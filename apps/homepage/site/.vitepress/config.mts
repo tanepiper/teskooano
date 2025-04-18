@@ -5,10 +5,7 @@ import lightbox from "vitepress-plugin-lightbox"
 
 // https://vitepress.dev/reference/site-config
 export default withMermaid({
-  mermaid: {
-    theme: "dark",
-  },
-  base: process.env.CI ? "/teskooano/" : "/",
+  base: "/",
   ignoreDeadLinks: true,
   title: "Teskooano",
   description:

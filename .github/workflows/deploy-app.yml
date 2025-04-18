@@ -43,7 +43,7 @@ jobs:
       - name: Build Homepage
         run: |
           moon run homepage:build
-          mv apps/teskooano/dist apps/homepage/site/.vitepress/dist/app
+          mv apps/teskooano/dist apps/homepage/site/.vitepress/dist/teskooano
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
