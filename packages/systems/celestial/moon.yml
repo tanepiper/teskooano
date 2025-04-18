@@ -1,0 +1,12 @@
+type: library
+language: typescript
+
+tasks:
+  test:
+    command: npm run test
+    local: true
+    options:
+      interactive: true
+    inputs:
+      - src/**/*.ts
+      - src/**/*.tsx

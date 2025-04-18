@@ -1,0 +1,70 @@
+{
+  "name": "@teskooano/systems-celestial",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Handles the definition and rendering logic for celestial bodies",
+  "keywords": [
+    "threejs",
+    "planets",
+    "space"
+  ],
+  "license": "ISC",
+  "author": "Tane Piper <hello@tanepiper.com>",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc && npm run copy-fonts",
+    "copy-fonts": "node scripts/copy-fonts.js",
+    "test": "vitest run  --browser=chromium",
+    "test:browser": "vitest --browser",
+    "test:browser:headless": "vitest --browser.headless",
+    "test:ui": "vitest --ui",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "build:watch": "tsc -p tsconfig.json --watch",
+    "dev": "vite",
+    "preview": "vite preview",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@teskooano/core-debug": "file:../../core/debug",
+    "@teskooano/core-math": "file:../../core/math",
+    "@teskooano/core-physics": "file:../../core/physics",
+    "@teskooano/data-types": "file:../data/types",
+    "@teskooano/threejs-effects": "file:../../renderer/threejs-effects",
+    "@types/three": "0.175.0",
+    "alea": "1.0.1",
+    "canvas": "3.1.0",
+    "commander": "13.1.0",
+    "extended-random": "1.2.2",
+    "ora": "8.2.0",
+    "simplex-noise": "4.0.3",
+    "squirrel-noise": "1.0.0",
+    "three": "0.175.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.51.1",
+    "@types/node": "22.14.1",
+    "@types/three": "0.175.0",
+    "@vitest/browser": "3.1.1",
+    "@vitest/ui": "3.1.1",
+    "eslint": "9.24.0",
+    "happy-dom": "17.4.4",
+    "playwright": "1.51.1",
+    "typescript": "5.8.3",
+    "vitest": "3.1.1"
+  },
+  "bin": {
+    "generate-planet-texture": "./src/cli/generate-texture.ts"
+  }
+}

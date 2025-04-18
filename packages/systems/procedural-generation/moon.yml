@@ -1,0 +1,9 @@
+tasks:
+  test:
+    command: vitest
+    args: run
+    options:
+      runInCI: true
+
+dependsOn:
+  - "~:build" 

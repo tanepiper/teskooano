@@ -1,0 +1,21 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "declaration": true,
+    "paths": {
+      "@teskooano/data-types": ["../../data/types"],
+      "@teskooano/core-physics": ["../../physics"],
+      "@teskooano/core-math": ["../../math"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    {
+      "path": "../../data/types"
+    }
+  ]
+} 

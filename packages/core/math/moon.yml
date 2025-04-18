@@ -1,0 +1,21 @@
+language: typescript
+
+tags:
+  - core
+  - math
+
+dependsOn:
+  - '~:build'
+
+tasks:
+  build:
+    command: npm run build
+    inputs:
+      - src/**/*
+      - tsconfig.json
+    outputs:
+      - dist/**/*
+      - tsconfig.tsbuildinfo
+  dev:
+    command: npm run dev
+    local: true 

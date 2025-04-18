@@ -1,0 +1,1 @@
+export { generateSystem } from './generator'; 

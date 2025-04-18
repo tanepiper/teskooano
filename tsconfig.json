@@ -1,0 +1,59 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "sourceMap": true,
+    "composite": true,
+    "declarationMap": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@teskooano/renderer-threejs": ["packages/renderer/threejs/src/index.ts"],
+      "@teskooano/renderer-threejs-core": ["packages/renderer/threejs-core/src/index.ts"],
+      "@teskooano/renderer-threejs-visualization": ["packages/renderer/threejs-visualization/src/index.ts"],
+      "@teskooano/renderer-threejs-interaction": ["packages/renderer/threejs-interaction/src/index.ts"],
+      "@teskooano/renderer-threejs-effects": ["packages/renderer/threejs-effects/src/index.ts"],
+      "@teskooano/core-state": ["packages/core/state/src/index.ts"],
+      "@teskooano/data-types": ["packages/data/types/src/index.ts"],
+      "@teskooano/app-simulation": ["packages/app/simulation/src/index.ts"],
+      "@teskooano/core-physics": ["packages/core/physics/src/index.ts"],
+      "@teskooano/systems-celestial": ["packages/systems/celestial/src/index.ts"],
+      "@teskooano/systems-procedural-generation": ["packages/systems/procedural-generation/src/index.ts"],
+      "@teskooano/core-debug": ["packages/core/debug/src/index.ts"],
+      "@teskooano/*": ["packages/*/src"]
+    }
+  },
+  "references": [
+    {
+      "path": "./packages/data/types"
+    },
+    {
+      "path": "./packages/core/math"
+    },
+    {
+      "path": "./packages/core/state"
+    },
+    {
+      "path": "./packages/core/physics"
+    },
+    {
+      "path": "./packages/renderer/threejs"
+    },
+    {
+      "path": "./packages/app/simulation"
+    },
+    {
+      "path": "./packages/systems/procedural-generation"
+    },
+    {
+      "path": "./packages/core/debug"
+    }
+  ],
+  "exclude": ["node_modules", "dist"]
+} 

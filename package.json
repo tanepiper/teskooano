@@ -1,0 +1,27 @@
+{
+  "name": "open-space",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/teskooano",
+    "./apps/*",
+    "./packages/app/*",
+    "./packages/data/*",
+    "./packages/core/*",
+    "./packages/systems/*",
+    "./packages/renderer/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/frontend",
+    "test": "npm run test --workspaces",
+    "build": "npm run build --workspaces",
+    "install:all": "npm install && npm run install:packages",
+    "install:packages": "npm install --workspaces"
+  },
+  "devDependencies": {
+    "@types/node": "22.14.1",
+    "typescript": "5.8.3",
+    "vitest": "3.1.1",
+    "eslint": "9.24.0"
+  }
+} 

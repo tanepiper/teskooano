@@ -1,0 +1,23 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "declaration": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "types": ["vite-plugin-glsl/ext"],
+    "paths": {
+      "@teskooano/renderer-threejs": ["../../renderer/threejs"],
+      "@teskooano/core-state": ["../../core/state"],
+      "@teskooano/data-types": ["../../data/types"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../../renderer/threejs" },
+    { "path": "../../core/state" },
+    { "path": "../../data/types" }
+  ]
+} 

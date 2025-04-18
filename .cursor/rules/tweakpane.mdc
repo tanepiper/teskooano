@@ -1,0 +1,652 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Bindings
+For fine-tuning parameters, use addBinding() of the pane to add components. Tweakpane provides suitable components for bound values.
+
+Number
+
+For number parameters, Tweakpane provides a text input by default.
+
+const PARAMS = {
+  speed: 0.5,
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'speed');
+
+Range
+You can specify a range of number by min and max. If you specify both of them, slider control will be created.
+
+const PARAMS = {
+  speed: 50,
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'speed', {
+  min: 0,
+  max: 100,
+});
+
+Step
+step constraints step of changes.
+
+const PARAMS = {
+  speed: 0.5,
+  count: 10,
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'speed', {
+  step: 0.1,
+});
+pane.addBinding(PARAMS, 'count', {
+  step: 10,
+  min: 0,
+  max: 100,
+});
+
+Number list
+If you want to choose a value from presets, use options.
+
+const PARAMS = {
+  quality: 0,
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'quality', {
+  options: {
+    low: 0,
+    medium: 50,
+    high: 100,
+  },
+});
+
+Formatter
+You can use a custom number formatter with format.
+
+const PARAMS = {
+  k: 0,
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'k', {
+  format: (v) => v.toFixed(6),
+});
+
+String
+For string parameters, text input will be provided by default.
+
+const PARAMS = {
+  message: 'hello, world',
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'message');
+
+String list
+Same as for number properties, options provides a list component.
+
+const PARAMS = {
+  theme: '',
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'theme', {
+  options: {
+    none: '',
+    dark: 'dark-theme.json',
+    light: 'light-theme.json',
+  },
+});
+
+Boolean
+For boolean parameters, checkbox field component will be provided.
+
+const PARAMS = {
+  hidden: true,
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'hidden');
+
+
+Color
+For object parameters that have components key r, g, and b (and optional a), text field with a color swatch will be provided. You can choose a color from a color picker by clicking the swatch.
+
+const PARAMS = {
+  background: {r: 255, g: 0, b: 55},
+  tint: {r: 0, g: 255, b: 214, a: 0.5},
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'background');
+pane.addBinding(PARAMS, 'tint');
+
+Passing {color: {type: 'float'}} will change the maximum value of color components to 1.0. It may be useful for some cases (e.g. shader colors).
+
+const PARAMS = {
+  overlay: {r: 1, g: 0, b: 0.33},
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'overlay', {
+  color: {type: 'float'},
+});
+
+This field will also be provided for string parameters that can be parsed as a color.
+
+const PARAMS = {
+  primary: '#f05',
+  secondary: 'rgb(0, 255, 214)',
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'primary');
+pane.addBinding(PARAMS, 'secondary');
+)
+If you want to regard a hex number (like 0x0088ff) as a color, specify {view: 'color'} option, and {color: {alpha: true}} to add an alpha component.
+
+const PARAMS = {
+  background: 0xff0055,
+  tint: 0x00ffd644,
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'background', {
+  view: 'color',
+});
+pane.addBinding(PARAMS, 'tint', {
+  view: 'color',
+  color: {alpha: true},
+});
+
+Or, if you want to force a color-like string to be a string input, pass view: 'text' option.
+
+const PARAMS = {
+  hex: '#0088ff',
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'hex', {
+  view: 'text',
+});
+
+picker can change the layout of the picker.
+
+const PARAMS = {
+  key: '#ff0055ff',
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'key', {
+  picker: 'inline',
+  expanded: true,
+});
+
+Point 2D
+For object parameters that have number properties x and y, text fields and a picker will be provided.
+
+const PARAMS = {
+  offset: {x: 50, y: 25},
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'offset');
+
+Each dimension can be constrained with step, min and max parameters just like a numeric input.
+
+const PARAMS = {
+  offset: {x: 20, y: 30},
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'offset', {
+  x: {step: 20},
+  y: {min: 0, max: 100},
+});
+
+{inverted: true} inverts Y-axis.
+
+const PARAMS = {
+  offset: {x: 50, y: 50},
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'offset', {
+  y: {inverted: true},
+});
+
+picker can change the layout of the picker.
+
+const PARAMS = {
+  offset: {x: 50, y: 50},
+};
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'offset', {
+  picker: 'inline',
+  expanded: true,
+});
+
+Point 3D/4D
+Tweakpane also has a support for 3D and 4D vector object. You can constrain each axis same as Point 2D.
+
+const PARAMS = {
+  source: {x: 0, y: 0, z: 0},
+  camera: {x: 0, y: 20, z: -10},
+  color: {x: 0, y: 0, z: 0, w: 1},
+};
+
+// 3d
+const pane = new Pane();
+pane.addBinding(PARAMS, 'source');
+pane.addBinding(PARAMS, 'camera', {
+  y: {step: 10},
+  z: {max: 0},
+});
+
+// 4d
+pane.addBinding(PARAMS, 'color', {
+  x: {min: 0, max: 1},
+  y: {min: 0, max: 1},
+  z: {min: 0, max: 1},
+  w: {min: 0, max: 1},
+});
+
+To monitor primitive value changes, use addBinding() with the option {readonly: true}.
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'wave', {
+  readonly: true,
+});
+
+Multiline
+multiline option provides a multiline log component. rows can change the display height.
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'wave', {
+  readonly: true,
+  multiline: true,
+  rows: 5,
+});
+
+Buffer size
+You can use bufferSize option to change the buffer size.
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'wave', {
+  readonly: true,
+  bufferSize: 10,
+});
+
+Interval
+To change an interval of monitors, set interval option in milliseconds. The default value is 200(ms).
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'time', {
+  readonly: true,
+  interval: 1000,
+});
+
+Graph
+{view: 'graph'} option for number parameters provides a graph component. Pass min and max for value range.
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'wave', {
+  readonly: true,
+  view: 'graph',
+  min: -1,
+  max: +1,
+});
+
+Folder
+Use addFolder() to add folders. You can add all types of components to the returned folder just like adding them to the pane.
+
+const pane = new Pane();
+
+const f1 = pane.addFolder({
+  title: 'Basic',
+});
+f1.addBinding(PARAMS, 'speed');
+
+const f2 = pane.addFolder({
+  title: 'Advanced',
+  expanded: false,   // optional
+});
+f2.addBinding(PARAMS, 'acceleration');
+f2.addBinding(PARAMS, 'randomness');
+
+
+Advanced
+
+Pane title
+title option of the pane creates a root title. It can expand/collapse the whole pane.
+
+const pane = new Pane({
+  title: 'Parameters',
+});
+
+
+Button
+addButton() adds a button component. Use on() to handle click events.
+
+const pane = new Pane();
+
+const btn = pane.addButton({
+  title: 'Increment',
+  label: 'counter',   // optional
+});
+
+let count = 0;
+btn.on('click', () => {
+  count += 1;
+  console.log(count);
+});
+
+Tab
+addTab() adds a tab component. You can access an each page by pages[] and add components into it.
+
+const pane = new Pane();
+
+const tab = pane.addTab({
+  pages: [
+    {title: 'Parameters'},
+    {title: 'Advanced'},
+  ],
+});
+
+tab.pages[0].addBinding(...);
+
+Blades
+
+Basics
+addBlade() can create a blade without binding.
+
+const pane = new Pane();
+pane.addBlade({
+  view: 'slider',
+  label: 'brightness',
+  min: 0,
+  max: 1,
+  value: 0.5,
+});
+b
+Most of blades need a specific view and other required parameters. See the sections below for details.
+
+If you are a TypeScript user, need to cast a created blade to a specific type to access full functionalities:
+
+const b = pane.addBlade({
+  view: 'slider',
+  label: 'brightness',
+  min: 0,
+  max: 1,
+  value: 0.5,
+}) as SliderBladeApi;
+
+
+Text
+Parameters | API
+
+const pane = new Pane();
+pane.addBlade({
+  view: 'text',
+  label: 'name',
+  parse: (v) => String(v),
+  value: 'sketch-01',
+});
+
+List
+Parameters | API
+
+const pane = new Pane();
+pane.addBlade({
+  view: 'list',
+  label: 'scene',
+  options: [
+    {text: 'loading', value: 'LDG'},
+    {text: 'menu', value: 'MNU'},
+    {text: 'field', value: 'FLD'},
+  ],
+  value: 'LDG',
+});
+
+LDG
+Slider
+Parameters | API
+
+const pane = new Pane();
+pane.addBlade({
+  view: 'slider',
+  label: 'brightness',
+  min: 0,
+  max: 1,
+  value: 0.5,
+});
+
+Separator
+Parameters | API
+
+const pane = new Pane();
+// ...
+pane.addBlade({
+  view: 'separator',
+});
+// ...
+
+
+Events
+Use on() of specific components to listen its changes. Input components will emit change events. The first argument of the event handler is the event object that contains a value.
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'value')
+  .on('change', (ev) => {
+    console.log(ev.value.toFixed(2));
+    if (ev.last) {
+      console.log('(last)');
+    }
+  });
+
+If you want to handle global events (for all of components), on() of the pane is for it.
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'boolean');
+pane.addBinding(PARAMS, 'color');
+pane.addBinding(PARAMS, 'number');
+pane.addBinding(PARAMS, 'string');
+
+pane.on('change', (ev) => {
+  console.log('changed: ' + JSON.stringify(ev.value));
+});
+
+Import/Export
+Tweakpane can import/export a blade state with exportState().
+
+const pane = new Pane();
+// pane.addBinding(PARAMS, ...);
+// pane.addBinding(PARAMS, ...);
+
+const state = pane.exportState();
+console.log(state);
+
+To import an exported state, pass the state object to importState().
+
+const pane = new Pane();
+// ...
+
+const f = pane.addFolder({
+  title: 'Values',
+});
+// f.addBinding(PARAMS, ...);
+// f.addBinding(PARAMS, ...);
+
+f.importState(state);
+
+Tips
+Custom container
+If you want to put a pane into the specific element, pass it as container option of the pane.
+
+const pane = new Pane({
+  container: document.getElementById('someContainer'),
+});
+
+Custom label
+You can set a label of components by label option.
+
+const pane = new Pane();
+pane.addBinding(PARAMS, 'initSpd', {
+  label: 'Initial speed',
+});
+pane.addBinding(PARAMS, 'size', {
+  label: 'Force field\nradius',
+});
+
+Refresh manually
+By default, Tweakpane doesn't detect changes of bound parameters. Use refresh() to force-update all input/monitor components.
+
+const pane = new Pane();
+// pane.addBinding(PARAMS, ...);
+// pane.addBinding(PARAMS, ...);
+
+pane.refresh();
+
+Visibility
+Toggle hidden property to show/hide components.
+
+const pane = new Pane();
+const f = pane.addFolder({
+  title: 'Advanced',
+});
+
+// ...
+
+btn.on('click', () => {
+  f.hidden = !f.hidden;
+});
+
+
+Disabled
+Use disabled property to disable a view temporarily.
+
+const pane = new Pane();
+const i = pane.addBinding(PARAMS, 'param', {
+  disabled: true,
+  title: 'Advanced',
+});
+
+// ...
+
+btn.on('click', () => {
+  i.disabled = !i.disabled;
+});
+
+Disposing
+If you want to dispose a pane manually, call dispose() of the pane. You can also dispose each component in the same way.
+
+const pane = new Pane();
+const i = pane.addBinding(PARAMS, 'count');
+
+// ...
+
+// Dispose the input
+i.dispose();
+
+// Dispose the pane
+pane.dispose();
+
+Adding input/monitor at a specific position
+Use index option to specify an index.
+
+const pane = new Pane();
+pane.addButton({title: 'Run'});
+pane.addButton({title: 'Stop'});
+pane.addButton({
+  index: 1,
+  title: '**Reset**',
+});
+
+// @tweakpane/plugin-essentials addons
+
+const PARAMS = {
+  interval: {min: 16, max: 48},
+};
+
+// Interval
+pane.addBinding(PARAMS, 'interval', {
+  min: 0,
+  max: 100,
+  step: 1,
+});
+
+// ...
+
+// FPS graph
+const fpsGraph = pane.addBlade({
+  view: 'fpsgraph',
+  label: 'fpsgraph',
+});
+
+function render() {
+  fpsGraph.begin();
+
+  // Rendering
+
+  fpsGraph.end();
+}
+
+// @tweakpane/plugin-camerakit addons
+
+const PARAMS = {
+  flen: 55,
+  fnum: 1.8,
+  iso: 100,
+};
+
+// ...
+
+pane.addBinding(PARAMS, 'fnum', {
+  // Use a ring view of Camerakit
+  view: 'cameraring',
+  // Appearance of the ring
+  series: 1,
+  // Configuration of the scale unit
+  unit: {ticks: 10, pixels: 40, value: 0.2},
+  // Hide a text input and widen the ring
+  wide: true,
+  // Number constraints
+  min: 1.4,
+  step: 0.02,
+});
+
+
+Add --tp-* variables to the container element to change pane colors. All themeable variables are listed below:
+
+<!-- Example theme: Translucent -->
+<style>
+:root {
+  --tp-base-background-color: hsla(0, 0%, 10%, 0.8);
+  --tp-base-shadow-color: hsla(0, 0%, 0%, 0.2);
+  --tp-button-background-color: hsla(0, 0%, 80%, 1);
+  --tp-button-background-color-active: hsla(0, 0%, 100%, 1);
+  --tp-button-background-color-focus: hsla(0, 0%, 95%, 1);
+  --tp-button-background-color-hover: hsla(0, 0%, 85%, 1);
+  --tp-button-foreground-color: hsla(0, 0%, 0%, 0.8);
+  --tp-container-background-color: hsla(0, 0%, 0%, 0.3);
+  --tp-container-background-color-active: hsla(0, 0%, 0%, 0.6);
+  --tp-container-background-color-focus: hsla(0, 0%, 0%, 0.5);
+  --tp-container-background-color-hover: hsla(0, 0%, 0%, 0.4);
+  --tp-container-foreground-color: hsla(0, 0%, 100%, 0.5);
+  --tp-groove-foreground-color: hsla(0, 0%, 0%, 0.2);
+  --tp-input-background-color: hsla(0, 0%, 0%, 0.3);
+  --tp-input-background-color-active: hsla(0, 0%, 0%, 0.6);
+  --tp-input-background-color-focus: hsla(0, 0%, 0%, 0.5);
+  --tp-input-background-color-hover: hsla(0, 0%, 0%, 0.4);
+  --tp-input-foreground-color: hsla(0, 0%, 100%, 0.5);
+  --tp-label-foreground-color: hsla(0, 0%, 100%, 0.5);
+  --tp-monitor-background-color: hsla(0, 0%, 0%, 0.3);
+  --tp-monitor-foreground-color: hsla(0, 0%, 100%, 0.3);
+}
+</style>
+

@@ -1,0 +1,26 @@
+type: 'library'
+language: 'typescript'
+
+fileGroups:
+  sources:
+    - 'src/**/*'
+  tests:
+    - 'src/**/*.spec.ts'
+
+tasks:
+  build:
+    command: 'npm run build'
+    inputs:
+      - '@globs(sources)'
+    outputs:
+      - 'dist'
+  lint:
+    command: 'npm run lint'
+    inputs:
+      - '@globs(sources)' 
+  test:
+    command: 'npm run test:browser'
+    inputs:
+      - '@globs(tests)'
+    outputs:
+      - 'coverage'

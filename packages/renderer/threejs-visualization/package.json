@@ -1,0 +1,50 @@
+{
+  "name": "@teskooano/renderer-threejs-visualization",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.d.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc && npm run copy-fonts",
+    "copy-fonts": "node scripts/copy-fonts.js",
+    "test": "vitest run",
+    "test:browser": "vitest --browser=chromium",
+    "test:watch": "vitest",
+    "test:browser:watch": "vitest --browser=chromium",
+    "test:browser:headless": "vitest --browser.headless",
+    "test:ui": "vitest --ui",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@teskooano/core-state": "file:../../core/state",
+    "@teskooano/data-types": "file:../../data/types",
+    "@teskooano/renderer-threejs": "file:../threejs",
+    "@teskooano/renderer-threejs-core": "file:../threejs-core",
+    "@teskooano/renderer-threejs-effects": "file:../threejs-effects",
+    "@teskooano/renderer-threejs-interaction": "file:../threejs-interaction",
+    "@teskooano/systems-celestial": "file:../../systems/celestial",
+    "three": "0.175.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.175.0",
+    "@playwright/test": "1.51.1",
+    "@vitest/browser": "3.1.1",
+    "@vitest/ui": "3.1.1",
+    "eslint": "9.24.0",
+    "happy-dom": "17.4.4",
+    "playwright": "1.51.1",
+    "typescript": "5.8.3",
+    "vitest": "3.1.1"
+  }
+} 

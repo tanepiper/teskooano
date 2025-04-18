@@ -1,0 +1,28 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "declaration": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@teskooano/core-state": ["../../core/state/src"],
+      "@teskooano/data-types": ["../../data/types/src"],
+      "@teskooano/renderer-threejs": ["../threejs/src"],
+      "@teskooano/renderer-threejs-core": ["../threejs-core/src"],
+      "@teskooano/renderer-threejs-effects": ["../threejs-effects/src"],
+      "@teskooano/systems-celestial": ["../../systems/celestial/src"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../../core/state" },
+    { "path": "../../data/types" },
+    { "path": "../threejs-core" },
+    { "path": "../threejs-effects" },
+    { "path": "../threejs" },
+    { "path": "../../systems/celestial" }
+  ]
+} 

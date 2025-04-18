@@ -1,0 +1,28 @@
+{
+  "name": "@teskooano/systems-procedural-generation",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.d.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@teskooano/data-types": "file:../../data/types",
+    "@teskooano/core-math": "file:../../core/math"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3",
+    "vitest": "3.1.1"
+  },
+  "scripts": {
+    "test": "vitest run"
+  }
+} 

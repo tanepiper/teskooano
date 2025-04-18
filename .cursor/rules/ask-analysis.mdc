@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Analyse only this library.
+
+- Find out it's purpose
+- Think about some improvement as a senior developer might implement
+- Create a detailed readme document
+- Add missing tests

@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "declaration": true,
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
+    "paths": {
+      "@teskooano/core-debug": ["../../../packages/core/debug/src"],
+      "@teskooano/core-math": ["../../../packages/core/math/src"],
+      "@teskooano/core-physics": ["../../../packages/core/physics/src"],
+      "@teskooano/data-types": ["../../../packages/data/types/src"],
+      "@teskooano/threejs-effects": ["../../../packages/renderer/threejs-effects/src"]
+    }
+  },
+  "references": [
+    { "path": "../../../packages/data/types" },
+    { "path": "../../../packages/core/physics" },
+    { "path": "../../../packages/renderer/threejs-effects" },
+    { "path": "../../../packages/core/debug" },
+    { "path": "../../../packages/core/math" }
+  ],
+  "include": [
+    "src/**/*",
+    "src/shims-glsl.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+} 

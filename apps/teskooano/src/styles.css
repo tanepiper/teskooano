@@ -1,0 +1,95 @@
+:root {
+  --color-background: #1a1a2e; /* Dark Navy Blue */
+  --color-surface: #2a2a3e; /* Slightly Lighter Navy/Grey */
+  --color-text: #e0e0fc; /* Light Lavender/White */
+  --color-primary: #6c63ff; /* A Purple/Blue Accent */
+  --color-border: #4a4a6a; /* Muted Border Color */
+
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: var(--color-text);
+  background-color: var(--color-background);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#toolbar {
+  height: 50px; /* Example height, adjust as needed */
+  width: 100%;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  box-sizing: border-box; /* Include padding/border in height */
+}
+
+#app {
+  width: 100%;
+  height: calc(100vh - 50px); /* Adjust height for toolbar */
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Basic button styling */
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: var(--color-primary);
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Dockview specific overrides - adjust as needed */
+.dockview-theme-abyss {
+  --dv-background-color: var(--color-background);
+  --dv-pane-background-color: var(--color-surface);
+  --dv-separator-border: var(--color-border);
+  --dv-tabs-and-actions-container-background-color: var(--color-surface);
+  --dv-active-tab-background-color: var(--color-background);
+  --dv-tab-background-color: var(--color-surface);
+  --dv-tab-color: var(--color-text);
+  --dv-tab-border: var(--color-border);
+  --dv-group-control-background-color: var(--color-surface);
+}
+
+.toolbar-cosmic-background {
+  /* Base dark color (matches the one set previously) */
+  background-color: var(--color-surface-deep, #1a1a2e); 
+  
+  /* Adjusted layered gradients for a more visible nebula */
+  background-image: 
+    /* Faint directional haze */
+    linear-gradient(160deg, hsla(280, 40%, 25%, 0.15) 0%, transparent 40%), 
+    /* Brighter purple cloud, slightly larger */
+    radial-gradient(ellipse at 25% 35%, hsla(260, 55%, 40%, 0.35) 0%, transparent 60%),
+    /* Brighter cyan cloud, shifted */
+    radial-gradient(ellipse at 75% 65%, hsla(180, 60%, 35%, 0.3) 0%, transparent 55%);
+    
+  /* Ensure background doesn't repeat if element is larger */
+  background-repeat: no-repeat;
+} 
