@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import glsl from 'vite-plugin-glsl'; // Import the plugin
 
 
-const basePath = process.env.CI ? '/teskooano/app' : '/';
+const basePath = process.env.CI ? '/teskooano' : '/';
 
 
 export default defineConfig({
