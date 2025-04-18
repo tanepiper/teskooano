@@ -228,15 +228,18 @@ export class ModularSpaceRenderer {
           if (this.previousFollowTargetPos.lengthSq() === 0) {
             this.previousFollowTargetPos.copy(this.tempNewObjectPos);
           }
+          // Restore delta calculation
           const deltaMovement = this.tempNewObjectPos
             .clone()
             .sub(this.previousFollowTargetPos);
 
-          // Instead of moving camera directly, let controls handle damping
-          // this.sceneManager.camera.position.add(deltaMovement);
+          // Restore direct camera position update
+          this.sceneManager.camera.position.add(deltaMovement);
           
           // Update the target directly - this is the core of following
           this.controlsManager.controls.target.copy(this.tempNewObjectPos);
+          // REMOVED: Immediate update call - let the main manager handle it
+          // this.controlsManager.controls.update(); 
           this.previousFollowTargetPos.copy(this.tempNewObjectPos);
         } else {
           console.warn(
@@ -251,8 +254,8 @@ export class ModularSpaceRenderer {
       }
       // --- End Camera Following Logic ---
 
-      // Update controls (needed for damping)
-      this.controlsManager.controls.update();
+      // Restore the main ControlsManager update call
+      this.controlsManager.update();
 
       // Final render for the frame
       this.render();
