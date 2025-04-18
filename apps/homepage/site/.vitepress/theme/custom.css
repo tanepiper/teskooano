@@ -1,0 +1,166 @@
+/* Custom theme styles for Teskooano */
+
+:root {
+  --vp-c-brand: #3a70c9;
+  --vp-c-brand-light: #5a8fe8;
+  --vp-c-brand-lighter: #7aaef7;
+  --vp-c-brand-dark: #2a5aa9;
+  --vp-c-brand-darker: #1a4a89;
+  
+  --vp-home-hero-name-color: var(--vp-c-brand-light);
+  --vp-home-hero-image-background-image: linear-gradient(
+    -45deg, 
+    #3a70c9 30%, 
+    #0e1f41
+  );
+  --vp-home-hero-image-filter: blur(72px);
+  
+  /* Set the dark theme as the default */
+  --vp-c-bg: #0e1f41;
+  --vp-c-bg-alt: #162a4e;
+  --vp-c-black: #0e1f41;
+  --vp-c-divider: rgba(255, 255, 255, 0.1);
+  --vp-c-text: rgba(255, 255, 255, 0.87);
+  
+  /* Star background */
+  --stars-color: rgba(255, 255, 255, 0.8);
+  --shooting-star-color: #3a70c9;
+}
+
+/* Header customization */
+.VPNav {
+  backdrop-filter: blur(8px);
+  background-color: rgba(14, 31, 65, 0.75) !important;
+}
+
+/* Custom star background */
+.VPHomeHero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(var(--stars-color) 1px, transparent 1px),
+    radial-gradient(var(--stars-color) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: 0 0, 25px 25px;
+  opacity: 0.3;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Feature icons */
+.VPFeature .icon {
+  font-size: 28px !important;
+  border-radius: 12px;
+  background: var(--vp-c-brand-dark);
+  width: 48px !important;
+  height: 48px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  color: white !important;
+}
+
+/* Shooting star animation */
+@keyframes shooting-star {
+  0% {
+    transform: translateX(0) translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(300px) translateY(200px);
+    opacity: 0;
+  }
+}
+
+.VPHomeHero::after {
+  content: '';
+  position: absolute;
+  top: 100px;
+  left: 10%;
+  width: 100px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--shooting-star-color), transparent);
+  animation: shooting-star 7s infinite;
+  animation-delay: 2s;
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Another shooting star */
+.VPHomeHero .container::after {
+  content: '';
+  position: absolute;
+  top: 250px;
+  left: 60%;
+  width: 150px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--shooting-star-color), transparent);
+  animation: shooting-star 8s infinite;
+  animation-delay: 5s;
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Custom code blocks */
+.vp-doc div[class*='language-'] {
+  background-color: rgba(30, 50, 90, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Custom blockquotes */
+.vp-doc blockquote {
+  border-left-color: var(--vp-c-brand);
+  background-color: rgba(58, 112, 201, 0.1);
+  border-radius: 4px;
+}
+
+/* Custom hero button */
+.VPButton.brand {
+  background-color: var(--vp-c-brand);
+  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.VPButton.brand:hover {
+  background-color: var(--vp-c-brand-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(58, 112, 201, 0.3);
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .VPHomeHero .text {
+    font-size: 12px !important;
+  }
+}
+
+/* Mermaid diagrams - space-themed */
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon {
+  fill: rgba(30, 50, 90, 0.7) !important;
+  stroke: var(--vp-c-brand) !important;
+}
+
+.mermaid .edgePath .path {
+  stroke: var(--vp-c-brand-light) !important;
+}
+
+/* Custom tip container */
+.custom-container.tip {
+  background-color: rgba(58, 112, 201, 0.1);
+  border-color: var(--vp-c-brand);
+}
+
+.custom-container.tip .custom-container-title {
+  color: var(--vp-c-brand-light);
+} 

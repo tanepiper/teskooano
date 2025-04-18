@@ -1,0 +1,19 @@
+{
+  "name": "@teskooano/homepage",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev site",
+    "build": "vitepress build site",
+    "preview": "vitepress preview site"
+  },
+  "dependencies": {
+    "vitepress": "1.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.14.1",
+    "typescript": "5.8.3",
+    "vite": "6.2.6"
+  }
+}
