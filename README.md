@@ -1,4 +1,4 @@
-# Open Space
+# Teskoanno
 
 A realistic space simulation game inspired by EVE Online and Elite: Dangerous, featuring accurate orbital mechanics, gravitational physics, and celestial body visualization.
 
