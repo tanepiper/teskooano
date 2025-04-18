@@ -9,11 +9,13 @@
     "preview": "vitepress preview site"
   },
   "dependencies": {
-    "vitepress": "1.6.3"
+    "vitepress": "1.6.3",
+    "vitepress-plugin-mermaid": "2.0.17",
+    "mermaid": "11.6.0"
   },
   "devDependencies": {
     "@types/node": "22.14.1",
     "typescript": "5.8.3",
-    "vite": "6.2.6"
+    "vite": "6.3.2"
   }
 }

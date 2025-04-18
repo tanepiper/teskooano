@@ -11,8 +11,8 @@ hero:
     alt: Teskooano Observatory Panel
   actions:
     - theme: brand
-      text: Try The Demo
-      link: https://tanepiper.github.io/teskooano
+      text: Play with Teskooano
+      link: https://tanepiper.github.io/teskooano/app
     - theme: alt
       text: View on GitHub
       link: https://github.com/tanepiper/teskooano

@@ -5,7 +5,7 @@ platform: 'node'
 fileGroups:
   sources: # Used by build, check, etc tasks
     # Matches files in the `src` directory
-    - 'src/**/*'
+    - 'site/**/*'
     # Matches files in the root
     - 'vite.config.ts'
     - 'tsconfig.json'
@@ -22,7 +22,7 @@ tasks:
       - 'tsconfig.json'
     outputs:
       # The built distribution
-      - 'dist'
+      - 'site/.vitepress/dist'
 
   # Start the development server
   dev:

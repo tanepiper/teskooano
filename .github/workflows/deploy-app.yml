@@ -40,11 +40,16 @@ jobs:
       - name: Build App
         run: |
           moon run teskooano:build
+      - name: Build Homepage
+        run: |
+          moon run homepage:build
+          mv apps/teskooano/dist apps/homepage/site/.vitepress/dist/app
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload Build Dist
-          path: 'apps/teskooano/dist/'
+          
+          path: 'apps/homepage/site/.vitepress/dist/'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
