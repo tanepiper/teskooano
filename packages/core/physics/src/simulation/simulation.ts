@@ -1,7 +1,10 @@
 import { PhysicsStateReal } from "../types";
 import { OSVector3 } from "@teskooano/core-math";
 import { CelestialType } from "@teskooano/data-types";
-import { handleCollisions } from "../collision/collision"; // <-- Import collision handler
+import {
+  handleCollisions,
+  type DestructionEvent,
+} from "../collision/collision"; // <-- Import collision handler
 import { velocityVerletIntegrate } from "../integrators/verlet"; // Use Velocity Verlet
 import { Octree } from "../spatial/octree"; // Import Octree
 
@@ -18,7 +21,7 @@ const calculateAccelerationForBody = (
   targetBodyState: PhysicsStateReal,
   // otherBodies: PhysicsStateReal[], // No longer needed directly
   octree: Octree,
-  theta: number = 0.7 // Default theta value
+  theta: number = 0.7, // Default theta value
 ): OSVector3 => {
   // Calculate force using the Octree
   // Note: If targetBodyState is a *predicted* state, it won't be *in* the octree.
@@ -39,6 +42,7 @@ export interface SimulationStepResult {
   states: PhysicsStateReal[];
   accelerations: Map<string, OSVector3>;
   destroyedIds: Set<string | number>; // <-- Add destroyed IDs
+  destructionEvents: DestructionEvent[]; // <-- Add destruction events
 }
 
 /**
@@ -61,7 +65,7 @@ export const updateSimulation = (
   isStar: Map<string | number, boolean>, // <-- Add isStar map
   bodyTypes: Map<string | number, CelestialType>, // --- NEW PARAM ---
   octreeSize: number = 5e13,
-  barnesHutTheta: number = 0.7
+  barnesHutTheta: number = 0.7,
 ): SimulationStepResult => {
   // --- Octree Setup ---
   // Determine appropriate size if not provided (optional enhancement)
@@ -92,14 +96,14 @@ export const updateSimulation = (
 
     // Define the function needed by Velocity Verlet to calculate acceleration at a new state
     const calculateNewAcceleration = (
-      newStateGuess: PhysicsStateReal
+      newStateGuess: PhysicsStateReal,
     ): OSVector3 => {
       // Calculate acceleration on the guessed state using the *current* Octree
       // Pass the pre-built octree and theta parameter
       return calculateAccelerationForBody(
         newStateGuess,
         octree,
-        barnesHutTheta
+        barnesHutTheta,
       );
     };
 
@@ -108,23 +112,28 @@ export const updateSimulation = (
       body, // Current state
       currentAcceleration, // Acceleration at current state
       calculateNewAcceleration, // Function to calc acceleration at predicted state
-      dt // Time step
+      dt, // Time step
     );
   });
 
-  // Step 3: Handle Collisions
-  const [finalStates, destroyedIds] = handleCollisions(
+  // Step 3: Handle Collisions - Capture destruction events
+  const [finalStates, destroyedIds, destructionEvents] = handleCollisions(
     integratedStates,
     radii,
     isStar,
-    bodyTypes
+    bodyTypes,
   );
 
   // Octree is rebuilt next step, no need to explicitly clear here unless memory is critical
   // octree.clear();
 
-  // Return the final states, accelerations, and destroyed IDs
-  return { states: finalStates, accelerations, destroyedIds };
+  // Return the final states, accelerations, destroyed IDs, and destruction events
+  return {
+    states: finalStates,
+    accelerations,
+    destroyedIds,
+    destructionEvents,
+  }; // <-- Include destructionEvents
 };
 
 /**
@@ -148,7 +157,7 @@ export const runSimulation = (
   isStar: Map<string | number, boolean>, // <-- Add isStar map
   bodyTypes: Map<string | number, CelestialType>, // --- NEW PARAM ---
   octreeSize?: number,
-  barnesHutTheta?: number
+  barnesHutTheta?: number,
 ): PhysicsStateReal[][] => {
   const states: PhysicsStateReal[][] = [[...bodies]]; // Store a copy of the initial state
   let currentStates = bodies;
@@ -162,7 +171,7 @@ export const runSimulation = (
       isStar,
       bodyTypes,
       octreeSize,
-      barnesHutTheta
+      barnesHutTheta,
     );
     // We only store the states for this historical run function
     states.push([...stepResult.states]); // Store a copy of the new state

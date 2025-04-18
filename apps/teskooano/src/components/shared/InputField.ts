@@ -1,4 +1,4 @@
-const template = document.createElement('template');
+const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
@@ -57,7 +57,16 @@ template.innerHTML = `
 `;
 
 export class TeskooanoInputField extends HTMLElement {
-  static observedAttributes = ['label', 'type', 'value', 'placeholder', 'disabled', 'min', 'max', 'step'];
+  static observedAttributes = [
+    "label",
+    "type",
+    "value",
+    "placeholder",
+    "disabled",
+    "min",
+    "max",
+    "step",
+  ];
 
   private inputElement: HTMLInputElement;
   private labelElement: HTMLLabelElement;
@@ -65,90 +74,103 @@ export class TeskooanoInputField extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
-    this.inputElement = this.shadowRoot!.querySelector('#input-field')!;
-    this.labelElement = this.shadowRoot!.querySelector('label')!;
+    this.inputElement = this.shadowRoot!.querySelector("#input-field")!;
+    this.labelElement = this.shadowRoot!.querySelector("label")!;
     this.labelSlot = this.shadowRoot!.querySelector('slot[name="label"]')!;
 
     // Forward input/change events
-    this.inputElement.addEventListener('input', (e) => {
-      this.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true, data: this.inputElement.value }));
+    this.inputElement.addEventListener("input", (e) => {
+      this.dispatchEvent(
+        new InputEvent("input", {
+          bubbles: true,
+          composed: true,
+          data: this.inputElement.value,
+        }),
+      );
     });
-    this.inputElement.addEventListener('change', (e) => {
-      this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    this.inputElement.addEventListener("change", (e) => {
+      this.dispatchEvent(
+        new Event("change", { bubbles: true, composed: true }),
+      );
     });
   }
 
   connectedCallback() {
-    this.updateAttribute('label', this.getAttribute('label'));
-    this.updateAttribute('type', this.getAttribute('type') || 'text');
-    this.updateAttribute('value', this.getAttribute('value'));
-    this.updateAttribute('placeholder', this.getAttribute('placeholder'));
-    this.updateAttribute('disabled', this.getAttribute('disabled'));
-    this.updateAttribute('min', this.getAttribute('min'));
-    this.updateAttribute('max', this.getAttribute('max'));
-    this.updateAttribute('step', this.getAttribute('step'));
+    this.updateAttribute("label", this.getAttribute("label"));
+    this.updateAttribute("type", this.getAttribute("type") || "text");
+    this.updateAttribute("value", this.getAttribute("value"));
+    this.updateAttribute("placeholder", this.getAttribute("placeholder"));
+    this.updateAttribute("disabled", this.getAttribute("disabled"));
+    this.updateAttribute("min", this.getAttribute("min"));
+    this.updateAttribute("max", this.getAttribute("max"));
+    this.updateAttribute("step", this.getAttribute("step"));
   }
 
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+  attributeChangedCallback(
+    name: string,
+    oldValue: string | null,
+    newValue: string | null,
+  ) {
     this.updateAttribute(name, newValue);
   }
 
   private updateAttribute(name: string, value: string | null) {
     switch (name) {
-      case 'label':
+      case "label":
         // Update slot content if label attribute is set, otherwise default slot is used
         if (value !== null && !this.querySelector('[slot="label"]')) {
-            this.labelSlot.textContent = value;
+          this.labelSlot.textContent = value;
         }
         // Ensure label's 'for' matches input ID
-        this.labelElement.setAttribute('for', 'input-field');
+        this.labelElement.setAttribute("for", "input-field");
         break;
-      case 'type':
-        this.inputElement.type = value || 'text';
+      case "type":
+        this.inputElement.type = value || "text";
         break;
-      case 'value':
+      case "value":
         // Only update if value is different to prevent cursor jumping
         if (this.inputElement.value !== value) {
-             this.inputElement.value = value || '';
+          this.inputElement.value = value || "";
         }
         break;
-      case 'placeholder':
+      case "placeholder":
         if (value !== null) this.inputElement.placeholder = value;
-        else this.inputElement.removeAttribute('placeholder');
+        else this.inputElement.removeAttribute("placeholder");
         break;
-      case 'disabled':
+      case "disabled":
         if (value !== null) {
-          this.inputElement.setAttribute('disabled', '');
-          this.inputElement.setAttribute('aria-disabled', 'true');
+          this.inputElement.setAttribute("disabled", "");
+          this.inputElement.setAttribute("aria-disabled", "true");
         } else {
-          this.inputElement.removeAttribute('disabled');
-          this.inputElement.removeAttribute('aria-disabled');
+          this.inputElement.removeAttribute("disabled");
+          this.inputElement.removeAttribute("aria-disabled");
         }
         break;
-       case 'min':
-       case 'max':
-       case 'step':
-         if (value !== null) this.inputElement.setAttribute(name, value);
-         else this.inputElement.removeAttribute(name);
-         break;
+      case "min":
+      case "max":
+      case "step":
+        if (value !== null) this.inputElement.setAttribute(name, value);
+        else this.inputElement.removeAttribute(name);
+        break;
     }
   }
 
   // Getter/Setter for value property
   get value(): string | number {
-    if (this.inputElement.type === 'number') {
-        return this.inputElement.valueAsNumber;
+    if (this.inputElement.type === "number") {
+      return this.inputElement.valueAsNumber;
     }
     return this.inputElement.value;
   }
 
   set value(newValue: string | number) {
-    if (this.inputElement.type === 'number') {
-        this.inputElement.valueAsNumber = typeof newValue === 'string' ? parseFloat(newValue) : newValue;
+    if (this.inputElement.type === "number") {
+      this.inputElement.valueAsNumber =
+        typeof newValue === "string" ? parseFloat(newValue) : newValue;
     } else {
-        this.inputElement.value = String(newValue);
+      this.inputElement.value = String(newValue);
     }
     // Reflect change back to attribute if needed (optional)
     // this.setAttribute('value', String(newValue));
@@ -156,16 +178,16 @@ export class TeskooanoInputField extends HTMLElement {
 
   // Getter/Setter for disabled property
   get disabled(): boolean {
-    return this.hasAttribute('disabled');
+    return this.hasAttribute("disabled");
   }
 
   set disabled(isDisabled: boolean) {
     if (isDisabled) {
-      this.setAttribute('disabled', '');
+      this.setAttribute("disabled", "");
     } else {
-      this.removeAttribute('disabled');
+      this.removeAttribute("disabled");
     }
   }
 }
 
-customElements.define('teskooano-input-field', TeskooanoInputField); 
+customElements.define("teskooano-input-field", TeskooanoInputField);

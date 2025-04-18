@@ -161,7 +161,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
                 }
               } else {
                 console.warn(
-                  "[AsteroidFieldRenderer] Material uniform array not ready for texture update."
+                  "[AsteroidFieldRenderer] Material uniform array not ready for texture update.",
                 );
               }
             }
@@ -170,7 +170,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
           (error) => {
             console.error(`Failed to load texture: ${path}`, error);
             // Consider setting materialReady = true even on error, using fallback?
-          }
+          },
         );
       });
     }
@@ -205,7 +205,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
           if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
             console.error(
               "[AsteroidFieldRenderer] Vertex shader compile error:",
-              gl.getShaderInfoLog(vertexShader)
+              gl.getShaderInfoLog(vertexShader),
             );
           }
           gl.deleteShader(vertexShader);
@@ -226,7 +226,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
    */
   private _createAsteroidGeometry(
     object: RenderableCelestialObject,
-    targetParticleCount: number
+    targetParticleCount: number,
   ): THREE.BufferGeometry {
     let properties: CentralAsteroidFieldProperties | null = null;
 
@@ -237,7 +237,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
       properties = object.properties as CentralAsteroidFieldProperties;
     } else {
       console.error(
-        `[AsteroidFieldRenderer] Invalid properties for ${object.celestialObjectId}. Using defaults.`
+        `[AsteroidFieldRenderer] Invalid properties for ${object.celestialObjectId}. Using defaults.`,
       );
       properties = {
         /* Default properties */ type: CelestialType.ASTEROID_FIELD,
@@ -253,7 +253,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
     // Basic validation (can be expanded)
     if (!properties) {
       throw new Error(
-        "[AsteroidFieldRenderer] Failed to get valid properties for geometry generation."
+        "[AsteroidFieldRenderer] Failed to get valid properties for geometry generation.",
       );
     }
 
@@ -288,7 +288,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
       const newColor = new THREE.Color().setHSL(
         hsl.h + (Math.random() * 0.1 - 0.05),
         hsl.s * (0.8 + Math.random() * 0.4),
-        hsl.l * (0.8 + Math.random() * 0.4)
+        hsl.l * (0.8 + Math.random() * 0.4),
       );
       colors.push(newColor.r, newColor.g, newColor.b);
 
@@ -299,17 +299,17 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
 
     geometry.setAttribute(
       "position",
-      new THREE.Float32BufferAttribute(positions, 3)
+      new THREE.Float32BufferAttribute(positions, 3),
     );
     geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
     geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
     geometry.setAttribute(
       "textureIndex",
-      new THREE.Float32BufferAttribute(textureIndices, 1)
+      new THREE.Float32BufferAttribute(textureIndices, 1),
     );
     geometry.setAttribute(
       "initialRotation",
-      new THREE.Float32BufferAttribute(initialRotations, 1)
+      new THREE.Float32BufferAttribute(initialRotations, 1),
     );
 
     // Store geometry for disposal
@@ -325,7 +325,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
     options?: CelestialMeshOptions & {
       parentLODDistances?: number[];
       beltRotationSpeed?: number;
-    }
+    },
   ): LODLevel[] {
     this.objectId = object.celestialObjectId;
     this.lodGeometries = []; // Clear previous geometries
@@ -346,7 +346,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
     // Define LOD distances in AU and convert to scene units
     const distancesAU = [0, 1, 4, 10]; // Start distances for each LOD level in AU
     const distancesSceneUnits = distancesAU.map(
-      (au) => au * SCALE.RENDER_SCALE_AU
+      (au) => au * SCALE.RENDER_SCALE_AU,
     );
 
     // Define particle counts for each LOD level (highest to lowest)
@@ -375,13 +375,13 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
 
     if (lodLevels.length === 0) {
       console.error(
-        `[AsteroidFieldRenderer] Failed to generate any LOD levels for ${object.celestialObjectId}.`
+        `[AsteroidFieldRenderer] Failed to generate any LOD levels for ${object.celestialObjectId}.`,
       );
       // Maybe return a fallback single level?
       const fallbackGeom = this._createAsteroidGeometry(object, 1000);
       const fallbackPoints = new THREE.Points(
         fallbackGeom,
-        this.sharedMaterial!
+        this.sharedMaterial!,
       );
       return [{ object: fallbackPoints, distance: 0 }];
     }

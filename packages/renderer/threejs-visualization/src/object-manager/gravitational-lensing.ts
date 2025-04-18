@@ -1,13 +1,13 @@
-import * as THREE from 'three';
-import type { RenderableCelestialObject } from '@teskooano/renderer-threejs';
-import { CelestialType, StellarType } from '@teskooano/data-types';
-import { StarProperties } from '@teskooano/data-types';
-import { 
-  CelestialRenderer, 
+import * as THREE from "three";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import { CelestialType, StellarType } from "@teskooano/data-types";
+import { StarProperties } from "@teskooano/data-types";
+import {
+  CelestialRenderer,
   SchwarzschildBlackHoleRenderer,
   KerrBlackHoleRenderer,
-  NeutronStarRenderer
-} from '@teskooano/systems-celestial';
+  NeutronStarRenderer,
+} from "@teskooano/systems-celestial";
 
 /**
  * Manages the setup and potential teardown of gravitational lensing effects for specific types of celestial objects
@@ -39,14 +39,14 @@ export class GravitationalLensingHandler {
   needsGravitationalLensing(object: RenderableCelestialObject): boolean {
     if (object.type === CelestialType.STAR) {
       const starProps = object.properties as StarProperties;
-      
+
       return (
         starProps?.stellarType === StellarType.BLACK_HOLE ||
         starProps?.stellarType === StellarType.KERR_BLACK_HOLE ||
         starProps?.stellarType === StellarType.NEUTRON_STAR
       );
     }
-    
+
     return false;
   }
 
@@ -91,13 +91,13 @@ export class GravitationalLensingHandler {
     renderer: THREE.WebGLRenderer,
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
-    mesh: THREE.Object3D
+    mesh: THREE.Object3D,
   ): void {
     // Check if this object was marked for setup
     if (!this.lensingObjectsToAdd.has(objectData.celestialObjectId)) return;
 
     const starRenderer = this.starRenderers.get(objectData.celestialObjectId);
-    
+
     if (mesh && starRenderer) {
       if (
         starRenderer instanceof SchwarzschildBlackHoleRenderer ||
@@ -106,14 +106,22 @@ export class GravitationalLensingHandler {
       ) {
         // TODO: Update addGravitationalLensing in specific renderers to accept RenderableCelestialObject
         // Pass the RenderableCelestialObject data down
-        starRenderer.addGravitationalLensing(objectData, renderer, scene, camera, mesh);
-        
+        starRenderer.addGravitationalLensing(
+          objectData,
+          renderer,
+          scene,
+          camera,
+          mesh,
+        );
+
         // Remove from the pending set since it's now set up
         this.lensingObjectsToAdd.delete(objectData.celestialObjectId);
       }
     } else {
       // Could happen if renderer/mesh not ready yet
-      console.warn(`[LensingHandler] Mesh or StarRenderer not ready for lensing object ${objectData.celestialObjectId}`);
+      console.warn(
+        `[LensingHandler] Mesh or StarRenderer not ready for lensing object ${objectData.celestialObjectId}`,
+      );
     }
   }
 
@@ -124,4 +132,4 @@ export class GravitationalLensingHandler {
   clear(): void {
     this.lensingObjectsToAdd.clear();
   }
-} 
+}

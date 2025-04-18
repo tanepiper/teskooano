@@ -1,10 +1,13 @@
-import type { CelestialObject, GasGiantProperties } from '@teskooano/data-types';
-import * as THREE from 'three';
-import { BaseGasGiantMaterial, BaseGasGiantRenderer } from './base-gas-giant';
-import { TextureFactory } from '../../textures/TextureFactory';
-import classIVFragmentShader from '../../shaders/gas-giants/class-iv.fragment.glsl';
-import classIVVertexShader from '../../shaders/gas-giants/class-iv.vertex.glsl';
-import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
+import type {
+  CelestialObject,
+  GasGiantProperties,
+} from "@teskooano/data-types";
+import * as THREE from "three";
+import { BaseGasGiantMaterial, BaseGasGiantRenderer } from "./base-gas-giant";
+import { TextureFactory } from "../../textures/TextureFactory";
+import classIVFragmentShader from "../../shaders/gas-giants/class-iv.fragment.glsl";
+import classIVVertexShader from "../../shaders/gas-giants/class-iv.vertex.glsl";
+import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**
  * Material for Class IV gas giants (Alkali Metals / Dark)
@@ -37,14 +40,18 @@ class ClassIVMaterial extends BaseGasGiantMaterial {
  */
 export class ClassIVGasGiantRenderer extends BaseGasGiantRenderer {
   // private textureCache: Map<string, THREE.Texture> = new Map(); // Removed texture cache
-  
-  protected getMaterial(object: RenderableCelestialObject): BaseGasGiantMaterial {
+
+  protected getMaterial(
+    object: RenderableCelestialObject,
+  ): BaseGasGiantMaterial {
     const properties = object.properties as GasGiantProperties;
 
     // Generate deterministic seed from object id
-    const seed = object.celestialObjectId ? 
-      object.celestialObjectId.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) : 
-      Math.random() * 10000;
+    const seed = object.celestialObjectId
+      ? object.celestialObjectId
+          .split("")
+          .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
+      : Math.random() * 10000;
 
     // Default to a very dark grey/brown if no color provided
     const baseColor = properties.atmosphereColor
@@ -59,17 +66,17 @@ export class ClassIVGasGiantRenderer extends BaseGasGiantRenderer {
         class: properties.gasGiantClass,
         baseColor: baseColor,
         secondaryColor: new THREE.Color(properties.stormColor),
-        seed: seed
+        seed: seed,
       });
       stormMap = stormTexture.colorMap;
     }
 
     return new ClassIVMaterial({
       baseColor: baseColor,
-      stormMap: stormMap
+      stormMap: stormMap,
     });
   }
 
   // Removed override update
   // Removed override dispose
-} 
+}

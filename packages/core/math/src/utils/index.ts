@@ -26,7 +26,7 @@ export function lerp(start: number, end: number, t: number): number {
  * @returns The angle in radians.
  */
 export function degToRad(degrees: number): number {
-  return degrees * Math.PI / 180;
+  return (degrees * Math.PI) / 180;
 }
 
 /**
@@ -35,7 +35,7 @@ export function degToRad(degrees: number): number {
  * @returns The angle in degrees.
  */
 export function radToDeg(radians: number): number {
-  return radians * 180 / Math.PI;
+  return (radians * 180) / Math.PI;
 }
 
 /**
@@ -90,16 +90,16 @@ export function nearestPowerOfTwo(value: number): number {
  * @returns A string representing the generated UUID.
  */
 export function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }
 
 /**
- * Creates a debounced function that delays invoking the provided function 
- * until after `wait` milliseconds have elapsed since the last time the 
+ * Creates a debounced function that delays invoking the provided function
+ * until after `wait` milliseconds have elapsed since the last time the
  * debounced function was invoked.
  * @template T The type of the function to debounce.
  * @param func The function to debounce.
@@ -108,7 +108,7 @@ export function generateUUID(): string {
  */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  wait: number
+  wait: number,
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout;
   return function executedFunction(...args: Parameters<T>) {
@@ -122,7 +122,7 @@ export function debounce<T extends (...args: any[]) => any>(
 }
 
 /**
- * Creates a throttled function that only invokes the provided function 
+ * Creates a throttled function that only invokes the provided function
  * at most once per every `limit` milliseconds.
  * @template T The type of the function to throttle.
  * @param func The function to throttle.
@@ -131,14 +131,14 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
-  limit: number
+  limit: number,
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
   return function executedFunction(...args: Parameters<T>) {
     if (!inThrottle) {
       func(...args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => (inThrottle = false), limit);
     }
   };
 }
@@ -152,7 +152,7 @@ export function throttle<T extends (...args: any[]) => any>(
  * @returns A memoized function.
  */
 export function memoize<T extends (...args: any[]) => any>(
-  func: T
+  func: T,
 ): (...args: Parameters<T>) => ReturnType<T> {
   const cache = new Map<string, ReturnType<T>>();
   return function executedFunction(...args: Parameters<T>): ReturnType<T> {
@@ -164,4 +164,4 @@ export function memoize<T extends (...args: any[]) => any>(
     cache.set(key, result);
     return result;
   };
-} 
+}

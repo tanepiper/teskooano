@@ -17,6 +17,7 @@ The camera system in Teskooano is based on Three.js OrbitControls, which provide
 ### Touch Controls
 
 On touch devices:
+
 - **Rotate**: One-finger drag
 - **Pan**: Two-finger drag
 - **Zoom**: Pinch gesture
@@ -103,4 +104,4 @@ Adjustable camera properties:
 - **F**: Toggle free/locked camera mode
 - **Arrow Keys**: Pan camera in corresponding direction
 - **Page Up/Down**: Zoom in/out
-- **Home**: Focus on the primary star 
+- **Home**: Focus on the primary star

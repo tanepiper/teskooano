@@ -1,19 +1,19 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-import { PhysicsStateReal } from '@teskooano/data-types';
-import { standardEuler } from './euler';
-import { verletIntegrate, velocityVerletIntegrate } from './verlet';
-import * as THREE from 'three'
-import { Vector3 } from 'three';
+import { PhysicsStateReal } from "@teskooano/data-types";
+import { standardEuler } from "./euler";
+import { verletIntegrate, velocityVerletIntegrate } from "./verlet";
+import * as THREE from "three";
+import { Vector3 } from "three";
 
-describe('Physics Integrators', () => {
-  describe('Euler Integration', () => {
-    it('updates position and velocity correctly under constant acceleration', () => {
+describe("Physics Integrators", () => {
+  describe("Euler Integration", () => {
+    it("updates position and velocity correctly under constant acceleration", () => {
       const initialState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(0, 0, 0),
-        velocity_mps: new THREE.Vector3(0, 0, 0)
+        velocity_mps: new THREE.Vector3(0, 0, 0),
       };
       const acceleration = new THREE.Vector3(1, 0, 0);
       const dt = 1;
@@ -31,12 +31,12 @@ describe('Physics Integrators', () => {
       expect(newState.position_m.z).toBe(0);
     });
 
-    it('preserves body properties (id, mass_kg)', () => {
+    it("preserves body properties (id, mass_kg)", () => {
       const initialState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(0, 0, 0),
-        velocity_mps: new THREE.Vector3(0, 0, 0)
+        velocity_mps: new THREE.Vector3(0, 0, 0),
       };
       const acceleration = new THREE.Vector3(1, 0, 0);
       const dt = 1;
@@ -47,12 +47,12 @@ describe('Physics Integrators', () => {
       expect(newState.mass_kg).toBe(initialState.mass_kg);
     });
 
-    it('handles zero acceleration correctly', () => {
+    it("handles zero acceleration correctly", () => {
       const initialState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(0, 0, 0),
-        velocity_mps: new THREE.Vector3(1, 0, 0)
+        velocity_mps: new THREE.Vector3(1, 0, 0),
       };
       const acceleration = new THREE.Vector3(0, 0, 0);
       const dt = 1;
@@ -67,12 +67,12 @@ describe('Physics Integrators', () => {
       expect(newState.position_m.z).toBe(0);
     });
 
-    it('handles zero time step correctly', () => {
+    it("handles zero time step correctly", () => {
       const initialState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(0, 0, 0),
-        velocity_mps: new THREE.Vector3(0, 0, 0)
+        velocity_mps: new THREE.Vector3(0, 0, 0),
       };
       const acceleration = new THREE.Vector3(1, 0, 0);
       const dt = 0;
@@ -84,24 +84,29 @@ describe('Physics Integrators', () => {
     });
   });
 
-  describe('Verlet Integration', () => {
-    it('updates position and velocity correctly under constant acceleration', () => {
+  describe("Verlet Integration", () => {
+    it("updates position and velocity correctly under constant acceleration", () => {
       const previousState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(0, 0, 0),
-        velocity_mps: new THREE.Vector3(0, 0, 0)
+        velocity_mps: new THREE.Vector3(0, 0, 0),
       };
       const currentState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(0.5, 0, 0),
-        velocity_mps: new THREE.Vector3(1, 0, 0)
+        velocity_mps: new THREE.Vector3(1, 0, 0),
       };
       const acceleration = new THREE.Vector3(1, 0, 0);
       const dt = 1;
 
-      const newState = verletIntegrate(currentState, previousState, acceleration, dt);
+      const newState = verletIntegrate(
+        currentState,
+        previousState,
+        acceleration,
+        dt,
+      );
 
       // Position should be updated using Verlet formula
       // x_new = 2x_current - x_previous + 0.5 * a * dt²
@@ -119,45 +124,55 @@ describe('Physics Integrators', () => {
       expect(newState.velocity_mps.z).toBe(0);
     });
 
-    it('preserves body properties (id, mass_kg)', () => {
+    it("preserves body properties (id, mass_kg)", () => {
       const previousState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(0, 0, 0),
-        velocity_mps: new THREE.Vector3(0, 0, 0)
+        velocity_mps: new THREE.Vector3(0, 0, 0),
       };
       const currentState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(0.5, 0, 0),
-        velocity_mps: new THREE.Vector3(1, 0, 0)
+        velocity_mps: new THREE.Vector3(1, 0, 0),
       };
       const acceleration = new THREE.Vector3(1, 0, 0);
       const dt = 1;
 
-      const newState = verletIntegrate(currentState, previousState, acceleration, dt);
+      const newState = verletIntegrate(
+        currentState,
+        previousState,
+        acceleration,
+        dt,
+      );
 
       expect(newState.id).toBe(currentState.id);
       expect(newState.mass_kg).toBe(currentState.mass_kg);
     });
 
-    it('handles zero acceleration correctly', () => {
+    it("handles zero acceleration correctly", () => {
       const previousState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(0, 0, 0),
-        velocity_mps: new THREE.Vector3(1, 0, 0)
+        velocity_mps: new THREE.Vector3(1, 0, 0),
       };
       const currentState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(1, 0, 0),
-        velocity_mps: new THREE.Vector3(1, 0, 0)
+        velocity_mps: new THREE.Vector3(1, 0, 0),
       };
       const acceleration = new THREE.Vector3(0, 0, 0);
       const dt = 1;
 
-      const newState = verletIntegrate(currentState, previousState, acceleration, dt);
+      const newState = verletIntegrate(
+        currentState,
+        previousState,
+        acceleration,
+        dt,
+      );
 
       // Position should follow constant velocity motion
       expect(newState.position_m.x).toBe(2);
@@ -168,47 +183,52 @@ describe('Physics Integrators', () => {
       expect(newState.velocity_mps).toEqual(currentState.velocity_mps);
     });
 
-    it('handles zero time step correctly', () => {
+    it("handles zero time step correctly", () => {
       const previousState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(0, 0, 0),
-        velocity_mps: new THREE.Vector3(0, 0, 0)
+        velocity_mps: new THREE.Vector3(0, 0, 0),
       };
       const currentState: PhysicsStateReal = {
         id: 1,
         mass_kg: 1000,
         position_m: new THREE.Vector3(0.5, 0, 0),
-        velocity_mps: new THREE.Vector3(1, 0, 0)
+        velocity_mps: new THREE.Vector3(1, 0, 0),
       };
       const acceleration = new THREE.Vector3(1, 0, 0);
       const dt = 0;
 
-      const newState = verletIntegrate(currentState, previousState, acceleration, dt);
+      const newState = verletIntegrate(
+        currentState,
+        previousState,
+        acceleration,
+        dt,
+      );
 
       // State should remain unchanged
       expect(newState).toEqual(currentState);
     });
 
-    it('maintains better energy conservation than Euler for circular orbital motion', () => {
+    it("maintains better energy conservation than Euler for circular orbital motion", () => {
       // Test with a circular orbit system where energy should be preserved
       // Constants
-      const G = 6.67430e-11; // Gravitational constant in m^3 kg^-1 s^-2
+      const G = 6.6743e-11; // Gravitational constant in m^3 kg^-1 s^-2
       const centralMass = 1.989e30; // Mass of central body (Sun's mass)
       const dt = 0.01; // Time step in appropriate units
       const orbitalRadius = 1.496e11; // Earth's orbital radius in meters
       const steps = 1000;
-      
+
       // Initial state: object in circular orbit
       // Initial velocity is calculated to maintain a perfect circular orbit
-      const orbitalSpeed = Math.sqrt(G * centralMass / orbitalRadius); 
-      
+      const orbitalSpeed = Math.sqrt((G * centralMass) / orbitalRadius);
+
       // Initial conditions - starting at (r, 0, 0) with velocity perpendicular (0, v, 0)
       const initialState: PhysicsStateReal = {
         id: 1,
         mass_kg: 5.972e24, // Earth's mass
         position_m: new THREE.Vector3(orbitalRadius, 0, 0),
-        velocity_mps: new THREE.Vector3(0, orbitalSpeed, 0)
+        velocity_mps: new THREE.Vector3(0, orbitalSpeed, 0),
       };
 
       // Function to calculate gravitational acceleration towards origin
@@ -216,7 +236,7 @@ describe('Physics Integrators', () => {
         const r = position.clone();
         const distanceCubed = Math.pow(r.length(), 3);
         if (distanceCubed === 0) return new THREE.Vector3(0, 0, 0);
-        return r.multiplyScalar(-G * centralMass / distanceCubed);
+        return r.multiplyScalar((-G * centralMass) / distanceCubed);
       };
 
       // Run both integrators for multiple steps
@@ -224,10 +244,12 @@ describe('Physics Integrators', () => {
       let verletState: PhysicsStateReal = { ...initialState };
 
       // Initial energy (kinetic + potential)
-      const initialKineticEnergy = 0.5 * initialState.mass_kg * Math.pow(orbitalSpeed, 2);
-      const initialPotentialEnergy = -G * centralMass * initialState.mass_kg / orbitalRadius;
+      const initialKineticEnergy =
+        0.5 * initialState.mass_kg * Math.pow(orbitalSpeed, 2);
+      const initialPotentialEnergy =
+        (-G * centralMass * initialState.mass_kg) / orbitalRadius;
       const initialEnergy = initialKineticEnergy + initialPotentialEnergy;
-      
+
       let maxEulerEnergyDiff = 0;
       let maxVerletEnergyDiff = 0;
 
@@ -238,39 +260,51 @@ describe('Physics Integrators', () => {
       for (let i = 0; i < steps; i++) {
         // Update states
         const newEulerState = standardEuler(eulerState, eulerAccel, dt);
-        
+
         // For velocity Verlet, we need to recalculate acceleration at the new position
         const newVerletState = velocityVerletIntegrate(
-          verletState, 
-          verletAccel, 
+          verletState,
+          verletAccel,
           (pos_m) => calculateAcceleration(pos_m),
-          dt
+          dt,
         );
 
         // Calculate energies
-        const eulerVelSquared = Math.pow(newEulerState.velocity_mps.length(), 2);
+        const eulerVelSquared = Math.pow(
+          newEulerState.velocity_mps.length(),
+          2,
+        );
         const eulerKinetic = 0.5 * newEulerState.mass_kg * eulerVelSquared;
         const eulerDistance = newEulerState.position_m.length();
-        const eulerPotential = -G * centralMass * newEulerState.mass_kg / eulerDistance;
+        const eulerPotential =
+          (-G * centralMass * newEulerState.mass_kg) / eulerDistance;
         const eulerEnergy = eulerKinetic + eulerPotential;
-        
-        const verletVelSquared = Math.pow(newVerletState.velocity_mps.length(), 2);
+
+        const verletVelSquared = Math.pow(
+          newVerletState.velocity_mps.length(),
+          2,
+        );
         const verletKinetic = 0.5 * newVerletState.mass_kg * verletVelSquared;
         const verletDistance = newVerletState.position_m.length();
-        const verletPotential = -G * centralMass * newVerletState.mass_kg / verletDistance;
+        const verletPotential =
+          (-G * centralMass * newVerletState.mass_kg) / verletDistance;
         const verletEnergy = verletKinetic + verletPotential;
 
         // Track maximum energy differences as percentage of initial energy
-        const eulerEnergyDiff = Math.abs((eulerEnergy - initialEnergy) / initialEnergy);
-        const verletEnergyDiff = Math.abs((verletEnergy - initialEnergy) / initialEnergy);
-        
+        const eulerEnergyDiff = Math.abs(
+          (eulerEnergy - initialEnergy) / initialEnergy,
+        );
+        const verletEnergyDiff = Math.abs(
+          (verletEnergy - initialEnergy) / initialEnergy,
+        );
+
         maxEulerEnergyDiff = Math.max(maxEulerEnergyDiff, eulerEnergyDiff);
         maxVerletEnergyDiff = Math.max(maxVerletEnergyDiff, verletEnergyDiff);
 
         // Update states and accelerations for next iteration
         eulerState = newEulerState;
         eulerAccel = calculateAcceleration(eulerState.position_m);
-        
+
         verletState = newVerletState;
         verletAccel = calculateAcceleration(verletState.position_m);
       }
@@ -279,9 +313,9 @@ describe('Physics Integrators', () => {
 
       // Verlet should maintain better energy conservation
       expect(maxVerletEnergyDiff).toBeLessThan(maxEulerEnergyDiff);
-      
+
       // Relaxing the constraint to be reasonable for the test
       expect(maxVerletEnergyDiff).toBeLessThan(0.1); // Energy should be conserved within 10%
     });
   });
-}); 
+});

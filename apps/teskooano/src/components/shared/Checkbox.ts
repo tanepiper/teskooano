@@ -1,4 +1,4 @@
-const template = document.createElement('template');
+const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
@@ -88,20 +88,22 @@ template.innerHTML = `
 `;
 
 export class TeskooanoCheckbox extends HTMLElement {
-  static observedAttributes = ['checked', 'disabled', 'label'];
+  static observedAttributes = ["checked", "disabled", "label"];
 
   private checkboxElement: HTMLInputElement;
   private labelSpan: HTMLElement;
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
-    this.checkboxElement = this.shadowRoot!.querySelector('input[type="checkbox"]')!;
-    this.labelSpan = this.shadowRoot!.querySelector('.label')!;
+    this.checkboxElement = this.shadowRoot!.querySelector(
+      'input[type="checkbox"]',
+    )!;
+    this.labelSpan = this.shadowRoot!.querySelector(".label")!;
 
     // Handle clicks on the host element to toggle the checkbox
-    this.addEventListener('click', (e) => {
+    this.addEventListener("click", (e) => {
       if (this.disabled) {
         e.preventDefault();
         e.stopPropagation();
@@ -109,62 +111,72 @@ export class TeskooanoCheckbox extends HTMLElement {
       }
       // Don't toggle if the click was directly on the hidden input
       if (e.target !== this.checkboxElement) {
-          this.checked = !this.checked;
-          // Dispatch change event manually since input click is prevented
-          this.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+        this.checked = !this.checked;
+        // Dispatch change event manually since input click is prevented
+        this.dispatchEvent(
+          new Event("change", { bubbles: true, composed: true }),
+        );
       }
     });
-    
+
     // Prevent clicks on label from double-toggling
-    this.labelSpan.addEventListener('click', (e) => e.stopPropagation());
+    this.labelSpan.addEventListener("click", (e) => e.stopPropagation());
 
     // Handle spacebar press for accessibility
-    this.addEventListener('keydown', (e) => {
-        if (e.key === ' ' || e.key === 'Enter') {
-            if (!this.disabled) {
-                e.preventDefault();
-                this.click(); // Simulate a click
-            }
+    this.addEventListener("keydown", (e) => {
+      if (e.key === " " || e.key === "Enter") {
+        if (!this.disabled) {
+          e.preventDefault();
+          this.click(); // Simulate a click
         }
+      }
     });
-    
+
     // Ensure component is focusable
-    if (!this.hasAttribute('tabindex')) {
-        this.tabIndex = 0;
+    if (!this.hasAttribute("tabindex")) {
+      this.tabIndex = 0;
     }
   }
 
   connectedCallback() {
-    this.updateAttribute('checked', this.getAttribute('checked'));
-    this.updateAttribute('disabled', this.getAttribute('disabled'));
-    this.updateAttribute('label', this.getAttribute('label'));
+    this.updateAttribute("checked", this.getAttribute("checked"));
+    this.updateAttribute("disabled", this.getAttribute("disabled"));
+    this.updateAttribute("label", this.getAttribute("label"));
   }
 
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+  attributeChangedCallback(
+    name: string,
+    oldValue: string | null,
+    newValue: string | null,
+  ) {
     this.updateAttribute(name, newValue);
   }
 
   private updateAttribute(name: string, value: string | null) {
     switch (name) {
-      case 'label':
+      case "label":
         // Check if a label attribute is provided AND if the default slot is empty
-        const hasSlottedLabel = this.childNodes.length > 0 && Array.from(this.childNodes).some(node => !node.hasOwnProperty('slot'));
+        const hasSlottedLabel =
+          this.childNodes.length > 0 &&
+          Array.from(this.childNodes).some(
+            (node) => !node.hasOwnProperty("slot"),
+          );
         if (value !== null && !hasSlottedLabel) {
-            // If label attribute exists and no slotted content, set the span text
-            this.labelSpan.textContent = value;
+          // If label attribute exists and no slotted content, set the span text
+          this.labelSpan.textContent = value;
         } else if (value === null && !hasSlottedLabel) {
-             // If label attribute removed and still no slotted content, clear the span
-             this.labelSpan.textContent = '';
+          // If label attribute removed and still no slotted content, clear the span
+          this.labelSpan.textContent = "";
         }
         // If there IS slotted content, we let it take precedence and don't touch labelSpan.textContent
         break;
-      case 'checked':
+      case "checked":
         this.checkboxElement.checked = value !== null;
         break;
-      case 'disabled':
+      case "disabled":
         const isDisabled = value !== null;
         this.checkboxElement.disabled = isDisabled;
-        this.toggleAttribute('disabled', isDisabled); 
+        this.toggleAttribute("disabled", isDisabled);
         this.tabIndex = isDisabled ? -1 : 0;
         break;
     }
@@ -172,29 +184,29 @@ export class TeskooanoCheckbox extends HTMLElement {
 
   // Getter/Setter for checked property
   get checked(): boolean {
-    return this.hasAttribute('checked');
+    return this.hasAttribute("checked");
   }
 
   set checked(isChecked: boolean) {
     if (isChecked) {
-      this.setAttribute('checked', '');
+      this.setAttribute("checked", "");
     } else {
-      this.removeAttribute('checked');
+      this.removeAttribute("checked");
     }
   }
 
   // Getter/Setter for disabled property
   get disabled(): boolean {
-    return this.hasAttribute('disabled');
+    return this.hasAttribute("disabled");
   }
 
   set disabled(isDisabled: boolean) {
     if (isDisabled) {
-      this.setAttribute('disabled', '');
+      this.setAttribute("disabled", "");
     } else {
-      this.removeAttribute('disabled');
+      this.removeAttribute("disabled");
     }
   }
 }
 
-customElements.define('teskooano-checkbox', TeskooanoCheckbox); 
+customElements.define("teskooano-checkbox", TeskooanoCheckbox);

@@ -2,9 +2,7 @@
 
 Teskooano is a 3D N-Body simulation engine that accurately simulates real physics and provides a multi-view experience in real time. It features collision detection, realistic orbital mechanics, and procedural generation to create unique star systems.
 
-
 > The name **Teskooano** comes from Beelzebub's Tales to His Grandson by G.I. Gurdjieff. In the book, a "Teskooano" is a type of advanced telescope in Beelzebub's observatory on Mars - used to observe distant cosmic phenomena. It is designed to perceive both physical and non-physical aspects of the universe. The simulation engine is named after this device because it similarly acts as a tool for observing and exploring complex celestial systems in motion.
-
 
 ![Teskooano Simulation](https://github.com/tanepiper/teskooano/raw/main/docs/images/screenshot.png)
 
@@ -69,48 +67,48 @@ graph TD
         FE[Frontend App]
         UI[UI Components]
     end
-    
+
     subgraph Core
         Math[core-math]
         Physics[core-physics]
         State[core-state]
         Types[data-types]
     end
-    
+
     subgraph Systems
         Celestial[systems-celestial]
         Renderer[renderer-threejs]
         Simulation[app-simulation]
     end
-    
+
     Math --> Physics
     Math --> Types
     Math --> Celestial
     Math --> Renderer
     Math --> Simulation
     Math --> State
-    
+
     Physics --> State
     Physics --> Celestial
     Physics --> Simulation
-    
+
     Types --> State
     Types --> Physics
     Types --> Celestial
     Types --> Renderer
     Types --> Simulation
-    
+
     State --> Renderer
     State --> Simulation
     State --> Celestial
     State --> UI
-    
+
     Celestial --> Renderer
     Celestial --> Simulation
-    
+
     Simulation --> Renderer
     Simulation --> FE
-    
+
     FE --> UI
 ```
 
@@ -120,38 +118,39 @@ The application is stuctured to import TypeScript modules, which allow for a mor
 
 Here is a table of all the packages in the repository:
 
-| Library Name | Library Path | Description | Status |
-|--------------|--------------|-------------|--------|
-| @teskooano/core-math | packages/core/math | Mathematical utilities for the Teskooano engine | ⚠️ |
-| @teskooano/core-physics | packages/core/physics | Newtonian physics and orbital mechanics implementation | ⚠️ |
-| @teskooano/core-state | packages/core/state | Central state management using Nanostores | ⚠️ |
-| @teskooano/core-debug | packages/core/debug | Debug utilities for the Teskooano engine | ⚠️ |
-| @teskooano/data-types | packages/data/types | TypeScript type definitions for all data structures | ⚠️ |
-| @teskooano/app-simulation | packages/app/simulation | Simulation orchestration and game loop | ⚠️ |
-| @teskooano/systems-celestial | packages/systems/celestial | Handles the definition and rendering logic for celestial bodies | ⚠️ |
-| @teskooano/systems-procedural-generation | packages/systems/procedural-generation | Procedural generation of star systems | ⚠️ |
-| @teskooano/renderer-threejs | packages/renderer/threejs | Main Three.js rendering engine implementation | ⚠️ |
-| @teskooano/renderer-threejs-core | packages/renderer/threejs-core | Core Three.js rendering foundation | ⚠️ |
-| @teskooano/renderer-threejs-effects | packages/renderer/threejs-effects | Visual effects for the Three.js renderer | ⚠️ |
-| @teskooano/renderer-threejs-interaction | packages/renderer/threejs-interaction | User interaction with the Three.js scene | ⚠️ |
-| @teskooano/renderer-threejs-visualization | packages/renderer/threejs-visualization | Visualization components for the Three.js renderer | ⚠️ |
+| Library Name                              | Library Path                            | Description                                                     | Status |
+| ----------------------------------------- | --------------------------------------- | --------------------------------------------------------------- | ------ |
+| @teskooano/core-math                      | packages/core/math                      | Mathematical utilities for the Teskooano engine                 | ⚠️     |
+| @teskooano/core-physics                   | packages/core/physics                   | Newtonian physics and orbital mechanics implementation          | ⚠️     |
+| @teskooano/core-state                     | packages/core/state                     | Central state management using Nanostores                       | ⚠️     |
+| @teskooano/core-debug                     | packages/core/debug                     | Debug utilities for the Teskooano engine                        | ⚠️     |
+| @teskooano/data-types                     | packages/data/types                     | TypeScript type definitions for all data structures             | ⚠️     |
+| @teskooano/app-simulation                 | packages/app/simulation                 | Simulation orchestration and game loop                          | ⚠️     |
+| @teskooano/systems-celestial              | packages/systems/celestial              | Handles the definition and rendering logic for celestial bodies | ⚠️     |
+| @teskooano/systems-procedural-generation  | packages/systems/procedural-generation  | Procedural generation of star systems                           | ⚠️     |
+| @teskooano/renderer-threejs               | packages/renderer/threejs               | Main Three.js rendering engine implementation                   | ⚠️     |
+| @teskooano/renderer-threejs-core          | packages/renderer/threejs-core          | Core Three.js rendering foundation                              | ⚠️     |
+| @teskooano/renderer-threejs-effects       | packages/renderer/threejs-effects       | Visual effects for the Three.js renderer                        | ⚠️     |
+| @teskooano/renderer-threejs-interaction   | packages/renderer/threejs-interaction   | User interaction with the Three.js scene                        | ⚠️     |
+| @teskooano/renderer-threejs-visualization | packages/renderer/threejs-visualization | Visualization components for the Three.js renderer              | ⚠️     |
 
 - **Core Libraries**
+
   - `packages/core/math`: Mathematical utilities for vectors, matrices, and quaternions
   - `packages/core/physics`: Newtonian physics and orbital mechanics
   - `packages/core/state`: Central state management using Nanostores
   - `packages/data/types`: TypeScript type definitions for all data structures
 
 - **System Libraries**
-  - `packages/systems/celestial`: Celestial object implementations 
+
+  - `packages/systems/celestial`: Celestial object implementations
   - `packages/systems/procedural-generation`: Procedural generation of star systems
   - `packages/renderer/threejs`: 3D rendering engine using Three.js
   - `packages/app/simulation`: Simulation orchestration and game loop
 
 - **Applications**
   - `apps/teskooano`: Main simulation application with UI components
-components
-
+    components
 
 <div class="screenshot-container">
   <div class="screenshot">
@@ -176,33 +175,33 @@ flowchart TD
         UserInput[User Input]
         SystemData[System Data]
     end
-    
+
     subgraph Simulation
         SimLoop[Simulation Loop]
         Physics[Physics Engine]
         OrbitalCalc[Orbital Calculations]
     end
-    
+
     subgraph State
         CoreState[Core State]
     end
-    
+
     subgraph Rendering
         Renderer[Three.js Renderer]
         CelestialRenderer[Celestial Renderers]
         UILayer[UI Layer]
     end
-    
+
     UserInput --> SimLoop
     SystemData --> SimLoop
-    
+
     SimLoop --> Physics
     Physics --> OrbitalCalc
     OrbitalCalc --> CoreState
-    
+
     CoreState --> Renderer
     CoreState --> UILayer
-    
+
     Renderer --> CelestialRenderer
     CelestialRenderer --> Display
     UILayer --> Display
@@ -216,7 +215,6 @@ flowchart TD
 - **Driver.js**: Interactive tour and onboarding
 - **DockView**: Multi-panel UI layout system
 - **Vite**: Fast, modern frontend tooling
-
 
 ### Contributing
 
@@ -241,4 +239,4 @@ If you encounter any bugs or have suggestions for improvements, please [create a
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

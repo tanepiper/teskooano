@@ -1,7 +1,7 @@
 /**
  * Unit conversion constants and functions for the physics engine
  */
-import { OSVector3 } from '@teskooano/core-math';
+import { OSVector3 } from "@teskooano/core-math";
 
 // Base units (SI)
 export const SI = {
@@ -45,7 +45,11 @@ export const CONVERSION = {
  * @param fromFactor The conversion factor to multiply by to get to base units
  * @param toFactor The conversion factor to multiply by to get to target units
  */
-export const convert = (value: number, fromFactor: number, toFactor: number): number => {
+export const convert = (
+  value: number,
+  fromFactor: number,
+  toFactor: number,
+): number => {
   return value * fromFactor * toFactor;
 };
 
@@ -58,7 +62,7 @@ export const convert = (value: number, fromFactor: number, toFactor: number): nu
 export const convertVector = (
   vector: OSVector3,
   fromFactor: number,
-  toFactor: number
+  toFactor: number,
 ): OSVector3 => {
   // Modify vector in place
   vector.x = convert(vector.x, fromFactor, toFactor);
@@ -97,4 +101,4 @@ export const auDayToMetersPerSecond = (auDay: number): number => {
   // Convert AU/day to m/day, then to m/s
   const metersPerDay = auDay * CONVERSION.AU_TO_M;
   return metersPerDay * CONVERSION.DAYS_TO_S;
-}; 
+};

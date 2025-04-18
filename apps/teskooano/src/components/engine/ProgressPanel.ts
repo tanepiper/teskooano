@@ -74,7 +74,7 @@ export class ProgressPanel implements IContentRenderer {
     document.addEventListener("texture-progress", this.handleTextureProgress);
     document.addEventListener(
       "texture-generation-complete",
-      this.handleGenerationComplete
+      this.handleGenerationComplete,
     );
   }
 
@@ -82,11 +82,11 @@ export class ProgressPanel implements IContentRenderer {
   private removeEventListeners(): void {
     document.removeEventListener(
       "texture-progress",
-      this.handleTextureProgress
+      this.handleTextureProgress,
     );
     document.removeEventListener(
       "texture-generation-complete",
-      this.handleGenerationComplete
+      this.handleGenerationComplete,
     );
   }
 

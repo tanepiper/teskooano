@@ -1,11 +1,13 @@
-import { map, type MapStore } from 'nanostores';
-import type { RenderableCelestialObject } from '@teskooano/renderer-threejs';
+import { map, type MapStore } from "nanostores";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**
  * Store for holding the renderable state of celestial objects.
  * This data is derived from the core celestialObjectsStore and physics updates.
  */
-export const renderableObjectsStore = map<Record<string, RenderableCelestialObject>>({});
+export const renderableObjectsStore = map<
+  Record<string, RenderableCelestialObject>
+>({});
 
 /**
  * Actions for managing the renderable state of celestial objects.
@@ -25,16 +27,18 @@ export const renderableActions = {
    */
   updateRenderableObject: (
     celestialObjectId: string,
-    updates: Partial<RenderableCelestialObject>
+    updates: Partial<RenderableCelestialObject>,
   ) => {
     const currentObject = renderableObjectsStore.get()[celestialObjectId];
     if (currentObject) {
-      renderableObjectsStore.setKey(celestialObjectId, { 
-        ...currentObject, 
-        ...updates 
+      renderableObjectsStore.setKey(celestialObjectId, {
+        ...currentObject,
+        ...updates,
       });
     } else {
-      console.warn(`[renderableActions] updateRenderableObject: Object ${celestialObjectId} not found.`);
+      console.warn(
+        `[renderableActions] updateRenderableObject: Object ${celestialObjectId} not found.`,
+      );
     }
   },
 
@@ -50,7 +54,9 @@ export const renderableActions = {
       delete newObjects[celestialObjectId];
       renderableObjectsStore.set(newObjects); // Set the new map without the key
     } else {
-      console.warn(`[renderableActions] removeRenderableObject: Object ${celestialObjectId} not found.`);
+      console.warn(
+        `[renderableActions] removeRenderableObject: Object ${celestialObjectId} not found.`,
+      );
     }
   },
 
@@ -58,7 +64,9 @@ export const renderableActions = {
    * Sets the entire renderable objects map.
    * Useful for initialization or bulk updates from the adapter.
    */
-  setAllRenderableObjects: (objects: Record<string, RenderableCelestialObject>) => {
+  setAllRenderableObjects: (
+    objects: Record<string, RenderableCelestialObject>,
+  ) => {
     renderableObjectsStore.set(objects);
-  }
-}; 
+  },
+};

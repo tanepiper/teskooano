@@ -16,13 +16,15 @@
     "test": "npm run test --workspaces",
     "build": "npm run build --workspaces",
     "install:all": "npm install && npm run install:packages",
-    "install:packages": "npm install --workspaces"
+    "install:packages": "npm install --workspaces",
+    "format": "prettier --write ."
   },
   "devDependencies": {
     "@types/node": "22.14.1",
     "typescript": "5.8.3",
     "vitest": "3.1.1",
-    "eslint": "9.24.0"
+    "eslint": "9.24.0",
+    "prettier": "3.5.3"
   },
   "packageManager": "npm@11.0.0",
   "engines": {

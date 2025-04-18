@@ -1,4 +1,4 @@
-const template = document.createElement('template');
+const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
@@ -23,7 +23,7 @@ template.innerHTML = `
 export class TeskooanoCard extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
   }
 
@@ -37,7 +37,7 @@ export class TeskooanoCard extends HTMLElement {
 }
 
 // Define the custom element
-const ELEMENT_TAG = 'teskooano-card';
+const ELEMENT_TAG = "teskooano-card";
 if (!customElements.get(ELEMENT_TAG)) {
   customElements.define(ELEMENT_TAG, TeskooanoCard);
-} 
+}

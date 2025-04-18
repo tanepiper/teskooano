@@ -16,16 +16,18 @@ Thank you for your interest in contributing to Teskooano! This guide will help y
 1. **Fork the repository** on GitHub
 
 2. **Clone your fork**:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/teskooano.git
    cd teskooano
    ```
 
 3. **Set up proto and moon**:
+
    ```bash
    # Install proto if you don't have it
    curl -fsSL https://moonrepo.dev/install/proto.sh | bash
-   
+
    # Use proto to set up the local development environment
    proto use
    ```
@@ -68,6 +70,7 @@ teskooano/
 ### Creating a New Feature
 
 1. **Create a branch** for your feature:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -77,16 +80,19 @@ teskooano/
 3. **Write tests** for your changes (we follow a TDD approach)
 
 4. **Run tests** to ensure everything works:
+
    ```bash
    moon run :test
    ```
 
 5. **Commit your changes** using the [Conventional Commits](https://www.conventionalcommits.org/) format:
+
    ```bash
    git commit -m "feat: add new celestial body type"
    ```
 
 6. **Push your branch** to your fork:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -165,4 +171,4 @@ Before contributing, familiarize yourself with these core concepts:
 - **GitHub Issues**: For bug reports and feature requests
 - **Discussions**: For general questions and discussions
 
-Thank you for contributing to Teskooano! Together, we can create an amazing tool for exploring and understanding celestial physics. 
+Thank you for contributing to Teskooano! Together, we can create an amazing tool for exploring and understanding celestial physics.

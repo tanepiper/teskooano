@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from "three";
 
 /**
  * Updates the position of the entire star field group based on the camera's position
@@ -12,18 +12,18 @@ import * as THREE from 'three';
 export function updateParallax(
   starsGroup: THREE.Group,
   camera: THREE.PerspectiveCamera | null,
-  parallaxStrength: number = 0.1
+  parallaxStrength: number = 0.1,
 ): void {
   if (camera) {
     // Get camera position
     const cameraPos = camera.position;
-    
+
     // Compute parallax position (inverted and scaled)
     // Smaller values for parallaxStrength make stars appear more distant
     const parallaxX = -cameraPos.x * parallaxStrength;
     const parallaxY = -cameraPos.y * parallaxStrength;
     const parallaxZ = -cameraPos.z * parallaxStrength;
-    
+
     // Apply parallax to stars group
     starsGroup.position.set(parallaxX, parallaxY, parallaxZ);
   }
@@ -41,13 +41,13 @@ export function updateParallax(
  */
 export function animateStarField(
   starsGroup: THREE.Group, // eslint-disable-line @typescript-eslint/no-unused-vars
-  starLayers: THREE.Points[], 
+  starLayers: THREE.Points[],
   deltaTime: number,
-  rotationSpeed: number = 0.00000002
+  rotationSpeed: number = 0.00000002,
 ): void {
   // Global rotation of entire stars group (Disabled - caused unwanted background rotation)
   // starsGroup.rotation.y += rotationSpeed * deltaTime;
-  
+
   // Apply slightly different rotation to each layer for depth effect
   if (starLayers.length >= 3) {
     // Different rotation speeds for each layer
@@ -55,4 +55,4 @@ export function animateStarField(
     starLayers[1].rotation.y += rotationSpeed * deltaTime * 0.3;
     starLayers[2].rotation.y += rotationSpeed * deltaTime * 0.1;
   }
-} 
+}

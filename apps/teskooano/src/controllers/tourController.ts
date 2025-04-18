@@ -1,7 +1,7 @@
 import { driver, DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 import { TourStep } from "../components/tours/types";
-import { BASE_TOUR_STEPS } from "../components/tours/intro-tour";
+import { createIntroTour } from "../components/tours/intro-tour";
 
 // Tour Controller class
 export class TourController {
@@ -9,11 +9,8 @@ export class TourController {
   private currentStepIndex = 0;
   private currentSelectedCelestial: string | undefined;
   private tourSteps: TourStep[] = [];
-
+  private engineViewId: string | null = null;
   constructor() {
-    // Clone the base steps to our instance variable
-    this.tourSteps = JSON.parse(JSON.stringify(BASE_TOUR_STEPS));
-
     // Initialize driver.js with default configurations
     this.driverInstance = driver({
       animate: true,
@@ -23,7 +20,18 @@ export class TourController {
       overlayColor: "rgba(0, 0, 0, 0.75)", // Default overlay - semi-transparent dark
       allowClose: true,
       disableActiveInteraction: false, // By default, prevent interacting with highlighted element
-      onHighlightStarted: (element) => {
+      onNextClick: () => {
+        // Move to next step
+        const currentStep =
+          this.tourSteps[this.driverInstance.getActiveIndex()!];
+        console.log("Current step:", currentStep);
+        if (currentStep.onNextClick) {
+          currentStep.onNextClick(this?.engineViewId ?? undefined);
+        } else {
+          this.driverInstance.moveNext();
+        }
+      },
+      onHighlightStarted: () => {
         // Save current step to localStorage if not skipping
         if (!this.isSkippingTour()) {
           const currentStep = this.tourSteps[this.currentStepIndex];
@@ -37,6 +45,13 @@ export class TourController {
         }
       },
     });
+
+    // Clone the base steps to our instance variable
+    this.tourSteps = createIntroTour(this.driverInstance);
+  }
+
+  public setEngineViewId(engineViewId: string): void {
+    this.engineViewId = engineViewId;
   }
 
   /**
@@ -53,7 +68,7 @@ export class TourController {
   private updateDynamicTourSteps(): void {
     // Find the engine-view-final step and update its description
     const finalStepIndex = this.tourSteps.findIndex(
-      (step) => step.id === "engine-view-final"
+      (step) => step.id === "engine-view-final",
     );
     if (finalStepIndex !== -1) {
       // Create a custom description based on the selected celestial
@@ -105,7 +120,7 @@ export class TourController {
     if (savedStepId) {
       // Find the index of the saved step
       const stepIndex = this.tourSteps.findIndex(
-        (step) => step.id === savedStepId
+        (step) => step.id === savedStepId,
       );
       this.currentStepIndex = stepIndex >= 0 ? stepIndex : 0;
     } else {

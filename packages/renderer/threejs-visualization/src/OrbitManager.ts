@@ -103,7 +103,7 @@ export class OrbitManager {
   constructor(
     objectManager: ObjectManager,
     stateAdapter: RendererStateAdapter, // Keep adapter for visual settings
-    renderableObjectsStore: MapStore<Record<string, RenderableCelestialObject>> // Add store parameter
+    renderableObjectsStore: MapStore<Record<string, RenderableCelestialObject>>, // Add store parameter
   ) {
     this.objectManager = objectManager;
     this.stateAdapter = stateAdapter;
@@ -112,7 +112,7 @@ export class OrbitManager {
     // Instantiate the Keplerian manager
     this.keplerianManager = new KeplerianOrbitManager(
       objectManager,
-      renderableObjectsStore
+      renderableObjectsStore,
     );
 
     // Subscribe to physics engine changes FROM THE ADAPTER
@@ -190,7 +190,7 @@ export class OrbitManager {
             obj.parentId,
             this.visualizationVisible, // Pass current visibility
             this.highlightedObjectId, // Pass current highlight ID
-            this.highlightColor // Pass highlight color
+            this.highlightColor, // Pass highlight color
           );
         } else if (this.keplerianManager.lines.has(obj.celestialObjectId)) {
           // If object no longer has orbit/parent, remove its line via manager
@@ -230,12 +230,12 @@ export class OrbitManager {
             if (shouldUpdatePredictions) {
               // Time to recalculate
               const otherPhysicsStates = allCurrentPhysicsStates.filter(
-                (state) => state.id !== targetId
+                (state) => state.id !== targetId,
               );
               const newPredictionPoints = predictVerletTrajectory(
                 [fullTargetObject.physicsStateReal, ...otherPhysicsStates],
                 this.predictionDuration,
-                this.predictionSteps
+                this.predictionSteps,
               );
               this.predictedLinePoints.set(targetId, newPredictionPoints);
               this.updatePredictionLine(targetId, newPredictionPoints);
@@ -248,12 +248,12 @@ export class OrbitManager {
                 // If no stored points yet, calculate them now even if not on frequency
                 // This handles the case where an object is newly highlighted
                 const otherPhysicsStates = allCurrentPhysicsStates.filter(
-                  (state) => state.id !== targetId
+                  (state) => state.id !== targetId,
                 );
                 const initialPoints = predictVerletTrajectory(
                   [fullTargetObject.physicsStateReal, ...otherPhysicsStates],
                   this.predictionDuration,
-                  this.predictionSteps
+                  this.predictionSteps,
                 );
                 this.predictedLinePoints.set(targetId, initialPoints);
                 this.updatePredictionLine(targetId, initialPoints);
@@ -284,7 +284,7 @@ export class OrbitManager {
    * @internal
    */
   cleanupRemovedObjects(
-    currentRenderableObjects: Record<string, RenderableCelestialObject>
+    currentRenderableObjects: Record<string, RenderableCelestialObject>,
   ): void {
     const currentIds = new Set(Object.keys(currentRenderableObjects));
     const removalCandidates = new Set<string>();
@@ -345,7 +345,7 @@ export class OrbitManager {
   updateTrailLine(
     id: string,
     points: THREE.Vector3[],
-    maxPoints: number
+    maxPoints: number,
   ): void {
     let line = this.trailLines.get(id);
     const safeMaxPoints = Math.max(1, Math.floor(maxPoints));
@@ -358,7 +358,7 @@ export class OrbitManager {
       const positions = new Float32Array(safeMaxPoints * 3);
       geometry.setAttribute(
         "position",
-        new THREE.BufferAttribute(positions, 3)
+        new THREE.BufferAttribute(positions, 3),
       );
       geometry.setDrawRange(0, 0);
       line = new THREE.Line(geometry, TRAIL_MATERIAL.clone());
@@ -375,7 +375,7 @@ export class OrbitManager {
       if (existingCapacity < safeMaxPoints) {
         const newPositions = new Float32Array(safeMaxPoints * 3);
         newPositions.set(
-          positionAttribute.array.slice(0, existingCapacity * 3)
+          positionAttribute.array.slice(0, existingCapacity * 3),
         );
         geometry.deleteAttribute("position");
         positionAttribute = new THREE.BufferAttribute(newPositions, 3);
@@ -420,7 +420,7 @@ export class OrbitManager {
       const positions = new Float32Array(maxPoints * 3);
       geometry.setAttribute(
         "position",
-        new THREE.BufferAttribute(positions, 3)
+        new THREE.BufferAttribute(positions, 3),
       );
       geometry.setDrawRange(0, 0); // Initially draw nothing
 
@@ -579,7 +579,7 @@ export class OrbitManager {
       // Reset Keplerian via manager
       this.keplerianManager.resetPreviousHighlight(
         previouslyHighlightedId,
-        objectId
+        objectId,
       );
       // Reset Verlet (trails) directly
       const previousTrailLine = this.trailLines.get(previouslyHighlightedId);
@@ -589,7 +589,7 @@ export class OrbitManager {
         previousTrailLine.userData.defaultColor
       ) {
         previousTrailLine.material.color.copy(
-          previousTrailLine.userData.defaultColor
+          previousTrailLine.userData.defaultColor,
         );
       }
     }
@@ -600,7 +600,7 @@ export class OrbitManager {
       this.keplerianManager.applyHighlightToObject(
         objectId,
         objectId,
-        this.highlightColor
+        this.highlightColor,
       );
       // Apply Verlet (trail) highlight directly
       const trailLineToHighlight = this.trailLines.get(objectId);

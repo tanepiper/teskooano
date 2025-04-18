@@ -1,4 +1,3 @@
-
 // Import creation/initialization functions for each system component
 import { initializeAsteroidBelt } from "./asteroidBelt";
 import { initializeEarth } from "./earth";
@@ -12,7 +11,6 @@ import { initializeSaturn } from "./saturn";
 import { initializeSun } from "./star";
 import { initializeUranus } from "./uranus";
 import { initializeVenus } from "./venus";
-
 
 /**
  * Initializes the complete Solar System by calling creation functions

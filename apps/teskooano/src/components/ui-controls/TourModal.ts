@@ -5,8 +5,8 @@ export class TourModal extends HTMLElement {
 
   constructor() {
     super();
-    this.modalContainer = document.createElement('div');
-    this.modalContainer.className = 'tour-modal';
+    this.modalContainer = document.createElement("div");
+    this.modalContainer.className = "tour-modal";
     this.render();
   }
 
@@ -33,7 +33,7 @@ export class TourModal extends HTMLElement {
     `;
 
     // Add styles
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       .tour-modal {
         position: fixed;
@@ -87,22 +87,22 @@ export class TourModal extends HTMLElement {
         color: var(--color-text, #fff);
       }
     `;
-    
+
     document.head.appendChild(style);
 
     // Add event listeners
-    const acceptButton = this.modalContainer.querySelector('#tour-accept');
-    const declineButton = this.modalContainer.querySelector('#tour-decline');
+    const acceptButton = this.modalContainer.querySelector("#tour-accept");
+    const declineButton = this.modalContainer.querySelector("#tour-decline");
 
     if (acceptButton) {
-      acceptButton.addEventListener('click', () => {
+      acceptButton.addEventListener("click", () => {
         this.onAccept();
         this.close();
       });
     }
 
     if (declineButton) {
-      declineButton.addEventListener('click', () => {
+      declineButton.addEventListener("click", () => {
         this.onDecline();
         this.close();
       });
@@ -122,4 +122,4 @@ export class TourModal extends HTMLElement {
 }
 
 // Register the custom element
-customElements.define('tour-modal', TourModal); 
+customElements.define("tour-modal", TourModal);

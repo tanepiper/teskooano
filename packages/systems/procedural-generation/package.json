@@ -25,4 +25,4 @@
   "scripts": {
     "test": "vitest run"
   }
-} 
+}

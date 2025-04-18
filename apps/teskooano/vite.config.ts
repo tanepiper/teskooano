@@ -1,20 +1,18 @@
-import { defineConfig } from 'vite'
-import glsl from 'vite-plugin-glsl'; // Import the plugin
+import { defineConfig } from "vite";
+import glsl from "vite-plugin-glsl"; // Import the plugin
 
-
-const basePath = process.env.CI ? '/teskooano' : '/';
-
+const basePath = process.env.CI ? "/teskooano" : "/";
 
 export default defineConfig({
   plugins: [
-    glsl() // Add the plugin to the plugins array
+    glsl(), // Add the plugin to the plugins array
   ],
   base: basePath,
-  
+
   server: {
     port: 3000,
   },
   build: {
-    target: 'esnext'
-  }
-})
+    target: "esnext",
+  },
+});

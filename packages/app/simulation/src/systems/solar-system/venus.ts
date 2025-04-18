@@ -1,7 +1,12 @@
-import { DEG_TO_RAD } from '@teskooano/core-math';
-import { AU } from '@teskooano/core-physics';
-import { actions } from '@teskooano/core-state';
-import { CelestialType, PlanetType, SurfaceType, type LavaSurfaceProperties } from '@teskooano/data-types';
+import { DEG_TO_RAD } from "@teskooano/core-math";
+import { AU } from "@teskooano/core-physics";
+import { actions } from "@teskooano/core-state";
+import {
+  CelestialType,
+  PlanetType,
+  SurfaceType,
+  type LavaSurfaceProperties,
+} from "@teskooano/data-types";
 
 // --- Constants (NASA Planetary Fact Sheet / JPL HORIZONS J2000) ---
 const VENUS_MASS_KG = 4.8675e24;
@@ -22,9 +27,9 @@ const VENUS_AXIAL_TILT_DEG = 177.36; // Retrograde rotation (large tilt)
  */
 export function initializeVenus(parentId: string): void {
   actions.addCelestial({
-    id: 'venus',
-    name: 'Venus',
-    seed: 'venus',
+    id: "venus",
+    name: "Venus",
+    seed: "venus",
     type: CelestialType.PLANET,
     parentId: parentId,
     realMass_kg: VENUS_MASS_KG,
@@ -42,23 +47,23 @@ export function initializeVenus(parentId: string): void {
       period_s: VENUS_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ['CO2', 'N2', 'SO2'], // Thick CO2 atmosphere
+      composition: ["CO2", "N2", "SO2"], // Thick CO2 atmosphere
       pressure: 92, // Surface pressure in atm
-      color: '#FDD835', // Yellow/Orange/Tan thick haze
+      color: "#FDD835", // Yellow/Orange/Tan thick haze
     },
     surface: {
       // Venus' surface is obscured, but radar shows volcanic features
       type: SurfaceType.VOLCANIC,
       planetType: PlanetType.LAVA, // Represent as Lava-like due to heat/pressure
-      color: '#FFA000', // Base orange/brown rock
-      lavaColor: '#EF6C00', // Suggestion of molten rock/heat
+      color: "#FFA000", // Base orange/brown rock
+      lavaColor: "#EF6C00", // Suggestion of molten rock/heat
       roughness: 0.7,
-      rockColor: '#795548', // Darker rock
+      rockColor: "#795548", // Darker rock
     } as LavaSurfaceProperties,
     properties: {
       type: CelestialType.PLANET,
       isMoon: false,
-      composition: ['silicates', 'iron core', 'sulfuric acid clouds'],
+      composition: ["silicates", "iron core", "sulfuric acid clouds"],
     },
   });
-} 
+}

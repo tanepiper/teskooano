@@ -10,7 +10,9 @@
       "@teskooano/core-state": ["../../core/state/src"],
       "@teskooano/data-types": ["../../data/types/src"],
       "@teskooano/renderer-threejs-core": ["../threejs-core/src"],
-      "@teskooano/renderer-threejs-visualization": ["../threejs-visualization/src"],
+      "@teskooano/renderer-threejs-visualization": [
+        "../threejs-visualization/src"
+      ],
       "@teskooano/renderer-threejs-interaction": ["../threejs-interaction/src"],
       "@teskooano/renderer-threejs-effects": ["../threejs-effects/src"],
       "@teskooano/systems-celestial": ["../../systems/celestial/src"],
@@ -29,4 +31,4 @@
     { "path": "../../systems/celestial" },
     { "path": "../../core/debug" }
   ]
-} 
+}

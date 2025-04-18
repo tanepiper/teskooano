@@ -1,20 +1,26 @@
-import { DEG_TO_RAD } from '@teskooano/core-math';
-import { AU } from '@teskooano/core-physics';
-import { actions } from '@teskooano/core-state';
-import { CelestialType, PlanetType, SurfaceType, type DesertSurfaceProperties, type RockyTerrestrialSurfaceProperties } from '@teskooano/data-types';
+import { DEG_TO_RAD } from "@teskooano/core-math";
+import { AU } from "@teskooano/core-physics";
+import { actions } from "@teskooano/core-state";
+import {
+  CelestialType,
+  PlanetType,
+  SurfaceType,
+  type DesertSurfaceProperties,
+  type RockyTerrestrialSurfaceProperties,
+} from "@teskooano/data-types";
 
 // --- Mars Constants (NASA Planetary Fact Sheet / JPL HORIZONS J2000) ---
 const MARS_MASS_KG = 6.4171e23;
 const MARS_RADIUS_M = 3389500; // Volumetric mean radius
 const MARS_TEMP_K = 210; // Mean surface temperature
-const MARS_ALBEDO = 0.170; // Geometric Albedo
+const MARS_ALBEDO = 0.17; // Geometric Albedo
 const MARS_SMA_AU = 1.523679;
 const MARS_ECC = 0.093405;
 const MARS_INC_DEG = 1.85061;
 const MARS_LAN_DEG = 49.57854;
 const MARS_AOP_DEG = 336.04084;
 const MARS_MA_DEG = 355.45332; // Mean Anomaly at J2000 Epoch
-const MARS_SIDEREAL_PERIOD_S = 5.93550e7; // Sidereal Orbit Period (~686.98 days)
+const MARS_SIDEREAL_PERIOD_S = 5.9355e7; // Sidereal Orbit Period (~686.98 days)
 const MARS_AXIAL_TILT_DEG = 25.19; // Obliquity to Orbit
 
 // --- Phobos Constants (NASA) ---
@@ -39,13 +45,13 @@ const DEIMOS_ALBEDO = 0.068;
  * Initializes Mars and its moons (Phobos, Deimos) using accurate data.
  */
 export function initializeMars(parentId: string): void {
-  const marsId = 'mars'; // Define Mars' ID
+  const marsId = "mars"; // Define Mars' ID
 
   // --- Initialize Mars ---
   actions.addCelestial({
     id: marsId,
-    name: 'Mars',
-    seed: 'mars',
+    name: "Mars",
+    seed: "mars",
     type: CelestialType.PLANET,
     parentId: parentId,
     realMass_kg: MARS_MASS_KG,
@@ -63,28 +69,28 @@ export function initializeMars(parentId: string): void {
       period_s: MARS_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ['CO2', 'N2', 'Ar'], // Thin CO2 atmosphere
+      composition: ["CO2", "N2", "Ar"], // Thin CO2 atmosphere
       pressure: 0.006, // ~0.6% of Earth's pressure
-      color: '#FFB07A', // Pale reddish/orange sky
+      color: "#FFB07A", // Pale reddish/orange sky
     },
     surface: {
       type: SurfaceType.DUNES, // Changed from planetType: PlanetType.ROCKY
       planetType: PlanetType.DESERT, // Added appropriate planetType
-      color: '#C1440E', // Reddish-brown base
+      color: "#C1440E", // Reddish-brown base
       roughness: 0.6,
-      secondaryColor: '#8B4513' // Darker sienna/brown rock
+      secondaryColor: "#8B4513", // Darker sienna/brown rock
     } as DesertSurfaceProperties, // Use DesertSurfaceProperties
     properties: {
       type: CelestialType.PLANET,
       isMoon: false,
-      composition: ['silicates', 'iron oxide', 'basalt'],
+      composition: ["silicates", "iron oxide", "basalt"],
     },
   });
 
   // --- Initialize Phobos ---
   actions.addCelestial({
-    id: 'phobos',
-    name: 'Phobos',
+    id: "phobos",
+    name: "Phobos",
     type: CelestialType.MOON,
     parentId: marsId,
     realMass_kg: PHOBOS_MASS_KG,
@@ -102,25 +108,25 @@ export function initializeMars(parentId: string): void {
       meanAnomaly: Math.random() * 2 * Math.PI,
       period_s: PHOBOS_SIDEREAL_PERIOD_S,
     },
-    atmosphere: { composition: [], pressure: 0, color: '#00000000' }, // No atmosphere
+    atmosphere: { composition: [], pressure: 0, color: "#00000000" }, // No atmosphere
     surface: {
       type: SurfaceType.CRATERED,
       planetType: PlanetType.ROCKY,
-      color: '#606060', // Dark grey
+      color: "#606060", // Dark grey
       roughness: 0.9,
     } as RockyTerrestrialSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: marsId,
-      composition: ['carbonaceous chondrite'], // Likely captured asteroid
+      composition: ["carbonaceous chondrite"], // Likely captured asteroid
     },
   });
 
   // --- Initialize Deimos ---
   actions.addCelestial({
-    id: 'deimos',
-    name: 'Deimos',
+    id: "deimos",
+    name: "Deimos",
     type: CelestialType.MOON,
     parentId: marsId,
     realMass_kg: DEIMOS_MASS_KG,
@@ -137,21 +143,21 @@ export function initializeMars(parentId: string): void {
       meanAnomaly: Math.random() * 2 * Math.PI,
       period_s: DEIMOS_SIDEREAL_PERIOD_S,
     },
-    atmosphere: { composition: [], pressure: 0, color: '#00000000' },
+    atmosphere: { composition: [], pressure: 0, color: "#00000000" },
     surface: {
       type: SurfaceType.CRATERED, // Smoother than Phobos due to regolith
       planetType: PlanetType.ROCKY,
-      color: '#808080', // Slightly lighter grey than Phobos
+      color: "#808080", // Slightly lighter grey than Phobos
       roughness: 0.6,
     } as RockyTerrestrialSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: marsId,
-      composition: ['carbonaceous chondrite'],
+      composition: ["carbonaceous chondrite"],
     },
   });
 }
 
 // REMOVED DUPLICATED FUNCTION
-// export function createMarsSystemData(parentId: string): CelestialObjectInputData[] { ... } 
+// export function createMarsSystemData(parentId: string): CelestialObjectInputData[] { ... }

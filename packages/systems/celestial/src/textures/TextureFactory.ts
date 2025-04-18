@@ -1,16 +1,16 @@
-import * as THREE from 'three';
-import { GasGiantTextureGenerator } from './GasGiantTextureGenerator';
-import { SpaceRockTextureGenerator } from './SpaceRockTextureGenerator';
-import { StarTextureGenerator } from './StarTextureGenerator';
-import { TerrestrialTextureGenerator } from './TerrestrialTextureGenerator';
-import { TextureResourceManager } from './TextureGeneratorBase';
+import * as THREE from "three";
+import { GasGiantTextureGenerator } from "./GasGiantTextureGenerator";
+import { SpaceRockTextureGenerator } from "./SpaceRockTextureGenerator";
+import { StarTextureGenerator } from "./StarTextureGenerator";
+import { TerrestrialTextureGenerator } from "./TerrestrialTextureGenerator";
+import { TextureResourceManager } from "./TextureGeneratorBase";
 import {
   GasGiantTextureOptions,
   SpaceRockTextureOptions,
   StarTextureOptions,
   TerrestrialTextureOptions,
-  TextureResult
-} from './TextureTypes';
+  TextureResult,
+} from "./TextureTypes";
 
 /**
  * Factory for creating textures for all types of celestial objects
@@ -77,96 +77,102 @@ export class TextureFactory {
 
   /**
    * Generate a gas giant texture with improved, physically-based rendering
-   * 
+   *
    * @param options Gas giant texture generation options
    * @returns A high-quality texture for the gas giant
    */
-  public static generateGasGiantTexture(options: GasGiantTextureOptions): TextureResult {
-    const cacheKey = this.createCacheKey('gas-giant', options);
-    
+  public static generateGasGiantTexture(
+    options: GasGiantTextureOptions,
+  ): TextureResult {
+    const cacheKey = this.createCacheKey("gas-giant", options);
+
     if (this.textureCache.has(cacheKey)) {
       return this.textureCache.get(cacheKey)!;
     }
-    
+
     // Support both instance and static methods
     let result: TextureResult;
     const generator = this.getGasGiantGenerator();
-    
+
     // Try instance method first, fall back to static
-    if (typeof generator.generateTexture === 'function') {
+    if (typeof generator.generateTexture === "function") {
       result = generator.generateTexture(options);
     } else {
       // If instance method doesn't exist, use static method
       // @ts-ignore - Allow static access for backward compatibility
       result = { colorMap: GasGiantTextureGenerator.generateTexture(options) };
     }
-    
+
     this.textureCache.set(cacheKey, result);
-    
+
     return result;
   }
-  
+
   /**
    * Generate a terrestrial planet texture
-   * 
+   *
    * @param options Terrestrial planet texture generation options
    * @returns The generated texture for the terrestrial planet
    */
   public static generateTerrestrialTexture(
-    options: TerrestrialTextureOptions
+    options: TerrestrialTextureOptions,
   ): TextureResult {
-    const cacheKey = this.createCacheKey('terrestrial', options);
-    
+    const cacheKey = this.createCacheKey("terrestrial", options);
+
     if (this.textureCache.has(cacheKey)) {
       return this.textureCache.get(cacheKey)!;
     }
-    
+
     // Support both instance and static methods
     let result: TextureResult;
     const generator = this.getTerrestrialGenerator();
-    
+
     // Try instance method first, fall back to static
-    if (typeof generator.generateTexture === 'function') {
+    if (typeof generator.generateTexture === "function") {
       result = generator.generateTexture(options);
     } else {
       // If instance method doesn't exist, use static method
       // @ts-ignore - Allow static access for backward compatibility
-      result = { colorMap: TerrestrialTextureGenerator.generateTexture(options) };
+      result = {
+        colorMap: TerrestrialTextureGenerator.generateTexture(options),
+      };
     }
-    
+
     this.textureCache.set(cacheKey, result);
-    
+
     return result;
   }
-  
+
   /**
    * Generate a star texture
    *
    * @param options Star texture generation options
    * @returns The generated texture for the star
    */
-  public static generateStarTexture(options: StarTextureOptions): TextureResult {
-    const cacheKey = this.createCacheKey('star', options);
-    
+  public static generateStarTexture(
+    options: StarTextureOptions,
+  ): TextureResult {
+    const cacheKey = this.createCacheKey("star", options);
+
     if (this.textureCache.has(cacheKey)) {
       return this.textureCache.get(cacheKey)!;
     }
-    
+
     // Support both instance and static methods
     let result: TextureResult;
     const generator = this.getStarGenerator();
-    
+
     // Try instance method first, fall back to static
-    if (typeof generator.generateTexture === 'function') {
+    if (typeof generator.generateTexture === "function") {
       result = generator.generateTexture(options);
     } else {
       // If instance method doesn't exist, use static method
       // @ts-ignore - Allow static access for backward compatibility
       result = { colorMap: StarTextureGenerator.generateTexture(options) };
     }
-    
+
     this.textureCache.set(cacheKey, result);
-    
+
     return result;
   }
 
@@ -176,28 +182,30 @@ export class TextureFactory {
    * @param options Space Rock texture generation options
    * @returns The generated texture for the space rock
    */
-  public static generateSpaceRockTexture(options: SpaceRockTextureOptions): TextureResult {
-    const cacheKey = this.createCacheKey('space-rock', options);
-    
+  public static generateSpaceRockTexture(
+    options: SpaceRockTextureOptions,
+  ): TextureResult {
+    const cacheKey = this.createCacheKey("space-rock", options);
+
     if (this.textureCache.has(cacheKey)) {
       return this.textureCache.get(cacheKey)!;
     }
-    
+
     // Support both instance and static methods
     let result: TextureResult;
     const generator = this.getSpaceRockGenerator();
-    
+
     // Try instance method first, fall back to static
-    if (typeof generator.generateTexture === 'function') {
+    if (typeof generator.generateTexture === "function") {
       result = generator.generateTexture(options);
     } else {
       // If instance method doesn't exist, use static method
       // @ts-ignore - Allow static access for backward compatibility
       result = { colorMap: SpaceRockTextureGenerator.generateTexture(options) };
     }
-    
+
     this.textureCache.set(cacheKey, result);
-    
+
     return result;
   }
 
@@ -205,14 +213,14 @@ export class TextureFactory {
    * Clear the texture cache
    */
   public static clearCache(): void {
-    this.textureCache.forEach(result => {
-      Object.values(result).forEach(texture => {
+    this.textureCache.forEach((result) => {
+      Object.values(result).forEach((texture) => {
         if (texture) {
           texture.dispose();
         }
       });
     });
-    
+
     this.textureCache.clear();
   }
 
@@ -222,29 +230,29 @@ export class TextureFactory {
   public static dispose(): void {
     // Clear the texture cache
     this.clearCache();
-    
+
     // Dispose of generators
     if (this.gasGiantGenerator) {
       this.gasGiantGenerator.dispose();
       this.gasGiantGenerator = null!;
     }
-    
+
     if (this.terrestrialGenerator) {
       this.terrestrialGenerator.dispose();
       this.terrestrialGenerator = null!;
     }
-    
+
     if (this.starGenerator) {
       this.starGenerator.dispose();
       this.starGenerator = null!;
     }
-    
+
     if (this.spaceRockGenerator) {
       this.spaceRockGenerator.dispose();
       this.spaceRockGenerator = null!;
     }
-    
+
     // Dispose of global WebGL resources
     TextureResourceManager.getInstance().dispose();
   }
-} 
+}

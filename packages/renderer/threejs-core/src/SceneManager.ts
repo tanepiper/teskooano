@@ -41,7 +41,7 @@ export class SceneManager {
       showDebugSphere?: boolean;
       showGrid?: boolean;
       showAuMarkers?: boolean; // Option to control initial visibility
-    } = {}
+    } = {},
   ) {
     // Initialize Three.js scene
     this.scene = new THREE.Scene();
@@ -51,7 +51,7 @@ export class SceneManager {
       60,
       container.clientWidth / container.clientHeight,
       0.0001, // Much closer near plane
-      10000000 // Much further far plane
+      10000000, // Much further far plane
     );
 
     // Initial camera position from state
@@ -59,7 +59,7 @@ export class SceneManager {
     this.camera.position.set(
       camera.position.x,
       camera.position.y,
-      camera.position.z
+      camera.position.z,
     );
     this.camera.lookAt(camera.target.x, camera.target.y, camera.target.z);
 
@@ -139,7 +139,7 @@ export class SceneManager {
     // Set initial label visibility explicitly after creation
     this.css2DManager?.setLayerVisibility(
       CSS2DLayerType.AU_MARKERS,
-      this.showAuMarkers
+      this.showAuMarkers,
     );
     // --- End marker creation ---
   }
@@ -151,7 +151,9 @@ export class SceneManager {
    * to ensure proper transition handling
    */
   updateCamera(position: THREE.Vector3, target: THREE.Vector3): void {
-    console.warn('[SceneManager] Direct camera update called. This should only be used during initialization.');
+    console.warn(
+      "[SceneManager] Direct camera update called. This should only be used during initialization.",
+    );
     // Direct camera updates should be avoided - ControlsManager.moveTo should be used instead
     // This method is kept primarily for initialization before ControlsManager is set up
     if (position && target) {
@@ -200,7 +202,7 @@ export class SceneManager {
   private addDebugSphere(): void {
     const debugSphere = new THREE.Mesh(
       new THREE.SphereGeometry(0.5, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0xff00ff })
+      new THREE.MeshBasicMaterial({ color: 0xff00ff }),
     );
     debugSphere.position.set(0, 0, 0);
     this.scene.add(debugSphere);
@@ -260,7 +262,7 @@ export class SceneManager {
 
       if (!Number.isFinite(radiusSceneUnits) || radiusSceneUnits <= 0) {
         console.warn(
-          `[SceneManager] Skipping AU marker for ${au} AU due to invalid calculated radius: ${radiusSceneUnits}`
+          `[SceneManager] Skipping AU marker for ${au} AU due to invalid calculated radius: ${radiusSceneUnits}`,
         );
         return;
       }
@@ -274,8 +276,8 @@ export class SceneManager {
           new THREE.Vector3(
             Math.cos(theta) * radiusSceneUnits,
             0, // Keep in the XZ plane
-            Math.sin(theta) * radiusSceneUnits
-          )
+            Math.sin(theta) * radiusSceneUnits,
+          ),
         );
       }
       geometry.setFromPoints(points);
@@ -402,7 +404,7 @@ export class SceneManager {
           10000,
           100,
           0xff0000,
-          0x444444
+          0x444444,
         );
         this.scene.add(currentGridHelper);
         this.gridHelper = currentGridHelper; // Assign back to class property
@@ -434,7 +436,7 @@ export class SceneManager {
         // Check if creation succeeded
         if (!currentAuMarkers) {
           console.error(
-            "[SceneManager] Failed to create AU markers for setVisible."
+            "[SceneManager] Failed to create AU markers for setVisible.",
           );
           this.showAuMarkers = false; // Revert state if creation failed
           return;

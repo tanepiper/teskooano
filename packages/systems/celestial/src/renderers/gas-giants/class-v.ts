@@ -1,12 +1,15 @@
-import type { CelestialObject, GasGiantProperties } from '@teskooano/data-types';
-import * as THREE from 'three';
-import { BaseGasGiantMaterial, BaseGasGiantRenderer } from './base-gas-giant';
-import { TextureFactory } from '../../textures/TextureFactory';
+import type {
+  CelestialObject,
+  GasGiantProperties,
+} from "@teskooano/data-types";
+import * as THREE from "three";
+import { BaseGasGiantMaterial, BaseGasGiantRenderer } from "./base-gas-giant";
+import { TextureFactory } from "../../textures/TextureFactory";
 
 // Import the new Class V shaders
-import classVFragmentShader from '../../shaders/gas-giants/class-v.fragment.glsl';
-import classVVertexShader from '../../shaders/gas-giants/class-v.vertex.glsl';
-import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
+import classVFragmentShader from "../../shaders/gas-giants/class-v.fragment.glsl";
+import classVVertexShader from "../../shaders/gas-giants/class-v.vertex.glsl";
+import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**
  * Material for Class V gas giants (Silicate Clouds / Bright / Glowing)
@@ -43,24 +46,28 @@ class ClassVMaterial extends BaseGasGiantMaterial {
  */
 export class ClassVGasGiantRenderer extends BaseGasGiantRenderer {
   // private textureCache: Map<string, THREE.Texture> = new Map(); // Removed texture cache
-  
-  protected getMaterial(object: RenderableCelestialObject): BaseGasGiantMaterial {
+
+  protected getMaterial(
+    object: RenderableCelestialObject,
+  ): BaseGasGiantMaterial {
     const properties = object.properties as GasGiantProperties;
 
     // Generate deterministic seed from object id
-    const seed = object.celestialObjectId ? 
-      object.celestialObjectId.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) : 
-      Math.random() * 10000;
+    const seed = object.celestialObjectId
+      ? object.celestialObjectId
+          .split("")
+          .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
+      : Math.random() * 10000;
 
     // Default to a bright off-white/pale yellow for silicate clouds
     const baseColor = properties.atmosphereColor
       ? new THREE.Color(properties.atmosphereColor)
-      : new THREE.Color(0xFFF8DC); // Cornsilk / Pale Yellowish default
+      : new THREE.Color(0xfff8dc); // Cornsilk / Pale Yellowish default
 
     // Default emissive properties - use object props if available
     const emissiveColor = properties.emissiveColor
       ? new THREE.Color(properties.emissiveColor)
-      : new THREE.Color(0xFF6600); // Dull Orange/Red default glow
+      : new THREE.Color(0xff6600); // Dull Orange/Red default glow
     const emissiveIntensity = properties.emissiveIntensity ?? 0.1; // Default faint glow
 
     // Check if we should use a texture overlay (e.g., for storms)
@@ -71,7 +78,7 @@ export class ClassVGasGiantRenderer extends BaseGasGiantRenderer {
         class: properties.gasGiantClass,
         baseColor: baseColor,
         secondaryColor: new THREE.Color(properties.stormColor),
-        seed: seed
+        seed: seed,
       });
       stormMap = stormTexture.colorMap;
     }
@@ -80,10 +87,10 @@ export class ClassVGasGiantRenderer extends BaseGasGiantRenderer {
       baseColor: baseColor,
       emissiveColor: emissiveColor,
       emissiveIntensity: emissiveIntensity,
-      stormMap: stormMap
+      stormMap: stormMap,
     });
   }
 
   // Removed override update
   // Removed override dispose
-} 
+}

@@ -94,7 +94,7 @@ export function generateStar(random: () => number): CelestialObject {
   // 1. Determine Stellar Type
   const totalWeight = STELLAR_TYPE_WEIGHTS.reduce(
     (sum, item) => sum + item.weight,
-    0
+    0,
   );
   let roll = random() * totalWeight;
   let chosenType = StellarType.MAIN_SEQUENCE; // Default
@@ -188,7 +188,7 @@ export function generateStar(random: () => number): CelestialObject {
   // 3. Calculate Derived Properties
   const starLuminosity = UTIL.calculateLuminosity(
     starRadius_Solar,
-    starTemperature
+    starTemperature,
   );
   let mainSpectralClass = UTIL.getSpectralClass(starTemperature);
   let specialSpectralClass: SpecialSpectralClass | undefined = undefined;
@@ -262,7 +262,7 @@ export function generateStar(random: () => number): CelestialObject {
       `[StarGen Debug] Correcting undersized ${mainSpectralClass}-type star final radius: ` +
         `${(realStarRadius / 1000).toFixed(0)} km -> ${(
           correctedRadius / 1000
-        ).toFixed(0)} km`
+        ).toFixed(0)} km`,
     );
 
     // Re-calculate visual radius with the corrected real radius
@@ -274,7 +274,7 @@ export function generateStar(random: () => number): CelestialObject {
     visualStarRadius = correctedVisualRadius;
   } else {
     console.warn(
-      `[StarGen Debug] Star radius validation passed or not applicable`
+      `[StarGen Debug] Star radius validation passed or not applicable`,
     );
   }
 

@@ -15,6 +15,7 @@ The simulation time controls allow you to manage how quickly the simulation runs
 ### Time Scale Presets
 
 Quickly set common time scales:
+
 - **1x**: Slow time
 - **16x**: Real-time (1 second tick)
 - **100x**: 100 seconds per second
@@ -64,6 +65,7 @@ Teskooano allows you to adjust the underlying physics simulation parameters.
 ### Integration Methods
 
 Select the mathematical method used to calculate object positions:
+
 - **Euler**: Basic integration (fastest, less accurate)
 - **Symplectic Euler**: Better energy conservation for orbital mechanics (default)
 - **Verlet**: More accurate for complex gravitational interactions (slower)
@@ -120,4 +122,4 @@ Select the mathematical method used to calculate object positions:
 - **Transfer Orbits**: Create objects on transfer orbits between planets
 - **Retrograde Orbits**: Set up moons or planets with orbits opposite to the system trend
 - **Rogue Planet Encounters**: Send a massive object through an established system
-- **L4/L5 Points**: Place objects at Lagrange points to observe stability 
+- **L4/L5 Points**: Place objects at Lagrange points to observe stability

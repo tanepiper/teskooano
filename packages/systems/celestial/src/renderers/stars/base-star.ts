@@ -1,9 +1,9 @@
-import * as THREE from 'three';
-import type { CelestialObject, StarProperties } from '@teskooano/data-types';
-import { CelestialRenderer, LODLevel } from '../index';
-import { SCALE } from '@teskooano/data-types';
-import type { CelestialMeshOptions } from '../common/CelestialRenderer';
-import type { RenderableCelestialObject } from '@teskooano/renderer-threejs';
+import * as THREE from "three";
+import type { CelestialObject, StarProperties } from "@teskooano/data-types";
+import { CelestialRenderer, LODLevel } from "../index";
+import { SCALE } from "@teskooano/data-types";
+import type { CelestialMeshOptions } from "../common/CelestialRenderer";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**
  * Vertex shader for stars
@@ -227,7 +227,7 @@ export abstract class BaseStarMaterial extends THREE.ShaderMaterial {
       glowIntensity?: number;
       temperatureVariation?: number;
       metallicEffect?: number;
-    } = {}
+    } = {},
   ) {
     super({
       uniforms: {
@@ -237,12 +237,12 @@ export abstract class BaseStarMaterial extends THREE.ShaderMaterial {
         pulseSpeed: { value: options.pulseSpeed ?? 0.5 },
         glowIntensity: { value: options.glowIntensity ?? 0.4 },
         temperatureVariation: { value: options.temperatureVariation ?? 0.1 },
-        metallicEffect: { value: options.metallicEffect ?? 0.6 }
+        metallicEffect: { value: options.metallicEffect ?? 0.6 },
       },
       vertexShader: starVertexShader,
       fragmentShader: starFragmentShader,
       transparent: true,
-      side: THREE.FrontSide
+      side: THREE.FrontSide,
     });
   }
 
@@ -273,7 +273,7 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
       opacity?: number;
       pulseSpeed?: number;
       noiseScale?: number;
-    } = {}
+    } = {},
   ) {
     super({
       uniforms: {
@@ -281,13 +281,13 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
         starColor: { value: color },
         opacity: { value: options.opacity ?? 0.6 },
         pulseSpeed: { value: options.pulseSpeed ?? 0.3 },
-        noiseScale: { value: options.noiseScale ?? 3.0 }
+        noiseScale: { value: options.noiseScale ?? 3.0 },
       },
       vertexShader: starVertexShader,
       fragmentShader: coronaFragmentShader,
       transparent: true,
       side: THREE.DoubleSide,
-      depthWrite: false
+      depthWrite: false,
     });
   }
 
@@ -314,26 +314,35 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
   protected coronaMaterials: Map<string, CoronaMaterial[]> = new Map();
   protected startTime: number = Date.now() / 1000;
   protected elapsedTime: number = 0;
-  
+
   /**
    * Creates and returns an array of LOD levels for the star object.
    */
-  getLODLevels(object: RenderableCelestialObject, options?: CelestialMeshOptions): LODLevel[] {
-    const scale = typeof SCALE === 'number' ? SCALE : 1;
+  getLODLevels(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): LODLevel[] {
+    const scale = typeof SCALE === "number" ? SCALE : 1;
 
     // --- Level 0: High Detail (Star Mesh) ---
     const highDetailGroup = this._createHighDetailGroup(object, options);
     const level0: LODLevel = { object: highDetailGroup, distance: 0 };
 
     // --- Level 1: Medium Detail (Simplified Material/Geometry?) ---
-    const mediumDetailGroup = this._createHighDetailGroup(object, { ...options, segments: 32 });
+    const mediumDetailGroup = this._createHighDetailGroup(object, {
+      ...options,
+      segments: 32,
+    });
     mediumDetailGroup.name = `${object.celestialObjectId}-medium-lod`;
-    const level1: LODLevel = { object: mediumDetailGroup, distance: 200 * scale };
+    const level1: LODLevel = {
+      object: mediumDetailGroup,
+      distance: 200 * scale,
+    };
 
     // --- Level 2: Low Detail (Billboard/Sprite?) ---
     const lowDetailMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(object.radius * 0.8, 8, 8),
-        new THREE.MeshBasicMaterial({ color: this.getStarColor(object) })
+      new THREE.SphereGeometry(object.radius * 0.8, 8, 8),
+      new THREE.MeshBasicMaterial({ color: this.getStarColor(object) }),
     );
     lowDetailMesh.name = `${object.celestialObjectId}-low-lod`;
     const level2Group = new THREE.Group();
@@ -346,9 +355,12 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
   /**
    * Helper to create the high-detail group (Level 0 LOD).
    * Contains the logic previously in createMesh.
-   * @internal 
+   * @internal
    */
-  protected _createHighDetailGroup(object: RenderableCelestialObject, options?: CelestialMeshOptions): THREE.Group {
+  protected _createHighDetailGroup(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): THREE.Group {
     const group = new THREE.Group();
     group.name = `${object.celestialObjectId}-high-lod-group`;
 
@@ -357,8 +369,12 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     // group.position.set(object.position.x, object.position.y, object.position.z);
     // group.quaternion.set(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w);
 
-    const segments = options?.detailLevel === 'high' ? 64 : 48;
-    const geometry = new THREE.SphereGeometry(object.radius, segments, segments);
+    const segments = options?.detailLevel === "high" ? 64 : 48;
+    const geometry = new THREE.SphereGeometry(
+      object.radius,
+      segments,
+      segments,
+    );
     const material = this.getMaterial(object);
     this.materials.set(object.celestialObjectId, material);
     const mesh = new THREE.Mesh(geometry, material);
@@ -371,15 +387,18 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
   /**
    * Add corona effect to the star
    */
-  protected addCorona(object: RenderableCelestialObject, group: THREE.Group): void {
+  protected addCorona(
+    object: RenderableCelestialObject,
+    group: THREE.Group,
+  ): void {
     const starColor = this.getStarColor(object);
     const coronaMaterials: CoronaMaterial[] = [];
-    
+
     this.coronaMaterials.set(object.celestialObjectId, coronaMaterials);
-    
-    const coronaScales = [1.1, 1.2]; 
-    const opacities = [0.1, 0.05]; 
-    
+
+    const coronaScales = [1.1, 1.2];
+    const opacities = [0.1, 0.05];
+
     coronaScales.forEach((scale, index) => {
       const coronaRadius = object.radius * scale;
       const coronaGeometry = new THREE.SphereGeometry(coronaRadius, 24, 24);
@@ -387,7 +406,7 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
         scale: scale,
         opacity: opacities[index],
         pulseSpeed: 0.12 + index * 0.03,
-        noiseScale: 1.2 + index * 0.3 
+        noiseScale: 1.2 + index * 0.3,
       });
       coronaMaterials.push(coronaMaterial);
       const coronaMesh = new THREE.Mesh(coronaGeometry, coronaMaterial);
@@ -402,23 +421,25 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
    * Get the appropriate material for the star type
    * Subclasses must implement this
    */
-  protected abstract getMaterial(object: RenderableCelestialObject): BaseStarMaterial;
-  
+  protected abstract getMaterial(
+    object: RenderableCelestialObject,
+  ): BaseStarMaterial;
+
   /**
    * Update the renderer with the current time
    */
   update(time?: number): void {
     if (time === undefined) {
-      this.elapsedTime = (Date.now() / 1000) - this.startTime;
+      this.elapsedTime = Date.now() / 1000 - this.startTime;
     } else {
       this.elapsedTime = time;
     }
-    
+
     // Update all materials
     this.materials.forEach((material) => {
       material.update(this.elapsedTime);
     });
-    
+
     // Update all corona materials
     this.coronaMaterials.forEach((materials) => {
       materials.forEach((material) => {
@@ -426,7 +447,7 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
       });
     });
   }
-  
+
   /**
    * Clean up resources
    */
@@ -435,19 +456,19 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     this.materials.forEach((material) => {
       material.dispose();
     });
-    
+
     // Dispose corona materials
     this.coronaMaterials.forEach((materials) => {
       materials.forEach((material) => {
         material.dispose();
       });
     });
-    
+
     // Clear maps
     this.materials.clear();
     this.coronaMaterials.clear();
   }
-  
+
   /**
    * Get the primary color for the star based on its properties
    * Subclasses can override this for specific star types
@@ -458,21 +479,28 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     if (starProps?.color) {
       return new THREE.Color(starProps.color);
     }
-    
+
     // Determine color based on spectral class if available
     if (starProps?.spectralClass) {
       switch (starProps.spectralClass.toUpperCase()) {
-        case 'O': return new THREE.Color(0x9bb0ff); // Blue
-        case 'B': return new THREE.Color(0xaabfff); // Bluish white
-        case 'A': return new THREE.Color(0xf8f7ff); // White
-        case 'F': return new THREE.Color(0xfff4ea); // Yellowish white
-        case 'G': return new THREE.Color(0xffcc00); // Yellow (Sun-like)
-        case 'K': return new THREE.Color(0xffaa55); // Light orange
-        case 'M': return new THREE.Color(0xff6644); // Light orangish red
+        case "O":
+          return new THREE.Color(0x9bb0ff); // Blue
+        case "B":
+          return new THREE.Color(0xaabfff); // Bluish white
+        case "A":
+          return new THREE.Color(0xf8f7ff); // White
+        case "F":
+          return new THREE.Color(0xfff4ea); // Yellowish white
+        case "G":
+          return new THREE.Color(0xffcc00); // Yellow (Sun-like)
+        case "K":
+          return new THREE.Color(0xffaa55); // Light orange
+        case "M":
+          return new THREE.Color(0xff6644); // Light orangish red
       }
     }
-    
+
     // Default yellow color if no spectral class specified
     return new THREE.Color(0xffcc00);
   }
-} 
+}

@@ -4,12 +4,12 @@ import type {
   OrbitalParameters,
   PhysicsStateReal,
   RingProperties,
-  RingSystemProperties
+  RingSystemProperties,
 } from "@teskooano/data-types";
 import {
   CelestialStatus,
   CelestialType,
-  scaleSize
+  scaleSize,
 } from "@teskooano/data-types";
 import * as CONST from "../constants";
 import { generateCelestialName } from "../name-generator";
@@ -44,7 +44,7 @@ export function generatePlanet(
   starRadius: number,
   bodyDistanceAU: number,
   systemSeed: string,
-  parentStarState: PhysicsStateReal
+  parentStarState: PhysicsStateReal,
 ): {
   generatedObjects: (CelestialObject | null)[];
   planetMass_kg: number;
@@ -60,41 +60,47 @@ export function generatePlanet(
     random,
     bodyDistanceAU,
     starTemperature,
-    starRadius
+    starRadius,
   );
 
   // 2. Calculate Preliminary Mass and Radius
   const massRangeMultiplier = 1 + bodyDistanceAU / 5; // Base multiplier + distance factor
   // Apply zone/type specific mass factor determined earlier
-  const planetMassMultiplier = (0.1 + random() * 10) * massRangeMultiplier * baseProps.massMultiplierFactor;
+  const planetMassMultiplier =
+    (0.1 + random() * 10) *
+    massRangeMultiplier *
+    baseProps.massMultiplierFactor;
   const planetMass_kg = planetMassMultiplier * CONST.EARTH_MASS_KG;
 
   // Recalculate radius using the target density for the final determined type
   // This provides a more accurate final radius based on composition
   const finalPlanetRadius_m = UTIL.calculateRadius(
-      planetMass_kg,
-      baseProps.targetDensity_kg_m3
+    planetMass_kg,
+    baseProps.targetDensity_kg_m3,
   );
 
   // 3. Generate Type-Specific Properties
   const specificProperties = generatePlanetSpecificProperties(
-      random,
-      baseProps,
-      bodyDistanceAU // Pass distance if needed
+    random,
+    baseProps,
+    bodyDistanceAU, // Pass distance if needed
   );
 
   // 4. Calculate Visual Radius (using final radius)
-  const visualPlanetRadius_m = scaleSize(finalPlanetRadius_m, baseProps.planetType);
+  const visualPlanetRadius_m = scaleSize(
+    finalPlanetRadius_m,
+    baseProps.planetType,
+  );
 
   // 5. Generate Rings (if applicable)
   let generatedRings: RingProperties[] | undefined;
   if (baseProps.ringChance > 0 && baseProps.ringAllowedTypes.length > 0) {
-      generatedRings = generateRings(
-          random,
-          baseProps.ringChance,
-          baseProps.ringAllowedTypes,
-          visualPlanetRadius_m // Pass VISUAL radius in meters
-      );
+    generatedRings = generateRings(
+      random,
+      baseProps.ringChance,
+      baseProps.ringAllowedTypes,
+      visualPlanetRadius_m, // Pass VISUAL radius in meters
+    );
   }
 
   // 6. Calculate Orbital Parameters and Initial Physics State
@@ -104,12 +110,14 @@ export function generatePlanet(
     planetMass_kg,
     bodyDistanceAU,
     parentStarState,
-    planetId
+    planetId,
   );
 
   // If initial state calculation failed, bail out
   if (!initialPhysicsState) {
-    console.error(`[generatePlanet] Failed to calculate initial state for ${planetId}, skipping object creation.`);
+    console.error(
+      `[generatePlanet] Failed to calculate initial state for ${planetId}, skipping object creation.`,
+    );
     return { generatedObjects: [], planetMass_kg: 0, planetRadius_m: 0 }; // Return empty/zero
   }
 
@@ -119,7 +127,11 @@ export function generatePlanet(
   const tilt_rad = tilt_deg * (Math.PI / 180);
   // Ensure tiltAxis is normalized or correctly calculated if needed elsewhere
   // For simple tilt degrees, storing the angle might be enough, but a vector is standard
-  const tiltAxis = new OSVector3(0, Math.cos(tilt_rad), Math.sin(tilt_rad)).normalize();
+  const tiltAxis = new OSVector3(
+    0,
+    Math.cos(tilt_rad),
+    Math.sin(tilt_rad),
+  ).normalize();
 
   // 8. Generate Planet Seed and Temperature
   const planetSeed = `${systemSeed}-${planetId}`;
@@ -151,24 +163,24 @@ export function generatePlanet(
 
   // 10. Create Ring System Object (if rings were generated)
   if (generatedRings && generatedRings.length > 0) {
-      const ringSystemId = `ring-system-${planetId}`;
-      const ringSystemName = `${planetName} Rings`;
+    const ringSystemId = `ring-system-${planetId}`;
+    const ringSystemName = `${planetName} Rings`;
 
-      const ringSystemProperties: RingSystemProperties = {
-          type: CelestialType.RING_SYSTEM,
-          rings: generatedRings,
+    const ringSystemProperties: RingSystemProperties = {
+      type: CelestialType.RING_SYSTEM,
+      rings: generatedRings,
       parentId: planetId,
-      };
+    };
 
     // Ring system inherits position/orientation from parent
-      const ringSystemData: CelestialObject = {
-          id: ringSystemId,
-          name: ringSystemName,
-          type: CelestialType.RING_SYSTEM,
-          status: CelestialStatus.ACTIVE,
+    const ringSystemData: CelestialObject = {
+      id: ringSystemId,
+      name: ringSystemName,
+      type: CelestialType.RING_SYSTEM,
+      status: CelestialStatus.ACTIVE,
       parentId: planetId,
       currentParentId: planetId,
-          properties: ringSystemProperties,
+      properties: ringSystemProperties,
       axialTilt: tiltAxis.clone(), // Inherit tilt
       // No independent orbit, mass, radius, temp
       realMass_kg: 0,
@@ -177,15 +189,19 @@ export function generatePlanet(
       orbit: {} as OrbitalParameters, // Empty orbit
       // Minimal physics state, starts at parent's position/velocity
       physicsStateReal: {
-              id: ringSystemId,
-              mass_kg: 0,
+        id: ringSystemId,
+        mass_kg: 0,
         position_m: initialPhysicsState.position_m.clone(),
         velocity_mps: initialPhysicsState.velocity_mps.clone(),
       },
-      };
+    };
     generatedObjects.push(ringSystemData);
   }
 
   // Return the array of generated objects and key planet stats
-  return { generatedObjects, planetMass_kg, planetRadius_m: finalPlanetRadius_m };
+  return {
+    generatedObjects,
+    planetMass_kg,
+    planetRadius_m: finalPlanetRadius_m,
+  };
 }

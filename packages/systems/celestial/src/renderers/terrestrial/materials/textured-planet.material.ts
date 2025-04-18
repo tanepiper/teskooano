@@ -39,14 +39,16 @@ export class TexturedPlanetMaterial extends THREE.ShaderMaterial {
       shininess?: number;
       lightDirection?: THREE.Vector3;
       lightColor?: THREE.Color;
-    } = {}
+    } = {},
   ) {
     const uniforms: SimpleTextureUniforms = {
       colorMap: { value: options.colorMap ?? null },
       normalMap: { value: options.normalMap ?? null },
       heightMap: { value: options.heightMap ?? null },
       displacementScale: { value: options.displacementScale ?? 0.0 },
-      normalScale: { value: options.normalScale ?? new THREE.Vector2(1.5, 1.5) },
+      normalScale: {
+        value: options.normalScale ?? new THREE.Vector2(1.5, 1.5),
+      },
       ambientIntensity: { value: options.ambientIntensity ?? 0.3 },
       diffuseIntensity: { value: options.diffuseIntensity ?? 0.9 },
       specularIntensity: { value: options.specularIntensity ?? 0.35 },
@@ -85,30 +87,30 @@ export class TexturedPlanetMaterial extends THREE.ShaderMaterial {
    * Adjust all lighting parameters for a specific visual style
    * @param style Preset style identifier: 'default', 'dramatic', 'soft', 'harsh'
    */
-  setLightingStyle(style: 'default' | 'dramatic' | 'soft' | 'harsh'): void {
+  setLightingStyle(style: "default" | "dramatic" | "soft" | "harsh"): void {
     switch (style) {
-      case 'dramatic':
+      case "dramatic":
         this.uniforms.ambientIntensity.value = 0.25;
         this.uniforms.diffuseIntensity.value = 1.0;
         this.uniforms.specularIntensity.value = 0.6;
         this.uniforms.shininess.value = 20;
         this.uniforms.normalScale.value.set(1.7, 1.7);
         break;
-      case 'soft':
+      case "soft":
         this.uniforms.ambientIntensity.value = 0.4;
         this.uniforms.diffuseIntensity.value = 0.7;
         this.uniforms.specularIntensity.value = 0.25;
         this.uniforms.shininess.value = 8;
         this.uniforms.normalScale.value.set(1.0, 1.0);
         break;
-      case 'harsh':
+      case "harsh":
         this.uniforms.ambientIntensity.value = 0.35;
         this.uniforms.diffuseIntensity.value = 1.0;
         this.uniforms.specularIntensity.value = 0.45;
         this.uniforms.shininess.value = 25;
         this.uniforms.normalScale.value.set(1.7, 1.7);
         break;
-      case 'default':
+      case "default":
       default:
         this.uniforms.ambientIntensity.value = 0.3;
         this.uniforms.diffuseIntensity.value = 0.9;

@@ -1,7 +1,7 @@
-import { actions, simulationState } from '@teskooano/core-state';
-import { TeskooanoButton } from '../shared/Button'; // Import the custom button
+import { actions, simulationState } from "@teskooano/core-state";
+import { TeskooanoButton } from "../shared/Button"; // Import the custom button
 
-const template = document.createElement('template');
+const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
@@ -95,22 +95,32 @@ export class ToolbarSimulationControls extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
   }
 
   connectedCallback() {
-    this.playPauseButton = this.shadowRoot!.getElementById('play-pause') as TeskooanoButton | null;
-    this.speedUpButton = this.shadowRoot!.getElementById('speed-up') as TeskooanoButton | null;
-    this.speedDownButton = this.shadowRoot!.getElementById('speed-down') as TeskooanoButton | null;
-    this.reverseButton = this.shadowRoot!.getElementById('reverse') as TeskooanoButton | null;
-    this.scaleValueDisplay = this.shadowRoot!.getElementById('scale-value');
-    this.timeValueDisplay = this.shadowRoot!.getElementById('time-value');
-    this.engineValueDisplay = this.shadowRoot!.getElementById('engine-value');
+    this.playPauseButton = this.shadowRoot!.getElementById(
+      "play-pause",
+    ) as TeskooanoButton | null;
+    this.speedUpButton = this.shadowRoot!.getElementById(
+      "speed-up",
+    ) as TeskooanoButton | null;
+    this.speedDownButton = this.shadowRoot!.getElementById(
+      "speed-down",
+    ) as TeskooanoButton | null;
+    this.reverseButton = this.shadowRoot!.getElementById(
+      "reverse",
+    ) as TeskooanoButton | null;
+    this.scaleValueDisplay = this.shadowRoot!.getElementById("scale-value");
+    this.timeValueDisplay = this.shadowRoot!.getElementById("time-value");
+    this.engineValueDisplay = this.shadowRoot!.getElementById("engine-value");
 
     this.addEventListeners();
     // Direct subscription might be fine, assuming state structure matches
-    this.unsubscribeSimState = simulationState.subscribe(this.updateButtonStates);
+    this.unsubscribeSimState = simulationState.subscribe(
+      this.updateButtonStates,
+    );
     this.updateButtonStates(); // Initial state update
   }
 
@@ -120,67 +130,73 @@ export class ToolbarSimulationControls extends HTMLElement {
   }
 
   private addEventListeners(): void {
-    this.playPauseButton?.addEventListener('click', actions.togglePause);
-    this.speedUpButton?.addEventListener('click', () => {
+    this.playPauseButton?.addEventListener("click", actions.togglePause);
+    this.speedUpButton?.addEventListener("click", () => {
       const currentScale = simulationState.get().timeScale;
-      const newScale = currentScale === 0 ? 1 :
-                       currentScale < 0 ? Math.min(currentScale / 2, -0.1) :
-                       Math.min(currentScale * 2, 10000000);
+      const newScale =
+        currentScale === 0
+          ? 1
+          : currentScale < 0
+            ? Math.min(currentScale / 2, -0.1)
+            : Math.min(currentScale * 2, 10000000);
       actions.setTimeScale(newScale);
     });
-    this.speedDownButton?.addEventListener('click', () => {
+    this.speedDownButton?.addEventListener("click", () => {
       const currentScale = simulationState.get().timeScale;
-      const newScale = currentScale > 0 ? Math.max(currentScale / 2, 0.1) :
-                       currentScale < 0 ? Math.max(currentScale * 2, -10000000) :
-                       0; 
-       actions.setTimeScale(newScale);
+      const newScale =
+        currentScale > 0
+          ? Math.max(currentScale / 2, 0.1)
+          : currentScale < 0
+            ? Math.max(currentScale * 2, -10000000)
+            : 0;
+      actions.setTimeScale(newScale);
     });
-    this.reverseButton?.addEventListener('click', () => {
+    this.reverseButton?.addEventListener("click", () => {
       const currentScale = simulationState.get().timeScale;
-      actions.setTimeScale(currentScale === 0 ? -1 : -currentScale); 
+      actions.setTimeScale(currentScale === 0 ? -1 : -currentScale);
     });
   }
 
   private removeEventListeners(): void {
-     this.playPauseButton?.removeEventListener('click', actions.togglePause);
-     // No removal needed for anonymous arrow functions used for speed/reverse
+    this.playPauseButton?.removeEventListener("click", actions.togglePause);
+    // No removal needed for anonymous arrow functions used for speed/reverse
   }
 
   private formatScale(scale: number): string {
-      const absScale = Math.abs(scale);
-      let scaleText: string;
-      if (scale === 0) return "0.0x";
+    const absScale = Math.abs(scale);
+    let scaleText: string;
+    if (scale === 0) return "0.0x";
 
-      if (absScale >= 1000000) {
-          scaleText = `${(scale / 1000000).toFixed(1)}M`;
-      } else if (absScale >= 1000) {
-          scaleText = `${(scale / 1000).toFixed(1)}K`;
-      } else {
-          scaleText = absScale < 1 ? scale.toFixed(2) : scale.toFixed(1);
-      }
-      return `${scaleText}x`;
+    if (absScale >= 1000000) {
+      scaleText = `${(scale / 1000000).toFixed(1)}M`;
+    } else if (absScale >= 1000) {
+      scaleText = `${(scale / 1000).toFixed(1)}K`;
+    } else {
+      scaleText = absScale < 1 ? scale.toFixed(2) : scale.toFixed(1);
+    }
+    return `${scaleText}x`;
   }
-  
+
   private formatTime(timeSeconds: number = 0): string {
-      const days = Math.floor(timeSeconds / 86400);
-      const hours = Math.floor((timeSeconds % 86400) / 3600);
-      const minutes = Math.floor((timeSeconds % 3600) / 60);
-      const seconds = Math.floor(timeSeconds % 60);
-      return `${days}d ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const days = Math.floor(timeSeconds / 86400);
+    const hours = Math.floor((timeSeconds % 86400) / 3600);
+    const minutes = Math.floor((timeSeconds % 3600) / 60);
+    const seconds = Math.floor(timeSeconds % 60);
+    return `${days}d ${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
-  
+
   private getEngineShortName(engineName: string): string {
-      if (!engineName) return '-';
-      
-      // Get first letter or first letter of each word for acronym
-      const words = engineName.split(/[\s-_]+/);
-      if (words.length > 1) {
-          // Create acronym from first letter of each word
-          return words.map(word => word.charAt(0).toUpperCase()).join('');
-      } else {
-          // Just use first letter
-          return engineName.charAt(0).toUpperCase();
-      }
+    if (!engineName) return "-";
+
+    // Get first letter or first letter of each word for acronym
+    const words = engineName.split(/[\s-_]+/);
+    if (words.length > 1) {
+      // Create acronym from first letter of each word
+      return words.map((word) => word.charAt(0).toUpperCase()).join("");
+    } else {
+      // Just use first letter
+      return engineName.charAt(0).toUpperCase();
+    }
   }
 
   // Arrow function to preserve 'this' context when used as callback
@@ -190,47 +206,56 @@ export class ToolbarSimulationControls extends HTMLElement {
     if (this.playPauseButton) {
       const iconSpan = this.playPauseButton.querySelector('span[slot="icon"]');
       if (iconSpan) {
-         iconSpan.textContent = state.paused ? '⏵' : '⏸'; // Update icon text
+        iconSpan.textContent = state.paused ? "⏵" : "⏸"; // Update icon text
       }
-      this.playPauseButton.title = state.paused ? 'Play Simulation' : 'Pause Simulation';
-      this.playPauseButton.toggleAttribute('active', !state.paused);
+      this.playPauseButton.title = state.paused
+        ? "Play Simulation"
+        : "Pause Simulation";
+      this.playPauseButton.toggleAttribute("active", !state.paused);
     }
 
     if (this.speedDownButton) {
-        const disableSpeedDown = state.paused || (state.timeScale > 0 && state.timeScale <= 0.1) || (state.timeScale < 0 && state.timeScale >= -10000000);
-        this.speedDownButton.disabled = disableSpeedDown; // Use property setter
+      const disableSpeedDown =
+        state.paused ||
+        (state.timeScale > 0 && state.timeScale <= 0.1) ||
+        (state.timeScale < 0 && state.timeScale >= -10000000);
+      this.speedDownButton.disabled = disableSpeedDown; // Use property setter
     }
     if (this.speedUpButton) {
-        const disableSpeedUp = state.paused || (state.timeScale < 0 && state.timeScale <= -0.1) || (state.timeScale > 0 && state.timeScale >= 10000000);
-        this.speedUpButton.disabled = disableSpeedUp; // Use property setter
+      const disableSpeedUp =
+        state.paused ||
+        (state.timeScale < 0 && state.timeScale <= -0.1) ||
+        (state.timeScale > 0 && state.timeScale >= 10000000);
+      this.speedUpButton.disabled = disableSpeedUp; // Use property setter
     }
 
     if (this.reverseButton) {
-        this.reverseButton.toggleAttribute('active', state.timeScale < 0);
+      this.reverseButton.toggleAttribute("active", state.timeScale < 0);
     }
 
     if (this.scaleValueDisplay) {
-        this.scaleValueDisplay.textContent = this.formatScale(state.timeScale);
-        this.scaleValueDisplay.style.color = state.timeScale < 0
-            ? 'var(--color-accent-alt, #ff8a65)' 
-            : 'var(--color-text-secondary, #aaa)';
+      this.scaleValueDisplay.textContent = this.formatScale(state.timeScale);
+      this.scaleValueDisplay.style.color =
+        state.timeScale < 0
+          ? "var(--color-accent-alt, #ff8a65)"
+          : "var(--color-text-secondary, #aaa)";
     }
-    
+
     // Update time display
     if (this.timeValueDisplay) {
-        this.timeValueDisplay.textContent = this.formatTime(state.time);
+      this.timeValueDisplay.textContent = this.formatTime(state.time);
     }
-    
+
     // Update engine display
     if (this.engineValueDisplay) {
-        const engineName = state.physicsEngine || '-';
-        this.engineValueDisplay.textContent = this.getEngineShortName(engineName);
-        this.engineValueDisplay.setAttribute('data-full-name', engineName);
+      const engineName = state.physicsEngine || "-";
+      this.engineValueDisplay.textContent = this.getEngineShortName(engineName);
+      this.engineValueDisplay.setAttribute("data-full-name", engineName);
     }
-  }
+  };
 }
 
-const ELEMENT_TAG = 'toolbar-simulation-controls';
+const ELEMENT_TAG = "toolbar-simulation-controls";
 if (!customElements.get(ELEMENT_TAG)) {
   customElements.define(ELEMENT_TAG, ToolbarSimulationControls);
 }

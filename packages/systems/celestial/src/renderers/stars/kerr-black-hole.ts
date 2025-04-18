@@ -1,10 +1,13 @@
-import * as THREE from 'three';
-import type { CelestialObject } from '@teskooano/data-types';
-import { BaseStarMaterial, BaseStarRenderer } from './base-star';
-import { SchwarzschildBlackHoleMaterial, AccretionDiskMaterial } from './schwarzschild-black-hole';
-import { GravitationalLensingHelper } from '../common/gravitational-lensing';
-import type { RenderableCelestialObject } from '@teskooano/renderer-threejs';
-import type { CelestialMeshOptions } from '../common/CelestialRenderer';
+import * as THREE from "three";
+import type { CelestialObject } from "@teskooano/data-types";
+import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
+import {
+  SchwarzschildBlackHoleMaterial,
+  AccretionDiskMaterial,
+} from "./schwarzschild-black-hole";
+import { GravitationalLensingHelper } from "../common/gravitational-lensing";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { CelestialMeshOptions } from "../common/CelestialRenderer";
 
 /**
  * Material for Kerr black holes' ergosphere
@@ -96,9 +99,9 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
           
           gl_FragColor = vec4(finalColor, alpha * 0.8);
         }
-      `
+      `,
     };
-    
+
     super({
       uniforms: ergosphereShader.uniforms,
       vertexShader: ergosphereShader.vertexShader,
@@ -106,24 +109,24 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
       transparent: true,
       side: THREE.DoubleSide,
       depthWrite: false,
-      blending: THREE.AdditiveBlending
+      blending: THREE.AdditiveBlending,
     });
   }
-  
+
   /**
    * Update the material with the current time
    */
   update(time: number): void {
     this.uniforms.time.value = time;
   }
-  
+
   /**
    * Set the rotation speed of the black hole
    */
   setRotationSpeed(speed: number): void {
     this.uniforms.rotationSpeed.value = speed;
   }
-  
+
   /**
    * Dispose of material resources
    */
@@ -138,11 +141,11 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
 export class KerrAccretionDiskMaterial extends AccretionDiskMaterial {
   constructor(rotationSpeed: number = 0.5) {
     super();
-    
+
     // Override with additional uniform for rotation speed
     this.uniforms.rotationSpeed = { value: rotationSpeed };
   }
-  
+
   /**
    * Set the rotation speed of the black hole
    */
@@ -157,10 +160,11 @@ export class KerrAccretionDiskMaterial extends AccretionDiskMaterial {
 export class KerrBlackHoleRenderer extends BaseStarRenderer {
   private eventHorizonMaterial: SchwarzschildBlackHoleMaterial | null = null;
   private ergosphereMaterial: ErgosphereMaterial | null = null;
-  private accretionDiskMaterials: Map<string, KerrAccretionDiskMaterial> = new Map();
+  private accretionDiskMaterials: Map<string, KerrAccretionDiskMaterial> =
+    new Map();
   private rotationSpeed: number = 0.5;
   private lensingHelpers: Map<string, GravitationalLensingHelper> = new Map();
-  
+
   /**
    * Constructor allows setting rotation speed
    */
@@ -168,88 +172,105 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
     super();
     this.rotationSpeed = rotationSpeed;
   }
-  
+
   /**
    * Create the black hole mesh with event horizon, ergosphere and accretion disk
    */
-  createMesh(object: RenderableCelestialObject, options?: CelestialMeshOptions): THREE.Object3D {
+  createMesh(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): THREE.Object3D {
     const group = new THREE.Group();
     group.name = `kerr-blackhole-${object.celestialObjectId}`;
-    
+
     // Create event horizon sphere
     this.addEventHorizon(object, group);
-    
+
     // Create ergosphere (oblate spheroid)
     this.addErgosphere(object, group);
-    
+
     // Create accretion disk with frame dragging effects
     this.addAccretionDisk(object, group);
-    
+
     return group;
   }
-  
+
   /**
    * Add the event horizon sphere to the group
    */
-  private addEventHorizon(object: RenderableCelestialObject, group: THREE.Group): void {
+  private addEventHorizon(
+    object: RenderableCelestialObject,
+    group: THREE.Group,
+  ): void {
     const radius = object.radius || 1;
-    
+
     // Create the event horizon geometry and material
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
     this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
-    
+
     // Create the mesh and add to group
     const eventHorizon = new THREE.Mesh(geometry, this.eventHorizonMaterial);
     group.add(eventHorizon);
   }
-  
+
   /**
    * Add the ergosphere to the group - slightly oblate spheroid
    */
-  private addErgosphere(object: RenderableCelestialObject, group: THREE.Group): void {
+  private addErgosphere(
+    object: RenderableCelestialObject,
+    group: THREE.Group,
+  ): void {
     const radius = object.radius || 1;
     const ergoRadius = radius * 1.4; // Ergosphere is larger than event horizon
-    
+
     // Use slightly flattened sphere to represent ergosphere (oblate spheroid)
     // Higher segments for smoother appearance
     const geometry = new THREE.SphereGeometry(ergoRadius, 48, 48);
-    
+
     // Scale to create the oblate shape - flattened at poles due to rotation
     geometry.scale(1.0, 0.8, 1.0);
-    
+
     this.ergosphereMaterial = new ErgosphereMaterial();
     this.ergosphereMaterial.setRotationSpeed(this.rotationSpeed);
-    
+
     // Create the mesh and add to group
     const ergosphere = new THREE.Mesh(geometry, this.ergosphereMaterial);
     group.add(ergosphere);
   }
-  
+
   /**
    * Add the accretion disk to the group with frame dragging effects
    */
-  private addAccretionDisk(object: RenderableCelestialObject, group: THREE.Group): void {
+  private addAccretionDisk(
+    object: RenderableCelestialObject,
+    group: THREE.Group,
+  ): void {
     const radius = object.radius || 1;
     const diskOuterRadius = radius * 6; // Larger disk for Kerr black holes
     const diskInnerRadius = radius * 1.2; // Inner edge closer due to frame dragging
-    
+
     // Create the accretion disk geometry - higher segment count for smoothness
-    const diskGeometry = new THREE.RingGeometry(diskInnerRadius, diskOuterRadius, 96, 1);
+    const diskGeometry = new THREE.RingGeometry(
+      diskInnerRadius,
+      diskOuterRadius,
+      96,
+      1,
+    );
     const diskMaterial = new KerrAccretionDiskMaterial(this.rotationSpeed);
-    
+
     // Store the material for animation updates
     this.accretionDiskMaterials.set(object.celestialObjectId, diskMaterial);
-    
+
     // Create the disk mesh and add to group with slight angle for better visuals
     const accretionDisk = new THREE.Mesh(diskGeometry, diskMaterial);
     accretionDisk.rotation.x = Math.PI / 2;
-    
+
     // Add a slight tilt to make rotation more visible
     accretionDisk.rotation.z = Math.PI / 15;
-    
+
     group.add(accretionDisk);
   }
-  
+
   /**
    * Required by base class but not used for black holes
    */
@@ -258,7 +279,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
     // This is a placeholder to satisfy the abstract method requirement
     return {} as BaseStarMaterial;
   }
-  
+
   /**
    * Add gravitational lensing effect to the black hole
    * Should be called after the object is added to the scene
@@ -269,7 +290,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
     renderer: THREE.WebGLRenderer,
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
-    group: THREE.Object3D
+    group: THREE.Object3D,
   ): void {
     // Create the gravitational lensing helper
     const lensHelper = new GravitationalLensingHelper(
@@ -281,46 +302,54 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
         // Kerr black holes have stronger lensing, but still more subtle
         intensity: 1.4, // Reduced from 2.5
         // Scale based on mass and rotation but more subtle
-        distortionScale: 2.0 * (object.mass ? Math.min(8, object.mass / 6e6) : 1.0) * (1 + this.rotationSpeed * 0.4), // Reduced from 3.5 and adjusted scaling
+        distortionScale:
+          2.0 *
+          (object.mass ? Math.min(8, object.mass / 6e6) : 1.0) *
+          (1 + this.rotationSpeed * 0.4), // Reduced from 3.5 and adjusted scaling
         // Large sphere around the black hole
-        lensSphereScale: 9.0 // Adjusted from 12.0
-      }
+        lensSphereScale: 9.0, // Adjusted from 12.0
+      },
     );
-    
+
     // Store the helper for updates
     this.lensingHelpers.set(object.celestialObjectId, lensHelper);
   }
-  
+
   /**
    * Update materials with current time
    */
-  update(time?: number, renderer?: THREE.WebGLRenderer, scene?: THREE.Scene, camera?: THREE.PerspectiveCamera): void {
-    const currentTime = time ?? (Date.now() / 1000 - this.startTime);
+  update(
+    time?: number,
+    renderer?: THREE.WebGLRenderer,
+    scene?: THREE.Scene,
+    camera?: THREE.PerspectiveCamera,
+  ): void {
+    const currentTime = time ?? Date.now() / 1000 - this.startTime;
     this.elapsedTime = currentTime;
-    
+
     // Update event horizon material
     if (this.eventHorizonMaterial) {
       this.eventHorizonMaterial.update(currentTime);
     }
-    
+
     // Update ergosphere material
     if (this.ergosphereMaterial) {
       this.ergosphereMaterial.update(currentTime);
     }
-    
+
     // Update accretion disk materials
-    this.accretionDiskMaterials.forEach(material => {
+    this.accretionDiskMaterials.forEach((material) => {
       material.update(currentTime);
     });
-    
+
     // Update lensing helpers if renderer, scene and camera are provided
     if (renderer && scene && camera) {
-      this.lensingHelpers.forEach(helper => {
+      this.lensingHelpers.forEach((helper) => {
         helper.update(renderer, scene, camera);
       });
     }
   }
-  
+
   /**
    * Dispose of all materials
    */
@@ -328,22 +357,22 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
     if (this.eventHorizonMaterial) {
       this.eventHorizonMaterial.dispose();
     }
-    
+
     if (this.ergosphereMaterial) {
       this.ergosphereMaterial.dispose();
     }
-    
-    this.accretionDiskMaterials.forEach(material => {
+
+    this.accretionDiskMaterials.forEach((material) => {
       material.dispose();
     });
-    
+
     this.accretionDiskMaterials.clear();
-    
+
     // Dispose lensing helpers
-    this.lensingHelpers.forEach(helper => {
+    this.lensingHelpers.forEach((helper) => {
       helper.dispose();
     });
-    
+
     this.lensingHelpers.clear();
   }
-} 
+}

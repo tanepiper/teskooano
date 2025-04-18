@@ -69,13 +69,13 @@ export class StarInfoComponent
                 }
                 <dt>Mass:</dt><dd>${FormatUtils.formatExp(
                   celestial.realMass_kg,
-                  4
+                  4,
                 )} kg</dd>
                 <dt>Radius:</dt><dd>${FormatUtils.formatDistanceKm(
-                  celestial.realRadius_m
+                  celestial.realRadius_m,
                 )}</dd>
                 <dt>Temp:</dt><dd>${FormatUtils.formatFix(
-                  celestial.temperature
+                  celestial.temperature,
                 )} K</dd>
                 
                 <dt>Spectral:</dt><dd>${
@@ -83,7 +83,7 @@ export class StarInfoComponent
                 }${spectralDescription}</dd>
                 <dt>Luminosity:</dt><dd>${FormatUtils.formatExp(
                   starProps?.luminosity,
-                  2
+                  2,
                 )} L☉</dd>
                 <dt>Color:</dt><dd>${colorDisplay}</dd>
                 
@@ -91,14 +91,14 @@ export class StarInfoComponent
                   celestial.orbit?.realSemiMajorAxis_m
                     ? `
                 <dt>Orbit Size:</dt><dd>${FormatUtils.formatDistanceAU(
-                  celestial.orbit.realSemiMajorAxis_m
+                  celestial.orbit.realSemiMajorAxis_m,
                 )}</dd>
                 <dt>Eccentricity:</dt><dd>${FormatUtils.formatFix(
                   celestial.orbit.eccentricity,
-                  4
+                  4,
                 )}</dd>
                 <dt>Period:</dt><dd>${FormatUtils.formatPeriod(
-                  celestial.orbit.period_s
+                  celestial.orbit.period_s,
                 )}</dd>
                 `
                     : ""
@@ -113,7 +113,7 @@ export class StarInfoComponent
                 ${
                   starProps?.partnerStars && starProps.partnerStars.length > 0
                     ? `<dt>Partners:</dt><dd>${starProps.partnerStars.join(
-                        ", "
+                        ", ",
                       )}</dd>`
                     : ""
                 }

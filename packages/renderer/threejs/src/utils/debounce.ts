@@ -12,4 +12,4 @@ export function debounce<T extends (...args: any[]) => void>(
       func(...args);
     }, wait);
   };
-} 
+}

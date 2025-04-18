@@ -17,33 +17,33 @@ flowchart TD
         UserInput[User Input]
         SystemData[System Data]
     end
-    
+
     subgraph Simulation
         SimLoop[Simulation Loop]
         Physics[Physics Engine]
         OrbitalCalc[Orbital Calculations]
     end
-    
+
     subgraph State
         CoreState[Core State]
     end
-    
+
     subgraph Rendering
         Renderer[Three.js Renderer]
         CelestialRenderer[Celestial Renderers]
         UILayer[UI Layer]
     end
-    
+
     UserInput --> SimLoop
     SystemData --> SimLoop
-    
+
     SimLoop --> Physics
     Physics --> OrbitalCalc
     OrbitalCalc --> CoreState
-    
+
     CoreState --> Renderer
     CoreState --> UILayer
-    
+
     Renderer --> CelestialRenderer
     CelestialRenderer --> Display
     UILayer --> Display
@@ -62,13 +62,13 @@ graph TD
         DT --> CoreS[core/state]
         CoreP --> CoreS
     end
-    
+
     subgraph Domain["Domain Systems"]
         DT --> SC[systems/celestial]
         CoreP --> SO[systems/orbital]
         SO --> SC
     end
-    
+
     subgraph Renderer["Renderer Packages"]
         DT --> RT[renderer/threejs]
         CoreS --> RT
@@ -78,7 +78,7 @@ graph TD
         RT --> RTI[renderer/threejs-interaction]
         RT --> RTE[renderer/threejs-effects]
     end
-    
+
     subgraph Applications
         DT --> AS[app/simulation]
         CoreS --> AS
@@ -87,7 +87,7 @@ graph TD
         DT --> AW[app/window-manager]
         AS --> AW
     end
-    
+
     style Foundation fill:#e0f7fa,stroke:#006064
     style Domain fill:#e8f5e9,stroke:#1b5e20
     style Renderer fill:#f3e5f5,stroke:#4a148c
@@ -139,7 +139,7 @@ flowchart TB
         UpdatePhysics["Update Physics\n(integrator)"]
         CP --> UpdatePhysics
     end
-    
+
     subgraph State["State Store (Nanostores)"]
         CS[core/state]
         CelStore["celestialObjectsStore"]
@@ -149,7 +149,7 @@ flowchart TB
         CS --> SimState
         CS -.-> PanelViewState
     end
-    
+
     subgraph Render["Rendering Pipeline"]
         RT[renderer/threejs]
         Adapter[RendererStateAdapter]
@@ -167,7 +167,7 @@ flowchart TB
         RT --> LightM
         RT --> CSSM
     end
-    
+
     subgraph App["Application & UI"]
         AS[app/simulation / app/teskooano]
         EnginePanel[EnginePanel]
@@ -179,13 +179,13 @@ flowchart TB
         AS --> EnginePanel
         EnginePanel --> UIControls
     end
-    
+
     %% Main Flow
     PhysicsLoop -- "Get bodies" --> CelStore
     CP -- "Calculate forces" --> PhysicsLoop
     UpdatePhysics -- "Update positions & velocities" --> PhysicsLoop
     PhysicsLoop -- "Update state" --> CelStore
-    
+
     %% Render Flow
     CelStore -- "Core object state" --> Adapter
     SimState -- "Global sim state" --> Adapter
@@ -203,7 +203,7 @@ flowchart TB
     PanelViewState -- "State changes" --> EnginePanel
     EnginePanel -- "Call Renderer Methods" --> RT
     UIControls -- "Update Global State" --> SimState
-    
+
     style Core fill:#e0f7fa,stroke:#006064
     style State fill:#e8f5e9,stroke:#1b5e20
     style Render fill:#f3e5f5,stroke:#4a148c
@@ -222,7 +222,7 @@ flowchart TB
 ### State Management
 
 - **Nanostores**: Uses lightweight, efficient state management
-- **Core Stores**: 
+- **Core Stores**:
   - `celestialObjectsStore`: All celestial object data
   - `simulationState`: Global simulation settings
   - `celestialHierarchyStore`: Parent-child relationships
@@ -249,6 +249,7 @@ Teskooano manages three coordinate systems:
 3. **Screen Coordinates**: 2D coordinates for UI elements
 
 Conversion between these systems happens at specific points:
+
 - Physics calculations use real coordinates
 - The `RendererStateAdapter` converts to visualization coordinates
 - The Three.js renderer handles the final conversion to screen coordinates
@@ -278,4 +279,4 @@ When contributing to Teskooano, keep these architectural principles in mind:
 4. **Performance First**: Consider the performance impact of any changes
 5. **Test-Driven Development**: Write tests, especially for physics and core logic
 
-For more detailed guidance, see the [Contributing Guide](/docs/contributing). 
+For more detailed guidance, see the [Contributing Guide](/docs/contributing).

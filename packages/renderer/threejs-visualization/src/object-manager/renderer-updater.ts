@@ -1,5 +1,11 @@
-import { CelestialRenderer, KerrBlackHoleRenderer, NeutronStarRenderer, RingSystemRenderer, SchwarzschildBlackHoleRenderer } from '@teskooano/systems-celestial';
-import * as THREE from 'three';
+import {
+  CelestialRenderer,
+  KerrBlackHoleRenderer,
+  NeutronStarRenderer,
+  RingSystemRenderer,
+  SchwarzschildBlackHoleRenderer,
+} from "@teskooano/systems-celestial";
+import * as THREE from "three";
 
 /**
  * Helper class responsible for iterating through different categories of celestial renderers
@@ -33,7 +39,7 @@ export class RendererUpdater {
     starRenderers: Map<string, CelestialRenderer>,
     planetRenderers: Map<string, CelestialRenderer>,
     moonRenderers: Map<string, CelestialRenderer>,
-    ringSystemRenderers: Map<string, RingSystemRenderer>
+    ringSystemRenderers: Map<string, RingSystemRenderer>,
   ) {
     this.celestialRenderers = celestialRenderers;
     this.starRenderers = starRenderers;
@@ -56,17 +62,26 @@ export class RendererUpdater {
    */
   updateRenderers(
     time: number,
-    lightSources?: Map<string, { position: THREE.Vector3, color: THREE.Color, intensity: number }>,
+    lightSources?: Map<
+      string,
+      { position: THREE.Vector3; color: THREE.Color; intensity: number }
+    >,
     objects?: Map<string, THREE.Object3D>,
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
-    camera?: THREE.PerspectiveCamera
+    camera?: THREE.PerspectiveCamera,
   ): void {
     // Update standard renderers
     this.updateStandardRenderers(time, lightSources, camera);
-    
-    // Update specialized renderers 
-    this.updateSpecializedRenderers(time, lightSources, renderer, scene, camera);
+
+    // Update specialized renderers
+    this.updateSpecializedRenderers(
+      time,
+      lightSources,
+      renderer,
+      scene,
+      camera,
+    );
   }
 
   /**
@@ -79,17 +94,20 @@ export class RendererUpdater {
    */
   private updateStandardRenderers(
     time: number,
-    lightSources?: Map<string, { position: THREE.Vector3, color: THREE.Color, intensity: number }>, 
-    camera?: THREE.Camera
+    lightSources?: Map<
+      string,
+      { position: THREE.Vector3; color: THREE.Color; intensity: number }
+    >,
+    camera?: THREE.Camera,
   ): void {
     // Restore original logic: Update standard renderers (Planets, Moons, Generic Celestial)
     const renderersToUpdate = [
-        ...this.celestialRenderers.values(),
-        ...this.planetRenderers.values(),
-        ...this.moonRenderers.values()
+      ...this.celestialRenderers.values(),
+      ...this.planetRenderers.values(),
+      ...this.moonRenderers.values(),
     ];
 
-    renderersToUpdate.forEach(rendererInstance => {
+    renderersToUpdate.forEach((rendererInstance) => {
       if (rendererInstance.update) {
         rendererInstance.update(time, lightSources, camera);
       }
@@ -108,16 +126,19 @@ export class RendererUpdater {
    */
   private updateSpecializedRenderers(
     time: number,
-    lightSources?: Map<string, { position: THREE.Vector3, color: THREE.Color, intensity: number }>, 
+    lightSources?: Map<
+      string,
+      { position: THREE.Vector3; color: THREE.Color; intensity: number }
+    >,
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
-    camera?: THREE.PerspectiveCamera
+    camera?: THREE.PerspectiveCamera,
   ): void {
-    // Update star renderers 
+    // Update star renderers
     this.starRenderers.forEach((starRenderer, id) => {
       if (starRenderer.update) {
-        // const mesh = objects?.get(id); 
-        
+        // const mesh = objects?.get(id);
+
         // Check if this is a renderer that supports gravitational lensing
         if (
           starRenderer instanceof SchwarzschildBlackHoleRenderer ||
@@ -136,7 +157,7 @@ export class RendererUpdater {
         }
       }
     });
-    
+
     // Update ring renderers
     this.ringSystemRenderers.forEach((ringRenderer, id) => {
       if (ringRenderer.update) {
@@ -153,35 +174,35 @@ export class RendererUpdater {
    */
   dispose(): void {
     // Dispose of renderers
-    this.celestialRenderers.forEach(renderer => {
+    this.celestialRenderers.forEach((renderer) => {
       if (renderer.dispose) {
         renderer.dispose();
       }
     });
-    
-    this.starRenderers.forEach(renderer => {
+
+    this.starRenderers.forEach((renderer) => {
       if (renderer.dispose) {
         renderer.dispose();
       }
     });
-    
-    this.planetRenderers.forEach(renderer => {
+
+    this.planetRenderers.forEach((renderer) => {
       if (renderer.dispose) {
         renderer.dispose();
       }
     });
-    
-    this.moonRenderers.forEach(renderer => {
+
+    this.moonRenderers.forEach((renderer) => {
       if (renderer.dispose) {
         renderer.dispose();
       }
     });
-    
+
     // Dispose ring renderers
-    this.ringSystemRenderers.forEach(renderer => {
-        if (renderer.dispose) {
-            renderer.dispose();
-        }
+    this.ringSystemRenderers.forEach((renderer) => {
+      if (renderer.dispose) {
+        renderer.dispose();
+      }
     });
   }
-} 
+}

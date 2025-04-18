@@ -6,93 +6,93 @@
  * UI Component types
  */
 export enum UIComponentType {
-  PANEL = 'panel',
-  FOLDER = 'folder',
-  BUTTON = 'button',
-  SLIDER = 'slider',
-  CHECKBOX = 'checkbox',
-  DROPDOWN = 'dropdown',
-  COLOR = 'color',
-  TEXT = 'text',
-  NUMBER = 'number',
-  LABEL = 'label',
-  TOOLBAR = 'toolbar',
-  WINDOW = 'window'
+  PANEL = "panel",
+  FOLDER = "folder",
+  BUTTON = "button",
+  SLIDER = "slider",
+  CHECKBOX = "checkbox",
+  DROPDOWN = "dropdown",
+  COLOR = "color",
+  TEXT = "text",
+  NUMBER = "number",
+  LABEL = "label",
+  TOOLBAR = "toolbar",
+  WINDOW = "window",
 }
 
 /**
  * UI Layer definitions for z-index organization
  */
 export enum UILayer {
-  BASE = 0,        // Base layer (lowest)
-  BACKGROUND = 1,  // Background elements
-  CONTENT = 2,     // Main content elements
-  TOOLTIP = 3,     // Tooltip/hover elements
-  MODAL = 4,       // Modal dialogs
-  DEBUG = 99       // Debug layer (highest)
+  BASE = 0, // Base layer (lowest)
+  BACKGROUND = 1, // Background elements
+  CONTENT = 2, // Main content elements
+  TOOLTIP = 3, // Tooltip/hover elements
+  MODAL = 4, // Modal dialogs
+  DEBUG = 99, // Debug layer (highest)
 }
 
 /**
  * UI Slot types for layout organization
  */
 export enum UISlotType {
-  HEADER = 'header',    // Top section of a container
-  CONTENT = 'content',  // Main content area
-  FOOTER = 'footer',    // Bottom section of a container
-  LEFT = 'left',        // Left side of a container
-  RIGHT = 'right'       // Right side of a container
+  HEADER = "header", // Top section of a container
+  CONTENT = "content", // Main content area
+  FOOTER = "footer", // Bottom section of a container
+  LEFT = "left", // Left side of a container
+  RIGHT = "right", // Right side of a container
 }
 
 /**
  * UI Event types
  */
 export enum UIEventType {
-  CLICK = 'click',
-  HOVER = 'hover',
-  HOVER_START = 'hoverStart',
-  HOVER_END = 'hoverEnd',
-  CHANGE = 'change',
-  FINISH_CHANGE = 'finishChange',
-  DRAG_START = 'dragStart',
-  DRAG = 'drag',
-  DRAG_END = 'dragEnd',
-  FOCUS = 'focus',
-  BLUR = 'blur',
-  KEY_DOWN = 'keyDown',
-  KEY_UP = 'keyUp'
+  CLICK = "click",
+  HOVER = "hover",
+  HOVER_START = "hoverStart",
+  HOVER_END = "hoverEnd",
+  CHANGE = "change",
+  FINISH_CHANGE = "finishChange",
+  DRAG_START = "dragStart",
+  DRAG = "drag",
+  DRAG_END = "dragEnd",
+  FOCUS = "focus",
+  BLUR = "blur",
+  KEY_DOWN = "keyDown",
+  KEY_UP = "keyUp",
 }
 
 /**
  * Mouse event types
  */
 export enum MouseEvents {
-  CLICK = 'click',
-  DBLCLICK = 'dblclick',
-  MOUSEDOWN = 'mousedown',
-  MOUSEUP = 'mouseup',
-  MOUSEMOVE = 'mousemove',
-  MOUSEENTER = 'mouseenter',
-  MOUSELEAVE = 'mouseleave',
-  CONTEXTMENU = 'contextmenu'
+  CLICK = "click",
+  DBLCLICK = "dblclick",
+  MOUSEDOWN = "mousedown",
+  MOUSEUP = "mouseup",
+  MOUSEMOVE = "mousemove",
+  MOUSEENTER = "mouseenter",
+  MOUSELEAVE = "mouseleave",
+  CONTEXTMENU = "contextmenu",
 }
 
 /**
  * Keyboard event types
  */
 export enum KeyboardEvents {
-  KEYDOWN = 'keydown',
-  KEYUP = 'keyup',
-  KEYPRESS = 'keypress'
+  KEYDOWN = "keydown",
+  KEYUP = "keyup",
+  KEYPRESS = "keypress",
 }
 
 /**
  * Focus mode for UI components
  */
 export enum UIFocusMode {
-  NONE = 'none',
-  KEYBOARD = 'keyboard',
-  MOUSE = 'mouse',
-  TOUCH = 'touch'
+  NONE = "none",
+  KEYBOARD = "keyboard",
+  MOUSE = "mouse",
+  TOUCH = "touch",
 }
 
 /**
@@ -106,8 +106,8 @@ export interface UIThemeOptions {
   accentColor?: string;
   textColor?: string;
   disabledColor?: string;
-  hoverColor?: string;      // Color for hover state
-  activeColor?: string;     // Color for active/selected state
+  hoverColor?: string; // Color for hover state
+  activeColor?: string; // Color for active/selected state
   spacing?: number;
   borderRadius?: number;
   opacity?: number;
@@ -123,23 +123,23 @@ export type UISetter<T> = (value: T) => void;
  * Standard UI component events
  */
 export enum UIEvents {
-  COMPONENT_ADDED = 'ui-component-added',
-  COMPONENT_REMOVED = 'ui-component-removed',
-  COMPONENT_SHOWN = 'ui-component-shown',
-  COMPONENT_HIDDEN = 'ui-component-hidden',
-  COMPONENT_ENABLED = 'ui-component-enabled',
-  COMPONENT_DISABLED = 'ui-component-disabled',
-  PANEL_COLLAPSED = 'ui-panel-collapsed',
-  PANEL_EXPANDED = 'ui-panel-expanded',
-  DRAG_START = 'ui-drag-start',
-  DRAG_MOVE = 'ui-drag-move',
-  DRAG_END = 'ui-drag-end',
-  FOCUS = 'ui-focus',
-  BLUR = 'ui-blur',
-  VALUE_CHANGE = 'ui-value-change',
-  VALUE_CHANGE_DONE = 'ui-value-change-done',
-  LAYER_CHANGED = 'ui-layer-changed',
-  THEME_CHANGED = 'ui-theme-changed'
+  COMPONENT_ADDED = "ui-component-added",
+  COMPONENT_REMOVED = "ui-component-removed",
+  COMPONENT_SHOWN = "ui-component-shown",
+  COMPONENT_HIDDEN = "ui-component-hidden",
+  COMPONENT_ENABLED = "ui-component-enabled",
+  COMPONENT_DISABLED = "ui-component-disabled",
+  PANEL_COLLAPSED = "ui-panel-collapsed",
+  PANEL_EXPANDED = "ui-panel-expanded",
+  DRAG_START = "ui-drag-start",
+  DRAG_MOVE = "ui-drag-move",
+  DRAG_END = "ui-drag-end",
+  FOCUS = "ui-focus",
+  BLUR = "ui-blur",
+  VALUE_CHANGE = "ui-value-change",
+  VALUE_CHANGE_DONE = "ui-value-change-done",
+  LAYER_CHANGED = "ui-layer-changed",
+  THEME_CHANGED = "ui-theme-changed",
 }
 
 /**
@@ -155,7 +155,7 @@ export interface BaseUIComponent {
   disabled: boolean;
   layer?: UILayer;
   zIndex?: number;
-  
+
   // Methods all components should implement
   add(component: BaseUIComponent): BaseUIComponent;
   remove(component: BaseUIComponent): void;
@@ -169,7 +169,7 @@ export interface BaseUIComponent {
 }
 
 /**
- * Base UI Event data 
+ * Base UI Event data
  */
 export interface BaseUIEvent {
   type: UIEventType;
@@ -287,4 +287,4 @@ export interface BaseNumberStyle {
   textColor?: string;
   borderColor?: string;
   borderRadius?: number;
-} 
+}

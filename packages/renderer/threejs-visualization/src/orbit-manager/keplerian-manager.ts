@@ -1,9 +1,9 @@
-import * as THREE from 'three';
-import { type OrbitalParameters, CelestialType } from '@teskooano/data-types';
-import type { MapStore } from 'nanostores';
-import type { RenderableCelestialObject } from '@teskooano/renderer-threejs';
-import type { ObjectManager } from '../ObjectManager'; // Adjust path as needed
-import { calculateOrbitPoints, updateOrbitLine } from './'; // Import from index
+import * as THREE from "three";
+import { type OrbitalParameters, CelestialType } from "@teskooano/data-types";
+import type { MapStore } from "nanostores";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { ObjectManager } from "../ObjectManager"; // Adjust path as needed
+import { calculateOrbitPoints, updateOrbitLine } from "./"; // Import from index
 
 // --- Material Definitions ---
 const KEPLERIAN_DEFAULT_MATERIAL = new THREE.LineBasicMaterial({
@@ -29,7 +29,9 @@ export class KeplerianOrbitManager {
   public lines: Map<string, THREE.Line> = new Map();
 
   private objectManager: ObjectManager;
-  private renderableObjectsStore: MapStore<Record<string, RenderableCelestialObject>>;
+  private renderableObjectsStore: MapStore<
+    Record<string, RenderableCelestialObject>
+  >;
 
   /**
    * Creates an instance of KeplerianOrbitManager.
@@ -38,7 +40,7 @@ export class KeplerianOrbitManager {
    */
   constructor(
     objectManager: ObjectManager,
-    renderableObjectsStore: MapStore<Record<string, RenderableCelestialObject>>
+    renderableObjectsStore: MapStore<Record<string, RenderableCelestialObject>>,
   ) {
     this.objectManager = objectManager;
     this.renderableObjectsStore = renderableObjectsStore;
@@ -59,7 +61,7 @@ export class KeplerianOrbitManager {
     parentId: string,
     isVisible: boolean,
     highlightedObjectId: string | null,
-    highlightColor: THREE.Color
+    highlightColor: THREE.Color,
   ): void {
     const existingLine = this.lines.get(objectId);
     const parentObject3D = this.objectManager.getObject(parentId);
@@ -83,8 +85,8 @@ export class KeplerianOrbitManager {
     // Determine material based on parent type
     const isMoon = parentState.type !== CelestialType.STAR; // Assuming CelestialType is available
     const targetMaterial = isMoon
-        ? KEPLERIAN_MOON_MATERIAL
-        : KEPLERIAN_DEFAULT_MATERIAL;
+      ? KEPLERIAN_MOON_MATERIAL
+      : KEPLERIAN_DEFAULT_MATERIAL;
 
     if (existingLine) {
       updateOrbitLine(existingLine, orbitPoints); // Update geometry
@@ -93,12 +95,17 @@ export class KeplerianOrbitManager {
 
       // Update material if necessary
       if (existingLine.material !== targetMaterial) {
-          if (existingLine.material instanceof THREE.Material) {
-              existingLine.material.dispose(); // Dispose old material
-          }
-          existingLine.material = targetMaterial.clone(); // Assign cloned new material
+        if (existingLine.material instanceof THREE.Material) {
+          existingLine.material.dispose(); // Dispose old material
+        }
+        existingLine.material = targetMaterial.clone(); // Assign cloned new material
       }
-      this.applyHighlight(objectId, existingLine, highlightedObjectId, highlightColor); // Apply highlight
+      this.applyHighlight(
+        objectId,
+        existingLine,
+        highlightedObjectId,
+        highlightColor,
+      ); // Apply highlight
     } else {
       // Create new line
       const geometry = new THREE.BufferGeometry().setFromPoints(orbitPoints);
@@ -111,7 +118,12 @@ export class KeplerianOrbitManager {
       newLine.frustumCulled = false;
       this.objectManager.addRawObjectToScene(newLine);
       this.lines.set(objectId, newLine);
-      this.applyHighlight(objectId, newLine, highlightedObjectId, highlightColor); // Apply highlight
+      this.applyHighlight(
+        objectId,
+        newLine,
+        highlightedObjectId,
+        highlightColor,
+      ); // Apply highlight
     }
   }
 
@@ -155,11 +167,20 @@ export class KeplerianOrbitManager {
    * @param highlightedObjectId - The ID currently being highlighted (or null).
    * @param highlightColor - The color for highlighting.
    */
-  applyHighlightToObject(targetObjectId: string, highlightedObjectId: string | null, highlightColor: THREE.Color): void {
-      const line = this.lines.get(targetObjectId);
-      if (line) {
-          this.applyHighlight(targetObjectId, line, highlightedObjectId, highlightColor);
-      }
+  applyHighlightToObject(
+    targetObjectId: string,
+    highlightedObjectId: string | null,
+    highlightColor: THREE.Color,
+  ): void {
+    const line = this.lines.get(targetObjectId);
+    if (line) {
+      this.applyHighlight(
+        targetObjectId,
+        line,
+        highlightedObjectId,
+        highlightColor,
+      );
+    }
   }
 
   /**
@@ -167,13 +188,23 @@ export class KeplerianOrbitManager {
    * @param previouslyHighlightedId - The ID that was previously highlighted.
    * @param currentHighlightedId - The ID currently being highlighted (or null).
    */
-  resetPreviousHighlight(previouslyHighlightedId: string, currentHighlightedId: string | null): void {
-      if (previouslyHighlightedId && previouslyHighlightedId !== currentHighlightedId) {
-          const previousLine = this.lines.get(previouslyHighlightedId);
-          if (previousLine && previousLine.material instanceof THREE.LineBasicMaterial && previousLine.userData.defaultColor) {
-              previousLine.material.color.copy(previousLine.userData.defaultColor);
-          }
+  resetPreviousHighlight(
+    previouslyHighlightedId: string,
+    currentHighlightedId: string | null,
+  ): void {
+    if (
+      previouslyHighlightedId &&
+      previouslyHighlightedId !== currentHighlightedId
+    ) {
+      const previousLine = this.lines.get(previouslyHighlightedId);
+      if (
+        previousLine &&
+        previousLine.material instanceof THREE.LineBasicMaterial &&
+        previousLine.userData.defaultColor
+      ) {
+        previousLine.material.color.copy(previousLine.userData.defaultColor);
       }
+    }
   }
 
   /**
@@ -185,23 +216,23 @@ export class KeplerianOrbitManager {
    * @private
    */
   private applyHighlight(
-      lineObjectId: string,
-      line: THREE.Line,
-      highlightedObjectId: string | null,
-      highlightColor: THREE.Color
+    lineObjectId: string,
+    line: THREE.Line,
+    highlightedObjectId: string | null,
+    highlightColor: THREE.Color,
   ): void {
-      if (!(line.material instanceof THREE.LineBasicMaterial)) return;
+    if (!(line.material instanceof THREE.LineBasicMaterial)) return;
 
-      if (highlightedObjectId === lineObjectId) {
-          if (!line.userData.defaultColor) {
-              line.userData.defaultColor = line.material.color.clone();
-          }
-          line.material.color.copy(highlightColor);
-      } else if (line.userData.defaultColor) {
-          // Only reset if it was previously highlighted (has defaultColor)
-          line.material.color.copy(line.userData.defaultColor);
-          // Optional: delete line.userData.defaultColor; to signify it's no longer highlighted
+    if (highlightedObjectId === lineObjectId) {
+      if (!line.userData.defaultColor) {
+        line.userData.defaultColor = line.material.color.clone();
       }
+      line.material.color.copy(highlightColor);
+    } else if (line.userData.defaultColor) {
+      // Only reset if it was previously highlighted (has defaultColor)
+      line.material.color.copy(line.userData.defaultColor);
+      // Optional: delete line.userData.defaultColor; to signify it's no longer highlighted
+    }
   }
 
   /**
@@ -211,4 +242,4 @@ export class KeplerianOrbitManager {
     this.clearAll();
     // Any other specific cleanup for this manager
   }
-} 
+}

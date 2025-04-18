@@ -3,7 +3,7 @@ import { simulationState } from "@teskooano/core-state";
 // Helper to format vectors nicely
 function formatVector(
   vec?: { x: number; y: number; z: number },
-  precision: number = 0
+  precision: number = 0,
 ): string {
   if (!vec) return "(?, ?, ?)";
   const factor = Math.pow(10, precision);
@@ -178,7 +178,7 @@ export class RendererInfoDisplay extends HTMLElement {
     // --- Memory ---
     if (this.memoryValue) {
       this.memoryValue.textContent = formatMemory(
-        rendererStats?.memory?.usedJSHeapSize
+        rendererStats?.memory?.usedJSHeapSize,
       );
     }
 

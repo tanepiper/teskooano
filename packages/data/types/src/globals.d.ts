@@ -1,4 +1,4 @@
-import type { ModularSpaceRenderer } from '@teskooano/renderer-threejs';
+import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 
 declare global {
   interface Window {
@@ -18,4 +18,4 @@ declare global {
 
 // Adding this export makes the file a module, which is required for ambient declarations
 // when using module systems like ES Modules or CommonJS.
-export {}; 
+export {};

@@ -1,7 +1,11 @@
-import { DEG_TO_RAD } from '@teskooano/core-math';
-import { AU } from '@teskooano/core-physics';
-import { actions } from '@teskooano/core-state';
-import { CelestialType, RockyType, type AsteroidFieldProperties } from '@teskooano/data-types';
+import { DEG_TO_RAD } from "@teskooano/core-math";
+import { AU } from "@teskooano/core-physics";
+import { actions } from "@teskooano/core-state";
+import {
+  CelestialType,
+  RockyType,
+  type AsteroidFieldProperties,
+} from "@teskooano/data-types";
 
 // --- Asteroid Belt Constants (Approximate values) ---
 const BELT_CENTER_AU = 2.7; // Approximate center of the main belt
@@ -18,13 +22,13 @@ const BELT_ASTEROID_COUNT = 50000; // Representative number for simulation/rende
  */
 export function initializeAsteroidBelt(parentId: string): void {
   actions.addCelestial({
-    id: 'asteroid-belt-main',
-    name: 'Main Asteroid Belt',
+    id: "asteroid-belt-main",
+    name: "Main Asteroid Belt",
     type: CelestialType.ASTEROID_FIELD,
     parentId: parentId,
     realMass_kg: BELT_TOTAL_MASS_KG, // Total mass of the belt
     // Radius represents the extent/size, not a single body radius
-    realRadius_m: (BELT_OUTER_AU - BELT_INNER_AU) * AU / 2, // Half the width
+    realRadius_m: ((BELT_OUTER_AU - BELT_INNER_AU) * AU) / 2, // Half the width
     // Orbital parameters represent the approximate orbit of the belt's barycenter
     orbit: {
       realSemiMajorAxis_m: BELT_CENTER_AU * AU,
@@ -46,9 +50,9 @@ export function initializeAsteroidBelt(parentId: string): void {
       outerRadiusAU: BELT_OUTER_AU,
       heightAU: BELT_HEIGHT_AU,
       count: BELT_ASTEROID_COUNT,
-      color: '#8B4513', // Average color (Saddle Brown - rocky/dusty)
-      composition: ['silicates', 'carbonaceous', 'metallic', 'ice'], // Diverse composition
+      color: "#8B4513", // Average color (Saddle Brown - rocky/dusty)
+      composition: ["silicates", "carbonaceous", "metallic", "ice"], // Diverse composition
       asteroidType: RockyType.DARK_ROCK, // Default visual type for asteroids
     } as AsteroidFieldProperties,
   });
-} 
+}

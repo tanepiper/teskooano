@@ -6,11 +6,11 @@ This document provides a consolidated view of the Open Space 2 engine architectu
 
 The engine aims to simulate N-body physics in celestial systems with real orbital mechanics, rendered using Three.js. Key principles include:
 
-*   **Modularity**: Functionality is broken down into distinct packages (`core`, `data`, `systems`, `renderer`, `app`).
-*   **Unidirectional Data Flow**: Adhering to a clear flow driven by centralized state management.
-*   **Separation of Physics & Rendering**: Physics calculations are performed in real-world units, separate from scaled visualization.
-*   **Vanilla Tools**: Preference for Vanilla TypeScript, CSS, and standard web technologies.
-*   **Testability**: Emphasis on TDD, especially for physics and core logic.
+- **Modularity**: Functionality is broken down into distinct packages (`core`, `data`, `systems`, `renderer`, `app`).
+- **Unidirectional Data Flow**: Adhering to a clear flow driven by centralized state management.
+- **Separation of Physics & Rendering**: Physics calculations are performed in real-world units, separate from scaled visualization.
+- **Vanilla Tools**: Preference for Vanilla TypeScript, CSS, and standard web technologies.
+- **Testability**: Emphasis on TDD, especially for physics and core logic.
 
 ## II. System Packages Organization
 
@@ -23,13 +23,13 @@ graph TD
         DT --> CoreS[core/state]
         CoreP --> CoreS
     end
-    
+
     subgraph Domain["Domain Systems"]
         DT --> SC[systems/celestial]
         CoreP --> SO[systems/orbital]
         SO --> SC
     end
-    
+
     subgraph Renderer["Renderer Packages"]
         DT --> RT[renderer/threejs]
         CoreS --> RT
@@ -39,7 +39,7 @@ graph TD
         RT --> RTI[renderer/threejs-interaction]
         RT --> RTE[renderer/threejs-effects]
     end
-    
+
     subgraph Applications
         DT --> AS[app/simulation]
         CoreS --> AS
@@ -48,7 +48,7 @@ graph TD
         DT --> AW[app/window-manager]
         AS --> AW
     end
-    
+
     style Foundation fill:#e0f7fa,stroke:#006064
     style Domain fill:#e8f5e9,stroke:#1b5e20
     style Renderer fill:#f3e5f5,stroke:#4a148c
@@ -62,6 +62,7 @@ graph TD
 **Purpose**: Defines all shared TypeScript interfaces and enums used across the engine, ensuring data consistency.
 
 **Key Components**:
+
 - **`celestial.ts`**: Defines `CelestialObject`, specific types (Star, Planet, etc.) and their properties.
   - **Enums**: `CelestialType`, `GasGiantClass`, `PlanetType`, `AtmosphereType`, `SurfaceType`, etc.
   - **Core Interfaces**: `CelestialObject`, `OrbitalParameters`, `StarProperties`, `PlanetProperties`, etc.
@@ -79,6 +80,7 @@ graph TD
 **Purpose**: Provides fundamental mathematical constructs and utilities.
 
 **Key Components**:
+
 - **`OSVector3.ts`**: Custom 3D vector implementation for physics calculations, with conversion to/from `THREE.Vector3`.
 - **`constants.ts`**: Mathematical constants like `PI`, `TWO_PI`, `EPSILON`.
 - **`utils/`**: General-purpose math utilities (`clamp`, `lerp`, etc.) and functional programming helpers (`debounce`, `throttle`).
@@ -90,6 +92,7 @@ graph TD
 **Purpose**: Implements the core physics simulation logic with an emphasis on gravity and orbital mechanics.
 
 **Key Components**:
+
 - **`types.ts`**: Defines function signatures for `NetForceCalculator`, `PairForceCalculator`, and `Integrator`.
 - **`forces/gravity.ts`**: Implements Newtonian gravitational force calculation.
 - **`integrators/`**: Multiple numerical methods:
@@ -101,6 +104,7 @@ graph TD
 - **`orbital/`**: Specialized orbital mechanics calculations.
 
 **Key Characteristics**:
+
 - Uses real physical units throughout (meters, kilograms, seconds).
 - Pluggable force calculators and integrators.
 - Focuses on accuracy and performance for N-body gravity simulation.
@@ -112,6 +116,7 @@ graph TD
 **Purpose**: Manages the global application state using Nanostores as the central source of truth.
 
 **Key Components**:
+
 - **`game/stores.ts`**: Core Nanostores:
   - `celestialObjectsStore`: Map of all `CelestialObject` data keyed by ID.
   - `celestialHierarchyStore`: Parent-child relationships between objects.
@@ -125,6 +130,7 @@ graph TD
 - **`game/factory.ts`**: Creates initialized `CelestialObject` instances.
 
 **Key Characteristics**:
+
 - Single source of truth for the entire simulation.
 - Reactive state management with Nanostores.
 - Clear separation of concerns between state storage, simulation control, and physics synchronization.
@@ -138,6 +144,7 @@ graph TD
 **Purpose**: Defines, generates, and renders various celestial objects within the engine.
 
 **Key Components**:
+
 - **`renderers/`**: Specialized renderers for different celestial types:
   - `terrestrial/`: Handles rocky planets with procedural textures.
   - `stars/`: Manages spectral types, corona effects, and gravitational lensing.
@@ -151,6 +158,7 @@ graph TD
 - **`shaders/`**: GLSL shader code for various visual effects.
 
 **Key Characteristics**:
+
 - Highly specialized renderers tailored to celestial object types.
 - Procedural texture generation for variety and detail.
 - Custom shader implementations for realistic visuals.
@@ -170,9 +178,10 @@ graph TD
 **Purpose**: Provides foundational Three.js setup: scene, camera, renderer, animation loop, and state bridging.
 
 **Key Components**:
+
 - **`SceneManager`**: Manages `THREE.Scene`, `THREE.PerspectiveCamera`, and `THREE.WebGLRenderer`.
 - **`AnimationLoop`**: Manages the `requestAnimationFrame` loop and timing.
-- **`StateManager`**: _(Deprecated/Removed?)_ - *Seems state bridging is now handled by `RendererStateAdapter` in `renderer/threejs`.*
+- **`StateManager`**: _(Deprecated/Removed?)_ - _Seems state bridging is now handled by `RendererStateAdapter` in `renderer/threejs`._
 
 **Dependencies**: `three`, `@teskooano/core-state`, `@teskooano/data-types`.
 
@@ -181,6 +190,7 @@ graph TD
 **Purpose**: Manages visual effects and optimizations like lighting and Level of Detail (LOD).
 
 **Key Components**:
+
 - **`LightManager`**: Manages `THREE.Light` sources (stars).
 - **`LODManager`**: Handles Level of Detail transitions for objects.
 - **`lod-manager/`**: Helpers for LOD mesh creation and distance calculation (including `distance-calculator.ts` with segment/distance logic).
@@ -192,6 +202,7 @@ graph TD
 **Purpose**: Manages user interaction via camera controls and HTML overlays.
 
 **Key Components**:
+
 - **`ControlsManager`**: Integrates and configures `THREE.OrbitControls`.
 - **`CSS2DManager`**: Manages HTML elements positioned in 3D space using `CSS2DRenderer`, handles layer visibility.
 
@@ -202,6 +213,7 @@ graph TD
 **Purpose**: Orchestrates the rendering of celestial objects, orbits, and backgrounds.
 
 **Key Components**:
+
 - **`ObjectManager`**: Creates, updates, removes `THREE.Object3D` representations (including `THREE.LOD`). Synchronizes with state adapter, manages `LightManager` updates, triggers lensing setup.
 - **`OrbitManager`**: Visualizes orbital paths (Keplerian or Verlet), optimized line rendering.
 - **`BackgroundManager`**: Creates the starfield background with parallax.
@@ -214,11 +226,13 @@ graph TD
 **Purpose**: Main integration package providing the top-level `ModularSpaceRenderer` facade and state adaptation.
 
 **Key Components**:
+
 - **`ModularSpaceRenderer`**: Instantiates and coordinates all renderer managers (`SceneManager`, `ObjectManager`, `OrbitManager`, `LightManager`, etc.). Manages panel-specific view state interactions (label/grid visibility via `EnginePanel`).
 - **`RendererStateAdapter`**: Subscribes to core state (`celestialObjectsStore`, relevant parts of `simulationState`) and creates derived, renderer-specific state (`$renderableObjects`, `$visualSettings`) including coordinate conversion and passing necessary properties like `realRadius_m`.
 - **`utils/coordinateUtils.ts`**: Contains `physicsToThreeJSPosition` for coordinate conversion.
 
 **Key Characteristics**:
+
 - Facade pattern for simplified high-level API.
 - Orchestrates the entire rendering pipeline.
 - State-driven updates based on core state changes via the adapter.
@@ -233,6 +247,7 @@ graph TD
 **Purpose**: Main application entry point for running the Open Space simulation.
 
 **Key Components**:
+
 - **`Simulation` class**: Instantiates `ModularSpaceRenderer` and provides the main rendering loop.
 - **`loop.ts`**: Contains the physics simulation loop:
   1. Calculates forces and accelerations.
@@ -242,6 +257,7 @@ graph TD
 - **`systems/`**: Predefined celestial system configurations.
 
 **Key Characteristics**:
+
 - Dual loop architecture (physics and rendering).
 - Uses state store for communication between loops.
 - Web Components for UI controls.
@@ -261,7 +277,7 @@ flowchart TB
         UpdatePhysics["Update Physics\n(integrator)"]
         CP --> UpdatePhysics
     end
-    
+
     subgraph State["State Store (Nanostores)"]
         CS[core/state]
         CelStore["celestialObjectsStore"]
@@ -271,7 +287,7 @@ flowchart TB
         CS --> SimState
         CS -.-> PanelViewState
     end
-    
+
     subgraph Render["Rendering Pipeline"]
         RT[renderer/threejs]
         Adapter[RendererStateAdapter]
@@ -289,7 +305,7 @@ flowchart TB
         RT --> LightM
         RT --> CSSM
     end
-    
+
     subgraph App["Application & UI"]
         AS[app/simulation / app/teskooano]
         EnginePanel[EnginePanel]
@@ -301,13 +317,13 @@ flowchart TB
         AS --> EnginePanel
         EnginePanel --> UIControls
     end
-    
+
     %% Main Flow
     PhysicsLoop -- "Get bodies" --> CelStore
     CP -- "Calculate forces" --> PhysicsLoop
     UpdatePhysics -- "Update positions & velocities" --> PhysicsLoop
     PhysicsLoop -- "Update state" --> CelStore
-    
+
     %% Render Flow
     CelStore -- "Core object state" --> Adapter
     SimState -- "Global sim state" --> Adapter
@@ -325,7 +341,7 @@ flowchart TB
     PanelViewState -- "State changes" --> EnginePanel
     EnginePanel -- "Call Renderer Methods\n(setCelestialLabelsVisible, etc)" --> RT
     UIControls -- "Update Global State?" --> SimState
-    
+
     style Core fill:#e0f7fa,stroke:#006064
     style State fill:#e8f5e9,stroke:#1b5e20
     style Render fill:#f3e5f5,stroke:#4a148c
@@ -338,7 +354,7 @@ flowchart TB
 2.  It uses `core/physics` to calculate forces and updates positions/velocities using the chosen integrator.
 3.  Updated physics state is written back to `celestialObjectsStore`.
 4.  The `RendererStateAdapter` subscribes to `celestialObjectsStore` and relevant parts of `simulationState`, creating derived state (`$renderableObjects`, `$visualSettings`) optimized for rendering (e.g., converting coordinates).
-5.  Renderer Managers (`ObjectManager`, `OrbitManager`) subscribe to the *adapter's* derived state.
+5.  Renderer Managers (`ObjectManager`, `OrbitManager`) subscribe to the _adapter's_ derived state.
 6.  `ObjectManager` updates meshes, LOD, and informs `LightManager` based on state changes.
 7.  `OrbitManager` updates trail/prediction lines.
 8.  The main `RenderLoop` calls the `ModularSpaceRenderer`'s update/render methods.
@@ -351,19 +367,23 @@ flowchart TB
 ### A. Patterns
 
 1.  **State-Driven Architecture**:
+
     - Central Nanostores (`celestialObjectsStore`, `simulationState`) for global state.
     - **Adapter Pattern**: `RendererStateAdapter` decouples core state from renderer-specific needs (coordinate systems, derived data).
     - **Panel-Specific State**: View settings managed within `EnginePanel`'s internal store.
     - Unidirectional data flow remains key.
 
 2.  **Facade Pattern**:
+
     - `ModularSpaceRenderer` simplifies interaction with the complex renderer subsystem.
     - `celestialFactory` provides simplified creation of complex celestial objects.
 
 3.  **Manager Pattern**:
+
     - Used extensively (e.g., `SceneManager`, `ObjectManager`, `LODManager`) to encapsulate related responsibilities.
 
 4.  **Dependency Injection**:
+
     - Components are wired together during instantiation in parent classes (e.g., `ModularSpaceRenderer` creates and passes managers).
 
 5.  **Dual Loop Architecture**:
@@ -372,32 +392,39 @@ flowchart TB
 ### B. Key Decisions
 
 1.  **Real Units vs. Scaled Visualization**:
+
     - Physics uses real units; conversion happens in `RendererStateAdapter` / `coordinateUtils`.
 
 2.  **Pluggable Physics**:
+
     - Multiple integrators, selectable via `simulationState.physicsEngine`.
 
 3.  **Specialized Celestial Renderers**:
+
     - Distinct renderers, custom shaders, procedural generation.
 
 4.  **Level of Detail (LOD)**:
+
     - Centralized `LODManager` using `distance-calculator` logic.
     - **Critical**: Segment counts must be reasonable to avoid performance cliffs.
 
-5.  **State Management Scope**: 
+5.  **State Management Scope**:
+
     - Global simulation state (`simulationState`) vs. Per-Panel view state (`PanelViewState`). Clear separation is crucial.
 
-6. **Optimized Rendering**: 
-   - Avoid per-frame geometry creation/disposal (e.g., for lines).
-   - Efficient state synchronization (`ObjectManager`).
-   - Correct CSS2D layer management.
+6.  **Optimized Rendering**:
+    - Avoid per-frame geometry creation/disposal (e.g., for lines).
+    - Efficient state synchronization (`ObjectManager`).
+    - Correct CSS2D layer management.
 
 ### D. Areas for Improvement
 
 1.  **Consistent Abstraction**:
+
     - Formal `CelestialRenderer` interface still needed.
 
 2.  **Renderer Agnosticism**:
+
     - Some state components (`PanelViewState`) still use Three.js types.
 
 3.  **Performance Optimization**:
@@ -408,14 +435,17 @@ flowchart TB
 ## IX. Future Directions
 
 1. **Enhanced physics accuracy**:
+
    - Relativistic effects for high-gravity scenarios.
    - Additional N-body optimization techniques.
 
 2. **Expanded celestial types**:
+
    - More specialized renderers for exotic objects.
    - Enhanced atmospheric effects and surface details.
 
 3. **Improved user experience**:
+
    - Interactive object selection and manipulation.
    - Expanded informational displays and educational features.
 
@@ -423,4 +453,4 @@ flowchart TB
    - WebGPU support for computation and rendering.
    - Optimized procedural generation and texture caching.
 
-This comprehensive architecture provides a solid foundation for the Open Space 2 engine, focusing on accurate physics simulation, scalable rendering, and extensible design. 
+This comprehensive architecture provides a solid foundation for the Open Space 2 engine, focusing on accurate physics simulation, scalable rendering, and extensible design.

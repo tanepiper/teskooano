@@ -1,12 +1,12 @@
-import * as THREE from 'three';
-import { 
-  createStarLayers, 
-  updateStarColors, 
-  createDebugVisuals, 
-  cleanupDebugVisuals, 
-  updateParallax, 
-  animateStarField 
-} from './background-manager';
+import * as THREE from "three";
+import {
+  createStarLayers,
+  updateStarColors,
+  createDebugVisuals,
+  cleanupDebugVisuals,
+  updateParallax,
+  animateStarField,
+} from "./background-manager";
 
 /**
  * Manages the space background with multiple star field layers
@@ -30,27 +30,27 @@ export class BackgroundManager {
     this.group = new THREE.Group();
     this.starsGroup = new THREE.Group();
     this.debugGroup = new THREE.Group();
-    
+
     // Create the stars
     this.createStars();
-    
+
     // Add groups to the main group
     this.group.add(this.starsGroup);
     this.group.add(this.debugGroup);
-    
+
     // Add the background group to the scene
     scene.add(this.group);
   }
-  
+
   /**
    * Toggle debug visualization mode
    */
   public toggleDebug(): void {
     this.isDebugMode = !this.isDebugMode;
-    
+
     // Clear existing debug objects
     cleanupDebugVisuals(this.debugGroup);
-    
+
     if (this.isDebugMode) {
       // Create new debug visuals and add them to the debug group
       const newDebugGroup = createDebugVisuals();
@@ -59,10 +59,10 @@ export class BackgroundManager {
         this.debugGroup.add(newDebugGroup.children[0]);
       }
     }
-    
+
     // Update star colors based on debug mode
     updateStarColors(this.starLayers, this.isDebugMode);
-    
+
     // If debug mode was turned off, recreate the stars to restore original colors
     if (!this.isDebugMode) {
       this.createStars();
@@ -74,7 +74,7 @@ export class BackgroundManager {
    */
   private createStars(): void {
     // Clear existing layers
-    while(this.starsGroup.children.length > 0) {
+    while (this.starsGroup.children.length > 0) {
       const child = this.starsGroup.children[0];
       if (child instanceof THREE.Points) {
         child.geometry.dispose();
@@ -82,12 +82,12 @@ export class BackgroundManager {
       }
       this.starsGroup.remove(child);
     }
-    
+
     // Create new star layers
     this.starLayers = createStarLayers();
-    
+
     // Add all layers to the stars group
-    this.starLayers.forEach(layer => this.starsGroup.add(layer));
+    this.starLayers.forEach((layer) => this.starsGroup.add(layer));
   }
 
   /**
@@ -113,7 +113,7 @@ export class BackgroundManager {
 
     // Update parallax based on camera position
     updateParallax(this.starsGroup, this.camera);
-    
+
     // Animate star field
     animateStarField(this.starsGroup, this.starLayers, deltaTime);
   }
@@ -124,26 +124,26 @@ export class BackgroundManager {
   dispose(): void {
     // Remove from scene
     this.scene.remove(this.group);
-    
+
     // Dispose of star geometries and materials
-    this.starLayers.forEach(stars => {
+    this.starLayers.forEach((stars) => {
       stars.geometry.dispose();
       (stars.material as THREE.Material).dispose();
     });
-    
+
     // Clear arrays
     this.starLayers = [];
-    
+
     // Clean up debug visuals
     cleanupDebugVisuals(this.debugGroup);
-    
+
     // Clear groups
-    while(this.starsGroup.children.length > 0) {
+    while (this.starsGroup.children.length > 0) {
       this.starsGroup.remove(this.starsGroup.children[0]);
     }
-    
-    while(this.group.children.length > 0) {
+
+    while (this.group.children.length > 0) {
       this.group.remove(this.group.children[0]);
     }
   }
-} 
+}

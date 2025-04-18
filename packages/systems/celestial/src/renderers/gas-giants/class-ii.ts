@@ -1,11 +1,11 @@
-import type { GasGiantProperties } from '@teskooano/data-types';
-import * as THREE from 'three';
-import { BaseGasGiantMaterial, BaseGasGiantRenderer } from './base-gas-giant';
+import type { GasGiantProperties } from "@teskooano/data-types";
+import * as THREE from "three";
+import { BaseGasGiantMaterial, BaseGasGiantRenderer } from "./base-gas-giant";
 
 // Import the new Class II shaders
-import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
-import classIIFragmentShader from '../../shaders/gas-giants/class-ii.fragment.glsl';
-import classIIVertexShader from '../../shaders/gas-giants/class-ii.vertex.glsl';
+import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import classIIFragmentShader from "../../shaders/gas-giants/class-ii.fragment.glsl";
+import classIIVertexShader from "../../shaders/gas-giants/class-ii.vertex.glsl";
 
 // Map LOD level (0-3) to number of noise octaves (copied from class-i.ts)
 const lodToOctaveMap = [
@@ -25,13 +25,14 @@ class ClassIIMaterial extends BaseGasGiantMaterial {
 
   constructor(options: {
     atmosphereColor: THREE.Color; // Maps to mainColor1
-    cloudColor: THREE.Color;      // Maps to mainColor2
+    cloudColor: THREE.Color; // Maps to mainColor2
     seed: string | number;
-    textures?: { // New option for textures
+    textures?: {
+      // New option for textures
       stormMap?: THREE.Texture;
       cloudMap?: THREE.Texture;
       detailMap?: THREE.Texture;
-    }
+    };
   }) {
     // Derive a dark color - use a slightly different factor for variety?
     const darkColor = options.atmosphereColor.clone().multiplyScalar(0.35); // Darken atmosphere
@@ -57,7 +58,7 @@ class ClassIIMaterial extends BaseGasGiantMaterial {
         stormMap: { value: options.textures?.stormMap },
         hasStormMap: { value: !!options.textures?.stormMap },
       },
-      vertexShader: classIIVertexShader,   // Use Class II vertex shader
+      vertexShader: classIIVertexShader, // Use Class II vertex shader
       fragmentShader: classIIFragmentShader, // Use Class II fragment shader
     });
   }
@@ -98,17 +99,26 @@ class ClassIIMaterial extends BaseGasGiantMaterial {
 export class ClassIIGasGiantRenderer extends BaseGasGiantRenderer {
   // Removed texture cache
 
-  protected getMaterial(object: RenderableCelestialObject): BaseGasGiantMaterial { // Return type is Base, actual is ClassII
+  protected getMaterial(
+    object: RenderableCelestialObject,
+  ): BaseGasGiantMaterial {
+    // Return type is Base, actual is ClassII
     const properties = object.properties as GasGiantProperties;
 
     // Generate deterministic seed from object id or use random
-    const seed = object.celestialObjectId ? 
-      object.celestialObjectId.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) : 
-      Math.random() * 10000;
+    const seed = object.celestialObjectId
+      ? object.celestialObjectId
+          .split("")
+          .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
+      : Math.random() * 10000;
 
     // Use default colors if properties are missing
-    const atmosphereColor = properties.atmosphereColor ? new THREE.Color(properties.atmosphereColor) : new THREE.Color(0xFFFFE0); // Light Yellow default
-    const cloudColor = properties.cloudColor ? new THREE.Color(properties.cloudColor) : new THREE.Color(0xD2B48C); // Tan/Light Brown default
+    const atmosphereColor = properties.atmosphereColor
+      ? new THREE.Color(properties.atmosphereColor)
+      : new THREE.Color(0xffffe0); // Light Yellow default
+    const cloudColor = properties.cloudColor
+      ? new THREE.Color(properties.cloudColor)
+      : new THREE.Color(0xd2b48c); // Tan/Light Brown default
 
     // Removed old BasicGasGiantMaterial logic
 
@@ -116,9 +126,9 @@ export class ClassIIGasGiantRenderer extends BaseGasGiantRenderer {
     return new ClassIIMaterial({
       atmosphereColor: atmosphereColor,
       cloudColor: cloudColor,
-      seed: seed
+      seed: seed,
     });
   }
 
   // Base class update and dispose are sufficient now
-} 
+}

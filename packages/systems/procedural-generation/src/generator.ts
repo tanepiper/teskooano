@@ -10,7 +10,12 @@ import type {
   StarProperties,
   OortCloudProperties,
 } from "@teskooano/data-types";
-import { CelestialType, SCALE, SpectralClass, CelestialStatus } from "@teskooano/data-types";
+import {
+  CelestialType,
+  SCALE,
+  SpectralClass,
+  CelestialStatus,
+} from "@teskooano/data-types";
 import * as CONST from "./constants";
 import { generateAsteroidBelt } from "./generators/asteroidBelt";
 import { generateMoon } from "./generators/moon";
@@ -102,7 +107,7 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
                 `Correcting undersized companion ${spectralClass}-type star radius: ` +
                   `${(oldRadius / 1000).toFixed(0)} km -> ${(
                     correctedRadius / 1000
-                  ).toFixed(0)} km`
+                  ).toFixed(0)} km`,
               );
 
               // Update the radius
@@ -114,13 +119,13 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
             }
           } else {
             console.warn(
-              `-> Skipping radius validation for exotic companion star ${starData.name} with spectral class ${spectralClass}`
+              `-> Skipping radius validation for exotic companion star ${starData.name} with spectral class ${spectralClass}`,
             );
           }
 
           if (needsCorrection) {
             console.warn(
-              `-> Applied radius correction to companion star ${starData.name}`
+              `-> Applied radius correction to companion star ${starData.name}`,
             );
           }
         }
@@ -137,7 +142,7 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
       const companionPeriod_s = UTIL.calculateOrbitalPeriod_s(
         primaryStar.realMass_kg,
         companionSMA_m,
-        starData.realMass_kg
+        starData.realMass_kg,
       );
 
       const companionOrbit: OrbitalParameters = {
@@ -181,7 +186,7 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
         };
         primaryStar.orbit = primaryOrbit; // Use orbit field
         console.warn(
-          `-> Updated primary star ${primaryStar.name} orbit for barycenter motion.`
+          `-> Updated primary star ${primaryStar.name} orbit for barycenter motion.`,
         );
 
         // --- Calculate INITIAL STATE VECTORS for BOTH stars from orbits ---
@@ -196,12 +201,12 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
           const companionInitialRelPos = calculateOrbitalPosition(
             primaryStateForCompanionCalc,
             companionOrbit,
-            0
+            0,
           );
           const companionInitialVel = calculateOrbitalVelocity(
             primaryStateForCompanionCalc,
             companionOrbit,
-            0
+            0,
           );
           starData.physicsStateReal.position_m = companionInitialRelPos; // Starts relative to primary at 0,0,0
           starData.physicsStateReal.velocity_mps = companionInitialVel;
@@ -216,12 +221,12 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
           const primaryInitialRelPos = calculateOrbitalPosition(
             barycenterStateForPrimaryCalc,
             primaryOrbit,
-            0
+            0,
           );
           const primaryInitialVel = calculateOrbitalVelocity(
             barycenterStateForPrimaryCalc,
             primaryOrbit,
-            0
+            0,
           );
           primaryStar.physicsStateReal.position_m = primaryInitialRelPos;
           primaryStar.physicsStateReal.velocity_mps = primaryInitialVel;
@@ -233,7 +238,7 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
         } catch (error) {
           console.error(
             `[generateSystem] Error calculating initial binary star physics state:`,
-            error
+            error,
           );
           // Decide how to handle - skip companion? continue with 0 velocity?
           // For now, we'll proceed but physics will be wrong.
@@ -266,12 +271,12 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
     // Clamp the step to avoid tiny or huge jumps
     distanceStepAU = Math.max(
       minDistanceStepAU,
-      Math.min(maxDistanceStepAU, distanceStepAU)
+      Math.min(maxDistanceStepAU, distanceStepAU),
     );
 
     if (lastBodyDistanceAU + distanceStepAU > maxPlacementAU) {
       console.warn(
-        ` -> Reached max placement distance (${maxPlacementAU} AU). Stopping body generation.`
+        ` -> Reached max placement distance (${maxPlacementAU} AU). Stopping body generation.`,
       );
       break;
     }
@@ -284,7 +289,7 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
       const starOrbitRadiusAU =
         (star.orbit?.realSemiMajorAxis_m ?? 0) / CONST.AU_TO_METERS;
       const distanceDiff = Math.abs(
-        lastBodyDistanceAU + distanceStepAU - starOrbitRadiusAU
+        lastBodyDistanceAU + distanceStepAU - starOrbitRadiusAU,
       );
 
       if (distanceDiff < minDistanceDiff) {
@@ -304,7 +309,7 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
     const parentStarOrbitRadiusAU =
       (parentStar.orbit?.realSemiMajorAxis_m ?? 0) / CONST.AU_TO_METERS;
     const distanceRelativeToParentAU = Math.abs(
-      lastBodyDistanceAU + distanceStepAU - parentStarOrbitRadiusAU
+      lastBodyDistanceAU + distanceStepAU - parentStarOrbitRadiusAU,
     );
 
     // Basic check: Don't place body inside the parent star radius
@@ -314,14 +319,14 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
     ) {
       console.warn(
         ` -> Skipping body at ${lastBodyDistanceAU.toFixed(
-          2
+          2,
         )} AU - calculated position relative to parent ${
           parentStar.name
         } (${distanceRelativeToParentAU.toFixed(
-          2
+          2,
         )} AU) is too close to star radius (${(
           parentStarRadius / CONST.AU_TO_METERS
-        ).toFixed(4)} AU).`
+        ).toFixed(4)} AU).`,
       );
       // Don't update lastBodyDistanceAU here, try placing the *next* body further out
       continue; // Skip this body generation attempt
@@ -335,8 +340,13 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
     if (bodyTypeRoll < 0.15) {
       // Generate Asteroid Belt
       // Clamp distance to 2-10 AU for belts
-      if (distanceRelativeToParentAU < 2.0 || distanceRelativeToParentAU > 10.0) {
-        console.log(` -> Skipping asteroid belt generation at ${distanceRelativeToParentAU.toFixed(2)} AU (outside 2-10 AU range).`);
+      if (
+        distanceRelativeToParentAU < 2.0 ||
+        distanceRelativeToParentAU > 10.0
+      ) {
+        console.log(
+          ` -> Skipping asteroid belt generation at ${distanceRelativeToParentAU.toFixed(2)} AU (outside 2-10 AU range).`,
+        );
         // Update lastBodyDistanceAU anyway to prevent getting stuck trying to place belt here
         lastBodyDistanceAU += distanceStepAU;
         continue; // Skip to next potential orbit slot
@@ -347,7 +357,7 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
         parentStarId,
         parentStarMass_kg, // Pass parent mass
         i, // Use loop index for naming
-        distanceRelativeToParentAU // Use distance relative to parent star
+        distanceRelativeToParentAU, // Use distance relative to parent star
       );
       if (beltData) {
         celestialObjects.push(beltData);
@@ -363,14 +373,14 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
           parentStarRadius,
           distanceRelativeToParentAU, // Use distance relative to parent star
           seed,
-          parentStarState // Pass the parent state
+          parentStarState, // Pass the parent state
         );
 
       // --- MODIFIED: Handle the array of generated objects ---
       if (generatedObjects && generatedObjects.length > 0) {
         // Find the actual planet object (should be the first non-null one that's not a ring system)
         const planetObject = generatedObjects.find(
-          (obj) => obj && obj.type !== CelestialType.RING_SYSTEM
+          (obj) => obj && obj.type !== CelestialType.RING_SYSTEM,
         ) as CelestialObject | null;
 
         // Add all generated objects (planet + potential ring system) to the main list
@@ -394,7 +404,7 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
               planetMass_kg,
               planetRadius_m,
               lastMoonDistance_radii,
-              seed
+              seed,
             );
             if (moonData) {
               celestialObjects.push(moonData);
@@ -413,9 +423,9 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
     lastBodyDistanceAU += distanceStepAU;
   }
 
-  // --- Generate Oort Cloud --- 
+  // --- Generate Oort Cloud ---
   const primaryStar = stars[0]; // Assuming the first star is the primary parent
-  // TODO: Add Oort Cloud generation back in - at the moment it's a 
+  // TODO: Add Oort Cloud generation back in - at the moment it's a
   // performance issue and doesn't look good.
   // if (primaryStar) {
   //     const oortCloud = generateOortCloud(random, primaryStar);
@@ -428,20 +438,24 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
   // --- End Oort Cloud Generation ---
 
   // --- Ensure at least one asteroid belt ---
-  const hasAsteroidBelt = celestialObjects.some(obj => obj.type === CelestialType.ASTEROID_FIELD);
+  const hasAsteroidBelt = celestialObjects.some(
+    (obj) => obj.type === CelestialType.ASTEROID_FIELD,
+  );
   if (!hasAsteroidBelt && primaryStar) {
     // Place guaranteed asteroid belt between 2-6 AU from primary star
     const guaranteedBeltDistanceAU = 2.0 + random() * 4.0;
-    console.log(` -> Adding guaranteed asteroid belt at ${guaranteedBeltDistanceAU.toFixed(2)} AU`);
-    
+    console.log(
+      ` -> Adding guaranteed asteroid belt at ${guaranteedBeltDistanceAU.toFixed(2)} AU`,
+    );
+
     const beltData = generateAsteroidBelt(
       random,
       primaryStar.id,
       primaryStar.realMass_kg,
       totalPotentialOrbits, // Use totalPotentialOrbits as index for naming
-      guaranteedBeltDistanceAU
+      guaranteedBeltDistanceAU,
     );
-    
+
     if (beltData) {
       celestialObjects.push(beltData);
     } else {

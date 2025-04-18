@@ -1,7 +1,7 @@
-import { OSVector3 } from '@teskooano/core-math';
-import { Octree, verlet } from '@teskooano/core-physics';
-import { METERS_TO_SCENE_UNITS, PhysicsStateReal } from '@teskooano/data-types';
-import * as THREE from 'three';
+import { OSVector3 } from "@teskooano/core-math";
+import { Octree, verlet } from "@teskooano/core-physics";
+import { METERS_TO_SCENE_UNITS, PhysicsStateReal } from "@teskooano/data-types";
+import * as THREE from "three";
 
 /**
  * @internal
@@ -15,13 +15,13 @@ import * as THREE from 'three';
 function _calculateAccelerationsForStep(
   currentPredictionStates: PhysicsStateReal[],
   octreeSize: number,
-  barnesHutTheta: number
+  barnesHutTheta: number,
 ): [Map<string, OSVector3>, Octree] {
   const stepOctree = new Octree(octreeSize);
-  currentPredictionStates.forEach(body => stepOctree.insert(body));
+  currentPredictionStates.forEach((body) => stepOctree.insert(body));
 
   const accelerations = new Map<string, OSVector3>();
-  currentPredictionStates.forEach(body => {
+  currentPredictionStates.forEach((body) => {
     const force = stepOctree.calculateForceOn(body, barnesHutTheta);
     const acc = new OSVector3(0, 0, 0);
     if (body.mass_kg !== 0) {
@@ -56,15 +56,20 @@ function _integrateOneStep(
   barnesHutTheta: number,
   dt: number,
   targetBodyId: string,
-  stepIndex: number
-): { nextPredictionStates: PhysicsStateReal[]; nextTargetPoint: THREE.Vector3 | null; error: boolean } {
-
+  stepIndex: number,
+): {
+  nextPredictionStates: PhysicsStateReal[];
+  nextTargetPoint: THREE.Vector3 | null;
+  error: boolean;
+} {
   const nextPredictionStates: PhysicsStateReal[] = [];
   let targetBodyNextState: PhysicsStateReal | null = null;
   let integrationErrorOccurred = false;
 
   // Define helper to calculate acceleration for a given state (within prediction context)
-  const calculateAccelerationForState = (stateGuess: PhysicsStateReal): OSVector3 => {
+  const calculateAccelerationForState = (
+    stateGuess: PhysicsStateReal,
+  ): OSVector3 => {
     const force = stepOctree.calculateForceOn(stateGuess, barnesHutTheta);
     const acc = new OSVector3(0, 0, 0);
     if (stateGuess.mass_kg !== 0) {
@@ -73,24 +78,39 @@ function _integrateOneStep(
     return acc;
   };
 
-  currentPredictionStates.forEach(body => {
+  currentPredictionStates.forEach((body) => {
     if (integrationErrorOccurred) return; // Stop processing if error happened
 
     const acceleration = accelerations.get(body.id);
     if (!acceleration) {
-      console.error(`[predictVerletTrajectory] Acceleration calculation failed for body ${body.id}`);
+      console.error(
+        `[predictVerletTrajectory] Acceleration calculation failed for body ${body.id}`,
+      );
       integrationErrorOccurred = true;
       return;
     }
 
     // IMPORTANT: Ensure 'verlet' function is correctly imported and used
     try {
-      const nextState: PhysicsStateReal = verlet(body, acceleration, calculateAccelerationForState, dt);
+      const nextState: PhysicsStateReal = verlet(
+        body,
+        acceleration,
+        calculateAccelerationForState,
+        dt,
+      );
       // Basic validation using individual components
-      const posOk = Number.isFinite(nextState.position_m.x) && Number.isFinite(nextState.position_m.y) && Number.isFinite(nextState.position_m.z);
-      const velOk = Number.isFinite(nextState.velocity_mps.x) && Number.isFinite(nextState.velocity_mps.y) && Number.isFinite(nextState.velocity_mps.z);
+      const posOk =
+        Number.isFinite(nextState.position_m.x) &&
+        Number.isFinite(nextState.position_m.y) &&
+        Number.isFinite(nextState.position_m.z);
+      const velOk =
+        Number.isFinite(nextState.velocity_mps.x) &&
+        Number.isFinite(nextState.velocity_mps.y) &&
+        Number.isFinite(nextState.velocity_mps.z);
       if (!posOk || !velOk) {
-        console.error(`[predictVerletTrajectory] Non-finite state detected for body ${body.id} after integration step ${stepIndex}. Pos OK: ${posOk}, Vel OK: ${velOk}. Aborting prediction.`);
+        console.error(
+          `[predictVerletTrajectory] Non-finite state detected for body ${body.id} after integration step ${stepIndex}. Pos OK: ${posOk}, Vel OK: ${velOk}. Aborting prediction.`,
+        );
         integrationErrorOccurred = true;
         return;
       }
@@ -100,7 +120,10 @@ function _integrateOneStep(
         targetBodyNextState = nextState;
       }
     } catch (error) {
-      console.error(`[predictVerletTrajectory] Error during Verlet integration for body ${body.id} at step ${stepIndex}:`, error);
+      console.error(
+        `[predictVerletTrajectory] Error during Verlet integration for body ${body.id} at step ${stepIndex}:`,
+        error,
+      );
       integrationErrorOccurred = true;
     }
   });
@@ -109,19 +132,25 @@ function _integrateOneStep(
   if (!integrationErrorOccurred) {
     // Use type assertion via unknown
     const finalState = targetBodyNextState as unknown as PhysicsStateReal;
-    if (finalState?.position_m) { // Check after assertion
-        nextTargetPoint = finalState.position_m.clone().multiplyScalar(METERS_TO_SCENE_UNITS).toThreeJS();
+    if (finalState?.position_m) {
+      // Check after assertion
+      nextTargetPoint = finalState.position_m
+        .clone()
+        .multiplyScalar(METERS_TO_SCENE_UNITS)
+        .toThreeJS();
     } else {
-        // This shouldn't happen if integration succeeded, but good safety check
-        console.warn(`[predictVerletTrajectory] Target body state not found after integration step ${stepIndex}`);
-        integrationErrorOccurred = true; // Treat missing target state as an error
+      // This shouldn't happen if integration succeeded, but good safety check
+      console.warn(
+        `[predictVerletTrajectory] Target body state not found after integration step ${stepIndex}`,
+      );
+      integrationErrorOccurred = true; // Treat missing target state as an error
     }
   }
 
   return {
     nextPredictionStates,
     nextTargetPoint,
-    error: integrationErrorOccurred
+    error: integrationErrorOccurred,
   };
 }
 
@@ -157,10 +186,14 @@ export function predictVerletTrajectory(
   duration_s: number,
   steps: number,
   octreeSize: number = 5e13,
-  barnesHutTheta: number = 0.7
+  barnesHutTheta: number = 0.7,
 ): THREE.Vector3[] {
-
-  if (steps <= 0 || !allBodiesInitialStates || allBodiesInitialStates.length === 0) return [];
+  if (
+    steps <= 0 ||
+    !allBodiesInitialStates ||
+    allBodiesInitialStates.length === 0
+  )
+    return [];
   const targetBodyInitialState = allBodiesInitialStates[0];
   const targetBodyId = targetBodyInitialState.id;
 
@@ -169,59 +202,70 @@ export function predictVerletTrajectory(
 
   // --- Initialize Simulation State for Prediction ---
   let currentPredictionStates: PhysicsStateReal[] = [
-      ...allBodiesInitialStates.map(body => (
-         { ...body, position_m: body.position_m.clone(), velocity_mps: body.velocity_mps.clone() }
-      ))
+    ...allBodiesInitialStates.map((body) => ({
+      ...body,
+      position_m: body.position_m.clone(),
+      velocity_mps: body.velocity_mps.clone(),
+    })),
   ];
 
   // Add initial scaled position if available
   if (targetBodyInitialState.position_m) {
     predictedPoints.push(
-        targetBodyInitialState.position_m.clone().multiplyScalar(METERS_TO_SCENE_UNITS).toThreeJS()
+      targetBodyInitialState.position_m
+        .clone()
+        .multiplyScalar(METERS_TO_SCENE_UNITS)
+        .toThreeJS(),
     );
   } else {
-      console.warn(`[predictVerletTrajectory] Initial target position missing for ${targetBodyId}`);
-      return []; // Cannot predict without initial position
+    console.warn(
+      `[predictVerletTrajectory] Initial target position missing for ${targetBodyId}`,
+    );
+    return []; // Cannot predict without initial position
   }
 
   // --- Run Prediction Loop ---
   for (let i = 0; i < steps; i++) {
-      // 1. Calculate forces based on current predicted positions
-      // 2. Calculate accelerations using the helper function
-      const [accelerations, stepOctree] = _calculateAccelerationsForStep(
-        currentPredictionStates,
-        octreeSize,
-        barnesHutTheta
+    // 1. Calculate forces based on current predicted positions
+    // 2. Calculate accelerations using the helper function
+    const [accelerations, stepOctree] = _calculateAccelerationsForStep(
+      currentPredictionStates,
+      octreeSize,
+      barnesHutTheta,
+    );
+
+    // 3. Update states using Verlet integrator
+    const stepResult = _integrateOneStep(
+      currentPredictionStates,
+      accelerations,
+      stepOctree,
+      barnesHutTheta,
+      dt,
+      targetBodyId,
+      i, // Pass step index for logging
+    );
+
+    // If an error occurred during integration, stop prediction
+    if (stepResult.error) {
+      console.warn(
+        `[predictVerletTrajectory] Prediction aborted for ${targetBodyId} due to integration error at step ${i}.`,
       );
+      return predictedPoints; // Return points generated so far
+    }
 
-      // 3. Update states using Verlet integrator
-      const stepResult = _integrateOneStep(
-        currentPredictionStates,
-        accelerations,
-        stepOctree,
-        barnesHutTheta,
-        dt,
-        targetBodyId,
-        i // Pass step index for logging
+    // Update current state for the next iteration
+    currentPredictionStates = stepResult.nextPredictionStates;
+
+    // Store the predicted position of the target body (scaled)
+    if (stepResult.nextTargetPoint) {
+      predictedPoints.push(stepResult.nextTargetPoint);
+    } else {
+      // Should be caught by stepResult.error, but as a safeguard:
+      console.warn(
+        `[predictVerletTrajectory] Target body point unexpectedly missing after step ${i}. Aborting.`,
       );
-
-      // If an error occurred during integration, stop prediction
-      if (stepResult.error) {
-          console.warn(`[predictVerletTrajectory] Prediction aborted for ${targetBodyId} due to integration error at step ${i}.`);
-          return predictedPoints; // Return points generated so far
-      }
-
-      // Update current state for the next iteration
-      currentPredictionStates = stepResult.nextPredictionStates;
-
-      // Store the predicted position of the target body (scaled)
-      if (stepResult.nextTargetPoint) {
-          predictedPoints.push(stepResult.nextTargetPoint);
-      } else {
-          // Should be caught by stepResult.error, but as a safeguard:
-          console.warn(`[predictVerletTrajectory] Target body point unexpectedly missing after step ${i}. Aborting.`);
-          break;
-      }
+      break;
+    }
   }
 
   return predictedPoints;

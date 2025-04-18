@@ -113,13 +113,14 @@ export class CSS2DManager {
       backgroundColor?: string;
       layerType?: CSS2DLayerType;
       id?: string;
-    }
+    },
   ): CSS2DObject {
     const labelDiv = document.createElement("div");
     labelDiv.className = options?.className || "celestial-label";
     labelDiv.textContent = text;
     labelDiv.style.color = options?.color || "white";
-    labelDiv.style.backgroundColor = options?.backgroundColor || "rgba(0,0,0,0.5)";
+    labelDiv.style.backgroundColor =
+      options?.backgroundColor || "rgba(0,0,0,0.5)";
     labelDiv.style.padding = "2px 5px";
     labelDiv.style.borderRadius = "3px";
     labelDiv.style.fontSize = "12px";
@@ -152,18 +153,23 @@ export class CSS2DManager {
    * Determine label position for a celestial object
    * @private
    */
-  private calculateLabelPosition(object: RenderableCelestialObject): THREE.Vector3 {
+  private calculateLabelPosition(
+    object: RenderableCelestialObject,
+  ): THREE.Vector3 {
     // Special case: Position Oort Cloud label at inner radius rather than at center
-    if (object.type === CelestialType.OORT_CLOUD && object.properties?.type === CelestialType.OORT_CLOUD) {
+    if (
+      object.type === CelestialType.OORT_CLOUD &&
+      object.properties?.type === CelestialType.OORT_CLOUD
+    ) {
       // Get inner radius from properties - this is in AU
       const oortCloudProps = object.properties as OortCloudProperties;
       const innerRadiusAU = oortCloudProps.innerRadiusAU;
-      if (innerRadiusAU && typeof innerRadiusAU === 'number') {
+      if (innerRadiusAU && typeof innerRadiusAU === "number") {
         // Convert AU to scene units
         const scaledInnerRadius = innerRadiusAU * SCALE.RENDER_SCALE_AU;
-        
+
         // Position label slightly offset from parent star
-        // Use a fixed direction vector toward upper right (+x, +y) 
+        // Use a fixed direction vector toward upper right (+x, +y)
         // and multiply by inner radius to place at boundary
         const direction = new THREE.Vector3(0.7, 0.7, 0).normalize();
         return direction.multiplyScalar(scaledInnerRadius);
@@ -183,13 +189,13 @@ export class CSS2DManager {
    */
   createCelestialLabel(
     object: RenderableCelestialObject,
-    parentMesh: THREE.Object3D
+    parentMesh: THREE.Object3D,
   ): void {
     // Check if a label already exists for this object ID within the layer
     const labelsMap = this.elements.get(CSS2DLayerType.CELESTIAL_LABELS);
     if (labelsMap?.has(object.celestialObjectId)) {
       console.warn(
-        `[CSS2DManager] Label already exists for ${object.celestialObjectId}. Skipping creation.`
+        `[CSS2DManager] Label already exists for ${object.celestialObjectId}. Skipping creation.`,
       );
       return; // Avoid creating duplicate labels
     }
@@ -198,16 +204,11 @@ export class CSS2DManager {
     const labelPosition = this.calculateLabelPosition(object);
 
     // Create and position the label
-    this.createPositionedLabel(
-      object.name,
-      labelPosition,
-      parentMesh,
-      {
-        className: "celestial-label",
-        layerType: CSS2DLayerType.CELESTIAL_LABELS,
-        id: object.celestialObjectId
-      }
-    );
+    this.createPositionedLabel(object.name, labelPosition, parentMesh, {
+      className: "celestial-label",
+      layerType: CSS2DLayerType.CELESTIAL_LABELS,
+      id: object.celestialObjectId,
+    });
   }
 
   /**
@@ -219,12 +220,12 @@ export class CSS2DManager {
   createAuMarkerLabel(
     id: string,
     auValue: number,
-    position: THREE.Vector3
+    position: THREE.Vector3,
   ): void {
     const labelsMap = this.elements.get(CSS2DLayerType.AU_MARKERS);
     if (labelsMap?.has(id)) {
       console.warn(
-        `[CSS2DManager] AU Marker Label already exists for ${id}. Skipping creation.`
+        `[CSS2DManager] AU Marker Label already exists for ${id}. Skipping creation.`,
       );
       return;
     }
@@ -269,7 +270,7 @@ export class CSS2DManager {
     id: string,
     element: HTMLElement,
     parent: THREE.Object3D,
-    position: THREE.Vector3
+    position: THREE.Vector3,
   ): void {
     const css2dObject = new CSS2DObject(element);
     css2dObject.position.copy(position);
@@ -313,7 +314,7 @@ export class CSS2DManager {
       if (label) {
         // Calculate the appropriate position for this object type
         const labelPosition = this.calculateLabelPosition(object);
-        
+
         // Update the label position
         label.position.copy(labelPosition);
       }
@@ -411,7 +412,7 @@ export class CSS2DManager {
 
         if (!element.parent || !parentConnected) {
           console.warn(
-            `[CSS2DManager] Found orphaned label ${id} in layer ${layerType}. Removing.`
+            `[CSS2DManager] Found orphaned label ${id} in layer ${layerType}. Removing.`,
           );
           // Don't remove directly while iterating, mark for removal
           orphanedIdsToRemove.push({ layer: layerType, id: id });
@@ -435,7 +436,7 @@ export class CSS2DManager {
           // This ideally shouldn't happen if removeElement works, but as a safeguard:
           console.error(
             `[CSS2DManager] CRITICAL: Found visible CSS2DObject in scene WITHOUT parent just before render! Hiding.`,
-            object
+            object,
           );
           object.visible = false; // Hide it to hopefully prevent crash
         }
@@ -463,7 +464,7 @@ export class CSS2DManager {
       } catch (e) {
         console.error(
           "[CSS2DManager] Error during internal CSS2DRenderer.render call:",
-          e
+          e,
         );
         // If this still happens, the issue might be deeper within the library or scene state.
       }
@@ -523,7 +524,7 @@ export class CSS2DManager {
       cssObject.element.classList.remove("label-hidden");
     } else {
       console.warn(
-        `[CSS2DManager]   showLabel: Could not find element or element is not HTMLElement for id=${id}`
+        `[CSS2DManager]   showLabel: Could not find element or element is not HTMLElement for id=${id}`,
       );
     }
   }
@@ -540,7 +541,7 @@ export class CSS2DManager {
       cssObject.element.classList.add("label-hidden");
     } else {
       console.warn(
-        `[CSS2DManager]   hideLabel: Could not find element or element is not HTMLElement for id=${id}`
+        `[CSS2DManager]   hideLabel: Could not find element or element is not HTMLElement for id=${id}`,
       );
     }
   }

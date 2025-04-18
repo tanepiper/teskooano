@@ -13,9 +13,9 @@ class EventEmitter {
     if (!this.events.has(event)) {
       this.events.set(event, []);
     }
-    
+
     this.events.get(event)!.push(callback);
-    
+
     // Return unsubscribe function
     return () => {
       const callbacks = this.events.get(event);
@@ -34,7 +34,7 @@ class EventEmitter {
   emit(event: string, ...args: any[]): void {
     const callbacks = this.events.get(event);
     if (callbacks) {
-      callbacks.forEach(callback => callback(...args));
+      callbacks.forEach((callback) => callback(...args));
     }
   }
 }
@@ -42,4 +42,4 @@ class EventEmitter {
 /**
  * Events that can be emitted by the renderer
  */
-export const rendererEvents = new EventEmitter(); 
+export const rendererEvents = new EventEmitter();

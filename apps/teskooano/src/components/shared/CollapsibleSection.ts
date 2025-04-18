@@ -1,4 +1,4 @@
-const template = document.createElement('template');
+const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
@@ -82,154 +82,165 @@ export class CollapsibleSection extends HTMLElement {
   private _internalUpdate = false;
 
   static get observedAttributes() {
-    return ['title', 'closed'];
+    return ["title", "closed"];
   }
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
   }
 
   connectedCallback() {
-    this.headerElement = this.shadowRoot!.querySelector('.header');
-    this.contentElement = this.shadowRoot!.querySelector('.content');
-    
+    this.headerElement = this.shadowRoot!.querySelector(".header");
+    this.contentElement = this.shadowRoot!.querySelector(".content");
+
     // Add event listeners
-    this.headerElement?.addEventListener('click', this.toggle);
-    this.headerElement?.addEventListener('keydown', this.handleKeydown);
+    this.headerElement?.addEventListener("click", this.toggle);
+    this.headerElement?.addEventListener("keydown", this.handleKeydown);
 
     // Set initial title
-    this.updateTitle(this.getAttribute('title'));
+    this.updateTitle(this.getAttribute("title"));
 
     // Set initial state based on attribute (default open)
-    if (!this.hasAttribute('closed')) {
-        this.open();
+    if (!this.hasAttribute("closed")) {
+      this.open();
     } else {
-        this.close();
+      this.close();
     }
-    
+
     // Update ARIA attributes
     this.updateAriaAttributes();
   }
 
   disconnectedCallback() {
-    this.headerElement?.removeEventListener('click', this.toggle);
-    this.headerElement?.removeEventListener('keydown', this.handleKeydown);
+    this.headerElement?.removeEventListener("click", this.toggle);
+    this.headerElement?.removeEventListener("keydown", this.handleKeydown);
   }
 
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+  attributeChangedCallback(
+    name: string,
+    oldValue: string | null,
+    newValue: string | null,
+  ) {
     if (oldValue === newValue) return;
-    
-    if (name === 'title') {
+
+    if (name === "title") {
       this.updateTitle(newValue);
-    } else if (name === 'closed' && !this._internalUpdate) {
+    } else if (name === "closed" && !this._internalUpdate) {
       // Update ARIA when closed state changes
       this.updateAriaAttributes();
-      
+
       // Dispatch event when closed state changes via attribute
-      this.dispatchEvent(new CustomEvent('toggle', { 
-        bubbles: true, 
-        composed: true,
-        detail: { 
-          closed: this.hasAttribute('closed'),
-          source: 'attribute'
-        } 
-      }));
+      this.dispatchEvent(
+        new CustomEvent("toggle", {
+          bubbles: true,
+          composed: true,
+          detail: {
+            closed: this.hasAttribute("closed"),
+            source: "attribute",
+          },
+        }),
+      );
     }
   }
 
   private updateTitle(title: string | null) {
-     if (this.shadowRoot) {
-      const titleElement = this.shadowRoot.querySelector('.title');
+    if (this.shadowRoot) {
+      const titleElement = this.shadowRoot.querySelector(".title");
       if (titleElement) {
-        titleElement.textContent = title || 'Section';
+        titleElement.textContent = title || "Section";
       }
     }
   }
-  
+
   private updateAriaAttributes() {
     if (this.headerElement && this.contentElement) {
-      const isExpanded = !this.hasAttribute('closed');
-      this.headerElement.setAttribute('aria-expanded', String(isExpanded));
-      
+      const isExpanded = !this.hasAttribute("closed");
+      this.headerElement.setAttribute("aria-expanded", String(isExpanded));
+
       // Set a unique ID for the content region
-      const contentId = this.contentElement.id || `section-content-${this.getUniqueId()}`;
+      const contentId =
+        this.contentElement.id || `section-content-${this.getUniqueId()}`;
       this.contentElement.id = contentId;
-      
+
       // Connect header to content with aria-controls
-      this.headerElement.setAttribute('aria-controls', contentId);
+      this.headerElement.setAttribute("aria-controls", contentId);
     }
   }
-  
+
   // Generate a simple unique ID for ARIA attributes
   private getUniqueId(): string {
     return Math.random().toString(36).substring(2, 9);
   }
 
   private toggle = () => {
-    if (this.hasAttribute('closed')) {
+    if (this.hasAttribute("closed")) {
       this.open();
     } else {
       this.close();
     }
-  }
-  
+  };
+
   private handleKeydown = (e: KeyboardEvent) => {
     // Toggle on Space or Enter key
-    if (e.key === ' ' || e.key === 'Enter') {
+    if (e.key === " " || e.key === "Enter") {
       e.preventDefault();
       this.toggle();
     }
-  }
+  };
 
   public open() {
-    if (this.hasAttribute('closed')) {
+    if (this.hasAttribute("closed")) {
       this._internalUpdate = true;
-      this.removeAttribute('closed');
+      this.removeAttribute("closed");
       this._internalUpdate = false;
-      
+
       this.updateAriaAttributes();
-      
+
       // Dispatch toggle event
-      this.dispatchEvent(new CustomEvent('toggle', { 
-        bubbles: true, 
-        composed: true,
-        detail: { 
-          closed: false,
-          source: 'method'
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent("toggle", {
+          bubbles: true,
+          composed: true,
+          detail: {
+            closed: false,
+            source: "method",
+          },
+        }),
+      );
     }
   }
 
   public close() {
-    if (!this.hasAttribute('closed')) {
+    if (!this.hasAttribute("closed")) {
       this._internalUpdate = true;
-      this.setAttribute('closed', '');
+      this.setAttribute("closed", "");
       this._internalUpdate = false;
-      
+
       this.updateAriaAttributes();
-      
+
       // Dispatch toggle event
-      this.dispatchEvent(new CustomEvent('toggle', { 
-        bubbles: true, 
-        composed: true,
-        detail: { 
-          closed: true,
-          source: 'method'
-        }
-      }));
+      this.dispatchEvent(
+        new CustomEvent("toggle", {
+          bubbles: true,
+          composed: true,
+          detail: {
+            closed: true,
+            source: "method",
+          },
+        }),
+      );
     }
   }
-  
+
   // Public API to check closed state
   public get isClosed(): boolean {
-    return this.hasAttribute('closed');
+    return this.hasAttribute("closed");
   }
 }
 
 // Ensure it's only defined once
-if (!customElements.get('collapsible-section')) {
-  customElements.define('collapsible-section', CollapsibleSection);
-} 
+if (!customElements.get("collapsible-section")) {
+  customElements.define("collapsible-section", CollapsibleSection);
+}

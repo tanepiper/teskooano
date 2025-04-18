@@ -1,16 +1,10 @@
-import {
-  AddPanelOptions,
-  DockviewApi,
-  IDockviewGroupPanel,
-  IDockviewPanel,
-} from "dockview-core";
-import "../components/toolbar/SimulationControls"; // Import for side effect (registers element)
+import { AddPanelOptions } from "dockview-core";
+import "../components/shared/Button.js";
 import "../components/toolbar/SeedForm"; // Import the new ToolbarSeedForm
+import { ToolbarSeedForm } from "../components/toolbar/SeedForm";
+import "../components/toolbar/SimulationControls"; // Import for side effect (registers element)
 import { DockviewController } from "./dockviewController";
 import { TourController } from "./tourController";
-import "../components/shared/Button.js";
-import { TeskooanoButton } from "../components/shared/Button"; // Ensure type import if needed elsewhere
-import { ToolbarSeedForm } from "../components/toolbar/SeedForm";
 
 /**
  * ToolbarController is responsible for managing the toolbar and adding engine views.
@@ -84,9 +78,9 @@ export class ToolbarController {
    * @param tourController - Optional TourController for managing app tours
    */
   constructor(
-    element: HTMLElement, 
+    element: HTMLElement,
     dockviewController: DockviewController,
-    tourController?: TourController
+    tourController?: TourController,
   ) {
     this._element = element;
     this._dockviewController = dockviewController;
@@ -111,7 +105,7 @@ export class ToolbarController {
       this.addEnginePanels();
     } else {
       console.warn(
-        "initializeFirstEngineView called but engine panels already exist."
+        "initializeFirstEngineView called but engine panels already exist.",
       );
     }
   }
@@ -136,23 +130,27 @@ export class ToolbarController {
     try {
       // Determine where to position the new engine view
       let positionOptions: AddPanelOptions["position"] = undefined;
-      
+
       if (this._lastEngineViewId) {
         // Find the previous engine panel
         const previousPanel = this._dockviewController.api.panels.find(
-          p => p.id === this._lastEngineViewId
+          (p) => p.id === this._lastEngineViewId,
         );
-        
+
         if (previousPanel && previousPanel.group) {
           // Position new panel below the GROUP of the previous panel
           // This ensures we take the full width of the previous engine+UI
-          console.log(`Positioning new panel below group: ${previousPanel.group.id}`);
+          console.log(
+            `Positioning new panel below group: ${previousPanel.group.id}`,
+          );
           positionOptions = {
             referenceGroup: previousPanel.group,
             direction: "below",
           };
         } else {
-          console.warn(`Previous engine ${this._lastEngineViewId} or its group not found, using default positioning.`);
+          console.warn(
+            `Previous engine ${this._lastEngineViewId} or its group not found, using default positioning.`,
+          );
         }
       } else {
         console.log("Positioning first engine view (default).");
@@ -194,7 +192,7 @@ export class ToolbarController {
     } catch (error) {
       console.error(
         `Failed to create engine window panels for counter ${counter}:`,
-        error
+        error,
       );
     }
   }
@@ -204,7 +202,7 @@ export class ToolbarController {
    */
   private toggleSettingsPanel(): void {
     const existingPanel = this._dockviewController.api.panels.find(
-      (p) => p.id === this.SETTINGS_PANEL_ID
+      (p) => p.id === this.SETTINGS_PANEL_ID,
     );
 
     if (existingPanel) {
@@ -230,7 +228,7 @@ export class ToolbarController {
       } catch (error) {
         console.error(
           `Failed to add settings panel ${this.SETTINGS_PANEL_ID}:`,
-          error
+          error,
         );
       }
     }
@@ -240,7 +238,7 @@ export class ToolbarController {
    * Opens the GitHub repository in a new window/tab
    */
   private openGitHubRepo(): void {
-    window.open(this.GITHUB_REPO_URL, '_blank');
+    window.open(this.GITHUB_REPO_URL, "_blank");
   }
 
   private render(): void {
@@ -269,25 +267,25 @@ export class ToolbarController {
     const githubButton = document.createElement("teskooano-button");
     githubButton.title = "View Source on GitHub";
     githubButton.id = "github-button";
-    
+
     // Add GitHub Icon
     const githubIcon = document.createElement("span");
     githubIcon.slot = "icon";
     githubIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
       <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
     </svg>`;
-    
+
     // Create text element (optional - we won't add text to keep the button simple)
     // const textSpan = document.createElement("span");
     // textSpan.textContent = "GitHub";
-    
+
     githubButton.appendChild(githubIcon);
     // githubButton.appendChild(textSpan); // Uncomment if you want to add text
-    
+
     githubButton.addEventListener("click", () => {
       this.openGitHubRepo();
     });
-    
+
     this._element.appendChild(githubButton);
     // --- End GitHub Button ---
 
@@ -305,7 +303,7 @@ export class ToolbarController {
     settingsButton.appendChild(gearIcon);
     settingsButton.addEventListener(
       "click",
-      this.toggleSettingsPanel.bind(this)
+      this.toggleSettingsPanel.bind(this),
     ); // Use bind or arrow function
     this._element.appendChild(settingsButton);
     // --- End Settings Button ---
@@ -314,7 +312,7 @@ export class ToolbarController {
     if (this._tourController) {
       const tourButton = document.createElement("teskooano-button");
       tourButton.title = "Take a tour of the application";
-      
+
       // Add Question Icon
       const helpIcon = document.createElement("span");
       helpIcon.slot = "icon";
@@ -322,19 +320,19 @@ export class ToolbarController {
           <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
           <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
       </svg>`;
-      
+
       const textSpan = document.createElement("span");
       textSpan.textContent = "Take Tour";
-      
+
       tourButton.appendChild(helpIcon);
       tourButton.appendChild(textSpan);
-      
+
       tourButton.addEventListener("click", () => {
         if (this._tourController) {
           this._tourController.restartTour();
         }
       });
-      
+
       this._element.appendChild(tourButton);
     }
     // --- End Tour Button ---
@@ -386,7 +384,7 @@ export class ToolbarController {
 
     // Add the seed form
     const seedForm = document.createElement(
-      "toolbar-seed-form"
+      "toolbar-seed-form",
     ) as ToolbarSeedForm;
     ToolbarSeedForm.setDockviewApi(this._dockviewController.api);
     this._element.appendChild(seedForm);

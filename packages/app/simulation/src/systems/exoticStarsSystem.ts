@@ -1,11 +1,11 @@
-import { actions } from '@teskooano/core-state';
-import { 
-  CelestialType, 
-  GasGiantClass, 
-  StellarType, 
-  SCALE, 
-  PlanetType, 
-  SurfaceType, 
+import { actions } from "@teskooano/core-state";
+import {
+  CelestialType,
+  GasGiantClass,
+  StellarType,
+  SCALE,
+  PlanetType,
+  SurfaceType,
   RockyType,
   StarProperties,
   PlanetProperties,
@@ -14,10 +14,10 @@ import {
   DesertSurfaceProperties,
   type LavaSurfaceProperties,
   type IceSurfaceProperties,
-  type RockyTerrestrialSurfaceProperties
-} from '@teskooano/data-types';
-import { SOLAR_MASS, SOLAR_RADIUS, AU, KM } from '@teskooano/core-physics'; // Removed VISUAL_AU_SCALE
-import { DEG_TO_RAD, OSVector3 } from '@teskooano/core-math';
+  type RockyTerrestrialSurfaceProperties,
+} from "@teskooano/data-types";
+import { SOLAR_MASS, SOLAR_RADIUS, AU, KM } from "@teskooano/core-physics"; // Removed VISUAL_AU_SCALE
+import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 
 // Define JUPITER_MASS locally if not exported
 const JUPITER_MASS = 1.898e27; // kg
@@ -31,38 +31,44 @@ export function initializeExoticStarsSystem() {
   // Set up large distances between objects to make them visible
   const largeOrbitDistanceAU = 100.0; // Define distance in AU - Increased
   const largeOrbitDistance = largeOrbitDistanceAU * SCALE.RENDER_SCALE_AU; // Calculate visual distance
-  
+
   // 1. NEUTRON STAR - Center
   const neutronStarId = actions.createSolarSystem({
-    id: 'pulsar-1',
-    name: 'Crab Pulsar',
+    id: "pulsar-1",
+    name: "Crab Pulsar",
     type: CelestialType.STAR,
-    seed: 'pulsar_seed',
+    seed: "pulsar_seed",
     visualScaleRadius: 0.1,
     realMass_kg: 1.4 * SOLAR_MASS,
     realRadius_m: 10 * KM,
     temperature: 600000,
     albedo: 0.1,
     orbit: {
-      realSemiMajorAxis_m: 0, eccentricity: 0, inclination: 0, longitudeOfAscendingNode: 0, argumentOfPeriapsis: 0, meanAnomaly: 0, period_s: 0
+      realSemiMajorAxis_m: 0,
+      eccentricity: 0,
+      inclination: 0,
+      longitudeOfAscendingNode: 0,
+      argumentOfPeriapsis: 0,
+      meanAnomaly: 0,
+      period_s: 0,
     },
     properties: {
       type: CelestialType.STAR,
       isMainStar: true,
-      spectralClass: 'X',
+      spectralClass: "X",
       luminosity: 30000,
-      color: '#DCECFF', 
-      stellarType: StellarType.NEUTRON_STAR
-    } as StarProperties
+      color: "#DCECFF",
+      stellarType: StellarType.NEUTRON_STAR,
+    } as StarProperties,
   });
 
   // Companion planet to Neutron Star
   const pulsarPlanetSMA_AU = 0.3; // Define distance in AU
   actions.addCelestial({
-    id: 'pulsar-1-planet',
-    name: 'Pulsar Planet',
+    id: "pulsar-1-planet",
+    name: "Pulsar Planet",
     type: CelestialType.PLANET,
-    seed: 'pulsar_planet_seed',
+    seed: "pulsar_planet_seed",
     visualScaleRadius: 0.5,
     realMass_kg: 5.97237e24,
     realRadius_m: 6371000,
@@ -74,37 +80,37 @@ export function initializeExoticStarsSystem() {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 5.8e5
+      period_s: 5.8e5,
     },
     temperature: 900,
     albedo: 0.2,
     atmosphere: {
-      composition: ['heavy elements'],
+      composition: ["heavy elements"],
       pressure: 0.0001,
-      color: '#FF69B4'
+      color: "#FF69B4",
     },
     surface: {
       type: SurfaceType.VOLCANIC,
       planetType: PlanetType.LAVA,
-      color: '#4B0082',
-      lavaColor: '#FF1493',
-      roughness: 0.9
+      color: "#4B0082",
+      lavaColor: "#FF1493",
+      roughness: 0.9,
     } as LavaSurfaceProperties,
     properties: {
       type: CelestialType.PLANET,
       isMoon: false,
-      composition: ['iron', 'neutronium crust?']
-    } as PlanetProperties
+      composition: ["iron", "neutronium crust?"],
+    } as PlanetProperties,
   });
 
   // 2. WHITE DWARF - Orbiting Neutron Star
   const whiteDwarfSMA_AU = largeOrbitDistanceAU; // Use the AU value for real calculation
-  const whiteDwarfId = 'sirius-b'; // Assign ID directly
+  const whiteDwarfId = "sirius-b"; // Assign ID directly
   actions.addCelestial({
     id: whiteDwarfId,
-    name: 'Sirius B',
+    name: "Sirius B",
     type: CelestialType.STAR,
-    seed: 'sirius_b_seed',
+    seed: "sirius_b_seed",
     visualScaleRadius: 0.15,
     realMass_kg: 0.6 * SOLAR_MASS,
     realRadius_m: 0.008 * SOLAR_RADIUS,
@@ -116,17 +122,17 @@ export function initializeExoticStarsSystem() {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 6.3e9
+      period_s: 6.3e9,
     },
     temperature: 25000,
     properties: {
       type: CelestialType.STAR,
       isMainStar: false,
-      spectralClass: 'DA',
+      spectralClass: "DA",
       luminosity: 0.025,
-      color: '#F0F8FF',
-      stellarType: StellarType.WHITE_DWARF
-    } as StarProperties
+      color: "#F0F8FF",
+      stellarType: StellarType.WHITE_DWARF,
+    } as StarProperties,
   });
 
   // Companion debris disk to White Dwarf
@@ -135,10 +141,10 @@ export function initializeExoticStarsSystem() {
   const debrisDiskOuterAU = 0.25;
   const debrisDiskHeightAU = 0.01;
   actions.addCelestial({
-    id: 'white-dwarf-debris',
-    name: 'Stellar Debris Disk',
+    id: "white-dwarf-debris",
+    name: "Stellar Debris Disk",
     type: CelestialType.ASTEROID_FIELD,
-    seed: 'debris_disk_seed',
+    seed: "debris_disk_seed",
     visualScaleRadius: 0.01,
     realMass_kg: 1.0e22,
     realRadius_m: (debrisDiskOuterAU - debrisDiskInnerAU) * AU,
@@ -150,28 +156,28 @@ export function initializeExoticStarsSystem() {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 1.5e4
+      period_s: 1.5e4,
     },
     properties: {
       type: CelestialType.ASTEROID_FIELD,
       innerRadiusAU: debrisDiskInnerAU,
       outerRadiusAU: debrisDiskOuterAU,
       heightAU: debrisDiskHeightAU,
-      count: 500, 
-      color: '#D3D3D3',
-      composition: ['silicates', 'metals'],
-      visualDensity: 500
-    } as AsteroidFieldProperties
+      count: 500,
+      color: "#D3D3D3",
+      composition: ["silicates", "metals"],
+      visualDensity: 500,
+    } as AsteroidFieldProperties,
   });
 
   // 3. WOLF-RAYET STAR - Orbiting Neutron Star
   const wolfRayetSMA_AU = largeOrbitDistanceAU * 0.9;
-  const wolfRayetId = 'wr-124'; // Assign ID directly
+  const wolfRayetId = "wr-124"; // Assign ID directly
   actions.addCelestial({
     id: wolfRayetId,
-    name: 'WR 124',
+    name: "WR 124",
     type: CelestialType.STAR,
-    seed: 'wr124_seed',
+    seed: "wr124_seed",
     visualScaleRadius: 8.0,
     realMass_kg: 20 * SOLAR_MASS,
     realRadius_m: 5 * SOLAR_RADIUS,
@@ -183,26 +189,26 @@ export function initializeExoticStarsSystem() {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 5.6e9
+      period_s: 5.6e9,
     },
     temperature: 50000,
     properties: {
       type: CelestialType.STAR,
       isMainStar: false,
-      spectralClass: 'WN',
+      spectralClass: "WN",
       luminosity: 200000,
-      color: '#E6E6FA',
-      stellarType: StellarType.WOLF_RAYET
-    } as StarProperties
+      color: "#E6E6FA",
+      stellarType: StellarType.WOLF_RAYET,
+    } as StarProperties,
   });
 
   // Distant Gas Giant orbiting Wolf-Rayet star
   const wrPlanetSMA_AU = 1.5; // Estimated distance in AU
   actions.addCelestial({
-    id: 'wr-124-planet',
-    name: 'WR 124b',
+    id: "wr-124-planet",
+    name: "WR 124b",
     type: CelestialType.GAS_GIANT,
-    seed: 'wr124b_seed',
+    seed: "wr124b_seed",
     visualScaleRadius: 3.0,
     realMass_kg: 2 * JUPITER_MASS,
     realRadius_m: 1.2 * 69911000,
@@ -214,27 +220,27 @@ export function initializeExoticStarsSystem() {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 8e6
+      period_s: 8e6,
     },
     temperature: 700,
     albedo: 0.25,
     properties: {
       type: CelestialType.GAS_GIANT,
       gasGiantClass: GasGiantClass.CLASS_II,
-      atmosphereColor: '#FFE4C4',
-      cloudColor: '#FFFFFF',
-      cloudSpeed: 220
-    } as GasGiantProperties
+      atmosphereColor: "#FFE4C4",
+      cloudColor: "#FFFFFF",
+      cloudSpeed: 220,
+    } as GasGiantProperties,
   });
 
   // 4. SCHWARZSCHILD BLACK HOLE - Orbiting Neutron Star
   const schwarzschildSMA_AU = largeOrbitDistanceAU; // 100 AU
-  const schwarzschildId = 'sgr-a'; // Assign ID directly
+  const schwarzschildId = "sgr-a"; // Assign ID directly
   actions.addCelestial({
     id: schwarzschildId,
-    name: 'Sagittarius A*',
+    name: "Sagittarius A*",
     type: CelestialType.STAR,
-    seed: 'sgr_a_seed',
+    seed: "sgr_a_seed",
     visualScaleRadius: 0.2,
     realMass_kg: 4.0e6 * SOLAR_MASS,
     realRadius_m: 1.2e10,
@@ -246,26 +252,26 @@ export function initializeExoticStarsSystem() {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 6.3e9
+      period_s: 6.3e9,
     },
     temperature: 0,
     properties: {
       type: CelestialType.STAR,
       isMainStar: false,
-      spectralClass: 'BH',
+      spectralClass: "BH",
       luminosity: 0,
-      color: '#000000',
-      stellarType: StellarType.BLACK_HOLE
-    } as StarProperties
+      color: "#000000",
+      stellarType: StellarType.BLACK_HOLE,
+    } as StarProperties,
   });
 
   // Star orbiting the Black Hole
   const s2StarSMA_AU = 0.001; // Very close orbit ~120 AU
   actions.addCelestial({
-    id: 's2-star',
-    name: 'S2 Star',
+    id: "s2-star",
+    name: "S2 Star",
     type: CelestialType.STAR,
-    seed: 's2_star_seed',
+    seed: "s2_star_seed",
     visualScaleRadius: 5.0,
     realMass_kg: 10 * SOLAR_MASS,
     realRadius_m: 7 * SOLAR_RADIUS,
@@ -277,27 +283,27 @@ export function initializeExoticStarsSystem() {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 5e8
+      period_s: 5e8,
     },
     temperature: 20000,
     properties: {
       type: CelestialType.STAR,
       isMainStar: false,
-      spectralClass: 'B',
+      spectralClass: "B",
       luminosity: 15000,
-      color: '#AABFFF',
-      stellarType: StellarType.MAIN_SEQUENCE
-    }
+      color: "#AABFFF",
+      stellarType: StellarType.MAIN_SEQUENCE,
+    },
   });
 
   // 5. KERR BLACK HOLE - Orbiting Neutron Star
   const kerrOrbitSMA_AU = largeOrbitDistanceAU * 1.1; // Slightly further out
-  const kerrId = 'cygnus-x1'; // Assign ID directly
+  const kerrId = "cygnus-x1"; // Assign ID directly
   actions.addCelestial({
     id: kerrId,
-    name: 'Cygnus X-1',
+    name: "Cygnus X-1",
     type: CelestialType.STAR,
-    seed: 'cygnus_x1_seed',
+    seed: "cygnus_x1_seed",
     visualScaleRadius: 0.15,
     realMass_kg: 15 * SOLAR_MASS,
     realRadius_m: 44 * KM,
@@ -309,26 +315,26 @@ export function initializeExoticStarsSystem() {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 6.9e9
+      period_s: 6.9e9,
     },
     temperature: 0,
     properties: {
       type: CelestialType.STAR,
       isMainStar: false,
-      spectralClass: 'BH',
+      spectralClass: "BH",
       luminosity: 0,
-      color: '#000000',
-      stellarType: StellarType.KERR_BLACK_HOLE
-    }
+      color: "#000000",
+      stellarType: StellarType.KERR_BLACK_HOLE,
+    },
   });
 
   // Companion star to Kerr Black Hole
   const hdeStarSMA_AU = 0.2; // Close orbit
   actions.addCelestial({
-    id: 'hde-226868',
-    name: 'HDE 226868', 
+    id: "hde-226868",
+    name: "HDE 226868",
     type: CelestialType.STAR,
-    seed: 'hde_seed',
+    seed: "hde_seed",
     visualScaleRadius: 15.0,
     realMass_kg: 19 * SOLAR_MASS,
     realRadius_m: 20 * SOLAR_RADIUS,
@@ -340,18 +346,18 @@ export function initializeExoticStarsSystem() {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 4.8e5
+      period_s: 4.8e5,
     },
     temperature: 30000,
     properties: {
       type: CelestialType.STAR,
       isMainStar: false,
-      spectralClass: 'O9.7Iab',
+      spectralClass: "O9.7Iab",
       luminosity: 200000,
-      color: '#9DB4FF',
-      stellarType: StellarType.MAIN_SEQUENCE
-    }
+      color: "#9DB4FF",
+      stellarType: StellarType.MAIN_SEQUENCE,
+    },
   });
 
   return neutronStarId;
-} 
+}

@@ -1,9 +1,11 @@
 # @teskooano/core-state
 
 ## Overview
+
 The core-state package manages the game's state using nanostores. It provides a centralized state management system for handling simulation state, celestial objects, and game actions.
 
 ## Features
+
 - Simulation state management (time, timeScale, pause state)
 - Celestial object state management
 - Action creators for state modifications
@@ -12,6 +14,7 @@ The core-state package manages the game's state using nanostores. It provides a 
 ## API
 
 ### State
+
 ```typescript
 interface SimulationState {
   time: number;
@@ -25,6 +28,7 @@ interface SimulationState {
 ```
 
 ### Actions
+
 ```typescript
 const actions = {
   togglePause: () => void;
@@ -36,13 +40,16 @@ const actions = {
 ```
 
 ### Stores
+
 ```typescript
 const simulationState: Store<SimulationState>;
 const celestialObjects: Store<CelestialObject[]>;
 ```
 
 ## Testing
+
 The package includes comprehensive tests in `index.spec.ts` that verify:
+
 - State initialization
 - Action creators
 - State updates
@@ -50,12 +57,17 @@ The package includes comprehensive tests in `index.spec.ts` that verify:
 - Error handling
 
 ## Usage
+
 ```typescript
-import { simulationState, celestialObjects, actions } from '@teskooano/core-state';
+import {
+  simulationState,
+  celestialObjects,
+  actions,
+} from "@teskooano/core-state";
 
 // Subscribe to state changes
-simulationState.subscribe(state => {
-  console.log('Simulation time:', state.time);
+simulationState.subscribe((state) => {
+  console.log("Simulation time:", state.time);
 });
 
 // Update state
@@ -64,13 +76,13 @@ actions.togglePause();
 
 // Add celestial object
 actions.addCelestialObject({
-  id: 'earth',
-  name: 'Earth',
+  id: "earth",
+  name: "Earth",
   type: CelestialType.PLANET,
   position: { x: 0, y: 0, z: 0 },
   rotation: { x: 0, y: 0, z: 0, w: 1 },
   scale: { x: 1, y: 1, z: 1 },
   mass: 5.972e24,
-  radius: 6371
+  radius: 6371,
 });
-``` 
+```

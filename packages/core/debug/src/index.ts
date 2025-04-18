@@ -1,15 +1,15 @@
 /**
  * Debug utilities for the Teskooano engine
- * 
+ *
  * This module provides debug tools for visualization and development
  */
 
-import { OSVector3 } from '@teskooano/core-math';
+import { OSVector3 } from "@teskooano/core-math";
 
-export * from './vector-debug';
-export * from './logger';
-export * from './three-vector-debug';
-export * from './celestial-debug';
+export * from "./vector-debug";
+export * from "./logger";
+export * from "./three-vector-debug";
+export * from "./celestial-debug";
 
 /**
  * Debug level enumeration
@@ -20,7 +20,7 @@ export enum DebugLevel {
   WARN = 2,
   INFO = 3,
   DEBUG = 4,
-  TRACE = 5
+  TRACE = 5,
 }
 
 /**
@@ -39,9 +39,10 @@ export interface DebugConfig {
  * Global debug configuration
  */
 export const debugConfig: DebugConfig = {
-  level: process.env.NODE_ENV === 'production' ? DebugLevel.ERROR : DebugLevel.INFO,
-  visualize: process.env.NODE_ENV !== 'production',
-  logging: process.env.NODE_ENV !== 'production'
+  level:
+    process.env.NODE_ENV === "production" ? DebugLevel.ERROR : DebugLevel.INFO,
+  visualize: process.env.NODE_ENV !== "production",
+  logging: process.env.NODE_ENV !== "production",
 };
 
 /**
@@ -60,9 +61,9 @@ export function isVisualizationEnabled(): boolean {
 
 /**
  * Set whether debug visualization is enabled
- * 
+ *
  * @param enabled True to enable visualization, false to disable
  */
 export function setVisualizationEnabled(enabled: boolean): void {
   debugConfig.visualize = enabled;
-} 
+}

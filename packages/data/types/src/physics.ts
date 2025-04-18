@@ -1,4 +1,4 @@
-import type { OSVector3 } from '@teskooano/core-math';
+import type { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Represents the physics state of a body in REAL-WORLD units.
@@ -14,4 +14,4 @@ export interface PhysicsStateReal {
   velocity_mps: OSVector3;
   /** Optional: Tracks ticks since last update for throttling */
   ticksSinceLastPhysicsUpdate?: number;
-} 
+}

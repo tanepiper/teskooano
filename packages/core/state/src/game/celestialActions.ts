@@ -30,7 +30,7 @@ export const celestialActions = {
         // Ensure top-level star entry exists even without parent
         celestialHierarchyStore.setKey(
           object.id,
-          celestialHierarchyStore.get()[object.id] || []
+          celestialHierarchyStore.get()[object.id] || [],
         );
       }
 
@@ -41,7 +41,7 @@ export const celestialActions = {
             count: Object.keys(newObjects).length,
             newObject: object.id,
           },
-        })
+        }),
       );
     } catch (error) {
       console.error(`[celestialActions] Error adding ${object.id}:`, error);
@@ -50,7 +50,7 @@ export const celestialActions = {
 
   updateCelestialObject: (
     objectId: string,
-    updates: Partial<CelestialObject>
+    updates: Partial<CelestialObject>,
   ) => {
     const currentObjects = celestialObjectsStore.get();
     const object = currentObjects[objectId];
@@ -65,14 +65,14 @@ export const celestialActions = {
       celestialObjectsStore.set(newObjects);
     } else {
       console.warn(
-        `[celestialActions] updateCelestialObject: Object ${objectId} not found.`
+        `[celestialActions] updateCelestialObject: Object ${objectId} not found.`,
       );
     }
   },
 
   updateOrbitalParameters: (
     objectId: string,
-    parameters: Partial<OrbitalParameters>
+    parameters: Partial<OrbitalParameters>,
   ) => {
     const objects = celestialObjectsStore.get();
     const object = objects[objectId];
@@ -87,7 +87,7 @@ export const celestialActions = {
       });
     } else if (object) {
       console.warn(
-        `Object ${objectId} doesn't have an 'orbit' property to update`
+        `Object ${objectId} doesn't have an 'orbit' property to update`,
       );
     }
   },
@@ -123,11 +123,11 @@ export const celestialActions = {
             id: objectId,
             count: Object.keys(currentObjects).length, // Count remains same initially
           },
-        })
+        }),
       );
     } else {
       console.warn(
-        `[celestialActions] markObjectDestroyed: Object ${objectId} not found.`
+        `[celestialActions] markObjectDestroyed: Object ${objectId} not found.`,
       );
     }
   },
@@ -154,11 +154,11 @@ export const celestialActions = {
             id: objectId,
             count: Object.keys(newObjects).length,
           },
-        })
+        }),
       );
     } else {
       console.warn(
-        `[celestialActions] removeCelestialObject: Object ${objectId} not found.`
+        `[celestialActions] removeCelestialObject: Object ${objectId} not found.`,
       );
     }
   },

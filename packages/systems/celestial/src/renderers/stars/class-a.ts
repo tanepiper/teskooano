@@ -1,7 +1,7 @@
-import * as THREE from 'three';
-import type { CelestialObject } from '@teskooano/data-types';
-import { BaseStarMaterial, BaseStarRenderer } from './base-star';
-import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
+import * as THREE from "three";
+import type { CelestialObject } from "@teskooano/data-types";
+import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
+import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**
  * Material for A-class stars
@@ -14,16 +14,18 @@ import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
  * - Frequency: 0.61% of main-sequence stars
  */
 export class ClassAStarMaterial extends BaseStarMaterial {
-  constructor(options: {
-    coronaIntensity?: number;
-    pulseSpeed?: number;
-    glowIntensity?: number;
-    temperatureVariation?: number;
-    metallicEffect?: number;
-  } = {}) {
+  constructor(
+    options: {
+      coronaIntensity?: number;
+      pulseSpeed?: number;
+      glowIntensity?: number;
+      temperatureVariation?: number;
+      metallicEffect?: number;
+    } = {},
+  ) {
     // White color for A-class stars
     const whiteColor = new THREE.Color(0xf8f7ff);
-    
+
     super(whiteColor, {
       // Moderate corona intensity
       coronaIntensity: options.coronaIntensity ?? 0.5,
@@ -34,7 +36,7 @@ export class ClassAStarMaterial extends BaseStarMaterial {
       // Moderate temperature variations
       temperatureVariation: options.temperatureVariation ?? 0.12,
       // Moderate metallic effect
-      metallicEffect: options.metallicEffect ?? 0.5
+      metallicEffect: options.metallicEffect ?? 0.5,
     });
   }
 }
@@ -49,11 +51,11 @@ export class ClassAStarRenderer extends BaseStarRenderer {
   protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
     return new ClassAStarMaterial();
   }
-  
+
   /**
    * A-class stars are white
    */
   protected getStarColor(star: RenderableCelestialObject): THREE.Color {
     return new THREE.Color(0xf8f7ff);
   }
-} 
+}

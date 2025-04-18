@@ -15,7 +15,7 @@ import {
   CelestialStatus,
   CelestialType,
   PlanetType,
-  SurfaceType
+  SurfaceType,
 } from "@teskooano/data-types";
 import * as CONST from "../constants";
 import { generateCelestialName } from "../name-generator";
@@ -37,7 +37,7 @@ export function generateMoon(
   parentPlanetMass: number,
   parentPlanetRadius: number,
   lastMoonDistance_radii: number,
-  systemSeed: string
+  systemSeed: string,
 ): { moonData: CelestialObject | null; nextLastMoonDistance_radii: number } {
   const moonName = generateCelestialName(random);
   const moonId = `moon-${parentPlanetData.id}-${moonName.toLowerCase()}`;
@@ -61,7 +61,7 @@ export function generateMoon(
   const moonOrbitalPeriod_s = UTIL.calculateOrbitalPeriod_s(
     parentPlanetMass,
     moonSemiMajorAxis_m,
-    moonMass
+    moonMass,
   );
 
   const moonOrbit: OrbitalParameters = {
@@ -77,7 +77,7 @@ export function generateMoon(
   // --- Validate Moon Orbit ---
   if (parentPlanetMass <= 0 || !Number.isFinite(parentPlanetMass)) {
     console.warn(
-      `[generateMoon] Invalid parent planet mass (${parentPlanetMass}) for orbit validation of ${moonId}. Skipping moon.`
+      `[generateMoon] Invalid parent planet mass (${parentPlanetMass}) for orbit validation of ${moonId}. Skipping moon.`,
     );
     return {
       moonData: null,
@@ -89,7 +89,7 @@ export function generateMoon(
     !Number.isFinite(moonOrbit.realSemiMajorAxis_m)
   ) {
     console.warn(
-      `[generateMoon] Invalid semi-major axis (${moonOrbit.realSemiMajorAxis_m}) for ${moonId}. Skipping moon.`
+      `[generateMoon] Invalid semi-major axis (${moonOrbit.realSemiMajorAxis_m}) for ${moonId}. Skipping moon.`,
     );
     return {
       moonData: null,
@@ -102,7 +102,7 @@ export function generateMoon(
     !Number.isFinite(moonOrbit.eccentricity)
   ) {
     console.warn(
-      `[generateMoon] Invalid eccentricity (${moonOrbit.eccentricity}) for ${moonId}. Skipping moon.`
+      `[generateMoon] Invalid eccentricity (${moonOrbit.eccentricity}) for ${moonId}. Skipping moon.`,
     );
     return {
       moonData: null,
@@ -114,7 +114,7 @@ export function generateMoon(
   if (moonPeriapsis <= (parentPlanetRadius ?? 0) * 1.1) {
     // Check if orbit intersects planet (with margin)
     console.warn(
-      `[generateMoon] Orbit periapsis (${moonPeriapsis} m) too close to or inside parent radius (${parentPlanetRadius} m) for ${moonId}. Skipping moon.`
+      `[generateMoon] Orbit periapsis (${moonPeriapsis} m) too close to or inside parent radius (${parentPlanetRadius} m) for ${moonId}. Skipping moon.`,
     );
     return {
       moonData: null,
@@ -131,12 +131,12 @@ export function generateMoon(
     const initialRelativePos_m = calculateOrbitalPosition(
       parentPlanetState, // Parent PLANET's state
       moonOrbit, // Moon's orbital params relative to planet
-      0 // time = 0 for initial state
+      0, // time = 0 for initial state
     );
     initialWorldVel_mps = calculateOrbitalVelocity(
       parentPlanetState,
       moonOrbit,
-      0
+      0,
     );
     // Absolute position = parent's position + relative orbital position
     initialWorldPos_m = initialRelativePos_m
@@ -152,13 +152,13 @@ export function generateMoon(
       !Number.isFinite(initialWorldVel_mps.x)
     ) {
       throw new Error(
-        "Calculated initial moon state contains non-finite values."
+        "Calculated initial moon state contains non-finite values.",
       );
     }
   } catch (error) {
     console.error(
       `[generateMoon] Error calculating initial physics state for ${moonId}:`,
-      error
+      error,
     );
     console.error("Inputs:", {
       parentState: parentPlanetState,
@@ -176,14 +176,14 @@ export function generateMoon(
     ? PlanetType.BARREN
     : UTIL.getRandomItem(
         [PlanetType.ROCKY, PlanetType.ICE, PlanetType.BARREN],
-        random
+        random,
       );
   const moonSurfaceType =
     moonPlanetType === PlanetType.ICE
       ? SurfaceType.ICE_FLATS
       : UTIL.getRandomItem(
           [SurfaceType.CRATERED, SurfaceType.FLAT, SurfaceType.MOUNTAINOUS],
-          random
+          random,
         );
 
   // --- Create detailed surface object based on moonPlanetType ---
@@ -260,7 +260,7 @@ export function generateMoon(
       moonPlanetType === PlanetType.ICE
         ? CONST.ICE_COMPOSITION
         : CONST.ROCKY_COMPOSITION,
-      random
+      random,
     ).split(","),
     surface: detailedSurface, // Use the detailed surface object
     atmosphere: undefined,

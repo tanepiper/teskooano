@@ -1,7 +1,7 @@
 /**
  * Vector-based debug utilities
  */
-import { OSVector3 } from '@teskooano/core-math';
+import { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Class for storing and manipulating debug vectors
@@ -15,7 +15,7 @@ export class VectorDebug {
 
   /**
    * Set a debug vector with a specific name and key
-   * 
+   *
    * @param name The debug context name (e.g. 'ring-system-1')
    * @param key The vector key (e.g. 'sunDir', 'parentPos', etc)
    * @param vector The vector to store
@@ -31,7 +31,7 @@ export class VectorDebug {
 
   /**
    * Get a debug vector by name and key
-   * 
+   *
    * @param name The debug context name
    * @param key The vector key
    * @returns The vector or undefined if not found
@@ -43,7 +43,7 @@ export class VectorDebug {
 
   /**
    * Get all vectors for a named debug context
-   * 
+   *
    * @param name The debug context name
    * @returns Record of all vectors for this context or undefined if not found
    */
@@ -53,7 +53,7 @@ export class VectorDebug {
 
   /**
    * Get all debug contexts
-   * 
+   *
    * @returns Array of all debug context names
    */
   public getNames(): string[] {
@@ -62,7 +62,7 @@ export class VectorDebug {
 
   /**
    * Clear all vectors for a specific debug context
-   * 
+   *
    * @param name The debug context name
    */
   public clearVectors(name: string): void {
@@ -80,4 +80,4 @@ export class VectorDebug {
 /**
  * Singleton instance of the VectorDebug class
  */
-export const vectorDebug = new VectorDebug(); 
+export const vectorDebug = new VectorDebug();

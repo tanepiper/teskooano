@@ -4,11 +4,11 @@
 
 The `@teskooano/systems-celestial` library provides concrete **renderer implementations** for different types of celestial objects within the Open Space engine. It bridges the gap between the abstract data definitions in `@teskooano/data-types` and their visual representation using `THREE.js`. It includes systems for:
 
-*   **Rendering**: Creating `THREE.Object3D` representations (meshes, materials, etc.) for various celestial object types.
-*   **Procedural Generation**: Generating procedural textures (color, normal maps) using techniques like 3D Simplex Noise.
-*   **Texture Management**: A framework for generating and caching textures.
-*   **Shaders**: Custom GLSL shaders for visual effects, lighting, and procedural patterns.
-*   **Common Utilities**: Reusable components like gravitational lensing and event dispatchers.
+- **Rendering**: Creating `THREE.Object3D` representations (meshes, materials, etc.) for various celestial object types.
+- **Procedural Generation**: Generating procedural textures (color, normal maps) using techniques like 3D Simplex Noise.
+- **Texture Management**: A framework for generating and caching textures.
+- **Shaders**: Custom GLSL shaders for visual effects, lighting, and procedural patterns.
+- **Common Utilities**: Reusable components like gravitational lensing and event dispatchers.
 
 **Note:** This package **focuses primarily on rendering and visual generation**. Core data structures are defined in `@teskooano/data-types`, and physics/state are handled by `@teskooano/core-physics` and `@teskooano/core-state`.
 
@@ -48,9 +48,9 @@ graph TD
 
 The components in this package are used by visualization managers (like `ObjectManager` in `@teskooano/renderer-threejs-visualization`) when:
 
-*   Creating the `THREE.Object3D` for a specific `CelestialObject`.
-*   Generating procedural textures for objects that require them.
-*   Updating the visual appearance of an object over time (e.g., updating shader uniforms, handling LOD).
+- Creating the `THREE.Object3D` for a specific `CelestialObject`.
+- Generating procedural textures for objects that require them.
+- Updating the visual appearance of an object over time (e.g., updating shader uniforms, handling LOD).
 
 ## How does it work?
 
@@ -59,23 +59,26 @@ This package uses a combination of specialized renderers, procedural generation 
 ### Core Concepts
 
 1.  **Renderers (`src/renderers/`)**: Each major category of celestial object (terrestrial, star, gas giant, etc.) has a dedicated renderer or set of renderers. These implement a common conceptual interface (`CelestialRenderer`) with methods like `createMesh`, `update`, and `dispose`.
-    *   They are responsible for creating Three.js geometry, applying scaling, instantiating materials (often custom `ShaderMaterial` subclasses), loading textures or triggering generation, and assembling the final `Object3D`.
-    *   Specific renderers exist for unique objects like Earth or handle classifications like gas giant types or star spectral classes.
-    *   Particle systems (`THREE.Points`) are used for asteroid fields and Oort clouds.
-    *   Renderers may incorporate common helpers (like `GravitationalLensingHelper`) or modular components (like the `rings` renderer).
-    *   Factory functions (e.g., `createTerrestrialRenderer`, `createStarRenderer`) are often provided for easier instantiation.
+
+    - They are responsible for creating Three.js geometry, applying scaling, instantiating materials (often custom `ShaderMaterial` subclasses), loading textures or triggering generation, and assembling the final `Object3D`.
+    - Specific renderers exist for unique objects like Earth or handle classifications like gas giant types or star spectral classes.
+    - Particle systems (`THREE.Points`) are used for asteroid fields and Oort clouds.
+    - Renderers may incorporate common helpers (like `GravitationalLensingHelper`) or modular components (like the `rings` renderer).
+    - Factory functions (e.g., `createTerrestrialRenderer`, `createStarRenderer`) are often provided for easier instantiation.
 
 2.  **Procedural Texture Generation (`src/generation/`)**: Primarily uses 3D Simplex noise (`simplex-noise` library) mapped onto a sphere to generate seamless color and normal map textures (`OffscreenCanvas`) for planets and moons.
-    *   Includes sophisticated logic (`getColorForHeight`) to map noise values to realistic color bands based on planetary surface properties.
+
+    - Includes sophisticated logic (`getColorForHeight`) to map noise values to realistic color bands based on planetary surface properties.
 
 3.  **Texture System (`src/textures/`)**: Provides a `TextureFactory` facade to access different texture generators (`TerrestrialTextureGenerator`, etc.).
-    *   While a `TextureGeneratorBase` exists for potential GPU/shader-based generation, the current terrestrial generation uses the CPU/Canvas method from `src/generation`.
-    *   Uses typed options (`TextureTypes.ts`) for configuring texture generation.
+
+    - While a `TextureGeneratorBase` exists for potential GPU/shader-based generation, the current terrestrial generation uses the CPU/Canvas method from `src/generation`.
+    - Uses typed options (`TextureTypes.ts`) for configuring texture generation.
 
 4.  **Shaders (`src/shaders/`)**: Contains the GLSL code defining the visual appearance.
-    *   Organized by object type.
-    *   Implements various techniques: procedural noise (Simplex, FBM), different lighting models, texturing (day/night, specular, normal maps), atmospheric effects (Fresnel), shadows (rings), distortion (lensing).
-    *   Configured via uniforms set by the materials in the renderers.
+    - Organized by object type.
+    - Implements various techniques: procedural noise (Simplex, FBM), different lighting models, texturing (day/night, specular, normal maps), atmospheric effects (Fresnel), shadows (rings), distortion (lensing).
+    - Configured via uniforms set by the materials in the renderers.
 
 ```typescript
 import { ObjectManager } from '@teskooano/renderer-threejs-visualization'; // Hypothetical manager
@@ -128,32 +131,32 @@ npm install @teskooano/systems-celestial --workspace=@your-app-or-package
 
 ## Status & Roadmap
 
-*(See [CHANGELOG.md](./CHANGELOG.md) for version history)*
+_(See [CHANGELOG.md](./CHANGELOG.md) for version history)_
 
 **Current Features (v0.1.0):**
 
-*   Renderers for Terrestrial Planets, Moons, Stars (Main Sequence + Exotics), Gas Giants (Class I-V), Planetary Rings, Asteroid Fields, Oort Clouds, and a specialized Earth renderer.
-*   Procedural texture generation (Color + Normal maps) using 3D Simplex Noise for terrestrial bodies.
-*   Texture generation framework and factory.
-*   Custom shaders for various effects (procedural noise, lighting, day/night cycles, atmospheres, shadows, lensing).
-*   Common helper for Gravitational Lensing.
-*   Event dispatch system for texture generation progress.
-*   Basic LOD handling implemented inconsistently across different renderers.
-*   IndexedDB caching for terrestrial procedural textures.
+- Renderers for Terrestrial Planets, Moons, Stars (Main Sequence + Exotics), Gas Giants (Class I-V), Planetary Rings, Asteroid Fields, Oort Clouds, and a specialized Earth renderer.
+- Procedural texture generation (Color + Normal maps) using 3D Simplex Noise for terrestrial bodies.
+- Texture generation framework and factory.
+- Custom shaders for various effects (procedural noise, lighting, day/night cycles, atmospheres, shadows, lensing).
+- Common helper for Gravitational Lensing.
+- Event dispatch system for texture generation progress.
+- Basic LOD handling implemented inconsistently across different renderers.
+- IndexedDB caching for terrestrial procedural textures.
 
 **Planned / Future Work:**
 
-*   Unify renderer structure (Interface/Base Class).
-*   Consolidate texture generation strategies.
-*   Standardize shader loading (remove embedded star shaders).
-*   Decouple dependencies (IndexedDB caching, `celestialObjectsStore` access).
-*   Implement a consistent LOD strategy.
-*   Refine atmosphere rendering (address transparency issues).
-*   Improve procedural normal map quality.
-*   Add renderers for Comets, Stations, Ships.
-*   Improve test coverage (Vitest).
-*   Review static class usage.
-*   Remove legacy code (`diamond-square.ts`).
+- Unify renderer structure (Interface/Base Class).
+- Consolidate texture generation strategies.
+- Standardize shader loading (remove embedded star shaders).
+- Decouple dependencies (IndexedDB caching, `celestialObjectsStore` access).
+- Implement a consistent LOD strategy.
+- Refine atmosphere rendering (address transparency issues).
+- Improve procedural normal map quality.
+- Add renderers for Comets, Stations, Ships.
+- Improve test coverage (Vitest).
+- Review static class usage.
+- Remove legacy code (`diamond-square.ts`).
 
 ## Contributing
 
@@ -165,4 +168,4 @@ npm install @teskooano/systems-celestial --workspace=@your-app-or-package
 
 ## License
 
-MIT License - see LICENSE file for details 
+MIT License - see LICENSE file for details

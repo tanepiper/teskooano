@@ -1,12 +1,9 @@
-export * from './celestial';
-export * from './scaling';
+export * from "./celestial";
+export * from "./scaling";
 
 // Import THREE.Vector3 directly for use in type definitions
-import * as THREE from 'three';
-import { PhysicsStateReal } from './physics';
-
-
-
+import * as THREE from "three";
+import { PhysicsStateReal } from "./physics";
 
 /**
  * State interface for the simulation
@@ -27,7 +24,7 @@ export interface SimulationState {
 export type PairForceCalculator = (
   body1: PhysicsStateReal,
   body2: PhysicsStateReal,
-  G?: number
+  G?: number,
 ) => THREE.Vector3;
 
 /**
@@ -36,5 +33,5 @@ export type PairForceCalculator = (
 export type Integrator = (
   currentState: PhysicsStateReal,
   acceleration: THREE.Vector3,
-  dt: number
-) => PhysicsStateReal; 
+  dt: number,
+) => PhysicsStateReal;

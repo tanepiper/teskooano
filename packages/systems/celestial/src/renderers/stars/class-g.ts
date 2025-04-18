@@ -1,7 +1,7 @@
-import * as THREE from 'three';
-import type { CelestialObject } from '@teskooano/data-types';
-import { BaseStarMaterial, BaseStarRenderer } from './base-star';
-import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
+import * as THREE from "three";
+import type { CelestialObject } from "@teskooano/data-types";
+import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
+import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**
  * Material for G-class stars (includes our Sun)
@@ -14,16 +14,18 @@ import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
  * - Frequency: 7.6% of main-sequence stars
  */
 export class ClassGStarMaterial extends BaseStarMaterial {
-  constructor(options: {
-    coronaIntensity?: number;
-    pulseSpeed?: number;
-    glowIntensity?: number;
-    temperatureVariation?: number;
-    metallicEffect?: number;
-  } = {}) {
+  constructor(
+    options: {
+      coronaIntensity?: number;
+      pulseSpeed?: number;
+      glowIntensity?: number;
+      temperatureVariation?: number;
+      metallicEffect?: number;
+    } = {},
+  ) {
     // Yellow color for G-class stars (like our Sun)
     const yellowColor = new THREE.Color(0xffcc00);
-    
+
     super(yellowColor, {
       // Medium-low corona intensity
       coronaIntensity: options.coronaIntensity ?? 0.4,
@@ -34,7 +36,7 @@ export class ClassGStarMaterial extends BaseStarMaterial {
       // Medium temperature variations
       temperatureVariation: options.temperatureVariation ?? 0.09,
       // Higher metallic effect (Sun has more visible surface details)
-      metallicEffect: options.metallicEffect ?? 0.6
+      metallicEffect: options.metallicEffect ?? 0.6,
     });
   }
 }
@@ -49,11 +51,11 @@ export class ClassGStarRenderer extends BaseStarRenderer {
   protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
     return new ClassGStarMaterial();
   }
-  
+
   /**
    * G-class stars are yellow (like our Sun)
    */
   protected getStarColor(star: RenderableCelestialObject): THREE.Color {
     return new THREE.Color(0xffcc00);
   }
-} 
+}

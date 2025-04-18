@@ -1,8 +1,8 @@
-import type { PanelViewState } from '@teskooano/core-state'; // Need the type
-import { panelRegistry } from '@teskooano/core-state'; // Assuming correct path resolution
-import type { EnginePanel } from '../engine/EnginePanel'; // Corrected path
+import type { PanelViewState } from "@teskooano/core-state"; // Need the type
+import { panelRegistry } from "@teskooano/core-state"; // Assuming correct path resolution
+import type { EnginePanel } from "../engine/EnginePanel"; // Corrected path
 
-const template = document.createElement('template');
+const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
@@ -92,15 +92,25 @@ template.innerHTML = `
       <span class="slider"></span>
     </label>
   </div>
+  <div class="setting-row">
+    <label for="debris-effects-toggle">Show Debris Effects</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="debris-effects-toggle">
+      <span class="slider"></span>
+    </label>
+  </div>
   <div id="error-message" class="error-message" style="display: none;"></div>
 `;
 
 export class EngineUISettingsPanel extends HTMLElement {
-  static get observedAttributes() { return ['engine-view-id']; }
+  static get observedAttributes() {
+    return ["engine-view-id"];
+  }
 
   private gridToggle: HTMLInputElement | null = null;
   private labelsToggle: HTMLInputElement | null = null;
   private auMarkersToggle: HTMLInputElement | null = null;
+  private debrisEffectsToggle: HTMLInputElement | null = null;
   private errorMessageElement: HTMLElement | null = null;
 
   private linkedEnginePanel: EnginePanel | null = null;
@@ -110,19 +120,28 @@ export class EngineUISettingsPanel extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
   }
 
   connectedCallback() {
-    this.gridToggle = this.shadowRoot!.getElementById('grid-toggle') as HTMLInputElement;
-    this.labelsToggle = this.shadowRoot!.getElementById('labels-toggle') as HTMLInputElement;
-    this.auMarkersToggle = this.shadowRoot!.getElementById('au-markers-toggle') as HTMLInputElement;
-    this.errorMessageElement = this.shadowRoot!.getElementById('error-message');
+    this.gridToggle = this.shadowRoot!.getElementById(
+      "grid-toggle",
+    ) as HTMLInputElement;
+    this.labelsToggle = this.shadowRoot!.getElementById(
+      "labels-toggle",
+    ) as HTMLInputElement;
+    this.auMarkersToggle = this.shadowRoot!.getElementById(
+      "au-markers-toggle",
+    ) as HTMLInputElement;
+    this.debrisEffectsToggle = this.shadowRoot!.getElementById(
+      "debris-effects-toggle",
+    ) as HTMLInputElement;
+    this.errorMessageElement = this.shadowRoot!.getElementById("error-message");
 
     this.addEventListeners();
 
-    this._engineViewId = this.getAttribute('engine-view-id');
+    this._engineViewId = this.getAttribute("engine-view-id");
     this.attemptLinkToEnginePanel();
   }
 
@@ -136,8 +155,12 @@ export class EngineUISettingsPanel extends HTMLElement {
     }
   }
 
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
-    if (name === 'engine-view-id' && oldValue !== newValue) {
+  attributeChangedCallback(
+    name: string,
+    oldValue: string | null,
+    newValue: string | null,
+  ): void {
+    if (name === "engine-view-id" && oldValue !== newValue) {
       this._engineViewId = newValue;
       // Unsubscribe from old panel if linked
       this.unsubscribeLinkedPanelState?.();
@@ -147,15 +170,35 @@ export class EngineUISettingsPanel extends HTMLElement {
   }
 
   private addEventListeners(): void {
-    this.gridToggle?.addEventListener('change', this.handleGridToggleChange);
-    this.labelsToggle?.addEventListener('change', this.handleLabelsToggleChange);
-    this.auMarkersToggle?.addEventListener('change', this.handleAuMarkersToggleChange);
+    this.gridToggle?.addEventListener("change", this.handleGridToggleChange);
+    this.labelsToggle?.addEventListener(
+      "change",
+      this.handleLabelsToggleChange,
+    );
+    this.auMarkersToggle?.addEventListener(
+      "change",
+      this.handleAuMarkersToggleChange,
+    );
+    this.debrisEffectsToggle?.addEventListener(
+      "change",
+      this.handleDebrisEffectsToggleChange,
+    );
   }
 
   private removeEventListeners(): void {
-    this.gridToggle?.removeEventListener('change', this.handleGridToggleChange);
-    this.labelsToggle?.removeEventListener('change', this.handleLabelsToggleChange);
-    this.auMarkersToggle?.removeEventListener('change', this.handleAuMarkersToggleChange);
+    this.gridToggle?.removeEventListener("change", this.handleGridToggleChange);
+    this.labelsToggle?.removeEventListener(
+      "change",
+      this.handleLabelsToggleChange,
+    );
+    this.auMarkersToggle?.removeEventListener(
+      "change",
+      this.handleAuMarkersToggleChange,
+    );
+    this.debrisEffectsToggle?.removeEventListener(
+      "change",
+      this.handleDebrisEffectsToggleChange,
+    );
   }
 
   // Event handlers bound to the class instance
@@ -163,37 +206,57 @@ export class EngineUISettingsPanel extends HTMLElement {
     if (!this.linkedEnginePanel) return;
     const isChecked = (event.target as HTMLInputElement).checked;
     // Call the method on the linked panel (we'll add this method later)
-    if (typeof this.linkedEnginePanel.setShowGrid === 'function') {
-        this.linkedEnginePanel.setShowGrid(isChecked);
+    if (typeof this.linkedEnginePanel.setShowGrid === "function") {
+      this.linkedEnginePanel.setShowGrid(isChecked);
     } else {
-        console.error(`[SettingsPanel ${this._engineViewId}] linkedEnginePanel.setShowGrid is not a function!`);
-        this.showError('Error communicating with engine panel.');
+      console.error(
+        `[SettingsPanel ${this._engineViewId}] linkedEnginePanel.setShowGrid is not a function!`,
+      );
+      this.showError("Error communicating with engine panel.");
     }
-  }
+  };
 
   private handleLabelsToggleChange = (event: Event): void => {
     if (!this.linkedEnginePanel) return;
     const isChecked = (event.target as HTMLInputElement).checked;
     // Call the method on the linked panel (we'll add this method later)
-     if (typeof this.linkedEnginePanel.setShowCelestialLabels === 'function') {
-        this.linkedEnginePanel.setShowCelestialLabels(isChecked);
-     } else {
-         console.error(`[SettingsPanel ${this._engineViewId}] linkedEnginePanel.setShowCelestialLabels is not a function!`);
-         this.showError('Error communicating with engine panel.');
-     }
-  }
+    if (typeof this.linkedEnginePanel.setShowCelestialLabels === "function") {
+      this.linkedEnginePanel.setShowCelestialLabels(isChecked);
+    } else {
+      console.error(
+        `[SettingsPanel ${this._engineViewId}] linkedEnginePanel.setShowCelestialLabels is not a function!`,
+      );
+      this.showError("Error communicating with engine panel.");
+    }
+  };
 
   private handleAuMarkersToggleChange = (event: Event): void => {
     if (!this.linkedEnginePanel) return;
     const isChecked = (event.target as HTMLInputElement).checked;
     // Call the method on the linked panel
-    if (typeof this.linkedEnginePanel.setShowAuMarkers === 'function') {
-        this.linkedEnginePanel.setShowAuMarkers(isChecked);
+    if (typeof this.linkedEnginePanel.setShowAuMarkers === "function") {
+      this.linkedEnginePanel.setShowAuMarkers(isChecked);
     } else {
-        console.error(`[SettingsPanel ${this._engineViewId}] linkedEnginePanel.setShowAuMarkers is not a function!`);
-        this.showError('Error communicating with engine panel.');
+      console.error(
+        `[SettingsPanel ${this._engineViewId}] linkedEnginePanel.setShowAuMarkers is not a function!`,
+      );
+      this.showError("Error communicating with engine panel.");
     }
-  }
+  };
+
+  private handleDebrisEffectsToggleChange = (event: Event): void => {
+    if (!this.linkedEnginePanel) return;
+    const isChecked = (event.target as HTMLInputElement).checked;
+    // Call the method on the linked panel
+    if (typeof this.linkedEnginePanel.setDebrisEffectsEnabled === "function") {
+      this.linkedEnginePanel.setDebrisEffectsEnabled(isChecked);
+    } else {
+      console.error(
+        `[SettingsPanel ${this._engineViewId}] linkedEnginePanel.setDebrisEffectsEnabled is not a function!`,
+      );
+      this.showError("Error communicating with engine panel.");
+    }
+  };
 
   private updateToggleState(viewState: PanelViewState): void {
     if (this.gridToggle) {
@@ -205,27 +268,29 @@ export class EngineUISettingsPanel extends HTMLElement {
     if (this.auMarkersToggle) {
       this.auMarkersToggle.checked = viewState.showAuMarkers ?? true; // Default to true if undefined
     }
+    if (this.debrisEffectsToggle) {
+      this.debrisEffectsToggle.checked = viewState.showDebrisEffects ?? false; // Default to true if undefined
+    }
   }
 
   private showError(message: string): void {
     if (this.errorMessageElement) {
-        this.errorMessageElement.textContent = message;
-        this.errorMessageElement.style.display = 'block';
+      this.errorMessageElement.textContent = message;
+      this.errorMessageElement.style.display = "block";
     }
   }
 
   private clearError(): void {
-     if (this.errorMessageElement) {
-        this.errorMessageElement.style.display = 'none';
-        this.errorMessageElement.textContent = '';
-     }
+    if (this.errorMessageElement) {
+      this.errorMessageElement.style.display = "none";
+      this.errorMessageElement.textContent = "";
+    }
   }
-
 
   private attemptLinkToEnginePanel(): void {
     if (!this._engineViewId) {
-      console.warn('[SettingsPanel] Missing engine-view-id attribute.');
-      this.showError('Link to engine view failed: Missing ID.');
+      console.warn("[SettingsPanel] Missing engine-view-id attribute.");
+      this.showError("Link to engine view failed: Missing ID.");
       return;
     }
 
@@ -239,18 +304,23 @@ export class EngineUISettingsPanel extends HTMLElement {
     this.linkedEnginePanel = null;
     this.clearError(); // Clear errors on new link attempt
 
-
     const attempt = () => {
-      const potentialEnginePanel = panelRegistry.getPanelInstance<EnginePanel>(this._engineViewId!);
+      const potentialEnginePanel = panelRegistry.getPanelInstance<EnginePanel>(
+        this._engineViewId!,
+      );
 
-      if (potentialEnginePanel && typeof potentialEnginePanel.subscribeToViewState === 'function') {
+      if (
+        potentialEnginePanel &&
+        typeof potentialEnginePanel.subscribeToViewState === "function"
+      ) {
         this.linkedEnginePanel = potentialEnginePanel;
         this.clearError(); // Clear error on successful link
 
         // Subscribe to the linked panel's state
-        this.unsubscribeLinkedPanelState = this.linkedEnginePanel.subscribeToViewState(viewState => {
-          this.updateToggleState(viewState);
-        });
+        this.unsubscribeLinkedPanelState =
+          this.linkedEnginePanel.subscribeToViewState((viewState) => {
+            this.updateToggleState(viewState);
+          });
 
         // Get initial state
         const initialState = this.linkedEnginePanel.getViewState();
@@ -262,7 +332,9 @@ export class EngineUISettingsPanel extends HTMLElement {
           this._linkCheckInterval = null;
         }
       } else {
-        console.warn(`[SettingsPanel] Engine panel ${this._engineViewId} not found or not ready yet. Retrying...`);
+        console.warn(
+          `[SettingsPanel] Engine panel ${this._engineViewId} not found or not ready yet. Retrying...`,
+        );
         // Keep trying if not found immediately
         if (!this._linkCheckInterval) {
           this._linkCheckInterval = window.setInterval(attempt, 1000); // Retry every second
@@ -275,4 +347,4 @@ export class EngineUISettingsPanel extends HTMLElement {
 }
 
 // Define the custom element
-customElements.define('engine-ui-settings-panel', EngineUISettingsPanel);
+customElements.define("engine-ui-settings-panel", EngineUISettingsPanel);

@@ -11,16 +11,15 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "paths": {
       "@teskooano/core-debug": ["../../../packages/core/debug/src"],
       "@teskooano/core-math": ["../../../packages/core/math/src"],
       "@teskooano/core-physics": ["../../../packages/core/physics/src"],
       "@teskooano/data-types": ["../../../packages/data/types/src"],
-      "@teskooano/threejs-effects": ["../../../packages/renderer/threejs-effects/src"]
+      "@teskooano/threejs-effects": [
+        "../../../packages/renderer/threejs-effects/src"
+      ]
     }
   },
   "references": [
@@ -30,12 +29,6 @@
     { "path": "../../../packages/core/debug" },
     { "path": "../../../packages/core/math" }
   ],
-  "include": [
-    "src/**/*",
-    "src/shims-glsl.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
-} 
+  "include": ["src/**/*", "src/shims-glsl.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

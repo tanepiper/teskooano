@@ -5,7 +5,13 @@ import {
   type PanelViewState,
   renderableObjectsStore,
 } from "@teskooano/core-state";
-import { CelestialType, scaleSize, CelestialStatus, OortCloudProperties, SCALE } from "@teskooano/data-types"; // Need CelestialType & scaleSize
+import {
+  CelestialType,
+  scaleSize,
+  CelestialStatus,
+  OortCloudProperties,
+  SCALE,
+} from "@teskooano/data-types"; // Need CelestialType & scaleSize
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { OrbitManager } from "@teskooano/renderer-threejs-visualization";
 import {
@@ -85,6 +91,7 @@ export class EnginePanel implements IContentRenderer {
       showGrid: true, // Default to true
       showCelestialLabels: true, // Default to true
       showAuMarkers: true, // Added: Default to true
+      showDebrisEffects: false, // Default to true
     });
     // Store initial state for comparison
     this._previousViewState = this._viewStateStore.get();
@@ -122,7 +129,7 @@ export class EnginePanel implements IContentRenderer {
       if (!renderableObject || !renderableObject.position || !coreObject) {
         // This shouldn't happen if checks are done before calling, but log just in case
         console.error(
-          `[EnginePanel ${this._api?.id}] _applyFocus called for ${objectId}, but object data is missing!`
+          `[EnginePanel ${this._api?.id}] _applyFocus called for ${objectId}, but object data is missing!`,
         );
         // Reset to default state to be safe
         newCameraPosition = DEFAULT_CAMERA_POSITION.clone();
@@ -131,44 +138,50 @@ export class EnginePanel implements IContentRenderer {
         const objectAbsPos = renderableObject.position.clone();
         const objectType = coreObject.type;
         const objectRealRadius = coreObject.realRadius_m;
-        
+
         // Special case for Oort Cloud - position camera at inner radius boundary
-        if (objectType === CelestialType.OORT_CLOUD && coreObject.properties?.type === CelestialType.OORT_CLOUD) {
+        if (
+          objectType === CelestialType.OORT_CLOUD &&
+          coreObject.properties?.type === CelestialType.OORT_CLOUD
+        ) {
           const oortCloudProps = coreObject.properties as OortCloudProperties;
           const innerRadiusAU = oortCloudProps.innerRadiusAU;
-          
-          if (innerRadiusAU && typeof innerRadiusAU === 'number') {
+
+          if (innerRadiusAU && typeof innerRadiusAU === "number") {
             // Convert AU to scene units
             const scaledInnerRadius = innerRadiusAU * SCALE.RENDER_SCALE_AU;
-            
+
             // Position camera toward upper right (+x, +y) at the inner radius boundary
             const direction = new THREE.Vector3(0.7, 0.7, 0).normalize();
             const boundaryPoint = direction.multiplyScalar(scaledInnerRadius);
-            
+
             // Calculate camera position offset from this boundary point
             targetPosition = boundaryPoint.clone();
-            
+
             // Position camera slightly offset from target (standard distance)
             const distance = customDistance ?? 50;
             const offset = CAMERA_OFFSET.clone().multiplyScalar(distance);
             newCameraPosition = targetPosition.clone().add(offset);
-            
+
             // Only update the focused object ID in the state, not the camera position
             // This prevents the view state subscription from overriding our transition
             this.updateViewState({
               focusedObjectId: objectId,
             });
-            
+
             // Update camera with smooth transition
-            this._renderer?.controlsManager.moveTo(newCameraPosition, targetPosition);
-            
+            this._renderer?.controlsManager.moveTo(
+              newCameraPosition,
+              targetPosition,
+            );
+
             // Don't follow the Oort Cloud - it doesn't work well with the following logic
             // Clear any existing follow target
             this._renderer?.setFollowTarget(null);
-            
+
             // Just highlight it in the visualization
             this._renderer?.orbitManager?.highlightVisualization(objectId);
-            
+
             return; // Exit early after handling Oort Cloud special case
           }
         }
@@ -196,7 +209,7 @@ export class EnginePanel implements IContentRenderer {
       this.updateViewState({
         focusedObjectId: objectId,
       });
-      
+
       // Update camera with smooth transition
       this._renderer?.controlsManager.moveTo(newCameraPosition, targetPosition);
       this._renderer?.setFollowTarget(objectId);
@@ -210,9 +223,12 @@ export class EnginePanel implements IContentRenderer {
       this.updateViewState({
         focusedObjectId: null,
       });
-      
+
       // Update camera with smooth transition
-      this._renderer?.controlsManager.moveTo(DEFAULT_CAMERA_POSITION.clone(), DEFAULT_CAMERA_TARGET.clone());
+      this._renderer?.controlsManager.moveTo(
+        DEFAULT_CAMERA_POSITION.clone(),
+        DEFAULT_CAMERA_TARGET.clone(),
+      );
       this._renderer?.setFollowTarget(null);
 
       // --- ADD HIGHLIGHT CALL (CLEAR) ---
@@ -223,20 +239,36 @@ export class EnginePanel implements IContentRenderer {
 
   // Method to control grid visibility
   public setShowGrid(visible: boolean): void {
-    this.updateViewState({ showGrid: visible });
-    // Renderer update will happen via the state subscription
+    if (this._renderer) {
+      this._renderer.setGridVisible(visible);
+      this.updateViewState({ showGrid: visible });
+    }
   }
 
   // Method to control celestial label visibility
   public setShowCelestialLabels(visible: boolean): void {
-    this.updateViewState({ showCelestialLabels: visible });
-    // Renderer update will happen via the state subscription
+    if (this._renderer) {
+      this._renderer.setCelestialLabelsVisible(visible);
+      this.updateViewState({ showCelestialLabels: visible });
+    }
   }
 
   // Added: Method to control AU marker visibility
   public setShowAuMarkers(visible: boolean): void {
-    this.updateViewState({ showAuMarkers: visible });
-    // Renderer update will happen via the state subscription
+    if (this._renderer) {
+      this._renderer.setAuMarkersVisible(visible);
+      this.updateViewState({ showAuMarkers: visible });
+    }
+  }
+
+  /**
+   * Enable or disable the debris effects visualization
+   */
+  public setDebrisEffectsEnabled(visible: boolean): void {
+    if (this._renderer) {
+      this._renderer.setDebrisEffectsEnabled(visible);
+      this.updateViewState({ showDebrisEffects: visible });
+    }
   }
 
   // --- Add getRendererStats method ---
@@ -252,7 +284,7 @@ export class EnginePanel implements IContentRenderer {
 
   // --- Add public method to subscribe to internal state ---
   public subscribeToViewState(
-    callback: (state: PanelViewState) => void
+    callback: (state: PanelViewState) => void,
   ): () => void {
     return this._viewStateStore.subscribe(callback);
   }
@@ -267,7 +299,7 @@ export class EnginePanel implements IContentRenderer {
   init(parameters: GroupPanelPartInitParameters): void {
     if (this._isInitialized) {
       console.warn(
-        `[EnginePanel ${this._api?.id}] Attempted to initialize already initialized panel.`
+        `[EnginePanel ${this._api?.id}] Attempted to initialize already initialized panel.`,
       );
       return;
     }
@@ -282,7 +314,7 @@ export class EnginePanel implements IContentRenderer {
       panelRegistry.registerPanel(this._api.id, this);
     } else {
       console.error(
-        "[EnginePanel] Cannot register panel: API not available at init time."
+        "[EnginePanel] Cannot register panel: API not available at init time.",
       );
     }
 
@@ -297,7 +329,7 @@ export class EnginePanel implements IContentRenderer {
           this.disposeRenderer();
           this._element.textContent = "Waiting for celestial objects data...";
         }
-      }
+      },
     );
 
     // ADD Event listener for focus requests targeted at this panel
@@ -337,7 +369,7 @@ export class EnginePanel implements IContentRenderer {
         this._pendingFocusQueue = [];
       } else {
         console.warn(
-          `[EnginePanel ${this._api?.id}] Object ${objectId} not ready yet. Adding to focus queue.`
+          `[EnginePanel ${this._api?.id}] Object ${objectId} not ready yet. Adding to focus queue.`,
         );
         // Add to the queue instead of overwriting a single variable
         this._pendingFocusQueue.push({ objectId, distance });
@@ -349,7 +381,7 @@ export class EnginePanel implements IContentRenderer {
     // Prevent double initialization
     if (this._renderer) {
       console.warn(
-        `[EnginePanel ${this._api?.title}] Renderer already initialized.`
+        `[EnginePanel ${this._api?.title}] Renderer already initialized.`,
       );
       return;
     }
@@ -375,25 +407,28 @@ export class EnginePanel implements IContentRenderer {
       // Set initial camera position/target directly
       this._renderer.updateCamera(
         initialState.cameraPosition,
-        initialState.cameraTarget
+        initialState.cameraTarget,
       );
       // Set initial follow target directly
       this._renderer.setFollowTarget(initialState.focusedObjectId);
 
       // Listen for camera transition completion events
-      document.addEventListener('camera-transition-complete', (event: Event) => {
-        const customEvent = event as CustomEvent;
-        if (customEvent.detail) {
-          const { position, target } = customEvent.detail;
-          // Update the panel's view state with the final camera position
-          if (position && target) {
-            this.updateViewState({
-              cameraPosition: position,
-              cameraTarget: target
-            });
+      document.addEventListener(
+        "camera-transition-complete",
+        (event: Event) => {
+          const customEvent = event as CustomEvent;
+          if (customEvent.detail) {
+            const { position, target } = customEvent.detail;
+            // Update the panel's view state with the final camera position
+            if (position && target) {
+              this.updateViewState({
+                cameraPosition: position,
+                cameraTarget: target,
+              });
+            }
           }
-        }
-      });
+        },
+      );
 
       // --- SUBSCRIBE TO PANEL STATE FOR RENDERER UPDATES ---
       // Subscribe the panel TO its own state store to push updates TO the renderer
@@ -421,7 +456,7 @@ export class EnginePanel implements IContentRenderer {
           this._previousViewState.showCelestialLabels
         ) {
           this._renderer?.setCelestialLabelsVisible(
-            newState.showCelestialLabels ?? true
+            newState.showCelestialLabels ?? true,
           );
         }
         // Added: Update AU marker visibility based on state
@@ -461,7 +496,7 @@ export class EnginePanel implements IContentRenderer {
                 processedIndices.push(index); // Mark for removal
               } else if (renderableEntry && coreEntry) {
                 console.warn(
-                  `[EnginePanel ${this._api?.id}] Queued focus ${pendingId} met renderable & core exists, but position is missing.`
+                  `[EnginePanel ${this._api?.id}] Queued focus ${pendingId} met renderable & core exists, but position is missing.`,
                 );
               }
             });
@@ -471,7 +506,7 @@ export class EnginePanel implements IContentRenderer {
               this._pendingFocusQueue.splice(processedIndices[i], 1);
             }
           }
-        }
+        },
       );
       // --- END RENDERABLE OBJECTS SUBSCRIPTION ---
 
@@ -493,7 +528,7 @@ export class EnginePanel implements IContentRenderer {
     } catch (error) {
       console.error(
         `Failed to initialize EnginePanel [${this._api?.title}] renderer:`,
-        error
+        error,
       );
       this._element.textContent = `Error initializing engine renderer: ${error}`;
       this._element.style.color = "red";
@@ -528,11 +563,11 @@ export class EnginePanel implements IContentRenderer {
     // Remove event listeners
     document.removeEventListener(
       "engine-focus-request",
-      this._handleFocusRequest
+      this._handleFocusRequest,
     );
-    
+
     // Remove the camera transition event listener
-    document.removeEventListener('camera-transition-complete', () => {});
+    document.removeEventListener("camera-transition-complete", () => {});
 
     this._dataListenerUnsubscribe?.();
     this._dataListenerUnsubscribe = null;

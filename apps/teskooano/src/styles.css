@@ -79,17 +79,25 @@ button:focus-visible {
 
 .toolbar-cosmic-background {
   /* Base dark color (matches the one set previously) */
-  background-color: var(--color-surface-deep, #1a1a2e); 
-  
+  background-color: var(--color-surface-deep, #1a1a2e);
+
   /* Adjusted layered gradients for a more visible nebula */
   background-image: 
     /* Faint directional haze */
-    linear-gradient(160deg, hsla(280, 40%, 25%, 0.15) 0%, transparent 40%), 
+    linear-gradient(160deg, hsla(280, 40%, 25%, 0.15) 0%, transparent 40%),
     /* Brighter purple cloud, slightly larger */
-    radial-gradient(ellipse at 25% 35%, hsla(260, 55%, 40%, 0.35) 0%, transparent 60%),
+      radial-gradient(
+        ellipse at 25% 35%,
+        hsla(260, 55%, 40%, 0.35) 0%,
+        transparent 60%
+      ),
     /* Brighter cyan cloud, shifted */
-    radial-gradient(ellipse at 75% 65%, hsla(180, 60%, 35%, 0.3) 0%, transparent 55%);
-    
+      radial-gradient(
+        ellipse at 75% 65%,
+        hsla(180, 60%, 35%, 0.3) 0%,
+        transparent 55%
+      );
+
   /* Ensure background doesn't repeat if element is larger */
   background-repeat: no-repeat;
-} 
+}

@@ -82,6 +82,7 @@ export class ModularSpaceRenderer {
   private previousFollowTargetPos = new THREE.Vector3();
   private _followTargetId: string | null = null; // ID of the object to follow
   private _lastTimeLog: number | null = null;
+  private _missingFrameCount = 0;
 
   constructor(
     container: HTMLElement,
@@ -94,7 +95,7 @@ export class ModularSpaceRenderer {
       showGrid?: boolean;
       enableUI?: boolean;
       showAuMarkers?: boolean;
-    } = {}
+    } = {},
   ) {
     this.stateAdapter = new RendererStateAdapter();
 
@@ -113,7 +114,7 @@ export class ModularSpaceRenderer {
     const enableUI = options.enableUI !== false; // Default to true
     this.controlsManager = new ControlsManager(
       this.sceneManager.camera,
-      this.sceneManager.renderer.domElement
+      this.sceneManager.renderer.domElement,
     );
 
     // Only initialize CSS2D manager if UI is enabled
@@ -143,13 +144,13 @@ export class ModularSpaceRenderer {
       renderableObjectsStore,
       this.lightManager,
       this.sceneManager.renderer,
-      this.css2DManager
+      this.css2DManager,
     );
     // Pass BOTH the store AND the adapter to OrbitManager
     this.orbitManager = new OrbitManager(
       this.objectManager,
       this.stateAdapter, // For visual settings
-      renderableObjectsStore // For object data
+      renderableObjectsStore, // For object data
     );
     this.backgroundManager = new BackgroundManager(this.sceneManager.scene);
     this.backgroundManager.setCamera(this.sceneManager.camera);
@@ -210,23 +211,31 @@ export class ModularSpaceRenderer {
         this.lightManager.getStarLightsData(),
         this.sceneManager.renderer,
         this.sceneManager.scene,
-        this.sceneManager.camera
+        this.sceneManager.camera,
       );
 
       // Update the background with the current time delta
       this.backgroundManager.update(deltaTime);
 
       // --- Camera Following Logic ---
-      // Only run follow logic if NOT transitioning
-      if (this._followTargetId && !this.controlsManager.getIsTransitioning) {
-        const focusedObjectMesh = this.objectManager.getObject(
-          this._followTargetId
-        );
+      if (this._followTargetId) {
+        // Get the target mesh from the ObjectManager
+        const targetMesh = this.objectManager.getObject(this._followTargetId);
 
-        if (focusedObjectMesh) {
-          focusedObjectMesh.getWorldPosition(this.tempNewObjectPos);
-          if (this.previousFollowTargetPos.lengthSq() === 0) {
+        // Check if the mesh exists and is visible (not destroyed)
+        if (targetMesh && targetMesh.visible) {
+          // Get the world position (already in scene units)
+          targetMesh.getWorldPosition(this.tempNewObjectPos);
+
+          // First-time setup for following
+          if (
+            this.previousFollowTargetPos.x === 0 &&
+            this.previousFollowTargetPos.y === 0 &&
+            this.previousFollowTargetPos.z === 0
+          ) {
             this.previousFollowTargetPos.copy(this.tempNewObjectPos);
+            this.controlsManager.controls.target.copy(this.tempNewObjectPos);
+            return;
           }
           // Restore delta calculation
           const deltaMovement = this.tempNewObjectPos
@@ -235,18 +244,34 @@ export class ModularSpaceRenderer {
 
           // Restore direct camera position update
           this.sceneManager.camera.position.add(deltaMovement);
-          
+
           // Update the target directly - this is the core of following
           this.controlsManager.controls.target.copy(this.tempNewObjectPos);
           // REMOVED: Immediate update call - let the main manager handle it
-          // this.controlsManager.controls.update(); 
+          // this.controlsManager.controls.update();
           this.previousFollowTargetPos.copy(this.tempNewObjectPos);
         } else {
+          // Mesh not found or destroyed - log warning and clear follow target after multiple attempts
           console.warn(
-            `[Renderer Anim] Follow target object ${this._followTargetId} mesh not found. Stopping follow.`
+            `[Renderer Anim] Follow target mesh ${this._followTargetId} not found this frame. Skipping camera update.`,
           );
-          this._followTargetId = null;
-          this.previousFollowTargetPos.set(0, 0, 0);
+
+          // Track missing frames to handle the case when an object is permanently destroyed
+          if (!this._missingFrameCount) {
+            this._missingFrameCount = 1;
+          } else {
+            this._missingFrameCount++;
+          }
+
+          // If object is missing for several consecutive frames, stop following it
+          if (this._missingFrameCount > 5) {
+            console.log(
+              `[Renderer Anim] Follow target ${this._followTargetId} missing for ${this._missingFrameCount} frames. Clearing follow target.`,
+            );
+            this._followTargetId = null;
+            this._missingFrameCount = 0;
+            this.previousFollowTargetPos.set(0, 0, 0);
+          }
         }
       } else if (!this._followTargetId) {
         // If no follow target, ensure previous position is cleared
@@ -335,7 +360,7 @@ export class ModularSpaceRenderer {
   setCelestialLabelsVisible(visible: boolean): void {
     this.css2DManager?.setLayerVisibility(
       CSS2DLayerType.CELESTIAL_LABELS,
-      visible
+      visible,
     );
   }
   setGridVisible(visible: boolean): void {
@@ -419,5 +444,21 @@ export class ModularSpaceRenderer {
     const newState = !debugConfig.visualize;
     this.setDebugVisualization(newState); // This now just sets the global flag
     return newState;
+  }
+
+  /**
+   * Set whether debris effects should be shown when objects are destroyed
+   * @param enabled Whether debris effects should be shown
+   */
+  public setDebrisEffectsEnabled(enabled: boolean): void {
+    this.objectManager.setDebrisEffectsEnabled(enabled);
+  }
+
+  /**
+   * Toggle debris effects on/off
+   * @returns The new state (true if enabled, false if disabled)
+   */
+  public toggleDebrisEffects(): boolean {
+    return this.objectManager.toggleDebrisEffects();
   }
 }

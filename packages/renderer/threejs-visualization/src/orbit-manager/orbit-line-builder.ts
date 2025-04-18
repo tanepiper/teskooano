@@ -10,7 +10,7 @@ import * as THREE from "three";
  * @returns BufferGeometry for the orbit line.
  */
 export function createOrbitLineGeometry(
-  orbitPoints: THREE.Vector3[]
+  orbitPoints: THREE.Vector3[],
 ): THREE.BufferGeometry {
   return new THREE.BufferGeometry().setFromPoints(orbitPoints);
 }
@@ -27,7 +27,7 @@ export function createOrbitLineGeometry(
  */
 export function updateOrbitLine(
   line: THREE.Line,
-  orbitPoints: THREE.Vector3[]
+  orbitPoints: THREE.Vector3[],
 ): THREE.Line {
   if (line.geometry instanceof THREE.BufferGeometry) {
     const positions = new Float32Array(orbitPoints.length * 3);
@@ -40,7 +40,7 @@ export function updateOrbitLine(
 
     line.geometry.setAttribute(
       "position",
-      new THREE.BufferAttribute(positions, 3)
+      new THREE.BufferAttribute(positions, 3),
     );
     line.geometry.attributes.position.needsUpdate = true;
   }

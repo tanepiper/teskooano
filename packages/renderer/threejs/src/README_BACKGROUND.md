@@ -51,15 +51,15 @@ graph TD
     SR[SpaceRenderer] --> BM[BackgroundManager]
     BM --> Stars[Star Field]
     BM --> Nebula[Nebula Effect]
-    
+
     Stars --> StarGeometry[BufferGeometry]
     Stars --> StarMaterial[PointsMaterial]
-    
+
     Nebula --> NebulaMesh[Planes]
     Nebula --> NebulaShader[ShaderMaterial]
-    
+
     subgraph Animation
         Update[Update Method] --> ParallaxEffect[Parallax Effect]
         Update --> TimeAnimation[Time-based Animation]
     end
-``` 
+```

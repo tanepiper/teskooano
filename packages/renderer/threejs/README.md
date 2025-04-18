@@ -16,19 +16,19 @@ The renderer is now split into several modular packages:
 ### Basic Usage
 
 ```typescript
-import { ModularSpaceRenderer } from '@teskooano/renderer-threejs';
+import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 
 // Create a container element
-const container = document.getElementById('renderer-container');
+const container = document.getElementById("renderer-container");
 
 // Initialize the renderer
 const renderer = new ModularSpaceRenderer(container, {
   antialias: true,
   shadows: true,
   hdr: true,
-  background: 'black',
+  background: "black",
   showDebugSphere: false,
-  showGrid: true
+  showGrid: true,
 });
 
 // Start the render loop
@@ -50,12 +50,12 @@ renderer.updateCamera(new THREE.Vector3(0, 0, 10), new THREE.Vector3(0, 0, 0));
 renderer.setCanvasUIManager({
   render: () => {
     // Custom rendering logic
-  }
+  },
 });
 
 // Add a render callback
 const callback = () => {
-  console.log('Rendering frame');
+  console.log("Rendering frame");
 };
 renderer.addRenderCallback(callback);
 
@@ -163,11 +163,11 @@ To migrate from `SpaceRenderer` to `ModularSpaceRenderer`, simply replace the im
 
 ```typescript
 // Old code
-import { SpaceRenderer } from '@teskooano/renderer-threejs';
+import { SpaceRenderer } from "@teskooano/renderer-threejs";
 const renderer = new SpaceRenderer(container, options);
 
 // New code
-import { ModularSpaceRenderer } from '@teskooano/renderer-threejs';
+import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 const renderer = new ModularSpaceRenderer(container, options);
 ```
 

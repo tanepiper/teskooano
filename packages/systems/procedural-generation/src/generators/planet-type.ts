@@ -34,7 +34,7 @@ export function determinePlanetTypeAndBaseProperties(
   random: () => number,
   bodyDistanceAU: number,
   starTemperature: number, // Added for Gas Giant classification
-  starRadius: number // Added for Gas Giant classification
+  starRadius: number, // Added for Gas Giant classification
 ): PlanetBaseProperties {
   let planetType: CelestialType;
   let preliminaryDensity_kg_m3: number;
@@ -66,7 +66,7 @@ export function determinePlanetTypeAndBaseProperties(
         random,
         bodyDistanceAU,
         starTemperature,
-        starRadius
+        starRadius,
       );
     } else {
       planetType = CelestialType.PLANET;
@@ -88,7 +88,7 @@ export function determinePlanetTypeAndBaseProperties(
       random,
       bodyDistanceAU,
       starTemperature,
-      starRadius
+      starRadius,
     );
   } else {
     // --- Outer Zone --- (Likely Ice Giant or Icy Rocky)
@@ -104,7 +104,7 @@ export function determinePlanetTypeAndBaseProperties(
       // Force Class III or IV for Ice Giants
       gasGiantClass = UTIL.getRandomItem(
         [GasGiantClass.CLASS_III, GasGiantClass.CLASS_IV],
-        random
+        random,
       );
     } else {
       planetType = CelestialType.PLANET;

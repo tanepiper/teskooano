@@ -192,7 +192,7 @@ export class TeskooanoSlider extends HTMLElement {
   attributeChangedCallback(
     name: string,
     oldValue: string | null,
-    newValue: string | null
+    newValue: string | null,
   ) {
     if (oldValue === newValue) return;
 
@@ -259,7 +259,7 @@ export class TeskooanoSlider extends HTMLElement {
       // Add ARIA attributes for better accessibility
       this.sliderElement.setAttribute(
         "aria-disabled",
-        isDisabled ? "true" : "false"
+        isDisabled ? "true" : "false",
       );
     }
   }
@@ -308,7 +308,7 @@ export class TeskooanoSlider extends HTMLElement {
         bubbles: true,
         composed: true,
         detail: { value: this.value },
-      })
+      }),
     );
   };
 
@@ -318,7 +318,7 @@ export class TeskooanoSlider extends HTMLElement {
         bubbles: true,
         composed: true,
         detail: { value: this.value },
-      })
+      }),
     );
   };
 

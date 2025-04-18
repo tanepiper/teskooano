@@ -9,7 +9,7 @@ import {
   OceanSurfaceProperties,
   PlanetType,
   ProceduralSurfaceProperties,
-  SurfacePropertiesUnion
+  SurfacePropertiesUnion,
 } from "@teskooano/data-types";
 import { createNoise3D } from "simplex-noise"; // Corrected import
 
@@ -35,7 +35,7 @@ function mulberry32(seed: number) {
  */
 function mapEquirectangularToSphere(
   u: number,
-  v: number
+  v: number,
 ): [number, number, number] {
   const phi = u * 2 * Math.PI; // Azimuthal angle (longitude)
   const theta = v * Math.PI; // Polar angle (latitude)
@@ -62,7 +62,7 @@ function hexToRgb(hex: string): [number, number, number] | null {
 function interpolateRgb(
   colorA: [number, number, number],
   colorB: [number, number, number],
-  factor: number
+  factor: number,
 ): [number, number, number] {
   const clampedFactor = Math.max(0, Math.min(1, factor)); // Ensure factor is 0-1
   const r = Math.round(colorA[0] + (colorB[0] - colorA[0]) * clampedFactor);
@@ -82,7 +82,7 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
 
 function getColorForHeight(
   height: number, // Expected to be normalized (0 to 1)
-  surfaceProperties: SurfacePropertiesUnion | undefined
+  surfaceProperties: SurfacePropertiesUnion | undefined,
 ): string {
   // Default grayscale if no properties
   if (!surfaceProperties) {
@@ -114,7 +114,7 @@ function getColorForHeight(
 
     if (!c1 || !c2 || !c3 || !c4 || !c5) {
       console.error(
-        "[getColorForHeight] Failed to parse one or more hex colors for ProceduralSurface."
+        "[getColorForHeight] Failed to parse one or more hex colors for ProceduralSurface.",
       );
       return "rgb(128, 128, 128)"; // Fallback gray
     }
@@ -160,7 +160,7 @@ function getColorForHeight(
         if (duneColor && rockColor) {
           const desertFactor = smoothstep(0.3, 0.7, height);
           baseColor = rgbToCssString(
-            interpolateRgb(rockColor, duneColor, desertFactor)
+            interpolateRgb(rockColor, duneColor, desertFactor),
           );
         }
         break;
@@ -171,7 +171,7 @@ function getColorForHeight(
         if (iceColor && crevasseColor) {
           const iceFactor = smoothstep(0.2, 0.5, height);
           baseColor = rgbToCssString(
-            interpolateRgb(crevasseColor, iceColor, iceFactor)
+            interpolateRgb(crevasseColor, iceColor, iceFactor),
           );
         }
         break;
@@ -183,13 +183,13 @@ function getColorForHeight(
         const lavaColor = hexToRgb(lavaProps.lavaColor ?? "#FF4500");
         if (rockLavaColor && lavaColor) {
           baseColor = rgbToCssString(
-            interpolateRgb(rockLavaColor, lavaColor, lavaFactor)
+            interpolateRgb(rockLavaColor, lavaColor, lavaFactor),
           );
         } else {
           baseColor =
             height > 0.6
-              ? lavaProps.lavaColor ?? "#FF4500"
-              : lavaProps.rockColor ?? "#303030";
+              ? (lavaProps.lavaColor ?? "#FF4500")
+              : (lavaProps.rockColor ?? "#303030");
         }
         break;
       case PlanetType.OCEAN:
@@ -200,19 +200,19 @@ function getColorForHeight(
         const oceanFactor = smoothstep(
           landRatio - blendRange / 2,
           landRatio + blendRange / 2,
-          height
+          height,
         );
         const oceanColor = hexToRgb(oceanProps.oceanColor ?? "#1E90FF");
         const landColor = hexToRgb(oceanProps.landColor ?? "#90EE90");
         if (oceanColor && landColor) {
           baseColor = rgbToCssString(
-            interpolateRgb(oceanColor, landColor, oceanFactor)
+            interpolateRgb(oceanColor, landColor, oceanFactor),
           );
         } else {
           baseColor =
             height < landRatio
-              ? oceanProps.oceanColor ?? "#1E90FF"
-              : oceanProps.landColor ?? "#90EE90";
+              ? (oceanProps.oceanColor ?? "#1E90FF")
+              : (oceanProps.landColor ?? "#90EE90");
         }
         break;
     }
@@ -221,7 +221,7 @@ function getColorForHeight(
 
   // Fallback
   console.warn(
-    "[getColorForHeight] No planetType found or matched, using base surface color."
+    "[getColorForHeight] No planetType found or matched, using base surface color.",
   );
   return (surfaceProperties as BaseSurfaceProperties).color ?? "#808080";
 }
@@ -244,7 +244,7 @@ function drawColorCanvasFromNoise(
   noiseScale: number = 1.0,
   noiseOctaves: number = 4,
   noisePersistence: number = 0.5,
-  noiseLacunarity: number = 2.0
+  noiseLacunarity: number = 2.0,
 ): number[][] {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
@@ -317,13 +317,13 @@ function drawColorCanvasFromNoise(
 function generateNormalMapFromHeightData(
   heightMap: number[][],
   canvasSize: number = 512,
-  strength: number = 1.0
+  strength: number = 1.0,
 ): OffscreenCanvas {
   const height = heightMap.length;
   const width = heightMap[0]?.length ?? 0;
   if (width === 0 || height === 0 || width !== height || width !== canvasSize) {
     throw new Error(
-      `Invalid heightMap dimensions (${width}x${height}) for normal map generation (expected ${canvasSize}x${canvasSize}).`
+      `Invalid heightMap dimensions (${width}x${height}) for normal map generation (expected ${canvasSize}x${canvasSize}).`,
     );
   }
 
@@ -360,7 +360,7 @@ function generateNormalMapFromHeightData(
       // Z component is 1 before normalization for heightmap normals
       const vec = [dx, dy, 1.0];
       const len = Math.sqrt(
-        vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]
+        vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2],
       );
 
       let nx = 0,
@@ -423,7 +423,7 @@ export function generateTerrainTexture(
     noisePersistence?: number;
     noiseLacunarity?: number;
     normalStrength?: number;
-  }
+  },
 ): GeneratedTerrainTextures {
   // Generate a cache key based on seed and options
   // Simple stringification; consider a more robust hashing for complex options if needed.
@@ -443,7 +443,7 @@ export function generateTerrainTexture(
   }
 
   console.warn(
-    `[generateTerrainTexture] Cache miss for key: ${cacheKey}. Generating...`
+    `[generateTerrainTexture] Cache miss for key: ${cacheKey}. Generating...`,
   );
 
   // Use mulberry32 PRNG for deterministic noise based on seed
@@ -460,7 +460,7 @@ export function generateTerrainTexture(
   const normalStrength = options?.normalStrength ?? 1.0;
 
   console.log(
-    `[generateTerrainTexture] Using 3D Simplex Noise. Seed: ${seed}, Size: ${canvasSize}, Scale: ${noiseScale}, Octaves: ${noiseOctaves}, Persistence: ${noisePersistence}, Lacunarity: ${noiseLacunarity}, Normal Strength: ${normalStrength}`
+    `[generateTerrainTexture] Using 3D Simplex Noise. Seed: ${seed}, Size: ${canvasSize}, Scale: ${noiseScale}, Octaves: ${noiseOctaves}, Persistence: ${noisePersistence}, Lacunarity: ${noiseLacunarity}, Normal Strength: ${normalStrength}`,
   );
   if (surfaceProperties) {
     console.log(
@@ -468,11 +468,11 @@ export function generateTerrainTexture(
         "planetType" in surfaceProperties
           ? surfaceProperties.planetType
           : "Unknown"
-      }`
+      }`,
     );
   } else {
     console.log(
-      `[generateTerrainTexture] No surface properties provided, using default grayscale.`
+      `[generateTerrainTexture] No surface properties provided, using default grayscale.`,
     );
   }
 
@@ -487,14 +487,14 @@ export function generateTerrainTexture(
     noiseScale,
     noiseOctaves,
     noisePersistence,
-    noiseLacunarity
+    noiseLacunarity,
   );
 
   // Generate normal map from the height data
   const normalCanvas = generateNormalMapFromHeightData(
     heightMap,
     canvasSize,
-    normalStrength
+    normalStrength,
   );
 
   const result: GeneratedTerrainTextures = {

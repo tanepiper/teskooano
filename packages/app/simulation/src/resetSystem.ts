@@ -14,7 +14,7 @@ export function resetCelestialObjects(skipStateClear: boolean = false) {
     });
   } else {
     console.warn(
-      "[SYSTEM] Skipping state clear as createSolarSystem will handle it"
+      "[SYSTEM] Skipping state clear as createSolarSystem will handle it",
     );
   }
 }

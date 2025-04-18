@@ -206,7 +206,7 @@ export class AnimationLoop {
     } catch (error) {
       console.error(
         "AnimationLoop: Error collecting/updating renderer stats:",
-        error
+        error,
       );
     }
   }

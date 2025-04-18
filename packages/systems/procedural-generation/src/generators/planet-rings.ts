@@ -1,7 +1,4 @@
-import type {
-  RingProperties,
-  RockyType,
-} from "@teskooano/data-types";
+import type { RingProperties, RockyType } from "@teskooano/data-types";
 import * as CONST from "../constants";
 import * as UTIL from "../utils";
 
@@ -20,20 +17,24 @@ export function generateRings(
   chance: number,
   allowedTypes: RockyType[],
   parentVisualRadius_m: number,
-  outerRadiusFactor: number = 1.5 // Controls max spread from inner radius
+  outerRadiusFactor: number = 1.5, // Controls max spread from inner radius
 ): RingProperties[] | undefined {
   const roll = random();
 
   if (roll < chance && allowedTypes.length > 0) {
     const ringType = UTIL.getRandomItem(allowedTypes, random);
     if (!ringType) {
-      console.warn(`[generateRings] Failed to get random ring type from allowed types:`, allowedTypes);
+      console.warn(
+        `[generateRings] Failed to get random ring type from allowed types:`,
+        allowedTypes,
+      );
       return undefined;
     }
 
     // Calculate radii multipliers relative to the PARENT'S VISUAL RADIUS
     const innerRadiusMultiplier = 1.3 + random() * 0.7; // Rings start further out (1.3x to 2.0x parent radius)
-    const outerRadiusMultiplier = innerRadiusMultiplier + (0.1 + random() * outerRadiusFactor);
+    const outerRadiusMultiplier =
+      innerRadiusMultiplier + (0.1 + random() * outerRadiusFactor);
 
     // Calculate actual radii in METERS based on the visual radius
     const innerRadius_m = innerRadiusMultiplier * parentVisualRadius_m;
@@ -41,12 +42,16 @@ export function generateRings(
 
     const ringComp = CONST.RING_COMPOSITION[ringType];
     if (!ringComp) {
-        console.warn(`[generateRings] No composition defined for ring type: ${ringType}`);
-        return undefined; // Cannot create ring without composition
+      console.warn(
+        `[generateRings] No composition defined for ring type: ${ringType}`,
+      );
+      return undefined; // Cannot create ring without composition
     }
     const ringColor = UTIL.getRandomItem(CONST.RING_COLORS[ringType], random);
     if (!ringColor) {
-      console.warn(`[generateRings] Failed to get random ring color for type: ${ringType}.`);
+      console.warn(
+        `[generateRings] Failed to get random ring color for type: ${ringType}.`,
+      );
       return undefined;
     }
 
@@ -68,4 +73,4 @@ export function generateRings(
   }
 
   return undefined;
-} 
+}

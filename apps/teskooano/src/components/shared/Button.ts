@@ -1,4 +1,4 @@
-const template = document.createElement('template');
+const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
@@ -107,18 +107,18 @@ template.innerHTML = `
 `;
 
 export class TeskooanoButton extends HTMLElement {
-  static observedAttributes = ['disabled', 'type', 'title', 'fullwidth'];
+  static observedAttributes = ["disabled", "type", "title", "fullwidth"];
 
   private buttonElement: HTMLButtonElement;
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
-    this.buttonElement = this.shadowRoot!.querySelector('button')!;
+    this.buttonElement = this.shadowRoot!.querySelector("button")!;
 
     // Forward clicks from the custom element to the internal button
-    this.addEventListener('click', (e) => {
+    this.addEventListener("click", (e) => {
       if (this.disabled) {
         e.stopPropagation();
         return;
@@ -132,16 +132,20 @@ export class TeskooanoButton extends HTMLElement {
   connectedCallback() {
     // Sync initial attribute states
     this.updateDisabledState();
-    this.updateAttribute('type', this.getAttribute('type') || 'button'); // Default to type="button"
-    this.updateAttribute('title', this.getAttribute('title'));
+    this.updateAttribute("type", this.getAttribute("type") || "button"); // Default to type="button"
+    this.updateAttribute("title", this.getAttribute("title"));
     // No need to handle fullwidth here, CSS does it
   }
 
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
-    if (name === 'disabled') {
+  attributeChangedCallback(
+    name: string,
+    oldValue: string | null,
+    newValue: string | null,
+  ) {
+    if (name === "disabled") {
       this.updateDisabledState();
-    } else if (name === 'fullwidth') {
-       // Attribute presence handled by CSS selector :host([fullwidth])
+    } else if (name === "fullwidth") {
+      // Attribute presence handled by CSS selector :host([fullwidth])
     } else {
       this.updateAttribute(name, newValue);
     }
@@ -158,30 +162,30 @@ export class TeskooanoButton extends HTMLElement {
 
   // Getter/setter for disabled state
   get disabled(): boolean {
-    return this.hasAttribute('disabled');
+    return this.hasAttribute("disabled");
   }
 
   set disabled(isDisabled: boolean) {
     if (isDisabled) {
-      this.setAttribute('disabled', '');
+      this.setAttribute("disabled", "");
     } else {
-      this.removeAttribute('disabled');
+      this.removeAttribute("disabled");
     }
   }
 
   private updateDisabledState() {
     if (this.disabled) {
-      this.buttonElement.setAttribute('disabled', '');
+      this.buttonElement.setAttribute("disabled", "");
       // Optionally add ARIA disabled state
-      this.buttonElement.setAttribute('aria-disabled', 'true');
+      this.buttonElement.setAttribute("aria-disabled", "true");
     } else {
-      this.buttonElement.removeAttribute('disabled');
-      this.buttonElement.removeAttribute('aria-disabled');
+      this.buttonElement.removeAttribute("disabled");
+      this.buttonElement.removeAttribute("aria-disabled");
     }
   }
 
   // Expose the form association methods (optional but good practice)
-  // static formAssociated = true; 
+  // static formAssociated = true;
   // private internals: ElementInternals;
 
   // If you need the button to participate in forms (e.g., submit)
@@ -197,7 +201,6 @@ export class TeskooanoButton extends HTMLElement {
   // formDisabledCallback(disabled) { this.disabled = disabled; }
   // formResetCallback() { ... }
   // formStateRestoreCallback(state, mode) { ... }
-
 }
 
-customElements.define('teskooano-button', TeskooanoButton);
+customElements.define("teskooano-button", TeskooanoButton);

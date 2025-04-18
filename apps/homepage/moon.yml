@@ -1,38 +1,38 @@
 # https://moonrepo.dev/docs/config/project
-language: 'typescript'
-platform: 'node'
+language: "typescript"
+platform: "node"
 
 fileGroups:
   sources: # Used by build, check, etc tasks
     # Matches files in the `src` directory
-    - 'site/**/*'
+    - "site/**/*"
     # Matches files in the root
-    - 'vite.config.ts'
-    - 'tsconfig.json'
+    - "vite.config.ts"
+    - "tsconfig.json"
 
 tasks:
   # Build the project
   build:
-    command: 'npm run build'
+    command: "npm run build"
     inputs:
       # Sources
-      - '@group(sources)'
+      - "@group(sources)"
       # Package dependencies
-      - 'package.json'
-      - 'tsconfig.json'
+      - "package.json"
+      - "tsconfig.json"
     outputs:
       # The built distribution
-      - 'site/.vitepress/dist'
+      - "site/.vitepress/dist"
 
   # Start the development server
   dev:
-    command: 'npm run dev'
+    command: "npm run dev"
     local: true # Mark as local development only
-   # Start the development server
+    # Start the development server
   preview:
-    command: 'npm run preview'
+    command: "npm run preview"
     local: true # Mark as local development only
 
   # Run unit tests
   test:
-    command: 'npm run test' 
+    command: "npm run test"

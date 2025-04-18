@@ -69,10 +69,10 @@ export class ToolbarSeedForm extends HTMLElement {
 
   connectedCallback() {
     this.inputElement = this.shadowRoot!.getElementById(
-      "seed-input"
+      "seed-input",
     ) as TeskooanoInputField;
     this.buttonElement = this.shadowRoot!.getElementById(
-      "generate-button"
+      "generate-button",
     ) as TeskooanoButton;
 
     // Ensure label is cleared on the input field
@@ -99,6 +99,10 @@ export class ToolbarSeedForm extends HTMLElement {
     if (e.key === "Enter") {
       this.handleGenerate();
     }
+  };
+
+  public tourGenerate = async () => {
+    this.handleGenerate();
   };
 
   private handleGenerate = async () => {
@@ -140,7 +144,6 @@ export class ToolbarSeedForm extends HTMLElement {
     // Dispatch the custom event to reset accumulated time in the simulation loop
     dispatchSimulationTimeReset();
 
-
     // --- Show Progress Panel (After clearing state) ---
     const progressPanelId = "texture-progress-panel";
     // Close existing progress panel first, if any
@@ -158,7 +161,7 @@ export class ToolbarSeedForm extends HTMLElement {
         .filter(
           (obj) =>
             obj.type === CelestialType.PLANET ||
-            obj.type === CelestialType.GAS_GIANT
+            obj.type === CelestialType.GAS_GIANT,
         )
         .map((planet) => ({ id: planet.id, name: planet.name }));
 
@@ -176,48 +179,71 @@ export class ToolbarSeedForm extends HTMLElement {
       });
 
       // --- Add objects to the state store ---
-      if (systemData.length > 0) {
+      if (systemData && systemData.length > 0) {
+        // Find the primary star first (should have isMainStar=true in properties)
+        let primaryStar = systemData.find((obj) => {
+          if (obj.type !== CelestialType.STAR) return false;
+          const props = obj.properties as StarProperties;
+          return props?.isMainStar === true;
+        });
 
-        // Find the primary star first
-        let primaryStar = systemData.find(
-          (obj) =>
-            obj.type === CelestialType.STAR &&
-            (obj.properties as StarProperties)?.isMainStar
-        );
-
-        // If no star with isMainStar property, fallback to first star in the system
+        // Fallback to any star if no isMainStar flag is found
         if (!primaryStar) {
           console.warn(
-            "[ToolbarSeedForm] No star with isMainStar=true found. Falling back to first star in system."
+            "[ToolbarSeedForm] No star with isMainStar=true found. Falling back to first star in system.",
           );
           primaryStar = systemData.find(
             (obj) =>
-              obj.type === CelestialType.STAR || obj.id.startsWith("star-")
+              obj.type === CelestialType.STAR || obj.id.startsWith("star-"),
           );
         }
 
         if (primaryStar) {
-         
+          // Create the system with the primary star first
+          console.log(
+            `[ToolbarSeedForm] Creating solar system with primary star: ${primaryStar.id}`,
+          );
           actions.createSolarSystem(primaryStar);
 
-          // Add all *other* objects
+          // Add all *other* objects, ensuring no stars are added with addCelestial
           systemData.forEach((objData) => {
             if (objData.id !== primaryStar.id) {
-              // Don't re-add the primary star
-             
-              actions.addCelestial(objData);
+              // Check if this is a secondary star with no parent (should use createSolarSystem)
+              if (objData.type === CelestialType.STAR && !objData.parentId) {
+                console.warn(
+                  `[ToolbarSeedForm] Found another primary star: ${objData.id}. Using createSolarSystem.`,
+                );
+                actions.createSolarSystem(objData);
+              } else {
+                // Add other objects normally
+                actions.addCelestial(objData);
+              }
             }
           });
         } else {
           // Fallback or error handling if no primary star found (shouldn't happen with generator)
           console.error(
-            "[ToolbarSeedForm] No primary star found in generated data! Adding all via addCelestial as fallback."
+            "[ToolbarSeedForm] No primary star found in generated data! Adding stars with createSolarSystem and other objects with addCelestial.",
           );
+
+          // First add all stars using createSolarSystem
+          const stars = systemData.filter(
+            (obj) => obj.type === CelestialType.STAR && !obj.parentId,
+          );
+          stars.forEach((star) => {
+            console.log(
+              `[ToolbarSeedForm] Creating solar system with star: ${star.id}`,
+            );
+            actions.createSolarSystem(star);
+          });
+
+          // Then add non-primary-stars and other objects
           systemData.forEach((objData) => {
-            actions.addCelestial(objData);
+            if (!(objData.type === CelestialType.STAR && !objData.parentId)) {
+              actions.addCelestial(objData);
+            }
           });
         }
-
 
         // IMPORTANT: Reset simulation time at the end to ensure we start from time 0
         actions.resetTime();
@@ -233,13 +259,12 @@ export class ToolbarSeedForm extends HTMLElement {
         } catch (err) {
           console.warn(
             "[ToolbarSeedForm] Couldn't import simulationState directly:",
-            err
+            err,
           );
         }
 
         // Dispatch custom event to reset accumulated time in the simulation loop
         dispatchSimulationTimeReset();
-
 
         // Dispatch completion event AFTER state update and time resets
         dispatchTextureGenerationComplete(true);
@@ -253,7 +278,7 @@ export class ToolbarSeedForm extends HTMLElement {
     } catch (error) {
       console.error(
         "[ToolbarSeedForm] Error during system generation or state update:",
-        error
+        error,
       );
       ToolbarSeedForm.dockviewApi.panels
         .find((p) => p.id === progressPanelId)

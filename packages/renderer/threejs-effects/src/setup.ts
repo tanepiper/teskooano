@@ -13,4 +13,4 @@ declare global {
   }
 }
 
-// Add any global setup for browser tests here 
+// Add any global setup for browser tests here

@@ -1,7 +1,16 @@
-import { DEG_TO_RAD, OSVector3 } from '@teskooano/core-math';
-import { AU, KM } from '@teskooano/core-physics';
-import { actions } from '@teskooano/core-state';
-import { CelestialType, GasGiantClass, IceSurfaceProperties, LavaSurfaceProperties, PlanetType, RockyType, SurfaceType, type GasGiantProperties } from '@teskooano/data-types';
+import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
+import { AU, KM } from "@teskooano/core-physics";
+import { actions } from "@teskooano/core-state";
+import {
+  CelestialType,
+  GasGiantClass,
+  IceSurfaceProperties,
+  LavaSurfaceProperties,
+  PlanetType,
+  RockyType,
+  SurfaceType,
+  type GasGiantProperties,
+} from "@teskooano/data-types";
 
 // --- Jupiter Constants (NASA Planetary Fact Sheet / JPL HORIZONS J2000) ---
 const JUPITER_REAL_MASS_KG = 1.89819e27; // More precise mass
@@ -22,7 +31,7 @@ const IO_MASS_KG = 8.9319e22;
 const IO_RADIUS_M = 1821600;
 const IO_SMA_M = 421700 * KM;
 const IO_ECC = 0.0041;
-const IO_INC_DEG = 0.050; // Relative to Jupiter's equator
+const IO_INC_DEG = 0.05; // Relative to Jupiter's equator
 const IO_SIDEREAL_PERIOD_S = 152854; // ~1.769 days
 const IO_ALBEDO = 0.63;
 
@@ -57,13 +66,13 @@ const CALLISTO_ALBEDO = 0.17;
  * Initializes Jupiter and its Galilean moons using accurate data.
  */
 export function initializeJupiter(parentId: string): void {
-  const jupiterId = 'jupiter'; // Define Jupiter's ID
+  const jupiterId = "jupiter"; // Define Jupiter's ID
 
   // --- Initialize Jupiter ---
   actions.addCelestial({
     id: jupiterId,
-    name: 'Jupiter',
-    seed: 'jupiter',
+    name: "Jupiter",
+    seed: "jupiter",
     type: CelestialType.GAS_GIANT,
     parentId: parentId,
     realMass_kg: JUPITER_REAL_MASS_KG,
@@ -75,7 +84,7 @@ export function initializeJupiter(parentId: string): void {
     axialTilt: new OSVector3(
       0,
       Math.cos(JUPITER_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(JUPITER_AXIAL_TILT_DEG * DEG_TO_RAD)
+      Math.sin(JUPITER_AXIAL_TILT_DEG * DEG_TO_RAD),
     ).normalize(),
     orbit: {
       realSemiMajorAxis_m: JUPITER_SMA_AU * AU,
@@ -89,28 +98,30 @@ export function initializeJupiter(parentId: string): void {
     properties: {
       type: CelestialType.GAS_GIANT,
       gasGiantClass: GasGiantClass.CLASS_I,
-      atmosphereColor: '#D8C8A8', // Tan/beige cloud bands
-      cloudColor: '#FFFFFF', // White zones
+      atmosphereColor: "#D8C8A8", // Tan/beige cloud bands
+      cloudColor: "#FFFFFF", // White zones
       cloudSpeed: 100, // Representative wind speed (m/s)
-      stormColor: '#B7410E', // Great Red Spot color
+      stormColor: "#B7410E", // Great Red Spot color
       stormSpeed: 50,
       rings: [
-        { // Faint main ring
+        {
+          // Faint main ring
           innerRadius: 1.72 * JUPITER_REAL_RADIUS_M, // Approx 122,500 km
           outerRadius: 1.81 * JUPITER_REAL_RADIUS_M, // Approx 129,000 km
           density: 0.05,
           opacity: 0.05,
-          color: '#A0522D', // Dusty brown
+          color: "#A0522D", // Dusty brown
           type: RockyType.DUST,
         },
-        { // Halo ring (inner, toroidal)
+        {
+          // Halo ring (inner, toroidal)
           innerRadius: 1.29 * JUPITER_REAL_RADIUS_M, // Approx 92,000 km
           outerRadius: 1.72 * JUPITER_REAL_RADIUS_M, // Approx 122,500 km
           density: 0.01,
           opacity: 0.02,
-          color: '#A0522D', // Faint dust
+          color: "#A0522D", // Faint dust
           type: RockyType.DUST,
-        }
+        },
         // Gossamer rings are even fainter
       ],
       axialTiltDeg: JUPITER_AXIAL_TILT_DEG,
@@ -119,9 +130,9 @@ export function initializeJupiter(parentId: string): void {
 
   // --- Initialize Io ---
   actions.addCelestial({
-    id: 'io',
-    name: 'Io',
-    seed: 'io_seed_1769',
+    id: "io",
+    name: "Io",
+    seed: "io_seed_1769",
     type: CelestialType.MOON,
     parentId: jupiterId,
     realMass_kg: IO_MASS_KG,
@@ -139,31 +150,31 @@ export function initializeJupiter(parentId: string): void {
       period_s: IO_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ['SO2'], // Thin sulfur dioxide atmosphere
+      composition: ["SO2"], // Thin sulfur dioxide atmosphere
       pressure: 1e-9,
-      color: '#FFFF0030' // Faint yellow tint, near transparent
+      color: "#FFFF0030", // Faint yellow tint, near transparent
     },
     surface: {
       type: SurfaceType.VOLCANIC,
       planetType: PlanetType.LAVA, // Representative surface type
-      color: '#FFFFA0', // Yellow/orange/white/black mottled surface
-      lavaColor: '#FF4500',
+      color: "#FFFFA0", // Yellow/orange/white/black mottled surface
+      lavaColor: "#FF4500",
       roughness: 0.5,
-      rockColor: '#303030',
+      rockColor: "#303030",
     } as LavaSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: jupiterId,
-      composition: ['sulfur compounds', 'silicates', 'iron core'],
+      composition: ["sulfur compounds", "silicates", "iron core"],
     },
   });
 
   // --- Initialize Europa ---
   actions.addCelestial({
-    id: 'europa',
-    name: 'Europa',
-    seed: 'europa_seed_3551',
+    id: "europa",
+    name: "Europa",
+    seed: "europa_seed_3551",
     type: CelestialType.MOON,
     parentId: jupiterId,
     realMass_kg: EUROPA_MASS_KG,
@@ -181,35 +192,40 @@ export function initializeJupiter(parentId: string): void {
       period_s: EUROPA_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ['O2'], // Very thin oxygen atmosphere
+      composition: ["O2"], // Very thin oxygen atmosphere
       pressure: 1e-11,
-      color: '#FFFFFF00' // Transparent
+      color: "#FFFFFF00", // Transparent
     },
     surface: {
       type: SurfaceType.ICE_CRACKED,
       planetType: PlanetType.ICE,
-      color: '#F0F8FF', // Alice blue / off-white ice
+      color: "#F0F8FF", // Alice blue / off-white ice
       roughness: 0.3,
       glossiness: 0.6,
-      color1: '#F0F8FF', // Ice base
-      color2: '#ADD8E6', // Light blue cracks/features
-      color3: '#FFE4B5', // Brownish deposits (Moccasin)
-      color4: '#FFFFFF', // Bright ice
-      color5: '#D2B48C', // Tan deposits
+      color1: "#F0F8FF", // Ice base
+      color2: "#ADD8E6", // Light blue cracks/features
+      color3: "#FFE4B5", // Brownish deposits (Moccasin)
+      color4: "#FFFFFF", // Bright ice
+      color5: "#D2B48C", // Tan deposits
     } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: jupiterId,
-      composition: ['water ice shell', 'silicate mantle', 'iron core', 'subsurface ocean'],
+      composition: [
+        "water ice shell",
+        "silicate mantle",
+        "iron core",
+        "subsurface ocean",
+      ],
     },
   });
 
   // --- Initialize Ganymede ---
   actions.addCelestial({
-    id: 'ganymede',
-    name: 'Ganymede',
-    seed: 'ganymede_seed_7155',
+    id: "ganymede",
+    name: "Ganymede",
+    seed: "ganymede_seed_7155",
     type: CelestialType.MOON,
     parentId: jupiterId,
     realMass_kg: GANYMEDE_MASS_KG,
@@ -227,15 +243,15 @@ export function initializeJupiter(parentId: string): void {
       period_s: GANYMEDE_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ['O2'], // Very thin oxygen atmosphere
+      composition: ["O2"], // Very thin oxygen atmosphere
       pressure: 1e-12,
-      color: '#FFFFFF00' // Transparent
+      color: "#FFFFFF00", // Transparent
     },
     surface: {
       type: SurfaceType.ICE_FLATS, // Changed: Represent mix of dark/light terrain
       planetType: PlanetType.ICE,
-      color: '#D3D3D3', // Light grey base (bright terrain)
-      secondaryColor: '#A9A9A9', // Dark grey (dark terrain)
+      color: "#D3D3D3", // Light grey base (bright terrain)
+      secondaryColor: "#A9A9A9", // Dark grey (dark terrain)
       roughness: 0.4,
       glossiness: 0.5,
     } as IceSurfaceProperties,
@@ -243,15 +259,20 @@ export function initializeJupiter(parentId: string): void {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: jupiterId,
-      composition: ['water ice', 'silicates', 'iron core', 'possible subsurface ocean'],
+      composition: [
+        "water ice",
+        "silicates",
+        "iron core",
+        "possible subsurface ocean",
+      ],
     },
   });
 
   // --- Initialize Callisto ---
   actions.addCelestial({
-    id: 'callisto',
-    name: 'Callisto',
-    seed: 'callisto_seed_16689',
+    id: "callisto",
+    name: "Callisto",
+    seed: "callisto_seed_16689",
     type: CelestialType.MOON,
     parentId: jupiterId,
     realMass_kg: CALLISTO_MASS_KG,
@@ -269,27 +290,27 @@ export function initializeJupiter(parentId: string): void {
       period_s: CALLISTO_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ['CO2', 'O2'], // Very thin atmosphere
+      composition: ["CO2", "O2"], // Very thin atmosphere
       pressure: 7.5e-12,
-      color: '#FFFFFF00' // Transparent
+      color: "#FFFFFF00", // Transparent
     },
     surface: {
       type: SurfaceType.ICE_CRACKED, // Changed: Heavily cratered ancient ICE surface
       planetType: PlanetType.ICE, // Primarily ice/rock mix
-      color: '#A9A9A9', // Dark grey ice
+      color: "#A9A9A9", // Dark grey ice
       roughness: 0.8,
       glossiness: 0.2, // Ice is somewhat glossy, but old/dirty
-      color1: '#696969', // Dimgrey
-      color2: '#808080', // Grey
-      color3: '#A9A9A9', // Darkgrey
-      color4: '#BEBEBE', // Lightgrey
-      color5: '#FFFFFF', // White crater ejecta highlights
+      color1: "#696969", // Dimgrey
+      color2: "#808080", // Grey
+      color3: "#A9A9A9", // Darkgrey
+      color4: "#BEBEBE", // Lightgrey
+      color5: "#FFFFFF", // White crater ejecta highlights
     } as IceSurfaceProperties, // Changed: Use IceSurfaceProperties
     properties: {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: jupiterId,
-      composition: ['ice', 'rock', 'possible subsurface ocean'],
+      composition: ["ice", "rock", "possible subsurface ocean"],
     },
   });
-} 
+}

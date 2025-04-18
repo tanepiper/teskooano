@@ -1,12 +1,12 @@
-import { DEG_TO_RAD } from '@teskooano/core-math';
-import { AU, KM } from '@teskooano/core-physics';
-import { actions } from '@teskooano/core-state';
+import { DEG_TO_RAD } from "@teskooano/core-math";
+import { AU, KM } from "@teskooano/core-physics";
+import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
   IceSurfaceProperties,
   PlanetType,
-  SurfaceType
-} from '@teskooano/data-types';
+  SurfaceType,
+} from "@teskooano/data-types";
 
 // --- Pluto Constants (NASA Planetary Fact Sheet / JPL HORIZONS J2000) ---
 const PLUTO_MASS_KG = 1.303e22;
@@ -16,7 +16,7 @@ const PLUTO_ALBEDO = 0.58; // Geometric Albedo (average)
 const PLUTO_SMA_AU = 39.482;
 const PLUTO_ECC = 0.2488;
 const PLUTO_INC_DEG = 17.16;
-const PLUTO_LAN_DEG = 110.30;
+const PLUTO_LAN_DEG = 110.3;
 const PLUTO_AOP_DEG = 224.07;
 const PLUTO_MA_DEG = 238.93; // Mean Anomaly at J2000 Epoch
 const PLUTO_SIDEREAL_PERIOD_S = 7.824e9; // Sidereal Orbit Period (~248 years)
@@ -35,13 +35,13 @@ const CHARON_ALBEDO = 0.38;
  * Initializes Pluto and its largest moon Charon using accurate data.
  */
 export function initializePluto(parentId: string): void {
-  const plutoId = 'pluto'; // Define Pluto's ID
+  const plutoId = "pluto"; // Define Pluto's ID
 
   // --- Initialize Pluto (Dwarf Planet) ---
   actions.addCelestial({
     id: plutoId,
-    name: 'Pluto',
-    seed: 'pluto',
+    name: "Pluto",
+    seed: "pluto",
     type: CelestialType.DWARF_PLANET, // Correct classification
     parentId: parentId,
     realMass_kg: PLUTO_MASS_KG,
@@ -58,31 +58,38 @@ export function initializePluto(parentId: string): void {
       meanAnomaly: PLUTO_MA_DEG * DEG_TO_RAD,
       period_s: PLUTO_SIDEREAL_PERIOD_S,
     },
-    atmosphere: { // Tenuous, variable nitrogen/methane/CO atmosphere
-      composition: ['N2', 'CH4', 'CO'],
+    atmosphere: {
+      // Tenuous, variable nitrogen/methane/CO atmosphere
+      composition: ["N2", "CH4", "CO"],
       pressure: 1e-5, // Approx pressure in microbars (very low)
-      color: '#E0FFFF80', // Very faint light cyan haze
+      color: "#E0FFFF80", // Very faint light cyan haze
     },
     surface: {
       type: SurfaceType.ICE_FLATS, // Represents varied terrain (Sputnik Planitia, etc.)
       planetType: PlanetType.ICE,
-      color: '#FFF8DC', // Cornsilk / pale yellow base (Nitrogen ice)
-      secondaryColor: '#DAA520', // Goldenrod/brownish (Tholins)
+      color: "#FFF8DC", // Cornsilk / pale yellow base (Nitrogen ice)
+      secondaryColor: "#DAA520", // Goldenrod/brownish (Tholins)
       roughness: 0.4,
       glossiness: 0.6,
     } as IceSurfaceProperties,
     properties: {
       type: CelestialType.DWARF_PLANET,
       isMoon: false,
-      composition: ['nitrogen ice', 'water ice', 'methane ice', 'rock', 'tholins'],
+      composition: [
+        "nitrogen ice",
+        "water ice",
+        "methane ice",
+        "rock",
+        "tholins",
+      ],
     },
   });
 
   // --- Initialize Charon ---
   actions.addCelestial({
-    id: 'charon',
-    name: 'Charon',
-    seed: 'charon',
+    id: "charon",
+    name: "Charon",
+    seed: "charon",
     type: CelestialType.MOON,
     parentId: plutoId, // Pluto is the parent
     realMass_kg: CHARON_MASS_KG,
@@ -100,21 +107,21 @@ export function initializePluto(parentId: string): void {
       meanAnomaly: Math.random() * 2 * Math.PI,
       period_s: CHARON_SIDEREAL_PERIOD_S,
     },
-    atmosphere: { composition: [], pressure: 0, color: '#00000000' }, // Effectively no atmosphere
+    atmosphere: { composition: [], pressure: 0, color: "#00000000" }, // Effectively no atmosphere
     surface: {
       type: SurfaceType.CRATERED, // Less varied than Pluto, more cratered
       planetType: PlanetType.ICE,
-      color: '#B0B0B0', // Greyish water ice
-      secondaryColor: '#8B4513', // Reddish-brown polar cap (Mordor Macula)
+      color: "#B0B0B0", // Greyish water ice
+      secondaryColor: "#8B4513", // Reddish-brown polar cap (Mordor Macula)
       roughness: 0.6,
     } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: plutoId,
-      composition: ['water ice', 'ammonia ice', 'rock'],
+      composition: ["water ice", "ammonia ice", "rock"],
     },
   });
 
   // TODO: Add other moons (Styx, Nix, Kerberos, Hydra) if needed
-} 
+}

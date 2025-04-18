@@ -1,31 +1,31 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ControlsManager } from '../ControlsManager';
-import * as THREE from 'three';
-import { simulationState } from '@teskooano/core-state';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { ControlsManager } from "../ControlsManager";
+import * as THREE from "three";
+import { simulationState } from "@teskooano/core-state";
 
 // Mock simulationState since we need to verify state updates
-vi.mock('@teskooano/core-state', () => ({
+vi.mock("@teskooano/core-state", () => ({
   simulationState: {
     get: vi.fn().mockReturnValue({
       camera: {
         position: { x: 0, y: 0, z: 1000 },
-        target: { x: 0, y: 0, z: 0 }
-      }
+        target: { x: 0, y: 0, z: 0 },
+      },
     }),
-    set: vi.fn()
-  }
+    set: vi.fn(),
+  },
 }));
 
-describe('ControlsManager', () => {
+describe("ControlsManager", () => {
   let controlsManager: ControlsManager;
   let camera: THREE.PerspectiveCamera;
   let container: HTMLElement;
 
   beforeEach(() => {
     // Create a container for the controls
-    container = document.createElement('div');
-    container.style.width = '800px';
-    container.style.height = '600px';
+    container = document.createElement("div");
+    container.style.width = "800px";
+    container.style.height = "600px";
     document.body.appendChild(container);
 
     // Create a camera
@@ -43,7 +43,7 @@ describe('ControlsManager', () => {
     vi.clearAllMocks();
   });
 
-  it('should initialize with default settings', () => {
+  it("should initialize with default settings", () => {
     expect(controlsManager.controls).toBeDefined();
     expect(controlsManager.controls.enableDamping).toBe(true);
     expect(controlsManager.controls.dampingFactor).toBe(0.1);
@@ -59,7 +59,7 @@ describe('ControlsManager', () => {
     expect(controlsManager.controls.panSpeed).toBe(1.0);
   });
 
-  it('should update camera target', () => {
+  it("should update camera target", () => {
     const newTarget = new THREE.Vector3(100, 200, 300);
     controlsManager.updateTarget(newTarget);
 
@@ -68,16 +68,16 @@ describe('ControlsManager', () => {
     expect(controlsManager.controls.target.z).toBe(300);
   });
 
-  it('should update controls when called', () => {
+  it("should update controls when called", () => {
     // Create a spy on the controls update method
-    const updateSpy = vi.spyOn(controlsManager.controls, 'update');
-    
+    const updateSpy = vi.spyOn(controlsManager.controls, "update");
+
     controlsManager.update();
-    
+
     expect(updateSpy).toHaveBeenCalled();
   });
 
-  it('should enable and disable controls', () => {
+  it("should enable and disable controls", () => {
     controlsManager.setEnabled(false);
     expect(controlsManager.controls.enabled).toBe(false);
 
@@ -85,20 +85,20 @@ describe('ControlsManager', () => {
     expect(controlsManager.controls.enabled).toBe(true);
   });
 
-  it('should update simulation state when controls change', () => {
+  it("should update simulation state when controls change", () => {
     // Move the camera to trigger the change event
     camera.position.set(100, 200, 300);
     controlsManager.controls.target.set(10, 20, 30);
-    
+
     // Manually dispatch the change event
-    controlsManager.controls.dispatchEvent({ type: 'change' });
+    controlsManager.controls.dispatchEvent({ type: "change" });
 
     // Check if simulationState.set was called with the correct parameters
     expect(simulationState.set).toHaveBeenCalledWith({
       camera: {
         position: expect.any(THREE.Vector3),
-        target: expect.any(THREE.Vector3)
-      }
+        target: expect.any(THREE.Vector3),
+      },
     });
 
     // Get the actual call arguments
@@ -116,26 +116,26 @@ describe('ControlsManager', () => {
     expect(cameraState.target.z).toBe(30);
   });
 
-  it('should not update simulation state when controls are disabled', () => {
+  it("should not update simulation state when controls are disabled", () => {
     // Disable controls
     controlsManager.setEnabled(false);
 
     // Move the camera
     camera.position.set(100, 200, 300);
     controlsManager.controls.target.set(10, 20, 30);
-    
+
     // Manually dispatch the change event
-    controlsManager.controls.dispatchEvent({ type: 'change' });
+    controlsManager.controls.dispatchEvent({ type: "change" });
 
     // Check that simulationState.set was not called
     expect(simulationState.set).not.toHaveBeenCalled();
   });
 
-  it('should dispose controls properly', () => {
-    const disposeSpy = vi.spyOn(controlsManager.controls, 'dispose');
-    
+  it("should dispose controls properly", () => {
+    const disposeSpy = vi.spyOn(controlsManager.controls, "dispose");
+
     controlsManager.dispose();
-    
+
     expect(disposeSpy).toHaveBeenCalled();
   });
-}); 
+});

@@ -98,4 +98,4 @@ Teskooano supports multiple simultaneous views of the same simulation.
 - **R**: Reset camera
 - **G**: Toggle grid
 - **O**: Toggle orbits
-- **L**: Toggle labels 
+- **L**: Toggle labels

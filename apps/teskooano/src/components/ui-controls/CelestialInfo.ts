@@ -40,7 +40,7 @@ export class FormatUtils {
 
   static formatDistanceKm(
     meters: number | undefined | null,
-    digits = 0
+    digits = 0,
   ): string {
     return meters != null && Number.isFinite(meters)
       ? (meters / 1000).toFixed(digits) + " km"
@@ -49,7 +49,7 @@ export class FormatUtils {
 
   static formatDistanceAU(
     meters: number | undefined | null,
-    digits = 3
+    digits = 3,
   ): string {
     return meters != null && Number.isFinite(meters)
       ? (meters / AU_IN_METERS).toFixed(digits) + " AU"
@@ -252,7 +252,7 @@ export class CelestialInfo extends HTMLElement {
   attributeChangedCallback(
     name: string,
     oldValue: string | null,
-    newValue: string | null
+    newValue: string | null,
   ) {
     if (name === "engine-view-id" && oldValue !== newValue) {
       this._engineViewId = newValue;
@@ -270,7 +270,7 @@ export class CelestialInfo extends HTMLElement {
 
     if (!this._engineViewId) {
       console.warn(
-        "[CelestialInfo] Cannot link: engine-view-id attribute is missing or empty."
+        "[CelestialInfo] Cannot link: engine-view-id attribute is missing or empty.",
       );
       return;
     }
@@ -289,11 +289,11 @@ export class CelestialInfo extends HTMLElement {
       this.unsubscribePanelState = this.linkedEnginePanel.subscribeToViewState(
         (viewState) => {
           this.handleSelectionChange(viewState.focusedObjectId);
-        }
+        },
       );
 
       this.handleSelectionChange(
-        this.linkedEnginePanel.getViewState().focusedObjectId
+        this.linkedEnginePanel.getViewState().focusedObjectId,
       );
 
       if (this._linkCheckInterval) {
@@ -320,7 +320,7 @@ export class CelestialInfo extends HTMLElement {
             this.renderInfo(selectedData);
           }
         }
-      }
+      },
     );
   }
 
@@ -341,7 +341,7 @@ export class CelestialInfo extends HTMLElement {
     if (celestialData) {
       if (celestialData.status === CelestialStatus.DESTROYED) {
         this.showPlaceholder(
-          `Object '${celestialData.name}' has been destroyed.`
+          `Object '${celestialData.name}' has been destroyed.`,
         );
       } else {
         this.renderInfo(celestialData);
@@ -363,7 +363,7 @@ export class CelestialInfo extends HTMLElement {
 
     // Show placeholder
     const placeholder = this.shadow.querySelector(
-      ".placeholder"
+      ".placeholder",
     ) as HTMLElement;
     if (placeholder) {
       placeholder.style.display = "block";
@@ -376,7 +376,7 @@ export class CelestialInfo extends HTMLElement {
   private renderInfo(celestial: CelestialObject) {
     // Hide placeholder
     const placeholder = this.shadow.querySelector(
-      ".placeholder"
+      ".placeholder",
     ) as HTMLElement;
     if (placeholder) {
       placeholder.style.display = "none";

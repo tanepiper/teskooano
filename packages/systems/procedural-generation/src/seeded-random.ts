@@ -10,7 +10,7 @@ export async function createSeededRandom(seed: string): Promise<() => number> {
   // 1. Hash the seed using SHA-256
   const encoder = new TextEncoder();
   const data = encoder.encode(seed);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
 
   // 2. Convert the first 4 bytes of the hash to an initial integer state for the LCG.
   // We only need 32 bits for a simple LCG seed.
@@ -33,4 +33,4 @@ export async function createSeededRandom(seed: string): Promise<() => number> {
     // Return a float between 0 (inclusive) and 1 (exclusive)
     return state / m;
   };
-} 
+}

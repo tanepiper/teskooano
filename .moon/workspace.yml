@@ -1,5 +1,5 @@
 # https://moonrepo.dev/docs/config/workspace
-$schema: 'https://moonrepo.dev/schemas/workspace.json'
+$schema: "https://moonrepo.dev/schemas/workspace.json"
 
 # Require a specific version of moon while running commands, otherwise fail.
 # versionConstraint: '>=1.0.0'
@@ -12,14 +12,14 @@ $schema: 'https://moonrepo.dev/schemas/workspace.json'
 # path to the project folder as the map value. File paths are relative from the workspace root,
 # and cannot reference projects located outside the workspace boundary.
 projects:
-  - 'apps/teskooano'
-  - 'apps/homepage'
-  - 'packages/core/physics'
-  - 'packages/core/state'
-  - 'packages/data/types'
-  - 'packages/renderer/threejs'
-  - 'packages/renderer/threejs-core'
-  - 'packages/renderer/threejs-effects'
-  - 'packages/renderer/threejs-interaction'
-  - 'packages/renderer/threejs-visualization'
-  - 'packages/systems/celestial'
+  - "apps/teskooano"
+  - "apps/homepage"
+  - "packages/core/physics"
+  - "packages/core/state"
+  - "packages/data/types"
+  - "packages/renderer/threejs"
+  - "packages/renderer/threejs-core"
+  - "packages/renderer/threejs-effects"
+  - "packages/renderer/threejs-interaction"
+  - "packages/renderer/threejs-visualization"
+  - "packages/systems/celestial"

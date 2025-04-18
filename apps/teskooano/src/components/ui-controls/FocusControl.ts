@@ -1,7 +1,4 @@
-import {
-  celestialObjectsStore,
-  panelRegistry
-} from "@teskooano/core-state";
+import { celestialObjectsStore, panelRegistry } from "@teskooano/core-state";
 import {
   CelestialObject,
   CelestialStatus,
@@ -118,6 +115,7 @@ template.innerHTML = `
       color: var(--color-text-disabled, #888);
       text-decoration: line-through;
       cursor: not-allowed;
+      opacity: 0.6;
       background-color: transparent; /* Ensure no hover/active background */
     }
     button.focus-item.destroyed:hover {
@@ -125,6 +123,21 @@ template.innerHTML = `
     }
     button.focus-item.destroyed .celestial-icon {
       filter: grayscale(100%) opacity(50%);
+    }
+
+    /* Style for annihilated items */
+    button.focus-item.annihilated {
+      color: var(--color-text-disabled, #888);
+      text-decoration: line-through;
+      cursor: not-allowed;
+      opacity: 0.4; /* Even more faded than destroyed */
+      background-color: transparent;
+    }
+    button.focus-item.annihilated:hover {
+      background-color: transparent;
+    }
+    button.focus-item.annihilated .celestial-icon {
+      filter: grayscale(100%) opacity(30%);
     }
 
     .indent-1 { margin-left: 15px; }
@@ -208,7 +221,7 @@ export class FocusControl extends HTMLElement {
   attributeChangedCallback(
     name: string,
     oldValue: string | null,
-    newValue: string | null
+    newValue: string | null,
   ): void {
     if (name === "engine-view-id" && oldValue !== newValue) {
       this._engineViewId = newValue;
@@ -219,10 +232,10 @@ export class FocusControl extends HTMLElement {
   connectedCallback() {
     this.listContainer = this.shadowRoot!.getElementById("target-list");
     this.resetButton = this.shadowRoot!.getElementById(
-      "reset-view"
+      "reset-view",
     ) as HTMLButtonElement;
     this.clearButton = this.shadowRoot!.getElementById(
-      "clear-focus"
+      "clear-focus",
     ) as HTMLButtonElement;
 
     this.addEventListeners();
@@ -234,11 +247,11 @@ export class FocusControl extends HTMLElement {
     // that would require rebuilding the list
     document.addEventListener(
       "celestial-objects-loaded",
-      this._handleObjectsLoaded
+      this._handleObjectsLoaded,
     );
     document.addEventListener(
       "celestial-object-destroyed",
-      this._handleObjectDestroyed
+      this._handleObjectDestroyed,
     );
 
     // No longer subscribe to global simulationState for focus updates
@@ -247,7 +260,7 @@ export class FocusControl extends HTMLElement {
     // Subscribe to the event dispatched when influences change
     document.addEventListener(
       "planet-influences-changed",
-      this.handleInfluencesChanged
+      this.handleInfluencesChanged,
     );
 
     // Attempt initial link if attribute is already set
@@ -263,16 +276,16 @@ export class FocusControl extends HTMLElement {
     // Clean up event listeners
     document.removeEventListener(
       "celestial-objects-loaded",
-      this._handleObjectsLoaded
+      this._handleObjectsLoaded,
     );
     document.removeEventListener(
       "celestial-object-destroyed",
-      this._handleObjectDestroyed
+      this._handleObjectDestroyed,
     );
     // Unsubscribe from influence change events
     document.removeEventListener(
       "planet-influences-changed",
-      this.handleInfluencesChanged
+      this.handleInfluencesChanged,
     );
 
     // Clear polling interval
@@ -282,6 +295,101 @@ export class FocusControl extends HTMLElement {
     }
     this.removeEventListeners();
   }
+
+  public tourFocus = (): void => {
+    // Find an active (non-destroyed) object to focus on
+    const activeButtons = Array.from(
+      this.listContainer!.querySelectorAll("button.focus-item:not([disabled])"),
+    );
+
+    if (activeButtons.length === 0) {
+      console.warn("[FocusControl] No active objects found for tour focus");
+      return;
+    }
+
+    // Pick a random active button
+    const randomButton = activeButtons[
+      Math.floor(Math.random() * activeButtons.length)
+    ] as HTMLElement;
+    if (randomButton) {
+      console.log(
+        `[FocusControl] Tour focusing on: ${randomButton.textContent?.trim()}`,
+      );
+      randomButton.click();
+    }
+  };
+
+  /**
+   * Get a random active object ID from the celestial objects store
+   * This can be used by tours to focus on a valid object
+   * @returns A tuple of [objectId: string, engineViewId: string | null]
+   */
+  public getRandomActiveObjectId = (): [string | null, string | null] => {
+    const objects = celestialObjectsStore.get();
+    // Filter out destroyed or annihilated objects
+    const activeObjects = Object.values(objects).filter(
+      (obj) =>
+        obj.status !== CelestialStatus.DESTROYED &&
+        obj.status !== CelestialStatus.ANNIHILATED,
+    );
+
+    if (activeObjects.length === 0) {
+      console.warn("[FocusControl] No active objects available");
+      return [null, this._engineViewId];
+    }
+
+    // Select a random active object
+    const randomObject =
+      activeObjects[Math.floor(Math.random() * activeObjects.length)];
+    return [randomObject.id, this._engineViewId];
+  };
+
+  /**
+   * Focus on a specific object programmatically
+   * @param objectId The ID of the object to focus on
+   * @returns true if focus was successful, false otherwise
+   */
+  public focusOnObject = (objectId: string): boolean => {
+    if (!this._engineViewId) {
+      console.warn("[FocusControl] Cannot focus: no engine panel linked");
+      return false;
+    }
+
+    const objects = celestialObjectsStore.get();
+    const focusObject = objects[objectId];
+
+    if (!focusObject) {
+      console.warn(`[FocusControl] Object not found: ${objectId}`);
+      return false;
+    }
+
+    if (
+      focusObject.status === CelestialStatus.DESTROYED ||
+      focusObject.status === CelestialStatus.ANNIHILATED
+    ) {
+      console.warn(
+        `[FocusControl] Cannot focus on destroyed object: ${objectId}`,
+      );
+      return false;
+    }
+
+    // Calculate appropriate distance
+    const distance = this.calculateCameraDistance(focusObject);
+
+    // Dispatch focus event
+    const focusEvent = new CustomEvent("engine-focus-request", {
+      detail: {
+        targetPanelId: this._engineViewId,
+        objectId: objectId,
+        distance: distance,
+      },
+      bubbles: true,
+      composed: true,
+    });
+
+    this.dispatchEvent(focusEvent);
+    return true;
+  };
 
   private addEventListeners(): void {
     this.listContainer?.addEventListener("click", (event) => {
@@ -300,7 +408,7 @@ export class FocusControl extends HTMLElement {
       } else {
         // Otherwise find closest parent button
         focusItemButton = target.closest(
-          "button.focus-item[data-id]"
+          "button.focus-item[data-id]",
         ) as HTMLButtonElement | null;
       }
 
@@ -308,11 +416,24 @@ export class FocusControl extends HTMLElement {
       if (focusItemButton && this._engineViewId) {
         const objectId = focusItemButton.dataset.id;
         if (objectId) {
+          // Check if the object is destroyed or annihilated - skip if it is
+          const objects = celestialObjectsStore.get();
+          const focusObject = objects[objectId];
+
+          if (
+            !focusObject ||
+            focusObject.status === CelestialStatus.DESTROYED ||
+            focusObject.status === CelestialStatus.ANNIHILATED
+          ) {
+            console.log(
+              `[FocusControl] Cannot focus on removed/destroyed object: ${objectId}`,
+            );
+            return; // Skip focusing on destroyed objects
+          }
+
           // Only send the command if the focus is actually changing
           if (objectId !== this._currentFocusedId) {
             // Get the object to calculate distance based on radius
-            const objects = celestialObjectsStore.get();
-            const focusObject = objects[objectId];
             let distance: number | undefined = undefined;
 
             if (focusObject) {
@@ -334,13 +455,13 @@ export class FocusControl extends HTMLElement {
             this.dispatchEvent(focusEvent);
           } else {
             console.trace(
-              `[FocusControl] Item ${objectId} is already focused in panel ${this._engineViewId}. Ignoring click.`
+              `[FocusControl] Item ${objectId} is already focused in panel ${this._engineViewId}. Ignoring click.`,
             );
           }
         }
       } else if (focusItemButton && !this._engineViewId) {
         console.warn(
-          `[FocusControl] Clicked focus item ${focusItemButton.dataset.id}, but no engine panel is linked.`
+          `[FocusControl] Clicked focus item ${focusItemButton.dataset.id}, but no engine panel is linked.`,
         );
       }
     });
@@ -381,7 +502,7 @@ export class FocusControl extends HTMLElement {
         this.dispatchEvent(clearFocusEvent);
       } else {
         console.warn(
-          "[FocusControl] Cannot clear focus, no engine panel ID known."
+          "[FocusControl] Cannot clear focus, no engine panel ID known.",
         );
       }
     });
@@ -461,7 +582,7 @@ export class FocusControl extends HTMLElement {
         '<div class="empty-message">Loading hierarchy...</div>';
       console.warn(
         "[FocusControl] No root objects found in dynamic hierarchy, but objects exist.",
-        dynamicHierarchy
+        dynamicHierarchy,
       );
       // Potentially add logic to display objects without hierarchy if roots aren't determined correctly
     } else if (objectMap.size === 0) {
@@ -470,22 +591,29 @@ export class FocusControl extends HTMLElement {
     } else {
       // Recursive function to add items
       const addItem = (obj: CelestialObject, indentLevel: number) => {
-        // ... (existing item creation logic using obj.id, obj.name, obj.type) ...
-        // --- Keep existing item creation logic ---
         const item = document.createElement("button");
         item.classList.add("focus-item");
-        item.classList.toggle("active", obj.id === focusedId);
         item.dataset.id = obj.id;
-        item.title = `${obj.name} (${obj.type})`;
 
-        // --- Check status and apply styles/disable ---
-        if (obj.status === CelestialStatus.DESTROYED) {
+        // --- Check Status for Styling/Disabling ---
+        if (obj.status === CelestialStatus.ANNIHILATED) {
+          // Completely gone - disable, grey out, line-through
+          item.classList.add("annihilated"); // Add specific class for styling
+          item.disabled = true; // Disable the button for annihilated objects
+          item.title = `${obj.name} (Annihilated)`;
+          item.classList.remove("active", "destroyed"); // Ensure other states removed
+        } else if (obj.status === CelestialStatus.DESTROYED) {
+          // Shattered - also disable now that we remove them from the scene
           item.classList.add("destroyed");
-          item.disabled = true;
-          item.title = `${obj.name} (Destroyed)`; // Update title
+          item.disabled = true; // Disable the button for destroyed objects
+          item.title = `${obj.name} (Destroyed)`;
+          item.classList.remove("active", "annihilated");
         } else {
+          // Active - standard styling
           item.disabled = false;
-          item.title = `${obj.name} (${obj.type})`; // Reset title if not destroyed
+          item.title = `${obj.name} (${obj.type})`;
+          item.classList.toggle("active", obj.id === focusedId);
+          item.classList.remove("destroyed", "annihilated");
         }
         // --- End status check ---
 
@@ -493,6 +621,15 @@ export class FocusControl extends HTMLElement {
         const icon = document.createElement("span");
         icon.classList.add("celestial-icon");
         icon.classList.add(this.getIconClass(obj.type));
+        // Apply dimmed style to icon if status is destroyed or annihilated
+        if (
+          obj.status === CelestialStatus.DESTROYED ||
+          obj.status === CelestialStatus.ANNIHILATED
+        ) {
+          icon.style.filter = "grayscale(80%) opacity(60%)";
+        } else {
+          icon.style.filter = ""; // Reset filter
+        }
         item.appendChild(icon);
 
         // Text label
@@ -506,7 +643,6 @@ export class FocusControl extends HTMLElement {
         }
 
         this.listContainer!.appendChild(item);
-        // --- End existing item creation logic ---
 
         // Recursively add children from dynamic hierarchy
         const childrenIds = dynamicHierarchy.get(obj.id) || [];
@@ -594,14 +730,14 @@ export class FocusControl extends HTMLElement {
 
     if (!this._engineViewId) {
       console.warn(
-        "[FocusControl] Cannot link: engine-view-id attribute is missing or empty."
+        "[FocusControl] Cannot link: engine-view-id attribute is missing or empty.",
       );
       return;
     }
 
     // Try to get panel instance from registry
     const potentialEnginePanel = panelRegistry.getPanelInstance<EnginePanel>(
-      this._engineViewId
+      this._engineViewId,
     );
 
     // Check for required methods AND the new getter
@@ -659,31 +795,35 @@ export class FocusControl extends HTMLElement {
   private calculateCameraDistance(object: CelestialObject): number {
     // Get type-specific scaling factor (or default)
     const sizeScaling = SIZE_BASED_SCALING[object.type] ?? DEFAULT_SIZE_SCALING;
-    
+
     // Get type-specific fallback distance
     const typeDistance = CAMERA_DISTANCES[object.type];
 
     // Calculate distance based on REAL radius (if available)
     let radiusDistance: number | undefined = undefined;
-    
+
     // Access the correct property: realRadius_m
     if (object.realRadius_m) {
       // Convert real radius to scaled renderer units
       const scaledRadius = scaleSize(object.realRadius_m, object.type);
-      
+
       // Apply type-specific scaling to ensure proper framing in camera view
       // For stars and large bodies, we need to be much further away
       const adjustedRadius = scaledRadius * sizeScaling;
-      
+
       // Calculate distance as scaled radius + percentage margin
-      radiusDistance = adjustedRadius * (1 + CAMERA_DISTANCE_SURFACE_PERCENTAGE);
-      
+      radiusDistance =
+        adjustedRadius * (1 + CAMERA_DISTANCE_SURFACE_PERCENTAGE);
+
       // Ensure minimum distance
       radiusDistance = Math.max(radiusDistance, MINIMUM_CAMERA_DISTANCE);
-      
+
       // For stars specifically, ensure we're never too close
       if (object.type === CelestialType.STAR) {
-        radiusDistance = Math.max(radiusDistance, CAMERA_DISTANCES[CelestialType.STAR] ?? 150);
+        radiusDistance = Math.max(
+          radiusDistance,
+          CAMERA_DISTANCES[CelestialType.STAR] ?? 150,
+        );
       }
     }
 

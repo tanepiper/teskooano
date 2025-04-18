@@ -68,7 +68,7 @@ export class DockviewController {
       createComponent: (options) => {
         // Check the registry first
         const RegisteredComponent = this._registeredComponents.get(
-          options.name
+          options.name,
         );
         if (RegisteredComponent) {
           return new RegisteredComponent();
@@ -85,11 +85,11 @@ export class DockviewController {
             return new Panel(); // Basic fallback panel
           default:
             console.warn(
-              `Unknown component requested or not registered: ${options.name}`
+              `Unknown component requested or not registered: ${options.name}`,
             );
             const errorPanel = new Panel();
             errorPanel.updateContent(
-              `Error: Unknown/unregistered component '${options.name}'`
+              `Error: Unknown/unregistered component '${options.name}'`,
             );
             return errorPanel;
         }
@@ -124,11 +124,11 @@ export class DockviewController {
    */
   public registerComponent(
     name: string,
-    constructor: new () => IContentRenderer
+    constructor: new () => IContentRenderer,
   ): void {
     if (this._registeredComponents.has(name)) {
       console.warn(
-        `DockviewController: Component '${name}' is already registered. Overwriting.`
+        `DockviewController: Component '${name}' is already registered. Overwriting.`,
       );
     }
     this._registeredComponents.set(name, constructor);

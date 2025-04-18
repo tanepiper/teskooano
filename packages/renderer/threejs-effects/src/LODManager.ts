@@ -65,11 +65,11 @@ export class LODManager {
    */
   createAndRegisterLOD(
     object: RenderableCelestialObject,
-    levels: LODLevel[]
+    levels: LODLevel[],
   ): THREE.LOD {
     if (!levels || levels.length === 0) {
       throw new Error(
-        `[LODManager] Cannot create LOD for ${object.celestialObjectId}: No LOD levels provided.`
+        `[LODManager] Cannot create LOD for ${object.celestialObjectId}: No LOD levels provided.`,
       );
     }
 
@@ -81,7 +81,7 @@ export class LODManager {
       if (!level.object || typeof level.distance !== "number") {
         console.warn(
           `[LODManager] Invalid LOD level provided for ${object.celestialObjectId}:`,
-          level
+          level,
         );
         // Skip invalid levels
         return;

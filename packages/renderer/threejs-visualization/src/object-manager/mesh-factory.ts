@@ -34,7 +34,7 @@ export class MeshFactory {
   /** @internal Function provided by ObjectManager/LODManager to create a THREE.LOD object from levels. */
   private createAndRegisterLOD: (
     object: RenderableCelestialObject,
-    levels: LODLevel[]
+    levels: LODLevel[],
   ) => THREE.LOD;
   /** @internal Reference to the LODManager to query parent LOD levels. */
   private lodManager: LODManager;
@@ -53,9 +53,9 @@ export class MeshFactory {
     planetRenderers: Map<string, CelestialRenderer>,
     createAndRegisterLOD: (
       object: RenderableCelestialObject,
-      levels: LODLevel[]
+      levels: LODLevel[],
     ) => THREE.LOD,
-    lodManager: LODManager // Added lodManager parameter
+    lodManager: LODManager, // Added lodManager parameter
   ) {
     this.celestialRenderers = celestialRenderers;
     this.starRenderers = starRenderers;
@@ -71,7 +71,7 @@ export class MeshFactory {
    * @returns The corresponding CelestialRenderer instance, or `null` if none is found/created.
    */
   private getOrCreateRenderer(
-    object: RenderableCelestialObject
+    object: RenderableCelestialObject,
   ): CelestialRenderer | null {
     const objectId = object.celestialObjectId;
 
@@ -87,7 +87,7 @@ export class MeshFactory {
       }
       const renderer = createStarRenderer(
         starProps.spectralClass,
-        starProps.stellarType
+        starProps.stellarType,
       );
       if (renderer) {
         this.starRenderers.set(objectId, renderer);
@@ -112,7 +112,7 @@ export class MeshFactory {
       } catch (error) {
         console.error(
           `[MeshFactory] Failed to instantiate BaseTerrestrialRenderer for ${objectId}:`,
-          error
+          error,
         );
         return null;
       }
@@ -126,7 +126,7 @@ export class MeshFactory {
         rendererKey = properties.gasGiantClass;
       } else {
         console.warn(
-          `[MeshFactory] Missing gasGiantClass for GAS_GIANT ${objectId}. Falling back.`
+          `[MeshFactory] Missing gasGiantClass for GAS_GIANT ${objectId}. Falling back.`,
         );
         rendererKey = GasGiantClass.CLASS_I; // Fallback to Class I Gas Giant renderer
       }
@@ -145,13 +145,13 @@ export class MeshFactory {
       rendererKey !== GasGiantClass.CLASS_I
     ) {
       console.warn(
-        `[MeshFactory] Renderer for ${rendererKey} not found. Using default CLASS_I Gas Giant renderer for ${objectId}.`
+        `[MeshFactory] Renderer for ${rendererKey} not found. Using default CLASS_I Gas Giant renderer for ${objectId}.`,
       );
       return this.celestialRenderers.get(GasGiantClass.CLASS_I) || null;
     }
 
     console.warn(
-      `[MeshFactory] No specific renderer found for ${object.celestialObjectId} (Type: ${object.type}).`
+      `[MeshFactory] No specific renderer found for ${object.celestialObjectId} (Type: ${object.type}).`,
     );
     return null;
   }
@@ -169,7 +169,7 @@ export class MeshFactory {
 
     if (!renderer) {
       console.error(
-        `[MeshFactory] No renderer found for ${object.celestialObjectId}. Creating fallback sphere.`
+        `[MeshFactory] No renderer found for ${object.celestialObjectId}. Creating fallback sphere.`,
       );
       return this.createFallbackSphere(object);
     }
@@ -179,28 +179,28 @@ export class MeshFactory {
       // Check if the renderer has the required getLODLevels method
       if (typeof (renderer as any).getLODLevels !== "function") {
         throw new Error(
-          `Renderer for type ${object.type} (ID: ${object.celestialObjectId}) does not implement getLODLevels.`
+          `Renderer for type ${object.type} (ID: ${object.celestialObjectId}) does not implement getLODLevels.`,
         );
       }
 
       // --- Ring System Specific Logic ---
       let options: any = { detailLevel: "high" }; // Default options
       if (
-        (object.type === CelestialType.RING_SYSTEM || 
-         object.type === CelestialType.ASTEROID_FIELD) && 
+        (object.type === CelestialType.RING_SYSTEM ||
+          object.type === CelestialType.ASTEROID_FIELD) &&
         object.parentId
       ) {
         const parentLOD = this.lodManager.getLODById(object.parentId);
         if (parentLOD) {
           const parentDistances = parentLOD.levels.map(
-            (level: { distance: number }) => level.distance
+            (level: { distance: number }) => level.distance,
           );
           // Ensure distances are sorted if necessary (LOD levels should be)
           // parentDistances.sort((a, b) => a - b);
           options.parentLODDistances = parentDistances;
         } else {
           console.warn(
-            `[MeshFactory] Could not find parent LOD for ring system ${object.celestialObjectId} (Parent ID: ${object.parentId}). Rings might not follow parent LOD.`
+            `[MeshFactory] Could not find parent LOD for ring system ${object.celestialObjectId} (Parent ID: ${object.parentId}). Rings might not follow parent LOD.`,
           );
         }
       }
@@ -210,7 +210,7 @@ export class MeshFactory {
 
       if (!levels || levels.length === 0) {
         throw new Error(
-          `getLODLevels returned empty or invalid levels for ${object.celestialObjectId}.`
+          `getLODLevels returned empty or invalid levels for ${object.celestialObjectId}.`,
         );
       }
 
@@ -221,7 +221,7 @@ export class MeshFactory {
     } catch (error) {
       console.error(
         `[MeshFactory] Failed to create LOD mesh for ${object.celestialObjectId}:`,
-        error
+        error,
       );
       return this.createFallbackSphere(object);
     }
@@ -233,12 +233,12 @@ export class MeshFactory {
    */
   private createFallbackSphere(object: RenderableCelestialObject): THREE.Mesh {
     console.warn(
-      `[MeshFactory] Creating fallback sphere for ${object.celestialObjectId}`
+      `[MeshFactory] Creating fallback sphere for ${object.celestialObjectId}`,
     );
     const geometry = new THREE.SphereGeometry(
       object.radius > 0 ? object.radius : 1,
       16,
-      8
+      8,
     );
     const material = new THREE.MeshBasicMaterial({
       color: this.getFallbackColor(object.type),

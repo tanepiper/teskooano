@@ -95,7 +95,7 @@ export const simulationActions = {
       // console.log(`[simulationActions] Stepped time by ${dt}s.`);
     } else {
       console.warn(
-        "[simulationActions] Cannot step time while simulation is running."
+        "[simulationActions] Cannot step time while simulation is running.",
       );
     }
   },
@@ -149,7 +149,7 @@ export const simulationActions = {
       });
     } else {
       console.warn(
-        `[simulationActions] Multiplier unchanged (${validatedMultiplier}), skipping state set.`
+        `[simulationActions] Multiplier unchanged (${validatedMultiplier}), skipping state set.`,
       );
     }
   },

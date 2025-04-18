@@ -39,11 +39,13 @@ The application will be available at http://localhost:3000.
 When you first launch Teskooano, you'll be greeted with an empty engine view and an interactive tour to guide you through the interface.
 
 1. **Generate a Star System**:
+
    - Look for the Seed Generator in the toolbar
    - Enter a seed value (or use the default)
    - Click "Generate"
 
 2. **Explore the System**:
+
    - Use the Focus Control panel to select celestial bodies
    - Click and drag to orbit around the selected body
    - Use the mouse wheel to zoom in and out
@@ -92,4 +94,4 @@ After getting familiar with the basic interface, you might want to:
 - Try focusing on different celestial bodies to observe their orbits
 - Adjust the simulation speed to observe long-term orbital behavior
 
-Check out the [Basic Usage](/docs/basic-usage) guide for more detailed information about Teskooano's features. 
+Check out the [Basic Usage](/docs/basic-usage) guide for more detailed information about Teskooano's features.

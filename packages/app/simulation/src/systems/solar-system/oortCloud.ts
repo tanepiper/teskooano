@@ -1,8 +1,6 @@
-import { AU } from '@teskooano/core-physics';
-import { actions } from '@teskooano/core-state';
-import {
-  CelestialType
-} from '@teskooano/data-types';
+import { AU } from "@teskooano/core-physics";
+import { actions } from "@teskooano/core-state";
+import { CelestialType } from "@teskooano/data-types";
 
 // --- Oort Cloud Constants (Estimates / Representative Values) ---
 // Boundaries are highly uncertain and debated
@@ -16,8 +14,8 @@ const OORT_PARTICLE_COUNT = 50000; // Representative number for simulation/rende
  */
 export function initializeOortCloud(parentId: string): void {
   actions.addCelestial({
-    id: 'oort-cloud',
-    name: 'Oort Cloud',
+    id: "oort-cloud",
+    name: "Oort Cloud",
     type: CelestialType.OORT_CLOUD,
     parentId: parentId,
     realMass_kg: OORT_TOTAL_MASS_KG,
@@ -26,7 +24,7 @@ export function initializeOortCloud(parentId: string): void {
     // Objects within have highly varied, near-parabolic orbits.
     // We can set placeholder values for the "center" or ignore them.
     orbit: {
-      realSemiMajorAxis_m: (OORT_INNER_AU + OORT_OUTER_AU) / 2 * AU,
+      realSemiMajorAxis_m: ((OORT_INNER_AU + OORT_OUTER_AU) / 2) * AU,
       eccentricity: 0, // Not meaningful for the whole structure
       inclination: 0, // Cloud is spherical, so inclination isn't a useful single value
       longitudeOfAscendingNode: 0,
@@ -38,13 +36,13 @@ export function initializeOortCloud(parentId: string): void {
     ignorePhysics: true, // Exclude from physics calculations
     properties: {
       type: CelestialType.OORT_CLOUD,
-      composition: ['water ice', 'ammonia ice', 'methane ice'],
+      composition: ["water ice", "ammonia ice", "methane ice"],
       innerRadiusAU: OORT_INNER_AU,
       outerRadiusAU: OORT_OUTER_AU,
       // Visual representation details
       visualDensity: 1e-15, // Extremely sparse visually
       visualParticleCount: OORT_PARTICLE_COUNT,
-      visualParticleColor: '#B0C4DE', // Light Steel Blue / faint white
+      visualParticleColor: "#B0C4DE", // Light Steel Blue / faint white
     },
   });
-} 
+}

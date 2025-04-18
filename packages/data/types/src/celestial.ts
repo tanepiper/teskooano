@@ -1,7 +1,6 @@
-import * as THREE from 'three';
-import type { OSVector3 } from '@teskooano/core-math';
-import type { PhysicsStateReal } from './physics';
-
+import * as THREE from "three";
+import type { OSVector3 } from "@teskooano/core-math";
+import type { PhysicsStateReal } from "./physics";
 
 /**
  * Defines the primary classification of a celestial body.
@@ -170,40 +169,40 @@ export enum SpectralClass {
  * Special spectral classes for non-main sequence stars
  */
 export enum SpecialSpectralClass {
-  W = "W",     // Wolf-Rayet stars
-  C = "C",     // Carbon stars
-  S = "S",     // S-type stars (zirconium oxide)
-  D = "D",     // White dwarfs
-  Q = "Q",     // Novae
-  P = "P",     // Planetary nebulae
-  R = "R",     // Legacy class, now part of C
-  N = "N",     // Legacy class, now part of C
+  W = "W", // Wolf-Rayet stars
+  C = "C", // Carbon stars
+  S = "S", // S-type stars (zirconium oxide)
+  D = "D", // White dwarfs
+  Q = "Q", // Novae
+  P = "P", // Planetary nebulae
+  R = "R", // Legacy class, now part of C
+  N = "N", // Legacy class, now part of C
 }
 
 /**
  * Luminosity classes, indicating the size and evolutionary state of the star
  */
 export enum LuminosityClass {
-  I = "I",       // Supergiants
-  II = "II",     // Bright giants
-  III = "III",   // Normal giants
-  IV = "IV",     // Subgiants
-  V = "V",       // Main sequence stars (dwarfs)
-  VI = "VI",     // Subdwarfs
-  VII = "VII",   // White dwarfs
+  I = "I", // Supergiants
+  II = "II", // Bright giants
+  III = "III", // Normal giants
+  IV = "IV", // Subgiants
+  V = "V", // Main sequence stars (dwarfs)
+  VI = "VI", // Subdwarfs
+  VII = "VII", // White dwarfs
 }
 
 /**
  * Specific white dwarf spectral types based on spectral features
  */
 export enum WhiteDwarfType {
-  DA = "DA",   // Only hydrogen lines
-  DB = "DB",   // Only helium lines
-  DC = "DC",   // No spectral lines
-  DO = "DO",   // Strong ionized helium lines
-  DZ = "DZ",   // Metal lines only
-  DQ = "DQ",   // Carbon features
-  DX = "DX",   // Unclear spectrum
+  DA = "DA", // Only hydrogen lines
+  DB = "DB", // Only helium lines
+  DC = "DC", // No spectral lines
+  DO = "DO", // Strong ionized helium lines
+  DZ = "DZ", // Metal lines only
+  DQ = "DQ", // Carbon features
+  DX = "DX", // Unclear spectrum
 }
 
 /**
@@ -217,8 +216,8 @@ export enum ExoticStellarType {
   QUASAR = "QUASAR",
   WHITE_DWARF = "WHITE_DWARF",
   WOLF_RAYET = "WOLF_RAYET",
-  T_TAURI = "T_TAURI",         // Young pre-main-sequence stars
-  HERBIG_AE_BE = "HERBIG_AE_BE",  // Young stars of spectral types A or B
+  T_TAURI = "T_TAURI", // Young pre-main-sequence stars
+  HERBIG_AE_BE = "HERBIG_AE_BE", // Young stars of spectral types A or B
   PROTOSTAR = "PROTOSTAR",
 }
 
@@ -292,7 +291,7 @@ export interface PlanetProperties extends SpecificPropertiesBase {
   /** The ID of the parent planet, required if isMoon is true. */
   parentPlanet?: string;
   /** Optional indicator for the desired 3D shape. Defaults to 'sphere' if omitted. */
-  shapeModel?: 'sphere' | 'asteroid' | string; // string for potential model paths later
+  shapeModel?: "sphere" | "asteroid" | string; // string for potential model paths later
   /** Array listing the primary chemical or geological composition (e.g., ["silicates", "iron"]). */
   composition: string[];
   /** Optional atmospheric properties. */
@@ -409,19 +408,19 @@ export interface ProceduralSurfaceProperties extends BaseSurfaceProperties {
   // offset?: number;    // Removed - Handled in fragment shader if needed
   // period?: number;    // Removed - Replaced by uSimplePeriod for fragment
   persistence?: number; // Keep for fragment FBM
-  lacunarity?: number;  // Keep for fragment FBM
-  octaves?: number;     // Keep for fragment FBM
+  lacunarity?: number; // Keep for fragment FBM
+  octaves?: number; // Keep for fragment FBM
   // undulation?: number; // Removed - Not used
   // bodyScale?: number; // Removed - No vertex displacement
   simplePeriod?: number; // Keep for fragment noise scale
 
-  // --- NEW Simple Color Parameters --- 
+  // --- NEW Simple Color Parameters ---
   colorLow?: string;
   colorMid1?: string;
   colorMid2?: string;
   colorHigh?: string;
 
-  // --- Removed Old Color/Blend Parameters --- 
+  // --- Removed Old Color/Blend Parameters ---
   // color1..color5, transition2..transition5, blend12..blend45 removed
 
   // --- Bump Mapping Parameters (Keep if normal mapping is desired later) ---
@@ -430,7 +429,8 @@ export interface ProceduralSurfaceProperties extends BaseSurfaceProperties {
 }
 
 /** Surface properties specific to Rocky/Terrestrial planets */
-export interface RockyTerrestrialSurfaceProperties extends ProceduralSurfaceProperties {
+export interface RockyTerrestrialSurfaceProperties
+  extends ProceduralSurfaceProperties {
   planetType: PlanetType.ROCKY | PlanetType.TERRESTRIAL;
 }
 
@@ -485,7 +485,7 @@ export interface GasGiantProperties extends SpecificPropertiesBase {
   atmosphereColor: string; // Overall visual color tint
   cloudColor: string;
   cloudSpeed: number;
-  
+
   // ADDED Optional atmosphere object for detailed composition/pressure
   atmosphere?: {
     composition: string[];
@@ -502,7 +502,6 @@ export interface GasGiantProperties extends SpecificPropertiesBase {
   emissiveColor?: string;
   emissiveIntensity?: number;
 }
-
 
 /**
  * Properties specific to Comets.
@@ -605,11 +604,10 @@ export type CelestialSpecificPropertiesUnion =
   | OortCloudProperties
   | RingSystemProperties; // Added RingSystemProperties
 
-
-
 export enum CelestialStatus {
-  ACTIVE = 'active',
-  DESTROYED = 'destroyed'
+  ACTIVE = "active",
+  DESTROYED = "destroyed", // Represents shattered/collided but potentially visually persistent
+  ANNIHILATED = "annihilated", // Represents absorbed by star, gone completely
 }
 
 /**
@@ -644,10 +642,10 @@ export interface CelestialObject {
 
   /** Optional atmospheric properties common to many bodies */
   atmosphere?: {
-      composition: string[];
-      pressure: number;
-      color: string;
-      // Add other common atmosphere props if needed across types
+    composition: string[];
+    pressure: number;
+    color: string;
+    // Add other common atmosphere props if needed across types
   };
 
   /** Optional surface properties common to many bodies */
@@ -674,13 +672,15 @@ export interface CelestialObject {
 
   /** Optional seed value used for procedural generation (textures, etc.). */
   seed?: string;
-  
+
   /** When true, this object will be excluded from physics calculations (no gravity interactions, collisions, etc.) */
   ignorePhysics?: boolean;
 
+  /** Current visual rotation of the object in the scene. */
+  rotation?: THREE.Quaternion;
+
   // --- REMOVED Scaled State for Renderer ---
   // position: THREE.Vector3; // Scaled Position
-  // rotation: THREE.Quaternion; // Scaled Rotation
   // radius: number; // Scaled Radius
   // mass: number; // Scaled Mass
 

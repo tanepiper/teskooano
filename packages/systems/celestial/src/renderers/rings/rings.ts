@@ -1,7 +1,5 @@
 import { renderableObjectsStore } from "@teskooano/core-state";
-import {
-  RingSystemProperties
-} from "@teskooano/data-types";
+import { RingSystemProperties } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
 import type {
@@ -15,7 +13,10 @@ import ringFragmentShader from "../../shaders/ring/ring.fragment.glsl";
 import ringVertexShader from "../../shaders/ring/ring.vertex.glsl";
 
 // Import debug utilities
-import { threeVectorDebug, isVisualizationEnabled } from "@teskooano/core-debug";
+import {
+  threeVectorDebug,
+  isVisualizationEnabled,
+} from "@teskooano/core-debug";
 
 /**
  * Material for celestial object rings
@@ -30,7 +31,7 @@ export class RingMaterial extends THREE.ShaderMaterial {
       detailLevel?: "high" | "medium" | "low" | "very-low";
       ringIndex?: number; // Which ring this is (for variation)
       ringType?: "default" | "detailed_saturn"; // Type of ring for shader variations
-    } = {}
+    } = {},
   ) {
     // Adjust quality based on detail level
     const detailLevel = options.detailLevel || "high";
@@ -81,7 +82,7 @@ export class RingMaterial extends THREE.ShaderMaterial {
     time: number,
     sunPosition?: THREE.Vector3,
     parentPosition?: THREE.Vector3,
-    parentRadius?: number
+    parentRadius?: number,
   ) {
     this.uniforms.time.value = time;
     if (sunPosition) {
@@ -114,7 +115,7 @@ export class RingSystemRenderer implements CelestialRenderer {
   // Reinstating the private method to create the detailed group
   private _createRingGroup(
     object: RenderableCelestialObject,
-    options?: CelestialMeshOptions
+    options?: CelestialMeshOptions,
   ): THREE.Group {
     const ringGroup = new THREE.Group();
     ringGroup.name = `${object.celestialObjectId}-rings`;
@@ -122,13 +123,13 @@ export class RingSystemRenderer implements CelestialRenderer {
 
     if (!properties?.rings || properties.rings.length === 0) {
       console.warn(
-        `[RingSystemRenderer] No ring data found for ${object.celestialObjectId}`
+        `[RingSystemRenderer] No ring data found for ${object.celestialObjectId}`,
       );
       return ringGroup; // Return empty group
     }
 
     const sortedRings = [...properties.rings].sort(
-      (a, b) => (a.innerRadius || 0) - (b.innerRadius || 0)
+      (a, b) => (a.innerRadius || 0) - (b.innerRadius || 0),
     );
 
     sortedRings.forEach((ringProps, index) => {
@@ -141,7 +142,7 @@ export class RingSystemRenderer implements CelestialRenderer {
 
       if (scaledOuterRadius <= scaledInnerRadius) {
         console.warn(
-          `[RingSystemRenderer] Invalid ring dimensions for ${object.celestialObjectId}, ring ${index}: Outer radius must be greater than inner radius.`
+          `[RingSystemRenderer] Invalid ring dimensions for ${object.celestialObjectId}, ring ${index}: Outer radius must be greater than inner radius.`,
         );
         return; // Skip invalid ring
       }
@@ -153,7 +154,7 @@ export class RingSystemRenderer implements CelestialRenderer {
         segments,
         8,
         0,
-        Math.PI * 2
+        Math.PI * 2,
       );
 
       // Restore the original RingMaterial
@@ -182,7 +183,7 @@ export class RingSystemRenderer implements CelestialRenderer {
    */
   getLODLevels(
     object: RenderableCelestialObject,
-    options?: CelestialMeshOptions & { parentLODDistances?: number[] }
+    options?: CelestialMeshOptions & { parentLODDistances?: number[] },
   ): LODLevel[] {
     this.objectIds.add(object.celestialObjectId);
 
@@ -205,7 +206,7 @@ export class RingSystemRenderer implements CelestialRenderer {
         } else if (index > 0) {
           // Handle cases where parent might have level 0 at distance 0, we still need subsequent empty levels
           console.warn(
-            `[RingSystemRenderer] Parent LOD distance ${index} is 0, creating empty group anyway.`
+            `[RingSystemRenderer] Parent LOD distance ${index} is 0, creating empty group anyway.`,
           );
           const emptyGroup = new THREE.Group();
           emptyGroup.name = `${object.celestialObjectId}-ring-lod-${
@@ -219,7 +220,7 @@ export class RingSystemRenderer implements CelestialRenderer {
       // Fallback if no parent distances provided?
       // Option 1: Only show high detail (simplest)
       console.warn(
-        `[RingSystemRenderer] No parentLODDistances provided for ${object.celestialObjectId}. Rings will always render at high detail.`
+        `[RingSystemRenderer] No parentLODDistances provided for ${object.celestialObjectId}. Rings will always render at high detail.`,
       );
       // Option 2: Re-implement distance-based LODs (like before)
       // For now, stick with Option 1 for simplicity based on the request to tie to parent LOD.
@@ -234,14 +235,14 @@ export class RingSystemRenderer implements CelestialRenderer {
     lightSources?: Map<
       string,
       { position: THREE.Vector3; color: THREE.Color; intensity?: number }
-    >
+    >,
   ): void {
     const currentRenderableObjects = renderableObjectsStore.get();
 
     // Clear any existing debug vectors when starting an update
     if (isVisualizationEnabled()) {
       // Clear only vectors related to ring systems, not all debug vectors
-      this.objectIds.forEach(id => {
+      this.objectIds.forEach((id) => {
         threeVectorDebug.clearVectors(`ring-system-${id}`);
       });
     }
@@ -252,7 +253,7 @@ export class RingSystemRenderer implements CelestialRenderer {
 
       if (!ringSystemObject) {
         console.warn(
-          `[RingSystemRenderer Update] Ring system object ${ringSystemId} not found in store.`
+          `[RingSystemRenderer Update] Ring system object ${ringSystemId} not found in store.`,
         );
         return;
       }
@@ -260,7 +261,7 @@ export class RingSystemRenderer implements CelestialRenderer {
       const parentId = ringSystemObject.parentId;
       if (!parentId) {
         console.warn(
-          `[RingSystemRenderer Update] Parent ID not found for ring system ${ringSystemId}.`
+          `[RingSystemRenderer Update] Parent ID not found for ring system ${ringSystemId}.`,
         );
         return;
       }
@@ -268,7 +269,7 @@ export class RingSystemRenderer implements CelestialRenderer {
       const parentObject = currentRenderableObjects[parentId];
       if (!parentObject) {
         console.warn(
-          `[RingSystemRenderer Update] Parent object ${parentId} not found for ring system ${ringSystemId}.`
+          `[RingSystemRenderer Update] Parent object ${parentId} not found for ring system ${ringSystemId}.`,
         );
         return;
       }
@@ -278,7 +279,7 @@ export class RingSystemRenderer implements CelestialRenderer {
 
       if (!parentPosition || parentRadius === undefined) {
         console.warn(
-          `[RingSystemRenderer Update] Parent position or radius missing for parent ${parentId}. Skipping vector storage and material update.`
+          `[RingSystemRenderer Update] Parent position or radius missing for parent ${parentId}. Skipping vector storage and material update.`,
         );
         return;
       }
@@ -301,7 +302,7 @@ export class RingSystemRenderer implements CelestialRenderer {
       if (isVisualizationEnabled() && primarySunPosition) {
         threeVectorDebug.setVectors(`ring-system-${ringSystemId}`, {
           sunDir: primarySunPosition.clone().normalize(),
-          parentPos: parentPosition.clone()
+          parentPos: parentPosition.clone(),
         });
       }
 
@@ -317,14 +318,14 @@ export class RingSystemRenderer implements CelestialRenderer {
       materialArray.forEach((material) => material.dispose());
     });
     this.materials.clear();
-    
+
     // Clear debug vectors for all ring systems
     if (isVisualizationEnabled()) {
-      this.objectIds.forEach(id => {
+      this.objectIds.forEach((id) => {
         threeVectorDebug.clearVectors(`ring-system-${id}`);
       });
     }
-    
+
     this.objectIds.clear();
   }
 }

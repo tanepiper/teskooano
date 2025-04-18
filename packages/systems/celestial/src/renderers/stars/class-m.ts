@@ -1,7 +1,7 @@
-import * as THREE from 'three';
-import type { CelestialObject } from '@teskooano/data-types';
-import { BaseStarMaterial, BaseStarRenderer } from './base-star';
-import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
+import * as THREE from "three";
+import type { CelestialObject } from "@teskooano/data-types";
+import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
+import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**
  * Material for M-class stars
@@ -14,16 +14,18 @@ import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
  * - Frequency: 76% of main-sequence stars (most common)
  */
 export class ClassMStarMaterial extends BaseStarMaterial {
-  constructor(options: {
-    coronaIntensity?: number;
-    pulseSpeed?: number;
-    glowIntensity?: number;
-    temperatureVariation?: number;
-    metallicEffect?: number;
-  } = {}) {
+  constructor(
+    options: {
+      coronaIntensity?: number;
+      pulseSpeed?: number;
+      glowIntensity?: number;
+      temperatureVariation?: number;
+      metallicEffect?: number;
+    } = {},
+  ) {
     // Light orangish red color for M-class stars
     const orangishRedColor = new THREE.Color(0xff6644);
-    
+
     super(orangishRedColor, {
       // Lowest corona intensity
       coronaIntensity: options.coronaIntensity ?? 0.3,
@@ -34,7 +36,7 @@ export class ClassMStarMaterial extends BaseStarMaterial {
       // Lowest temperature variations
       temperatureVariation: options.temperatureVariation ?? 0.07,
       // Highest metallic effect (more surface texture visibility)
-      metallicEffect: options.metallicEffect ?? 0.7
+      metallicEffect: options.metallicEffect ?? 0.7,
     });
   }
 }
@@ -49,11 +51,11 @@ export class ClassMStarRenderer extends BaseStarRenderer {
   protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
     return new ClassMStarMaterial();
   }
-  
+
   /**
    * M-class stars are light orangish red
    */
   protected getStarColor(star: RenderableCelestialObject): THREE.Color {
     return new THREE.Color(0xff6644);
   }
-} 
+}

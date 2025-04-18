@@ -6,22 +6,22 @@
   --vp-c-brand-lighter: #7aaef7;
   --vp-c-brand-dark: #2a5aa9;
   --vp-c-brand-darker: #1a4a89;
-  
+
   --vp-home-hero-name-color: var(--vp-c-brand-light);
   --vp-home-hero-image-background-image: linear-gradient(
-    -45deg, 
-    #3a70c9 30%, 
+    -45deg,
+    #3a70c9 30%,
     #0e1f41
   );
   --vp-home-hero-image-filter: blur(72px);
-  
+
   /* Set the dark theme as the default */
   --vp-c-bg: #0e1f41;
   --vp-c-bg-alt: #162a4e;
   --vp-c-black: #0e1f41;
   --vp-c-divider: rgba(255, 255, 255, 0.1);
   --vp-c-text: rgba(255, 255, 255, 0.87);
-  
+
   /* Star background */
   --stars-color: rgba(255, 255, 255, 0.8);
   --shooting-star-color: #3a70c9;
@@ -35,17 +35,19 @@
 
 /* Custom star background */
 .VPHomeHero::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
+  background-image:
     radial-gradient(var(--stars-color) 1px, transparent 1px),
     radial-gradient(var(--stars-color) 1px, transparent 1px);
   background-size: 50px 50px;
-  background-position: 0 0, 25px 25px;
+  background-position:
+    0 0,
+    25px 25px;
   opacity: 0.3;
   z-index: -1;
   pointer-events: none;
@@ -79,14 +81,23 @@
   }
 }
 
+.VPHomeHero img {
+  border-radius: 12px;
+}
+
 .VPHomeHero::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 100px;
   left: 10%;
   width: 100px;
   height: 1px;
-  background: linear-gradient(to right, transparent, var(--shooting-star-color), transparent);
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--shooting-star-color),
+    transparent
+  );
   animation: shooting-star 7s infinite;
   animation-delay: 2s;
   opacity: 0;
@@ -96,13 +107,18 @@
 
 /* Another shooting star */
 .VPHomeHero .container::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 250px;
   left: 60%;
   width: 150px;
   height: 1px;
-  background: linear-gradient(to right, transparent, var(--shooting-star-color), transparent);
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--shooting-star-color),
+    transparent
+  );
   animation: shooting-star 8s infinite;
   animation-delay: 5s;
   opacity: 0;
@@ -111,7 +127,7 @@
 }
 
 /* Custom code blocks */
-.vp-doc div[class*='language-'] {
+.vp-doc div[class*="language-"] {
   background-color: rgba(30, 50, 90, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -126,7 +142,10 @@
 /* Custom hero button */
 .VPButton.brand {
   background-color: var(--vp-c-brand);
-  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    background-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .VPButton.brand:hover {
@@ -225,7 +244,9 @@
   max-height: 90%;
   transform: scale(0.9);
   opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .lightbox.active .lightbox-content {
@@ -239,7 +260,7 @@
   max-height: 80vh; /* Limit image height */
   margin: 0 auto;
   border-radius: 4px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
 }
 
 .lightbox-caption {
@@ -268,8 +289,8 @@
   .screenshot-container {
     flex-direction: row;
   }
-  
+
   .screenshot {
     flex: 1;
   }
-} 
+}

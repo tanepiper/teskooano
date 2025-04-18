@@ -1,1 +1,1 @@
-export { generateSystem } from './generator'; 
+export { generateSystem } from "./generator";

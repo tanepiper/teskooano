@@ -1,4 +1,4 @@
-const template = document.createElement('template');
+const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
@@ -97,7 +97,7 @@ template.innerHTML = `
 `;
 
 export class TeskooanoOutputDisplay extends HTMLElement {
-  static observedAttributes = ['value', 'monospace', 'copy-enabled'];
+  static observedAttributes = ["value", "monospace", "copy-enabled"];
 
   private slotElement: HTMLSlotElement;
   private copyButton: HTMLButtonElement;
@@ -107,40 +107,40 @@ export class TeskooanoOutputDisplay extends HTMLElement {
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
-    
-    this.slotElement = this.shadowRoot!.querySelector('slot')!;
-    this.copyButton = this.shadowRoot!.querySelector('.copy-button')!;
-    this.copyFeedback = this.shadowRoot!.querySelector('.copy-feedback')!;
+
+    this.slotElement = this.shadowRoot!.querySelector("slot")!;
+    this.copyButton = this.shadowRoot!.querySelector(".copy-button")!;
+    this.copyFeedback = this.shadowRoot!.querySelector(".copy-feedback")!;
 
     // Listen for changes in slotted content to update internal state
-    this.slotElement.addEventListener('slotchange', this.handleSlotChange);
-    
+    this.slotElement.addEventListener("slotchange", this.handleSlotChange);
+
     // Add copy button click handler
-    this.copyButton.addEventListener('click', this.handleCopyClick);
+    this.copyButton.addEventListener("click", this.handleCopyClick);
   }
 
   connectedCallback() {
-    this.updateMonospaceAttribute(this.getAttribute('monospace'));
-    this.updateCopyEnabledAttribute(this.getAttribute('copy-enabled'));
-    this.updateValueAttribute(this.getAttribute('value'));
-    
+    this.updateMonospaceAttribute(this.getAttribute("monospace"));
+    this.updateCopyEnabledAttribute(this.getAttribute("copy-enabled"));
+    this.updateValueAttribute(this.getAttribute("value"));
+
     // Make component focusable
-    if (!this.hasAttribute('tabindex')) {
-      this.setAttribute('tabindex', '0');
+    if (!this.hasAttribute("tabindex")) {
+      this.setAttribute("tabindex", "0");
     }
-    
+
     // Set role for accessibility
-    this.setAttribute('role', 'textbox');
-    this.setAttribute('aria-readonly', 'true');
+    this.setAttribute("role", "textbox");
+    this.setAttribute("aria-readonly", "true");
   }
-  
+
   disconnectedCallback() {
     // Remove event listeners
-    this.slotElement.removeEventListener('slotchange', this.handleSlotChange);
-    this.copyButton.removeEventListener('click', this.handleCopyClick);
-    
+    this.slotElement.removeEventListener("slotchange", this.handleSlotChange);
+    this.copyButton.removeEventListener("click", this.handleCopyClick);
+
     // Clear any pending timeouts
     if (this._copyTimeout !== null) {
       window.clearTimeout(this._copyTimeout);
@@ -148,19 +148,23 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     }
   }
 
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+  attributeChangedCallback(
+    name: string,
+    oldValue: string | null,
+    newValue: string | null,
+  ) {
     if (oldValue === newValue) return;
-    
+
     switch (name) {
-      case 'value':
+      case "value":
         if (!this._internalUpdate) {
           this.updateValueAttribute(newValue);
         }
         break;
-      case 'monospace':
+      case "monospace":
         this.updateMonospaceAttribute(newValue);
         break;
-      case 'copy-enabled':
+      case "copy-enabled":
         this.updateCopyEnabledAttribute(newValue);
         break;
     }
@@ -169,68 +173,77 @@ export class TeskooanoOutputDisplay extends HTMLElement {
   private handleSlotChange = () => {
     // Update the value attribute to reflect slotted content
     const slottedText = this.getSlottedText();
-    if (slottedText && !this.hasAttribute('value')) {
+    if (slottedText && !this.hasAttribute("value")) {
       this._internalUpdate = true;
-      this.setAttribute('value', slottedText);
+      this.setAttribute("value", slottedText);
       this._internalUpdate = false;
     }
-    
+
     // Dispatch content change event
-    this.dispatchEvent(new CustomEvent('content-change', {
-      bubbles: true,
-      composed: true,
-      detail: { value: this.value }
-    }));
-  }
-  
+    this.dispatchEvent(
+      new CustomEvent("content-change", {
+        bubbles: true,
+        composed: true,
+        detail: { value: this.value },
+      }),
+    );
+  };
+
   private getSlottedText(): string {
     const nodes = this.slotElement.assignedNodes();
-    return nodes.map(node => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        return node.textContent;
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        return (node as Element).textContent;
-      }
-      return '';
-    }).join('').trim();
+    return nodes
+      .map((node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return node.textContent;
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          return (node as Element).textContent;
+        }
+        return "";
+      })
+      .join("")
+      .trim();
   }
-  
+
   private handleCopyClick = async (e: Event) => {
     e.stopPropagation();
-    
+
     try {
       await navigator.clipboard.writeText(this.value);
       this.showCopyFeedback();
-      
+
       // Dispatch copy success event
-      this.dispatchEvent(new CustomEvent('copy', {
-        bubbles: true,
-        composed: true,
-        detail: { success: true, value: this.value }
-      }));
+      this.dispatchEvent(
+        new CustomEvent("copy", {
+          bubbles: true,
+          composed: true,
+          detail: { success: true, value: this.value },
+        }),
+      );
     } catch (error) {
-      console.error('Failed to copy text:', error);
-      
+      console.error("Failed to copy text:", error);
+
       // Dispatch copy error event
-      this.dispatchEvent(new CustomEvent('copy', {
-        bubbles: true,
-        composed: true,
-        detail: { success: false, error }
-      }));
+      this.dispatchEvent(
+        new CustomEvent("copy", {
+          bubbles: true,
+          composed: true,
+          detail: { success: false, error },
+        }),
+      );
     }
-  }
-  
+  };
+
   private showCopyFeedback() {
-    this.copyFeedback.classList.add('visible');
-    
+    this.copyFeedback.classList.add("visible");
+
     // Clear any existing timeout
     if (this._copyTimeout !== null) {
       window.clearTimeout(this._copyTimeout);
     }
-    
+
     // Hide the feedback after 2 seconds
     this._copyTimeout = window.setTimeout(() => {
-      this.copyFeedback.classList.remove('visible');
+      this.copyFeedback.classList.remove("visible");
       this._copyTimeout = null;
     }, 2000);
   }
@@ -239,32 +252,38 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     // Set textContent only if the default slot is empty
     if (value !== null && this.slotElement.assignedNodes().length === 0) {
       this.textContent = value; // Directly set textContent on host
-    } else if (value === null && this.slotElement.assignedNodes().length === 0) {
+    } else if (
+      value === null &&
+      this.slotElement.assignedNodes().length === 0
+    ) {
       // Clear if attribute removed and slot empty
-      this.textContent = '';
+      this.textContent = "";
     }
-    
+
     // Update ARIA attributes
     if (value !== null) {
-      this.setAttribute('aria-label', `Output: ${value.substring(0, 50)}${value.length > 50 ? '...' : ''}`);
+      this.setAttribute(
+        "aria-label",
+        `Output: ${value.substring(0, 50)}${value.length > 50 ? "..." : ""}`,
+      );
     }
   }
-  
+
   private updateMonospaceAttribute(value: string | null) {
     // Attribute presence toggles the host style
     // Styling is handled via :host([monospace]) CSS rule
-    
+
     // Update ARIA to indicate monospace format if enabled
     if (value !== null) {
-      this.setAttribute('aria-description', 'Displayed in monospace font');
+      this.setAttribute("aria-description", "Displayed in monospace font");
     } else {
-      this.removeAttribute('aria-description');
+      this.removeAttribute("aria-description");
     }
   }
-  
+
   private updateCopyEnabledAttribute(value: string | null) {
     const copyEnabled = value !== null;
-    this.copyButton.style.display = copyEnabled ? 'block' : 'none';
+    this.copyButton.style.display = copyEnabled ? "block" : "none";
   }
 
   // Public API
@@ -273,15 +292,15 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     if (slottedText) {
       return slottedText;
     }
-    return this.getAttribute('value') ?? this.textContent ?? '';
+    return this.getAttribute("value") ?? this.textContent ?? "";
   }
 
   set value(newValue: string) {
     this._internalUpdate = true;
-    this.setAttribute('value', newValue);
+    this.setAttribute("value", newValue);
     this._internalUpdate = false;
   }
-  
+
   // Copy text to clipboard programmatically
   public async copyToClipboard(): Promise<boolean> {
     try {
@@ -289,23 +308,25 @@ export class TeskooanoOutputDisplay extends HTMLElement {
       this.showCopyFeedback();
       return true;
     } catch (error) {
-      console.error('Failed to copy text:', error);
+      console.error("Failed to copy text:", error);
       return false;
     }
   }
-  
+
   // Clear the display
   public clear() {
-    this.textContent = '';
+    this.textContent = "";
     this._internalUpdate = true;
-    this.setAttribute('value', '');
+    this.setAttribute("value", "");
     this._internalUpdate = false;
-    
-    this.dispatchEvent(new CustomEvent('clear', {
-      bubbles: true,
-      composed: true
-    }));
+
+    this.dispatchEvent(
+      new CustomEvent("clear", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 }
 
-customElements.define('teskooano-output-display', TeskooanoOutputDisplay); 
+customElements.define("teskooano-output-display", TeskooanoOutputDisplay);

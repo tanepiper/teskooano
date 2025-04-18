@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { generateSystem } from './generator';
-import type { CelestialObjectInputData } from '@teskooano/data-types';
-import { CelestialType } from '@teskooano/data-types';
+import { describe, it, expect } from "vitest";
+import { generateSystem } from "./generator";
+import type { CelestialObjectInputData } from "@teskooano/data-types";
+import { CelestialType } from "@teskooano/data-types";
 
-describe('generateSystem', () => {
-  it('should generate a deterministic system based on a seed', async () => {
-    const seed = 'test-deterministic-seed';
+describe("generateSystem", () => {
+  it("should generate a deterministic system based on a seed", async () => {
+    const seed = "test-deterministic-seed";
 
     // Generate the system twice with the same seed
     const system1 = await generateSystem(seed);
@@ -26,9 +26,9 @@ describe('generateSystem', () => {
     // console.log(system1[0].name);
   });
 
-  it('should generate different systems for different seeds', async () => {
-    const seedA = 'test-seed-alpha';
-    const seedB = 'test-seed-beta';
+  it("should generate different systems for different seeds", async () => {
+    const seedA = "test-seed-alpha";
+    const seedB = "test-seed-beta";
 
     const systemA = await generateSystem(seedA);
     const systemB = await generateSystem(seedB);
@@ -45,4 +45,4 @@ describe('generateSystem', () => {
     // Specifically, check if star names are different (high probability)
     expect(systemA[0].name).not.toEqual(systemB[0].name);
   });
-}); 
+});

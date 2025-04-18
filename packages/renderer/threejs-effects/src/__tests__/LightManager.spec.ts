@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { LightManager } from '../LightManager';
-import * as THREE from 'three';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { LightManager } from "../LightManager";
+import * as THREE from "three";
 
-describe('LightManager', () => {
+describe("LightManager", () => {
   let lightManager: LightManager;
   let scene: THREE.Scene;
 
@@ -17,17 +17,17 @@ describe('LightManager', () => {
     lightManager.dispose();
   });
 
-  it('should add a star light to the scene', () => {
+  it("should add a star light to the scene", () => {
     const position = new THREE.Vector3(100, 200, 300);
     const color = 0xff0000;
     const intensity = 2.0;
-    const id = 'star1';
+    const id = "star1";
 
     lightManager.addStarLight(id, position, color, intensity);
 
     // Get the light from the scene
     const light = scene.children[0] as THREE.PointLight;
-    
+
     // Verify light properties
     expect(light).toBeInstanceOf(THREE.PointLight);
     expect(light.color.getHex()).toBe(color);
@@ -39,22 +39,22 @@ describe('LightManager', () => {
     expect(light.distance).toBe(0); // Check distance parameter
   });
 
-  it('should add a star light with default parameters', () => {
+  it("should add a star light with default parameters", () => {
     const position = new THREE.Vector3(100, 200, 300);
-    const id = 'star1';
+    const id = "star1";
 
     lightManager.addStarLight(id, position);
 
     const light = scene.children[0] as THREE.PointLight;
-    
+
     // Verify default properties
     expect(light.color.getHex()).toBe(0xffffff);
     expect(light.intensity).toBe(1.5);
   });
 
-  it('should update star light position', () => {
+  it("should update star light position", () => {
     const initialPosition = new THREE.Vector3(100, 200, 300);
-    const id = 'star1';
+    const id = "star1";
 
     // Add a light
     lightManager.addStarLight(id, initialPosition);
@@ -64,25 +64,25 @@ describe('LightManager', () => {
     lightManager.updateStarLight(id, newPosition);
 
     const light = scene.children[0] as THREE.PointLight;
-    
+
     // Verify new position
     expect(light.position.x).toBe(newPosition.x);
     expect(light.position.y).toBe(newPosition.y);
     expect(light.position.z).toBe(newPosition.z);
   });
 
-  it('should not throw when updating non-existent light', () => {
+  it("should not throw when updating non-existent light", () => {
     const position = new THREE.Vector3(100, 200, 300);
-    
+
     // This should not throw
     expect(() => {
-      lightManager.updateStarLight('nonexistent', position);
+      lightManager.updateStarLight("nonexistent", position);
     }).not.toThrow();
   });
 
-  it('should remove star light from scene', () => {
+  it("should remove star light from scene", () => {
     const position = new THREE.Vector3(100, 200, 300);
-    const id = 'star1';
+    const id = "star1";
 
     // Add a light
     lightManager.addStarLight(id, position);
@@ -93,18 +93,18 @@ describe('LightManager', () => {
     expect(scene.children.length).toBe(0);
   });
 
-  it('should not throw when removing non-existent light', () => {
+  it("should not throw when removing non-existent light", () => {
     expect(() => {
-      lightManager.removeStarLight('nonexistent');
+      lightManager.removeStarLight("nonexistent");
     }).not.toThrow();
   });
 
-  it('should get all star light positions', () => {
+  it("should get all star light positions", () => {
     const positions = [
       new THREE.Vector3(100, 200, 300),
-      new THREE.Vector3(400, 500, 600)
+      new THREE.Vector3(400, 500, 600),
     ];
-    const ids = ['star1', 'star2'];
+    const ids = ["star1", "star2"];
 
     // Add multiple lights
     positions.forEach((pos, index) => {
@@ -124,11 +124,11 @@ describe('LightManager', () => {
     });
   });
 
-  it('should dispose all lights', () => {
+  it("should dispose all lights", () => {
     // Add multiple lights
     const positions = [
       new THREE.Vector3(100, 200, 300),
-      new THREE.Vector3(400, 500, 600)
+      new THREE.Vector3(400, 500, 600),
     ];
     positions.forEach((pos, index) => {
       lightManager.addStarLight(`star${index}`, pos);
@@ -143,8 +143,8 @@ describe('LightManager', () => {
     expect(scene.children.length).toBe(0);
   });
 
-  it('should handle multiple operations on the same light', () => {
-    const id = 'star1';
+  it("should handle multiple operations on the same light", () => {
+    const id = "star1";
     const initialPos = new THREE.Vector3(100, 200, 300);
     const updatedPos = new THREE.Vector3(400, 500, 600);
 
@@ -168,4 +168,4 @@ describe('LightManager', () => {
       lightManager.updateStarLight(id, initialPos);
     }).not.toThrow();
   });
-}); 
+});

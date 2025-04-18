@@ -1,7 +1,13 @@
+import { Driver } from "driver.js";
 import { TourStep } from "./types";
-
+import { ToolbarSeedForm } from "../toolbar/SeedForm";
+import { FocusControl } from "../ui-controls";
+import { celestialObjectsStore } from "@teskooano/core-state";
+import { SCALE, CelestialStatus } from "@teskooano/data-types";
 // Base tour steps definition - will be cloned and customized when driving
-export const BASE_TOUR_STEPS: TourStep[] = [
+
+export function createIntroTour(driverObj: Driver): TourStep[] {
+  const BASE_TOUR_STEPS: TourStep[] = [
     {
       id: "app-intro",
       element: "#app-logo",
@@ -32,9 +38,8 @@ export const BASE_TOUR_STEPS: TourStep[] = [
       overlayColor: "rgba(0, 0, 0, 0.1)", // More transparent for the engine view
       popover: {
         title: "Engine View",
-        description:
-          `This is the main engine view, it is currently empty as you need to load a system (don't worry, we're coming to that!), but here you will see the 3D simulation of the system. In this view you can orbit and zoom around the system, and use the focus controls to focus on specific objects.`,
-        side: "bottom",
+        description: `This is the main engine view, it is currently empty as you need to load a system (don't worry, we're coming to that!), but here you will see the 3D simulation of the system. In this view you can orbit and zoom around the system, and use the focus controls to focus on specific objects.`,
+        side: "over",
         align: "center",
       },
     },
@@ -58,7 +63,7 @@ export const BASE_TOUR_STEPS: TourStep[] = [
         description:
           "This toolbar contains the main controls for the simulation. You can add new bodies, adjust the simulation speed, and access settings.  x16 is equivilent to real time, you can go up to x10M but this depends on your CPU and GPU performance.",
         side: "bottom",
-        align: "start",
+        align: "center",
       },
       disableActiveInteraction: true,
     },
@@ -69,8 +74,16 @@ export const BASE_TOUR_STEPS: TourStep[] = [
         title: "Seed Generator",
         description:
           "Generate new star systems with different seeds. Each seed creates a unique procedurally generated system. Go ahead and try it out, feel free to change the default seed to see different systems!",
-        side: "right",
+        side: "bottom",
         align: "center",
+      },
+      onNextClick: () => {
+        console.log("Generating system...");
+        const generator = document.querySelector("toolbar-seed-form");
+        if (generator) {
+          (generator as ToolbarSeedForm).tourGenerate();
+        }
+        driverObj.moveNext();
       },
     },
     {
@@ -80,8 +93,8 @@ export const BASE_TOUR_STEPS: TourStep[] = [
         title: "Engine UI Settings",
         description:
           "This panel controls the engine view panels - each engine is independently rendered from the same simulation data, allowing you to have multiple views of the same system in real time. I'll explain each panel in more detail...",
-        side: "right",
-        align: "center",
+        side: "left",
+        align: "start",
       },
     },
     {
@@ -93,8 +106,72 @@ export const BASE_TOUR_STEPS: TourStep[] = [
         title: "Focus Control",
         description:
           "This is the focus control, it allows you to focus on specific objects in the simulation. You can use the focus controls to focus on specific objects, or use the orbit controls to orbit around the system.  Why not try it out by clicking on a body in the list?",
-        side: "right",
-        align: "center",
+        side: "left",
+        align: "start",
+      },
+      onNextClick: (engineViewId?: string) => {
+        console.log("Engine view ID:", engineViewId);
+        if (!engineViewId) {
+          driverObj.moveNext();
+          return;
+        }
+
+        // Get the focus control for this engine panel
+        const focusControl = document.querySelector(
+          `focus-control[engine-view-id="${engineViewId}"]`,
+        );
+
+        if (
+          focusControl &&
+          typeof (focusControl as any).getRandomActiveObjectId === "function"
+        ) {
+          // Use our improved method to get a valid object
+          const [objectId, _] = (focusControl as any).getRandomActiveObjectId();
+
+          if (objectId) {
+            console.log(`[Tour] Focusing on object: ${objectId}`);
+            (focusControl as any).focusOnObject(objectId);
+          } else {
+            console.warn("[Tour] No active objects found for focus");
+          }
+        } else {
+          // Fallback to old approach if focus control not found or method unavailable
+          const objects = celestialObjectsStore.get();
+          // Filter out destroyed objects
+          const activeObjects = Object.entries(objects).filter(
+            ([_, obj]) =>
+              obj.status !== CelestialStatus.DESTROYED &&
+              obj.status !== CelestialStatus.ANNIHILATED,
+          );
+
+          if (activeObjects.length === 0) {
+            console.warn("[Tour] No active objects available for focus");
+            driverObj.moveNext();
+            return;
+          }
+
+          const [randomId, randomObject] =
+            activeObjects[Math.floor(Math.random() * activeObjects.length)];
+
+          console.log("[Tour] Random object:", randomObject);
+
+          const focusEvent = new CustomEvent("engine-focus-request", {
+            detail: {
+              targetPanelId: engineViewId,
+              objectId: randomId,
+              distance: randomObject.realRadius_m
+                ? randomObject.realRadius_m * SCALE.RENDER_SCALE_AU * 1.1
+                : undefined,
+            },
+            bubbles: true,
+            composed: true,
+          });
+
+          console.log("[Tour] Dispatching focus event...");
+          document.dispatchEvent(focusEvent);
+        }
+
+        driverObj.moveNext();
       },
     },
     {
@@ -104,8 +181,8 @@ export const BASE_TOUR_STEPS: TourStep[] = [
         title: "Celestial Info",
         description:
           "This is the celestial info section, it displays information about the currently focused object.",
-        side: "right",
-        align: "center",
+        side: "left",
+        align: "start",
       },
     },
     {
@@ -115,8 +192,8 @@ export const BASE_TOUR_STEPS: TourStep[] = [
         title: "Renderer Info",
         description:
           "This is the renderer info section, it displays information about the renderer.",
-        side: "right",
-        align: "center",
+        side: "left",
+        align: "start",
       },
     },
     {
@@ -126,8 +203,8 @@ export const BASE_TOUR_STEPS: TourStep[] = [
         title: "Engine Settings",
         description:
           "This is the engine settings section, it allows you to adjust the engine settings.",
-        side: "right",
-        align: "center",
+        side: "left",
+        align: "start",
       },
     },
     {
@@ -139,7 +216,7 @@ export const BASE_TOUR_STEPS: TourStep[] = [
         description:
           // Using a placeholder that will be replaced dynamically
           "Now you should see the full system. If you've selected a celestial body, you can see more details about it in the Celestial Info panel.  Feel free to now play around, and try break things! If you do find any bugs please raise an issue on the GitHub repo.",
-        side: "bottom",
+        side: "over",
         align: "center",
       },
     },
@@ -156,3 +233,6 @@ export const BASE_TOUR_STEPS: TourStep[] = [
       },
     },
   ];
+
+  return BASE_TOUR_STEPS;
+}

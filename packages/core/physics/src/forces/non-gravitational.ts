@@ -1,5 +1,5 @@
-import { PhysicsStateReal } from '../types';
-import { OSVector3, EPSILON } from '@teskooano/core-math';
+import { PhysicsStateReal } from "../types";
+import { OSVector3, EPSILON } from "@teskooano/core-math";
 
 /**
  * Represents a thrust force
@@ -28,9 +28,7 @@ export interface DragForce {
 /**
  * Calculates the thrust force vector
  */
-export const calculateThrustForce = (
-  thrust: ThrustForce
-): OSVector3 => {
+export const calculateThrustForce = (thrust: ThrustForce): OSVector3 => {
   if (!thrust.active) {
     return new OSVector3(0, 0, 0);
   }
@@ -49,22 +47,17 @@ export const calculateThrustForce = (
  */
 export const calculateDragForce = (
   body: PhysicsStateReal,
-  drag: DragForce
+  drag: DragForce,
 ): OSVector3 => {
   const velocity = body.velocity_mps;
   const speed = velocity.length();
-  
+
   if (speed < EPSILON) {
     return new OSVector3(0, 0, 0);
   }
 
   const forceMagnitude =
-    0.5 *
-    drag.density *
-    speed *
-    speed *
-    drag.coefficient *
-    drag.referenceArea;
+    0.5 * drag.density * speed * speed * drag.coefficient * drag.referenceArea;
 
   // Drag force opposes motion
   const direction = velocity.clone().normalize();
@@ -75,14 +68,12 @@ export const calculateDragForce = (
 /**
  * Combines multiple forces acting on a body
  */
-export const combineForces = (
-  forces: OSVector3[]
-): OSVector3 => {
+export const combineForces = (forces: OSVector3[]): OSVector3 => {
   const result = new OSVector3(0, 0, 0);
   if (forces.length === 0) {
     return result;
   }
-  
+
   for (const force of forces) {
     result.add(force);
   }

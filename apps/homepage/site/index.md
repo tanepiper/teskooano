@@ -9,6 +9,7 @@ hero:
   image:
     src: /panel-icon.png
     alt: Teskooano Observatory Panel
+    class: "hero-image"
   actions:
     - theme: brand
       text: Play with Teskooano

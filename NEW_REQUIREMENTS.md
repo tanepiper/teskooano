@@ -16,7 +16,7 @@ The celestials are created by a factory that uses the celestial type to pick a p
 
 I'm not sure in what direction data goes, but my gut feeling is everything should derive from THE CELESTIAL as the abstraction to the state, physics engine and the renderer - why?
 
-We have an initial state, and we put that into a nanostore - but then just fire out subscriptions on this everywhere, which makes things messy.  Instead, if we went the route of connecting state to a celestial object, then we can use it in different strategies to define certain things.  Here are some facts.
+We have an initial state, and we put that into a nanostore - but then just fire out subscriptions on this everywhere, which makes things messy. Instead, if we went the route of connecting state to a celestial object, then we can use it in different strategies to define certain things. Here are some facts.
 
 1. When the physics state calls things - we can have rules like planets and moons are only affected by stars, parents and other celestials within a certain distance (e.g. 2 AU) that help optimise the calculations
 
@@ -25,7 +25,6 @@ We have an initial state, and we put that into a nanostore - but then just fire 
 3. When a user focuses on a Celestial, we call data from the celestial store related to it's properties, we also want to then subscribe to it's state only from the global state to display in another panel
 
 In terms of refactoring, I don't want to overload the celestial module, so we can still keep a facade to it, but I want you to really think about this one, as a senior dev - this is serious
-
 
 Requirements:
 
@@ -38,4 +37,3 @@ Requirements:
 Essentially we move to a model of Celestial as sort of "Plugin" abstraction, we are just giving for each Celestial a seed of data, which the system then extracts and mutates as needed, providing it back as a single layer to read in any part of the system that subscribes - we have both the procedural way of doing it, but will also provide methods to create systems via code or JSON.
 
 Are you up to the task?
-

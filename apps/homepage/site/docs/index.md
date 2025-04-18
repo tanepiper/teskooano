@@ -38,4 +38,4 @@ Teskooano is built with modern web technologies:
 - **DockView** for multi-panel layouts
 - **Vite** for fast development and building
 
-The architecture follows a unidirectional data flow pattern, with clear separation of concerns between the physics engine, state management, and rendering pipeline. 
+The architecture follows a unidirectional data flow pattern, with clear separation of concerns between the physics engine, state management, and rendering pipeline.

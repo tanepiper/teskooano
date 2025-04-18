@@ -1,4 +1,4 @@
-import type { OSVector3 } from '@teskooano/core-math';
+import type { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Represents the physics state of a body in REAL-WORLD units.
@@ -17,29 +17,29 @@ export interface PhysicsStateReal {
 }
 
 /**
- * Interface for a function that calculates the net force acting on a specific body 
+ * Interface for a function that calculates the net force acting on a specific body
  * within a system of bodies (using REAL units).
- * 
+ *
  * @param targetBody - The body (real state) for which to calculate the net force.
  * @param allBodies - An array of all bodies (real state) in the system.
  * @returns The net force vector acting on the targetBody (Newtons - kg*m/s^2).
  */
 export type NetForceCalculator = (
   targetBody: PhysicsStateReal,
-  allBodies: readonly PhysicsStateReal[]
+  allBodies: readonly PhysicsStateReal[],
 ) => OSVector3;
 
 /**
  * Interface for a function that calculates the force exerted by one body on another (using REAL units).
  * Used as a building block for NetForceCalculators.
- * 
+ *
  * @param body1 - The body (real state) exerting the force.
  * @param body2 - The body (real state) experiencing the force.
  * @returns The force vector acting on body2 due to body1 (Newtons - kg*m/s^2).
  */
 export type PairForceCalculator = (
-  body1: PhysicsStateReal, 
-  body2: PhysicsStateReal
+  body1: PhysicsStateReal,
+  body2: PhysicsStateReal,
 ) => OSVector3;
 
 /**
@@ -53,5 +53,5 @@ export type Integrator = (
   dt: number, // Time step (seconds)
   // Optional function needed by some integrators (e.g., Velocity Verlet)
   // Takes a predicted state and returns the acceleration at that state.
-  calculateNewAcceleration?: (newStateGuess: PhysicsStateReal) => OSVector3 
-) => PhysicsStateReal; 
+  calculateNewAcceleration?: (newStateGuess: PhysicsStateReal) => OSVector3,
+) => PhysicsStateReal;

@@ -1,5 +1,5 @@
-import { PhysicsStateReal } from '../types';
-import { OSVector3, EPSILON } from '@teskooano/core-math';
+import { PhysicsStateReal } from "../types";
+import { OSVector3, EPSILON } from "@teskooano/core-math";
 
 /**
  * Speed of light in meters per second
@@ -14,9 +14,9 @@ const SPEED_OF_LIGHT_SQ = SPEED_OF_LIGHT * SPEED_OF_LIGHT;
 const calculateGamma = (velocity: OSVector3): number => {
   const speedSq = velocity.lengthSq(); // Use lengthSq for efficiency
   if (speedSq >= SPEED_OF_LIGHT_SQ) {
-      // Handle cases at or above light speed (avoid NaN/Infinity)
-      // Depending on desired behavior, could clamp, throw error, or return Infinity
-      return Infinity; 
+    // Handle cases at or above light speed (avoid NaN/Infinity)
+    // Depending on desired behavior, could clamp, throw error, or return Infinity
+    return Infinity;
   }
   return 1 / Math.sqrt(1 - speedSq / SPEED_OF_LIGHT_SQ);
 };
@@ -30,14 +30,18 @@ const calculateGamma = (velocity: OSVector3): number => {
 export const calculateRelativisticGravitationalForce = (
   body1: PhysicsStateReal, // Use PhysicsStateReal
   body2: PhysicsStateReal, // Use PhysicsStateReal
-  G: number
-): OSVector3 => { // Return OSVector3
+  G: number,
+): OSVector3 => {
+  // Return OSVector3
   // Calculate displacement from body2 to body1
-  const displacement = new OSVector3().copy(body1.position_m).sub(body2.position_m);
+  const displacement = new OSVector3()
+    .copy(body1.position_m)
+    .sub(body2.position_m);
   const distanceSq = displacement.lengthSq();
   const distance = Math.sqrt(distanceSq);
-  
-  if (distance < EPSILON) { // Use epsilon
+
+  if (distance < EPSILON) {
+    // Use epsilon
     return new OSVector3(0, 0, 0);
   }
 
@@ -54,16 +58,18 @@ export const calculateRelativisticGravitationalForce = (
   const schwarzschildRadius = (2 * G * relativisticMass1) / SPEED_OF_LIGHT_SQ;
   const timeDilationFactor = Math.sqrt(1 - schwarzschildRadius / distance);
   if (isNaN(timeDilationFactor)) {
-      // Inside event horizon or invalid state, return zero force for now
-      return new OSVector3(0, 0, 0);
+    // Inside event horizon or invalid state, return zero force for now
+    return new OSVector3(0, 0, 0);
   }
 
   // Calculate force magnitude with relativistic corrections
-  const forceMagnitude = (G * relativisticMass1 * relativisticMass2) / (distanceSq * timeDilationFactor);
-  
+  const forceMagnitude =
+    (G * relativisticMass1 * relativisticMass2) /
+    (distanceSq * timeDilationFactor);
+
   // Force direction is from body2 towards body1 (attractive force)
   displacement.normalize().multiplyScalar(forceMagnitude);
-  
+
   return displacement;
 };
 
@@ -74,8 +80,9 @@ export const calculateRelativisticGravitationalForce = (
 export const calculateRelativisticAcceleration = (
   mass_kg: number, // Use real mass
   force: OSVector3, // Use OSVector3
-  velocity_mps: OSVector3 // Use OSVector3
-): OSVector3 => { // Return OSVector3
+  velocity_mps: OSVector3, // Use OSVector3
+): OSVector3 => {
+  // Return OSVector3
   if (mass_kg === 0) {
     return new OSVector3(0, 0, 0);
   }
@@ -84,8 +91,8 @@ export const calculateRelativisticAcceleration = (
   if (!isFinite(gamma)) return new OSVector3(0, 0, 0); // Handle infinite gamma
 
   const relativisticMass = mass_kg * gamma;
-  if (relativisticMass === 0) return new OSVector3(0,0,0); // Avoid division by zero
+  if (relativisticMass === 0) return new OSVector3(0, 0, 0); // Avoid division by zero
 
   const acceleration = force.clone().multiplyScalar(1 / relativisticMass);
   return acceleration;
-}; 
+};

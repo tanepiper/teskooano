@@ -1,7 +1,7 @@
-import * as THREE from 'three';
-import type { CelestialObject } from '@teskooano/data-types';
-import { BaseStarMaterial, BaseStarRenderer } from './base-star';
-import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
+import * as THREE from "three";
+import type { CelestialObject } from "@teskooano/data-types";
+import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
+import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**
  * Material for O-class stars
@@ -14,16 +14,18 @@ import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
  * - Frequency: 0.00003% of main-sequence stars
  */
 export class ClassOStarMaterial extends BaseStarMaterial {
-  constructor(options: {
-    coronaIntensity?: number;
-    pulseSpeed?: number;
-    glowIntensity?: number;
-    temperatureVariation?: number;
-    metallicEffect?: number;
-  } = {}) {
+  constructor(
+    options: {
+      coronaIntensity?: number;
+      pulseSpeed?: number;
+      glowIntensity?: number;
+      temperatureVariation?: number;
+      metallicEffect?: number;
+    } = {},
+  ) {
     // Blue color for O-class stars
     const blueColor = new THREE.Color(0x9bb0ff);
-    
+
     super(blueColor, {
       // Hotter stars have more intense coronas
       coronaIntensity: options.coronaIntensity ?? 0.7,
@@ -34,7 +36,7 @@ export class ClassOStarMaterial extends BaseStarMaterial {
       // Higher temperature variations
       temperatureVariation: options.temperatureVariation ?? 0.15,
       // Less metallic effect for hotter stars
-      metallicEffect: options.metallicEffect ?? 0.4
+      metallicEffect: options.metallicEffect ?? 0.4,
     });
   }
 }
@@ -49,11 +51,11 @@ export class ClassOStarRenderer extends BaseStarRenderer {
   protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
     return new ClassOStarMaterial();
   }
-  
+
   /**
    * O-class stars are blue
    */
   protected getStarColor(star: RenderableCelestialObject): THREE.Color {
     return new THREE.Color(0x9bb0ff);
   }
-} 
+}

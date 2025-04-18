@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: '🔧 Setup Toolchain'
+      - name: "🔧 Setup Toolchain"
         uses: moonrepo/setup-toolchain@v0
         with:
           auto-install: true
@@ -48,8 +48,8 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload Build Dist
-          
-          path: 'apps/homepage/site/.vitepress/dist/'
+
+          path: "apps/homepage/site/.vitepress/dist/"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

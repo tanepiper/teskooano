@@ -1,6 +1,6 @@
-import { map } from 'nanostores';
-import type { CelestialObject } from '@teskooano/data-types';
-import type { OSVector3 } from '@teskooano/core-math';
+import { map } from "nanostores";
+import type { CelestialObject } from "@teskooano/data-types";
+import type { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Store that maps celestial object IDs to their full data including physics state
@@ -22,7 +22,9 @@ export const accelerationVectorsStore = map<Record<string, OSVector3>>({});
  * Accepts a Map<string, OSVector3> and updates the store.
  * @param newAccelerations - A Map containing the latest acceleration vectors keyed by object ID.
  */
-export function updateAccelerationVectors(newAccelerations: Map<string, OSVector3>): void {
+export function updateAccelerationVectors(
+  newAccelerations: Map<string, OSVector3>,
+): void {
   // Convert the Map to a plain Record<string, OSVector3> for the store
   const accelerationsRecord: Record<string, OSVector3> = {};
   newAccelerations.forEach((vec, id) => {
@@ -38,5 +40,5 @@ export const getChildrenOfObject = (objectId: string): CelestialObject[] => {
   const hierarchy = celestialHierarchyStore.get();
   const objects = celestialObjectsStore.get();
   const childIds = hierarchy[objectId] || [];
-  return childIds.map(id => objects[id]).filter(Boolean);
-}; 
+  return childIds.map((id) => objects[id]).filter(Boolean);
+};

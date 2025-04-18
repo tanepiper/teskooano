@@ -1,7 +1,4 @@
-import { AsteroidFieldRenderer } from './AsteroidFieldRenderer';
-import { OortCloudRenderer } from './OortCloudRenderer';
+import { AsteroidFieldRenderer } from "./AsteroidFieldRenderer";
+import { OortCloudRenderer } from "./OortCloudRenderer";
 
-export {
-  AsteroidFieldRenderer,
-  OortCloudRenderer
-}; 
+export { AsteroidFieldRenderer, OortCloudRenderer };

@@ -31,12 +31,12 @@ The current physics simulation uses direct N-body calculation which becomes inef
 
 ### Progress Tracking
 
-| Task | Status | Assigned To | Notes |
-|------|--------|-------------|-------|
-| Barnes-Hut Integration | Not Started | | |
-| Memory Optimization | Not Started | | |
-| Benchmarking Suite | Not Started | | |
-| UI Configuration | Not Started | | |
+| Task                   | Status      | Assigned To | Notes |
+| ---------------------- | ----------- | ----------- | ----- |
+| Barnes-Hut Integration | Not Started |             |       |
+| Memory Optimization    | Not Started |             |       |
+| Benchmarking Suite     | Not Started |             |       |
+| UI Configuration       | Not Started |             |       |
 
 ## 2. Unified Celestial Renderer Architecture & Quality
 
@@ -59,12 +59,12 @@ The current celestial renderers have inconsistencies in their implementations. A
   - [ ] Update `StarRenderer` to use external GLSL files like other renderers
   - [ ] Standardize material management patterns
 - [✓] Stabilize and Optimize Core Rendering
-    - [✓] Fix state synchronization bugs (`ObjectManager`, `RendererStateAdapter`)
-    - [✓] Optimize LOD segment counts & fix LOD switching
-    - [✓] Optimize line rendering (trails/predictions)
-    - [✓] Fix lighting integration (`LightManager`)
-    - [✓] Fix CSS2D label rendering and visibility controls
-    - [✓] Fix camera reset issues on UI toggle
+  - [✓] Fix state synchronization bugs (`ObjectManager`, `RendererStateAdapter`)
+  - [✓] Optimize LOD segment counts & fix LOD switching
+  - [✓] Optimize line rendering (trails/predictions)
+  - [✓] Fix lighting integration (`LightManager`)
+  - [✓] Fix CSS2D label rendering and visibility controls
+  - [✓] Fix camera reset issues on UI toggle
 - [ ] Improve texture generation system
   - [ ] Unify CPU and GPU-based texture generation approaches
   - [ ] Implement proper texture caching across all renderer types
@@ -78,13 +78,13 @@ The current celestial renderers have inconsistencies in their implementations. A
 
 ### Progress Tracking
 
-| Task | Status | Assigned To | Notes |
-|------|--------|-------------|-------|
-| Formal Interface | Completed | | Created CelestialRenderer interface and BaseCelestialRenderer class |
-| Renderer Refactoring | In Progress | | Starting with StarRenderer refactoring |
-| Core Rendering Stabilization | Completed | | Addressed major bugs and performance issues |
-| Texture System | Not Started | | |
-| Rendering Quality | Not Started | | |
+| Task                         | Status      | Assigned To | Notes                                                               |
+| ---------------------------- | ----------- | ----------- | ------------------------------------------------------------------- |
+| Formal Interface             | Completed   |             | Created CelestialRenderer interface and BaseCelestialRenderer class |
+| Renderer Refactoring         | In Progress |             | Starting with StarRenderer refactoring                              |
+| Core Rendering Stabilization | Completed   |             | Addressed major bugs and performance issues                         |
+| Texture System               | Not Started |             |                                                                     |
+| Rendering Quality            | Not Started |             |                                                                     |
 
 ## 3. Interactive UI and Simulation Controls
 
@@ -118,12 +118,12 @@ A comprehensive and intuitive UI will greatly enhance user experience, providing
 
 ### Progress Tracking
 
-| Task | Status | Assigned To | Notes |
-|------|--------|-------------|-------|
-| Selection System | Not Started | | |
-| Info Panels | Not Started | | |
-| Camera Controls | Not Started | | |
-| Simulation Controls | Not Started | | |
+| Task                | Status      | Assigned To | Notes |
+| ------------------- | ----------- | ----------- | ----- |
+| Selection System    | Not Started |             |       |
+| Info Panels         | Not Started |             |       |
+| Camera Controls     | Not Started |             |       |
+| Simulation Controls | Not Started |             |       |
 
 ## Implementation Notes
 
@@ -140,7 +140,6 @@ A comprehensive and intuitive UI will greatly enhance user experience, providing
 - Monthly: Full architecture review to ensure new components align with design principles
 
 Remember that these priorities may shift based on feedback, discoveries during implementation, or changing project needs. This is a living document that should be updated as the project evolves.
-
 
 ## Outcome after refactoring
 

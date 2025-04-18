@@ -1,9 +1,11 @@
 # @teskooano/app-simulation
 
 ## What is it?
+
 The `@teskooano/app-simulation` library is the central orchestration engine for the Open Space game. It coordinates the interaction between physics, state management, and rendering to create a cohesive space simulation. This package manages the simulation loop, time progression, and coordinates the updates between all other subsystems.
 
 ## Where is it?
+
 **Physical Location:** `/packages/app/simulation`
 
 **System Context:** The simulation package sits at the center of the application, orchestrating all other components:
@@ -18,7 +20,7 @@ graph TD
     Renderer[renderer-threejs]
     Simulation[app-simulation]
     Frontend[Frontend Application]
-    
+
     Math --> Simulation
     Physics --> Simulation
     State --> Simulation
@@ -29,7 +31,9 @@ graph TD
 ```
 
 ## When is it used?
+
 The simulation engine is used:
+
 - When initializing the game environment and loading star systems
 - During each game tick to update physics, state, and trigger rendering
 - For controlling simulation time and speed
@@ -38,50 +42,61 @@ The simulation engine is used:
 - For loading and saving simulation state
 
 ## How does it work?
+
 The simulation system implements:
 
 ### Simulation Loop
+
 - Manages the main game loop with fixed time steps
 - Coordinates physics updates, state changes, and rendering
 - Handles frame timing and performance optimization
 
 ### System Management
+
 - Coordinates the initialization and shutdown of subsystems
 - Manages resource allocation and cleanup
 - Handles system configuration and scaling
 
 ### Time Control
+
 - Provides controls for simulation speed and pausing
 - Manages in-game time progression
 - Implements time dilation effects
 
 ### Event System
+
 - Relays events between subsystems
 - Handles user input that affects simulation
 - Manages event queuing and processing
 
 ### Scene Loading
+
 - Coordinates the loading of star systems
 - Handles transitions between different space environments
 - Manages system generation and persistence
 
 ## Strengths
+
 - Central coordination simplifies interaction between subsystems
 - Clean separation between simulation logic and rendering
 - Flexible time management for different simulation speeds
 - Well-structured initialization and update sequences
 
 ## Weaknesses
+
 - Currently limited system generation capabilities
 - Lacks advanced loading/saving functionality for complex systems
 
 ## Opportunities
+
 - Integration with the upcoming system loader for JSON-based star systems
 - Support for the new ship movement and warp travel mechanics
 - Enhanced event handling for complex user interactions
 
 ## Future Considerations
+
 For upcoming features:
+
 - The system loader will require coordinated loading from JSON files, validation, and initialization
 - Ship movement will need simulation support for player-controlled entities with physics
 - The UI manager will need hooks into the simulation for status updates and control
@@ -106,21 +121,21 @@ npm install @teskooano/app-simulation
 ### Basic Simulation Setup
 
 ```typescript
-import Simulation from '@teskooano/app-simulation';
+import Simulation from "@teskooano/app-simulation";
 
 // Get container element
-const container = document.getElementById('simulation-container');
+const container = document.getElementById("simulation-container");
 
 // Initialize simulation
 const simulation = new Simulation(container);
 
 // Add celestial objects
 simulation.addObject({
-  id: 'sun',
-  name: 'Sun',
-  type: 'star',
+  id: "sun",
+  name: "Sun",
+  type: "star",
   position: { x: 0, y: 0, z: 0 },
-  mass: 1.989e30
+  mass: 1.989e30,
 });
 ```
 
@@ -129,13 +144,14 @@ simulation.addObject({
 The simulation package includes integration with the Window Manager toolbar for easy control of the simulation:
 
 ```typescript
-import { initializeSimulationDemo } from '@teskooano/app-simulation';
+import { initializeSimulationDemo } from "@teskooano/app-simulation";
 
 // Get container element
-const container = document.getElementById('simulation-container');
+const container = document.getElementById("simulation-container");
 
 // Initialize simulation with window manager integration
-const { simulation, windowManager, toolbar } = initializeSimulationDemo(container);
+const { simulation, windowManager, toolbar } =
+  initializeSimulationDemo(container);
 
 // The toolbar now contains simulation controls:
 // - Play/Pause button
@@ -149,12 +165,11 @@ const { simulation, windowManager, toolbar } = initializeSimulationDemo(containe
 If you prefer to set up the toolbar manually:
 
 ```typescript
-import { registerSimulationControls } from '@teskooano/app-simulation';
-
+import { registerSimulationControls } from "@teskooano/app-simulation";
 
 // Create toolbar
 const toolbar = new Toolbar();
-toolbar.init('simulation-container', 'top');
+toolbar.init("simulation-container", "top");
 
 // Register simulation controls
 registerSimulationControls();
@@ -172,12 +187,12 @@ The simulation package now includes a web component for easy integration of simu
 You can also create the component programmatically:
 
 ```typescript
-import { SimulationControlsComponent } from '@teskooano/app-simulation';
+import { SimulationControlsComponent } from "@teskooano/app-simulation";
 
 // The component is automatically registered as a custom element
 // You can create it programmatically
-const controlsElement = document.createElement('simulation-controls');
-document.querySelector('#my-toolbar').appendChild(controlsElement);
+const controlsElement = document.createElement("simulation-controls");
+document.querySelector("#my-toolbar").appendChild(controlsElement);
 ```
 
 ### Legacy Toolbar Integration
@@ -185,12 +200,11 @@ document.querySelector('#my-toolbar').appendChild(controlsElement);
 For backward compatibility, you can still use the `registerSimulationControls` function:
 
 ```typescript
-import { registerSimulationControls } from '@teskooano/app-simulation';
-
+import { registerSimulationControls } from "@teskooano/app-simulation";
 
 // Create toolbar
 const toolbar = new Toolbar();
-toolbar.init('simulation-container', 'top');
+toolbar.init("simulation-container", "top");
 
 // Register simulation controls
 registerSimulationControls();
@@ -201,13 +215,16 @@ registerSimulationControls();
 The simulation toolbar provides the following controls:
 
 ### Play/Pause
+
 Toggles the simulation between playing and paused states.
 
 ### Speed Control
+
 - **Speed Up**: Increases the simulation speed by 1.5x
 - **Speed Down**: Decreases the simulation speed by 1.5x
 
 ### Direction Control
+
 - **Reverse Direction**: Flips the direction of time flow by negating the time scale
 
 ## API Reference
@@ -217,13 +234,13 @@ Toggles the simulation between playing and paused states.
 ```typescript
 class Simulation {
   constructor(container: HTMLElement);
-  
+
   // Add an object to the simulation
   addObject(object: CelestialObject): void;
-  
+
   // Remove an object from the simulation
   removeObject(objectId: string): void;
-  
+
   // Stop the simulation
   stop(): void;
 }
@@ -251,29 +268,31 @@ function registerSimulationControls(): void;
 The simulation can be easily integrated with other components of the Open Space project:
 
 ```typescript
-import Simulation, { registerSimulationControls } from '@teskooano/app-simulation';
-import { createSolarSystem } from '@teskooano/app-simulation';
+import Simulation, {
+  registerSimulationControls,
+} from "@teskooano/app-simulation";
+import { createSolarSystem } from "@teskooano/app-simulation";
 
 // Initialize window manager
 const windowManager = new WindowManager();
-windowManager.init('app-container');
+windowManager.init("app-container");
 
 // Initialize toolbar
 const toolbar = new Toolbar();
-toolbar.init('app-container', 'top');
+toolbar.init("app-container", "top");
 
 // Register simulation window
 registerWindow({
-  id: 'simulation-view',
-  title: 'Solar System Simulation',
+  id: "simulation-view",
+  title: "Solar System Simulation",
   position: { x: 100, y: 100 },
   size: { width: 800, height: 600 },
   resizable: true,
-  draggable: true
+  draggable: true,
 });
 
 // Initialize simulation
-const container = document.getElementById('simulation-view');
+const container = document.getElementById("simulation-view");
 const simulation = new Simulation(container);
 
 // Create solar system
@@ -285,4 +304,4 @@ registerSimulationControls();
 
 ## License
 
-MIT 
+MIT

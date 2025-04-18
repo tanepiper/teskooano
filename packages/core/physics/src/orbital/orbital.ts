@@ -16,7 +16,7 @@ import { OSVector3 } from "@teskooano/core-math";
 export const calculateOrbitalPosition = (
   parentStateReal: PhysicsStateReal,
   orbitalParameters: OrbitalParameters,
-  currentTime: number
+  currentTime: number,
 ): OSVector3 => {
   const {
     period_s,
@@ -31,7 +31,7 @@ export const calculateOrbitalPosition = (
   // --- Input Validation Logging ---
   if (period_s === 0) {
     console.error(
-      `[OrbitalCalc Error] period is zero for object orbiting ${parentStateReal.id}! Calculation skipped. Returning zero relative vector.`
+      `[OrbitalCalc Error] period is zero for object orbiting ${parentStateReal.id}! Calculation skipped. Returning zero relative vector.`,
     );
     return new OSVector3(0, 0, 0);
   }
@@ -53,7 +53,7 @@ export const calculateOrbitalPosition = (
     const derivative = 1 - eccentricity * Math.cos(eccentricAnomaly);
     if (derivative === 0) {
       console.error(
-        "[OrbitalCalc Error] Kepler derivative is zero! Calculation skipped. Returning zero relative vector."
+        "[OrbitalCalc Error] Kepler derivative is zero! Calculation skipped. Returning zero relative vector.",
       );
       // Return ZERO relative vector
       return new OSVector3(0, 0, 0);
@@ -67,7 +67,7 @@ export const calculateOrbitalPosition = (
   const sqrtArg2 = 1 - eccentricity;
   if (sqrtArg1 < 0 || sqrtArg2 < 0) {
     console.error(
-      `[OrbitalCalc Error] Negative value in sqrt for true anomaly! eccentricity=${eccentricity}. Returning zero relative vector.`
+      `[OrbitalCalc Error] Negative value in sqrt for true anomaly! eccentricity=${eccentricity}. Returning zero relative vector.`,
     );
     // Return ZERO relative vector
     return new OSVector3(0, 0, 0);
@@ -117,7 +117,7 @@ export const calculateOrbitalPosition = (
 export const calculateOrbitalVelocity = (
   parentStateReal: PhysicsStateReal,
   orbitalParameters: OrbitalParameters,
-  currentTime: number
+  currentTime: number,
 ): OSVector3 => {
   const {
     period_s,
@@ -149,7 +149,7 @@ export const calculateOrbitalVelocity = (
     2 *
     Math.atan2(
       Math.sqrt(1 + eccentricity) * Math.sin(eccentricAnomaly / 2),
-      Math.sqrt(1 - eccentricity) * Math.cos(eccentricAnomaly / 2)
+      Math.sqrt(1 - eccentricity) * Math.cos(eccentricAnomaly / 2),
     );
 
   // Calculate standard gravitational parameter (mu) using REAL units
@@ -161,7 +161,7 @@ export const calculateOrbitalVelocity = (
   // Avoid division by zero if p is zero (e.g., e=1)
   if (p <= 0) {
     console.warn(
-      `[OrbitalCalc Velocity] Semi-latus rectum p is zero or negative (p=${p}). Cannot calculate velocity.`
+      `[OrbitalCalc Velocity] Semi-latus rectum p is zero or negative (p=${p}). Cannot calculate velocity.`,
     );
     return new OSVector3(0, 0, 0); // Return zero velocity
   }
@@ -211,19 +211,19 @@ export const updateOrbitalBody = (
   body: PhysicsStateReal,
   parent: PhysicsStateReal,
   orbitalParameters: OrbitalParameters,
-  currentTime: number
+  currentTime: number,
 ): PhysicsStateReal => {
   // Calculate position relative to parent (meters)
   const relative_pos_m = calculateOrbitalPosition(
     parent,
     orbitalParameters,
-    currentTime
+    currentTime,
   );
   // Calculate world velocity (m/s)
   const world_vel_mps = calculateOrbitalVelocity(
     parent,
     orbitalParameters,
-    currentTime
+    currentTime,
   );
 
   // Use OSVector3 add method for position

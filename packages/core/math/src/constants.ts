@@ -15,4 +15,4 @@ export const TWO_PI = PI * 2;
 export const HALF_PI = PI / 2;
 
 // Conversion factor from degrees to radians
-export const DEG_TO_RAD = PI / 180; 
+export const DEG_TO_RAD = PI / 180;

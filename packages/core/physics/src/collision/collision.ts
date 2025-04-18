@@ -27,6 +27,23 @@ export interface Collision {
 }
 
 /**
+ * Details about a collision event that resulted in the destruction
+ * of one body by another.
+ */
+export interface DestructionEvent {
+  /** ID of the object that survived and absorbed the other. */
+  survivorId: string | number;
+  /** ID of the object that was destroyed. */
+  destroyedId: string | number;
+  /** Approximate position where the destruction occurred (center of destroyed body). */
+  impactPosition: OSVector3;
+  /** Relative velocity between the two bodies at the point of contact (survivor.velocity - destroyed.velocity, in m/s). */
+  relativeVelocity: OSVector3;
+  /** Approximate radius of the destroyed object, useful for scaling effects. */
+  destroyedRadius: number;
+}
+
+/**
  * Detects collision between two spheres based on their positions and radii.
  * Assumes instantaneous detection (does not calculate time of impact).
  *
@@ -40,7 +57,7 @@ export function detectSphereCollision(
   body1: PhysicsStateReal,
   radius1: number,
   body2: PhysicsStateReal,
-  radius2: number
+  radius2: number,
 ): Collision | null {
   // Calculate displacement vector from body2 center to body1 center
   const displacement = new OSVector3()
@@ -97,7 +114,7 @@ export function detectSphereCollision(
 export const resolveCollision = (
   collision: Collision,
   body1Real: PhysicsStateReal,
-  body2Real: PhysicsStateReal
+  body2Real: PhysicsStateReal,
 ): [PhysicsStateReal, PhysicsStateReal] => {
   const { normal, relativeVelocity } = collision;
   const mass1 = body1Real.mass_kg;
@@ -106,7 +123,7 @@ export const resolveCollision = (
   // Prevent division by zero or nonsensical physics with invalid mass
   if (mass1 <= 0 || mass2 <= 0) {
     console.warn(
-      `Collision resolution skipped between ${body1Real.id} and ${body2Real.id}: Invalid mass (<= 0).`
+      `Collision resolution skipped between ${body1Real.id} and ${body2Real.id}: Invalid mass (<= 0).`,
     );
     return [body1Real, body2Real]; // Return original states without modification
   }
@@ -154,6 +171,15 @@ export const resolveCollision = (
   return [newBody1, newBody2];
 };
 
+/** Helper function to check if a type is a planet, dwarf planet, or moon */
+const isPlanetOrMoon = (type: CelestialType): boolean => {
+  return (
+    type === CelestialType.PLANET ||
+    type === CelestialType.DWARF_PLANET ||
+    type === CelestialType.MOON
+  );
+};
+
 /**
  * Iterates through all pairs of bodies, detects collisions, and applies appropriate resolution.
  * Handles different scenarios:
@@ -168,21 +194,23 @@ export const resolveCollision = (
  * @param radii - A Map associating body IDs with their real-world radii in meters.
  * @param isStar - A Map associating body IDs with a boolean indicating if the body is a star.
  * @param bodyTypes - A Map associating body IDs with their `CelestialType`.
- * @returns A tuple: `[finalStates, destroyedIds]` where
+ * @returns A tuple: `[finalStates, destroyedIds, destructionEvents]` where
  *          `finalStates` is the updated array of `PhysicsStateReal` objects (excluding destroyed ones),
- *          `destroyedIds` is a Set containing the IDs of bodies destroyed in this collision pass.
+ *          `destroyedIds` is a Set containing the IDs of bodies destroyed in this collision pass,
+ *          `destructionEvents` is an array containing details about each destructive collision.
  */
 export const handleCollisions = (
   bodiesReal: PhysicsStateReal[],
   radii: Map<string | number, number>,
   isStar: Map<string | number, boolean>,
-  bodyTypes: Map<string | number, CelestialType>
-): [PhysicsStateReal[], Set<string | number>] => {
+  bodyTypes: Map<string | number, CelestialType>,
+): [PhysicsStateReal[], Set<string | number>, DestructionEvent[]] => {
   // Use a map to store potentially updated states during the iteration
   const updatedBodiesMap = new Map<string | number, PhysicsStateReal>();
   bodiesReal.forEach((body) => updatedBodiesMap.set(body.id, { ...body })); // Start with clones
 
   const destroyedIds = new Set<string | number>();
+  const destructionEvents: DestructionEvent[] = [];
   const numBodies = bodiesReal.length;
   // Threshold for mass difference to trigger inelastic collision (destruction)
   const MASS_DIFF_THRESHOLD = 0.1; // e.g., obj1 is < 10% mass of obj2
@@ -191,14 +219,17 @@ export const handleCollisions = (
    * Handles an inelastic collision where one body (survivor) absorbs another (destroyed).
    * Conserves momentum by calculating a new velocity for the combined mass.
    * Updates the survivor's state in `updatedBodiesMap` and adds the destroyed ID to `destroyedIds`.
+   * Creates and adds a DestructionEvent to the `destructionEvents` array.
    *
    * @param survivorId - The ID of the body that survives the collision.
    * @param destroyedId - The ID of the body that is destroyed/absorbed.
+   * @param destructionEventsRef - Reference to the array collecting destruction events.
    * @private - Internal helper function.
    */
   const handleInelasticCollision = (
     survivorId: string | number,
-    destroyedId: string | number
+    destroyedId: string | number,
+    destructionEventsRef: DestructionEvent[],
   ): void => {
     // Check if either body was already involved in a destructive collision in this step
     if (destroyedIds.has(survivorId) || destroyedIds.has(destroyedId)) {
@@ -206,16 +237,33 @@ export const handleCollisions = (
     }
     const survivor = updatedBodiesMap.get(survivorId)!;
     const destroyed = updatedBodiesMap.get(destroyedId)!;
+    const destroyedRadius = radii.get(destroyedId);
 
-    if (!survivor || !destroyed) {
+    if (!survivor || !destroyed || destroyedRadius === undefined) {
       console.warn(
-        `[handleInelasticCollision] Could not find states for survivor ${survivorId} or destroyed ${destroyedId}`
+        `[handleInelasticCollision] Could not find states/radius for survivor ${survivorId} or destroyed ${destroyedId}`,
       );
+      if (destroyedId) destroyedIds.add(destroyedId);
       return;
     }
 
+    // --- Create Destruction Event ---
+    const relativeVelocity = survivor.velocity_mps
+      .clone()
+      .sub(destroyed.velocity_mps);
+    const impactPosition = destroyed.position_m.clone();
+
+    const destructionEvent: DestructionEvent = {
+      survivorId,
+      destroyedId,
+      impactPosition,
+      relativeVelocity,
+      destroyedRadius,
+    };
+    destructionEventsRef.push(destructionEvent);
+    // --- End Create Destruction Event ---
+
     // --- Momentum Conservation ---
-    // p = m * v
     const momentum1 = survivor.velocity_mps
       .clone()
       .multiplyScalar(survivor.mass_kg);
@@ -229,10 +277,8 @@ export const handleCollisions = (
     // Check for zero total mass to prevent division by zero
     if (totalMass <= 0) {
       console.warn(
-        `[handleInelasticCollision] Skipping inelastic collision between ${survivorId} and ${destroyedId}: Zero or negative total mass (${totalMass} kg).`
+        `[handleInelasticCollision] Skipping inelastic collision between ${survivorId} and ${destroyedId}: Zero or negative total mass (${totalMass} kg).`,
       );
-      // Optionally mark both as destroyed if mass is nonsensical?
-      // destroyedIds.add(survivorId);
       destroyedIds.add(destroyedId);
       return;
     }
@@ -248,124 +294,150 @@ export const handleCollisions = (
       velocity_mps: newVelocity,
     });
 
-    // Mark the other body as destroyed for this step
+    // Mark the other body as destroyed for this step AFTER creating the event
     destroyedIds.add(destroyedId);
   };
 
   // --- Collision Detection and Resolution Loop ---
-  // Iterate through all unique pairs of bodies (i, j where j > i)
   for (let i = 0; i < numBodies; i++) {
     const id1 = bodiesReal[i].id;
-    // Skip if this body was already destroyed by a previous interaction in *this* timestep
     if (destroyedIds.has(id1)) continue;
-
-    const body1 = updatedBodiesMap.get(id1)!; // Get the latest state for body1
+    const body1 = updatedBodiesMap.get(id1)!;
 
     for (let j = i + 1; j < numBodies; j++) {
       const id2 = bodiesReal[j].id;
-      // Skip if body2 was already destroyed
       if (destroyedIds.has(id2)) continue;
+      const body2 = updatedBodiesMap.get(id2)!;
 
-      const body2 = updatedBodiesMap.get(id2)!; // Get the latest state for body2
-
-      // --- Check for special types (Ring Systems) ---
       const type1 = bodyTypes.get(id1);
       const type2 = bodyTypes.get(id2);
-      // Ring systems are visual representations and do not participate in physical collisions
-      // TODO: Add ring system specific collision handling logic
       if (
         type1 === CelestialType.RING_SYSTEM ||
         type2 === CelestialType.RING_SYSTEM
       ) {
-        continue; // Skip collision check
+        continue;
       }
-      // --- End Special Type Check ---
 
       const radius1 = radii.get(id1);
       const radius2 = radii.get(id2);
       const body1IsStar = isStar.get(id1) ?? false;
       const body2IsStar = isStar.get(id2) ?? false;
 
-      // Ensure radii are available for collision detection
       if (radius1 === undefined || radius2 === undefined) {
         console.warn(
-          `Skipping collision check between ${id1} and ${id2}: Missing radius information.`
+          `Skipping collision check between ${id1} and ${id2}: Missing radius information.`,
         );
         continue;
       }
 
-      // --- Detect Collision ---
       const collision = detectSphereCollision(body1, radius1, body2, radius2);
 
       if (collision) {
-        // --- Handle Detected Collision ---
-
         // Scenario 1: Star Collision
         if (body1IsStar || body2IsStar) {
           if (body1IsStar && body2IsStar) {
-            // Star-Star: Merge into the more massive one (or body1 if equal)
             if (body1.mass_kg >= body2.mass_kg) {
-              handleInelasticCollision(id1, id2);
+              handleInelasticCollision(id1, id2, destructionEvents);
             } else {
-              handleInelasticCollision(id2, id1);
+              handleInelasticCollision(id2, id1, destructionEvents);
             }
           } else if (body1IsStar) {
-            // Star-NonStar: Star absorbs the other body
-            handleInelasticCollision(id1, id2);
+            handleInelasticCollision(id1, id2, destructionEvents);
           } else {
-            // NonStar-Star: Star absorbs the other body
-            handleInelasticCollision(id2, id1);
+            handleInelasticCollision(id2, id1, destructionEvents);
           }
-          // Potential future enhancement: transfer angular momentum during absorption
-          continue; // Move to next pair after inelastic handling
+          continue; // Handled star collision
         }
-        // Scenario 2: Non-Star vs Non-Star Collision
-        else {
-          const mass1 = body1.mass_kg;
-          const mass2 = body2.mass_kg;
 
-          // Check for valid masses before calculating ratio
-          if (mass1 <= 0 || mass2 <= 0) {
+        // Scenario 2: Non-Star Collisions (Refined Logic)
+        else {
+          // Ensure types are defined before checking
+          if (type1 === undefined || type2 === undefined) {
             console.warn(
-              `Skipping collision resolution between non-stars ${id1} and ${id2}: Invalid mass.`
+              `[Collision] Skipping collision between ${id1} and ${id2}: Undefined body type.`,
             );
             continue;
           }
 
-          // Determine if mass difference is significant
-          const massRatio = Math.min(mass1, mass2) / Math.max(mass1, mass2);
+          // Sub-Scenario 2a: Moon vs Moon -> Mutual Destruction
+          if (type1 === CelestialType.MOON && type2 === CelestialType.MOON) {
+            destroyedIds.add(id1);
+            destroyedIds.add(id2);
+            // Create one event representing the collision site (using body1's info)
+            const relativeVelocity = body1.velocity_mps
+              .clone()
+              .sub(body2.velocity_mps);
+            const destructionEvent: DestructionEvent = {
+              survivorId: "MUTUAL_DESTRUCTION", // Special ID or null?
+              destroyedId: `${id1} & ${id2}`,
+              impactPosition: body1.position_m.clone(),
+              relativeVelocity: relativeVelocity,
+              destroyedRadius: radius1, // Use first moon's radius for effect scaling
+            };
+            destructionEvents.push(destructionEvent);
+            console.log(`[Collision] Mutual Destruction: ${id1} & ${id2}`);
+            continue; // Handled Moon vs Moon
+          }
 
-          if (massRatio < MASS_DIFF_THRESHOLD) {
-            // Inelastic: Significant mass difference -> Larger body absorbs smaller body
-            if (mass1 < mass2) {
-              handleInelasticCollision(id2, id1); // Body 2 survives
-            } else {
-              handleInelasticCollision(id1, id2); // Body 1 survives
-            }
-          } else {
+          // Sub-Scenario 2b: Planet/Moon vs Gas Giant -> Elastic Bounce
+          else if (
+            (isPlanetOrMoon(type1) && type2 === CelestialType.GAS_GIANT) ||
+            (isPlanetOrMoon(type2) && type1 === CelestialType.GAS_GIANT)
+          ) {
+            // Always elastic regardless of mass ratio
             const [resolvedBody1, resolvedBody2] = resolveCollision(
               collision,
               body1,
-              body2
+              body2,
             );
-            // Update the states in the map for subsequent checks within this timestep
             updatedBodiesMap.set(id1, resolvedBody1);
             updatedBodiesMap.set(id2, resolvedBody2);
+            console.log(
+              `[Collision] Elastic Bounce (Planet/Moon vs Gas Giant): ${id1} & ${id2}`,
+            );
+            continue; // Handled Planet/Moon vs Gas Giant
           }
-        }
-        // --- End Collision Handling Logic ---
-      }
-      // --- End Collision Detection Check ---
-    }
-    // --- End Inner Loop (j) ---
-  }
-  // --- End Outer Loop (i) ---
+
+          // Sub-Scenario 2c: All Other Non-Star Collisions (Planet/Moon vs Planet/Moon, etc.)
+          else {
+            const mass1 = body1.mass_kg;
+            const mass2 = body2.mass_kg;
+            if (mass1 <= 0 || mass2 <= 0) {
+              console.warn(
+                `Skipping collision resolution between non-stars ${id1} and ${id2}: Invalid mass.`,
+              );
+              continue;
+            }
+            const massRatio = Math.min(mass1, mass2) / Math.max(mass1, mass2);
+
+            if (massRatio < MASS_DIFF_THRESHOLD) {
+              // Inelastic: Larger absorbs smaller
+              if (mass1 < mass2) {
+                handleInelasticCollision(id2, id1, destructionEvents);
+              } else {
+                handleInelasticCollision(id1, id2, destructionEvents);
+              }
+            } else {
+              // Elastic Collision
+              const [resolvedBody1, resolvedBody2] = resolveCollision(
+                collision,
+                body1,
+                body2,
+              );
+              updatedBodiesMap.set(id1, resolvedBody1);
+              updatedBodiesMap.set(id2, resolvedBody2);
+            }
+          } // End of standard Planet/Moon vs Planet/Moon logic
+        } // End Non-Star Collision Block
+      } // End if (collision)
+    } // End inner loop (j)
+  } // End outer loop (i)
 
   // --- Finalize Results ---
   // Create the final array of states, excluding any bodies marked as destroyed
   const finalBodies = Array.from(updatedBodiesMap.values()).filter(
-    (body) => !destroyedIds.has(body.id)
+    (body) => !destroyedIds.has(body.id),
   );
 
-  return [finalBodies, destroyedIds];
+  return [finalBodies, destroyedIds, destructionEvents];
 };

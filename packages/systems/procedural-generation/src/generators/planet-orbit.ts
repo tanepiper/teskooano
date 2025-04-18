@@ -1,10 +1,10 @@
 import {
-    calculateOrbitalPosition,
-    calculateOrbitalVelocity,
+  calculateOrbitalPosition,
+  calculateOrbitalVelocity,
 } from "@teskooano/core-physics";
 import type {
-    OrbitalParameters,
-    PhysicsStateReal,
+  OrbitalParameters,
+  PhysicsStateReal,
 } from "@teskooano/data-types";
 import * as CONST from "../constants";
 import * as UTIL from "../utils";
@@ -27,7 +27,7 @@ export function calculatePlanetOrbitAndInitialState(
   planetMass_kg: number,
   bodyDistanceAU: number,
   parentStarState: PhysicsStateReal,
-  planetId: string
+  planetId: string,
 ): {
   orbit: OrbitalParameters;
   initialPhysicsState: PhysicsStateReal | null;
@@ -37,7 +37,7 @@ export function calculatePlanetOrbitAndInitialState(
   const orbitalPeriod_s = UTIL.calculateOrbitalPeriod_s(
     starMass_kg,
     semiMajorAxis_m,
-    planetMass_kg // Include planet mass for slightly more accuracy
+    planetMass_kg, // Include planet mass for slightly more accuracy
   );
 
   const orbit: OrbitalParameters = {
@@ -58,12 +58,12 @@ export function calculatePlanetOrbitAndInitialState(
     const initialRelativePos_m = calculateOrbitalPosition(
       parentStarState, // Treat star state as the central body for this calculation
       orbit, // Planet's orbital params relative to star
-      0 // time = 0 for initial state
+      0, // time = 0 for initial state
     );
     const initialRelativeVel_mps = calculateOrbitalVelocity(
       parentStarState, // Treat star state as the central body
       orbit,
-      0
+      0,
     );
 
     // Absolute position = parent's position + relative orbital position
@@ -72,8 +72,8 @@ export function calculatePlanetOrbitAndInitialState(
       .add(parentStarState.position_m);
     // Absolute velocity = parent's velocity + relative orbital velocity
     const initialWorldVel_mps = initialRelativeVel_mps
-        .clone()
-        .add(parentStarState.velocity_mps);
+      .clone()
+      .add(parentStarState.velocity_mps);
 
     // Basic validation
     if (
@@ -87,29 +87,28 @@ export function calculatePlanetOrbitAndInitialState(
       !Number.isFinite(initialWorldVel_mps.z)
     ) {
       throw new Error(
-        "Calculated initial planet state contains non-finite values."
+        "Calculated initial planet state contains non-finite values.",
       );
     }
 
     initialPhysicsState = {
-        id: planetId,
-        mass_kg: planetMass_kg,
-        position_m: initialWorldPos_m,
-        velocity_mps: initialWorldVel_mps,
+      id: planetId,
+      mass_kg: planetMass_kg,
+      position_m: initialWorldPos_m,
+      velocity_mps: initialWorldVel_mps,
     };
-
   } catch (error) {
     console.error(
       `[PlanetOrbit] Error calculating initial physics state for ${planetId}:`,
-      error
+      error,
     );
     console.error("Inputs:", {
       parentState: parentStarState,
       orbitParams: orbit,
-      planetMass_kg: planetMass_kg
+      planetMass_kg: planetMass_kg,
     });
     // Leave initialPhysicsState as null if calculation fails
   }
 
   return { orbit, initialPhysicsState };
-} 
+}

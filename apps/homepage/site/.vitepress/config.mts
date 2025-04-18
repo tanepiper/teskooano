@@ -1,7 +1,6 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
-import lightbox from "vitepress-plugin-lightbox"
-
+import lightbox from "vitepress-plugin-lightbox";
 
 // https://vitepress.dev/reference/site-config
 export default withMermaid({

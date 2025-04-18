@@ -1,9 +1,9 @@
-import * as THREE from 'three';
-import type { CelestialObject } from '@teskooano/data-types';
-import { BaseStarMaterial, BaseStarRenderer } from './base-star';
-import { GravitationalLensingHelper } from '../common/gravitational-lensing';
-import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
-import type { CelestialMeshOptions } from '../common/CelestialRenderer';
+import * as THREE from "three";
+import type { CelestialObject } from "@teskooano/data-types";
+import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
+import { GravitationalLensingHelper } from "../common/gravitational-lensing";
+import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { CelestialMeshOptions } from "../common/CelestialRenderer";
 
 /**
  * Material for Schwarzschild black holes
@@ -48,25 +48,25 @@ export class SchwarzschildBlackHoleMaterial extends THREE.ShaderMaterial {
           
           gl_FragColor = vec4(finalColor, 1.0);
         }
-      `
+      `,
     };
-    
+
     super({
       uniforms: horizonShader.uniforms,
       vertexShader: horizonShader.vertexShader,
       fragmentShader: horizonShader.fragmentShader,
       transparent: false,
-      side: THREE.FrontSide
+      side: THREE.FrontSide,
     });
   }
-  
+
   /**
    * Update the material with the current time
    */
   update(time: number): void {
     this.uniforms.time.value = time;
   }
-  
+
   /**
    * Dispose of material resources
    */
@@ -150,9 +150,9 @@ export class AccretionDiskMaterial extends THREE.ShaderMaterial {
           // Final color with alpha
           gl_FragColor = vec4(diskColor * ring, ring * 0.9);
         }
-      `
+      `,
     };
-    
+
     super({
       uniforms: diskShader.uniforms,
       vertexShader: diskShader.vertexShader,
@@ -160,17 +160,17 @@ export class AccretionDiskMaterial extends THREE.ShaderMaterial {
       transparent: true,
       side: THREE.DoubleSide,
       depthWrite: false,
-      blending: THREE.AdditiveBlending
+      blending: THREE.AdditiveBlending,
     });
   }
-  
+
   /**
    * Update the material with the current time
    */
   update(time: number): void {
     this.uniforms.time.value = time;
   }
-  
+
   /**
    * Dispose of material resources
    */
@@ -184,62 +184,77 @@ export class AccretionDiskMaterial extends THREE.ShaderMaterial {
  */
 export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
   private eventHorizonMaterial: SchwarzschildBlackHoleMaterial | null = null;
-  private accretionDiskMaterials: Map<string, AccretionDiskMaterial> = new Map();
+  private accretionDiskMaterials: Map<string, AccretionDiskMaterial> =
+    new Map();
   private lensingHelpers: Map<string, GravitationalLensingHelper> = new Map();
-  
+
   /**
    * Create the black hole mesh with event horizon and accretion disk
    */
-  createMesh(object: RenderableCelestialObject, options?: CelestialMeshOptions): THREE.Object3D {
+  createMesh(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): THREE.Object3D {
     const group = new THREE.Group();
     group.name = `blackhole-${object.celestialObjectId}`;
-    
+
     // Create event horizon sphere
     this.addEventHorizon(object, group);
-    
+
     // Create accretion disk
     this.addAccretionDisk(object, group);
-    
+
     return group;
   }
-  
+
   /**
    * Add the event horizon sphere to the group
    */
-  private addEventHorizon(object: RenderableCelestialObject, group: THREE.Group): void {
+  private addEventHorizon(
+    object: RenderableCelestialObject,
+    group: THREE.Group,
+  ): void {
     const radius = object.radius || 1;
-    
+
     // Create the event horizon geometry and material
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
     this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
-    
+
     // Create the mesh and add to group
     const eventHorizon = new THREE.Mesh(geometry, this.eventHorizonMaterial);
     group.add(eventHorizon);
   }
-  
+
   /**
    * Add the accretion disk to the group
    */
-  private addAccretionDisk(object: RenderableCelestialObject, group: THREE.Group): void {
+  private addAccretionDisk(
+    object: RenderableCelestialObject,
+    group: THREE.Group,
+  ): void {
     const radius = object.radius || 1;
     const diskOuterRadius = radius * 5;
     const diskInnerRadius = radius * 1.5;
-    
+
     // Create the accretion disk geometry
-    const diskGeometry = new THREE.RingGeometry(diskInnerRadius, diskOuterRadius, 64, 1);
+    const diskGeometry = new THREE.RingGeometry(
+      diskInnerRadius,
+      diskOuterRadius,
+      64,
+      1,
+    );
     const diskMaterial = new AccretionDiskMaterial();
-    
+
     // Store the material for animation updates
     this.accretionDiskMaterials.set(object.celestialObjectId, diskMaterial);
-    
+
     // Create the disk mesh and rotate it to horizontal position
     const accretionDisk = new THREE.Mesh(diskGeometry, diskMaterial);
     accretionDisk.rotation.x = Math.PI / 2;
-    
+
     group.add(accretionDisk);
   }
-  
+
   /**
    * Required by base class but not used for black holes
    */
@@ -248,7 +263,7 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
     // This is a placeholder to satisfy the abstract method requirement
     return {} as BaseStarMaterial;
   }
-  
+
   /**
    * Add gravitational lensing effect to the black hole
    * Should be called after the object is added to the scene
@@ -258,7 +273,7 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
     renderer: THREE.WebGLRenderer,
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
-    group: THREE.Object3D
+    group: THREE.Object3D,
   ): void {
     // Create the gravitational lensing helper
     const lensHelper = new GravitationalLensingHelper(
@@ -270,41 +285,47 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
         // Black holes have strong lensing but less overwhelming
         intensity: 1.2, // Reduced from 2.0
         // Scale based on mass but more subtle
-        distortionScale: 1.8 * (object.mass ? Math.min(6, object.mass / 8e6) : 1.0), // Reduced from 3.0 and adjusted scaling
+        distortionScale:
+          1.8 * (object.mass ? Math.min(6, object.mass / 8e6) : 1.0), // Reduced from 3.0 and adjusted scaling
         // Large sphere around the black hole
-        lensSphereScale: 8.0 // Adjusted from 10.0
-      }
+        lensSphereScale: 8.0, // Adjusted from 10.0
+      },
     );
-    
+
     // Store the helper for updates
     this.lensingHelpers.set(object.celestialObjectId, lensHelper);
   }
-  
+
   /**
    * Update materials with current time
    */
-  update(time?: number, renderer?: THREE.WebGLRenderer, scene?: THREE.Scene, camera?: THREE.PerspectiveCamera): void {
-    const currentTime = time ?? (Date.now() / 1000 - this.startTime);
+  update(
+    time?: number,
+    renderer?: THREE.WebGLRenderer,
+    scene?: THREE.Scene,
+    camera?: THREE.PerspectiveCamera,
+  ): void {
+    const currentTime = time ?? Date.now() / 1000 - this.startTime;
     this.elapsedTime = currentTime;
-    
+
     // Update event horizon material
     if (this.eventHorizonMaterial) {
       this.eventHorizonMaterial.update(currentTime);
     }
-    
+
     // Update accretion disk materials
-    this.accretionDiskMaterials.forEach(material => {
+    this.accretionDiskMaterials.forEach((material) => {
       material.update(currentTime);
     });
-    
+
     // Update lensing helpers if renderer, scene and camera are provided
     if (renderer && scene && camera) {
-      this.lensingHelpers.forEach(helper => {
+      this.lensingHelpers.forEach((helper) => {
         helper.update(renderer, scene, camera);
       });
     }
   }
-  
+
   /**
    * Dispose of all materials
    */
@@ -312,18 +333,18 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
     if (this.eventHorizonMaterial) {
       this.eventHorizonMaterial.dispose();
     }
-    
-    this.accretionDiskMaterials.forEach(material => {
+
+    this.accretionDiskMaterials.forEach((material) => {
       material.dispose();
     });
-    
+
     this.accretionDiskMaterials.clear();
-    
+
     // Dispose lensing helpers
-    this.lensingHelpers.forEach(helper => {
+    this.lensingHelpers.forEach((helper) => {
       helper.dispose();
     });
-    
+
     this.lensingHelpers.clear();
   }
-} 
+}

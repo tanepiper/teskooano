@@ -14,31 +14,38 @@ A utility package providing debug tools for the Teskooano engine.
 ### Basic Setup
 
 ```typescript
-import { debugConfig, DebugLevel } from '@teskooano/core-debug';
+import { debugConfig, DebugLevel } from "@teskooano/core-debug";
 
 // Configure debug behavior
 debugConfig.level = DebugLevel.DEBUG; // Set debug level
-debugConfig.visualize = true;          // Enable visual debugging
-debugConfig.logging = true;            // Enable console logging
+debugConfig.visualize = true; // Enable visual debugging
+debugConfig.logging = true; // Enable console logging
 ```
 
 ### Logging
 
 ```typescript
-import { error, warn, info, debug, trace, createLogger } from '@teskooano/core-debug';
+import {
+  error,
+  warn,
+  info,
+  debug,
+  trace,
+  createLogger,
+} from "@teskooano/core-debug";
 
 // Basic logging
-info('System initialized');
-warn('Potential issue detected');
-error('Failed to load resource', { resourceId: 123 });
+info("System initialized");
+warn("Potential issue detected");
+error("Failed to load resource", { resourceId: 123 });
 
 // Module-specific logger
-const logger = createLogger('PhysicsEngine');
-logger.info('Physics system started');
-logger.debug('Applying force', { x: 10, y: 0, z: 0 });
+const logger = createLogger("PhysicsEngine");
+logger.info("Physics system started");
+logger.debug("Applying force", { x: 10, y: 0, z: 0 });
 
 // Performance timing
-logger.time('update', () => {
+logger.time("update", () => {
   // Expensive operation here
   for (let i = 0; i < 1000; i++) {
     // Do work
@@ -49,31 +56,31 @@ logger.time('update', () => {
 ### Vector Debugging
 
 ```typescript
-import { vectorDebug } from '@teskooano/core-debug';
-import { OSVector3 } from '@teskooano/core-math';
+import { vectorDebug } from "@teskooano/core-debug";
+import { OSVector3 } from "@teskooano/core-math";
 
 // Store vectors for a specific context
-vectorDebug.setVector('planet-1', 'position', new OSVector3(100, 0, 0));
-vectorDebug.setVector('planet-1', 'velocity', new OSVector3(0, 10, 0));
+vectorDebug.setVector("planet-1", "position", new OSVector3(100, 0, 0));
+vectorDebug.setVector("planet-1", "velocity", new OSVector3(0, 10, 0));
 
 // Retrieve vectors
-const position = vectorDebug.getVector('planet-1', 'position');
-const allVectors = vectorDebug.getVectors('planet-1');
+const position = vectorDebug.getVector("planet-1", "position");
+const allVectors = vectorDebug.getVectors("planet-1");
 ```
 
 ### THREE.js Integration
 
 ```typescript
-import { threeVectorDebug } from '@teskooano/core-debug';
+import { threeVectorDebug } from "@teskooano/core-debug";
 
 // Store THREE.js vectors
-threeVectorDebug.setVector('ring-system', 'sunDir', sunDirection);
-threeVectorDebug.setVector('ring-system', 'parentPos', parentPosition);
+threeVectorDebug.setVector("ring-system", "sunDir", sunDirection);
+threeVectorDebug.setVector("ring-system", "parentPos", parentPosition);
 
 // Or store multiple vectors at once
-threeVectorDebug.setVectors('ring-system', { 
-  sunDir: sunDirection, 
-  parentPos: parentPosition 
+threeVectorDebug.setVectors("ring-system", {
+  sunDir: sunDirection,
+  parentPos: parentPosition,
 });
 ```
 
@@ -100,4 +107,4 @@ if (isVisualizationEnabled()) {
     parentPos: parentPos
   });
 }
-``` 
+```

@@ -3,7 +3,7 @@
  */
 
 // Gravitational constant (G) in m^3 kg^-1 s^-2
-export const GRAVITATIONAL_CONSTANT = 6.67430e-11;
+export const GRAVITATIONAL_CONSTANT = 6.6743e-11;
 
 // Mass of the Sun in kg
 export const SOLAR_MASS = 1.989e30;
@@ -44,4 +44,4 @@ export const MAX_FORCE = 1e25; // Maximum force magnitude
 export const MAX_VELOCITY = 1e7; // Maximum velocity magnitude (m/s)
 
 // Conversion factor from degrees to radians - MOVED to math/constants.ts
-// export const DEG_TO_RAD = Math.PI / 180; 
+// export const DEG_TO_RAD = Math.PI / 180;

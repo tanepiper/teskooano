@@ -1,6 +1,6 @@
 /**
  * Unified scaling system for ensuring consistent physics and visualization
- * 
+ *
  * This scaling system helps normalize calculations between the internal physics
  * (which needs realistic values) and the visualization (which needs visually appropriate scales).
  */
@@ -8,15 +8,14 @@
 import { CelestialType } from "./celestial";
 
 // Gravitational constant (G) in m^3 kg^-1 s^-2
-export const GRAVITATIONAL_CONSTANT = 6.67430e-11;
-
+export const GRAVITATIONAL_CONSTANT = 6.6743e-11;
 
 // Astronomical Unit (AU) in meters
 export const AU_METERS = 149597870700;
 
 /**
  * Scaling constants for the simulation.
- * 
+ *
  * These values help maintain consistent scaling across the simulation:
  * - DISTANCE_SCALE: Factor for scaling distances between objects (orbital radii)
  * - SIZE_SCALE: Factor for scaling physical size of objects (radii)
@@ -30,14 +29,14 @@ export const SCALE = {
   SIZE: 1.0,
   TIME: 1.0, // For now, we keep time at real scale
   MASS: 1.0e-20, // Scale down masses to prevent numerical explosion
-  
+
   // Defines the visual scale in the renderer: scene units per AU
-  RENDER_SCALE_AU: 1000, 
+  RENDER_SCALE_AU: 1000,
 
   // Special scales for specific types of objects - Set to 1.0 unless specific visual tweaks needed
   GAS_GIANT_SIZE: 1.0,
   STAR_SIZE: 1.0,
-  MOON_DISTANCE: 50.0 // Increase moon distances for better visibility
+  MOON_DISTANCE: 50.0, // Increase moon distances for better visibility
 };
 
 // Pre-calculate the scale factor from meters to ThreeJS scene units
@@ -55,9 +54,14 @@ export function scaleDistance(realDistance: number, isMoon = false): number {
 /**
  * Convert a visual distance back to a physical distance
  */
-export function unscaleDistance(visualDistance: number, isMoon = false): number {
+export function unscaleDistance(
+  visualDistance: number,
+  isMoon = false,
+): number {
   // Reverse the scaling logic
-  const baseVisualDistance = isMoon ? visualDistance / SCALE.MOON_DISTANCE : visualDistance;
+  const baseVisualDistance = isMoon
+    ? visualDistance / SCALE.MOON_DISTANCE
+    : visualDistance;
   return baseVisualDistance / METERS_TO_SCENE_UNITS;
 }
 
@@ -118,7 +122,7 @@ export function unscaleTime(visualTime: number): number {
 
 /**
  * Scale the gravitational constant to match the visualization
- * 
+ *
  * This is crucial for ensuring orbital mechanics are consistent
  * with the scaling factors used for distances and masses.
  */
@@ -137,29 +141,29 @@ export function scaledGravitationalConstant(): number {
   const massTimeScaleSquared = SCALE.MASS * Math.pow(SCALE.TIME, 2);
 
   if (massTimeScaleSquared === 0) {
-   console.warn(
-     'Cannot calculate scaled G: MASS_SCALE or TIME_SCALE is zero. Returning real G.'
-   );
-   return GRAVITATIONAL_CONSTANT;
+    console.warn(
+      "Cannot calculate scaled G: MASS_SCALE or TIME_SCALE is zero. Returning real G.",
+    );
+    return GRAVITATIONAL_CONSTANT;
   }
 
-  return GRAVITATIONAL_CONSTANT * distanceScaleCubed / massTimeScaleSquared;
+  return (GRAVITATIONAL_CONSTANT * distanceScaleCubed) / massTimeScaleSquared;
 }
 
 /**
  * Get a consistent scale factor for orbital velocities based on current scaling
- * 
+ *
  * This ensures that velocity calculations match the scaled distances and times
  */
 export function velocityScaleFactor(): number {
   // Velocity scaling factor v = √(G*m/r)
   // So v_scaled = √(G_scaled * m_scaled / r_scaled)
-  return Math.sqrt(SCALE.DISTANCE / SCALE.TIME); 
+  return Math.sqrt(SCALE.DISTANCE / SCALE.TIME);
 }
 
 /**
  * Calculate orbit parameters ensuring they're consistent with the scaling system
- * 
+ *
  * @param realSemiMajorAxis Distance in meters
  * @param realEccentricity Eccentricity (dimensionless)
  * @param realPeriod Period in seconds
@@ -172,22 +176,22 @@ export function scaleOrbitalParameters(
   realEccentricity: number,
   realPeriod: number,
   parentMass: number,
-  isMoon = false
-): { 
-  semiMajorAxis: number,
-  period: number 
+  isMoon = false,
+): {
+  semiMajorAxis: number;
+  period: number;
 } {
   // Scale semi-major axis
   const scaledSemiMajorAxis = scaleDistance(realSemiMajorAxis, isMoon);
-  
+
   // Adjust period for the scaled system using Kepler's Third Law
   // T^2 ∝ a^3 relationship
   // When 'a' is scaled, 'T' needs to be adjusted to maintain orbital mechanics
   const scaleFactor = Math.sqrt((scaledSemiMajorAxis / realSemiMajorAxis) ** 3);
   const scaledPeriod = realPeriod * scaleFactor;
-  
+
   return {
     semiMajorAxis: scaledSemiMajorAxis,
-    period: scaledPeriod
+    period: scaledPeriod,
   };
-} 
+}

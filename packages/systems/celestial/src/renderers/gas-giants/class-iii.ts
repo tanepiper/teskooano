@@ -1,12 +1,12 @@
-import type { GasGiantProperties } from '@teskooano/data-types';
-import * as THREE from 'three';
-import { TextureFactory } from '../../textures/TextureFactory';
-import { BaseGasGiantMaterial, BaseGasGiantRenderer } from './base-gas-giant';
+import type { GasGiantProperties } from "@teskooano/data-types";
+import * as THREE from "three";
+import { TextureFactory } from "../../textures/TextureFactory";
+import { BaseGasGiantMaterial, BaseGasGiantRenderer } from "./base-gas-giant";
 
 // Import the new Class III shaders
-import { RenderableCelestialObject } from '@teskooano/renderer-threejs';
-import classIIIFragmentShader from '../../shaders/gas-giants/class-iii.fragment.glsl';
-import classIIIVertexShader from '../../shaders/gas-giants/class-iii.vertex.glsl';
+import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import classIIIFragmentShader from "../../shaders/gas-giants/class-iii.fragment.glsl";
+import classIIIVertexShader from "../../shaders/gas-giants/class-iii.vertex.glsl";
 
 /**
  * Material for Class III gas giants (Cloudless / Azure)
@@ -25,12 +25,12 @@ class ClassIIIMaterial extends BaseGasGiantMaterial {
         // Uniforms required by the base material/vertex shader
         time: { value: 0 }, // Still needed for Base class update method
         sunPosition: { value: new THREE.Vector3(0, 0, 0) }, // Updated by Base
-        
+
         // Storm texture uniforms
         stormMap: { value: options.stormMap },
         hasStormMap: { value: !!options.stormMap },
       },
-      vertexShader: classIIIVertexShader,   // Use Class III vertex shader
+      vertexShader: classIIIVertexShader, // Use Class III vertex shader
       fragmentShader: classIIIFragmentShader, // Use Class III fragment shader
     });
   }
@@ -45,18 +45,22 @@ class ClassIIIMaterial extends BaseGasGiantMaterial {
  * Renderer for Class III gas giants
  */
 export class ClassIIIGasGiantRenderer extends BaseGasGiantRenderer {
-  protected getMaterial(object: RenderableCelestialObject): BaseGasGiantMaterial {
+  protected getMaterial(
+    object: RenderableCelestialObject,
+  ): BaseGasGiantMaterial {
     const properties = object.properties as GasGiantProperties;
 
     // Generate deterministic seed from object id
-    const seed = object.celestialObjectId ? 
-      object.celestialObjectId.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) : 
-      Math.random() * 10000;
+    const seed = object.celestialObjectId
+      ? object.celestialObjectId
+          .split("")
+          .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
+      : Math.random() * 10000;
 
     // Determine the base color. Use property if available, otherwise default pale cyan.
     const baseColor = properties.atmosphereColor
       ? new THREE.Color(properties.atmosphereColor)
-      : new THREE.Color(0xAFDBF5); // Changed default to a paler cyan/blue (was 0x2B65EC)
+      : new THREE.Color(0xafdbf5); // Changed default to a paler cyan/blue (was 0x2B65EC)
 
     // Check if we should use a texture overlay (e.g., for storms)
     let stormMap: THREE.Texture | undefined = undefined;
@@ -66,7 +70,7 @@ export class ClassIIIGasGiantRenderer extends BaseGasGiantRenderer {
         class: properties.gasGiantClass,
         baseColor: baseColor,
         secondaryColor: new THREE.Color(properties.stormColor),
-        seed: seed
+        seed: seed,
       });
       stormMap = stormTexture.colorMap;
     }
@@ -74,9 +78,9 @@ export class ClassIIIGasGiantRenderer extends BaseGasGiantRenderer {
     // Return the new Class III material
     return new ClassIIIMaterial({
       baseColor: baseColor,
-      stormMap: stormMap
+      stormMap: stormMap,
     });
   }
 
   // Base class update and dispose are sufficient
-} 
+}

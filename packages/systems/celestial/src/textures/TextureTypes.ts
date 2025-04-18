@@ -4,9 +4,9 @@ import {
   RockyType,
   SpectralClass,
   SpecialSpectralClass,
-  ExoticStellarType
-} from '@teskooano/data-types';
-import * as THREE from 'three';
+  ExoticStellarType,
+} from "@teskooano/data-types";
+import * as THREE from "three";
 
 /**
  * Standard texture result interface for all generators
@@ -30,17 +30,17 @@ export interface TextureGeneratorOptions {
    * Size of the generated texture
    */
   textureSize?: number;
-  
+
   /**
    * Seed for random pattern generation
    */
   seed?: number;
-  
+
   /**
    * Generate mipmaps for the texture
    */
   generateMipmaps?: boolean;
-  
+
   /**
    * Whether to generate a normal map
    */
@@ -65,12 +65,12 @@ export interface GasGiantTextureOptions extends BaseTextureOptions {
    * Class of gas giant
    */
   class: GasGiantClass;
-  
+
   /**
    * Secondary color for bands or clouds
    */
   secondaryColor?: THREE.ColorRepresentation;
-  
+
   /**
    * Optional storm color (for Jupiter-like giants)
    */
@@ -85,28 +85,28 @@ export interface TerrestrialTextureOptions extends BaseTextureOptions {
    * Planet type from @teskooano/data-types
    */
   type: PlanetType;
-  
+
   /**
    * Surface color of the planet
    */
   surfaceColor: THREE.ColorRepresentation; // Base color for land/rock/ice
-  
+
   /**
    * Water color for oceanic areas
    */
   waterColor?: THREE.ColorRepresentation; // Color for oceans/lakes
-  
+
   /**
    * Cloud color and coverage
    */
   cloudColor?: THREE.ColorRepresentation; // Color for clouds
   cloudCoverage?: number; // 0-1 cloud coverage percentage
-  
+
   /**
    * Surface roughness (affects mountain generation)
    */
   roughness?: number; // 0-1 surface roughness (mountains, etc.)
-  
+
   /**
    * Whether the planet has vegetation
    */
@@ -122,22 +122,22 @@ export interface StarTextureOptions extends BaseTextureOptions {
    * Main spectral class (O, B, A, F, G, K, M, etc.)
    */
   spectralClass?: SpectralClass;
-  
+
   /**
    * Special spectral class for non-main sequence stars
    */
   specialSpectralClass?: SpecialSpectralClass;
-  
+
   /**
    * Exotic stellar type (neutron star, white dwarf, etc.)
    */
   exoticType?: ExoticStellarType;
-  
+
   /**
    * Surface intensity/brightness (0-1)
    */
   surfaceIntensity?: number;
-  
+
   /**
    * Intensity/contrast of star spots/granulation (0-1)
    */
@@ -152,4 +152,4 @@ export interface SpaceRockTextureOptions extends BaseTextureOptions {
   featureColor?: THREE.ColorRepresentation; // Color for craters, darker areas
   roughness?: number; // 0-1 surface roughness
   metalness?: number; // 0-1 how metallic the rock appears (for METALLIC type)
-} 
+}

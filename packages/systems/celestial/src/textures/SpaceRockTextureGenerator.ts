@@ -1,7 +1,7 @@
-import { RockyType } from '@teskooano/data-types';
-import * as THREE from 'three';
-import { TextureGeneratorBase } from './TextureGeneratorBase';
-import { SpaceRockTextureOptions, TextureResult } from './TextureTypes';
+import { RockyType } from "@teskooano/data-types";
+import * as THREE from "three";
+import { TextureGeneratorBase } from "./TextureGeneratorBase";
+import { SpaceRockTextureOptions, TextureResult } from "./TextureTypes";
 
 /**
  * Generator for space rock textures (asteroids, comets, etc.)
@@ -9,23 +9,27 @@ import { SpaceRockTextureOptions, TextureResult } from './TextureTypes';
 export class SpaceRockTextureGenerator extends TextureGeneratorBase {
   /**
    * Generate a space rock texture
-   * 
+   *
    * @param options Options for generating the space rock texture
    * @returns The generated texture result with color and normal maps
    */
   public generateTexture(options: SpaceRockTextureOptions): TextureResult {
     // Use the cache mechanism from base class
-    return this.getOrCreateTexture(options, (opts) => this.createSpaceRockTexture(opts));
+    return this.getOrCreateTexture(options, (opts) =>
+      this.createSpaceRockTexture(opts),
+    );
   }
-  
+
   /**
    * Create the actual texture for a space rock
-   * 
+   *
    * @param options Options for the space rock texture
    * @returns The texture result
    */
-  private createSpaceRockTexture(options: SpaceRockTextureOptions): TextureResult {
-    const { 
+  private createSpaceRockTexture(
+    options: SpaceRockTextureOptions,
+  ): TextureResult {
+    const {
       type,
       baseColor = this.getBaseColorForType(type),
       featureColor = new THREE.Color(0x555555),
@@ -33,9 +37,9 @@ export class SpaceRockTextureGenerator extends TextureGeneratorBase {
       metalness = type === RockyType.METALLIC ? 0.6 : 0.1,
       textureSize = 1024,
       seed = Math.random() * 10000,
-      generateMipmaps = true
+      generateMipmaps = true,
     } = options;
-    
+
     // Create a material for the space rock surface
     const material = new THREE.ShaderMaterial({
       uniforms: {
@@ -43,7 +47,7 @@ export class SpaceRockTextureGenerator extends TextureGeneratorBase {
         featureColor: { value: new THREE.Color(featureColor) },
         roughnessValue: { value: roughness },
         metalnessValue: { value: metalness },
-        seed: { value: seed }
+        seed: { value: seed },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -103,32 +107,43 @@ export class SpaceRockTextureGenerator extends TextureGeneratorBase {
           
           gl_FragColor = vec4(color, 1.0);
         }
-      `
+      `,
     });
-    
+
     // Render the shader to a texture
-    const colorMap = this.renderToTexture(material, textureSize, generateMipmaps);
-    
+    const colorMap = this.renderToTexture(
+      material,
+      textureSize,
+      generateMipmaps,
+    );
+
     // Create a simple result with just the color map for now
     const result: TextureResult = {
-      colorMap: colorMap
+      colorMap: colorMap,
     };
-    
+
     return result;
   }
-  
+
   /**
    * Get a base color based on the rock type
    */
   private getBaseColorForType(type: RockyType): THREE.ColorRepresentation {
     switch (type) {
-      case RockyType.ICE: return 0xd0e0f0; // Light blue-gray
-      case RockyType.METALLIC: return 0x8c8c8c; // Silvery gray
-      case RockyType.LIGHT_ROCK: return 0xb0a090; // Light tan
-      case RockyType.DARK_ROCK: return 0x605040; // Dark brown
-      case RockyType.ICE_DUST: return 0xb0b8c0; // Dusty gray
-      case RockyType.DUST: return 0xa09080; // Dusty brown
-      default: return 0x808080; // Default gray
+      case RockyType.ICE:
+        return 0xd0e0f0; // Light blue-gray
+      case RockyType.METALLIC:
+        return 0x8c8c8c; // Silvery gray
+      case RockyType.LIGHT_ROCK:
+        return 0xb0a090; // Light tan
+      case RockyType.DARK_ROCK:
+        return 0x605040; // Dark brown
+      case RockyType.ICE_DUST:
+        return 0xb0b8c0; // Dusty gray
+      case RockyType.DUST:
+        return 0xa09080; // Dusty brown
+      default:
+        return 0x808080; // Default gray
     }
   }
-} 
+}

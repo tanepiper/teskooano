@@ -1,11 +1,11 @@
 /**
  * Logging utilities for debug messages
  */
-import { DebugLevel, debugConfig, isDebugEnabled } from './index';
+import { DebugLevel, debugConfig, isDebugEnabled } from "./index";
 
 /**
  * Log a message if the current debug level permits
- * 
+ *
  * @param level Debug level of the message
  * @param message The message to log
  * @param args Additional arguments to log
@@ -71,7 +71,7 @@ export function trace(message: string, ...args: any[]): void {
 
 /**
  * Helper to measure execution time of a function
- * 
+ *
  * @param name Name of the operation being timed
  * @param fn Function to execute and time
  * @returns The result of the function
@@ -89,17 +89,23 @@ export function timeExecution<T>(name: string, fn: () => T): T {
 
 /**
  * Create a logger instance for a specific module
- * 
+ *
  * @param moduleName Name of the module using this logger
  * @returns Object with logging methods
  */
 export function createLogger(moduleName: string) {
   return {
-    error: (message: string, ...args: any[]) => error(`[${moduleName}] ${message}`, ...args),
-    warn: (message: string, ...args: any[]) => warn(`[${moduleName}] ${message}`, ...args),
-    info: (message: string, ...args: any[]) => info(`[${moduleName}] ${message}`, ...args),
-    debug: (message: string, ...args: any[]) => debug(`[${moduleName}] ${message}`, ...args),
-    trace: (message: string, ...args: any[]) => trace(`[${moduleName}] ${message}`, ...args),
-    time: <T>(operationName: string, fn: () => T) => timeExecution(`${moduleName}:${operationName}`, fn)
+    error: (message: string, ...args: any[]) =>
+      error(`[${moduleName}] ${message}`, ...args),
+    warn: (message: string, ...args: any[]) =>
+      warn(`[${moduleName}] ${message}`, ...args),
+    info: (message: string, ...args: any[]) =>
+      info(`[${moduleName}] ${message}`, ...args),
+    debug: (message: string, ...args: any[]) =>
+      debug(`[${moduleName}] ${message}`, ...args),
+    trace: (message: string, ...args: any[]) =>
+      trace(`[${moduleName}] ${message}`, ...args),
+    time: <T>(operationName: string, fn: () => T) =>
+      timeExecution(`${moduleName}:${operationName}`, fn),
   };
-} 
+}

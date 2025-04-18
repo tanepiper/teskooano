@@ -2,8 +2,8 @@
  * THREE.js specific vector debugging utilities
  * This file provides integrations for THREE.js vector types
  */
-import { OSVector3 } from '@teskooano/core-math';
-import { vectorDebug } from './vector-debug';
+import { OSVector3 } from "@teskooano/core-math";
+import { vectorDebug } from "./vector-debug";
 
 // Type definition for THREE.Vector3
 // This saves us from adding a direct THREE.js dependency
@@ -27,7 +27,7 @@ export function convertThreeVector(vector: ThreeVector3): OSVector3 {
 export class ThreeVectorDebug {
   /**
    * Store a THREE.Vector3 in the debug system
-   * 
+   *
    * @param name The debug context name
    * @param key The vector key
    * @param vector The THREE.Vector3 to store
@@ -39,7 +39,7 @@ export class ThreeVectorDebug {
 
   /**
    * Store multiple THREE.Vector3 values at once
-   * 
+   *
    * @param name The debug context name
    * @param vectors Record of vector keys to THREE.Vector3 objects
    */
@@ -51,28 +51,33 @@ export class ThreeVectorDebug {
 
   /**
    * Get a vector as a THREE.Vector3-like object
-   * 
+   *
    * @param name The debug context name
    * @param key The vector key
    * @returns Object with x, y, z properties or undefined if not found
    */
-  public getVector(name: string, key: string): {x: number; y: number; z: number} | undefined {
+  public getVector(
+    name: string,
+    key: string,
+  ): { x: number; y: number; z: number } | undefined {
     const vector = vectorDebug.getVector(name, key);
     if (!vector) return undefined;
     return { x: vector.x, y: vector.y, z: vector.z };
   }
-  
+
   /**
    * Get all vectors for a named debug context
-   * 
+   *
    * @param name The debug context name
    * @returns Record of all vector keys to vector objects or undefined if not found
    */
-  public getVectors(name: string): Record<string, {x: number; y: number; z: number}> | undefined {
+  public getVectors(
+    name: string,
+  ): Record<string, { x: number; y: number; z: number }> | undefined {
     const vectors = vectorDebug.getVectors(name);
     if (!vectors) return undefined;
-    
-    const result: Record<string, {x: number; y: number; z: number}> = {};
+
+    const result: Record<string, { x: number; y: number; z: number }> = {};
     Object.entries(vectors).forEach(([key, vector]) => {
       result[key] = { x: vector.x, y: vector.y, z: vector.z };
     });
@@ -104,4 +109,4 @@ export class ThreeVectorDebug {
 /**
  * Singleton instance for THREE.js vector debugging
  */
-export const threeVectorDebug = new ThreeVectorDebug(); 
+export const threeVectorDebug = new ThreeVectorDebug();

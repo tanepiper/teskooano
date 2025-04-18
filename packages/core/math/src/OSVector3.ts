@@ -1,5 +1,5 @@
 import { EPSILON } from "./constants";
-import * as THREE from 'three';
+import * as THREE from "three";
 
 /**
  * Represents a 3-dimensional vector using the Open Space engine's
@@ -122,7 +122,7 @@ export class OSVector3 {
     if (len > EPSILON) {
       this.multiplyScalar(1 / len);
     } else {
-        this.set(0,0,0); // Set to zero vector if length is negligible
+      this.set(0, 0, 0); // Set to zero vector if length is negligible
     }
     return this;
   }
@@ -143,7 +143,9 @@ export class OSVector3 {
    * @returns This vector for chaining.
    */
   cross(v: OSVector3): this {
-    const x = this.x, y = this.y, z = this.z;
+    const x = this.x,
+      y = this.y,
+      z = this.z;
     this.x = y * v.z - z * v.y;
     this.y = z * v.x - x * v.z;
     this.z = x * v.y - y * v.x;
@@ -186,7 +188,6 @@ export class OSVector3 {
    * @returns A new THREE.Vector3 instance.
    */
   toThreeJS(): THREE.Vector3 {
-
     return new THREE.Vector3(this.x, this.y, this.z);
   }
 
@@ -196,8 +197,13 @@ export class OSVector3 {
    * @returns This vector for chaining.
    */
   applyQuaternion(q: THREE.Quaternion): this {
-    const x = this.x, y = this.y, z = this.z;
-    const qx = q.x, qy = q.y, qz = q.z, qw = q.w;
+    const x = this.x,
+      y = this.y,
+      z = this.z;
+    const qx = q.x,
+      qy = q.y,
+      qz = q.z,
+      qw = q.w;
 
     // Calculate quat * vector
     const ix = qw * x + qy * z - qz * y;
@@ -212,4 +218,4 @@ export class OSVector3 {
 
     return this;
   }
-} 
+}

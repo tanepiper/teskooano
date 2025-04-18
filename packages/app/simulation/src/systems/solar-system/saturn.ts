@@ -9,7 +9,7 @@ import {
   SurfaceType,
   type GasGiantProperties,
   type IceSurfaceProperties,
-  type RingProperties
+  type RingProperties,
 } from "@teskooano/data-types";
 
 // --- Saturn Constants (NASA Planetary Fact Sheet / JPL HORIZONS J2000) ---
@@ -75,13 +75,13 @@ const TETHYS_ALBEDO = 1.229; // Very bright!
  * Initializes Saturn, its rings, and major moons using accurate data.
  */
 export function initializeSaturn(parentId: string): void {
-  const saturnId = 'saturn'; // Define Saturn's ID
+  const saturnId = "saturn"; // Define Saturn's ID
 
   // --- Initialize Saturn ---
   actions.addCelestial({
     id: saturnId,
-    name: 'Saturn',
-    seed: 'saturn',
+    name: "Saturn",
+    seed: "saturn",
     type: CelestialType.GAS_GIANT,
     parentId: parentId,
     realMass_kg: SATURN_MASS_KG,
@@ -101,41 +101,91 @@ export function initializeSaturn(parentId: string): void {
     properties: {
       type: CelestialType.GAS_GIANT,
       gasGiantClass: GasGiantClass.CLASS_II,
-      atmosphereColor: '#F0E68C', // Pale yellow/khaki
-      cloudColor: '#FFF8DC', // Cornsilk white bands
+      atmosphereColor: "#F0E68C", // Pale yellow/khaki
+      cloudColor: "#FFF8DC", // Cornsilk white bands
       cloudSpeed: 80, // Representative wind speed (m/s)
       stormSpeed: 50,
       rings: [
         // Radii in KM from Saturn center (Source: NASA Saturn Rings Fact Sheet)
-        { innerRadius: 66900, outerRadius: 74510, density: 0.05, opacity: 0.1, color: '#A0522D', type: RockyType.DUST }, // D Ring (very faint)
-        { innerRadius: 74510, outerRadius: 92000, density: 0.4, opacity: 0.3, color: '#B8860B', type: RockyType.ICE }, // C Ring
-        { innerRadius: 92000, outerRadius: 117580, density: 1.0, opacity: 0.8, color: '#F5F5DC', type: RockyType.ICE }, // B Ring (brightest)
+        {
+          innerRadius: 66900,
+          outerRadius: 74510,
+          density: 0.05,
+          opacity: 0.1,
+          color: "#A0522D",
+          type: RockyType.DUST,
+        }, // D Ring (very faint)
+        {
+          innerRadius: 74510,
+          outerRadius: 92000,
+          density: 0.4,
+          opacity: 0.3,
+          color: "#B8860B",
+          type: RockyType.ICE,
+        }, // C Ring
+        {
+          innerRadius: 92000,
+          outerRadius: 117580,
+          density: 1.0,
+          opacity: 0.8,
+          color: "#F5F5DC",
+          type: RockyType.ICE,
+        }, // B Ring (brightest)
         // Cassini Division (Gap: 117580 - 122170)
-        { innerRadius: 122170, outerRadius: 136775, density: 0.6, opacity: 0.6, color: '#FFFFF0', type: RockyType.ICE }, // A Ring
+        {
+          innerRadius: 122170,
+          outerRadius: 136775,
+          density: 0.6,
+          opacity: 0.6,
+          color: "#FFFFF0",
+          type: RockyType.ICE,
+        }, // A Ring
         // Roche Division (Gap within A Ring: 133589)
-        { innerRadius: 136775, outerRadius: 139380, density: 0.1, opacity: 0.2, color: '#D3D3D3', type: RockyType.DUST }, // F Ring (narrow, complex)
-        { innerRadius: 165800, outerRadius: 173800, density: 0.01, opacity: 0.05, color: '#C0C0C0', type: RockyType.DUST }, // G Ring (faint)
-        { innerRadius: 120000, outerRadius: 480000, density: 0.001, opacity: 0.01, color: '#E6E6FA', type: RockyType.DUST }, // E Ring (very wide, diffuse, sourced by Enceladus)
-      ].map(ring => ({ // Convert KM radii to meters for consistency
+        {
+          innerRadius: 136775,
+          outerRadius: 139380,
+          density: 0.1,
+          opacity: 0.2,
+          color: "#D3D3D3",
+          type: RockyType.DUST,
+        }, // F Ring (narrow, complex)
+        {
+          innerRadius: 165800,
+          outerRadius: 173800,
+          density: 0.01,
+          opacity: 0.05,
+          color: "#C0C0C0",
+          type: RockyType.DUST,
+        }, // G Ring (faint)
+        {
+          innerRadius: 120000,
+          outerRadius: 480000,
+          density: 0.001,
+          opacity: 0.01,
+          color: "#E6E6FA",
+          type: RockyType.DUST,
+        }, // E Ring (very wide, diffuse, sourced by Enceladus)
+      ].map((ring) => ({
+        // Convert KM radii to meters for consistency
         ...ring,
         innerRadius: ring.innerRadius * KM, // Using KM constant
         outerRadius: ring.outerRadius * KM,
       })) as RingProperties[],
       axialTiltDeg: SATURN_AXIAL_TILT_DEG,
-      emissiveIntensity: 0.1
+      emissiveIntensity: 0.1,
     } as GasGiantProperties,
   });
 
   // --- Initialize Titan ---
   actions.addCelestial({
-    id: 'titan',
-    name: 'Titan',
-    seed: 'titan',
+    id: "titan",
+    name: "Titan",
+    seed: "titan",
     type: CelestialType.MOON,
     parentId: saturnId,
     realMass_kg: TITAN_MASS_KG,
     realRadius_m: TITAN_RADIUS_M,
-    visualScaleRadius: 0.40, // Changed from radius
+    visualScaleRadius: 0.4, // Changed from radius
     temperature: 94, // Surface K
     albedo: TITAN_ALBEDO,
     orbit: {
@@ -148,30 +198,30 @@ export function initializeSaturn(parentId: string): void {
       period_s: TITAN_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ['N2', 'CH4', 'C2H6'], // Thick nitrogen/methane atmosphere
+      composition: ["N2", "CH4", "C2H6"], // Thick nitrogen/methane atmosphere
       pressure: 1.45, // atm
-      color: '#FFA500A0', // Opaque orange haze
+      color: "#FFA500A0", // Opaque orange haze
     },
     surface: {
       type: SurfaceType.FLAT, // Corrected: Use existing type
       planetType: PlanetType.ICE, // Fundamentally icy body
-      color: '#B8860B', // Dark goldenrod / brown (surface beneath haze)
-      secondaryColor: '#00008B', // Dark blue (liquid methane/ethane lakes)
+      color: "#B8860B", // Dark goldenrod / brown (surface beneath haze)
+      secondaryColor: "#00008B", // Dark blue (liquid methane/ethane lakes)
       roughness: 0.2, // Smooth surface under haze
     } as IceSurfaceProperties, // Represent as icy despite thick atmosphere
     properties: {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ['nitrogen', 'methane', 'water ice', 'rock'],
+      composition: ["nitrogen", "methane", "water ice", "rock"],
     },
   });
 
   // --- Initialize Rhea ---
   actions.addCelestial({
-    id: 'rhea',
-    name: 'Rhea',
-    seed: 'rhea',
+    id: "rhea",
+    name: "Rhea",
+    seed: "rhea",
     type: CelestialType.MOON,
     parentId: saturnId,
     realMass_kg: RHEA_MASS_KG,
@@ -188,11 +238,15 @@ export function initializeSaturn(parentId: string): void {
       meanAnomaly: Math.random() * 2 * Math.PI,
       period_s: RHEA_SIDEREAL_PERIOD_S,
     },
-    atmosphere: { composition: ['O2', 'CO2'], pressure: 5e-12, color: '#FFFFFF00' }, // Tenuous
+    atmosphere: {
+      composition: ["O2", "CO2"],
+      pressure: 5e-12,
+      color: "#FFFFFF00",
+    }, // Tenuous
     surface: {
       type: SurfaceType.ICE_FLATS, // Corrected: Use existing type
       planetType: PlanetType.ICE,
-      color: '#F5F5F5', // Very bright white/grey ice
+      color: "#F5F5F5", // Very bright white/grey ice
       roughness: 0.6,
       glossiness: 0.4,
     } as IceSurfaceProperties,
@@ -200,15 +254,15 @@ export function initializeSaturn(parentId: string): void {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ['water ice', 'rock'],
+      composition: ["water ice", "rock"],
     },
   });
 
   // --- Initialize Iapetus ---
   actions.addCelestial({
-    id: 'iapetus',
-    name: 'Iapetus',
-    seed: 'iapetus',
+    id: "iapetus",
+    name: "Iapetus",
+    seed: "iapetus",
     type: CelestialType.MOON,
     parentId: saturnId,
     realMass_kg: IAPETUS_MASS_KG,
@@ -225,12 +279,12 @@ export function initializeSaturn(parentId: string): void {
       meanAnomaly: Math.random() * 2 * Math.PI,
       period_s: IAPETUS_SIDEREAL_PERIOD_S,
     },
-    atmosphere: { composition: [], pressure: 0, color: '#FFFFFF00' },
+    atmosphere: { composition: [], pressure: 0, color: "#FFFFFF00" },
     surface: {
       type: SurfaceType.ICE_FLATS, // Corrected: Use existing type
       planetType: PlanetType.ICE,
-      color: '#F0F0F0', // Bright trailing hemisphere
-      secondaryColor: '#303030', // Dark leading hemisphere (like asphalt)
+      color: "#F0F0F0", // Bright trailing hemisphere
+      secondaryColor: "#303030", // Dark leading hemisphere (like asphalt)
       roughness: 0.7,
       glossiness: 0.2, // Dark side is very non-reflective
     } as IceSurfaceProperties,
@@ -238,15 +292,15 @@ export function initializeSaturn(parentId: string): void {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ['water ice', 'rock', 'carbonaceous material'],
+      composition: ["water ice", "rock", "carbonaceous material"],
     },
   });
 
   // --- Initialize Dione ---
   actions.addCelestial({
-    id: 'dione',
-    name: 'Dione',
-    seed: 'dione',
+    id: "dione",
+    name: "Dione",
+    seed: "dione",
     type: CelestialType.MOON,
     parentId: saturnId,
     realMass_kg: DIONE_MASS_KG,
@@ -263,12 +317,12 @@ export function initializeSaturn(parentId: string): void {
       meanAnomaly: Math.random() * 2 * Math.PI,
       period_s: DIONE_SIDEREAL_PERIOD_S,
     },
-    atmosphere: { composition: [], pressure: 0, color: '#FFFFFF00' },
+    atmosphere: { composition: [], pressure: 0, color: "#FFFFFF00" },
     surface: {
       type: SurfaceType.ICE_CRACKED, // Corrected: Use existing type
       planetType: PlanetType.ICE,
-      color: '#E8E8E8', // Bright ice
-      secondaryColor: '#FFFFFF', // Brighter cliff faces
+      color: "#E8E8E8", // Bright ice
+      secondaryColor: "#FFFFFF", // Brighter cliff faces
       roughness: 0.5,
       glossiness: 0.5,
     } as IceSurfaceProperties,
@@ -276,15 +330,15 @@ export function initializeSaturn(parentId: string): void {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ['water ice', 'rock'],
+      composition: ["water ice", "rock"],
     },
   });
 
   // --- Initialize Tethys ---
   actions.addCelestial({
-    id: 'tethys',
-    name: 'Tethys',
-    seed: 'tethys',
+    id: "tethys",
+    name: "Tethys",
+    seed: "tethys",
     type: CelestialType.MOON,
     parentId: saturnId,
     realMass_kg: TETHYS_MASS_KG,
@@ -301,12 +355,12 @@ export function initializeSaturn(parentId: string): void {
       meanAnomaly: Math.random() * 2 * Math.PI,
       period_s: TETHYS_SIDEREAL_PERIOD_S,
     },
-    atmosphere: { composition: [], pressure: 0, color: '#FFFFFF00' },
+    atmosphere: { composition: [], pressure: 0, color: "#FFFFFF00" },
     surface: {
       type: SurfaceType.ICE_CRACKED, // Corrected: Use existing type
       planetType: PlanetType.ICE,
-      color: '#FFFFFF', // Very bright white ice
-      secondaryColor: '#DCDCDC', // Greyer canyon floors/walls
+      color: "#FFFFFF", // Very bright white ice
+      secondaryColor: "#DCDCDC", // Greyer canyon floors/walls
       roughness: 0.4,
       glossiness: 0.7, // Very bright surface
     } as IceSurfaceProperties,
@@ -314,7 +368,7 @@ export function initializeSaturn(parentId: string): void {
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ['water ice', 'rock'],
+      composition: ["water ice", "rock"],
     },
   });
 }

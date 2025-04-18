@@ -1,6 +1,6 @@
-import * as THREE from 'three';
-import { TextureGeneratorBase } from './TextureGeneratorBase';
-import { GasGiantTextureOptions, TextureResult } from './TextureTypes';
+import * as THREE from "three";
+import { TextureGeneratorBase } from "./TextureGeneratorBase";
+import { GasGiantTextureOptions, TextureResult } from "./TextureTypes";
 
 /**
  * Generator for gas giant textures
@@ -8,37 +8,41 @@ import { GasGiantTextureOptions, TextureResult } from './TextureTypes';
 export class GasGiantTextureGenerator extends TextureGeneratorBase {
   /**
    * Generate a gas giant texture
-   * 
+   *
    * @param options Options for generating the gas giant texture
    * @returns The generated texture result with color and normal maps
    */
   public generateTexture(options: GasGiantTextureOptions): TextureResult {
-    return this.getOrCreateTexture(options, (opts) => this.createGasGiantTexture(opts));
+    return this.getOrCreateTexture(options, (opts) =>
+      this.createGasGiantTexture(opts),
+    );
   }
-  
+
   /**
    * Create the actual texture for a gas giant
-   * 
+   *
    * @param options Options for the gas giant texture
    * @returns The texture result
    */
-  private createGasGiantTexture(options: GasGiantTextureOptions): TextureResult {
-    const { 
+  private createGasGiantTexture(
+    options: GasGiantTextureOptions,
+  ): TextureResult {
+    const {
       class: gasGiantClass,
-      baseColor = new THREE.Color(0xCCBB99),
-      secondaryColor = new THREE.Color(0xBBAA88),
+      baseColor = new THREE.Color(0xccbb99),
+      secondaryColor = new THREE.Color(0xbbaa88),
       textureSize = 1024,
       seed = Math.random() * 10000,
-      generateMipmaps = true
+      generateMipmaps = true,
     } = options;
-    
+
     // Create a material for the gas giant bands
     const material = new THREE.ShaderMaterial({
       uniforms: {
         baseColor: { value: new THREE.Color(baseColor) },
         secondaryColor: { value: new THREE.Color(secondaryColor) },
         seed: { value: seed },
-        classType: { value: gasGiantClass }
+        classType: { value: gasGiantClass },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -89,17 +93,21 @@ export class GasGiantTextureGenerator extends TextureGeneratorBase {
           
           gl_FragColor = vec4(color, 1.0);
         }
-      `
+      `,
     });
-    
+
     // Render the shader to a texture
-    const colorMap = this.renderToTexture(material, textureSize, generateMipmaps);
-    
+    const colorMap = this.renderToTexture(
+      material,
+      textureSize,
+      generateMipmaps,
+    );
+
     // Create a simple result with just the color map for now
     const result: TextureResult = {
-      colorMap: colorMap
+      colorMap: colorMap,
     };
-    
+
     return result;
   }
-} 
+}
