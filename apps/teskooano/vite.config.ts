@@ -10,6 +10,7 @@ export default defineConfig({
     glsl() // Add the plugin to the plugins array
   ],
   base: basePath,
+  
   server: {
     port: 3000,
   },

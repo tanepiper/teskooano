@@ -8,6 +8,7 @@ import '../shared/CollapsibleSection';
 interface UiPanelSectionConfig {
   id: string; // Unique ID for the section (optional, but good practice)
   title: string;
+  class: string;
   componentTag: string; // The HTML tag of the web component to render (e.g., 'seed-form')
   startClosed?: boolean;
 }
@@ -33,6 +34,8 @@ export class UiPanel implements IContentRenderer {
 
   constructor() {
     this._element = document.createElement('div');
+    this._element.id = `ui-panel-${this._api?.id}`;
+    this._element.classList.add("ui-panel");
     this._element.style.height = '100%';
     this._element.style.width = '100%';
     this._element.style.padding = '10px';
@@ -57,6 +60,8 @@ export class UiPanel implements IContentRenderer {
     sections.forEach((config: UiPanelSectionConfig) => {
       try {
         const sectionContainer = document.createElement('collapsible-section');
+        sectionContainer.id = config.id;
+        sectionContainer.classList.add(config.class);
         sectionContainer.setAttribute('title', config.title);
         if (config.startClosed) {
           sectionContainer.setAttribute('closed', '');

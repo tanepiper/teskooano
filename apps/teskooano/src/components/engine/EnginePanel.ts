@@ -69,6 +69,8 @@ export class EnginePanel implements IContentRenderer {
 
   constructor() {
     this._element = document.createElement("div");
+    this._element.id = `engine-view-${this._api?.id}`;
+    this._element.classList.add("engine-view");
     // Style the container for the renderer
     this._element.style.height = "100%";
     this._element.style.width = "100%";

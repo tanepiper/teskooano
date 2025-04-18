@@ -1,9 +1,15 @@
-import { AddPanelOptions, DockviewApi } from "dockview-core";
+import {
+  AddPanelOptions,
+  DockviewApi,
+  IDockviewGroupPanel,
+  IDockviewPanel,
+} from "dockview-core";
 import "../components/toolbar/SimulationControls"; // Import for side effect (registers element)
 import "../components/toolbar/SeedForm"; // Import the new ToolbarSeedForm
 import { DockviewController } from "./dockviewController";
-import '../components/shared/Button.js';
-import { TeskooanoButton } from '../components/shared/Button'; // Ensure type import if needed elsewhere
+import { TourController } from "./tourController";
+import "../components/shared/Button.js";
+import { TeskooanoButton } from "../components/shared/Button"; // Ensure type import if needed elsewhere
 import { ToolbarSeedForm } from "../components/toolbar/SeedForm";
 
 /**
@@ -23,22 +29,91 @@ export class ToolbarController {
    */
   private _dockviewController: DockviewController;
   /**
+   * The TourController for managing app tours.
+   */
+  private _tourController: TourController | null = null;
+  /**
    * A counter specifically for engine views.
    */
   private _enginePanelCounter = 0; // Counter specifically for engine views
+  /**
+   * Store the ID of the last added engine panel for positioning the next one.
+   */
+  private _lastEngineViewId: string | null = null;
 
   // Define a constant for the settings panel ID
-  private readonly SETTINGS_PANEL_ID = 'app_settings_panel';
+  private readonly SETTINGS_PANEL_ID = "app_settings_panel";
+  // GitHub repository URL
+  private readonly GITHUB_REPO_URL = "https://github.com/tanepiper/teskooano";
+  // Define the standard UI sections for reuse
+  private readonly DEFAULT_UI_SECTIONS = [
+    {
+      id: `focus-section-{{COUNTER}}`,
+      class: "focus-section",
+      title: "Focus Control",
+      componentTag: "focus-control",
+      startClosed: false,
+    },
+    {
+      id: `celestial-info-section-{{COUNTER}}`,
+      class: "celestial-info-section",
+      title: "Selected Object",
+      componentTag: "celestial-info",
+      startClosed: false,
+    },
+    {
+      id: `renderer-info-section-{{COUNTER}}`,
+      class: "renderer-info-section",
+      title: "Renderer Info",
+      componentTag: "renderer-info-display",
+      startClosed: false,
+    },
+    {
+      id: `engine-settings-section-{{COUNTER}}`,
+      class: "engine-settings-section",
+      title: "View Settings",
+      componentTag: "engine-ui-settings-panel",
+      startClosed: false,
+    },
+  ];
 
   /**
    * Constructor for the ToolbarController.
    * @param element - The DOM element that the toolbar will be added to.
    * @param dockviewController - The DockviewController that the toolbar will use to add panels.
+   * @param tourController - Optional TourController for managing app tours
    */
-  constructor(element: HTMLElement, dockviewController: DockviewController) {
+  constructor(
+    element: HTMLElement, 
+    dockviewController: DockviewController,
+    tourController?: TourController
+  ) {
     this._element = element;
     this._dockviewController = dockviewController;
+    this._tourController = tourController || null;
     this.render();
+  }
+
+  /**
+   * Set the tour controller after initialization
+   */
+  public setTourController(tourController: TourController): void {
+    this._tourController = tourController;
+    this.render(); // Re-render to add tour button if needed
+  }
+
+  /**
+   * Public method to create the very first engine/UI panel group on initialization.
+   */
+  public initializeFirstEngineView(): void {
+    // Ensure we only add the *first* view this way
+    if (this._enginePanelCounter === 0) {
+      this.addEnginePanels();
+    } else {
+      console.warn(
+        "initializeFirstEngineView called but engine panels already exist."
+      );
+    }
   }
 
   /**
@@ -46,103 +121,81 @@ export class ToolbarController {
    */
   private addEnginePanels(): void {
     this._enginePanelCounter++;
-    const engineViewId = `engine_view_${this._enginePanelCounter}`;
-    const engineUiId = `engine_ui_${this._enginePanelCounter}`;
-    const engineViewTitle = `Engine View ${this._enginePanelCounter}`;
-    const engineUiTitle = `Engine ${this._enginePanelCounter} UI`;
+    const counter = this._enginePanelCounter;
+    const engineViewId = `engine_view_${counter}`;
+    const engineUiId = `engine_ui_${counter}`;
+    const engineViewTitle = `Teskooano ${counter}`;
+    const engineUiTitle = `Engine ${counter} UI`;
 
-    // Find the currently active panel, or any existing panel as fallback
-    let referencePanelId: string | undefined = undefined;
-    const activePanel = this._dockviewController.api.activePanel;
-    if (activePanel) {
-      referencePanelId = activePanel.id;
-    } else if (this._dockviewController.api.panels.length > 0) {
-      // Fallback: Use the last panel in the list if no panel is active
-      referencePanelId =
-        this._dockviewController.api.panels[
-          this._dockviewController.api.panels.length - 1
-        ].id;
-      console.log(
-        `Add Panels: No active panel, using last panel '${referencePanelId}' as reference.`
-      );
-    }
-
-    // Determine position for the ENGINE VIEW panel
-    let enginePositionOptions: AddPanelOptions["position"] = undefined;
-    if (referencePanelId) {
-      // Place new engine view below the reference panel
-      enginePositionOptions = {
-        referencePanel: referencePanelId,
-        direction: "below",
-      };
-    } // Else, let Dockview decide default position
-
-    // Add Engine View Panel
-    const enginePanelOptions: AddPanelOptions = {
-      id: engineViewId,
-      component: "engine_view",
-      title: engineViewTitle,
-      params: { title: engineViewTitle },
-      position: enginePositionOptions,
-    };
+    // Prepare UI sections with the current counter
+    const uiSections = this.DEFAULT_UI_SECTIONS.map((section) => ({
+      ...section,
+      id: section.id.replace("{{COUNTER}}", counter.toString()),
+    }));
 
     try {
+      // Determine where to position the new engine view
+      let positionOptions: AddPanelOptions["position"] = undefined;
+      
+      if (this._lastEngineViewId) {
+        // Find the previous engine panel
+        const previousPanel = this._dockviewController.api.panels.find(
+          p => p.id === this._lastEngineViewId
+        );
+        
+        if (previousPanel && previousPanel.group) {
+          // Position new panel below the GROUP of the previous panel
+          // This ensures we take the full width of the previous engine+UI
+          console.log(`Positioning new panel below group: ${previousPanel.group.id}`);
+          positionOptions = {
+            referenceGroup: previousPanel.group,
+            direction: "below",
+          };
+        } else {
+          console.warn(`Previous engine ${this._lastEngineViewId} or its group not found, using default positioning.`);
+        }
+      } else {
+        console.log("Positioning first engine view (default).");
+      }
+
+      // Create the engine panel
       console.log(`Adding engine panel: ${engineViewId}`);
-      this._dockviewController.api.addPanel(enginePanelOptions);
-    } catch (error) {
-      console.error(`Failed to add engine panel ${engineViewId}:`, error);
-      // Don't proceed to add UI panel if engine panel fails
-      return;
-    }
+      const enginePanel = this._dockviewController.api.addPanel({
+        id: engineViewId,
+        component: "engine_view",
+        title: engineViewTitle,
+        params: { title: engineViewTitle },
+        position: positionOptions,
+      });
 
-    // Add Corresponding Engine UI Panel
-    const engineUiPanelOptions: AddPanelOptions = {
-      id: engineUiId,
-      component: "ui_view",
-      title: engineUiTitle,
-      params: {
-        engineViewId: engineViewId,
-        sections: [
-          {
-            id: `focus-section-${this._enginePanelCounter}`,
-            title: "Focus Control",
-            componentTag: "focus-control",
-            startClosed: false,
-          },
-          {
-            id: `celestial-info-section-${this._enginePanelCounter}`,
-            title: "Selected Object",
-            componentTag: "celestial-info",
-            startClosed: false,
-          },
-          {
-            id: `renderer-info-section-${this._enginePanelCounter}`,
-            title: "Renderer Info",
-            componentTag: "renderer-info-display",
-            startClosed: false,
-          },
-          {
-            id: `engine-settings-section-${this._enginePanelCounter}`,
-            title: "View Settings",
-            componentTag: "engine-ui-settings-panel",
-            startClosed: false,
-          },
-        ],
-      },
-      // Position it properly, now that we don't have a global UI panel
-      position: {
-        referencePanel: engineViewId,
-        direction: "right",
-      },
-      minimumWidth: 250,
-      maximumWidth: 400,
-    };
+      // Add UI panel to the right of engine panel
+      console.log(`Adding UI panel: ${engineUiId}`);
+      this._dockviewController.api.addPanel({
+        id: engineUiId,
+        component: "ui_view",
+        title: engineUiTitle,
+        params: {
+          engineViewId: engineViewId,
+          sections: uiSections,
+        },
+        position: {
+          referencePanel: engineViewId,
+          direction: "right",
+        },
+        minimumWidth: 250,
+        maximumWidth: 400,
+      });
 
-    try {
-      console.log(`Adding engine UI panel: ${engineUiId}`);
-      this._dockviewController.api.addPanel(engineUiPanelOptions);
+      // Store the engine ID for positioning the next pair
+      this._lastEngineViewId = engineViewId;
+
+      // Activate the engine panel
+      enginePanel.api.setActive();
     } catch (error) {
-      console.error(`Failed to add engine UI panel ${engineUiId}:`, error);
+      console.error(
+        `Failed to create engine window panels for counter ${counter}:`,
+        error
+      );
     }
   }
 
@@ -150,116 +203,191 @@ export class ToolbarController {
    * Toggles the visibility of the floating settings panel.
    */
   private toggleSettingsPanel(): void {
-    const existingPanel = this._dockviewController.api.panels.find(p => p.id === this.SETTINGS_PANEL_ID);
+    const existingPanel = this._dockviewController.api.panels.find(
+      (p) => p.id === this.SETTINGS_PANEL_ID
+    );
 
     if (existingPanel) {
-        console.log(`Closing existing settings panel: ${this.SETTINGS_PANEL_ID}`);
-        existingPanel.api.close();
+      console.log(`Closing existing settings panel: ${this.SETTINGS_PANEL_ID}`);
+      existingPanel.api.close();
     } else {
-        console.log(`Adding settings panel: ${this.SETTINGS_PANEL_ID}`);
-        const settingsPanelOptions: AddPanelOptions = {
-            id: this.SETTINGS_PANEL_ID,
-            component: 'settings_view', // Placeholder component name
-            title: 'Settings',
-            floating: {
-                position: { top: 80, left: 80 },
-                width: 450,
-                height: 500,
-            },
-            params: {},
-            // Consider making it non-closable via header x button if toggled only via toolbar
-            // isClosable: false 
-        };
-        try {
-             this._dockviewController.api.addPanel(settingsPanelOptions);
-        } catch (error) {
-            console.error(`Failed to add settings panel ${this.SETTINGS_PANEL_ID}:`, error);
-        }
+      console.log(`Adding settings panel: ${this.SETTINGS_PANEL_ID}`);
+      const settingsPanelOptions: AddPanelOptions = {
+        id: this.SETTINGS_PANEL_ID,
+        component: "settings_view", // Placeholder component name
+        title: "Settings",
+        floating: {
+          position: { top: 80, left: 80 },
+          width: 450,
+          height: 500,
+        },
+        params: {},
+        // Consider making it non-closable via header x button if toggled only via toolbar
+        // isClosable: false
+      };
+      try {
+        this._dockviewController.api.addPanel(settingsPanelOptions);
+      } catch (error) {
+        console.error(
+          `Failed to add settings panel ${this.SETTINGS_PANEL_ID}:`,
+          error
+        );
+      }
     }
+  }
+
+  /**
+   * Opens the GitHub repository in a new window/tab
+   */
+  private openGitHubRepo(): void {
+    window.open(this.GITHUB_REPO_URL, '_blank');
   }
 
   private render(): void {
     // Clear existing content
     this._element.innerHTML = "";
     // Apply cosmic theme styles
-    this._element.classList.add('toolbar-cosmic-background'); // Apply CSS class for background
+    this._element.classList.add("toolbar-cosmic-background"); // Apply CSS class for background
     this._element.style.padding = "var(--space-sm, 8px)"; // Add some padding
     this._element.style.display = "flex"; // Use flexbox
     this._element.style.alignItems = "center"; // Center items vertically
     this._element.style.gap = "var(--space-md, 12px)"; // Add gap between items
 
     // Add Application Icon
-    const appIcon = document.createElement('img');
+    const appIcon = document.createElement("img");
     appIcon.src = `${window.location.href}assets/icon.png`; // *** Adjust this path if needed ***
-    appIcon.alt = 'Teskooano App Icon';
-    appIcon.title = 'Teskooano: 3D N-Body Simulation';
-    appIcon.style.height = 'calc(var(--toolbar-height, 50px) * 0.7)'; // ~70% of toolbar height
-    appIcon.style.width = 'auto'; // Maintain aspect ratio
-    appIcon.style.verticalAlign = 'middle'; // Helps alignment
+    appIcon.alt = "Teskooano App Icon";
+    appIcon.title = "Teskooano: 3D N-Body Simulation";
+    appIcon.style.height = "calc(var(--toolbar-height, 50px) * 0.7)"; // ~70% of toolbar height
+    appIcon.style.width = "auto"; // Maintain aspect ratio
+    appIcon.style.verticalAlign = "middle"; // Helps alignment
+    appIcon.className = "app-logo"; // Add class for tour targeting
+    appIcon.id = "app-logo"; // Add ID for tour targeting
     this._element.appendChild(appIcon); // Add icon first
 
-    // --- Add Settings Button --- 
-    const settingsButton = document.createElement('teskooano-button');
+    // --- Add GitHub Button ---
+    const githubButton = document.createElement("teskooano-button");
+    githubButton.title = "View Source on GitHub";
+    githubButton.id = "github-button";
+    
+    // Add GitHub Icon
+    const githubIcon = document.createElement("span");
+    githubIcon.slot = "icon";
+    githubIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+    </svg>`;
+    
+    // Create text element (optional - we won't add text to keep the button simple)
+    // const textSpan = document.createElement("span");
+    // textSpan.textContent = "GitHub";
+    
+    githubButton.appendChild(githubIcon);
+    // githubButton.appendChild(textSpan); // Uncomment if you want to add text
+    
+    githubButton.addEventListener("click", () => {
+      this.openGitHubRepo();
+    });
+    
+    this._element.appendChild(githubButton);
+    // --- End GitHub Button ---
+
+    // --- Add Settings Button ---
+    const settingsButton = document.createElement("teskooano-button");
     settingsButton.title = "Application Settings";
+    settingsButton.id = "settings-button";
     // Add Gear Icon
-    const gearIcon = document.createElement('span');
-    gearIcon.slot = 'icon';
+    const gearIcon = document.createElement("span");
+    gearIcon.slot = "icon";
     gearIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
         <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
         <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zM8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1"/>
     </svg>`;
     settingsButton.appendChild(gearIcon);
-    settingsButton.addEventListener('click', this.toggleSettingsPanel.bind(this)); // Use bind or arrow function
+    settingsButton.addEventListener(
+      "click",
+      this.toggleSettingsPanel.bind(this)
+    ); // Use bind or arrow function
     this._element.appendChild(settingsButton);
-    // --- End Settings Button --- 
+    // --- End Settings Button ---
+
+    // --- Add Tour Button if tour controller is available ---
+    if (this._tourController) {
+      const tourButton = document.createElement("teskooano-button");
+      tourButton.title = "Take a tour of the application";
+      
+      // Add Question Icon
+      const helpIcon = document.createElement("span");
+      helpIcon.slot = "icon";
+      helpIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+          <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
+      </svg>`;
+      
+      const textSpan = document.createElement("span");
+      textSpan.textContent = "Take Tour";
+      
+      tourButton.appendChild(helpIcon);
+      tourButton.appendChild(textSpan);
+      
+      tourButton.addEventListener("click", () => {
+        if (this._tourController) {
+          this._tourController.restartTour();
+        }
+      });
+      
+      this._element.appendChild(tourButton);
+    }
+    // --- End Tour Button ---
 
     // Add "Add View" button
     const addButton = document.createElement("teskooano-button");
-
+    addButton.id = "add-view-button";
     // Create icon element
-    const iconSpan = document.createElement('span');
-    iconSpan.setAttribute('slot', 'icon');
-    iconSpan.textContent = '+'; // Simple plus icon
-    iconSpan.style.fontWeight = 'bold'; // Make icon slightly bolder
+    const iconSpan = document.createElement("span");
+    iconSpan.setAttribute("slot", "icon");
+    iconSpan.textContent = "+"; // Simple plus icon
+    iconSpan.style.fontWeight = "bold"; // Make icon slightly bolder
 
     // Create text element (optional, could just append text node)
-    const textSpan = document.createElement('span');
+    const textSpan = document.createElement("span");
     textSpan.textContent = "Add Teskooano";
 
     // Append icon and text to the button
     addButton.appendChild(iconSpan);
     addButton.appendChild(textSpan);
-    
+
     addButton.title = "Add a new engine view"; // Add a tooltip
 
-    addButton.addEventListener('click', () => {
+    addButton.addEventListener("click", () => {
       this.addEnginePanels();
     });
 
     this._element.appendChild(addButton);
 
     // Add Separator
-    const separator1 = document.createElement('div');
-    separator1.style.width = '1px';
-    separator1.style.height = 'calc(var(--toolbar-height, 50px) * 0.6)'; // Adjust height relative to toolbar
-    separator1.style.backgroundColor = 'var(--color-border, #50506a)'; 
-    separator1.style.margin = '0 var(--space-xs, 4px)'; // Small horizontal margin
+    const separator1 = document.createElement("div");
+    separator1.style.width = "1px";
+    separator1.style.height = "calc(var(--toolbar-height, 50px) * 0.6)"; // Adjust height relative to toolbar
+    separator1.style.backgroundColor = "var(--color-border, #50506a)";
+    separator1.style.margin = "0 var(--space-xs, 4px)"; // Small horizontal margin
     this._element.appendChild(separator1);
 
     // Add the simulation controls
     const simControls = document.createElement("toolbar-simulation-controls");
     this._element.appendChild(simControls);
-    
+
     // Add Separator before seed form
-    const separator2 = document.createElement('div');
-    separator2.style.width = '1px';
-    separator2.style.height = 'calc(var(--toolbar-height, 50px) * 0.6)'; 
-    separator2.style.backgroundColor = 'var(--color-border, #50506a)'; 
-    separator2.style.margin = '0 var(--space-xs, 4px)';
+    const separator2 = document.createElement("div");
+    separator2.style.width = "1px";
+    separator2.style.height = "calc(var(--toolbar-height, 50px) * 0.6)";
+    separator2.style.backgroundColor = "var(--color-border, #50506a)";
+    separator2.style.margin = "0 var(--space-xs, 4px)";
     this._element.appendChild(separator2);
-    
+
     // Add the seed form
-    const seedForm = document.createElement("toolbar-seed-form") as ToolbarSeedForm;
+    const seedForm = document.createElement(
+      "toolbar-seed-form"
+    ) as ToolbarSeedForm;
     ToolbarSeedForm.setDockviewApi(this._dockviewController.api);
     this._element.appendChild(seedForm);
   }
