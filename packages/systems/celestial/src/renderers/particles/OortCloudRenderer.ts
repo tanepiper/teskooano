@@ -244,11 +244,11 @@ export class OortCloudRenderer implements CelestialRenderer {
     if (!this.cloudTexture) {
       
       // Use file-based texture loading instead of base64 data
-      const texturePath = '/space/textures/asteroids/asteroid_1.png'; // Use a known working texture
+      const texturePath = 'space/textures/asteroids/asteroid_1.png'; // Use a known working texture
       
       this.textureLoader = new THREE.TextureLoader();
       this.textureLoader.load(
-        texturePath,
+        `${window.location.href}${texturePath}`,
         (texture) => {
           if (this.material) {
             this.material.uniforms.cloudTexture.value = texture;

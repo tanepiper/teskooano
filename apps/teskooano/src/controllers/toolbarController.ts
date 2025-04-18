@@ -190,7 +190,7 @@ export class ToolbarController {
 
     // Add Application Icon
     const appIcon = document.createElement('img');
-    appIcon.src = '/assets/icon.png'; // *** Adjust this path if needed ***
+    appIcon.src = `${window.location.href}assets/icon.png`; // *** Adjust this path if needed ***
     appIcon.alt = 'Teskooano App Icon';
     appIcon.title = 'Teskooano: 3D N-Body Simulation';
     appIcon.style.height = 'calc(var(--toolbar-height, 50px) * 0.7)'; // ~70% of toolbar height

@@ -130,11 +130,11 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
     // Load textures if not already loaded/loading
     if (this.asteroidTextures.length === 0) {
       const texturePaths = [
-        "/space/textures/asteroids/asteroid_1.png",
-        "/space/textures/asteroids/asteroid_2.png",
-        "/space/textures/asteroids/asteroid_3.png",
-        "/space/textures/asteroids/asteroid_4.png",
-        "/space/textures/asteroids/asteroid_5.png",
+        "space/textures/asteroids/asteroid_1.png",
+        "space/textures/asteroids/asteroid_2.png",
+        "space/textures/asteroids/asteroid_3.png",
+        "space/textures/asteroids/asteroid_4.png",
+        "space/textures/asteroids/asteroid_5.png",
       ];
 
       this.asteroidTextures = new Array(5).fill(null);
@@ -143,7 +143,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
 
       texturePaths.forEach((path, index) => {
         this.textureLoader.load(
-          path,
+          `${window.location.href}${path}`,
           (texture) => {
             this.asteroidTextures[index] = texture;
             this.loadedTextureCount++;
