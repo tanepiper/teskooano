@@ -33,7 +33,7 @@ export default withMermaid({
       "meta",
       {
         name: "og:image",
-        content: "https://tanepiper.github.io/teskooano/panel-icon.png",
+        content: "https://teskooano.space/panel-icon.png",
       },
     ],
     ["meta", { name: "twitter:card", content: "summary_large_image" }],
@@ -44,7 +44,7 @@ export default withMermaid({
     nav: [
       { text: "Home", link: "/" },
       { text: "Documentation", link: "/docs/" },
-      { text: "Teskooano", link: "https://tanepiper.github.io/teskooano/app" },
+      { text: "Teskooano", link: "https://teskooano.space/teskooano" },
     ],
 
     sidebar: [

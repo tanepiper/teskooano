@@ -12,7 +12,7 @@ hero:
   actions:
     - theme: brand
       text: Play with Teskooano
-      link: https://tanepiper.github.io/teskooano/app
+      link: https://teskooano.space/teskooano
     - theme: alt
       text: View on GitHub
       link: https://github.com/tanepiper/teskooano
