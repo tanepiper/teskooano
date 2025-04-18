@@ -21,23 +21,23 @@ features:
   - icon: 🪐
     title: Realistic Physics
     details: Experience true N-Body gravitational simulation with accurate orbital mechanics and collision detection based on real-world physics.
-  
+
   - icon: 🔍
     title: Multi-View Experience
     details: Observe simulations from multiple angles simultaneously, with each view maintaining its own focus and camera controls.
-  
+
   - icon: 🌌
     title: Procedural Generation
     details: Create unique star systems with procedurally generated planets, moons, and other celestial bodies using custom seeds.
-  
+
   - icon: 🎮
     title: Interactive Controls
     details: Select and focus on any celestial body with intuitive camera controls, orbit tracking, and detailed information panels.
-  
+
   - icon: ⏱️
     title: Dynamic Time Control
     details: Adjust simulation speed from real-time to 10 million times faster to observe both immediate interactions and long-term celestial evolution.
-  
+
   - icon: 🧩
     title: Modular Architecture
     details: Built with TypeScript and modern frontend tools, Teskooano features a component-based design that's easily extendable.
@@ -80,6 +80,16 @@ Perfect for educational settings, Teskooano makes complex orbital mechanics intu
 
 When you first launch Teskooano, an interactive guided tour introduces you to all key features. The intuitive DockView-based UI allows for customizable layouts to suit your specific needs.
 
+## Teskooano in Action
+
+Experience Teskooano's powerful visualization capabilities through these screenshots (click to enlarge):
+
+![teskooano-ui-1.png](/screenshots/teskooano-ui-1.png)
+
+<p>Close-up view of a planet with simulation controls and celestial body information panel.</p>
+
+![teskooano-ui-2.png](/screenshots/teskooano-ui-2.png)
+
 ## Built With Modern Tech
 
 Teskooano leverages cutting-edge web technologies including:
@@ -100,4 +110,3 @@ Teskooano is completely open source under the MIT license. We welcome contributi
 </div>
 
 </div>
-

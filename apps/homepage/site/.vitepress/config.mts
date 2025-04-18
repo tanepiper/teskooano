@@ -1,5 +1,7 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
+import lightbox from "vitepress-plugin-lightbox"
+
 
 // https://vitepress.dev/reference/site-config
 export default withMermaid({
@@ -84,6 +86,12 @@ export default withMermaid({
 
     search: {
       provider: "local",
+    },
+    markdown: {
+      config: (md) => {
+        // Use lightbox plugin
+        md.use(lightbox, {});
+      },
     },
   },
 });

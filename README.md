@@ -152,6 +152,20 @@ Here is a table of all the packages in the repository:
   - `apps/teskooano`: Main simulation application with UI components
 components
 
+
+<div class="screenshot-container">
+  <div class="screenshot">
+    <img src="apps/homepage/site/public/screenshots/teskooano-ui-1.png" alt="Teskooano UI displaying a star system with planets and orbital paths" />
+    <p>Close-up view of a planet with simulation controls and celestial body information panel.</p>
+    
+  </div>
+  
+  <div class="screenshot">
+    <img src="apps/homepage/site/public/screenshots/teskooano-ui-2.png" alt="Teskooano UI showing detailed planet view and system controls" />
+    <p>Multiple panels showing different views of the same solar system with orbital paths and information panels.</p>
+  </div>
+</div>
+
 ### Data Flow
 
 The engine follows a unidirectional data flow pattern:

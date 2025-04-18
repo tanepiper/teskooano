@@ -9,13 +9,15 @@
     "preview": "vitepress preview site"
   },
   "dependencies": {
+    "mermaid": "11.6.0",
     "vitepress": "1.6.3",
     "vitepress-plugin-mermaid": "2.0.17",
-    "mermaid": "11.6.0"
+    "vitepress-plugin-lightbox": "1.0.2"
   },
   "devDependencies": {
     "@types/node": "22.14.1",
     "typescript": "5.8.3",
-    "vite": "6.3.2"
+    "vite": "6.3.2",
+    "vue-router": "^4.5.0"
   }
 }
