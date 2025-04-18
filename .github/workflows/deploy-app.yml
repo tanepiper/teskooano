@@ -39,7 +39,7 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Build App
         run: |
-          moon run teskoanoo:build
+          moon run teskooano:build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
