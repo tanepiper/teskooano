@@ -4,7 +4,7 @@ Teskooano is a 3D N-Body simulation engine that accurately simulates real physic
 
 > The name **Teskooano** comes from Beelzebub's Tales to His Grandson by G.I. Gurdjieff. In the book, a "Teskooano" is a type of advanced telescope in Beelzebub's observatory on Mars - used to observe distant cosmic phenomena. It is designed to perceive both physical and non-physical aspects of the universe. The simulation engine is named after this device because it similarly acts as a tool for observing and exploring complex celestial systems in motion.
 
-![Teskooano Simulation](https://github.com/tanepiper/teskooano/raw/main/docs/images/screenshot.png)
+![Teskooano Simulation](apps/homepage/site/public/panel-icon.png)
 
 ## Key Features
 

@@ -1,39 +1,67 @@
-/* Custom theme styles for Teskooano */
+/* Custom theme styles for Teskooano - Subtle Cosmic Theme */
 
 :root {
-  --vp-c-brand: #3a70c9;
-  --vp-c-brand-light: #5a8fe8;
-  --vp-c-brand-lighter: #7aaef7;
-  --vp-c-brand-dark: #2a5aa9;
-  --vp-c-brand-darker: #1a4a89;
+  /* Cosmic color palette - toned down */
+  --vp-c-brand: #7a61b8;
+  --vp-c-brand-light: #9d7fd9;
+  --vp-c-brand-lighter: #bca4e6;
+  --vp-c-brand-dark: #5a46a0;
+  --vp-c-brand-darker: #483680;
 
-  --vp-home-hero-name-color: var(--vp-c-brand-light);
-  --vp-home-hero-image-background-image: linear-gradient(
-    -45deg,
-    #3a70c9 30%,
-    #0e1f41
+  /* Nebula colors - more subtle */
+  --nebula-pink: #d256a0;
+  --nebula-purple: #60519c;
+  --nebula-blue: #406596;
+  --nebula-teal: #317a7a;
+  --nebula-deep-blue: #0e1f41;
+  --nebula-dark: #0a1428;
+
+  --vp-home-hero-name-color: var(--nebula-purple);
+  --vp-home-hero-image-background-image: radial-gradient(
+    circle at 60% 40%,
+    var(--nebula-purple) 10%,
+    var(--nebula-deep-blue) 40%,
+    var(--nebula-dark) 70%
   );
-  --vp-home-hero-image-filter: blur(72px);
+  --vp-home-hero-image-filter: blur(60px);
 
   /* Set the dark theme as the default */
-  --vp-c-bg: #0e1f41;
-  --vp-c-bg-alt: #162a4e;
-  --vp-c-black: #0e1f41;
+  --vp-c-bg: var(--nebula-dark);
+  --vp-c-bg-alt: #0a1428;
+  --vp-c-black: #050b19;
   --vp-c-divider: rgba(255, 255, 255, 0.1);
-  --vp-c-text: rgba(255, 255, 255, 0.87);
+  --vp-c-text: rgba(255, 255, 255, 0.9);
 
   /* Star background */
-  --stars-color: rgba(255, 255, 255, 0.8);
-  --shooting-star-color: #3a70c9;
+  --stars-color: rgba(255, 255, 255, 0.6);
+  --shooting-star-color: var(--nebula-teal);
+
+  /* Additional nebula effects */
+  --dust-color: rgba(255, 152, 255, 0.1);
+  --star-glow: rgba(200, 220, 255, 0.3);
+}
+
+/* Set body background */
+body {
+  background-color: var(--nebula-dark);
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(96, 81, 156, 0.1), transparent 50%),
+    radial-gradient(
+      circle at 80% 60%,
+      rgba(49, 122, 122, 0.05),
+      transparent 60%
+    );
+  background-attachment: fixed;
 }
 
 /* Header customization */
 .VPNav {
   backdrop-filter: blur(8px);
-  background-color: rgba(14, 31, 65, 0.75) !important;
+  background-color: rgba(10, 20, 40, 0.7) !important;
+  border-bottom: 1px solid rgba(96, 81, 156, 0.1);
 }
 
-/* Custom star background */
+/* Custom star background - more subtle */
 .VPHomeHero::before {
   content: "";
   position: absolute;
@@ -43,12 +71,14 @@
   bottom: 0;
   background-image:
     radial-gradient(var(--stars-color) 1px, transparent 1px),
-    radial-gradient(var(--stars-color) 1px, transparent 1px);
-  background-size: 50px 50px;
+    radial-gradient(var(--stars-color) 0.5px, transparent 0.5px);
+  background-size:
+    150px 150px,
+    100px 100px;
   background-position:
     0 0,
     25px 25px;
-  opacity: 0.3;
+  opacity: 0.4;
   z-index: -1;
   pointer-events: none;
 }
@@ -57,101 +87,125 @@
 .VPFeature .icon {
   font-size: 28px !important;
   border-radius: 12px;
-  background: var(--vp-c-brand-dark);
+  background: var(--nebula-purple);
   width: 48px !important;
   height: 48px !important;
   display: flex !important;
   align-items: center;
   justify-content: center;
   color: white !important;
+  box-shadow: 0 0 10px rgba(96, 81, 156, 0.2);
 }
 
-/* Shooting star animation */
+/* Remove animated nebula dust particles */
+.VPHomeHero::after {
+  content: none;
+}
+
+/* Subtle nebula glow behind hero */
+.VPHome::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background:
+    radial-gradient(
+      circle at 30% 30%,
+      rgba(96, 81, 156, 0.08),
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 70% 60%,
+      rgba(64, 101, 150, 0.05),
+      transparent 60%
+    );
+  filter: blur(40px);
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* Only one subtle shooting star */
 @keyframes shooting-star {
   0% {
-    transform: translateX(0) translateY(0);
+    transform: translateX(0) translateY(0) rotate(-15deg);
     opacity: 0;
   }
   10% {
-    opacity: 1;
+    opacity: 0.4;
   }
   100% {
-    transform: translateX(300px) translateY(200px);
+    transform: translateX(-200px) translateY(150px) rotate(-15deg);
     opacity: 0;
   }
 }
 
 .VPHomeHero img {
   border-radius: 12px;
+  box-shadow: 0 0 20px rgba(96, 81, 156, 0.2);
 }
 
-.VPHomeHero::after {
+/* Just one shooting star */
+.VPHomeHero .container::after {
   content: "";
   position: absolute;
-  top: 100px;
-  left: 10%;
+  top: 150px;
+  left: 70%;
   width: 100px;
   height: 1px;
   background: linear-gradient(
     to right,
     transparent,
-    var(--shooting-star-color),
+    var(--nebula-teal),
     transparent
   );
-  animation: shooting-star 7s infinite;
-  animation-delay: 2s;
+  animation: shooting-star 12s infinite;
+  animation-delay: 4s;
   opacity: 0;
   z-index: -1;
   pointer-events: none;
+  box-shadow: 0 0 3px var(--nebula-teal);
 }
 
-/* Another shooting star */
-.VPHomeHero .container::after {
-  content: "";
-  position: absolute;
-  top: 250px;
-  left: 60%;
-  width: 150px;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--shooting-star-color),
-    transparent
-  );
-  animation: shooting-star 8s infinite;
-  animation-delay: 5s;
-  opacity: 0;
-  z-index: -1;
-  pointer-events: none;
+/* Remove other shooting stars and twinkling effects */
+.VPHomeHero .container::before,
+.VPHome::after,
+.VPHomeHero .name::before,
+.VPHomeHero .text::after {
+  content: none;
 }
 
 /* Custom code blocks */
 .vp-doc div[class*="language-"] {
-  background-color: rgba(30, 50, 90, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgba(10, 20, 40, 0.8);
+  border: 1px solid rgba(96, 81, 156, 0.1);
+  box-shadow: 0 0 10px rgba(96, 81, 156, 0.05);
+  backdrop-filter: blur(10px);
 }
 
 /* Custom blockquotes */
 .vp-doc blockquote {
-  border-left-color: var(--vp-c-brand);
-  background-color: rgba(58, 112, 201, 0.1);
+  border-left-color: var(--nebula-purple);
+  background-color: rgba(96, 81, 156, 0.05);
   border-radius: 4px;
 }
 
 /* Custom hero button */
 .VPButton.brand {
-  background-color: var(--vp-c-brand);
+  background: var(--nebula-purple);
   transition:
     transform 0.2s,
-    background-color 0.2s,
     box-shadow 0.2s;
+  border: none;
 }
 
 .VPButton.brand:hover {
-  background-color: var(--vp-c-brand-light);
+  background: var(--vp-c-brand-light);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(58, 112, 201, 0.3);
+  box-shadow:
+    0 0 15px rgba(96, 81, 156, 0.3),
+    0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 /* Mobile adjustments */
@@ -161,27 +215,29 @@
   }
 }
 
-/* Mermaid diagrams - space-themed */
+/* Mermaid diagrams - space-themed but subtle */
 .mermaid .node rect,
 .mermaid .node circle,
 .mermaid .node ellipse,
 .mermaid .node polygon {
-  fill: rgba(30, 50, 90, 0.7) !important;
-  stroke: var(--vp-c-brand) !important;
+  fill: rgba(10, 20, 40, 0.8) !important;
+  stroke: var(--nebula-teal) !important;
 }
 
 .mermaid .edgePath .path {
-  stroke: var(--vp-c-brand-light) !important;
+  stroke: var(--nebula-purple) !important;
+  stroke-width: 1.5px;
 }
 
 /* Custom tip container */
 .custom-container.tip {
-  background-color: rgba(58, 112, 201, 0.1);
-  border-color: var(--vp-c-brand);
+  background-color: rgba(96, 81, 156, 0.05);
+  border-color: var(--nebula-purple);
+  backdrop-filter: blur(5px);
 }
 
 .custom-container.tip .custom-container-title {
-  color: var(--vp-c-brand-light);
+  color: var(--nebula-purple);
 }
 
 /* Styles moved from index.md */
@@ -197,7 +253,12 @@
   flex-direction: column;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 15px rgba(49, 122, 122, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.screenshot:hover {
+  box-shadow: 0 0 25px rgba(96, 81, 156, 0.2);
 }
 
 .screenshot img {
@@ -215,8 +276,10 @@
 .screenshot p {
   margin: 0;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(10, 20, 40, 0.7);
+  color: rgba(255, 255, 255, 0.9);
   font-style: italic;
+  backdrop-filter: blur(5px);
 }
 
 /* Lightbox Styles */
@@ -235,7 +298,8 @@
 }
 
 .lightbox.active {
-  background-color: rgba(0, 0, 0, 0.9); /* Fade in background */
+  background-color: rgba(10, 20, 40, 0.9); /* Fade in background */
+  backdrop-filter: blur(10px);
 }
 
 .lightbox-content {
@@ -257,40 +321,66 @@
 .lightbox-img {
   display: block;
   max-width: 100%;
-  max-height: 80vh; /* Limit image height */
+  max-height: 80vh;
   margin: 0 auto;
-  border-radius: 4px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(96, 81, 156, 0.2);
 }
 
 .lightbox-caption {
   color: white;
   text-align: center;
-  padding: 1rem;
-  margin-top: 0.5rem; /* Space between image and caption */
+  margin-top: 20px;
+  padding: 10px;
   font-style: italic;
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .close-button {
   position: absolute;
-  top: -40px; /* Position above the content */
-  right: 0px;
-  font-size: 30px;
+  top: -40px;
+  right: 0;
   color: white;
+  font-size: 30px;
+  background: none;
+  border: none;
   cursor: pointer;
-  transition: color 0.2s;
+  opacity: 0.7;
+  transition: opacity 0.2s;
 }
 
 .close-button:hover {
-  color: #ddd;
+  opacity: 1;
 }
 
 @media (min-width: 768px) {
   .screenshot-container {
     flex-direction: row;
+    flex-wrap: wrap;
   }
 
   .screenshot {
-    flex: 1;
+    flex: 0 0 calc(50% - 1rem);
   }
+}
+
+/* Subtler gradient for content areas */
+.VPContent::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(49, 122, 122, 0.03),
+      transparent 40%
+    ),
+    radial-gradient(circle at 20% 80%, rgba(96, 81, 156, 0.03), transparent 50%);
+  pointer-events: none;
+  z-index: -1;
 }
