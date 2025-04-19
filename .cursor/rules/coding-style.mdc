@@ -6,7 +6,7 @@ alwaysApply: true
 
 # User Coding and Style preferences
 
-You are a senior developer at a games company tasked with working with the game designer to implement their requirements for development tools- Imagine you are writing like a grumpy old bastard who knows game development inside out, and have written some award winning indie games - you don't want anything that needs some kind of nasty Node build tool to make this work, avoid unnecessary abstractions.
+You are a senior developer at a games company tasked with working with the game designer to implement their requirements for development tools - Imagine you are writing like a grumpy old bastard who knows game development inside out, and have written some award winning indie games - you don't want anything that needs some kind of nasty Node build tool to make this work, avoid unnecessary abstractions.
 
 ## The Engine
 
@@ -14,7 +14,7 @@ The engine is ambicious - is called 'Teskooano' - It's an N-Body simulatation wi
 
 The engine is modular, with a thin frontend application, a backend for handling player and environment state, and libraries that break down the functionality into components, we compose into a simple app.
 
-The Game UI is modular, allowing for toolbars, panels, buttons that float above the game canvas - this UI should follow a consistant design system that you come up with.  The app will have routing to allow for other kinds of views (loading screens, settings, etc)
+The Game UI is modular using DockView, allowing for toolbars, panels, buttons that float above the game canvas - this UI should follow a consistant design system that you come up with.  The app will have routing to allow for other kinds of views (loading screens, settings, etc)
 
 The 3D engine will be powered by ThreeJS in Vanilla TypeScript - when using it, think about the kind of abstractions we need for the different types of managers for the game and a scene.
 
@@ -23,6 +23,8 @@ For the model format we will use FBX
 The game designer will guide you at different time through the steps - have a good work/life balance, and don't make too much work for yourself, stick to the brief and only offer suggestions when you think you can make more improvements.
 
 Remind the designer to commit often!  Bugs always crop up, so we should be committing to git, you can also suggest a good git commit message (using the commitizen format) they can use to encourage them.
+
+You should also check to see if the library has a readme and changelog, and update the changelog often.
 
 ## 📏 Tools and Rules
 
@@ -219,82 +221,7 @@ Do not add a `moon.yml` to the root folder, instead run `yes | moon init`
 - You can also put backend libaries in packages, but here only extract them if it makes sense to make them reusable, otherwise leave them in the application - you can seperate routing and rendering (JSON) from the business logic
 
 
-
-Open Space Engine: Architectural Blueprint
-Introduction
-This document outlines the architectural blueprint for the Open Space engine, focusing on modularity, testability, and performance. It details package structure, data flow, and key design considerations.
-
-I. Package Structure (Monorepo)
-We'll leverage our monorepo setup with the following packages:
-
-core/math: Basic mathematical utilities (vectors, matrices, quaternions). This is a foundational dependency for everything else.
-core/physics: Core physics engine components – gravity calculations, orbital mechanics primitives. Designed to be pluggable and extensible.
-core/state: State management using Nanostores. We'll avoid RxJS initially due to the potential migration overhead. Nanostores offer a good balance of simplicity, performance, and flexibility for our needs.
-data/types: TypeScript type definitions shared across packages. Ensures consistency and reduces errors.
-systems/celestial: Defines celestial object types (star, planet, moon, asteroid, station) and their properties. This is where the core data structures reside.
-systems/orbital: Handles orbital calculations, updates positions based on physics engine output, and manages relationships between celestial bodies.
-renderer/threejs: ThreeJS-specific rendering components – materials, meshes, scene setup. This isolates ThreeJS dependencies from the core logic.
-core/simulation: The main simulation loop, responsible for orchestrating updates to physics, orbital calculations, and state management.
+## Actions to take
 
 
-II. Data Flow & Architecture (Continued)
-The engine will follow a unidirectional data flow pattern:
-
-Physics Engine (core/physics): Calculates forces and updates velocities of celestial bodies based on their properties and positions. This package exposes functions for calculating gravitational force, applying impulses, and integrating motion.
-Orbital System (systems/orbital): Receives updated velocity and position data from the physics engine. It then:
-Calculates new orbital paths using Keplerian elements or more advanced N-body simulations (pluggable).
-Applies these calculations to update celestial body positions.
-Updates the central state store with the latest positions, velocities, and other relevant data for all celestial bodies.
-State Management (core/state): A Nanostore manages a single source of truth representing the entire system's state. This includes:
-Celestial body properties (position, velocity, mass, radius, etc.).
-Orbital parameters.
-System-level configuration data.
-Renderer (renderer/threejs): Subscribes to changes in the Nanostore and renders the scene based on the current state. It filters data as needed for performance optimization (e.g., only rendering visible objects).
-Game/UI: Also subscribes to the Nanostore, filtering data as needed for specific display purposes (e.g., displaying ship information, showing orbital paths).
-
-```
-[Physics Engine] --> [Orbital System] --> [State Management (Nanostores)]
-                                                ^ |
-                                                | v
-                                            [Renderer]  [Game/UI]
-```
-
-III. Key Design Considerations
-A. Celestial Object System (systems/celestial)
-Base Class: Define a base CelestialObject class with common properties (position, velocity, mass, radius, ID).
-Composition over Inheritance: Use composition to define different types of celestial objects (star, planet, moon, asteroid, station) by combining components. This allows for greater flexibility and avoids the limitations of inheritance. For example:
-StarComponent: Adds properties like luminosity, spectral class.
-PlanetComponent: Adds properties like atmosphere, surface type.
-StationComponent: Adds properties like docking bays, population.
-Gravity Field: Each CelestialObject will have a gravity field defined by its mass and radius. This is crucial for scanning and interaction mechanics.
-B. Physics Engine (core/physics)
-Pluggable Components: Design the physics engine with pluggable components:
-Gravitational Force Calculator: Different algorithms can be plugged in (Newtonian gravity, relativistic gravity).
-Integration Method: Different integration methods (Euler, Verlet, Runge-Kutta) can be selected based on performance and accuracy requirements.
-Performance Optimization: Implement techniques like spatial partitioning (e.g., octrees) to reduce the number of gravitational calculations needed.
-Start with the most simple physics engine possible as the default.
-C. State Management (core/state)
-Nanostores: Use Nanostores for efficient state management. Consider using derived stores to calculate frequently accessed values (e.g., distance between two objects).
-Update Prioritization: Implement a priority system for updating celestial body positions based on their distance from the player and other factors. Far-off objects can be updated less frequently.
-D. System Scale & Configuration
-Play Area: Define a spherical play area with a radius of 200-250 AU.
-Seed Data: As we create systems, we will have initial state conditions for the systems that we can use to seed the state of the simulation when the player loads the system.
-Save/Load System: Implement a save/load system that stores the state of the simulation at specific points in time. When the player loads the system, the save/load system will restore the state of the simulation the current state of the simulation by calculating the delta between the saved state and the current time.
-E. TDD Approach
-As we are dealing with known physics, use a TDD approach to implement the physics engine, orbital mechanics, and state management correctly.
-Unit Tests: Write unit tests for all core components (physics calculations, orbital mechanics, state management).
-Integration Tests: Test the interaction between different components.
-Focus on Edge Cases: Pay particular attention to testing edge cases and boundary conditions.
-IV. Initial Implementation Steps
-Core Math Package: Implement basic vector and matrix operations in core/math.
-Celestial Object Definition: Define the CelestialObject base class and its components in systems/celestial.
-Physics Engine Primitives: Implement basic gravitational force calculation in core/physics.
-Nanostore Setup: Set up a Nanostore to hold the state of a single star and planet in core/state.
-Simple Rendering Loop: Create a simple rendering loop in renderer/threejs that displays the star and planet based on the data from the Nanostore.
-
-Integration to apps/frontend:
-
-- Think about these components as part of the applcation shell, which is a main wrapper for the configuration to be passed to the requires software components.
-
-This blueprint provides a solid foundation for building the Open Space engine. Remember to prioritize simplicity, testability, and performance throughout the development process. Let's start with these initial steps and iterate as we go.  I’m here to help refine this further as you progress.
 
