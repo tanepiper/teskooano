@@ -1,6 +1,6 @@
-import { driver, DriveStep } from "driver.js";
+import { driver, DriveStep, PopoverDOM, Config, State } from "driver.js";
 import "driver.js/dist/driver.css";
-import { TourStep } from "../components/tours/types";
+import { type TourStep } from "../components/tours/types";
 import { createIntroTour } from "../components/tours/intro-tour";
 
 // Tour Controller class
@@ -20,6 +20,17 @@ export class TourController {
       overlayColor: "rgba(0, 0, 0, 0.75)", // Default overlay - semi-transparent dark
       allowClose: true,
       disableActiveInteraction: false, // By default, prevent interacting with highlighted element
+
+      onPopoverRender: (
+        popover: PopoverDOM,
+        opts: { config: Config; state: State },
+      ) => {
+        const currentStep =
+          this.tourSteps[this.driverInstance.getActiveIndex()!];
+        if (currentStep.onPopoverRender) {
+          currentStep.onPopoverRender(popover, opts);
+        }
+      },
       onNextClick: () => {
         // Move to next step
         const currentStep =
@@ -34,8 +45,12 @@ export class TourController {
       onHighlightStarted: () => {
         // Save current step to localStorage if not skipping
         if (!this.isSkippingTour()) {
-          const currentStep = this.tourSteps[this.currentStepIndex];
+          const currentStep =
+            this.tourSteps[this.driverInstance.getActiveIndex()!];
           localStorage.setItem("tourCurrentStep", currentStep.id);
+          if (currentStep.onHighlightStarted) {
+            currentStep.onHighlightStarted();
+          }
         }
       },
       onDeselected: () => {

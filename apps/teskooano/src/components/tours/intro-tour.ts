@@ -1,4 +1,4 @@
-import { Driver } from "driver.js";
+import { Config, Driver, PopoverDOM, State } from "driver.js";
 import { TourStep } from "./types";
 import { ToolbarSeedForm } from "../toolbar/SeedForm";
 import { celestialObjectsStore } from "@teskooano/core-state";
@@ -6,10 +6,7 @@ import { SCALE, CelestialStatus } from "@teskooano/data-types";
 // Base tour steps definition - will be cloned and customized when driving
 
 export function createIntroTour(driverObj: Driver): TourStep[] {
-  const totalCelestialObjects = Object.values(
-    celestialObjectsStore.get(),
-  ).length;
-  const hasCelestialObjects = totalCelestialObjects > 0;
+  let hasCelestialObjects = false;
 
   const BASE_TOUR_STEPS: TourStep[] = [
     {
@@ -35,6 +32,14 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
         side: "bottom",
         align: "center",
       },
+      onNextClick: () => {
+        const totalCelestialObjects = Object.values(
+          celestialObjectsStore.get(),
+        ).length;
+        console.log("Total celestial objects:", totalCelestialObjects);
+        hasCelestialObjects = totalCelestialObjects > 0;
+        driverObj.moveNext();
+      },
     },
     {
       id: "engine-view",
@@ -42,9 +47,17 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       overlayColor: "rgba(0, 0, 0, 0.1)", // More transparent for the engine view
       popover: {
         title: "The main simulation view",
-        description: `This is the main engine view, ${hasCelestialObjects ? "which you have currently loaded a system in to " : "it is currently empty as you need to load a system (don't worry, we're coming to that!)"}. This is the main view of the simulation, in this view you can orbit and zoom around the system, and use the focus controls to focus on specific objects.`,
+        description: `This is the main engine view, ${hasCelestialObjects ? "which you have currently loaded a system in to " : "which may be currently empty as you need to load a system (don't worry, we're coming to that!)"}. This is the main view of the simulation, in this view you can orbit and zoom around the system, and use the focus controls to focus on specific objects.`,
         side: "over",
         align: "center",
+      },
+      onPopoverRender: (
+        popover: PopoverDOM,
+        opts: { config: Config; state: State },
+      ) => {
+        console.log("Popover rendered:", popover);
+        console.log("Popover opts:", opts);
+        popover.description.innerHTML = `This is the main engine view, ${hasCelestialObjects ? "which you have currently loaded a system in to " : "which may be currently empty as you need to load a system (don't worry, we're coming to that!)"}. This is the main view of the simulation, in this view you can orbit and zoom around the system, and use the focus controls to focus on specific objects.`;
       },
     },
     {
