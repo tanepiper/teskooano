@@ -41,4 +41,13 @@ export * from './gamepad';
 
 // -- UI & Interaction --
 export * from './drag-and-drop';
-export * from './invoker-commands'; 
+export * from './invoker-commands';
+
+// -- Media --
+export * from './media-recorder';
+
+// -- Casting & Remote Display --
+export * from './remote-playback';
+
+// -- Screen & Window --
+export * from './screen-capture'; 

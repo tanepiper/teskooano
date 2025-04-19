@@ -15,6 +15,14 @@ The goal is to simplify common tasks, improve performance, and provide consisten
 *   **Battery:** Reactive Nanostore (`batteryStore`) for device battery status.
 *   **Device Orientation:** RxJS Observable (`deviceOrientation$`) for device orientation events (handles iOS 13+ permissions).
 *   **Idle Detection (Experimental):** Callback helper, permission request function, and RxJS Observable (`idleState$`) for detecting user/screen idle state.
+*   **Device Memory (Experimental):** Reactive Nanostore (`deviceMemoryStore`) providing `deviceMemory` and `effectiveMemory` values.
+*   **Background Tasks (Experimental):** Helpers (`requestBackgroundTasksPermission`, `runInBackground`) for `requestIdleCallback`.
+*   **Gamepad:** RxJS Observable (`gamepadConnection$`) for gamepad connection/disconnection events and Nanostore (`gamepadStateStore`) for button/axis state.
+*   **Drag and Drop:** Helper functions (`createDraggable`, `createDropZone`) for managing HTML Drag and Drop.
+*   **Invoker Commands:** Helper functions for the experimental Invoker API.
+*   **Media Recorder:** Helper functions (`startRecording`, `stopRecording`, `requestMediaPermissions`) and RxJS Observable (`mediaRecorderState$`) for audio/video recording.
+*   **Remote Playback:** Helper functions (`requestRemotePlayback`, `watchAvailability`) and RxJS Observable (`remotePlaybackAvailability$`) for casting media.
+*   **Screen Capture:** Helper functions (`startScreenCapture`, `stopScreenCapture`) and RxJS Observable (`screenCaptureState$`) for capturing the screen or application window.
 
 ## Installation
 
@@ -64,6 +72,33 @@ import {
   observeIdleState,
   requestIdleDetectionPermission,
   idleState$, // Note: Default instance uses 60s threshold
+} from '@teskooano/app-web-apis';
+
+// Import additional APIs
+import {
+  // Performance & Capabilities
+  deviceMemoryStore,
+  requestBackgroundTasksPermission,
+  runInBackground,
+  gamepadConnection$,
+  gamepadStateStore,
+  // UI & Interaction
+  createDraggable,
+  createDropZone,
+  invokeAction, // Example invoker command
+  // Media
+  startRecording,
+  stopRecording,
+  requestMediaPermissions,
+  mediaRecorderState$,
+  // Casting & Remote Display
+  requestRemotePlayback,
+  watchAvailability,
+  remotePlaybackAvailability$,
+  // Screen & Window
+  startScreenCapture,
+  stopScreenCapture,
+  screenCaptureState$,
 } from '@teskooano/app-web-apis';
 
 // Example: Using ResizeObserver observable
@@ -236,4 +271,105 @@ async function setupIdleDetection() {
   }
 }
 setupIdleDetection();
+
+// Example: Using Device Memory Store
+const unsubDeviceMemory = deviceMemoryStore.subscribe(state => {
+  console.log(`Device Memory: ${state.deviceMemory}GB, Effective: ${state.effectiveMemory}GB`);
+});
+// Later...
+// unsubDeviceMemory();
+
+// Example: Using Background Tasks
+async function runBackgroundTask() {
+  const permission = await requestBackgroundTasksPermission();
+  if (permission === 'granted') {
+    runInBackground(() => {
+      console.log('Running task in background during idle time.');
+    });
+  }
+}
+
+// Example: Using Gamepad API
+gamepadConnection$.subscribe(event => {
+  console.log(`Gamepad ${event.type}:`, event.gamepad.id);
+});
+const unsubGamepadState = gamepadStateStore.subscribe(state => {
+  // Access state.gamepads (Map<index, GamepadState>) for button/axis data
+  // console.log('Gamepad state updated:', state.gamepads);
+});
+// Later...
+// unsubGamepadState();
+
+// Example: Using Media Recorder
+async function recordAudio() {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const recorderControls = startRecording(stream, { mimeType: 'audio/webm' });
+
+  if (!recorderControls) return;
+
+  mediaRecorderState$.subscribe(state => {
+    console.log('Media Recorder State:', state.status);
+    if (state.status === 'recording' && state.dataAvailable) {
+      console.log('Recorded chunk size:', state.blob?.size);
+      // Handle the recorded blob (e.g., upload or save)
+    }
+    if (state.error) {
+      console.error('Media Recorder Error:', state.error);
+    }
+  });
+
+  // Record for 5 seconds
+  setTimeout(() => {
+    stopRecording(recorderControls.recorder);
+    console.log('Stopped recording.');
+  }, 5000);
+}
+
+// Example: Using Remote Playback
+async function setupRemotePlayback(videoElement: HTMLVideoElement) {
+  const availabilitySub = remotePlaybackAvailability$.subscribe(available => {
+    console.log('Remote Playback Available:', available);
+    // Update UI to show/hide cast button
+  });
+
+  // Example button click handler
+  async function onCastButtonClick() {
+    try {
+      await requestRemotePlayback(videoElement);
+      console.log('Remote playback session started.');
+    } catch (error) {
+      console.error('Failed to start remote playback:', error);
+    }
+  }
+  // Later...
+  // availabilitySub.unsubscribe();
+}
+
+// Example: Using Screen Capture
+async function captureScreen() {
+  const captureControls = await startScreenCapture({ video: true });
+
+  if (!captureControls) return;
+
+  const videoElement = document.createElement('video');
+  videoElement.srcObject = captureControls.stream;
+  videoElement.autoplay = true;
+  document.body.appendChild(videoElement);
+
+  screenCaptureState$.subscribe(state => {
+    console.log('Screen Capture State:', state.status);
+    if (state.status === 'stopped') {
+      videoElement.remove();
+      console.log('Screen capture stopped.');
+    }
+    if (state.error) {
+      console.error('Screen Capture Error:', state.error);
+    }
+  });
+
+  // Example: Stop capture after 10 seconds
+  setTimeout(() => {
+    stopScreenCapture(captureControls.stream);
+  }, 10000);
+}
 ``` 
