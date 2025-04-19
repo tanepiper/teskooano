@@ -1,21 +1,25 @@
 import { Driver } from "driver.js";
 import { TourStep } from "./types";
 import { ToolbarSeedForm } from "../toolbar/SeedForm";
-import { FocusControl } from "../ui-controls";
 import { celestialObjectsStore } from "@teskooano/core-state";
 import { SCALE, CelestialStatus } from "@teskooano/data-types";
 // Base tour steps definition - will be cloned and customized when driving
 
 export function createIntroTour(driverObj: Driver): TourStep[] {
+  const totalCelestialObjects = Object.values(
+    celestialObjectsStore.get(),
+  ).length;
+  const hasCelestialObjects = totalCelestialObjects > 0;
+
   const BASE_TOUR_STEPS: TourStep[] = [
     {
       id: "app-intro",
       element: "#app-logo",
       overlayColor: "rgba(0, 0, 0, 0.75)", // Standard overlay
       popover: {
-        title: "Welcome to Teskooano",
+        title: "🔭 Welcome to Teskooano",
         description:
-          "Teskooano is an 3D N-Body simulation engine that attempts to simulate real physics, and provide a multi-view experience of the simulation in real time. It also features collision detection and a physics engine to simulate realistic interactions between celestial bodies combined with procedural generation to create unique systems and views.",
+          "Teskooano is an 3D N-Body simulation engine that attempts to simulate real physics. It provides a multi-view experience of the simulation in real time. It also features collision detection and a physics engine to simulate realistic interactions between celestial bodies combined with procedural generation to create unique systems and views.",
         side: "bottom",
         align: "center",
       },
@@ -25,7 +29,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       element: "#app-logo",
       overlayColor: "rgba(0, 0, 0, 0.75)", // Standard overlay
       popover: {
-        title: "Welcome to Teskooano",
+        title: "...on to the tour!",
         description:
           "This tour will guide you through the main features of using the application and hopefully help you get the most out of it!",
         side: "bottom",
@@ -37,8 +41,8 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       element: ".engine-view",
       overlayColor: "rgba(0, 0, 0, 0.1)", // More transparent for the engine view
       popover: {
-        title: "Engine View",
-        description: `This is the main engine view, it is currently empty as you need to load a system (don't worry, we're coming to that!), but here you will see the 3D simulation of the system. In this view you can orbit and zoom around the system, and use the focus controls to focus on specific objects.`,
+        title: "The main simulation view",
+        description: `This is the main engine view, ${hasCelestialObjects ? "which you have currently loaded a system in to " : "it is currently empty as you need to load a system (don't worry, we're coming to that!)"}. This is the main view of the simulation, in this view you can orbit and zoom around the system, and use the focus controls to focus on specific objects.`,
         side: "over",
         align: "center",
       },
@@ -47,7 +51,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "add-view",
       element: "#add-view-button",
       popover: {
-        title: "Add View",
+        title: "Adding new multi-view panels",
         description:
           "Teskooano supports multiple engine views, each with its own UI settings and focus controls providing multiple views of the same simulation in real time. Lets skip this for now and focus on the main features.",
         side: "bottom",
@@ -59,7 +63,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "controls-intro",
       element: "toolbar-simulation-controls",
       popover: {
-        title: "Control Panel",
+        title: "Simulation Controls",
         description:
           "This toolbar contains the main controls for the simulation. You can add new bodies, adjust the simulation speed, and access settings.  x16 is equivilent to real time, you can go up to x10M but this depends on your CPU and GPU performance.",
         side: "bottom",
@@ -71,9 +75,9 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "seed-form",
       element: "toolbar-seed-form",
       popover: {
-        title: "Seed Generator",
+        title: "🌱 Creating a new system with a seed",
         description:
-          "Generate new star systems with different seeds. Each seed creates a unique procedurally generated system. Go ahead and try it out, feel free to change the default seed to see different systems!",
+          "Generate new star systems with different seeds. Each seed creates a unique procedurally generated system. Go ahead and try it out, or click next and I'll do it - feel free to change the default seed to see different systems! ",
         side: "bottom",
         align: "center",
       },
@@ -90,7 +94,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "ui-settings",
       element: ".ui-panel",
       popover: {
-        title: "Engine UI Settings",
+        title: "The simulation view settings",
         description:
           "This panel controls the engine view panels - each engine is independently rendered from the same simulation data, allowing you to have multiple views of the same system in real time. I'll explain each panel in more detail...",
         side: "left",
@@ -103,7 +107,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       overlayColor: "rgba(0, 0, 0, 0.3)", // More transparent for interactive controls
       disableActiveInteraction: false, // Allow interaction with the focus control
       popover: {
-        title: "Focus Control",
+        title: "Focusing on Celestial Objects",
         description:
           "This is the focus control, it allows you to focus on specific objects in the simulation. You can use the focus controls to focus on specific objects, or use the orbit controls to orbit around the system.  Why not try it out by clicking on a body in the list?",
         side: "left",
@@ -178,7 +182,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "celestial-info",
       element: ".celestial-info-section",
       popover: {
-        title: "Celestial Info",
+        title: "Viewing Celestial Object Details",
         description:
           "This is the celestial info section, it displays information about the currently focused object.",
         side: "left",
@@ -189,7 +193,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "renderer-info",
       element: ".renderer-info-section",
       popover: {
-        title: "Renderer Info",
+        title: "Viewing Renderer & Performance Information",
         description:
           "This is the renderer info section, it displays information about the renderer.",
         side: "left",
@@ -200,7 +204,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "engine-settings",
       element: ".engine-settings-section",
       popover: {
-        title: "Engine Settings",
+        title: "Current simulation view settings",
         description:
           "This is the engine settings section, it allows you to adjust the engine settings.",
         side: "left",
@@ -212,7 +216,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       element: ".engine-view",
       overlayColor: "rgba(0, 0, 0, 0)", // Fully transparent for the final view
       popover: {
-        title: "Engine View",
+        title: "The full simulation view",
         description:
           // Using a placeholder that will be replaced dynamically
           "Now you should see the full system. If you've selected a celestial body, you can see more details about it in the Celestial Info panel.  Feel free to now play around, and try break things! If you do find any bugs please raise an issue on the GitHub repo.",

@@ -2,19 +2,11 @@
 import DefaultTheme from "vitepress/theme";
 import { onMounted, onBeforeUnmount, ref } from "vue";
 import { useRouter } from "vitepress";
-import mediumZoom from "medium-zoom";
 
 const { Layout } = DefaultTheme;
 const router = useRouter();
 const nebulaCanvas = ref(null);
 let animationFrame = null;
-
-// Setup medium zoom with the desired options
-const setupMediumZoom = () => {
-  mediumZoom("[data-zoomable]", {
-    background: "transparent",
-  });
-};
 
 // Nebula background setup
 const setupNebula = () => {
@@ -150,7 +142,6 @@ const handleResize = () => {
 
 // Apply medium zoom on load
 onMounted(() => {
-  setupMediumZoom();
   setupNebula();
   window.addEventListener("resize", handleResize);
 });
@@ -162,11 +153,6 @@ onBeforeUnmount(() => {
   }
   window.removeEventListener("resize", handleResize);
 });
-
-// Subscribe to route changes to re-apply medium zoom effect
-router.onAfterRouteChanged = () => {
-  setupMediumZoom();
-};
 </script>
 
 <template>
@@ -193,14 +179,5 @@ router.onAfterRouteChanged = () => {
   left: 0;
   width: 100%;
   height: 100%;
-}
-
-.medium-zoom-overlay {
-  backdrop-filter: blur(5rem);
-}
-
-.medium-zoom-overlay,
-.medium-zoom-image--opened {
-  z-index: 999;
 }
 </style>

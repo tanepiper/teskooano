@@ -4,15 +4,16 @@ layout: home
 
 hero:
   name: "🔭 Teskooano"
-  text: "Advanced 3D N-Body Simulation Engine"
-  tagline: Explore realistic celestial systems with accurate physics, real-time visualization, and multi-view capabilities
+  text: "A fun mutli-camera 3D N-Body Simulation Engine"
+  tagline: |
+    Explore procedurally generated solar systems with realistic physics, time-lapse control and other simulation features - all 3D with multiple viewports!
   image:
     src: /panel-icon.png
     alt: Teskooano Observatory Panel
     class: "hero-image"
   actions:
     - theme: brand
-      text: Play with Teskooano
+      text: 🔭 Play with Teskooano
       link: https://teskooano.space/teskooano
     - theme: alt
       text: View on GitHub
@@ -46,9 +47,13 @@ features:
 
 <div class="vp-doc">
 
+## Teskooano in Action
+
+<ScreenshotCarousel />
+
 ## Observe The Cosmos Like Never Before
 
-Teskooano (pronounced tes-koo-ah-no) is an advanced 3D simulation engine that recreates the physics of celestial bodies with extraordinary accuracy. The name comes from a fictional telescope in Beelzebub's Tales to His Grandson by G.I. Gurdjieff, and like its namesake, it allows you to observe distant cosmic phenomena with unprecedented clarity.
+Teskooano (pronounced tes-koo-ah-no) is an advanced 3D simulation engine that recreates the physics of celestial bodies with reasonable accuracy.
 
 ```mermaid
 flowchart TD
@@ -81,16 +86,6 @@ Perfect for educational settings, Teskooano makes complex orbital mechanics intu
 
 When you first launch Teskooano, an interactive guided tour introduces you to all key features. The intuitive DockView-based UI allows for customizable layouts to suit your specific needs.
 
-## Teskooano in Action
-
-Experience Teskooano's powerful visualization capabilities through these screenshots (click to enlarge):
-
-![teskooano-ui-1.png](/screenshots/teskooano-ui-1.png)
-
-<p>Close-up view of a planet with simulation controls and celestial body information panel.</p>
-
-![teskooano-ui-2.png](/screenshots/teskooano-ui-2.png)
-
 ## Built With Modern Tech
 
 Teskooano leverages cutting-edge web technologies including:
@@ -105,9 +100,6 @@ Teskooano leverages cutting-edge web technologies including:
 
 Teskooano is completely open source under the MIT license. We welcome contributions, bug reports, and feature requests from the community.
 
-<div class="custom-container tip">
-  <p class="custom-container-title">Ready to explore?</p>
-  <p>Try the online demo today and experience the beauty of accurate celestial simulation!</p>
-</div>
+- [GitHub](https://github.com/tanepiper/teskooano)
 
 </div>

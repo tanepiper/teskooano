@@ -1,9 +1,16 @@
-import { defineConfig } from "vitepress";
-import { withMermaid } from "vitepress-plugin-mermaid";
 import lightbox from "vitepress-plugin-lightbox";
+import { withMermaid } from "vitepress-plugin-mermaid";
 
 // https://vitepress.dev/reference/site-config
 export default withMermaid({
+  vite: {
+    resolve: {
+      alias: {
+        "vue-easy-lightbox$":
+          "vue-easy-lightbox/dist/external-css/vue-easy-lightbox.esm.min.js",
+      },
+    },
+  },
   base: "/",
   ignoreDeadLinks: true,
   title: "Teskooano",
@@ -25,7 +32,7 @@ export default withMermaid({
       {
         name: "og:description",
         content:
-          "Explore realistic celestial systems with accurate physics, real-time visualization, and multi-view capabilities",
+          "Explore celestial systems with reasonably accurate physics, real-time visualization, and multi-view capabilities",
       },
     ],
     [
