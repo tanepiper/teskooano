@@ -218,10 +218,12 @@ export class FocusControl extends HTMLElement {
     this._handleObjectDestroyed = this.populateList.bind(this);
     // Bind the focus change handler
     this._handleRendererFocusChange = (event: Event): void => {
-        const customEvent = event as CustomEvent<{ focusedObjectId: string | null }>;
-        if (customEvent.detail) {
-            this.updateHighlight(customEvent.detail.focusedObjectId);
-        }
+      const customEvent = event as CustomEvent<{
+        focusedObjectId: string | null;
+      }>;
+      if (customEvent.detail) {
+        this.updateHighlight(customEvent.detail.focusedObjectId);
+      }
     };
   }
 
@@ -259,7 +261,10 @@ export class FocusControl extends HTMLElement {
     // This assumes the renderer or its controls emit an event when focus changes
     // Or, alternatively, subscribe to the CompositeEnginePanel's viewStateStore if it tracks focus
     // Example using a custom event:
-    document.addEventListener('renderer-focus-changed', this._handleRendererFocusChange);
+    document.addEventListener(
+      "renderer-focus-changed",
+      this._handleRendererFocusChange,
+    );
   }
 
   disconnectedCallback() {
@@ -342,11 +347,16 @@ export class FocusControl extends HTMLElement {
     }
 
     // Check if object is a type we don't want to directly focus (e.g., fields)
-    if (targetObject.type === CelestialType.ASTEROID_FIELD || targetObject.type === CelestialType.OORT_CLOUD) {
-        console.warn(`[FocusControl] Direct focus disallowed for type: ${targetObject.type}`);
-        // Optionally, focus on the parent object instead?
-        // if (targetObject.parentId) { return this.focusOnObject(targetObject.parentId); }
-        return false; // Prevent focusing for now
+    if (
+      targetObject.type === CelestialType.ASTEROID_FIELD ||
+      targetObject.type === CelestialType.OORT_CLOUD
+    ) {
+      console.warn(
+        `[FocusControl] Direct focus disallowed for type: ${targetObject.type}`,
+      );
+      // Optionally, focus on the parent object instead?
+      // if (targetObject.parentId) { return this.focusOnObject(targetObject.parentId); }
+      return false; // Prevent focusing for now
     }
 
     // Check if object is destroyed or annihilated
@@ -365,7 +375,10 @@ export class FocusControl extends HTMLElement {
     console.log(
       `[FocusControl] Requesting parent focus on ${objectId} (distance: ${distance})`,
     );
-    console.log("[FocusControl] Calling parentPanel.focusOnObject...", this._parentPanel);
+    console.log(
+      "[FocusControl] Calling parentPanel.focusOnObject...",
+      this._parentPanel,
+    );
 
     // Call parent panel's focus method
     this._parentPanel.focusOnObject(objectId, distance);
@@ -438,7 +451,10 @@ export class FocusControl extends HTMLElement {
     // This assumes the renderer or its controls emit an event when focus changes
     // Or, alternatively, subscribe to the CompositeEnginePanel's viewStateStore if it tracks focus
     // Example using a custom event:
-    document.addEventListener('renderer-focus-changed', this._handleRendererFocusChange);
+    document.addEventListener(
+      "renderer-focus-changed",
+      this._handleRendererFocusChange,
+    );
   }
 
   private removeEventListeners(): void {
@@ -455,7 +471,10 @@ export class FocusControl extends HTMLElement {
       "celestial-influences-changed",
       this.handleInfluencesChanged,
     );
-    document.removeEventListener('renderer-focus-changed', this._handleRendererFocusChange);
+    document.removeEventListener(
+      "renderer-focus-changed",
+      this._handleRendererFocusChange,
+    );
     // Note: Button listeners are implicitly removed when the component disconnects
   }
 

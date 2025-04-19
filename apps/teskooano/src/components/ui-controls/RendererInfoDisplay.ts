@@ -130,7 +130,7 @@ export class RendererInfoDisplay extends HTMLElement {
     this.fovValue = this.shadowRoot!.getElementById("fov-value");
 
     if (this._renderer) {
-        this.startUpdateTimer();
+      this.startUpdateTimer();
     }
   }
 
@@ -149,7 +149,7 @@ export class RendererInfoDisplay extends HTMLElement {
   private startUpdateTimer(): void {
     this.stopUpdateTimer();
     this._updateInterval = window.setInterval(() => {
-        this.fetchAndUpdateDisplay();
+      this.fetchAndUpdateDisplay();
     }, 1000);
     this.fetchAndUpdateDisplay();
   }
@@ -196,7 +196,9 @@ export class RendererInfoDisplay extends HTMLElement {
 
     // --- Memory ---
     if (this.memoryValue) {
-      this.memoryValue.textContent = formatMemory(stats?.memory?.usedJSHeapSize);
+      this.memoryValue.textContent = formatMemory(
+        stats?.memory?.usedJSHeapSize,
+      );
     }
 
     // --- Camera Position ---

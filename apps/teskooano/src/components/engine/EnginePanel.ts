@@ -89,24 +89,28 @@ export class EnginePanel implements IContentRenderer {
     this._element.textContent = "Engine Initializing..."; // Placeholder
 
     // --- Subscribe to layout orientation changes ---
-    this._layoutUnsubscribe = layoutOrientationStore.subscribe((orientation) => {
-      if (this._currentOrientation !== orientation) {
-        this._currentOrientation = orientation;
-        console.log(`EnginePanel [${this._api?.id}] orientation: ${orientation}`); // Debug
-        if (orientation === "portrait") {
-          this._element.classList.remove("layout-internal-landscape");
-          this._element.classList.add("layout-internal-portrait");
-        } else {
-          this._element.classList.remove("layout-internal-portrait");
-          this._element.classList.add("layout-internal-landscape");
+    this._layoutUnsubscribe = layoutOrientationStore.subscribe(
+      (orientation) => {
+        if (this._currentOrientation !== orientation) {
+          this._currentOrientation = orientation;
+          console.log(
+            `EnginePanel [${this._api?.id}] orientation: ${orientation}`,
+          ); // Debug
+          if (orientation === "portrait") {
+            this._element.classList.remove("layout-internal-landscape");
+            this._element.classList.add("layout-internal-portrait");
+          } else {
+            this._element.classList.remove("layout-internal-portrait");
+            this._element.classList.add("layout-internal-landscape");
+          }
+          // Force renderer resize after potential layout shifts
+          const { clientWidth, clientHeight } = this._element;
+          if (clientWidth > 0 && clientHeight > 0) {
+            this._renderer?.onResize(clientWidth, clientHeight);
+          }
         }
-        // Force renderer resize after potential layout shifts
-        const { clientWidth, clientHeight } = this._element;
-        if (clientWidth > 0 && clientHeight > 0) {
-          this._renderer?.onResize(clientWidth, clientHeight);
-        }
-      }
-    });
+      },
+    );
     // Apply initial class (important if store already has a value)
     const initialOrientation = layoutOrientationStore.get();
     this._currentOrientation = initialOrientation;

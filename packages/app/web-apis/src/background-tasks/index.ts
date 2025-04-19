@@ -11,7 +11,7 @@ declare global {
   interface Window {
     requestIdleCallback: (
       callback: IdleRequestCallback,
-      opts?: IdleRequestOptions
+      opts?: IdleRequestOptions,
     ) => number;
     cancelIdleCallback: (handle: number) => void;
   }
@@ -22,7 +22,7 @@ declare global {
  * @returns `true` if `window.requestIdleCallback` exists, `false` otherwise.
  */
 export function isRequestIdleCallbackSupported(): boolean {
-  return typeof window !== 'undefined' && 'requestIdleCallback' in window;
+  return typeof window !== "undefined" && "requestIdleCallback" in window;
 }
 
 /**
@@ -39,26 +39,26 @@ export function isRequestIdleCallbackSupported(): boolean {
  */
 export function requestIdleCallbackPromise(
   callback: (deadline: RequestIdleCallbackDeadline) => void,
-  options?: { timeout?: number; signal?: AbortSignal }
+  options?: { timeout?: number; signal?: AbortSignal },
 ): Promise<RequestIdleCallbackDeadline> {
   return new Promise((resolve, reject) => {
     if (!isRequestIdleCallbackSupported()) {
-      return reject(new Error('requestIdleCallback is not supported.'));
+      return reject(new Error("requestIdleCallback is not supported."));
     }
 
     const handle = window.requestIdleCallback(
       (deadline) => {
         // Clean up the abort listener once the callback executes
-        options?.signal?.removeEventListener('abort', abortListener);
+        options?.signal?.removeEventListener("abort", abortListener);
         callback(deadline); // Execute the user's callback first
         resolve(deadline); // Then resolve the promise
       },
-      options?.timeout ? { timeout: options.timeout } : undefined
+      options?.timeout ? { timeout: options.timeout } : undefined,
     );
 
     const abortListener = () => {
       window.cancelIdleCallback(handle);
-      reject(new DOMException('Idle callback cancelled', 'AbortError'));
+      reject(new DOMException("Idle callback cancelled", "AbortError"));
     };
 
     // If a signal is provided, listen for abort events
@@ -67,7 +67,7 @@ export function requestIdleCallbackPromise(
         // If already aborted, reject immediately
         abortListener();
       } else {
-        options.signal.addEventListener('abort', abortListener, { once: true });
+        options.signal.addEventListener("abort", abortListener, { once: true });
       }
     }
   });
@@ -84,10 +84,10 @@ export function requestIdleCallbackPromise(
  */
 export function scheduleIdleTask(
   callback: () => void,
-  options?: { timeout?: number }
+  options?: { timeout?: number },
 ): (() => void) | null {
   if (!isRequestIdleCallbackSupported()) {
-    console.warn('requestIdleCallback is not supported.');
+    console.warn("requestIdleCallback is not supported.");
     return null;
   }
 
@@ -95,7 +95,7 @@ export function scheduleIdleTask(
     () => {
       callback();
     },
-    options?.timeout ? { timeout: options.timeout } : undefined
+    options?.timeout ? { timeout: options.timeout } : undefined,
   );
 
   return () => window.cancelIdleCallback(handle);

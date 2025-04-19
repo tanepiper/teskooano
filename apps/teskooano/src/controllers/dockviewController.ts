@@ -58,7 +58,10 @@ export class DockviewController {
     // Register components needed at initialization time internally first
     // this._registeredComponents.set("engine_view", EnginePanel);
     // this._registeredComponents.set("ui_view", UiPanel);
-    this._registeredComponents.set("composite_engine_view", CompositeEnginePanel);
+    this._registeredComponents.set(
+      "composite_engine_view",
+      CompositeEnginePanel,
+    );
     // Remove pre-registration for dynamically added panels
     // this._registeredComponents.set('progress_view', ProgressPanel);
     // this._registeredComponents.set('settings_view', SettingsPanel);

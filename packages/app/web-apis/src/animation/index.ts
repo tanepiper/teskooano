@@ -1,5 +1,5 @@
-import { Observable } from 'rxjs';
-import { share, repeat, map } from 'rxjs/operators';
+import { Observable } from "rxjs";
+import { share, repeat, map } from "rxjs/operators";
 
 /**
  * Callback function type for the animation loop.
@@ -26,7 +26,7 @@ export interface AnimationLoopControls {
  * @returns Controls to start, stop, and check the status of the loop.
  */
 export function createAnimationLoop(
-  callback: AnimationLoopCallback
+  callback: AnimationLoopCallback,
 ): AnimationLoopControls {
   let frameId: number | null = null;
 
@@ -42,11 +42,11 @@ export function createAnimationLoop(
    * Starts the animation loop.
    */
   const start = () => {
-    if (frameId === null && typeof requestAnimationFrame !== 'undefined') {
+    if (frameId === null && typeof requestAnimationFrame !== "undefined") {
       frameId = requestAnimationFrame(loop);
-    } else if (typeof requestAnimationFrame === 'undefined') {
+    } else if (typeof requestAnimationFrame === "undefined") {
       console.warn(
-        'requestAnimationFrame is not supported in this environment.'
+        "requestAnimationFrame is not supported in this environment.",
       );
     }
   };
@@ -55,12 +55,15 @@ export function createAnimationLoop(
    * Stops the animation loop, takes an optional cleanup function to run after stopping.
    */
   const stop = (cleanup?: () => void) => {
-    if (frameId !== null && typeof cancelAnimationFrame !== 'undefined') {
+    if (frameId !== null && typeof cancelAnimationFrame !== "undefined") {
       cancelAnimationFrame(frameId);
       frameId = null;
-    } else if (frameId !== null && typeof cancelAnimationFrame === 'undefined') {
+    } else if (
+      frameId !== null &&
+      typeof cancelAnimationFrame === "undefined"
+    ) {
       console.warn(
-        'cancelAnimationFrame is not supported in this environment.'
+        "cancelAnimationFrame is not supported in this environment.",
       );
       // Attempt to nullify frameId anyway to prevent loop continuation
       frameId = null;
@@ -81,36 +84,38 @@ export function createAnimationLoop(
  * Uses requestAnimationFrame for scheduling emissions.
  * The observable is shared and replays the last frame timestamp.
  */
-export const animationFrames$ = new Observable<DOMHighResTimeStamp>((observer) => {
-  let frameId: number | null = null;
+export const animationFrames$ = new Observable<DOMHighResTimeStamp>(
+  (observer) => {
+    let frameId: number | null = null;
 
-  const callback = (timestamp: DOMHighResTimeStamp) => {
-    observer.next(timestamp);
-    // Schedule next frame only if the observable is still subscribed
-    if (!observer.closed) {
+    const callback = (timestamp: DOMHighResTimeStamp) => {
+      observer.next(timestamp);
+      // Schedule next frame only if the observable is still subscribed
+      if (!observer.closed) {
+        frameId = requestAnimationFrame(callback);
+      }
+    };
+
+    // Start the loop
+    if (typeof requestAnimationFrame !== "undefined") {
       frameId = requestAnimationFrame(callback);
+    } else {
+      console.warn(
+        "requestAnimationFrame is not supported, animationFrames$ will not emit.",
+      );
+      observer.complete(); // Complete if rAF not supported
     }
-  };
 
-  // Start the loop
-  if (typeof requestAnimationFrame !== 'undefined') {
-    frameId = requestAnimationFrame(callback);
-  } else {
-    console.warn(
-      'requestAnimationFrame is not supported, animationFrames$ will not emit.'
-    );
-    observer.complete(); // Complete if rAF not supported
-  }
-
-  // Cleanup function to cancel the animation frame on unsubscribe
-  return () => {
-    if (frameId !== null && typeof cancelAnimationFrame !== 'undefined') {
-      cancelAnimationFrame(frameId);
-    }
-    frameId = null;
-  };
-}).pipe(
-  share() // Share the underlying rAF loop among subscribers
+    // Cleanup function to cancel the animation frame on unsubscribe
+    return () => {
+      if (frameId !== null && typeof cancelAnimationFrame !== "undefined") {
+        cancelAnimationFrame(frameId);
+      }
+      frameId = null;
+    };
+  },
+).pipe(
+  share(), // Share the underlying rAF loop among subscribers
   // No need for repeat() here, the rAF loop handles continuation
   // No need for shareReplay - typically you want the *current* frame time
-); 
+);

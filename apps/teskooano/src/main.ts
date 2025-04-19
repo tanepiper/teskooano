@@ -33,18 +33,32 @@ if (!appElement || !toolbarElement) {
 // --- Orientation Handling --- //
 
 const portraitMediaQuery = window.matchMedia("(orientation: portrait)");
+const narrowWidthMediaQuery = window.matchMedia("(max-width: 1024px)");
 
-function updateOrientation(isPortrait: boolean) {
-  const newOrientation: Orientation = isPortrait ? "portrait" : "landscape";
+function updateOrientation() {
+  // Check if either physical orientation is portrait OR width is below 1024px
+  const isPortraitMode =
+    portraitMediaQuery.matches || narrowWidthMediaQuery.matches;
+  const newOrientation: Orientation = isPortraitMode ? "portrait" : "landscape";
   layoutOrientationStore.set(newOrientation);
 }
 
 // Initial check
-updateOrientation(portraitMediaQuery.matches);
+updateOrientation();
 
-// Listen for changes
-portraitMediaQuery.addEventListener("change", (event) => {
-  updateOrientation(event.matches);
+// Listen for changes in device orientation
+portraitMediaQuery.addEventListener("change", () => {
+  updateOrientation();
+});
+
+// Listen for changes in window width
+narrowWidthMediaQuery.addEventListener("change", () => {
+  updateOrientation();
+});
+
+// Also update on resize for browsers that don't support matchMedia well
+window.addEventListener("resize", () => {
+  updateOrientation();
 });
 
 // --- Initialize Controllers --- //

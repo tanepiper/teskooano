@@ -194,14 +194,27 @@ button:focus-visible {
 }
 
 /* Larger screens */
-@media (min-width: 1200px) {
+@media only screen and(min-width: 1200px) {
   :root {
     --font-size-base: 18px; /* Slightly larger text on bigger screens */
   }
 }
 
+@media only screen and (min-width: 1024px) {
+  .composite-engine-panel .ui-container collapsible-section {
+    min-height: 36px; /* Use fit-content instead of fixed height */
+    margin-bottom: var(--spacing-xs); /* Smaller margins */
+  }
+}
+
 /* Medium screens - now starts at 1024px */
-@media (max-width: 1024px) {
+@media only screen and (max-width: 1024px) {
+  /* 
+   * LAYOUT NOTE: At this breakpoint (1024px), the internal layout orientation 
+   * should switch from landscape (engine-left, UI-right) to portrait (engine-top, UI-bottom).
+   * This would be handled by JavaScript detecting window size in the CompositeEnginePanel.
+   */
+
   #toolbar {
     gap: var(--spacing-xs); /* Less space between items */
     flex-wrap: wrap; /* Allow wrapping on medium screens too */
@@ -257,10 +270,41 @@ button:focus-visible {
   #toolbar #settings-button span:not([slot="icon"]) {
     display: none;
   }
+
+  /* For smaller screens, ensure the panel layout is more compact */
+  .composite-engine-panel .ui-container collapsible-section {
+    min-height: fit-content; /* Use fit-content instead of fixed height */
+    margin-bottom: var(--spacing-xs); /* Smaller margins */
+  }
+
+  /* Reduce min-heights for containers on smaller screens */
+  .composite-engine-panel.layout-internal-landscape
+    .ui-container
+    > .left-ui-container,
+  .composite-engine-panel.layout-internal-portrait
+    .ui-container
+    > .left-ui-container {
+    min-height: 100px; /* Smaller min height on mobile */
+  }
+
+  .composite-engine-panel.layout-internal-landscape
+    .ui-container
+    > .right-ui-container,
+  .composite-engine-panel.layout-internal-portrait
+    .ui-container
+    > .right-ui-container {
+    min-height: 150px; /* Smaller min height on mobile */
+  }
+
+  /* Ensure minimum UI container height is appropriate for mobile */
+  .composite-engine-panel.layout-internal-portrait .ui-container {
+    min-height: 180px; /* Slightly smaller minimum height */
+    max-height: 50%; /* Allow a bit more height on mobile */
+  }
 }
 
 /* Better handle "awkward" widths like 833px specifically */
-@media (max-width: 900px) and (min-width: 769px) {
+@media only screen and(max-width: 900px) and (min-width: 769px) {
   /* Force more aggressive wrapping at these in-between sizes */
   #toolbar {
     padding: var(--spacing-xs); /* Tighter padding */
@@ -303,7 +347,7 @@ button:focus-visible {
 }
 
 /* Small screens / tablets */
-@media (max-width: 768px) {
+@media only screen and(max-width: 768px) {
   :root {
     --toolbar-height: auto; /* Allow toolbar to expand vertically */
   }
@@ -359,7 +403,7 @@ button:focus-visible {
 }
 
 /* Mobile phones */
-@media (max-width: 480px) {
+@media only screen and(max-width: 480px) {
   :root {
     --font-size-base: 14px; /* Slightly smaller base font to fit more content */
   }
@@ -416,90 +460,142 @@ button:focus-visible {
 }
 
 /* Dockview specific overrides - get the container for orientation */
-.dockview-container { 
-  width: 100%; 
+.dockview-container {
+  width: 100%;
   height: 100%;
 }
 
 /* --- Composite Panel Internal Layout --- */
 .composite-engine-panel {
-  /* Base is flex, orientation classes change direction */
-}
-
-.composite-engine-panel.layout-internal-landscape {
-  flex-direction: row;
-}
-
-.composite-engine-panel.layout-internal-portrait {
-  flex-direction: column;
-}
-
-/* Engine Container takes up remaining space */
-.composite-engine-panel .engine-container {
-  flex: 1 1 auto;
-  min-width: 0; /* Prevent flexbox overflow */
-  min-height: 0; /* Prevent flexbox overflow */
-  position: relative; /* Context for renderer? */
-  overflow: hidden;
-}
-
-/* UI Container Styling */
-.composite-engine-panel .ui-container {
-  overflow-y: auto;
-  overflow-x: hidden;
-  box-sizing: border-box;
-  padding: var(--spacing-sm, 8px);
-  /* Add flex display for internal containers */
-  display: flex; 
-}
-
-/* Landscape specific UI container */
-.composite-engine-panel.layout-internal-landscape .ui-container {
-  flex: 0 0 300px; /* Fixed width sidebar */
+  /* Base settings for the panel */
+  display: flex;
+  width: 100%;
   height: 100%;
+}
+
+/* 
+ * LAYOUT NOTE: At the 1024px breakpoint, the internal layout orientation 
+ * should switch from landscape (engine-left, UI-right) to portrait (engine-top, UI-bottom).
+ * This would be handled by JavaScript detecting window size in the CompositeEnginePanel.
+ */
+
+/* === PORTRAIT LAYOUT (Device Landscape) === */
+.composite-engine-panel.layout-internal-landscape {
+  flex-direction: row; /* Engine on left, UI on right */
+}
+
+/* Engine takes 2/3 width in portrait */
+.composite-engine-panel.layout-internal-landscape .engine-container {
+  flex: 2; /* 2/3 width */
+  overflow: hidden;
+  position: relative;
+}
+
+/* UI container takes 1/3 width in portrait */
+.composite-engine-panel.layout-internal-landscape .ui-container {
+  flex: 1; /* 1/3 width */
   border-left: 1px solid var(--color-border);
-  border-top: none;
-  /* Arrange internal containers vertically */
-  flex-direction: column;
+  overflow: hidden; /* Don't scroll the container itself */
+  display: flex;
+  flex-direction: column; /* Stack the UI sections vertically */
 }
 
-/* Landscape internal UI containers */
-.composite-engine-panel.layout-internal-landscape .ui-container > .left-ui-container {
-  flex: 1 1 33%; /* ~1/3 width */
-  min-width: 0; /* Prevent overflow */
-  padding-right: var(--spacing-xs, 4px);
-  box-sizing: border-box;
-  overflow-y: auto;
-  width: 100%; /* Added for column layout */
-}
-
-.composite-engine-panel.layout-internal-landscape .ui-container > .right-ui-container {
-  flex: 2 1 67%; /* ~2/3 width */
-  min-width: 0; /* Prevent overflow */
-  padding-left: var(--spacing-xs, 4px);
-  box-sizing: border-box;
-  overflow-y: auto;
-  width: 100%; /* Added for column layout */
-}
-
-/* Portrait specific UI container */
-.composite-engine-panel.layout-internal-portrait .ui-container {
-  flex: 0 0 auto; /* Height based on content, or set a max-height */
+/* Top UI section (Focus Control) */
+.composite-engine-panel.layout-internal-landscape
+  .ui-container
+  > .left-ui-container {
+  flex: 0 0 auto; /* Height based on content */
   width: 100%;
+  padding: var(--spacing-sm);
+  overflow-y: auto; /* Allow scrolling within top section if needed */
+  box-sizing: border-box;
+  max-height: 40%; /* Ensure it doesn't take more than 40% of the height */
+  min-height: 100px; /* Minimum height even if content is collapsed */
+}
+
+/* Bottom UI section (Other panels) */
+.composite-engine-panel.layout-internal-landscape
+  .ui-container
+  > .right-ui-container {
+  flex: 1; /* Take remaining height */
+  width: 100%;
+  padding: var(--spacing-sm);
+  overflow-y: auto; /* Allow scrolling within bottom section */
+  box-sizing: border-box;
   border-top: 1px solid var(--color-border);
-  border-left: none;
-  max-height: 40%; /* Example: Limit height in portrait */
-  /* Arrange internal containers horizontally */
-  flex-direction: row;
+  min-height: 60%; /* Ensure it takes at least 60% of the height */
 }
 
-/* Portrait internal UI containers */
-.composite-engine-panel.layout-internal-portrait .ui-container > .left-ui-container,
-.composite-engine-panel.layout-internal-portrait .ui-container > .right-ui-container {
+/* === LANDSCAPE LAYOUT (Device Portrait) === */
+.composite-engine-panel.layout-internal-portrait {
+  flex-direction: column; /* Engine on top, UI below */
+}
+
+/* Engine takes majority height in landscape */
+.composite-engine-panel.layout-internal-portrait .engine-container {
+  flex: 1; /* Fill available height */
+  overflow: hidden;
+  position: relative;
+}
+
+/* UI container fixed max-height in landscape */
+.composite-engine-panel.layout-internal-portrait .ui-container {
+  flex: 0 0 auto; /* Height based on content */
+  max-height: 40%; /* Maximum 40% height */
+  min-height: 200px; /* Minimum height to ensure panels are visible */
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: row; /* Place UI sections side by side */
+}
+
+/* Left UI section (Focus Control) */
+.composite-engine-panel.layout-internal-portrait
+  .ui-container
+  > .left-ui-container {
+  flex: 0 0 33%; /* 1/3 width */
+  height: 100%;
+  padding: var(--spacing-sm);
+  overflow-y: auto; /* Allow scrolling */
+  box-sizing: border-box;
+  border-right: 1px solid var(--color-border);
+  min-height: 200px; /* Minimum height even if content is collapsed */
+}
+
+/* Right UI section (Other panels) */
+.composite-engine-panel.layout-internal-portrait
+  .ui-container
+  > .right-ui-container {
+  flex: 0 0 67%; /* 2/3 width */
+  height: 100%;
+  padding: var(--spacing-sm);
+  overflow-y: auto; /* Allow scrolling */
+  box-sizing: border-box;
+  display: flex; /* Make it a flex container */
+  flex-direction: column; /* Stack panels vertically */
+  min-height: 200px; /* Minimum height even if content is collapsed */
+}
+
+/* Ensure all collapsible sections are displayed properly */
+.composite-engine-panel .ui-container collapsible-section {
   width: 100%;
-  height: auto; /* Adjust height based on content */
-  /* Adjust flex for row layout in portrait */
-  flex: 1;
+  margin-bottom: var(--spacing-sm);
+  /* Ensure minimum height for the section even when collapsed */
+  min-height: fit-content; /* Height of header */
+}
+
+/* Target specific components inside the collapsible sections */
+.composite-engine-panel
+  .right-ui-container
+  collapsible-section
+  renderer-info-display,
+.composite-engine-panel .right-ui-container collapsible-section celestial-info,
+.composite-engine-panel
+  .right-ui-container
+  collapsible-section
+  engine-ui-settings-panel {
+  display: block;
+  width: 100%;
+  min-height: 30px; /* Ensure minimum height */
 }
 
 /* --- End Composite Panel Layout --- */

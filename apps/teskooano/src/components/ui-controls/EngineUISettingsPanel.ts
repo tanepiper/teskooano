@@ -140,7 +140,7 @@ export class EngineUISettingsPanel extends HTMLElement {
 
     // Attempt to sync state if parent panel is already set
     if (this._parentPanel) {
-        this.syncWithParentPanelState();
+      this.syncWithParentPanelState();
     }
   }
 
@@ -191,30 +191,30 @@ export class EngineUISettingsPanel extends HTMLElement {
     this._parentPanel = panel;
     // If connected, sync state now
     if (this.isConnected) {
-        this.syncWithParentPanelState();
+      this.syncWithParentPanelState();
     }
   }
 
   // Method to get initial state and subscribe to updates from parent panel
   private syncWithParentPanelState(): void {
-      if (!this._parentPanel) {
-          this.showError("Parent panel not available.");
-          return;
-      }
+    if (!this._parentPanel) {
+      this.showError("Parent panel not available.");
+      return;
+    }
 
-      // Unsubscribe from previous parent state if any
-      this._unsubscribeParentState?.();
+    // Unsubscribe from previous parent state if any
+    this._unsubscribeParentState?.();
 
-      // Get initial state from parent panel
-      const initialState = this._parentPanel.getViewState();
-      this.updateToggleState(initialState);
+    // Get initial state from parent panel
+    const initialState = this._parentPanel.getViewState();
+    this.updateToggleState(initialState);
 
-      // Subscribe to state changes from parent panel
-      this._unsubscribeParentState = this._parentPanel.subscribeToViewState(
-          (newState: PanelViewState) => {
-              this.updateToggleState(newState);
-          }
-      );
+    // Subscribe to state changes from parent panel
+    this._unsubscribeParentState = this._parentPanel.subscribeToViewState(
+      (newState: PanelViewState) => {
+        this.updateToggleState(newState);
+      },
+    );
   }
 
   // Event handlers bound to the class instance

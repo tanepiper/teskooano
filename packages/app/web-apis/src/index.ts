@@ -3,51 +3,53 @@
  * Exports various reactive stores and functions based on browser Web APIs.
  */
 
-export * from './resizeObserver';
+export * as ResizeObserverAPI from "./resizeObserver";
 // Add other exports here as we create them, e.g.:
 // export * from './breakpoint';
 // export * from './deviceOrientation';
 
 // Export observer utilities
-export * from './observers';
+export * as ObserversAPI from "./observers";
 
 // Export storage utilities
-export * from './storage';
+export * as StorageAPI from "./storage";
 
 // Export network utilities
-export * from './network';
+export * as NetworkAPI from "./network";
 
 // Export worker utilities
-export * from './workers';
+export * as WorkersAPI from "./workers";
 
 // Export animation utilities
-export * from './animation';
+export * as AnimationAPI from "./animation";
 
 // Export fullscreen utilities
-export * from './fullscreen';
+export * as FullscreenAPI from "./fullscreen";
 
 // Export clipboard utilities
-export * from './clipboard';
+export * as ClipboardAPI from "./clipboard";
 
 // -- Mobile / Sensor APIs --
-export * from './battery';
-export * from './device-orientation';
-export * from './idle-detection';
+export * as BatteryAPI from "./battery";
+export * as DeviceOrientationAPI from "./device-orientation";
+export * as IdleDetectionAPI from "./idle-detection";
 
 // -- Performance & Capabilities --
-export * from './device-memory';
-export * from './background-tasks';
-export * from './gamepad';
+export * as DeviceMemoryAPI from "./device-memory";
+export * as BackgroundTasksAPI from "./background-tasks";
+export * as GamepadAPI from "./gamepad";
 
 // -- UI & Interaction --
-export * from './drag-and-drop';
-export * from './invoker-commands';
+export * as DragAndDropAPI from "./drag-and-drop";
+export * as InvokerCommandsAPI from "./invoker-commands";
 
 // -- Media --
-export * from './media-recorder';
+export * as MediaRecorderAPI from "./media-recorder";
 
 // -- Casting & Remote Display --
-export * from './remote-playback';
+export * as RemotePlaybackAPI from "./remote-playback";
 
 // -- Screen & Window --
-export * from './screen-capture'; 
+export * as ScreenCaptureAPI from "./screen-capture";
+
+export * as PopoverAPI from "./popover";

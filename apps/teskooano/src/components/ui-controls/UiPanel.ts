@@ -53,19 +53,21 @@ export class UiPanel implements IContentRenderer {
     this._element.style.overflowY = "auto";
 
     // --- Subscribe to layout orientation changes ---
-    this._layoutUnsubscribe = layoutOrientationStore.subscribe((orientation) => {
-      if (this._currentOrientation !== orientation) {
-        this._currentOrientation = orientation;
-        console.log(`UiPanel [${this._api?.id}] orientation: ${orientation}`); // Debug
-        if (orientation === "portrait") {
-          this._element.classList.remove("layout-internal-landscape");
-          this._element.classList.add("layout-internal-portrait");
-        } else {
-          this._element.classList.remove("layout-internal-portrait");
-          this._element.classList.add("layout-internal-landscape");
+    this._layoutUnsubscribe = layoutOrientationStore.subscribe(
+      (orientation) => {
+        if (this._currentOrientation !== orientation) {
+          this._currentOrientation = orientation;
+          console.log(`UiPanel [${this._api?.id}] orientation: ${orientation}`); // Debug
+          if (orientation === "portrait") {
+            this._element.classList.remove("layout-internal-landscape");
+            this._element.classList.add("layout-internal-portrait");
+          } else {
+            this._element.classList.remove("layout-internal-portrait");
+            this._element.classList.add("layout-internal-landscape");
+          }
         }
-      }
-    });
+      },
+    );
     // Apply initial class
     const initialOrientation = layoutOrientationStore.get();
     this._currentOrientation = initialOrientation;
@@ -128,12 +130,17 @@ export class UiPanel implements IContentRenderer {
         }
 
         // --- Sort into containers ---
-        if (config.id === 'focus-selector-section') { // Assuming this ID for the focus selector
-            leftContainer.appendChild(sectionContainer);
-            console.log(` -> Added component <${config.componentTag}> to LEFT container`);
+        if (config.id === "focus-selector-section") {
+          // Assuming this ID for the focus selector
+          leftContainer.appendChild(sectionContainer);
+          console.log(
+            ` -> Added component <${config.componentTag}> to LEFT container`,
+          );
         } else {
-            rightContainer.appendChild(sectionContainer);
-            console.log(` -> Added component <${config.componentTag}> to RIGHT container`);
+          rightContainer.appendChild(sectionContainer);
+          console.log(
+            ` -> Added component <${config.componentTag}> to RIGHT container`,
+          );
         }
         // --- End sorting ---
 

@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from "rxjs";
 
 declare global {
   interface Navigator {
@@ -12,7 +12,7 @@ declare global {
  * @returns `true` if `navigator.deviceMemory` exists, `false` otherwise.
  */
 export function isDeviceMemorySupported(): boolean {
-  return typeof navigator !== 'undefined' && 'deviceMemory' in navigator;
+  return typeof navigator !== "undefined" && "deviceMemory" in navigator;
 }
 
 /**
@@ -22,7 +22,7 @@ export function isDeviceMemorySupported(): boolean {
  */
 export function getDeviceMemory(): number | null {
   if (!isDeviceMemorySupported()) {
-    console.warn('Device Memory API is not supported.');
+    console.warn("Device Memory API is not supported.");
     return null;
   }
   return navigator.deviceMemory ?? null; // Return null if undefined
@@ -44,10 +44,13 @@ const initialDeviceMemoryState: DeviceMemoryState = {
 };
 
 // Create a simple BehaviorSubject since the value doesn't change.
-const deviceMemorySubject = new BehaviorSubject<DeviceMemoryState>(initialDeviceMemoryState);
+const deviceMemorySubject = new BehaviorSubject<DeviceMemoryState>(
+  initialDeviceMemoryState,
+);
 
 /**
  * An RxJS Observable that emits the approximate device memory.
  * It emits the current value immediately upon subscription.
  */
-export const deviceMemory$: Observable<DeviceMemoryState> = deviceMemorySubject.asObservable();
+export const deviceMemory$: Observable<DeviceMemoryState> =
+  deviceMemorySubject.asObservable();

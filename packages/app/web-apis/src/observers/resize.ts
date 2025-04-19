@@ -1,5 +1,5 @@
-import { Observable } from 'rxjs';
-import { share } from 'rxjs/operators';
+import { Observable } from "rxjs";
+import { share } from "rxjs/operators";
 
 /**
  * Simplified ResizeObserver callback type.
@@ -19,10 +19,10 @@ export type SimpleResizeObserverCallback = (entry: ResizeObserverEntry) => void;
 export function observeResize(
   element: Element,
   callback: SimpleResizeObserverCallback,
-  options?: ResizeObserverOptions
+  options?: ResizeObserverOptions,
 ): () => void {
-  if (typeof ResizeObserver === 'undefined') {
-    console.warn('ResizeObserver is not supported in this environment.');
+  if (typeof ResizeObserver === "undefined") {
+    console.warn("ResizeObserver is not supported in this environment.");
     return () => {}; // Return no-op cleanup
   }
 
@@ -48,11 +48,13 @@ export function observeResize(
  */
 export function observeResize$(
   element: Element,
-  options?: ResizeObserverOptions
+  options?: ResizeObserverOptions,
 ): Observable<ResizeObserverEntry[]> {
   return new Observable<ResizeObserverEntry[]>((subscriber) => {
-    if (typeof ResizeObserver === 'undefined') {
-      console.warn('ResizeObserver is not supported, observable will not emit.');
+    if (typeof ResizeObserver === "undefined") {
+      console.warn(
+        "ResizeObserver is not supported, observable will not emit.",
+      );
       subscriber.complete();
       return;
     }
@@ -68,4 +70,4 @@ export function observeResize$(
       observer.disconnect();
     };
   }).pipe(share()); // Share the underlying observer
-} 
+}

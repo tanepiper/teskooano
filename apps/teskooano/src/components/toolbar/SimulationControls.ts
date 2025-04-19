@@ -63,6 +63,14 @@ template.innerHTML = `
         opacity: 0.9;
         z-index: 10;
     }
+    :host([mobile]) #time-value {
+       min-width: 90px; /* Reduce width */
+       font-size: 0.9em; /* Slightly smaller font */
+    }
+    :host([mobile]) #scale-value {
+       min-width: 50px; /* Reduce width */
+       font-size: 0.9em;
+    }
   </style>
 
   <teskooano-button id="reverse" title="Reverse Direction">

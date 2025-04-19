@@ -8,6 +8,10 @@ template.innerHTML = `
       border-radius: var(--border-radius-md, 5px); /* Updated theme variable */
       overflow: hidden; /* Prevents content bleed when closed */
       background-color: var(--color-surface, #2a2a3e); /* Updated theme variable */
+      /* Ensure the host itself can flex if needed by parent */
+      display: flex; 
+      flex-direction: column;
+      min-height: 0; /* Prevent shrinking issues in flex context */
     }
     .header {
       background-color: var(--color-background, #1a1a2e); /* Updated theme variable */
@@ -19,6 +23,7 @@ template.innerHTML = `
       user-select: none;
       /* Keep subtle border, might be needed depending on bg colors */
       border-bottom: 1px solid var(--color-border-subtle, #30304a); 
+      flex-shrink: 0; /* Prevent header from shrinking */
     }
     /* Keep brightness hover for now */
     .header:hover {
@@ -37,17 +42,28 @@ template.innerHTML = `
     }
     .content {
       padding: var(--space-sm, 8px); /* Reduced padding */
-      /* Transition for smooth collapse/expand */
-      max-height: 1000px; /* Set a large max-height for open state */
-      overflow: hidden;
-      transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, border-top 0.3s ease-in-out;
+      /* Transition for smooth collapse/expand - REMOVED max-height */
+      /* max-height: 1000px; */ /* REMOVED - Let flex control height */
+      overflow: hidden; /* Keep hidden for collapse */
+      transition: padding 0.3s ease-in-out, opacity 0.3s ease-in-out; /* Adjusted transition */
+      opacity: 1;
+      /* Let flex determine height when open */
+      flex: 1 1 auto; /* Allow content to grow/shrink */
+      min-height: 0; /* Prevent flex overflow issues */
+      /* Add flex context for slotted children if needed */
+      display: flex; 
+      flex-direction: column;
       /* Removed border-top, rely on header border */
     }
     :host([closed]) .content {
-      max-height: 0;
+      max-height: 0; /* Keep for closing animation */
       padding-top: 0;
       padding-bottom: 0;
-      /* border-top-color: transparent; Removed */
+      border-top-color: transparent; /* Keep border transition smooth */
+      opacity: 0; /* Fade out content */
+      min-height: 0; /* Ensure it can shrink to zero */
+      overflow: hidden; /* Ensure content is clipped */
+      flex: 0 0 0px; /* Explicitly set flex basis to 0 when closed */
     }
     :host([closed]) .header {
        border-bottom-color: transparent; /* Hide border when closed */

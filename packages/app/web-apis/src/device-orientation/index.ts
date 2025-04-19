@@ -1,5 +1,10 @@
-import { Observable, fromEvent, merge } from 'rxjs';
-import { map, startWith, shareReplay, distinctUntilChanged } from 'rxjs/operators';
+import { Observable, fromEvent, merge } from "rxjs";
+import {
+  map,
+  startWith,
+  shareReplay,
+  distinctUntilChanged,
+} from "rxjs/operators";
 
 /**
  * Interface for Device Orientation event data.
@@ -16,7 +21,7 @@ export interface DeviceOrientationData {
   /** Indicates if the Device Orientation API is supported by the browser. */
   isSupported: boolean;
   /** Current permission state ('prompt', 'granted', 'denied'). */
-  permissionState: PermissionState | 'prompt';
+  permissionState: PermissionState | "prompt";
   /** Error message if permission denied or API not supported */
   error?: string;
 }
@@ -26,73 +31,76 @@ const initialOrientationState: DeviceOrientationData = {
   beta: null,
   gamma: null,
   absolute: false,
-  isSupported: typeof window !== 'undefined' && 'DeviceOrientationEvent' in window,
-  permissionState: 'prompt', // Assume prompt needed initially
+  isSupported:
+    typeof window !== "undefined" && "DeviceOrientationEvent" in window,
+  permissionState: "prompt", // Assume prompt needed initially
 };
 
 // Check for the specific permission request method needed for iOS 13+
 const requiresPermissionRequest =
-  typeof (DeviceOrientationEvent as any)?.requestPermission === 'function';
+  typeof (DeviceOrientationEvent as any)?.requestPermission === "function";
 
-let permissionState: PermissionState | 'prompt' = 'prompt';
+let permissionState: PermissionState | "prompt" = "prompt";
 if (!requiresPermissionRequest) {
   // If no permission request method exists, assume granted (older browsers/Android)
-  permissionState = 'granted';
-  initialOrientationState.permissionState = 'granted';
+  permissionState = "granted";
+  initialOrientationState.permissionState = "granted";
 } else {
   // For iOS 13+, we need to explicitly check/request
-  initialOrientationState.permissionState = 'prompt';
+  initialOrientationState.permissionState = "prompt";
 }
 
 // Internal function to create the observable
 function createOrientationObservable(): Observable<DeviceOrientationData> {
-  if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) {
+  if (typeof window === "undefined" || !("DeviceOrientationEvent" in window)) {
     return new Observable((subscriber) => {
       subscriber.next({
         ...initialOrientationState,
         isSupported: false,
-        error: 'DeviceOrientationEvent not supported.',
+        error: "DeviceOrientationEvent not supported.",
       });
       subscriber.complete();
     });
   }
 
   // If permission is required but not granted, return state indicating prompt needed
-  if (requiresPermissionRequest && permissionState !== 'granted') {
+  if (requiresPermissionRequest && permissionState !== "granted") {
     return new Observable((subscriber) => {
       subscriber.next({
         ...initialOrientationState,
         permissionState: permissionState,
         error:
-          permissionState === 'denied'
-            ? 'Permission denied.'
-            : 'Permission required.',
+          permissionState === "denied"
+            ? "Permission denied."
+            : "Permission required.",
       });
       // Keep the observable alive in case permission is granted later via requestPermission()
     });
   }
 
   // If supported and permission granted (or not needed)
-  return fromEvent<DeviceOrientationEvent>(window, 'deviceorientation').pipe(
-    map((event): DeviceOrientationData => ({
-      alpha: event.alpha,
-      beta: event.beta,
-      gamma: event.gamma,
-      absolute: event.absolute,
-      isSupported: true,
-      permissionState: 'granted',
-    })),
+  return fromEvent<DeviceOrientationEvent>(window, "deviceorientation").pipe(
+    map(
+      (event): DeviceOrientationData => ({
+        alpha: event.alpha,
+        beta: event.beta,
+        gamma: event.gamma,
+        absolute: event.absolute,
+        isSupported: true,
+        permissionState: "granted",
+      }),
+    ),
     startWith(<DeviceOrientationData>{
       ...initialOrientationState,
       isSupported: true,
-      permissionState: 'granted',
+      permissionState: "granted",
     }),
     distinctUntilChanged(
       (prev, curr) =>
         prev.alpha === curr.alpha &&
         prev.beta === curr.beta &&
-        prev.gamma === curr.gamma
-    ) // Only emit when values actually change
+        prev.gamma === curr.gamma,
+    ), // Only emit when values actually change
   );
 }
 
@@ -103,7 +111,7 @@ function createOrientationObservable(): Observable<DeviceOrientationData> {
  * Use `requestDeviceOrientationPermission()` before subscribing on iOS 13+ devices.
  */
 export const deviceOrientation$ = createOrientationObservable().pipe(
-  shareReplay({ bufferSize: 1, refCount: true }) // Share the source and replay the last emission
+  shareReplay({ bufferSize: 1, refCount: true }), // Share the source and replay the last emission
 );
 
 /**
@@ -115,30 +123,36 @@ export const deviceOrientation$ = createOrientationObservable().pipe(
 export async function requestDeviceOrientationPermission(): Promise<boolean> {
   if (!requiresPermissionRequest) {
     console.log(
-      'DeviceOrientationEvent.requestPermission() not needed or not supported.'
+      "DeviceOrientationEvent.requestPermission() not needed or not supported.",
     );
     return true; // Permission not required
   }
 
   try {
-    const state: PermissionState = await (DeviceOrientationEvent as any).requestPermission();
+    const state: PermissionState = await (
+      DeviceOrientationEvent as any
+    ).requestPermission();
     permissionState = state;
-    if (state === 'granted') {
+    if (state === "granted") {
       // Manually trigger an update to the observable if it exists and permission was granted
       // This is a bit hacky, might need a cleaner way to re-trigger observable creation
-      (deviceOrientation$ as any)._subscribe(new (require('rxjs').Subscriber)());
+      (deviceOrientation$ as any)._subscribe(
+        new (require("rxjs").Subscriber)(),
+      );
       return true;
     } else {
-      console.warn('Device orientation permission denied.');
+      console.warn("Device orientation permission denied.");
       // Trigger update with denied state
-      (deviceOrientation$ as any)._subscribe(new (require('rxjs').Subscriber)());
+      (deviceOrientation$ as any)._subscribe(
+        new (require("rxjs").Subscriber)(),
+      );
       return false;
     }
   } catch (error) {
-    console.error('Error requesting device orientation permission:', error);
-    permissionState = 'denied'; // Assume denied on error
+    console.error("Error requesting device orientation permission:", error);
+    permissionState = "denied"; // Assume denied on error
     // Trigger update with denied state
-    (deviceOrientation$ as any)._subscribe(new (require('rxjs').Subscriber)());
+    (deviceOrientation$ as any)._subscribe(new (require("rxjs").Subscriber)());
     return false;
   }
-} 
+}

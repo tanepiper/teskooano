@@ -4,22 +4,19 @@
  */
 declare class IdleDetector {
   constructor();
-  readonly userState: 'active' | 'idle';
-  readonly screenState: 'locked' | 'unlocked';
+  readonly userState: "active" | "idle";
+  readonly screenState: "locked" | "unlocked";
   onchange: ((this: IdleDetector, ev: Event) => any) | null;
-  start(options?: {
-    threshold: number;
-    signal?: AbortSignal;
-  }): Promise<void>;
+  start(options?: { threshold: number; signal?: AbortSignal }): Promise<void>;
   addEventListener(
-    type: 'change',
+    type: "change",
     listener: (this: IdleDetector, ev: Event) => any,
-    options?: boolean | AddEventListenerOptions
+    options?: boolean | AddEventListenerOptions,
   ): void;
   removeEventListener(
-    type: 'change',
+    type: "change",
     listener: (this: IdleDetector, ev: Event) => any,
-    options?: boolean | EventListenerOptions
+    options?: boolean | EventListenerOptions,
   ): void;
 }
 
@@ -41,15 +38,15 @@ declare global {
  * @returns `true` if `window.IdleDetector` exists, `false` otherwise.
  */
 export function isIdleDetectionSupported(): boolean {
-  return typeof window !== 'undefined' && 'IdleDetector' in window;
+  return typeof window !== "undefined" && "IdleDetector" in window;
 }
 
 /**
  * Callback function type for idle state changes.
  */
 export type IdleChangeCallback = (
-  state: { user: 'active' | 'idle'; screen: 'locked' | 'unlocked' },
-  detector: IdleDetector
+  state: { user: "active" | "idle"; screen: "locked" | "unlocked" },
+  detector: IdleDetector,
 ) => void;
 
 /**
@@ -73,22 +70,22 @@ export interface IdleObserverControls {
  */
 export async function observeIdleState(
   callback: IdleChangeCallback,
-  options: { threshold?: number } = {}
+  options: { threshold?: number } = {},
 ): Promise<IdleObserverControls | null> {
   if (!isIdleDetectionSupported()) {
-    console.warn('Idle Detection API is not supported.');
+    console.warn("Idle Detection API is not supported.");
     return null;
   }
 
   try {
     // 1. Check Permission Status
     const permissionStatus = await navigator.permissions.query({
-      name: 'idle-detection' as PermissionName, // Cast needed as type might be missing
+      name: "idle-detection" as PermissionName, // Cast needed as type might be missing
     });
 
-    if (permissionStatus.state !== 'granted') {
+    if (permissionStatus.state !== "granted") {
       console.warn(
-        `Idle detection permission state is ${permissionStatus.state}. Please request permission first.`
+        `Idle detection permission state is ${permissionStatus.state}. Please request permission first.`,
       );
       // Optionally, listen for changes in case permission is granted later
       // permissionStatus.onchange = () => { /* retry logic */ };
@@ -110,15 +107,15 @@ export async function observeIdleState(
           user: detector.userState,
           screen: detector.screenState,
         },
-        detector
+        detector,
       );
     };
 
-    detector.addEventListener('change', changeListener);
+    detector.addEventListener("change", changeListener);
 
     // Start the detector
     await detector.start({ threshold, signal });
-    console.log('Idle detector started.');
+    console.log("Idle detector started.");
 
     // Initial callback trigger
     changeListener();
@@ -128,18 +125,20 @@ export async function observeIdleState(
       stop: () => {
         controller.abort(); // This stops the detector via the signal
         if (detector) {
-          detector.removeEventListener('change', changeListener);
+          detector.removeEventListener("change", changeListener);
         }
-        console.log('Idle detector stopped.');
+        console.log("Idle detector stopped.");
       },
       detector,
     };
   } catch (err: any) {
     // Log specific error messages if available
-    if (err.name === 'NotAllowedError') {
-      console.error('Idle detection permission denied or requires user activation.');
+    if (err.name === "NotAllowedError") {
+      console.error(
+        "Idle detection permission denied or requires user activation.",
+      );
     } else {
-      console.error('Failed to start idle detector:', err);
+      console.error("Failed to start idle detector:", err);
     }
     return null;
   }
@@ -152,37 +151,30 @@ export async function observeIdleState(
  * @returns A Promise resolving to the `PermissionState` ('granted' or 'denied').
  */
 export async function requestIdleDetectionPermission(): Promise<
-  PermissionState | 'prompt'
+  PermissionState | "prompt"
 > {
   if (!isIdleDetectionSupported()) {
-    console.warn('Idle Detection API is not supported, cannot request permission.');
-    return 'denied';
+    console.warn(
+      "Idle Detection API is not supported, cannot request permission.",
+    );
+    return "denied";
   }
   try {
     // Attempting to query often implicitly requests if not granted, but best practice is explicit request if needed
     // However, Idle API currently doesn't have an explicit request method, relies on query + user activation.
     const permissionStatus = await navigator.permissions.query({
-      name: 'idle-detection' as PermissionName,
+      name: "idle-detection" as PermissionName,
     });
-    console.log(
-      `Idle detection permission status: ${permissionStatus.state}`
-    );
+    console.log(`Idle detection permission status: ${permissionStatus.state}`);
     // Re-check state after query, which might have prompted user
     return permissionStatus.state;
   } catch (err) {
-    console.error('Error querying idle detection permission:', err);
-    return 'denied';
+    console.error("Error querying idle detection permission:", err);
+    return "denied";
   }
 }
 
-import {
-  Observable,
-  Subject,
-  from,
-  defer,
-  EMPTY,
-  BehaviorSubject,
-} from 'rxjs';
+import { Observable, Subject, from, defer, EMPTY, BehaviorSubject } from "rxjs";
 import {
   switchMap,
   finalize,
@@ -190,15 +182,15 @@ import {
   catchError,
   startWith,
   distinctUntilChanged,
-} from 'rxjs/operators';
+} from "rxjs/operators";
 
 /**
  * Interface for the state emitted by the idleState$ observable.
  */
 export interface IdleObservableState {
-  user: 'active' | 'idle' | null;
-  screen: 'locked' | 'unlocked' | null;
-  permissionState: PermissionState | 'prompt';
+  user: "active" | "idle" | null;
+  screen: "locked" | "unlocked" | null;
+  permissionState: PermissionState | "prompt";
   isSupported: boolean;
   error?: string;
 }
@@ -206,13 +198,13 @@ export interface IdleObservableState {
 const initialIdleObservableState: IdleObservableState = {
   user: null,
   screen: null,
-  permissionState: 'prompt',
+  permissionState: "prompt",
   isSupported: isIdleDetectionSupported(),
 };
 
 // Subject to manage the permission state
-const idlePermissionSubject = new BehaviorSubject<PermissionState | 'prompt'>(
-  'prompt'
+const idlePermissionSubject = new BehaviorSubject<PermissionState | "prompt">(
+  "prompt",
 );
 
 // Update permission state when queried
@@ -220,7 +212,7 @@ async function updateIdlePermissionState() {
   if (initialIdleObservableState.isSupported) {
     try {
       const status = await navigator.permissions.query({
-        name: 'idle-detection' as PermissionName,
+        name: "idle-detection" as PermissionName,
       });
       idlePermissionSubject.next(status.state);
       // Listen for future changes (e.g., user revokes permission)
@@ -228,11 +220,11 @@ async function updateIdlePermissionState() {
         idlePermissionSubject.next(status.state);
       };
     } catch (err) {
-      console.error('Error querying idle permission:', err);
-      idlePermissionSubject.next('denied'); // Assume denied on error
+      console.error("Error querying idle permission:", err);
+      idlePermissionSubject.next("denied"); // Assume denied on error
     }
   } else {
-    idlePermissionSubject.next('denied'); // Not supported is equivalent to denied
+    idlePermissionSubject.next("denied"); // Not supported is equivalent to denied
   }
 }
 // Initial check
@@ -249,7 +241,7 @@ updateIdlePermissionState();
  * @param threshold Minimum idle time in milliseconds before emitting 'idle' (default 60000ms).
  */
 export function createIdleStateObservable(
-  threshold: number = 60000
+  threshold: number = 60000,
 ): Observable<IdleObservableState> {
   return idlePermissionSubject.pipe(
     switchMap((permissionState) => {
@@ -258,20 +250,20 @@ export function createIdleStateObservable(
           {
             ...initialIdleObservableState,
             isSupported: false,
-            permissionState: 'denied',
-            error: 'Idle Detection API not supported.',
+            permissionState: "denied",
+            error: "Idle Detection API not supported.",
           } as IdleObservableState,
         ]);
       }
-      if (permissionState !== 'granted') {
+      if (permissionState !== "granted") {
         return from([
           {
             ...initialIdleObservableState,
             permissionState,
             error:
-              permissionState === 'denied'
-                ? 'Permission denied.'
-                : 'Permission required.',
+              permissionState === "denied"
+                ? "Permission denied."
+                : "Permission required.",
           } as IdleObservableState,
         ]);
       }
@@ -291,28 +283,28 @@ export function createIdleStateObservable(
               subscriber.next({
                 user: detector.userState,
                 screen: detector.screenState,
-                permissionState: 'granted',
+                permissionState: "granted",
                 isSupported: true,
               });
             };
 
-            detector.addEventListener('change', changeListener);
+            detector.addEventListener("change", changeListener);
             await detector.start({ threshold, signal });
 
             // Emit initial state after start
             subscriber.next({
               user: detector.userState,
               screen: detector.screenState,
-              permissionState: 'granted',
+              permissionState: "granted",
               isSupported: true,
             });
 
-            console.log('Idle detector started via Observable.');
+            console.log("Idle detector started via Observable.");
           } catch (err: any) {
-            console.error('Failed to start idle detector for Observable:', err);
+            console.error("Failed to start idle detector for Observable:", err);
             subscriber.next({
               ...initialIdleObservableState,
-              permissionState: 'granted', // Still granted, but failed to start
+              permissionState: "granted", // Still granted, but failed to start
               error: `Failed to start detector: ${err.message}`,
             });
             // Don't complete, permission might still be valid
@@ -328,7 +320,7 @@ export function createIdleStateObservable(
             // No removeEventListener needed, abort signal handles cleanup
           }
           detector = null;
-          console.log('Idle detector stopped via Observable cleanup.');
+          console.log("Idle detector stopped via Observable cleanup.");
         };
       });
     }),
@@ -338,11 +330,11 @@ export function createIdleStateObservable(
         prev.user === curr.user &&
         prev.screen === curr.screen &&
         prev.permissionState === curr.permissionState &&
-        prev.error === curr.error
+        prev.error === curr.error,
     ),
-    shareReplay({ bufferSize: 1, refCount: true })
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
 }
 
 // Create a default instance of the observable
-export const idleState$ = createIdleStateObservable(); 
+export const idleState$ = createIdleStateObservable();

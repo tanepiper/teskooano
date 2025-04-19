@@ -1,24 +1,69 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, defineProps } from "vue";
 import "vue3-carousel/carousel.css";
 import { Carousel, Slide, Pagination, Navigation } from "vue3-carousel";
 import { useEasyLightbox } from "vue-easy-lightbox";
 
-const screenshotData = ref([
-  {
-    src: "/screenshots/teskooano-ui-1.png",
-    alt: "Teskooano UI Close-up",
-    caption:
-      "Close-up view of a planet with simulation controls and celestial body information panel.",
+const props = defineProps({
+  // Path to the images directory (relative to public)
+  basePath: {
+    type: String,
+    default: "/screenshots/",
   },
-  {
-    src: "/screenshots/teskooano-ui-2.png",
-    alt: "Teskooano UI Wide View",
-    caption: "Wider view showing multiple celestial bodies and orbital paths.",
+  // Array of image filenames or full image data objects
+  images: {
+    type: Array,
+    default: () => [
+      {
+        src: "teskooano-ui-1.png",
+        alt: "Teskooano UI Close-up",
+        caption:
+          "Close-up view of a planet with simulation controls and celestial body information panel.",
+      },
+      {
+        src: "teskooano-ui-2.png",
+        alt: "Teskooano UI Wide View",
+        caption:
+          "Wider view showing multiple celestial bodies and orbital paths.",
+      },
+    ],
   },
-  // Add more screenshots here if needed
-  // { src: '/screenshots/teskooano-ui-3.png', alt: 'Another view', caption: 'Description of another view.' },
-]);
+  // Carousel configuration
+  carouselOptions: {
+    type: Object,
+    default: () => ({
+      itemsToShow: 1,
+      wrapAround: true,
+      snapAlign: "center",
+    }),
+  },
+});
+
+// Process the images to ensure they have full paths and all required properties
+const screenshotData = computed(() => {
+  return props.images.map((image) => {
+    // Handle both string filenames and object formats
+    if (typeof image === "string") {
+      return {
+        src: `${props.basePath}${image}`,
+        alt: image.replace(/\.[^/.]+$/, ""), // Remove file extension for alt
+        caption: "",
+      };
+    } else {
+      // Handle object format, ensuring src has the correct path if not already absolute
+      const src =
+        image.src.startsWith("http") || image.src.startsWith("/")
+          ? image.src
+          : `${props.basePath}${image.src}`;
+
+      return {
+        src,
+        alt: image.alt || image.src.replace(/\.[^/.]+$/, ""),
+        caption: image.caption || "",
+      };
+    }
+  });
+});
 
 // Prepare image sources for the lightbox
 const lightboxImgs = computed(() => screenshotData.value.map((s) => s.src));
@@ -33,7 +78,7 @@ const {
   indexRef,
   imgsRef,
 } = useEasyLightbox({
-  imgs: lightboxImgs.value, // Pass computed image sources
+  imgs: lightboxImgs.value,
   initIndex: 0,
 });
 
@@ -44,11 +89,7 @@ const openLightbox = (index) => {
   showLightbox(); // Show the lightbox
 };
 
-const carouselConfig = ref({
-  itemsToShow: 1, // Show 1 full item and half of the next
-  wrapAround: true, // Loop the carousel
-  snapAlign: "center", // Center the active slide
-});
+const carouselConfig = computed(() => props.carouselOptions);
 </script>
 
 <template>
@@ -62,7 +103,9 @@ const carouselConfig = ref({
             class="carousel-img"
             @click="openLightbox(index)"
           />
-          <p class="carousel-caption">{{ screenshot.caption }}</p>
+          <p v-if="screenshot.caption" class="carousel-caption">
+            {{ screenshot.caption }}
+          </p>
         </div>
       </Slide>
 

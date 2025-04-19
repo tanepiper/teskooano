@@ -240,7 +240,10 @@ export class CelestialInfo extends HTMLElement {
 
     // ADD LISTENER FOR FOCUS CHANGES *FROM* THE RENDERER/CONTROLS
     // Assuming the same event name as used in FocusControl
-    document.addEventListener('renderer-focus-changed', this.handleRendererFocusChange);
+    document.addEventListener(
+      "renderer-focus-changed",
+      this.handleRendererFocusChange,
+    );
   }
 
   disconnectedCallback() {
@@ -254,7 +257,10 @@ export class CelestialInfo extends HTMLElement {
     this.unsubscribeObjectsStore?.();
     this.unsubscribeObjectsStore = null;
 
-    document.removeEventListener('renderer-focus-changed', this.handleRendererFocusChange);
+    document.removeEventListener(
+      "renderer-focus-changed",
+      this.handleRendererFocusChange,
+    );
   }
 
   /**
@@ -271,7 +277,9 @@ export class CelestialInfo extends HTMLElement {
 
   // Event handler for focus changes from the renderer
   private handleRendererFocusChange = (event: Event): void => {
-    const customEvent = event as CustomEvent<{ focusedObjectId: string | null }>;
+    const customEvent = event as CustomEvent<{
+      focusedObjectId: string | null;
+    }>;
     if (customEvent.detail) {
       this.handleSelectionChange(customEvent.detail.focusedObjectId);
     }

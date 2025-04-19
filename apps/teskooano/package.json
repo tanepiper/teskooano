@@ -14,6 +14,7 @@
     "@teskooano/core-state": "file:../../packages/core/state",
     "@teskooano/procedural-generation": "file:../../packages/systems/procedural-generation",
     "@teskooano/renderer-threejs": "file:../../packages/renderer/threejs",
+    "@teskooano/web-apis": "file:../../packages/app/web-apis",
     "three": "0.175.0",
     "dockview-core": "4.2.3",
     "nanostores": "1.0.1",

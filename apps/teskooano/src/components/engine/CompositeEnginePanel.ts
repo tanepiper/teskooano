@@ -107,21 +107,25 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._element.appendChild(this._uiContainer);
 
     // --- Subscribe to layout orientation changes ---
-    this._layoutUnsubscribe = layoutOrientationStore.subscribe((orientation) => {
-      if (this._currentOrientation !== orientation) {
-        this._currentOrientation = orientation;
-        console.log(`CompositePanel [${this._api?.id}] orientation: ${orientation}`); // Debug
-        if (orientation === "portrait") {
-          this._element.classList.remove("layout-internal-landscape");
-          this._element.classList.add("layout-internal-portrait");
-        } else {
-          this._element.classList.remove("layout-internal-portrait");
-          this._element.classList.add("layout-internal-landscape");
+    this._layoutUnsubscribe = layoutOrientationStore.subscribe(
+      (orientation) => {
+        if (this._currentOrientation !== orientation) {
+          this._currentOrientation = orientation;
+          console.log(
+            `CompositePanel [${this._api?.id}] orientation: ${orientation}`,
+          ); // Debug
+          if (orientation === "portrait") {
+            this._element.classList.remove("layout-internal-landscape");
+            this._element.classList.add("layout-internal-portrait");
+          } else {
+            this._element.classList.remove("layout-internal-portrait");
+            this._element.classList.add("layout-internal-landscape");
+          }
+          // Force renderer resize after potential layout shifts
+          this.triggerResize();
         }
-        // Force renderer resize after potential layout shifts
-        this.triggerResize();
-      }
-    });
+      },
+    );
     // Apply initial class
     const initialOrientation = layoutOrientationStore.get();
     this._currentOrientation = initialOrientation;
@@ -157,7 +161,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       ...updates,
     });
     // Apply changes directly to the renderer if it exists
-    this.applyViewStateToRenderer(updates); 
+    this.applyViewStateToRenderer(updates);
   }
 
   public subscribeToViewState(
@@ -168,91 +172,101 @@ export class CompositeEnginePanel implements IContentRenderer {
 
   // Apply specific state updates to the internal renderer
   private applyViewStateToRenderer(updates: Partial<PanelViewState>): void {
-      if (!this._renderer) return;
+    if (!this._renderer) return;
 
-      if (updates.showGrid !== undefined) {
-          this._renderer.setGridVisible(updates.showGrid);
-      }
-      if (updates.showCelestialLabels !== undefined) {
-          this._renderer.setCelestialLabelsVisible(updates.showCelestialLabels);
-      }
-      if (updates.showAuMarkers !== undefined) {
-          this._renderer.setAuMarkersVisible(updates.showAuMarkers);
-      }
-      if (updates.showDebrisEffects !== undefined) {
-          this._renderer.setDebrisEffectsEnabled(updates.showDebrisEffects);
-      }
-      // Add other direct renderer updates here if needed (e.g., camera, focus)
-      // Note: Focus is likely handled separately via controlsManager
+    if (updates.showGrid !== undefined) {
+      this._renderer.setGridVisible(updates.showGrid);
+    }
+    if (updates.showCelestialLabels !== undefined) {
+      this._renderer.setCelestialLabelsVisible(updates.showCelestialLabels);
+    }
+    if (updates.showAuMarkers !== undefined) {
+      this._renderer.setAuMarkersVisible(updates.showAuMarkers);
+    }
+    if (updates.showDebrisEffects !== undefined) {
+      this._renderer.setDebrisEffectsEnabled(updates.showDebrisEffects);
+    }
+    // Add other direct renderer updates here if needed (e.g., camera, focus)
+    // Note: Focus is likely handled separately via controlsManager
   }
 
   // --- Public methods for UI controls to call (Calls updateViewState internally) ---
   public setShowGrid(visible: boolean): void {
-      this.updateViewState({ showGrid: visible });
+    this.updateViewState({ showGrid: visible });
   }
   public setShowCelestialLabels(visible: boolean): void {
-      this.updateViewState({ showCelestialLabels: visible });
+    this.updateViewState({ showCelestialLabels: visible });
   }
   public setShowAuMarkers(visible: boolean): void {
-      this.updateViewState({ showAuMarkers: visible });
+    this.updateViewState({ showAuMarkers: visible });
   }
   public setDebrisEffectsEnabled(visible: boolean): void {
-      this.updateViewState({ showDebrisEffects: visible });
+    this.updateViewState({ showDebrisEffects: visible });
   }
   // --- End Public methods for UI controls ---
 
   // --- Methods for FocusControl interaction ---
   public focusOnObject(objectId: string | null, distance?: number): void {
-      if (!this._renderer?.controlsManager) return;
+    if (!this._renderer?.controlsManager) return;
 
-      if (objectId === null) {
-          // Clear focus
-          this._renderer.controlsManager.moveTo(
-              DEFAULT_CAMERA_POSITION.clone(),
-              DEFAULT_CAMERA_TARGET.clone(),
-          );
-          this._renderer.setFollowTarget(null);
-          this.updateViewState({ focusedObjectId: null }); // Update internal state
-          // TODO: Consider emitting 'renderer-focus-changed' event?
-          this.dispatchFocusChangeEvent(); // Dispatch event on clear too
-      } else {
-          // Focus on object
-          const renderables = renderableObjectsStore.get(); // Get full map
-          const renderableObject = renderables[objectId];
-          console.log(`[CompositePanel] focusOnObject: Found renderable:`, renderableObject); // LOG 3
+    if (objectId === null) {
+      // Clear focus
+      this._renderer.controlsManager.moveTo(
+        DEFAULT_CAMERA_POSITION.clone(),
+        DEFAULT_CAMERA_TARGET.clone(),
+      );
+      this._renderer.setFollowTarget(null);
+      this.updateViewState({ focusedObjectId: null }); // Update internal state
+      // TODO: Consider emitting 'renderer-focus-changed' event?
+      this.dispatchFocusChangeEvent(); // Dispatch event on clear too
+    } else {
+      // Focus on object
+      const renderables = renderableObjectsStore.get(); // Get full map
+      const renderableObject = renderables[objectId];
+      console.log(
+        `[CompositePanel] focusOnObject: Found renderable:`,
+        renderableObject,
+      ); // LOG 3
 
-          if (!renderableObject?.position) {
-              console.error(`[CompositePanel] focusOnObject: Cannot focus on ${objectId}, missing renderable position. Renderables dump:`, renderables); // LOG 4 + dump
-              return;
-          }
-          const targetPosition = renderableObject.position.clone();
-          const calculatedDistance = distance ?? DEFAULT_CAMERA_DISTANCE; // Ensure valid number
-          const cameraPosition = targetPosition.clone().add(CAMERA_OFFSET.clone().multiplyScalar(calculatedDistance));
-          console.log(`[CompositePanel] focusOnObject: targetPos=${targetPosition.toArray()}, camPos=${cameraPosition.toArray()}, dist=${calculatedDistance}`); // LOG 5
-
-          this._renderer.controlsManager.moveTo(cameraPosition, targetPosition);
-          console.log("[CompositePanel] focusOnObject: moveTo called."); // LOG 6
-          this._renderer.setFollowTarget(objectId);
-          this.updateViewState({ focusedObjectId: objectId }); // Update internal state
-          // TODO: Consider emitting 'renderer-focus-changed' event?
+      if (!renderableObject?.position) {
+        console.error(
+          `[CompositePanel] focusOnObject: Cannot focus on ${objectId}, missing renderable position. Renderables dump:`,
+          renderables,
+        ); // LOG 4 + dump
+        return;
       }
+      const targetPosition = renderableObject.position.clone();
+      const calculatedDistance = distance ?? DEFAULT_CAMERA_DISTANCE; // Ensure valid number
+      const cameraPosition = targetPosition
+        .clone()
+        .add(CAMERA_OFFSET.clone().multiplyScalar(calculatedDistance));
+      console.log(
+        `[CompositePanel] focusOnObject: targetPos=${targetPosition.toArray()}, camPos=${cameraPosition.toArray()}, dist=${calculatedDistance}`,
+      ); // LOG 5
+
+      this._renderer.controlsManager.moveTo(cameraPosition, targetPosition);
+      console.log("[CompositePanel] focusOnObject: moveTo called."); // LOG 6
+      this._renderer.setFollowTarget(objectId);
+      this.updateViewState({ focusedObjectId: objectId }); // Update internal state
+      // TODO: Consider emitting 'renderer-focus-changed' event?
+    }
   }
 
   public resetCameraView(): void {
-      if (!this._renderer?.controlsManager) return;
-      this._renderer.controlsManager.moveTo(
-          DEFAULT_CAMERA_POSITION.clone(),
-          DEFAULT_CAMERA_TARGET.clone(),
-      );
-      this._renderer.setFollowTarget(null);
-      this.updateViewState({ focusedObjectId: null });
-      // TODO: Emit event?
-      this.dispatchFocusChangeEvent(); // Dispatch event
+    if (!this._renderer?.controlsManager) return;
+    this._renderer.controlsManager.moveTo(
+      DEFAULT_CAMERA_POSITION.clone(),
+      DEFAULT_CAMERA_TARGET.clone(),
+    );
+    this._renderer.setFollowTarget(null);
+    this.updateViewState({ focusedObjectId: null });
+    // TODO: Emit event?
+    this.dispatchFocusChangeEvent(); // Dispatch event
   }
 
   public clearFocus(): void {
-      // Equivalent to focusing on null
-      this.focusOnObject(null);
+    // Equivalent to focusing on null
+    this.focusOnObject(null);
   }
   // --- End FocusControl Methods ---
 
@@ -326,8 +340,8 @@ export class CompositeEnginePanel implements IContentRenderer {
 
       // Listen for camera transition completion events
       document.addEventListener(
-          "camera-transition-complete",
-          this.handleCameraTransitionComplete // Use bound method
+        "camera-transition-complete",
+        this.handleCameraTransitionComplete, // Use bound method
       );
 
       this._renderer.startRenderLoop();
@@ -342,7 +356,8 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._resizeObserver.observe(this._engineContainer);
     } catch (error) {
       console.error(
-        `Failed to initialize CompositePanel [${this._api?.id}] renderer:`, error
+        `Failed to initialize CompositePanel [${this._api?.id}] renderer:`,
+        error,
       );
       if (this._engineContainer) {
         this._engineContainer.textContent = `Error initializing engine renderer: ${error}`;
@@ -353,40 +368,42 @@ export class CompositeEnginePanel implements IContentRenderer {
 
   // Bound event handler for camera transition completion
   private handleCameraTransitionComplete = (event: Event): void => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail) {
-          const { position, target } = customEvent.detail;
-          // Update the panel's view state with the final camera position
-          if (position && target) {
-              this.updateViewState({
-                  cameraPosition: position,
-                  cameraTarget: target,
-              });
-          }
-          // Now that state is updated, dispatch focus change event
-          this.dispatchFocusChangeEvent();
+    const customEvent = event as CustomEvent;
+    if (customEvent.detail) {
+      const { position, target } = customEvent.detail;
+      // Update the panel's view state with the final camera position
+      if (position && target) {
+        this.updateViewState({
+          cameraPosition: position,
+          cameraTarget: target,
+        });
       }
+      // Now that state is updated, dispatch focus change event
+      this.dispatchFocusChangeEvent();
+    }
   };
 
   // Helper to dispatch the focus change event
   private dispatchFocusChangeEvent(): void {
-      const currentFocus = this._viewStateStore.get().focusedObjectId;
-      console.log(`[CompositePanel] Dispatching renderer-focus-changed: ${currentFocus}`);
-      const focusEvent = new CustomEvent('renderer-focus-changed', {
-          detail: { focusedObjectId: currentFocus },
-          bubbles: true,
-          composed: true
-      });
-      this.element.dispatchEvent(focusEvent); // Dispatch from the panel element
+    const currentFocus = this._viewStateStore.get().focusedObjectId;
+    console.log(
+      `[CompositePanel] Dispatching renderer-focus-changed: ${currentFocus}`,
+    );
+    const focusEvent = new CustomEvent("renderer-focus-changed", {
+      detail: { focusedObjectId: currentFocus },
+      bubbles: true,
+      composed: true,
+    });
+    this.element.dispatchEvent(focusEvent); // Dispatch from the panel element
   }
 
   private initializeUiControls(): void {
     if (!this._uiContainer || !this._params?.params?.sections) return;
 
-    this._uiContainer.innerHTML = ''; // Clear previous content
+    this._uiContainer.innerHTML = ""; // Clear previous content
     const sections = this._params.params.sections;
 
-    // --- Create Left/Right Containers for UI split --- 
+    // --- Create Left/Right Containers for UI split ---
     const leftUiContainer = document.createElement("div");
     leftUiContainer.classList.add("left-ui-container");
     // Basic flex styling (can be overridden by CSS)
@@ -403,7 +420,7 @@ export class CompositeEnginePanel implements IContentRenderer {
 
     this._uiContainer.appendChild(leftUiContainer);
     this._uiContainer.appendChild(rightUiContainer);
-    // --- End Left/Right Containers --- 
+    // --- End Left/Right Containers ---
 
     sections.forEach((config: UiPanelSectionConfig) => {
       try {
@@ -420,46 +437,59 @@ export class CompositeEnginePanel implements IContentRenderer {
             `Custom element <${config.componentTag}> is not defined.`,
           );
         }
-        const contentComponent = document.createElement(config.componentTag) as any; // Use 'any' for now
+        const contentComponent = document.createElement(
+          config.componentTag,
+        ) as any; // Use 'any' for now
 
         // *** CRITICAL STEP: Pass the PARENT PANEL or RENDERER instance ***
-        if (config.componentTag === 'engine-ui-settings-panel' || config.componentTag === 'focus-control') {
-            // These components need to call methods on the parent panel
-            if (typeof contentComponent.setParentPanel === 'function') {
-                contentComponent.setParentPanel(this);
-            } else {
-                console.warn(
-                    `Component <${config.componentTag}> does not have a setParentPanel method.`
-                );
-            }
-        } else if (config.componentTag === 'celestial-info' || config.componentTag === 'renderer-info-display') {
-            // These components primarily need read access to the renderer or its state
-             if (this._renderer && typeof contentComponent.setRenderer === 'function') {
-               contentComponent.setRenderer(this._renderer);
-             } else if (!this._renderer) {
-               console.warn(
-                 `Cannot set renderer for <${config.componentTag}>: Renderer not ready.`
-               );
-             } else {
-               console.warn(
-                 `Component <${config.componentTag}> does not have a setRenderer method.`
-               );
-             }
+        if (
+          config.componentTag === "engine-ui-settings-panel" ||
+          config.componentTag === "focus-control"
+        ) {
+          // These components need to call methods on the parent panel
+          if (typeof contentComponent.setParentPanel === "function") {
+            contentComponent.setParentPanel(this);
+          } else {
+            console.warn(
+              `Component <${config.componentTag}> does not have a setParentPanel method.`,
+            );
+          }
+        } else if (
+          config.componentTag === "celestial-info" ||
+          config.componentTag === "renderer-info-display"
+        ) {
+          // These components primarily need read access to the renderer or its state
+          if (
+            this._renderer &&
+            typeof contentComponent.setRenderer === "function"
+          ) {
+            contentComponent.setRenderer(this._renderer);
+          } else if (!this._renderer) {
+            console.warn(
+              `Cannot set renderer for <${config.componentTag}>: Renderer not ready.`,
+            );
+          } else {
+            console.warn(
+              `Component <${config.componentTag}> does not have a setRenderer method.`,
+            );
+          }
         } else {
-             console.warn(`Unknown component type for DI: <${config.componentTag}>`);
+          console.warn(
+            `Unknown component type for DI: <${config.componentTag}>`,
+          );
         }
 
         // REMOVED: engine-view-id attribute setting
 
         sectionContainer.appendChild(contentComponent);
 
-        // --- Append to correct container --- 
-        if (config.id.startsWith('focus-section-')) {
-             leftUiContainer.appendChild(sectionContainer);
+        // --- Append to correct container ---
+        if (config.id.startsWith("focus-section-")) {
+          leftUiContainer.appendChild(sectionContainer);
         } else {
-             rightUiContainer.appendChild(sectionContainer);
+          rightUiContainer.appendChild(sectionContainer);
         }
-        // --- End Append --- 
+        // --- End Append ---
       } catch (error) {
         console.error(
           `Error creating section '${config.title}' with component <${config.componentTag}>:`,
@@ -479,8 +509,8 @@ export class CompositeEnginePanel implements IContentRenderer {
 
     // Remove camera transition listener
     document.removeEventListener(
-        "camera-transition-complete",
-        this.handleCameraTransitionComplete
+      "camera-transition-complete",
+      this.handleCameraTransitionComplete,
     );
 
     // Unsubscribe from layout changes
@@ -506,4 +536,4 @@ export class CompositeEnginePanel implements IContentRenderer {
 const CAMERA_OFFSET = new THREE.Vector3(0.8, 0.4, 1.0).normalize();
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 0, 300);
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
-const DEFAULT_CAMERA_DISTANCE = 8; 
+const DEFAULT_CAMERA_DISTANCE = 8;

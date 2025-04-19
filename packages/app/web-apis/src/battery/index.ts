@@ -1,4 +1,4 @@
-import { atom, onMount } from 'nanostores';
+import { atom, onMount } from "nanostores";
 
 /**
  * Interface mimicking the BatteryManager API structure.
@@ -61,7 +61,7 @@ function updateStore(manager: BatteryManager) {
 }
 
 onMount(batteryStore, () => {
-  if (typeof navigator !== 'undefined' && navigator.getBattery) {
+  if (typeof navigator !== "undefined" && navigator.getBattery) {
     navigator
       .getBattery()
       .then((manager) => {
@@ -75,40 +75,46 @@ onMount(batteryStore, () => {
         const levelChangeListener = () => updateStore(manager);
 
         // Add listeners
-        manager.addEventListener('chargingchange', chargingChangeListener);
-        manager.addEventListener('chargingtimechange', chargingTimeChangeListener);
+        manager.addEventListener("chargingchange", chargingChangeListener);
         manager.addEventListener(
-          'dischargingtimechange',
-          dischargingTimeChangeListener
+          "chargingtimechange",
+          chargingTimeChangeListener,
         );
-        manager.addEventListener('levelchange', levelChangeListener);
+        manager.addEventListener(
+          "dischargingtimechange",
+          dischargingTimeChangeListener,
+        );
+        manager.addEventListener("levelchange", levelChangeListener);
 
         // Store cleanup function
         removeListeners = () => {
           if (!batteryManager) return;
           batteryManager.removeEventListener(
-            'chargingchange',
-            chargingChangeListener
+            "chargingchange",
+            chargingChangeListener,
           );
           batteryManager.removeEventListener(
-            'chargingtimechange',
-            chargingTimeChangeListener
+            "chargingtimechange",
+            chargingTimeChangeListener,
           );
           batteryManager.removeEventListener(
-            'dischargingtimechange',
-            dischargingTimeChangeListener
+            "dischargingtimechange",
+            dischargingTimeChangeListener,
           );
-          batteryManager.removeEventListener('levelchange', levelChangeListener);
+          batteryManager.removeEventListener(
+            "levelchange",
+            levelChangeListener,
+          );
           removeListeners = null;
           batteryManager = null;
         };
       })
       .catch((error) => {
-        console.error('Failed to get Battery Manager:', error);
+        console.error("Failed to get Battery Manager:", error);
         batteryStore.set({ ...initialBatteryState, isSupported: false });
       });
   } else {
-    console.warn('Battery Status API is not supported in this environment.');
+    console.warn("Battery Status API is not supported in this environment.");
     batteryStore.set({ ...initialBatteryState, isSupported: false });
   }
 
@@ -116,4 +122,4 @@ onMount(batteryStore, () => {
   return () => {
     removeListeners?.();
   };
-}); 
+});

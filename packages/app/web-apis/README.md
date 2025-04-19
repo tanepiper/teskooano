@@ -5,24 +5,24 @@ The goal is to simplify common tasks, improve performance, and provide consisten
 
 ## Features
 
-*   **Observers:** Callback helpers and RxJS Observable factories (`observeResize$`, etc.) for `ResizeObserver`, `IntersectionObserver`, `PerformanceObserver`, and `MutationObserver`.
-*   **Storage:** Wrappers for `localStorage` and `sessionStorage` with automatic JSON handling.
-*   **Network:** A basic wrapper around the `fetch` API.
-*   **Workers:** Helper for creating and terminating Web Workers (`createWorker`).
-*   **Animation:** Helper (`createAnimationLoop`) and RxJS Observable (`animationFrames$`) for `requestAnimationFrame`.
-*   **Fullscreen:** Helpers and RxJS Observable (`fullscreenChange$`) for managing browser fullscreen mode.
-*   **Clipboard:** Async helpers for reading/writing text to the clipboard.
-*   **Battery:** Reactive Nanostore (`batteryStore`) for device battery status.
-*   **Device Orientation:** RxJS Observable (`deviceOrientation$`) for device orientation events (handles iOS 13+ permissions).
-*   **Idle Detection (Experimental):** Callback helper, permission request function, and RxJS Observable (`idleState$`) for detecting user/screen idle state.
-*   **Device Memory (Experimental):** Reactive Nanostore (`deviceMemoryStore`) providing `deviceMemory` and `effectiveMemory` values.
-*   **Background Tasks (Experimental):** Helpers (`requestBackgroundTasksPermission`, `runInBackground`) for `requestIdleCallback`.
-*   **Gamepad:** RxJS Observable (`gamepadConnection$`) for gamepad connection/disconnection events and Nanostore (`gamepadStateStore`) for button/axis state.
-*   **Drag and Drop:** Helper functions (`createDraggable`, `createDropZone`) for managing HTML Drag and Drop.
-*   **Invoker Commands:** Helper functions for the experimental Invoker API.
-*   **Media Recorder:** Helper functions (`startRecording`, `stopRecording`, `requestMediaPermissions`) and RxJS Observable (`mediaRecorderState$`) for audio/video recording.
-*   **Remote Playback:** Helper functions (`requestRemotePlayback`, `watchAvailability`) and RxJS Observable (`remotePlaybackAvailability$`) for casting media.
-*   **Screen Capture:** Helper functions (`startScreenCapture`, `stopScreenCapture`) and RxJS Observable (`screenCaptureState$`) for capturing the screen or application window.
+- **Observers:** Callback helpers and RxJS Observable factories (`observeResize$`, etc.) for `ResizeObserver`, `IntersectionObserver`, `PerformanceObserver`, and `MutationObserver`.
+- **Storage:** Wrappers for `localStorage` and `sessionStorage` with automatic JSON handling.
+- **Network:** A basic wrapper around the `fetch` API.
+- **Workers:** Helper for creating and terminating Web Workers (`createWorker`).
+- **Animation:** Helper (`createAnimationLoop`) and RxJS Observable (`animationFrames$`) for `requestAnimationFrame`.
+- **Fullscreen:** Helpers and RxJS Observable (`fullscreenChange$`) for managing browser fullscreen mode.
+- **Clipboard:** Async helpers for reading/writing text to the clipboard.
+- **Battery:** Reactive Nanostore (`batteryStore`) for device battery status.
+- **Device Orientation:** RxJS Observable (`deviceOrientation$`) for device orientation events (handles iOS 13+ permissions).
+- **Idle Detection (Experimental):** Callback helper, permission request function, and RxJS Observable (`idleState$`) for detecting user/screen idle state.
+- **Device Memory (Experimental):** Reactive Nanostore (`deviceMemoryStore`) providing `deviceMemory` and `effectiveMemory` values.
+- **Background Tasks (Experimental):** Helpers (`requestBackgroundTasksPermission`, `runInBackground`) for `requestIdleCallback`.
+- **Gamepad:** RxJS Observable (`gamepadConnection$`) for gamepad connection/disconnection events and Nanostore (`gamepadStateStore`) for button/axis state.
+- **Drag and Drop:** Helper functions (`createDraggable`, `createDropZone`) for managing HTML Drag and Drop.
+- **Invoker Commands:** Helper functions for the experimental Invoker API.
+- **Media Recorder:** Helper functions (`startRecording`, `stopRecording`, `requestMediaPermissions`) and RxJS Observable (`mediaRecorderState$`) for audio/video recording.
+- **Remote Playback:** Helper functions (`requestRemotePlayback`, `watchAvailability`) and RxJS Observable (`remotePlaybackAvailability$`) for casting media.
+- **Screen Capture:** Helper functions (`startScreenCapture`, `stopScreenCapture`) and RxJS Observable (`screenCaptureState$`) for capturing the screen or application window.
 
 ## Installation
 
@@ -72,7 +72,7 @@ import {
   observeIdleState,
   requestIdleDetectionPermission,
   idleState$, // Note: Default instance uses 60s threshold
-} from '@teskooano/app-web-apis';
+} from "@teskooano/app-web-apis";
 
 // Import additional APIs
 import {
@@ -99,20 +99,20 @@ import {
   startScreenCapture,
   stopScreenCapture,
   screenCaptureState$,
-} from '@teskooano/app-web-apis';
+} from "@teskooano/app-web-apis";
 
 // Example: Using ResizeObserver observable
-const elementToWatch = document.getElementById('resizable-thing');
+const elementToWatch = document.getElementById("resizable-thing");
 if (elementToWatch) {
   const resizeSub = observeResize$(elementToWatch)
-    .pipe(
-      // Maybe debounce or throttle here?
-      // import { debounceTime } from 'rxjs/operators';
-      // debounceTime(100)
-    )
+    .pipe
+    // Maybe debounce or throttle here?
+    // import { debounceTime } from 'rxjs/operators';
+    // debounceTime(100)
+    ()
     .subscribe((entries) => {
       const entry = entries[0];
-      console.log('Element resized (via Observable):', entry.contentRect);
+      console.log("Element resized (via Observable):", entry.contentRect);
     });
   // Later...
   // resizeSub.unsubscribe();
@@ -128,30 +128,32 @@ const frameSub = animationFrames$.subscribe((timestamp) => {
 // Example: Using idleState$ observable
 const idleSub = idleState$.subscribe((state) => {
   if (state.error) {
-    console.error('Idle State Error:', state.error);
+    console.error("Idle State Error:", state.error);
     return;
   }
-  console.log(`Idle State (Observable): User=${state.user}, Screen=${state.screen}, Permission=${state.permissionState}`);
+  console.log(
+    `Idle State (Observable): User=${state.user}, Screen=${state.screen}, Permission=${state.permissionState}`,
+  );
 });
 // Later...
 // idleSub.unsubscribe();
 
 // Example: Using localStorage wrapper
-safeLocalStorage.setItem('userPreferences', { theme: 'dark' });
-const prefs = safeLocalStorage.getItem<{ theme: string }>('userPreferences');
+safeLocalStorage.setItem("userPreferences", { theme: "dark" });
+const prefs = safeLocalStorage.getItem<{ theme: string }>("userPreferences");
 console.log(prefs?.theme); // 'dark'
 
 // Example: Using Worker helper
-const workerControls = createWorker('./my-worker.js');
+const workerControls = createWorker("./my-worker.js");
 if (workerControls) {
-  workerControls.worker.postMessage({ command: 'start', data: {} });
+  workerControls.worker.postMessage({ command: "start", data: {} });
   // Later...
   // workerControls.terminate();
 }
 
 // Example: Using Animation loop helper
 const animationControls = createAnimationLoop((timestamp) => {
-  console.log('Animation frame at:', timestamp);
+  console.log("Animation frame at:", timestamp);
   // Stop after 5 seconds
   if (timestamp > 5000) {
     animationControls.stop();
@@ -166,40 +168,38 @@ const disconnectPerf = observePerformance(
       console.log(`Performance entry: ${entry.name} - ${entry.entryType}`);
     });
   },
-  { entryTypes: ['mark', 'measure'] }
+  { entryTypes: ["mark", "measure"] },
 );
 // Later...
 // if(disconnectPerf) disconnectPerf();
 
 // Example: Using MutationObserver helper
-const targetNode = document.getElementById('some-id');
+const targetNode = document.getElementById("some-id");
 if (targetNode) {
   const disconnectMutations = observeMutations(
     targetNode,
     (mutationsList, observer) => {
       for (const mutation of mutationsList) {
-        if (mutation.type === 'childList') {
-          console.log('A child node has been added or removed.');
-        } else if (mutation.type === 'attributes') {
-          console.log(
-            `The ${mutation.attributeName} attribute was modified.`
-          );
+        if (mutation.type === "childList") {
+          console.log("A child node has been added or removed.");
+        } else if (mutation.type === "attributes") {
+          console.log(`The ${mutation.attributeName} attribute was modified.`);
         }
       }
     },
-    { attributes: true, childList: true, subtree: true }
+    { attributes: true, childList: true, subtree: true },
   );
   // Later...
   // disconnectMutations();
 }
 
 // Example: Using Fullscreen API helpers
-const fullscreenButton = document.getElementById('fullscreen-btn');
-const gameView = document.getElementById('game-view');
+const fullscreenButton = document.getElementById("fullscreen-btn");
+const gameView = document.getElementById("game-view");
 if (fullscreenButton && gameView && isFullscreenSupported()) {
-  fullscreenButton.addEventListener('click', () => {
+  fullscreenButton.addEventListener("click", () => {
     toggleFullscreen(gameView).catch((err) =>
-      console.error('Fullscreen toggle failed:', err)
+      console.error("Fullscreen toggle failed:", err),
     );
   });
 }
@@ -208,10 +208,10 @@ if (fullscreenButton && gameView && isFullscreenSupported()) {
 async function copyData() {
   if (isClipboardSupported()) {
     try {
-      await writeTextToClipboard('Some data to copy');
-      console.log('Text copied to clipboard');
+      await writeTextToClipboard("Some data to copy");
+      console.log("Text copied to clipboard");
     } catch (err) {
-      console.error('Failed to copy text:', err);
+      console.error("Failed to copy text:", err);
     }
   }
 }
@@ -220,9 +220,9 @@ async function pasteData() {
   if (isClipboardSupported()) {
     try {
       const text = await readTextFromClipboard();
-      console.log('Pasted text:', text);
+      console.log("Pasted text:", text);
     } catch (err) {
-      console.error('Failed to read text from clipboard:', err);
+      console.error("Failed to read text from clipboard:", err);
     }
   }
 }
@@ -238,34 +238,36 @@ const unsubscribeBattery = batteryStore.subscribe((state) => {
 // On iOS 13+, call requestDeviceOrientationPermission() on user interaction first!
 deviceOrientation$.subscribe((orientation) => {
   if (orientation.error) {
-    console.error('Orientation Error:', orientation.error);
+    console.error("Orientation Error:", orientation.error);
     return;
   }
-  if (orientation.permissionState === 'prompt') {
-    console.log('Orientation permission required.');
+  if (orientation.permissionState === "prompt") {
+    console.log("Orientation permission required.");
     return;
   }
-  console.log(`Orientation: alpha=${orientation.alpha?.toFixed(2)}, beta=${orientation.beta?.toFixed(2)}, gamma=${orientation.gamma?.toFixed(2)}`);
+  console.log(
+    `Orientation: alpha=${orientation.alpha?.toFixed(2)}, beta=${orientation.beta?.toFixed(2)}, gamma=${orientation.gamma?.toFixed(2)}`,
+  );
 });
 
 // Example: Using Idle Detection
 async function setupIdleDetection() {
   // Ideally call requestIdleDetectionPermission() on user interaction first
   const permission = await requestIdleDetectionPermission();
-  if (permission !== 'granted') {
-    console.log('Idle detection permission not granted.');
+  if (permission !== "granted") {
+    console.log("Idle detection permission not granted.");
     return;
   }
 
   const idleControls = await observeIdleState((state) => {
     console.log(`User state: ${state.user}, Screen state: ${state.screen}`);
-    if (state.user === 'idle') {
+    if (state.user === "idle") {
       // Maybe reduce background activity?
     }
   });
 
   if (idleControls) {
-    console.log('Idle observer started.');
+    console.log("Idle observer started.");
     // Later, to stop:
     // idleControls.stop();
   }
@@ -273,8 +275,10 @@ async function setupIdleDetection() {
 setupIdleDetection();
 
 // Example: Using Device Memory Store
-const unsubDeviceMemory = deviceMemoryStore.subscribe(state => {
-  console.log(`Device Memory: ${state.deviceMemory}GB, Effective: ${state.effectiveMemory}GB`);
+const unsubDeviceMemory = deviceMemoryStore.subscribe((state) => {
+  console.log(
+    `Device Memory: ${state.deviceMemory}GB, Effective: ${state.effectiveMemory}GB`,
+  );
 });
 // Later...
 // unsubDeviceMemory();
@@ -282,18 +286,18 @@ const unsubDeviceMemory = deviceMemoryStore.subscribe(state => {
 // Example: Using Background Tasks
 async function runBackgroundTask() {
   const permission = await requestBackgroundTasksPermission();
-  if (permission === 'granted') {
+  if (permission === "granted") {
     runInBackground(() => {
-      console.log('Running task in background during idle time.');
+      console.log("Running task in background during idle time.");
     });
   }
 }
 
 // Example: Using Gamepad API
-gamepadConnection$.subscribe(event => {
+gamepadConnection$.subscribe((event) => {
   console.log(`Gamepad ${event.type}:`, event.gamepad.id);
 });
-const unsubGamepadState = gamepadStateStore.subscribe(state => {
+const unsubGamepadState = gamepadStateStore.subscribe((state) => {
   // Access state.gamepads (Map<index, GamepadState>) for button/axis data
   // console.log('Gamepad state updated:', state.gamepads);
 });
@@ -303,32 +307,32 @@ const unsubGamepadState = gamepadStateStore.subscribe(state => {
 // Example: Using Media Recorder
 async function recordAudio() {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const recorderControls = startRecording(stream, { mimeType: 'audio/webm' });
+  const recorderControls = startRecording(stream, { mimeType: "audio/webm" });
 
   if (!recorderControls) return;
 
-  mediaRecorderState$.subscribe(state => {
-    console.log('Media Recorder State:', state.status);
-    if (state.status === 'recording' && state.dataAvailable) {
-      console.log('Recorded chunk size:', state.blob?.size);
+  mediaRecorderState$.subscribe((state) => {
+    console.log("Media Recorder State:", state.status);
+    if (state.status === "recording" && state.dataAvailable) {
+      console.log("Recorded chunk size:", state.blob?.size);
       // Handle the recorded blob (e.g., upload or save)
     }
     if (state.error) {
-      console.error('Media Recorder Error:', state.error);
+      console.error("Media Recorder Error:", state.error);
     }
   });
 
   // Record for 5 seconds
   setTimeout(() => {
     stopRecording(recorderControls.recorder);
-    console.log('Stopped recording.');
+    console.log("Stopped recording.");
   }, 5000);
 }
 
 // Example: Using Remote Playback
 async function setupRemotePlayback(videoElement: HTMLVideoElement) {
-  const availabilitySub = remotePlaybackAvailability$.subscribe(available => {
-    console.log('Remote Playback Available:', available);
+  const availabilitySub = remotePlaybackAvailability$.subscribe((available) => {
+    console.log("Remote Playback Available:", available);
     // Update UI to show/hide cast button
   });
 
@@ -336,9 +340,9 @@ async function setupRemotePlayback(videoElement: HTMLVideoElement) {
   async function onCastButtonClick() {
     try {
       await requestRemotePlayback(videoElement);
-      console.log('Remote playback session started.');
+      console.log("Remote playback session started.");
     } catch (error) {
-      console.error('Failed to start remote playback:', error);
+      console.error("Failed to start remote playback:", error);
     }
   }
   // Later...
@@ -351,19 +355,19 @@ async function captureScreen() {
 
   if (!captureControls) return;
 
-  const videoElement = document.createElement('video');
+  const videoElement = document.createElement("video");
   videoElement.srcObject = captureControls.stream;
   videoElement.autoplay = true;
   document.body.appendChild(videoElement);
 
-  screenCaptureState$.subscribe(state => {
-    console.log('Screen Capture State:', state.status);
-    if (state.status === 'stopped') {
+  screenCaptureState$.subscribe((state) => {
+    console.log("Screen Capture State:", state.status);
+    if (state.status === "stopped") {
       videoElement.remove();
-      console.log('Screen capture stopped.');
+      console.log("Screen capture stopped.");
     }
     if (state.error) {
-      console.error('Screen Capture Error:', state.error);
+      console.error("Screen Capture Error:", state.error);
     }
   });
 
@@ -372,4 +376,4 @@ async function captureScreen() {
     stopScreenCapture(captureControls.stream);
   }, 10000);
 }
-``` 
+```

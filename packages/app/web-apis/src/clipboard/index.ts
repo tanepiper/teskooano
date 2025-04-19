@@ -16,12 +16,12 @@ export function isClipboardSupported(): boolean {
  */
 export async function writeTextToClipboard(text: string): Promise<void> {
   if (!isClipboardSupported()) {
-    return Promise.reject(new Error('Clipboard API is not supported.'));
+    return Promise.reject(new Error("Clipboard API is not supported."));
   }
   try {
     await navigator.clipboard.writeText(text);
   } catch (err) {
-    console.error('Failed to write text to clipboard:', err);
+    console.error("Failed to write text to clipboard:", err);
     throw err; // Re-throw after logging
   }
 }
@@ -34,13 +34,13 @@ export async function writeTextToClipboard(text: string): Promise<void> {
  */
 export async function readTextFromClipboard(): Promise<string> {
   if (!isClipboardSupported()) {
-    return Promise.reject(new Error('Clipboard API is not supported.'));
+    return Promise.reject(new Error("Clipboard API is not supported."));
   }
   try {
     const text = await navigator.clipboard.readText();
     return text;
   } catch (err) {
-    console.error('Failed to read text from clipboard:', err);
+    console.error("Failed to read text from clipboard:", err);
     throw err; // Re-throw after logging
   }
-} 
+}

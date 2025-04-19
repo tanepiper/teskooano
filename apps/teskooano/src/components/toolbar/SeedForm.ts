@@ -46,12 +46,29 @@ template.innerHTML = `
       font-weight: var(--font-weight-medium, 500);
       margin-right: var(--space-xxs, 2px);
     }
+
+    :host([mobile]) .seed-label {
+      display: none; /* Hide label */
+    }
+
+    :host([mobile]) teskooano-input-field {
+      width: 60px; /* Make input narrower */
+    }
+
+    /* Target the text span we added earlier */
+    :host([mobile]) #generate-button span:not([slot='icon']) {
+       display: none; /* Hide text, keep icon */
+    }
+
+    :host([mobile]) #generate-button span[slot="icon"] {
+      margin-right: 0; /* Remove margin when text is hidden */
+    }
   </style>
   <span class="seed-label">Seed:</span>
   <teskooano-input-field id="seed-input" value="42" placeholder="System seed" label=""></teskooano-input-field>
   <teskooano-button id="generate-button">
     <span slot="icon">🌍</span>
-    Generate
+    <span>Generate</span>
   </teskooano-button>
 `;
 

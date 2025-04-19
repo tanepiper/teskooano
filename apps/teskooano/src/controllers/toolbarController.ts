@@ -6,6 +6,7 @@ import "../components/toolbar/SimulationControls"; // Import for side effect (re
 import { DockviewController } from "./dockviewController";
 import { TourController } from "./tourController";
 import { layoutOrientationStore, Orientation } from "../stores/layoutStore";
+import { PopoverAPI } from "@teskooano/web-apis";
 
 /**
  * ToolbarController is responsible for managing the toolbar and adding engine views.
@@ -97,9 +98,11 @@ export class ToolbarController {
     this._tourController = tourController || null;
 
     // Subscribe to layout orientation changes
-    this._layoutUnsubscribe = layoutOrientationStore.subscribe((orientation) => {
-      this.handleOrientationChange(orientation);
-    });
+    this._layoutUnsubscribe = layoutOrientationStore.subscribe(
+      (orientation) => {
+        this.handleOrientationChange(orientation);
+      },
+    );
     // Get initial orientation
     this._currentOrientation = layoutOrientationStore.get();
     // Apply initial layout based on orientation (optional, could be deferred)
@@ -120,6 +123,7 @@ export class ToolbarController {
   private handleResize = (): void => {
     const wasMobile = this._isMobileDevice;
     this._isMobileDevice = this.detectMobileDevice();
+    this.render();
 
     // If device type changed (mobile → desktop or desktop → mobile)
     // we could potentially re-create the layout here if needed
@@ -306,13 +310,15 @@ export class ToolbarController {
     this._element.style.padding = "var(--space-sm, 8px)"; // Add some padding
     this._element.style.display = "flex"; // Use flexbox
     this._element.style.alignItems = "center"; // Center items vertically
-    this._element.style.gap = "var(--space-md, 12px)"; // Add gap between items
+    // Adjust gap based on device type
+    this._element.style.gap = this._isMobileDevice
+      ? "var(--space-xs, 4px)"
+      : "var(--space-md, 12px)";
 
     // Add Application Icon
     const appIcon = document.createElement("img");
     appIcon.src = `${window.location.href}assets/icon.png`; // *** Adjust this path if needed ***
     appIcon.alt = "Teskooano App Icon";
-    appIcon.title = "Teskooano: 3D N-Body Simulation";
     appIcon.style.height = "calc(var(--toolbar-height, 50px) * 0.7)"; // ~70% of toolbar height
     appIcon.style.width = "auto"; // Maintain aspect ratio
     appIcon.style.verticalAlign = "middle"; // Helps alignment
@@ -322,7 +328,6 @@ export class ToolbarController {
 
     // --- Add GitHub Button ---
     const githubButton = document.createElement("teskooano-button");
-    githubButton.title = "View Source on GitHub";
     githubButton.id = "github-button";
 
     // Add GitHub Icon
@@ -332,15 +337,30 @@ export class ToolbarController {
       <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
     </svg>`;
 
-    // Create text element (optional - we won't add text to keep the button simple)
-    // const textSpan = document.createElement("span");
-    // textSpan.textContent = "GitHub";
-
     githubButton.appendChild(githubIcon);
-    // githubButton.appendChild(textSpan); // Uncomment if you want to add text
+
+    // Add Popover for GitHub button
+    const githubPopoverId = "github-popover";
+    const githubPopover = document.createElement("div");
+    githubPopover.id = githubPopoverId;
+    githubPopover.setAttribute("popover", PopoverAPI.PopoverStates.AUTO);
+    githubPopover.textContent = "View Source on GitHub";
+    githubPopover.classList.add("tooltip-popover");
+    this._element.appendChild(githubPopover);
+
+    // Link button to popover
+    githubButton.setAttribute("popovertarget", githubPopoverId);
+    githubButton.setAttribute(
+      "popovertargetaction",
+      PopoverAPI.PopoverTargetActions.TOGGLE,
+    );
+    githubButton.setAttribute("aria-describedby", githubPopoverId);
 
     githubButton.addEventListener("click", () => {
-      this.openGitHubRepo();
+      // Only open GitHub if popover isn't already open (prevents immediate navigation)
+      if (!githubPopover.matches(":popover-open")) {
+        this.openGitHubRepo();
+      }
     });
 
     this._element.appendChild(githubButton);
@@ -348,7 +368,6 @@ export class ToolbarController {
 
     // --- Add Settings Button ---
     const settingsButton = document.createElement("teskooano-button");
-    settingsButton.title = "Application Settings";
     settingsButton.id = "settings-button";
     // Add Gear Icon
     const gearIcon = document.createElement("span");
@@ -358,17 +377,35 @@ export class ToolbarController {
         <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zM8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1"/>
     </svg>`;
     settingsButton.appendChild(gearIcon);
+
+    // Add Popover for Settings button
+    const settingsPopoverId = "settings-popover";
+    const settingsPopover = document.createElement("div");
+    settingsPopover.id = settingsPopoverId;
+    settingsPopover.setAttribute("popover", PopoverAPI.PopoverStates.AUTO);
+    settingsPopover.textContent = "Application Settings";
+    settingsPopover.classList.add("tooltip-popover");
+    this._element.appendChild(settingsPopover);
+
+    // Link button to popover
+    settingsButton.setAttribute("popovertarget", settingsPopoverId);
+    settingsButton.setAttribute(
+      "popovertargetaction",
+      PopoverAPI.PopoverTargetActions.TOGGLE,
+    );
+    settingsButton.setAttribute("aria-describedby", settingsPopoverId);
+
     settingsButton.addEventListener(
       "click",
       this.toggleSettingsPanel.bind(this),
-    ); // Use bind or arrow function
+    );
     this._element.appendChild(settingsButton);
     // --- End Settings Button ---
 
     // --- Add Tour Button if tour controller is available ---
     if (this._tourController) {
       const tourButton = document.createElement("teskooano-button");
-      tourButton.title = "Take a tour of the application";
+      tourButton.id = "tour-button";
 
       // Add Question Icon
       const helpIcon = document.createElement("span");
@@ -377,12 +414,34 @@ export class ToolbarController {
           <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
           <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
       </svg>`;
-
-      const textSpan = document.createElement("span");
-      textSpan.textContent = "Take Tour";
-
       tourButton.appendChild(helpIcon);
-      tourButton.appendChild(textSpan);
+
+      // ALWAYS add text span
+      const textSpanTour = document.createElement("span");
+      textSpanTour.textContent = "Take Tour";
+      tourButton.appendChild(textSpanTour);
+
+      // Add Popover for Tour button
+      const tourPopoverId = "tour-popover";
+      const tourPopover = document.createElement("div");
+      tourPopover.id = tourPopoverId;
+      tourPopover.setAttribute("popover", PopoverAPI.PopoverStates.AUTO);
+      tourPopover.textContent = "Take a tour of the application";
+      tourPopover.classList.add("tooltip-popover");
+      this._element.appendChild(tourPopover);
+
+      // Link button to popover
+      tourButton.setAttribute("popovertarget", tourPopoverId);
+      tourButton.setAttribute(
+        "popovertargetaction",
+        PopoverAPI.PopoverTargetActions.TOGGLE,
+      );
+      tourButton.setAttribute("aria-describedby", tourPopoverId);
+
+      // Add mobile attribute if needed
+      if (this._isMobileDevice) {
+        tourButton.setAttribute("mobile", "");
+      }
 
       tourButton.addEventListener("click", () => {
         if (this._tourController) {
@@ -400,18 +459,38 @@ export class ToolbarController {
     // Create icon element
     const iconSpan = document.createElement("span");
     iconSpan.setAttribute("slot", "icon");
-    iconSpan.textContent = "+"; // Simple plus icon
+    iconSpan.textContent = "🔭"; // Simple plus icon
     iconSpan.style.fontWeight = "bold"; // Make icon slightly bolder
 
-    // Create text element (optional, could just append text node)
-    const textSpan = document.createElement("span");
-    textSpan.textContent = "Add Teskooano";
-
-    // Append icon and text to the button
+    // Append icon to the button
     addButton.appendChild(iconSpan);
-    addButton.appendChild(textSpan);
 
-    addButton.title = "Add a new engine view"; // Add a tooltip
+    // ALWAYS add text span
+    const textSpanAdd = document.createElement("span");
+    textSpanAdd.textContent = "Add Engine View";
+    addButton.appendChild(textSpanAdd); // Always add text
+
+    // Add Popover for Add View button
+    const addViewPopoverId = "add-view-popover";
+    const addViewPopover = document.createElement("div");
+    addViewPopover.id = addViewPopoverId;
+    addViewPopover.setAttribute("popover", PopoverAPI.PopoverStates.AUTO);
+    addViewPopover.textContent = "Add a new engine view";
+    addViewPopover.classList.add("tooltip-popover");
+    this._element.appendChild(addViewPopover);
+
+    // Link button to popover
+    addButton.setAttribute("popovertarget", addViewPopoverId);
+    addButton.setAttribute(
+      "popovertargetaction",
+      PopoverAPI.PopoverTargetActions.TOGGLE,
+    );
+    addButton.setAttribute("aria-describedby", addViewPopoverId);
+
+    // Add mobile attribute if needed
+    if (this._isMobileDevice) {
+      addButton.setAttribute("mobile", "");
+    }
 
     addButton.addEventListener("click", () => {
       this.addEnginePanels();
@@ -429,6 +508,9 @@ export class ToolbarController {
 
     // Add the simulation controls
     const simControls = document.createElement("toolbar-simulation-controls");
+    if (this._isMobileDevice) {
+      simControls.setAttribute("mobile", "");
+    }
     this._element.appendChild(simControls);
 
     // Add Separator before seed form
@@ -443,6 +525,9 @@ export class ToolbarController {
     const seedForm = document.createElement(
       "toolbar-seed-form",
     ) as ToolbarSeedForm;
+    if (this._isMobileDevice) {
+      seedForm.setAttribute("mobile", "");
+    }
     ToolbarSeedForm.setDockviewApi(this._dockviewController.api);
     this._element.appendChild(seedForm);
   }
@@ -461,10 +546,12 @@ export class ToolbarController {
     // Find the main composite panel (assuming only one for now)
     // TODO: Handle multiple engine views if needed
     const mainPanelId = `composite_engine_view_1`;
-    const mainPanel = dockviewApi.panels.find(p => p.id === mainPanelId);
+    const mainPanel = dockviewApi.panels.find((p) => p.id === mainPanelId);
 
     if (!mainPanel) {
-      console.warn(`Main panel ${mainPanelId} not found for orientation change.`);
+      console.warn(
+        `Main panel ${mainPanelId} not found for orientation change.`,
+      );
       return;
     }
 
@@ -482,7 +569,9 @@ export class ToolbarController {
     // For now, we just log, as the change might already be handled visually
     // by the CompositeEnginePanel reacting to the store change.
 
-    console.log(`Relying on CompositeEnginePanel (${mainPanelId}) internal CSS for layout change.`);
+    console.log(
+      `Relying on CompositeEnginePanel (${mainPanelId}) internal CSS for layout change.`,
+    );
 
     // --- Potential future Dockview API adjustments (if internal CSS isn't enough) ---
     /*
@@ -494,7 +583,6 @@ export class ToolbarController {
     }
     */
     // --- End potential adjustments ---
-
   }
   // --- End orientation change handler ---
 }

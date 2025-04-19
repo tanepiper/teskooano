@@ -50,6 +50,8 @@ export default withMermaid({
     nav: [
       { text: "Home", link: "/" },
       { text: "Documentation", link: "/docs/" },
+      { text: ".plan", link: "/plan/" },
+      { text: "Changelog", link: "/CHANGELOG" },
       { text: "Teskooano", link: "https://teskooano.space/teskooano" },
     ],
 
@@ -75,6 +77,10 @@ export default withMermaid({
           { text: "Architecture", link: "/docs/architecture" },
           { text: "Contributing", link: "/docs/contributing" },
         ],
+      },
+      {
+        text: "Plan",
+        items: [{ text: "Latest Updates", link: "/plan/" }],
       },
     ],
 

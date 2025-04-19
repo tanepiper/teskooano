@@ -1,5 +1,5 @@
-import { Observable, fromEvent, merge } from 'rxjs';
-import { map, share, takeUntil, tap } from 'rxjs/operators';
+import { Observable, fromEvent, merge } from "rxjs";
+import { map, share, takeUntil, tap } from "rxjs/operators";
 
 /**
  * Checks if the browser environment supports basic drag and drop events.
@@ -9,27 +9,27 @@ import { map, share, takeUntil, tap } from 'rxjs/operators';
 export function isDragAndDropSupported(): boolean {
   // Basic check - Drag and Drop is widely supported.
   // More specific checks could involve 'draggable' attribute or event constructor checks.
-  return typeof window !== 'undefined';
+  return typeof window !== "undefined";
 }
 
 /**
  * Enum for standard drag effect types.
  */
 export enum DragEffect {
-  Copy = 'copy',
-  Move = 'move',
-  Link = 'link',
-  None = 'none',
+  Copy = "copy",
+  Move = "move",
+  Link = "link",
+  None = "none",
 }
 
 /**
  * Enum for standard drop effect types.
  */
 export enum DropEffect {
-  Copy = 'copy',
-  Move = 'move',
-  Link = 'link',
-  None = 'none',
+  Copy = "copy",
+  Move = "move",
+  Link = "link",
+  None = "none",
 }
 
 /**
@@ -59,10 +59,10 @@ export interface DraggableOptions {
  */
 export function makeDraggable(
   element: HTMLElement,
-  options: DraggableOptions = {}
+  options: DraggableOptions = {},
 ): { unsubscribe: () => void } | null {
   if (!isDragAndDropSupported()) {
-    console.warn('Drag and Drop not supported (basic check failed).');
+    console.warn("Drag and Drop not supported (basic check failed).");
     return null;
   }
 
@@ -71,7 +71,8 @@ export function makeDraggable(
   const handleDragStart = (event: DragEvent) => {
     if (event.dataTransfer) {
       // Set drag effect
-      event.dataTransfer.effectAllowed = (options.dragEffect || DragEffect.Copy) as any;
+      event.dataTransfer.effectAllowed = (options.dragEffect ||
+        DragEffect.Copy) as any;
 
       // Set data payload
       if (options.data) {
@@ -80,7 +81,10 @@ export function makeDraggable(
         }
       } else {
         // Default data if none provided (useful for debugging)
-        event.dataTransfer.setData('text/plain', element.id || 'draggable-element');
+        event.dataTransfer.setData(
+          "text/plain",
+          element.id || "draggable-element",
+        );
       }
 
       // Set custom drag image
@@ -88,7 +92,7 @@ export function makeDraggable(
         event.dataTransfer.setDragImage(
           options.dragImage.element,
           options.dragImage.xOffset,
-          options.dragImage.yOffset
+          options.dragImage.yOffset,
         );
       }
       console.log(`Drag started for element: ${element.id}`);
@@ -96,25 +100,26 @@ export function makeDraggable(
   };
 
   const handleDragEnd = (event: DragEvent) => {
-     console.log(`Drag ended for element: ${element.id}, Drop Effect: ${event.dataTransfer?.dropEffect}`);
-     // You could potentially use event.dataTransfer.dropEffect here
+    console.log(
+      `Drag ended for element: ${element.id}, Drop Effect: ${event.dataTransfer?.dropEffect}`,
+    );
+    // You could potentially use event.dataTransfer.dropEffect here
   };
 
-  element.addEventListener('dragstart', handleDragStart);
-  element.addEventListener('dragend', handleDragEnd);
+  element.addEventListener("dragstart", handleDragStart);
+  element.addEventListener("dragend", handleDragEnd);
 
   const unsubscribe = () => {
-    element.removeEventListener('dragstart', handleDragStart);
-    element.removeEventListener('dragend', handleDragEnd);
+    element.removeEventListener("dragstart", handleDragStart);
+    element.removeEventListener("dragend", handleDragEnd);
     element.draggable = false; // Reset draggable attribute
   };
 
   // Handle abortion
-  options.abortSignal?.addEventListener('abort', unsubscribe, { once: true });
+  options.abortSignal?.addEventListener("abort", unsubscribe, { once: true });
 
   return { unsubscribe };
 }
-
 
 /**
  * Options for making an element a drop zone.
@@ -126,7 +131,7 @@ export interface DropZoneOptions {
   acceptedFormats?: string[];
   /** Optional signal to remove event listeners. */
   abortSignal?: AbortSignal;
-   /** CSS class to add when a valid item is dragged over. */
+  /** CSS class to add when a valid item is dragged over. */
   dragOverClass?: string;
 }
 
@@ -140,10 +145,10 @@ export interface DropZoneOptions {
  */
 export function createDropZoneObservable(
   element: HTMLElement,
-  options: DropZoneOptions = {}
+  options: DropZoneOptions = {},
 ): Observable<DragEvent> | null {
-   if (!isDragAndDropSupported()) {
-    console.warn('Drag and Drop not supported (basic check failed).');
+  if (!isDragAndDropSupported()) {
+    console.warn("Drag and Drop not supported (basic check failed).");
     return null;
   }
 
@@ -159,43 +164,43 @@ export function createDropZoneObservable(
     event.preventDefault(); // Necessary to allow dropping
     // Check if data type is acceptable (if specified)
     if (acceptedFormats && event.dataTransfer) {
-        const types = Array.from(event.dataTransfer.types);
-        if (!acceptedFormats.some(format => types.includes(format))) {
-            return; // Not an accepted type
-        }
+      const types = Array.from(event.dataTransfer.types);
+      if (!acceptedFormats.some((format) => types.includes(format))) {
+        return; // Not an accepted type
+      }
     }
     if (dragOverClass) {
-        element.classList.add(dragOverClass);
+      element.classList.add(dragOverClass);
     }
-     if (event.dataTransfer) {
-        event.dataTransfer.dropEffect = dropEffect; // Show allowed cursor
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = dropEffect; // Show allowed cursor
     }
     console.log(`Drag enter on: ${element.id}`);
   };
 
-   const handleDragOver = (event: DragEvent) => {
-     event.preventDefault(); // Necessary to allow dropping!
-     // Ensure drop effect is consistently set
-     if (event.dataTransfer) {
-        // Check accepted formats again in case state changed mid-drag
-         if (acceptedFormats) {
-            const types = Array.from(event.dataTransfer.types);
-            if (!acceptedFormats.some(format => types.includes(format))) {
-                event.dataTransfer.dropEffect = DropEffect.None; // Indicate invalid drop
-                return;
-            }
-         }
-        event.dataTransfer.dropEffect = dropEffect;
-     }
-   };
+  const handleDragOver = (event: DragEvent) => {
+    event.preventDefault(); // Necessary to allow dropping!
+    // Ensure drop effect is consistently set
+    if (event.dataTransfer) {
+      // Check accepted formats again in case state changed mid-drag
+      if (acceptedFormats) {
+        const types = Array.from(event.dataTransfer.types);
+        if (!acceptedFormats.some((format) => types.includes(format))) {
+          event.dataTransfer.dropEffect = DropEffect.None; // Indicate invalid drop
+          return;
+        }
+      }
+      event.dataTransfer.dropEffect = dropEffect;
+    }
+  };
 
   const handleDragLeave = (event: DragEvent) => {
     // Check if the leave is going outside the element bounds
     if (!element.contains(event.relatedTarget as Node)) {
-        if (dragOverClass) {
-           element.classList.remove(dragOverClass);
-        }
-        console.log(`Drag leave from: ${element.id}`);
+      if (dragOverClass) {
+        element.classList.remove(dragOverClass);
+      }
+      console.log(`Drag leave from: ${element.id}`);
     }
   };
 
@@ -206,48 +211,48 @@ export function createDropZoneObservable(
     }
     // Final check for accepted formats
     if (acceptedFormats && event.dataTransfer) {
-        const types = Array.from(event.dataTransfer.types);
-        if (!acceptedFormats.some(format => types.includes(format))) {
-            console.warn(`Drop rejected on ${element.id}: Invalid data format.`);
-            return; // Reject drop
-        }
+      const types = Array.from(event.dataTransfer.types);
+      if (!acceptedFormats.some((format) => types.includes(format))) {
+        console.warn(`Drop rejected on ${element.id}: Invalid data format.`);
+        return; // Reject drop
+      }
     }
     console.log(`Dropped on: ${element.id}`);
     // Drop event is emitted by the observable stream below
   };
 
   // Add listeners
-  element.addEventListener('dragenter', handleDragEnter);
-  element.addEventListener('dragover', handleDragOver);
-  element.addEventListener('dragleave', handleDragLeave);
-  element.addEventListener('drop', handleDrop);
+  element.addEventListener("dragenter", handleDragEnter);
+  element.addEventListener("dragover", handleDragOver);
+  element.addEventListener("dragleave", handleDragLeave);
+  element.addEventListener("drop", handleDrop);
   // Need to prevent default on dragover to allow drop
   // element.addEventListener('dragover', preventDefaults);
 
-  const drop$ = fromEvent<DragEvent>(element, 'drop').pipe(
-      // The actual drop event emission
-      tap(event => {
-          // Potentially process data here if needed universally
-          // const data = event.dataTransfer?.getData('text/plain');
-      }),
-      share() // Share the stream among multiple subscribers
+  const drop$ = fromEvent<DragEvent>(element, "drop").pipe(
+    // The actual drop event emission
+    tap((event) => {
+      // Potentially process data here if needed universally
+      // const data = event.dataTransfer?.getData('text/plain');
+    }),
+    share(), // Share the stream among multiple subscribers
   );
 
   // Cleanup logic using takeUntil
   const stop$ = options.abortSignal
-    ? fromEvent(options.abortSignal, 'abort')
+    ? fromEvent(options.abortSignal, "abort")
     : new Observable<never>(); // An observable that never emits if no signal
 
   stop$.subscribe(() => {
-      console.log(`Removing drop zone listeners from ${element.id}`);
-      element.removeEventListener('dragenter', handleDragEnter);
-      element.removeEventListener('dragover', handleDragOver);
-      element.removeEventListener('dragleave', handleDragLeave);
-      element.removeEventListener('drop', handleDrop);
-      // element.removeEventListener('dragover', preventDefaults);
-      if (dragOverClass) {
-          element.classList.remove(dragOverClass); // Ensure class is removed
-      }
+    console.log(`Removing drop zone listeners from ${element.id}`);
+    element.removeEventListener("dragenter", handleDragEnter);
+    element.removeEventListener("dragover", handleDragOver);
+    element.removeEventListener("dragleave", handleDragLeave);
+    element.removeEventListener("drop", handleDrop);
+    // element.removeEventListener('dragover', preventDefaults);
+    if (dragOverClass) {
+      element.classList.remove(dragOverClass); // Ensure class is removed
+    }
   });
 
   return drop$.pipe(takeUntil(stop$));

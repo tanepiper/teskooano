@@ -1,5 +1,5 @@
-import { Observable } from 'rxjs';
-import { share } from 'rxjs/operators';
+import { Observable } from "rxjs";
+import { share } from "rxjs/operators";
 
 /**
  * Creates and manages a PerformanceObserver.
@@ -12,10 +12,10 @@ import { share } from 'rxjs/operators';
  */
 export function observePerformance(
   callback: PerformanceObserverCallback,
-  options: PerformanceObserverInit
+  options: PerformanceObserverInit,
 ): (() => void) | null {
-  if (typeof PerformanceObserver === 'undefined') {
-    console.warn('PerformanceObserver is not supported in this environment.');
+  if (typeof PerformanceObserver === "undefined") {
+    console.warn("PerformanceObserver is not supported in this environment.");
     return null;
   }
 
@@ -27,7 +27,7 @@ export function observePerformance(
     // Return a cleanup function to disconnect the observer
     return () => observer.disconnect();
   } catch (error) {
-    console.error('Failed to create or observe PerformanceObserver:', error);
+    console.error("Failed to create or observe PerformanceObserver:", error);
     // Attempt to observe might fail if entryTypes are unsupported, etc.
     return null;
   }
@@ -41,12 +41,12 @@ export function observePerformance(
  * @returns An Observable emitting PerformanceObserverEntryList objects, or EMPTY if not supported.
  */
 export function observePerformance$(
-  options: PerformanceObserverInit
+  options: PerformanceObserverInit,
 ): Observable<PerformanceObserverEntryList> {
   return new Observable<PerformanceObserverEntryList>((subscriber) => {
-    if (typeof PerformanceObserver === 'undefined') {
+    if (typeof PerformanceObserver === "undefined") {
       console.warn(
-        'PerformanceObserver is not supported, observable will not emit.'
+        "PerformanceObserver is not supported, observable will not emit.",
       );
       subscriber.complete();
       return;
@@ -64,11 +64,11 @@ export function observePerformance$(
       };
     } catch (error) {
       console.error(
-        'Failed to create or observe PerformanceObserver for observable:',
-        error
+        "Failed to create or observe PerformanceObserver for observable:",
+        error,
       );
       subscriber.error(error); // Emit error if creation/observation fails
       return;
     }
   }).pipe(share()); // Share the underlying observer
-} 
+}

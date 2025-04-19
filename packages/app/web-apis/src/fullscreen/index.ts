@@ -1,5 +1,5 @@
-import { Observable, fromEvent } from 'rxjs';
-import { map, startWith, shareReplay } from 'rxjs/operators';
+import { Observable, fromEvent } from "rxjs";
+import { map, startWith, shareReplay } from "rxjs/operators";
 
 /**
  * Checks if the Fullscreen API is available and enabled in the browser.
@@ -27,20 +27,20 @@ export function isFullscreenActive(): boolean {
  */
 export async function requestFullscreen(
   element: Element,
-  options?: FullscreenOptions
+  options?: FullscreenOptions,
 ): Promise<void> {
   if (!isFullscreenSupported()) {
-    return Promise.reject(new Error('Fullscreen API is not supported.'));
+    return Promise.reject(new Error("Fullscreen API is not supported."));
   }
   if (!element.requestFullscreen) {
     return Promise.reject(
-      new Error('Element does not support requestFullscreen method.')
+      new Error("Element does not support requestFullscreen method."),
     );
   }
   try {
     await element.requestFullscreen(options);
   } catch (err) {
-    console.error('Failed to enter fullscreen mode:', err);
+    console.error("Failed to enter fullscreen mode:", err);
     throw err; // Re-throw the error after logging
   }
 }
@@ -51,7 +51,7 @@ export async function requestFullscreen(
  */
 export async function exitFullscreen(): Promise<void> {
   if (!isFullscreenSupported()) {
-    return Promise.reject(new Error('Fullscreen API is not supported.'));
+    return Promise.reject(new Error("Fullscreen API is not supported."));
   }
   if (!isFullscreenActive()) {
     return Promise.resolve(); // Already not in fullscreen
@@ -59,7 +59,7 @@ export async function exitFullscreen(): Promise<void> {
   try {
     await document.exitFullscreen();
   } catch (err) {
-    console.error('Failed to exit fullscreen mode:', err);
+    console.error("Failed to exit fullscreen mode:", err);
     throw err; // Re-throw the error after logging
   }
 }
@@ -74,7 +74,7 @@ export async function exitFullscreen(): Promise<void> {
  */
 export async function toggleFullscreen(
   element: Element,
-  options?: FullscreenOptions
+  options?: FullscreenOptions,
 ): Promise<void> {
   if (isFullscreenActive()) {
     return exitFullscreen();
@@ -89,35 +89,34 @@ export async function toggleFullscreen(
  * Starts with the current fullscreen element (or null).
  * Replays the last emitted value for new subscribers.
  */
-export const fullscreenChange$: Observable<Element | null> = new Observable<
-  Element | null
->((subscriber) => {
-  // Check for support initially
-  if (
-    typeof document === 'undefined' ||
-    document.fullscreenEnabled === undefined
-  ) {
-    console.warn('Fullscreen API likely not supported in this environment.');
-    subscriber.next(null);
-    subscriber.complete();
-    return;
-  }
+export const fullscreenChange$: Observable<Element | null> =
+  new Observable<Element | null>((subscriber) => {
+    // Check for support initially
+    if (
+      typeof document === "undefined" ||
+      document.fullscreenEnabled === undefined
+    ) {
+      console.warn("Fullscreen API likely not supported in this environment.");
+      subscriber.next(null);
+      subscriber.complete();
+      return;
+    }
 
-  // Handler to emit the current fullscreen element
-  const handler = () => {
-    subscriber.next(document.fullscreenElement);
-  };
+    // Handler to emit the current fullscreen element
+    const handler = () => {
+      subscriber.next(document.fullscreenElement);
+    };
 
-  // Attach listener
-  document.addEventListener('fullscreenchange', handler);
+    // Attach listener
+    document.addEventListener("fullscreenchange", handler);
 
-  // Cleanup function
-  return () => {
-    document.removeEventListener('fullscreenchange', handler);
-  };
-}).pipe(
-  startWith<Element | null>(
-    typeof document !== 'undefined' ? document.fullscreenElement : null
-  ),
-  shareReplay({ bufferSize: 1, refCount: true })
-); 
+    // Cleanup function
+    return () => {
+      document.removeEventListener("fullscreenchange", handler);
+    };
+  }).pipe(
+    startWith<Element | null>(
+      typeof document !== "undefined" ? document.fullscreenElement : null,
+    ),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );

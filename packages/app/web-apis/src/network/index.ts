@@ -18,10 +18,10 @@ export interface EnhancedRequestInit extends RequestInit {
  */
 export async function enhancedFetch(
   url: string | URL | Request,
-  options?: EnhancedRequestInit
+  options?: EnhancedRequestInit,
 ): Promise<Response> {
-  if (typeof fetch === 'undefined') {
-    throw new Error('fetch API is not available in this environment.');
+  if (typeof fetch === "undefined") {
+    throw new Error("fetch API is not available in this environment.");
   }
 
   // Basic implementation - currently just calls native fetch.
@@ -33,14 +33,14 @@ export async function enhancedFetch(
     // More sophisticated handling could be added here.
     if (!response.ok) {
       throw new Error(
-        `HTTP error! status: ${response.status} ${response.statusText}`
+        `HTTP error! status: ${response.status} ${response.statusText}`,
       );
     }
 
     return response;
   } catch (error) {
-    console.error('Fetch error:', error);
+    console.error("Fetch error:", error);
     // Re-throw the error or handle it as needed (e.g., return a specific error object)
     throw error;
   }
-} 
+}

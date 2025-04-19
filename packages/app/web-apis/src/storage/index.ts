@@ -58,7 +58,7 @@ abstract class BaseStorageWrapper {
     try {
       this.storage.clear();
     } catch (error) {
-      console.error('Error clearing storage:', error);
+      console.error("Error clearing storage:", error);
     }
   }
 }
@@ -68,8 +68,8 @@ abstract class BaseStorageWrapper {
  */
 class LocalStorageWrapper extends BaseStorageWrapper {
   constructor() {
-    if (typeof window === 'undefined' || !window.localStorage) {
-      throw new Error('localStorage is not available in this environment.');
+    if (typeof window === "undefined" || !window.localStorage) {
+      throw new Error("localStorage is not available in this environment.");
     }
     super(window.localStorage);
   }
@@ -80,8 +80,8 @@ class LocalStorageWrapper extends BaseStorageWrapper {
  */
 class SessionStorageWrapper extends BaseStorageWrapper {
   constructor() {
-    if (typeof window === 'undefined' || !window.sessionStorage) {
-      throw new Error('sessionStorage is not available in this environment.');
+    if (typeof window === "undefined" || !window.sessionStorage) {
+      throw new Error("sessionStorage is not available in this environment.");
     }
     super(window.sessionStorage);
   }
@@ -89,4 +89,4 @@ class SessionStorageWrapper extends BaseStorageWrapper {
 
 // Export instances for direct use
 export const safeLocalStorage = new LocalStorageWrapper();
-export const safeSessionStorage = new SessionStorageWrapper(); 
+export const safeSessionStorage = new SessionStorageWrapper();

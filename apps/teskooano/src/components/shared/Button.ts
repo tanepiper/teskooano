@@ -99,6 +99,15 @@ template.innerHTML = `
         margin-right: 0;
     }
     
+    /* Hide default slot (text) when mobile attribute is present */
+    :host([mobile]) ::slotted(:not([slot='icon'])) {
+      display: none;
+    }
+
+    /* Ensure icon doesn't have margin when text is hidden */
+     :host([mobile]) ::slotted([slot="icon"]) {
+        margin-right: 0;
+    }
   </style>
   <button part="button">
     <slot name="icon"></slot>

@@ -18,6 +18,9 @@ hero:
     - theme: alt
       text: View on GitHub
       link: https://github.com/tanepiper/teskooano
+    - theme: brand
+      text: Read the latest .plan file
+      link: ./plan
 
 features:
   - icon: 🪐
@@ -43,7 +46,16 @@ features:
   - icon: 🧩
     title: Modular Architecture
     details: Built with TypeScript and modern frontend tools, Teskooano features a component-based design that's easily extendable.
+
+  - title: Multi-View Capabilities
+    details: Analyze simulations from different perspectives simultaneously.
 ---
+
+## Latest .plan Update
+
+::: info From the Plan Log
+See all entries in the [Plan Section](./plan/).
+:::
 
 <div class="vp-doc">
 

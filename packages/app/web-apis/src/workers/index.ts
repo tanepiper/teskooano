@@ -22,10 +22,10 @@ export interface WorkerControls {
  */
 export function createWorker(
   scriptURL: string | URL,
-  options?: WorkerOptions
+  options?: WorkerOptions,
 ): WorkerControls | null {
-  if (typeof Worker === 'undefined') {
-    console.warn('Web Workers are not supported in this environment.');
+  if (typeof Worker === "undefined") {
+    console.warn("Web Workers are not supported in this environment.");
     return null;
   }
 
@@ -33,14 +33,14 @@ export function createWorker(
     const worker = new Worker(scriptURL, options);
 
     worker.onerror = (event) => {
-      console.error('Error in Web Worker:', event.message, event);
+      console.error("Error in Web Worker:", event.message, event);
       // Optionally, terminate the worker on error or implement retry logic
       // worker.terminate();
     };
 
     // Basic message logging (can be removed or customized)
     worker.onmessage = (event) => {
-      console.log('Message received from worker:', event.data);
+      console.log("Message received from worker:", event.data);
     };
 
     const terminate = () => {
@@ -49,7 +49,7 @@ export function createWorker(
 
     return { worker, terminate };
   } catch (error) {
-    console.error('Failed to create Web Worker:', error);
+    console.error("Failed to create Web Worker:", error);
     return null;
   }
-} 
+}

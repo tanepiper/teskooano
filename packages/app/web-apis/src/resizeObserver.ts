@@ -1,4 +1,4 @@
-import { atom, WritableAtom } from 'nanostores';
+import { atom, WritableAtom } from "nanostores";
 
 // --- Types --- //
 
@@ -43,9 +43,13 @@ export function observeElementResize(
   targetElement: HTMLElement | null,
   options: ObserveResizeOptions = {},
 ): ElementResizeObserver | null {
-  if (typeof window === 'undefined' || !('ResizeObserver' in window) || !targetElement) {
+  if (
+    typeof window === "undefined" ||
+    !("ResizeObserver" in window) ||
+    !targetElement
+  ) {
     console.warn(
-      'ResizeObserver not supported or target element is invalid. Cannot observe element resize.',
+      "ResizeObserver not supported or target element is invalid. Cannot observe element resize.",
     );
     // Return a dummy observer that does nothing
     const $elementSize = atom<ElementSize | null>(null);
@@ -55,7 +59,7 @@ export function observeElementResize(
     };
   }
 
-  const { box = 'border-box', throttleMs = DEFAULT_THROTTLE_MS } = options;
+  const { box = "border-box", throttleMs = DEFAULT_THROTTLE_MS } = options;
   let resizeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   const $elementSize = atom<ElementSize | null>(null); // Initialize with null
@@ -72,13 +76,13 @@ export function observeElementResize(
 
     // Prefer borderBoxSize or contentBoxSize based on options
     // Note: borderBoxSize/contentBoxSize are arrays, take the first element
-    if (box === 'border-box' && entry.borderBoxSize?.length > 0) {
+    if (box === "border-box" && entry.borderBoxSize?.length > 0) {
       size = {
         inlineSize: entry.borderBoxSize[0].inlineSize,
         blockSize: entry.borderBoxSize[0].blockSize,
         contentRect: entry.contentRect,
       };
-    } else if (box === 'content-box' && entry.contentBoxSize?.length > 0) {
+    } else if (box === "content-box" && entry.contentBoxSize?.length > 0) {
       size = {
         inlineSize: entry.contentBoxSize[0].inlineSize,
         blockSize: entry.contentBoxSize[0].blockSize,
@@ -117,11 +121,11 @@ export function observeElementResize(
     }
     observer.unobserve(targetElement);
     observer.disconnect(); // Clean up the observer fully
-    console.log('ResizeObserver stopped for element:', targetElement);
+    console.log("ResizeObserver stopped for element:", targetElement);
   };
 
   return {
     $elementSize,
     unobserve,
   };
-} 
+}

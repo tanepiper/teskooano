@@ -1,11 +1,11 @@
-import { Observable } from 'rxjs';
-import { share } from 'rxjs/operators';
+import { Observable } from "rxjs";
+import { share } from "rxjs/operators";
 
 /**
  * Simplified IntersectionObserver callback type.
  */
 export type SimpleIntersectionObserverCallback = (
-  entry: IntersectionObserverEntry
+  entry: IntersectionObserverEntry,
 ) => void;
 
 /**
@@ -21,10 +21,10 @@ export type SimpleIntersectionObserverCallback = (
 export function observeIntersection(
   element: Element,
   callback: SimpleIntersectionObserverCallback,
-  options?: IntersectionObserverInit
+  options?: IntersectionObserverInit,
 ): () => void {
-  if (typeof IntersectionObserver === 'undefined') {
-    console.warn('IntersectionObserver is not supported in this environment.');
+  if (typeof IntersectionObserver === "undefined") {
+    console.warn("IntersectionObserver is not supported in this environment.");
     return () => {}; // Return no-op cleanup
   }
 
@@ -50,12 +50,12 @@ export function observeIntersection(
  */
 export function observeIntersection$(
   element: Element,
-  options?: IntersectionObserverInit
+  options?: IntersectionObserverInit,
 ): Observable<IntersectionObserverEntry[]> {
   return new Observable<IntersectionObserverEntry[]>((subscriber) => {
-    if (typeof IntersectionObserver === 'undefined') {
+    if (typeof IntersectionObserver === "undefined") {
       console.warn(
-        'IntersectionObserver is not supported, observable will not emit.'
+        "IntersectionObserver is not supported, observable will not emit.",
       );
       subscriber.complete();
       return;
@@ -72,4 +72,4 @@ export function observeIntersection$(
       observer.disconnect();
     };
   }).pipe(share()); // Share the underlying observer
-} 
+}

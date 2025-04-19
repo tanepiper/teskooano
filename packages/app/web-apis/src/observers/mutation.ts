@@ -1,5 +1,5 @@
-import { Observable } from 'rxjs';
-import { share } from 'rxjs/operators';
+import { Observable } from "rxjs";
+import { share } from "rxjs/operators";
 
 /**
  * Creates and manages a MutationObserver for a given target node.
@@ -14,10 +14,10 @@ import { share } from 'rxjs/operators';
 export function observeMutations(
   target: Node,
   callback: MutationCallback,
-  options: MutationObserverInit
+  options: MutationObserverInit,
 ): () => void {
-  if (typeof MutationObserver === 'undefined') {
-    console.warn('MutationObserver is not supported in this environment.');
+  if (typeof MutationObserver === "undefined") {
+    console.warn("MutationObserver is not supported in this environment.");
     return () => {}; // Return no-op cleanup
   }
 
@@ -41,11 +41,13 @@ export function observeMutations(
  */
 export function observeMutations$(
   target: Node,
-  options: MutationObserverInit
+  options: MutationObserverInit,
 ): Observable<MutationRecord[]> {
   return new Observable<MutationRecord[]>((subscriber) => {
-    if (typeof MutationObserver === 'undefined') {
-      console.warn('MutationObserver is not supported, observable will not emit.');
+    if (typeof MutationObserver === "undefined") {
+      console.warn(
+        "MutationObserver is not supported, observable will not emit.",
+      );
       subscriber.complete();
       return;
     }
@@ -61,4 +63,4 @@ export function observeMutations$(
       observer.disconnect();
     };
   }).pipe(share()); // Share the underlying observer
-} 
+}
