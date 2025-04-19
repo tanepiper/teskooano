@@ -1,4 +1,7 @@
-import { celestialObjectsStore, panelRegistry } from "@teskooano/core-state";
+import {
+  celestialObjectsStore,
+  renderableObjectsStore,
+} from "@teskooano/core-state";
 import {
   CelestialObject,
   CelestialStatus,
@@ -6,8 +9,10 @@ import {
   scaleSize,
 } from "@teskooano/data-types";
 import * as THREE from "three"; // Needed for Vector3 calculations
+import { ModularSpaceRenderer } from "@teskooano/renderer-threejs"; // Import Renderer type
+import type { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // Import parent panel type
 // import { throttle } from 'lodash-es'; // Remove throttle for now
-import { EnginePanel } from "../engine/EnginePanel"; // Use regular import and corrected path
+// import { EnginePanel } from "../engine/EnginePanel"; // Use regular import and corrected path
 // import { DockviewApi } from 'dockview-core'; // Need DockviewApi type potentially
 // import { SeedForm } from './SeedForm'; // Import SeedForm for the API hack
 
@@ -192,21 +197,16 @@ const DEFAULT_SIZE_SCALING = 1.5;
 // --- End Constants ---
 
 export class FocusControl extends HTMLElement {
-  static get observedAttributes() {
-    return ["engine-view-id"];
-  }
-
   private listContainer: HTMLElement | null = null;
   private resetButton: HTMLButtonElement | null = null;
   private clearButton: HTMLButtonElement | null = null;
 
-  private linkedEnginePanel: EnginePanel | null = null;
-  private unsubscribeLinkedPanelState: (() => void) | null = null;
-  private _engineViewId: string | null = null;
-  private _linkCheckInterval: number | null = null;
+  private _parentPanel: CompositeEnginePanel | null = null; // Store parent panel instance
+
   private _currentFocusedId: string | null = null;
   private _handleObjectsLoaded: () => void;
   private _handleObjectDestroyed: () => void;
+  private _handleRendererFocusChange: (event: Event) => void; // Store handler reference
 
   constructor() {
     super();
@@ -216,17 +216,13 @@ export class FocusControl extends HTMLElement {
     // Bind event handlers to maintain correct 'this' context
     this._handleObjectsLoaded = this.populateList.bind(this);
     this._handleObjectDestroyed = this.populateList.bind(this);
-  }
-
-  attributeChangedCallback(
-    name: string,
-    oldValue: string | null,
-    newValue: string | null,
-  ): void {
-    if (name === "engine-view-id" && oldValue !== newValue) {
-      this._engineViewId = newValue;
-      this.attemptLinkToEnginePanel(); // Link when ID changes
-    }
+    // Bind the focus change handler
+    this._handleRendererFocusChange = (event: Event): void => {
+        const customEvent = event as CustomEvent<{ focusedObjectId: string | null }>;
+        if (customEvent.detail) {
+            this.updateHighlight(customEvent.detail.focusedObjectId);
+        }
+    };
   }
 
   connectedCallback() {
@@ -243,8 +239,7 @@ export class FocusControl extends HTMLElement {
     // Initial population (run directly)
     this.populateList();
 
-    // Instead of subscribing to ALL updates, just listen for specific events
-    // that would require rebuilding the list
+    // Listen for celestial object load/destroy events to repopulate list
     document.addEventListener(
       "celestial-objects-loaded",
       this._handleObjectsLoaded,
@@ -254,46 +249,33 @@ export class FocusControl extends HTMLElement {
       this._handleObjectDestroyed,
     );
 
-    // No longer subscribe to global simulationState for focus updates
-    // Focus updates will come directly from the linked panel's view state
-
-    // Subscribe to the event dispatched when influences change
+    // If we need to react to influence changes for list display
     document.addEventListener(
-      "planet-influences-changed",
+      "celestial-influences-changed",
       this.handleInfluencesChanged,
     );
 
-    // Attempt initial link if attribute is already set
-    this._engineViewId = this.getAttribute("engine-view-id");
-    this.attemptLinkToEnginePanel();
+    // ADD LISTENER FOR FOCUS CHANGES *FROM* THE RENDERER/CONTROLS
+    // This assumes the renderer or its controls emit an event when focus changes
+    // Or, alternatively, subscribe to the CompositeEnginePanel's viewStateStore if it tracks focus
+    // Example using a custom event:
+    document.addEventListener('renderer-focus-changed', this._handleRendererFocusChange);
   }
 
   disconnectedCallback() {
-    // Only unsubscribe from panel state, not simulation state
-    this.unsubscribeLinkedPanelState?.();
-    this.linkedEnginePanel = null;
-
-    // Clean up event listeners
-    document.removeEventListener(
-      "celestial-objects-loaded",
-      this._handleObjectsLoaded,
-    );
-    document.removeEventListener(
-      "celestial-object-destroyed",
-      this._handleObjectDestroyed,
-    );
-    // Unsubscribe from influence change events
-    document.removeEventListener(
-      "planet-influences-changed",
-      this.handleInfluencesChanged,
-    );
-
-    // Clear polling interval
-    if (this._linkCheckInterval) {
-      clearInterval(this._linkCheckInterval);
-      this._linkCheckInterval = null;
-    }
     this.removeEventListeners();
+    // REMOVED unsubscribeLinkedPanelState and interval clearing
+  }
+
+  /**
+   * Public method for the parent component (CompositeEnginePanel)
+   * to provide its instance.
+   */
+  public setParentPanel(panel: CompositeEnginePanel): void {
+    console.log("[FocusControl] Parent panel set.");
+    this._parentPanel = panel;
+    // TODO: Subscribe to parent panel's view state for focus changes?
+    // Or rely on the renderer-focus-changed event?
   }
 
   public tourFocus = (): void => {
@@ -335,183 +317,146 @@ export class FocusControl extends HTMLElement {
 
     if (activeObjects.length === 0) {
       console.warn("[FocusControl] No active objects available");
-      return [null, this._engineViewId];
+      return [null, null];
     }
 
     // Select a random active object
     const randomObject =
       activeObjects[Math.floor(Math.random() * activeObjects.length)];
-    return [randomObject.id, this._engineViewId];
+    return [randomObject.id, null];
   };
 
-  /**
-   * Focus on a specific object programmatically
-   * @param objectId The ID of the object to focus on
-   * @returns true if focus was successful, false otherwise
-   */
   public focusOnObject = (objectId: string): boolean => {
-    if (!this._engineViewId) {
-      console.warn("[FocusControl] Cannot focus: no engine panel linked");
+    console.log(`[FocusControl] focusOnObject called for ID: ${objectId}`);
+
+    if (!this._parentPanel) {
+      console.warn("[FocusControl] Cannot focus, parent panel not set.");
       return false;
     }
-
     const objects = celestialObjectsStore.get();
-    const focusObject = objects[objectId];
+    const targetObject = objects[objectId];
 
-    if (!focusObject) {
-      console.warn(`[FocusControl] Object not found: ${objectId}`);
+    if (!targetObject) {
+      console.warn(`[FocusControl] Target object ${objectId} not found.`);
       return false;
     }
 
+    // Check if object is a type we don't want to directly focus (e.g., fields)
+    if (targetObject.type === CelestialType.ASTEROID_FIELD || targetObject.type === CelestialType.OORT_CLOUD) {
+        console.warn(`[FocusControl] Direct focus disallowed for type: ${targetObject.type}`);
+        // Optionally, focus on the parent object instead?
+        // if (targetObject.parentId) { return this.focusOnObject(targetObject.parentId); }
+        return false; // Prevent focusing for now
+    }
+
+    // Check if object is destroyed or annihilated
     if (
-      focusObject.status === CelestialStatus.DESTROYED ||
-      focusObject.status === CelestialStatus.ANNIHILATED
+      targetObject.status === CelestialStatus.DESTROYED ||
+      targetObject.status === CelestialStatus.ANNIHILATED
     ) {
       console.warn(
-        `[FocusControl] Cannot focus on destroyed object: ${objectId}`,
+        `[FocusControl] Cannot focus on object ${objectId} with status ${targetObject.status}`,
       );
-      return false;
+      return false; // Prevent focusing on destroyed/annihilated objects
     }
 
-    // Calculate appropriate distance
-    const distance = this.calculateCameraDistance(focusObject);
+    const distance = this.calculateCameraDistance(targetObject);
 
-    // Dispatch focus event
-    const focusEvent = new CustomEvent("engine-focus-request", {
-      detail: {
-        targetPanelId: this._engineViewId,
-        objectId: objectId,
-        distance: distance,
-      },
-      bubbles: true,
-      composed: true,
-    });
+    console.log(
+      `[FocusControl] Requesting parent focus on ${objectId} (distance: ${distance})`,
+    );
+    console.log("[FocusControl] Calling parentPanel.focusOnObject...", this._parentPanel);
 
-    this.dispatchEvent(focusEvent);
-    return true;
+    // Call parent panel's focus method
+    this._parentPanel.focusOnObject(objectId, distance);
+
+    // --- Update internal highlight state (NO LONGER NEEDED IF RENDERER HANDLES IT) ---
+    // We assume the renderer (or its ControlsManager) will update its own state
+    // which might trigger events that other components listen to.
+    // this.updateHighlight(objectId);
+
+    return true; // Indicate focus request was sent
   };
 
   private addEventListeners(): void {
-    this.listContainer?.addEventListener("click", (event) => {
+    if (this.resetButton) {
+      this.resetButton.addEventListener("click", () => {
+        console.log("[FocusControl] Reset View clicked.");
+        // Call parent panel's reset method
+        this._parentPanel?.resetCameraView();
+      });
+    }
+    if (this.clearButton) {
+      this.clearButton.addEventListener("click", () => {
+        console.log("[FocusControl] Clear Focus clicked.");
+        // Call parent panel's clear focus method
+        this._parentPanel?.clearFocus();
+      });
+    }
+
+    // Keep list item click listener
+    this.shadowRoot!.addEventListener("click", (event) => {
+      console.log("[FocusControl] Click listener fired.");
       const target = event.target as HTMLElement;
+      const button = target.closest("button.focus-item") as HTMLButtonElement;
 
-      // Get the button - either the target itself or its closest parent button
-      let focusItemButton: HTMLButtonElement | null = null;
+      if (button && button.dataset.id) {
+        const objectId = button.dataset.id;
+        console.log(`[FocusControl] Clicked button for objectId: ${objectId}`);
 
-      // First check if target is already the button
-      if (
-        target.tagName === "BUTTON" &&
-        target.classList.contains("focus-item") &&
-        target.dataset.id
-      ) {
-        focusItemButton = target as HTMLButtonElement;
-      } else {
-        // Otherwise find closest parent button
-        focusItemButton = target.closest(
-          "button.focus-item[data-id]",
-        ) as HTMLButtonElement | null;
-      }
-
-      // Check linked panel ID exists before dispatching
-      if (focusItemButton && this._engineViewId) {
-        const objectId = focusItemButton.dataset.id;
-        if (objectId) {
-          // Check if the object is destroyed or annihilated - skip if it is
-          const objects = celestialObjectsStore.get();
-          const focusObject = objects[objectId];
-
-          if (
-            !focusObject ||
-            focusObject.status === CelestialStatus.DESTROYED ||
-            focusObject.status === CelestialStatus.ANNIHILATED
-          ) {
-            console.log(
-              `[FocusControl] Cannot focus on removed/destroyed object: ${objectId}`,
-            );
-            return; // Skip focusing on destroyed objects
-          }
-
-          // Only send the command if the focus is actually changing
-          if (objectId !== this._currentFocusedId) {
-            // Get the object to calculate distance based on radius
-            let distance: number | undefined = undefined;
-
-            if (focusObject) {
-              // Calculate distance as radius + 10% of radius
-              distance = this.calculateCameraDistance(focusObject);
-            }
-            // Else: distance remains undefined, panel can use default
-
-            // *** DISPATCH CUSTOM EVENT INSTEAD OF DIRECT CALL ***
-            const focusEvent = new CustomEvent("engine-focus-request", {
-              detail: {
-                targetPanelId: this._engineViewId,
-                objectId: objectId,
-                distance: distance, // Pass calculated distance or undefined
-              },
-              bubbles: true, // Allow event to bubble up if needed
-              composed: true, // Allow event to cross shadow DOM boundaries
-            });
-            this.dispatchEvent(focusEvent);
-          } else {
-            console.trace(
-              `[FocusControl] Item ${objectId} is already focused in panel ${this._engineViewId}. Ignoring click.`,
-            );
-          }
+        // Check if the item is destroyed or annihilated before trying to focus
+        if (
+          button.classList.contains("destroyed") ||
+          button.classList.contains("annihilated")
+        ) {
+          console.warn(
+            `[FocusControl] Click ignored for object ${objectId} (destroyed/annihilated).`,
+          );
+          return; // Do nothing if clicked on a destroyed/annihilated item
         }
-      } else if (focusItemButton && !this._engineViewId) {
-        console.warn(
-          `[FocusControl] Clicked focus item ${focusItemButton.dataset.id}, but no engine panel is linked.`,
-        );
+
+        this.focusOnObject(objectId);
       }
     });
 
-    this.resetButton?.addEventListener("click", () => {
-      if (this.linkedEnginePanel) {
-        // Resetting view likely doesn't need event, direct update is fine?
-        // Or could also dispatch an event 'engine-reset-view-request'
-        this.linkedEnginePanel.updateViewState({
-          cameraPosition: DEFAULT_CAMERA_POSITION.clone(),
-          cameraTarget: DEFAULT_CAMERA_TARGET.clone(),
-          focusedObjectId: null,
-        });
-      } else if (this._engineViewId) {
-        // Dispatch event even if panel link isn't established yet?
+    // Listen for celestial object load/destroy events to repopulate list
+    document.addEventListener(
+      "celestial-objects-loaded",
+      this._handleObjectsLoaded,
+    );
+    document.addEventListener(
+      "celestial-object-destroyed",
+      this._handleObjectDestroyed,
+    );
+    // If we need to react to influence changes for list display
+    document.addEventListener(
+      "celestial-influences-changed",
+      this.handleInfluencesChanged,
+    );
 
-        const resetEvent = new CustomEvent("engine-reset-view-request", {
-          detail: { targetPanelId: this._engineViewId },
-          bubbles: true,
-          composed: true,
-        });
-        this.dispatchEvent(resetEvent);
-      }
-    });
-
-    this.clearButton?.addEventListener("click", () => {
-      // Clearing focus should also use the event system
-      if (this._engineViewId) {
-        const clearFocusEvent = new CustomEvent("engine-focus-request", {
-          detail: {
-            targetPanelId: this._engineViewId,
-            objectId: null, // Signal to clear focus
-            distance: undefined,
-          },
-          bubbles: true,
-          composed: true,
-        });
-        this.dispatchEvent(clearFocusEvent);
-      } else {
-        console.warn(
-          "[FocusControl] Cannot clear focus, no engine panel ID known.",
-        );
-      }
-    });
+    // ADD LISTENER FOR FOCUS CHANGES *FROM* THE RENDERER/CONTROLS
+    // This assumes the renderer or its controls emit an event when focus changes
+    // Or, alternatively, subscribe to the CompositeEnginePanel's viewStateStore if it tracks focus
+    // Example using a custom event:
+    document.addEventListener('renderer-focus-changed', this._handleRendererFocusChange);
   }
 
   private removeEventListeners(): void {
-    this.listContainer?.removeEventListener("click", () => {}); // Placeholder for removal logic if needed
-    this.resetButton?.removeEventListener("click", () => {}); // Placeholder
-    this.clearButton?.removeEventListener("click", () => {}); // Placeholder
+    // Remove listeners added in addEventListeners
+    document.removeEventListener(
+      "celestial-objects-loaded",
+      this._handleObjectsLoaded,
+    );
+    document.removeEventListener(
+      "celestial-object-destroyed",
+      this._handleObjectDestroyed,
+    );
+    document.removeEventListener(
+      "celestial-influences-changed",
+      this.handleInfluencesChanged,
+    );
+    document.removeEventListener('renderer-focus-changed', this._handleRendererFocusChange);
+    // Note: Button listeners are implicitly removed when the component disconnects
   }
 
   private populateList = (): void => {
@@ -717,74 +662,6 @@ export class FocusControl extends HTMLElement {
         item.classList.toggle("active", shouldBeActive);
       }
     });
-  }
-
-  private attemptLinkToEnginePanel(): void {
-    // Clear previous state
-    this.unsubscribeLinkedPanelState?.();
-    this.unsubscribeLinkedPanelState = null;
-    this.linkedEnginePanel = null;
-    this.updateHighlight(null);
-    if (this._linkCheckInterval) clearInterval(this._linkCheckInterval);
-    this._linkCheckInterval = null;
-
-    if (!this._engineViewId) {
-      console.warn(
-        "[FocusControl] Cannot link: engine-view-id attribute is missing or empty.",
-      );
-      return;
-    }
-
-    // Try to get panel instance from registry
-    const potentialEnginePanel = panelRegistry.getPanelInstance<EnginePanel>(
-      this._engineViewId,
-    );
-
-    // Check for required methods AND the new getter
-    if (
-      potentialEnginePanel &&
-      typeof potentialEnginePanel.subscribeToViewState === "function" &&
-      potentialEnginePanel.orbitManager
-    ) {
-      // Check if orbitManager getter returns a value
-
-      this.linkedEnginePanel = potentialEnginePanel;
-      const orbitManager = this.linkedEnginePanel.orbitManager; // Use the getter
-
-      this.linkedEnginePanel.updateViewState({ focusedObjectId: null });
-
-      this.unsubscribeLinkedPanelState =
-        this.linkedEnginePanel.subscribeToViewState((viewState) => {
-          // 1. Update the UI highlight
-          this.updateHighlight(viewState.focusedObjectId);
-
-          if (orbitManager) {
-            orbitManager.highlightVisualization(viewState.focusedObjectId);
-          } // No else needed due to outer check
-        });
-      // Trigger initial highlight sync
-      const initialState = this.linkedEnginePanel.getViewState();
-      this.updateHighlight(initialState.focusedObjectId);
-
-      if (orbitManager) {
-        // orbitManager confirmed available
-        orbitManager.highlightVisualization(initialState.focusedObjectId);
-      }
-
-      // Stop polling if we were
-      if (this._linkCheckInterval) {
-        clearInterval(this._linkCheckInterval);
-        this._linkCheckInterval = null;
-      }
-    } else {
-      // Panel not registered yet, start polling if not already
-      if (!this._linkCheckInterval) {
-        // Use a longer interval (1000ms instead of 500ms) to reduce performance impact
-        this._linkCheckInterval = window.setInterval(() => {
-          this.attemptLinkToEnginePanel(); // Retry link
-        }, 1000); // Increased poll rate to reduce CPU usage
-      }
-    }
   }
 
   /**

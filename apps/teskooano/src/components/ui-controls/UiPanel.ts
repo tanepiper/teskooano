@@ -7,6 +7,7 @@ import {
 import "../shared/CollapsibleSection";
 // REMOVE import of specific content components like SeedForm
 // import '../engine/SeedForm';
+import { layoutOrientationStore, Orientation } from "../../stores/layoutStore"; // Import layout store
 
 // --- Define the expected structure for panel parameters ---
 interface UiPanelSectionConfig {
@@ -33,6 +34,9 @@ export class UiPanel implements IContentRenderer {
     | undefined;
   private _api: DockviewPanelApi | undefined;
   private _engineViewId: string | null = null;
+  // --- View Orientation Handling ---
+  private _layoutUnsubscribe: (() => void) | null = null;
+  private _currentOrientation: Orientation | null = null;
 
   get element(): HTMLElement {
     return this._element;
@@ -47,6 +51,30 @@ export class UiPanel implements IContentRenderer {
     this._element.style.padding = "10px";
     this._element.style.boxSizing = "border-box";
     this._element.style.overflowY = "auto";
+
+    // --- Subscribe to layout orientation changes ---
+    this._layoutUnsubscribe = layoutOrientationStore.subscribe((orientation) => {
+      if (this._currentOrientation !== orientation) {
+        this._currentOrientation = orientation;
+        console.log(`UiPanel [${this._api?.id}] orientation: ${orientation}`); // Debug
+        if (orientation === "portrait") {
+          this._element.classList.remove("layout-internal-landscape");
+          this._element.classList.add("layout-internal-portrait");
+        } else {
+          this._element.classList.remove("layout-internal-portrait");
+          this._element.classList.add("layout-internal-landscape");
+        }
+      }
+    });
+    // Apply initial class
+    const initialOrientation = layoutOrientationStore.get();
+    this._currentOrientation = initialOrientation;
+    if (initialOrientation === "portrait") {
+      this._element.classList.add("layout-internal-portrait");
+    } else {
+      this._element.classList.add("layout-internal-landscape");
+    }
+    // --- End layout subscription ---
   }
 
   init(parameters: GroupPanelPartInitParameters): void {
@@ -106,5 +134,11 @@ export class UiPanel implements IContentRenderer {
     });
   }
 
-  dispose(): void {}
+  dispose(): void {
+    // Unsubscribe from layout changes
+    if (this._layoutUnsubscribe) {
+      this._layoutUnsubscribe();
+      this._layoutUnsubscribe = null;
+    }
+  }
 }

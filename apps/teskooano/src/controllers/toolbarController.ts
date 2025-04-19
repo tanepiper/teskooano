@@ -170,10 +170,8 @@ export class ToolbarController {
   private addEnginePanels(): void {
     this._enginePanelCounter++;
     const counter = this._enginePanelCounter;
-    const engineViewId = `engine_view_${counter}`;
-    const engineUiId = `engine_ui_${counter}`;
-    const engineViewTitle = `Teskooano ${counter}`;
-    const engineUiTitle = `Engine ${counter} UI`;
+    const compositeViewId = `composite_engine_view_${counter}`;
+    const compositeViewTitle = `Teskooano ${counter}`;
 
     // Prepare UI sections with the current counter
     const uiSections = this.DEFAULT_UI_SECTIONS.map((section) => ({
@@ -210,46 +208,24 @@ export class ToolbarController {
         console.log("Positioning first engine view (default).");
       }
 
-      // Create the engine panel
-      console.log(`Adding engine panel: ${engineViewId}`);
-      const enginePanel = this._dockviewController.api.addPanel({
-        id: engineViewId,
-        component: "engine_view",
-        title: engineViewTitle,
-        params: { title: engineViewTitle },
+      // Create the composite engine panel
+      console.log(`Adding composite engine panel: ${compositeViewId}`);
+      const compositePanel = this._dockviewController.api.addPanel({
+        id: compositeViewId,
+        component: "composite_engine_view", // New component type
+        title: compositeViewTitle,
+        params: {
+          title: compositeViewTitle,
+          sections: uiSections, // Pass UI sections config
+        },
         position: positionOptions,
       });
 
-      // Add UI panel - position based on device type
-      console.log(
-        `Adding UI panel: ${engineUiId} (Mobile: ${this._isMobileDevice})`,
-      );
-      this._dockviewController.api.addPanel({
-        id: engineUiId,
-        component: "ui_view",
-        title: engineUiTitle,
-        params: {
-          engineViewId: engineViewId,
-          sections: uiSections,
-        },
-        position: {
-          referencePanel: engineViewId,
-          // For mobile: position below, for desktop: position to the right
-          direction: this._isMobileDevice ? "below" : "right",
-        },
-        // Different size constraints based on device type
-        minimumWidth: this._isMobileDevice ? 100 : 250,
-        maximumWidth: this._isMobileDevice ? 2000 : 400,
-        // On mobile, we want the UI panel to be shorter
-        minimumHeight: this._isMobileDevice ? 200 : undefined,
-        maximumHeight: this._isMobileDevice ? 300 : undefined,
-      });
+      // Store the composite ID for positioning the next one
+      this._lastEngineViewId = compositeViewId;
 
-      // Store the engine ID for positioning the next pair
-      this._lastEngineViewId = engineViewId;
-
-      // Activate the engine panel
-      enginePanel.api.setActive();
+      // Activate the composite panel
+      compositePanel.api.setActive();
     } catch (error) {
       console.error(
         `Failed to create engine window panels for counter ${counter}:`,

@@ -1,6 +1,9 @@
-import type { PanelViewState } from "@teskooano/core-state"; // Need the type
-import { panelRegistry } from "@teskooano/core-state"; // Assuming correct path resolution
-import type { EnginePanel } from "../engine/EnginePanel"; // Corrected path
+// import type { PanelViewState } from "@teskooano/core-state"; // Removed - Type defined in CompositePanel
+// import { panelRegistry } from "@teskooano/core-state"; // Removed
+// import type { EnginePanel } from "../engine/EnginePanel"; // Removed
+// import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs"; // Not needed directly
+import type { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // Import parent panel type
+import type { PanelViewState } from "../engine/CompositeEnginePanel"; // Import type from parent
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -103,20 +106,14 @@ template.innerHTML = `
 `;
 
 export class EngineUISettingsPanel extends HTMLElement {
-  static get observedAttributes() {
-    return ["engine-view-id"];
-  }
-
   private gridToggle: HTMLInputElement | null = null;
   private labelsToggle: HTMLInputElement | null = null;
   private auMarkersToggle: HTMLInputElement | null = null;
   private debrisEffectsToggle: HTMLInputElement | null = null;
   private errorMessageElement: HTMLElement | null = null;
 
-  private linkedEnginePanel: EnginePanel | null = null;
-  private unsubscribeLinkedPanelState: (() => void) | null = null;
-  private _engineViewId: string | null = null;
-  private _linkCheckInterval: number | null = null;
+  private _parentPanel: CompositeEnginePanel | null = null; // Store parent panel instance
+  private _unsubscribeParentState: (() => void) | null = null; // To unsub from parent state
 
   constructor() {
     super();
@@ -141,32 +138,16 @@ export class EngineUISettingsPanel extends HTMLElement {
 
     this.addEventListeners();
 
-    this._engineViewId = this.getAttribute("engine-view-id");
-    this.attemptLinkToEnginePanel();
+    // Attempt to sync state if parent panel is already set
+    if (this._parentPanel) {
+        this.syncWithParentPanelState();
+    }
   }
 
   disconnectedCallback() {
     this.removeEventListeners();
-    this.unsubscribeLinkedPanelState?.();
-    this.linkedEnginePanel = null;
-    if (this._linkCheckInterval) {
-      clearInterval(this._linkCheckInterval);
-      this._linkCheckInterval = null;
-    }
-  }
-
-  attributeChangedCallback(
-    name: string,
-    oldValue: string | null,
-    newValue: string | null,
-  ): void {
-    if (name === "engine-view-id" && oldValue !== newValue) {
-      this._engineViewId = newValue;
-      // Unsubscribe from old panel if linked
-      this.unsubscribeLinkedPanelState?.();
-      this.linkedEnginePanel = null;
-      this.attemptLinkToEnginePanel(); // Attempt link with new ID
-    }
+    this._unsubscribeParentState?.(); // Unsubscribe from parent state
+    this._unsubscribeParentState = null;
   }
 
   private addEventListeners(): void {
@@ -201,61 +182,64 @@ export class EngineUISettingsPanel extends HTMLElement {
     );
   }
 
+  /**
+   * Public method for the parent component (CompositeEnginePanel)
+   * to provide its instance.
+   */
+  public setParentPanel(panel: CompositeEnginePanel): void {
+    console.log("[EngineUISettingsPanel] Parent panel set.");
+    this._parentPanel = panel;
+    // If connected, sync state now
+    if (this.isConnected) {
+        this.syncWithParentPanelState();
+    }
+  }
+
+  // Method to get initial state and subscribe to updates from parent panel
+  private syncWithParentPanelState(): void {
+      if (!this._parentPanel) {
+          this.showError("Parent panel not available.");
+          return;
+      }
+
+      // Unsubscribe from previous parent state if any
+      this._unsubscribeParentState?.();
+
+      // Get initial state from parent panel
+      const initialState = this._parentPanel.getViewState();
+      this.updateToggleState(initialState);
+
+      // Subscribe to state changes from parent panel
+      this._unsubscribeParentState = this._parentPanel.subscribeToViewState(
+          (newState: PanelViewState) => {
+              this.updateToggleState(newState);
+          }
+      );
+  }
+
   // Event handlers bound to the class instance
   private handleGridToggleChange = (event: Event): void => {
-    if (!this.linkedEnginePanel) return;
+    if (!this._parentPanel) return;
     const isChecked = (event.target as HTMLInputElement).checked;
-    // Call the method on the linked panel (we'll add this method later)
-    if (typeof this.linkedEnginePanel.setShowGrid === "function") {
-      this.linkedEnginePanel.setShowGrid(isChecked);
-    } else {
-      console.error(
-        `[SettingsPanel ${this._engineViewId}] linkedEnginePanel.setShowGrid is not a function!`,
-      );
-      this.showError("Error communicating with engine panel.");
-    }
+    this._parentPanel.setShowGrid(isChecked);
   };
 
   private handleLabelsToggleChange = (event: Event): void => {
-    if (!this.linkedEnginePanel) return;
+    if (!this._parentPanel) return;
     const isChecked = (event.target as HTMLInputElement).checked;
-    // Call the method on the linked panel (we'll add this method later)
-    if (typeof this.linkedEnginePanel.setShowCelestialLabels === "function") {
-      this.linkedEnginePanel.setShowCelestialLabels(isChecked);
-    } else {
-      console.error(
-        `[SettingsPanel ${this._engineViewId}] linkedEnginePanel.setShowCelestialLabels is not a function!`,
-      );
-      this.showError("Error communicating with engine panel.");
-    }
+    this._parentPanel.setShowCelestialLabels(isChecked);
   };
 
   private handleAuMarkersToggleChange = (event: Event): void => {
-    if (!this.linkedEnginePanel) return;
+    if (!this._parentPanel) return;
     const isChecked = (event.target as HTMLInputElement).checked;
-    // Call the method on the linked panel
-    if (typeof this.linkedEnginePanel.setShowAuMarkers === "function") {
-      this.linkedEnginePanel.setShowAuMarkers(isChecked);
-    } else {
-      console.error(
-        `[SettingsPanel ${this._engineViewId}] linkedEnginePanel.setShowAuMarkers is not a function!`,
-      );
-      this.showError("Error communicating with engine panel.");
-    }
+    this._parentPanel.setShowAuMarkers(isChecked);
   };
 
   private handleDebrisEffectsToggleChange = (event: Event): void => {
-    if (!this.linkedEnginePanel) return;
+    if (!this._parentPanel) return;
     const isChecked = (event.target as HTMLInputElement).checked;
-    // Call the method on the linked panel
-    if (typeof this.linkedEnginePanel.setDebrisEffectsEnabled === "function") {
-      this.linkedEnginePanel.setDebrisEffectsEnabled(isChecked);
-    } else {
-      console.error(
-        `[SettingsPanel ${this._engineViewId}] linkedEnginePanel.setDebrisEffectsEnabled is not a function!`,
-      );
-      this.showError("Error communicating with engine panel.");
-    }
+    this._parentPanel.setDebrisEffectsEnabled(isChecked);
   };
 
   private updateToggleState(viewState: PanelViewState): void {
@@ -285,64 +269,6 @@ export class EngineUISettingsPanel extends HTMLElement {
       this.errorMessageElement.style.display = "none";
       this.errorMessageElement.textContent = "";
     }
-  }
-
-  private attemptLinkToEnginePanel(): void {
-    if (!this._engineViewId) {
-      console.warn("[SettingsPanel] Missing engine-view-id attribute.");
-      this.showError("Link to engine view failed: Missing ID.");
-      return;
-    }
-
-    // Clear previous interval if any
-    if (this._linkCheckInterval) {
-      clearInterval(this._linkCheckInterval);
-      this._linkCheckInterval = null;
-    }
-    // Clear previous subscription
-    this.unsubscribeLinkedPanelState?.();
-    this.linkedEnginePanel = null;
-    this.clearError(); // Clear errors on new link attempt
-
-    const attempt = () => {
-      const potentialEnginePanel = panelRegistry.getPanelInstance<EnginePanel>(
-        this._engineViewId!,
-      );
-
-      if (
-        potentialEnginePanel &&
-        typeof potentialEnginePanel.subscribeToViewState === "function"
-      ) {
-        this.linkedEnginePanel = potentialEnginePanel;
-        this.clearError(); // Clear error on successful link
-
-        // Subscribe to the linked panel's state
-        this.unsubscribeLinkedPanelState =
-          this.linkedEnginePanel.subscribeToViewState((viewState) => {
-            this.updateToggleState(viewState);
-          });
-
-        // Get initial state
-        const initialState = this.linkedEnginePanel.getViewState();
-        this.updateToggleState(initialState);
-
-        // Clear the interval check once linked
-        if (this._linkCheckInterval) {
-          clearInterval(this._linkCheckInterval);
-          this._linkCheckInterval = null;
-        }
-      } else {
-        console.warn(
-          `[SettingsPanel] Engine panel ${this._engineViewId} not found or not ready yet. Retrying...`,
-        );
-        // Keep trying if not found immediately
-        if (!this._linkCheckInterval) {
-          this._linkCheckInterval = window.setInterval(attempt, 1000); // Retry every second
-        }
-      }
-    };
-
-    attempt(); // Initial attempt
   }
 }
 

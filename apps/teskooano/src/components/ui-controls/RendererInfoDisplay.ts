@@ -1,4 +1,5 @@
 import { simulationState } from "@teskooano/core-state";
+import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 
 // Helper to format vectors nicely
 function formatVector(
@@ -91,6 +92,18 @@ interface ExtendedSimulationState {
   };
 }
 
+// --- Interface for Renderer Stats (Matching EnginePanel/CompositePanel getRendererStats) ---
+interface RendererStats {
+  fps?: number;
+  drawCalls?: number;
+  triangles?: number;
+  memory?: { usedJSHeapSize?: number };
+  camera?: {
+    position?: { x: number; y: number; z: number };
+    fov?: number;
+  };
+}
+
 export class RendererInfoDisplay extends HTMLElement {
   private fpsValue: HTMLElement | null = null;
   private drawCallsValue: HTMLElement | null = null;
@@ -99,7 +112,8 @@ export class RendererInfoDisplay extends HTMLElement {
   private camPosValue: HTMLElement | null = null;
   private fovValue: HTMLElement | null = null;
 
-  private unsubscribeSimState: (() => void) | null = null;
+  private _renderer: ModularSpaceRenderer | null = null;
+  private _updateInterval: number | null = null;
 
   constructor() {
     super();
@@ -115,45 +129,50 @@ export class RendererInfoDisplay extends HTMLElement {
     this.camPosValue = this.shadowRoot!.getElementById("cam-pos-value");
     this.fovValue = this.shadowRoot!.getElementById("fov-value");
 
-    // Subscribe to the simulation state
-    this.unsubscribeSimState = simulationState.subscribe(this.updateDisplay);
-    this.updateDisplay(); // Initial update
-
-    // If renderer pushes updates less frequently than desired FPS display:
-    // requestAnimationFrame(this.fpsTick); // Alternative: calculate FPS here
+    if (this._renderer) {
+        this.startUpdateTimer();
+    }
   }
 
   disconnectedCallback() {
-    this.unsubscribeSimState?.();
+    this.stopUpdateTimer();
   }
 
-  // // --- Optional: FPS Calculation within component ---
-  // // Use if state updates for FPS aren't frequent enough
-  // private fpsTick = (now: number): void => {
-  //     if (!this.isConnected) return; // Stop if disconnected
-  //     this.frameCount++;
-  //     if (now - this.lastFPSUpdate >= this.fpsUpdateInterval) {
-  //         this.calculatedFPS = Math.round((this.frameCount * 1000) / (now - this.lastFPSUpdate));
-  //         this.frameCount = 0;
-  //         this.lastFPSUpdate = now;
-  //         // Force update display if state doesn't trigger frequently enough
-  //         if (!simulationState.get().renderer?.fps) {
-  //              this.updateDisplay(simulationState.get()); // Pass current state
-  //         }
-  //     }
-  //     requestAnimationFrame(this.fpsTick);
-  // }
-  // // --- End Optional FPS Calc ---
+  public setRenderer(renderer: ModularSpaceRenderer): void {
+    console.log("[RendererInfoDisplay] Renderer set.");
+    this._renderer = renderer;
+    if (this.isConnected) {
+      this.startUpdateTimer();
+    }
+  }
 
-  private updateDisplay = (): void => {
-    const state = simulationState.get() as ExtendedSimulationState; // Cast to locally defined interface
-    const rendererStats = state.renderer;
+  private startUpdateTimer(): void {
+    this.stopUpdateTimer();
+    this._updateInterval = window.setInterval(() => {
+        this.fetchAndUpdateDisplay();
+    }, 1000);
+    this.fetchAndUpdateDisplay();
+  }
 
+  private stopUpdateTimer(): void {
+    if (this._updateInterval) {
+      window.clearInterval(this._updateInterval);
+      this._updateInterval = null;
+    }
+  }
+
+  private fetchAndUpdateDisplay(): void {
+    if (!this._renderer?.animationLoop) return;
+
+    const stats = this._renderer.animationLoop.getCurrentStats();
+    this.updateDisplay(stats);
+  }
+
+  private updateDisplay = (stats: RendererStats | null): void => {
     // --- FPS ---
-    const fps = rendererStats?.fps;
+    const fps = stats?.fps;
     if (this.fpsValue) {
       this.fpsValue.textContent = fps?.toFixed(0) ?? "-";
-      // Color coding based on value
       if (fps === undefined) {
         this.fpsValue.style.color = "var(--color-text-secondary)";
       } else if (fps >= 55) {
@@ -167,30 +186,29 @@ export class RendererInfoDisplay extends HTMLElement {
 
     // --- Draw Calls ---
     if (this.drawCallsValue) {
-      this.drawCallsValue.textContent = formatNumber(rendererStats?.drawCalls);
+      this.drawCallsValue.textContent = formatNumber(stats?.drawCalls);
     }
 
     // --- Triangles ---
     if (this.trianglesValue) {
-      this.trianglesValue.textContent = formatNumber(rendererStats?.triangles);
+      this.trianglesValue.textContent = formatNumber(stats?.triangles);
     }
 
     // --- Memory ---
     if (this.memoryValue) {
-      this.memoryValue.textContent = formatMemory(
-        rendererStats?.memory?.usedJSHeapSize,
-      );
+      this.memoryValue.textContent = formatMemory(stats?.memory?.usedJSHeapSize);
     }
 
     // --- Camera Position ---
+    const cameraInfo = stats?.camera;
     if (this.camPosValue) {
-      this.camPosValue.textContent = formatVector(state.camera?.position, 0);
+      this.camPosValue.textContent = formatVector(cameraInfo?.position, 0);
     }
 
     // --- FOV ---
     if (this.fovValue) {
-      this.fovValue.textContent = state.camera?.fov
-        ? `${state.camera.fov.toFixed(0)}°`
+      this.fovValue.textContent = cameraInfo?.fov
+        ? `${cameraInfo.fov.toFixed(0)}°`
         : "-";
     }
   };

@@ -5,8 +5,7 @@ import {
   GroupPanelPartInitParameters,
   IContentRenderer,
 } from "dockview-core";
-import { EnginePanel } from "../components/engine";
-import { UiPanel } from "../components/ui-controls";
+import { CompositeEnginePanel } from "../components/engine/CompositeEnginePanel";
 
 // --- State --- (Removed counter)
 
@@ -57,8 +56,9 @@ export class DockviewController {
 
   constructor(element: HTMLElement) {
     // Register components needed at initialization time internally first
-    this._registeredComponents.set("engine_view", EnginePanel);
-    this._registeredComponents.set("ui_view", UiPanel);
+    // this._registeredComponents.set("engine_view", EnginePanel);
+    // this._registeredComponents.set("ui_view", UiPanel);
+    this._registeredComponents.set("composite_engine_view", CompositeEnginePanel);
     // Remove pre-registration for dynamically added panels
     // this._registeredComponents.set('progress_view', ProgressPanel);
     // this._registeredComponents.set('settings_view', SettingsPanel);
@@ -105,7 +105,7 @@ export class DockviewController {
 
     // Example: Log panel active events and update state
     this._api.onDidActivePanelChange((event) => {
-      if (event && event.api.component === "engine_view") {
+      if (event && event.api.component === "composite_engine_view") {
         // Check if it's an EnginePanel
         activePanelApi.set(event.api); // Update the store with the active panel API
       } else {

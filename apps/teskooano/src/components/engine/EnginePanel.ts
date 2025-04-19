@@ -22,6 +22,8 @@ import {
 import { atom, type WritableAtom } from "nanostores"; // Add nanostores import
 import * as THREE from "three";
 
+import { layoutOrientationStore, Orientation } from "../../stores/layoutStore"; // Import layout store
+
 let isSimulationLoopStarted = false;
 
 // --- Constants for Camera Focusing (Copied from FocusControl) ---
@@ -57,6 +59,9 @@ export class EnginePanel implements IContentRenderer {
   private _resizeObserver: ResizeObserver | undefined;
   private _dataListenerUnsubscribe: (() => void) | null = null;
   private _isInitialized = false;
+  // --- View Orientation Handling ---
+  private _layoutUnsubscribe: (() => void) | null = null;
+  private _currentOrientation: Orientation | null = null;
 
   // --- Internal View State ---
   private _previousViewState: PanelViewState | null = null;
@@ -82,6 +87,35 @@ export class EnginePanel implements IContentRenderer {
     this._element.style.width = "100%";
     this._element.style.overflow = "hidden"; // Prevent scrollbars from renderer canvas
     this._element.textContent = "Engine Initializing..."; // Placeholder
+
+    // --- Subscribe to layout orientation changes ---
+    this._layoutUnsubscribe = layoutOrientationStore.subscribe((orientation) => {
+      if (this._currentOrientation !== orientation) {
+        this._currentOrientation = orientation;
+        console.log(`EnginePanel [${this._api?.id}] orientation: ${orientation}`); // Debug
+        if (orientation === "portrait") {
+          this._element.classList.remove("layout-internal-landscape");
+          this._element.classList.add("layout-internal-portrait");
+        } else {
+          this._element.classList.remove("layout-internal-portrait");
+          this._element.classList.add("layout-internal-landscape");
+        }
+        // Force renderer resize after potential layout shifts
+        const { clientWidth, clientHeight } = this._element;
+        if (clientWidth > 0 && clientHeight > 0) {
+          this._renderer?.onResize(clientWidth, clientHeight);
+        }
+      }
+    });
+    // Apply initial class (important if store already has a value)
+    const initialOrientation = layoutOrientationStore.get();
+    this._currentOrientation = initialOrientation;
+    if (initialOrientation === "portrait") {
+      this._element.classList.add("layout-internal-portrait");
+    } else {
+      this._element.classList.add("layout-internal-landscape");
+    }
+    // --- End layout subscription ---
 
     // Initialize internal view state with defaults
     this._viewStateStore = atom<PanelViewState>({
@@ -550,12 +584,23 @@ export class EnginePanel implements IContentRenderer {
   }
 
   dispose(): void {
-    const panelIdForLog = this._api?.id ?? "unknown";
+    console.log(`Disposing EnginePanel ${this._api?.id}`);
+    // Unsubscribe from layout changes
+    if (this._layoutUnsubscribe) {
+      this._layoutUnsubscribe();
+      this._layoutUnsubscribe = null;
+    }
+    // Unsubscribe from data listeners
+    const panelIdForLog = this._api?.id ?? "unknown"; // Capture ID before potentially nulling API
+    if (this._dataListenerUnsubscribe) {
+      this._dataListenerUnsubscribe();
+      this._dataListenerUnsubscribe = null;
+    }
     // --- Unregister from Panel Registry ---
     if (this._api) {
-      panelRegistry.unregisterPanel(this._api.id);
+      panelRegistry.unregisterPanel(panelIdForLog);
     } else if (panelIdForLog !== "unknown") {
-      // Attempt unregister even if API is gone, using the captured ID
+      // Attempt unregister even if API is gone, using the captured ID if available
       panelRegistry.unregisterPanel(panelIdForLog);
     }
     // --- End Unregistration ---
@@ -569,8 +614,6 @@ export class EnginePanel implements IContentRenderer {
     // Remove the camera transition event listener
     document.removeEventListener("camera-transition-complete", () => {});
 
-    this._dataListenerUnsubscribe?.();
-    this._dataListenerUnsubscribe = null;
     this.disposeRenderer(); // Calls the queue clearing
     this._isInitialized = false;
   }

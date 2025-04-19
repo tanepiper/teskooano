@@ -4,10 +4,11 @@ import {
   CelestialType,
 } from "@teskooano/data-types";
 // Import necessary stores and registry from core-state
-import { celestialObjectsStore, panelRegistry } from "@teskooano/core-state";
+import { celestialObjectsStore } from "@teskooano/core-state";
 // Import the EnginePanel type (adjust path if necessary)
 import { map } from "nanostores";
-import { EnginePanel } from "../engine/EnginePanel";
+import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
+// import { EnginePanel } from "../engine/EnginePanel";
 
 // Import component types
 import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
@@ -144,13 +145,15 @@ export class FormatUtils {
 // --- MAIN CELESTIAL INFO COMPONENT ---
 export class CelestialInfo extends HTMLElement {
   private shadow: ShadowRoot;
-  private _engineViewId: string | null = null;
+  // REMOVED _engineViewId and linking properties
+  // private _engineViewId: string | null = null;
 
   // Store references
-  private linkedEnginePanel: EnginePanel | null = null;
-  private unsubscribePanelState: (() => void) | null = null;
+  // private linkedEnginePanel: EnginePanel | null = null;
+  // private unsubscribePanelState: (() => void) | null = null;
   private unsubscribeObjectsStore: (() => void) | null = null;
-  private _linkCheckInterval: number | null = null;
+  // private _linkCheckInterval: number | null = null;
+  private _renderer: ModularSpaceRenderer | null = null; // Store renderer instance
 
   private currentSelectedId: string | null = null;
 
@@ -165,10 +168,6 @@ export class CelestialInfo extends HTMLElement {
 
   // Track which component is currently active
   private activeComponent: CelestialInfoComponent | null = null;
-
-  static get observedAttributes() {
-    return ["engine-view-id"];
-  }
 
   constructor() {
     super();
@@ -234,90 +233,58 @@ export class CelestialInfo extends HTMLElement {
   }
 
   connectedCallback() {
-    this._engineViewId = this.getAttribute("engine-view-id");
-    this.attemptLinkToEnginePanel();
+    // REMOVED attribute reading and link attempt
+    // this._engineViewId = this.getAttribute("engine-view-id");
+    // this.attemptLinkToEnginePanel();
     this.setupObjectListener();
+
+    // ADD LISTENER FOR FOCUS CHANGES *FROM* THE RENDERER/CONTROLS
+    // Assuming the same event name as used in FocusControl
+    document.addEventListener('renderer-focus-changed', this.handleRendererFocusChange);
   }
 
   disconnectedCallback() {
-    this.unsubscribePanelState?.();
+    // REMOVED panel state unsubscribe and interval clear
+    // this.unsubscribePanelState?.();
+    // if (this._linkCheckInterval) clearInterval(this._linkCheckInterval);
+    // this.unsubscribePanelState = null;
+    // this.linkedEnginePanel = null;
+    // this._linkCheckInterval = null;
+
     this.unsubscribeObjectsStore?.();
-    if (this._linkCheckInterval) clearInterval(this._linkCheckInterval);
-    this.unsubscribePanelState = null;
     this.unsubscribeObjectsStore = null;
-    this.linkedEnginePanel = null;
-    this._linkCheckInterval = null;
+
+    document.removeEventListener('renderer-focus-changed', this.handleRendererFocusChange);
   }
 
-  attributeChangedCallback(
-    name: string,
-    oldValue: string | null,
-    newValue: string | null,
-  ) {
-    if (name === "engine-view-id" && oldValue !== newValue) {
-      this._engineViewId = newValue;
-      this.attemptLinkToEnginePanel();
-    }
+  /**
+   * Public method for the parent component (CompositeEnginePanel)
+   * to provide the renderer instance.
+   */
+  public setRenderer(renderer: ModularSpaceRenderer): void {
+    console.log("[CelestialInfo] Renderer set.");
+    this._renderer = renderer;
+    // If renderer has a way to get current focus, update immediately
+    // Otherwise, rely on the event listener
+    // Example: this.handleSelectionChange(this._renderer.getCurrentFocusId());
   }
 
-  private attemptLinkToEnginePanel(): void {
-    this.unsubscribePanelState?.();
-    this.unsubscribePanelState = null;
-    this.linkedEnginePanel = null;
-    this.handleSelectionChange(null);
-    if (this._linkCheckInterval) clearInterval(this._linkCheckInterval);
-    this._linkCheckInterval = null;
-
-    if (!this._engineViewId) {
-      console.warn(
-        "[CelestialInfo] Cannot link: engine-view-id attribute is missing or empty.",
-      );
-      return;
+  // Event handler for focus changes from the renderer
+  private handleRendererFocusChange = (event: Event): void => {
+    const customEvent = event as CustomEvent<{ focusedObjectId: string | null }>;
+    if (customEvent.detail) {
+      this.handleSelectionChange(customEvent.detail.focusedObjectId);
     }
-
-    const viewId = this._engineViewId;
-
-    const potentialEnginePanel =
-      panelRegistry.getPanelInstance<EnginePanel>(viewId);
-
-    if (
-      potentialEnginePanel instanceof EnginePanel &&
-      typeof potentialEnginePanel.subscribeToViewState === "function"
-    ) {
-      this.linkedEnginePanel = potentialEnginePanel;
-
-      this.unsubscribePanelState = this.linkedEnginePanel.subscribeToViewState(
-        (viewState) => {
-          this.handleSelectionChange(viewState.focusedObjectId);
-        },
-      );
-
-      this.handleSelectionChange(
-        this.linkedEnginePanel.getViewState().focusedObjectId,
-      );
-
-      if (this._linkCheckInterval) {
-        clearInterval(this._linkCheckInterval);
-        this._linkCheckInterval = null;
-      }
-    } else {
-      if (!this._linkCheckInterval) {
-        this._linkCheckInterval = window.setInterval(() => {
-          this.attemptLinkToEnginePanel();
-        }, 1000);
-      }
-    }
-  }
+  };
 
   private setupObjectListener() {
-    this.unsubscribeObjectsStore?.();
-
-    this.unsubscribeObjectsStore = map(celestialObjectsStore).listen(
+    // No changes needed here, still listens to the global store
+    this.unsubscribeObjectsStore = celestialObjectsStore.subscribe(
       (allCelestials) => {
         if (this.currentSelectedId) {
-          const selectedData = allCelestials.get()[this.currentSelectedId];
-          if (selectedData) {
-            this.renderInfo(selectedData);
+          const currentObject = allCelestials[this.currentSelectedId];
+          if (currentObject) {
+            this.renderInfo(currentObject);
           }
         }
       },

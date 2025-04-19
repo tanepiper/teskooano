@@ -16,6 +16,8 @@ import { ProgressPanel } from "./components/engine/ProgressPanel";
 // Import TourModal
 import { TourModal } from "./components/ui-controls/TourModal";
 import { celestialObjectsStore } from "@teskooano/core-state";
+import { layoutOrientationStore, Orientation } from "./stores/layoutStore"; // Import the layout store
+import "./components/ui-controls/EngineUISettingsPanel"; // Import for side effect (registers element)
 
 // --- Setup --- //
 
@@ -27,7 +29,25 @@ if (!appElement || !toolbarElement) {
   throw new Error("Required HTML elements (#app or #toolbar) not found.");
 }
 
-// Initialize Controllers
+// --- Orientation Handling --- //
+
+const portraitMediaQuery = window.matchMedia("(orientation: portrait)");
+
+function updateOrientation(isPortrait: boolean) {
+  const newOrientation: Orientation = isPortrait ? "portrait" : "landscape";
+  layoutOrientationStore.set(newOrientation);
+}
+
+// Initial check
+updateOrientation(portraitMediaQuery.matches);
+
+// Listen for changes
+portraitMediaQuery.addEventListener("change", (event) => {
+  updateOrientation(event.matches);
+});
+
+// --- Initialize Controllers --- //
+
 const dockviewController = new DockviewController(appElement);
 
 // Now initialize the tour controller with the correct engine view ID

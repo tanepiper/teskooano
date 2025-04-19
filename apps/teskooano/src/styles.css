@@ -50,8 +50,52 @@ body {
   flex-direction: column;
 }
 
+/* --- Orientation Layout - REMOVED --- */
+/*
+#app.layout-landscape {
+  display: flex;
+  flex-direction: row; /* Toolbar and Dockview side-by-side */
+/*}
+
+#app.layout-landscape #toolbar {
+  width: auto; /* Let it size based on content or a fixed width */
+/*  height: 100%; /* Full height */
+/*  flex-direction: column; /* Toolbar items stacked vertically */
+/*  border-right: 1px solid var(--color-border);
+  border-bottom: none;
+  /* Add fixed width or min/max width as needed */
+/*  /* width: 200px; */
+/*}
+
+#app.layout-landscape .dockview-container {
+  /* Dockview takes remaining space */
+/*  flex-grow: 1;
+}
+
+#app.layout-portrait {
+  display: flex;
+  flex-direction: column; /* Toolbar above Dockview */
+/*}
+
+#app.layout-portrait #toolbar {
+  height: auto; /* Allow wrapping */
+/*  min-height: var(--toolbar-height);
+  width: 100%;
+  flex-direction: row; /* Toolbar items horizontally */
+/*  border-bottom: 1px solid var(--color-border);
+  border-right: none;
+  flex-wrap: wrap; /* Allow items to wrap */
+/*}
+
+#app.layout-portrait .dockview-container {
+  /* Dockview takes remaining space */
+/*  flex-grow: 1;
+}
+*/
+/* ----------------------- */
+
 #toolbar {
-  height: var(--toolbar-height);
+  height: var(--toolbar-height); /* Keep this for portrait default */
   width: 100%;
   background-color: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
@@ -63,15 +107,23 @@ body {
   flex-wrap: nowrap;
   gap: var(--spacing-sm);
   flex-shrink: 0; /* Prevent toolbar from shrinking */
+  /* text-align: center; */
+  overflow: hidden;
+  position: relative; /* Creates new stacking context */
+  /* display: flex; is now handled by orientation classes - REVERTED */
+  display: flex; /* Re-apply display: flex as it's the default now */
+  flex-direction: row; /* Ensure items are laid out horizontally */
 }
 
 #app {
   width: 100%;
   flex: 1; /* Use flexbox model for better height calculation */
   margin: 0 auto;
-  text-align: center;
+  /* Remove text-align: center; if flex handles alignment */
+  /* text-align: center; */
   overflow: hidden;
   position: relative; /* Creates new stacking context */
+  /* display: flex; is now handled by orientation classes */
 }
 
 /* Better scaling for simulation controls buttons */
@@ -362,3 +414,58 @@ button:focus-visible {
   --button-padding-x: 0.8rem;
   font-size: var(--button-font-size);
 }
+
+/* Dockview specific overrides - get the container for orientation */
+.dockview-container { 
+  width: 100%; 
+  height: 100%;
+}
+
+/* --- Composite Panel Internal Layout --- */
+.composite-engine-panel {
+  /* Base is flex, orientation classes change direction */
+}
+
+.composite-engine-panel.layout-internal-landscape {
+  flex-direction: row;
+}
+
+.composite-engine-panel.layout-internal-portrait {
+  flex-direction: column;
+}
+
+/* Engine Container takes up remaining space */
+.composite-engine-panel .engine-container {
+  flex: 1 1 auto;
+  min-width: 0; /* Prevent flexbox overflow */
+  min-height: 0; /* Prevent flexbox overflow */
+  position: relative; /* Context for renderer? */
+  overflow: hidden;
+}
+
+/* UI Container Styling */
+.composite-engine-panel .ui-container {
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: var(--spacing-sm, 8px);
+}
+
+/* Landscape specific UI container */
+.composite-engine-panel.layout-internal-landscape .ui-container {
+  flex: 0 0 300px; /* Fixed width sidebar */
+  height: 100%;
+  border-left: 1px solid var(--color-border);
+  border-top: none;
+}
+
+/* Portrait specific UI container */
+.composite-engine-panel.layout-internal-portrait .ui-container {
+  flex: 0 0 auto; /* Height based on content, or set a max-height */
+  width: 100%;
+  border-top: 1px solid var(--color-border);
+  border-left: none;
+  max-height: 40%; /* Example: Limit height in portrait */
+}
+
+/* --- End Composite Panel Layout --- */
