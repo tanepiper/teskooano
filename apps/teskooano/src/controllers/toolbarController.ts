@@ -34,6 +34,10 @@ export class ToolbarController {
    * Store the ID of the last added engine panel for positioning the next one.
    */
   private _lastEngineViewId: string | null = null;
+  /**
+   * Track if we're on a mobile device
+   */
+  private _isMobileDevice: boolean = false;
 
   // Define a constant for the settings panel ID
   private readonly SETTINGS_PANEL_ID = "app_settings_panel";
@@ -85,7 +89,57 @@ export class ToolbarController {
     this._element = element;
     this._dockviewController = dockviewController;
     this._tourController = tourController || null;
+
+    // Detect mobile device
+    this._isMobileDevice = this.detectMobileDevice();
+
+    // Set up a resize listener to update mobile detection on window resize
+    window.addEventListener("resize", this.handleResize);
+
     this.render();
+  }
+
+  /**
+   * Handle window resize events to update mobile detection
+   */
+  private handleResize = (): void => {
+    const wasMobile = this._isMobileDevice;
+    this._isMobileDevice = this.detectMobileDevice();
+
+    // If device type changed (mobile → desktop or desktop → mobile)
+    // we could potentially re-create the layout here if needed
+    if (wasMobile !== this._isMobileDevice) {
+      console.log(
+        `Device type changed to: ${this._isMobileDevice ? "mobile" : "desktop"}`,
+      );
+      // Future enhancement: recreate panels with new layout
+    }
+  };
+
+  /**
+   * Detect if the current device is a mobile device
+   * Uses a combination of screen width and user agent detection
+   */
+  private detectMobileDevice(): boolean {
+    // Check screen width - consider anything under 768px as mobile
+    const isMobileWidth = window.innerWidth < 768;
+
+    // Also check user agent for mobile devices
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isMobileDevice =
+      /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+        userAgent,
+      );
+
+    // Consider it mobile if either condition is true
+    return isMobileWidth || isMobileDevice;
+  }
+
+  /**
+   * Cleanup event listeners when controller is destroyed
+   */
+  public destroy(): void {
+    window.removeEventListener("resize", this.handleResize);
   }
 
   /**
@@ -166,8 +220,10 @@ export class ToolbarController {
         position: positionOptions,
       });
 
-      // Add UI panel to the right of engine panel
-      console.log(`Adding UI panel: ${engineUiId}`);
+      // Add UI panel - position based on device type
+      console.log(
+        `Adding UI panel: ${engineUiId} (Mobile: ${this._isMobileDevice})`,
+      );
       this._dockviewController.api.addPanel({
         id: engineUiId,
         component: "ui_view",
@@ -178,10 +234,15 @@ export class ToolbarController {
         },
         position: {
           referencePanel: engineViewId,
-          direction: "right",
+          // For mobile: position below, for desktop: position to the right
+          direction: this._isMobileDevice ? "below" : "right",
         },
-        minimumWidth: 250,
-        maximumWidth: 400,
+        // Different size constraints based on device type
+        minimumWidth: this._isMobileDevice ? 100 : 250,
+        maximumWidth: this._isMobileDevice ? 2000 : 400,
+        // On mobile, we want the UI panel to be shorter
+        minimumHeight: this._isMobileDevice ? 200 : undefined,
+        maximumHeight: this._isMobileDevice ? 300 : undefined,
       });
 
       // Store the engine ID for positioning the next pair

@@ -118,3 +118,9 @@ window.addEventListener("DOMContentLoaded", () => {
     document.body.appendChild(tourModal);
   }
 });
+
+// --- Cleanup on page unload --- //
+window.addEventListener("beforeunload", () => {
+  // Clean up controllers
+  toolbarController.destroy();
+});

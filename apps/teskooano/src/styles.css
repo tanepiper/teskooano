@@ -5,9 +5,25 @@
   --color-primary: #6c63ff; /* A Purple/Blue Accent */
   --color-border: #4a4a6a; /* Muted Border Color */
 
+  /* Base font sizes - improved for better scaling */
+  --font-size-base: 16px;
+  --font-size-small: 0.875rem; /* 14px at base size */
+  --font-size-medium: 1rem; /* 16px at base size */
+  --font-size-large: 1.125rem; /* 18px at base size */
+
+  /* Spacing variables */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+
+  /* Component sizing */
+  --toolbar-height: 3.125rem; /* Equivalent to 50px at 16px base, but scales with font */
+
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  font-size: var(--font-size-base);
 
   color-scheme: light dark;
   color: var(--color-text);
@@ -19,36 +35,58 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
 body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
   min-width: 320px;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 #toolbar {
-  height: 50px; /* Example height, adjust as needed */
+  height: var(--toolbar-height);
   width: 100%;
   background-color: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
-  padding: 0 10px;
-  box-sizing: border-box; /* Include padding/border in height */
+  justify-content: flex-start;
+  padding: 0 var(--spacing-sm);
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+  gap: var(--spacing-sm);
+  flex-shrink: 0; /* Prevent toolbar from shrinking */
 }
 
 #app {
   width: 100%;
-  height: calc(100vh - 50px); /* Adjust height for toolbar */
+  flex: 1; /* Use flexbox model for better height calculation */
   margin: 0 auto;
   text-align: center;
+  overflow: hidden;
+  position: relative; /* Creates new stacking context */
 }
 
-/* Basic button styling */
+/* Better scaling for simulation controls buttons */
+toolbar-simulation-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* Basic button styling with better sizing */
 button {
-  border-radius: 8px;
+  border-radius: 0.5rem;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-medium);
   font-weight: 500;
   font-family: inherit;
   background-color: var(--color-surface);
@@ -61,7 +99,8 @@ button:hover {
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 /* Dockview specific overrides - adjust as needed */
@@ -100,4 +139,226 @@ button:focus-visible {
 
   /* Ensure background doesn't repeat if element is larger */
   background-repeat: no-repeat;
+}
+
+/* Larger screens */
+@media (min-width: 1200px) {
+  :root {
+    --font-size-base: 18px; /* Slightly larger text on bigger screens */
+  }
+}
+
+/* Medium screens - now starts at 1024px */
+@media (max-width: 1024px) {
+  #toolbar {
+    gap: var(--spacing-xs); /* Less space between items */
+    flex-wrap: wrap; /* Allow wrapping on medium screens too */
+    height: auto;
+    min-height: var(--toolbar-height);
+  }
+
+  /* Allow toolbar items to have less fixed width */
+  #toolbar > * {
+    flex-shrink: 1;
+    flex-basis: auto;
+    min-width: 0;
+  }
+
+  /* Make sure the seed-input component doesn't take too much space */
+  toolbar-seed-form teskooano-input-field {
+    width: 80px;
+  }
+
+  /* Apply specific styling to toolbar-simulation-controls at medium sizes */
+  toolbar-simulation-controls {
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  /* Make simulation controls buttons smaller at medium sizes */
+  toolbar-simulation-controls teskooano-button {
+    padding: 2px 4px;
+  }
+
+  /* Make the time display more compact */
+  toolbar-simulation-controls .display-value {
+    min-width: auto;
+    font-size: 0.85em;
+    padding: 2px 4px;
+  }
+
+  /* Logo size adjustments */
+  .app-logo,
+  #app-logo {
+    max-height: 30px !important;
+  }
+
+  /* Make buttons more compact */
+  #toolbar teskooano-button {
+    --button-font-size: 0.9rem;
+    --button-padding-y: 0.4rem;
+    --button-padding-x: 0.7rem;
+  }
+
+  /* Hide text on some buttons, show only icons */
+  #toolbar #github-button span:not([slot="icon"]),
+  #toolbar #settings-button span:not([slot="icon"]) {
+    display: none;
+  }
+}
+
+/* Better handle "awkward" widths like 833px specifically */
+@media (max-width: 900px) and (min-width: 769px) {
+  /* Force more aggressive wrapping at these in-between sizes */
+  #toolbar {
+    padding: var(--spacing-xs); /* Tighter padding */
+  }
+
+  /* Logo size for awkward widths */
+  .app-logo,
+  #app-logo {
+    max-height: 28px !important;
+  }
+
+  /* Ensure toolbar items don't push width */
+  #toolbar > * {
+    margin-right: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  /* Compact the seed form specifically */
+  toolbar-seed-form {
+    flex-basis: 100%; /* Force to new line */
+    margin-top: var(--spacing-xs);
+  }
+
+  /* Make the input wider when it's on its own line */
+  toolbar-seed-form teskooano-input-field {
+    width: 120px; /* Restore width since it has more space now */
+  }
+
+  /* Make buttons even more compact */
+  #toolbar teskooano-button {
+    --button-font-size: 0.85rem;
+    --button-padding-y: 0.35rem;
+    --button-padding-x: 0.6rem;
+  }
+
+  /* Smaller text for "Add Teskooano" button */
+  #toolbar #add-view-button {
+    padding: 0.3rem 0.5rem;
+  }
+}
+
+/* Small screens / tablets */
+@media (max-width: 768px) {
+  :root {
+    --toolbar-height: auto; /* Allow toolbar to expand vertically */
+  }
+
+  /* Smaller logo for tablets */
+  .app-logo,
+  #app-logo {
+    max-height: 26px !important;
+  }
+
+  #toolbar {
+    flex-wrap: wrap;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+    min-height: 3.125rem; /* Minimum height to match desktop */
+  }
+
+  /* Allow direct children of toolbar to shrink and wrap */
+  #toolbar > * {
+    flex-shrink: 1;
+    flex-basis: auto;
+    min-width: 0;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  /* Target the simulation controls component */
+  toolbar-simulation-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Adjust button sizes for touch targets */
+  button {
+    padding: 0.5rem 0.8rem; /* Slightly larger touch target */
+  }
+
+  /* Further reduce button size */
+  #toolbar teskooano-button {
+    --button-font-size: 0.8rem;
+    --button-padding-y: 0.3rem;
+    --button-padding-x: 0.5rem;
+  }
+
+  /* Show icons only for all buttons except Add button */
+  #toolbar teskooano-button:not(#add-view-button) span:not([slot="icon"]) {
+    display: none;
+  }
+
+  /* Compact "Add" button */
+  #toolbar #add-view-button span:not([slot="icon"]) {
+    font-size: 0.8rem;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+  :root {
+    --font-size-base: 14px; /* Slightly smaller base font to fit more content */
+  }
+
+  /* Extra small logo for mobile */
+  .app-logo,
+  #app-logo {
+    max-height: 24px !important;
+  }
+
+  #toolbar {
+    padding: var(--spacing-xs) var(--spacing-xs);
+  }
+
+  button {
+    padding: 0.4rem 0.6rem; /* Compact but still touchable */
+    font-size: var(--font-size-small);
+  }
+
+  /* Smallest button size for mobile */
+  #toolbar teskooano-button {
+    --button-font-size: 0.75rem;
+    --button-padding-y: 0.25rem;
+    --button-padding-x: 0.4rem;
+  }
+
+  /* Remove text from Add button too on very small screens */
+  #toolbar #add-view-button span:not([slot="icon"]) {
+    display: none;
+  }
+
+  /* Make separator lines shorter */
+  #toolbar div[style*="height: calc(var(--toolbar-height"] {
+    height: calc(var(--toolbar-height, 50px) * 0.4) !important;
+  }
+}
+
+/* Logo styling - override inline styles in toolbarController.ts */
+.app-logo,
+#app-logo {
+  height: calc(
+    var(--toolbar-height, 50px) * 0.7
+  ) !important; /* Override the inline style */
+  width: auto !important;
+  max-height: 35px !important; /* Cap the maximum size */
+}
+
+/* Add specific styling for toolbar buttons */
+#toolbar teskooano-button {
+  --button-font-size: var(--font-size-medium, 1rem);
+  --button-padding-y: 0.5rem;
+  --button-padding-x: 0.8rem;
+  font-size: var(--button-font-size);
 }
