@@ -386,6 +386,25 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._uiContainer.innerHTML = ''; // Clear previous content
     const sections = this._params.params.sections;
 
+    // --- Create Left/Right Containers for UI split --- 
+    const leftUiContainer = document.createElement("div");
+    leftUiContainer.classList.add("left-ui-container");
+    // Basic flex styling (can be overridden by CSS)
+    leftUiContainer.style.display = "flex";
+    leftUiContainer.style.flexDirection = "column";
+    leftUiContainer.style.height = "100%"; // Allow fill
+
+    const rightUiContainer = document.createElement("div");
+    rightUiContainer.classList.add("right-ui-container");
+    // Basic flex styling (can be overridden by CSS)
+    rightUiContainer.style.display = "flex";
+    rightUiContainer.style.flexDirection = "column";
+    rightUiContainer.style.height = "100%"; // Allow fill
+
+    this._uiContainer.appendChild(leftUiContainer);
+    this._uiContainer.appendChild(rightUiContainer);
+    // --- End Left/Right Containers --- 
+
     sections.forEach((config: UiPanelSectionConfig) => {
       try {
         const sectionContainer = document.createElement("collapsible-section");
@@ -433,7 +452,14 @@ export class CompositeEnginePanel implements IContentRenderer {
         // REMOVED: engine-view-id attribute setting
 
         sectionContainer.appendChild(contentComponent);
-        this._uiContainer!.appendChild(sectionContainer);
+
+        // --- Append to correct container --- 
+        if (config.id.startsWith('focus-section-')) {
+             leftUiContainer.appendChild(sectionContainer);
+        } else {
+             rightUiContainer.appendChild(sectionContainer);
+        }
+        // --- End Append --- 
       } catch (error) {
         console.error(
           `Error creating section '${config.title}' with component <${config.componentTag}>:`,

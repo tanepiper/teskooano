@@ -85,6 +85,14 @@ export class UiPanel implements IContentRenderer {
     this._engineViewId = this._params?.params?.engineViewId ?? null;
     this._element.innerHTML = "";
 
+    // --- Create layout containers ---
+    const leftContainer = document.createElement("div");
+    leftContainer.classList.add("ui-panel-left-container");
+
+    const rightContainer = document.createElement("div");
+    rightContainer.classList.add("ui-panel-right-container");
+    // --- End layout containers ---
+
     const sections = this._params?.params?.sections;
     if (!sections || sections.length === 0) {
       this._element.textContent = "No UI sections configured for this panel.";
@@ -119,8 +127,18 @@ export class UiPanel implements IContentRenderer {
           );
         }
 
-        sectionContainer.appendChild(contentComponent);
-        this._element.appendChild(sectionContainer);
+        // --- Sort into containers ---
+        if (config.id === 'focus-selector-section') { // Assuming this ID for the focus selector
+            leftContainer.appendChild(sectionContainer);
+            console.log(` -> Added component <${config.componentTag}> to LEFT container`);
+        } else {
+            rightContainer.appendChild(sectionContainer);
+            console.log(` -> Added component <${config.componentTag}> to RIGHT container`);
+        }
+        // --- End sorting ---
+
+        // sectionContainer.appendChild(contentComponent); // Content is added within collapsible-section
+        // this._element.appendChild(sectionContainer); // Now append containers instead
       } catch (error) {
         console.error(
           `Error creating section '${config.title}' with component <${config.componentTag}>:`,
@@ -132,6 +150,11 @@ export class UiPanel implements IContentRenderer {
         this._element.appendChild(errorPlaceholder);
       }
     });
+
+    // --- Append containers to the main element ---
+    this._element.appendChild(leftContainer);
+    this._element.appendChild(rightContainer);
+    // --- End appending containers ---
   }
 
   dispose(): void {

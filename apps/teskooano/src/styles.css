@@ -449,6 +449,8 @@ button:focus-visible {
   overflow-x: hidden;
   box-sizing: border-box;
   padding: var(--spacing-sm, 8px);
+  /* Add flex display for internal containers */
+  display: flex; 
 }
 
 /* Landscape specific UI container */
@@ -457,6 +459,27 @@ button:focus-visible {
   height: 100%;
   border-left: 1px solid var(--color-border);
   border-top: none;
+  /* Arrange internal containers vertically */
+  flex-direction: column;
+}
+
+/* Landscape internal UI containers */
+.composite-engine-panel.layout-internal-landscape .ui-container > .left-ui-container {
+  flex: 1 1 33%; /* ~1/3 width */
+  min-width: 0; /* Prevent overflow */
+  padding-right: var(--spacing-xs, 4px);
+  box-sizing: border-box;
+  overflow-y: auto;
+  width: 100%; /* Added for column layout */
+}
+
+.composite-engine-panel.layout-internal-landscape .ui-container > .right-ui-container {
+  flex: 2 1 67%; /* ~2/3 width */
+  min-width: 0; /* Prevent overflow */
+  padding-left: var(--spacing-xs, 4px);
+  box-sizing: border-box;
+  overflow-y: auto;
+  width: 100%; /* Added for column layout */
 }
 
 /* Portrait specific UI container */
@@ -466,6 +489,17 @@ button:focus-visible {
   border-top: 1px solid var(--color-border);
   border-left: none;
   max-height: 40%; /* Example: Limit height in portrait */
+  /* Arrange internal containers horizontally */
+  flex-direction: row;
+}
+
+/* Portrait internal UI containers */
+.composite-engine-panel.layout-internal-portrait .ui-container > .left-ui-container,
+.composite-engine-panel.layout-internal-portrait .ui-container > .right-ui-container {
+  width: 100%;
+  height: auto; /* Adjust height based on content */
+  /* Adjust flex for row layout in portrait */
+  flex: 1;
 }
 
 /* --- End Composite Panel Layout --- */

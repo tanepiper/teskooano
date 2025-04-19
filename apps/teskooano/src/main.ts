@@ -1,5 +1,6 @@
 import "dockview-core/dist/styles/dockview.css";
 import "./styles.css"; // Import our custom styles
+// import "./components/ui-controls/ui-layout.css"; // Import UI layout styles -- REMOVED
 
 import { DockviewController } from "./controllers/dockviewController";
 import { ToolbarController } from "./controllers/toolbarController";

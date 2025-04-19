@@ -5,6 +5,7 @@ import { ToolbarSeedForm } from "../components/toolbar/SeedForm";
 import "../components/toolbar/SimulationControls"; // Import for side effect (registers element)
 import { DockviewController } from "./dockviewController";
 import { TourController } from "./tourController";
+import { layoutOrientationStore, Orientation } from "../stores/layoutStore";
 
 /**
  * ToolbarController is responsible for managing the toolbar and adding engine views.
@@ -38,6 +39,11 @@ export class ToolbarController {
    * Track if we're on a mobile device
    */
   private _isMobileDevice: boolean = false;
+  /**
+   * Store orientation state and unsubscribe function
+   */
+  private _currentOrientation: Orientation | null = null;
+  private _layoutUnsubscribe: (() => void) | null = null;
 
   // Define a constant for the settings panel ID
   private readonly SETTINGS_PANEL_ID = "app_settings_panel";
@@ -90,6 +96,15 @@ export class ToolbarController {
     this._dockviewController = dockviewController;
     this._tourController = tourController || null;
 
+    // Subscribe to layout orientation changes
+    this._layoutUnsubscribe = layoutOrientationStore.subscribe((orientation) => {
+      this.handleOrientationChange(orientation);
+    });
+    // Get initial orientation
+    this._currentOrientation = layoutOrientationStore.get();
+    // Apply initial layout based on orientation (optional, could be deferred)
+    // this.handleOrientationChange(this._currentOrientation);
+
     // Detect mobile device
     this._isMobileDevice = this.detectMobileDevice();
 
@@ -140,6 +155,11 @@ export class ToolbarController {
    */
   public destroy(): void {
     window.removeEventListener("resize", this.handleResize);
+    // Unsubscribe from layout changes on destroy
+    if (this._layoutUnsubscribe) {
+      this._layoutUnsubscribe();
+      this._layoutUnsubscribe = null;
+    }
   }
 
   /**
@@ -426,4 +446,55 @@ export class ToolbarController {
     ToolbarSeedForm.setDockviewApi(this._dockviewController.api);
     this._element.appendChild(seedForm);
   }
+
+  // --- New method to handle orientation changes for Dockview layout ---
+  private handleOrientationChange(orientation: Orientation): void {
+    if (this._currentOrientation === orientation) {
+      return; // No change
+    }
+    this._currentOrientation = orientation;
+    console.log(`ToolbarController: Orientation changed to ${orientation}`);
+
+    // Get the Dockview API
+    const dockviewApi = this._dockviewController.api;
+
+    // Find the main composite panel (assuming only one for now)
+    // TODO: Handle multiple engine views if needed
+    const mainPanelId = `composite_engine_view_1`;
+    const mainPanel = dockviewApi.panels.find(p => p.id === mainPanelId);
+
+    if (!mainPanel) {
+      console.warn(`Main panel ${mainPanelId} not found for orientation change.`);
+      return;
+    }
+
+    // The CompositeEnginePanel component *itself* should handle the internal
+    // layout split (engine vs UI) using CSS and the layout-internal-* classes
+    // driven by the layoutOrientationStore.
+    // Dockview's job here is mainly to ensure the panel/group has the right dimensions.
+
+    // We might not need to *move* panels with Dockview API if the CompositeEnginePanel
+    // correctly uses flexbox internally based on the store.
+    // Let's ensure the Dockview container allows flex layout to work.
+
+    // It's possible the parent group needs resizing or constraints adjusted,
+    // but let's rely on the CompositeEnginePanel's internal CSS first.
+    // For now, we just log, as the change might already be handled visually
+    // by the CompositeEnginePanel reacting to the store change.
+
+    console.log(`Relying on CompositeEnginePanel (${mainPanelId}) internal CSS for layout change.`);
+
+    // --- Potential future Dockview API adjustments (if internal CSS isn't enough) ---
+    /*
+    if (orientation === 'landscape') {
+      // Example: Force a resize or ensure the group isn't constrained vertically
+      mainPanel.group.api.setSize({ height: mainPanel.group.height, width: mainPanel.group.width }); // Trigger reflow?
+    } else {
+      // Portrait adjustments if needed
+    }
+    */
+    // --- End potential adjustments ---
+
+  }
+  // --- End orientation change handler ---
 }
