@@ -21,4 +21,24 @@ export * from './network';
 export * from './workers';
 
 // Export animation utilities
-export * from './animation'; 
+export * from './animation';
+
+// Export fullscreen utilities
+export * from './fullscreen';
+
+// Export clipboard utilities
+export * from './clipboard';
+
+// -- Mobile / Sensor APIs --
+export * from './battery';
+export * from './device-orientation';
+export * from './idle-detection';
+
+// -- Performance & Capabilities --
+export * from './device-memory';
+export * from './background-tasks';
+export * from './gamepad';
+
+// -- UI & Interaction --
+export * from './drag-and-drop';
+export * from './invoker-commands'; 
