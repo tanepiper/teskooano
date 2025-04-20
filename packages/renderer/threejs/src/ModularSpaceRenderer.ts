@@ -57,7 +57,7 @@ export class ModularSpaceRenderer {
       showGrid?: boolean;
       enableUI?: boolean;
       showAuMarkers?: boolean;
-    } = {}
+    } = {},
   ) {
     this.stateAdapter = new RendererStateAdapter();
 
@@ -77,7 +77,7 @@ export class ModularSpaceRenderer {
     const enableUI = options.enableUI !== false; // Default to true
     this.controlsManager = new ControlsManager(
       this.sceneManager.camera,
-      this.sceneManager.renderer.domElement
+      this.sceneManager.renderer.domElement,
     );
 
     // Only initialize CSS2D manager if UI is enabled
@@ -107,13 +107,13 @@ export class ModularSpaceRenderer {
       renderableObjectsStore,
       this.lightManager,
       this.sceneManager.renderer,
-      this.css2DManager
+      this.css2DManager,
     );
     // Pass BOTH the store AND the adapter to OrbitManager
     this.orbitManager = new OrbitManager(
       this.objectManager,
       this.stateAdapter, // For visual settings
-      renderableObjectsStore // For object data
+      renderableObjectsStore, // For object data
     );
     this.backgroundManager = new BackgroundManager(this.sceneManager.scene);
     this.backgroundManager.setCamera(this.sceneManager.camera);
@@ -164,7 +164,7 @@ export class ModularSpaceRenderer {
         // Maybe log that the transition completed, but don't rely on internal state here
         console.log(
           `[Renderer] Camera transition complete. Detail:`,
-          customEvent.detail
+          customEvent.detail,
         );
       }
     });
@@ -186,7 +186,7 @@ export class ModularSpaceRenderer {
         this.lightManager.getStarLightsData(),
         this.sceneManager.renderer,
         this.sceneManager.scene,
-        this.sceneManager.camera
+        this.sceneManager.camera,
       );
 
       // Update the background with the current time delta
@@ -270,7 +270,7 @@ export class ModularSpaceRenderer {
   setCelestialLabelsVisible(visible: boolean): void {
     this.css2DManager?.setLayerVisibility(
       CSS2DLayerType.CELESTIAL_LABELS,
-      visible
+      visible,
     );
   }
   setGridVisible(visible: boolean): void {
@@ -333,12 +333,12 @@ export class ModularSpaceRenderer {
   setFollowTarget(
     objectId: string | null,
     targetPosition?: THREE.Vector3,
-    cameraPosition?: THREE.Vector3
+    cameraPosition?: THREE.Vector3,
   ): void {
     // TODO: Refactor this method to use ControlsManager.setFollowTarget
     // For now, just log and clear internal state if needed
     console.warn(
-      "[Renderer] setFollowTarget needs refactoring to use ControlsManager."
+      "[Renderer] setFollowTarget needs refactoring to use ControlsManager.",
     );
     if (!objectId) {
       this.controlsManager.setFollowTarget(null); // Pass null to ControlsManager
@@ -348,14 +348,14 @@ export class ModularSpaceRenderer {
       const targetMesh = this.objectManager.getObject(objectId);
       if (targetMesh) {
         console.log(
-          `[Renderer] Requesting ControlsManager follow object: ${objectId}`
+          `[Renderer] Requesting ControlsManager follow object: ${objectId}`,
         );
         // Decide if we still need keepCurrentDistance or pass calculated positions
         // For now, use the basic follow call (keeps current distance by default in ControlsManager impl)
         this.controlsManager.setFollowTarget(targetMesh, undefined, true); // Keep current distance
       } else {
         console.error(
-          `[Renderer] Cannot follow object ${objectId}: Mesh not found.`
+          `[Renderer] Cannot follow object ${objectId}: Mesh not found.`,
         );
         // Ensure follow is stopped if mesh not found
         this.controlsManager.setFollowTarget(null);

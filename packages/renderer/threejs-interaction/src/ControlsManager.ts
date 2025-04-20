@@ -12,13 +12,15 @@ export class ControlsManager {
   public controls: OrbitControls;
   private camera: THREE.PerspectiveCamera;
   private isTransitioning: boolean = false;
-  private transitionDistanceFactor: number = 2.0; // Controls how much distance affects duration (Increased from 0.5)
-  private minTransitionDuration: number = 0.5; // Minimum transition time in seconds (Decreased from 1.0)
-  private maxTransitionDuration: number = 8.0; // Maximum transition time in seconds (Increased from 4.0)
+  private transitionDistanceFactor: number = 0.5; // Controls how much distance affects duration
+  private minTransitionDuration: number = 1.0; // Minimum transition time in seconds
+  private maxTransitionDuration: number = 4.0; // Maximum transition time in seconds
   private activeTimeline: gsap.core.Timeline | null = null; // Store active timeline
   private tempVector = new THREE.Vector3(); // For angle calculations
   private followingTargetObject: THREE.Object3D | null = null; // Object to follow
   private tempTargetPosition = new THREE.Vector3(); // Reusable vector for target position
+  private previousFollowTargetPos = new THREE.Vector3(); // Re-add previousFollowTargetPos for delta calculation
+  private finalFollowOffset: THREE.Vector3 | null = null; // Stored offset for following - Keep for potential future use or reference?
 
   /**
    * Create a new ControlsManager
@@ -44,13 +46,15 @@ export class ControlsManager {
     // Listen for control changes
     this.controls.addEventListener("change", () => {
       // Only update the state if controls are enabled (user is controlling)
+      // AND if the camera isn't currently doing an animated transition
       if (this.controls.enabled && !this.isTransitioning) {
         // Get the current camera position and target
         const position = camera.position;
         const target = this.controls.target;
 
         // Update the simulation state with current camera values
-        // But don't clear focused object - just update camera position
+        // This primarily reflects user-driven changes when NOT following
+        // or reflects the state AFTER the follow logic adjusts position/target.
         simulationState.set({
           ...simulationState.get(),
           camera: {
@@ -59,23 +63,6 @@ export class ControlsManager {
             target: new OSVector3(target.x, target.y, target.z),
           },
         });
-
-        // If user interacts, stop following
-        if (this.followingTargetObject) {
-          console.log(
-            "[ControlsManager] User interaction detected, stopping follow.",
-          );
-          this.followingTargetObject = null;
-          // Stop tracking the focused object in the global state as well
-          const currentState = simulationState.get();
-          // Assuming 'focusedObjectId' is the correct key in SimulationState
-          if (currentState.focusedObjectId) {
-            simulationState.set({ ...currentState, focusedObjectId: null });
-            console.log(
-              "[ControlsManager] Cleared focusedObjectId due to user interaction.",
-            );
-          }
-        }
       }
     });
   }
@@ -154,7 +141,7 @@ export class ControlsManager {
       );
     }
 
-    return Math.min(duration, this.maxTransitionDuration) * 2;
+    return Math.min(duration, this.maxTransitionDuration);
   }
 
   /**
@@ -162,9 +149,9 @@ export class ControlsManager {
    */
   private startTransition(
     startPos: THREE.Vector3,
-    startTarget: THREE.Vector3, // This is now the fixed target
-    endPos: THREE.Vector3,   // This is the camera end position
-    endTarget: THREE.Vector3, // This is the fixed target (same as startTarget)
+    startTarget: THREE.Vector3,
+    endPos: THREE.Vector3,
+    endTarget: THREE.Vector3,
   ): void {
     // Kill any previous timeline to avoid conflicts
     if (this.activeTimeline) {
@@ -175,21 +162,27 @@ export class ControlsManager {
     this.setEnabled(false);
     this.isTransitioning = true;
 
-    // Calculate total transition duration based on CAMERA distance
+    // Calculate total transition duration based on distance
     const totalDuration = this.calculateTransitionDuration(startPos, endPos);
 
-    // --- Calculate Angle for Rotation Duration (Still useful for timing) ---
-    // Use startPos and the fixed endTarget for direction calculation
-    const cameraForward = this.camera.getWorldDirection(this.tempVector.clone());
-    const targetDirection = endTarget.clone().sub(startPos).normalize(); 
-    const angle = targetDirection.lengthSq() > 0.0001 ? cameraForward.angleTo(targetDirection) : 0;
-    
-    // Allocate duration based on distance and angle (adjust proportions if needed)
-    // We only have one animation (position), so we can simplify or just use totalDuration.
-    // Let's keep the angle calculation for potential easing variation later, but use a simpler duration split for now.
-    // Example: Allocate most time to position movement.
-    const positionDuration = totalDuration * 0.9; // Use most of the duration for camera movement
-    const rotationDurationApproximation = totalDuration * 0.1; // Not used for animation, but could influence easing
+    // --- Calculate Angle for Rotation Duration (Restored from main) ---
+    const cameraForward = this.camera.getWorldDirection(
+      this.tempVector.clone(),
+    );
+    // Use startPos and endTarget for the direction the camera needs to point eventually
+    const targetDirection = endTarget.clone().sub(startPos).normalize();
+    // Prevent issues if start and end points are the same
+    const angle =
+      targetDirection.lengthSq() > 0.0001
+        ? cameraForward.angleTo(targetDirection)
+        : 0;
+
+    // Allocate duration percentages (Restored from main)
+    // Adjust multiplier if needed, 5 seemed high, maybe 1 or 2? Let's try 2.
+    const rotationPercent = Math.min(0.5, Math.max(0.1, angle / Math.PI)); // 10% to 50% based on angle
+    const rotationDuration = totalDuration * rotationPercent * 2; // Adjusted multiplier from 5
+    const positionDuration = totalDuration * (1 - rotationPercent); // Remainder for position
+    // --- End Angle Calculation ---
 
     // Define the completion logic
     const onTimelineComplete = () => {
@@ -199,9 +192,7 @@ export class ControlsManager {
 
       // Ensure final state is precise
       this.camera.position.copy(endPos);
-      // Target should already be correct due to immediate set and update loop,
-      // but set it again for safety.
-      this.controls.target.copy(endTarget); 
+      this.controls.target.copy(endTarget);
       this.controls.update(); // Final update
 
       // Update the simulation state with final camera values
@@ -228,19 +219,48 @@ export class ControlsManager {
       );
       document.dispatchEvent(transitionCompleteEvent);
 
+      // Calculate and store the final offset if we are following an object
+      if (this.followingTargetObject) {
+        this.finalFollowOffset = endPos.clone().sub(endTarget);
+        // Initialize previousFollowTargetPos with the target's position AT THE END of the transition
+        this.previousFollowTargetPos.copy(endTarget);
+        console.log(
+          "[ControlsManager] Follow offset calculated:",
+          this.finalFollowOffset,
+          "Initial previousFollowTargetPos:",
+          this.previousFollowTargetPos,
+        );
+      } else {
+        this.finalFollowOffset = null;
+        this.previousFollowTargetPos.set(0, 0, 0); // Ensure reset if not following
+      }
+
       console.log(
-        "[ControlsManager] Camera POSITION transition complete. Controls enabled.",
+        "[ControlsManager] Camera transition (Rotation+Position) complete. Controls enabled.", // Updated log
       );
     };
 
     // Create and configure the timeline
     this.activeTimeline = gsap.timeline({ onComplete: onTimelineComplete });
 
-    // 1. Rotation Phase (Animate Target) - REMOVED
-    // Target is set immediately in setFollowTarget
+    // 1. Rotation Phase (Animate Target - Restored from main)
+    if (rotationDuration > 0.01) {
+      // Only add if duration is meaningful
+      this.activeTimeline.to(this.controls.target, {
+        x: endTarget.x,
+        y: endTarget.y,
+        z: endTarget.z,
+        duration: rotationDuration,
+        ease: "power1.inOut", // Restored ease
+        onUpdate: () => {
+          this.controls.update(); // Update controls during target animation
+        },
+      });
+    }
 
-    // 2. Position Phase (Animate Camera Position)
+    // 2. Position Phase (Animate Camera Position) - starts after rotation
     if (positionDuration > 0.01) {
+      // Only add if duration is meaningful
       this.activeTimeline.to(
         this.camera.position,
         {
@@ -248,19 +268,26 @@ export class ControlsManager {
           y: endPos.y,
           z: endPos.z,
           duration: positionDuration,
-          ease: "sine.inOut", // Or adjust easing as needed
-          // onUpdate could potentially call controls.update() here if needed,
-          // but let's rely on the main update loop first.
-          // onUpdate: () => { this.controls.update(); }
+          ease: "expo.out", // Restored ease
+          // No onUpdate needed here, target is fixed during this phase
+          // but controls still need update for damping/other effects
+          onUpdate: () => {
+            this.controls.update();
+          },
         },
-        0 // Start immediately
+        // Start immediately after previous if it exists, otherwise at time 0
+        // Use ">" to chain animations sequentially
+        rotationDuration > 0.01 ? ">" : 0,
       );
-    } else {
-       // If duration is too short, just jump to the end state and finish
-       console.warn("[ControlsManager] Transition duration too short, jumping to end state.");
-       this.camera.position.copy(endPos);
-       this.controls.target.copy(endTarget);
-       onTimelineComplete(); // Manually trigger completion
+    } else if (rotationDuration <= 0.01) {
+      // If only position moves (or neither, though unlikely)
+      // and position duration is also negligible, just jump to end
+      console.warn(
+        "[ControlsManager] Rotation and Position duration too short, jumping to end state.",
+      );
+      this.camera.position.copy(endPos);
+      this.controls.target.copy(endTarget);
+      onTimelineComplete(); // Manually trigger completion
     }
   }
 
@@ -268,17 +295,35 @@ export class ControlsManager {
    * Update controls (called each frame)
    */
   update(): void {
-    // If we are following an object and not transitioning, update the target
-    if (this.followingTargetObject && !this.isTransitioning) {
-      this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
-      this.controls.target.copy(this.tempTargetPosition);
-    }
+    // Reintroduce delta logic for following
+    if (this.controls.enabled) {
+      if (this.followingTargetObject && !this.isTransitioning) {
+        // Get the target's current world position
+        this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
 
-    // GSAP timeline handles updates during transition via onUpdate callbacks (REMOVED)
-    // We need OrbitControls to update based on GSAP's changes during transition.
-    // We also need it to update normally when user is controlling or following.
-    // Always update controls if not disabled externally
-    this.controls.update();
+        // Check if previous position is valid (not 0,0,0 - indicating first frame or reset)
+        if (!this.previousFollowTargetPos.equals(new THREE.Vector3(0, 0, 0))) {
+          // Calculate the positional change (delta) of the target since last frame
+          const deltaMovement = this.tempTargetPosition
+            .clone()
+            .sub(this.previousFollowTargetPos);
+
+          // Apply this delta to the camera's current position
+          this.camera.position.add(deltaMovement);
+        } // If it IS the first frame, previousFollowTargetPos was set by onTimelineComplete, so delta is implicitly zero, camera doesn't jump.
+
+        // Update the controls target to the object's new position
+        this.controls.target.copy(this.tempTargetPosition);
+
+        // Store the current target position as the previous one for the *next* frame
+        this.previousFollowTargetPos.copy(this.tempTargetPosition);
+      }
+
+      // Always call controls.update() if enabled.
+      // This applies damping, processes user input relative to the current state,
+      // and finalizes the camera position/orientation for the frame.
+      this.controls.update();
+    }
   }
 
   /**
@@ -334,7 +379,7 @@ export class ControlsManager {
     if (!object) {
       console.log("[ControlsManager] Clearing follow target.");
       this.followingTargetObject = null;
-      // No need to explicitly enable controls, transition cancellation handles it
+      this.finalFollowOffset = null;
       return;
     }
 
@@ -347,46 +392,64 @@ export class ControlsManager {
     object.getWorldPosition(targetPosition).add(offset);
 
     let finalCameraPosition: THREE.Vector3;
+    // Preserve the current camera->target vector for distance/direction calculation
+    const currentTarget = this.controls.target.clone(); // Capture current target BEFORE changing it
+    const currentPosition = this.camera.position.clone(); // Capture current position
+    const directionToTarget = currentPosition.clone().sub(currentTarget);
 
-    // --- Calculate desired final camera position --- 
+    // --- Calculate desired final camera position ---
     if (keepCurrentDistance) {
-      // Calculate the vector from the *current* target to the camera
-      const currentTarget = this.controls.target.clone();
-      const direction = this.camera.position.clone().sub(currentTarget);
       // Maintain the same distance and direction relative to the *new* target
-      finalCameraPosition = targetPosition.clone().add(direction);
+      finalCameraPosition = targetPosition.clone().add(directionToTarget);
     } else {
       // Default behavior: Calculate a position based on object size or a fixed distance
-      const currentDistance = this.camera.position.distanceTo(
-        this.controls.target,
-      );
-      const direction = this.camera.position
-        .clone()
-        .sub(this.controls.target)
-        .normalize();
-      // Ensure minimum distance if calculated distance is too small
-      const desiredDistance = Math.max(currentDistance, 1); 
+      // Let's ensure a minimum reasonable distance relative to the new target
+      // Use the existing direction vector magnitude or a minimum distance
+      const currentDistance = directionToTarget.length();
+      // Use object's bounding sphere radius if available, otherwise default minimum
+      let objectRadius = 1; // Default radius
+      // Check if the object is a Mesh and has geometry with a bounding sphere
+      if (
+        object instanceof THREE.Mesh &&
+        object.geometry &&
+        object.geometry.boundingSphere
+      ) {
+        objectRadius =
+          object.geometry.boundingSphere.radius *
+          Math.max(object.scale.x, object.scale.y, object.scale.z);
+      }
+      const minSafeDistance = objectRadius * 3; // e.g., 3x radius away
+      const desiredDistance = Math.max(currentDistance, minSafeDistance);
+
+      // Normalize the direction vector ONLY if length > 0
+      if (directionToTarget.lengthSq() > 0.0001) {
+        directionToTarget.normalize();
+      } else {
+        // If camera is exactly at target, pick a default direction (e.g., up)
+        directionToTarget.set(0, 1, 0); // Adjust as needed
+      }
+
       finalCameraPosition = targetPosition
         .clone()
-        .add(direction.multiplyScalar(desiredDistance)); 
+        .add(directionToTarget.multiplyScalar(desiredDistance));
     }
     // --- End Camera Position Calculation ---
 
-    // --- Set state IMMEDIATELY --- 
+    // --- Set FOLLOW state IMMEDIATELY ---
+    // Don't set controls.target here; let the transition handle it.
     this.followingTargetObject = object; // Start tracking the object now
-    // Set the target immediately - NO GSAP for target
-    this.controls.target.copy(targetPosition);
+    // Reset previous position - it will be set correctly on transition end or first update
+    this.finalFollowOffset = null; // Clear offset until transition completes
     // --- End Immediate State Set ---
 
-    // --- Start transition for CAMERA POSITION ONLY --- 
-    // Use the current position as start, calculated final position as end
-    // Pass the *already set* targetPosition as both start and end target 
-    // because the target is no longer animated by GSAP.
+    // --- Start transition for BOTH TARGET and CAMERA POSITION ---
+    // Pass the CURRENT target as startTarget and the calculated targetPosition as endTarget.
+    // Pass the CURRENT position as startPos and calculated finalCameraPosition as endPos.
     this.startTransition(
-        this.camera.position.clone(), 
-        targetPosition, // Start target (already set)
-        finalCameraPosition, 
-        targetPosition  // End target (same as start, not animated)
+      currentPosition, // Start Pos = Current Camera Pos
+      currentTarget, // Start Target = Current Controls Target
+      finalCameraPosition, // End Pos = Calculated Final Camera Pos
+      targetPosition, // End Target = Object's World Position (+ offset)
     );
   }
 }

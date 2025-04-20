@@ -1,5 +1,5 @@
-export * from './ModularSpaceRenderer';
-export * from './RendererStateAdapter';
+export * from "./ModularSpaceRenderer";
+export * from "./RendererStateAdapter";
 // Export event system
 export * from "./events";
 
