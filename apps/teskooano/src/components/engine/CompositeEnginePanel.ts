@@ -156,6 +156,13 @@ export class CompositeEnginePanel implements IContentRenderer {
     return this._viewStateStore.subscribe(callback);
   }
 
+  /**
+   * Public method to get the renderer instance (if initialized)
+   */
+  public getRenderer(): ModularSpaceRenderer | undefined {
+    return this._renderer;
+  }
+
   // Apply specific state updates to the internal renderer
   private applyViewStateToRenderer(updates: Partial<PanelViewState>): void {
     if (!this._renderer) return;
@@ -230,11 +237,13 @@ export class CompositeEnginePanel implements IContentRenderer {
         `[CompositePanel] focusOnObject: targetPos=${targetPosition.toArray()}, camPos=${cameraPosition.toArray()}, dist=${calculatedDistance}`,
       ); // LOG 5
 
-      this._renderer.controlsManager.moveTo(cameraPosition, targetPosition);
-      console.log("[CompositePanel] focusOnObject: moveTo called."); // LOG 6
-      this._renderer.setFollowTarget(objectId);
+      // Call the renderer's setFollowTarget with the calculated positions
+      // This will initiate the moveTo transition within the renderer
+      this._renderer.setFollowTarget(objectId, targetPosition, cameraPosition);
+
       this.updateViewState({ focusedObjectId: objectId }); // Update internal state
       // TODO: Consider emitting 'renderer-focus-changed' event?
+      // Event emission is handled by camera transition completion now
     }
   }
 
@@ -317,12 +326,45 @@ export class CompositeEnginePanel implements IContentRenderer {
 
       // Get initial state from this panel's store
       const initialState = this._viewStateStore.get();
-      this._renderer.updateCamera(
-        initialState.cameraPosition,
-        initialState.cameraTarget,
+
+      // --- Set Initial Camera State --- (Replaces updateCamera and setFollowTarget calls)
+      let initialTargetPosition = initialState.cameraTarget.clone(); // Default target
+
+      if (initialState.focusedObjectId) {
+        // If initial focus is set, try to find the object and use its position as the target
+        const initialFocusObject =
+          renderableObjectsStore.get()[initialState.focusedObjectId];
+        if (initialFocusObject?.position) {
+          // Use the object's position as the initial target
+          initialTargetPosition.copy(initialFocusObject.position);
+          console.log(
+            `[CompositePanel Init] Setting initial target to focused object: ${initialState.focusedObjectId}`,
+          );
+        } else {
+          console.warn(
+            `[CompositePanel Init] Initial focused object ${initialState.focusedObjectId} not found or has no position. Using default target.`,
+          );
+          // Keep default target, but clear the invalid focus ID from state
+          this.updateViewState({ focusedObjectId: null });
+        }
+      } else {
+        console.log(
+          "[CompositePanel Init] No initial focus ID. Using default target.",
+        );
+      }
+
+      // Set camera position directly from initial state
+      this._renderer.camera.position.copy(initialState.cameraPosition);
+      // Set controls target based on calculated initialTargetPosition
+      this._renderer.controlsManager.controls.target.copy(
+        initialTargetPosition,
       );
-      this._renderer.setFollowTarget(initialState.focusedObjectId);
-      // TODO: Add state subscriptions and focus handling logic from old EnginePanel if needed
+      // Perform an initial update on controls to sync
+      this._renderer.controlsManager.controls.update();
+      console.log(
+        `[CompositePanel Init] Initial Cam Pos: ${initialState.cameraPosition.toArray().join(", ")}, Target: ${initialTargetPosition.toArray().join(", ")}`,
+      );
+      // --- End Set Initial Camera State ---
 
       // Listen for camera transition completion events
       document.addEventListener(

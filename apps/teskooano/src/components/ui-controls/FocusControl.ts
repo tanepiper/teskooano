@@ -10,6 +10,8 @@ import type { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // I
 // import { EnginePanel } from "../engine/EnginePanel"; // Use regular import and corrected path
 // import { DockviewApi } from 'dockview-core'; // Need DockviewApi type potentially
 // import { SeedForm } from './SeedForm'; // Import SeedForm for the API hack
+import * as THREE from "three";
+import { renderableObjectsStore } from "@teskooano/core-state";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -429,7 +431,85 @@ export class FocusControl extends HTMLElement {
           return; // Do nothing if clicked on a destroyed/annihilated item
         }
 
-        this.focusOnObject(objectId);
+        // --- START NEW LOGIC ---
+        // Fetch from renderableObjectsStore to get live position data
+        const renderables = renderableObjectsStore.get();
+        const targetObjectRenderable = renderables[objectId]; // Use renderable object
+
+        if (!targetObjectRenderable) {
+          console.warn(
+            `[FocusControl] Could not find renderable object data for ${objectId} in store.`,
+          );
+          // Optionally, fall back to static store to check if object exists at all?
+          // const staticObjects = celestialObjectsStore.get();
+          // if (!staticObjects[objectId]) { console.error(`Object ${objectId} not found anywhere!`); } // <-- Fixed line
+          return;
+        }
+
+        // 1. Get Target Position (Should be THREE.Vector3 directly from renderable store)
+        const targetPosition = targetObjectRenderable.position; // Access position directly
+        if (!targetPosition || !(targetPosition instanceof THREE.Vector3)) {
+          console.error(
+            `[FocusControl] Invalid or missing position data on renderable object ${objectId}`,
+          );
+          return;
+        }
+        // No need to check x,y,z individually if it's a THREE.Vector3
+
+        // 2. Calculate desired Camera Position
+        // We still need the static object data for calculateCameraDistance
+        const staticObjects = celestialObjectsStore.get();
+        const targetObjectStatic = staticObjects[objectId];
+        if (!targetObjectStatic) {
+          console.error(
+            `[FocusControl] Could not find static data for ${objectId} to calculate distance.`,
+          );
+          return; // Should not happen if renderable exists, but check anyway
+        }
+        const desiredDistance =
+          this.calculateCameraDistance(targetObjectStatic);
+
+        // Get current camera position to determine direction
+        const renderer = this._parentPanel?.getRenderer(); // <-- Use the new getRenderer() method
+        if (!renderer) {
+          console.error(
+            "[FocusControl] Cannot get renderer instance from parent panel.",
+          );
+          return;
+        }
+        const currentCameraPosition = renderer.camera.position.clone();
+
+        // Calculate direction from target back towards current camera
+        // Handle potential zero vector if camera is already at the target
+        const direction = currentCameraPosition.clone().sub(targetPosition);
+        if (direction.lengthSq() < 0.0001) {
+          // Camera is already at the target, use a default direction (e.g., up)
+          direction.set(0, 1, 0);
+        } else {
+          direction.normalize();
+        }
+
+        // Calculate final camera position (Use cloned position)
+        const cameraPosition = targetPosition
+          .clone() // Clone before modifying
+          .addScaledVector(direction, desiredDistance);
+
+        // 3. Call Renderer with new signature (Use cloned position)
+        renderer.setFollowTarget(
+          objectId,
+          targetPosition.clone(),
+          cameraPosition,
+        );
+
+        // --- ADD THIS LINE ---
+        // Update the parent panel's central view state
+        this._parentPanel?.updateViewState({ focusedObjectId: objectId });
+        // --- END ADD ---
+
+        console.log(
+          `[FocusControl] Directly calling renderer.setFollowTarget for ${objectId}`,
+        );
+        // --- END NEW LOGIC ---
       }
     });
 

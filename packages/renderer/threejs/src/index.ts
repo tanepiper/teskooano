@@ -187,6 +187,30 @@ export class ModularSpaceRenderer {
     container.addEventListener("toggleBackgroundDebug", () => {
       this.backgroundManager.toggleDebug();
     });
+
+    // Handle window resize
+    window.addEventListener("resize", () => {
+      if (container) {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        this.onResize(width, height);
+      }
+    });
+
+    // Add event listener for camera transition completion
+    document.addEventListener("camera-transition-complete", (event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail) {
+        // Check if we have an active follow target and update if needed
+        if (this._followTargetId) {
+          console.log(
+            `[Renderer] Camera transition complete, continuing to follow object ${this._followTargetId}`,
+          );
+          // Reset the previous position to force an immediate update on the next frame
+          this.previousFollowTargetPos.set(0, 0, 0);
+        }
+      }
+    });
   }
 
   private setupAnimationCallbacks(): void {
@@ -217,8 +241,9 @@ export class ModularSpaceRenderer {
       // Update the background with the current time delta
       this.backgroundManager.update(deltaTime);
 
-      // --- Camera Following Logic ---
-      if (this._followTargetId) {
+      // --- Camera Following Logic --- (Re-enabled, conditional)
+      // Only update camera position if we have a follow target AND we're not in the middle of a transition
+      if (this._followTargetId && !this.controlsManager.getIsTransitioning) {
         // Get the target mesh from the ObjectManager
         const targetMesh = this.objectManager.getObject(this._followTargetId);
 
@@ -227,38 +252,36 @@ export class ModularSpaceRenderer {
           // Get the world position (already in scene units)
           targetMesh.getWorldPosition(this.tempNewObjectPos);
 
-          // First-time setup for following
-          if (
-            this.previousFollowTargetPos.x === 0 &&
-            this.previousFollowTargetPos.y === 0 &&
-            this.previousFollowTargetPos.z === 0
-          ) {
-            this.previousFollowTargetPos.copy(this.tempNewObjectPos);
-            this.controlsManager.controls.target.copy(this.tempNewObjectPos);
-            return;
-          }
-          // Restore delta calculation
-          const deltaMovement = this.tempNewObjectPos
-            .clone()
-            .sub(this.previousFollowTargetPos);
-
-          // Update the target directly - this is the core of following
+          // Update the target position directly
+          // This is all we need - OrbitControls will naturally maintain the camera's
+          // relative position (zoom level and orbital angles) around this new target
           this.controlsManager.controls.target.copy(this.tempNewObjectPos);
+
+          // Log movement occasionally
+          if (now - this._lastTimeLog > 5000) {
+            const movement = this.previousFollowTargetPos.distanceTo(
+              this.tempNewObjectPos,
+            );
+            if (movement > 0.001) {
+              console.log(
+                `[Renderer] Following object ${this._followTargetId}, moved: ${movement.toFixed(2)} units`,
+              );
+            }
+          }
+
+          // Update previous position for next frame tracking
           this.previousFollowTargetPos.copy(this.tempNewObjectPos);
+          this._missingFrameCount = 0; // Reset missing frame count
         } else {
           // Mesh not found or destroyed - log warning and clear follow target after multiple attempts
           console.warn(
             `[Renderer Anim] Follow target mesh ${this._followTargetId} not found this frame. Skipping camera update.`,
           );
-
-          // Track missing frames to handle the case when an object is permanently destroyed
           if (!this._missingFrameCount) {
             this._missingFrameCount = 1;
           } else {
             this._missingFrameCount++;
           }
-
-          // If object is missing for several consecutive frames, stop following it
           if (this._missingFrameCount > 5) {
             console.log(
               `[Renderer Anim] Follow target ${this._followTargetId} missing for ${this._missingFrameCount} frames. Clearing follow target.`,
@@ -270,6 +293,7 @@ export class ModularSpaceRenderer {
         }
       } else if (!this._followTargetId) {
         // If no follow target, ensure previous position is cleared
+        // This prevents accidental delta calculations if a target is set later
         this.previousFollowTargetPos.set(0, 0, 0);
       }
       // --- End Camera Following Logic ---
@@ -414,8 +438,8 @@ export class ModularSpaceRenderer {
 
   setFollowTarget(
     objectId: string | null,
-    targetPosition?: THREE.Vector3, // <-- Add optional target position
-    cameraPosition?: THREE.Vector3, // <-- Add optional camera position
+    targetPosition?: THREE.Vector3,
+    cameraPosition?: THREE.Vector3,
   ): void {
     // --- Handle Stopping Follow/Transition ---
     if (!objectId) {
@@ -440,13 +464,16 @@ export class ModularSpaceRenderer {
     // --- Initiate Smooth Transition --- (Use provided positions)
     this.controlsManager.moveTo(cameraPosition, targetPosition);
 
-    // --- Manage Follow State ---
-    // Clear the internal follow ID so the animation loop doesn't interfere
-    this._followTargetId = null;
+    // --- Set follow state immediately (don't wait for transition to complete) ---
+    // This makes it possible for the animation loop to pick up following after transition
+    this._followTargetId = objectId;
+
+    // Reset previous position tracking for the new target
+    // (Will be updated on the first frame after transition completes)
     this.previousFollowTargetPos.set(0, 0, 0);
 
     console.log(
-      `[Renderer] Initiating transition to ${objectId} -> Target: ${targetPosition.toArray().join(", ")}, Camera: ${cameraPosition.toArray().join(", ")}`,
+      `[Renderer] Following target ${objectId} -> Target: ${targetPosition.toArray().join(", ")}, Camera: ${cameraPosition.toArray().join(", ")}`,
     );
   }
 

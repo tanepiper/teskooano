@@ -17,6 +17,8 @@ export class ControlsManager {
   private maxTransitionDuration: number = 8.0; // Maximum transition time in seconds (Increased from 4.0)
   private activeTimeline: gsap.core.Timeline | null = null; // Store active timeline
   private tempVector = new THREE.Vector3(); // For angle calculations
+  private followingTargetObject: THREE.Object3D | null = null; // Object to follow
+  private tempTargetPosition = new THREE.Vector3(); // Reusable vector for target position
 
   /**
    * Create a new ControlsManager
@@ -57,6 +59,23 @@ export class ControlsManager {
             target: new OSVector3(target.x, target.y, target.z),
           },
         });
+
+        // If user interacts, stop following
+        if (this.followingTargetObject) {
+          console.log(
+            "[ControlsManager] User interaction detected, stopping follow.",
+          );
+          this.followingTargetObject = null;
+          // Stop tracking the focused object in the global state as well
+          const currentState = simulationState.get();
+          // Assuming 'focusedObjectId' is the correct key in SimulationState
+          if (currentState.focusedObjectId) {
+            simulationState.set({ ...currentState, focusedObjectId: null });
+            console.log(
+              "[ControlsManager] Cleared focusedObjectId due to user interaction.",
+            );
+          }
+        }
       }
     });
   }
@@ -210,6 +229,10 @@ export class ControlsManager {
         },
       );
       document.dispatchEvent(transitionCompleteEvent);
+
+      console.log(
+        "[ControlsManager] Camera transition complete. Controls enabled.",
+      );
     };
 
     // Create and configure the timeline
@@ -249,17 +272,17 @@ export class ControlsManager {
    * Update controls (called each frame)
    */
   update(): void {
+    // If we are following an object and not transitioning, update the target
+    if (this.followingTargetObject && !this.isTransitioning) {
+      this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
+      this.controls.target.copy(this.tempTargetPosition);
+    }
+
     // GSAP timeline handles updates during transition via onUpdate callbacks (REMOVED)
     // We need OrbitControls to update based on GSAP's changes during transition.
-    // We also need it to update normally when user is controlling.
-    if (this.isTransitioning) {
-      // Force update to sync OrbitControls with GSAP's state changes
-      this.controls.update();
-    } else if (this.controls.enabled) {
-      // Normal update when user is controlling (and not transitioning)
-      this.controls.update();
-    }
-    // If !isTransitioning and !controls.enabled, do nothing.
+    // We also need it to update normally when user is controlling or following.
+    // Always update controls if not disabled externally
+    this.controls.update();
   }
 
   /**
@@ -296,5 +319,64 @@ export class ControlsManager {
       this.setEnabled(true); // Re-enable controls
       console.log("[ControlsManager] Transition cancelled externally.");
     }
+  }
+
+  /**
+   * Set a target object to follow, initiating a camera transition.
+   * Pass null to stop following.
+   * @param object The THREE.Object3D to follow, or null to stop.
+   * @param offset Optional offset from the target's center. Defaults to (0,0,0).
+   * @param keepCurrentDistance If true, maintain current camera distance from the target.
+   */
+  public setFollowTarget(
+    object: THREE.Object3D | null,
+    offset: THREE.Vector3 = new THREE.Vector3(),
+    keepCurrentDistance: boolean = false,
+  ): void {
+    this.cancelTransition(); // Cancel any existing transition
+
+    if (!object) {
+      console.log("[ControlsManager] Clearing follow target.");
+      this.followingTargetObject = null;
+      // Optionally re-enable controls immediately if needed, though transitions usually handle this
+      // this.setEnabled(true);
+      return;
+    }
+
+    console.log(
+      `[ControlsManager] Setting follow target: ${object.name || object.uuid}`,
+    );
+    this.followingTargetObject = object;
+
+    // Calculate the target position (center of the object + offset)
+    const targetPosition = new THREE.Vector3();
+    object.getWorldPosition(targetPosition).add(offset);
+
+    let finalCameraPosition: THREE.Vector3;
+
+    if (keepCurrentDistance) {
+      // Calculate the vector from the *current* target to the camera
+      const currentTarget = this.controls.target.clone();
+      const direction = this.camera.position.clone().sub(currentTarget);
+      // Maintain the same distance and direction relative to the *new* target
+      finalCameraPosition = targetPosition.clone().add(direction);
+    } else {
+      // Default behavior: Calculate a position based on object size or a fixed distance
+      // For now, let's just use a default offset if not keeping distance
+      // A more sophisticated approach would involve bounding box checks etc.
+      const currentDistance = this.camera.position.distanceTo(
+        this.controls.target,
+      );
+      const direction = this.camera.position
+        .clone()
+        .sub(this.controls.target)
+        .normalize();
+      finalCameraPosition = targetPosition
+        .clone()
+        .add(direction.multiplyScalar(Math.max(currentDistance, 1))); // Ensure minimum distance
+    }
+
+    // Start the transition to the new target and calculated position
+    this.moveTo(finalCameraPosition, targetPosition, true);
   }
 }
