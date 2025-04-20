@@ -1,4 +1,3 @@
-import { simulationState } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 
 // Helper to format vectors nicely
@@ -72,25 +71,6 @@ template.innerHTML = `
       <span class="value" id="fov-value">-</span>
   </div>
 `;
-
-// Assuming simulationState.get() provides data potentially matching this structure
-interface ExtendedSimulationState {
-  time?: number;
-  timeScale?: number;
-  paused?: boolean;
-  physicsEngine?: string;
-  camera?: {
-    position?: { x: number; y: number; z: number };
-    target?: { x: number; y: number; z: number };
-    fov?: number;
-  };
-  renderer?: {
-    fps?: number;
-    drawCalls?: number;
-    triangles?: number;
-    memory?: { usedJSHeapSize?: number }; // Match structure from performance.memory
-  };
-}
 
 // --- Interface for Renderer Stats (Matching EnginePanel/CompositePanel getRendererStats) ---
 interface RendererStats {

@@ -1,35 +1,8 @@
 import { Observable, from, of, throwError } from "rxjs";
 import { catchError, tap, map } from "rxjs/operators";
 
-// Augment existing MediaDevices interface and define necessary types
-declare global {
-  interface MediaDevices {
-    getDisplayMedia(
-      constraints?: DisplayMediaStreamConstraints,
-    ): Promise<MediaStream>;
-  }
-
-  // Based on MDN documentation for DisplayMediaStreamConstraints
-  interface DisplayMediaStreamConstraints {
-    video?: boolean | MediaTrackConstraints;
-    audio?: boolean | MediaTrackConstraints;
-    // Screen Capture specific constraints
-    preferCurrentTab?: boolean; // Example constraint (check spec/browser support)
-    selfBrowserSurface?: "include" | "exclude"; // Example
-    surfaceSwitching?: "include" | "exclude"; // Example
-    systemAudio?: "include" | "exclude"; // Example
-    controller?: any; // For CaptureController, type broadly for now
-  }
-
-  // Augment MediaTrackConstraints for Screen Capture options
-  interface MediaTrackConstraints {
-    displaySurface?: "application" | "browser" | "monitor" | "window";
-    logicalSurface?: boolean;
-    suppressLocalAudioPlayback?: boolean; // Experimental
-    // Add other constraints as needed, e.g., cursor
-    cursor?: "always" | "motion" | "never";
-  }
-}
+// Import standard type if needed (assuming @types/web is included)
+// type DisplayMediaStreamConstraints = globalThis.DisplayMediaStreamConstraints;
 
 /**
  * Checks if the Screen Capture API (getDisplayMedia) is likely supported.

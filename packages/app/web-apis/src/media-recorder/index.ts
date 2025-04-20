@@ -11,65 +11,25 @@ import {
 } from "rxjs/operators";
 
 // Define necessary types if not already globally available or need augmentation
+// Augmenting global types for MediaRecorder to include specific options,
+// properties, and ensure consistent event types across environments.
 declare global {
-  interface Window {
-    MediaRecorder?: typeof MediaRecorder;
-    BlobEvent?: typeof BlobEvent;
-  }
-
-  // Interface for the event fired when data is available
-  interface BlobEvent extends Event {
-    readonly data: Blob;
-    readonly timecode: DOMHighResTimeStamp;
-  }
-
-  // Extend MediaRecorder options to include standard and common non-standard properties
+  // Augment MediaRecorderOptions to include potentially non-standard properties
   interface MediaRecorderOptions {
-    mimeType?: string;
-    audioBitsPerSecond?: number;
-    videoBitsPerSecond?: number;
-    bitsPerSecond?: number; // General fallback
-    audioBitrateMode?: "constant" | "variable"; // Example non-standard
+    bitsPerSecond?: number; // General fallback some browsers might support
+    audioBitrateMode?: "constant" | "variable"; // Non-standard property
   }
 
-  // Define the MediaRecorder class interface
-  interface MediaRecorder extends EventTarget {
-    readonly stream: MediaStream;
-    readonly mimeType: string;
-    readonly state: "inactive" | "recording" | "paused";
-    readonly videoBitsPerSecond: number;
-    readonly audioBitsPerSecond: number;
-    readonly audioBitrateMode: "constant" | "variable"; // Example non-standard
-
-    ondataavailable: ((this: MediaRecorder, ev: BlobEvent) => any) | null;
-    onerror: ((this: MediaRecorder, ev: ErrorEvent) => any) | null; // Use standard ErrorEvent type
-    onpause: ((this: MediaRecorder, ev: Event) => any) | null;
-    onresume: ((this: MediaRecorder, ev: Event) => any) | null;
-    onstart: ((this: MediaRecorder, ev: Event) => any) | null;
-    onstop: ((this: MediaRecorder, ev: Event) => any) | null;
-
-    constructor(stream: MediaStream, options?: MediaRecorderOptions);
-
-    start(timeslice?: number): void;
-    stop(): void;
-    pause(): void;
-    resume(): void;
-    requestData(): void;
-    isTypeSupported(type: string): boolean;
-
-    // Static method
-    // isTypeSupported(type: string): boolean; // Defined below on the class type
+  // Augment MediaRecorder to include potentially non-standard properties
+  interface MediaRecorder {
+    readonly audioBitrateMode?: "constant" | "variable"; // Non-standard property
   }
 
-  // Define the constructor type separately for static methods
-  interface MediaRecorderConstructor {
-    new (stream: MediaStream, options?: MediaRecorderOptions): MediaRecorder;
-    prototype: MediaRecorder;
-    isTypeSupported(type: string): boolean;
-  }
-
-  // Make MediaRecorder constructor available on window
-  var MediaRecorder: MediaRecorderConstructor | undefined;
+  // It's generally not needed to redeclare Window properties if @types/web is present
+  // interface Window {
+  //   MediaRecorder?: typeof MediaRecorder;
+  //   BlobEvent?: typeof BlobEvent;
+  // }
 }
 
 /**

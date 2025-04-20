@@ -1,18 +1,6 @@
 import { startSimulationLoop } from "@teskooano/app-simulation";
-import {
-  celestialObjectsStore,
-  panelRegistry,
-  renderableObjectsStore,
-} from "@teskooano/core-state";
-import {
-  CelestialType,
-  scaleSize,
-  CelestialStatus,
-  OortCloudProperties,
-  SCALE,
-} from "@teskooano/data-types";
+import { panelRegistry, renderableObjectsStore } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-import { OrbitManager } from "@teskooano/renderer-threejs-visualization";
 import {
   DockviewPanelApi,
   GroupPanelPartInitParameters,
@@ -72,7 +60,6 @@ export class CompositeEnginePanel implements IContentRenderer {
   private _currentOrientation: Orientation | null = null;
 
   // --- Internal View State Store (Copied from old EnginePanel) ---
-  private _previousViewState: PanelViewState | null = null;
   private _viewStateStore: WritableAtom<PanelViewState>;
 
   get element(): HTMLElement {
@@ -146,7 +133,6 @@ export class CompositeEnginePanel implements IContentRenderer {
       showAuMarkers: true,
       showDebrisEffects: false,
     });
-    this._previousViewState = this._viewStateStore.get();
   }
 
   // --- Public methods for state management (Copied/adapted from old EnginePanel) ---

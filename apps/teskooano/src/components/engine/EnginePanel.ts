@@ -7,10 +7,9 @@ import {
 } from "@teskooano/core-state";
 import {
   CelestialType,
-  scaleSize,
-  CelestialStatus,
   OortCloudProperties,
   SCALE,
+  scaleSize,
 } from "@teskooano/data-types"; // Need CelestialType & scaleSize
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { OrbitManager } from "@teskooano/renderer-threejs-visualization";

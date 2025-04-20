@@ -1,15 +1,10 @@
-import {
-  celestialObjectsStore,
-  renderableObjectsStore,
-} from "@teskooano/core-state";
+import { celestialObjectsStore } from "@teskooano/core-state";
 import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
   scaleSize,
 } from "@teskooano/data-types";
-import * as THREE from "three"; // Needed for Vector3 calculations
-import { ModularSpaceRenderer } from "@teskooano/renderer-threejs"; // Import Renderer type
 import type { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // Import parent panel type
 // import { throttle } from 'lodash-es'; // Remove throttle for now
 // import { EnginePanel } from "../engine/EnginePanel"; // Use regular import and corrected path
@@ -181,9 +176,6 @@ const CAMERA_DISTANCES: Partial<Record<CelestialType, number>> = {
   [CelestialType.MOON]: 8, // Slightly increased
 };
 const DEFAULT_CAMERA_DISTANCE = 8; // Increased default distance
-const CAMERA_OFFSET = new THREE.Vector3(0.8, 0.4, 1.0).normalize();
-const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 0, 300); // Simpler default
-const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 
 // Size-based scaling factors for different celestial types
 const SIZE_BASED_SCALING: Partial<Record<CelestialType, number>> = {

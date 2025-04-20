@@ -5,10 +5,6 @@ import {
 } from "@teskooano/data-types";
 // Import necessary stores and registry from core-state
 import { celestialObjectsStore } from "@teskooano/core-state";
-// Import the EnginePanel type (adjust path if necessary)
-import { map } from "nanostores";
-import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-// import { EnginePanel } from "../engine/EnginePanel";
 
 // Import component types
 import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
@@ -18,9 +14,9 @@ import { AsteroidFieldInfoComponent } from "./celestial-components/AsteroidField
 import { GasGiantInfoComponent } from "./celestial-components/GasGiantInfo";
 import { GenericCelestialInfoComponent } from "./celestial-components/GenericCelestialInfo";
 import { MoonInfoComponent } from "./celestial-components/MoonInfo";
+import { OortCloudInfoComponent } from "./celestial-components/OortCloudInfo";
 import { PlanetInfoComponent } from "./celestial-components/PlanetInfo";
 import { StarInfoComponent } from "./celestial-components/StarInfo";
-import { OortCloudInfoComponent } from "./celestial-components/OortCloudInfo";
 
 // Constants for formatters
 const AU_IN_METERS = 149597870700;
@@ -153,7 +149,6 @@ export class CelestialInfo extends HTMLElement {
   // private unsubscribePanelState: (() => void) | null = null;
   private unsubscribeObjectsStore: (() => void) | null = null;
   // private _linkCheckInterval: number | null = null;
-  private _renderer: ModularSpaceRenderer | null = null; // Store renderer instance
 
   private currentSelectedId: string | null = null;
 
@@ -261,18 +256,6 @@ export class CelestialInfo extends HTMLElement {
       "renderer-focus-changed",
       this.handleRendererFocusChange,
     );
-  }
-
-  /**
-   * Public method for the parent component (CompositeEnginePanel)
-   * to provide the renderer instance.
-   */
-  public setRenderer(renderer: ModularSpaceRenderer): void {
-    console.log("[CelestialInfo] Renderer set.");
-    this._renderer = renderer;
-    // If renderer has a way to get current focus, update immediately
-    // Otherwise, rely on the event listener
-    // Example: this.handleSelectionChange(this._renderer.getCurrentFocusId());
   }
 
   // Event handler for focus changes from the renderer

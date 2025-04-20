@@ -18,28 +18,6 @@ import {
   finalize,
 } from "rxjs/operators";
 
-// Define necessary types based on the Remote Playback API spec
-declare global {
-  interface HTMLMediaElement {
-    readonly remote: RemotePlayback;
-    disableRemotePlayback: boolean;
-  }
-
-  interface RemotePlayback extends EventTarget {
-    readonly state: "disconnected" | "connecting" | "connected";
-    onconnecting: ((this: RemotePlayback, ev: Event) => any) | null;
-    onconnect: ((this: RemotePlayback, ev: Event) => any) | null;
-    ondisconnect: ((this: RemotePlayback, ev: Event) => any) | null;
-
-    watchAvailability(callback: (available: boolean) => void): Promise<number>;
-    cancelWatchAvailability(id?: number): Promise<void>;
-    prompt(): Promise<void>;
-  }
-
-  // Add constructor type to Window if needed, although it's usually accessed via element.remote
-  // interface Window { RemotePlayback?: RemotePlayback; }
-}
-
 /** Type for the state emitted by remotePlaybackState$ */
 export type RemotePlaybackStatus = "disconnected" | "connecting" | "connected";
 
