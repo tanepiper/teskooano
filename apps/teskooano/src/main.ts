@@ -19,6 +19,8 @@ import { TourModal } from "./components/ui-controls/TourModal";
 import { celestialObjectsStore } from "@teskooano/core-state";
 import { layoutOrientationStore, Orientation } from "./stores/layoutStore"; // Import the layout store
 import "./components/ui-controls/EngineUISettingsPanel"; // Import for side effect (registers element)
+import { EnginePlaceholder } from "./components/engine/EnginePlaceholder"; // Import EnginePlaceholder class
+import { ToolbarSeedForm } from "./components/toolbar/SeedForm"; // Correct import path
 
 // --- Setup --- //
 
@@ -64,6 +66,10 @@ window.addEventListener("resize", () => {
 // --- Initialize Controllers --- //
 
 const dockviewController = new DockviewController(appElement);
+
+// --- Set Dockview API for SeedForm & EnginePlaceholder --- //
+ToolbarSeedForm.setDockviewApi(dockviewController.api); // For toolbar seed form
+EnginePlaceholder.setDockviewApi(dockviewController.api); // For placeholder seed form
 
 // Now initialize the tour controller with the correct engine view ID
 const tourController = new TourController();
@@ -153,3 +159,10 @@ window.addEventListener("beforeunload", () => {
   // Clean up controllers
   toolbarController.destroy();
 });
+
+// --- Listener for Start Tour Requests from Placeholders ---
+document.body.addEventListener("start-tour-request", () => {
+  console.log("[main.ts] Received start-tour-request event.");
+  tourController.restartTour();
+});
+// --- End Listener ---

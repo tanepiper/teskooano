@@ -109,7 +109,6 @@ export class TeskooanoForm extends HTMLElement {
   private isFormControl(element: Element): boolean {
     // Check for custom elements with common form control properties
     const customElementTags = [
-      "teskooano-input-field",
       "teskooano-select",
       "teskooano-checkbox",
       "teskooano-slider",

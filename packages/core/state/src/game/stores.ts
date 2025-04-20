@@ -1,6 +1,50 @@
-import { map } from "nanostores";
+import { map, atom } from "nanostores";
 import type { CelestialObject } from "@teskooano/data-types";
 import type { OSVector3 } from "@teskooano/core-math";
+
+// --- Seed State ---
+// localStorage key for the seed
+const LAST_SEED_STORAGE_KEY = "teskooano_last_seed";
+const DEFAULT_SEED = "42";
+
+// Function to safely get the initial seed from localStorage
+const getInitialSeed = (): string => {
+  try {
+    const storedSeed = localStorage.getItem(LAST_SEED_STORAGE_KEY);
+    return storedSeed ?? DEFAULT_SEED;
+  } catch (error) {
+    console.error("Error accessing localStorage for seed:", error);
+    return DEFAULT_SEED;
+  }
+};
+
+/**
+ * Atom storing the current seed used for system generation.
+ * Initializes from localStorage or falls back to the default seed.
+ */
+export const currentSeed = atom<string>(getInitialSeed());
+
+/**
+ * Action to update the current seed value in the store and localStorage.
+ * @param newSeed The new seed value.
+ */
+export const updateSeed = (newSeed: string): void => {
+  const trimmedSeed = newSeed.trim();
+  const seedToSet = trimmedSeed || DEFAULT_SEED;
+  try {
+    localStorage.setItem(LAST_SEED_STORAGE_KEY, seedToSet);
+    currentSeed.set(seedToSet);
+    if (!trimmedSeed) {
+      console.warn(
+        `Seed input was empty, using default seed "${DEFAULT_SEED}".`,
+      );
+    }
+  } catch (error) {
+    console.error("Error updating seed in localStorage:", error);
+    currentSeed.set(seedToSet);
+  }
+};
+// --- End Seed State ---
 
 /**
  * Store that maps celestial object IDs to their full data including physics state

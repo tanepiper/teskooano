@@ -1,11 +1,12 @@
-import { AddPanelOptions } from "dockview-core";
+import type { AddPanelOptions } from "dockview-core";
 import "../components/shared/Button.js";
 import "../components/toolbar/SeedForm"; // Import the new ToolbarSeedForm
 import { ToolbarSeedForm } from "../components/toolbar/SeedForm";
 import "../components/toolbar/SimulationControls"; // Import for side effect (registers element)
+import { layoutOrientationStore, Orientation } from "../stores/layoutStore";
 import { DockviewController } from "./dockviewController";
 import { TourController } from "./tourController";
-import { layoutOrientationStore, Orientation } from "../stores/layoutStore";
+import { actions as simulationActions } from "@teskooano/core-state";
 import { PopoverAPI } from "@teskooano/web-apis";
 
 /**
@@ -31,7 +32,7 @@ export class ToolbarController {
   /**
    * A counter specifically for engine views.
    */
-  private _enginePanelCounter = 0; // Counter specifically for engine views
+  private _compositePanelCounter = 0; // Renamed
   /**
    * Store the ID of the last added engine panel for positioning the next one.
    */
@@ -185,8 +186,8 @@ export class ToolbarController {
    */
   public initializeFirstEngineView(): void {
     // Ensure we only add the *first* view this way
-    if (this._enginePanelCounter === 0) {
-      this.addEnginePanels();
+    if (this._compositePanelCounter === 0) {
+      this.addCompositeEnginePanel();
     } else {
       console.warn(
         "initializeFirstEngineView called but engine panels already exist.",
@@ -197,9 +198,9 @@ export class ToolbarController {
   /**
    * Adds the engine views and the corresponding engine UI panels.
    */
-  private addEnginePanels(): void {
-    this._enginePanelCounter++;
-    const counter = this._enginePanelCounter;
+  private addCompositeEnginePanel(): void {
+    this._compositePanelCounter++;
+    const counter = this._compositePanelCounter;
     const compositeViewId = `composite_engine_view_${counter}`;
     const compositeViewTitle = `Teskooano ${counter}`;
 
@@ -209,33 +210,21 @@ export class ToolbarController {
       id: section.id.replace("{{COUNTER}}", counter.toString()),
     }));
 
+    // Determine positioning
+    let positionOptions: AddPanelOptions["position"] | undefined = undefined;
+
+    if (this._lastEngineViewId) {
+      // Position below the *previous panel* to force grouping
+      positionOptions = {
+        referencePanel: this._lastEngineViewId,
+        direction: "below",
+      };
+    } else {
+      // First panel, add without specific position (goes into root)
+      // console.log("Adding first panel to root.");
+    }
+
     try {
-      // Determine where to position the new engine view
-      let positionOptions: AddPanelOptions["position"] = undefined;
-
-      if (this._lastEngineViewId) {
-        // Find the previous engine panel
-        const previousPanel = this._dockviewController.api.panels.find(
-          (p) => p.id === this._lastEngineViewId,
-        );
-
-        if (previousPanel && previousPanel.group) {
-          // Position new panel below the GROUP of the previous panel
-          // This ensures we take the full width of the previous engine+UI
-
-          positionOptions = {
-            referenceGroup: previousPanel.group,
-            direction: "below",
-          };
-        } else {
-          console.warn(
-            `Previous engine ${this._lastEngineViewId} or its group not found, using default positioning.`,
-          );
-        }
-      } else {
-        // console.log("Positioning first engine view (default).");
-      }
-
       // Create the composite engine panel
       const compositePanel = this._dockviewController.api.addPanel({
         id: compositeViewId,
@@ -245,7 +234,7 @@ export class ToolbarController {
           title: compositeViewTitle,
           sections: uiSections, // Pass UI sections config
         },
-        position: positionOptions,
+        position: positionOptions, // Use the calculated options
       });
 
       // Store the composite ID for positioning the next one
@@ -516,7 +505,7 @@ export class ToolbarController {
     }
 
     addButton.addEventListener("click", () => {
-      this.addEnginePanels();
+      this.addCompositeEnginePanel();
     });
 
     this._element.appendChild(addButton);

@@ -1,38 +1,151 @@
+/* ==========================================================================
+   Design Tokens - Teskooano Theme
+   ========================================================================== */
 :root {
-  --color-background: #1a1a2e; /* Dark Navy Blue */
-  --color-surface: #2a2a3e; /* Slightly Lighter Navy/Grey */
-  --color-text: #e0e0fc; /* Light Lavender/White */
-  --color-primary: #6c63ff; /* A Purple/Blue Accent */
-  --color-border: #4a4a6a; /* Muted Border Color */
+  /* --- Colors --- */
+  /* Neutrals */
+  --color-background: #12121e; /* Deep Space Blue */
+  --color-surface-1: #1a1a2e; /* Dark Navy (Prev Background) */
+  --color-surface-2: #2a2a3e; /* Lighter Navy/Grey (Prev Surface) */
+  --color-surface-3: #3a3a4e; /* Even Lighter Surface */
+  --color-text-primary: #e0e0fc; /* Light Lavender/White (Prev Text) */
+  --color-text-secondary: #a0a0cc; /* Muted Lavender */
+  --color-text-disabled: #6a6a8a; /* Greyed Out */
+  --color-border-strong: #6a6a8a; /* Visible Border */
+  --color-border-subtle: #4a4a6a; /* Muted Border (Prev Border) */
+  --color-border-focus: var(--color-primary); /* Focus Indicator */
 
-  /* Base font sizes - improved for better scaling */
-  --font-size-base: 16px;
-  --font-size-small: 0.875rem; /* 14px at base size */
-  --font-size-medium: 1rem; /* 16px at base size */
-  --font-size-large: 1.125rem; /* 18px at base size */
+  /* Primary Action */
+  --color-primary: #6c63ff; /* Purple/Blue Accent */
+  --color-primary-hover: #5a52e0;
+  --color-primary-active: #4841c2;
+  --color-text-on-primary: #ffffff;
 
-  /* Spacing variables */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
+  /* Secondary Action (Optional - Example: Blue) */
+  --color-secondary: #00aaff;
+  --color-secondary-hover: #0088cc;
+  --color-secondary-active: #006699;
+  --color-text-on-secondary: #ffffff;
 
-  /* Component sizing */
-  --toolbar-height: 3.125rem; /* Equivalent to 50px at 16px base, but scales with font */
+  /* Accent (Optional - Example: Teal) */
+  --color-accent: #17ead9;
+  --color-accent-hover: #12b8ab;
+  --color-accent-active: #0d8a7f;
+  --color-text-on-accent: #12121e;
 
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* Semantic Colors */
+  --color-success: #2ecc71;
+  --color-warning: #f1c40f;
+  --color-error: #e74c3c;
+  --color-info: #3498db;
+
+  /* --- Typography --- */
+  --font-family-base: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-family-heading: var(
+    --font-family-base
+  ); /* Or a different one if desired */
+  --font-family-mono: "Courier New", Courier, monospace;
+
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  --line-height-base: 1.6;
+  --line-height-heading: 1.3;
+
+  /* Fluid Font Sizes (Example using clamp) */
+  --font-size-1: clamp(0.75rem, 0.5vw + 0.65rem, 0.875rem); /* ~12px - 14px */
+  --font-size-2: clamp(
+    0.875rem,
+    0.5vw + 0.775rem,
+    1rem
+  ); /* ~14px - 16px (Base) */
+  --font-size-3: clamp(1rem, 0.6vw + 0.88rem, 1.125rem); /* ~16px - 18px */
+  --font-size-4: clamp(1.125rem, 0.7vw + 0.975rem, 1.25rem); /* ~18px - 20px */
+  --font-size-5: clamp(1.375rem, 1vw + 1.125rem, 1.75rem); /* ~22px - 28px */
+  --font-size-6: clamp(1.75rem, 1.5vw + 1.3rem, 2.5rem); /* ~28px - 40px */
+
+  /* Base Definition */
+  --font-size-base: var(--font-size-2);
+  --font-size-small: var(--font-size-1);
+  --font-size-medium: var(--font-size-3);
+  --font-size-large: var(--font-size-4);
+
+  /* --- Spacing (Linear Scale) --- */
+  --space-unit: 0.25rem; /* ~4px */
+  --space-1: var(--space-unit); /* 4px */
+  --space-2: calc(var(--space-unit) * 2); /* 8px */
+  --space-3: calc(var(--space-unit) * 3); /* 12px */
+  --space-4: calc(var(--space-unit) * 4); /* 16px (Base) */
+  --space-5: calc(var(--space-unit) * 6); /* 24px */
+  --space-6: calc(var(--space-unit) * 8); /* 32px */
+  --space-8: calc(var(--space-unit) * 12); /* 48px */
+  --space-10: calc(var(--space-unit) * 16); /* 64px */
+
+  /* Aliases for common use cases */
+  --spacing-xs: var(--space-1);
+  --spacing-sm: var(--space-2);
+  --spacing-md: var(--space-4);
+  --spacing-lg: var(--space-6);
+  --spacing-xl: var(--space-8);
+  --spacing-xxl: var(--space-10);
+
+  /* --- Borders --- */
+  --border-width-thin: 1px;
+  --border-width-medium: 2px;
+  --border-width-thick: 3px;
+
+  --radius-none: 0;
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.5rem; /* 8px */
+  --radius-lg: 1rem; /* 16px */
+  --radius-full: 9999px; /* Pill shape */
+
+  /* --- Shadows --- */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.15);
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12);
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+
+  /* --- Layout --- */
+  --container-padding: var(--spacing-md);
+  --toolbar-height: 3.125rem; /* ~50px - Keep for now */
+  --max-width: 1200px; /* Example max width */
+
+  /* --- Transitions --- */
+  --transition-duration-fast: 150ms;
+  --transition-duration-base: 250ms;
+  --transition-duration-slow: 400ms;
+  --transition-timing-base: ease-in-out;
+
+  /* --- Base Styles Application --- */
+  font-family: var(--font-family-base);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-normal);
   font-size: var(--font-size-base);
 
-  color-scheme: light dark;
-  color: var(--color-text);
+  color-scheme: light dark; /* Assuming dark theme primarily */
+  color: var(--color-text-primary);
   background-color: var(--color-background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   Base HTML Element Styles
+   ========================================================================== */
+
+/* --- Reset & Box Sizing --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 html,
@@ -46,544 +159,810 @@ body {
 body {
   min-width: 320px;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  display: flex; /* Keep for overall layout */
+  flex-direction: column; /* Keep for overall layout */
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
 }
 
-/* --- Orientation Layout - REMOVED --- */
-/*
-#app.layout-landscape {
-  display: flex;
-  flex-direction: row; /* Toolbar and Dockview side-by-side */
-/*}
-
-#app.layout-landscape #toolbar {
-  width: auto; /* Let it size based on content or a fixed width */
-/*  height: 100%; /* Full height */
-/*  flex-direction: column; /* Toolbar items stacked vertically */
-/*  border-right: 1px solid var(--color-border);
-  border-bottom: none;
-  /* Add fixed width or min/max width as needed */
-/*  /* width: 200px; */
-/*}
-
-#app.layout-landscape .dockview-container {
-  /* Dockview takes remaining space */
-/*  flex-grow: 1;
+/* --- Typography --- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  color: var(--color-text-primary);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
-#app.layout-portrait {
-  display: flex;
-  flex-direction: column; /* Toolbar above Dockview */
-/*}
+h1 {
+  font-size: var(--font-size-6);
+}
+h2 {
+  font-size: var(--font-size-5);
+}
+h3 {
+  font-size: var(--font-size-4);
+}
+h4 {
+  font-size: var(--font-size-3);
+}
+h5 {
+  font-size: var(--font-size-2);
+}
+h6 {
+  font-size: var(--font-size-1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 
-#app.layout-portrait #toolbar {
-  height: auto; /* Allow wrapping */
-/*  min-height: var(--toolbar-height);
+p {
+  margin-bottom: var(--spacing-md);
+  max-width: 65ch; /* Improve readability */
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-duration-fast)
+    var(--transition-timing-base);
+}
+a:hover,
+a:focus {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+strong,
+b {
+  font-weight: var(--font-weight-bold);
+}
+em,
+i {
+  font-style: italic;
+}
+small {
+  font-size: var(--font-size-small);
+}
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-family-mono);
+  font-size: 0.9em;
+  background-color: var(--color-surface-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+}
+pre {
+  padding: var(--spacing-md);
+  overflow-x: auto;
+  white-space: pre-wrap; /* Wrap long lines */
+}
+hr {
+  border: 0;
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+  margin: var(--spacing-lg) 0;
+}
+
+/* --- Lists --- */
+ul,
+ol {
+  margin-left: var(--spacing-md);
+  padding-left: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+li {
+  margin-bottom: var(--spacing-sm);
+}
+
+/* --- Forms --- */
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: 0; /* Remove default margins */
+}
+
+label {
+  display: block;
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text-secondary);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="number"],
+textarea,
+select {
+  display: block;
   width: 100%;
-  flex-direction: row; /* Toolbar items horizontally */
-/*  border-bottom: 1px solid var(--color-border);
-  border-right: none;
-  flex-wrap: wrap; /* Allow items to wrap */
-/*}
-
-#app.layout-portrait .dockview-container {
-  /* Dockview takes remaining space */
-/*  flex-grow: 1;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-base);
+  background-color: var(--color-surface-1);
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  transition:
+    border-color var(--transition-duration-fast) var(--transition-timing-base),
+    box-shadow var(--transition-duration-fast) var(--transition-timing-base);
 }
-*/
-/* ----------------------- */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-disabled);
+  opacity: 1; /* Firefox */
+}
+select {
+  appearance: none; /* Remove default arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a0a0cc'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  background-size: 1.2em;
+  padding-right: calc(var(--space-3) * 2 + 1.2em); /* Space for icon */
+}
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
 
-#toolbar {
-  height: var(--toolbar-height); /* Keep this for portrait default */
-  width: 100%;
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  display: flex;
+/* --- Buttons --- */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  display: inline-flex; /* Allows alignment of text/icons */
   align-items: center;
-  justify-content: flex-start;
-  padding: 0 var(--spacing-sm);
-  box-sizing: border-box;
-  flex-wrap: nowrap;
+  justify-content: center;
   gap: var(--spacing-sm);
-  flex-shrink: 0; /* Prevent toolbar from shrinking */
-  /* text-align: center; */
-  overflow: hidden;
-  position: relative; /* Creates new stacking context */
-  /* display: flex; is now handled by orientation classes - REVERTED */
-  display: flex; /* Re-apply display: flex as it's the default now */
-  flex-direction: row; /* Ensure items are laid out horizontally */
+  padding: var(--space-2) var(--space-4); /* Base padding */
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  white-space: nowrap; /* Prevent wrapping */
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  border: var(--border-width-thin) solid transparent;
+  border-radius: var(--radius-md);
+  transition:
+    background-color var(--transition-duration-fast)
+      var(--transition-timing-base),
+    border-color var(--transition-duration-fast) var(--transition-timing-base),
+    color var(--transition-duration-fast) var(--transition-timing-base),
+    box-shadow var(--transition-duration-fast) var(--transition-timing-base);
+
+  /* Default Button Style (Subtle Surface) */
+  background-color: var(--color-surface-2);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-subtle);
 }
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover {
+  background-color: var(--color-surface-3);
+  border-color: var(--color-border-strong);
+}
+button:focus,
+input[type="button"]:focus,
+input[type="submit"]:focus,
+input[type="reset"]:focus,
+button:focus-visible,
+input[type="button"]:focus-visible,
+input[type="submit"]:focus-visible,
+input[type="reset"]:focus-visible {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+button:active,
+input[type="button"]:active,
+input[type="submit"]:active,
+input[type="reset"]:active {
+  background-color: var(--color-surface-1);
+}
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Primary Button Style */
+.button-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border-color: var(--color-primary);
+}
+.button-primary:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+.button-primary:active {
+  background-color: var(--color-primary-active);
+  border-color: var(--color-primary-active);
+}
+.button-primary:focus,
+.button-primary:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--color-background),
+    0 0 0 4px var(--color-primary);
+}
+
+/* Secondary Button Style (Example) */
+.button-secondary {
+  background-color: var(--color-secondary);
+  color: var(--color-text-on-secondary);
+  border-color: var(--color-secondary);
+}
+.button-secondary:hover {
+  background-color: var(--color-secondary-hover);
+  border-color: var(--color-secondary-hover);
+}
+.button-secondary:active {
+  background-color: var(--color-secondary-active);
+  border-color: var(--color-secondary-active);
+}
+.button-secondary:focus,
+.button-secondary:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--color-background),
+    0 0 0 4px var(--color-secondary);
+}
+
+/* Outline Button Style */
+.button-outline {
+  background-color: transparent;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.button-outline:hover {
+  background-color: rgba(
+    var(--color-primary-rgb, 108, 99, 255),
+    0.1
+  ); /* Needs --color-primary-rgb defined or manual rgb */
+  color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+.button-outline:active {
+  background-color: rgba(var(--color-primary-rgb, 108, 99, 255), 0.2);
+}
+.button-outline:focus,
+.button-outline:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+/* Ghost Button Style (No background or border until hover) */
+.button-ghost {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border-color: transparent;
+}
+.button-ghost:hover {
+  background-color: var(--color-surface-2);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-subtle);
+}
+.button-ghost:active {
+  background-color: var(--color-surface-1);
+}
+.button-ghost:focus,
+.button-ghost:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+/* Button Sizes */
+.button-sm {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-small);
+  gap: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+}
+.button-lg {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-large);
+  gap: var(--spacing-sm);
+  border-radius: var(--radius-lg);
+}
+
+/* --- Images & Media --- */
+img,
+video,
+svg {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle; /* Fix potential baseline issues */
+}
+
+/* ==========================================================================
+   Application Layout & Specific Component Styles
+   ========================================================================== */
 
 #app {
   width: 100%;
-  flex: 1; /* Use flexbox model for better height calculation */
+  flex: 1;
   margin: 0 auto;
-  /* Remove text-align: center; if flex handles alignment */
-  /* text-align: center; */
   overflow: hidden;
-  position: relative; /* Creates new stacking context */
-  /* display: flex; is now handled by orientation classes */
+  position: relative;
+  display: flex; /* Add back flex for main layout */
+  flex-direction: column; /* Stack toolbar and content */
 }
 
-/* Better scaling for simulation controls buttons */
-toolbar-simulation-controls {
+#toolbar {
+  height: var(--toolbar-height);
+  width: 100%;
+  background-color: var(--color-surface-2); /* Use surface-2 */
+  border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  justify-content: flex-start;
+  padding: 0 var(--spacing-md); /* Use new spacing */
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+  gap: var(--spacing-md); /* Use new spacing */
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
 }
 
-/* Basic button styling with better sizing */
-button {
-  border-radius: 0.5rem;
-  border: 1px solid transparent;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-medium);
-  font-weight: 500;
-  font-family: inherit;
-  background-color: var(--color-surface);
-  color: var(--color-text);
-  cursor: pointer;
-  transition: border-color 0.25s;
+/* Style the basic button within the toolbar using the new base style */
+/* Remove specific button overrides if base styles are sufficient */
+/* Or apply button variant classes like .button-ghost */
+#toolbar button {
+  /* Inherits base button styles */
+  /* Example: Make toolbar buttons ghost by default */
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border-color: transparent;
+  padding: var(--space-1) var(--space-2); /* Smaller padding for toolbar */
 }
-button:hover {
-  border-color: var(--color-primary);
+#toolbar button:hover {
+  background-color: var(--color-surface-3);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-subtle);
 }
-button:focus,
-button:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+#toolbar button:active {
+  background-color: var(--color-surface-1);
+}
+#toolbar button:focus,
+#toolbar button:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary);
+  border-color: var(--color-primary); /* Add border on focus too */
 }
 
-/* Dockview specific overrides - adjust as needed */
+/* --- Logo Styling --- */
+.app-logo,
+#app-logo {
+  /* Adjust size using height relative to toolbar or fixed value */
+  height: calc(var(--toolbar-height) * 0.65);
+  max-height: 30px; /* Cap max size */
+  width: auto;
+  display: block; /* Remove potential inline spacing issues */
+}
+
+/* --- Dockview Overrides --- */
+.dockview-container {
+  width: 100%;
+  height: 100%; /* Ensure it fills space below toolbar */
+  flex-grow: 1; /* Allow it to take remaining space */
+  overflow: hidden; /* Prevent Dockview's own scrollbars if desired */
+}
+
 .dockview-theme-abyss {
+  /* Use the new design tokens */
   --dv-background-color: var(--color-background);
-  --dv-pane-background-color: var(--color-surface);
-  --dv-separator-border: var(--color-border);
-  --dv-tabs-and-actions-container-background-color: var(--color-surface);
-  --dv-active-tab-background-color: var(--color-background);
-  --dv-tab-background-color: var(--color-surface);
-  --dv-tab-color: var(--color-text);
-  --dv-tab-border: var(--color-border);
-  --dv-group-control-background-color: var(--color-surface);
+  --dv-pane-background-color: var(
+    --color-surface-1
+  ); /* Use surface-1 for panes */
+  --dv-separator-border: var(--color-border-subtle);
+  --dv-tabs-and-actions-container-background-color: var(
+    --color-surface-2
+  ); /* Use surface-2 for tabs */
+  --dv-active-tab-background-color: var(
+    --color-background
+  ); /* Match main bg for active */
+  --dv-tab-background-color: var(--color-surface-2);
+  --dv-tab-color: var(
+    --color-text-secondary
+  ); /* Muted text for inactive tabs */
+  --dv-active-tab-color: var(
+    --color-text-primary
+  ); /* Brighter text for active */
+  --dv-tab-border: var(--color-border-subtle);
+  --dv-group-control-background-color: var(--color-surface-2);
+  /* Add other Dockview variables as needed, referencing your tokens */
 }
 
+/* --- Toolbar Background Effect --- */
 .toolbar-cosmic-background {
-  /* Base dark color (matches the one set previously) */
-  background-color: var(--color-surface-deep, #1a1a2e);
-
-  /* Adjusted layered gradients for a more visible nebula */
-  background-image: 
-    /* Faint directional haze */
+  background-color: var(--color-surface-2); /* Base color */
+  /* Keep the gradient for flair, adjust colors if needed */
+  background-image:
     linear-gradient(160deg, hsla(280, 40%, 25%, 0.15) 0%, transparent 40%),
-    /* Brighter purple cloud, slightly larger */
-      radial-gradient(
-        ellipse at 25% 35%,
-        hsla(260, 55%, 40%, 0.35) 0%,
-        transparent 60%
-      ),
-    /* Brighter cyan cloud, shifted */
-      radial-gradient(
-        ellipse at 75% 65%,
-        hsla(180, 60%, 35%, 0.3) 0%,
-        transparent 55%
-      );
-
-  /* Ensure background doesn't repeat if element is larger */
+    radial-gradient(
+      ellipse at 25% 35%,
+      hsla(260, 55%, 40%, 0.35) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse at 75% 65%,
+      hsla(180, 60%, 35%, 0.3) 0%,
+      transparent 55%
+    );
   background-repeat: no-repeat;
 }
 
-/* Larger screens */
-@media only screen and(min-width: 1200px) {
-  :root {
-    --font-size-base: 18px; /* Slightly larger text on bigger screens */
-  }
+/* --- Composite Panel Layout --- */
+/* Keep the layout structure but use new tokens */
+.composite-engine-panel {
+  display: flex;
+  width: 100%;
+  height: 100%;
 }
 
-@media only screen and (min-width: 1024px) {
-  .composite-engine-panel .ui-container collapsible-section {
-    min-height: 36px; /* Use fit-content instead of fixed height */
-    margin-bottom: var(--spacing-xs); /* Smaller margins */
-  }
+/* Portrait Layout (Device Landscape) */
+.composite-engine-panel.layout-internal-landscape {
+  flex-direction: row;
+}
+.composite-engine-panel.layout-internal-landscape .engine-container {
+  /* flex: 2; */ /* Removed, let it take remaining space */
+  overflow: hidden;
+  position: relative;
+}
+.composite-engine-panel.layout-internal-landscape .ui-container {
+  /* flex: 1; */ /* Removed */
+  flex: 0 0 300px; /* Set initial width, don't grow/shrink */
+  border-left: var(--border-width-thin) solid var(--color-border-subtle);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface-1); /* Give UI panel a surface color */
+}
+.composite-engine-panel.layout-internal-landscape
+  .ui-container
+  > .left-ui-container {
+  flex: 0 0 auto;
+  width: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  max-height: 40%;
+  min-height: 100px;
+}
+.composite-engine-panel.layout-internal-landscape
+  .ui-container
+  > .right-ui-container {
+  flex: 1;
+  width: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+  min-height: 60%;
 }
 
-/* Medium screens - now starts at 1024px */
+/* Landscape Layout (Device Portrait) */
+.composite-engine-panel.layout-internal-portrait {
+  flex-direction: column;
+}
+.composite-engine-panel.layout-internal-portrait .engine-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.composite-engine-panel.layout-internal-portrait .ui-container {
+  flex: 0 0 auto;
+  max-height: 40%;
+  min-height: 200px;
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+  display: flex;
+  flex-direction: row;
+  background-color: var(--color-surface-1); /* Give UI panel a surface color */
+}
+.composite-engine-panel.layout-internal-portrait
+  .ui-container
+  > .left-ui-container {
+  flex: 0 0 33%;
+  height: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  border-right: var(--border-width-thin) solid var(--color-border-subtle);
+  min-height: unset; /* Remove explicit min-height */
+}
+.composite-engine-panel.layout-internal-portrait
+  .ui-container
+  > .right-ui-container {
+  flex: 0 0 67%;
+  height: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: unset; /* Remove explicit min-height */
+}
+
+/* --- Collapsible Section --- */
+/* Basic styling for the custom element - could be replaced with <details> */
+.composite-engine-panel .ui-container collapsible-section {
+  width: 100%;
+  margin-bottom: var(--spacing-md); /* Use new spacing */
+  min-height: fit-content;
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-2);
+  overflow: hidden; /* Contain background and borders */
+}
+/* Style header/content within the collapsible section if needed */
+collapsible-section > header {
+  /* Assuming a header element */
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-surface-3);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+}
+collapsible-section > div {
+  /* Assuming content is in a div */
+  padding: var(--spacing-md);
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+}
+
+/* --- Styles for Internal Resizer --- */
+.internal-resizer {
+  background-color: var(--color-border-interactive, #606080);
+  transition: background-color 0.2s ease-in-out;
+  /* Width/height and cursor set dynamically based on orientation */
+}
+
+.internal-resizer:hover {
+  background-color: var(--color-border-interactive-hover, #8080a0);
+}
+
+.internal-resizer.resizing {
+  background-color: var(--color-border-interactive-active, #a0a0c0);
+}
+
+/* Ensure engine container takes up remaining space */
+.composite-engine-panel > .engine-container {
+  flex: 1 1 auto; /* Allow grow/shrink, basis is auto */
+  min-width: 0; /* Prevent content from forcing minimum size */
+  min-height: 0;
+}
+
+/* UI container should not grow/shrink by default, basis is set by resize */
+.composite-engine-panel > .ui-container {
+  flex: 0 0 auto; /* Don't grow/shrink initially, basis set by resize/CSS */
+}
+
+/* Landscape Layout (Device Landscape) */
+.composite-engine-panel.layout-internal-landscape
+  .ui-container
+  > .right-ui-container {
+  flex: 1;
+  width: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+  min-height: 60%; /* Remove explicit min-height if resizing handles it */
+}
+
+/* Landscape Layout (Device Portrait) */
+.composite-engine-panel.layout-internal-portrait
+  .ui-container
+  > .left-ui-container {
+  flex: 0 0 33%;
+  height: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  border-right: var(--border-width-thin) solid var(--color-border-subtle);
+  min-height: unset; /* Remove explicit min-height */
+}
+.composite-engine-panel.layout-internal-portrait
+  .ui-container
+  > .right-ui-container {
+  width: 100%;
+  flex-grow: 1; /* Take remaining space */
+  min-height: unset; /* Remove explicit min-height */
+}
+
+/* ==========================================================================
+   Responsive Styles & Media Queries
+   ========================================================================== */
+
+/* --- Larger Screens (Example: > 1200px) --- */
+@media only screen and (min-width: 1200px) {
+  /* Optionally increase base font size or tweak layout */
+  /* :root { --font-size-base: var(--font-size-3); } */
+}
+
+/* --- Medium Screens (Example: Tablets, ~769px - 1024px) --- */
 @media only screen and (max-width: 1024px) {
-  /* 
-   * LAYOUT NOTE: At this breakpoint (1024px), the internal layout orientation 
-   * should switch from landscape (engine-left, UI-right) to portrait (engine-top, UI-bottom).
-   * This would be handled by JavaScript detecting window size in the CompositeEnginePanel.
-   */
-
   #toolbar {
-    gap: var(--spacing-xs); /* Less space between items */
-    flex-wrap: wrap; /* Allow wrapping on medium screens too */
-    height: auto;
-    min-height: var(--toolbar-height);
+    gap: var(--spacing-sm); /* Less gap */
+    flex-wrap: wrap;
+    height: auto; /* Allow wrapping */
+    min-height: var(--toolbar-height); /* Ensure min height */
+    padding: var(--spacing-sm) var(--spacing-md); /* Adjust padding */
   }
 
-  /* Allow toolbar items to have less fixed width */
   #toolbar > * {
     flex-shrink: 1;
     flex-basis: auto;
     min-width: 0;
   }
 
-  /* Make sure the seed-input component doesn't take too much space */
-  toolbar-seed-form teskooano-input-field {
-    width: 80px;
+  /* Make toolbar buttons slightly smaller */
+  #toolbar button {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-small);
   }
 
-  /* Apply specific styling to toolbar-simulation-controls at medium sizes */
-  toolbar-simulation-controls {
-    flex-wrap: wrap;
-    gap: 2px;
-  }
-
-  /* Make simulation controls buttons smaller at medium sizes */
-  toolbar-simulation-controls teskooano-button {
-    padding: 2px 4px;
-  }
-
-  /* Make the time display more compact */
-  toolbar-simulation-controls .display-value {
-    min-width: auto;
-    font-size: 0.85em;
-    padding: 2px 4px;
-  }
-
-  /* Logo size adjustments */
-  .app-logo,
-  #app-logo {
-    max-height: 30px !important;
-  }
-
-  /* Make buttons more compact */
-  #toolbar teskooano-button {
-    --button-font-size: 0.9rem;
-    --button-padding-y: 0.4rem;
-    --button-padding-x: 0.7rem;
-  }
-
-  /* Hide text on some buttons, show only icons */
+  /* Example: Hide text on specific buttons */
   #toolbar #github-button span:not([slot="icon"]),
   #toolbar #settings-button span:not([slot="icon"]) {
-    display: none;
+    /* display: none; */ /* Keep this if still needed */
   }
 
-  /* For smaller screens, ensure the panel layout is more compact */
-  .composite-engine-panel .ui-container collapsible-section {
-    min-height: fit-content; /* Use fit-content instead of fixed height */
-    margin-bottom: var(--spacing-xs); /* Smaller margins */
+  /* Adjust composite panel layout responsiveness if needed */
+  .composite-engine-panel.layout-internal-portrait .ui-container {
+    max-height: 50%; /* Allow more height on tablet */
+    min-height: 180px;
   }
-
-  /* Reduce min-heights for containers on smaller screens */
   .composite-engine-panel.layout-internal-landscape
     .ui-container
     > .left-ui-container,
   .composite-engine-panel.layout-internal-portrait
     .ui-container
     > .left-ui-container {
-    min-height: 100px; /* Smaller min height on mobile */
+    min-height: 120px;
   }
-
   .composite-engine-panel.layout-internal-landscape
     .ui-container
     > .right-ui-container,
   .composite-engine-panel.layout-internal-portrait
     .ui-container
     > .right-ui-container {
-    min-height: 150px; /* Smaller min height on mobile */
-  }
-
-  /* Ensure minimum UI container height is appropriate for mobile */
-  .composite-engine-panel.layout-internal-portrait .ui-container {
-    min-height: 180px; /* Slightly smaller minimum height */
-    max-height: 50%; /* Allow a bit more height on mobile */
+    min-height: 150px;
   }
 }
 
-/* Better handle "awkward" widths like 833px specifically */
-@media only screen and(max-width: 900px) and (min-width: 769px) {
-  /* Force more aggressive wrapping at these in-between sizes */
-  #toolbar {
-    padding: var(--spacing-xs); /* Tighter padding */
-  }
-
-  /* Logo size for awkward widths */
-  .app-logo,
-  #app-logo {
-    max-height: 28px !important;
-  }
-
-  /* Ensure toolbar items don't push width */
-  #toolbar > * {
-    margin-right: var(--spacing-xs);
-    margin-bottom: var(--spacing-xs);
-  }
-
-  /* Compact the seed form specifically */
-  toolbar-seed-form {
-    flex-basis: 100%; /* Force to new line */
-    margin-top: var(--spacing-xs);
-  }
-
-  /* Make the input wider when it's on its own line */
-  toolbar-seed-form teskooano-input-field {
-    width: 120px; /* Restore width since it has more space now */
-  }
-
-  /* Make buttons even more compact */
-  #toolbar teskooano-button {
-    --button-font-size: 0.85rem;
-    --button-padding-y: 0.35rem;
-    --button-padding-x: 0.6rem;
-  }
-
-  /* Smaller text for "Add Teskooano" button */
-  #toolbar #add-view-button {
-    padding: 0.3rem 0.5rem;
-  }
-}
-
-/* Small screens / tablets */
-@media only screen and(max-width: 768px) {
+/* --- Small Screens (Example: Mobile, < 768px) --- */
+@media only screen and (max-width: 768px) {
   :root {
-    --toolbar-height: auto; /* Allow toolbar to expand vertically */
-  }
-
-  /* Smaller logo for tablets */
-  .app-logo,
-  #app-logo {
-    max-height: 26px !important;
+    /* Reduce base font size slightly on mobile */
+    /* --font-size-base: var(--font-size-1); */
   }
 
   #toolbar {
-    flex-wrap: wrap;
+    padding: var(--spacing-sm); /* Tighter padding */
+    gap: var(--spacing-sm);
+  }
+
+  .app-logo,
+  #app-logo {
+    max-height: 26px; /* Smaller logo */
+  }
+
+  /* Further compact toolbar buttons */
+  #toolbar button {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-small);
+    /* Maybe hide text on most buttons */
+  }
+
+  /* Example: Hide text on almost all buttons */
+  #toolbar button:not(#add-view-button) span:not([slot="icon"]) {
+    /* display: none; */ /* Keep this if still needed */
+  }
+
+  /* Adjust composite panel for mobile */
+  .composite-engine-panel.layout-internal-portrait .ui-container {
+    flex-direction: column; /* Stack UI sections vertically */
+    max-height: 60%; /* More height allowed */
+    min-height: 150px;
+  }
+  .composite-engine-panel.layout-internal-portrait
+    .ui-container
+    > .left-ui-container {
+    flex-basis: auto; /* Height based on content */
+    width: 100%;
+    border-right: none;
+    border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
+    min-height: 80px; /* Adjust min-height */
+  }
+  .composite-engine-panel.layout-internal-portrait
+    .ui-container
+    > .right-ui-container {
+    flex-basis: auto; /* Height based on content */
+    width: 100%;
+    flex-grow: 1; /* Take remaining space */
+    min-height: 100px; /* Adjust min-height */
+  }
+}
+
+/* --- Extra Small Screens (Example: Small Mobile, < 480px) --- */
+@media only screen and (max-width: 480px) {
+  #toolbar {
     padding: var(--spacing-xs) var(--spacing-sm);
     gap: var(--spacing-xs);
-    min-height: 3.125rem; /* Minimum height to match desktop */
   }
 
-  /* Allow direct children of toolbar to shrink and wrap */
-  #toolbar > * {
-    flex-shrink: 1;
-    flex-basis: auto;
-    min-width: 0;
-    margin-bottom: var(--spacing-xs);
-  }
-
-  /* Target the simulation controls component */
-  toolbar-simulation-controls {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  /* Adjust button sizes for touch targets */
-  button {
-    padding: 0.5rem 0.8rem; /* Slightly larger touch target */
-  }
-
-  /* Further reduce button size */
-  #toolbar teskooano-button {
-    --button-font-size: 0.8rem;
-    --button-padding-y: 0.3rem;
-    --button-padding-x: 0.5rem;
-  }
-
-  /* Show icons only for all buttons except Add button */
-  #toolbar teskooano-button:not(#add-view-button) span:not([slot="icon"]) {
-    display: none;
-  }
-
-  /* Compact "Add" button */
-  #toolbar #add-view-button span:not([slot="icon"]) {
-    font-size: 0.8rem;
-  }
-}
-
-/* Mobile phones */
-@media only screen and(max-width: 480px) {
-  :root {
-    --font-size-base: 14px; /* Slightly smaller base font to fit more content */
-  }
-
-  /* Extra small logo for mobile */
   .app-logo,
   #app-logo {
-    max-height: 24px !important;
+    max-height: 24px;
   }
 
-  #toolbar {
-    padding: var(--spacing-xs) var(--spacing-xs);
+  #toolbar button {
+    padding: var(--space-1); /* Even smaller padding */
+    /* Hide all text? */
   }
-
-  button {
-    padding: 0.4rem 0.6rem; /* Compact but still touchable */
-    font-size: var(--font-size-small);
-  }
-
-  /* Smallest button size for mobile */
-  #toolbar teskooano-button {
-    --button-font-size: 0.75rem;
-    --button-padding-y: 0.25rem;
-    --button-padding-x: 0.4rem;
-  }
-
-  /* Remove text from Add button too on very small screens */
+  /* Example: Hide text on add button too */
   #toolbar #add-view-button span:not([slot="icon"]) {
-    display: none;
-  }
-
-  /* Make separator lines shorter */
-  #toolbar div[style*="height: calc(var(--toolbar-height"] {
-    height: calc(var(--toolbar-height, 50px) * 0.4) !important;
+    /* display: none; */ /* Keep this if still needed */
   }
 }
 
-/* Logo styling - override inline styles in toolbarController.ts */
-.app-logo,
-#app-logo {
-  height: calc(
-    var(--toolbar-height, 50px) * 0.7
-  ) !important; /* Override the inline style */
-  width: auto !important;
-  max-height: 35px !important; /* Cap the maximum size */
-}
+/* ==========================================================================
+   Legacy / Component Specific Styles (Review & Refactor)
+   ========================================================================== */
 
-/* Add specific styling for toolbar buttons */
-#toolbar teskooano-button {
-  --button-font-size: var(--font-size-medium, 1rem);
-  --button-padding-y: 0.5rem;
-  --button-padding-x: 0.8rem;
-  font-size: var(--button-font-size);
-}
-
-/* Dockview specific overrides - get the container for orientation */
-.dockview-container {
-  width: 100%;
-  height: 100%;
-}
-
-/* --- Composite Panel Internal Layout --- */
-.composite-engine-panel {
-  /* Base settings for the panel */
+/* Styles targeting custom elements - review if they can use base styles/classes */
+toolbar-simulation-controls {
   display: flex;
-  width: 100%;
-  height: 100%;
+  align-items: center;
+  gap: var(--spacing-sm); /* Use new spacing */
 }
 
-/* 
- * LAYOUT NOTE: At the 1024px breakpoint, the internal layout orientation 
- * should switch from landscape (engine-left, UI-right) to portrait (engine-top, UI-bottom).
- * This would be handled by JavaScript detecting window size in the CompositeEnginePanel.
- */
-
-/* === PORTRAIT LAYOUT (Device Landscape) === */
-.composite-engine-panel.layout-internal-landscape {
-  flex-direction: row; /* Engine on left, UI on right */
+toolbar-simulation-controls .display-value {
+  /* Style like a regular text element or perhaps a disabled input */
+  font-family: var(--font-family-mono);
+  background-color: var(--color-surface-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  min-width: 5ch; /* Example min-width */
+  text-align: right;
 }
 
-/* Engine takes 2/3 width in portrait */
-.composite-engine-panel.layout-internal-landscape .engine-container {
-  flex: 2; /* 2/3 width */
-  overflow: hidden;
-  position: relative;
-}
-
-/* UI container takes 1/3 width in portrait */
-.composite-engine-panel.layout-internal-landscape .ui-container {
-  flex: 1; /* 1/3 width */
-  border-left: 1px solid var(--color-border);
-  overflow: hidden; /* Don't scroll the container itself */
-  display: flex;
-  flex-direction: column; /* Stack the UI sections vertically */
-}
-
-/* Top UI section (Focus Control) */
-.composite-engine-panel.layout-internal-landscape
-  .ui-container
-  > .left-ui-container {
-  flex: 0 0 auto; /* Height based on content */
-  width: 100%;
-  padding: var(--spacing-sm);
-  overflow-y: auto; /* Allow scrolling within top section if needed */
-  box-sizing: border-box;
-  max-height: 40%; /* Ensure it doesn't take more than 40% of the height */
-  min-height: 100px; /* Minimum height even if content is collapsed */
-}
-
-/* Bottom UI section (Other panels) */
-.composite-engine-panel.layout-internal-landscape
-  .ui-container
-  > .right-ui-container {
-  flex: 1; /* Take remaining height */
-  width: 100%;
-  padding: var(--spacing-sm);
-  overflow-y: auto; /* Allow scrolling within bottom section */
-  box-sizing: border-box;
-  border-top: 1px solid var(--color-border);
-  min-height: 60%; /* Ensure it takes at least 60% of the height */
-}
-
-/* === LANDSCAPE LAYOUT (Device Portrait) === */
-.composite-engine-panel.layout-internal-portrait {
-  flex-direction: column; /* Engine on top, UI below */
-}
-
-/* Engine takes majority height in landscape */
-.composite-engine-panel.layout-internal-portrait .engine-container {
-  flex: 1; /* Fill available height */
-  overflow: hidden;
-  position: relative;
-}
-
-/* UI container fixed max-height in landscape */
-.composite-engine-panel.layout-internal-portrait .ui-container {
-  flex: 0 0 auto; /* Height based on content */
-  max-height: 40%; /* Maximum 40% height */
-  min-height: 200px; /* Minimum height to ensure panels are visible */
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  flex-direction: row; /* Place UI sections side by side */
-}
-
-/* Left UI section (Focus Control) */
-.composite-engine-panel.layout-internal-portrait
-  .ui-container
-  > .left-ui-container {
-  flex: 0 0 33%; /* 1/3 width */
-  height: 100%;
-  padding: var(--spacing-sm);
-  overflow-y: auto; /* Allow scrolling */
-  box-sizing: border-box;
-  border-right: 1px solid var(--color-border);
-  min-height: 200px; /* Minimum height even if content is collapsed */
-}
-
-/* Right UI section (Other panels) */
-.composite-engine-panel.layout-internal-portrait
-  .ui-container
-  > .right-ui-container {
-  flex: 0 0 67%; /* 2/3 width */
-  height: 100%;
-  padding: var(--spacing-sm);
-  overflow-y: auto; /* Allow scrolling */
-  box-sizing: border-box;
-  display: flex; /* Make it a flex container */
-  flex-direction: column; /* Stack panels vertically */
-  min-height: 200px; /* Minimum height even if content is collapsed */
-}
-
-/* Ensure all collapsible sections are displayed properly */
-.composite-engine-panel .ui-container collapsible-section {
-  width: 100%;
-  margin-bottom: var(--spacing-sm);
-  /* Ensure minimum height for the section even when collapsed */
-  min-height: fit-content; /* Height of header */
-}
-
-/* Target specific components inside the collapsible sections */
+/* Specific styles for info displays inside collapsible sections */
+/* Ensure these elements exist or adjust selectors */
 .composite-engine-panel
   .right-ui-container
   collapsible-section
@@ -593,9 +972,11 @@ button:focus-visible {
   .right-ui-container
   collapsible-section
   engine-ui-settings-panel {
-  display: block;
+  display: block; /* Keep if these are custom elements needing block display */
   width: 100%;
-  min-height: 30px; /* Ensure minimum height */
+  min-height: 30px; /* Keep or adjust as needed */
+  /* Add padding/margin using tokens if necessary */
+  /* padding: var(--spacing-sm); */
 }
 
-/* --- End Composite Panel Layout --- */
+/* --- End of File --- */

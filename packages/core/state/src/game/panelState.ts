@@ -13,6 +13,7 @@ export interface PanelViewState {
   showCelestialLabels?: boolean;
   showAuMarkers?: boolean;
   showDebrisEffects?: boolean;
+  showDebugSphere?: boolean;
   // Add other view-specific settings here (e.g., wireframe mode)
 }
 

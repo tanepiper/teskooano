@@ -55,8 +55,9 @@ export class ModularSpaceRenderer {
       background?: string | THREE.Texture;
       showDebugSphere?: boolean;
       showGrid?: boolean;
-      enableUI?: boolean;
+      showCelestialLabels?: boolean;
       showAuMarkers?: boolean;
+      showDebrisEffects?: boolean;
     } = {},
   ) {
     this.stateAdapter = new RendererStateAdapter();
@@ -74,14 +75,14 @@ export class ModularSpaceRenderer {
     this.lodManager = new LODManager(this.sceneManager.camera);
 
     // Initialize interaction components (ControlsManager needs DOM element)
-    const enableUI = options.enableUI !== false; // Default to true
+    const showCelestialLabels = options.showCelestialLabels !== false; // Default to true
     this.controlsManager = new ControlsManager(
       this.sceneManager.camera,
       this.sceneManager.renderer.domElement,
     );
 
     // Only initialize CSS2D manager if UI is enabled
-    if (enableUI) {
+    if (showCelestialLabels) {
       this.css2DManager = new CSS2DManager(this.sceneManager.scene, container);
       // Now pass the created CSS2DManager back to SceneManager
       this.sceneManager.setCSS2DManager(this.css2DManager);
@@ -92,9 +93,9 @@ export class ModularSpaceRenderer {
     // Initialize visualization components AFTER interaction components (ObjectManager needs CSS2DManager)
     // Pass css2DManager - ObjectManager constructor needs to handle undefined if UI is disabled
     // OR ensure ObjectManager is only passed a valid instance.
-    if (!this.css2DManager && enableUI) {
+    if (!this.css2DManager && showCelestialLabels) {
       throw new Error("CSS2DManager failed to initialize but UI was enabled.");
-    } else if (!enableUI && this.css2DManager) {
+    } else if (!showCelestialLabels && this.css2DManager) {
       // This case shouldn't happen based on above logic, but good practice
       console.warn("CSS2DManager initialized but UI is disabled?");
       this.css2DManager = undefined; // Ensure consistency
@@ -137,6 +138,12 @@ export class ModularSpaceRenderer {
     // Add initial AU marker state based on options
     if (options.showAuMarkers !== undefined) {
       this.sceneManager.setAuMarkersVisible(options.showAuMarkers);
+    }
+    if (options.showDebrisEffects !== undefined) {
+      this.setDebrisEffectsEnabled(options.showDebrisEffects);
+    }
+    if (options.showDebugSphere !== undefined) {
+      this.sceneManager.toggleDebugSphere();
     }
   }
 

@@ -1,12 +1,10 @@
-import { actions } from "@teskooano/core-state";
+import { actions, currentSeed, updateSeed } from "@teskooano/core-state";
 import { CelestialType, StarProperties } from "@teskooano/data-types";
 import { generateSystem } from "@teskooano/procedural-generation";
 import { dispatchTextureGenerationComplete } from "@teskooano/systems-celestial";
 import { DockviewApi } from "dockview-core";
 import { TeskooanoButton } from "../shared/Button";
 import "../shared/Button.js"; // Assuming Button.ts compiles to .js
-import { TeskooanoInputField } from "../shared/InputField";
-import "../shared/InputField.js"; // Assuming InputField.ts compiles to .js
 
 // Custom event name for simulation time reset
 const RESET_SIMULATION_TIME_EVENT = "resetSimulationTime";
@@ -26,20 +24,28 @@ template.innerHTML = `
       gap: var(--space-sm, 8px);
       font-family: var(--font-family, sans-serif);
     }
-    
-    /* Compact styles for toolbar */
-    teskooano-input-field {
+
+    /* Styles for the native input */
+    #seed-input {
+      box-sizing: border-box;
       width: 120px;
-      margin-bottom: 0;
+      height: 28px; /* Match button height roughly */
+      padding: var(--space-xs, 4px) var(--space-sm, 8px);
+      border: 1px solid var(--color-border, #50506a);
+      border-radius: var(--border-radius-sm, 3px);
+      background-color: var(--color-surface-inset, #1a1a2e);
+      color: var(--color-text, #e0e0fc);
+      font-size: var(--font-size-md, 1em);
+      line-height: 1.5; /* Adjust if needed */
+      margin-bottom: 0; /* Override browser defaults */
     }
-    
-    /* Make the input appear inline in the toolbar context */
-    teskooano-input-field::part(input) {
-      height: 28px;
-      padding-top: 4px;
-      padding-bottom: 4px;
+
+    #seed-input:focus {
+      outline: 2px solid var(--color-primary-light, #9fa8da);
+      outline-offset: 1px;
+      border-color: var(--color-primary-light, #9fa8da);
     }
-    
+
     .seed-label {
       font-size: var(--font-size-sm, 0.9em);
       color: var(--color-text-secondary, #aaa);
@@ -51,7 +57,7 @@ template.innerHTML = `
       display: none; /* Hide label */
     }
 
-    :host([mobile]) teskooano-input-field {
+    :host([mobile]) #seed-input {
       width: 60px; /* Make input narrower */
     }
 
@@ -65,7 +71,7 @@ template.innerHTML = `
     }
   </style>
   <span class="seed-label">Seed:</span>
-  <teskooano-input-field id="seed-input" value="42" placeholder="System seed" label=""></teskooano-input-field>
+  <input type="text" id="seed-input" placeholder="System seed" />
   <teskooano-button id="generate-button">
     <span slot="icon">🌍</span>
     <span>Generate</span>
@@ -73,10 +79,11 @@ template.innerHTML = `
 `;
 
 export class ToolbarSeedForm extends HTMLElement {
-  private inputElement: TeskooanoInputField | null = null;
+  private inputElement: HTMLInputElement | null = null;
   private buttonElement: TeskooanoButton | null = null;
   private _isGenerating = false; // Prevent multiple clicks
   private static dockviewApi: DockviewApi | null = null; // Static reference to dockview API
+  private unsubscribeSeed: (() => void) | null = null; // Use function type
 
   constructor() {
     super();
@@ -87,14 +94,22 @@ export class ToolbarSeedForm extends HTMLElement {
   connectedCallback() {
     this.inputElement = this.shadowRoot!.getElementById(
       "seed-input",
-    ) as TeskooanoInputField;
+    ) as HTMLInputElement;
     this.buttonElement = this.shadowRoot!.getElementById(
       "generate-button",
     ) as TeskooanoButton;
 
-    // Ensure label is cleared on the input field
+    // Set initial value from the store and subscribe to changes
     if (this.inputElement) {
-      this.inputElement.setAttribute("label", "");
+      const initialSeed = currentSeed.get(); // Get current value from store
+      this.inputElement.value = initialSeed;
+
+      // Subscribe to the seed store
+      this.unsubscribeSeed = currentSeed.subscribe((seed) => {
+        if (this.inputElement && this.inputElement.value !== seed) {
+          this.inputElement.value = seed;
+        }
+      });
     }
 
     this.buttonElement.addEventListener("click", this.handleGenerate);
@@ -104,6 +119,11 @@ export class ToolbarSeedForm extends HTMLElement {
   disconnectedCallback() {
     this.buttonElement?.removeEventListener("click", this.handleGenerate);
     this.inputElement?.removeEventListener("keydown", this.handleKeydown);
+    // Unsubscribe from the store when the element is removed
+    if (this.unsubscribeSeed) {
+      this.unsubscribeSeed();
+      this.unsubscribeSeed = null;
+    }
   }
 
   // Static method to set the Dockview API reference
@@ -123,13 +143,14 @@ export class ToolbarSeedForm extends HTMLElement {
   };
 
   private handleGenerate = async () => {
-    if (!ToolbarSeedForm.dockviewApi) {
-      console.error("Dockview API not set on ToolbarSeedForm!");
+    if (!ToolbarSeedForm.dockviewApi || !this.inputElement) {
+      console.error(
+        "Dockview API not set or input element not found in ToolbarSeedForm!",
+      );
       return;
     }
-    if (this._isGenerating) {
-      return;
-    }
+    if (this._isGenerating) return;
+
     this._isGenerating = true;
     if (this.buttonElement) this.buttonElement.disabled = true;
 
@@ -138,16 +159,12 @@ export class ToolbarSeedForm extends HTMLElement {
     const originalIcon = iconElement?.textContent || "🌍";
     if (iconElement) iconElement.textContent = "⏳";
 
-    let seed = "42";
-    if (this.inputElement) {
-      const inputSeed = String(this.inputElement.value).trim();
-      if (inputSeed) {
-        seed = inputSeed;
-      } else {
-        console.warn('Seed input is empty, using default seed "42".');
-        this.inputElement.value = "42";
-      }
-    }
+    const inputSeed = this.inputElement.value; // Get seed from input
+
+    // --- Update the central seed store (this also updates localStorage) ---
+    updateSeed(inputSeed);
+    const finalSeed = currentSeed.get(); // Get the potentially defaulted seed from the store
+    // --- End Update State ---
 
     // --- Clear state FIRST ---
     actions.clearState({
@@ -155,10 +172,7 @@ export class ToolbarSeedForm extends HTMLElement {
       resetTime: true,
       resetSelection: true,
     });
-
-    // Force an explicit time reset immediately after clearing state
     actions.resetTime();
-    // Dispatch the custom event to reset accumulated time in the simulation loop
     dispatchSimulationTimeReset();
 
     // --- Show Progress Panel (After clearing state) ---
@@ -173,7 +187,7 @@ export class ToolbarSeedForm extends HTMLElement {
     let planetList: { id: string; name: string }[] = [];
 
     try {
-      systemData = await generateSystem(seed);
+      systemData = await generateSystem(finalSeed);
       planetList = systemData
         .filter(
           (obj) =>

@@ -315,7 +315,7 @@ export class OrbitManager {
    */
   createOrUpdateVerletTrail(id: string, obj: RenderableCelestialObject): void {
     const multiplier =
-      this.stateAdapter.$visualSettings.get().trailLengthMultiplier ?? 30;
+      this.stateAdapter.$visualSettings.get().trailLengthMultiplier;
     const maxHistoryLength = 100 * multiplier;
 
     let history = this.positionHistory.get(id);

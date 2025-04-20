@@ -3,26 +3,26 @@ template.innerHTML = `
   <style>
     :host {
       display: block;
-      border: 1px solid var(--color-border, #50506a); /* Updated theme variable */
-      margin-bottom: var(--space-sm, 8px); /* Reduced margin */
-      border-radius: var(--border-radius-md, 5px); /* Updated theme variable */
+      border: var(--border-width-thin) solid var(--color-border-subtle); /* Use global tokens */
+      margin-bottom: var(--spacing-md); /* Use global spacing */
+      border-radius: var(--radius-md); /* Use global radius */
       overflow: hidden; /* Prevents content bleed when closed */
-      background-color: var(--color-surface, #2a2a3e); /* Updated theme variable */
+      background-color: var(--color-surface-2); /* Use global surface color */
       /* Ensure the host itself can flex if needed by parent */
       display: flex; 
       flex-direction: column;
       min-height: 0; /* Prevent shrinking issues in flex context */
     }
     .header {
-      background-color: var(--color-background, #1a1a2e); /* Updated theme variable */
-      padding: var(--space-xs, 4px) var(--space-sm, 8px); /* Reduced padding */
+      background-color: var(--color-surface-3); /* Use slightly lighter surface for header */
+      padding: var(--space-2) var(--space-3); /* Use global spacing */
       cursor: pointer;
       display: flex;
       justify-content: space-between;
       align-items: center;
       user-select: none;
       /* Keep subtle border, might be needed depending on bg colors */
-      border-bottom: 1px solid var(--color-border-subtle, #30304a); 
+      border-bottom: var(--border-width-thin) solid var(--color-border-subtle); 
       flex-shrink: 0; /* Prevent header from shrinking */
     }
     /* Keep brightness hover for now */
@@ -30,22 +30,24 @@ template.innerHTML = `
        filter: brightness(1.2);
     }
     .title {
-      font-weight: var(--font-weight-medium, 500); /* Use theme variable */
-      font-size: var(--font-size-sm, 0.9em); /* Slightly smaller title */
-      color: var(--color-text, #e0e0fc); /* Updated theme variable */
+      font-weight: var(--font-weight-medium); /* Use global weight */
+      font-size: var(--font-size-base); /* Use base font size */
+      color: var(--color-text-primary); /* Use global text color */
     }
     .toggle {
       font-size: 1.1em; /* Keep toggle size relative */
-      transition: transform 0.2s ease-in-out;
-      color: var(--color-text-secondary, #aaa); /* Use secondary text color */
-      margin-left: var(--space-sm, 8px); /* Space between title and toggle */
+      transition: transform var(--transition-duration-fast) var(--transition-timing-base);
+      color: var(--color-text-secondary); /* Use global secondary text color */
+      margin-left: var(--space-3); /* Use global spacing */
     }
     .content {
-      padding: var(--space-sm, 8px); /* Reduced padding */
+      padding: var(--spacing-md); /* Use global padding */
       /* Transition for smooth collapse/expand - REMOVED max-height */
       /* max-height: 1000px; */ /* REMOVED - Let flex control height */
       overflow: hidden; /* Keep hidden for collapse */
-      transition: padding 0.3s ease-in-out, opacity 0.3s ease-in-out; /* Adjusted transition */
+      transition: padding var(--transition-duration-base) var(--transition-timing-base),
+                  opacity var(--transition-duration-base) var(--transition-timing-base),
+                  flex-basis var(--transition-duration-base) var(--transition-timing-base); /* Add flex-basis */
       opacity: 1;
       /* Let flex determine height when open */
       flex: 1 1 auto; /* Allow content to grow/shrink */
@@ -81,6 +83,10 @@ template.innerHTML = `
     /* Use focus-visible for better UX - only show outline when using keyboard */
     .header:focus:not(:focus-visible) {
       outline: none;
+    }
+    .header:focus-visible {
+        outline: var(--border-width-medium) solid var(--color-border-focus);
+        outline-offset: 1px;
     }
   </style>
   <div class="header" tabindex="0" role="button" aria-expanded="true">

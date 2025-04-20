@@ -251,14 +251,12 @@ export class SettingsPanel implements IContentRenderer {
     this.trailSliderElement.setAttribute("max", "500");
     this.trailSliderElement.setAttribute("step", "1");
 
-    // Set initial value directly from (new) state, default to 30
-    const currentState = simulationState.get();
-    // Assuming visualSettings.trailLengthMultiplier exists after state update
-    const initialMultiplier =
-      currentState.visualSettings.trailLengthMultiplier ?? 30;
-    this.trailSliderElement.setAttribute("value", String(initialMultiplier)); // Use setAttribute for initial string value
+    // Set initial value from state
+    const currentState = simulationState.get(); // Get initial state
+    this.trailSliderElement.value =
+      currentState.visualSettings.trailLengthMultiplier;
 
-    // Add event listener to update state directly
+    // Update state when slider changes
     this.trailSliderElement.addEventListener("input", (event) => {
       const target = event.target as TeskooanoSlider;
       const sliderValueNumber = target.value;
@@ -456,8 +454,7 @@ export class SettingsPanel implements IContentRenderer {
 
     // Update Trail Slider
     if (this.trailSliderElement) {
-      const currentMultiplier =
-        state.visualSettings.trailLengthMultiplier ?? 30;
+      const currentMultiplier = state.visualSettings.trailLengthMultiplier;
       if (currentMultiplier !== this.trailSliderElement.value) {
         this.trailSliderElement.value = currentMultiplier;
       }

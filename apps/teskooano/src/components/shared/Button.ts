@@ -2,112 +2,177 @@ const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
-      display: inline-flex; /* Default to fitting content */
+      /* Inherit display from context, default to inline-block behavior */
+      display: inline-block; 
       box-sizing: border-box;
-      font-family: var(--font-family, sans-serif);
-      /* Define base cosmic theme variables */
-      --button-bg: var(--teskooano-button-bg, #2a2a3e); /* Dark blue-grey */
-      --button-text: var(--teskooano-button-text, #e0e0fc); /* Light lavender */
-      --button-border: var(--teskooano-button-border, #50506a); /* Muted border */
-      --button-hover-bg: var(--teskooano-button-hover-bg, #3a3a5e);
-      --button-hover-border: var(--teskooano-button-hover-border, #8888ff); /* Brighter blue/purple */
-      --button-active-bg: var(--teskooano-button-active-bg, #1a1a2e);
-      --button-active-border: var(--teskooano-button-active-border, #aaaaff);
-      --button-focus-outline: var(--teskooano-button-focus-outline, #aaaaff);
-      --button-disabled-bg: var(--teskooano-button-disabled-bg, #303040);
-      --button-disabled-border: var(--teskooano-button-disabled-border, #404050);
-      --button-disabled-opacity: 0.6;
-      --button-border-radius: var(--border-radius-xs, 3px); /* Sharper corners */
-      --button-padding-y: var(--space-xs, 4px);
-      --button-padding-x: var(--space-sm, 8px);
-      --icon-size: var(--font-size-md, 1em);
-      --icon-gap: var(--space-xs, 4px);
+      /* Component will use global font */
+      /* Define base styling using global tokens */
+      --icon-size: var(--font-size-base); /* Link icon size to base font size */
+      /* Default gap size (Medium) */
+      --icon-gap: var(--space-2); /* Use space-2 (8px) for default gap */
     }
 
     :host([fullwidth]) {
-        display: flex; /* Allow stretching */
+        display: block; /* Use block for full width */
         width: 100%;
     }
     :host([fullwidth]) button {
-        flex-grow: 1;
+        width: 100%; /* Ensure button fills host */
     }
 
     button {
+      /* Apply base button styles from global tokens */
       display: inline-flex;
       align-items: center;
       justify-content: center;
       box-sizing: border-box;
-      width: 100%; /* Fill the host container */
-      padding: var(--button-padding-y) var(--button-padding-x);
-      border: 1px solid var(--button-border);
-      border-radius: var(--button-border-radius);
-      background-color: var(--button-bg);
-      color: var(--button-text);
-      font-size: var(--font-size-sm, 0.9em);
-      font-weight: var(--font-weight-medium, 500);
-      line-height: 1.4;
+      width: 100%; /* Fill the host container by default */
+      /* Calculate min-height based on padding and line-height */
+      min-height: calc(var(--space-2) * 2 + var(--line-height-base) * 1em);
+      padding: var(--space-2) var(--space-4); /* Base (Medium) padding */
+      border: var(--border-width-thin) solid var(--color-border-subtle); /* Default border */
+      border-radius: var(--radius-md); /* Default radius */
+      background-color: var(--color-surface-2); /* Default background */
+      color: var(--color-text-primary); /* Default text color */
+      font-family: var(--font-family-base); /* Use global font */
+      font-size: var(--font-size-base); /* Default font size */
+      font-weight: var(--font-weight-medium); /* Default weight */
+      line-height: var(--line-height-base); /* Default line height */
+      gap: var(--icon-gap); /* Use gap for spacing between slots */
       cursor: pointer;
       text-align: center;
       white-space: nowrap;
-      transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      transition: background-color var(--transition-duration-fast) var(--transition-timing-base),
+                  border-color var(--transition-duration-fast) var(--transition-timing-base),
+                  color var(--transition-duration-fast) var(--transition-timing-base),
+                  box-shadow var(--transition-duration-fast) var(--transition-timing-base);
     }
 
     button:hover:not([disabled]) {
-      border-color: var(--button-hover-border);
-      background-color: var(--button-hover-bg);
-      /* Optional subtle glow */
-      /* box-shadow: 0 0 3px 0 var(--button-hover-border); */
+      border-color: var(--color-border-strong);
+      background-color: var(--color-surface-3);
+      color: var(--color-text-primary); /* Ensure text stays primary on hover */
     }
 
     button:active:not([disabled]) {
-      background-color: var(--button-active-bg);
-      border-color: var(--button-active-border);
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+      background-color: var(--color-surface-1); /* Slightly darker active state */
+      border-color: var(--color-border-strong);
+      box-shadow: var(--shadow-inner); /* Add subtle inner shadow */
     }
 
     button:focus {
       outline: none; /* Remove default */
     }
-    /* Hide default focus styles if using custom */
     button:focus:not(:focus-visible) { 
        outline: none; 
     } 
     button:focus-visible { 
-       outline: 2px solid var(--button-focus-outline); 
+       /* Use global focus style */
+       outline: var(--border-width-medium) solid var(--color-border-focus); 
        outline-offset: 1px; 
+       border-color: var(--color-border-focus); /* Also highlight border */
     }
 
     button[disabled] {
-      opacity: var(--button-disabled-opacity);
+      opacity: 0.6; /* Use standard opacity */
       cursor: not-allowed;
-      background-color: var(--button-disabled-bg);
-      border-color: var(--button-disabled-border);
+      background-color: var(--color-surface-1); /* Use a muted surface */
+      border-color: var(--color-border-subtle);
+      color: var(--color-text-disabled);
     }
 
+    /* --- Variants using host attributes (Example) --- */
+    /* You might need JS to add these classes/attributes based on a 'variant' prop */
+    :host([variant="primary"]) button {
+        background-color: var(--color-primary);
+        border-color: var(--color-primary);
+        color: var(--color-text-on-primary);
+    }
+    :host([variant="primary"]) button:hover:not([disabled]) {
+        background-color: var(--color-primary-hover);
+        border-color: var(--color-primary-hover);
+    }
+     :host([variant="primary"]) button:active:not([disabled]) {
+        background-color: var(--color-primary-active);
+        border-color: var(--color-primary-active);
+    }
+    :host([variant="primary"]) button:focus-visible {
+       box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-primary);
+       outline: none; /* Use box-shadow for primary focus */
+    }
+    
+    :host([variant="ghost"]) button {
+        background-color: transparent;
+        border-color: transparent;
+        color: var(--color-text-secondary);
+    }
+     :host([variant="ghost"]) button:hover:not([disabled]) {
+        background-color: var(--color-surface-2);
+        border-color: var(--color-border-subtle);
+        color: var(--color-text-primary);
+    }
+    :host([variant="ghost"]) button:active:not([disabled]) {
+        background-color: var(--color-surface-1);
+    }
+     :host([variant="ghost"]) button:focus-visible {
+       border-color: var(--color-border-focus); /* Show border on focus */
+    }
+
+
+    /* --- Sizes using host attributes (Example) --- */
+    :host([size="sm"]) button {
+        min-height: calc(var(--space-1) * 2 + var(--line-height-base) * 1em);
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--font-size-small);
+        border-radius: var(--radius-sm);
+        gap: var(--icon-gap); /* Use scaled gap */
+    }
+    :host([size="sm"]) {
+         --icon-size: var(--font-size-small);
+         --icon-gap: var(--space-1); /* Smaller gap for small buttons */
+    }
+
+    :host([size="lg"]) button {
+        min-height: calc(var(--space-3) * 2 + var(--line-height-base) * 1em);
+        padding: var(--space-3) var(--space-5);
+        font-size: var(--font-size-large);
+        border-radius: var(--radius-lg);
+        gap: var(--icon-gap); /* Use scaled gap */
+    }
+     :host([size="lg"]) {
+         --icon-size: var(--font-size-large);
+         --icon-gap: var(--space-3); /* Larger gap for large buttons */
+    }
+
+
+    /* --- Icon Styling --- */
     ::slotted([slot="icon"]) {
       display: inline-flex; /* Ensure icon aligns */
       align-items: center;
       justify-content: center;
       width: var(--icon-size);
       height: var(--icon-size);
-      margin-right: var(--icon-gap);
+      /* Dynamic margin based on presence of text */
+      /* No margin needed, gap property handles spacing */
       flex-shrink: 0; /* Prevent icon shrinking */
     }
     
-    /* Hide margin if text slot is empty */
-    ::slotted([slot="icon"]:only-child) {
-        margin-right: 0;
+    /* Add gap only if icon is followed by default slot content */
+    ::slotted([slot="icon"] + slot:not(:empty)) {
+        margin-right: var(--icon-gap);
     }
-    
+    /* Alternative: Add gap if icon exists and host isn't in mobile state */
+    /* Requires JS check or different structure */
+    /* :host(:not([mobile])) ::slotted([slot="icon"]) {
+        margin-right: var(--icon-gap);
+    } */
+
     /* Hide default slot (text) when mobile attribute is present */
-    :host([mobile]) ::slotted(:not([slot='icon'])) {
+    :host([mobile]) slot:not([name='icon']) {
       display: none;
     }
+    /* No need to adjust icon margin specifically for mobile */
 
-    /* Ensure icon doesn't have margin when text is hidden */
-     :host([mobile]) ::slotted([slot="icon"]) {
-        margin-right: 0;
-    }
   </style>
   <button part="button">
     <slot name="icon"></slot>

@@ -1,11 +1,12 @@
-import { activePanelApi } from "@teskooano/core-state";
 import {
   createDockview,
-  DockviewPanelApi,
   GroupPanelPartInitParameters,
   IContentRenderer,
+  IDockviewPanel,
 } from "dockview-core";
 import { CompositeEnginePanel } from "../components/engine/CompositeEnginePanel";
+import { SettingsPanel } from "../components/settings/SettingsPanel";
+// import { CelestialInfoPanel } from "../components/ui-controls/CelestialInfoPanel"; // REMOVE - Incorrect Class/File
 
 // --- State --- (Removed counter)
 
@@ -62,9 +63,10 @@ export class DockviewController {
       "composite_engine_view",
       CompositeEnginePanel,
     );
+    // this._registeredComponents.set("celestial_info", CelestialInfoPanel); // REMOVE - Incorrect Class/File
+    this._registeredComponents.set("settings", SettingsPanel);
     // Remove pre-registration for dynamically added panels
     // this._registeredComponents.set('progress_view', ProgressPanel);
-    // this._registeredComponents.set('settings_view', SettingsPanel);
 
     this._api = createDockview(element, {
       className: "dockview-theme-abyss",
@@ -100,23 +102,16 @@ export class DockviewController {
       disableFloatingGroups: true,
     });
 
-    // Example: Log panel close events
-    // TODO: Add this back in to handle forcing unsubscription of the active panel API
-    // this._api.onDidRemovePanel(event => {
-    //   //console.log(`Panel removed: ${event.id}`);
-    // });
-
-    // Example: Log panel active events and update state
-    this._api.onDidActivePanelChange((event) => {
-      if (event && event.api.component === "composite_engine_view") {
-        // Check if it's an EnginePanel
-        activePanelApi.set(event.api); // Update the store with the active panel API
-      } else {
-        // If a non-engine panel is activated, or focus is lost,
-        // set the active panel store to null
-        activePanelApi.set(null);
-      }
-    });
+    // Handle panel activation changes
+    this._api.onDidActivePanelChange(
+      (activePanel: IDockviewPanel | undefined) => {
+        // this.activePanelApiStore.set(activePanelApi?.api ?? null); // REMOVE - Property doesn't exist
+        console.log(
+          "[DockviewController] Active panel changed:",
+          activePanel?.id ?? "none",
+        );
+      },
+    );
   }
 
   /**

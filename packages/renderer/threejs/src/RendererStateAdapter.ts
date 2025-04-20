@@ -78,11 +78,13 @@ export class RendererStateAdapter {
   private euler = new THREE.Euler(); // RE-ADD Euler for OSVector3 tilt
 
   constructor() {
-    // REMOVED initialization of internal store
-    // this.$renderableObjects = map<Record<string, RenderableCelestialObject>>({});
+    // Initialize visual settings directly from the current core state
+    const initialSimState = simulationState.get();
     this.$visualSettings = map<RendererVisualSettings>({
-      trailLengthMultiplier: 30,
-      physicsEngine: "keplerian",
+      trailLengthMultiplier:
+        initialSimState.visualSettings.trailLengthMultiplier,
+      physicsEngine:
+        initialSimState.physicsEngine === "verlet" ? "verlet" : "keplerian",
     });
 
     this.subscribeToCoreState();
@@ -333,25 +335,17 @@ export class RendererStateAdapter {
       (simState: SimulationState) => {
         this.currentSimulationTime = simState.time ?? 0;
 
+        const currentVisSettings = this.$visualSettings.get();
         const newMultiplier =
-          simState.visualSettings.trailLengthMultiplier ?? 30;
-        const currentMultiplierInAdapter =
-          this.$visualSettings.get().trailLengthMultiplier;
-        // REMOVED Log
+          simState.visualSettings.trailLengthMultiplier ?? 150;
+        const newEngine =
+          simState.physicsEngine === "verlet" ? "verlet" : "keplerian";
 
-        if (newMultiplier !== currentMultiplierInAdapter) {
-          // REMOVED Log
+        if (newMultiplier !== currentVisSettings.trailLengthMultiplier) {
           this.$visualSettings.setKey("trailLengthMultiplier", newMultiplier);
         }
-
-        const corePhysicsEngine = simState.physicsEngine ?? "euler";
-        const currentEngineInAdapter = this.$visualSettings.get().physicsEngine;
-        const newEngineMapped =
-          corePhysicsEngine === "verlet" ? "verlet" : "keplerian";
-
-        if (newEngineMapped !== currentEngineInAdapter) {
-          // REMOVED Log
-          this.$visualSettings.setKey("physicsEngine", newEngineMapped);
+        if (newEngine !== currentVisSettings.physicsEngine) {
+          this.$visualSettings.setKey("physicsEngine", newEngine);
         }
       },
     );

@@ -1,5 +1,9 @@
 import { startSimulationLoop } from "@teskooano/app-simulation";
-import { panelRegistry, renderableObjectsStore } from "@teskooano/core-state";
+import {
+  celestialObjectsStore,
+  panelRegistry,
+  renderableObjectsStore,
+} from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
   DockviewPanelApi,
@@ -9,8 +13,25 @@ import {
 import { atom, type WritableAtom } from "nanostores";
 import * as THREE from "three";
 
+// --- Import placeholder components ---
+import "./EnginePlaceholder";
+import "../ui-controls/UiPlaceholder";
+// --- End Import ---
+
+// --- ADD THREEJS OrbitManager ---
+import { OrbitManager } from "@teskooano/renderer-threejs-visualization";
+// --- END ADD ---
+
 import { layoutOrientationStore, Orientation } from "../../stores/layoutStore";
 import "../shared/CollapsibleSection"; // Needed for UI sections
+
+// --- Constants for Resizer ---
+const RESIZER_WIDTH = 4; // px
+const MIN_UI_WIDTH_PX = 200;
+const MIN_ENGINE_WIDTH_PX = 300;
+const MIN_UI_HEIGHT_PX = 150;
+const MIN_ENGINE_HEIGHT_PX = 200;
+// --- End Constants ---
 
 // Define the expected structure for panel parameters from ToolbarController
 interface UiPanelSectionConfig {
@@ -27,6 +48,13 @@ interface CompositePanelParams {
 }
 
 // --- Interface for View State (Copied from old EnginePanel) ---
+interface RendererStats {
+  fps?: number;
+  drawCalls?: number;
+  triangles?: number;
+  memory?: { usedJSHeapSize?: number };
+}
+
 export interface PanelViewState {
   cameraPosition: THREE.Vector3;
   cameraTarget: THREE.Vector3;
@@ -35,6 +63,7 @@ export interface PanelViewState {
   showCelestialLabels?: boolean;
   showAuMarkers?: boolean;
   showDebrisEffects?: boolean;
+  showDebugSphere?: boolean;
 }
 
 let isSimulationLoopStarted = false;
@@ -47,6 +76,7 @@ export class CompositeEnginePanel implements IContentRenderer {
   private readonly _element: HTMLElement;
   private _engineContainer: HTMLElement | undefined;
   private _uiContainer: HTMLElement | undefined;
+  private _resizerElement: HTMLElement | undefined; // <-- Add Resizer Element
 
   private _params:
     | (GroupPanelPartInitParameters & { params?: CompositePanelParams })
@@ -58,6 +88,17 @@ export class CompositeEnginePanel implements IContentRenderer {
   // --- View Orientation Handling ---
   private _layoutUnsubscribe: (() => void) | null = null;
   private _currentOrientation: Orientation | null = null;
+  private _dataListenerUnsubscribe: (() => void) | null = null;
+  private _isInitialized = false;
+
+  // --- Resizing State ---
+  private _isResizing = false;
+  private _initialMousePos = { x: 0, y: 0 };
+  private _initialUiSize = { width: 0, height: 0 };
+  // Bound event handlers for removal
+  private _handleMouseMoveBound = this.handleMouseMove.bind(this);
+  private _handleMouseUpBound = this.handleMouseUp.bind(this);
+  // --- End Resizing State ---
 
   // --- Internal View State Store (Copied from old EnginePanel) ---
   private _viewStateStore: WritableAtom<PanelViewState>;
@@ -78,19 +119,33 @@ export class CompositeEnginePanel implements IContentRenderer {
     // Create internal containers
     this._engineContainer = document.createElement("div");
     this._engineContainer.classList.add("engine-container");
-    this._engineContainer.style.flex = "1 1 auto"; // Engine takes up most space initially
+    // Initial flex values will be adjusted by orientation CSS and resizing
+    // this._engineContainer.style.flex = "1 1 auto"; // Removed initial fixed flex
     this._engineContainer.style.position = "relative"; // Needed for renderer?
     this._engineContainer.style.overflow = "hidden";
     this._element.appendChild(this._engineContainer);
 
+    // --- Create Resizer Element ---
+    this._resizerElement = document.createElement("div");
+    this._resizerElement.classList.add("internal-resizer");
+    // Style will be added in CSS, but basic width/height needed
+    this._resizerElement.style.flex = `0 0 ${RESIZER_WIDTH}px`; // Fixed width
+    this._resizerElement.addEventListener(
+      "mousedown",
+      this.handleMouseDown.bind(this),
+    );
+    this._element.appendChild(this._resizerElement);
+    // --- End Resizer Element ---
+
     this._uiContainer = document.createElement("div");
     this._uiContainer.classList.add("ui-container");
-    this._uiContainer.style.flex = "0 0 300px"; // Fixed width for UI initially
+    // Initial flex values will be adjusted by orientation CSS and resizing
+    // this._uiContainer.style.flex = "0 0 300px"; // Removed initial fixed flex
     this._uiContainer.style.overflowY = "auto"; // Allow UI scrolling
     this._uiContainer.style.overflowX = "hidden";
-    this._uiContainer.style.padding = "10px";
     this._uiContainer.style.boxSizing = "border-box";
-    this._uiContainer.style.borderLeft = "1px solid var(--color-border)"; // Separator for landscape
+    // Border will be added in CSS based on orientation
+    // this._uiContainer.style.borderLeft = "1px solid var(--color-border)";
     this._element.appendChild(this._uiContainer);
 
     // --- Subscribe to layout orientation changes ---
@@ -98,27 +153,16 @@ export class CompositeEnginePanel implements IContentRenderer {
       (orientation) => {
         if (this._currentOrientation !== orientation) {
           this._currentOrientation = orientation;
-
-          if (orientation === "portrait") {
-            this._element.classList.remove("layout-internal-landscape");
-            this._element.classList.add("layout-internal-portrait");
-          } else {
-            this._element.classList.remove("layout-internal-portrait");
-            this._element.classList.add("layout-internal-landscape");
-          }
+          this.updateLayoutClassesAndResizer(orientation); // Call new method
           // Force renderer resize after potential layout shifts
           this.triggerResize();
         }
       },
     );
-    // Apply initial class
+    // Apply initial class and resizer style
     const initialOrientation = layoutOrientationStore.get();
     this._currentOrientation = initialOrientation;
-    if (initialOrientation === "portrait") {
-      this._element.classList.add("layout-internal-portrait");
-    } else {
-      this._element.classList.add("layout-internal-landscape");
-    }
+    this.updateLayoutClassesAndResizer(initialOrientation); // Call new method
     // --- End layout subscription ---
 
     // Initialize internal view state store
@@ -132,6 +176,32 @@ export class CompositeEnginePanel implements IContentRenderer {
       showDebrisEffects: false,
     });
   }
+
+  // --- NEW: Update Layout Classes and Resizer Style ---
+  private updateLayoutClassesAndResizer(orientation: Orientation): void {
+    if (!this._element || !this._resizerElement) return;
+
+    if (orientation === "portrait") {
+      this._element.classList.remove("layout-internal-landscape");
+      this._element.classList.add("layout-internal-portrait");
+      // Resizer style for portrait (horizontal drag)
+      this._resizerElement.style.height = `${RESIZER_WIDTH}px`;
+      this._resizerElement.style.width = "100%";
+      this._resizerElement.style.cursor = "row-resize";
+      // Reset flex basis if needed (handled by CSS mostly now)
+      if (this._uiContainer) this._uiContainer.style.flexBasis = "";
+    } else {
+      this._element.classList.remove("layout-internal-portrait");
+      this._element.classList.add("layout-internal-landscape");
+      // Resizer style for landscape (vertical drag)
+      this._resizerElement.style.width = `${RESIZER_WIDTH}px`;
+      this._resizerElement.style.height = "100%";
+      this._resizerElement.style.cursor = "col-resize";
+      // Reset flex basis if needed (handled by CSS mostly now)
+      if (this._uiContainer) this._uiContainer.style.flexBasis = "";
+    }
+  }
+  // --- END NEW ---
 
   // --- Public methods for state management (Copied/adapted from old EnginePanel) ---
   public getViewState(): Readonly<PanelViewState> {
@@ -160,6 +230,25 @@ export class CompositeEnginePanel implements IContentRenderer {
   public getRenderer(): ModularSpaceRenderer | undefined {
     return this._renderer;
   }
+
+  // --- Add getRendererStats method ---
+  public getRendererStats(): RendererStats | null {
+    if (this._renderer?.animationLoop) {
+      // Call the new method on AnimationLoop
+      return this._renderer.animationLoop.getCurrentStats();
+    } else {
+      // Return null or default stats if renderer/loop isn't ready
+      return null;
+    }
+  }
+  // --- End getRendererStats method ---
+
+  // --- Add orbitManager getter ---
+  public get orbitManager(): OrbitManager | undefined {
+    // Return the orbitManager directly from the renderer instance
+    return this._renderer?.orbitManager;
+  }
+  // --- End orbitManager getter ---
 
   // Apply specific state updates to the internal renderer
   private applyViewStateToRenderer(updates: Partial<PanelViewState>): void {
@@ -217,9 +306,9 @@ export class CompositeEnginePanel implements IContentRenderer {
 
       if (!renderableObject?.position) {
         console.error(
-          `[CompositePanel] focusOnObject: Cannot focus on ${objectId}, missing renderable position. Renderables dump:`,
+          `[CompositePanel ${this._api?.id}] focusOnObject: Cannot focus on ${objectId}, missing renderable or its position. Renderables dump:`,
           renderables,
-        ); // LOG 4 + dump
+        );
         return;
       }
       const targetPosition = renderableObject.position.clone();
@@ -269,6 +358,14 @@ export class CompositeEnginePanel implements IContentRenderer {
   }
 
   init(parameters: GroupPanelPartInitParameters): void {
+    if (this._isInitialized) {
+      console.warn(
+        `[CompositePanel ${this._api?.id}] Attempted to initialize already initialized panel.`,
+      );
+      return;
+    }
+    this._isInitialized = true; // Mark as initialized
+
     this._params = parameters as GroupPanelPartInitParameters & {
       params?: CompositePanelParams;
     };
@@ -284,20 +381,81 @@ export class CompositeEnginePanel implements IContentRenderer {
       );
     }
 
-    // Initialize Renderer
-    this.initializeRenderer();
-
-    // Initialize UI Controls
-    this.initializeUiControls();
-
-    // Start simulation loop globally only once
-    if (!isSimulationLoopStarted) {
-      startSimulationLoop();
-      isSimulationLoopStarted = true;
+    // --- Set initial placeholder state ---
+    if (this._engineContainer) {
+      // this._engineContainer.textContent = "Waiting for celestial objects data...";
+      this._engineContainer.innerHTML = ""; // Clear first
+      this._engineContainer.appendChild(
+        document.createElement("engine-placeholder"),
+      );
     }
+    if (this._uiContainer) {
+      this._uiContainer.innerHTML = ""; // Clear any old UI
+      // this._uiContainer.textContent = "Waiting for controls data..."; // Placeholder for UI
+      this._uiContainer.appendChild(document.createElement("ui-placeholder"));
+    }
+    // --- End initial placeholder state ---
 
-    // Initial resize
-    this.triggerResize();
+    // --- Subscribe to celestial objects data ---
+    this._dataListenerUnsubscribe?.(); // Unsubscribe previous listener if any
+    this._dataListenerUnsubscribe = celestialObjectsStore.subscribe(
+      (celestialObjects) => {
+        // Ensure panel hasn't been disposed prematurely
+        if (!this._isInitialized) {
+          return;
+        }
+
+        const objectCount = Object.keys(celestialObjects).length;
+
+        if (!this._renderer && objectCount > 0) {
+          // Data is available, and renderer isn't initialized yet
+          console.log(
+            `[CompositePanel ${this._api?.id}] Data received, initializing renderer and UI...`,
+          );
+          // Clear placeholders before initializing
+          if (this._engineContainer) this._engineContainer.textContent = "";
+          if (this._uiContainer) this._uiContainer.textContent = "";
+
+          this.initializeRenderer();
+          this.initializeUiControls();
+
+          // Start simulation loop globally only once
+          if (!isSimulationLoopStarted) {
+            console.log(
+              `[CompositePanel ${this._api?.id}] Starting global simulation loop.`,
+            );
+            startSimulationLoop();
+            isSimulationLoopStarted = true;
+          }
+
+          // Trigger initial resize after initialization
+          this.triggerResize();
+        } else if (this._renderer && objectCount === 0) {
+          // Renderer exists, but data has disappeared
+          console.log(
+            `[CompositePanel ${this._api?.id}] Data removed, disposing renderer and UI.`,
+          );
+          this.disposeRendererAndUI(); // Dispose renderer and clear UI
+          // Reset to placeholder state
+          if (this._engineContainer) {
+            // this._engineContainer.textContent =
+            //   "Waiting for celestial objects data...";
+            this._engineContainer.innerHTML = "";
+            this._engineContainer.appendChild(
+              document.createElement("engine-placeholder"),
+            );
+          }
+          if (this._uiContainer) {
+            this._uiContainer.innerHTML = "";
+            // this._uiContainer.textContent = "Waiting for controls data...";
+            this._uiContainer.appendChild(
+              document.createElement("ui-placeholder"),
+            );
+          }
+        }
+      },
+    );
+    // --- End data subscription ---
   }
 
   private initializeRenderer(): void {
@@ -309,9 +467,9 @@ export class CompositeEnginePanel implements IContentRenderer {
         shadows: true,
         hdr: true,
         background: "black",
-        showDebugSphere: false,
+        showDebugSphere: this._viewStateStore.get().showDebugSphere ?? false,
         showGrid: this._viewStateStore.get().showGrid,
-        enableUI: true,
+        showCelestialLabels: true,
         showAuMarkers: this._viewStateStore.get().showAuMarkers,
       });
 
@@ -521,8 +679,124 @@ export class CompositeEnginePanel implements IContentRenderer {
     });
   }
 
+  // --- NEW Resizer Event Handlers ---
+  private handleMouseDown(event: MouseEvent): void {
+    if (!this._uiContainer || !this._resizerElement) return;
+
+    this._isResizing = true;
+    this._resizerElement.classList.add("resizing"); // Add class for visual feedback
+    this._initialMousePos = { x: event.clientX, y: event.clientY };
+
+    // Get initial size based on orientation
+    if (this._currentOrientation === "landscape") {
+      this._initialUiSize = { width: this._uiContainer.offsetWidth, height: 0 };
+    } else {
+      this._initialUiSize = {
+        width: 0,
+        height: this._uiContainer.offsetHeight,
+      };
+    }
+
+    // Attach move/up listeners to the window to capture events outside the resizer
+    window.addEventListener("mousemove", this._handleMouseMoveBound);
+    window.addEventListener("mouseup", this._handleMouseUpBound);
+    window.addEventListener("mouseleave", this._handleMouseUpBound); // Stop if mouse leaves window
+
+    // Prevent text selection during drag
+    event.preventDefault();
+  }
+
+  private handleMouseMove(event: MouseEvent): void {
+    if (!this._isResizing || !this._uiContainer || !this._engineContainer)
+      return;
+
+    const dx = event.clientX - this._initialMousePos.x;
+    const dy = event.clientY - this._initialMousePos.y;
+
+    if (this._currentOrientation === "landscape") {
+      // Landscape: Resize width (UI is on the right)
+      const newWidth = this._initialUiSize.width - dx; // Subtract dx because UI is right
+      const totalWidth = this._element.offsetWidth;
+      const engineWidth = totalWidth - newWidth - RESIZER_WIDTH;
+
+      if (newWidth >= MIN_UI_WIDTH_PX && engineWidth >= MIN_ENGINE_WIDTH_PX) {
+        // Use flex-basis for better compatibility with flex layout
+        this._uiContainer.style.flexBasis = `${newWidth}px`;
+        this._uiContainer.style.flexGrow = "0"; // Prevent growing/shrinking
+        this._uiContainer.style.flexShrink = "0";
+        // Engine container will fill remaining space due to flex: 1 1 auto in CSS
+      }
+    } else {
+      // Portrait: Resize height (UI is at the bottom)
+      const newHeight = this._initialUiSize.height - dy; // Subtract dy because UI is bottom
+      const totalHeight = this._element.offsetHeight;
+      const engineHeight = totalHeight - newHeight - RESIZER_WIDTH;
+
+      if (
+        newHeight >= MIN_UI_HEIGHT_PX &&
+        engineHeight >= MIN_ENGINE_HEIGHT_PX
+      ) {
+        // Use flex-basis for better compatibility with flex layout
+        this._uiContainer.style.flexBasis = `${newHeight}px`;
+        this._uiContainer.style.flexGrow = "0"; // Prevent growing/shrinking
+        this._uiContainer.style.flexShrink = "0";
+        // Engine container will fill remaining space due to flex: 1 1 auto in CSS
+      }
+    }
+
+    // Trigger renderer resize continuously during drag might be expensive,
+    // consider debouncing or only resizing on mouseup. For now, resize continuously.
+    this.triggerResize();
+  }
+
+  private handleMouseUp(): void {
+    if (!this._isResizing) return;
+
+    this._isResizing = false;
+    if (this._resizerElement) {
+      this._resizerElement.classList.remove("resizing");
+    }
+
+    // Remove global listeners
+    window.removeEventListener("mousemove", this._handleMouseMoveBound);
+    window.removeEventListener("mouseup", this._handleMouseUpBound);
+    window.removeEventListener("mouseleave", this._handleMouseUpBound);
+
+    // Final resize call for the renderer
+    this.triggerResize();
+  }
+  // --- END Resizer Event Handlers ---
+
+  // --- Add method to dispose renderer and UI ---
+  private disposeRendererAndUI(): void {
+    console.log(
+      `[CompositePanel ${this._api?.id}] Disposing renderer and UI...`,
+    );
+    this._renderer?.dispose();
+    this._renderer = undefined;
+    if (this._uiContainer) this._uiContainer.innerHTML = ""; // Clear UI controls
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = undefined;
+    }
+    // Remove resizer listeners on dispose
+    if (this._resizerElement) {
+      this._resizerElement.removeEventListener(
+        "mousedown",
+        this.handleMouseDown,
+      );
+    }
+    // Clean up window listeners if component is disposed mid-drag
+    window.removeEventListener("mousemove", this._handleMouseMoveBound);
+    window.removeEventListener("mouseup", this._handleMouseUpBound);
+    window.removeEventListener("mouseleave", this._handleMouseUpBound);
+  }
+  // --- End Add disposeRendererAndUI ---
+
   dispose(): void {
     const panelIdForLog = this._api?.id ?? "unknown";
+    console.log(`[CompositePanel ${panelIdForLog}] Disposing...`);
+    this._isInitialized = false; // Mark as disposed
 
     // Remove camera transition listener
     document.removeEventListener(
@@ -536,11 +810,16 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._layoutUnsubscribe = null;
     }
 
-    // Dispose renderer
-    this._resizeObserver?.disconnect();
-    this._renderer?.dispose();
-    this._renderer = undefined;
-    this._resizeObserver = undefined;
+    // --- Unsubscribe from data listener ---
+    if (this._dataListenerUnsubscribe) {
+      this._dataListenerUnsubscribe();
+      this._dataListenerUnsubscribe = null;
+    }
+    // --- End data unsubscribe ---
+
+    // --- Dispose renderer and UI (already handles resizer listeners) ---
+    this.disposeRendererAndUI();
+    // --- End dispose ---
 
     // Unregister from Panel Registry
     panelRegistry.unregisterPanel(panelIdForLog);

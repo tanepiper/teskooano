@@ -49,7 +49,7 @@ const initialState: SimulationState = {
   physicsEngine: "verlet", // Changed default to Verlet
   visualSettings: {
     // Initialize visual settings
-    trailLengthMultiplier: 30, // Default to 30
+    trailLengthMultiplier: 150, // Default to 30
   },
 };
 
