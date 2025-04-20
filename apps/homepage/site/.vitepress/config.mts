@@ -39,14 +39,15 @@ export default withMermaid({
       "meta",
       {
         name: "og:image",
-        content: "https://teskooano.space/panel-icon.png",
+        content: "https://teskooano.space/assets/panel-icon.png",
       },
     ],
     ["meta", { name: "twitter:card", content: "summary_large_image" }],
   ],
   themeConfig: {
+    head: [["link", { rel: "icon", href: "/assets/icon.png" }]],
     // https://vitepress.dev/reference/default-theme-config
-    logo: "/icon.png",
+    logo: "/assets/icon.png",
     nav: [
       { text: "Home", link: "/" },
       { text: "Documentation", link: "/docs/" },

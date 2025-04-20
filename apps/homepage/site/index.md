@@ -8,7 +8,7 @@ hero:
   tagline: |
     Explore procedurally generated solar systems with realistic physics, time-lapse control and other simulation features - all 3D with multiple viewports!
   image:
-    src: /panel-icon.png
+    src: /assets/panel-icon.png
     alt: Teskooano Observatory Panel
     class: "hero-image"
   actions:
