@@ -169,6 +169,7 @@ export class ObjectManager {
       this.celestialRenderers,
       this.starRenderers,
       this.planetRenderers,
+      this.ringSystemRenderers,
       (object: RenderableCelestialObject, levels: LODLevel[]) =>
         this.lodManager.createAndRegisterLOD(object, levels),
       this.lodManager,
@@ -230,10 +231,7 @@ export class ObjectManager {
 
     // Add RingSystemRenderer for the specific type
     // This one isn't stored per-ID, but used by MeshFactory based on type
-    this.celestialRenderers.set(
-      CelestialType.RING_SYSTEM,
-      new RingSystemRenderer(),
-    );
+    // REMOVE THIS LINE -> this.celestialRenderers.set(CelestialType.RING_SYSTEM, new RingSystemRenderer());
   }
 
   /**
@@ -787,13 +785,40 @@ export class ObjectManager {
     // Dispose geometry/material - Traverse the mesh and its children
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        child.geometry?.dispose();
+        child.geometry?.dispose(); // Dispose geometry if it exists
         if (Array.isArray(child.material)) {
-          child.material.forEach((mat) => mat?.dispose());
-        } else if (child.material) {
+          // Handle array of materials
+          child.material.forEach((mat) => {
+            // Check if material exists and has a dispose method
+            if (mat && typeof mat.dispose === "function") {
+              mat.dispose();
+            }
+          });
+        } else if (
+          child.material &&
+          typeof child.material.dispose === "function"
+        ) {
+          // Handle single material, ensure it has a dispose method
           child.material.dispose();
         }
       }
+      // TODO: Consider adding similar checks for other object types like Points, Lines if they are used
+      // Example for Points:
+      /*
+      else if (child instanceof THREE.Points) {
+        child.geometry?.dispose();
+        const material = child.material; // Type assertion might be needed depending on THREE version
+        if (Array.isArray(material)) {
+          material.forEach((mat) => {
+            if (mat && typeof mat.dispose === 'function') {
+              mat.dispose();
+            }
+          });
+        } else if (material && typeof material.dispose === 'function') {
+          material.dispose();
+        }
+      }
+      */
     });
 
     // Delete from map
@@ -806,10 +831,29 @@ export class ObjectManager {
     // --- End LightManager removal ---
 
     // Remove from specialized renderer maps if necessary
-    // (Though renderers themselves should handle disposal of resources if needed)
+    // Call dispose on the renderer before deleting it to clean up internal state
+    const starRenderer = this.starRenderers.get(objectId);
+    if (starRenderer?.dispose) {
+      starRenderer.dispose();
+    }
     this.starRenderers.delete(objectId);
+
+    const planetRenderer = this.planetRenderers.get(objectId);
+    if (planetRenderer?.dispose) {
+      planetRenderer.dispose();
+    }
     this.planetRenderers.delete(objectId);
+
+    const moonRenderer = this.moonRenderers.get(objectId);
+    if (moonRenderer?.dispose) {
+      moonRenderer.dispose();
+    }
     this.moonRenderers.delete(objectId);
+
+    const ringSystemRenderer = this.ringSystemRenderers.get(objectId);
+    if (ringSystemRenderer?.dispose) {
+      ringSystemRenderer.dispose();
+    }
     this.ringSystemRenderers.delete(objectId);
   }
 

@@ -31,6 +31,8 @@ export class MeshFactory {
   private starRenderers: Map<string, CelestialRenderer>;
   /** @internal Map storing specialized renderers specifically for planets/moons. Keyed by object ID. */
   private planetRenderers: Map<string, CelestialRenderer>;
+  /** @internal Map storing ring system renderers. Keyed by object ID. */
+  private ringSystemRenderers: Map<string, RingSystemRenderer>;
   /** @internal Function provided by ObjectManager/LODManager to create a THREE.LOD object from levels. */
   private createAndRegisterLOD: (
     object: RenderableCelestialObject,
@@ -44,6 +46,7 @@ export class MeshFactory {
    * @param celestialRenderers - A map containing pre-initialized renderers for specific non-star/planet types.
    * @param starRenderers - An empty map that will be populated with star-specific renderers.
    * @param planetRenderers - An empty map that will be populated with planet/moon-specific renderers.
+   * @param ringSystemRenderers - An empty map that will be populated with ring system renderers.
    * @param createAndRegisterLOD - A function passed from the `LODManager` used to construct a `THREE.LOD` object from an array of `LODLevel`.
    * @param lodManager - The LODManager instance itself, used to query parent LOD levels.
    */
@@ -51,17 +54,19 @@ export class MeshFactory {
     celestialRenderers: Map<string, CelestialRenderer>,
     starRenderers: Map<string, CelestialRenderer>,
     planetRenderers: Map<string, CelestialRenderer>,
+    ringSystemRenderers: Map<string, RingSystemRenderer>,
     createAndRegisterLOD: (
       object: RenderableCelestialObject,
       levels: LODLevel[],
     ) => THREE.LOD,
-    lodManager: LODManager, // Added lodManager parameter
+    lodManager: LODManager,
   ) {
     this.celestialRenderers = celestialRenderers;
     this.starRenderers = starRenderers;
     this.planetRenderers = planetRenderers;
+    this.ringSystemRenderers = ringSystemRenderers;
     this.createAndRegisterLOD = createAndRegisterLOD;
-    this.lodManager = lodManager; // Store the LODManager instance
+    this.lodManager = lodManager;
   }
 
   /**
@@ -117,6 +122,27 @@ export class MeshFactory {
         return null;
       }
     }
+
+    // --- Handle Ring System Explicitly ---
+    if (object.type === CelestialType.RING_SYSTEM) {
+      // Ring systems need their own renderer instance because they manage
+      // internal materials state specific to that ring system.
+      if (this.ringSystemRenderers.has(objectId)) {
+        return this.ringSystemRenderers.get(objectId)!;
+      }
+      try {
+        const renderer = new RingSystemRenderer();
+        this.ringSystemRenderers.set(objectId, renderer);
+        return renderer;
+      } catch (error) {
+        console.error(
+          `[MeshFactory] Failed to instantiate RingSystemRenderer for ${objectId}:`,
+          error,
+        );
+        return null;
+      }
+    }
+    // --- End Ring System Handling ---
 
     // --- Specialized Renderers (from celestialRenderers map) ---
     let rendererKey: string | undefined;

@@ -46,22 +46,18 @@ features:
   - icon: 🧩
     title: Modular Architecture
     details: Built with TypeScript and modern frontend tools, Teskooano features a component-based design that's easily extendable.
-
-  - title: Multi-View Capabilities
-    details: Analyze simulations from different perspectives simultaneously.
 ---
 
-## Latest .plan Update
-
-::: info From the Plan Log
-See all entries in the [Plan Section](./plan/).
-:::
-
-<div class="vp-doc">
-
-## Teskooano in Action
+<div style="margin: 2rem 0; text-align: center;">
+  <video autoplay loop muted playsinline width="100%" style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+    <source src="/video/orbit-video.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</div>
 
 <ScreenshotCarousel />
+
+<div class="vp-doc">
 
 ## Observe The Cosmos Like Never Before
 

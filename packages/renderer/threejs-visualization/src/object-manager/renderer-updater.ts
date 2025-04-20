@@ -81,6 +81,7 @@ export class RendererUpdater {
       renderer,
       scene,
       camera,
+      objects,
     );
   }
 
@@ -123,6 +124,7 @@ export class RendererUpdater {
    * @param renderer - WebGLRenderer instance.
    * @param scene - Scene instance.
    * @param camera - PerspectiveCamera instance.
+   * @param objects - Map of the current THREE.Object3D instances managed by ObjectManager.
    */
   private updateSpecializedRenderers(
     time: number,
@@ -133,6 +135,7 @@ export class RendererUpdater {
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
     camera?: THREE.PerspectiveCamera,
+    objects?: Map<string, THREE.Object3D>,
   ): void {
     // Update star renderers
     this.starRenderers.forEach((starRenderer, id) => {
@@ -160,9 +163,15 @@ export class RendererUpdater {
 
     // Update ring renderers
     this.ringSystemRenderers.forEach((ringRenderer, id) => {
-      if (ringRenderer.update) {
-        // Ring renderer update doesn't need renderer/scene/camera for basic light updates
-        ringRenderer.update(time, lightSources);
+      if (objects && objects.has(id)) {
+        if (ringRenderer.update) {
+          // Ring renderer update doesn't need renderer/scene/camera for basic light updates
+          ringRenderer.update(time, lightSources);
+        }
+      } else {
+        // Mesh for this renderer ID no longer exists in ObjectManager.
+        // This can happen briefly during system transitions. Silently skip update.
+        // console.log(`[RendererUpdater] Skipping update for ring system ${id}: Mesh not found.`); // Optional log
       }
     });
   }
