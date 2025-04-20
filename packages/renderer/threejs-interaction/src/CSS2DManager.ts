@@ -12,7 +12,6 @@ import type { OortCloudProperties } from "@teskooano/data-types";
  */
 export enum CSS2DLayerType {
   CELESTIAL_LABELS = "celestial-labels",
-  UI_CONTROLS = "ui-controls",
   TOOLTIPS = "tooltips",
   AU_MARKERS = "au-markers",
 }
@@ -31,9 +30,6 @@ export class CSS2DManager {
   // Visibility state for each layer
   private layerVisibility: Map<CSS2DLayerType, boolean> = new Map();
 
-  // UI control elements container (separate from CSS2D renderer)
-  private uiControlsContainer: HTMLElement | null = null;
-
   /**
    * Create a new CSS2DManager
    */
@@ -43,7 +39,10 @@ export class CSS2DManager {
 
     // Setup renderer
     this.renderer = new CSS2DRenderer();
-    this.renderer.setSize(container.clientWidth, container.clientHeight);
+    this.renderer.setSize(
+      this.container.clientWidth,
+      this.container.clientHeight,
+    );
     this.renderer.domElement.style.position = "absolute";
     this.renderer.domElement.style.top = "0";
     this.renderer.domElement.style.zIndex = "1";
@@ -84,9 +83,6 @@ export class CSS2DManager {
       this.elements.set(layerType, new Map());
       this.layerVisibility.set(layerType, true);
     });
-
-    // Create UI controls container (separate from CSS2D renderer)
-    this.createUIControlsContainer();
 
     // --- BEGIN ADD CSS CLASS INJECTION ---
     const styleElement = document.createElement("style");
@@ -263,31 +259,6 @@ export class CSS2DManager {
   }
 
   /**
-   * Create a custom CSS2D element
-   */
-  createCustomElement(
-    layerType: CSS2DLayerType,
-    id: string,
-    element: HTMLElement,
-    parent: THREE.Object3D,
-    position: THREE.Vector3,
-  ): void {
-    const css2dObject = new CSS2DObject(element);
-    css2dObject.position.copy(position);
-    parent.add(css2dObject);
-
-    // Store in the appropriate layer
-    const layerMap = this.elements.get(layerType);
-    if (layerMap) {
-      layerMap.set(id, css2dObject);
-    }
-
-    // Set visibility based on layer visibility
-    const isVisible = this.layerVisibility.get(layerType) ?? true;
-    css2dObject.visible = isVisible;
-  }
-
-  /**
    * Remove an element by ID and layer type
    */
   removeElement(layerType: CSS2DLayerType, id: string): void {
@@ -300,23 +271,6 @@ export class CSS2DManager {
 
         // Always remove from our internal tracking map afterwards
         layerMap.delete(id);
-      }
-    }
-  }
-
-  /**
-   * Update a celestial label position
-   */
-  updateCelestialLabel(object: RenderableCelestialObject): void {
-    const labelsMap = this.elements.get(CSS2DLayerType.CELESTIAL_LABELS);
-    if (labelsMap) {
-      const label = labelsMap.get(object.celestialObjectId);
-      if (label) {
-        // Calculate the appropriate position for this object type
-        const labelPosition = this.calculateLabelPosition(object);
-
-        // Update the label position
-        label.position.copy(labelPosition);
       }
     }
   }
@@ -337,58 +291,6 @@ export class CSS2DManager {
         }
       });
     }
-  }
-
-  /**
-   * Toggle visibility for a specific layer
-   */
-  toggleLayerVisibility(layerType: CSS2DLayerType): void {
-    const currentVisibility = this.layerVisibility.get(layerType) ?? true;
-    this.setLayerVisibility(layerType, !currentVisibility);
-  }
-
-  /**
-   * Get the current visibility state for a specific layer
-   */
-  public getLayerVisibility(layerType: CSS2DLayerType): boolean {
-    return this.layerVisibility.get(layerType) ?? true; // Default to true if not set
-  }
-
-  /**
-   * Create UI controls container with buttons
-   */
-  private createUIControlsContainer(): void {
-    // Create container for UI controls (separate from CSS2D renderer)
-    const controlsContainer = document.createElement("div");
-    controlsContainer.className = "threejs-ui-controls";
-    controlsContainer.style.position = "absolute";
-    controlsContainer.style.bottom = "10px";
-    controlsContainer.style.right = "10px";
-    controlsContainer.style.display = "flex";
-    controlsContainer.style.gap = "10px";
-    controlsContainer.style.zIndex = "1000";
-    controlsContainer.style.pointerEvents = "auto";
-
-    this.uiControlsContainer = controlsContainer;
-
-    this.container.appendChild(controlsContainer);
-  }
-
-  /**
-   * Add a custom UI button to the controls container
-   */
-  addUIButton(text: string, onClick: () => void): HTMLButtonElement {
-    if (!this.uiControlsContainer) {
-      this.createUIControlsContainer();
-    }
-
-    const button = document.createElement("button");
-    button.innerText = text;
-    button.style.pointerEvents = "auto";
-    button.addEventListener("click", onClick);
-
-    this.uiControlsContainer?.appendChild(button);
-    return button;
   }
 
   /**
@@ -479,20 +381,6 @@ export class CSS2DManager {
   }
 
   /**
-   * Clears all elements from a specific layer.
-   * @param layerType - The layer to clear.
-   */
-  clearLayer(layerType: CSS2DLayerType): void {
-    const layerMap = this.elements.get(layerType);
-    if (layerMap) {
-      layerMap.forEach((element) => {
-        element.removeFromParent(); // Use built-in method
-      });
-      layerMap.clear();
-    }
-  }
-
-  /**
    * Clean up resources
    */
   dispose(): void {
@@ -504,11 +392,6 @@ export class CSS2DManager {
     // Remove the renderer DOM element
     if (this.renderer.domElement.parentNode) {
       this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
-    }
-
-    // Remove the UI controls container if it exists
-    if (this.uiControlsContainer && this.uiControlsContainer.parentNode) {
-      this.uiControlsContainer.parentNode.removeChild(this.uiControlsContainer);
     }
   }
 
@@ -547,10 +430,16 @@ export class CSS2DManager {
   }
 
   /**
-   * Creates a CSS2DObject label for a celestial body.
-   * @param objectData - Data for the celestial object.
+   * Clears all elements from a specific layer.
+   * @param layerType - The layer to clear.
    */
-  createCelestialLabelFromData(objectData: RenderableCelestialObject): void {
-    // Implementation of createCelestialLabelFromData method
+  clearLayer(layerType: CSS2DLayerType): void {
+    const layerMap = this.elements.get(layerType);
+    if (layerMap) {
+      layerMap.forEach((element) => {
+        element.removeFromParent(); // Use built-in method
+      });
+      layerMap.clear();
+    }
   }
 }

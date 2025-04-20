@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-These are the changes since the first release - they will be gathered here until I'm ready to release a first minor release
-
 ### Added
 
+- JSDoc documentation for `ControlsManager`.
+- README.md and ARCHITECTURE.md for `@teskooano/renderer-threejs-interaction` package.
 - Helper functions (`startRecording`, `stopRecording`, `requestMediaPermissions`) and Observable (`mediaRecorderState$`) for the MediaRecorder API.
 - Helper functions (`requestRemotePlayback`, `watchAvailability`) and Observable (`remotePlaybackAvailability$`) for the Remote Playback API.
 - Helper functions (`startScreenCapture`, `stopScreenCapture`) and Observable (`screenCaptureState$`) for the Screen Capture API.
@@ -32,6 +32,8 @@ These are the changes since the first release - they will be gathered here until
 
 ### Changed
 
+- Refactored `CSS2DManager` to remove unused methods.
+- Updated dependencies (visible in package.json/lock).
 - style: fixes for mobile (eab8a93)
 - docs: improve tour (a4fd682)
 - docs: improve site and tour (c8b14cb)
@@ -54,3 +56,15 @@ These are the changes since the first release - they will be gathered here until
 - fix: correct name of .prototools file (2b24053)
 - add build and deploy (437d82c)
 - chore: initial commit (505ad11)
+
+### Fixed
+
+- Corrected camera transition animation logic in `ControlsManager`.
+- Fixed camera following logic to correctly track moving objects while allowing free orbit controls.
+- Prevented user interaction (zoom/pan) from incorrectly cancelling the camera follow lock.
+
+### Removed
+
+- Unused cloud fragment shader (`packages/renderer/threejs/src/shaders/cloud.frag`).
+
+These are the changes since the first release - they will be gathered here until I'm ready to release a first minor release
