@@ -148,6 +148,11 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 html,
 body {
   margin: 0;
