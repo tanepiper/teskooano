@@ -98,6 +98,10 @@ export class CompositeEnginePanel implements IContentRenderer {
   // Bound event handlers for removal
   private _handleMouseMoveBound = this.handleMouseMove.bind(this);
   private _handleMouseUpBound = this.handleMouseUp.bind(this);
+  // --- ADD Touch Handlers ---
+  private _handleTouchMoveBound = this.handleTouchMove.bind(this);
+  private _handleTouchEndBound = this.handleTouchEnd.bind(this);
+  // --- END ADD ---
   // --- End Resizing State ---
 
   // --- Internal View State Store (Copied from old EnginePanel) ---
@@ -134,6 +138,13 @@ export class CompositeEnginePanel implements IContentRenderer {
       "mousedown",
       this.handleMouseDown.bind(this),
     );
+    // --- ADD Touch Start Listener ---
+    this._resizerElement.addEventListener(
+      "touchstart",
+      this.handleTouchStart.bind(this),
+      { passive: false }, // Need passive: false to prevent default scroll
+    );
+    // --- END ADD ---
     this._element.appendChild(this._resizerElement);
     // --- End Resizer Element ---
 
@@ -707,46 +718,17 @@ export class CompositeEnginePanel implements IContentRenderer {
   }
 
   private handleMouseMove(event: MouseEvent): void {
-    if (!this._isResizing || !this._uiContainer || !this._engineContainer)
+    if (
+      !this._isResizing ||
+      !this._resizerElement ||
+      !this._uiContainer ||
+      !this._engineContainer
+    )
       return;
 
-    const dx = event.clientX - this._initialMousePos.x;
-    const dy = event.clientY - this._initialMousePos.y;
-
-    if (this._currentOrientation === "landscape") {
-      // Landscape: Resize width (UI is on the right)
-      const newWidth = this._initialUiSize.width - dx; // Subtract dx because UI is right
-      const totalWidth = this._element.offsetWidth;
-      const engineWidth = totalWidth - newWidth - RESIZER_WIDTH;
-
-      if (newWidth >= MIN_UI_WIDTH_PX && engineWidth >= MIN_ENGINE_WIDTH_PX) {
-        // Use flex-basis for better compatibility with flex layout
-        this._uiContainer.style.flexBasis = `${newWidth}px`;
-        this._uiContainer.style.flexGrow = "0"; // Prevent growing/shrinking
-        this._uiContainer.style.flexShrink = "0";
-        // Engine container will fill remaining space due to flex: 1 1 auto in CSS
-      }
-    } else {
-      // Portrait: Resize height (UI is at the bottom)
-      const newHeight = this._initialUiSize.height - dy; // Subtract dy because UI is bottom
-      const totalHeight = this._element.offsetHeight;
-      const engineHeight = totalHeight - newHeight - RESIZER_WIDTH;
-
-      if (
-        newHeight >= MIN_UI_HEIGHT_PX &&
-        engineHeight >= MIN_ENGINE_HEIGHT_PX
-      ) {
-        // Use flex-basis for better compatibility with flex layout
-        this._uiContainer.style.flexBasis = `${newHeight}px`;
-        this._uiContainer.style.flexGrow = "0"; // Prevent growing/shrinking
-        this._uiContainer.style.flexShrink = "0";
-        // Engine container will fill remaining space due to flex: 1 1 auto in CSS
-      }
-    }
-
-    // Trigger renderer resize continuously during drag might be expensive,
-    // consider debouncing or only resizing on mouseup. For now, resize continuously.
-    this.triggerResize();
+    // --- REFACTOR: Call shared resize logic ---
+    this._performResize(event.clientX, event.clientY);
+    // --- END REFACTOR ---
   }
 
   private handleMouseUp(): void {
@@ -767,7 +749,109 @@ export class CompositeEnginePanel implements IContentRenderer {
   }
   // --- END Resizer Event Handlers ---
 
-  // --- Add method to dispose renderer and UI ---
+  // --- ADD Touch Handlers ---
+  private handleTouchStart(event: TouchEvent): void {
+    if (!this._resizerElement || !this._uiContainer || !this._engineContainer)
+      return;
+    // Only handle single touch resize
+    if (event.touches.length !== 1) {
+      return;
+    }
+
+    event.preventDefault(); // Prevent scrolling while dragging
+
+    this._isResizing = true;
+    const touch = event.touches[0];
+    this._initialMousePos = { x: touch.clientX, y: touch.clientY }; // Reuse same state variable
+
+    if (this._currentOrientation === "landscape") {
+      this._initialUiSize = { width: this._uiContainer.offsetWidth, height: 0 };
+    } else {
+      this._initialUiSize = {
+        width: 0,
+        height: this._uiContainer.offsetHeight,
+      };
+    }
+
+    // Add listeners to the document to capture movement outside the resizer
+    document.addEventListener("touchmove", this._handleTouchMoveBound, {
+      passive: false,
+    }); // Need passive: false here too
+    document.addEventListener("touchend", this._handleTouchEndBound);
+    document.addEventListener("touchcancel", this._handleTouchEndBound); // Handle cancellations too
+  }
+
+  private handleTouchMove(event: TouchEvent): void {
+    if (!this._isResizing || event.touches.length !== 1) return;
+
+    event.preventDefault(); // Prevent scrolling
+
+    const touch = event.touches[0];
+    // --- REFACTOR: Call shared resize logic ---
+    this._performResize(touch.clientX, touch.clientY);
+    // --- END REFACTOR ---
+  }
+
+  private handleTouchEnd(): void {
+    if (!this._isResizing) return;
+
+    this._isResizing = false;
+    // Remove listeners from the document
+    document.removeEventListener("touchmove", this._handleTouchMoveBound);
+    document.removeEventListener("touchend", this._handleTouchEndBound);
+    document.removeEventListener("touchcancel", this._handleTouchEndBound);
+  }
+  // --- END ADD Touch Handlers ---
+
+  // --- ADD Shared Resize Logic ---
+  private _performResize(currentX: number, currentY: number): void {
+    if (
+      !this._isResizing ||
+      !this._resizerElement ||
+      !this._uiContainer ||
+      !this._engineContainer
+    )
+      return;
+
+    if (this._currentOrientation === "landscape") {
+      const deltaX = currentX - this._initialMousePos.x;
+      let newUiWidth = this._initialUiSize.width - deltaX; // Dragging left decreases width
+
+      // Enforce minimum widths
+      const containerWidth = this._element.offsetWidth;
+      const maxUiWidth = containerWidth - MIN_ENGINE_WIDTH_PX - RESIZER_WIDTH;
+      newUiWidth = Math.max(MIN_UI_WIDTH_PX, Math.min(newUiWidth, maxUiWidth));
+
+      if (this._uiContainer) {
+        this._uiContainer.style.flexBasis = `${newUiWidth}px`;
+        // Ensure other panels adjust correctly (might not be strictly necessary with flex)
+        // this._engineContainer.style.flexBasis = `${containerWidth - newUiWidth - RESIZER_WIDTH}px`;
+      }
+    } else {
+      // Portrait
+      const deltaY = currentY - this._initialMousePos.y;
+      let newUiHeight = this._initialUiSize.height - deltaY; // Dragging up decreases height
+
+      // Enforce minimum heights
+      const containerHeight = this._element.offsetHeight;
+      const maxUiHeight =
+        containerHeight - MIN_ENGINE_HEIGHT_PX - RESIZER_WIDTH;
+      newUiHeight = Math.max(
+        MIN_UI_HEIGHT_PX,
+        Math.min(newUiHeight, maxUiHeight),
+      );
+
+      if (this._uiContainer) {
+        this._uiContainer.style.flexBasis = `${newUiHeight}px`;
+        // Ensure other panels adjust correctly
+        // this._engineContainer.style.flexBasis = `${containerHeight - newUiHeight - RESIZER_WIDTH}px`;
+      }
+    }
+    // Debounce or directly trigger resize? Direct for now.
+    this.triggerResize(); // Ensure renderer resizes if needed
+  }
+  // --- END ADD Shared Resize Logic ---
+
   private disposeRendererAndUI(): void {
     console.log(
       `[CompositePanel ${this._api?.id}] Disposing renderer and UI...`,
@@ -791,7 +875,6 @@ export class CompositeEnginePanel implements IContentRenderer {
     window.removeEventListener("mouseup", this._handleMouseUpBound);
     window.removeEventListener("mouseleave", this._handleMouseUpBound);
   }
-  // --- End Add disposeRendererAndUI ---
 
   dispose(): void {
     const panelIdForLog = this._api?.id ?? "unknown";

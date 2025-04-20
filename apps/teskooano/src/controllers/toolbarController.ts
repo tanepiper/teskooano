@@ -1,3 +1,4 @@
+import { PopoverAPI } from "@teskooano/web-apis";
 import type { AddPanelOptions } from "dockview-core";
 import "../components/shared/Button.js";
 import "../components/toolbar/SeedForm"; // Import the new ToolbarSeedForm
@@ -6,8 +7,6 @@ import "../components/toolbar/SimulationControls"; // Import for side effect (re
 import { layoutOrientationStore, Orientation } from "../stores/layoutStore";
 import { DockviewController } from "./dockviewController";
 import { TourController } from "./tourController";
-import { actions as simulationActions } from "@teskooano/core-state";
-import { PopoverAPI } from "@teskooano/web-apis";
 
 /**
  * ToolbarController is responsible for managing the toolbar and adding engine views.
