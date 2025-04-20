@@ -440,10 +440,7 @@ export class CompositeEnginePanel implements IContentRenderer {
               `Component <${config.componentTag}> does not have a setParentPanel method.`,
             );
           }
-        } else if (
-          config.componentTag === "celestial-info" ||
-          config.componentTag === "renderer-info-display"
-        ) {
+        } else if (config.componentTag === "renderer-info-display") {
           // These components primarily need read access to the renderer or its state
           if (
             this._renderer &&
@@ -460,9 +457,12 @@ export class CompositeEnginePanel implements IContentRenderer {
             );
           }
         } else {
-          console.warn(
-            `Unknown component type for DI: <${config.componentTag}>`,
-          );
+          // Only warn if it's not a known component that doesn't need specific DI
+          if (config.componentTag !== "celestial-info") {
+            console.warn(
+              `Unknown component type for DI: <${config.componentTag}>`,
+            );
+          }
         }
 
         // REMOVED: engine-view-id attribute setting
