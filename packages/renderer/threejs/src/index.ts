@@ -83,6 +83,8 @@ export class ModularSpaceRenderer {
   private _followTargetId: string | null = null; // ID of the object to follow
   private _lastTimeLog: number | null = null;
   private _missingFrameCount = 0;
+  private tempTargetPos = new THREE.Vector3(); // Reusable vector for target position
+  private tempDesiredCamPos = new THREE.Vector3(); // Reusable vector for desired camera position
 
   constructor(
     container: HTMLElement,
@@ -105,6 +107,7 @@ export class ModularSpaceRenderer {
     this.stateManager = new StateManager();
 
     this.animationLoop.setRenderer(this.sceneManager.renderer);
+    this.animationLoop.setCamera(this.sceneManager.camera);
 
     // Initialize effects components (like LightManager needed by ObjectManager)
     this.lightManager = new LightManager(this.sceneManager.scene);
@@ -194,9 +197,6 @@ export class ModularSpaceRenderer {
         this._lastTimeLog = now;
       }
 
-      // Update controls first
-      this.controlsManager.update();
-
       // Update Orbit Manager visualizations (trails, predictions, Keplerian)
       this.orbitManager.updateAllVisualizations();
 
@@ -242,13 +242,8 @@ export class ModularSpaceRenderer {
             .clone()
             .sub(this.previousFollowTargetPos);
 
-          // Restore direct camera position update
-          this.sceneManager.camera.position.add(deltaMovement);
-
           // Update the target directly - this is the core of following
           this.controlsManager.controls.target.copy(this.tempNewObjectPos);
-          // REMOVED: Immediate update call - let the main manager handle it
-          // this.controlsManager.controls.update();
           this.previousFollowTargetPos.copy(this.tempNewObjectPos);
         } else {
           // Mesh not found or destroyed - log warning and clear follow target after multiple attempts
@@ -278,9 +273,6 @@ export class ModularSpaceRenderer {
         this.previousFollowTargetPos.set(0, 0, 0);
       }
       // --- End Camera Following Logic ---
-
-      // Restore the main ControlsManager update call
-      this.controlsManager.update();
 
       // Final render for the frame
       this.render();
@@ -326,9 +318,9 @@ export class ModularSpaceRenderer {
     this.lodManager.update();
     // ObjectManager update now handles its internal state/objects
     this.objectManager.update(this.renderer, this.scene, this.camera);
-    this.controlsManager.update();
     this.css2DManager?.render(this.camera);
     this.animationLoop.getRenderCallbacks().forEach((callback) => callback());
+    this.controlsManager.update();
     this.sceneManager.render();
     if (this.canvasUIManager) {
       this.canvasUIManager.render();
@@ -421,11 +413,57 @@ export class ModularSpaceRenderer {
   }
 
   setFollowTarget(objectId: string | null): void {
-    if (this._followTargetId === objectId) return;
+    if (!objectId) {
+      // If null is passed, stop following (consider if we need a transition back to origin?)
+      this._followTargetId = null;
+      this.previousFollowTargetPos.set(0, 0, 0); // Clear tracking
+      // Maybe smoothly transition back to a default view or just let user control?
+      // For now, just stop the internal follow logic.
+      return;
+    }
 
-    this._followTargetId = objectId;
+    // Get the target mesh immediately
+    const targetMesh = this.objectManager.getObject(objectId);
+    if (!targetMesh) {
+      console.warn(
+        `[Renderer] setFollowTarget: Target mesh ${objectId} not found.`,
+      );
+      return;
+    }
 
+    // Get the target's current world position
+    targetMesh.getWorldPosition(this.tempTargetPos);
+
+    // --- Calculate desired camera position ---
+    // Strategy: Maintain current distance from the *old* target, but aim at the new one.
+    const currentCamPos = this.sceneManager.camera.position.clone();
+    const currentTargetPos = this.controlsManager.controls.target.clone();
+    const distance = currentCamPos.distanceTo(currentTargetPos);
+
+    // Calculate direction from new target back towards current camera position
+    const direction = currentCamPos.clone().sub(this.tempTargetPos).normalize();
+
+    // Calculate the new camera position along that direction vector
+    this.tempDesiredCamPos
+      .copy(this.tempTargetPos)
+      .addScaledVector(direction, distance);
+
+    // --- Initiate Smooth Transition ---
+    // Use the ControlsManager's moveTo for the smooth GSAP animation
+    this.controlsManager.moveTo(this.tempDesiredCamPos, this.tempTargetPos); // Pass calculated positions
+
+    // --- Manage Follow State ---
+    // Option 1: Clear the internal follow ID so the animation loop doesn't interfere
+    this._followTargetId = null;
     this.previousFollowTargetPos.set(0, 0, 0);
+
+    // Option 2: Keep the ID set? Might cause issues if the object moves *during* the transition.
+    // Let's stick with Option 1 for now - the transition handles getting to the target.
+    // If we want continuous following *after* the transition, that's a separate step.
+
+    console.log(
+      `[Renderer] Initiating transition to ${objectId} at ${this.tempTargetPos.toArray().join(", ")}`,
+    );
   }
 
   /**

@@ -1,16 +1,16 @@
-import * as THREE from "three";
 import { simulationState } from "@teskooano/core-state";
-import { celestialObjectsStore } from "@teskooano/core-state";
-import { CelestialType } from "@teskooano/data-types";
-import { physicsToThreeJSPosition } from "@teskooano/renderer-threejs";
-import { OSVector3 } from "@teskooano/core-math"; // Needed for type check
+import * as THREE from "three";
 
 // Interface for stats (can be shared or redefined)
-interface RendererStats {
+export interface RendererStats {
   fps: number;
   drawCalls: number;
   triangles: number;
   memory?: { usedJSHeapSize?: number }; // Memory might still be tricky
+  camera?: {
+    position?: { x: number; y: number; z: number };
+    fov?: number;
+  };
 }
 
 /**
@@ -24,6 +24,7 @@ export class AnimationLoop {
 
   // Add reference for the renderer
   private renderer: THREE.WebGLRenderer | null = null;
+  private camera: THREE.Camera | null = null;
 
   // State for FPS calculation
   private fpsFrameCount = 0;
@@ -49,6 +50,11 @@ export class AnimationLoop {
   // Method to set the renderer instance
   setRenderer(renderer: THREE.WebGLRenderer): void {
     this.renderer = renderer;
+  }
+
+  // Method to set the camera instance
+  setCamera(camera: THREE.Camera): void {
+    this.camera = camera;
   }
 
   /**
@@ -236,11 +242,24 @@ export class AnimationLoop {
     try {
       const rendererInfo = this.renderer.info;
       const memoryInfo = (window.performance as any)?.memory;
+      // Get camera stats safely
+      let cameraStats: { position?: THREE.Vector3; fov?: number } | undefined;
+      if (this.camera) {
+        cameraStats = {
+          position: this.camera.position.clone(), // Clone position
+          fov:
+            this.camera instanceof THREE.PerspectiveCamera
+              ? this.camera.fov
+              : undefined, // Only get FOV if it's a perspective camera
+        };
+      }
+
       return {
         fps: this.currentFPS,
         drawCalls: rendererInfo.render.calls,
         triangles: rendererInfo.render.triangles,
         memory: { usedJSHeapSize: memoryInfo?.usedJSHeapSize },
+        camera: cameraStats,
       };
     } catch (error) {
       console.error("AnimationLoop: Error getting current stats:", error);

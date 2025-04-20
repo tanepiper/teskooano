@@ -239,6 +239,12 @@ export class CelestialInfo extends HTMLElement {
       "renderer-focus-changed",
       this.handleRendererFocusChange,
     );
+
+    // ADD LISTENER FOR IMMEDIATE FOCUS *REQUESTS*
+    document.addEventListener(
+      "focus-request-initiated",
+      this.handleFocusRequestInitiated, // Use bound handler
+    );
   }
 
   disconnectedCallback() {
@@ -256,15 +262,51 @@ export class CelestialInfo extends HTMLElement {
       "renderer-focus-changed",
       this.handleRendererFocusChange,
     );
+
+    // REMOVE LISTENER FOR FOCUS REQUESTS
+    document.removeEventListener(
+      "focus-request-initiated",
+      this.handleFocusRequestInitiated, // Use bound handler
+    );
   }
 
-  // Event handler for focus changes from the renderer
+  // Event handler for focus changes confirmed by the renderer
   private handleRendererFocusChange = (event: Event): void => {
     const customEvent = event as CustomEvent<{
       focusedObjectId: string | null;
     }>;
     if (customEvent.detail) {
-      this.handleSelectionChange(customEvent.detail.focusedObjectId);
+      // Check if the ID is different before updating to avoid redundant calls
+      if (this.currentSelectedId !== customEvent.detail.focusedObjectId) {
+        console.log(
+          `[CelestialInfo] Renderer focus changed to: ${customEvent.detail.focusedObjectId}`,
+        );
+        this.handleSelectionChange(customEvent.detail.focusedObjectId);
+      } else {
+        console.log(
+          `[CelestialInfo] Renderer focus change ignored (already ${this.currentSelectedId})`,
+        );
+      }
+    }
+  };
+
+  // Event handler for focus requests initiated by UI (e.g., FocusControl click)
+  private handleFocusRequestInitiated = (event: Event): void => {
+    const customEvent = event as CustomEvent<{ objectId: string | null }>;
+    if (customEvent.detail && customEvent.detail.objectId) {
+      // Check if the ID is different before updating
+      if (this.currentSelectedId !== customEvent.detail.objectId) {
+        console.log(
+          `[CelestialInfo] Focus request initiated for: ${customEvent.detail.objectId}`,
+        );
+        this.handleSelectionChange(customEvent.detail.objectId);
+      } else {
+        console.log(
+          `[CelestialInfo] Focus request ignored (already selected ${this.currentSelectedId})`,
+        );
+      }
+    } else {
+      console.warn("[CelestialInfo] Received focus request with no objectId.");
     }
   };
 

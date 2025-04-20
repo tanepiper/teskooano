@@ -409,6 +409,15 @@ export class FocusControl extends HTMLElement {
         const objectId = button.dataset.id;
         console.log(`[FocusControl] Clicked button for objectId: ${objectId}`);
 
+        // Dispatch event *before* initiating focus to allow immediate UI updates
+        this.dispatchEvent(
+          new CustomEvent("focus-request-initiated", {
+            bubbles: true, // Allow event to bubble up
+            composed: true, // Allow event to cross shadow DOM boundaries
+            detail: { objectId },
+          }),
+        );
+
         // Check if the item is destroyed or annihilated before trying to focus
         if (
           button.classList.contains("destroyed") ||

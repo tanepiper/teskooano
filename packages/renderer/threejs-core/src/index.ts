@@ -4,6 +4,7 @@ import { StateManager } from "./StateManager";
 
 export { SceneManager } from "./SceneManager";
 export { AnimationLoop } from "./AnimationLoop";
+export type { RendererStats } from "./AnimationLoop";
 export { StateManager } from "./StateManager";
 export * from "./events";
 
@@ -20,6 +21,8 @@ export class CoreRenderer {
 
     // Pass the renderer instance to the animation loop
     this.animationLoop.setRenderer(this.sceneManager.renderer);
+    // Pass the camera instance to the animation loop
+    this.animationLoop.setCamera(this.sceneManager.camera);
   }
 
   get scene() {

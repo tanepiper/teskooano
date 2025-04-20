@@ -1,4 +1,6 @@
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
+// Import the shared RendererStats type
+import type { RendererStats } from "@teskooano/renderer-threejs-core";
 
 // Helper to format vectors nicely
 function formatVector(
@@ -71,18 +73,6 @@ template.innerHTML = `
       <span class="value" id="fov-value">-</span>
   </div>
 `;
-
-// --- Interface for Renderer Stats (Matching EnginePanel/CompositePanel getRendererStats) ---
-interface RendererStats {
-  fps?: number;
-  drawCalls?: number;
-  triangles?: number;
-  memory?: { usedJSHeapSize?: number };
-  camera?: {
-    position?: { x: number; y: number; z: number };
-    fov?: number;
-  };
-}
 
 export class RendererInfoDisplay extends HTMLElement {
   private fpsValue: HTMLElement | null = null;
