@@ -1,25 +1,39 @@
-import { driver, DriveStep, PopoverDOM, Config, State } from "driver.js";
+import { Config, driver, PopoverDOM, State } from "driver.js";
 import "driver.js/dist/driver.css";
-import { type TourStep } from "../components/tours/types";
 import { createIntroTour } from "../components/tours/intro-tour";
+import { type TourStep } from "../components/tours/types";
 
-// Tour Controller class
+/**
+ * Manages the application tour using driver.js.
+ * Handles starting, resuming, restarting, and skipping the tour.
+ * Dynamically updates tour steps based on application state.
+ */
 export class TourController {
+  /** The driver.js instance used for the tour. */
   private readonly driverInstance: ReturnType<typeof driver>;
+  /** The index of the current active step in the tour. */
   private currentStepIndex = 0;
+  /** The name of the currently selected celestial object, used for dynamic step content. */
   private currentSelectedCelestial: string | undefined;
+  /** The array of tour steps configured for the current tour. */
   private tourSteps: TourStep[] = [];
+  /** The ID of the active engine view panel, used by some step actions. */
   private engineViewId: string | null = null;
+
+  /**
+   * Creates an instance of TourController.
+   * Initializes driver.js with default configuration and loads the intro tour steps.
+   */
   constructor() {
     // Initialize driver.js with default configurations
     this.driverInstance = driver({
       animate: true,
       showProgress: true,
-      showButtons: ["next", "previous", "close"],
+      showButtons: ["next", "previous"],
       steps: [],
-      overlayColor: "rgba(0, 0, 0, 0.75)", // Default overlay - semi-transparent dark
+      overlayColor: "rgba(0, 0, 0, 0.75)",
       allowClose: true,
-      disableActiveInteraction: false, // By default, prevent interacting with highlighted element
+      disableActiveInteraction: false,
 
       onPopoverRender: (
         popover: PopoverDOM,
@@ -65,12 +79,19 @@ export class TourController {
     this.tourSteps = createIntroTour(this.driverInstance);
   }
 
+  /**
+   * Sets the ID of the currently active engine view panel.
+   * This ID might be needed by specific tour steps to interact with the correct panel.
+   * @param engineViewId - The ID of the active engine view Dockview panel.
+   */
   public setEngineViewId(engineViewId: string): void {
     this.engineViewId = engineViewId;
   }
 
   /**
-   * Sets the current selected celestial and updates relevant tour steps
+   * Sets the current selected celestial object name.
+   * Updates relevant tour steps that might display dynamic content based on the selection.
+   * @param celestialName - The name of the selected celestial object, or undefined if none is selected.
    */
   public setCurrentSelectedCelestial(celestialName: string | undefined): void {
     this.currentSelectedCelestial = celestialName;
@@ -78,7 +99,9 @@ export class TourController {
   }
 
   /**
-   * Updates any tour steps that need dynamic content
+   * Updates any tour steps that depend on dynamic application state,
+   * like the currently selected celestial object.
+   * @private
    */
   private updateDynamicTourSteps(): void {
     // Find the engine-view-final step and update its description
@@ -104,22 +127,35 @@ export class TourController {
     }
   }
 
-  // Check if tour should be skipped
+  /**
+   * Checks if the user has previously chosen to skip the tour.
+   * Reads the preference from localStorage.
+   * @returns True if the tour should be skipped, false otherwise.
+   */
   public isSkippingTour(): boolean {
     return localStorage.getItem("skipTour") === "true";
   }
 
-  // Check if tour modal has been shown
+  /**
+   * Checks if the initial tour prompt modal has been shown before.
+   * Reads the preference from localStorage.
+   * @returns True if the modal has been shown, false otherwise.
+   */
   public hasShownTourModal(): boolean {
     return localStorage.getItem("tourModalShown") === "true";
   }
 
-  // Mark tour modal as shown
+  /**
+   * Marks the initial tour prompt modal as shown in localStorage.
+   */
   public markTourModalAsShown(): void {
     localStorage.setItem("tourModalShown", "true");
   }
 
-  // Start the tour from beginning
+  /**
+   * Starts the tour from the very beginning (step 0).
+   * Ensures dynamic steps are updated before starting.
+   */
   public startTour(): void {
     this.currentStepIndex = 0;
     // Make sure dynamic content is up to date
@@ -128,7 +164,11 @@ export class TourController {
     this.driverInstance.drive();
   }
 
-  // Resume tour from saved position or start from beginning
+  /**
+   * Resumes the tour from the last saved step (read from localStorage).
+   * If no saved step is found, starts from the beginning.
+   * Ensures dynamic steps are updated before starting.
+   */
   public resumeTour(): void {
     const savedStepId = localStorage.getItem("tourCurrentStep");
 
@@ -148,13 +188,19 @@ export class TourController {
     this.driverInstance.drive(this.currentStepIndex);
   }
 
-  // Restart tour
+  /**
+   * Restarts the tour from the beginning, clearing any saved step progress.
+   */
   public restartTour(): void {
     localStorage.removeItem("tourCurrentStep");
     this.startTour();
   }
 
-  // Set skip tour preference
+  /**
+   * Sets the user's preference for skipping the tour in the future.
+   * Stores the preference in localStorage.
+   * @param skip - True to skip the tour in the future, false to show it.
+   */
   public setSkipTour(skip: boolean): void {
     if (skip) {
       localStorage.setItem("skipTour", "true");

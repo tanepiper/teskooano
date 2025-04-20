@@ -121,12 +121,6 @@ document.addEventListener("engine-focus-request", (event: Event) => {
 window.addEventListener("DOMContentLoaded", () => {
   // Only show if user hasn't chosen to skip the tour
   if (!tourController.isSkippingTour() && !tourController.hasShownTourModal()) {
-    // Add the app logo ID for tour targeting
-    const appLogo = document.querySelector(".app-logo");
-    if (appLogo) {
-      appLogo.id = "app-logo";
-    }
-
     // Mark tour modal as shown to avoid showing it again on reload
     tourController.markTourModalAsShown();
 
