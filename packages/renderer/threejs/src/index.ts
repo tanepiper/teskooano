@@ -412,57 +412,41 @@ export class ModularSpaceRenderer {
     return count;
   }
 
-  setFollowTarget(objectId: string | null): void {
+  setFollowTarget(
+    objectId: string | null,
+    targetPosition?: THREE.Vector3, // <-- Add optional target position
+    cameraPosition?: THREE.Vector3, // <-- Add optional camera position
+  ): void {
+    // --- Handle Stopping Follow/Transition ---
     if (!objectId) {
-      // If null is passed, stop following (consider if we need a transition back to origin?)
+      // If null objectId is passed, stop following and potentially cancel transition
       this._followTargetId = null;
       this.previousFollowTargetPos.set(0, 0, 0); // Clear tracking
-      // Maybe smoothly transition back to a default view or just let user control?
-      // For now, just stop the internal follow logic.
+
+      // Stop any ongoing GSAP transition using the public method
+      this.controlsManager.cancelTransition();
       return;
     }
 
-    // Get the target mesh immediately
-    const targetMesh = this.objectManager.getObject(objectId);
-    if (!targetMesh) {
-      console.warn(
-        `[Renderer] setFollowTarget: Target mesh ${objectId} not found.`,
+    // --- Handle Starting Follow/Transition ---
+    // Ensure positions are provided when starting a follow
+    if (!targetPosition || !cameraPosition) {
+      console.error(
+        `[Renderer] setFollowTarget: targetPosition and cameraPosition must be provided when objectId ('${objectId}') is not null.`,
       );
       return;
     }
 
-    // Get the target's current world position
-    targetMesh.getWorldPosition(this.tempTargetPos);
-
-    // --- Calculate desired camera position ---
-    // Strategy: Maintain current distance from the *old* target, but aim at the new one.
-    const currentCamPos = this.sceneManager.camera.position.clone();
-    const currentTargetPos = this.controlsManager.controls.target.clone();
-    const distance = currentCamPos.distanceTo(currentTargetPos);
-
-    // Calculate direction from new target back towards current camera position
-    const direction = currentCamPos.clone().sub(this.tempTargetPos).normalize();
-
-    // Calculate the new camera position along that direction vector
-    this.tempDesiredCamPos
-      .copy(this.tempTargetPos)
-      .addScaledVector(direction, distance);
-
-    // --- Initiate Smooth Transition ---
-    // Use the ControlsManager's moveTo for the smooth GSAP animation
-    this.controlsManager.moveTo(this.tempDesiredCamPos, this.tempTargetPos); // Pass calculated positions
+    // --- Initiate Smooth Transition --- (Use provided positions)
+    this.controlsManager.moveTo(cameraPosition, targetPosition);
 
     // --- Manage Follow State ---
-    // Option 1: Clear the internal follow ID so the animation loop doesn't interfere
+    // Clear the internal follow ID so the animation loop doesn't interfere
     this._followTargetId = null;
     this.previousFollowTargetPos.set(0, 0, 0);
 
-    // Option 2: Keep the ID set? Might cause issues if the object moves *during* the transition.
-    // Let's stick with Option 1 for now - the transition handles getting to the target.
-    // If we want continuous following *after* the transition, that's a separate step.
-
     console.log(
-      `[Renderer] Initiating transition to ${objectId} at ${this.tempTargetPos.toArray().join(", ")}`,
+      `[Renderer] Initiating transition to ${objectId} -> Target: ${targetPosition.toArray().join(", ")}, Camera: ${cameraPosition.toArray().join(", ")}`,
     );
   }
 

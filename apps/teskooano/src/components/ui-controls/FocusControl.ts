@@ -170,10 +170,10 @@ const MINIMUM_CAMERA_DISTANCE = 1;
 // Enhanced distances with better defaults for stars and large bodies
 const CAMERA_DISTANCES: Partial<Record<CelestialType, number>> = {
   [CelestialType.STAR]: 150, // Increased from 50 to allow better view of stars
-  [CelestialType.GAS_GIANT]: 40, // Doubled from 20
-  [CelestialType.PLANET]: 15, // Slightly increased
-  [CelestialType.DWARF_PLANET]: 10, // Slightly increased
-  [CelestialType.MOON]: 8, // Slightly increased
+  [CelestialType.GAS_GIANT]: 5, // Doubled from 20
+  [CelestialType.PLANET]: 5, // Slightly increased
+  [CelestialType.DWARF_PLANET]: 5, // Slightly increased
+  [CelestialType.MOON]: 5, // Slightly increased
 };
 const DEFAULT_CAMERA_DISTANCE = 8; // Increased default distance
 

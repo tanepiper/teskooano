@@ -12,10 +12,9 @@ export class ControlsManager {
   public controls: OrbitControls;
   private camera: THREE.PerspectiveCamera;
   private isTransitioning: boolean = false;
-  private transitionDuration: number = 1.5; // default total seconds
-  private transitionDistanceFactor: number = 0.5; // Controls how much distance affects duration
-  private minTransitionDuration: number = 1.0; // Minimum transition time in seconds
-  private maxTransitionDuration: number = 4.0; // Maximum transition time in seconds
+  private transitionDistanceFactor: number = 2.0; // Controls how much distance affects duration (Increased from 0.5)
+  private minTransitionDuration: number = 0.5; // Minimum transition time in seconds (Decreased from 1.0)
+  private maxTransitionDuration: number = 8.0; // Maximum transition time in seconds (Increased from 4.0)
   private activeTimeline: gsap.core.Timeline | null = null; // Store active timeline
   private tempVector = new THREE.Vector3(); // For angle calculations
 
@@ -136,7 +135,7 @@ export class ControlsManager {
       );
     }
 
-    return Math.min(duration, this.maxTransitionDuration);
+    return Math.min(duration, this.maxTransitionDuration) * 2;
   }
 
   /**
@@ -173,8 +172,8 @@ export class ControlsManager {
 
     // Allocate duration percentages
     const rotationPercent = Math.min(0.5, Math.max(0.1, angle / Math.PI)); // 10% to 50% based on angle (PI radians = 180 deg)
-    const rotationDuration = totalDuration * rotationPercent * 5;
-    const positionDuration = (totalDuration * (1 - rotationPercent)) / 5;
+    const rotationDuration = (totalDuration * rotationPercent) / 2;
+    const positionDuration = (totalDuration * (1 - rotationPercent)) / 4;
     // --- End Angle Calculation ---
 
     // Define the completion logic
@@ -224,10 +223,7 @@ export class ControlsManager {
         y: endTarget.y,
         z: endTarget.z,
         duration: rotationDuration,
-        ease: "power1.inOut",
-        onUpdate: () => {
-          this.controls.update();
-        },
+        ease: "circ.in",
       });
     }
 
@@ -241,7 +237,7 @@ export class ControlsManager {
           y: endPos.y,
           z: endPos.z,
           duration: positionDuration,
-          ease: "expo.out",
+          ease: "sine.inOut",
           // No onUpdate needed here, target is fixed during this phase
         },
         rotationDuration > 0.01 ? ">" : 0,
@@ -253,14 +249,17 @@ export class ControlsManager {
    * Update controls (called each frame)
    */
   update(): void {
-    // GSAP timeline handles updates during transition via onUpdate callbacks
-    // We only need to call controls.update() when NOT transitioning OR
-    // if damping is enabled and the user might still be influencing it subtly.
-    if (!this.isTransitioning || this.controls.enableDamping) {
-      if (this.controls.enabled) {
-        this.controls.update();
-      }
+    // GSAP timeline handles updates during transition via onUpdate callbacks (REMOVED)
+    // We need OrbitControls to update based on GSAP's changes during transition.
+    // We also need it to update normally when user is controlling.
+    if (this.isTransitioning) {
+      // Force update to sync OrbitControls with GSAP's state changes
+      this.controls.update();
+    } else if (this.controls.enabled) {
+      // Normal update when user is controlling (and not transitioning)
+      this.controls.update();
     }
+    // If !isTransitioning and !controls.enabled, do nothing.
   }
 
   /**
@@ -284,5 +283,18 @@ export class ControlsManager {
     gsap.killTweensOf(this.controls.target);
 
     this.controls.dispose();
+  }
+
+  /**
+   * Public method to cancel any ongoing camera transition
+   */
+  public cancelTransition(): void {
+    if (this.isTransitioning && this.activeTimeline) {
+      this.activeTimeline.kill();
+      this.activeTimeline = null;
+      this.isTransitioning = false; // Ensure state is reset
+      this.setEnabled(true); // Re-enable controls
+      console.log("[ControlsManager] Transition cancelled externally.");
+    }
   }
 }
