@@ -78,7 +78,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       popover: {
         title: "Simulation Controls",
         description:
-          "This toolbar contains the main controls for the simulation. You can add new bodies, adjust the simulation speed, and access settings.  x16 is equivilent to real time, you can go up to x10M but this depends on your CPU and GPU performance.",
+          "This toolbar contains the main controls for the simulation. You can add new bodies, adjust the simulation speed, and access settings.  1x is equivilent to real time, you can go up to x10M but this depends on your CPU and GPU performance.",
         side: "bottom",
         align: "center",
       },
