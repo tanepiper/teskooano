@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "ESNext",
     "useDefineForClassFields": true,
@@ -16,5 +17,6 @@
     "noImplicitReturns": true,
     "skipLibCheck": true
   },
-  "include": ["src"]
+  "exclude": ["node_modules", "dist"],
+  "include": ["site/types/index.d.ts", "site/.vitepress/theme/index.ts"]
 }

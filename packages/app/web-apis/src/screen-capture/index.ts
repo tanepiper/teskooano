@@ -24,7 +24,7 @@ export function isScreenCaptureSupported(): boolean {
  * @returns A Promise resolving with the MediaStream if successful, or rejecting on error/denial.
  */
 export async function requestDisplayMedia(
-  options?: DisplayMediaStreamConstraints,
+  options?: DisplayMediaStreamOptions,
 ): Promise<MediaStream> {
   if (!isScreenCaptureSupported()) {
     return Promise.reject(
@@ -68,7 +68,7 @@ export async function requestDisplayMedia(
  * @returns An Observable emitting the MediaStream or an error.
  */
 export function requestDisplayMediaObservable(
-  options?: DisplayMediaStreamConstraints,
+  options?: DisplayMediaStreamOptions,
 ): Observable<MediaStream> {
   return from(requestDisplayMedia(options)).pipe(
     tap((stream) =>

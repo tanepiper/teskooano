@@ -46,6 +46,14 @@ export class ToolbarController {
   private _currentOrientation: Orientation | null = null;
   private _layoutUnsubscribe: (() => void) | null = null;
 
+  // Cache toolbar elements to avoid repeated queries
+  private _githubButton: HTMLElement | null = null;
+  private _settingsButton: HTMLElement | null = null;
+  private _tourButton: HTMLElement | null = null;
+  private _addButton: HTMLElement | null = null;
+  private _simControls: HTMLElement | null = null;
+  private _seedForm: HTMLElement | null = null;
+
   // Define a constant for the settings panel ID
   private readonly SETTINGS_PANEL_ID = "app_settings_panel";
   // GitHub repository URL
@@ -114,7 +122,7 @@ export class ToolbarController {
     // Set up a resize listener to update mobile detection on window resize
     window.addEventListener("resize", this.handleResize);
 
-    this.render();
+    this.createToolbar();
   }
 
   /**
@@ -123,12 +131,10 @@ export class ToolbarController {
   private handleResize = (): void => {
     const wasMobile = this._isMobileDevice;
     this._isMobileDevice = this.detectMobileDevice();
-    this.render();
 
-    // If device type changed (mobile → desktop or desktop → mobile)
-    // we could potentially re-create the layout here if needed
+    // Only update if the mobile state actually changed
     if (wasMobile !== this._isMobileDevice) {
-      // Future enhancement: recreate panels with new layout
+      this.updateToolbarForMobileState();
     }
   };
 
@@ -168,7 +174,10 @@ export class ToolbarController {
    */
   public setTourController(tourController: TourController): void {
     this._tourController = tourController;
-    this.render(); // Re-render to add tour button if needed
+    // TODO: If render created the tour button, we need a way to
+    // add/remove just that button or update its state if it exists.
+    // For now, recreating might be acceptable if this only happens once.
+    this.createToolbar(); // Re-render to add tour button if needed
   }
 
   /**
@@ -294,8 +303,27 @@ export class ToolbarController {
     window.open(this.GITHUB_REPO_URL, "_blank");
   }
 
-  private render(): void {
-    // Clear existing content
+  /**
+   * Updates the toolbar elements based on the current mobile state.
+   */
+  private updateToolbarForMobileState(): void {
+    // Update gap
+    this._element.style.gap = this._isMobileDevice
+      ? "var(--space-xs, 4px)"
+      : "var(--space-md, 12px)";
+
+    // Toggle mobile attribute on relevant components
+    this._tourButton?.toggleAttribute("mobile", this._isMobileDevice);
+    this._addButton?.toggleAttribute("mobile", this._isMobileDevice);
+    this._simControls?.toggleAttribute("mobile", this._isMobileDevice);
+    this._seedForm?.toggleAttribute("mobile", this._isMobileDevice);
+  }
+
+  /**
+   * Creates the initial toolbar structure and elements.
+   */
+  private createToolbar(): void {
+    // Clear existing content (should only happen once)
     this._element.innerHTML = "";
     // Apply cosmic theme styles
     this._element.classList.add("toolbar-cosmic-background"); // Apply CSS class for background
@@ -356,6 +384,7 @@ export class ToolbarController {
     });
 
     this._element.appendChild(githubButton);
+    this._githubButton = githubButton; // Cache reference
     // --- End GitHub Button ---
 
     // --- Add Settings Button ---
@@ -392,6 +421,7 @@ export class ToolbarController {
       this.toggleSettingsPanel.bind(this),
     );
     this._element.appendChild(settingsButton);
+    this._settingsButton = settingsButton; // Cache reference
     // --- End Settings Button ---
 
     // --- Add Tour Button if tour controller is available ---
@@ -442,6 +472,7 @@ export class ToolbarController {
       });
 
       this._element.appendChild(tourButton);
+      this._tourButton = tourButton; // Cache reference
     }
     // --- End Tour Button ---
 
@@ -489,6 +520,7 @@ export class ToolbarController {
     });
 
     this._element.appendChild(addButton);
+    this._addButton = addButton; // Cache reference
 
     // Add Separator
     const separator1 = document.createElement("div");
@@ -504,6 +536,7 @@ export class ToolbarController {
       simControls.setAttribute("mobile", "");
     }
     this._element.appendChild(simControls);
+    this._simControls = simControls; // Cache reference
 
     // Add Separator before seed form
     const separator2 = document.createElement("div");
@@ -522,6 +555,7 @@ export class ToolbarController {
     }
     ToolbarSeedForm.setDockviewApi(this._dockviewController.api);
     this._element.appendChild(seedForm);
+    this._seedForm = seedForm; // Cache reference
   }
 
   // --- New method to handle orientation changes for Dockview layout ---
