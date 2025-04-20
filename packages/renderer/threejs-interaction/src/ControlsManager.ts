@@ -162,9 +162,9 @@ export class ControlsManager {
    */
   private startTransition(
     startPos: THREE.Vector3,
-    startTarget: THREE.Vector3,
-    endPos: THREE.Vector3,
-    endTarget: THREE.Vector3,
+    startTarget: THREE.Vector3, // This is now the fixed target
+    endPos: THREE.Vector3,   // This is the camera end position
+    endTarget: THREE.Vector3, // This is the fixed target (same as startTarget)
   ): void {
     // Kill any previous timeline to avoid conflicts
     if (this.activeTimeline) {
@@ -175,25 +175,21 @@ export class ControlsManager {
     this.setEnabled(false);
     this.isTransitioning = true;
 
-    // Calculate total transition duration based on distance
+    // Calculate total transition duration based on CAMERA distance
     const totalDuration = this.calculateTransitionDuration(startPos, endPos);
 
-    // --- Calculate Angle for Rotation Duration ---
-    const cameraForward = this.camera.getWorldDirection(
-      this.tempVector.clone(),
-    );
-    const targetDirection = endTarget.clone().sub(startPos).normalize();
-    // Prevent issues if start and end points are the same
-    const angle =
-      targetDirection.lengthSq() > 0.0001
-        ? cameraForward.angleTo(targetDirection)
-        : 0;
-
-    // Allocate duration percentages
-    const rotationPercent = Math.min(0.5, Math.max(0.1, angle / Math.PI)); // 10% to 50% based on angle (PI radians = 180 deg)
-    const rotationDuration = (totalDuration * rotationPercent) / 2;
-    const positionDuration = (totalDuration * (1 - rotationPercent)) / 4;
-    // --- End Angle Calculation ---
+    // --- Calculate Angle for Rotation Duration (Still useful for timing) ---
+    // Use startPos and the fixed endTarget for direction calculation
+    const cameraForward = this.camera.getWorldDirection(this.tempVector.clone());
+    const targetDirection = endTarget.clone().sub(startPos).normalize(); 
+    const angle = targetDirection.lengthSq() > 0.0001 ? cameraForward.angleTo(targetDirection) : 0;
+    
+    // Allocate duration based on distance and angle (adjust proportions if needed)
+    // We only have one animation (position), so we can simplify or just use totalDuration.
+    // Let's keep the angle calculation for potential easing variation later, but use a simpler duration split for now.
+    // Example: Allocate most time to position movement.
+    const positionDuration = totalDuration * 0.9; // Use most of the duration for camera movement
+    const rotationDurationApproximation = totalDuration * 0.1; // Not used for animation, but could influence easing
 
     // Define the completion logic
     const onTimelineComplete = () => {
@@ -203,7 +199,9 @@ export class ControlsManager {
 
       // Ensure final state is precise
       this.camera.position.copy(endPos);
-      this.controls.target.copy(endTarget);
+      // Target should already be correct due to immediate set and update loop,
+      // but set it again for safety.
+      this.controls.target.copy(endTarget); 
       this.controls.update(); // Final update
 
       // Update the simulation state with final camera values
@@ -231,28 +229,18 @@ export class ControlsManager {
       document.dispatchEvent(transitionCompleteEvent);
 
       console.log(
-        "[ControlsManager] Camera transition complete. Controls enabled.",
+        "[ControlsManager] Camera POSITION transition complete. Controls enabled.",
       );
     };
 
     // Create and configure the timeline
     this.activeTimeline = gsap.timeline({ onComplete: onTimelineComplete });
 
-    // 1. Rotation Phase (Animate Target)
-    if (rotationDuration > 0.01) {
-      // Only add if duration is meaningful
-      this.activeTimeline.to(this.controls.target, {
-        x: endTarget.x,
-        y: endTarget.y,
-        z: endTarget.z,
-        duration: rotationDuration,
-        ease: "circ.in",
-      });
-    }
+    // 1. Rotation Phase (Animate Target) - REMOVED
+    // Target is set immediately in setFollowTarget
 
-    // 2. Position Phase (Animate Camera Position) - starts after rotation
+    // 2. Position Phase (Animate Camera Position)
     if (positionDuration > 0.01) {
-      // Only add if duration is meaningful
       this.activeTimeline.to(
         this.camera.position,
         {
@@ -260,11 +248,19 @@ export class ControlsManager {
           y: endPos.y,
           z: endPos.z,
           duration: positionDuration,
-          ease: "sine.inOut",
-          // No onUpdate needed here, target is fixed during this phase
+          ease: "sine.inOut", // Or adjust easing as needed
+          // onUpdate could potentially call controls.update() here if needed,
+          // but let's rely on the main update loop first.
+          // onUpdate: () => { this.controls.update(); }
         },
-        rotationDuration > 0.01 ? ">" : 0,
-      ); // Start immediately after previous if it exists, otherwise at time 0
+        0 // Start immediately
+      );
+    } else {
+       // If duration is too short, just jump to the end state and finish
+       console.warn("[ControlsManager] Transition duration too short, jumping to end state.");
+       this.camera.position.copy(endPos);
+       this.controls.target.copy(endTarget);
+       onTimelineComplete(); // Manually trigger completion
     }
   }
 
@@ -338,15 +334,13 @@ export class ControlsManager {
     if (!object) {
       console.log("[ControlsManager] Clearing follow target.");
       this.followingTargetObject = null;
-      // Optionally re-enable controls immediately if needed, though transitions usually handle this
-      // this.setEnabled(true);
+      // No need to explicitly enable controls, transition cancellation handles it
       return;
     }
 
     console.log(
       `[ControlsManager] Setting follow target: ${object.name || object.uuid}`,
     );
-    this.followingTargetObject = object;
 
     // Calculate the target position (center of the object + offset)
     const targetPosition = new THREE.Vector3();
@@ -354,6 +348,7 @@ export class ControlsManager {
 
     let finalCameraPosition: THREE.Vector3;
 
+    // --- Calculate desired final camera position --- 
     if (keepCurrentDistance) {
       // Calculate the vector from the *current* target to the camera
       const currentTarget = this.controls.target.clone();
@@ -362,8 +357,6 @@ export class ControlsManager {
       finalCameraPosition = targetPosition.clone().add(direction);
     } else {
       // Default behavior: Calculate a position based on object size or a fixed distance
-      // For now, let's just use a default offset if not keeping distance
-      // A more sophisticated approach would involve bounding box checks etc.
       const currentDistance = this.camera.position.distanceTo(
         this.controls.target,
       );
@@ -371,12 +364,29 @@ export class ControlsManager {
         .clone()
         .sub(this.controls.target)
         .normalize();
+      // Ensure minimum distance if calculated distance is too small
+      const desiredDistance = Math.max(currentDistance, 1); 
       finalCameraPosition = targetPosition
         .clone()
-        .add(direction.multiplyScalar(Math.max(currentDistance, 1))); // Ensure minimum distance
+        .add(direction.multiplyScalar(desiredDistance)); 
     }
+    // --- End Camera Position Calculation ---
 
-    // Start the transition to the new target and calculated position
-    this.moveTo(finalCameraPosition, targetPosition, true);
+    // --- Set state IMMEDIATELY --- 
+    this.followingTargetObject = object; // Start tracking the object now
+    // Set the target immediately - NO GSAP for target
+    this.controls.target.copy(targetPosition);
+    // --- End Immediate State Set ---
+
+    // --- Start transition for CAMERA POSITION ONLY --- 
+    // Use the current position as start, calculated final position as end
+    // Pass the *already set* targetPosition as both start and end target 
+    // because the target is no longer animated by GSAP.
+    this.startTransition(
+        this.camera.position.clone(), 
+        targetPosition, // Start target (already set)
+        finalCameraPosition, 
+        targetPosition  // End target (same as start, not animated)
+    );
   }
 }

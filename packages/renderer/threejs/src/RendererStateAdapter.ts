@@ -55,7 +55,7 @@ export interface RenderableCelestialObject {
 }
 
 // Define the structure for visual settings *derived from core state*
-export interface VisualSettings {
+export interface RendererVisualSettings {
   trailLengthMultiplier: number;
   physicsEngine: "keplerian" | "verlet"; // Map core state engines to renderer-friendly types
 }
@@ -66,7 +66,7 @@ export class RendererStateAdapter {
   // public $renderableObjects: MapStore<Record<string, RenderableCelestialObject>>;
 
   // Store for visual settings relevant to rendering (derived from core state)
-  public $visualSettings: MapStore<VisualSettings>;
+  public $visualSettings: MapStore<RendererVisualSettings>;
 
   private unsubscribeObjects: (() => void) | null = null;
   private unsubscribeSimState: (() => void) | null = null;
@@ -80,7 +80,7 @@ export class RendererStateAdapter {
   constructor() {
     // REMOVED initialization of internal store
     // this.$renderableObjects = map<Record<string, RenderableCelestialObject>>({});
-    this.$visualSettings = map<VisualSettings>({
+    this.$visualSettings = map<RendererVisualSettings>({
       trailLengthMultiplier: 30,
       physicsEngine: "keplerian",
     });
