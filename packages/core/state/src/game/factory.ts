@@ -346,9 +346,6 @@ export const celestialFactory = {
         );
         // Continue anyway, but with caution
       } else {
-        console.log(
-          `[celestialFactory] Processing companion star with parent ${data.parentId}`,
-        );
         // Allow adding companion stars
       }
     }

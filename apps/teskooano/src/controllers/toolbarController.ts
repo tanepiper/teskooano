@@ -128,9 +128,6 @@ export class ToolbarController {
     // If device type changed (mobile → desktop or desktop → mobile)
     // we could potentially re-create the layout here if needed
     if (wasMobile !== this._isMobileDevice) {
-      console.log(
-        `Device type changed to: ${this._isMobileDevice ? "mobile" : "desktop"}`,
-      );
       // Future enhancement: recreate panels with new layout
     }
   };
@@ -216,9 +213,7 @@ export class ToolbarController {
         if (previousPanel && previousPanel.group) {
           // Position new panel below the GROUP of the previous panel
           // This ensures we take the full width of the previous engine+UI
-          console.log(
-            `Positioning new panel below group: ${previousPanel.group.id}`,
-          );
+
           positionOptions = {
             referenceGroup: previousPanel.group,
             direction: "below",
@@ -229,11 +224,10 @@ export class ToolbarController {
           );
         }
       } else {
-        console.log("Positioning first engine view (default).");
+        // console.log("Positioning first engine view (default).");
       }
 
       // Create the composite engine panel
-      console.log(`Adding composite engine panel: ${compositeViewId}`);
       const compositePanel = this._dockviewController.api.addPanel({
         id: compositeViewId,
         component: "composite_engine_view", // New component type
@@ -267,10 +261,8 @@ export class ToolbarController {
     );
 
     if (existingPanel) {
-      console.log(`Closing existing settings panel: ${this.SETTINGS_PANEL_ID}`);
       existingPanel.api.close();
     } else {
-      console.log(`Adding settings panel: ${this.SETTINGS_PANEL_ID}`);
       const settingsPanelOptions: AddPanelOptions = {
         id: this.SETTINGS_PANEL_ID,
         component: "settings_view", // Placeholder component name
@@ -538,7 +530,6 @@ export class ToolbarController {
       return; // No change
     }
     this._currentOrientation = orientation;
-    console.log(`ToolbarController: Orientation changed to ${orientation}`);
 
     // Get the Dockview API
     const dockviewApi = this._dockviewController.api;
@@ -568,10 +559,6 @@ export class ToolbarController {
     // but let's rely on the CompositeEnginePanel's internal CSS first.
     // For now, we just log, as the change might already be handled visually
     // by the CompositeEnginePanel reacting to the store change.
-
-    console.log(
-      `Relying on CompositeEnginePanel (${mainPanelId}) internal CSS for layout change.`,
-    );
 
     // --- Potential future Dockview API adjustments (if internal CSS isn't enough) ---
     /*

@@ -92,9 +92,7 @@ export class EnginePanel implements IContentRenderer {
       (orientation) => {
         if (this._currentOrientation !== orientation) {
           this._currentOrientation = orientation;
-          console.log(
-            `EnginePanel [${this._api?.id}] orientation: ${orientation}`,
-          ); // Debug
+
           if (orientation === "portrait") {
             this._element.classList.remove("layout-internal-landscape");
             this._element.classList.add("layout-internal-portrait");

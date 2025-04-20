@@ -109,7 +109,6 @@ export class RendererInfoDisplay extends HTMLElement {
   }
 
   public setRenderer(renderer: ModularSpaceRenderer): void {
-    console.log("[RendererInfoDisplay] Renderer set.");
     this._renderer = renderer;
     if (this.isConnected) {
       this.startUpdateTimer();

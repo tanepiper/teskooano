@@ -187,7 +187,6 @@ export class EngineUISettingsPanel extends HTMLElement {
    * to provide its instance.
    */
   public setParentPanel(panel: CompositeEnginePanel): void {
-    console.log("[EngineUISettingsPanel] Parent panel set.");
     this._parentPanel = panel;
     // If connected, sync state now
     if (this.isConnected) {

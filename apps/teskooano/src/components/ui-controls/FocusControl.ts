@@ -202,6 +202,10 @@ export class FocusControl extends HTMLElement {
   private _handleObjectDestroyed: () => void;
   private _handleRendererFocusChange: (event: Event) => void; // Store handler reference
 
+  // Store subscription for automatic updates
+  private _celestialObjectsUnsubscribe: (() => void) | null = null;
+  private _previousObjectsState: Record<string, CelestialObject> = {};
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -235,6 +239,14 @@ export class FocusControl extends HTMLElement {
     // Initial population (run directly)
     this.populateList();
 
+    // Subscribe to celestial objects store for automatic updates
+    this._previousObjectsState = { ...celestialObjectsStore.get() };
+    this._celestialObjectsUnsubscribe = celestialObjectsStore.subscribe(
+      (objects) => {
+        this.checkForStatusChanges(objects);
+      },
+    );
+
     // Listen for celestial object load/destroy events to repopulate list
     document.addEventListener(
       "celestial-objects-loaded",
@@ -245,6 +257,12 @@ export class FocusControl extends HTMLElement {
       this._handleObjectDestroyed,
     );
 
+    // Listen for object status changes (like when an object is destroyed)
+    document.addEventListener(
+      "celestial-object-status-changed",
+      this.handleObjectStatusChanged,
+    );
+
     // If we need to react to influence changes for list display
     document.addEventListener(
       "celestial-influences-changed",
@@ -252,9 +270,6 @@ export class FocusControl extends HTMLElement {
     );
 
     // ADD LISTENER FOR FOCUS CHANGES *FROM* THE RENDERER/CONTROLS
-    // This assumes the renderer or its controls emit an event when focus changes
-    // Or, alternatively, subscribe to the CompositeEnginePanel's viewStateStore if it tracks focus
-    // Example using a custom event:
     document.addEventListener(
       "renderer-focus-changed",
       this._handleRendererFocusChange,
@@ -263,7 +278,12 @@ export class FocusControl extends HTMLElement {
 
   disconnectedCallback() {
     this.removeEventListeners();
-    // REMOVED unsubscribeLinkedPanelState and interval clearing
+
+    // Unsubscribe from store
+    if (this._celestialObjectsUnsubscribe) {
+      this._celestialObjectsUnsubscribe();
+      this._celestialObjectsUnsubscribe = null;
+    }
   }
 
   /**
@@ -271,7 +291,6 @@ export class FocusControl extends HTMLElement {
    * to provide its instance.
    */
   public setParentPanel(panel: CompositeEnginePanel): void {
-    console.log("[FocusControl] Parent panel set.");
     this._parentPanel = panel;
     // TODO: Subscribe to parent panel's view state for focus changes?
     // Or rely on the renderer-focus-changed event?
@@ -293,9 +312,6 @@ export class FocusControl extends HTMLElement {
       Math.floor(Math.random() * activeButtons.length)
     ] as HTMLElement;
     if (randomButton) {
-      console.log(
-        `[FocusControl] Tour focusing on: ${randomButton.textContent?.trim()}`,
-      );
       randomButton.click();
     }
   };
@@ -326,10 +342,7 @@ export class FocusControl extends HTMLElement {
   };
 
   public focusOnObject = (objectId: string): boolean => {
-    console.log(`[FocusControl] focusOnObject called for ID: ${objectId}`);
-
     if (!this._parentPanel) {
-      console.warn("[FocusControl] Cannot focus, parent panel not set.");
       return false;
     }
     const objects = celestialObjectsStore.get();
@@ -366,21 +379,8 @@ export class FocusControl extends HTMLElement {
 
     const distance = this.calculateCameraDistance(targetObject);
 
-    console.log(
-      `[FocusControl] Requesting parent focus on ${objectId} (distance: ${distance})`,
-    );
-    console.log(
-      "[FocusControl] Calling parentPanel.focusOnObject...",
-      this._parentPanel,
-    );
-
     // Call parent panel's focus method
     this._parentPanel.focusOnObject(objectId, distance);
-
-    // --- Update internal highlight state (NO LONGER NEEDED IF RENDERER HANDLES IT) ---
-    // We assume the renderer (or its ControlsManager) will update its own state
-    // which might trigger events that other components listen to.
-    // this.updateHighlight(objectId);
 
     return true; // Indicate focus request was sent
   };
@@ -388,28 +388,47 @@ export class FocusControl extends HTMLElement {
   private addEventListeners(): void {
     if (this.resetButton) {
       this.resetButton.addEventListener("click", () => {
-        console.log("[FocusControl] Reset View clicked.");
-        // Call parent panel's reset method
         this._parentPanel?.resetCameraView();
       });
     }
     if (this.clearButton) {
       this.clearButton.addEventListener("click", () => {
-        console.log("[FocusControl] Clear Focus clicked.");
-        // Call parent panel's clear focus method
         this._parentPanel?.clearFocus();
       });
     }
 
     // Keep list item click listener
     this.shadowRoot!.addEventListener("click", (event) => {
-      console.log("[FocusControl] Click listener fired.");
       const target = event.target as HTMLElement;
       const button = target.closest("button.focus-item") as HTMLButtonElement;
 
       if (button && button.dataset.id) {
         const objectId = button.dataset.id;
-        console.log(`[FocusControl] Clicked button for objectId: ${objectId}`);
+
+        // First check if button itself is marked as disabled or destroyed
+        if (
+          button.disabled ||
+          button.classList.contains("destroyed") ||
+          button.classList.contains("annihilated")
+        ) {
+          return; // Do nothing if clicked on a disabled item
+        }
+
+        // Double-check current state from the store
+        const currentObjects = celestialObjectsStore.get();
+        const currentObject = currentObjects[objectId];
+        if (
+          !currentObject ||
+          currentObject.status === CelestialStatus.DESTROYED ||
+          currentObject.status === CelestialStatus.ANNIHILATED
+        ) {
+          console.warn(
+            `[FocusControl] Click ignored for object ${objectId}: Object no longer active in current state.`,
+          );
+          // Trigger immediate list refresh to update the UI
+          this.populateList();
+          return; // Stop processing the click
+        }
 
         // Dispatch event *before* initiating focus to allow immediate UI updates
         this.dispatchEvent(
@@ -420,29 +439,15 @@ export class FocusControl extends HTMLElement {
           }),
         );
 
-        // Check if the item is destroyed or annihilated before trying to focus
-        if (
-          button.classList.contains("destroyed") ||
-          button.classList.contains("annihilated")
-        ) {
-          console.warn(
-            `[FocusControl] Click ignored for object ${objectId} (destroyed/annihilated).`,
-          );
-          return; // Do nothing if clicked on a destroyed/annihilated item
-        }
-
-        // --- START NEW LOGIC ---
+        // --- Start rendering logic ---
         // Fetch from renderableObjectsStore to get live position data
-        const renderables = renderableObjectsStore.get();
-        const targetObjectRenderable = renderables[objectId]; // Use renderable object
+        const currentRenderables = renderableObjectsStore.get();
+        const targetObjectRenderable = currentRenderables[objectId];
 
         if (!targetObjectRenderable) {
           console.warn(
             `[FocusControl] Could not find renderable object data for ${objectId} in store.`,
           );
-          // Optionally, fall back to static store to check if object exists at all?
-          // const staticObjects = celestialObjectsStore.get();
-          // if (!staticObjects[objectId]) { console.error(`Object ${objectId} not found anywhere!`); } // <-- Fixed line
           return;
         }
 
@@ -454,23 +459,12 @@ export class FocusControl extends HTMLElement {
           );
           return;
         }
-        // No need to check x,y,z individually if it's a THREE.Vector3
 
         // 2. Calculate desired Camera Position
-        // We still need the static object data for calculateCameraDistance
-        const staticObjects = celestialObjectsStore.get();
-        const targetObjectStatic = staticObjects[objectId];
-        if (!targetObjectStatic) {
-          console.error(
-            `[FocusControl] Could not find static data for ${objectId} to calculate distance.`,
-          );
-          return; // Should not happen if renderable exists, but check anyway
-        }
-        const desiredDistance =
-          this.calculateCameraDistance(targetObjectStatic);
+        const desiredDistance = this.calculateCameraDistance(currentObject);
 
         // Get current camera position to determine direction
-        const renderer = this._parentPanel?.getRenderer(); // <-- Use the new getRenderer() method
+        const renderer = this._parentPanel?.getRenderer();
         if (!renderer) {
           console.error(
             "[FocusControl] Cannot get renderer instance from parent panel.",
@@ -501,15 +495,10 @@ export class FocusControl extends HTMLElement {
           cameraPosition,
         );
 
-        // --- ADD THIS LINE ---
         // Update the parent panel's central view state
         this._parentPanel?.updateViewState({ focusedObjectId: objectId });
-        // --- END ADD ---
 
-        console.log(
-          `[FocusControl] Directly calling renderer.setFollowTarget for ${objectId}`,
-        );
-        // --- END NEW LOGIC ---
+        // --- End rendering logic ---
       }
     });
 
@@ -555,6 +544,10 @@ export class FocusControl extends HTMLElement {
     document.removeEventListener(
       "renderer-focus-changed",
       this._handleRendererFocusChange,
+    );
+    document.removeEventListener(
+      "celestial-object-status-changed",
+      this.handleObjectStatusChanged,
     );
     // Note: Button listeners are implicitly removed when the component disconnects
   }
@@ -636,45 +629,29 @@ export class FocusControl extends HTMLElement {
     } else {
       // Recursive function to add items
       const addItem = (obj: CelestialObject, indentLevel: number) => {
+        // --- MODIFIED CHECK: Include destroyed/annihilated objects but mark them appropriately --- //
+        const isDestroyed = obj.status === CelestialStatus.DESTROYED;
+        const isAnnihilated = obj.status === CelestialStatus.ANNIHILATED;
+
         const item = document.createElement("button");
         item.classList.add("focus-item");
         item.dataset.id = obj.id;
 
-        // --- Check Status for Styling/Disabling ---
-        if (obj.status === CelestialStatus.ANNIHILATED) {
-          // Completely gone - disable, grey out, line-through
-          item.classList.add("annihilated"); // Add specific class for styling
-          item.disabled = true; // Disable the button for annihilated objects
-          item.title = `${obj.name} (Annihilated)`;
-          item.classList.remove("active", "destroyed"); // Ensure other states removed
-        } else if (obj.status === CelestialStatus.DESTROYED) {
-          // Shattered - also disable now that we remove them from the scene
-          item.classList.add("destroyed");
-          item.disabled = true; // Disable the button for destroyed objects
-          item.title = `${obj.name} (Destroyed)`;
-          item.classList.remove("active", "annihilated");
+        // Apply disabled state for destroyed or annihilated objects
+        if (isDestroyed || isAnnihilated) {
+          item.disabled = true; // Make the button non-interactive
+          item.classList.add(isDestroyed ? "destroyed" : "annihilated");
+          item.title = `${obj.name} (${obj.type}) - ${obj.status}`;
         } else {
-          // Active - standard styling
           item.disabled = false;
           item.title = `${obj.name} (${obj.type})`;
           item.classList.toggle("active", obj.id === focusedId);
-          item.classList.remove("destroyed", "annihilated");
         }
-        // --- End status check ---
 
         // Icon based on type
         const icon = document.createElement("span");
         icon.classList.add("celestial-icon");
         icon.classList.add(this.getIconClass(obj.type));
-        // Apply dimmed style to icon if status is destroyed or annihilated
-        if (
-          obj.status === CelestialStatus.DESTROYED ||
-          obj.status === CelestialStatus.ANNIHILATED
-        ) {
-          icon.style.filter = "grayscale(80%) opacity(60%)";
-        } else {
-          icon.style.filter = ""; // Reset filter
-        }
         item.appendChild(icon);
 
         // Text label
@@ -806,6 +783,130 @@ export class FocusControl extends HTMLElement {
 
     // Prefer radius-based distance if calculated, otherwise use type fallback, then default
     return radiusDistance ?? typeDistance ?? DEFAULT_CAMERA_DISTANCE;
+  }
+
+  // --- Add this method for handling object status updates ---
+  private updateObjectStatus(objectId: string, status: CelestialStatus): void {
+    if (!this.listContainer) return;
+
+    // Find button for the specified object
+    const button = this.listContainer.querySelector(
+      `button.focus-item[data-id="${objectId}"]`,
+    ) as HTMLButtonElement;
+    if (!button) {
+      console.warn(
+        `[FocusControl] Button for object ${objectId} not found in DOM, will refresh list`,
+      );
+      this.populateList(); // If button not found, refresh the entire list
+      return;
+    }
+
+    // Skip if button already has the correct state
+    const isDestroyedNow = status === CelestialStatus.DESTROYED;
+    const isAnnihilatedNow = status === CelestialStatus.ANNIHILATED;
+    const wasDestroyedBefore = button.classList.contains("destroyed");
+    const wasAnnihilatedBefore = button.classList.contains("annihilated");
+
+    if (
+      (isDestroyedNow && wasDestroyedBefore) ||
+      (isAnnihilatedNow && wasAnnihilatedBefore)
+    ) {
+      console.log(
+        `[FocusControl] Object ${objectId} already has status ${status}, skipping update`,
+      );
+      return; // Already has the correct status
+    }
+
+    // Update button based on status
+    if (isDestroyedNow || isAnnihilatedNow) {
+      button.disabled = true;
+
+      // Remove active class if this was the focused object
+      if (button.classList.contains("active")) {
+        button.classList.remove("active");
+      }
+
+      // Add appropriate status class
+      button.classList.remove("destroyed", "annihilated");
+      button.classList.add(isDestroyedNow ? "destroyed" : "annihilated");
+
+      // Update title
+      const objects = celestialObjectsStore.get();
+      const obj = objects[objectId];
+      if (obj) {
+        button.title = `${obj.name} (${obj.type}) - ${status}`;
+      }
+
+      // If this was the focused object, clear the focus
+      if (this._currentFocusedId === objectId) {
+        this._parentPanel?.clearFocus();
+      }
+    }
+  }
+
+  // --- Add event handler for object status changes ---
+  private handleObjectStatusChanged = (event: Event): void => {
+    const customEvent = event as CustomEvent<{
+      objectId: string;
+      status: CelestialStatus;
+    }>;
+    if (customEvent.detail) {
+      const { objectId, status } = customEvent.detail;
+      this.updateObjectStatus(objectId, status);
+    }
+  };
+
+  // Check for status changes between previous and current state
+  private checkForStatusChanges(
+    currentObjects: Record<string, CelestialObject>,
+  ): void {
+    // No need to check if we don't have previous state
+    if (Object.keys(this._previousObjectsState).length === 0) {
+      this._previousObjectsState = { ...currentObjects };
+      return;
+    }
+
+    let needsFullRefresh = false;
+
+    // Check for objects whose status has changed
+    Object.entries(currentObjects).forEach(([id, obj]) => {
+      const prevObj = this._previousObjectsState[id];
+
+      // If object is new or status changed
+      if (!prevObj || prevObj.status !== obj.status) {
+        if (
+          obj.status === CelestialStatus.DESTROYED ||
+          obj.status === CelestialStatus.ANNIHILATED
+        ) {
+          this.updateObjectStatus(id, obj.status);
+
+          // If this was the focused object, clear focus
+          if (this._currentFocusedId === id) {
+            this._parentPanel?.clearFocus();
+            needsFullRefresh = true;
+          }
+        }
+      }
+    });
+
+    // Check for objects that were removed
+    Object.keys(this._previousObjectsState).forEach((id) => {
+      if (!currentObjects[id]) {
+        // Object was removed
+        if (this._currentFocusedId === id) {
+          this._parentPanel?.clearFocus();
+          needsFullRefresh = true;
+        }
+      }
+    });
+
+    // Update previous state for next comparison
+    this._previousObjectsState = { ...currentObjects };
+
+    // If something significant changed, do a full refresh
+    if (needsFullRefresh) {
+      this.populateList();
+    }
   }
 }
 

@@ -98,9 +98,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       (orientation) => {
         if (this._currentOrientation !== orientation) {
           this._currentOrientation = orientation;
-          console.log(
-            `CompositePanel [${this._api?.id}] orientation: ${orientation}`,
-          ); // Debug
+
           if (orientation === "portrait") {
             this._element.classList.remove("layout-internal-landscape");
             this._element.classList.add("layout-internal-portrait");
@@ -216,10 +214,6 @@ export class CompositeEnginePanel implements IContentRenderer {
       // Focus on object
       const renderables = renderableObjectsStore.get(); // Get full map
       const renderableObject = renderables[objectId];
-      console.log(
-        `[CompositePanel] focusOnObject: Found renderable:`,
-        renderableObject,
-      ); // LOG 3
 
       if (!renderableObject?.position) {
         console.error(
@@ -233,9 +227,6 @@ export class CompositeEnginePanel implements IContentRenderer {
       const cameraPosition = targetPosition
         .clone()
         .add(CAMERA_OFFSET.clone().multiplyScalar(calculatedDistance));
-      console.log(
-        `[CompositePanel] focusOnObject: targetPos=${targetPosition.toArray()}, camPos=${cameraPosition.toArray()}, dist=${calculatedDistance}`,
-      ); // LOG 5
 
       // Call the renderer's setFollowTarget with the calculated positions
       // This will initiate the moveTo transition within the renderer
@@ -337,9 +328,6 @@ export class CompositeEnginePanel implements IContentRenderer {
         if (initialFocusObject?.position) {
           // Use the object's position as the initial target
           initialTargetPosition.copy(initialFocusObject.position);
-          console.log(
-            `[CompositePanel Init] Setting initial target to focused object: ${initialState.focusedObjectId}`,
-          );
         } else {
           console.warn(
             `[CompositePanel Init] Initial focused object ${initialState.focusedObjectId} not found or has no position. Using default target.`,
@@ -348,7 +336,7 @@ export class CompositeEnginePanel implements IContentRenderer {
           this.updateViewState({ focusedObjectId: null });
         }
       } else {
-        console.log(
+        console.warn(
           "[CompositePanel Init] No initial focus ID. Using default target.",
         );
       }
@@ -361,9 +349,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       );
       // Perform an initial update on controls to sync
       this._renderer.controlsManager.controls.update();
-      console.log(
-        `[CompositePanel Init] Initial Cam Pos: ${initialState.cameraPosition.toArray().join(", ")}, Target: ${initialTargetPosition.toArray().join(", ")}`,
-      );
+
       // --- End Set Initial Camera State ---
 
       // Listen for camera transition completion events
@@ -382,6 +368,10 @@ export class CompositeEnginePanel implements IContentRenderer {
         }
       });
       this._resizeObserver.observe(this._engineContainer);
+
+      // --- Apply Initial State Immediately ---
+      this.applyViewStateToRenderer(this.getViewState());
+      // --- End Apply Initial State ---
     } catch (error) {
       console.error(
         `Failed to initialize CompositePanel [${this._api?.id}] renderer:`,
@@ -532,7 +522,6 @@ export class CompositeEnginePanel implements IContentRenderer {
   }
 
   dispose(): void {
-    console.log(`Disposing CompositeEnginePanel ${this._api?.id}`);
     const panelIdForLog = this._api?.id ?? "unknown";
 
     // Remove camera transition listener
