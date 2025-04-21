@@ -61,9 +61,9 @@ export class OrbitManager {
   /** Stores recent position history for Verlet trails, keyed by object ID. */
   private positionHistory: Map<string, THREE.Vector3[]> = new Map();
   /** Duration (in seconds) into the future for Verlet predictions. */
-  private predictionDuration: number = 3600 * 24; // Default: 1 day
+  private predictionDuration: number = 3600 * 12; // Default: 1 day
   /** Number of steps used in Verlet prediction calculation. Affects resolution. */
-  private predictionSteps: number = 100;
+  private predictionSteps: number = 200;
 
   /** Stores the calculated points for the prediction line to avoid recalculation every frame, keyed by object ID. */
   private predictedLinePoints: Map<string, THREE.Vector3[]> = new Map();
@@ -353,12 +353,19 @@ export class OrbitManager {
     let line = this.trailLines.get(id);
     const safeMaxPoints = Math.max(1, Math.floor(maxPoints));
 
+    // --- REVERTED: Remove Smoothing Logic ---
+    // Use raw points directly
+    const pointsToUse = points;
+    // --- End Revert ---
+
     if (!line) {
-      if (safeMaxPoints <= 0) {
+      // Revert buffer size logic to original
+      const bufferSize = safeMaxPoints;
+      if (bufferSize <= 0) {
         return;
       }
       const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(safeMaxPoints * 3);
+      const positions = new Float32Array(bufferSize * 3);
       geometry.setAttribute(
         "position",
         new THREE.BufferAttribute(positions, 3),
@@ -374,27 +381,30 @@ export class OrbitManager {
       let positionAttribute = geometry.attributes
         .position as THREE.BufferAttribute;
       const existingCapacity = positionAttribute.count;
+      // Revert buffer size logic to original
+      const requiredCapacity = safeMaxPoints;
 
-      if (existingCapacity < safeMaxPoints) {
-        const newPositions = new Float32Array(safeMaxPoints * 3);
+      if (existingCapacity < requiredCapacity) {
+        const newPositions = new Float32Array(requiredCapacity * 3);
         newPositions.set(
           positionAttribute.array.slice(0, existingCapacity * 3),
         );
         geometry.deleteAttribute("position");
         positionAttribute = new THREE.BufferAttribute(newPositions, 3);
         geometry.setAttribute("position", positionAttribute);
-        geometry.setDrawRange(0, safeMaxPoints);
+        geometry.setDrawRange(0, requiredCapacity); // Use required capacity
       }
 
-      const pointsToDraw = Math.min(points.length, safeMaxPoints);
+      // Use pointsToUse (which is now the raw points array)
+      const pointsToDraw = Math.min(pointsToUse.length, positionAttribute.count);
       for (let i = 0; i < pointsToDraw; i++) {
-        points[i].toArray(positionAttribute.array, i * 3);
+        pointsToUse[i].toArray(positionAttribute.array, i * 3);
       }
 
       positionAttribute.needsUpdate = true;
       geometry.setDrawRange(0, pointsToDraw);
       line.visible = this.visualizationVisible;
-      this.applyHighlight(id, line); // Added: Apply highlight after updating
+      this.applyHighlight(id, line);
     }
   }
 

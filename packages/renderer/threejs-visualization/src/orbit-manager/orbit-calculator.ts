@@ -15,13 +15,13 @@ import * as THREE from "three";
  * The returned points are scaled from real-world meters to the visual scene units using `SCALE.RENDER_SCALE_AU`.
  *
  * @param orbitalParameters - The Keplerian orbital elements of the object.
- * @param segments - The number of segments to divide the orbit into. More segments result in a smoother curve. Defaults to 128.
+ * @param segments - The number of segments to divide the orbit into. More segments result in a smoother curve. Defaults to 256.
  * @returns An array of `THREE.Vector3` points representing the orbit in scaled visual units, relative to the focus at (0,0,0). Returns an empty array if essential parameters (period, semi-major axis) are invalid.
  * @internal This function calculates the raw relative points and is typically called by `calculateOrbitPoints`.
  */
 export function calculateRelativeOrbitPoints(
   orbitalParameters: OrbitalParameters,
-  segments: number = 128,
+  segments: number = 256,
 ): THREE.Vector3[] {
   const {
     period_s,
@@ -130,12 +130,12 @@ export function calculateRelativeOrbitPoints(
  * and are scaled for visual rendering.
  *
  * @param orbitalParameters - The Keplerian orbital elements of the object.
- * @param segments - The number of segments to divide the orbit into for visualization. Defaults to 128.
+ * @param segments - The number of segments to divide the orbit into for visualization. Defaults to 256.
  * @returns An array of `THREE.Vector3` points representing the orbit in scaled visual units, relative to the focus. Returns an empty array if essential parameters are missing or invalid.
  */
 export function calculateOrbitPoints(
   orbitalParameters: OrbitalParameters,
-  segments: number = 128,
+  segments: number = 256,
 ): THREE.Vector3[] {
   // Always calculate the static relative orbit shape using physics parameters
   // Ensure orbitalParameters are valid before calling

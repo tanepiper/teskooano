@@ -7,12 +7,18 @@ import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
 
 /**
+ * Default FOV value if not provided or found in state.
+ */
+const DEFAULT_FOV = 75; // More conventional default FOV
+
+/**
  * Manages the Three.js scene, camera, and renderer
  */
 export class SceneManager {
   public scene: THREE.Scene;
   public camera: THREE.PerspectiveCamera;
   public renderer: THREE.WebGLRenderer;
+  private fov: number; // Added FOV property
   private debugSphere: THREE.Mesh | null = null;
   private gridHelper: THREE.GridHelper | null = null;
   private showGrid: boolean = true;
@@ -41,21 +47,27 @@ export class SceneManager {
       showDebugSphere?: boolean;
       showGrid?: boolean;
       showAuMarkers?: boolean; // Option to control initial visibility
+      fov?: number; // Added FOV option
     } = {},
   ) {
     // Initialize Three.js scene
     this.scene = new THREE.Scene();
 
+    // Get initial camera state from global state if available
+    const initialSimState = simulationState.get();
+    const initialFov = options.fov ?? initialSimState.camera?.fov ?? DEFAULT_FOV;
+    this.fov = initialFov; // Store initial FOV
+
     // Create camera with far clip plane suitable for space scenes
     this.camera = new THREE.PerspectiveCamera(
-      60,
+      this.fov, // Use the fov property
       container.clientWidth / container.clientHeight,
       0.0001, // Much closer near plane
       10000000, // Much further far plane
     );
 
     // Initial camera position from state
-    const { camera } = simulationState.get();
+    const { camera } = initialSimState; // Use already retrieved state
     this.camera.position.set(
       camera.position.x,
       camera.position.y,
@@ -65,8 +77,10 @@ export class SceneManager {
 
     // Create renderer with options
     this.renderer = new THREE.WebGLRenderer({
-      antialias: options.antialias !== false,
-      powerPreference: "high-performance",
+      antialias: true,
+      stencil: false,
+      preserveDrawingBuffer: true,
+      powerPreference: "default",
     });
 
     // Setup renderer
@@ -121,6 +135,26 @@ export class SceneManager {
 
     this.width = container.clientWidth;
     this.height = container.clientHeight;
+  }
+
+  /**
+   * Sets the Field of View (FOV) of the camera.
+   * @param newFov The new FOV value in degrees.
+   */
+  public setFov(newFov: number): void {
+    if (this.fov === newFov) return; // No change needed
+
+    this.fov = newFov;
+    this.camera.fov = newFov;
+    this.camera.updateProjectionMatrix(); // Crucial step to apply FOV change
+    console.log(`[SceneManager] Camera FOV set to: ${newFov}`);
+
+    // Persist FOV change to global state (optional, but good practice)
+    // TODO: Consider if this direct update is desired or should be handled higher up
+    // simulationState.setKey("camera", {
+    //   ...simulationState.get().camera,
+    //   fov: newFov,
+    // });
   }
 
   /**

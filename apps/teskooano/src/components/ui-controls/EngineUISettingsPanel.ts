@@ -21,6 +21,15 @@ template.innerHTML = `
       align-items: center;
       margin-bottom: 8px;
     }
+    .setting-row input[type=range] {
+      flex-grow: 1;
+      margin: 0 10px;
+    }
+    .setting-row .value-display {
+      min-width: 30px; /* Ensure space for value */
+      text-align: right;
+      color: var(--color-text-primary, #eee);
+    }
     label {
       margin-right: 10px;
       color: var(--color-text-secondary, #aaa);
@@ -102,6 +111,11 @@ template.innerHTML = `
       <span class="slider"></span>
     </label>
   </div>
+  <div class="setting-row">
+    <label for="fov-slider">FOV</label>
+    <input type="range" id="fov-slider" min="30" max="140" step="1">
+    <span id="fov-value" class="value-display">75</span>
+  </div>
   <div id="error-message" class="error-message" style="display: none;"></div>
 `;
 
@@ -110,10 +124,12 @@ export class EngineUISettingsPanel extends HTMLElement {
   private labelsToggle: HTMLInputElement | null = null;
   private auMarkersToggle: HTMLInputElement | null = null;
   private debrisEffectsToggle: HTMLInputElement | null = null;
+  private fovSlider: HTMLInputElement | null = null;
+  private fovValueDisplay: HTMLElement | null = null;
   private errorMessageElement: HTMLElement | null = null;
 
-  private _parentPanel: CompositeEnginePanel | null = null; // Store parent panel instance
-  private _unsubscribeParentState: (() => void) | null = null; // To unsub from parent state
+  private _parentPanel: CompositeEnginePanel | null = null;
+  private _unsubscribeParentState: (() => void) | null = null;
 
   constructor() {
     super();
@@ -134,11 +150,12 @@ export class EngineUISettingsPanel extends HTMLElement {
     this.debrisEffectsToggle = this.shadowRoot!.getElementById(
       "debris-effects-toggle",
     ) as HTMLInputElement;
+    this.fovSlider = this.shadowRoot!.getElementById("fov-slider") as HTMLInputElement;
+    this.fovValueDisplay = this.shadowRoot!.getElementById("fov-value");
     this.errorMessageElement = this.shadowRoot!.getElementById("error-message");
 
     this.addEventListeners();
 
-    // Attempt to sync state if parent panel is already set
     if (this._parentPanel) {
       this.syncWithParentPanelState();
     }
@@ -146,7 +163,7 @@ export class EngineUISettingsPanel extends HTMLElement {
 
   disconnectedCallback() {
     this.removeEventListeners();
-    this._unsubscribeParentState?.(); // Unsubscribe from parent state
+    this._unsubscribeParentState?.();
     this._unsubscribeParentState = null;
   }
 
@@ -164,6 +181,7 @@ export class EngineUISettingsPanel extends HTMLElement {
       "change",
       this.handleDebrisEffectsToggleChange,
     );
+    this.fovSlider?.addEventListener("input", this.handleFovChange);
   }
 
   private removeEventListeners(): void {
@@ -180,43 +198,34 @@ export class EngineUISettingsPanel extends HTMLElement {
       "change",
       this.handleDebrisEffectsToggleChange,
     );
+    this.fovSlider?.removeEventListener("input", this.handleFovChange);
   }
 
-  /**
-   * Public method for the parent component (CompositeEnginePanel)
-   * to provide its instance.
-   */
   public setParentPanel(panel: CompositeEnginePanel): void {
     this._parentPanel = panel;
-    // If connected, sync state now
     if (this.isConnected) {
       this.syncWithParentPanelState();
     }
   }
 
-  // Method to get initial state and subscribe to updates from parent panel
   private syncWithParentPanelState(): void {
     if (!this._parentPanel) {
       this.showError("Parent panel not available.");
       return;
     }
 
-    // Unsubscribe from previous parent state if any
     this._unsubscribeParentState?.();
 
-    // Get initial state from parent panel
     const initialState = this._parentPanel.getViewState();
-    this.updateToggleState(initialState);
+    this.updateUiState(initialState);
 
-    // Subscribe to state changes from parent panel
     this._unsubscribeParentState = this._parentPanel.subscribeToViewState(
       (newState: PanelViewState) => {
-        this.updateToggleState(newState);
+        this.updateUiState(newState);
       },
     );
   }
 
-  // Event handlers bound to the class instance
   private handleGridToggleChange = (event: Event): void => {
     if (!this._parentPanel) return;
     const isChecked = (event.target as HTMLInputElement).checked;
@@ -241,18 +250,30 @@ export class EngineUISettingsPanel extends HTMLElement {
     this._parentPanel.setDebrisEffectsEnabled(isChecked);
   };
 
-  private updateToggleState(viewState: PanelViewState): void {
+  private handleFovChange = (event: Event): void => {
+    if (!this._parentPanel || !this.fovSlider || !this.fovValueDisplay) return;
+    const newFov = parseInt((event.target as HTMLInputElement).value, 10);
+    this._parentPanel.setFov(newFov);
+    this.fovValueDisplay.textContent = newFov.toString();
+  };
+
+  private updateUiState(viewState: PanelViewState): void {
     if (this.gridToggle) {
-      this.gridToggle.checked = viewState.showGrid ?? true; // Default to true if undefined
+      this.gridToggle.checked = viewState.showGrid ?? true;
     }
     if (this.labelsToggle) {
-      this.labelsToggle.checked = viewState.showCelestialLabels ?? true; // Default to true if undefined
+      this.labelsToggle.checked = viewState.showCelestialLabels ?? true;
     }
     if (this.auMarkersToggle) {
-      this.auMarkersToggle.checked = viewState.showAuMarkers ?? true; // Default to true if undefined
+      this.auMarkersToggle.checked = viewState.showAuMarkers ?? true;
     }
     if (this.debrisEffectsToggle) {
-      this.debrisEffectsToggle.checked = viewState.showDebrisEffects ?? false; // Default to true if undefined
+      this.debrisEffectsToggle.checked = viewState.showDebrisEffects ?? false;
+    }
+    if (this.fovSlider && this.fovValueDisplay) {
+      const currentFov = viewState.fov ?? 75;
+      this.fovSlider.value = currentFov.toString();
+      this.fovValueDisplay.textContent = currentFov.toString();
     }
   }
 
@@ -271,5 +292,4 @@ export class EngineUISettingsPanel extends HTMLElement {
   }
 }
 
-// Define the custom element
 customElements.define("engine-ui-settings-panel", EngineUISettingsPanel);

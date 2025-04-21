@@ -24,6 +24,7 @@ import { OrbitManager } from "@teskooano/renderer-threejs-visualization";
 
 import { layoutOrientationStore, Orientation } from "../../stores/layoutStore";
 import "../shared/CollapsibleSection"; // Needed for UI sections
+import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
 
 // --- Constants for Resizer ---
 const RESIZER_WIDTH = 4; // px
@@ -55,6 +56,9 @@ interface RendererStats {
   memory?: { usedJSHeapSize?: number };
 }
 
+// Default FOV for the panel state, aligning with SceneManager's default
+const DEFAULT_PANEL_FOV = 75;
+
 export interface PanelViewState {
   cameraPosition: THREE.Vector3;
   cameraTarget: THREE.Vector3;
@@ -64,6 +68,7 @@ export interface PanelViewState {
   showAuMarkers?: boolean;
   showDebrisEffects?: boolean;
   showDebugSphere?: boolean;
+  fov?: number; // Added FOV to state
 }
 
 let isSimulationLoopStarted = false;
@@ -185,6 +190,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       showCelestialLabels: true,
       showAuMarkers: true,
       showDebrisEffects: false,
+      fov: DEFAULT_PANEL_FOV, // Initialize FOV state
     });
   }
 
@@ -265,20 +271,30 @@ export class CompositeEnginePanel implements IContentRenderer {
   private applyViewStateToRenderer(updates: Partial<PanelViewState>): void {
     if (!this._renderer) return;
 
+    // Apply individual state changes to the renderer components
     if (updates.showGrid !== undefined) {
-      this._renderer.setGridVisible(updates.showGrid);
+      this._renderer.sceneManager.setGridVisible(updates.showGrid);
     }
     if (updates.showCelestialLabels !== undefined) {
-      this._renderer.setCelestialLabelsVisible(updates.showCelestialLabels);
+      this._renderer.css2DManager?.setLayerVisibility(
+        CSS2DLayerType.CELESTIAL_LABELS,
+        updates.showCelestialLabels,
+      );
     }
     if (updates.showAuMarkers !== undefined) {
-      this._renderer.setAuMarkersVisible(updates.showAuMarkers);
+      this._renderer.sceneManager.setAuMarkersVisible(updates.showAuMarkers);
     }
     if (updates.showDebrisEffects !== undefined) {
-      this._renderer.setDebrisEffectsEnabled(updates.showDebrisEffects);
+      // TODO: Implement debris effect toggle in renderer
+      console.warn(
+        "Debris effects toggle not yet implemented in renderer.",
+        updates.showDebrisEffects,
+      );
     }
-    // Add other direct renderer updates here if needed (e.g., camera, focus)
-    // Note: Focus is likely handled separately via controlsManager
+    if (updates.fov !== undefined) {
+      this._renderer.sceneManager.setFov(updates.fov);
+    }
+
   }
 
   // --- Public methods for UI controls to call (Calls updateViewState internally) ---
@@ -909,6 +925,12 @@ export class CompositeEnginePanel implements IContentRenderer {
 
     // Remove event listeners (if any were added directly)
   }
+
+  // --- ADD setFov method ---
+  public setFov(fov: number): void {
+    this.updateViewState({ fov });
+  }
+  // --- End Add ---
 }
 
 // --- Add Constants Needed by Focus Methods ---

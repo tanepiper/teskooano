@@ -49,8 +49,9 @@ export function startSimulationLoop() {
       const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
       lastTime = currentTime;
 
-      const fixedDeltaTime = Math.min(deltaTime, 0.01); // Cap at 100fps rate for physics
-      // const fixedDeltaTime = Math.min(deltaTime, 0.001); // TEST: Cap at 1000fps physics rate
+      // Cap the delta time used for physics calculations
+      // const fixedDeltaTime = Math.min(deltaTime, 0.01); // Cap at 100fps rate for physics
+      const fixedDeltaTime = Math.min(deltaTime, 0.001); // USE SMALLER CAP: Cap at 1000fps physics rate
 
       if (!simulationState.get().paused) {
         const timeScale = simulationState.get().timeScale;
