@@ -1,13 +1,8 @@
 import * as THREE from "three";
-// Import constants from data-types
 import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import { simulationState } from "@teskooano/core-state";
-// Import CSS2D types
 import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
-// --- Import simulation state ---
-import { type PerformanceProfileType } from "@teskooano/core-state";
-// --- End import ---
 
 /**
  * Default FOV value if not provided or found in state.
@@ -97,6 +92,7 @@ export class SceneManager {
 
     // Create renderer with options
     this.renderer = new THREE.WebGLRenderer({
+      alpha: true,
       antialias: true,
       stencil: false,
       logarithmicDepthBuffer: false,

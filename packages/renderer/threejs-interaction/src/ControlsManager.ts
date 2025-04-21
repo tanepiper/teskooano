@@ -98,12 +98,36 @@ export class ControlsManager {
 
     // --- Initialize FlyControls (Disabled by default) ---
     this.flyControls = new FlyControls(camera, domElement);
-    this.flyControls.movementSpeed = 50000; // Significantly increased speed
-    this.flyControls.rollSpeed = 50; // Increased roll sensitivity significantly (tune further)
+    this.flyControls.movementSpeed = 5000; // Significantly increased speed
+    this.flyControls.rollSpeed = 20; // Increased roll sensitivity significantly (tune further)
     this.flyControls.autoForward = false;
     this.flyControls.dragToLook = true; // Use mouse drag to look around
     this.flyControls.enabled = false; // Start disabled
     // --- End FlyControls Init ---
+
+    let shiftAcceleration = 1000;
+    let shiftInterval = 1000;
+    let intervalId: NodeJS.Timeout | null = null;
+    window.addEventListener("keydown", (event) => {
+      if (event.shiftKey) {
+        this.flyControls.movementSpeed = 50000;
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+        intervalId = setInterval(() => {
+          this.flyControls.movementSpeed += shiftAcceleration;
+        }, shiftInterval);
+      }
+    });
+
+    window.addEventListener("keyup", (event) => {
+      //if (event.shiftKey) {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      this.flyControls.movementSpeed = 5000;
+      // }
+    });
   }
 
   /**
