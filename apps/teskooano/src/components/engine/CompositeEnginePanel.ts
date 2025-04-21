@@ -1,5 +1,10 @@
 import { startSimulationLoop } from "@teskooano/app-simulation";
-import { celestialObjectsStore, panelRegistry } from "@teskooano/core-state";
+import {
+  celestialObjectsStore,
+  panelRegistry,
+  simulationState, // Import global simulation state
+  type SimulationState, // Import state type
+} from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
   DockviewPanelApi,
@@ -63,7 +68,7 @@ export interface PanelViewState {
   showCelestialLabels?: boolean;
   showAuMarkers?: boolean;
   showDebrisEffects?: boolean;
-  showDebugSphere?: boolean;
+  isDebugMode?: boolean;
   fov?: number;
 }
 
@@ -98,7 +103,9 @@ export class CompositeEnginePanel implements IContentRenderer {
   // --- View Orientation Handling ---
   private _layoutUnsubscribe: (() => void) | null = null;
   private _currentOrientation: Orientation | null = null;
-  private _dataListenerUnsubscribe: (() => void) | null = null;
+  private _celestialObjectsUnsubscribe: (() => void) | null = null; // Renamed for clarity
+  private _simulationStateUnsubscribe: (() => void) | null = null; // For global state
+  private _previousSimState: SimulationState | null = null; // Store previous state for comparison
   private _isInitialized = false;
 
   // --- Add CameraManager instance ---
@@ -166,7 +173,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       showCelestialLabels: true,
       showAuMarkers: true,
       showDebrisEffects: false,
-      showDebugSphere: false,
+      isDebugMode: false,
       fov: DEFAULT_PANEL_FOV,
     });
   }
@@ -288,6 +295,9 @@ export class CompositeEnginePanel implements IContentRenderer {
     if (updates.fov !== undefined) {
       this._renderer.sceneManager.setFov(updates.fov);
     }
+    if (updates.isDebugMode !== undefined) {
+      this._renderer.setDebugMode(updates.isDebugMode);
+    }
     // Add other state applications here as needed
   }
 
@@ -364,6 +374,11 @@ export class CompositeEnginePanel implements IContentRenderer {
         `[CompositePanel ${this._api?.id}] clearFocus called before CameraManager was initialized.`,
       );
     }
+  }
+
+  /** Enables or disables the global renderer debug mode. */
+  public setDebugMode(enabled: boolean): void {
+    this.updateViewState({ isDebugMode: enabled });
   }
   // --- End FocusControl Methods ---
 
@@ -443,8 +458,8 @@ export class CompositeEnginePanel implements IContentRenderer {
     }
 
     // Subscribe to celestial objects data to trigger renderer/UI setup
-    this._dataListenerUnsubscribe?.(); // Clean up previous listener if any
-    this._dataListenerUnsubscribe = celestialObjectsStore.subscribe(
+    this._celestialObjectsUnsubscribe?.(); // Clean up previous listener if any
+    this._celestialObjectsUnsubscribe = celestialObjectsStore.subscribe(
       (celestialObjects) => {
         // Only proceed if the panel hasn't been disposed
         if (!this._element.isConnected) {
@@ -491,6 +506,12 @@ export class CompositeEnginePanel implements IContentRenderer {
     );
 
     this._isInitialized = true; // Mark as initialized *after* setup
+
+    // Subscribe to global simulation state *after* initialization
+    this._simulationStateUnsubscribe?.(); // Clean up previous if any (unlikely here)
+    this._simulationStateUnsubscribe = simulationState.subscribe(
+      this.handleSimulationStateChange,
+    );
   }
 
   /**
@@ -506,11 +527,22 @@ export class CompositeEnginePanel implements IContentRenderer {
         shadows: true,
         hdr: true,
         background: "black",
-        showDebugSphere: this._viewStateStore.get().showDebugSphere ?? false,
         showGrid: this._viewStateStore.get().showGrid,
         showCelestialLabels: true, // Defaulting to true, controlled by state later
         showAuMarkers: this._viewStateStore.get().showAuMarkers,
       });
+
+      // --- Subscribe to simulation state for visual settings ---
+      // Note: We also subscribe in init(), but need to ensure we capture initial state
+      //       if the renderer initializes *after* the first state emit.
+      if (!this._simulationStateUnsubscribe) {
+        // Avoid double subscription
+        this._simulationStateUnsubscribe = simulationState.subscribe(
+          this.handleSimulationStateChange,
+        );
+      }
+      // Apply initial simulation state values that affect the renderer
+      this.handleSimulationStateChange(simulationState.get());
 
       // --- Initialize Camera Manager ---
       this._cameraManager = new CameraManager({
@@ -553,6 +585,16 @@ export class CompositeEnginePanel implements IContentRenderer {
       }
     }
   }
+
+  /**
+   * Handles changes in the global simulation state, updating the renderer as needed.
+   * @param newState The latest simulation state.
+   */
+  private handleSimulationStateChange = (newState: SimulationState): void => {
+    if (!this._renderer?.orbitManager) return; // Need orbit manager
+    // Update previous state for next comparison
+    this._previousSimState = newState;
+  };
 
   /**
    * Initializes the UI controls section based on the configuration
@@ -678,9 +720,11 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._layoutUnsubscribe?.();
     this._layoutUnsubscribe = null;
 
-    // Unsubscribe from data listener
-    this._dataListenerUnsubscribe?.();
-    this._dataListenerUnsubscribe = null;
+    // Unsubscribe from data listeners
+    this._celestialObjectsUnsubscribe?.();
+    this._celestialObjectsUnsubscribe = null;
+    this._simulationStateUnsubscribe?.();
+    this._simulationStateUnsubscribe = null;
 
     // Dispose renderer and UI (handles renderer disposal, resize observer, UI clear)
     this.disposeRendererAndUI();

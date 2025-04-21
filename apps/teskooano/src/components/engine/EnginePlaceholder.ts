@@ -33,7 +33,7 @@ template.innerHTML = `
     }
 
     img {
-      max-width: 400px;
+      max-width: 250px;
       height: auto;
       margin-top: var(--space-lg, 2rem);
       opacity: 0.7;
@@ -49,6 +49,20 @@ template.innerHTML = `
       --button-border-radius: var(--border-radius-md);
     }
 
+    .placeholder-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .placeholder-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+      
     /* Focus styles might need adjustment if default is different */
     /* teskooano-button:focus-visible { ... } */
 
@@ -66,13 +80,8 @@ template.innerHTML = `
       display: flex;
       justify-content: center;
       width: 100%;
-      max-width: 300px; /* Limit width */
     }
 
-    toolbar-seed-form {
-        /* Adjust styles if needed */
-        gap: var(--space-xs);
-    }
     /* Ensure button inside seed form doesn't get too big */
     toolbar-seed-form teskooano-button {
         flex-shrink: 0;
@@ -95,7 +104,11 @@ template.innerHTML = `
       }
     }
   </style>
-  <div>
+  <div class="placeholder-container">
+    <div class="placeholder-content">
+   <img src="/assets/panel-icon.png" alt="Teskooano Loading Screen" />
+   </div>
+   <div class="placeholder-content">
     <h2>🔭 Teskooano...</h2>
     <h3>Waiting for celestial objects data...</h3>
     <teskooano-button id="start-tour-button">
@@ -114,7 +127,7 @@ template.innerHTML = `
     <div class="seed-form-container">
       <toolbar-seed-form id="placeholder-seed-form"></toolbar-seed-form>
     </div>
-    <img src="/assets/panel-icon.png" alt="Teskooano Loading Screen" />  
+     
   </div>
 `;
 

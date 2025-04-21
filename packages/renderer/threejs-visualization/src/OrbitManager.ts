@@ -69,7 +69,7 @@ export class OrbitManager {
   /** Counter used to throttle how often Verlet predictions are recalculated. */
   private predictionUpdateCounter: number = 0;
   /** Recalculate predictions every N calls to `updateAllVisualizations`. */
-  private readonly predictionUpdateFrequency: number = 1; // Update prediction every frame
+  private readonly predictionUpdateFrequency: number = 15; // Update prediction less frequently
 
   /** Reference to the ObjectManager for adding/removing lines from the scene. */
   private objectManager: ObjectManager;

@@ -40,6 +40,8 @@ export class MeshFactory {
   ) => THREE.LOD;
   /** @internal Reference to the LODManager to query parent LOD levels. */
   private lodManager: LODManager;
+  /** @internal Flag to enable debug rendering (fallback spheres). */
+  private _isDebugMode: boolean = false;
 
   /**
    * Creates an instance of MeshFactory.
@@ -67,6 +69,19 @@ export class MeshFactory {
     this.ringSystemRenderers = ringSystemRenderers;
     this.createAndRegisterLOD = createAndRegisterLOD;
     this.lodManager = lodManager;
+  }
+
+  /**
+   * Sets the debug rendering mode.
+   * @param enabled - If true, forces the factory to create fallback spheres instead of detailed meshes.
+   */
+  public setDebugMode(enabled: boolean): void {
+    this._isDebugMode = enabled;
+    console.log(
+      `[MeshFactory] Debug mode ${enabled ? "enabled" : "disabled"}.`,
+    );
+    // Note: This doesn't automatically update existing meshes.
+    // Debug mode will apply to newly created or recreated meshes.
   }
 
   /**
@@ -191,6 +206,15 @@ export class MeshFactory {
    * @returns A Three.js `Object3D` representing the celestial object, or a fallback sphere on failure.
    */
   createObjectMesh(object: RenderableCelestialObject): THREE.Object3D {
+    // --- Force Fallback Sphere in Debug Mode ---
+    if (this._isDebugMode) {
+      console.log(
+        `[MeshFactory] Debug mode: Creating fallback for ${object.celestialObjectId}`,
+      );
+      return this.createFallbackSphere(object);
+    }
+    // --- End Debug Mode Check ---
+
     const renderer = this.getOrCreateRenderer(object);
 
     if (!renderer) {

@@ -129,6 +129,19 @@ export class ObjectManager {
   private _enableDebrisEffects: boolean = true; // Default to true
 
   /**
+   * Sets the debug rendering mode for the underlying MeshFactory.
+   * This will affect newly created meshes.
+   * @param enabled - If true, forces MeshFactory to use fallback spheres.
+   */
+  public setDebugMode(enabled: boolean): void {
+    if (this.meshFactory) {
+      this.meshFactory.setDebugMode(enabled);
+      // TODO: Consider if we need to force-recreate meshes when toggling debug mode.
+      // Currently, it only affects *new* objects added or objects whose meshes get recreated.
+    }
+  }
+
+  /**
    * Creates an instance of ObjectManager.
    * @param scene - The main Three.js scene.
    * @param camera - The primary Three.js camera.
@@ -1089,5 +1102,31 @@ export class ObjectManager {
     if (obj.parent === this.scene) {
       this.scene.remove(obj);
     }
+  }
+
+  /**
+   * Forces the recreation of all managed Three.js objects based on the current state
+   * in the renderableObjectsStore. This is useful for applying changes like debug mode
+   * that require mesh regeneration.
+   */
+  public recreateAllMeshes(): void {
+    console.log("[ObjectManager] Recreating all meshes...");
+    const currentState = this.renderableObjectsStore.get();
+    const currentIds = Array.from(this.objects.keys()); // Get IDs before removing
+
+    // Remove all existing objects first
+    currentIds.forEach((id) => {
+      this.internalRemoveObject(id);
+    });
+
+    // Add objects back based on the current state and MeshFactory settings
+    for (const objectId in currentState) {
+      const objectData = currentState[objectId];
+      if (objectData.status === CelestialStatus.ACTIVE) {
+        // Only re-add active objects
+        this.internalAddObject(objectData);
+      }
+    }
+    console.log("[ObjectManager] Finished recreating meshes.");
   }
 }

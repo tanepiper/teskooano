@@ -271,7 +271,7 @@ export class SettingsPanel implements IContentRenderer {
       currentState.visualSettings.trailLengthMultiplier;
 
     // Update state when slider changes
-    this.trailSliderElement.addEventListener("input", (event) => {
+    this.trailSliderElement.addEventListener("change", (event) => {
       const target = event.target as TeskooanoSlider;
       const sliderValueNumber = target.value;
 

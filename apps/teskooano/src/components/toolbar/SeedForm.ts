@@ -20,7 +20,7 @@ template.innerHTML = `
   <style>
     :host {
       display: inline-flex;
-      align-items: center;
+      align-items: baseline;
       gap: var(--space-sm, 8px);
       font-family: var(--font-family, sans-serif);
     }
@@ -29,15 +29,14 @@ template.innerHTML = `
     #seed-input {
       box-sizing: border-box;
       width: 120px;
-      height: 28px; /* Match button height roughly */
       padding: var(--space-xs, 4px) var(--space-sm, 8px);
       border: 1px solid var(--color-border, #50506a);
       border-radius: var(--border-radius-sm, 3px);
       background-color: var(--color-surface-inset, #1a1a2e);
       color: var(--color-text, #e0e0fc);
       font-size: var(--font-size-md, 1em);
-      line-height: 1.5; /* Adjust if needed */
-      margin-bottom: 0; /* Override browser defaults */
+      line-height: 1.5;
+      vertical-align: baseline;
     }
 
     #seed-input:focus {
@@ -53,12 +52,8 @@ template.innerHTML = `
       margin-right: var(--space-xxs, 2px);
     }
 
-    :host([mobile]) .seed-label {
-      display: none; /* Hide label */
-    }
-
     :host([mobile]) #seed-input {
-      width: 60px; /* Make input narrower */
+      width: 80px;
     }
 
     /* Target the text span we added earlier */

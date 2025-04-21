@@ -4,9 +4,10 @@ import { simulationState } from "@teskooano/core-state";
 import { Vector3 } from "three";
 import { OSVector3 } from "@teskooano/core-math";
 import gsap from "gsap";
+import { FlyControls } from "three/examples/jsm/controls/FlyControls.js";
 
 /**
- * Manages camera controls (specifically THREE.OrbitControls) and user interaction
+ * Manages camera controls (OrbitControls or FlyControls) and user interaction
  * within a Three.js scene. Handles smooth camera transitions between targets,
  * following moving objects, and synchronizing camera state with the global simulation state.
  *
@@ -17,6 +18,8 @@ import gsap from "gsap";
 export class ControlsManager {
   /** The underlying OrbitControls instance. */
   public controls: OrbitControls;
+  /** The free-flight camera controls instance. */
+  private flyControls: FlyControls;
   /** The camera being controlled. */
   private camera: THREE.PerspectiveCamera;
   /** Flag indicating if the camera is currently undergoing a GSAP animation. */
@@ -39,6 +42,12 @@ export class ControlsManager {
   private previousFollowTargetPos = new THREE.Vector3(); // Re-add previousFollowTargetPos for delta calculation
   /** Stores the calculated camera offset relative to the target at the end of a transition. (Currently unused in update loop but kept for reference). */
   private finalFollowOffset: THREE.Vector3 | null = null; // Stored offset for following - Keep for potential future use or reference?
+  /** Tracks whether debug/fly controls are active. */
+  private isDebugModeActive: boolean = false;
+  /** Stores the last OrbitControls target before switching to debug mode. */
+  private lastOrbitTarget: THREE.Vector3 = new THREE.Vector3();
+  /** Clock for FlyControls delta calculation. */
+  private clock = new THREE.Clock();
 
   /**
    * Creates an instance of ControlsManager.
@@ -47,6 +56,8 @@ export class ControlsManager {
    */
   constructor(camera: THREE.PerspectiveCamera, domElement: HTMLElement) {
     this.camera = camera;
+
+    // --- Initialize OrbitControls ---
     this.controls = new OrbitControls(camera, domElement);
 
     // Configure orbit controls for space simulation
@@ -84,6 +95,15 @@ export class ControlsManager {
         });
       }
     });
+
+    // --- Initialize FlyControls (Disabled by default) ---
+    this.flyControls = new FlyControls(camera, domElement);
+    this.flyControls.movementSpeed = 50000; // Significantly increased speed
+    this.flyControls.rollSpeed = 50; // Increased roll sensitivity significantly (tune further)
+    this.flyControls.autoForward = false;
+    this.flyControls.dragToLook = true; // Use mouse drag to look around
+    this.flyControls.enabled = false; // Start disabled
+    // --- End FlyControls Init ---
   }
 
   /**
@@ -323,47 +343,54 @@ export class ControlsManager {
    * Handles applying damping, processing user input, and updating camera/target
    * positions when following an object.
    */
-  update(): void {
-    // Only process if controls are enabled
-    if (this.controls.enabled) {
-      // --- Following Logic ---
-      if (this.followingTargetObject && !this.isTransitioning) {
-        // Get the target's current world position
+  update(delta: number): void {
+    if (this.isTransitioning) {
+      // GSAP handles updates during transitions
+      return;
+    }
+
+    // Only update the active controls
+    if (this.isDebugModeActive) {
+      this.flyControls.update(delta); // Pass delta time to FlyControls
+    } else {
+      this.controls.update(); // OrbitControls update (handles damping etc.)
+
+      // --- Following Logic (only for OrbitControls) ---
+      if (this.followingTargetObject) {
+        // Get current world position of the target
         this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
 
-        // Check if previous position is valid (not the first frame after transition/reset)
-        if (!this.previousFollowTargetPos.equals(new THREE.Vector3(0, 0, 0))) {
-          // Calculate how much the target moved since the last frame
-          const deltaMovement = this.tempTargetPosition
-            .clone()
-            .sub(this.previousFollowTargetPos);
+        // Calculate how much the target moved since the last frame
+        const targetDelta = this.tempTargetPosition
+          .clone()
+          .sub(this.previousFollowTargetPos);
 
-          // Apply this exact movement delta to the camera's position
-          this.camera.position.add(deltaMovement);
-        }
+        // Add this delta to both the camera position and the control target
+        this.camera.position.add(targetDelta);
+        this.controls.target.add(targetDelta);
 
-        // Update the OrbitControls target to the object's new position
-        this.controls.target.copy(this.tempTargetPosition);
-
-        // Store the current target position for the next frame's delta calculation
+        // Update the previous position for the next frame
         this.previousFollowTargetPos.copy(this.tempTargetPosition);
+
+        // No need to explicitly update controls here if damping is enabled,
+        // as the 'change' event listener or the main controls.update() call will handle it.
+        // However, calling update() might be necessary if damping is off or for immediate effect.
+        // Let's rely on the main controls.update() call above for now.
       }
       // --- End Following Logic ---
-
-      // Always call controls.update() if enabled.
-      // This applies damping, processes user input (if not following/transitioning),
-      // and finalizes the camera position/orientation based on current target and user input.
-      this.controls.update();
     }
   }
 
   /**
-   * Enables or disables the OrbitControls, preventing user interaction.
-   *
-   * @param {boolean} enabled Set to true to enable, false to disable.
+   * Enables or disables the currently active camera controls.
+   * @param {boolean} enabled - Whether to enable the active controls.
    */
   setEnabled(enabled: boolean): void {
-    this.controls.enabled = enabled;
+    if (this.isDebugModeActive) {
+      this.flyControls.enabled = enabled;
+    } else {
+      this.controls.enabled = enabled;
+    }
   }
 
   /**
@@ -481,5 +508,34 @@ export class ControlsManager {
       finalTargetPosition, // End Target
       true, // Use transition
     );
+  }
+
+  /**
+   * Sets the debug mode, switching between OrbitControls and FlyControls.
+   * @param {boolean} enabled - True to enable debug/fly controls, false for orbit controls.
+   */
+  public setDebugMode(enabled: boolean): void {
+    if (this.isDebugModeActive === enabled) return; // No change
+
+    this.isDebugModeActive = enabled;
+
+    if (enabled) {
+      // Switching TO debug mode
+      this.cancelTransition(); // Cancel any camera movement
+      this.setFollowTarget(null); // Stop following any target
+      this.lastOrbitTarget.copy(this.controls.target); // Save current orbit target
+      this.controls.enabled = false;
+      this.flyControls.enabled = true;
+      console.log("[ControlsManager] Debug Mode Enabled (FlyControls Active)");
+    } else {
+      // Switching FROM debug mode
+      this.flyControls.enabled = false;
+      this.controls.target.copy(this.lastOrbitTarget); // Restore old target
+      this.controls.enabled = true;
+      this.controls.update(); // Update orbit controls state
+      console.log(
+        "[ControlsManager] Debug Mode Disabled (OrbitControls Active)",
+      );
+    }
   }
 }

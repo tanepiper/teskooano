@@ -1,9 +1,7 @@
-// import type { PanelViewState } from "@teskooano/core-state"; // Removed - Type defined in CompositePanel
-// import { panelRegistry } from "@teskooano/core-state"; // Removed
-// import type { EnginePanel } from "../engine/EnginePanel"; // Removed
-// import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs"; // Not needed directly
 import type { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // Import parent panel type
 import type { PanelViewState } from "../engine/CompositeEnginePanel"; // Import type from parent
+import "../shared/Slider.js"; // Import the slider component
+import type { TeskooanoSlider } from "../shared/Slider.js"; // Import the slider type
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -77,6 +75,11 @@ template.innerHTML = `
       transform: translateX(14px);
       background-color: white;
     }
+    /* Add margin to the slider component */
+    teskooano-slider {
+      /* Override default margin if needed, or use existing variables */
+      /* Example: margin-bottom: var(--space-sm, 8px); */
+    }
     .error-message {
         color: var(--color-error, #f44336);
         font-style: italic;
@@ -112,10 +115,22 @@ template.innerHTML = `
     </label>
   </div>
   <div class="setting-row">
-    <label for="fov-slider">FOV</label>
-    <input type="range" id="fov-slider" min="30" max="140" step="1">
-    <span id="fov-value" class="value-display">75</span>
+    <label for="debug-mode-toggle">Debug Mode</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="debug-mode-toggle">
+      <span class="slider"></span>
+    </label>
   </div>
+  <teskooano-slider 
+    id="fov-slider" 
+    label="FOV" 
+    min="30" 
+    max="140" 
+    step="1" 
+    value="75"
+    editable-value
+    help-text="Adjust the camera Field of View (degrees)"
+  ></teskooano-slider>
   <div id="error-message" class="error-message" style="display: none;"></div>
 `;
 
@@ -124,9 +139,9 @@ export class EngineUISettingsPanel extends HTMLElement {
   private labelsToggle: HTMLInputElement | null = null;
   private auMarkersToggle: HTMLInputElement | null = null;
   private debrisEffectsToggle: HTMLInputElement | null = null;
-  private fovSlider: HTMLInputElement | null = null;
-  private fovValueDisplay: HTMLElement | null = null;
+  private fovSliderElement: TeskooanoSlider | null = null;
   private errorMessageElement: HTMLElement | null = null;
+  private debugModeToggle: HTMLInputElement | null = null;
 
   private _parentPanel: CompositeEnginePanel | null = null;
   private _unsubscribeParentState: (() => void) | null = null;
@@ -150,11 +165,13 @@ export class EngineUISettingsPanel extends HTMLElement {
     this.debrisEffectsToggle = this.shadowRoot!.getElementById(
       "debris-effects-toggle",
     ) as HTMLInputElement;
-    this.fovSlider = this.shadowRoot!.getElementById(
+    this.fovSliderElement = this.shadowRoot!.getElementById(
       "fov-slider",
-    ) as HTMLInputElement;
-    this.fovValueDisplay = this.shadowRoot!.getElementById("fov-value");
+    ) as TeskooanoSlider;
     this.errorMessageElement = this.shadowRoot!.getElementById("error-message");
+    this.debugModeToggle = this.shadowRoot!.getElementById(
+      "debug-mode-toggle",
+    ) as HTMLInputElement;
 
     this.addEventListeners();
 
@@ -183,7 +200,11 @@ export class EngineUISettingsPanel extends HTMLElement {
       "change",
       this.handleDebrisEffectsToggleChange,
     );
-    this.fovSlider?.addEventListener("input", this.handleFovChange);
+    this.fovSliderElement?.addEventListener("change", this.handleFovChange);
+    this.debugModeToggle?.addEventListener(
+      "change",
+      this.handleDebugModeToggleChange,
+    );
   }
 
   private removeEventListeners(): void {
@@ -200,7 +221,11 @@ export class EngineUISettingsPanel extends HTMLElement {
       "change",
       this.handleDebrisEffectsToggleChange,
     );
-    this.fovSlider?.removeEventListener("input", this.handleFovChange);
+    this.fovSliderElement?.removeEventListener("change", this.handleFovChange);
+    this.debugModeToggle?.removeEventListener(
+      "change",
+      this.handleDebugModeToggleChange,
+    );
   }
 
   public setParentPanel(panel: CompositeEnginePanel): void {
@@ -252,11 +277,46 @@ export class EngineUISettingsPanel extends HTMLElement {
     this._parentPanel.setDebrisEffectsEnabled(isChecked);
   };
 
+  private handleDebugModeToggleChange = (event: Event): void => {
+    if (!this._parentPanel) return;
+    const isChecked = (event.target as HTMLInputElement).checked;
+    this._parentPanel.setDebugMode(isChecked);
+  };
+
   private handleFovChange = (event: Event): void => {
-    if (!this._parentPanel || !this.fovSlider || !this.fovValueDisplay) return;
-    const newFov = parseInt((event.target as HTMLInputElement).value, 10);
-    this._parentPanel.setFov(newFov);
-    this.fovValueDisplay.textContent = newFov.toString();
+    if (!this._parentPanel) return;
+
+    let newFov: number | undefined;
+
+    // Check if it's a CustomEvent and has the expected detail
+    if (
+      event instanceof CustomEvent &&
+      typeof event.detail?.value === "number"
+    ) {
+      newFov = event.detail.value;
+    } else {
+      // Fallback or error - shouldn't happen if Slider dispatches correctly
+      console.warn(
+        "[EngineUISettingsPanel] Received 'change' event without expected numeric detail.value. Event:",
+        event,
+      );
+      // Optionally, try reading from target as a last resort, but it might be unreliable
+      const slider = event.target as TeskooanoSlider;
+      if (slider && typeof slider.value === "number") {
+        newFov = slider.value;
+      } else {
+        return; // Can't determine new value
+      }
+    }
+
+    // Ensure we have a valid number before calling the parent
+    if (typeof newFov === "number" && !isNaN(newFov)) {
+      this._parentPanel.setFov(newFov);
+    } else {
+      console.error(
+        "[EngineUISettingsPanel] Invalid or undefined FOV value processed.",
+      );
+    }
   };
 
   private updateUiState(viewState: PanelViewState): void {
@@ -272,10 +332,12 @@ export class EngineUISettingsPanel extends HTMLElement {
     if (this.debrisEffectsToggle) {
       this.debrisEffectsToggle.checked = viewState.showDebrisEffects ?? false;
     }
-    if (this.fovSlider && this.fovValueDisplay) {
+    if (this.fovSliderElement) {
       const currentFov = viewState.fov ?? 75;
-      this.fovSlider.value = currentFov.toString();
-      this.fovValueDisplay.textContent = currentFov.toString();
+      this.fovSliderElement.value = currentFov;
+    }
+    if (this.debugModeToggle) {
+      this.debugModeToggle.checked = viewState.isDebugMode ?? false;
     }
   }
 

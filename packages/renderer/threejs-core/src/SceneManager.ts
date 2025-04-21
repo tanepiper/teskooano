@@ -47,7 +47,6 @@ export class SceneManager {
       shadows?: boolean;
       hdr?: boolean;
       background?: string | THREE.Texture;
-      showDebugSphere?: boolean;
       showGrid?: boolean;
       showAuMarkers?: boolean; // Option to control initial visibility
       fov?: number; // Added FOV option
@@ -145,11 +144,6 @@ export class SceneManager {
 
     // Setup AU markers - REMOVE creation call from here
     this.showAuMarkers = options.showAuMarkers !== false; // Control initial state via options
-
-    // Add debug sphere at origin for reference - only if enabled
-    if (options.showDebugSphere) {
-      this.addDebugSphere();
-    }
 
     // Add stronger ambient light for better visibility
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
@@ -265,29 +259,28 @@ export class SceneManager {
   }
 
   /**
-   * Toggle the visibility of the debug sphere
+   * Sets the global debug mode for the scene manager.
+   * This controls the visibility of the origin debug sphere.
+   * @param enabled - If true, shows the debug sphere; otherwise, hides it.
    */
-  toggleDebugSphere(): void {
-    if (this.debugSphere) {
-      // If it exists, toggle its visibility
-      this.debugSphere.visible = !this.debugSphere.visible;
-    } else {
-      // If it doesn't exist, create it and ensure it's visible
-      this.addDebugSphere();
-      // addDebugSphere assigns to this.debugSphere
-      // Check if creation was successful before accessing
+  public setDebugMode(enabled: boolean): void {
+    if (enabled) {
+      if (!this.debugSphere) {
+        this.addDebugSphere(); // Create if it doesn't exist
+      }
       if (this.debugSphere) {
-        // Use non-null assertion (!) to satisfy the linter
-        (this.debugSphere as THREE.Mesh).visible = true;
-      } else {
-        // Handle potential failure in addDebugSphere if necessary
-        console.error("[SceneManager] Failed to create debug sphere.");
+        // Check again in case creation failed
+        this.debugSphere.visible = true;
+      }
+    } else {
+      if (this.debugSphere) {
+        this.debugSphere.visible = false; // Hide if it exists
       }
     }
   }
 
   /**
-   * Toggle visibility of the grid helper
+   * Toggle the visibility of the grid helper
    */
   toggleGrid(): void {
     const targetVisibility = !this.showGrid;

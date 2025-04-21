@@ -53,7 +53,6 @@ export class ModularSpaceRenderer {
       shadows?: boolean;
       hdr?: boolean;
       background?: string | THREE.Texture;
-      showDebugSphere?: boolean;
       showGrid?: boolean;
       showCelestialLabels?: boolean;
       showAuMarkers?: boolean;
@@ -141,9 +140,6 @@ export class ModularSpaceRenderer {
     }
     if (options.showDebrisEffects !== undefined) {
       this.setDebrisEffectsEnabled(options.showDebrisEffects);
-    }
-    if (options.showDebugSphere !== undefined) {
-      this.sceneManager.toggleDebugSphere();
     }
   }
 
@@ -241,7 +237,10 @@ export class ModularSpaceRenderer {
     this.objectManager.update(this.renderer, this.scene, this.camera);
     this.css2DManager?.render(this.camera);
     this.animationLoop.getRenderCallbacks().forEach((callback) => callback());
-    this.controlsManager.update();
+    // --- PASS DELTA TO CONTROLS --- //
+    const delta = this.animationLoop.getDelta(); // Get delta from animation loop (Corrected method name)
+    this.controlsManager.update(delta); // Pass delta to controls manager
+    // --- END PASS DELTA ---
     this.sceneManager.render();
     if (this.canvasUIManager) {
       this.canvasUIManager.render();
@@ -294,15 +293,13 @@ export class ModularSpaceRenderer {
   toggleOrbits(): void {
     this.orbitManager.toggleVisualization();
   }
-  toggleDebugSphere(): void {
-    this.sceneManager.toggleDebugSphere();
-  }
+  // toggleDebugSphere(): void { // <-- REMOVED METHOD
+  //   this.sceneManager.toggleDebugSphere();
+  // }
   // --- END VISIBILITY CONTROLS ---
 
   updateCamera(position: THREE.Vector3, target: THREE.Vector3): void {
-    // We should NOT directly modify the camera position here
-    // Only use the controlsManager to handle camera positioning
-    // This prevents double updates and allows the ControlsManager to handle transitions
+    // Deprecated: Use ControlsManager for camera movement
     this.controlsManager.moveTo(position, target);
   }
 
@@ -394,5 +391,22 @@ export class ModularSpaceRenderer {
    */
   public toggleDebrisEffects(): boolean {
     return this.objectManager.toggleDebrisEffects();
+  }
+
+  /**
+   * Sets the global debug mode for the renderer.
+   * Toggles the origin debug sphere and forces fallback meshes.
+   * Note: Forcing fallback meshes currently requires object recreation.
+   * @param enabled - If true, enables debug mode.
+   */
+  public setDebugMode(enabled: boolean): void {
+    console.log(`[ModularSpaceRenderer] Setting debug mode: ${enabled}`);
+    this.sceneManager.setDebugMode(enabled);
+    this.objectManager.setDebugMode(enabled);
+    this.objectManager.recreateAllMeshes(); // <-- ADDED CALL
+    this.controlsManager.setDebugMode(enabled); // <-- ADDED CALL
+    // TODO: Implement logic to force recreate meshes in ObjectManager if needed
+    // when debug mode changes. Might involve clearing and re-syncing.
+    // console.warn("[ModularSpaceRenderer] Toggling debug mode may require recreating objects to see fallback mesh changes."); // <-- REMOVED WARN
   }
 }
