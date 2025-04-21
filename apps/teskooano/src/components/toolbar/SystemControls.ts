@@ -5,6 +5,7 @@ import { generateAndLoadSystem } from "../../systems/system-generator.js";
 import "../shared/Button.ts";
 import { SystemControlsTemplate } from "./SystemControls.template";
 import * as SystemActions from "./system-controls.actions.js"; // Import the new actions
+import * as SystemControlsUI from "./system-controls.ui.js"; // Import the new UI handlers
 
 /**
  * @element system-controls
@@ -20,7 +21,10 @@ import * as SystemActions from "./system-controls.actions.js"; // Import the new
  *                        (Note: This is currently handled internally via `actions.clearState`).
  * @fires resetSimulationTime - Dispatched after importing a system to reset the simulation loop timer.
  */
-class SystemControls extends HTMLElement {
+class SystemControls
+  extends HTMLElement
+  implements SystemControlsUI.SystemControlsUIContract
+{
   // DOM elements
   /** @internal The main container element for the controls. */
   private container: HTMLElement | null = null;
@@ -111,7 +115,6 @@ class SystemControls extends HTMLElement {
 
     // Initial UI update based on current store state
     this.updateDisplay(celestialObjectsStore.get(), currentSeed.get());
-    this.updateButtonSizes(); // Apply initial mobile state if present
     // Set initial seed input value
     if (this.seedInput) {
       this.seedInput.value = currentSeed.get() || "";
@@ -192,47 +195,16 @@ class SystemControls extends HTMLElement {
 
   /**
    * Updates the size and appearance of buttons based on the mobile state.
+   * Calls the external UI handler.
    * @private
    */
   private updateButtonSizes() {
-    const size = this._isMobile ? "sm" : ""; // Use 'sm' for mobile, default otherwise
-    this.buttons?.forEach((button) => {
-      // Only apply if size makes sense (don't remove size from primary submit?)
-      // Let's apply size="sm" to all buttons on mobile for consistency
-      if (this._isMobile) {
-        button.setAttribute("size", "sm");
-      } else {
-        // Remove 'sm' size if not mobile, revert to potential default
-        if (button.getAttribute("size") === "sm") {
-          // Check if it's the primary submit button, maybe keep its default size?
-          // For simplicity, let's remove 'sm' from all for now.
-          // We can refine this if needed.
-          button.removeAttribute("size");
-        }
-      }
-
-      // Special handling for seed form submit button text based on mobile
-      const submitButton = this.seedForm?.querySelector(
-        'teskooano-button[type="submit"]',
-      );
-      const submitText = submitButton?.querySelector('span:not([slot="icon"])');
-      if (submitText) {
-        (submitText as HTMLElement).style.display = this._isMobile
-          ? "none"
-          : "";
-      }
-      const submitIcon = submitButton?.querySelector('span[slot="icon"]');
-      if (submitIcon) {
-        (submitIcon as HTMLElement).style.marginRight = this._isMobile
-          ? "0"
-          : "";
-      }
-    });
+    SystemControlsUI.updateButtonSizesUI(this);
   }
 
   /**
    * Updates the component's display based on the current system state (objects and seed).
-   * Toggles between empty and loaded states, updates displayed info, and loading overlay.
+   * Calls the external UI handler.
    * @param {Record<string, CelestialObject>} objects - The current map of celestial objects.
    * @param {string} seed - The current system seed.
    * @private
@@ -240,47 +212,8 @@ class SystemControls extends HTMLElement {
   private updateDisplay(
     objects: Record<string, CelestialObject>,
     seed: string,
-  ) {
-    const objectCount = Object.keys(objects).length;
-    const systemLoaded = objectCount > 0;
-
-    // Update visibility based on system state
-    if (this.emptyState && this.loadedState) {
-      this.emptyState.style.display = systemLoaded ? "none" : "";
-      this.loadedState.style.display = systemLoaded ? "" : "none";
-    }
-
-    // Update system info when loaded
-    if (systemLoaded) {
-      const count = objectCount;
-      const currentSystemSeed = seed || "---------";
-      if (this.systemSeedEl) {
-        this.systemSeedEl.textContent = currentSystemSeed;
-        this.systemSeedEl.title = `Seed: ${currentSystemSeed}`;
-      }
-      if (this.celestialCountEl) {
-        this.celestialCountEl.textContent = `${count} Celestial${count !== 1 ? "s" : ""}`;
-      }
-    } else {
-      // Ensure seed input is updated when in empty state
-      // REMOVED: Don't force input value during general UI updates
-      // if (this.seedInput && this.seedInput.value !== seed) {
-      //   this.seedInput.value = seed;
-      // }
-    }
-
-    // Toggle loading overlay
-    if (this.loadingOverlay) {
-      this.loadingOverlay.style.display = this._isGenerating ? "flex" : "none";
-    }
-
-    // Ensure buttons are enabled/disabled correctly based on generating state
-    this.buttons?.forEach((button) => {
-      (button as HTMLButtonElement).disabled = this._isGenerating;
-    });
-
-    // Re-apply mobile styles after potential state changes
-    this.updateButtonSizes();
+  ): void {
+    SystemControlsUI.updateDisplayUI(this, objects, seed);
   }
 
   /**
@@ -572,6 +505,16 @@ class SystemControls extends HTMLElement {
     setTimeout(() => {
       targetElement.innerHTML = originalContentHTML;
     }, duration);
+  }
+
+  /** Public getter for the mobile state. */
+  public isMobile(): boolean {
+    return this._isMobile;
+  }
+
+  /** Public getter for the generating state. */
+  public isGenerating(): boolean {
+    return this._isGenerating;
   }
 }
 

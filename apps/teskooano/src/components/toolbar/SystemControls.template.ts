@@ -195,7 +195,7 @@ template.innerHTML = `
         flex-wrap: wrap; /* Allow wrap */
     }
     :host([mobile]) .state--loaded .system-info {
-      flex-direction: column;
+      flex-direction: row;
       align-items: flex-start;
       gap: var(--spacing-xs, 4px);
       min-width: 100px;

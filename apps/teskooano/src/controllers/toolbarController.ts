@@ -305,34 +305,43 @@ export class ToolbarController {
     this._systemControls?.toggleAttribute("mobile", this._isMobileDevice); // Add toggle for new component
   }
 
+  // --- Toolbar Creation Methods ---
+
   /**
-   * Creates the initial toolbar structure and elements.
+   * Sets up the main toolbar container styles.
    */
-  private createToolbar(): void {
-    // Clear existing content (should only happen once)
-    this._element.innerHTML = "";
-    // Apply cosmic theme styles
+  private _setupToolbarContainer(): void {
+    this._element.innerHTML = ""; // Clear existing content
     this._element.classList.add("toolbar-cosmic-background"); // Apply CSS class for background
-    this._element.style.padding = "var(--space-sm, 8px)"; // Add some padding
-    this._element.style.display = "flex"; // Use flexbox
-    this._element.style.alignItems = "center"; // Center items vertically
-    // Adjust gap based on device type
+    this._element.style.padding = "var(--space-sm, 8px)";
+    this._element.style.display = "flex";
+    this._element.style.alignItems = "center";
     this._element.style.gap = this._isMobileDevice
       ? "var(--space-xs, 4px)"
       : "var(--space-md, 12px)";
+  }
 
-    // Add Application Icon
+  /**
+   * Creates the application icon element.
+   * @returns The created img element.
+   */
+  private _createAppIcon(): HTMLImageElement {
     const appIcon = document.createElement("img");
-    appIcon.src = `${window.location.href}assets/icon.png`; // *** Adjust this path if needed ***
+    appIcon.src = `${window.location.origin}/assets/icon.png`; // Use origin for robustness
     appIcon.alt = "Teskooano App Icon";
-    appIcon.style.height = "calc(var(--toolbar-height, 50px) * 0.7)"; // ~70% of toolbar height
-    appIcon.style.width = "auto"; // Maintain aspect ratio
-    appIcon.style.verticalAlign = "middle"; // Helps alignment
-    appIcon.className = "app-logo"; // Add class for tour targeting
-    appIcon.id = "app-logo"; // Add ID for tour targeting
-    this._element.appendChild(appIcon); // Add icon first
+    appIcon.style.height = "calc(var(--toolbar-height, 50px) * 0.7)";
+    appIcon.style.width = "auto";
+    appIcon.style.verticalAlign = "middle";
+    appIcon.className = "app-logo";
+    appIcon.id = "app-logo";
+    return appIcon;
+  }
 
-    // --- Add GitHub Button ---
+  /**
+   * Creates the GitHub button with icon and popover.
+   * @returns The created button element.
+   */
+  private _createGitHubButton(): HTMLElement {
     const githubButton = document.createElement("teskooano-button");
     githubButton.id = "github-button";
 
@@ -342,17 +351,15 @@ export class ToolbarController {
     githubIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
       <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
     </svg>`;
-
     githubButton.appendChild(githubIcon);
 
     // Add Popover for GitHub button
     const githubPopoverId = "github-popover";
-    const githubPopover = document.createElement("div");
-    githubPopover.id = githubPopoverId;
-    githubPopover.setAttribute("popover", PopoverAPI.PopoverStates.AUTO);
-    githubPopover.textContent = "View Source on GitHub";
-    githubPopover.classList.add("tooltip-popover");
-    this._element.appendChild(githubPopover);
+    const githubPopover = this._createPopover(
+      githubPopoverId,
+      "View Source on GitHub",
+    );
+    this._element.appendChild(githubPopover); // Append popover to toolbar
 
     // Link button to popover
     githubButton.setAttribute("popovertarget", githubPopoverId);
@@ -369,11 +376,14 @@ export class ToolbarController {
       }
     });
 
-    this._element.appendChild(githubButton);
-    this._githubButton = githubButton; // Cache reference
-    // --- End GitHub Button ---
+    return githubButton;
+  }
 
-    // --- Add Settings Button ---
+  /**
+   * Creates the Settings button with icon and popover.
+   * @returns The created button element.
+   */
+  private _createSettingsButton(): HTMLElement {
     const settingsButton = document.createElement("teskooano-button");
     settingsButton.id = "settings-button";
     // Add Gear Icon
@@ -387,12 +397,11 @@ export class ToolbarController {
 
     // Add Popover for Settings button
     const settingsPopoverId = "settings-popover";
-    const settingsPopover = document.createElement("div");
-    settingsPopover.id = settingsPopoverId;
-    settingsPopover.setAttribute("popover", PopoverAPI.PopoverStates.AUTO);
-    settingsPopover.textContent = "Application Settings";
-    settingsPopover.classList.add("tooltip-popover");
-    this._element.appendChild(settingsPopover);
+    const settingsPopover = this._createPopover(
+      settingsPopoverId,
+      "Application Settings",
+    );
+    this._element.appendChild(settingsPopover); // Append popover to toolbar
 
     // Link button to popover
     settingsButton.setAttribute("popovertarget", settingsPopoverId);
@@ -406,63 +415,70 @@ export class ToolbarController {
       "click",
       this.toggleSettingsPanel.bind(this),
     );
-    this._element.appendChild(settingsButton);
-    this._settingsButton = settingsButton; // Cache reference
-    // --- End Settings Button ---
+    return settingsButton;
+  }
 
-    // --- Add Tour Button if tour controller is available ---
-    if (this._tourController) {
-      const tourButton = document.createElement("teskooano-button");
-      tourButton.id = "tour-button";
-
-      // Add Question Icon
-      const helpIcon = document.createElement("span");
-      helpIcon.slot = "icon";
-      helpIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-          <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
-      </svg>`;
-      tourButton.appendChild(helpIcon);
-
-      // ALWAYS add text span
-      const textSpanTour = document.createElement("span");
-      textSpanTour.textContent = "Take Tour";
-      tourButton.appendChild(textSpanTour);
-
-      // Add Popover for Tour button
-      const tourPopoverId = "tour-popover";
-      const tourPopover = document.createElement("div");
-      tourPopover.id = tourPopoverId;
-      tourPopover.setAttribute("popover", PopoverAPI.PopoverStates.AUTO);
-      tourPopover.textContent = "Take a tour of the application";
-      tourPopover.classList.add("tooltip-popover");
-      this._element.appendChild(tourPopover);
-
-      // Link button to popover
-      tourButton.setAttribute("popovertarget", tourPopoverId);
-      tourButton.setAttribute(
-        "popovertargetaction",
-        PopoverAPI.PopoverTargetActions.TOGGLE,
-      );
-      tourButton.setAttribute("aria-describedby", tourPopoverId);
-
-      // Add mobile attribute if needed
-      if (this._isMobileDevice) {
-        tourButton.setAttribute("mobile", "");
-      }
-
-      tourButton.addEventListener("click", () => {
-        if (this._tourController) {
-          this._tourController.restartTour();
-        }
-      });
-
-      this._element.appendChild(tourButton);
-      this._tourButton = tourButton; // Cache reference
+  /**
+   * Creates the Tour button if a TourController is available.
+   * @returns The created button element, or null if no TourController exists.
+   */
+  private _createTourButton(): HTMLElement | null {
+    if (!this._tourController) {
+      return null;
     }
-    // --- End Tour Button ---
 
-    // Add "Add View" button
+    const tourButton = document.createElement("teskooano-button");
+    tourButton.id = "tour-button";
+
+    // Add Question Icon
+    const helpIcon = document.createElement("span");
+    helpIcon.slot = "icon";
+    helpIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+        <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
+    </svg>`;
+    tourButton.appendChild(helpIcon);
+
+    // ALWAYS add text span
+    const textSpanTour = document.createElement("span");
+    textSpanTour.textContent = "Take Tour";
+    tourButton.appendChild(textSpanTour);
+
+    // Add Popover for Tour button
+    const tourPopoverId = "tour-popover";
+    const tourPopover = this._createPopover(
+      tourPopoverId,
+      "Take a tour of the application",
+    );
+    this._element.appendChild(tourPopover); // Append popover to toolbar
+
+    // Link button to popover
+    tourButton.setAttribute("popovertarget", tourPopoverId);
+    tourButton.setAttribute(
+      "popovertargetaction",
+      PopoverAPI.PopoverTargetActions.TOGGLE,
+    );
+    tourButton.setAttribute("aria-describedby", tourPopoverId);
+
+    // Add mobile attribute if needed
+    if (this._isMobileDevice) {
+      tourButton.setAttribute("mobile", "");
+    }
+
+    tourButton.addEventListener("click", () => {
+      if (this._tourController) {
+        this._tourController.restartTour();
+      }
+    });
+
+    return tourButton;
+  }
+
+  /**
+   * Creates the "Add Engine View" button with icon and popover.
+   * @returns The created button element.
+   */
+  private _createAddViewButton(): HTMLElement {
     const addButton = document.createElement("teskooano-button");
     addButton.id = "add-view-button";
     // Create icon element
@@ -470,23 +486,20 @@ export class ToolbarController {
     iconSpan.setAttribute("slot", "icon");
     iconSpan.textContent = "🔭"; // Simple plus icon
     iconSpan.style.fontWeight = "bold"; // Make icon slightly bolder
-
-    // Append icon to the button
     addButton.appendChild(iconSpan);
 
     // ALWAYS add text span
     const textSpanAdd = document.createElement("span");
     textSpanAdd.textContent = "Add Engine View";
-    addButton.appendChild(textSpanAdd); // Always add text
+    addButton.appendChild(textSpanAdd);
 
     // Add Popover for Add View button
     const addViewPopoverId = "add-view-popover";
-    const addViewPopover = document.createElement("div");
-    addViewPopover.id = addViewPopoverId;
-    addViewPopover.setAttribute("popover", PopoverAPI.PopoverStates.AUTO);
-    addViewPopover.textContent = "Add a new engine view";
-    addViewPopover.classList.add("tooltip-popover");
-    this._element.appendChild(addViewPopover);
+    const addViewPopover = this._createPopover(
+      addViewPopoverId,
+      "Add a new engine view",
+    );
+    this._element.appendChild(addViewPopover); // Append popover to toolbar
 
     // Link button to popover
     addButton.setAttribute("popovertarget", addViewPopoverId);
@@ -505,64 +518,60 @@ export class ToolbarController {
       this.addCompositeEnginePanel();
     });
 
-    this._element.appendChild(addButton);
-    this._addButton = addButton; // Cache reference
+    return addButton;
+  }
 
-    // Add Separator
-    const separator1 = document.createElement("div");
-    separator1.style.width = "1px";
-    separator1.style.height = "calc(var(--toolbar-height, 50px) * 0.6)"; // Adjust height relative to toolbar
-    separator1.style.backgroundColor = "var(--color-border, #50506a)";
-    separator1.style.margin = "0 var(--space-xs, 4px)"; // Small horizontal margin
-    this._element.appendChild(separator1);
+  /**
+   * Creates a vertical separator element.
+   * @returns The created div element.
+   */
+  private _createSeparator(): HTMLDivElement {
+    const separator = document.createElement("div");
+    separator.style.width = "1px";
+    separator.style.height = "calc(var(--toolbar-height, 50px) * 0.6)";
+    separator.style.backgroundColor = "var(--color-border, #50506a)";
+    separator.style.margin = "0 var(--space-xs, 4px)";
+    return separator;
+  }
 
-    // Add the simulation controls
+  /**
+   * Creates the simulation controls element.
+   * @returns The created custom element.
+   */
+  private _createSimulationControls(): HTMLElement {
     const simControls = document.createElement("toolbar-simulation-controls");
     if (this._isMobileDevice) {
       simControls.setAttribute("mobile", "");
     }
-    this._element.appendChild(simControls);
-    this._simControls = simControls; // Cache reference
+    return simControls;
+  }
 
-    // Add Separator before system controls
-    const separator2 = document.createElement("div");
-    separator2.style.width = "1px";
-    separator2.style.height = "calc(var(--toolbar-height, 50px) * 0.6)";
-    separator2.style.backgroundColor = "var(--color-border, #50506a)";
-    separator2.style.margin = "0 var(--space-xs, 4px)";
-    this._element.appendChild(separator2);
-
-    // --- Add New System Controls ---
+  /**
+   * Creates the system controls element and sets up its API and listeners.
+   * @returns The created custom element.
+   */
+  private _createSystemControls(): SystemControls {
     const systemControls = document.createElement(
       "system-controls",
-    ) as SystemControls; // Cast to the class
-    systemControls.id = "system-controls"; // Give it an ID if needed
-
-    // Create a wrapper div to better position the component
-    const systemControlsWrapper = document.createElement("div");
-    systemControlsWrapper.style.display = "flex";
-    systemControlsWrapper.style.alignItems = "center";
-    systemControlsWrapper.style.height = "100%";
-    systemControlsWrapper.style.flex = "1"; // Let it take available space
-    systemControlsWrapper.style.position = "relative"; // For potential fixed positioning
+    ) as SystemControls;
+    systemControls.id = "system-controls";
 
     if (this._isMobileDevice) {
-      systemControls.setAttribute("mobile", ""); // Apply mobile state if needed
+      systemControls.setAttribute("mobile", "");
     }
 
-    // --- Pass the Dockview API ---
-    const dockviewApi = this._dockviewController.api; // Get the API instance
+    // Pass the Dockview API
+    const dockviewApi = this._dockviewController.api;
     if (dockviewApi && systemControls instanceof SystemControls) {
-      systemControls.setDockviewApi(dockviewApi); // Call the method
+      systemControls.setDockviewApi(dockviewApi);
       console.log("ToolbarController: Dockview API passed to SystemControls.");
     } else {
       console.error(
         "ToolbarController: Failed to get Dockview API or systemControls element!",
       );
     }
-    // --- End Pass the Dockview API ---
 
-    // Add event listeners for the new component's events
+    // Add event listeners
     systemControls.addEventListener(
       "load-seed",
       this.handleLoadSeed.bind(this) as EventListener,
@@ -572,17 +581,83 @@ export class ToolbarController {
       this.handleSystemAction.bind(this) as EventListener,
     );
 
-    // Append to wrapper, then to toolbar
-    systemControlsWrapper.appendChild(systemControls);
-    this._element.appendChild(systemControlsWrapper);
-    this._systemControls = systemControls; // Cache reference
+    return systemControls;
+  }
 
-    // Example: Set initial seed functionality
-    // For testing, you could uncomment this to see the loaded state
-    // this.updateSystemControlsState(true, "Test System", 7);
-    // Fetch any existing system state from storage/state manager
+  /**
+   * Creates a popover element.
+   * @param id The ID for the popover.
+   * @param textContent The text content for the popover.
+   * @returns The created div element.
+   */
+  private _createPopover(id: string, textContent: string): HTMLDivElement {
+    const popover = document.createElement("div");
+    popover.id = id;
+    popover.setAttribute("popover", PopoverAPI.PopoverStates.AUTO);
+    popover.textContent = textContent;
+    popover.classList.add("tooltip-popover");
+    return popover;
+  }
+
+  /**
+   * Creates the initial toolbar structure and elements by calling helper methods.
+   */
+  private createToolbar(): void {
+    this._setupToolbarContainer();
+
+    // Add App Icon
+    this._element.appendChild(this._createAppIcon());
+
+    const otherButtonsWrapper = document.createElement("div");
+    otherButtonsWrapper.style.display = "flex";
+    otherButtonsWrapper.style.alignItems = "center";
+    otherButtonsWrapper.style.justifyContent = "space-between";
+    otherButtonsWrapper.style.gap = "var(--space-xs, 4px)";
+
+    // Add GitHub Button
+    this._githubButton = this._createGitHubButton();
+    otherButtonsWrapper.appendChild(this._githubButton);
+
+    // Add Settings Button
+    this._settingsButton = this._createSettingsButton();
+    otherButtonsWrapper.appendChild(this._settingsButton);
+
+    // Add Tour Button (if applicable)
+    this._tourButton = this._createTourButton();
+    if (this._tourButton) {
+      otherButtonsWrapper.appendChild(this._tourButton);
+    }
+
+    // Add "Add View" Button
+    this._addButton = this._createAddViewButton();
+    otherButtonsWrapper.appendChild(this._addButton);
+
+    this._element.appendChild(otherButtonsWrapper);
+
+    // Add Separator 1
+    this._element.appendChild(this._createSeparator());
+
+    // Add Simulation Controls
+    this._simControls = this._createSimulationControls();
+    this._element.appendChild(this._simControls);
+
+    // Add Separator 2
+    this._element.appendChild(this._createSeparator());
+
+    // Add System Controls
+    // Wrap system controls for better layout flexibility if needed
+    const systemControlsWrapper = document.createElement("div");
+    systemControlsWrapper.style.display = "flex";
+    systemControlsWrapper.style.alignItems = "center";
+    // systemControlsWrapper.style.flex = '1'; // Allow it to take space if desired
+    this._systemControls = this._createSystemControls();
+    systemControlsWrapper.appendChild(this._systemControls);
+    this._element.appendChild(systemControlsWrapper);
+
+    // Optionally restore state after elements are created
     // this.restoreSystemState();
   }
+  // --- End Toolbar Creation Methods ---
 
   // --- Event Handlers for SystemControls ---
 

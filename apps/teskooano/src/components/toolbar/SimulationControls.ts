@@ -11,56 +11,58 @@ const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
-      display: inline-flex; /* Change back to inline-flex */
+      display: inline-flex;
       align-items: center;
-      gap: 8px; /* Spacing between elements */
-      font-family: var(--font-family, sans-serif);
-      /* padding: 0 10px; /* Removed overall padding? Add back if needed */
+      gap: var(--spacing-sm);
+      font-family: var(--font-family-base); 
     }
-    /* REMOVED specific overrides for teskooano-button */
-    /* Buttons will now inherit styles from Button.ts */
+
+    .controls-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .display-container {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
 
     /* Style the SVG icons */
     teskooano-button svg {
         width: 1em; /* Adjust size as needed */
         height: 1em;
-        fill: white; /* Make icons white */
-        display: block; /* Ensure proper layout */
-        margin: auto; /* Center if needed */
+        fill: var(--color-text-primary);
+        display: block;
+        margin: auto;
     }
-
-    /* REMOVED - No longer needed as we use SVG now */
-    /* teskooano-button span[slot="icon"] {
-        margin-right: 0; /* Icon only * /
-        color: var(--color-text, #e0e0fc);
-    } */
 
     /* Keep styles for separator and scale display */
     .separator {
-        width: 1px;
+        width: var(--border-width-thin); /* Use token */
         height: 20px;
-        background-color: var(--color-border, #4a4a6a);
-        margin: 0 5px;
+        background-color: var(--color-border-subtle); /* Use token */
+        margin: 0 var(--spacing-xs); /* Use token */
     }
     .display-value {
-        font-family: var(--font-family-monospace, monospace);
-        font-size: 0.95em;
-        color: var(--color-text-secondary, #aaa);
+        font-family: var(--font-family-mono); /* Use token */
+        font-size: var(--font-size-small); /* Use token */
+        color: var(--color-text-secondary); /* Use token */
         min-width: 60px; 
         text-align: center;
-        padding: 4px 6px;
-        border: 1px solid var(--color-border, #4a4a6a);
-        border-radius: 4px;
-        background-color: var(--color-surface-low, #202030);
+        padding: var(--space-1) var(--space-2); /* Use tokens */
+        border: var(--border-width-thin) solid var(--color-border-subtle); /* Use tokens */
+        border-radius: var(--radius-sm); /* Use token */
+        background-color: var(--color-surface-1); /* Use token */
     }
     #time-value {
         min-width: 120px;
-        color: var(--color-primary-light, #9fa8da);
+        color: var(--color-primary); /* Use token (was primary-light) */
     }
     #engine-value {
         min-width: 30px;
-        color: var(--color-text, #e0e0fc);
-        font-weight: bold;
+        color: var(--color-text-primary); /* Use token (was text) */
+        font-weight: var(--font-weight-bold); /* Use token */
         text-transform: uppercase;
     }
     /* Optional tooltip styles for engine letter */
@@ -70,11 +72,11 @@ template.innerHTML = `
         top: 100%;
         left: 50%;
         transform: translateX(-50%);
-        background: var(--color-surface, #2a2a3e);
-        border: 1px solid var(--color-border, #4a4a6a);
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.9em;
+        background: var(--color-surface-2); /* Use token (was surface) */
+        border: var(--border-width-thin) solid var(--color-border-subtle); /* Use tokens */
+        padding: var(--space-1) var(--space-2); /* Use tokens */
+        border-radius: var(--radius-sm); /* Use token */
+        font-size: var(--font-size-small); /* Use token */
         white-space: nowrap;
         pointer-events: none;
         opacity: 0.9;
@@ -90,6 +92,7 @@ template.innerHTML = `
     }
   </style>
 
+  <div class="controls-container">
   <teskooano-button id="reverse" title="Reverse Direction">
       ${ArrowClockwiseRegular}
   </teskooano-button>
@@ -102,10 +105,13 @@ template.innerHTML = `
    <teskooano-button id="speed-up" title="Increase Speed">
        ${NextRegular}
    </teskooano-button>
+  </div>
   <div class="separator"></div>
-  <span class="display-value" id="scale-value" title="Time Scale">-</span>
-  <span class="display-value" id="time-value" title="Simulation Time">-</span>
-  <span class="display-value" id="engine-value" title="Physics Engine">-</span>
+  <div class="display-container">
+    <span class="display-value" id="scale-value" title="Time Scale">-</span>
+    <span class="display-value" id="time-value" title="Simulation Time">-</span>
+    <span class="display-value" id="engine-value" title="Physics Engine">-</span>
+  </div>
 `;
 
 export class ToolbarSimulationControls extends HTMLElement {
@@ -260,10 +266,11 @@ export class ToolbarSimulationControls extends HTMLElement {
 
     if (this.scaleValueDisplay) {
       this.scaleValueDisplay.textContent = this.formatScale(state.timeScale);
+      // Use a semantic color for negative scale, e.g., warning or error
       this.scaleValueDisplay.style.color =
         state.timeScale < 0
-          ? "var(--color-accent-alt, #ff8a65)"
-          : "var(--color-text-secondary, #aaa)";
+          ? "var(--color-warning)" // Use warning token for negative scale
+          : "var(--color-text-secondary)";
     }
 
     // Update time display

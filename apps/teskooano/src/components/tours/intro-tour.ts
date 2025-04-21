@@ -1,8 +1,6 @@
+import { celestialObjectsStore } from "@teskooano/core-state";
 import { Config, Driver, PopoverDOM, State } from "driver.js";
 import { TourStep } from "./types";
-import { ToolbarSeedForm } from "../toolbar/SeedForm";
-import { celestialObjectsStore } from "@teskooano/core-state";
-import { SCALE, CelestialStatus } from "@teskooano/data-types";
 // Base tour steps definition - will be cloned and customized when driving
 import { SystemControls } from "../toolbar/SystemControls";
 import { FocusControl } from "../ui-controls";
@@ -27,7 +25,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       element: "#app-logo",
       overlayColor: "rgba(0, 0, 0, 0.75)", // Standard overlay
       popover: {
-        title: "...on to the tour!",
+        title: "🛫 ...on to the tour!",
         description:
           "This tour will guide you through the main features of using the application and hopefully help you get the most out of it!",
         side: "bottom",
@@ -46,7 +44,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       element: ".engine-view",
       overlayColor: "rgba(0, 0, 0, 0.1)", // More transparent for the engine view
       popover: {
-        title: "The main simulation view",
+        title: "📽️ The Simulation View",
         description: `This is the main engine view, ${hasCelestialObjects ? "which you have currently loaded a system in to " : "which may be currently empty as you need to load a system (don't worry, we're coming to that!)"}. This is the main view of the simulation, in this view you can orbit and zoom around the system, and use the focus controls to focus on specific objects.`,
         side: "over",
         align: "center",
@@ -62,7 +60,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "add-view",
       element: "#add-view-button",
       popover: {
-        title: "Adding new multi-view panels",
+        title: "🖥️ Multi-View Panels",
         description:
           "Teskooano supports multiple engine views, each with its own UI settings and focus controls providing multiple views of the same simulation in real time. Lets skip this for now and focus on the main features.",
         side: "bottom",
@@ -74,7 +72,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "controls-intro",
       element: "toolbar-simulation-controls",
       popover: {
-        title: "Simulation Controls",
+        title: "⏯️ Simulation Controls",
         description:
           "This toolbar contains the main controls for the simulation. You can add new bodies, adjust the simulation speed, and access settings.  1x is equivilent to real time, you can go up to x10M but this depends on your CPU and GPU performance.",
         side: "bottom",
@@ -83,10 +81,10 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       disableActiveInteraction: true,
     },
     {
-      id: "system-controls",
+      id: "system-controls-1",
       element: "system-controls",
       popover: {
-        title: "🪐 Managing your systems",
+        title: "🪐 Managing Systems",
         description:
           "You can generate new star systems with different seeds. Each seed creates a unique procedurally generated system. Go ahead and try it out, or click next and I'll do it - feel free to change the default seed to see different systems! ",
         side: "bottom",
@@ -101,10 +99,28 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       },
     },
     {
-      id: "ui-settings",
-      element: ".ui-panel",
+      id: "system-controls-2",
+      element: "system-controls",
       popover: {
-        title: "The simulation view settings",
+        title: "🪐 Managing Systems",
+        description:
+          "You can also import and export systems to JSON files. This allows you to save your systems and load them later, or share them with others.",
+        side: "bottom",
+        align: "center",
+      },
+      onNextClick: () => {
+        const generator = document.querySelector("system-controls");
+        if (generator) {
+          (generator as SystemControls).tourRandomSeed();
+        }
+        driverObj.moveNext();
+      },
+    },
+    {
+      id: "ui-settings",
+      element: ".ui-container",
+      popover: {
+        title: "🌁 View Settings",
         description:
           "This panel controls the engine view panels - each engine is independently rendered from the same simulation data, allowing you to have multiple views of the same system in real time. I'll explain each panel in more detail...",
         side: "left",
@@ -117,7 +133,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       overlayColor: "rgba(0, 0, 0, 0.3)", // More transparent for interactive controls
       disableActiveInteraction: false, // Allow interaction with the focus control
       popover: {
-        title: "Focusing on Celestial Objects",
+        title: "🔍 Focusing on Celestials",
         description:
           "This is the focus control, it allows you to focus on specific objects in the simulation. You can use the focus controls to focus on specific objects, or use the orbit controls to orbit around the system.  Why not try it out by clicking on a body in the list?",
         side: "left",
@@ -148,7 +164,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "celestial-info",
       element: ".celestial-info-section",
       popover: {
-        title: "Viewing Celestial Object Details",
+        title: "ℹ️ Celestial Info",
         description:
           "This is the celestial info section, it displays information about the currently focused object.",
         side: "left",
@@ -159,7 +175,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "renderer-info",
       element: ".renderer-info-section",
       popover: {
-        title: "Viewing Renderer & Performance Information",
+        title: "🎨 Renderer & Performance",
         description:
           "This is the renderer info section, it displays information about the renderer.",
         side: "left",
@@ -170,7 +186,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "engine-settings",
       element: ".engine-settings-section",
       popover: {
-        title: "Current simulation view settings",
+        title: "⚙️ Engine Settings",
         description:
           "This is the engine settings section, it allows you to adjust the engine settings.",
         side: "left",
@@ -182,7 +198,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       element: ".engine-view",
       overlayColor: "rgba(0, 0, 0, 0)", // Fully transparent for the final view
       popover: {
-        title: "The full simulation view",
+        title: "🔭 Viewing Systems",
         description:
           // Using a placeholder that will be replaced dynamically
           "Now you should see the full system. If you've selected a celestial body, you can see more details about it in the Celestial Info panel.  Feel free to now play around, and try break things! If you do find any bugs please raise an issue on the GitHub repo.",
@@ -195,7 +211,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       element: "#github-button",
       overlayColor: "rgba(0, 0, 0, 0.6)",
       popover: {
-        title: "Report Issues & Contribute",
+        title: "📤 Report Issues & Contribute",
         description:
           "Remember, if you find any bugs or have ideas for improvements, please visit our GitHub repository by clicking this button. Your feedback helps make Teskooano better!",
         side: "bottom",
