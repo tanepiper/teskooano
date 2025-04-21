@@ -281,16 +281,6 @@ export class ObjectManager {
     // 1. Objects to remove (exist in current state, but not in new state)
     currentIds.forEach((id) => {
       if (!newStateIds.has(id)) {
-        // --- Add Diagnostic Log ---
-        console.log(`[ObjectManager sync] Attempting removal of ID: ${id}`);
-        console.log(`  Reason: ID not found in newStateIds.`);
-        // Log first few keys of newStateIds for comparison
-        console.log(
-          `  newStateIds keys sample:`,
-          Array.from(newStateIds).slice(0, 10),
-        );
-        // --- End Log ---
-
         // Only remove if the ID is completely gone from the new state
         this.internalRemoveObject(id);
       }
@@ -307,9 +297,6 @@ export class ObjectManager {
         objectData.status === CelestialStatus.ANNIHILATED
       ) {
         if (mesh) {
-          console.log(
-            `[ObjectManager] Immediately removing destroyed/annihilated object: ${id}`,
-          );
           this.internalRemoveObject(id);
         }
         return; // Skip further processing for this object
@@ -400,9 +387,6 @@ export class ObjectManager {
    */
   public setDebrisEffectsEnabled(enabled: boolean): void {
     this._enableDebrisEffects = enabled;
-    console.log(
-      `[ObjectManager] Debris effects ${enabled ? "enabled" : "disabled"}`,
-    );
   }
 
   /**
@@ -411,9 +395,7 @@ export class ObjectManager {
    */
   public toggleDebrisEffects(): boolean {
     this._enableDebrisEffects = !this._enableDebrisEffects;
-    console.log(
-      `[ObjectManager] Debris effects ${this._enableDebrisEffects ? "enabled" : "disabled"}`,
-    );
+
     return this._enableDebrisEffects;
   }
 
@@ -425,26 +407,18 @@ export class ObjectManager {
   private _handleDestructionEffect(event: DestructionEvent): void {
     // Skip debris generation if feature is disabled
     if (!this._enableDebrisEffects) {
-      console.log(
-        `[ObjectManager] Skipping debris effect for ${event.destroyedId} (feature disabled)`,
-      );
       return;
     }
 
-    console.log(
-      `[ObjectManager] Handling destruction effect for ${event.destroyedId}`,
-    );
     const impactScenePos = new THREE.Vector3(
       event.impactPosition.x * METERS_TO_SCENE_UNITS,
       event.impactPosition.y * METERS_TO_SCENE_UNITS,
       event.impactPosition.z * METERS_TO_SCENE_UNITS,
     );
-    console.log(`  Impact Scene Position:`, impactScenePos.toArray()); // <-- Log position
 
     // --- Debris Parameters ---
     const debrisCount = 100; // Number of debris particles (increased from 50)
     const debrisBaseSize = event.destroyedRadius * METERS_TO_SCENE_UNITS * 0.15; // Size relative to destroyed object (increased from 0.1)
-    console.log(`  Debris Base Size:`, debrisBaseSize); // <-- Log size
     const debrisLifetime = 15.0; // Seconds (increased from 2.0)
     const speedMultiplier = 0.3; // Adjust speed of debris spread (reduced from 0.5 to make debris stay in view longer)
     const initialSpreadFactor =
@@ -528,14 +502,6 @@ export class ObjectManager {
         .lerp(randomDir, 0.6)
         .normalize()
         .multiplyScalar(baseVel.length() * speedMultiplier * randomVelFactor);
-      // Log the first debris velocity for comparison
-      if (i === 0) {
-        console.log(`  First Debris Velocity:`, finalVel.toArray()); // <-- Log velocity
-        console.log(
-          `  Base Relative Velocity (Scene Units):`,
-          baseVel.toArray(),
-        ); // <-- Log base velocity
-      }
 
       debrisVelocities.set(mesh.uuid, finalVel);
 
@@ -986,9 +952,7 @@ export class ObjectManager {
       if (elapsedTime >= effect.lifetime) {
         // Effect expired, remove from scene and dispose
         this.scene.remove(effect.group);
-        console.log(
-          `[ObjectManager] Removing debris effect for ${effect.group.name} after ${elapsedTime.toFixed(1)}s`,
-        );
+
         effect.group.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             child.geometry?.dispose(); // Geometry is shared, dispose only once

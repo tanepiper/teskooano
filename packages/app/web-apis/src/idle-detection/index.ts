@@ -115,7 +115,6 @@ export async function observeIdleState(
 
     // Start the detector
     await detector.start({ threshold, signal });
-    console.log("Idle detector started.");
 
     // Initial callback trigger
     changeListener();
@@ -127,7 +126,6 @@ export async function observeIdleState(
         if (detector) {
           detector.removeEventListener("change", changeListener);
         }
-        console.log("Idle detector stopped.");
       },
       detector,
     };
@@ -165,7 +163,6 @@ export async function requestIdleDetectionPermission(): Promise<
     const permissionStatus = await navigator.permissions.query({
       name: "idle-detection" as PermissionName,
     });
-    console.log(`Idle detection permission status: ${permissionStatus.state}`);
     // Re-check state after query, which might have prompted user
     return permissionStatus.state;
   } catch (err) {
@@ -298,8 +295,6 @@ export function createIdleStateObservable(
               permissionState: "granted",
               isSupported: true,
             });
-
-            console.log("Idle detector started via Observable.");
           } catch (err: any) {
             console.error("Failed to start idle detector for Observable:", err);
             subscriber.next({
@@ -320,7 +315,6 @@ export function createIdleStateObservable(
             // No removeEventListener needed, abort signal handles cleanup
           }
           detector = null;
-          console.log("Idle detector stopped via Observable cleanup.");
         };
       });
     }),

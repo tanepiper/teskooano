@@ -35,3 +35,10 @@ export type Integrator = (
   acceleration: THREE.Vector3,
   dt: number,
 ) => PhysicsStateReal;
+
+// --- Simulation Settings Types ---
+export type PhysicsEngineType = "euler" | "symplectic" | "verlet";
+
+/**
+ * Represents the fundamental properties of a celestial body required for rendering and simulation.
+ */

@@ -36,7 +36,6 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
         const totalCelestialObjects = Object.values(
           celestialObjectsStore.get(),
         ).length;
-        console.log("Total celestial objects:", totalCelestialObjects);
         hasCelestialObjects = totalCelestialObjects > 0;
         driverObj.moveNext();
       },
@@ -55,8 +54,6 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
         popover: PopoverDOM,
         opts: { config: Config; state: State },
       ) => {
-        console.log("Popover rendered:", popover);
-        console.log("Popover opts:", opts);
         popover.description.innerHTML = `This is the main engine view, ${hasCelestialObjects ? "which you have currently loaded a system in to " : "which may be currently empty as you need to load a system (don't worry, we're coming to that!)"}. This is the main view of the simulation, in this view you can orbit and zoom around the system, and use the focus controls to focus on specific objects.`;
       },
     },
@@ -95,7 +92,6 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
         align: "center",
       },
       onNextClick: () => {
-        console.log("Generating system...");
         const generator = document.querySelector("toolbar-seed-form");
         if (generator) {
           (generator as ToolbarSeedForm).tourGenerate();
@@ -127,7 +123,6 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
         align: "start",
       },
       onNextClick: (engineViewId?: string) => {
-        console.log("Engine view ID:", engineViewId);
         if (!engineViewId) {
           driverObj.moveNext();
           return;
@@ -146,7 +141,6 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
           const [objectId, _] = (focusControl as any).getRandomActiveObjectId();
 
           if (objectId) {
-            console.log(`[Tour] Focusing on object: ${objectId}`);
             (focusControl as any).focusOnObject(objectId);
           } else {
             console.warn("[Tour] No active objects found for focus");
@@ -170,8 +164,6 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
           const [randomId, randomObject] =
             activeObjects[Math.floor(Math.random() * activeObjects.length)];
 
-          console.log("[Tour] Random object:", randomObject);
-
           const focusEvent = new CustomEvent("engine-focus-request", {
             detail: {
               targetPanelId: engineViewId,
@@ -184,7 +176,6 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
             composed: true,
           });
 
-          console.log("[Tour] Dispatching focus event...");
           document.dispatchEvent(focusEvent);
         }
 

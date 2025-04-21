@@ -171,7 +171,6 @@ export class RendererUpdater {
       } else {
         // Mesh for this renderer ID no longer exists in ObjectManager.
         // This can happen briefly during system transitions. Silently skip update.
-        // console.log(`[RendererUpdater] Skipping update for ring system ${id}: Mesh not found.`); // Optional log
       }
     });
   }

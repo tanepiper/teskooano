@@ -448,9 +448,6 @@ export class CompositeEnginePanel implements IContentRenderer {
       (celestialObjects) => {
         // Only proceed if the panel hasn't been disposed
         if (!this._element.isConnected) {
-          console.log(
-            `[CompositePanel ${this._api?.id}] Data update received, but panel element is disconnected. Ignoring.`,
-          );
           return; // Don't initialize if element is detached
         }
 
@@ -458,9 +455,7 @@ export class CompositeEnginePanel implements IContentRenderer {
 
         if (!this._renderer && objectCount > 0) {
           // Data available, renderer not initialized: Initialize
-          console.log(
-            `[CompositePanel ${this._api?.id}] Data received, initializing renderer and UI...`,
-          );
+
           if (this._engineContainer) this._engineContainer.innerHTML = ""; // Clear placeholder
           if (this._uiContainer) this._uiContainer.innerHTML = ""; // Clear placeholder
 
@@ -469,9 +464,6 @@ export class CompositeEnginePanel implements IContentRenderer {
 
           // Start simulation loop globally (if not already started)
           if (!isSimulationLoopStarted) {
-            console.log(
-              `[CompositePanel ${this._api?.id}] Starting global simulation loop.`,
-            );
             startSimulationLoop();
             isSimulationLoopStarted = true;
           }
@@ -479,9 +471,7 @@ export class CompositeEnginePanel implements IContentRenderer {
           this.triggerResize(); // Trigger initial resize
         } else if (this._renderer && objectCount === 0) {
           // Renderer exists, but data disappeared: Dispose renderer/UI
-          console.log(
-            `[CompositePanel ${this._api?.id}] Data removed, disposing renderer and UI.`,
-          );
+
           this.disposeRendererAndUI(); // Clean up
           // Reset to placeholder state
           if (this._engineContainer) {
@@ -530,9 +520,6 @@ export class CompositeEnginePanel implements IContentRenderer {
         // This allows the panel (or other interested components) to react, e.g., update UI state
         onFocusChangeCallback: (focusedId) => {
           // Example: Log the focus change, could also dispatch an event
-          console.log(
-            `[CompositePanel ${this._api?.id}] CameraManager reported focus change: ${focusedId}`,
-          );
           // We could dispatch the 'renderer-focus-changed' event here if needed externally
           // this.dispatchFocusChangeEvent(); // Assuming this method is re-added or handled differently
         },
@@ -660,9 +647,6 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Called when data disappears or the panel is disposed.
    */
   private disposeRendererAndUI(): void {
-    console.log(
-      `[CompositePanel ${this._api?.id ?? "unknown"}] Disposing renderer and UI...`,
-    );
     this._renderer?.dispose();
     this._renderer = undefined;
 
@@ -688,7 +672,6 @@ export class CompositeEnginePanel implements IContentRenderer {
    */
   dispose(): void {
     const panelIdForLog = this._api?.id ?? "unknown";
-    console.log(`[CompositePanel ${panelIdForLog}] Disposing...`);
     this._isInitialized = false; // Mark as disposed early
 
     // Unsubscribe from layout changes

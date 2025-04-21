@@ -169,10 +169,6 @@ export class ModularSpaceRenderer {
       const customEvent = event as CustomEvent;
       if (customEvent.detail) {
         // Maybe log that the transition completed, but don't rely on internal state here
-        console.log(
-          `[Renderer] Camera transition complete. Detail:`,
-          customEvent.detail,
-        );
       }
     });
   }
@@ -349,14 +345,10 @@ export class ModularSpaceRenderer {
     );
     if (!objectId) {
       this.controlsManager.setFollowTarget(null); // Pass null to ControlsManager
-      console.log("[Renderer] Cleared follow target via ControlsManager.");
     } else {
       // We need the actual Object3D reference to pass to ControlsManager
       const targetMesh = this.objectManager.getObject(objectId);
       if (targetMesh) {
-        console.log(
-          `[Renderer] Requesting ControlsManager follow object: ${objectId}`,
-        );
         // Decide if we still need keepCurrentDistance or pass calculated positions
         // For now, use the basic follow call (keeps current distance by default in ControlsManager impl)
         this.controlsManager.setFollowTarget(targetMesh, undefined, true); // Keep current distance

@@ -265,20 +265,10 @@ export class ControlsManager {
         // Initialize previousFollowTargetPos with the target's position AT THE END of the transition
         this.previousFollowTargetPos.copy(endTarget);
         this.finalFollowOffset = endPos.clone().sub(endTarget); // Also store offset for reference
-        console.log(
-          "[ControlsManager] Transition complete. Follow offset calculated:",
-          this.finalFollowOffset,
-          "Initial previousFollowTargetPos:",
-          this.previousFollowTargetPos,
-        );
       } else {
         this.finalFollowOffset = null;
         this.previousFollowTargetPos.set(0, 0, 0); // Ensure reset if not following
       }
-
-      console.log(
-        "[ControlsManager] Camera transition (Rotation+Position) complete. Controls enabled.",
-      );
     };
     // --- End Completion Logic ---
 
@@ -381,7 +371,6 @@ export class ControlsManager {
    * and any active GSAP animations.
    */
   dispose(): void {
-    console.log("[ControlsManager] Disposing...");
     // Kill any active GSAP animations
     this.cancelTransition(); // Uses the cancellation logic
     gsap.killTweensOf(this.camera.position); // Belt and braces
@@ -389,7 +378,6 @@ export class ControlsManager {
 
     // Dispose of OrbitControls resources (removes event listeners)
     this.controls.dispose();
-    console.log("[ControlsManager] Disposed.");
   }
 
   /**
@@ -398,12 +386,10 @@ export class ControlsManager {
    */
   public cancelTransition(): void {
     if (this.isTransitioning && this.activeTimeline) {
-      console.log("[ControlsManager] Cancelling active transition...");
       this.activeTimeline.kill(); // Stop the GSAP timeline
       this.activeTimeline = null;
       this.isTransitioning = false; // Reset state flag
       this.setEnabled(true); // Re-enable controls
-      console.log("[ControlsManager] Transition cancelled externally.");
     }
   }
 
@@ -426,7 +412,6 @@ export class ControlsManager {
     this.cancelTransition();
 
     if (!object) {
-      console.log("[ControlsManager] Clearing follow target.");
       this.followingTargetObject = null;
       this.finalFollowOffset = null;
       this.previousFollowTargetPos.set(0, 0, 0); // Reset previous pos tracking
@@ -435,10 +420,6 @@ export class ControlsManager {
       return;
     }
 
-    console.log(
-      `[ControlsManager] Setting follow target: ${object.name || object.uuid}`,
-      { object, offset, keepCurrentDistance },
-    );
     this.followingTargetObject = object; // Set the object to follow IMMEDIATELY
 
     // Calculate the desired final target position (object center + offset)
@@ -456,10 +437,6 @@ export class ControlsManager {
     if (keepCurrentDistance) {
       // Maintain the same vector (distance and direction) relative to the *new* target
       finalCameraPosition = finalTargetPosition.clone().add(directionToTarget);
-      console.log(
-        "[ControlsManager] keepCurrentDistance: true, finalCameraPosition:",
-        finalCameraPosition,
-      );
     } else {
       // Calculate a suitable distance based on object size or defaults
       const currentDistance = directionToTarget.length();
@@ -489,12 +466,6 @@ export class ControlsManager {
       finalCameraPosition = finalTargetPosition
         .clone()
         .add(directionToTarget.multiplyScalar(desiredDistance));
-      console.log(
-        "[ControlsManager] keepCurrentDistance: false, calculated desiredDistance:",
-        desiredDistance,
-        "finalCameraPosition:",
-        finalCameraPosition,
-      );
     }
     // --- End Camera Position Calculation ---
 
@@ -505,12 +476,6 @@ export class ControlsManager {
 
     // --- Start the transition ---
     // Move from current position/target to the calculated final positions
-    console.log("[ControlsManager] Initiating moveTo transition:", {
-      currentCameraPosition,
-      currentTargetPosition,
-      finalCameraPosition,
-      finalTargetPosition,
-    });
     this.moveTo(
       finalCameraPosition, // End Pos
       finalTargetPosition, // End Target

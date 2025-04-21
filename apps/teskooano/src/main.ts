@@ -162,7 +162,6 @@ window.addEventListener("beforeunload", () => {
 
 // --- Listener for Start Tour Requests from Placeholders ---
 document.body.addEventListener("start-tour-request", () => {
-  console.log("[main.ts] Received start-tour-request event.");
   tourController.restartTour();
 });
 // --- End Listener ---

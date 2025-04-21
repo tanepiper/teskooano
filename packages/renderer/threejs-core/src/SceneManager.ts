@@ -5,6 +5,9 @@ import { simulationState } from "@teskooano/core-state";
 // Import CSS2D types
 import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
+// --- Import simulation state ---
+import { type PerformanceProfileType } from "@teskooano/core-state";
+// --- End import ---
 
 /**
  * Default FOV value if not provided or found in state.
@@ -76,12 +79,30 @@ export class SceneManager {
     );
     this.camera.lookAt(camera.target.x, camera.target.y, camera.target.z);
 
+    // --- Determine Power Preference based on Performance Profile ---
+    const profile = initialSimState.performanceProfile;
+    let powerPref: "default" | "high-performance" | "low-power" = "default";
+    switch (profile) {
+      case "low":
+        powerPref = "low-power";
+        break;
+      case "medium":
+        powerPref = "default";
+        break;
+      case "high":
+      case "cosmic":
+        powerPref = "high-performance";
+        break;
+    }
+    // --- End Determination ---
+
     // Create renderer with options
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       stencil: false,
-      preserveDrawingBuffer: true,
-      powerPreference: "default",
+      logarithmicDepthBuffer: true,
+      preserveDrawingBuffer: false,
+      powerPreference: powerPref, // Apply determined preference
     });
 
     // Setup renderer
@@ -148,7 +169,6 @@ export class SceneManager {
     this.fov = newFov;
     this.camera.fov = newFov;
     this.camera.updateProjectionMatrix(); // Crucial step to apply FOV change
-    console.log(`[SceneManager] Camera FOV set to: ${newFov}`);
 
     // Persist FOV change to global state (optional, but good practice)
     // TODO: Consider if this direct update is desired or should be handled higher up

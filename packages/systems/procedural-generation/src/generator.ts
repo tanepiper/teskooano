@@ -344,9 +344,6 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
         distanceRelativeToParentAU < 2.0 ||
         distanceRelativeToParentAU > 10.0
       ) {
-        console.log(
-          ` -> Skipping asteroid belt generation at ${distanceRelativeToParentAU.toFixed(2)} AU (outside 2-10 AU range).`,
-        );
         // Update lastBodyDistanceAU anyway to prevent getting stuck trying to place belt here
         lastBodyDistanceAU += distanceStepAU;
         continue; // Skip to next potential orbit slot
@@ -444,9 +441,6 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
   if (!hasAsteroidBelt && primaryStar) {
     // Place guaranteed asteroid belt between 2-6 AU from primary star
     const guaranteedBeltDistanceAU = 2.0 + random() * 4.0;
-    console.log(
-      ` -> Adding guaranteed asteroid belt at ${guaranteedBeltDistanceAU.toFixed(2)} AU`,
-    );
 
     const beltData = generateAsteroidBelt(
       random,

@@ -2,6 +2,12 @@ import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 // Import LODLevel from the correct location (adjust path if necessary)
 import type { LODLevel } from "@teskooano/systems-celestial";
+// --- Import simulation state ---
+import {
+  simulationState,
+  type PerformanceProfileType,
+} from "@teskooano/core-state";
+// --- End import ---
 
 // Debug Label related imports (assuming they are now in a separate utility file)
 // We might need to adjust paths or create this file if it doesn't exist
@@ -22,9 +28,22 @@ export class LODManager {
   private objectLODs: Map<string, THREE.LOD> = new Map();
   private debugLabels: Map<string, DebugLabel> = new Map();
   private debugEnabled: boolean = false;
+  private currentProfile: PerformanceProfileType = "medium"; // Store current profile
+  private unsubscribeSimState: (() => void) | null = null; // For unsubscribing
 
   constructor(camera: THREE.PerspectiveCamera) {
     this.camera = camera;
+    // Get initial profile
+    this.currentProfile = simulationState.get().performanceProfile;
+    // Subscribe to profile changes
+    this.unsubscribeSimState = simulationState.subscribe((state) => {
+      if (state.performanceProfile !== this.currentProfile) {
+        this.currentProfile = state.performanceProfile;
+        // Note: Existing LOD objects won't automatically update distances.
+        // A more complex implementation could potentially update them,
+        // but for now, new objects will use the new profile.
+      }
+    });
   }
 
   /**
@@ -76,7 +95,10 @@ export class LODManager {
     const lod = new THREE.LOD();
     lod.name = `${object.celestialObjectId}-LODContainer`; // Add a name for debugging
 
-    // Add levels provided by the renderer
+    // --- Scale distances based on profile ---
+    const scaleFactor = this.getLODScaleFactor();
+    // --- End Scale ---
+
     levels.forEach((level) => {
       if (!level.object || typeof level.distance !== "number") {
         console.warn(
@@ -86,7 +108,10 @@ export class LODManager {
         // Skip invalid levels
         return;
       }
-      lod.addLevel(level.object, level.distance);
+      // Apply scaling factor to the distance
+      const scaledDistance = level.distance * scaleFactor;
+      lod.addLevel(level.object, scaledDistance);
+      // console.log(`[LODManager] Adding level for ${object.celestialObjectId} at scaled distance ${scaledDistance} (Original: ${level.distance}, Scale: ${scaleFactor})`);
     });
 
     // Auto update needs to be true for LOD to work
@@ -133,8 +158,8 @@ export class LODManager {
       this.debugLabels.delete(objectId);
     }
 
+    // If LOD exists, dispose its levels' resources before deleting from map
     if (lod) {
-      // Important: Traverse and dispose geometry/material of *all levels* managed by this LOD
       lod.levels.forEach((levelData) => {
         levelData.object.traverse((child) => {
           if (child instanceof THREE.Mesh) {
@@ -145,7 +170,6 @@ export class LODManager {
               child.material.dispose();
             }
           }
-          // Handle Points material/geometry if necessary
           if (child instanceof THREE.Points) {
             child.geometry?.dispose();
             if (Array.isArray(child.material)) {
@@ -157,8 +181,6 @@ export class LODManager {
         });
       });
       this.objectLODs.delete(objectId);
-      // Note: We don't remove the LOD object from the scene here,
-      // that responsibility lies with the ObjectManager which added it.
     }
   }
 
@@ -176,6 +198,9 @@ export class LODManager {
     objectIds.forEach((id) => this.remove(id));
     // Should be empty now, but clear just in case
     this.objectLODs.clear();
+    // Unsubscribe from state changes
+    this.unsubscribeSimState?.();
+    this.unsubscribeSimState = null;
   }
 
   /**
@@ -196,5 +221,25 @@ export class LODManager {
    */
   getLODById(objectId: string): THREE.LOD | null {
     return this.objectLODs.get(objectId) || null;
+  }
+
+  /**
+   * Determines the scaling factor for LOD distances based on the current profile.
+   * Higher quality profiles use smaller distances (switch LODs sooner).
+   * @returns The scaling factor (e.g., 1.0 for medium, 0.5 for cosmic).
+   */
+  private getLODScaleFactor(): number {
+    switch (this.currentProfile) {
+      case "low":
+        return 1.5;
+      case "medium":
+        return 1.0;
+      case "high":
+        return 0.75;
+      case "cosmic":
+        return 0.5; // Switch levels much closer for max detail
+      default:
+        return 1.0; // Default to medium if profile is unknown
+    }
   }
 }

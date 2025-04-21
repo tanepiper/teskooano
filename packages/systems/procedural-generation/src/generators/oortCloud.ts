@@ -67,6 +67,5 @@ export function generateOortCloud(
       velocity_mps: new OSVector3(0, 0, 0), // Will be updated by factory based on parent
     },
   };
-  console.log(` -> Generated ${oortCloudName} around ${parentStar.name}`);
   return oortCloud;
 }

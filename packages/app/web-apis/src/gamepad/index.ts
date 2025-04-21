@@ -49,7 +49,6 @@ const gamepadConnected$ = fromEvent<GamepadEvent>(
   window,
   "gamepadconnected",
 ).pipe(
-  tap((ev) => console.log("Gamepad connected:", ev.gamepad.id)),
   map((event) => ({ type: "connected" as const, gamepad: event.gamepad })),
 );
 
@@ -58,7 +57,6 @@ const gamepadDisconnected$ = fromEvent<GamepadEvent>(
   window,
   "gamepaddisconnected",
 ).pipe(
-  tap((ev) => console.log("Gamepad disconnected:", ev.gamepad.id)),
   map((event) => ({ type: "disconnected" as const, gamepad: event.gamepad })),
 );
 
@@ -159,7 +157,6 @@ export const gamepadState$: Observable<GamepadState> =
       if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
       }
-      console.log("Gamepad polling stopped.");
     };
   }).pipe(
     shareReplay({ bufferSize: 1, refCount: true }), // Share polling among subscribers

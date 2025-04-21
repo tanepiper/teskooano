@@ -231,9 +231,7 @@ export class ToolbarSeedForm extends HTMLElement {
 
         if (primaryStar) {
           // Create the system with the primary star first
-          console.log(
-            `[ToolbarSeedForm] Creating solar system with primary star: ${primaryStar.id}`,
-          );
+
           actions.createSolarSystem(primaryStar);
 
           // Add all *other* objects, ensuring no stars are added with addCelestial
@@ -262,9 +260,6 @@ export class ToolbarSeedForm extends HTMLElement {
             (obj) => obj.type === CelestialType.STAR && !obj.parentId,
           );
           stars.forEach((star) => {
-            console.log(
-              `[ToolbarSeedForm] Creating solar system with star: ${star.id}`,
-            );
             actions.createSolarSystem(star);
           });
 

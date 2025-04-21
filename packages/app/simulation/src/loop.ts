@@ -121,7 +121,6 @@ export function startSimulationLoop() {
           stepResult.destructionEvents.length > 0
         ) {
           stepResult.destructionEvents.forEach((event: DestructionEvent) => {
-            // console.log('[SimulationLoop] Destruction Occurred:', event);
             rendererEvents.emit("destruction:occurred", event);
           });
         }

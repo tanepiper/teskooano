@@ -95,14 +95,10 @@ export function makeDraggable(
           options.dragImage.yOffset,
         );
       }
-      console.log(`Drag started for element: ${element.id}`);
     }
   };
 
   const handleDragEnd = (event: DragEvent) => {
-    console.log(
-      `Drag ended for element: ${element.id}, Drop Effect: ${event.dataTransfer?.dropEffect}`,
-    );
     // You could potentially use event.dataTransfer.dropEffect here
   };
 
@@ -175,7 +171,6 @@ export function createDropZoneObservable(
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = dropEffect; // Show allowed cursor
     }
-    console.log(`Drag enter on: ${element.id}`);
   };
 
   const handleDragOver = (event: DragEvent) => {
@@ -200,7 +195,6 @@ export function createDropZoneObservable(
       if (dragOverClass) {
         element.classList.remove(dragOverClass);
       }
-      console.log(`Drag leave from: ${element.id}`);
     }
   };
 
@@ -217,7 +211,6 @@ export function createDropZoneObservable(
         return; // Reject drop
       }
     }
-    console.log(`Dropped on: ${element.id}`);
     // Drop event is emitted by the observable stream below
   };
 
@@ -244,7 +237,6 @@ export function createDropZoneObservable(
     : new Observable<never>(); // An observable that never emits if no signal
 
   stop$.subscribe(() => {
-    console.log(`Removing drop zone listeners from ${element.id}`);
     element.removeEventListener("dragenter", handleDragEnter);
     element.removeEventListener("dragover", handleDragOver);
     element.removeEventListener("dragleave", handleDragLeave);

@@ -220,7 +220,6 @@ export class ToolbarController {
       };
     } else {
       // First panel, add without specific position (goes into root)
-      // console.log("Adding first panel to root.");
     }
 
     try {

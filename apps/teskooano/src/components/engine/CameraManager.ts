@@ -209,6 +209,5 @@ export class CameraManager {
       "camera-transition-complete",
       this.handleCameraTransitionComplete,
     );
-    console.log("[CameraManager] Destroyed and listeners removed.");
   }
 }

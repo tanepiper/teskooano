@@ -375,7 +375,6 @@ export const handleCollisions = (
               destroyedRadius: radius1, // Use first moon's radius for effect scaling
             };
             destructionEvents.push(destructionEvent);
-            console.log(`[Collision] Mutual Destruction: ${id1} & ${id2}`);
             continue; // Handled Moon vs Moon
           }
 
@@ -392,9 +391,7 @@ export const handleCollisions = (
             );
             updatedBodiesMap.set(id1, resolvedBody1);
             updatedBodiesMap.set(id2, resolvedBody2);
-            console.log(
-              `[Collision] Elastic Bounce (Planet/Moon vs Gas Giant): ${id1} & ${id2}`,
-            );
+
             continue; // Handled Planet/Moon vs Gas Giant
           }
 

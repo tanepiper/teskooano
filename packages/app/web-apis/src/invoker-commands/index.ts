@@ -142,16 +142,12 @@ export function invokeCommand(
       );
     }
 
-    console.log(`Dispatching command "${command}" on target:`, targetElement);
     return targetElement.dispatchEvent(commandEvent);
   } catch (err) {
     console.error(`Failed to dispatch command "${command}":`, err);
 
     // Fallback attempt with a simple CustomEvent if CommandEvent fails
     try {
-      console.log(
-        `Falling back to dispatching CustomEvent for command "${command}"`,
-      );
       const customEvent = new CustomEvent("command", {
         ...options,
         detail: { command: command },

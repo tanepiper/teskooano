@@ -106,10 +106,6 @@ export class DockviewController {
     this._api.onDidActivePanelChange(
       (activePanel: IDockviewPanel | undefined) => {
         // this.activePanelApiStore.set(activePanelApi?.api ?? null); // REMOVE - Property doesn't exist
-        console.log(
-          "[DockviewController] Active panel changed:",
-          activePanel?.id ?? "none",
-        );
       },
     );
   }

@@ -121,7 +121,6 @@ export function observeElementResize(
     }
     observer.unobserve(targetElement);
     observer.disconnect(); // Clean up the observer fully
-    console.log("ResizeObserver stopped for element:", targetElement);
   };
 
   return {

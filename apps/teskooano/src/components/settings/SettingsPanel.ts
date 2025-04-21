@@ -1,9 +1,10 @@
 import { IContentRenderer, IDockviewPanelProps } from "dockview-core";
 // Import state and actions
 import {
-  actions,
   simulationState,
+  simulationActions,
   type PhysicsEngineType,
+  type PerformanceProfileType,
 } from "@teskooano/core-state";
 // Import shared components to ensure they are registered
 import "../shared/Card.js";
@@ -25,6 +26,18 @@ const ENGINE_OPTIONS: { value: PhysicsEngineType; label: string }[] = [
   { value: "symplectic", label: "Symplectic Euler" },
   { value: "verlet", label: "Verlet Integration" },
 ];
+
+// --- ADD Performance Profile Options ---
+const PERFORMANCE_PROFILE_OPTIONS: {
+  value: PerformanceProfileType;
+  label: string;
+}[] = [
+  { value: "low", label: "Low (Power Saving)" },
+  { value: "medium", label: "Medium (Balanced)" },
+  { value: "high", label: "High (Performance)" },
+  { value: "cosmic", label: "Cosmic (Max Quality)" },
+];
+// --- END ADD ---
 
 // Constants for the texture cache
 const TEXTURE_CACHE_DB_NAME = "textureCacheDB";
@@ -191,6 +204,7 @@ export class SettingsPanel implements IContentRenderer {
   private formElement: TeskooanoForm | null = null;
   private trailSliderElement: TeskooanoSlider | null = null;
   private engineSelectElement: TeskooanoSelect | null = null;
+  private profileSelectElement: TeskooanoSelect | null = null;
   private unsubscribeSimState: (() => void) | null = null;
 
   // Texture cache elements
@@ -264,7 +278,7 @@ export class SettingsPanel implements IContentRenderer {
       if (!isNaN(sliderValueNumber)) {
         // Dispatch the (new) action directly with the number
         // Assuming actions.setTrailLengthMultiplier exists after state update
-        actions.setTrailLengthMultiplier(sliderValueNumber);
+        simulationActions.setTrailLengthMultiplier(sliderValueNumber);
       }
     });
 
@@ -299,11 +313,48 @@ export class SettingsPanel implements IContentRenderer {
       const newEngine = target.value as PhysicsEngineType;
       // Dispatch action if the value is a valid engine type
       if (ENGINE_OPTIONS.some((opt) => opt.value === newEngine)) {
-        actions.setPhysicsEngine(newEngine);
+        simulationActions.setPhysicsEngine(newEngine);
       }
     });
     this.formElement.appendChild(this.engineSelectElement);
     // --- End Physics Engine Select ---
+
+    // --- Performance Profile Select ---
+    this.profileSelectElement = document.createElement(
+      "teskooano-select",
+    ) as TeskooanoSelect;
+    this.profileSelectElement.id = "setting-performance-profile";
+    this.profileSelectElement.setAttribute("label", "Performance Profile");
+    this.profileSelectElement.setAttribute(
+      "help-text",
+      "Adjusts visual quality and performance. Higher settings increase GPU load and may impact battery life. GPU preference changes require restart.",
+    );
+    // Populate options
+    PERFORMANCE_PROFILE_OPTIONS.forEach((option) => {
+      const optionElement = document.createElement("option");
+      optionElement.value = option.value;
+      optionElement.textContent = option.label;
+      this.profileSelectElement!.appendChild(optionElement);
+    });
+
+    // Set initial value from state
+    const profileState = simulationState.get();
+    this.profileSelectElement.setAttribute(
+      "value",
+      profileState.performanceProfile,
+    );
+
+    // Add event listener to update state
+    this.profileSelectElement.addEventListener("change", (event) => {
+      const target = event.target as TeskooanoSelect;
+      const newProfile = target.value as PerformanceProfileType;
+      // Dispatch action if the value is a valid profile type
+      if (PERFORMANCE_PROFILE_OPTIONS.some((opt) => opt.value === newProfile)) {
+        simulationActions.setPerformanceProfile(newProfile);
+      }
+    });
+    this.formElement.appendChild(this.profileSelectElement);
+    // --- End Performance Profile Select ---
 
     // --- Texture Cache Section ---
     // Create section title
@@ -465,6 +516,14 @@ export class SettingsPanel implements IContentRenderer {
       const currentEngine = state.physicsEngine;
       if (currentEngine !== this.engineSelectElement.value) {
         this.engineSelectElement.value = currentEngine;
+      }
+    }
+
+    // Update Performance Profile Select
+    if (this.profileSelectElement) {
+      const currentProfile = state.performanceProfile;
+      if (currentProfile !== this.profileSelectElement.value) {
+        this.profileSelectElement.value = currentProfile;
       }
     }
   };

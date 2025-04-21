@@ -122,9 +122,6 @@ export const deviceOrientation$ = createOrientationObservable().pipe(
  */
 export async function requestDeviceOrientationPermission(): Promise<boolean> {
   if (!requiresPermissionRequest) {
-    console.log(
-      "DeviceOrientationEvent.requestPermission() not needed or not supported.",
-    );
     return true; // Permission not required
   }
 

@@ -49,7 +49,6 @@ export class TourController {
         // Move to next step
         const currentStep =
           this.tourSteps[this.driverInstance.getActiveIndex()!];
-        console.log("Current step:", currentStep);
         if (currentStep.onNextClick) {
           currentStep.onNextClick(this?.engineViewId ?? undefined);
         } else {

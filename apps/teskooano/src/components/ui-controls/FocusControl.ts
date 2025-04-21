@@ -811,9 +811,6 @@ export class FocusControl extends HTMLElement {
       (isDestroyedNow && wasDestroyedBefore) ||
       (isAnnihilatedNow && wasAnnihilatedBefore)
     ) {
-      console.log(
-        `[FocusControl] Object ${objectId} already has status ${status}, skipping update`,
-      );
       return; // Already has the correct status
     }
 

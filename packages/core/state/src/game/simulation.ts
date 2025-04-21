@@ -12,6 +12,10 @@ export interface CameraState {
 // Define the possible physics engine types
 export type PhysicsEngineType = "euler" | "symplectic" | "verlet";
 
+// --- ADD Performance Profile Type ---
+export type PerformanceProfileType = "low" | "medium" | "high" | "cosmic";
+// --- END ADD ---
+
 export interface VisualSettingsState {
   trailLengthMultiplier: number;
   // View-specific settings like label visibility belong in PanelViewState
@@ -33,6 +37,7 @@ export interface SimulationState {
     triangles?: number;
     memory?: { usedJSHeapSize?: number }; // Reflecting performance.memory structure
   };
+  performanceProfile: PerformanceProfileType; // Added performance profile
 }
 
 const initialState: SimulationState = {
@@ -49,8 +54,10 @@ const initialState: SimulationState = {
   physicsEngine: "verlet", // Changed default to Verlet
   visualSettings: {
     // Initialize visual settings
-    trailLengthMultiplier: 150, // Default to 30
+    trailLengthMultiplier: 100,
+    // Add other visual defaults here
   },
+  performanceProfile: "medium", // Default performance profile
 };
 
 export const simulationState = atom<SimulationState>(initialState);
@@ -131,6 +138,17 @@ export const simulationActions = {
       ...simulationState.get(),
       physicsEngine: engine,
     });
+  },
+
+  // Action to set the performance profile
+  setPerformanceProfile: (profile: PerformanceProfileType) => {
+    const currentState = simulationState.get();
+    if (profile !== currentState.performanceProfile) {
+      simulationState.set({
+        ...currentState,
+        performanceProfile: profile,
+      });
+    }
   },
 
   // Action to set the trail length multiplier

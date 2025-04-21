@@ -278,14 +278,7 @@ export class CelestialInfo extends HTMLElement {
     if (customEvent.detail) {
       // Check if the ID is different before updating to avoid redundant calls
       if (this.currentSelectedId !== customEvent.detail.focusedObjectId) {
-        console.log(
-          `[CelestialInfo] Renderer focus changed to: ${customEvent.detail.focusedObjectId}`,
-        );
         this.handleSelectionChange(customEvent.detail.focusedObjectId);
-      } else {
-        console.log(
-          `[CelestialInfo] Renderer focus change ignored (already ${this.currentSelectedId})`,
-        );
       }
     }
   };
@@ -296,14 +289,7 @@ export class CelestialInfo extends HTMLElement {
     if (customEvent.detail && customEvent.detail.objectId) {
       // Check if the ID is different before updating
       if (this.currentSelectedId !== customEvent.detail.objectId) {
-        console.log(
-          `[CelestialInfo] Focus request initiated for: ${customEvent.detail.objectId}`,
-        );
         this.handleSelectionChange(customEvent.detail.objectId);
-      } else {
-        console.log(
-          `[CelestialInfo] Focus request ignored (already selected ${this.currentSelectedId})`,
-        );
       }
     } else {
       console.warn("[CelestialInfo] Received focus request with no objectId.");

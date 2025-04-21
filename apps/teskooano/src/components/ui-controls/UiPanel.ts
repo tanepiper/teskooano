@@ -57,7 +57,6 @@ export class UiPanel implements IContentRenderer {
       (orientation) => {
         if (this._currentOrientation !== orientation) {
           this._currentOrientation = orientation;
-          console.log(`UiPanel [${this._api?.id}] orientation: ${orientation}`); // Debug
           if (orientation === "portrait") {
             this._element.classList.remove("layout-internal-landscape");
             this._element.classList.add("layout-internal-portrait");
@@ -133,14 +132,8 @@ export class UiPanel implements IContentRenderer {
         if (config.id === "focus-selector-section") {
           // Assuming this ID for the focus selector
           leftContainer.appendChild(sectionContainer);
-          console.log(
-            ` -> Added component <${config.componentTag}> to LEFT container`,
-          );
         } else {
           rightContainer.appendChild(sectionContainer);
-          console.log(
-            ` -> Added component <${config.componentTag}> to RIGHT container`,
-          );
         }
         // --- End sorting ---
 

@@ -432,7 +432,6 @@ export function generateTerrainTexture(
 
   // Check cache first
   if (textureCache.has(cacheKey)) {
-    console.log(`[generateTerrainTexture] Cache hit for key: ${cacheKey}`);
     // Return a structured clone to avoid shared mutable state issues if canvases were modified elsewhere
     const cached = textureCache.get(cacheKey)!;
     return {
@@ -458,24 +457,6 @@ export function generateTerrainTexture(
   const noisePersistence = options?.noisePersistence ?? 0.5;
   const noiseLacunarity = options?.noiseLacunarity ?? 2.0;
   const normalStrength = options?.normalStrength ?? 1.0;
-
-  console.log(
-    `[generateTerrainTexture] Using 3D Simplex Noise. Seed: ${seed}, Size: ${canvasSize}, Scale: ${noiseScale}, Octaves: ${noiseOctaves}, Persistence: ${noisePersistence}, Lacunarity: ${noiseLacunarity}, Normal Strength: ${normalStrength}`,
-  );
-  if (surfaceProperties) {
-    console.log(
-      `[generateTerrainTexture] Surface Properties Type: ${
-        "planetType" in surfaceProperties
-          ? surfaceProperties.planetType
-          : "Unknown"
-      }`,
-    );
-  } else {
-    console.log(
-      `[generateTerrainTexture] No surface properties provided, using default grayscale.`,
-    );
-  }
-
   // Create color canvas
   const colorCanvas = new OffscreenCanvas(canvasSize, canvasSize);
 
