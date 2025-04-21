@@ -10,7 +10,6 @@ import type { ObjectManager } from "./ObjectManager";
 import { KeplerianOrbitManager } from "./orbit-manager";
 import { predictVerletTrajectory } from "./orbit-manager/verlet-predictor"; // Import predictVerletTrajectory directly
 
-
 /**
  * Enum defining the available modes for orbit visualization.
  * - `Keplerian`: Static elliptical orbits calculated from orbital parameters.
@@ -396,7 +395,10 @@ export class OrbitManager {
       }
 
       // Use pointsToUse (which is now the raw points array)
-      const pointsToDraw = Math.min(pointsToUse.length, positionAttribute.count);
+      const pointsToDraw = Math.min(
+        pointsToUse.length,
+        positionAttribute.count,
+      );
       for (let i = 0; i < pointsToDraw; i++) {
         pointsToUse[i].toArray(positionAttribute.array, i * 3);
       }

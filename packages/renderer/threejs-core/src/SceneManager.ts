@@ -55,7 +55,8 @@ export class SceneManager {
 
     // Get initial camera state from global state if available
     const initialSimState = simulationState.get();
-    const initialFov = options.fov ?? initialSimState.camera?.fov ?? DEFAULT_FOV;
+    const initialFov =
+      options.fov ?? initialSimState.camera?.fov ?? DEFAULT_FOV;
     this.fov = initialFov; // Store initial FOV
 
     // Create camera with far clip plane suitable for space scenes

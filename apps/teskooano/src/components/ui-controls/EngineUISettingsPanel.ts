@@ -150,7 +150,9 @@ export class EngineUISettingsPanel extends HTMLElement {
     this.debrisEffectsToggle = this.shadowRoot!.getElementById(
       "debris-effects-toggle",
     ) as HTMLInputElement;
-    this.fovSlider = this.shadowRoot!.getElementById("fov-slider") as HTMLInputElement;
+    this.fovSlider = this.shadowRoot!.getElementById(
+      "fov-slider",
+    ) as HTMLInputElement;
     this.fovValueDisplay = this.shadowRoot!.getElementById("fov-value");
     this.errorMessageElement = this.shadowRoot!.getElementById("error-message");
 

@@ -744,7 +744,7 @@ export class ObjectManager {
       return;
     }
 
-    // ---> REVERT: Use position directly from RenderableCelestialObject <--- 
+    // ---> REVERT: Use position directly from RenderableCelestialObject <---
     // This position is already calculated and scaled by RendererStateAdapter
     existingMesh.position.copy(object.position);
     // ---> END REVERT <---
