@@ -1,45 +1,62 @@
-import "../shared/Button.ts";
-import {
-  actions,
-  celestialObjectsStore,
-  currentSeed,
-} from "@teskooano/core-state";
-import { CelestialType, type CelestialObject } from "@teskooano/data-types";
-import { generateStar } from "@teskooano/procedural-generation";
+import { celestialObjectsStore, currentSeed } from "@teskooano/core-state";
+import { type CelestialObject } from "@teskooano/data-types";
 import { DockviewApi } from "dockview-core";
-import { OSVector3 } from "@teskooano/core-math";
 import { generateAndLoadSystem } from "../../systems/system-generator.js";
+import "../shared/Button.ts";
 import { SystemControlsTemplate } from "./SystemControls.template";
+import * as SystemActions from "./system-controls.actions.js"; // Import the new actions
 
-function createDefaultStar(): CelestialObject {
-  return generateStar(Math.random);
-}
-
-interface SystemImportData {
-  seed: string;
-  objects: CelestialObject[];
-}
-
+/**
+ * @element system-controls
+ * @description
+ * A custom element that provides UI controls for managing the star system generation,
+ * loading, saving, and clearing within the Teskooano application.
+ * It interacts with the core state stores (`celestialObjectsStore`, `currentSeed`)
+ * and actions to modify the application state.
+ *
+ * @attr {boolean} mobile - Indicates if the component should render in a mobile-friendly layout.
+ *
+ * @fires system-action - Dispatched when a system-level action (like clear) occurs.
+ *                        (Note: This is currently handled internally via `actions.clearState`).
+ * @fires resetSimulationTime - Dispatched after importing a system to reset the simulation loop timer.
+ */
 class SystemControls extends HTMLElement {
   // DOM elements
+  /** @internal The main container element for the controls. */
   private container: HTMLElement | null = null;
+  /** @internal The element shown when no system is loaded. */
   private emptyState: HTMLElement | null = null;
+  /** @internal The element shown when a system is loaded. */
   private loadedState: HTMLElement | null = null;
+  /** @internal The input field for the system seed. */
   private seedInput: HTMLInputElement | null = null;
+  /** @internal The form containing the seed input and submit button. */
   private seedForm: HTMLFormElement | null = null;
+  /** @internal The element displaying the current system seed. */
   private systemSeedEl: HTMLElement | null = null;
+  /** @internal The element displaying the number of celestial objects. */
   private celestialCountEl: HTMLElement | null = null;
+  /** @internal A collection of all action buttons within the component. */
   private buttons: NodeListOf<HTMLElement> | null = null;
+  /** @internal The overlay shown during loading/generation states. */
   private loadingOverlay: HTMLElement | null = null;
 
   // State & Properties
+  /** @internal Flag indicating if the mobile layout is active. Controlled by the `mobile` attribute. */
   private _isMobile: boolean = false;
+  /** @internal Flag indicating if a system generation/import/export process is currently running. */
   private _isGenerating: boolean = false;
+  /** @internal Reference to the Dockview API, used for potential panel interactions. */
   private dockviewApi: DockviewApi | null = null;
 
   // Store Unsubscribers
+  /** @internal Array holding unsubscribe functions for Nanostore subscriptions. */
   private unsubscribers: (() => void)[] = [];
 
+  /**
+   * Observed attributes for the custom element.
+   * @returns {string[]} An array of attribute names to observe.
+   */
   static get observedAttributes() {
     // Only observe mobile, other state comes from store
     return ["mobile"];
@@ -51,12 +68,20 @@ class SystemControls extends HTMLElement {
     shadow.appendChild(SystemControlsTemplate.content.cloneNode(true));
   }
 
-  // Method to inject Dockview API
+  /**
+   * Sets the Dockview API instance for the component.
+   * Allows the component to interact with the Dockview layout engine if needed.
+   * @param {DockviewApi} api - The Dockview API instance.
+   */
   public setDockviewApi(api: DockviewApi): void {
     this.dockviewApi = api;
     console.log("SystemControls: Dockview API set.");
   }
 
+  /**
+   * Lifecycle callback executed when the element is connected to the DOM.
+   * @internal
+   */
   connectedCallback() {
     console.log("SystemControls connected");
 
@@ -93,6 +118,10 @@ class SystemControls extends HTMLElement {
     }
   }
 
+  /**
+   * Lifecycle callback executed when the element is disconnected from the DOM.
+   * @internal
+   */
   disconnectedCallback() {
     console.log("SystemControls disconnected");
     this.removeEventListeners();
@@ -101,6 +130,13 @@ class SystemControls extends HTMLElement {
     this.unsubscribers = [];
   }
 
+  /**
+   * Lifecycle callback executed when an observed attribute changes.
+   * @param {string} name - The name of the attribute that changed.
+   * @param {string | null} oldValue - The previous value of the attribute.
+   * @param {string | null} newValue - The new value of the attribute.
+   * @internal
+   */
   attributeChangedCallback(
     name: string,
     oldValue: string | null,
@@ -114,6 +150,10 @@ class SystemControls extends HTMLElement {
     }
   }
 
+  /**
+   * Subscribes to the relevant Nanostores and stores the unsubscribe functions.
+   * @private
+   */
   private subscribeToStores() {
     // Subscribe to celestialObjectsStore
     const unsubObjects = celestialObjectsStore.subscribe(
@@ -140,12 +180,20 @@ class SystemControls extends HTMLElement {
     this.unsubscribers.push(unsubSeed);
   }
 
+  /**
+   * Generates a system using a random seed. Typically used for tours or demonstrations.
+   * @public
+   */
   public tourRandomSeed() {
     const randomSeed = Math.random().toString(36).substring(2, 10); // Simple random seed
     console.log("Generating random system with seed:", randomSeed);
     this.handleSeedSubmit({ preventDefault: () => {} } as Event);
   }
 
+  /**
+   * Updates the size and appearance of buttons based on the mobile state.
+   * @private
+   */
   private updateButtonSizes() {
     const size = this._isMobile ? "sm" : ""; // Use 'sm' for mobile, default otherwise
     this.buttons?.forEach((button) => {
@@ -182,6 +230,13 @@ class SystemControls extends HTMLElement {
     });
   }
 
+  /**
+   * Updates the component's display based on the current system state (objects and seed).
+   * Toggles between empty and loaded states, updates displayed info, and loading overlay.
+   * @param {Record<string, CelestialObject>} objects - The current map of celestial objects.
+   * @param {string} seed - The current system seed.
+   * @private
+   */
   private updateDisplay(
     objects: Record<string, CelestialObject>,
     seed: string,
@@ -228,6 +283,10 @@ class SystemControls extends HTMLElement {
     this.updateButtonSizes();
   }
 
+  /**
+   * Adds event listeners to the interactive elements within the component.
+   * @private
+   */
   private addEventListeners() {
     // Remove the listener from the form's submit event
     // this.seedForm?.addEventListener('submit', this.handleSeedSubmit);
@@ -248,6 +307,10 @@ class SystemControls extends HTMLElement {
     });
   }
 
+  /**
+   * Removes event listeners added by `addEventListeners`.
+   * @private
+   */
   private removeEventListeners() {
     // Remove the listener from the form's submit event (if it was ever added)
     // this.seedForm?.removeEventListener('submit', this.handleSeedSubmit);
@@ -266,6 +329,12 @@ class SystemControls extends HTMLElement {
     });
   }
 
+  /**
+   * Handles the submission of the seed form (triggered by button click).
+   * Validates the seed input and calls the system generation function.
+   * @param {Event} event - The click event object.
+   * @private
+   */
   private handleSeedSubmit = async (event: Event) => {
     event.preventDefault(); // Keep this!
     console.log("handleSeedSubmit triggered via BUTTON CLICK."); // Updated log message
@@ -278,60 +347,62 @@ class SystemControls extends HTMLElement {
     const seed = this.seedInput?.value.trim() ?? ""; // Use empty string if null/undefined
     console.log(
       `Seed value from input: "${this.seedInput?.value}", Trimmed: "${seed}"`,
-    ); // Log seed value
+    );
 
     // Basic validation feedback
     if (!seed && this.seedInput) {
-      console.log("Validation failed: Seed is empty after trimming."); // Log validation failure
+      console.log("Validation failed: Seed is empty after trimming.");
       console.warn("Seed input is empty");
       this.seedInput.classList.add("error");
       this.seedInput.setAttribute("placeholder", "Seed cannot be empty!");
-      // Use showFeedback on the button instead of timeout
       const submitButton = this.seedForm?.querySelector(
         'teskooano-button[type="submit"]',
       );
       if (submitButton)
         this.showFeedback(submitButton as HTMLElement, "⚠️", true);
 
-      // Remove error state after a delay
       setTimeout(() => {
         this.seedInput?.classList.remove("error");
         this.seedInput?.setAttribute("placeholder", "Enter seed...");
       }, 2000);
-      return; // Stop if seed is empty
+      return;
     }
 
     console.log(`Validation passed. Proceeding with seed: "${seed}"`);
     this.setGenerating(true);
 
     try {
-      console.log("Calling generateAndLoadSystem..."); // Log before call
+      console.log("Calling generateAndLoadSystem...");
       const success = await generateAndLoadSystem(seed, this.dockviewApi);
-      // Feedback is handled by store updates triggering updateDisplay
+      // Feedback is now implicitly handled by store updates triggering updateDisplay
       if (!success) {
         console.error("System generation failed.");
-        // Optionally show an error feedback message
         const submitButton = this.seedForm?.querySelector(
           'teskooano-button[type="submit"]',
         );
         if (submitButton)
           this.showFeedback(submitButton as HTMLElement, "❌", true, 3000);
       }
-      console.log(`generateAndLoadSystem returned: ${success}`); // Log result
+      console.log(`generateAndLoadSystem returned: ${success}`);
     } catch (error) {
       console.error("Error during generateAndLoadSystem call:", error);
-      // Optionally show an error feedback message
       const submitButton = this.seedForm?.querySelector(
         'teskooano-button[type="submit"]',
       );
       if (submitButton)
         this.showFeedback(submitButton as HTMLElement, "❌", true, 3000);
     } finally {
-      console.log("Resetting generating state."); // Log before resetting state
+      console.log("Resetting generating state.");
       this.setGenerating(false);
     }
   };
 
+  /**
+   * Handles clicks on buttons with `data-action` attributes.
+   * Dispatches calls to specific handler methods based on the action.
+   * @param {Event} event - The click event object.
+   * @private
+   */
   private handleActionClick = async (event: Event) => {
     if (this._isGenerating) return;
 
@@ -341,311 +412,143 @@ class SystemControls extends HTMLElement {
     if (!action) return;
     console.log("Action clicked:", action);
 
-    // --- Export Action ---
-    if (action === "export") {
-      try {
-        this.setGenerating(true); // Indicate activity
-        const seed = currentSeed.get();
-        const objectsMap = celestialObjectsStore.get();
-        const objectsArray = Object.values(objectsMap);
+    this.setGenerating(true);
+    let result: SystemActions.ActionResult | null = null;
 
-        if (objectsArray.length === 0) {
-          console.warn("Nothing to export.");
-          this.showFeedback(button, "🤷", false, 2000); // Maybe a "nothing to export" icon?
-          return; // Exit early
-        }
-
-        const exportData: SystemImportData = {
-          seed: seed || "", // Ensure seed is a string
-          objects: objectsArray,
-        };
-
-        const jsonString = JSON.stringify(exportData, null, 2); // Pretty print JSON
-        const blob = new Blob([jsonString], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `teskooano-system-${seed || Date.now()}.json`; // Filename with seed or timestamp
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        console.log("System exported successfully.");
-        this.showFeedback(button, "💾"); // Export icon
-      } catch (error) {
-        console.error("Error exporting system:", error);
-        this.showFeedback(button, "❌", true);
-      } finally {
-        this.setGenerating(false);
-      }
-      return; // Handled
-    }
-
-    // --- Import Action ---
-    if (action === "import") {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".json";
-      input.style.display = "none"; // Keep it hidden
-
-      input.onchange = async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (!file) {
-          console.log("No file selected.");
-          // No explicit feedback needed if user cancels dialog
-          return;
-        }
-
-        this.setGenerating(true); // Show loading state
-        const reader = new FileReader();
-
-        reader.onload = async (event) => {
-          try {
-            const fileContent = event.target?.result as string;
-            if (!fileContent) throw new Error("File content is empty.");
-
-            const parsedData = JSON.parse(fileContent) as SystemImportData;
-
-            // --- Basic Validation ---
-            if (
-              !parsedData ||
-              typeof parsedData !== "object" ||
-              typeof parsedData.seed !== "string" ||
-              !Array.isArray(parsedData.objects)
-            ) {
-              throw new Error(
-                "Invalid file format. Expected { seed: string, objects: CelestialObject[] }.",
-              );
-            }
-
-            // --- Hydrate Physics State Vectors ---
-            const hydratedObjects = parsedData.objects.map((obj) => {
-              if (obj.physicsStateReal) {
-                // Ensure position_m is an OSVector3 instance
-                if (
-                  obj.physicsStateReal.position_m &&
-                  !(obj.physicsStateReal.position_m instanceof OSVector3)
-                ) {
-                  // Use 'as any' to access properties on the plain JS object
-                  const pos = obj.physicsStateReal.position_m as any;
-                  obj.physicsStateReal.position_m = new OSVector3(
-                    pos.x,
-                    pos.y,
-                    pos.z,
-                  );
-                }
-                // Ensure velocity_mps is an OSVector3 instance
-                if (
-                  obj.physicsStateReal.velocity_mps &&
-                  !(obj.physicsStateReal.velocity_mps instanceof OSVector3)
-                ) {
-                  // Use 'as any' to access properties on the plain JS object
-                  const vel = obj.physicsStateReal.velocity_mps as any;
-                  obj.physicsStateReal.velocity_mps = new OSVector3(
-                    vel.x,
-                    vel.y,
-                    vel.z,
-                  );
-                }
-              }
-              return obj;
-            });
-            // --- End Hydration ---
-
-            console.log(
-              `Importing system with seed "${parsedData.seed}" and ${hydratedObjects.length} objects...`,
-            );
-
-            // 1. Clear existing state
-            actions.clearState({
-              resetCamera: false, // Keep camera position for now
-              resetTime: true,
-              resetSelection: true,
-            });
-            actions.resetTime(); // Ensure time resets
-
-            // 2. Set the seed (REMOVED - Assuming createSolarSystem handles this)
-            // actions.setSeed(parsedData.seed);
-
-            // 3. Load the objects (using hydratedObjects)
-            // No batch action available, load individually.
-            console.warn(
-              "No batch load action found, attempting manual load (may be slow/incomplete).",
-            );
-            // Find the star first for createSolarSystem
-            const star = hydratedObjects.find(
-              (obj) => obj.type === CelestialType.STAR && obj.parentId == null,
-            ); // Basic check for primary star
-
-            if (!star) {
-              throw new Error(
-                "Could not find a primary star in imported data.",
-              );
-            }
-
-            // Load the primary star (this might set the seed indirectly)
-            actions.createSolarSystem(star);
-
-            // Load remaining objects
-            hydratedObjects.forEach((obj) => {
-              if (obj.id !== star.id) {
-                // Check if addCelestialObject exists (based on previous linter hint)
-                if (typeof actions.addCelestialObject === "function") {
-                  actions.addCelestialObject(obj); // Add others
-                } else {
-                  // Fallback if addCelestialObject also doesn't exist
-                  console.error(
-                    `Cannot add object ${obj.name} (ID: ${obj.id}) - actions.addCelestialObject missing.`,
-                  );
-                  // Optionally throw an error here or continue processing others
-                }
-              }
-            });
-
-            console.log("System imported successfully.");
-            this.showFeedback(button, "✅"); // Success icon
-
-            // Dispatch event to reset the simulation loop's internal timer
-            window.dispatchEvent(new CustomEvent("resetSimulationTime"));
-            console.log("Dispatched resetSimulationTime event.");
-          } catch (error) {
-            console.error("Error importing system:", error);
-            this.showFeedback(
-              button,
-              "❌",
-              true,
-              3000, // Show error longer
-            );
-          } finally {
-            this.setGenerating(false); // Hide loading state
-            document.body.removeChild(input); // Clean up the input element
-          }
-        };
-
-        reader.onerror = (error) => {
-          console.error("Error reading file:", error);
-          this.showFeedback(button, "❌", true, 3000);
+    try {
+      switch (action) {
+        case "export":
+          result = await this._handleExport();
+          break;
+        case "import":
+          result = await this._handleImport();
+          break;
+        case "random":
+          result = await this._handleRandom();
+          break;
+        case "clear":
+          result = await this._handleClear();
+          break;
+        case "create-blank":
+          result = await this._handleCreateBlank();
+          break;
+        case "copy-seed":
+          result = await this._handleCopySeed();
+          break;
+        default:
+          console.warn(`Unhandled action: ${action}`);
+          // Keep generating false if action is unhandled
           this.setGenerating(false);
-          document.body.removeChild(input);
-        };
+          return; // Exit early for unhandled actions
+      }
 
-        reader.readAsText(file); // Start reading the file
-      };
-
-      // Add to body, click, and set up removal in the callbacks
-      document.body.appendChild(input);
-      input.click();
-      // Cleanup is handled within the onload/onerror callbacks now
-
-      return; // Handled
-    }
-
-    // --- End Import Action ---
-
-    // Actions that trigger generation
-    if (action === "random") {
-      this.setGenerating(true);
-      const randomSeed = Math.random().toString(36).substring(2, 10); // Simple random seed
-      console.log("Generating random system with seed:", randomSeed);
-      try {
-        await generateAndLoadSystem(randomSeed, this.dockviewApi);
-        this.showFeedback(button, "🎲"); // Feedback on the random button
-      } catch (error) {
-        console.error("Error during random generation:", error);
+      // Show feedback based on the result from the action handlers
+      if (result) {
+        this.showFeedback(button, result.symbol, !result.success);
+      } else {
+        // Handle cases where the action handler didn't return a result (e.g., import cancelled)
+        console.log(`Action '${action}' completed without explicit feedback.`);
+      }
+    } catch (error) {
+      // Catch errors from the action handlers themselves (e.g., file dialog rejection)
+      console.error(`Error during action '${action}':`, error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      // Show generic error feedback if the action handler failed unexpectedly
+      // unless it's a cancellation error we want to ignore visually.
+      if (message !== "File selection cancelled.") {
         this.showFeedback(button, "❌", true);
-      } finally {
+      }
+    } finally {
+      // Always reset generating state unless it was already reset (e.g., for unhandled action)
+      if (this._isGenerating) {
         this.setGenerating(false);
       }
-      return; // Handled
     }
-
-    // Actions that modify state directly or need confirmation
-    if (action === "clear") {
-      if (
-        !confirm(
-          "Are you sure you want to clear the current system? This cannot be undone.",
-        )
-      ) {
-        return; // Abort if user cancels
-      }
-      console.log("Clearing system via action...");
-      // Use clearState action directly
-      actions.clearState({
-        resetCamera: false,
-        resetTime: true,
-        resetSelection: true,
-      });
-      actions.resetTime(); // Ensure time resets
-      // No need to dispatch system-action if handled here
-      this.showFeedback(button, "🗑️");
-      return; // Handled
-    }
-
-    if (action === "create-blank") {
-      console.log("Creating blank system with default star...");
-      // 1. Clear existing state
-      actions.clearState({
-        resetCamera: false,
-        resetTime: true,
-        resetSelection: true,
-      });
-      actions.resetTime();
-
-      // 2. Create the default star object
-      const defaultStar = createDefaultStar();
-
-      // 3. Add the default star using createSolarSystem
-      try {
-        actions.createSolarSystem(defaultStar);
-        console.log(`Default star "${defaultStar.name}" added to the system.`);
-        // TODO: Still need a way to set the overall system name, e.g., "New System"
-        console.warn(
-          "[SystemControls] TODO: Need correct action/store to set systemName for blank system.",
-        );
-      } catch (error) {
-        console.error("Error creating default solar system:", error);
-        // Show error feedback maybe?
-        this.showFeedback(button, "❌", true);
-        return; // Stop if star creation failed
-      }
-
-      // 4. Show success feedback
-      this.showFeedback(button, "📝");
-      return;
-    }
-
-    // Actions handled via events or clipboard
-    if (action === "copy-seed") {
-      const seed = currentSeed.get(); // Get seed from store
-      if (seed) {
-        navigator.clipboard
-          .writeText(seed)
-          .then(() => {
-            console.log("Seed copied to clipboard:", seed);
-            this.showFeedback(button, "✓");
-          })
-          .catch((err) => {
-            console.error("Failed to copy seed: ", err);
-            this.showFeedback(button, "⚠️", true);
-          });
-      } else {
-        console.warn("No seed available to copy.");
-        this.showFeedback(button, "⚠️", true);
-      }
-      return;
-    }
-
-    console.warn(`Unhandled action: ${action}`);
   };
 
+  // --- Private Action Handlers ---
+
+  /** @private Handles the 'export' action. */
+  private async _handleExport(): Promise<SystemActions.ActionResult> {
+    const seed = currentSeed.get();
+    const objectsMap = celestialObjectsStore.get();
+    return await SystemActions.exportSystem(seed, objectsMap);
+  }
+
+  /** @private Handles the 'import' action. */
+  private async _handleImport(): Promise<SystemActions.ActionResult | null> {
+    try {
+      // Trigger the dialog first
+      const file = await SystemActions.triggerImportDialog();
+      // If the promise resolved, a file was selected
+      return await SystemActions.importSystem(file, this.dockviewApi);
+    } catch (error) {
+      // Handle cancellation (triggerImportDialog rejects on cancel)
+      if (
+        error instanceof Error &&
+        error.message === "File selection cancelled."
+      ) {
+        console.log("Import cancelled by user.");
+        return null; // Indicate cancellation, no feedback needed
+      } else {
+        // Handle other errors during file selection/dialog
+        console.error("Error triggering import dialog:", error);
+        throw error; // Re-throw to be caught by handleActionClick
+      }
+    }
+  }
+
+  /** @private Handles the 'random' action. */
+  private async _handleRandom(): Promise<SystemActions.ActionResult> {
+    return await SystemActions.generateRandomSystem(this.dockviewApi);
+  }
+
+  /** @private Handles the 'clear' action. */
+  private async _handleClear(): Promise<SystemActions.ActionResult> {
+    if (
+      !confirm(
+        "Are you sure you want to clear the current system? This cannot be undone.",
+      )
+    ) {
+      // If user cancels confirmation, return a 'cancelled' state
+      return { success: false, symbol: "🚫", message: "Clear cancelled." };
+    }
+    return await SystemActions.clearSystem();
+  }
+
+  /** @private Handles the 'create-blank' action. */
+  private async _handleCreateBlank(): Promise<SystemActions.ActionResult> {
+    return await SystemActions.createBlankSystem();
+  }
+
+  /** @private Handles the 'copy-seed' action. */
+  private async _handleCopySeed(): Promise<SystemActions.ActionResult> {
+    const seed = currentSeed.get();
+    return await SystemActions.copySystemSeed(seed);
+  }
+
+  // --- End Private Action Handlers ---
+
+  /**
+   * Sets the generating state of the component, updating the UI accordingly.
+   * @param {boolean} isGenerating - True if the component should be in a loading state, false otherwise.
+   * @private
+   */
   private setGenerating(isGenerating: boolean) {
     if (this._isGenerating === isGenerating) return; // No change
     this._isGenerating = isGenerating;
     this.updateDisplay(celestialObjectsStore.get(), currentSeed.get());
   }
 
+  /**
+   * Displays temporary feedback (a symbol) within a target element (usually a button).
+   * Replaces the element's content temporarily and restores it after a duration.
+   * @param {HTMLElement} element - The HTML element to display feedback within.
+   * @param {string} symbol - The feedback symbol/text to display.
+   * @param {boolean} [isError=false] - If true, applies an 'error' class for styling.
+   * @param {number} [duration=1500] - The duration in milliseconds to show the feedback.
+   * @private
+   */
   private showFeedback(
     element: HTMLElement,
     symbol: string,
