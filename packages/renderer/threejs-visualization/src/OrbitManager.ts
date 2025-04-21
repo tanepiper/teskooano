@@ -10,6 +10,7 @@ import type { ObjectManager } from "./ObjectManager";
 import { KeplerianOrbitManager } from "./orbit-manager";
 import { predictVerletTrajectory } from "./orbit-manager/verlet-predictor"; // Import predictVerletTrajectory directly
 
+
 /**
  * Enum defining the available modes for orbit visualization.
  * - `Keplerian`: Static elliptical orbits calculated from orbital parameters.
@@ -20,9 +21,11 @@ export enum VisualizationMode {
   Verlet = "VERLET",
 }
 
+const isMobileWidth = window.innerWidth < 1024;
+
 const TRAIL_MATERIAL = new THREE.LineBasicMaterial({
   color: 0xffffff, // Changed to white
-  linewidth: 5, // Slightly thicker
+  linewidth: isMobileWidth ? 2 : 5, // Slightly thicker
   transparent: true,
   opacity: 1, // Slightly less transparent
   depthTest: true,
@@ -30,7 +33,7 @@ const TRAIL_MATERIAL = new THREE.LineBasicMaterial({
 
 const PREDICTION_MATERIAL = new THREE.LineBasicMaterial({
   color: 0xff0000, // Red
-  linewidth: 5, // Slightly thicker
+  linewidth: isMobileWidth ? 2 : 5, // Slightly thicker
   transparent: true,
   opacity: 1,
   depthTest: true,
