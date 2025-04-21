@@ -4,8 +4,9 @@ This section contains ongoing thoughts, updates, and plans for the Teskooano pro
 
 ## Entries
 
+- [.plan 00001: First major update](./00001.md)
 - [.plan 00000: Developer notes from the megalocosmos](./00000.md)
 
 ## 🪐 Latest Entry
 
-<!--@include: ./00000.md-->
+<!--@include: ./00001.md-->
