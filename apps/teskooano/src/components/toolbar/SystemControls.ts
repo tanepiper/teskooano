@@ -116,7 +116,7 @@ class SystemControls extends HTMLElement {
     const unsubObjects = celestialObjectsStore.subscribe(
       (objects: Record<string, CelestialObject>) => {
         // Subscribe to correct store
-        console.log("SystemControls: celestialObjectsStore updated", objects);
+        // REMOVED: console.log("SystemControls: celestialObjectsStore updated", objects);
         // TODO: Still need systemName source
         this.updateDisplay(objects, currentSeed.get()); // Pass objects map
       },
@@ -135,6 +135,12 @@ class SystemControls extends HTMLElement {
       this.updateDisplay(celestialObjectsStore.get(), seed);
     });
     this.unsubscribers.push(unsubSeed);
+  }
+
+  public tourRandomSeed() {
+    const randomSeed = Math.random().toString(36).substring(2, 10); // Simple random seed
+    console.log("Generating random system with seed:", randomSeed);
+    this.handleSeedSubmit({ preventDefault: () => {} } as Event);
   }
 
   private updateButtonSizes() {

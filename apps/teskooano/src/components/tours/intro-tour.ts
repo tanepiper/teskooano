@@ -4,7 +4,8 @@ import { ToolbarSeedForm } from "../toolbar/SeedForm";
 import { celestialObjectsStore } from "@teskooano/core-state";
 import { SCALE, CelestialStatus } from "@teskooano/data-types";
 // Base tour steps definition - will be cloned and customized when driving
-
+import { SystemControls } from "../toolbar/SystemControls";
+import { FocusControl } from "../ui-controls";
 export function createIntroTour(driverObj: Driver): TourStep[] {
   let hasCelestialObjects = false;
 
@@ -82,19 +83,19 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       disableActiveInteraction: true,
     },
     {
-      id: "seed-form",
-      element: "toolbar-seed-form",
+      id: "system-controls",
+      element: "system-controls",
       popover: {
-        title: "🌱 Creating a new system with a seed",
+        title: "🪐 Managing your systems",
         description:
-          "Generate new star systems with different seeds. Each seed creates a unique procedurally generated system. Go ahead and try it out, or click next and I'll do it - feel free to change the default seed to see different systems! ",
+          "You can generate new star systems with different seeds. Each seed creates a unique procedurally generated system. Go ahead and try it out, or click next and I'll do it - feel free to change the default seed to see different systems! ",
         side: "bottom",
         align: "center",
       },
       onNextClick: () => {
-        const generator = document.querySelector("toolbar-seed-form");
+        const generator = document.querySelector("system-controls");
         if (generator) {
-          (generator as ToolbarSeedForm).tourGenerate();
+          (generator as SystemControls).tourRandomSeed();
         }
         driverObj.moveNext();
       },
@@ -135,48 +136,9 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
 
         if (
           focusControl &&
-          typeof (focusControl as any).getRandomActiveObjectId === "function"
+          typeof (focusControl as FocusControl).tourFocus === "function"
         ) {
-          // Use our improved method to get a valid object
-          const [objectId, _] = (focusControl as any).getRandomActiveObjectId();
-
-          if (objectId) {
-            (focusControl as any).focusOnObject(objectId);
-          } else {
-            console.warn("[Tour] No active objects found for focus");
-          }
-        } else {
-          // Fallback to old approach if focus control not found or method unavailable
-          const objects = celestialObjectsStore.get();
-          // Filter out destroyed objects
-          const activeObjects = Object.entries(objects).filter(
-            ([_, obj]) =>
-              obj.status !== CelestialStatus.DESTROYED &&
-              obj.status !== CelestialStatus.ANNIHILATED,
-          );
-
-          if (activeObjects.length === 0) {
-            console.warn("[Tour] No active objects available for focus");
-            driverObj.moveNext();
-            return;
-          }
-
-          const [randomId, randomObject] =
-            activeObjects[Math.floor(Math.random() * activeObjects.length)];
-
-          const focusEvent = new CustomEvent("engine-focus-request", {
-            detail: {
-              targetPanelId: engineViewId,
-              objectId: randomId,
-              distance: randomObject.realRadius_m
-                ? randomObject.realRadius_m * SCALE.RENDER_SCALE_AU * 1.1
-                : undefined,
-            },
-            bubbles: true,
-            composed: true,
-          });
-
-          document.dispatchEvent(focusEvent);
+          (focusControl as FocusControl).tourFocus();
         }
 
         driverObj.moveNext();
