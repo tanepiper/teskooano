@@ -15,7 +15,6 @@ template.innerHTML = `
     :host {
       display: inline-flex;
       align-items: center;
-      gap: var(--spacing-md, 12px);
       font-family: var(--font-family-base, sans-serif);
       height: 100%;
       min-width: 240px; /* Default min width */
@@ -26,7 +25,6 @@ template.innerHTML = `
     :host([mobile]) {
       min-width: auto; /* Let it shrink */
       width: auto;
-      gap: var(--spacing-sm, 8px);
     }
 
     .system-controls-container {
@@ -35,7 +33,6 @@ template.innerHTML = `
       align-items: center;
       justify-content: space-between; /* Align items nicely */
       width: 100%;
-      gap: var(--spacing-md, 12px);
       padding: 0 var(--spacing-sm, 8px);
       height: 100%;
     }
@@ -51,7 +48,6 @@ template.innerHTML = `
 
      /* When mobile, stack items more readily if needed */
      :host([mobile]) .state {
-       gap: var(--spacing-sm, 8px);
        flex-wrap: wrap; /* Allow wrapping on small screens */
      }
 
@@ -60,7 +56,6 @@ template.innerHTML = `
     .actions {
       display: flex;
       flex-wrap: nowrap; /* Keep actions in a single row */
-      gap: var(--spacing-sm, 8px);
       align-items: center; /* Align buttons vertically */
     }
 
