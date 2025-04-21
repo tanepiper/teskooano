@@ -1,21 +1,24 @@
-import "../shared/Button.ts"; // Import the custom button component
-// Import state management and the new generator
+import "../shared/Button.ts";
 import {
   actions,
   celestialObjectsStore,
   currentSeed,
 } from "@teskooano/core-state";
-import type { CelestialObject } from "@teskooano/data-types"; // Import type for store
+import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
 import { DockviewApi } from "dockview-core";
+import { OSVector3 } from "@teskooano/core-math";
 import { generateAndLoadSystem } from "../../systems/system-generator.js";
 import { SystemControlsTemplate } from "./SystemControls.template";
 
-// --- Helper Function for Default Star ---
 function createDefaultStar(): CelestialObject {
   return generateStar(Math.random);
 }
-// --- End Helper Function ---
+
+interface SystemImportData {
+  seed: string;
+  objects: CelestialObject[];
+}
 
 class SystemControls extends HTMLElement {
   // DOM elements
@@ -338,6 +341,209 @@ class SystemControls extends HTMLElement {
     if (!action) return;
     console.log("Action clicked:", action);
 
+    // --- Export Action ---
+    if (action === "export") {
+      try {
+        this.setGenerating(true); // Indicate activity
+        const seed = currentSeed.get();
+        const objectsMap = celestialObjectsStore.get();
+        const objectsArray = Object.values(objectsMap);
+
+        if (objectsArray.length === 0) {
+          console.warn("Nothing to export.");
+          this.showFeedback(button, "🤷", false, 2000); // Maybe a "nothing to export" icon?
+          return; // Exit early
+        }
+
+        const exportData: SystemImportData = {
+          seed: seed || "", // Ensure seed is a string
+          objects: objectsArray,
+        };
+
+        const jsonString = JSON.stringify(exportData, null, 2); // Pretty print JSON
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `teskooano-system-${seed || Date.now()}.json`; // Filename with seed or timestamp
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log("System exported successfully.");
+        this.showFeedback(button, "💾"); // Export icon
+      } catch (error) {
+        console.error("Error exporting system:", error);
+        this.showFeedback(button, "❌", true);
+      } finally {
+        this.setGenerating(false);
+      }
+      return; // Handled
+    }
+
+    // --- Import Action ---
+    if (action === "import") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".json";
+      input.style.display = "none"; // Keep it hidden
+
+      input.onchange = async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) {
+          console.log("No file selected.");
+          // No explicit feedback needed if user cancels dialog
+          return;
+        }
+
+        this.setGenerating(true); // Show loading state
+        const reader = new FileReader();
+
+        reader.onload = async (event) => {
+          try {
+            const fileContent = event.target?.result as string;
+            if (!fileContent) throw new Error("File content is empty.");
+
+            const parsedData = JSON.parse(fileContent) as SystemImportData;
+
+            // --- Basic Validation ---
+            if (
+              !parsedData ||
+              typeof parsedData !== "object" ||
+              typeof parsedData.seed !== "string" ||
+              !Array.isArray(parsedData.objects)
+            ) {
+              throw new Error(
+                "Invalid file format. Expected { seed: string, objects: CelestialObject[] }.",
+              );
+            }
+
+            // --- Hydrate Physics State Vectors ---
+            const hydratedObjects = parsedData.objects.map((obj) => {
+              if (obj.physicsStateReal) {
+                // Ensure position_m is an OSVector3 instance
+                if (
+                  obj.physicsStateReal.position_m &&
+                  !(obj.physicsStateReal.position_m instanceof OSVector3)
+                ) {
+                  // Use 'as any' to access properties on the plain JS object
+                  const pos = obj.physicsStateReal.position_m as any;
+                  obj.physicsStateReal.position_m = new OSVector3(
+                    pos.x,
+                    pos.y,
+                    pos.z,
+                  );
+                }
+                // Ensure velocity_mps is an OSVector3 instance
+                if (
+                  obj.physicsStateReal.velocity_mps &&
+                  !(obj.physicsStateReal.velocity_mps instanceof OSVector3)
+                ) {
+                  // Use 'as any' to access properties on the plain JS object
+                  const vel = obj.physicsStateReal.velocity_mps as any;
+                  obj.physicsStateReal.velocity_mps = new OSVector3(
+                    vel.x,
+                    vel.y,
+                    vel.z,
+                  );
+                }
+              }
+              return obj;
+            });
+            // --- End Hydration ---
+
+            console.log(
+              `Importing system with seed "${parsedData.seed}" and ${hydratedObjects.length} objects...`,
+            );
+
+            // 1. Clear existing state
+            actions.clearState({
+              resetCamera: false, // Keep camera position for now
+              resetTime: true,
+              resetSelection: true,
+            });
+            actions.resetTime(); // Ensure time resets
+
+            // 2. Set the seed (REMOVED - Assuming createSolarSystem handles this)
+            // actions.setSeed(parsedData.seed);
+
+            // 3. Load the objects (using hydratedObjects)
+            // No batch action available, load individually.
+            console.warn(
+              "No batch load action found, attempting manual load (may be slow/incomplete).",
+            );
+            // Find the star first for createSolarSystem
+            const star = hydratedObjects.find(
+              (obj) => obj.type === CelestialType.STAR && obj.parentId == null,
+            ); // Basic check for primary star
+
+            if (!star) {
+              throw new Error(
+                "Could not find a primary star in imported data.",
+              );
+            }
+
+            // Load the primary star (this might set the seed indirectly)
+            actions.createSolarSystem(star);
+
+            // Load remaining objects
+            hydratedObjects.forEach((obj) => {
+              if (obj.id !== star.id) {
+                // Check if addCelestialObject exists (based on previous linter hint)
+                if (typeof actions.addCelestialObject === "function") {
+                  actions.addCelestialObject(obj); // Add others
+                } else {
+                  // Fallback if addCelestialObject also doesn't exist
+                  console.error(
+                    `Cannot add object ${obj.name} (ID: ${obj.id}) - actions.addCelestialObject missing.`,
+                  );
+                  // Optionally throw an error here or continue processing others
+                }
+              }
+            });
+
+            console.log("System imported successfully.");
+            this.showFeedback(button, "✅"); // Success icon
+
+            // Dispatch event to reset the simulation loop's internal timer
+            window.dispatchEvent(new CustomEvent("resetSimulationTime"));
+            console.log("Dispatched resetSimulationTime event.");
+          } catch (error) {
+            console.error("Error importing system:", error);
+            this.showFeedback(
+              button,
+              "❌",
+              true,
+              3000, // Show error longer
+            );
+          } finally {
+            this.setGenerating(false); // Hide loading state
+            document.body.removeChild(input); // Clean up the input element
+          }
+        };
+
+        reader.onerror = (error) => {
+          console.error("Error reading file:", error);
+          this.showFeedback(button, "❌", true, 3000);
+          this.setGenerating(false);
+          document.body.removeChild(input);
+        };
+
+        reader.readAsText(file); // Start reading the file
+      };
+
+      // Add to body, click, and set up removal in the callbacks
+      document.body.appendChild(input);
+      input.click();
+      // Cleanup is handled within the onload/onerror callbacks now
+
+      return; // Handled
+    }
+
+    // --- End Import Action ---
+
     // Actions that trigger generation
     if (action === "random") {
       this.setGenerating(true);
@@ -407,7 +613,7 @@ class SystemControls extends HTMLElement {
 
       // 4. Show success feedback
       this.showFeedback(button, "📝");
-      return; // Handled
+      return;
     }
 
     // Actions handled via events or clipboard
@@ -428,32 +634,15 @@ class SystemControls extends HTMLElement {
         console.warn("No seed available to copy.");
         this.showFeedback(button, "⚠️", true);
       }
-      return; // Handled
+      return;
     }
 
-    // --- Actions dispatched as events for parent/app to handle ---
-    if (action === "import" || action === "export") {
-      console.log(`Dispatching system-action event: ${action}`);
-      this.dispatchEvent(
-        new CustomEvent("system-action", {
-          detail: { action },
-          bubbles: true,
-          composed: true,
-        }),
-      );
-      // Show temporary feedback maybe?
-      // this.showFeedback(button, '...');
-      return; // Handled by dispatching
-    }
-
-    // Fallback for unhandled actions
     console.warn(`Unhandled action: ${action}`);
   };
 
   private setGenerating(isGenerating: boolean) {
     if (this._isGenerating === isGenerating) return; // No change
     this._isGenerating = isGenerating;
-    // Update UI immediately
     this.updateDisplay(celestialObjectsStore.get(), currentSeed.get());
   }
 
@@ -478,12 +667,7 @@ class SystemControls extends HTMLElement {
     targetElement.appendChild(feedback);
 
     setTimeout(() => {
-      // Restore original content
-      targetElement.innerHTML = originalContentHTML; // Restore original SVG etc.
-      // Ensure feedback element is removed if it wasn't replaced correctly (shouldn't happen now)
-      // if (feedback.parentNode === targetElement) {
-      //   targetElement.removeChild(feedback);
-      // }
+      targetElement.innerHTML = originalContentHTML;
     }, duration);
   }
 }
