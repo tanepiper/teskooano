@@ -100,7 +100,7 @@ export class SceneManager {
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       stencil: false,
-      logarithmicDepthBuffer: true,
+      logarithmicDepthBuffer: false,
       preserveDrawingBuffer: false,
       powerPreference: powerPref, // Apply determined preference
     });
