@@ -1,9 +1,8 @@
 import { PopoverAPI } from "@teskooano/web-apis";
 import type { AddPanelOptions } from "dockview-core";
 import "../components/shared/Button.js";
-import "../components/toolbar/SeedForm"; // Import the new ToolbarSeedForm
-import { ToolbarSeedForm } from "../components/toolbar/SeedForm";
 import "../components/toolbar/SimulationControls"; // Import for side effect (registers element)
+import { SystemControls } from "../components/toolbar/SystemControls"; // Import the class directly
 import { layoutOrientationStore, Orientation } from "../stores/layoutStore";
 import { DockviewController } from "./dockviewController";
 import { TourController } from "./tourController";
@@ -52,7 +51,7 @@ export class ToolbarController {
   private _tourButton: HTMLElement | null = null;
   private _addButton: HTMLElement | null = null;
   private _simControls: HTMLElement | null = null;
-  private _seedForm: HTMLElement | null = null;
+  private _systemControls: SystemControls | null = null; // Use the class type
 
   // Define a constant for the settings panel ID
   private readonly SETTINGS_PANEL_ID = "app_settings_panel";
@@ -303,7 +302,7 @@ export class ToolbarController {
     this._tourButton?.toggleAttribute("mobile", this._isMobileDevice);
     this._addButton?.toggleAttribute("mobile", this._isMobileDevice);
     this._simControls?.toggleAttribute("mobile", this._isMobileDevice);
-    this._seedForm?.toggleAttribute("mobile", this._isMobileDevice);
+    this._systemControls?.toggleAttribute("mobile", this._isMobileDevice); // Add toggle for new component
   }
 
   /**
@@ -525,7 +524,7 @@ export class ToolbarController {
     this._element.appendChild(simControls);
     this._simControls = simControls; // Cache reference
 
-    // Add Separator before seed form
+    // Add Separator before system controls
     const separator2 = document.createElement("div");
     separator2.style.width = "1px";
     separator2.style.height = "calc(var(--toolbar-height, 50px) * 0.6)";
@@ -533,16 +532,234 @@ export class ToolbarController {
     separator2.style.margin = "0 var(--space-xs, 4px)";
     this._element.appendChild(separator2);
 
-    // Add the seed form
-    const seedForm = document.createElement(
-      "toolbar-seed-form",
-    ) as ToolbarSeedForm;
+    // --- Add New System Controls ---
+    const systemControls = document.createElement(
+      "system-controls",
+    ) as SystemControls; // Cast to the class
+    systemControls.id = "system-controls"; // Give it an ID if needed
+
+    // Create a wrapper div to better position the component
+    const systemControlsWrapper = document.createElement("div");
+    systemControlsWrapper.style.display = "flex";
+    systemControlsWrapper.style.alignItems = "center";
+    systemControlsWrapper.style.height = "100%";
+    systemControlsWrapper.style.flex = "1"; // Let it take available space
+    systemControlsWrapper.style.position = "relative"; // For potential fixed positioning
+
     if (this._isMobileDevice) {
-      seedForm.setAttribute("mobile", "");
+      systemControls.setAttribute("mobile", ""); // Apply mobile state if needed
     }
-    ToolbarSeedForm.setDockviewApi(this._dockviewController.api);
-    this._element.appendChild(seedForm);
-    this._seedForm = seedForm; // Cache reference
+
+    // --- Pass the Dockview API ---
+    const dockviewApi = this._dockviewController.api; // Get the API instance
+    if (dockviewApi && systemControls instanceof SystemControls) {
+      systemControls.setDockviewApi(dockviewApi); // Call the method
+      console.log("ToolbarController: Dockview API passed to SystemControls.");
+    } else {
+      console.error(
+        "ToolbarController: Failed to get Dockview API or systemControls element!",
+      );
+    }
+    // --- End Pass the Dockview API ---
+
+    // Add event listeners for the new component's events
+    systemControls.addEventListener(
+      "load-seed",
+      this.handleLoadSeed.bind(this) as EventListener,
+    );
+    systemControls.addEventListener(
+      "system-action",
+      this.handleSystemAction.bind(this) as EventListener,
+    );
+
+    // Append to wrapper, then to toolbar
+    systemControlsWrapper.appendChild(systemControls);
+    this._element.appendChild(systemControlsWrapper);
+    this._systemControls = systemControls; // Cache reference
+
+    // Example: Set initial seed functionality
+    // For testing, you could uncomment this to see the loaded state
+    // this.updateSystemControlsState(true, "Test System", 7);
+    // Fetch any existing system state from storage/state manager
+    // this.restoreSystemState();
+  }
+
+  // --- Event Handlers for SystemControls ---
+
+  private handleLoadSeed(event: CustomEvent<{ seed: string }>): void {
+    const seed = event.detail.seed;
+    console.log(
+      `ToolbarController: Received load-seed event with seed: ${seed}`,
+    );
+
+    // TODO: Add actual seed loading logic here
+    // For now, simulate loading a system
+    // This would dispatch to your engine/state controller for real implementation
+
+    // Example: Generate a random number of celestials (3-12)
+    const celestialCount = Math.floor(Math.random() * 10) + 3;
+    // Update the UI to show the system is loaded
+    this.updateSystemControlsState(
+      true,
+      `System ${seed.substring(0, 6)}`,
+      celestialCount,
+    );
+
+    // Store the seed (in a real implementation, this would be stored in your app state)
+    if (this._systemControls) {
+      this._systemControls.setAttribute("seed", seed);
+    }
+  }
+
+  private handleSystemAction(event: CustomEvent<{ action: string }>): void {
+    const action = event.detail.action;
+    console.log(`ToolbarController: Received system-action event: ${action}`);
+
+    switch (action) {
+      case "create-blank":
+        console.log("Creating blank system...");
+        // In real implementation: Initialize a new empty system
+        this.updateSystemControlsState(true, "New System", 0);
+        break;
+
+      case "random":
+        console.log("Creating random system...");
+        // Generate a random seed
+        const randomSeed = Math.random().toString(36).substring(2, 10);
+        console.log(`Generated random seed: ${randomSeed}`);
+
+        // Store the seed in the component for copy functionality
+        if (this._systemControls) {
+          this._systemControls.setAttribute("seed", randomSeed);
+        }
+
+        // Simulate loading a system with random number of celestials (5-15)
+        const randomCelestialCount = Math.floor(Math.random() * 11) + 5;
+        this.updateSystemControlsState(
+          true,
+          `Random ${randomSeed.substring(0, 4)}`,
+          randomCelestialCount,
+        );
+        break;
+
+      case "import":
+        console.log("TODO: Implement import system from JSON");
+        // Example of opening a file dialog - would need to be hooked to real file handling
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json";
+        input.onchange = (e) => {
+          const target = e.target as HTMLInputElement;
+          if (target?.files?.length) {
+            const file = target.files[0];
+            console.log(`Selected file: ${file.name}`);
+            // In real implementation: Read file and parse JSON
+
+            // For demo - simulate successful import
+            this.updateSystemControlsState(
+              true,
+              file.name.replace(".json", ""),
+              8,
+            );
+          }
+        };
+        input.click();
+        break;
+
+      case "copy-seed":
+        // This is handled internally by the component
+        console.log("Copy seed handled by component");
+        break;
+
+      case "export":
+        console.log("TODO: Implement export system to JSON");
+
+        // Get current seed for filename
+        const seed = this._systemControls?.getAttribute("seed") || "system";
+
+        // Generate dummy example JSON
+        const exportData = {
+          seed,
+          name:
+            this._systemControls?.getAttribute("system-name") ||
+            "Unnamed System",
+          celestialCount: parseInt(
+            this._systemControls?.getAttribute("celestial-count") || "0",
+            10,
+          ),
+          celestials: [], // Would contain actual celestial data in real implementation
+        };
+
+        // Create a download link
+        const dataStr =
+          "data:text/json;charset=utf-8," +
+          encodeURIComponent(JSON.stringify(exportData, null, 2));
+        const downloadLink = document.createElement("a");
+        downloadLink.setAttribute("href", dataStr);
+        downloadLink.setAttribute("download", `${seed}.json`);
+        document.body.appendChild(downloadLink); // Required for Firefox
+        downloadLink.click();
+        downloadLink.remove();
+        break;
+
+      case "clear":
+        console.log("Clearing system...");
+        this.updateSystemControlsState(false, null, 0);
+        break;
+
+      default:
+        console.warn(`Unknown system action received: ${action}`);
+    }
+  }
+
+  /**
+   * Helper method to update the attributes of the system-controls component.
+   * This should be called whenever the application's system state changes.
+   */
+  public updateSystemControlsState(
+    isLoaded: boolean,
+    systemName: string | null,
+    celestialCount: number,
+  ): void {
+    if (!this._systemControls) return;
+
+    if (isLoaded) {
+      this._systemControls.setAttribute("system-loaded", "");
+      if (systemName) {
+        this._systemControls.setAttribute("system-name", systemName);
+      }
+      this._systemControls.setAttribute(
+        "celestial-count",
+        celestialCount.toString(),
+      );
+    } else {
+      this._systemControls.removeAttribute("system-loaded");
+      this._systemControls.removeAttribute("system-name");
+      this._systemControls.removeAttribute("celestial-count");
+      // Only remove seed if we're clearing the system completely
+      this._systemControls.removeAttribute("seed");
+    }
+  }
+
+  // Optional: Restore system state from localStorage or other persistence
+  private restoreSystemState(): void {
+    // This is just a placeholder example using localStorage
+    // In a real app, you'd get this from your app state management
+    try {
+      const savedState = localStorage.getItem("teskooano-system-state");
+      if (savedState) {
+        const { isLoaded, systemName, celestialCount, seed } =
+          JSON.parse(savedState);
+        this.updateSystemControlsState(isLoaded, systemName, celestialCount);
+
+        // Restore seed for copy functionality
+        if (seed && this._systemControls) {
+          this._systemControls.setAttribute("seed", seed);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to restore system state:", error);
+    }
   }
 
   // --- New method to handle orientation changes for Dockview layout ---

@@ -25,13 +25,92 @@ import { generateStar } from "./generators/star";
 import { createSeededRandom } from "./seeded-random";
 import * as UTIL from "./utils";
 
+// Helper function for name generation
+function generateSystemName(random: () => number): string {
+  const prefixes = [
+    "Andromeda",
+    "Orion",
+    "Cygnus",
+    "Draco",
+    "Lyra",
+    "Aquila",
+    "Pegasus",
+    "Ursa",
+    "Virgo",
+    "Centaurus",
+    "Kepler",
+    "Gliese",
+    "HD",
+    "HIP",
+    "Tau",
+    "Epsilon",
+    "Zeta",
+  ];
+  const separators = ["-", " ", ""];
+  const suffixes = [
+    "Prime",
+    "Secundus",
+    "Tertius",
+    "Minor",
+    "Major",
+    "Alpha",
+    "Beta",
+    "Gamma",
+    "Delta",
+    "Epsilon",
+    "Zeta",
+    "Eta",
+    "Theta",
+    "Iota",
+    "Kappa",
+    "Lambda",
+    "Mu",
+    "Nu",
+    "Xi",
+    "Omicron",
+    "Pi",
+    "Rho",
+    "Sigma",
+    "Tau",
+    "Upsilon",
+    "Phi",
+    "Chi",
+    "Psi",
+    "Omega",
+  ];
+
+  const prefix = prefixes[Math.floor(random() * prefixes.length)];
+  const separator = separators[Math.floor(random() * separators.length)];
+
+  let designation = "";
+  // 70% chance of number, 30% chance of suffix
+  if (random() < 0.7) {
+    // Generate a number between 1 and 999
+    designation = String(Math.floor(random() * 999) + 1);
+    // ~30% chance of adding a letter suffix A-F
+    if (random() < 0.3) {
+      designation += String.fromCharCode(65 + Math.floor(random() * 6)); // A-F
+    }
+  } else {
+    designation = suffixes[Math.floor(random() * suffixes.length)];
+  }
+
+  return `${prefix}${separator}${designation}`;
+}
+
 /**
- * Generates the initial data for celestial objects in a solar system based on a seed string.
+ * Generates the initial data for celestial objects and a name for a solar system based on a seed string.
  * @param seed The seed string to use for generation.
- * @returns A Promise resolving to an array of CelestialObject.
+ * @returns A Promise resolving to an object containing the system name and an array of CelestialObjects.
  */
-export async function generateSystem(seed: string): Promise<CelestialObject[]> {
+export async function generateSystem(
+  seed: string,
+): Promise<{ systemName: string; objects: CelestialObject[] }> {
   const random = await createSeededRandom(seed);
+
+  // Generate Name First
+  const systemName = generateSystemName(random);
+  console.log(`[Generator] Generated system name: ${systemName}`);
 
   // 1. Determine System Type & Generate Star(s)
   const systemTypeRoll = random();
@@ -458,5 +537,6 @@ export async function generateSystem(seed: string): Promise<CelestialObject[]> {
   }
   // --- End ensure asteroid belt ---
 
-  return celestialObjects;
+  // Return both the name and the objects
+  return { systemName, objects: celestialObjects };
 }

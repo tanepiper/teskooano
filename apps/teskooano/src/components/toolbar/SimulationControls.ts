@@ -1,6 +1,12 @@
 import { actions, simulationState } from "@teskooano/core-state";
 import { TeskooanoButton } from "../shared/Button"; // Import the custom button
 
+import PlayRegular from "@fluentui/svg-icons/icons/play_20_regular.svg?raw";
+import PauseRegular from "@fluentui/svg-icons/icons/pause_20_regular.svg?raw";
+import PreviousRegular from "@fluentui/svg-icons/icons/previous_20_regular.svg?raw";
+import NextRegular from "@fluentui/svg-icons/icons/next_20_regular.svg?raw";
+import ArrowClockwiseRegular from "@fluentui/svg-icons/icons/arrow_clockwise_20_regular.svg?raw";
+
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
@@ -13,17 +19,28 @@ template.innerHTML = `
     }
     /* REMOVED specific overrides for teskooano-button */
     /* Buttons will now inherit styles from Button.ts */
-    
-    /* Keep style for icon-only buttons */
-    teskooano-button span[slot="icon"] {
-        margin-right: 0; /* Icon only */
+
+    /* Style the SVG icons */
+    teskooano-button svg {
+        width: 1em; /* Adjust size as needed */
+        height: 1em;
+        fill: white; /* Make icons white */
+        display: block; /* Ensure proper layout */
+        margin: auto; /* Center if needed */
     }
+
+    /* REMOVED - No longer needed as we use SVG now */
+    /* teskooano-button span[slot="icon"] {
+        margin-right: 0; /* Icon only * /
+        color: var(--color-text, #e0e0fc);
+    } */
+
     /* Keep styles for separator and scale display */
     .separator {
         width: 1px;
         height: 20px;
         background-color: var(--color-border, #4a4a6a);
-        margin: 0 5px; 
+        margin: 0 5px;
     }
     .display-value {
         font-family: var(--font-family-monospace, monospace);
@@ -74,16 +91,16 @@ template.innerHTML = `
   </style>
 
   <teskooano-button id="reverse" title="Reverse Direction">
-      <span slot="icon">↺</span>
+      ${ArrowClockwiseRegular}
   </teskooano-button>
   <teskooano-button id="speed-down" title="Decrease Speed">
-      <span slot="icon">⏮</span>
+      ${PreviousRegular}
   </teskooano-button>
   <teskooano-button id="play-pause" title="Play/Pause">
-      <span slot="icon">⏸</span> <!-- Initial state: Pause icon -->
+      ${PauseRegular} <!-- Initial state: Pause icon -->
   </teskooano-button>
    <teskooano-button id="speed-up" title="Increase Speed">
-       <span slot="icon">⏭</span>
+       ${NextRegular}
    </teskooano-button>
   <div class="separator"></div>
   <span class="display-value" id="scale-value" title="Time Scale">-</span>
@@ -212,10 +229,10 @@ export class ToolbarSimulationControls extends HTMLElement {
     const state = simulationState.get();
 
     if (this.playPauseButton) {
-      const iconSpan = this.playPauseButton.querySelector('span[slot="icon"]');
-      if (iconSpan) {
-        iconSpan.textContent = state.paused ? "⏵" : "⏸"; // Update icon text
-      }
+      // Update the SVG content directly
+      this.playPauseButton.innerHTML = state.paused
+        ? PlayRegular
+        : PauseRegular;
       this.playPauseButton.title = state.paused
         ? "Play Simulation"
         : "Pause Simulation";

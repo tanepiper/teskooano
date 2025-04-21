@@ -287,10 +287,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._renderer.sceneManager.setAuMarkersVisible(updates.showAuMarkers);
     }
     if (updates.showDebrisEffects !== undefined) {
-      console.warn(
-        "Debris effects toggle not yet implemented in renderer.",
-        updates.showDebrisEffects,
-      );
+      this._renderer.setDebrisEffectsEnabled(updates.showDebrisEffects);
     }
     if (updates.fov !== undefined) {
       this._renderer.sceneManager.setFov(updates.fov);
