@@ -325,16 +325,20 @@ export class ToolbarController {
    * Creates the application icon element.
    * @returns The created img element.
    */
-  private _createAppIcon(): HTMLImageElement {
+  private _createAppIcon(): HTMLAnchorElement {
     const appIcon = document.createElement("img");
     appIcon.src = `${window.location.origin}/assets/icon.png`; // Use origin for robustness
     appIcon.alt = "Teskooano App Icon";
-    appIcon.style.height = "calc(var(--toolbar-height, 50px) * 0.7)";
+    appIcon.style.height = "100%";
     appIcon.style.width = "auto";
     appIcon.style.verticalAlign = "middle";
     appIcon.className = "app-logo";
     appIcon.id = "app-logo";
-    return appIcon;
+
+    const link = document.createElement("a");
+    link.href = window.location.origin;
+    link.appendChild(appIcon);
+    return link;
   }
 
   /**
