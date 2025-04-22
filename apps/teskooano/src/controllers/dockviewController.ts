@@ -4,10 +4,15 @@ import {
   IContentRenderer,
   IDockviewPanel,
   DockviewApi,
+  AddGroupOptions,
+  AddPanelOptions,
 } from "dockview-core";
 import { CompositeEnginePanel } from "../components/engine/CompositeEnginePanel";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 // import { CelestialInfoPanel } from "../components/ui-controls/CelestialInfoPanel"; // REMOVE - Incorrect Class/File
+
+// We'll use any here because the exact type from dockview is complex and private
+type DockviewGroup = any;
 
 // --- State --- (Removed counter)
 
@@ -54,6 +59,10 @@ export class DockviewController {
   private _api: DockviewApi;
   // Registry for dynamically added components
   private _registeredComponents = new Map<string, new () => IContentRenderer>();
+  // Map to store logical group names to their runtime Dockview group IDs
+  private _groupNameToIdMap: Map<string, string> = new Map();
+  // Map to cache group references
+  private _groupCache: Map<string, DockviewGroup> = new Map();
 
   constructor(element: HTMLElement) {
     // Register components needed at initialization time internally first
@@ -159,8 +168,146 @@ export class DockviewController {
     return this._api.addPanel(options);
   }
 
+  /**
+   * Creates a new group or returns an existing one with the provided name.
+   * @param groupName Logical name for the group
+   * @param options Optional configuration for the new group
+   * @returns The group object or null if creation failed
+   */
+  public createOrGetGroup(
+    groupName: string, 
+    options?: AddGroupOptions
+  ): DockviewGroup | null {
+    // Check if we already have the group cached
+    if (this._groupNameToIdMap.has(groupName)) {
+      const groupId = this._groupNameToIdMap.get(groupName)!;
+      const cachedGroup = this._groupCache.get(groupId) || this._api.getGroup(groupId);
+      
+      if (cachedGroup) {
+        this._groupCache.set(groupId, cachedGroup);
+        return cachedGroup;
+      }
+      
+      // Group no longer exists, remove from cache
+      this._groupNameToIdMap.delete(groupName);
+      this._groupCache.delete(groupId);
+    }
+    
+    // Create a new group
+    try {
+      const newGroup = this._api.addGroup(options);
+      const newId = newGroup.id;
+      
+      // Store mappings
+      this._groupNameToIdMap.set(groupName, newId);
+      this._groupCache.set(newId, newGroup);
+      
+      console.log(`DockviewController: Created new group '${groupName}' with ID: ${newId}`);
+      return newGroup;
+    } catch (error) {
+      console.error(`DockviewController: Failed to create group '${groupName}':`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Get a group by its logical name
+   */
+  public getGroupByName(groupName: string): DockviewGroup | null {
+    const groupId = this._groupNameToIdMap.get(groupName);
+    if (!groupId) return null;
+    
+    return this._api.getGroup(groupId) || null;
+  }
+  
+  /**
+   * Adds a panel to a specified group using the group's ID
+   */
+  public addPanelToGroup(
+    group: DockviewGroup,
+    panelOptions: AddPanelOptions
+  ): IDockviewPanel | null {
+    try {
+      // Create panel using the main API but target the specific group
+      const panelWithPosition = {
+        ...panelOptions,
+      };
+      
+      // Add position targeting if not already specified
+      if (!panelWithPosition.position) {
+        panelWithPosition.position = { 
+          referenceGroup: group.id,
+        };
+      }
+      
+      // Add the panel using the main API
+      const panel = this._api.addPanel(panelWithPosition);
+      
+      // Activate the panel
+      panel.api.setActive();
+      return panel;
+    } catch (error) {
+      console.error(
+        `DockviewController: Failed to add panel '${panelOptions.id}' to group ID '${group.id}':`,
+        error
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Adds a panel to a named group, creating the group if it doesn't exist
+   */
+  public addPanelToNamedGroup(
+    groupName: string,
+    panelOptions: AddPanelOptions,
+    groupOptions?: AddGroupOptions,
+  ): IDockviewPanel | null {
+    // Get or create the group
+    const group = this.createOrGetGroup(groupName, groupOptions);
+    
+    if (!group) {
+      console.error(
+        `DockviewController: Cannot add panel '${panelOptions.id}' because group '${groupName}' could not be created.`
+      );
+      return null;
+    }
+    
+    return this.addPanelToGroup(group, panelOptions);
+  }
+
+  /**
+   * Maximize a group by its logical name
+   */
+  public maximizeGroupByName(groupName: string): boolean {
+    const group = this.getGroupByName(groupName);
+    if (!group) {
+      console.error(`DockviewController: Cannot maximize group '${groupName}' because it doesn't exist.`);
+      return false;
+    }
+    
+    try {
+      this._api.maximizeGroup(group);
+      return true;
+    } catch (error) {
+      console.error(`DockviewController: Failed to maximize group '${groupName}':`, error);
+      return false;
+    }
+  }
+  
+  /**
+   * Exit maximized state for any maximized group
+   */
+  public exitMaximizedGroup(): void {
+    try {
+      this._api.exitMaximizedGroup();
+    } catch (error) {
+      console.error(`DockviewController: Failed to exit maximized group:`, error);
+    }
+  }
+
   // Expose the raw Dockview API
-  public get api(): DockviewApi { // Explicitly type the return
+  public get api(): DockviewApi {
     return this._api;
   }
 }
