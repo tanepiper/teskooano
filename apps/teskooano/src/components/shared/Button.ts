@@ -152,6 +152,7 @@ template.innerHTML = `
       justify-content: center;
       width: var(--icon-size);
       height: var(--icon-size);
+      color: inherit; /* Make icon inherit host color */
       /* Dynamic margin based on presence of text */
       /* No margin needed, gap property handles spacing */
       flex-shrink: 0; /* Prevent icon shrinking */

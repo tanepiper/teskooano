@@ -1,6 +1,9 @@
 import { actions, simulationState } from "@teskooano/core-state";
 import { TeskooanoButton } from "../shared/Button"; // Import the custom button
 
+// Import state type if not already imported
+import type { SimulationState } from "@teskooano/core-state";
+
 import PlayRegular from "@fluentui/svg-icons/icons/play_20_regular.svg?raw";
 import PauseRegular from "@fluentui/svg-icons/icons/pause_20_regular.svg?raw";
 import PreviousRegular from "@fluentui/svg-icons/icons/previous_20_regular.svg?raw";
@@ -124,6 +127,11 @@ export class ToolbarSimulationControls extends HTMLElement {
   private engineValueDisplay: HTMLElement | null = null;
   private unsubscribeSimState: (() => void) | null = null;
 
+  // Store previous relevant state pieces to avoid unnecessary updates
+  private previousPausedState: boolean | undefined = undefined;
+  private previousTimeScaleState: number | undefined = undefined;
+  private previousEngineState: string | undefined = undefined;
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -148,11 +156,13 @@ export class ToolbarSimulationControls extends HTMLElement {
     this.engineValueDisplay = this.shadowRoot!.getElementById("engine-value");
 
     this.addEventListeners();
-    // Direct subscription might be fine, assuming state structure matches
+
+    // Subscribe to the main state atom
     this.unsubscribeSimState = simulationState.subscribe(
-      this.updateButtonStates,
+      this.handleStateUpdate,
     );
-    this.updateButtonStates(); // Initial state update
+    // Call handler initially to set UI from current state
+    this.handleStateUpdate(simulationState.get());
   }
 
   disconnectedCallback() {
@@ -193,6 +203,96 @@ export class ToolbarSimulationControls extends HTMLElement {
     // No removal needed for anonymous arrow functions used for speed/reverse
   }
 
+  // Main handler called on ANY state change
+  private handleStateUpdate = (state: SimulationState): void => {
+    // 1. Always update time display (most frequent change)
+    this.updateTimeDisplay(state.time);
+
+    // 2. Update play/pause ONLY if paused state changed
+    if (state.paused !== this.previousPausedState) {
+      this.updatePlayPauseButton(state.paused);
+      this.previousPausedState = state.paused;
+      // Also re-evaluate speed button disabled state when pause changes
+      this.updateSpeedButtons(state.paused, state.timeScale);
+    }
+
+    // 3. Update scale/speed/reverse ONLY if timeScale changed
+    if (state.timeScale !== this.previousTimeScaleState) {
+      this.updateScaleDisplay(state.timeScale);
+      this.updateReverseButton(state.timeScale);
+      // Also re-evaluate speed button disabled state when scale changes
+      this.updateSpeedButtons(state.paused, state.timeScale);
+      this.previousTimeScaleState = state.timeScale;
+    }
+
+    // 4. Update engine ONLY if physicsEngine changed
+    if (state.physicsEngine !== this.previousEngineState) {
+      this.updateEngineDisplay(state.physicsEngine);
+      this.previousEngineState = state.physicsEngine;
+    }
+  };
+
+  // Specific update function for Time Display
+  private updateTimeDisplay(timeSeconds: number = 0): void {
+    if (this.timeValueDisplay) {
+      this.timeValueDisplay.textContent = this.formatTime(timeSeconds);
+    }
+  }
+
+  // Specific update function for Play/Pause Button
+  private updatePlayPauseButton(isPaused: boolean): void {
+    if (this.playPauseButton) {
+      this.playPauseButton.innerHTML = isPaused ? PlayRegular : PauseRegular;
+      this.playPauseButton.title = isPaused
+        ? "Play Simulation"
+        : "Pause Simulation";
+      this.playPauseButton.toggleAttribute("active", !isPaused);
+    }
+  }
+
+  // Specific update function for Scale Display
+  private updateScaleDisplay(timeScale: number): void {
+    if (this.scaleValueDisplay) {
+      this.scaleValueDisplay.textContent = this.formatScale(timeScale);
+      this.scaleValueDisplay.style.color =
+        timeScale < 0 ? "var(--color-warning)" : "var(--color-text-secondary)";
+    }
+  }
+
+  // Specific update function for Reverse Button state
+  private updateReverseButton(timeScale: number): void {
+    if (this.reverseButton) {
+      this.reverseButton.toggleAttribute("active", timeScale < 0);
+    }
+  }
+
+  // Specific update function for Speed Button disabled states
+  private updateSpeedButtons(isPaused: boolean, timeScale: number): void {
+    if (this.speedDownButton) {
+      const disableSpeedDown =
+        isPaused ||
+        (timeScale > 0 && timeScale <= 0.1) ||
+        (timeScale < 0 && timeScale >= -10000000);
+      this.speedDownButton.disabled = disableSpeedDown;
+    }
+    if (this.speedUpButton) {
+      const disableSpeedUp =
+        isPaused ||
+        (timeScale < 0 && timeScale <= -0.1) ||
+        (timeScale > 0 && timeScale >= 10000000);
+      this.speedUpButton.disabled = disableSpeedUp;
+    }
+  }
+
+  // Specific update function for Engine Display
+  private updateEngineDisplay(engineName: string | undefined): void {
+    if (this.engineValueDisplay) {
+      const name = engineName || "-";
+      this.engineValueDisplay.textContent = this.getEngineShortName(name);
+      this.engineValueDisplay.setAttribute("data-full-name", name);
+    }
+  }
+
   private formatScale(scale: number): string {
     const absScale = Math.abs(scale);
     let scaleText: string;
@@ -229,62 +329,6 @@ export class ToolbarSimulationControls extends HTMLElement {
       return engineName.charAt(0).toUpperCase();
     }
   }
-
-  // Arrow function to preserve 'this' context when used as callback
-  private updateButtonStates = (): void => {
-    const state = simulationState.get();
-
-    if (this.playPauseButton) {
-      // Update the SVG content directly
-      this.playPauseButton.innerHTML = state.paused
-        ? PlayRegular
-        : PauseRegular;
-      this.playPauseButton.title = state.paused
-        ? "Play Simulation"
-        : "Pause Simulation";
-      this.playPauseButton.toggleAttribute("active", !state.paused);
-    }
-
-    if (this.speedDownButton) {
-      const disableSpeedDown =
-        state.paused ||
-        (state.timeScale > 0 && state.timeScale <= 0.1) ||
-        (state.timeScale < 0 && state.timeScale >= -10000000);
-      this.speedDownButton.disabled = disableSpeedDown; // Use property setter
-    }
-    if (this.speedUpButton) {
-      const disableSpeedUp =
-        state.paused ||
-        (state.timeScale < 0 && state.timeScale <= -0.1) ||
-        (state.timeScale > 0 && state.timeScale >= 10000000);
-      this.speedUpButton.disabled = disableSpeedUp; // Use property setter
-    }
-
-    if (this.reverseButton) {
-      this.reverseButton.toggleAttribute("active", state.timeScale < 0);
-    }
-
-    if (this.scaleValueDisplay) {
-      this.scaleValueDisplay.textContent = this.formatScale(state.timeScale);
-      // Use a semantic color for negative scale, e.g., warning or error
-      this.scaleValueDisplay.style.color =
-        state.timeScale < 0
-          ? "var(--color-warning)" // Use warning token for negative scale
-          : "var(--color-text-secondary)";
-    }
-
-    // Update time display
-    if (this.timeValueDisplay) {
-      this.timeValueDisplay.textContent = this.formatTime(state.time);
-    }
-
-    // Update engine display
-    if (this.engineValueDisplay) {
-      const engineName = state.physicsEngine || "-";
-      this.engineValueDisplay.textContent = this.getEngineShortName(engineName);
-      this.engineValueDisplay.setAttribute("data-full-name", engineName);
-    }
-  };
 }
 
 const ELEMENT_TAG = "toolbar-simulation-controls";

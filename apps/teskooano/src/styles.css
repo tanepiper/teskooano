@@ -162,6 +162,7 @@ body {
 }
 
 body {
+  overscroll-behavior: none;
   min-width: 320px;
   min-height: 100vh;
   display: flex; /* Keep for overall layout */
@@ -517,6 +518,7 @@ svg {
    ========================================================================== */
 
 #app {
+  touch-action: none;
   width: 100%;
   flex: 1;
   margin: 0 auto;
@@ -628,6 +630,11 @@ svg {
       transparent 55%
     );
   background-repeat: no-repeat;
+}
+
+/* Improve touch dragging for Dockview floating panels */
+.dockview-floating-group .dv-group-control {
+  touch-action: none;
 }
 
 /* --- Composite Panel Layout --- */

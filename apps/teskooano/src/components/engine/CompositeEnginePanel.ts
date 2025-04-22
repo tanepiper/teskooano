@@ -7,14 +7,14 @@ import {
 } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
+  AddPanelOptions,
   DockviewPanelApi,
   GroupPanelPartInitParameters,
   IContentRenderer,
-  AddPanelOptions, // Import AddPanelOptions
 } from "dockview-core";
 import { atom, type WritableAtom } from "nanostores";
+import { Subscription } from "rxjs"; // Import Subscription
 import * as THREE from "three";
-import { Subject, Subscription } from "rxjs"; // Import Subscription
 
 // --- Import placeholder components ---
 // Removed placeholder imports as UI is now external
@@ -24,8 +24,8 @@ import { Subject, Subscription } from "rxjs"; // Import Subscription
 import { OrbitManager } from "@teskooano/renderer-threejs-visualization";
 // --- END ADD ---
 
-import { layoutOrientationStore, Orientation } from "../../stores/layoutStore";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
+import { layoutOrientationStore, Orientation } from "../../stores/layoutStore";
 
 // --- Import the new PanelResizer ---
 // PanelResizer is no longer needed
@@ -35,11 +35,11 @@ import { CameraManager } from "./CameraManager";
 import type { DockviewController } from "../../controllers/dockviewController"; // Import controller type
 
 // --- Import Fluent UI Icons ---
-import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
-import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
-import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw";
-import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
 // --- End Fluent UI Icons ---
+
+// --- Import EngineToolbar ---
+import { EngineToolbar, type ToolbarButtonClickDetail } from "./EngineToolbar";
+// --- End Import ---
 
 interface CompositePanelParams {
   title?: string;
@@ -114,6 +114,9 @@ export class CompositeEnginePanel implements IContentRenderer {
   // --- Dockview Controller Instance ---
   private _dockviewController: DockviewController | null = null;
 
+  // --- Add EngineToolbar Instance ---
+  private _engineToolbar: EngineToolbar | null = null;
+
   // --- Track Open Floating Panels ---
   private _trackedFloatingPanels: Map<string, DockviewPanelApi> = new Map();
 
@@ -137,16 +140,17 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._element.style.position = "relative"; // Needed for absolute positioning of toolbar
 
     // --- Inject CSS for toolbar button icons ---
-    const style = document.createElement("style");
-    style.textContent = `
-      .engine-overlay-toolbar teskooano-button {
-        color: var(--color-text-on-primary, white); /* Force button text/icon color to white */
-      }
-      .engine-overlay-toolbar teskooano-button svg {
-        fill: currentColor; /* Ensure SVG inherits the button color */
-      }
-    `;
-    this._element.appendChild(style);
+    // REMOVED - Now handled by EngineToolbar
+    // const style = document.createElement('style');
+    // style.textContent = `
+    //   .engine-overlay-toolbar teskooano-button {
+    //     color: var(--color-text-on-primary, white); /* Force button text/icon color to white */
+    //   }
+    //   .engine-overlay-toolbar teskooano-button svg {
+    //     fill: currentColor; /* Ensure SVG inherits the button color */
+    //   }
+    // `;
+    // this._element.appendChild(style);
     // --- End Inject CSS ---
 
     this._engineContainer = document.createElement("div");
@@ -156,19 +160,10 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._element.appendChild(this._engineContainer);
 
     // Create toolbar container
-    this._toolbarContainer = document.createElement("div");
-    this._toolbarContainer.classList.add("engine-overlay-toolbar");
-    // Basic styling - adjust as needed
-    this._toolbarContainer.style.position = "absolute";
-    this._toolbarContainer.style.top = "5px";
-    this._toolbarContainer.style.left = "5px";
-    this._toolbarContainer.style.zIndex = "10";
-    this._toolbarContainer.style.display = "flex";
-    this._toolbarContainer.style.gap = "4px";
-    this._toolbarContainer.style.padding = "4px";
-    this._toolbarContainer.style.backgroundColor = "rgba(40, 40, 60, 0.7)";
-    this._toolbarContainer.style.borderRadius = "4px";
-    this._element.appendChild(this._toolbarContainer);
+    // REMOVED - Toolbar container creation is now handled by EngineToolbar
+    // this._toolbarContainer = document.createElement("div");
+    // ... styling ...
+    // this._element.appendChild(this._toolbarContainer);
 
     // Initialize internal view state store
     this._viewStateStore = atom<PanelViewState>({
@@ -567,75 +562,51 @@ export class CompositeEnginePanel implements IContentRenderer {
   };
 
   /**
-   * Initializes the overlay toolbar with buttons to launch floating panels.
+   * Initializes the overlay toolbar using the EngineToolbar component.
    */
   private initializeToolbar(): void {
-    if (!this._toolbarContainer || !this._dockviewController) return;
+    // Ensure we have the API ID before creating the toolbar
+    if (!this._api?.id) {
+      console.error(
+        "CompositeEnginePanel: Cannot initialize toolbar without panel API ID.",
+      );
+      return;
+    }
 
-    this._toolbarContainer.innerHTML = ""; // Clear existing buttons
+    // Clean up any existing toolbar instance
+    this._engineToolbar?.dispose();
 
-    // --- Define Toolbar Buttons ---
-    // Use imported icons directly
-    const buttons = [
-      {
-        id: "engine_settings",
-        iconSvg: SettingsIcon,
-        title: "Engine Settings",
-        panelId: `engine_settings_${this._api?.id}`,
-        component: "engine-ui-settings-panel",
-        behaviour: "toggle" as const,
-      },
-      {
-        id: "focus",
-        iconSvg: TargetIcon,
-        title: "Focus Control",
-        panelId: `focus_${this._api?.id}`,
-        component: "focus-control",
-        behaviour: "toggle" as const,
-      },
-      {
-        id: "renderer_info",
-        iconSvg: DataUsageIcon,
-        title: "Renderer Info",
-        panelId: `renderer_info_${this._api?.id}`,
-        component: "renderer-info-display",
-        behaviour: "toggle" as const,
-      },
-      {
-        id: "celestial_info",
-        iconSvg: InfoIcon,
-        title: "Celestial Info",
-        panelId: `celestial_info_${this._api?.id}`,
-        component: "celestial-info",
-        behaviour: "toggle" as const,
-      },
-      // Add more buttons here
-    ];
+    // Create and append the new toolbar
+    this._engineToolbar = new EngineToolbar(this._api.id);
+    this._element.appendChild(this._engineToolbar.element);
 
-    buttons.forEach((config) => {
-      const button = document.createElement("teskooano-button"); // Use custom element
-      button.id = `engine-toolbar-button-${config.id}`;
-      button.title = config.title;
-      // Remove direct styling, rely on the component's CSS
-
-      // Create icon span and insert raw SVG
-      const iconSpan = document.createElement("span");
-      iconSpan.slot = "icon"; // Assign to the 'icon' slot
-      iconSpan.innerHTML = config.iconSvg; // Insert the raw SVG string
-      button.appendChild(iconSpan);
-
-      button.addEventListener("click", () => {
-        this.handleToolbarButtonClick(
-          config.panelId,
-          config.component,
-          config.behaviour,
-          config.title,
-        );
-      });
-
-      this._toolbarContainer?.appendChild(button);
-    });
+    // Add event listener for button clicks
+    this._engineToolbar.element.addEventListener(
+      "toolbar-button-click",
+      this.handleToolbarEvent as EventListener, // Cast to satisfy TS
+    );
   }
+
+  /**
+   * Handles the custom 'toolbar-button-click' event dispatched by EngineToolbar.
+   */
+  private handleToolbarEvent = (
+    event: CustomEvent<ToolbarButtonClickDetail>,
+  ): void => {
+    if (!event.detail) {
+      console.warn(
+        "CompositeEnginePanel: Received toolbar-button-click event without detail.",
+      );
+      return;
+    }
+    const { panelId, componentType, behaviour, panelTitle } = event.detail;
+    this.handleToolbarButtonClick(
+      panelId,
+      componentType,
+      behaviour,
+      panelTitle,
+    );
+  };
 
   /**
    * Handles clicks on the overlay toolbar buttons.
@@ -716,6 +687,18 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._renderer?.dispose();
     this._renderer = undefined;
 
+    // --- Dispose EngineToolbar ---
+    if (this._engineToolbar) {
+      // Remove event listener before disposing
+      this._engineToolbar.element.removeEventListener(
+        "toolbar-button-click",
+        this.handleToolbarEvent as EventListener,
+      );
+      this._engineToolbar.dispose();
+      this._engineToolbar = null;
+    }
+    // --- End Dispose EngineToolbar ---
+
     // Close any tracked floating panels when the engine panel is disposed
     this._trackedFloatingPanels.forEach((panelApi) => {
       try {
@@ -764,7 +747,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     panelRegistry.unregisterPanel(this._api?.id ?? "unknown");
   }
 
-  // --- ADDED: Method to handle external panel removal ---
+  // --- Method to handle external panel removal (NO CHANGE NEEDED HERE) ---
   private handleExternalPanelRemoval(panelId: string): void {
     if (this._trackedFloatingPanels.has(panelId)) {
       console.log(
