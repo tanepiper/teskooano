@@ -71,6 +71,11 @@ export class OrbitManager {
   /** Recalculate predictions every N calls to `updateAllVisualizations`. */
   private readonly predictionUpdateFrequency: number = 15; // Update prediction less frequently
 
+  /** Counter used to throttle how often Verlet trail geometries are sent to the GPU. */
+  private trailUpdateCounter: number = 0;
+  /** Send trail geometry updates to the GPU every N calls to `updateAllVisualizations`. */
+  private readonly trailUpdateFrequency: number = 5; // Update geometry less frequently
+
   /** Reference to the ObjectManager for adding/removing lines from the scene. */
   private objectManager: ObjectManager;
   /** Reference to the RendererStateAdapter for accessing visualization settings. */
@@ -201,8 +206,22 @@ export class OrbitManager {
       });
     } else {
       // Verlet Mode
+      // --- ADDED: Increment trail update counter ---
+      this.trailUpdateCounter++;
+      const shouldUpdateTrailGeometry =
+        this.trailUpdateCounter >= this.trailUpdateFrequency;
+      if (shouldUpdateTrailGeometry) {
+        this.trailUpdateCounter = 0; // Reset counter
+      }
+      // --- END ADDED ---
+
       Object.values(objects).forEach((obj) => {
-        this.createOrUpdateVerletTrail(obj.celestialObjectId, obj);
+        // Pass the update flag to the trail function
+        this.createOrUpdateVerletTrail(
+          obj.celestialObjectId,
+          obj,
+          shouldUpdateTrailGeometry,
+        );
       });
 
       // --- Verlet Prediction Update ---
@@ -315,7 +334,11 @@ export class OrbitManager {
    * @param obj - The `RenderableCelestialObject` containing the current position.
    * @internal Called by `updateAllVisualizations` when in Verlet mode.
    */
-  createOrUpdateVerletTrail(id: string, obj: RenderableCelestialObject): void {
+  createOrUpdateVerletTrail(
+    id: string,
+    obj: RenderableCelestialObject,
+    shouldUpdateGeometry: boolean,
+  ): void {
     const multiplier =
       this.stateAdapter.$visualSettings.get().trailLengthMultiplier;
     const maxHistoryLength = 100 * multiplier;
@@ -329,7 +352,7 @@ export class OrbitManager {
     if (history.length > maxHistoryLength) {
       history.shift();
     }
-    this.updateTrailLine(id, history, maxHistoryLength);
+    this.updateTrailLine(id, history, maxHistoryLength, shouldUpdateGeometry);
   }
 
   /**
@@ -348,6 +371,7 @@ export class OrbitManager {
     id: string,
     points: THREE.Vector3[],
     maxPoints: number,
+    shouldUpdateGeometry: boolean,
   ): void {
     let line = this.trailLines.get(id);
     const safeMaxPoints = Math.max(1, Math.floor(maxPoints));
@@ -403,8 +427,13 @@ export class OrbitManager {
         pointsToUse[i].toArray(positionAttribute.array, i * 3);
       }
 
-      positionAttribute.needsUpdate = true;
-      geometry.setDrawRange(0, pointsToDraw);
+      // --- MODIFIED: Conditional needsUpdate ---
+      if (shouldUpdateGeometry) {
+        positionAttribute.needsUpdate = true;
+        geometry.setDrawRange(0, pointsToDraw);
+      }
+      // --- END MODIFIED ---
+
       line.visible = this.visualizationVisible;
       this.applyHighlight(id, line);
     }

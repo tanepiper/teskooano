@@ -770,6 +770,40 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     const mesh = renderer?.getObjectById(object.id); // ASSUMPTION: Method exists
 
     if (mesh) {
+      // --- OPTIMIZATION: Prioritize pre-calculated radius ---
+      if (
+        mesh.userData?.effectiveRadius &&
+        typeof mesh.userData.effectiveRadius === "number" &&
+        mesh.userData.effectiveRadius > 0
+      ) {
+        const effectiveRadius = mesh.userData.effectiveRadius;
+        console.debug(
+          `[FocusControl] Using pre-calculated radius from userData for ${object.name}: ${effectiveRadius.toFixed(2)}`,
+        );
+
+        let distance =
+          effectiveRadius * (1 + CAMERA_DISTANCE_SURFACE_PERCENTAGE);
+
+        // Apply type-specific scaling and minimum distance
+        const scaleFactor =
+          SIZE_BASED_SCALING[object.type] ?? DEFAULT_SIZE_SCALING;
+        const minTypeDistance =
+          CAMERA_DISTANCES[object.type] ?? DEFAULT_CAMERA_DISTANCE;
+
+        distance *= scaleFactor;
+        distance = Math.max(distance, minTypeDistance); // Ensure type-specific min distance
+        distance = Math.max(distance, MINIMUM_CAMERA_DISTANCE); // Ensure general minimum distance
+
+        console.debug(
+          `[FocusControl] Final distance using userData radius for ${object.name}: ${distance.toFixed(2)}`,
+        );
+        return distance;
+      } else {
+        console.warn(
+          `[FocusControl] No valid pre-calculated effectiveRadius in userData for ${object.name}. Attempting dynamic calculation.`,
+        );
+      }
+
       try {
         const box = new THREE.Box3().setFromObject(mesh);
         const size = new THREE.Vector3();
