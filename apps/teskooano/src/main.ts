@@ -22,6 +22,7 @@ import { layoutOrientationStore, Orientation } from "./stores/layoutStore"; // I
 import "./components/ui-controls/EngineUISettingsPanel"; // Import for side effect (registers element)
 import { EnginePlaceholder } from "./components/engine/EnginePlaceholder"; // Import EnginePlaceholder class
 import { ToolbarSeedForm } from "./components/toolbar/SeedForm"; // Correct import path
+import { FocusControl } from "./components/ui-controls/FocusControl"; // Import FocusControl
 
 // --- Setup --- //
 
@@ -66,9 +67,10 @@ window.addEventListener("resize", () => {
 
 // --- Initialize Controllers --- //
 
-const dockviewController = new DockviewController(appElement);
-// Pass the appElement (Dockview container) as the second argument
-const modalManager = new ModalManager(dockviewController, appElement);
+const dockviewController = new DockviewController(appElement); // Pass appElement
+// Pass the appElement (Dockview container) as the second argument - REMOVE second arg
+// const modalManager = new ModalManager(dockviewController, dockviewContainer);
+const modalManager = new ModalManager(dockviewController); // Only pass controller
 
 // Inject ModalManager into TourModal class
 TeskooanoTourModal.setModalManager(modalManager);
@@ -96,6 +98,7 @@ toolbarController.setTourController(tourController);
 // Register dynamically used components
 dockviewController.registerComponent("settings_view", SettingsPanel);
 dockviewController.registerComponent("progress_view", ProgressPanel);
+dockviewController.registerComponent("focus-control", FocusControl); // Add registration for FocusControl
 
 // --- Set Dockview API for SeedForm & UiPanel --- //
 // const dockviewApi = dockviewController.api; // This seems redundant now

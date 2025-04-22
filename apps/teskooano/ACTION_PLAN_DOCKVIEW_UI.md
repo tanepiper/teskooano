@@ -22,7 +22,7 @@ This document outlines potential improvements to the Teskooano application UI by
     - **Solution:** Define the logical placement for such panels. Determine if they belong as tabs in the "Engine Views" group, the "Controls/Info" group, or elsewhere. Update the code that adds these panels to specify the correct `referenceGroup`.
     - **Implementation Notes:** Done. Controllers can now use `dockviewController.addPanelToNamedGroup("controls", panelOptions)` to add panels to logical groups like "controls" or "engine_views".
 
-4.  **Preset Layouts with `fromJSON`:**
+4.  **Preset Layouts with `fromJSON`:** ![Status](https://img.shields.io/badge/Status-To%20Do-blue)
 
     - **Problem:** The initial application layout might be empty or inconsistent.
     - **Solution:** Define a default starting `SerializedDockview` layout in JSON format, specifying the initial groups ("Engine Views", "Controls"), their positions, and sizes. Load this layout on startup using `dockviewController.api.fromJSON()` for a consistent user experience. Consider offering multiple layout presets.
@@ -33,9 +33,10 @@ This document outlines potential improvements to the Teskooano application UI by
     - **Solution:** Implement a mechanism (e.g., a button) to call `dockviewController.api.maximizeGroup(engineGroup)` on the main engine view group. Provide a corresponding way to call `exitMaximizedGroup()` to restore the layout.
     - **Implementation Notes:** Done. `DockviewController` now provides `maximizeGroupByName("engine_views")` and `exitMaximizedGroup()` methods for easily toggling maximized view state.
 
-6.  **Floating Palettes (Optional):**
+6.  **Floating Palettes (Optional):** ![Status](https://img.shields.io/badge/Status-To%20Do-blue)
     - **Problem:** Infrequently used tools might not need permanent screen space.
     - **Solution:** Consider using `dockviewController.api.addFloatingGroup()` for utility panels (like debug info) instead of adding them to the main grid. This creates detachable, floating palettes.
+    - **Implementation Notes:** Modals were refactored to use Overlays instead of floating groups.
 
 ## Usage Examples for Enhanced DockviewController
 

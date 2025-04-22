@@ -203,7 +203,8 @@ export class ToolbarController {
       title: compositeViewTitle,
       params: {
         title: compositeViewTitle,
-        sections: uiSections, // Pass UI sections config
+        // sections: uiSections, // No longer needed
+        dockviewController: this._dockviewController, // Pass the controller instance
       },
       // position is handled internally by addPanelToNamedGroup
     };

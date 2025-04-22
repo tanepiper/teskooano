@@ -19,6 +19,7 @@
     "driver.js": "1.3.5",
     "nanostores": "1.0.1",
     "three": "0.175.0",
+    "rxjs": "7.8.2",
     "@fluentui/svg-icons": "1.1.297"
   },
   "devDependencies": {

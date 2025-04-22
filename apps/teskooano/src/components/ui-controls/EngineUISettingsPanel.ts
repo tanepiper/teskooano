@@ -2,6 +2,15 @@ import type { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // I
 import type { PanelViewState } from "../engine/CompositeEnginePanel"; // Import type from parent
 import "../shared/Slider.js"; // Import the slider component
 import type { TeskooanoSlider } from "../shared/Slider.js"; // Import the slider type
+// Import Dockview types and panel registry
+import { GroupPanelPartInitParameters } from "dockview-core";
+import { panelRegistry } from "@teskooano/core-state";
+import { IContentRenderer } from "dockview-core"; // ADD THIS IMPORT
+
+// Define expected params
+interface EngineUISettingsParams {
+  parentEnginePanelId?: string;
+}
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -134,7 +143,10 @@ template.innerHTML = `
   <div id="error-message" class="error-message" style="display: none;"></div>
 `;
 
-export class EngineUISettingsPanel extends HTMLElement {
+export class EngineUISettingsPanel
+  extends HTMLElement
+  implements IContentRenderer
+{
   private gridToggle: HTMLInputElement | null = null;
   private labelsToggle: HTMLInputElement | null = null;
   private auMarkersToggle: HTMLInputElement | null = null;
@@ -226,6 +238,39 @@ export class EngineUISettingsPanel extends HTMLElement {
       "change",
       this.handleDebugModeToggleChange,
     );
+  }
+
+  public init(parameters: GroupPanelPartInitParameters): void {
+    // const params = parameters.params as EngineUISettingsParams; // REMOVE THIS LINE
+    // Define params type inline
+    const params = parameters.params as {
+      parentInstance?: CompositeEnginePanel;
+    }; // ADD THIS LINE
+    console.log(`[EngineUISettingsPanel] Initializing with params:`, params);
+
+    // Check for the directly passed instance
+    if (params?.parentInstance) {
+      // Add a basic type check
+      if (
+        params.parentInstance instanceof Object &&
+        "getViewState" in params.parentInstance
+      ) {
+        console.log(
+          `[EngineUISettingsPanel] Setting parent panel via direct instance.`,
+        );
+        this.setParentPanel(params.parentInstance);
+      } else {
+        const errMsg =
+          "Received parentInstance, but it doesn't seem to be a valid CompositeEnginePanel.";
+        this.showError(errMsg);
+        console.error(`[EngineUISettingsPanel] ${errMsg}`);
+      }
+    } else {
+      const errMsg =
+        "Initialization parameters did not include 'parentInstance'. Cannot link to parent.";
+      this.showError(errMsg);
+      console.error(`[EngineUISettingsPanel] ${errMsg}`);
+    }
   }
 
   public setParentPanel(panel: CompositeEnginePanel): void {
@@ -353,6 +398,11 @@ export class EngineUISettingsPanel extends HTMLElement {
       this.errorMessageElement.style.display = "none";
       this.errorMessageElement.textContent = "";
     }
+  }
+
+  // ADD REQUIRED GETTER FOR IContentRenderer
+  get element(): HTMLElement {
+    return this;
   }
 }
 

@@ -10,13 +10,14 @@ import {
   DockviewPanelApi,
   GroupPanelPartInitParameters,
   IContentRenderer,
+  AddPanelOptions, // Import AddPanelOptions
 } from "dockview-core";
 import { atom, type WritableAtom } from "nanostores";
 import * as THREE from "three";
+import { Subject, Subscription } from "rxjs"; // Import Subscription
 
 // --- Import placeholder components ---
-import "./EnginePlaceholder";
-import "../ui-controls/UiPlaceholder";
+// Removed placeholder imports as UI is now external
 // --- End Import ---
 
 // --- ADD THREEJS OrbitManager ---
@@ -24,25 +25,25 @@ import { OrbitManager } from "@teskooano/renderer-threejs-visualization";
 // --- END ADD ---
 
 import { layoutOrientationStore, Orientation } from "../../stores/layoutStore";
-import "../shared/CollapsibleSection"; // Needed for UI sections
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
 
 // --- Import the new PanelResizer ---
-import { PanelResizer } from "./PanelResizer";
+// PanelResizer is no longer needed
 import { CameraManager } from "./CameraManager";
 
 // Define the expected structure for panel parameters from ToolbarController
-interface UiPanelSectionConfig {
-  id: string;
-  title: string;
-  class: string;
-  componentTag: string;
-  startClosed?: boolean;
-}
+import type { DockviewController } from "../../controllers/dockviewController"; // Import controller type
+
+// --- Import Fluent UI Icons ---
+import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
+import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
+import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw";
+import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
+// --- End Fluent UI Icons ---
 
 interface CompositePanelParams {
   title?: string;
-  sections?: UiPanelSectionConfig[];
+  dockviewController?: DockviewController; // Expect controller to be passed in
 }
 
 // --- Interface for View State (Copied from old EnginePanel) ---
@@ -89,9 +90,7 @@ let isSimulationLoopStarted = false;
 export class CompositeEnginePanel implements IContentRenderer {
   private readonly _element: HTMLElement;
   private _engineContainer: HTMLElement | undefined;
-  private _uiContainer: HTMLElement | undefined;
-  private _resizerElement: HTMLElement | undefined;
-  private _panelResizer: PanelResizer | undefined; // <-- Add PanelResizer instance
+  private _toolbarContainer: HTMLElement | undefined; // Toolbar container
 
   private _params:
     | (GroupPanelPartInitParameters & { params?: CompositePanelParams })
@@ -101,11 +100,9 @@ export class CompositeEnginePanel implements IContentRenderer {
   private _resizeObserver: ResizeObserver | undefined;
 
   // --- View Orientation Handling ---
-  private _layoutUnsubscribe: (() => void) | null = null;
   private _currentOrientation: Orientation | null = null;
   private _celestialObjectsUnsubscribe: (() => void) | null = null; // Renamed for clarity
   private _simulationStateUnsubscribe: (() => void) | null = null; // For global state
-  private _previousSimState: SimulationState | null = null; // Store previous state for comparison
   private _isInitialized = false;
 
   // --- Add CameraManager instance ---
@@ -113,6 +110,15 @@ export class CompositeEnginePanel implements IContentRenderer {
 
   // --- Internal View State Store (Copied from old EnginePanel) ---
   private _viewStateStore: WritableAtom<PanelViewState>;
+
+  // --- Dockview Controller Instance ---
+  private _dockviewController: DockviewController | null = null;
+
+  // --- Track Open Floating Panels ---
+  private _trackedFloatingPanels: Map<string, DockviewPanelApi> = new Map();
+
+  // --- RxJS Subscription for Panel Removal ---
+  private _panelRemovedSubscription: Subscription | null = null;
 
   /**
    * The root HTML element for this panel.
@@ -128,6 +134,20 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._element.style.width = "100%";
     this._element.style.overflow = "hidden";
     this._element.style.display = "flex";
+    this._element.style.position = "relative"; // Needed for absolute positioning of toolbar
+
+    // --- Inject CSS for toolbar button icons ---
+    const style = document.createElement("style");
+    style.textContent = `
+      .engine-overlay-toolbar teskooano-button {
+        color: var(--color-text-on-primary, white); /* Force button text/icon color to white */
+      }
+      .engine-overlay-toolbar teskooano-button svg {
+        fill: currentColor; /* Ensure SVG inherits the button color */
+      }
+    `;
+    this._element.appendChild(style);
+    // --- End Inject CSS ---
 
     this._engineContainer = document.createElement("div");
     this._engineContainer.classList.add("engine-container");
@@ -135,34 +155,20 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._engineContainer.style.overflow = "hidden";
     this._element.appendChild(this._engineContainer);
 
-    this._resizerElement = document.createElement("div");
-    this._resizerElement.classList.add("internal-resizer");
-    // Basic size is now handled by PanelResizer, listeners removed
-    this._resizerElement.style.flex = `0 0 auto`; // Let PanelResizer control size
-    this._element.appendChild(this._resizerElement);
-
-    this._uiContainer = document.createElement("div");
-    this._uiContainer.classList.add("ui-container");
-    this._uiContainer.style.overflowY = "auto";
-    this._uiContainer.style.overflowX = "hidden";
-    this._uiContainer.style.boxSizing = "border-box";
-    this._element.appendChild(this._uiContainer);
-
-    // Subscribe to layout orientation changes
-    this._layoutUnsubscribe = layoutOrientationStore.subscribe(
-      (orientation) => {
-        if (this._currentOrientation !== orientation) {
-          this._currentOrientation = orientation;
-          this.updateLayoutOrientation(orientation); // Call updated method
-          this.triggerResize(); // Force renderer resize
-        }
-      },
-    );
-
-    // Apply initial layout based on current orientation
-    const initialOrientation = layoutOrientationStore.get();
-    this._currentOrientation = initialOrientation;
-    this.updateLayoutOrientation(initialOrientation);
+    // Create toolbar container
+    this._toolbarContainer = document.createElement("div");
+    this._toolbarContainer.classList.add("engine-overlay-toolbar");
+    // Basic styling - adjust as needed
+    this._toolbarContainer.style.position = "absolute";
+    this._toolbarContainer.style.top = "5px";
+    this._toolbarContainer.style.left = "5px";
+    this._toolbarContainer.style.zIndex = "10";
+    this._toolbarContainer.style.display = "flex";
+    this._toolbarContainer.style.gap = "4px";
+    this._toolbarContainer.style.padding = "4px";
+    this._toolbarContainer.style.backgroundColor = "rgba(40, 40, 60, 0.7)";
+    this._toolbarContainer.style.borderRadius = "4px";
+    this._element.appendChild(this._toolbarContainer);
 
     // Initialize internal view state store
     this._viewStateStore = atom<PanelViewState>({
@@ -176,30 +182,6 @@ export class CompositeEnginePanel implements IContentRenderer {
       isDebugMode: false,
       fov: DEFAULT_PANEL_FOV,
     });
-  }
-
-  /**
-   * Updates the flex layout classes and resizer style based on orientation.
-   * Delegates resizer styling to the PanelResizer instance.
-   * @param orientation The new layout orientation ('portrait' or 'landscape').
-   */
-  private updateLayoutOrientation(orientation: Orientation): void {
-    if (!this._element) return;
-
-    // Update main element layout classes
-    if (orientation === "portrait") {
-      this._element.classList.remove("layout-internal-landscape");
-      this._element.classList.add("layout-internal-portrait");
-    } else {
-      this._element.classList.remove("layout-internal-portrait");
-      this._element.classList.add("layout-internal-landscape");
-    }
-
-    // Update resizer style via the PanelResizer instance
-    this._panelResizer?.updateResizerStyle(orientation);
-
-    // Reset UI container flex basis if needed (allowing CSS or PanelResizer to control)
-    if (this._uiContainer) this._uiContainer.style.flexBasis = "";
   }
 
   /**
@@ -402,7 +384,8 @@ export class CompositeEnginePanel implements IContentRenderer {
    * @param parameters - Initialization parameters provided by Dockview.
    */
   init(parameters: GroupPanelPartInitParameters): void {
-    if (this._isInitialized) {
+    // Check initialization flag AND if dockviewController is set
+    if (this._isInitialized && this._dockviewController) {
       console.warn(
         `[CompositePanel ${this._api?.id}] Attempted to initialize already initialized panel.`,
       );
@@ -412,47 +395,18 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._params = parameters as GroupPanelPartInitParameters & {
       params?: CompositePanelParams;
     };
+    // Store the DockviewController instance from params
+    this._dockviewController = this._params?.params?.dockviewController ?? null;
+
+    if (!this._dockviewController) {
+      console.error(
+        `[CompositePanel ${this._api?.id}] DockviewController instance was not provided in params. Toolbar actions will fail.`,
+      );
+      // Optionally display an error message in the panel
+    }
+
     this._api = parameters.api;
     this._element.id = `composite-engine-view-${this._api?.id}`; // Ensure unique ID
-
-    // --- Instantiate PanelResizer ---
-    if (this._resizerElement && this._uiContainer && this._engineContainer) {
-      this._panelResizer = new PanelResizer({
-        resizerElement: this._resizerElement,
-        uiContainer: this._uiContainer,
-        engineContainer: this._engineContainer,
-        parentElement: this._element,
-        initialOrientation:
-          this._currentOrientation ?? layoutOrientationStore.get(), // Use current or initial
-        onResizeCallback: this.triggerResize.bind(this), // Pass triggerResize
-      });
-    } else {
-      console.error(
-        "[CompositePanel] Failed to initialize PanelResizer: Required elements missing.",
-      );
-    }
-    // --- End Instantiate PanelResizer ---
-
-    // Register with Panel Registry
-    if (this._api) {
-      panelRegistry.registerPanel(this._api.id, this);
-    } else {
-      console.error(
-        "[CompositePanel] Cannot register panel: API not available at init time.",
-      );
-    }
-
-    // Set initial placeholder state
-    if (this._engineContainer) {
-      this._engineContainer.innerHTML = "";
-      this._engineContainer.appendChild(
-        document.createElement("engine-placeholder"),
-      );
-    }
-    if (this._uiContainer) {
-      this._uiContainer.innerHTML = "";
-      this._uiContainer.appendChild(document.createElement("ui-placeholder"));
-    }
 
     // Subscribe to celestial objects data to trigger renderer/UI setup
     this._celestialObjectsUnsubscribe?.(); // Clean up previous listener if any
@@ -469,10 +423,9 @@ export class CompositeEnginePanel implements IContentRenderer {
           // Data available, renderer not initialized: Initialize
 
           if (this._engineContainer) this._engineContainer.innerHTML = ""; // Clear placeholder
-          if (this._uiContainer) this._uiContainer.innerHTML = ""; // Clear placeholder
 
           this.initializeRenderer();
-          this.initializeUiControls();
+          this.initializeToolbar(); // Initialize the new toolbar
 
           // Start simulation loop globally (if not already started)
           if (!isSimulationLoopStarted) {
@@ -486,17 +439,9 @@ export class CompositeEnginePanel implements IContentRenderer {
 
           this.disposeRendererAndUI(); // Clean up
           // Reset to placeholder state
-          if (this._engineContainer) {
-            this._engineContainer.innerHTML = "";
-            this._engineContainer.appendChild(
-              document.createElement("engine-placeholder"),
-            );
-          }
-          if (this._uiContainer) {
-            this._uiContainer.innerHTML = "";
-            this._uiContainer.appendChild(
-              document.createElement("ui-placeholder"),
-            );
+          if (this._engineContainer && !this._renderer) {
+            this._engineContainer.innerHTML =
+              "<p style='color: #aaa; padding: 1em;'>Engine Cleared</p>";
           }
         }
       },
@@ -509,6 +454,22 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._simulationStateUnsubscribe = simulationState.subscribe(
       this.handleSimulationStateChange,
     );
+
+    // --- Subscribe to Panel Removals from DockviewController ---
+    if (this._dockviewController) {
+      this._panelRemovedSubscription =
+        this._dockviewController.onPanelRemoved$.subscribe((panelId) => {
+          this.handleExternalPanelRemoval(panelId);
+        });
+    } else {
+      console.warn(
+        "CompositeEnginePanel: DockviewController not provided, cannot subscribe to panel removals.",
+      );
+    }
+    // --- End Subscription ---
+
+    // Set initial orientation and start listening for changes
+    this._currentOrientation = layoutOrientationStore.get();
   }
 
   /**
@@ -557,6 +518,20 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._cameraManager.initializeCameraPosition();
       // --- End Initialize Camera Manager ---
 
+      // Dispatch event indicating the renderer is ready
+      if (this._renderer && this.element.isConnected) {
+        this.element.dispatchEvent(
+          new CustomEvent("renderer-ready", {
+            bubbles: true, // Allow event to bubble up if needed
+            composed: true, // Allow event to cross shadow DOM boundaries
+            detail: { renderer: this._renderer },
+          }),
+        );
+        console.log(
+          `[CompositePanel ${this._api?.id}] Dispatched renderer-ready event.`,
+        );
+      }
+
       this._renderer.startRenderLoop();
 
       // Setup resize observer for the engine container
@@ -589,96 +564,148 @@ export class CompositeEnginePanel implements IContentRenderer {
    */
   private handleSimulationStateChange = (newState: SimulationState): void => {
     if (!this._renderer?.orbitManager) return; // Need orbit manager
-    // Update previous state for next comparison
-    this._previousSimState = newState;
   };
 
   /**
-   * Initializes the UI controls section based on the configuration
-   * provided in the panel parameters. Creates collapsible sections
-   * and injects the specified custom elements.
+   * Initializes the overlay toolbar with buttons to launch floating panels.
    */
-  private initializeUiControls(): void {
-    if (!this._uiContainer || !this._params?.params?.sections) return;
+  private initializeToolbar(): void {
+    if (!this._toolbarContainer || !this._dockviewController) return;
 
-    this._uiContainer.innerHTML = ""; // Clear previous content
-    const sections = this._params.params.sections;
+    this._toolbarContainer.innerHTML = ""; // Clear existing buttons
 
-    // --- Create Left/Right Containers for UI split ---
-    const leftUiContainer = document.createElement("div");
-    leftUiContainer.classList.add("left-ui-container");
-    leftUiContainer.style.display = "flex";
-    leftUiContainer.style.flexDirection = "column";
-    leftUiContainer.style.height = "100%";
+    // --- Define Toolbar Buttons ---
+    // Use imported icons directly
+    const buttons = [
+      {
+        id: "engine_settings",
+        iconSvg: SettingsIcon,
+        title: "Engine Settings",
+        panelId: `engine_settings_${this._api?.id}`,
+        component: "engine-ui-settings-panel",
+        behaviour: "toggle" as const,
+      },
+      {
+        id: "focus",
+        iconSvg: TargetIcon,
+        title: "Focus Control",
+        panelId: `focus_${this._api?.id}`,
+        component: "focus-control",
+        behaviour: "toggle" as const,
+      },
+      {
+        id: "renderer_info",
+        iconSvg: DataUsageIcon,
+        title: "Renderer Info",
+        panelId: `renderer_info_${this._api?.id}`,
+        component: "renderer-info-display",
+        behaviour: "toggle" as const,
+      },
+      {
+        id: "celestial_info",
+        iconSvg: InfoIcon,
+        title: "Celestial Info",
+        panelId: `celestial_info_${this._api?.id}`,
+        component: "celestial-info",
+        behaviour: "toggle" as const,
+      },
+      // Add more buttons here
+    ];
 
-    const rightUiContainer = document.createElement("div");
-    rightUiContainer.classList.add("right-ui-container");
-    rightUiContainer.style.display = "flex";
-    rightUiContainer.style.flexDirection = "column";
-    rightUiContainer.style.height = "100%";
+    buttons.forEach((config) => {
+      const button = document.createElement("teskooano-button"); // Use custom element
+      button.id = `engine-toolbar-button-${config.id}`;
+      button.title = config.title;
+      // Remove direct styling, rely on the component's CSS
 
-    this._uiContainer.appendChild(leftUiContainer);
-    this._uiContainer.appendChild(rightUiContainer);
-    // --- End Left/Right Containers ---
+      // Create icon span and insert raw SVG
+      const iconSpan = document.createElement("span");
+      iconSpan.slot = "icon"; // Assign to the 'icon' slot
+      iconSpan.innerHTML = config.iconSvg; // Insert the raw SVG string
+      button.appendChild(iconSpan);
 
-    sections.forEach((config: UiPanelSectionConfig) => {
-      try {
-        const sectionContainer = document.createElement("collapsible-section");
-        sectionContainer.id = config.id;
-        sectionContainer.classList.add(config.class);
-        sectionContainer.setAttribute("section-title", config.title); // Use 'section-title' attribute
-        if (config.startClosed) {
-          sectionContainer.setAttribute("closed", "");
-        }
-
-        // Check if the custom element is defined before creating it
-        const isDefined = !!customElements.get(config.componentTag);
-        if (!isDefined) {
-          throw new Error(
-            `Custom element <${config.componentTag}> is not defined. Make sure it's imported and registered.`,
-          );
-        }
-        const contentComponent = document.createElement(config.componentTag);
-
-        // Dependency Injection: Pass panel or renderer instance to specific components
-        if (typeof (contentComponent as any).setParentPanel === "function") {
-          (contentComponent as any).setParentPanel(this);
-        } else if (
-          typeof (contentComponent as any).setRenderer === "function" &&
-          this._renderer
-        ) {
-          (contentComponent as any).setRenderer(this._renderer);
-        } else if (
-          typeof (contentComponent as any).setRenderer === "function"
-        ) {
-          // Log warning if setRenderer exists but renderer isn't ready yet
-          console.warn(
-            `[CompositePanel] setRenderer exists on <${config.componentTag}>, but renderer is not yet initialized.`,
-          );
-        }
-
-        sectionContainer.appendChild(contentComponent);
-
-        // Append to the appropriate container based on ID prefix or other logic
-        // Simple example: focus controls go left, others go right
-        if (config.id.startsWith("focus-section-")) {
-          leftUiContainer.appendChild(sectionContainer);
-        } else {
-          rightUiContainer.appendChild(sectionContainer);
-        }
-      } catch (error) {
-        console.error(
-          `Error creating UI section '${config.title}' with component <${config.componentTag}>:`,
-          error,
+      button.addEventListener("click", () => {
+        this.handleToolbarButtonClick(
+          config.panelId,
+          config.component,
+          config.behaviour,
+          config.title,
         );
-        const errorPlaceholder = document.createElement("div");
-        errorPlaceholder.textContent = `Error loading section: ${config.title}`;
-        errorPlaceholder.style.color = "var(--color-error, red)"; // Use CSS variable if available
-        errorPlaceholder.style.padding = "0.5em";
-        // Append error placeholder to the main UI container for visibility
-        this._uiContainer!.appendChild(errorPlaceholder);
-      }
+      });
+
+      this._toolbarContainer?.appendChild(button);
     });
+  }
+
+  /**
+   * Handles clicks on the overlay toolbar buttons.
+   * Toggles or creates floating panels based on configuration.
+   */
+  private handleToolbarButtonClick(
+    panelId: string,
+    componentType: string,
+    behaviour: "toggle" | "create",
+    panelTitle: string,
+  ): void {
+    if (!this._dockviewController) {
+      console.error(
+        "Cannot handle toolbar click: DockviewController is not available.",
+      );
+      return;
+    }
+
+    const existingPanelApi = this._trackedFloatingPanels.get(panelId);
+
+    if (existingPanelApi) {
+      // Panel exists, close it (toggle behaviour)
+      console.log(`Closing existing floating panel: ${panelId}`);
+      try {
+        existingPanelApi.close();
+        this._trackedFloatingPanels.delete(panelId);
+      } catch (error) {
+        console.error(`Error closing panel ${panelId}:`, error);
+        this._trackedFloatingPanels.delete(panelId); // Remove tracking even if close fails
+      }
+    } else {
+      // Panel doesn't exist, create it
+      console.log(`Creating floating panel: ${panelId} (${componentType})`);
+      const panelOptions: AddPanelOptions = {
+        id: panelId,
+        component: componentType,
+        title: panelTitle,
+        params: {
+          // Pass context: the ID of this engine panel
+          // parentEnginePanelId: this._api?.id, // REMOVE THIS LINE
+          // Potentially pass other context if needed by the specific component
+          parentInstance: this, // Ensure this is passed for ALL floating panels from here
+        },
+      };
+
+      // Define desired position/size (optional, Dockview will choose if omitted)
+      // Example: position slightly offset from toolbar
+      const position = {
+        top:
+          (this._toolbarContainer?.offsetTop ?? 0) +
+          (this._toolbarContainer?.offsetHeight ?? 0) +
+          10,
+        left: (this._toolbarContainer?.offsetLeft ?? 0) + 10,
+        width: 300, // Default width
+        height: 400, // Default height
+      };
+
+      const newPanelApi = this._dockviewController.addFloatingPanel(
+        panelOptions,
+        position,
+      );
+
+      if (newPanelApi) {
+        this._trackedFloatingPanels.set(panelId, newPanelApi);
+        // TODO: Revisit tracking user closes. DockviewPanelApi doesn't have onDidClose.
+        // We might need to listen on the group or handle cleanup differently.
+      } else {
+        console.error(`Failed to create floating panel ${panelId}`);
+      }
+    }
   }
 
   /**
@@ -689,7 +716,18 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._renderer?.dispose();
     this._renderer = undefined;
 
-    if (this._uiContainer) this._uiContainer.innerHTML = ""; // Clear UI
+    // Close any tracked floating panels when the engine panel is disposed
+    this._trackedFloatingPanels.forEach((panelApi) => {
+      try {
+        panelApi.close();
+      } catch (e) {
+        console.warn(
+          `Error closing tracked panel ${panelApi.id} during dispose:`,
+          e,
+        );
+      }
+    });
+    this._trackedFloatingPanels.clear();
 
     if (this._resizeObserver) {
       this._resizeObserver.disconnect();
@@ -699,10 +737,6 @@ export class CompositeEnginePanel implements IContentRenderer {
     // Destroy the CameraManager (handles its own listener cleanup)
     this._cameraManager?.destroy();
     this._cameraManager = undefined;
-
-    // Destroy the PanelResizer (handles its own listener cleanup)
-    this._panelResizer?.destroy();
-    this._panelResizer = undefined;
   }
 
   /**
@@ -710,23 +744,38 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Stops listeners, disposes the renderer, and unregisters the panel.
    */
   dispose(): void {
-    const panelIdForLog = this._api?.id ?? "unknown";
-    this._isInitialized = false; // Mark as disposed early
+    console.log(
+      `CompositeEnginePanel (${this._api?.id ?? "unknown"}): Disposing.`,
+    );
+    this.disposeRendererAndUI();
 
-    // Unsubscribe from layout changes
-    this._layoutUnsubscribe?.();
-    this._layoutUnsubscribe = null;
+    // --- Unsubscribe from Panel Removals ---
+    this._panelRemovedSubscription?.unsubscribe();
+    this._panelRemovedSubscription = null;
+    // --- End Unsubscribe ---
 
-    // Unsubscribe from data listeners
+    // Unsubscribe from nanostores
     this._celestialObjectsUnsubscribe?.();
     this._celestialObjectsUnsubscribe = null;
     this._simulationStateUnsubscribe?.();
     this._simulationStateUnsubscribe = null;
 
-    // Dispose renderer and UI (handles renderer disposal, resize observer, UI clear)
-    this.disposeRendererAndUI();
-
     // Unregister from Panel Registry
-    panelRegistry.unregisterPanel(panelIdForLog);
+    panelRegistry.unregisterPanel(this._api?.id ?? "unknown");
   }
+
+  // --- ADDED: Method to handle external panel removal ---
+  private handleExternalPanelRemoval(panelId: string): void {
+    if (this._trackedFloatingPanels.has(panelId)) {
+      console.log(
+        `CompositeEnginePanel: Detected external removal of tracked floating panel: ${panelId}. Updating internal state.`,
+      );
+      this._trackedFloatingPanels.delete(panelId);
+      // Optionally, update toolbar button state if needed here
+    } else {
+      // Panel removed was not one we were tracking (e.g., a different floating panel, or a docked panel)
+      // console.log(`CompositeEnginePanel: Ignoring external removal of untracked panel: ${panelId}`);
+    }
+  }
+  // --- END ADDED ---
 }

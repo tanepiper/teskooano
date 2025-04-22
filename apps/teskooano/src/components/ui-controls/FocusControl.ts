@@ -6,12 +6,11 @@ import {
   scaleSize,
 } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // Import parent panel type
-// import { throttle } from 'lodash-es'; // Remove throttle for now
-// import { EnginePanel } from "../engine/EnginePanel"; // Use regular import and corrected path
-// import { DockviewApi } from 'dockview-core'; // Need DockviewApi type potentially
-// import { SeedForm } from './SeedForm'; // Import SeedForm for the API hack
 import * as THREE from "three";
 import { renderableObjectsStore } from "@teskooano/core-state";
+import { GroupPanelPartInitParameters } from "dockview-core";
+import { panelRegistry } from "@teskooano/core-state";
+import { IContentRenderer } from "dockview-core";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -190,7 +189,13 @@ const SIZE_BASED_SCALING: Partial<Record<CelestialType, number>> = {
 const DEFAULT_SIZE_SCALING = 1.5;
 // --- End Constants ---
 
-export class FocusControl extends HTMLElement {
+// --- ADD Interface for Params ---
+interface FocusControlParams {
+  parentEnginePanelId?: string;
+}
+// --- END Interface --- // FocusControl already implements IContentRenderer
+
+export class FocusControl extends HTMLElement implements IContentRenderer {
   private listContainer: HTMLElement | null = null;
   private resetButton: HTMLButtonElement | null = null;
   private clearButton: HTMLButtonElement | null = null;
@@ -904,6 +909,40 @@ export class FocusControl extends HTMLElement {
     if (needsFullRefresh) {
       this.populateList();
     }
+  }
+
+  // Dockview panel lifecycle method
+  public init(parameters: GroupPanelPartInitParameters): void {
+    // const params = parameters.params as FocusControlParams; // REMOVE THIS LINE
+    // Define params type inline or import if available
+    const params = parameters.params as {
+      parentInstance?: CompositeEnginePanel;
+    }; // ADD THIS LINE
+
+    // Check for the directly passed instance
+    if (params?.parentInstance) {
+      // Ideally, add a type check here if possible, although TypeScript might handle it
+      if (
+        params.parentInstance instanceof Object &&
+        "focusOnObject" in params.parentInstance
+      ) {
+        // Basic check
+        this.setParentPanel(params.parentInstance); // Use existing method
+      } else {
+        console.error(
+          "[FocusControl] Received parentInstance, but it doesn't seem to be a valid CompositeEnginePanel.",
+        );
+      }
+    } else {
+      console.error(
+        "[FocusControl] Initialization parameters did not include 'parentInstance'. Cannot link to parent.",
+      );
+    }
+  }
+
+  // Add required getter for IContentRenderer
+  get element(): HTMLElement {
+    return this;
   }
 }
 

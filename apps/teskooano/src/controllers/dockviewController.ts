@@ -6,12 +6,19 @@ import {
   DockviewApi,
   AddGroupOptions,
   AddPanelOptions,
+  DockviewPanelApi,
+  DockviewGroupPanel,
 } from "dockview-core";
 // Import Overlay specifically
 import { Overlay } from "dockview-core/dist/esm/overlay/overlay";
 import { CompositeEnginePanel } from "../components/engine/CompositeEnginePanel";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
+import { EngineUISettingsPanel } from "../components/ui-controls/EngineUISettingsPanel";
+import { FocusControl } from "../components/ui-controls/FocusControl";
+import { RendererInfoDisplay } from "../components/ui-controls/RendererInfoDisplay";
+import { CelestialInfo } from "../components/ui-controls/CelestialInfo";
 // import { CelestialInfoPanel } from "../components/ui-controls/CelestialInfoPanel"; // REMOVE - Incorrect Class/File
+import { Subject, Observable } from "rxjs"; // Import RxJS classes
 
 // We'll use any here because the exact type from dockview is complex and private
 type DockviewGroup = any;
@@ -81,6 +88,12 @@ export class DockviewController {
   private _overlayContainer: HTMLElement; // Need the root element for overlay bounds
   private _activeOverlays: Map<string, ActiveOverlay> = new Map();
 
+  // --- RxJS Subject for Panel Removal ---
+  private _removedPanelSubject = new Subject<string>();
+  public readonly onPanelRemoved$: Observable<string> =
+    this._removedPanelSubject.asObservable();
+  // --- End RxJS Subject ---
+
   constructor(element: HTMLElement) {
     // Register components needed at initialization time internally first
     // this._registeredComponents.set("engine_view", EnginePanel);
@@ -89,7 +102,16 @@ export class DockviewController {
       "composite_engine_view",
       CompositeEnginePanel,
     );
-    // this._registeredComponents.set("celestial_info", CelestialInfoPanel); // REMOVE - Incorrect Class/File
+    this._registeredComponents.set(
+      "engine-ui-settings-panel",
+      EngineUISettingsPanel,
+    );
+    this._registeredComponents.set("focus-control", FocusControl);
+    this._registeredComponents.set(
+      "renderer-info-display",
+      RendererInfoDisplay,
+    );
+    this._registeredComponents.set("celestial-info", CelestialInfo);
     this._registeredComponents.set("settings", SettingsPanel);
     // Remove pre-registration for dynamically added panels
     // this._registeredComponents.set('progress_view', ProgressPanel);
@@ -160,6 +182,12 @@ export class DockviewController {
     );
 
     this._overlayContainer = element; // Store the root element
+
+    // --- Add Event Listener for Panel Removal ---
+    this._api.onDidRemovePanel((panel: IDockviewPanel) => {
+      this.handlePanelRemoval(panel);
+    });
+    // --- End Event Listener ---
   }
 
   /**
@@ -194,7 +222,8 @@ export class DockviewController {
     // Ensure the component type is registered if it's a string name
     if (
       typeof options.component === "string" &&
-      !this._registeredComponents.has(options.component)
+      !this._registeredComponents.has(options.component) &&
+      options.component !== "default" // Don't warn for the default fallback
     ) {
       console.warn(
         `DockviewController: Component '${options.component}' not pre-registered. Panel may fail to render.`,
@@ -527,10 +556,155 @@ export class DockviewController {
 
   // --- Ensure dispose calls the new cleanup ---
   public dispose(): void {
-    // ... existing dispose logic ...
-    this.disposeOverlays();
-    // ...
+    // Dispose the main Dockview API instance first
+    // This should implicitly handle cleanup of internal listeners,
+    // but explicit removal is safer if the API allows it.
+    // Note: DockviewApi doesn't expose a specific method to remove listeners added with 'onDid...',
+    // so disposing the api instance itself is the primary cleanup mechanism.
+    try {
+      this._api.dispose();
+      console.log("DockviewController: Dockview API disposed.");
+    } catch (error) {
+      console.error("DockviewController: Error disposing Dockview API:", error);
+    }
+
+    // --- Complete the Subject ---
+    this._removedPanelSubject.complete();
+    // --- End Complete Subject ---
+
+    // Clear our internal caches/maps
+    this._registeredComponents.clear();
+    this._groupNameToIdMap.clear();
+    this._groupCache.clear();
+    console.log("DockviewController: Internal caches cleared.");
+
+    // Dispose any active overlays
+    this.disposeOverlays(); // Already handles logging
   }
+
+  /**
+   * Adds a new panel within its own new floating group.
+   * @param panelOptions Options for the panel to add.
+   * @param position Optional absolute position and size for the floating group.
+   * @returns The API of the newly added panel, or null if creation failed.
+   */
+  public addFloatingPanel(
+    panelOptions: AddPanelOptions,
+    position?: { top: number; left: number; width: number; height: number },
+  ): DockviewPanelApi | null {
+    let temporaryPanel: IDockviewPanel | null = null;
+    try {
+      console.log(
+        `DockviewController: Attempting to add floating panel ${panelOptions.id}`,
+      );
+
+      // 1. Create the panel instance first.
+      // We might need to add it 'inactive' or to a temporary location
+      // if just creating it doesn't work as expected.
+      temporaryPanel = this._api.addPanel({
+        ...panelOptions,
+        // Try adding inactive? Check if this option exists and helps.
+        // inactive: true,
+      });
+
+      if (!temporaryPanel || !temporaryPanel.api) {
+        console.error(
+          `DockviewController: Failed to create temporary panel instance for ${panelOptions.id}.`,
+        );
+        return null;
+      }
+      console.log(
+        `DockviewController: Temporary panel ${panelOptions.id} created.`,
+      );
+
+      // 2. Add this panel instance to a new floating group
+      // The 'item' argument should be the panel instance.
+      // The second argument should contain position/size options.
+      const floatingGroup = this._api.addFloatingGroup(temporaryPanel, {
+        position,
+      });
+
+      // Check if the floating group creation seems successful
+      // The return type of addFloatingGroup is likely 'void' or the group,
+      // we rely on it not throwing an error.
+      console.log(
+        `DockviewController: addFloatingGroup called for panel ${panelOptions.id}.`,
+      );
+
+      // Assuming the panel is now successfully in the floating group
+      // Ensure it's active
+      temporaryPanel.api.setActive();
+      return temporaryPanel.api;
+    } catch (error) {
+      console.error(
+        `DockviewController: Error adding floating panel ${panelOptions.id}:`,
+        error,
+      );
+      // Clean up the temporary panel if it was created but floating failed
+      if (temporaryPanel) {
+        try {
+          this._api.removePanel(temporaryPanel);
+        } catch (cleanupError) {
+          console.error(
+            `DockviewController: Error cleaning up temporary panel ${panelOptions.id}:`,
+            cleanupError,
+          );
+        }
+      }
+      return null;
+    }
+  }
+
+  // --- UPDATED METHOD TO HANDLE PANEL REMOVAL ---
+  private handlePanelRemoval(panel: IDockviewPanel): void {
+    const groupId = panel.group?.id; // Use optional chaining
+    const panelId = panel.id;
+
+    console.log(
+      `DockviewController: handlePanelRemoval called for panel '${panelId}' in group '${groupId ?? "none"}'`,
+    );
+
+    // --- Notify Subscribers ---
+    this._removedPanelSubject.next(panelId);
+    // --- End Notify ---
+
+    const group = panel.group; // Get the group the panel belonged to
+
+    // Check if the group is now empty AND if it's still tracked in our map
+    if (group && group.panels.length === 0) {
+      let groupNameToRemove: string | null = null;
+      for (const [name, id] of this._groupNameToIdMap.entries()) {
+        if (id === group.id) {
+          groupNameToRemove = name;
+          break;
+        }
+      }
+
+      if (groupNameToRemove) {
+        console.log(
+          `DockviewController: Panel removed from group '${groupNameToRemove}' (ID: ${group.id}). Group is now empty, removing mapping.`,
+        );
+        this._groupNameToIdMap.delete(groupNameToRemove);
+        this._groupCache.delete(group.id);
+      } else {
+        console.log(
+          `DockviewController: Panel '${panelId}' removed from empty group (ID: ${group.id}) that wasn't tracked by logical name (e.g., floating or closed group). No mapping cleanup needed.`,
+        );
+      }
+    } else if (group) {
+      // Log panel removal without group cleanup if group is not empty
+      console.log(
+        `DockviewController: Panel '${panelId}' removed from group ID: ${group.id}. Group still contains panels.`,
+      );
+    } else {
+      // This case might happen if the panel was already detached from its group
+      // before the removal event fired, or for floating panels initially.
+      console.warn(
+        `DockviewController: Removed panel '${panelId}' did not have an associated group at the time of removal event.`,
+      );
+    }
+  }
+  // --- END UPDATED METHOD ---
 }
 
 // --- Add ModalResult type if not already imported/defined ---

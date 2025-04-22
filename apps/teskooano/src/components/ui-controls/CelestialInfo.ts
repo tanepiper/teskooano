@@ -5,6 +5,8 @@ import {
 } from "@teskooano/data-types";
 // Import necessary stores and registry from core-state
 import { celestialObjectsStore } from "@teskooano/core-state";
+// Import Dockview interface
+import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 
 // Import component types
 import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
@@ -139,7 +141,7 @@ export class FormatUtils {
 }
 
 // --- MAIN CELESTIAL INFO COMPONENT ---
-export class CelestialInfo extends HTMLElement {
+export class CelestialInfo extends HTMLElement implements IContentRenderer {
   private shadow: ShadowRoot;
   // REMOVED _engineViewId and linking properties
   // private _engineViewId: string | null = null;
@@ -225,6 +227,23 @@ export class CelestialInfo extends HTMLElement {
       this.genericInfoComponent.style.display = "none";
       this.oortCloudInfoComponent.style.display = "none";
     }
+  }
+
+  // This method is required for IContentRenderer interface
+  init(parameters: GroupPanelPartInitParameters): void {
+    // Panel initialization - nothing specific needed here
+    console.log("[CelestialInfo] Panel initialized");
+
+    // If params contains any specific setup instructions, handle them here
+    const params = (parameters.params as { focusedObjectId?: string }) || {};
+    if (params.focusedObjectId) {
+      this.handleSelectionChange(params.focusedObjectId);
+    }
+  }
+
+  // This getter is required for IContentRenderer interface
+  get element(): HTMLElement {
+    return this;
   }
 
   connectedCallback() {
