@@ -315,6 +315,10 @@ export class ModularSpaceRenderer {
     this.animationLoop.removeRenderCallback(callback);
   }
 
+  public getObjectById(id: string): THREE.Object3D | null {
+    return this.objectManager.getObject(id);
+  }
+
   public getTriangleCount(): number {
     let count = 0;
     this.scene.traverse((object) => {

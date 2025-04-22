@@ -182,9 +182,9 @@ const DEFAULT_CAMERA_DISTANCE = 8; // Increased default distance
 const SIZE_BASED_SCALING: Partial<Record<CelestialType, number>> = {
   [CelestialType.STAR]: 5.0, // Stars need much more space due to brightness/size
   [CelestialType.GAS_GIANT]: 3.0, // Gas giants are large but not as bright
-  [CelestialType.PLANET]: 2.0,
+  [CelestialType.PLANET]: 1.5, // Reduced from 2.0
   [CelestialType.DWARF_PLANET]: 1.5,
-  [CelestialType.MOON]: 1.2,
+  [CelestialType.MOON]: 1.0, // Reduced from 1.2
 };
 const DEFAULT_SIZE_SCALING = 1.5;
 // --- End Constants ---
@@ -465,18 +465,31 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
           return;
         }
 
+        // Reset camera zoom before calculating position
+        const renderer = this._parentPanel?.getRenderer();
+        if (
+          renderer?.camera &&
+          "zoom" in renderer.camera &&
+          "updateProjectionMatrix" in renderer.camera
+        ) {
+          const cameraWithZoom = renderer.camera as
+            | THREE.PerspectiveCamera
+            | THREE.OrthographicCamera;
+          cameraWithZoom.zoom = 1;
+          cameraWithZoom.updateProjectionMatrix();
+        }
+
         // 2. Calculate desired Camera Position
         const desiredDistance = this.calculateCameraDistance(currentObject);
 
         // Get current camera position to determine direction
-        const renderer = this._parentPanel?.getRenderer();
-        if (!renderer) {
+        if (!renderer?.camera?.position) {
           console.error(
-            "[FocusControl] Cannot get renderer instance from parent panel.",
+            "[FocusControl] Cannot get renderer or camera position.",
           );
           return;
         }
-        const currentCameraPosition = renderer.camera.position.clone();
+        const currentCameraPosition = renderer.camera.position.clone(); // Now safe to access
 
         // Calculate direction from target back towards current camera
         // Handle potential zero vector if camera is already at the target
@@ -494,7 +507,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
           .addScaledVector(direction, desiredDistance);
 
         // 3. Call Renderer with new signature (Use cloned position)
-        renderer.setFollowTarget(
+        renderer?.setFollowTarget(
           objectId,
           targetPosition.clone(),
           cameraPosition,
@@ -747,11 +760,66 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
   }
 
   /**
-   * Calculate camera distance based on object radius and type
+   * Calculate camera distance based on object mesh bounds or fallback to real radius.
    * Uses both scaling factor and percentage from surface based on type
    * With improved handling for large objects like stars
    */
   private calculateCameraDistance(object: CelestialObject): number {
+    // --- Try Mesh Bounding Box First ---
+    const renderer = this._parentPanel?.getRenderer();
+    const mesh = renderer?.getObjectById(object.id); // ASSUMPTION: Method exists
+
+    if (mesh) {
+      try {
+        const box = new THREE.Box3().setFromObject(mesh);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        // Calculate effective radius from the largest dimension of the bounding box
+        const effectiveRadius = Math.max(size.x, size.y, size.z) / 2;
+
+        // Check if calculation was valid
+        if (!isNaN(effectiveRadius) && effectiveRadius > 0) {
+          let distance =
+            effectiveRadius * (1 + CAMERA_DISTANCE_SURFACE_PERCENTAGE);
+
+          // Apply type-specific scaling and minimum distance
+          const scaleFactor =
+            SIZE_BASED_SCALING[object.type] ?? DEFAULT_SIZE_SCALING;
+          const minTypeDistance =
+            CAMERA_DISTANCES[object.type] ?? DEFAULT_CAMERA_DISTANCE;
+
+          distance *= scaleFactor;
+          distance = Math.max(distance, minTypeDistance); // Ensure type-specific min distance
+          console.debug(
+            `[FocusControl] Applied type scaling (${scaleFactor.toFixed(1)}x) and min distance (${minTypeDistance}). New Distance: ${distance.toFixed(2)}`,
+          );
+
+          // Ensure general minimum distance for all types
+          distance = Math.max(distance, MINIMUM_CAMERA_DISTANCE);
+
+          console.debug(
+            `[FocusControl] Using mesh bounds for ${object.name}. Effective Radius: ${effectiveRadius.toFixed(2)}, Distance: ${distance.toFixed(2)}`,
+          );
+          return distance;
+        } else {
+          console.warn(
+            `[FocusControl] Mesh bounds calculation resulted in invalid radius for ${object.name}. Falling back.`,
+          );
+        }
+      } catch (error) {
+        console.error(
+          `[FocusControl] Error calculating mesh bounds for ${object.name}:`,
+          error,
+          ". Falling back.",
+        );
+      }
+    }
+
+    // --- Fallback to Real Radius Calculation ---
+    console.debug(
+      `[FocusControl] Falling back to realRadius_m calculation for ${object.name}`,
+    );
     // Get type-specific scaling factor (or default)
     const sizeScaling = SIZE_BASED_SCALING[object.type] ?? DEFAULT_SIZE_SCALING;
 
