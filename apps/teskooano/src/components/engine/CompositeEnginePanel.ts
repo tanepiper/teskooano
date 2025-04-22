@@ -38,7 +38,7 @@ import type { DockviewController } from "../../controllers/dockviewController"; 
 // --- End Fluent UI Icons ---
 
 // --- Import EngineToolbar ---
-import { EngineToolbar, type ToolbarButtonClickDetail } from "./EngineToolbar";
+import { EngineToolbar } from "./EngineToolbar";
 // --- End Import ---
 
 interface CompositePanelParams {
@@ -576,107 +576,13 @@ export class CompositeEnginePanel implements IContentRenderer {
     // Clean up any existing toolbar instance
     this._engineToolbar?.dispose();
 
-    // Create and append the new toolbar
-    this._engineToolbar = new EngineToolbar(this._api.id);
+    // Create and append the new toolbar - pass this instance as parentEngine
+    this._engineToolbar = new EngineToolbar(
+      this._api.id,
+      this._dockviewController!,
+      this,
+    );
     this._element.appendChild(this._engineToolbar.element);
-
-    // Add event listener for button clicks
-    this._engineToolbar.element.addEventListener(
-      "toolbar-button-click",
-      this.handleToolbarEvent as EventListener, // Cast to satisfy TS
-    );
-  }
-
-  /**
-   * Handles the custom 'toolbar-button-click' event dispatched by EngineToolbar.
-   */
-  private handleToolbarEvent = (
-    event: CustomEvent<ToolbarButtonClickDetail>,
-  ): void => {
-    if (!event.detail) {
-      console.warn(
-        "CompositeEnginePanel: Received toolbar-button-click event without detail.",
-      );
-      return;
-    }
-    const { panelId, componentType, behaviour, panelTitle } = event.detail;
-    this.handleToolbarButtonClick(
-      panelId,
-      componentType,
-      behaviour,
-      panelTitle,
-    );
-  };
-
-  /**
-   * Handles clicks on the overlay toolbar buttons.
-   * Toggles or creates floating panels based on configuration.
-   */
-  private handleToolbarButtonClick(
-    panelId: string,
-    componentType: string,
-    behaviour: "toggle" | "create",
-    panelTitle: string,
-  ): void {
-    if (!this._dockviewController) {
-      console.error(
-        "Cannot handle toolbar click: DockviewController is not available.",
-      );
-      return;
-    }
-
-    const existingPanelApi = this._trackedFloatingPanels.get(panelId);
-
-    if (existingPanelApi) {
-      // Panel exists, close it (toggle behaviour)
-      console.log(`Closing existing floating panel: ${panelId}`);
-      try {
-        existingPanelApi.close();
-        this._trackedFloatingPanels.delete(panelId);
-      } catch (error) {
-        console.error(`Error closing panel ${panelId}:`, error);
-        this._trackedFloatingPanels.delete(panelId); // Remove tracking even if close fails
-      }
-    } else {
-      // Panel doesn't exist, create it
-      console.log(`Creating floating panel: ${panelId} (${componentType})`);
-      const panelOptions: AddPanelOptions = {
-        id: panelId,
-        component: componentType,
-        title: panelTitle,
-        params: {
-          // Pass context: the ID of this engine panel
-          // parentEnginePanelId: this._api?.id, // REMOVE THIS LINE
-          // Potentially pass other context if needed by the specific component
-          parentInstance: this, // Ensure this is passed for ALL floating panels from here
-        },
-      };
-
-      // Define desired position/size (optional, Dockview will choose if omitted)
-      // Example: position slightly offset from toolbar
-      const position = {
-        top:
-          (this._toolbarContainer?.offsetTop ?? 0) +
-          (this._toolbarContainer?.offsetHeight ?? 0) +
-          10,
-        left: (this._toolbarContainer?.offsetLeft ?? 0) + 10,
-        width: 300, // Default width
-        height: 400, // Default height
-      };
-
-      const newPanelApi = this._dockviewController.addFloatingPanel(
-        panelOptions,
-        position,
-      );
-
-      if (newPanelApi) {
-        this._trackedFloatingPanels.set(panelId, newPanelApi);
-        // TODO: Revisit tracking user closes. DockviewPanelApi doesn't have onDidClose.
-        // We might need to listen on the group or handle cleanup differently.
-      } else {
-        console.error(`Failed to create floating panel ${panelId}`);
-      }
-    }
   }
 
   /**
@@ -689,11 +595,6 @@ export class CompositeEnginePanel implements IContentRenderer {
 
     // --- Dispose EngineToolbar ---
     if (this._engineToolbar) {
-      // Remove event listener before disposing
-      this._engineToolbar.element.removeEventListener(
-        "toolbar-button-click",
-        this.handleToolbarEvent as EventListener,
-      );
       this._engineToolbar.dispose();
       this._engineToolbar = null;
     }

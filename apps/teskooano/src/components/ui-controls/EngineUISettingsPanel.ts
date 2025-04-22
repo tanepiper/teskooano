@@ -3,9 +3,16 @@ import type { PanelViewState } from "../engine/CompositeEnginePanel"; // Import 
 import "../shared/Slider.js"; // Import the slider component
 import type { TeskooanoSlider } from "../shared/Slider.js"; // Import the slider type
 // Import Dockview types and panel registry
-import { GroupPanelPartInitParameters } from "dockview-core";
+import { GroupPanelPartInitParameters, DockviewPanelApi } from "dockview-core";
 import { panelRegistry } from "@teskooano/core-state";
 import { IContentRenderer } from "dockview-core"; // ADD THIS IMPORT
+import {
+  ToolbarButtonConfig,
+  PanelToolbarButtonConfig,
+} from "../../stores/toolbarStore"; // Import toolbar types
+
+// Import Fluent UI Icons
+import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
 
 // Define expected params
 interface EngineUISettingsParams {
@@ -157,6 +164,22 @@ export class EngineUISettingsPanel
 
   private _parentPanel: CompositeEnginePanel | null = null;
   private _unsubscribeParentState: (() => void) | null = null;
+
+  // --- Static Configuration ---
+  public static readonly componentName = "engine-ui-settings-panel";
+
+  public static registerToolbarButtonConfig(): PanelToolbarButtonConfig {
+    return {
+      id: "engine_settings", // Base ID, EngineToolbar will add apiId
+      iconSvg: SettingsIcon,
+      title: "Engine Settings",
+      type: "panel",
+      componentName: this.componentName,
+      panelTitle: "Engine Settings", // Default panel title
+      behaviour: "toggle",
+    };
+  }
+  // --- End Static Configuration ---
 
   constructor() {
     super();

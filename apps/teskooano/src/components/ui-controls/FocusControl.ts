@@ -10,7 +10,14 @@ import * as THREE from "three";
 import { renderableObjectsStore } from "@teskooano/core-state";
 import { GroupPanelPartInitParameters } from "dockview-core";
 import { panelRegistry } from "@teskooano/core-state";
-import { IContentRenderer } from "dockview-core";
+import { IContentRenderer, DockviewPanelApi } from "dockview-core";
+import {
+  ToolbarButtonConfig,
+  PanelToolbarButtonConfig,
+} from "../../stores/toolbarStore"; // Import toolbar types
+
+// Import Fluent UI Icons
+import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -210,6 +217,22 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
   // Store subscription for automatic updates
   private _celestialObjectsUnsubscribe: (() => void) | null = null;
   private _previousObjectsState: Record<string, CelestialObject> = {};
+
+  // --- Static Configuration ---
+  public static readonly componentName = "focus-control";
+
+  public static registerToolbarButtonConfig(): PanelToolbarButtonConfig {
+    return {
+      id: "focus_control", // Base ID
+      iconSvg: TargetIcon,
+      title: "Focus Control",
+      type: "panel",
+      componentName: this.componentName,
+      panelTitle: "Focus Control",
+      behaviour: "toggle",
+    };
+  }
+  // --- End Static Configuration ---
 
   constructor() {
     super();

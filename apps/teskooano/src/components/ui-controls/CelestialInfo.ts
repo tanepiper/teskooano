@@ -6,7 +6,16 @@ import {
 // Import necessary stores and registry from core-state
 import { celestialObjectsStore } from "@teskooano/core-state";
 // Import Dockview interface
-import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
+import {
+  GroupPanelPartInitParameters,
+  IContentRenderer,
+  DockviewPanelApi,
+} from "dockview-core";
+import { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // Import parent type
+import {
+  ToolbarButtonConfig,
+  PanelToolbarButtonConfig,
+} from "../../stores/toolbarStore"; // Import toolbar types
 
 // Import component types
 import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
@@ -24,6 +33,9 @@ import { StarInfoComponent } from "./celestial-components/StarInfo";
 const AU_IN_METERS = 149597870700;
 const SECONDS_PER_DAY = 86400;
 const SECONDS_PER_YEAR = SECONDS_PER_DAY * 365.25;
+
+// Import Fluent UI Icons
+import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
 
 // Shared formatter utility class
 export class FormatUtils {
@@ -143,6 +155,12 @@ export class FormatUtils {
 // --- MAIN CELESTIAL INFO COMPONENT ---
 export class CelestialInfo extends HTMLElement implements IContentRenderer {
   private shadow: ShadowRoot;
+  private _element: HTMLElement;
+  private _api: DockviewPanelApi | undefined;
+  private _parentInstance: CompositeEnginePanel | undefined;
+  private _contentDiv: HTMLElement | undefined;
+  private _parentStateUnsubscribe: (() => void) | undefined;
+
   // REMOVED _engineViewId and linking properties
   // private _engineViewId: string | null = null;
 
@@ -166,9 +184,26 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   // Track which component is currently active
   private activeComponent: CelestialInfoComponent | null = null;
 
+  // --- Static Configuration ---
+  public static readonly componentName = "celestial-info";
+
+  public static registerToolbarButtonConfig(): PanelToolbarButtonConfig {
+    return {
+      id: "celestial_info", // Base ID
+      iconSvg: InfoIcon,
+      title: "Celestial Info",
+      type: "panel",
+      componentName: this.componentName,
+      panelTitle: "Celestial Info",
+      behaviour: "toggle",
+    };
+  }
+  // --- End Static Configuration ---
+
   constructor() {
     super();
     this.shadow = this.attachShadow({ mode: "open" });
+    this._element = this; // Initialize _element to the instance itself
 
     // Create sub-components
     this.starInfoComponent = new StarInfoComponent();

@@ -2,8 +2,19 @@ import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 // Import the shared RendererStats type
 import type { RendererStats } from "@teskooano/renderer-threejs-core";
 // Import Dockview types and panel registry
-import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
+import {
+  GroupPanelPartInitParameters,
+  IContentRenderer,
+  DockviewPanelApi,
+} from "dockview-core";
 import type { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // Import for type checking
+import {
+  ToolbarButtonConfig,
+  PanelToolbarButtonConfig,
+} from "../../stores/toolbarStore"; // Import toolbar types
+
+// Import Fluent UI Icons
+import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw";
 
 // Define expected params
 interface RendererInfoParams {
@@ -129,6 +140,22 @@ export class RendererInfoDisplay
   private _attemptCount: number = 0;
   private _maxAttempts: number = 10;
   private _connectionAttemptTimer: number | null = null;
+
+  // --- Static Configuration ---
+  public static readonly componentName = "renderer-info-display";
+
+  public static registerToolbarButtonConfig(): PanelToolbarButtonConfig {
+    return {
+      id: "renderer_info", // Base ID
+      iconSvg: DataUsageIcon,
+      title: "Renderer Info",
+      type: "panel",
+      componentName: this.componentName,
+      panelTitle: "Renderer Info",
+      behaviour: "toggle",
+    };
+  }
+  // --- End Static Configuration ---
 
   constructor() {
     super();

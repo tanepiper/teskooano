@@ -19,6 +19,10 @@ import { RendererInfoDisplay } from "../components/ui-controls/RendererInfoDispl
 import { CelestialInfo } from "../components/ui-controls/CelestialInfo";
 // import { CelestialInfoPanel } from "../components/ui-controls/CelestialInfoPanel"; // REMOVE - Incorrect Class/File
 import { Subject, Observable } from "rxjs"; // Import RxJS classes
+import {
+  PanelToolbarButtonConfig,
+  ToolbarButtonType,
+} from "../stores/toolbarStore"; // Import toolbar type
 
 // We'll use any here because the exact type from dockview is complex and private
 type DockviewGroup = any;
@@ -76,11 +80,28 @@ interface ActiveOverlay {
   resolve: (result: ModalResult) => void; // For the promise
 }
 
+// Type for component constructor with potential static toolbar config method
+// Need to define the static side separately
+interface ComponentWithStaticConfig extends IContentRenderer {
+  // No instance-side changes needed here usually
+}
+interface ComponentConstructorWithStaticConfig {
+  new (): ComponentWithStaticConfig;
+  componentName?: string; // Allow static name
+  registerToolbarButtonConfig?: () => PanelToolbarButtonConfig;
+}
+
+// Type for the value stored in the component registry
+interface RegisteredComponentInfo {
+  constructor: new () => IContentRenderer; // Keep original constructor type here
+  toolbarConfig?: PanelToolbarButtonConfig; // Store static config if available
+}
+
 // --- Dockview Controller ---
 export class DockviewController {
   private _api: DockviewApi;
-  // Registry for dynamically added components
-  private _registeredComponents = new Map<string, new () => IContentRenderer>();
+  // Updated registry to store constructor AND static toolbar config
+  private _registeredComponents = new Map<string, RegisteredComponentInfo>();
   // Map to store logical group names to their runtime Dockview group IDs
   private _groupNameToIdMap: Map<string, string> = new Map();
   // Map to cache group references
@@ -96,23 +117,18 @@ export class DockviewController {
 
   constructor(element: HTMLElement) {
     // Register components needed at initialization time internally first
-    // this._registeredComponents.set("engine_view", EnginePanel);
-    // this._registeredComponents.set("ui_view", UiPanel);
-    this._registeredComponents.set(
-      "composite_engine_view",
-      CompositeEnginePanel,
-    );
-    this._registeredComponents.set(
-      "engine-ui-settings-panel",
+    this.registerComponent("composite_engine_view", CompositeEnginePanel);
+    this.registerComponent(
+      EngineUISettingsPanel.componentName,
       EngineUISettingsPanel,
     );
-    this._registeredComponents.set("focus-control", FocusControl);
-    this._registeredComponents.set(
-      "renderer-info-display",
+    this.registerComponent(FocusControl.componentName, FocusControl);
+    this.registerComponent(
+      RendererInfoDisplay.componentName,
       RendererInfoDisplay,
     );
-    this._registeredComponents.set("celestial-info", CelestialInfo);
-    this._registeredComponents.set("settings", SettingsPanel);
+    this.registerComponent(CelestialInfo.componentName, CelestialInfo);
+    this.registerComponent("settings", SettingsPanel);
     // Remove pre-registration for dynamically added panels
     // this._registeredComponents.set('progress_view', ProgressPanel);
 
@@ -123,15 +139,14 @@ export class DockviewController {
           `DockviewController: Creating component for name: '${options.name}'`,
         );
         // Check the registry first
-        const RegisteredComponent = this._registeredComponents.get(
-          options.name,
-        );
-        if (RegisteredComponent) {
+        const componentInfo = this._registeredComponents.get(options.name);
+        if (componentInfo) {
           console.log(
-            `DockviewController: Found registered component: ${RegisteredComponent.name}`,
+            `DockviewController: Found registered component info for: ${options.name}`,
           );
           try {
-            return new RegisteredComponent();
+            // Instantiate using the stored constructor
+            return new componentInfo.constructor();
           } catch (err) {
             console.error(
               `DockviewController: Error instantiating registered component '${options.name}':`,
@@ -171,7 +186,7 @@ export class DockviewController {
             return errorPanel;
         }
       },
-      disableFloatingGroups: true,
+      disableFloatingGroups: false,
     });
 
     // Handle panel activation changes
@@ -198,15 +213,41 @@ export class DockviewController {
    */
   public registerComponent(
     name: string,
-    constructor: new () => IContentRenderer,
+    // Use the constructor type that might have static methods
+    componentConstructor: ComponentConstructorWithStaticConfig,
   ): void {
     if (this._registeredComponents.has(name)) {
       console.warn(
         `DockviewController: Component '${name}' is already registered. Overwriting.`,
       );
     }
-    this._registeredComponents.set(name, constructor);
-    console.log(`DockviewController: Registered component '${name}'`);
+
+    // Check if the component has the static config method
+    let toolbarConfig: PanelToolbarButtonConfig | undefined = undefined;
+    if (
+      typeof componentConstructor.registerToolbarButtonConfig === "function"
+    ) {
+      try {
+        toolbarConfig = componentConstructor.registerToolbarButtonConfig();
+        console.log(
+          `DockviewController: Found toolbar config for component '${name}'`,
+        );
+      } catch (err) {
+        console.error(
+          `DockviewController: Error calling registerToolbarButtonConfig for '${name}':`,
+          err,
+        );
+      }
+    }
+
+    // Store both constructor and config
+    this._registeredComponents.set(name, {
+      constructor: componentConstructor as new () => IContentRenderer, // Cast back for map
+      toolbarConfig,
+    });
+    console.log(
+      `DockviewController: Registered component '${name}' ${toolbarConfig ? "with" : "without"} toolbar config.`,
+    );
   }
 
   /**
@@ -411,6 +452,18 @@ export class DockviewController {
     }
   }
 
+  /**
+   * Retrieves the static toolbar button configuration for a registered component.
+   * @param componentName The name the component was registered under.
+   * @returns The static PanelToolbarButtonConfig or undefined if not found or not applicable.
+   */
+  public getToolbarButtonConfig(
+    componentName: string,
+  ): PanelToolbarButtonConfig | undefined {
+    const componentInfo = this._registeredComponents.get(componentName);
+    return componentInfo?.toolbarConfig;
+  }
+
   // Expose the raw Dockview API
   public get api(): DockviewApi {
     return this._api;
@@ -598,40 +651,54 @@ export class DockviewController {
         `DockviewController: Attempting to add floating panel ${panelOptions.id}`,
       );
 
-      // 1. Create the panel instance first.
-      // We might need to add it 'inactive' or to a temporary location
-      // if just creating it doesn't work as expected.
-      temporaryPanel = this._api.addPanel({
+      // --- REVERTED: Create panel first, then add to floating group ---
+
+      // 1. Create the panel instance *without* position details initially.
+      // This might create it detached or in a default location temporarily.
+      const initialPanelOptions: AddPanelOptions = {
         ...panelOptions,
-        // Try adding inactive? Check if this option exists and helps.
-        // inactive: true,
-      });
+        position: undefined, // Explicitly remove position from initial creation
+      };
+      temporaryPanel = this._api.addPanel(initialPanelOptions);
 
       if (!temporaryPanel || !temporaryPanel.api) {
         console.error(
-          `DockviewController: Failed to create temporary panel instance for ${panelOptions.id}.`,
+          `DockviewController: Failed to create initial panel instance for ${panelOptions.id}.`,
         );
         return null;
       }
       console.log(
-        `DockviewController: Temporary panel ${panelOptions.id} created.`,
+        `DockviewController: Initial panel ${panelOptions.id} created. Adding to floating group...`,
       );
 
-      // 2. Add this panel instance to a new floating group
-      // The 'item' argument should be the panel instance.
-      // The second argument should contain position/size options.
-      const floatingGroup = this._api.addFloatingGroup(temporaryPanel, {
-        position,
+      // 2. Add this panel instance to a new floating group, providing position.
+      // This relies on addFloatingGroup handling the placement.
+      this._api.addFloatingGroup(temporaryPanel, {
+        // Pass the position object directly here
+        position: position,
       });
 
-      // Check if the floating group creation seems successful
-      // The return type of addFloatingGroup is likely 'void' or the group,
-      // we rely on it not throwing an error.
+      // --- ADD Explicit setSize call ---
+      // Force the size again after adding to group, in case defaults overrode it
+      if (position && temporaryPanel.api) {
+        try {
+          console.log(
+            `DockviewController: Explicitly setting size for ${panelOptions.id} after addFloatingGroup.`,
+          );
+          temporaryPanel.api.setSize(position);
+        } catch (e) {
+          console.error(
+            `DockviewController: Error calling setSize after addFloatingGroup for ${panelOptions.id}:`,
+            e,
+          );
+        }
+      }
+      // --- END ADD ---
+
       console.log(
         `DockviewController: addFloatingGroup called for panel ${panelOptions.id}.`,
       );
 
-      // Assuming the panel is now successfully in the floating group
       // Ensure it's active
       temporaryPanel.api.setActive();
       return temporaryPanel.api;
