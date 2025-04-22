@@ -1,6 +1,13 @@
 import {
     type CelestialObject, // Import CelestialType enum
-    CelestialStatus
+    CelestialStatus,
+    CelestialType,
+    StellarType,
+    SpectralClass,
+    SpecialSpectralClass,
+    LuminosityClass,
+    ExoticStellarType,
+    type StarProperties,
 } from "@teskooano/data-types";
 // Import necessary stores and registry from core-state
 import { celestialObjectsStore } from "@teskooano/core-state";
@@ -152,6 +159,8 @@ export class CelestialEditor extends HTMLElement implements IContentRenderer {
   // Store references
   private unsubscribeObjectsStore: (() => void) | null = null;
   private currentSelectedId: string | null = null;
+  // Track previous data for comparison
+  private previousDataForSelected: CelestialObject | null = null; 
 
   // TODO: References to EDITOR sub-components
   // private starEditorComponent: StarEditorComponent;
@@ -198,23 +207,96 @@ export class CelestialEditor extends HTMLElement implements IContentRenderer {
           display: block;
           width: 100%;
           height: 100%;
+          overflow: hidden; /* Prevent host scroll */
         }
         
         .placeholder {
-          padding: 10px;
-          color: var(--ui-text-color-dim, #888);
+          padding: var(--space-3); /* Use token */
+          color: var(--color-text-secondary); /* Use token */
           font-style: italic;
+          text-align: center;
         }
         
         .container {
           width: 100%;
           height: 100%;
-          overflow: auto;
+          overflow-y: auto; /* Allow vertical scroll */
+          padding: var(--space-3); /* Use token */
+          box-sizing: border-box;
         }
+
+        /* Form Styles */
+        .editor-form {
+          display: grid;
+          grid-template-columns: auto 1fr;
+          gap: var(--space-3) var(--space-4); /* Use tokens */
+          align-items: center;
+        }
+
+        .editor-form label {
+          font-weight: var(--font-weight-medium); /* Use token */
+          color: var(--color-text-secondary); /* Use token */
+          justify-self: end;
+        }
+
+        .editor-form input[type="text"],
+        .editor-form select {
+          width: 100%;
+          padding: var(--space-2); /* Use token */
+          border: 1px solid var(--color-border); /* Use token */
+          background-color: var(--color-surface-1); /* Use token */
+          color: var(--color-text-primary); /* Use token */
+          border-radius: var(--radius-sm); /* Use token */
+          font-size: var(--font-size-base); /* Use token */
+          box-sizing: border-box;
+        }
+        
+        .editor-form input[type="text"]:disabled,
+        .editor-form select:disabled {
+            background-color: var(--color-surface-disabled); /* Use token */
+            color: var(--color-text-disabled); /* Use token */
+            cursor: not-allowed;
+        }
+
+
+        .editor-form input[type="text"]:focus,
+        .editor-form select:focus {
+          outline: none;
+          border-color: var(--color-primary); /* Use token */
+          box-shadow: 0 0 0 2px var(--color-primary-emphasis); /* Use token */
+        }
+        
+        .editor-form button {
+          grid-column: 2 / 3; /* Span across the second column */
+          justify-self: start; /* Align button to the start of the grid cell */
+          /* Assuming teskooano-button exists and is styled */
+          margin-top: var(--space-4); /* Use token */
+        }
+        
+        .form-divider {
+            grid-column: 1 / -1; /* Span full width */
+            height: 1px;
+            background-color: var(--color-border); /* Use token */
+            margin: var(--space-4) 0; /* Use tokens */
+            border: none;
+        }
+        
+        h3 {
+            grid-column: 1 / -1; /* Span full width */
+            margin: 0 0 var(--space-1) 0; /* Use tokens */
+            color: var(--color-text-primary); /* Use token */
+            font-size: var(--font-size-large); /* Use token */
+            font-weight: var(--font-weight-semibold); /* Use token */
+            border-bottom: 1px solid var(--color-border-subtle); /* Use token */
+            padding-bottom: var(--space-2); /* Use token */
+        }
+
       </style>
       <div class="container">
         <!-- Placeholder for Editor Content -->
         <div class="placeholder">Select a celestial object to edit...</div> 
+        <!-- Editor Form Area -->
+        <form id="celestial-editor-form" class="editor-form" style="display: none;"></form>
       </div>
     `;
 
@@ -261,6 +343,7 @@ export class CelestialEditor extends HTMLElement implements IContentRenderer {
   disconnectedCallback() {
     this.unsubscribeObjectsStore?.();
     this.unsubscribeObjectsStore = null;
+    this.previousDataForSelected = null; // Clear tracked data on disconnect
 
     document.removeEventListener(
       "renderer-focus-changed",
@@ -301,9 +384,38 @@ export class CelestialEditor extends HTMLElement implements IContentRenderer {
       (allCelestials) => {
         if (this.currentSelectedId) {
           const currentObject = allCelestials[this.currentSelectedId];
-          if (currentObject) {
-            this.renderEditor(currentObject); // Changed to renderEditor
-          }
+          
+          // Simple JSON string comparison to detect changes in the selected object's data
+          // This is potentially expensive for very large objects but avoids complex deep comparison logic for now.
+          const currentDataString = currentObject ? JSON.stringify(currentObject) : null;
+          const previousDataString = this.previousDataForSelected ? JSON.stringify(this.previousDataForSelected) : null;
+
+          if (currentDataString !== previousDataString) {
+            if (currentObject) {
+              console.log(`[CelestialEditor] Data changed for selected object ${this.currentSelectedId}, re-rendering editor.`);
+              this.renderEditor(currentObject);
+              // Update tracked data after rendering
+              try {
+                this.previousDataForSelected = JSON.parse(currentDataString!); // Store deep copy
+              } catch (e) {
+                  console.error("Failed to parse current celestial data for tracking:", e);
+                  this.previousDataForSelected = null;
+              }
+            } else {
+              // Selected object was removed from the store
+              console.log(`[CelestialEditor] Selected object ${this.currentSelectedId} removed from store.`);
+              this.showPlaceholder(`Object ${this.currentSelectedId} no longer exists.`);
+              // Clear selection and tracked data handled by showPlaceholder/handleSelectionChange if needed
+              // Resetting selection state here might be redundant if called from elsewhere
+              // Let's clear tracked data directly
+              this.currentSelectedId = null;
+              this.previousDataForSelected = null;
+            }
+          } // else: No change in selected object data, do nothing.
+          
+        } else {
+             // Nothing is selected, ensure previous data is cleared
+             this.previousDataForSelected = null;
         }
       },
     );
@@ -313,6 +425,22 @@ export class CelestialEditor extends HTMLElement implements IContentRenderer {
     if (selectedId === this.currentSelectedId) return;
 
     this.currentSelectedId = selectedId;
+    const form = this.shadow.querySelector<HTMLFormElement>("#celestial-editor-form");
+    const placeholder = this.shadow.querySelector<HTMLElement>(".placeholder");
+
+    // Clear previous tracked data on any selection change
+    this.previousDataForSelected = null;
+
+    if (!form || !placeholder) {
+        console.error("Editor internal elements not found!");
+        return;
+    }
+
+    // Hide form and show placeholder initially
+    form.style.display = "none";
+    form.innerHTML = ""; // Clear previous form content
+    placeholder.style.display = "block";
+
 
     if (!selectedId) {
       this.showPlaceholder("Select a celestial object to edit..."); // Updated placeholder text
@@ -320,8 +448,8 @@ export class CelestialEditor extends HTMLElement implements IContentRenderer {
     }
 
     const storeData = celestialObjectsStore.get();
-    const objectMap = new Map(Object.entries(storeData));
-    const celestialData = selectedId ? objectMap.get(selectedId) : null;
+    // const objectMap = new Map(Object.entries(storeData)); // No need for map if accessing by ID
+    const celestialData = selectedId ? storeData[selectedId] : null;
 
     if (celestialData) {
       if (celestialData.status === CelestialStatus.DESTROYED) {
@@ -330,74 +458,204 @@ export class CelestialEditor extends HTMLElement implements IContentRenderer {
         );
       } else {
         this.renderEditor(celestialData); // Changed to renderEditor
+        // Store initial data for comparison after rendering
+        try {
+          this.previousDataForSelected = JSON.parse(JSON.stringify(celestialData));
+        } catch(e) {
+            console.error("Failed to stringify/parse initial celestial data for tracking:", e);
+            this.previousDataForSelected = null;
+        }
       }
     } else {
       this.showPlaceholder("Selected object data not found.");
+      this.previousDataForSelected = null; // Ensure cleared if object not found
     }
   }
 
   private showPlaceholder(message: string) {
-    // TODO: Hide all EDITOR components
-    // this.starEditorComponent.style.display = "none";
-    // ... etc
+    const placeholder = this.shadow.querySelector<HTMLElement>(".placeholder");
+    const form = this.shadow.querySelector<HTMLFormElement>("#celestial-editor-form");
+    
+    // Also clear tracked data when showing placeholder
+    this.previousDataForSelected = null; 
 
-    // Show placeholder
-    const placeholder = this.shadow.querySelector(
-      ".placeholder",
-    ) as HTMLElement;
+    if (form) {
+        form.style.display = 'none';
+        form.innerHTML = ''; // Clear form
+    }
     if (placeholder) {
       placeholder.style.display = "block";
       placeholder.textContent = message;
     }
 
-    this.activeComponent = null;
+    this.activeComponent = null; // No active editor component when showing placeholder
   }
 
   // Changed from renderInfo to renderEditor
   private renderEditor(celestial: CelestialObject) {
-    // Hide placeholder
-    const placeholder = this.shadow.querySelector(
-      ".placeholder",
-    ) as HTMLElement;
-    if (placeholder) {
-      placeholder.style.display = "none";
+    const placeholder = this.shadow.querySelector<HTMLElement>(".placeholder");
+    const formContainer = this.shadow.querySelector<HTMLFormElement>("#celestial-editor-form");
+
+    if (!formContainer || !placeholder) {
+      console.error("Cannot render editor, container or placeholder not found.");
+      return;
     }
 
-    // Hide current active component
-    if (this.activeComponent) {
-      this.activeComponent.style.display = "none";
-    }
+    // Hide placeholder, show and clear form container
+    placeholder.style.display = "none";
+    formContainer.innerHTML = ""; // Clear previous content
+    formContainer.style.display = "grid"; // Use grid layout defined in styles
 
-    // TODO: Select the appropriate EDITOR component based on celestial type
-    let newActiveComponent: any; // TODO: Update type to CelestialEditorComponent
+    // Remove previous listeners if any (important!)
+    formContainer.replaceWith(formContainer.cloneNode(true)); // Simple way to remove all listeners
+    const newFormContainer = this.shadow.querySelector<HTMLFormElement>("#celestial-editor-form")!; // Re-select the new node
+    newFormContainer.addEventListener('submit', this.handleSave); // Add submit listener
 
+
+    // Select the appropriate EDITOR component based on celestial type
     switch (celestial.type) {
-      // case CelestialType.STAR:
-      //   newActiveComponent = this.starEditorComponent;
-      //   break;
+       case CelestialType.STAR:
+         this.renderStarEditor(celestial, newFormContainer);
+         break;
       // ... handle other types
       // default:
-      //   newActiveComponent = this.genericEditorComponent;
+      //   this.renderGenericEditor(celestial, newFormContainer); // Example
       //   break;
     }
     
-    // TEMPORARY: Just show generic info for now until editor components exist
-    newActiveComponent = this.shadow.querySelector(".placeholder"); // Re-use placeholder for now
-    if (newActiveComponent) {
-        newActiveComponent.textContent = `Editing: ${celestial.name} (ID: ${celestial.id}) - Editor UI TBD`;
-        newActiveComponent.style.display = "block";
-    } else {
-        console.error("Placeholder element not found for temporary editor display.");
+    // TEMPORARY: Fallback if no specific editor matches
+    if (newFormContainer.innerHTML === '') {
+        this.showPlaceholder(`Editing for type '${celestial.type}' not yet implemented.`);
     }
-    this.activeComponent = newActiveComponent;
 
-    /* TODO: When editor components exist:
-    // Update and show the selected component
-    newActiveComponent.updateData(celestial);
-    newActiveComponent.style.display = "block";
-    this.activeComponent = newActiveComponent;
-    */
   }
+
+  // --- Specific Editor Rendering Functions ---
+
+  private renderStarEditor(celestial: CelestialObject, container: HTMLElement) {
+      const properties = celestial.properties as StarProperties | undefined; // Type assertion
+      if (!properties || celestial.type !== CelestialType.STAR) {
+          console.error("Invalid data for Star editor:", celestial);
+          this.showPlaceholder("Error: Invalid data for selected star.");
+          return;
+      }
+
+      // Helper to create select options
+      const createOptions = (enumObject: object, selectedValue?: string | null) => {
+          let options = '<option value="">-- Select --</option>'; // Default empty option
+          for (const [key, value] of Object.entries(enumObject)) {
+              const isSelected = value === selectedValue ? ' selected' : '';
+              options += `<option value="${value}"${isSelected}>${key} (${value})</option>`;
+          }
+          return options;
+      };
+
+      container.innerHTML = `
+          <h3>General Properties</h3>
+          
+          <label for="editor-name">Name:</label>
+          <input type="text" id="editor-name" name="name" value="${celestial.name}" required>
+
+          <label for="editor-type">Type:</label>
+          <input type="text" id="editor-type" name="type" value="${celestial.type}" disabled>
+          
+          <hr class="form-divider">
+          <h3>Stellar Classification</h3>
+
+          <label for="editor-stellar-type">Stellar Type:</label>
+          <select id="editor-stellar-type" name="stellarType">
+              ${createOptions(StellarType, properties.stellarType)}
+          </select>
+
+          <label for="editor-spectral-class">Spectral Class:</label>
+          <select id="editor-spectral-class" name="mainSpectralClass">
+              ${createOptions(SpectralClass, properties.mainSpectralClass)}
+          </select>
+          
+          <label for="editor-special-spectral-class">Special Spectral:</label>
+          <select id="editor-special-spectral-class" name="specialSpectralClass">
+              ${createOptions(SpecialSpectralClass, properties.specialSpectralClass)}
+          </select>
+
+          <label for="editor-luminosity-class">Luminosity Class:</label>
+          <select id="editor-luminosity-class" name="luminosityClass">
+              ${createOptions(LuminosityClass, properties.luminosityClass)}
+          </select>
+          
+          <label for="editor-exotic-type">Exotic Type:</label>
+          <select id="editor-exotic-type" name="exoticType">
+              ${createOptions(ExoticStellarType, properties.exoticType)}
+          </select>
+
+          <button type="submit">Save Changes</button> 
+          <!-- <teskooano-button type="submit" variant="primary">Save Changes</teskooano-button> -->
+      `;
+  }
+
+  // --- Save Handler ---
+  private handleSave = (event: SubmitEvent) => {
+      event.preventDefault();
+      console.log("Save changes triggered for ID:", this.currentSelectedId);
+      if (!this.currentSelectedId) return;
+
+      const form = event.target as HTMLFormElement;
+      const formData = new FormData(form);
+      const updatedData: Partial<CelestialObject> = {};
+      const updatedProperties: Partial<StarProperties> = {}; // Assuming Star for now
+
+      formData.forEach((value, key) => {
+          const stringValue = value as string;
+          // Handle general properties
+          if (key === 'name') {
+              updatedData.name = stringValue;
+          }
+          // Handle specific properties (nested under 'properties')
+          else if (key === 'stellarType' || key === 'mainSpectralClass' || key === 'specialSpectralClass' || key === 'luminosityClass' || key === 'exoticType') {
+               // Store null if '-- Select --' was chosen, otherwise the value
+              updatedProperties[key as keyof StarProperties] = stringValue === "" ? null : stringValue as any;
+          }
+      });
+
+      // Get current object data
+      const currentObjects = { ...celestialObjectsStore.get() }; // Clone current state
+      const currentObject = currentObjects[this.currentSelectedId];
+
+      if (!currentObject) {
+          console.error("Cannot save, object not found in store:", this.currentSelectedId);
+          return;
+      }
+
+      // Merge changes
+      const newObjectData: CelestialObject = {
+          ...currentObject,
+          ...updatedData,
+          properties: {
+              ...currentObject.properties,
+              ...updatedProperties,
+          } as StarProperties, // Ensure properties are typed correctly
+      };
+      
+      // Update the specific object within the cloned state
+      currentObjects[this.currentSelectedId] = newObjectData;
+
+      // Update the store
+      celestialObjectsStore.set(currentObjects); // Set the entire updated state
+
+      console.log("Object updated in store:", this.currentSelectedId, newObjectData);
+
+      // TODO: Add visual feedback (e.g., temporary message or button state change)
+      const saveButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      if (saveButton) {
+          const originalText = saveButton.textContent;
+          saveButton.textContent = 'Saved!';
+          saveButton.disabled = true;
+          setTimeout(() => {
+              saveButton.textContent = originalText;
+              saveButton.disabled = false;
+          }, 1500);
+      }
+  };
+
 }
 
 // Define the main custom element
