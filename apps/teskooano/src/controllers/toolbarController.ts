@@ -1,5 +1,5 @@
 import { PopoverAPI } from "@teskooano/web-apis";
-import type { AddPanelOptions } from "dockview-core";
+import type { AddGroupOptions, AddPanelOptions } from "dockview-core";
 import "../components/shared/Button.js";
 import "../components/toolbar/SimulationControls"; // Import for side effect (registers element)
 import { SystemControls } from "../components/toolbar/SystemControls"; // Import the class directly
@@ -32,9 +32,14 @@ export class ToolbarController {
    */
   private _compositePanelCounter = 0; // Renamed
   /**
-   * Store the ID of the last added engine panel for positioning the next one.
+   * Define a constant ID for the main engine views group.
    */
-  private _lastEngineViewId: string | null = null;
+  private _engineGroupId: string | null = null; // Store the ID after creation
+  /**
+   * Store the ID of the initially created engine panel for potential reference.
+   */
+  private _firstEngineViewId: string | null = null;
+
   /**
    * Track if we're on a mobile device
    */
@@ -185,6 +190,8 @@ export class ToolbarController {
   public initializeFirstEngineView(): void {
     // Ensure we only add the *first* view this way
     if (this._compositePanelCounter === 0) {
+      // Ensure the engine group exists before adding the panel
+      this.ensureEngineGroupExists();
       this.addCompositeEnginePanel();
     } else {
       console.warn(
@@ -194,9 +201,45 @@ export class ToolbarController {
   }
 
   /**
-   * Adds the engine views and the corresponding engine UI panels.
+   * Checks if the main engine group exists, and creates it if it doesn't.
+   */
+  private ensureEngineGroupExists(): void {
+    // Check if we already created and stored the ID
+    if (this._engineGroupId) {
+      const group = this._dockviewController.api.getGroup(this._engineGroupId);
+      if (group) {
+        return; // Group exists, we're good
+      }
+      // Group ID was stored but group no longer exists (e.g., closed by user?)
+      console.warn(`Engine group ID ${this._engineGroupId} was stored but group not found. Will recreate.`);
+      this._engineGroupId = null; // Reset stored ID
+    }
+
+    console.log(`ToolbarController: Engine group not found or ID invalid, creating...`);
+    try {
+      // Add the group without specific options, let Dockview place it and generate ID
+      const newGroup = this._dockviewController.api.addGroup();
+      this._engineGroupId = newGroup.id; // Store the generated ID
+      console.log(`ToolbarController: Created new engine group with ID: ${this._engineGroupId}`);
+    } catch (error) {
+      console.error("Failed to create initial engine group:", error);
+      // Handle error appropriately - maybe disable adding views?
+    }
+  }
+
+  /**
+   * Adds a new composite engine panel to the dedicated engine group.
    */
   private addCompositeEnginePanel(): void {
+    // Ensure the target group exists before adding the panel
+    this.ensureEngineGroupExists();
+
+    // If group creation failed or ID is somehow null, bail out
+    if (!this._engineGroupId) {
+      console.error("Cannot add engine panel: Engine group ID is not available.");
+      return;
+    }
+
     this._compositePanelCounter++;
     const counter = this._compositePanelCounter;
     const compositeViewId = `composite_engine_view_${counter}`;
@@ -208,36 +251,29 @@ export class ToolbarController {
       id: section.id.replace("{{COUNTER}}", counter.toString()),
     }));
 
-    // Determine positioning
-    let positionOptions: AddPanelOptions["position"] | undefined = undefined;
-
-    if (this._lastEngineViewId) {
-      // Position below the *previous panel* to force grouping
-      positionOptions = {
-        referencePanel: this._lastEngineViewId,
-        direction: "below",
-      };
-    } else {
-      // First panel, add without specific position (goes into root)
-    }
+    // Always add to the dedicated engine group
+    const panelOptions: AddPanelOptions = {
+      id: compositeViewId,
+      component: "composite_engine_view", // New component type
+      title: compositeViewTitle,
+      params: {
+        title: compositeViewTitle,
+        sections: uiSections, // Pass UI sections config
+      },
+      // Use position.referenceGroup to target the group ID
+      position: { referenceGroup: this._engineGroupId },
+    };
 
     try {
       // Create the composite engine panel
-      const compositePanel = this._dockviewController.api.addPanel({
-        id: compositeViewId,
-        component: "composite_engine_view", // New component type
-        title: compositeViewTitle,
-        params: {
-          title: compositeViewTitle,
-          sections: uiSections, // Pass UI sections config
-        },
-        position: positionOptions, // Use the calculated options
-      });
+      const compositePanel = this._dockviewController.api.addPanel(panelOptions);
 
-      // Store the composite ID for positioning the next one
-      this._lastEngineViewId = compositeViewId;
+      // Store the first engine view ID if it's the first one
+      if (counter === 1) {
+        this._firstEngineViewId = compositeViewId;
+      }
 
-      // Activate the composite panel
+      // Activate the newly added panel
       compositePanel.api.setActive();
     } catch (error) {
       console.error(
@@ -484,44 +520,13 @@ export class ToolbarController {
    */
   private _createAddViewButton(): HTMLElement {
     const addButton = document.createElement("teskooano-button");
-    addButton.id = "add-view-button";
-    // Create icon element
-    const iconSpan = document.createElement("span");
-    iconSpan.setAttribute("slot", "icon");
-    iconSpan.textContent = "🔭"; // Simple plus icon
-    iconSpan.style.fontWeight = "bold"; // Make icon slightly bolder
-    addButton.appendChild(iconSpan);
-
-    // ALWAYS add text span
-    const textSpanAdd = document.createElement("span");
-    textSpanAdd.textContent = "Add Engine View";
-    addButton.appendChild(textSpanAdd);
-
-    // Add Popover for Add View button
-    const addViewPopoverId = "add-view-popover";
-    const addViewPopover = this._createPopover(
-      addViewPopoverId,
-      "Add a new engine view",
-    );
-    this._element.appendChild(addViewPopover); // Append popover to toolbar
-
-    // Link button to popover
-    addButton.setAttribute("popovertarget", addViewPopoverId);
-    addButton.setAttribute(
-      "popovertargetaction",
-      PopoverAPI.PopoverTargetActions.TOGGLE,
-    );
-    addButton.setAttribute("aria-describedby", addViewPopoverId);
-
-    // Add mobile attribute if needed
-    if (this._isMobileDevice) {
-      addButton.setAttribute("mobile", "");
-    }
-
+    addButton.textContent = "+ Add View";
+    addButton.setAttribute("title", "Add a new engine view");
+    addButton.setAttribute("aria-label", "Add new engine view");
     addButton.addEventListener("click", () => {
+      // Always call addCompositeEnginePanel, which now adds to the group
       this.addCompositeEnginePanel();
     });
-
     return addButton;
   }
 

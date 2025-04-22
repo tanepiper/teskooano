@@ -14,8 +14,9 @@ import "./components/shared/Button"; // Add this line
 import { SettingsPanel } from "./components/settings/SettingsPanel";
 // Also import ProgressPanel for registration
 import { ProgressPanel } from "./components/engine/ProgressPanel";
-// Import TourModal
-import { TourModal } from "./components/ui-controls/TourModal";
+// Import TourModal custom element
+import { TeskooanoTourModal } from "./components/tours/TourModal";
+import { ModalManager } from "./components/shared/ModalManager"; // Import ModalManager
 import { celestialObjectsStore } from "@teskooano/core-state";
 import { layoutOrientationStore, Orientation } from "./stores/layoutStore"; // Import the layout store
 import "./components/ui-controls/EngineUISettingsPanel"; // Import for side effect (registers element)
@@ -66,6 +67,11 @@ window.addEventListener("resize", () => {
 // --- Initialize Controllers --- //
 
 const dockviewController = new DockviewController(appElement);
+// Pass the appElement (Dockview container) as the second argument
+const modalManager = new ModalManager(dockviewController, appElement);
+
+// Inject ModalManager into TourModal class
+TeskooanoTourModal.setModalManager(modalManager);
 
 // --- Set Dockview API for SeedForm & EnginePlaceholder --- //
 ToolbarSeedForm.setDockviewApi(dockviewController.api); // For toolbar seed form
@@ -92,7 +98,7 @@ dockviewController.registerComponent("settings_view", SettingsPanel);
 dockviewController.registerComponent("progress_view", ProgressPanel);
 
 // --- Set Dockview API for SeedForm & UiPanel --- //
-const dockviewApi = dockviewController.api;
+// const dockviewApi = dockviewController.api; // This seems redundant now
 
 // --- Listen for focus changes to update tour --- //
 document.addEventListener("engine-focus-request", (event: Event) => {
@@ -130,9 +136,11 @@ window.addEventListener("DOMContentLoaded", () => {
     // Mark tour modal as shown to avoid showing it again on reload
     tourController.markTourModalAsShown();
 
-    // Create and show tour modal
-    const tourModal = new TourModal();
-    tourModal.setCallbacks(
+    // Create the custom element instance
+    const tourModalElement = document.createElement('teskooano-tour-modal');
+
+    // Set callbacks (this will also trigger showing the modal)
+    (tourModalElement as TeskooanoTourModal).setCallbacks(
       // On Accept - Start Tour
       () => {
         // Check if there's a saved step
@@ -149,8 +157,8 @@ window.addEventListener("DOMContentLoaded", () => {
       },
     );
 
-    // Append to document
-    document.body.appendChild(tourModal);
+    // Append the trigger element (it will remove itself later)
+    document.body.appendChild(tourModalElement);
   }
 });
 
@@ -158,6 +166,8 @@ window.addEventListener("DOMContentLoaded", () => {
 window.addEventListener("beforeunload", () => {
   // Clean up controllers
   toolbarController.destroy();
+  // Optionally dispose modal manager if needed
+  // modalManager.dispose();
 });
 
 // --- Listener for Start Tour Requests from Placeholders ---
