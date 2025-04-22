@@ -1,3 +1,6 @@
+import { atom } from "nanostores";
+import type { CelestialObject } from "@teskooano/data-types";
+
 export * from "./game";
 export * from "./game/physics";
 export * from "./game/panelState";
@@ -12,3 +15,7 @@ export {
   type PerformanceProfileType,
   simulationActions,
 } from "./game/simulation";
+
+export const celestialObjectsStore = atom<Record<string, CelestialObject>>({});
+export const currentSeed = atom<string>("");
+export const systemNameStore = atom<string | null>(null);

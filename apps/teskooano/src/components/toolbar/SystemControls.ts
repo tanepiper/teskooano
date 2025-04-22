@@ -1,18 +1,23 @@
-import { celestialObjectsStore, currentSeed } from "@teskooano/core-state";
+import {
+  celestialObjectsStore,
+  currentSeed,
+  systemNameStore,
+} from "@teskooano/core-state";
 import { type CelestialObject } from "@teskooano/data-types";
 import { DockviewApi } from "dockview-core";
 import { generateAndLoadSystem } from "../../systems/system-generator.js";
 import "../shared/Button.ts";
+import { TeskooanoModal } from "../shared/Modal";
 import { SystemControlsTemplate } from "./SystemControls.template";
-import * as SystemActions from "./system-controls.actions.js"; // Import the new actions
-import * as SystemControlsUI from "./system-controls.ui.js"; // Import the new UI handlers
+import * as SystemActions from "./system-controls.actions.js";
+import * as SystemControlsUI from "./system-controls.ui.js";
 
 /**
  * @element system-controls
  * @description
  * A custom element that provides UI controls for managing the star system generation,
  * loading, saving, and clearing within the Teskooano application.
- * It interacts with the core state stores (`celestialObjectsStore`, `currentSeed`)
+ * It interacts with the core state stores (`celestialObjectsStore`, `currentSeed`, `systemNameStore`)
  * and actions to modify the application state.
  *
  * @attr {boolean} mobile - Indicates if the component should render in a mobile-friendly layout.
@@ -36,20 +41,26 @@ class SystemControls
   private seedInput: HTMLInputElement | null = null;
   /** @internal The form containing the seed input and submit button. */
   private seedForm: HTMLFormElement | null = null;
-  /** @internal The element displaying the current system seed. */
-  private systemSeedEl: HTMLElement | null = null;
+  /** @internal The element displaying the current system identifier (name or seed). */
+  private systemIdentifierEl: HTMLElement | null = null;
   /** @internal The element displaying the number of celestial objects. */
   private celestialCountEl: HTMLElement | null = null;
   /** @internal A collection of all action buttons within the component. */
   private buttons: NodeListOf<HTMLElement> | null = null;
   /** @internal The overlay shown during loading/generation states. */
   private loadingOverlay: HTMLElement | null = null;
+  /** @internal Reference to the currently active modal, if any. */
+  private activeModal: TeskooanoModal | null = null;
 
   // State & Properties
   /** @internal Flag indicating if the mobile layout is active. Controlled by the `mobile` attribute. */
   private _isMobile: boolean = false;
   /** @internal Flag indicating if a system generation/import/export process is currently running. */
-  private _isGenerating: boolean = false;
+  private _isProcessing: boolean = false;
+  /** @internal Flag indicating if a system generation process is currently running. Required by UIContract. */
+  public isGenerating(): boolean {
+    return this._isProcessing;
+  }
   /** @internal Reference to the Dockview API, used for potential panel interactions. */
   private dockviewApi: DockviewApi | null = null;
 
@@ -97,7 +108,8 @@ class SystemControls
     this.seedInput = this.shadowRoot?.querySelector("#seed") || null;
     this.seedForm =
       (this.shadowRoot?.querySelector(".seed-form") as HTMLFormElement) || null;
-    this.systemSeedEl = this.shadowRoot?.querySelector(".system-seed") || null;
+    this.systemIdentifierEl =
+      this.shadowRoot?.querySelector(".system-identifier") || null;
     this.celestialCountEl =
       this.shadowRoot?.querySelector(".celestial-count") || null;
     this.buttons =
@@ -114,7 +126,11 @@ class SystemControls
     this.subscribeToStores();
 
     // Initial UI update based on current store state
-    this.updateDisplay(celestialObjectsStore.get(), currentSeed.get());
+    this.updateDisplay(
+      celestialObjectsStore.get(),
+      currentSeed.get(),
+      systemNameStore.get(),
+    );
     // Set initial seed input value
     if (this.seedInput) {
       this.seedInput.value = currentSeed.get() || "";
@@ -131,6 +147,8 @@ class SystemControls
     // Unsubscribe from all stores
     this.unsubscribers.forEach((unsub) => unsub());
     this.unsubscribers = [];
+    // Clean up any active modal
+    this._closeActiveModal();
   }
 
   /**
@@ -149,7 +167,11 @@ class SystemControls
       this._isMobile = newValue !== null;
       this.updateButtonSizes();
       // Re-run display logic if mobile status affects layout significantly
-      this.updateDisplay(celestialObjectsStore.get(), currentSeed.get());
+      this.updateDisplay(
+        celestialObjectsStore.get(),
+        currentSeed.get(),
+        systemNameStore.get(),
+      );
     }
   }
 
@@ -161,26 +183,28 @@ class SystemControls
     // Subscribe to celestialObjectsStore
     const unsubObjects = celestialObjectsStore.subscribe(
       (objects: Record<string, CelestialObject>) => {
-        // Subscribe to correct store
-        // REMOVED: console.log("SystemControls: celestialObjectsStore updated", objects);
-        // TODO: Still need systemName source
-        this.updateDisplay(objects, currentSeed.get()); // Pass objects map
+        this.updateDisplay(objects, currentSeed.get(), systemNameStore.get());
       },
     );
     this.unsubscribers.push(unsubObjects);
 
-    // Current Seed subscription remains the same
+    // Current Seed subscription
     const unsubSeed = currentSeed.subscribe((seed: string) => {
       console.log("SystemControls: currentSeed updated", seed);
-      // REMOVED: Don't force input value on every seed store change
-      // if (this.seedInput && this.seedInput.value !== seed) {
-      //   this.seedInput.value = seed;
-      // }
-      // Update display using current objects store value
-      // TODO: Still need systemName source
-      this.updateDisplay(celestialObjectsStore.get(), seed);
+      this.updateDisplay(
+        celestialObjectsStore.get(),
+        seed,
+        systemNameStore.get(),
+      );
     });
     this.unsubscribers.push(unsubSeed);
+
+    // Subscribe to System Name Store
+    const unsubName = systemNameStore.subscribe((name: string | null) => {
+      console.log("SystemControls: systemNameStore updated", name);
+      this.updateDisplay(celestialObjectsStore.get(), currentSeed.get(), name);
+    });
+    this.unsubscribers.push(unsubName);
   }
 
   /**
@@ -188,9 +212,33 @@ class SystemControls
    * @public
    */
   public tourRandomSeed() {
-    const randomSeed = Math.random().toString(36).substring(2, 10); // Simple random seed
-    console.log("Generating random system with seed:", randomSeed);
-    this.handleSeedSubmit({ preventDefault: () => {} } as Event);
+    if (this._isProcessing) return;
+    this.setProcessing(true);
+    SystemActions.generateRandomSystem(this.dockviewApi)
+      .then((result) => {
+        const randomButton = this.shadowRoot?.querySelector(
+          '[data-action="random"] span',
+        ) as HTMLElement;
+        if (result && randomButton) {
+          this.showFeedback(
+            randomButton.parentElement!,
+            result.symbol,
+            !result.success,
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Error during random generation:", error);
+        const randomButton = this.shadowRoot?.querySelector(
+          '[data-action="random"] span',
+        ) as HTMLElement;
+        if (randomButton) {
+          this.showFeedback(randomButton.parentElement!, "❌", true);
+        }
+      })
+      .finally(() => {
+        this.setProcessing(false);
+      });
   }
 
   /**
@@ -203,17 +251,21 @@ class SystemControls
   }
 
   /**
-   * Updates the component's display based on the current system state (objects and seed).
+   * Updates the component's display based on the current system state (objects, seed, name).
    * Calls the external UI handler.
    * @param {Record<string, CelestialObject>} objects - The current map of celestial objects.
    * @param {string} seed - The current system seed.
+   * @param {string | null} systemName - The current system name.
    * @private
    */
   private updateDisplay(
     objects: Record<string, CelestialObject>,
     seed: string,
+    systemName: string | null,
   ): void {
-    SystemControlsUI.updateDisplayUI(this, objects, seed);
+    const identifier =
+      systemName || `Seed: ${seed.substring(0, 8)}...` || "N/A";
+    SystemControlsUI.updateDisplayUI(this, objects, identifier);
   }
 
   /**
@@ -221,19 +273,12 @@ class SystemControls
    * @private
    */
   private addEventListeners() {
-    // Remove the listener from the form's submit event
-    // this.seedForm?.addEventListener('submit', this.handleSeedSubmit);
-
-    // Find the specific submit button within the form
     const submitButton = this.seedForm?.querySelector(
       'teskooano-button[type="submit"]',
     );
-    // Add a click listener DIRECTLY to the submit button
     submitButton?.addEventListener("click", this.handleSeedSubmit);
 
     this.buttons?.forEach((button) => {
-      // This loop already skips the submit button, which is fine.
-      // We keep the listeners for the other action buttons (random, clear, etc.)
       if (button.getAttribute("type") !== "submit") {
         button.addEventListener("click", this.handleActionClick);
       }
@@ -245,14 +290,9 @@ class SystemControls
    * @private
    */
   private removeEventListeners() {
-    // Remove the listener from the form's submit event (if it was ever added)
-    // this.seedForm?.removeEventListener('submit', this.handleSeedSubmit);
-
-    // Find the specific submit button again
     const submitButton = this.seedForm?.querySelector(
       'teskooano-button[type="submit"]',
     );
-    // Remove the click listener DIRECTLY from the submit button
     submitButton?.removeEventListener("click", this.handleSeedSubmit);
 
     this.buttons?.forEach((button) => {
@@ -269,15 +309,15 @@ class SystemControls
    * @private
    */
   private handleSeedSubmit = async (event: Event) => {
-    event.preventDefault(); // Keep this!
-    console.log("handleSeedSubmit triggered via BUTTON CLICK."); // Updated log message
+    event.preventDefault();
+    console.log("handleSeedSubmit triggered via BUTTON CLICK.");
 
-    if (this._isGenerating) {
-      console.log("Submit prevented: _isGenerating is true.");
+    if (this._isProcessing) {
+      console.log("Submit prevented: _isProcessing is true.");
       return;
     }
 
-    const seed = this.seedInput?.value.trim() ?? ""; // Use empty string if null/undefined
+    const seed = this.seedInput?.value.trim() ?? "";
     console.log(
       `Seed value from input: "${this.seedInput?.value}", Trimmed: "${seed}"`,
     );
@@ -289,10 +329,15 @@ class SystemControls
       this.seedInput.classList.add("error");
       this.seedInput.setAttribute("placeholder", "Seed cannot be empty!");
       const submitButton = this.seedForm?.querySelector(
-        'teskooano-button[type="submit"]',
+        'teskooano-button[type="submit"] span',
       );
-      if (submitButton)
-        this.showFeedback(submitButton as HTMLElement, "⚠️", true);
+      if (submitButton) {
+        this.showFeedback(
+          submitButton.parentElement as HTMLElement,
+          "⚠️",
+          true,
+        );
+      }
 
       setTimeout(() => {
         this.seedInput?.classList.remove("error");
@@ -302,31 +347,43 @@ class SystemControls
     }
 
     console.log(`Validation passed. Proceeding with seed: "${seed}"`);
-    this.setGenerating(true);
+    this.setProcessing(true);
 
     try {
       console.log("Calling generateAndLoadSystem...");
       const success = await generateAndLoadSystem(seed, this.dockviewApi);
-      // Feedback is now implicitly handled by store updates triggering updateDisplay
+      // Feedback handled by store updates triggering updateDisplay
       if (!success) {
         console.error("System generation failed.");
         const submitButton = this.seedForm?.querySelector(
-          'teskooano-button[type="submit"]',
+          'teskooano-button[type="submit"] span',
         );
-        if (submitButton)
-          this.showFeedback(submitButton as HTMLElement, "❌", true, 3000);
+        if (submitButton) {
+          this.showFeedback(
+            submitButton.parentElement as HTMLElement,
+            "❌",
+            true,
+            3000,
+          );
+        }
       }
       console.log(`generateAndLoadSystem returned: ${success}`);
     } catch (error) {
       console.error("Error during generateAndLoadSystem call:", error);
       const submitButton = this.seedForm?.querySelector(
-        'teskooano-button[type="submit"]',
+        'teskooano-button[type="submit"] span',
       );
-      if (submitButton)
-        this.showFeedback(submitButton as HTMLElement, "❌", true, 3000);
+      if (submitButton) {
+        this.showFeedback(
+          submitButton.parentElement as HTMLElement,
+          "❌",
+          true,
+          3000,
+        );
+      }
     } finally {
-      console.log("Resetting generating state.");
-      this.setGenerating(false);
+      console.log("Resetting processing state.");
+      this.setProcessing(false);
     }
   };
 
@@ -337,7 +394,7 @@ class SystemControls
    * @private
    */
   private handleActionClick = async (event: Event) => {
-    if (this._isGenerating) return;
+    if (this._isProcessing) return;
 
     const button = event.currentTarget as HTMLElement;
     const action = button.dataset.action;
@@ -345,8 +402,12 @@ class SystemControls
     if (!action) return;
     console.log("Action clicked:", action);
 
-    this.setGenerating(true);
+    if (action !== "create-blank" && action !== "copy-seed") {
+      this.setProcessing(true);
+    }
+
     let result: SystemActions.ActionResult | null = null;
+    let shouldShowFeedback = true;
 
     try {
       switch (action) {
@@ -355,46 +416,65 @@ class SystemControls
           break;
         case "import":
           result = await this._handleImport();
+          shouldShowFeedback = false;
           break;
         case "random":
           result = await this._handleRandom();
           break;
         case "clear":
           result = await this._handleClear();
+          if (!result) shouldShowFeedback = false;
           break;
         case "create-blank":
-          result = await this._handleCreateBlank();
+          this._handleCreateBlank();
+          shouldShowFeedback = false;
           break;
         case "copy-seed":
           result = await this._handleCopySeed();
           break;
         default:
           console.warn(`Unhandled action: ${action}`);
-          // Keep generating false if action is unhandled
-          this.setGenerating(false);
-          return; // Exit early for unhandled actions
+          if (
+            this._isProcessing &&
+            action !== "create-blank" &&
+            action !== "copy-seed"
+          ) {
+            this.setProcessing(false);
+          }
+          return;
       }
 
-      // Show feedback based on the result from the action handlers
-      if (result) {
-        this.showFeedback(button, result.symbol, !result.success);
+      const feedbackTarget = button.querySelector("span") || button;
+      if (shouldShowFeedback && result) {
+        this.showFeedback(
+          feedbackTarget.parentElement!,
+          result.symbol,
+          !result.success,
+        );
+      } else if (!shouldShowFeedback) {
+        console.log(
+          `Action '${action}' feedback handled elsewhere or skipped.`,
+        );
       } else {
-        // Handle cases where the action handler didn't return a result (e.g., import cancelled)
-        console.log(`Action '${action}' completed without explicit feedback.`);
+        console.log(
+          `Action '${action}' completed without explicit feedback result.`,
+        );
       }
     } catch (error) {
-      // Catch errors from the action handlers themselves (e.g., file dialog rejection)
       console.error(`Error during action '${action}':`, error);
       const message = error instanceof Error ? error.message : "Unknown error";
-      // Show generic error feedback if the action handler failed unexpectedly
-      // unless it's a cancellation error we want to ignore visually.
+      const feedbackTarget = button.querySelector("span") || button;
       if (message !== "File selection cancelled.") {
-        this.showFeedback(button, "❌", true);
+        this.showFeedback(feedbackTarget.parentElement!, "❌", true);
       }
+      shouldShowFeedback = false;
     } finally {
-      // Always reset generating state unless it was already reset (e.g., for unhandled action)
-      if (this._isGenerating) {
-        this.setGenerating(false);
+      if (
+        this._isProcessing &&
+        action !== "create-blank" &&
+        action !== "copy-seed"
+      ) {
+        this.setProcessing(false);
       }
     }
   };
@@ -411,22 +491,41 @@ class SystemControls
   /** @private Handles the 'import' action. */
   private async _handleImport(): Promise<SystemActions.ActionResult | null> {
     try {
-      // Trigger the dialog first
       const file = await SystemActions.triggerImportDialog();
-      // If the promise resolved, a file was selected
-      return await SystemActions.importSystem(file, this.dockviewApi);
+      this.setProcessing(true);
+      const result = await SystemActions.importSystem(file, this.dockviewApi);
+      this.setProcessing(false);
+      const importButton = this.shadowRoot?.querySelector(
+        '[data-action="import"] span',
+      ) as HTMLElement;
+      if (importButton)
+        this.showFeedback(
+          importButton.parentElement!,
+          result.symbol,
+          !result.success,
+        );
+      return result;
     } catch (error) {
-      // Handle cancellation (triggerImportDialog rejects on cancel)
       if (
         error instanceof Error &&
         error.message === "File selection cancelled."
       ) {
         console.log("Import cancelled by user.");
-        return null; // Indicate cancellation, no feedback needed
+        if (this._isProcessing) this.setProcessing(false);
+        return null;
       } else {
-        // Handle other errors during file selection/dialog
-        console.error("Error triggering import dialog:", error);
-        throw error; // Re-throw to be caught by handleActionClick
+        console.error("Error during import process:", error);
+        this.setProcessing(false);
+        const importButton = this.shadowRoot?.querySelector(
+          '[data-action="import"] span',
+        ) as HTMLElement;
+        if (importButton)
+          this.showFeedback(importButton.parentElement!, "❌", true);
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : "Import Error",
+          symbol: "❌",
+        };
       }
     }
   }
@@ -437,46 +536,211 @@ class SystemControls
   }
 
   /** @private Handles the 'clear' action. */
-  private async _handleClear(): Promise<SystemActions.ActionResult> {
+  private async _handleClear(): Promise<SystemActions.ActionResult | null> {
     if (
       !confirm(
         "Are you sure you want to clear the current system? This cannot be undone.",
       )
     ) {
-      // If user cancels confirmation, return a 'cancelled' state
-      return { success: false, symbol: "🚫", message: "Clear cancelled." };
+      console.log("Clear cancelled by user.");
+      this.setProcessing(false);
+      return null;
     }
     return await SystemActions.clearSystem();
   }
 
-  /** @private Handles the 'create-blank' action. */
-  private async _handleCreateBlank(): Promise<SystemActions.ActionResult> {
-    return await SystemActions.createBlankSystem();
+  /** @private Handles the 'create-blank' action by showing a modal. */
+  private _handleCreateBlank(): void {
+    if (this.activeModal) {
+      console.warn("Create Blank Modal already open.");
+      return;
+    }
+
+    const modal = document.createElement("teskooano-modal") as TeskooanoModal;
+    modal.setAttribute("title", "Create New System");
+    modal.setAttribute("confirm-text", "Create");
+    modal.setAttribute("close-text", "Cancel");
+    modal.setAttribute("hide-secondary-button", "");
+    modal.style.position = "fixed";
+    modal.style.top = "50%";
+    modal.style.left = "50%";
+    modal.style.transform = "translate(-50%, -50%)";
+    modal.style.zIndex = "1000";
+    modal.style.width = "min(90vw, 450px)";
+    modal.style.maxHeight = "80vh";
+
+    const formContent = document.createElement("div");
+    formContent.innerHTML = `
+        <style>
+            .form-group { margin-bottom: 1rem; }
+            label { display: block; margin-bottom: 0.5rem; color: var(--color-text-secondary); font-size: var(--font-size-small); }
+            input[type="text"] {
+                box-sizing: border-box;
+                width: 100%;
+                padding: var(--space-2, 8px);
+                border: 1px solid var(--color-border);
+                background-color: var(--color-surface-1);
+                color: var(--color-text-primary);
+                border-radius: var(--radius-sm);
+                font-size: var(--font-size-base);
+            }
+            input[type="text"]:focus {
+                outline: none;
+                border-color: var(--color-primary);
+                box-shadow: 0 0 0 2px var(--color-primary-emphasis);
+            }
+            .error-message {
+                color: var(--color-danger);
+                font-size: var(--font-size-small);
+                margin-top: 0.25rem;
+                min-height: 1em;
+            }
+        </style>
+        <div class="form-group">
+            <label for="system-name-input">System Name:</label>
+            <input type="text" id="system-name-input" name="systemName" required placeholder="e.g., Kepler-186">
+            <div class="error-message" id="name-error"></div>
+        </div>
+    `;
+    modal.setContent(formContent);
+
+    const nameInput = formContent.querySelector(
+      "#system-name-input",
+    ) as HTMLInputElement;
+    const errorDiv = formContent.querySelector("#name-error") as HTMLElement;
+
+    const validateName = () => {
+      const name = nameInput.value.trim();
+      if (!name) {
+        errorDiv.textContent = "System name cannot be empty.";
+        nameInput.focus();
+        return false;
+      }
+      errorDiv.textContent = "";
+      return true;
+    };
+
+    nameInput.addEventListener("input", validateName);
+    nameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (validateName()) {
+          modal.shadowRoot
+            ?.querySelector<HTMLElement>(".confirm-button")
+            ?.click();
+        }
+      }
+    });
+
+    let isSubmitting = false;
+    modal.setConfirmHandler(async () => {
+      if (isSubmitting || !validateName()) {
+        return;
+      }
+      isSubmitting = true;
+      const systemName = nameInput.value.trim();
+      this.setProcessing(true);
+      const createButton = modal.shadowRoot?.querySelector(
+        ".confirm-button span",
+      ) as HTMLElement;
+      try {
+        console.log(
+          `Modal confirmed. Calling createNewNamedSystem with name: "${systemName}"`,
+        );
+        const result = await SystemActions.createNewNamedSystem(systemName);
+        if (result.success) {
+          if (createButton)
+            this.showFeedback(
+              createButton.parentElement!,
+              result.symbol,
+              !result.success,
+              1000,
+            );
+          setTimeout(() => this._closeActiveModal(), 500);
+        } else {
+          errorDiv.textContent = result.message || "Failed to create system.";
+          if (createButton)
+            this.showFeedback(
+              createButton.parentElement!,
+              result.symbol,
+              true,
+              2000,
+            );
+          this.setProcessing(false);
+          isSubmitting = false;
+        }
+      } catch (err) {
+        console.error("Error calling createNewNamedSystem:", err);
+        errorDiv.textContent = "An unexpected error occurred.";
+        if (createButton)
+          this.showFeedback(createButton.parentElement!, "❌", true, 2000);
+        this.setProcessing(false);
+        isSubmitting = false;
+      }
+    });
+
+    modal.setCloseHandler(() => {
+      console.log("Modal closed by user.");
+      this._closeActiveModal();
+    });
+
+    document.body.appendChild(modal);
+    this.activeModal = modal;
+    setTimeout(() => nameInput.focus(), 50);
   }
 
   /** @private Handles the 'copy-seed' action. */
   private async _handleCopySeed(): Promise<SystemActions.ActionResult> {
     const seed = currentSeed.get();
-    return await SystemActions.copySystemSeed(seed);
+    const result = await SystemActions.copySystemSeed(seed);
+    const copyButton = this.shadowRoot?.querySelector(
+      '[data-action="copy-seed"] span',
+    ) as HTMLElement;
+    if (copyButton)
+      this.showFeedback(
+        copyButton.parentElement!,
+        result.symbol,
+        !result.success,
+      );
+    return result;
   }
 
   // --- End Private Action Handlers ---
 
   /**
-   * Sets the generating state of the component, updating the UI accordingly.
-   * @param {boolean} isGenerating - True if the component should be in a loading state, false otherwise.
+   * Closes and removes the currently active modal, if any.
    * @private
    */
-  private setGenerating(isGenerating: boolean) {
-    if (this._isGenerating === isGenerating) return; // No change
-    this._isGenerating = isGenerating;
-    this.updateDisplay(celestialObjectsStore.get(), currentSeed.get());
+  private _closeActiveModal(): void {
+    if (this.activeModal) {
+      this.activeModal.remove();
+      this.activeModal = null;
+      console.log("Active modal closed and removed.");
+      if (this._isProcessing) {
+        this.setProcessing(false);
+      }
+    }
+  }
+
+  /**
+   * Sets the processing state of the component, updating the UI accordingly.
+   * @param {boolean} isProcessing - True if the component should be in a loading state, false otherwise.
+   * @private
+   */
+  private setProcessing(isProcessing: boolean) {
+    if (this._isProcessing === isProcessing) return;
+    this._isProcessing = isProcessing;
+    this.updateDisplay(
+      celestialObjectsStore.get(),
+      currentSeed.get(),
+      systemNameStore.get(),
+    );
   }
 
   /**
    * Displays temporary feedback (a symbol) within a target element (usually a button).
    * Replaces the element's content temporarily and restores it after a duration.
-   * @param {HTMLElement} element - The HTML element to display feedback within.
+   * @param {HTMLElement} element - The HTML element to display feedback within (should be the button itself).
    * @param {string} symbol - The feedback symbol/text to display.
    * @param {boolean} [isError=false] - If true, applies an 'error' class for styling.
    * @param {number} [duration=1500] - The duration in milliseconds to show the feedback.
@@ -488,22 +752,35 @@ class SystemControls
     isError: boolean = false,
     duration: number = 1500,
   ) {
-    // Find the icon span within the button if possible
-    const targetElement = element; // The button itself
-    const originalContentHTML = targetElement.innerHTML; // Store original SVG etc.
+    if (!element) return;
+    if (
+      element instanceof HTMLButtonElement ||
+      element.getAttribute("role") === "button"
+    ) {
+      (element as HTMLButtonElement).disabled = true;
+    }
 
-    // Create feedback span
+    const targetElement = element;
+    const originalContentHTML = targetElement.innerHTML;
+
     const feedback = document.createElement("span");
     feedback.className = `feedback ${isError ? "error" : ""}`;
     feedback.textContent = symbol;
-    feedback.style.display = "inline-block"; // Ensure it's visible
+    feedback.style.display = "inline-block";
+    feedback.style.width = "100%";
+    feedback.style.textAlign = "center";
 
-    // Temporarily replace or append
-    targetElement.innerHTML = ""; // Clear original content (SVG)
+    targetElement.innerHTML = "";
     targetElement.appendChild(feedback);
 
     setTimeout(() => {
       targetElement.innerHTML = originalContentHTML;
+      if (
+        targetElement instanceof HTMLButtonElement ||
+        targetElement.getAttribute("role") === "button"
+      ) {
+        (targetElement as HTMLButtonElement).disabled = false;
+      }
     }, duration);
   }
 
@@ -512,9 +789,49 @@ class SystemControls
     return this._isMobile;
   }
 
-  /** Public getter for the generating state. */
-  public isGenerating(): boolean {
-    return this._isGenerating;
+  /** Public getter for the processing state. */
+  public isProcessing(): boolean {
+    return this._isProcessing;
+  }
+
+  /** Public getter for the container element (used by UI handler). */
+  public getContainer(): HTMLElement | null {
+    return this.container;
+  }
+
+  /** Public getter for the empty state element (used by UI handler). */
+  public getEmptyState(): HTMLElement | null {
+    return this.emptyState;
+  }
+
+  /** Public getter for the loaded state element (used by UI handler). */
+  public getLoadedState(): HTMLElement | null {
+    return this.loadedState;
+  }
+
+  /** Public getter for the system identifier element (used by UI handler). */
+  public getSystemIdentifierEl(): HTMLElement | null {
+    return this.systemIdentifierEl;
+  }
+
+  /** Public getter for the celestial count element (used by UI handler). */
+  public getCelestialCountEl(): HTMLElement | null {
+    return this.celestialCountEl;
+  }
+
+  /** Public getter for the seed input element (used by UI handler). */
+  public getSeedInput(): HTMLInputElement | null {
+    return this.seedInput;
+  }
+
+  /** Public getter for the loading overlay element (used by UI handler). */
+  public getLoadingOverlay(): HTMLElement | null {
+    return this.loadingOverlay;
+  }
+
+  /** Public getter for the buttons NodeList (used by UI handler). */
+  public getButtons(): NodeListOf<HTMLElement> | null {
+    return this.buttons;
   }
 }
 

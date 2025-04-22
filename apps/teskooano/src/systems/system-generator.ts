@@ -1,8 +1,9 @@
 import {
   actions,
-  currentSeed,
-  updateSeed,
   celestialObjectsStore,
+  currentSeed,
+  systemNameStore,
+  updateSeed,
 } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -56,6 +57,8 @@ export async function generateAndLoadSystem(
   });
   actions.resetTime();
   dispatchSimulationTimeReset();
+  systemNameStore.set(null);
+  currentSeed.set("");
   console.log("[SystemGenerator] State cleared.");
 
   // --- Show Progress Panel ---
@@ -81,20 +84,13 @@ export async function generateAndLoadSystem(
       `[SystemGenerator] Generated system "${systemName}" with ${systemData.length} celestial objects.`,
     );
 
-    // --- Update System Name in State ---
-    // TODO: Replace this with the actual way to update system name in core-state
-    // Example assuming an atom store named 'systemNameStore':
-    // import { systemNameStore } from '@teskooano/core-state'; // Hypothetical import
-    // if (systemName) {
-    //   systemNameStore.set(systemName);
-    //   console.log(`[SystemGenerator] System name "${systemName}" set in state.`);
-    // } else {
-    //    systemNameStore.set(null); // Clear name if generation failed?
-    // }
-    console.warn(
-      `[SystemGenerator] TODO: Need to implement setting system name "${systemName}" in core-state.`,
+    // --- Update System Name and Seed in State ---
+    systemNameStore.set(systemName);
+    currentSeed.set(finalSeed);
+    console.log(
+      `[SystemGenerator] System name "${systemName}" and seed "${finalSeed}" set in state.`,
     );
-    // --- End Update System Name ---
+    // --- End Update System Name and Seed ---
 
     planetList = systemData
       .filter(

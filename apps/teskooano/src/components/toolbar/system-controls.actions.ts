@@ -2,6 +2,7 @@ import {
   actions,
   celestialObjectsStore,
   currentSeed,
+  systemNameStore,
 } from "@teskooano/core-state";
 import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
@@ -27,10 +28,13 @@ export interface ActionResult {
 
 /**
  * Creates a default star object.
- * @returns {CelestialObject} A newly generated star object.
+ * Used when importing a system without a central star
+ * or when creating a new blank system.
+ * @returns A CelestialObject representing a default star.
  */
-function createDefaultStar(): CelestialObject {
-  return generateStar(Math.random);
+function createDefaultStar(name: string): CelestialObject {
+  // Use the procedural generator with Math.random for a simple default star
+  return generateStar(Math.random, name);
 }
 
 /**
@@ -94,7 +98,7 @@ export async function importSystem(
     reader.onload = async (event) => {
       let inputElement = document.querySelector(
         'input[type="file"][data-importer="system"]',
-      ); // Find our temp input
+      );
       try {
         const fileContent = event.target?.result as string;
         if (!fileContent) throw new Error("File content is empty.");
@@ -105,11 +109,12 @@ export async function importSystem(
         if (
           !parsedData ||
           typeof parsedData !== "object" ||
-          typeof parsedData.seed !== "string" ||
+          (parsedData.seed !== undefined &&
+            typeof parsedData.seed !== "string") ||
           !Array.isArray(parsedData.objects)
         ) {
           throw new Error(
-            "Invalid file format. Expected { seed: string, objects: CelestialObject[] }.",
+            "Invalid file format. Expected { seed?: string, objects: CelestialObject[] }.",
           );
         }
 
@@ -146,12 +151,14 @@ export async function importSystem(
           `Importing system with seed "${parsedData.seed}" and ${hydratedObjects.length} objects...`,
         );
 
-        // 1. Clear existing state
+        // 1. Clear existing state (including system name)
         actions.clearState({
           resetCamera: false,
           resetTime: true,
           resetSelection: true,
         });
+        systemNameStore.set(null);
+        currentSeed.set("");
         actions.resetTime();
 
         // 2. Load objects
@@ -163,7 +170,11 @@ export async function importSystem(
           throw new Error("Could not find a primary star in imported data.");
         }
 
-        actions.createSolarSystem(star);
+        celestialObjectsStore.set({
+          ...celestialObjectsStore.get(),
+          [star.id]: star,
+        });
+        console.log(`Primary star "${star.name}" (ID: ${star.id}) set.`);
 
         hydratedObjects.forEach((obj) => {
           if (obj.id !== star.id) {
@@ -177,14 +188,41 @@ export async function importSystem(
           }
         });
 
+        // Attempt to set system name from seed or filename
+        if (parsedData.seed) {
+          console.log(
+            `Regenerating system from imported seed: ${parsedData.seed}`,
+          );
+          const success = await generateAndLoadSystem(
+            parsedData.seed,
+            dockviewApi,
+          );
+          if (!success) {
+            console.warn(
+              `Failed to regenerate system from imported seed: ${parsedData.seed}. Keeping manually loaded objects.`,
+            );
+            systemNameStore.set(star.name);
+            currentSeed.set(parsedData.seed);
+          } else {
+            console.log(
+              `System regenerated successfully from seed: ${parsedData.seed}`,
+            );
+          }
+        } else {
+          systemNameStore.set(star.name);
+          currentSeed.set("");
+          console.log(`System name set from primary star: ${star.name}`);
+        }
+
         console.log("System imported successfully.");
-        // Dispatch event to reset the simulation loop's internal timer
         window.dispatchEvent(new CustomEvent("resetSimulationTime"));
         console.log("Dispatched resetSimulationTime event.");
 
         resolve({ success: true, symbol: "✅", message: "Import successful." });
       } catch (error) {
         console.error("Error importing system:", error);
+        systemNameStore.set(null);
+        currentSeed.set("");
         const message =
           error instanceof Error ? error.message : "Unknown import error";
         resolve({ success: false, symbol: "❌", message });
@@ -198,9 +236,15 @@ export async function importSystem(
     reader.onerror = (error) => {
       let inputElement = document.querySelector(
         'input[type="file"][data-importer="system"]',
-      ); // Find our temp input
+      );
       console.error("Error reading file:", error);
-      resolve({ success: false, symbol: "❌", message: "Error reading file." });
+      systemNameStore.set(null);
+      currentSeed.set("");
+      resolve({
+        success: false,
+        symbol: "❌",
+        message: `Error reading file: ${error}`,
+      });
       if (inputElement && inputElement.parentNode) {
         inputElement.parentNode.removeChild(inputElement);
       }
@@ -287,19 +331,20 @@ export async function generateRandomSystem(
 }
 
 /**
- * Clears the current system state.
+ * Handles clearing the current system state.
  * @returns Promise resolving to an ActionResult.
  */
 export async function clearSystem(): Promise<ActionResult> {
   try {
-    console.log("Clearing system via action...");
     actions.clearState({
       resetCamera: false,
       resetTime: true,
       resetSelection: true,
     });
-    actions.resetTime(); // Ensure time resets
-    return { success: true, symbol: "🗑️", message: "System cleared." };
+    systemNameStore.set(null);
+    currentSeed.set("");
+    console.log("System cleared.");
+    return { success: true, symbol: "✅", message: "System cleared." };
   } catch (error) {
     console.error("Error clearing system:", error);
     const message =
@@ -309,37 +354,74 @@ export async function clearSystem(): Promise<ActionResult> {
 }
 
 /**
- * Creates a new blank system with just a default star.
+ * Creates a new, empty system with a given name.
+ * Replaces the old `createBlankSystem`.
+ * @param systemName The name for the new system.
  * @returns Promise resolving to an ActionResult.
  */
-export async function createBlankSystem(): Promise<ActionResult> {
+export async function createNewNamedSystem(
+  systemName: string,
+): Promise<ActionResult> {
+  if (!systemName || !systemName.trim()) {
+    return {
+      success: false,
+      symbol: "⚠️",
+      message: "System name cannot be empty.",
+    };
+  }
   try {
-    console.log("Creating blank system with default star...");
+    console.log(`Creating new named system: "${systemName}"`);
     // 1. Clear existing state
     actions.clearState({
       resetCamera: false,
       resetTime: true,
       resetSelection: true,
     });
-    actions.resetTime();
+    // 2. Clear seed and set the new system name
+    currentSeed.set("");
+    systemNameStore.set(systemName.trim());
 
-    // 2. Create the default star object
-    const defaultStar = createDefaultStar();
-
-    // 3. Add the default star using createSolarSystem
-    actions.createSolarSystem(defaultStar);
-    console.log(`Default star "${defaultStar.name}" added to the system.`);
-    console.warn(
-      "[system-controls.actions] TODO: Need correct action/store to set systemName for blank system.",
+    // 3. Create and add the default star
+    const star = createDefaultStar(systemName);
+    celestialObjectsStore.set({
+      ...celestialObjectsStore.get(),
+      [star.id]: star,
+    });
+    console.log(
+      `Added default star '${star.name}' (${star.id}) to the new system.`,
     );
 
-    return { success: true, symbol: "📝", message: "Blank system created." };
+    // Dispatch event to reset the simulation loop's internal timer
+    window.dispatchEvent(new CustomEvent("resetSimulationTime"));
+    console.log("Dispatched resetSimulationTime event.");
+
+    return {
+      success: true,
+      symbol: "✨",
+      message: `Created blank system: ${systemName.trim()}`,
+    };
   } catch (error) {
-    console.error("Error creating default solar system:", error);
+    console.error("Error creating blank named system:", error);
+    systemNameStore.set(null);
+    currentSeed.set("");
     const message =
-      error instanceof Error ? error.message : "Unknown blank system error";
+      error instanceof Error ? error.message : "Unknown creation error";
     return { success: false, symbol: "❌", message };
   }
+}
+
+/**
+ * DEPRECATED: Handles creating a blank system state.
+ * Use `createNewNamedSystem` instead.
+ * @deprecated
+ * @returns Promise resolving to an ActionResult.
+ */
+export async function createBlankSystem(): Promise<ActionResult> {
+  console.warn(
+    "`createBlankSystem` is deprecated. Use `createNewNamedSystem` instead.",
+  );
+  // Call the new one with a default name for compatibility, log warning.
+  return createNewNamedSystem("Unnamed System");
 }
 
 /**

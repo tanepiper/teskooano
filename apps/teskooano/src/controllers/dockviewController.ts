@@ -17,6 +17,7 @@ import { EngineUISettingsPanel } from "../components/ui-controls/EngineUISetting
 import { FocusControl } from "../components/ui-controls/FocusControl";
 import { RendererInfoDisplay } from "../components/ui-controls/RendererInfoDisplay";
 import { CelestialInfo } from "../components/ui-controls/CelestialInfo";
+import { CelestialEditor } from "../components/editor/CelestialEditor"; // Import the editor
 // import { CelestialInfoPanel } from "../components/ui-controls/CelestialInfoPanel"; // REMOVE - Incorrect Class/File
 import { Subject, Observable } from "rxjs"; // Import RxJS classes
 import {
@@ -128,6 +129,7 @@ export class DockviewController {
       RendererInfoDisplay,
     );
     this.registerComponent(CelestialInfo.componentName, CelestialInfo);
+    this.registerComponent(CelestialEditor.componentName, CelestialEditor); // Register the editor
     this.registerComponent("settings", SettingsPanel);
     // Remove pre-registration for dynamically added panels
     // this._registeredComponents.set('progress_view', ProgressPanel);

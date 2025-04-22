@@ -40,6 +40,7 @@ export class EngineToolbar {
     "focus-control",
     "renderer-info-display",
     "celestial-info",
+    "celestial-editor",
   ];
 
   /**

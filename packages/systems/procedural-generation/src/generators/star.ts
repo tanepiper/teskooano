@@ -88,8 +88,11 @@ const STAR_VISUAL_SCALE_MULTIPLIER = 50.0; // Increased from 1.0 to make stars v
  * @param random The seeded random function.
  * @returns The generated star's data.
  */
-export function generateStar(random: () => number): CelestialObject {
-  const starName = generateCelestialName(random);
+export function generateStar(
+  random: () => number,
+  name?: string,
+): CelestialObject {
+  const starName = name || generateCelestialName(random);
 
   // 1. Determine Stellar Type
   const totalWeight = STELLAR_TYPE_WEIGHTS.reduce(
