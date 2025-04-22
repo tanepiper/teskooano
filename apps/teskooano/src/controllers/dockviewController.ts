@@ -7,6 +7,8 @@ import {
   AddGroupOptions,
   AddPanelOptions,
 } from "dockview-core";
+// Import Overlay specifically
+import { Overlay } from "dockview-core/dist/esm/overlay/overlay";
 import { CompositeEnginePanel } from "../components/engine/CompositeEnginePanel";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 // import { CelestialInfoPanel } from "../components/ui-controls/CelestialInfoPanel"; // REMOVE - Incorrect Class/File
@@ -54,6 +56,19 @@ class Panel implements IContentRenderer {
   }
 }
 
+// Add a type for overlay options for clarity
+interface OverlayOptions {
+  width: number;
+  height: number;
+}
+
+// Add a type for storing overlay info
+interface ActiveOverlay {
+  overlay: Overlay;
+  element: HTMLElement;
+  resolve: (result: ModalResult) => void; // For the promise
+}
+
 // --- Dockview Controller ---
 export class DockviewController {
   private _api: DockviewApi;
@@ -63,6 +78,8 @@ export class DockviewController {
   private _groupNameToIdMap: Map<string, string> = new Map();
   // Map to cache group references
   private _groupCache: Map<string, DockviewGroup> = new Map();
+  private _overlayContainer: HTMLElement; // Need the root element for overlay bounds
+  private _activeOverlays: Map<string, ActiveOverlay> = new Map();
 
   constructor(element: HTMLElement) {
     // Register components needed at initialization time internally first
@@ -141,6 +158,8 @@ export class DockviewController {
         // this.activePanelApiStore.set(activePanelApi?.api ?? null); // REMOVE - Property doesn't exist
       },
     );
+
+    this._overlayContainer = element; // Store the root element
   }
 
   /**
@@ -367,4 +386,152 @@ export class DockviewController {
   public get api(): DockviewApi {
     return this._api;
   }
+
+  // --- NEW OVERLAY METHODS ---
+
+  /**
+   * Shows a modal-like overlay centered in the Dockview container.
+   * @param id Unique ID for this overlay instance.
+   * @param element The HTML element to display within the overlay.
+   * @param options Dimensions for the overlay.
+   * @returns A promise that resolves with the result when the overlay is hidden.
+   */
+  public showOverlay(
+    id: string,
+    element: HTMLElement,
+    options: OverlayOptions,
+  ): Promise<ModalResult> {
+    return new Promise((resolve) => {
+      if (this._activeOverlays.has(id)) {
+        console.warn(
+          `DockviewController: Overlay with ID ${id} already shown.`,
+        );
+        // Potentially bring existing overlay to front?
+        // For now, let's just resolve the promise as dismissed to avoid issues
+        resolve("dismissed");
+        return;
+      }
+
+      // --- Calculate Centered Bounds ---
+      const containerRect = this._overlayContainer.getBoundingClientRect();
+      const width = options.width;
+      const height = options.height;
+      const top = Math.max(
+        0,
+        containerRect.top + containerRect.height / 2 - height / 2,
+      );
+      const left = Math.max(
+        0,
+        containerRect.left + containerRect.width / 2 - width / 2,
+      );
+
+      console.log(
+        `DockviewController: Creating overlay ${id} at top: ${top}, left: ${left}, width: ${width}, height: ${height}`,
+      );
+
+      try {
+        // TODO: Replace with actual Dockview Overlay creation/API call
+        // This is a conceptual placeholder - NOW IMPLEMENTED
+        // Create the overlay instance
+        const overlayInstance = new Overlay({
+          // Provide required options based on overlay.d.ts
+          container: this._overlayContainer,
+          content: element, // The modal element passed in
+          // Pass bounds directly if Overlay constructor accepts them
+          // Or set them via setBounds later
+          top: top,
+          left: left,
+          width: width,
+          height: height,
+          // Add minimumInViewportWidth/Height if needed
+        });
+
+        const overlayElement = overlayInstance.element as HTMLElement;
+
+        // Style and append content - Overlay likely handles its own element structure
+        // The overlay should handle its own placement within the container,
+        // but we might need to ensure the container allows absolute positioning.
+        this._overlayContainer.style.position = "relative"; // Ensure container is a positioning context
+
+        // --- Setup Dockview Overlay ---
+        // Bounds might be set in constructor, or confirm setBounds is needed
+        // overlayInstance.setBounds({ top, left, width, height });
+        overlayInstance.setVisible(true);
+        overlayInstance.bringToFront(); // Ensure it's on top
+
+        // Overlay constructor likely handles adding its element to the container
+
+        // TODO: Add listeners if overlay provides close events
+
+        // Store the overlay info
+        this._activeOverlays.set(id, {
+          overlay: overlayInstance,
+          element: overlayElement, // Store the overlay's root element
+          resolve,
+        });
+      } catch (error) {
+        console.error(
+          `DockviewController: Failed to create overlay ${id}:`,
+          error,
+        );
+        resolve("dismissed"); // Resolve as dismissed on error
+      }
+    });
+  }
+
+  /**
+   * Hides and cleans up a specific overlay.
+   * @param id The ID of the overlay to hide.
+   * @param result The reason the overlay is being hidden (e.g., 'confirm', 'close').
+   */
+  public hideOverlay(id: string, result: ModalResult): void {
+    const overlayData = this._activeOverlays.get(id);
+    if (!overlayData) {
+      console.warn(
+        `DockviewController: No active overlay found with ID ${id} to hide.`,
+      );
+      return;
+    }
+
+    console.log(
+      `DockviewController: Hiding overlay ${id} with result: ${result}`,
+    );
+
+    try {
+      // TODO: Replace with actual Dockview Overlay API calls
+      overlayData.overlay.setVisible(false);
+      // Optionally remove the element from DOM
+      // Overlay dispose should handle removing its element
+      // Dispose overlay and listeners
+      overlayData.overlay.dispose();
+    } catch (error) {
+      console.error(
+        `DockviewController: Error during overlay cleanup for ${id}:`,
+        error,
+      );
+    }
+
+    // Resolve the promise associated with this overlay
+    overlayData.resolve(result);
+
+    // Remove from active map
+    this._activeOverlays.delete(id);
+  }
+
+  // Method to clean up all overlays on controller disposal
+  public disposeOverlays(): void {
+    this._activeOverlays.forEach((_, id) => {
+      this.hideOverlay(id, "dismissed");
+    });
+  }
+
+  // --- Ensure dispose calls the new cleanup ---
+  public dispose(): void {
+    // ... existing dispose logic ...
+    this.disposeOverlays();
+    // ...
+  }
 }
+
+// --- Add ModalResult type if not already imported/defined ---
+export type ModalResult = "confirm" | "close" | "secondary" | "dismissed";

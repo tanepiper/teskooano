@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refactored modal dialogs (`ModalManager`) to utilize Dockview's overlay system instead of floating panels, managed via `DockviewController`.
 - Refactored `CSS2DManager` to remove unused methods.
 - Updated dependencies (visible in package.json/lock).
 - style: fixes for mobile (eab8a93)
@@ -59,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Corrected positioning for modal dialogs, ensuring they appear centered within the application window.
+- Ensured modal dialogs display the correct title in their header/tab.
 - Corrected camera transition animation logic in `ControlsManager`.
 - Fixed camera following logic to correctly track moving objects while allowing free orbit controls.
 - Prevented user interaction (zoom/pan) from incorrectly cancelling the camera follow lock.

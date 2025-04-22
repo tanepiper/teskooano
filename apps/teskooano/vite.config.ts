@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     glsl(), // Add the plugin to the plugins array
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       manifest: {
         name: "Teskooano 3D N-Body Simulator",
         short_name: "Teskooano",
