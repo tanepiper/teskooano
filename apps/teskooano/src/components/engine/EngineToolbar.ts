@@ -1,12 +1,15 @@
 import { DockviewController } from "../../controllers/dockviewController";
 import {
-  $isToolbarExpanded,
-  $toolbarButtons,
-  FunctionToolbarButtonConfig,
-  PanelToolbarButtonConfig,
+  $toolbarButtonConfigs,
+  $toolbarExpansionStates,
+  cleanupToolbarState,
+  getToolbarButtons,
+  getToolbarExpandedState,
   registerToolbarButton,
   toggleToolbar,
   ToolbarButtonType,
+  FunctionToolbarButtonConfig,
+  PanelToolbarButtonConfig,
   unregisterToolbarButton,
 } from "../../stores/toolbarStore";
 import { CompositeEnginePanel } from "./CompositeEnginePanel"; // Import parent panel type
@@ -60,7 +63,7 @@ export class EngineToolbar {
 
     this.injectStyles(); // Inject styles first
     this.createBaseStructure(); // Create toggle button and collapsible area
-    this.listenToStores(); // Start listening for state changes
+    this.listenToStores(); // Start listening for state changes for THIS instance
 
     // Register default buttons associated with this toolbar instance
     this.registerDefaultButtons();
@@ -134,13 +137,13 @@ export class EngineToolbar {
     const iconSpan = document.createElement("span");
     iconSpan.slot = "icon";
     // Initial icon based on store state (or default to collapsed)
-    iconSpan.innerHTML = $isToolbarExpanded.get()
+    iconSpan.innerHTML = getToolbarExpandedState(this._apiId)
       ? ChevronLeftIcon
       : ChevronRightIcon;
     toggleButton.appendChild(iconSpan);
 
     toggleButton.addEventListener("click", () => {
-      toggleToolbar(); // Use the action from the store
+      toggleToolbar(this._apiId); // Use the action for this instance
     });
 
     this._element.appendChild(toggleButton);
@@ -150,7 +153,7 @@ export class EngineToolbar {
     const collapsibleContainer = document.createElement("div");
     collapsibleContainer.classList.add("toolbar-collapsible-buttons");
     // Set initial class based on store state
-    if ($isToolbarExpanded.get()) {
+    if (getToolbarExpandedState(this._apiId)) {
       collapsibleContainer.classList.add("expanded");
     }
 
@@ -161,19 +164,23 @@ export class EngineToolbar {
   /** Listen to store changes and update UI accordingly */
   private listenToStores(): void {
     // Listen for changes in button registrations
-    this._buttonStoreUnsubscribe = $toolbarButtons.subscribe(
-      (buttons: Record<string, ToolbarButtonType>) => {
-        // Add explicit type
-        console.log("Toolbar Store updated, re-rendering buttons...");
-        this.renderDynamicButtons(buttons);
+    this._buttonStoreUnsubscribe = $toolbarButtonConfigs.subscribe(
+      (allConfigs) => {
+        const instanceButtons = allConfigs[this._apiId] ?? {};
+        console.log(
+          `Toolbar Store updated for ${this._apiId}, re-rendering buttons...`,
+        );
+        this.renderDynamicButtons(instanceButtons);
       },
     );
 
     // Listen for changes in the expanded state
-    this._expandedStoreUnsubscribe = $isToolbarExpanded.subscribe(
-      (isExpanded: boolean) => {
-        // Add explicit type
-        console.log(`Toolbar expanded state changed: ${isExpanded}`);
+    this._expandedStoreUnsubscribe = $toolbarExpansionStates.subscribe(
+      (allStates) => {
+        const isExpanded = allStates[this._apiId] ?? true; // Default to true if not set
+        console.log(
+          `Toolbar expanded state changed for ${this._apiId}: ${isExpanded}`,
+        );
         if (this._collapsibleContainer) {
           this._collapsibleContainer.classList.toggle("expanded", isExpanded);
         }
@@ -224,13 +231,16 @@ export class EngineToolbar {
       iconSpan.innerHTML = config.iconSvg;
       button.appendChild(iconSpan);
 
+      // Get the apiId into the click handler scope
+      const currentApiId = this._apiId;
       button.addEventListener("click", async () => {
         // Mark as async
         if (config.type === "panel") {
           this.handlePanelButtonClick(config as PanelToolbarButtonConfig);
         } else if (config.type === "function") {
           try {
-            await (config as FunctionToolbarButtonConfig).action(); // Await the action
+            // Pass the apiId to the action
+            await (config as FunctionToolbarButtonConfig).action(currentApiId);
           } catch (error) {
             console.error(
               `Error executing toolbar action for '${config.id}':`,
@@ -444,7 +454,7 @@ export class EngineToolbar {
         : `${componentName}_${this._apiId}_float`,
     };
 
-    registerToolbarButton(instanceConfig);
+    registerToolbarButton(this._apiId, instanceConfig); // Pass apiId
     console.log(
       `EngineToolbar: Registered button for '${componentName}' with instance ID '${instanceConfig.id}'`,
     );
@@ -459,9 +469,9 @@ export class EngineToolbar {
       this._dockviewController.getToolbarButtonConfig(componentName);
     if (staticConfig) {
       const instanceId = `${staticConfig.id}_${this._apiId}`;
-      unregisterToolbarButton(instanceId);
+      unregisterToolbarButton(this._apiId, instanceId); // Pass apiId
       console.log(
-        `EngineToolbar: Unregistered button with instance ID '${instanceId}'`,
+        `EngineToolbar: Unregistered button with instance ID '${instanceId}' for toolbar ${this._apiId}`,
       );
     } else {
       console.warn(
@@ -475,7 +485,7 @@ export class EngineToolbar {
    * (Could be used if a button doesn't have a corresponding panel component)
    */
   public addFunctionButton(config: FunctionToolbarButtonConfig): void {
-    registerToolbarButton(config);
+    registerToolbarButton(this._apiId, config);
   }
 
   /** Clean up listeners when the toolbar is destroyed */
@@ -487,9 +497,11 @@ export class EngineToolbar {
     this._buttonStoreUnsubscribe = null;
     this._expandedStoreUnsubscribe = null;
 
-    // --- Unregister default buttons ---
-    this.unregisterDefaultButtons();
-    // --- End Unregister ---
+    // --- Unregister default buttons --- (This already uses the correct unregisterToolbarButton with apiId)
+    // this.unregisterDefaultButtons();
+
+    // --- Clean up state for this specific toolbar instance ---
+    cleanupToolbarState(this._apiId);
 
     // Remove the element from the DOM if it's still attached
     this._element.remove();
