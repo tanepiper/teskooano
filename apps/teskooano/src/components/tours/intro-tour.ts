@@ -108,28 +108,33 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
         side: "bottom",
         align: "center",
       },
-      onNextClick: () => {
-        const generator = document.querySelector("system-controls");
-        if (generator) {
-          (generator as SystemControls).tourRandomSeed();
-        }
-        driverObj.moveNext();
-      },
     },
     {
-      id: "ui-settings",
-      element: ".ui-container",
+      id: "ui-settings-1",
+      element: ".engine-overlay-toolbar-container",
       popover: {
         title: "🌁 View Settings",
         description:
-          "This panel controls the engine view panels - each engine is independently rendered from the same simulation data, allowing you to have multiple views of the same system in real time. I'll explain each panel in more detail...",
-        side: "left",
-        align: "start",
+          "This is the Engine Toolbar - it's a pluggable container that panels and functions can register with and display a button in the toolbar.",
+        side: "bottom",
+        align: "center",
       },
     },
     {
+      id: "ui-settings-2",
+      element: "#engine-toolbar-toggle-composite_engine_view_1",
+      popover: {
+        title: "☾ Toggle the Toolbar",
+        description:
+          "This button toggles the visibility of the UI buttons toolbar. From this toolbar you can access the main controls for the engine view, focus on specific objects, and more!",
+        side: "bottom",
+        align: "center",
+      },
+    },
+
+    {
       id: "focus-control",
-      element: ".focus-section",
+      element: "#engine-toolbar-button-focus_control_composite_engine_view_1",
       overlayColor: "rgba(0, 0, 0, 0.3)", // More transparent for interactive controls
       disableActiveInteraction: false, // Allow interaction with the focus control
       popover: {
@@ -162,7 +167,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "celestial-info",
-      element: ".celestial-info-section",
+      element: "#engine-toolbar-button-celestial_info_composite_engine_view_1",
       popover: {
         title: "ℹ️ Celestial Info",
         description:
@@ -173,7 +178,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "renderer-info",
-      element: ".renderer-info-section",
+      element: "#engine-toolbar-button-renderer_info_composite_engine_view_1",
       popover: {
         title: "🎨 Renderer & Performance",
         description:
@@ -184,7 +189,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "engine-settings",
-      element: ".engine-settings-section",
+      element: "#engine-toolbar-button-engine_settings_composite_engine_view_1",
       popover: {
         title: "⚙️ Engine Settings",
         description:
