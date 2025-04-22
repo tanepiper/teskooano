@@ -80,27 +80,39 @@ export class DockviewController {
     this._api = createDockview(element, {
       className: "dockview-theme-abyss",
       createComponent: (options) => {
-        console.log(`DockviewController: Creating component for name: '${options.name}'`);
+        console.log(
+          `DockviewController: Creating component for name: '${options.name}'`,
+        );
         // Check the registry first
         const RegisteredComponent = this._registeredComponents.get(
           options.name,
         );
         if (RegisteredComponent) {
-          console.log(`DockviewController: Found registered component: ${RegisteredComponent.name}`);
+          console.log(
+            `DockviewController: Found registered component: ${RegisteredComponent.name}`,
+          );
           try {
-             return new RegisteredComponent();
+            return new RegisteredComponent();
           } catch (err) {
-             console.error(`DockviewController: Error instantiating registered component '${options.name}':`, err);
-             const errorPanel = new Panel();
-             // Check if err is an Error object before accessing message
-             const errorMessage = err instanceof Error ? err.message : String(err);
-             errorPanel.updateContent(`Error creating component: ${errorMessage}`);
-             return errorPanel;
+            console.error(
+              `DockviewController: Error instantiating registered component '${options.name}':`,
+              err,
+            );
+            const errorPanel = new Panel();
+            // Check if err is an Error object before accessing message
+            const errorMessage =
+              err instanceof Error ? err.message : String(err);
+            errorPanel.updateContent(
+              `Error creating component: ${errorMessage}`,
+            );
+            return errorPanel;
           }
         }
 
         // Fallback for default or unknown (or if we chose not to pre-register above)
-        console.log(`DockviewController: Component '${options.name}' not in registry, using fallback.`);
+        console.log(
+          `DockviewController: Component '${options.name}' not in registry, using fallback.`,
+        );
         switch (options.name) {
           /* Cases for components not pre-registered could go here */
           /* e.g., if we didn't pre-register settings_view: 
@@ -157,57 +169,90 @@ export class DockviewController {
    * @param options Options for adding the panel (Dockview AddPanelParameters)
    * @returns The newly added panel (IDockviewPanel)
    */
-  public addPanel(options: Parameters<DockviewApi['addPanel']>[0]): IDockviewPanel {
+  public addPanel(
+    options: Parameters<DockviewApi["addPanel"]>[0],
+  ): IDockviewPanel {
     // Ensure the component type is registered if it's a string name
-    if (typeof options.component === 'string' && !this._registeredComponents.has(options.component)) {
-      console.warn(`DockviewController: Component '${options.component}' not pre-registered. Panel may fail to render.`);
+    if (
+      typeof options.component === "string" &&
+      !this._registeredComponents.has(options.component)
+    ) {
+      console.warn(
+        `DockviewController: Component '${options.component}' not pre-registered. Panel may fail to render.`,
+      );
       // Optionally, we could throw an error or provide a default component here.
     }
-    
+
     // We can add more logic here later, like checking for existing IDs, etc.
     return this._api.addPanel(options);
   }
 
   /**
    * Creates a new group or returns an existing one with the provided name.
+   * Handles cases where the group might have been closed by the user.
    * @param groupName Logical name for the group
    * @param options Optional configuration for the new group
-   * @returns The group object or null if creation failed
+   * @returns The group object or null if creation failed or group not found
    */
   public createOrGetGroup(
-    groupName: string, 
-    options?: AddGroupOptions
+    groupName: string,
+    options?: AddGroupOptions,
   ): DockviewGroup | null {
-    // Check if we already have the group cached
-    if (this._groupNameToIdMap.has(groupName)) {
-      const groupId = this._groupNameToIdMap.get(groupName)!;
-      const cachedGroup = this._groupCache.get(groupId) || this._api.getGroup(groupId);
-      
-      if (cachedGroup) {
-        this._groupCache.set(groupId, cachedGroup);
-        return cachedGroup;
+    let group: DockviewGroup | null = null;
+    const groupId = this._groupNameToIdMap.get(groupName);
+
+    // 1. Check if we have a known ID for this group name
+    if (groupId) {
+      // 2. Try getting the group from the cache or API
+      group = this._groupCache.get(groupId) || this._api.getGroup(groupId);
+
+      // 3. Validate if the retrieved group actually exists in the Dockview instance
+      if (group && this._api.getGroup(groupId)) {
+        // Group exists and is valid, update cache and return
+        this._groupCache.set(groupId, group);
+        console.log(
+          `DockviewController: Found existing group '${groupName}' with ID: ${groupId}`,
+        );
+        return group;
+      } else {
+        // Group ID was mapped, but group no longer exists (closed by user)
+        console.warn(
+          `DockviewController: Group '${groupName}' (ID: ${groupId}) not found or invalid. Removing stale entry.`,
+        );
+        this._groupNameToIdMap.delete(groupName);
+        if (groupId) this._groupCache.delete(groupId); // Clear cache for the old ID
+        group = null; // Ensure we proceed to create a new one
       }
-      
-      // Group no longer exists, remove from cache
-      this._groupNameToIdMap.delete(groupName);
-      this._groupCache.delete(groupId);
     }
-    
-    // Create a new group
-    try {
-      const newGroup = this._api.addGroup(options);
-      const newId = newGroup.id;
-      
-      // Store mappings
-      this._groupNameToIdMap.set(groupName, newId);
-      this._groupCache.set(newId, newGroup);
-      
-      console.log(`DockviewController: Created new group '${groupName}' with ID: ${newId}`);
-      return newGroup;
-    } catch (error) {
-      console.error(`DockviewController: Failed to create group '${groupName}':`, error);
-      return null;
+
+    // 4. If no valid group was found, create a new one
+    if (!group) {
+      console.log(
+        `DockviewController: Creating new group for '${groupName}'...`,
+      );
+      try {
+        const newGroup = this._api.addGroup(options);
+        const newId = newGroup.id;
+
+        // Store new mappings
+        this._groupNameToIdMap.set(groupName, newId);
+        this._groupCache.set(newId, newGroup);
+
+        console.log(
+          `DockviewController: Created new group '${groupName}' with ID: ${newId}`,
+        );
+        return newGroup;
+      } catch (error) {
+        console.error(
+          `DockviewController: Failed to create group '${groupName}':`,
+          error,
+        );
+        return null;
+      }
     }
+
+    // Should technically not be reached, but satisfies TS
+    return group;
   }
 
   /**
@@ -216,40 +261,44 @@ export class DockviewController {
   public getGroupByName(groupName: string): DockviewGroup | null {
     const groupId = this._groupNameToIdMap.get(groupName);
     if (!groupId) return null;
-    
+
     return this._api.getGroup(groupId) || null;
   }
-  
+
   /**
    * Adds a panel to a specified group using the group's ID
    */
   public addPanelToGroup(
     group: DockviewGroup,
-    panelOptions: AddPanelOptions
+    panelOptions: AddPanelOptions,
   ): IDockviewPanel | null {
+    // Log the group ID we are attempting to add to
+    console.log(
+      `DockviewController: Attempting to add panel '${panelOptions.id}' to group ID: ${group.id}`,
+    );
     try {
       // Create panel using the main API but target the specific group
       const panelWithPosition = {
         ...panelOptions,
       };
-      
+
       // Add position targeting if not already specified
       if (!panelWithPosition.position) {
-        panelWithPosition.position = { 
+        panelWithPosition.position = {
           referenceGroup: group.id,
         };
       }
-      
+
       // Add the panel using the main API
       const panel = this._api.addPanel(panelWithPosition);
-      
+
       // Activate the panel
       panel.api.setActive();
       return panel;
     } catch (error) {
       console.error(
         `DockviewController: Failed to add panel '${panelOptions.id}' to group ID '${group.id}':`,
-        error
+        error,
       );
       return null;
     }
@@ -265,14 +314,14 @@ export class DockviewController {
   ): IDockviewPanel | null {
     // Get or create the group
     const group = this.createOrGetGroup(groupName, groupOptions);
-    
+
     if (!group) {
       console.error(
-        `DockviewController: Cannot add panel '${panelOptions.id}' because group '${groupName}' could not be created.`
+        `DockviewController: Cannot add panel '${panelOptions.id}' because group '${groupName}' could not be created.`,
       );
       return null;
     }
-    
+
     return this.addPanelToGroup(group, panelOptions);
   }
 
@@ -282,19 +331,24 @@ export class DockviewController {
   public maximizeGroupByName(groupName: string): boolean {
     const group = this.getGroupByName(groupName);
     if (!group) {
-      console.error(`DockviewController: Cannot maximize group '${groupName}' because it doesn't exist.`);
+      console.error(
+        `DockviewController: Cannot maximize group '${groupName}' because it doesn't exist.`,
+      );
       return false;
     }
-    
+
     try {
       this._api.maximizeGroup(group);
       return true;
     } catch (error) {
-      console.error(`DockviewController: Failed to maximize group '${groupName}':`, error);
+      console.error(
+        `DockviewController: Failed to maximize group '${groupName}':`,
+        error,
+      );
       return false;
     }
   }
-  
+
   /**
    * Exit maximized state for any maximized group
    */
@@ -302,7 +356,10 @@ export class DockviewController {
     try {
       this._api.exitMaximizedGroup();
     } catch (error) {
-      console.error(`DockviewController: Failed to exit maximized group:`, error);
+      console.error(
+        `DockviewController: Failed to exit maximized group:`,
+        error,
+      );
     }
   }
 

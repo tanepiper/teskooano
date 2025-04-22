@@ -19,13 +19,13 @@ The `DockviewController` is responsible for managing the UI layout of the applic
 
 ```typescript
 // In your main application initialization
-const dockviewContainer = document.getElementById('dockview-container');
+const dockviewContainer = document.getElementById("dockview-container");
 const dockviewController = new DockviewController(dockviewContainer);
 
 // Pass the controller to other components that need to interact with the UI
 const toolbarController = new ToolbarController(
-  document.getElementById('toolbar-container'), 
-  dockviewController
+  document.getElementById("toolbar-container"),
+  dockviewController,
 );
 ```
 
@@ -33,31 +33,31 @@ const toolbarController = new ToolbarController(
 
 ```typescript
 // Register a custom panel component
-dockviewController.registerComponent('my_custom_panel', MyCustomPanelClass);
+dockviewController.registerComponent("my_custom_panel", MyCustomPanelClass);
 ```
 
 #### Working with Groups
 
 ```typescript
 // Create (or get existing) named group
-const controlsGroup = dockviewController.createOrGetGroup('controls');
+const controlsGroup = dockviewController.createOrGetGroup("controls");
 
 // Add a panel directly to a group
 dockviewController.addPanelToGroup(controlsGroup, {
-  id: 'settings_panel',
-  component: 'settings',
-  title: 'Settings'
+  id: "settings_panel",
+  component: "settings",
+  title: "Settings",
 });
 
 // Add a panel to a named group (creates the group if it doesn't exist)
-dockviewController.addPanelToNamedGroup('engine_views', {
-  id: 'main_engine_view',
-  component: 'composite_engine_view',
-  title: 'Main Engine View'
+dockviewController.addPanelToNamedGroup("engine_views", {
+  id: "main_engine_view",
+  component: "composite_engine_view",
+  title: "Main Engine View",
 });
 
 // Maximize a group by name
-dockviewController.maximizeGroupByName('engine_views');
+dockviewController.maximizeGroupByName("engine_views");
 
 // Exit maximized view
 dockviewController.exitMaximizedGroup();
@@ -79,4 +79,4 @@ The `ToolbarController` is responsible for managing the toolbar UI and adding en
 
 ## TourController
 
-The `TourController` manages application tours that guide users through features of the application. 
+The `TourController` manages application tours that guide users through features of the application.

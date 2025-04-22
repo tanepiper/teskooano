@@ -1,4 +1,4 @@
-import type { ModalManager, ModalResult } from '../shared/ModalManager';
+import type { ModalManager, ModalResult } from "../shared/ModalManager";
 
 /**
  * A custom element that acts as a trigger to show the initial tour prompt modal.
@@ -39,7 +39,13 @@ export class TeskooanoTourModal extends HTMLElement {
 
   private async showModalIfNeeded(): Promise<void> {
     // Ensure manager exists, callbacks are set, element is in DOM, and modal hasn't been shown
-    if (!TeskooanoTourModal.modalManager || !this.onAccept || !this.onDecline || !this.isConnected || this.modalShown) {
+    if (
+      !TeskooanoTourModal.modalManager ||
+      !this.onAccept ||
+      !this.onDecline ||
+      !this.isConnected ||
+      this.modalShown
+    ) {
       return;
     }
 
@@ -47,7 +53,7 @@ export class TeskooanoTourModal extends HTMLElement {
 
     try {
       const result: ModalResult = await TeskooanoTourModal.modalManager.show({
-        id: 'tour-prompt-modal', // Give it a specific ID
+        id: "tour-prompt-modal", // Give it a specific ID
         title: "Welcome to Teskooano!",
         content: `<p>Would you like to take a quick tour of the interface?</p>
                   <p><small>You can restart the tour later from the help menu.</small></p>`, // HTML content
@@ -59,20 +65,21 @@ export class TeskooanoTourModal extends HTMLElement {
       });
 
       // Handle the result
-      if (result === 'confirm') {
+      if (result === "confirm") {
         this.onAccept();
-      } else { // 'close' or 'dismissed' treated as decline
+      } else {
+        // 'close' or 'dismissed' treated as decline
         this.onDecline();
       }
     } catch (error) {
       console.error("Error showing tour modal:", error);
       // Optionally call decline if there was an error showing the modal
-      if(this.onDecline) {
-         this.onDecline();
+      if (this.onDecline) {
+        this.onDecline();
       }
     } finally {
       // Remove this trigger element from the DOM after the modal is handled
-      this.remove(); 
+      this.remove();
     }
   }
 }

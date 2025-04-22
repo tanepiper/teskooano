@@ -137,7 +137,7 @@ window.addEventListener("DOMContentLoaded", () => {
     tourController.markTourModalAsShown();
 
     // Create the custom element instance
-    const tourModalElement = document.createElement('teskooano-tour-modal');
+    const tourModalElement = document.createElement("teskooano-tour-modal");
 
     // Set callbacks (this will also trigger showing the modal)
     (tourModalElement as TeskooanoTourModal).setCallbacks(

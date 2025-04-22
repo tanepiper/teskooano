@@ -101,13 +101,13 @@ template.innerHTML = `
 export class TeskooanoModal extends HTMLElement {
   static get observedAttributes() {
     return [
-      'title', 
-      'confirm-text', 
-      'close-text', 
-      'secondary-text', 
-      'hide-close-button', 
-      'hide-confirm-button', 
-      'hide-secondary-button'
+      "title",
+      "confirm-text",
+      "close-text",
+      "secondary-text",
+      "hide-close-button",
+      "hide-confirm-button",
+      "hide-secondary-button",
     ];
   }
 
@@ -131,37 +131,44 @@ export class TeskooanoModal extends HTMLElement {
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
     // Get references to elements
-    this.titleElement = this.shadowRoot!.querySelector('.modal-title')!;
-    this.confirmButton = this.shadowRoot!.querySelector('.confirm-button')!;
-    this.closeButton = this.shadowRoot!.querySelector('.close-button')!;
-    this.secondaryButton = this.shadowRoot!.querySelector('.secondary-button')!;
-    this.confirmButtonText = this.shadowRoot!.querySelector('.confirm-text')!;
-    this.closeButtonText = this.shadowRoot!.querySelector('.close-text')!;
-    this.secondaryButtonText = this.shadowRoot!.querySelector('.secondary-text')!;
+    this.titleElement = this.shadowRoot!.querySelector(".modal-title")!;
+    this.confirmButton = this.shadowRoot!.querySelector(".confirm-button")!;
+    this.closeButton = this.shadowRoot!.querySelector(".close-button")!;
+    this.secondaryButton = this.shadowRoot!.querySelector(".secondary-button")!;
+    this.confirmButtonText = this.shadowRoot!.querySelector(".confirm-text")!;
+    this.closeButtonText = this.shadowRoot!.querySelector(".close-text")!;
+    this.secondaryButtonText =
+      this.shadowRoot!.querySelector(".secondary-text")!;
 
     // Set up button event listeners
-    this.confirmButton.addEventListener('click', () => {
+    this.confirmButton.addEventListener("click", () => {
       if (this.confirmHandler) {
         this.confirmHandler();
       }
       // Dispatch custom event for modal-confirm
-      this.dispatchEvent(new CustomEvent('modal-confirm', { bubbles: true, composed: true }));
+      this.dispatchEvent(
+        new CustomEvent("modal-confirm", { bubbles: true, composed: true }),
+      );
     });
 
-    this.closeButton.addEventListener('click', () => {
+    this.closeButton.addEventListener("click", () => {
       if (this.closeHandler) {
         this.closeHandler();
       }
       // Dispatch custom event for modal-close
-      this.dispatchEvent(new CustomEvent('modal-close', { bubbles: true, composed: true }));
+      this.dispatchEvent(
+        new CustomEvent("modal-close", { bubbles: true, composed: true }),
+      );
     });
 
-    this.secondaryButton.addEventListener('click', () => {
+    this.secondaryButton.addEventListener("click", () => {
       if (this.secondaryHandler) {
         this.secondaryHandler();
       }
       // Dispatch custom event for modal-additional
-      this.dispatchEvent(new CustomEvent('modal-additional', { bubbles: true, composed: true }));
+      this.dispatchEvent(
+        new CustomEvent("modal-additional", { bubbles: true, composed: true }),
+      );
     });
   }
 
@@ -171,16 +178,20 @@ export class TeskooanoModal extends HTMLElement {
     this.updateButtonTexts();
   }
 
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+  attributeChangedCallback(
+    name: string,
+    oldValue: string | null,
+    newValue: string | null,
+  ) {
     if (oldValue === newValue) return;
 
     switch (name) {
-      case 'title':
+      case "title":
         this.updateTitle();
         break;
-      case 'confirm-text':
-      case 'close-text':
-      case 'secondary-text':
+      case "confirm-text":
+      case "close-text":
+      case "secondary-text":
         this.updateButtonTexts();
         break;
       // Visibility attributes are handled via CSS
@@ -188,31 +199,38 @@ export class TeskooanoModal extends HTMLElement {
   }
 
   private updateTitle() {
-    this.titleElement.textContent = this.getAttribute('title') || 'Dialog';
+    this.titleElement.textContent = this.getAttribute("title") || "Dialog";
   }
 
   private updateButtonTexts() {
-    this.confirmButtonText.textContent = this.getAttribute('confirm-text') || 'Confirm';
-    this.closeButtonText.textContent = this.getAttribute('close-text') || 'Cancel';
-    this.secondaryButtonText.textContent = this.getAttribute('secondary-text') || 'Secondary Action';
+    this.confirmButtonText.textContent =
+      this.getAttribute("confirm-text") || "Confirm";
+    this.closeButtonText.textContent =
+      this.getAttribute("close-text") || "Cancel";
+    this.secondaryButtonText.textContent =
+      this.getAttribute("secondary-text") || "Secondary Action";
   }
 
   // Public methods to set content and button handlers
   public setContent(content: string | HTMLElement) {
-    const contentSlot = this.shadowRoot!.querySelector('slot[name="content"]') as HTMLSlotElement;
-    
+    const contentSlot = this.shadowRoot!.querySelector(
+      'slot[name="content"]',
+    ) as HTMLSlotElement;
+
     // Clear existing content
-    const assignedElements = contentSlot.assignedElements ? contentSlot.assignedElements() : [];
-    [...assignedElements].forEach(el => el.remove());
-    
+    const assignedElements = contentSlot.assignedElements
+      ? contentSlot.assignedElements()
+      : [];
+    [...assignedElements].forEach((el) => el.remove());
+
     // Add new content
-    if (typeof content === 'string') {
-      const contentElement = document.createElement('div');
-      contentElement.slot = 'content';
+    if (typeof content === "string") {
+      const contentElement = document.createElement("div");
+      contentElement.slot = "content";
       contentElement.innerHTML = content;
       this.appendChild(contentElement);
     } else {
-      content.slot = 'content';
+      content.slot = "content";
       this.appendChild(content);
     }
   }
@@ -234,4 +252,4 @@ export class TeskooanoModal extends HTMLElement {
 const ELEMENT_TAG = "teskooano-modal";
 if (!customElements.get(ELEMENT_TAG)) {
   customElements.define(ELEMENT_TAG, TeskooanoModal);
-} 
+}

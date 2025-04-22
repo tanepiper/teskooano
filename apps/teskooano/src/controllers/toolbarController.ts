@@ -32,9 +32,9 @@ export class ToolbarController {
    */
   private _compositePanelCounter = 0; // Renamed
   /**
-   * Define a constant ID for the main engine views group.
+   * Define a constant logical name for the engine group
    */
-  private _engineGroupId: string | null = null; // Store the ID after creation
+  private readonly ENGINE_GROUP_NAME = "engine_views";
   /**
    * Store the ID of the initially created engine panel for potential reference.
    */
@@ -44,11 +44,6 @@ export class ToolbarController {
    * Track if we're on a mobile device
    */
   private _isMobileDevice: boolean = false;
-  /**
-   * Store orientation state and unsubscribe function
-   */
-  private _currentOrientation: Orientation | null = null;
-  private _layoutUnsubscribe: (() => void) | null = null;
 
   // Cache toolbar elements to avoid repeated queries
   private _githubButton: HTMLElement | null = null;
@@ -109,17 +104,6 @@ export class ToolbarController {
     this._dockviewController = dockviewController;
     this._tourController = tourController || null;
 
-    // Subscribe to layout orientation changes
-    this._layoutUnsubscribe = layoutOrientationStore.subscribe(
-      (orientation) => {
-        this.handleOrientationChange(orientation);
-      },
-    );
-    // Get initial orientation
-    this._currentOrientation = layoutOrientationStore.get();
-    // Apply initial layout based on orientation (optional, could be deferred)
-    // this.handleOrientationChange(this._currentOrientation);
-
     // Detect mobile device
     this._isMobileDevice = this.detectMobileDevice();
 
@@ -166,11 +150,6 @@ export class ToolbarController {
    */
   public destroy(): void {
     window.removeEventListener("resize", this.handleResize);
-    // Unsubscribe from layout changes on destroy
-    if (this._layoutUnsubscribe) {
-      this._layoutUnsubscribe();
-      this._layoutUnsubscribe = null;
-    }
   }
 
   /**
@@ -190,8 +169,7 @@ export class ToolbarController {
   public initializeFirstEngineView(): void {
     // Ensure we only add the *first* view this way
     if (this._compositePanelCounter === 0) {
-      // Ensure the engine group exists before adding the panel
-      this.ensureEngineGroupExists();
+      // No need to explicitly ensure group exists here, addPanelToNamedGroup handles it
       this.addCompositeEnginePanel();
     } else {
       console.warn(
@@ -201,44 +179,11 @@ export class ToolbarController {
   }
 
   /**
-   * Checks if the main engine group exists, and creates it if it doesn't.
-   */
-  private ensureEngineGroupExists(): void {
-    // Check if we already created and stored the ID
-    if (this._engineGroupId) {
-      const group = this._dockviewController.api.getGroup(this._engineGroupId);
-      if (group) {
-        return; // Group exists, we're good
-      }
-      // Group ID was stored but group no longer exists (e.g., closed by user?)
-      console.warn(`Engine group ID ${this._engineGroupId} was stored but group not found. Will recreate.`);
-      this._engineGroupId = null; // Reset stored ID
-    }
-
-    console.log(`ToolbarController: Engine group not found or ID invalid, creating...`);
-    try {
-      // Add the group without specific options, let Dockview place it and generate ID
-      const newGroup = this._dockviewController.api.addGroup();
-      this._engineGroupId = newGroup.id; // Store the generated ID
-      console.log(`ToolbarController: Created new engine group with ID: ${this._engineGroupId}`);
-    } catch (error) {
-      console.error("Failed to create initial engine group:", error);
-      // Handle error appropriately - maybe disable adding views?
-    }
-  }
-
-  /**
    * Adds a new composite engine panel to the dedicated engine group.
    */
   private addCompositeEnginePanel(): void {
-    // Ensure the target group exists before adding the panel
-    this.ensureEngineGroupExists();
-
-    // If group creation failed or ID is somehow null, bail out
-    if (!this._engineGroupId) {
-      console.error("Cannot add engine panel: Engine group ID is not available.");
-      return;
-    }
+    // Use the logical group name directly
+    const groupName = this.ENGINE_GROUP_NAME;
 
     this._compositePanelCounter++;
     const counter = this._compositePanelCounter;
@@ -251,7 +196,7 @@ export class ToolbarController {
       id: section.id.replace("{{COUNTER}}", counter.toString()),
     }));
 
-    // Always add to the dedicated engine group
+    // Use the new controller method to add the panel to the named group
     const panelOptions: AddPanelOptions = {
       id: compositeViewId,
       component: "composite_engine_view", // New component type
@@ -260,21 +205,29 @@ export class ToolbarController {
         title: compositeViewTitle,
         sections: uiSections, // Pass UI sections config
       },
-      // Use position.referenceGroup to target the group ID
-      position: { referenceGroup: this._engineGroupId },
+      // position is handled internally by addPanelToNamedGroup
     };
 
     try {
-      // Create the composite engine panel
-      const compositePanel = this._dockviewController.api.addPanel(panelOptions);
+      // Create the composite engine panel using the controller method
+      const compositePanel = this._dockviewController.addPanelToNamedGroup(
+        groupName,
+        panelOptions,
+      );
+
+      if (!compositePanel) {
+        throw new Error(
+          `Failed to add panel '${compositeViewId}' to group '${groupName}'`,
+        );
+      }
 
       // Store the first engine view ID if it's the first one
       if (counter === 1) {
         this._firstEngineViewId = compositeViewId;
       }
 
-      // Activate the newly added panel
-      compositePanel.api.setActive();
+      // Activate the newly added panel (panel is already active by default)
+      // compositePanel.api.setActive(); // Usually not needed if added via controller
     } catch (error) {
       console.error(
         `Failed to create engine window panels for counter ${counter}:`,
@@ -580,16 +533,6 @@ export class ToolbarController {
       );
     }
 
-    // Add event listeners
-    systemControls.addEventListener(
-      "load-seed",
-      this.handleLoadSeed.bind(this) as EventListener,
-    );
-    systemControls.addEventListener(
-      "system-action",
-      this.handleSystemAction.bind(this) as EventListener,
-    );
-
     return systemControls;
   }
 
@@ -667,231 +610,4 @@ export class ToolbarController {
     // this.restoreSystemState();
   }
   // --- End Toolbar Creation Methods ---
-
-  // --- Event Handlers for SystemControls ---
-
-  private handleLoadSeed(event: CustomEvent<{ seed: string }>): void {
-    const seed = event.detail.seed;
-    console.log(
-      `ToolbarController: Received load-seed event with seed: ${seed}`,
-    );
-
-    // TODO: Add actual seed loading logic here
-    // For now, simulate loading a system
-    // This would dispatch to your engine/state controller for real implementation
-
-    // Example: Generate a random number of celestials (3-12)
-    const celestialCount = Math.floor(Math.random() * 10) + 3;
-    // Update the UI to show the system is loaded
-    this.updateSystemControlsState(
-      true,
-      `System ${seed.substring(0, 6)}`,
-      celestialCount,
-    );
-
-    // Store the seed (in a real implementation, this would be stored in your app state)
-    if (this._systemControls) {
-      this._systemControls.setAttribute("seed", seed);
-    }
-  }
-
-  private handleSystemAction(event: CustomEvent<{ action: string }>): void {
-    const action = event.detail.action;
-    console.log(`ToolbarController: Received system-action event: ${action}`);
-
-    switch (action) {
-      case "create-blank":
-        console.log("Creating blank system...");
-        // In real implementation: Initialize a new empty system
-        this.updateSystemControlsState(true, "New System", 0);
-        break;
-
-      case "random":
-        console.log("Creating random system...");
-        // Generate a random seed
-        const randomSeed = Math.random().toString(36).substring(2, 10);
-        console.log(`Generated random seed: ${randomSeed}`);
-
-        // Store the seed in the component for copy functionality
-        if (this._systemControls) {
-          this._systemControls.setAttribute("seed", randomSeed);
-        }
-
-        // Simulate loading a system with random number of celestials (5-15)
-        const randomCelestialCount = Math.floor(Math.random() * 11) + 5;
-        this.updateSystemControlsState(
-          true,
-          `Random ${randomSeed.substring(0, 4)}`,
-          randomCelestialCount,
-        );
-        break;
-
-      case "import":
-        console.log("TODO: Implement import system from JSON");
-        // Example of opening a file dialog - would need to be hooked to real file handling
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = ".json";
-        input.onchange = (e) => {
-          const target = e.target as HTMLInputElement;
-          if (target?.files?.length) {
-            const file = target.files[0];
-            console.log(`Selected file: ${file.name}`);
-            // In real implementation: Read file and parse JSON
-
-            // For demo - simulate successful import
-            this.updateSystemControlsState(
-              true,
-              file.name.replace(".json", ""),
-              8,
-            );
-          }
-        };
-        input.click();
-        break;
-
-      case "copy-seed":
-        // This is handled internally by the component
-        console.log("Copy seed handled by component");
-        break;
-
-      case "export":
-        console.log("TODO: Implement export system to JSON");
-
-        // Get current seed for filename
-        const seed = this._systemControls?.getAttribute("seed") || "system";
-
-        // Generate dummy example JSON
-        const exportData = {
-          seed,
-          name:
-            this._systemControls?.getAttribute("system-name") ||
-            "Unnamed System",
-          celestialCount: parseInt(
-            this._systemControls?.getAttribute("celestial-count") || "0",
-            10,
-          ),
-          celestials: [], // Would contain actual celestial data in real implementation
-        };
-
-        // Create a download link
-        const dataStr =
-          "data:text/json;charset=utf-8," +
-          encodeURIComponent(JSON.stringify(exportData, null, 2));
-        const downloadLink = document.createElement("a");
-        downloadLink.setAttribute("href", dataStr);
-        downloadLink.setAttribute("download", `${seed}.json`);
-        document.body.appendChild(downloadLink); // Required for Firefox
-        downloadLink.click();
-        downloadLink.remove();
-        break;
-
-      case "clear":
-        console.log("Clearing system...");
-        this.updateSystemControlsState(false, null, 0);
-        break;
-
-      default:
-        console.warn(`Unknown system action received: ${action}`);
-    }
-  }
-
-  /**
-   * Helper method to update the attributes of the system-controls component.
-   * This should be called whenever the application's system state changes.
-   */
-  public updateSystemControlsState(
-    isLoaded: boolean,
-    systemName: string | null,
-    celestialCount: number,
-  ): void {
-    if (!this._systemControls) return;
-
-    if (isLoaded) {
-      this._systemControls.setAttribute("system-loaded", "");
-      if (systemName) {
-        this._systemControls.setAttribute("system-name", systemName);
-      }
-      this._systemControls.setAttribute(
-        "celestial-count",
-        celestialCount.toString(),
-      );
-    } else {
-      this._systemControls.removeAttribute("system-loaded");
-      this._systemControls.removeAttribute("system-name");
-      this._systemControls.removeAttribute("celestial-count");
-      // Only remove seed if we're clearing the system completely
-      this._systemControls.removeAttribute("seed");
-    }
-  }
-
-  // Optional: Restore system state from localStorage or other persistence
-  private restoreSystemState(): void {
-    // This is just a placeholder example using localStorage
-    // In a real app, you'd get this from your app state management
-    try {
-      const savedState = localStorage.getItem("teskooano-system-state");
-      if (savedState) {
-        const { isLoaded, systemName, celestialCount, seed } =
-          JSON.parse(savedState);
-        this.updateSystemControlsState(isLoaded, systemName, celestialCount);
-
-        // Restore seed for copy functionality
-        if (seed && this._systemControls) {
-          this._systemControls.setAttribute("seed", seed);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to restore system state:", error);
-    }
-  }
-
-  // --- New method to handle orientation changes for Dockview layout ---
-  private handleOrientationChange(orientation: Orientation): void {
-    if (this._currentOrientation === orientation) {
-      return; // No change
-    }
-    this._currentOrientation = orientation;
-
-    // Get the Dockview API
-    const dockviewApi = this._dockviewController.api;
-
-    // Find the main composite panel (assuming only one for now)
-    // TODO: Handle multiple engine views if needed
-    const mainPanelId = `composite_engine_view_1`;
-    const mainPanel = dockviewApi.panels.find((p) => p.id === mainPanelId);
-
-    if (!mainPanel) {
-      console.warn(
-        `Main panel ${mainPanelId} not found for orientation change.`,
-      );
-      return;
-    }
-
-    // The CompositeEnginePanel component *itself* should handle the internal
-    // layout split (engine vs UI) using CSS and the layout-internal-* classes
-    // driven by the layoutOrientationStore.
-    // Dockview's job here is mainly to ensure the panel/group has the right dimensions.
-
-    // We might not need to *move* panels with Dockview API if the CompositeEnginePanel
-    // correctly uses flexbox internally based on the store.
-    // Let's ensure the Dockview container allows flex layout to work.
-
-    // It's possible the parent group needs resizing or constraints adjusted,
-    // but let's rely on the CompositeEnginePanel's internal CSS first.
-    // For now, we just log, as the change might already be handled visually
-    // by the CompositeEnginePanel reacting to the store change.
-
-    // --- Potential future Dockview API adjustments (if internal CSS isn't enough) ---
-    /*
-    if (orientation === 'landscape') {
-      // Example: Force a resize or ensure the group isn't constrained vertically
-      mainPanel.group.api.setSize({ height: mainPanel.group.height, width: mainPanel.group.width }); // Trigger reflow?
-    } else {
-      // Portrait adjustments if needed
-    }
-    */
-    // --- End potential adjustments ---
-  }
-  // --- End orientation change handler ---
 }
