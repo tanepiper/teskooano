@@ -135,6 +135,60 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* =================================== */
+  /* === Dockview Cosmic Dark Theme === */
+  /* =================================== */
+
+  /* General Background */
+  --dv-background-color: #0f0f1a; /* Very dark deep blue/purple */
+
+  /* Panel/Group Backgrounds */
+  --dv-group-view-background-color: #1a1a2e; /* Slightly lighter dark blue/purple */
+  --dv-tabs-and-actions-container-background-color: #1f1f38; /* A bit lighter for tab bar */
+
+  /* Tab Background Colors */
+  --dv-activegroup-visiblepanel-tab-background-color: #4a4a7f; /* Muted purple for active tab */
+  --dv-activegroup-hiddenpanel-tab-background-color: #2c2c54; /* Darker purple for inactive tabs in active group */
+  --dv-inactivegroup-visiblepanel-tab-background-color: #303050; /* Dark grey/purple for visible tab in inactive group */
+  --dv-inactivegroup-hiddenpanel-tab-background-color: #252540; /* Very dark grey/purple for hidden tabs in inactive group */
+
+  /* Tab Text Colors */
+  --dv-activegroup-visiblepanel-tab-color: #e0e0ff; /* Light lavender for active tab text */
+  --dv-activegroup-hiddenpanel-tab-color: #a0a0c0; /* Muted lavender/grey for inactive tab text */
+  --dv-inactivegroup-visiblepanel-tab-color: #b0b0d0; /* Slightly brighter muted lavender */
+  --dv-inactivegroup-hiddenpanel-tab-color: #8080a0; /* Darker muted lavender/grey */
+
+  /* Borders and Separators */
+  --dv-separator-border: 1px solid #3a3a6a; /* Subtle purple border */
+  --dv-paneview-header-border-color: #3a3a6a; /* Matching border color */
+  --dv-tab-divider-color: #3a3a6a; /* Matching divider */
+
+  /* Interaction States */
+  --dv-paneview-active-outline-color: #7f7fdc; /* Brighter lavender/blue outline for active panel */
+  --dv-icon-hover-background-color: rgba(
+    127,
+    127,
+    220,
+    0.2
+  ); /* Semi-transparent lavender hover */
+  --dv-active-sash-color: #7f7fdc; /* Matching sash color */
+  --dv-drag-over-background-color: rgba(
+    74,
+    74,
+    127,
+    0.3
+  ); /* Semi-transparent purple drag overlay */
+  --dv-drag-over-border-color: #7f7fdc; /* Lavender border for drag overlay */
+
+  /* Fonts and Sizing (Using defaults unless specified otherwise) */
+  --dv-tabs-and-actions-container-font-size: 0.8rem; /* Slightly smaller font */
+  --dv-tabs-and-actions-container-height: 30px; /* Slightly shorter tab bar */
+
+  /* Other Elements */
+  --dv-tab-close-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23a0a0c0" viewBox="0 0 12 12"><path d="M9.3 2.7l-6.6 6.6-0.7-0.7 6.6-6.6 0.7 0.7z"/><path d="M2.7 2.7l6.6 6.6-0.7 0.7-6.6-6.6 0.7-0.7z"/></svg>'); /* Muted lavender 'X' icon */
+  --dv-tabs-container-scrollbar-color: #4a4a7f #1f1f38; /* Scrollbar track and thumb */
+  --dv-floating-box-shadow: 0 5px 15px rgba(127, 127, 220, 0.2); /* Subtle lavender glow */
 }
 
 /* ==========================================================================
@@ -637,6 +691,21 @@ svg {
   touch-action: none;
 }
 
+.dv-groupview-floating,
+.dv-resize-container {
+  border-radius: var(--radius-md);
+}
+.dv-groupview-floating {
+  container-name: floating-groupview;
+  container-type: inline-size;
+}
+
+@container floating-groupview (max-width: 1920px) {
+  .dv-tabs-and-actions-container {
+    background-color: rgba(0, 0, 0, 0);
+  }
+}
+
 /* --- Composite Panel Layout --- */
 /* Keep the layout structure but use new tokens */
 .composite-engine-panel {
@@ -989,6 +1058,48 @@ toolbar-simulation-controls .display-value {
   min-height: 30px; /* Keep or adjust as needed */
   /* Add padding/margin using tokens if necessary */
   /* padding: var(--spacing-sm); */
+}
+
+/* ==========================================================================
+   Dockview Theme Overrides (Beyond :root variables)
+   ========================================================================== */
+
+/* Add roundness to tabs */
+.dockview-theme-abyss .dv-tab {
+  /* Apply to top corners, assuming tabs are on top */
+  border-top-left-radius: var(--radius-sm);
+  border-top-right-radius: var(--radius-sm);
+  /* Remove default bottom border if it looks weird with radius */
+  /* border-bottom: none; */
+  /* Add subtle padding if text looks cramped */
+  /* padding-left: calc(var(--space-2) + 2px); */
+  /* padding-right: calc(var(--space-2) + 2px); */
+}
+
+/* Ensure active tab background fills the rounded corners */
+.dockview-theme-abyss .dv-tab.active-tab {
+  /* Use the active tab background variable */
+  background-color: var(--dv-activegroup-visiblepanel-tab-background-color);
+}
+
+/* Add roundness to the group control/header area */
+.dockview-theme-abyss .dv-group-control {
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+  /* Hide potential overflow from content if needed */
+  /* overflow: hidden; */
+}
+
+/* Add roundness to floating panels */
+.dockview-floating-group {
+  border-radius: var(--radius-md);
+  /* Ensure the header inside also gets rounded corners */
+  & > .dv-group-view > .dv-group-control {
+    border-top-left-radius: var(--radius-md);
+    border-top-right-radius: var(--radius-md);
+  }
+  /* Hide overflow to maintain the rounded shape */
+  overflow: hidden;
 }
 
 /* --- End of File --- */

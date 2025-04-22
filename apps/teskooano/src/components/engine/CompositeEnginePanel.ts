@@ -373,6 +373,14 @@ export class CompositeEnginePanel implements IContentRenderer {
     });
   }
 
+  private _createPlaceholderContent(): string {
+    return `
+      <div style='display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center; padding: 1em; box-sizing: border-box;'>
+        <img src='/assets/panel-icon.png' alt='Engine Placeholder Icon' style='max-width: 256px; max-height: 256px; margin-bottom: 1em; opacity: 0.5;' />
+        <p style='color: #aaa; margin: 0;'>Load or Generate a System</p>
+      </div>
+    `;
+  }
   /**
    * Dockview lifecycle method: Initializes the panel's content and renderer.
    * Sets up data listeners, placeholders, and the PanelResizer.
@@ -403,6 +411,11 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._api = parameters.api;
     this._element.id = `composite-engine-view-${this._api?.id}`; // Ensure unique ID
 
+    // --- Set initial placeholder content ---
+    if (this._engineContainer) {
+      this._engineContainer.innerHTML = this._createPlaceholderContent();
+    }
+
     // Subscribe to celestial objects data to trigger renderer/UI setup
     this._celestialObjectsUnsubscribe?.(); // Clean up previous listener if any
     this._celestialObjectsUnsubscribe = celestialObjectsStore.subscribe(
@@ -417,7 +430,8 @@ export class CompositeEnginePanel implements IContentRenderer {
         if (!this._renderer && objectCount > 0) {
           // Data available, renderer not initialized: Initialize
 
-          if (this._engineContainer) this._engineContainer.innerHTML = ""; // Clear placeholder
+          // Clear placeholder before initializing renderer
+          if (this._engineContainer) this._engineContainer.innerHTML = "";
 
           this.initializeRenderer();
           this.initializeToolbar(); // Initialize the new toolbar
@@ -435,8 +449,7 @@ export class CompositeEnginePanel implements IContentRenderer {
           this.disposeRendererAndUI(); // Clean up
           // Reset to placeholder state
           if (this._engineContainer && !this._renderer) {
-            this._engineContainer.innerHTML =
-              "<p style='color: #aaa; padding: 1em;'>Engine Cleared</p>";
+            this._engineContainer.innerHTML = this._createPlaceholderContent();
           }
         }
       },
