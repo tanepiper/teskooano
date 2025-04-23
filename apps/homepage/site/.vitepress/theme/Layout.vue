@@ -156,6 +156,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <link rel="me" href="https://mastodon.gamedev.place/@teskooano" />
+
   <div class="nebula-container">
     <canvas ref="nebulaCanvas" class="nebula-canvas"></canvas>
   </div>
