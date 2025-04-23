@@ -21,11 +21,11 @@
   "dependencies": {
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/core-math": "file:../../math",
-    "three": "0.175.0"
+    "three": "0.176.0"
   },
   "devDependencies": {
     "typescript": "5.8.3",
-    "vitest": "3.1.1",
-    "eslint": "9.25.0"
+    "vitest": "3.1.2",
+    "eslint": "9.25.1"
   }
 }

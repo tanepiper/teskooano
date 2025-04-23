@@ -27,17 +27,17 @@
   "dependencies": {
     "@teskooano/core-state": "file:../../core/state",
     "@teskooano/data-types": "file:../../data/types",
-    "three": "0.175.0"
+    "three": "0.176.0"
   },
   "devDependencies": {
     "@types/three": "0.175.0",
     "@playwright/test": "1.52.0",
-    "@vitest/browser": "3.1.1",
-    "@vitest/ui": "3.1.1",
-    "eslint": "9.25.0",
+    "@vitest/browser": "3.1.2",
+    "@vitest/ui": "3.1.2",
+    "eslint": "9.25.1",
     "happy-dom": "17.4.4",
     "playwright": "1.52.0",
     "typescript": "5.8.3",
-    "vitest": "3.1.1"
+    "vitest": "3.1.2"
   }
 }
