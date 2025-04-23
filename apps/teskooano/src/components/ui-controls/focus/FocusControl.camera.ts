@@ -26,7 +26,7 @@ import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
  */
 export function calculateCameraDistance(
   object: CelestialObject,
-  renderer: ModularSpaceRenderer | null | undefined
+  renderer: ModularSpaceRenderer | null | undefined,
 ): number {
   // --- Try Mesh Bounding Box First ---
   const mesh = renderer?.getObjectById(object.id); // Use passed renderer
@@ -40,11 +40,10 @@ export function calculateCameraDistance(
     ) {
       const effectiveRadius = mesh.userData.effectiveRadius;
       console.debug(
-        `[FocusControl.camera] Using pre-calculated radius from userData for ${object.name}: ${effectiveRadius.toFixed(2)}`
+        `[FocusControl.camera] Using pre-calculated radius from userData for ${object.name}: ${effectiveRadius.toFixed(2)}`,
       );
 
-      let distance =
-        effectiveRadius * (1 + CAMERA_DISTANCE_SURFACE_PERCENTAGE);
+      let distance = effectiveRadius * (1 + CAMERA_DISTANCE_SURFACE_PERCENTAGE);
 
       // Apply type-specific scaling and minimum distance
       const scaleFactor =
@@ -57,12 +56,12 @@ export function calculateCameraDistance(
       distance = Math.max(distance, MINIMUM_CAMERA_DISTANCE); // Ensure general minimum distance
 
       console.debug(
-        `[FocusControl.camera] Final distance using userData radius for ${object.name}: ${distance.toFixed(2)}`
+        `[FocusControl.camera] Final distance using userData radius for ${object.name}: ${distance.toFixed(2)}`,
       );
       return distance;
     } else {
       console.warn(
-        `[FocusControl.camera] No valid pre-calculated effectiveRadius in userData for ${object.name}. Attempting dynamic calculation.`
+        `[FocusControl.camera] No valid pre-calculated effectiveRadius in userData for ${object.name}. Attempting dynamic calculation.`,
       );
     }
 
@@ -88,33 +87,33 @@ export function calculateCameraDistance(
         distance *= scaleFactor;
         distance = Math.max(distance, minTypeDistance); // Ensure type-specific min distance
         console.debug(
-          `[FocusControl.camera] Applied type scaling (${scaleFactor.toFixed(1)}x) and min distance (${minTypeDistance}). New Distance: ${distance.toFixed(2)}`
+          `[FocusControl.camera] Applied type scaling (${scaleFactor.toFixed(1)}x) and min distance (${minTypeDistance}). New Distance: ${distance.toFixed(2)}`,
         );
 
         // Ensure general minimum distance for all types
         distance = Math.max(distance, MINIMUM_CAMERA_DISTANCE);
 
         console.debug(
-          `[FocusControl.camera] Using mesh bounds for ${object.name}. Effective Radius: ${effectiveRadius.toFixed(2)}, Distance: ${distance.toFixed(2)}`
+          `[FocusControl.camera] Using mesh bounds for ${object.name}. Effective Radius: ${effectiveRadius.toFixed(2)}, Distance: ${distance.toFixed(2)}`,
         );
         return distance;
       } else {
         console.warn(
-          `[FocusControl.camera] Mesh bounds calculation resulted in invalid radius for ${object.name}. Falling back.`
+          `[FocusControl.camera] Mesh bounds calculation resulted in invalid radius for ${object.name}. Falling back.`,
         );
       }
     } catch (error) {
       console.error(
         `[FocusControl.camera] Error calculating mesh bounds for ${object.name}:`,
         error,
-        ". Falling back."
+        ". Falling back.",
       );
     }
   }
 
   // --- Fallback to Real Radius Calculation ---
   console.debug(
-    `[FocusControl.camera] Falling back to realRadius_m calculation for ${object.name}`
+    `[FocusControl.camera] Falling back to realRadius_m calculation for ${object.name}`,
   );
   // Get type-specific scaling factor (or default)
   const sizeScaling = SIZE_BASED_SCALING[object.type] ?? DEFAULT_SIZE_SCALING;
@@ -144,13 +143,16 @@ export function calculateCameraDistance(
     if (object.type === CelestialType.STAR) {
       radiusDistance = Math.max(
         radiusDistance,
-        CAMERA_DISTANCES[CelestialType.STAR] ?? 150 // Consistent fallback
+        CAMERA_DISTANCES[CelestialType.STAR] ?? 150, // Consistent fallback
       );
     }
   }
 
   // Prefer radius-based distance if calculated, otherwise use type fallback, then default
-  const finalDistance = radiusDistance ?? typeDistance ?? DEFAULT_CAMERA_DISTANCE;
-  console.debug(`[FocusControl.camera] Final fallback distance for ${object.name}: ${finalDistance.toFixed(2)}`);
+  const finalDistance =
+    radiusDistance ?? typeDistance ?? DEFAULT_CAMERA_DISTANCE;
+  console.debug(
+    `[FocusControl.camera] Final fallback distance for ${object.name}: ${finalDistance.toFixed(2)}`,
+  );
   return finalDistance;
 }

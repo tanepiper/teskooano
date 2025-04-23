@@ -27,7 +27,7 @@ interface CameraManagerState {
   currentTarget?: THREE.Vector3;
   /**
    * Field of View (FOV)
-   */ 
+   */
   fov: number;
   /**
    * Focused object ID
@@ -98,7 +98,7 @@ export class CameraManager {
     // Listen for camera transitions
     document.addEventListener(
       "camera-transition-complete",
-      this.handleCameraTransitionComplete
+      this.handleCameraTransitionComplete,
     );
   }
 
@@ -117,7 +117,7 @@ export class CameraManager {
         initialTargetPosition.copy(initialFocusObject.position);
       } else {
         console.warn(
-          `[CameraManager Init] Initial focused object ${initialState.focusedObjectId} not found or has no position. Using default target.`
+          `[CameraManager Init] Initial focused object ${initialState.focusedObjectId} not found or has no position. Using default target.`,
         );
         // Ensure panel state is consistent if focus object is invalid
         this.updatePanelViewState({ focusedObjectId: null });
@@ -140,9 +140,9 @@ export class CameraManager {
 
     if (objectId === null) {
       // Clear focus: move to default position
-      this.renderer.controlsManager.moveTo(
+      this.renderer.controlsManager.moveToPosition(
         DEFAULT_CAMERA_POSITION.clone(),
-        DEFAULT_CAMERA_TARGET.clone()
+        DEFAULT_CAMERA_TARGET.clone(),
       );
       this.renderer.setFollowTarget(null);
       this.state.focusedObjectId = null; // Update internal state first
@@ -154,7 +154,7 @@ export class CameraManager {
 
       if (!renderableObject?.position) {
         console.error(
-          `[CameraManager] focusOnObject: Cannot focus on ${objectId}, missing renderable or its position.`
+          `[CameraManager] focusOnObject: Cannot focus on ${objectId}, missing renderable or its position.`,
         );
         return;
       }
@@ -173,13 +173,33 @@ export class CameraManager {
   }
 
   /**
+   * Points the camera towards a specific target position without changing
+   * the camera's current position. Uses a smooth transition.
+   * @param targetPosition - The world coordinates to point the camera at.
+   */
+  public pointCameraAt(targetPosition: THREE.Vector3): void {
+    if (!this.renderer.controlsManager) return;
+
+    // Use the controlsManager's updateTarget method to change focus without moving
+    this.renderer.controlsManager.pointCameraAtTarget(
+      targetPosition.clone(),
+      true,
+    );
+
+    // Note: We might need to decide if this action should update the
+    // 'focusedObjectId' state. Currently, it only changes the camera target.
+    // If it *should* update the focus state, we might need the objectId here.
+    // For now, assume only focusOnObject updates the canonical focus state.
+  }
+
+  /**
    * Resets the camera to its default position and target, clearing any focus.
    */
   public resetCameraView(): void {
     if (!this.renderer.controlsManager) return;
-    this.renderer.controlsManager.moveTo(
+    this.renderer.controlsManager.moveToPosition(
       DEFAULT_CAMERA_POSITION.clone(),
-      DEFAULT_CAMERA_TARGET.clone()
+      DEFAULT_CAMERA_TARGET.clone(),
     );
     this.renderer.setFollowTarget(null);
     this.state.focusedObjectId = null; // Update internal state first
@@ -249,7 +269,7 @@ export class CameraManager {
   public destroy(): void {
     document.removeEventListener(
       "camera-transition-complete",
-      this.handleCameraTransitionComplete
+      this.handleCameraTransitionComplete,
     );
   }
 }

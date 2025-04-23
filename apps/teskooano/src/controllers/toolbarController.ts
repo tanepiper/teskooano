@@ -1,10 +1,9 @@
 import { PopoverAPI } from "@teskooano/web-apis";
-import type { AddGroupOptions, AddPanelOptions } from "dockview-core";
+import type { AddPanelOptions } from "dockview-core";
 import "../components/shared/Button.js";
 import "../components/toolbar/SimulationControls"; // Import for side effect (registers element)
 import { SystemControls } from "../components/toolbar/SystemControls"; // Import the class directly
-import { layoutOrientationStore, Orientation } from "../stores/layoutStore";
-import { DockviewController } from "./dockviewController";
+import { DockviewController } from "./dockview/DockviewController.js";
 import { TourController } from "./tourController";
 
 /**
@@ -57,37 +56,6 @@ export class ToolbarController {
   private readonly SETTINGS_PANEL_ID = "app_settings_panel";
   // GitHub repository URL
   private readonly GITHUB_REPO_URL = "https://github.com/tanepiper/teskooano";
-  // Define the standard UI sections for reuse
-  private readonly DEFAULT_UI_SECTIONS = [
-    {
-      id: `focus-section-{{COUNTER}}`,
-      class: "focus-section",
-      title: "Focus Control",
-      componentTag: "focus-control",
-      startClosed: false,
-    },
-    {
-      id: `celestial-info-section-{{COUNTER}}`,
-      class: "celestial-info-section",
-      title: "Selected Object",
-      componentTag: "celestial-info",
-      startClosed: false,
-    },
-    {
-      id: `renderer-info-section-{{COUNTER}}`,
-      class: "renderer-info-section",
-      title: "Renderer Info",
-      componentTag: "renderer-info-display",
-      startClosed: false,
-    },
-    {
-      id: `engine-settings-section-{{COUNTER}}`,
-      class: "engine-settings-section",
-      title: "View Settings",
-      componentTag: "engine-ui-settings-panel",
-      startClosed: false,
-    },
-  ];
 
   /**
    * Constructor for the ToolbarController.
@@ -190,12 +158,6 @@ export class ToolbarController {
     const compositeViewId = `composite_engine_view_${counter}`;
     const compositeViewTitle = `Teskooano ${counter}`;
 
-    // Prepare UI sections with the current counter
-    const uiSections = this.DEFAULT_UI_SECTIONS.map((section) => ({
-      ...section,
-      id: section.id.replace("{{COUNTER}}", counter.toString()),
-    }));
-
     // Use the new controller method to add the panel to the named group
     const panelOptions: AddPanelOptions = {
       id: compositeViewId,
@@ -203,10 +165,8 @@ export class ToolbarController {
       title: compositeViewTitle,
       params: {
         title: compositeViewTitle,
-        // sections: uiSections, // No longer needed
-        dockviewController: this._dockviewController, // Pass the controller instance
+        dockviewController: this._dockviewController,
       },
-      // position is handled internally by addPanelToNamedGroup
     };
 
     try {
@@ -245,6 +205,12 @@ export class ToolbarController {
       (p) => p.id === this.SETTINGS_PANEL_ID,
     );
 
+    const panelWidth = 650;
+    const panelHeight = 500;
+
+    const centerWidth = window.innerWidth / 2 - panelWidth / 2;
+    const centerHeight = window.innerHeight / 2 - panelHeight / 2;
+
     if (existingPanel) {
       existingPanel.api.close();
     } else {
@@ -253,9 +219,9 @@ export class ToolbarController {
         component: "settings_view", // Placeholder component name
         title: "Settings",
         floating: {
-          position: { top: 80, left: 80 },
-          width: 450,
-          height: 500,
+          position: { top: centerHeight, left: centerWidth },
+          width: panelWidth,
+          height: panelHeight,
         },
         params: {},
         // Consider making it non-closable via header x button if toggled only via toolbar
@@ -602,13 +568,9 @@ export class ToolbarController {
     const systemControlsWrapper = document.createElement("div");
     systemControlsWrapper.style.display = "flex";
     systemControlsWrapper.style.alignItems = "center";
-    // systemControlsWrapper.style.flex = '1'; // Allow it to take space if desired
     this._systemControls = this._createSystemControls();
     systemControlsWrapper.appendChild(this._systemControls);
     this._element.appendChild(systemControlsWrapper);
-
-    // Optionally restore state after elements are created
-    // this.restoreSystemState();
   }
   // --- End Toolbar Creation Methods ---
 }

@@ -1,10 +1,8 @@
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import * as THREE from "three";
-import { simulationState } from "@teskooano/core-state";
-import { Vector3 } from "three";
 import { OSVector3 } from "@teskooano/core-math";
+import { simulationState } from "@teskooano/core-state";
 import gsap from "gsap";
-import { FlyControls } from "three/examples/jsm/controls/FlyControls.js";
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 /**
  * Manages camera controls (OrbitControls or FlyControls) and user interaction
@@ -18,8 +16,6 @@ import { FlyControls } from "three/examples/jsm/controls/FlyControls.js";
 export class ControlsManager {
   /** The underlying OrbitControls instance. */
   public controls: OrbitControls;
-  /** The free-flight camera controls instance. */
-  private flyControls: FlyControls;
   /** The camera being controlled. */
   private camera: THREE.PerspectiveCamera;
   /** Flag indicating if the camera is currently undergoing a GSAP animation. */
@@ -95,39 +91,6 @@ export class ControlsManager {
         });
       }
     });
-
-    // --- Initialize FlyControls (Disabled by default) ---
-    this.flyControls = new FlyControls(camera, domElement);
-    this.flyControls.movementSpeed = 5000; // Significantly increased speed
-    this.flyControls.rollSpeed = 20; // Increased roll sensitivity significantly (tune further)
-    this.flyControls.autoForward = false;
-    this.flyControls.dragToLook = true; // Use mouse drag to look around
-    this.flyControls.enabled = false; // Start disabled
-    // --- End FlyControls Init ---
-
-    let shiftAcceleration = 1000;
-    let shiftInterval = 1000;
-    let intervalId: NodeJS.Timeout | null = null;
-    window.addEventListener("keydown", (event) => {
-      if (event.shiftKey) {
-        this.flyControls.movementSpeed = 50000;
-        if (intervalId) {
-          clearInterval(intervalId);
-        }
-        intervalId = setInterval(() => {
-          this.flyControls.movementSpeed += shiftAcceleration;
-        }, shiftInterval);
-      }
-    });
-
-    window.addEventListener("keyup", (event) => {
-      //if (event.shiftKey) {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-      this.flyControls.movementSpeed = 5000;
-      // }
-    });
   }
 
   /**
@@ -146,25 +109,223 @@ export class ControlsManager {
    * @param {THREE.Vector3} target The new target position.
    * @param {boolean} [withTransition=true] Whether to animate the transition smoothly.
    */
-  updateTarget(target: THREE.Vector3, withTransition: boolean = true): void {
+  pointCameraAtTarget(
+    target: THREE.Vector3,
+    withTransition: boolean = true,
+  ): void {
+    // Cancel any ongoing transition
+    this.cancelTransition();
+
     if (!withTransition) {
       // Immediate update without transition
       this.controls.target.set(target.x, target.y, target.z);
       this.controls.update(); // Ensure controls reflect the change immediately
+      // Update simulation state if needed (though target-only changes might not warrant it)
       return;
     }
 
-    // Use the current camera position and target as the start for the transition
-    const currentPosition = this.camera.position.clone();
-    const currentTarget = this.controls.target.clone();
+    // --- Smooth Transition for Target Only ---
+    this.setEnabled(false); // Disable user controls
+    this.isTransitioning = true;
 
-    // Begin transition: only the target moves
-    this.startTransition(
-      currentPosition, // Start camera position (doesn't change)
-      currentTarget, // Start target position
-      currentPosition, // End camera position (doesn't change)
-      target, // End target position
-    );
+    // Store current damping state to restore later
+    const wasDampingEnabled = this.controls.enableDamping;
+    const originalDampingFactor = this.controls.dampingFactor;
+
+    // Disable damping temporarily to prevent camera position adjustments
+    this.controls.enableDamping = false;
+
+    const currentTarget = this.controls.target.clone();
+    const currentPosition = this.camera.position.clone(); // Needed for duration calc
+
+    // Calculate duration based on angular change or fixed time?
+    // Using positional distance for now, as it's readily available
+    // but consider changing this if needed.
+    const duration = this.calculateTransitionDuration(
+      currentPosition,
+      currentPosition
+        .clone()
+        .setFromSphericalCoords(
+          currentPosition.length(),
+          target.angleTo(new THREE.Vector3(0, 0, 0)),
+          target.angleTo(new THREE.Vector3(0, 1, 0)),
+        ),
+    ); // Rough angular distance approx
+    // const duration = 1.5; // Or just use a fixed duration for target changes
+
+    const onComplete = () => {
+      this.isTransitioning = false;
+      this.setEnabled(true);
+      this.activeTimeline = null;
+
+      // Restore original damping state
+      this.controls.enableDamping = wasDampingEnabled;
+      this.controls.dampingFactor = originalDampingFactor;
+
+      // Ensure final state is precise
+      this.controls.target.copy(target);
+      this.controls.update(); // Final update
+
+      // Dispatch a custom event indicating the transition is complete
+      const transitionCompleteEvent = new CustomEvent(
+        "camera-transition-complete", // Use the same event name for consistency?
+        {
+          detail: {
+            position: this.camera.position.clone(), // Current position
+            target: target.clone(), // Final target
+            type: "target-only", // Add type differentiator
+          },
+          bubbles: true,
+          composed: true,
+        },
+      );
+      document.dispatchEvent(transitionCompleteEvent);
+    };
+
+    this.activeTimeline = gsap.timeline({ onComplete: onComplete });
+
+    this.activeTimeline.to(this.controls.target, {
+      x: target.x,
+      y: target.y,
+      z: target.z,
+      duration: duration,
+      ease: "power1.inOut",
+      onUpdate: () => {
+        // Manually update the camera's lookAt direction WITHOUT calling controls.update()
+        // which would recalculate position.
+        this.camera.lookAt(this.controls.target);
+      },
+    });
+    // --- End Smooth Transition ---
+  }
+
+  /**
+   * PRIVATE: Initiates a smooth, sequenced camera transition for both position and target using GSAP.
+   *
+   * @param {THREE.Vector3} startPos The starting camera position.
+   * @param {THREE.Vector3} startTarget The starting target position.
+   * @param {THREE.Vector3} endPos The desired final camera position.
+   * @param {THREE.Vector3} endTarget The desired final target position.
+   */
+  private _transitionPositionAndTarget(
+    startPos: THREE.Vector3,
+    startTarget: THREE.Vector3,
+    endPos: THREE.Vector3,
+    endTarget: THREE.Vector3,
+  ): void {
+    // Cancel any ongoing transition to avoid conflicts
+    this.cancelTransition();
+
+    // Disable user controls during the transition
+    this.setEnabled(false);
+    this.isTransitioning = true;
+
+    // Calculate total transition duration based on camera travel distance
+    const totalDuration = this.calculateTransitionDuration(startPos, endPos);
+
+    // --- Calculate Angle for Rotation Duration ---
+    const cameraForward = this.camera
+      .getWorldDirection(this.tempVector.clone())
+      .negate();
+    const targetDirection = endTarget.clone().sub(startPos).normalize();
+    const angle =
+      targetDirection.lengthSq() > 0.0001
+        ? cameraForward.angleTo(targetDirection)
+        : 0;
+    const rotationPercent = Math.min(0.5, Math.max(0.1, angle / Math.PI));
+    const rotationDuration = totalDuration * rotationPercent * 2;
+    const positionDuration = totalDuration * (1 - rotationPercent);
+    // --- End Angle Calculation ---
+
+    // --- Define Transition Completion Logic ---
+    const onTimelineComplete = () => {
+      this.isTransitioning = false;
+      this.setEnabled(true);
+      this.activeTimeline = null;
+      // Ensure final state is precise
+      this.camera.position.copy(endPos);
+      this.controls.target.copy(endTarget);
+      this.controls.update();
+
+      // Update global state
+      simulationState.set({
+        ...simulationState.get(),
+        camera: {
+          ...simulationState.get().camera,
+          position: new OSVector3(endPos.x, endPos.y, endPos.z),
+          target: new OSVector3(endTarget.x, endTarget.y, endTarget.z),
+        },
+      });
+
+      // Dispatch event
+      const transitionCompleteEvent = new CustomEvent(
+        "camera-transition-complete",
+        {
+          detail: {
+            position: endPos.clone(),
+            target: endTarget.clone(),
+            type: "move-and-target", // Indicate type
+          },
+          bubbles: true,
+          composed: true,
+        },
+      );
+      document.dispatchEvent(transitionCompleteEvent);
+
+      // Handle follow state update
+      if (this.followingTargetObject) {
+        this.previousFollowTargetPos.copy(endTarget);
+        this.finalFollowOffset = endPos.clone().sub(endTarget);
+      } else {
+        this.finalFollowOffset = null;
+        this.previousFollowTargetPos.set(0, 0, 0);
+      }
+    };
+    // --- End Completion Logic ---
+
+    // --- Create and Configure GSAP Timeline ---
+    this.activeTimeline = gsap.timeline({ onComplete: onTimelineComplete });
+
+    // 1. Rotation Phase: Animate target
+    if (rotationDuration > 0.01) {
+      this.activeTimeline.to(this.controls.target, {
+        x: endTarget.x,
+        y: endTarget.y,
+        z: endTarget.z,
+        duration: rotationDuration,
+        ease: "power1.inOut",
+        onUpdate: () => {
+          this.controls.update();
+        }, // Update controls during target animation
+      });
+    }
+
+    // 2. Position Phase: Animate camera position
+    if (positionDuration > 0.01) {
+      this.activeTimeline.to(
+        this.camera.position,
+        {
+          x: endPos.x,
+          y: endPos.y,
+          z: endPos.z,
+          duration: positionDuration,
+          ease: "expo.out",
+          onUpdate: () => {
+            this.controls.update();
+          }, // Update controls during position animation
+        },
+        rotationDuration > 0.01 ? ">" : 0, // Start after rotation completes
+      );
+    } else if (rotationDuration <= 0.01) {
+      // Skip animation if duration too short
+      console.warn(
+        "[ControlsManager] Transition duration too short, jumping to end state.",
+      );
+      this.camera.position.copy(endPos);
+      this.controls.target.copy(endTarget);
+      onTimelineComplete(); // Manually trigger completion
+    }
+    // --- End GSAP Timeline ---
   }
 
   /**
@@ -174,16 +335,32 @@ export class ControlsManager {
    * @param {THREE.Vector3} target The desired final target position.
    * @param {boolean} [withTransition=true] Whether to animate the transition smoothly.
    */
-  moveTo(
+  moveToPosition(
     position: THREE.Vector3,
     target: THREE.Vector3,
     withTransition: boolean = true,
   ): void {
     if (!withTransition) {
       // Immediate update without transition
+      this.cancelTransition(); // Cancel any ongoing transition first
       this.camera.position.copy(position);
       this.controls.target.copy(target);
       this.controls.update(); // Ensure controls reflect the change immediately
+      // Update global state for immediate changes too
+      simulationState.set({
+        ...simulationState.get(),
+        camera: {
+          ...simulationState.get().camera,
+          position: new OSVector3(position.x, position.y, position.z),
+          target: new OSVector3(target.x, target.y, target.z),
+        },
+      });
+      // If following, update previous position immediately
+      if (this.followingTargetObject) {
+        this.followingTargetObject.getWorldPosition(
+          this.previousFollowTargetPos,
+        );
+      }
       return;
     }
 
@@ -191,8 +368,13 @@ export class ControlsManager {
     const currentPosition = this.camera.position.clone();
     const currentTarget = this.controls.target.clone();
 
-    // Begin transition to the new position and target
-    this.startTransition(currentPosition, currentTarget, position, target);
+    // Begin transition to the new position and target using the combined logic
+    this._transitionPositionAndTarget(
+      currentPosition,
+      currentTarget,
+      position,
+      target,
+    );
   }
 
   /**
@@ -226,143 +408,6 @@ export class ControlsManager {
   }
 
   /**
-   * Initiates a smooth, sequenced camera transition using GSAP.
-   * The transition typically involves animating the target first (rotation/pan)
-   * followed by animating the camera's position.
-   *
-   * @private
-   * @param {THREE.Vector3} startPos The starting camera position.
-   * @param {THREE.Vector3} startTarget The starting target position.
-   * @param {THREE.Vector3} endPos The desired final camera position.
-   * @param {THREE.Vector3} endTarget The desired final target position.
-   */
-  private startTransition(
-    startPos: THREE.Vector3,
-    startTarget: THREE.Vector3,
-    endPos: THREE.Vector3,
-    endTarget: THREE.Vector3,
-  ): void {
-    // Cancel any ongoing transition to avoid conflicts
-    this.cancelTransition();
-
-    // Disable user controls during the transition
-    this.setEnabled(false);
-    this.isTransitioning = true;
-
-    // Calculate total transition duration based on camera travel distance
-    const totalDuration = this.calculateTransitionDuration(startPos, endPos);
-
-    // --- Calculate Angle for Rotation Duration ---
-    // Determines how much time to allocate to rotating towards the target vs. moving.
-    const cameraForward = this.camera
-      .getWorldDirection(this.tempVector.clone())
-      .negate(); // OrbitControls looks down -Z by default
-    const targetDirection = endTarget.clone().sub(startPos).normalize();
-    const angle =
-      targetDirection.lengthSq() > 0.0001
-        ? cameraForward.angleTo(targetDirection) // Angle between current view and target direction
-        : 0;
-
-    // Allocate duration percentages based on the angle. Larger angle = more rotation time.
-    const rotationPercent = Math.min(0.5, Math.max(0.1, angle / Math.PI)); // Clamp between 10% and 50%
-    const rotationDuration = totalDuration * rotationPercent * 2; // Multiplier can be tuned
-    const positionDuration = totalDuration * (1 - rotationPercent);
-    // --- End Angle Calculation ---
-
-    // --- Define Transition Completion Logic ---
-    const onTimelineComplete = () => {
-      this.isTransitioning = false;
-      this.setEnabled(true); // Re-enable user controls
-      this.activeTimeline = null;
-
-      // Ensure final state is precise after animation
-      this.camera.position.copy(endPos);
-      this.controls.target.copy(endTarget);
-      this.controls.update(); // Apply final state to controls
-
-      // Update the global simulation state with the final camera values
-      simulationState.set({
-        ...simulationState.get(),
-        camera: {
-          ...simulationState.get().camera,
-          position: new OSVector3(endPos.x, endPos.y, endPos.z),
-          target: new OSVector3(endTarget.x, endTarget.y, endTarget.z),
-        },
-      });
-
-      // Dispatch a custom event indicating the transition is complete
-      const transitionCompleteEvent = new CustomEvent(
-        "camera-transition-complete",
-        {
-          detail: {
-            position: endPos.clone(),
-            target: endTarget.clone(),
-          },
-          bubbles: true,
-          composed: true,
-        },
-      );
-      document.dispatchEvent(transitionCompleteEvent);
-
-      // If following an object, store its position now for the next frame's delta calculation
-      if (this.followingTargetObject) {
-        // Initialize previousFollowTargetPos with the target's position AT THE END of the transition
-        this.previousFollowTargetPos.copy(endTarget);
-        this.finalFollowOffset = endPos.clone().sub(endTarget); // Also store offset for reference
-      } else {
-        this.finalFollowOffset = null;
-        this.previousFollowTargetPos.set(0, 0, 0); // Ensure reset if not following
-      }
-    };
-    // --- End Completion Logic ---
-
-    // --- Create and Configure GSAP Timeline ---
-    this.activeTimeline = gsap.timeline({ onComplete: onTimelineComplete });
-
-    // 1. Rotation Phase: Animate the OrbitControls target
-    if (rotationDuration > 0.01) {
-      this.activeTimeline.to(this.controls.target, {
-        x: endTarget.x,
-        y: endTarget.y,
-        z: endTarget.z,
-        duration: rotationDuration,
-        ease: "power1.inOut", // Smooth easing for rotation
-        onUpdate: () => {
-          this.controls.update(); // Crucial: Update controls during target animation
-        },
-      });
-    }
-
-    // 2. Position Phase: Animate the camera's position (starts after rotation)
-    if (positionDuration > 0.01) {
-      this.activeTimeline.to(
-        this.camera.position,
-        {
-          x: endPos.x,
-          y: endPos.y,
-          z: endPos.z,
-          duration: positionDuration,
-          ease: "expo.out", // Often a good ease for positional movement
-          onUpdate: () => {
-            this.controls.update(); // Update controls during position animation for damping
-          },
-        },
-        // Start immediately after the rotation tween completes (if it exists)
-        rotationDuration > 0.01 ? ">" : 0,
-      );
-    } else if (rotationDuration <= 0.01) {
-      // If rotation is negligible and position duration is also too short, skip animation
-      console.warn(
-        "[ControlsManager] Transition duration too short, jumping to end state.",
-      );
-      this.camera.position.copy(endPos);
-      this.controls.target.copy(endTarget);
-      onTimelineComplete(); // Manually trigger completion logic
-    }
-    // --- End GSAP Timeline ---
-  }
-
-  /**
    * Updates the controls state. This should be called every frame in the render loop.
    * Handles applying damping, processing user input, and updating camera/target
    * positions when following an object.
@@ -374,35 +419,32 @@ export class ControlsManager {
     }
 
     // Only update the active controls
-    if (this.isDebugModeActive) {
-      this.flyControls.update(delta); // Pass delta time to FlyControls
-    } else {
-      this.controls.update(); // OrbitControls update (handles damping etc.)
 
-      // --- Following Logic (only for OrbitControls) ---
-      if (this.followingTargetObject) {
-        // Get current world position of the target
-        this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
+    this.controls.update(); // OrbitControls update (handles damping etc.)
 
-        // Calculate how much the target moved since the last frame
-        const targetDelta = this.tempTargetPosition
-          .clone()
-          .sub(this.previousFollowTargetPos);
+    // --- Following Logic (only for OrbitControls) ---
+    if (this.followingTargetObject) {
+      // Get current world position of the target
+      this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
 
-        // Add this delta to both the camera position and the control target
-        this.camera.position.add(targetDelta);
-        this.controls.target.add(targetDelta);
+      // Calculate how much the target moved since the last frame
+      const targetDelta = this.tempTargetPosition
+        .clone()
+        .sub(this.previousFollowTargetPos);
 
-        // Update the previous position for the next frame
-        this.previousFollowTargetPos.copy(this.tempTargetPosition);
+      // Add this delta to both the camera position and the control target
+      this.camera.position.add(targetDelta);
+      this.controls.target.add(targetDelta);
 
-        // No need to explicitly update controls here if damping is enabled,
-        // as the 'change' event listener or the main controls.update() call will handle it.
-        // However, calling update() might be necessary if damping is off or for immediate effect.
-        // Let's rely on the main controls.update() call above for now.
-      }
-      // --- End Following Logic ---
+      // Update the previous position for the next frame
+      this.previousFollowTargetPos.copy(this.tempTargetPosition);
+
+      // No need to explicitly update controls here if damping is enabled,
+      // as the 'change' event listener or the main controls.update() call will handle it.
+      // However, calling update() might be necessary if damping is off or for immediate effect.
+      // Let's rely on the main controls.update() call above for now.
     }
+    // --- End Following Logic ---
   }
 
   /**
@@ -410,11 +452,7 @@ export class ControlsManager {
    * @param {boolean} enabled - Whether to enable the active controls.
    */
   setEnabled(enabled: boolean): void {
-    if (this.isDebugModeActive) {
-      this.flyControls.enabled = enabled;
-    } else {
-      this.controls.enabled = enabled;
-    }
+    this.controls.enabled = enabled;
   }
 
   /**
@@ -527,7 +565,7 @@ export class ControlsManager {
 
     // --- Start the transition ---
     // Move from current position/target to the calculated final positions
-    this.moveTo(
+    this.moveToPosition(
       finalCameraPosition, // End Pos
       finalTargetPosition, // End Target
       true, // Use transition
@@ -542,24 +580,5 @@ export class ControlsManager {
     if (this.isDebugModeActive === enabled) return; // No change
 
     this.isDebugModeActive = enabled;
-
-    if (enabled) {
-      // Switching TO debug mode
-      this.cancelTransition(); // Cancel any camera movement
-      this.setFollowTarget(null); // Stop following any target
-      this.lastOrbitTarget.copy(this.controls.target); // Save current orbit target
-      this.controls.enabled = false;
-      this.flyControls.enabled = true;
-      console.log("[ControlsManager] Debug Mode Enabled (FlyControls Active)");
-    } else {
-      // Switching FROM debug mode
-      this.flyControls.enabled = false;
-      this.controls.target.copy(this.lastOrbitTarget); // Restore old target
-      this.controls.enabled = true;
-      this.controls.update(); // Update orbit controls state
-      console.log(
-        "[ControlsManager] Debug Mode Disabled (OrbitControls Active)",
-      );
-    }
   }
 }

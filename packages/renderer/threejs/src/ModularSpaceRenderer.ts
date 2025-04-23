@@ -199,28 +199,55 @@ export class ModularSpaceRenderer {
   }
 
   // Public API (Getters)
+  /**
+   * Gets the underlying Three.js scene instance.
+   * @returns {THREE.Scene} The scene object.
+   */
   get scene(): THREE.Scene {
     return this.sceneManager.scene;
   }
+  /**
+   * Gets the active Three.js perspective camera instance.
+   * @returns {THREE.PerspectiveCamera} The camera object.
+   */
   get camera(): THREE.PerspectiveCamera {
     return this.sceneManager.camera;
   }
+  /**
+   * Gets the underlying Three.js WebGL renderer instance.
+   * @returns {THREE.WebGLRenderer} The renderer object.
+   */
   get renderer(): THREE.WebGLRenderer {
     return this.sceneManager.renderer;
   }
+  /**
+   * Gets the associated OrbitControls instance.
+   * @returns {OrbitControls} The controls instance.
+   */
   get controls() {
     return this.controlsManager.controls;
   }
 
   // Start/Stop Loop
+  /**
+   * Starts the rendering loop.
+   */
   startRenderLoop(): void {
     this.animationLoop.start();
   }
+  /**
+   * Stops the rendering loop.
+   */
   stopRenderLoop(): void {
     this.animationLoop.stop();
   }
 
   // Resize Handling
+  /**
+   * Handles window resize events, updating camera aspect ratio and renderer size.
+   * @param {number} width - The new width of the viewport.
+   * @param {number} height - The new height of the viewport.
+   */
   onResize(width: number, height: number): void {
     this.sceneManager.onResize(width, height);
     // controlsManager doesn't seem to have onResize
@@ -231,6 +258,11 @@ export class ModularSpaceRenderer {
     // this.objectManager.onResize(width, height);
   }
 
+  /**
+   * Executes a single render frame.
+   * Updates LODs, objects, CSS2D elements, calls custom render callbacks,
+   * updates controls, and renders the scene.
+   */
   render(): void {
     this.lodManager.update();
     // ObjectManager update now handles its internal state/objects
@@ -247,6 +279,10 @@ export class ModularSpaceRenderer {
     }
   }
 
+  /**
+   * Cleans up resources used by the renderer and its managers.
+   * Stops the animation loop and removes event listeners.
+   */
   dispose(): void {
     this.stateAdapter.dispose();
 
@@ -268,57 +304,101 @@ export class ModularSpaceRenderer {
     });
   }
 
-  // --- VISIBILITY CONTROLS (DELEGATION) ---
+  /**
+   * Sets the visibility of celestial object labels (CSS2D layer).
+   * @param {boolean} visible - True to show labels, false to hide.
+   */
   setCelestialLabelsVisible(visible: boolean): void {
     this.css2DManager?.setLayerVisibility(
       CSS2DLayerType.CELESTIAL_LABELS,
       visible,
     );
   }
+  /**
+   * Sets the visibility of the background grid helper.
+   * @param {boolean} visible - True to show the grid, false to hide.
+   */
   setGridVisible(visible: boolean): void {
     this.sceneManager.setGridVisible(visible);
   }
+  /**
+   * Sets the visibility of the AU (Astronomical Unit) marker lines.
+   * @param {boolean} visible - True to show AU markers, false to hide.
+   */
   setAuMarkersVisible(visible: boolean): void {
     this.sceneManager.setAuMarkersVisible(visible);
   }
+  /**
+   * Sets the visibility of all orbital lines.
+   * @param {boolean} visible - True to show orbits, false to hide.
+   */
   setOrbitsVisible(visible: boolean): void {
     // TODO: Add setVisibility(visible: boolean) method to OrbitManager
     this.orbitManager.setVisibility(visible);
   }
-  // TODO: Decide if a generic toggleLabels is needed, or specific toggles per layer type?
-  // toggleCelestialLabels(): void { this.css2DManager?.toggleLayerVisibility(CSS2DLayerType.CELESTIAL_LABELS); }
+  /**
+   * Toggles the visibility of the background grid helper.
+   */
   toggleGrid(): void {
     this.sceneManager.toggleGrid();
   }
+  /**
+   * Toggles the visibility of all orbital lines.
+   */
   toggleOrbits(): void {
     this.orbitManager.toggleVisualization();
   }
-  // toggleDebugSphere(): void { // <-- REMOVED METHOD
-  //   this.sceneManager.toggleDebugSphere();
-  // }
-  // --- END VISIBILITY CONTROLS ---
 
+  /**
+   * @deprecated Use ControlsManager methods (`pointCameraAtTarget`, `moveCameraToTarget`, `setFollowTarget`) instead for camera manipulation.
+   * Updates the camera's position and target look-at point.
+   * @param {THREE.Vector3} position - The new camera position.
+   * @param {THREE.Vector3} target - The new point for the camera to look at.
+   */
   updateCamera(position: THREE.Vector3, target: THREE.Vector3): void {
     // Deprecated: Use ControlsManager for camera movement
-    this.controlsManager.moveTo(position, target);
+    this.controlsManager.pointCameraAtTarget(target);
   }
 
+  /**
+   * Sets an optional Canvas UI manager to be rendered on top of the 3D scene.
+   * @param {object} uiManager - An object with a `render()` method.
+   * @param {function} uiManager.render - The function to call during the render loop.
+   */
   setCanvasUIManager(uiManager: { render(): void }): void {
     this.canvasUIManager = uiManager;
   }
 
+  /**
+   * Adds a callback function to be executed during each render frame.
+   * @param {function} callback - The function to execute.
+   */
   addRenderCallback(callback: () => void): void {
     this.animationLoop.onRender(callback);
   }
 
+  /**
+   * Removes a previously added render callback function.
+   * @param {function} callback - The callback function to remove.
+   */
   removeRenderCallback(callback: () => void): void {
     this.animationLoop.removeRenderCallback(callback);
   }
 
+  /**
+   * Retrieves a specific 3D object from the scene by its ID.
+   * @param {string} id - The unique identifier of the object.
+   * @returns {THREE.Object3D | null} The found object, or null if not found.
+   */
   public getObjectById(id: string): THREE.Object3D | null {
     return this.objectManager.getObject(id);
   }
 
+  /**
+   * Calculates the total number of triangles currently being rendered in the scene.
+   * Traverses the scene graph and sums up triangles from Mesh geometries.
+   * @returns {number} The total triangle count.
+   */
   public getTriangleCount(): number {
     let count = 0;
     this.scene.traverse((object) => {
@@ -334,33 +414,55 @@ export class ModularSpaceRenderer {
     return count;
   }
 
+  /**
+   * Sets the camera to follow a specific celestial object.
+   * This method now delegates the core follow logic to the ControlsManager.
+   *
+   * @param {string | null} objectId The ID of the object to follow, or null to stop following.
+   * @param {THREE.Vector3} [_targetPosition] Optional: Ignored. The final target position is calculated internally.
+   * @param {THREE.Vector3} [_cameraPosition] Optional: Ignored. The final camera position is calculated internally.
+   */
   setFollowTarget(
     objectId: string | null,
-    targetPosition?: THREE.Vector3,
-    cameraPosition?: THREE.Vector3,
+    _targetPosition?: THREE.Vector3, // Mark as unused
+    _cameraPosition?: THREE.Vector3, // Mark as unused
   ): void {
-    // TODO: Refactor this method to use ControlsManager.setFollowTarget
-    // For now, just log and clear internal state if needed
-    console.warn(
-      "[Renderer] setFollowTarget needs refactoring to use ControlsManager.",
-    );
-    if (!objectId) {
-      this.controlsManager.setFollowTarget(null); // Pass null to ControlsManager
-    } else {
-      // We need the actual Object3D reference to pass to ControlsManager
-      const targetMesh = this.objectManager.getObject(objectId);
-      if (targetMesh) {
-        // Decide if we still need keepCurrentDistance or pass calculated positions
-        // For now, use the basic follow call (keeps current distance by default in ControlsManager impl)
-        this.controlsManager.setFollowTarget(targetMesh, undefined, true); // Keep current distance
-      } else {
-        console.error(
-          `[Renderer] Cannot follow object ${objectId}: Mesh not found.`,
-        );
-        // Ensure follow is stopped if mesh not found
-        this.controlsManager.setFollowTarget(null);
-      }
+    console.log(`[Renderer] setFollowTarget called with objectId: ${objectId}`);
+
+    if (!this.controlsManager) {
+      console.error("[Renderer] ControlsManager not initialized.");
+      return;
     }
+
+    if (objectId === null) {
+      // Stop following
+      this.controlsManager.setFollowTarget(null);
+      console.log(`[Renderer] Cleared follow target.`);
+      return;
+    }
+
+    // Find the Three.js object to follow
+    const objectToFollow = this.objectManager.getObject(objectId);
+
+    if (!objectToFollow) {
+      console.warn(
+        `[Renderer] Could not find object with ID '${objectId}' to follow.`,
+      );
+      // Optionally clear the follow target if the requested object doesn't exist
+      this.controlsManager.setFollowTarget(null);
+      return;
+    }
+
+    console.log(
+      `[Renderer] Found object to follow:`,
+      objectToFollow.name || objectId,
+    );
+
+    // Delegate to ControlsManager
+    // We let ControlsManager calculate the position and target based on the object.
+    // The `false` argument for `keepCurrentDistance` means it will calculate
+    // a suitable distance instead of maintaining the current one.
+    this.controlsManager.setFollowTarget(objectToFollow, undefined, false);
   }
 
   /**
@@ -407,10 +509,7 @@ export class ModularSpaceRenderer {
     console.log(`[ModularSpaceRenderer] Setting debug mode: ${enabled}`);
     this.sceneManager.setDebugMode(enabled);
     this.objectManager.setDebugMode(enabled);
-    this.objectManager.recreateAllMeshes(); // <-- ADDED CALL
-    this.controlsManager.setDebugMode(enabled); // <-- ADDED CALL
-    // TODO: Implement logic to force recreate meshes in ObjectManager if needed
-    // when debug mode changes. Might involve clearing and re-syncing.
-    // console.warn("[ModularSpaceRenderer] Toggling debug mode may require recreating objects to see fallback mesh changes."); // <-- REMOVED WARN
+    this.objectManager.recreateAllMeshes();
+    this.controlsManager.setDebugMode(enabled);
   }
 }

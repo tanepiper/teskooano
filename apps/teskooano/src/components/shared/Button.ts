@@ -120,6 +120,18 @@ template.innerHTML = `
 
 
     /* --- Sizes using host attributes --- */
+    :host([size="xs"]) button {
+        min-height: calc(var(--space-1) * 2 + var(--line-height-base) * 0.5em);
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--font-size-small);
+        border-radius: var(--radius-sm);
+        gap: var(--icon-gap); /* Use scaled gap */
+    }
+    :host([size="xs"]) {
+         --icon-size: var(--font-size-small);
+         --icon-gap: var(--space-1); /* Smaller gap for small buttons */
+    }
+
     :host([size="sm"]) button {
         min-height: calc(var(--space-1) * 2 + var(--line-height-base) * 1em);
         padding: var(--space-1) var(--space-2);
@@ -196,7 +208,13 @@ template.innerHTML = `
 `;
 
 export class TeskooanoButton extends HTMLElement {
-  static observedAttributes = ["disabled", "type", "title", "fullwidth", "size"];
+  static observedAttributes = [
+    "disabled",
+    "type",
+    "title",
+    "fullwidth",
+    "size",
+  ];
 
   private buttonElement: HTMLButtonElement;
 
@@ -283,14 +301,16 @@ export class TeskooanoButton extends HTMLElement {
   }
   set size(newSize: string | null) {
     if (newSize) {
-        // Basic validation (optional)
-        const validSizes = ["sm", "md", "lg", "xl"];
-        if (validSizes.includes(newSize)) {
-            this.setAttribute("size", newSize);
-        } else {
-            console.warn(`Invalid size "${newSize}" for teskooano-button. Using default.`);
-            this.removeAttribute("size"); // Fallback to default (md)
-        }
+      // Basic validation (optional)
+      const validSizes = ["sm", "md", "lg", "xl"];
+      if (validSizes.includes(newSize)) {
+        this.setAttribute("size", newSize);
+      } else {
+        console.warn(
+          `Invalid size "${newSize}" for teskooano-button. Using default.`,
+        );
+        this.removeAttribute("size"); // Fallback to default (md)
+      }
     } else {
       this.removeAttribute("size"); // Remove attribute if set to null/undefined
     }

@@ -1,5 +1,6 @@
 import ArrowSyncCircleIcon from "@fluentui/svg-icons/icons/arrow_sync_circle_24_regular.svg?raw";
 import DismissCircleIcon from "@fluentui/svg-icons/icons/dismiss_circle_24_regular.svg?raw";
+import { CelestialType } from "@teskooano/data-types"; // Only needed for iconStyles map if kept
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -23,11 +24,9 @@ template.innerHTML = `
       display: flex;
       gap: 8px;
     }
-    /* Update selectors */
     teskooano-button#reset-view,
     teskooano-button#clear-focus {
       flex-grow: 1;
-      /* Assuming teskooano-button handles its own base styling */
     }
 
     .target-list-container {
@@ -35,92 +34,94 @@ template.innerHTML = `
         overflow-y: auto;
         padding-right: 5px; /* Space for scrollbar */
     }
-    /* Styles for the focus item buttons */
-    button.focus-item {
-      /* Reset button defaults */
-      border: none;
-      background: none;
-      margin: 0 0 2px 0; /* Add bottom margin */
+
+    /* --- Tree View Styles --- */
+    ul, #focus-tree-list {
+      list-style-type: none;
+    }
+    #focus-tree-list {
+      margin: 0;
       padding: 0;
-      font: inherit;
-      color: inherit;
-      text-align: left;
+    }
+    li {
+      padding: 0;
+      margin: 0;
+      /* Add a little space between top-level items */
+      /* margin-bottom: 1px; */
+    }
+
+    /* Container for caret + row OR just row (leaf) */
+    .list-item-content {
+        display: flex;
+        align-items: center;
+        padding-left: 4px; /* Base padding */
+        min-height: 24px; /* Ensure consistent height */
+    }
+    .list-item-content.leaf-node {
+        padding-left: 22px; /* Indent leaf nodes further to align with text after caret */
+    }
+
+    /* Style the caret/arrow container (SPAN) */
+    .caret {
       cursor: pointer;
-      width: 100%; /* Make button fill container width */
-
-      /* Original focus-item styles */
-      display: flex;
-      align-items: center;
-      padding: 4px 6px; /* Re-apply padding */
-      border-radius: 3px;
-      transition: background-color 0.15s ease;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    button.focus-item:hover {
-      background-color: var(--color-surface-hover, rgba(255, 255, 255, 0.1));
-    }
-    button.focus-item.active {
-      background-color: var(--color-primary, #6c63ff);
-      color: white;
-      font-weight: bold;
-    }
-    button.focus-item.active .celestial-icon {
-       filter: brightness(0) invert(1); /* Make icon white on active */
-    }
-    .celestial-icon {
-      width: 14px;
-      height: 14px;
-      margin-right: 6px;
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
+      user-select: none;
+      display: inline-block; /* Or flex if needed */
+      width: 18px; /* Fixed width for alignment */
+      height: 18px; /* Match button size roughly */
       flex-shrink: 0;
-      /* Basic placeholder colors */
-      border-radius: 50%;
-      display: inline-block;
+      margin-right: 4px; /* Space between caret and row */
+      position: relative; /* For pseudo-element positioning */
+      transition: transform 0.15s ease-out;
     }
-    .star-icon { background-color: yellow; }
-    .planet-icon { background-color: skyblue; }
-    .gas-giant-icon { background-color: orange; }
-    .moon-icon { background-color: lightgrey; }
-    .asteroid-field-icon { background-color: brown; }
-    .oort-cloud-icon { background-color: darkgrey; }
-    .default-icon { background-color: white; }
+    /* Caret arrow using ::before */
+    .caret::before {
+      content: "\\25B6"; /* Right arrow */
+      color: var(--color-text-secondary, #aaa);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 10px; /* Adjust size */
+    }
+    .caret.caret-down::before {
+      transform: translate(-50%, -50%) rotate(90deg);
+    }
 
-    /* Style for destroyed items */
-    button.focus-item.destroyed {
+    /* Make the row take up remaining space */
+    .list-item-content celestial-row {
+       flex-grow: 1;
+       /* Remove internal padding if handled by li/contentDiv now */
+       /* padding: 0 !important; */
+    }
+
+    /* Hide/show nested lists */
+    .nested {
+      display: none;
+      padding-left: 22px; /* Indentation for nested lists (aligns with leaf nodes) */
+      margin: 0;
+    }
+    ul.nested.active {
+      display: block;
+    }
+    /* --- End Tree View Styles --- */
+
+
+    /* --- Status Styling (Applied to LI) --- */
+    li.destroyed .list-item-content .caret::before,
+    li.annihilated .list-item-content .caret::before {
       color: var(--color-text-disabled, #888);
-      text-decoration: line-through;
-      cursor: not-allowed;
-      opacity: 0.6;
-      background-color: transparent; /* Ensure no hover/active background */
+      transform: translate(-50%, -50%) rotate(0deg) !important; /* Ensure always right arrow, no rotation */
     }
-    button.focus-item.destroyed:hover {
-      background-color: transparent; /* Prevent hover effect */
-    }
-    button.focus-item.destroyed .celestial-icon {
-      filter: grayscale(100%) opacity(50%);
+    li.destroyed .list-item-content .caret,
+    li.annihilated .list-item-content .caret {
+       cursor: not-allowed;
     }
 
-    /* Style for annihilated items */
-    button.focus-item.annihilated {
-      color: var(--color-text-disabled, #888);
-      text-decoration: line-through;
-      cursor: not-allowed;
-      opacity: 0.4; /* Even more faded than destroyed */
-      background-color: transparent;
-    }
-    button.focus-item.annihilated:hover {
-      background-color: transparent;
-    }
-    button.focus-item.annihilated .celestial-icon {
-      filter: grayscale(100%) opacity(30%);
-    }
+    li.destroyed { opacity: 0.6; }
+    li.annihilated { opacity: 0.4; }
 
-    .indent-1 { margin-left: 15px; }
-    .indent-2 { margin-left: 30px; }
+    /* --- End Status Styling --- */
+
 
     .empty-message {
         padding: 10px;
@@ -138,9 +139,23 @@ template.innerHTML = `
     </div>
   </div>
 
-  <div class="target-list-container" id="target-list">
-    <!-- Object list populated here -->
+  <div class="target-list-container">
+     <ul id="focus-tree-list">
+       <!-- Tree populated here -->
+     </ul>
   </div>
 `;
 
-export default template;
+// Keep iconStyles map if CelestialRow doesn't fully handle icon types yet
+const iconStyles: Record<string, string> = {
+  [CelestialType.STAR]: "background-color: yellow;",
+  [CelestialType.PLANET]: "background-color: skyblue;",
+  [CelestialType.GAS_GIANT]: "background-color: orange;",
+  [CelestialType.DWARF_PLANET]: "background-color: lightblue;",
+  [CelestialType.MOON]: "background-color: lightgrey;",
+  [CelestialType.ASTEROID_FIELD]: "background-color: brown;",
+  [CelestialType.OORT_CLOUD]: "background-color: darkgrey;",
+  default: "background-color: white;",
+};
+
+export { template, iconStyles }; // Export map if still needed by list.ts or row.ts

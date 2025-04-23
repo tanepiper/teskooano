@@ -2,7 +2,7 @@ import "dockview-core/dist/styles/dockview.css";
 import "./styles.css"; // Import our custom styles
 // import "./components/ui-controls/ui-layout.css"; // Import UI layout styles -- REMOVED
 
-import { DockviewController } from "./controllers/dockviewController";
+import { DockviewController } from "./controllers/dockview/DockviewController";
 import { ToolbarController } from "./controllers/toolbarController";
 import { TourController } from "./controllers/tourController";
 // Import simulation controls component definition

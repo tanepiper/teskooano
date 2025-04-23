@@ -22,7 +22,7 @@ import { layoutOrientationStore, Orientation } from "../../stores/layoutStore";
 
 import { CameraManager } from "./CameraManager";
 
-import type { DockviewController } from "../../controllers/dockviewController"; // Import controller type
+import type { DockviewController } from "../../controllers/dockview/DockviewController"; // Import controller type
 
 import { EngineToolbar } from "./EngineToolbar";
 import { RendererStats } from "@teskooano/renderer-threejs-core";
@@ -203,7 +203,7 @@ export class CompositeEnginePanel implements IContentRenderer {
    * @returns An unsubscribe function to stop listening to state updates.
    */
   public subscribeToViewState(
-    callback: (state: CompositeEngineState) => void
+    callback: (state: CompositeEngineState) => void,
   ): () => void {
     return this._viewStateStore.subscribe(callback);
   }
@@ -282,7 +282,7 @@ export class CompositeEnginePanel implements IContentRenderer {
    * @param updates - The partial view state containing changes to apply.
    */
   private applyViewStateToRenderer(
-    updates: Partial<CompositeEngineState>
+    updates: Partial<CompositeEngineState>,
   ): void {
     if (!this._renderer) return;
 
@@ -295,7 +295,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     ) {
       this._renderer.css2DManager.setLayerVisibility(
         CSS2DLayerType.CELESTIAL_LABELS,
-        updates.showCelestialLabels
+        updates.showCelestialLabels,
       );
     }
     if (updates.showAuMarkers !== undefined) {
@@ -351,7 +351,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._cameraManager.setFov(fov);
     } else {
       console.warn(
-        `[CompositePanel ${this._api?.id}] setFov called before CameraManager was initialized.`
+        `[CompositePanel ${this._api?.id}] setFov called before CameraManager was initialized.`,
       );
       // Optionally update the state directly as a fallback if needed before init
       this.updateViewState({ fov });
@@ -369,7 +369,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._cameraManager.focusOnObject(objectId, distance);
     } else {
       console.warn(
-        `[CompositePanel ${this._api?.id}] focusOnObject called before CameraManager was initialized.`
+        `[CompositePanel ${this._api?.id}] focusOnObject called before CameraManager was initialized.`,
       );
     }
   }
@@ -383,7 +383,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._cameraManager.resetCameraView();
     } else {
       console.warn(
-        `[CompositePanel ${this._api?.id}] resetCameraView called before CameraManager was initialized.`
+        `[CompositePanel ${this._api?.id}] resetCameraView called before CameraManager was initialized.`,
       );
     }
   }
@@ -397,7 +397,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._cameraManager.clearFocus();
     } else {
       console.warn(
-        `[CompositePanel ${this._api?.id}] clearFocus called before CameraManager was initialized.`
+        `[CompositePanel ${this._api?.id}] clearFocus called before CameraManager was initialized.`,
       );
     }
   }
@@ -448,7 +448,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     // Check initialization flag AND if dockviewController is set
     if (this._isInitialized && this._dockviewController) {
       console.warn(
-        `[CompositePanel ${this._api?.id}] Attempted to initialize already initialized panel.`
+        `[CompositePanel ${this._api?.id}] Attempted to initialize already initialized panel.`,
       );
       return;
     }
@@ -461,7 +461,7 @@ export class CompositeEnginePanel implements IContentRenderer {
 
     if (!this._dockviewController) {
       console.error(
-        `[CompositePanel ${this._api?.id}] DockviewController instance was not provided in params. Toolbar actions will fail.`
+        `[CompositePanel ${this._api?.id}] DockviewController instance was not provided in params. Toolbar actions will fail.`,
       );
       // Optionally display an error message in the panel
     }
@@ -510,7 +510,7 @@ export class CompositeEnginePanel implements IContentRenderer {
             this._engineContainer.innerHTML = this._createPlaceholderContent();
           }
         }
-      }
+      },
     );
 
     this._isInitialized = true; // Mark as initialized *after* setup
@@ -518,7 +518,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     // Subscribe to global simulation state *after* initialization
     this._simulationStateUnsubscribe?.(); // Clean up previous if any (unlikely here)
     this._simulationStateUnsubscribe = simulationState.subscribe(
-      this.handleSimulationStateChange
+      this.handleSimulationStateChange,
     );
 
     // --- Subscribe to Panel Removals from DockviewController ---
@@ -529,7 +529,7 @@ export class CompositeEnginePanel implements IContentRenderer {
         });
     } else {
       console.warn(
-        "CompositeEnginePanel: DockviewController not provided, cannot subscribe to panel removals."
+        "CompositeEnginePanel: DockviewController not provided, cannot subscribe to panel removals.",
       );
     }
     // Set initial orientation and start listening for changes
@@ -564,7 +564,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       if (!this._simulationStateUnsubscribe) {
         // Avoid double subscription
         this._simulationStateUnsubscribe = simulationState.subscribe(
-          this.handleSimulationStateChange
+          this.handleSimulationStateChange,
         );
       }
       // Apply initial simulation state values that affect the renderer
@@ -578,7 +578,7 @@ export class CompositeEnginePanel implements IContentRenderer {
         // This allows the panel (or other interested components) to react, e.g., update UI state
         onFocusChangeCallback: (focusedId) => {
           console.log(
-            `[CompositePanel ${this._api?.id}] CameraManager focus changed to ${focusedId}.`
+            `[CompositePanel ${this._api?.id}] CameraManager focus changed to ${focusedId}.`,
           );
           // Example: Log the focus change, could also dispatch an event
           // We could dispatch the 'renderer-focus-changed' event here if needed externally
@@ -596,10 +596,10 @@ export class CompositeEnginePanel implements IContentRenderer {
             bubbles: true, // Allow event to bubble up if needed
             composed: true, // Allow event to cross shadow DOM boundaries
             detail: { renderer: this._renderer },
-          })
+          }),
         );
         console.log(
-          `[CompositePanel ${this._api?.id}] Dispatched renderer-ready event.`
+          `[CompositePanel ${this._api?.id}] Dispatched renderer-ready event.`,
         );
       }
 
@@ -619,7 +619,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     } catch (error) {
       console.error(
         `Failed to initialize CompositePanel [${this._api?.id}] renderer:`,
-        error
+        error,
       );
       if (this._engineContainer) {
         this._engineContainer.textContent = `Error initializing engine renderer: ${error}`;
@@ -644,7 +644,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     // Ensure we have the API ID before creating the toolbar
     if (!this._api?.id) {
       console.error(
-        "CompositeEnginePanel: Cannot initialize toolbar without panel API ID."
+        "CompositeEnginePanel: Cannot initialize toolbar without panel API ID.",
       );
       return;
     }
@@ -656,7 +656,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._engineToolbar = new EngineToolbar(
       this._api.id,
       this._dockviewController!,
-      this
+      this,
     );
     this._element.appendChild(this._engineToolbar.element);
   }
@@ -683,7 +683,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       } catch (e) {
         console.warn(
           `Error closing tracked panel ${panelApi.id} during dispose:`,
-          e
+          e,
         );
       }
     });
@@ -705,7 +705,7 @@ export class CompositeEnginePanel implements IContentRenderer {
    */
   dispose(): void {
     console.log(
-      `CompositeEnginePanel (${this._api?.id ?? "unknown"}): Disposing.`
+      `CompositeEnginePanel (${this._api?.id ?? "unknown"}): Disposing.`,
     );
     this.disposeRendererAndUI();
 
@@ -728,7 +728,7 @@ export class CompositeEnginePanel implements IContentRenderer {
   private handleExternalPanelRemoval(panelId: string): void {
     if (this._trackedFloatingPanels.has(panelId)) {
       console.log(
-        `CompositeEnginePanel: Detected external removal of tracked floating panel: ${panelId}. Updating internal state.`
+        `CompositeEnginePanel: Detected external removal of tracked floating panel: ${panelId}. Updating internal state.`,
       );
       this._trackedFloatingPanels.delete(panelId);
       // Optionally, update toolbar button state if needed here
@@ -738,4 +738,13 @@ export class CompositeEnginePanel implements IContentRenderer {
     }
   }
   // --- END ADDED ---
+
+  /**
+   * Points the camera towards a specific target position without changing
+   * the camera's current position. Uses a smooth transition.
+   * @param targetPosition - The world coordinates to point the camera at.
+   */
+  public pointCameraAt(targetPosition: THREE.Vector3): void {
+    this._cameraManager?.pointCameraAt(targetPosition);
+  }
 }

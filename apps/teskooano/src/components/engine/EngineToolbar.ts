@@ -1,15 +1,15 @@
-import { DockviewController } from "../../controllers/dockviewController";
+import { DockviewController } from "../../controllers/dockview/DockviewController";
 import {
-    $toolbarButtonConfigs,
-    $toolbarExpansionStates,
-    cleanupToolbarState,
-    FunctionToolbarButtonConfig,
-    getToolbarExpandedState,
-    PanelToolbarButtonConfig,
-    registerToolbarButton,
-    toggleToolbar,
-    ToolbarButtonType,
-    unregisterToolbarButton
+  $toolbarButtonConfigs,
+  $toolbarExpansionStates,
+  cleanupToolbarState,
+  FunctionToolbarButtonConfig,
+  getToolbarExpandedState,
+  PanelToolbarButtonConfig,
+  registerToolbarButton,
+  toggleToolbar,
+  ToolbarButtonType,
+  unregisterToolbarButton,
 } from "../../stores/toolbarStore";
 import { CompositeEnginePanel } from "./CompositeEnginePanel"; // Import parent panel type
 
@@ -32,7 +32,7 @@ export class EngineToolbar {
   private readonly _defaultButtonComponentNames = [
     "focus-control",
     "celestial-info",
-    "engine-ui-settings-panel", 
+    "engine-ui-settings-panel",
     "renderer-info-display",
   ];
 
