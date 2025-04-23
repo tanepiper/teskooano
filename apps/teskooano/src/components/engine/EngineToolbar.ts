@@ -1,26 +1,20 @@
 import { DockviewController } from "../../controllers/dockviewController";
 import {
-  $toolbarButtonConfigs,
-  $toolbarExpansionStates,
-  cleanupToolbarState,
-  getToolbarButtons,
-  getToolbarExpandedState,
-  registerToolbarButton,
-  toggleToolbar,
-  ToolbarButtonType,
-  FunctionToolbarButtonConfig,
-  PanelToolbarButtonConfig,
-  unregisterToolbarButton,
+    $toolbarButtonConfigs,
+    $toolbarExpansionStates,
+    cleanupToolbarState,
+    FunctionToolbarButtonConfig,
+    getToolbarExpandedState,
+    PanelToolbarButtonConfig,
+    registerToolbarButton,
+    toggleToolbar,
+    ToolbarButtonType,
+    unregisterToolbarButton
 } from "../../stores/toolbarStore";
 import { CompositeEnginePanel } from "./CompositeEnginePanel"; // Import parent panel type
 
-// Icons - Assuming these are still needed for default/toggle buttons
-import ChevronLeftIcon from "@fluentui/svg-icons/icons/chevron_left_24_regular.svg?raw";
-import ChevronRightIcon from "@fluentui/svg-icons/icons/chevron_right_24_regular.svg?raw";
-// Example icons for dynamic buttons (replace with actual registrations later)
-
-// Remove the old event detail interface
-// export interface ToolbarButtonClickDetail { ... }
+import BoxMultipleArrowRightFilled from "@fluentui/svg-icons/icons/box_multiple_arrow_right_24_filled.svg?raw";
+import BoxMultipleArrowLeftFilled from "@fluentui/svg-icons/icons/box_multiple_arrow_left_24_filled.svg?raw";
 
 export class EngineToolbar {
   private readonly _element: HTMLElement;
@@ -36,10 +30,10 @@ export class EngineToolbar {
 
   // --- List of default buttons to register ---
   private readonly _defaultButtonComponentNames = [
-    "engine-ui-settings-panel",
     "focus-control",
-    "renderer-info-display",
     "celestial-info",
+    "engine-ui-settings-panel", 
+    "renderer-info-display",
   ];
 
   /**
@@ -75,10 +69,10 @@ export class EngineToolbar {
     style.textContent = `
       .engine-overlay-toolbar-container {
         position: absolute;
-        top: 5px;
-        left: 5px;
-        z-index: 10;
-        display: flex;
+        top: 0px;
+        left: 0px;
+        z-index: 9999;
+        display: inline-flex;
         align-items: center; /* Align items vertically */
         background-color: rgba(40, 40, 60, 0.7);
         border-radius: 4px;
@@ -98,8 +92,12 @@ export class EngineToolbar {
         height: 18px;
       }
 
-      .toolbar-toggle-button {
-        /* Specific styles for the toggle button if needed */
+      teskooano-button.toolbar-toggle-button svg {
+        fill: rgba(191, 237, 9, 0.85);
+      }
+
+      .engine-overlay-toolbar-container teskooano-button:not(.toolbar-toggle-button):hover svg{
+        fill: rgba(191, 237, 9, 0.85);
       }
 
       .toolbar-collapsible-buttons {
@@ -131,15 +129,15 @@ export class EngineToolbar {
     toggleButton.id = `engine-toolbar-toggle-${this._apiId}`;
     toggleButton.classList.add("toolbar-toggle-button");
     toggleButton.setAttribute("variant", "icon");
-    toggleButton.setAttribute("size", "small");
-    toggleButton.title = "Toggle Tools"; // Initial title
+    toggleButton.setAttribute("size", "lg");
+    toggleButton.title = "Toggle Tools";
 
     const iconSpan = document.createElement("span");
     iconSpan.slot = "icon";
     // Initial icon based on store state (or default to collapsed)
     iconSpan.innerHTML = getToolbarExpandedState(this._apiId)
-      ? ChevronLeftIcon
-      : ChevronRightIcon;
+      ? BoxMultipleArrowLeftFilled
+      : BoxMultipleArrowRightFilled;
     toggleButton.appendChild(iconSpan);
 
     toggleButton.addEventListener("click", () => {
@@ -190,8 +188,8 @@ export class EngineToolbar {
             this._toggleButton.querySelector("span[slot='icon']");
           if (iconSpan) {
             iconSpan.innerHTML = isExpanded
-              ? ChevronLeftIcon
-              : ChevronRightIcon;
+              ? BoxMultipleArrowLeftFilled
+              : BoxMultipleArrowRightFilled;
           }
           this._toggleButton.title = isExpanded ? "Hide Tools" : "Show Tools";
         }

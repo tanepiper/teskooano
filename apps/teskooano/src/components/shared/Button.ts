@@ -119,7 +119,7 @@ template.innerHTML = `
     }
 
 
-    /* --- Sizes using host attributes (Example) --- */
+    /* --- Sizes using host attributes --- */
     :host([size="sm"]) button {
         min-height: calc(var(--space-1) * 2 + var(--line-height-base) * 1em);
         padding: var(--space-1) var(--space-2);
@@ -142,6 +142,19 @@ template.innerHTML = `
      :host([size="lg"]) {
          --icon-size: var(--font-size-large);
          --icon-gap: var(--space-3); /* Larger gap for large buttons */
+    }
+
+    /* XL Size */
+    :host([size="xl"]) button {
+        min-height: calc(var(--space-4) * 2 + var(--line-height-base) * 1em); /* Larger padding */
+        padding: var(--space-4) var(--space-6); /* Larger padding */
+        font-size: var(--font-size-xlarge); /* Larger font */
+        border-radius: var(--radius-xl); /* Larger radius */
+        gap: var(--icon-gap); /* Use scaled gap */
+    }
+    :host([size="xl"]) {
+         --icon-size: var(--font-size-xlarge); /* Larger icon */
+         --icon-gap: var(--space-4); /* Largest gap */
     }
 
 
@@ -183,7 +196,7 @@ template.innerHTML = `
 `;
 
 export class TeskooanoButton extends HTMLElement {
-  static observedAttributes = ["disabled", "type", "title", "fullwidth"];
+  static observedAttributes = ["disabled", "type", "title", "fullwidth", "size"];
 
   private buttonElement: HTMLButtonElement;
 
@@ -215,13 +228,17 @@ export class TeskooanoButton extends HTMLElement {
 
   attributeChangedCallback(
     name: string,
-    oldValue: string | null,
+    _oldValue: string | null, // Mark oldValue as unused
     newValue: string | null,
   ) {
     if (name === "disabled") {
       this.updateDisabledState();
     } else if (name === "fullwidth") {
       // Attribute presence handled by CSS selector :host([fullwidth])
+    } else if (name === "size") {
+      // Reflect the attribute to the host for CSS styling
+      // The actual styling is done via :host([size=...]) selectors
+      // No direct action needed here unless we want validation
     } else {
       this.updateAttribute(name, newValue);
     }
@@ -260,23 +277,24 @@ export class TeskooanoButton extends HTMLElement {
     }
   }
 
-  // Expose the form association methods (optional but good practice)
-  // static formAssociated = true;
-  // private internals: ElementInternals;
-
-  // If you need the button to participate in forms (e.g., submit)
-  // uncomment this constructor part and the relevant methods
-  // constructor() {
-  //   super();
-  //   // ... existing constructor ...
-  //   this.internals = this.attachInternals();
-  // }
-
-  // Add form-related methods if needed (e.g., for submit buttons)
-  // formAssociatedCallback(form) { ... }
-  // formDisabledCallback(disabled) { this.disabled = disabled; }
-  // formResetCallback() { ... }
-  // formStateRestoreCallback(state, mode) { ... }
+  // Getter/setter for size property
+  get size(): string | null {
+    return this.getAttribute("size");
+  }
+  set size(newSize: string | null) {
+    if (newSize) {
+        // Basic validation (optional)
+        const validSizes = ["sm", "md", "lg", "xl"];
+        if (validSizes.includes(newSize)) {
+            this.setAttribute("size", newSize);
+        } else {
+            console.warn(`Invalid size "${newSize}" for teskooano-button. Using default.`);
+            this.removeAttribute("size"); // Fallback to default (md)
+        }
+    } else {
+      this.removeAttribute("size"); // Remove attribute if set to null/undefined
+    }
+  }
 }
 
 customElements.define("teskooano-button", TeskooanoButton);

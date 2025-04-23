@@ -7,7 +7,6 @@ import {
 } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
-  AddPanelOptions,
   DockviewPanelApi,
   GroupPanelPartInitParameters,
   IContentRenderer,
@@ -16,60 +15,79 @@ import { atom, type WritableAtom } from "nanostores";
 import { Subscription } from "rxjs"; // Import Subscription
 import * as THREE from "three";
 
-// --- Import placeholder components ---
-// Removed placeholder imports as UI is now external
-// --- End Import ---
-
-// --- ADD THREEJS OrbitManager ---
 import { OrbitManager } from "@teskooano/renderer-threejs-visualization";
-// --- END ADD ---
 
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
 import { layoutOrientationStore, Orientation } from "../../stores/layoutStore";
 
-// --- Import the new PanelResizer ---
-// PanelResizer is no longer needed
 import { CameraManager } from "./CameraManager";
 
-// Define the expected structure for panel parameters from ToolbarController
 import type { DockviewController } from "../../controllers/dockviewController"; // Import controller type
 
-// --- Import Fluent UI Icons ---
-// --- End Fluent UI Icons ---
-
-// --- Import EngineToolbar ---
 import { EngineToolbar } from "./EngineToolbar";
-// --- End Import ---
+import { RendererStats } from "@teskooano/renderer-threejs-core";
 
+/**
+ * The parameters for the CompositeEnginePanel
+ */
 interface CompositePanelParams {
+  /**
+   * The title of the panel
+   */
   title?: string;
+  /**
+   * The controller for the panel
+   */
   dockviewController?: DockviewController; // Expect controller to be passed in
 }
 
-// --- Interface for View State (Copied from old EnginePanel) ---
-interface RendererStats {
-  fps?: number;
-  drawCalls?: number;
-  triangles?: number;
-  memory?: { usedJSHeapSize?: number };
-}
-
-// Default FOV for the panel state, aligning with SceneManager's default
+/**
+ * The default FOV for the panel state, aligning with SceneManager's default
+ */
 const DEFAULT_PANEL_FOV = 75;
 
 /**
  * Represents the internal view state of an engine panel, including camera,
  * focus, and display options.
  */
-export interface PanelViewState {
+export interface CompositeEngineState {
+  /**
+   * The position of the camera
+   */
   cameraPosition: THREE.Vector3;
+  /**
+   * The target of the camera
+   */
   cameraTarget: THREE.Vector3;
+  /**
+   * The focused object ID
+   */
   focusedObjectId: string | null;
+  /**
+   * Whether to show the 5AU grid
+   */
   showGrid?: boolean;
+  /**
+   * Whether to show the labels for celestial bodies
+   */
   showCelestialLabels?: boolean;
+  /**
+   * Whether to show the AU markers (distance markers) at 1-100AU
+   */
   showAuMarkers?: boolean;
+  /**
+   * Whether to show the debris effects
+   * NOTE: currently this is buggy and kill performance, which is why it's behind a feature flag
+   */
   showDebrisEffects?: boolean;
+  /**
+   * Whether to show the debug mode
+   * NOTE: This is still a work in progress and the camera controls are not yet fully integrated
+   */
   isDebugMode?: boolean;
+  /**
+   * The Field of View (FOV)
+   */
   fov?: number;
 }
 
@@ -90,7 +108,6 @@ let isSimulationLoopStarted = false;
 export class CompositeEnginePanel implements IContentRenderer {
   private readonly _element: HTMLElement;
   private _engineContainer: HTMLElement | undefined;
-  private _toolbarContainer: HTMLElement | undefined; // Toolbar container
 
   private _params:
     | (GroupPanelPartInitParameters & { params?: CompositePanelParams })
@@ -109,7 +126,7 @@ export class CompositeEnginePanel implements IContentRenderer {
   private _cameraManager: CameraManager | undefined;
 
   // --- Internal View State Store (Copied from old EnginePanel) ---
-  private _viewStateStore: WritableAtom<PanelViewState>;
+  private _viewStateStore: WritableAtom<CompositeEngineState>;
 
   // --- Dockview Controller Instance ---
   private _dockviewController: DockviewController | null = null;
@@ -137,21 +154,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._element.style.width = "100%";
     this._element.style.overflow = "hidden";
     this._element.style.display = "flex";
-    this._element.style.position = "relative"; // Needed for absolute positioning of toolbar
-
-    // --- Inject CSS for toolbar button icons ---
-    // REMOVED - Now handled by EngineToolbar
-    // const style = document.createElement('style');
-    // style.textContent = `
-    //   .engine-overlay-toolbar teskooano-button {
-    //     color: var(--color-text-on-primary, white); /* Force button text/icon color to white */
-    //   }
-    //   .engine-overlay-toolbar teskooano-button svg {
-    //     fill: currentColor; /* Ensure SVG inherits the button color */
-    //   }
-    // `;
-    // this._element.appendChild(style);
-    // --- End Inject CSS ---
+    this._element.style.position = "relative";
 
     this._engineContainer = document.createElement("div");
     this._engineContainer.classList.add("engine-container");
@@ -159,14 +162,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._engineContainer.style.overflow = "hidden";
     this._element.appendChild(this._engineContainer);
 
-    // Create toolbar container
-    // REMOVED - Toolbar container creation is now handled by EngineToolbar
-    // this._toolbarContainer = document.createElement("div");
-    // ... styling ...
-    // this._element.appendChild(this._toolbarContainer);
-
-    // Initialize internal view state store
-    this._viewStateStore = atom<PanelViewState>({
+    this._viewStateStore = atom<CompositeEngineState>({
       cameraPosition: new THREE.Vector3(200, 200, 200), // Default starting position
       cameraTarget: new THREE.Vector3(0, 0, 0), // Default starting target
       focusedObjectId: null,
@@ -183,7 +179,7 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Retrieves the current view state of the panel.
    * @returns A read-only copy of the current PanelViewState.
    */
-  public getViewState(): Readonly<PanelViewState> {
+  public getViewState(): Readonly<CompositeEngineState> {
     return this._viewStateStore.get();
   }
 
@@ -193,7 +189,7 @@ export class CompositeEnginePanel implements IContentRenderer {
    * to the underlying renderer instance.
    * @param updates - An object containing the state properties to update.
    */
-  public updateViewState(updates: Partial<PanelViewState>): void {
+  public updateViewState(updates: Partial<CompositeEngineState>): void {
     this._viewStateStore.set({
       ...this._viewStateStore.get(),
       ...updates,
@@ -207,7 +203,7 @@ export class CompositeEnginePanel implements IContentRenderer {
    * @returns An unsubscribe function to stop listening to state updates.
    */
   public subscribeToViewState(
-    callback: (state: PanelViewState) => void,
+    callback: (state: CompositeEngineState) => void
   ): () => void {
     return this._viewStateStore.subscribe(callback);
   }
@@ -241,11 +237,53 @@ export class CompositeEnginePanel implements IContentRenderer {
   }
 
   /**
+   * Provides access to the CameraManager instance.
+   * @returns The CameraManager instance or undefined if not initialized.
+   */
+  public get cameraManager(): CameraManager | undefined {
+    return this._cameraManager;
+  }
+
+  /**
+   * Provides access to the view state store.
+   * @returns The view state store.
+   */
+  public get viewStateStore(): WritableAtom<CompositeEngineState> {
+    return this._viewStateStore;
+  }
+
+  /**
+   * Provides access to the DockviewController instance.
+   * @returns The DockviewController instance or null if not initialized.
+   */
+  public get dockviewController(): DockviewController | null {
+    return this._dockviewController;
+  }
+
+  /**
+   * Provides access to the EngineToolbar instance.
+   * @returns The EngineToolbar instance or null if not initialized.
+   */
+  public get engineToolbar(): EngineToolbar | null {
+    return this._engineToolbar;
+  }
+
+  /**
+   * Provides access to the tracked floating panels.
+   * @returns The tracked floating panels.
+   */
+  public get trackedFloatingPanels(): Map<string, DockviewPanelApi> {
+    return this._trackedFloatingPanels;
+  }
+
+  /**
    * Applies specific view state updates directly to the renderer's components.
    * This is called internally when the view state is updated.
    * @param updates - The partial view state containing changes to apply.
    */
-  private applyViewStateToRenderer(updates: Partial<PanelViewState>): void {
+  private applyViewStateToRenderer(
+    updates: Partial<CompositeEngineState>
+  ): void {
     if (!this._renderer) return;
 
     if (updates.showGrid !== undefined) {
@@ -257,7 +295,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     ) {
       this._renderer.css2DManager.setLayerVisibility(
         CSS2DLayerType.CELESTIAL_LABELS,
-        updates.showCelestialLabels,
+        updates.showCelestialLabels
       );
     }
     if (updates.showAuMarkers !== undefined) {
@@ -275,31 +313,45 @@ export class CompositeEnginePanel implements IContentRenderer {
     // Add other state applications here as needed
   }
 
-  // --- Public methods for UI controls to call (Calls updateViewState internally) ---
-  /** Toggles the visibility of the grid helper in the renderer. */
+  /**
+   * Toggles the visibility of the 5AU grid.
+   * @param visible - Whether to show the grid.
+   */
   public setShowGrid(visible: boolean): void {
     this.updateViewState({ showGrid: visible });
   }
-  /** Toggles the visibility of celestial body labels. */
+  /**
+   * Toggles the visibility of celestial body labels.
+   * @param visible - Whether to show the labels.
+   */
   public setShowCelestialLabels(visible: boolean): void {
     this.updateViewState({ showCelestialLabels: visible });
   }
-  /** Toggles the visibility of Astronomical Unit (AU) markers. */
+  /**
+   * Toggles the visibility of Astronomical Unit (AU) markers.
+   * @param visible - Whether to show the markers.
+   */
   public setShowAuMarkers(visible: boolean): void {
     this.updateViewState({ showAuMarkers: visible });
   }
-  /** Enables or disables debris effects (placeholder). */
+  /**
+   * Enables or disables debris effects (placeholder).
+   * @param visible - Whether to show the debris effects.
+   */
   public setDebrisEffectsEnabled(visible: boolean): void {
     this.updateViewState({ showDebrisEffects: visible });
   }
-  /** Sets the camera's Field of View (FOV). */
+  /**
+   * Sets the camera's Field of View (FOV).
+   * @param fov - The new FOV value.
+   */
   public setFov(fov: number): void {
     // Check if camera manager exists before calling
     if (this._cameraManager) {
       this._cameraManager.setFov(fov);
     } else {
       console.warn(
-        `[CompositePanel ${this._api?.id}] setFov called before CameraManager was initialized.`,
+        `[CompositePanel ${this._api?.id}] setFov called before CameraManager was initialized.`
       );
       // Optionally update the state directly as a fallback if needed before init
       this.updateViewState({ fov });
@@ -317,7 +369,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._cameraManager.focusOnObject(objectId, distance);
     } else {
       console.warn(
-        `[CompositePanel ${this._api?.id}] focusOnObject called before CameraManager was initialized.`,
+        `[CompositePanel ${this._api?.id}] focusOnObject called before CameraManager was initialized.`
       );
     }
   }
@@ -331,7 +383,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._cameraManager.resetCameraView();
     } else {
       console.warn(
-        `[CompositePanel ${this._api?.id}] resetCameraView called before CameraManager was initialized.`,
+        `[CompositePanel ${this._api?.id}] resetCameraView called before CameraManager was initialized.`
       );
     }
   }
@@ -345,16 +397,18 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._cameraManager.clearFocus();
     } else {
       console.warn(
-        `[CompositePanel ${this._api?.id}] clearFocus called before CameraManager was initialized.`,
+        `[CompositePanel ${this._api?.id}] clearFocus called before CameraManager was initialized.`
       );
     }
   }
 
-  /** Enables or disables the global renderer debug mode. */
+  /**
+   * Enables or disables the global renderer debug mode.
+   * @param enabled - Whether to enable the debug mode.
+   */
   public setDebugMode(enabled: boolean): void {
     this.updateViewState({ isDebugMode: enabled });
   }
-  // --- End FocusControl Methods ---
 
   /**
    * Requests the renderer to resize on the next animation frame.
@@ -373,6 +427,10 @@ export class CompositeEnginePanel implements IContentRenderer {
     });
   }
 
+  /**
+   * Creates placeholder content for the panel.
+   * @returns The placeholder content.
+   */
   private _createPlaceholderContent(): string {
     return `
       <div style='display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center; padding: 1em; box-sizing: border-box;'>
@@ -390,7 +448,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     // Check initialization flag AND if dockviewController is set
     if (this._isInitialized && this._dockviewController) {
       console.warn(
-        `[CompositePanel ${this._api?.id}] Attempted to initialize already initialized panel.`,
+        `[CompositePanel ${this._api?.id}] Attempted to initialize already initialized panel.`
       );
       return;
     }
@@ -403,7 +461,7 @@ export class CompositeEnginePanel implements IContentRenderer {
 
     if (!this._dockviewController) {
       console.error(
-        `[CompositePanel ${this._api?.id}] DockviewController instance was not provided in params. Toolbar actions will fail.`,
+        `[CompositePanel ${this._api?.id}] DockviewController instance was not provided in params. Toolbar actions will fail.`
       );
       // Optionally display an error message in the panel
     }
@@ -452,7 +510,7 @@ export class CompositeEnginePanel implements IContentRenderer {
             this._engineContainer.innerHTML = this._createPlaceholderContent();
           }
         }
-      },
+      }
     );
 
     this._isInitialized = true; // Mark as initialized *after* setup
@@ -460,7 +518,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     // Subscribe to global simulation state *after* initialization
     this._simulationStateUnsubscribe?.(); // Clean up previous if any (unlikely here)
     this._simulationStateUnsubscribe = simulationState.subscribe(
-      this.handleSimulationStateChange,
+      this.handleSimulationStateChange
     );
 
     // --- Subscribe to Panel Removals from DockviewController ---
@@ -471,13 +529,15 @@ export class CompositeEnginePanel implements IContentRenderer {
         });
     } else {
       console.warn(
-        "CompositeEnginePanel: DockviewController not provided, cannot subscribe to panel removals.",
+        "CompositeEnginePanel: DockviewController not provided, cannot subscribe to panel removals."
       );
     }
-    // --- End Subscription ---
-
     // Set initial orientation and start listening for changes
     this._currentOrientation = layoutOrientationStore.get();
+
+    layoutOrientationStore.subscribe((orientation) => {
+      this._currentOrientation = orientation;
+    });
   }
 
   /**
@@ -504,7 +564,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       if (!this._simulationStateUnsubscribe) {
         // Avoid double subscription
         this._simulationStateUnsubscribe = simulationState.subscribe(
-          this.handleSimulationStateChange,
+          this.handleSimulationStateChange
         );
       }
       // Apply initial simulation state values that affect the renderer
@@ -517,6 +577,9 @@ export class CompositeEnginePanel implements IContentRenderer {
         // Provide a callback for the CameraManager to notify the panel of focus changes
         // This allows the panel (or other interested components) to react, e.g., update UI state
         onFocusChangeCallback: (focusedId) => {
+          console.log(
+            `[CompositePanel ${this._api?.id}] CameraManager focus changed to ${focusedId}.`
+          );
           // Example: Log the focus change, could also dispatch an event
           // We could dispatch the 'renderer-focus-changed' event here if needed externally
           // this.dispatchFocusChangeEvent(); // Assuming this method is re-added or handled differently
@@ -533,10 +596,10 @@ export class CompositeEnginePanel implements IContentRenderer {
             bubbles: true, // Allow event to bubble up if needed
             composed: true, // Allow event to cross shadow DOM boundaries
             detail: { renderer: this._renderer },
-          }),
+          })
         );
         console.log(
-          `[CompositePanel ${this._api?.id}] Dispatched renderer-ready event.`,
+          `[CompositePanel ${this._api?.id}] Dispatched renderer-ready event.`
         );
       }
 
@@ -556,7 +619,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     } catch (error) {
       console.error(
         `Failed to initialize CompositePanel [${this._api?.id}] renderer:`,
-        error,
+        error
       );
       if (this._engineContainer) {
         this._engineContainer.textContent = `Error initializing engine renderer: ${error}`;
@@ -581,7 +644,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     // Ensure we have the API ID before creating the toolbar
     if (!this._api?.id) {
       console.error(
-        "CompositeEnginePanel: Cannot initialize toolbar without panel API ID.",
+        "CompositeEnginePanel: Cannot initialize toolbar without panel API ID."
       );
       return;
     }
@@ -593,7 +656,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._engineToolbar = new EngineToolbar(
       this._api.id,
       this._dockviewController!,
-      this,
+      this
     );
     this._element.appendChild(this._engineToolbar.element);
   }
@@ -620,7 +683,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       } catch (e) {
         console.warn(
           `Error closing tracked panel ${panelApi.id} during dispose:`,
-          e,
+          e
         );
       }
     });
@@ -642,7 +705,7 @@ export class CompositeEnginePanel implements IContentRenderer {
    */
   dispose(): void {
     console.log(
-      `CompositeEnginePanel (${this._api?.id ?? "unknown"}): Disposing.`,
+      `CompositeEnginePanel (${this._api?.id ?? "unknown"}): Disposing.`
     );
     this.disposeRendererAndUI();
 
@@ -665,7 +728,7 @@ export class CompositeEnginePanel implements IContentRenderer {
   private handleExternalPanelRemoval(panelId: string): void {
     if (this._trackedFloatingPanels.has(panelId)) {
       console.log(
-        `CompositeEnginePanel: Detected external removal of tracked floating panel: ${panelId}. Updating internal state.`,
+        `CompositeEnginePanel: Detected external removal of tracked floating panel: ${panelId}. Updating internal state.`
       );
       this._trackedFloatingPanels.delete(panelId);
       // Optionally, update toolbar button state if needed here

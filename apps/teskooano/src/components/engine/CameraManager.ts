@@ -1,28 +1,55 @@
-import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { renderableObjectsStore } from "@teskooano/core-state";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import * as THREE from "three";
+import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { type WritableAtom } from "nanostores";
-import type { PanelViewState } from "./CompositeEnginePanel"; // Use type import
+import * as THREE from "three";
+import type { CompositeEngineState } from "./CompositeEnginePanel"; // Use type import
 
-// --- Constants for Camera/Focus (Moved from CompositeEnginePanel) ---
+/**
+ * Constants for Camera/Focus
+ */
 const CAMERA_OFFSET = new THREE.Vector3(0.8, 0.4, 1.0).normalize();
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(200, 200, 200);
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 const DEFAULT_CAMERA_DISTANCE = 10; // Default distance multiplier for focus
 const DEFAULT_FOV = 75; // Align with panel's default
-// --- End Constants ---
 
-// Define specific state the CameraManager directly controls
+/**
+ * The current state of the CameraManager
+ */
 interface CameraManagerState {
+  /**
+   * The current position of the camera
+   */
+  currentPosition?: THREE.Vector3;
+  /**
+   * The current target of the camera
+   */
+  currentTarget?: THREE.Vector3;
+  /**
+   * Field of View (FOV)
+   */ 
   fov: number;
+  /**
+   * Focused object ID
+   */
   focusedObjectId: string | null;
-  // Camera position/target are managed via transitions and read from renderer state
 }
 
+/**
+ * Options for the CameraManager
+ */
 interface CameraManagerOptions {
+  /**
+   * The renderer instance
+   */
   renderer: ModularSpaceRenderer;
-  viewStateAtom: WritableAtom<PanelViewState>;
+  /**
+   * The view state atom
+   */
+  viewStateAtom: WritableAtom<CompositeEngineState>;
+  /**
+   * Callback for when the focus changes
+   */
   onFocusChangeCallback: (focusedObjectId: string | null) => void;
 }
 
@@ -32,12 +59,27 @@ interface CameraManagerOptions {
  * and managing camera transitions.
  */
 export class CameraManager {
+  /**
+   * The renderer instance
+   */
   private renderer: ModularSpaceRenderer;
-  private viewStateAtom: WritableAtom<PanelViewState>;
+  /**
+   * The view state atom
+   */
+  private viewStateAtom: WritableAtom<CompositeEngineState>;
+  /**
+   * Callback for when the focus changes
+   */
   private onFocusChangeCallback: (focusedObjectId: string | null) => void;
-
+  /**
+   * The current state of the CameraManager
+   */
   private state: CameraManagerState;
 
+  /**
+   * Constructor for the CameraManager
+   * @param options - The options for the CameraManager
+   */
   constructor(options: CameraManagerOptions) {
     this.renderer = options.renderer;
     this.viewStateAtom = options.viewStateAtom;
@@ -56,7 +98,7 @@ export class CameraManager {
     // Listen for camera transitions
     document.addEventListener(
       "camera-transition-complete",
-      this.handleCameraTransitionComplete,
+      this.handleCameraTransitionComplete
     );
   }
 
@@ -75,7 +117,7 @@ export class CameraManager {
         initialTargetPosition.copy(initialFocusObject.position);
       } else {
         console.warn(
-          `[CameraManager Init] Initial focused object ${initialState.focusedObjectId} not found or has no position. Using default target.`,
+          `[CameraManager Init] Initial focused object ${initialState.focusedObjectId} not found or has no position. Using default target.`
         );
         // Ensure panel state is consistent if focus object is invalid
         this.updatePanelViewState({ focusedObjectId: null });
@@ -100,7 +142,7 @@ export class CameraManager {
       // Clear focus: move to default position
       this.renderer.controlsManager.moveTo(
         DEFAULT_CAMERA_POSITION.clone(),
-        DEFAULT_CAMERA_TARGET.clone(),
+        DEFAULT_CAMERA_TARGET.clone()
       );
       this.renderer.setFollowTarget(null);
       this.state.focusedObjectId = null; // Update internal state first
@@ -112,7 +154,7 @@ export class CameraManager {
 
       if (!renderableObject?.position) {
         console.error(
-          `[CameraManager] focusOnObject: Cannot focus on ${objectId}, missing renderable or its position.`,
+          `[CameraManager] focusOnObject: Cannot focus on ${objectId}, missing renderable or its position.`
         );
         return;
       }
@@ -137,7 +179,7 @@ export class CameraManager {
     if (!this.renderer.controlsManager) return;
     this.renderer.controlsManager.moveTo(
       DEFAULT_CAMERA_POSITION.clone(),
-      DEFAULT_CAMERA_TARGET.clone(),
+      DEFAULT_CAMERA_TARGET.clone()
     );
     this.renderer.setFollowTarget(null);
     this.state.focusedObjectId = null; // Update internal state first
@@ -171,7 +213,7 @@ export class CameraManager {
       const { position, target, focusedObjectId } = customEvent.detail;
 
       // Prepare state update for the panel, always including latest position/target
-      const panelStateUpdate: Partial<PanelViewState> = {};
+      const panelStateUpdate: Partial<CompositeEngineState> = {};
       if (position) panelStateUpdate.cameraPosition = position;
       if (target) panelStateUpdate.cameraTarget = target;
 
@@ -194,7 +236,7 @@ export class CameraManager {
   };
 
   /** Helper to update the central PanelViewState atom */
-  private updatePanelViewState(updates: Partial<PanelViewState>): void {
+  private updatePanelViewState(updates: Partial<CompositeEngineState>): void {
     this.viewStateAtom.set({
       ...this.viewStateAtom.get(),
       ...updates,
@@ -207,7 +249,7 @@ export class CameraManager {
   public destroy(): void {
     document.removeEventListener(
       "camera-transition-complete",
-      this.handleCameraTransitionComplete,
+      this.handleCameraTransitionComplete
     );
   }
 }

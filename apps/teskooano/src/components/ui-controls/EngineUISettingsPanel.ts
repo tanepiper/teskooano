@@ -1,5 +1,5 @@
 import type { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // Import parent panel type
-import type { PanelViewState } from "../engine/CompositeEnginePanel"; // Import type from parent
+import type { CompositeEngineState } from "../engine/CompositeEnginePanel"; // Import type from parent
 import "../shared/Slider.js"; // Import the slider component
 import type { TeskooanoSlider } from "../shared/Slider.js"; // Import the slider type
 // Import Dockview types and panel registry
@@ -315,7 +315,7 @@ export class EngineUISettingsPanel
     this.updateUiState(initialState);
 
     this._unsubscribeParentState = this._parentPanel.subscribeToViewState(
-      (newState: PanelViewState) => {
+      (newState: CompositeEngineState) => {
         this.updateUiState(newState);
       },
     );
@@ -387,7 +387,7 @@ export class EngineUISettingsPanel
     }
   };
 
-  private updateUiState(viewState: PanelViewState): void {
+  private updateUiState(viewState: CompositeEngineState): void {
     if (this.gridToggle) {
       this.gridToggle.checked = viewState.showGrid ?? true;
     }
