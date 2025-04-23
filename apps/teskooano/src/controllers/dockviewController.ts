@@ -14,7 +14,7 @@ import { Overlay } from "dockview-core/dist/esm/overlay/overlay";
 import { CompositeEnginePanel } from "../components/engine/CompositeEnginePanel";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
 import { EngineUISettingsPanel } from "../components/ui-controls/EngineUISettingsPanel";
-import { FocusControl } from "../components/ui-controls/FocusControl";
+import { FocusControl } from "../components/ui-controls/focus/FocusControl";
 import { RendererInfoDisplay } from "../components/ui-controls/RendererInfoDisplay";
 import { CelestialInfo } from "../components/ui-controls/CelestialInfo";
 // import { CelestialInfoPanel } from "../components/ui-controls/CelestialInfoPanel"; // REMOVE - Incorrect Class/File

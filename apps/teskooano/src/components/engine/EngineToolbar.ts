@@ -14,7 +14,7 @@ import {
 import { CompositeEnginePanel } from "./CompositeEnginePanel"; // Import parent panel type
 
 import BoxMultipleArrowRightFilled from "@fluentui/svg-icons/icons/box_multiple_arrow_right_24_filled.svg?raw";
-import BoxMultipleArrowLeftFilled from "@fluentui/svg-icons/icons/box_multiple_arrow_left_24_filled.svg?raw";
+import BoxMultipleArrowLeftFilled from "@fluentui/svg-icons/icons/box_multiple_arrow_left_24_regular.svg?raw";
 
 export class EngineToolbar {
   private readonly _element: HTMLElement;

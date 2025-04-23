@@ -1,4 +1,4 @@
 export * from "./UiPanel";
-export * from "./FocusControl";
+export * from "./focus/FocusControl";
 export * from "./EngineUISettingsPanel";
 export * from "../tours/TourModal";

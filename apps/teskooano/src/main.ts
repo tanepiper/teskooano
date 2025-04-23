@@ -6,7 +6,7 @@ import { DockviewController } from "./controllers/dockviewController";
 import { ToolbarController } from "./controllers/toolbarController";
 import { TourController } from "./controllers/tourController";
 // Import simulation controls component definition
-import "./components/ui-controls/FocusControl"; // Import the new component
+import "./components/ui-controls/focus/FocusControl"; // Import the new component
 import "./components/ui-controls/RendererInfoDisplay"; // Import the new renderer info component
 // SimulationInfoDisplay has been migrated to the toolbar
 import "./components/ui-controls/CelestialInfo"; // Import the new CelestialInfo component
@@ -22,7 +22,7 @@ import { layoutOrientationStore, Orientation } from "./stores/layoutStore"; // I
 import "./components/ui-controls/EngineUISettingsPanel"; // Import for side effect (registers element)
 import { EnginePlaceholder } from "./components/engine/EnginePlaceholder"; // Import EnginePlaceholder class
 import { ToolbarSeedForm } from "./components/toolbar/SeedForm"; // Correct import path
-import { FocusControl } from "./components/ui-controls/FocusControl"; // Import FocusControl
+import { FocusControl } from "./components/ui-controls/focus/FocusControl"; // Import FocusControl
 
 // --- Setup --- //
 
