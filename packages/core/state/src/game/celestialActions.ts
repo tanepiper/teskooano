@@ -2,6 +2,7 @@ import type { CelestialObject, OrbitalParameters } from "@teskooano/data-types";
 import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import { celestialObjectsStore, celestialHierarchyStore } from "./stores";
 import { renderableActions } from "./renderableStore";
+import { CustomEvents } from "@teskooano/data-types";
 
 /**
  * Actions for managing celestial objects
@@ -34,13 +35,10 @@ export const celestialActions = {
         );
       }
 
-      // Dispatch event when a new object is added
+      // Dispatch event after loading
       document.dispatchEvent(
-        new CustomEvent("celestial-objects-loaded", {
-          detail: {
-            count: Object.keys(newObjects).length,
-            newObject: object.id,
-          },
+        new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
+          detail: { count: Object.keys(newObjects).length },
         }),
       );
     } catch (error) {
@@ -115,14 +113,10 @@ export const celestialActions = {
       // Set the entire new map
       celestialObjectsStore.set(newObjects);
 
-      // Dispatch event when an object is destroyed/removed
-      // Keep the same event for compatibility, but the object still exists
+      // Dispatch event after destruction
       document.dispatchEvent(
-        new CustomEvent("celestial-object-destroyed", {
-          detail: {
-            id: objectId,
-            count: Object.keys(currentObjects).length, // Count remains same initially
-          },
+        new CustomEvent(CustomEvents.CELESTIAL_OBJECT_DESTROYED, {
+          detail: { objectId: objectId },
         }),
       );
     } else {
@@ -147,13 +141,10 @@ export const celestialActions = {
       // Update hierarchy (remove from parent's list)
       // TODO: Implement hierarchy removal logic if needed
 
-      // Dispatch event when an object is destroyed/removed
+      // Dispatch event after destruction
       document.dispatchEvent(
-        new CustomEvent("celestial-object-destroyed", {
-          detail: {
-            id: objectId,
-            count: Object.keys(newObjects).length,
-          },
+        new CustomEvent(CustomEvents.CELESTIAL_OBJECT_DESTROYED, {
+          detail: { objectId: objectId },
         }),
       );
     } else {

@@ -1,3 +1,6 @@
+import { createHtmlElement } from "@teskooano/common";
+import { CustomEvents } from "@teskooano/types";
+
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
@@ -155,7 +158,7 @@ export class CollapsibleSection extends HTMLElement {
 
       // Dispatch event when closed state changes via attribute
       this.dispatchEvent(
-        new CustomEvent("toggle", {
+        new CustomEvent(CustomEvents.TOGGLE, {
           bubbles: true,
           composed: true,
           detail: {
@@ -222,7 +225,7 @@ export class CollapsibleSection extends HTMLElement {
 
       // Dispatch toggle event
       this.dispatchEvent(
-        new CustomEvent("toggle", {
+        new CustomEvent(CustomEvents.TOGGLE, {
           bubbles: true,
           composed: true,
           detail: {
@@ -244,7 +247,7 @@ export class CollapsibleSection extends HTMLElement {
 
       // Dispatch toggle event
       this.dispatchEvent(
-        new CustomEvent("toggle", {
+        new CustomEvent(CustomEvents.TOGGLE, {
           bubbles: true,
           composed: true,
           detail: {

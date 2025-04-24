@@ -1,5 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { simulationState } from "@teskooano/core-state";
+import { CustomEvents } from "@teskooano/data-types";
 import gsap from "gsap";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -168,7 +169,7 @@ export class ControlsManager {
 
       // Dispatch a custom event indicating the transition is complete
       const transitionCompleteEvent = new CustomEvent(
-        "camera-transition-complete", // Use the same event name for consistency?
+        CustomEvents.CAMERA_TRANSITION_COMPLETE,
         {
           detail: {
             position: this.camera.position.clone(), // Current position
@@ -220,6 +221,15 @@ export class ControlsManager {
     this.setEnabled(false);
     this.isTransitioning = true;
 
+    // Store current damping state to restore later
+    const wasDampingEnabled = this.controls.enableDamping;
+    const originalDampingFactor = this.controls.dampingFactor;
+
+    // Disable damping temporarily to prevent interference
+    // This might not be strictly necessary if GSAP overrides fully,
+    // but it's safer to be explicit.
+    // this.controls.enableDamping = false; // Optional: uncomment if needed
+
     // Calculate total transition duration based on camera travel distance
     const totalDuration = this.calculateTransitionDuration(startPos, endPos);
 
@@ -242,44 +252,41 @@ export class ControlsManager {
       this.isTransitioning = false;
       this.setEnabled(true);
       this.activeTimeline = null;
-      // Ensure final state is precise
+      // Restore original damping state
+      this.controls.enableDamping = wasDampingEnabled;
+      this.controls.dampingFactor = originalDampingFactor;
+
+      // Ensure final state is exactly as intended
       this.camera.position.copy(endPos);
       this.controls.target.copy(endTarget);
-      this.controls.update();
+      this.controls.update(); // Final update
 
-      // Update global state
-      simulationState.set({
-        ...simulationState.get(),
-        camera: {
-          ...simulationState.get().camera,
-          position: new OSVector3(endPos.x, endPos.y, endPos.z),
-          target: new OSVector3(endTarget.x, endTarget.y, endTarget.z),
-        },
-      });
+      // Set the offset if following after transition
+      if (this.followingTargetObject) {
+        this.previousFollowTargetPos.copy(
+          this.followingTargetObject.getWorldPosition(this.tempTargetPosition),
+        );
+        // Calculate and store the final offset if needed (though not currently used in update)
+        this.finalFollowOffset = this.camera.position
+          .clone()
+          .sub(this.previousFollowTargetPos);
+        // console.log("Transition complete, setting follow offset:", this.finalFollowOffset);
+      }
 
-      // Dispatch event
+      // Dispatch completion event
       const transitionCompleteEvent = new CustomEvent(
-        "camera-transition-complete",
+        CustomEvents.CAMERA_TRANSITION_COMPLETE,
         {
           detail: {
             position: endPos.clone(),
             target: endTarget.clone(),
-            type: "move-and-target", // Indicate type
+            type: "position-and-target", // Add type differentiator
           },
           bubbles: true,
           composed: true,
         },
       );
       document.dispatchEvent(transitionCompleteEvent);
-
-      // Handle follow state update
-      if (this.followingTargetObject) {
-        this.previousFollowTargetPos.copy(endTarget);
-        this.finalFollowOffset = endPos.clone().sub(endTarget);
-      } else {
-        this.finalFollowOffset = null;
-        this.previousFollowTargetPos.set(0, 0, 0);
-      }
     };
     // --- End Completion Logic ---
 

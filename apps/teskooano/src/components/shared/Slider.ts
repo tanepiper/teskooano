@@ -1,3 +1,7 @@
+import { createHtmlElement } from "@teskooano/common";
+import { formatNumber } from "@teskooano/common";
+import { CustomEvents } from "@teskooano/data-types";
+
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
@@ -484,7 +488,7 @@ export class TeskooanoSlider extends HTMLElement {
 
       // Dispatch change event
       this.dispatchEvent(
-        new CustomEvent("change", {
+        new CustomEvent(CustomEvents.SLIDER_CHANGE, {
           bubbles: true,
           composed: true,
           detail: { value },
@@ -534,7 +538,7 @@ export class TeskooanoSlider extends HTMLElement {
 
       // Dispatch change event
       this.dispatchEvent(
-        new CustomEvent("change", {
+        new CustomEvent(CustomEvents.SLIDER_CHANGE, {
           bubbles: true,
           composed: true,
           detail: { value: numValue },
@@ -567,7 +571,7 @@ export class TeskooanoSlider extends HTMLElement {
       // Dispatch change event if value changed
       if (numValue !== currentState.value) {
         this.dispatchEvent(
-          new CustomEvent("change", {
+          new CustomEvent(CustomEvents.SLIDER_CHANGE, {
             bubbles: true,
             composed: true,
             detail: { value: numValue },
@@ -612,7 +616,7 @@ export class TeskooanoSlider extends HTMLElement {
 
       // Dispatch change event
       this.dispatchEvent(
-        new CustomEvent("change", {
+        new CustomEvent(CustomEvents.SLIDER_CHANGE, {
           bubbles: true,
           composed: true,
           detail: { value: clampedValue },

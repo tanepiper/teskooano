@@ -1,3 +1,6 @@
+import { createHtmlElement } from "@teskooano/common";
+import { CustomEvents } from "@teskooano/data-types";
+
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
@@ -46,7 +49,7 @@ export class TeskooanoForm extends HTMLElement {
       e.preventDefault();
       // Dispatch a custom submit event from the host element
       this.dispatchEvent(
-        new CustomEvent("submit-custom", {
+        new CustomEvent(CustomEvents.SUBMIT_CUSTOM, {
           bubbles: true,
           composed: true,
           detail: this.getFormData(),
@@ -176,10 +179,9 @@ export class TeskooanoForm extends HTMLElement {
 
     // Dispatch a custom reset event
     this.dispatchEvent(
-      new CustomEvent("reset-custom", {
+      new CustomEvent(CustomEvents.RESET_CUSTOM, {
         bubbles: true,
         composed: true,
-        detail: { form: this },
       }),
     );
   }

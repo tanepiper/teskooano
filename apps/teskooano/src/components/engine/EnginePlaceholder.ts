@@ -1,6 +1,9 @@
 // Vanilla Web Component for Engine Placeholder
 import { DockviewApi } from "dockview-core"; // Import DockviewApi type
 import "../toolbar/SeedForm.js"; // Import SeedForm definition
+import { simulationState } from "@teskooano/core-state";
+import { CustomEvents } from "@teskooano/data-types"; // Add import
+import * as THREE from "three";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -162,11 +165,12 @@ export class EnginePlaceholder extends HTMLElement {
 
   private handleStartTourClick = () => {
     // Dispatch a custom event that bubbles up
-    const event = new CustomEvent("start-tour-request", {
-      bubbles: true,
-      composed: true, // Allows event to cross shadow DOM boundaries
-    });
-    this.dispatchEvent(event);
+    this.dispatchEvent(
+      new CustomEvent(CustomEvents.START_TOUR_REQUEST, {
+        bubbles: true,
+        composed: true,
+      }),
+    );
   };
 }
 

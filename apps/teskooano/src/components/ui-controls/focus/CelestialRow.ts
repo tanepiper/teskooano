@@ -1,5 +1,6 @@
 import { CelestialType } from "@teskooano/data-types";
 import { template, iconStyles } from "./CelestialRow.template";
+import { CustomEvents } from "@teskooano/data-types";
 
 export class CelestialRow extends HTMLElement {
   static observedAttributes = [
@@ -91,9 +92,9 @@ export class CelestialRow extends HTMLElement {
     event.stopPropagation(); // Prevent triggering parent listeners if needed
     if (this._objectId && !this._isInactive) {
       this.dispatchEvent(
-        new CustomEvent("focus-request", {
-          bubbles: true, // Allow event to bubble up
-          composed: true, // Allow event to cross shadow DOM boundary
+        new CustomEvent(CustomEvents.FOCUS_REQUEST, {
+          bubbles: true,
+          composed: true,
           detail: { objectId: this._objectId },
         }),
       );
@@ -105,7 +106,7 @@ export class CelestialRow extends HTMLElement {
     if (this._objectId && !this._isInactive) {
       console.log(`Follow requested for ${this._objectId}`); // Placeholder
       this.dispatchEvent(
-        new CustomEvent("follow-request", {
+        new CustomEvent(CustomEvents.FOLLOW_REQUEST, {
           bubbles: true,
           composed: true,
           detail: { objectId: this._objectId },

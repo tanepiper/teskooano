@@ -1,3 +1,5 @@
+import { CustomEvents } from "@teskooano/types";
+
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
@@ -179,12 +181,12 @@ export class TeskooanoOutputDisplay extends HTMLElement {
       this._internalUpdate = false;
     }
 
-    // Dispatch content change event
+    // Dispatch event when content changes
     this.dispatchEvent(
-      new CustomEvent("content-change", {
+      new CustomEvent(CustomEvents.CONTENT_CHANGE, {
         bubbles: true,
         composed: true,
-        detail: { value: this.value },
+        detail: { content: this.value },
       }),
     );
   };
@@ -211,23 +213,23 @@ export class TeskooanoOutputDisplay extends HTMLElement {
       await navigator.clipboard.writeText(this.value);
       this.showCopyFeedback();
 
-      // Dispatch copy success event
+      // Dispatch event when content changes
       this.dispatchEvent(
-        new CustomEvent("copy", {
+        new CustomEvent(CustomEvents.COPY, {
           bubbles: true,
           composed: true,
-          detail: { success: true, value: this.value },
+          detail: { success: true },
         }),
       );
     } catch (error) {
       console.error("Failed to copy text:", error);
 
-      // Dispatch copy error event
+      // Dispatch event when copy error occurs
       this.dispatchEvent(
-        new CustomEvent("copy", {
+        new CustomEvent(CustomEvents.COPY, {
           bubbles: true,
           composed: true,
-          detail: { success: false, error },
+          detail: { success: false, error: error },
         }),
       );
     }
@@ -321,10 +323,7 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     this._internalUpdate = false;
 
     this.dispatchEvent(
-      new CustomEvent("clear", {
-        bubbles: true,
-        composed: true,
-      }),
+      new CustomEvent(CustomEvents.CLEAR, { bubbles: true, composed: true }),
     );
   }
 }

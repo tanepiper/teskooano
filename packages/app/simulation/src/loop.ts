@@ -19,20 +19,17 @@ import {
 } from "@teskooano/data-types";
 import * as THREE from "three";
 import { rendererEvents } from "@teskooano/renderer-threejs-core";
+import { CustomEvents } from "@teskooano/data-types";
 
 let lastTime = performance.now();
 let running = true;
 let lastLoggedTime = 0;
 let accumulatedTime = 0; // Track simulation time accumulation
 
-// Event listener for simulation time reset
-window.addEventListener("resetSimulationTime", () => {
-  accumulatedTime = 0;
-  // Also update the simulation state directly
-  simulationState.set({
-    ...simulationState.get(),
-    time: 0,
-  });
+// Listen for resetSimulationTime event
+window.addEventListener(CustomEvents.SIMULATION_RESET_TIME, () => {
+  console.log("Received resetSimulationTime event, resetting accumulatedTime");
+  accumulatedTime = 0; // Reset accumulated time
 });
 
 // Removed Octree Initialization
@@ -223,11 +220,25 @@ export function startSimulationLoop() {
         updateAccelerationVectors(stepResult.accelerations);
         // --- End State Updates ---
 
-        // Dispatch event for OrbitManager to update lines
-        const orbitUpdateEvent = new CustomEvent("orbitUpdate", {
-          detail: { time: accumulatedTime },
+        // --- Prepare data for orbit update event ---
+        const updatedPositions: Record<
+          string,
+          { x: number; y: number; z: number }
+        > = {};
+        stepResult.states.forEach((state) => {
+          updatedPositions[String(state.id)] = {
+            x: state.position_m.x,
+            y: state.position_m.y,
+            z: state.position_m.z,
+          };
         });
-        window.dispatchEvent(orbitUpdateEvent);
+        // --- End Prepare data ---
+
+        // Dispatch an event with the updated positions
+        const orbitUpdateEvent = new CustomEvent(CustomEvents.ORBIT_UPDATE, {
+          detail: { positions: updatedPositions },
+        });
+        document.dispatchEvent(orbitUpdateEvent);
       }
 
       // Debug logging remains the same...

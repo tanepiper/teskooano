@@ -12,13 +12,11 @@ import {
 import { generateSystem } from "@teskooano/procedural-generation";
 import { dispatchTextureGenerationComplete } from "@teskooano/systems-celestial";
 import { DockviewApi } from "dockview-core";
-
-// Custom event name for simulation time reset
-const RESET_SIMULATION_TIME_EVENT = "resetSimulationTime";
+import { CustomEvents } from "@teskooano/data-types";
 
 // Define the custom event for resetting simulation accumulated time
 export function dispatchSimulationTimeReset() {
-  const event = new CustomEvent(RESET_SIMULATION_TIME_EVENT);
+  const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
   window.dispatchEvent(event);
 }
 
@@ -218,3 +216,9 @@ export async function generateAndLoadSystem(
   }
   return success;
 }
+
+export const handleResetSimulationTime = () => {
+  // dispatch event to reset simulation time
+  const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
+  window.dispatchEvent(event);
+};

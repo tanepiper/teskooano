@@ -1,3 +1,6 @@
+import { createHtmlElement } from "@teskooano/common";
+import { CustomEvents } from "@teskooano/data-types";
+
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
@@ -312,9 +315,9 @@ export class TeskooanoSelect extends HTMLElement {
     this.setAttribute("value", this.selectElement.value);
     this._internalUpdate = false;
 
-    // Dispatch a change event from the component
+    // Dispatch a standard 'change' event and our custom event
     this.dispatchEvent(
-      new CustomEvent("change", {
+      new CustomEvent(CustomEvents.SELECT_CHANGE, {
         bubbles: true,
         composed: true,
         detail: { value: this.value },

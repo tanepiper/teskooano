@@ -25,6 +25,7 @@ import * as THREE from "three";
 import { celestialActions } from "./celestialActions";
 import { simulationState } from "./simulation";
 import { celestialHierarchyStore, celestialObjectsStore } from "./stores";
+import { CustomEvents } from "@teskooano/data-types";
 
 /**
  * Input data required to create a new celestial object.
@@ -157,9 +158,11 @@ export const celestialFactory = {
     // Update the state
     simulationState.set(newState);
 
-    // Dispatch event notifying that celestial objects have been cleared/loaded
+    // Dispatch event indicating objects are cleared (or loaded with count 0)
     document.dispatchEvent(
-      new CustomEvent("celestial-objects-loaded", { detail: { count: 0 } }),
+      new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
+        detail: { count: 0 },
+      }),
     );
   },
 
@@ -324,7 +327,7 @@ export const celestialFactory = {
     celestialHierarchyStore.setKey(data.id, []);
 
     document.dispatchEvent(
-      new CustomEvent("celestial-objects-loaded", {
+      new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
         detail: { count: 1, systemId: data.id },
       }),
     );

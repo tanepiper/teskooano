@@ -26,6 +26,7 @@ import type { DockviewController } from "../../controllers/dockview/DockviewCont
 
 import { EngineToolbar } from "./EngineToolbar";
 import { RendererStats } from "@teskooano/renderer-threejs-core";
+import { CustomEvents } from "@teskooano/data-types";
 
 /**
  * The parameters for the CompositeEnginePanel
@@ -590,16 +591,16 @@ export class CompositeEnginePanel implements IContentRenderer {
       // --- End Initialize Camera Manager ---
 
       // Dispatch event indicating the renderer is ready
-      if (this._renderer && this.element.isConnected) {
+      if (this._renderer && this.element.isConnected && this._api?.id) {
         this.element.dispatchEvent(
-          new CustomEvent("renderer-ready", {
-            bubbles: true, // Allow event to bubble up if needed
-            composed: true, // Allow event to cross shadow DOM boundaries
-            detail: { renderer: this._renderer },
+          new CustomEvent(CustomEvents.RENDERER_READY, {
+            bubbles: true,
+            composed: true,
+            detail: { panelId: this._api.id, renderer: this._renderer },
           }),
         );
         console.log(
-          `[CompositePanel ${this._api?.id}] Dispatched renderer-ready event.`,
+          `[CompositePanel ${this._api.id}] Dispatched CustomEvents.RENDERER_READY.`,
         );
       }
 

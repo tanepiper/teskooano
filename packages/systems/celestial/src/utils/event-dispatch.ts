@@ -1,27 +1,18 @@
 import { TextureProgressEventDetail } from "./types"; // Assuming types.ts is created
+import { CustomEvents } from "@teskooano/data-types";
 
-export function dispatchTextureProgress(
-  objectId: string,
-  objectName: string,
-  status: TextureProgressEventDetail["status"],
-  message?: string,
-): void {
-  const detail: TextureProgressEventDetail = {
-    objectId,
-    objectName,
-    status,
-    message,
-  };
-  document.dispatchEvent(new CustomEvent("texture-progress", { detail }));
+export function dispatchTextureProgress(current: number, total: number): void {
+  const detail = { current, total, progress: current / total };
+  document.dispatchEvent(
+    new CustomEvent(CustomEvents.TEXTURE_PROGRESS, { detail }),
+  );
 }
 
-export function dispatchTextureGenerationComplete(
-  success: boolean,
-  errorCount: number = 0,
-): void {
+export function dispatchTextureGenerationComplete(): void {
   document.dispatchEvent(
-    new CustomEvent("texture-generation-complete", {
-      detail: { success, errorCount },
+    new CustomEvent(CustomEvents.TEXTURE_GENERATION_COMPLETE, {
+      bubbles: true,
+      composed: true,
     }),
   );
 }

@@ -1,3 +1,6 @@
+import { createHtmlElement } from "@teskooano/common";
+import { CustomEvents } from "@teskooano/data-types";
+
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
@@ -147,8 +150,12 @@ export class TeskooanoModal extends HTMLElement {
       }
       // Dispatch custom event for modal-confirm
       this.dispatchEvent(
-        new CustomEvent("modal-confirm", { bubbles: true, composed: true }),
+        new CustomEvent(CustomEvents.MODAL_CONFIRM, {
+          bubbles: true,
+          composed: true,
+        }),
       );
+      this.close();
     });
 
     this.closeButton.addEventListener("click", () => {
@@ -157,8 +164,12 @@ export class TeskooanoModal extends HTMLElement {
       }
       // Dispatch custom event for modal-close
       this.dispatchEvent(
-        new CustomEvent("modal-close", { bubbles: true, composed: true }),
+        new CustomEvent(CustomEvents.MODAL_CLOSE, {
+          bubbles: true,
+          composed: true,
+        }),
       );
+      this.close();
     });
 
     this.secondaryButton.addEventListener("click", () => {

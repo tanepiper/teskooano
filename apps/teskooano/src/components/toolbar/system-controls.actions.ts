@@ -8,6 +8,7 @@ import { generateStar } from "@teskooano/procedural-generation";
 import { OSVector3 } from "@teskooano/core-math";
 import { generateAndLoadSystem } from "../../systems/system-generator.js";
 import { DockviewApi } from "dockview-core";
+import { CustomEvents } from "@teskooano/data-types";
 
 /**
  * Represents the data structure for importing/exporting system state.
@@ -179,7 +180,9 @@ export async function importSystem(
 
         console.log("System imported successfully.");
         // Dispatch event to reset the simulation loop's internal timer
-        window.dispatchEvent(new CustomEvent("resetSimulationTime"));
+        window.dispatchEvent(
+          new CustomEvent(CustomEvents.SIMULATION_RESET_TIME),
+        );
         console.log("Dispatched resetSimulationTime event.");
 
         resolve({ success: true, symbol: "✅", message: "Import successful." });

@@ -5,6 +5,7 @@ import {
 import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import * as THREE from "three";
 import type { CompositeEnginePanel } from "../../engine/CompositeEnginePanel";
+import { CustomEvents } from "@teskooano/data-types";
 
 /**
  * Handles the logic for requesting the camera to point at a specific object.
@@ -64,7 +65,7 @@ export function handleFocusRequest(
 
   // Dispatch event *before* initiating focus (target change)
   dispatchEventCallback(
-    new CustomEvent("focus-request-initiated", {
+    new CustomEvent(CustomEvents.FOCUS_REQUEST_INITIATED, {
       bubbles: true,
       composed: true,
       detail: { objectId },
