@@ -68,5 +68,6 @@
       "path": "./packages/core/debug"
     }
   ],
+  "include": ["packages/**/*", "apps/**/*"],
   "exclude": ["node_modules", "dist"]
 }

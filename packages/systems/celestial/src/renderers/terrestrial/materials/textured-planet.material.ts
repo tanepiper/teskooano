@@ -1,7 +1,9 @@
 import * as THREE from "three";
 
 // Import the NEW simple texture shaders
+// @ts-ignore
 import simpleVertexShaderSource from "../../../shaders/terrestrial/simple_texture.vertex.glsl?raw";
+// @ts-ignore
 import simpleFragmentShaderSource from "../../../shaders/terrestrial/simple_texture.fragment.glsl?raw";
 
 // Define uniforms for the simple texture shader

@@ -94,14 +94,7 @@ export class TextureFactory {
     let result: TextureResult;
     const generator = this.getGasGiantGenerator();
 
-    // Try instance method first, fall back to static
-    if (typeof generator.generateTexture === "function") {
-      result = generator.generateTexture(options);
-    } else {
-      // If instance method doesn't exist, use static method
-      // @ts-ignore - Allow static access for backward compatibility
-      result = { colorMap: GasGiantTextureGenerator.generateTexture(options) };
-    }
+    result = generator.generateTexture(options);
 
     this.textureCache.set(cacheKey, result);
 
@@ -127,16 +120,7 @@ export class TextureFactory {
     let result: TextureResult;
     const generator = this.getTerrestrialGenerator();
 
-    // Try instance method first, fall back to static
-    if (typeof generator.generateTexture === "function") {
-      result = generator.generateTexture(options);
-    } else {
-      // If instance method doesn't exist, use static method
-      // @ts-ignore - Allow static access for backward compatibility
-      result = {
-        colorMap: TerrestrialTextureGenerator.generateTexture(options),
-      };
-    }
+    result = generator.generateTexture(options);
 
     this.textureCache.set(cacheKey, result);
 
@@ -162,14 +146,7 @@ export class TextureFactory {
     let result: TextureResult;
     const generator = this.getStarGenerator();
 
-    // Try instance method first, fall back to static
-    if (typeof generator.generateTexture === "function") {
-      result = generator.generateTexture(options);
-    } else {
-      // If instance method doesn't exist, use static method
-      // @ts-ignore - Allow static access for backward compatibility
-      result = { colorMap: StarTextureGenerator.generateTexture(options) };
-    }
+    result = generator.generateTexture(options);
 
     this.textureCache.set(cacheKey, result);
 
@@ -195,14 +172,7 @@ export class TextureFactory {
     let result: TextureResult;
     const generator = this.getSpaceRockGenerator();
 
-    // Try instance method first, fall back to static
-    if (typeof generator.generateTexture === "function") {
-      result = generator.generateTexture(options);
-    } else {
-      // If instance method doesn't exist, use static method
-      // @ts-ignore - Allow static access for backward compatibility
-      result = { colorMap: SpaceRockTextureGenerator.generateTexture(options) };
-    }
+    result = generator.generateTexture(options);
 
     this.textureCache.set(cacheKey, result);
 
