@@ -1,12 +1,12 @@
-$schema: 'https://moonrepo.dev/schemas/project.json'
+$schema: "https://moonrepo.dev/schemas/project.json"
 
-language: 'typescript'
+language: "typescript"
 
 project:
-  name: 'design-system'
-  description: 'Shared design system styles and tokens for Teskooano apps'
-  channel: '' # Or specify a release channel if needed
-  owner: '' # Or specify an owner
+  name: "design-system"
+  description: "Shared design system styles and tokens for Teskooano apps"
+  channel: "" # Or specify a release channel if needed
+  owner: "" # Or specify an owner
   maintainers: []
 
 # Depends on nothing for now
@@ -14,31 +14,31 @@ dependsOn: []
 
 fileGroups:
   sources: # Source files
-    - 'src/**/*'
-    - 'styles.css' # If styles.css is at the root of the package
+    - "src/**/*"
+    - "styles.css" # If styles.css is at the root of the package
   configs: # Config files
-    - 'tsconfig.json'
-    - 'package.json'
+    - "tsconfig.json"
+    - "package.json"
 
 tasks:
   build:
-    command: 'npm run build' # Although it does nothing now
+    command: "npm run build" # Although it does nothing now
     inputs:
-      - '@group(sources)'
+      - "@group(sources)"
     outputs:
-      - 'src/styles.css' # The main output
-    platform: 'node'
+      - "src/styles.css" # The main output
+    platform: "node"
 
   lint:
-    command: 'npm run lint'
+    command: "npm run lint"
     inputs:
-      - '@group(sources)'
-      - '@group(configs)'
-    platform: 'node'
+      - "@group(sources)"
+      - "@group(configs)"
+    platform: "node"
 
   test:
-    command: 'npm run test'
+    command: "npm run test"
     inputs:
-      - '@group(sources)'
-      - '@group(configs)'
-    platform: 'node' 
+      - "@group(sources)"
+      - "@group(configs)"
+    platform: "node"

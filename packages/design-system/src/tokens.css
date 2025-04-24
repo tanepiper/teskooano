@@ -192,4 +192,4 @@
   --dv-tab-close-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23a0a0c0" viewBox="0 0 12 12"><path d="M9.3 2.7l-6.6 6.6-0.7-0.7 6.6-6.6 0.7 0.7z"/><path d="M2.7 2.7l6.6 6.6-0.7 0.7-6.6-6.6 0.7-0.7z"/></svg>'); /* Muted lavender 'X' icon */
   --dv-tabs-container-scrollbar-color: #4a4a7f #1f1f38; /* Scrollbar track and thumb */
   --dv-floating-box-shadow: 0 5px 15px rgba(127, 127, 220, 0.2); /* Subtle lavender glow */
-} 
+}

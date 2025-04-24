@@ -2,7 +2,10 @@
   /* === Starlight Variable Overrides using Teskooano Tokens === */
 
   /* --- Base Colors (Dark Mode) --- */
-  --sl-color-white: var(--color-text-primary, #e0e0fc); /* Map Starlight 'white' to our primary text */
+  --sl-color-white: var(
+    --color-text-primary,
+    #e0e0fc
+  ); /* Map Starlight 'white' to our primary text */
   /* Assuming Starlight's gray scale is similar enough for now, 
      might need fine-tuning if elements look off */
   --sl-color-gray-1: #d0d0f0; /* Lighter than text-primary */
@@ -11,23 +14,40 @@
   --sl-color-gray-4: var(--color-border-strong, #6a6a8a);
   --sl-color-gray-5: var(--color-border-subtle, #4a4a6a);
   --sl-color-gray-6: var(--color-surface-3, #3a3a4e);
-  --sl-color-black: var(--color-background, #12121e); /* Map Starlight 'black' to our background */
+  --sl-color-black: var(
+    --color-background,
+    #12121e
+  ); /* Map Starlight 'black' to our background */
 
   /* Accent Colors */
   /* Using our primary color for Starlight's accent */
   --sl-color-accent-low: var(--color-primary-active, #4841c2);
   --sl-color-accent: var(--color-primary, #6c63ff);
-  --sl-color-accent-high: var(--color-primary-hover, #5a52e0); /* Use hover for 'high' maybe? Or a lighter shade */
+  --sl-color-accent-high: var(
+    --color-primary-hover,
+    #5a52e0
+  ); /* Use hover for 'high' maybe? Or a lighter shade */
 
   /* Text & Background */
   --sl-color-text: var(--sl-color-gray-2); /* Use the mapped gray */
   --sl-color-text-accent: var(--sl-color-accent); /* Use the mapped accent */
-  --sl-color-text-invert: var(--color-text-on-primary, #ffffff); /* Text on primary buttons */
+  --sl-color-text-invert: var(
+    --color-text-on-primary,
+    #ffffff
+  ); /* Text on primary buttons */
   --sl-color-bg: var(--sl-color-black); /* Use the mapped background */
-  --sl-color-bg-nav: var(--color-surface-2, #2a2a3e); /* Use a surface color for nav */
-  --sl-color-bg-sidebar: var(--color-surface-1, #1a1a2e); /* Use a surface color for sidebar */
+  --sl-color-bg-nav: var(
+    --color-surface-2,
+    #2a2a3e
+  ); /* Use a surface color for nav */
+  --sl-color-bg-sidebar: var(
+    --color-surface-1,
+    #1a1a2e
+  ); /* Use a surface color for sidebar */
   --sl-color-bg-inline-code: var(--color-surface-3, #3a3a4e);
-  --sl-color-bg-accent: var(--sl-color-accent); /* Background for accent elements */
+  --sl-color-bg-accent: var(
+    --sl-color-accent
+  ); /* Background for accent elements */
 
   /* Borders */
   --sl-color-hairline-light: var(--color-border-subtle, #4a4a6a);
@@ -35,12 +55,17 @@
   --sl-color-hairline-shade: var(--color-surface-2, #2a2a3e);
 
   /* Backdrop */
-  --sl-color-backdrop-overlay: hsla(240, 22%, 11%, 0.7); /* Adjust alpha on background */
+  --sl-color-backdrop-overlay: hsla(
+    240,
+    22%,
+    11%,
+    0.7
+  ); /* Adjust alpha on background */
 
   /* --- Typography --- */
   /* Font Families */
   --sl-font-system: var(--font-family-base, Inter, system-ui, sans-serif);
-  --sl-font-system-mono: var(--font-family-mono, 'Courier New', monospace);
+  --sl-font-system-mono: var(--font-family-mono, "Courier New", monospace);
 
   /* Text Sizes (Mapping approximations) */
   --sl-text-xs: var(--font-size-1); /* Smallest */
@@ -64,12 +89,18 @@
 }
 
 /* === Light Theme Overrides === */
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   /* Re-map base colors for light mode */
-  --sl-color-white: var(--color-background, #12121e); /* Map Starlight 'white' to our dark background */
+  --sl-color-white: var(
+    --color-background,
+    #12121e
+  ); /* Map Starlight 'white' to our dark background */
   --sl-color-gray-1: var(--color-surface-1, #1a1a2e); /* Dark surfaces */
   --sl-color-gray-2: var(--color-surface-2, #2a2a3e);
-  --sl-color-gray-3: var(--color-text-secondary, #5a5a7a); /* Slightly darker secondary text */
+  --sl-color-gray-3: var(
+    --color-text-secondary,
+    #5a5a7a
+  ); /* Slightly darker secondary text */
   --sl-color-gray-4: var(--color-text-primary, #30304c); /* Dark primary text */
   --sl-color-gray-5: #d0d0e0; /* Light border/subtle elements */
   --sl-color-gray-6: #e8e8f8; /* Lighter surface/background */
@@ -81,14 +112,25 @@
   --sl-color-accent-high: var(--color-primary-hover, #5a52e0);
 
   /* Text & Background */
-  --sl-color-text: var(--sl-color-gray-4); /* Use the mapped dark primary text */
+  --sl-color-text: var(
+    --sl-color-gray-4
+  ); /* Use the mapped dark primary text */
   --sl-color-text-accent: var(--sl-color-accent); /* Keep accent color */
-  --sl-color-text-invert: var(--color-text-on-primary, #ffffff); /* Keep text on primary */
+  --sl-color-text-invert: var(
+    --color-text-on-primary,
+    #ffffff
+  ); /* Keep text on primary */
   --sl-color-bg: var(--sl-color-black); /* Use the mapped light background */
   --sl-color-bg-nav: #ffffff; /* White nav maybe? */
-  --sl-color-bg-sidebar: var(--sl-color-gray-6); /* Use a light gray for sidebar */
-  --sl-color-bg-inline-code: var(--sl-color-gray-5); /* Light background for code */
-  --sl-color-bg-accent: var(--sl-color-accent); /* Background for accent elements */
+  --sl-color-bg-sidebar: var(
+    --sl-color-gray-6
+  ); /* Use a light gray for sidebar */
+  --sl-color-bg-inline-code: var(
+    --sl-color-gray-5
+  ); /* Light background for code */
+  --sl-color-bg-accent: var(
+    --sl-color-accent
+  ); /* Background for accent elements */
 
   /* Borders */
   --sl-color-hairline-light: var(--sl-color-gray-5);
@@ -96,10 +138,154 @@
   --sl-color-hairline-shade: #c0c0d0; /* Slightly darker border */
 
   /* Backdrop */
-  --sl-color-backdrop-overlay: hsla(240, 22%, 90%, 0.7); /* Adjust alpha on light background */
+  --sl-color-backdrop-overlay: hsla(
+    240,
+    22%,
+    90%,
+    0.7
+  ); /* Adjust alpha on light background */
 
   /* Shadows (Adjust for light background if needed) */
   /* --sl-shadow-sm: ...; */
   /* --sl-shadow-md: ...; */
   /* --sl-shadow-lg: ...; */
+}
+
+/* === Homepage Styling === */
+/* Move the homepage video above the hero section */
+main {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero {
+  padding: 2rem;
+  border-radius: 12px;
+  background: linear-gradient(
+    to bottom,
+    var(--color-surface-1, #585867),
+    var(--color-background, #303082)
+  );
+  overflow: hidden;
+}
+
+.hero > img {
+  border-radius: 12px;
+  /* Emboss the image */
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+}
+
+.hero h1 {
+  color: var(--sl-color-white);
+  font-size: 1.6rem;
+  font-weight: 600;
+  /* text-align: center; */
+}
+
+.homepage-video {
+  display: flex;
+  justify-content: space-between;
+  margin: 3rem auto 2rem;
+  /* max-width: 600px; */
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  position: relative;
+  background: #000;
+  border: 1px solid var(--sl-color-accent-high);
+  z-index: 2;
+}
+
+.homepage-video .video-items {
+  width: 520px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  order: 1;
+}
+
+.homepage-video video {
+  display: block;
+  width: 600px;
+  height: auto;
+}
+
+/* Create container for mermaid diagrams */
+.mermaid-container {
+  margin: 2rem auto;
+  max-width: 800px;
+  background: var(--sl-color-gray-6);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--sl-color-gray-5);
+}
+
+/* Style section headings with gradient text */
+main h2 {
+  margin: 2.5rem 0 1.5rem;
+  font-size: var(--sl-text-2xl, 1.5rem);
+  color: var(--sl-color-accent);
+}
+
+:where([data-page-layout="splash"]) main h2::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--sl-color-accent) 0%,
+    rgba(159, 151, 255, 0.5) 100%
+  );
+  border-radius: 2px;
+  margin: 0.5rem auto 0;
+}
+
+/* Style section h3 headings */
+:where([data-page-layout="splash"]) main h3 {
+  font-size: var(--sl-text-xl);
+  color: var(--sl-color-accent);
+  margin-bottom: 0.5rem;
+}
+
+/* Add some spacing and style to the main content */
+:where([data-page-layout="splash"]) main .content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Tech list styling */
+:where([data-page-layout="splash"]) main > ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  list-style: none;
+  padding: 1rem 0;
+  justify-content: center;
+}
+
+:where([data-page-layout="splash"]) main > ul li {
+  background: rgba(108, 99, 255, 0.1);
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  border: 1px solid rgba(108, 99, 255, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  :where([data-page-layout="splash"]) .hero .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  :where([data-page-layout="splash"]) .hero .action {
+    width: 100%;
+    justify-content: center;
+  }
+
+  :where([data-page-layout="splash"]) .homepage-video {
+    margin: 2rem 1rem;
+  }
 }

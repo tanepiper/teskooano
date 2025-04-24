@@ -14,7 +14,7 @@ Import the main stylesheet into your application's entry point:
 
 ```typescript
 // Example in main.ts or similar
-import '@teskooano/design-system/styles.css';
+import "@teskooano/design-system/styles.css";
 ```
 
 ## Structure (Planned)
@@ -24,4 +24,4 @@ import '@teskooano/design-system/styles.css';
 - `src/base/`: Base element styling (resets, body defaults).
 - `src/components/`: Styles for specific UI components (buttons, panels, etc.).
 
-*Note: This structure is aspirational. Currently, all styles are in `styles.css` and need refactoring.* 
+_Note: This structure is aspirational. Currently, all styles are in `styles.css` and need refactoring._

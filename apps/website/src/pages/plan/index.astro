@@ -1,0 +1,70 @@
+---
+import { getCollection } from 'astro:content';
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+
+// Sort by release date descending, assuming newer plans are more relevant
+const plans = (await getCollection('plan')).sort((a, b) => {
+  const dateA = a.data.released?.getTime() || 0;
+  const dateB = b.data.released?.getTime() || 0;
+  return dateB - dateA; // Sort descending
+});
+
+const frontmatter = {
+  title: 'Project Plans',
+  description: 'Overview of current and future project plans for Teskooano.',
+  
+};
+---
+
+<StarlightPage frontmatter={frontmatter}>
+  {plans.length === 0 ? (
+    <p>No plans found yet.</p>
+  ) : (
+
+    <h2>Latest Plan</h2>
+
+    <p>The latest plan is <a href={`/plan/${plans[0].data.plan}/`}>{plans[0].data.title}</a>.</p>
+
+    <h3>All Plans</h3>
+    <ul class="plan-list">
+      {plans.map(plan => (
+        <li>
+          <span class="updated"> ({plan.data.released?.toLocaleDateString('en-GB', { year: '2-digit', month: 'short', day: 'numeric' }) || 'N/A'})</span>&nbsp;<a href={`/plan/${plan.data.plan}/`}>{plan.data.title}</a>
+          {plan.data.author && <span class="author"> - By {plan.data.author}</span>}
+        </li>
+      ))}
+    </ul>
+  )}
+</StarlightPage>
+
+<style>
+  /* Plan list styling */
+  .plan-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0; /* Add margin */
+  }
+  .plan-list li {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--sl-color-hairline, #eee);
+  }
+  .plan-list li:last-child {
+    border-bottom: none;
+  }
+  .plan-list a {
+    color: var(--sl-color-accent);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: var(--sl-text-lg);
+  }
+  .plan-list a:hover {
+    text-decoration: underline;
+  }
+  .plan-list .author,
+  .plan-list .updated {
+      font-size: var(--sl-text-sm);
+      color: var(--sl-color-gray-3);
+      margin-left: 0.5em;
+  }
+</style> 

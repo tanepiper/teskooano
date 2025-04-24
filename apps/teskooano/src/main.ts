@@ -1,7 +1,7 @@
-import './vite-env.d'; // Ensure Vite types are loaded
-import '@teskooano/design-system/styles.css'; // Load shared styles
-import { initRouter } from './controllers/router';
-import { initDockview } from './controllers/dockview';
+import "./vite-env.d"; // Ensure Vite types are loaded
+import "@teskooano/design-system/styles.css"; // Load shared styles
+import { initRouter } from "./controllers/router";
+import { initDockview } from "./controllers/dockview";
 import "dockview-core/dist/styles/dockview.css";
 
 import { DockviewController } from "./controllers/dockview/DockviewController";

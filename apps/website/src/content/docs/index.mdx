@@ -1,36 +1,133 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
+title: 🔭 Teskooano - 3D N-Body Simulation Engine
+description: Explore procedurally generated solar systems with realistic physics.
 template: splash
 hero:
-  tagline: Congrats on setting up a new Starlight project!
+  tagline: Teskooano (pronounced tes-koo-ah-no) lets you explore procedurally generated solar systems with realistic physics, time-lapse control and other simulation features - all 3D with multiple viewports!
   image:
-    file: ../../assets/houston.webp
+    file: /public/assets/panel-icon.png
+    alt: Teskooano Observatory Panel
   actions:
-    - text: Example Guide
-      link: /guides/example/
-      icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
+    - text: 🔭 Play with Teskooano
+      link: https://teskooano.space/teskooano
       icon: external
-      variant: minimal
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/tanepiper/teskooano
+      icon: github
+      variant: secondary
+    - text: Read the Plan
+      link: /plan
+      icon: document
+      variant: primary
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card, CardGrid } from "@astrojs/starlight/components";
 
-## Next steps
+<div class="homepage-video">
+  <video autoplay loop muted playsinline>
+    <source
+      src="/video/orbit-video.mp4"
+      type="video/mp4"
+      alt="A video of two stars in Orbit in Teskooano"
+    />
+    Your browser does not support the video tag.
+  </video>
+  <section class="video-items">
+    <Card title="'Realistic Physics'" icon="star">
+      Experience N-Body gravitational simulation with orbital mechanics and
+      collision detection based on real-world physics.
+    </Card>
+    <Card title="Procedural Generation" icon="random">
+      Create unique star systems with procedurally generated planets, moons, and
+      other celestial bodies using custom seeds.
+    </Card>
+    <Card title="Multi-View Experience" icon="open-book">
+      Observe simulations from multiple angles simultaneously, with each view
+      maintaining its own focus and camera controls.
+    </Card>
+  </section>
+</div>
 
-<CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
-	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
-	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
-	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
-	</Card>
+<Card title="">
+  <q>
+    <em>
+      Yes, I must note that by the time to which my tale refers, my first{" "}
+      <strong>Teskooano</strong> had already been set up in the observatory
+      which I had constructed on the planet Mars. I was just then devoting
+      myself entirely to the further organization and development of this
+      observatory of mine, for the more detailed observation of the remote
+      concentrations of our great Universe and of the planets of this solar
+      system.
+    </em>
+  </q>
+  <p>
+    <em>
+      -{" "}
+      <a
+        href="https://en.wikipedia.org/wiki/Beelzebub%27s_Tales_to_His_Grandson"
+        target="_blank"
+      >
+        Beelzebub's Tales to His Grandson
+      </a>
+    </em>
+  </p>
+</Card>
+
+## More Features
+
+<CardGrid>
+  <Card title="Intuitive Controls" icon="setting">
+    Select, focus and orbit around any celestial body with intuitive camera
+    controls, orbit tracking, and detailed information panels.
+  </Card>
+  <Card title="Offline-First PWA" icon="phone">
+    Responsive and mobile-friendly, Teskooano can be fully installed on any
+    device as a Progressive Web App that can be used offline
+  </Card>
+  <Card title="Dynamic Time Control" icon="rocket">
+    Adjust simulation speed from real-time to 10 million times faster to observe
+    both immediate interactions and long-term celestial evolution.
+  </Card>
+  <Card title="Modular Architecture" icon="approve-check-circle">
+    Built with TypeScript and modern frontend tools, Teskooano features a
+    component-based design that's easily extendable.
+  </Card>
+</CardGrid>
+
+## Key Capabilities
+
+<CardGrid>
+  <Card title="Accurate Celestial Physics" icon="puzzle">
+    Full N-Body gravitational simulation where every object exerts gravitational
+    force on every other object. Watch planets orbit stars, moons orbit planets,
+    and complex gravitational interactions create realistic celestial motion.
+  </Card>
+  <Card title="Real-time Visualization" icon="seti:lua">
+    Built on Three.js, Teskooano renders complex celestial systems in real-time
+    with physically accurate lighting, materials, and effects supporting
+    hundreds of objects while maintaining smooth performance.
+  </Card>
+  <Card title="Interactive Learning Platform" icon="open-book">
+    Perfect for educational settings, making complex orbital mechanics intuitive
+    and accessible. Experiment with different planetary configurations and learn
+    about celestial mechanics through direct observation.
+  </Card>
+  <Card title="Seamless User Experience" icon="rocket">
+    An interactive guided tour introduces you to all key features. The intuitive
+    DockView-based UI allows for customizable layouts to suit your specific
+    needs.
+  </Card>
+  <Card title="Open Technology Stack" icon="laptop">
+    Built with Three.js for 3D rendering, TypeScript for type-safe development,
+    Nanostores for state management, Driver.js for tours, and DockView for
+    flexible layouts.
+  </Card>
+  <Card title="Open Source & Community Driven" icon="github">
+    Completely open source under the MIT license. We welcome contributions, bug
+    reports, and feature requests from the community via{" "}
+    <a href="https://github.com/tanepiper/teskooano" target="_blank">
+      GitHub
+    </a>
+  </Card>
 </CardGrid>

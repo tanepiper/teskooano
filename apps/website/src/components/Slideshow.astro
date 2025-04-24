@@ -1,0 +1,348 @@
+---
+import type { ImageMetadata } from 'astro';
+
+interface ImageItem {
+  src: ImageMetadata | string; // Allow both optimized images and simple strings
+  alt: string;
+  caption?: string;
+}
+
+interface Props {
+  images: ImageItem[];
+  id?: string; // Optional ID for multiple slideshows on a page
+}
+
+const { images, id = 'slideshow' } = Astro.props;
+
+// Helper to get the src string regardless of type
+const getSrc = (img: ImageMetadata | string) => {
+  return typeof img === 'string' ? img : img.src;
+}
+---
+
+<div class="slideshow-container" id={id}>
+  <div class="slideshow-main">
+    <button class="nav-button prev" aria-label="Previous image" data-direction="-1">&lt;</button>
+    <div class="slide-viewer">
+      {images.map((image, index) => (
+        <img
+          src={getSrc(image.src)}
+          alt={image.alt}
+          class={`slide ${index === 0 ? 'active' : ''}`}
+          data-index={index}
+          loading={index === 0 ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+      ))}
+    </div>
+    <button class="nav-button next" aria-label="Next image" data-direction="1">&gt;</button>
+  </div>
+  <div class="slide-caption" aria-live="polite">
+    {images[0]?.caption || ''}
+  </div>
+
+  <!-- Lightbox Structure (Hidden by default) -->
+  <div class="lightbox-overlay" id={`${id}-lightbox`} style="display: none;">
+    <button class="close-button" aria-label="Close lightbox">&times;</button>
+    <img class="lightbox-image" src="" alt="" />
+    <div class="lightbox-caption"></div>
+  </div>
+</div>
+
+<script define:vars={{ images, id }} is:inline>
+  const slideshowContainer = document.getElementById(id);
+  if (slideshowContainer) {
+    const slides = slideshowContainer.querySelectorAll('.slide');
+    const captionElement = slideshowContainer.querySelector('.slide-caption');
+    const prevButton = slideshowContainer.querySelector('.nav-button.prev');
+    const nextButton = slideshowContainer.querySelector('.nav-button.next');
+    const slideViewer = slideshowContainer.querySelector('.slide-viewer');
+
+    const lightboxOverlay = document.getElementById(`${id}-lightbox`);
+    const lightboxImage = lightboxOverlay?.querySelector('.lightbox-image');
+    const lightboxCaption = lightboxOverlay?.querySelector('.lightbox-caption');
+    const closeButton = lightboxOverlay?.querySelector('.close-button');
+
+    let currentIndex = 0;
+    const totalImages = images.length;
+    const originalLightboxParent = lightboxOverlay?.parentNode;
+
+    function showSlide(index) {
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+        slide.setAttribute('aria-hidden', i !== index);
+      });
+      if (captionElement) {
+        captionElement.textContent = images[index]?.caption || '';
+      }
+      currentIndex = index;
+
+      // Update button states
+      if (prevButton) prevButton.disabled = index === 0;
+      if (nextButton) nextButton.disabled = index === totalImages - 1;
+    }
+
+    function changeSlide(direction) {
+      const newIndex = (currentIndex + direction + totalImages) % totalImages;
+      // Simple linear navigation, not wrapping around
+      if (newIndex >= 0 && newIndex < totalImages) {
+          showSlide(newIndex);
+      }
+    }
+
+    function openLightbox(index) {
+      if (!lightboxOverlay || !lightboxImage || !lightboxCaption) return;
+
+      const image = images[index];
+      if (!image) return;
+
+      const imageSrc = typeof image.src === 'string' ? image.src : image.src.src;
+
+      lightboxImage.src = imageSrc;
+      lightboxImage.alt = image.alt;
+      lightboxCaption.textContent = image.caption || '';
+      lightboxOverlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      lightboxOverlay.focus(); // Focus the overlay for accessibility
+
+      if (lightboxOverlay) {
+        document.body.appendChild(lightboxOverlay);
+      }
+    }
+
+    function closeLightbox() {
+      if (!lightboxOverlay) return;
+      lightboxOverlay.style.display = 'none';
+      lightboxImage.src = ''; // Clear image
+      lightboxImage.alt = '';
+      lightboxCaption.textContent = '';
+      document.body.style.overflow = ''; // Restore scrolling
+
+      if (originalLightboxParent && lightboxOverlay) {
+        originalLightboxParent.appendChild(lightboxOverlay);
+      }
+
+      // Return focus to the element that opened the lightbox? Maybe the slide viewer.
+      slideViewer?.focus();
+    }
+
+    // Event Listeners
+    prevButton?.addEventListener('click', () => changeSlide(-1));
+    nextButton?.addEventListener('click', () => changeSlide(1));
+
+    // Click on the slide viewer to open lightbox
+    slideViewer?.addEventListener('click', () => {
+        // Only open if not clicking on buttons inside (though we don't have any)
+        openLightbox(currentIndex);
+    });
+    slideViewer?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openLightbox(currentIndex);
+      }
+    });
+
+    // Add tabindex to make the viewer focusable
+    if (slideViewer) {
+        slideViewer.setAttribute('tabindex', '0');
+        slideViewer.setAttribute('role', 'button');
+        slideViewer.setAttribute('aria-label', 'View image in lightbox');
+    }
+
+
+    closeButton?.addEventListener('click', closeLightbox);
+    lightboxOverlay?.addEventListener('click', (e) => {
+      // Close if clicked outside the image area
+      if (e.target === lightboxOverlay) {
+        closeLightbox();
+      }
+    });
+
+    // Keyboard navigation for lightbox
+    lightboxOverlay?.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeLightbox();
+      }
+      // Potentially add left/right arrow keys to navigate within lightbox later
+    });
+
+
+    // Initialize
+    if (totalImages > 0) {
+      showSlide(0);
+    } else {
+       // Handle no images case - maybe hide controls or show a message
+       if (prevButton) prevButton.style.display = 'none';
+       if (nextButton) nextButton.style.display = 'none';
+       if (captionElement) captionElement.textContent = 'No images to display.';
+    }
+  }
+</script>
+
+<style>
+  .slideshow-container {
+    --slide-nav-button-bg: rgba(0, 0, 0, 0.4);
+    --slide-nav-button-text: white;
+    --slide-nav-button-bg-hover: rgba(0, 0, 0, 0.7);
+    --lightbox-bg: rgba(0, 0, 0, 0.85);
+    --lightbox-caption-bg: rgba(0, 0, 0, 0.7);
+    --lightbox-text-color: white;
+
+    width: 100%;
+    max-width: 800px; /* Adjust as needed */
+    margin: 1rem auto;
+    position: relative;
+    background-color: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+
+  .slideshow-main {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9; /* Default aspect ratio */
+    overflow: hidden; /* Prevents image overflow before load */
+  }
+
+  .slide-viewer {
+    width: 100%;
+    height: 100%;
+    display: flex; /* Use flex to manage slides */
+    align-items: center;
+    justify-content: center;
+    background-color: var(--sl-color-black); /* Dark background for images */
+    cursor: pointer; /* Indicate clickable for lightbox */
+    outline: none; /* Remove default focus outline, handle focus state below */
+  }
+
+  .slide-viewer:focus-visible {
+      box-shadow: 0 0 0 3px var(--sl-color-accent); /* Custom focus indicator */
+  }
+
+
+  .slide {
+    display: none; /* Hide all slides initially */
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Fit image within container */
+    transition: opacity 0.5s ease-in-out;
+    opacity: 0;
+  }
+
+  .slide.active {
+    display: block; /* Show only the active slide */
+    opacity: 1;
+  }
+
+  .nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--slide-nav-button-bg);
+    color: var(--slide-nav-button-text);
+    border: none;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    z-index: 10;
+    font-size: 1.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    opacity: 0.7;
+  }
+
+  .nav-button:hover,
+  .nav-button:focus-visible {
+    background-color: var(--slide-nav-button-bg-hover);
+    opacity: 1;
+    outline: none;
+  }
+
+  .nav-button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      background-color: var(--slide-nav-button-bg); /* Keep bg same when disabled */
+  }
+
+  .nav-button.prev {
+    left: 1rem;
+  }
+
+  .nav-button.next {
+    right: 1rem;
+  }
+
+  .slide-caption {
+    padding: 0.5rem 1rem;
+    text-align: center;
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-text);
+    min-height: 1.5em; /* Reserve space for caption */
+    background-color: var(--sl-color-gray-5);
+  }
+
+  /* Lightbox Styles */
+  .lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--lightbox-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10001;
+    padding: 1rem;
+    box-sizing: border-box;
+    /* Ensure it's focusable for keyboard nav */
+    outline: none;
+  }
+
+  .lightbox-image {
+    max-width: 90%;
+    max-height: 85%; /* Leave space for caption and close button */
+    object-fit: contain;
+    display: block;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  }
+
+  .close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    z-index: 1003;
+    background: transparent;
+    border: none;
+    color: var(--lightbox-text-color);
+    font-size: 2.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.2rem;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+  }
+
+  .close-button:hover,
+  .close-button:focus-visible {
+    opacity: 1;
+    outline: none; /* Or style focus state appropriately */
+  }
+
+  .lightbox-caption {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1002;
+    background-color: var(--lightbox-caption-bg);
+    color: var(--lightbox-text-color);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: var(--sl-text-base);
+    max-width: 80%;
+    text-align: center;
+    word-wrap: break-word;
+  }
+</style> 
