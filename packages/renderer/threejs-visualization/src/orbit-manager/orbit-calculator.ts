@@ -1,7 +1,7 @@
 import { AU } from "@teskooano/core-physics";
 import type { OrbitalParameters } from "@teskooano/data-types";
 import { SCALE } from "@teskooano/data-types";
-import * as THREE from "three";
+import { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Calculates the 3D points representing a Keplerian orbit based on orbital parameters.
@@ -22,7 +22,7 @@ import * as THREE from "three";
 export function calculateRelativeOrbitPoints(
   orbitalParameters: OrbitalParameters,
   segments: number = 256,
-): THREE.Vector3[] {
+): OSVector3[] {
   const {
     period_s,
     realSemiMajorAxis_m,
@@ -41,7 +41,7 @@ export function calculateRelativeOrbitPoints(
     return [];
   }
 
-  const points: THREE.Vector3[] = [];
+  const points: OSVector3[] = [];
   const meanMotion = (2 * Math.PI) / period_s;
 
   for (let i = 0; i <= segments; i++) {
@@ -95,11 +95,7 @@ export function calculateRelativeOrbitPoints(
     const yFinal_m = y_intermediate_m;
 
     // Create REAL RELATIVE position vector (relative to parent focus)
-    const realRelativePosition = new THREE.Vector3(
-      xFinal_m,
-      yFinal_m,
-      zFinal_m,
-    );
+    const realRelativePosition = new OSVector3(xFinal_m, yFinal_m, zFinal_m);
 
     // Scale the REAL RELATIVE position to Scene Units (meters -> scene units)
     const scaledRelativePosition = realRelativePosition.multiplyScalar(
@@ -136,7 +132,7 @@ export function calculateRelativeOrbitPoints(
 export function calculateOrbitPoints(
   orbitalParameters: OrbitalParameters,
   segments: number = 256,
-): THREE.Vector3[] {
+): OSVector3[] {
   // Always calculate the static relative orbit shape using physics parameters
   // Ensure orbitalParameters are valid before calling
   if (

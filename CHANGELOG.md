@@ -316,7 +316,6 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- **`VisualizationRenderer` (`index.ts`):** Facade class to orchestrate visualization components.
 - **`ObjectManager`:** Manages creation, update, and removal of celestial object meshes based on `renderableObjectsStore`.
   - Integrates specialized renderers from `@teskooano/systems-celestial` (Gas Giants, Asteroid Fields, Rings).
   - Integrates `LODManager` from `@teskooano/renderer-threejs-effects`.
@@ -332,6 +331,7 @@ All notable changes to this project will be documented in this file.
 - **`BackgroundManager`:** Creates and manages a multi-layered, animated starfield background with parallax effect.
 - **Helper Modules:** Includes sub-modules (`object-manager/`, `orbit-manager/`, `background-manager/`) for specific logic (mesh creation, orbit calculation, star generation, etc.).
 - **State Integration:** Deeply integrated with `@teskooano/core-state` for driving updates.
+- **Architecture Update**: Refactored to export individual managers (`ObjectManager`, `OrbitManager`, `BackgroundManager`) instead of a single facade class.
 
 ## Package: Renderer ThreeJS Interaction
 

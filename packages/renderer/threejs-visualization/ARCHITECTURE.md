@@ -1,10 +1,10 @@
 # Architecture: `@teskooano/renderer-threejs-visualization`
 
-This package orchestrates the rendering of the Teskooano simulation scene, managing the visual representation of celestial objects, their orbits, and the background environment.
+This package orchestrates the rendering of the Teskooano simulation scene, providing managers for the visual representation of celestial objects, their orbits, and the background environment.
 
 ## Overview
 
-The `VisualizationRenderer` acts as a facade, coordinating three main managers:
+This package exports three main managers intended to be coordinated by a higher-level renderer (e.g., `@teskooano/renderer-threejs` or the main application):
 
 1.  **`ObjectManager`**: Handles the lifecycle of `THREE.Object3D` instances representing celestial bodies. It subscribes to the `renderableObjectsStore` and synchronizes the scene by adding, updating, or removing meshes. It leverages specialized renderers from `@teskooano/systems-celestial`, LOD management from `@teskooano/renderer-threejs-effects`, lighting via `LightManager`, and label integration via `CSS2DManager`.
 2.  **`OrbitManager`**: Manages the visualization of orbital paths. It dynamically switches between rendering static Keplerian ellipses and dynamic Verlet integration trails/predictions based on the `simulationState`'s `physicsEngine`. It highlights selected orbits and allows visibility toggling.
@@ -18,19 +18,19 @@ graph TD
         RStore[renderableObjectsStore]
         SStore[simulationState]
         AStore[accelerationVectorsStore]
-        CEStore[celestialObjectsStore] // Used by OrbitManager for prediction
+        CEStore[celestialObjectsStore]
     end
 
     subgraph SystemsCelestial ["@teskooano/systems-celestial"]
         direction LR
-        SpecializedRenderers[Specialized Renderers (GasGiant, Star, Planet, Ring, Asteroid...)]
+        SpecializedRenderers[Specialized Renderers <GasGiant, Star, Planet, Ring, Asteroid...>]
     end
 
     subgraph RendererEffects ["@teskooano/renderer-threejs-effects"]
         direction LR
         LODM[LODManager]
         LightM[LightManager]
-        Lensing[GravitationalLensingHandler] // within ObjectManager
+        Lensing[GravitationalLensingHandler]
     end
 
     subgraph RendererInteraction ["@teskooano/renderer-threejs-interaction"]
@@ -40,9 +40,9 @@ graph TD
 
     subgraph Visualization ["@teskooano/renderer-threejs-visualization"]
         direction TB
-        VR(VisualizationRenderer) -- Manages --> OM(ObjectManager)
-        VR -- Manages --> OrbM(OrbitManager)
-        VR -- Manages --> BGM(BackgroundManager)
+        OM(ObjectManager)
+        OrbM(OrbitManager)
+        BGM(BackgroundManager)
 
         OM -- Uses --> MeshFact[object-manager/MeshFactory]
         OM -- Uses --> RendUpd[object-manager/RendererUpdater]
@@ -66,10 +66,14 @@ graph TD
 
     end
 
-    AppCode[Application/Main Renderer] -- Creates/Updates --> VR
+    AppCode[Application/Main Renderer] -- Creates/Updates --> OM
+    AppCode -- Creates/Updates --> OrbM
+    AppCode -- Creates/Updates --> BGM
     AppCode -- Provides --> SceneCameraRenderer[Scene, Camera, Renderer]
 
-    VR -- Needs access to --> SceneCameraRenderer
+    OM -- Needs access to --> SceneCameraRenderer
+    OrbM -- Needs access to --> SceneCameraRenderer
+    BGM -- Needs access to --> SceneCameraRenderer
 
     style CoreState fill:#f9f,stroke:#333,stroke-width:2px
     style SystemsCelestial fill:#ccf,stroke:#333,stroke-width:2px
@@ -132,11 +136,8 @@ graph TD
 - **Debug Mode:** Provides an option to visualize the different layers distinctly.
 - **Cleanup:** Removes layers from the scene and disposes of geometries/materials.
 
-## Facade: `VisualizationRenderer`
+## Coordination (External)
 
-### Responsibilities:
+Unlike a facade pattern, this package does not provide a single entry point for coordination. The responsibility of creating instances of `ObjectManager`, `OrbitManager`, and `BackgroundManager`, and calling their respective `update(delta)` methods within the main animation loop, lies with the consuming application or a higher-level renderer package (like `@teskooano/renderer-threejs`).
 
-- **Initialization:** Creates instances of `ObjectManager`, `OrbitManager`, and `BackgroundManager`.
-- **Coordination:** Provides a unified `update(delta)` method that calls the respective update methods of the managed components.
-- **API Exposure:** Exposes methods for controlling aspects of the visualization, such as orbit highlighting (`highlightOrbit`), visibility (`toggleOrbitVisibility`, `setOrbitVisibility`), and debug modes (`setDebugMode`).
-- **Resource Management:** Provides a `dispose()` method to clean up all managed resources.
+The consuming code needs to inject the necessary dependencies (Scene, Camera, state stores, other managers like `LightManager`, `CSS2DManager`, etc.) into the constructors of these managers.

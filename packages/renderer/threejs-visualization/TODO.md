@@ -4,7 +4,6 @@
   - `ObjectManager`: State synchronization, object add/update/remove, mesh factory logic, renderer updates, LOD integration, destruction effects.
   - `OrbitManager`: Mode switching, Keplerian calculations, Verlet trail updates, Verlet prediction logic, cleanup, highlighting.
   - `BackgroundManager`: Layer creation, parallax updates, animation.
-  - `VisualizationRenderer`: Facade methods and coordination.
 - **`ObjectManager` Renderer Initialization:** Explicitly initialize _all_ required renderer types (Star, Terrestrial, etc.) in `initCelestialRenderers` or document clearly why `MeshFactory` handles them dynamically.
 - **`ObjectManager` Lensing:** Fully implement and test `GravitationalLensingHandler` if lensing is a required feature.
 - **`ObjectManager` Debug Mode:** Ensure `setDebugMode` correctly handles existing meshes if toggled mid-simulation.
