@@ -1,80 +1,93 @@
-# Open Space ThreeJS Renderer
+# @teskooano/renderer-threejs
 
-This package provides a ThreeJS-based renderer for the Open Space project. It has been refactored to use a modular architecture for better maintainability and extensibility.
+This package is the **integrator** for the modular Three.js rendering system used in the Teskooano engine. It brings together components from the `core`, `visualization`, `interaction`, and `effects` packages to provide a complete rendering solution.
 
 ## Architecture
 
-The renderer is now split into several modular packages:
+This package's main role is orchestration. See `ARCHITECTURE.md` for a detailed diagram and explanation.
 
-- **@teskooano/renderer-threejs-core**: Core functionality including scene management, animation loop, and state management
-- **@teskooano/renderer-threejs-visualization**: Visualization components including object management, orbit management, and background management
-- **@teskooano/renderer-threejs-interaction**: Interaction components including controls management and UI management
-- **@teskooano/renderer-threejs-effects**: Effects components including light management and LOD management
+- It uses `@teskooano/renderer-threejs-core` for scene setup, animation loop, and state management connection.
+- It uses `@teskooano/renderer-threejs-visualization` for managing the display of objects, orbits, and backgrounds.
+- It uses `@teskooano/renderer-threejs-interaction` for user controls and UI elements like labels.
+- It uses `@teskooano/renderer-threejs-effects` for lighting and level-of-detail management.
+
+The primary class exported is `ModularSpaceRenderer`, which acts as a facade to initialize and coordinate these underlying modules.
 
 ## Usage
 
-### Basic Usage
+### Initialization
 
 ```typescript
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 
-// Create a container element
+// Get the container element
 const container = document.getElementById("renderer-container");
+if (!container) throw new Error("Renderer container not found");
 
-// Initialize the renderer
-const renderer = new ModularSpaceRenderer(container, {
+// Define options for the renderer and its sub-modules
+const rendererOptions = {
   antialias: true,
-  shadows: true,
-  hdr: true,
-  background: "black",
-  showDebugSphere: false,
-  showGrid: true,
-});
+  shadows: false, // Example: Shadows might be configured here or in effects
+  hdr: false, // Example: HDR might be configured here or in effects
+  background: "black", // Handled by core/visualization
+  showGrid: true, // Handled by core
+  showCelestialLabels: true, // Handled by interaction/visualization
+  // Add other options passed to sub-modules as needed
+};
 
-// Start the render loop
-renderer.startRenderLoop();
+// Initialize the main renderer facade
+// This will internally instantiate and wire up all the necessary managers
+const spaceRenderer = new ModularSpaceRenderer(container, rendererOptions);
+
+// Start the render loop (managed by the core module)
+spaceRenderer.startRenderLoop();
+
+// Ensure disposal on cleanup
+// window.addEventListener('beforeunload', () => {
+//   spaceRenderer.dispose(); // Calls dispose on all managed components
+// });
 ```
 
-### Advanced Usage
+### Interacting with the Renderer
+
+Interactions are generally done through methods on the `ModularSpaceRenderer` facade, which delegate to the appropriate underlying manager.
 
 ```typescript
-// Toggle UI elements
-renderer.toggleLabels();
-renderer.toggleGrid();
-renderer.toggleDebugSphere();
+// Toggle the grid helper (delegates to SceneManager in core)
+spaceRenderer.setGridVisible(!spaceRenderer.sceneManager.isGridVisible());
+// Or use a dedicated toggle if available:
+// spaceRenderer.toggleGrid(); // Assuming this method exists and calls sceneManager.toggleGrid()
 
-// Update camera
-renderer.updateCamera(new THREE.Vector3(0, 0, 10), new THREE.Vector3(0, 0, 0));
+// Toggle orbit visibility (delegates to OrbitManager in visualization)
+spaceRenderer.setOrbitsVisible(!spaceRenderer.orbitManager.areOrbitsVisible()); // Example method name
+// Or use a dedicated toggle if available:
+// spaceRenderer.toggleOrbits();
 
-// Add a custom canvas UI manager
-renderer.setCanvasUIManager({
-  render: () => {
-    // Custom rendering logic
-  },
-});
+// Toggle labels (delegates to ObjectManager/CSS2DManager)
+spaceRenderer.setCelestialLabelsVisible(
+  !spaceRenderer.objectManager.areLabelsVisible(),
+); // Example method name
+// Or use a dedicated toggle if available:
+// spaceRenderer.toggleLabels();
 
-// Add a render callback
-const callback = () => {
-  console.log("Rendering frame");
-};
-renderer.addRenderCallback(callback);
+// Set camera follow target (delegates to ControlsManager/ObjectManager)
+const objectIdToFollow = "earth"; // Example ID
+spaceRenderer.setFollowTarget(objectIdToFollow);
 
-// Remove a render callback
-renderer.removeRenderCallback(callback);
+// Stop following
+spaceRenderer.setFollowTarget(null);
 
-// Get performance metrics
-const triangleCount = renderer.getTriangleCount();
-console.log(`Total triangles: ${triangleCount}`);
-
-// Clean up resources
-renderer.dispose();
+// Access underlying managers/objects (use with caution)
+// const scene = spaceRenderer.sceneManager.scene;
+// const camera = spaceRenderer.sceneManager.camera;
+// const controls = spaceRenderer.controlsManager.controls;
 ```
 
 ## API Reference
 
-### ModularSpaceRenderer
+### `ModularSpaceRenderer`
 
-The main class that integrates all the modular components.
+Acts as the main facade and integrator.
 
 #### Constructor
 
@@ -83,92 +96,42 @@ constructor(container: HTMLElement, options?: {
   antialias?: boolean;
   shadows?: boolean;
   hdr?: boolean;
-  background?: string | THREE.Texture;
-  showDebugSphere?: boolean;
+  background?: string | THREE.Color | THREE.Texture;
   showGrid?: boolean;
+  showCelestialLabels?: boolean;
+  // ... other options passed to sub-modules
 })
 ```
 
-#### Methods
+#### Key Methods (Examples - check source for specifics)
 
-- `startRenderLoop()`: Start the animation loop
-- `stopRenderLoop()`: Stop the animation loop
-- `onResize(width: number, height: number)`: Handle window resize
-- `render()`: Render a single frame
-- `addObject(object: any)`: Add an object to the scene
-- `removeObject(id: string)`: Remove an object from the scene
-- `updateObject(object: any)`: Update an object in the scene
-- `dispose()`: Clean up resources
-- `toggleLabels()`: Toggle visibility of celestial object labels
-- `toggleGrid()`: Toggle visibility of the grid
-- `toggleDebugSphere()`: Toggle visibility of the debug sphere
-- `updateCamera(position: THREE.Vector3, target: THREE.Vector3)`: Update the camera position and target
-- `setCanvasUIManager(uiManager: { render(): void })`: Set a custom canvas UI manager
-- `addRenderCallback(callback: () => void)`: Add a callback to be called on each render
-- `removeRenderCallback(callback: () => void)`: Remove a render callback
-- `getTriangleCount()`: Get the total triangle count for all meshes in the scene
+- `startRenderLoop()`: Starts the animation loop (via `core`).
+- `stopRenderLoop()`: Stops the animation loop (via `core`).
+- `dispose()`: Disposes all managed components from sub-modules.
+- `setGridVisible(visible: boolean)` / `toggleGrid()`: Controls grid visibility (via `core`).
+- `setOrbitsVisible(visible: boolean)` / `toggleOrbits()`: Controls orbit visibility (via `visualization`).
+- `setCelestialLabelsVisible(visible: boolean)` / `toggleLabels()`: Controls label visibility (via `interaction`/`visualization`).
+- `setFollowTarget(id: string | null)`: Sets the camera follow target (via `interaction`/`visualization`).
+- `updateCamera(position, target)`: Manually sets camera position/target (via `core`/`interaction`).
 
-#### Properties
+#### Key Properties (Accessing Sub-Managers)
 
-- `scene`: The ThreeJS scene
-- `camera`: The ThreeJS camera
-- `renderer`: The ThreeJS renderer
-- `controls`: The orbit controls
+- `sceneManager: SceneManager` (from `core`)
+- `animationLoop: AnimationLoop` (from `core`)
+- `stateManager: StateManager` (from `core`)
+- `objectManager: ObjectManager` (from `visualization`)
+- `orbitManager: OrbitManager` (from `visualization`)
+- `backgroundManager: BackgroundManager` (from `visualization`)
+- `controlsManager: ControlsManager` (from `interaction`)
+- `css2DManager?: CSS2DManager` (from `interaction`)
+- `lightManager: LightManager` (from `effects`)
+- `lodManager: LODManager` (from `effects`)
 
-## Modular Packages
+(Direct access to sub-managers allows calling their specific methods if needed, but prefer using facade methods on `ModularSpaceRenderer` when available).
 
-### @teskooano/renderer-threejs-core
+## Development
 
-Core functionality for the ThreeJS renderer.
+- **Build**: `npm run build` (or as defined in `moon.yml`)
+- **Test**: `npm run test`
 
-#### Components
-
-- `SceneManager`: Manages the ThreeJS scene, camera, and renderer
-- `AnimationLoop`: Manages the animation loop
-- `StateManager`: Manages the state of the renderer
-
-### @teskooano/renderer-threejs-visualization
-
-Visualization components for the ThreeJS renderer.
-
-#### Components
-
-- `ObjectManager`: Manages celestial objects in the scene
-- `OrbitManager`: Manages orbit lines in the scene
-- `BackgroundManager`: Manages the background of the scene
-
-### @teskooano/renderer-threejs-interaction
-
-Interaction components for the ThreeJS renderer.
-
-#### Components
-
-- `ControlsManager`: Manages orbit controls
-- `UIManager`: Manages UI elements like labels
-
-### @teskooano/renderer-threejs-effects
-
-Effects components for the ThreeJS renderer.
-
-#### Components
-
-- `LightManager`: Manages lights in the scene
-- `LODManager`: Manages level of detail for objects
-
-## Migration from SpaceRenderer
-
-The original `SpaceRenderer` class has been replaced with the new `ModularSpaceRenderer` class. The new class provides the same functionality but with a more modular architecture. The original class is no longer exported.
-
-To migrate from `SpaceRenderer` to `ModularSpaceRenderer`, simply replace the import and class name:
-
-```typescript
-// Old code
-import { SpaceRenderer } from "@teskooano/renderer-threejs";
-const renderer = new SpaceRenderer(container, options);
-
-// New code
-import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-const renderer = new ModularSpaceRenderer(container, options);
-```
-
-The API is compatible, so no other changes should be needed.
+Remember to install dependencies: `npm install` (likely managed by the monorepo root)

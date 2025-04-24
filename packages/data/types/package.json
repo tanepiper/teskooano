@@ -16,9 +16,13 @@
     "test": "vitest",
     "lint": "eslint src/**/*.ts"
   },
+  "dependencies": {
+    "three": "0.176.0"
+  },
   "devDependencies": {
     "typescript": "5.8.3",
     "vitest": "3.1.2",
-    "eslint": "9.25.1"
+    "eslint": "9.25.1",
+    "@types/three": "0.176.0"
   }
 }

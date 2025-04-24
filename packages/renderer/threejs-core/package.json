@@ -2,6 +2,7 @@
   "name": "@teskooano/renderer-threejs-core",
   "version": "0.1.0",
   "private": true,
+  "description": "Core components for the ThreeJS renderer (Scene, Animation, State)",
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.d.ts",

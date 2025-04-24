@@ -1,6 +1,6 @@
 {
   "name": "@teskooano/renderer-threejs-visualization",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "main": "src/index.ts",

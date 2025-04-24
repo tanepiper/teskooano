@@ -5,18 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Texture Generation System Refactor
-
-- Added `TextureResourceManager` for centralized WebGL resource management
-- Refactored texture generators to use instance methods instead of static methods
-- Standardized `TextureResult` interface for all texture generators
-- Improved texture caching with built-in caching in base generator class
-- Enhanced resource management for efficient WebGL context usage
-- Added support for both WebGL shader-based and canvas-based generation approaches
-
-## [0.1.0] - 2025-04-14
+## [0.1.0] - 2025-04-24
 
 ### Added
 
@@ -64,3 +53,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Utilities (`utils/`)**:
   - Event dispatching for texture progress.
   - Type definitions for events.
+
+### Changed
+
+- **Texture Generation System Refactor**:
+  - Added `TextureResourceManager` for centralized WebGL resource management.
+  - Refactored texture generators to use instance methods instead of static methods.
+  - Standardized `TextureResult` interface for all texture generators.
+  - Improved texture caching with built-in caching in base generator class.
+  - Enhanced resource management for efficient WebGL context usage.
+  - Added support for both WebGL shader-based and canvas-based generation approaches.

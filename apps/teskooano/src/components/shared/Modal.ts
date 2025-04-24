@@ -1,4 +1,3 @@
-import { createHtmlElement } from "@teskooano/common";
 import { CustomEvents } from "@teskooano/data-types";
 
 const template = document.createElement("template");
@@ -155,7 +154,7 @@ export class TeskooanoModal extends HTMLElement {
           composed: true,
         }),
       );
-      this.close();
+      this.remove();
     });
 
     this.closeButton.addEventListener("click", () => {
@@ -169,7 +168,7 @@ export class TeskooanoModal extends HTMLElement {
           composed: true,
         }),
       );
-      this.close();
+      this.remove();
     });
 
     this.secondaryButton.addEventListener("click", () => {

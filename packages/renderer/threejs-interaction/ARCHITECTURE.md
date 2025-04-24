@@ -90,20 +90,19 @@ This is the central orchestrator for camera control and movement logic.
 ```mermaid
 graph TD
     A[User Input (Mouse/Touch)] --> B(OrbitControls);
-    C[Render Loop] --> D{ControlsManager.update()};
+    C[Render Loop] --> D{ControlsManager.update(delta)};
     E[UI / External Logic] -- focus request --> F(ControlsManager.setFollowTarget);
-    F -- calculates positions --> G(ControlsManager.moveTo);
-    G -- calls --> H(ControlsManager.startTransition);
+    F -- calculates positions --> G(ControlsManager.moveToPosition);
+    G -- calls --> H(ControlsManager._transitionPositionAndTarget);
     H -- creates --> I(GSAP Timeline);
     I -- animates --> B;
     I -- animates --> J(Camera Position);
-    I -- onUpdate calls --> D;
     I -- onComplete calls --> K(ControlsManager onTimelineComplete);
     K -- updates --> L(previousFollowTargetPos);
     K -- dispatches --> M(Event: camera-transition-complete);
     D -- when following --> N{Calculates Delta};
     N -- updates --> J;
-    D -- updates --> B;
+    N -- updates --> B(OrbitControls.target);
     D -- calls --> O(OrbitControls.update());
     B -- change event --> P{ControlsManager Change Listener};
     P -- updates --> Q(@teskooano/core-state);
@@ -121,12 +120,13 @@ graph TD
 
 ### Key Design Decisions for `ControlsManager`:
 
-- **GSAP for Transitions:** Provides reliable, controllable, and cancellable animations superior to simple lerping.
-- **Delta-Based Following:** The `update` loop calculates the target's frame-to-frame movement delta and applies it directly to the camera. This ensures the camera keeps pace precisely.
-- **`OrbitControls.update()` is Key:** Crucially, `controls.update()` is called _after_ the delta logic. This allows `OrbitControls` to apply damping and user input _relative_ to the camera's new position dictated by the follow logic.
-- **Separation of Concerns:** Transitions (`startTransition`) are distinct from continuous following (`update` loop logic). `setFollowTarget` bridges these by initiating a transition and then enabling the follow state.
+- **GSAP for Transitions:** Provides reliable, controllable, and cancellable animations superior to simple lerping for both position and target rotation.
+- **Delta-Based Following:** The `update` loop calculates the target's frame-to-frame movement delta and applies it directly to both the camera position and the `OrbitControls` target. This ensures the camera keeps pace precisely.
+- **`OrbitControls.update()` is Key:** Crucially, `controls.update()` is called _after_ the delta logic. This allows `OrbitControls` to apply damping and user input _relative_ to the camera's new position/target dictated by the follow logic.
+- **Separation of Concerns:** Transitions (`_transitionPositionAndTarget`) are distinct from continuous following (`update` loop logic). `setFollowTarget` bridges these by initiating a transition (using `moveToPosition`) and then enabling the follow state.
 - **State Update on User Input:** The global state is primarily updated when the _user_ directly manipulates the controls via the `change` event, preventing potential feedback loops from programmatic updates.
-- **Initialization of `previousFollowTargetPos`:** This value is crucial for the delta calculation. It's initialized _at the end_ of the `startTransition` animation to the target's final position, ensuring the first frame of following doesn't apply an incorrect delta based on the pre-transition state.
+- **Initialization of `previousFollowTargetPos`:** This value is crucial for the delta calculation. It's initialized _at the end_ of the transition animation (`onTimelineComplete`) to the target's final position, ensuring the first frame of following doesn't apply an incorrect delta based on the pre-transition state.
+- **Sequenced Transitions:** Position and target transitions are handled by a single GSAP timeline (`_transitionPositionAndTarget`), ensuring smooth, coordinated movement.
 
 ## Core Class: `CSS2DManager`
 
@@ -134,18 +134,19 @@ Manages HTML elements overlaid onto the 3D scene using `THREE.CSS2DRenderer`.
 
 ### Responsibilities:
 
-- **Initialization:** Creates and configures a `CSS2DRenderer` instance, adding its DOM element to the provided container. Sets necessary styles (`position: absolute`, `pointer-events: none`).
-- **Layer Management:** Defines distinct layers (`CSS2DLayerType`) for different types of UI elements (labels, markers, etc.). Manages internal maps (`elements`) to store `CSS2DObject` instances per layer and tracks layer visibility (`layerVisibility`).
+- **Initialization:** Creates and configures a `CSS2DRenderer` instance, adding its DOM element to the provided container. Sets necessary styles (`position: absolute`, `pointer-events: none`). Injects CSS rules to ensure `pointer-events: none` on all children.
+- **Layer Management:** Defines distinct layers (`CSS2DLayerType`: `CELESTIAL_LABELS`, `TOOLTIPS`, `AU_MARKERS`) for different types of UI elements. Manages internal maps (`elements`) to store `CSS2DObject` instances per layer and tracks layer visibility (`layerVisibility`).
 - **Element Creation:** Provides methods to create specific types of elements:
-  - `createCelestialLabel`: Creates name labels for celestial objects, positioning them based on object type/radius and attaching them to the object's mesh.
+  - `createCelestialLabel`: Creates name labels for celestial objects, positioning them based on object type/radius (with special handling for Oort Cloud) and attaching them to the object's mesh.
   - `createAuMarkerLabel`: Creates labels for AU distance markers, attaching them directly to the scene.
-  - `createCustomElement`: Allows adding arbitrary HTML elements as `CSS2DObject`s.
+  - `createCustomElement`: (Internal/Private) Helper for creating positioned labels with common styling.
 - **Element Management:**
   - `removeElement`: Removes an element from the scene and internal tracking.
-  - `updateCelestialLabel`: Updates the position of an existing label.
-  - `setLayerVisibility`/`toggleLayerVisibility`/`getLayerVisibility`: Controls the visibility of entire layers.
-  - `showLabel`/`hideLabel`: Controls the visibility of individual labels using CSS classes.
-- **Rendering (`render()`):** **Must be called every frame** after the main WebGL render pass. It performs pre-render checks for orphaned labels (elements whose parents are no longer in the scene) and then calls the internal `renderer.render()` method.
+  - `clearLayer`: Removes all elements from a specific layer.
+  - `updateCelestialLabel`: (Not currently implemented/used - positioning happens at creation).
+  - `setLayerVisibility`/`toggleLayerVisibility`/`getLayerVisibility`: Controls the visibility of entire layers by toggling the `visible` property of contained `CSS2DObject`s.
+  - `showLabel`/`hideLabel`: Controls the visibility of individual labels using CSS classes (`label-hidden`) for potentially faster/more direct control.
+- **Rendering (`render()`):** **Must be called every frame** after the main WebGL render pass. It performs pre-render checks for orphaned labels (elements whose parent object might have been removed from the scene) and then calls the internal `renderer.render()` method.
 - **Resize Handling (`onResize()`):** Updates the `CSS2DRenderer` size when the container resizes.
 - **Cleanup (`dispose()`):** Removes all created elements and the renderer's DOM element.
 
@@ -165,7 +166,8 @@ graph TD
         App -- Calls --> AddLbl(CSS2DManager.createCelestialLabel)
         App -- Calls --> AddAu(CSS2DManager.createAuMarkerLabel)
         App -- Calls --> Rem(CSS2DManager.removeElement)
-        App -- Calls --> Upd(CSS2DManager.updateCelestialLabel)
+        App -- Calls --> Show(CSS2DManager.showLabel)
+        App -- Calls --> Hide(CSS2DManager.hideLabel)
     end
 
     subgraph CSS2DManager
@@ -178,17 +180,19 @@ graph TD
 
     Rndr -- Renders --> CSSDOM(CSS2D DOM Element)
     CSSDOM -- Appended to --> Ctr
-    El -- Added to --> Scn
-    El -- Added to --> ParentObj(THREE.Object3D)
+    El -- Added to --> Scn(For AU Markers)
+    El -- Added to --> ParentObj(THREE.Object3D for Celestial Labels)
     Ren -- Uses --> Cam(Camera)
     Ren -- Calls --> Rndr
+    Ren -- Performs --> OrphanCheck[Orphan Label Check]
 ```
 
 ### Key Design Decisions for `CSS2DManager`:
 
 - **`CSS2DRenderer`:** Standard Three.js approach for placing HTML elements in 3D space.
 - **Layer System:** Allows logical grouping and independent visibility control for different UI categories (e.g., hide all AU markers).
-- **`pointer-events: none`:** Essential for ensuring the CSS2D overlay doesn't block interaction with the underlying WebGL canvas (handled by `ControlsManager`).
-- **Element Lifecycles:** Provides explicit methods for creating, removing, and updating elements to keep the internal state consistent with the scene graph.
+- **`pointer-events: none`:** Essential for ensuring the CSS2D overlay doesn't block interaction with the underlying WebGL canvas (handled by `ControlsManager`). CSS is injected to enforce this.
+- **Element Lifecycles:** Provides explicit methods for creating, removing (`removeElement`, `clearLayer`), and managing elements to keep the internal state consistent with the scene graph.
 - **Orphan Check:** The `render` method includes a pre-check to find and remove labels whose parent object might have been removed from the scene unexpectedly, preventing errors in the underlying `CSS2DRenderer`.
-- **DOM Manipulation for Visibility:** Directly manipulating `element.style.display` or using CSS classes (`label-hidden`) alongside `element.visible` provides more immediate and potentially robust visibility control compared to relying solely on the Three.js `visible` flag for CSS objects.
+- **Dual Visibility Control:** Offers layer-level visibility (`setLayerVisibility` toggling `CSS2DObject.visible`) and individual label visibility (`showLabel`/`hideLabel` using CSS classes). Choose based on use case (performance vs. granularity).
+- **Specific Creation Methods:** Favors distinct methods (`createCelestialLabel`, `createAuMarkerLabel`) over a generic one for clarity and type safety.

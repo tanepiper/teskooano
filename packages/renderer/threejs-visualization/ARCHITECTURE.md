@@ -1,64 +1,142 @@
-## Three.js Visualization Analysis (`threejs-visualization`)
+# Architecture: `@teskooano/renderer-threejs-visualization`
 
-This package is responsible for orchestrating the rendering of the complete scene, managing the lifecycle of celestial object visuals, orbits, and background elements.
+This package orchestrates the rendering of the Teskooano simulation scene, managing the visual representation of celestial objects, their orbits, and the background environment.
 
-**Core Components:**
+## Overview
 
-1.  **`VisualizationRenderer` (`index.ts`)**: A facade class coordinating the different visualization managers.
+The `VisualizationRenderer` acts as a facade, coordinating three main managers:
 
-    - Instantiates `ObjectManager`, `OrbitManager`, and `BackgroundManager`.
-    - Provides methods like `renderCelestialObject` and `renderOrbit` which delegate to the appropriate manager (`ObjectManager.addObject`, `OrbitManager.createOrUpdate...`).
-    - `update()`: Calls the `update` methods of its managed components (`ObjectManager`, `BackgroundManager`). _Note: OrbitManager update seems to be handled implicitly via state changes or within ObjectManager?_.
-    - `dispose()`: Calls dispose on managed components.
+1.  **`ObjectManager`**: Handles the lifecycle of `THREE.Object3D` instances representing celestial bodies. It subscribes to the `renderableObjectsStore` and synchronizes the scene by adding, updating, or removing meshes. It leverages specialized renderers from `@teskooano/systems-celestial`, LOD management from `@teskooano/renderer-threejs-effects`, lighting via `LightManager`, and label integration via `CSS2DManager`.
+2.  **`OrbitManager`**: Manages the visualization of orbital paths. It dynamically switches between rendering static Keplerian ellipses and dynamic Verlet integration trails/predictions based on the `simulationState`'s `physicsEngine`. It highlights selected orbits and allows visibility toggling.
+3.  **`BackgroundManager`**: Creates and animates a multi-layered starfield, providing a sense of depth and movement with parallax effects tied to the camera.
 
-2.  **`ObjectManager.ts` (`ObjectManager`)**: Manages the creation, update, and removal of `THREE.Object3D` representations for celestial bodies.
+These managers rely heavily on data from `@teskooano/core-state` and interact with other renderer packages for effects, interaction, and core utilities.
 
-    - Holds references to the main `THREE.Scene` and `THREE.PerspectiveCamera`.
-    - Instantiates and uses `LODManager` from `@teskooano/renderer-threejs-effects`.
-    - Instantiates and uses `LabelManager` (which is deprecated and wraps `CSS2DManager`).
-    - Instantiates helper classes from `object-manager/` subdirectory: `GravitationalLensingHandler`, `MeshFactory`, `RendererUpdater`.
-    - `initCelestialRenderers()`: Initializes a map (`celestialRenderers`) holding instances of specific renderers from `@teskooano/systems-celestial` (Gas Giants, Particles). _Note: It does NOT seem to initialize Star or Terrestrial renderers here._.
-    - `addObject(object)`: Creates a mesh using `MeshFactory.createObjectMesh`, adds it to the scene and internal map (`objects`). Creates a label via `LabelManager`. Checks if lensing is needed via `lensingHandler`. Sets initial position using `physicsToThreeJSPosition`.
-    - `updateObject(object)`: Updates the `position` (using `physicsToThreeJSPosition`) and `quaternion` of an existing mesh. Updates the label position.
-    - `removeObject(objectId)`: Removes the label, removes the object from `LODManager`, removes the mesh from the scene, and disposes of geometry/material.
-    - `updateRenderers(...)`: Called potentially by the main loop, passes time, light sources, and other context to `RendererUpdater.updateAll`.
-    - `update()`: Calls `lodManager.update()`.
-    - `dispose()`: Cleans up objects, renderers, label manager, and LOD manager.
-    - **Dependencies**: Relies heavily on `@teskooano/systems-celestial` for renderer implementations, `@teskooano/renderer-threejs-effects` for LOD, `@teskooano/renderer-threejs-interaction` (via `LabelManager` wrapping `CSS2DManager`), `@teskooano/core-state` (implicitly via sub-managers), and `@teskooano/renderer-threejs` for `physicsToThreeJSPosition`.
+```mermaid
+graph TD
+    subgraph CoreState ["@teskooano/core-state"]
+        RStore[renderableObjectsStore]
+        SStore[simulationState]
+        AStore[accelerationVectorsStore]
+        CEStore[celestialObjectsStore] // Used by OrbitManager for prediction
+    end
 
-3.  **`OrbitManager.ts` (`OrbitManager`)**: Manages the visualization of orbital paths.
+    subgraph SystemsCelestial ["@teskooano/systems-celestial"]
+        direction LR
+        SpecializedRenderers[Specialized Renderers (GasGiant, Star, Planet, Ring, Asteroid...)]
+    end
 
-    - Holds a reference to the `ObjectManager` to get parent object positions.
-    - Supports two `VisualizationMode`s: `Keplerian` (drawing ellipses) and `Verlet` (drawing trails and predictions based on physics state).
-    - Subscribes to `simulationState` to automatically switch `visualizationMode` based on `physicsEngine` changes.
-    - Maintains maps of `THREE.Line` objects for Keplerian orbits (`keplerianLines`), Verlet trails (`trailLines`), and Verlet predictions (`predictionLines`).
-    - `setVisualizationMode()`: Switches modes, cleans up visualizations from the previous mode, and triggers `updateAllVisualizations`.
-    - `updateAllVisualizations()`: The main update logic. Iterates through objects from `celestialObjectsStore`. Depending on the mode, calls either `createOrUpdateKeplerianOrbit` or `createOrUpdateVerletVisualization` & `updatePredictionLine`.
-    - `createOrUpdateKeplerianOrbit()`: Calculates orbit points using `calculateOrbitPoints` (from `orbit-manager/`), creates/updates the `THREE.Line` using helpers, positions it relative to the parent object, and adds/updates it in the scene via `ObjectManager`.
-    - `createOrUpdateVerletVisualization()`: Reads the current object position, updates a position history (`positionHistory`), and creates/updates a `THREE.Line` (`trailLines`) showing the recent path.
-    - `updatePredictionLine()`: Uses `predictVerletTrajectory` (from `orbit-manager/`) based on the object's `physicsStateReal` to get future points and creates/updates a prediction line (`predictionLines`).
-    - Includes logic for highlighting (`highlightVisualization`) and toggling visibility.
-    - `dispose()`: Removes all lines and unsubscribes from state.
+    subgraph RendererEffects ["@teskooano/renderer-threejs-effects"]
+        direction LR
+        LODM[LODManager]
+        LightM[LightManager]
+        Lensing[GravitationalLensingHandler] // within ObjectManager
+    end
 
-4.  **`BackgroundManager.ts` (`BackgroundManager`)**: Manages the starfield background.
+    subgraph RendererInteraction ["@teskooano/renderer-threejs-interaction"]
+        direction LR
+        CSS2DM[CSS2DManager]
+    end
 
-    - Holds a reference to the main `THREE.Scene`.
-    - Uses helpers from `background-manager/` (`createStarLayers`, `updateStarColors`, etc.) to create multiple layers of `THREE.Points` representing stars.
-    - `update(deltaTime)`: Updates parallax effect based on camera position (`updateParallax`) and applies subtle animation (`animateStarField`).
-    - Includes debug mode (`toggleDebug`) to visualize layers.
-    - `dispose()`: Removes star layers and cleans up resources.
+    subgraph Visualization ["@teskooano/renderer-threejs-visualization"]
+        direction TB
+        VR(VisualizationRenderer) -- Manages --> OM(ObjectManager)
+        VR -- Manages --> OrbM(OrbitManager)
+        VR -- Manages --> BGM(BackgroundManager)
 
-5.  **`LabelManager.ts` (`LabelManager`)**: **Deprecated**. Acts as a wrapper around `CSS2DManager` from `threejs-interaction`. Should be phased out in favor of direct usage of `CSS2DManager`.
+        OM -- Uses --> MeshFact[object-manager/MeshFactory]
+        OM -- Uses --> RendUpd[object-manager/RendererUpdater]
+        OM -- Uses --> Lensing
+        OM -- Uses --> LODM
+        OM -- Uses --> LightM
+        OM -- Uses --> CSS2DM
+        OM -- Listens to --> RStore
+        OM -- Listens to --> AStore
+        MeshFact -- Uses --> SpecializedRenderers
+        RendUpd -- Updates --> SpecializedRenderers
 
-6.  **Subdirectories (`object-manager/`, `orbit-manager/`, `background-manager/`)**: Contain helper functions and potentially specialized classes used by the main managers in this package (e.g., orbit calculation logic, mesh creation logic, background layer creation).
+        OrbM -- Uses --> KepM[orbit-manager/KeplerianOrbitManager]
+        OrbM -- Uses --> VerletPred[orbit-manager/verlet-predictor]
+        OrbM -- Interacts with --> OM
+        OrbM -- Listens to --> SStore
+        OrbM -- Listens to --> RStore
+        OrbM -- Reads --> CEStore
 
-**Key Characteristics & Design:**
+        BGM -- Uses --> BGHelpers[background-manager/*]
 
-- **Orchestration Layer**: Acts as the main coordinator for bringing together different visual elements (objects, orbits, background).
-- **Manager Pattern**: Divides responsibilities into distinct managers (`ObjectManager`, `OrbitManager`, `BackgroundManager`).
-- **State-Driven Updates**: Relies heavily on data from `@teskooano/core-state` (`celestialObjectsStore`, `simulationState`) to drive updates (object positions, orbit calculations, visualization mode switching).
-- **Mode Switching**: `OrbitManager` dynamically switches between Keplerian and Verlet visualization based on the physics engine state.
-- **Delegation**: `ObjectManager` delegates actual mesh creation and updates to specific renderers obtained from `@teskooano/systems-celestial` (via its internal `MeshFactory` and `RendererUpdater`).
-- **Dependency Chain**: Forms a key part of the rendering pipeline, depending on `core-state`, `systems-celestial`, `threejs-core`, `threejs-effects`, and `threejs-interaction`.
-- **Deprecated Components**: Contains a deprecated `LabelManager`.
-- **Incomplete Initialization**: `ObjectManager.initCelestialRenderers` doesn't seem to initialize all necessary renderer types (e.g., Stars, Terrestrial), relying on `MeshFactory` to handle them dynamically, which might be less explicit.
+    end
+
+    AppCode[Application/Main Renderer] -- Creates/Updates --> VR
+    AppCode -- Provides --> SceneCameraRenderer[Scene, Camera, Renderer]
+
+    VR -- Needs access to --> SceneCameraRenderer
+
+    style CoreState fill:#f9f,stroke:#333,stroke-width:2px
+    style SystemsCelestial fill:#ccf,stroke:#333,stroke-width:2px
+    style RendererEffects fill:#cfc,stroke:#333,stroke-width:2px
+    style RendererInteraction fill:#fcc,stroke:#333,stroke-width:2px
+    style Visualization fill:#ffc,stroke:#333,stroke-width:2px
+```
+
+## Core Class: `ObjectManager`
+
+### Responsibilities:
+
+- **State Synchronization:** Subscribes to `renderableObjectsStore` and `accelerationVectorsStore`. Adds, updates, or removes `THREE.Object3D` representations based on store changes.
+- **Mesh Creation:** Delegates mesh creation to `MeshFactory`, which selects the appropriate specialized renderer (`@teskooano/systems-celestial`) or creates standard meshes.
+- **LOD Integration:** Creates and registers objects with `LODManager` (`@teskooano/renderer-threejs-effects`) via `MeshFactory`.
+- **Renderer Updates:** Uses `RendererUpdater` to call the `update` method of active specialized renderers each frame, passing time, lighting, and context.
+- **Position/Rotation Updates:** Updates the `position` and `rotation` of meshes based on `RenderableCelestialObject` data, converting physics units to scene units.
+- **Label Management:** Creates/removes labels via the injected `CSS2DManager`.
+- **Light Management:** Updates light sources via `LightManager` (especially for stars).
+- **Lensing:** Manages gravitational lensing post-processing effects via `GravitationalLensingHandler`.
+- **Destruction Effects:** Handles visual effects (e.g., debris) when an object is destroyed (listens to physics events).
+- **Cleanup:** Disposes of meshes, materials, and unsubscribes from stores.
+
+### Key Dependencies:
+
+- `@teskooano/core-state` (Object & Acceleration Stores)
+- `@teskooano/systems-celestial` (Specialized Renderers)
+- `@teskooano/renderer-threejs-effects` (LOD, Lighting, Lensing)
+- `@teskooano/renderer-threejs-interaction` (CSS2D Labels)
+- `@teskooano/renderer-threejs-core` (Event Bus, Type Definitions)
+
+## Core Class: `OrbitManager`
+
+### Responsibilities:
+
+- **Mode Management:** Switches between `Keplerian` and `Verlet` visualization modes based on `simulationState.physicsEngine`.
+- **Keplerian Visualization:** Delegates to `KeplerianOrbitManager` to calculate and render static elliptical orbits using orbital elements.
+- **Verlet Visualization:**
+  - **Trails:** Maintains a history of recent object positions and renders them as `THREE.Line` trails.
+  - **Predictions:** Calculates future trajectory using `verlet-predictor` based on current `physicsStateReal` from `celestialObjectsStore` and renders it as a `THREE.Line`.
+- **Scene Integration:** Uses `ObjectManager` to add/remove orbit/trail/prediction lines from the scene.
+- **Update Throttling:** Limits the frequency of Verlet trail geometry updates and prediction recalculations for performance.
+- **Highlighting:** Changes the color of the orbit/trail/prediction line for a selected object.
+- **Visibility Control:** Toggles the visibility of all managed lines.
+- **Cleanup:** Removes all lines from the scene and unsubscribes from stores.
+
+### Key Dependencies:
+
+- `@teskooano/core-state` (Simulation State & Celestial Objects Stores)
+- `@teskooano/renderer-threejs-core` (Type Definitions, State Adapter)
+- `ObjectManager` (for scene manipulation)
+
+## Core Class: `BackgroundManager`
+
+### Responsibilities:
+
+- **Starfield Creation:** Uses helpers in `background-manager/` to generate multiple layers of `THREE.Points` representing stars with varying density and depth.
+- **Parallax Effect:** Updates the position of star layers based on camera movement to simulate parallax.
+- **Animation:** Applies subtle animation effects to the starfield over time.
+- **Debug Mode:** Provides an option to visualize the different layers distinctly.
+- **Cleanup:** Removes layers from the scene and disposes of geometries/materials.
+
+## Facade: `VisualizationRenderer`
+
+### Responsibilities:
+
+- **Initialization:** Creates instances of `ObjectManager`, `OrbitManager`, and `BackgroundManager`.
+- **Coordination:** Provides a unified `update(delta)` method that calls the respective update methods of the managed components.
+- **API Exposure:** Exposes methods for controlling aspects of the visualization, such as orbit highlighting (`highlightOrbit`), visibility (`toggleOrbitVisibility`, `setOrbitVisibility`), and debug modes (`setDebugMode`).
+- **Resource Management:** Provides a `dispose()` method to clean up all managed resources.
