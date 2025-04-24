@@ -56,6 +56,11 @@ export default defineConfig({
           label: "GitHub",
           href: "https://github.com/tanepiper/teskooano",
         },
+        {
+          icon: "mastodon",
+          label: "Mastodon",
+          href: "https://mastodon.gamedev.place/@teskooano",
+        },
       ],
       sidebar: [
         { label: "Homepage", link: "/" },
