@@ -49,7 +49,7 @@ jobs:
         with:
           # Upload Build Dist
 
-          path: "apps/homepage/site/.vitepress/dist/"
+          path: "apps/website/dist/"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
