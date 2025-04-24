@@ -2,13 +2,13 @@
 
 ## What is it?
 
-The `@teskooano/app-simulation` library is the central orchestration engine for the Open Space game. It coordinates the interaction between physics, state management, and rendering to create a cohesive space simulation. This package manages the simulation loop, time progression, and coordinates the updates between all other subsystems.
+The `@teskooano/app-simulation` package provides the core simulation loop and setup for the Teskooano engine. It integrates the physics engine (`@teskooano/core-physics`), state management (`@teskooano/core-state`), and the renderer (`@teskooano/renderer-threejs`) to simulate celestial body interactions and manage the overall simulation time and state.
 
 ## Where is it?
 
 **Physical Location:** `/packages/app/simulation`
 
-**System Context:** The simulation package sits at the center of the application, orchestrating all other components:
+**System Context:** This package acts as the central orchestrator, connecting various core libraries to the frontend rendering.
 
 ```mermaid
 graph TD
@@ -16,292 +16,170 @@ graph TD
     Physics[core-physics]
     State[core-state]
     Types[data-types]
-    Celestial[systems-celestial]
     Renderer[renderer-threejs]
     Simulation[app-simulation]
     Frontend[Frontend Application]
 
-    Math --> Simulation
-    Physics --> Simulation
+    Math --> Physics
+    Types --> Physics
+    Types --> State
+    Types --> Renderer
     State --> Simulation
-    Celestial --> Simulation
-    Types --> Simulation
+    Physics --> Simulation
     Simulation --> Renderer
-    Simulation --> Frontend
+    Renderer --> Frontend
+
+    subgraph Simulation Package
+        direction LR
+        Loop[loop.ts]
+        Index[index.ts]
+        Systems[systems/*]
+        Reset[resetSystem.ts]
+    end
+
+    Index -- Manages --> Renderer
+    Loop -- Updates --> State
+    State -- Read by --> Loop
+    State -- Read by --> Renderer
+    Systems --> State(Via Actions)
+    Reset --> State(Via Actions)
 ```
 
 ## When is it used?
 
-The simulation engine is used:
-
-- When initializing the game environment and loading star systems
-- During each game tick to update physics, state, and trigger rendering
-- For controlling simulation time and speed
-- When processing user interactions that affect the simulation
-- To synchronize state changes across different subsystems
-- For loading and saving simulation state
+- To initialize the main `Simulation` class which sets up the renderer.
+- To start/stop the core physics `simulationLoop`.
+- Whenever the simulation time needs to be updated or controlled (pause, timescale).
+- When loading initial system configurations (e.g., from the `systems` directory).
 
 ## How does it work?
 
-The simulation system implements:
+The simulation system is based on two main parts:
 
-### Simulation Loop
+1.  **`Simulation` Class (`index.ts`)**:
 
-- Manages the main game loop with fixed time steps
-- Coordinates physics updates, state changes, and rendering
-- Handles frame timing and performance optimization
+    - Initializes and holds the `ModularSpaceRenderer` instance.
+    - Sets up event listeners for things like window resizing to keep the renderer updated.
+    - This class _does not_ run the main simulation loop itself but provides the rendering context.
 
-### System Management
-
-- Coordinates the initialization and shutdown of subsystems
-- Manages resource allocation and cleanup
-- Handles system configuration and scaling
+2.  **`simulationLoop` (`loop.ts`)**:
+    - This is the core physics update loop, typically run via `requestAnimationFrame` when started with `startSimulationLoop()`.
+    - Reads the current state (`celestialObjectsStore`, `simulationState`) from `@teskooano/core-state`.
+    - Calculates the time delta, applying the simulation timescale.
+    - Filters active celestial bodies.
+    - Calls the `updateSimulation` function from `@teskooano/core-physics` to perform N-body calculations, collision detection, and integration.
+    - Handles destruction events emitted by the physics engine and passes them to the renderer via `rendererEvents`.
+    - Updates the `celestialObjectsStore` with the new physics states and statuses (including handling destroyed/annihilated objects).
+    - Calculates and applies object rotations directly to the state.
+    - Dispatches an `orbitUpdate` custom event for potential listeners (like orbit trail renderers).
 
 ### Time Control
 
-- Provides controls for simulation speed and pausing
-- Manages in-game time progression
-- Implements time dilation effects
+- Simulation time (`simulationState.time`) is advanced within the `simulationLoop`.
+- Pausing (`simulationState.paused`) and time scaling (`simulationState.timeScale`) are respected by the loop.
+- Time resets are handled via the `CustomEvents.SIMULATION_RESET_TIME` event.
 
-### Event System
+### System Initialization
 
-- Relays events between subsystems
-- Handles user input that affects simulation
-- Manages event queuing and processing
-
-### Scene Loading
-
-- Coordinates the loading of star systems
-- Handles transitions between different space environments
-- Manages system generation and persistence
-
-## Strengths
-
-- Central coordination simplifies interaction between subsystems
-- Clean separation between simulation logic and rendering
-- Flexible time management for different simulation speeds
-- Well-structured initialization and update sequences
-
-## Weaknesses
-
-- Currently limited system generation capabilities
-- Lacks advanced loading/saving functionality for complex systems
-
-## Opportunities
-
-- Integration with the upcoming system loader for JSON-based star systems
-- Support for the new ship movement and warp travel mechanics
-- Enhanced event handling for complex user interactions
-
-## Future Considerations
-
-For upcoming features:
-
-- The system loader will require coordinated loading from JSON files, validation, and initialization
-- Ship movement will need simulation support for player-controlled entities with physics
-- The UI manager will need hooks into the simulation for status updates and control
-- Need to expand the simulation capabilities to handle multiple star systems and transitions between them
-- Adding support for saving and loading simulation state for persistent gameplay
-
-## Features
-
-- Physics-based simulation of celestial objects
-- Orbital mechanics for realistic planetary motion
-- Configurable time scales and simulation controls
-- Integration with the Window Manager for UI controls
+- Functions like `initializeRedDwarfSystem` (in `systems/`) use `actions` from `@teskooano/core-state` to populate the `celestialObjectsStore` with initial bodies.
+- `resetSystem` likely provides a way to clear the state and load a specific system.
 
 ## Installation
 
 ```bash
-npm install @teskooano/app-simulation
+# Assuming part of the monorepo, installed via workspace dependency
 ```
+
+_(Internal package, typically not installed standalone)_
 
 ## Usage
 
 ### Basic Simulation Setup
 
 ```typescript
-import Simulation from "@teskooano/app-simulation";
+import Simulation, {
+  startSimulationLoop,
+  stopSimulationLoop,
+} from "@teskooano/app-simulation";
+import { initializeRedDwarfSystem } from "@teskooano/app-simulation/systems"; // Example system
+import { actions as simulationActions } from "@teskooano/core-state";
 
 // Get container element
 const container = document.getElementById("simulation-container");
+if (!container) throw new Error("Container not found");
 
-// Initialize simulation
+// 1. Initialize the Simulation class (sets up renderer)
 const simulation = new Simulation(container);
 
-// Add celestial objects
-simulation.addObject({
-  id: "sun",
-  name: "Sun",
-  type: "star",
-  position: { x: 0, y: 0, z: 0 },
-  mass: 1.989e30,
-});
+// 2. Load an initial system into the state
+const systemId = initializeRedDwarfSystem();
+console.log(`Initialized system: ${systemId}`);
+
+// Optional: Set initial camera focus or position via state actions
+// simulationActions.setCameraTarget(systemId);
+
+// 3. Start the physics loop
+startSimulationLoop();
+
+// To stop the loop later:
+// stopSimulationLoop();
+
+// To pause/resume:
+// simulationActions.setPaused(true);
+// simulationActions.setPaused(false);
+
+// To change time scale:
+// simulationActions.setTimeScale(10); // 10x speed
 ```
 
-### Using Simulation Controls with Window Manager
-
-The simulation package includes integration with the Window Manager toolbar for easy control of the simulation:
-
-```typescript
-import { initializeSimulationDemo } from "@teskooano/app-simulation";
-
-// Get container element
-const container = document.getElementById("simulation-container");
-
-// Initialize simulation with window manager integration
-const { simulation, windowManager, toolbar } =
-  initializeSimulationDemo(container);
-
-// The toolbar now contains simulation controls:
-// - Play/Pause button
-// - Speed Up button
-// - Speed Down button
-// - Reverse Direction button
-```
-
-### Manual Toolbar Integration
-
-If you prefer to set up the toolbar manually:
-
-```typescript
-import { registerSimulationControls } from "@teskooano/app-simulation";
-
-// Create toolbar
-const toolbar = new Toolbar();
-toolbar.init("simulation-container", "top");
-
-// Register simulation controls
-registerSimulationControls();
-```
-
-### Using Web Components for Simulation Controls
-
-The simulation package now includes a web component for easy integration of simulation controls:
-
-```html
-<!-- Add simulation controls to your HTML -->
-<simulation-controls></simulation-controls>
-```
-
-You can also create the component programmatically:
-
-```typescript
-import { SimulationControlsComponent } from "@teskooano/app-simulation";
-
-// The component is automatically registered as a custom element
-// You can create it programmatically
-const controlsElement = document.createElement("simulation-controls");
-document.querySelector("#my-toolbar").appendChild(controlsElement);
-```
-
-### Legacy Toolbar Integration
-
-For backward compatibility, you can still use the `registerSimulationControls` function:
-
-```typescript
-import { registerSimulationControls } from "@teskooano/app-simulation";
-
-// Create toolbar
-const toolbar = new Toolbar();
-toolbar.init("simulation-container", "top");
-
-// Register simulation controls
-registerSimulationControls();
-```
-
-## Simulation Controls
-
-The simulation toolbar provides the following controls:
-
-### Play/Pause
-
-Toggles the simulation between playing and paused states.
-
-### Speed Control
-
-- **Speed Up**: Increases the simulation speed by 1.5x
-- **Speed Down**: Decreases the simulation speed by 1.5x
-
-### Direction Control
-
-- **Reverse Direction**: Flips the direction of time flow by negating the time scale
+_(Removing outdated toolbar/web component sections as they are not present in the current code structure)_
 
 ## API Reference
 
-### Simulation Class
+### Exports from `index.ts`
 
 ```typescript
+// Main class for renderer setup
 class Simulation {
   constructor(container: HTMLElement);
-
-  // Add an object to the simulation
-  addObject(object: CelestialObject): void;
-
-  // Remove an object from the simulation
-  removeObject(objectId: string): void;
-
-  // Stop the simulation
-  stop(): void;
+  // Primarily manages the renderer instance
 }
+export default Simulation;
+
+// Core simulation loop controls
+export function startSimulationLoop(): void;
+export function stopSimulationLoop(): void;
+
+// Utility to reset simulation state
+export function resetSystem(systemInitializer?: () => string): void;
+
+// Placeholder/Example solar system setup
+export function initializeSolarSystem(): string; // Likely defined in systems/solar-system
 ```
 
-### Web Components
+### Exports from `loop.ts`
+
+_(Primarily internal loop logic, `startSimulationLoop` and `stopSimulationLoop` are re-exported via `index.ts`)_
+
+### Exports from `systems/*`
+
+_(Example: `systems/redDwarfSystem.ts`)_
 
 ```typescript
-// Simulation controls web component
-class SimulationControlsComponent extends HTMLElement {
-  // Creates a toolbar with simulation controls
-  // Automatically connects to the simulation state
-}
+export function initializeRedDwarfSystem(): string; // Returns the ID of the primary star
 ```
 
-### Utility Functions
+_(Add other system initializers as needed)_
 
-```typescript
-// Register simulation controls in the toolbar (legacy method)
-function registerSimulationControls(): void;
-```
+## Dependencies
 
-## Integration Example
+- `@teskooano/core-math`
+- `@teskooano/core-physics`
+- `@teskooano/core-state`
+- `@teskooano/data-types`
+- `@teskooano/renderer-threejs`
+- `three`
 
-The simulation can be easily integrated with other components of the Open Space project:
+---
 
-```typescript
-import Simulation, {
-  registerSimulationControls,
-} from "@teskooano/app-simulation";
-import { createSolarSystem } from "@teskooano/app-simulation";
-
-// Initialize window manager
-const windowManager = new WindowManager();
-windowManager.init("app-container");
-
-// Initialize toolbar
-const toolbar = new Toolbar();
-toolbar.init("app-container", "top");
-
-// Register simulation window
-registerWindow({
-  id: "simulation-view",
-  title: "Solar System Simulation",
-  position: { x: 100, y: 100 },
-  size: { width: 800, height: 600 },
-  resizable: true,
-  draggable: true,
-});
-
-// Initialize simulation
-const container = document.getElementById("simulation-view");
-const simulation = new Simulation(container);
-
-// Create solar system
-createSolarSystem(simulation);
-
-// Register simulation controls
-registerSimulationControls();
-```
-
-## License
-
-MIT
+_Remember to commit often! `git commit -m "docs(simulation): update README for v0.1.0"`_

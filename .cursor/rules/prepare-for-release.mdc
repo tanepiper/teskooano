@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Go through this project, analyse all files.
+
+- Update the README.md to reflect the correct and current state of this library
+- Update the ARCHITECTURE.md to relfect the architecture of the library
+- Based on your reading update the TODO.md
+
+If none of these files exist, create them.
+
+Also update the package.json to version 0.1.0 and update or create a CHANGELOG in prepareation for the 0.1.0 release and todays date 2025-04-24 - only talk about added features as this is the first official release

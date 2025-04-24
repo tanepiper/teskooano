@@ -6,7 +6,6 @@
     "composite": true,
     "declaration": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "types": ["vite-plugin-glsl/ext"],
     "paths": {
       "@teskooano/renderer-threejs": ["../../renderer/threejs"],
       "@teskooano/core-state": ["../../core/state"],
