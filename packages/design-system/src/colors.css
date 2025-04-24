@@ -1,0 +1,6 @@
+@import './tokens.css';
+
+/* This file intentionally only imports the design tokens (CSS variables) 
+   and applies no other styles. It's intended for use in applications
+   like the website that only need the theme variables, not the full
+   component styling. */ 

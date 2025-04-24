@@ -1,0 +1,18 @@
+{
+  "name": "@teskooano/website",
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.34.0",
+    "@teskooano/design-system": "file:../../packages/design-system",
+    "astro": "5.7.5",
+    "sharp": "0.34.1"
+  }
+}

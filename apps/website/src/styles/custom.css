@@ -1,0 +1,105 @@
+:root {
+  /* === Starlight Variable Overrides using Teskooano Tokens === */
+
+  /* --- Base Colors (Dark Mode) --- */
+  --sl-color-white: var(--color-text-primary, #e0e0fc); /* Map Starlight 'white' to our primary text */
+  /* Assuming Starlight's gray scale is similar enough for now, 
+     might need fine-tuning if elements look off */
+  --sl-color-gray-1: #d0d0f0; /* Lighter than text-primary */
+  --sl-color-gray-2: var(--color-text-primary, #e0e0fc); /* Match text */
+  --sl-color-gray-3: var(--color-text-secondary, #a0a0cc);
+  --sl-color-gray-4: var(--color-border-strong, #6a6a8a);
+  --sl-color-gray-5: var(--color-border-subtle, #4a4a6a);
+  --sl-color-gray-6: var(--color-surface-3, #3a3a4e);
+  --sl-color-black: var(--color-background, #12121e); /* Map Starlight 'black' to our background */
+
+  /* Accent Colors */
+  /* Using our primary color for Starlight's accent */
+  --sl-color-accent-low: var(--color-primary-active, #4841c2);
+  --sl-color-accent: var(--color-primary, #6c63ff);
+  --sl-color-accent-high: var(--color-primary-hover, #5a52e0); /* Use hover for 'high' maybe? Or a lighter shade */
+
+  /* Text & Background */
+  --sl-color-text: var(--sl-color-gray-2); /* Use the mapped gray */
+  --sl-color-text-accent: var(--sl-color-accent); /* Use the mapped accent */
+  --sl-color-text-invert: var(--color-text-on-primary, #ffffff); /* Text on primary buttons */
+  --sl-color-bg: var(--sl-color-black); /* Use the mapped background */
+  --sl-color-bg-nav: var(--color-surface-2, #2a2a3e); /* Use a surface color for nav */
+  --sl-color-bg-sidebar: var(--color-surface-1, #1a1a2e); /* Use a surface color for sidebar */
+  --sl-color-bg-inline-code: var(--color-surface-3, #3a3a4e);
+  --sl-color-bg-accent: var(--sl-color-accent); /* Background for accent elements */
+
+  /* Borders */
+  --sl-color-hairline-light: var(--color-border-subtle, #4a4a6a);
+  --sl-color-hairline: var(--color-surface-3, #3a3a4e); /* Match a surface */
+  --sl-color-hairline-shade: var(--color-surface-2, #2a2a3e);
+
+  /* Backdrop */
+  --sl-color-backdrop-overlay: hsla(240, 22%, 11%, 0.7); /* Adjust alpha on background */
+
+  /* --- Typography --- */
+  /* Font Families */
+  --sl-font-system: var(--font-family-base, Inter, system-ui, sans-serif);
+  --sl-font-system-mono: var(--font-family-mono, 'Courier New', monospace);
+
+  /* Text Sizes (Mapping approximations) */
+  --sl-text-xs: var(--font-size-1); /* Smallest */
+  --sl-text-sm: var(--font-size-2); /* Base */
+  --sl-text-base: var(--font-size-3); /* Slightly larger base */
+  --sl-text-lg: var(--font-size-4);
+  --sl-text-xl: var(--font-size-5);
+  --sl-text-2xl: var(--font-size-6); /* Largest */
+  /* Starlight has more sizes, we might need to adjust or add if needed */
+  --sl-text-3xl: calc(var(--font-size-6) * 1.2);
+  --sl-text-4xl: calc(var(--font-size-6) * 1.4);
+  --sl-text-5xl: calc(var(--font-size-6) * 1.6);
+
+  /* Line Heights */
+  --sl-line-height: var(--line-height-base, 1.6);
+  --sl-line-height-headings: var(--line-height-heading, 1.3);
+
+  /* --- Layout (Optional Adjustments) --- */
+  /* --sl-content-width: 50rem; */ /* Example: make content wider */
+  /* --sl-sidebar-width: 20rem; */ /* Example: make sidebar wider */
+}
+
+/* === Light Theme Overrides === */
+:root[data-theme='light'] {
+  /* Re-map base colors for light mode */
+  --sl-color-white: var(--color-background, #12121e); /* Map Starlight 'white' to our dark background */
+  --sl-color-gray-1: var(--color-surface-1, #1a1a2e); /* Dark surfaces */
+  --sl-color-gray-2: var(--color-surface-2, #2a2a3e);
+  --sl-color-gray-3: var(--color-text-secondary, #5a5a7a); /* Slightly darker secondary text */
+  --sl-color-gray-4: var(--color-text-primary, #30304c); /* Dark primary text */
+  --sl-color-gray-5: #d0d0e0; /* Light border/subtle elements */
+  --sl-color-gray-6: #e8e8f8; /* Lighter surface/background */
+  --sl-color-black: #f8f8fc; /* Very light background (almost white) */
+
+  /* Accent Colors (Keep similar, maybe slightly adjusted saturation/lightness) */
+  --sl-color-accent-low: var(--color-primary-active, #4841c2);
+  --sl-color-accent: var(--color-primary, #6c63ff);
+  --sl-color-accent-high: var(--color-primary-hover, #5a52e0);
+
+  /* Text & Background */
+  --sl-color-text: var(--sl-color-gray-4); /* Use the mapped dark primary text */
+  --sl-color-text-accent: var(--sl-color-accent); /* Keep accent color */
+  --sl-color-text-invert: var(--color-text-on-primary, #ffffff); /* Keep text on primary */
+  --sl-color-bg: var(--sl-color-black); /* Use the mapped light background */
+  --sl-color-bg-nav: #ffffff; /* White nav maybe? */
+  --sl-color-bg-sidebar: var(--sl-color-gray-6); /* Use a light gray for sidebar */
+  --sl-color-bg-inline-code: var(--sl-color-gray-5); /* Light background for code */
+  --sl-color-bg-accent: var(--sl-color-accent); /* Background for accent elements */
+
+  /* Borders */
+  --sl-color-hairline-light: var(--sl-color-gray-5);
+  --sl-color-hairline: var(--sl-color-gray-6);
+  --sl-color-hairline-shade: #c0c0d0; /* Slightly darker border */
+
+  /* Backdrop */
+  --sl-color-backdrop-overlay: hsla(240, 22%, 90%, 0.7); /* Adjust alpha on light background */
+
+  /* Shadows (Adjust for light background if needed) */
+  /* --sl-shadow-sm: ...; */
+  /* --sl-shadow-md: ...; */
+  /* --sl-shadow-lg: ...; */
+}

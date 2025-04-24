@@ -1,0 +1,195 @@
+/* ==========================================================================
+   Design Tokens - Teskooano Theme
+   ========================================================================== */
+:root {
+  /* --- Colors --- */
+  /* Neutrals */
+  --color-background: #12121e; /* Deep Space Blue */
+  --color-surface-1: #1a1a2e; /* Dark Navy (Prev Background) */
+  --color-surface-2: #2a2a3e; /* Lighter Navy/Grey (Prev Surface) */
+  --color-surface-3: #3a3a4e; /* Even Lighter Surface */
+  --color-text-primary: #e0e0fc; /* Light Lavender/White (Prev Text) */
+  --color-text-secondary: #a0a0cc; /* Muted Lavender */
+  --color-text-disabled: #6a6a8a; /* Greyed Out */
+  --color-border-strong: #6a6a8a; /* Visible Border */
+  --color-border-subtle: #4a4a6a; /* Muted Border (Prev Border) */
+  --color-border-focus: var(--color-primary); /* Focus Indicator */
+
+  /* Primary Action */
+  --color-primary: #6c63ff; /* Purple/Blue Accent */
+  --color-primary-hover: #5a52e0;
+  --color-primary-active: #4841c2;
+  --color-text-on-primary: #ffffff;
+
+  /* Secondary Action (Optional - Example: Blue) */
+  --color-secondary: #00aaff;
+  --color-secondary-hover: #0088cc;
+  --color-secondary-active: #006699;
+  --color-text-on-secondary: #ffffff;
+
+  /* Accent (Optional - Example: Teal) */
+  --color-accent: #17ead9;
+  --color-accent-hover: #12b8ab;
+  --color-accent-active: #0d8a7f;
+  --color-text-on-accent: #12121e;
+
+  /* Semantic Colors */
+  --color-success: #2ecc71;
+  --color-warning: #f1c40f;
+  --color-error: #e74c3c;
+  --color-info: #3498db;
+
+  /* --- Typography --- */
+  --font-family-base: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-family-heading: var(
+    --font-family-base
+  ); /* Or a different one if desired */
+  --font-family-mono: "Courier New", Courier, monospace;
+
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  --line-height-base: 1.6;
+  --line-height-heading: 1.3;
+
+  /* Fluid Font Sizes (Example using clamp) */
+  --font-size-1: clamp(0.75rem, 0.5vw + 0.65rem, 0.875rem); /* ~12px - 14px */
+  --font-size-2: clamp(
+    0.875rem,
+    0.5vw + 0.775rem,
+    1rem
+  ); /* ~14px - 16px (Base) */
+  --font-size-3: clamp(1rem, 0.6vw + 0.88rem, 1.125rem); /* ~16px - 18px */
+  --font-size-4: clamp(1.125rem, 0.7vw + 0.975rem, 1.25rem); /* ~18px - 20px */
+  --font-size-5: clamp(1.375rem, 1vw + 1.125rem, 1.75rem); /* ~22px - 28px */
+  --font-size-6: clamp(1.75rem, 1.5vw + 1.3rem, 2.5rem); /* ~28px - 40px */
+
+  /* Base Definition */
+  --font-size-base: var(--font-size-2);
+  --font-size-small: var(--font-size-1);
+  --font-size-medium: var(--font-size-3);
+  --font-size-large: var(--font-size-4);
+
+  /* --- Spacing (Linear Scale) --- */
+  --space-unit: 0.25rem; /* ~4px */
+  --space-1: var(--space-unit); /* 4px */
+  --space-2: calc(var(--space-unit) * 2); /* 8px */
+  --space-3: calc(var(--space-unit) * 3); /* 12px */
+  --space-4: calc(var(--space-unit) * 4); /* 16px (Base) */
+  --space-5: calc(var(--space-unit) * 6); /* 24px */
+  --space-6: calc(var(--space-unit) * 8); /* 32px */
+  --space-8: calc(var(--space-unit) * 12); /* 48px */
+  --space-10: calc(var(--space-unit) * 16); /* 64px */
+
+  /* Aliases for common use cases */
+  --spacing-xs: var(--space-1);
+  --spacing-sm: var(--space-2);
+  --spacing-md: var(--space-4);
+  --spacing-lg: var(--space-6);
+  --spacing-xl: var(--space-8);
+  --spacing-xxl: var(--space-10);
+
+  /* --- Borders --- */
+  --border-width-thin: 1px;
+  --border-width-medium: 2px;
+  --border-width-thick: 3px;
+
+  --radius-none: 0;
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.5rem; /* 8px */
+  --radius-lg: 1rem; /* 16px */
+  --radius-full: 9999px; /* Pill shape */
+
+  /* --- Shadows --- */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.15);
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12);
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+
+  /* --- Layout --- */
+  --container-padding: var(--spacing-md);
+  --toolbar-height: 3.125rem; /* ~50px - Keep for now */
+  --max-width: 1200px; /* Example max width */
+
+  /* --- Transitions --- */
+  --transition-duration-fast: 150ms;
+  --transition-duration-base: 250ms;
+  --transition-duration-slow: 400ms;
+  --transition-timing-base: ease-in-out;
+
+  /* --- Base Styles Application --- */
+  /* NOTE: These are NOT variables, but actual style rules.
+     They *should* ideally be in a separate `base.css`, 
+     but are kept here for now until further refactoring. */
+  font-family: var(--font-family-base);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-normal);
+  font-size: var(--font-size-base);
+
+  color-scheme: light dark; /* Assuming dark theme primarily */
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* =================================== */
+  /* === Dockview Cosmic Dark Theme === */
+  /* =================================== */
+
+  /* General Background */
+  --dv-background-color: #0f0f1a; /* Very dark deep blue/purple */
+
+  /* Panel/Group Backgrounds */
+  --dv-group-view-background-color: #1a1a2e; /* Slightly lighter dark blue/purple */
+  --dv-tabs-and-actions-container-background-color: #1f1f38; /* A bit lighter for tab bar */
+
+  /* Tab Background Colors */
+  --dv-activegroup-visiblepanel-tab-background-color: #4a4a7f; /* Muted purple for active tab */
+  --dv-activegroup-hiddenpanel-tab-background-color: #2c2c54; /* Darker purple for inactive tabs in active group */
+  --dv-inactivegroup-visiblepanel-tab-background-color: #303050; /* Dark grey/purple for visible tab in inactive group */
+  --dv-inactivegroup-hiddenpanel-tab-background-color: #252540; /* Very dark grey/purple for hidden tabs in inactive group */
+
+  /* Tab Text Colors */
+  --dv-activegroup-visiblepanel-tab-color: #e0e0ff; /* Light lavender for active tab text */
+  --dv-activegroup-hiddenpanel-tab-color: #a0a0c0; /* Muted lavender/grey for inactive tab text */
+  --dv-inactivegroup-visiblepanel-tab-color: #b0b0d0; /* Slightly brighter muted lavender */
+  --dv-inactivegroup-hiddenpanel-tab-color: #8080a0; /* Darker muted lavender/grey */
+
+  /* Borders and Separators */
+  --dv-separator-border: 1px solid #3a3a6a; /* Subtle purple border */
+  --dv-paneview-header-border-color: #3a3a6a; /* Matching border color */
+  --dv-tab-divider-color: #3a3a6a; /* Matching divider */
+
+  /* Interaction States */
+  --dv-paneview-active-outline-color: #7f7fdc; /* Brighter lavender/blue outline for active panel */
+  --dv-icon-hover-background-color: rgba(
+    127,
+    127,
+    220,
+    0.2
+  ); /* Semi-transparent lavender hover */
+  --dv-active-sash-color: #7f7fdc; /* Matching sash color */
+  --dv-drag-over-background-color: rgba(
+    74,
+    74,
+    127,
+    0.3
+  ); /* Semi-transparent purple drag overlay */
+  --dv-drag-over-border-color: #7f7fdc; /* Lavender border for drag overlay */
+
+  /* Fonts and Sizing (Using defaults unless specified otherwise) */
+  --dv-tabs-and-actions-container-font-size: 0.8rem; /* Slightly smaller font */
+  --dv-tabs-and-actions-container-height: 30px; /* Slightly shorter tab bar */
+
+  /* Other Elements */
+  --dv-tab-close-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23a0a0c0" viewBox="0 0 12 12"><path d="M9.3 2.7l-6.6 6.6-0.7-0.7 6.6-6.6 0.7 0.7z"/><path d="M2.7 2.7l6.6 6.6-0.7 0.7-6.6-6.6 0.7-0.7z"/></svg>'); /* Muted lavender 'X' icon */
+  --dv-tabs-container-scrollbar-color: #4a4a7f #1f1f38; /* Scrollbar track and thumb */
+  --dv-floating-box-shadow: 0 5px 15px rgba(127, 127, 220, 0.2); /* Subtle lavender glow */
+} 
