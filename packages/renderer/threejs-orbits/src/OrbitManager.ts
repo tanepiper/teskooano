@@ -6,7 +6,7 @@ import type {
 } from "@teskooano/renderer-threejs";
 import type { MapStore } from "nanostores"; // Import MapStore
 import * as THREE from "three";
-import type { ObjectManager } from "./ObjectManager";
+import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { KeplerianOrbitManager } from "./orbit-manager";
 import { predictVerletTrajectory } from "./orbit-manager/verlet-predictor"; // Import predictVerletTrajectory directly
 

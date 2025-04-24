@@ -10,13 +10,8 @@
       "@teskooano/core-state": ["../../core/state/src"],
       "@teskooano/data-types": ["../../data/types/src"],
       "@teskooano/renderer-threejs-core": ["../threejs-core/src"],
-      "@teskooano/renderer-threejs-objects": ["../threejs-objects/src"],
-      "@teskooano/renderer-threejs-orbits": ["../threejs-orbits/src"],
-      "@teskooano/renderer-threejs-background": ["../threejs-background/src"],
-      "@teskooano/renderer-threejs-interaction": ["../threejs-interaction/src"],
       "@teskooano/renderer-threejs-effects": ["../threejs-effects/src"],
-      "@teskooano/systems-celestial": ["../../systems/celestial/src"],
-      "@teskooano/core-debug": ["../../core/debug/src"]
+      "@teskooano/systems-celestial": ["../../systems/celestial/src"]
     }
   },
   "include": ["src/**/*.ts"],
@@ -25,12 +20,7 @@
     { "path": "../../core/state" },
     { "path": "../../data/types" },
     { "path": "../threejs-core" },
-    { "path": "../threejs-objects" },
-    { "path": "../threejs-orbits" },
-    { "path": "../threejs-background" },
-    { "path": "../threejs-interaction" },
     { "path": "../threejs-effects" },
-    { "path": "../../systems/celestial" },
-    { "path": "../../core/debug" }
+    { "path": "../../systems/celestial" }
   ]
 }

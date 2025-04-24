@@ -317,4 +317,7 @@ export class TeskooanoButton extends HTMLElement {
   }
 }
 
-customElements.define("teskooano-button", TeskooanoButton);
+// Define the custom element only if it hasn't been defined yet
+if (!customElements.get("teskooano-button")) {
+  customElements.define("teskooano-button", TeskooanoButton);
+}

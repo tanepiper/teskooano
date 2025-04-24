@@ -22,6 +22,15 @@
       "@teskooano/renderer-threejs-visualization": [
         "packages/renderer/threejs-visualization/src/index.ts"
       ],
+      "@teskooano/renderer-threejs-objects": [
+        "packages/renderer/threejs-objects/src/index.ts"
+      ],
+      "@teskooano/renderer-threejs-orbits": [
+        "packages/renderer/threejs-orbits/src/index.ts"
+      ],
+      "@teskooano/renderer-threejs-background": [
+        "packages/renderer/threejs-background/src/index.ts"
+      ],
       "@teskooano/renderer-threejs-interaction": [
         "packages/renderer/threejs-interaction/src/index.ts"
       ],
@@ -59,6 +68,24 @@
       "path": "./packages/renderer/threejs"
     },
     {
+      "path": "./packages/renderer/threejs-core"
+    },
+    {
+      "path": "./packages/renderer/threejs-effects"
+    },
+    {
+      "path": "./packages/renderer/threejs-interaction"
+    },
+    {
+      "path": "./packages/renderer/threejs-objects"
+    },
+    {
+      "path": "./packages/renderer/threejs-orbits"
+    },
+    {
+      "path": "./packages/renderer/threejs-background"
+    },
+    {
       "path": "./packages/app/simulation"
     },
     {
@@ -66,8 +93,11 @@
     },
     {
       "path": "./packages/core/debug"
+    },
+    {
+      "path": "./packages/systems/celestial"
     }
   ],
-  "include": ["packages/**/*", "apps/**/*"],
+  "include": ["packages/**/*", "apps/**/*", "glsl.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -25,9 +25,9 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
+    "@teskooano/core-math": "file:../../core/math",
     "@teskooano/core-state": "file:../../core/state",
     "@teskooano/data-types": "file:../../data/types",
-    "@teskooano/core-math": "file:../../core/math",
     "@teskooano/renderer-threejs": "file:../threejs",
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
     "three": "0.176.0"

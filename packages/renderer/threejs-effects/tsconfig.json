@@ -10,7 +10,6 @@
       "@teskooano/core-state": ["../../core/state/src"],
       "@teskooano/data-types": ["../../data/types/src"],
       "@teskooano/core-math": ["../../core/math/src"],
-      "@teskooano/renderer-threejs": ["../threejs/src"],
       "@teskooano/renderer-threejs-core": ["../threejs-core/src"]
     }
   },
@@ -20,7 +19,6 @@
     { "path": "../../core/state" },
     { "path": "../../data/types" },
     { "path": "../../core/math" },
-    { "path": "../threejs" },
     { "path": "../threejs-core" }
   ]
 }

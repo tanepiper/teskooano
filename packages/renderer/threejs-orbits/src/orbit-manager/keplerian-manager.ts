@@ -1,8 +1,13 @@
 import * as THREE from "three";
-import { type OrbitalParameters, CelestialType } from "@teskooano/data-types";
+import {
+  type OrbitalParameters,
+  CelestialType,
+  SCALE,
+} from "@teskooano/data-types";
 import type { MapStore } from "nanostores";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import type { ObjectManager } from "../ObjectManager"; // Adjust path as needed
+import { OSVector3 } from "@teskooano/core-math";
+import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { calculateOrbitPoints, updateOrbitLine } from "./"; // Import from index
 
 // --- Material Definitions ---
@@ -75,9 +80,10 @@ export class KeplerianOrbitManager {
 
     const parentWorldPosition = new THREE.Vector3();
     parentObject3D.getWorldPosition(parentWorldPosition);
-    const orbitPoints = calculateOrbitPoints(orbitalParameters); // Assumes this returns relative points
+    const orbitPointsOS = calculateOrbitPoints(orbitalParameters); // Assumes this returns OSVector3[]
+    const orbitPointsTHREE = orbitPointsOS.map((p) => p.toThreeJS()); // Convert to THREE.Vector3[]
 
-    if (orbitPoints.length === 0) {
+    if (orbitPointsTHREE.length === 0) {
       if (existingLine) this.remove(objectId);
       return;
     }
@@ -89,7 +95,7 @@ export class KeplerianOrbitManager {
       : KEPLERIAN_DEFAULT_MATERIAL;
 
     if (existingLine) {
-      updateOrbitLine(existingLine, orbitPoints); // Update geometry
+      updateOrbitLine(existingLine, orbitPointsTHREE); // Update geometry using THREE vectors
       existingLine.position.copy(parentWorldPosition); // Update position
       existingLine.visible = isVisible; // Update visibility
 
@@ -108,7 +114,9 @@ export class KeplerianOrbitManager {
       ); // Apply highlight
     } else {
       // Create new line
-      const geometry = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+      const geometry = new THREE.BufferGeometry().setFromPoints(
+        orbitPointsTHREE,
+      ); // Use THREE vectors
       const material = targetMaterial.clone(); // Clone material for new line
       const newLine = new THREE.Line(geometry, material);
 

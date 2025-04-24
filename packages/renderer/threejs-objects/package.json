@@ -1,0 +1,47 @@
+{
+  "name": "@teskooano/renderer-threejs-objects",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Handles rendering of celestial object meshes in Three.js for Teskooano.",
+  "keywords": [
+    "teskooano",
+    "threejs",
+    "renderer",
+    "objects",
+    "celestial"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "echo 'No build step required'",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "three": "^0.176.0",
+    "@teskooano/core-state": "file:../../../core/state",
+    "@teskooano/data-types": "file:../../../core/data-types",
+    "@teskooano/renderer-threejs-core": "file:../threejs-core",
+    "@teskooano/renderer-threejs-effects": "file:../threejs-effects",
+    "@teskooano/renderer-threejs-interaction": "file:../threejs-interaction",
+    "@teskooano/systems-celestial": "file:../../../systems/celestial",
+    "@nanostores/logger": "^1.0.0",
+    "eventemitter3": "^5.0.1",
+    "nanostores": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.176.0",
+    "vitest": "^3.1.2"
+  }
+}

@@ -10,11 +10,9 @@ import {
   CSS2DLayerType,
   CSS2DManager,
 } from "@teskooano/renderer-threejs-interaction";
-import {
-  BackgroundManager,
-  ObjectManager,
-  OrbitManager,
-} from "@teskooano/renderer-threejs-visualization";
+import { BackgroundManager } from "@teskooano/renderer-threejs-background";
+import { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import { OrbitManager } from "@teskooano/renderer-threejs-orbits";
 import * as THREE from "three";
 import { RendererStateAdapter } from "./RendererStateAdapter";
 // Import debug utilities

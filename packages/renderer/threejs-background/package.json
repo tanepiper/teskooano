@@ -1,0 +1,38 @@
+{
+  "name": "@teskooano/renderer-threejs-background",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Handles rendering of the starfield background in Three.js for Teskooano.",
+  "keywords": [
+    "teskooano",
+    "threejs",
+    "renderer",
+    "background",
+    "starfield"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "echo 'No build step required'",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "three": "^0.176.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.176.0",
+    "vitest": "^3.1.2"
+  }
+}

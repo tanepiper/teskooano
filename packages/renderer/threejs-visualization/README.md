@@ -1,4 +1,14 @@
-# `@teskooano/renderer-threejs-visualization`
+# `@teskooano/renderer-threejs-visualization` (DEPRECATED)
+
+**This package is deprecated and has been split into multiple, more focused packages:**
+
+- **`@teskooano/renderer-threejs-objects`**: Manages celestial object meshes.
+- **`@teskooano/renderer-threejs-orbits`**: Manages orbit line visualizations.
+- **`@teskooano/renderer-threejs-background`**: Manages the starfield background.
+
+Please update your dependencies to use these new packages instead.
+
+---
 
 This package orchestrates the visualization of the Teskooano simulation within a Three.js scene. It provides managers for rendering celestial objects, their orbital paths, and the background environment based on data from the core state management.
 
