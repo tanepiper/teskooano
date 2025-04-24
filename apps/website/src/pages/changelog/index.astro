@@ -1,0 +1,79 @@
+---
+import { getCollection } from 'astro:content';
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+
+// Sort by version descending - assuming SemVer-like strings
+// Note: This is a simple string sort, might need refinement for complex SemVer
+const changelogs = (await getCollection('changelog')).sort((a, b) => {
+  // Basic version comparison (adjust if versions are complex)
+  return b.data.version.localeCompare(a.data.version, undefined, { numeric: true });
+});
+
+const frontmatter = {
+  title: 'Changelog',
+  description: 'History of changes and releases for Teskooano components.',
+};
+---
+
+<StarlightPage frontmatter={frontmatter}>
+  {changelogs.length === 0 ? (
+    <p>No changelog entries found yet.</p>
+  ) : (
+    <>
+      <h2>Latest Release</h2>
+      <p>
+        The latest version is <a href={`/changelog/${changelogs[0].slug}/`}>v{changelogs[0].data.version}</a>
+        {changelogs[0].data.released &&
+          ` (Released: ${changelogs[0].data.released.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })})`
+        }
+      </p>
+
+      <h3>All Versions</h3>
+      <ul class="changelog-list">
+        {changelogs.map(entry => (
+          <li>
+            <a href={`/changelog/${entry.slug}/`}>v{entry.data.version}</a>
+            {entry.data.released &&
+              <span class="released"> - Released: {entry.data.released.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+            }
+          </li>
+        ))}
+      </ul>
+    </>
+  )}
+</StarlightPage>
+
+<style>
+  /* Basic list styling, similar to plan list */
+  .changelog-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+  }
+  .changelog-list li {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--sl-color-hairline, #eee);
+  }
+  .changelog-list li:last-child {
+    border-bottom: none;
+  }
+  .changelog-list a {
+    color: var(--sl-color-accent);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: var(--sl-text-lg);
+  }
+  .changelog-list a:hover {
+    text-decoration: underline;
+  }
+  .changelog-list .released {
+      font-size: var(--sl-text-sm);
+      color: var(--sl-color-gray-3);
+      margin-left: 0.5em;
+  }
+
+  h2, h3 {
+    margin-top: 1.5rem;
+  }
+</style> 

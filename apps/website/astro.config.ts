@@ -49,11 +49,7 @@ export default defineConfig({
       sidebar: [
         { label: "Homepage", link: "/" },
         { label: "Plan", link: "/plan" },
-        { label: "Gallery", link: "/gallery" },
-        {
-          label: "Docs",
-          items: [{ label: "Introduction", link: "/docs/introduction" }],
-        },
+
         { label: "Changelog", link: "/changelog" },
       ],
       customCss: ["./src/styles/custom.css"],

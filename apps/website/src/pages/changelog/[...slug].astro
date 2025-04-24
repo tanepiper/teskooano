@@ -1,0 +1,80 @@
+---
+import { getCollection, type CollectionEntry, render } from "astro:content";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+
+export async function getStaticPaths() {
+  const changelogs = await getCollection("changelog");
+  return changelogs.map((entry) => ({
+    // Astro's collection routing expects params.slug
+    params: { slug: entry.slug }, 
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<"changelog">;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry); // Use render instead of entry.render()
+
+// Prepare frontmatter for StarlightPage
+const frontmatter = {
+  title: `Version ${entry.data.version}`,
+  description: `Changelog details for version ${entry.data.version}.`,
+  tableOfContents: {
+    minHeadingLevel: 2,
+    maxHeadingLevel: 6
+  },
+};
+---
+
+<StarlightPage frontmatter={frontmatter}>
+  {/* Back link to the main changelog page */}
+  <a href="/changelog/" class="back-link sl-link">&larr; Back to Changelog</a>
+
+  <h1>{frontmatter.title}</h1>
+
+  <div class="metadata">
+    {entry.data.released && 
+      <span><strong>Released:</strong> {entry.data.released.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+    }
+  </div>
+
+  <hr />
+
+  <Content />
+</StarlightPage>
+
+<style>
+  /* Keep styles specific to this page's content */
+  .back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    margin-top: 1rem; /* Add space below back link */
+    margin-bottom: 0.5rem;
+    font-size: var(--sl-text-4xl); /* Adjust size if needed */
+  }
+
+  .metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem; /* Row and column gap */
+    margin-top: 1rem; /* Add some space above */
+    margin-bottom: 1rem;
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-3);
+  }
+  .metadata span {
+    display: inline-block;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--sl-color-hairline);
+    margin: 1.5rem 0;
+  }
+</style> 

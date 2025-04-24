@@ -1,11 +1,8 @@
 import { defineCollection } from "astro:content";
 import { docsLoader } from "@astrojs/starlight/loaders";
 import { docsSchema } from "@astrojs/starlight/schema";
-
-// Custom schema for the 'plan' collection
 import { planSchema } from "./schemas/plan";
-// Loader is not needed here when using type: 'data'
-// import { planLoader } from "./loaders/planLoader"; // We don't need the custom loader for type: 'data'
+import { changelogSchema } from "./schemas/changelog";
 
 export const collections = {
   docs: defineCollection({
@@ -17,5 +14,10 @@ export const collections = {
     type: "content", // Treat .plan files as data (frontmatter + raw body)
     // Astro implicitly finds files in src/content/plan/
     schema: planSchema(), // Apply our custom frontmatter schema
+  }),
+  changelog: defineCollection({
+    type: "content", // Treat .changelog files as data (frontmatter + raw body)
+    // Astro implicitly finds files in src/content/changelog/
+    schema: changelogSchema(), // Apply our custom frontmatter schema
   }),
 };
