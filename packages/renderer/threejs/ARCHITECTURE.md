@@ -9,11 +9,15 @@ This package does not contain the core rendering logic itself. Instead, it impor
 Its primary class, `ModularSpaceRenderer`, instantiates and coordinates managers for:
 
 - **Core**: Scene, Camera, Renderer, Animation Loop, State (`@teskooano/renderer-threejs-core`)
-- **Visualization**: Object Management, Orbits, Background (`@teskooano/renderer-threejs-visualization`)
-- **Interaction**: Controls, CSS2D Labels (`@teskooano/renderer-threejs-interaction`)
-- **Effects**: Lighting, Level of Detail (`@teskooano/renderer-threejs-effects`)
+- **Object Rendering**: Meshes (`@teskooano/renderer-threejs-objects`)
+- **Orbit Rendering**: Lines (`@teskooano/renderer-threejs-orbits`)
+- **Background Rendering**: Starfield (`@teskooano/renderer-threejs-background`)
+- **Interaction**: Controls, UI Overlays (`@teskooano/renderer-threejs-interaction`)
+- **Effects**: Lighting, LOD (`@teskooano/renderer-threejs-effects`)
 
 It also includes `RendererStateAdapter` to manage visual settings or states specific to the integrated renderer.
+
+These are then used by the main application (`@teskooano/teskooano`) or potentially a simulation orchestration layer (`@teskooano/app-simulation`).
 
 ```mermaid
 graph TD
@@ -34,20 +38,20 @@ graph TD
         StateMgr(StateManager);
     end
 
-    subgraph Viz[@teskooano/renderer-threejs-visualization]
-        ObjMgr(ObjectManager);
-        OrbitMgr(OrbitManager);
-        BgMgr(BackgroundManager);
+    subgraph VisualizationComponents
+        ObjMgr(ObjectManager - @teskooano/renderer-threejs-objects);
+        OrbitMgr(OrbitManager - @teskooano/renderer-threejs-orbits);
+        BgMgr(BackgroundManager - @teskooano/renderer-threejs-background);
     end
 
-    subgraph Interact[@teskooano/renderer-threejs-interaction]
-        CtrlMgr(ControlsManager);
-        CSSMgr(CSS2DManager);
+    subgraph Interaction[@teskooano/renderer-threejs-interaction]
+        Interaction -- Provides --> ControlsM[ControlsManager]
+        Interaction -- Provides --> CSS2DM[CSS2DManager]
     end
 
     subgraph Effects[@teskooano/renderer-threejs-effects]
-        LightMgr(LightManager);
-        LODMgr(LODManager);
+        Effects -- Provides --> LightM[LightManager]
+        Effects -- Provides --> LODM[LODManager]
     end
 
     AppUI -- Instantiates --> MSR;
@@ -57,10 +61,10 @@ graph TD
     MSR -- Instantiates & Coordinates --> ObjMgr;
     MSR -- Instantiates & Coordinates --> OrbitMgr;
     MSR -- Instantiates & Coordinates --> BgMgr;
-    MSR -- Instantiates & Coordinates --> CtrlMgr;
-    MSR -- Instantiates & Coordinates --> CSSMgr;
-    MSR -- Instantiates & Coordinates --> LightMgr;
-    MSR -- Instantiates & Coordinates --> LODMgr;
+    MSR -- Instantiates & Coordinates --> ControlsM;
+    MSR -- Instantiates & Coordinates --> CSS2DM;
+    MSR -- Instantiates & Coordinates --> LightM;
+    MSR -- Instantiates & Coordinates --> LODM;
     MSR -- Uses --> RSA;
 
     StateMgr -- Reads --> State;
@@ -73,18 +77,26 @@ graph TD
     MSRCallback -- Updates --> OrbitMgr;
     MSRCallback -- Updates --> BgMgr;
     MSRCallback -- Renders --> SceneMgr;
-    MSRCallback -- Renders --> CSSMgr;
+    MSRCallback -- Renders --> CSS2DM;
 
     OrbitMgr -- Uses --> RSA;
 
-    ObjMgr -- Uses --> LightMgr;
-    ObjMgr -- Uses --> CSSMgr;
-    LODMgr -- Uses --> SceneMgr(Camera);
-    CtrlMgr -- Uses --> SceneMgr(Camera, DOM Element);
-    LightMgr -- Modifies --> SceneMgr(Scene);
+    ObjMgr -- Uses --> LightM;
+    ObjMgr -- Uses --> CSS2DM;
+    LODM -- Uses --> SceneMgr(Camera);
+    ControlsM -- Uses --> SceneMgr(Camera, DOM Element);
+    LightM -- Modifies --> SceneMgr(Scene);
     BgMgr -- Modifies --> SceneMgr(Scene);
     ObjMgr -- Modifies --> SceneMgr(Scene);
     OrbitMgr -- Modifies --> SceneMgr(Scene);
+
+    Integrator -- Uses --> Core
+    Integrator -- Uses --> Interaction
+    Integrator -- Uses --> Effects
+    Integrator -- Uses --> VisualizationComponents
+
+    Application[Application Code] -- Creates --> Integrator
+    Application -- Interacts With --> Integrator
 ```
 
 ## Core Components within this Package

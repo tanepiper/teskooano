@@ -15,10 +15,6 @@ export default defineConfig({
         __dirname,
         "../threejs-core/src",
       ),
-      "@teskooano/renderer-threejs-visualization": resolve(
-        __dirname,
-        "../threejs-visualization/src",
-      ),
       "@teskooano/renderer-threejs-interaction": resolve(
         __dirname,
         "../threejs-interaction/src",

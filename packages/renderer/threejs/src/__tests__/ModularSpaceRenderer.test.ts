@@ -5,16 +5,15 @@ import {
   AnimationLoop,
   StateManager,
 } from "@teskooano/renderer-threejs-core";
-import {
-  ObjectManager,
-  OrbitManager,
-  BackgroundManager,
-} from "@teskooano/renderer-threejs-visualization";
+
 import {
   ControlsManager,
   CSS2DManager,
 } from "@teskooano/renderer-threejs-interaction";
-import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
+import { LightManager } from "@teskooano/renderer-threejs-effects";
+import { OrbitManager } from "@teskooano/renderer-threejs-orbits";
+import { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { celestialObjectsStore, simulationState } from "@teskooano/core-state";
 import { CelestialType } from "@teskooano/data-types";
 import * as THREE from "three";
@@ -108,7 +107,6 @@ describe("ModularSpaceRenderer Integration Tests", () => {
     expect(renderer["controlsManager"]).toBeInstanceOf(ControlsManager);
     expect(renderer["css2DManager"]).toBeInstanceOf(CSS2DManager);
     expect(renderer["lightManager"]).toBeInstanceOf(LightManager);
-    expect(renderer["lodManager"]).toBeInstanceOf(LODManager);
   });
 
   it("should set up event listeners", () => {

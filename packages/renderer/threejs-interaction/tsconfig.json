@@ -10,7 +10,8 @@
       "@teskooano/core-state": ["../../core/state/src"],
       "@teskooano/data-types": ["../../data/types/src"],
       "@teskooano/renderer-threejs-core": ["../threejs-core/src"]
-    }
+    },
+    "noEmit": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],

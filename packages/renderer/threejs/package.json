@@ -30,9 +30,11 @@
     "@teskooano/core-state": "file:../../core/state",
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
-    "@teskooano/renderer-threejs-visualization": "file:../threejs-visualization",
-    "@teskooano/renderer-threejs-interaction": "file:../threejs-interaction",
+    "@teskooano/renderer-threejs-objects": "file:../threejs-objects",
+    "@teskooano/renderer-threejs-orbits": "file:../threejs-orbits",
+    "@teskooano/renderer-threejs-background": "file:../threejs-background",
     "@teskooano/renderer-threejs-effects": "file:../threejs-effects",
+    "@teskooano/renderer-threejs-interaction": "file:../threejs-interaction",
     "@teskooano/systems-celestial": "file:../../systems/celestial",
     "three": "0.176.0"
   },

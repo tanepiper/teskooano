@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { OSVector3 } from "../math/OSVector3";
+import { OSVector3 } from "@teskooano/core-math";
 import {
   calculateNewtonianGravitationalForce,
   calculateRelativisticCorrection,

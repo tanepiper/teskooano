@@ -6,6 +6,7 @@
     "composite": true,
     "declaration": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "noEmit": false,
     "paths": {
       "@teskooano/renderer-threejs": ["../../renderer/threejs"],
       "@teskooano/core-state": ["../../core/state"],

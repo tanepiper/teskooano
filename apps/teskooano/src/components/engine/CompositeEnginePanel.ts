@@ -15,7 +15,7 @@ import { atom, type WritableAtom } from "nanostores";
 import { Subscription } from "rxjs"; // Import Subscription
 import * as THREE from "three";
 
-import { OrbitManager } from "@teskooano/renderer-threejs-visualization";
+import { OrbitManager } from "@teskooano/renderer-threejs-orbits";
 
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
 import { layoutOrientationStore, Orientation } from "../../stores/layoutStore";
@@ -27,6 +27,7 @@ import type { DockviewController } from "../../controllers/dockview/DockviewCont
 import { EngineToolbar } from "./EngineToolbar";
 import { RendererStats } from "@teskooano/renderer-threejs-core";
 import { CustomEvents } from "@teskooano/data-types";
+import type { Simulation } from "@teskooano/app-simulation";
 
 /**
  * The parameters for the CompositeEnginePanel

@@ -12,7 +12,8 @@
       "@teskooano/renderer-threejs-core": ["../threejs-core/src"],
       "@teskooano/renderer-threejs-effects": ["../threejs-effects/src"],
       "@teskooano/systems-celestial": ["../../systems/celestial/src"]
-    }
+    },
+    "noEmit": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],

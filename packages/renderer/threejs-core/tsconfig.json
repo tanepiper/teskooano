@@ -5,6 +5,7 @@
     "rootDir": "./src",
     "composite": true,
     "declaration": true,
+    "noEmit": false,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "paths": {
       "@teskooano/core-physics": ["../../core/physics/src"],

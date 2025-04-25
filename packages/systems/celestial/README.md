@@ -20,37 +20,46 @@ The `@teskooano/systems-celestial` library provides concrete **renderer implemen
 
 ```mermaid
 graph TD
-    subgraph "External Dependencies & Consumers"
-        DataTypes[<b>@teskooano/data-types</b><br/><i>Defines Object Properties</i>] -->|Uses Data| SysCelestial(<b>@teskooano/systems-celestial</b><br/><i>Generates Textures & Renders Objects</i>);
-        SysCelestial -->|Provides Renderers| VisManager[<b>@teskooano/renderer-threejs-visualization</b><br/><i>Manages Scene & Calls Renderers</i>];
+    subgraph Data ["@teskooano/data-types"]
+        CTypes[CelestialObject Types]
     end
-
-    subgraph "systems-celestial Internal Modules"
+    subgraph State ["@teskooano/core-state"]
+        SimState[simulationState]
+        ObjStore[renderableObjectsStore]
+    end
+    subgraph Effects ["@teskooano/renderer-threejs-effects"]
+        LODM[LODManager]
+        LightM[LightManager]
+        LensH[GravitationalLensingHandler]
+    end
+    subgraph ObjectsManager ["<b>@teskooano/renderer-threejs-objects</b><br/><i>ObjectManager</i>"]
+        OM(ObjectManager)
+    end
+    subgraph SysCelestial ["@teskooano/systems-celestial"]
         direction LR
-        Gen[src/generation<br/>Procedural Noise] --> Tex[src/textures<br/>Texture Factory];
-        Shd[src/shaders<br/>GLSL Code] --> Rend[src/renderers<br/>Object Renderers];
-        Tex --> Rend;
-        Com[src/renderers/common<br/>Helpers] --> Rend;
-        Uti[src/utils<br/>Event Dispatch] --> Rend;
-        Uti --> Tex;
+        CRenderer{{CelestialRenderer Interface}}
+        Renderers[Specific Renderers<br/>(Star, Planet, GasGiant...)]
+        TexGen[Texture Generation]
+        Shaders[GLSL Shaders]
     end
 
-    %% Link internal modules to the main package node conceptually (optional)
-    %% Gen -- internal --> SysCelestial;
-    %% Shd -- internal --> SysCelestial;
-    %% Tex -- internal --> SysCelestial;
-    %% Rend -- internal --> SysCelestial;
-    %% Uti -- internal --> SysCelestial;
-    %% Com -- internal --> SysCelestial;
+    Data --> SysCelestial;
+    Data --> ObjectsManager;
+    State --> ObjectsManager;
+    Effects --> ObjectsManager;
+    SysCelestial -->|Provides Renderers| ObjectsManager;
+
+    style SysCelestial fill:#ccf,stroke:#333,stroke-width:2px
+    style ObjectsManager fill:#ffc,stroke:#333,stroke-width:2px
 ```
 
 ## When is it used?
 
-The components in this package are used by visualization managers (like `ObjectManager` in `@teskooano/renderer-threejs-visualization`) when:
+The components in this package are used by visualization managers (like `ObjectManager` in `@teskooano/renderer-threejs-objects`) when:
 
-- Creating the `THREE.Object3D` for a specific `CelestialObject`.
-- Generating procedural textures for objects that require them.
-- Updating the visual appearance of an object over time (e.g., updating shader uniforms, handling LOD).
+1.  **Creating a new celestial object mesh:** The `ObjectManager` (or a factory it uses) determines the object type (`Star`, `Planet`, `GasGiant`, etc.) from the state data (`@teskooano/data-types`).
+2.  \*\*Generating procedural textures for objects that require them.
+3.  \*\*Updating the visual appearance of an object over time (e.g., updating shader uniforms, handling LOD).
 
 ## How does it work?
 
@@ -81,7 +90,7 @@ This package uses a combination of specialized renderers, procedural generation 
     - Configured via uniforms set by the materials in the renderers.
 
 ```typescript
-import { ObjectManager } from '@teskooano/renderer-threejs-visualization'; // Hypothetical manager
+import { ObjectManager } from '@teskooano/renderer-threejs-objects'; // Hypothetical manager
 import { CelestialObject, CelestialType } from '@teskooano/data-types';
 import {
   createTerrestrialRenderer,

@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "composite": true,
-    "declaration": true
+    "declaration": true,
+    "noEmit": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

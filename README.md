@@ -118,21 +118,24 @@ The application is stuctured to import TypeScript modules, which allow for a mor
 
 Here is a table of all the packages in the repository:
 
-| Library Name                              | Library Path                            | Description                                                     | Status |
-| ----------------------------------------- | --------------------------------------- | --------------------------------------------------------------- | ------ |
-| @teskooano/core-math                      | packages/core/math                      | Mathematical utilities for the Teskooano engine                 | ⚠️     |
-| @teskooano/core-physics                   | packages/core/physics                   | Newtonian physics and orbital mechanics implementation          | ⚠️     |
-| @teskooano/core-state                     | packages/core/state                     | Central state management using Nanostores                       | ⚠️     |
-| @teskooano/core-debug                     | packages/core/debug                     | Debug utilities for the Teskooano engine                        | ⚠️     |
-| @teskooano/data-types                     | packages/data/types                     | TypeScript type definitions for all data structures             | ⚠️     |
-| @teskooano/app-simulation                 | packages/app/simulation                 | Simulation orchestration and game loop                          | ⚠️     |
-| @teskooano/systems-celestial              | packages/systems/celestial              | Handles the definition and rendering logic for celestial bodies | ⚠️     |
-| @teskooano/systems-procedural-generation  | packages/systems/procedural-generation  | Procedural generation of star systems                           | ⚠️     |
-| @teskooano/renderer-threejs               | packages/renderer/threejs               | Main Three.js rendering engine implementation                   | ⚠️     |
-| @teskooano/renderer-threejs-core          | packages/renderer/threejs-core          | Core Three.js rendering foundation                              | ⚠️     |
-| @teskooano/renderer-threejs-effects       | packages/renderer/threejs-effects       | Visual effects for the Three.js renderer                        | ⚠️     |
-| @teskooano/renderer-threejs-interaction   | packages/renderer/threejs-interaction   | User interaction with the Three.js scene                        | ⚠️     |
-| @teskooano/renderer-threejs-visualization | packages/renderer/threejs-visualization | Visualization components for the Three.js renderer              | ⚠️     |
+| Library Name                             | Library Path                           | Description                                                     | Status |
+| ---------------------------------------- | -------------------------------------- | --------------------------------------------------------------- | ------ |
+| @teskooano/core-math                     | packages/core/math                     | Mathematical utilities for the Teskooano engine                 | ⚠️     |
+| @teskooano/core-physics                  | packages/core/physics                  | Newtonian physics and orbital mechanics implementation          | ⚠️     |
+| @teskooano/core-state                    | packages/core/state                    | Central state management using Nanostores                       | ⚠️     |
+| @teskooano/core-debug                    | packages/core/debug                    | Debug utilities for the Teskooano engine                        | ⚠️     |
+| @teskooano/data-types                    | packages/data/types                    | TypeScript type definitions for all data structures             | ⚠️     |
+| @teskooano/app-simulation                | packages/app/simulation                | Simulation orchestration and game loop                          | ⚠️     |
+| @teskooano/systems-celestial             | packages/systems/celestial             | Handles the definition and rendering logic for celestial bodies | ⚠️     |
+| @teskooano/systems-procedural-generation | packages/systems/procedural-generation | Procedural generation of star systems                           | ⚠️     |
+| @teskooano/renderer-threejs              | packages/renderer/threejs              | Main Three.js rendering engine implementation                   | ⚠️     |
+| @teskooano/renderer-threejs-core         | packages/renderer/threejs-core         | Core Three.js rendering foundation                              | ⚠️     |
+| @teskooano/renderer-threejs-effects      | packages/renderer/threejs-effects      | Visual effects for the Three.js renderer                        | ⚠️     |
+| @teskooano/renderer-threejs-interaction  | packages/renderer/threejs-interaction  | User interaction (controls, labels) components                  |
+| @teskooano/renderer-threejs-objects      | packages/renderer/threejs-objects      | Object mesh rendering and management                            |
+| @teskooano/renderer-threejs-orbits       | packages/renderer/threejs-orbits       | Orbit line rendering and management                             |
+| @teskooano/renderer-threejs-background   | packages/renderer/threejs-background   | Starfield background rendering and management                   |
+| @teskooano/design-system                 | packages/design-system                 | Global CSS variables, base styles, and potentially components   | ✅     |
 
 - **Core Libraries**
 

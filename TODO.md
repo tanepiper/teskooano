@@ -160,7 +160,7 @@ graph TD
           RE[RendererEvents?]
       end
 
-      subgraph Viz ["@teskooano/renderer-threejs-visualization"]
+      subgraph VisualizationComponents
           OM[ObjectManager]
           OrbM[OrbitManager]
           BM[BackgroundManager]
@@ -171,11 +171,20 @@ graph TD
           LiM[LightManager]
           LODM[LODManager]
       end
-
-      subgraph Interaction ["@teskooano/renderer-threejs-interaction"]
+      subgraph Interact ["@teskooano/renderer-threejs-interaction"]
           CM[ControlsManager]
           CSSM[CSS2DManager]
       end
+      subgraph Objects ["@teskooano/renderer-threejs-objects"]
+          // Placeholder - used by OM in Viz
+      end
+      subgraph Orbits ["@teskooano/renderer-threejs-orbits"]
+          // Placeholder - used by OrbM in Viz
+      end
+      subgraph Background ["@teskooano/renderer-threejs-background"]
+          // Placeholder - used by BM in Viz
+      end
+    end
 
       MRS -- Initiates --> AL
       MRS -- Orchestrates Updates --> OM
@@ -200,15 +209,17 @@ graph TD
       AL -- Drives --> MRS[Update Callback]
 
       OM -- Uses --> SM[Scene]
+      OM -- Uses --> Objects[Object Renderers]
       OrbM -- Uses --> OM
+      OrbM -- Uses --> Orbits[Orbit Renderers]
       BM -- Uses --> SM[Scene]
+      BM -- Uses --> Background[Background Renderers]
       LM -- Uses --> OM & CSSM?
       LiM -- Uses --> SM[Scene]
       LODM -- Uses --> OM & Camera
       CM -- Uses --> Camera & DOM
       CSSM -- Uses --> SM[Scene] & DOM
       SM -- Manages --> Scene & Camera & Renderer
-  end
 
   CoreAppState --> RSA
 ```

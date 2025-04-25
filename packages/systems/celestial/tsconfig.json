@@ -20,7 +20,8 @@
       "@teskooano/threejs-effects": [
         "../../../packages/renderer/threejs-effects/src"
       ]
-    }
+    },
+    "noEmit": false
   },
   "references": [
     { "path": "../../../packages/data/types" },

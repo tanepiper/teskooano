@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { Octree } from "./octree";
+import { OSVector3 } from "@teskooano/core-math";
 import { PhysicsStateReal } from "@teskooano/data-types";
-import { OSVector3 } from "../math/OSVector3";
+import { Octree } from "./octree";
 
 // Helper to create REAL state
 const createRealState = (

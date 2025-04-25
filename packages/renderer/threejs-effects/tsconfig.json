@@ -11,7 +11,8 @@
       "@teskooano/data-types": ["../../data/types/src"],
       "@teskooano/core-math": ["../../core/math/src"],
       "@teskooano/renderer-threejs-core": ["../threejs-core/src"]
-    }
+    },
+    "noEmit": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],

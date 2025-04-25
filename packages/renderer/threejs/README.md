@@ -7,7 +7,7 @@ This package is the **integrator** for the modular Three.js rendering system use
 This package's main role is orchestration. See `ARCHITECTURE.md` for a detailed diagram and explanation.
 
 - It uses `@teskooano/renderer-threejs-core` for scene setup, animation loop, and state management connection.
-- It uses `@teskooano/renderer-threejs-visualization` for managing the display of objects, orbits, and backgrounds.
+- It uses `@teskooano/renderer-threejs-objects`, `@teskooano/renderer-threejs-orbits`, and `@teskooano/renderer-threejs-background` for managing the display of objects, orbits, and backgrounds.
 - It uses `@teskooano/renderer-threejs-interaction` for user controls and UI elements like labels.
 - It uses `@teskooano/renderer-threejs-effects` for lighting and level-of-detail management.
 
@@ -135,3 +135,9 @@ constructor(container: HTMLElement, options?: {
 - **Test**: `npm run test`
 
 Remember to install dependencies: `npm install` (likely managed by the monorepo root)
+
+- **Integration:** It acts as the central integration point for various specialized renderer packages:
+  - It uses `@teskooano/renderer-threejs-core` for scene, camera, and animation loop management.
+  - It uses `@teskooano/renderer-threejs-objects`, `@teskooano/renderer-threejs-orbits`, and `@teskooano/renderer-threejs-background` for managing the display of objects, orbits, and backgrounds.
+  - It uses `@teskooano/renderer-threejs-interaction` for user controls and UI overlays (labels).
+  - It uses `@teskooano/renderer-threejs-effects` for lighting and LOD management.

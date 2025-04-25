@@ -8,7 +8,8 @@
     "paths": {
       "@teskooano/data-types": ["../../data/types/src"],
       "@teskooano/core-math": ["../../math/src"]
-    }
+    },
+    "noEmit": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts"],

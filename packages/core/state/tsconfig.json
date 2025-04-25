@@ -9,7 +9,8 @@
       "@teskooano/data-types": ["../../data/types"],
       "@teskooano/core-physics": ["../../physics"],
       "@teskooano/core-math": ["../../math"]
-    }
+    },
+    "noEmit": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
