@@ -1,8 +1,7 @@
 import { celestialObjectsStore, currentSeed } from "@teskooano/core-state";
 import { type CelestialObject } from "@teskooano/data-types";
-import { DockviewApi } from "dockview-core";
+import type { DockviewApi } from "dockview-core";
 import { generateAndLoadSystem } from "../../systems/system-generator.js";
-import "../shared/Button.ts";
 import { SystemControlsTemplate } from "./SystemControls.template";
 import * as SystemActions from "./system-controls.actions.js"; // Import the new actions
 import * as SystemControlsUI from "./system-controls.ui.js"; // Import the new UI handlers

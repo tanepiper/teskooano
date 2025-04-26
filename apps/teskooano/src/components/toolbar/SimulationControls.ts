@@ -1,5 +1,5 @@
 import { actions, simulationState } from "@teskooano/core-state";
-import { TeskooanoButton } from "../shared/Button"; // Import the custom button
+import { type TeskooanoButton } from "../shared/Button"; // Import the custom button
 
 // Import state type if not already imported
 import type { SimulationState } from "@teskooano/core-state";

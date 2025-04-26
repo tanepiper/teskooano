@@ -1,197 +1,101 @@
 # Teskooano UI Plugin System (@teskooano/ui-plugin)
 
-This package provides the core infrastructure for registering and managing UI plugins within the Teskooano application ecosystem through dynamic loading based on configuration.
+This package provides the core infrastructure for registering and managing UI plugins within the Teskooano application ecosystem through configuration and a dedicated Vite plugin.
 
 ## What?
 
-This library acts as a central registry for UI elements provided by different modules (plugins). It allows features like Dockview panels, custom web components, toolbar buttons, and standalone functions to be defined externally. These components and plugins are loaded dynamically based on configuration files, promoting a modular and maintainable architecture.
+This library, along with its accompanying Vite plugin (`teskooanoUiPlugin`), acts as a central registry for UI elements (Dockview panels, functions, toolbar items) provided by different modules (plugins). It also manages the loading and definition of base web components.
+
+Plugin and component loading is driven by configuration files, analyzed by the Vite plugin at build time to enable efficient dynamic imports.
 
 ## Why?
 
-- **Configuration-Driven:** Easily enable, disable, or swap features by modifying configuration, not code.
-- **Dynamic Loading:** Load only the necessary code for enabled features, potentially improving initial load times.
-- **Modularity:** Decouples UI features from the core application.
-- **Extensibility:** Add new UI features without modifying the core application code.
-- **Consistency:** Provides a standardized way to define and register UI components and their interactions.
+- **Build-Time Integration:** Leverages Vite to correctly resolve paths and handle transpilation for dynamically loaded components and plugins.
+- **Configuration-Driven:** Easily enable/disable features via config.
+- **Dynamic Loading:** Optimized loading of feature code.
+- **Modularity & Extensibility:** Decouples features.
+- **Order Guarantee:** Ensures base components are defined before plugins use them.
 
 ## How?
 
-1.  **Configure Components:** Create a configuration object (`ComponentRegistryConfig`) mapping component tag names to their module paths (and optional export names).
+1.  **Configure Components:** Create `componentRegistry.ts` mapping tag names to *relative paths* from the config file location (e.g., `./components/shared/Button.ts`).
 
     ```typescript
-    // Example: src/config/componentRegistry.ts
-    import type { ComponentRegistryConfig } from "@teskooano/ui-plugin";
+    // Example: apps/teskooano/src/config/componentRegistry.ts
+    import type { ComponentRegistryConfig } from '@teskooano/ui-plugin';
 
     export const componentConfig: ComponentRegistryConfig = {
-      "teskooano-button": { path: "@teskooano/design-system/Button" },
-      "teskooano-card": { path: "@teskooano/design-system/Card" },
-      // ... other base components
+      'teskooano-button': { path: '../components/shared/Button.ts' }, // Path relative to this file
+      'teskooano-card':   { path: '../components/shared/Card.ts' },
     };
     ```
 
-2.  **Configure Plugins:** Create a configuration object (`PluginRegistryConfig`) mapping plugin IDs to their module paths (and optional export names for the plugin object, defaults to `plugin`).
+2.  **Configure Plugins:** Create `pluginRegistry.ts` mapping plugin IDs to *relative paths* from the config file location (e.g., `../components/ui-controls/focus/FocusControl.plugin.ts`).
 
     ```typescript
-    // Example: src/config/pluginRegistry.ts
-    import type { PluginRegistryConfig } from "@teskooano/ui-plugin";
+    // Example: apps/teskooano/src/config/pluginRegistry.ts
+    import type { PluginRegistryConfig } from '@teskooano/ui-plugin';
 
     export const pluginConfig: PluginRegistryConfig = {
-      "core-focus-controls": { path: "@teskooano/focus-plugin/plugin" },
-      "feature-ship-editor": {
-        path: "@teskooano/ship-editor/pluginDefinition",
-        exportName: "shipEditorPlugin",
-      },
-      // ... other plugins
+      'core-focus-controls': { path: '../components/ui-controls/focus/FocusControl.plugin.ts' },
     };
     ```
 
-3.  **Load Components and Plugins (in `main.ts`):**
+3.  **Configure Vite:** In your application's `vite.config.ts`, import and use the `teskooanoUiPlugin`, providing the *absolute paths* to your configuration files.
 
-    - Import `loadAndRegisterComponents` and `loadAndRegisterPlugins`.
-    - Import your configuration objects.
-    - Call `await loadAndRegisterComponents(componentConfig)` **first** to define base elements.
-    - Call `await loadAndRegisterPlugins(pluginConfig)` to load plugins, register their metadata, and run their `initialize` functions.
+    ```typescript
+    // Example: apps/teskooano/vite.config.ts
+    import { defineConfig } from 'vite';
+    import { teskooanoUiPlugin } from '@teskooano/ui-plugin';
+    import path from 'path';
+
+    export default defineConfig({
+      plugins: [
+        teskooanoUiPlugin({
+          // Use path.resolve to get absolute paths
+          componentRegistryPath: path.resolve(__dirname, 'src/config/componentRegistry.ts'),
+          pluginRegistryPath: path.resolve(__dirname, 'src/config/pluginRegistry.ts'),
+        }),
+        // ... other plugins
+      ],
+      // ... other vite config
+    });
+    ```
+
+4.  **Vite Plugin Action:** The `teskooanoUiPlugin` reads the configs and generates a virtual module (`virtual:teskooano-loaders`) containing functions that perform Vite-analyzable dynamic imports, e.g.:
+    ```typescript
+    // virtual:teskooano-loaders (simplified)
+    export const componentLoaders = {
+      'teskooano-button': () => import('/path/to/app/src/components/shared/Button.ts')
+    };
+    export const pluginLoaders = {
+       'core-focus-controls': () => import('/path/to/app/src/components/ui-controls/focus/FocusControl.plugin.ts')
+    };
+    ```
+
+5.  **Load Components and Plugins (in `main.ts`):**
+    *   Import `loadAndRegisterComponents`, `loadAndRegisterPlugins`.
+    *   Import your configuration objects (`componentConfig`, `pluginConfig`).
+    *   Call `await loadAndRegisterComponents(Object.keys(componentConfig))`.
+    *   Call `await loadAndRegisterPlugins(Object.keys(pluginConfig))`.
+    *   These functions now internally use the loaders from `virtual:teskooano-loaders`.
 
     ```typescript
     // Example: apps/teskooano/src/main.ts
-    import {
-      loadAndRegisterComponents,
-      loadAndRegisterPlugins,
-    } from "@teskooano/ui-plugin";
-    import { componentConfig } from "./config/componentRegistry";
-    import { pluginConfig } from "./config/pluginRegistry";
+    import { loadAndRegisterComponents, loadAndRegisterPlugins } from '@teskooano/ui-plugin';
+    import { componentConfig } from './config/componentRegistry';
+    import { pluginConfig } from './config/pluginRegistry';
 
     async function initializeApp() {
-      console.log("Initializing Teskooano...");
-
-      // 1. Load and register base web components
-      await loadAndRegisterComponents(componentConfig);
-
-      // 2. Load and register plugins (which might use those components)
-      await loadAndRegisterPlugins(pluginConfig);
-
-      // 3. Initialize core application logic (Dockview, routing, etc.)
-      // ... now safe to use registered panels, functions, etc.
-      console.log("Teskooano Initialized.");
+      // ...
+      await loadAndRegisterComponents(Object.keys(componentConfig));
+      await loadAndRegisterPlugins(Object.keys(pluginConfig));
+      // ... Initialize core app ...
     }
-
     initializeApp();
     ```
 
-4.  **Define a Plugin Module:** Create the plugin module exporting a `TeskooanoPlugin` object (usually named `plugin`).
+6.  **Define a Plugin Module:** Export a `TeskooanoPlugin` object (usually named `plugin`) defining panels, functions, toolbar registrations, etc. (No change from previous step in this file).
 
-    - This object defines panels, functions, and toolbar registrations.
-    - It _does not_ define components (handled by `loadAndRegisterComponents`).
-    - It can have an optional `initialize` function.
-
-    ```typescript
-    // Example: packages/features/focus-controls/src/plugin.ts
-    import { FocusControlPanel } from "./FocusControlPanel";
-    import {
-      TeskooanoPlugin,
-      PanelConfig,
-      ToolbarRegistration,
-    } from "@teskooano/ui-plugin";
-    import TargetIcon from "./target_24_regular.svg?raw";
-
-    const panelConfig: PanelConfig = {
-      componentName: "focus-control",
-      panelClass: FocusControlPanel,
-      defaultTitle: "Focus Control",
-    };
-
-    const toolbarRegistration: ToolbarRegistration = {
-      target: "engine-toolbar",
-      items: [
-        {
-          id: "focus-control-button",
-          type: "panel",
-          title: "Focus Control",
-          iconSvg: TargetIcon,
-          componentName: "focus-control",
-          behaviour: "toggle",
-          initialPosition: { top: 150, left: 50, width: 400, height: 650 },
-          order: 10,
-        },
-      ],
-    };
-
-    export const plugin: TeskooanoPlugin = {
-      id: "core-focus-controls", // Must match the key in pluginConfig
-      name: "Core Focus Controls",
-      panels: [panelConfig],
-      toolbarRegistrations: [toolbarRegistration],
-      // No 'components' array needed here
-      initialize: () => {
-        console.log("Focus Controls Plugin Initialized");
-        // Setup listeners or other logic if needed
-      },
-    };
-    ```
-
-5.  **Consume Registered Items:** UI controllers (like `ToolbarController` or `EngineToolbar`) use getter functions (`getToolbarItemsForTarget`, `getPanelConfig`, etc.) to retrieve registered configurations and dynamically build the UI.
-
-## Usage Example (Conceptual)
-
-```typescript
-// --- In a plugin module (e.g., packages/features/my-feature/src/plugin.ts) ---
-import { MyComponent } from "./MyComponent";
-import { MyPanel } from "./MyPanel";
-import { TeskooanoPlugin, ToolbarRegistration } from "@teskooano/ui-plugin"; // Import ToolbarRegistration
-import MyIcon from "./icon.svg?raw";
-import AnotherIcon from "./another-icon.svg?raw";
-
-export const myFeaturePlugin: TeskooanoPlugin = {
-  id: "my-feature",
-  name: "My Awesome Feature",
-  components: [{ tagName: "my-component", componentClass: MyComponent }],
-  panels: [
-    {
-      componentName: "my-panel",
-      panelClass: MyPanel,
-      defaultTitle: "My Panel",
-    },
-  ],
-  toolbarRegistrations: [
-    {
-      target: "main-toolbar", // Target the main application toolbar
-      items: [
-        {
-          id: "my-feature-main-button",
-          type: "panel",
-          title: "Open My Feature Panel",
-          iconSvg: MyIcon,
-          componentName: "my-panel",
-          order: 100,
-        },
-      ],
-    },
-    {
-      target: "engine-toolbar", // Target the engine-specific toolbar
-      items: [
-        {
-          id: "my-feature-engine-button",
-          type: "function", // Example of a function button
-          title: "Do Something Feature-Specific",
-          iconSvg: AnotherIcon,
-          functionId: "my-feature-action", // Assumes a FunctionConfig with this ID is also registered
-          order: 50,
-        },
-      ],
-    },
-  ],
-};
-
-// --- In the main application (e.g., apps/teskooano/src/main.ts) ---
-import { registerPlugin } from "@teskooano/ui-plugin";
-import { myFeaturePlugin } from "@teskooano/feature-my-feature"; // Assuming path alias
-
-// Register plugins during app initialization
-registerPlugin(myFeaturePlugin);
-
-// ... later, in a Toolbar controller ...
-// import { getToolbarItemsForTarget } from '@teskooano/ui-plugin';
-// const mainToolbarItems = getToolbarItemsForTarget('main-toolbar');
-// const engineToolbarItems = getToolbarItemsForTarget('engine-toolbar');
-// // Dynamically create buttons based on these items for the respective toolbars
-```
+7.  **Consume Registered Items:** UI controllers use getter functions (`getToolbarItemsForTarget`, etc.) to dynamically build the UI. (No change here).
+ 

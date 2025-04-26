@@ -1,14 +1,10 @@
-import type { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // Import parent panel type
-import type { CompositeEngineState } from "../engine/CompositeEnginePanel"; // Import type from parent
-import "../shared/Slider.js"; // Import the slider component
+import type { CompositeEnginePanel, CompositeEngineState } from "../engine/CompositeEnginePanel"; // Import parent panel type
+// import "../shared/Slider.js"; // REMOVED - Import the slider component
 import type { TeskooanoSlider } from "../shared/Slider.js"; // Import the slider type
 // Import Dockview types and panel registry
-import { GroupPanelPartInitParameters, DockviewPanelApi } from "dockview-core";
-import { panelRegistry } from "@teskooano/core-state";
-import { IContentRenderer } from "dockview-core"; // ADD THIS IMPORT
+import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 import {
-  ToolbarButtonConfig,
-  PanelToolbarButtonConfig,
+  PanelToolbarButtonConfig
 } from "../../stores/toolbarStore"; // Import toolbar types
 
 // Import Fluent UI Icons

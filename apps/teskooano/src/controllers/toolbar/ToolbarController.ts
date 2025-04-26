@@ -1,5 +1,4 @@
 import type { AddPanelOptions } from "dockview-core";
-import "../../components/shared/Button.js";
 import "../../components/toolbar/SimulationControls.js"; // Import for side effect (registers element)
 import "../../components/toolbar/SystemControls.js";
 import type { SystemControls } from "../../components/toolbar/SystemControls.js"; // Use the class type for casting

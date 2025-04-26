@@ -4,6 +4,28 @@ import type {
   IDockviewPanelProps,
 } from "dockview-core";
 
+/** Configuration for dynamically loading a component. */
+export interface ComponentLoadConfig {
+  /** Path to the module exporting the component class (e.g., '@teskooano/design-system/Button'). */
+  path: string;
+  /** Optional name of the exported class if not default export (useful if module exports multiple things). */
+  exportName?: string;
+}
+
+/** Configuration for dynamically loading a plugin. */
+export interface PluginLoadConfig {
+  /** Path to the module exporting the plugin object (e.g., '@teskooano/focus-plugin/plugin'). */
+  path: string;
+  /** Optional name of the exported plugin object if not exported as 'plugin'. */
+  exportName?: string;
+}
+
+/** Map of component tag names to their loading configuration. */
+export type ComponentRegistryConfig = Record<string, ComponentLoadConfig>;
+
+/** Map of plugin IDs to their loading configuration. */
+export type PluginRegistryConfig = Record<string, PluginLoadConfig>;
+
 /**
  * Represents the target UI area for a toolbar item.
  * - 'main-toolbar': The primary application toolbar.

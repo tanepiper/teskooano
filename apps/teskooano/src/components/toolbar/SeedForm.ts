@@ -1,8 +1,7 @@
 import { currentSeed } from "@teskooano/core-state";
 import { DockviewApi } from "dockview-core";
 import { generateAndLoadSystem } from "../../systems/system-generator";
-import { TeskooanoButton } from "../shared/Button";
-import "../shared/Button.js"; // Assuming Button.ts compiles to .js
+import { type TeskooanoButton } from "../shared/Button";
 
 const template = document.createElement("template");
 template.innerHTML = `

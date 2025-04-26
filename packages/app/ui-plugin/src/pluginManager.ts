@@ -7,31 +7,26 @@ import {
   ToolbarTarget,
   ToolbarRegistration,
   ToolbarItemDefinition,
-} from "./types";
+  ComponentRegistryConfig,
+  PluginRegistryConfig
+} from "./types.js";
+
+// --- Import the generated loaders from the virtual module --- //
+import { componentLoaders, pluginLoaders } from 'virtual:teskooano-loaders';
 
 // --- Configuration Interfaces ---
 
 /** Configuration for dynamically loading a component. */
-export interface ComponentLoadConfig {
-  /** Path to the module exporting the component class (e.g., '@teskooano/design-system/Button'). */
-  path: string;
-  /** Optional name of the exported class if not default export (useful if module exports multiple things). */
-  exportName?: string;
-}
+// export interface ComponentLoadConfig { ... }
 
 /** Configuration for dynamically loading a plugin. */
-export interface PluginLoadConfig {
-  /** Path to the module exporting the plugin object (e.g., '@teskooano/focus-plugin/plugin'). */
-  path: string;
-  /** Optional name of the exported plugin object if not exported as 'plugin'. */
-  exportName?: string;
-}
+// export interface PluginLoadConfig { ... }
 
 /** Map of component tag names to their loading configuration. */
-export type ComponentRegistryConfig = Record<string, ComponentLoadConfig>;
+// export type ComponentRegistryConfig = Record<string, ComponentLoadConfig>;
 
 /** Map of plugin IDs to their loading configuration. */
-export type PluginRegistryConfig = Record<string, PluginLoadConfig>;
+// export type PluginRegistryConfig = Record<string, PluginLoadConfig>;
 
 // --- Registries (remain the same) ---
 const pluginRegistry: Map<string, TeskooanoPlugin> = new Map();
@@ -114,108 +109,89 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
   // Initialize function is called after *dynamic* loading in loadAndRegisterPlugins
 }
 
-// --- Dynamic Loading and Registration Functions ---
+// --- Loading and Registration Functions (Using Vite Plugin Loaders) ---
 
 /**
- * Loads and registers custom web components based on configuration.
- * Ensures base components are defined before plugins might need them.
- * @param componentConfig - An object mapping tag names to their load configurations.
+ * Loads and registers custom web components using loaders from the Vite plugin.
+ * @param componentTags - An array of component tag names to load (must exist in the config used by the Vite plugin).
  */
-export async function loadAndRegisterComponents(
-  componentConfig: ComponentRegistryConfig,
-): Promise<void> {
-  console.log("[PluginManager] Starting component registration...");
-  for (const [tagName, config] of Object.entries(componentConfig)) {
-    if (customElements.get(tagName)) {
-      console.warn(
-        `[PluginManager] Custom element '${tagName}' is already defined. Skipping registration.`,
-      );
-      continue;
-    }
-    try {
-      console.log(
-        `  - Dynamically importing component '${tagName}' from ${config.path}`,
-      );
-      const module = await import(/* @vite-ignore */ config.path);
-      const componentClass = config.exportName
-        ? module[config.exportName]
-        : module.default;
+export async function loadAndRegisterComponents(componentTags: string[]): Promise<void> {
+    console.log('[PluginManager] Starting component registration via Vite loaders...');
+    // Cast the imported loaders to the expected type
+    const loaders = componentLoaders as Record<string, () => Promise<any>>;
 
-      if (
-        typeof componentClass === "function" &&
-        componentClass.prototype instanceof HTMLElement
-      ) {
-        customElements.define(
-          tagName,
-          componentClass as CustomElementConstructor,
-        );
-        console.log(`  - Defined component: <${tagName}>`);
-      } else {
-        console.error(
-          `[PluginManager] Failed to define component '${tagName}'. Loaded module export '${config.exportName || "default"}' is not a valid Custom Element constructor.`,
-        );
-      }
-    } catch (error) {
-      console.error(
-        `[PluginManager] Failed to load or define component '${tagName}' from ${config.path}:`,
-        error,
-      );
+    for (const tagName of componentTags) {
+        if (customElements.get(tagName)) {
+            console.warn(`[PluginManager] Custom element '${tagName}' is already defined. Skipping registration.`);
+            continue;
+        }
+
+        const loader = loaders[tagName];
+        if (!loader) {
+            console.error(`[PluginManager] No component loader found for tag '${tagName}'. Was it configured in componentRegistry.ts?`);
+            continue;
+        }
+
+        try {
+            console.log(`  - Calling loader for component '${tagName}'...`);
+            const module = await loader();
+            // Assume component class is the default export unless specified differently in future
+            const componentClass = module.default;
+
+            if (typeof componentClass === 'function' && componentClass.prototype instanceof HTMLElement) {
+                 customElements.define(tagName, componentClass as CustomElementConstructor);
+                 console.log(`  - Defined component: <${tagName}>`);
+            } else {
+                 console.error(`[PluginManager] Failed to define component '${tagName}'. Loaded module 'default' export is not a valid Custom Element constructor.`);
+            }
+        } catch (error) {
+            console.error(`[PluginManager] Failed to load or define component '${tagName}' using its loader:`, error);
+        }
     }
-  }
-  console.log("[PluginManager] Component registration finished.");
+    console.log('[PluginManager] Component registration via Vite loaders finished.');
 }
 
 /**
- * Loads and registers UI plugins based on configuration.
- * @param pluginConfig - An object mapping plugin IDs to their load configurations.
+ * Loads and registers UI plugins using loaders from the Vite plugin.
+ * @param pluginIds - An array of plugin IDs to load (must exist in the config used by the Vite plugin).
  */
-export async function loadAndRegisterPlugins(
-  pluginConfig: PluginRegistryConfig,
-): Promise<void> {
-  console.log("[PluginManager] Starting plugin registration...");
-  for (const [pluginId, config] of Object.entries(pluginConfig)) {
-    try {
-      console.log(
-        `  - Dynamically importing plugin '${pluginId}' from ${config.path}`,
-      );
-      const module = await import(/* @vite-ignore */ config.path);
-      const plugin = (
-        config.exportName ? module[config.exportName] : module.plugin
-      ) as TeskooanoPlugin;
+export async function loadAndRegisterPlugins(pluginIds: string[]): Promise<void> {
+    console.log('[PluginManager] Starting plugin registration via Vite loaders...');
+    const loaders = pluginLoaders as Record<string, () => Promise<any>>;
 
-      if (plugin && typeof plugin === "object" && plugin.id === pluginId) {
-        registerPlugin(plugin); // Register the metadata
-        // Call initialize *after* successful registration
-        if (typeof plugin.initialize === "function") {
-          try {
-            console.log(
-              `  - Initializing plugin: ${plugin.name} (ID: ${pluginId})`,
-            );
-            plugin.initialize(/* Pass APIs if needed */);
-          } catch (initError) {
-            console.error(
-              `[PluginManager] Error initializing plugin '${pluginId}':`,
-              initError,
-            );
-          }
+    for (const pluginId of pluginIds) {
+         const loader = loaders[pluginId];
+         if (!loader) {
+             console.error(`[PluginManager] No plugin loader found for ID '${pluginId}'. Was it configured in pluginRegistry.ts?`);
+             continue;
+         }
+
+         try {
+            console.log(`  - Calling loader for plugin '${pluginId}'...`);
+            const module = await loader();
+            // Assume plugin object is exported as 'plugin' unless specified differently in future
+            const plugin = module.plugin as TeskooanoPlugin;
+
+            if (plugin && typeof plugin === 'object' && plugin.id === pluginId) {
+                registerPlugin(plugin);
+                if (typeof plugin.initialize === 'function') {
+                    try {
+                        console.log(`  - Initializing plugin: ${plugin.name} (ID: ${pluginId})`);
+                        plugin.initialize(/* Pass APIs if needed */);
+                    } catch (initError) {
+                        console.error(`[PluginManager] Error initializing plugin '${pluginId}':`, initError);
+                    }
+                }
+            } else if (plugin && plugin.id !== pluginId) {
+                console.error(`[PluginManager] Failed to register plugin '${pluginId}'. Loaded plugin has mismatched ID '${plugin.id}'.`);
+            } else {
+                console.error(`[PluginManager] Failed to register plugin '${pluginId}'. Module export 'plugin' not found or invalid.`);
+            }
+        } catch (error) {
+            console.error(`[PluginManager] Failed to load or register plugin '${pluginId}' using its loader:`, error);
         }
-      } else if (plugin && plugin.id !== pluginId) {
-        console.error(
-          `[PluginManager] Failed to register plugin '${pluginId}'. Loaded plugin has mismatched ID '${plugin.id}'.`,
-        );
-      } else {
-        console.error(
-          `[PluginManager] Failed to register plugin '${pluginId}'. Module export '${config.exportName || "plugin"}' not found or invalid.`,
-        );
-      }
-    } catch (error) {
-      console.error(
-        `[PluginManager] Failed to load or register plugin '${pluginId}' from ${config.path}:`,
-        error,
-      );
     }
-  }
-  console.log("[PluginManager] Plugin registration finished.");
+    console.log('[PluginManager] Plugin registration via Vite loaders finished.');
 }
 
 // --- Getter functions (remain the same) --- //
@@ -251,8 +227,6 @@ export function getFunctionConfig(id: string): FunctionConfig | undefined {
  * @param target - The target toolbar ('main-toolbar' or 'engine-toolbar').
  * @returns An array of ToolbarItemConfig objects, or an empty array if none found.
  */
-export function getToolbarItemsForTarget(
-  target: ToolbarTarget,
-): ToolbarItemConfig[] {
+export function getToolbarItemsForTarget(target: ToolbarTarget): ToolbarItemConfig[] {
   return [...(toolbarRegistry.get(target) ?? [])]; // Return a copy
 }
