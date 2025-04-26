@@ -1,0 +1,58 @@
+# Defines tasks and project details specific to @teskooano/ui-plugin
+
+# Project-level settings (optional)
+# project:
+#   type: 'library'
+#   language: 'typescript'
+
+# File groups (can be used in task inputs/outputs)
+# fileGroups:
+#   sources: # Example: all source files
+#     - 'src/**/*'
+#   tests: # Example: all test files
+#     - 'src/**/*.spec.ts'
+
+# Tasks available via `moon run ui-plugin:<task-name>`
+tasks:
+  # Type checking
+  check:
+    command: "tsc --noEmit"
+    inputs:
+      - "src/**/*.ts"
+      - "tsconfig.json"
+      - "../../tsconfig.base.json"
+    options:
+      runInCI: true
+
+  # Linting
+  lint:
+    command: "eslint . --fix"
+    inputs:
+      - "src/**/*.ts"
+      - ".eslintrc.js" # Assuming eslint config file
+      - "../../.eslintrc.js"
+    options:
+      runInCI: true
+
+  # Formatting
+  format:
+    command: "prettier --write ."
+    inputs:
+      - "src/**/*.ts"
+      - ".prettierrc.js" # Assuming prettier config file
+      - "../../.prettierrc.js"
+    options:
+      runInCI: false # Usually run locally
+
+
+  # Build (if needed, e.g., for type declarations only)
+  # build:
+  #   command: 'tsc -p tsconfig.json'
+  #   inputs:
+  #     - 'src/**/*.ts'
+  #     - 'tsconfig.json'
+  #     - '../../tsconfig.base.json'
+  #   outputs:
+  #     - 'dist'
+  #   options:
+  #     runInCI: true

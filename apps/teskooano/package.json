@@ -21,7 +21,7 @@
     "nanostores": "1.0.1",
     "three": "0.176.0",
     "rxjs": "7.8.2",
-    "@fluentui/svg-icons": "1.1.297"
+    "@fluentui/svg-icons": "1.1.298"
   },
   "devDependencies": {
     "typescript": "5.8.3",
