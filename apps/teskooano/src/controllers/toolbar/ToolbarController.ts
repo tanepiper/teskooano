@@ -28,15 +28,6 @@ export class ToolbarController {
    */
   private _dockviewController: DockviewController;
   /**
-   * A counter specifically for engine views.
-   */
-  private _compositePanelCounter = 0;
-  /**
-   * Define a constant logical name for the engine group
-   */
-  private readonly ENGINE_GROUP_NAME = "engine_views";
-
-  /**
    * Track if we're on a mobile device
    */
   private _isMobileDevice: boolean = false;
@@ -53,8 +44,6 @@ export class ToolbarController {
   // Use the specific type returned by createToolbarHandlers
   private _handlers: ToolbarTemplateHandlers;
 
-  // Define a constant for the settings panel ID
-  private readonly SETTINGS_PANEL_ID = "app_settings_panel";
   // GitHub repository URL - CORRECTED back to original
   private readonly GITHUB_REPO_URL = "https://github.com/tanepiper/teskooano";
 
@@ -120,118 +109,6 @@ export class ToolbarController {
   public destroy(): void {
     // Remove the resize listener
     window.removeEventListener("resize", this.handleResize);
-  }
-
-  /**
-   * Public method to create the very first engine/UI panel group on initialization.
-   */
-  public initializeFirstEngineView(): void {
-    // Ensure we only add the *first* view this way
-    if (this._compositePanelCounter === 0) {
-      // No need to explicitly ensure group exists here, addPanelToNamedGroup handles it
-      this.addCompositeEnginePanel();
-    } else {
-      console.warn(
-        "initializeFirstEngineView called but engine panels already exist.",
-      );
-    }
-  }
-
-  /**
-   * Adds a new composite engine panel to the dedicated engine group.
-   * PUBLIC: Called by the add view button handler.
-   */
-  public addCompositeEnginePanel(): void {
-    // Use the logical group name directly
-    const groupName = this.ENGINE_GROUP_NAME;
-
-    this._compositePanelCounter++;
-    const counter = this._compositePanelCounter;
-    const compositeViewId = `composite_engine_view_${counter}`;
-    const compositeViewTitle = `Teskooano ${counter}`;
-
-    // Use the new controller method to add the panel to the named group
-    const panelOptions: AddPanelOptions = {
-      id: compositeViewId,
-      component: "composite_engine_view", // New component type
-      title: compositeViewTitle,
-      params: {
-        title: compositeViewTitle,
-        dockviewController: this._dockviewController,
-      },
-    };
-
-    try {
-      // Create the composite engine panel using the controller method
-      const compositePanel = this._dockviewController.addPanelToNamedGroup(
-        groupName,
-        panelOptions,
-      );
-
-      if (!compositePanel) {
-        throw new Error(
-          `Failed to add panel '${compositeViewId}' to group '${groupName}'`,
-        );
-      }
-
-      // Activate the newly added panel (panel is already active by default)
-      // compositePanel.api.setActive(); // Usually not needed if added via controller
-    } catch (error) {
-      console.error(
-        `Failed to create engine window panels for counter ${counter}:`,
-        error,
-      );
-    }
-  }
-
-  /**
-   * Toggles the visibility of the floating settings panel.
-   * PUBLIC: Called by the settings button handler.
-   */
-  public toggleSettingsPanel(): void {
-    const existingPanel = this._dockviewController.api.panels.find(
-      (p) => p.id === this.SETTINGS_PANEL_ID,
-    );
-
-    const panelWidth = 650;
-    const panelHeight = 500;
-
-    const centerWidth = window.innerWidth / 2 - panelWidth / 2;
-    const centerHeight = window.innerHeight / 2 - panelHeight / 2;
-
-    if (existingPanel) {
-      existingPanel.api.close();
-    } else {
-      const settingsPanelOptions: AddPanelOptions = {
-        id: this.SETTINGS_PANEL_ID,
-        component: "settings_view", // Placeholder component name
-        title: "Settings",
-        floating: {
-          position: { top: centerHeight, left: centerWidth },
-          width: panelWidth,
-          height: panelHeight,
-        },
-        params: {},
-        // Consider making it non-closable via header x button if toggled only via toolbar
-        // isClosable: false
-      };
-      try {
-        this._dockviewController.api.addPanel(settingsPanelOptions);
-      } catch (error) {
-        console.error(
-          `Failed to add settings panel ${this.SETTINGS_PANEL_ID}:`,
-          error,
-        );
-      }
-    }
-  }
-
-  /**
-   * Opens the GitHub repository in a new window/tab
-   * PUBLIC: Called by the github button handler.
-   */
-  public openGitHubRepo(): void {
-    window.open(this.GITHUB_REPO_URL, "_blank");
   }
 
   /**
@@ -338,4 +215,12 @@ export class ToolbarController {
     }
   }
   // --- END ADDED BACK ---
+
+  /**
+   * Opens the GitHub repository in a new window/tab
+   * PUBLIC: Called by the github button handler.
+   */
+  public openGitHubRepo(): void {
+    window.open(this.GITHUB_REPO_URL, "_blank");
+  }
 }

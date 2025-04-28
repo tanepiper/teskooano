@@ -26,6 +26,7 @@ export type {
   PluginLoadConfig,
   ComponentRegistryConfig,
   PluginRegistryConfig,
+  PluginExecutionContext,
 } from "./types.js";
 
 // Export Client-Side Manager Functions
@@ -33,6 +34,7 @@ export {
   registerPlugin,
   loadAndRegisterComponents,
   loadAndRegisterPlugins,
+  setAppDependencies,
   getPlugins,
   getPanelConfig,
   getFunctionConfig,

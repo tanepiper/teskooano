@@ -24,4 +24,5 @@ export const pluginConfig: PluginRegistryConfig = {
     path: "../components/ui-controls/celestial-info/CelestialInfo.plugin.ts",
   },
   "core-tour": { path: "../components/tours/Tour.plugin.ts" },
+  "core-settings": { path: "../components/settings/Settings.plugin.ts" },
 };

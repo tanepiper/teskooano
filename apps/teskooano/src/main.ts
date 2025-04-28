@@ -21,6 +21,7 @@ import {
   loadAndRegisterPlugins,
   PanelConfig,
   TeskooanoPlugin,
+  setAppDependencies,
 } from "@teskooano/ui-plugin";
 import { componentConfig } from "./config/componentRegistry";
 import { pluginConfig } from "./config/pluginRegistry";
@@ -110,6 +111,12 @@ async function initializeApp() {
   const modalManager = new ModalManagerClass(dockviewController);
   console.log("[App] TeskooanoModalManager instantiated.");
 
+  // --- Set Dependencies for Plugins --- //
+  setAppDependencies({
+    dockviewApi: dockviewController.api,
+    dockviewController: dockviewController,
+  });
+
   // ---> Store the singleton instance for others to use
   appContext.modalManager = modalManager;
 
@@ -123,7 +130,7 @@ async function initializeApp() {
   console.log("Registering Dockview panel components...");
 
   // Register components from plugins
-  const plugins = getPlugins();
+  const plugins = getPlugins(); // Keep getting plugins for component registration
   plugins.forEach((plugin: TeskooanoPlugin) => {
     plugin.panels?.forEach((panelConfig: PanelConfig) => {
       const panelClass = panelConfig.panelClass;
@@ -145,7 +152,17 @@ async function initializeApp() {
 
   console.log("Dockview panel registration complete.");
 
-  toolbarController.initializeFirstEngineView();
+  // Ensure at least one engine panel is created on startup via the plugin function
+  const addPanelFunc = getFunctionConfig("engine:add_composite_panel");
+  if (addPanelFunc?.execute) {
+    console.log("[App] Calling engine:add_composite_panel for initial view...");
+    addPanelFunc.execute();
+  } else {
+    console.error(
+      "[App] Failed to find engine:add_composite_panel function during initialization!",
+    );
+  }
+
   setupEventListeners();
 
   console.log("Teskooano Initialized.");

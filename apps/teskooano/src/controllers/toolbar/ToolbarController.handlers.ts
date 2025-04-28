@@ -35,11 +35,33 @@ export const createToolbarHandlers = (
   };
 
   const handleSettingsClick = (event: MouseEvent) => {
-    controller.toggleSettingsPanel();
+    // Call the toggle function via the plugin manager
+    const toggleFunc = getFunctionConfig("settings:toggle_panel");
+    if (toggleFunc?.execute) {
+      console.log(
+        "[Toolbar] Calling settings:toggle_panel function from plugin...",
+      );
+      toggleFunc.execute(); // Execute the function
+    } else {
+      console.warn(
+        "[Toolbar] Settings button clicked, but settings:toggle_panel function not found in plugin manager.",
+      );
+    }
   };
 
   const handleAddViewClick = (event: MouseEvent) => {
-    controller.addCompositeEnginePanel();
+    // Call the add panel function via the plugin manager
+    const addPanelFunc = getFunctionConfig("engine:add_composite_panel");
+    if (addPanelFunc?.execute) {
+      console.log(
+        "[Toolbar] Calling engine:add_composite_panel function from plugin...",
+      );
+      addPanelFunc.execute(); // Execute the function
+    } else {
+      console.warn(
+        "[Toolbar] Add View button clicked, but engine:add_composite_panel function not found in plugin manager.",
+      );
+    }
   };
 
   const handleTourClick = (event: MouseEvent) => {

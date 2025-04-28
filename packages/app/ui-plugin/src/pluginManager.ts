@@ -9,7 +9,10 @@ import type {
   ToolbarItemDefinition,
   ComponentRegistryConfig,
   PluginRegistryConfig,
+  PluginExecutionContext,
+  PluginFunctionCallerSignature,
 } from "./types.js";
+import type { DockviewApi } from "dockview-core";
 
 // --- Import the generated loaders AND config from the virtual module --- //
 import {
@@ -32,6 +35,31 @@ const functionRegistry: Map<string, FunctionConfig> = new Map();
 const toolbarRegistry: Map<ToolbarTarget, ToolbarItemConfig[]> = new Map();
 /** Stores loaded module classes for non-custom-elements, keyed by registry key. */
 const loadedModuleClasses: Map<string, any> = new Map();
+
+// --- ADD: Manager State for Dependencies ---
+let _dockviewApi: DockviewApi | null = null;
+let _dockviewController: any | null = null; // Use same type as in context (any for now)
+
+/**
+ * Sets the core application dependencies needed by plugins.
+ * MUST be called once during application initialization.
+ * @param deps - Object containing the core dependencies.
+ */
+export function setAppDependencies(deps: {
+  dockviewApi: DockviewApi;
+  dockviewController: any; // Use same type as context
+}): void {
+  if (_dockviewApi) {
+    console.warn("[PluginManager] setAppDependencies called more than once.");
+    // Optionally throw an error or just overwrite
+  }
+  _dockviewApi = deps.dockviewApi;
+  _dockviewController = deps.dockviewController;
+  console.log(
+    "[PluginManager] Application dependencies (DockviewApi, DockviewController) set.",
+  );
+}
+// --- END ADD ---
 
 /**
  * Registers the metadata of a UI plugin (panels, functions, toolbars).
@@ -213,12 +241,15 @@ export async function loadAndRegisterPlugins(
 
       if (plugin && typeof plugin === "object" && plugin.id === pluginId) {
         registerPlugin(plugin);
+        // REMOVED: Automatic dependency injection via initialize.
+        // Initialize is now only for plugin-specific setup.
         if (typeof plugin.initialize === "function") {
           try {
-            plugin.initialize(...(passedArguments ?? []));
+            // Call initialize without API/Controller args
+            plugin.initialize();
           } catch (initError) {
             console.error(
-              `[PluginManager] Error initializing plugin '${pluginId}':`,
+              `[PluginManager] Error calling optional initialize for plugin '${pluginId}':`,
               initError,
             );
           }
@@ -261,14 +292,52 @@ export function getPanelConfig(componentName: string): PanelConfig | undefined {
 
 /**
  * Retrieves the configuration for a specific function.
- * @param id - The ID of the function.
- * @returns The FunctionConfig or undefined if not found.
+ * @param id The unique identifier of the function.
+ * @returns The function configuration object, or undefined if not found.
  */
-export function getFunctionConfig(id: string): FunctionConfig | undefined {
-  // console.log(`[PluginManager Debug] getFunctionConfig called for ID: ${id}`); // REMOVED DEBUG
-  const func = functionRegistry.get(id);
-  // console.log(`[PluginManager Debug] Found function config for ${id}:`, !!func); // REMOVED DEBUG
-  return func;
+export function getFunctionConfig(
+  id: string,
+): { id: string; execute: PluginFunctionCallerSignature } | undefined {
+  const originalConfig = functionRegistry.get(id);
+
+  if (!originalConfig) {
+    return undefined;
+  }
+
+  // Return a new object containing a wrapped execute function
+  return {
+    id: originalConfig.id,
+    // The returned execute function matches the *original* expected signature (args only)
+    execute: (...args: any[]) => {
+      // This wrapper injects the stored dependencies into the context
+      // before calling the plugin's original execute function.
+      if (!_dockviewApi) {
+        console.error(
+          `[PluginManager] Cannot execute function '${id}': DockviewApi dependency not set. Call setAppDependencies first.`,
+        );
+        // Optionally throw or return a rejected promise for async cases
+        return Promise.reject("DockviewApi not available");
+      }
+
+      // Create the context to pass
+      const executionContext: PluginExecutionContext = {
+        dockviewApi: _dockviewApi,
+        dockviewController: _dockviewController, // Pass stored controller
+      };
+
+      try {
+        // Call the original plugin function with the prepared context and original args
+        return originalConfig.execute(executionContext, ...args);
+      } catch (error) {
+        console.error(
+          `[PluginManager] Error executing function '${id}' from plugin '${/* How to get plugin ID here? Might need to store it with func */ "unknown"}':`,
+          error,
+        );
+        // Re-throw or handle as appropriate
+        throw error;
+      }
+    },
+  };
 }
 
 /**

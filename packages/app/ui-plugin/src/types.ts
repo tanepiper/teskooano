@@ -2,7 +2,25 @@ import type {
   AddPanelOptions,
   IContentRenderer,
   IDockviewPanelProps,
+  DockviewApi,
 } from "dockview-core";
+
+/**
+ * Context object passed to plugin function execute methods.
+ */
+export interface PluginExecutionContext {
+  dockviewApi: DockviewApi;
+  dockviewController?: any;
+  // Add other shared dependencies here if needed in the future
+}
+
+/**
+ * The signature of the execute function returned by `getFunctionConfig`.
+ * It hides the injected context from the caller.
+ */
+export type PluginFunctionCallerSignature = (
+  ...args: any[]
+) => void | Promise<void>;
 
 /** Configuration for dynamically loading a component. */
 export interface ComponentLoadConfig {
@@ -71,8 +89,15 @@ export interface PanelConfig {
 export interface FunctionConfig {
   /** A unique identifier for this function/action. */
   id: string;
-  /** The function to execute. Can be async. Takes optional args. */
-  execute: (...args: any[]) => void | Promise<void>;
+  /**
+   * The function to execute. Can be async.
+   * Receives the execution context (with APIs) as the first argument,
+   * followed by any specific arguments passed during the call.
+   */
+  execute: (
+    context: PluginExecutionContext,
+    ...args: any[]
+  ) => void | Promise<void>;
 }
 
 /**
@@ -175,7 +200,8 @@ export interface TeskooanoPlugin {
   /**
    * Optional initialization function called after registration.
    * Can be used for setting up listeners, etc.
-   * Should receive necessary application controllers/APIs.
+   * Note: This will NO LONGER automatically receive API/Controller instances.
+   * Use the context passed to function `execute` methods instead for API access.
    */
   initialize?: (...args: any[]) => void;
 
