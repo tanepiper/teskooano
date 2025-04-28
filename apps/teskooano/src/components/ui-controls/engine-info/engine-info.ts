@@ -2,16 +2,9 @@ import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 // Import the shared RendererStats type
 import type { RendererStats } from "@teskooano/renderer-threejs-core";
 // Import Dockview types and panel registry
-import {
-  GroupPanelPartInitParameters,
-  IContentRenderer,
-  DockviewPanelApi,
-} from "dockview-core";
+import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
+import { PanelToolbarButtonConfig } from "../../../stores/toolbarStore"; // Import toolbar types
 import type { CompositeEnginePanel } from "../../engine/CompositeEnginePanel"; // Import for type checking
-import {
-  ToolbarButtonConfig,
-  PanelToolbarButtonConfig,
-} from "../../../stores/toolbarStore"; // Import toolbar types
 
 // Import Fluent UI Icons
 import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw";

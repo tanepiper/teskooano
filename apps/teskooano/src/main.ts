@@ -5,7 +5,6 @@ import "./vite-env.d";
 import { celestialObjectsStore } from "@teskooano/core-state";
 import { EnginePlaceholder } from "./components/engine/EnginePlaceholder";
 // import type { TeskooanoModalManager } from "./components/shared/ModalManager";
-import { ToolbarSeedForm } from "./components/toolbar/SeedForm";
 import { TeskooanoTourModal } from "./components/tours/TourModal";
 import { DockviewController } from "./controllers/dockview/DockviewController";
 import { ToolbarController } from "./controllers/toolbar/ToolbarController";
@@ -115,7 +114,6 @@ async function initializeApp() {
   TeskooanoTourModal.setModalManager(modalManager);
 
   // Set Dockview API for SeedForm & EnginePlaceholder (if still needed globally)
-  ToolbarSeedForm.setDockviewApi(dockviewController.api);
   EnginePlaceholder.setDockviewApi(dockviewController.api);
 
   // Register Dockview panels using loaded plugin metadata

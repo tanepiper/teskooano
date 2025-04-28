@@ -84,12 +84,9 @@ const createAppIcon = (): HTMLAnchorElement => {
  * Creates a vertical separator element.
  * @returns The created div element.
  */
-const createSeparator = (): HTMLDivElement => {
+const createSeparator = () => {
   const separator = document.createElement("div");
-  separator.style.width = "1px";
-  separator.style.height = "calc(var(--toolbar-height, 50px) * 0.6)";
-  separator.style.backgroundColor = "var(--color-border, #50506a)";
-  separator.style.margin = "0 var(--space-xs, 4px)";
+  separator.className = "toolbar-separator";
   return separator;
 };
 
@@ -226,14 +223,15 @@ export const renderToolbarTemplate = (
     simControls.toggleAttribute("mobile", true);
   }
 
-  // System Controls
+  // --- ADDED BACK: System Controls ---
   const systemControls = document.createElement(
     "system-controls",
-  ) as SystemControls; // Cast necessary? Assuming it's registered
+  ) as SystemControls;
   systemControls.id = "system-controls";
   if (data.isMobile) {
     systemControls.toggleAttribute("mobile", true);
   }
+  // --- END ADDED BACK ---
 
   // --- Assemble Toolbar ---
   toolbarElement.appendChild(appIcon);
@@ -248,22 +246,23 @@ export const renderToolbarTemplate = (
 
   toolbarElement.appendChild(createSeparator());
   toolbarElement.appendChild(simControls);
-  toolbarElement.appendChild(createSeparator());
+  toolbarElement.appendChild(createSeparator()); // ADDED BACK Separator
 
-  // Wrap system controls if needed, or just append
+  // --- ADDED BACK: Appending System Controls Wrapper ---
   const systemControlsWrapper = document.createElement("div");
-  systemControlsWrapper.style.display = "flex"; // Keep wrapper for consistency
+  systemControlsWrapper.style.display = "flex";
   systemControlsWrapper.style.alignItems = "center";
   systemControlsWrapper.appendChild(systemControls);
   toolbarElement.appendChild(systemControlsWrapper);
+  // --- END ADDED BACK ---
 
-  // Return references to key elements that the controller might need to interact with
+  // Return references including systemControls
   return {
     githubButton,
     settingsButton,
     tourButton, // Can be null
     addButton,
     simControls,
-    systemControls,
+    systemControls, // ADDED BACK
   };
 };

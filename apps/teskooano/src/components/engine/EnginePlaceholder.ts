@@ -1,7 +1,6 @@
 // Vanilla Web Component for Engine Placeholder
 import { CustomEvents } from "@teskooano/data-types"; // Add import
 import { DockviewApi } from "dockview-core"; // Import DockviewApi type
-import "../toolbar/SeedForm.js"; // Import SeedForm definition
 
 const template = document.createElement("template");
 template.innerHTML = `

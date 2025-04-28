@@ -1,14 +1,17 @@
-import type { AddPanelOptions } from "dockview-core";
+import type { AddPanelOptions, DockviewApi } from "dockview-core";
 import "../../components/toolbar/SimulationControls.js"; // Import for side effect (registers element)
-import "../../components/toolbar/SystemControls.js";
-import type { SystemControls } from "../../components/toolbar/SystemControls.js"; // Use the class type for casting
+import "../../components/toolbar/SystemControls.js"; // ADDED BACK
+import type { SystemControls } from "../../components/toolbar/SystemControls.js"; // ADDED BACK
 import { DockviewController } from "../dockview/DockviewController.js";
 import { TourController } from "../tourController.js";
-import { createToolbarHandlers } from "./ToolbarController.handlers.js";
+import {
+  createToolbarHandlers,
+  type ToolbarTemplateHandlers, // Use the correct handler type
+} from "./ToolbarController.handlers.js"; // Import the correct handler type
 import {
   renderToolbarTemplate,
   type ToolbarTemplateData,
-  type ToolbarTemplateHandlers,
+  // type ToolbarTemplateHandlers as TemplateHandlers, // REMOVE incorrect import alias
 } from "./ToolbarController.template.js";
 
 /**
@@ -49,10 +52,11 @@ export class ToolbarController {
   private _tourButton: HTMLElement | null = null;
   private _addButton: HTMLElement | null = null;
   private _simControls: HTMLElement | null = null;
-  private _systemControls: SystemControls | null = null; // Use the class type
+  private _systemControls: SystemControls | null = null; // ADDED BACK
 
   // Handlers
-  private _handlers: ReturnType<typeof createToolbarHandlers>;
+  // Use the specific type returned by createToolbarHandlers
+  private _handlers: ToolbarTemplateHandlers;
 
   // Define a constant for the settings panel ID
   private readonly SETTINGS_PANEL_ID = "app_settings_panel";
@@ -77,24 +81,32 @@ export class ToolbarController {
     // Detect initial mobile state
     this._isMobileDevice = this.detectMobileDevice();
 
-    // Create handlers, passing the required dependencies bound to 'this'
-    this._handlers = createToolbarHandlers({
-      openGitHubRepo: this.openGitHubRepo.bind(this),
-      toggleSettingsPanel: this.toggleSettingsPanel.bind(this),
-      startTour: this.startTour.bind(this),
-      addCompositeEnginePanel: this.addCompositeEnginePanel.bind(this),
-      // Pass functions to get current state or trigger updates
-      isMobileDevice: () => this._isMobileDevice,
-      detectMobileDevice: this.detectMobileDevice.bind(this),
-      updateToolbarForMobileState: this.updateToolbarForMobileState.bind(this),
-    });
+    // Create handlers directly using the updated signature
+    this._handlers = createToolbarHandlers(
+      this, // Pass the controller instance
+      this._tourController, // Pass the tour controller instance (can be null)
+    );
 
-    // Set up resize listener using the handler function
-    window.addEventListener("resize", this._handlers.handleResize);
+    // Set up resize listener - We need a separate handler for this
+    window.addEventListener("resize", this.handleResize);
 
     // Initial render
     this.createToolbar();
   }
+
+  // --- Resize Handler --- // ADDED BACK
+  /**
+   * Handle window resize events to update mobile detection and UI
+   */
+  private handleResize = () => {
+    const wasMobile = this._isMobileDevice;
+    const isNowMobile = this.detectMobileDevice();
+    // Only update if the mobile state actually changed
+    if (wasMobile !== isNowMobile) {
+      this.updateToolbarForMobileState();
+    }
+  };
+  // --- End Resize Handler ---
 
   /**
    * Detect if the current device is a mobile device
@@ -117,9 +129,8 @@ export class ToolbarController {
    * Cleanup event listeners when controller is destroyed
    */
   public destroy(): void {
-    // Use the handler reference for removal
-    window.removeEventListener("resize", this._handlers.handleResize);
-    // Potentially remove other listeners if added directly in the future
+    // Remove the resize listener
+    window.removeEventListener("resize", this.handleResize);
   }
 
   /**
@@ -268,7 +279,6 @@ export class ToolbarController {
     this._tourButton?.toggleAttribute("mobile", this._isMobileDevice);
     this._addButton?.toggleAttribute("mobile", this._isMobileDevice);
     this._simControls?.toggleAttribute("mobile", this._isMobileDevice);
-    this._systemControls?.toggleAttribute("mobile", this._isMobileDevice);
   }
 
   // --- Private Methods ---
@@ -291,12 +301,8 @@ export class ToolbarController {
     }
 
     // Pass the handler functions directly to the template renderer
-    const templateHandlers: ToolbarTemplateHandlers = {
-      handleGitHubClick: this._handlers.handleGitHubClick,
-      handleSettingsClick: this._handlers.handleSettingsClick,
-      handleTourClick: this._handlers.handleTourClick,
-      handleAddViewClick: this._handlers.handleAddViewClick,
-    };
+    // No type casting needed as _handlers should match ToolbarTemplateHandlers
+    const templateHandlers: ToolbarTemplateHandlers = this._handlers;
 
     // Render the template, passing the container, handlers, and data
     const elements = renderToolbarTemplate(
@@ -311,46 +317,39 @@ export class ToolbarController {
     this._tourButton = elements.tourButton;
     this._addButton = elements.addButton;
     this._simControls = elements.simControls;
-    this._systemControls = elements.systemControls as SystemControls; // Cast needed
+    this._systemControls = elements.systemControls as SystemControls; // ADDED BACK
 
-    // Pass Dockview API to SystemControls after it's created AND defined
+    // Pass Dockview API to SystemControls after it's defined - ADDED BACK
     this.passApiToSystemControlsWhenDefined();
 
-    // Apply initial mobile state visuals (template handles initial attributes)
-    // this.updateToolbarForMobileState(); // No need to call here, template handles initial render
+    // Apply initial mobile state visuals
+    this.updateToolbarForMobileState(); // Ensure initial state is applied
   }
 
+  // --- ADDED BACK: Method to pass API to SystemControls ---
   /**
    * Passes the Dockview API to the SystemControls component *after* ensuring
    * the custom element is defined.
    */
   private passApiToSystemControlsWhenDefined(): void {
-    const systemControlsElement = this._systemControls; // Use cached element
+    const systemControlsElement = this._systemControls;
     const dockviewApi = this._dockviewController.api;
 
     if (systemControlsElement && dockviewApi) {
-      // Wait for the element definition
       customElements
         .whenDefined("system-controls")
         .then(() => {
-          // Now we are sure the element is defined, try calling the method
           console.log(
             "ToolbarController: system-controls defined. Attempting to set Dockview API.",
           );
-          // Double-check the method exists *after* definition, just in case
-          if (
-            typeof (systemControlsElement as SystemControls).setDockviewApi ===
-            "function"
-          ) {
-            (systemControlsElement as SystemControls).setDockviewApi(
-              dockviewApi,
-            );
+          if (typeof systemControlsElement.setDockviewApi === "function") {
+            systemControlsElement.setDockviewApi(dockviewApi);
             console.log(
               "ToolbarController: Dockview API successfully passed to SystemControls.",
             );
           } else {
             console.error(
-              "ToolbarController: SystemControls defined, but setDockviewApi method still not found!",
+              "ToolbarController: SystemControls defined, but setDockviewApi method not found!",
             );
           }
         })
@@ -362,7 +361,7 @@ export class ToolbarController {
         });
     } else if (!systemControlsElement) {
       console.error(
-        "ToolbarController: Cannot pass API, systemControls element not found in cache.",
+        "ToolbarController: Cannot pass API, systemControls element not found.",
       );
     } else {
       console.error(
@@ -370,4 +369,5 @@ export class ToolbarController {
       );
     }
   }
+  // --- END ADDED BACK ---
 }

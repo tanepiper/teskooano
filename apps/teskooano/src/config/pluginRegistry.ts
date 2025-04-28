@@ -8,13 +8,28 @@ import type { PluginRegistryConfig } from "@teskooano/ui-plugin";
 export const pluginConfig: PluginRegistryConfig = {
   // ---> Put Engine UI Controls Plugin FIRST
   "core-engine-ui-controls": {
-    path: "../components/ui-controls/engine-settings/EngineSettings.plugin.ts",
+    path: "../plugins/EngineUIPlugin.ts",
   },
 
   // Add the Focus Control plugin SECOND
   "core-focus-controls": {
     path: "../components/ui-controls/focus/FocusControl.plugin.ts",
   }, // Assuming .js after build, adjust if needed
+
+  // ---> Add the Engine Info Plugin
+  "core-engine-info": {
+    path: "../components/ui-controls/engine-info/EngineInfo.plugin.ts",
+  },
+
+  // ---> Add the Celestial Info Plugin
+  "core-celestial-info": {
+    path: "../components/ui-controls/celestial-info/CelestialInfo.plugin.ts",
+  },
+
+  // ---> Add the System Actions Plugin
+  "core-system-actions": {
+    path: "../plugins/SystemActions.plugin.ts",
+  },
 
   // Example (add actual plugins here later):
   // 'feature-celestial-info': { path: '@teskooano/celestial-info-plugin' }, // Assuming default export 'plugin'

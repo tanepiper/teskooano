@@ -9,50 +9,60 @@ interface ToolbarHandlerDependencies {
   updateToolbarForMobileState: () => void;
 }
 
+// Handlers for toolbar actions
+import type { ToolbarController } from "./ToolbarController";
+import type { TourController } from "../tourController";
+
+// Interface defining the required handler functions
+export interface ToolbarTemplateHandlers {
+  handleGitHubClick: (event: MouseEvent) => void;
+  handleSettingsClick: (event: MouseEvent) => void;
+  handleTourClick: (event: MouseEvent) => void;
+  handleAddViewClick: (event: MouseEvent) => void;
+}
+
 /**
- * Creates the event handlers for the toolbar buttons and window events.
- * @param deps - An object containing the necessary methods and properties from the ToolbarController.
- * @returns An object containing the handler functions.
+ * Creates the event handlers for the toolbar buttons.
+ * @param controller - The ToolbarController instance.
+ * @param tourController - The TourController instance (optional).
+ * @returns An object containing the handler functions conforming to ToolbarTemplateHandlers.
  */
-export const createToolbarHandlers = (deps: ToolbarHandlerDependencies) => {
+export const createToolbarHandlers = (
+  controller: ToolbarController,
+  tourController: TourController | null,
+): ToolbarTemplateHandlers => {
+  // --- Define individual handlers ---
   const handleGitHubClick = (event: MouseEvent) => {
-    // Check if the related popover is open before navigating
-    const popover = document.getElementById("github-button-popover");
-    if (!popover?.matches(":popover-open")) {
-      deps.openGitHubRepo();
+    window.open(
+      "https://github.com/tanepiper/open-space-2",
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  const handleSettingsClick = (event: MouseEvent) => {
+    controller.toggleSettingsPanel();
+  };
+
+  const handleAddViewClick = (event: MouseEvent) => {
+    controller.addCompositeEnginePanel();
+  };
+
+  const handleTourClick = (event: MouseEvent) => {
+    if (tourController) {
+      controller.startTour();
+    } else {
+      console.warn("Tour handler called but tourController is null");
     }
   };
 
-  const handleSettingsClick = () => {
-    deps.toggleSettingsPanel();
+  // --- Assemble handlers object --- //
+  const handlers: ToolbarTemplateHandlers = {
+    handleGitHubClick: handleGitHubClick,
+    handleSettingsClick: handleSettingsClick,
+    handleAddViewClick: handleAddViewClick,
+    handleTourClick: handleTourClick,
   };
 
-  const handleTourClick = () => {
-    deps.startTour();
-  };
-
-  const handleAddViewClick = () => {
-    deps.addCompositeEnginePanel();
-  };
-
-  /**
-   * Handle window resize events to update mobile detection and UI
-   */
-  const handleResize = () => {
-    const wasMobile = deps.isMobileDevice();
-    const isNowMobile = deps.detectMobileDevice(); // Assuming detectMobileDevice updates internal state if needed
-
-    // Only update if the mobile state actually changed
-    if (wasMobile !== isNowMobile) {
-      deps.updateToolbarForMobileState();
-    }
-  };
-
-  return {
-    handleGitHubClick,
-    handleSettingsClick,
-    handleTourClick,
-    handleAddViewClick,
-    handleResize,
-  };
+  return handlers;
 };
