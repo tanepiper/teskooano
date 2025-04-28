@@ -11,4 +11,3 @@
 - Defined core types: `TeskooanoPlugin`, `PanelConfig`, `FunctionConfig`, `ToolbarItemConfig`, `ToolbarTarget`, `ToolbarRegistration`, `ToolbarItemDefinition`.
 - Defined configuration/loading types: `ComponentLoadConfig`, `PluginLoadConfig`, `ComponentRegistryConfig`, `PluginRegistryConfig`.
 - Added initial `README.md`, `package.json`, `tsconfig.json`, `moon.yml`.
- 

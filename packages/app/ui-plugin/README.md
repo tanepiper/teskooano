@@ -18,43 +18,51 @@ Plugin and component loading is driven by configuration files, analyzed by the V
 
 ## How?
 
-1.  **Configure Components:** Create `componentRegistry.ts` mapping tag names to *relative paths* from the config file location (e.g., `./components/shared/Button.ts`).
+1.  **Configure Components:** Create `componentRegistry.ts` mapping tag names to _relative paths_ from the config file location (e.g., `./components/shared/Button.ts`).
 
     ```typescript
     // Example: apps/teskooano/src/config/componentRegistry.ts
-    import type { ComponentRegistryConfig } from '@teskooano/ui-plugin';
+    import type { ComponentRegistryConfig } from "@teskooano/ui-plugin";
 
     export const componentConfig: ComponentRegistryConfig = {
-      'teskooano-button': { path: '../components/shared/Button.ts' }, // Path relative to this file
-      'teskooano-card':   { path: '../components/shared/Card.ts' },
+      "teskooano-button": { path: "../components/shared/Button.ts" }, // Path relative to this file
+      "teskooano-card": { path: "../components/shared/Card.ts" },
     };
     ```
 
-2.  **Configure Plugins:** Create `pluginRegistry.ts` mapping plugin IDs to *relative paths* from the config file location (e.g., `../components/ui-controls/focus/FocusControl.plugin.ts`).
+2.  **Configure Plugins:** Create `pluginRegistry.ts` mapping plugin IDs to _relative paths_ from the config file location (e.g., `../components/ui-controls/focus/FocusControl.plugin.ts`).
 
     ```typescript
     // Example: apps/teskooano/src/config/pluginRegistry.ts
-    import type { PluginRegistryConfig } from '@teskooano/ui-plugin';
+    import type { PluginRegistryConfig } from "@teskooano/ui-plugin";
 
     export const pluginConfig: PluginRegistryConfig = {
-      'core-focus-controls': { path: '../components/ui-controls/focus/FocusControl.plugin.ts' },
+      "core-focus-controls": {
+        path: "../components/ui-controls/focus/FocusControl.plugin.ts",
+      },
     };
     ```
 
-3.  **Configure Vite:** In your application's `vite.config.ts`, import and use the `teskooanoUiPlugin`, providing the *absolute paths* to your configuration files.
+3.  **Configure Vite:** In your application's `vite.config.ts`, import and use the `teskooanoUiPlugin`, providing the _absolute paths_ to your configuration files.
 
     ```typescript
     // Example: apps/teskooano/vite.config.ts
-    import { defineConfig } from 'vite';
-    import { teskooanoUiPlugin } from '@teskooano/ui-plugin';
-    import path from 'path';
+    import { defineConfig } from "vite";
+    import { teskooanoUiPlugin } from "@teskooano/ui-plugin";
+    import path from "path";
 
     export default defineConfig({
       plugins: [
         teskooanoUiPlugin({
           // Use path.resolve to get absolute paths
-          componentRegistryPath: path.resolve(__dirname, 'src/config/componentRegistry.ts'),
-          pluginRegistryPath: path.resolve(__dirname, 'src/config/pluginRegistry.ts'),
+          componentRegistryPath: path.resolve(
+            __dirname,
+            "src/config/componentRegistry.ts",
+          ),
+          pluginRegistryPath: path.resolve(
+            __dirname,
+            "src/config/pluginRegistry.ts",
+          ),
         }),
         // ... other plugins
       ],
@@ -63,28 +71,37 @@ Plugin and component loading is driven by configuration files, analyzed by the V
     ```
 
 4.  **Vite Plugin Action:** The `teskooanoUiPlugin` reads the configs and generates a virtual module (`virtual:teskooano-loaders`) containing functions that perform Vite-analyzable dynamic imports, e.g.:
+
     ```typescript
     // virtual:teskooano-loaders (simplified)
     export const componentLoaders = {
-      'teskooano-button': () => import('/path/to/app/src/components/shared/Button.ts')
+      "teskooano-button": () =>
+        import("/path/to/app/src/components/shared/Button.ts"),
     };
     export const pluginLoaders = {
-       'core-focus-controls': () => import('/path/to/app/src/components/ui-controls/focus/FocusControl.plugin.ts')
+      "core-focus-controls": () =>
+        import(
+          "/path/to/app/src/components/ui-controls/focus/FocusControl.plugin.ts"
+        ),
     };
     ```
 
 5.  **Load Components and Plugins (in `main.ts`):**
-    *   Import `loadAndRegisterComponents`, `loadAndRegisterPlugins`.
-    *   Import your configuration objects (`componentConfig`, `pluginConfig`).
-    *   Call `await loadAndRegisterComponents(Object.keys(componentConfig))`.
-    *   Call `await loadAndRegisterPlugins(Object.keys(pluginConfig))`.
-    *   These functions now internally use the loaders from `virtual:teskooano-loaders`.
+
+    - Import `loadAndRegisterComponents`, `loadAndRegisterPlugins`.
+    - Import your configuration objects (`componentConfig`, `pluginConfig`).
+    - Call `await loadAndRegisterComponents(Object.keys(componentConfig))`.
+    - Call `await loadAndRegisterPlugins(Object.keys(pluginConfig))`.
+    - These functions now internally use the loaders from `virtual:teskooano-loaders`.
 
     ```typescript
     // Example: apps/teskooano/src/main.ts
-    import { loadAndRegisterComponents, loadAndRegisterPlugins } from '@teskooano/ui-plugin';
-    import { componentConfig } from './config/componentRegistry';
-    import { pluginConfig } from './config/pluginRegistry';
+    import {
+      loadAndRegisterComponents,
+      loadAndRegisterPlugins,
+    } from "@teskooano/ui-plugin";
+    import { componentConfig } from "./config/componentRegistry";
+    import { pluginConfig } from "./config/pluginRegistry";
 
     async function initializeApp() {
       // ...
@@ -98,4 +115,3 @@ Plugin and component loading is driven by configuration files, analyzed by the V
 6.  **Define a Plugin Module:** Export a `TeskooanoPlugin` object (usually named `plugin`) defining panels, functions, toolbar registrations, etc. (No change from previous step in this file).
 
 7.  **Consume Registered Items:** UI controllers use getter functions (`getToolbarItemsForTarget`, etc.) to dynamically build the UI. (No change here).
- 

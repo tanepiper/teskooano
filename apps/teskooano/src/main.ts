@@ -14,18 +14,51 @@ import { layoutOrientationStore, Orientation } from "./stores/layoutStore";
 
 // --- Import Plugin System --- //
 import {
-  loadAndRegisterComponents,
-  loadAndRegisterPlugins,
-  getPanelConfig,
-  getPlugins,
-  TeskooanoPlugin,
-  PanelConfig
+    getLoadedModuleClass,
+    getPlugins,
+    loadAndRegisterComponents,
+    loadAndRegisterPlugins,
+    PanelConfig,
+    TeskooanoPlugin
 } from "@teskooano/ui-plugin";
 import { componentConfig } from "./config/componentRegistry";
 import { pluginConfig } from "./config/pluginRegistry";
-import { TeskooanoModalManager } from "./components/shared/ModalManager";
+
+// --- Centralized instance store (Example) ---
+// You could use Nanostores or a simple exported object
+interface AppContext {
+    modalManager?: any; // Use the actual ModalManager type here
+    // other shared instances...
+}
+export const appContext: AppContext = {}; // Export this for other modules
 
 // --- Application Initialization --- //
+
+async function startApp() {
+    console.log('[App] Starting initialization...');
+
+    // Define which components/modules are critical for initial load
+    const criticalComponents = [
+        'teskooano-button', 
+        'teskooano-modal',
+        'teskooano-modal-manager', // Make sure manager is loaded early
+        // Add other essential tags/keys...
+    ]; 
+
+    try {
+        // Ensure critical components/modules are loaded BEFORE initializing the rest
+        console.log('[App] Loading critical components/modules...');
+        await loadAndRegisterComponents(criticalComponents);
+        console.log('[App] Critical components/modules loaded.');
+
+        // Now initialize the main application logic
+        initializeApp();
+
+    } catch (error) {
+        console.error('[App] Failed during critical component loading or initialization:', error);
+        // Handle initialization failure (e.g., show error message)
+    }
+}
 
 async function initializeApp() {
     console.log("Initializing Teskooano...");
@@ -55,12 +88,24 @@ async function initializeApp() {
     console.log("Initializing core controllers...");
 
     const dockviewController = new DockviewController(appElement);
-    const modalManager = new TeskooanoModalManager(dockviewController);
     const tourController = new TourController();
     const toolbarController = new ToolbarController(
         toolbarElement,
         dockviewController
     );
+
+    // --- Get Loaded Class and Instantiate Singleton ---
+    const ModalManagerClass = getLoadedModuleClass('teskooano-modal-manager');
+    if (!ModalManagerClass) {
+         console.error("[App] Failed to get TeskooanoModalManager class after loading.");
+         // Handle this critical failure
+         return; 
+    }
+    const modalManager = new ModalManagerClass(dockviewController);
+    console.log('[App] TeskooanoModalManager instantiated.');
+
+    // ---> Store the singleton instance for others to use
+    appContext.modalManager = modalManager; 
 
     // Inject ModalManager into TourModal class (if TourModal is still needed globally)
     TeskooanoTourModal.setModalManager(modalManager);
@@ -161,4 +206,4 @@ function setupEventListeners(tourController: TourController) {
 }
 
 // --- Start the App --- //
-initializeApp();
+startApp();

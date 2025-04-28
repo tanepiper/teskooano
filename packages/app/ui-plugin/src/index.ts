@@ -2,32 +2,33 @@
 
 // Export Types
 export type {
-    // Core Plugin System Types
-    ToolbarTarget,
-    ComponentConfig,
-    PanelConfig,
-    FunctionConfig,
-    BaseToolbarItemConfig,
-    PanelToolbarItemConfig,
-    FunctionToolbarItemConfig,
-    ToolbarItemConfig,
-    ToolbarItemDefinition,
-    ToolbarRegistration,
-    TeskooanoPlugin,
-    // Config types
-    ComponentLoadConfig,
-    PluginLoadConfig,
-    ComponentRegistryConfig,
-    PluginRegistryConfig
-} from './types.js';
+  // Core Plugin System Types
+  ToolbarTarget,
+  ComponentConfig,
+  PanelConfig,
+  FunctionConfig,
+  BaseToolbarItemConfig,
+  PanelToolbarItemConfig,
+  FunctionToolbarItemConfig,
+  ToolbarItemConfig,
+  ToolbarItemDefinition,
+  ToolbarRegistration,
+  TeskooanoPlugin,
+  // Config types
+  ComponentLoadConfig,
+  PluginLoadConfig,
+  ComponentRegistryConfig,
+  PluginRegistryConfig,
+} from "./types.js";
 
 // Export Client-Side Manager Functions
 export {
-    registerPlugin,
-    loadAndRegisterComponents,
-    loadAndRegisterPlugins,
-    getPlugins,
-    getPanelConfig,
-    getFunctionConfig,
-    getToolbarItemsForTarget
-} from './pluginManager.js';
+  registerPlugin,
+  loadAndRegisterComponents,
+  loadAndRegisterPlugins,
+  getPlugins,
+  getPanelConfig,
+  getFunctionConfig,
+  getToolbarItemsForTarget,
+  getLoadedModuleClass,
+} from "./pluginManager.js";

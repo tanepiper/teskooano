@@ -10,11 +10,11 @@ export interface ComponentLoadConfig {
   path: string;
   /** The name of the exported class. */
   className: string;
-  /** 
+  /**
    * Whether this module defines a custom element to be registered with customElements.define.
    * @default true
    */
-  isCustomElement?: boolean; 
+  isCustomElement?: boolean;
 }
 
 /** Configuration for dynamically loading a plugin. */
