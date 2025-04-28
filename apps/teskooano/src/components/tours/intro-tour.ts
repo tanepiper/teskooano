@@ -10,7 +10,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
   const BASE_TOUR_STEPS: TourStep[] = [
     {
       id: "app-intro",
-      element: "#app-logo",
+      element: "#toolbar-logo",
       overlayColor: "rgba(0, 0, 0, 0.75)", // Standard overlay
       popover: {
         title: "🔭 Welcome to Teskooano",
@@ -22,7 +22,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "app-intro-2",
-      element: "#app-logo",
+      element: "#toolbar-logo",
       overlayColor: "rgba(0, 0, 0, 0.75)", // Standard overlay
       popover: {
         title: "🛫 ...on to the tour!",
@@ -58,7 +58,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "add-view",
-      element: "#add-view-button",
+      element: "#main-toolbar-add-view",
       popover: {
         title: "🖥️ Multi-View Panels",
         description:
@@ -70,7 +70,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "controls-intro",
-      element: "toolbar-simulation-controls",
+      element: "#main-toolbar-sim-controls",
       popover: {
         title: "⏯️ Simulation Controls",
         description:
@@ -81,8 +81,8 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       disableActiveInteraction: true,
     },
     {
-      id: "system-controls-1",
-      element: "system-controls",
+      id: "teskooano-system-controls-1",
+      element: "teskooano-system-controls",
       popover: {
         title: "🪐 Managing Systems",
         description:
@@ -91,7 +91,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
         align: "center",
       },
       onNextClick: () => {
-        const generator = document.querySelector("system-controls");
+        const generator = document.querySelector("teskooano-system-controls");
         if (generator) {
           (generator as SystemControls).tourRandomSeed();
         }
@@ -99,8 +99,8 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       },
     },
     {
-      id: "system-controls-2",
-      element: "system-controls",
+      id: "teskooano-system-controls-2",
+      element: "teskooano-system-controls",
       popover: {
         title: "🪐 Managing Systems",
         description:
@@ -134,7 +134,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
 
     {
       id: "focus-control",
-      element: "#engine-toolbar-button-focus_control_composite_engine_view_1",
+      element: "#engine-toolbar-button-focus-control-button",
       overlayColor: "rgba(0, 0, 0, 0.3)", // More transparent for interactive controls
       disableActiveInteraction: false, // Allow interaction with the focus control
       popover: {
@@ -167,7 +167,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "celestial-info",
-      element: "#engine-toolbar-button-celestial_info_composite_engine_view_1",
+      element: "#engine-toolbar-button-celestial-info-button",
       popover: {
         title: "ℹ️ Celestial Info",
         description:
@@ -178,7 +178,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "renderer-info",
-      element: "#engine-toolbar-button-renderer_info_composite_engine_view_1",
+      element: "#engine-toolbar-button-engine-info-button",
       popover: {
         title: "🎨 Renderer & Performance",
         description:
@@ -189,7 +189,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "engine-settings",
-      element: "#engine-toolbar-button-engine_settings_composite_engine_view_1",
+      element: "#engine-toolbar-button-engine_settings",
       popover: {
         title: "⚙️ Engine Settings",
         description:
@@ -213,7 +213,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "github-reminder",
-      element: "#github-button",
+      element: "#toolbar-github",
       overlayColor: "rgba(0, 0, 0, 0.6)",
       popover: {
         title: "📤 Report Issues & Contribute",

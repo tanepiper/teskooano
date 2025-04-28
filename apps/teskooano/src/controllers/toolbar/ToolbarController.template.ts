@@ -203,17 +203,19 @@ export const renderToolbarTemplate = (
   }
 
   // Simulation Controls
-  const simControls = document.createElement("toolbar-simulation-controls");
-  simControls.id = "simulation-controls";
+  const simControls = document.createElement(
+    "toolbar-teskooano-simulation-controls",
+  );
+  simControls.id = "teskooano-simulation-controls";
   if (data.isMobile) {
     simControls.toggleAttribute("mobile", true);
   }
 
   // --- ADDED BACK: System Controls ---
   const systemControls = document.createElement(
-    "system-controls",
+    "teskooano-system-controls",
   ) as SystemControls;
-  systemControls.id = "system-controls";
+  systemControls.id = "teskooano-system-controls";
   if (data.isMobile) {
     systemControls.toggleAttribute("mobile", true);
   }

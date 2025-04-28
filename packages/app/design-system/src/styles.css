@@ -835,13 +835,13 @@ collapsible-section > div {
    ========================================================================== */
 
 /* Styles targeting custom elements - review if they can use base styles/classes */
-toolbar-simulation-controls {
+toolbar-teskooano-simulation-controls {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm); /* Use new spacing */
 }
 
-toolbar-simulation-controls .display-value {
+toolbar-teskooano-simulation-controls .display-value {
   /* Style like a regular text element or perhaps a disabled input */
   font-family: var(--font-family-mono);
   background-color: var(--color-surface-1);

@@ -20,7 +20,7 @@ export class EngineToolbar {
   private _dockviewController: DockviewController; // Reference to the controller
   private _apiId: string; // Keep for potential unique ID needs
   private _parentEngine: CompositeEnginePanel; // Store reference to parent engine
-  private _isExpanded: boolean = false; // ADD local state for expansion
+  private _isExpanded: boolean = true; // ADD local state for expansion
   private _activeFloatingPanels: Map<string, string> = new Map(); // Track panelId -> componentName
 
   /**

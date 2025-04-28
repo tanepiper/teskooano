@@ -62,12 +62,12 @@ export const componentConfig: ComponentRegistryConfig = {
   // 'ds-button': { path: '@teskooano/design-system/Button' },
 
   // --- ADD THESE (Adjust paths if needed) ---
-  "simulation-controls": {
+  "teskooano-simulation-controls": {
     path: "../components/engine/main-toolbar/simulation-controls/SimulationControls.ts",
     className: "SimulationControls",
     isCustomElement: true, // Ensure this is true or omitted
   },
-  "system-controls": {
+  "teskooano-system-controls": {
     path: "../components/engine/main-toolbar/system-controls/SystemControls.ts",
     className: "SystemControls",
     isCustomElement: true, // Ensure this is true or omitted

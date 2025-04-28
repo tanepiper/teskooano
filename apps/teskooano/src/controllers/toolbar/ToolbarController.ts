@@ -1,201 +1,220 @@
+import {
+  type FunctionToolbarItemConfig, // Specific config for function buttons
+  getFunctionConfig, // Assuming this type is added
+  getToolbarItemsForTarget,
+  getToolbarWidgetsForTarget, // Get all items for a target
+  type ToolbarItemConfig, // Assuming this function is added to the plugin package
+  type ToolbarWidgetConfig,
+} from "@teskooano/ui-plugin";
 import type { DockviewController } from "../dockview/DockviewController.js";
 import "./ToolbarController.css";
-// Import plugin types and functions (assuming they exist in the updated package)
-import {
-  getToolbarWidgetsForTarget, // Assuming this function is added to the plugin package
-  type ToolbarWidgetConfig, // Assuming this type is added
-} from "@teskooano/ui-plugin";
 
 import {
   createToolbarHandlers,
   type ToolbarTemplateHandlers,
 } from "./ToolbarController.handlers.js";
 
-// Remove GitHubIcon import, use direct SVG below
-// import GitHubIcon from "@fluentui/svg-icons/icons/github_24_regular.svg?raw";
-import AddIcon from "@fluentui/svg-icons/icons/add_24_regular.svg?raw";
 import TourIcon from "@fluentui/svg-icons/icons/compass_northwest_24_regular.svg?raw";
 import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
-// REMOVED: Import the logo icon
-// import LogoIcon from "../../assets/icon.png";
 
 /**
- * ToolbarController is responsible for managing the toolbar and adding engine views.
- * It dynamically renders toolbar content based on plugin registrations.
+ * @class ToolbarController
+ * @description Manages the main application toolbar, dynamically rendering buttons
+ * and widgets based on plugin registrations and handling user interactions.
+ * It also adapts the toolbar layout based on screen size (mobile/desktop).
  */
 export class ToolbarController {
   /**
-   * The DOM element that the toolbar will be added to.
+   * The container element for the toolbar UI.
+   * @private
    */
   private _element: HTMLElement;
   /**
-   * The DockviewController that the toolbar will use to add panels.
+   * Reference to the Dockview controller for adding/managing panels.
+   * @private
    */
   private _dockviewController: DockviewController;
   /**
-   * Track if we're on a mobile device
+   * Tracks whether the application is currently viewed on a mobile-like device width.
+   * @private
    */
   private _isMobileDevice: boolean = false;
 
-  // Cache STATIC elements
+  /**
+   * Reference to the GitHub button element.
+   * @private
+   */
   private _githubButton: HTMLElement | null = null;
+  /**
+   * Reference to the Settings button element.
+   * @private
+   */
   private _settingsButton: HTMLElement | null = null;
+  /**
+   * Reference to the Tour button element.
+   * @private
+   */
   private _tourButton: HTMLElement | null = null;
-  private _addButton: HTMLElement | null = null;
-  // REMOVED: Caching for dynamically added plugin widgets
-  // private _simControls: HTMLElement | null = null;
-  // private _systemControls: SystemControls | null = null;
 
-  // Handlers
-  // Use the specific type returned by createToolbarHandlers
+  /**
+   * Handlers for toolbar button clicks and other interactions.
+   * @private
+   */
   private _handlers: ToolbarTemplateHandlers;
 
-  // GitHub repository URL - CORRECTED back to original
+  /**
+   * URL for the Teskooano GitHub repository.
+   * @private
+   * @readonly
+   */
   private readonly GITHUB_REPO_URL = "https://github.com/tanepiper/teskooano";
-  // Website URL
+  /**
+   * URL for the main Teskooano website.
+   * @private
+   * @readonly
+   */
   private readonly WEBSITE_URL = "https://teskooano.space";
 
   /**
-   * Constructor for the ToolbarController.
-   * @param element - The DOM element that the toolbar will be added to.
-   * @param dockviewController - The DockviewController that the toolbar will use to add panels.
+   * Initializes the ToolbarController.
+   * @param {HTMLElement} element - The DOM element to attach the toolbar to.
+   * @param {DockviewController} dockviewController - The Dockview controller instance.
    */
   constructor(element: HTMLElement, dockviewController: DockviewController) {
     this._element = element;
     this._dockviewController = dockviewController;
-
-    // Detect initial mobile state
     this._isMobileDevice = this.detectMobileDevice();
-
-    // Create handlers directly using the updated signature
-    // Pass the bound methods needed by the handlers
     this._handlers = createToolbarHandlers(this);
 
-    // Set up resize listener - We need a separate handler for this
     window.addEventListener("resize", this.handleResize);
 
-    // Initial render
     this.createToolbar();
   }
 
-  // --- Resize Handler --- // ADDED BACK
   /**
-   * Handle window resize events to update mobile detection and UI
+   * Handles window resize events to check for mobile state changes and update the UI.
+   * @private
    */
-  private handleResize = () => {
+  private handleResize = (): void => {
     const wasMobile = this._isMobileDevice;
     const isNowMobile = this.detectMobileDevice();
-    // Only update if the mobile state actually changed
     if (wasMobile !== isNowMobile) {
-      // Update gap and static buttons
       this.updateToolbarForMobileState();
-      // Potentially re-render dynamic widgets if their appearance depends on mobile state?
-      // For now, assume widgets handle their own mobile styling.
     }
   };
-  // --- End Resize Handler ---
 
   /**
-   * Detect if the current device is a mobile device
+   * Detects if the current device context resembles a mobile device based on screen width or user agent.
+   * Updates the internal `_isMobileDevice` state.
+   * @public
+   * @returns {boolean} True if the device is considered mobile, false otherwise.
    */
   public detectMobileDevice(): boolean {
-    // Check screen width - consider anything under 768px as mobile
     const isMobileWidth = window.innerWidth < 768;
-    // Also check user agent for mobile devices
     const userAgent = navigator.userAgent.toLowerCase();
     const isMobileDevice =
       /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
         userAgent,
       );
-    // Update internal state
     this._isMobileDevice = isMobileWidth || isMobileDevice;
     return this._isMobileDevice;
   }
 
   /**
-   * Cleanup event listeners when controller is destroyed
+   * Cleans up resources, specifically removing the window resize event listener.
+   * Should be called when the controller is no longer needed.
+   * @public
    */
   public destroy(): void {
-    // Remove the resize listener
     window.removeEventListener("resize", this.handleResize);
   }
 
   /**
-   * Updates the toolbar elements based on the current mobile state.
-   * PUBLIC: Called by the resize handler.
+   * Updates specific toolbar elements' visual appearance based on the current mobile state.
+   * For example, adjusts spacing and toggles mobile attributes on buttons.
+   * @public
    */
   public updateToolbarForMobileState(): void {
-    // Update gap
     this._element.style.gap = this._isMobileDevice
       ? "var(--space-xs, 4px)"
       : "var(--space-md, 12px)";
 
-    // Toggle mobile attribute ONLY on static cached elements
     this._tourButton?.toggleAttribute("mobile", this._isMobileDevice);
-    this._addButton?.toggleAttribute("mobile", this._isMobileDevice);
-    // REMOVED: Toggling attributes on dynamic widgets
-    // this._simControls?.toggleAttribute("mobile", this._isMobileDevice);
+    // Potentially add other elements that need mobile state adjustments here
+    // e.g., find the "Add View" button by its ID if it needs specific styling.
+    const addViewButton = this._element.querySelector<HTMLElement>(
+      "#main-toolbar-add-view",
+    );
+    addViewButton?.toggleAttribute("mobile", this._isMobileDevice);
   }
 
-  // --- Private Methods ---
-
   /**
-   * Creates/re-creates the toolbar using the template and attaches handlers.
+   * Clears the existing toolbar content and rebuilds it by setting up layout,
+   * creating static buttons, and loading dynamic items from the plugin system.
+   * @private
    */
   private createToolbar(): void {
-    // Clear existing content
     this._element.innerHTML = "";
-    this._element.classList.add("toolbar-container"); // Add class for main container styling
+    this._element.classList.add("toolbar-container");
 
-    // --- Create distinct areas --- //
+    const { leftButtonGroup, widgetArea } = this._setupToolbarLayout();
+    this._createStaticButtons(leftButtonGroup);
+    this._loadAndCreatePluginItems(leftButtonGroup, widgetArea);
+
+    this._element.appendChild(leftButtonGroup);
+    this._element.appendChild(widgetArea);
+
+    this.updateToolbarForMobileState();
+  }
+
+  /**
+   * Creates the main layout containers (div elements) for the toolbar sections.
+   * @private
+   * @returns {{ leftButtonGroup: HTMLDivElement, widgetArea: HTMLDivElement }} An object containing the created container elements.
+   */
+  private _setupToolbarLayout(): {
+    leftButtonGroup: HTMLDivElement;
+    widgetArea: HTMLDivElement;
+  } {
     const leftButtonGroup = document.createElement("div");
     leftButtonGroup.classList.add("toolbar-section", "left-button-group");
 
     const widgetArea = document.createElement("div");
     widgetArea.classList.add("toolbar-section", "widget-area");
 
-    // --- Render Static Elements into the left group --- //
-    // --- NEW: Logo Button ---
+    return { leftButtonGroup, widgetArea };
+  }
+
+  /**
+   * Creates and configures the static buttons (Logo, GitHub, Tour, Settings)
+   * and appends them to the specified container.
+   * @private
+   * @param {HTMLElement} container - The container element (e.g., leftButtonGroup) to append the buttons to.
+   */
+  private _createStaticButtons(container: HTMLElement): void {
     const logoButton = document.createElement("teskooano-button");
     logoButton.id = "toolbar-logo";
     logoButton.title = "Visit Teskooano Website";
     logoButton.setAttribute("variant", "image");
     logoButton.setAttribute("size", "medium");
-    // Use an img tag for the PNG logo, explicitly setting size
     logoButton.innerHTML = `<span slot="icon"><img src="/assets/icon.png" alt="Teskooano Logo" style="width: 45px; height: 45px; object-fit: contain;"></span>`;
     logoButton.addEventListener("click", () => {
       window.open(this.WEBSITE_URL, "_blank");
     });
-    leftButtonGroup.appendChild(logoButton); // Append FIRST
+    container.appendChild(logoButton);
 
-    // Example: GitHub Button
     this._githubButton = document.createElement("teskooano-button");
     this._githubButton.id = "toolbar-github";
     this._githubButton.title = "View on GitHub";
     this._githubButton.setAttribute("variant", "icon");
     this._githubButton.setAttribute("size", "medium");
-    // --- Embed your actual GitHub SVG here --- //
     this._githubButton.innerHTML = `<span slot="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.341-3.369-1.341-.455-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.004.07 1.532 1.03 1.532 1.03.891 1.529 2.341 1.088 2.91.832.092-.647.348-1.088.635-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682-.103-.253-.446-1.27.098-2.64 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0 1 12 6.82c.85.004 1.705.115 2.504.336 1.91-1.294 2.748-1.025 2.748-1.025.546 1.37.201 2.387.099 2.64.64.698 1.03 1.591 1.03 2.682 0 3.841-2.337 4.688-4.566 4.935.359.309.678.92.678 1.852 0 1.338-.012 2.419-.012 2.748 0 .267.18.577.688.48C19.137 20.166 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg></span>`;
     this._githubButton.addEventListener(
       "click",
       this._handlers.handleGitHubClick,
     );
-    leftButtonGroup.appendChild(this._githubButton); // Append to left group
+    container.appendChild(this._githubButton);
 
-    // Example: Add Button
-    this._addButton = document.createElement("teskooano-button");
-    this._addButton.id = "toolbar-add-panel";
-    this._addButton.title = "Add Engine View";
-    this._addButton.setAttribute("variant", "icon");
-    this._addButton.setAttribute("size", "medium");
-    this._addButton.innerHTML = `<span slot="icon">${AddIcon}</span>`;
-    this._addButton.addEventListener(
-      "click",
-      this._handlers.handleAddViewClick,
-    );
-    leftButtonGroup.appendChild(this._addButton); // Append to left group
-
-    // Example: Tour Button
     this._tourButton = document.createElement("teskooano-button");
     this._tourButton.id = "toolbar-tour";
     this._tourButton.title = "Start Tour";
@@ -203,9 +222,8 @@ export class ToolbarController {
     this._tourButton.setAttribute("size", "medium");
     this._tourButton.innerHTML = `<span slot="icon">${TourIcon}</span>`;
     this._tourButton.addEventListener("click", this._handlers.handleTourClick);
-    leftButtonGroup.appendChild(this._tourButton); // Append to left group
+    container.appendChild(this._tourButton);
 
-    // Example: Settings Button
     this._settingsButton = document.createElement("teskooano-button");
     this._settingsButton.id = "toolbar-settings";
     this._settingsButton.title = "Settings";
@@ -216,20 +234,35 @@ export class ToolbarController {
       "click",
       this._handlers.handleSettingsClick,
     );
-    leftButtonGroup.appendChild(this._settingsButton); // Append to left group
+    container.appendChild(this._settingsButton);
+  }
 
-    // --- Render Dynamic Widgets into the widget area --- //
+  /**
+   * Fetches and creates toolbar items (widgets, buttons) registered via the plugin system
+   * for the "main-toolbar" target and appends them to the appropriate containers.
+   * Handles basic parameter setting for widgets and function execution for buttons.
+   * @private
+   * @param {HTMLElement} buttonContainer - The container for buttons.
+   * @param {HTMLElement} widgetContainer - The container for widgets.
+   */
+  private _loadAndCreatePluginItems(
+    buttonContainer: HTMLElement,
+    widgetContainer: HTMLElement,
+  ): void {
+    const targetId = "main-toolbar";
+
     try {
       const widgets: ToolbarWidgetConfig[] =
-        getToolbarWidgetsForTarget("main-toolbar");
-
+        getToolbarWidgetsForTarget(targetId);
       widgets.forEach((widgetConfig) => {
         try {
           const widgetElement = document.createElement(
             widgetConfig.componentName,
           );
           widgetElement.classList.add("toolbar-widget");
-          // Apply params logic...
+          if (widgetConfig.id) {
+            widgetElement.id = widgetConfig.id;
+          }
           if (widgetConfig.params) {
             Object.entries(widgetConfig.params).forEach(([key, value]) => {
               if (
@@ -239,45 +272,105 @@ export class ToolbarController {
               ) {
                 widgetElement.setAttribute(key, String(value));
               } else {
-                console.warn(
-                  `Cannot set complex param '${key}' as attribute on ${widgetConfig.componentName}`,
+                console.error(
+                  // Use error here as it's unexpected
+                  `[ToolbarController] Cannot set complex param '${key}' as attribute on ${widgetConfig.componentName}`,
                 );
               }
             });
           }
-          widgetArea.appendChild(widgetElement); // Append to widget area
-          console.log(
-            `[ToolbarController] Added widget: ${widgetConfig.componentName}`,
-          );
+          widgetContainer.appendChild(widgetElement);
         } catch (widgetError) {
           console.error(
-            `[ToolbarController] Error creating widget '${widgetConfig.componentName}' (ID: ${widgetConfig.id}):`,
+            `[ToolbarController] Error creating widget '${widgetConfig.id ?? widgetConfig.componentName}':`,
             widgetError,
           );
         }
       });
     } catch (pluginError) {
       console.error(
-        "[ToolbarController] Error fetching or processing toolbar widgets:",
+        `[ToolbarController] Error fetching or processing toolbar widgets for target '${targetId}':`,
         pluginError,
       );
       const errorEl = document.createElement("div");
       errorEl.textContent = "Error loading toolbar widgets.";
       errorEl.style.color = "red";
-      widgetArea.appendChild(errorEl); // Append error to widget area
+      widgetContainer.appendChild(errorEl);
     }
 
-    // --- Append areas to the main element --- //
-    this._element.appendChild(leftButtonGroup);
-    this._element.appendChild(widgetArea);
+    try {
+      const items: ToolbarItemConfig[] = getToolbarItemsForTarget(targetId);
+      items.forEach((item) => {
+        try {
+          if (item.type === "function") {
+            const buttonConfig = item as FunctionToolbarItemConfig;
+            if (!buttonConfig.functionId) {
+              console.error(
+                // Use error here as it's unexpected
+                `[ToolbarController] Skipping function item '${buttonConfig.id}' - missing functionId.`,
+              );
+              return;
+            }
 
-    // Apply initial mobile state visuals to static elements
-    this.updateToolbarForMobileState();
+            const buttonElement = document.createElement("teskooano-button");
+            buttonElement.id = buttonConfig.id;
+            buttonElement.title = buttonConfig.title ?? "";
+            buttonElement.setAttribute("variant", "icon");
+            buttonElement.setAttribute("size", "medium");
+            if (buttonConfig.iconSvg) {
+              buttonElement.innerHTML = `<span slot="icon">${buttonConfig.iconSvg}</span>`;
+            }
+
+            const functionId = buttonConfig.functionId;
+            buttonElement.addEventListener("click", () => {
+              const funcConfig = getFunctionConfig(functionId);
+              if (funcConfig?.execute) {
+                try {
+                  funcConfig.execute();
+                } catch (execError) {
+                  console.error(
+                    `[ToolbarController] Error executing function '${functionId}':`,
+                    execError,
+                  );
+                }
+              } else {
+                console.error(
+                  // Use error here as it's unexpected
+                  `[ToolbarController] Button clicked, but function '${functionId}' not found via getFunctionConfig.`,
+                );
+              }
+            });
+
+            buttonContainer.appendChild(buttonElement);
+          } else if (item.type === "panel") {
+            console.warn(
+              // Use warn as it's planned but not implemented
+              `[ToolbarController] Skipping panel item '${item.id}' - panel item handling not implemented.`,
+            );
+          }
+        } catch (elementError) {
+          console.error(
+            `[ToolbarController] Error creating toolbar item '${item.id}':`,
+            elementError,
+          );
+        }
+      });
+    } catch (pluginError) {
+      console.error(
+        `[ToolbarController] Error fetching or processing toolbar items for target '${targetId}':`,
+        pluginError,
+      );
+      const errorEl = document.createElement("div");
+      errorEl.textContent = "Error loading toolbar buttons/items.";
+      errorEl.style.color = "red";
+      buttonContainer.appendChild(errorEl);
+    }
   }
 
   /**
-   * Opens the GitHub repository in a new window/tab
-   * PUBLIC: Called by the github button handler.
+   * Opens the Teskooano GitHub repository in a new browser window or tab.
+   * Intended to be called by the GitHub button's click handler.
+   * @public
    */
   public openGitHubRepo(): void {
     window.open(this.GITHUB_REPO_URL, "_blank");

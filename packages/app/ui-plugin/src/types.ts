@@ -188,7 +188,7 @@ export interface ToolbarWidgetConfig {
   id: string;
   /** The target toolbar area ID (e.g., 'main-toolbar', 'engine-toolbar'). */
   target: string;
-  /** The tag name of the custom element to render (e.g., 'system-controls'). */
+  /** The tag name of the custom element to render (e.g., 'teskooano-system-controls'). */
   componentName: string;
   /** Optional rendering order (lower numbers appear first/earlier). */
   order?: number;

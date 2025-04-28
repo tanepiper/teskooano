@@ -7,7 +7,7 @@ describe("SystemControls", () => {
   beforeEach(async () => {
     // Create and append the element to the DOM for testing
     // This might require jsdom or similar in vitest config if running in Node
-    element = document.createElement("system-controls");
+    element = document.createElement("teskooano-system-controls");
     document.body.appendChild(element);
     // Wait for component to render if necessary (e.g., if async)
     // await element.updateComplete; // Example for LitElement, adjust as needed

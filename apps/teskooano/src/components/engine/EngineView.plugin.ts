@@ -21,6 +21,7 @@ import { generateAndLoadSystem } from "../../systems/system-generator.js";
 import { CustomEvents } from "@teskooano/data-types";
 
 import SparkleIcon from "@fluentui/svg-icons/icons/sparkle_24_regular.svg?raw";
+import AddIcon from "@fluentui/svg-icons/icons/add_24_regular.svg?raw";
 import type { DockviewApi, AddPanelOptions } from "dockview-core";
 
 let enginePanelCounter = 0;
@@ -372,33 +373,34 @@ const copySeedFunction: FunctionConfig = {
   },
 };
 
-const mainToolbarRegistration: ToolbarRegistration = {
-  target: "main-toolbar",
-  items: [
-    {
-      id: "main-toolbar-random-system",
-      type: "function",
-      title: "Generate Random System",
-      iconSvg: SparkleIcon,
-      functionId: generateRandomSystemFunction.id,
-      order: 200,
-    },
-  ],
-};
-
 // --- Define Toolbar Widget Configurations --- //
 const simulationControlsWidget: ToolbarWidgetConfig = {
   id: "main-toolbar-sim-controls",
   target: "main-toolbar",
-  componentName: "simulation-controls",
+  componentName: "teskooano-simulation-controls",
   order: 10, // Render before system controls
 };
 
 const systemControlsWidget: ToolbarWidgetConfig = {
-  id: "main-toolbar-system-controls",
+  id: "main-toolbar-teskooano-system-controls",
   target: "main-toolbar",
-  componentName: "system-controls",
+  componentName: "teskooano-system-controls",
   order: 20, // Render after sim controls
+};
+
+// Registration for the 'Add Engine View' button
+const addViewButtonRegistration: ToolbarRegistration = {
+  target: "main-toolbar", // Target the main toolbar area
+  items: [
+    {
+      id: "main-toolbar-add-view",
+      type: "function",
+      title: "Add Engine View",
+      iconSvg: AddIcon,
+      functionId: addCompositeEnginePanelFunction.id,
+      order: 150, // Place it logically among other buttons
+    },
+  ],
 };
 
 export const plugin: TeskooanoPlugin = {
@@ -416,6 +418,6 @@ export const plugin: TeskooanoPlugin = {
     createBlankSystemFunction,
     copySeedFunction,
   ],
-  toolbarRegistrations: [mainToolbarRegistration],
+  toolbarRegistrations: [addViewButtonRegistration],
   toolbarWidgets: [simulationControlsWidget, systemControlsWidget],
 };

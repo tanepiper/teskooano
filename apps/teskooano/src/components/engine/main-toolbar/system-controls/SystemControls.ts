@@ -9,7 +9,7 @@ import { SystemControlsTemplate } from "./SystemControls.template.js";
 import * as SystemControlsUI from "./system-controls.ui.js";
 
 /**
- * @element system-controls
+ * @element teskooano-system-controls
  * @description
  * A custom element that provides UI controls for managing the star system generation,
  * loading, saving, and clearing within the Teskooano application.
@@ -80,7 +80,8 @@ class SystemControls
 
     // Cache DOM elements
     this.container =
-      this.shadowRoot?.querySelector(".system-controls-container") || null;
+      this.shadowRoot?.querySelector(".teskooano-system-controls-container") ||
+      null;
     this.emptyState = this.shadowRoot?.querySelector(".state--empty") || null;
     this.loadedState = this.shadowRoot?.querySelector(".state--loaded") || null;
     this.seedInput = this.shadowRoot?.querySelector("#seed") || null;

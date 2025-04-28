@@ -333,7 +333,7 @@ export async function createBlankSystem(): Promise<ActionResult> {
     actions.createSolarSystem(defaultStar);
     console.log(`Default star "${defaultStar.name}" added to the system.`);
     console.warn(
-      "[system-controls.actions] TODO: Need correct action/store to set systemName for blank system.",
+      "[teskooano-system-controls.actions] TODO: Need correct action/store to set systemName for blank system.",
     );
 
     return { success: true, symbol: "📝", message: "Blank system created." };

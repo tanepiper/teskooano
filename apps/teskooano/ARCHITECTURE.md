@@ -20,7 +20,7 @@
 
 3.  **`controllers/toolbarController.ts`**: Manages the top toolbar element (`#toolbar`).
 
-    - Renders the toolbar content, including application icon, buttons (`Add Teskooano`, `Settings`), simulation controls (`toolbar-simulation-controls`), and potentially a seed form (`toolbar-seed-form`).
+    - Renders the toolbar content, including application icon, buttons (`Add Teskooano`, `Settings`), simulation controls (`toolbar-teskooano-simulation-controls`), and potentially a seed form (`toolbar-seed-form`).
     - Handles button actions:
       - `Add Teskooano`: Calls `addEnginePanels` to create a new `EnginePanel` and its associated `UiPanel` within the `dockview` layout, managed via the `DockviewController`.
       - `Settings`: Calls `toggleSettingsPanel` to add or remove a floating `SettingsPanel` using the `DockviewController`.

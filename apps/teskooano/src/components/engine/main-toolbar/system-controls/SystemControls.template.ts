@@ -27,7 +27,7 @@ template.innerHTML = `
       width: auto;
     }
 
-    .system-controls-container {
+    .teskooano-system-controls-container {
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -247,7 +247,7 @@ template.innerHTML = `
      }
 
   </style>
-  <div class="system-controls-container">
+  <div class="teskooano-system-controls-container">
     <!-- Empty State -->
     <div class="state state--empty">
       <form class="seed-form">
