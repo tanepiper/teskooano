@@ -1,8 +1,4 @@
 import type { DockviewController } from "../dockview/DockviewController.js";
-// Custom elements are registered globally in main.ts now
-// import "../../components/engine/main-toolbar/simulation-controls/SimulationControls.ts";
-// import "../../components/engine/main-toolbar/system-controls/SystemControls.ts";
-// import type { SystemControls } from "../../components/engine/main-toolbar/system-controls/SystemControls.ts";
 import "./ToolbarController.css";
 // Import plugin types and functions (assuming they exist in the updated package)
 import {
@@ -14,11 +10,14 @@ import {
   createToolbarHandlers,
   type ToolbarTemplateHandlers,
 } from "./ToolbarController.handlers.js";
-// We no longer use the static template renderer
-// import {
-//   renderToolbarTemplate,
-//   type ToolbarTemplateData,
-// } from "./ToolbarController.template.js";
+
+// Remove GitHubIcon import, use direct SVG below
+// import GitHubIcon from "@fluentui/svg-icons/icons/github_24_regular.svg?raw";
+import AddIcon from "@fluentui/svg-icons/icons/add_24_regular.svg?raw";
+import TourIcon from "@fluentui/svg-icons/icons/compass_northwest_24_regular.svg?raw";
+import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
+// REMOVED: Import the logo icon
+// import LogoIcon from "../../assets/icon.png";
 
 /**
  * ToolbarController is responsible for managing the toolbar and adding engine views.
@@ -53,6 +52,8 @@ export class ToolbarController {
 
   // GitHub repository URL - CORRECTED back to original
   private readonly GITHUB_REPO_URL = "https://github.com/tanepiper/teskooano";
+  // Website URL
+  private readonly WEBSITE_URL = "https://teskooano.space";
 
   /**
    * Constructor for the ToolbarController.
@@ -144,9 +145,28 @@ export class ToolbarController {
   private createToolbar(): void {
     // Clear existing content
     this._element.innerHTML = "";
+    this._element.classList.add("toolbar-container"); // Add class for main container styling
 
-    // --- Render Static Elements (Example - Adapt based on ToolbarController.template.js) ---
-    // You'll need to recreate the structure and attach handlers for non-plugin items
+    // --- Create distinct areas --- //
+    const leftButtonGroup = document.createElement("div");
+    leftButtonGroup.classList.add("toolbar-section", "left-button-group");
+
+    const widgetArea = document.createElement("div");
+    widgetArea.classList.add("toolbar-section", "widget-area");
+
+    // --- Render Static Elements into the left group --- //
+    // --- NEW: Logo Button ---
+    const logoButton = document.createElement("teskooano-button");
+    logoButton.id = "toolbar-logo";
+    logoButton.title = "Visit Teskooano Website";
+    logoButton.setAttribute("variant", "image");
+    logoButton.setAttribute("size", "medium");
+    // Use an img tag for the PNG logo, explicitly setting size
+    logoButton.innerHTML = `<span slot="icon"><img src="/assets/icon.png" alt="Teskooano Logo" style="width: 45px; height: 45px; object-fit: contain;"></span>`;
+    logoButton.addEventListener("click", () => {
+      window.open(this.WEBSITE_URL, "_blank");
+    });
+    leftButtonGroup.appendChild(logoButton); // Append FIRST
 
     // Example: GitHub Button
     this._githubButton = document.createElement("teskooano-button");
@@ -154,17 +174,52 @@ export class ToolbarController {
     this._githubButton.title = "View on GitHub";
     this._githubButton.setAttribute("variant", "icon");
     this._githubButton.setAttribute("size", "medium");
-    this._githubButton.innerHTML = `<span slot="icon">/* SVG for GitHub */</span>`;
+    // --- Embed your actual GitHub SVG here --- //
+    this._githubButton.innerHTML = `<span slot="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.341-3.369-1.341-.455-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.004.07 1.532 1.03 1.532 1.03.891 1.529 2.341 1.088 2.91.832.092-.647.348-1.088.635-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682-.103-.253-.446-1.27.098-2.64 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0 1 12 6.82c.85.004 1.705.115 2.504.336 1.91-1.294 2.748-1.025 2.748-1.025.546 1.37.201 2.387.099 2.64.64.698 1.03 1.591 1.03 2.682 0 3.841-2.337 4.688-4.566 4.935.359.309.678.92.678 1.852 0 1.338-.012 2.419-.012 2.748 0 .267.18.577.688.48C19.137 20.166 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg></span>`;
     this._githubButton.addEventListener(
       "click",
       this._handlers.handleGitHubClick,
     );
-    this._element.appendChild(this._githubButton);
+    leftButtonGroup.appendChild(this._githubButton); // Append to left group
 
-    // --- Render Dynamic Widgets from Plugins ---
+    // Example: Add Button
+    this._addButton = document.createElement("teskooano-button");
+    this._addButton.id = "toolbar-add-panel";
+    this._addButton.title = "Add Engine View";
+    this._addButton.setAttribute("variant", "icon");
+    this._addButton.setAttribute("size", "medium");
+    this._addButton.innerHTML = `<span slot="icon">${AddIcon}</span>`;
+    this._addButton.addEventListener(
+      "click",
+      this._handlers.handleAddViewClick,
+    );
+    leftButtonGroup.appendChild(this._addButton); // Append to left group
+
+    // Example: Tour Button
+    this._tourButton = document.createElement("teskooano-button");
+    this._tourButton.id = "toolbar-tour";
+    this._tourButton.title = "Start Tour";
+    this._tourButton.setAttribute("variant", "icon");
+    this._tourButton.setAttribute("size", "medium");
+    this._tourButton.innerHTML = `<span slot="icon">${TourIcon}</span>`;
+    this._tourButton.addEventListener("click", this._handlers.handleTourClick);
+    leftButtonGroup.appendChild(this._tourButton); // Append to left group
+
+    // Example: Settings Button
+    this._settingsButton = document.createElement("teskooano-button");
+    this._settingsButton.id = "toolbar-settings";
+    this._settingsButton.title = "Settings";
+    this._settingsButton.setAttribute("variant", "icon");
+    this._settingsButton.setAttribute("size", "medium");
+    this._settingsButton.innerHTML = `<span slot="icon">${SettingsIcon}</span>`;
+    this._settingsButton.addEventListener(
+      "click",
+      this._handlers.handleSettingsClick,
+    );
+    leftButtonGroup.appendChild(this._settingsButton); // Append to left group
+
+    // --- Render Dynamic Widgets into the widget area --- //
     try {
-      // Fetch and sort widgets registered for the 'main-toolbar'
-      // NOTE: getToolbarWidgetsForTarget must exist in the ui-plugin package
       const widgets: ToolbarWidgetConfig[] =
         getToolbarWidgetsForTarget("main-toolbar");
 
@@ -174,11 +229,9 @@ export class ToolbarController {
             widgetConfig.componentName,
           );
           widgetElement.classList.add("toolbar-widget");
-
-          // Apply params as attributes (simple example, might need refinement)
+          // Apply params logic...
           if (widgetConfig.params) {
             Object.entries(widgetConfig.params).forEach(([key, value]) => {
-              // Basic attribute setting, handle complex objects if needed
               if (
                 typeof value === "string" ||
                 typeof value === "number" ||
@@ -186,15 +239,13 @@ export class ToolbarController {
               ) {
                 widgetElement.setAttribute(key, String(value));
               } else {
-                // Maybe set as property? element[key] = value;
                 console.warn(
                   `Cannot set complex param '${key}' as attribute on ${widgetConfig.componentName}`,
                 );
               }
             });
           }
-
-          this._element.appendChild(widgetElement);
+          widgetArea.appendChild(widgetElement); // Append to widget area
           console.log(
             `[ToolbarController] Added widget: ${widgetConfig.componentName}`,
           );
@@ -210,49 +261,15 @@ export class ToolbarController {
         "[ToolbarController] Error fetching or processing toolbar widgets:",
         pluginError,
       );
-      // Render fallback or error message?
       const errorEl = document.createElement("div");
       errorEl.textContent = "Error loading toolbar widgets.";
       errorEl.style.color = "red";
-      this._element.appendChild(errorEl);
+      widgetArea.appendChild(errorEl); // Append error to widget area
     }
 
-    // --- Render other Static Elements (Add, Tour, Settings) ---
-    // Example: Add Button
-    this._addButton = document.createElement("teskooano-button");
-    this._addButton.id = "toolbar-add-panel";
-    this._addButton.title = "Add Engine View";
-    this._addButton.setAttribute("variant", "icon");
-    this._addButton.setAttribute("size", "medium");
-    this._addButton.innerHTML = `<span slot="icon">/* SVG for Add */</span>`;
-    this._addButton.addEventListener(
-      "click",
-      this._handlers.handleAddViewClick,
-    );
-    this._element.appendChild(this._addButton);
-
-    // Example: Tour Button
-    this._tourButton = document.createElement("teskooano-button");
-    this._tourButton.id = "toolbar-tour";
-    this._tourButton.title = "Start Tour";
-    this._tourButton.setAttribute("variant", "icon");
-    this._tourButton.setAttribute("size", "medium");
-    this._tourButton.innerHTML = `<span slot="icon">/* SVG for Tour */</span>`;
-    this._tourButton.addEventListener("click", this._handlers.handleTourClick);
-    this._element.appendChild(this._tourButton);
-
-    // Example: Settings Button
-    this._settingsButton = document.createElement("teskooano-button");
-    this._settingsButton.id = "toolbar-settings";
-    this._settingsButton.title = "Settings";
-    this._settingsButton.setAttribute("variant", "icon");
-    this._settingsButton.setAttribute("size", "medium");
-    this._settingsButton.innerHTML = `<span slot="icon">/* SVG for Settings */</span>`;
-    this._settingsButton.addEventListener(
-      "click",
-      this._handlers.handleSettingsClick,
-    );
-    this._element.appendChild(this._settingsButton);
+    // --- Append areas to the main element --- //
+    this._element.appendChild(leftButtonGroup);
+    this._element.appendChild(widgetArea);
 
     // Apply initial mobile state visuals to static elements
     this.updateToolbarForMobileState();

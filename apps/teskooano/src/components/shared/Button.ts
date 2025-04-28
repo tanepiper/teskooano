@@ -118,6 +118,44 @@ template.innerHTML = `
        border-color: var(--color-border-focus); /* Show border on focus */
     }
 
+    /* --- Image Variant --- */
+    /* Special styling for buttons that are just raster images (PNG, JPG) */
+    :host([variant="image"]) button {
+      padding: 0; /* No padding to allow image fill */
+      min-height: auto;
+      min-width: auto;
+      /* Fixed size */
+      width: 45px;
+      height: 45px;
+      background-color: transparent;
+      border-color: transparent;
+      gap: 0;
+      line-height: 0; 
+      display: flex; 
+      align-items: center;
+    }
+    :host([variant="image"]) {
+      /* Remove host height constraint */
+      /* height: 100%; */
+      display: inline-flex; 
+      align-items: center; 
+      /* Add margin to the host element */
+      margin-right: var(--space-sm, 8px);
+    }
+    :host([variant="image"]) button:hover:not([disabled]) {
+        background-color: var(--color-surface-hover);
+        border-color: transparent;
+    }
+    :host([variant="image"]) button:active:not([disabled]) {
+        background-color: var(--color-surface-active);
+        border-color: transparent;
+    }
+    :host([variant="image"]) button:focus-visible {
+       /* Simple outline for image buttons */
+       outline: var(--border-width-medium) solid var(--color-border-focus); 
+       outline-offset: 1px; 
+       border-color: transparent;
+    }
 
     /* --- Sizes using host attributes --- */
     :host([size="xs"]) button {
@@ -175,8 +213,9 @@ template.innerHTML = `
       display: inline-flex; /* Ensure icon aligns */
       align-items: center;
       justify-content: center;
-      width: var(--icon-size);
-      height: var(--icon-size);
+      /* REMOVED: Explicit width/height - let content determine size or fill */
+      /* width: var(--icon-size); */
+      /* height: var(--icon-size); */
       color: inherit; /* Make icon inherit host color */
       fill: currentColor; /* Make icon inherit host color */
       /* Dynamic margin based on presence of text */
