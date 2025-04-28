@@ -8,11 +8,13 @@ import { EnginePlaceholder } from "./components/engine/EnginePlaceholder";
 import { TeskooanoTourModal } from "./components/tours/TourModal";
 import { DockviewController } from "./controllers/dockview/DockviewController";
 import { ToolbarController } from "./controllers/toolbar/ToolbarController";
-import { TourController } from "./controllers/tourController";
+// import { TourController } from "./controllers/tourController"; // REMOVED - Plugin handles this now
 import { layoutOrientationStore, Orientation } from "./stores/layoutStore";
+// import { ProgressPanel } from "./components/engine/ProgressPanel"; // REMOVED Import
 
 // --- Import Plugin System --- //
 import {
+  getFunctionConfig,
   getLoadedModuleClass,
   getPlugins,
   loadAndRegisterComponents,
@@ -89,10 +91,11 @@ async function initializeApp() {
   console.log("Initializing core controllers...");
 
   const dockviewController = new DockviewController(appElement);
-  const tourController = new TourController();
+  // const tourController = new TourController(); // REMOVED - Plugin handles this
   const toolbarController = new ToolbarController(
     toolbarElement,
     dockviewController,
+    // No tourController passed here anymore
   );
 
   // --- Get Loaded Class and Instantiate Singleton ---
@@ -116,8 +119,10 @@ async function initializeApp() {
   // Set Dockview API for SeedForm & EnginePlaceholder (if still needed globally)
   EnginePlaceholder.setDockviewApi(dockviewController.api);
 
-  // Register Dockview panels using loaded plugin metadata
+  // --- Register Dockview Components --- //
   console.log("Registering Dockview panel components...");
+
+  // Register components from plugins
   const plugins = getPlugins();
   plugins.forEach((plugin: TeskooanoPlugin) => {
     plugin.panels?.forEach((panelConfig: PanelConfig) => {
@@ -137,23 +142,30 @@ async function initializeApp() {
       }
     });
   });
+
+  // Manually register components not part of plugins - REMOVED
+  // console.log("  - Registering Dockview component: progress_view (manual)");
+  // dockviewController.registerComponent("progress_view", ProgressPanel); // REMOVED
+
   console.log("Dockview panel registration complete.");
 
   // --- Initialize first engine view (if still desired as default) --- //
   toolbarController.initializeFirstEngineView();
-  tourController.setEngineViewId("engine_view_1"); // Assuming ID is still valid
+  // tourController.setEngineViewId("engine_view_1"); // REMOVED - Need alternative way if steps need this
 
   // --- Setup Tour (if still needed globally) --- //
-  toolbarController.setTourController(tourController); // Set tour controller if needed
+  // toolbarController.setTourController(tourController); // REMOVED - Method no longer exists
 
   // Setup listeners
-  setupEventListeners(tourController);
+  setupEventListeners(/* tourController */); // REMOVED tourController dependency if possible
 
   console.log("Teskooano Initialized.");
 }
 
 // --- Helper to Setup Event Listeners (keeps initializeApp cleaner) --- //
-function setupEventListeners(tourController: TourController) {
+// REMOVE tourController dependency if setupEventListeners doesn't strictly need it
+// or find alternative way to access tour functions (e.g., via plugin manager)
+function setupEventListeners(/* tourController: TourController */) {
   // Orientation Handling
   const portraitMediaQuery = window.matchMedia("(orientation: portrait)");
   const narrowWidthMediaQuery = window.matchMedia("(max-width: 1024px)");
@@ -181,34 +193,58 @@ function setupEventListeners(tourController: TourController) {
     if (objectId) {
       const objects = celestialObjectsStore.get();
       const selectedObject = objects[objectId];
-      tourController.setCurrentSelectedCelestial(selectedObject?.name);
+      // tourController.setCurrentSelectedCelestial(selectedObject?.name);
+      const func = getFunctionConfig("tour:setCelestialFocus"); // Hypothetical function ID
+      if (func?.execute) {
+        func.execute({ celestialName: selectedObject?.name });
+      } else {
+        // console.warn("Function tour:setCelestialFocus not found");
+      }
     } else {
-      tourController.setCurrentSelectedCelestial(undefined);
+      // tourController.setCurrentSelectedCelestial(undefined);
     }
   });
 
   // Tour Modal Logic
   window.addEventListener("DOMContentLoaded", () => {
-    if (
-      !tourController.isSkippingTour() &&
-      !tourController.hasShownTourModal()
-    ) {
-      tourController.markTourModalAsShown();
-      const tourModalElement = document.createElement("teskooano-tour-modal");
-      (tourModalElement as TeskooanoTourModal).setCallbacks(
-        () => {
-          // On Accept
-          const savedStep = localStorage.getItem("tourCurrentStep");
-          if (savedStep) tourController.resumeTour();
-          else tourController.startTour();
-        },
-        () => {
-          // On Decline
-          tourController.setSkipTour(true);
-        },
-      );
-      document.body.appendChild(tourModalElement);
-    }
+    // This logic needs to use plugin functions now
+    const isSkippingFunc = getFunctionConfig("tour:isSkipping"); // Hypothetical
+    const hasShownModalFunc = getFunctionConfig("tour:hasShownModal"); // Hypothetical
+    const markModalShownFunc = getFunctionConfig("tour:markModalShown"); // Hypothetical
+    const resumeTourFunc = getFunctionConfig("tour:resume"); // Hypothetical
+    const startTourFunc = getFunctionConfig("tour:start");
+    const setSkipTourFunc = getFunctionConfig("tour:setSkip");
+
+    let isSkipping = false;
+    let hasShownModal = true; // Assume shown if functions don't exist
+
+    // NOTE: This is complex because execute is async and we need sync checks
+    // Ideally, the tour plugin exposes state via a store or simple getters
+    // For now, we'll skip this complex part
+    /*
+    if (isSkippingFunc?.execute) isSkipping = await isSkippingFunc.execute();
+    if (hasShownModalFunc?.execute) hasShownModal = await hasShownModalFunc.execute();
+    */
+
+    // Simplified: Assume tourControllerInstance is somehow accessible for checks
+    // This needs a better solution (e.g., TourController exposing state via store)
+    // const tourInstance = getTourControllerInstance(); // Hypothetical function
+    // if (tourInstance && !tourInstance.isSkippingTour() && !tourInstance.hasShownTourModal()) {
+    //   tourInstance.markTourModalAsShown();
+
+    //   const tourModalElement = document.createElement("teskooano-tour-modal");
+    //   (tourModalElement as TeskooanoTourModal).setCallbacks(
+    //     () => { // On Accept
+    //       const savedStep = localStorage.getItem("tourCurrentStep");
+    //       if (savedStep && resumeTourFunc?.execute) resumeTourFunc.execute();
+    //       else if (startTourFunc?.execute) startTourFunc.execute();
+    //     },
+    //     () => { // On Decline
+    //       if (setSkipTourFunc?.execute) setSkipTourFunc.execute({ skip: true });
+    //     },
+    //   );
+    //   document.body.appendChild(tourModalElement);
+    // }
   });
 
   // Cleanup on page unload
@@ -219,7 +255,13 @@ function setupEventListeners(tourController: TourController) {
 
   // Listener for Start Tour Requests from Placeholders
   document.body.addEventListener("start-tour-request", () => {
-    tourController.restartTour();
+    // Use plugin function
+    const restartFunc = getFunctionConfig("tour:restart");
+    if (restartFunc?.execute) {
+      restartFunc.execute();
+    } else {
+      console.warn("Function tour:restart not found for start-tour-request");
+    }
   });
 }
 

@@ -3,7 +3,6 @@ import "../../components/toolbar/SimulationControls.js"; // Import for side effe
 import "../../components/toolbar/SystemControls.js"; // ADDED BACK
 import type { SystemControls } from "../../components/toolbar/SystemControls.js"; // ADDED BACK
 import { DockviewController } from "../dockview/DockviewController.js";
-import { TourController } from "../tourController.js";
 import {
   createToolbarHandlers,
   type ToolbarTemplateHandlers, // Use the correct handler type
@@ -28,10 +27,6 @@ export class ToolbarController {
    * The DockviewController that the toolbar will use to add panels.
    */
   private _dockviewController: DockviewController;
-  /**
-   * The TourController for managing app tours.
-   */
-  private _tourController: TourController | null = null;
   /**
    * A counter specifically for engine views.
    */
@@ -67,16 +62,10 @@ export class ToolbarController {
    * Constructor for the ToolbarController.
    * @param element - The DOM element that the toolbar will be added to.
    * @param dockviewController - The DockviewController that the toolbar will use to add panels.
-   * @param tourController - Optional TourController for managing app tours
    */
-  constructor(
-    element: HTMLElement,
-    dockviewController: DockviewController,
-    tourController?: TourController,
-  ) {
+  constructor(element: HTMLElement, dockviewController: DockviewController) {
     this._element = element;
     this._dockviewController = dockviewController;
-    this._tourController = tourController || null;
 
     // Detect initial mobile state
     this._isMobileDevice = this.detectMobileDevice();
@@ -84,7 +73,6 @@ export class ToolbarController {
     // Create handlers directly using the updated signature
     this._handlers = createToolbarHandlers(
       this, // Pass the controller instance
-      this._tourController, // Pass the tour controller instance (can be null)
     );
 
     // Set up resize listener - We need a separate handler for this
@@ -131,14 +119,6 @@ export class ToolbarController {
   public destroy(): void {
     // Remove the resize listener
     window.removeEventListener("resize", this.handleResize);
-  }
-
-  /**
-   * Set the tour controller after initialization and re-render toolbar
-   */
-  public setTourController(tourController: TourController): void {
-    this._tourController = tourController;
-    this.createToolbar(); // Re-render to add/update tour button
   }
 
   /**
@@ -254,18 +234,6 @@ export class ToolbarController {
   }
 
   /**
-   * Starts or restarts the application tour.
-   * PUBLIC: Called by the tour button handler.
-   */
-  public startTour(): void {
-    if (this._tourController) {
-      this._tourController.restartTour();
-    } else {
-      console.warn("Tour button clicked but TourController is not available.");
-    }
-  }
-
-  /**
    * Updates the toolbar elements based on the current mobile state.
    * PUBLIC: Called by the resize handler.
    */
@@ -289,7 +257,6 @@ export class ToolbarController {
   private createToolbar(): void {
     const templateData: ToolbarTemplateData = {
       isMobile: this._isMobileDevice,
-      hasTourController: !!this._tourController,
     };
 
     // Ensure the handlers object exists before accessing its properties

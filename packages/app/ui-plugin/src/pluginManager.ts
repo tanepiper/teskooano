@@ -79,6 +79,9 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
 
   // Register functions
   plugin.functions?.forEach((funcConfig) => {
+    console.log(
+      `[PluginManager Debug] Plugin '${plugin.id}' processing function ID: ${funcConfig.id}`,
+    ); // DEBUG
     if (functionRegistry.has(funcConfig.id)) {
       console.warn(
         `[PluginManager] Function ID '${funcConfig.id}' from plugin '${plugin.id}' already registered. Skipping.`,
@@ -87,6 +90,9 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
     }
     functionRegistry.set(funcConfig.id, funcConfig);
     console.log(`  - Registered function: ${funcConfig.id}`);
+    console.log(
+      `[PluginManager Debug] Function registry size: ${functionRegistry.size}`,
+    ); // DEBUG
   });
 
   // Register toolbar items
@@ -249,6 +255,7 @@ export async function loadAndRegisterPlugins(
   const loaders = pluginLoaders as Record<string, () => Promise<any>>;
 
   for (const pluginId of pluginIds) {
+    console.log(`[PluginManager Debug] Processing plugin ID: ${pluginId}`); // DEBUG
     const loader = loaders[pluginId];
     if (!loader) {
       console.error(
@@ -264,6 +271,9 @@ export async function loadAndRegisterPlugins(
       const plugin = module.plugin as TeskooanoPlugin;
 
       if (plugin && typeof plugin === "object" && plugin.id === pluginId) {
+        console.log(
+          `[PluginManager Debug] Calling registerPlugin for ${pluginId}`,
+        ); // DEBUG
         registerPlugin(plugin);
         if (typeof plugin.initialize === "function") {
           try {
@@ -322,7 +332,10 @@ export function getPanelConfig(componentName: string): PanelConfig | undefined {
  * @returns The FunctionConfig or undefined if not found.
  */
 export function getFunctionConfig(id: string): FunctionConfig | undefined {
-  return functionRegistry.get(id);
+  console.log(`[PluginManager Debug] getFunctionConfig called for ID: ${id}`); // DEBUG
+  const func = functionRegistry.get(id);
+  console.log(`[PluginManager Debug] Found function config for ${id}:`, !!func); // DEBUG
+  return func;
 }
 
 /**

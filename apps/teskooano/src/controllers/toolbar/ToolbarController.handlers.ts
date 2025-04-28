@@ -12,6 +12,7 @@ interface ToolbarHandlerDependencies {
 // Handlers for toolbar actions
 import type { ToolbarController } from "./ToolbarController";
 import type { TourController } from "../tourController";
+import { getFunctionConfig } from "@teskooano/ui-plugin"; // Import plugin manager function
 
 // Interface defining the required handler functions
 export interface ToolbarTemplateHandlers {
@@ -24,12 +25,10 @@ export interface ToolbarTemplateHandlers {
 /**
  * Creates the event handlers for the toolbar buttons.
  * @param controller - The ToolbarController instance.
- * @param tourController - The TourController instance (optional).
  * @returns An object containing the handler functions conforming to ToolbarTemplateHandlers.
  */
 export const createToolbarHandlers = (
   controller: ToolbarController,
-  tourController: TourController | null,
 ): ToolbarTemplateHandlers => {
   // --- Define individual handlers ---
   const handleGitHubClick = (event: MouseEvent) => {
@@ -49,10 +48,15 @@ export const createToolbarHandlers = (
   };
 
   const handleTourClick = (event: MouseEvent) => {
-    if (tourController) {
-      controller.startTour();
+    // Call the tour:restart function via the plugin manager
+    const restartFunc = getFunctionConfig("tour:restart");
+    if (restartFunc?.execute) {
+      console.log("[Toolbar] Calling tour:restart function from plugin...");
+      restartFunc.execute(); // Execute the function
     } else {
-      console.warn("Tour handler called but tourController is null");
+      console.warn(
+        "[Toolbar] Tour button clicked, but tour:restart function not found in plugin manager.",
+      );
     }
   };
 

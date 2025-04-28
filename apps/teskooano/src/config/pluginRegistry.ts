@@ -1,4 +1,5 @@
 import type { PluginRegistryConfig } from "@teskooano/ui-plugin";
+// import { pluginConfig as uiPluginConfig } from "@teskooano/ui-lib/plugins"; // REMOVED Example import
 
 // Defines the UI feature plugins to load.
 // The keys are unique plugin IDs used for identification.
@@ -6,31 +7,30 @@ import type { PluginRegistryConfig } from "@teskooano/ui-plugin";
 // (exported as 'plugin' by default).
 
 export const pluginConfig: PluginRegistryConfig = {
-  // ---> Put Engine UI Controls Plugin FIRST
-  "core-engine-ui-controls": {
-    path: "../plugins/EngineUIPlugin.ts",
-  },
+  // --- Core Engine View --- // (Register this first, seems fundamental)
+  "core-engine-view": { path: "../components/engine/EngineView.plugin.ts" },
 
-  // Add the Focus Control plugin SECOND
+  // --- UI Controls & Features --- //
+  "core-engine-ui-controls": {
+    path: "../components/ui-controls/engine-settings/EngineSettings.plugin.ts",
+  },
   "core-focus-controls": {
     path: "../components/ui-controls/focus/FocusControl.plugin.ts",
-  }, // Assuming .js after build, adjust if needed
-
-  // ---> Add the Engine Info Plugin
+  },
   "core-engine-info": {
     path: "../components/ui-controls/engine-info/EngineInfo.plugin.ts",
   },
-
-  // ---> Add the Celestial Info Plugin
   "core-celestial-info": {
     path: "../components/ui-controls/celestial-info/CelestialInfo.plugin.ts",
   },
 
-  // ---> Add the System Actions Plugin
-  "core-system-actions": {
-    path: "../plugins/SystemActions.plugin.ts",
-  },
+  // --- System Actions & Tour --- //
+  "core-system-actions": { path: "../plugins/SystemActions.plugin.ts" },
+  "core-tour": { path: "../plugins/Tour.plugin.ts" },
 
-  // Example (add actual plugins here later):
-  // 'feature-celestial-info': { path: '@teskooano/celestial-info-plugin' }, // Assuming default export 'plugin'
+  // --- Library Plugins (Example) --- //
+  // ...uiPluginConfig, // Spread in plugins from ui-lib if needed
+
+  // Example (add actual feature plugins here later):
+  // 'feature-celestial-info': { path: '@teskooano/celestial-info-plugin' },
 };
