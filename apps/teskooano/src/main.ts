@@ -1,182 +1,223 @@
-import "./vite-env.d"; // Ensure Vite types are loaded
-import "@teskooano/design-system/styles.css"; // Load shared styles
-import { initRouter } from "./controllers/router";
-import { initDockview } from "./controllers/dockview";
+import "@teskooano/design-system/styles.css";
 import "dockview-core/dist/styles/dockview.css";
+import "./vite-env.d";
 
+import { celestialObjectsStore } from "@teskooano/core-state";
+import { EnginePlaceholder } from "./components/engine/EnginePlaceholder";
+// import type { TeskooanoModalManager } from "./components/shared/ModalManager";
+import { TeskooanoTourModal } from "./components/tours/TourModal";
 import { DockviewController } from "./controllers/dockview/DockviewController";
 import { ToolbarController } from "./controllers/toolbar/ToolbarController";
-import { TourController } from "./controllers/tourController";
-// Import simulation controls component definition
-import "./components/ui-controls/focus/FocusControl"; // Import the new component
-import "./components/ui-controls/RendererInfoDisplay"; // Import the new renderer info component
-// SimulationInfoDisplay has been migrated to the toolbar
-import "./components/ui-controls/CelestialInfo"; // Import the new CelestialInfo component
-import "./components/shared/Button"; // Add this line
-import { SettingsPanel } from "./components/settings/SettingsPanel";
-// Also import ProgressPanel for registration
-import { ProgressPanel } from "./components/engine/ProgressPanel";
-// Import TourModal custom element
-import { TeskooanoTourModal } from "./components/tours/TourModal";
-import { ModalManager } from "./components/shared/ModalManager"; // Import ModalManager
-import { celestialObjectsStore } from "@teskooano/core-state";
-import { layoutOrientationStore, Orientation } from "./stores/layoutStore"; // Import the layout store
-import "./components/ui-controls/EngineUISettingsPanel"; // Import for side effect (registers element)
-import { EnginePlaceholder } from "./components/engine/EnginePlaceholder"; // Import EnginePlaceholder class
-import { ToolbarSeedForm } from "./components/toolbar/SeedForm"; // Correct import path
-import { FocusControl } from "./components/ui-controls/focus/FocusControl"; // Import FocusControl
+// import { TourController } from "./controllers/tourController"; // REMOVED - Plugin handles this now
+import { layoutOrientationStore, Orientation } from "./stores/layoutStore";
+// import { ProgressPanel } from "./components/engine/ProgressPanel"; // REMOVED Import
 
-// --- Setup --- //
+// --- Import Plugin System --- //
+import {
+  getFunctionConfig,
+  getLoadedModuleClass,
+  getPlugins,
+  loadAndRegisterComponents,
+  loadAndRegisterPlugins,
+  PanelConfig,
+  TeskooanoPlugin,
+  setAppDependencies,
+} from "@teskooano/ui-plugin";
+import { componentConfig } from "./config/componentRegistry";
+import { pluginConfig } from "./config/pluginRegistry";
 
-// Get main elements
-const appElement = document.getElementById("app");
-const toolbarElement = document.getElementById("toolbar");
-
-if (!appElement || !toolbarElement) {
-  throw new Error("Required HTML elements (#app or #toolbar) not found.");
+// --- Centralized instance store (Example) ---
+// You could use Nanostores or a simple exported object
+interface AppContext {
+  modalManager?: any; // Use the actual ModalManager type here
+  // other shared instances...
 }
+export const appContext: AppContext = {}; // Export this for other modules
 
-// --- Orientation Handling --- //
+// --- Application Initialization --- //
 
-const portraitMediaQuery = window.matchMedia("(orientation: portrait)");
-const narrowWidthMediaQuery = window.matchMedia("(max-width: 1024px)");
+async function startApp() {
+  console.log("[App] Starting initialization...");
 
-function updateOrientation() {
-  // Check if either physical orientation is portrait OR width is below 1024px
-  const isPortraitMode =
-    portraitMediaQuery.matches || narrowWidthMediaQuery.matches;
-  const newOrientation: Orientation = isPortraitMode ? "portrait" : "landscape";
-  layoutOrientationStore.set(newOrientation);
-}
+  // Define which components/modules are critical for initial load
+  const criticalComponents = [
+    "teskooano-button",
+    "teskooano-modal",
+    "teskooano-modal-manager", // Make sure manager is loaded early
+    // Add other essential tags/keys...
+  ];
 
-// Initial check
-updateOrientation();
+  try {
+    // Ensure critical components/modules are loaded BEFORE initializing the rest
+    console.log("[App] Loading critical components/modules...");
+    await loadAndRegisterComponents(criticalComponents);
+    console.log("[App] Critical components/modules loaded.");
 
-// Listen for changes in device orientation
-portraitMediaQuery.addEventListener("change", () => {
-  updateOrientation();
-});
-
-// Listen for changes in window width
-narrowWidthMediaQuery.addEventListener("change", () => {
-  updateOrientation();
-});
-
-// Also update on resize for browsers that don't support matchMedia well
-window.addEventListener("resize", () => {
-  updateOrientation();
-});
-
-// --- Initialize Controllers --- //
-
-const dockviewController = new DockviewController(appElement); // Pass appElement
-// Pass the appElement (Dockview container) as the second argument - REMOVE second arg
-// const modalManager = new ModalManager(dockviewController, dockviewContainer);
-const modalManager = new ModalManager(dockviewController); // Only pass controller
-
-// Inject ModalManager into TourModal class
-TeskooanoTourModal.setModalManager(modalManager);
-
-// --- Set Dockview API for SeedForm & EnginePlaceholder --- //
-ToolbarSeedForm.setDockviewApi(dockviewController.api); // For toolbar seed form
-EnginePlaceholder.setDockviewApi(dockviewController.api); // For placeholder seed form
-
-// Now initialize the tour controller with the correct engine view ID
-const tourController = new TourController();
-
-// Initialize the first engine view BEFORE creating the tour controller
-const toolbarController = new ToolbarController(
-  toolbarElement,
-  dockviewController,
-);
-toolbarController.initializeFirstEngineView();
-
-// Get the first engine view ID after it's been created
-tourController.setEngineViewId("engine_view_1");
-
-// Now set the tour controller on the toolbar controller
-toolbarController.setTourController(tourController);
-
-// Register dynamically used components
-dockviewController.registerComponent("settings_view", SettingsPanel);
-dockviewController.registerComponent("progress_view", ProgressPanel);
-dockviewController.registerComponent("focus-control", FocusControl); // Add registration for FocusControl
-
-// --- Set Dockview API for SeedForm & UiPanel --- //
-// const dockviewApi = dockviewController.api; // This seems redundant now
-
-// --- Listen for focus changes to update tour --- //
-document.addEventListener("engine-focus-request", (event: Event) => {
-  // Cast to CustomEvent with the expected detail structure
-  const focusEvent = event as CustomEvent<{
-    targetPanelId: string;
-    objectId: string | null;
-    distance?: number;
-  }>;
-
-  const { objectId } = focusEvent.detail;
-
-  if (objectId) {
-    // Get the celestial object from the store
-    const objects = celestialObjectsStore.get();
-    const selectedObject = objects[objectId];
-
-    if (selectedObject) {
-      // Update the tour controller with the selected celestial name
-      tourController.setCurrentSelectedCelestial(selectedObject.name);
-    } else {
-      tourController.setCurrentSelectedCelestial(undefined);
-    }
-  } else {
-    // Clear the selected celestial when focus is cleared
-    tourController.setCurrentSelectedCelestial(undefined);
-  }
-});
-
-// --- Check for tour preferences and show modal if needed --- //
-// Wait for DOM to be fully ready before showing tour modal
-window.addEventListener("DOMContentLoaded", () => {
-  // Only show if user hasn't chosen to skip the tour
-  if (!tourController.isSkippingTour() && !tourController.hasShownTourModal()) {
-    // Mark tour modal as shown to avoid showing it again on reload
-    tourController.markTourModalAsShown();
-
-    // Create the custom element instance
-    const tourModalElement = document.createElement("teskooano-tour-modal");
-
-    // Set callbacks (this will also trigger showing the modal)
-    (tourModalElement as TeskooanoTourModal).setCallbacks(
-      // On Accept - Start Tour
-      () => {
-        // Check if there's a saved step
-        const savedStep = localStorage.getItem("tourCurrentStep");
-        if (savedStep) {
-          tourController.resumeTour();
-        } else {
-          tourController.startTour();
-        }
-      },
-      // On Decline - Skip Tour
-      () => {
-        tourController.setSkipTour(true);
-      },
+    // Now initialize the main application logic
+    initializeApp();
+  } catch (error) {
+    console.error(
+      "[App] Failed during critical component loading or initialization:",
+      error,
     );
-
-    // Append the trigger element (it will remove itself later)
-    document.body.appendChild(tourModalElement);
+    // Handle initialization failure (e.g., show error message)
   }
-});
+}
 
-// --- Cleanup on page unload --- //
-window.addEventListener("beforeunload", () => {
-  // Clean up controllers
-  toolbarController.destroy();
-  // Optionally dispose modal manager if needed
-  // modalManager.dispose();
-});
+async function initializeApp() {
+  console.log("Initializing Teskooano...");
 
-// --- Listener for Start Tour Requests from Placeholders ---
-document.body.addEventListener("start-tour-request", () => {
-  tourController.restartTour();
-});
-// --- End Listener ---
+  // Get main elements
+  const appElement = document.getElementById("app");
+  const toolbarElement = document.getElementById("toolbar");
+
+  if (!appElement || !toolbarElement) {
+    throw new Error("Required HTML elements (#app or #toolbar) not found.");
+  }
+
+  // --- Load UI Components and Plugins --- //
+  console.log("Phase 1: Loading and Registering Base Components...");
+  // Get component tag names from the config keys
+  const componentTags = Object.keys(componentConfig);
+  await loadAndRegisterComponents(componentTags);
+  console.log("Phase 1 Complete.");
+
+  console.log("Phase 2: Loading and Registering Plugins...");
+  // Get plugin IDs from the config keys
+  const pluginIds = Object.keys(pluginConfig);
+  await loadAndRegisterPlugins(pluginIds);
+  console.log("Phase 2 Complete.");
+
+  // --- Initialize Core Controllers & Systems --- //
+  console.log("Initializing core controllers...");
+
+  const dockviewController = new DockviewController(appElement);
+  // const tourController = new TourController(); // REMOVED - Plugin handles this
+  const toolbarController = new ToolbarController(
+    toolbarElement,
+    dockviewController,
+    // No tourController passed here anymore
+  );
+
+  // --- Get Loaded Class and Instantiate Singleton ---
+  const ModalManagerClass = getLoadedModuleClass("teskooano-modal-manager");
+  if (!ModalManagerClass) {
+    console.error(
+      "[App] Failed to get TeskooanoModalManager class after loading.",
+    );
+    // Handle this critical failure
+    return;
+  }
+  const modalManager = new ModalManagerClass(dockviewController);
+  console.log("[App] TeskooanoModalManager instantiated.");
+
+  // --- Set Dependencies for Plugins --- //
+  setAppDependencies({
+    dockviewApi: dockviewController.api,
+    dockviewController: dockviewController,
+  });
+
+  // ---> Store the singleton instance for others to use
+  appContext.modalManager = modalManager;
+
+  // Inject ModalManager into TourModal class (if TourModal is still needed globally)
+  TeskooanoTourModal.setModalManager(modalManager);
+
+  // Set Dockview API for SeedForm & EnginePlaceholder (if still needed globally)
+  EnginePlaceholder.setDockviewApi(dockviewController.api);
+
+  // --- Register Dockview Components --- //
+  console.log("Registering Dockview panel components...");
+
+  // Register components from plugins
+  const plugins = getPlugins(); // Keep getting plugins for component registration
+  plugins.forEach((plugin: TeskooanoPlugin) => {
+    plugin.panels?.forEach((panelConfig: PanelConfig) => {
+      const panelClass = panelConfig.panelClass;
+      if (panelClass) {
+        console.log(
+          `  - Registering Dockview component: ${panelConfig.componentName} from plugin ${plugin.id}`,
+        );
+        dockviewController.registerComponent(
+          panelConfig.componentName,
+          panelClass,
+        );
+      } else {
+        console.error(
+          `Panel class not found for ${panelConfig.componentName} in plugin ${plugin.id}`,
+        );
+      }
+    });
+  });
+
+  console.log("Dockview panel registration complete.");
+
+  // Ensure at least one engine panel is created on startup via the plugin function
+  const addPanelFunc = getFunctionConfig("engine:add_composite_panel");
+  if (addPanelFunc?.execute) {
+    console.log("[App] Calling engine:add_composite_panel for initial view...");
+    addPanelFunc.execute();
+  } else {
+    console.error(
+      "[App] Failed to find engine:add_composite_panel function during initialization!",
+    );
+  }
+
+  setupEventListeners();
+
+  console.log("Teskooano Initialized.");
+}
+
+function setupEventListeners() {
+  const portraitMediaQuery = window.matchMedia("(orientation: portrait)");
+  const narrowWidthMediaQuery = window.matchMedia("(max-width: 1024px)");
+  function updateOrientation() {
+    const isPortraitMode =
+      portraitMediaQuery.matches || narrowWidthMediaQuery.matches;
+    const newOrientation: Orientation = isPortraitMode
+      ? "portrait"
+      : "landscape";
+    layoutOrientationStore.set(newOrientation);
+  }
+  updateOrientation(); // Initial check
+  portraitMediaQuery.addEventListener("change", updateOrientation);
+  narrowWidthMediaQuery.addEventListener("change", updateOrientation);
+  window.addEventListener("resize", updateOrientation);
+
+  // Focus changes listener
+  document.addEventListener("engine-focus-request", (event: Event) => {
+    const focusEvent = event as CustomEvent<{
+      targetPanelId: string;
+      objectId: string | null;
+      distance?: number;
+    }>;
+    const { objectId } = focusEvent.detail;
+    if (objectId) {
+      const objects = celestialObjectsStore.get();
+      const selectedObject = objects[objectId];
+      // tourController.setCurrentSelectedCelestial(selectedObject?.name);
+      const func = getFunctionConfig("tour:setCelestialFocus"); // Hypothetical function ID
+      if (func?.execute) {
+        func.execute({ celestialName: selectedObject?.name });
+      } else {
+        // console.warn("Function tour:setCelestialFocus not found");
+      }
+    } else {
+      // tourController.setCurrentSelectedCelestial(undefined);
+    }
+  });
+
+  // Listener for Start Tour Requests from Placeholders
+  document.body.addEventListener("start-tour-request", () => {
+    // Use plugin function
+    const restartFunc = getFunctionConfig("tour:restart");
+    if (restartFunc?.execute) {
+      restartFunc.execute();
+    } else {
+      console.warn("Function tour:restart not found for start-tour-request");
+    }
+  });
+}
+
+// --- Start the App --- //
+startApp();

@@ -11,10 +11,10 @@ import {
 import { Observable, Subject } from "rxjs"; // Import RxJS classes
 import { CompositeEnginePanel } from "../../components/engine/CompositeEnginePanel";
 import { SettingsPanel } from "../../components/settings/SettingsPanel";
-import { CelestialInfo } from "../../components/ui-controls/CelestialInfo";
-import { EngineUISettingsPanel } from "../../components/ui-controls/EngineUISettingsPanel";
+import { CelestialInfo } from "../../components/ui-controls/celestial-info/CelestialInfo";
+import { EngineUISettingsPanel } from "../../components/ui-controls/engine-settings/EngineSettings";
 import { FocusControl } from "../../components/ui-controls/focus/FocusControl";
-import { RendererInfoDisplay } from "../../components/ui-controls/RendererInfoDisplay";
+import { RendererInfoDisplay } from "../../components/ui-controls/engine-info/engine-info";
 import { PanelToolbarButtonConfig } from "../../stores/toolbarStore"; // Import toolbar type
 
 // Import types and fallback panel

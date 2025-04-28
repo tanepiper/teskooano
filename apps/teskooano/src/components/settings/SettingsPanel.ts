@@ -6,19 +6,11 @@ import {
   type PhysicsEngineType,
   type PerformanceProfileType,
 } from "@teskooano/core-state";
-// Import shared components to ensure they are registered
-import "../shared/Card.js";
-import "../shared/Form.js";
-import "../shared/Slider.js"; // Import the slider
-import "../shared/Select.js"; // Import Select component
-import "../shared/Button.js"; // Import Button component
-
-// Import specific component types if needed for casting later
-import { TeskooanoCard } from "../shared/Card";
-import { TeskooanoForm } from "../shared/Form";
-import { TeskooanoSlider } from "../shared/Slider"; // Import slider type
-import { TeskooanoSelect } from "../shared/Select"; // Import Select type
-import { TeskooanoButton } from "../shared/Button"; // Import Button type
+import { type TeskooanoCard } from "../shared/Card";
+import { type TeskooanoForm } from "../shared/Form";
+import { type TeskooanoSlider } from "../shared/Slider";
+import { type TeskooanoSelect } from "../shared/Select";
+import { type TeskooanoButton } from "../shared/Button";
 
 // Define options for the select component
 const ENGINE_OPTIONS: { value: PhysicsEngineType; label: string }[] = [

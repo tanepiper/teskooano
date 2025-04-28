@@ -1,4 +1,4 @@
-import { CustomEvents } from "@teskooano/types";
+import { CustomEvents } from "@teskooano/data-types";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -327,5 +327,3 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     );
   }
 }
-
-customElements.define("teskooano-output-display", TeskooanoOutputDisplay);

@@ -1,5 +1,3 @@
-import { createHtmlElement } from "@teskooano/common";
-import { formatNumber } from "@teskooano/common";
 import { CustomEvents } from "@teskooano/data-types";
 
 const template = document.createElement("template");
@@ -634,5 +632,3 @@ export class TeskooanoSlider extends HTMLElement {
     this.state.set({ ...this.state.get(), isDisabled });
   }
 }
-
-customElements.define("teskooano-slider", TeskooanoSlider);

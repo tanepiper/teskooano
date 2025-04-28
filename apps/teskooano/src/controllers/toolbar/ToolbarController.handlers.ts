@@ -1,58 +1,94 @@
-// Define the dependencies needed from the controller
-interface ToolbarHandlerDependencies {
-  openGitHubRepo: () => void;
-  toggleSettingsPanel: () => void;
-  startTour: () => void;
-  addCompositeEnginePanel: () => void;
-  isMobileDevice: () => boolean; // Use a function to get current state
-  detectMobileDevice: () => boolean;
-  updateToolbarForMobileState: () => void;
+// Handlers for toolbar actions
+import type { ToolbarController } from "./ToolbarController";
+import { getFunctionConfig } from "@teskooano/ui-plugin"; // Import plugin manager function
+
+/**
+ * @interface ToolbarTemplateHandlers
+ * @description Defines the structure for the object containing event handlers for toolbar buttons.
+ */
+export interface ToolbarTemplateHandlers {
+  /** Handler for the GitHub button click. */
+  handleGitHubClick: (event: MouseEvent) => void;
+  /** Handler for the Settings button click. */
+  handleSettingsClick: (event: MouseEvent) => void;
+  /** Handler for the Tour button click. */
+  handleTourClick: (event: MouseEvent) => void;
+  /** Handler for the Add View (or equivalent) button click. */
+  handleAddViewClick: (event: MouseEvent) => void;
 }
 
 /**
- * Creates the event handlers for the toolbar buttons and window events.
- * @param deps - An object containing the necessary methods and properties from the ToolbarController.
- * @returns An object containing the handler functions.
+ * Creates and returns an object containing event handler functions for the main toolbar buttons.
+ * These handlers typically interact with the `ToolbarController` or the `ui-plugin` system
+ * to perform actions like opening links, toggling panels, or starting tours.
+ *
+ * @param {ToolbarController} controller - The instance of the ToolbarController to interact with (e.g., for opening GitHub repo).
+ * @returns {ToolbarTemplateHandlers} An object containing the handler functions.
  */
-export const createToolbarHandlers = (deps: ToolbarHandlerDependencies) => {
-  const handleGitHubClick = (event: MouseEvent) => {
-    // Check if the related popover is open before navigating
-    const popover = document.getElementById("github-button-popover");
-    if (!popover?.matches(":popover-open")) {
-      deps.openGitHubRepo();
+export const createToolbarHandlers = (
+  controller: ToolbarController,
+): ToolbarTemplateHandlers => {
+  const handleGitHubClick = (event: MouseEvent): void => {
+    controller.openGitHubRepo();
+  };
+
+  const handleSettingsClick = (event: MouseEvent): void => {
+    const toggleFunc = getFunctionConfig("settings:toggle_panel");
+    if (toggleFunc?.execute) {
+      try {
+        toggleFunc.execute();
+      } catch (error) {
+        console.error(
+          "[Toolbar] Error executing settings:toggle_panel:",
+          error,
+        );
+      }
+    } else {
+      console.error(
+        "[Toolbar] Function settings:toggle_panel not found in plugin manager.",
+      );
     }
   };
 
-  const handleSettingsClick = () => {
-    deps.toggleSettingsPanel();
-  };
-
-  const handleTourClick = () => {
-    deps.startTour();
-  };
-
-  const handleAddViewClick = () => {
-    deps.addCompositeEnginePanel();
-  };
-
-  /**
-   * Handle window resize events to update mobile detection and UI
-   */
-  const handleResize = () => {
-    const wasMobile = deps.isMobileDevice();
-    const isNowMobile = deps.detectMobileDevice(); // Assuming detectMobileDevice updates internal state if needed
-
-    // Only update if the mobile state actually changed
-    if (wasMobile !== isNowMobile) {
-      deps.updateToolbarForMobileState();
+  const handleAddViewClick = (event: MouseEvent): void => {
+    const addPanelFunc = getFunctionConfig("engine:add_composite_panel");
+    if (addPanelFunc?.execute) {
+      try {
+        addPanelFunc.execute();
+      } catch (error) {
+        console.error(
+          "[Toolbar] Error executing engine:add_composite_panel:",
+          error,
+        );
+      }
+    } else {
+      console.error(
+        "[Toolbar] Function engine:add_composite_panel not found in plugin manager.",
+      );
     }
   };
 
-  return {
+  const handleTourClick = (event: MouseEvent): void => {
+    const restartFunc = getFunctionConfig("tour:restart");
+    if (restartFunc?.execute) {
+      try {
+        restartFunc.execute();
+      } catch (error) {
+        console.error("[Toolbar] Error executing tour:restart:", error);
+      }
+    } else {
+      console.error(
+        "[Toolbar] Function tour:restart not found in plugin manager.",
+      );
+    }
+  };
+
+  const handlers: ToolbarTemplateHandlers = {
     handleGitHubClick,
     handleSettingsClick,
-    handleTourClick,
     handleAddViewClick,
-    handleResize,
+    handleTourClick,
   };
+
+  return handlers;
 };

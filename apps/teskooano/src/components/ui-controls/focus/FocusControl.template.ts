@@ -9,6 +9,7 @@ template.innerHTML = `
       display: block;
       font-family: var(--font-family, sans-serif);
       font-size: 0.9em;
+      fill: #fff;
     }
     .control-section {
       margin-bottom: 15px;

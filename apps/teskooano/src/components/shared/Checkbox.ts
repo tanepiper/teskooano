@@ -208,5 +208,3 @@ export class TeskooanoCheckbox extends HTMLElement {
     }
   }
 }
-
-customElements.define("teskooano-checkbox", TeskooanoCheckbox);

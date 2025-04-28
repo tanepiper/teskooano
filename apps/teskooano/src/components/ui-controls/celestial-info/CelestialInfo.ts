@@ -11,23 +11,23 @@ import {
   IContentRenderer,
   DockviewPanelApi,
 } from "dockview-core";
-import { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // Import parent type
+import { CompositeEnginePanel } from "../../engine/CompositeEnginePanel"; // Import parent type
 import {
   ToolbarButtonConfig,
   PanelToolbarButtonConfig,
-} from "../../stores/toolbarStore"; // Import toolbar types
+} from "../../../stores/toolbarStore"; // Import toolbar types
 
 // Import component types
-import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
+import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
 
 // Import all celestial info components
-import { AsteroidFieldInfoComponent } from "./celestial-components/AsteroidFieldInfo";
-import { GasGiantInfoComponent } from "./celestial-components/GasGiantInfo";
-import { GenericCelestialInfoComponent } from "./celestial-components/GenericCelestialInfo";
-import { MoonInfoComponent } from "./celestial-components/MoonInfo";
-import { OortCloudInfoComponent } from "./celestial-components/OortCloudInfo";
-import { PlanetInfoComponent } from "./celestial-components/PlanetInfo";
-import { StarInfoComponent } from "./celestial-components/StarInfo";
+import { AsteroidFieldInfoComponent } from "./AsteroidFieldInfo";
+import { GasGiantInfoComponent } from "./GasGiantInfo";
+import { GenericCelestialInfoComponent } from "./GenericCelestialInfo";
+import { MoonInfoComponent } from "./MoonInfo";
+import { OortCloudInfoComponent } from "./OortCloudInfo";
+import { PlanetInfoComponent } from "./PlanetInfo";
+import { StarInfoComponent } from "./StarInfo";
 
 // Constants for formatters
 const AU_IN_METERS = 149597870700;

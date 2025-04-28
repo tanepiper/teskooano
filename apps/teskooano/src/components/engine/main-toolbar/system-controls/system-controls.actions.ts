@@ -6,7 +6,7 @@ import {
 import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
 import { OSVector3 } from "@teskooano/core-math";
-import { generateAndLoadSystem } from "../../systems/system-generator.js";
+import { generateAndLoadSystem } from "../../../../systems/system-generator.js";
 import { DockviewApi } from "dockview-core";
 import { CustomEvents } from "@teskooano/data-types";
 
@@ -333,7 +333,7 @@ export async function createBlankSystem(): Promise<ActionResult> {
     actions.createSolarSystem(defaultStar);
     console.log(`Default star "${defaultStar.name}" added to the system.`);
     console.warn(
-      "[system-controls.actions] TODO: Need correct action/store to set systemName for blank system.",
+      "[teskooano-system-controls.actions] TODO: Need correct action/store to set systemName for blank system.",
     );
 
     return { success: true, symbol: "📝", message: "Blank system created." };

@@ -1,7 +1,7 @@
 import { Config, driver, PopoverDOM, State } from "driver.js";
 import "driver.js/dist/driver.css";
-import { createIntroTour } from "../components/tours/intro-tour";
-import { type TourStep } from "../components/tours/types";
+import { createIntroTour } from "./intro-tour";
+import { type TourStep } from "./types";
 
 /**
  * Manages the application tour using driver.js.

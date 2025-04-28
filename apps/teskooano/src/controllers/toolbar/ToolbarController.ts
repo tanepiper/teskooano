@@ -1,374 +1,415 @@
-import type { AddPanelOptions } from "dockview-core";
-import "../../components/shared/Button.js";
-import "../../components/toolbar/SimulationControls.js"; // Import for side effect (registers element)
-import "../../components/toolbar/SystemControls.js";
-import type { SystemControls } from "../../components/toolbar/SystemControls.js"; // Use the class type for casting
-import { DockviewController } from "../dockview/DockviewController.js";
-import { TourController } from "../tourController.js";
-import { createToolbarHandlers } from "./ToolbarController.handlers.js";
 import {
-  renderToolbarTemplate,
-  type ToolbarTemplateData,
+  type FunctionToolbarItemConfig, // Specific config for function buttons
+  getFunctionConfig, // Assuming this type is added
+  getToolbarItemsForTarget,
+  getToolbarWidgetsForTarget, // Get all items for a target
+  type ToolbarItemConfig, // Assuming this function is added to the plugin package
+  type ToolbarWidgetConfig,
+} from "@teskooano/ui-plugin";
+import type { DockviewController } from "../dockview/DockviewController.js";
+import "./ToolbarController.css";
+
+import {
+  createToolbarHandlers,
   type ToolbarTemplateHandlers,
-} from "./ToolbarController.template.js";
+} from "./ToolbarController.handlers.js";
+
+import TourIcon from "@fluentui/svg-icons/icons/compass_northwest_24_regular.svg?raw";
+import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
 
 /**
- * ToolbarController is responsible for managing the toolbar and adding engine views.
- * It orchestrates the creation of the toolbar UI via a template and manages
- * interactions with Dockview and other controllers.
+ * @class ToolbarController
+ * @description Manages the main application toolbar, dynamically rendering buttons
+ * and widgets based on plugin registrations and handling user interactions.
+ * It also adapts the toolbar layout based on screen size (mobile/desktop).
  */
 export class ToolbarController {
   /**
-   * The DOM element that the toolbar will be added to.
+   * The container element for the toolbar UI.
+   * @private
    */
   private _element: HTMLElement;
   /**
-   * The DockviewController that the toolbar will use to add panels.
+   * Reference to the Dockview controller for adding/managing panels.
+   * @private
    */
   private _dockviewController: DockviewController;
   /**
-   * The TourController for managing app tours.
-   */
-  private _tourController: TourController | null = null;
-  /**
-   * A counter specifically for engine views.
-   */
-  private _compositePanelCounter = 0;
-  /**
-   * Define a constant logical name for the engine group
-   */
-  private readonly ENGINE_GROUP_NAME = "engine_views";
-
-  /**
-   * Track if we're on a mobile device
+   * Tracks whether the application is currently viewed on a mobile-like device width.
+   * @private
    */
   private _isMobileDevice: boolean = false;
 
-  // Cache toolbar elements populated by the template
+  /**
+   * Reference to the GitHub button element.
+   * @private
+   */
   private _githubButton: HTMLElement | null = null;
+  /**
+   * Reference to the Settings button element.
+   * @private
+   */
   private _settingsButton: HTMLElement | null = null;
+  /**
+   * Reference to the Tour button element.
+   * @private
+   */
   private _tourButton: HTMLElement | null = null;
-  private _addButton: HTMLElement | null = null;
-  private _simControls: HTMLElement | null = null;
-  private _systemControls: SystemControls | null = null; // Use the class type
-
-  // Handlers
-  private _handlers: ReturnType<typeof createToolbarHandlers>;
-
-  // Define a constant for the settings panel ID
-  private readonly SETTINGS_PANEL_ID = "app_settings_panel";
-  // GitHub repository URL
-  private readonly GITHUB_REPO_URL = "https://github.com/tanepiper/teskooano";
 
   /**
-   * Constructor for the ToolbarController.
-   * @param element - The DOM element that the toolbar will be added to.
-   * @param dockviewController - The DockviewController that the toolbar will use to add panels.
-   * @param tourController - Optional TourController for managing app tours
+   * Handlers for toolbar button clicks and other interactions.
+   * @private
    */
-  constructor(
-    element: HTMLElement,
-    dockviewController: DockviewController,
-    tourController?: TourController,
-  ) {
+  private _handlers: ToolbarTemplateHandlers;
+
+  /**
+   * URL for the Teskooano GitHub repository.
+   * @private
+   * @readonly
+   */
+  private readonly GITHUB_REPO_URL = "https://github.com/tanepiper/teskooano";
+  /**
+   * URL for the main Teskooano website.
+   * @private
+   * @readonly
+   */
+  private readonly WEBSITE_URL = "https://teskooano.space";
+
+  /**
+   * Initializes the ToolbarController.
+   * @param {HTMLElement} element - The DOM element to attach the toolbar to.
+   * @param {DockviewController} dockviewController - The Dockview controller instance.
+   */
+  constructor(element: HTMLElement, dockviewController: DockviewController) {
     this._element = element;
     this._dockviewController = dockviewController;
-    this._tourController = tourController || null;
-
-    // Detect initial mobile state
     this._isMobileDevice = this.detectMobileDevice();
+    this._handlers = createToolbarHandlers(this);
 
-    // Create handlers, passing the required dependencies bound to 'this'
-    this._handlers = createToolbarHandlers({
-      openGitHubRepo: this.openGitHubRepo.bind(this),
-      toggleSettingsPanel: this.toggleSettingsPanel.bind(this),
-      startTour: this.startTour.bind(this),
-      addCompositeEnginePanel: this.addCompositeEnginePanel.bind(this),
-      // Pass functions to get current state or trigger updates
-      isMobileDevice: () => this._isMobileDevice,
-      detectMobileDevice: this.detectMobileDevice.bind(this),
-      updateToolbarForMobileState: this.updateToolbarForMobileState.bind(this),
-    });
+    window.addEventListener("resize", this.handleResize);
 
-    // Set up resize listener using the handler function
-    window.addEventListener("resize", this._handlers.handleResize);
-
-    // Initial render
     this.createToolbar();
   }
 
   /**
-   * Detect if the current device is a mobile device
+   * Handles window resize events to check for mobile state changes and update the UI.
+   * @private
+   */
+  private handleResize = (): void => {
+    const wasMobile = this._isMobileDevice;
+    const isNowMobile = this.detectMobileDevice();
+    if (wasMobile !== isNowMobile) {
+      this.updateToolbarForMobileState();
+    }
+  };
+
+  /**
+   * Detects if the current device context resembles a mobile device based on screen width or user agent.
+   * Updates the internal `_isMobileDevice` state.
+   * @public
+   * @returns {boolean} True if the device is considered mobile, false otherwise.
    */
   public detectMobileDevice(): boolean {
-    // Check screen width - consider anything under 768px as mobile
     const isMobileWidth = window.innerWidth < 768;
-    // Also check user agent for mobile devices
     const userAgent = navigator.userAgent.toLowerCase();
     const isMobileDevice =
       /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
         userAgent,
       );
-    // Update internal state
     this._isMobileDevice = isMobileWidth || isMobileDevice;
     return this._isMobileDevice;
   }
 
   /**
-   * Cleanup event listeners when controller is destroyed
+   * Cleans up resources, specifically removing the window resize event listener.
+   * Should be called when the controller is no longer needed.
+   * @public
    */
   public destroy(): void {
-    // Use the handler reference for removal
-    window.removeEventListener("resize", this._handlers.handleResize);
-    // Potentially remove other listeners if added directly in the future
+    window.removeEventListener("resize", this.handleResize);
   }
 
   /**
-   * Set the tour controller after initialization and re-render toolbar
-   */
-  public setTourController(tourController: TourController): void {
-    this._tourController = tourController;
-    this.createToolbar(); // Re-render to add/update tour button
-  }
-
-  /**
-   * Public method to create the very first engine/UI panel group on initialization.
-   */
-  public initializeFirstEngineView(): void {
-    // Ensure we only add the *first* view this way
-    if (this._compositePanelCounter === 0) {
-      // No need to explicitly ensure group exists here, addPanelToNamedGroup handles it
-      this.addCompositeEnginePanel();
-    } else {
-      console.warn(
-        "initializeFirstEngineView called but engine panels already exist.",
-      );
-    }
-  }
-
-  /**
-   * Adds a new composite engine panel to the dedicated engine group.
-   * PUBLIC: Called by the add view button handler.
-   */
-  public addCompositeEnginePanel(): void {
-    // Use the logical group name directly
-    const groupName = this.ENGINE_GROUP_NAME;
-
-    this._compositePanelCounter++;
-    const counter = this._compositePanelCounter;
-    const compositeViewId = `composite_engine_view_${counter}`;
-    const compositeViewTitle = `Teskooano ${counter}`;
-
-    // Use the new controller method to add the panel to the named group
-    const panelOptions: AddPanelOptions = {
-      id: compositeViewId,
-      component: "composite_engine_view", // New component type
-      title: compositeViewTitle,
-      params: {
-        title: compositeViewTitle,
-        dockviewController: this._dockviewController,
-      },
-    };
-
-    try {
-      // Create the composite engine panel using the controller method
-      const compositePanel = this._dockviewController.addPanelToNamedGroup(
-        groupName,
-        panelOptions,
-      );
-
-      if (!compositePanel) {
-        throw new Error(
-          `Failed to add panel '${compositeViewId}' to group '${groupName}'`,
-        );
-      }
-
-      // Activate the newly added panel (panel is already active by default)
-      // compositePanel.api.setActive(); // Usually not needed if added via controller
-    } catch (error) {
-      console.error(
-        `Failed to create engine window panels for counter ${counter}:`,
-        error,
-      );
-    }
-  }
-
-  /**
-   * Toggles the visibility of the floating settings panel.
-   * PUBLIC: Called by the settings button handler.
-   */
-  public toggleSettingsPanel(): void {
-    const existingPanel = this._dockviewController.api.panels.find(
-      (p) => p.id === this.SETTINGS_PANEL_ID,
-    );
-
-    const panelWidth = 650;
-    const panelHeight = 500;
-
-    const centerWidth = window.innerWidth / 2 - panelWidth / 2;
-    const centerHeight = window.innerHeight / 2 - panelHeight / 2;
-
-    if (existingPanel) {
-      existingPanel.api.close();
-    } else {
-      const settingsPanelOptions: AddPanelOptions = {
-        id: this.SETTINGS_PANEL_ID,
-        component: "settings_view", // Placeholder component name
-        title: "Settings",
-        floating: {
-          position: { top: centerHeight, left: centerWidth },
-          width: panelWidth,
-          height: panelHeight,
-        },
-        params: {},
-        // Consider making it non-closable via header x button if toggled only via toolbar
-        // isClosable: false
-      };
-      try {
-        this._dockviewController.api.addPanel(settingsPanelOptions);
-      } catch (error) {
-        console.error(
-          `Failed to add settings panel ${this.SETTINGS_PANEL_ID}:`,
-          error,
-        );
-      }
-    }
-  }
-
-  /**
-   * Opens the GitHub repository in a new window/tab
-   * PUBLIC: Called by the github button handler.
-   */
-  public openGitHubRepo(): void {
-    window.open(this.GITHUB_REPO_URL, "_blank");
-  }
-
-  /**
-   * Starts or restarts the application tour.
-   * PUBLIC: Called by the tour button handler.
-   */
-  public startTour(): void {
-    if (this._tourController) {
-      this._tourController.restartTour();
-    } else {
-      console.warn("Tour button clicked but TourController is not available.");
-    }
-  }
-
-  /**
-   * Updates the toolbar elements based on the current mobile state.
-   * PUBLIC: Called by the resize handler.
+   * Updates specific toolbar elements' visual appearance based on the current mobile state.
+   * For example, adjusts spacing and toggles mobile attributes on buttons.
+   * @public
    */
   public updateToolbarForMobileState(): void {
-    // Update gap
     this._element.style.gap = this._isMobileDevice
       ? "var(--space-xs, 4px)"
       : "var(--space-md, 12px)";
 
-    // Toggle mobile attribute on cached elements
     this._tourButton?.toggleAttribute("mobile", this._isMobileDevice);
-    this._addButton?.toggleAttribute("mobile", this._isMobileDevice);
-    this._simControls?.toggleAttribute("mobile", this._isMobileDevice);
-    this._systemControls?.toggleAttribute("mobile", this._isMobileDevice);
+    // Potentially add other elements that need mobile state adjustments here
+    // e.g., find the "Add View" button by its ID if it needs specific styling.
+    const addViewButton = this._element.querySelector<HTMLElement>(
+      "#main-toolbar-add-view",
+    );
+    addViewButton?.toggleAttribute("mobile", this._isMobileDevice);
   }
 
-  // --- Private Methods ---
-
   /**
-   * Creates/re-creates the toolbar using the template and attaches handlers.
+   * Clears the existing toolbar content and rebuilds it by setting up layout,
+   * creating static buttons, and loading dynamic items from the plugin system.
+   * @private
    */
   private createToolbar(): void {
-    const templateData: ToolbarTemplateData = {
-      isMobile: this._isMobileDevice,
-      hasTourController: !!this._tourController,
-    };
+    this._element.innerHTML = "";
+    this._element.classList.add("toolbar-container");
 
-    // Ensure the handlers object exists before accessing its properties
-    if (!this._handlers) {
-      console.error(
-        "ToolbarController: Handlers not initialized before createToolbar call.",
-      );
-      return; // Avoid errors if constructor logic changes
-    }
+    const { leftButtonGroup, widgetArea } = this._setupToolbarLayout();
+    this._createStaticButtons(leftButtonGroup);
+    this._loadAndCreatePluginItems(leftButtonGroup, widgetArea);
 
-    // Pass the handler functions directly to the template renderer
-    const templateHandlers: ToolbarTemplateHandlers = {
-      handleGitHubClick: this._handlers.handleGitHubClick,
-      handleSettingsClick: this._handlers.handleSettingsClick,
-      handleTourClick: this._handlers.handleTourClick,
-      handleAddViewClick: this._handlers.handleAddViewClick,
-    };
+    this._element.appendChild(leftButtonGroup);
+    this._element.appendChild(widgetArea);
 
-    // Render the template, passing the container, handlers, and data
-    const elements = renderToolbarTemplate(
-      this._element,
-      templateHandlers,
-      templateData,
-    );
-
-    // Cache the created elements
-    this._githubButton = elements.githubButton;
-    this._settingsButton = elements.settingsButton;
-    this._tourButton = elements.tourButton;
-    this._addButton = elements.addButton;
-    this._simControls = elements.simControls;
-    this._systemControls = elements.systemControls as SystemControls; // Cast needed
-
-    // Pass Dockview API to SystemControls after it's created AND defined
-    this.passApiToSystemControlsWhenDefined();
-
-    // Apply initial mobile state visuals (template handles initial attributes)
-    // this.updateToolbarForMobileState(); // No need to call here, template handles initial render
+    this.updateToolbarForMobileState();
   }
 
   /**
-   * Passes the Dockview API to the SystemControls component *after* ensuring
-   * the custom element is defined.
+   * Creates the main layout containers (div elements) for the toolbar sections.
+   * @private
+   * @returns {{ leftButtonGroup: HTMLDivElement, widgetArea: HTMLDivElement }} An object containing the created container elements.
    */
-  private passApiToSystemControlsWhenDefined(): void {
-    const systemControlsElement = this._systemControls; // Use cached element
-    const dockviewApi = this._dockviewController.api;
+  private _setupToolbarLayout(): {
+    leftButtonGroup: HTMLDivElement;
+    widgetArea: HTMLDivElement;
+  } {
+    const leftButtonGroup = document.createElement("div");
+    leftButtonGroup.classList.add("toolbar-section", "left-button-group");
 
-    if (systemControlsElement && dockviewApi) {
-      // Wait for the element definition
-      customElements
-        .whenDefined("system-controls")
-        .then(() => {
-          // Now we are sure the element is defined, try calling the method
-          console.log(
-            "ToolbarController: system-controls defined. Attempting to set Dockview API.",
+    const widgetArea = document.createElement("div");
+    widgetArea.classList.add("toolbar-section", "widget-area");
+
+    return { leftButtonGroup, widgetArea };
+  }
+
+  /**
+   * Creates and configures the static buttons (Logo, GitHub, Tour, Settings)
+   * and appends them to the specified container.
+   * @private
+   * @param {HTMLElement} container - The container element (e.g., leftButtonGroup) to append the buttons to.
+   */
+  private _createStaticButtons(container: HTMLElement): void {
+    const logoButton = document.createElement("teskooano-button");
+    logoButton.id = "toolbar-logo";
+    logoButton.title = "Visit Teskooano Website";
+    logoButton.setAttribute("variant", "image");
+    logoButton.setAttribute("size", "sm");
+    logoButton.setAttribute("tooltip-text", "Visit Teskooano Website");
+    logoButton.setAttribute("tooltip-title", "Teskooano");
+    logoButton.setAttribute("tooltip-icon-svg", TourIcon);
+    logoButton.innerHTML = `<span slot="icon"><img src="/assets/icon.png" alt="Teskooano Logo" style="width: 45px; height: 45px; object-fit: contain;"></span>`;
+    logoButton.addEventListener("click", () => {
+      window.open(this.WEBSITE_URL, "_blank");
+    });
+    container.appendChild(logoButton);
+
+    this._githubButton = document.createElement("teskooano-button");
+    this._githubButton.id = "toolbar-github";
+    this._githubButton.title = "View on GitHub";
+    this._githubButton.setAttribute("tooltip-text", "View Teskooano on GitHub");
+    this._githubButton.setAttribute("tooltip-title", "GitHub");
+    this._githubButton.setAttribute("tooltip-icon-svg", TourIcon);
+    this._githubButton.setAttribute("variant", "icon");
+    this._githubButton.setAttribute("size", "sm");
+    this._githubButton.innerHTML = `<span slot="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.341-3.369-1.341-.455-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.004.07 1.532 1.03 1.532 1.03.891 1.529 2.341 1.088 2.91.832.092-.647.348-1.088.635-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682-.103-.253-.446-1.27.098-2.64 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0 1 12 6.82c.85.004 1.705.115 2.504.336 1.91-1.294 2.748-1.025 2.748-1.025.546 1.37.201 2.387.099 2.64.64.698 1.03 1.591 1.03 2.682 0 3.841-2.337 4.688-4.566 4.935.359.309.678.92.678 1.852 0 1.338-.012 2.419-.012 2.748 0 .267.18.577.688.48C19.137 20.166 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg></span>`;
+    this._githubButton.addEventListener(
+      "click",
+      this._handlers.handleGitHubClick,
+    );
+    container.appendChild(this._githubButton);
+
+    this._tourButton = document.createElement("teskooano-button");
+    this._tourButton.id = "toolbar-tour";
+    this._tourButton.title = "Start Tour";
+    this._tourButton.setAttribute("variant", "icon");
+    this._tourButton.setAttribute("size", "sm");
+    this._tourButton.setAttribute(
+      "tooltip-text",
+      "This button starts a tour of the application.",
+    );
+    this._tourButton.setAttribute("tooltip-title", "Tour");
+    this._tourButton.setAttribute("tooltip-icon-svg", TourIcon);
+    this._tourButton.innerHTML = `<span slot="icon">${TourIcon}</span>`;
+    this._tourButton.addEventListener("click", this._handlers.handleTourClick);
+    container.appendChild(this._tourButton);
+
+    this._settingsButton = document.createElement("teskooano-button");
+    this._settingsButton.id = "toolbar-settings";
+    this._settingsButton.title = "Settings";
+    this._settingsButton.setAttribute("variant", "icon");
+    this._settingsButton.setAttribute("size", "sm");
+    this._settingsButton.setAttribute(
+      "tooltip-text",
+      "This panel contains global settings for the application.",
+    );
+    this._settingsButton.setAttribute("tooltip-title", "Settings");
+    this._settingsButton.setAttribute("tooltip-icon-svg", SettingsIcon);
+    this._settingsButton.innerHTML = `<span slot="icon">${SettingsIcon}</span>`;
+    this._settingsButton.addEventListener(
+      "click",
+      this._handlers.handleSettingsClick,
+    );
+    container.appendChild(this._settingsButton);
+  }
+
+  /**
+   * Fetches and creates toolbar items (widgets, buttons) registered via the plugin system
+   * for the "main-toolbar" target and appends them to the appropriate containers.
+   * Handles basic parameter setting for widgets and function execution for buttons.
+   * @private
+   * @param {HTMLElement} buttonContainer - The container for buttons.
+   * @param {HTMLElement} widgetContainer - The container for widgets.
+   */
+  private _loadAndCreatePluginItems(
+    buttonContainer: HTMLElement,
+    widgetContainer: HTMLElement,
+  ): void {
+    const targetId = "main-toolbar";
+
+    try {
+      const widgets: ToolbarWidgetConfig[] =
+        getToolbarWidgetsForTarget(targetId);
+      widgets.forEach((widgetConfig) => {
+        try {
+          const widgetElement = document.createElement(
+            widgetConfig.componentName,
           );
-          // Double-check the method exists *after* definition, just in case
-          if (
-            typeof (systemControlsElement as SystemControls).setDockviewApi ===
-            "function"
-          ) {
-            (systemControlsElement as SystemControls).setDockviewApi(
-              dockviewApi,
-            );
-            console.log(
-              "ToolbarController: Dockview API successfully passed to SystemControls.",
-            );
-          } else {
-            console.error(
-              "ToolbarController: SystemControls defined, but setDockviewApi method still not found!",
+          widgetElement.classList.add("toolbar-widget");
+          if (widgetConfig.id) {
+            widgetElement.id = widgetConfig.id;
+          }
+          if (widgetConfig.params) {
+            Object.entries(widgetConfig.params).forEach(([key, value]) => {
+              if (
+                typeof value === "string" ||
+                typeof value === "number" ||
+                typeof value === "boolean"
+              ) {
+                widgetElement.setAttribute(key, String(value));
+              } else {
+                console.error(
+                  // Use error here as it's unexpected
+                  `[ToolbarController] Cannot set complex param '${key}' as attribute on ${widgetConfig.componentName}`,
+                );
+              }
+            });
+          }
+          widgetContainer.appendChild(widgetElement);
+        } catch (widgetError) {
+          console.error(
+            `[ToolbarController] Error creating widget '${widgetConfig.id ?? widgetConfig.componentName}':`,
+            widgetError,
+          );
+        }
+      });
+    } catch (pluginError) {
+      console.error(
+        `[ToolbarController] Error fetching or processing toolbar widgets for target '${targetId}':`,
+        pluginError,
+      );
+      const errorEl = document.createElement("div");
+      errorEl.textContent = "Error loading toolbar widgets.";
+      errorEl.style.color = "red";
+      widgetContainer.appendChild(errorEl);
+    }
+
+    try {
+      const items: ToolbarItemConfig[] = getToolbarItemsForTarget(targetId);
+      items.forEach((item) => {
+        try {
+          if (item.type === "function") {
+            const buttonConfig = item as FunctionToolbarItemConfig;
+            if (!buttonConfig.functionId) {
+              console.error(
+                // Use error here as it's unexpected
+                `[ToolbarController] Skipping function item '${buttonConfig.id}' - missing functionId.`,
+              );
+              return;
+            }
+
+            const buttonElement = document.createElement("teskooano-button");
+            buttonElement.id = buttonConfig.id;
+            buttonElement.setAttribute("variant", "icon");
+            buttonElement.setAttribute("size", "sm");
+            if (buttonConfig.iconSvg) {
+              buttonElement.innerHTML = `<span slot="icon">${buttonConfig.iconSvg}</span>`;
+            }
+
+            const configAny = buttonConfig as any;
+            if (configAny.tooltipText) {
+              buttonElement.setAttribute("tooltip-text", configAny.tooltipText);
+            }
+            if (configAny.tooltipTitle) {
+              buttonElement.setAttribute(
+                "tooltip-title",
+                configAny.tooltipTitle,
+              );
+            }
+            if (configAny.tooltipIconSvg) {
+              buttonElement.setAttribute(
+                "tooltip-icon-svg",
+                configAny.tooltipIconSvg,
+              );
+            }
+            if (!configAny.tooltipText && buttonConfig.title) {
+              buttonElement.setAttribute("title", buttonConfig.title);
+            }
+
+            const functionId = buttonConfig.functionId;
+            buttonElement.addEventListener("click", () => {
+              const funcConfig = getFunctionConfig(functionId);
+              if (funcConfig?.execute) {
+                try {
+                  funcConfig.execute();
+                } catch (execError) {
+                  console.error(
+                    `[ToolbarController] Error executing function '${functionId}':`,
+                    execError,
+                  );
+                }
+              } else {
+                console.error(
+                  // Use error here as it's unexpected
+                  `[ToolbarController] Button clicked, but function '${functionId}' not found via getFunctionConfig.`,
+                );
+              }
+            });
+
+            buttonContainer.appendChild(buttonElement);
+          } else if (item.type === "panel") {
+            console.warn(
+              // Use warn as it's planned but not implemented
+              `[ToolbarController] Skipping panel item '${item.id}' - panel item handling not implemented.`,
             );
           }
-        })
-        .catch((error) => {
+        } catch (elementError) {
           console.error(
-            "ToolbarController: Error waiting for system-controls definition:",
-            error,
+            `[ToolbarController] Error creating toolbar item '${item.id}':`,
+            elementError,
           );
-        });
-    } else if (!systemControlsElement) {
+        }
+      });
+    } catch (pluginError) {
       console.error(
-        "ToolbarController: Cannot pass API, systemControls element not found in cache.",
+        `[ToolbarController] Error fetching or processing toolbar items for target '${targetId}':`,
+        pluginError,
       );
-    } else {
-      console.error(
-        "ToolbarController: Cannot pass API, Dockview API is not available.",
-      );
+      const errorEl = document.createElement("div");
+      errorEl.textContent = "Error loading toolbar buttons/items.";
+      errorEl.style.color = "red";
+      buttonContainer.appendChild(errorEl);
     }
+  }
+
+  /**
+   * Opens the Teskooano GitHub repository in a new browser window or tab.
+   * Intended to be called by the GitHub button's click handler.
+   * @public
+   */
+  public openGitHubRepo(): void {
+    window.open(this.GITHUB_REPO_URL, "_blank");
   }
 }

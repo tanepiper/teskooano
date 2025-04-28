@@ -13,8 +13,11 @@ $schema: "https://moonrepo.dev/schemas/workspace.json"
 # and cannot reference projects located outside the workspace boundary.
 projects:
   - "apps/teskooano"
-  - "apps/homepage"
   - "apps/website"
+  - "packages/app/design-system"
+  - "packages/app/simulation"
+  - "packages/app/ui-plugin"
+  - "packages/app/web-apis"
   - "packages/core/physics"
   - "packages/core/state"
   - "packages/data/types"

@@ -184,9 +184,9 @@ main {
 
 .homepage-video {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
+  align-items: center;
   margin: 3rem auto 2rem;
-  /* max-width: 600px; */
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
@@ -197,17 +197,20 @@ main {
 }
 
 .homepage-video .video-items {
-  width: 520px;
+  width: 100%;
+  max-width: 520px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   align-items: center;
-  order: 1;
+  order: 2;
+  text-align: center;
+  margin-top: 1.5rem;
 }
 
 .homepage-video video {
   display: block;
-  width: 600px;
+  width: 100%;
+  max-width: 600px;
   height: auto;
 }
 
@@ -274,7 +277,7 @@ main h2 {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media only screen and (max-width: 768px) {
   :where([data-page-layout="splash"]) .hero .actions {
     flex-direction: column;
     align-items: stretch;
@@ -287,5 +290,40 @@ main h2 {
 
   :where([data-page-layout="splash"]) .homepage-video {
     margin: 2rem 1rem;
+  }
+}
+
+/* Apply row layout on wider screens */
+@media only screen and (max-width: 960px) {
+  .homepage-video {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center; /* Center the group */
+    align-items: flex-start;
+    gap: 2rem; /* Space between video and items */
+  }
+
+  .homepage-video video {
+    flex: 1 1 500px; /* Allow grow/shrink, base 500px */
+    width: auto; /* Override 100% width */
+    max-width: 600px;
+    /* margin-bottom: 0; */ /* Remove margin, use gap */
+  }
+
+  .homepage-video .video-items {
+    width: auto; /* Override 100% width */
+    flex-direction: row;
+    align-items: flex-start;
+    vertical-align: top;
+    gap: 1rem;
+    font-size: 0.9rem;
+    text-align: right;
+  }
+
+  /** Remove margin-top between paragraphs */
+  .sl-markdown-content
+    :not(a, strong, em, del, span, input, code, br)
+    + :not(a, strong, em, del, span, input, code, br, :where(.not-content *)) {
+    margin-top: 0;
   }
 }

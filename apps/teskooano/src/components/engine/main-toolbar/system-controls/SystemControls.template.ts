@@ -6,6 +6,13 @@ import ArrowDownloadRegular from "@fluentui/svg-icons/icons/arrow_download_20_re
 import CopyRegular from "@fluentui/svg-icons/icons/copy_20_regular.svg?raw";
 import ArrowUploadRegular from "@fluentui/svg-icons/icons/arrow_upload_20_regular.svg?raw";
 import DeleteRegular from "@fluentui/svg-icons/icons/delete_20_regular.svg?raw";
+import SparkleIcon from "@fluentui/svg-icons/icons/sparkle_24_regular.svg?raw";
+import DeleteIcon from "@fluentui/svg-icons/icons/delete_24_regular.svg?raw";
+import SaveIcon from "@fluentui/svg-icons/icons/save_24_regular.svg?raw";
+import FolderOpenIcon from "@fluentui/svg-icons/icons/folder_open_24_regular.svg?raw";
+import DocumentAddIcon from "@fluentui/svg-icons/icons/document_add_24_regular.svg?raw";
+import CopyIcon from "@fluentui/svg-icons/icons/copy_24_regular.svg?raw";
+import CheckmarkIcon from "@fluentui/svg-icons/icons/checkmark_24_regular.svg?raw";
 // --- End Fluent UI Icons ---
 
 // Define template outside the class for better organization
@@ -27,7 +34,7 @@ template.innerHTML = `
       width: auto;
     }
 
-    .system-controls-container {
+    .teskooano-system-controls-container {
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -247,7 +254,7 @@ template.innerHTML = `
      }
 
   </style>
-  <div class="system-controls-container">
+  <div class="teskooano-system-controls-container">
     <!-- Empty State -->
     <div class="state state--empty">
       <form class="seed-form">
@@ -300,3 +307,14 @@ template.innerHTML = `
 `;
 
 export { template as SystemControlsTemplate };
+
+// Export icons for use in the component logic
+export {
+  SparkleIcon,
+  DeleteIcon,
+  SaveIcon,
+  FolderOpenIcon,
+  DocumentAddIcon,
+  CopyIcon,
+  CheckmarkIcon,
+};

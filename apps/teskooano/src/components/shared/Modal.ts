@@ -257,9 +257,3 @@ export class TeskooanoModal extends HTMLElement {
     this.secondaryHandler = handler;
   }
 }
-
-// Define the custom element
-const ELEMENT_TAG = "teskooano-modal";
-if (!customElements.get(ELEMENT_TAG)) {
-  customElements.define(ELEMENT_TAG, TeskooanoModal);
-}
