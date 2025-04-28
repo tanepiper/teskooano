@@ -46,8 +46,15 @@ export const updatePlayPauseButton = (
   isPaused: boolean,
 ): void => {
   if (button) {
-    button.innerHTML = isPaused ? PlayIcon : PauseIcon;
-    button.title = isPaused ? "Play Simulation" : "Pause Simulation";
+    const stateText = isPaused ? "Play" : "Pause";
+    const tooltipText = `${stateText} Simulation`;
+    const iconSvg = isPaused ? PlayIcon : PauseIcon;
+
+    button.innerHTML = iconSvg; // Set button icon
+    button.title = tooltipText; // Keep native title for accessibility fallback
+    button.setAttribute("tooltip-text", tooltipText); // Set custom tooltip text
+    button.setAttribute("tooltip-title", stateText); // Set tooltip title (Play/Pause)
+    button.setAttribute("tooltip-icon-svg", iconSvg); // Set tooltip icon
     button.toggleAttribute("active", !isPaused);
   }
 };

@@ -4,7 +4,14 @@ import {
   createStateUpdateHandler,
   setupEventHandlers,
 } from "./SimulationControls.handlers";
-import { template } from "./SimulationControls.template";
+import {
+  template,
+  PlayIcon,
+  PauseIcon,
+  PreviousIcon,
+  NextIcon,
+  ReverseIcon,
+} from "./SimulationControls.template";
 import type { SimulationUIElements } from "./SimulationControls.updater";
 
 /**
@@ -55,6 +62,27 @@ export class SimulationControls extends HTMLElement {
 
     // Call handler initially to set UI from current state
     this.stateUpdateHandler(simulationState.get());
+
+    // --- Set static tooltips ---
+    this.setStaticTooltip(
+      this.uiElements.reverseButton,
+      "Reverse",
+      "Reverse simulation direction.",
+      ReverseIcon,
+    );
+    this.setStaticTooltip(
+      this.uiElements.speedDownButton,
+      "Decrease Speed",
+      "Decrease simulation speed (halve).",
+      PreviousIcon,
+    );
+    this.setStaticTooltip(
+      this.uiElements.speedUpButton,
+      "Increase Speed",
+      "Increase simulation speed (double).",
+      NextIcon,
+    );
+    // Play/Pause tooltip is handled dynamically in the updater
   }
 
   disconnectedCallback(): void {
@@ -94,5 +122,60 @@ export class SimulationControls extends HTMLElement {
     this.uiElements.timeValueDisplay = shadowRoot.getElementById("time-value");
     this.uiElements.engineValueDisplay =
       shadowRoot.getElementById("engine-value");
+  }
+
+  /**
+   * Helper to set all tooltip attributes on a button.
+   * @private
+   */
+  private setStaticTooltip(
+    button: TeskooanoButton | null,
+    title: string | null,
+    text: string | null,
+    iconSvg: string | null,
+  ): void {
+    if (!button) return;
+
+    if (text) {
+      button.setAttribute("tooltip-text", text);
+      button.removeAttribute("title"); // Remove native title if custom is set
+    } else if (title) {
+      // Fallback: Use title as text if no specific text provided
+      button.setAttribute("tooltip-text", title);
+      button.removeAttribute("title");
+    } else {
+      // If neither text nor title attr exists, maybe keep native title?
+      // Or clear custom tooltip text
+      button.removeAttribute("tooltip-text");
+      if (button.hasAttribute("title")) {
+        // Re-apply native if needed
+        this.setButtonAttribute(button, "title", button.getAttribute("title"));
+      }
+    }
+
+    if (title) {
+      button.setAttribute("tooltip-title", title);
+    } else {
+      button.removeAttribute("tooltip-title");
+    }
+
+    if (iconSvg) {
+      button.setAttribute("tooltip-icon-svg", iconSvg);
+    } else {
+      button.removeAttribute("tooltip-icon-svg");
+    }
+  }
+
+  // Need setButtonAttribute if removing native title inside helper
+  private setButtonAttribute(
+    button: TeskooanoButton,
+    name: string,
+    value: string | null,
+  ) {
+    if (value !== null) {
+      button.setAttribute(name, value);
+    } else {
+      button.removeAttribute(name);
+    }
   }
 }

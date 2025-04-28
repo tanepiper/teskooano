@@ -5,8 +5,18 @@ import {
   getFunctionConfig,
   type PluginFunctionCallerSignature,
 } from "@teskooano/ui-plugin";
-import { SystemControlsTemplate } from "./SystemControls.template.js";
+import {
+  SystemControlsTemplate,
+  SparkleIcon,
+  DeleteIcon,
+  SaveIcon,
+  FolderOpenIcon,
+  DocumentAddIcon,
+  CopyIcon,
+  CheckmarkIcon,
+} from "./SystemControls.template.js";
 import * as SystemControlsUI from "./system-controls.ui.js";
+import type { TeskooanoButton } from "../../../shared/Button";
 
 /**
  * @element teskooano-system-controls
@@ -109,6 +119,9 @@ class SystemControls
     if (this.seedInput) {
       this.seedInput.value = currentSeed.get() || "";
     }
+
+    // --- Add Tooltips ---
+    this.setupTooltips();
   }
 
   /**
@@ -474,6 +487,107 @@ class SystemControls
   /** Public getter for the generating state. */
   public isGenerating(): boolean {
     return this._isGenerating;
+  }
+
+  /**
+   * Iterates through buttons and sets tooltip attributes based on action.
+   * @private
+   */
+  private setupTooltips(): void {
+    const submitButton = this.seedForm?.querySelector(
+      'teskooano-button[type="submit"]',
+    ) as TeskooanoButton | null;
+
+    if (submitButton) {
+      this.setButtonTooltip(
+        submitButton,
+        "Generate",
+        "Generate system from entered seed",
+        CheckmarkIcon,
+      );
+    }
+
+    this.buttons?.forEach((button) => {
+      const actionButton = button as TeskooanoButton; // Cast to specific type
+      const action = actionButton.dataset.action;
+      switch (action) {
+        case "random":
+          this.setButtonTooltip(
+            actionButton,
+            "Random Seed",
+            "Generate system using a random seed",
+            SparkleIcon,
+          );
+          break;
+        case "clear":
+          this.setButtonTooltip(
+            actionButton,
+            "Clear System",
+            "Clear all objects from the current system",
+            DeleteIcon,
+          );
+          break;
+        case "export":
+          this.setButtonTooltip(
+            actionButton,
+            "Export System",
+            "Export current system objects and seed to a JSON file",
+            SaveIcon,
+          );
+          break;
+        case "import":
+          this.setButtonTooltip(
+            actionButton,
+            "Import System",
+            "Import system from a JSON file",
+            FolderOpenIcon,
+          );
+          break;
+        case "create-blank":
+          this.setButtonTooltip(
+            actionButton,
+            "New Blank",
+            "Create a new blank system with just a star",
+            DocumentAddIcon,
+          );
+          break;
+        case "copy-seed":
+          this.setButtonTooltip(
+            actionButton,
+            "Copy Seed",
+            "Copy the current system seed to the clipboard",
+            CopyIcon,
+          );
+          break;
+        // Add cases for other buttons if they exist
+      }
+    });
+  }
+
+  /**
+   * Helper to set tooltip attributes on a button.
+   * @param button The button element.
+   * @param title Tooltip title.
+   * @param text Tooltip descriptive text.
+   * @param iconSvg Optional SVG string for the tooltip icon.
+   * @private
+   */
+  private setButtonTooltip(
+    button: TeskooanoButton | null,
+    title: string | null,
+    text: string | null,
+    iconSvg: string | null,
+  ): void {
+    if (!button) return;
+    // Set attributes - the button component handles native title suppression
+    if (title) button.setAttribute("tooltip-title", title);
+    else button.removeAttribute("tooltip-title");
+
+    if (text) button.setAttribute("tooltip-text", text);
+    else button.removeAttribute("tooltip-text");
+
+    if (iconSvg) button.setAttribute("tooltip-icon-svg", iconSvg);
+    else button.removeAttribute("tooltip-icon-svg");
   }
 }
 

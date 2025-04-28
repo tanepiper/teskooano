@@ -113,3 +113,6 @@ template.innerHTML = `
 
 export const PlayIcon = PlayRegular;
 export const PauseIcon = PauseRegular;
+export const PreviousIcon = PreviousRegular;
+export const NextIcon = NextRegular;
+export const ReverseIcon = ArrowClockwiseRegular;
