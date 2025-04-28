@@ -143,30 +143,15 @@ async function initializeApp() {
     });
   });
 
-  // Manually register components not part of plugins - REMOVED
-  // console.log("  - Registering Dockview component: progress_view (manual)");
-  // dockviewController.registerComponent("progress_view", ProgressPanel); // REMOVED
-
   console.log("Dockview panel registration complete.");
 
-  // --- Initialize first engine view (if still desired as default) --- //
   toolbarController.initializeFirstEngineView();
-  // tourController.setEngineViewId("engine_view_1"); // REMOVED - Need alternative way if steps need this
-
-  // --- Setup Tour (if still needed globally) --- //
-  // toolbarController.setTourController(tourController); // REMOVED - Method no longer exists
-
-  // Setup listeners
-  setupEventListeners(/* tourController */); // REMOVED tourController dependency if possible
+  setupEventListeners();
 
   console.log("Teskooano Initialized.");
 }
 
-// --- Helper to Setup Event Listeners (keeps initializeApp cleaner) --- //
-// REMOVE tourController dependency if setupEventListeners doesn't strictly need it
-// or find alternative way to access tour functions (e.g., via plugin manager)
-function setupEventListeners(/* tourController: TourController */) {
-  // Orientation Handling
+function setupEventListeners() {
   const portraitMediaQuery = window.matchMedia("(orientation: portrait)");
   const narrowWidthMediaQuery = window.matchMedia("(max-width: 1024px)");
   function updateOrientation() {
@@ -204,54 +189,6 @@ function setupEventListeners(/* tourController: TourController */) {
       // tourController.setCurrentSelectedCelestial(undefined);
     }
   });
-
-  // Tour Modal Logic
-  window.addEventListener("DOMContentLoaded", () => {
-    // This logic needs to use plugin functions now
-    const isSkippingFunc = getFunctionConfig("tour:isSkipping"); // Hypothetical
-    const hasShownModalFunc = getFunctionConfig("tour:hasShownModal"); // Hypothetical
-    const markModalShownFunc = getFunctionConfig("tour:markModalShown"); // Hypothetical
-    const resumeTourFunc = getFunctionConfig("tour:resume"); // Hypothetical
-    const startTourFunc = getFunctionConfig("tour:start");
-    const setSkipTourFunc = getFunctionConfig("tour:setSkip");
-
-    let isSkipping = false;
-    let hasShownModal = true; // Assume shown if functions don't exist
-
-    // NOTE: This is complex because execute is async and we need sync checks
-    // Ideally, the tour plugin exposes state via a store or simple getters
-    // For now, we'll skip this complex part
-    /*
-    if (isSkippingFunc?.execute) isSkipping = await isSkippingFunc.execute();
-    if (hasShownModalFunc?.execute) hasShownModal = await hasShownModalFunc.execute();
-    */
-
-    // Simplified: Assume tourControllerInstance is somehow accessible for checks
-    // This needs a better solution (e.g., TourController exposing state via store)
-    // const tourInstance = getTourControllerInstance(); // Hypothetical function
-    // if (tourInstance && !tourInstance.isSkippingTour() && !tourInstance.hasShownTourModal()) {
-    //   tourInstance.markTourModalAsShown();
-
-    //   const tourModalElement = document.createElement("teskooano-tour-modal");
-    //   (tourModalElement as TeskooanoTourModal).setCallbacks(
-    //     () => { // On Accept
-    //       const savedStep = localStorage.getItem("tourCurrentStep");
-    //       if (savedStep && resumeTourFunc?.execute) resumeTourFunc.execute();
-    //       else if (startTourFunc?.execute) startTourFunc.execute();
-    //     },
-    //     () => { // On Decline
-    //       if (setSkipTourFunc?.execute) setSkipTourFunc.execute({ skip: true });
-    //     },
-    //   );
-    //   document.body.appendChild(tourModalElement);
-    // }
-  });
-
-  // Cleanup on page unload
-  // window.addEventListener("beforeunload", () => {
-  //     toolbarController.destroy(); // toolbarController might not be accessible here
-  // });
-  // Note: Cleanup might need a different approach if toolbarController is local to initializeApp
 
   // Listener for Start Tour Requests from Placeholders
   document.body.addEventListener("start-tour-request", () => {

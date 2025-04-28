@@ -4,9 +4,6 @@ tags:
   - core
   - math
 
-dependsOn:
-  - "~:build"
-
 tasks:
   build:
     command: npm run build

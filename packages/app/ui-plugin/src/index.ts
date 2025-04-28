@@ -1,6 +1,13 @@
-// Only re-export types and CLIENT-SIDE manager functions
+/**
+ * UI Plugin System
+ *
+ * This package provides a system for registering and loading UI plugins.
+ * It includes types, functions, and utilities for managing plugins, components,
+ * and toolbar items.
+ *
+ * Don't export the vite plugin here, it's handled in the vite config.
+ */
 
-// Export Types
 export type {
   // Core Plugin System Types
   ToolbarTarget,

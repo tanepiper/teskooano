@@ -1,5 +1,5 @@
 import type { TeskooanoPlugin, FunctionConfig } from "@teskooano/ui-plugin";
-import { TourController } from "../controllers/tourController"; // Import the controller class
+import { TourController } from "./tourController"; // Import the controller class
 
 // --- Instantiate Tour Controller Singleton ---
 // Create a single instance when the plugin module is loaded.

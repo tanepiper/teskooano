@@ -55,7 +55,7 @@ export class ToolbarController {
 
   // Define a constant for the settings panel ID
   private readonly SETTINGS_PANEL_ID = "app_settings_panel";
-  // GitHub repository URL
+  // GitHub repository URL - CORRECTED back to original
   private readonly GITHUB_REPO_URL = "https://github.com/tanepiper/teskooano";
 
   /**
@@ -71,6 +71,7 @@ export class ToolbarController {
     this._isMobileDevice = this.detectMobileDevice();
 
     // Create handlers directly using the updated signature
+    // Pass the bound methods needed by the handlers
     this._handlers = createToolbarHandlers(
       this, // Pass the controller instance
     );

@@ -1,4 +1,4 @@
-import {
+import type {
   TeskooanoPlugin,
   // ComponentConfig, // No longer needed directly in registerPlugin
   PanelConfig,
@@ -21,31 +21,17 @@ import {
 // Cast the imported config to the correct type
 const loadedComponentConfig =
   componentRegistryConfig as ComponentRegistryConfig;
-
-// --- Configuration Interfaces ---
-
-/** Configuration for dynamically loading a component. */
-// export interface ComponentLoadConfig { ... }
-
-/** Configuration for dynamically loading a plugin. */
-// export interface PluginLoadConfig { ... }
-
-/** Map of component tag names to their loading configuration. */
-// export type ComponentRegistryConfig = Record<string, ComponentLoadConfig>;
-
-/** Map of plugin IDs to their loading configuration. */
-// export type PluginRegistryConfig = Record<string, PluginLoadConfig>;
-
-// --- Registries (remain the same) ---
+/** Stores registered plugin definitions, keyed by plugin ID. */
 const pluginRegistry: Map<string, TeskooanoPlugin> = new Map();
 // const componentRegistry: Map<string, ComponentConfig> = new Map(); // We don't store ComponentConfig anymore
+/** Stores registered panel configurations, keyed by component name. */
 const panelRegistry: Map<string, PanelConfig> = new Map();
+/** Stores registered function configurations, keyed by function ID. */
 const functionRegistry: Map<string, FunctionConfig> = new Map();
+/** Stores registered toolbar item configurations, keyed by target toolbar ID. */
 const toolbarRegistry: Map<ToolbarTarget, ToolbarItemConfig[]> = new Map();
-// ---> NEW: Map to store loaded classes for non-custom-elements
+/** Stores loaded module classes for non-custom-elements, keyed by registry key. */
 const loadedModuleClasses: Map<string, any> = new Map();
-
-// --- Core Registration Functions ---
 
 /**
  * Registers the metadata of a UI plugin (panels, functions, toolbars).
@@ -65,7 +51,6 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
   );
   pluginRegistry.set(plugin.id, plugin);
 
-  // Register panels
   plugin.panels?.forEach((panelConfig) => {
     if (panelRegistry.has(panelConfig.componentName)) {
       console.warn(
@@ -77,11 +62,7 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
     console.log(`  - Registered panel: ${panelConfig.componentName}`);
   });
 
-  // Register functions
   plugin.functions?.forEach((funcConfig) => {
-    console.log(
-      `[PluginManager Debug] Plugin '${plugin.id}' processing function ID: ${funcConfig.id}`,
-    ); // DEBUG
     if (functionRegistry.has(funcConfig.id)) {
       console.warn(
         `[PluginManager] Function ID '${funcConfig.id}' from plugin '${plugin.id}' already registered. Skipping.`,
@@ -90,70 +71,31 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
     }
     functionRegistry.set(funcConfig.id, funcConfig);
     console.log(`  - Registered function: ${funcConfig.id}`);
-    console.log(
-      `[PluginManager Debug] Function registry size: ${functionRegistry.size}`,
-    ); // DEBUG
   });
 
-  // Register toolbar items
   plugin.toolbarRegistrations?.forEach((registration: ToolbarRegistration) => {
     const target = registration.target;
-    console.log(
-      `[PluginManager Debug] Processing target '${target}' for plugin '${plugin.id}'`,
-    ); // DEBUG LOG
     if (!toolbarRegistry.has(target)) {
       toolbarRegistry.set(target, []);
-      console.log(
-        `[PluginManager Debug] Initialized empty array for target '${target}'`,
-      ); // DEBUG LOG
     }
     const targetItems = toolbarRegistry.get(target)!;
-    console.log(
-      `[PluginManager Debug] Target '${target}' items BEFORE processing plugin '${plugin.id}':`,
-      JSON.stringify(targetItems.map((i) => i.id)),
-    ); // DEBUG LOG
 
     registration.items.forEach((itemDefinition: ToolbarItemDefinition) => {
       const fullItemConfig: ToolbarItemConfig = {
         ...itemDefinition,
         target: target,
       };
-      console.log(
-        `[PluginManager Debug] Checking item '${fullItemConfig.id}' for target '${target}'`,
-      ); // DEBUG LOG
       if (targetItems.some((item) => item.id === fullItemConfig.id)) {
         console.warn(
           `[PluginManager] Toolbar item ID '${fullItemConfig.id}' for target '${target}' from plugin '${plugin.id}' already exists. Skipping.`,
         );
         return;
       }
-      console.log(
-        `[PluginManager Debug] Pushing item '${fullItemConfig.id}' to target '${target}'...`,
-      ); // DEBUG LOG
       targetItems.push(fullItemConfig);
-      console.log(
-        `[PluginManager Debug] Target '${target}' items AFTER push for item '${fullItemConfig.id}':`,
-        JSON.stringify(targetItems.map((i) => i.id)),
-      ); // DEBUG LOG
-      console.log(
-        `  - Registered toolbar item '${fullItemConfig.id}' for target '${target}'`,
-      );
     });
-    console.log(
-      `[PluginManager Debug] Target '${target}' items BEFORE sort for plugin '${plugin.id}':`,
-      JSON.stringify(targetItems.map((i) => i.id)),
-    ); // DEBUG LOG
     targetItems.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
-    console.log(
-      `[PluginManager Debug] Target '${target}' items AFTER sort for plugin '${plugin.id}':`,
-      JSON.stringify(targetItems.map((i) => i.id)),
-    ); // DEBUG LOG
   });
-
-  // Initialize function is called after *dynamic* loading in loadAndRegisterPlugins
 }
-
-// --- Loading and Registration Functions (Using Vite Plugin Loaders) ---
 
 /**
  * Loads and registers custom web components or just loads modules
@@ -248,6 +190,7 @@ export async function loadAndRegisterComponents(
  */
 export async function loadAndRegisterPlugins(
   pluginIds: string[],
+  passedArguments?: any,
 ): Promise<void> {
   console.log(
     "[PluginManager] Starting plugin registration via Vite loaders...",
@@ -255,7 +198,7 @@ export async function loadAndRegisterPlugins(
   const loaders = pluginLoaders as Record<string, () => Promise<any>>;
 
   for (const pluginId of pluginIds) {
-    console.log(`[PluginManager Debug] Processing plugin ID: ${pluginId}`); // DEBUG
+    // console.log(`[PluginManager Debug] Processing plugin ID: ${pluginId}`); // REMOVED DEBUG
     const loader = loaders[pluginId];
     if (!loader) {
       console.error(
@@ -265,22 +208,14 @@ export async function loadAndRegisterPlugins(
     }
 
     try {
-      console.log(`  - Calling loader for plugin '${pluginId}'...`);
       const module = await loader();
-      // Assume plugin object is exported as 'plugin' unless specified differently in future
       const plugin = module.plugin as TeskooanoPlugin;
 
       if (plugin && typeof plugin === "object" && plugin.id === pluginId) {
-        console.log(
-          `[PluginManager Debug] Calling registerPlugin for ${pluginId}`,
-        ); // DEBUG
         registerPlugin(plugin);
         if (typeof plugin.initialize === "function") {
           try {
-            console.log(
-              `  - Initializing plugin: ${plugin.name} (ID: ${pluginId})`,
-            );
-            plugin.initialize(/* Pass APIs if needed */);
+            plugin.initialize(...(passedArguments ?? []));
           } catch (initError) {
             console.error(
               `[PluginManager] Error initializing plugin '${pluginId}':`,
@@ -307,8 +242,6 @@ export async function loadAndRegisterPlugins(
   console.log("[PluginManager] Plugin registration via Vite loaders finished.");
 }
 
-// --- Getter functions (remain the same) --- //
-
 /**
  * Retrieves all registered plugins.
  * @returns An array of registered plugin objects.
@@ -332,9 +265,9 @@ export function getPanelConfig(componentName: string): PanelConfig | undefined {
  * @returns The FunctionConfig or undefined if not found.
  */
 export function getFunctionConfig(id: string): FunctionConfig | undefined {
-  console.log(`[PluginManager Debug] getFunctionConfig called for ID: ${id}`); // DEBUG
+  // console.log(`[PluginManager Debug] getFunctionConfig called for ID: ${id}`); // REMOVED DEBUG
   const func = functionRegistry.get(id);
-  console.log(`[PluginManager Debug] Found function config for ${id}:`, !!func); // DEBUG
+  // console.log(`[PluginManager Debug] Found function config for ${id}:`, !!func); // REMOVED DEBUG
   return func;
 }
 
@@ -347,15 +280,9 @@ export function getToolbarItemsForTarget(
   target: ToolbarTarget,
 ): ToolbarItemConfig[] {
   const items = toolbarRegistry.get(target) ?? [];
-  console.log(items);
-  console.log(
-    `[PluginManager Debug] getToolbarItemsForTarget('${target}') returning:`,
-    JSON.stringify(items.map((i) => i.id)),
-  ); // DEBUG LOG
-  return [...items]; // Return a copy
+  return [...items];
 }
 
-// ---> NEW: Getter for loaded module classes
 /**
  * Retrieves a loaded class definition for a non-custom-element module.
  * @param key - The key used in the componentRegistry (e.g., 'teskooano-modal-manager').

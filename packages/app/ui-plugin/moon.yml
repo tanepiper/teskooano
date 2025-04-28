@@ -20,7 +20,6 @@ tasks:
     inputs:
       - "src/**/*.ts"
       - "tsconfig.json"
-      - "../../tsconfig.base.json"
     options:
       runInCI: true
 
@@ -29,8 +28,6 @@ tasks:
     command: "eslint . --fix"
     inputs:
       - "src/**/*.ts"
-      - ".eslintrc.js" # Assuming eslint config file
-      - "../../.eslintrc.js"
     options:
       runInCI: true
 
@@ -39,20 +36,15 @@ tasks:
     command: "prettier --write ."
     inputs:
       - "src/**/*.ts"
-      - ".prettierrc.js" # Assuming prettier config file
-      - "../../.prettierrc.js"
     options:
       runInCI: false # Usually run locally
 
-
-  # Build (if needed, e.g., for type declarations only)
-  # build:
-  #   command: 'tsc -p tsconfig.json'
-  #   inputs:
-  #     - 'src/**/*.ts'
-  #     - 'tsconfig.json'
-  #     - '../../tsconfig.base.json'
-  #   outputs:
-  #     - 'dist'
-  #   options:
-  #     runInCI: true
+  build:
+    command: "npm run build"
+    inputs:
+      - "src/**/*.ts"
+      - "tsconfig.json"
+    outputs:
+      - "dist"
+    options:
+      runInCI: true

@@ -11,7 +11,6 @@ interface ToolbarHandlerDependencies {
 
 // Handlers for toolbar actions
 import type { ToolbarController } from "./ToolbarController";
-import type { TourController } from "../tourController";
 import { getFunctionConfig } from "@teskooano/ui-plugin"; // Import plugin manager function
 
 // Interface defining the required handler functions
@@ -32,11 +31,7 @@ export const createToolbarHandlers = (
 ): ToolbarTemplateHandlers => {
   // --- Define individual handlers ---
   const handleGitHubClick = (event: MouseEvent) => {
-    window.open(
-      "https://github.com/tanepiper/open-space-2",
-      "_blank",
-      "noopener,noreferrer",
-    );
+    controller.openGitHubRepo();
   };
 
   const handleSettingsClick = (event: MouseEvent) => {

@@ -23,14 +23,5 @@ export const pluginConfig: PluginRegistryConfig = {
   "core-celestial-info": {
     path: "../components/ui-controls/celestial-info/CelestialInfo.plugin.ts",
   },
-
-  // --- System Actions & Tour --- //
-  "core-system-actions": { path: "../plugins/SystemActions.plugin.ts" },
-  "core-tour": { path: "../plugins/Tour.plugin.ts" },
-
-  // --- Library Plugins (Example) --- //
-  // ...uiPluginConfig, // Spread in plugins from ui-lib if needed
-
-  // Example (add actual feature plugins here later):
-  // 'feature-celestial-info': { path: '@teskooano/celestial-info-plugin' },
+  "core-tour": { path: "../components/tours/Tour.plugin.ts" },
 };

@@ -177,7 +177,7 @@ export interface TeskooanoPlugin {
    * Can be used for setting up listeners, etc.
    * Should receive necessary application controllers/APIs.
    */
-  initialize?: (/* apiHandles: AppApiHandles */) => void;
+  initialize?: (...args: any[]) => void;
 
   /**
    * Optional cleanup function called when the plugin is unloaded (if supported).
