@@ -1,5 +1,5 @@
 import { PopoverAPI } from "@teskooano/web-apis";
-import type { SystemControls } from "../../components/toolbar/SystemControls"; // Import type only if needed, otherwise just use HTMLElement
+import type { SystemControls } from "../../components/engine/main-toolbar/system-controls/SystemControls"; // Import type only if needed, otherwise just use HTMLElement
 
 /**
  * Helper function to create a popover element.

@@ -27,6 +27,8 @@ export type {
   ComponentRegistryConfig,
   PluginRegistryConfig,
   PluginExecutionContext,
+  PluginFunctionCallerSignature,
+  ToolbarWidgetConfig,
 } from "./types.js";
 
 // Export Client-Side Manager Functions
@@ -40,4 +42,5 @@ export {
   getFunctionConfig,
   getToolbarItemsForTarget,
   getLoadedModuleClass,
+  getToolbarWidgetsForTarget,
 } from "./pluginManager.js";

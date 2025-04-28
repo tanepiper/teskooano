@@ -11,6 +11,7 @@ import type {
   PluginRegistryConfig,
   PluginExecutionContext,
   PluginFunctionCallerSignature,
+  ToolbarWidgetConfig,
 } from "./types.js";
 import type { DockviewApi } from "dockview-core";
 
@@ -359,4 +360,40 @@ export function getToolbarItemsForTarget(
  */
 export function getLoadedModuleClass(key: string): any | undefined {
   return loadedModuleClasses.get(key);
+}
+
+/**
+ * Retrieves all registered toolbar widget configurations for a specific target toolbar area,
+ * sorted by their 'order' property.
+ * @param target - The ID of the target toolbar ('main-toolbar', 'engine-toolbar', etc.).
+ * @returns An array of sorted ToolbarWidgetConfig objects.
+ */
+export function getToolbarWidgetsForTarget(
+  target: ToolbarTarget,
+): ToolbarWidgetConfig[] {
+  const allWidgets: ToolbarWidgetConfig[] = [];
+
+  pluginRegistry.forEach((plugin) => {
+    if (plugin.toolbarWidgets) {
+      plugin.toolbarWidgets.forEach((widgetConfig) => {
+        // Ensure the widget config has the target property correctly set internally
+        // (Even though it's defined on the config object itself)
+        if (widgetConfig.target === target) {
+          allWidgets.push(widgetConfig);
+        }
+      });
+    }
+  });
+
+  // Sort widgets by order (ascending, undefined order goes last)
+  allWidgets.sort((a, b) => {
+    const orderA = a.order ?? Infinity;
+    const orderB = b.order ?? Infinity;
+    return orderA - orderB;
+  });
+
+  console.log(
+    `[PluginManager] Found ${allWidgets.length} widgets for target '${target}'`,
+  );
+  return allWidgets;
 }

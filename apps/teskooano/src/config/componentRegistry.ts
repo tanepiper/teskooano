@@ -60,4 +60,16 @@ export const componentConfig: ComponentRegistryConfig = {
   // Note: If @teskooano/design-system already registers its components globally,
   // you might not need to list them here. Check its implementation.
   // 'ds-button': { path: '@teskooano/design-system/Button' },
+
+  // --- ADD THESE (Adjust paths if needed) ---
+  "simulation-controls": {
+    path: "../components/engine/main-toolbar/simulation-controls/SimulationControls.ts",
+    className: "SimulationControls",
+    isCustomElement: true, // Ensure this is true or omitted
+  },
+  "system-controls": {
+    path: "../components/engine/main-toolbar/system-controls/SystemControls.ts",
+    className: "SystemControls",
+    isCustomElement: true, // Ensure this is true or omitted
+  },
 };

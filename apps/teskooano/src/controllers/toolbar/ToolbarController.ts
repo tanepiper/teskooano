@@ -1,22 +1,28 @@
-import type { AddPanelOptions, DockviewApi } from "dockview-core";
-import "../../components/toolbar/SimulationControls.js"; // Import for side effect (registers element)
-import "../../components/toolbar/SystemControls.js"; // ADDED BACK
-import type { SystemControls } from "../../components/toolbar/SystemControls.js"; // ADDED BACK
-import { DockviewController } from "../dockview/DockviewController.js";
+import type { DockviewController } from "../dockview/DockviewController.js";
+// Custom elements are registered globally in main.ts now
+// import "../../components/engine/main-toolbar/simulation-controls/SimulationControls.ts";
+// import "../../components/engine/main-toolbar/system-controls/SystemControls.ts";
+// import type { SystemControls } from "../../components/engine/main-toolbar/system-controls/SystemControls.ts";
+import "./ToolbarController.css";
+// Import plugin types and functions (assuming they exist in the updated package)
+import {
+  getToolbarWidgetsForTarget, // Assuming this function is added to the plugin package
+  type ToolbarWidgetConfig, // Assuming this type is added
+} from "@teskooano/ui-plugin";
+
 import {
   createToolbarHandlers,
-  type ToolbarTemplateHandlers, // Use the correct handler type
-} from "./ToolbarController.handlers.js"; // Import the correct handler type
-import {
-  renderToolbarTemplate,
-  type ToolbarTemplateData,
-  // type ToolbarTemplateHandlers as TemplateHandlers, // REMOVE incorrect import alias
-} from "./ToolbarController.template.js";
+  type ToolbarTemplateHandlers,
+} from "./ToolbarController.handlers.js";
+// We no longer use the static template renderer
+// import {
+//   renderToolbarTemplate,
+//   type ToolbarTemplateData,
+// } from "./ToolbarController.template.js";
 
 /**
  * ToolbarController is responsible for managing the toolbar and adding engine views.
- * It orchestrates the creation of the toolbar UI via a template and manages
- * interactions with Dockview and other controllers.
+ * It dynamically renders toolbar content based on plugin registrations.
  */
 export class ToolbarController {
   /**
@@ -32,13 +38,14 @@ export class ToolbarController {
    */
   private _isMobileDevice: boolean = false;
 
-  // Cache toolbar elements populated by the template
+  // Cache STATIC elements
   private _githubButton: HTMLElement | null = null;
   private _settingsButton: HTMLElement | null = null;
   private _tourButton: HTMLElement | null = null;
   private _addButton: HTMLElement | null = null;
-  private _simControls: HTMLElement | null = null;
-  private _systemControls: SystemControls | null = null; // ADDED BACK
+  // REMOVED: Caching for dynamically added plugin widgets
+  // private _simControls: HTMLElement | null = null;
+  // private _systemControls: SystemControls | null = null;
 
   // Handlers
   // Use the specific type returned by createToolbarHandlers
@@ -61,9 +68,7 @@ export class ToolbarController {
 
     // Create handlers directly using the updated signature
     // Pass the bound methods needed by the handlers
-    this._handlers = createToolbarHandlers(
-      this, // Pass the controller instance
-    );
+    this._handlers = createToolbarHandlers(this);
 
     // Set up resize listener - We need a separate handler for this
     window.addEventListener("resize", this.handleResize);
@@ -81,7 +86,10 @@ export class ToolbarController {
     const isNowMobile = this.detectMobileDevice();
     // Only update if the mobile state actually changed
     if (wasMobile !== isNowMobile) {
+      // Update gap and static buttons
       this.updateToolbarForMobileState();
+      // Potentially re-render dynamic widgets if their appearance depends on mobile state?
+      // For now, assume widgets handle their own mobile styling.
     }
   };
   // --- End Resize Handler ---
@@ -121,10 +129,11 @@ export class ToolbarController {
       ? "var(--space-xs, 4px)"
       : "var(--space-md, 12px)";
 
-    // Toggle mobile attribute on cached elements
+    // Toggle mobile attribute ONLY on static cached elements
     this._tourButton?.toggleAttribute("mobile", this._isMobileDevice);
     this._addButton?.toggleAttribute("mobile", this._isMobileDevice);
-    this._simControls?.toggleAttribute("mobile", this._isMobileDevice);
+    // REMOVED: Toggling attributes on dynamic widgets
+    // this._simControls?.toggleAttribute("mobile", this._isMobileDevice);
   }
 
   // --- Private Methods ---
@@ -133,88 +142,121 @@ export class ToolbarController {
    * Creates/re-creates the toolbar using the template and attaches handlers.
    */
   private createToolbar(): void {
-    const templateData: ToolbarTemplateData = {
-      isMobile: this._isMobileDevice,
-    };
+    // Clear existing content
+    this._element.innerHTML = "";
 
-    // Ensure the handlers object exists before accessing its properties
-    if (!this._handlers) {
-      console.error(
-        "ToolbarController: Handlers not initialized before createToolbar call.",
-      );
-      return; // Avoid errors if constructor logic changes
-    }
+    // --- Render Static Elements (Example - Adapt based on ToolbarController.template.js) ---
+    // You'll need to recreate the structure and attach handlers for non-plugin items
 
-    // Pass the handler functions directly to the template renderer
-    // No type casting needed as _handlers should match ToolbarTemplateHandlers
-    const templateHandlers: ToolbarTemplateHandlers = this._handlers;
-
-    // Render the template, passing the container, handlers, and data
-    const elements = renderToolbarTemplate(
-      this._element,
-      templateHandlers,
-      templateData,
+    // Example: GitHub Button
+    this._githubButton = document.createElement("teskooano-button");
+    this._githubButton.id = "toolbar-github";
+    this._githubButton.title = "View on GitHub";
+    this._githubButton.setAttribute("variant", "icon");
+    this._githubButton.setAttribute("size", "medium");
+    this._githubButton.innerHTML = `<span slot="icon">/* SVG for GitHub */</span>`;
+    this._githubButton.addEventListener(
+      "click",
+      this._handlers.handleGitHubClick,
     );
+    this._element.appendChild(this._githubButton);
 
-    // Cache the created elements
-    this._githubButton = elements.githubButton;
-    this._settingsButton = elements.settingsButton;
-    this._tourButton = elements.tourButton;
-    this._addButton = elements.addButton;
-    this._simControls = elements.simControls;
-    this._systemControls = elements.systemControls as SystemControls; // ADDED BACK
+    // --- Render Dynamic Widgets from Plugins ---
+    try {
+      // Fetch and sort widgets registered for the 'main-toolbar'
+      // NOTE: getToolbarWidgetsForTarget must exist in the ui-plugin package
+      const widgets: ToolbarWidgetConfig[] =
+        getToolbarWidgetsForTarget("main-toolbar");
 
-    // Pass Dockview API to SystemControls after it's defined - ADDED BACK
-    this.passApiToSystemControlsWhenDefined();
-
-    // Apply initial mobile state visuals
-    this.updateToolbarForMobileState(); // Ensure initial state is applied
-  }
-
-  // --- ADDED BACK: Method to pass API to SystemControls ---
-  /**
-   * Passes the Dockview API to the SystemControls component *after* ensuring
-   * the custom element is defined.
-   */
-  private passApiToSystemControlsWhenDefined(): void {
-    const systemControlsElement = this._systemControls;
-    const dockviewApi = this._dockviewController.api;
-
-    if (systemControlsElement && dockviewApi) {
-      customElements
-        .whenDefined("system-controls")
-        .then(() => {
-          console.log(
-            "ToolbarController: system-controls defined. Attempting to set Dockview API.",
+      widgets.forEach((widgetConfig) => {
+        try {
+          const widgetElement = document.createElement(
+            widgetConfig.componentName,
           );
-          if (typeof systemControlsElement.setDockviewApi === "function") {
-            systemControlsElement.setDockviewApi(dockviewApi);
-            console.log(
-              "ToolbarController: Dockview API successfully passed to SystemControls.",
-            );
-          } else {
-            console.error(
-              "ToolbarController: SystemControls defined, but setDockviewApi method not found!",
-            );
+          widgetElement.classList.add("toolbar-widget");
+
+          // Apply params as attributes (simple example, might need refinement)
+          if (widgetConfig.params) {
+            Object.entries(widgetConfig.params).forEach(([key, value]) => {
+              // Basic attribute setting, handle complex objects if needed
+              if (
+                typeof value === "string" ||
+                typeof value === "number" ||
+                typeof value === "boolean"
+              ) {
+                widgetElement.setAttribute(key, String(value));
+              } else {
+                // Maybe set as property? element[key] = value;
+                console.warn(
+                  `Cannot set complex param '${key}' as attribute on ${widgetConfig.componentName}`,
+                );
+              }
+            });
           }
-        })
-        .catch((error) => {
-          console.error(
-            "ToolbarController: Error waiting for system-controls definition:",
-            error,
+
+          this._element.appendChild(widgetElement);
+          console.log(
+            `[ToolbarController] Added widget: ${widgetConfig.componentName}`,
           );
-        });
-    } else if (!systemControlsElement) {
+        } catch (widgetError) {
+          console.error(
+            `[ToolbarController] Error creating widget '${widgetConfig.componentName}' (ID: ${widgetConfig.id}):`,
+            widgetError,
+          );
+        }
+      });
+    } catch (pluginError) {
       console.error(
-        "ToolbarController: Cannot pass API, systemControls element not found.",
+        "[ToolbarController] Error fetching or processing toolbar widgets:",
+        pluginError,
       );
-    } else {
-      console.error(
-        "ToolbarController: Cannot pass API, Dockview API is not available.",
-      );
+      // Render fallback or error message?
+      const errorEl = document.createElement("div");
+      errorEl.textContent = "Error loading toolbar widgets.";
+      errorEl.style.color = "red";
+      this._element.appendChild(errorEl);
     }
+
+    // --- Render other Static Elements (Add, Tour, Settings) ---
+    // Example: Add Button
+    this._addButton = document.createElement("teskooano-button");
+    this._addButton.id = "toolbar-add-panel";
+    this._addButton.title = "Add Engine View";
+    this._addButton.setAttribute("variant", "icon");
+    this._addButton.setAttribute("size", "medium");
+    this._addButton.innerHTML = `<span slot="icon">/* SVG for Add */</span>`;
+    this._addButton.addEventListener(
+      "click",
+      this._handlers.handleAddViewClick,
+    );
+    this._element.appendChild(this._addButton);
+
+    // Example: Tour Button
+    this._tourButton = document.createElement("teskooano-button");
+    this._tourButton.id = "toolbar-tour";
+    this._tourButton.title = "Start Tour";
+    this._tourButton.setAttribute("variant", "icon");
+    this._tourButton.setAttribute("size", "medium");
+    this._tourButton.innerHTML = `<span slot="icon">/* SVG for Tour */</span>`;
+    this._tourButton.addEventListener("click", this._handlers.handleTourClick);
+    this._element.appendChild(this._tourButton);
+
+    // Example: Settings Button
+    this._settingsButton = document.createElement("teskooano-button");
+    this._settingsButton.id = "toolbar-settings";
+    this._settingsButton.title = "Settings";
+    this._settingsButton.setAttribute("variant", "icon");
+    this._settingsButton.setAttribute("size", "medium");
+    this._settingsButton.innerHTML = `<span slot="icon">/* SVG for Settings */</span>`;
+    this._settingsButton.addEventListener(
+      "click",
+      this._handlers.handleSettingsClick,
+    );
+    this._element.appendChild(this._settingsButton);
+
+    // Apply initial mobile state visuals to static elements
+    this.updateToolbarForMobileState();
   }
-  // --- END ADDED BACK ---
 
   /**
    * Opens the GitHub repository in a new window/tab

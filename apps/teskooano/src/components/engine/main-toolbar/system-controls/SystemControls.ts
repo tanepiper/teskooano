@@ -1,10 +1,12 @@
 import { celestialObjectsStore, currentSeed } from "@teskooano/core-state";
 import { type CelestialObject } from "@teskooano/data-types";
 import type { DockviewApi } from "dockview-core";
-import { generateAndLoadSystem } from "../../systems/system-generator.js";
-import { SystemControlsTemplate } from "./SystemControls.template";
-import * as SystemActions from "./system-controls.actions.js"; // Import the new actions
-import * as SystemControlsUI from "./system-controls.ui.js"; // Import the new UI handlers
+import {
+  getFunctionConfig,
+  type PluginFunctionCallerSignature,
+} from "@teskooano/ui-plugin";
+import { SystemControlsTemplate } from "./SystemControls.template.js";
+import * as SystemControlsUI from "./system-controls.ui.js";
 
 /**
  * @element system-controls
@@ -49,8 +51,6 @@ class SystemControls
   private _isMobile: boolean = false;
   /** @internal Flag indicating if a system generation/import/export process is currently running. */
   private _isGenerating: boolean = false;
-  /** @internal Reference to the Dockview API, used for potential panel interactions. */
-  private dockviewApi: DockviewApi | null = null;
 
   // Store Unsubscribers
   /** @internal Array holding unsubscribe functions for Nanostore subscriptions. */
@@ -69,16 +69,6 @@ class SystemControls
     super();
     const shadow = this.attachShadow({ mode: "open" });
     shadow.appendChild(SystemControlsTemplate.content.cloneNode(true));
-  }
-
-  /**
-   * Sets the Dockview API instance for the component.
-   * Allows the component to interact with the Dockview layout engine if needed.
-   * @param {DockviewApi} api - The Dockview API instance.
-   */
-  public setDockviewApi(api: DockviewApi): void {
-    this.dockviewApi = api;
-    console.log("SystemControls: Dockview API set.");
   }
 
   /**
@@ -304,10 +294,14 @@ class SystemControls
     this.setGenerating(true);
 
     try {
-      console.log("Calling generateAndLoadSystem...");
-      const success = await generateAndLoadSystem(seed, this.dockviewApi);
+      console.log("Calling system:generate_random plugin function...");
+      const generateFunc = getFunctionConfig("system:generate_random");
+      if (!generateFunc) throw new Error("Generate function not found");
+      // Pass seed in options object
+      const result = await generateFunc.execute({ seed: seed });
+      const success = (result as any)?.success;
       // Feedback is now implicitly handled by store updates triggering updateDisplay
-      if (!success) {
+      if (success === false) {
         console.error("System generation failed.");
         const submitButton = this.seedForm?.querySelector(
           'teskooano-button[type="submit"]',
@@ -315,9 +309,9 @@ class SystemControls
         if (submitButton)
           this.showFeedback(submitButton as HTMLElement, "❌", true, 3000);
       }
-      console.log(`generateAndLoadSystem returned: ${success}`);
+      console.log(`system:generate_random returned: ${success}`);
     } catch (error) {
-      console.error("Error during generateAndLoadSystem call:", error);
+      console.error("Error during system:generate_random call:", error);
       const submitButton = this.seedForm?.querySelector(
         'teskooano-button[type="submit"]',
       );
@@ -345,27 +339,55 @@ class SystemControls
     console.log("Action clicked:", action);
 
     this.setGenerating(true);
-    let result: SystemActions.ActionResult | null = null;
+    // Use 'any' for result type as ActionResult is no longer directly imported
+    let result: any | null = null;
 
     try {
+      // Get plugin functions
+      const exportFunc = getFunctionConfig("system:export");
+      const importFunc = getFunctionConfig("system:trigger_import_dialog");
+      const randomFunc = getFunctionConfig("system:generate_random");
+      const clearFunc = getFunctionConfig("system:clear");
+      const blankFunc = getFunctionConfig("system:create_blank");
+      const copyFunc = getFunctionConfig("system:copy_seed");
+
       switch (action) {
         case "export":
-          result = await this._handleExport();
+          if (!exportFunc) throw new Error("Export function not found");
+          result = await exportFunc.execute();
           break;
         case "import":
-          result = await this._handleImport();
+          if (!importFunc) throw new Error("Import function not found");
+          result = await importFunc.execute();
           break;
         case "random":
-          result = await this._handleRandom();
+          if (!randomFunc) throw new Error("Random function not found");
+          result = await randomFunc.execute(); // No args needed for random
           break;
         case "clear":
-          result = await this._handleClear();
+          if (!clearFunc) throw new Error("Clear function not found");
+          // Confirmation dialog is now inside the plugin function
+          if (
+            confirm(
+              "Are you sure you want to clear the current system? This cannot be undone.",
+            )
+          ) {
+            result = await clearFunc.execute();
+          } else {
+            result = {
+              success: false,
+              symbol: "🚫",
+              message: "Clear cancelled.",
+            };
+          }
           break;
         case "create-blank":
-          result = await this._handleCreateBlank();
+          if (!blankFunc) throw new Error("Create Blank function not found");
+          result = await blankFunc.execute();
           break;
         case "copy-seed":
-          result = await this._handleCopySeed();
+          if (!copyFunc) throw new Error("Copy Seed function not found");
+          result = await copyFunc.execute(currentSeed.get()); // Pass current seed
           break;
         default:
           console.warn(`Unhandled action: ${action}`);
@@ -397,69 +419,6 @@ class SystemControls
       }
     }
   };
-
-  // --- Private Action Handlers ---
-
-  /** @private Handles the 'export' action. */
-  private async _handleExport(): Promise<SystemActions.ActionResult> {
-    const seed = currentSeed.get();
-    const objectsMap = celestialObjectsStore.get();
-    return await SystemActions.exportSystem(seed, objectsMap);
-  }
-
-  /** @private Handles the 'import' action. */
-  private async _handleImport(): Promise<SystemActions.ActionResult | null> {
-    try {
-      // Trigger the dialog first
-      const file = await SystemActions.triggerImportDialog();
-      // If the promise resolved, a file was selected
-      return await SystemActions.importSystem(file, this.dockviewApi);
-    } catch (error) {
-      // Handle cancellation (triggerImportDialog rejects on cancel)
-      if (
-        error instanceof Error &&
-        error.message === "File selection cancelled."
-      ) {
-        console.log("Import cancelled by user.");
-        return null; // Indicate cancellation, no feedback needed
-      } else {
-        // Handle other errors during file selection/dialog
-        console.error("Error triggering import dialog:", error);
-        throw error; // Re-throw to be caught by handleActionClick
-      }
-    }
-  }
-
-  /** @private Handles the 'random' action. */
-  private async _handleRandom(): Promise<SystemActions.ActionResult> {
-    return await SystemActions.generateRandomSystem(this.dockviewApi);
-  }
-
-  /** @private Handles the 'clear' action. */
-  private async _handleClear(): Promise<SystemActions.ActionResult> {
-    if (
-      !confirm(
-        "Are you sure you want to clear the current system? This cannot be undone.",
-      )
-    ) {
-      // If user cancels confirmation, return a 'cancelled' state
-      return { success: false, symbol: "🚫", message: "Clear cancelled." };
-    }
-    return await SystemActions.clearSystem();
-  }
-
-  /** @private Handles the 'create-blank' action. */
-  private async _handleCreateBlank(): Promise<SystemActions.ActionResult> {
-    return await SystemActions.createBlankSystem();
-  }
-
-  /** @private Handles the 'copy-seed' action. */
-  private async _handleCopySeed(): Promise<SystemActions.ActionResult> {
-    const seed = currentSeed.get();
-    return await SystemActions.copySystemSeed(seed);
-  }
-
-  // --- End Private Action Handlers ---
 
   /**
    * Sets the generating state of the component, updating the UI accordingly.
@@ -516,8 +475,6 @@ class SystemControls
     return this._isGenerating;
   }
 }
-
-customElements.define("system-controls", SystemControls);
 
 // Export for potential external usage or typing
 export { SystemControls };

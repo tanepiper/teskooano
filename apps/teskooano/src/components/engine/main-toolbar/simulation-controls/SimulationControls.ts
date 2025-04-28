@@ -1,5 +1,5 @@
 import { actions, simulationState } from "@teskooano/core-state";
-import { type TeskooanoButton } from "../shared/Button"; // Import the custom button
+import { type TeskooanoButton } from "../../../shared/Button"; // Corrected relative path
 
 // Import state type if not already imported
 import type { SimulationState } from "@teskooano/core-state";
@@ -117,7 +117,7 @@ template.innerHTML = `
   </div>
 `;
 
-export class ToolbarSimulationControls extends HTMLElement {
+export class SimulationControls extends HTMLElement {
   private playPauseButton: TeskooanoButton | null = null;
   private speedUpButton: TeskooanoButton | null = null;
   private speedDownButton: TeskooanoButton | null = null;
@@ -329,9 +329,4 @@ export class ToolbarSimulationControls extends HTMLElement {
       return engineName.charAt(0).toUpperCase();
     }
   }
-}
-
-const ELEMENT_TAG = "toolbar-simulation-controls";
-if (!customElements.get(ELEMENT_TAG)) {
-  customElements.define(ELEMENT_TAG, ToolbarSimulationControls);
 }

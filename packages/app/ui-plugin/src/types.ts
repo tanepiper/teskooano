@@ -97,7 +97,7 @@ export interface FunctionConfig {
   execute: (
     context: PluginExecutionContext,
     ...args: any[]
-  ) => void | Promise<void>;
+  ) => any | Promise<any>;
 }
 
 /**
@@ -180,6 +180,23 @@ export interface ToolbarRegistration {
 }
 
 /**
+ * Configuration for a custom element widget to be directly embedded
+ * within a designated toolbar area.
+ */
+export interface ToolbarWidgetConfig {
+  /** A unique identifier for this widget registration. */
+  id: string;
+  /** The target toolbar area ID (e.g., 'main-toolbar', 'engine-toolbar'). */
+  target: string;
+  /** The tag name of the custom element to render (e.g., 'system-controls'). */
+  componentName: string;
+  /** Optional rendering order (lower numbers appear first/earlier). */
+  order?: number;
+  /** Optional parameters or initial attributes to pass to the widget element. */
+  params?: Record<string, any>; // Could be used for initial state
+}
+
+/**
  * Defines the structure of a Teskooano UI plugin.
  */
 export interface TeskooanoPlugin {
@@ -209,4 +226,7 @@ export interface TeskooanoPlugin {
    * Optional cleanup function called when the plugin is unloaded (if supported).
    */
   dispose?: () => void;
+
+  /** Optional: Widgets to be embedded directly into toolbars. */
+  toolbarWidgets?: ToolbarWidgetConfig[];
 }

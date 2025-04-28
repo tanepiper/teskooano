@@ -2,7 +2,7 @@ import { celestialObjectsStore } from "@teskooano/core-state";
 import { Config, Driver, PopoverDOM, State } from "driver.js";
 import { TourStep } from "./types";
 // Base tour steps definition - will be cloned and customized when driving
-import { SystemControls } from "../toolbar/SystemControls";
+import { SystemControls } from "../engine/main-toolbar/system-controls/SystemControls";
 import { FocusControl } from "../ui-controls";
 export function createIntroTour(driverObj: Driver): TourStep[] {
   let hasCelestialObjects = false;

@@ -40,6 +40,7 @@ tasks:
       runInCI: false # Usually run locally
 
   build:
+    local: true
     command: "npm run build"
     inputs:
       - "src/**/*.ts"

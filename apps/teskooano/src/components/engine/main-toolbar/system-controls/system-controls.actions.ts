@@ -6,7 +6,7 @@ import {
 import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
 import { OSVector3 } from "@teskooano/core-math";
-import { generateAndLoadSystem } from "../../systems/system-generator.js";
+import { generateAndLoadSystem } from "../../../../systems/system-generator.js";
 import { DockviewApi } from "dockview-core";
 import { CustomEvents } from "@teskooano/data-types";
 
