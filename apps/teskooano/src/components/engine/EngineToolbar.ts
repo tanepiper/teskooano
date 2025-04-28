@@ -180,13 +180,13 @@ export class EngineToolbar {
     buttons.forEach((config) => {
       const button = document.createElement("teskooano-button");
       button.id = `engine-toolbar-button-${config.id}`;
-      button.title = config.title;
+      button.title = config.title ?? "";
       button.setAttribute("variant", "icon");
       button.setAttribute("size", "small");
 
       const iconSpan = document.createElement("span");
       iconSpan.slot = "icon";
-      iconSpan.innerHTML = config.iconSvg;
+      iconSpan.innerHTML = config.iconSvg ?? "";
       button.appendChild(iconSpan);
 
       button.addEventListener("click", async () => {
