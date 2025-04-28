@@ -1,10 +1,4 @@
 import { DockviewController } from "../../controllers/dockview/DockviewController";
-import {
-  FunctionToolbarButtonConfig,
-  PanelToolbarButtonConfig,
-  registerToolbarButton,
-  unregisterToolbarButton
-} from "../../stores/toolbarStore";
 import { CompositeEnginePanel } from "./CompositeEnginePanel"; // Import parent panel type
 
 import BoxMultipleArrowLeftFilled from "@fluentui/svg-icons/icons/box_multiple_arrow_left_24_regular.svg?raw";
@@ -12,12 +6,11 @@ import BoxMultipleArrowRightFilled from "@fluentui/svg-icons/icons/box_multiple_
 
 // --- Import from ui-plugin --- //
 import {
-  FunctionToolbarItemConfig // Specific type for casting
-  ,
+  FunctionToolbarItemConfig,
   getFunctionConfig,
   getToolbarItemsForTarget,
   PanelToolbarItemConfig,
-  ToolbarItemConfig
+  ToolbarItemConfig,
 } from "@teskooano/ui-plugin";
 
 export class EngineToolbar {
@@ -27,18 +20,8 @@ export class EngineToolbar {
   private _dockviewController: DockviewController; // Reference to the controller
   private _apiId: string; // Keep for potential unique ID needs
   private _parentEngine: CompositeEnginePanel; // Store reference to parent engine
-
-  private _buttonStoreUnsubscribe: (() => void) | null = null;
-  private _expandedStoreUnsubscribe: (() => void) | null = null;
+  private _isExpanded: boolean = false; // ADD local state for expansion
   private _activeFloatingPanels: Map<string, string> = new Map(); // Track panelId -> componentName
-
-  // --- List of default buttons to register ---
-  private readonly _defaultButtonComponentNames = [
-    "focus-control",
-    "celestial-info",
-    "engine-ui-settings-panel",
-    "renderer-info-display",
-  ];
 
   /**
    * The root HTML element for the toolbar.
@@ -50,7 +33,7 @@ export class EngineToolbar {
   constructor(
     apiId: string,
     dockviewController: DockviewController,
-    parentEngine: CompositeEnginePanel,
+    parentEngine: CompositeEnginePanel
   ) {
     this._apiId = apiId;
     this._dockviewController = dockviewController;
@@ -61,13 +44,9 @@ export class EngineToolbar {
 
     this.injectStyles(); // Inject styles first
     this.createBaseStructure(); // Create toggle button and collapsible area
-
-    // Fetch and render buttons from plugin system
+    this.updateExpansionUI(); // Set initial UI state based on _isExpanded
     this.populateButtonsFromPlugins();
-
-    // Listen only for panel removals and expansion state (if needed)
     this.listenForPanelRemovals();
-    this.listenForExpansionChanges(); // Add back listener for expansion state
   }
 
   /** Inject CSS for toolbar structure, icons, and animation */
@@ -134,39 +113,34 @@ export class EngineToolbar {
   private createBaseStructure(): void {
     this._element.innerHTML = ""; // Clear previous content
 
-    // --- TODO: Re-integrate expansion state management --- //
-    const isInitiallyExpanded = false; // Default to collapsed for now
-
-    // 1. Create Toggle Button
     const toggleButton = document.createElement("teskooano-button");
     toggleButton.id = `engine-toolbar-toggle-${this._apiId}`;
     toggleButton.classList.add("toolbar-toggle-button");
     toggleButton.setAttribute("variant", "icon");
     toggleButton.setAttribute("size", "lg");
-    toggleButton.title = isInitiallyExpanded ? "Hide Tools" : "Show Tools";
-    // toggleButton.style.display = 'none'; // Keep toggle visible
+    // Title and Icon will be set by updateExpansionUI
 
     const iconSpan = document.createElement("span");
     iconSpan.slot = "icon";
-    iconSpan.innerHTML = isInitiallyExpanded ? BoxMultipleArrowLeftFilled : BoxMultipleArrowRightFilled;
+    // Icon will be set by updateExpansionUI
     toggleButton.appendChild(iconSpan);
 
     toggleButton.addEventListener("click", () => {
-      // --- TODO: Implement toggle logic using a state management solution --- //
-      console.warn(`[EngineToolbar ${this._apiId}] Toggle button clicked - expansion state management not implemented.`);
-      // Example using hypothetical toggle function:
-      // toggleExpansionState(this._apiId);
+      // Implement toggle logic
+      this._isExpanded = !this._isExpanded;
+      console.log(
+        `[EngineToolbar ${this._apiId}] Toggled expansion state to: ${this._isExpanded}`
+      );
+      this.updateExpansionUI();
     });
 
     this._element.appendChild(toggleButton);
     this._toggleButton = toggleButton; // Store reference
 
-    // 2. Create Collapsible Container
     const collapsibleContainer = document.createElement("div");
     collapsibleContainer.classList.add("toolbar-collapsible-buttons");
-    if (isInitiallyExpanded) {
-      collapsibleContainer.classList.add("expanded");
-    }
+    // Expanded class will be set by updateExpansionUI
+    // if (this._isExpanded) { ... } // REMOVE
 
     this._element.appendChild(collapsibleContainer);
     this._collapsibleContainer = collapsibleContainer; // Store reference
@@ -174,9 +148,14 @@ export class EngineToolbar {
 
   /** Fetches buttons from the plugin manager and renders them */
   private populateButtonsFromPlugins(): void {
-    console.log(`[EngineToolbar ${this._apiId}] Fetching items for target 'engine-toolbar'`);
-    const buttonConfigs = getToolbarItemsForTarget('engine-toolbar');
-    console.log(`[EngineToolbar ${this._apiId}] Found ${buttonConfigs.length} items.`);
+    console.log(
+      `[EngineToolbar ${this._apiId}] Fetching items for target 'engine-toolbar'`
+    );
+    const buttonConfigs = getToolbarItemsForTarget("engine-toolbar");
+    console.log(buttonConfigs);
+    console.log(
+      `[EngineToolbar ${this._apiId}] Found ${buttonConfigs.length} items.`
+    );
     this.renderDynamicButtons(buttonConfigs);
   }
 
@@ -192,40 +171,14 @@ export class EngineToolbar {
     });
   }
 
-  /** Listen for expansion state changes to update UI */
-  private listenForExpansionChanges(): void {
-    // --- TODO: Re-subscribe to expansion state changes --- //
-    console.warn(`[EngineToolbar ${this._apiId}] Expansion state listening not implemented.`);
-    // Example using hypothetical store:
-    // this._expandedStoreUnsubscribe = $toolbarExpansionStates.subscribe((allStates) => {
-    //     const isExpanded = allStates[this._apiId] ?? false; // Default to collapsed
-    //     console.log(`Toolbar expanded state changed for ${this._apiId}: ${isExpanded}`);
-    //     if (this._collapsibleContainer) {
-    //         this._collapsibleContainer.classList.toggle("expanded", isExpanded);
-    //     }
-    //     if (this._toggleButton) {
-    //         const iconSpan = this._toggleButton.querySelector("span[slot='icon']");
-    //         if (iconSpan) {
-    //             iconSpan.innerHTML = isExpanded
-    //                 ? BoxMultipleArrowLeftFilled
-    //                 : BoxMultipleArrowRightFilled;
-    //         }
-    //         this._toggleButton.title = isExpanded ? "Hide Tools" : "Show Tools";
-    //     }
-    // });
-  }
-
   /** Clears and re-renders buttons in the collapsible container */
-  private renderDynamicButtons(
-    buttons: ToolbarItemConfig[],
-  ): void {
+  private renderDynamicButtons(buttons: ToolbarItemConfig[]): void {
     if (!this._collapsibleContainer) return;
 
     this._collapsibleContainer.innerHTML = ""; // Clear existing buttons
 
     buttons.forEach((config) => {
       const button = document.createElement("teskooano-button");
-      // Use config.id directly (plugin system ensures uniqueness per target)
       button.id = `engine-toolbar-button-${config.id}`;
       button.title = config.title;
       button.setAttribute("variant", "icon");
@@ -291,13 +244,21 @@ export class EngineToolbar {
           this._dockviewController.api.removePanel(existingPanel);
           // Let the subscription handle _activeFloatingPanels cleanup
         } catch (error) {
-          console.error(`[EngineToolbar ${this._apiId}] Error removing panel ${panelId}:`, error);
+          console.error(
+            `[EngineToolbar ${this._apiId}] Error removing panel ${panelId}:`,
+            error
+          );
         }
       } else {
         const position = calculatePosition();
-        console.log(`[EngineToolbar ${this._apiId}] Calculated position:`, JSON.stringify(position));
+        console.log(
+          `[EngineToolbar ${this._apiId}] Calculated position:`,
+          JSON.stringify(position)
+        );
         if (existingPanel) {
-          console.log(`[EngineToolbar ${this._apiId}] Panel ${panelId} exists but is hidden. Activating and setting size.`);
+          console.log(
+            `[EngineToolbar ${this._apiId}] Panel ${panelId} exists but is hidden. Activating and setting size.`
+          );
           try {
             existingPanel.api.setSize(position);
             const newTitle = config.panelTitle ?? config.title;
@@ -308,10 +269,15 @@ export class EngineToolbar {
             // Re-track just in case removal listener didn't fire/was missed
             this._activeFloatingPanels.set(panelId, config.componentName);
           } catch (e) {
-            console.error(`[EngineToolbar ${this._apiId}] Error setting size/activating existing panel ${panelId}:`, e);
+            console.error(
+              `[EngineToolbar ${this._apiId}] Error setting size/activating existing panel ${panelId}:`,
+              e
+            );
           }
         } else {
-          console.log(`[EngineToolbar ${this._apiId}] Panel ${panelId} does not exist. Creating new panel.`);
+          console.log(
+            `[EngineToolbar ${this._apiId}] Panel ${panelId} does not exist. Creating new panel.`
+          );
           const panelApi = this._dockviewController.addFloatingPanel(
             {
               id: panelId, // Use derived ID for toggle
@@ -328,7 +294,9 @@ export class EngineToolbar {
             this._activeFloatingPanels.set(panelId, config.componentName);
             panelApi.setActive?.();
           } else {
-            console.error(`[EngineToolbar ${this._apiId}] Failed to create floating panel ${panelId}`);
+            console.error(
+              `[EngineToolbar ${this._apiId}] Failed to create floating panel ${panelId}`
+            );
           }
         }
       }
@@ -336,11 +304,14 @@ export class EngineToolbar {
     // --- Create Behaviour ---
     else if (behaviour === "create") {
       console.log(
-        `[EngineToolbar ${this._apiId}] Creating new panel instance for ${config.componentName} (behaviour: create).`,
+        `[EngineToolbar ${this._apiId}] Creating new panel instance for ${config.componentName} (behaviour: create).`
       );
       const newPanelId = `${config.componentName}_${this._apiId}_float_${Date.now()}`;
       const position = calculatePosition();
-      console.log(`[EngineToolbar ${this._apiId}] Calculated position for new panel ${newPanelId}:`, position);
+      console.log(
+        `[EngineToolbar ${this._apiId}] Calculated position for new panel ${newPanelId}:`,
+        position
+      );
       const panelApi = this._dockviewController.addFloatingPanel(
         {
           id: newPanelId,
@@ -357,16 +328,22 @@ export class EngineToolbar {
         this._activeFloatingPanels.set(newPanelId, config.componentName);
         panelApi.setActive?.();
       } else {
-        console.error(`[EngineToolbar ${this._apiId}] Failed to create floating panel ${newPanelId}`);
+        console.error(
+          `[EngineToolbar ${this._apiId}] Failed to create floating panel ${newPanelId}`
+        );
       }
     }
   }
 
   /** Handles clicks for buttons configured as 'function' type */
-  private async handleFunctionButtonClick(config: FunctionToolbarItemConfig): Promise<void> {
-    console.log(`[EngineToolbar ${this._apiId}] Handling function button click for: ${config.id}, functionId: ${config.functionId}`);
+  private async handleFunctionButtonClick(
+    config: FunctionToolbarItemConfig
+  ): Promise<void> {
+    console.log(
+      `[EngineToolbar ${this._apiId}] Handling function button click for: ${config.id}, functionId: ${config.functionId}`
+    );
     const funcConfig = getFunctionConfig(config.functionId);
-    if (funcConfig && typeof funcConfig.execute === 'function') {
+    if (funcConfig && typeof funcConfig.execute === "function") {
       try {
         // Pass the apiId or parentEngine if the function needs context?
         // For now, pass nothing.
@@ -384,93 +361,23 @@ export class EngineToolbar {
     }
   }
 
-  /** Registers the default set of toolbar buttons based on component names */
-  private registerDefaultButtons(): void {
-    this._defaultButtonComponentNames.forEach((componentName) => {
-      this.addRegisteredButton(componentName);
-    });
+  // --- ADD UI Update Method ---
+  private updateExpansionUI(): void {
+    if (!this._toggleButton || !this._collapsibleContainer) return;
 
-    // Example: Add a function button programmatically if needed
-    // this.addFunctionButton({
-    //     id: `log_action_${this._apiId}`,
-    //     iconSvg: InfoIcon,
-    //     title: "Log Action",
-    //     type: 'function',
-    //     action: async () => {
-    //       console.log("Executing dynamic async action!");
-    //       await new Promise(resolve => setTimeout(resolve, 500));
-    //       console.log("Dynamic action finished.");
-    //     }
-    // });
-  }
+    const isExpanded = this._isExpanded;
+    const iconSpan = this._toggleButton.querySelector("span[slot='icon']");
 
-  /** Unregisters the default set of toolbar buttons */
-  private unregisterDefaultButtons(): void {
-    this._defaultButtonComponentNames.forEach((componentName) => {
-      this.removeRegisteredButton(componentName);
-    });
-    // Also remove any programmatically added function buttons
-    // unregisterToolbarButton(`log_action_${this._apiId}`);
-  }
+    // Update container class
+    this._collapsibleContainer.classList.toggle("expanded", isExpanded);
 
-  /**
-   * Fetches static config for a component and registers an instance-specific button.
-   * @param componentName The registered name of the component.
-   */
-  public addRegisteredButton(componentName: string): void {
-    const staticConfig =
-      this._dockviewController.getToolbarButtonConfig(componentName);
-
-    if (!staticConfig) {
-      console.warn(
-        `EngineToolbar: No static toolbar config found for component '${componentName}'. Cannot add button.`,
-      );
-      return;
+    // Update button icon and title
+    if (iconSpan) {
+      iconSpan.innerHTML = isExpanded
+        ? BoxMultipleArrowLeftFilled
+        : BoxMultipleArrowRightFilled;
     }
-
-    // Create instance-specific config
-    const instanceConfig: PanelToolbarButtonConfig = {
-      ...staticConfig,
-      // Ensure unique ID using the toolbar's apiId
-      id: `${staticConfig.id}_${this._apiId}`,
-      // Optionally create instance-specific panel ID if needed
-      panelId: staticConfig.panelId
-        ? `${staticConfig.panelId}_${this._apiId}`
-        : `${componentName}_${this._apiId}_float`,
-    };
-
-    registerToolbarButton(this._apiId, instanceConfig); // Pass apiId
-    console.log(
-      `EngineToolbar: Registered button for '${componentName}' with instance ID '${instanceConfig.id}'`,
-    );
-  }
-
-  /**
-   * Removes the instance-specific button associated with a component name.
-   * @param componentName The registered name of the component.
-   */
-  public removeRegisteredButton(componentName: string): void {
-    const staticConfig =
-      this._dockviewController.getToolbarButtonConfig(componentName);
-    if (staticConfig) {
-      const instanceId = `${staticConfig.id}_${this._apiId}`;
-      unregisterToolbarButton(this._apiId, instanceId); // Pass apiId
-      console.log(
-        `EngineToolbar: Unregistered button with instance ID '${instanceId}' for toolbar ${this._apiId}`,
-      );
-    } else {
-      console.warn(
-        `EngineToolbar: Could not find static config for '${componentName}' during unregistration.`,
-      );
-    }
-  }
-
-  /**
-   * Allows adding a function button programmatically.
-   * (Could be used if a button doesn't have a corresponding panel component)
-   */
-  public addFunctionButton(config: FunctionToolbarButtonConfig): void {
-    registerToolbarButton(this._apiId, config);
+    this._toggleButton.title = isExpanded ? "Hide Tools" : "Show Tools";
   }
 
   /** Clean up listeners when the toolbar is destroyed */
@@ -484,10 +391,6 @@ export class EngineToolbar {
     this._toggleButton = null;
     this._collapsibleContainer = null;
     this._activeFloatingPanels.clear();
-
-    // NOTE: We may need to explicitly unsubscribe from the dockviewController.onPanelRemoved$ subject
-    // if the DockviewController doesn't handle observable cleanup itself when this toolbar is disposed.
-    // For now, assume DockviewController manages its observables or is longer-lived.
 
     console.log(`[EngineToolbar ${this._apiId}] disposed.`);
   }

@@ -92,28 +92,36 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
   // Register toolbar items
   plugin.toolbarRegistrations?.forEach((registration: ToolbarRegistration) => {
     const target = registration.target;
+    console.log(`[PluginManager Debug] Processing target '${target}' for plugin '${plugin.id}'`); // DEBUG LOG
     if (!toolbarRegistry.has(target)) {
       toolbarRegistry.set(target, []);
+      console.log(`[PluginManager Debug] Initialized empty array for target '${target}'`); // DEBUG LOG
     }
     const targetItems = toolbarRegistry.get(target)!;
+    console.log(`[PluginManager Debug] Target '${target}' items BEFORE processing plugin '${plugin.id}':`, JSON.stringify(targetItems.map(i => i.id))); // DEBUG LOG
 
     registration.items.forEach((itemDefinition: ToolbarItemDefinition) => {
       const fullItemConfig: ToolbarItemConfig = {
         ...itemDefinition,
         target: target,
       };
+      console.log(`[PluginManager Debug] Checking item '${fullItemConfig.id}' for target '${target}'`); // DEBUG LOG
       if (targetItems.some((item) => item.id === fullItemConfig.id)) {
         console.warn(
           `[PluginManager] Toolbar item ID '${fullItemConfig.id}' for target '${target}' from plugin '${plugin.id}' already exists. Skipping.`,
         );
         return;
       }
+      console.log(`[PluginManager Debug] Pushing item '${fullItemConfig.id}' to target '${target}'...`); // DEBUG LOG
       targetItems.push(fullItemConfig);
+      console.log(`[PluginManager Debug] Target '${target}' items AFTER push for item '${fullItemConfig.id}':`, JSON.stringify(targetItems.map(i => i.id))); // DEBUG LOG
       console.log(
         `  - Registered toolbar item '${fullItemConfig.id}' for target '${target}'`,
       );
     });
+    console.log(`[PluginManager Debug] Target '${target}' items BEFORE sort for plugin '${plugin.id}':`, JSON.stringify(targetItems.map(i => i.id))); // DEBUG LOG
     targetItems.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
+    console.log(`[PluginManager Debug] Target '${target}' items AFTER sort for plugin '${plugin.id}':`, JSON.stringify(targetItems.map(i => i.id))); // DEBUG LOG
   });
 
   // Initialize function is called after *dynamic* loading in loadAndRegisterPlugins
@@ -305,7 +313,10 @@ export function getFunctionConfig(id: string): FunctionConfig | undefined {
 export function getToolbarItemsForTarget(
   target: ToolbarTarget,
 ): ToolbarItemConfig[] {
-  return [...(toolbarRegistry.get(target) ?? [])]; // Return a copy
+  const items = toolbarRegistry.get(target) ?? [];
+  console.log(items);
+  console.log(`[PluginManager Debug] getToolbarItemsForTarget('${target}') returning:`, JSON.stringify(items.map(i => i.id))); // DEBUG LOG
+  return [...items]; // Return a copy
 }
 
 // ---> NEW: Getter for loaded module classes
