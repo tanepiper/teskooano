@@ -39,6 +39,7 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Build App
         run: |
+          moon run ui-plugin:build
           moon run teskooano:build
       - name: Build Homepage
         run: |
