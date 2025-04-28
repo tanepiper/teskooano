@@ -7,11 +7,11 @@ import {
   IContentRenderer,
   DockviewPanelApi,
 } from "dockview-core";
-import type { CompositeEnginePanel } from "../engine/CompositeEnginePanel"; // Import for type checking
+import type { CompositeEnginePanel } from "../../engine/CompositeEnginePanel"; // Import for type checking
 import {
   ToolbarButtonConfig,
   PanelToolbarButtonConfig,
-} from "../../stores/toolbarStore"; // Import toolbar types
+} from "../../../stores/toolbarStore"; // Import toolbar types
 
 // Import Fluent UI Icons
 import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw";

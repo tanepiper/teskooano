@@ -14,12 +14,12 @@ import { layoutOrientationStore, Orientation } from "./stores/layoutStore";
 
 // --- Import Plugin System --- //
 import {
-    getLoadedModuleClass,
-    getPlugins,
-    loadAndRegisterComponents,
-    loadAndRegisterPlugins,
-    PanelConfig,
-    TeskooanoPlugin
+  getLoadedModuleClass,
+  getPlugins,
+  loadAndRegisterComponents,
+  loadAndRegisterPlugins,
+  PanelConfig,
+  TeskooanoPlugin,
 } from "@teskooano/ui-plugin";
 import { componentConfig } from "./config/componentRegistry";
 import { pluginConfig } from "./config/pluginRegistry";
@@ -27,182 +27,202 @@ import { pluginConfig } from "./config/pluginRegistry";
 // --- Centralized instance store (Example) ---
 // You could use Nanostores or a simple exported object
 interface AppContext {
-    modalManager?: any; // Use the actual ModalManager type here
-    // other shared instances...
+  modalManager?: any; // Use the actual ModalManager type here
+  // other shared instances...
 }
 export const appContext: AppContext = {}; // Export this for other modules
 
 // --- Application Initialization --- //
 
 async function startApp() {
-    console.log('[App] Starting initialization...');
+  console.log("[App] Starting initialization...");
 
-    // Define which components/modules are critical for initial load
-    const criticalComponents = [
-        'teskooano-button', 
-        'teskooano-modal',
-        'teskooano-modal-manager', // Make sure manager is loaded early
-        // Add other essential tags/keys...
-    ]; 
+  // Define which components/modules are critical for initial load
+  const criticalComponents = [
+    "teskooano-button",
+    "teskooano-modal",
+    "teskooano-modal-manager", // Make sure manager is loaded early
+    // Add other essential tags/keys...
+  ];
 
-    try {
-        // Ensure critical components/modules are loaded BEFORE initializing the rest
-        console.log('[App] Loading critical components/modules...');
-        await loadAndRegisterComponents(criticalComponents);
-        console.log('[App] Critical components/modules loaded.');
+  try {
+    // Ensure critical components/modules are loaded BEFORE initializing the rest
+    console.log("[App] Loading critical components/modules...");
+    await loadAndRegisterComponents(criticalComponents);
+    console.log("[App] Critical components/modules loaded.");
 
-        // Now initialize the main application logic
-        initializeApp();
-
-    } catch (error) {
-        console.error('[App] Failed during critical component loading or initialization:', error);
-        // Handle initialization failure (e.g., show error message)
-    }
+    // Now initialize the main application logic
+    initializeApp();
+  } catch (error) {
+    console.error(
+      "[App] Failed during critical component loading or initialization:",
+      error,
+    );
+    // Handle initialization failure (e.g., show error message)
+  }
 }
 
 async function initializeApp() {
-    console.log("Initializing Teskooano...");
+  console.log("Initializing Teskooano...");
 
-    // Get main elements
-    const appElement = document.getElementById("app");
-    const toolbarElement = document.getElementById("toolbar");
+  // Get main elements
+  const appElement = document.getElementById("app");
+  const toolbarElement = document.getElementById("toolbar");
 
-    if (!appElement || !toolbarElement) {
-        throw new Error("Required HTML elements (#app or #toolbar) not found.");
-    }
+  if (!appElement || !toolbarElement) {
+    throw new Error("Required HTML elements (#app or #toolbar) not found.");
+  }
 
-    // --- Load UI Components and Plugins --- //
-    console.log("Phase 1: Loading and Registering Base Components...");
-    // Get component tag names from the config keys
-    const componentTags = Object.keys(componentConfig);
-    await loadAndRegisterComponents(componentTags);
-    console.log("Phase 1 Complete.");
+  // --- Load UI Components and Plugins --- //
+  console.log("Phase 1: Loading and Registering Base Components...");
+  // Get component tag names from the config keys
+  const componentTags = Object.keys(componentConfig);
+  await loadAndRegisterComponents(componentTags);
+  console.log("Phase 1 Complete.");
 
-    console.log("Phase 2: Loading and Registering Plugins...");
-    // Get plugin IDs from the config keys
-    const pluginIds = Object.keys(pluginConfig);
-    await loadAndRegisterPlugins(pluginIds);
-    console.log("Phase 2 Complete.");
+  console.log("Phase 2: Loading and Registering Plugins...");
+  // Get plugin IDs from the config keys
+  const pluginIds = Object.keys(pluginConfig);
+  await loadAndRegisterPlugins(pluginIds);
+  console.log("Phase 2 Complete.");
 
-    // --- Initialize Core Controllers & Systems --- //
-    console.log("Initializing core controllers...");
+  // --- Initialize Core Controllers & Systems --- //
+  console.log("Initializing core controllers...");
 
-    const dockviewController = new DockviewController(appElement);
-    const tourController = new TourController();
-    const toolbarController = new ToolbarController(
-        toolbarElement,
-        dockviewController
+  const dockviewController = new DockviewController(appElement);
+  const tourController = new TourController();
+  const toolbarController = new ToolbarController(
+    toolbarElement,
+    dockviewController,
+  );
+
+  // --- Get Loaded Class and Instantiate Singleton ---
+  const ModalManagerClass = getLoadedModuleClass("teskooano-modal-manager");
+  if (!ModalManagerClass) {
+    console.error(
+      "[App] Failed to get TeskooanoModalManager class after loading.",
     );
+    // Handle this critical failure
+    return;
+  }
+  const modalManager = new ModalManagerClass(dockviewController);
+  console.log("[App] TeskooanoModalManager instantiated.");
 
-    // --- Get Loaded Class and Instantiate Singleton ---
-    const ModalManagerClass = getLoadedModuleClass('teskooano-modal-manager');
-    if (!ModalManagerClass) {
-         console.error("[App] Failed to get TeskooanoModalManager class after loading.");
-         // Handle this critical failure
-         return; 
-    }
-    const modalManager = new ModalManagerClass(dockviewController);
-    console.log('[App] TeskooanoModalManager instantiated.');
+  // ---> Store the singleton instance for others to use
+  appContext.modalManager = modalManager;
 
-    // ---> Store the singleton instance for others to use
-    appContext.modalManager = modalManager; 
+  // Inject ModalManager into TourModal class (if TourModal is still needed globally)
+  TeskooanoTourModal.setModalManager(modalManager);
 
-    // Inject ModalManager into TourModal class (if TourModal is still needed globally)
-    TeskooanoTourModal.setModalManager(modalManager);
+  // Set Dockview API for SeedForm & EnginePlaceholder (if still needed globally)
+  ToolbarSeedForm.setDockviewApi(dockviewController.api);
+  EnginePlaceholder.setDockviewApi(dockviewController.api);
 
-    // Set Dockview API for SeedForm & EnginePlaceholder (if still needed globally)
-    ToolbarSeedForm.setDockviewApi(dockviewController.api);
-    EnginePlaceholder.setDockviewApi(dockviewController.api);
-
-    // Register Dockview panels using loaded plugin metadata
-    console.log("Registering Dockview panel components...");
-    const plugins = getPlugins();
-    plugins.forEach((plugin: TeskooanoPlugin) => {
-        plugin.panels?.forEach((panelConfig: PanelConfig) => {
-            const panelClass = panelConfig.panelClass;
-            if (panelClass) {
-                 console.log(`  - Registering Dockview component: ${panelConfig.componentName} from plugin ${plugin.id}`);
-                 dockviewController.registerComponent(panelConfig.componentName, panelClass);
-            } else {
-                 console.error(`Panel class not found for ${panelConfig.componentName} in plugin ${plugin.id}`);
-            }
-        });
+  // Register Dockview panels using loaded plugin metadata
+  console.log("Registering Dockview panel components...");
+  const plugins = getPlugins();
+  plugins.forEach((plugin: TeskooanoPlugin) => {
+    plugin.panels?.forEach((panelConfig: PanelConfig) => {
+      const panelClass = panelConfig.panelClass;
+      if (panelClass) {
+        console.log(
+          `  - Registering Dockview component: ${panelConfig.componentName} from plugin ${plugin.id}`,
+        );
+        dockviewController.registerComponent(
+          panelConfig.componentName,
+          panelClass,
+        );
+      } else {
+        console.error(
+          `Panel class not found for ${panelConfig.componentName} in plugin ${plugin.id}`,
+        );
+      }
     });
-    console.log("Dockview panel registration complete.");
+  });
+  console.log("Dockview panel registration complete.");
 
-    // --- Initialize first engine view (if still desired as default) --- //
-    toolbarController.initializeFirstEngineView();
-    tourController.setEngineViewId("engine_view_1"); // Assuming ID is still valid
+  // --- Initialize first engine view (if still desired as default) --- //
+  toolbarController.initializeFirstEngineView();
+  tourController.setEngineViewId("engine_view_1"); // Assuming ID is still valid
 
-    // --- Setup Tour (if still needed globally) --- //
-    toolbarController.setTourController(tourController); // Set tour controller if needed
+  // --- Setup Tour (if still needed globally) --- //
+  toolbarController.setTourController(tourController); // Set tour controller if needed
 
-    // Setup listeners
-    setupEventListeners(tourController);
+  // Setup listeners
+  setupEventListeners(tourController);
 
-    console.log("Teskooano Initialized.");
+  console.log("Teskooano Initialized.");
 }
 
 // --- Helper to Setup Event Listeners (keeps initializeApp cleaner) --- //
 function setupEventListeners(tourController: TourController) {
-    // Orientation Handling
-    const portraitMediaQuery = window.matchMedia("(orientation: portrait)");
-    const narrowWidthMediaQuery = window.matchMedia("(max-width: 1024px)");
-    function updateOrientation() {
-        const isPortraitMode = portraitMediaQuery.matches || narrowWidthMediaQuery.matches;
-        const newOrientation: Orientation = isPortraitMode ? "portrait" : "landscape";
-        layoutOrientationStore.set(newOrientation);
+  // Orientation Handling
+  const portraitMediaQuery = window.matchMedia("(orientation: portrait)");
+  const narrowWidthMediaQuery = window.matchMedia("(max-width: 1024px)");
+  function updateOrientation() {
+    const isPortraitMode =
+      portraitMediaQuery.matches || narrowWidthMediaQuery.matches;
+    const newOrientation: Orientation = isPortraitMode
+      ? "portrait"
+      : "landscape";
+    layoutOrientationStore.set(newOrientation);
+  }
+  updateOrientation(); // Initial check
+  portraitMediaQuery.addEventListener("change", updateOrientation);
+  narrowWidthMediaQuery.addEventListener("change", updateOrientation);
+  window.addEventListener("resize", updateOrientation);
+
+  // Focus changes listener
+  document.addEventListener("engine-focus-request", (event: Event) => {
+    const focusEvent = event as CustomEvent<{
+      targetPanelId: string;
+      objectId: string | null;
+      distance?: number;
+    }>;
+    const { objectId } = focusEvent.detail;
+    if (objectId) {
+      const objects = celestialObjectsStore.get();
+      const selectedObject = objects[objectId];
+      tourController.setCurrentSelectedCelestial(selectedObject?.name);
+    } else {
+      tourController.setCurrentSelectedCelestial(undefined);
     }
-    updateOrientation(); // Initial check
-    portraitMediaQuery.addEventListener("change", updateOrientation);
-    narrowWidthMediaQuery.addEventListener("change", updateOrientation);
-    window.addEventListener("resize", updateOrientation);
+  });
 
-    // Focus changes listener
-    document.addEventListener("engine-focus-request", (event: Event) => {
-        const focusEvent = event as CustomEvent<{
-            targetPanelId: string;
-            objectId: string | null;
-            distance?: number;
-        }>;
-        const { objectId } = focusEvent.detail;
-        if (objectId) {
-            const objects = celestialObjectsStore.get();
-            const selectedObject = objects[objectId];
-            tourController.setCurrentSelectedCelestial(selectedObject?.name);
-        } else {
-            tourController.setCurrentSelectedCelestial(undefined);
-        }
-    });
+  // Tour Modal Logic
+  window.addEventListener("DOMContentLoaded", () => {
+    if (
+      !tourController.isSkippingTour() &&
+      !tourController.hasShownTourModal()
+    ) {
+      tourController.markTourModalAsShown();
+      const tourModalElement = document.createElement("teskooano-tour-modal");
+      (tourModalElement as TeskooanoTourModal).setCallbacks(
+        () => {
+          // On Accept
+          const savedStep = localStorage.getItem("tourCurrentStep");
+          if (savedStep) tourController.resumeTour();
+          else tourController.startTour();
+        },
+        () => {
+          // On Decline
+          tourController.setSkipTour(true);
+        },
+      );
+      document.body.appendChild(tourModalElement);
+    }
+  });
 
-    // Tour Modal Logic
-    window.addEventListener("DOMContentLoaded", () => {
-        if (!tourController.isSkippingTour() && !tourController.hasShownTourModal()) {
-            tourController.markTourModalAsShown();
-            const tourModalElement = document.createElement("teskooano-tour-modal");
-            (tourModalElement as TeskooanoTourModal).setCallbacks(
-                () => { // On Accept
-                    const savedStep = localStorage.getItem("tourCurrentStep");
-                    if (savedStep) tourController.resumeTour(); else tourController.startTour();
-                },
-                () => { // On Decline
-                    tourController.setSkipTour(true);
-                }
-            );
-            document.body.appendChild(tourModalElement);
-        }
-    });
+  // Cleanup on page unload
+  // window.addEventListener("beforeunload", () => {
+  //     toolbarController.destroy(); // toolbarController might not be accessible here
+  // });
+  // Note: Cleanup might need a different approach if toolbarController is local to initializeApp
 
-    // Cleanup on page unload
-    // window.addEventListener("beforeunload", () => {
-    //     toolbarController.destroy(); // toolbarController might not be accessible here
-    // });
-    // Note: Cleanup might need a different approach if toolbarController is local to initializeApp
-
-    // Listener for Start Tour Requests from Placeholders
-    document.body.addEventListener("start-tour-request", () => {
-        tourController.restartTour();
-    });
+  // Listener for Start Tour Requests from Placeholders
+  document.body.addEventListener("start-tour-request", () => {
+    tourController.restartTour();
+  });
 }
 
 // --- Start the App --- //

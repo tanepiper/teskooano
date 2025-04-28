@@ -208,4 +208,3 @@ export class TeskooanoCheckbox extends HTMLElement {
     }
   }
 }
-

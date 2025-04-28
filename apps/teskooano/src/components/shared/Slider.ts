@@ -249,7 +249,7 @@ export class TeskooanoSlider extends HTMLElement {
     // Create debounced handler for actual value updates
     this._debouncedHandleValueInput = debounce(
       this.handleValueUpdate.bind(this),
-      300
+      300,
     ); // Renamed for clarity
   }
 
@@ -295,12 +295,12 @@ export class TeskooanoSlider extends HTMLElement {
     this.sliderElement.addEventListener("input", this.handleInput);
     this.valueInputElement.addEventListener(
       "input",
-      this._debouncedHandleValueInput
+      this._debouncedHandleValueInput,
     );
     // Add separate listener for immediate visual validation
     this.valueInputElement.addEventListener(
       "input",
-      this.handleVisualValidation
+      this.handleVisualValidation,
     );
     // Add blur handler to reset when focus is lost
     this.valueInputElement.addEventListener("blur", this.handleInputBlur);
@@ -317,11 +317,11 @@ export class TeskooanoSlider extends HTMLElement {
     this.sliderElement.removeEventListener("input", this.handleInput);
     this.valueInputElement.removeEventListener(
       "input",
-      this._debouncedHandleValueInput
+      this._debouncedHandleValueInput,
     );
     this.valueInputElement.removeEventListener(
       "input",
-      this.handleVisualValidation
+      this.handleVisualValidation,
     );
     this.valueInputElement.removeEventListener("blur", this.handleInputBlur);
 
@@ -335,7 +335,7 @@ export class TeskooanoSlider extends HTMLElement {
   attributeChangedCallback(
     name: string,
     oldValue: string | null,
-    newValue: string | null
+    newValue: string | null,
   ) {
     if (oldValue === newValue) return;
 
@@ -451,7 +451,7 @@ export class TeskooanoSlider extends HTMLElement {
     // Set ARIA states
     this.sliderElement.setAttribute(
       "aria-disabled",
-      state.isDisabled ? "true" : "false"
+      state.isDisabled ? "true" : "false",
     );
 
     // Update the value attribute without triggering attributeChangedCallback
@@ -490,7 +490,7 @@ export class TeskooanoSlider extends HTMLElement {
           bubbles: true,
           composed: true,
           detail: { value },
-        })
+        }),
       );
     }
   };
@@ -540,7 +540,7 @@ export class TeskooanoSlider extends HTMLElement {
           bubbles: true,
           composed: true,
           detail: { value: numValue },
-        })
+        }),
       );
     }
   };
@@ -573,7 +573,7 @@ export class TeskooanoSlider extends HTMLElement {
             bubbles: true,
             composed: true,
             detail: { value: numValue },
-          })
+          }),
         );
       }
     } else {
@@ -618,7 +618,7 @@ export class TeskooanoSlider extends HTMLElement {
           bubbles: true,
           composed: true,
           detail: { value: clampedValue },
-        })
+        }),
       );
     }
   }

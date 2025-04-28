@@ -257,4 +257,3 @@ export class TeskooanoModal extends HTMLElement {
     this.secondaryHandler = handler;
   }
 }
-

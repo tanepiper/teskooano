@@ -33,7 +33,7 @@ export class EngineToolbar {
   constructor(
     apiId: string,
     dockviewController: DockviewController,
-    parentEngine: CompositeEnginePanel
+    parentEngine: CompositeEnginePanel,
   ) {
     this._apiId = apiId;
     this._dockviewController = dockviewController;
@@ -129,7 +129,7 @@ export class EngineToolbar {
       // Implement toggle logic
       this._isExpanded = !this._isExpanded;
       console.log(
-        `[EngineToolbar ${this._apiId}] Toggled expansion state to: ${this._isExpanded}`
+        `[EngineToolbar ${this._apiId}] Toggled expansion state to: ${this._isExpanded}`,
       );
       this.updateExpansionUI();
     });
@@ -149,12 +149,12 @@ export class EngineToolbar {
   /** Fetches buttons from the plugin manager and renders them */
   private populateButtonsFromPlugins(): void {
     console.log(
-      `[EngineToolbar ${this._apiId}] Fetching items for target 'engine-toolbar'`
+      `[EngineToolbar ${this._apiId}] Fetching items for target 'engine-toolbar'`,
     );
     const buttonConfigs = getToolbarItemsForTarget("engine-toolbar");
     console.log(buttonConfigs);
     console.log(
-      `[EngineToolbar ${this._apiId}] Found ${buttonConfigs.length} items.`
+      `[EngineToolbar ${this._apiId}] Found ${buttonConfigs.length} items.`,
     );
     this.renderDynamicButtons(buttonConfigs);
   }
@@ -164,7 +164,7 @@ export class EngineToolbar {
     this._dockviewController.onPanelRemoved$.subscribe((removedPanelId) => {
       if (this._activeFloatingPanels.has(removedPanelId)) {
         console.log(
-          `[EngineToolbar ${this._apiId}] Detected removal of tracked floating panel '${removedPanelId}'. Removing from active map.`
+          `[EngineToolbar ${this._apiId}] Detected removal of tracked floating panel '${removedPanelId}'. Removing from active map.`,
         );
         this._activeFloatingPanels.delete(removedPanelId);
       }
@@ -230,7 +230,7 @@ export class EngineToolbar {
     // --- END ADD ---
 
     console.log(
-      `[EngineToolbar ${this._apiId}] Handling panel button click for: ${config.id}, panelId: ${panelId}, component: ${config.componentName}, behaviour: ${behaviour}`
+      `[EngineToolbar ${this._apiId}] Handling panel button click for: ${config.id}, panelId: ${panelId}, component: ${config.componentName}, behaviour: ${behaviour}`,
     );
 
     // --- Toggle Behaviour ---
@@ -238,7 +238,7 @@ export class EngineToolbar {
       const existingPanel = this._dockviewController.api.getPanel(panelId);
       if (existingPanel?.api.isVisible) {
         console.log(
-          `[EngineToolbar ${this._apiId}] Panel ${panelId} exists and is visible, removing (toggle off).`
+          `[EngineToolbar ${this._apiId}] Panel ${panelId} exists and is visible, removing (toggle off).`,
         );
         try {
           this._dockviewController.api.removePanel(existingPanel);
@@ -246,18 +246,18 @@ export class EngineToolbar {
         } catch (error) {
           console.error(
             `[EngineToolbar ${this._apiId}] Error removing panel ${panelId}:`,
-            error
+            error,
           );
         }
       } else {
         const position = calculatePosition();
         console.log(
           `[EngineToolbar ${this._apiId}] Calculated position:`,
-          JSON.stringify(position)
+          JSON.stringify(position),
         );
         if (existingPanel) {
           console.log(
-            `[EngineToolbar ${this._apiId}] Panel ${panelId} exists but is hidden. Activating and setting size.`
+            `[EngineToolbar ${this._apiId}] Panel ${panelId} exists but is hidden. Activating and setting size.`,
           );
           try {
             existingPanel.api.setSize(position);
@@ -271,12 +271,12 @@ export class EngineToolbar {
           } catch (e) {
             console.error(
               `[EngineToolbar ${this._apiId}] Error setting size/activating existing panel ${panelId}:`,
-              e
+              e,
             );
           }
         } else {
           console.log(
-            `[EngineToolbar ${this._apiId}] Panel ${panelId} does not exist. Creating new panel.`
+            `[EngineToolbar ${this._apiId}] Panel ${panelId} does not exist. Creating new panel.`,
           );
           const panelApi = this._dockviewController.addFloatingPanel(
             {
@@ -288,14 +288,14 @@ export class EngineToolbar {
                 parentInstance: this._parentEngine, // CRITICAL
               },
             },
-            position
+            position,
           );
           if (panelApi) {
             this._activeFloatingPanels.set(panelId, config.componentName);
             panelApi.setActive?.();
           } else {
             console.error(
-              `[EngineToolbar ${this._apiId}] Failed to create floating panel ${panelId}`
+              `[EngineToolbar ${this._apiId}] Failed to create floating panel ${panelId}`,
             );
           }
         }
@@ -304,13 +304,13 @@ export class EngineToolbar {
     // --- Create Behaviour ---
     else if (behaviour === "create") {
       console.log(
-        `[EngineToolbar ${this._apiId}] Creating new panel instance for ${config.componentName} (behaviour: create).`
+        `[EngineToolbar ${this._apiId}] Creating new panel instance for ${config.componentName} (behaviour: create).`,
       );
       const newPanelId = `${config.componentName}_${this._apiId}_float_${Date.now()}`;
       const position = calculatePosition();
       console.log(
         `[EngineToolbar ${this._apiId}] Calculated position for new panel ${newPanelId}:`,
-        position
+        position,
       );
       const panelApi = this._dockviewController.addFloatingPanel(
         {
@@ -322,14 +322,14 @@ export class EngineToolbar {
             parentInstance: this._parentEngine, // CRITICAL
           },
         },
-        position
+        position,
       );
       if (panelApi) {
         this._activeFloatingPanels.set(newPanelId, config.componentName);
         panelApi.setActive?.();
       } else {
         console.error(
-          `[EngineToolbar ${this._apiId}] Failed to create floating panel ${newPanelId}`
+          `[EngineToolbar ${this._apiId}] Failed to create floating panel ${newPanelId}`,
         );
       }
     }
@@ -337,10 +337,10 @@ export class EngineToolbar {
 
   /** Handles clicks for buttons configured as 'function' type */
   private async handleFunctionButtonClick(
-    config: FunctionToolbarItemConfig
+    config: FunctionToolbarItemConfig,
   ): Promise<void> {
     console.log(
-      `[EngineToolbar ${this._apiId}] Handling function button click for: ${config.id}, functionId: ${config.functionId}`
+      `[EngineToolbar ${this._apiId}] Handling function button click for: ${config.id}, functionId: ${config.functionId}`,
     );
     const funcConfig = getFunctionConfig(config.functionId);
     if (funcConfig && typeof funcConfig.execute === "function") {
@@ -351,12 +351,12 @@ export class EngineToolbar {
       } catch (error) {
         console.error(
           `[EngineToolbar ${this._apiId}] Error executing function '${config.functionId}' for button '${config.id}':`,
-          error
+          error,
         );
       }
     } else {
       console.warn(
-        `[EngineToolbar ${this._apiId}] Function configuration or execute method not found for functionId: ${config.functionId}`
+        `[EngineToolbar ${this._apiId}] Function configuration or execute method not found for functionId: ${config.functionId}`,
       );
     }
   }
