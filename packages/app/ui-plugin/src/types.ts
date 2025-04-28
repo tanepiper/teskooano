@@ -109,12 +109,16 @@ export interface BaseToolbarItemConfig {
   id: string;
   /** The target toolbar where this item should appear. */
   target: ToolbarTarget;
-  /** Tooltip text displayed on hover. */
-  title: string;
+  /** Tooltip text displayed on hover. Falls back to title if not provided. */
+  title?: string; // Keep title as it might be used elsewhere or as fallback
   /** Raw SVG string for the icon. */
-  iconSvg: string;
+  iconSvg?: string; // Made optional as some items might not have icons
   /** Optional display order (lower numbers appear first). */
   order?: number;
+  // Add tooltip properties
+  tooltipText?: string;
+  tooltipTitle?: string;
+  tooltipIconSvg?: string;
 }
 
 /**
@@ -170,16 +174,6 @@ export type ToolbarItemDefinition =
   | Omit<FunctionToolbarItemConfig, "target">;
 
 /**
- * Defines a block for registering toolbar items to a specific target toolbar.
- */
-export interface ToolbarRegistration {
-  /** The target toolbar ID where these items should be added. */
-  target: ToolbarTarget;
-  /** An array of toolbar item definitions for this target. */
-  items: ToolbarItemDefinition[];
-}
-
-/**
  * Configuration for a custom element widget to be directly embedded
  * within a designated toolbar area.
  */
@@ -194,6 +188,18 @@ export interface ToolbarWidgetConfig {
   order?: number;
   /** Optional parameters or initial attributes to pass to the widget element. */
   params?: Record<string, any>; // Could be used for initial state
+}
+
+/**
+ * Defines a block for registering toolbar items to a specific target toolbar.
+ */
+export interface ToolbarRegistration {
+  /** The target toolbar ID where these items should be added. */
+  target: ToolbarTarget;
+  /** An array of toolbar item definitions for this target. */
+  items?: ToolbarItemDefinition[];
+  /** Optional: Widgets to be embedded directly into toolbars. */
+  widgets?: ToolbarWidgetConfig[];
 }
 
 /**

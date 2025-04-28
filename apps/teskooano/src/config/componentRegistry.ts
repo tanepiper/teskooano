@@ -72,4 +72,9 @@ export const componentConfig: ComponentRegistryConfig = {
     className: "SystemControls",
     isCustomElement: true, // Ensure this is true or omitted
   },
+  "teskooano-tooltip": {
+    path: "../components/shared/Tooltip.ts",
+    className: "TeskooanoTooltip",
+    isCustomElement: true, // Ensure this is true or omitted
+  },
 };

@@ -5,6 +5,7 @@ import type {
   PluginExecutionContext,
   ToolbarRegistration,
   ToolbarWidgetConfig,
+  FunctionToolbarItemConfig,
 } from "@teskooano/ui-plugin";
 import { CompositeEnginePanel } from "./CompositeEnginePanel";
 import { ProgressPanel } from "./ProgressPanel";
@@ -398,7 +399,10 @@ const addViewButtonRegistration: ToolbarRegistration = {
       title: "Add Engine View",
       iconSvg: AddIcon,
       functionId: addCompositeEnginePanelFunction.id,
-      order: 150, // Place it logically among other buttons
+      order: 150,
+      tooltipText: "Add a new composite engine view panel to the layout.",
+      tooltipTitle: "Add Engine View",
+      tooltipIconSvg: AddIcon,
     },
   ],
 };

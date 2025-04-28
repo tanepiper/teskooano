@@ -27,6 +27,10 @@
   justify-content: flex-start; /* Align widgets to the start of their area */
 }
 
+teskooano-button svg {
+  fill: currentColor;
+}
+
 #toolbar .toolbar-widget {
   /* Try controlling size and flexibility */
   flex-shrink: 0; /* Don't shrink */

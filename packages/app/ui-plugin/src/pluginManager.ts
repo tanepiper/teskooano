@@ -109,7 +109,7 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
     }
     const targetItems = toolbarRegistry.get(target)!;
 
-    registration.items.forEach((itemDefinition: ToolbarItemDefinition) => {
+    registration.items?.forEach((itemDefinition: ToolbarItemDefinition) => {
       const fullItemConfig: ToolbarItemConfig = {
         ...itemDefinition,
         target: target,

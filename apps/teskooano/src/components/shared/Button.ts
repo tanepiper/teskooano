@@ -1,15 +1,19 @@
+import type { TeskooanoTooltip } from "./Tooltip"; // Import the tooltip type
+
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
-      /* Inherit display from context, default to inline-block behavior */
-      display: inline-block; 
+      /* position: relative; */ /* REMOVED: Let's see if this fixes layout issues */
+      display: inline-block;
       box-sizing: border-box;
       /* Component will use global font */
       /* Define base styling using global tokens */
       --icon-size: var(--font-size-base); /* Link icon size to base font size */
       /* Default gap size (Medium) */
       --icon-gap: var(--space-2); /* Use space-2 (8px) for default gap */
+      /* REMOVED: Host z-index boost no longer needed */
+      /* z-index: auto; */
     }
 
     :host([fullwidth]) {
@@ -26,7 +30,8 @@ template.innerHTML = `
       align-items: center;
       justify-content: center;
       box-sizing: border-box;
-      width: 100%; /* Fill the host container by default */
+      /* REMOVED: width: 100%; Let host control width via inline-block */
+      /* width: 100%; */ 
       /* Calculate min-height based on padding and line-height */
       min-height: calc(var(--space-2) * 2 + var(--line-height-base) * 1em);
       padding: var(--space-2) var(--space-4); /* Base (Medium) padding */
@@ -207,43 +212,31 @@ template.innerHTML = `
          --icon-gap: var(--space-4); /* Largest gap */
     }
 
-
-    /* --- Icon Styling --- */
-    ::slotted([slot="icon"]) {
-      display: inline-flex; /* Ensure icon aligns */
-      align-items: center;
-      justify-content: center;
-      /* REMOVED: Explicit width/height - let content determine size or fill */
-      /* width: var(--icon-size); */
-      /* height: var(--icon-size); */
-      color: inherit; /* Make icon inherit host color */
-      fill: currentColor; /* Make icon inherit host color */
-      /* Dynamic margin based on presence of text */
-      /* No margin needed, gap property handles spacing */
-      flex-shrink: 0; /* Prevent icon shrinking */
-    }
-    
     /* Add gap only if icon is followed by default slot content */
-    ::slotted([slot="icon"] + slot:not(:empty)) {
+    ::slotted([slot="icon"] + slot:not([name]):not(:empty)) { 
         margin-right: var(--icon-gap);
     }
-    /* Alternative: Add gap if icon exists and host isn't in mobile state */
-    /* Requires JS check or different structure */
-    /* :host(:not([mobile])) ::slotted([slot="icon"]) {
-        margin-right: var(--icon-gap);
-    } */
 
     /* Hide default slot (text) when mobile attribute is present */
-    :host([mobile]) slot:not([name='icon']) {
+    :host([mobile]) button > slot:not([name='icon']) {
       display: none;
     }
-    /* No need to adjust icon margin specifically for mobile */
 
+    /* Explicitly hide the tooltip when it's inside the shadow DOM */
+    teskooano-tooltip {
+      display: none;
+    }
   </style>
-  <button part="button">
+  <button part="button" aria-describedby="internal-tooltip">
     <slot name="icon"></slot>
-    <slot></slot> <!-- Default slot for text -->
+    <slot></slot> <!-- Default slot for button text -->
   </button>
+  <!-- Tooltip is initially here for structure and content, but will be moved -->
+  <teskooano-tooltip id="internal-tooltip" exportparts="tooltip,content,icon,text-content,title,main">
+      <slot name="tooltip-icon" slot="icon"></slot>
+      <slot name="tooltip-title" slot="title"></slot>
+      <slot name="tooltip-text"></slot> <!-- Default slot for tooltip main text -->
+  </teskooano-tooltip>
 `;
 
 export class TeskooanoButton extends HTMLElement {
@@ -253,61 +246,354 @@ export class TeskooanoButton extends HTMLElement {
     "title",
     "fullwidth",
     "size",
+    "tooltip-text",
+    "tooltip-title",
+    "tooltip-icon-svg",
   ];
 
   private buttonElement: HTMLButtonElement;
+  private tooltipElement: TeskooanoTooltip | null = null;
+  private tooltipOriginContainer: Node | null = null; // To remember where to put it back
+  private isTooltipInBody: boolean = false;
 
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
     this.buttonElement = this.shadowRoot!.querySelector("button")!;
+    this.tooltipElement = this.shadowRoot!.querySelector("teskooano-tooltip");
+    // Store the original parent (the shadow root fragment)
+    this.tooltipOriginContainer = this.tooltipElement?.parentNode ?? null;
 
-    // Forward clicks from the custom element to the internal button
-    this.addEventListener("click", (e) => {
-      if (this.disabled) {
-        e.stopPropagation();
-        return;
-      }
-      // We don't need to explicitly call button.click()
-      // The event will naturally propagate if the button itself is clicked.
-      // This listener mainly handles the disabled state propagation.
-    });
+    this.addEventListener("click", this.handleClick);
+    this.addEventListener("mouseenter", this.showTooltip);
+    this.addEventListener("focusin", this.showTooltip);
+    this.addEventListener("mouseleave", this.hideTooltip);
+    this.addEventListener("focusout", this.hideTooltip);
   }
 
   connectedCallback() {
-    // Sync initial attribute states
     this.updateDisabledState();
-    this.updateAttribute("type", this.getAttribute("type") || "button"); // Default to type="button"
-    this.updateAttribute("title", this.getAttribute("title"));
-    // No need to handle fullwidth here, CSS does it
+    this.updateAttribute("type", this.getAttribute("type") || "button");
+    if (!this.hasAttribute("tooltip-text")) {
+      this.setButtonAttribute("title", this.getAttribute("title"));
+    }
+    this.updateTooltipContent(); // Populate content while it's in shadow DOM
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("click", this.handleClick);
+    this.removeEventListener("mouseenter", this.showTooltip);
+    this.removeEventListener("focusin", this.showTooltip);
+    this.removeEventListener("mouseleave", this.hideTooltip);
+    this.removeEventListener("focusout", this.hideTooltip);
+
+    // Ensure tooltip is removed from body if button disconnects while it's shown
+    this.removeTooltipFromBody();
+  }
+
+  private removeTooltipFromBody() {
+    if (
+      this.isTooltipInBody &&
+      this.tooltipElement &&
+      document.body.contains(this.tooltipElement)
+    ) {
+      document.body.removeChild(this.tooltipElement);
+      this.isTooltipInBody = false;
+      // Optionally put it back in shadow DOM, though less critical on disconnect
+      // if (this.tooltipOriginContainer) {
+      //    this.tooltipOriginContainer.appendChild(this.tooltipElement);
+      // }
+    }
+  }
+
+  private handleClick = (e: MouseEvent) => {
+    if (this.disabled) {
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
+  };
+
+  private showTooltip = () => {
+    if (this.disabled || !this.tooltipElement || !this.hasTooltipContent()) {
+      return;
+    }
+
+    // Ensure content is up-to-date before showing/moving
+    this.updateTooltipContent();
+
+    // Temporarily remove native title to prevent double tooltip
+    const originalTitle = this.buttonElement.getAttribute("title");
+    if (originalTitle) {
+      this.buttonElement.removeAttribute("title");
+      // Store it temporarily if we need to restore it precisely
+      this.buttonElement.dataset.originalTitle = originalTitle;
+    }
+
+    if (!this.isTooltipInBody) {
+      document.body.appendChild(this.tooltipElement);
+      this.isTooltipInBody = true;
+
+      requestAnimationFrame(() => {
+        if (!this.tooltipElement) return;
+
+        const buttonRect = this.getBoundingClientRect();
+        const tooltipRect = this.tooltipElement.getBoundingClientRect();
+        const scrollX = window.scrollX;
+        const scrollY = window.scrollY;
+        const gap = 4;
+
+        let top = scrollY + buttonRect.bottom + gap;
+        let baseLeft = scrollX + buttonRect.left;
+        let transformX = buttonRect.width / 2 - tooltipRect.width / 2;
+
+        const viewportHeight = document.documentElement.clientHeight;
+        const viewportWidth = document.documentElement.clientWidth;
+
+        if (top + tooltipRect.height > scrollY + viewportHeight) {
+          top = scrollY + buttonRect.top - tooltipRect.height - gap;
+        }
+        if (top < scrollY) {
+          top = scrollY + gap;
+        }
+
+        const finalLeft = baseLeft + transformX;
+        if (finalLeft < scrollX) {
+          transformX = -buttonRect.left + gap;
+        } else if (finalLeft + tooltipRect.width > scrollX + viewportWidth) {
+          const maxLeft = scrollX + viewportWidth - tooltipRect.width - gap;
+          transformX = maxLeft - baseLeft;
+        }
+
+        // --- DEBUG LOGGING ---
+        if (this.getAttribute("title") === "Add Engine View") {
+          // Identify the '+' button
+          console.log("Tooltip Pos Debug (+ Button):", {
+            buttonLeft: buttonRect.left,
+            buttonWidth: buttonRect.width,
+            tooltipWidth: tooltipRect.width,
+            baseLeftStyle: baseLeft,
+            transformXStyle: transformX,
+            finalCalcLeft: finalLeft,
+          });
+        }
+        // --- END DEBUG LOGGING ---
+
+        this.tooltipElement.style.position = "absolute";
+        this.tooltipElement.style.top = `${top}px`;
+        this.tooltipElement.style.left = `${baseLeft}px`;
+        //this.tooltipElement.style.transform = `translateX(${transformX}px)`;
+      });
+    }
+
+    this.tooltipElement.show();
+  };
+
+  private hideTooltip = () => {
+    if (this.tooltipElement) {
+      if (!this.isTooltipInBody) {
+        this.tooltipElement.hide();
+        return;
+      }
+
+      const handleTransitionEnd = (event: TransitionEvent) => {
+        if (
+          event.propertyName !== "opacity" &&
+          event.propertyName !== "visibility"
+        ) {
+          return;
+        }
+        this.tooltipElement?.removeEventListener(
+          "transitionend",
+          handleTransitionEnd,
+        );
+
+        if (
+          this.isTooltipInBody &&
+          this.tooltipElement &&
+          document.body.contains(this.tooltipElement)
+        ) {
+          try {
+            document.body.removeChild(this.tooltipElement);
+            if (this.tooltipOriginContainer) {
+              this.tooltipOriginContainer.appendChild(this.tooltipElement);
+            }
+            this.isTooltipInBody = false;
+
+            this.tooltipElement?.style.removeProperty("top");
+            this.tooltipElement?.style.removeProperty("left");
+            this.tooltipElement?.style.removeProperty("position");
+            this.tooltipElement?.style.removeProperty("transform");
+
+            // Restore native title ONLY if tooltip-text is not set AND original title existed
+            const originalTitle = this.buttonElement.dataset.originalTitle;
+            if (!this.hasAttribute("tooltip-text") && originalTitle) {
+              this.setButtonAttribute("title", originalTitle);
+            }
+            // Clean up dataset attribute
+            delete this.buttonElement.dataset.originalTitle;
+          } catch (error) {
+            console.error("Error removing/restoring tooltip:", error);
+            this.isTooltipInBody = false;
+            delete this.buttonElement.dataset.originalTitle; // Ensure cleanup even on error
+          }
+        }
+      };
+
+      this.tooltipElement.addEventListener(
+        "transitionend",
+        handleTransitionEnd,
+        { once: true },
+      );
+      this.tooltipElement.hide();
+
+      // Fallback timeout remains the same
+      setTimeout(() => {
+        if (
+          this.isTooltipInBody &&
+          this.tooltipElement &&
+          document.body.contains(this.tooltipElement)
+        ) {
+          console.warn("Tooltip removal fallback timeout triggered.");
+          // Manually trigger cleanup, including title restoration attempt
+          handleTransitionEnd({ propertyName: "opacity" } as TransitionEvent);
+        }
+      }, 300);
+    }
+  };
+
+  private hasTooltipContent(): boolean {
+    const hasText =
+      !!this.getAttribute("tooltip-text") ||
+      !!this.querySelector('[slot="tooltip-text"]')?.textContent?.trim() ||
+      !!this.getAttribute("title");
+    const hasTitle =
+      !!this.getAttribute("tooltip-title") ||
+      !!this.querySelector('[slot="tooltip-title"]')?.textContent?.trim();
+    const hasIcon =
+      !!this.getAttribute("tooltip-icon-svg") ||
+      !!this.querySelector('[slot="tooltip-icon"]');
+
+    return hasText || hasTitle || hasIcon;
   }
 
   attributeChangedCallback(
     name: string,
-    _oldValue: string | null, // Mark oldValue as unused
+    oldValue: string | null,
     newValue: string | null,
   ) {
-    if (name === "disabled") {
-      this.updateDisabledState();
-    } else if (name === "fullwidth") {
-      // Attribute presence handled by CSS selector :host([fullwidth])
-    } else if (name === "size") {
-      // Reflect the attribute to the host for CSS styling
-      // The actual styling is done via :host([size=...]) selectors
-      // No direct action needed here unless we want validation
-    } else {
-      this.updateAttribute(name, newValue);
+    if (oldValue === newValue) return;
+
+    switch (name) {
+      case "disabled":
+        this.updateDisabledState();
+        if (this.disabled) this.hideTooltip();
+        break;
+      case "tooltip-text":
+      case "tooltip-title":
+      case "tooltip-icon-svg":
+        this.updateTooltipContent(); // Update content
+        // Native title handling is now done in show/hide
+        break;
+      case "title": // Only update tooltip content if title changes (used as fallback)
+        if (!this.hasAttribute("tooltip-text")) {
+          this.updateTooltipContent();
+          // Also update button title if custom tooltip isn't showing
+          if (!this.isTooltipInBody) {
+            this.setButtonAttribute("title", newValue);
+          }
+        }
+        break;
+      case "fullwidth":
+      case "size":
+        break;
+      default:
+        if (name === "type") {
+          this.setButtonAttribute(name, newValue || "button");
+        }
+        break;
     }
   }
 
-  // Helper to update attributes on the internal button
+  // Helper to update attributes on the internal button (excluding title handling)
   private updateAttribute(name: string, value: string | null) {
+    if (name === "title") return; // Title is handled specially based on tooltip presence
+
+    this.setButtonAttribute(name, value);
+  }
+
+  // Internal helper to actually set attributes on the button element
+  private setButtonAttribute(name: string, value: string | null) {
     if (value !== null) {
       this.buttonElement.setAttribute(name, value);
     } else {
       this.buttonElement.removeAttribute(name);
     }
+  }
+
+  private updateTooltipContent() {
+    if (!this.tooltipElement) return;
+
+    const text =
+      this.getAttribute("tooltip-text") ?? this.getAttribute("title") ?? "";
+    const title = this.getAttribute("tooltip-title");
+    const iconSvg = this.getAttribute("tooltip-icon-svg");
+
+    const textSlot = this.shadowRoot?.querySelector(
+      'slot[name="tooltip-text"]',
+    ) as HTMLSlotElement | null;
+    const titleSlot = this.shadowRoot?.querySelector(
+      'slot[name="tooltip-title"]',
+    ) as HTMLSlotElement | null;
+    const iconSlot = this.shadowRoot?.querySelector(
+      'slot[name="tooltip-icon"]',
+    ) as HTMLSlotElement | null;
+
+    const hasTextSlotContent = !!this.querySelector('[slot="tooltip-text"]');
+    const hasTitleSlotContent = !!this.querySelector('[slot="tooltip-title"]');
+    const hasIconSlotContent = !!this.querySelector('[slot="tooltip-icon"]');
+
+    // Text Content
+    if (textSlot && !hasTextSlotContent) {
+      this.setTextSlotContent(textSlot, text);
+    } else if (textSlot && hasTextSlotContent && textSlot.textContent !== "") {
+      this.setTextSlotContent(textSlot, "");
+    }
+
+    // Title Content
+    if (titleSlot && !hasTitleSlotContent) {
+      this.setTextSlotContent(titleSlot, title);
+    } else if (titleSlot && hasTitleSlotContent && titleSlot.innerHTML !== "") {
+      this.setTextSlotContent(titleSlot, null);
+    }
+
+    // Icon Content
+    if (iconSlot && !hasIconSlotContent) {
+      this.setIconSlotContent(iconSlot, iconSvg);
+    } else if (iconSlot && hasIconSlotContent && iconSlot.innerHTML !== "") {
+      this.setIconSlotContent(iconSlot, null);
+    }
+
+    // REMOVED: Title attribute handling moved to show/hide tooltip methods
+  }
+
+  private setTextSlotContent(
+    slotElement: HTMLSlotElement | null,
+    text: string | null,
+  ) {
+    if (!slotElement) return;
+    // Use textContent for safety, unless HTML is explicitly needed (which it isn't here)
+    slotElement.textContent = text ?? "";
+  }
+
+  private setIconSlotContent(
+    slotElement: HTMLSlotElement | null,
+    svgString: string | null,
+  ) {
+    if (!slotElement) return;
+    // Assuming svgString is safe, validated SVG markup
+    slotElement.innerHTML = svgString ?? "";
   }
 
   // Getter/setter for disabled state
@@ -326,7 +612,6 @@ export class TeskooanoButton extends HTMLElement {
   private updateDisabledState() {
     if (this.disabled) {
       this.buttonElement.setAttribute("disabled", "");
-      // Optionally add ARIA disabled state
       this.buttonElement.setAttribute("aria-disabled", "true");
     } else {
       this.buttonElement.removeAttribute("disabled");
@@ -340,18 +625,17 @@ export class TeskooanoButton extends HTMLElement {
   }
   set size(newSize: string | null) {
     if (newSize) {
-      // Basic validation (optional)
-      const validSizes = ["sm", "md", "lg", "xl"];
+      const validSizes = ["xs", "sm", "md", "lg", "xl"];
       if (validSizes.includes(newSize)) {
         this.setAttribute("size", newSize);
       } else {
         console.warn(
           `Invalid size "${newSize}" for teskooano-button. Using default.`,
         );
-        this.removeAttribute("size"); // Fallback to default (md)
+        this.removeAttribute("size");
       }
     } else {
-      this.removeAttribute("size"); // Remove attribute if set to null/undefined
+      this.removeAttribute("size");
     }
   }
 }
