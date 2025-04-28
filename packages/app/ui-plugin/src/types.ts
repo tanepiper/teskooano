@@ -6,10 +6,15 @@ import type {
 
 /** Configuration for dynamically loading a component. */
 export interface ComponentLoadConfig {
-  /** Path to the module exporting the component class (e.g., '@teskooano/design-system/Button'). */
+  /** Path to the module exporting the class (e.g., '../components/shared/Button.ts'). */
   path: string;
-  /** Optional name of the exported class if not default export (useful if module exports multiple things). */
-  exportName?: string;
+  /** The name of the exported class. */
+  className: string;
+  /** 
+   * Whether this module defines a custom element to be registered with customElements.define.
+   * @default true
+   */
+  isCustomElement?: boolean; 
 }
 
 /** Configuration for dynamically loading a plugin. */

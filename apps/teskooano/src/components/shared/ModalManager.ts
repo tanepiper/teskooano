@@ -20,7 +20,7 @@ export interface ModalOptions {
  * Manages the creation and interaction of modal dialogs using Dockview overlays
  * and the TeskooanoModal web component.
  */
-export class ModalManager {
+export class TeskooanoModalManager {
   private _dockviewController: DockviewController; // Store controller
 
   /**

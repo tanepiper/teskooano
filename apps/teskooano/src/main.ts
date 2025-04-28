@@ -4,7 +4,7 @@ import "./vite-env.d";
 
 import { celestialObjectsStore } from "@teskooano/core-state";
 import { EnginePlaceholder } from "./components/engine/EnginePlaceholder";
-import { ModalManager } from "./components/shared/ModalManager";
+// import type { TeskooanoModalManager } from "./components/shared/ModalManager";
 import { ToolbarSeedForm } from "./components/toolbar/SeedForm";
 import { TeskooanoTourModal } from "./components/tours/TourModal";
 import { DockviewController } from "./controllers/dockview/DockviewController";
@@ -23,6 +23,7 @@ import {
 } from "@teskooano/ui-plugin";
 import { componentConfig } from "./config/componentRegistry";
 import { pluginConfig } from "./config/pluginRegistry";
+import { TeskooanoModalManager } from "./components/shared/ModalManager";
 
 // --- Application Initialization --- //
 
@@ -54,7 +55,7 @@ async function initializeApp() {
     console.log("Initializing core controllers...");
 
     const dockviewController = new DockviewController(appElement);
-    const modalManager = new ModalManager(dockviewController);
+    const modalManager = new TeskooanoModalManager(dockviewController);
     const tourController = new TourController();
     const toolbarController = new ToolbarController(
         toolbarElement,

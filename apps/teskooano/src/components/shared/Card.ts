@@ -36,8 +36,3 @@ export class TeskooanoCard extends HTMLElement {
   }
 }
 
-// Define the custom element
-const ELEMENT_TAG = "teskooano-card";
-if (!customElements.get(ELEMENT_TAG)) {
-  customElements.define(ELEMENT_TAG, TeskooanoCard);
-}

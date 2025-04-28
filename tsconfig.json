@@ -46,7 +46,10 @@
         "packages/systems/procedural-generation/src/index.ts"
       ],
       "@teskooano/core-debug": ["packages/core/debug/src/index.ts"],
-      "@teskooano/*": ["packages/*/src"]
+      "@teskooano/*": ["packages/*/src"],
+      "@teskooano/ui-plugin": ["packages/app/ui-plugin/dist/index.js"],
+      "@teskooano/ui-plugin/ts": ["packages/app/ui-plugin/src/index.ts"],
+      "@teskooano/ui-plugin/vite.js": ["packages/app/ui-plugin/src/vite-plugin.ts"]
     }
   },
   "references": [

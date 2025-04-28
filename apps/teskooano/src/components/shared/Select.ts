@@ -1,4 +1,3 @@
-import { createHtmlElement } from "@teskooano/common";
 import { CustomEvents } from "@teskooano/data-types";
 
 const template = document.createElement("template");
@@ -365,5 +364,3 @@ export class TeskooanoSelect extends HTMLElement {
     }
   }
 }
-
-customElements.define("teskooano-select", TeskooanoSelect);

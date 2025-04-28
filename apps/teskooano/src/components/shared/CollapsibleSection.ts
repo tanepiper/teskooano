@@ -100,7 +100,7 @@ template.innerHTML = `
   </div>
 `;
 
-export class CollapsibleSection extends HTMLElement {
+export class TeskooanoCollapsibleSection extends HTMLElement {
   private headerElement: HTMLElement | null = null;
   private contentElement: HTMLElement | null = null;
   private _internalUpdate = false;
@@ -265,6 +265,3 @@ export class CollapsibleSection extends HTMLElement {
 }
 
 // Ensure it's only defined once
-if (!customElements.get("collapsible-section")) {
-  customElements.define("collapsible-section", CollapsibleSection);
-}

@@ -1,4 +1,3 @@
-import { createHtmlElement } from "@teskooano/common";
 import { CustomEvents } from "@teskooano/data-types";
 
 const template = document.createElement("template");
@@ -219,10 +218,4 @@ export class TeskooanoForm extends HTMLElement {
 
     return isValid;
   }
-}
-
-// Define the custom element
-const ELEMENT_TAG = "teskooano-form";
-if (!customElements.get(ELEMENT_TAG)) {
-  customElements.define(ELEMENT_TAG, TeskooanoForm);
 }

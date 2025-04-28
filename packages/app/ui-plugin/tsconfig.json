@@ -5,8 +5,12 @@
     "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
-    "composite": true
+    "composite": true,
+    "noEmit": false,
+    "emitDeclarationOnly": false,
+    "noEmitOnError": true,
+    "moduleResolution": "bundler"
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

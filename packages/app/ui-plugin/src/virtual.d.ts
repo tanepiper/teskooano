@@ -13,4 +13,11 @@ declare module 'virtual:teskooano-loaders' {
    * the module containing the TeskooanoPlugin object (usually exported as 'plugin').
    */
   export const pluginLoaders: Record<string, () => Promise<any>>;
+
+  /**
+   * The component registry configuration.
+   */
+  export const componentRegistryConfig: ComponentRegistryConfig;
+
+    
 } 

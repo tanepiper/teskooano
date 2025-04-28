@@ -11,8 +11,15 @@ import {
   PluginRegistryConfig
 } from "./types.js";
 
-// --- Import the generated loaders from the virtual module --- //
-import { componentLoaders, pluginLoaders } from 'virtual:teskooano-loaders';
+// --- Import the generated loaders AND config from the virtual module --- //
+import {
+   componentLoaders, 
+   pluginLoaders, 
+   componentRegistryConfig // Import the config object
+} from 'virtual:teskooano-loaders';
+
+// Cast the imported config to the correct type
+const loadedComponentConfig = componentRegistryConfig as ComponentRegistryConfig;
 
 // --- Configuration Interfaces ---
 
@@ -112,43 +119,72 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
 // --- Loading and Registration Functions (Using Vite Plugin Loaders) ---
 
 /**
- * Loads and registers custom web components using loaders from the Vite plugin.
- * @param componentTags - An array of component tag names to load (must exist in the config used by the Vite plugin).
+ * Loads and registers custom web components or just loads modules 
+ * based on the configuration provided via the Vite plugin.
+ * @param componentTags - An array of component tag/keys to load from the registry.
  */
 export async function loadAndRegisterComponents(componentTags: string[]): Promise<void> {
-    console.log('[PluginManager] Starting component registration via Vite loaders...');
-    // Cast the imported loaders to the expected type
+    console.log('[PluginManager] Starting component/module loading via Vite loaders...');
     const loaders = componentLoaders as Record<string, () => Promise<any>>;
 
     for (const tagName of componentTags) {
-        if (customElements.get(tagName)) {
+        // Get the configuration for this specific tag/key from the loaded config
+        const config = loadedComponentConfig[tagName];
+        
+        if (!config) {
+            console.error(`[PluginManager] No configuration found for key '${tagName}' in the registry provided by the Vite plugin.`);
+            continue;
+        }
+
+        // Use the className from the config
+        const className = config.className;
+        // Determine if it's a custom element (default to true if undefined)
+        const isCustomElement = config.isCustomElement !== false;
+
+        if (isCustomElement && customElements.get(tagName)) {
             console.warn(`[PluginManager] Custom element '${tagName}' is already defined. Skipping registration.`);
             continue;
         }
 
         const loader = loaders[tagName];
         if (!loader) {
-            console.error(`[PluginManager] No component loader found for tag '${tagName}'. Was it configured in componentRegistry.ts?`);
+            // This case should ideally be caught by the config check above, but keep for safety
+            console.error(`[PluginManager] No component loader found for tag '${tagName}'.`);
             continue;
         }
 
         try {
-            console.log(`  - Calling loader for component '${tagName}'...`);
+            console.log(`  - Calling loader for ${isCustomElement ? 'component' : 'module'} '${tagName}' (Class: ${className})...`);
             const module = await loader();
-            // Assume component class is the default export unless specified differently in future
-            const componentClass = module.default;
+            
+            // Get the class using the correct className from the config
+            const loadedClass = module[className]; 
 
-            if (typeof componentClass === 'function' && componentClass.prototype instanceof HTMLElement) {
-                 customElements.define(tagName, componentClass as CustomElementConstructor);
-                 console.log(`  - Defined component: <${tagName}>`);
-            } else {
-                 console.error(`[PluginManager] Failed to define component '${tagName}'. Loaded module 'default' export is not a valid Custom Element constructor.`);
+            if (typeof loadedClass !== 'function') {
+                 console.error(`[PluginManager] Failed to load ${isCustomElement ? 'component' : 'module'} '${tagName}'. Class '${className}' not found or not a function in the loaded module.`);
+                 continue; // Skip to next tag
             }
+
+            if (isCustomElement) {
+                // It's a custom element, register it
+                if (loadedClass.prototype instanceof HTMLElement) {
+                    customElements.define(tagName, loadedClass as CustomElementConstructor);
+                    console.log(`  - Defined custom element: <${tagName}>`);
+                } else {
+                    console.error(`[PluginManager] Failed to define custom element '${tagName}'. Class '${className}' is not a valid Custom Element constructor (does not extend HTMLElement).`);
+                }
+            } else {
+                // It's just a module to load, not define
+                console.log(`  - Loaded module for '${tagName}' (Class: ${className}). No registration needed.`);
+                // TODO: Decide what to do with the loadedClass for non-components.
+                // Store it? Instantiate it? For now, just loading it is enough.
+            }
+
         } catch (error) {
-            console.error(`[PluginManager] Failed to load or define component '${tagName}' using its loader:`, error);
+            console.error(`[PluginManager] Failed to load ${isCustomElement ? 'component' : 'module'} '${tagName}' using its loader:`, error);
         }
     }
-    console.log('[PluginManager] Component registration via Vite loaders finished.');
+    console.log('[PluginManager] Component/module loading finished.');
 }
 
 /**

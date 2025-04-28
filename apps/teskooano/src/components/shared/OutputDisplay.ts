@@ -327,5 +327,3 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     );
   }
 }
-
-customElements.define("teskooano-output-display", TeskooanoOutputDisplay);

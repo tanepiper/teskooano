@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "rm -rf dist && rm -rf tsconfig.tsbuildinfo && vite build",
     "preview": "vite preview",
     "test": "vitest run"
   },

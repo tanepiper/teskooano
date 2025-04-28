@@ -2,7 +2,8 @@ import { defineConfig, PluginOption } from "vite";
 import glsl from "vite-plugin-glsl"; // Import the plugin
 import { VitePWA } from "vite-plugin-pwa";
 import path from 'path'; // Import Node's path module
-import { teskooanoUiPlugin } from '@teskooano/ui-plugin'; // Import our UI plugin
+// Import from the CORRECT compiled export path
+import { teskooanoUiPlugin } from '@teskooano/ui-plugin/vite.js';
 
 const basePath = process.env.CI ? "/teskooano" : "/";
 

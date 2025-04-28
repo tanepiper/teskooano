@@ -1,4 +1,6 @@
-// Re-export everything except the conflicting config types from types.ts
+// Only re-export types and CLIENT-SIDE manager functions
+
+// Export Types
 export type {
     // Core Plugin System Types
     ToolbarTarget,
@@ -19,7 +21,7 @@ export type {
     PluginRegistryConfig
 } from './types.js';
 
-// Re-export everything from pluginManager
+// Export Client-Side Manager Functions
 export {
     registerPlugin,
     loadAndRegisterComponents,
@@ -29,16 +31,3 @@ export {
     getFunctionConfig,
     getToolbarItemsForTarget
 } from './pluginManager.js';
-
-// Re-export the vite plugin and its options type
-export { teskooanoUiPlugin } from './vite-plugin.js';
-export type { TeskooanoUiPluginOptions } from './vite-plugin.js';
-
-// // Explicitly re-export config types if needed at the top level
-// // (This structure avoids the name collision)
-// export type {
-//     ComponentLoadConfig,
-//     PluginLoadConfig,
-//     ComponentRegistryConfig,
-//     PluginRegistryConfig
-// } from './types.js';

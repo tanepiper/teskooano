@@ -109,4 +109,3 @@ export class TeskooanoLabeledValue extends HTMLElement {
   }
 }
 
-customElements.define("teskooano-labeled-value", TeskooanoLabeledValue);
