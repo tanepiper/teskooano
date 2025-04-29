@@ -3,16 +3,12 @@ import "dockview-core/dist/styles/dockview.css";
 import "./vite-env.d";
 
 import { celestialObjectsStore } from "@teskooano/core-state";
-import { EnginePlaceholder } from "./components/engine/EnginePlaceholder";
-// import type { TeskooanoModalManager } from "./components/shared/ModalManager";
-import { TeskooanoTourModal } from "./components/tours/TourModal";
-import { DockviewController } from "./controllers/dockview/DockviewController";
-import { ToolbarController } from "./controllers/toolbar/ToolbarController";
-// import { TourController } from "./controllers/tourController"; // REMOVED - Plugin handles this now
-import { layoutOrientationStore, Orientation } from "./stores/layoutStore";
-// import { ProgressPanel } from "./components/engine/ProgressPanel"; // REMOVED Import
 
-// --- Import Plugin System --- //
+import { TeskooanoTourModal } from "./core/tours/TourModal";
+import { DockviewController } from "./core/controllers/dockview/DockviewController";
+import { ToolbarController } from "./core/controllers/toolbar/ToolbarController";
+import { layoutOrientationStore, Orientation } from "./core/stores/layoutStore";
+
 import {
   getFunctionConfig,
   getLoadedModuleClass,
@@ -23,6 +19,9 @@ import {
   TeskooanoPlugin,
   setAppDependencies,
 } from "@teskooano/ui-plugin";
+
+import { coreComponents } from "./core";
+
 import { componentConfig } from "./config/componentRegistry";
 import { pluginConfig } from "./config/pluginRegistry";
 
@@ -65,20 +64,15 @@ async function startApp() {
 }
 
 async function initializeApp() {
-  console.log("Initializing Teskooano...");
+  console.log("🔭 Initializing Teskooano...");
 
-  // Get main elements
   const appElement = document.getElementById("app");
   const toolbarElement = document.getElementById("toolbar");
 
   if (!appElement || !toolbarElement) {
     throw new Error("Required HTML elements (#app or #toolbar) not found.");
   }
-
-  // --- Load UI Components and Plugins --- //
-  console.log("Phase 1: Loading and Registering Base Components...");
-  // Get component tag names from the config keys
-  const componentTags = Object.keys(componentConfig);
+  const componentTags = Object.keys({ ...coreComponents, ...componentConfig });
   await loadAndRegisterComponents(componentTags);
   console.log("Phase 1 Complete.");
 
@@ -122,9 +116,6 @@ async function initializeApp() {
 
   // Inject ModalManager into TourModal class (if TourModal is still needed globally)
   TeskooanoTourModal.setModalManager(modalManager);
-
-  // Set Dockview API for SeedForm & EnginePlaceholder (if still needed globally)
-  EnginePlaceholder.setDockviewApi(dockviewController.api);
 
   // --- Register Dockview Components --- //
   console.log("Registering Dockview panel components...");

@@ -1,6 +1,5 @@
 import type {
   TeskooanoPlugin,
-  // ComponentConfig, // No longer needed directly in registerPlugin
   PanelConfig,
   FunctionConfig,
   ToolbarItemConfig,
@@ -15,14 +14,12 @@ import type {
 } from "./types.js";
 import type { DockviewApi } from "dockview-core";
 
-// --- Import the generated loaders AND config from the virtual module --- //
 import {
   componentLoaders,
   pluginLoaders,
-  componentRegistryConfig, // Import the config object
+  componentRegistryConfig,
 } from "virtual:teskooano-loaders";
 
-// Cast the imported config to the correct type
 const loadedComponentConfig =
   componentRegistryConfig as ComponentRegistryConfig;
 /** Stores registered plugin definitions, keyed by plugin ID. */
@@ -37,9 +34,8 @@ const toolbarRegistry: Map<ToolbarTarget, ToolbarItemConfig[]> = new Map();
 /** Stores loaded module classes for non-custom-elements, keyed by registry key. */
 const loadedModuleClasses: Map<string, any> = new Map();
 
-// --- ADD: Manager State for Dependencies ---
 let _dockviewApi: DockviewApi | null = null;
-let _dockviewController: any | null = null; // Use same type as in context (any for now)
+let _dockviewController: any | null = null;
 
 /**
  * Sets the core application dependencies needed by plugins.
@@ -52,7 +48,6 @@ export function setAppDependencies(deps: {
 }): void {
   if (_dockviewApi) {
     console.warn("[PluginManager] setAppDependencies called more than once.");
-    // Optionally throw an error or just overwrite
   }
   _dockviewApi = deps.dockviewApi;
   _dockviewController = deps.dockviewController;
@@ -60,7 +55,6 @@ export function setAppDependencies(deps: {
     "[PluginManager] Application dependencies (DockviewApi, DockviewController) set.",
   );
 }
-// --- END ADD ---
 
 /**
  * Registers the metadata of a UI plugin (panels, functions, toolbars).
@@ -74,10 +68,6 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
     );
     return;
   }
-
-  console.log(
-    `[PluginManager] Registering plugin metadata: ${plugin.name} (ID: ${plugin.id})`,
-  );
   pluginRegistry.set(plugin.id, plugin);
 
   plugin.panels?.forEach((panelConfig) => {
@@ -88,7 +78,6 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
       return;
     }
     panelRegistry.set(panelConfig.componentName, panelConfig);
-    console.log(`  - Registered panel: ${panelConfig.componentName}`);
   });
 
   plugin.functions?.forEach((funcConfig) => {
@@ -99,7 +88,6 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
       return;
     }
     functionRegistry.set(funcConfig.id, funcConfig);
-    console.log(`  - Registered function: ${funcConfig.id}`);
   });
 
   plugin.toolbarRegistrations?.forEach((registration: ToolbarRegistration) => {
@@ -134,9 +122,6 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
 export async function loadAndRegisterComponents(
   componentTags: string[],
 ): Promise<void> {
-  console.log(
-    "[PluginManager] Starting component/module loading via Vite loaders...",
-  );
   const loaders = componentLoaders as Record<string, () => Promise<any>>;
 
   for (const tagName of componentTags) {
@@ -156,9 +141,8 @@ export async function loadAndRegisterComponents(
       );
       continue;
     }
-    // ---> Check if non-custom-element class is already loaded
     if (!isCustomElement && loadedModuleClasses.has(tagName)) {
-      console.log(
+      console.warn(
         `[PluginManager] Module class for '${tagName}' already loaded. Skipping.`,
       );
       continue;
@@ -171,9 +155,6 @@ export async function loadAndRegisterComponents(
     }
 
     try {
-      console.log(
-        `  - Calling loader for ${isCustomElement ? "component" : "module"} '${tagName}' (Class: ${className})...`,
-      );
       const module = await loader();
       const loadedClass = module[className];
 
@@ -190,18 +171,13 @@ export async function loadAndRegisterComponents(
             tagName,
             loadedClass as CustomElementConstructor,
           );
-          console.log(`  - Defined custom element: <${tagName}>`);
         } else {
           console.error(
             `[PluginManager] Failed to define '${tagName}'. Class '${className}' is not a valid Custom Element constructor.`,
           );
         }
       } else {
-        // ---> Store the loaded class for non-custom-elements
         loadedModuleClasses.set(tagName, loadedClass);
-        console.log(
-          `  - Loaded and stored class '${className}' for key '${tagName}'.`,
-        );
       }
     } catch (error) {
       console.error(
@@ -210,7 +186,6 @@ export async function loadAndRegisterComponents(
       );
     }
   }
-  console.log("[PluginManager] Component/module loading finished.");
 }
 
 /**
@@ -221,9 +196,6 @@ export async function loadAndRegisterPlugins(
   pluginIds: string[],
   passedArguments?: any,
 ): Promise<void> {
-  console.log(
-    "[PluginManager] Starting plugin registration via Vite loaders...",
-  );
   const loaders = pluginLoaders as Record<string, () => Promise<any>>;
 
   for (const pluginId of pluginIds) {
@@ -242,11 +214,9 @@ export async function loadAndRegisterPlugins(
 
       if (plugin && typeof plugin === "object" && plugin.id === pluginId) {
         registerPlugin(plugin);
-        // REMOVED: Automatic dependency injection via initialize.
-        // Initialize is now only for plugin-specific setup.
+
         if (typeof plugin.initialize === "function") {
           try {
-            // Call initialize without API/Controller args
             plugin.initialize();
           } catch (initError) {
             console.error(
@@ -271,7 +241,6 @@ export async function loadAndRegisterPlugins(
       );
     }
   }
-  console.log("[PluginManager] Plugin registration via Vite loaders finished.");
 }
 
 /**
@@ -305,36 +274,28 @@ export function getFunctionConfig(
     return undefined;
   }
 
-  // Return a new object containing a wrapped execute function
   return {
     id: originalConfig.id,
-    // The returned execute function matches the *original* expected signature (args only)
     execute: (...args: any[]) => {
-      // This wrapper injects the stored dependencies into the context
-      // before calling the plugin's original execute function.
       if (!_dockviewApi) {
         console.error(
           `[PluginManager] Cannot execute function '${id}': DockviewApi dependency not set. Call setAppDependencies first.`,
         );
-        // Optionally throw or return a rejected promise for async cases
         return Promise.reject("DockviewApi not available");
       }
 
-      // Create the context to pass
       const executionContext: PluginExecutionContext = {
         dockviewApi: _dockviewApi,
         dockviewController: _dockviewController, // Pass stored controller
       };
 
       try {
-        // Call the original plugin function with the prepared context and original args
         return originalConfig.execute(executionContext, ...args);
       } catch (error) {
         console.error(
           `[PluginManager] Error executing function '${id}' from plugin '${/* How to get plugin ID here? Might need to store it with func */ "unknown"}':`,
           error,
         );
-        // Re-throw or handle as appropriate
         throw error;
       }
     },
@@ -376,8 +337,6 @@ export function getToolbarWidgetsForTarget(
   pluginRegistry.forEach((plugin) => {
     if (plugin.toolbarWidgets) {
       plugin.toolbarWidgets.forEach((widgetConfig) => {
-        // Ensure the widget config has the target property correctly set internally
-        // (Even though it's defined on the config object itself)
         if (widgetConfig.target === target) {
           allWidgets.push(widgetConfig);
         }
@@ -385,15 +344,10 @@ export function getToolbarWidgetsForTarget(
     }
   });
 
-  // Sort widgets by order (ascending, undefined order goes last)
   allWidgets.sort((a, b) => {
     const orderA = a.order ?? Infinity;
     const orderB = b.order ?? Infinity;
     return orderA - orderB;
   });
-
-  console.log(
-    `[PluginManager] Found ${allWidgets.length} widgets for target '${target}'`,
-  );
   return allWidgets;
 }
