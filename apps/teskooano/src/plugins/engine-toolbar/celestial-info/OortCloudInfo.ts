@@ -4,9 +4,9 @@ import {
   OortCloudProperties,
   AU_METERS,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/FormatUtils";
-import { baseStyles } from "../utils/CelestialStyles";
-import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
+import { FormatUtils } from "./utils/FormatUtils";
+import { baseStyles } from "./utils/CelestialStyles";
+import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
 
 // --- OORT CLOUD INFO COMPONENT ---
 export class OortCloudInfoComponent

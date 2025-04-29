@@ -27,10 +27,9 @@ import { CameraManager } from "../libs/CameraManager";
 
 import type { DockviewController } from "../../../core/controllers/dockview/DockviewController"; // Import controller type
 
-import { EngineToolbar } from "../engine-toolbar/EngineToolbar";
-import { RendererStats } from "@teskooano/renderer-threejs-core";
 import { CustomEvents } from "@teskooano/data-types";
-import type { Simulation } from "@teskooano/app-simulation";
+import { RendererStats } from "@teskooano/renderer-threejs-core";
+import { EngineToolbar } from "../../engine-toolbar/EngineToolbar";
 
 /**
  * The parameters for the CompositeEnginePanel

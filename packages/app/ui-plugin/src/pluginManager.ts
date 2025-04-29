@@ -58,7 +58,7 @@ export function setAppDependencies(deps: {
 
 /**
  * Registers the metadata of a UI plugin (panels, functions, toolbars).
- * Does NOT register custom elements anymore.
+ * It now ALSO automatically defines custom elements provided via plugin panels.
  * @param plugin - The plugin object containing metadata.
  */
 export function registerPlugin(plugin: TeskooanoPlugin): void {
@@ -73,11 +73,53 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
   plugin.panels?.forEach((panelConfig) => {
     if (panelRegistry.has(panelConfig.componentName)) {
       console.warn(
-        `[PluginManager] Panel component name '${panelConfig.componentName}' from plugin '${plugin.id}' already registered. Skipping.`,
+        `[PluginManager] Panel component name '${panelConfig.componentName}' from plugin '${plugin.id}' already registered by another plugin. Skipping panel registration.`,
       );
-      return;
+      // We still check if the custom element needs defining below,
+      // in case multiple plugins reuse the same panel component.
+    } else {
+      panelRegistry.set(panelConfig.componentName, panelConfig);
     }
-    panelRegistry.set(panelConfig.componentName, panelConfig);
+
+    // --- Auto-define Custom Element Panels ---
+    const PanelClass = panelConfig.panelClass as any; // Cast to any to satisfy TS temporarily
+    const componentName = panelConfig.componentName;
+
+    // Check if it's a class, extends HTMLElement, and isn't already defined
+    if (
+      PanelClass &&
+      typeof PanelClass === "function" &&
+      PanelClass.prototype instanceof HTMLElement &&
+      !customElements.get(componentName)
+    ) {
+      try {
+        console.log(
+          `[PluginManager] Auto-defining custom element panel '${componentName}' from plugin '${plugin.id}'...`,
+        );
+        // We perform runtime checks, so the cast is safe here
+        customElements.define(
+          componentName,
+          PanelClass as CustomElementConstructor,
+        );
+        console.log(
+          `[PluginManager] Custom element panel '${componentName}' defined successfully.`,
+        );
+      } catch (error) {
+        console.error(
+          `[PluginManager] Failed to auto-define custom element panel '${componentName}' from plugin '${plugin.id}':`,
+          error,
+        );
+      }
+    } else if (
+      PanelClass &&
+      typeof PanelClass === "function" &&
+      PanelClass.prototype instanceof HTMLElement &&
+      customElements.get(componentName)
+    ) {
+      // Optional: Log if it's already defined
+      // console.log(`[PluginManager] Custom element panel '${componentName}' was already defined.`);
+    }
+    // --- End Auto-define ---
   });
 
   plugin.functions?.forEach((funcConfig) => {
@@ -167,9 +209,15 @@ export async function loadAndRegisterComponents(
 
       if (isCustomElement) {
         if (loadedClass.prototype instanceof HTMLElement) {
+          console.log(
+            `[PluginManager] Defining custom element '${tagName}'...`,
+          );
           customElements.define(
             tagName,
             loadedClass as CustomElementConstructor,
+          );
+          console.log(
+            `[PluginManager] Custom element '${tagName}' defined successfully.`,
           );
         } else {
           console.error(
@@ -178,6 +226,9 @@ export async function loadAndRegisterComponents(
         }
       } else {
         loadedModuleClasses.set(tagName, loadedClass);
+        console.log(
+          `[PluginManager] Loaded non-custom-element module '${tagName}'.`,
+        );
       }
     } catch (error) {
       console.error(

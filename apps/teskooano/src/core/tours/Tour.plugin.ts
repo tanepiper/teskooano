@@ -26,10 +26,7 @@ const restartTourFunction: FunctionConfig = {
 const setSkipTourFunction: FunctionConfig = {
   id: "tour:setSkip",
   // Expects second argument: { skip: boolean }
-  execute: async (
-    _: PluginExecutionContext,
-    args?: { skip?: boolean }
-  ) => {
+  execute: async (_: PluginExecutionContext, args?: { skip?: boolean }) => {
     const skipValue = args?.skip ?? false;
     console.log(`[TourPlugin] Executing tour:setSkip with value: ${skipValue}`);
     tourControllerInstance.setSkipTour(skipValue);

@@ -75,8 +75,14 @@ export interface ComponentConfig {
 export interface PanelConfig {
   /** The unique identifier Dockview uses for this panel type (e.g., 'focus_control'). */
   componentName: string;
-  /** The class implementing the Dockview panel's content (IContentRenderer). */
-  panelClass: { new (): IContentRenderer }; // Constructor signature
+  /**
+   * The class implementing the Dockview panel's content.
+   * Can be a standard class implementing IContentRenderer,
+   * OR a Custom Element constructor that also implements IContentRenderer.
+   */
+  panelClass:
+    | ({ new (): IContentRenderer } & Partial<CustomElementConstructor>)
+    | CustomElementConstructor;
   /** Default title for the panel (can be overridden). */
   defaultTitle: string;
   /** Optional default parameters to pass to the panel on creation. */

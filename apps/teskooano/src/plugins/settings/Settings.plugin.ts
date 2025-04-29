@@ -13,7 +13,7 @@ const SETTINGS_PANEL_ID = "app_settings_panel"; // Consistent ID
 
 // --- Panel Configuration ---
 const settingsPanelConfig: PanelConfig = {
-  componentName: "settings_view", // Matches the component name used before
+  componentName: SettingsPanel.componentName,
   panelClass: SettingsPanel,
   defaultTitle: "Settings",
 };

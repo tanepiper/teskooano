@@ -1,5 +1,5 @@
-import { DockviewController } from "../../../core/controllers/dockview/DockviewController";
-import { CompositeEnginePanel } from "../panels/CompositeEnginePanel"; // Import parent panel type
+import { DockviewController } from "../../core/controllers/dockview/DockviewController";
+import { CompositeEnginePanel } from "../engine/panels/CompositeEnginePanel"; // Import parent panel type
 
 import BoxMultipleArrowLeftFilled from "@fluentui/svg-icons/icons/box_multiple_arrow_left_24_regular.svg?raw";
 import BoxMultipleArrowRightFilled from "@fluentui/svg-icons/icons/box_multiple_arrow_right_24_filled.svg?raw";

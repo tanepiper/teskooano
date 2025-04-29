@@ -1,8 +1,8 @@
 import type {
   CompositeEnginePanel,
   CompositeEngineState,
-} from "../../panels/CompositeEnginePanel.js"; // Import parent panel type
-import type { TeskooanoSlider } from "../../../../core/components/slider/Slider.js"; // Import the slider type
+} from "../../engine/panels/CompositeEnginePanel.js"; // Import parent panel type
+import type { TeskooanoSlider } from "../../../core/components/slider/Slider.js"; // Import the slider type
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 import { PanelToolbarButtonConfig } from "../EngineToolbar.store.js"; // Import toolbar types
 
@@ -40,8 +40,42 @@ export class EngineUISettingsPanel
 
   constructor() {
     super();
+    console.log("[EngineUISettingsPanel] Constructor running..."); // Debug log
+    // Check if template and template.content are valid before using
+    if (
+      !template ||
+      !(template instanceof HTMLTemplateElement) ||
+      !template.content
+    ) {
+      console.error(
+        "[EngineUISettingsPanel] Invalid template or template.content!",
+      );
+      // Optionally throw an error or handle gracefully
+      return;
+    }
+    console.log(
+      "[EngineUISettingsPanel] Template content childElementCount:",
+      template.content.childElementCount,
+    ); // Debug log
+    console.log(
+      "[EngineUISettingsPanel] Template content first child:",
+      template.content.firstChild?.nodeName,
+    ); // Debug log
+
     this.attachShadow({ mode: "open" });
-    this.shadowRoot!.appendChild(template.content.cloneNode(true));
+    try {
+      const clonedContent = template.content.cloneNode(true);
+      // console.log('[EngineUISettingsPanel] Cloned template content:', clonedContent); // Optional: log the whole node
+      this.shadowRoot!.appendChild(clonedContent);
+      console.log(
+        "[EngineUISettingsPanel] Appended template content to shadowRoot.",
+      ); // Debug log
+    } catch (error) {
+      console.error(
+        "[EngineUISettingsPanel] Error appending template content to shadowRoot:",
+        error,
+      ); // Debug log
+    }
   }
 
   connectedCallback() {

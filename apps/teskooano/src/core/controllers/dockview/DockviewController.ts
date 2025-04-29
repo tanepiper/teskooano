@@ -9,12 +9,6 @@ import {
 } from "dockview-core";
 
 import { Observable, Subject } from "rxjs";
-import { CompositeEnginePanel } from "../../../plugins/engine/panels/CompositeEnginePanel";
-import { SettingsPanel } from "../../../plugins/settings/SettingsPanel";
-import { CelestialInfo } from "../../../plugins/ui-controls/celestial-info/CelestialInfo";
-import { EngineUISettingsPanel } from "../../../plugins/engine/engine-toolbar/engine-settings/EngineSettings";
-import { FocusControl } from "../../../plugins/ui-controls/focus/FocusControl";
-import { RendererInfoDisplay } from "../../../plugins/engine/engine-toolbar/engine-info/engine-info";
 import { PanelToolbarButtonConfig } from "../../../plugins/engine/engine-toolbar/EngineToolbar.store";
 
 // Import types and fallback panel
@@ -42,13 +36,11 @@ export class DockviewController {
   private _overlayManager: OverlayManager; // Add OverlayManager instance
   private _groupManager: GroupManager; // Add GroupManager instance
 
-  // --- RxJS Subject for Panel Removal ---
   /** @internal Subject to emit panel IDs when they are removed */
   private _removedPanelSubject = new Subject<string>();
   /** Observable that emits the ID of a panel when it is removed from the Dockview instance. */
   public readonly onPanelRemoved$: Observable<string> =
     this._removedPanelSubject.asObservable();
-  // --- End RxJS Subject ---
 
   /**
    * Creates an instance of DockviewController.
@@ -56,22 +48,6 @@ export class DockviewController {
    * @param element - The root HTML element to host the Dockview instance.
    */
   constructor(element: HTMLElement) {
-    // Register components needed at initialization time internally first
-    this.registerComponent("composite_engine_view", CompositeEnginePanel);
-    this.registerComponent(
-      EngineUISettingsPanel.componentName,
-      EngineUISettingsPanel,
-    );
-    this.registerComponent(FocusControl.componentName, FocusControl);
-    this.registerComponent(
-      RendererInfoDisplay.componentName,
-      RendererInfoDisplay,
-    );
-    this.registerComponent(CelestialInfo.componentName, CelestialInfo);
-    this.registerComponent("settings", SettingsPanel);
-    // Remove pre-registration for dynamically added panels
-    // this._registeredComponents.set('progress_view', ProgressPanel);
-
     this._api = createDockview(element, {
       className: "dockview-theme-abyss",
       createComponent: (options) => {
@@ -133,18 +109,9 @@ export class DockviewController {
     this._overlayManager = new OverlayManager(element);
     this._groupManager = new GroupManager(this._api); // Instantiate GroupManager
 
-    // Handle panel activation changes
-    this._api.onDidActivePanelChange(
-      (activePanel: IDockviewPanel | undefined) => {
-        // this.activePanelApiStore.set(activePanelApi?.api ?? null); // REMOVE - Property doesn't exist
-      },
-    );
-
-    // --- Add Event Listener for Panel Removal ---
     this._api.onDidRemovePanel((panel: IDockviewPanel) => {
       this.handlePanelRemoval(panel);
     });
-    // --- End Event Listener ---
   }
 
   /**
@@ -351,8 +318,6 @@ export class DockviewController {
     return this._api;
   }
 
-  // --- OVERLAY METHODS (Delegation) ---
-
   /**
    * Shows a modal-like overlay centered in the Dockview container.
    * Delegates to OverlayManager.
@@ -417,10 +382,6 @@ export class DockviewController {
         `DockviewController: Attempting to add floating panel ${panelOptions.id}`,
       );
 
-      // --- REVERTED: Create panel first, then add to floating group ---
-
-      // 1. Create the panel instance *without* position details initially.
-      // This might create it detached or in a default location temporarily.
       const initialPanelOptions: AddPanelOptions = {
         ...panelOptions,
         position: undefined, // Explicitly remove position from initial creation
@@ -437,20 +398,13 @@ export class DockviewController {
         `DockviewController: Initial panel ${panelOptions.id} created. Adding to floating group...`,
       );
 
-      // 2. Add this panel instance to a new floating group, providing position.
-      // This relies on addFloatingGroup handling the placement.
       this._api.addFloatingGroup(temporaryPanel, {
         // Pass the position object directly here
         position: position,
       });
 
-      // --- ADD Explicit setSize call ---
-      // Force the size again after adding to group, in case defaults overrode it
       if (position && temporaryPanel.api) {
         try {
-          console.log(
-            `DockviewController: Explicitly setting size for ${panelOptions.id} after addFloatingGroup.`,
-          );
           temporaryPanel.api.setSize(position);
         } catch (e) {
           console.error(
@@ -459,11 +413,6 @@ export class DockviewController {
           );
         }
       }
-      // --- END ADD ---
-
-      console.log(
-        `DockviewController: addFloatingGroup called for panel ${panelOptions.id}.`,
-      );
 
       // Ensure it's active
       temporaryPanel.api.setActive();
@@ -498,10 +447,6 @@ export class DockviewController {
     const groupId = panel.group?.id;
     const panelId = panel.id;
 
-    console.log(
-      `DockviewController: handlePanelRemoval called for panel '${panelId}' in group '${groupId ?? "none"}'`,
-    );
-
     this._removedPanelSubject.next(panelId);
 
     const group = panel.group;
@@ -510,14 +455,10 @@ export class DockviewController {
       // Group is empty, tell GroupManager to clean up tracking for this ID
       this._groupManager.cleanupGroupTracking(groupId);
     } else if (group) {
-      console.log(
-        `DockviewController: Panel '${panelId}' removed from group ID: ${group.id}. Group still contains panels.`,
-      );
     } else {
       console.warn(
         `DockviewController: Removed panel '${panelId}' did not have an associated group.`,
       );
     }
   }
-  // --- END UPDATED METHOD ---
 }

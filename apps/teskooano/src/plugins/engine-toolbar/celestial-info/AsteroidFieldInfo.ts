@@ -4,9 +4,9 @@ import {
   AsteroidFieldProperties,
   AU_METERS,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/FormatUtils";
-import { baseStyles } from "../utils/CelestialStyles";
-import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
+import { FormatUtils } from "./utils/FormatUtils";
+import { baseStyles } from "./utils/CelestialStyles";
+import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
 
 // --- ASTEROID FIELD INFO COMPONENT ---
 export class AsteroidFieldInfoComponent

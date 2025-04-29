@@ -11,11 +11,11 @@ import {
   GroupPanelPartInitParameters,
   IContentRenderer,
 } from "dockview-core";
-import { PanelToolbarButtonConfig } from "../../engine/engine-toolbar/EngineToolbar.store"; // Import toolbar types
+import { PanelToolbarButtonConfig } from "../../engine-toolbar/EngineToolbar.store"; // Import toolbar types
 import { CompositeEnginePanel } from "../../engine/panels/CompositeEnginePanel"; // Import parent type
 
 // Import component types
-import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
+import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
 
 // Import all celestial info components
 import { AsteroidFieldInfoComponent } from "./AsteroidFieldInfo";
