@@ -31,16 +31,5 @@ export type {
   ToolbarWidgetConfig,
 } from "./types.js";
 
-// Export Client-Side Manager Functions
-export {
-  registerPlugin,
-  loadAndRegisterComponents,
-  loadAndRegisterPlugins,
-  setAppDependencies,
-  getPlugins,
-  getPanelConfig,
-  getFunctionConfig,
-  getToolbarItemsForTarget,
-  getLoadedModuleClass,
-  getToolbarWidgetsForTarget,
-} from "./pluginManager.js";
+// Export the singleton instance of the PluginManager
+export { pluginManager } from "./pluginManager.js";

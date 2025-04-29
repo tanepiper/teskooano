@@ -1,8 +1,6 @@
 import {
+  pluginManager, // Import the singleton instance
   type FunctionToolbarItemConfig, // Specific config for function buttons
-  getFunctionConfig, // Assuming this type is added
-  getToolbarItemsForTarget,
-  getToolbarWidgetsForTarget, // Get all items for a target
   type ToolbarItemConfig, // Assuming this function is added to the plugin package
   type ToolbarWidgetConfig,
 } from "@teskooano/ui-plugin";
@@ -84,7 +82,7 @@ export class ToolbarController {
     this._element = element;
     this._dockviewController = dockviewController;
     this._isMobileDevice = this.detectMobileDevice();
-    this._handlers = createToolbarHandlers(this);
+    this._handlers = createToolbarHandlers(this, this._dockviewController.api);
 
     window.addEventListener("resize", this.handleResize);
 
@@ -271,7 +269,7 @@ export class ToolbarController {
 
     try {
       const widgets: ToolbarWidgetConfig[] =
-        getToolbarWidgetsForTarget(targetId);
+        pluginManager.getToolbarWidgetsForTarget(targetId);
       widgets.forEach((widgetConfig) => {
         try {
           const widgetElement = document.createElement(
@@ -317,7 +315,8 @@ export class ToolbarController {
     }
 
     try {
-      const items: ToolbarItemConfig[] = getToolbarItemsForTarget(targetId);
+      const items: ToolbarItemConfig[] =
+        pluginManager.getToolbarItemsForTarget(targetId);
       items.forEach((item) => {
         try {
           if (item.type === "function") {
@@ -359,24 +358,11 @@ export class ToolbarController {
             }
 
             const functionId = buttonConfig.functionId;
-            buttonElement.addEventListener("click", () => {
-              const funcConfig = getFunctionConfig(functionId);
-              if (funcConfig?.execute) {
-                try {
-                  funcConfig.execute();
-                } catch (execError) {
-                  console.error(
-                    `[ToolbarController] Error executing function '${functionId}':`,
-                    execError,
-                  );
-                }
-              } else {
-                console.error(
-                  // Use error here as it's unexpected
-                  `[ToolbarController] Button clicked, but function '${functionId}' not found via getFunctionConfig.`,
-                );
-              }
-            });
+            buttonElement.addEventListener(
+              "click",
+              this._handlers.handlePluginFunctionClick,
+            );
+            buttonElement.setAttribute("data-function-id", functionId);
 
             buttonContainer.appendChild(buttonElement);
           } else if (item.type === "panel") {

@@ -2,7 +2,7 @@ import { celestialObjectsStore, currentSeed } from "@teskooano/core-state";
 import { type CelestialObject } from "@teskooano/data-types";
 import type { DockviewApi } from "dockview-core";
 import {
-  getFunctionConfig,
+  pluginManager,
   type PluginFunctionCallerSignature,
 } from "@teskooano/ui-plugin";
 import {
@@ -309,7 +309,9 @@ class SystemControls
 
     try {
       console.log("Calling system:generate_random plugin function...");
-      const generateFunc = getFunctionConfig("system:generate_random");
+      const generateFunc = pluginManager.getFunctionConfig(
+        "system:generate_random",
+      );
       if (!generateFunc) throw new Error("Generate function not found");
       // Pass seed in options object
       const result = await generateFunc.execute({ seed: seed });
@@ -357,13 +359,17 @@ class SystemControls
     let result: any | null = null;
 
     try {
-      // Get plugin functions
-      const exportFunc = getFunctionConfig("system:export");
-      const importFunc = getFunctionConfig("system:trigger_import_dialog");
-      const randomFunc = getFunctionConfig("system:generate_random");
-      const clearFunc = getFunctionConfig("system:clear");
-      const blankFunc = getFunctionConfig("system:create_blank");
-      const copyFunc = getFunctionConfig("system:copy_seed");
+      // Use pluginManager instance for all function getters
+      const exportFunc = pluginManager.getFunctionConfig("system:export");
+      const importFunc = pluginManager.getFunctionConfig(
+        "system:trigger_import_dialog",
+      );
+      const randomFunc = pluginManager.getFunctionConfig(
+        "system:generate_random",
+      );
+      const clearFunc = pluginManager.getFunctionConfig("system:clear");
+      const blankFunc = pluginManager.getFunctionConfig("system:create_blank");
+      const copyFunc = pluginManager.getFunctionConfig("system:copy_seed");
 
       switch (action) {
         case "export":
@@ -401,7 +407,8 @@ class SystemControls
           break;
         case "copy-seed":
           if (!copyFunc) throw new Error("Copy Seed function not found");
-          result = await copyFunc.execute(currentSeed.get()); // Pass current seed
+          // Pass current seed from the store directly to execute
+          result = await copyFunc.execute(currentSeed.get() ?? "");
           break;
         default:
           console.warn(`Unhandled action: ${action}`);
