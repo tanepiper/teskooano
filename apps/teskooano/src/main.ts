@@ -36,35 +36,22 @@ export const appContext: AppContext = {}; // Export this for other modules
 // --- Application Initialization --- //
 
 async function startApp() {
-  console.log("[App] Starting initialization...");
-
-  // Define which components/modules are critical for initial load
-  const criticalComponents = [
-    "teskooano-button",
-    "teskooano-modal",
-    "teskooano-modal-manager", // Make sure manager is loaded early
-    // Add other essential tags/keys...
-  ];
+  console.log("🔭 Initializing Teskooano...");
   const componentTags = Object.keys(coreComponentConfig);
   try {
-    // Ensure critical components/modules are loaded BEFORE initializing the rest
-    console.log("[App] Loading critical components/modules...");
     await loadAndRegisterComponents(componentTags);
-    console.log("[App] Critical components/modules loaded.");
 
-    // Now initialize the main application logic
     initializeApp();
   } catch (error) {
     console.error(
       "[App] Failed during critical component loading or initialization:",
-      error,
+      error
     );
-    // Handle initialization failure (e.g., show error message)
   }
 }
 
 async function initializeApp() {
-  console.log("🔭 Initializing Teskooano...");
+  
 
   const appElement = document.getElementById("app");
   const toolbarElement = document.getElementById("toolbar");
@@ -74,68 +61,60 @@ async function initializeApp() {
   }
   const componentTags = Object.keys(componentConfig);
   await loadAndRegisterComponents(componentTags);
-  console.log("Phase 1 Complete.");
-
-  console.log("Phase 2: Loading and Registering Plugins...");
-  // Get plugin IDs from the config keys
+  
   const pluginIds = Object.keys(pluginConfig);
   await loadAndRegisterPlugins(pluginIds);
-  console.log("Phase 2 Complete.");
-
-  // --- Initialize Core Controllers & Systems --- //
-  console.log("Initializing core controllers...");
+  
 
   const dockviewController = new DockviewController(appElement);
-  // const tourController = new TourController(); // REMOVED - Plugin handles this
+
   const toolbarController = new ToolbarController(
     toolbarElement,
-    dockviewController,
-    // No tourController passed here anymore
+    dockviewController
+   
   );
 
-  // --- Get Loaded Class and Instantiate Singleton ---
+  
   const ModalManagerClass = getLoadedModuleClass("teskooano-modal-manager");
   if (!ModalManagerClass) {
     console.error(
-      "[App] Failed to get TeskooanoModalManager class after loading.",
+      "[App] Failed to get TeskooanoModalManager class after loading."
     );
-    // Handle this critical failure
+    
     return;
   }
   const modalManager = new ModalManagerClass(dockviewController);
-  console.log("[App] TeskooanoModalManager instantiated.");
+ 
 
-  // --- Set Dependencies for Plugins --- //
+ 
   setAppDependencies({
     dockviewApi: dockviewController.api,
     dockviewController: dockviewController,
   });
 
-  // ---> Store the singleton instance for others to use
+
   appContext.modalManager = modalManager;
 
-  // Inject ModalManager into TourModal class (if TourModal is still needed globally)
+
   TeskooanoTourModal.setModalManager(modalManager);
 
-  // --- Register Dockview Components --- //
+
   console.log("Registering Dockview panel components...");
 
-  // Register components from plugins
-  const plugins = getPlugins(); // Keep getting plugins for component registration
+
+  const plugins = getPlugins(); 
   plugins.forEach((plugin: TeskooanoPlugin) => {
     plugin.panels?.forEach((panelConfig: PanelConfig) => {
       const panelClass = panelConfig.panelClass;
       if (panelClass) {
-        console.log(
-          `  - Registering Dockview component: ${panelConfig.componentName} from plugin ${plugin.id}`,
-        );
+
         dockviewController.registerComponent(
           panelConfig.componentName,
-          panelClass,
+          panelClass
         );
       } else {
         console.error(
-          `Panel class not found for ${panelConfig.componentName} in plugin ${plugin.id}`,
+          `Panel class not found for ${panelConfig.componentName} in plugin ${plugin.id}`
         );
       }
     });
@@ -150,13 +129,13 @@ async function initializeApp() {
     addPanelFunc.execute();
   } else {
     console.error(
-      "[App] Failed to find engine:add_composite_panel function during initialization!",
+      "[App] Failed to find engine:add_composite_panel function during initialization!"
     );
   }
 
   setupEventListeners();
 
-  console.log("Teskooano Initialized.");
+  console.log("🪐 Teskooano Initialized.");
 }
 
 function setupEventListeners() {
