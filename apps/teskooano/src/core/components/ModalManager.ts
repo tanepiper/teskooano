@@ -1,5 +1,5 @@
-import type { DockviewController } from "../../core/controllers/dockview/DockviewController"; // Import controller type
-import { ModalResult } from "../../core/controllers/dockview/types";
+import type { DockviewController } from "../controllers/dockview/DockviewController"; // Import controller type
+import { ModalResult } from "../controllers/dockview/types";
 import { TeskooanoModal } from "./Modal"; // Import for the TeskooanoModal web component class
 
 export interface ModalOptions {

@@ -10,12 +10,17 @@ import { ToolbarController } from "./core/controllers/toolbar/ToolbarController"
 import { layoutOrientationStore, Orientation } from "./core/stores/layoutStore";
 
 import {
-  pluginManager,
-  type PanelConfig,
-  type TeskooanoPlugin,
+  getFunctionConfig,
+  getLoadedModuleClass,
+  getPlugins,
+  loadAndRegisterComponents,
+  loadAndRegisterPlugins,
+  PanelConfig,
+  TeskooanoPlugin,
+  setAppDependencies,
 } from "@teskooano/ui-plugin";
 
-import { coreComponents } from "./core";
+import { componentConfig as coreComponentConfig } from "./core";
 
 import { componentConfig } from "./config/componentRegistry";
 import { pluginConfig } from "./config/pluginRegistry";
@@ -40,11 +45,11 @@ async function startApp() {
     "teskooano-modal-manager", // Make sure manager is loaded early
     // Add other essential tags/keys...
   ];
-
+  const componentTags = Object.keys(coreComponentConfig);
   try {
     // Ensure critical components/modules are loaded BEFORE initializing the rest
     console.log("[App] Loading critical components/modules...");
-    await pluginManager.loadAndRegisterComponents(criticalComponents);
+    await loadAndRegisterComponents(componentTags);
     console.log("[App] Critical components/modules loaded.");
 
     // Now initialize the main application logic
@@ -67,14 +72,14 @@ async function initializeApp() {
   if (!appElement || !toolbarElement) {
     throw new Error("Required HTML elements (#app or #toolbar) not found.");
   }
-  const componentTags = Object.keys({ ...coreComponents, ...componentConfig });
-  await pluginManager.loadAndRegisterComponents(componentTags);
+  const componentTags = Object.keys(componentConfig);
+  await loadAndRegisterComponents(componentTags);
   console.log("Phase 1 Complete.");
 
   console.log("Phase 2: Loading and Registering Plugins...");
   // Get plugin IDs from the config keys
   const pluginIds = Object.keys(pluginConfig);
-  await pluginManager.loadAndRegisterPlugins(pluginIds);
+  await loadAndRegisterPlugins(pluginIds);
   console.log("Phase 2 Complete.");
 
   // --- Initialize Core Controllers & Systems --- //
@@ -89,9 +94,7 @@ async function initializeApp() {
   );
 
   // --- Get Loaded Class and Instantiate Singleton ---
-  const ModalManagerClass = pluginManager.getLoadedModuleClass(
-    "teskooano-modal-manager",
-  );
+  const ModalManagerClass = getLoadedModuleClass("teskooano-modal-manager");
   if (!ModalManagerClass) {
     console.error(
       "[App] Failed to get TeskooanoModalManager class after loading.",
@@ -103,7 +106,7 @@ async function initializeApp() {
   console.log("[App] TeskooanoModalManager instantiated.");
 
   // --- Set Dependencies for Plugins --- //
-  pluginManager.setAppDependencies({
+  setAppDependencies({
     dockviewApi: dockviewController.api,
     dockviewController: dockviewController,
   });
@@ -118,7 +121,7 @@ async function initializeApp() {
   console.log("Registering Dockview panel components...");
 
   // Register components from plugins
-  const plugins = pluginManager.getPlugins(); // Keep getting plugins for component registration
+  const plugins = getPlugins(); // Keep getting plugins for component registration
   plugins.forEach((plugin: TeskooanoPlugin) => {
     plugin.panels?.forEach((panelConfig: PanelConfig) => {
       const panelClass = panelConfig.panelClass;
@@ -141,9 +144,7 @@ async function initializeApp() {
   console.log("Dockview panel registration complete.");
 
   // Ensure at least one engine panel is created on startup via the plugin function
-  const addPanelFunc = pluginManager.getFunctionConfig(
-    "engine:add_composite_panel",
-  );
+  const addPanelFunc = getFunctionConfig("engine:add_composite_panel");
   if (addPanelFunc?.execute) {
     console.log("[App] Calling engine:add_composite_panel for initial view...");
     addPanelFunc.execute();
@@ -186,7 +187,7 @@ function setupEventListeners() {
       const objects = celestialObjectsStore.get();
       const selectedObject = objects[objectId];
       // tourController.setCurrentSelectedCelestial(selectedObject?.name);
-      const func = pluginManager.getFunctionConfig("tour:setCelestialFocus"); // Hypothetical function ID
+      const func = getFunctionConfig("tour:setCelestialFocus"); // Hypothetical function ID
       if (func?.execute) {
         func.execute({ celestialName: selectedObject?.name });
       } else {
@@ -200,7 +201,7 @@ function setupEventListeners() {
   // Listener for Start Tour Requests from Placeholders
   document.body.addEventListener("start-tour-request", () => {
     // Use plugin function
-    const restartFunc = pluginManager.getFunctionConfig("tour:restart");
+    const restartFunc = getFunctionConfig("tour:restart");
     if (restartFunc?.execute) {
       restartFunc.execute();
     } else {

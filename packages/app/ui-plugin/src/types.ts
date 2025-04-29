@@ -33,6 +33,8 @@ export interface ComponentLoadConfig {
    * @default true
    */
   isCustomElement?: boolean;
+  /** Internal: Used by the Vite plugin to track the source config file for relative path resolution. */
+  _configPath?: string;
 }
 
 /** Configuration for dynamically loading a plugin. */

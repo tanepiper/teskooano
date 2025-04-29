@@ -11,8 +11,8 @@ import type {
  * Options for the Teskooano UI Vite plugin.
  */
 export interface TeskooanoUiPluginOptions {
-  /** Absolute path to the component registry configuration file (e.g., componentRegistry.ts). */
-  componentRegistryPath: string;
+  /** Absolute paths to the component registry configuration files (e.g., componentRegistry.ts). */
+  componentRegistryPaths: string[];
   /** Absolute path to the plugin registry configuration file (e.g., pluginRegistry.ts). */
   pluginRegistryPath: string;
 }
@@ -30,26 +30,29 @@ const RESOLVED_VIRTUAL_MODULE_ID = "\0" + VIRTUAL_MODULE_ID; // Vite convention
  *
  * @param options - Configuration options for the plugin.
  * @returns A Vite Plugin instance.
- * @throws If required options (`componentRegistryPath`, `pluginRegistryPath`) are missing.
+ * @throws If required options (`componentRegistryPaths`, `pluginRegistryPath`) are missing.
  */
 export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
   if (
     !options ||
-    !options.componentRegistryPath ||
+    !options.componentRegistryPaths ||
+    options.componentRegistryPaths.length === 0 ||
     !options.pluginRegistryPath
   ) {
     throw new Error(
-      "[Teskooano UI Plugin] Missing required options: componentRegistryPath and pluginRegistryPath",
+      "[Teskooano UI Plugin] Missing required options: componentRegistryPaths (must be a non-empty array) and pluginRegistryPath",
     );
   }
 
   // Ensure paths are absolute
-  const componentConfigPath = path.resolve(options.componentRegistryPath);
+  const componentConfigPaths = options.componentRegistryPaths.map((p) =>
+    path.resolve(p),
+  );
   const pluginConfigPath = path.resolve(options.pluginRegistryPath);
 
   console.log(`[Teskooano UI Plugin] Initialized with:
-    Component Config: ${componentConfigPath}
-    Plugin Config:    ${pluginConfigPath}`);
+    Component Configs: ${componentConfigPaths.join(", ")}
+    Plugin Config:     ${pluginConfigPath}`);
 
   return {
     name: "vite-plugin-teskooano-ui",
@@ -77,20 +80,51 @@ export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
       if (id === RESOLVED_VIRTUAL_MODULE_ID) {
         // console.log(`[Teskooano UI Plugin] Loading virtual module: ${id}`); // DEBUG
         try {
-          // Read Component Config
-          // console.log(`  - Reading component config: ${componentConfigPath}`); // DEBUG
-          // Use dynamic import with cache busting for potentially changing TS config files
-          const componentConfigModule = await import(
-            componentConfigPath + `?import&t=${Date.now()}`
+          // --- Load and Merge Component Configs ---
+          const mergedComponentConfig: ComponentRegistryConfig = {};
+          console.log(
+            `  - Reading ${componentConfigPaths.length} component config(s)...`,
           );
-          const componentConfig: ComponentRegistryConfig =
-            componentConfigModule.componentConfig;
-          if (!componentConfig || typeof componentConfig !== "object") {
-            throw new Error(
-              `Invalid or missing export 'componentConfig' from ${componentConfigPath}`,
-            );
+          for (const configPath of componentConfigPaths) {
+            try {
+              // console.log(`    - Reading component config: ${configPath}`); // DEBUG
+              // Use dynamic import with cache busting
+              const componentConfigModule = await import(
+                configPath + `?import&t=${Date.now()}`
+              );
+              const componentConfig: ComponentRegistryConfig =
+                componentConfigModule.componentConfig;
+              if (!componentConfig || typeof componentConfig !== "object") {
+                console.warn(
+                  `[Teskooano UI Plugin] Invalid or missing export 'componentConfig' from ${configPath}. Skipping.`,
+                );
+                continue; // Skip this config file
+              }
+              // Merge, warning on duplicates
+              for (const [key, value] of Object.entries(componentConfig)) {
+                if (mergedComponentConfig[key]) {
+                  console.warn(
+                    `[Teskooano UI Plugin] Duplicate component key '${key}' found while merging from ${configPath}. Overwriting previous definition.`,
+                  );
+                }
+                // Store the original config path with the value for correct relative path resolution later
+                mergedComponentConfig[key] = {
+                  ...value,
+                  _configPath: configPath,
+                };
+              }
+              // console.log(`    - Merged ${Object.keys(componentConfig).length} components from ${configPath}.`); // DEBUG
+            } catch (error) {
+              console.error(
+                `[Teskooano UI Plugin] Error loading component config from ${configPath}:`,
+                error,
+              );
+              // Decide if we should throw or continue. Let's continue but log the error.
+            }
           }
-          // console.log(`  - Found ${Object.keys(componentConfig).length} components in config.`); // DEBUG
+          console.log(
+            `  - Total ${Object.keys(mergedComponentConfig).length} components merged.`,
+          );
 
           // Read Plugin Config
           // console.log(`  - Reading plugin config: ${pluginConfigPath}`); // DEBUG
@@ -109,18 +143,36 @@ export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
           // Generate the virtual module content
           let content = `// Generated by vite-plugin-teskooano-ui\n// Timestamp: ${new Date().toISOString()}\n\n`;
 
-          // Export the raw component config object
-          content += `export const componentRegistryConfig = ${JSON.stringify(componentConfig, null, 2)};\n\n`;
+          // Export the raw *merged* component config object (without the temporary _configPath)
+          const finalComponentRegistry = Object.entries(
+            mergedComponentConfig,
+          ).reduce((acc, [key, value]) => {
+            const { _configPath, ...rest } = value as any; // Remove internal property
+            acc[key] = rest;
+            return acc;
+          }, {} as ComponentRegistryConfig);
 
-          // Generate component loaders
+          content += `export const componentRegistryConfig = ${JSON.stringify(finalComponentRegistry, null, 2)};\n\n`;
+
+          // Generate component loaders using the merged config
           content += "export const componentLoaders = {\n";
-          for (const [key, config] of Object.entries(componentConfig)) {
-            const loadConfig = config as ComponentLoadConfig;
-            // Resolve path relative to the config file's directory
+          for (const [key, configData] of Object.entries(
+            mergedComponentConfig,
+          )) {
+            // Retrieve the original config path stored earlier
+            const originalConfigPath = (configData as any)._configPath;
+            if (!originalConfigPath) {
+              console.error(
+                `[Teskooano UI Plugin] Internal error: Missing _configPath for component '${key}'. Cannot generate loader.`,
+              );
+              continue;
+            }
+            const loadConfig = configData as ComponentLoadConfig;
+            // Resolve path relative to the *original* config file's directory
             const resolvedCompPath = path
-              .resolve(path.dirname(componentConfigPath), loadConfig.path)
+              .resolve(path.dirname(originalConfigPath), loadConfig.path) // Use originalConfigPath
               .replace(/\\/g, "/"); // Ensure forward slashes
-            // console.log(`    - Generating component loader for '${key}': import('${resolvedCompPath}')`); // DEBUG
+            // console.log(`    - Generating component loader for '${key}' (from ${path.basename(originalConfigPath)}): import('${resolvedCompPath}')`); // DEBUG
             content += `  ${JSON.stringify(key)}: () => import('${resolvedCompPath}'),\n`;
           }
           content += "};\n\n";

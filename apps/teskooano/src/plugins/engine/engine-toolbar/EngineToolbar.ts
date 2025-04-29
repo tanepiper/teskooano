@@ -6,10 +6,11 @@ import BoxMultipleArrowRightFilled from "@fluentui/svg-icons/icons/box_multiple_
 
 // --- Import from ui-plugin --- //
 import {
-  pluginManager,
-  type FunctionToolbarItemConfig,
-  type PanelToolbarItemConfig,
-  type ToolbarItemConfig,
+  FunctionToolbarItemConfig,
+  getFunctionConfig,
+  getToolbarItemsForTarget,
+  PanelToolbarItemConfig,
+  ToolbarItemConfig,
 } from "@teskooano/ui-plugin";
 
 export class EngineToolbar {
@@ -150,8 +151,7 @@ export class EngineToolbar {
     console.log(
       `[EngineToolbar ${this._apiId}] Fetching items for target 'engine-toolbar'`,
     );
-    const buttonConfigs =
-      pluginManager.getToolbarItemsForTarget("engine-toolbar");
+    const buttonConfigs = getToolbarItemsForTarget("engine-toolbar");
     console.log(buttonConfigs);
     console.log(
       `[EngineToolbar ${this._apiId}] Found ${buttonConfigs.length} items.`,
@@ -342,10 +342,11 @@ export class EngineToolbar {
     console.log(
       `[EngineToolbar ${this._apiId}] Handling function button click for: ${config.id}, functionId: ${config.functionId}`,
     );
-    const funcConfig = pluginManager.getFunctionConfig(config.functionId);
+    const funcConfig = getFunctionConfig(config.functionId);
     if (funcConfig && typeof funcConfig.execute === "function") {
       try {
-        // The execute method returned by pluginManager already handles context
+        // Pass the apiId or parentEngine if the function needs context?
+        // For now, pass nothing.
         await funcConfig.execute(/* pass args if needed */);
       } catch (error) {
         console.error(

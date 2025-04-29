@@ -11,10 +11,11 @@ export default defineConfig({
   plugins: [
     // Add our UI plugin FIRST to ensure virtual module is ready
     teskooanoUiPlugin({
-      componentRegistryPath: path.resolve(
-        __dirname,
-        "src/config/componentRegistry.ts",
-      ),
+      // Pass an array of component registry paths
+      componentRegistryPaths: [
+        path.resolve(__dirname, "src/core/config/componentRegistry.ts"),
+        path.resolve(__dirname, "src/config/componentRegistry.ts"),
+      ],
       pluginRegistryPath: path.resolve(
         __dirname,
         "src/config/pluginRegistry.ts",

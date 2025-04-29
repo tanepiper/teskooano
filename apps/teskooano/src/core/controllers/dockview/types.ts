@@ -1,4 +1,4 @@
-import { PanelToolbarButtonConfig } from "../../stores/toolbarStore";
+import { PanelToolbarButtonConfig } from "../../../plugins/engine/engine-toolbar/EngineToolbar.store";
 import { IContentRenderer, GroupPanelPartInitParameters } from "dockview-core";
 
 /**

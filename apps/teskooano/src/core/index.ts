@@ -1,4 +1,4 @@
 /**
  * Export the Component Registry
  */
-export { componentConfig as coreComponents } from "./config/componentRegistry";
+export { componentConfig } from "./config/componentRegistry";

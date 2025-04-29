@@ -2,57 +2,47 @@ import type { ComponentRegistryConfig } from "@teskooano/ui-plugin";
 
 export const componentConfig: ComponentRegistryConfig = {
   "teskooano-button": {
-    path: "../core/components/button",
+    path: "../components/button/Button.ts",
     className: "TeskooanoButton",
     isCustomElement: true,
   },
   "teskooano-card": {
-    path: "../core/components/card",
+    path: "../components/card",
     className: "TeskooanoCard",
     isCustomElement: true,
   },
   "teskooano-labeled-value": {
-    path: "../plugins/shared/LabeledValue.ts",
+    path: "../components/LabeledValue.ts",
     className: "TeskooanoLabeledValue",
     isCustomElement: true,
   },
   "teskooano-modal": {
-    path: "../plugins/shared/Modal.ts",
+    path: "../components/Modal.ts",
     className: "TeskooanoModal",
     isCustomElement: true,
   },
   "teskooano-modal-manager": {
-    path: "../plugins/shared/ModalManager.ts",
+    path: "../components/ModalManager.ts",
     className: "TeskooanoModalManager",
     isCustomElement: false,
   },
   "teskooano-output-display": {
-    path: "../plugins/shared/OutputDisplay.ts",
+    path: "../components/OutputDisplay.ts",
     className: "TeskooanoOutputDisplay",
     isCustomElement: true,
   },
   "teskooano-select": {
-    path: "../plugins/shared/Select.ts",
+    path: "../components/Select.ts",
     className: "TeskooanoSelect",
     isCustomElement: true,
   },
   "teskooano-slider": {
-    path: "../core/components/slider",
+    path: "../components/slider",
     className: "TeskooanoSlider",
     isCustomElement: true,
   },
-  "teskooano-simulation-controls": {
-    path: "../plugins/engine/main-toolbar/simulation-controls/SimulationControls.ts",
-    className: "SimulationControls",
-    isCustomElement: true,
-  },
-  "teskooano-system-controls": {
-    path: "../plugins/engine/main-toolbar/system-controls/SystemControls.ts",
-    className: "SystemControls",
-    isCustomElement: true,
-  },
   "teskooano-tooltip": {
-    path: "../plugins/shared/Tooltip.ts",
+    path: "../components/Tooltip.ts",
     className: "TeskooanoTooltip",
     isCustomElement: true,
   },
