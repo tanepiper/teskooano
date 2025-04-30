@@ -34,7 +34,6 @@ export type {
 // Export Client-Side Manager Functions
 export {
   registerPlugin,
-  loadAndRegisterComponents,
   loadAndRegisterPlugins,
   setAppDependencies,
   getPlugins,

@@ -1,1 +1,1 @@
-export { componentConfig } from "./componentRegistry";
+export { pluginConfig } from "./pluginRegistry";

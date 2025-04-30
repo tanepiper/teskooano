@@ -7,7 +7,6 @@ import type {
   ToolbarRegistration,
   ToolbarItemDefinition,
   ComponentRegistryConfig,
-  PluginRegistryConfig,
   PluginExecutionContext,
   PluginFunctionCallerSignature,
   ToolbarWidgetConfig,
@@ -20,8 +19,6 @@ import {
   componentRegistryConfig,
 } from "virtual:teskooano-loaders";
 
-const loadedComponentConfig =
-  componentRegistryConfig as ComponentRegistryConfig;
 /** Stores registered plugin definitions, keyed by plugin ID. */
 const pluginRegistry: Map<string, TeskooanoPlugin> = new Map();
 // const componentRegistry: Map<string, ComponentConfig> = new Map(); // We don't store ComponentConfig anymore
@@ -223,89 +220,6 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
       );
     }
   });
-}
-
-/**
- * Loads and registers custom web components or just loads modules
- * based on the configuration provided via the Vite plugin.
- * @param componentTags - An array of component tag/keys to load from the registry.
- */
-export async function loadAndRegisterComponents(
-  componentTags: string[],
-): Promise<void> {
-  const loaders = componentLoaders as Record<string, () => Promise<any>>;
-
-  for (const tagName of componentTags) {
-    const config = loadedComponentConfig[tagName];
-    if (!config) {
-      console.error(
-        `[PluginManager] No configuration found for key '${tagName}' in the registry.`,
-      );
-      continue;
-    }
-    const className = config.className;
-    const isCustomElement = config.isCustomElement !== false;
-
-    if (isCustomElement && customElements.get(tagName)) {
-      console.warn(
-        `[PluginManager] Custom element '${tagName}' is already defined. Skipping.`,
-      );
-      continue;
-    }
-    if (!isCustomElement && loadedModuleClasses.has(tagName)) {
-      console.warn(
-        `[PluginManager] Module class for '${tagName}' already loaded. Skipping.`,
-      );
-      continue;
-    }
-
-    const loader = loaders[tagName];
-    if (!loader) {
-      console.error(`[PluginManager] No loader found for tag '${tagName}'.`);
-      continue;
-    }
-
-    try {
-      const module = await loader();
-      const loadedClass = module[className];
-
-      if (typeof loadedClass !== "function") {
-        console.error(
-          `[PluginManager] Failed to load '${tagName}'. Class '${className}' not found or not a function.`,
-        );
-        continue;
-      }
-
-      if (isCustomElement) {
-        if (loadedClass.prototype instanceof HTMLElement) {
-          console.log(
-            `[PluginManager] Defining custom element '${tagName}'...`,
-          );
-          customElements.define(
-            tagName,
-            loadedClass as CustomElementConstructor,
-          );
-          console.log(
-            `[PluginManager] Custom element '${tagName}' defined successfully.`,
-          );
-        } else {
-          console.error(
-            `[PluginManager] Failed to define '${tagName}'. Class '${className}' is not a valid Custom Element constructor.`,
-          );
-        }
-      } else {
-        loadedModuleClasses.set(tagName, loadedClass);
-        console.log(
-          `[PluginManager] Loaded non-custom-element module '${tagName}'.`,
-        );
-      }
-    } catch (error) {
-      console.error(
-        `[PluginManager] Failed to load ${isCustomElement ? "component" : "module"} '${tagName}':`,
-        error,
-      );
-    }
-  }
 }
 
 /**

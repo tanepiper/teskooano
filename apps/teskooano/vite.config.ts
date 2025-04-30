@@ -3,25 +3,19 @@ import glsl from "vite-plugin-glsl"; // Import the plugin
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path"; // Import Node's path module
 // Import from the CORRECT compiled export path
-import { teskooanoUiPlugin } from "@teskooano/ui-plugin/vite.js";
+import { teskooanoUiPlugin } from "../../packages/app/ui-plugin/src/vite-plugin.js";
 
 const basePath = process.env.CI ? "/teskooano" : "/";
 
 export default defineConfig({
   plugins: [
-    // Add our UI plugin FIRST to ensure virtual module is ready
     teskooanoUiPlugin({
-      // Pass an array of component registry paths
-      componentRegistryPaths: [
-        path.resolve(__dirname, "src/core/config/componentRegistry.ts"),
-        path.resolve(__dirname, "src/config/componentRegistry.ts"),
+      pluginRegistryPaths: [
+        path.resolve(__dirname, "src/core/config/pluginRegistry.ts"),
+        path.resolve(__dirname, "src/config/pluginRegistry.ts"),
       ],
-      pluginRegistryPath: path.resolve(
-        __dirname,
-        "src/config/pluginRegistry.ts",
-      ),
     }),
-    glsl(), // Add the plugin to the plugins array
+    glsl(),
     VitePWA({
       registerType: "prompt",
       manifest: {
