@@ -213,7 +213,9 @@ export class CompositeEnginePanel implements IContentRenderer {
    * @param callback - The function to call whenever the state changes.
    * @returns An unsubscribe function to stop listening to state updates.
    */
-  public subscribeToViewState(callback: (state: CompositeEngineState) => void): Subscription {
+  public subscribeToViewState(
+    callback: (state: CompositeEngineState) => void,
+  ): Subscription {
     return this._viewStateSubject.subscribe(callback);
   }
 
@@ -575,17 +577,20 @@ export class CompositeEnginePanel implements IContentRenderer {
 
       // --- Initialize Camera Manager ---
       // Get the singleton instance
-      const cameraManagerInstance = getManagerInstance<CameraManager>("camera-manager");
+      const cameraManagerInstance =
+        getManagerInstance<CameraManager>("camera-manager");
       this._cameraManager = cameraManagerInstance; // Store the singleton instance
-      
+
       if (!this._cameraManager) {
-         console.error(`[CompositePanel ${this._api?.id}] Failed to get CameraManager instance! Camera controls will be unavailable.`);
-         // Handle error appropriately - maybe show a message in the panel?
-         return; // Stop initialization if manager is missing
+        console.error(
+          `[CompositePanel ${this._api?.id}] Failed to get CameraManager instance! Camera controls will be unavailable.`,
+        );
+        // Handle error appropriately - maybe show a message in the panel?
+        return; // Stop initialization if manager is missing
       }
 
       const initialViewState = this._viewStateSubject.getValue(); // Get initial state
-      
+
       // --- Set Dependencies (Requires method on CameraManager) --- //
       try {
         // We need a method like setDependencies or initialize on CameraManager
@@ -603,13 +608,13 @@ export class CompositeEnginePanel implements IContentRenderer {
             this.updateViewState({ focusedObjectId: focusedId });
           },
         });
-        
+
         // REMOVE old direct instantiation:
         // this._cameraManager = new CameraManager({ ... });
 
         // Set initial camera position using the manager (only if initialized)
         if (this._cameraManager) this._cameraManager.initializeCameraPosition();
-        
+
         // Subscribe to the CameraManager's state changes (only if initialized)
         if (this._cameraManager) {
           this._cameraManager.getCameraState$().subscribe((cameraState) => {
@@ -620,13 +625,21 @@ export class CompositeEnginePanel implements IContentRenderer {
             const currentPanelState = this._viewStateSubject.getValue();
             const updates: Partial<CompositeEngineState> = {};
 
-            if (!currentPanelState.cameraPosition.equals(cameraState.currentPosition)) {
+            if (
+              !currentPanelState.cameraPosition.equals(
+                cameraState.currentPosition,
+              )
+            ) {
               updates.cameraPosition = cameraState.currentPosition.clone();
             }
-            if (!currentPanelState.cameraTarget.equals(cameraState.currentTarget)) {
+            if (
+              !currentPanelState.cameraTarget.equals(cameraState.currentTarget)
+            ) {
               updates.cameraTarget = cameraState.currentTarget.clone();
             }
-            if (currentPanelState.focusedObjectId !== cameraState.focusedObjectId) {
+            if (
+              currentPanelState.focusedObjectId !== cameraState.focusedObjectId
+            ) {
               updates.focusedObjectId = cameraState.focusedObjectId;
             }
             if (currentPanelState.fov !== cameraState.fov) {
@@ -672,7 +685,10 @@ export class CompositeEnginePanel implements IContentRenderer {
         // Apply Initial State Immediately after renderer creation
         this.applyViewStateToRenderer(this.getViewState());
       } catch (error) {
-        console.error(`[CompositePanel ${this._api?.id}] Failed to set CameraManager dependencies:`, error);
+        console.error(
+          `[CompositePanel ${this._api?.id}] Failed to set CameraManager dependencies:`,
+          error,
+        );
         this._cameraManager = undefined; // Use undefined to match type
       }
     } catch (error) {
@@ -748,7 +764,7 @@ export class CompositeEnginePanel implements IContentRenderer {
     const toolbarManager = getManagerInstance<EngineToolbarManager>(
       "engine-toolbar-manager",
     );
-      
+
     if (toolbarManager && this._api?.id) {
       // Call method on the instance
       toolbarManager.disposeToolbarForPanel(this._api.id);
@@ -758,7 +774,7 @@ export class CompositeEnginePanel implements IContentRenderer {
         "[CompositeEnginePanel] EngineToolbarManager not found or API ID missing during dispose!",
       );
       // Fallback? Should not happen if initialized correctly
-      this._engineToolbar?.dispose(); 
+      this._engineToolbar?.dispose();
       this._engineToolbar = null;
     }
     // --- End Dispose EngineToolbar ---
@@ -870,15 +886,15 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Called by EngineToolbar to subscribe to state.
    */
   public getToolbarManagerInstance(): EngineToolbarManager | null {
-      const managerInstance = getManagerInstance<EngineToolbarManager>(
-        "engine-toolbar-manager",
+    const managerInstance = getManagerInstance<EngineToolbarManager>(
+      "engine-toolbar-manager",
+    );
+    if (!managerInstance) {
+      console.error(
+        "[CompositeEnginePanel] EngineToolbarManager instance not found!",
       );
-      if (!managerInstance) {
-          console.error(
-            "[CompositeEnginePanel] EngineToolbarManager instance not found!",
-          );
-          return null;
-      }
-      return managerInstance;
+      return null;
+    }
+    return managerInstance;
   }
 }

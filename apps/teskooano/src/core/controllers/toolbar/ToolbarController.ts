@@ -330,16 +330,23 @@ export class ToolbarController {
           } else if (item.type === "panel") {
             const panelConfig = item as PanelToolbarItemConfig;
             // --- DEBUG LOG --- //
-            console.log(`[ToolbarController] Processing panel item config:`, panelConfig);
+            console.log(
+              `[ToolbarController] Processing panel item config:`,
+              panelConfig,
+            );
             // --- END DEBUG LOG --- //
 
-            console.log(`[ToolbarController] Creating PANEL button for '${panelConfig.id}', component: '${panelConfig.componentName}'`);
+            console.log(
+              `[ToolbarController] Creating PANEL button for '${panelConfig.id}', component: '${panelConfig.componentName}'`,
+            );
 
             if (!panelConfig.componentName) {
-               console.error(`[ToolbarController] Skipping panel item '${panelConfig.id}' - missing componentName.`);
-               return; // Continue to next item
+              console.error(
+                `[ToolbarController] Skipping panel item '${panelConfig.id}' - missing componentName.`,
+              );
+              return; // Continue to next item
             }
-            
+
             const buttonElement = document.createElement("teskooano-button");
             buttonElement.id = panelConfig.id;
             buttonElement.setAttribute("variant", "icon");
@@ -347,21 +354,33 @@ export class ToolbarController {
             if (panelConfig.iconSvg) {
               buttonElement.innerHTML = `<span slot="icon">${panelConfig.iconSvg}</span>`;
             }
-            
+
             // Handle tooltips (similar to function buttons)
             const configAny = panelConfig as any;
-            if (configAny.tooltipText) buttonElement.setAttribute("tooltip-text", configAny.tooltipText);
-            if (configAny.tooltipTitle) buttonElement.setAttribute("tooltip-title", configAny.tooltipTitle);
-            if (configAny.tooltipIconSvg) buttonElement.setAttribute("tooltip-icon-svg", configAny.tooltipIconSvg);
-            if (!configAny.tooltipText && panelConfig.title) buttonElement.setAttribute("title", panelConfig.title);
+            if (configAny.tooltipText)
+              buttonElement.setAttribute("tooltip-text", configAny.tooltipText);
+            if (configAny.tooltipTitle)
+              buttonElement.setAttribute(
+                "tooltip-title",
+                configAny.tooltipTitle,
+              );
+            if (configAny.tooltipIconSvg)
+              buttonElement.setAttribute(
+                "tooltip-icon-svg",
+                configAny.tooltipIconSvg,
+              );
+            if (!configAny.tooltipText && panelConfig.title)
+              buttonElement.setAttribute("title", panelConfig.title);
 
             buttonElement.addEventListener("click", () => {
-               console.log(`[ToolbarController] Panel button '${panelConfig.id}' clicked. Triggering panel action...`);
-               // Use DockviewController to handle panel toggle/creation
-               // TODO: Implement or verify handlePanelToggleAction method on DockviewController
-               this._dockviewController.handlePanelToggleAction(panelConfig);
+              console.log(
+                `[ToolbarController] Panel button '${panelConfig.id}' clicked. Triggering panel action...`,
+              );
+              // Use DockviewController to handle panel toggle/creation
+              // TODO: Implement or verify handlePanelToggleAction method on DockviewController
+              this._dockviewController.handlePanelToggleAction(panelConfig);
             });
-            
+
             buttonContainer.appendChild(buttonElement);
             // --- END PANEL BUTTON HANDLING --- //
           }

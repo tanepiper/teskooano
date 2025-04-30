@@ -7,7 +7,7 @@ import type {
   // Remove unused ToolbarRegistration and ToolbarWidgetConfig
   // ToolbarRegistration,
   ComponentConfig,
-  // ToolbarWidgetConfig,
+  ToolbarWidgetConfig,
 } from "@teskooano/ui-plugin";
 
 // Import the component class
@@ -30,30 +30,30 @@ const externalLinksComponentConfig: ComponentConfig = {
   componentClass: ExternalLinksComponent,
 };
 
-// Remove the toolbar widget configuration - it seems components are registered directly
-// const externalLinksToolbarWidget: ToolbarWidgetConfig = {
-//   id: "widget-external-links", // Unique ID for the widget instance
-//   target: "main-toolbar", // <--- Changed target to main-toolbar
-//   componentName: externalLinksComponentConfig.tagName, // Tag name of the component
-//   order: 900, // Display order (may need adjustment relative to main toolbar items)
-//   // Alignment might need to be handled by CSS in the toolbar layout
-// };
+// Toolbar Widget Configuration (defined locally)
+const externalLinksWidget: ToolbarWidgetConfig = {
+  id: "main-toolbar-external-links", // Matches ID used in toolbar-definitions.ts (consistency)
+  target: "main-toolbar", // Target the main toolbar's widget area
+  componentName: externalLinksComponentConfig.tagName, // Tag name of the component
+  order: 30, // Suggest an order (adjust as needed)
+};
 
 // Define the overall plugin using the correct structure
 export const plugin: TeskooanoPlugin = {
   id: "core-external-links",
   name: "External Links",
-  description: "Provides external link buttons embedded in the main toolbar.", // Updated description
+  description: "Provides external link buttons for the main toolbar.",
   dependencies: [],
   panels: [], // No panels
   functions: [], // No functions
   managerClasses: [], // No manager classes
   components: [externalLinksComponentConfig], // Register the custom element
-  toolbarRegistrations: [], // No toolbar registrations needed if components are handled directly
+  toolbarRegistrations: [], // No standard toolbar buttons/functions
+  toolbarWidgets: [externalLinksWidget], // Register the widget directly
   initialize: () => {
     console.log("[ExternalLinksPlugin] Initialized.");
   },
   dispose: () => {
     console.log("[ExternalLinksPlugin] Disposed.");
   },
-}; 
+};

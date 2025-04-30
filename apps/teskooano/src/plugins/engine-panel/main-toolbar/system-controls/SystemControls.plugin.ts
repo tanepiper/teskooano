@@ -35,4 +35,4 @@ export const plugin: TeskooanoPlugin = {
   panels: [],
   toolbarRegistrations: [],
   managerClasses: [],
-}; 
+};

@@ -62,7 +62,8 @@ export class CameraManager {
   private onFocusChangeCallback?: (focusedObjectId: string | null) => void;
   private isInitialized = false; // Prevent re-initialization
 
-  private cameraStateSubject: BehaviorSubject<CameraManagerState> = new BehaviorSubject<CameraManagerState>({
+  private cameraStateSubject: BehaviorSubject<CameraManagerState> =
+    new BehaviorSubject<CameraManagerState>({
       fov: DEFAULT_FOV,
       focusedObjectId: null,
       currentPosition: DEFAULT_CAMERA_POSITION.clone(),
@@ -81,11 +82,15 @@ export class CameraManager {
    */
   public setDependencies(options: CameraManagerOptions): void {
     if (this.isInitialized) {
-      console.warn("[CameraManager] setDependencies called more than once. Ignoring subsequent calls.");
+      console.warn(
+        "[CameraManager] setDependencies called more than once. Ignoring subsequent calls.",
+      );
       return;
     }
     if (!options.renderer) {
-      console.error("[CameraManager] setDependencies called without a valid renderer. Initialization failed.");
+      console.error(
+        "[CameraManager] setDependencies called without a valid renderer. Initialization failed.",
+      );
       return;
     }
 
@@ -108,10 +113,12 @@ export class CameraManager {
           `[CameraManager Init] Initial focused object ${initialFocusedObjectId} not found or has no position. Using default target.`,
         );
         initialFocusedObjectId = null; // Correct the focus ID if invalid
-        initialTarget = options.initialCameraTarget ?? DEFAULT_CAMERA_TARGET.clone();
+        initialTarget =
+          options.initialCameraTarget ?? DEFAULT_CAMERA_TARGET.clone();
       }
     } else {
-      initialTarget = options.initialCameraTarget ?? DEFAULT_CAMERA_TARGET.clone();
+      initialTarget =
+        options.initialCameraTarget ?? DEFAULT_CAMERA_TARGET.clone();
     }
 
     initialPosition =
@@ -148,7 +155,9 @@ export class CameraManager {
    */
   public initializeCameraPosition(): void {
     if (!this.isInitialized || !this.renderer) {
-      console.warn("[CameraManager] Cannot initialize camera position: Dependencies not set.");
+      console.warn(
+        "[CameraManager] Cannot initialize camera position: Dependencies not set.",
+      );
       return;
     }
     const initialState = this.cameraStateSubject.getValue();
@@ -165,7 +174,9 @@ export class CameraManager {
    * @deprecated Use getCameraState$() instead.
    */
   public getCameraStateAtom(): BehaviorSubject<CameraManagerState> {
-    console.warn("getCameraStateAtom() is deprecated. Use getCameraState$() instead.");
+    console.warn(
+      "getCameraStateAtom() is deprecated. Use getCameraState$() instead.",
+    );
     return this.cameraStateSubject;
   }
 
@@ -184,14 +195,19 @@ export class CameraManager {
    */
   public focusOnObject(objectId: string | null, distance?: number): void {
     if (!this.isInitialized || !this.renderer?.controlsManager) {
-      console.warn("[CameraManager] Cannot focus on object: Renderer or controls not initialized.");
+      console.warn(
+        "[CameraManager] Cannot focus on object: Renderer or controls not initialized.",
+      );
       return;
     }
 
     // Update the internal intended focus *before* starting the transition
     const currentState = this.cameraStateSubject.getValue();
     if (currentState.focusedObjectId !== objectId) {
-      this.cameraStateSubject.next({ ...currentState, focusedObjectId: objectId });
+      this.cameraStateSubject.next({
+        ...currentState,
+        focusedObjectId: objectId,
+      });
       // The callback will be triggered *after* transition completes
     }
 
@@ -212,7 +228,10 @@ export class CameraManager {
           `[CameraManager] focusOnObject: Cannot focus on ${objectId}, missing renderable or its position.`,
         );
         // Revert focus state if object is invalid
-        this.cameraStateSubject.next({ ...currentState, focusedObjectId: null });
+        this.cameraStateSubject.next({
+          ...currentState,
+          focusedObjectId: null,
+        });
         return;
       }
 
@@ -224,11 +243,7 @@ export class CameraManager {
 
       // Initiate camera movement and follow state within the renderer
       // Pass objectId so the event detail reflects the *intended* target
-      this.renderer.setFollowTarget(
-        objectId,
-        targetPosition,
-        cameraPosition,
-      );
+      this.renderer.setFollowTarget(objectId, targetPosition, cameraPosition);
     }
   }
 
@@ -239,10 +254,15 @@ export class CameraManager {
    */
   public pointCameraAt(targetPosition: THREE.Vector3): void {
     if (!this.isInitialized || !this.renderer?.controlsManager) {
-        console.warn("[CameraManager] Cannot point camera: Renderer or controls not initialized.");
-        return;
+      console.warn(
+        "[CameraManager] Cannot point camera: Renderer or controls not initialized.",
+      );
+      return;
     }
-    this.renderer.controlsManager.pointCameraAtTarget(targetPosition.clone(), true);
+    this.renderer.controlsManager.pointCameraAtTarget(
+      targetPosition.clone(),
+      true,
+    );
   }
 
   /**
@@ -250,8 +270,10 @@ export class CameraManager {
    */
   public resetCameraView(): void {
     if (!this.isInitialized || !this.renderer?.controlsManager) {
-        console.warn("[CameraManager] Cannot reset camera view: Renderer or controls not initialized.");
-        return;
+      console.warn(
+        "[CameraManager] Cannot reset camera view: Renderer or controls not initialized.",
+      );
+      return;
     }
     this.focusOnObject(null); // Call internal focus logic to reset
   }
@@ -269,7 +291,9 @@ export class CameraManager {
    */
   public setFov(fov: number): void {
     if (!this.isInitialized || !this.renderer?.sceneManager) {
-      console.warn("[CameraManager] Cannot set FOV: Renderer or scene manager not initialized.");
+      console.warn(
+        "[CameraManager] Cannot set FOV: Renderer or scene manager not initialized.",
+      );
       return;
     }
 
@@ -303,7 +327,7 @@ export class CameraManager {
 
     // Only emit if position/target actually changed during transition
     if (stateChanged) {
-       this.cameraStateSubject.next(nextState);
+      this.cameraStateSubject.next(nextState);
     }
 
     // Now call the focus change callback if focus ID is set

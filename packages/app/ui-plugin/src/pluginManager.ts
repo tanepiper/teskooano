@@ -161,33 +161,42 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
 
   plugin.managerClasses?.forEach((managerConfig) => {
     if (managerInstances.has(managerConfig.id)) {
-       console.warn(
+      console.warn(
         `[PluginManager] Manager INSTANCE for ID '${managerConfig.id}' already exists. Skipping registration.`,
       );
       return; // Skip if instance already exists
     }
-    
+
     try {
-       // Instantiate the manager class immediately
-       const ManagerClass = managerConfig.managerClass;
-       const instance = new ManagerClass(/* Constructor args? Needs context? */);
-       
-       // Store the INSTANCE
-       managerInstances.set(managerConfig.id, instance);
-       console.log(`[PluginManager] Instantiated and registered manager '${managerConfig.id}' from plugin '${plugin.id}'.`);
-       
-       // Optional: Call an init method on the instance if it exists, passing context?
-       if (typeof instance.setDependencies === "function") {
-          // Pass core dependencies if available
-          if(_dockviewApi && _dockviewController) {
-            instance.setDependencies({ dockviewApi: _dockviewApi, dockviewController: _dockviewController });
-          } else {
-             console.warn(`[PluginManager] Dependencies not yet available for manager ${managerConfig.id}. Consider initializing later or handling missing dependencies.`);
-          }
-       }
-       
+      // Instantiate the manager class immediately
+      const ManagerClass = managerConfig.managerClass;
+      const instance = new ManagerClass(/* Constructor args? Needs context? */);
+
+      // Store the INSTANCE
+      managerInstances.set(managerConfig.id, instance);
+      console.log(
+        `[PluginManager] Instantiated and registered manager '${managerConfig.id}' from plugin '${plugin.id}'.`,
+      );
+
+      // Optional: Call an init method on the instance if it exists, passing context?
+      if (typeof instance.setDependencies === "function") {
+        // Pass core dependencies if available
+        if (_dockviewApi && _dockviewController) {
+          instance.setDependencies({
+            dockviewApi: _dockviewApi,
+            dockviewController: _dockviewController,
+          });
+        } else {
+          console.warn(
+            `[PluginManager] Dependencies not yet available for manager ${managerConfig.id}. Consider initializing later or handling missing dependencies.`,
+          );
+        }
+      }
     } catch (error) {
-       console.error(`[PluginManager] Failed to instantiate manager '${managerConfig.id}' from plugin '${plugin.id}':`, error);
+      console.error(
+        `[PluginManager] Failed to instantiate manager '${managerConfig.id}' from plugin '${plugin.id}':`,
+        error,
+      );
     }
   });
 
@@ -200,7 +209,10 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
       return;
     }
     try {
-      customElements.define(componentConfig.tagName, componentConfig.componentClass);
+      customElements.define(
+        componentConfig.tagName,
+        componentConfig.componentClass,
+      );
       console.log(
         `[PluginManager] Defined custom element '${componentConfig.tagName}' from plugin '${plugin.id}'.`,
       );
@@ -309,7 +321,10 @@ export async function loadAndRegisterPlugins(
   const registeredPluginIds: Set<string> = new Set();
   const failedPluginIds: Set<string> = new Set();
 
-  console.log(`[PluginManager] Attempting to load ${pluginIds.length} plugins:`, pluginIds);
+  console.log(
+    `[PluginManager] Attempting to load ${pluginIds.length} plugins:`,
+    pluginIds,
+  );
 
   // --- 1. Load all plugin modules --- //
   const loadPromises = pluginIds.map(async (id) => {
@@ -323,7 +338,7 @@ export async function loadAndRegisterPlugins(
       const module = await loader();
       // Assuming the plugin object is exported as 'plugin'
       const plugin = module.plugin as TeskooanoPlugin;
-      if (!plugin || typeof plugin !== 'object' || plugin.id !== id) {
+      if (!plugin || typeof plugin !== "object" || plugin.id !== id) {
         console.error(
           `[PluginManager] Failed to load plugin '${id}'. Invalid or missing 'plugin' export or mismatched ID.`,
         );
@@ -333,7 +348,10 @@ export async function loadAndRegisterPlugins(
       loadedPlugins[id] = plugin;
       return plugin;
     } catch (error) {
-      console.error(`[PluginManager] Failed to load plugin module '${id}':`, error);
+      console.error(
+        `[PluginManager] Failed to load plugin module '${id}':`,
+        error,
+      );
       failedPluginIds.add(id);
       return null;
     }
@@ -341,7 +359,9 @@ export async function loadAndRegisterPlugins(
 
   await Promise.all(loadPromises);
 
-  console.log(`[PluginManager] Successfully loaded modules for ${Object.keys(loadedPlugins).length} plugins.`);
+  console.log(
+    `[PluginManager] Successfully loaded modules for ${Object.keys(loadedPlugins).length} plugins.`,
+  );
 
   // --- 2. Register plugins respecting dependencies --- //
   let pluginsToRegister = Object.values(loadedPlugins);
@@ -354,13 +374,16 @@ export async function loadAndRegisterPlugins(
     registeredInPass = 0;
     const remainingPlugins: TeskooanoPlugin[] = [];
 
-    console.log(`[PluginManager] Registration Pass ${currentPass}, attempting to register ${pluginsToRegister.length} plugins.`);
+    console.log(
+      `[PluginManager] Registration Pass ${currentPass}, attempting to register ${pluginsToRegister.length} plugins.`,
+    );
 
     for (const plugin of pluginsToRegister) {
       // Check dependencies
       const dependencies = plugin.dependencies || [];
       const unmetDependencies = dependencies.filter(
-        (depId) => !registeredPluginIds.has(depId) && !failedPluginIds.has(depId) // Don't wait for failed deps
+        (depId) =>
+          !registeredPluginIds.has(depId) && !failedPluginIds.has(depId), // Don't wait for failed deps
       );
 
       if (unmetDependencies.length === 0) {
@@ -370,7 +393,9 @@ export async function loadAndRegisterPlugins(
           registerPlugin(plugin); // Use the existing registration logic
           // Call initialize if it exists (passing optional args)
           if (typeof plugin.initialize === "function") {
-            console.log(`[PluginManager] Initializing plugin '${plugin.id}'...`);
+            console.log(
+              `[PluginManager] Initializing plugin '${plugin.id}'...`,
+            );
             try {
               plugin.initialize(passedArguments);
             } catch (initError) {
@@ -383,7 +408,9 @@ export async function loadAndRegisterPlugins(
           }
           registeredPluginIds.add(plugin.id);
           registeredInPass++;
-          console.log(`[PluginManager] Plugin '${plugin.id}' registered successfully.`);
+          console.log(
+            `[PluginManager] Plugin '${plugin.id}' registered successfully.`,
+          );
         } catch (registerError) {
           console.error(
             `[PluginManager] Error during registerPlugin() for plugin '${plugin.id}':`,
@@ -403,11 +430,16 @@ export async function loadAndRegisterPlugins(
     if (registeredInPass === 0 && pluginsToRegister.length > 0) {
       // No progress made in this pass, indicates circular or missing dependencies
       console.error(
-        `[PluginManager] Could not register some plugins due to missing or circular dependencies. Remaining:`, pluginsToRegister.map(p => p.id)
+        `[PluginManager] Could not register some plugins due to missing or circular dependencies. Remaining:`,
+        pluginsToRegister.map((p) => p.id),
       );
-      pluginsToRegister.forEach(p => {
-        const unmet = (p.dependencies || []).filter(depId => !registeredPluginIds.has(depId));
-        console.error(` - Plugin '${p.id}' waiting for: ${unmet.join(", ") || '[unknown issue]'}`);
+      pluginsToRegister.forEach((p) => {
+        const unmet = (p.dependencies || []).filter(
+          (depId) => !registeredPluginIds.has(depId),
+        );
+        console.error(
+          ` - Plugin '${p.id}' waiting for: ${unmet.join(", ") || "[unknown issue]"}`,
+        );
         failedPluginIds.add(p.id); // Mark remaining as failed
       });
       break; // Exit the loop
@@ -415,13 +447,20 @@ export async function loadAndRegisterPlugins(
   }
 
   if (pluginsToRegister.length === 0) {
-    console.log(`[PluginManager] All ${registeredPluginIds.size} requested and loadable plugins registered successfully.`);
+    console.log(
+      `[PluginManager] All ${registeredPluginIds.size} requested and loadable plugins registered successfully.`,
+    );
   } else {
-      console.warn(`[PluginManager] Finished registration process with ${pluginsToRegister.length} plugins unable to register.`);
+    console.warn(
+      `[PluginManager] Finished registration process with ${pluginsToRegister.length} plugins unable to register.`,
+    );
   }
 
   if (failedPluginIds.size > 0) {
-      console.error(`[PluginManager] The following plugins failed to load or register:`, Array.from(failedPluginIds));
+    console.error(
+      `[PluginManager] The following plugins failed to load or register:`,
+      Array.from(failedPluginIds),
+    );
   }
 }
 

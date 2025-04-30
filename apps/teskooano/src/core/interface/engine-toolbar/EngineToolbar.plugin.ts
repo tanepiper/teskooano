@@ -18,4 +18,4 @@ export const plugin: TeskooanoPlugin = {
     },
   ],
   // Optional initialize/dispose if the manager needs setup/teardown
-}; 
+};

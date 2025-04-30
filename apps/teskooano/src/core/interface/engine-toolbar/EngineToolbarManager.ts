@@ -29,11 +29,15 @@ export class EngineToolbarManager {
     dockviewController: any, // Pass dependencies needed by EngineToolbar
     parentEngine: CompositeEnginePanel, // Pass dependencies needed by EngineToolbar
   ): EngineToolbar | null {
-    console.log(`[EngineToolbarManager] Request to create toolbar for ${apiId}`);
+    console.log(
+      `[EngineToolbarManager] Request to create toolbar for ${apiId}`,
+    );
 
     // 1. Check if toolbar already exists for apiId
     if (this.activeToolbars.has(apiId)) {
-      console.warn(`[EngineToolbarManager] Toolbar already exists for ${apiId}. Returning existing instance.`);
+      console.warn(
+        `[EngineToolbarManager] Toolbar already exists for ${apiId}. Returning existing instance.`,
+      );
       return this.activeToolbars.get(apiId) || null;
     }
 
@@ -41,7 +45,9 @@ export class EngineToolbarManager {
       // Create and store the BehaviorSubject FIRST
       const expansionSubject = new BehaviorSubject<boolean>(true); // Default to expanded
       this.toolbarExpansionStateSubjects.set(apiId, expansionSubject);
-      console.log(`[EngineToolbarManager] Expansion state subject created for ${apiId}`);
+      console.log(
+        `[EngineToolbarManager] Expansion state subject created for ${apiId}`,
+      );
 
       // Now instantiate the EngineToolbar
       const newToolbar = new EngineToolbar(
@@ -55,19 +61,26 @@ export class EngineToolbarManager {
 
       // 4. Append the toolbar element to parentElement
       parentElement.appendChild(newToolbar.element);
-      console.log(`[EngineToolbarManager] Toolbar created and appended for ${apiId}`);
+      console.log(
+        `[EngineToolbarManager] Toolbar created and appended for ${apiId}`,
+      );
 
       // 5. Return the instance
       return newToolbar;
     } catch (error) {
-      console.error(`[EngineToolbarManager] Failed to create toolbar for ${apiId}:`, error);
+      console.error(
+        `[EngineToolbarManager] Failed to create toolbar for ${apiId}:`,
+        error,
+      );
       // 5. Handle errors
       return null;
     }
   }
 
   public disposeToolbarForPanel(apiId: string): void {
-    console.log(`[EngineToolbarManager] Request to dispose toolbar for ${apiId}`);
+    console.log(
+      `[EngineToolbarManager] Request to dispose toolbar for ${apiId}`,
+    );
     // 1. Find the toolbar instance for apiId
     const toolbarInstance = this.activeToolbars.get(apiId);
     const expansionSubject = this.toolbarExpansionStateSubjects.get(apiId);
@@ -87,10 +100,15 @@ export class EngineToolbarManager {
         this.activeToolbars.delete(apiId);
         console.log(`[EngineToolbarManager] Toolbar disposed for ${apiId}`);
       } catch (error) {
-        console.error(`[EngineToolbarManager] Error disposing toolbar for ${apiId}:`, error);
+        console.error(
+          `[EngineToolbarManager] Error disposing toolbar for ${apiId}:`,
+          error,
+        );
       }
     } else {
-      console.warn(`[EngineToolbarManager] Toolbar not found for disposal: ${apiId}`);
+      console.warn(
+        `[EngineToolbarManager] Toolbar not found for disposal: ${apiId}`,
+      );
     }
     // 4. TODO: Remove related state from EngineToolbar.store.ts (or internal state)
   }
@@ -142,4 +160,4 @@ export class EngineToolbarManager {
   // TODO: Add methods corresponding to EngineToolbar.store.ts actions if needed externally,
   // e.g., toggleToolbar(apiId), registerButton(apiId, config), etc.
   // OR keep that logic internal if only managed via ToolbarRegistration.
-} 
+}

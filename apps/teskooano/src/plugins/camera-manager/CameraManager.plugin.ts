@@ -24,4 +24,4 @@ export const plugin: TeskooanoPlugin = {
   functions: [], // Not a UI function
   toolbarRegistrations: [], // No toolbar items
   toolbarWidgets: [], // No toolbar widgets
-}; 
+};

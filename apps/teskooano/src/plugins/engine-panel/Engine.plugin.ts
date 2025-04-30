@@ -18,7 +18,6 @@ import {
   simulationControlsWidget,
   systemControlsWidget,
   addViewButtonRegistration,
-  externalLinksWidget,
 } from "./main-toolbar/toolbar-definitions";
 
 // --- Panel Definitions --- //
@@ -57,9 +56,5 @@ export const plugin: TeskooanoPlugin = {
   // Register toolbar items imported from another file
   toolbarRegistrations: [addViewButtonRegistration],
   // Register toolbar widgets imported from another file
-  toolbarWidgets: [
-    simulationControlsWidget,
-    systemControlsWidget,
-    externalLinksWidget,
-  ],
+  toolbarWidgets: [simulationControlsWidget, systemControlsWidget],
 };

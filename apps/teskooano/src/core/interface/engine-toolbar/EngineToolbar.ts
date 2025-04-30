@@ -454,7 +454,9 @@ export class EngineToolbar {
   public updateExpansionUI(isExpanded: boolean): void {
     // Store the state locally (optional, manager is source of truth but good for immediate UI)
     this._isExpanded = isExpanded;
-    console.log(`[EngineToolbar ${this._apiId}] Updating UI. Expanded: ${isExpanded}`);
+    console.log(
+      `[EngineToolbar ${this._apiId}] Updating UI. Expanded: ${isExpanded}`,
+    );
 
     if (!this._toggleButton || !this._collapsibleContainer) return;
 
@@ -505,16 +507,24 @@ export class EngineToolbar {
     if (manager) {
       const state$ = manager.getExpansionState$(this._apiId);
       if (state$) {
-        this._expansionSubscription = state$.subscribe(isExpanded => {
-          console.log(`[EngineToolbar ${this._apiId}] Received expansion state update: ${isExpanded}`);
+        this._expansionSubscription = state$.subscribe((isExpanded) => {
+          console.log(
+            `[EngineToolbar ${this._apiId}] Received expansion state update: ${isExpanded}`,
+          );
           this.updateExpansionUI(isExpanded);
         });
-        console.log(`[EngineToolbar ${this._apiId}] Subscribed to expansion state.`);
+        console.log(
+          `[EngineToolbar ${this._apiId}] Subscribed to expansion state.`,
+        );
       } else {
-        console.error(`[EngineToolbar ${this._apiId}] Could not get expansion state observable from manager.`);
+        console.error(
+          `[EngineToolbar ${this._apiId}] Could not get expansion state observable from manager.`,
+        );
       }
     } else {
-      console.error(`[EngineToolbar ${this._apiId}] Could not get EngineToolbarManager instance to subscribe to state.`);
+      console.error(
+        `[EngineToolbar ${this._apiId}] Could not get EngineToolbarManager instance to subscribe to state.`,
+      );
     }
   }
 }

@@ -16,9 +16,8 @@ import {
   loadAndRegisterPlugins,
   PanelConfig,
   setAppDependencies,
-  TeskooanoPlugin
+  TeskooanoPlugin,
 } from "@teskooano/ui-plugin";
-
 
 import { pluginConfig } from "./config/pluginRegistry";
 
@@ -74,9 +73,7 @@ async function initializeApp() {
   // Get the singleton INSTANCE of ModalManager
   const modalManager = getManagerInstance<any>("modal-manager"); // Use actual type if known
   if (!modalManager) {
-    console.error(
-      "[App] Failed to get ModalManager instance after loading.",
-    );
+    console.error("[App] Failed to get ModalManager instance after loading.");
     return;
   }
 
