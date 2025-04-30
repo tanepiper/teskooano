@@ -9,7 +9,6 @@ import {
 } from "dockview-core";
 
 import { Observable, Subject } from "rxjs";
-import { PanelToolbarButtonConfig } from "../../../plugins/engine/engine-toolbar/EngineToolbar.store";
 
 // Import types and fallback panel
 import { FallbackPanel } from "./FallbackPanel";
@@ -22,6 +21,7 @@ import {
   OverlayOptions,
   RegisteredComponentInfo,
 } from "./types";
+import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 
 /**
  * Controller class for managing a Dockview instance.
@@ -52,13 +52,13 @@ export class DockviewController {
       className: "dockview-theme-abyss",
       createComponent: (options) => {
         console.log(
-          `DockviewController: Creating component for name: '${options.name}'`,
+          `DockviewController: Creating component for name: '${options.name}'`
         );
         // Check the registry first
         const componentInfo = this._registeredComponents.get(options.name);
         if (componentInfo) {
           console.log(
-            `DockviewController: Found registered component info for: ${options.name}`,
+            `DockviewController: Found registered component info for: ${options.name}`
           );
           try {
             // Instantiate using the stored constructor
@@ -66,14 +66,14 @@ export class DockviewController {
           } catch (err) {
             console.error(
               `DockviewController: Error instantiating registered component '${options.name}':`,
-              err,
+              err
             );
             const errorPanel = new FallbackPanel();
             // Check if err is an Error object before accessing message
             const errorMessage =
               err instanceof Error ? err.message : String(err);
             errorPanel.updateContent(
-              `Error creating component: ${errorMessage}`,
+              `Error creating component: ${errorMessage}`
             );
             return errorPanel;
           }
@@ -81,7 +81,7 @@ export class DockviewController {
 
         // Fallback for default or unknown (or if we chose not to pre-register above)
         console.log(
-          `DockviewController: Component '${options.name}' not in registry, using fallback.`,
+          `DockviewController: Component '${options.name}' not in registry, using fallback.`
         );
         switch (options.name) {
           /* Cases for components not pre-registered could go here */
@@ -93,11 +93,11 @@ export class DockviewController {
             return new FallbackPanel(); // Use FallbackPanel
           default:
             console.warn(
-              `Unknown component requested or not registered: ${options.name}`,
+              `Unknown component requested or not registered: ${options.name}`
             );
             const errorPanel = new FallbackPanel(); // Use FallbackPanel
             errorPanel.updateContent(
-              `Error: Unknown/unregistered component '${options.name}'`,
+              `Error: Unknown/unregistered component '${options.name}'`
             );
             return errorPanel;
         }
@@ -124,28 +124,28 @@ export class DockviewController {
   public registerComponent(
     name: string,
     // Use the constructor type that might have static methods
-    componentConstructor: ComponentConstructorWithStaticConfig,
+    componentConstructor: ComponentConstructorWithStaticConfig
   ): void {
     if (this._registeredComponents.has(name)) {
       console.warn(
-        `DockviewController: Component '${name}' is already registered. Overwriting.`,
+        `DockviewController: Component '${name}' is already registered. Overwriting.`
       );
     }
 
     // Check if the component has the static config method
-    let toolbarConfig: PanelToolbarButtonConfig | undefined = undefined;
+    let toolbarConfig: PanelToolbarItemConfig | undefined = undefined;
     if (
       typeof componentConstructor.registerToolbarButtonConfig === "function"
     ) {
       try {
         toolbarConfig = componentConstructor.registerToolbarButtonConfig();
         console.log(
-          `DockviewController: Found toolbar config for component '${name}'`,
+          `DockviewController: Found toolbar config for component '${name}'`
         );
       } catch (err) {
         console.error(
           `DockviewController: Error calling registerToolbarButtonConfig for '${name}':`,
-          err,
+          err
         );
       }
     }
@@ -156,7 +156,7 @@ export class DockviewController {
       toolbarConfig,
     });
     console.log(
-      `DockviewController: Registered component '${name}' ${toolbarConfig ? "with" : "without"} toolbar config.`,
+      `DockviewController: Registered component '${name}' ${toolbarConfig ? "with" : "without"} toolbar config.`
     );
   }
 
@@ -169,7 +169,7 @@ export class DockviewController {
    * @returns The newly added panel API (IDockviewPanel).
    */
   public addPanel(
-    options: Parameters<DockviewApi["addPanel"]>[0],
+    options: Parameters<DockviewApi["addPanel"]>[0]
   ): IDockviewPanel {
     // Ensure the component type is registered if it's a string name
     if (
@@ -178,7 +178,7 @@ export class DockviewController {
       options.component !== "default" // Don't warn for the default fallback
     ) {
       console.warn(
-        `DockviewController: Component '${options.component}' not pre-registered. Panel may fail to render.`,
+        `DockviewController: Component '${options.component}' not pre-registered. Panel may fail to render.`
       );
       // Optionally, we could throw an error or provide a default component here.
     }
@@ -196,7 +196,7 @@ export class DockviewController {
    */
   public createOrGetGroup(
     groupName: string,
-    options?: AddGroupOptions,
+    options?: AddGroupOptions
   ): DockviewGroup | null {
     return this._groupManager.createOrGetGroup(groupName, options);
   }
@@ -218,11 +218,11 @@ export class DockviewController {
    */
   public addPanelToGroup(
     group: DockviewGroup,
-    panelOptions: AddPanelOptions,
+    panelOptions: AddPanelOptions
   ): IDockviewPanel | null {
     // Log the group ID we are attempting to add to
     console.log(
-      `DockviewController: Attempting to add panel '${panelOptions.id}' to group ID: ${group.id}`,
+      `DockviewController: Attempting to add panel '${panelOptions.id}' to group ID: ${group.id}`
     );
     try {
       // Create panel using the main API but target the specific group
@@ -246,7 +246,7 @@ export class DockviewController {
     } catch (error) {
       console.error(
         `DockviewController: Failed to add panel '${panelOptions.id}' to group ID '${group.id}':`,
-        error,
+        error
       );
       return null;
     }
@@ -259,14 +259,14 @@ export class DockviewController {
   public addPanelToNamedGroup(
     groupName: string,
     panelOptions: AddPanelOptions,
-    groupOptions?: AddGroupOptions,
+    groupOptions?: AddGroupOptions
   ): IDockviewPanel | null {
     // Use GroupManager to get or create the group
     const group = this._groupManager.createOrGetGroup(groupName, groupOptions);
 
     if (!group) {
       console.error(
-        `DockviewController: Cannot add panel '${panelOptions.id}' because group '${groupName}' could not be created or retrieved.`,
+        `DockviewController: Cannot add panel '${panelOptions.id}' because group '${groupName}' could not be created or retrieved.`
       );
       return null;
     }
@@ -293,7 +293,7 @@ export class DockviewController {
     } catch (error) {
       console.error(
         `DockviewController: Failed to exit maximized group:`,
-        error,
+        error
       );
     }
   }
@@ -304,8 +304,8 @@ export class DockviewController {
    * @returns The static PanelToolbarButtonConfig or undefined if not found.
    */
   public getToolbarButtonConfig(
-    componentName: string,
-  ): PanelToolbarButtonConfig | undefined {
+    componentName: string
+  ): PanelToolbarItemConfig | undefined {
     const componentInfo = this._registeredComponents.get(componentName);
     return componentInfo?.toolbarConfig;
   }
@@ -329,7 +329,7 @@ export class DockviewController {
   public showOverlay(
     id: string,
     element: HTMLElement,
-    options: OverlayOptions,
+    options: OverlayOptions
   ): Promise<ModalResult> {
     return this._overlayManager.showOverlay(id, element, options);
   }
@@ -358,7 +358,7 @@ export class DockviewController {
     // Clear internal caches/maps
     this._registeredComponents.clear();
     console.log(
-      "DockviewController: Internal caches cleared (excluding managers).",
+      "DockviewController: Internal caches cleared (excluding managers)."
     );
 
     // Dispose managers
@@ -374,12 +374,12 @@ export class DockviewController {
    */
   public addFloatingPanel(
     panelOptions: AddPanelOptions,
-    position?: { top: number; left: number; width: number; height: number },
+    position?: { top: number; left: number; width: number; height: number }
   ): DockviewPanelApi | null {
     let temporaryPanel: IDockviewPanel | null = null;
     try {
       console.log(
-        `DockviewController: Attempting to add floating panel ${panelOptions.id}`,
+        `DockviewController: Attempting to add floating panel ${panelOptions.id}`
       );
 
       const initialPanelOptions: AddPanelOptions = {
@@ -390,12 +390,12 @@ export class DockviewController {
 
       if (!temporaryPanel || !temporaryPanel.api) {
         console.error(
-          `DockviewController: Failed to create initial panel instance for ${panelOptions.id}.`,
+          `DockviewController: Failed to create initial panel instance for ${panelOptions.id}.`
         );
         return null;
       }
       console.log(
-        `DockviewController: Initial panel ${panelOptions.id} created. Adding to floating group...`,
+        `DockviewController: Initial panel ${panelOptions.id} created. Adding to floating group...`
       );
 
       this._api.addFloatingGroup(temporaryPanel, {
@@ -409,7 +409,7 @@ export class DockviewController {
         } catch (e) {
           console.error(
             `DockviewController: Error calling setSize after addFloatingGroup for ${panelOptions.id}:`,
-            e,
+            e
           );
         }
       }
@@ -420,7 +420,7 @@ export class DockviewController {
     } catch (error) {
       console.error(
         `DockviewController: Error adding floating panel ${panelOptions.id}:`,
-        error,
+        error
       );
       // Clean up the temporary panel if it was created but floating failed
       if (temporaryPanel) {
@@ -429,7 +429,7 @@ export class DockviewController {
         } catch (cleanupError) {
           console.error(
             `DockviewController: Error cleaning up temporary panel ${panelOptions.id}:`,
-            cleanupError,
+            cleanupError
           );
         }
       }
@@ -457,8 +457,72 @@ export class DockviewController {
     } else if (group) {
     } else {
       console.warn(
-        `DockviewController: Removed panel '${panelId}' did not have an associated group.`,
+        `DockviewController: Removed panel '${panelId}' did not have an associated group.`
       );
+    }
+  }
+
+  /**
+   * Handles the action triggered by a toolbar button configured with type: 'panel'.
+   * Toggles or creates a floating panel based on the provided configuration.
+   * @param config - The configuration object for the panel button.
+   */
+  public handlePanelToggleAction(config: PanelToolbarItemConfig): void {
+    // Derive a consistent ID for the floating panel instance
+    const panelId = `${config.componentName}_float`; 
+    const behaviour = config.behaviour ?? "toggle"; // Default to toggle
+
+    console.log(
+      `[DockviewController] Handling panel toggle action for: ${config.id}, panelId: ${panelId}, component: ${config.componentName}, behaviour: ${behaviour}`
+    );
+
+    const existingPanel = this.api.getPanel(panelId);
+
+    // --- Toggle Behaviour --- //
+    if (behaviour === "toggle") {
+      if (existingPanel?.api.isVisible) {
+        console.log(`[DockviewController] Closing panel ${panelId} (toggle off).`);
+        try {
+          this.api.removePanel(existingPanel);
+        } catch (error) {
+          console.error(`[DockviewController] Error removing panel ${panelId}:`, error);
+        }
+      } else {
+        // Panel exists but hidden, or doesn't exist yet
+        if (existingPanel) {
+          console.log(`[DockviewController] Activating existing panel ${panelId}.`);
+          existingPanel.api.setActive();
+          // Optionally resize/reposition if needed based on config?
+        } else {
+          console.log(`[DockviewController] Creating new panel ${panelId}.`);
+          // Simplified position calculation for now
+          const position = { top: 100, left: 100, width: 500, height: 400 }; // TODO: Improve positioning
+          this.addFloatingPanel(
+            {
+              id: panelId,
+              component: config.componentName,
+              title: config.panelTitle ?? config.title,
+              params: { title: config.panelTitle ?? config.title }, // Pass title, add other params if needed
+            },
+            position
+          );
+        }
+      }
+    } 
+    // --- Create Behaviour --- //
+    else if (behaviour === "create") {
+       console.log(`[DockviewController] Creating new panel instance for ${config.componentName} (behaviour: create).`);
+       const newPanelId = `${config.componentName}_float_${Date.now()}`; // Ensure unique ID
+       const position = { top: 100, left: 100, width: 500, height: 400 }; // TODO: Improve positioning
+       this.addFloatingPanel(
+         {
+           id: newPanelId,
+           component: config.componentName,
+           title: config.panelTitle ?? config.title,
+           params: { title: config.panelTitle ?? config.title },
+         },
+         position
+       );
     }
   }
 }

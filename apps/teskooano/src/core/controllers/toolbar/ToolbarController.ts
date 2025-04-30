@@ -5,6 +5,7 @@ import {
   getToolbarWidgetsForTarget, // Get all items for a target
   type ToolbarItemConfig, // Assuming this function is added to the plugin package
   type ToolbarWidgetConfig,
+  PanelToolbarItemConfig,
 } from "@teskooano/ui-plugin";
 import type { DockviewController } from "../dockview/DockviewController.js";
 import "./ToolbarController.css";
@@ -40,11 +41,6 @@ export class ToolbarController {
    */
   private _isMobileDevice: boolean = false;
 
-  /**
-   * Reference to the GitHub button element.
-   * @private
-   */
-  private _githubButton: HTMLElement | null = null;
   /**
    * Reference to the Settings button element.
    * @private
@@ -186,7 +182,7 @@ export class ToolbarController {
   }
 
   /**
-   * Creates and configures the static buttons (Logo, GitHub, Tour, Settings)
+   * Creates and configures the static buttons (Logo, Tour, Settings)
    * and appends them to the specified container.
    * @private
    * @param {HTMLElement} container - The container element (e.g., leftButtonGroup) to append the buttons to.
@@ -205,54 +201,6 @@ export class ToolbarController {
       window.open(this.WEBSITE_URL, "_blank");
     });
     container.appendChild(logoButton);
-
-    this._githubButton = document.createElement("teskooano-button");
-    this._githubButton.id = "toolbar-github";
-    this._githubButton.title = "View on GitHub";
-    this._githubButton.setAttribute("tooltip-text", "View Teskooano on GitHub");
-    this._githubButton.setAttribute("tooltip-title", "GitHub");
-    this._githubButton.setAttribute("tooltip-icon-svg", TourIcon);
-    this._githubButton.setAttribute("variant", "icon");
-    this._githubButton.setAttribute("size", "sm");
-    this._githubButton.innerHTML = `<span slot="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.341-3.369-1.341-.455-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.004.07 1.532 1.03 1.532 1.03.891 1.529 2.341 1.088 2.91.832.092-.647.348-1.088.635-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682-.103-.253-.446-1.27.098-2.64 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0 1 12 6.82c.85.004 1.705.115 2.504.336 1.91-1.294 2.748-1.025 2.748-1.025.546 1.37.201 2.387.099 2.64.64.698 1.03 1.591 1.03 2.682 0 3.841-2.337 4.688-4.566 4.935.359.309.678.92.678 1.852 0 1.338-.012 2.419-.012 2.748 0 .267.18.577.688.48C19.137 20.166 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg></span>`;
-    this._githubButton.addEventListener(
-      "click",
-      this._handlers.handleGitHubClick,
-    );
-    container.appendChild(this._githubButton);
-
-    this._tourButton = document.createElement("teskooano-button");
-    this._tourButton.id = "toolbar-tour";
-    this._tourButton.title = "Start Tour";
-    this._tourButton.setAttribute("variant", "icon");
-    this._tourButton.setAttribute("size", "sm");
-    this._tourButton.setAttribute(
-      "tooltip-text",
-      "This button starts a tour of the application.",
-    );
-    this._tourButton.setAttribute("tooltip-title", "Tour");
-    this._tourButton.setAttribute("tooltip-icon-svg", TourIcon);
-    this._tourButton.innerHTML = `<span slot="icon">${TourIcon}</span>`;
-    this._tourButton.addEventListener("click", this._handlers.handleTourClick);
-    container.appendChild(this._tourButton);
-
-    this._settingsButton = document.createElement("teskooano-button");
-    this._settingsButton.id = "toolbar-settings";
-    this._settingsButton.title = "Settings";
-    this._settingsButton.setAttribute("variant", "icon");
-    this._settingsButton.setAttribute("size", "sm");
-    this._settingsButton.setAttribute(
-      "tooltip-text",
-      "This panel contains global settings for the application.",
-    );
-    this._settingsButton.setAttribute("tooltip-title", "Settings");
-    this._settingsButton.setAttribute("tooltip-icon-svg", SettingsIcon);
-    this._settingsButton.innerHTML = `<span slot="icon">${SettingsIcon}</span>`;
-    this._settingsButton.addEventListener(
-      "click",
-      this._handlers.handleSettingsClick,
-    );
-    container.appendChild(this._settingsButton);
   }
 
   /**
@@ -380,10 +328,42 @@ export class ToolbarController {
 
             buttonContainer.appendChild(buttonElement);
           } else if (item.type === "panel") {
-            console.warn(
-              // Use warn as it's planned but not implemented
-              `[ToolbarController] Skipping panel item '${item.id}' - panel item handling not implemented.`,
-            );
+            const panelConfig = item as PanelToolbarItemConfig;
+            // --- DEBUG LOG --- //
+            console.log(`[ToolbarController] Processing panel item config:`, panelConfig);
+            // --- END DEBUG LOG --- //
+
+            console.log(`[ToolbarController] Creating PANEL button for '${panelConfig.id}', component: '${panelConfig.componentName}'`);
+
+            if (!panelConfig.componentName) {
+               console.error(`[ToolbarController] Skipping panel item '${panelConfig.id}' - missing componentName.`);
+               return; // Continue to next item
+            }
+            
+            const buttonElement = document.createElement("teskooano-button");
+            buttonElement.id = panelConfig.id;
+            buttonElement.setAttribute("variant", "icon");
+            buttonElement.setAttribute("size", "sm");
+            if (panelConfig.iconSvg) {
+              buttonElement.innerHTML = `<span slot="icon">${panelConfig.iconSvg}</span>`;
+            }
+            
+            // Handle tooltips (similar to function buttons)
+            const configAny = panelConfig as any;
+            if (configAny.tooltipText) buttonElement.setAttribute("tooltip-text", configAny.tooltipText);
+            if (configAny.tooltipTitle) buttonElement.setAttribute("tooltip-title", configAny.tooltipTitle);
+            if (configAny.tooltipIconSvg) buttonElement.setAttribute("tooltip-icon-svg", configAny.tooltipIconSvg);
+            if (!configAny.tooltipText && panelConfig.title) buttonElement.setAttribute("title", panelConfig.title);
+
+            buttonElement.addEventListener("click", () => {
+               console.log(`[ToolbarController] Panel button '${panelConfig.id}' clicked. Triggering panel action...`);
+               // Use DockviewController to handle panel toggle/creation
+               // TODO: Implement or verify handlePanelToggleAction method on DockviewController
+               this._dockviewController.handlePanelToggleAction(panelConfig);
+            });
+            
+            buttonContainer.appendChild(buttonElement);
+            // --- END PANEL BUTTON HANDLING --- //
           }
         } catch (elementError) {
           console.error(

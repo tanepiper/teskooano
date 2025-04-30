@@ -192,14 +192,14 @@ export async function generateAndLoadSystem(
       actions.resetTime();
       dispatchSimulationTimeReset();
 
-      dispatchTextureGenerationComplete(true);
+      dispatchTextureGenerationComplete();
       success = true;
       console.log(
         "[SystemGenerator] System generation and state update successful.",
       );
     } else {
       console.warn("[SystemGenerator] Generator returned no objects.");
-      dispatchTextureGenerationComplete(true);
+      dispatchTextureGenerationComplete();
       dockviewApi.panels.find((p) => p.id === progressPanelId)?.api.close();
       success = true;
     }
@@ -209,7 +209,7 @@ export async function generateAndLoadSystem(
       error,
     );
     dockviewApi.panels.find((p) => p.id === progressPanelId)?.api.close();
-    dispatchTextureGenerationComplete(false, 1);
+    dispatchTextureGenerationComplete();
     success = false;
   } finally {
     console.log(`[SystemGenerator] Process finished. Success: ${success}`);

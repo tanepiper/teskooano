@@ -211,6 +211,16 @@ export interface ToolbarRegistration {
 }
 
 /**
+ * Defines the configuration for a non-UI manager/service class registered by a plugin.
+ */
+export interface ManagerConfig {
+  /** A unique identifier for this manager/service. */
+  id: string;
+  /** The class constructor itself. */
+  managerClass: { new (...args: any[]): any };
+}
+
+/**
  * Defines the structure of a Teskooano UI plugin.
  */
 export interface TeskooanoPlugin {
@@ -220,6 +230,8 @@ export interface TeskooanoPlugin {
   name: string;
   /** Optional description of the plugin's purpose. */
   description?: string;
+  /** Optional array of plugin IDs that this plugin depends on. */
+  dependencies?: string[];
 
   /** Array of Dockview panels provided by this plugin. */
   panels?: PanelConfig[];
@@ -227,6 +239,12 @@ export interface TeskooanoPlugin {
   functions?: FunctionConfig[];
   /** Array of toolbar registrations, grouping items by target toolbar. */
   toolbarRegistrations?: ToolbarRegistration[];
+
+  /** Array of non-UI manager/service classes provided by this plugin. */
+  managerClasses?: ManagerConfig[];
+
+  /** Array of custom element components provided by this plugin. */
+  components?: ComponentConfig[];
 
   /**
    * Optional initialization function called after registration.

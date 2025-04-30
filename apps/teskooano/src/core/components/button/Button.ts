@@ -1,4 +1,4 @@
-import type { TeskooanoTooltip } from "../Tooltip"; // Import the tooltip type
+import type { TeskooanoTooltip } from "../tooltip/Tooltip"; // Import the tooltip type
 
 import { template } from "./Button.template";
 

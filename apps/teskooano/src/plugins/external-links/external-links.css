@@ -1,0 +1,20 @@
+.external-links-component-container {
+  display: flex;
+  /* flex-direction: row; /* Default for flex */
+  gap: 8px; /* Adjust spacing for toolbar */
+  /* padding: 0; /* Remove padding, let toolbar manage it */
+  /* height: auto; /* Remove fixed height */
+  /* box-sizing: border-box; */
+  align-items: center; /* Vertically align items in the center */
+  /* justify-content: flex-end; /* Align items to the right - might be handled by toolbar */
+}
+
+.external-links-component-container teskooano-button {
+  /* width: auto; /* Let buttons size naturally */
+  /* Optionally add min-width or specific styles if needed */
+}
+
+/* Remove panel-specific icon styles */
+/* .external-links-panel-container teskooano-button span[slot="icon"] { */
+  /* Example: margin-right: 8px; */
+/* } */ 

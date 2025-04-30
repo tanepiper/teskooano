@@ -1,5 +1,5 @@
 import { PopoverAPI } from "@teskooano/web-apis";
-import type { SystemControls } from "../../../plugins/engine/main-toolbar/system-controls/SystemControls"; // Import type only if needed, otherwise just use HTMLElement
+import type { SystemControls } from "../../../plugins/engine-panel/main-toolbar/system-controls/SystemControls"; // Import type only if needed, otherwise just use HTMLElement
 
 /**
  * Helper function to create a popover element.
@@ -243,6 +243,9 @@ export const renderToolbarTemplate = (
   systemControlsWrapper.appendChild(systemControls);
   toolbarElement.appendChild(systemControlsWrapper);
   // --- END ADDED BACK ---
+
+  // Append External Links (adjust position as needed)
+  // toolbarElement.appendChild(externalLinks); // REMOVED
 
   // Return references including systemControls
   return {

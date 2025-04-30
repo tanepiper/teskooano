@@ -4,25 +4,22 @@ import "./vite-env.d";
 
 import { celestialObjectsStore } from "@teskooano/core-state";
 
-import { TeskooanoTourModal } from "./core/tours/TourModal";
 import { DockviewController } from "./core/controllers/dockview/DockviewController";
 import { ToolbarController } from "./core/controllers/toolbar/ToolbarController";
+import { TeskooanoTourModal } from "./core/interface/tour-controller/TourModal";
 import { layoutOrientationStore, Orientation } from "./core/stores/layoutStore";
 
 import {
   getFunctionConfig,
-  getLoadedModuleClass,
+  getManagerInstance,
   getPlugins,
-  loadAndRegisterComponents,
   loadAndRegisterPlugins,
   PanelConfig,
-  TeskooanoPlugin,
   setAppDependencies,
+  TeskooanoPlugin
 } from "@teskooano/ui-plugin";
 
-import { componentConfig as coreComponentConfig } from "./core";
 
-import { componentConfig } from "./config/componentRegistry";
 import { pluginConfig } from "./config/pluginRegistry";
 
 import { IContentRenderer, PanelInitParameters } from "dockview-core";
@@ -39,10 +36,8 @@ export const appContext: AppContext = {}; // Export this for other modules
 
 async function startApp() {
   console.log("🔭 Initializing Teskooano...");
-  const componentTags = Object.keys(coreComponentConfig);
-  try {
-    await loadAndRegisterComponents(componentTags);
 
+  try {
     initializeApp();
   } catch (error) {
     console.error(
@@ -59,33 +54,31 @@ async function initializeApp() {
   if (!appElement || !toolbarElement) {
     throw new Error("Required HTML elements (#app or #toolbar) not found.");
   }
-  const componentTags = Object.keys(componentConfig);
-  await loadAndRegisterComponents(componentTags);
 
   const pluginIds = Object.keys(pluginConfig);
   await loadAndRegisterPlugins(pluginIds);
 
   const dockviewController = new DockviewController(appElement);
 
+  // Set dependencies early so plugin functions can use them
+  setAppDependencies({
+    dockviewApi: dockviewController.api,
+    dockviewController: dockviewController,
+  });
+
   const toolbarController = new ToolbarController(
     toolbarElement,
     dockviewController,
   );
 
-  const ModalManagerClass = getLoadedModuleClass("teskooano-modal-manager");
-  if (!ModalManagerClass) {
+  // Get the singleton INSTANCE of ModalManager
+  const modalManager = getManagerInstance<any>("modal-manager"); // Use actual type if known
+  if (!modalManager) {
     console.error(
-      "[App] Failed to get TeskooanoModalManager class after loading.",
+      "[App] Failed to get ModalManager instance after loading.",
     );
-
     return;
   }
-  const modalManager = new ModalManagerClass(dockviewController);
-
-  setAppDependencies({
-    dockviewApi: dockviewController.api,
-    dockviewController: dockviewController,
-  });
 
   appContext.modalManager = modalManager;
 

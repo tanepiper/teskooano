@@ -1,5 +1,5 @@
-import { PanelToolbarButtonConfig } from "../../../plugins/engine/engine-toolbar/EngineToolbar.store";
 import { IContentRenderer, GroupPanelPartInitParameters } from "dockview-core";
+import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 
 /**
  * Type alias for a Dockview group object.
@@ -47,7 +47,7 @@ export interface ComponentConstructorWithStaticConfig {
   /** Optional static property defining the component's registration name. */
   componentName?: string;
   /** Optional static method to provide toolbar button configuration. */
-  registerToolbarButtonConfig?: () => PanelToolbarButtonConfig;
+  registerToolbarButtonConfig?: () => PanelToolbarItemConfig;
 }
 
 /**
@@ -57,7 +57,7 @@ export interface RegisteredComponentInfo {
   /** The constructor function for the component. */
   constructor: new () => IContentRenderer;
   /** Optional toolbar configuration associated with the component. */
-  toolbarConfig?: PanelToolbarButtonConfig;
+  toolbarConfig?: PanelToolbarItemConfig;
 }
 
 /**

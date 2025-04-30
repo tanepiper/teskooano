@@ -43,4 +43,5 @@ export {
   getToolbarItemsForTarget,
   getLoadedModuleClass,
   getToolbarWidgetsForTarget,
+  getManagerInstance,
 } from "./pluginManager.js";
