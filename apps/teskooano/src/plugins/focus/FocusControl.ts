@@ -2,7 +2,6 @@ import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
 import { celestialObjectsStore } from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
-import { PanelToolbarButtonConfig } from "../../engine/engine-toolbar/EngineToolbar.store.js"; // Import toolbar types
 import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel.js"; // Import parent panel type
 import {
   handleFocusRequest,
@@ -16,6 +15,7 @@ import {
 import { template } from "./FocusControl.template.js";
 
 import "./CelestialRow.js";
+import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 
 /**
  * A custom element panel for Dockview that displays a hierarchical list
@@ -54,9 +54,10 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    * to the EngineToolbar.
    * @returns {PanelToolbarButtonConfig} Configuration object for the toolbar button.
    */
-  public static registerToolbarButtonConfig(): PanelToolbarButtonConfig {
+  public static registerToolbarButtonConfig(): PanelToolbarItemConfig {
     return {
       id: "focus_control", // Base ID
+      target: "engine-toolbar",
       iconSvg: TargetIcon,
       title: "Focus Control",
       type: "panel",

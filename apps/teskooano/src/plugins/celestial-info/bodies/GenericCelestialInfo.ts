@@ -1,7 +1,7 @@
 import { CelestialObject } from "@teskooano/data-types";
-import { FormatUtils } from "./utils/FormatUtils";
-import { baseStyles } from "./utils/CelestialStyles";
-import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
+import { FormatUtils } from "../utils/FormatUtils";
+import { baseStyles } from "../utils/CelestialStyles";
+import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
 
 // --- GENERIC CELESTIAL INFO COMPONENT ---
 export class GenericCelestialInfoComponent

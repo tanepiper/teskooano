@@ -4,13 +4,13 @@ import {
   PlanetProperties,
   RingSystemProperties,
 } from "@teskooano/data-types";
-import { FormatUtils } from "./utils/FormatUtils";
-import { baseStyles } from "./utils/CelestialStyles";
-import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
+import { FormatUtils } from "../utils/FormatUtils";
+import { baseStyles } from "../utils/CelestialStyles";
+import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
 import { celestialObjectsStore } from "@teskooano/core-state";
 
-// --- PLANET INFO COMPONENT ---
-export class PlanetInfoComponent
+// --- MOON INFO COMPONENT ---
+export class MoonInfoComponent
   extends HTMLElement
   implements CelestialInfoComponent
 {
@@ -21,25 +21,22 @@ export class PlanetInfoComponent
     this.shadow = this.attachShadow({ mode: "open" });
     this.shadow.innerHTML = `
             <style>${baseStyles}</style>
-            <div id="container" class="placeholder">Loading planet data...</div>
+            <div id="container" class="placeholder">Loading moon data...</div>
         `;
   }
 
   updateData(celestial: CelestialObject): void {
-    if (
-      celestial.type !== CelestialType.PLANET &&
-      celestial.type !== CelestialType.DWARF_PLANET
-    ) {
-      console.warn("PlanetInfoComponent received non-planet data");
+    if (celestial.type !== CelestialType.MOON) {
+      console.warn("MoonInfoComponent received non-moon data");
       return;
     }
 
     const container = this.shadow.getElementById("container");
     if (!container) return;
 
-    const planetProps = celestial.properties as PlanetProperties;
-    const surface = planetProps?.surface;
-    const atmosphere = planetProps?.atmosphere;
+    const moonProps = celestial.properties as PlanetProperties;
+    const atmosphere = moonProps?.atmosphere;
+    const surface = moonProps?.surface;
 
     const allObjects = celestialObjectsStore.get();
     const ringSystem = Object.values(allObjects).find(
@@ -53,9 +50,9 @@ export class PlanetInfoComponent
     container.innerHTML = `
             <h3>${celestial.name}</h3>
             <dl class="info-grid">
-                <dt>Type:</dt><dd>${celestial.type === CelestialType.DWARF_PLANET ? "Dwarf Planet" : "Planet"}</dd>
+                <dt>Type:</dt><dd>Moon</dd>
                 <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
-                <dt>Planet Type:</dt><dd>${planetProps?.planetType ?? "N/A"}</dd>
+                <dt>Moon Type:</dt><dd>${moonProps?.planetType ?? "N/A"}</dd>
                 <dt>Mass:</dt><dd>${FormatUtils.formatExp(celestial.realMass_kg, 4)} kg</dd>
                 <dt>Radius:</dt><dd>${FormatUtils.formatDistanceKm(celestial.realRadius_m)}</dd>
                 <dt>Temp:</dt><dd>${FormatUtils.formatFix(celestial.temperature)} K</dd>
@@ -90,7 +87,7 @@ export class PlanetInfoComponent
                 ${
                   celestial.orbit
                     ? `
-                <dt>Orbit Radius:</dt><dd>${FormatUtils.formatDistanceAU(celestial.orbit.realSemiMajorAxis_m)}</dd>
+                <dt>Distance:</dt><dd>${FormatUtils.formatDistanceKm(celestial.orbit.realSemiMajorAxis_m)}</dd>
                 <dt>Eccentricity:</dt><dd>${FormatUtils.formatFix(celestial.orbit.eccentricity, 4)}</dd>
                 <dt>Inclination:</dt><dd>${FormatUtils.formatDegrees(celestial.orbit.inclination)}</dd>
                 <dt>Period:</dt><dd>${FormatUtils.formatPeriod(celestial.orbit.period_s)}</dd>
@@ -113,4 +110,4 @@ export class PlanetInfoComponent
 }
 
 // Define the custom element
-customElements.define("planet-info", PlanetInfoComponent);
+customElements.define("moon-info", MoonInfoComponent);

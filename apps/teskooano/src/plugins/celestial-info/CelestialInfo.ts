@@ -1,192 +1,60 @@
 import {
-  type CelestialObject, // Import CelestialType enum
+  type CelestialObject,
   CelestialStatus,
   CelestialType,
 } from "@teskooano/data-types";
-// Import necessary stores and registry from core-state
 import { celestialObjectsStore } from "@teskooano/core-state";
-// Import Dockview interface
-import {
-  DockviewPanelApi,
-  GroupPanelPartInitParameters,
-  IContentRenderer,
-} from "dockview-core";
-import { PanelToolbarButtonConfig } from "../../core/interface/engine-toolbar/EngineToolbar.store"; // Import toolbar types
-import { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel"; // Import parent type
+import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 
-// Import component types
 import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
+import { FormatUtils } from "./utils/formatters";
 
-// Import all celestial info components
-import { AsteroidFieldInfoComponent } from "./AsteroidFieldInfo";
-import { GasGiantInfoComponent } from "./GasGiantInfo";
-import { GenericCelestialInfoComponent } from "./GenericCelestialInfo";
-import { MoonInfoComponent } from "./MoonInfo";
-import { OortCloudInfoComponent } from "./OortCloudInfo";
-import { PlanetInfoComponent } from "./PlanetInfo";
-import { StarInfoComponent } from "./StarInfo";
+import { AsteroidFieldInfoComponent } from "./bodies/AsteroidFieldInfo";
+import { GasGiantInfoComponent } from "./bodies/GasGiantInfo";
+import { GenericCelestialInfoComponent } from "./bodies/GenericCelestialInfo";
+import { MoonInfoComponent } from "./bodies/MoonInfo";
+import { OortCloudInfoComponent } from "./bodies/OortCloudInfo";
+import { PlanetInfoComponent } from "./bodies/PlanetInfo";
+import { StarInfoComponent } from "./bodies/StarInfo";
 
-// Constants for formatters
-const AU_IN_METERS = 149597870700;
-const SECONDS_PER_DAY = 86400;
-const SECONDS_PER_YEAR = SECONDS_PER_DAY * 365.25;
-
-// Import Fluent UI Icons
 import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
+import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 
-// Shared formatter utility class
-export class FormatUtils {
-  static formatExp(val: number | undefined | null, digits = 3): string {
-    return val != null && Number.isFinite(val)
-      ? val.toExponential(digits)
-      : "N/A";
-  }
+import { template } from "./CelestialInfo.template";
 
-  static formatFix(val: number | undefined | null, digits = 1): string {
-    return val != null && Number.isFinite(val) ? val.toFixed(digits) : "N/A";
-  }
-
-  static formatDistanceKm(
-    meters: number | undefined | null,
-    digits = 0,
-  ): string {
-    return meters != null && Number.isFinite(meters)
-      ? (meters / 1000).toFixed(digits) + " km"
-      : "N/A";
-  }
-
-  static formatDistanceAU(
-    meters: number | undefined | null,
-    digits = 3,
-  ): string {
-    return meters != null && Number.isFinite(meters)
-      ? (meters / AU_IN_METERS).toFixed(digits) + " AU"
-      : "N/A";
-  }
-
-  static formatDegrees(radians: number | undefined | null, digits = 1): string {
-    return radians != null && Number.isFinite(radians)
-      ? ((radians * 180) / Math.PI).toFixed(digits) + "°"
-      : "N/A";
-  }
-
-  static formatPeriod(seconds: number | undefined | null): string {
-    if (seconds == null || !Number.isFinite(seconds)) return "N/A";
-    if (seconds > SECONDS_PER_YEAR * 1.5) {
-      // Use years for long periods
-      return (seconds / SECONDS_PER_YEAR).toFixed(2) + " yrs";
-    } else if (seconds > SECONDS_PER_DAY * 1.5) {
-      // Use days
-      return (seconds / SECONDS_PER_DAY).toFixed(1) + " days";
-    } else {
-      // Use seconds for short periods
-      return seconds.toFixed(0) + " s";
-    }
-  }
-
-  // Function to map star color hex codes to descriptive names
-  static getStarColorName(hexColor: string | undefined | null): string {
-    if (!hexColor) return "Unknown";
-
-    // Map of star colors to descriptive names based on spectral classes
-    const colorMap: Record<string, string> = {
-      // O-type stars (blue)
-      "#9bb0ff": "Blue",
-      "#a2b5ff": "Blue",
-      "#aabfff": "Blue",
-
-      // B-type stars (blue-white)
-      "#cad7ff": "Blue-White",
-      "#cadfff": "Blue-White",
-      "#f6f3ff": "Blue-White",
-
-      // A-type stars (white)
-      "#f8f7ff": "White",
-      "#ffffff": "White",
-
-      // F-type stars (yellow-white)
-      "#fff4ea": "Yellow-White",
-      "#fffcdf": "Yellow-White",
-
-      // G-type stars (yellow)
-      "#ffff9d": "Yellow",
-      "#fffadc": "Yellow",
-
-      // K-type stars (orange)
-      "#ffd2a1": "Orange",
-      "#ffcc6f": "Orange",
-
-      // M-type stars (red)
-      "#ffb56c": "Red-Orange",
-      "#ff9b6c": "Red",
-      "#ff8080": "Red",
-    };
-
-    // Try exact match first
-    const lowerHex = hexColor.toLowerCase();
-    if (lowerHex in colorMap) {
-      return colorMap[lowerHex];
-    }
-
-    // If no exact match, use a simple approximation based on color code
-    if (hexColor.startsWith("#ff")) {
-      if (hexColor.includes("8") || hexColor.includes("9")) {
-        return "Reddish";
-      } else {
-        return "Yellowish";
-      }
-    } else if (
-      hexColor.startsWith("#ca") ||
-      hexColor.startsWith("#9b") ||
-      hexColor.startsWith("#a")
-    ) {
-      return "Bluish";
-    } else if (hexColor.startsWith("#ff")) {
-      return "Yellowish";
-    }
-
-    return "Unknown";
-  }
-}
-
-// --- MAIN CELESTIAL INFO COMPONENT ---
+/**
+ * Custom Element `celestial-info`.
+ *
+ * Displays detailed information about the currently selected celestial object.
+ * It dynamically loads the appropriate sub-component based on the object type
+ * and listens for changes in the global celestial objects store and focus events.
+ *
+ * Implements Dockview `IContentRenderer` to be used as a panel content.
+ */
 export class CelestialInfo extends HTMLElement implements IContentRenderer {
   private shadow: ShadowRoot;
-  private _element: HTMLElement;
-  private _api: DockviewPanelApi | undefined;
-  private _parentInstance: CompositeEnginePanel | undefined;
-  private _contentDiv: HTMLElement | undefined;
-  private _parentStateUnsubscribe: (() => void) | undefined;
-
-  // REMOVED _engineViewId and linking properties
-  // private _engineViewId: string | null = null;
-
-  // Store references
-  // private linkedEnginePanel: EnginePanel | null = null;
-  // private unsubscribePanelState: (() => void) | null = null;
   private unsubscribeObjectsStore: (() => void) | null = null;
-  // private _linkCheckInterval: number | null = null;
-
   private currentSelectedId: string | null = null;
 
-  // References to sub-components
-  private starInfoComponent: StarInfoComponent;
-  private planetInfoComponent: PlanetInfoComponent;
-  private moonInfoComponent: MoonInfoComponent;
-  private gasGiantInfoComponent: GasGiantInfoComponent;
-  private asteroidFieldInfoComponent: AsteroidFieldInfoComponent;
-  private genericInfoComponent: GenericCelestialInfoComponent;
-  private oortCloudInfoComponent: OortCloudInfoComponent;
+  private components: Map<CelestialType | "generic", CelestialInfoComponent> =
+    new Map();
 
-  // Track which component is currently active
   private activeComponent: CelestialInfoComponent | null = null;
 
-  // --- Static Configuration ---
+  /**
+   * Unique identifier for the custom element.
+   */
   public static readonly componentName = "celestial-info";
 
-  public static registerToolbarButtonConfig(): PanelToolbarButtonConfig {
+  /**
+   * Generates the configuration required to register this panel as a toolbar button.
+   *
+   * @returns {PanelToolbarItemConfig} Configuration object for the UI plugin manager.
+   */
+  public static registerToolbarButtonConfig(): PanelToolbarItemConfig {
     return {
       id: "celestial_info", // Base ID
+      target: "engine-toolbar",
       iconSvg: InfoIcon,
       title: "Celestial Info",
       type: "panel",
@@ -195,102 +63,55 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
       behaviour: "toggle",
     };
   }
-  // --- End Static Configuration ---
 
   constructor() {
     super();
     this.shadow = this.attachShadow({ mode: "open" });
-    this._element = this; // Initialize _element to the instance itself
 
-    // Create sub-components
-    this.starInfoComponent = new StarInfoComponent();
-    this.planetInfoComponent = new PlanetInfoComponent();
-    this.moonInfoComponent = new MoonInfoComponent();
-    this.gasGiantInfoComponent = new GasGiantInfoComponent();
-    this.asteroidFieldInfoComponent = new AsteroidFieldInfoComponent();
-    this.genericInfoComponent = new GenericCelestialInfoComponent();
-    this.oortCloudInfoComponent = new OortCloudInfoComponent();
+    this.shadow.appendChild(template.content.cloneNode(true));
 
-    // Start with generic component shown
-    this.activeComponent = this.genericInfoComponent;
+    this.components.set(CelestialType.STAR, new StarInfoComponent());
+    this.components.set(CelestialType.PLANET, new PlanetInfoComponent());
+    this.components.set(CelestialType.DWARF_PLANET, new PlanetInfoComponent()); // Re-use Planet component
+    this.components.set(CelestialType.MOON, new MoonInfoComponent());
+    this.components.set(CelestialType.GAS_GIANT, new GasGiantInfoComponent());
+    this.components.set(
+      CelestialType.ASTEROID_FIELD,
+      new AsteroidFieldInfoComponent(),
+    );
+    this.components.set(CelestialType.OORT_CLOUD, new OortCloudInfoComponent());
+    this.components.set("generic", new GenericCelestialInfoComponent());
 
-    this.shadow.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          width: 100%;
-          height: 100%;
-        }
-        
-        .placeholder {
-          padding: 10px;
-          color: var(--ui-text-color-dim, #888);
-          font-style: italic;
-        }
-        
-        .container {
-          width: 100%;
-          height: 100%;
-          overflow: auto;
-        }
-      </style>
-      <div class="container">
-        <div class="placeholder">Select a celestial object...</div>
-      </div>
-    `;
+    this.activeComponent = this.components.get("generic")!;
 
-    // Append all sub-components to shadow DOM (initially hidden)
     const container = this.shadow.querySelector(".container") as HTMLElement;
     if (container) {
-      container.appendChild(this.starInfoComponent);
-      container.appendChild(this.planetInfoComponent);
-      container.appendChild(this.moonInfoComponent);
-      container.appendChild(this.gasGiantInfoComponent);
-      container.appendChild(this.asteroidFieldInfoComponent);
-      container.appendChild(this.genericInfoComponent);
-      container.appendChild(this.oortCloudInfoComponent);
-
-      // Hide all components
-      this.starInfoComponent.style.display = "none";
-      this.planetInfoComponent.style.display = "none";
-      this.moonInfoComponent.style.display = "none";
-      this.gasGiantInfoComponent.style.display = "none";
-      this.asteroidFieldInfoComponent.style.display = "none";
-      this.genericInfoComponent.style.display = "none";
-      this.oortCloudInfoComponent.style.display = "none";
+      this.components.forEach((component) => {
+        component.style.display = "none"; // Hide initially
+        container.appendChild(component);
+      });
     }
   }
 
-  // This method is required for IContentRenderer interface
   init(parameters: GroupPanelPartInitParameters): void {
-    // Panel initialization - nothing specific needed here
-
-    // If params contains any specific setup instructions, handle them here
     const params = (parameters.params as { focusedObjectId?: string }) || {};
     if (params.focusedObjectId) {
       this.handleSelectionChange(params.focusedObjectId);
     }
   }
 
-  // This getter is required for IContentRenderer interface
   get element(): HTMLElement {
     return this;
   }
 
   connectedCallback() {
-    // REMOVED attribute reading and link attempt
-    // this._engineViewId = this.getAttribute("engine-view-id");
-    // this.attemptLinkToEnginePanel();
     this.setupObjectListener();
 
-    // ADD LISTENER FOR FOCUS CHANGES *FROM* THE RENDERER/CONTROLS
-    // Assuming the same event name as used in FocusControl
     document.addEventListener(
       "renderer-focus-changed",
       this.handleRendererFocusChange,
     );
 
-    // ADD LISTENER FOR IMMEDIATE FOCUS *REQUESTS*
     document.addEventListener(
       "focus-request-initiated",
       this.handleFocusRequestInitiated, // Use bound handler
@@ -298,13 +119,6 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   }
 
   disconnectedCallback() {
-    // REMOVED panel state unsubscribe and interval clear
-    // this.unsubscribePanelState?.();
-    // if (this._linkCheckInterval) clearInterval(this._linkCheckInterval);
-    // this.unsubscribePanelState = null;
-    // this.linkedEnginePanel = null;
-    // this._linkCheckInterval = null;
-
     this.unsubscribeObjectsStore?.();
     this.unsubscribeObjectsStore = null;
 
@@ -320,24 +134,20 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
     );
   }
 
-  // Event handler for focus changes confirmed by the renderer
   private handleRendererFocusChange = (event: Event): void => {
     const customEvent = event as CustomEvent<{
       focusedObjectId: string | null;
     }>;
     if (customEvent.detail) {
-      // Check if the ID is different before updating to avoid redundant calls
       if (this.currentSelectedId !== customEvent.detail.focusedObjectId) {
         this.handleSelectionChange(customEvent.detail.focusedObjectId);
       }
     }
   };
 
-  // Event handler for focus requests initiated by UI (e.g., FocusControl click)
   private handleFocusRequestInitiated = (event: Event): void => {
     const customEvent = event as CustomEvent<{ objectId: string | null }>;
     if (customEvent.detail && customEvent.detail.objectId) {
-      // Check if the ID is different before updating
       if (this.currentSelectedId !== customEvent.detail.objectId) {
         this.handleSelectionChange(customEvent.detail.objectId);
       }
@@ -347,13 +157,23 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   };
 
   private setupObjectListener() {
-    // No changes needed here, still listens to the global store
     this.unsubscribeObjectsStore = celestialObjectsStore.subscribe(
       (allCelestials) => {
         if (this.currentSelectedId) {
           const currentObject = allCelestials[this.currentSelectedId];
-          if (currentObject) {
+          if (
+            currentObject &&
+            currentObject.status !== CelestialStatus.DESTROYED
+          ) {
             this.renderInfo(currentObject);
+          } else if (!currentObject) {
+            this.showPlaceholder("Selected object data not found.");
+            this.currentSelectedId = null; // Clear selection
+          } else {
+            this.showPlaceholder(
+              `Object '${currentObject.name}' has been destroyed.`,
+            );
+            this.currentSelectedId = null; // Clear selection
           }
         }
       },
@@ -361,7 +181,7 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   }
 
   private handleSelectionChange(selectedId: string | null) {
-    if (selectedId === this.currentSelectedId) return;
+    if (selectedId === this.currentSelectedId) return; // No change
 
     this.currentSelectedId = selectedId;
 
@@ -370,34 +190,36 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
       return;
     }
 
-    const storeData = celestialObjectsStore.get();
-    const objectMap = new Map(Object.entries(storeData));
-    const celestialData = selectedId ? objectMap.get(selectedId) : null;
+    const allCelestials = celestialObjectsStore.get();
+    const celestialData = allCelestials[selectedId];
 
     if (celestialData) {
       if (celestialData.status === CelestialStatus.DESTROYED) {
         this.showPlaceholder(
           `Object '${celestialData.name}' has been destroyed.`,
         );
+        if (this.activeComponent) {
+          this.activeComponent.style.display = "none";
+        }
+        this.activeComponent = null;
       } else {
         this.renderInfo(celestialData);
       }
     } else {
       this.showPlaceholder("Selected object data not found.");
+      if (this.activeComponent) {
+        this.activeComponent.style.display = "none";
+      }
+      this.activeComponent = null;
     }
   }
 
   private showPlaceholder(message: string) {
-    // Hide all components
-    this.starInfoComponent.style.display = "none";
-    this.planetInfoComponent.style.display = "none";
-    this.moonInfoComponent.style.display = "none";
-    this.gasGiantInfoComponent.style.display = "none";
-    this.asteroidFieldInfoComponent.style.display = "none";
-    this.genericInfoComponent.style.display = "none";
-    this.oortCloudInfoComponent.style.display = "none";
+    if (this.activeComponent) {
+      this.activeComponent.style.display = "none";
+      this.activeComponent = null; // Clear active component reference
+    }
 
-    // Show placeholder
     const placeholder = this.shadow.querySelector(
       ".placeholder",
     ) as HTMLElement;
@@ -405,12 +227,9 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
       placeholder.style.display = "block";
       placeholder.textContent = message;
     }
-
-    this.activeComponent = null;
   }
 
   private renderInfo(celestial: CelestialObject) {
-    // Hide placeholder
     const placeholder = this.shadow.querySelector(
       ".placeholder",
     ) as HTMLElement;
@@ -418,46 +237,35 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
       placeholder.style.display = "none";
     }
 
-    // Hide current active component
-    if (this.activeComponent) {
-      this.activeComponent.style.display = "none";
+    let componentType: CelestialType | "generic" = "generic";
+    if (this.components.has(celestial.type)) {
+      componentType = celestial.type;
+    } else if (celestial.type === CelestialType.DWARF_PLANET) {
+      componentType = CelestialType.PLANET;
     }
 
-    // Select the appropriate component based on celestial type
-    let newActiveComponent: CelestialInfoComponent;
+    const newActiveComponent = this.components.get(componentType);
 
-    switch (celestial.type) {
-      case CelestialType.STAR:
-        newActiveComponent = this.starInfoComponent;
-        break;
-      case CelestialType.PLANET:
-      case CelestialType.DWARF_PLANET:
-        newActiveComponent = this.planetInfoComponent;
-        break;
-      case CelestialType.MOON:
-        newActiveComponent = this.moonInfoComponent;
-        break;
-      case CelestialType.GAS_GIANT:
-        newActiveComponent = this.gasGiantInfoComponent;
-        break;
-      case CelestialType.ASTEROID_FIELD:
-        newActiveComponent = this.asteroidFieldInfoComponent;
-        break;
-      case CelestialType.OORT_CLOUD:
-        newActiveComponent = this.oortCloudInfoComponent;
-        break;
-      default:
-        newActiveComponent = this.genericInfoComponent;
-        break;
+    if (!newActiveComponent) {
+      console.error(
+        `[CelestialInfo] Could not find component for type: ${componentType}`,
+      );
+      this.showPlaceholder("Error displaying object info.");
+      return;
     }
 
-    // Update and show the selected component
-    newActiveComponent.updateData(celestial);
-    newActiveComponent.style.display = "block";
+    if (this.activeComponent !== newActiveComponent) {
+      if (this.activeComponent) {
+        this.activeComponent.style.display = "none";
+      }
+      newActiveComponent.style.display = "block";
+      this.activeComponent = newActiveComponent;
+    }
 
-    this.activeComponent = newActiveComponent;
+    this.activeComponent.updateData(celestial);
   }
 }
 
-// Define the main custom element
 customElements.define("celestial-info", CelestialInfo);
+
+export { FormatUtils };

@@ -3,9 +3,9 @@ import {
   CelestialType,
   StarProperties,
 } from "@teskooano/data-types";
-import { FormatUtils } from "./utils/FormatUtils";
-import { baseStyles } from "./utils/CelestialStyles";
-import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
+import { FormatUtils } from "../utils/FormatUtils";
+import { baseStyles } from "../utils/CelestialStyles";
+import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
 
 // --- STAR INFO COMPONENT ---
 export class StarInfoComponent
