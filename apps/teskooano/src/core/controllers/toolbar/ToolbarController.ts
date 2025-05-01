@@ -56,12 +56,6 @@ export class ToolbarController {
   private _handlers: ToolbarTemplateHandlers;
 
   /**
-   * URL for the Teskooano GitHub repository.
-   * @private
-   * @readonly
-   */
-  private readonly GITHUB_REPO_URL = "https://github.com/tanepiper/teskooano";
-  /**
    * URL for the main Teskooano website.
    * @private
    * @readonly
@@ -193,6 +187,7 @@ export class ToolbarController {
     logoButton.setAttribute("tooltip-text", "Visit Teskooano Website");
     logoButton.setAttribute("tooltip-title", "Teskooano");
     logoButton.setAttribute("tooltip-icon-svg", TourIcon);
+    logoButton.setAttribute("tooltip-horizontal-align", "start");
     logoButton.innerHTML = `<span slot="icon"><img src="/assets/icon.png" alt="Teskooano Logo" style="width: 45px; height: 45px; object-fit: contain;"></span>`;
     logoButton.addEventListener("click", () => {
       window.open(this.WEBSITE_URL, "_blank");
@@ -375,14 +370,5 @@ export class ToolbarController {
       errorEl.style.color = "red";
       buttonContainer.appendChild(errorEl);
     }
-  }
-
-  /**
-   * Opens the Teskooano GitHub repository in a new browser window or tab.
-   * Intended to be called by the GitHub button's click handler.
-   * @public
-   */
-  public openGitHubRepo(): void {
-    window.open(this.GITHUB_REPO_URL, "_blank");
   }
 }

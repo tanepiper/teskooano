@@ -7,8 +7,6 @@ import { pluginManager } from "@teskooano/ui-plugin"; // Import the instance
  * @description Defines the structure for the object containing event handlers for toolbar buttons.
  */
 export interface ToolbarTemplateHandlers {
-  /** Handler for the GitHub button click. */
-  handleGitHubClick: (event: MouseEvent) => void;
   /** Handler for the Settings button click. */
   handleSettingsClick: (event: MouseEvent) => void;
   /** Handler for the Tour button click. */
@@ -28,10 +26,6 @@ export interface ToolbarTemplateHandlers {
 export const createToolbarHandlers = (
   controller: ToolbarController,
 ): ToolbarTemplateHandlers => {
-  const handleGitHubClick = (event: MouseEvent): void => {
-    controller.openGitHubRepo();
-  };
-
   const handleSettingsClick = (event: MouseEvent): void => {
     const toggleFuncConfig = pluginManager.getFunctionConfig(
       "settings:toggle_panel",
@@ -88,7 +82,6 @@ export const createToolbarHandlers = (
   };
 
   const handlers: ToolbarTemplateHandlers = {
-    handleGitHubClick,
     handleSettingsClick,
     handleAddViewClick,
     handleTourClick,

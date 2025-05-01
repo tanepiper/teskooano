@@ -1,11 +1,10 @@
 import { startSimulationLoop } from "@teskooano/app-simulation";
 import {
-  getCelestialObjects,
   celestialObjects$,
+  getSimulationState,
   panelRegistry,
   simulationState$, // Import global simulation state
   type SimulationState,
-  getSimulationState, // Import state type
 } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {

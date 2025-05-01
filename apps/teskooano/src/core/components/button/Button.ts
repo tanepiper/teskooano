@@ -90,86 +90,43 @@ export class TeskooanoButton extends HTMLElement {
       this.buttonElement.dataset.originalTitle = originalTitle;
     }
 
+    // Move to body if not already there for correct fixed positioning context
     if (!this.isTooltipInBody) {
       document.body.appendChild(this.tooltipElement);
       this.isTooltipInBody = true;
-
-      requestAnimationFrame(() => {
-        if (!this.tooltipElement) return;
-
-        const buttonRect = this.getBoundingClientRect();
-        const tooltipRect = this.tooltipElement.getBoundingClientRect();
-        const scrollX = window.scrollX;
-        const scrollY = window.scrollY;
-        const gap = 4;
-
-        let top = scrollY + buttonRect.bottom + gap;
-        let baseLeft = scrollX + buttonRect.left;
-        let transformX = buttonRect.width / 2 - tooltipRect.width / 2;
-
-        const viewportHeight = document.documentElement.clientHeight;
-        const viewportWidth = document.documentElement.clientWidth;
-
-        if (top + tooltipRect.height > scrollY + viewportHeight) {
-          top = scrollY + buttonRect.top - tooltipRect.height - gap;
-        }
-        if (top < scrollY) {
-          top = scrollY + gap;
-        }
-
-        const finalLeft = baseLeft + transformX;
-        if (finalLeft < scrollX) {
-          transformX = -buttonRect.left + gap;
-        } else if (finalLeft + tooltipRect.width > scrollX + viewportWidth) {
-          const maxLeft = scrollX + viewportWidth - tooltipRect.width - gap;
-          transformX = maxLeft - baseLeft;
-        }
-
-        this.tooltipElement.style.position = "absolute";
-        this.tooltipElement.style.top = `${top}px`;
-        this.tooltipElement.style.left = `${baseLeft}px`;
-        //this.tooltipElement.style.transform = `translateX(${transformX}px)`;
-      });
     }
 
-    this.tooltipElement.show();
+    // Call the tooltip's show method, passing the button itself as the trigger
+    this.tooltipElement.show(this);
   };
 
   private hideTooltip = () => {
     if (this.tooltipElement) {
-      if (!this.isTooltipInBody) {
-        this.tooltipElement.hide();
-        return;
-      }
+      // Let the tooltip handle its own internal state/transitions
+      this.tooltipElement.hide();
 
-      const handleTransitionEnd = (event: TransitionEvent) => {
-        if (
-          event.propertyName !== "opacity" &&
-          event.propertyName !== "visibility"
-        ) {
-          return;
-        }
-        this.tooltipElement?.removeEventListener(
-          "transitionend",
-          handleTransitionEnd,
-        );
-
+      // After the tooltip has finished hiding (or after a short delay),
+      // move it back from the body to the shadow DOM if it was moved.
+      // Using a small timeout to ensure hide() has started.
+      setTimeout(() => {
         if (
           this.isTooltipInBody &&
           this.tooltipElement &&
-          document.body.contains(this.tooltipElement)
+          this.tooltipElement.parentElement === document.body // Check if it's still in body
         ) {
           try {
             document.body.removeChild(this.tooltipElement);
             if (this.tooltipOriginContainer) {
-              this.tooltipOriginContainer.appendChild(this.tooltipElement);
+              // Check if the origin container still exists before appending
+              if (document.contains(this.tooltipOriginContainer)) {
+                this.tooltipOriginContainer.appendChild(this.tooltipElement);
+              } else {
+                console.warn(
+                  "[Button] Tooltip origin container disconnected, cannot re-attach.",
+                );
+              }
             }
             this.isTooltipInBody = false;
-
-            this.tooltipElement?.style.removeProperty("top");
-            this.tooltipElement?.style.removeProperty("left");
-            this.tooltipElement?.style.removeProperty("position");
-            this.tooltipElement?.style.removeProperty("transform");
 
             // Restore native title ONLY if tooltip-text is not set AND original title existed
             const originalTitle = this.buttonElement.dataset.originalTitle;
@@ -184,26 +141,7 @@ export class TeskooanoButton extends HTMLElement {
             delete this.buttonElement.dataset.originalTitle; // Ensure cleanup even on error
           }
         }
-      };
-
-      this.tooltipElement.addEventListener(
-        "transitionend",
-        handleTransitionEnd,
-        { once: true },
-      );
-      this.tooltipElement.hide();
-
-      // Fallback timeout remains the same
-      setTimeout(() => {
-        if (
-          this.isTooltipInBody &&
-          this.tooltipElement &&
-          document.body.contains(this.tooltipElement)
-        ) {
-          // Manually trigger cleanup, including title restoration attempt
-          handleTransitionEnd({ propertyName: "opacity" } as TransitionEvent);
-        }
-      }, 300);
+      }, 50); // Small delay to allow hide() to initiate
     }
   };
 
