@@ -13,6 +13,7 @@ fileGroups:
 tasks:
   # Build the project
   build:
+    local: true
     command: "npm run build"
     inputs:
       # Sources

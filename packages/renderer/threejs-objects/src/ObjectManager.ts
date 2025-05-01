@@ -1110,7 +1110,6 @@ export class ObjectManager {
    * that require mesh regeneration.
    */
   public recreateAllMeshes(): void {
-    console.log("[ObjectManager] Recreating all meshes...");
     const currentState = this.renderableObjectsStore.get();
     const currentIds = Array.from(this.objects.keys()); // Get IDs before removing
 
@@ -1127,6 +1126,5 @@ export class ObjectManager {
         this.internalAddObject(objectData);
       }
     }
-    console.log("[ObjectManager] Finished recreating meshes.");
   }
 }

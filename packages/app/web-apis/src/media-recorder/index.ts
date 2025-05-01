@@ -206,9 +206,7 @@ export function manageMediaRecorder(
       updateState({ status: "stopped" });
       if (stopTracksOnStop) {
         stream.getTracks().forEach((track) => track.stop());
-        console.log("MediaRecorder stopped and tracks stopped.");
       } else {
-        console.log("MediaRecorder stopped.");
       }
       destroySubject.next(); // Signal completion on stop
       destroySubject.complete();
@@ -266,7 +264,6 @@ export function manageMediaRecorder(
     stateSubject.complete();
     dataSubject.complete();
     recorder = null; // Release reference
-    console.log("MediaRecorder controls destroyed.");
   };
 
   // Complete subjects when destroy signal is received

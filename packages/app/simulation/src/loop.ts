@@ -28,7 +28,6 @@ let accumulatedTime = 0; // Track simulation time accumulation
 
 // Listen for resetSimulationTime event
 window.addEventListener(CustomEvents.SIMULATION_RESET_TIME, () => {
-  console.log("Received resetSimulationTime event, resetting accumulatedTime");
   accumulatedTime = 0; // Reset accumulated time
 });
 

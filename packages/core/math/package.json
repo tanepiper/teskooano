@@ -1,6 +1,6 @@
 {
   "name": "@teskooano/core-math",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "src/index.ts",
@@ -20,6 +20,6 @@
   },
   "devDependencies": {
     "typescript": "5.8.3",
-    "@types/node": "22.15.2"
+    "@types/node": "22.15.3"
   }
 }

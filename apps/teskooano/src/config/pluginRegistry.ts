@@ -1,28 +1,32 @@
 import type { PluginRegistryConfig } from "@teskooano/ui-plugin";
-// import { pluginConfig as uiPluginConfig } from "@teskooano/ui-lib/plugins"; // REMOVED Example import
-
-// Defines the UI feature plugins to load.
-// The keys are unique plugin IDs used for identification.
-// The paths should point to the module exporting the `TeskooanoPlugin` object
-// (exported as 'plugin' by default).
 
 export const pluginConfig: PluginRegistryConfig = {
-  // --- Core Engine View --- // (Register this first, seems fundamental)
-  "core-engine-view": { path: "../components/engine/EngineView.plugin.ts" },
+  "teskooano-external-links": {
+    path: "../plugins/external-links",
+  },
+  "teskooano-engine-panel": { path: "../plugins/engine-panel" },
 
-  // --- UI Controls & Features --- //
-  "core-engine-ui-controls": {
-    path: "../components/ui-controls/engine-settings/EngineSettings.plugin.ts",
+  "teskooano-engine-settings": {
+    path: "../plugins/engine-settings",
   },
-  "core-focus-controls": {
-    path: "../components/ui-controls/focus/FocusControl.plugin.ts",
+  "teskooano-focus-controls": {
+    path: "../plugins/focus",
   },
-  "core-engine-info": {
-    path: "../components/ui-controls/engine-info/EngineInfo.plugin.ts",
+  "teskooano-engine-info": {
+    path: "../plugins/engine-info",
   },
-  "core-celestial-info": {
-    path: "../components/ui-controls/celestial-info/CelestialInfo.plugin.ts",
+  "teskooano-celestial-info": {
+    path: "../plugins/celestial-info",
   },
-  "core-tour": { path: "../components/tours/Tour.plugin.ts" },
-  "core-settings": { path: "../components/settings/Settings.plugin.ts" },
+  "teskooano-settings": {
+    path: "../plugins/settings",
+  },
+  "teskooano-camera-manager": { path: "../plugins/camera-manager" },
+
+  "teskooano-simulation-controls": {
+    path: "../plugins/engine-panel/main-toolbar/simulation-controls",
+  },
+  "teskooano-system-controls": {
+    path: "../plugins/engine-panel/main-toolbar/system-controls",
+  },
 };

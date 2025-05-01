@@ -1,6 +1,6 @@
 {
   "name": "@teskooano/renderer-threejs-background",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Handles rendering of the starfield background in Three.js for Teskooano.",
   "keywords": [

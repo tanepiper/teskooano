@@ -9,8 +9,14 @@ import type {
  * Context object passed to plugin function execute methods.
  */
 export interface PluginExecutionContext {
-  dockviewApi: DockviewApi;
-  dockviewController?: any;
+  dockviewApi: DockviewApi | null;
+  dockviewController?: any | null;
+  // Add access to manager instances and the execute function
+  getManager: <T = any>(id: string) => T | undefined;
+  executeFunction: <T = any>(
+    functionId: string,
+    args?: any,
+  ) => Promise<T> | T | undefined;
   // Add other shared dependencies here if needed in the future
 }
 
@@ -19,8 +25,9 @@ export interface PluginExecutionContext {
  * It hides the injected context from the caller.
  */
 export type PluginFunctionCallerSignature = (
-  ...args: any[]
-) => void | Promise<void>;
+  context: PluginExecutionContext,
+  args?: any,
+) => any; // Allow any return type, including void, values, or promises
 
 /** Configuration for dynamically loading a component. */
 export interface ComponentLoadConfig {
@@ -33,6 +40,8 @@ export interface ComponentLoadConfig {
    * @default true
    */
   isCustomElement?: boolean;
+  /** Internal: Used by the Vite plugin to track the source config file for relative path resolution. */
+  _configPath?: string;
 }
 
 /** Configuration for dynamically loading a plugin. */
@@ -73,8 +82,14 @@ export interface ComponentConfig {
 export interface PanelConfig {
   /** The unique identifier Dockview uses for this panel type (e.g., 'focus_control'). */
   componentName: string;
-  /** The class implementing the Dockview panel's content (IContentRenderer). */
-  panelClass: { new (): IContentRenderer }; // Constructor signature
+  /**
+   * The class implementing the Dockview panel's content.
+   * Can be a standard class implementing IContentRenderer,
+   * OR a Custom Element constructor that also implements IContentRenderer.
+   */
+  panelClass:
+    | ({ new (): IContentRenderer } & Partial<CustomElementConstructor>)
+    | CustomElementConstructor;
   /** Default title for the panel (can be overridden). */
   defaultTitle: string;
   /** Optional default parameters to pass to the panel on creation. */
@@ -94,10 +109,11 @@ export interface FunctionConfig {
    * Receives the execution context (with APIs) as the first argument,
    * followed by any specific arguments passed during the call.
    */
-  execute: (
-    context: PluginExecutionContext,
-    ...args: any[]
-  ) => any | Promise<any>;
+  execute: PluginFunctionCallerSignature;
+  /** Optional: Set to true if this function requires the Dockview API. */
+  requiresDockviewApi?: boolean;
+  /** Optional: Set to true if this function requires the Dockview Controller. */
+  requiresDockviewController?: boolean;
 }
 
 /**
@@ -203,6 +219,16 @@ export interface ToolbarRegistration {
 }
 
 /**
+ * Defines the configuration for a non-UI manager/service class registered by a plugin.
+ */
+export interface ManagerConfig {
+  /** A unique identifier for this manager/service. */
+  id: string;
+  /** The class constructor itself. */
+  managerClass: { new (...args: any[]): any };
+}
+
+/**
  * Defines the structure of a Teskooano UI plugin.
  */
 export interface TeskooanoPlugin {
@@ -212,6 +238,8 @@ export interface TeskooanoPlugin {
   name: string;
   /** Optional description of the plugin's purpose. */
   description?: string;
+  /** Optional array of plugin IDs that this plugin depends on. */
+  dependencies?: string[];
 
   /** Array of Dockview panels provided by this plugin. */
   panels?: PanelConfig[];
@@ -219,6 +247,12 @@ export interface TeskooanoPlugin {
   functions?: FunctionConfig[];
   /** Array of toolbar registrations, grouping items by target toolbar. */
   toolbarRegistrations?: ToolbarRegistration[];
+
+  /** Array of non-UI manager/service classes provided by this plugin. */
+  managerClasses?: ManagerConfig[];
+
+  /** Array of custom element components provided by this plugin. */
+  components?: ComponentConfig[];
 
   /**
    * Optional initialization function called after registration.
@@ -236,3 +270,25 @@ export interface TeskooanoPlugin {
   /** Optional: Widgets to be embedded directly into toolbars. */
   toolbarWidgets?: ToolbarWidgetConfig[];
 }
+
+export type PluginRegistrationStatus =
+  | { type: "loading_started"; pluginIds: string[] }
+  | { type: "loading_plugin"; pluginId: string }
+  | { type: "loaded_plugin"; pluginId: string }
+  | { type: "load_error"; pluginId: string; error: Error }
+  | { type: "registration_started"; pluginIds: string[] }
+  | { type: "registering_plugin"; pluginId: string }
+  | { type: "registered_plugin"; pluginId: string }
+  | { type: "register_error"; pluginId: string; error: Error }
+  | { type: "init_error"; pluginId: string; error: Error } // If initialization fails
+  | {
+      type: "dependency_error";
+      pluginId: string;
+      missingDependencies: string[];
+    }
+  | {
+      type: "loading_complete";
+      successfullyRegistered: string[];
+      failed: string[]; // IDs that failed load, register, init, or dependency checks
+      notFound: string[]; // IDs requested but no loader found
+    };

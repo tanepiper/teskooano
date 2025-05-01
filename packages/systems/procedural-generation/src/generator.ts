@@ -110,7 +110,6 @@ export async function generateSystem(
 
   // Generate Name First
   const systemName = generateSystemName(random);
-  console.log(`[Generator] Generated system name: ${systemName}`);
 
   // 1. Determine System Type & Generate Star(s)
   const systemTypeRoll = random();

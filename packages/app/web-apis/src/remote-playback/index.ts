@@ -102,9 +102,7 @@ export function watchRemotePlaybackAvailability(
             );
           return;
         }
-        console.log(
-          `Started watching remote playback availability (ID: ${id})`,
-        );
+
         watchId = id;
         // Emit state again with the watchId included
         const newState = {
@@ -127,9 +125,6 @@ export function watchRemotePlaybackAvailability(
     return () => {
       isWatching = false;
       if (watchId !== undefined && element.remote) {
-        console.log(
-          `Stopping watching remote playback availability (ID: ${watchId})`,
-        );
         element.remote
           .cancelWatchAvailability(watchId)
           .catch((err) =>

@@ -1,0 +1,5 @@
+.external-links-component-container {
+  display: flex;
+  gap: 8px; /* Adjust spacing for toolbar */
+  align-items: center; /* Vertically align items in the center */
+}

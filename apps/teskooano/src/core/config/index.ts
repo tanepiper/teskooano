@@ -1,0 +1,1 @@
+export { pluginConfig } from "./pluginRegistry";

@@ -1,6 +1,6 @@
 {
   "name": "teskooano",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "workspaces": [
     "apps/teskooano",
@@ -17,7 +17,7 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
-    "@types/node": "22.15.2",
+    "@types/node": "22.15.3",
     "typescript": "5.8.3",
     "vitest": "3.1.2",
     "eslint": "9.25.1",

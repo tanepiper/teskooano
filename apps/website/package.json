@@ -1,7 +1,7 @@
 {
   "name": "@teskooano/website",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
@@ -13,7 +13,7 @@
     "@astrojs/starlight": "0.34.1",
     "@teskooano/design-system": "file:../../packages/design-system",
     "@pasqal-io/starlight-client-mermaid": "0.1.0",
-    "astro": "5.7.5",
+    "astro": "5.7.10",
     "sharp": "0.34.1",
     "starlight-typedoc": "0.21.1",
     "typedoc": "0.28.3",

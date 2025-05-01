@@ -1,6 +1,6 @@
 {
   "name": "@teskooano/renderer-threejs-interaction",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "src/index.ts",
@@ -29,7 +29,7 @@
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
     "three": "0.176.0",
-    "gsap": "3.12.7"
+    "gsap": "3.13.0"
   },
   "devDependencies": {
     "@types/three": "0.176.0",
@@ -37,7 +37,7 @@
     "@vitest/browser": "3.1.2",
     "@vitest/ui": "3.1.2",
     "eslint": "9.25.1",
-    "happy-dom": "17.4.4",
+    "happy-dom": "17.4.6",
     "playwright": "1.52.0",
     "typescript": "5.8.3",
     "vitest": "3.1.2"
