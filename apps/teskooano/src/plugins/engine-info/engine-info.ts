@@ -1,120 +1,45 @@
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-// Import the shared RendererStats type
 import type { RendererStats } from "@teskooano/renderer-threejs-core";
-// Import Dockview types and panel registry
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
-// Import the type from the UI Plugin package
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
-// Correct the import path for CompositeEnginePanel again
-import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel"; // Import for type checking
+import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel";
 
-// Import Fluent UI Icons
 import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw";
+import type { RendererInfoParams } from "./types";
+import { template } from "./engine-info.template";
+import { formatVector, formatNumber, formatMemory } from "./utils/formatters";
 
-// Define expected params
-interface RendererInfoParams {
-  parentEnginePanelId?: string;
-}
+/**
+ * Frequency in milliseconds for updating renderer stats.
+ */
+const UPDATE_INTERVAL_MS = 1000;
+/**
+ * Maximum number of attempts to connect to the renderer before stopping.
+ */
+const MAX_CONNECTION_ATTEMPTS = 10;
+/**
+ * Delay in milliseconds between connection attempts.
+ */
+const CONNECTION_ATTEMPT_DELAY_MS = 2000;
 
-// Helper to format vectors nicely
-function formatVector(
-  vec?: { x: number; y: number; z: number },
-  precision: number = 0,
-): string {
-  if (!vec) return "(?, ?, ?)";
-  const factor = Math.pow(10, precision);
-  const x = Math.round(vec.x * factor) / factor;
-  const y = Math.round(vec.y * factor) / factor;
-  const z = Math.round(vec.z * factor) / factor;
-  return `(${x.toLocaleString()}, ${y.toLocaleString()}, ${z.toLocaleString()})`;
-}
+/**
+ * FPS thresholds for color coding.
+ */
+const FPS_THRESHOLDS = {
+  GOOD: 50,
+  WARN: 30,
+};
 
-// Helper to format large numbers
-function formatNumber(num?: number): string {
-  return num?.toLocaleString() ?? "-";
-}
-
-// Helper to format memory
-function formatMemory(bytes?: number): string {
-  if (bytes === undefined) return "- MB";
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-const template = document.createElement("template");
-template.innerHTML = `
-  <style>
-    :host {
-        display: block;
-        font-family: var(--font-family-monospace, monospace);
-        font-size: 0.9em;
-        color: var(--color-text, #e0e0fc);
-    }
-    .info-grid {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 4px 10px; /* Row gap, Column gap */
-        align-items: center;
-    }
-    .label {
-        color: var(--color-text-secondary, #aaa);
-        text-align: right;
-    }
-    .value {
-        font-weight: bold;
-        color: var(--color-primary-light, #9fa8da);
-    }
-    #fps-value {
-      /* Dynamic color set in update */
-    }
-    .controls {
-      margin-top: 8px;
-      display: flex;
-      justify-content: center;
-    }
-    button {
-      background: var(--color-button-background, #444);
-      color: var(--color-button-text, #fff);
-      border: 1px solid var(--color-border, #555);
-      border-radius: 4px;
-      padding: 4px 8px;
-      font-size: 0.8em;
-      cursor: pointer;
-    }
-    button:hover {
-      background: var(--color-button-hover, #555);
-    }
-    .status {
-      margin-top: 4px;
-      font-size: 0.8em;
-      color: var(--color-text-secondary, #aaa);
-      text-align: center;
-    }
-  </style>
-  <div class="info-grid">
-      <span class="label">FPS:</span>
-      <span class="value" id="fps-value">-</span>
-
-      <span class="label">Draw Calls:</span>
-      <span class="value" id="draw-calls-value">-</span>
-
-      <span class="label">Triangles:</span>
-      <span class="value" id="triangles-value">-</span>
-
-      <span class="label">Memory:</span>
-      <span class="value" id="memory-value">-</span>
-
-      <span class="label">Cam Pos:</span>
-      <span class="value" id="cam-pos-value">-</span>
-
-      <span class="label">FOV:</span>
-      <span class="value" id="fov-value">-</span>
-  </div>
-  <div class="controls">
-    <button id="refresh-button">Refresh Stats</button>
-  </div>
-  <div class="status" id="connection-status">Waiting for renderer...</div>
-`;
-
+/**
+ * Custom Element `renderer-info-display`.
+ *
+ * Displays real-time statistics from the `ModularSpaceRenderer`, such as FPS,
+ * draw calls, triangle count, memory usage, camera position, and FOV.
+ * It attempts to connect to a renderer instance provided by its parent panel
+ * and updates the displayed information periodically.
+ *
+ * Implements Dockview `IContentRenderer` to be used as panel content.
+ */
 export class RendererInfoDisplay
   extends HTMLElement
   implements IContentRenderer
@@ -126,23 +51,29 @@ export class RendererInfoDisplay
   private camPosValue: HTMLElement | null = null;
   private fovValue: HTMLElement | null = null;
   private connectionStatus: HTMLElement | null = null;
-  private refreshButton: HTMLElement | null = null;
+  private refreshButton: HTMLButtonElement | null = null;
 
   private _renderer: ModularSpaceRenderer | null = null;
   private _updateInterval: number | null = null;
-  private _parentPanel: CompositeEnginePanel | null = null; // Store parent reference
-  private _boundHandleRendererReady: (event: Event) => void; // Store bound listener
-  private _attemptCount: number = 0;
-  private _maxAttempts: number = 10;
+  private _parentPanel: CompositeEnginePanel | null = null;
+  private _boundHandleRendererReady: (event: Event) => void;
+  private _connectionAttemptCount: number = 0;
   private _connectionAttemptTimer: number | null = null;
 
-  // --- Static Configuration ---
+  /**
+   * Unique identifier for the custom element.
+   */
   public static readonly componentName = "renderer-info-display";
 
+  /**
+   * Generates the configuration required to register this panel as a toolbar button.
+   *
+   * @returns {PanelToolbarItemConfig} Configuration object for the UI plugin manager.
+   */
   public static registerToolbarButtonConfig(): PanelToolbarItemConfig {
     return {
-      id: "renderer_info", // Base ID
-      target: "engine-toolbar", // Add the required target property
+      id: "renderer_info",
+      target: "engine-toolbar",
       iconSvg: DataUsageIcon,
       title: "Renderer Info",
       type: "panel",
@@ -151,17 +82,26 @@ export class RendererInfoDisplay
       behaviour: "toggle",
     };
   }
-  // --- End Static Configuration ---
 
+  /**
+   * Constructs the RendererInfoDisplay panel.
+   * Sets up the shadow DOM, applies the HTML template, and binds event handlers.
+   */
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
-    // Bind event handlers
+
     this._boundHandleRendererReady = this.handleRendererReady.bind(this);
     this.handleRefreshClick = this.handleRefreshClick.bind(this);
+    this.updateDisplay = this.updateDisplay.bind(this);
   }
 
+  /**
+   * Called when the element is added to the document's DOM.
+   * Caches DOM element references and sets up initial event listeners
+   * and connection attempts.
+   */
   connectedCallback() {
     this.fpsValue = this.shadowRoot!.getElementById("fps-value");
     this.drawCallsValue = this.shadowRoot!.getElementById("draw-calls-value");
@@ -171,36 +111,49 @@ export class RendererInfoDisplay
     this.fovValue = this.shadowRoot!.getElementById("fov-value");
     this.connectionStatus =
       this.shadowRoot!.getElementById("connection-status");
-    this.refreshButton = this.shadowRoot!.getElementById("refresh-button");
+    this.refreshButton = this.shadowRoot!.getElementById(
+      "refresh-button",
+    ) as HTMLButtonElement;
 
     if (this.refreshButton) {
       this.refreshButton.addEventListener("click", this.handleRefreshClick);
     }
 
-    // Add listener if parent panel is already set
-    if (this._parentPanel?.element) {
+    if (this._renderer) {
+      if (!this._updateInterval) {
+        this.startUpdateTimer();
+      }
+      return;
+    }
+
+    if (this._parentPanel && this._parentPanel.element) {
+      this._parentPanel.element.removeEventListener(
+        "renderer-ready",
+        this._boundHandleRendererReady,
+      );
       this._parentPanel.element.addEventListener(
         "renderer-ready",
         this._boundHandleRendererReady,
       );
 
-      this.updateConnectionStatus("Listening for renderer events...");
+      this.updateConnectionStatus("Listening for renderer...");
+    } else if (!this._parentPanel) {
+      this.tryConnectToRenderer();
     }
-
-    // Attempt to get renderer from parent if it exists
-    this.tryConnectToRenderer();
   }
 
+  /**
+   * Called when the element is removed from the document's DOM.
+   * Cleans up timers and event listeners to prevent memory leaks.
+   */
   disconnectedCallback() {
     this.stopUpdateTimer();
     this.stopConnectionAttempts();
 
-    // Remove event listeners
     if (this.refreshButton) {
       this.refreshButton.removeEventListener("click", this.handleRefreshClick);
     }
 
-    // Remove renderer-ready listener
     if (this._parentPanel?.element) {
       this._parentPanel.element.removeEventListener(
         "renderer-ready",
@@ -209,298 +162,286 @@ export class RendererInfoDisplay
     }
   }
 
+  /**
+   * Handles clicks on the manual refresh button.
+   * Fetches current stats if connected, otherwise attempts to reconnect.
+   */
   private handleRefreshClick() {
-    this.updateConnectionStatus("Manual refresh triggered");
-
     if (this._renderer) {
+      this.updateConnectionStatus("Manual refresh triggered...");
       this.fetchAndUpdateDisplay();
-      this.updateConnectionStatus("Stats refreshed");
     } else {
+      this.updateConnectionStatus("Attempting reconnect on refresh...");
       this.tryConnectToRenderer();
     }
   }
 
-  private updateConnectionStatus(message: string): void {
+  /**
+   * Updates the text content of the connection status display area.
+   *
+   * @param {string} message - The status message to display.
+   * @param {boolean} [isError=false] - If true, styles the message as an error.
+   */
+  private updateConnectionStatus(
+    message: string,
+    isError: boolean = false,
+  ): void {
     if (this.connectionStatus) {
       this.connectionStatus.textContent = message;
+      this.connectionStatus.style.color = isError
+        ? "var(--color-error, #f44336)"
+        : "var(--color-text-secondary, #aaa)";
+    }
+    if (this.refreshButton) {
+      this.refreshButton.disabled = isError || !this._renderer;
     }
   }
 
+  /**
+   * Sets the renderer instance for this display.
+   * Stops connection attempts and starts the periodic update timer if successful.
+   *
+   * @param {ModularSpaceRenderer} renderer - The renderer instance.
+   */
   public setRenderer(renderer: ModularSpaceRenderer): void {
     this._renderer = renderer;
     this.stopConnectionAttempts();
 
     if (this._renderer && this.isConnected) {
-      this.updateConnectionStatus("Renderer connected! Starting updates...");
+      this.updateConnectionStatus("Renderer connected.");
       this.startUpdateTimer();
-    } else if (!renderer) {
-      this.updateConnectionStatus("No renderer provided");
-    } else if (!this.isConnected) {
-      this.updateConnectionStatus("Component not connected to DOM");
+      this.fetchAndUpdateDisplay();
+    } else {
+      this.updateConnectionStatus(
+        this.isConnected
+          ? "Renderer connection failed."
+          : "Component disconnected.",
+        true,
+      );
     }
   }
 
-  // Try multiple approaches to get the renderer
+  /**
+   * Attempts to establish a connection with the renderer, either via the parent panel
+   * or by listening for the 'renderer-ready' event.
+   * Retries automatically up to a maximum limit.
+   */
   private tryConnectToRenderer(): void {
+    if (
+      this._renderer ||
+      this._connectionAttemptCount >= MAX_CONNECTION_ATTEMPTS
+    ) {
+      if (
+        !this._renderer &&
+        this._connectionAttemptCount >= MAX_CONNECTION_ATTEMPTS
+      ) {
+        this.updateConnectionStatus(
+          `Failed to connect after ${MAX_CONNECTION_ATTEMPTS} attempts.`,
+          true,
+        );
+      }
+      this.stopConnectionAttempts();
+      return;
+    }
+
     this.updateConnectionStatus(
-      `Attempting to connect to renderer (${this._attemptCount + 1}/${this._maxAttempts})...`,
+      `Connecting... (Attempt ${this._connectionAttemptCount + 1}/${MAX_CONNECTION_ATTEMPTS})`,
     );
+    this._connectionAttemptCount++;
 
-    // Stop any existing attempts
-    this.stopConnectionAttempts();
-
-    // Three approaches to try:
-
-    // 1. Try getting renderer directly from parent panel if set
-    if (this._parentPanel) {
+    let foundRenderer = false;
+    if (
+      this._parentPanel &&
+      typeof this._parentPanel.getRenderer === "function"
+    ) {
       try {
-        // Check if parent has a getRenderer method
-        if (typeof this._parentPanel.getRenderer === "function") {
-          const renderer = this._parentPanel.getRenderer();
-          if (renderer) {
-            this.setRenderer(renderer);
-            return;
-          }
+        const renderer = this._parentPanel.getRenderer();
+        if (renderer) {
+          this.setRenderer(renderer);
+          foundRenderer = true;
+        } else {
         }
       } catch (error) {
         console.error(
-          "[RendererInfoDisplay] Error getting renderer from parent:",
+          "[RendererInfoDisplay] Error calling getRenderer():",
           error,
         );
       }
     }
 
-    // 2. Try finding the CompositeEnginePanel in the DOM
-    if (!this._parentPanel) {
-      const enginePanels = document.querySelectorAll("composite-engine-panel");
-      if (enginePanels.length > 0) {
-        // Try each panel
-        for (let i = 0; i < enginePanels.length; i++) {
-          const panel = enginePanels[i] as any;
-          if (panel && typeof panel.getRenderer === "function") {
-            try {
-              const renderer = panel.getRenderer();
-              if (renderer) {
-                this._parentPanel = panel;
-                this.setRenderer(renderer);
-                return;
-              }
-            } catch (error) {
-              console.error(
-                `[RendererInfoDisplay] Error getting renderer from DOM panel ${i}:`,
-                error,
-              );
-            }
-          }
-        }
+    if (!foundRenderer) {
+      if (this._parentPanel) {
+        this.stopConnectionAttempts();
+      } else {
+        this.stopConnectionAttempts();
+        this._connectionAttemptTimer = window.setTimeout(() => {
+          this.tryConnectToRenderer();
+        }, CONNECTION_ATTEMPT_DELAY_MS);
       }
     }
-
-    // If we've tried too many times, stop
-    this._attemptCount++;
-    if (this._attemptCount >= this._maxAttempts) {
-      console.warn("[RendererInfoDisplay] Max connection attempts reached");
-      this.updateConnectionStatus(
-        "Could not connect to renderer after multiple attempts. Try refreshing manually.",
-      );
-      return;
-    }
-
-    // Schedule another attempt
-    this._connectionAttemptTimer = window.setTimeout(() => {
-      this.tryConnectToRenderer();
-    }, 1000);
   }
 
+  /**
+   * Stops the automatic connection retry timer.
+   */
   private stopConnectionAttempts(): void {
     if (this._connectionAttemptTimer !== null) {
-      window.clearTimeout(this._connectionAttemptTimer);
+      clearTimeout(this._connectionAttemptTimer);
       this._connectionAttemptTimer = null;
     }
   }
 
+  /**
+   * Starts the periodic timer to fetch and update renderer stats.
+   */
   private startUpdateTimer(): void {
     this.stopUpdateTimer();
     this._updateInterval = window.setInterval(() => {
       this.fetchAndUpdateDisplay();
-    }, 1000);
+    }, UPDATE_INTERVAL_MS);
     this.fetchAndUpdateDisplay();
   }
 
+  /**
+   * Stops the periodic stats update timer.
+   */
   private stopUpdateTimer(): void {
-    if (this._updateInterval) {
-      window.clearInterval(this._updateInterval);
+    if (this._updateInterval !== null) {
+      clearInterval(this._updateInterval);
       this._updateInterval = null;
     }
   }
 
+  /**
+   * Fetches the latest statistics from the connected renderer and updates the display.
+   * Handles potential errors during fetching.
+   */
   private fetchAndUpdateDisplay(): void {
-    if (!this._renderer?.animationLoop) {
-      console.warn(
-        "[RendererInfoDisplay] fetchAndUpdateDisplay: No renderer or animation loop found.",
+    if (!this._renderer) {
+      this.updateConnectionStatus(
+        "Cannot fetch: Renderer not available.",
+        true,
       );
-      this.updateConnectionStatus("No animation loop found");
+      this.updateDisplay(null);
       return;
     }
 
     try {
-      const stats = this._renderer.animationLoop.getCurrentStats();
-
+      const stats = this._renderer.animationLoop?.getCurrentStats();
+      if (!stats) {
+        this.updateConnectionStatus("Could not retrieve stats.", true);
+        this.updateDisplay(null);
+        return;
+      }
       this.updateDisplay(stats);
-      this.updateConnectionStatus(
-        "Stats updated at " + new Date().toLocaleTimeString(),
-      );
+      if (
+        this.connectionStatus?.style.color !== "var(--color-error, #f44336)"
+      ) {
+        this.updateConnectionStatus("Stats updated.");
+      }
     } catch (error) {
       console.error("[RendererInfoDisplay] Error fetching stats:", error);
-      this.updateConnectionStatus(
-        "Error fetching stats: " + (error as Error).message,
-      );
+      this.updateConnectionStatus("Error fetching stats.", true);
+      this.updateDisplay(null);
     }
   }
 
+  /**
+   * Updates the DOM elements with the fetched renderer statistics.
+   *
+   * @param {RendererStats | null} stats - The latest statistics object, or null if unavailable.
+   */
   private updateDisplay = (stats: RendererStats | null): void => {
-    // --- FPS ---
+    if (!this.isConnected) return;
+
     const fps = stats?.fps;
+    const drawCalls = stats?.drawCalls;
+    const triangles = stats?.triangles;
+    const memory = stats?.memory?.usedJSHeapSize;
+    const camPos = stats?.camera?.position;
+    const fov = stats?.camera?.fov;
+
     if (this.fpsValue) {
-      this.fpsValue.textContent = fps?.toFixed(0) ?? "-";
-      if (fps === undefined) {
-        this.fpsValue.style.color = "var(--color-text-secondary)";
-      } else if (fps >= 55) {
-        this.fpsValue.style.color = "var(--color-success, #a5d6a7)"; // Green
-      } else if (fps >= 30) {
-        this.fpsValue.style.color = "var(--color-warning, #ffcc80)"; // Orange
+      this.fpsValue.textContent = formatNumber(fps);
+      if (fps != null && Number.isFinite(fps)) {
+        if (fps >= FPS_THRESHOLDS.GOOD) {
+          this.fpsValue.style.color = "var(--color-success, #4caf50)";
+        } else if (fps >= FPS_THRESHOLDS.WARN) {
+          this.fpsValue.style.color = "var(--color-warning, #ff9800)";
+        } else {
+          this.fpsValue.style.color = "var(--color-error, #f44336)";
+        }
       } else {
-        this.fpsValue.style.color = "var(--color-error, #ef9a9a)"; // Red
+        this.fpsValue.style.color = "var(--color-text-secondary, #aaa)";
       }
     }
 
-    // --- Draw Calls ---
     if (this.drawCallsValue) {
-      this.drawCallsValue.textContent = formatNumber(stats?.drawCalls);
+      this.drawCallsValue.textContent = formatNumber(drawCalls);
     }
-
-    // --- Triangles ---
     if (this.trianglesValue) {
-      this.trianglesValue.textContent = formatNumber(stats?.triangles);
+      this.trianglesValue.textContent = formatNumber(triangles);
     }
-
-    // --- Memory ---
     if (this.memoryValue) {
-      this.memoryValue.textContent = formatMemory(
-        stats?.memory?.usedJSHeapSize,
-      );
+      this.memoryValue.textContent = formatMemory(memory);
     }
-
-    // --- Camera Position ---
-    const cameraInfo = stats?.camera;
     if (this.camPosValue) {
-      this.camPosValue.textContent = formatVector(cameraInfo?.position, 0);
+      this.camPosValue.textContent = formatVector(camPos, 1);
     }
-
-    // --- FOV ---
     if (this.fovValue) {
-      this.fovValue.textContent = cameraInfo?.fov
-        ? `${cameraInfo.fov.toFixed(0)}°`
-        : "-";
+      this.fovValue.textContent = fov?.toFixed(0) ?? "-";
     }
   };
 
-  // Dockview panel lifecycle method
+  /**
+   * Dockview panel initialization method.
+   * Stores reference to the parent panel if provided.
+   *
+   * @param {GroupPanelPartInitParameters} parameters - Initialization parameters from Dockview.
+   */
   public init(parameters: GroupPanelPartInitParameters): void {
-    const params = parameters.params as {
-      parentInstance?: CompositeEnginePanel;
-    };
+    const params = parameters.params as RendererInfoParams;
 
-    // Reset attempt counter
-    this._attemptCount = 0;
+    if (
+      params.parentInstance &&
+      typeof params.parentInstance.getRenderer === "function"
+    ) {
+      this._parentPanel = params.parentInstance;
 
-    if (params?.parentInstance) {
-      if (
-        params.parentInstance instanceof Object &&
-        "getRenderer" in params.parentInstance
-      ) {
-        // Store the parent instance
-        this._parentPanel = params.parentInstance;
-
-        this.updateConnectionStatus(
-          "Parent panel found, attempting to connect...",
-        );
-
-        // Attempt direct connection first
-        try {
-          const renderer = params.parentInstance.getRenderer();
-          if (renderer) {
-            this.setRenderer(renderer);
-            return; // Success!
-          } else {
-            console.warn(
-              `[RendererInfoDisplay] Parent instance found, but getRenderer() returned undefined.`,
-            );
-          }
-        } catch (error) {
-          console.error(
-            "[RendererInfoDisplay] Error getting renderer from parent:",
-            error,
-          );
-        }
-
-        // Add listener as backup
-        if (this.isConnected && this._parentPanel?.element) {
-          this._parentPanel.element.removeEventListener(
-            "renderer-ready",
-            this._boundHandleRendererReady,
-          ); // Ensure no duplicates
-          this._parentPanel.element.addEventListener(
-            "renderer-ready",
-            this._boundHandleRendererReady,
-          );
-
-          // Also try connecting through other methods
-          this.tryConnectToRenderer();
-        }
-      } else {
-        console.error(
-          "[RendererInfoDisplay] Received parentInstance, but it doesn't seem to be a valid CompositeEnginePanel.",
-        );
-        this.updateConnectionStatus("Invalid parent panel reference");
-        this.tryConnectToRenderer(); // Try other methods
-      }
+      this.tryConnectToRenderer();
     } else {
       console.warn(
-        "[RendererInfoDisplay] Initialization parameters did not include 'parentInstance'. Cannot link to renderer directly.",
+        `[RendererInfoDisplay] Parent instance not provided or invalid in init params.`,
       );
-      this.updateConnectionStatus("No parent panel reference provided");
-      this.tryConnectToRenderer(); // Try other methods
     }
   }
 
-  // Event handler for when the parent's renderer is ready
+  /**
+   * Handles the `renderer-ready` event dispatched by the parent panel.
+   * Obtains the renderer instance from the event detail and sets it.
+   *
+   * @param {Event} event - The custom event containing the renderer instance.
+   */
   private handleRendererReady(event: Event): void {
-    const customEvent = event as CustomEvent<{
-      renderer: ModularSpaceRenderer;
-    }>;
-    if (customEvent.detail?.renderer) {
-      this.updateConnectionStatus("Received renderer from ready event");
-      this.setRenderer(customEvent.detail.renderer);
+    if (
+      event instanceof CustomEvent &&
+      event.detail &&
+      event.detail.renderer instanceof ModularSpaceRenderer
+    ) {
+      this.setRenderer(event.detail.renderer);
     } else {
       console.warn(
-        "[RendererInfoDisplay] Received renderer-ready event without renderer detail.",
+        "[RendererInfoDisplay] Received renderer-ready event with invalid detail.",
       );
-      this.updateConnectionStatus("Received empty renderer event");
     }
   }
 
-  // ADD REQUIRED GETTER FOR IContentRenderer
+  /**
+   * Required by Dockview `IContentRenderer`.
+   *
+   * @returns {HTMLElement} The root element of the panel content.
+   */
   get element(): HTMLElement {
     return this;
   }
 }
-
-// Define the custom element
-const ELEMENT_TAG = "renderer-info-display";
-if (!customElements.get(ELEMENT_TAG)) {
-  customElements.define(ELEMENT_TAG, RendererInfoDisplay);
-}
-
-// Export the class if needed elsewhere, though definition is the main part
-// export { RendererInfoDisplay };
