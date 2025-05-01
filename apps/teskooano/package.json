@@ -16,7 +16,7 @@
     "@teskooano/renderer-threejs": "file:../../packages/renderer/threejs",
     "@teskooano/web-apis": "file:../../packages/app/web-apis",
     "@teskooano/design-system": "file:../../packages/design-system",
-    "dockview-core": "4.2.3",
+    "dockview-core": "4.2.4",
     "driver.js": "1.3.5",
     "nanostores": "1.0.1",
     "three": "0.176.0",
@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "typescript": "5.8.3",
-    "vite": "6.3.3",
+    "vite": "6.3.4",
     "vite-plugin-glsl": "1.4.1",
     "vite-plugin-pwa": "^1.0.0",
     "vitest": "3.1.2"

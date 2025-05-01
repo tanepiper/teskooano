@@ -17,9 +17,9 @@
     "vue-easy-lightbox": "next"
   },
   "devDependencies": {
-    "@types/node": "22.15.2",
+    "@types/node": "22.15.3",
     "typescript": "5.8.3",
-    "vite": "6.3.3",
+    "vite": "6.3.4",
     "vue-router": "^4.5.1"
   }
 }
