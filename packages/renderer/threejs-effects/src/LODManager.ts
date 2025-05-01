@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import { Subscription } from "rxjs";
 // Import LODLevel from the correct location (adjust path if necessary)
 import type { LODLevel } from "@teskooano/systems-celestial";
 // --- Import simulation state ---
 import {
-  simulationState,
+  getSimulationState,
+  simulationState$,
   type PerformanceProfileType,
 } from "@teskooano/core-state";
 // --- End import ---
@@ -29,14 +31,14 @@ export class LODManager {
   private debugLabels: Map<string, DebugLabel> = new Map();
   private debugEnabled: boolean = false;
   private currentProfile: PerformanceProfileType = "medium"; // Store current profile
-  private unsubscribeSimState: (() => void) | null = null; // For unsubscribing
+  private unsubscribeSimState: Subscription | null = null; // For unsubscribing
 
   constructor(camera: THREE.PerspectiveCamera) {
     this.camera = camera;
     // Get initial profile
-    this.currentProfile = simulationState.get().performanceProfile;
+    this.currentProfile = getSimulationState().performanceProfile;
     // Subscribe to profile changes
-    this.unsubscribeSimState = simulationState.subscribe((state) => {
+    this.unsubscribeSimState = simulationState$.subscribe((state) => {
       if (state.performanceProfile !== this.currentProfile) {
         this.currentProfile = state.performanceProfile;
         // Note: Existing LOD objects won't automatically update distances.
@@ -93,7 +95,7 @@ export class LODManager {
     }
 
     const lod = new THREE.LOD();
-    lod.name = `${object.celestialObjectId}-LODContainer`; // Add a name for debugging
+    lod.name = `${object.celestialObjectId}-LODContainer`;
 
     // --- Scale distances based on profile ---
     const scaleFactor = this.getLODScaleFactor();
@@ -198,8 +200,8 @@ export class LODManager {
     objectIds.forEach((id) => this.remove(id));
     // Should be empty now, but clear just in case
     this.objectLODs.clear();
-    // Unsubscribe from state changes
-    this.unsubscribeSimState?.();
+    // Unsubscribe from state changes correctly
+    this.unsubscribeSimState?.unsubscribe();
     this.unsubscribeSimState = null;
   }
 

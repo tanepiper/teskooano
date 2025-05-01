@@ -2,7 +2,7 @@ import "@teskooano/design-system/styles.css";
 import "dockview-core/dist/styles/dockview.css";
 import "./vite-env.d";
 
-import { celestialObjectsStore } from "@teskooano/core-state";
+import { getCelestialObjects } from "@teskooano/core-state";
 
 import { ToolbarController } from "./core/controllers/toolbar/ToolbarController";
 import { TeskooanoTourModal } from "./core/interface/tour-controller/TourModal";
@@ -185,14 +185,18 @@ function setupEventListeners() {
     }>;
     const { objectId } = focusEvent.detail;
     if (objectId) {
-      const objects = celestialObjectsStore.get();
+      const objects = getCelestialObjects();
       const selectedObject = objects[objectId];
-      try {
-        pluginManager.execute("tour:setCelestialFocus", {
-          celestialName: selectedObject?.name,
-        });
-      } catch (error) {
-        console.error("[App] Error calling tour:setCelestialFocus:", error);
+      if (selectedObject && selectedObject.name) {
+        try {
+          pluginManager.execute("tour:setCelestialFocus", {
+            celestialName: selectedObject.name,
+          });
+        } catch (error) {
+          console.error("[App] Error calling tour:setCelestialFocus:", error);
+        }
+      } else {
+        console.warn(`[App] Could not find object or name for ID: ${objectId}`);
       }
     }
   });

@@ -1,4 +1,4 @@
-import { atom } from "nanostores";
+import { BehaviorSubject } from "rxjs";
 import * as THREE from "three";
 import { OSVector3 } from "@teskooano/core-math";
 import { AU_METERS, SCALE } from "@teskooano/data-types";
@@ -60,29 +60,32 @@ const initialState: SimulationState = {
   performanceProfile: "medium", // Default performance profile
 };
 
-export const simulationState = atom<SimulationState>(initialState);
+// Define the BehaviorSubject internally
+const _simulationState = new BehaviorSubject<SimulationState>(initialState);
+// Export the observable for external use
+export const simulationState$ = _simulationState.asObservable();
 
 /**
  * Actions for updating simulation state
  */
 export const simulationActions = {
   setTimeScale: (scale: number) => {
-    simulationState.set({
-      ...simulationState.get(),
+    _simulationState.next({
+      ..._simulationState.getValue(),
       timeScale: scale,
     });
   },
 
   togglePause: () => {
-    simulationState.set({
-      ...simulationState.get(),
-      paused: !simulationState.get().paused,
+    _simulationState.next({
+      ..._simulationState.getValue(),
+      paused: !_simulationState.getValue().paused,
     });
   },
 
   resetTime: () => {
-    const currentState = simulationState.get();
-    simulationState.set({
+    const currentState = _simulationState.getValue();
+    _simulationState.next({
       ...currentState,
       time: 0,
       timeScale: 1,
@@ -91,11 +94,9 @@ export const simulationActions = {
   },
 
   stepTime: (dt: number = 1) => {
-    // Default step of 1 second
-    const currentState = simulationState.get();
+    const currentState = _simulationState.getValue();
     if (currentState.paused) {
-      // Only step if paused
-      simulationState.set({
+      _simulationState.next({
         ...currentState,
         time: currentState.time + dt,
       });
@@ -107,24 +108,24 @@ export const simulationActions = {
   },
 
   selectObject: (objectId: string | null) => {
-    simulationState.set({
-      ...simulationState.get(),
+    _simulationState.next({
+      ..._simulationState.getValue(),
       selectedObject: objectId,
     });
   },
 
   setFocusedObject: (objectId: string | null) => {
-    simulationState.set({
-      ...simulationState.get(),
+    _simulationState.next({
+      ..._simulationState.getValue(),
       focusedObjectId: objectId,
     });
   },
 
   updateCamera: (position: OSVector3, target: OSVector3) => {
-    simulationState.set({
-      ...simulationState.get(),
+    _simulationState.next({
+      ..._simulationState.getValue(),
       camera: {
-        ...simulationState.get().camera,
+        ..._simulationState.getValue().camera,
         position,
         target,
       },
@@ -133,17 +134,17 @@ export const simulationActions = {
 
   // Action to set the physics engine
   setPhysicsEngine: (engine: PhysicsEngineType) => {
-    simulationState.set({
-      ...simulationState.get(),
+    _simulationState.next({
+      ..._simulationState.getValue(),
       physicsEngine: engine,
     });
   },
 
   // Action to set the performance profile
   setPerformanceProfile: (profile: PerformanceProfileType) => {
-    const currentState = simulationState.get();
+    const currentState = _simulationState.getValue();
     if (profile !== currentState.performanceProfile) {
-      simulationState.set({
+      _simulationState.next({
         ...currentState,
         performanceProfile: profile,
       });
@@ -153,11 +154,11 @@ export const simulationActions = {
   // Action to set the trail length multiplier
   setTrailLengthMultiplier: (multiplier: number) => {
     const validatedMultiplier = Math.max(0, multiplier);
-    const currentState = simulationState.get();
+    const currentState = _simulationState.getValue();
     if (
       validatedMultiplier !== currentState.visualSettings.trailLengthMultiplier
     ) {
-      simulationState.set({
+      _simulationState.next({
         ...currentState,
         visualSettings: {
           ...currentState.visualSettings,
@@ -171,3 +172,9 @@ export const simulationActions = {
     }
   },
 };
+
+// Export getter for synchronous access (use with caution)
+export const getSimulationState = () => _simulationState.getValue();
+// Export setter for synchronous access (use with caution)
+export const setSimulationState = (newState: SimulationState) =>
+  _simulationState.next(newState);

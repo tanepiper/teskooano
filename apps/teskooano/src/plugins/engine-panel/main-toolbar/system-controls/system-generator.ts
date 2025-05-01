@@ -33,7 +33,7 @@ export async function generateAndLoadSystem(
 
   // Update seed store
   updateSeed(inputSeed);
-  const finalSeed = currentSeed.get();
+  const finalSeed = currentSeed.getValue();
 
   // Clear state
   actions.clearState({

@@ -1,4 +1,4 @@
-import { atom, onMount } from "nanostores";
+import { BehaviorSubject } from "rxjs";
 
 /**
  * Interface mimicking the BatteryManager API structure.
@@ -42,16 +42,18 @@ declare global {
 }
 
 /**
- * A Nanostore atom that provides reactive updates on the device's battery status.
+ * A RxJS BehaviorSubject that provides reactive updates on the device's battery status.
  * It automatically updates when battery properties change (level, charging state, etc.).
  */
-export const batteryStore = atom<BatteryState>(initialBatteryState);
+export const batteryState$ = new BehaviorSubject<BatteryState>(
+  initialBatteryState,
+);
 
 let batteryManager: BatteryManager | null = null;
 let removeListeners: (() => void) | null = null;
 
 function updateStore(manager: BatteryManager) {
-  batteryStore.set({
+  batteryState$.next({
     charging: manager.charging,
     chargingTime: manager.chargingTime,
     dischargingTime: manager.dischargingTime,
@@ -60,7 +62,16 @@ function updateStore(manager: BatteryManager) {
   });
 }
 
-onMount(batteryStore, () => {
+/**
+ * Initializes the battery status monitoring.
+ * Should be called once when the application starts.
+ */
+function initializeBatteryMonitor() {
+  // Prevent double initialization
+  if (batteryManager || removeListeners) {
+    return;
+  }
+
   if (typeof navigator !== "undefined" && navigator.getBattery) {
     navigator
       .getBattery()
@@ -111,15 +122,22 @@ onMount(batteryStore, () => {
       })
       .catch((error) => {
         console.error("Failed to get Battery Manager:", error);
-        batteryStore.set({ ...initialBatteryState, isSupported: false });
+        batteryState$.next({ ...initialBatteryState, isSupported: false });
       });
   } else {
     console.warn("Battery Status API is not supported in this environment.");
-    batteryStore.set({ ...initialBatteryState, isSupported: false });
+    batteryState$.next({ ...initialBatteryState, isSupported: false });
   }
+}
 
-  // Cleanup on unmount
-  return () => {
-    removeListeners?.();
-  };
-});
+/**
+ * Cleans up the battery status listeners.
+ * Should be called when the application or relevant part is unmounted/destroyed.
+ */
+export function cleanupBatteryMonitor() {
+  removeListeners?.();
+}
+
+// Initialize automatically when the module is loaded
+// This mimics the onMount behavior
+initializeBatteryMonitor();

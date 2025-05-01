@@ -1,10 +1,10 @@
 import { type PhysicsStateReal } from "@teskooano/core-physics";
-import { celestialObjectsStore } from "@teskooano/core-state";
+import { getCelestialObjects } from "@teskooano/core-state";
 import type {
   RenderableCelestialObject,
   RendererStateAdapter,
 } from "@teskooano/renderer-threejs";
-import type { MapStore } from "nanostores"; // Import MapStore
+import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { KeplerianOrbitManager } from "./orbit-manager";
@@ -81,9 +81,14 @@ export class OrbitManager {
   /** Reference to the RendererStateAdapter for accessing visualization settings. */
   private stateAdapter: RendererStateAdapter;
   /** Reference to the store containing renderable object data. */
-  private renderableObjectsStore: MapStore<
+  private renderableObjects$: Observable<
     Record<string, RenderableCelestialObject>
   >;
+  /** Added property to hold the latest state */
+  private latestRenderableObjects: Record<string, RenderableCelestialObject> =
+    {};
+  /** Added property to hold the subscription */
+  private objectsSubscription: Subscription | null = null;
 
   /** Current visibility state of all managed visualization lines. */
   private visualizationVisible: boolean = true;
@@ -105,21 +110,27 @@ export class OrbitManager {
    *
    * @param objectManager - The scene's `ObjectManager` instance.
    * @param stateAdapter - The `RendererStateAdapter` for accessing visual settings.
-   * @param renderableObjectsStore - The Nanostore containing `RenderableCelestialObject` data.
+   * @param renderableObjects$ - An Observable emitting `RenderableCelestialObject` data.
    */
   constructor(
     objectManager: ObjectManager,
     stateAdapter: RendererStateAdapter, // Keep adapter for visual settings
-    renderableObjectsStore: MapStore<Record<string, RenderableCelestialObject>>, // Add store parameter
+    renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
   ) {
     this.objectManager = objectManager;
     this.stateAdapter = stateAdapter;
-    this.renderableObjectsStore = renderableObjectsStore; // Assign store
+    this.renderableObjects$ = renderableObjects$;
 
-    // Instantiate the Keplerian manager
+    // Subscribe to the observable to keep the latest state
+    this.objectsSubscription = this.renderableObjects$.subscribe((objects) => {
+      this.latestRenderableObjects = objects;
+      // Note: updateAllVisualizations is called externally, so no need to trigger it here.
+    });
+
+    // Instantiate the Keplerian manager with the Observable
     this.keplerianManager = new KeplerianOrbitManager(
       objectManager,
-      renderableObjectsStore,
+      this.renderableObjects$, // Pass the Observable
     );
 
     // Subscribe to physics engine changes FROM THE ADAPTER
@@ -136,7 +147,7 @@ export class OrbitManager {
       });
 
     // Set initial mode based on adapter's initial state
-    const initialSettings = this.stateAdapter.$visualSettings.get();
+    const initialSettings = this.stateAdapter.$visualSettings.getValue();
     this.currentMode =
       initialSettings.physicsEngine === "verlet"
         ? VisualizationMode.Verlet
@@ -182,8 +193,9 @@ export class OrbitManager {
    * - Calculating and updating Verlet predictions (throttled) for the highlighted object if in `Verlet` mode.
    */
   updateAllVisualizations(): void {
-    const objects = this.renderableObjectsStore.get();
-    const visualSettings = this.stateAdapter.$visualSettings.get();
+    // Use the latest state from the subscription
+    const objects = this.latestRenderableObjects;
+    const visualSettings = this.stateAdapter.$visualSettings.getValue();
 
     this.cleanupRemovedObjects(objects);
 
@@ -234,8 +246,8 @@ export class OrbitManager {
         this.predictionUpdateCounter = 0; // Reset counter
       }
 
-      // Get the full state for prediction calculation
-      const fullObjectsMap = celestialObjectsStore.get();
+      // Get the full state for prediction calculation using the getter
+      const fullObjectsMap = getCelestialObjects();
       const allCurrentPhysicsStates = Object.values(fullObjectsMap)
         .map((co) => co.physicsStateReal)
         .filter((state): state is PhysicsStateReal => !!state); // Filter out any undefined states
@@ -340,7 +352,7 @@ export class OrbitManager {
     shouldUpdateGeometry: boolean,
   ): void {
     const multiplier =
-      this.stateAdapter.$visualSettings.get().trailLengthMultiplier;
+      this.stateAdapter.$visualSettings.getValue().trailLengthMultiplier;
     const maxHistoryLength = 100 * multiplier;
 
     let history = this.positionHistory.get(id);
@@ -664,6 +676,10 @@ export class OrbitManager {
     // Unsubscribe from adapter settings
     this.unsubscribeAdapterSettings?.();
     this.unsubscribeAdapterSettings = null;
+
+    // Unsubscribe from renderable objects
+    this.objectsSubscription?.unsubscribe();
+    this.objectsSubscription = null;
 
     // Remove all visualizations
     // Delegate Keplerian cleanup

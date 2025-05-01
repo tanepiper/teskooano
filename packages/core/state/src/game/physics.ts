@@ -2,8 +2,8 @@ import type { CelestialObject, PhysicsStateReal } from "@teskooano/data-types";
 import { AU_METERS, SCALE } from "@teskooano/data-types";
 import * as THREE from "three";
 import { renderableActions } from "./renderableStore"; // Import renderable actions
-import { simulationState } from "./simulation"; // Import simulationState to get time
-import { celestialObjectsStore } from "./stores";
+import { getSimulationState } from "./simulation"; // Import getter instead of old store name
+import { getCelestialObjects, setCelestialObject } from "./stores";
 
 // Counter and Interval for periodic updates
 let updateCounter = 0;
@@ -14,7 +14,7 @@ const ORBITAL_ELEMENT_UPDATE_INTERVAL = 60; // Recalculate every N updates
  */
 export const getPhysicsBodies = (): PhysicsStateReal[] => {
   const bodies: PhysicsStateReal[] = [];
-  Object.values(celestialObjectsStore.get()).forEach((obj) => {
+  Object.values(getCelestialObjects()).forEach((obj) => {
     if (obj.physicsStateReal) {
       bodies.push(obj.physicsStateReal);
     } else {
@@ -37,7 +37,7 @@ export const updatePhysicsState = (
 
   updatedBodiesReal.forEach((bodyReal) => {
     const id = String(bodyReal.id);
-    const existingObject = celestialObjectsStore.get()[id];
+    const existingObject = getCelestialObjects()[id];
     if (!existingObject) {
       console.warn(
         `[updatePhysicsState] Cannot find existing object with ID: ${id} (for state update)`,
@@ -52,7 +52,7 @@ export const updatePhysicsState = (
       existingObject.siderealRotationPeriod_s !== 0 &&
       existingObject.axialTilt
     ) {
-      const currentTime = simulationState.get().time;
+      const currentTime = getSimulationState().time;
       const rotationSpeed =
         (2 * Math.PI) / existingObject.siderealRotationPeriod_s;
       const currentRotationAngle =
@@ -82,7 +82,7 @@ export const updatePhysicsState = (
       physicsStateReal: bodyReal, // Update only the real physics state
       // orbit: existingObject.orbit, // Keep existing orbit (already spread)
     };
-    celestialObjectsStore.setKey(id, newObjectData);
+    setCelestialObject(id, newObjectData);
 
     // --- REMOVED ---
     // Direct update to renderable store should NOT happen here.

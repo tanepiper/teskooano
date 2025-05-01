@@ -1,6 +1,6 @@
 import {
   actions,
-  simulationState,
+  getSimulationState,
   type SimulationState,
 } from "@teskooano/core-state";
 import type { SimulationUIElements } from "./SimulationControls.updater";
@@ -78,7 +78,7 @@ export const setupEventHandlers = (
 ): { add: () => void; remove: () => void } => {
   const playPauseHandler = actions.togglePause;
   const speedUpHandler = (): void => {
-    const currentScale = simulationState.get().timeScale;
+    const currentScale = getSimulationState().timeScale;
     const newScale =
       currentScale === 0
         ? 1 // Start forward from zero
@@ -89,7 +89,7 @@ export const setupEventHandlers = (
   };
 
   const speedDownHandler = (): void => {
-    const currentScale = simulationState.get().timeScale;
+    const currentScale = getSimulationState().timeScale;
     const newScale =
       currentScale > 0
         ? Math.max(currentScale / 2, 0.1) // Slow down towards 0.1 from positive
@@ -100,7 +100,7 @@ export const setupEventHandlers = (
   };
 
   const reverseHandler = (): void => {
-    const currentScale = simulationState.get().timeScale;
+    const currentScale = getSimulationState().timeScale;
     actions.setTimeScale(currentScale === 0 ? -1 : -currentScale); // Toggle sign, or start at -1 from 0
   };
 

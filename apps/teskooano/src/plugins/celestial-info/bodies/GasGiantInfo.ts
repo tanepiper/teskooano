@@ -1,13 +1,13 @@
+import { getCelestialObjects } from "@teskooano/core-state";
 import {
   CelestialObject,
   CelestialType,
   GasGiantProperties,
   RingSystemProperties,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/FormatUtils";
-import { baseStyles } from "../utils/CelestialStyles";
 import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
-import { celestialObjectsStore } from "@teskooano/core-state";
+import { baseStyles } from "../utils/CelestialStyles";
+import { FormatUtils } from "../utils/FormatUtils";
 
 // --- GAS GIANT INFO COMPONENT ---
 export class GasGiantInfoComponent
@@ -36,7 +36,7 @@ export class GasGiantInfoComponent
 
     const giantProps = celestial.properties as GasGiantProperties;
 
-    const allObjects = celestialObjectsStore.get();
+    const allObjects = getCelestialObjects();
     const ringSystem = Object.values(allObjects).find(
       (obj) =>
         obj.type === CelestialType.RING_SYSTEM && obj.parentId === celestial.id,

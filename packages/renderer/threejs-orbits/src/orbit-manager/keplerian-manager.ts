@@ -1,13 +1,8 @@
-import * as THREE from "three";
-import {
-  type OrbitalParameters,
-  CelestialType,
-  SCALE,
-} from "@teskooano/data-types";
-import type { MapStore } from "nanostores";
+import { type OrbitalParameters, CelestialType } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import { OSVector3 } from "@teskooano/core-math";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import type { Observable, Subscription } from "rxjs";
+import * as THREE from "three";
 import { calculateOrbitPoints, updateOrbitLine } from "./"; // Import from index
 
 // --- Material Definitions ---
@@ -34,21 +29,27 @@ export class KeplerianOrbitManager {
   public lines: Map<string, THREE.Line> = new Map();
 
   private objectManager: ObjectManager;
-  private renderableObjectsStore: MapStore<
+  private renderableObjects$: Observable<
     Record<string, RenderableCelestialObject>
   >;
+  private latestRenderableObjects: Record<string, RenderableCelestialObject> =
+    {};
+  private objectsSubscription: Subscription | null = null;
 
   /**
    * Creates an instance of KeplerianOrbitManager.
    * @param objectManager - The scene's ObjectManager instance.
-   * @param renderableObjectsStore - The Nanostore containing RenderableCelestialObject data.
+   * @param renderableObjects$ - An Observable emitting RenderableCelestialObject data.
    */
   constructor(
     objectManager: ObjectManager,
-    renderableObjectsStore: MapStore<Record<string, RenderableCelestialObject>>,
+    renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
   ) {
     this.objectManager = objectManager;
-    this.renderableObjectsStore = renderableObjectsStore;
+    this.renderableObjects$ = renderableObjects$;
+    this.objectsSubscription = this.renderableObjects$.subscribe((objects) => {
+      this.latestRenderableObjects = objects;
+    });
   }
 
   /**
@@ -70,7 +71,7 @@ export class KeplerianOrbitManager {
   ): void {
     const existingLine = this.lines.get(objectId);
     const parentObject3D = this.objectManager.getObject(parentId);
-    const allRenderableObjects = this.renderableObjectsStore.get(); // Get latest state
+    const allRenderableObjects = this.latestRenderableObjects;
     const parentState = allRenderableObjects[parentId];
 
     if (!parentObject3D || !parentState) {
@@ -248,6 +249,6 @@ export class KeplerianOrbitManager {
    */
   dispose(): void {
     this.clearAll();
-    // Any other specific cleanup for this manager
+    this.objectsSubscription?.unsubscribe();
   }
 }

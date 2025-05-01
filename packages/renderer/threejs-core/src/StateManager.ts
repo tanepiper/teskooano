@@ -1,6 +1,13 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { celestialObjectsStore, simulationState } from "@teskooano/core-state";
+import {
+  celestialObjects$,
+  getCelestialObjects,
+  getSimulationState,
+  simulationState$,
+} from "@teskooano/core-state";
 import type { CelestialObject } from "@teskooano/data-types";
+import { Subscription } from "rxjs";
+import { pairwise, startWith } from "rxjs/operators";
 
 /**
  * Interface for extended celestial object with renderer-specific properties
@@ -33,7 +40,7 @@ export type CameraStateCallback = (
 export class StateManager {
   private objectSubscribers: Set<ObjectStateCallback> = new Set();
   private cameraSubscribers: Set<CameraStateCallback> = new Set();
-  private unsubscribes: (() => void)[] = [];
+  private unsubscribes: Subscription[] = [];
 
   /**
    * Create a new StateManager
@@ -47,28 +54,37 @@ export class StateManager {
    */
   private subscribeToStateChanges(): void {
     // Subscribe to simulation state changes (camera, etc.)
-    const simUnsubscribe = simulationState.subscribe((state) => {
+    const simUnsubscribe = simulationState$.subscribe((state) => {
       // Notify camera subscribers
       this.cameraSubscribers.forEach((callback) => {
         callback(state.camera.position, state.camera.target);
       });
     });
 
-    // Subscribe to celestial objects changes
-    const objUnsubscribe = celestialObjectsStore.subscribe(
-      (newObjects, prevObjects) => {
+    // Subscribe to celestial objects changes, comparing previous and current state
+    const initialObjects = getCelestialObjects(); // Get initial state for startWith
+    const objUnsubscribe = celestialObjects$
+      .pipe(
+        startWith(initialObjects), // Emit initial state immediately so pairwise works on first emission
+        pairwise(), // Emit [previous, current]
+      )
+      .subscribe(([prevObjects, newObjects]) => {
+        // Destructure the pair
+        // Ensure prevObjects is not null/undefined if startWith provides the initial state
+        const safePrevObjects = prevObjects ?? {};
+
         // Process added and updated objects
         for (const id in newObjects) {
           const object = newObjects[id] as RendererCelestialObject;
 
-          if (!prevObjects || !prevObjects[id]) {
+          if (!safePrevObjects[id]) {
             // New object
             this.objectSubscribers.forEach((callback) => {
               callback("add", object, id);
             });
           } else {
             // Check if object has changed - focusing on physics state
-            const prevObject = prevObjects[id];
+            const prevObject = safePrevObjects[id];
 
             // Compare physicsStateReal for position/velocity changes
             let physicsChanged = false;
@@ -114,22 +130,19 @@ export class StateManager {
         }
 
         // Process removed objects
-        if (prevObjects) {
-          for (const id in prevObjects) {
-            if (!newObjects[id]) {
-              // Object was removed
-              this.objectSubscribers.forEach((callback) => {
-                callback(
-                  "remove",
-                  prevObjects[id] as RendererCelestialObject,
-                  id,
-                );
-              });
-            }
+        for (const id in safePrevObjects) {
+          if (!newObjects[id]) {
+            // Object was removed
+            this.objectSubscribers.forEach((callback) => {
+              callback(
+                "remove",
+                safePrevObjects[id] as RendererCelestialObject,
+                id,
+              );
+            });
           }
         }
-      },
-    );
+      });
 
     this.unsubscribes.push(simUnsubscribe, objUnsubscribe);
   }
@@ -162,16 +175,13 @@ export class StateManager {
    * Get all current celestial objects
    */
   getAllObjects(): Record<string, RendererCelestialObject> {
-    return celestialObjectsStore.get() as Record<
-      string,
-      RendererCelestialObject
-    >;
+    return getCelestialObjects() as Record<string, RendererCelestialObject>;
   }
 
   /**
    * Add an unsubscribe function to be called during cleanup
    */
-  addUnsubscribe(unsubscribe: () => void): void {
+  addUnsubscribe(unsubscribe: Subscription): void {
     this.unsubscribes.push(unsubscribe);
   }
 
@@ -180,7 +190,7 @@ export class StateManager {
    */
   dispose(): void {
     // Call all unsubscribe functions
-    this.unsubscribes.forEach((unsubscribe) => unsubscribe());
+    this.unsubscribes.forEach((unsubscribe) => unsubscribe.unsubscribe());
     this.unsubscribes = [];
     this.objectSubscribers.clear();
     this.cameraSubscribers.clear();

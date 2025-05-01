@@ -1,5 +1,3 @@
-import { renderableObjectsStore } from "@teskooano/core-state";
-import { simulationState } from "@teskooano/core-state";
 import {
   CelestialType,
   type OortCloudProperties as CentralOortCloudProperties,
@@ -8,6 +6,10 @@ import {
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
 import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "..";
+import {
+  getRenderableObjects,
+  getSimulationState,
+} from "@teskooano/core-state";
 
 // --- Shaders --- // TODO: Move to separate .glsl files
 const oortCloudVertexShader = `
@@ -464,7 +466,7 @@ export class OortCloudRenderer implements CelestialRenderer {
     }
 
     // Get current simulation time scale
-    const timeScale = simulationState.get().timeScale;
+    const timeScale = getSimulationState().timeScale;
 
     // Debug: Log time values occasionally to avoid console spam
     const currentTime = Date.now();
@@ -536,7 +538,7 @@ export class OortCloudRenderer implements CelestialRenderer {
     }
 
     // Oort cloud position is typically centered on the system origin (its parent)
-    const currentRenderableObjects = renderableObjectsStore.get();
+    const currentRenderableObjects = getRenderableObjects();
     const currentObject = currentRenderableObjects[this.objectId];
 
     if (!currentObject) {

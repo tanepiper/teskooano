@@ -23,8 +23,14 @@ import {
 } from "@teskooano/data-types";
 import * as THREE from "three";
 import { celestialActions } from "./celestialActions";
-import { simulationState } from "./simulation";
-import { celestialHierarchyStore, celestialObjectsStore } from "./stores";
+import { getSimulationState, setSimulationState } from "./simulation";
+import {
+  getCelestialObjects,
+  getCelestialHierarchy,
+  setCelestialHierarchy,
+  setAllCelestialObjects,
+  setAllCelestialHierarchy,
+} from "./stores";
 import { CustomEvents } from "@teskooano/data-types";
 
 /**
@@ -72,7 +78,8 @@ const _createCelestialObjectInternal = (
       ? data.seed.toString()
       : (data.seed ?? `${Math.floor(Math.random() * 1000000)}`);
 
-  // --- Create and Store the CORE CelestialObject ---
+  // --- Create and Store the CORE CelestialObject using celestialActions ---
+  // celestialActions already uses the correct setters
   const coreObject: CelestialObject = {
     id: data.id,
     name: data.name,
@@ -96,14 +103,22 @@ const _createCelestialObjectInternal = (
   };
   celestialActions.addCelestialObject(coreObject);
 
+  // NOTE: Hierarchy update is now handled within celestialActions.addCelestialObject
+  // The logic below is removed as it's duplicated/obsolete.
+  /*
   // Update hierarchy (caller handles star root case)
   if (data.parentId) {
-    const currentHierarchy = celestialHierarchyStore.get();
+    const currentHierarchy = getCelestialHierarchy(); // Use getter
     const siblings = currentHierarchy[data.parentId] || [];
     if (!siblings.includes(data.id)) {
-      celestialHierarchyStore.setKey(data.parentId, [...siblings, data.id]);
+      const newHierarchy = { // Create new hierarchy object
+        ...currentHierarchy,
+        [data.parentId]: [...siblings, data.id],
+      };
+      setCelestialHierarchy(newHierarchy); // Use setter
     }
   }
+  */
 };
 
 /**
@@ -121,14 +136,12 @@ export const celestialFactory = {
       resetSelection = true,
     } = options;
 
-    // Clear all celestial objects
-    celestialObjectsStore.set({});
+    // Use bulk setters
+    setAllCelestialObjects({});
+    setAllCelestialHierarchy({});
 
-    // Clear hierarchy
-    celestialHierarchyStore.set({});
-
-    // Get current state to preserve what's needed
-    const currentState = simulationState.get();
+    // Get current state to preserve what's needed using getter
+    const currentState = getSimulationState();
 
     // Build the new state
     const newState: any = { ...currentState };
@@ -155,8 +168,8 @@ export const celestialFactory = {
       };
     }
 
-    // Update the state
-    simulationState.set(newState);
+    // Update the state using the setter
+    setSimulationState(newState);
 
     // Dispatch event indicating objects are cleared (or loaded with count 0)
     document.dispatchEvent(
@@ -323,8 +336,9 @@ export const celestialFactory = {
       albedo,
     );
 
-    // Initialize hierarchy root for the star
-    celestialHierarchyStore.setKey(data.id, []);
+    // Initialize hierarchy root for the star using the setter
+    const currentHierarchy = getCelestialHierarchy(); // Get current
+    setCelestialHierarchy({ ...currentHierarchy, [data.id]: [] }); // Set new map
 
     document.dispatchEvent(
       new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
@@ -366,8 +380,9 @@ export const celestialFactory = {
     let physicsStateReal: PhysicsStateReal;
     let orbitalParams = data.orbit;
 
-    const objects = celestialObjectsStore.get();
-    const parent = data.parentId ? objects[data.parentId] : null; // Get parent if ID exists
+    // Use getter to find parent
+    const objects = getCelestialObjects();
+    const parent = data.parentId ? objects[data.parentId] : null;
 
     // --- Handle RING_SYSTEM state derivation ---
     if (data.type === CelestialType.RING_SYSTEM) {

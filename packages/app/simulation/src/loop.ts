@@ -7,8 +7,11 @@ import {
 } from "@teskooano/core-physics";
 import {
   celestialActions,
-  celestialObjectsStore,
-  simulationState,
+  getCelestialObjects,
+  getSimulationState,
+  setAllCelestialObjects,
+  setSimulationState,
+  simulationState$,
   updateAccelerationVectors,
   updatePhysicsState,
 } from "@teskooano/core-state";
@@ -49,17 +52,17 @@ export function startSimulationLoop() {
       // const fixedDeltaTime = Math.min(deltaTime, 0.01); // Cap at 100fps rate for physics
       const fixedDeltaTime = Math.min(deltaTime, 0.001); // USE SMALLER CAP: Cap at 1000fps physics rate
 
-      if (!simulationState.get().paused) {
-        const timeScale = simulationState.get().timeScale;
+      if (!getSimulationState().paused) {
+        const timeScale = getSimulationState().timeScale;
         const scaledDeltaTime = fixedDeltaTime * timeScale;
         accumulatedTime += scaledDeltaTime;
 
-        simulationState.set({
-          ...simulationState.get(),
+        setSimulationState({
+          ...getSimulationState(),
           time: accumulatedTime,
         });
 
-        const currentCelestialObjects = celestialObjectsStore.get();
+        const currentCelestialObjects = getCelestialObjects();
         // Filter out destroyed objects before sending to physics engine
         const activeBodiesReal = Object.values(currentCelestialObjects)
           .filter(
@@ -69,7 +72,7 @@ export function startSimulationLoop() {
           .map((obj) => obj.physicsStateReal)
           .filter((state): state is PhysicsStateReal => !!state); // Ensure state exists
 
-        const cameraStatePos = simulationState.get().camera.position;
+        const cameraStatePos = getSimulationState().camera.position;
         const cameraPosition = vectorPool.get(
           cameraStatePos.x,
           cameraStatePos.y,
@@ -213,7 +216,7 @@ export function startSimulationLoop() {
 
         // --- Update State Stores (Single Update for Celestials) ---
         // Step 1: Set the complete celestial object state
-        celestialObjectsStore.set(finalStateMap);
+        setAllCelestialObjects(finalStateMap);
 
         // Step 2: Update the acceleration vector store separately
         updateAccelerationVectors(stepResult.accelerations);
@@ -241,7 +244,7 @@ export function startSimulationLoop() {
       }
 
       // Debug logging remains the same...
-      const currentSimTime = simulationState.get().time;
+      const currentSimTime = getSimulationState().time;
       if (
         Math.floor(currentSimTime) % 5 === 0 &&
         Math.floor(currentSimTime) !== lastLoggedTime
@@ -262,7 +265,7 @@ export function startSimulationLoop() {
 
   running = true;
   lastTime = performance.now();
-  accumulatedTime = simulationState.get().time;
+  accumulatedTime = getSimulationState().time;
   requestAnimationFrame(simulationLoop);
 }
 

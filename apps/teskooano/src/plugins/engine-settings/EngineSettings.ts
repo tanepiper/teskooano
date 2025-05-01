@@ -9,6 +9,7 @@ import { Subscription } from "rxjs";
 import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
 import { template } from "./EngineSettings.template.js";
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
+import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 
 /**
  * Custom Element `engine-ui-settings-panel`.
@@ -147,7 +148,10 @@ export class EngineUISettingsPanel
       "change",
       this.handleDebrisEffectsToggleChange,
     );
-    this.fovSliderElement?.addEventListener("change", this.handleFovChange);
+    this.fovSliderElement?.addEventListener(
+      CustomEvents.SLIDER_CHANGE,
+      this.handleFovChange as EventListener,
+    );
     this.debugModeToggle?.addEventListener(
       "change",
       this.handleDebugModeToggleChange,
@@ -171,7 +175,10 @@ export class EngineUISettingsPanel
       "change",
       this.handleDebrisEffectsToggleChange,
     );
-    this.fovSliderElement?.removeEventListener("change", this.handleFovChange);
+    this.fovSliderElement?.removeEventListener(
+      CustomEvents.SLIDER_CHANGE,
+      this.handleFovChange as EventListener,
+    );
     this.debugModeToggle?.removeEventListener(
       "change",
       this.handleDebugModeToggleChange,
@@ -286,42 +293,36 @@ export class EngineUISettingsPanel
     this._parentPanel.setDebugMode(isChecked);
   };
 
-  private handleFovChange = (event: Event): void => {
-    if (!this._parentPanel) return;
-
-    let newFov: number | undefined;
-
-    if (
-      event instanceof CustomEvent &&
-      typeof event.detail?.value === "number"
-    ) {
-      newFov = event.detail.value;
-    } else {
+  private handleFovChange = (
+    event: CustomEvent<SliderValueChangePayload>,
+  ): void => {
+    if (!this._parentPanel) {
+      this.showError("Cannot handle FOV change: Parent panel not available.");
       console.warn(
-        "[EngineUISettingsPanel] Received 'change' event without expected numeric detail.value. Attempting fallback. Event:",
-        event,
+        "[EngineUISettingsPanel] handleFovChange called without parent panel.",
       );
-      const slider = event.target as TeskooanoSlider;
-      if (slider && typeof slider.value === "number") {
-        newFov = slider.value;
-      } else {
-        this.showError("Could not determine FOV value.");
-        return;
-      }
+      return;
     }
 
-    if (typeof newFov === "number" && !isNaN(newFov)) {
-      try {
-        this._parentPanel.setFov(newFov);
+    try {
+      const newValue = event.detail.value;
+
+      if (typeof newValue === "number" && !isNaN(newValue)) {
+        this._parentPanel.updateViewState({ fov: newValue });
         this.clearError();
-      } catch (error) {
-        const errMsg = "Error setting FOV on parent panel.";
-        this.showError(errMsg);
-        console.error(`[EngineUISettingsPanel] ${errMsg}`, error);
+      } else {
+        console.warn(
+          "[EngineUISettingsPanel] FOV slider event received invalid detail value:",
+          event.detail,
+        );
+        this.showError("Invalid FOV value received from slider event.");
       }
-    } else {
-      this.showError("Invalid FOV value received.");
-      console.error("[EngineUISettingsPanel] Invalid FOV value:", newFov);
+    } catch (error) {
+      console.error(
+        "[EngineUISettingsPanel] Error handling FOV change event:",
+        error,
+      );
+      this.showError("An error occurred while updating FOV.");
     }
   };
 

@@ -1,4 +1,4 @@
-import { renderableObjectsStore } from "@teskooano/core-state"; // Import the shared store
+import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import {
   AnimationLoop,
   SceneManager,
@@ -10,13 +10,13 @@ import {
   CSS2DLayerType,
   CSS2DManager,
 } from "@teskooano/renderer-threejs-interaction";
-import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { OrbitManager } from "@teskooano/renderer-threejs-orbits";
 import * as THREE from "three";
 import { RendererStateAdapter } from "./RendererStateAdapter";
 // Import debug utilities
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
+import { renderableObjects$ } from "@teskooano/core-state";
 
 // Export our new SpaceRenderer facade that uses the new modular architecture
 export class ModularSpaceRenderer {
@@ -102,7 +102,7 @@ export class ModularSpaceRenderer {
     this.objectManager = new ObjectManager(
       this.sceneManager.scene,
       this.sceneManager.camera,
-      renderableObjectsStore,
+      renderableObjects$,
       this.lightManager,
       this.sceneManager.renderer,
       this.css2DManager,
@@ -111,7 +111,7 @@ export class ModularSpaceRenderer {
     this.orbitManager = new OrbitManager(
       this.objectManager,
       this.stateAdapter, // For visual settings
-      renderableObjectsStore, // For object data
+      renderableObjects$, // For object data
     );
     this.backgroundManager = new BackgroundManager(this.sceneManager.scene);
     this.backgroundManager.setCamera(this.sceneManager.camera);

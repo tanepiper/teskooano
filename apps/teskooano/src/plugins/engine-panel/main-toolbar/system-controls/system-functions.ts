@@ -4,7 +4,7 @@ import type {
 } from "@teskooano/ui-plugin";
 import {
   actions,
-  celestialObjectsStore,
+  getCelestialObjects,
   currentSeed,
 } from "@teskooano/core-state";
 import {
@@ -91,7 +91,7 @@ async function processImportedFile(
           if (obj.id !== star.id) actions.addCelestialObject(obj);
         });
 
-        currentSeed.set(parsedData.seed);
+        currentSeed.next(parsedData.seed);
 
         // Inform simulation/UI to reset time-based elements
         window.dispatchEvent(
@@ -182,8 +182,8 @@ export const exportSystemFunction: FunctionConfig = {
   id: "system:export",
   execute: async () => {
     try {
-      const objects = celestialObjectsStore.get();
-      const seed = currentSeed.get();
+      const objects = getCelestialObjects();
+      const seed = currentSeed.getValue();
       const objectsArray = Object.values(objects);
 
       if (objectsArray.length === 0) {
@@ -280,7 +280,7 @@ export const createBlankSystemFunction: FunctionConfig = {
 
       const star = generateStar(Math.random); // Generate a default star
       actions.createSolarSystem(star);
-      currentSeed.set(""); // No seed for a blank system
+      currentSeed.next(""); // No seed for a blank system
 
       // Inform simulation/UI to reset time-based elements
       window.dispatchEvent(new CustomEvent(CustomEvents.SIMULATION_RESET_TIME));
@@ -299,7 +299,7 @@ export const createBlankSystemFunction: FunctionConfig = {
 export const copySeedFunction: FunctionConfig = {
   id: "system:copy_seed",
   execute: async (context: PluginExecutionContext, seedToCopy?: string) => {
-    const seed = seedToCopy ?? currentSeed.get() ?? "";
+    const seed = seedToCopy ?? currentSeed.getValue() ?? "";
     if (!seed) {
       return { success: false, symbol: "🤷", message: "No seed to copy." };
     }

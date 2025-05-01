@@ -3,7 +3,7 @@ import {
   CelestialStatus,
   CelestialType,
 } from "@teskooano/data-types";
-import { celestialObjectsStore } from "@teskooano/core-state";
+import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 
 import { CelestialInfoComponent } from "./utils/CelestialInfoInterface";
@@ -21,6 +21,7 @@ import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 
 import { template } from "./CelestialInfo.template";
+import { Subscription } from "rxjs";
 
 /**
  * Custom Element `celestial-info`.
@@ -33,7 +34,7 @@ import { template } from "./CelestialInfo.template";
  */
 export class CelestialInfo extends HTMLElement implements IContentRenderer {
   private shadow: ShadowRoot;
-  private unsubscribeObjectsStore: (() => void) | null = null;
+  private unsubscribeObjectsStore: Subscription | null = null;
   private currentSelectedId: string | null = null;
 
   private components: Map<CelestialType | "generic", CelestialInfoComponent> =
@@ -119,7 +120,7 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   }
 
   disconnectedCallback() {
-    this.unsubscribeObjectsStore?.();
+    this.unsubscribeObjectsStore?.unsubscribe();
     this.unsubscribeObjectsStore = null;
 
     document.removeEventListener(
@@ -157,7 +158,7 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   };
 
   private setupObjectListener() {
-    this.unsubscribeObjectsStore = celestialObjectsStore.subscribe(
+    this.unsubscribeObjectsStore = celestialObjects$.subscribe(
       (allCelestials) => {
         if (this.currentSelectedId) {
           const currentObject = allCelestials[this.currentSelectedId];
@@ -190,7 +191,7 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
       return;
     }
 
-    const allCelestials = celestialObjectsStore.get();
+    const allCelestials = getCelestialObjects();
     const celestialData = allCelestials[selectedId];
 
     if (celestialData) {

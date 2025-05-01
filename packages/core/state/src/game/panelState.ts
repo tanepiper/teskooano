@@ -1,4 +1,4 @@
-import { atom, type WritableAtom } from "nanostores";
+import { BehaviorSubject } from "rxjs";
 import type { DockviewPanelApi } from "dockview-core";
 import type * as THREE from "three";
 
@@ -20,11 +20,16 @@ export interface PanelViewState {
 // --- Global Active Panel State ---
 // Store holding a reference to the currently active panel's API
 // We store the API object as it provides access to the panel's methods/properties.
-export const activePanelApi = atom<DockviewPanelApi | null>(null);
+export const activePanelApi = new BehaviorSubject<DockviewPanelApi | null>(
+  null,
+);
 
-// --- Actions --- (Optional: Can add actions later if needed)
-// export const actions = {
-//   setActivePanel(panelApi: DockviewPanelApi | null) {
-//     activePanelApi.set(panelApi);
-//   },
-// };
+// --- Actions --- (Converted to simple functions)
+export const panelActions = {
+  setActivePanel(panelApi: DockviewPanelApi | null) {
+    activePanelApi.next(panelApi);
+  },
+  getActivePanel(): DockviewPanelApi | null {
+    return activePanelApi.getValue();
+  },
+};

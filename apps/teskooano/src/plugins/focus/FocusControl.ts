@@ -1,5 +1,5 @@
 import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
-import { celestialObjectsStore } from "@teskooano/core-state";
+import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel.js"; // Import parent panel type
@@ -16,6 +16,7 @@ import { template } from "./FocusControl.template.js";
 
 import "./CelestialRow.js";
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
+import { Subscription } from "rxjs";
 
 /**
  * A custom element panel for Dockview that displays a hierarchical list
@@ -42,7 +43,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
   private _handleTreeInteraction: (event: Event) => void; // Combined tree handler
 
   // Store subscription for automatic updates
-  private _celestialObjectsUnsubscribe: (() => void) | null = null;
+  private _celestialObjectsUnsubscribe: Subscription | null = null;
   private _previousObjectsState: Record<string, CelestialObject> = {};
 
   // --- Static Configuration ---
@@ -132,8 +133,8 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     this._populateListInternal(); // Initial population
 
     // Subscribe to store
-    this._previousObjectsState = { ...celestialObjectsStore.get() };
-    this._celestialObjectsUnsubscribe = celestialObjectsStore.subscribe(
+    this._previousObjectsState = { ...getCelestialObjects() };
+    this._celestialObjectsUnsubscribe = celestialObjects$.subscribe(
       this.checkForStatusChanges.bind(this),
     );
 
@@ -167,7 +168,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
   disconnectedCallback() {
     this.removeEventListeners();
     if (this._celestialObjectsUnsubscribe) {
-      this._celestialObjectsUnsubscribe();
+      this._celestialObjectsUnsubscribe.unsubscribe();
       this._celestialObjectsUnsubscribe = null;
     }
   }
@@ -219,7 +220,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
       if (!objectId) return;
 
       // Double-check state (might be redundant if row checks inactive)
-      const currentObjects = celestialObjectsStore.get();
+      const currentObjects = getCelestialObjects();
       const currentObject = currentObjects[objectId];
       if (
         !currentObject ||
@@ -334,7 +335,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    * @internal Could be made public if needed for external testing/dev tools.
    */
   public getRandomActiveObjectId = (): [string | null, string | null] => {
-    const objects = celestialObjectsStore.get();
+    const objects = getCelestialObjects();
     const activeObjects = Object.values(objects).filter(
       (obj) =>
         obj.status !== CelestialStatus.DESTROYED &&
@@ -448,7 +449,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    */
   private _populateListInternal = (): void => {
     if (!this.treeListContainer) return;
-    const objects = celestialObjectsStore.get();
+    const objects = getCelestialObjects();
     populateFocusList(
       this.treeListContainer,
       objects,

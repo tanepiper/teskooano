@@ -1,6 +1,13 @@
 import type { CelestialObject, OrbitalParameters } from "@teskooano/data-types";
 import { CelestialStatus, CelestialType } from "@teskooano/data-types";
-import { celestialObjectsStore, celestialHierarchyStore } from "./stores";
+import {
+  getCelestialObjects,
+  setCelestialObject,
+  getCelestialHierarchy,
+  setCelestialHierarchy,
+  removeCelestialObject as removeObjectFromStore,
+  removeCelestialHierarchyEntry,
+} from "./stores";
 import { renderableActions } from "./renderableStore";
 import { CustomEvents } from "@teskooano/data-types";
 
@@ -10,35 +17,41 @@ import { CustomEvents } from "@teskooano/data-types";
 export const celestialActions = {
   addCelestialObject: (object: CelestialObject) => {
     try {
-      // Get current objects and create a new map with the added object
-      const currentObjects = celestialObjectsStore.get();
-      const newObjects = {
-        ...currentObjects,
-        [object.id]: object,
-      };
-      // Set the entire new map to trigger subscribers
-      celestialObjectsStore.set(newObjects);
+      // Get current objects and add the new one
+      const currentObjects = getCelestialObjects();
+      // Use the setter which handles creating the new map
+      setCelestialObject(object.id, object);
 
       // Update hierarchy
       const parentId = object.parentId;
       if (parentId) {
-        const currentHierarchy = celestialHierarchyStore.get();
+        const currentHierarchy = getCelestialHierarchy();
         const siblings = currentHierarchy[parentId] || [];
         if (!siblings.includes(object.id)) {
-          celestialHierarchyStore.setKey(parentId, [...siblings, object.id]);
+          // Create new hierarchy object for the update
+          const newHierarchy = {
+            ...currentHierarchy,
+            [parentId]: [...siblings, object.id],
+          };
+          setCelestialHierarchy(newHierarchy); // Update using the setter
         }
       } else if (object.type === CelestialType.STAR) {
         // Ensure top-level star entry exists even without parent
-        celestialHierarchyStore.setKey(
-          object.id,
-          celestialHierarchyStore.get()[object.id] || [],
-        );
+        const currentHierarchy = getCelestialHierarchy();
+        if (!currentHierarchy[object.id]) {
+          const newHierarchy = {
+            ...currentHierarchy,
+            [object.id]: [],
+          };
+          setCelestialHierarchy(newHierarchy);
+        }
       }
 
       // Dispatch event after loading
       document.dispatchEvent(
         new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
-          detail: { count: Object.keys(newObjects).length },
+          // Use the new object map from the setter indirectly
+          detail: { count: Object.keys(getCelestialObjects()).length },
         }),
       );
     } catch (error) {
@@ -50,17 +63,12 @@ export const celestialActions = {
     objectId: string,
     updates: Partial<CelestialObject>,
   ) => {
-    const currentObjects = celestialObjectsStore.get();
+    const currentObjects = getCelestialObjects();
     const object = currentObjects[objectId];
 
     if (object) {
-      // Create a new map with the updated object
-      const newObjects = {
-        ...currentObjects,
-        [objectId]: { ...object, ...updates },
-      };
-      // Set the entire new map
-      celestialObjectsStore.set(newObjects);
+      // Use the setter function
+      setCelestialObject(objectId, { ...object, ...updates });
     } else {
       console.warn(
         `[celestialActions] updateCelestialObject: Object ${objectId} not found.`,
@@ -72,11 +80,12 @@ export const celestialActions = {
     objectId: string,
     parameters: Partial<OrbitalParameters>,
   ) => {
-    const objects = celestialObjectsStore.get();
+    const objects = getCelestialObjects();
     const object = objects[objectId];
 
     if (object && object.orbit) {
-      celestialObjectsStore.setKey(objectId, {
+      // Use setter function
+      setCelestialObject(objectId, {
         ...object,
         orbit: {
           ...object.orbit,
@@ -96,22 +105,17 @@ export const celestialActions = {
    * @param objectId The ID of the object to mark as destroyed.
    */
   markObjectDestroyed: (objectId: string) => {
-    const currentObjects = celestialObjectsStore.get();
+    const currentObjects = getCelestialObjects();
     const object = currentObjects[objectId];
     if (object) {
       if (object.status === CelestialStatus.DESTROYED) {
         return; // Avoid unnecessary updates
       }
-      // Create a new map with the updated object status
-      const newObjects = {
-        ...currentObjects,
-        [objectId]: {
-          ...object,
-          status: CelestialStatus.DESTROYED,
-        },
-      };
-      // Set the entire new map
-      celestialObjectsStore.set(newObjects);
+      // Use setter function
+      setCelestialObject(objectId, {
+        ...object,
+        status: CelestialStatus.DESTROYED,
+      });
 
       // Dispatch event after destruction
       document.dispatchEvent(
@@ -127,19 +131,16 @@ export const celestialActions = {
   },
 
   removeCelestialObject: (objectId: string) => {
-    const currentObjects = celestialObjectsStore.get();
+    const currentObjects = getCelestialObjects();
     if (currentObjects[objectId]) {
-      // Create a new map excluding the removed object
-      const newObjects = { ...currentObjects };
-      delete newObjects[objectId];
-      // Set the entire new map
-      celestialObjectsStore.set(newObjects);
+      // Use the new store function to remove the object
+      removeObjectFromStore(objectId);
+
+      // Remove from hierarchy
+      removeCelestialHierarchyEntry(objectId);
 
       // Also remove the corresponding renderable object
       renderableActions.removeRenderableObject(objectId);
-
-      // Update hierarchy (remove from parent's list)
-      // TODO: Implement hierarchy removal logic if needed
 
       // Dispatch event after destruction
       document.dispatchEvent(

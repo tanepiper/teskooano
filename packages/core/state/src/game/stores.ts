@@ -1,4 +1,4 @@
-import { map, atom } from "nanostores";
+import { BehaviorSubject } from "rxjs";
 import type { CelestialObject } from "@teskooano/data-types";
 import type { OSVector3 } from "@teskooano/core-math";
 
@@ -22,7 +22,7 @@ const getInitialSeed = (): string => {
  * Atom storing the current seed used for system generation.
  * Initializes from localStorage or falls back to the default seed.
  */
-export const currentSeed = atom<string>(getInitialSeed());
+export const currentSeed = new BehaviorSubject<string>(getInitialSeed());
 
 /**
  * Action to update the current seed value in the store and localStorage.
@@ -33,7 +33,7 @@ export const updateSeed = (newSeed: string): void => {
   const seedToSet = trimmedSeed || DEFAULT_SEED;
   try {
     localStorage.setItem(LAST_SEED_STORAGE_KEY, seedToSet);
-    currentSeed.set(seedToSet);
+    currentSeed.next(seedToSet);
     if (!trimmedSeed) {
       console.warn(
         `Seed input was empty, using default seed "${DEFAULT_SEED}".`,
@@ -41,25 +41,37 @@ export const updateSeed = (newSeed: string): void => {
     }
   } catch (error) {
     console.error("Error updating seed in localStorage:", error);
-    currentSeed.set(seedToSet);
+    currentSeed.next(seedToSet);
   }
 };
 // --- End Seed State ---
 
 /**
  * Store that maps celestial object IDs to their full data including physics state
+ * @internal Use celestialObjects$ for external observable access.
  */
-export const celestialObjectsStore = map<Record<string, CelestialObject>>();
+const _celestialObjectsStore = new BehaviorSubject<
+  Record<string, CelestialObject>
+>({});
+export const celestialObjects$ = _celestialObjectsStore.asObservable();
 
 /**
  * Store for tracking hierarchical relationships between celestial objects
+ * @internal Use celestialHierarchy$ for external observable access.
  */
-export const celestialHierarchyStore = map<Record<string, string[]>>({});
+const _celestialHierarchyStore = new BehaviorSubject<Record<string, string[]>>(
+  {},
+);
+export const celestialHierarchy$ = _celestialHierarchyStore.asObservable();
 
 /**
  * Store that maps celestial object IDs to their calculated acceleration vector (m/s^2) for the current physics step.
+ * @internal Use accelerationVectors$ for external observable access.
  */
-export const accelerationVectorsStore = map<Record<string, OSVector3>>({});
+const _accelerationVectorsStore = new BehaviorSubject<
+  Record<string, OSVector3>
+>({});
+export const accelerationVectors$ = _accelerationVectorsStore.asObservable();
 
 /**
  * Helper action to update the acceleration vectors store.
@@ -74,15 +86,65 @@ export function updateAccelerationVectors(
   newAccelerations.forEach((vec, id) => {
     accelerationsRecord[id] = vec; // Store the actual OSVector3 object
   });
-  accelerationVectorsStore.set(accelerationsRecord);
+  _accelerationVectorsStore.next(accelerationsRecord); // Use .next()
 }
 
 /**
  * Get children of a celestial object
  */
 export const getChildrenOfObject = (objectId: string): CelestialObject[] => {
-  const hierarchy = celestialHierarchyStore.get();
-  const objects = celestialObjectsStore.get();
+  // Use .getValue() for synchronous access
+  const hierarchy = _celestialHierarchyStore.getValue();
+  const objects = _celestialObjectsStore.getValue();
   const childIds = hierarchy[objectId] || [];
   return childIds.map((id) => objects[id]).filter(Boolean);
+};
+
+// Export actions/getters if needed, and synchronous accessors (use with caution)
+export const getCelestialObjects = () => _celestialObjectsStore.getValue();
+export const getCelestialHierarchy = () => _celestialHierarchyStore.getValue();
+export const setCelestialObject = (id: string, object: CelestialObject) => {
+  const current = _celestialObjectsStore.getValue();
+  _celestialObjectsStore.next({ ...current, [id]: object });
+};
+export const removeCelestialObject = (id: string) => {
+  const current = _celestialObjectsStore.getValue();
+  if (current[id]) {
+    const newObjects = { ...current };
+    delete newObjects[id];
+    _celestialObjectsStore.next(newObjects);
+  }
+};
+export const setCelestialHierarchy = (hierarchy: Record<string, string[]>) => {
+  _celestialHierarchyStore.next(hierarchy);
+};
+export const removeCelestialHierarchyEntry = (objectId: string) => {
+  const currentHierarchy = _celestialHierarchyStore.getValue();
+  const objectToRemove = getCelestialObjects()[objectId];
+  const parentId = objectToRemove?.parentId;
+  const newHierarchy = { ...currentHierarchy };
+
+  if (newHierarchy[objectId]) {
+    delete newHierarchy[objectId];
+  }
+
+  if (parentId && newHierarchy[parentId]) {
+    newHierarchy[parentId] = newHierarchy[parentId].filter(
+      (childId) => childId !== objectId,
+    );
+  }
+
+  _celestialHierarchyStore.next(newHierarchy);
+};
+
+// --- Bulk Setters ---
+export const setAllCelestialObjects = (
+  objects: Record<string, CelestialObject>,
+) => {
+  _celestialObjectsStore.next(objects);
+};
+export const setAllCelestialHierarchy = (
+  hierarchy: Record<string, string[]>,
+) => {
+  _celestialHierarchyStore.next(hierarchy);
 };

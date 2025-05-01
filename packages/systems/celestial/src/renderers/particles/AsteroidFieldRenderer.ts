@@ -1,5 +1,3 @@
-import { renderableObjectsStore } from "@teskooano/core-state";
-import { simulationState } from "@teskooano/core-state";
 import * as THREE from "three";
 import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "..";
 
@@ -10,6 +8,7 @@ import {
   type AsteroidFieldProperties as CentralAsteroidFieldProperties,
 } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import { getSimulationState } from "@teskooano/core-state";
 
 // --- Shaders --- // TODO: Move to separate .glsl files
 const asteroidVertexShader = `
@@ -394,7 +393,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
     const currentTime = Date.now();
 
     // Get current simulation time scale
-    const timeScale = simulationState.get().timeScale;
+    const timeScale = getSimulationState().timeScale;
 
     // Calculate time delta, handling potential resets
     let timeDelta: number;

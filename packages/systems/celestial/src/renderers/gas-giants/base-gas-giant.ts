@@ -1,15 +1,9 @@
-import {
-  celestialObjectsStore,
-  renderableObjectsStore,
-} from "@teskooano/core-state";
-import type {
-  GasGiantProperties,
-  CelestialObject,
-} from "@teskooano/data-types";
+import { getRenderableObjects } from "@teskooano/core-state";
+import type { GasGiantProperties } from "@teskooano/data-types";
+import { SCALE } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
 import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "../index";
-import { SCALE } from "@teskooano/data-types";
 
 // Import the gas giant shaders
 import basicFragmentShader from "../../shaders/gas-giants/basic.fragment.glsl";
@@ -182,7 +176,7 @@ export abstract class BaseGasGiantRenderer implements CelestialRenderer {
     this.elapsedTime = (performance.now() - this.startTime) / 1000;
     const t = time ?? this.elapsedTime;
 
-    const currentRenderableObjects = renderableObjectsStore.get();
+    const currentRenderableObjects = getRenderableObjects();
 
     this.objectIds.forEach((objectId) => {
       const material = this.materials.get(objectId);

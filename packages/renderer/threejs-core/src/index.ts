@@ -6,6 +6,7 @@ export { SceneManager } from "./SceneManager";
 export { AnimationLoop } from "./AnimationLoop";
 export type { RendererStats } from "./AnimationLoop";
 export { StateManager } from "./StateManager";
+export type { RendererCelestialObject } from "./StateManager";
 export * from "./events";
 
 // Core module class will be implemented here

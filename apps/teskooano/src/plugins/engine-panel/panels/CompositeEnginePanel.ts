@@ -1,9 +1,11 @@
 import { startSimulationLoop } from "@teskooano/app-simulation";
 import {
-  celestialObjectsStore,
+  getCelestialObjects,
+  celestialObjects$,
   panelRegistry,
-  simulationState, // Import global simulation state
-  type SimulationState, // Import state type
+  simulationState$, // Import global simulation state
+  type SimulationState,
+  getSimulationState, // Import state type
 } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
@@ -126,8 +128,8 @@ export class CompositeEnginePanel implements IContentRenderer {
   // --- View Orientation Handling ---
   private _currentOrientation: Orientation | null = null;
   private _layoutOrientationSubscription: Subscription | null = null;
-  private _celestialObjectsUnsubscribe: (() => void) | null = null; // Renamed for clarity
-  private _simulationStateUnsubscribe: (() => void) | null = null; // For global state
+  private _celestialObjectsUnsubscribe: Subscription | null = null; // Renamed for clarity
+  private _simulationStateUnsubscribe: Subscription | null = null; // For global state
   private _isInitialized = false;
 
   // --- Add CameraManager instance ---
@@ -478,8 +480,8 @@ export class CompositeEnginePanel implements IContentRenderer {
     }
 
     // Subscribe to celestial objects data to trigger renderer/UI setup
-    this._celestialObjectsUnsubscribe?.(); // Clean up previous listener if any
-    this._celestialObjectsUnsubscribe = celestialObjectsStore.subscribe(
+    this._celestialObjectsUnsubscribe?.unsubscribe(); // Clean up previous listener if any
+    this._celestialObjectsUnsubscribe = celestialObjects$.subscribe(
       (celestialObjects) => {
         // Only proceed if the panel hasn't been disposed
         if (!this._element.isConnected) {
@@ -519,8 +521,8 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._isInitialized = true; // Mark as initialized *after* setup
 
     // Subscribe to global simulation state *after* initialization
-    this._simulationStateUnsubscribe?.(); // Clean up previous if any (unlikely here)
-    this._simulationStateUnsubscribe = simulationState.subscribe(
+    this._simulationStateUnsubscribe?.unsubscribe(); // Clean up previous if any (unlikely here)
+    this._simulationStateUnsubscribe = simulationState$.subscribe(
       this.handleSimulationStateChange,
     );
 
@@ -574,12 +576,12 @@ export class CompositeEnginePanel implements IContentRenderer {
       //       if the renderer initializes *after* the first state emit.
       if (!this._simulationStateUnsubscribe) {
         // Avoid double subscription
-        this._simulationStateUnsubscribe = simulationState.subscribe(
+        this._simulationStateUnsubscribe = simulationState$.subscribe(
           this.handleSimulationStateChange,
         );
       }
       // Apply initial simulation state values that affect the renderer
-      this.handleSimulationStateChange(simulationState.get());
+      this.handleSimulationStateChange(getSimulationState());
 
       // --- Initialize Camera Manager ---
       // Get the singleton instance using pluginManager
@@ -821,10 +823,9 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._panelRemovedSubscription = null;
     // --- End Unsubscribe ---
 
-    // Unsubscribe from nanostores
-    this._celestialObjectsUnsubscribe?.();
+    this._celestialObjectsUnsubscribe?.unsubscribe();
     this._celestialObjectsUnsubscribe = null;
-    this._simulationStateUnsubscribe?.();
+    this._simulationStateUnsubscribe?.unsubscribe();
     this._simulationStateUnsubscribe = null;
     this._layoutOrientationSubscription?.unsubscribe();
     this._layoutOrientationSubscription = null;

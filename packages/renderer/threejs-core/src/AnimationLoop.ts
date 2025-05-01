@@ -1,4 +1,4 @@
-import { simulationState } from "@teskooano/core-state";
+import { getSimulationState, setSimulationState } from "@teskooano/core-state";
 import * as THREE from "three";
 
 // Interface for stats (can be shared or redefined)
@@ -187,7 +187,7 @@ export class AnimationLoop {
       const memoryInfo = (window.performance as any)?.memory;
       const usedMemory = memoryInfo?.usedJSHeapSize;
 
-      const currentState = simulationState.get();
+      const currentState = getSimulationState();
 
       // Only update if values have actually changed to prevent unnecessary updates
       if (
@@ -196,7 +196,7 @@ export class AnimationLoop {
         currentState.renderer?.triangles !== triangles ||
         currentState.renderer?.memory?.usedJSHeapSize !== usedMemory
       ) {
-        simulationState.set({
+        setSimulationState({
           ...currentState,
           renderer: {
             ...currentState.renderer, // Keep existing non-updated stats if any

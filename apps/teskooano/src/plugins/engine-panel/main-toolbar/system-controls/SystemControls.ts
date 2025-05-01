@@ -1,4 +1,8 @@
-import { celestialObjectsStore, currentSeed } from "@teskooano/core-state";
+import {
+  getCelestialObjects,
+  currentSeed,
+  celestialObjects$,
+} from "@teskooano/core-state";
 import { type CelestialObject } from "@teskooano/data-types";
 import { pluginManager } from "@teskooano/ui-plugin";
 import type { TeskooanoButton } from "../../../../core/components/button/Button.js";
@@ -13,6 +17,7 @@ import {
   SystemControlsTemplate,
 } from "./SystemControls.template.js";
 import * as SystemControlsUI from "./system-controls.ui.js";
+import { Subscription } from "rxjs";
 
 /**
  * @element teskooano-system-controls
@@ -60,7 +65,7 @@ class SystemControls
 
   // Store Unsubscribers
   /** @internal Array holding unsubscribe functions for Nanostore subscriptions. */
-  private unsubscribers: (() => void)[] = [];
+  private unsubscribers: Subscription[] = [];
 
   /**
    * Observed attributes for the custom element.
@@ -108,10 +113,10 @@ class SystemControls
     this.subscribeToStores();
 
     // Initial UI update based on current store state
-    this.updateDisplay(celestialObjectsStore.get(), currentSeed.get());
+    this.updateDisplay(getCelestialObjects(), currentSeed.getValue());
     // Set initial seed input value
     if (this.seedInput) {
-      this.seedInput.value = currentSeed.get() || "";
+      this.seedInput.value = currentSeed.getValue() || "";
     }
 
     // --- Add Tooltips ---
@@ -125,7 +130,7 @@ class SystemControls
   disconnectedCallback() {
     this.removeEventListeners();
     // Unsubscribe from all stores
-    this.unsubscribers.forEach((unsub) => unsub());
+    this.unsubscribers.forEach((unsub) => unsub.unsubscribe());
     this.unsubscribers = [];
   }
 
@@ -145,7 +150,7 @@ class SystemControls
       this._isMobile = newValue !== null;
       this.updateButtonSizes();
       // Re-run display logic if mobile status affects layout significantly
-      this.updateDisplay(celestialObjectsStore.get(), currentSeed.get());
+      this.updateDisplay(getCelestialObjects(), currentSeed.getValue());
     }
   }
 
@@ -155,11 +160,11 @@ class SystemControls
    */
   private subscribeToStores() {
     // Subscribe to celestialObjectsStore
-    const unsubObjects = celestialObjectsStore.subscribe(
+    const unsubObjects = celestialObjects$.subscribe(
       (objects: Record<string, CelestialObject>) => {
         // Subscribe to correct store
         // TODO: Still need systemName source
-        this.updateDisplay(objects, currentSeed.get()); // Pass objects map
+        this.updateDisplay(objects, currentSeed.getValue()); // Pass objects map
       },
     );
     this.unsubscribers.push(unsubObjects);
@@ -172,7 +177,7 @@ class SystemControls
       // }
       // Update display using current objects store value
       // TODO: Still need systemName source
-      this.updateDisplay(celestialObjectsStore.get(), seed);
+      this.updateDisplay(getCelestialObjects(), seed);
     });
     this.unsubscribers.push(unsubSeed);
   }
@@ -365,7 +370,7 @@ class SystemControls
           break;
         case "copy-seed":
           result = await pluginManager.execute("system:copy_seed", {
-            seed: currentSeed.get(),
+            seed: currentSeed.getValue(),
           });
           break;
         default:
@@ -405,7 +410,7 @@ class SystemControls
   private setGenerating(isGenerating: boolean) {
     if (this._isGenerating === isGenerating) return; // No change
     this._isGenerating = isGenerating;
-    this.updateDisplay(celestialObjectsStore.get(), currentSeed.get());
+    this.updateDisplay(getCelestialObjects(), currentSeed.getValue());
   }
 
   /**

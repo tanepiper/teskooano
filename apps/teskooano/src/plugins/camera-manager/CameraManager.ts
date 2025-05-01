@@ -1,4 +1,7 @@
-import { renderableObjectsStore } from "@teskooano/core-state";
+import {
+  renderableObjects$,
+  getRenderableObjects,
+} from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { BehaviorSubject } from "rxjs";
 import * as THREE from "three";
@@ -96,8 +99,7 @@ export class CameraManager {
     let initialFocusedObjectId = options.initialFocusedObjectId ?? null;
 
     if (initialFocusedObjectId) {
-      const initialFocusObject =
-        renderableObjectsStore.get()[initialFocusedObjectId];
+      const initialFocusObject = getRenderableObjects()[initialFocusedObjectId];
       if (initialFocusObject?.position) {
         initialTarget = initialFocusObject.position.clone();
       } else {
@@ -196,7 +198,7 @@ export class CameraManager {
         DEFAULT_CAMERA_TARGET.clone(),
       );
     } else {
-      const renderables = renderableObjectsStore.get();
+      const renderables = getRenderableObjects();
       const renderableObject = renderables[objectId];
 
       if (!renderableObject?.position) {

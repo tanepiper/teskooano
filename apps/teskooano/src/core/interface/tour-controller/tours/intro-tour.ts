@@ -1,4 +1,4 @@
-import { celestialObjectsStore } from "@teskooano/core-state";
+import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
 import { Config, Driver, PopoverDOM, State } from "driver.js";
 import { TourStep } from "../types";
 // Base tour steps definition - will be cloned and customized when driving
@@ -32,7 +32,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       },
       onNextClick: () => {
         const totalCelestialObjects = Object.values(
-          celestialObjectsStore.get(),
+          getCelestialObjects(),
         ).length;
         hasCelestialObjects = totalCelestialObjects > 0;
         driverObj.moveNext();
@@ -208,6 +208,17 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
           "Now you should see the full system. If you've selected a celestial body, you can see more details about it in the Celestial Info panel.  Feel free to now play around, and try break things! If you do find any bugs please raise an issue on the GitHub repo.",
         side: "over",
         align: "center",
+      },
+    },
+    {
+      id: "social-links",
+      element: "#main-toolbar-external-links",
+      popover: {
+        title: "📢 Connect With Teskooano",
+        description:
+          "Connect with Teskooano via GitHub or Mastodon! These buttons will open the relevant profile pages in a new tab.",
+        side: "bottom",
+        align: "end",
       },
     },
   ];

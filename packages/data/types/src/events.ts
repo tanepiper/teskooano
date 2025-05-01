@@ -58,3 +58,7 @@ export const CustomEvents = {
 // export interface UIPanelOpenDetail { panelId: string; }
 // export interface EntityAddedDetail { entityId: string; type: string; }
 // export interface FocusRequestDetail { objectId: string; }
+
+export interface SliderValueChangePayload {
+  value: number;
+}

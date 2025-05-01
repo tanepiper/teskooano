@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
-import { simulationState } from "@teskooano/core-state";
+import { getSimulationState } from "@teskooano/core-state";
 import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
 
@@ -51,7 +51,7 @@ export class SceneManager {
     this.scene = new THREE.Scene();
 
     // Get initial camera state from global state if available
-    const initialSimState = simulationState.get();
+    const initialSimState = getSimulationState();
     const initialFov =
       options.fov ?? initialSimState.camera?.fov ?? DEFAULT_FOV;
     this.fov = initialFov; // Store initial FOV

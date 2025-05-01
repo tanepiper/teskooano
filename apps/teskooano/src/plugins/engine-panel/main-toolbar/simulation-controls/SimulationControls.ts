@@ -1,4 +1,8 @@
-import { simulationState, type SimulationState } from "@teskooano/core-state";
+import {
+  getSimulationState,
+  simulationState$,
+  type SimulationState,
+} from "@teskooano/core-state";
 import type { TeskooanoButton } from "../../../../core/components/button/Button";
 import {
   createStateUpdateHandler,
@@ -11,6 +15,7 @@ import {
   template,
 } from "./SimulationControls.template";
 import type { SimulationUIElements } from "./SimulationControls.updater";
+import { Subscription } from "rxjs";
 
 /**
  * @element simulation-controls
@@ -32,7 +37,7 @@ export class SimulationControls extends HTMLElement {
   };
 
   /** Function to unsubscribe from the simulation state store. */
-  private unsubscribeSimState: (() => void) | null = null;
+  private unsubscribeSimState: Subscription | null = null;
 
   /** The state update handler function, bound to this component's UI elements. */
   private stateUpdateHandler: ((state: SimulationState) => void) | null = null;
@@ -54,12 +59,12 @@ export class SimulationControls extends HTMLElement {
     this.eventHandlers.add();
 
     // Subscribe to the simulation state store
-    this.unsubscribeSimState = simulationState.subscribe(
+    this.unsubscribeSimState = simulationState$.subscribe(
       this.stateUpdateHandler,
     );
 
     // Call handler initially to set UI from current state
-    this.stateUpdateHandler(simulationState.get());
+    this.stateUpdateHandler(getSimulationState());
 
     // --- Set static tooltips ---
     this.setStaticTooltip(
@@ -84,7 +89,7 @@ export class SimulationControls extends HTMLElement {
   }
 
   disconnectedCallback(): void {
-    this.unsubscribeSimState?.();
+    this.unsubscribeSimState?.unsubscribe();
     this.eventHandlers?.remove();
 
     // Clear references

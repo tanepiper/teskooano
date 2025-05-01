@@ -1,13 +1,15 @@
-import { map, type MapStore } from "nanostores";
+import { BehaviorSubject } from "rxjs";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**
  * Store for holding the renderable state of celestial objects.
  * This data is derived from the core celestialObjectsStore and physics updates.
+ * @internal Use renderableObjects$ for external observable access.
  */
-export const renderableObjectsStore = map<
+const _renderableObjectsStore = new BehaviorSubject<
   Record<string, RenderableCelestialObject>
 >({});
+export const renderableObjects$ = _renderableObjectsStore.asObservable();
 
 /**
  * Actions for managing the renderable state of celestial objects.
@@ -18,8 +20,11 @@ export const renderableActions = {
    * Typically called by the factory for initial state or the adapter during updates.
    */
   addRenderableObject: (object: RenderableCelestialObject) => {
-    renderableObjectsStore.setKey(object.celestialObjectId, object);
-    // Optional: Dispatch event for render system?
+    const currentObjects = _renderableObjectsStore.getValue();
+    _renderableObjectsStore.next({
+      ...currentObjects,
+      [object.celestialObjectId]: object,
+    });
   },
 
   /**
@@ -29,11 +34,15 @@ export const renderableActions = {
     celestialObjectId: string,
     updates: Partial<RenderableCelestialObject>,
   ) => {
-    const currentObject = renderableObjectsStore.get()[celestialObjectId];
+    const currentObjects = _renderableObjectsStore.getValue();
+    const currentObject = currentObjects[celestialObjectId];
     if (currentObject) {
-      renderableObjectsStore.setKey(celestialObjectId, {
-        ...currentObject,
-        ...updates,
+      _renderableObjectsStore.next({
+        ...currentObjects,
+        [celestialObjectId]: {
+          ...currentObject,
+          ...updates,
+        },
       });
     } else {
       console.warn(
@@ -47,12 +56,11 @@ export const renderableActions = {
    * Should be called when the corresponding core celestial object is removed.
    */
   removeRenderableObject: (celestialObjectId: string) => {
-    // Use deleteMapKey if available, otherwise create new map
-    const currentObjects = renderableObjectsStore.get();
+    const currentObjects = _renderableObjectsStore.getValue();
     if (currentObjects[celestialObjectId]) {
       const newObjects = { ...currentObjects };
       delete newObjects[celestialObjectId];
-      renderableObjectsStore.set(newObjects); // Set the new map without the key
+      _renderableObjectsStore.next(newObjects); // Set the new map without the key
     } else {
       console.warn(
         `[renderableActions] removeRenderableObject: Object ${celestialObjectId} not found.`,
@@ -67,6 +75,9 @@ export const renderableActions = {
   setAllRenderableObjects: (
     objects: Record<string, RenderableCelestialObject>,
   ) => {
-    renderableObjectsStore.set(objects);
+    _renderableObjectsStore.next(objects);
   },
 };
+
+// Synchronous getter for convenience (use with caution)
+export const getRenderableObjects = () => _renderableObjectsStore.getValue();

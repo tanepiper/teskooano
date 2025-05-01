@@ -1,7 +1,8 @@
 import { IContentRenderer, IDockviewPanelProps } from "dockview-core";
 // Import state and actions
 import {
-  simulationState,
+  getSimulationState,
+  simulationState$,
   simulationActions,
   type PhysicsEngineType,
   type PerformanceProfileType,
@@ -9,6 +10,8 @@ import {
 
 import { type TeskooanoSlider } from "../../core/components/slider/Slider";
 import { template } from "./Settings.template"; // Import the template
+import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
+import { Subscription } from "rxjs";
 
 // Define options for the select component
 const ENGINE_OPTIONS: { value: PhysicsEngineType; label: string }[] = [
@@ -42,7 +45,7 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
   private trailSliderElement: TeskooanoSlider | null = null;
   private engineSelectElement: HTMLSelectElement | null = null;
   private profileSelectElement: HTMLSelectElement | null = null;
-  private unsubscribeSimState: (() => void) | null = null;
+  private unsubscribeSimState: Subscription | null = null;
 
   constructor() {
     super();
@@ -133,12 +136,15 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
     this.populateSelect(this.profileSelectElement, PERFORMANCE_PROFILE_OPTIONS);
 
     // Set Initial Values & Attach Listeners
-    const initialState = simulationState.get();
+    const initialState = getSimulationState();
 
     // Trail Slider
     this.trailSliderElement.value =
       initialState.visualSettings.trailLengthMultiplier;
-    this.trailSliderElement.addEventListener("change", this.handleTrailChange);
+    this.trailSliderElement.addEventListener(
+      CustomEvents.SLIDER_CHANGE,
+      this.handleTrailChange as EventListener,
+    );
 
     // Physics Engine Select
     this.engineSelectElement.value = initialState.physicsEngine;
@@ -155,7 +161,7 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
     );
 
     // Subscribe to state changes AFTER initial setup
-    this.unsubscribeSimState = simulationState.subscribe(
+    this.unsubscribeSimState = simulationState$.subscribe(
       this.updateControlStates,
     );
   }
@@ -163,8 +169,8 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
   private removeEventListenersAndUnsubscribe(): void {
     this.formElement?.removeEventListener("submit", this.handleFormSubmit);
     this.trailSliderElement?.removeEventListener(
-      "change",
-      this.handleTrailChange,
+      CustomEvents.SLIDER_CHANGE,
+      this.handleTrailChange as EventListener,
     );
     this.engineSelectElement?.removeEventListener(
       "change",
@@ -176,7 +182,7 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
     );
 
     // Unsubscribe from state changes
-    this.unsubscribeSimState?.();
+    this.unsubscribeSimState?.unsubscribe();
     this.unsubscribeSimState = null;
     // Clear references
     this.formElement = null;
@@ -201,10 +207,11 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
     });
   }
 
-  private handleTrailChange = (event: Event): void => {
-    const target = event.target as TeskooanoSlider;
-    const value = target.value;
-    if (!isNaN(value)) {
+  private handleTrailChange = (
+    event: CustomEvent<SliderValueChangePayload>,
+  ): void => {
+    const value = event.detail.value;
+    if (typeof value === "number" && !isNaN(value)) {
       simulationActions.setTrailLengthMultiplier(value);
     }
   };
@@ -226,7 +233,7 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
   };
 
   private updateControlStates = (): void => {
-    const state = simulationState.get();
+    const state = getSimulationState();
     // Update Trail Slider
     if (this.trailSliderElement) {
       const currentMultiplier = state.visualSettings.trailLengthMultiplier;

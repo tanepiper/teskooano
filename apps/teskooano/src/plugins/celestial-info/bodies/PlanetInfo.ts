@@ -7,7 +7,7 @@ import {
 import { FormatUtils } from "../utils/FormatUtils";
 import { baseStyles } from "../utils/CelestialStyles";
 import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
-import { celestialObjectsStore } from "@teskooano/core-state";
+import { getCelestialObjects } from "@teskooano/core-state";
 
 // --- PLANET INFO COMPONENT ---
 export class PlanetInfoComponent
@@ -41,7 +41,7 @@ export class PlanetInfoComponent
     const surface = planetProps?.surface;
     const atmosphere = planetProps?.atmosphere;
 
-    const allObjects = celestialObjectsStore.get();
+    const allObjects = getCelestialObjects();
     const ringSystem = Object.values(allObjects).find(
       (obj) =>
         obj.type === CelestialType.RING_SYSTEM && obj.parentId === celestial.id,

@@ -1,4 +1,4 @@
-import { atom, WritableAtom } from "nanostores";
+import { BehaviorSubject } from "rxjs";
 
 // --- Types --- //
 
@@ -19,8 +19,8 @@ export interface ObserveResizeOptions {
 
 /** Object returned by observeElementResize */
 export interface ElementResizeObserver {
-  /** Reactive atom store holding the element's dimensions */
-  $elementSize: WritableAtom<ElementSize | null>;
+  /** Reactive BehaviorSubject holding the element's dimensions */
+  $elementSize: BehaviorSubject<ElementSize | null>;
   /** Function to stop observing the element */
   unobserve: () => void;
 }
@@ -52,7 +52,7 @@ export function observeElementResize(
       "ResizeObserver not supported or target element is invalid. Cannot observe element resize.",
     );
     // Return a dummy observer that does nothing
-    const $elementSize = atom<ElementSize | null>(null);
+    const $elementSize = new BehaviorSubject<ElementSize | null>(null);
     return {
       $elementSize,
       unobserve: () => {},
@@ -62,7 +62,7 @@ export function observeElementResize(
   const { box = "border-box", throttleMs = DEFAULT_THROTTLE_MS } = options;
   let resizeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  const $elementSize = atom<ElementSize | null>(null); // Initialize with null
+  const $elementSize = new BehaviorSubject<ElementSize | null>(null); // Use BehaviorSubject
 
   const observer = new ResizeObserver((entries) => {
     if (!entries || entries.length === 0) {
@@ -105,7 +105,7 @@ export function observeElementResize(
 
     resizeTimeoutId = setTimeout(() => {
       if (size) {
-        $elementSize.set(size);
+        $elementSize.next(size); // Use .next()
       }
       resizeTimeoutId = null;
     }, throttleMs);

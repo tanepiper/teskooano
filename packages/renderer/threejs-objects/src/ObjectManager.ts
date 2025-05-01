@@ -1,9 +1,15 @@
+import { OSVector3 } from "@teskooano/core-math"; // Needed for type check
+import { accelerationVectors$ } from "@teskooano/core-state"; // Import from core state
 import {
   CelestialStatus,
   CelestialType,
   GasGiantClass,
   METERS_TO_SCENE_UNITS, // <-- Import scale factor
 } from "@teskooano/data-types";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
+import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
+import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
 import {
   AsteroidFieldRenderer,
   CelestialRenderer,
@@ -15,28 +21,18 @@ import {
   // OortCloudRenderer, // DISABLED: for performance reasons
   RingSystemRenderer,
 } from "@teskooano/systems-celestial";
+import type { Observable, Subscription } from "rxjs"; // Added rxjs imports
 import * as THREE from "three";
-import { LODManager } from "@teskooano/renderer-threejs-effects";
 import {
   GravitationalLensingHandler,
   MeshFactory,
   RendererUpdater,
 } from "./object-manager";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import { LightManager } from "@teskooano/renderer-threejs-effects";
-import { OSVector3 } from "@teskooano/core-math"; // Needed for type check
-import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
-import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
-import type { MapStore } from "nanostores"; // Import MapStore for typing
-import {
-  accelerationVectorsStore,
-  renderableObjectsStore as globalRenderableObjectsStore,
-} from "@teskooano/core-state"; // Import global store
 // Import LODLevel interface
 import type { LODLevel } from "@teskooano/systems-celestial";
 // Import event system and DestructionEvent type
-import { rendererEvents } from "@teskooano/renderer-threejs-core";
 import type { DestructionEvent } from "@teskooano/core-physics";
+import { rendererEvents } from "@teskooano/renderer-threejs-core";
 
 // --- Interface refinement for CSS2DManager (assuming this structure) ---
 interface LabelVisibilityManager {
@@ -85,10 +81,13 @@ export class ObjectManager {
   /** @internal Map storing specialized renderers for ring systems. Keyed by celestial object ID (matching the ring system). */
   private ringSystemRenderers: Map<string, RingSystemRenderer> = new Map();
 
-  /** @internal The Nanostore providing the source of truth for renderable celestial object data. */
-  private renderableObjectsStore: MapStore<
+  // Changed type from MapStore to Observable
+  private renderableObjects$: Observable<
     Record<string, RenderableCelestialObject>
   >;
+  // Added property to hold the latest state
+  private latestRenderableObjects: Record<string, RenderableCelestialObject> =
+    {};
 
   /** @internal Manages light sources in the scene, particularly those associated with stars. */
   private lightManager: LightManager;
@@ -110,13 +109,12 @@ export class ObjectManager {
   /** @internal Helper class responsible for calling the `update` method on all active specialized renderers. */
   private rendererUpdater: RendererUpdater;
 
-  // Storethe unsubscribe function
-  /** @internal Function to unsubscribe from the renderable objects store. */
-  private unsubscribeObjects: (() => void) | null = null;
-  /** @internal Function to unsubscribe from the acceleration vectors store. */
-  private unsubscribeAccelerations: (() => void) | null = null;
-  /** @internal Function to unsubscribe from destruction events. */
-  private unsubscribeDestruction: (() => void) | null = null;
+  // Changed type from `() => void` to `Subscription`
+  private objectsSubscription: Subscription | null = null;
+  // Corrected type: Subscription for RxJS observable
+  private accelerationsSubscription: Subscription | null = null;
+  // Type for destruction cleanup function
+  private destructionSubscription: (() => void) | null = null;
 
   /** @internal Temporary vector used for calculations to avoid allocations. */
   private tempVector3 = new THREE.Vector3();
@@ -145,27 +143,29 @@ export class ObjectManager {
    * Creates an instance of ObjectManager.
    * @param scene - The main Three.js scene.
    * @param camera - The primary Three.js camera.
-   * @param renderableObjectsStore - The Nanostore containing the state of objects to be rendered.
+   * @param renderableObjects$ - An Observable emitting the state of objects to be rendered.
    * @param lightManager - The manager for scene lighting, especially star lights.
    * @param renderer - The main WebGL renderer instance.
    * @param css2DManager - Optional manager for CSS2D labels. Must implement `showLabel` and `hideLabel`.
-   * @param accelerationStore - The Nanostore containing acceleration vectors for objects.
+   * @param acceleration$ - Observable for acceleration vectors.
    */
   constructor(
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
-    renderableObjectsStore: MapStore<Record<string, RenderableCelestialObject>>,
+    // Changed parameter name and type
+    renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
     lightManager: LightManager,
     renderer: THREE.WebGLRenderer,
     css2DManager?: LabelVisibilityManager & CSS2DManager, // Use combined type
-    // Add acceleration store dependency
-    private accelerationStore: typeof accelerationVectorsStore = accelerationVectorsStore,
+    // Inject the acceleration observable
+    private acceleration$: Observable<
+      Record<string, OSVector3>
+    > = accelerationVectors$, // Default to imported RxJS observable
   ) {
     this.scene = scene;
     this.camera = camera;
-    // Use the globally imported store if none is provided (or adjust logic as needed)
-    this.renderableObjectsStore =
-      renderableObjectsStore || globalRenderableObjectsStore;
+    // Assign the observable
+    this.renderableObjects$ = renderableObjects$ || renderableObjects$;
     this.lightManager = lightManager;
     this.lodManager = new LODManager(camera);
     this.css2DManager = css2DManager; // Store the potentially undefined CSS2DManager instance
@@ -252,14 +252,17 @@ export class ObjectManager {
    * @internal
    */
   private subscribeToStateChanges(): void {
-    this.unsubscribeObjects = this.renderableObjectsStore.subscribe(
+    // Subscribe using RxJS subscribe, store the Subscription
+    this.objectsSubscription = this.renderableObjects$.subscribe(
       (objects: Record<string, RenderableCelestialObject>) => {
-        this.syncObjectsWithState(objects);
+        // Store latest state and sync
+        this.latestRenderableObjects = objects;
+        this.syncObjectsWithState(this.latestRenderableObjects);
       },
     );
 
-    // Subscribe to acceleration changes
-    this.unsubscribeAccelerations = this.accelerationStore.subscribe(
+    // Subscribe to acceleration changes (using RxJS observable)
+    this.accelerationsSubscription = this.acceleration$.subscribe(
       (accelerations: Record<string, OSVector3>) => {
         this.syncAccelerationArrows(accelerations);
       },
@@ -271,7 +274,8 @@ export class ObjectManager {
    * @internal
    */
   private subscribeToDestructionEvents(): void {
-    this.unsubscribeDestruction = rendererEvents.on(
+    // Assuming rendererEvents.on returns a cleanup function
+    this.destructionSubscription = rendererEvents.on(
       "destruction:occurred",
       (event: DestructionEvent) => {
         this._handleDestructionEffect(event);
@@ -883,7 +887,8 @@ export class ObjectManager {
 
     // 3. Update Label Visibility based on LOD
     if (this.css2DManager) {
-      const allRenderableObjects = this.renderableObjectsStore.get(); // Get current state
+      // Use the latest state stored locally
+      const allRenderableObjects = this.latestRenderableObjects;
 
       for (const objectId in allRenderableObjects) {
         const objectData = allRenderableObjects[objectId];
@@ -1032,13 +1037,15 @@ export class ObjectManager {
    * Should be called when the visualization is destroyed.
    */
   dispose(): void {
-    // Call the stored unsubscribe function
-    this.unsubscribeObjects?.();
-    this.unsubscribeObjects = null; // Clear reference
-    this.unsubscribeAccelerations?.();
-    this.unsubscribeAccelerations = null;
-    this.unsubscribeDestruction?.(); // <-- Unsubscribe from destruction events
-    this.unsubscribeDestruction = null;
+    // Unsubscribe using RxJS unsubscribe
+    this.objectsSubscription?.unsubscribe();
+    this.objectsSubscription = null;
+    // Unsubscribe from acceleration observable
+    this.accelerationsSubscription?.unsubscribe();
+    this.accelerationsSubscription = null;
+    // Call the destruction cleanup function
+    this.destructionSubscription?.();
+    this.destructionSubscription = null;
 
     // Clean up any remaining debris effects
     this.activeDebrisEffects.forEach((effect) => {
@@ -1110,7 +1117,8 @@ export class ObjectManager {
    * that require mesh regeneration.
    */
   public recreateAllMeshes(): void {
-    const currentState = this.renderableObjectsStore.get();
+    // Use the latest state stored locally
+    const currentState = this.latestRenderableObjects;
     const currentIds = Array.from(this.objects.keys()); // Get IDs before removing
 
     // Remove all existing objects first

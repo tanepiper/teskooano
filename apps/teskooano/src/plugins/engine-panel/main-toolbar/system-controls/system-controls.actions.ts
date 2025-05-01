@@ -1,14 +1,13 @@
-import {
-  actions,
-  celestialObjectsStore,
-  currentSeed,
-} from "@teskooano/core-state";
-import { CelestialType, type CelestialObject } from "@teskooano/data-types";
-import { generateStar } from "@teskooano/procedural-generation";
 import { OSVector3 } from "@teskooano/core-math";
-import { generateAndLoadSystem } from "./system-generator.js";
+import { actions } from "@teskooano/core-state";
+import {
+  CelestialType,
+  CustomEvents,
+  type CelestialObject,
+} from "@teskooano/data-types";
+import { generateStar } from "@teskooano/procedural-generation";
 import { DockviewApi } from "dockview-core";
-import { CustomEvents } from "@teskooano/data-types";
+import { generateAndLoadSystem } from "./system-generator.js";
 
 /**
  * Represents the data structure for importing/exporting system state.

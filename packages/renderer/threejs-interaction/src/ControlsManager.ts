@@ -1,7 +1,7 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { simulationState } from "@teskooano/core-state";
 import { CustomEvents } from "@teskooano/data-types";
 import gsap from "gsap";
+import { getSimulationState, setSimulationState } from "@teskooano/core-state";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
@@ -82,10 +82,10 @@ export class ControlsManager {
 
         // Update the global simulation state with current camera values
         // This reflects user-driven changes or the state after follow logic.
-        simulationState.set({
-          ...simulationState.get(),
+        setSimulationState({
+          ...getSimulationState(),
           camera: {
-            ...simulationState.get().camera,
+            ...getSimulationState().camera,
             position: new OSVector3(position.x, position.y, position.z),
             target: new OSVector3(target.x, target.y, target.z),
           },
@@ -354,10 +354,10 @@ export class ControlsManager {
       this.controls.target.copy(target);
       this.controls.update(); // Ensure controls reflect the change immediately
       // Update global state for immediate changes too
-      simulationState.set({
-        ...simulationState.get(),
+      setSimulationState({
+        ...getSimulationState(),
         camera: {
-          ...simulationState.get().camera,
+          ...getSimulationState().camera,
           position: new OSVector3(position.x, position.y, position.z),
           target: new OSVector3(target.x, target.y, target.z),
         },

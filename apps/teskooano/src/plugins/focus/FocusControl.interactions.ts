@@ -1,6 +1,6 @@
 import {
-  celestialObjectsStore,
-  renderableObjectsStore,
+  getCelestialObjects,
+  getRenderableObjects,
 } from "@teskooano/core-state";
 import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import * as THREE from "three";
@@ -34,7 +34,7 @@ export function handleFocusRequest(
     return false;
   }
 
-  const objects = celestialObjectsStore.get();
+  const objects = getCelestialObjects();
   const targetObject = objects[objectId];
   if (
     !targetObject ||
@@ -49,7 +49,7 @@ export function handleFocusRequest(
     return false;
   }
 
-  const currentRenderables = renderableObjectsStore.get();
+  const currentRenderables = getRenderableObjects();
   const targetObjectRenderable = currentRenderables[objectId];
   if (
     !targetObjectRenderable ||
@@ -107,7 +107,7 @@ export function handleFollowRequest(
     return false;
   }
 
-  const objects = celestialObjectsStore.get();
+  const objects = getCelestialObjects();
   const targetObject = objects[objectId];
   if (
     !targetObject ||
@@ -120,7 +120,7 @@ export function handleFollowRequest(
     return false;
   }
 
-  const currentRenderables = renderableObjectsStore.get();
+  const currentRenderables = getRenderableObjects();
   const targetObjectRenderable = currentRenderables[objectId];
   if (
     !targetObjectRenderable ||

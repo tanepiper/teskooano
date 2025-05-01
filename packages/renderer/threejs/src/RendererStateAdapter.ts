@@ -1,8 +1,11 @@
 import { OSVector3 } from "@teskooano/core-math";
 import {
-  celestialObjectsStore,
-  renderableObjectsStore,
-  simulationState,
+  celestialObjects$,
+  getCelestialObjects,
+  getRenderableObjects,
+  getSimulationState,
+  renderableActions,
+  simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
 import {
@@ -14,8 +17,8 @@ import {
   type CelestialSpecificPropertiesUnion,
   type OrbitalParameters,
 } from "@teskooano/data-types";
-import { map, type MapStore } from "nanostores";
 import * as THREE from "three";
+import { Subscription, BehaviorSubject } from "rxjs";
 import { physicsToThreeJSPosition } from "./utils/coordinateUtils"; // Assuming this utility exists
 
 // Define the structure of the state relevant specifically for rendering
@@ -66,10 +69,10 @@ export class RendererStateAdapter {
   // public $renderableObjects: MapStore<Record<string, RenderableCelestialObject>>;
 
   // Store for visual settings relevant to rendering (derived from core state)
-  public $visualSettings: MapStore<RendererVisualSettings>;
+  public $visualSettings: BehaviorSubject<RendererVisualSettings>;
 
-  private unsubscribeObjects: (() => void) | null = null;
-  private unsubscribeSimState: (() => void) | null = null;
+  private unsubscribeObjects: Subscription | null = null;
+  private unsubscribeSimState: Subscription | null = null;
   private currentSimulationTime: number = 0; // Store current time
   // Pre-allocate reusable objects for rotation calculation
   private rotationAxis = new THREE.Vector3(0, 1, 0);
@@ -79,8 +82,8 @@ export class RendererStateAdapter {
 
   constructor() {
     // Initialize visual settings directly from the current core state
-    const initialSimState = simulationState.get();
-    this.$visualSettings = map<RendererVisualSettings>({
+    const initialSimState = getSimulationState();
+    this.$visualSettings = new BehaviorSubject<RendererVisualSettings>({
       trailLengthMultiplier:
         initialSimState.visualSettings.trailLengthMultiplier,
       physicsEngine:
@@ -232,7 +235,7 @@ export class RendererStateAdapter {
     const renderableMap: Record<string, RenderableCelestialObject> = {};
 
     if (objectCount === 0) {
-      renderableObjectsStore.set({});
+      renderableActions.setAllRenderableObjects({});
       return;
     }
 
@@ -256,7 +259,7 @@ export class RendererStateAdapter {
     // Ensure all light sources are determined upfront
     Object.keys(objects).forEach((id) => determineLightSource(id));
 
-    const existingRenderables = renderableObjectsStore.get();
+    const existingRenderables = getRenderableObjects();
 
     try {
       for (const id in objects) {
@@ -316,7 +319,7 @@ export class RendererStateAdapter {
         }
       }
 
-      renderableObjectsStore.set(renderableMap);
+      renderableActions.setAllRenderableObjects(renderableMap);
     } catch (error) {
       console.error(
         "[RendererStateAdapter] Error during object processing loop:",
@@ -326,34 +329,38 @@ export class RendererStateAdapter {
   }
 
   private subscribeToCoreState(): void {
-    this.unsubscribeObjects = celestialObjectsStore.subscribe((objects) =>
+    this.unsubscribeObjects = celestialObjects$.subscribe((objects) =>
       this.processCelestialObjectsUpdateNow(objects),
     );
 
     // Subscribe to the simulation state store
-    this.unsubscribeSimState = simulationState.subscribe(
+    this.unsubscribeSimState = simulationState$.subscribe(
       (simState: SimulationState) => {
         this.currentSimulationTime = simState.time ?? 0;
 
-        const currentVisSettings = this.$visualSettings.get();
+        const currentVisSettings = this.$visualSettings.getValue();
         const newMultiplier =
           simState.visualSettings.trailLengthMultiplier ?? 150;
         const newEngine =
           simState.physicsEngine === "verlet" ? "verlet" : "keplerian";
 
-        if (newMultiplier !== currentVisSettings.trailLengthMultiplier) {
-          this.$visualSettings.setKey("trailLengthMultiplier", newMultiplier);
-        }
-        if (newEngine !== currentVisSettings.physicsEngine) {
-          this.$visualSettings.setKey("physicsEngine", newEngine);
+        if (
+          newMultiplier !== currentVisSettings.trailLengthMultiplier ||
+          newEngine !== currentVisSettings.physicsEngine
+        ) {
+          this.$visualSettings.next({
+            ...currentVisSettings,
+            trailLengthMultiplier: newMultiplier,
+            physicsEngine: newEngine,
+          });
         }
       },
     );
   }
 
   public dispose(): void {
-    this.unsubscribeObjects?.();
-    this.unsubscribeSimState?.();
+    this.unsubscribeObjects?.unsubscribe();
+    this.unsubscribeSimState?.unsubscribe();
     this.unsubscribeObjects = null;
     this.unsubscribeSimState = null;
   }

@@ -1,7 +1,7 @@
-import * as THREE from "three";
-import { renderableObjectsStore } from "@teskooano/core-state";
+import { renderableObjects$ } from "@teskooano/core-state";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import type { MapStore } from "nanostores"; // Import MapStore type
+import { Observable, Subscription } from "rxjs";
+import * as THREE from "three";
 
 /**
  * Manages light sources in the scene, particularly star lights
@@ -10,16 +10,19 @@ export class LightManager {
   private starLights: Map<string, THREE.Light> = new Map();
   private scene: THREE.Scene;
   private ambientLight: THREE.AmbientLight; // Keep track of the ambient light
-  private unsubscribeStore: (() => void) | null = null; // Store unsubscribe function
+  // Renamed but keep type as Nanostore cleanup function
+  private objectsSubscription: Subscription | null = null;
 
   /**
    * Create a new LightManager
    */
   constructor(
     scene: THREE.Scene,
-    private objectsStore: MapStore<
+    // Keep type as MapStore to match previous state, but default to observable?
+    // This is awkward. Let's change the parameter type to Observable and use the observable default.
+    private objects$: Observable<
       Record<string, RenderableCelestialObject>
-    > = renderableObjectsStore, // Inject store
+    > = renderableObjects$, // Inject observable
   ) {
     this.scene = scene;
 
@@ -36,7 +39,8 @@ export class LightManager {
    * @internal
    */
   private subscribeToStore(): void {
-    this.unsubscribeStore = this.objectsStore.subscribe(
+    // Subscribe using RxJS subscribe and store the Subscription
+    this.objectsSubscription = this.objects$.subscribe(
       (objects: Record<string, RenderableCelestialObject>) => {
         // Iterate through store objects and update corresponding lights
         for (const id in objects) {
@@ -163,9 +167,9 @@ export class LightManager {
    * Clean up resources
    */
   dispose(): void {
-    // Unsubscribe from the store
-    this.unsubscribeStore?.();
-    this.unsubscribeStore = null;
+    // Unsubscribe using RxJS unsubscribe
+    this.objectsSubscription?.unsubscribe();
+    this.objectsSubscription = null;
 
     // Remove star lights
     this.starLights.forEach((light) => {
