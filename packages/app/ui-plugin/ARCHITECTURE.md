@@ -4,51 +4,60 @@
 
 The primary goal of this UI Plugin System is to enable a modular and extensible user interface for Teskooano applications. Key objectives include:
 
-- **Build-Time Integration:** Leverages Vite to correctly resolve paths and handle transpilation for dynamically loaded components, modules, and plugins.
-- **Configuration-Driven:** Allow UI features (panels, toolbar buttons, etc.) to be enabled, disabled, or swapped primarily through Vite plugin configuration, minimizing direct code changes in the core application for feature toggling.
+- **Build-Time Integration:** Leverages Vite to correctly resolve paths and handle transpilation for dynamically loaded plugin modules.
+- **Configuration-Driven:** Allow UI features (panels, toolbar buttons, managers, components) to be enabled/disabled primarily through Vite plugin configuration, minimizing direct code changes in the core application.
 - **Modularity:** Decouple UI features into self-contained plugin modules.
-- **Extensibility:** Provide a clear mechanism for adding new UI features without modifying the plugin system or core application initialization logic (beyond adding to the Vite plugin configuration).
-- **Dynamic Loading:** Load code for UI features on demand as defined by the configuration, potentially reducing initial application bundle size and load time.
-- **Dependency Management:** Provide a clear way for plugins to access core application services (like Dockview API) without creating tight coupling.
+- **Extensibility:** Provide a clear mechanism for adding new UI features without modifying the plugin system (beyond adding to the Vite plugin configuration).
+- **Dynamic Loading:** Load code for UI features on demand as defined by the configuration.
+- **Dependency Management:** Provide a clear way for plugins and instantiated managers to access core application services (like Dockview API) without creating tight coupling.
+- **Singleton Management:** Use a singleton `PluginManager` class for a single source of truth.
+- **Asynchronous Status:** Provide an RxJS Observable (`pluginStatus$`) to track plugin loading and initialization progress.
 
 ## 2. Core Concepts
 
-- **UI Components/Modules:** Reusable UI building blocks (e.g., `<teskooano-button>`, ModalManager class). Can be custom elements or standard JavaScript/TypeScript classes.
-- **Plugins (`TeskooanoPlugin`):** Modules defining metadata for panels, functions, toolbar items, and toolbar widgets.
+- **Plugins (`TeskooanoPlugin`):** Modules exporting a configuration object defining metadata for panels, functions, toolbar items/widgets, manager classes, and components associated with that plugin.
 - **Vite Plugin (`teskooanoUiPlugin`):**
-  - Configured in `vite.config.ts` with objects defining components/modules and plugins.
-  - Reads the configuration at build/dev time.
+  - Configured in `vite.config.ts` with an array of _absolute paths_ to plugin registry configuration files (`pluginRegistryPaths`).
+  - Reads these configuration files at build/dev time.
   - Generates a _virtual module_ (`virtual:teskooano-loaders`).
-  - This virtual module exports:
-    - `componentLoaders`: Maps component/module keys to _loader functions_ (e.g., `() => import('/abs/path/to/component.ts')`) containing static import paths Vite can analyze.
-    - `pluginLoaders`: Maps plugin IDs to similar _loader functions_.
-    - `componentRegistryConfig`: An object containing the configuration metadata passed to the Vite plugin for components/modules (including `className` and `isCustomElement`).
+  - This virtual module exports `pluginLoaders`: Maps plugin IDs to _loader functions_ (e.g., `() => import('/abs/path/to/plugin.ts')`) containing static import paths Vite can analyze.
 - **Plugin Manager (`pluginManager.ts`):**
-  - Imports `componentLoaders`, `pluginLoaders`, and `componentRegistryConfig` from the virtual module.
-  - Provides `loadAndRegisterComponents(keys)`: Loads specified modules, defining custom elements if `isCustomElement` is true, otherwise storing the class for retrieval.
-  - Provides `loadAndRegisterPlugins(ids)`: Loads specified plugin modules and calls `registerPlugin`.
-  - Provides `setAppDependencies(deps)`: Must be called by the application to provide core services (e.g., `dockviewApi`).
-  - Provides getter functions (`getPanelConfig`, `getToolbarItemsForTarget`, `getFunctionConfig`, `getToolbarWidgetsForTarget`, `getLoadedModuleClass`) for UI controllers.
-  - `getFunctionConfig` wraps the plugin's function to inject dependencies automatically.
+  - Implemented as a **singleton class** (`PluginManager.getInstance()`).
+  - Imports `pluginLoaders` from the virtual module.
+  - Provides `setAppDependencies(deps)`: Must be called by the application **ONCE** to provide core services (e.g., `dockviewApi`, `dockviewController`).
+  - Provides `loadAndRegisterPlugins(ids)`: Asynchronously loads specified plugin modules using the loaders, calls the internal `registerPlugin` method, which:
+    - Stores plugin metadata.
+    - Instantiates manager classes defined in the plugin (`managerClasses`).
+    - Defines custom elements defined in the plugin (`components` and `panelClass`).
+    - Calls the plugin's optional `initialize()` method.
+    - Emits status updates via the `pluginStatus$` observable.
+  - Provides getter functions (`getPanelConfig`, `getToolbarItemsForTarget`, `getFunctionConfig`, `getToolbarWidgetsForTarget`, `getManagerInstance`) for UI controllers to access registered items.
+  - `execute` function (for executing registered plugin functions) automatically injects dependencies.
+  - Provides `pluginStatus$: Observable<PluginRegistrationStatus>` to monitor loading.
 
 ## 3. Loading and Registration Flow
 
 1.  **Build/Dev Startup:**
 
-    - The `teskooanoUiPlugin` is initialized in `vite.config.ts` with configuration objects.
-    - The plugin generates the `virtual:teskooano-loaders` module containing loader functions and component metadata.
+    - The `teskooanoUiPlugin` is initialized in `vite.config.ts` with `pluginRegistryPaths`.
+    - The plugin reads the specified config files.
+    - The plugin generates the `virtual:teskooano-loaders` module containing `pluginLoaders`.
 
 2.  **Application Initialization (`main.ts` or similar):**
-    - Imports necessary functions from `@teskooano/ui-plugin`: `loadAndRegisterComponents`, `loadAndRegisterPlugins`, `setAppDependencies`.
-    - Imports `componentConfigKeys`, `pluginConfigIds` (arrays of keys/IDs, potentially derived from feature flags or environment variables).
-    - Calls `setAppDependencies({ dockviewApi, dockviewController })` **ONCE** to provide core services.
-    - Calls `await loadAndRegisterComponents(componentConfigKeys)`: **Phase 1**
-      - This function accesses `componentLoaders` and `componentRegistryConfig` from the virtual module.
-      - It iterates through keys, calls the corresponding loader function, awaits the import.
-      - Based on `componentRegistryConfig[key].isCustomElement`, it either calls `customElements.define` or stores the loaded class internally.
-    - Calls `await loadAndRegisterPlugins(pluginConfigIds)`: **Phase 2**
-      - This function accesses `pluginLoaders` from the virtual module.
-      - It iterates through IDs, calls the loader function, awaits the import, gets the `plugin` export, calls the internal `registerPlugin` helper (which populates metadata registries), and calls the plugin's optional `initialize()` method (without dependencies).
+    - Get the singleton instance: `const pluginManager = PluginManager.getInstance();`
+    - **Set Dependencies:** Call `pluginManager.setAppDependencies({ dockviewApi, dockviewController });` **ONCE**.
+    - **(Optional) Subscribe:** `pluginManager.pluginStatus$.subscribe(...)`.
+    - **Load Plugins:** Call `await pluginManager.loadAndRegisterPlugins(pluginIdsToLoad);`
+      - The manager iterates through the requested IDs.
+      - For each ID, it gets the loader function from `virtual:teskooano-loaders`.
+      - It calls the loader (`await loader()`) to dynamically import the plugin module.
+      - It calls the internal `registerPlugin(pluginModule.plugin)` method.
+      - `registerPlugin` processes the metadata:
+        - Stores panel, function, toolbar configs.
+        - Instantiates classes from `managerClasses`, stores instances, and calls `setDependencies` on them if available and dependencies are set.
+        - Defines custom elements using `customElements.define` for `components` and panel `panelClass`.
+      - Calls the plugin's optional `initialize()` function.
+      - Emits status updates (loading, registering, initializing, completed, error) via `pluginStatus$`.
 
 ```mermaid
 sequenceDiagram
@@ -68,23 +77,6 @@ sequenceDiagram
 
     AppMain->>PluginManager: setAppDependencies(deps)
     Note right of PluginManager: Stores Dockview API etc.
-
-    AppMain->>PluginManager: loadAndRegisterComponents(keys)
-    PluginManager->>VirtualModule: import { componentLoaders, componentRegistryConfig }
-    loop For each key
-        PluginManager->>VirtualModule: loader = componentLoaders[key]
-        PluginManager->>VirtualModule: config = componentRegistryConfig[key]
-        PluginManager->>Browser: module = await loader()
-        Browser->>ComponentModule: Load code
-        ComponentModule-->>Browser: Return module (with class export)
-        Browser-->>PluginManager: module
-        alt config.isCustomElement is true
-             PluginManager->>Browser: customElements.define(key, module[config.className])
-        else Not a custom element
-             PluginManager->>PluginManager: Store module[config.className] in loadedModuleClasses map
-        end
-    end
-    PluginManager-->>AppMain: Components Defined / Modules Loaded
 
     AppMain->>PluginManager: loadAndRegisterPlugins(ids)
     PluginManager->>VirtualModule: import { pluginLoaders }
@@ -140,5 +132,6 @@ This architecture ensures that UI controllers remain generic and simply render o
 ## TODO
 
 - Clarify and document the expected rendering flow for `ToolbarWidgetConfig`. Does the toolbar instantiate components directly, or does it expect the `componentName` to always be a custom element tag?
-- Consider error handling strategies for failed component/plugin loading or initialization.
-- Evaluate if the dependency injection mechanism needs to be more granular or support different dependency scopes.
+- Consider error handling strategies for failed plugin loading or initialization (currently emits error status via observable).
+- Evaluate if the dependency injection mechanism needs to be more granular or support different dependency scopes (currently global via `setAppDependencies`).
+- Update Mermaid diagram to reflect singleton manager and removal of component loading phase.
