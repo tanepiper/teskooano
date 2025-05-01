@@ -19,7 +19,7 @@ export interface ToolbarPluginOptions {
  */
 interface ToolbarPlugin {
   name: string;
-  type: 'toolbar';
+  type: "toolbar";
   /**
    * Initializes the Toolbar integration.
    * @param options Configuration options for the toolbar.
@@ -54,7 +54,6 @@ export const plugin: ToolbarPlugin & { id: string } = {
       );
     }
 
-
     const controller = new ToolbarController(
       options.targetElement,
       options.dockviewController,
@@ -71,4 +70,4 @@ export const plugin: ToolbarPlugin & { id: string } = {
 export * from "./ToolbarController";
 export { createToolbarHandlers }; // Export handlers if they might be useful externally
 // export * from './ToolbarController.template'; // Template likely internal
-// export * from './ToolbarController.handlers'; // Already exported above 
+// export * from './ToolbarController.handlers'; // Already exported above

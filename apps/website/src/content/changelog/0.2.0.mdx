@@ -1,0 +1,113 @@
+---
+title: "Teskooano v0.2.0 Release Notes"
+pubDate: YYYY-MM-DD
+description: "Version 0.2.0 brings major UI refactoring, new core components, plugin system improvements, and dependency updates."
+author: "The Teskooano Team"
+image:
+  url: "/images/blog/release-notes.jpg"
+  alt: "Space background with release notes text overlay"
+tags: ["release", "changelog", "teskooano", "simulation"]
+---
+
+import { Image } from "astro:assets";
+import releaseImage from "/images/blog/release-notes.jpg";
+
+# Teskooano v0.2.0 Release Notes
+
+<Image
+  src={releaseImage}
+  alt="Space background with release notes text overlay"
+  width="720"
+  height="360"
+/>
+
+Version 0.2.0 marks a significant milestone, primarily focused on internal refactoring and foundational improvements to the main Teskooano application and several core packages. This release lays the groundwork for more advanced features and a more robust user experience.
+
+## Key Highlights
+
+- **Major UI Refactoring (`@teskooano/teskooano`)**: The main application underwent substantial restructuring. Core UI components (buttons, modals, tooltips, etc.) and controllers (Dockview, Toolbar) were moved into a dedicated `core/` directory, improving organization and reusability.
+- **New Core UI Components (`@teskooano/teskooano`)**: Introduced a suite of standard UI elements (`Button`, `Card`, `Modal`, `OutputDisplay`, `Select`, `Slider`, `Tooltip`) to build a more consistent interface.
+- **Enhanced Plugin System (`@teskooano/ui-plugin`)**: Refactored the `pluginManager` into a singleton class using RxJS for better state management and asynchronous handling of plugin registration.
+- **New Application Features (`@teskooano/teskooano`)**: Added several new plugins and features, including:
+  - `ModalManager`: For handling application-wide modals.
+  - `EngineToolbar`: Contextual toolbars within engine view panels.
+  - `TourController`: An interactive tour system (with an initial intro tour).
+  - `CameraManager`: For managing camera perspectives and transitions.
+  - Detailed `CelestialInfo` and `EngineInfo` display plugins.
+  - New `EngineSettings`, `ExternalLinks`, `FocusControl`, and `SettingsPanel` plugins or major enhancements.
+- **Dependency Updates**: Updated dependencies across multiple packages.
+
+## Detailed Changes by Package
+
+### App: `@teskooano/teskooano` (v0.2.0)
+
+- **Added**
+  - New core UI components: `Button`, `Card`, `Modal`, `OutputDisplay`, `Select`, `Slider`, `Tooltip`.
+  - New `ModalManager`.
+  - New `EngineToolbar` & `EngineToolbarManager`.
+  - New `TourController` & `TourModal` (with intro tour).
+  - New plugins: `CameraManager`, `CelestialInfo`, `EngineInfo`, `EngineSettings`, `ExternalLinks`.
+- **Changed**
+  - Refactored `DockviewController` (`GroupManager`, `OverlayManager`).
+  - Refactored `ToolbarController`.
+  - Updated `UiPanel`, `EnginePanel`, `CompositeEnginePanel`, `ProgressPanel`.
+  - Major core structure refactor (`core/` directory).
+  - Integrated `@teskooano/ui-plugin`.
+  - Updated dependencies.
+- **Removed**
+  - Old component/controller locations.
+  - Redundant placeholders.
+- **Fixed**
+  - Integration and state management fixes post-refactor.
+
+### Package: `@teskooano/ui-plugin` (v0.2.0)
+
+- **Changed**
+  - Refactored `pluginManager` to a singleton class using RxJS.
+  - Added Vite plugin helper.
+  - Updated dependencies.
+
+### Package: `@teskooano/app-simulation` (v0.2.0)
+
+- **Changed**
+  - Internal update to `loop.ts`.
+  - Updated dependencies.
+
+### Package: `@teskooano/core-state` (v0.2.0)
+
+- **Changed**
+  - Internal update to `game/simulation.ts`.
+  - Updated dependencies.
+
+### Package: `@teskooano/renderer-threejs` (v0.2.0)
+
+- **Changed**
+  - Internal updates to `ModularSpaceRenderer.ts`.
+  - Updated dependencies.
+
+### Package: `@teskooano/renderer-threejs-objects` (v0.2.0)
+
+- **Changed**
+  - Internal updates to `ObjectManager.ts` and `mesh-factory.ts`.
+  - Updated dependencies.
+
+### Package: `@teskooano/systems-procedural-generation` (v0.2.0)
+
+- **Changed**
+  - Minor internal update to `generator.ts`.
+  - Updated dependencies.
+
+### Other Packages (v0.2.0)
+
+- `@teskooano/app-web-apis`: Minor internal updates, dependency updates.
+- `@teskooano/core-math`: Dependency updates only.
+- `@teskooano/renderer-threejs-core`: Dependency updates only.
+- `@teskooano/renderer-threejs-effects`: Dependency updates only.
+- `@teskooano/renderer-threejs-interaction`: Dependency updates only.
+- `@teskooano/systems-celestial`: Dependency updates only.
+
+---
+
+This release involved a lot of internal housekeeping, setting a stronger foundation for future development. Remember to pull the latest changes and run `npm install` to get all the updates.
+
+Don't forget to commit your work often!

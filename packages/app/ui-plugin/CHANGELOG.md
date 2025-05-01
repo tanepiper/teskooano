@@ -1,29 +1,22 @@
-# Changelog
+# Changelog - @teskooano/ui-plugin
 
-## 0.1.0 (YYYY-MM-DD) - Unreleased
+All notable changes to this project will be documented in this file.
 
-- Initial release of the UI Plugin system.
-- Implemented configuration-based dynamic loading for components and plugins.
-- Added `loadAndRegisterComponents` for dynamically defining custom elements.
-- Added `loadAndRegisterPlugins` for dynamically loading plugin modules, registering metadata, and running initialization.
-- Added `registerPlugin` (internal helper) to store plugin metadata (panels, functions, toolbars).
-- Added getter functions: `getPlugins`, `getPanelConfig`, `getFunctionConfig`, `getToolbarItemsForTarget`.
-- Defined core types: `TeskooanoPlugin`, `PanelConfig`, `FunctionConfig`, `ToolbarItemConfig`, `ToolbarTarget`, `ToolbarRegistration`, `ToolbarItemDefinition`.
-- Defined configuration/loading types: `ComponentLoadConfig`, `PluginLoadConfig`, `ComponentRegistryConfig`, `PluginRegistryConfig`.
-- Added initial `README.md`, `package.json`, `tsconfig.json`, `moon.yml`.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.2.0 (YYYY-MM-DD) - Unreleased
+## [0.2.0] - 2025-05-01
 
-- **Refactor:** Overhauled plugin and component loading mechanism.
-  - Removed separate `componentRegistry.ts` and `pluginRegistry.ts` config files.
-  - Integrated configuration directly into the Vite plugin (`teskooanoUiPlugin`).
-  - Vite plugin now generates `componentRegistryConfig` alongside `componentLoaders` and `pluginLoaders` in the virtual module.
-  - `loadAndRegisterComponents` now reads `isCustomElement` flag from `componentRegistryConfig` to differentiate between custom elements and standard classes.
-  - Added `getLoadedModuleClass` to retrieve non-custom-element classes loaded via `loadAndRegisterComponents`.
-- **Refactor:** Introduced explicit dependency injection for core application services.
-  - Added `setAppDependencies({ dockviewApi, dockviewController })` to provide dependencies required by plugins.
-  - Removed dependency injection from plugin `initialize` methods. `initialize` is now only for plugin-specific setup.
-  - `getFunctionConfig` now returns a wrapped `execute` function that automatically injects the `PluginExecutionContext` (containing `dockviewApi` and `dockviewController`) when called.
-- **Feat:** Added support for Toolbar Widgets (`ToolbarWidgetConfig`, `getToolbarWidgetsForTarget`).
-- **Fix:** Updated `registerPlugin` to handle sorting of toolbar items by `order`.
-- **Docs:** Updated `ARCHITECTURE.md` to reflect new loading flow and dependency management.
+### Changed
+
+- **Refactored `pluginManager` to a singleton class.**
+- Introduced RxJS `Subject` for observing plugin registration status.
+- Updated exports and types accordingly.
+- Added Vite plugin helper (`vite-plugin.ts`).
+- Updated dependencies.
+
+## [0.1.0] - 2025-04-24
+
+### Added
+
+- Initial functional implementation of plugin manager.

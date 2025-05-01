@@ -125,7 +125,7 @@ export class CompositeEnginePanel implements IContentRenderer {
 
   // --- View Orientation Handling ---
   private _currentOrientation: Orientation | null = null;
-  private _layoutOrientationSubscription: Subscription | null = null; // Changed name
+  private _layoutOrientationSubscription: Subscription | null = null;
   private _celestialObjectsUnsubscribe: (() => void) | null = null; // Renamed for clarity
   private _simulationStateUnsubscribe: (() => void) | null = null; // For global state
   private _isInitialized = false;
@@ -675,7 +675,7 @@ export class CompositeEnginePanel implements IContentRenderer {
 
         // Setup resize observer for the engine container
         this._resizeObserver = new ResizeObserver((entries) => {
-          for (let entry of entries) {
+          for (let _ of entries) {
             // Use triggerResize for debouncing
             this.triggerResize();
           }
@@ -708,7 +708,7 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Handles changes in the global simulation state, updating the renderer as needed.
    * @param newState The latest simulation state.
    */
-  private handleSimulationStateChange = (newState: SimulationState): void => {
+  private handleSimulationStateChange = (_: SimulationState): void => {
     if (!this._renderer?.orbitManager) return; // Need orbit manager
   };
 
@@ -826,6 +826,9 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._celestialObjectsUnsubscribe = null;
     this._simulationStateUnsubscribe?.();
     this._simulationStateUnsubscribe = null;
+    this._layoutOrientationSubscription?.unsubscribe();
+    this._layoutOrientationSubscription = null;
+    this._currentOrientation = null;
 
     // Unregister from Panel Registry
     panelRegistry.unregisterPanel(this._api?.id ?? "unknown");

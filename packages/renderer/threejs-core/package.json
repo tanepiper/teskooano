@@ -1,6 +1,6 @@
 {
   "name": "@teskooano/renderer-threejs-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Core components for the ThreeJS renderer (Scene, Animation, State)",
   "type": "module",
