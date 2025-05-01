@@ -94,7 +94,7 @@ The entire system is based around Web Components, and currently the plugin syste
 
 ### Vite Loader
 
-The first part of the integration is the [vite](https://vite.dev) loader - this plugin uses vite to import all the plugins, and create a mapping of all the imported features - web components are registered with the passed IDs (e.g. `teskooano-button`) and there are core plugins to ensure they are available before userland plugins.
+The first part of the integration is the [vite](https://vite.dev) loader - this plugin uses vite to import all the plugins, and create a mapping of all the imported features - web components are registered with the passed IDs (e.g. `teskooano-button`) and there are core plugins to ensure they are available before userland plugins - and most importantly it works at build time to create a single page app.
 
 ```ts
 export default defineConfig({
