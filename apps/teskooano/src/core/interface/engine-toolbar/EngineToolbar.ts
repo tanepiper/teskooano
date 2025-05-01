@@ -7,11 +7,8 @@ import BoxMultipleArrowLeftFilled from "@fluentui/svg-icons/icons/box_multiple_a
 import BoxMultipleArrowRightFilled from "@fluentui/svg-icons/icons/box_multiple_arrow_right_24_filled.svg?raw";
 
 import {
-  execute,
+  pluginManager,
   FunctionToolbarItemConfig,
-  getManagerInstance,
-  getToolbarItemsForTarget,
-  getToolbarWidgetsForTarget,
   PanelToolbarItemConfig,
   ToolbarItemConfig,
   ToolbarWidgetConfig,
@@ -172,8 +169,10 @@ export class EngineToolbar {
   }
 
   private populateItemsFromPlugins(): void {
-    const itemConfigs = getToolbarItemsForTarget("engine-toolbar");
-    const widgetConfigs = getToolbarWidgetsForTarget("engine-toolbar");
+    const itemConfigs =
+      pluginManager.getToolbarItemsForTarget("engine-toolbar");
+    const widgetConfigs =
+      pluginManager.getToolbarWidgetsForTarget("engine-toolbar");
 
     this.renderDynamicButtons(itemConfigs);
     this.renderDynamicWidgets(widgetConfigs);
@@ -376,7 +375,7 @@ export class EngineToolbar {
       return;
     }
     try {
-      await execute(functionId); // Call with functionId
+      await pluginManager.execute(functionId); // Call with functionId
     } catch (error) {
       console.error(
         `[EngineToolbar ${this._apiId}] Error executing function '${functionId}':`,
@@ -428,7 +427,7 @@ export class EngineToolbar {
    * Subscribes to the expansion state Observable provided by the manager.
    */
   private subscribeToExpansionState(): void {
-    const manager = getManagerInstance<EngineToolbarManager>(
+    const manager = pluginManager.getManagerInstance<EngineToolbarManager>(
       "engine-toolbar-manager",
     );
 

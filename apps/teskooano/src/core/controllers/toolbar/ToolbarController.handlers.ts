@@ -1,6 +1,6 @@
 // Handlers for toolbar actions
 import type { ToolbarController } from "./ToolbarController";
-import { getFunctionConfig } from "@teskooano/ui-plugin"; // Import plugin manager function
+import { pluginManager } from "@teskooano/ui-plugin"; // Import the instance
 
 /**
  * @interface ToolbarTemplateHandlers
@@ -33,10 +33,12 @@ export const createToolbarHandlers = (
   };
 
   const handleSettingsClick = (event: MouseEvent): void => {
-    const toggleFunc = getFunctionConfig("settings:toggle_panel");
-    if (toggleFunc?.execute) {
+    const toggleFuncConfig = pluginManager.getFunctionConfig(
+      "settings:toggle_panel",
+    );
+    if (toggleFuncConfig?.execute) {
       try {
-        toggleFunc.execute();
+        pluginManager.execute("settings:toggle_panel");
       } catch (error) {
         console.error(
           "[Toolbar] Error executing settings:toggle_panel:",
@@ -51,10 +53,12 @@ export const createToolbarHandlers = (
   };
 
   const handleAddViewClick = (event: MouseEvent): void => {
-    const addPanelFunc = getFunctionConfig("engine:add_composite_panel");
-    if (addPanelFunc?.execute) {
+    const addPanelFuncConfig = pluginManager.getFunctionConfig(
+      "engine:add_composite_panel",
+    );
+    if (addPanelFuncConfig?.execute) {
       try {
-        addPanelFunc.execute();
+        pluginManager.execute("engine:add_composite_panel");
       } catch (error) {
         console.error(
           "[Toolbar] Error executing engine:add_composite_panel:",
@@ -69,10 +73,10 @@ export const createToolbarHandlers = (
   };
 
   const handleTourClick = (event: MouseEvent): void => {
-    const restartFunc = getFunctionConfig("tour:restart");
-    if (restartFunc?.execute) {
+    const restartFuncConfig = pluginManager.getFunctionConfig("tour:restart");
+    if (restartFuncConfig?.execute) {
       try {
-        restartFunc.execute();
+        pluginManager.execute("tour:restart");
       } catch (error) {
         console.error("[Toolbar] Error executing tour:restart:", error);
       }

@@ -13,7 +13,7 @@ export const plugin: TeskooanoPlugin = {
   description: "Provides camera control and state management logic.",
   managerClasses: [
     {
-      id: "camera-manager", // Keep this ID for retrieval
+      id: "camera-manager",
       managerClass: CameraManager,
     },
   ],

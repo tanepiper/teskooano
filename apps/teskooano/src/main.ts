@@ -8,13 +8,9 @@ import { ToolbarController } from "./core/controllers/toolbar/ToolbarController"
 import { TeskooanoTourModal } from "./core/interface/tour-controller/TourModal";
 
 import {
-  getManagerInstance,
-  getPlugins,
-  loadAndRegisterPlugins,
+  pluginManager,
   PanelConfig,
-  setAppDependencies,
   TeskooanoPlugin,
-  execute,
 } from "@teskooano/ui-plugin";
 
 import { pluginConfig } from "./config/pluginRegistry";
@@ -45,15 +41,20 @@ async function initializeApp() {
     ...Object.keys(pluginConfig),
     ...Object.keys(corePluginConfig),
   ];
-  await loadAndRegisterPlugins(pluginIds);
+  await pluginManager.loadAndRegisterPlugins(pluginIds);
 
-  setAppDependencies({ dockviewApi: null as any, dockviewController: null });
+  pluginManager.setAppDependencies({
+    dockviewApi: null as any,
+    dockviewController: null,
+  });
 
   let dockviewController: any;
   let dockviewApi: DockviewApi | undefined;
 
   try {
-    const result: any = await execute("dockview:initialize", { appElement }); // Use execute(id, args)
+    const result: any = await pluginManager.execute("dockview:initialize", {
+      appElement,
+    });
 
     if (
       result &&
@@ -86,7 +87,7 @@ async function initializeApp() {
     );
     return;
   }
-  setAppDependencies({
+  pluginManager.setAppDependencies({
     dockviewApi: dockviewApi,
     dockviewController: dockviewController,
   });
@@ -98,7 +99,7 @@ async function initializeApp() {
     dockviewController,
   );
 
-  const modalManager = getManagerInstance<any>("modal-manager");
+  const modalManager = pluginManager.getManagerInstance<any>("modal-manager");
   if (!modalManager) {
     console.error("[App] Failed to get ModalManager instance after loading.");
     return;
@@ -106,7 +107,7 @@ async function initializeApp() {
   appContext.modalManager = modalManager;
   TeskooanoTourModal.setModalManager(modalManager);
 
-  const plugins = getPlugins();
+  const plugins = pluginManager.getPlugins();
   plugins.forEach((plugin: TeskooanoPlugin) => {
     plugin.panels?.forEach((panelConfig: PanelConfig) => {
       const PanelComponentOrConstructor = panelConfig.panelClass;
@@ -162,7 +163,7 @@ async function initializeApp() {
   });
 
   try {
-    await execute("engine:add_composite_panel"); // Use execute(id)
+    await pluginManager.execute("engine:add_composite_panel");
   } catch (error) {
     console.error(
       "[App] Error calling engine:add_composite_panel function:",
@@ -187,7 +188,7 @@ function setupEventListeners() {
       const objects = celestialObjectsStore.get();
       const selectedObject = objects[objectId];
       try {
-        execute("tour:setCelestialFocus", {
+        pluginManager.execute("tour:setCelestialFocus", {
           celestialName: selectedObject?.name,
         });
       } catch (error) {
@@ -198,7 +199,7 @@ function setupEventListeners() {
 
   document.body.addEventListener("start-tour-request", () => {
     try {
-      execute("tour:restart");
+      pluginManager.execute("tour:restart");
     } catch (error) {
       console.error("[App] Error calling tour:restart:", error);
     }

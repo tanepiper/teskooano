@@ -5,12 +5,10 @@ import {
   setupEventHandlers,
 } from "./SimulationControls.handlers";
 import {
-  template,
-  PlayIcon,
-  PauseIcon,
-  PreviousIcon,
   NextIcon,
+  PreviousIcon,
   ReverseIcon,
+  template,
 } from "./SimulationControls.template";
 import type { SimulationUIElements } from "./SimulationControls.updater";
 

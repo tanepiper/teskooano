@@ -3,7 +3,6 @@ import {
   CelestialStatus,
   CelestialType,
 } from "@teskooano/data-types";
-import { celestialObjectsStore } from "@teskooano/core-state"; // Import if needed for status text
 import "./CelestialRow"; // Ensure the component is defined before use
 
 /**

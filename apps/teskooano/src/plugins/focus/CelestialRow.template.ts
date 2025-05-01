@@ -1,8 +1,6 @@
-import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
 import EyeIcon from "@fluentui/svg-icons/icons/eye_24_regular.svg?raw";
 import PersonRunningFilledIcon from "@fluentui/svg-icons/icons/person_running_20_regular.svg?raw";
 // Placeholder - replace with actual icon import if needed
-import DefaultIconPlaceholder from "@fluentui/svg-icons/icons/circle_24_regular.svg?raw";
 import { CelestialType } from "@teskooano/data-types";
 
 const template = document.createElement("template");
@@ -128,4 +126,4 @@ const iconStyles: Record<string, string> = {
   default: "background-color: white;",
 };
 
-export { template, iconStyles };
+export { iconStyles, template };

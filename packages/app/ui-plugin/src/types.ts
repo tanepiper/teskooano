@@ -270,3 +270,25 @@ export interface TeskooanoPlugin {
   /** Optional: Widgets to be embedded directly into toolbars. */
   toolbarWidgets?: ToolbarWidgetConfig[];
 }
+
+export type PluginRegistrationStatus =
+  | { type: "loading_started"; pluginIds: string[] }
+  | { type: "loading_plugin"; pluginId: string }
+  | { type: "loaded_plugin"; pluginId: string }
+  | { type: "load_error"; pluginId: string; error: Error }
+  | { type: "registration_started"; pluginIds: string[] }
+  | { type: "registering_plugin"; pluginId: string }
+  | { type: "registered_plugin"; pluginId: string }
+  | { type: "register_error"; pluginId: string; error: Error }
+  | { type: "init_error"; pluginId: string; error: Error } // If initialization fails
+  | {
+      type: "dependency_error";
+      pluginId: string;
+      missingDependencies: string[];
+    }
+  | {
+      type: "loading_complete";
+      successfullyRegistered: string[];
+      failed: string[]; // IDs that failed load, register, init, or dependency checks
+      notFound: string[]; // IDs requested but no loader found
+    };

@@ -81,8 +81,8 @@ export class CameraManager {
       return;
     }
     if (!options.renderer) {
-      console.error(
-        "[CameraManager] setDependencies called without a valid renderer. Initialization failed.",
+      console.warn(
+        "[CameraManager] No valid renderer for the CameraManager, waiting for renderer to be set.",
       );
       return;
     }

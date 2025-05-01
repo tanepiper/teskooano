@@ -1,6 +1,6 @@
 import { celestialObjectsStore, currentSeed } from "@teskooano/core-state";
 import { type CelestialObject } from "@teskooano/data-types";
-import { execute } from "@teskooano/ui-plugin";
+import { pluginManager } from "@teskooano/ui-plugin";
 import type { TeskooanoButton } from "../../../../core/components/button/Button.js";
 import {
   CheckmarkIcon,
@@ -291,7 +291,9 @@ class SystemControls
     this.setGenerating(true);
 
     try {
-      const result = await execute("system:generate_random", { seed: seed });
+      const result = await pluginManager.execute("system:generate_random", {
+        seed: seed,
+      });
 
       const success = (result as any)?.success;
       // Feedback is now implicitly handled by store updates triggering updateDisplay
@@ -335,13 +337,13 @@ class SystemControls
     try {
       switch (action) {
         case "export":
-          result = await execute("system:export");
+          result = await pluginManager.execute("system:export");
           break;
         case "import":
-          result = await execute("system:trigger_import_dialog");
+          result = await pluginManager.execute("system:trigger_import_dialog");
           break;
         case "random":
-          result = await execute("system:generate_random");
+          result = await pluginManager.execute("system:generate_random");
           break;
         case "clear":
           if (
@@ -349,7 +351,7 @@ class SystemControls
               "Are you sure you want to clear the current system? This cannot be undone.",
             )
           ) {
-            result = await execute("system:clear");
+            result = await pluginManager.execute("system:clear");
           } else {
             result = {
               success: false,
@@ -359,10 +361,10 @@ class SystemControls
           }
           break;
         case "create-blank":
-          result = await execute("system:create_blank");
+          result = await pluginManager.execute("system:create_blank");
           break;
         case "copy-seed":
-          result = await execute("system:copy_seed", {
+          result = await pluginManager.execute("system:copy_seed", {
             seed: currentSeed.get(),
           });
           break;

@@ -1,10 +1,8 @@
 import {
   PanelToolbarItemConfig,
-  execute, // Assuming this type is added
-  getToolbarItemsForTarget,
-  getToolbarWidgetsForTarget,
-  type FunctionToolbarItemConfig, // Get all items for a target
-  type ToolbarItemConfig, // Assuming this function is added to the plugin package
+  pluginManager,
+  type FunctionToolbarItemConfig,
+  type ToolbarItemConfig,
   type ToolbarWidgetConfig,
 } from "@teskooano/ui-plugin";
 import type { DockviewController } from "../dockview/DockviewController.js";
@@ -218,7 +216,7 @@ export class ToolbarController {
 
     try {
       const widgets: ToolbarWidgetConfig[] =
-        getToolbarWidgetsForTarget(targetId);
+        pluginManager.getToolbarWidgetsForTarget(targetId);
       widgets.forEach((widgetConfig) => {
         try {
           const widgetElement = document.createElement(
@@ -264,7 +262,8 @@ export class ToolbarController {
     }
 
     try {
-      const items: ToolbarItemConfig[] = getToolbarItemsForTarget(targetId);
+      const items: ToolbarItemConfig[] =
+        pluginManager.getToolbarItemsForTarget(targetId);
       items.forEach((item) => {
         try {
           if (item.type === "function") {
@@ -308,7 +307,7 @@ export class ToolbarController {
             const functionId = buttonConfig.functionId;
             buttonElement.addEventListener("click", async () => {
               try {
-                await execute(functionId);
+                await pluginManager.execute(functionId);
               } catch (execError) {
                 console.error(
                   `[ToolbarController] Error executing function '${functionId}':`,

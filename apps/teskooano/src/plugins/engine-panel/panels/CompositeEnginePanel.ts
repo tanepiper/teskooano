@@ -28,7 +28,7 @@ import type { DockviewController } from "../../../core/controllers/dockview/Dock
 
 import { CustomEvents } from "@teskooano/data-types";
 import { RendererStats } from "@teskooano/renderer-threejs-core";
-import { getManagerInstance } from "@teskooano/ui-plugin"; // Correct package
+import { pluginManager } from "@teskooano/ui-plugin"; // Import the instance
 import {
   EngineToolbar,
   EngineToolbarManager, // Import the manager type
@@ -582,9 +582,9 @@ export class CompositeEnginePanel implements IContentRenderer {
       this.handleSimulationStateChange(simulationState.get());
 
       // --- Initialize Camera Manager ---
-      // Get the singleton instance
+      // Get the singleton instance using pluginManager
       const cameraManagerInstance =
-        getManagerInstance<CameraManager>("camera-manager");
+        pluginManager.getManagerInstance<CameraManager>("camera-manager");
       this._cameraManager = cameraManagerInstance; // Store the singleton instance
 
       if (!this._cameraManager) {
@@ -724,10 +724,11 @@ export class CompositeEnginePanel implements IContentRenderer {
       return;
     }
 
-    // --- Get the Toolbar Manager --- //
-    const toolbarManager = getManagerInstance<EngineToolbarManager>(
-      "engine-toolbar-manager",
-    );
+    // --- Get the Toolbar Manager using pluginManager --- //
+    const toolbarManager =
+      pluginManager.getManagerInstance<EngineToolbarManager>(
+        "engine-toolbar-manager",
+      );
 
     if (!toolbarManager) {
       console.error(
@@ -761,9 +762,11 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._renderer = undefined;
 
     // --- Dispose EngineToolbar via Manager --- //
-    const toolbarManager = getManagerInstance<EngineToolbarManager>(
-      "engine-toolbar-manager",
-    );
+    // Use pluginManager
+    const toolbarManager =
+      pluginManager.getManagerInstance<EngineToolbarManager>(
+        "engine-toolbar-manager",
+      );
 
     if (toolbarManager && this._api?.id) {
       // Call method on the instance
@@ -859,10 +862,11 @@ export class CompositeEnginePanel implements IContentRenderer {
       );
       return;
     }
-    // Get the singleton manager instance
-    const managerInstance = getManagerInstance<EngineToolbarManager>(
-      "engine-toolbar-manager",
-    );
+    // Get the singleton manager instance using pluginManager
+    const managerInstance =
+      pluginManager.getManagerInstance<EngineToolbarManager>(
+        "engine-toolbar-manager",
+      );
 
     if (!managerInstance) {
       console.error(
@@ -879,9 +883,11 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Called by EngineToolbar to subscribe to state.
    */
   public getToolbarManagerInstance(): EngineToolbarManager | null {
-    const managerInstance = getManagerInstance<EngineToolbarManager>(
-      "engine-toolbar-manager",
-    );
+    // Use pluginManager
+    const managerInstance =
+      pluginManager.getManagerInstance<EngineToolbarManager>(
+        "engine-toolbar-manager",
+      );
     if (!managerInstance) {
       console.error(
         "[CompositeEnginePanel] EngineToolbarManager instance not found!",

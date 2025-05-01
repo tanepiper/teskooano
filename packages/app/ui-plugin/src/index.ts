@@ -9,21 +9,4 @@
  */
 
 export * from "./types.js";
-export * from "./pluginManager.js";
-
-// Export Client-Side Manager Functions
-export {
-  registerPlugin,
-  loadAndRegisterPlugins,
-  setAppDependencies,
-  getPlugins,
-  getPanelConfig,
-  getFunctionConfig,
-  getToolbarItemsForTarget,
-  getLoadedModuleClass,
-  getToolbarWidgetsForTarget,
-  getManagerInstance,
-} from "./pluginManager.js";
-
-// Explicitly re-export execute if needed, though wildcard should cover it
-// export { execute } from "./pluginManager.js";
+export { pluginManager } from "./pluginManager.js";
