@@ -1,0 +1,147 @@
+---
+plan: "00002"
+title: "Whoops! I built a UI framework"
+author: "Tane"
+released: 2025-05-01
+---
+
+import { Image } from "astro:assets";
+import Slideshow from "../../components/Slideshow.astro";
+
+It's been just over a week since I released **Teskooano**, during that time I've been thinking of a roadmap
+for the next few months - for me this is a learning tool. I've been a professional developer for over 25 years, but with this project I've been working on some ideas I've not had time to realise.
+
+In terms of Now/Next, I've completed the first "stable" version of my first task - a modular UI system (I'll go into more details below) - and have a plan for the next phases:
+
+## "Now" - Upcoming changes
+
+### RxJS Refactor
+
+When I started out, I decided to use [nanostores](https://github.com/nanostores/nanostores) - a great little state library that makes working with frontend state management easy - but as the app grew, it became clear that the [RxJS](https://rxjs.dev/) operator setup would work better in the long run, with the complexity of the app.
+
+I've written an RxJS operator library before - [RxJS Ninja](https://rxjs-ninja.tane.dev/) although it likely needs some attention as it was abandoned, but I have experience with how powerful these can be for setting up data pipelines in your client.
+
+### New solid planet renderer
+
+As you may notice, planets and moons are not very varied or pretty - currently the way the textures are baked doesn't work, and I'd like to do a group up re-working on procedurally generated planets and moons.
+
+<Image
+  src="/plan/00002/lava-planet.png"
+  alt="A screenshot of a neutron star in Teskooano"
+  width="720"
+  height="360"
+/>
+
+In the first iteration of the application I used a CPU texure generated I had from a previous project, but it was too slow - the texture generation was moved to the GPU - but my experience with shaders up to now has been limited. This, along with new atmospheric shaders will hopefully make the universe of Teskooano more varied and exciting.
+
+## "Next" - Improving on existing features
+
+### Gas Giants
+
+At the moment, the gas giant textures are more in line with how they should look - but they are still rather static, and there is no storm or cloud rendering feature yet implemented. Gas giants should _feel_ epic, and this would be the main goal of the improvements
+
+### Stellar improvements
+
+Currently, there are some different types of stars within the main line and exotic types (neutron and black holes) - but they are, again, rather boring and missing some vital features (like gravitational lensing). The first focus would be the mainline stars, getting their shaders for their surfaces and corona correctly implemented, and then focusing on more exotic star types.
+
+<Image
+  src="/plan/00002/neutron-star.png"
+  alt="A screenshot of a neutron star in Teskooano"
+  width="720"
+  height="360"
+/>
+
+With this will also come updates to the lighting and shadow system, supporting multi-source lighting with realistic falloff, and better handling of 'transient transfers' where stars capture different bodies, ensuring more "realistic" physics
+
+### System editing
+
+The first steps of system editing are in place - you can create a blank system, but currently there is no editing feature. You can export a system and manually edit the JSON to import, but this isn't a good experience - with the system editor you will get full access to creating systems from scratch.
+
+## "Somewhere in infinity"
+
+In the long-run, the posibilities for the engine are limitless - I would like to add a terrain rendering system, allowing planets to be explored "on foot", and to add man-made objects like satellites - allowing for the creation of "grand tours" around systems.
+
+There's many more ideas that could be included, but for now I'll go on to the first new feature.
+
+## Teskooano UI plugins
+
+As I've been working on **Teskooano** I've found myself needing a bit more flexibility when it came to developing the UI, and with some of the features like the Engine Toolbar already heading that way - I decided to make an attempt at making the whole UI a bit more configurable.
+
+On the surface, not much looks different - but under the hood, there is a whole new plugin system that drive it. Here is the most complex example, which is the Engine View - here it not only registers the view, but it's own buttons, functions and widgets to the toolbar:
+
+```typescript
+export const plugin: TeskooanoPlugin = {
+  id: "core-engine-view",
+  name: "Core Engine View & System Actions",
+  description:
+    "Registers engine view panels and provides core system actions (generate, import, export, clear, etc.).",
+  panels: [enginePanelConfig, progressPanelConfig],
+  functions: [
+    addCompositeEnginePanelFunction,
+    generateRandomSystemFunction,
+    clearSystemFunction,
+    exportSystemFunction,
+    triggerImportDialogFunction,
+    createBlankSystemFunction,
+    copySeedFunction,
+  ],
+  toolbarRegistrations: [addViewButtonRegistration],
+  toolbarWidgets: [simulationControlsWidget, systemControlsWidget],
+};
+```
+
+The entire system is based around Web Components, and currently the plugin system integrates with the [DockView](https://dockview.dev/) UI, but can be easily seperated.
+
+### Vite Loader
+
+The first part of the integration is the [vite](https://vite.dev) loader - this plugin uses vite to import all the plugins, and create a mapping of all the imported features - web components are registered with the passed IDs (e.g. `teskooano-button`) and there are core plugins to ensure they are available before userland plugins.
+
+```ts
+export default defineConfig({
+  plugins: [
+    teskooanoUiPlugin({
+      pluginRegistryPaths: [
+        path.resolve(__dirname, "src/core/config/pluginRegistry.ts"),
+        path.resolve(__dirname, "src/config/pluginRegistry.ts"),
+      ],
+    }),
+    // rest of vite config
+  ],
+});
+```
+
+A plugin registry is just a map of files to their plugin location:
+
+```
+import type { PluginRegistryConfig } from "@teskooano/ui-plugin";
+
+export const pluginConfig: PluginRegistryConfig = {
+  "core-button": { path: "../core/components/button" },
+  "core-modal": { path: "../core/components/modal" },
+  "core-card": { path: "../core/components/card" },
+  // ... remaining core imports
+};
+```
+
+It does this using a _virtual module_ so all imports are available via `virtual:teskooano-loaders`, all the plugin manager has to do is `import { pluginLoaders } from "virtual:teskooano-loaders"` and it can then fetch everything passed in via the
+
+Classes and functions can also be registered - classes tend to be registered as singletons, while functions hidden behind an event facade:
+
+```ts
+// Getting an instance of the modal manager
+const modalManager = pluginManager.getManagerInstance<any>("modal-manager");
+// Calling a method via it's registered event
+const result: any = await pluginManager.execute("dockview:initialize", {
+  appElement,
+});
+```
+
+This means any plugin only has to import the `pluginManager` which is a singleton in `@teskooano/ui-plugin` on the client side.
+
+I should make it clear - I'm not _planning_ to release this as a web component framework, but it does feel like the seeds of one (the plugin config vaguely reminds me of _Angular_).
+
+Overall, I'm happy with it so far - it allows me to iterate new ideas quickly, and add new features as complete packges.
+
+If you have any feedback, feel free to leave an issues on [GitHub](https://github.com/tanepiper/teskooano)
+
+[🔭 Teskooano](https://teskooano.space/teskooano)

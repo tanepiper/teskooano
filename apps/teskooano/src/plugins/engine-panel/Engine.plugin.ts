@@ -41,9 +41,7 @@ export const plugin: TeskooanoPlugin = {
   name: "Core Engine View & System Actions",
   description:
     "Registers engine view panels and provides core system actions (generate, import, export, clear, etc.).",
-  // Register panels
   panels: [enginePanelConfig, progressPanelConfig],
-  // Register functions imported from other files
   functions: [
     addCompositeEnginePanelFunction,
     generateRandomSystemFunction,
@@ -53,8 +51,6 @@ export const plugin: TeskooanoPlugin = {
     createBlankSystemFunction,
     copySeedFunction,
   ],
-  // Register toolbar items imported from another file
   toolbarRegistrations: [addViewButtonRegistration],
-  // Register toolbar widgets imported from another file
   toolbarWidgets: [simulationControlsWidget, systemControlsWidget],
 };
