@@ -30,6 +30,9 @@ const settingsToolbarRegistration: ToolbarRegistration = {
       componentName: settingsPanelConfig.componentName, // Panel to open
       behaviour: "toggle", // Toggle the panel's visibility
       order: 100, // Place it towards the end (adjust as needed)
+      tooltipText: "Open the application settings panel.",
+      tooltipTitle: "Settings",
+      tooltipIconSvg: SettingsIcon,
     },
   ],
 };
