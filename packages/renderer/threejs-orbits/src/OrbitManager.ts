@@ -100,7 +100,7 @@ export class OrbitManager {
   /** The current active visualization mode (`Keplerian` or `Verlet`). */
   private currentMode: VisualizationMode = VisualizationMode.Keplerian;
   /** Unsubscribe function for the adapter settings listener. */
-  private unsubscribeAdapterSettings: (() => void) | null = null;
+  private unsubscribeAdapterSettings: Subscription | null = null;
 
   /** Add instance of the new manager */
   private keplerianManager: KeplerianOrbitManager;
@@ -674,7 +674,7 @@ export class OrbitManager {
    */
   dispose(): void {
     // Unsubscribe from adapter settings
-    this.unsubscribeAdapterSettings?.();
+    this.unsubscribeAdapterSettings?.unsubscribe();
     this.unsubscribeAdapterSettings = null;
 
     // Unsubscribe from renderable objects

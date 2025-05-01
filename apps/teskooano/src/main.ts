@@ -5,7 +5,10 @@ import "./vite-env.d";
 import { getCelestialObjects } from "@teskooano/core-state";
 
 import { ToolbarController } from "./core/controllers/toolbar/ToolbarController";
-import { TeskooanoTourModal } from "./core/interface/tour-controller/TourModal";
+import {
+  TeskooanoTourModal,
+  tourControllerInstance,
+} from "./core/interface/tour-controller";
 
 import {
   pluginManager,
@@ -99,13 +102,58 @@ async function initializeApp() {
     dockviewController,
   );
 
+  // --- Get ModalManager instance from plugin system and initialize ---
   const modalManager = pluginManager.getManagerInstance<any>("modal-manager");
+
   if (!modalManager) {
-    console.error("[App] Failed to get ModalManager instance after loading.");
+    console.error(
+      "[App] Failed to get ModalManager instance from plugin manager.",
+    );
     return;
+  } else {
+    // Initialize the manager with the controller
+    if (typeof modalManager.initialize === "function") {
+      modalManager.initialize(dockviewController);
+    } else {
+      console.error(
+        "[App] ModalManager instance from plugin system does not have an initialize method.",
+      );
+      return; // Cannot proceed without initialized modal manager
+    }
   }
-  appContext.modalManager = modalManager;
+  // --- End Initialization ---
+
+  appContext.modalManager = modalManager; // Store the initialized manager
   TeskooanoTourModal.setModalManager(modalManager);
+
+  // --- Show Tour Prompt Modal Logic ---
+  if (tourControllerInstance.shouldPromptForTour()) {
+    const tourModalElement = document.createElement(
+      "teskooano-tour-modal",
+    ) as TeskooanoTourModal;
+    tourModalElement.setCallbacks(
+      () => {
+        // On Accept
+        try {
+          pluginManager.execute("tour:start");
+          tourControllerInstance.markTourModalAsShown();
+        } catch (error) {
+          console.error("[App] Error executing tour:start:", error);
+        }
+      },
+      () => {
+        // On Decline
+        try {
+          pluginManager.execute("tour:setSkip", { skip: true });
+          tourControllerInstance.markTourModalAsShown();
+        } catch (error) {
+          console.error("[App] Error executing tour:setSkip:", error);
+        }
+      },
+    );
+    document.body.appendChild(tourModalElement);
+  }
+  // --- End Tour Prompt Modal Logic ---
 
   const plugins = pluginManager.getPlugins();
   plugins.forEach((plugin: TeskooanoPlugin) => {

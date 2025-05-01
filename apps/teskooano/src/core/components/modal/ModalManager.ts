@@ -21,14 +21,28 @@ export interface ModalOptions {
  * and the TeskooanoModal web component.
  */
 export class TeskooanoModalManager {
-  private _dockviewController: DockviewController; // Store controller
+  private _dockviewController: DockviewController | null = null; // Allow null initially
+  private isInitialized = false;
 
   /**
    * Create a new ModalManager
-   * @param dockviewController The DockviewController instance
+   * Dependencies are injected via initialize()
    */
-  constructor(dockviewController: DockviewController) {
+  constructor() {
+    // No dependencies in constructor
+  }
+
+  /**
+   * Initializes the manager with necessary dependencies.
+   * @param dockviewController The DockviewController instance.
+   */
+  public initialize(dockviewController: DockviewController): void {
+    if (this.isInitialized) {
+      console.warn("ModalManager already initialized.");
+      return;
+    }
     this._dockviewController = dockviewController;
+    this.isInitialized = true;
   }
 
   /**
@@ -44,6 +58,14 @@ export class TeskooanoModalManager {
 
     const width = options.width || 450;
     const height = options.height || 250;
+
+    // Check if initialized
+    if (!this.isInitialized || !this._dockviewController) {
+      console.error(
+        "ModalManager not initialized. Call initialize() before show().",
+      );
+      return Promise.resolve("dismissed"); // Cannot show modal
+    }
 
     // --- Create the TeskooanoModal element ---
     const modalElement = new TeskooanoModal();
@@ -89,18 +111,18 @@ export class TeskooanoModalManager {
     // --- Add event listeners to the modal element ---
     // These listeners will call the controller's hideOverlay method
     const handleConfirm = () =>
-      this._dockviewController.hideOverlay(modalId, "confirm");
+      this._dockviewController!.hideOverlay(modalId, "confirm");
     const handleClose = () =>
-      this._dockviewController.hideOverlay(modalId, "close");
+      this._dockviewController!.hideOverlay(modalId, "close");
     const handleSecondary = () =>
-      this._dockviewController.hideOverlay(modalId, "secondary");
+      this._dockviewController!.hideOverlay(modalId, "secondary");
 
     modalElement.addEventListener("modal-confirm", handleConfirm);
     modalElement.addEventListener("modal-close", handleClose);
     modalElement.addEventListener("modal-additional", handleSecondary);
 
     // --- Show the overlay using the controller ---
-    const overlayPromise = this._dockviewController.showOverlay(
+    const overlayPromise = this._dockviewController!.showOverlay(
       modalId,
       modalElement,
       { width, height },

@@ -21,7 +21,6 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "nanostores": "1.0.1",
     "rxjs": "7.8.2"
   },
   "devDependencies": {

@@ -20,7 +20,7 @@
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/core-physics": "file:../../physics",
     "@teskooano/core-math": "file:../../math",
-    "nanostores": "1.0.1",
+    "rxjs": "7.8.2",
     "three": "0.176.0"
   },
   "devDependencies": {

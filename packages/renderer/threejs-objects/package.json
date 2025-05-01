@@ -36,9 +36,8 @@
     "@teskooano/renderer-threejs-effects": "file:../threejs-effects",
     "@teskooano/renderer-threejs-interaction": "file:../threejs-interaction",
     "@teskooano/systems-celestial": "file:../../../systems/celestial",
-    "@nanostores/logger": "^1.0.0",
     "eventemitter3": "^5.0.1",
-    "nanostores": "^1.0.1"
+    "rxjs": "7.8.2"
   },
   "devDependencies": {
     "@types/three": "^0.176.0",

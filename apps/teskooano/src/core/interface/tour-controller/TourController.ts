@@ -152,6 +152,16 @@ export class TourController {
   }
 
   /**
+   * Checks if the tour should be prompted based on localStorage flags.
+   * Returns true if the prompt modal hasn't been shown AND the tour isn't set to skip.
+   */
+  public shouldPromptForTour(): boolean {
+    const modalShown = localStorage.getItem("tourModalShown") === "true";
+    const skipTour = localStorage.getItem("skipTour") === "true";
+    return !modalShown && !skipTour;
+  }
+
+  /**
    * Starts the tour from the very beginning (step 0).
    * Ensures dynamic steps are updated before starting.
    */

@@ -12,7 +12,8 @@ import TourIcon from "@fluentui/svg-icons/icons/compass_northwest_24_regular.svg
 export * from "./TourModal";
 export * from "./TourController";
 
-const tourControllerInstance = new TourController();
+// Export the instance so it can be accessed if needed
+export const tourControllerInstance = new TourController();
 
 const startTourFunction: FunctionConfig = {
   id: "tour:start",
