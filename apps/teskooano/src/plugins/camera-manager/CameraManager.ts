@@ -70,10 +70,7 @@ export class CameraManager {
       currentTarget: DEFAULT_CAMERA_TARGET.clone(),
     });
 
-  constructor() {
-    console.log("[CameraManager] Instance created (waiting for dependencies).");
-    // Constructor is now minimal
-  }
+  constructor() {}
 
   /**
    * Sets dependencies and initializes the manager state.
@@ -143,7 +140,6 @@ export class CameraManager {
     // --- End of moved logic --- //
 
     this.isInitialized = true;
-    console.log("[CameraManager] Dependencies set and initialized.");
 
     // Initialize camera position in controls
     this.initializeCameraPosition();
@@ -340,7 +336,6 @@ export class CameraManager {
    * Cleans up resources and listeners.
    */
   public destroy(): void {
-    console.log("[CameraManager] Destroying...");
     document.removeEventListener(
       "camera-transition-complete",
       this.handleCameraTransitionComplete,

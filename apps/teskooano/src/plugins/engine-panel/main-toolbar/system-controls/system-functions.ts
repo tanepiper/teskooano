@@ -13,7 +13,7 @@ import {
   type CelestialObject,
 } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
-import { generateAndLoadSystem } from "../../../../systems/system-generator.js";
+import { generateAndLoadSystem } from "./system-generator.js";
 import { OSVector3 } from "@teskooano/core-math";
 import type { DockviewApi } from "dockview-core";
 
@@ -122,6 +122,7 @@ async function processImportedFile(
 
 export const generateRandomSystemFunction: FunctionConfig = {
   id: "system:generate_random",
+  requiresDockviewApi: true,
   execute: async (
     context: PluginExecutionContext,
     options?: { seed?: string },
@@ -133,7 +134,6 @@ export const generateRandomSystemFunction: FunctionConfig = {
       );
       return;
     }
-    console.log("[SystemFunctions] Executing system:generate_random...");
     try {
       const seed = options?.seed ?? Math.random().toString(36).substring(2, 10);
       // Assuming generateAndLoadSystem handles progress updates via dockviewApi if needed
@@ -159,7 +159,6 @@ export const generateRandomSystemFunction: FunctionConfig = {
 export const clearSystemFunction: FunctionConfig = {
   id: "system:clear",
   execute: async () => {
-    console.log("[SystemFunctions] Executing system:clear...");
     try {
       actions.clearState({
         resetCamera: false,
@@ -182,7 +181,6 @@ export const clearSystemFunction: FunctionConfig = {
 export const exportSystemFunction: FunctionConfig = {
   id: "system:export",
   execute: async () => {
-    console.log("[SystemFunctions] Executing system:export...");
     try {
       const objects = celestialObjectsStore.get();
       const seed = currentSeed.get();
@@ -221,19 +219,10 @@ export const exportSystemFunction: FunctionConfig = {
 
 export const triggerImportDialogFunction: FunctionConfig = {
   id: "system:trigger_import_dialog",
+  requiresDockviewApi: true,
   execute: async (context: PluginExecutionContext) => {
+    // Destructure dockviewApi here to make it available in nested scopes
     const { dockviewApi } = context;
-    // We still need dockviewApi potentially for processImportedFile context
-    if (!dockviewApi) {
-      console.error(
-        "[SystemFunctions] Cannot trigger import: Dockview API not available.",
-      );
-      return {
-        success: false,
-        symbol: "❌",
-        message: "Internal error: API unavailable.",
-      };
-    }
 
     return new Promise((resolve) => {
       // Ensure previous importers are removed
@@ -250,6 +239,7 @@ export const triggerImportDialogFunction: FunctionConfig = {
       input.onchange = async (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (file) {
+          // Pass the captured dockviewApi variable
           const result = await processImportedFile(file, dockviewApi);
           resolve(result);
         } else {
@@ -277,8 +267,9 @@ export const triggerImportDialogFunction: FunctionConfig = {
 
 export const createBlankSystemFunction: FunctionConfig = {
   id: "system:create_blank",
-  execute: async () => {
-    console.log("[SystemFunctions] Executing system:create_blank...");
+  requiresDockviewApi: true,
+  execute: async (context: PluginExecutionContext) => {
+    const { dockviewApi } = context;
     try {
       actions.clearState({
         resetCamera: false,
@@ -308,7 +299,6 @@ export const createBlankSystemFunction: FunctionConfig = {
 export const copySeedFunction: FunctionConfig = {
   id: "system:copy_seed",
   execute: async (context: PluginExecutionContext, seedToCopy?: string) => {
-    console.log("[SystemFunctions] Executing system:copy_seed...");
     const seed = seedToCopy ?? currentSeed.get() ?? "";
     if (!seed) {
       return { success: false, symbol: "🤷", message: "No seed to copy." };

@@ -5,7 +5,6 @@ import type {
 } from "@teskooano/ui-plugin";
 import { RendererInfoDisplay } from "./engine-info"; // Import the panel class
 
-// --- Import Fluent UI Icons ---
 // Using DataUsageIcon from the component itself, but could define another like InfoIcon:
 // import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
 import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw"; // Using the same icon for now
@@ -34,17 +33,23 @@ const toolbarRegistration: ToolbarRegistration = {
   ],
 };
 
-// --- Plugin Definition ---
-// Export the plugin definition adhering to the TeskooanoPlugin interface
-// Use the required named export 'plugin'
+/**
+ * Plugin definition for the Engine Info display panel.
+ *
+ * Registers the RendererInfoDisplay panel and its associated toolbar button
+ * for showing renderer statistics.
+ */
 export const plugin: TeskooanoPlugin = {
-  id: "core-engine-info", // Unique ID for this plugin
-  name: "Core Engine Info",
+  id: "teskooano-engine-info", // Updated ID
+  name: "Engine Info Display",
   description:
     "Provides the engine information display panel and toolbar button.",
   panels: [panelConfig], // Register the panel
   toolbarRegistrations: [toolbarRegistration], // Register the toolbar item(s)
-  // No functions or base components from this plugin
   functions: [],
-  // Optional initialize/dispose if needed
+  toolbarWidgets: [],
+  managerClasses: [],
 };
+
+// Export the panel component directly if needed elsewhere
+export { RendererInfoDisplay };

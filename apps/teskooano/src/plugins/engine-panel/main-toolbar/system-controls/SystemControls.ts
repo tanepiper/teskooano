@@ -1,22 +1,18 @@
 import { celestialObjectsStore, currentSeed } from "@teskooano/core-state";
 import { type CelestialObject } from "@teskooano/data-types";
-import type { DockviewApi } from "dockview-core";
+import { execute } from "@teskooano/ui-plugin";
+import type { TeskooanoButton } from "../../../../core/components/button/Button.js";
 import {
-  getFunctionConfig,
-  type PluginFunctionCallerSignature,
-} from "@teskooano/ui-plugin";
-import {
-  SystemControlsTemplate,
-  SparkleIcon,
-  DeleteIcon,
-  SaveIcon,
-  FolderOpenIcon,
-  DocumentAddIcon,
-  CopyIcon,
   CheckmarkIcon,
+  CopyIcon,
+  DeleteIcon,
+  DocumentAddIcon,
+  FolderOpenIcon,
+  SaveIcon,
+  SparkleIcon,
+  SystemControlsTemplate,
 } from "./SystemControls.template.js";
 import * as SystemControlsUI from "./system-controls.ui.js";
-import type { TeskooanoButton } from "../../../../core/components/button/Button.js";
 
 /**
  * @element teskooano-system-controls
@@ -86,8 +82,6 @@ class SystemControls
    * @internal
    */
   connectedCallback() {
-    console.log("SystemControls connected");
-
     // Cache DOM elements
     this.container =
       this.shadowRoot?.querySelector(".teskooano-system-controls-container") ||
@@ -129,7 +123,6 @@ class SystemControls
    * @internal
    */
   disconnectedCallback() {
-    console.log("SystemControls disconnected");
     this.removeEventListeners();
     // Unsubscribe from all stores
     this.unsubscribers.forEach((unsub) => unsub());
@@ -165,7 +158,6 @@ class SystemControls
     const unsubObjects = celestialObjectsStore.subscribe(
       (objects: Record<string, CelestialObject>) => {
         // Subscribe to correct store
-        // REMOVED: console.log("SystemControls: celestialObjectsStore updated", objects);
         // TODO: Still need systemName source
         this.updateDisplay(objects, currentSeed.get()); // Pass objects map
       },
@@ -174,7 +166,6 @@ class SystemControls
 
     // Current Seed subscription remains the same
     const unsubSeed = currentSeed.subscribe((seed: string) => {
-      console.log("SystemControls: currentSeed updated", seed);
       // REMOVED: Don't force input value on every seed store change
       // if (this.seedInput && this.seedInput.value !== seed) {
       //   this.seedInput.value = seed;
@@ -192,7 +183,6 @@ class SystemControls
    */
   public tourRandomSeed() {
     const randomSeed = Math.random().toString(36).substring(2, 10); // Simple random seed
-    console.log("Generating random system with seed:", randomSeed);
     this.handleSeedSubmit({ preventDefault: () => {} } as Event);
   }
 
@@ -273,21 +263,15 @@ class SystemControls
    */
   private handleSeedSubmit = async (event: Event) => {
     event.preventDefault(); // Keep this!
-    console.log("handleSeedSubmit triggered via BUTTON CLICK."); // Updated log message
 
     if (this._isGenerating) {
-      console.log("Submit prevented: _isGenerating is true.");
       return;
     }
 
     const seed = this.seedInput?.value.trim() ?? ""; // Use empty string if null/undefined
-    console.log(
-      `Seed value from input: "${this.seedInput?.value}", Trimmed: "${seed}"`,
-    );
 
     // Basic validation feedback
     if (!seed && this.seedInput) {
-      console.log("Validation failed: Seed is empty after trimming.");
       console.warn("Seed input is empty");
       this.seedInput.classList.add("error");
       this.seedInput.setAttribute("placeholder", "Seed cannot be empty!");
@@ -304,15 +288,11 @@ class SystemControls
       return;
     }
 
-    console.log(`Validation passed. Proceeding with seed: "${seed}"`);
     this.setGenerating(true);
 
     try {
-      console.log("Calling system:generate_random plugin function...");
-      const generateFunc = getFunctionConfig("system:generate_random");
-      if (!generateFunc) throw new Error("Generate function not found");
-      // Pass seed in options object
-      const result = await generateFunc.execute({ seed: seed });
+      const result = await execute("system:generate_random", { seed: seed });
+
       const success = (result as any)?.success;
       // Feedback is now implicitly handled by store updates triggering updateDisplay
       if (success === false) {
@@ -323,7 +303,6 @@ class SystemControls
         if (submitButton)
           this.showFeedback(submitButton as HTMLElement, "❌", true, 3000);
       }
-      console.log(`system:generate_random returned: ${success}`);
     } catch (error) {
       console.error("Error during system:generate_random call:", error);
       const submitButton = this.seedForm?.querySelector(
@@ -332,7 +311,6 @@ class SystemControls
       if (submitButton)
         this.showFeedback(submitButton as HTMLElement, "❌", true, 3000);
     } finally {
-      console.log("Resetting generating state.");
       this.setGenerating(false);
     }
   };
@@ -350,43 +328,28 @@ class SystemControls
     const action = button.dataset.action;
 
     if (!action) return;
-    console.log("Action clicked:", action);
 
     this.setGenerating(true);
-    // Use 'any' for result type as ActionResult is no longer directly imported
     let result: any | null = null;
 
     try {
-      // Get plugin functions
-      const exportFunc = getFunctionConfig("system:export");
-      const importFunc = getFunctionConfig("system:trigger_import_dialog");
-      const randomFunc = getFunctionConfig("system:generate_random");
-      const clearFunc = getFunctionConfig("system:clear");
-      const blankFunc = getFunctionConfig("system:create_blank");
-      const copyFunc = getFunctionConfig("system:copy_seed");
-
       switch (action) {
         case "export":
-          if (!exportFunc) throw new Error("Export function not found");
-          result = await exportFunc.execute();
+          result = await execute("system:export");
           break;
         case "import":
-          if (!importFunc) throw new Error("Import function not found");
-          result = await importFunc.execute();
+          result = await execute("system:trigger_import_dialog");
           break;
         case "random":
-          if (!randomFunc) throw new Error("Random function not found");
-          result = await randomFunc.execute(); // No args needed for random
+          result = await execute("system:generate_random");
           break;
         case "clear":
-          if (!clearFunc) throw new Error("Clear function not found");
-          // Confirmation dialog is now inside the plugin function
           if (
             confirm(
               "Are you sure you want to clear the current system? This cannot be undone.",
             )
           ) {
-            result = await clearFunc.execute();
+            result = await execute("system:clear");
           } else {
             result = {
               success: false,
@@ -396,18 +359,17 @@ class SystemControls
           }
           break;
         case "create-blank":
-          if (!blankFunc) throw new Error("Create Blank function not found");
-          result = await blankFunc.execute();
+          result = await execute("system:create_blank");
           break;
         case "copy-seed":
-          if (!copyFunc) throw new Error("Copy Seed function not found");
-          result = await copyFunc.execute(currentSeed.get()); // Pass current seed
+          result = await execute("system:copy_seed", {
+            seed: currentSeed.get(),
+          });
           break;
         default:
           console.warn(`Unhandled action: ${action}`);
-          // Keep generating false if action is unhandled
           this.setGenerating(false);
-          return; // Exit early for unhandled actions
+          return;
       }
 
       // Show feedback based on the result from the action handlers
@@ -415,7 +377,6 @@ class SystemControls
         this.showFeedback(button, result.symbol, !result.success);
       } else {
         // Handle cases where the action handler didn't return a result (e.g., import cancelled)
-        console.log(`Action '${action}' completed without explicit feedback.`);
       }
     } catch (error) {
       // Catch errors from the action handlers themselves (e.g., file dialog rejection)

@@ -425,8 +425,6 @@ export class ModularSpaceRenderer {
     _targetPosition?: THREE.Vector3, // Mark as unused
     _cameraPosition?: THREE.Vector3, // Mark as unused
   ): void {
-    console.log(`[Renderer] setFollowTarget called with objectId: ${objectId}`);
-
     if (!this.controlsManager) {
       console.error("[Renderer] ControlsManager not initialized.");
       return;
@@ -435,7 +433,6 @@ export class ModularSpaceRenderer {
     if (objectId === null) {
       // Stop following
       this.controlsManager.setFollowTarget(null);
-      console.log(`[Renderer] Cleared follow target.`);
       return;
     }
 
@@ -450,11 +447,6 @@ export class ModularSpaceRenderer {
       this.controlsManager.setFollowTarget(null);
       return;
     }
-
-    console.log(
-      `[Renderer] Found object to follow:`,
-      objectToFollow.name || objectId,
-    );
 
     // Delegate to ControlsManager
     // We let ControlsManager calculate the position and target based on the object.
@@ -504,7 +496,6 @@ export class ModularSpaceRenderer {
    * @param enabled - If true, enables debug mode.
    */
   public setDebugMode(enabled: boolean): void {
-    console.log(`[ModularSpaceRenderer] Setting debug mode: ${enabled}`);
     this.sceneManager.setDebugMode(enabled);
     this.objectManager.setDebugMode(enabled);
     this.objectManager.recreateAllMeshes();

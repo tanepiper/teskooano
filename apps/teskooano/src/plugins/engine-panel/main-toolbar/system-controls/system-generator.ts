@@ -1,18 +1,13 @@
-import {
-  actions,
-  currentSeed,
-  updateSeed,
-  celestialObjectsStore,
-} from "@teskooano/core-state";
+import { actions, currentSeed, updateSeed } from "@teskooano/core-state";
 import {
   CelestialType,
+  CustomEvents,
   StarProperties,
   type CelestialObject,
 } from "@teskooano/data-types";
 import { generateSystem } from "@teskooano/procedural-generation";
 import { dispatchTextureGenerationComplete } from "@teskooano/systems-celestial";
 import { DockviewApi } from "dockview-core";
-import { CustomEvents } from "@teskooano/data-types";
 
 // Define the custom event for resetting simulation accumulated time
 export function dispatchSimulationTimeReset() {
@@ -36,17 +31,11 @@ export async function generateAndLoadSystem(
     return false;
   }
 
-  console.log(
-    `[SystemGenerator] Starting generation with input seed: "${inputSeed}"`,
-  );
-
   // Update seed store
   updateSeed(inputSeed);
   const finalSeed = currentSeed.get();
-  console.log(`[SystemGenerator] Using final seed: "${finalSeed}"`);
 
   // Clear state
-  console.log("[SystemGenerator] Clearing existing state...");
   actions.clearState({
     resetCamera: false,
     resetTime: true,
@@ -54,7 +43,6 @@ export async function generateAndLoadSystem(
   });
   actions.resetTime();
   dispatchSimulationTimeReset();
-  console.log("[SystemGenerator] State cleared.");
 
   // --- Show Progress Panel ---
   const progressPanelId = "texture-progress-panel";
@@ -69,26 +57,12 @@ export async function generateAndLoadSystem(
   let success = false;
 
   try {
-    console.log("[SystemGenerator] Generating system data and name...");
     // Destructure the result from generateSystem
     const { systemName: generatedName, objects: generatedObjects } =
       await generateSystem(finalSeed);
     systemName = generatedName; // Store the name
     systemData = generatedObjects; // Store the objects
-    console.log(
-      `[SystemGenerator] Generated system "${systemName}" with ${systemData.length} celestial objects.`,
-    );
 
-    // --- Update System Name in State ---
-    // TODO: Replace this with the actual way to update system name in core-state
-    // Example assuming an atom store named 'systemNameStore':
-    // import { systemNameStore } from '@teskooano/core-state'; // Hypothetical import
-    // if (systemName) {
-    //   systemNameStore.set(systemName);
-    //   console.log(`[SystemGenerator] System name "${systemName}" set in state.`);
-    // } else {
-    //    systemNameStore.set(null); // Clear name if generation failed?
-    // }
     console.warn(
       `[SystemGenerator] TODO: Need to implement setting system name "${systemName}" in core-state.`,
     );
@@ -102,10 +76,6 @@ export async function generateAndLoadSystem(
       )
       .map((planet) => ({ id: planet.id, name: planet.name }));
 
-    console.log(
-      `[SystemGenerator] Found ${planetList.length} planets/gas giants for texture generation.`,
-    );
-
     // Add the progress panel *after* generating data but *before* adding to state
     dockviewApi.addPanel({
       id: progressPanelId,
@@ -118,11 +88,9 @@ export async function generateAndLoadSystem(
         height: 300,
       },
     });
-    console.log("[SystemGenerator] Progress panel added.");
 
     // Add objects to the state store
     if (systemData && systemData.length > 0) {
-      console.log("[SystemGenerator] Adding generated objects to state...");
       // Find the primary star first
       let primaryStar = systemData.find((obj) => {
         if (obj.type !== CelestialType.STAR) return false;
@@ -142,9 +110,6 @@ export async function generateAndLoadSystem(
       }
 
       if (primaryStar) {
-        console.log(
-          `[SystemGenerator] Found primary star: ${primaryStar.id}. Creating solar system...`,
-        );
         // Create the system with the primary star first
         actions.createSolarSystem(primaryStar);
 
@@ -159,7 +124,6 @@ export async function generateAndLoadSystem(
               actions.createSolarSystem(objData);
             } else {
               // Add other objects normally
-              // console.log(`[SystemGenerator] Adding celestial: ${objData.id} (${objData.type})`);
               actions.addCelestial(objData);
             }
           }
@@ -173,20 +137,15 @@ export async function generateAndLoadSystem(
         systemData
           .filter((obj) => obj.type === CelestialType.STAR && !obj.parentId)
           .forEach((star) => {
-            console.log(
-              `[SystemGenerator] Adding root star (fallback): ${star.id}`,
-            );
             actions.createSolarSystem(star);
           });
         // Then add other objects
         systemData
           .filter((obj) => !(obj.type === CelestialType.STAR && !obj.parentId))
           .forEach((objData) => {
-            // console.log(`[SystemGenerator] Adding celestial (fallback): ${objData.id} (${objData.type})`);
             actions.addCelestial(objData);
           });
       }
-      console.log("[SystemGenerator] Finished adding objects to state.");
 
       // Reset time again
       actions.resetTime();
@@ -194,9 +153,6 @@ export async function generateAndLoadSystem(
 
       dispatchTextureGenerationComplete();
       success = true;
-      console.log(
-        "[SystemGenerator] System generation and state update successful.",
-      );
     } else {
       console.warn("[SystemGenerator] Generator returned no objects.");
       dispatchTextureGenerationComplete();
@@ -212,7 +168,6 @@ export async function generateAndLoadSystem(
     dispatchTextureGenerationComplete();
     success = false;
   } finally {
-    console.log(`[SystemGenerator] Process finished. Success: ${success}`);
   }
   return success;
 }

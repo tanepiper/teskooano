@@ -7,7 +7,7 @@ export * from "./Button";
  * Plugin definition for the core Button component.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "core-button", // Unique ID for this plugin
+  id: "core-button",
   name: "Core Button Component",
   description: "Provides the teskooano-button custom element.",
 

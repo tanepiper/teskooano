@@ -9,8 +9,14 @@ import type {
  * Context object passed to plugin function execute methods.
  */
 export interface PluginExecutionContext {
-  dockviewApi: DockviewApi;
-  dockviewController?: any;
+  dockviewApi: DockviewApi | null;
+  dockviewController?: any | null;
+  // Add access to manager instances and the execute function
+  getManager: <T = any>(id: string) => T | undefined;
+  executeFunction: <T = any>(
+    functionId: string,
+    args?: any,
+  ) => Promise<T> | T | undefined;
   // Add other shared dependencies here if needed in the future
 }
 
@@ -19,8 +25,9 @@ export interface PluginExecutionContext {
  * It hides the injected context from the caller.
  */
 export type PluginFunctionCallerSignature = (
-  ...args: any[]
-) => void | Promise<void>;
+  context: PluginExecutionContext,
+  args?: any,
+) => any; // Allow any return type, including void, values, or promises
 
 /** Configuration for dynamically loading a component. */
 export interface ComponentLoadConfig {
@@ -102,10 +109,11 @@ export interface FunctionConfig {
    * Receives the execution context (with APIs) as the first argument,
    * followed by any specific arguments passed during the call.
    */
-  execute: (
-    context: PluginExecutionContext,
-    ...args: any[]
-  ) => any | Promise<any>;
+  execute: PluginFunctionCallerSignature;
+  /** Optional: Set to true if this function requires the Dockview API. */
+  requiresDockviewApi?: boolean;
+  /** Optional: Set to true if this function requires the Dockview Controller. */
+  requiresDockviewController?: boolean;
 }
 
 /**

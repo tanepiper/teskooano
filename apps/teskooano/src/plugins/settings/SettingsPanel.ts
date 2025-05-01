@@ -63,12 +63,10 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
   init(params: IDockviewPanelProps<any>): void {
     // Initialization logic now happens in connectedCallback
     // We might pass params through if needed later
-    console.log("[SettingsPanel] Initializing Dockview panel wrapper.");
   }
 
   // --- Custom Element Lifecycle Callbacks ---
   connectedCallback() {
-    console.log("[SettingsPanel] Custom element connected.");
     // Find elements within the shadow DOM
     this.formElement =
       this.shadowRoot!.querySelector<HTMLFormElement>("#settings-form");
@@ -111,7 +109,6 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
   }
 
   disconnectedCallback() {
-    console.log("[SettingsPanel] Custom element disconnected.");
     // Remove listeners and unsubscribe
     this.removeEventListenersAndUnsubscribe();
   }

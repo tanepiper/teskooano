@@ -1,11 +1,11 @@
 import {
-  type FunctionToolbarItemConfig, // Specific config for function buttons
-  getFunctionConfig, // Assuming this type is added
+  PanelToolbarItemConfig,
+  execute, // Assuming this type is added
   getToolbarItemsForTarget,
-  getToolbarWidgetsForTarget, // Get all items for a target
+  getToolbarWidgetsForTarget,
+  type FunctionToolbarItemConfig, // Get all items for a target
   type ToolbarItemConfig, // Assuming this function is added to the plugin package
   type ToolbarWidgetConfig,
-  PanelToolbarItemConfig,
 } from "@teskooano/ui-plugin";
 import type { DockviewController } from "../dockview/DockviewController.js";
 import "./ToolbarController.css";
@@ -16,7 +16,6 @@ import {
 } from "./ToolbarController.handlers.js";
 
 import TourIcon from "@fluentui/svg-icons/icons/compass_northwest_24_regular.svg?raw";
-import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
 
 /**
  * @class ToolbarController
@@ -307,21 +306,13 @@ export class ToolbarController {
             }
 
             const functionId = buttonConfig.functionId;
-            buttonElement.addEventListener("click", () => {
-              const funcConfig = getFunctionConfig(functionId);
-              if (funcConfig?.execute) {
-                try {
-                  funcConfig.execute();
-                } catch (execError) {
-                  console.error(
-                    `[ToolbarController] Error executing function '${functionId}':`,
-                    execError,
-                  );
-                }
-              } else {
+            buttonElement.addEventListener("click", async () => {
+              try {
+                await execute(functionId);
+              } catch (execError) {
                 console.error(
-                  // Use error here as it's unexpected
-                  `[ToolbarController] Button clicked, but function '${functionId}' not found via getFunctionConfig.`,
+                  `[ToolbarController] Error executing function '${functionId}':`,
+                  execError,
                 );
               }
             });
@@ -329,16 +320,6 @@ export class ToolbarController {
             buttonContainer.appendChild(buttonElement);
           } else if (item.type === "panel") {
             const panelConfig = item as PanelToolbarItemConfig;
-            // --- DEBUG LOG --- //
-            console.log(
-              `[ToolbarController] Processing panel item config:`,
-              panelConfig,
-            );
-            // --- END DEBUG LOG --- //
-
-            console.log(
-              `[ToolbarController] Creating PANEL button for '${panelConfig.id}', component: '${panelConfig.componentName}'`,
-            );
 
             if (!panelConfig.componentName) {
               console.error(
@@ -373,16 +354,10 @@ export class ToolbarController {
               buttonElement.setAttribute("title", panelConfig.title);
 
             buttonElement.addEventListener("click", () => {
-              console.log(
-                `[ToolbarController] Panel button '${panelConfig.id}' clicked. Triggering panel action...`,
-              );
-              // Use DockviewController to handle panel toggle/creation
-              // TODO: Implement or verify handlePanelToggleAction method on DockviewController
               this._dockviewController.handlePanelToggleAction(panelConfig);
             });
 
             buttonContainer.appendChild(buttonElement);
-            // --- END PANEL BUTTON HANDLING --- //
           }
         } catch (elementError) {
           console.error(

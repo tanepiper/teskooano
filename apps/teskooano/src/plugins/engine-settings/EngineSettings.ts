@@ -4,11 +4,12 @@ import type {
 } from "../engine-panel/panels/CompositeEnginePanel.js"; // Import parent panel type
 import type { TeskooanoSlider } from "../../core/components/slider/Slider.js"; // Import the slider type
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
-import { PanelToolbarButtonConfig } from "../../core/interface/engine-toolbar/EngineToolbar.store.js"; // Import toolbar types
+// Import toolbar types
 import { Subscription } from "rxjs";
 
 import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
 import { template } from "./EngineSettings.template.js";
+import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 
 export class EngineUISettingsPanel
   extends HTMLElement
@@ -27,9 +28,10 @@ export class EngineUISettingsPanel
 
   public static readonly componentName = "engine-ui-settings-panel";
 
-  public static registerToolbarButtonConfig(): PanelToolbarButtonConfig {
+  public static registerToolbarButtonConfig(): PanelToolbarItemConfig {
     return {
       id: "engine_settings", // Base ID, EngineToolbar will add apiId
+      target: "engine-toolbar", // Add the required target property
       iconSvg: SettingsIcon,
       title: "Engine Settings",
       type: "panel",
@@ -41,7 +43,6 @@ export class EngineUISettingsPanel
 
   constructor() {
     super();
-    console.log("[EngineUISettingsPanel] Constructor running..."); // Debug log
     // Check if template and template.content are valid before using
     if (
       !template ||
@@ -54,23 +55,11 @@ export class EngineUISettingsPanel
       // Optionally throw an error or handle gracefully
       return;
     }
-    console.log(
-      "[EngineUISettingsPanel] Template content childElementCount:",
-      template.content.childElementCount,
-    ); // Debug log
-    console.log(
-      "[EngineUISettingsPanel] Template content first child:",
-      template.content.firstChild?.nodeName,
-    ); // Debug log
 
     this.attachShadow({ mode: "open" });
     try {
       const clonedContent = template.content.cloneNode(true);
-      // console.log('[EngineUISettingsPanel] Cloned template content:', clonedContent); // Optional: log the whole node
       this.shadowRoot!.appendChild(clonedContent);
-      console.log(
-        "[EngineUISettingsPanel] Appended template content to shadowRoot.",
-      ); // Debug log
     } catch (error) {
       console.error(
         "[EngineUISettingsPanel] Error appending template content to shadowRoot:",
@@ -161,7 +150,6 @@ export class EngineUISettingsPanel
     const params = parameters.params as {
       parentInstance?: CompositeEnginePanel;
     }; // ADD THIS LINE
-    console.log(`[EngineUISettingsPanel] Initializing with params:`, params);
 
     // Check for the directly passed instance
     if (params?.parentInstance) {
@@ -170,9 +158,6 @@ export class EngineUISettingsPanel
         params.parentInstance instanceof Object &&
         "getViewState" in params.parentInstance
       ) {
-        console.log(
-          `[EngineUISettingsPanel] Setting parent panel via direct instance.`,
-        );
         this.setParentPanel(params.parentInstance);
       } else {
         const errMsg =

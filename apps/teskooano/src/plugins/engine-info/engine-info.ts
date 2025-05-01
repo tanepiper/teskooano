@@ -3,8 +3,10 @@ import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import type { RendererStats } from "@teskooano/renderer-threejs-core";
 // Import Dockview types and panel registry
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
-import { PanelToolbarButtonConfig } from "../../core/interface/engine-toolbar/EngineToolbar.store"; // Import toolbar types
-import type { CompositeEnginePanel } from "../../panels/CompositeEnginePanel"; // Import for type checking
+// Import the type from the UI Plugin package
+import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
+// Correct the import path for CompositeEnginePanel again
+import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel"; // Import for type checking
 
 // Import Fluent UI Icons
 import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw";
@@ -137,9 +139,10 @@ export class RendererInfoDisplay
   // --- Static Configuration ---
   public static readonly componentName = "renderer-info-display";
 
-  public static registerToolbarButtonConfig(): PanelToolbarButtonConfig {
+  public static registerToolbarButtonConfig(): PanelToolbarItemConfig {
     return {
       id: "renderer_info", // Base ID
+      target: "engine-toolbar", // Add the required target property
       iconSvg: DataUsageIcon,
       title: "Renderer Info",
       type: "panel",
@@ -180,9 +183,7 @@ export class RendererInfoDisplay
         "renderer-ready",
         this._boundHandleRendererReady,
       );
-      console.log(
-        "[RendererInfoDisplay] Added renderer-ready listener in connectedCallback.",
-      );
+
       this.updateConnectionStatus("Listening for renderer events...");
     }
 
@@ -205,14 +206,10 @@ export class RendererInfoDisplay
         "renderer-ready",
         this._boundHandleRendererReady,
       );
-      console.log(
-        "[RendererInfoDisplay] Removed renderer-ready listener in disconnectedCallback.",
-      );
     }
   }
 
   private handleRefreshClick() {
-    console.log("[RendererInfoDisplay] Manual refresh triggered");
     this.updateConnectionStatus("Manual refresh triggered");
 
     if (this._renderer) {
@@ -230,7 +227,6 @@ export class RendererInfoDisplay
   }
 
   public setRenderer(renderer: ModularSpaceRenderer): void {
-    console.log("[RendererInfoDisplay] setRenderer called with:", renderer);
     this._renderer = renderer;
     this.stopConnectionAttempts();
 
@@ -258,17 +254,10 @@ export class RendererInfoDisplay
     // 1. Try getting renderer directly from parent panel if set
     if (this._parentPanel) {
       try {
-        console.log(
-          "[RendererInfoDisplay] Trying to get renderer from parent:",
-          this._parentPanel,
-        );
         // Check if parent has a getRenderer method
         if (typeof this._parentPanel.getRenderer === "function") {
           const renderer = this._parentPanel.getRenderer();
           if (renderer) {
-            console.log(
-              "[RendererInfoDisplay] Got renderer directly from parent",
-            );
             this.setRenderer(renderer);
             return;
           }
@@ -285,11 +274,6 @@ export class RendererInfoDisplay
     if (!this._parentPanel) {
       const enginePanels = document.querySelectorAll("composite-engine-panel");
       if (enginePanels.length > 0) {
-        console.log(
-          "[RendererInfoDisplay] Found engine panels in DOM:",
-          enginePanels,
-        );
-
         // Try each panel
         for (let i = 0; i < enginePanels.length; i++) {
           const panel = enginePanels[i] as any;
@@ -297,10 +281,6 @@ export class RendererInfoDisplay
             try {
               const renderer = panel.getRenderer();
               if (renderer) {
-                console.log(
-                  "[RendererInfoDisplay] Got renderer from DOM engine panel",
-                  i,
-                );
                 this._parentPanel = panel;
                 this.setRenderer(renderer);
                 return;
@@ -365,10 +345,7 @@ export class RendererInfoDisplay
 
     try {
       const stats = this._renderer.animationLoop.getCurrentStats();
-      console.log(
-        "[RendererInfoDisplay] fetchAndUpdateDisplay: Stats received:",
-        stats,
-      );
+
       this.updateDisplay(stats);
       this.updateConnectionStatus(
         "Stats updated at " + new Date().toLocaleTimeString(),
@@ -433,7 +410,6 @@ export class RendererInfoDisplay
     const params = parameters.params as {
       parentInstance?: CompositeEnginePanel;
     };
-    console.log(`[RendererInfoDisplay] Initializing with params:`, params);
 
     // Reset attempt counter
     this._attemptCount = 0;
@@ -445,10 +421,7 @@ export class RendererInfoDisplay
       ) {
         // Store the parent instance
         this._parentPanel = params.parentInstance;
-        console.log(
-          "[RendererInfoDisplay] Parent instance stored:",
-          this._parentPanel,
-        );
+
         this.updateConnectionStatus(
           "Parent panel found, attempting to connect...",
         );
@@ -457,9 +430,6 @@ export class RendererInfoDisplay
         try {
           const renderer = params.parentInstance.getRenderer();
           if (renderer) {
-            console.log(
-              `[RendererInfoDisplay] Setting renderer from parent instance.`,
-            );
             this.setRenderer(renderer);
             return; // Success!
           } else {
@@ -483,9 +453,6 @@ export class RendererInfoDisplay
           this._parentPanel.element.addEventListener(
             "renderer-ready",
             this._boundHandleRendererReady,
-          );
-          console.log(
-            "[RendererInfoDisplay] Added renderer-ready listener in init.",
           );
 
           // Also try connecting through other methods
@@ -513,10 +480,6 @@ export class RendererInfoDisplay
       renderer: ModularSpaceRenderer;
     }>;
     if (customEvent.detail?.renderer) {
-      console.log(
-        "[RendererInfoDisplay] Received renderer-ready event with renderer:",
-        customEvent.detail.renderer,
-      );
       this.updateConnectionStatus("Received renderer from ready event");
       this.setRenderer(customEvent.detail.renderer);
     } else {

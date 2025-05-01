@@ -38,9 +38,6 @@ export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
     path.resolve(p),
   );
 
-  console.log(`[Teskooano UI Plugin] Initialized with:
-    Plugin Configs: ${pluginConfigPaths.join(", ")}`);
-
   return {
     name: "vite-plugin-teskooano-ui",
 
@@ -51,7 +48,6 @@ export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
      */
     resolveId(id) {
       if (id === VIRTUAL_MODULE_ID) {
-        // console.log(`[Teskooano UI Plugin] Resolving virtual module ID: ${id}`); // DEBUG
         return RESOLVED_VIRTUAL_MODULE_ID;
       }
       return null; // Let Vite handle other IDs
@@ -65,13 +61,11 @@ export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
      */
     async load(id) {
       if (id === RESOLVED_VIRTUAL_MODULE_ID) {
-        // console.log(`[Teskooano UI Plugin] Loading virtual module: ${id}`); // DEBUG
         try {
           // --- Load Plugin Configs ---
           const mergedPluginConfig: PluginRegistryConfig = {};
 
           for (const configPath of pluginConfigPaths) {
-            // console.log(`  - Reading plugin config: ${configPath}`); // DEBUG
             const pluginConfigModule = await import(
               configPath + `?import&t=${Date.now()}` // Append timestamp to bust cache
             );
@@ -87,7 +81,6 @@ export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
             (pluginConfig as any)._configPath = path.dirname(configPath);
 
             Object.assign(mergedPluginConfig, pluginConfig); // Merge configs, later ones overwrite earlier ones
-            // console.log(`    - Found ${Object.keys(pluginConfig).length} plugins in ${path.basename(configPath)}.`); // DEBUG
           }
 
           // Generate the virtual module content
@@ -103,7 +96,6 @@ export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
             const resolvedPluginPath = path
               .resolve(configDir, loadConfig.path) // Resolve relative to its own config file
               .replace(/\\/g, "/"); // Ensure forward slashes
-            // console.log(`    - Generating plugin loader for '${pluginId}': import('${resolvedPluginPath}')`); // DEBUG
             content += `  ${JSON.stringify(pluginId)}: () => import('${resolvedPluginPath}'),\n`;
           }
           // Clean up temporary property
@@ -111,7 +103,6 @@ export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
 
           content += "};\n";
 
-          // console.log(`[Teskooano UI Plugin] Generated virtual module content.`); // DEBUG
           return content;
         } catch (error) {
           console.error(

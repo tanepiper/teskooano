@@ -5,7 +5,6 @@ import type {
 } from "@teskooano/ui-plugin";
 import { CelestialInfo } from "./CelestialInfo"; // Import the panel class
 
-// --- Import Fluent UI Icons ---
 // Use the InfoIcon defined in the CelestialInfo component's static config
 import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
 
@@ -33,17 +32,23 @@ const toolbarRegistration: ToolbarRegistration = {
   ],
 };
 
-// --- Plugin Definition ---
-// Export the plugin definition adhering to the TeskooanoPlugin interface
-// Use the required named export 'plugin'
+/**
+ * Plugin definition for the Celestial Info display panel.
+ *
+ * Registers the CelestialInfo panel and its associated toolbar button
+ * for showing detailed information about the currently focused celestial object.
+ */
 export const plugin: TeskooanoPlugin = {
-  id: "core-celestial-info", // Unique ID for this plugin
-  name: "Core Celestial Info",
+  id: "teskooano-celestial-info", // Updated ID
+  name: "Celestial Info Display",
   description:
     "Provides the celestial information display panel and toolbar button.",
   panels: [panelConfig], // Register the panel
   toolbarRegistrations: [toolbarRegistration], // Register the toolbar item(s)
-  // No functions or base components from this plugin
   functions: [],
-  // Optional initialize/dispose if needed
+  toolbarWidgets: [],
+  managerClasses: [],
 };
+
+// Export the panel component directly if needed elsewhere
+export { CelestialInfo };

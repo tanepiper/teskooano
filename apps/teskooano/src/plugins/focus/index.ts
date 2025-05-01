@@ -36,14 +36,22 @@ const toolbarRegistration: ToolbarRegistration = {
   ],
 };
 
-// Export the plugin definition adhering to the TeskooanoPlugin interface
+/**
+ * Plugin definition for the Focus Control panel.
+ *
+ * Registers the FocusControl panel and its associated toolbar button
+ * for selecting and focusing on celestial objects.
+ */
 export const plugin: TeskooanoPlugin = {
-  id: "core-focus-controls", // Unique ID for this plugin
-  name: "Core Focus Controls",
+  id: "teskooano-focus-controls", // Updated ID
+  name: "Focus Controls",
   description: "Provides the focus control panel and toolbar button.",
   panels: [panelConfig], // Register the panel
   toolbarRegistrations: [toolbarRegistration], // Register the toolbar item(s)
-  // No components to register here, FocusControl itself is a panel, not a base component
-  // Optional initialize function if needed
-  // initialize: () => { ... }
+  functions: [],
+  toolbarWidgets: [],
+  managerClasses: [],
 };
+
+// Export the panel component directly if needed elsewhere
+export { FocusControl };

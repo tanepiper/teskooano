@@ -51,10 +51,6 @@ export class OverlayManager {
         containerRect.left + containerRect.width / 2 - width / 2,
       );
 
-      console.log(
-        `OverlayManager: Creating overlay ${id} at top: ${top}, left: ${left}, width: ${width}, height: ${height}`,
-      );
-
       try {
         const overlayInstance = new Overlay({
           container: this._overlayContainer,
@@ -96,8 +92,6 @@ export class OverlayManager {
       return;
     }
 
-    console.log(`OverlayManager: Hiding overlay ${id} with result: ${result}`);
-
     try {
       overlayData.overlay.setVisible(false);
       overlayData.overlay.dispose();
@@ -120,6 +114,5 @@ export class OverlayManager {
       // Use "dismissed" as the default result when disposing all
       this.hideOverlay(id, "dismissed");
     });
-    console.log("OverlayManager: All active overlays disposed.");
   }
 }

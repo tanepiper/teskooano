@@ -10,7 +10,6 @@ import {
 
 import { Observable, Subject } from "rxjs";
 
-// Import types and fallback panel
 import { FallbackPanel } from "./FallbackPanel";
 import { GroupManager } from "./GroupManager";
 import { OverlayManager } from "./OverlayManager";
@@ -51,17 +50,9 @@ export class DockviewController {
     this._api = createDockview(element, {
       className: "dockview-theme-abyss",
       createComponent: (options) => {
-        console.log(
-          `DockviewController: Creating component for name: '${options.name}'`,
-        );
-        // Check the registry first
         const componentInfo = this._registeredComponents.get(options.name);
         if (componentInfo) {
-          console.log(
-            `DockviewController: Found registered component info for: ${options.name}`,
-          );
           try {
-            // Instantiate using the stored constructor
             return new componentInfo.constructor();
           } catch (err) {
             console.error(
@@ -69,7 +60,7 @@ export class DockviewController {
               err,
             );
             const errorPanel = new FallbackPanel();
-            // Check if err is an Error object before accessing message
+
             const errorMessage =
               err instanceof Error ? err.message : String(err);
             errorPanel.updateContent(
@@ -79,23 +70,14 @@ export class DockviewController {
           }
         }
 
-        // Fallback for default or unknown (or if we chose not to pre-register above)
-        console.log(
-          `DockviewController: Component '${options.name}' not in registry, using fallback.`,
-        );
         switch (options.name) {
-          /* Cases for components not pre-registered could go here */
-          /* e.g., if we didn't pre-register settings_view: 
-          case 'settings_view':
-            return new SettingsPanel(); 
-          */
           case "default":
-            return new FallbackPanel(); // Use FallbackPanel
+            return new FallbackPanel();
           default:
             console.warn(
               `Unknown component requested or not registered: ${options.name}`,
             );
-            const errorPanel = new FallbackPanel(); // Use FallbackPanel
+            const errorPanel = new FallbackPanel();
             errorPanel.updateContent(
               `Error: Unknown/unregistered component '${options.name}'`,
             );
@@ -105,10 +87,8 @@ export class DockviewController {
       disableFloatingGroups: false,
     });
 
-    // Instantiate Managers
     this._overlayManager = new OverlayManager(element);
-    this._groupManager = new GroupManager(this._api); // Instantiate GroupManager
-
+    this._groupManager = new GroupManager(this._api);
     this._api.onDidRemovePanel((panel: IDockviewPanel) => {
       this.handlePanelRemoval(panel);
     });
@@ -122,8 +102,7 @@ export class DockviewController {
    * @param componentConstructor - The constructor function of the component.
    */
   public registerComponent(
-    name: string,
-    // Use the constructor type that might have static methods
+    name: string, // Use the constructor type that might have static methods
     componentConstructor: ComponentConstructorWithStaticConfig,
   ): void {
     if (this._registeredComponents.has(name)) {
@@ -132,16 +111,12 @@ export class DockviewController {
       );
     }
 
-    // Check if the component has the static config method
     let toolbarConfig: PanelToolbarItemConfig | undefined = undefined;
     if (
       typeof componentConstructor.registerToolbarButtonConfig === "function"
     ) {
       try {
         toolbarConfig = componentConstructor.registerToolbarButtonConfig();
-        console.log(
-          `DockviewController: Found toolbar config for component '${name}'`,
-        );
       } catch (err) {
         console.error(
           `DockviewController: Error calling registerToolbarButtonConfig for '${name}':`,
@@ -152,12 +127,9 @@ export class DockviewController {
 
     // Store both constructor and config
     this._registeredComponents.set(name, {
-      constructor: componentConstructor as new () => IContentRenderer, // Cast back for map
+      constructor: componentConstructor as new () => IContentRenderer,
       toolbarConfig,
     });
-    console.log(
-      `DockviewController: Registered component '${name}' ${toolbarConfig ? "with" : "without"} toolbar config.`,
-    );
   }
 
   /**
@@ -171,19 +143,16 @@ export class DockviewController {
   public addPanel(
     options: Parameters<DockviewApi["addPanel"]>[0],
   ): IDockviewPanel {
-    // Ensure the component type is registered if it's a string name
     if (
       typeof options.component === "string" &&
       !this._registeredComponents.has(options.component) &&
-      options.component !== "default" // Don't warn for the default fallback
+      options.component !== "default"
     ) {
       console.warn(
         `DockviewController: Component '${options.component}' not pre-registered. Panel may fail to render.`,
       );
-      // Optionally, we could throw an error or provide a default component here.
     }
 
-    // We can add more logic here later, like checking for existing IDs, etc.
     return this._api.addPanel(options);
   }
 
@@ -220,10 +189,6 @@ export class DockviewController {
     group: DockviewGroup,
     panelOptions: AddPanelOptions,
   ): IDockviewPanel | null {
-    // Log the group ID we are attempting to add to
-    console.log(
-      `DockviewController: Attempting to add panel '${panelOptions.id}' to group ID: ${group.id}`,
-    );
     try {
       // Create panel using the main API but target the specific group
       const panelWithPosition = {
@@ -261,7 +226,6 @@ export class DockviewController {
     panelOptions: AddPanelOptions,
     groupOptions?: AddGroupOptions,
   ): IDockviewPanel | null {
-    // Use GroupManager to get or create the group
     const group = this._groupManager.createOrGetGroup(groupName, groupOptions);
 
     if (!group) {
@@ -271,7 +235,6 @@ export class DockviewController {
       return null;
     }
 
-    // Use the controller's method to add the panel to the found group
     return this.addPanelToGroup(group, panelOptions);
   }
 
@@ -348,20 +311,12 @@ export class DockviewController {
   public dispose(): void {
     try {
       this._api.dispose();
-      console.log("DockviewController: Dockview API disposed.");
     } catch (error) {
       console.error("DockviewController: Error disposing Dockview API:", error);
     }
 
     this._removedPanelSubject.complete();
-
-    // Clear internal caches/maps
     this._registeredComponents.clear();
-    console.log(
-      "DockviewController: Internal caches cleared (excluding managers).",
-    );
-
-    // Dispose managers
     this._overlayManager.dispose();
     this._groupManager.dispose(); // Call GroupManager dispose
   }
@@ -378,13 +333,9 @@ export class DockviewController {
   ): DockviewPanelApi | null {
     let temporaryPanel: IDockviewPanel | null = null;
     try {
-      console.log(
-        `DockviewController: Attempting to add floating panel ${panelOptions.id}`,
-      );
-
       const initialPanelOptions: AddPanelOptions = {
         ...panelOptions,
-        position: undefined, // Explicitly remove position from initial creation
+        position: undefined,
       };
       temporaryPanel = this._api.addPanel(initialPanelOptions);
 
@@ -394,9 +345,6 @@ export class DockviewController {
         );
         return null;
       }
-      console.log(
-        `DockviewController: Initial panel ${panelOptions.id} created. Adding to floating group...`,
-      );
 
       this._api.addFloatingGroup(temporaryPanel, {
         // Pass the position object directly here
@@ -472,18 +420,11 @@ export class DockviewController {
     const panelId = `${config.componentName}_float`;
     const behaviour = config.behaviour ?? "toggle"; // Default to toggle
 
-    console.log(
-      `[DockviewController] Handling panel toggle action for: ${config.id}, panelId: ${panelId}, component: ${config.componentName}, behaviour: ${behaviour}`,
-    );
-
     const existingPanel = this.api.getPanel(panelId);
 
     // --- Toggle Behaviour --- //
     if (behaviour === "toggle") {
       if (existingPanel?.api.isVisible) {
-        console.log(
-          `[DockviewController] Closing panel ${panelId} (toggle off).`,
-        );
         try {
           this.api.removePanel(existingPanel);
         } catch (error) {
@@ -495,13 +436,9 @@ export class DockviewController {
       } else {
         // Panel exists but hidden, or doesn't exist yet
         if (existingPanel) {
-          console.log(
-            `[DockviewController] Activating existing panel ${panelId}.`,
-          );
           existingPanel.api.setActive();
           // Optionally resize/reposition if needed based on config?
         } else {
-          console.log(`[DockviewController] Creating new panel ${panelId}.`);
           // Simplified position calculation for now
           const position = { top: 100, left: 100, width: 500, height: 400 }; // TODO: Improve positioning
           this.addFloatingPanel(
@@ -518,9 +455,6 @@ export class DockviewController {
     }
     // --- Create Behaviour --- //
     else if (behaviour === "create") {
-      console.log(
-        `[DockviewController] Creating new panel instance for ${config.componentName} (behaviour: create).`,
-      );
       const newPanelId = `${config.componentName}_float_${Date.now()}`; // Ensure unique ID
       const position = { top: 100, left: 100, width: 500, height: 400 }; // TODO: Improve positioning
       this.addFloatingPanel(

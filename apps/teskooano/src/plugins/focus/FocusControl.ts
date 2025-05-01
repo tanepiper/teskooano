@@ -530,9 +530,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
       // If the *followed* item becomes inactive, stop following
       if (isInactive && this._currentFollowedId === objectId) {
         // TODO: Tell renderer to stop following
-        console.log(
-          `[FocusControl] Stopping follow for inactive object ${objectId}`,
-        );
+
         this._currentFollowedId = null;
         // Remove visual indicator?
         const row = this.treeListContainer?.querySelector(

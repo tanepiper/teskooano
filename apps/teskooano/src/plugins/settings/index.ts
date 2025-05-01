@@ -1,18 +1,15 @@
 import type {
-  FunctionConfig,
   PanelConfig,
-  PluginExecutionContext,
   TeskooanoPlugin,
   ToolbarRegistration,
 } from "@teskooano/ui-plugin";
-import type { AddPanelOptions } from "dockview-core";
 import { SettingsPanel } from "./SettingsPanel"; // Import the panel class
 
 // Import the Fluent UI Settings icon
 import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
 
 // --- Constants ---
-const SETTINGS_PANEL_ID = "app_settings_panel"; // Consistent ID
+const SETTINGS_PANEL_ID = "app_settings_panel"; // Consistent ID (though componentName is primary)
 
 // --- Panel Configuration ---
 const settingsPanelConfig: PanelConfig = {
@@ -21,7 +18,7 @@ const settingsPanelConfig: PanelConfig = {
   defaultTitle: "Settings",
 };
 
-// Toolbar Registration (NEW)
+// Toolbar Registration
 const settingsToolbarRegistration: ToolbarRegistration = {
   target: "main-toolbar", // Target the main application toolbar
   items: [
@@ -37,13 +34,23 @@ const settingsToolbarRegistration: ToolbarRegistration = {
   ],
 };
 
-// --- Plugin Definition ---
+/**
+ * Plugin definition for the main application Settings panel.
+ *
+ * Registers the SettingsPanel and its associated toolbar button
+ * on the main application toolbar.
+ */
 export const plugin: TeskooanoPlugin = {
-  id: "core-settings",
-  name: "Core Settings Panel",
+  id: "teskooano-settings", // Updated ID
+  name: "Application Settings Panel",
   description:
     "Registers the main application settings panel and its toolbar toggle button.",
   panels: [settingsPanelConfig],
-  functions: [], // REMOVED toggleSettingsPanelFunction
-  toolbarRegistrations: [settingsToolbarRegistration], // ADDED toolbar registration
+  toolbarRegistrations: [settingsToolbarRegistration],
+  functions: [],
+  toolbarWidgets: [],
+  managerClasses: [],
 };
+
+// Export the panel component directly if needed elsewhere
+export { SettingsPanel };

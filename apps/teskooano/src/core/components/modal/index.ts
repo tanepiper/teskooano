@@ -9,7 +9,7 @@ export * from "./ModalManager";
  * Plugin definition for the core Modal system.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "core-modal", // Unique ID for this plugin
+  id: "core-modal", // Match the registry key
   name: "Core Modal System",
   description:
     "Provides the teskooano-modal custom element and the ModalManager service.",

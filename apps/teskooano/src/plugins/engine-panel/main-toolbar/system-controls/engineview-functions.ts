@@ -8,6 +8,8 @@ let enginePanelCounter = 0;
 
 export const addCompositeEnginePanelFunction: FunctionConfig = {
   id: "engine:add_composite_panel",
+  requiresDockviewApi: true,
+  requiresDockviewController: true,
   execute: async (context: PluginExecutionContext) => {
     const { dockviewApi, dockviewController } = context;
     if (!dockviewApi || !dockviewController) {
@@ -35,8 +37,6 @@ export const addCompositeEnginePanelFunction: FunctionConfig = {
     try {
       const newPanel = dockviewApi.addPanel(panelOptions);
       newPanel.api.setActive();
-
-      console.log(`[EngineViewPlugin] Added panel '${compositeViewId}'`);
     } catch (error) {
       console.error(
         `[EngineViewPlugin] Failed to add engine panel for counter ${counter}:`,

@@ -8,6 +8,7 @@ export const pluginConfig: PluginRegistryConfig = {
   "core-select": { path: "../core/components/select" },
   "core-slider": { path: "../core/components/slider" },
   "core-tooltip": { path: "../core/components/tooltip" },
+  "core-dockview": { path: "../core/controllers/dockview" },
   "core-tour": { path: "../core/interface/tour-controller" },
   "core-engine-toolbar": { path: "../core/interface/engine-toolbar" },
 };

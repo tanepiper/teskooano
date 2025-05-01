@@ -7,7 +7,7 @@ export * from "./Card";
  * Plugin definition for the core Card component.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "core-card", // Unique ID for this plugin
+  id: "core-card",
   name: "Core Card Component",
   description: "Provides the teskooano-card custom element.",
 

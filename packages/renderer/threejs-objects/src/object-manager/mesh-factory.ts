@@ -77,9 +77,7 @@ export class MeshFactory {
    */
   public setDebugMode(enabled: boolean): void {
     this._isDebugMode = enabled;
-    console.log(
-      `[MeshFactory] Debug mode ${enabled ? "enabled" : "disabled"}.`,
-    );
+
     // Note: This doesn't automatically update existing meshes.
     // Debug mode will apply to newly created or recreated meshes.
   }
@@ -208,9 +206,6 @@ export class MeshFactory {
   createObjectMesh(object: RenderableCelestialObject): THREE.Object3D {
     // --- Force Fallback Sphere in Debug Mode ---
     if (this._isDebugMode) {
-      console.log(
-        `[MeshFactory] Debug mode: Creating fallback for ${object.celestialObjectId}`,
-      );
       return this.createFallbackSphere(object);
     }
     // --- End Debug Mode Check ---

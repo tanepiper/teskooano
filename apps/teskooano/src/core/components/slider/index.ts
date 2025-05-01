@@ -7,7 +7,7 @@ export * from "./Slider";
  * Plugin definition for the core Slider component.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "core-slider", // Unique ID for this plugin
+  id: "core-slider", // Match the registry key
   name: "Core Slider Component",
   description: "Provides the teskooano-slider custom element.",
 

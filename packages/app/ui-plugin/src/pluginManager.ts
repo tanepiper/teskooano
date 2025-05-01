@@ -47,14 +47,15 @@ export function setAppDependencies(deps: {
   dockviewApi: DockviewApi;
   dockviewController: any; // Use same type as context
 }): void {
-  if (_dockviewApi) {
-    console.warn("[PluginManager] setAppDependencies called more than once.");
+  if (_dockviewApi && deps.dockviewApi) {
+    console.warn(
+      "[PluginManager] setAppDependencies called more than once with non-null API.",
+    );
   }
+
+  // ---- End Debug Logging ----
   _dockviewApi = deps.dockviewApi;
   _dockviewController = deps.dockviewController;
-  console.log(
-    "[PluginManager] Application dependencies (DockviewApi, DockviewController) set.",
-  );
 }
 
 /**
@@ -94,16 +95,10 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
       !customElements.get(componentName)
     ) {
       try {
-        console.log(
-          `[PluginManager] Auto-defining custom element panel '${componentName}' from plugin '${plugin.id}'...`,
-        );
         // We perform runtime checks, so the cast is safe here
         customElements.define(
           componentName,
           PanelClass as CustomElementConstructor,
-        );
-        console.log(
-          `[PluginManager] Custom element panel '${componentName}' defined successfully.`,
         );
       } catch (error) {
         console.error(
@@ -118,7 +113,6 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
       customElements.get(componentName)
     ) {
       // Optional: Log if it's already defined
-      // console.log(`[PluginManager] Custom element panel '${componentName}' was already defined.`);
     }
     // --- End Auto-define ---
   });
@@ -171,9 +165,6 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
 
       // Store the INSTANCE
       managerInstances.set(managerConfig.id, instance);
-      console.log(
-        `[PluginManager] Instantiated and registered manager '${managerConfig.id}' from plugin '${plugin.id}'.`,
-      );
 
       // Optional: Call an init method on the instance if it exists, passing context?
       if (typeof instance.setDependencies === "function") {
@@ -210,9 +201,6 @@ export function registerPlugin(plugin: TeskooanoPlugin): void {
         componentConfig.tagName,
         componentConfig.componentClass,
       );
-      console.log(
-        `[PluginManager] Defined custom element '${componentConfig.tagName}' from plugin '${plugin.id}'.`,
-      );
     } catch (error) {
       console.error(
         `[PluginManager] Failed to define custom element '${componentConfig.tagName}' from plugin '${plugin.id}':`,
@@ -234,11 +222,6 @@ export async function loadAndRegisterPlugins(
   const loadedPlugins: Record<string, TeskooanoPlugin> = {};
   const registeredPluginIds: Set<string> = new Set();
   const failedPluginIds: Set<string> = new Set();
-
-  console.log(
-    `[PluginManager] Attempting to load ${pluginIds.length} plugins:`,
-    pluginIds,
-  );
 
   // --- 1. Load all plugin modules --- //
   const loadPromises = pluginIds.map(async (id) => {
@@ -273,10 +256,6 @@ export async function loadAndRegisterPlugins(
 
   await Promise.all(loadPromises);
 
-  console.log(
-    `[PluginManager] Successfully loaded modules for ${Object.keys(loadedPlugins).length} plugins.`,
-  );
-
   // --- 2. Register plugins respecting dependencies --- //
   let pluginsToRegister = Object.values(loadedPlugins);
   let registeredInPass: number;
@@ -287,10 +266,6 @@ export async function loadAndRegisterPlugins(
     currentPass++;
     registeredInPass = 0;
     const remainingPlugins: TeskooanoPlugin[] = [];
-
-    console.log(
-      `[PluginManager] Registration Pass ${currentPass}, attempting to register ${pluginsToRegister.length} plugins.`,
-    );
 
     for (const plugin of pluginsToRegister) {
       // Check dependencies
@@ -303,13 +278,9 @@ export async function loadAndRegisterPlugins(
       if (unmetDependencies.length === 0) {
         // All dependencies met (or no dependencies)
         try {
-          console.log(`[PluginManager] Registering plugin '${plugin.id}'...`);
           registerPlugin(plugin); // Use the existing registration logic
           // Call initialize if it exists (passing optional args)
           if (typeof plugin.initialize === "function") {
-            console.log(
-              `[PluginManager] Initializing plugin '${plugin.id}'...`,
-            );
             try {
               plugin.initialize(passedArguments);
             } catch (initError) {
@@ -322,9 +293,6 @@ export async function loadAndRegisterPlugins(
           }
           registeredPluginIds.add(plugin.id);
           registeredInPass++;
-          console.log(
-            `[PluginManager] Plugin '${plugin.id}' registered successfully.`,
-          );
         } catch (registerError) {
           console.error(
             `[PluginManager] Error during registerPlugin() for plugin '${plugin.id}':`,
@@ -334,7 +302,6 @@ export async function loadAndRegisterPlugins(
         }
       } else {
         // Dependencies not met, keep for the next pass
-        // console.log(`[PluginManager] Deferring plugin '${plugin.id}', unmet dependencies: ${unmetDependencies.join(", ")}`);
         remainingPlugins.push(plugin);
       }
     }
@@ -361,9 +328,6 @@ export async function loadAndRegisterPlugins(
   }
 
   if (pluginsToRegister.length === 0) {
-    console.log(
-      `[PluginManager] All ${registeredPluginIds.size} requested and loadable plugins registered successfully.`,
-    );
   } else {
     console.warn(
       `[PluginManager] Finished registration process with ${pluginsToRegister.length} plugins unable to register.`,
@@ -409,32 +373,65 @@ export function getFunctionConfig(
     return undefined;
   }
 
-  return {
-    id: originalConfig.id,
-    execute: (...args: any[]) => {
-      if (!_dockviewApi) {
-        console.error(
-          `[PluginManager] Cannot execute function '${id}': DockviewApi dependency not set. Call setAppDependencies first.`,
-        );
-        return Promise.reject("DockviewApi not available");
-      }
+  // Return the original config directly, allowing the main execute function
+  // to handle context injection and dependency checks properly.
+  return originalConfig; // Restore original behavior
+}
 
-      const executionContext: PluginExecutionContext = {
-        dockviewApi: _dockviewApi,
-        dockviewController: _dockviewController, // Pass stored controller
-      };
+/**
+ * Executes a registered plugin function by its ID.
+ * Injects dependencies (like Dockview API/Controller) if required by the function config.
+ * @param functionId - The unique identifier of the function to execute.
+ * @param args - Optional arguments to pass to the function.
+ * @returns The result of the function execution, or undefined if the function is not found or fails.
+ */
+export function execute<T = any>(
+  functionId: string,
+  args?: any,
+): Promise<T> | T | undefined {
+  const funcConfig = functionRegistry.get(functionId);
+  if (!funcConfig) {
+    console.error(`[PluginManager] Function \'${functionId}\' not found.`);
+    return undefined;
+  }
 
-      try {
-        return originalConfig.execute(executionContext, ...args);
-      } catch (error) {
-        console.error(
-          `[PluginManager] Error executing function '${id}' from plugin '${/* How to get plugin ID here? Might need to store it with func */ "unknown"}':`,
-          error,
-        );
-        throw error;
-      }
-    },
+  // --- Dependency Checks ---
+  if (funcConfig.requiresDockviewApi && !_dockviewApi) {
+    console.error(
+      `[PluginManager] Cannot execute function \'${functionId}\': DockviewApi dependency required but not set. Call setAppDependencies first.`,
+    );
+    throw new Error(`DockviewApi not available for function ${functionId}`);
+  }
+  if (funcConfig.requiresDockviewController && !_dockviewController) {
+    console.error(
+      `[PluginManager] Cannot execute function \'${functionId}\': DockviewController dependency required but not set. Call setAppDependencies first.`,
+    );
+    throw new Error(
+      `DockviewController not available for function ${functionId}`,
+    );
+  }
+  // --- End Dependency Checks ---
+
+  // Prepare the context for the function execution
+  const context: PluginExecutionContext = {
+    dockviewApi: _dockviewApi, // Pass the actual (potentially null) API
+    dockviewController: _dockviewController, // Pass the actual (potentially null) Controller
+    getManager: getManagerInstance, // Provide access to managers
+    executeFunction: execute, // Allow functions to call other functions
   };
+
+  try {
+    // Log the arguments being passed to the function
+    // Call the original execute function from the config
+    return funcConfig.execute(context, args);
+  } catch (error) {
+    console.error(
+      `[PluginManager] Error executing function '${functionId}':`,
+      error,
+    );
+    // Rethrow to allow the caller (e.g., main.ts) to catch it
+    throw error;
+  }
 }
 
 /**

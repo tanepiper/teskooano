@@ -6,7 +6,7 @@ import {
 import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
 import { OSVector3 } from "@teskooano/core-math";
-import { generateAndLoadSystem } from "../../../../systems/system-generator.js";
+import { generateAndLoadSystem } from "./system-generator.js";
 import { DockviewApi } from "dockview-core";
 import { CustomEvents } from "@teskooano/data-types";
 
@@ -69,7 +69,6 @@ export async function exportSystem(
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    console.log("System exported successfully.");
     return { success: true, symbol: "💾", message: "Export successful." };
   } catch (error) {
     console.error("Error exporting system:", error);
@@ -143,10 +142,6 @@ export async function importSystem(
           return obj;
         });
 
-        console.log(
-          `Importing system with seed "${parsedData.seed}" and ${hydratedObjects.length} objects...`,
-        );
-
         // 1. Clear existing state
         actions.clearState({
           resetCamera: false,
@@ -178,12 +173,10 @@ export async function importSystem(
           }
         });
 
-        console.log("System imported successfully.");
         // Dispatch event to reset the simulation loop's internal timer
         window.dispatchEvent(
           new CustomEvent(CustomEvents.SIMULATION_RESET_TIME),
         );
-        console.log("Dispatched resetSimulationTime event.");
 
         resolve({ success: true, symbol: "✅", message: "Import successful." });
       } catch (error) {
@@ -231,7 +224,6 @@ export async function triggerImportDialog(): Promise<File> {
         resolve(file);
       } else {
         // User cancelled the dialog
-        console.log("File selection cancelled.");
         // Reject or resolve with null/undefined? Rejecting seems cleaner
         // for the calling component to handle cancellation.
         reject(new Error("File selection cancelled."));
@@ -266,7 +258,6 @@ export async function generateRandomSystem(
   dockviewApi: DockviewApi | null,
 ): Promise<ActionResult> {
   const randomSeed = Math.random().toString(36).substring(2, 10);
-  console.log("Generating random system with seed:", randomSeed);
   try {
     const success = await generateAndLoadSystem(randomSeed, dockviewApi);
     if (success) {
@@ -295,7 +286,6 @@ export async function generateRandomSystem(
  */
 export async function clearSystem(): Promise<ActionResult> {
   try {
-    console.log("Clearing system via action...");
     actions.clearState({
       resetCamera: false,
       resetTime: true,
@@ -317,7 +307,6 @@ export async function clearSystem(): Promise<ActionResult> {
  */
 export async function createBlankSystem(): Promise<ActionResult> {
   try {
-    console.log("Creating blank system with default star...");
     // 1. Clear existing state
     actions.clearState({
       resetCamera: false,
@@ -331,7 +320,6 @@ export async function createBlankSystem(): Promise<ActionResult> {
 
     // 3. Add the default star using createSolarSystem
     actions.createSolarSystem(defaultStar);
-    console.log(`Default star "${defaultStar.name}" added to the system.`);
     console.warn(
       "[teskooano-system-controls.actions] TODO: Need correct action/store to set systemName for blank system.",
     );
@@ -358,7 +346,6 @@ export async function copySystemSeed(seed: string): Promise<ActionResult> {
 
   try {
     await navigator.clipboard.writeText(seed);
-    console.log("Seed copied to clipboard:", seed);
     return { success: true, symbol: "✓", message: "Seed copied." };
   } catch (err) {
     console.error("Failed to copy seed: ", err);

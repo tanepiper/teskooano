@@ -104,7 +104,6 @@ export class CelestialRow extends HTMLElement {
   private handleFollowClick = (event: MouseEvent) => {
     event.stopPropagation();
     if (this._objectId && !this._isInactive) {
-      console.log(`Follow requested for ${this._objectId}`); // Placeholder
       this.dispatchEvent(
         new CustomEvent(CustomEvents.FOLLOW_REQUEST, {
           bubbles: true,

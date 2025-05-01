@@ -99,7 +99,6 @@ export const simulationActions = {
         ...currentState,
         time: currentState.time + dt,
       });
-      // console.log(`[simulationActions] Stepped time by ${dt}s.`);
     } else {
       console.warn(
         "[simulationActions] Cannot step time while simulation is running.",

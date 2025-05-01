@@ -37,9 +37,7 @@ export class GroupManager {
 
       if (group && this._api.getGroup(groupId)) {
         this._groupCache.set(groupId, group);
-        console.log(
-          `GroupManager: Found existing group '${groupName}' with ID: ${groupId}`,
-        );
+
         return group;
       } else {
         console.warn(
@@ -52,15 +50,12 @@ export class GroupManager {
     }
 
     if (!group) {
-      console.log(`GroupManager: Creating new group for '${groupName}'...`);
       try {
         const newGroup = this._api.addGroup(options);
         const newId = newGroup.id;
         this._groupNameToIdMap.set(groupName, newId);
         this._groupCache.set(newId, newGroup);
-        console.log(
-          `GroupManager: Created new group '${groupName}' with ID: ${newId}`,
-        );
+
         return newGroup;
       } catch (error) {
         console.error(
@@ -71,7 +66,7 @@ export class GroupManager {
       }
     }
 
-    return group; // Should technically not be reached
+    return group;
   }
 
   /**
@@ -82,13 +77,14 @@ export class GroupManager {
   public getGroupByName(groupName: string): DockviewGroup | null {
     const groupId = this._groupNameToIdMap.get(groupName);
     if (!groupId) {
-      console.log(`GroupManager: No ID mapped for group name '${groupName}'.`);
+      console.warn(`GroupManager: No ID mapped for group name '${groupName}'.`);
       return null;
     }
     const group = this._api.getGroup(groupId);
     if (!group) {
-      console.log(`GroupManager: Group with ID '${groupId}' not found in API.`);
-      // Clean up potentially stale mapping
+      console.warn(
+        `GroupManager: Group with ID '${groupId}' not found in API.`,
+      );
       this._groupNameToIdMap.delete(groupName);
       this._groupCache.delete(groupId);
     }
@@ -111,7 +107,6 @@ export class GroupManager {
 
     try {
       this._api.maximizeGroup(group);
-      console.log(`GroupManager: Maximized group '${groupName}'.`);
       return true;
     } catch (error) {
       console.error(
@@ -137,14 +132,10 @@ export class GroupManager {
     }
 
     if (groupNameToRemove) {
-      console.log(
-        `GroupManager: Cleaning up tracking for group '${groupNameToRemove}' (ID: ${groupId}).`,
-      );
       this._groupNameToIdMap.delete(groupNameToRemove);
       this._groupCache.delete(groupId);
     } else {
-      // This is expected if the group wasn't tracked by name (e.g., floating)
-      console.log(
+      console.warn(
         `GroupManager: No tracking cleanup needed for untracked group ID: ${groupId}.`,
       );
     }
@@ -157,6 +148,5 @@ export class GroupManager {
   public dispose(): void {
     this._groupNameToIdMap.clear();
     this._groupCache.clear();
-    console.log("GroupManager: Disposed and cleared caches.");
   }
 }

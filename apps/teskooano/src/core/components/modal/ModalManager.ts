@@ -1,5 +1,5 @@
-import type { DockviewController } from "../controllers/dockview/DockviewController"; // Import controller type
-import { ModalResult } from "../controllers/dockview/types";
+import type { DockviewController } from "../../controllers/dockview/DockviewController"; // Corrected path
+import { ModalResult } from "../../controllers/dockview/types"; // Corrected path
 import { TeskooanoModal } from "./Modal"; // Import for the TeskooanoModal web component class
 
 export interface ModalOptions {
@@ -108,7 +108,6 @@ export class TeskooanoModalManager {
 
     // --- Cleanup listeners when the overlay promise resolves/rejects ---
     overlayPromise.finally(() => {
-      console.log(`ModalManager: Cleaning up listeners for ${modalId}`);
       modalElement.removeEventListener("modal-confirm", handleConfirm);
       modalElement.removeEventListener("modal-close", handleClose);
       modalElement.removeEventListener("modal-additional", handleSecondary);
@@ -123,6 +122,5 @@ export class TeskooanoModalManager {
   public dispose(): void {
     // Controller handles overlay disposal now
     // If ModalManager had other resources, dispose them here
-    console.log("ModalManager: Dispose called. Controller handles overlays.");
   }
 }

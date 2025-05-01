@@ -264,7 +264,6 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   // This method is required for IContentRenderer interface
   init(parameters: GroupPanelPartInitParameters): void {
     // Panel initialization - nothing specific needed here
-    console.log("[CelestialInfo] Panel initialized");
 
     // If params contains any specific setup instructions, handle them here
     const params = (parameters.params as { focusedObjectId?: string }) || {};

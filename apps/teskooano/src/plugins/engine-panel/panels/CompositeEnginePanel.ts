@@ -18,9 +18,9 @@ import { OrbitManager } from "@teskooano/renderer-threejs-orbits";
 
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
 import {
-  layoutOrientationStore,
+  layoutOrientation$, // Import the RxJS Observable
   Orientation,
-} from "../../../core/stores/layoutStore";
+} from "./layoutStore";
 
 import { CameraManager } from "../../camera-manager/CameraManager"; // Revert to direct import
 
@@ -28,14 +28,11 @@ import type { DockviewController } from "../../../core/controllers/dockview/Dock
 
 import { CustomEvents } from "@teskooano/data-types";
 import { RendererStats } from "@teskooano/renderer-threejs-core";
+import { getManagerInstance } from "@teskooano/ui-plugin"; // Correct package
 import {
   EngineToolbar,
   EngineToolbarManager, // Import the manager type
 } from "../../../core/interface/engine-toolbar";
-import {
-  getManagerInstance, // Import the correct function
-  type TeskooanoPlugin, // Import types if needed elsewhere
-} from "@teskooano/ui-plugin"; // Correct package
 
 /**
  * The parameters for the CompositeEnginePanel
@@ -128,6 +125,7 @@ export class CompositeEnginePanel implements IContentRenderer {
 
   // --- View Orientation Handling ---
   private _currentOrientation: Orientation | null = null;
+  private _layoutOrientationSubscription: Subscription | null = null; // Changed name
   private _celestialObjectsUnsubscribe: (() => void) | null = null; // Renamed for clarity
   private _simulationStateUnsubscribe: (() => void) | null = null; // For global state
   private _isInitialized = false;
@@ -537,12 +535,20 @@ export class CompositeEnginePanel implements IContentRenderer {
         "CompositeEnginePanel: DockviewController not provided, cannot subscribe to panel removals.",
       );
     }
-    // Set initial orientation and start listening for changes
-    this._currentOrientation = layoutOrientationStore.get();
-
-    layoutOrientationStore.subscribe((orientation) => {
-      this._currentOrientation = orientation;
-    });
+    // Subscribe to Layout Orientation Store (RxJS)
+    // Initial value is handled by BehaviorSubject emitting on subscribe
+    this._layoutOrientationSubscription = layoutOrientation$.subscribe(
+      (orientation) => {
+        // Set the current orientation when the value is emitted
+        this._currentOrientation = orientation;
+        // Potentially trigger layout adjustments if needed when orientation changes
+        // e.g., this.adjustLayoutForOrientation(orientation);
+        if (this._isInitialized) {
+          // Only trigger resize after init
+          this.triggerResize(); // Often a resize is enough
+        }
+      },
+    );
   }
 
   /**
@@ -602,9 +608,6 @@ export class CompositeEnginePanel implements IContentRenderer {
           initialCameraPosition: initialViewState.cameraPosition,
           initialCameraTarget: initialViewState.cameraTarget,
           onFocusChangeCallback: (focusedId: string | null) => {
-            console.log(
-              `[CompositePanel ${this._api?.id}] CameraManager focus changed to ${focusedId}. Updating panel state.`,
-            );
             this.updateViewState({ focusedObjectId: focusedId });
           },
         });
@@ -665,9 +668,6 @@ export class CompositeEnginePanel implements IContentRenderer {
               composed: true,
               detail: { panelId: this._api.id, renderer: this._renderer },
             }),
-          );
-          console.log(
-            `[CompositePanel ${this._api.id}] Dispatched CustomEvents.RENDERER_READY.`,
           );
         }
 
@@ -811,9 +811,6 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Stops listeners, disposes the renderer, and unregisters the panel.
    */
   dispose(): void {
-    console.log(
-      `CompositeEnginePanel (${this._api?.id ?? "unknown"}): Disposing.`,
-    );
     this.disposeRendererAndUI();
 
     // --- Unsubscribe from Panel Removals ---
@@ -834,14 +831,10 @@ export class CompositeEnginePanel implements IContentRenderer {
   // --- Method to handle external panel removal (NO CHANGE NEEDED HERE) ---
   private handleExternalPanelRemoval(panelId: string): void {
     if (this._trackedFloatingPanels.has(panelId)) {
-      console.log(
-        `CompositeEnginePanel: Detected external removal of tracked floating panel: ${panelId}. Updating internal state.`,
-      );
       this._trackedFloatingPanels.delete(panelId);
       // Optionally, update toolbar button state if needed here
     } else {
       // Panel removed was not one we were tracking (e.g., a different floating panel, or a docked panel)
-      // console.log(`CompositeEnginePanel: Ignoring external removal of untracked panel: ${panelId}`);
     }
   }
   // --- END ADDED ---

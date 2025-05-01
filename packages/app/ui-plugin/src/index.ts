@@ -8,28 +8,8 @@
  * Don't export the vite plugin here, it's handled in the vite config.
  */
 
-export type {
-  // Core Plugin System Types
-  ToolbarTarget,
-  ComponentConfig,
-  PanelConfig,
-  FunctionConfig,
-  BaseToolbarItemConfig,
-  PanelToolbarItemConfig,
-  FunctionToolbarItemConfig,
-  ToolbarItemConfig,
-  ToolbarItemDefinition,
-  ToolbarRegistration,
-  TeskooanoPlugin,
-  // Config types
-  ComponentLoadConfig,
-  PluginLoadConfig,
-  ComponentRegistryConfig,
-  PluginRegistryConfig,
-  PluginExecutionContext,
-  PluginFunctionCallerSignature,
-  ToolbarWidgetConfig,
-} from "./types.js";
+export * from "./types.js";
+export * from "./pluginManager.js";
 
 // Export Client-Side Manager Functions
 export {
@@ -44,3 +24,6 @@ export {
   getToolbarWidgetsForTarget,
   getManagerInstance,
 } from "./pluginManager.js";
+
+// Explicitly re-export execute if needed, though wildcard should cover it
+// export { execute } from "./pluginManager.js";
