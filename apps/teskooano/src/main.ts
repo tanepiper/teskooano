@@ -210,11 +210,13 @@ async function initializeApp() {
     });
   });
 
+  // Call the function to potentially add the initial engine view
   try {
-    await pluginManager.execute("engine:add_composite_panel");
+    console.log("[App] Calling addCompositeEnginePanelFunction during init...");
+    await pluginManager.execute("view:addCompositeEnginePanel"); // Use new ID
   } catch (error) {
     console.error(
-      "[App] Error calling engine:add_composite_panel function:",
+      "[App] Error calling view:addCompositeEnginePanel function:", // Use new ID in log
       error,
     );
   }

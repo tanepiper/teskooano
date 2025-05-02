@@ -99,6 +99,18 @@ export interface PanelConfig {
 }
 
 /**
+ * Defines the structure for declaring dependencies required by a plugin function.
+ */
+export interface FunctionDependencies {
+  dockView?: {
+    api?: boolean;
+    controller?: boolean;
+  };
+  // Add other dependency categories here if needed
+  // e.g., coreState?: { someStore?: boolean; }
+}
+
+/**
  * Defines the configuration for a standalone function/action registered by a plugin.
  */
 export interface FunctionConfig {
@@ -110,10 +122,9 @@ export interface FunctionConfig {
    * followed by any specific arguments passed during the call.
    */
   execute: PluginFunctionCallerSignature;
-  /** Optional: Set to true if this function requires the Dockview API. */
-  requiresDockviewApi?: boolean;
-  /** Optional: Set to true if this function requires the Dockview Controller. */
-  requiresDockviewController?: boolean;
+
+  /** Optional: Specifies the dependencies required by this function. */
+  dependencies?: FunctionDependencies; // Use the new interface type
 }
 
 /**

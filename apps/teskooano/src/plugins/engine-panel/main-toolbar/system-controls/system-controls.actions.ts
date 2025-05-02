@@ -1,7 +1,5 @@
 import { actions } from "@teskooano/core-state";
-import {
-  type CelestialObject
-} from "@teskooano/data-types";
+import { type CelestialObject } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
 import { DockviewApi } from "dockview-core";
 import { generateAndLoadSystem } from "./system-generator.js";

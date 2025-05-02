@@ -1,11 +1,29 @@
 import {
-  getCelestialObjects,
-  currentSeed,
   celestialObjects$,
+  currentSeed,
+  getCelestialObjects,
   updateSeed,
 } from "@teskooano/core-state";
-import { type CelestialObject } from "@teskooano/data-types";
 import { pluginManager } from "@teskooano/ui-plugin";
+import {
+  BehaviorSubject,
+  Subscription,
+  combineLatest,
+  from,
+  fromEvent,
+  merge,
+  of,
+} from "rxjs";
+import {
+  catchError,
+  debounceTime,
+  filter,
+  map,
+  startWith,
+  switchMap,
+  tap,
+  withLatestFrom,
+} from "rxjs/operators";
 import type { TeskooanoButton } from "../../../../core/components/button/Button.js";
 import {
   CheckmarkIcon,
@@ -17,29 +35,8 @@ import {
   SparkleIcon,
   SystemControlsTemplate,
 } from "./SystemControls.template.js";
-import * as SystemControlsUI from "./system-controls.ui.js";
-import {
-  fromEvent,
-  BehaviorSubject,
-  Subscription,
-  combineLatest,
-  merge,
-  of,
-  EMPTY,
-  from,
-} from "rxjs";
-import {
-  map,
-  debounceTime,
-  switchMap,
-  tap,
-  catchError,
-  startWith,
-  withLatestFrom,
-  filter,
-} from "rxjs/operators";
 import * as systemActions from "./system-controls.actions.js";
-import { generateAndLoadSystem } from "./system-generator.js";
+import * as SystemControlsUI from "./system-controls.ui.js";
 
 /**
  * @element teskooano-system-controls
@@ -229,9 +226,10 @@ class SystemControls
       !copySeedButton ||
       !createBlankButton ||
       !this.seedInput
-    )
-     {
-      console.error("[SystemControls] One or more required elements not found.");
+    ) {
+      console.error(
+        "[SystemControls] One or more required elements not found.",
+      );
       return;
     }
 
@@ -254,7 +252,9 @@ class SystemControls
       tap(() => this.isGenerating$$.next(true)),
       // Use pluginManager.execute to call the registered generation function
       switchMap((seed) =>
-        from(pluginManager.execute("system:generate_random", { seed: seed })).pipe(
+        from(
+          pluginManager.execute("system:generate_random", { seed: seed }),
+        ).pipe(
           // The result from pluginManager.execute should already be ActionResult-like
           tap((result: any) => {
             console.log("Generation result:", result);
@@ -264,14 +264,23 @@ class SystemControls
               !result?.success,
             );
             const originalTriggerSeed = this.seedInput?.value;
-            if (result?.success && result?.seed && this.seedInput && result.seed !== originalTriggerSeed) {
+            if (
+              result?.success &&
+              result?.seed &&
+              this.seedInput &&
+              result.seed !== originalTriggerSeed
+            ) {
               this.seedInput.value = result.seed;
             }
           }),
           catchError((err) => {
             console.error("Generation error:", err);
             this.showFeedback(generateSubmitButton, "❌", true);
-            return of({ success: false, symbol: "❌", message: "Generation failed" });
+            return of({
+              success: false,
+              symbol: "❌",
+              message: "Generation failed",
+            });
           }),
         ),
       ),
@@ -295,7 +304,11 @@ class SystemControls
           catchError((err) => {
             console.error("Clear error:", err);
             this.showFeedback(clearButton, "❌", true);
-            return of({ success: false, symbol: "❌", message: "Clear failed" });
+            return of({
+              success: false,
+              symbol: "❌",
+              message: "Clear failed",
+            });
           }),
         ),
       ),
@@ -320,7 +333,11 @@ class SystemControls
           catchError((err) => {
             console.error("Export error:", err);
             this.showFeedback(exportButton, "❌", true);
-            return of({ success: false, symbol: "❌", message: "Export failed" });
+            return of({
+              success: false,
+              symbol: "❌",
+              message: "Export failed",
+            });
           }),
         ),
       ),
@@ -353,57 +370,75 @@ class SystemControls
             } else {
               this.showFeedback(importButton, "❌", true);
             }
-            return of({ success: false, symbol: "❌", message: "Import failed" });
+            return of({
+              success: false,
+              symbol: "❌",
+              message: "Import failed",
+            });
           }),
         ),
       ),
       tap(() => this.isGenerating$$.next(false)),
     );
 
-     // Action: Copy Seed
-     const copySeedAction$ = fromEvent(copySeedButton, "click").pipe(
-         filter(() => !this.isGenerating$$.value),
-         withLatestFrom(currentSeed),
-         // Call pluginManager for copy seed
-         switchMap(([_, seed]) =>
-             from(pluginManager.execute("system:copy_seed", seed)).pipe( // Pass seed as argument
-                 tap((result: any) => { // Add type assertion or check result type
-                     this.showFeedback(copySeedButton, result?.symbol || (result?.success ? "📋" : "❌"), !result?.success);
-                 }),
-                 catchError(err => {
-                     console.error("Copy seed error:", err);
-                     this.showFeedback(copySeedButton, "❌", true);
-                     return of({ success: false, symbol: "❌", message: "Copy failed" });
-                 })
-             )
-         )
-     );
+    // Action: Copy Seed
+    const copySeedAction$ = fromEvent(copySeedButton, "click").pipe(
+      filter(() => !this.isGenerating$$.value),
+      withLatestFrom(currentSeed),
+      // Call pluginManager for copy seed
+      switchMap(([_, seed]) =>
+        from(pluginManager.execute("system:copy_seed", seed)).pipe(
+          // Pass seed as argument
+          tap((result: any) => {
+            // Add type assertion or check result type
+            this.showFeedback(
+              copySeedButton,
+              result?.symbol || (result?.success ? "📋" : "❌"),
+              !result?.success,
+            );
+          }),
+          catchError((err) => {
+            console.error("Copy seed error:", err);
+            this.showFeedback(copySeedButton, "❌", true);
+            return of({ success: false, symbol: "❌", message: "Copy failed" });
+          }),
+        ),
+      ),
+    );
 
-     // Action: Create Blank System
-     const createBlankAction$ = fromEvent(createBlankButton, "click").pipe(
-         filter(() => !this.isGenerating$$.value),
-         tap(() => this.isGenerating$$.next(true)),
-          // Call pluginManager for create blank
-         switchMap(() =>
-             from(pluginManager.execute("system:create_blank")).pipe(
-                 tap((result: any) => {
-                     this.showFeedback(createBlankButton, result?.symbol || (result?.success ? "📄" : "❌"), !result?.success);
-                 }),
-                 catchError(err => {
-                     console.error("Create blank system error:", err);
-                     this.showFeedback(createBlankButton, "❌", true);
-                     return of({ success: false, symbol: "❌", message: "Create blank failed" });
-                 })
-             )
-         ),
-         tap(() => this.isGenerating$$.next(false)),
-     );
-
+    // Action: Create Blank System
+    const createBlankAction$ = fromEvent(createBlankButton, "click").pipe(
+      filter(() => !this.isGenerating$$.value),
+      tap(() => this.isGenerating$$.next(true)),
+      // Call pluginManager for create blank
+      switchMap(() =>
+        from(pluginManager.execute("system:create_blank")).pipe(
+          tap((result: any) => {
+            this.showFeedback(
+              createBlankButton,
+              result?.symbol || (result?.success ? "📄" : "❌"),
+              !result?.success,
+            );
+          }),
+          catchError((err) => {
+            console.error("Create blank system error:", err);
+            this.showFeedback(createBlankButton, "❌", true);
+            return of({
+              success: false,
+              symbol: "❌",
+              message: "Create blank failed",
+            });
+          }),
+        ),
+      ),
+      tap(() => this.isGenerating$$.next(false)),
+    );
 
     // --- State & UI Updates --- //
 
     // Combined state stream for UI updates
-    const displayState$ = combineLatest([ // Combine latest values from relevant streams
+    const displayState$ = combineLatest([
+      // Combine latest values from relevant streams
       celestialObjects$.pipe(startWith(getCelestialObjects())), // Ensure initial value
       currentSeed.pipe(startWith(currentSeed.getValue())), // Ensure initial value
       this.isGenerating$$,

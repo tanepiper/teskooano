@@ -486,20 +486,26 @@ class PluginManager {
       return undefined;
     }
 
-    if (funcConfig.requiresDockviewApi && !this.#dockviewApi) {
+    // Check new dependencies structure first
+    const requiresApi = funcConfig.dependencies?.dockView?.api;
+    const requiresController = funcConfig.dependencies?.dockView?.controller;
+
+    // Validate dependencies are met
+    if (requiresApi && !this.#dockviewApi) {
       const errorMsg = `[PluginManager] Cannot execute function '${functionId}': DockviewApi dependency required but not set. Call setAppDependencies first.`;
       console.error(errorMsg);
       throw new Error(errorMsg);
     }
-    if (funcConfig.requiresDockviewController && !this.#dockviewController) {
+    if (requiresController && !this.#dockviewController) {
       const errorMsg = `[PluginManager] Cannot execute function '${functionId}': DockviewController dependency required but not set. Call setAppDependencies first.`;
       console.error(errorMsg);
       throw new Error(errorMsg);
     }
 
+    // Build context, injecting only if needed (or always for simplicity? Always for now.)
     const context: PluginExecutionContext = {
-      dockviewApi: this.#dockviewApi,
-      dockviewController: this.#dockviewController,
+      dockviewApi: this.#dockviewApi, // Always pass, might be null if not set/needed
+      dockviewController: this.#dockviewController, // Always pass, might be null
       getManager: this.getManagerInstance.bind(this),
       executeFunction: this.execute.bind(this),
     };

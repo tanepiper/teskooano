@@ -7,14 +7,18 @@ import type { AddPanelOptions } from "dockview-core";
 let enginePanelCounter = 0;
 
 export const addCompositeEnginePanelFunction: FunctionConfig = {
-  id: "engine:add_composite_panel",
-  requiresDockviewApi: true,
-  requiresDockviewController: true,
-  execute: async (context: PluginExecutionContext) => {
-    const { dockviewApi, dockviewController } = context;
-    if (!dockviewApi || !dockviewController) {
+  id: "view:addCompositeEnginePanel",
+  dependencies: {
+    dockView: {
+      api: true,
+      controller: true,
+    },
+  },
+  execute: (context: PluginExecutionContext) => {
+    const { dockviewApi } = context;
+    if (!dockviewApi) {
       console.error(
-        "[EngineViewPlugin] Cannot add panel: Dockview API (or Controller) not provided in context.",
+        "[EngineViewFunctions] Cannot add panel: Dockview API not available.",
       );
       return;
     }
@@ -30,19 +34,24 @@ export const addCompositeEnginePanelFunction: FunctionConfig = {
       title: compositeViewTitle,
       params: {
         title: compositeViewTitle,
-        dockviewController: dockviewController,
+        dockviewController: context.dockviewController,
       },
     };
 
     try {
       const newPanel = dockviewApi.addPanel(panelOptions);
       newPanel.api.setActive();
+      console.log(
+        `[EngineViewFunctions] Added composite engine panel: ${compositeViewId}`,
+      );
+      return { success: true, panelId: compositeViewId };
     } catch (error) {
       console.error(
-        `[EngineViewPlugin] Failed to add engine panel for counter ${counter}:`,
+        `[EngineViewFunctions] Failed to add engine panel for counter ${counter}:`,
         error,
       );
       enginePanelCounter--; // Decrement counter on failure
+      return { success: false, panelId: null };
     }
   },
 };

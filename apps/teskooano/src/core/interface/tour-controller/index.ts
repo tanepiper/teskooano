@@ -17,6 +17,7 @@ export const tourControllerInstance = new TourController();
 
 const startTourFunction: FunctionConfig = {
   id: "tour:start",
+  dependencies: {}, // No external deps needed
   execute: async () => {
     tourControllerInstance.startTour();
   },
@@ -24,6 +25,7 @@ const startTourFunction: FunctionConfig = {
 
 const restartTourFunction: FunctionConfig = {
   id: "tour:restart",
+  dependencies: {}, // No external deps needed
   execute: async () => {
     tourControllerInstance.restartTour();
   },
@@ -31,6 +33,7 @@ const restartTourFunction: FunctionConfig = {
 
 const setSkipTourFunction: FunctionConfig = {
   id: "tour:setSkip",
+  dependencies: {}, // No external deps needed
   // Expects second argument: { skip: boolean }
   execute: async (_: PluginExecutionContext, args?: { skip?: boolean }) => {
     const skipValue = args?.skip ?? false;

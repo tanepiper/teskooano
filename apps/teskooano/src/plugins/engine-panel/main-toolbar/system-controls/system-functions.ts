@@ -165,7 +165,11 @@ function processImportedFile$(
 
 export const generateRandomSystemFunction: FunctionConfig = {
   id: "system:generate_random",
-  requiresDockviewApi: true,
+  dependencies: {
+    dockView: {
+      api: true,
+    },
+  },
   execute: async (
     context: PluginExecutionContext,
     options?: { seed?: string },
@@ -201,6 +205,7 @@ export const generateRandomSystemFunction: FunctionConfig = {
 
 export const clearSystemFunction: FunctionConfig = {
   id: "system:clear",
+  dependencies: {},
   execute: async () => {
     try {
       actions.clearState({
@@ -223,6 +228,7 @@ export const clearSystemFunction: FunctionConfig = {
 
 export const exportSystemFunction: FunctionConfig = {
   id: "system:export",
+  dependencies: {},
   execute: async () => {
     try {
       const objects = getCelestialObjects();
@@ -262,7 +268,11 @@ export const exportSystemFunction: FunctionConfig = {
 
 export const triggerImportDialogFunction: FunctionConfig = {
   id: "system:trigger_import_dialog",
-  requiresDockviewApi: true,
+  dependencies: {
+    dockView: {
+      api: true,
+    },
+  },
   execute: async (context: PluginExecutionContext) => {
     const { dockviewApi } = context;
     let inputElement: HTMLInputElement | null = null;
@@ -329,7 +339,11 @@ export const triggerImportDialogFunction: FunctionConfig = {
 
 export const createBlankSystemFunction: FunctionConfig = {
   id: "system:create_blank",
-  requiresDockviewApi: true,
+  dependencies: {
+    dockView: {
+      api: true,
+    },
+  },
   execute: async (context: PluginExecutionContext) => {
     const { dockviewApi } = context;
     try {
@@ -360,6 +374,7 @@ export const createBlankSystemFunction: FunctionConfig = {
 
 export const copySeedFunction: FunctionConfig = {
   id: "system:copy_seed",
+  dependencies: {},
   execute: async (context: PluginExecutionContext, seedToCopy?: string) => {
     const seed = seedToCopy ?? currentSeed.getValue() ?? "";
     if (!seed) {
