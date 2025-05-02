@@ -8,6 +8,17 @@ import {
 import { generateSystem } from "@teskooano/procedural-generation";
 import { dispatchTextureGenerationComplete } from "@teskooano/systems-celestial";
 import { DockviewApi } from "dockview-core";
+import {
+  defer,
+  tap,
+  switchMap,
+  catchError,
+  finalize,
+  of,
+  lastValueFrom,
+  map,
+  from,
+} from "rxjs"; // Import RxJS operators
 
 // Define the custom event for resetting simulation accumulated time
 export function dispatchSimulationTimeReset() {
@@ -31,74 +42,79 @@ export async function generateAndLoadSystem(
     return false;
   }
 
-  // Update seed store
-  updateSeed(inputSeed);
-  const finalSeed = currentSeed.getValue();
-
-  // Clear state
-  actions.clearState({
-    resetCamera: false,
-    resetTime: true,
-    resetSelection: true,
-  });
-  actions.resetTime();
-  dispatchSimulationTimeReset();
-
-  // --- Show Progress Panel ---
   const progressPanelId = "texture-progress-panel";
   let progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
-  // Close existing panel first if found
-  progressPanel?.api.close();
 
-  // Generate the system data (including name)
-  let systemData: CelestialObject[] = [];
-  let systemName: string | null = null;
-  let planetList: { id: string; name: string }[] = [];
-  let success = false;
-
-  try {
-    // Destructure the result from generateSystem
-    const { systemName: generatedName, objects: generatedObjects } =
-      await generateSystem(finalSeed);
-    systemName = generatedName; // Store the name
-    systemData = generatedObjects; // Store the objects
-
-    console.warn(
-      `[SystemGenerator] TODO: Need to implement setting system name "${systemName}" in core-state.`,
-    );
-    // --- End Update System Name ---
-
-    planetList = systemData
-      .filter(
-        (obj) =>
-          obj.type === CelestialType.PLANET ||
-          obj.type === CelestialType.GAS_GIANT,
-      )
-      .map((planet) => ({ id: planet.id, name: planet.name }));
-
-    // Add the progress panel *after* generating data but *before* adding to state
-    dockviewApi.addPanel({
-      id: progressPanelId,
-      component: "progress_view",
-      title: "Generating Textures...",
-      params: { planetList: planetList },
-      floating: {
-        position: { top: 100, left: 100 }, // TODO: Maybe center this later?
-        width: 400,
-        height: 300,
-      },
+  const generation$ = defer(() => {
+    // Initial synchronous setup
+    updateSeed(inputSeed);
+    const finalSeed = currentSeed.getValue();
+    actions.clearState({
+      resetCamera: false,
+      resetTime: true,
+      resetSelection: true,
     });
+    actions.resetTime();
+    dispatchSimulationTimeReset();
 
-    // Add objects to the state store
-    if (systemData && systemData.length > 0) {
-      // Find the primary star first
+    // Close existing panel if found
+    progressPanel?.api.close();
+    progressPanel = undefined; // Reset reference
+
+    // Return an observable that starts the async generation
+    return from(generateSystem(finalSeed)); // Convert promise to observable
+  }).pipe(
+    tap((systemResult) => {
+      // Side effect: Prepare and show progress panel *after* generation data is ready
+      const planetList = (systemResult?.objects || [])
+        .filter(
+          (obj) =>
+            obj.type === CelestialType.PLANET ||
+            obj.type === CelestialType.GAS_GIANT,
+        )
+        .map((planet) => ({ id: planet.id, name: planet.name }));
+
+      dockviewApi.addPanel({
+        id: progressPanelId,
+        component: "progress_view",
+        title: "Generating Textures...",
+        params: { planetList: planetList },
+        floating: {
+          position: { top: 100, left: 100 },
+          width: 400,
+          height: 300,
+        },
+      });
+      // Update panel reference after adding
+      progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
+    }),
+    switchMap((systemResult) => {
+      // Process the generated system data
+      const { systemName, objects: systemData } = systemResult || {
+        systemName: null,
+        objects: [],
+      };
+
+      if (systemName) {
+        console.warn(
+          `[SystemGenerator] TODO: Need to implement setting system name "${systemName}" in core-state.`,
+        );
+      }
+
+      if (!systemData || systemData.length === 0) {
+        console.warn("[SystemGenerator] Generator returned no objects.");
+        // If no objects, we still consider it a "successful" generation (of nothing)
+        // but return an empty array to skip state updates.
+        return of({ success: true, data: [] });
+      }
+
+      // Find the primary star
       let primaryStar = systemData.find((obj) => {
         if (obj.type !== CelestialType.STAR) return false;
         const props = obj.properties as StarProperties;
         return props?.isMainStar === true;
       });
 
-      // Fallback to any star if no isMainStar flag is found
       if (!primaryStar) {
         console.warn(
           "[SystemGenerator] No star with isMainStar=true found. Falling back to first star.",
@@ -115,15 +131,13 @@ export async function generateAndLoadSystem(
 
         // Add all *other* objects
         systemData.forEach((objData) => {
-          if (objData.id !== primaryStar.id) {
-            // Check if this is another primary star (should use createSolarSystem)
+          if (objData.id !== primaryStar!.id) {
             if (objData.type === CelestialType.STAR && !objData.parentId) {
               console.warn(
                 `[SystemGenerator] Found another root star: ${objData.id}. Using createSolarSystem.`,
               );
               actions.createSolarSystem(objData);
             } else {
-              // Add other objects normally
               actions.addCelestial(objData);
             }
           }
@@ -133,43 +147,46 @@ export async function generateAndLoadSystem(
         console.error(
           "[SystemGenerator] No primary star found! Adding stars with createSolarSystem and others with addCelestial.",
         );
-        // Add stars first
         systemData
           .filter((obj) => obj.type === CelestialType.STAR && !obj.parentId)
-          .forEach((star) => {
-            actions.createSolarSystem(star);
-          });
-        // Then add other objects
+          .forEach((star) => actions.createSolarSystem(star));
         systemData
           .filter((obj) => !(obj.type === CelestialType.STAR && !obj.parentId))
-          .forEach((objData) => {
-            actions.addCelestial(objData);
-          });
+          .forEach((objData) => actions.addCelestial(objData));
       }
 
-      // Reset time again
+      // Reset time again after adding objects
       actions.resetTime();
       dispatchSimulationTimeReset();
 
+      // Signal success for the stream
+      return of({ success: true, data: systemData });
+    }),
+    tap(() => {
+      // Side effect after successful processing or empty generation
       dispatchTextureGenerationComplete();
-      success = true;
-    } else {
-      console.warn("[SystemGenerator] Generator returned no objects.");
+    }),
+    map((result) => result.success), // Map to boolean indicating success
+    catchError((error) => {
+      console.error(
+        "[SystemGenerator] Error during system generation or state update:",
+        error,
+      );
+      // Dispatch completion event even on error
       dispatchTextureGenerationComplete();
-      dockviewApi.panels.find((p) => p.id === progressPanelId)?.api.close();
-      success = true;
-    }
-  } catch (error) {
-    console.error(
-      "[SystemGenerator] Error during system generation or state update:",
-      error,
-    );
-    dockviewApi.panels.find((p) => p.id === progressPanelId)?.api.close();
-    dispatchTextureGenerationComplete();
-    success = false;
-  } finally {
-  }
-  return success;
+      // Return an observable indicating failure
+      return of(false);
+    }),
+    finalize(() => {
+      // Always try to close the progress panel, regardless of success/error
+      progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId); // Re-find panel just in case
+      progressPanel?.api.close();
+      console.log("[SystemGenerator] Generation stream finalized.");
+    }),
+  );
+
+  // Execute the observable stream and return the resulting promise
+  return lastValueFrom(generation$);
 }
 
 export const handleResetSimulationTime = () => {

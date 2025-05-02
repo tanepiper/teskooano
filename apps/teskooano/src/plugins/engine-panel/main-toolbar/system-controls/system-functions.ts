@@ -16,22 +16,48 @@ import { generateStar } from "@teskooano/procedural-generation";
 import { generateAndLoadSystem } from "./system-generator.js";
 import { OSVector3 } from "@teskooano/core-math";
 import type { DockviewApi } from "dockview-core";
+import {
+  Observable,
+  defer,
+  fromEvent,
+  switchMap,
+  map,
+  catchError,
+  of,
+  take,
+  finalize,
+  lastValueFrom,
+} from "rxjs"; // Import RxJS operators
 
 interface SystemImportData {
   seed: string;
   objects: CelestialObject[];
 }
 
-async function processImportedFile(
+interface ProcessResult {
+  success: boolean;
+  message?: string;
+  symbol: string;
+}
+
+/**
+ * Processes an imported system file using FileReader, returning an Observable result.
+ * @param file The File object to process.
+ * @param dockviewApi Optional Dockview API instance.
+ * @returns Observable<ProcessResult>
+ */
+function processImportedFile$(
   file: File,
   dockviewApi: DockviewApi | null, // Keep DockviewApi reference if needed for future context
-): Promise<{ success: boolean; message?: string; symbol: string }> {
-  return new Promise((resolve) => {
+): Observable<ProcessResult> {
+  return new Observable<ProcessResult>((observer) => {
     const reader = new FileReader();
-    reader.onload = async (event) => {
-      let inputElement: HTMLInputElement | null = document.querySelector(
-        'input[type="file"][data-importer="system"]',
-      );
+    // Hold reference to the temporary input for cleanup in observer's cleanup function
+    const inputElement: HTMLInputElement | null = document.querySelector(
+      'input[type="file"][data-importer="system"]',
+    );
+
+    reader.onload = (event) => {
       try {
         const fileContent = event.target?.result as string;
         if (!fileContent) throw new Error("File content is empty.");
@@ -88,7 +114,7 @@ async function processImportedFile(
 
         actions.createSolarSystem(star);
         hydratedObjects.forEach((obj) => {
-          if (obj.id !== star.id) actions.addCelestialObject(obj);
+          if (obj.id !== star.id) actions.addCelestialObject(obj); // Use addCelestialObject for consistency
         });
 
         currentSeed.next(parsedData.seed);
@@ -97,26 +123,43 @@ async function processImportedFile(
         window.dispatchEvent(
           new CustomEvent(CustomEvents.SIMULATION_RESET_TIME),
         );
-        resolve({ success: true, symbol: "✅", message: "Import successful." });
+
+        observer.next({
+          success: true,
+          symbol: "✅",
+          message: "Import successful.",
+        });
+        observer.complete();
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown import error";
-        resolve({ success: false, symbol: "❌", message });
-      } finally {
-        if (inputElement?.parentNode)
-          inputElement.parentNode.removeChild(inputElement);
+        // Emit error result, don't throw error in observable stream directly
+        observer.next({ success: false, symbol: "❌", message });
+        observer.complete();
       }
     };
+
     reader.onerror = (error) => {
-      let inputElement: HTMLInputElement | null = document.querySelector(
-        'input[type="file"][data-importer="system"]',
-      );
       console.error("[SystemFunctions] Error reading file:", error);
-      resolve({ success: false, symbol: "❌", message: "Error reading file." });
-      if (inputElement?.parentNode)
-        inputElement.parentNode.removeChild(inputElement);
+      observer.next({
+        success: false,
+        symbol: "❌",
+        message: "Error reading file.",
+      });
+      observer.complete();
     };
+
     reader.readAsText(file);
+
+    // Cleanup function: remove the temporary input element if it still exists
+    return () => {
+      if (inputElement?.parentNode) {
+        console.log(
+          "[SystemFunctions] Cleaning up file input element from processImportedFile$",
+        );
+        inputElement.parentNode.removeChild(inputElement);
+      }
+    };
   });
 }
 
@@ -221,47 +264,66 @@ export const triggerImportDialogFunction: FunctionConfig = {
   id: "system:trigger_import_dialog",
   requiresDockviewApi: true,
   execute: async (context: PluginExecutionContext) => {
-    // Destructure dockviewApi here to make it available in nested scopes
     const { dockviewApi } = context;
+    let inputElement: HTMLInputElement | null = null;
 
-    return new Promise((resolve) => {
-      // Ensure previous importers are removed
+    const import$ = defer(() => {
+      // Create input element when subscribed
       document
         .querySelectorAll('input[type="file"][data-importer="system"]')
-        .forEach((el) => el.remove());
+        .forEach((el) => el.remove()); // Clean previous
 
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".json";
-      input.style.display = "none";
-      input.setAttribute("data-importer", "system");
+      inputElement = document.createElement("input");
+      inputElement.type = "file";
+      inputElement.accept = ".json";
+      inputElement.style.display = "none";
+      inputElement.setAttribute("data-importer", "system");
+      document.body.appendChild(inputElement);
 
-      input.onchange = async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
+      // Trigger click immediately
+      inputElement.click();
+
+      // Return an observable listening for the 'change' event
+      return fromEvent(inputElement, "change");
+    }).pipe(
+      take(1), // Only care about the first file selection
+      switchMap((event) => {
+        const file = (event.target as HTMLInputElement)?.files?.[0];
         if (file) {
-          // Pass the captured dockviewApi variable
-          const result = await processImportedFile(file, dockviewApi);
-          resolve(result);
+          // Process the selected file using the observable helper
+          return processImportedFile$(file, dockviewApi);
         } else {
-          // No file selected, remove the input
-          if (input.parentNode) input.parentNode.removeChild(input);
-          resolve({
+          // No file selected (user cancelled)
+          return of<ProcessResult>({
             success: false,
             symbol: "🤷",
             message: "File selection cancelled.",
           });
         }
-      };
-
-      input.onerror = (err) => {
-        if (input.parentNode) input.parentNode.removeChild(input);
+      }),
+      catchError((err) => {
+        // Handle errors during input creation or event listening
         console.error("[SystemFunctions] File input error:", err);
-        resolve({ success: false, symbol: "❌", message: "File input error." });
-      };
+        return of<ProcessResult>({
+          success: false,
+          symbol: "❌",
+          message: "File input error.",
+        });
+      }),
+      finalize(() => {
+        // Ensure the input element is removed after completion, error, or cancellation
+        if (inputElement?.parentNode) {
+          console.log(
+            "[SystemFunctions] Cleaning up file input element from triggerImportDialogFunction",
+          );
+          inputElement.parentNode.removeChild(inputElement);
+          inputElement = null; // Clear reference
+        }
+      }),
+    );
 
-      document.body.appendChild(input);
-      input.click(); // Trigger file selection dialog
-    });
+    // Execute the observable and return the final result as a Promise
+    return lastValueFrom(import$);
   },
 };
 
