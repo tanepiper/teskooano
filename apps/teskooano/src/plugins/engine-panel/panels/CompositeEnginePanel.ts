@@ -698,7 +698,7 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Called when data disappears or the panel is disposed.
    */
   private disposeRendererAndUI(): void {
-    this._renderer?.dispose();
+    this._renderer?.dispose?.();
     this._renderer = undefined;
 
     const toolbarManager =
@@ -714,7 +714,7 @@ export class CompositeEnginePanel implements IContentRenderer {
         "[CompositeEnginePanel] EngineToolbarManager not found or API ID missing during dispose!",
       );
 
-      this._engineToolbar?.dispose();
+      this._engineToolbar?.dispose?.();
       this._engineToolbar = null;
     }
 

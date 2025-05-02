@@ -380,10 +380,6 @@ export class CSS2DManager {
     const cssObject = layerMap?.get(id);
     if (cssObject?.element instanceof HTMLElement) {
       cssObject.element.classList.add("label-hidden");
-    } else {
-      console.warn(
-        `[CSS2DManager]   hideLabel: Could not find element or element is not HTMLElement for id=${id}`,
-      );
     }
   }
 

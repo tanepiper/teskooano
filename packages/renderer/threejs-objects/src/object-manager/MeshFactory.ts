@@ -14,6 +14,16 @@ import {
 import { RingSystemRenderer } from "@teskooano/systems-celestial";
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
+import {
+  createAsteroidFieldMesh,
+  createAsteroidMesh,
+  createFallbackSphere,
+  createGasGiantMesh,
+  createMoonMesh,
+  createPlanetMesh,
+  createRingSystemMesh,
+  createStarMesh,
+} from "./mesh-creators"; // Import creator functions
 
 /**
  * @internal
@@ -37,8 +47,7 @@ export interface MeshFactoryConfig {
  * @internal
  * Factory class responsible for creating appropriate Three.js mesh objects
  * for different types of celestial bodies based on their data.
- * It utilizes specialized renderers for specific types (like Gas Giants)
- * and integrates with the LODManager.
+ * It delegates the actual creation logic to specialized functions.
  */
 export class MeshFactory {
   private celestialRenderers: Map<string, CelestialRenderer>;
@@ -54,6 +63,19 @@ export class MeshFactory {
   private camera: THREE.PerspectiveCamera;
   private debugMode: boolean = false;
 
+  // Store deps needed by creator functions
+  private creatorDeps: {
+    starRenderers: Map<string, CelestialRenderer>;
+    planetRenderers: Map<string, CelestialRenderer>;
+    moonRenderers: Map<string, CelestialRenderer>;
+    ringSystemRenderers: Map<string, RingSystemRenderer>;
+    celestialRenderers: Map<string, CelestialRenderer>;
+    createLodCallback: (
+      object: RenderableCelestialObject,
+      levels: LODLevel[],
+    ) => THREE.LOD;
+  };
+
   constructor(config: MeshFactoryConfig) {
     this.celestialRenderers = config.celestialRenderers;
     this.starRenderers = config.starRenderers;
@@ -63,6 +85,16 @@ export class MeshFactory {
     this.lodManager = config.lodManager;
     this.createLodCallback = config.createLodCallback;
     this.camera = config.camera;
+
+    // Prepare deps object for creator functions
+    this.creatorDeps = {
+      starRenderers: this.starRenderers,
+      planetRenderers: this.planetRenderers,
+      moonRenderers: this.moonRenderers,
+      ringSystemRenderers: this.ringSystemRenderers,
+      celestialRenderers: this.celestialRenderers,
+      createLodCallback: this.createLodCallback,
+    };
   }
 
   /**
@@ -96,40 +128,46 @@ export class MeshFactory {
     object: RenderableCelestialObject,
   ): THREE.Object3D | null {
     if (this.debugMode) {
-      return this.createFallbackSphere(object);
+      // Use the imported fallback function
+      return createFallbackSphere(object);
     }
 
     try {
       let mesh: THREE.Object3D | null = null;
 
+      // Prepare common arguments/dependencies for creators
+      const deps = this.creatorDeps;
+
+      // Call the appropriate imported creator function
       switch (object.type) {
         case CelestialType.STAR:
-          mesh = this.createStarMesh(object);
+          mesh = createStarMesh(object, deps);
           break;
         case CelestialType.PLANET:
         case CelestialType.DWARF_PLANET:
-          mesh = this.createPlanetMesh(object);
+          mesh = createPlanetMesh(object, deps);
           break;
         case CelestialType.MOON:
-          mesh = this.createMoonMesh(object);
+          mesh = createMoonMesh(object, deps);
           break;
         case CelestialType.GAS_GIANT:
-          mesh = this.createGasGiantMesh(object);
+          mesh = createGasGiantMesh(object, deps);
           break;
         case CelestialType.SPACE_ROCK:
-          mesh = this.createAsteroidMesh(object);
+          mesh = createAsteroidMesh(object, deps);
           break;
         case CelestialType.RING_SYSTEM:
-          mesh = this.createRingSystemMesh(object);
+          mesh = createRingSystemMesh(object, deps);
           break;
         case CelestialType.ASTEROID_FIELD:
-          mesh = this.createAsteroidFieldMesh(object);
+          mesh = createAsteroidFieldMesh(object, deps);
           break;
         default:
           console.warn(
             `[MeshFactory] No mesh creation logic for type: ${object.type} (${object.celestialObjectId}). Creating fallback sphere.`,
           );
-          mesh = this.createFallbackSphere(object);
+          // Use imported fallback function
+          mesh = createFallbackSphere(object);
       }
 
       if (mesh) {
@@ -149,7 +187,8 @@ export class MeshFactory {
         `[MeshFactory] Error creating mesh for ${object.celestialObjectId} (${object.type}):`,
         error,
       );
-      return this.createFallbackSphere(object); // Return fallback on error
+      // Use imported fallback function
+      return createFallbackSphere(object); // Return fallback on error
     }
   }
 

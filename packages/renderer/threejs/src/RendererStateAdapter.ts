@@ -48,6 +48,7 @@ export interface RenderableCelestialObject {
   realRadius_m: number;
 
   axialTilt?: OSVector3;
+  temperature?: number;
 }
 
 export interface RendererVisualSettings {
@@ -150,6 +151,7 @@ export class RendererStateAdapter {
       isSelected: existing?.isSelected ?? false,
       isFocused: existing?.isFocused ?? false,
       status: obj.status,
+      temperature: obj.temperature,
     };
   }
 
@@ -201,6 +203,7 @@ export class RendererStateAdapter {
       isSelected: existing?.isSelected ?? false,
       isFocused: existing?.isFocused ?? false,
       status: obj.status,
+      temperature: obj.temperature,
     };
   }
 

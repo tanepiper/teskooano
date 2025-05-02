@@ -194,9 +194,10 @@ export class ObjectLifecycleManager {
     existingMesh.position.copy(object.position);
     existingMesh.quaternion.copy(object.rotation);
 
-    // Potentially update light position if it's a star
+    // Update light position if it's a star
     if (object.type === CelestialType.STAR && object.position) {
-      this.lightManager.updateStarLight(objectId, object.position);
+      // This is now handled by the store subscription in LightManager
+      // this.lightManager.updateStarLight(objectId, object.position);
     }
 
     // Update LOD, CSS labels, etc. if necessary (often handled in the main update loop)
@@ -246,14 +247,41 @@ export class ObjectLifecycleManager {
     // Dispose of geometries and materials
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
+        // Log the child mesh and its material for debugging
+        console.log(
+          `[ObjectLifecycleManager] Disposing child mesh: ${child.name} (${child.uuid}), Material:`,
+          child.material,
+        );
+
+        // Dispose geometry
         child.geometry?.dispose();
+
+        // Dispose material(s)
         if (Array.isArray(child.material)) {
-          child.material.forEach((mat) => mat?.dispose());
+          child.material.forEach((mat) => {
+            if (mat && typeof mat.dispose === "function") {
+              mat.dispose();
+            } else if (mat) {
+              console.warn(
+                `[ObjectLifecycleManager] Child mesh material in array for ${child.name} lacks dispose method:`,
+                mat,
+              );
+            }
+          });
         } else if (child.material) {
-          child.material.dispose();
+          if (typeof child.material.dispose === "function") {
+            child.material.dispose();
+          } else {
+            console.warn(
+              `[ObjectLifecycleManager] Child mesh material for ${child.name} lacks dispose method:`,
+              child.material,
+            );
+          }
         }
+      } else {
+        // Optionally log non-mesh children if needed
+        // console.log(`[ObjectLifecycleManager] Traversing non-mesh child: ${child.name} (${child.type})`);
       }
-      // Add handling for other types like Points if necessary
     });
 
     // Remove from the main tracking map

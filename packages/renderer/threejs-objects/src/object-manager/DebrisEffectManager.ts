@@ -2,12 +2,13 @@ import type { DestructionEvent } from "@teskooano/core-physics";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import * as THREE from "three";
 
-interface ActiveDebris {
-  group: THREE.Group;
-  velocities: Map<string, THREE.Vector3>;
-  rotations: Map<string, { axis: THREE.Vector3; speed: number }>;
+// New structure for active debris effects using InstancedMesh
+interface ActiveInstancedDebris {
+  mesh: THREE.InstancedMesh;
   startTime: number;
   lifetime: number;
+  // Material might need updating (uniforms)
+  material: THREE.ShaderMaterial; // Or RawShaderMaterial
 }
 
 /**
@@ -18,15 +19,51 @@ export interface DebrisEffectManagerConfig {
   scene: THREE.Scene;
 }
 
+// Placeholder basic shaders - These will need significant work
+const debrisVertexShader = `
+  attribute vec3 instancePositionOffset;
+  attribute vec4 instanceQuaternion;
+  attribute vec3 instanceScale;
+  attribute vec3 instanceVelocity;
+  attribute vec4 instanceColor;
+  attribute vec2 instanceLifetime; // x: startTime, y: lifetime
+
+  uniform float uTime;
+  varying vec4 vColor;
+
+  // Function to apply quaternion rotation
+  vec3 applyQuaternion(vec3 pos, vec4 q) {
+    return pos + 2.0 * cross(q.xyz, cross(q.xyz, pos) + q.w * pos);
+  }
+
+  void main() {
+    float elapsedTime = uTime - instanceLifetime.x;
+    vec3 currentPosition = position * instanceScale;
+    currentPosition = applyQuaternion(currentPosition, instanceQuaternion); // Apply initial rotation/orientation if needed
+    currentPosition += instancePositionOffset + instanceVelocity * elapsedTime;
+    vColor = instanceColor;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(currentPosition, 1.0);
+  }
+`;
+
+const debrisFragmentShader = `
+  varying vec4 vColor;
+  uniform float uOpacity;
+
+  void main() {
+    // Basic fragment shader, just uses color and uniform opacity
+    gl_FragColor = vec4(vColor.rgb, vColor.a * uOpacity);
+  }
+`;
+
 /**
  * @internal
- * Manages the visual effects for object destruction, creating, animating,
- * and cleaning up debris particle systems.
+ * Manages the visual effects for object destruction using InstancedMesh.
  */
 export class DebrisEffectManager {
   private scene: THREE.Scene;
   private debrisClock = new THREE.Clock();
-  private activeDebrisEffects: ActiveDebris[] = [];
+  private activeDebrisEffects: ActiveInstancedDebris[] = [];
   private _enableDebrisEffects: boolean = true;
 
   constructor(config: DebrisEffectManagerConfig) {
@@ -67,111 +104,161 @@ export class DebrisEffectManager {
 
     const debrisCount = 100;
     const debrisBaseSize = event.destroyedRadius * METERS_TO_SCENE_UNITS * 0.15;
-    const debrisLifetime = 15.0;
+    const debrisLifetime = 10.0; // Shorter lifetime might be better
     const speedMultiplier = 0.3;
-    const initialSpreadFactor =
-      event.destroyedRadius * METERS_TO_SCENE_UNITS * 1.5;
 
-    const debrisGroup = new THREE.Group();
-    debrisGroup.name = `Debris_${event.destroyedId}`;
-    const debrisVelocities = new Map<string, THREE.Vector3>();
-    const debrisRotations = new Map<
-      string,
-      { axis: THREE.Vector3; speed: number }
-    >();
-
-    // Reusable geometry and materials
+    // Base geometry and material for instancing
     const geometry = new THREE.IcosahedronGeometry(1, 0);
-    const material = new THREE.MeshBasicMaterial({
-      color: 0xff7700,
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: this.debrisClock.getElapsedTime() },
+        uOpacity: { value: 1.0 },
+      },
+      vertexShader: debrisVertexShader,
+      fragmentShader: debrisFragmentShader,
       transparent: true,
-      opacity: 0.9,
-      depthWrite: false,
-    });
-    const glowMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff5500,
-      transparent: true,
-      opacity: 0.5,
-      side: THREE.BackSide,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
+      // vertexColors: true, // Handled by instanceColor attribute now
     });
+
+    const instancedMesh = new THREE.InstancedMesh(
+      geometry,
+      material,
+      debrisCount,
+    );
+    instancedMesh.name = `DebrisInstanced_${event.destroyedId}`;
+
+    // Buffers for instance attributes
+    const positionOffsets = new Float32Array(debrisCount * 3);
+    const quaternions = new Float32Array(debrisCount * 4);
+    const scales = new Float32Array(debrisCount * 3);
+    const velocities = new Float32Array(debrisCount * 3);
+    const colors = new Float32Array(debrisCount * 4);
+    const lifetimes = new Float32Array(debrisCount * 2); // x: startTime, y: lifetime
+
+    const tempMatrix = new THREE.Matrix4();
+    const tempPos = new THREE.Vector3();
+    const tempQuat = new THREE.Quaternion();
+    const tempScale = new THREE.Vector3();
+    const tempColor = new THREE.Color();
+    const baseVel = new THREE.Vector3(
+      event.relativeVelocity.x,
+      event.relativeVelocity.y,
+      event.relativeVelocity.z,
+    ).multiplyScalar(METERS_TO_SCENE_UNITS * speedMultiplier);
+    const randomDir = new THREE.Vector3();
+    const startTime = this.debrisClock.getElapsedTime();
 
     for (let i = 0; i < debrisCount; i++) {
-      const hue = Math.random() * 0.1 + 0.05;
-      const debrisColor = new THREE.Color(0xff7700);
-      debrisColor.offsetHSL(hue, 0, Math.random() * 0.2);
+      const idx3 = i * 3;
+      const idx4 = i * 4;
+      const idx2 = i * 2;
 
-      const debrisMaterialInstance = material.clone();
-      debrisMaterialInstance.color = debrisColor;
-
-      const mesh = new THREE.Mesh(geometry, debrisMaterialInstance);
-      mesh.scale.setScalar(debrisBaseSize * (0.5 + Math.random() * 0.9));
-
-      const glowMatInstance = glowMaterial.clone();
-      glowMatInstance.color = debrisColor.clone().multiplyScalar(1.5);
-      const glowMesh = new THREE.Mesh(geometry, glowMatInstance); // Use same geometry
-      glowMesh.scale.setScalar(1.5);
-      mesh.add(glowMesh);
-
-      const randomOffset = new THREE.Vector3(
-        (Math.random() - 0.5) * 2,
-        (Math.random() - 0.5) * 2,
-        (Math.random() - 0.5) * 2,
-      )
+      // Initial Position Offset (relative to impact point)
+      randomDir
+        .set(
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2,
+        )
         .normalize()
-        .multiplyScalar(Math.random() * initialSpreadFactor * 1.2);
-      mesh.position.copy(impactScenePos).add(randomOffset);
+        .multiplyScalar(Math.random() * debrisBaseSize * 3); // Spread out a bit
+      tempPos.copy(impactScenePos).add(randomDir);
+      positionOffsets[idx3] = tempPos.x;
+      positionOffsets[idx3 + 1] = tempPos.y;
+      positionOffsets[idx3 + 2] = tempPos.z;
 
-      const baseVel = new THREE.Vector3(
-        event.relativeVelocity.x,
-        event.relativeVelocity.y,
-        event.relativeVelocity.z,
-      ).multiplyScalar(METERS_TO_SCENE_UNITS);
+      // Initial Rotation (random)
+      tempQuat.setFromAxisAngle(
+        randomDir
+          .set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+          .normalize(),
+        Math.random() * Math.PI * 2,
+      );
+      quaternions[idx4] = tempQuat.x;
+      quaternions[idx4 + 1] = tempQuat.y;
+      quaternions[idx4 + 2] = tempQuat.z;
+      quaternions[idx4 + 3] = tempQuat.w;
 
-      const randomDir = new THREE.Vector3(
-        (Math.random() - 0.5) * 2,
-        (Math.random() - 0.5) * 2,
-        (Math.random() - 0.5) * 2,
-      ).normalize();
+      // Scale
+      const scale = debrisBaseSize * (0.5 + Math.random() * 0.9);
+      scales[idx3] = scale;
+      scales[idx3 + 1] = scale;
+      scales[idx3 + 2] = scale;
 
-      const randomVelFactor = 0.8 + Math.random() * 0.6;
+      // Velocity (base + random component)
+      randomDir
+        .set(
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2,
+        )
+        .normalize();
+      const randomVelFactor = 0.5 + Math.random() * 0.8;
       const finalVel = baseVel
         .clone()
-        .lerp(randomDir, 0.6) // Blend base velocity with random direction
-        .normalize()
-        .multiplyScalar(baseVel.length() * speedMultiplier * randomVelFactor);
+        .lerp(randomDir, 0.7)
+        .multiplyScalar(randomVelFactor);
+      velocities[idx3] = finalVel.x;
+      velocities[idx3 + 1] = finalVel.y;
+      velocities[idx3 + 2] = finalVel.z;
 
-      debrisVelocities.set(mesh.uuid, finalVel);
+      // Color (variation of orange/yellow)
+      const hue = Math.random() * 0.1 + 0.05;
+      tempColor.setHSL(
+        hue,
+        0.8 + Math.random() * 0.2,
+        0.5 + Math.random() * 0.1,
+      );
+      colors[idx4] = tempColor.r;
+      colors[idx4 + 1] = tempColor.g;
+      colors[idx4 + 2] = tempColor.b;
+      colors[idx4 + 3] = 0.9; // Alpha
 
-      const rotationAxis = new THREE.Vector3(
-        (Math.random() - 0.5) * 2,
-        (Math.random() - 0.5) * 2,
-        (Math.random() - 0.5) * 2,
-      ).normalize();
-      const rotationSpeed = // Radians per second
-        (Math.random() * 1.5 + 0.5) * THREE.MathUtils.DEG2RAD * 60;
-      debrisRotations.set(mesh.uuid, {
-        axis: rotationAxis,
-        speed: rotationSpeed,
-      });
-
-      debrisGroup.add(mesh);
+      // Lifetime / Start time
+      lifetimes[idx2] = startTime;
+      lifetimes[idx2 + 1] = debrisLifetime * (0.8 + Math.random() * 0.4); // Vary lifetime slightly
     }
 
-    this.scene.add(debrisGroup);
+    // Set instance attributes
+    instancedMesh.geometry.setAttribute(
+      "instancePositionOffset",
+      new THREE.InstancedBufferAttribute(positionOffsets, 3),
+    );
+    instancedMesh.geometry.setAttribute(
+      "instanceQuaternion",
+      new THREE.InstancedBufferAttribute(quaternions, 4),
+    );
+    instancedMesh.geometry.setAttribute(
+      "instanceScale",
+      new THREE.InstancedBufferAttribute(scales, 3),
+    );
+    instancedMesh.geometry.setAttribute(
+      "instanceVelocity",
+      new THREE.InstancedBufferAttribute(velocities, 3),
+    );
+    instancedMesh.geometry.setAttribute(
+      "instanceColor",
+      new THREE.InstancedBufferAttribute(colors, 4),
+    );
+    instancedMesh.geometry.setAttribute(
+      "instanceLifetime",
+      new THREE.InstancedBufferAttribute(lifetimes, 2),
+    );
+
+    // Important: The InstancedMesh position itself should be (0,0,0) as positions are handled by offsets
+    instancedMesh.position.set(0, 0, 0);
+
+    this.scene.add(instancedMesh);
     this.activeDebrisEffects.push({
-      group: debrisGroup,
-      velocities: debrisVelocities,
-      rotations: debrisRotations,
-      startTime: this.debrisClock.getElapsedTime(),
-      lifetime: debrisLifetime,
+      mesh: instancedMesh,
+      startTime: startTime,
+      lifetime: debrisLifetime, // Use max lifetime for the system
+      material: material,
     });
 
-    // Dispose of the template geometry and materials after loop
-    geometry.dispose();
-    // material.dispose(); // Basic material, might not need disposal if shared?
-    // glowMaterial.dispose(); // Same as above
+    // No need to dispose template geometry/material here, it's used by the InstancedMesh
   }
 
   /**
@@ -180,62 +267,24 @@ export class DebrisEffectManager {
    */
   public update(delta: number): void {
     const currentTime = this.debrisClock.getElapsedTime();
-    const remainingDebris: ActiveDebris[] = [];
+    const remainingDebris: ActiveInstancedDebris[] = [];
 
     for (const effect of this.activeDebrisEffects) {
       const elapsedTime = currentTime - effect.startTime;
 
       if (elapsedTime >= effect.lifetime) {
         // Effect expired, remove from scene and dispose resources
-        this.scene.remove(effect.group);
-        effect.group.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            child.geometry?.dispose(); // Assumes unique geometry per mesh instance if needed
-            if (Array.isArray(child.material)) {
-              child.material.forEach((mat) => mat?.dispose());
-            } else if (child.material) {
-              child.material.dispose();
-            }
-          }
-        });
-        // Clear maps associated with this effect to free memory
-        effect.velocities.clear();
-        effect.rotations.clear();
+        this.scene.remove(effect.mesh);
+        effect.mesh.geometry.dispose();
+        // Dispose material uniforms/textures if necessary
+        effect.material.dispose();
       } else {
-        // Effect still active, update particles
+        // Effect still active, update shader uniforms
+        effect.material.uniforms.uTime.value = currentTime;
+        // Calculate overall opacity based on progress (can be refined in shader)
         const progress = elapsedTime / effect.lifetime;
-        const opacity = Math.min(1.0, (1.0 - progress) * 1.3); // Fade out
+        effect.material.uniforms.uOpacity.value = Math.max(0.0, 1.0 - progress);
 
-        effect.group.children.forEach((child) => {
-          if (child instanceof THREE.Mesh) {
-            const velocity = effect.velocities.get(child.uuid);
-            if (velocity) {
-              child.position.addScaledVector(velocity, delta);
-            }
-
-            const rotationData = effect.rotations.get(child.uuid);
-            if (rotationData) {
-              // Apply incremental rotation
-              const deltaRotation = new THREE.Quaternion().setFromAxisAngle(
-                rotationData.axis,
-                rotationData.speed * delta,
-              );
-              child.quaternion.premultiply(deltaRotation);
-            }
-
-            // Update material opacity on the mesh and its children (glow)
-            child.traverse((subChild) => {
-              if (
-                subChild instanceof THREE.Mesh &&
-                subChild.material instanceof THREE.Material
-              ) {
-                if (subChild.material.transparent) {
-                  subChild.material.opacity = opacity;
-                }
-              }
-            });
-          }
-        });
         remainingDebris.push(effect); // Keep active effect
       }
     }
@@ -248,19 +297,9 @@ export class DebrisEffectManager {
    */
   dispose(): void {
     this.activeDebrisEffects.forEach((effect) => {
-      this.scene.remove(effect.group);
-      effect.group.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-          child.geometry?.dispose();
-          if (Array.isArray(child.material)) {
-            child.material.forEach((mat) => mat?.dispose());
-          } else if (child.material) {
-            child.material.dispose();
-          }
-        }
-      });
-      effect.velocities.clear();
-      effect.rotations.clear();
+      this.scene.remove(effect.mesh);
+      effect.mesh.geometry.dispose();
+      effect.material.dispose();
     });
     this.activeDebrisEffects = [];
   }
