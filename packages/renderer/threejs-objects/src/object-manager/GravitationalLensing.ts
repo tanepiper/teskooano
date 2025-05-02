@@ -10,6 +10,15 @@ import {
 } from "@teskooano/systems-celestial";
 
 /**
+ * @internal
+ * Configuration for GravitationalLensingHandler.
+ */
+export interface GravitationalLensingHandlerConfig {
+  starRenderers: Map<string, CelestialRenderer>;
+  // Add other dependencies if they exist, e.g., post-processing manager
+}
+
+/**
  * Manages the setup and potential teardown of gravitational lensing effects for specific types of celestial objects
  * (Black Holes, Neutron Stars). It identifies objects requiring lensing based on their properties and collaborates
  * with their specialized `CelestialRenderer` instances (e.g., `SchwarzschildBlackHoleRenderer`) to apply the effect,
@@ -20,13 +29,17 @@ export class GravitationalLensingHandler {
   private lensingObjectsToAdd: Set<string> = new Set();
   /** @internal Reference to the map of active star renderers, used to find the correct renderer for applying lensing. */
   private starRenderers: Map<string, CelestialRenderer>;
+  private lensingObjects: Map<
+    string,
+    { pass?: any; objectData: RenderableCelestialObject }
+  > = new Map(); // Store pass reference if applicable
 
   /**
    * Creates a new GravitationalLensingHandler instance.
-   * @param starRenderers - A map containing the active star renderers, keyed by celestial object ID. This is used to access the specific renderer (e.g., `SchwarzschildBlackHoleRenderer`) needed to apply the lensing effect.
+   * @param config - Configuration object containing the active star renderers.
    */
-  constructor(starRenderers: Map<string, CelestialRenderer>) {
-    this.starRenderers = starRenderers;
+  constructor(config: GravitationalLensingHandlerConfig) {
+    this.starRenderers = config.starRenderers;
   }
 
   /**

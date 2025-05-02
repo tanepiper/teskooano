@@ -1,11 +1,23 @@
 import {
-  CelestialRenderer,
+  type CelestialRenderer,
+  type RingSystemRenderer,
   KerrBlackHoleRenderer,
   NeutronStarRenderer,
-  RingSystemRenderer,
   SchwarzschildBlackHoleRenderer,
 } from "@teskooano/systems-celestial";
-import * as THREE from "three";
+import type * as THREE from "three";
+
+/**
+ * @internal
+ * Configuration for RendererUpdater.
+ */
+export interface RendererUpdaterConfig {
+  celestialRenderers: Map<string, CelestialRenderer>;
+  starRenderers: Map<string, CelestialRenderer>;
+  planetRenderers: Map<string, CelestialRenderer>;
+  moonRenderers: Map<string, CelestialRenderer>;
+  ringSystemRenderers: Map<string, RingSystemRenderer>;
+}
 
 /**
  * Helper class responsible for iterating through different categories of celestial renderers
@@ -27,25 +39,15 @@ export class RendererUpdater {
   private ringSystemRenderers: Map<string, RingSystemRenderer>;
 
   /**
-   * Creates a new RendererUpdater instance.
-   * @param celestialRenderers - Map of general celestial renderers.
-   * @param starRenderers - Map of star-specific renderers.
-   * @param planetRenderers - Map of planet-specific renderers.
-   * @param moonRenderers - Map of moon-specific renderers.
-   * @param ringSystemRenderers - Map of ring system-specific renderers.
+   * Creates an instance of RendererUpdater.
+   * @param config - Configuration object containing maps of the different renderer types.
    */
-  constructor(
-    celestialRenderers: Map<string, CelestialRenderer>,
-    starRenderers: Map<string, CelestialRenderer>,
-    planetRenderers: Map<string, CelestialRenderer>,
-    moonRenderers: Map<string, CelestialRenderer>,
-    ringSystemRenderers: Map<string, RingSystemRenderer>,
-  ) {
-    this.celestialRenderers = celestialRenderers;
-    this.starRenderers = starRenderers;
-    this.planetRenderers = planetRenderers;
-    this.moonRenderers = moonRenderers;
-    this.ringSystemRenderers = ringSystemRenderers;
+  constructor(config: RendererUpdaterConfig) {
+    this.celestialRenderers = config.celestialRenderers;
+    this.starRenderers = config.starRenderers;
+    this.planetRenderers = config.planetRenderers;
+    this.moonRenderers = config.moonRenderers;
+    this.ringSystemRenderers = config.ringSystemRenderers;
   }
 
   /**
@@ -161,39 +163,7 @@ export class RendererUpdater {
   }
 
   /**
-   * Cleans up resources used by the renderers.
-   * Iterates through all managed renderer maps and calls the `dispose` method on each instance
-   * if it exists.
+   * Calls the dispose method on all managed renderers that have one.
    */
-  dispose(): void {
-    this.celestialRenderers.forEach((renderer) => {
-      if (renderer.dispose) {
-        renderer.dispose();
-      }
-    });
-
-    this.starRenderers.forEach((renderer) => {
-      if (renderer.dispose) {
-        renderer.dispose();
-      }
-    });
-
-    this.planetRenderers.forEach((renderer) => {
-      if (renderer.dispose) {
-        renderer.dispose();
-      }
-    });
-
-    this.moonRenderers.forEach((renderer) => {
-      if (renderer.dispose) {
-        renderer.dispose();
-      }
-    });
-
-    this.ringSystemRenderers.forEach((renderer) => {
-      if (renderer.dispose) {
-        renderer.dispose();
-      }
-    });
-  }
+  dispose(): void {}
 }

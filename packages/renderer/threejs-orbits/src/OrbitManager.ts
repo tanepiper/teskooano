@@ -401,8 +401,15 @@ export class OrbitManager {
         pointsToUse.length,
         positionAttribute.count,
       );
+
+      // Optimized loop: Directly access vector components
+      const positions = positionAttribute.array as Float32Array;
       for (let i = 0; i < pointsToDraw; i++) {
-        pointsToUse[i].toArray(positionAttribute.array, i * 3);
+        const point = pointsToUse[i];
+        const offset = i * 3;
+        positions[offset] = point.x;
+        positions[offset + 1] = point.y;
+        positions[offset + 2] = point.z;
       }
 
       if (shouldUpdateGeometry) {
