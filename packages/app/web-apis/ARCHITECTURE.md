@@ -9,9 +9,9 @@
 3.  **Interface Consistency**: Where applicable, the package attempts to provide consistent patterns:
     - **Helper Functions**: Simple wrappers for direct API calls (e.g., `requestFullscreen`, `writeTextToClipboard`).
     - **RxJS Observables**: For event-based APIs or asynchronous operations, providing streams of data/events (e.g., `observeResize$`, `deviceOrientation$`, `gamepadConnection$`).
-    - **Nanostores**: For stateful APIs where a reactive store makes sense (e.g., `batteryStore`, `gamepadStateStore`, `deviceMemoryStore`).
+    - **RxJS**: For stateful APIs where a reactive store makes sense (e.g., `batteryStore`, `gamepadStateStore`, `deviceMemoryStore`).
 4.  **Abstraction**: The wrappers hide some of the browser API inconsistencies or boilerplate (e.g., permission handling for Device Orientation, JSON parsing for Storage).
-5.  **Dependency Management**: Relies on `rxjs` for observables and `nanostores` for reactive state management.
+5.  **Dependency Management**: Relies on `rxjs` for observables and reactive state management.
 
 **Structure**:
 
@@ -64,4 +64,4 @@ packages/app/web-apis/
 
 **Data Flow**: Consumers import specific modules (e.g., `AnimationAPI`) from the main package entry point. They then use the exported functions, subscribe to observables, or read from stores provided by that module. Internally, these modules interact directly with the corresponding browser Web APIs.
 
-**Dependencies**: `nanostores`, `rxjs`, `@types/web`.
+**Dependencies**: `rxjs`, `@types/web`.

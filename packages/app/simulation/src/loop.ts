@@ -4,16 +4,14 @@ import {
   type PhysicsStateReal,
   type SimulationStepResult,
   type DestructionEvent,
+  type SimulationParameters,
 } from "@teskooano/core-physics";
 import {
-  celestialActions,
   getCelestialObjects,
   getSimulationState,
   setAllCelestialObjects,
   setSimulationState,
-  simulationState$,
   updateAccelerationVectors,
-  updatePhysicsState,
 } from "@teskooano/core-state";
 import {
   CelestialObject,
@@ -21,22 +19,33 @@ import {
   CelestialType,
 } from "@teskooano/data-types";
 import * as THREE from "three";
-import { rendererEvents } from "@teskooano/renderer-threejs-core";
-import { CustomEvents } from "@teskooano/data-types";
+// Remove direct renderer event import if no longer needed elsewhere in this file
+// import { rendererEvents } from "@teskooano/renderer-threejs-core";
+import { Subscription } from "rxjs";
+import {
+  resetTime$,
+  orbitUpdate$,
+  destructionOccurred$,
+  type OrbitUpdatePayload,
+} from "./simulationEvents"; // Import our new Subjects
 
 let lastTime = performance.now();
 let running = true;
 let lastLoggedTime = 0;
 let accumulatedTime = 0; // Track simulation time accumulation
+let resetTimeSubscription: Subscription | null = null; // Store subscription
 
-// Listen for resetSimulationTime event
-window.addEventListener(CustomEvents.SIMULATION_RESET_TIME, () => {
-  accumulatedTime = 0; // Reset accumulated time
-});
-
-// Removed Octree Initialization
+// Removed window.addEventListener for resetSimulationTime
 
 export function startSimulationLoop() {
+  // Subscribe to reset time event when starting the loop
+  resetTimeSubscription = resetTime$.subscribe(() => {
+    accumulatedTime = 0; // Reset accumulated time
+    console.log(
+      "[SimulationLoop] Resetting accumulated time via resetTime$ subject.",
+    );
+  });
+
   function simulationLoop() {
     const acquiredVectors: THREE.Vector3[] = [];
 
@@ -48,9 +57,7 @@ export function startSimulationLoop() {
       const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
       lastTime = currentTime;
 
-      // Cap the delta time used for physics calculations
-      // const fixedDeltaTime = Math.min(deltaTime, 0.01); // Cap at 100fps rate for physics
-      const fixedDeltaTime = Math.min(deltaTime, 0.001); // USE SMALLER CAP: Cap at 1000fps physics rate
+      const fixedDeltaTime = Math.min(deltaTime, 0.001); // Cap at 1000fps physics rate
 
       if (!getSimulationState().paused) {
         const timeScale = getSimulationState().timeScale;
@@ -63,14 +70,13 @@ export function startSimulationLoop() {
         });
 
         const currentCelestialObjects = getCelestialObjects();
-        // Filter out destroyed objects before sending to physics engine
         const activeBodiesReal = Object.values(currentCelestialObjects)
           .filter(
             (obj) =>
               obj.status !== CelestialStatus.DESTROYED && !obj.ignorePhysics,
-          ) // <-- Filter by status AND ignorePhysics
+          )
           .map((obj) => obj.physicsStateReal)
-          .filter((state): state is PhysicsStateReal => !!state); // Ensure state exists
+          .filter((state): state is PhysicsStateReal => !!state);
 
         const cameraStatePos = getSimulationState().camera.position;
         const cameraPosition = vectorPool.get(
@@ -80,9 +86,6 @@ export function startSimulationLoop() {
         );
         acquiredVectors.push(cameraPosition);
 
-        const celestialObjects = currentCelestialObjects;
-
-        // --- Construct maps needed for collision detection ---
         const radii = new Map<string | number, number>();
         const isStar = new Map<string | number, boolean>();
         const bodyTypes = new Map<string | number, CelestialType>();
@@ -90,37 +93,38 @@ export function startSimulationLoop() {
           .filter(
             (obj) =>
               obj.status !== CelestialStatus.DESTROYED && !obj.ignorePhysics,
-          ) // <-- Filter here too for consistency
+          )
           .forEach((obj) => {
             if (obj.physicsStateReal) {
-              // Only include objects with physics state
               radii.set(obj.id, obj.realRadius_m);
               isStar.set(obj.id, obj.type === CelestialType.STAR);
               bodyTypes.set(obj.id, obj.type);
             }
           });
-        // --- End map construction ---
 
-        // --- Call the centralized physics simulation update ---
-        // Includes integration and collision handling
+        // Combine parameters into a single object
+        const simParams: SimulationParameters = {
+          radii,
+          isStar,
+          bodyTypes,
+          // octreeSize and barnesHutTheta can be added here if needed
+          // otherwise, they will use the defaults defined in updateSimulation
+        };
+
         const stepResult: SimulationStepResult = updateSimulation(
-          activeBodiesReal, // <-- Pass filtered list
+          activeBodiesReal,
           scaledDeltaTime,
-          radii, // Pass radii map
-          isStar, // Pass isStar map
-          bodyTypes, // Pass bodyTypes map
-          // Optional Octree params can be added here if needed:
-          // octreeSize, barnesHutTheta
+          simParams, // Pass the combined parameters object
         );
-        // --- End Physics Update ---
 
-        // --- Handle Destruction Events (Emit visuals) ---
+        // --- Handle Destruction Events (Emit via Subject) ---
         if (
           stepResult.destructionEvents &&
           stepResult.destructionEvents.length > 0
         ) {
           stepResult.destructionEvents.forEach((event: DestructionEvent) => {
-            rendererEvents.emit("destruction:occurred", event);
+            // Replace rendererEvents.emit with subject.next()
+            destructionOccurred$.next(event);
           });
         }
         // --- End Destruction Event Handling ---
@@ -146,15 +150,13 @@ export function startSimulationLoop() {
           const destroyedIdStr = String(id);
           const existingObject = finalStateMap[destroyedIdStr];
           if (existingObject) {
-            // Find the corresponding destruction event to identify the survivor
             const destructionEvent = stepResult.destructionEvents.find(
               (event) => event.destroyedId === id,
             );
-            let finalStatus = CelestialStatus.DESTROYED; // Default to destroyed (shattered)
+            let finalStatus = CelestialStatus.DESTROYED;
 
             if (destructionEvent) {
               const survivorIdStr = String(destructionEvent.survivorId);
-              // Check the type of the survivor using the original map (currentCelestialObjects)
               const survivorObject = currentCelestialObjects[survivorIdStr];
               if (
                 survivorObject &&
@@ -162,11 +164,9 @@ export function startSimulationLoop() {
               ) {
                 finalStatus = CelestialStatus.ANNIHILATED;
               } else if (destructionEvent.survivorId === "MUTUAL_DESTRUCTION") {
-                // Handle Moon vs Moon mutual destruction - mark as annihilated for simplicity?
                 finalStatus = CelestialStatus.ANNIHILATED;
               }
             } else {
-              // This case shouldn't happen if physics generates events correctly, but handle defensively
               console.warn(
                 `[SimulationLoop] Cannot find destruction event for destroyed ID: ${id}. Defaulting to DESTROYED status.`,
               );
@@ -201,7 +201,6 @@ export function startSimulationLoop() {
             );
             finalStateMap[id] = { ...obj, rotation: newRotation };
           }
-          // Ensure physics state is present even if not updated by physics step (for destroyed objects etc)
           if (
             !finalStateMap[id].physicsStateReal &&
             currentCelestialObjects[id]?.physicsStateReal
@@ -212,15 +211,9 @@ export function startSimulationLoop() {
             };
           }
         });
-        // --- End Prepare Final State ---
 
-        // --- Update State Stores (Single Update for Celestials) ---
-        // Step 1: Set the complete celestial object state
         setAllCelestialObjects(finalStateMap);
-
-        // Step 2: Update the acceleration vector store separately
         updateAccelerationVectors(stepResult.accelerations);
-        // --- End State Updates ---
 
         // --- Prepare data for orbit update event ---
         const updatedPositions: Record<
@@ -234,16 +227,13 @@ export function startSimulationLoop() {
             z: state.position_m.z,
           };
         });
-        // --- End Prepare data ---
 
-        // Dispatch an event with the updated positions
-        const orbitUpdateEvent = new CustomEvent(CustomEvents.ORBIT_UPDATE, {
-          detail: { positions: updatedPositions },
-        });
-        document.dispatchEvent(orbitUpdateEvent);
+        // Emit orbit update via Subject
+        const payload: OrbitUpdatePayload = { positions: updatedPositions };
+        orbitUpdate$.next(payload);
+        // Removed document.dispatchEvent
       }
 
-      // Debug logging remains the same...
       const currentSimTime = getSimulationState().time;
       if (
         Math.floor(currentSimTime) % 5 === 0 &&
@@ -265,10 +255,15 @@ export function startSimulationLoop() {
 
   running = true;
   lastTime = performance.now();
+  // Ensure accumulatedTime starts from the current state value
   accumulatedTime = getSimulationState().time;
   requestAnimationFrame(simulationLoop);
 }
 
 export function stopSimulationLoop() {
   running = false;
+  // Unsubscribe from reset time event when stopping the loop
+  resetTimeSubscription?.unsubscribe();
+  resetTimeSubscription = null;
+  console.log("[SimulationLoop] Stopped and unsubscribed from resetTime$.");
 }

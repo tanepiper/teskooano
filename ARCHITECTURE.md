@@ -135,7 +135,7 @@ graph TD
 - Reactive state management with Nanostores.
 - Clear separation of concerns between state storage, simulation control, and physics synchronization.
 
-**Dependencies**: `nanostores`, `@teskooano/data-types`, `@teskooano/core-math`, `@teskooano/core-physics`, `three`.
+**Dependencies**: `RxJS`, `@teskooano/data-types`, `@teskooano/core-math`, `@teskooano/core-physics`, `three`.
 
 ## IV. Domain Systems
 

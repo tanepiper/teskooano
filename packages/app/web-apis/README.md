@@ -93,7 +93,7 @@ const padSub = GamepadAPI.gamepadStateStore.subscribe((state) => {
   }
 });
 // Later...
-// padSub(); // Unsubscribe function returned by nanostores
+// padSub(); // Unsubscribe function returned by RxJS
 ```
 
 ### Available API Modules

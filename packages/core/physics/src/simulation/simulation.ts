@@ -1,3 +1,5 @@
+import { Observable, combineLatest } from "rxjs";
+import { scan, startWith, map } from "rxjs/operators";
 import { PhysicsStateReal } from "../types";
 import { OSVector3 } from "@teskooano/core-math";
 import { CelestialType } from "@teskooano/data-types";
@@ -46,41 +48,49 @@ export interface SimulationStepResult {
 }
 
 /**
+ * Defines the parameters needed for a simulation step, excluding state and dt.
+ */
+export interface SimulationParameters {
+  radii: Map<string | number, number>;
+  isStar: Map<string | number, boolean>;
+  bodyTypes: Map<string | number, CelestialType>;
+  octreeSize?: number;
+  barnesHutTheta?: number;
+}
+
+/**
  * Updates the state of all bodies in the simulation for a given time step using an Octree.
  * Uses Barnes-Hut approximation for performance (O(N log N)).
  *
  * @param bodies - Array of all bodies in the simulation
  * @param dt - Time step duration (e.g., in seconds)
- * @param radii - Map of body IDs to their radii
- * @param isStar - Map of body IDs to boolean indicating if they are stars
- * @param bodyTypes - Map of body IDs to their CelestialType
- * @param octreeSize - The size (half-width) of the root Octree node. Should encompass the simulation area.
- * @param barnesHutTheta - Approximation parameter (0 = exact N-body, >0 = approximation). Default 0.7.
+ * @param params - Simulation parameters (radii, types, octree settings)
  * @returns Updated array of body states
  */
 export const updateSimulation = (
   bodies: PhysicsStateReal[],
   dt: number,
-  radii: Map<string | number, number>, // <-- Add radii map
-  isStar: Map<string | number, boolean>, // <-- Add isStar map
-  bodyTypes: Map<string | number, CelestialType>, // --- NEW PARAM ---
-  octreeSize: number = 5e13,
-  barnesHutTheta: number = 0.7,
+  params: SimulationParameters,
 ): SimulationStepResult => {
+  const {
+    radii,
+    isStar,
+    bodyTypes,
+    octreeSize = 5e13, // Default octree size
+    barnesHutTheta = 0.7, // Default theta
+  } = params;
+
   // --- Octree Setup ---
+
   // Determine appropriate size if not provided (optional enhancement)
   // For now, using provided/default size centered at origin.
   const octree = new Octree(octreeSize);
   bodies.forEach((body) => octree.insert(body));
   // --- End Octree Setup ---
 
-  // Calculate initial forces based on current positions - **REMOVED**
-  // const currentForces = calculateNetForces(bodies);
-
   // Step 1: Calculate acceleration for all bodies based on current state using Octree
   const accelerations = new Map<string, OSVector3>();
   bodies.forEach((body) => {
-    // const force = currentForces.get(body.id) || new OSVector3(0, 0, 0); // Old way
     const force = octree.calculateForceOn(body, barnesHutTheta);
     const acc = new OSVector3(0, 0, 0);
     if (body.mass_kg !== 0) {
@@ -102,7 +112,7 @@ export const updateSimulation = (
       // Pass the pre-built octree and theta parameter
       return calculateAccelerationForBody(
         newStateGuess,
-        octree,
+        octree, // Pass the octree constructed for this step
         barnesHutTheta,
       );
     };
@@ -137,46 +147,41 @@ export const updateSimulation = (
 };
 
 /**
- * Runs the simulation for a specified number of steps.
+ * Creates an Observable stream representing the physics simulation.
  *
- * @param bodies - Initial state of all bodies
- * @param dt - Time step duration (e.g., in seconds)
- * @param steps - Number of steps to run
- * @param radii - Map of body IDs to their radii
- * @param isStar - Map of body IDs to boolean indicating if they are stars
- * @param bodyTypes - Map of body IDs to their CelestialType
- * @param octreeSize - Size parameter for the Octree used in each step.
- * @param barnesHutTheta - Theta parameter for the Octree used in each step.
- * @returns Array of body states at each step
+ * @param initialState - The initial state of all bodies.
+ * @param parameters$ - An Observable emitting the simulation parameters (radii, types, octree settings).
+ *                      These parameters can change over time.
+ * @param tick$ - An Observable emitting the delta time (dt) for each simulation step.
+ * @returns An Observable emitting the SimulationStepResult after each step.
  */
-export const runSimulation = (
-  bodies: PhysicsStateReal[],
-  dt: number,
-  steps: number,
-  radii: Map<string | number, number>, // <-- Add radii map
-  isStar: Map<string | number, boolean>, // <-- Add isStar map
-  bodyTypes: Map<string | number, CelestialType>, // --- NEW PARAM ---
-  octreeSize?: number,
-  barnesHutTheta?: number,
-): PhysicsStateReal[][] => {
-  const states: PhysicsStateReal[][] = [[...bodies]]; // Store a copy of the initial state
-  let currentStates = bodies;
+export const createSimulationStream = (
+  initialState: PhysicsStateReal[],
+  parameters$: Observable<SimulationParameters>,
+  tick$: Observable<number>, // Emits dt
+): Observable<SimulationStepResult> => {
+  // Initial result seed for the scan operator
+  const initialResult: SimulationStepResult = {
+    states: initialState,
+    accelerations: new Map<string, OSVector3>(),
+    destroyedIds: new Set<string | number>(),
+    destructionEvents: [],
+  };
 
-  for (let i = 0; i < steps; i++) {
-    // Pass octree parameters and collision maps to updateSimulation
-    const stepResult = updateSimulation(
-      currentStates,
-      dt,
-      radii,
-      isStar,
-      bodyTypes,
-      octreeSize,
-      barnesHutTheta,
-    );
-    // We only store the states for this historical run function
-    states.push([...stepResult.states]); // Store a copy of the new state
-    currentStates = stepResult.states; // Update for the next iteration
-  }
-
-  return states;
+  return combineLatest([tick$, parameters$]).pipe(
+    scan(
+      (
+        previousResult: SimulationStepResult,
+        [dt, params]: [number, SimulationParameters],
+      ) => {
+        // Run one simulation step using the state from the previous result
+        return updateSimulation(previousResult.states, dt, params);
+      },
+      initialResult, // Start with the initial state wrapped in a result object
+    ),
+    // Start with the initial state so subscribers immediately get the starting point
+    // Note: scan's seed is the first ACCUMULATED value. startWith emits BEFORE scan runs.
+    // We map the initial result to ensure the type matches the stream output.
+    startWith(initialResult),
+  );
 };

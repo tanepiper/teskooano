@@ -19,13 +19,14 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@teskooano/data-types": "file:../../data/types",
     "@teskooano/core-math": "file:../../math",
+    "@teskooano/data-types": "file:../../data/types",
+    "rxjs": "^7.8.2",
     "three": "0.176.0"
   },
   "devDependencies": {
+    "eslint": "9.25.1",
     "typescript": "5.8.3",
-    "vitest": "3.1.2",
-    "eslint": "9.25.1"
+    "vitest": "3.1.2"
   }
 }

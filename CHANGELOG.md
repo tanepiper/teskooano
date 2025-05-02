@@ -185,7 +185,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Initial release of the core state management package.
-- **Foundation**: Uses `nanostores` for reactive state management.
+- **Foundation**: Uses `RxJS` for reactive state management.
 - **Core Stores**:
   - `celestialObjectsStore`: Map store for all `CelestialObject` data (including `physicsStateReal`).
   - `celestialHierarchyStore`: Map store for parent-child object relationships.

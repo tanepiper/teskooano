@@ -11,7 +11,7 @@ This is the main frontend application for the Teskooano engine. It provides the 
 - **Dynamic Layout:** Users can rearrange panels, and new simulation views can be added dynamically.
 - **Toolbar Controls:** Offers main application controls via a top toolbar, including simulation start/stop, adding views, and accessing settings.
 - **Component-Based:** Built using standard Web Components.
-- **State Management:** Integrates with `@teskooano/core-state` via `nanostores` for shared application state.
+- **State Management:** Integrates with `@teskooano/core-state` via `RxJS` for shared application state.
 - **Modular Integration:** Connects various backend packages for simulation logic (`@teskooano/app-simulation`), rendering (`@teskooano/renderer-threejs`), and data generation (`@teskooano/procedural-generation`).
 
 ## How to Run

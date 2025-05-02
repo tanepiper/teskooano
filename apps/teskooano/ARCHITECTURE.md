@@ -66,4 +66,4 @@
 - **Engine Abstraction**: The core simulation and rendering logic are largely delegated to imported packages (`@teskooano/app-simulation`, `@teskooano/renderer-threejs`), with `EnginePanel` acting as the integration point within this application's UI.
 - **Dynamic Layout**: The layout is not fixed; users can rearrange panels (within `dockview` constraints), and the `ToolbarController` can dynamically add new engine views.
 
-**Dependencies**: `dockview-core`, `nanostores`, `three`, `@teskooano/app-simulation`, `@teskooano/core-state`, `@teskooano/renderer-threejs`, `@teskooano/procedural-generation`.
+**Dependencies**: `dockview-core`, `RxJS`, `three`, `@teskooano/app-simulation`, `@teskooano/core-state`, `@teskooano/renderer-threejs`, `@teskooano/procedural-generation`.

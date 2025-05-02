@@ -53,6 +53,6 @@
 - **Physics Synchronization**: `game/physics.ts` handles the critical task of taking physics engine output (`PhysicsStateReal`) and updating the corresponding objects in the state store, including calculating derived values like scaled position and rotation.
 - **Separation of Concerns**: Clearly separates state storage (`stores.ts`), simulation control (`simulation.ts`), object modification (`celestialActions.ts`), object creation (`factory.ts`), and physics sync (`physics.ts`).
 
-**Dependencies**: `nanostores`, `@teskooano/data-types`, `@teskooano/core-math`, `@teskooano/core-physics`, `three` (for rotation calculation and deprecated scaled state properties within `game/physics.ts` and `game/factory.ts`).
+**Dependencies**: `RxJS`, `@teskooano/data-types`, `@teskooano/core-math`, `@teskooano/core-physics`, `three` (for rotation calculation and deprecated scaled state properties within `game/physics.ts` and `game/factory.ts`).
 
 **Areas for Review**: The remaining usage of `THREE.Vector3` and `THREE.Quaternion` within `game/physics.ts` and `game/factory.ts` should be reviewed to ensure `core/state` remains renderer-agnostic. Ideally, rotation should also be represented by a core type (e.g., a core Quaternion class or Euler angles) and converted by the renderer.

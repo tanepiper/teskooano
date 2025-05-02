@@ -37,7 +37,7 @@ This is a set of rules and conventions you should always follow - check to see i
     - Vanilla CSS - no frameworks or additional tooling is needed for styling, when creating CSS from scratch - take a design system approach and provide tokens for color, typography, layout and animation
     - Backend/Node - Clean typescript in a ESM Module format, focus on modular routing of different parts of the application, use tsx and tsx watch as the starter for all apps
     - Frontend & libraries - Vite with Vanilla Typescript and Web Components
-        - Use `nanostores` for state management - compose it in a way that provides a mappable interface for data
+        - Use `RxJS` for state management - compose it in a way that provides a mappable interface for data
         - Use `rxjs` for creating Observable interfaces that can either take incoming data from another Observable, or export an Obserable of a value ()
         - Use well-typed Typescript, and export interfaces needed with good documentation
         - Provide well written API documentation and a clear readme on how to use the library
@@ -171,7 +171,7 @@ Do not add a `moon.yml` to the root folder, instead run `yes | moon init`
 ### Applications
 
 - Put the frontend application in the `apps` folder, and run on port 3000
-- When starting a project, use nanostores @nanostores/router
+- When starting a project, use RxJS for state and think about how operators can be used to make better data pipelines
 - When writing a complex component, break it down into the smallest code possible, that make sense to unit test - avoid large files, especially over 400 lines.
     - When writing HTML fragments - If there is a loop or logic, put this into it's own component
     - When writing functional code - put complex loops or logic into their own component

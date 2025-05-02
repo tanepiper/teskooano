@@ -2,7 +2,7 @@
 
 ## Overview
 
-The core-state package manages the game's state using nanostores. It provides a centralized state management system for handling simulation state, celestial objects, and game actions.
+The core-state package manages the game's state using RxJS. It provides a centralized state management system for handling simulation state, celestial objects, and game actions.
 
 ## Features
 
