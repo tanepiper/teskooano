@@ -38,12 +38,10 @@ export class MainSequenceStarRenderer extends BaseStarRenderer {
   protected getStarColor(star: RenderableCelestialObject): THREE.Color {
     const properties = star.properties as StarProperties;
 
-    // Use color from properties if specified
     if (properties && properties.color) {
       return new THREE.Color(properties.color);
     }
 
-    // Default to yellow sun color
     return new THREE.Color(0xffcc00);
   }
 }

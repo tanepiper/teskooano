@@ -5,8 +5,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { vectorDebug } from "./vector-debug";
 
-// Type definition for THREE.Vector3
-// This saves us from adding a direct THREE.js dependency
 export interface ThreeVector3 {
   x: number;
   y: number;

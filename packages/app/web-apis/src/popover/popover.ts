@@ -1,7 +1,7 @@
 /**
  * @module PopoverAPI
  * Provides constants and utility functions for interacting with the native HTML Popover API.
- * @see https://developer.mozilla.org/en-US/docs/Web/API/Popover_API
+ * @see https:
  */
 
 /**
@@ -10,7 +10,7 @@
 export const PopoverStates = {
   AUTO: "auto",
   MANUAL: "manual",
-  HINT: "hint", // Note: 'hint' might be less common or deprecated depending on spec evolution
+  HINT: "hint",
 } as const;
 
 export type PopoverState = (typeof PopoverStates)[keyof typeof PopoverStates];
@@ -70,8 +70,6 @@ export function hidePopoverById(elementId: string): boolean {
   if (!isPopoverSupported()) return false;
   const element = document.getElementById(elementId) as HTMLElement | null;
   if (element?.popover === null || element?.popover === undefined) {
-    // Element exists but isn't a popover, or doesn't exist
-    // Log warning only if element exists but isn't popover
     if (element) {
       console.warn(`Element with ID "${elementId}" is not a popover element.`);
     }
@@ -111,6 +109,4 @@ export function togglePopoverById(elementId: string, force?: boolean): boolean {
   }
 }
 
-// Re-exporting the native ToggleEvent if needed elsewhere
-// Note: This relies on the global definition, ensure TS libs are up-to-date
 export type PopoverToggleEvent = ToggleEvent;

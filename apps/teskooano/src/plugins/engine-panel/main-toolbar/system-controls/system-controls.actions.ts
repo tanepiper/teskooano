@@ -16,8 +16,8 @@ interface SystemImportData {
 export interface ActionResult {
   success: boolean;
   message?: string;
-  symbol: string; // Symbol for feedback
-  seed?: string; // Optionally return generated seed
+  symbol: string;
+  seed?: string;
 }
 
 /**
@@ -47,17 +47,17 @@ export async function exportSystem(
     }
 
     const exportData: SystemImportData = {
-      seed: seed || "", // Ensure seed is a string
+      seed: seed || "",
       objects: objectsArray,
     };
 
-    const jsonString = JSON.stringify(exportData, null, 2); // Pretty print JSON
+    const jsonString = JSON.stringify(exportData, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `teskooano-system-${seed || Date.now()}.json`; // Filename with seed or timestamp
+    a.download = `teskooano-system-${seed || Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -114,7 +114,7 @@ export async function clearSystem(): Promise<ActionResult> {
       resetTime: true,
       resetSelection: true,
     });
-    actions.resetTime(); // Ensure time resets
+    actions.resetTime();
     return { success: true, symbol: "🗑️", message: "System cleared." };
   } catch (error) {
     console.error("Error clearing system:", error);
@@ -130,7 +130,6 @@ export async function clearSystem(): Promise<ActionResult> {
  */
 export async function createBlankSystem(): Promise<ActionResult> {
   try {
-    // 1. Clear existing state
     actions.clearState({
       resetCamera: false,
       resetTime: true,
@@ -138,10 +137,8 @@ export async function createBlankSystem(): Promise<ActionResult> {
     });
     actions.resetTime();
 
-    // 2. Create the default star object
     const defaultStar = createDefaultStar();
 
-    // 3. Add the default star using createSolarSystem
     actions.createSolarSystem(defaultStar);
     console.warn(
       "[teskooano-system-controls.actions] TODO: Need correct action/store to set systemName for blank system.",

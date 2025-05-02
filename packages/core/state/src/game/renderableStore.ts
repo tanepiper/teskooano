@@ -60,7 +60,7 @@ export const renderableActions = {
     if (currentObjects[celestialObjectId]) {
       const newObjects = { ...currentObjects };
       delete newObjects[celestialObjectId];
-      _renderableObjectsStore.next(newObjects); // Set the new map without the key
+      _renderableObjectsStore.next(newObjects);
     } else {
       console.warn(
         `[renderableActions] removeRenderableObject: Object ${celestialObjectId} not found.`,
@@ -79,5 +79,4 @@ export const renderableActions = {
   },
 };
 
-// Synchronous getter for convenience (use with caution)
 export const getRenderableObjects = () => _renderableObjectsStore.getValue();

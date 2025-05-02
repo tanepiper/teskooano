@@ -7,11 +7,9 @@ import type {
   LODLevel,
 } from "../index";
 
-// Import the ring shaders
 import ringFragmentShader from "../../shaders/ring/ring.fragment.glsl";
 import ringVertexShader from "../../shaders/ring/ring.vertex.glsl";
 
-// Import debug utilities
 import {
   threeVectorDebug,
   isVisualizationEnabled,
@@ -29,11 +27,10 @@ export class RingMaterial extends THREE.ShaderMaterial {
       opacity?: number;
       textureMap?: THREE.Texture;
       detailLevel?: "high" | "medium" | "low" | "very-low";
-      ringIndex?: number; // Which ring this is (for variation)
-      ringType?: "default" | "detailed_saturn"; // Type of ring for shader variations
+      ringIndex?: number;
+      ringType?: "default" | "detailed_saturn";
     } = {},
   ) {
-    // Adjust quality based on detail level
     const detailLevel = options.detailLevel || "high";
     const qualityFactors = {
       high: 1.0,
@@ -43,9 +40,8 @@ export class RingMaterial extends THREE.ShaderMaterial {
     };
     const qualityFactor = qualityFactors[detailLevel];
 
-    // Default to 'default' ring type if not specified
     const ringType = options.ringType || "default";
-    // Ring type coefficient for shader variations
+
     const typeCoef = ringType === "detailed_saturn" ? 1.0 : 0.0;
 
     super({
@@ -96,23 +92,19 @@ export class RingMaterial extends THREE.ShaderMaterial {
     }
   }
 
-  // Release resources
   dispose(): void {
     if (this.uniforms.textureMap.value) {
       (this.uniforms.textureMap.value as THREE.Texture).dispose();
     }
-    super.dispose(); // Call super dispose
+    super.dispose();
   }
 }
 
-// --- Ring System Renderer (implements CelestialRenderer) ---
 export class RingSystemRenderer implements CelestialRenderer {
-  // Store materials for updates
   protected materials: Map<string, RingMaterial[]> = new Map();
   protected objectIds: Set<string> = new Set();
   protected textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
 
-  // Reinstating the private method to create the detailed group
   private _createRingGroup(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
@@ -125,7 +117,7 @@ export class RingSystemRenderer implements CelestialRenderer {
       console.warn(
         `[RingSystemRenderer] No ring data found for ${object.celestialObjectId}`,
       );
-      return ringGroup; // Return empty group
+      return ringGroup;
     }
 
     const sortedRings = [...properties.rings].sort(
@@ -133,8 +125,6 @@ export class RingSystemRenderer implements CelestialRenderer {
     );
 
     sortedRings.forEach((ringProps, index) => {
-      // FIXED: Use ring properties directly without applying realRadius_m
-      // The ring radii should already be scaled appropriately in the data
       const scaledInnerRadius = ringProps.innerRadius ?? 1;
       const scaledOuterRadius = ringProps.outerRadius ?? 1;
       const ringColor = new THREE.Color(ringProps.color ?? 0xffffff);
@@ -144,7 +134,7 @@ export class RingSystemRenderer implements CelestialRenderer {
         console.warn(
           `[RingSystemRenderer] Invalid ring dimensions for ${object.celestialObjectId}, ring ${index}: Outer radius must be greater than inner radius.`,
         );
-        return; // Skip invalid ring
+        return;
       }
 
       const segments = options?.segments ?? 128;
@@ -157,15 +147,14 @@ export class RingSystemRenderer implements CelestialRenderer {
         Math.PI * 2,
       );
 
-      // Restore the original RingMaterial
       const ringMaterial = new RingMaterial(ringColor, {
         opacity: ringOpacity,
-        ringIndex: index, // Pass index for potential shader variations
-        detailLevel: options?.detailLevel || "high", // Pass detail level to material
+        ringIndex: index,
+        detailLevel: options?.detailLevel || "high",
       });
-      // Store the material for updates, keyed by a unique ID
+
       const materialKey = `${object.celestialObjectId}-ring-${index}`;
-      this.materials.set(materialKey, [ringMaterial]); // Store as array
+      this.materials.set(materialKey, [ringMaterial]);
 
       const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
       ringMesh.name = `${object.celestialObjectId}-ring-${index}`;
@@ -187,16 +176,13 @@ export class RingSystemRenderer implements CelestialRenderer {
   ): LODLevel[] {
     this.objectIds.add(object.celestialObjectId);
 
-    // Level 0: Always the detailed rings
     const detailedRingGroup = this._createRingGroup(object, options);
     const level0: LODLevel = { object: detailedRingGroup, distance: 0 };
 
     const lodLevels = [level0];
 
-    // Levels 1+: Empty groups using parent distances
     if (options?.parentLODDistances && options.parentLODDistances.length > 0) {
       options.parentLODDistances.forEach((distance, index) => {
-        // Skip distance 0 if present, as it's covered by level0
         if (distance > 0) {
           const emptyGroup = new THREE.Group();
           emptyGroup.name = `${object.celestialObjectId}-ring-lod-${
@@ -204,7 +190,6 @@ export class RingSystemRenderer implements CelestialRenderer {
           }-empty`;
           lodLevels.push({ object: emptyGroup, distance: distance });
         } else if (index > 0) {
-          // Handle cases where parent might have level 0 at distance 0, we still need subsequent empty levels
           console.warn(
             `[RingSystemRenderer] Parent LOD distance ${index} is 0, creating empty group anyway.`,
           );
@@ -212,24 +197,19 @@ export class RingSystemRenderer implements CelestialRenderer {
           emptyGroup.name = `${object.celestialObjectId}-ring-lod-${
             index + 1
           }-empty`;
-          // Use a very small distance to ensure it slots after the real level 0
+
           lodLevels.push({ object: emptyGroup, distance: 0.001 * (index + 1) });
         }
       });
     } else {
-      // Fallback if no parent distances provided?
-      // Option 1: Only show high detail (simplest)
       console.warn(
         `[RingSystemRenderer] No parentLODDistances provided for ${object.celestialObjectId}. Rings will always render at high detail.`,
       );
-      // Option 2: Re-implement distance-based LODs (like before)
-      // For now, stick with Option 1 for simplicity based on the request to tie to parent LOD.
     }
 
     return lodLevels;
   }
 
-  // Reinstating update method
   update(
     time: number,
     lightSources?: Map<
@@ -239,9 +219,7 @@ export class RingSystemRenderer implements CelestialRenderer {
   ): void {
     const currentRenderableObjects = getRenderableObjects();
 
-    // Clear any existing debug vectors when starting an update
     if (isVisualizationEnabled()) {
-      // Clear only vectors related to ring systems, not all debug vectors
       this.objectIds.forEach((id) => {
         threeVectorDebug.clearVectors(`ring-system-${id}`);
       });
@@ -298,7 +276,6 @@ export class RingSystemRenderer implements CelestialRenderer {
         primarySunPosition = new THREE.Vector3(1e11, 0, 0);
       }
 
-      // Store debug vectors using the new debug utilities
       if (isVisualizationEnabled() && primarySunPosition) {
         threeVectorDebug.setVectors(`ring-system-${ringSystemId}`, {
           sunDir: primarySunPosition.clone().normalize(),
@@ -312,14 +289,12 @@ export class RingSystemRenderer implements CelestialRenderer {
     });
   }
 
-  // Reinstating dispose method
   dispose(): void {
     this.materials.forEach((materialArray) => {
       materialArray.forEach((material) => material.dispose());
     });
     this.materials.clear();
 
-    // Clear debug vectors for all ring systems
     if (isVisualizationEnabled()) {
       this.objectIds.forEach((id) => {
         threeVectorDebug.clearVectors(`ring-system-${id}`);

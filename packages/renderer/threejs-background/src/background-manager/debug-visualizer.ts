@@ -7,7 +7,6 @@ import { BASE_DISTANCE } from "./star-field";
 export function createDebugVisuals(): THREE.Group {
   const debugGroup = new THREE.Group();
 
-  // Create spheres to show layer boundaries
   const createLayerSphere = (radius: number, color: string) => {
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
     const material = new THREE.MeshBasicMaterial({
@@ -20,12 +19,10 @@ export function createDebugVisuals(): THREE.Group {
     debugGroup.add(sphere);
   };
 
-  // Create spheres for each layer
-  createLayerSphere(BASE_DISTANCE * 0.5, "#FF0000"); // Close layer
-  createLayerSphere(BASE_DISTANCE, "#00FF00"); // Middle layer
-  createLayerSphere(BASE_DISTANCE * 1.1, "#0000FF"); // Far layer
+  createLayerSphere(BASE_DISTANCE * 0.5, "#FF0000");
+  createLayerSphere(BASE_DISTANCE, "#00FF00");
+  createLayerSphere(BASE_DISTANCE * 1.1, "#0000FF");
 
-  // Add axes helper
   const axesHelper = new THREE.AxesHelper(BASE_DISTANCE * 0.1);
   debugGroup.add(axesHelper);
 

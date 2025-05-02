@@ -28,12 +28,11 @@ export function calculateRelativeOrbitPoints(
     realSemiMajorAxis_m,
     eccentricity,
     inclination,
-    meanAnomaly, // Base anomaly at epoch
+    meanAnomaly,
     longitudeOfAscendingNode,
     argumentOfPeriapsis,
   } = orbitalParameters;
 
-  // Basic validation using real SMA
   if (period_s === 0 || !realSemiMajorAxis_m || realSemiMajorAxis_m === 0) {
     console.warn(
       `[OrbitCalc Rel] Invalid orbital parameters (period=${period_s}, realSMA=${realSemiMajorAxis_m}). Returning empty points.`,
@@ -48,7 +47,6 @@ export function calculateRelativeOrbitPoints(
     const timeInOrbit = (i / segments) * period_s;
     const currentMeanAnomaly = meanAnomaly + meanMotion * timeInOrbit;
 
-    // --- Kepler solver ---
     let eccentricAnomaly = currentMeanAnomaly;
     for (let iter = 0; iter < 5; iter++) {
       const delta =
@@ -62,7 +60,6 @@ export function calculateRelativeOrbitPoints(
       eccentricAnomaly = eccentricAnomaly - delta / derivative;
     }
 
-    // Calculate distance (using REAL SMA) and true anomaly
     const distance_m =
       realSemiMajorAxis_m * (1 - eccentricity * Math.cos(eccentricAnomaly));
     const trueAnomaly =
@@ -72,11 +69,9 @@ export function calculateRelativeOrbitPoints(
         Math.sqrt(1 - eccentricity) * Math.cos(eccentricAnomaly / 2),
       );
 
-    // --- Position in orbital plane (relative to focus at origin) in REAL meters ---
     const xOrbit_m = distance_m * Math.cos(trueAnomaly);
     const yOrbit_m = distance_m * Math.sin(trueAnomaly);
 
-    // --- Rotations (matching core-physics logic structure) ---
     const cosArgPeri = Math.cos(argumentOfPeriapsis);
     const sinArgPeri = Math.sin(argumentOfPeriapsis);
     const xPeri_m = xOrbit_m * cosArgPeri - yOrbit_m * sinArgPeri;
@@ -94,21 +89,16 @@ export function calculateRelativeOrbitPoints(
     const zFinal_m = x_m * sinLon + z_intermediate_m * cosLon;
     const yFinal_m = y_intermediate_m;
 
-    // Create REAL RELATIVE position vector (relative to parent focus)
     const realRelativePosition = new OSVector3(xFinal_m, yFinal_m, zFinal_m);
 
-    // Scale the REAL RELATIVE position to Scene Units (meters -> scene units)
     const scaledRelativePosition = realRelativePosition.multiplyScalar(
       SCALE.RENDER_SCALE_AU / AU,
     );
 
-    // Push the SCALED RELATIVE position
     points.push(scaledRelativePosition);
   }
 
-  // Ensure the orbit is closed
   if (points.length > 0 && points.length === segments + 1) {
-    // Ensure the last point matches the first SCALED point
     points[segments] = points[0].clone();
   }
 
@@ -133,8 +123,6 @@ export function calculateOrbitPoints(
   orbitalParameters: OrbitalParameters,
   segments: number = 256,
 ): OSVector3[] {
-  // Always calculate the static relative orbit shape using physics parameters
-  // Ensure orbitalParameters are valid before calling
   if (
     !orbitalParameters ||
     typeof orbitalParameters.period_s === "undefined" ||
@@ -143,10 +131,9 @@ export function calculateOrbitPoints(
     console.warn(
       "calculateOrbitPoints called without valid orbitalParameters (missing period or realSMA). Returning empty.",
     );
-    // Return empty array if essential physics parameters are missing
+
     return [];
   }
 
-  // Directly call the main relative calculation function
   return calculateRelativeOrbitPoints(orbitalParameters, segments);
 }

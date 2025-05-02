@@ -9,8 +9,8 @@ import * as THREE from "three";
 export class LightManager {
   private starLights: Map<string, THREE.Light> = new Map();
   private scene: THREE.Scene;
-  private ambientLight: THREE.AmbientLight; // Keep track of the ambient light
-  // Renamed but keep type as Nanostore cleanup function
+  private ambientLight: THREE.AmbientLight;
+
   private objectsSubscription: Subscription | null = null;
 
   /**
@@ -18,19 +18,16 @@ export class LightManager {
    */
   constructor(
     scene: THREE.Scene,
-    // Keep type as MapStore to match previous state, but default to observable?
-    // This is awkward. Let's change the parameter type to Observable and use the observable default.
+
     private objects$: Observable<
       Record<string, RenderableCelestialObject>
-    > = renderableObjects$, // Inject observable
+    > = renderableObjects$,
   ) {
     this.scene = scene;
 
-    // Add a soft white ambient light to provide base illumination
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.3); // White color, intensity 0.3
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
     this.scene.add(this.ambientLight);
 
-    // Subscribe to store changes
     this.subscribeToStore();
   }
 
@@ -39,25 +36,18 @@ export class LightManager {
    * @internal
    */
   private subscribeToStore(): void {
-    // Subscribe using RxJS subscribe and store the Subscription
     this.objectsSubscription = this.objects$.subscribe(
       (objects: Record<string, RenderableCelestialObject>) => {
-        // Iterate through store objects and update corresponding lights
         for (const id in objects) {
           const objectData = objects[id];
           if (objectData.type === "STAR" && objectData.position) {
-            // Only update STAR lights with position
             const light = this.starLights.get(id);
             if (light) {
-              light.position.copy(objectData.position); // Use copy for Vector3
+              light.position.copy(objectData.position);
             } else {
-              // Optionally add light if it doesn't exist? Or rely on ObjectManager?
-              // Let's assume ObjectManager handles adding lights initially.
             }
           }
         }
-        // Handle lights for objects that were removed from the store?
-        // We rely on ObjectManager calling removeStarLight for now.
       },
     );
   }
@@ -71,7 +61,6 @@ export class LightManager {
     color: number = 0xffffff,
     intensity: number = 1.5,
   ): void {
-    // Create a point light with distance-based attenuation
     const light = new THREE.PointLight(color, intensity, 0, 0.5);
     light.position.set(position.x, position.y, position.z);
     this.scene.add(light);
@@ -130,23 +119,20 @@ export class LightManager {
     >();
 
     this.starLights.forEach((light, id) => {
-      // Ensure the light object is a THREE.PointLight or similar with color and intensity
       if (
         light instanceof THREE.PointLight ||
         light instanceof THREE.SpotLight
       ) {
-        // DirectionalLight doesn't have intensity in the same way
         lightData.set(id, {
           position: light.position.clone(),
           color: light.color.clone(),
-          intensity: light.intensity, // Add intensity
+          intensity: light.intensity,
         });
       } else if (light instanceof THREE.DirectionalLight) {
-        // Directional lights use intensity differently, maybe default to 1?
         lightData.set(id, {
-          position: light.position.clone(), // Position is direction for directional
+          position: light.position.clone(),
           color: light.color.clone(),
-          intensity: light.intensity, // Still has intensity property
+          intensity: light.intensity,
         });
       } else {
         console.warn(
@@ -154,8 +140,8 @@ export class LightManager {
         );
         lightData.set(id, {
           position: light.position.clone(),
-          color: new THREE.Color(0xffffff), // Default white
-          intensity: 1.0, // Default intensity
+          color: new THREE.Color(0xffffff),
+          intensity: 1.0,
         });
       }
     });
@@ -167,17 +153,14 @@ export class LightManager {
    * Clean up resources
    */
   dispose(): void {
-    // Unsubscribe using RxJS unsubscribe
     this.objectsSubscription?.unsubscribe();
     this.objectsSubscription = null;
 
-    // Remove star lights
     this.starLights.forEach((light) => {
       this.scene.remove(light);
     });
     this.starLights.clear();
 
-    // Remove ambient light
     if (this.ambientLight) {
       this.scene.remove(this.ambientLight);
     }

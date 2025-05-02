@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as PopoverAPI from "./popover";
 
-// Mock HTMLElement methods
 const mockElement = {
   popover: "auto",
   showPopover: vi.fn(),
@@ -17,31 +16,25 @@ describe("Popover API Utilities", () => {
   let getElementByIdSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    // Reset mocks before each test
     vi.resetAllMocks();
-    // Mock document.getElementById
+
     getElementByIdSpy = vi.spyOn(
       document,
       "getElementById",
     ) as unknown as ReturnType<typeof vi.spyOn>;
-    // Mock console messages to avoid cluttering test output
+
     vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    // Restore mocks after each test
     vi.restoreAllMocks();
   });
 
-  // --- isPopoverSupported --- Does not need DOM mocking
   it("isPopoverSupported should return true if API exists", () => {
-    // Assuming the test environment (or polyfill) supports it
     expect(PopoverAPI.isPopoverSupported()).toBe(true);
-    // TODO: Could add a test case where the prototype is manipulated to test false
   });
 
-  // --- showPopoverById ---
   it("showPopoverById should call showPopover on the element", () => {
     getElementByIdSpy.mockReturnValue(mockElement);
     const result = PopoverAPI.showPopoverById("test-popover");
@@ -82,7 +75,6 @@ describe("Popover API Utilities", () => {
     expect(result).toBe(false);
   });
 
-  // --- hidePopoverById ---
   it("hidePopoverById should call hidePopover on the element", () => {
     getElementByIdSpy.mockReturnValue(mockElement);
     const result = PopoverAPI.hidePopoverById("test-popover");
@@ -96,7 +88,7 @@ describe("Popover API Utilities", () => {
     const result = PopoverAPI.hidePopoverById("not-found");
     expect(mockElement.hidePopover).not.toHaveBeenCalled();
     expect(result).toBe(false);
-    expect(console.warn).not.toHaveBeenCalled(); // No warning if not found
+    expect(console.warn).not.toHaveBeenCalled();
   });
 
   it("hidePopoverById should return false and warn if element is not a popover", () => {
@@ -124,12 +116,11 @@ describe("Popover API Utilities", () => {
     expect(result).toBe(false);
   });
 
-  // --- togglePopoverById ---
   it("togglePopoverById should call togglePopover on the element", () => {
     getElementByIdSpy.mockReturnValue(mockElement);
     const result = PopoverAPI.togglePopoverById("test-popover");
     expect(getElementByIdSpy).toHaveBeenCalledWith("test-popover");
-    expect(mockElement.togglePopover).toHaveBeenCalledWith(undefined); // No force param
+    expect(mockElement.togglePopover).toHaveBeenCalledWith(undefined);
     expect(mockElement.togglePopover).toHaveBeenCalledTimes(1);
     expect(result).toBe(true);
   });
@@ -148,7 +139,7 @@ describe("Popover API Utilities", () => {
     const result = PopoverAPI.togglePopoverById("not-found");
     expect(mockElement.togglePopover).not.toHaveBeenCalled();
     expect(result).toBe(false);
-    expect(console.warn).not.toHaveBeenCalled(); // No warning if not found
+    expect(console.warn).not.toHaveBeenCalled();
   });
 
   it("togglePopoverById should return false and warn if element is not a popover", () => {

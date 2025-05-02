@@ -7,8 +7,6 @@ import { map, share, takeUntil, tap } from "rxjs/operators";
  * @returns `true`
  */
 export function isDragAndDropSupported(): boolean {
-  // Basic check - Drag and Drop is widely supported.
-  // More specific checks could involve 'draggable' attribute or event constructor checks.
   return typeof window !== "undefined";
 }
 
@@ -39,7 +37,7 @@ export interface DraggableOptions {
   /** Data to be transferred during the drag. Key is format (e.g., 'text/plain'), value is data string. */
   data?: Record<string, string>;
   /** Allowed drag effect ('copy', 'move', 'link', 'none', or combinations). */
-  dragEffect?: DragEffect | string; // Allow custom strings too
+  dragEffect?: DragEffect | string;
   /** Optional element to use as the drag ghost image. */
   dragImage?: {
     element: Element;
@@ -70,24 +68,20 @@ export function makeDraggable(
 
   const handleDragStart = (event: DragEvent) => {
     if (event.dataTransfer) {
-      // Set drag effect
       event.dataTransfer.effectAllowed = (options.dragEffect ||
         DragEffect.Copy) as any;
 
-      // Set data payload
       if (options.data) {
         for (const format in options.data) {
           event.dataTransfer.setData(format, options.data[format]);
         }
       } else {
-        // Default data if none provided (useful for debugging)
         event.dataTransfer.setData(
           "text/plain",
           element.id || "draggable-element",
         );
       }
 
-      // Set custom drag image
       if (options.dragImage) {
         event.dataTransfer.setDragImage(
           options.dragImage.element,
@@ -98,9 +92,7 @@ export function makeDraggable(
     }
   };
 
-  const handleDragEnd = (event: DragEvent) => {
-    // You could potentially use event.dataTransfer.dropEffect here
-  };
+  const handleDragEnd = (event: DragEvent) => {};
 
   element.addEventListener("dragstart", handleDragStart);
   element.addEventListener("dragend", handleDragEnd);
@@ -108,10 +100,9 @@ export function makeDraggable(
   const unsubscribe = () => {
     element.removeEventListener("dragstart", handleDragStart);
     element.removeEventListener("dragend", handleDragEnd);
-    element.draggable = false; // Reset draggable attribute
+    element.draggable = false;
   };
 
-  // Handle abortion
   options.abortSignal?.addEventListener("abort", unsubscribe, { once: true });
 
   return { unsubscribe };
@@ -157,31 +148,30 @@ export function createDropZoneObservable(
   };
 
   const handleDragEnter = (event: DragEvent) => {
-    event.preventDefault(); // Necessary to allow dropping
-    // Check if data type is acceptable (if specified)
+    event.preventDefault();
+
     if (acceptedFormats && event.dataTransfer) {
       const types = Array.from(event.dataTransfer.types);
       if (!acceptedFormats.some((format) => types.includes(format))) {
-        return; // Not an accepted type
+        return;
       }
     }
     if (dragOverClass) {
       element.classList.add(dragOverClass);
     }
     if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = dropEffect; // Show allowed cursor
+      event.dataTransfer.dropEffect = dropEffect;
     }
   };
 
   const handleDragOver = (event: DragEvent) => {
-    event.preventDefault(); // Necessary to allow dropping!
-    // Ensure drop effect is consistently set
+    event.preventDefault();
+
     if (event.dataTransfer) {
-      // Check accepted formats again in case state changed mid-drag
       if (acceptedFormats) {
         const types = Array.from(event.dataTransfer.types);
         if (!acceptedFormats.some((format) => types.includes(format))) {
-          event.dataTransfer.dropEffect = DropEffect.None; // Indicate invalid drop
+          event.dataTransfer.dropEffect = DropEffect.None;
           return;
         }
       }
@@ -190,7 +180,6 @@ export function createDropZoneObservable(
   };
 
   const handleDragLeave = (event: DragEvent) => {
-    // Check if the leave is going outside the element bounds
     if (!element.contains(event.relatedTarget as Node)) {
       if (dragOverClass) {
         element.classList.remove(dragOverClass);
@@ -199,51 +188,42 @@ export function createDropZoneObservable(
   };
 
   const handleDrop = (event: DragEvent) => {
-    event.preventDefault(); // Prevent default drop action (like opening link)
+    event.preventDefault();
     if (dragOverClass) {
       element.classList.remove(dragOverClass);
     }
-    // Final check for accepted formats
+
     if (acceptedFormats && event.dataTransfer) {
       const types = Array.from(event.dataTransfer.types);
       if (!acceptedFormats.some((format) => types.includes(format))) {
         console.warn(`Drop rejected on ${element.id}: Invalid data format.`);
-        return; // Reject drop
+        return;
       }
     }
-    // Drop event is emitted by the observable stream below
   };
 
-  // Add listeners
   element.addEventListener("dragenter", handleDragEnter);
   element.addEventListener("dragover", handleDragOver);
   element.addEventListener("dragleave", handleDragLeave);
   element.addEventListener("drop", handleDrop);
-  // Need to prevent default on dragover to allow drop
-  // element.addEventListener('dragover', preventDefaults);
 
   const drop$ = fromEvent<DragEvent>(element, "drop").pipe(
-    // The actual drop event emission
-    tap((event) => {
-      // Potentially process data here if needed universally
-      // const data = event.dataTransfer?.getData('text/plain');
-    }),
-    share(), // Share the stream among multiple subscribers
+    tap((event) => {}),
+    share(),
   );
 
-  // Cleanup logic using takeUntil
   const stop$ = options.abortSignal
     ? fromEvent(options.abortSignal, "abort")
-    : new Observable<never>(); // An observable that never emits if no signal
+    : new Observable<never>();
 
   stop$.subscribe(() => {
     element.removeEventListener("dragenter", handleDragEnter);
     element.removeEventListener("dragover", handleDragOver);
     element.removeEventListener("dragleave", handleDragLeave);
     element.removeEventListener("drop", handleDrop);
-    // element.removeEventListener('dragover', preventDefaults);
+
     if (dragOverClass) {
-      element.classList.remove(dragOverClass); // Ensure class is removed
+      element.classList.remove(dragOverClass);
     }
   });
 

@@ -1,10 +1,10 @@
-import { OSVector3 } from "@teskooano/core-math"; // Needed for type check
-import { accelerationVectors$ } from "@teskooano/core-state"; // Import from core state
+import { OSVector3 } from "@teskooano/core-math";
+import { accelerationVectors$ } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
   GasGiantClass,
-  METERS_TO_SCENE_UNITS, // <-- Import scale factor
+  METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
@@ -18,39 +18,33 @@ import {
   ClassIIIGasGiantRenderer,
   ClassIVGasGiantRenderer,
   ClassVGasGiantRenderer,
-  // OortCloudRenderer, // DISABLED: for performance reasons
   RingSystemRenderer,
 } from "@teskooano/systems-celestial";
-import type { Observable, Subscription } from "rxjs"; // Added rxjs imports
+import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
 import {
   GravitationalLensingHandler,
   MeshFactory,
   RendererUpdater,
 } from "./object-manager";
-// Import LODLevel interface
+
 import type { LODLevel } from "@teskooano/systems-celestial";
-// Import event system and DestructionEvent type
+
 import type { DestructionEvent } from "@teskooano/core-physics";
 import { rendererEvents } from "@teskooano/renderer-threejs-core";
 
-// --- Interface refinement for CSS2DManager (assuming this structure) ---
 interface LabelVisibilityManager {
   showLabel(layer: CSS2DLayerType, id: string): void;
   hideLabel(layer: CSS2DLayerType, id: string): void;
-  // OR: setLabelVisibility(layer: CSS2DLayerType, id: string, visible: boolean): void;
 }
-// --- End Interface refinement ---
 
-// --- Simple structure to manage debris animation state ---
 interface ActiveDebris {
   group: THREE.Group;
-  velocities: Map<string, THREE.Vector3>; // Mesh UUID -> Velocity Vector
-  rotations: Map<string, { axis: THREE.Vector3; speed: number }>; // Mesh UUID -> Rotation Axis/Speed
+  velocities: Map<string, THREE.Vector3>;
+  rotations: Map<string, { axis: THREE.Vector3; speed: number }>;
   startTime: number;
   lifetime: number;
 }
-// --- End Debris Structure ---
 
 /**
  * Manages the creation, updating, and removal of Three.js meshes representing celestial objects in the scene.
@@ -81,11 +75,10 @@ export class ObjectManager {
   /** @internal Map storing specialized renderers for ring systems. Keyed by celestial object ID (matching the ring system). */
   private ringSystemRenderers: Map<string, RingSystemRenderer> = new Map();
 
-  // Changed type from MapStore to Observable
   private renderableObjects$: Observable<
     Record<string, RenderableCelestialObject>
   >;
-  // Added property to hold the latest state
+
   private latestRenderableObjects: Record<string, RenderableCelestialObject> =
     {};
 
@@ -93,14 +86,14 @@ export class ObjectManager {
   private lightManager: LightManager;
 
   /** @internal Optional manager for handling 2D CSS labels attached to objects. Needs visibility methods. */
-  private css2DManager?: LabelVisibilityManager & CSS2DManager; // Combine with assumed interface
+  private css2DManager?: LabelVisibilityManager & CSS2DManager;
 
   /** @internal Map storing ArrowHelper instances used to visualize acceleration vectors. Keyed by celestial object ID. */
   private accelerationArrows: Map<string, THREE.ArrowHelper> = new Map();
   /** @internal Scaling factor applied to acceleration vectors for visualization. Needs tuning. */
-  private readonly arrowScaleFactor = 1e-11; // TODO: Tune this scale factor! Drastically reduced.
+  private readonly arrowScaleFactor = 1e-11;
   /** @internal Color used for acceleration vector arrows. */
-  private readonly arrowColor = 0xff00ff; // Magenta for visibility
+  private readonly arrowColor = 0xff00ff;
 
   /** @internal Handles the application and management of gravitational lensing post-processing effects. */
   private lensingHandler: GravitationalLensingHandler;
@@ -109,11 +102,10 @@ export class ObjectManager {
   /** @internal Helper class responsible for calling the `update` method on all active specialized renderers. */
   private rendererUpdater: RendererUpdater;
 
-  // Changed type from `() => void` to `Subscription`
   private objectsSubscription: Subscription | null = null;
-  // Corrected type: Subscription for RxJS observable
+
   private accelerationsSubscription: Subscription | null = null;
-  // Type for destruction cleanup function
+
   private destructionSubscription: (() => void) | null = null;
 
   /** @internal Temporary vector used for calculations to avoid allocations. */
@@ -124,7 +116,7 @@ export class ObjectManager {
   private activeDebrisEffects: ActiveDebris[] = [];
 
   /** @internal Flag to enable/disable debris visualization effects */
-  private _enableDebrisEffects: boolean = true; // Default to true
+  private _enableDebrisEffects: boolean = true;
 
   /**
    * Sets the debug rendering mode for the underlying MeshFactory.
@@ -134,8 +126,6 @@ export class ObjectManager {
   public setDebugMode(enabled: boolean): void {
     if (this.meshFactory) {
       this.meshFactory.setDebugMode(enabled);
-      // TODO: Consider if we need to force-recreate meshes when toggling debug mode.
-      // Currently, it only affects *new* objects added or objects whose meshes get recreated.
     }
   }
 
@@ -152,28 +142,26 @@ export class ObjectManager {
   constructor(
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
-    // Changed parameter name and type
+
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
     lightManager: LightManager,
     renderer: THREE.WebGLRenderer,
-    css2DManager?: LabelVisibilityManager & CSS2DManager, // Use combined type
-    // Inject the acceleration observable
+    css2DManager?: LabelVisibilityManager & CSS2DManager,
+
     private acceleration$: Observable<
       Record<string, OSVector3>
-    > = accelerationVectors$, // Default to imported RxJS observable
+    > = accelerationVectors$,
   ) {
     this.scene = scene;
     this.camera = camera;
-    // Assign the observable
+
     this.renderableObjects$ = renderableObjects$ || renderableObjects$;
     this.lightManager = lightManager;
     this.lodManager = new LODManager(camera);
-    this.css2DManager = css2DManager; // Store the potentially undefined CSS2DManager instance
+    this.css2DManager = css2DManager;
 
-    // Store renderer instance
     this.renderer = renderer;
 
-    // Initialize sub-components
     this.initCelestialRenderers();
 
     this.lensingHandler = new GravitationalLensingHandler(this.starRenderers);
@@ -196,9 +184,8 @@ export class ObjectManager {
       this.ringSystemRenderers,
     );
 
-    // Start listening to the passed-in store
     this.subscribeToStateChanges();
-    // Start listening for destruction events
+
     this.subscribeToDestructionEvents();
   }
 
@@ -207,9 +194,6 @@ export class ObjectManager {
    * @internal
    */
   private initCelestialRenderers(): void {
-    // For stars, planets, moons, rings: MeshFactory gets/creates renderers on demand
-
-    // Initialize gas giant renderers for each class
     this.celestialRenderers.set(
       GasGiantClass.CLASS_I,
       new ClassIGasGiantRenderer(),
@@ -231,20 +215,10 @@ export class ObjectManager {
       new ClassVGasGiantRenderer(),
     );
 
-    // Add asteroid field and Oort cloud renderers (with type assertion for now)
     this.celestialRenderers.set(
       CelestialType.ASTEROID_FIELD,
       new AsteroidFieldRenderer() as any,
     );
-    // DISABLED: OortCloudRenderer for performance reasons
-    // this.celestialRenderers.set(
-    //   CelestialType.OORT_CLOUD,
-    //   new OortCloudRenderer() as any
-    // );
-
-    // Add RingSystemRenderer for the specific type
-    // This one isn't stored per-ID, but used by MeshFactory based on type
-    // REMOVE THIS LINE -> this.celestialRenderers.set(CelestialType.RING_SYSTEM, new RingSystemRenderer());
   }
 
   /**
@@ -252,16 +226,13 @@ export class ObjectManager {
    * @internal
    */
   private subscribeToStateChanges(): void {
-    // Subscribe using RxJS subscribe, store the Subscription
     this.objectsSubscription = this.renderableObjects$.subscribe(
       (objects: Record<string, RenderableCelestialObject>) => {
-        // Store latest state and sync
         this.latestRenderableObjects = objects;
         this.syncObjectsWithState(this.latestRenderableObjects);
       },
     );
 
-    // Subscribe to acceleration changes (using RxJS observable)
     this.accelerationsSubscription = this.acceleration$.subscribe(
       (accelerations: Record<string, OSVector3>) => {
         this.syncAccelerationArrows(accelerations);
@@ -274,7 +245,6 @@ export class ObjectManager {
    * @internal
    */
   private subscribeToDestructionEvents(): void {
-    // Assuming rendererEvents.on returns a cleanup function
     this.destructionSubscription = rendererEvents.on(
       "destruction:occurred",
       (event: DestructionEvent) => {
@@ -295,20 +265,16 @@ export class ObjectManager {
     const newStateIds = new Set(Object.keys(newState));
     const currentIds = new Set(this.objects.keys());
 
-    // 1. Objects to remove (exist in current state, but not in new state)
     currentIds.forEach((id) => {
       if (!newStateIds.has(id)) {
-        // Only remove if the ID is completely gone from the new state
         this.internalRemoveObject(id);
       }
     });
 
-    // 2. Objects to add or update
     newStateIds.forEach((id) => {
       const objectData = newState[id];
       const mesh = this.objects.get(id);
 
-      // Immediately remove objects that are destroyed or annihilated
       if (
         objectData.status === CelestialStatus.DESTROYED ||
         objectData.status === CelestialStatus.ANNIHILATED
@@ -316,16 +282,14 @@ export class ObjectManager {
         if (mesh) {
           this.internalRemoveObject(id);
         }
-        return; // Skip further processing for this object
+        return;
       }
 
       if (mesh) {
-        // Exists, update it if it's active
         if (objectData.status === CelestialStatus.ACTIVE) {
           this.internalUpdateObject(objectData);
         }
       } else if (objectData.status === CelestialStatus.ACTIVE) {
-        // New object, add only if active
         this.internalAddObject(objectData);
       }
     });
@@ -347,22 +311,19 @@ export class ObjectManager {
       const parentObject = this.objects.get(objectId);
 
       if (!parentObject || !accelerationVec) {
-        continue; // Skip if no parent object or no acceleration data
+        continue;
       }
 
-      // Convert OSVector3 direction to THREE.Vector3 (normalize)
-      // Avoid normalizing zero vectors
       const direction = new THREE.Vector3(
         accelerationVec.x,
         accelerationVec.y,
         accelerationVec.z,
       );
-      const length = direction.length(); // Get magnitude before normalizing
+      const length = direction.length();
       if (length > 1e-9) {
-        // Check if length is not effectively zero
         direction.normalize();
       } else {
-        direction.set(0, 1, 0); // Default direction if acceleration is zero
+        direction.set(0, 1, 0);
       }
 
       const scaledLength = length * this.arrowScaleFactor;
@@ -370,33 +331,29 @@ export class ObjectManager {
       let arrow = this.accelerationArrows.get(objectId);
 
       if (arrow) {
-        // Update existing arrow
         arrow.setDirection(direction);
         arrow.setLength(scaledLength);
-        // Ensure it's visible (in case it was hidden)
+
         arrow.visible = true;
       } else {
-        // Create new arrow
         arrow = new THREE.ArrowHelper(
           direction,
-          new THREE.Vector3(0, 0, 0), // Origin relative to parent
+          new THREE.Vector3(0, 0, 0),
           scaledLength,
           this.arrowColor,
         );
-        parentObject.add(arrow); // Add arrow as child of the celestial object mesh
+        parentObject.add(arrow);
         this.accelerationArrows.set(objectId, arrow);
       }
       updatedArrowIds.add(objectId);
     }
 
-    // Remove or hide arrows for objects that no longer have acceleration data
     this.accelerationArrows.forEach((arrow, objectId) => {
       if (!updatedArrowIds.has(objectId)) {
         arrow.visible = false;
       }
     });
   }
-  // --- End syncAccelerationArrows ---
 
   /**
    * Sets whether debris effects should be shown when objects are destroyed
@@ -422,7 +379,6 @@ export class ObjectManager {
    * @param event - The destruction event data.
    */
   private _handleDestructionEffect(event: DestructionEvent): void {
-    // Skip debris generation if feature is disabled
     if (!this._enableDebrisEffects) {
       return;
     }
@@ -433,14 +389,12 @@ export class ObjectManager {
       event.impactPosition.z * METERS_TO_SCENE_UNITS,
     );
 
-    // --- Debris Parameters ---
-    const debrisCount = 100; // Number of debris particles (increased from 50)
-    const debrisBaseSize = event.destroyedRadius * METERS_TO_SCENE_UNITS * 0.15; // Size relative to destroyed object (increased from 0.1)
-    const debrisLifetime = 15.0; // Seconds (increased from 2.0)
-    const speedMultiplier = 0.3; // Adjust speed of debris spread (reduced from 0.5 to make debris stay in view longer)
+    const debrisCount = 100;
+    const debrisBaseSize = event.destroyedRadius * METERS_TO_SCENE_UNITS * 0.15;
+    const debrisLifetime = 15.0;
+    const speedMultiplier = 0.3;
     const initialSpreadFactor =
-      event.destroyedRadius * METERS_TO_SCENE_UNITS * 1.5; // How far from center they start
-    // --- End Debris Parameters ---
+      event.destroyedRadius * METERS_TO_SCENE_UNITS * 1.5;
 
     const debrisGroup = new THREE.Group();
     debrisGroup.name = `Debris_${event.destroyedId}`;
@@ -448,17 +402,16 @@ export class ObjectManager {
     const debrisRotations = new Map<
       string,
       { axis: THREE.Vector3; speed: number }
-    >(); // <-- Initialize rotations map
+    >();
 
-    const geometry = new THREE.IcosahedronGeometry(1, 0); // Base size 1, use mesh scale
+    const geometry = new THREE.IcosahedronGeometry(1, 0);
     const material = new THREE.MeshBasicMaterial({
-      color: 0xff7700, // Brighter orange (changed from 0xffa500)
+      color: 0xff7700,
       transparent: true,
-      opacity: 0.9, // More opaque (changed from 0.8)
-      depthWrite: false, // Prevent depth buffer issues with transparency
+      opacity: 0.9,
+      depthWrite: false,
     });
 
-    // Create a second geometry for glow effect
     const glowGeometry = new THREE.IcosahedronGeometry(1, 0);
     const glowMaterial = new THREE.MeshBasicMaterial({
       color: 0xff5500,
@@ -470,50 +423,45 @@ export class ObjectManager {
     });
 
     for (let i = 0; i < debrisCount; i++) {
-      // Generate a random color variation for each debris piece
-      const hue = Math.random() * 0.1 + 0.05; // Random hue shift (0.05-0.15)
-      const saturation = 0.7 + Math.random() * 0.3; // Random saturation (0.7-1.0)
+      const hue = Math.random() * 0.1 + 0.05;
+      const saturation = 0.7 + Math.random() * 0.3;
       const debrisColor = new THREE.Color(0xff7700);
-      debrisColor.offsetHSL(hue, 0, Math.random() * 0.2); // Apply random hue shift and lightness
+      debrisColor.offsetHSL(hue, 0, Math.random() * 0.2);
 
       const debrisMaterial = material.clone();
       debrisMaterial.color = debrisColor;
 
-      // Create the main debris fragment
       const mesh = new THREE.Mesh(geometry, debrisMaterial);
-      mesh.scale.setScalar(debrisBaseSize * (0.5 + Math.random() * 0.9)); // Randomize size slightly (increased from 0.7)
+      mesh.scale.setScalar(debrisBaseSize * (0.5 + Math.random() * 0.9));
 
-      // Create a glow effect around the debris
       const glowMat = glowMaterial.clone();
-      glowMat.color = debrisColor.clone().multiplyScalar(1.5); // Make glow brighter
+      glowMat.color = debrisColor.clone().multiplyScalar(1.5);
       const glowMesh = new THREE.Mesh(glowGeometry, glowMat);
-      glowMesh.scale.setScalar(1.5); // Make glow larger than the debris
-      mesh.add(glowMesh); // Add glow as child of main mesh
+      glowMesh.scale.setScalar(1.5);
+      mesh.add(glowMesh);
 
-      // Start debris slightly offset from the impact point within a sphere
       const randomOffset = new THREE.Vector3(
         (Math.random() - 0.5) * 2,
         (Math.random() - 0.5) * 2,
         (Math.random() - 0.5) * 2,
       )
         .normalize()
-        .multiplyScalar(Math.random() * initialSpreadFactor * 1.2); // Increased spread by 20%
+        .multiplyScalar(Math.random() * initialSpreadFactor * 1.2);
       mesh.position.copy(impactScenePos).add(randomOffset);
 
-      // Calculate initial velocity vector
       const baseVel = new THREE.Vector3(
         event.relativeVelocity.x,
         event.relativeVelocity.y,
         event.relativeVelocity.z,
       ).multiplyScalar(METERS_TO_SCENE_UNITS);
-      // Add random direction component
+
       const randomDir = new THREE.Vector3(
         (Math.random() - 0.5) * 2,
         (Math.random() - 0.5) * 2,
         (Math.random() - 0.5) * 2,
       ).normalize();
-      // Combine base velocity direction with random component and scale
-      const randomVelFactor = 0.8 + Math.random() * 0.6; // Increased from 0.4
+
+      const randomVelFactor = 0.8 + Math.random() * 0.6;
       const finalVel = baseVel
         .clone()
         .lerp(randomDir, 0.6)
@@ -522,19 +470,17 @@ export class ObjectManager {
 
       debrisVelocities.set(mesh.uuid, finalVel);
 
-      // --- Add Random Rotation ---
       const rotationAxis = new THREE.Vector3(
         (Math.random() - 0.5) * 2,
         (Math.random() - 0.5) * 2,
         (Math.random() - 0.5) * 2,
       ).normalize();
       const rotationSpeed =
-        (Math.random() * 1.5 + 0.5) * THREE.MathUtils.DEG2RAD * 60; // Random speed (30-120 deg/sec)
+        (Math.random() * 1.5 + 0.5) * THREE.MathUtils.DEG2RAD * 60;
       debrisRotations.set(mesh.uuid, {
         axis: rotationAxis,
         speed: rotationSpeed,
       });
-      // --- End Random Rotation ---
 
       debrisGroup.add(mesh);
     }
@@ -543,21 +489,12 @@ export class ObjectManager {
     this.activeDebrisEffects.push({
       group: debrisGroup,
       velocities: debrisVelocities,
-      rotations: debrisRotations, // <-- Add rotations map
+      rotations: debrisRotations,
       startTime: this.debrisClock.getElapsedTime(),
       lifetime: debrisLifetime,
     });
 
-    // Cleanup geometry (only need one instance)
     geometry.dispose();
-
-    // --- Apply visual change to the destroyed object itself ---
-    // Visual change (transparency/hiding) is now handled by syncObjectsWithState based on status
-    // const destroyedMesh = this.objects.get(String(event.destroyedId));
-    // if (destroyedMesh) {
-    //     this._applyDestroyedAppearance(destroyedMesh);
-    // }
-    // --- End Apply Visual Change ---
   }
 
   /**
@@ -576,7 +513,7 @@ export class ObjectManager {
               mat instanceof THREE.MeshPhongMaterial
             ) {
               mat.transparent = true;
-              mat.opacity = 0.3; // Make it quite transparent
+              mat.opacity = 0.3;
               mat.needsUpdate = true;
             }
           });
@@ -608,7 +545,6 @@ export class ObjectManager {
               mat instanceof THREE.MeshStandardMaterial ||
               mat instanceof THREE.MeshPhongMaterial
             ) {
-              // Check if transparency was actually set before resetting
               if (mat.transparent && mat.opacity < 1.0) {
                 mat.transparent = false;
                 mat.opacity = 1.0;
@@ -621,7 +557,6 @@ export class ObjectManager {
           child.material instanceof THREE.MeshStandardMaterial ||
           child.material instanceof THREE.MeshPhongMaterial
         ) {
-          // Check if transparency was actually set before resetting
           if (child.material.transparent && child.material.opacity < 1.0) {
             child.material.transparent = false;
             child.material.opacity = 1.0;
@@ -632,7 +567,6 @@ export class ObjectManager {
     });
   }
 
-  // --- Internal Add/Update/Remove Methods (to be called by subscription handler) ---
   /**
    * Creates and adds a new Three.js mesh representation for a celestial object to the scene.
    * Also handles setting up associated labels and potential gravitational lensing effects.
@@ -641,7 +575,6 @@ export class ObjectManager {
    * @param object - The data for the new celestial object.
    */
   private internalAddObject(object: RenderableCelestialObject): void {
-    // Safety check: Do not add if marked as destroyed
     if (object.status === CelestialStatus.DESTROYED) {
       console.warn(
         `[ObjectManager] Attempted to add already destroyed object ${object.celestialObjectId}. Skipping.`,
@@ -656,7 +589,6 @@ export class ObjectManager {
     }
     const mesh = this.meshFactory.createObjectMesh(object);
 
-    // --- Check if mesh creation failed ---
     if (!mesh) {
       console.warn(
         `[ObjectManager internalAddObject] MeshFactory FAILED to create mesh for ${objectId}. Skipping add.`,
@@ -667,22 +599,14 @@ export class ObjectManager {
     this.scene.add(mesh);
     this.objects.set(objectId, mesh);
 
-    // --- Add LightManager call for new stars ---
-    // Restore call to add light when star object is added
     if (object.type === CelestialType.STAR && object.position) {
       this.lightManager.addStarLight(objectId, object.position);
     }
-    // --- End LightManager call ---
 
-    // Create label *after* mesh is created and added to map
-    // Label visibility will be handled in updateRenderers
     if (this.css2DManager) {
       this.css2DManager.createCelestialLabel(object, mesh);
-      // Initially hide labels for secondary objects? Or let updateRenderers handle it first time.
-      // Let's let updateRenderers handle initial visibility based on parent LOD.
     }
 
-    // Check and apply lensing effect setup *after* adding the mesh
     if (this.lensingHandler.needsGravitationalLensing(object)) {
       if (this.renderer) {
         this.lensingHandler.applyGravitationalLensing(
@@ -707,7 +631,6 @@ export class ObjectManager {
    * @param object - The updated data for the celestial object.
    */
   private internalUpdateObject(object: RenderableCelestialObject): void {
-    // Safety check: If updated object is now destroyed, remove it instead
     if (object.status === CelestialStatus.DESTROYED) {
       this.internalRemoveObject(object.celestialObjectId);
       return;
@@ -716,8 +639,6 @@ export class ObjectManager {
     const objectId = object.celestialObjectId;
     const existingMesh = this.objects.get(objectId);
     if (!existingMesh) {
-      // This can happen if the object was added and then immediately updated
-      // before the next frame rendered. Let's try adding it.
       if (object.status === CelestialStatus.ACTIVE) {
         console.warn(
           `[ObjectManager] internalUpdateObject called for non-existent object ${objectId}. Attempting to add.`,
@@ -727,15 +648,9 @@ export class ObjectManager {
       return;
     }
 
-    // ---> REVERT: Use position directly from RenderableCelestialObject <---
-    // This position is already calculated and scaled by RendererStateAdapter
     existingMesh.position.copy(object.position);
-    // ---> END REVERT <---
 
     existingMesh.quaternion.copy(object.rotation);
-
-    // Label visibility is handled in updateRenderers
-    // Material updates etc. are handled by specialized renderers called by rendererUpdater
   }
 
   /**
@@ -751,14 +666,12 @@ export class ObjectManager {
       return;
     }
 
-    // Remove associated acceleration arrow first (if it's a child)
     const arrow = this.accelerationArrows.get(objectId);
     if (arrow) {
-      mesh.remove(arrow); // Remove from parent mesh
+      mesh.remove(arrow);
       this.accelerationArrows.delete(objectId);
     }
 
-    // Remove the label associated with this object
     if (this.css2DManager) {
       this.css2DManager.removeElement(
         CSS2DLayerType.CELESTIAL_LABELS,
@@ -766,17 +679,14 @@ export class ObjectManager {
       );
     }
 
-    this.lodManager.remove(objectId); // Must happen before mesh disposal if LOD added debug labels
+    this.lodManager.remove(objectId);
     this.scene.remove(mesh);
 
-    // Dispose geometry/material - Traverse the mesh and its children
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        child.geometry?.dispose(); // Dispose geometry if it exists
+        child.geometry?.dispose();
         if (Array.isArray(child.material)) {
-          // Handle array of materials
           child.material.forEach((mat) => {
-            // Check if material exists and has a dispose method
             if (mat && typeof mat.dispose === "function") {
               mat.dispose();
             }
@@ -785,16 +695,14 @@ export class ObjectManager {
           child.material &&
           typeof child.material.dispose === "function"
         ) {
-          // Handle single material, ensure it has a dispose method
           child.material.dispose();
         }
       }
-      // TODO: Consider adding similar checks for other object types like Points, Lines if they are used
-      // Example for Points:
+
       /*
       else if (child instanceof THREE.Points) {
         child.geometry?.dispose();
-        const material = child.material; // Type assertion might be needed depending on THREE version
+        const material = child.material; 
         if (Array.isArray(material)) {
           material.forEach((mat) => {
             if (mat && typeof mat.dispose === 'function') {
@@ -808,17 +716,11 @@ export class ObjectManager {
       */
     });
 
-    // Delete from map
     this.objects.delete(objectId);
     this.lensingHandler.removeLensingObject(objectId);
 
-    // --- Add LightManager removal ---
-    // Restore call to remove light when object is removed
-    this.lightManager.removeStarLight(objectId); // Handles non-existent IDs gracefully
-    // --- End LightManager removal ---
+    this.lightManager.removeStarLight(objectId);
 
-    // Remove from specialized renderer maps if necessary
-    // Call dispose on the renderer before deleting it to clean up internal state
     const starRenderer = this.starRenderers.get(objectId);
     if (starRenderer?.dispose) {
       starRenderer.dispose();
@@ -872,10 +774,8 @@ export class ObjectManager {
     scene?: THREE.Scene,
     camera?: THREE.PerspectiveCamera,
   ): void {
-    // 1. Update LOD levels first
     this.lodManager.update();
 
-    // 2. Call specialized renderers update (stars, planets, moons, rings, etc.)
     this.rendererUpdater.updateRenderers(
       time,
       lightSources,
@@ -885,38 +785,30 @@ export class ObjectManager {
       camera,
     );
 
-    // 3. Update Label Visibility based on LOD
     if (this.css2DManager) {
-      // Use the latest state stored locally
       const allRenderableObjects = this.latestRenderableObjects;
 
       for (const objectId in allRenderableObjects) {
         const objectData = allRenderableObjects[objectId];
 
-        // Skip destroyed objects
         if (objectData.status === CelestialStatus.DESTROYED) continue;
 
-        // Check if the object exists in our scene map
         if (!this.objects.has(objectId)) continue;
 
-        // Determine label visibility
-        let showLabel = false; // Default to hidden
+        let showLabel = false;
 
         const type = objectData.type;
 
-        // Always show primary types
         if (
           type === CelestialType.STAR ||
           type === CelestialType.PLANET ||
           type === CelestialType.GAS_GIANT ||
           type === CelestialType.OORT_CLOUD ||
-          type === CelestialType.DWARF_PLANET || // Treat dwarf planets like planets
+          type === CelestialType.DWARF_PLANET ||
           type === CelestialType.ASTEROID_FIELD
         ) {
           showLabel = true;
-        }
-        // Show moons/rings only when parent is close enough (using LOD as proxy)
-        else if (
+        } else if (
           type === CelestialType.MOON ||
           type === CelestialType.RING_SYSTEM
         ) {
@@ -924,19 +816,15 @@ export class ObjectManager {
             const parentLODLevel = this.lodManager.getCurrentLODLevel(
               objectData.parentId,
             );
-            // Show label if parent LOD level is 0 or 1 (highest/high detail)
+
             if (parentLODLevel !== undefined && parentLODLevel <= 1) {
               showLabel = true;
             }
           }
-          // If no parent ID or parent is too far (low LOD), keep showLabel = false
-        }
-        // Default: Hide other types (Comets, Stations, etc.)
-        else {
+        } else {
           showLabel = false;
         }
 
-        // Apply visibility change
         if (showLabel) {
           this.css2DManager.showLabel(
             CSS2DLayerType.CELESTIAL_LABELS,
@@ -951,7 +839,6 @@ export class ObjectManager {
       }
     }
 
-    // Update any active debris effects
     this._updateDebrisEffects(this.debrisClock.getDelta());
   }
 
@@ -968,21 +855,19 @@ export class ObjectManager {
       const elapsedTime = currentTime - effect.startTime;
 
       if (elapsedTime >= effect.lifetime) {
-        // Effect expired, remove from scene and dispose
         this.scene.remove(effect.group);
 
         effect.group.traverse((child) => {
           if (child instanceof THREE.Mesh) {
-            child.geometry?.dispose(); // Geometry is shared, dispose only once
+            child.geometry?.dispose();
             if (child.material instanceof THREE.Material) {
-              child.material.dispose(); // Dispose cloned materials
+              child.material.dispose();
             }
           }
         });
       } else {
-        // Effect still active, update positions and opacity
         const progress = elapsedTime / effect.lifetime;
-        const opacity = Math.min(1.0, (1.0 - progress) * 1.3); // Fade out more slowly (added Math.min and multiplier)
+        const opacity = Math.min(1.0, (1.0 - progress) * 1.3);
 
         effect.group.children.forEach((child) => {
           if (child instanceof THREE.Mesh) {
@@ -990,7 +875,7 @@ export class ObjectManager {
             if (velocity) {
               child.position.addScaledVector(velocity, delta);
             }
-            // --- Apply Rotation ---
+
             const rotationData = effect.rotations.get(child.uuid);
             if (rotationData) {
               const deltaRotation = new THREE.Quaternion().setFromAxisAngle(
@@ -999,13 +884,13 @@ export class ObjectManager {
               );
               child.quaternion.premultiply(deltaRotation);
             }
-            // --- End Apply Rotation ---
+
             if (child.material instanceof THREE.Material) {
               child.material.opacity = opacity;
             }
           }
         });
-        remainingDebris.push(effect); // Keep this effect
+        remainingDebris.push(effect);
       }
     }
 
@@ -1024,11 +909,7 @@ export class ObjectManager {
     renderer: THREE.WebGLRenderer,
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
-  ): void {
-    // Lensing is handled elsewhere (e.g., within star renderer or post-processing)
-    // LODManager.update is now called within updateRenderers
-    // Main updates happen via store subscription and updateRenderers call
-  }
+  ): void {}
 
   /**
    * Cleans up all resources managed by the ObjectManager.
@@ -1037,23 +918,19 @@ export class ObjectManager {
    * Should be called when the visualization is destroyed.
    */
   dispose(): void {
-    // Unsubscribe using RxJS unsubscribe
     this.objectsSubscription?.unsubscribe();
     this.objectsSubscription = null;
-    // Unsubscribe from acceleration observable
+
     this.accelerationsSubscription?.unsubscribe();
     this.accelerationsSubscription = null;
-    // Call the destruction cleanup function
+
     this.destructionSubscription?.();
     this.destructionSubscription = null;
 
-    // Clean up any remaining debris effects
     this.activeDebrisEffects.forEach((effect) => {
       this.scene.remove(effect.group);
       effect.group.traverse((child) => {
         if (child instanceof THREE.Mesh) {
-          // Geometry is shared and disposed elsewhere if created once
-          // child.geometry?.dispose();
           if (child.material instanceof THREE.Material) {
             child.material.dispose();
           }
@@ -1062,7 +939,7 @@ export class ObjectManager {
     });
     this.activeDebrisEffects = [];
 
-    this.objects.forEach((_, id) => this.internalRemoveObject(id)); // Use internalRemove
+    this.objects.forEach((_, id) => this.internalRemoveObject(id));
     this.objects.clear();
 
     this.rendererUpdater.dispose();
@@ -1074,13 +951,7 @@ export class ObjectManager {
     this.lodManager.clear();
     this.lensingHandler.clear();
 
-    // Clean up acceleration arrows (already handled mostly by internalRemoveObject)
     this.accelerationArrows.clear();
-
-    // Optional: Explicitly clear CSS2D layer if needed
-    // if (this.css2DManager) {
-    //   this.css2DManager.clearLayer(CSS2DLayerType.CELESTIAL_LABELS);
-    // }
   }
 
   /**
@@ -1117,20 +988,16 @@ export class ObjectManager {
    * that require mesh regeneration.
    */
   public recreateAllMeshes(): void {
-    // Use the latest state stored locally
     const currentState = this.latestRenderableObjects;
-    const currentIds = Array.from(this.objects.keys()); // Get IDs before removing
+    const currentIds = Array.from(this.objects.keys());
 
-    // Remove all existing objects first
     currentIds.forEach((id) => {
       this.internalRemoveObject(id);
     });
 
-    // Add objects back based on the current state and MeshFactory settings
     for (const objectId in currentState) {
       const objectData = currentState[objectId];
       if (objectData.status === CelestialStatus.ACTIVE) {
-        // Only re-add active objects
         this.internalAddObject(objectData);
       }
     }

@@ -1,4 +1,3 @@
-// --- Import Fluent UI Icons ---
 import RocketRegular from "@fluentui/svg-icons/icons/rocket_20_regular.svg?raw";
 import SparkleRegular from "@fluentui/svg-icons/icons/sparkle_20_regular.svg?raw";
 import DocumentAddRegular from "@fluentui/svg-icons/icons/document_add_20_regular.svg?raw";
@@ -6,16 +5,7 @@ import ArrowDownloadRegular from "@fluentui/svg-icons/icons/arrow_download_20_re
 import CopyRegular from "@fluentui/svg-icons/icons/copy_20_regular.svg?raw";
 import ArrowUploadRegular from "@fluentui/svg-icons/icons/arrow_upload_20_regular.svg?raw";
 import DeleteRegular from "@fluentui/svg-icons/icons/delete_20_regular.svg?raw";
-import SparkleIcon from "@fluentui/svg-icons/icons/sparkle_24_regular.svg?raw";
-import DeleteIcon from "@fluentui/svg-icons/icons/delete_24_regular.svg?raw";
-import SaveIcon from "@fluentui/svg-icons/icons/save_24_regular.svg?raw";
-import FolderOpenIcon from "@fluentui/svg-icons/icons/folder_open_24_regular.svg?raw";
-import DocumentAddIcon from "@fluentui/svg-icons/icons/document_add_24_regular.svg?raw";
-import CopyIcon from "@fluentui/svg-icons/icons/copy_24_regular.svg?raw";
-import CheckmarkIcon from "@fluentui/svg-icons/icons/checkmark_24_regular.svg?raw";
-// --- End Fluent UI Icons ---
 
-// Define template outside the class for better organization
 const template = document.createElement("template");
 template.innerHTML = `
   <style>
@@ -261,20 +251,46 @@ template.innerHTML = `
         <label for="seed">Seed:</label>
         <input type="text" id="seed" name="seed" placeholder="Enter seed..."
                aria-label="System seed input">
-        <teskooano-button type="submit" variant="secondary" size="sm" title="Generate System from Seed">
+        <teskooano-button 
+            type="submit" 
+            variant="secondary" 
+            size="sm" 
+            title="Generate System from Seed"
+            tooltip-title="Generate"
+            tooltip-text="Generate system from entered seed"
+            tooltip-icon='${RocketRegular}' /* Use _20 icon for consistency? */>
           ${RocketRegular}
-          <!-- <span>Go</span> --> <!-- Remove text for icon only -->
         </teskooano-button>
       </form>
       <div class="actions">
-        <teskooano-button data-action="random" variant="secondary" size="sm" title="Generate Random System">
+        <teskooano-button 
+            data-action="random" 
+            variant="secondary" 
+            size="sm" 
+            title="Generate Random System"
+            tooltip-title="Random Seed"
+            tooltip-text="Generate system using a random seed"
+            tooltip-icon='${SparkleRegular}'>
           ${SparkleRegular}
         </teskooano-button>
-        <teskooano-button data-action="create-blank" variant="ghost" size="sm" title="Create New Blank System">
+        <teskooano-button 
+            data-action="create-blank" 
+            variant="ghost" 
+            size="sm" 
+            title="Create New Blank System"
+            tooltip-title="New Blank"
+            tooltip-text="Create a new blank system with just a star"
+            tooltip-icon='${DocumentAddRegular}'>
           ${DocumentAddRegular}
         </teskooano-button>
-        <!-- Import might need more work later -->
-        <teskooano-button data-action="import" variant="ghost" size="sm" title="Import System from JSON">
+        <teskooano-button 
+            data-action="import" 
+            variant="ghost" 
+            size="sm" 
+            title="Import System from JSON"
+            tooltip-title="Import System"
+            tooltip-text="Import system from a JSON file"
+            tooltip-icon='${ArrowDownloadRegular}'>
           ${ArrowDownloadRegular}
         </teskooano-button>
       </div>
@@ -287,13 +303,35 @@ template.innerHTML = `
         <span class="celestial-count">0 Celestials</span>
       </div>
       <div class="actions">
-        <teskooano-button data-action="copy-seed" variant="ghost" size="sm" title="Copy System Seed">
+        <teskooano-button 
+            data-action="copy-seed" 
+            variant="ghost" 
+            size="sm" 
+            title="Copy System Seed"
+            tooltip-title="Copy Seed"
+            tooltip-text="Copy the current system seed to the clipboard"
+            tooltip-icon='${CopyRegular}'>
           ${CopyRegular}
         </teskooano-button>
-        <teskooano-button data-action="export" variant="ghost" size="sm" title="Export System to JSON">
+        <teskooano-button 
+            data-action="export" 
+            variant="ghost" 
+            size="sm" 
+            title="Export System to JSON"
+            tooltip-title="Export System"
+            tooltip-text="Export current system objects and seed to a JSON file"
+            tooltip-icon='${ArrowUploadRegular}'>
           ${ArrowUploadRegular}
         </teskooano-button>
-        <teskooano-button data-action="clear" variant="ghost" class="danger" size="sm" title="Clear System">
+        <teskooano-button 
+            data-action="clear" 
+            variant="ghost" 
+            class="danger" 
+            size="sm" 
+            title="Clear System"
+            tooltip-title="Clear System"
+            tooltip-text="Clear all objects from the current system"
+            tooltip-icon='${DeleteRegular}'>
           ${DeleteRegular}
         </teskooano-button>
       </div>
@@ -307,14 +345,3 @@ template.innerHTML = `
 `;
 
 export { template as SystemControlsTemplate };
-
-// Export icons for use in the component logic
-export {
-  SparkleIcon,
-  DeleteIcon,
-  SaveIcon,
-  FolderOpenIcon,
-  DocumentAddIcon,
-  CopyIcon,
-  CheckmarkIcon,
-};

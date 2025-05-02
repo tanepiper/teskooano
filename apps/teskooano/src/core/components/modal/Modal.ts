@@ -113,7 +113,6 @@ export class TeskooanoModal extends HTMLElement {
     ];
   }
 
-  // Elements
   private titleElement: HTMLHeadingElement;
   private confirmButtonText: HTMLSpanElement;
   private closeButtonText: HTMLSpanElement;
@@ -122,7 +121,6 @@ export class TeskooanoModal extends HTMLElement {
   private closeButton: HTMLElement;
   private secondaryButton: HTMLElement;
 
-  // Event handlers
   private confirmHandler: (() => void) | null = null;
   private closeHandler: (() => void) | null = null;
   private secondaryHandler: (() => void) | null = null;
@@ -132,7 +130,6 @@ export class TeskooanoModal extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
-    // Get references to elements
     this.titleElement = this.shadowRoot!.querySelector(".modal-title")!;
     this.confirmButton = this.shadowRoot!.querySelector(".confirm-button")!;
     this.closeButton = this.shadowRoot!.querySelector(".close-button")!;
@@ -142,12 +139,11 @@ export class TeskooanoModal extends HTMLElement {
     this.secondaryButtonText =
       this.shadowRoot!.querySelector(".secondary-text")!;
 
-    // Set up button event listeners
     this.confirmButton.addEventListener("click", () => {
       if (this.confirmHandler) {
         this.confirmHandler();
       }
-      // Dispatch custom event for modal-confirm
+
       this.dispatchEvent(
         new CustomEvent(CustomEvents.MODAL_CONFIRM, {
           bubbles: true,
@@ -161,7 +157,7 @@ export class TeskooanoModal extends HTMLElement {
       if (this.closeHandler) {
         this.closeHandler();
       }
-      // Dispatch custom event for modal-close
+
       this.dispatchEvent(
         new CustomEvent(CustomEvents.MODAL_CLOSE, {
           bubbles: true,
@@ -175,7 +171,7 @@ export class TeskooanoModal extends HTMLElement {
       if (this.secondaryHandler) {
         this.secondaryHandler();
       }
-      // Dispatch custom event for modal-additional
+
       this.dispatchEvent(
         new CustomEvent("modal-additional", { bubbles: true, composed: true }),
       );
@@ -183,7 +179,6 @@ export class TeskooanoModal extends HTMLElement {
   }
 
   connectedCallback() {
-    // Set initial values from attributes
     this.updateTitle();
     this.updateButtonTexts();
   }
@@ -204,7 +199,6 @@ export class TeskooanoModal extends HTMLElement {
       case "secondary-text":
         this.updateButtonTexts();
         break;
-      // Visibility attributes are handled via CSS
     }
   }
 
@@ -221,19 +215,16 @@ export class TeskooanoModal extends HTMLElement {
       this.getAttribute("secondary-text") || "Secondary Action";
   }
 
-  // Public methods to set content and button handlers
   public setContent(content: string | HTMLElement) {
     const contentSlot = this.shadowRoot!.querySelector(
       'slot[name="content"]',
     ) as HTMLSlotElement;
 
-    // Clear existing content
     const assignedElements = contentSlot.assignedElements
       ? contentSlot.assignedElements()
       : [];
     [...assignedElements].forEach((el) => el.remove());
 
-    // Add new content
     if (typeof content === "string") {
       const contentElement = document.createElement("div");
       contentElement.slot = "content";

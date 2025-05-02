@@ -71,10 +71,8 @@ export class RendererUpdater {
     scene?: THREE.Scene,
     camera?: THREE.PerspectiveCamera,
   ): void {
-    // Update standard renderers
     this.updateStandardRenderers(time, lightSources, camera);
 
-    // Update specialized renderers
     this.updateSpecializedRenderers(
       time,
       lightSources,
@@ -101,7 +99,6 @@ export class RendererUpdater {
     >,
     camera?: THREE.Camera,
   ): void {
-    // Restore original logic: Update standard renderers (Planets, Moons, Generic Celestial)
     const renderersToUpdate = [
       ...this.celestialRenderers.values(),
       ...this.planetRenderers.values(),
@@ -137,40 +134,28 @@ export class RendererUpdater {
     camera?: THREE.PerspectiveCamera,
     objects?: Map<string, THREE.Object3D>,
   ): void {
-    // Update star renderers
     this.starRenderers.forEach((starRenderer, id) => {
       if (starRenderer.update) {
-        // const mesh = objects?.get(id);
-
-        // Check if this is a renderer that supports gravitational lensing
         if (
           starRenderer instanceof SchwarzschildBlackHoleRenderer ||
           starRenderer instanceof KerrBlackHoleRenderer ||
           starRenderer instanceof NeutronStarRenderer
         ) {
-          // Pass renderer, scene and camera for lensing updates
           if (renderer && scene && camera) {
-            // Lensing update might need different args - needs verification
-            // For now, attempt standard call (might error)
             starRenderer.update(time, lightSources, camera);
           }
         } else {
-          // Normal update for standard stars
           starRenderer.update(time, lightSources, camera);
         }
       }
     });
 
-    // Update ring renderers
     this.ringSystemRenderers.forEach((ringRenderer, id) => {
       if (objects && objects.has(id)) {
         if (ringRenderer.update) {
-          // Ring renderer update doesn't need renderer/scene/camera for basic light updates
           ringRenderer.update(time, lightSources);
         }
       } else {
-        // Mesh for this renderer ID no longer exists in ObjectManager.
-        // This can happen briefly during system transitions. Silently skip update.
       }
     });
   }
@@ -181,7 +166,6 @@ export class RendererUpdater {
    * if it exists.
    */
   dispose(): void {
-    // Dispose of renderers
     this.celestialRenderers.forEach((renderer) => {
       if (renderer.dispose) {
         renderer.dispose();
@@ -206,7 +190,6 @@ export class RendererUpdater {
       }
     });
 
-    // Dispose ring renderers
     this.ringSystemRenderers.forEach((renderer) => {
       if (renderer.dispose) {
         renderer.dispose();

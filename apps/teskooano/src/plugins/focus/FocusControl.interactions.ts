@@ -63,7 +63,6 @@ export function handleFocusRequest(
   }
   const targetPosition = targetObjectRenderable.position.clone();
 
-  // Dispatch event *before* initiating focus (target change)
   dispatchEventCallback(
     new CustomEvent(CustomEvents.FOCUS_REQUEST_INITIATED, {
       bubbles: true,
@@ -72,10 +71,8 @@ export function handleFocusRequest(
     }),
   );
 
-  // Point Camera At Target
   parentPanel.pointCameraAt(targetPosition);
 
-  // Update the view state to reflect the intended focus
   parentPanel.updateViewState({ focusedObjectId: objectId });
 
   console.debug(`[FocusControl.interactions] Focus pointed at ${objectId}`);
@@ -133,7 +130,6 @@ export function handleFollowRequest(
     return false;
   }
 
-  // Get the Three.js object to follow from the renderer's object manager
   const objectToFollow = renderer.objectManager.getObject(objectId);
   if (!objectToFollow) {
     console.error(
@@ -142,7 +138,6 @@ export function handleFollowRequest(
     return false;
   }
 
-  // Reset camera zoom before calculating position (if applicable)
   if (
     renderer.camera &&
     "zoom" in renderer.camera &&
@@ -155,16 +150,8 @@ export function handleFollowRequest(
     cameraWithZoom.updateProjectionMatrix();
   }
 
-  // We let the ControlsManager calculate the final position/distance
-  // The `false` argument for `keepCurrentDistance` means it will calculate
-  // a suitable distance instead of maintaining the current one.
-  renderer.controlsManager.setFollowTarget(
-    objectToFollow, // Pass the actual THREE.Object3D
-    undefined, // Let ControlsManager determine target position from object
-    false, // Don't keep current distance, calculate a new one
-  );
+  renderer.controlsManager.setFollowTarget(objectToFollow, undefined, false);
 
-  // Update the view state to reflect the intended focus/follow
   parentPanel.updateViewState({ focusedObjectId: objectId });
 
   console.debug(`[FocusControl.interactions] Follow initiated for ${objectId}`);

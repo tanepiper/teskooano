@@ -3,7 +3,6 @@ import { FormatUtils } from "../utils/FormatUtils";
 import { baseStyles } from "../utils/CelestialStyles";
 import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
 
-// --- GENERIC CELESTIAL INFO COMPONENT ---
 export class GenericCelestialInfoComponent
   extends HTMLElement
   implements CelestialInfoComponent
@@ -47,5 +46,4 @@ export class GenericCelestialInfoComponent
   }
 }
 
-// Define the custom element
 customElements.define("generic-celestial-info", GenericCelestialInfoComponent);

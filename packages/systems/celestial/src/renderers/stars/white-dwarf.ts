@@ -23,19 +23,17 @@ export class WhiteDwarfMaterial extends BaseStarMaterial {
       metallicEffect?: number;
     } = {},
   ) {
-    // Bright white with slight blue tint
     const whiteColor = new THREE.Color(0xf8fcff);
 
     super(whiteColor, {
-      // Minimal corona
       coronaIntensity: options.coronaIntensity ?? 0.4,
-      // Slow pulse - cooling stars
+
       pulseSpeed: options.pulseSpeed ?? 0.2,
-      // Strong glow due to high temperature
+
       glowIntensity: options.glowIntensity ?? 0.7,
-      // Low temperature variations
+
       temperatureVariation: options.temperatureVariation ?? 0.05,
-      // Higher metallic effect - crystallizing carbon
+
       metallicEffect: options.metallicEffect ?? 0.8,
     });
   }

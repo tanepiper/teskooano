@@ -11,6 +11,7 @@ template.innerHTML = `
       /* Prevent host from interfering with layout */
       /* width: 0; 
       height: 0; */
+      z-index: 9999999999;
     }
 
     /* --- Positioning Base --- */
@@ -72,10 +73,47 @@ template.innerHTML = `
        min-width: 100px; /* Give content area a minimum width */
     }
     
+    .icon {
+        /* Container for the icon slot */
+        flex-shrink: 0; 
+        line-height: 0; 
+        /* Add explicit size constraints to the container */
+        width: 48px; /* Match max image size */
+        height: 48px;
+        display: flex; /* Use flex to center content if needed */
+        align-items: center;
+        justify-content: center;
+        overflow: hidden; /* Hide overflow */
+    }
+    
+    /* Style slotted SVG */
     .icon ::slotted(svg) {
-        fill: #fff;
+       display: block;
+       width: 100%; 
+       height: 100%;
+       max-width: 24px; /* Keep smaller max for SVG */
+       max-height: 24px;
+       object-fit: contain; /* Good practice even for SVG */
+       fill: currentColor; /* Apply fill only to SVGs */
+     }
+ 
+    /* Style slotted Image AND images rendered via innerHTML */
+    .icon ::slotted(img),
+    .icon img {
+        display: block;
+        /* Make image fill the container */
+        width: 100%;
+        height: 100%;
+        max-width: 48px; /* Redundant? Keep for clarity */
+        max-height: 48px;
+        object-fit: contain;
     }
 
+    /* Apply fill only to SVGs - Already moved into specific SVG rule
+    .icon ::slotted(svg) {
+        fill: currentColor;
+    } */
+    
     .text-content {
         display: flex;
         flex-direction: column;
@@ -91,12 +129,6 @@ template.innerHTML = `
         font-weight: var(--font-weight-semibold);
         margin-bottom: var(--space-1, 4px);
         color: var(--color-tooltip-title-text, var(--color-text-inverse, #fff)); /* Can override */
-    }
-    
-    /* Hide sections if slots are empty */
-    .icon:empty,
-    .title:empty {
-      display: none;
     }
 
   </style>

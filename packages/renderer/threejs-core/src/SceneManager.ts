@@ -7,7 +7,7 @@ import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
 /**
  * Default FOV value if not provided or found in state.
  */
-const DEFAULT_FOV = 75; // More conventional default FOV
+const DEFAULT_FOV = 75;
 
 /**
  * Manages the Three.js scene, camera, and renderer
@@ -16,17 +16,17 @@ export class SceneManager {
   public scene: THREE.Scene;
   public camera: THREE.PerspectiveCamera;
   public renderer: THREE.WebGLRenderer;
-  private fov: number; // Added FOV property
+  private fov: number;
   private debugSphere: THREE.Mesh | null = null;
   private gridHelper: THREE.GridHelper | null = null;
   private showGrid: boolean = true;
-  // New properties for AU markers
+
   private auDistanceMarkers: THREE.Group | null = null;
-  private showAuMarkers: boolean = true; // Default to visible
+  private showAuMarkers: boolean = true;
   private backgroundColor: THREE.Color | THREE.Texture;
   private width: number;
   private height: number;
-  // Add reference to CSS2DManager
+
   private css2DManager?: CSS2DManager;
 
   /**
@@ -43,29 +43,25 @@ export class SceneManager {
       hdr?: boolean;
       background?: string | THREE.Texture;
       showGrid?: boolean;
-      showAuMarkers?: boolean; // Option to control initial visibility
-      fov?: number; // Added FOV option
+      showAuMarkers?: boolean;
+      fov?: number;
     } = {},
   ) {
-    // Initialize Three.js scene
     this.scene = new THREE.Scene();
 
-    // Get initial camera state from global state if available
     const initialSimState = getSimulationState();
     const initialFov =
       options.fov ?? initialSimState.camera?.fov ?? DEFAULT_FOV;
-    this.fov = initialFov; // Store initial FOV
+    this.fov = initialFov;
 
-    // Create camera with far clip plane suitable for space scenes
     this.camera = new THREE.PerspectiveCamera(
-      this.fov, // Use the fov property
+      this.fov,
       container.clientWidth / container.clientHeight,
-      0.0001, // Much closer near plane
-      10000000, // Much further far plane
+      0.0001,
+      10000000,
     );
 
-    // Initial camera position from state
-    const { camera } = initialSimState; // Use already retrieved state
+    const { camera } = initialSimState;
     this.camera.position.set(
       camera.position.x,
       camera.position.y,
@@ -73,7 +69,6 @@ export class SceneManager {
     );
     this.camera.lookAt(camera.target.x, camera.target.y, camera.target.z);
 
-    // --- Determine Power Preference based on Performance Profile ---
     const profile = initialSimState.performanceProfile;
     let powerPref: "default" | "high-performance" | "low-power" = "default";
     switch (profile) {
@@ -88,37 +83,31 @@ export class SceneManager {
         powerPref = "high-performance";
         break;
     }
-    // --- End Determination ---
 
-    // Create renderer with options
     this.renderer = new THREE.WebGLRenderer({
       alpha: true,
       antialias: true,
       stencil: false,
       logarithmicDepthBuffer: false,
       preserveDrawingBuffer: false,
-      powerPreference: powerPref, // Apply determined preference
+      powerPreference: powerPref,
     });
 
-    // Setup renderer
     this.renderer.setSize(container.clientWidth, container.clientHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(this.renderer.domElement);
 
-    // Enable shadows if requested
     if (options.shadows) {
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     }
 
-    // Setup HDR if requested
     if (options.hdr) {
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
       this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
       this.renderer.toneMappingExposure = 1.0;
     }
 
-    // Setup background
     if (options.background) {
       if (typeof options.background === "string") {
         this.backgroundColor = new THREE.Color(options.background);
@@ -126,11 +115,9 @@ export class SceneManager {
         this.backgroundColor = options.background;
       }
     } else {
-      // Default space background (very dark blue)
       this.backgroundColor = new THREE.Color(0x000510);
     }
 
-    // Setup debug helpers
     this.showGrid = options.showGrid !== false;
     if (this.showGrid) {
       this.gridHelper = new THREE.GridHelper(10000, 100, 0xff0000, 0x444444);
@@ -138,10 +125,8 @@ export class SceneManager {
       this.scene.add(this.gridHelper);
     }
 
-    // Setup AU markers - REMOVE creation call from here
-    this.showAuMarkers = options.showAuMarkers !== false; // Control initial state via options
+    this.showAuMarkers = options.showAuMarkers !== false;
 
-    // Add stronger ambient light for better visibility
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
     this.scene.add(ambientLight);
 
@@ -154,18 +139,11 @@ export class SceneManager {
    * @param newFov The new FOV value in degrees.
    */
   public setFov(newFov: number): void {
-    if (this.fov === newFov) return; // No change needed
+    if (this.fov === newFov) return;
 
     this.fov = newFov;
     this.camera.fov = newFov;
-    this.camera.updateProjectionMatrix(); // Crucial step to apply FOV change
-
-    // Persist FOV change to global state (optional, but good practice)
-    // TODO: Consider if this direct update is desired or should be handled higher up
-    // simulationState.setKey("camera", {
-    //   ...simulationState.get().camera,
-    //   fov: newFov,
-    // });
+    this.camera.updateProjectionMatrix();
   }
 
   /**
@@ -175,18 +153,17 @@ export class SceneManager {
    */
   public setCSS2DManager(manager: CSS2DManager): void {
     this.css2DManager = manager;
-    // --- Create AU markers now that we have the CSS2DManager ---
-    this._clearAuDistanceMarkers(); // Clear any existing markers first
-    this._createAuDistanceMarkers(); // Create lines and labels
+
+    this._clearAuDistanceMarkers();
+    this._createAuDistanceMarkers();
     if (this.auDistanceMarkers) {
-      this.auDistanceMarkers.visible = this.showAuMarkers; // Set initial visibility
+      this.auDistanceMarkers.visible = this.showAuMarkers;
     }
-    // Set initial label visibility explicitly after creation
+
     this.css2DManager?.setLayerVisibility(
       CSS2DLayerType.AU_MARKERS,
       this.showAuMarkers,
     );
-    // --- End marker creation ---
   }
 
   /**
@@ -199,8 +176,7 @@ export class SceneManager {
     console.warn(
       "[SceneManager] Direct camera update called. This should only be used during initialization.",
     );
-    // Direct camera updates should be avoided - ControlsManager.moveTo should be used instead
-    // This method is kept primarily for initialization before ControlsManager is set up
+
     if (position && target) {
       this.camera.position.set(position.x, position.y, position.z);
       this.camera.lookAt(target.x, target.y, target.z);
@@ -222,11 +198,9 @@ export class SceneManager {
    * Renders the scene
    */
   render(): void {
-    // Render with clear only on the first pass
     if (this.backgroundColor instanceof THREE.Color) {
       this.renderer.setClearColor(this.backgroundColor);
     } else if (this.backgroundColor instanceof THREE.Texture) {
-      // For texture backgrounds, set them directly on the scene
       this.scene.background = this.backgroundColor;
     }
 
@@ -236,8 +210,6 @@ export class SceneManager {
       this.renderer.render(this.scene, this.camera);
     } catch (error) {
       console.error("Error during scene rendering:", error);
-      // TODO: Implement more robust error handling or recovery if needed
-      // For now, just log the error.
     }
   }
 
@@ -262,15 +234,14 @@ export class SceneManager {
   public setDebugMode(enabled: boolean): void {
     if (enabled) {
       if (!this.debugSphere) {
-        this.addDebugSphere(); // Create if it doesn't exist
+        this.addDebugSphere();
       }
       if (this.debugSphere) {
-        // Check again in case creation failed
         this.debugSphere.visible = true;
       }
     } else {
       if (this.debugSphere) {
-        this.debugSphere.visible = false; // Hide if it exists
+        this.debugSphere.visible = false;
       }
     }
   }
@@ -293,7 +264,7 @@ export class SceneManager {
     const segments = 128;
 
     const material = new THREE.LineBasicMaterial({
-      color: 0xff00ff, // Magenta
+      color: 0xff00ff,
       transparent: true,
       opacity: 0.3,
       depthWrite: false,
@@ -311,7 +282,6 @@ export class SceneManager {
         return;
       }
 
-      // --- Create the XZ plane circle ---
       const geometry = new THREE.BufferGeometry();
       const points: THREE.Vector3[] = [];
       for (let i = 0; i <= segments; i++) {
@@ -319,7 +289,7 @@ export class SceneManager {
         points.push(
           new THREE.Vector3(
             Math.cos(theta) * radiusSceneUnits,
-            0, // Keep in the XZ plane
+            0,
             Math.sin(theta) * radiusSceneUnits,
           ),
         );
@@ -328,9 +298,7 @@ export class SceneManager {
       const circleXZ = new THREE.LineLoop(geometry, material);
       circleXZ.name = `AU_Marker_XZ_${au}`;
       this.auDistanceMarkers?.add(circleXZ);
-      // --- End Circle Creation ---
 
-      // --- Add Labels in Cardinal Directions (XZ Plane) ---
       if (this.css2DManager) {
         const labelPositions = {
           Xpos: new THREE.Vector3(radiusSceneUnits, 0, 0),
@@ -344,7 +312,6 @@ export class SceneManager {
           this.css2DManager.createAuMarkerLabel(labelId, au, pos);
         }
       }
-      // --- End Label Creation ---
     });
 
     this.scene.add(this.auDistanceMarkers);
@@ -376,7 +343,7 @@ export class SceneManager {
       });
       this.auDistanceMarkers = null;
     }
-    // Also clear labels via the manager
+
     this.css2DManager?.clearLayer(CSS2DLayerType.AU_MARKERS);
   }
 
@@ -384,13 +351,11 @@ export class SceneManager {
    * Clean up resources when the manager is no longer needed
    */
   dispose(): void {
-    // Dispose AU markers if they exist
     if (this.auDistanceMarkers) {
       this.scene.remove(this.auDistanceMarkers);
-      this._clearAuDistanceMarkers(); // Use the new helper method
+      this._clearAuDistanceMarkers();
     }
 
-    // Dispose grid helper
     if (this.gridHelper) {
       this.scene.remove(this.gridHelper);
       this.gridHelper.geometry.dispose();
@@ -402,7 +367,6 @@ export class SceneManager {
       this.gridHelper = null;
     }
 
-    // Dispose debug sphere
     if (this.debugSphere) {
       this.scene.remove(this.debugSphere);
       this.debugSphere.geometry.dispose();
@@ -416,19 +380,16 @@ export class SceneManager {
 
     this.renderer.dispose();
 
-    // Clear any remaining direct children of the scene (lights, etc.)
     while (this.scene.children.length > 0) {
       const child = this.scene.children[0];
-      // Avoid removing things already handled (like grid/markers if somehow still present)
+
       if (
         child !== this.gridHelper &&
         child !== this.auDistanceMarkers &&
         child !== this.debugSphere
       ) {
         this.scene.remove(child);
-        // Optionally dispose materials/geometries of other unknown objects if necessary
       } else {
-        // If it's one we *thought* we removed, just remove it again to be safe.
         this.scene.remove(child);
       }
     }
@@ -438,12 +399,11 @@ export class SceneManager {
    * @param visible True to show the grid, false to hide.
    */
   setGridVisible(visible: boolean): void {
-    this.showGrid = visible; // Update state first
-    let currentGridHelper = this.gridHelper; // Assign to local variable
+    this.showGrid = visible;
+    let currentGridHelper = this.gridHelper;
 
     if (visible) {
       if (!currentGridHelper) {
-        // Create if needed
         currentGridHelper = new THREE.GridHelper(
           10000,
           100,
@@ -451,16 +411,14 @@ export class SceneManager {
           0x444444,
         );
         this.scene.add(currentGridHelper);
-        this.gridHelper = currentGridHelper; // Assign back to class property
+        this.gridHelper = currentGridHelper;
       }
-      // Now use the local variable which TypeScript knows is non-null here
+
       currentGridHelper.visible = true;
     } else {
-      // Hide if it exists (use local variable for check and access)
       if (currentGridHelper) {
         currentGridHelper.visible = false;
       }
-      // If hiding and it doesn't exist, do nothing
     }
   }
 
@@ -469,35 +427,30 @@ export class SceneManager {
    * @param visible True to show the markers, false to hide.
    */
   setAuMarkersVisible(visible: boolean): void {
-    this.showAuMarkers = visible; // Update state first
-    let currentAuMarkers = this.auDistanceMarkers; // Assign to local variable
+    this.showAuMarkers = visible;
+    let currentAuMarkers = this.auDistanceMarkers;
 
     if (visible) {
       if (!currentAuMarkers) {
-        // Create if needed
         this._createAuDistanceMarkers();
-        currentAuMarkers = this.auDistanceMarkers; // Re-assign local var after creation
-        // Check if creation succeeded
+        currentAuMarkers = this.auDistanceMarkers;
+
         if (!currentAuMarkers) {
           console.error(
             "[SceneManager] Failed to create AU markers for setVisible.",
           );
-          this.showAuMarkers = false; // Revert state if creation failed
+          this.showAuMarkers = false;
           return;
         }
       }
-      // Now use the local variable which TypeScript knows is non-null here
+
       currentAuMarkers.visible = true;
     } else {
-      // Hide if they exist (use local variable for check and access)
       if (currentAuMarkers) {
         currentAuMarkers.visible = false;
       }
-      // If hiding and they don't exist, do nothing
     }
-    // Toggle label visibility using CSS2DManager
+
     this.css2DManager?.setLayerVisibility(CSS2DLayerType.AU_MARKERS, visible);
   }
-
-  // Add other methods as needed
 }

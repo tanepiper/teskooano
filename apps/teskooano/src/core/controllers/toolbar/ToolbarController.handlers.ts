@@ -1,6 +1,5 @@
-// Handlers for toolbar actions
 import type { ToolbarController } from "./ToolbarController";
-import { pluginManager } from "@teskooano/ui-plugin"; // Import the instance
+import { pluginManager } from "@teskooano/ui-plugin";
 
 /**
  * @interface ToolbarTemplateHandlers

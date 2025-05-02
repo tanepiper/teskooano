@@ -25,7 +25,7 @@ import type { PlanetBaseProperties } from "./planet-type";
 export function generatePlanetSpecificProperties(
   random: () => number,
   baseProps: PlanetBaseProperties,
-  bodyDistanceAU: number, // May be needed for some property calculations
+  bodyDistanceAU: number,
 ): CelestialSpecificPropertiesUnion {
   if (baseProps.planetType === CelestialType.GAS_GIANT) {
     return generateGasGiantSpecificProperties(
@@ -34,12 +34,9 @@ export function generatePlanetSpecificProperties(
       bodyDistanceAU,
     );
   } else {
-    // Defaults to PLANET type if not GAS_GIANT
     return generateRockyPlanetSpecificProperties(random, baseProps);
   }
 }
-
-// --- Helper Functions --- //
 
 /**
  * Generates properties specific to Gas Giants (including Ice Giants).
@@ -49,19 +46,16 @@ function generateGasGiantSpecificProperties(
   baseProps: PlanetBaseProperties,
   bodyDistanceAU: number,
 ): GasGiantProperties {
-  // Gas Giant Classification (already determined in baseProps)
-  const gasGiantClass = baseProps.gasGiantClass || GasGiantClass.CLASS_I; // Default fallback
+  const gasGiantClass = baseProps.gasGiantClass || GasGiantClass.CLASS_I;
 
-  // Determine Atmosphere-related properties based on zone/class
   let atmComposition: string[];
   let atmPressure: number;
   let atmosphereColor: string;
   let cloudColor: string;
   let cloudSpeed: number;
-  let atmosphereType: AtmosphereType; // Keep track of the determined type
+  let atmosphereType: AtmosphereType;
 
   if (bodyDistanceAU < 2.5) {
-    // Inner Zone (Hot Jupiter)
     atmosphereType = AtmosphereType.VERY_DENSE;
     atmComposition = ["H2", "He", "Na", "K"];
     atmPressure = 10 + random() * 100;
@@ -72,7 +66,6 @@ function generateGasGiantSpecificProperties(
     cloudColor = UTIL.getRandomItem(["#E0E0E0", "#D8D8D8", "#F5F5F5"], random);
     cloudSpeed = 0.05 + random() * 0.1;
   } else if (bodyDistanceAU < 8) {
-    // Mid Zone (Typical Gas Giant)
     atmosphereType = AtmosphereType.NORMAL;
     atmComposition = ["H2", "He", "CH4", "NH3"];
     atmPressure = 1 + random() * 10;
@@ -83,9 +76,8 @@ function generateGasGiantSpecificProperties(
     cloudColor = UTIL.getRandomItem(["#FFFFFF", "#F0F0F0", "#FEFEFE"], random);
     cloudSpeed = random() * 0.1;
   } else {
-    // Outer Zone (Ice Giant - Classes III, IV)
     atmosphereType = AtmosphereType.THIN;
-    atmComposition = ["H2", "He", "CH4"]; // Maybe add H2O ice later
+    atmComposition = ["H2", "He", "CH4"];
     atmPressure = 0.1 + random() * 1;
     atmosphereColor = UTIL.getRandomItem(
       ["#A0C0E0", "#B0D0F0", "#98B8D8"],
@@ -120,9 +112,7 @@ function generateRockyPlanetSpecificProperties(
   let surfaceType: SurfaceType;
   let composition: string[];
 
-  // Determine specific rocky type based on zone
   if (baseProps.rockyPlanetType === PlanetType.ICE) {
-    // Outer Icy Rocky was pre-determined
     rockyPlanetType = PlanetType.ICE;
     surfaceType = UTIL.getRandomItem(
       [SurfaceType.CRATERED, SurfaceType.FLAT, SurfaceType.ICE_FLATS],
@@ -130,7 +120,6 @@ function generateRockyPlanetSpecificProperties(
     );
     composition = CONST.ICE_COMPOSITION;
   } else {
-    // Inner Rocky - choose from various types
     rockyPlanetType = UTIL.getRandomItem(
       [
         PlanetType.ROCKY,
@@ -156,7 +145,6 @@ function generateRockyPlanetSpecificProperties(
     );
   }
 
-  // Determine Atmosphere (more likely in inner zone)
   const hasAtmosphere =
     baseProps.rockyPlanetType === PlanetType.ICE
       ? random() < 0.1
@@ -192,8 +180,7 @@ function generateRockyPlanetSpecificProperties(
       random,
     );
 
-    // Generate cloud properties
-    const cloudTypeKey = rockyPlanetType === PlanetType.ICE ? "ICE" : "ROCKY"; // Simplified key for now
+    const cloudTypeKey = rockyPlanetType === PlanetType.ICE ? "ICE" : "ROCKY";
     cloudProps = {
       color: UTIL.getRandomItem(CONST.CLOUD_COLORS[cloudTypeKey], random),
       opacity:
@@ -217,7 +204,6 @@ function generateRockyPlanetSpecificProperties(
     };
   }
 
-  // Generate detailed surface properties
   const detailedSurface = UTIL.createDetailedSurfaceProperties(
     random,
     rockyPlanetType,
@@ -234,7 +220,7 @@ function generateRockyPlanetSpecificProperties(
       ? {
           composition: atmComposition,
           pressure: pressure,
-          color: atmosphereColor!, // Non-null assertion as it's set if hasAtmosphere is true
+          color: atmosphereColor!,
           density: UTIL.getRandomInRange(
             CONST.ATMOSPHERE_DENSITY_RANGES[atmosphereType].min,
             CONST.ATMOSPHERE_DENSITY_RANGES[atmosphereType].max,
@@ -242,6 +228,6 @@ function generateRockyPlanetSpecificProperties(
           ),
         }
       : undefined,
-    clouds: cloudProps, // Assign generated cloud properties
+    clouds: cloudProps,
   };
 }

@@ -13,10 +13,10 @@ import {
   CelestialRenderer,
   createStarRenderer,
   RingSystemRenderer,
-  type LODLevel, // Import the LODLevel interface
+  type LODLevel,
 } from "@teskooano/systems-celestial";
 import * as THREE from "three";
-import type { LODManager } from "@teskooano/renderer-threejs-effects"; // Import LODManager type
+import type { LODManager } from "@teskooano/renderer-threejs-effects";
 
 /**
  * Factory responsible for creating appropriate Three.js `Object3D` instances (primarily THREE.LOD objects)
@@ -77,9 +77,6 @@ export class MeshFactory {
    */
   public setDebugMode(enabled: boolean): void {
     this._isDebugMode = enabled;
-
-    // Note: This doesn't automatically update existing meshes.
-    // Debug mode will apply to newly created or recreated meshes.
   }
 
   /**
@@ -93,7 +90,6 @@ export class MeshFactory {
   ): CelestialRenderer | null {
     const objectId = object.celestialObjectId;
 
-    // --- Specific Type Handling ---
     if (object.type === CelestialType.STAR) {
       if (this.starRenderers.has(objectId)) {
         return this.starRenderers.get(objectId)!;
@@ -121,8 +117,7 @@ export class MeshFactory {
       if (this.planetRenderers.has(objectId)) {
         return this.planetRenderers.get(objectId)!;
       }
-      // Assuming BaseTerrestrialRenderer handles all these for now
-      // It will need to implement getLODLevels
+
       try {
         const renderer = new BaseTerrestrialRenderer();
         this.planetRenderers.set(objectId, renderer);
@@ -136,10 +131,7 @@ export class MeshFactory {
       }
     }
 
-    // --- Handle Ring System Explicitly ---
     if (object.type === CelestialType.RING_SYSTEM) {
-      // Ring systems need their own renderer instance because they manage
-      // internal materials state specific to that ring system.
       if (this.ringSystemRenderers.has(objectId)) {
         return this.ringSystemRenderers.get(objectId)!;
       }
@@ -155,9 +147,7 @@ export class MeshFactory {
         return null;
       }
     }
-    // --- End Ring System Handling ---
 
-    // --- Specialized Renderers (from celestialRenderers map) ---
     let rendererKey: string | undefined;
     if (object.type === CelestialType.GAS_GIANT) {
       const properties = object.properties as GasGiantProperties;
@@ -167,10 +157,9 @@ export class MeshFactory {
         console.warn(
           `[MeshFactory] Missing gasGiantClass for GAS_GIANT ${objectId}. Falling back.`,
         );
-        rendererKey = GasGiantClass.CLASS_I; // Fallback to Class I Gas Giant renderer
+        rendererKey = GasGiantClass.CLASS_I;
       }
     } else {
-      // Use the CelestialType enum value as the key for other types
       rendererKey = object.type;
     }
 
@@ -178,7 +167,6 @@ export class MeshFactory {
       return this.celestialRenderers.get(rendererKey)!;
     }
 
-    // Specific fallback for Gas Giants if class-specific wasn't found
     if (
       object.type === CelestialType.GAS_GIANT &&
       rendererKey !== GasGiantClass.CLASS_I
@@ -204,11 +192,9 @@ export class MeshFactory {
    * @returns A Three.js `Object3D` representing the celestial object, or a fallback sphere on failure.
    */
   createObjectMesh(object: RenderableCelestialObject): THREE.Object3D {
-    // --- Force Fallback Sphere in Debug Mode ---
     if (this._isDebugMode) {
       return this.createFallbackSphere(object);
     }
-    // --- End Debug Mode Check ---
 
     const renderer = this.getOrCreateRenderer(object);
 
@@ -219,17 +205,14 @@ export class MeshFactory {
       return this.createFallbackSphere(object);
     }
 
-    // --- Standard LOD Path ---
     try {
-      // Check if the renderer has the required getLODLevels method
       if (typeof (renderer as any).getLODLevels !== "function") {
         throw new Error(
           `Renderer for type ${object.type} (ID: ${object.celestialObjectId}) does not implement getLODLevels.`,
         );
       }
 
-      // --- Ring System Specific Logic ---
-      let options: any = { detailLevel: "high" }; // Default options
+      let options: any = { detailLevel: "high" };
       if (
         (object.type === CelestialType.RING_SYSTEM ||
           object.type === CelestialType.ASTEROID_FIELD) &&
@@ -240,8 +223,7 @@ export class MeshFactory {
           const parentDistances = parentLOD.levels.map(
             (level: { distance: number }) => level.distance,
           );
-          // Ensure distances are sorted if necessary (LOD levels should be)
-          // parentDistances.sort((a, b) => a - b);
+
           options.parentLODDistances = parentDistances;
         } else {
           console.warn(
@@ -249,9 +231,8 @@ export class MeshFactory {
           );
         }
       }
-      // --- End Ring System Specific Logic ---
 
-      const levels = (renderer as any).getLODLevels(object, options); // Pass constructed options
+      const levels = (renderer as any).getLODLevels(object, options);
 
       if (!levels || levels.length === 0) {
         throw new Error(
@@ -259,9 +240,8 @@ export class MeshFactory {
         );
       }
 
-      // Use the function provided by LODManager to create the THREE.LOD object
       const lodObject = this.createAndRegisterLOD(object, levels);
-      lodObject.name = object.celestialObjectId; // Set name on the final LOD object
+      lodObject.name = object.celestialObjectId;
       return lodObject;
     } catch (error) {
       console.error(
@@ -301,34 +281,23 @@ export class MeshFactory {
   private getFallbackColor(type: CelestialType): THREE.ColorRepresentation {
     switch (type) {
       case CelestialType.STAR:
-        return 0xffff00; // Yellow
+        return 0xffff00;
       case CelestialType.PLANET:
-        return 0x00ff00; // Green
+        return 0x00ff00;
       case CelestialType.DWARF_PLANET:
-        return 0x00ffff; // Cyan
+        return 0x00ffff;
       case CelestialType.MOON:
-        return 0xaaaaaa; // Grey
+        return 0xaaaaaa;
       case CelestialType.GAS_GIANT:
-        return 0xff8800; // Orange
+        return 0xff8800;
       case CelestialType.ASTEROID_FIELD:
-        return 0x888888; // Dark Grey
+        return 0x888888;
       case CelestialType.OORT_CLOUD:
-        return 0xeeeeee; // Light Grey
+        return 0xeeeeee;
       case CelestialType.RING_SYSTEM:
-        return 0xaa8844; // Brownish
+        return 0xaa8844;
       default:
-        return 0xff00ff; // Magenta (error/unknown)
+        return 0xff00ff;
     }
   }
-
-  // Remove obsolete private methods like:
-  // createStarMesh
-  // createPlanetMesh
-  // createMoonMesh
-  // createAsteroidOrOortCloudMesh
-  // createSpecializedOrGasGiantMesh
-  // createDefaultMesh
-  // getPlanetColor
-  // createRingSystemMesh
-  // (getOrCreateRenderer and createObjectMesh replace their core logic)
 }

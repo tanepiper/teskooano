@@ -1,7 +1,5 @@
 import type { CelestialObject } from "@teskooano/data-types";
 
-// Define the shape of the component the UI functions expect to interact with.
-// This avoids a direct import cycle and clarifies dependencies.
 export interface SystemControlsUIContract {
   shadowRoot: ShadowRoot | null;
   isMobile: () => boolean;
@@ -34,7 +32,6 @@ export function updateButtonSizesUI(component: SystemControlsUIContract): void {
       }
     }
 
-    // Special handling for seed form submit button text based on mobile
     const submitButton = seedForm?.querySelector<HTMLElement>(
       'teskooano-button[type="submit"]',
     );
@@ -82,13 +79,11 @@ export function updateDisplayUI(
     'teskooano-button[data-action], teskooano-button[type="submit"]',
   );
 
-  // Update visibility based on system state
   if (emptyState && loadedState) {
     emptyState.style.display = systemLoaded ? "none" : "";
     loadedState.style.display = systemLoaded ? "" : "none";
   }
 
-  // Update system info when loaded
   if (systemLoaded) {
     const count = objectCount;
     const currentSystemSeed = seed || "---------";
@@ -101,16 +96,13 @@ export function updateDisplayUI(
     }
   }
 
-  // Toggle loading overlay
   if (loadingOverlay) {
     loadingOverlay.style.display = component.isGenerating() ? "flex" : "none";
   }
 
-  // Ensure buttons are enabled/disabled correctly based on generating state
   buttons?.forEach((button) => {
     (button as HTMLButtonElement).disabled = component.isGenerating();
   });
 
-  // Ensure button sizes/styles are correct for the current state
   updateButtonSizesUI(component);
 }

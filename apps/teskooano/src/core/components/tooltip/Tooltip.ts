@@ -60,12 +60,10 @@ export class TeskooanoTooltip extends HTMLElement {
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
     this.tooltipElement = this.shadowRoot!.querySelector(".tooltip");
 
-    // Ensure the host doesn't steal focus
     if (!this.hasAttribute("tabindex")) {
       this.setAttribute("tabindex", "-1");
     }
 
-    // Generate a unique ID if one isn't provided
     if (!this.id) {
       this.id = `tooltip-${crypto.randomUUID()}`;
     }
@@ -77,7 +75,7 @@ export class TeskooanoTooltip extends HTMLElement {
    */
   connectedCallback() {
     this.updateVisibility();
-    this.updatePositioning(); // Initial positioning
+    this.updatePositioning();
   }
 
   /**
@@ -106,12 +104,12 @@ export class TeskooanoTooltip extends HTMLElement {
     if (this.hasAttribute("visible")) {
       this.tooltipElement?.style.setProperty("opacity", "1");
       this.tooltipElement?.style.setProperty("visibility", "visible");
-      // Use requestAnimationFrame to ensure styles are applied and dimensions are readable
+
       requestAnimationFrame(() => this._calculateAndAdjustPosition());
     } else {
       this.tooltipElement?.style.setProperty("opacity", "0");
       this.tooltipElement?.style.setProperty("visibility", "hidden");
-      // Reset position styles when hiding
+
       this.tooltipElement?.style.removeProperty("left");
       this.tooltipElement?.style.removeProperty("top");
       this.tooltipElement?.style.removeProperty("transform");
@@ -133,11 +131,9 @@ export class TeskooanoTooltip extends HTMLElement {
    * @private
    */
   private _calculateAndAdjustPosition() {
-    // Use the stored trigger element, fallback to parentElement with a warning
     const trigger = this._triggerElement ?? this.parentElement;
 
     if (!this.tooltipElement || !trigger) {
-      // Ensure transforms are cleared even if we can't position
       this.tooltipElement?.style.setProperty("transform", "none");
       console.warn(
         "[Tooltip] Cannot calculate position: missing tooltip or trigger element.",
@@ -145,78 +141,65 @@ export class TeskooanoTooltip extends HTMLElement {
       return;
     }
 
-    // Ensure transforms are cleared before measuring
     this.tooltipElement.style.transform = "none";
 
     const tooltipRect = this.tooltipElement.getBoundingClientRect();
     const triggerRect = trigger.getBoundingClientRect();
-    const vAlign = this.getAttribute("vertical-align") || "below"; // Default to below
-    const hAlign = this.getAttribute("horizontal-align") || "center"; // Default to center
+    const vAlign = this.getAttribute("vertical-align") || "below";
+    const hAlign = this.getAttribute("horizontal-align") || "center";
 
-    const gap = 5; // Space between trigger and tooltip (including arrow)
+    const gap = 5;
 
     let top = 0;
     let left = 0;
 
-    // Calculate initial vertical position
     if (vAlign === "below") {
       top = triggerRect.bottom + gap;
     } else {
-      // "above"
       top = triggerRect.top - tooltipRect.height - gap;
     }
 
-    // Calculate initial horizontal position
     if (hAlign === "center") {
       left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2;
     } else if (hAlign === "start") {
       left = triggerRect.left;
     } else {
-      // "end"
       left = triggerRect.right - tooltipRect.width;
     }
 
-    // Viewport collision detection and adjustment
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const margin = 5; // Extra space from viewport edges
+    const margin = 5;
 
-    // Adjust horizontal position
     if (left < margin) {
       left = margin;
     } else if (left + tooltipRect.width > viewportWidth - margin) {
       left = viewportWidth - tooltipRect.width - margin;
     }
 
-    // Adjust vertical position
     if (top < margin) {
       top = margin;
-      // Potentially flip alignment if it hits top and was 'above'
+
       if (vAlign === "above") {
-        top = triggerRect.bottom + gap; // Flip to below
-        // TODO: Could also update the arrow direction class if needed
+        top = triggerRect.bottom + gap;
       }
     } else if (top + tooltipRect.height > viewportHeight - margin) {
       top = viewportHeight - tooltipRect.height - margin;
-      // Potentially flip alignment if it hits bottom and was 'below'
+
       if (vAlign === "below") {
-        top = triggerRect.top - tooltipRect.height - gap; // Flip to above
-        // TODO: Could also update the arrow direction class if needed
+        top = triggerRect.top - tooltipRect.height - gap;
       }
     }
 
-    // Final check after potential flipping to prevent going off-screen again
     if (top < margin) top = margin;
     if (top + tooltipRect.height > viewportHeight - margin) {
       top = viewportHeight - tooltipRect.height - margin;
     }
 
-    // Apply the calculated and adjusted position
-    // We position relative to the viewport, so use fixed positioning logic essentially
-    this.tooltipElement.style.position = "fixed"; // Use fixed for viewport positioning
+    this.tooltipElement.style.position = "fixed";
     this.tooltipElement.style.left = `${Math.round(left)}px`;
     this.tooltipElement.style.top = `${Math.round(top)}px`;
-    this.tooltipElement.style.transform = "none"; // Override any CSS transforms
+    this.tooltipElement.style.transform = "none";
   }
 
   /**
@@ -226,10 +209,9 @@ export class TeskooanoTooltip extends HTMLElement {
   private updatePositioning() {
     if (!this.tooltipElement) return;
 
-    const vAlign = this.getAttribute("vertical-align") || "below"; // Default to below
-    const hAlign = this.getAttribute("horizontal-align") || "center"; // Default to center
+    const vAlign = this.getAttribute("vertical-align") || "below";
+    const hAlign = this.getAttribute("horizontal-align") || "center";
 
-    // Remove existing alignment classes
     this.tooltipElement.classList.remove(
       "vertical-above",
       "vertical-below",
@@ -238,7 +220,6 @@ export class TeskooanoTooltip extends HTMLElement {
       "horizontal-end",
     );
 
-    // Add new classes
     this.tooltipElement.classList.add(
       `vertical-${vAlign}`,
       `horizontal-${hAlign}`,
@@ -254,7 +235,6 @@ export class TeskooanoTooltip extends HTMLElement {
     if (triggerElement) {
       this._triggerElement = triggerElement;
     } else if (!this._triggerElement && this.parentElement) {
-      // Fallback to parentElement if no trigger provided or set previously
       console.warn(
         "[Tooltip] No trigger element provided to show(), falling back to parentElement. Consider explicitly setting the trigger.",
       );
@@ -263,7 +243,7 @@ export class TeskooanoTooltip extends HTMLElement {
       console.error(
         "[Tooltip] Cannot show: No trigger element set or provided, and no parentElement available.",
       );
-      return; // Cannot position without a reference
+      return;
     }
     this.setAttribute("visible", "");
   }
@@ -272,7 +252,7 @@ export class TeskooanoTooltip extends HTMLElement {
    * Hides the tooltip by removing the 'visible' attribute.
    */
   hide() {
-    this._triggerElement = null; // Clear trigger reference on hide
+    this._triggerElement = null;
     this.removeAttribute("visible");
   }
 
@@ -281,8 +261,6 @@ export class TeskooanoTooltip extends HTMLElement {
    * @param {string} text - The text to display in the title.
    */
   set titleContent(text: string) {
-    // Prefer using slots directly for static content.
-    // This setter is for dynamic updates via JavaScript.
     const titleSlot = this.shadowRoot?.querySelector('slot[name="title"]');
     if (titleSlot) {
       titleSlot.textContent = text;
@@ -294,11 +272,9 @@ export class TeskooanoTooltip extends HTMLElement {
    * @param {string} svgString - A string containing valid SVG markup.
    */
   set iconContent(svgString: string) {
-    // Prefer using slots directly for static content.
-    // This setter is for dynamic updates via JavaScript.
     const iconSlot = this.shadowRoot?.querySelector('slot[name="icon"]');
     if (iconSlot) {
-      iconSlot.innerHTML = svgString; // Assumes svgString is valid SVG markup
+      iconSlot.innerHTML = svgString;
     }
   }
 
@@ -307,8 +283,6 @@ export class TeskooanoTooltip extends HTMLElement {
    * @param {string} text - The text to display.
    */
   set mainContent(text: string) {
-    // Prefer using slots directly for static content.
-    // This setter is for dynamic updates via JavaScript.
     const mainSlot = this.shadowRoot?.querySelector("slot:not([name])");
     if (mainSlot) {
       mainSlot.textContent = text;

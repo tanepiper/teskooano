@@ -51,10 +51,10 @@ export interface TextureGeneratorOptions {
  * Base options for all texture generation
  */
 export interface BaseTextureOptions {
-  textureSize?: number; // Size of the texture (e.g., 1024, 2048)
-  seed?: number; // Seed for procedural generation
-  baseColor?: THREE.ColorRepresentation; // Optional base color override
-  generateMipmaps?: boolean; // Whether to generate mipmaps for the texture
+  textureSize?: number;
+  seed?: number;
+  baseColor?: THREE.ColorRepresentation;
+  generateMipmaps?: boolean;
 }
 
 /**
@@ -74,7 +74,7 @@ export interface GasGiantTextureOptions extends BaseTextureOptions {
   /**
    * Optional storm color (for Jupiter-like giants)
    */
-  stormColor?: THREE.ColorRepresentation; // Color for prominent storms (e.g., Jupiter's Great Red Spot)
+  stormColor?: THREE.ColorRepresentation;
 }
 
 /**
@@ -89,29 +89,29 @@ export interface TerrestrialTextureOptions extends BaseTextureOptions {
   /**
    * Surface color of the planet
    */
-  surfaceColor: THREE.ColorRepresentation; // Base color for land/rock/ice
+  surfaceColor: THREE.ColorRepresentation;
 
   /**
    * Water color for oceanic areas
    */
-  waterColor?: THREE.ColorRepresentation; // Color for oceans/lakes
+  waterColor?: THREE.ColorRepresentation;
 
   /**
    * Cloud color and coverage
    */
-  cloudColor?: THREE.ColorRepresentation; // Color for clouds
-  cloudCoverage?: number; // 0-1 cloud coverage percentage
+  cloudColor?: THREE.ColorRepresentation;
+  cloudCoverage?: number;
 
   /**
    * Surface roughness (affects mountain generation)
    */
-  roughness?: number; // 0-1 surface roughness (mountains, etc.)
+  roughness?: number;
 
   /**
    * Whether the planet has vegetation
    */
-  hasVegetation?: boolean; // Does it have vegetation?
-  vegetationColor?: THREE.ColorRepresentation; // Color for vegetation
+  hasVegetation?: boolean;
+  vegetationColor?: THREE.ColorRepresentation;
 }
 
 /**
@@ -148,8 +148,8 @@ export interface StarTextureOptions extends BaseTextureOptions {
  * Options specific to Space Rock textures (asteroids, comets, ring particles)
  */
 export interface SpaceRockTextureOptions extends BaseTextureOptions {
-  type: RockyType; // Using RockyType from @teskooano/data-types
-  featureColor?: THREE.ColorRepresentation; // Color for craters, darker areas
-  roughness?: number; // 0-1 surface roughness
-  metalness?: number; // 0-1 how metallic the rock appears (for METALLIC type)
+  type: RockyType;
+  featureColor?: THREE.ColorRepresentation;
+  roughness?: number;
+  metalness?: number;
 }

@@ -1,4 +1,3 @@
-// import * as THREE from 'three';
 import { calculateNewtonianGravitationalForce } from "./gravity";
 import { OSVector3 } from "@teskooano/core-math";
 
@@ -24,10 +23,10 @@ export const calculateAcceleration = (
   force: OSVector3,
 ): OSVector3 => {
   if (mass === 0) {
-    return new OSVector3(0, 0, 0); // Return OSVector3 zero vector
+    return new OSVector3(0, 0, 0);
   }
-  // Clone the force vector before scaling to avoid modifying the original
+
   const acceleration = force.clone();
-  acceleration.multiplyScalar(1 / mass); // Use OSVector3 method
+  acceleration.multiplyScalar(1 / mass);
   return acceleration;
 };

@@ -9,10 +9,9 @@ interface ProgressParams {
   planetList?: { id: string; name: string }[];
 }
 
-// Define the structure of the progress event detail
 interface TextureProgressEventDetail {
   objectId: string;
-  objectName: string; // Include name for display
+  objectName: string;
   status: "pending" | "generating" | "cached" | "complete" | "error";
   message?: string;
 }
@@ -25,7 +24,6 @@ export class ProgressPanel implements IContentRenderer {
   private _params: GroupPanelPartInitParameters | undefined;
   private _api: DockviewPanelApi | undefined;
 
-  // Store texture processing states
   private _textureStates: Map<string, { status: string; name: string }> =
     new Map();
   private _timeoutId: number | undefined;
@@ -49,27 +47,22 @@ export class ProgressPanel implements IContentRenderer {
     this._params = parameters;
     this._api = parameters.api;
 
-    // Initialize state from params
     this._params?.params?.planetList?.forEach((planet: CelestialObject) => {
-      // Ensure we only track planets passed in initially
       this._textureStates.set(planet.id, {
         status: "pending",
         name: planet.name,
       });
     });
 
-    this.updateProgressDisplay(); // Initial render
-    this.addEventListeners(); // Add listeners for custom events
+    this.updateProgressDisplay();
+    this.addEventListeners();
 
-    // Set a timeout to automatically close the panel as a fallback
-    // In a perfect world, the 'texture-generation-complete' event would handle this.
     this._timeoutId = window.setTimeout(() => {
       console.warn("[ProgressPanel] Auto-closing panel due to timeout.");
       this._api?.close();
-    }, 60000); // Close after 60 seconds regardless
+    }, 60000);
   }
 
-  // Add event listeners
   private addEventListeners(): void {
     document.addEventListener("texture-progress", this.handleTextureProgress);
     document.addEventListener(
@@ -78,7 +71,6 @@ export class ProgressPanel implements IContentRenderer {
     );
   }
 
-  // Remove event listeners on dispose
   private removeEventListeners(): void {
     document.removeEventListener(
       "texture-progress",
@@ -90,7 +82,6 @@ export class ProgressPanel implements IContentRenderer {
     );
   }
 
-  // Handle individual texture progress updates
   private handleTextureProgress = (event: Event): void => {
     const customEvent = event as CustomEvent<TextureProgressEventDetail>;
     const detail = customEvent.detail;
@@ -101,24 +92,20 @@ export class ProgressPanel implements IContentRenderer {
         this._textureStates.set(detail.objectId, {
           ...currentState,
           status: detail.status,
-          // Optionally update name if provided in event, though unlikely to change
+
           name: detail.objectName || currentState.name,
         });
         this.updateProgressDisplay();
-        this.checkCompletionAndClose(); // Check if all done after each update
+        this.checkCompletionAndClose();
       }
     } else {
-      // console.warn("[ProgressPanel] Received progress for untracked object:", detail?.objectId);
     }
   };
 
-  // Handle overall completion signal
   private handleGenerationComplete = (): void => {
-    // Force close after a short delay
     this.closePanel(1000);
   };
 
-  // Update the visual display
   private updateProgressDisplay(): void {
     const listElement = this._element.querySelector("#progress-list");
     if (!listElement) return;
@@ -131,21 +118,20 @@ export class ProgressPanel implements IContentRenderer {
 
     let html = '<ul style="list-style: none; padding: 0; margin: 0;">';
     this._textureStates.forEach((value, key) => {
-      let statusIcon = "⏳"; // Pending
-      if (value.status === "generating") statusIcon = "⚙️"; // Processing
-      if (value.status === "cached") statusIcon = "💾"; // Cached
-      if (value.status === "complete") statusIcon = "✅"; // Complete
-      if (value.status === "error") statusIcon = "❌"; // Error
+      let statusIcon = "⏳";
+      if (value.status === "generating") statusIcon = "⚙️";
+      if (value.status === "cached") statusIcon = "💾";
+      if (value.status === "complete") statusIcon = "✅";
+      if (value.status === "error") statusIcon = "❌";
 
       html += `<li style="margin-bottom: 5px;">${statusIcon} ${
         value.name
-      } (${key.replace("planet-", "")})</li>`; // Shorten ID display
+      } (${key.replace("planet-", "")})</li>`;
     });
     html += "</ul>";
     listElement.innerHTML = html;
   }
 
-  // Check if all tracked items are complete or errored
   private checkCompletionAndClose(): void {
     let allDone = true;
     this._textureStates.forEach((value) => {
@@ -155,20 +141,19 @@ export class ProgressPanel implements IContentRenderer {
     });
 
     if (allDone) {
-      this.closePanel(3000); // Close after 3 seconds delay
+      this.closePanel(3000);
     }
   }
 
-  // Close the panel after a delay
   private closePanel(delayMs: number): void {
-    if (this._timeoutId) clearTimeout(this._timeoutId); // Clear auto-close timer
+    if (this._timeoutId) clearTimeout(this._timeoutId);
     this._timeoutId = window.setTimeout(() => {
       this._api?.close();
     }, delayMs);
   }
 
   dispose(): void {
-    this.removeEventListeners(); // IMPORTANT: Remove listeners
+    this.removeEventListeners();
     if (this._timeoutId) {
       clearTimeout(this._timeoutId);
     }

@@ -19,7 +19,6 @@ import type {
 import { pluginLoaders } from "virtual:teskooano-loaders";
 
 class PluginManager {
-  // --- Private Members ---
   #pluginRegistry: Map<string, TeskooanoPlugin> = new Map();
   #panelRegistry: Map<string, PanelConfig> = new Map();
   #functionRegistry: Map<string, FunctionConfig> = new Map();
@@ -30,17 +29,13 @@ class PluginManager {
   #dockviewApi: DockviewApi | null = null;
   #dockviewController: any | null = null;
 
-  // RxJS Subject for plugin registration status
   #pluginStatusSubject = new Subject<PluginRegistrationStatus>();
 
-  // --- Public RxJS Observable ---
   public readonly pluginStatus$: Observable<PluginRegistrationStatus> =
     this.#pluginStatusSubject.asObservable();
 
-  // Singleton instance
   private static instance: PluginManager;
 
-  // Private constructor to enforce singleton pattern
   private constructor() {}
 
   /**
@@ -52,8 +47,6 @@ class PluginManager {
     }
     return PluginManager.instance;
   }
-
-  // --- Public Methods ---
 
   /**
    * Sets the core application dependencies needed by plugins.
@@ -486,11 +479,9 @@ class PluginManager {
       return undefined;
     }
 
-    // Check new dependencies structure first
     const requiresApi = funcConfig.dependencies?.dockView?.api;
     const requiresController = funcConfig.dependencies?.dockView?.controller;
 
-    // Validate dependencies are met
     if (requiresApi && !this.#dockviewApi) {
       const errorMsg = `[PluginManager] Cannot execute function '${functionId}': DockviewApi dependency required but not set. Call setAppDependencies first.`;
       console.error(errorMsg);
@@ -502,10 +493,9 @@ class PluginManager {
       throw new Error(errorMsg);
     }
 
-    // Build context, injecting only if needed (or always for simplicity? Always for now.)
     const context: PluginExecutionContext = {
-      dockviewApi: this.#dockviewApi, // Always pass, might be null if not set/needed
-      dockviewController: this.#dockviewController, // Always pass, might be null
+      dockviewApi: this.#dockviewApi,
+      dockviewController: this.#dockviewController,
       getManager: this.getManagerInstance.bind(this),
       executeFunction: this.execute.bind(this),
     };
@@ -567,8 +557,6 @@ class PluginManager {
   public getManagerInstance<T = any>(id: string): T | undefined {
     return this.#managerInstances.get(id) as T | undefined;
   }
-
-  // --- Private Helper Methods ---
 
   #registerPanel(pluginId: string, panelConfig: PanelConfig): void {
     if (this.#panelRegistry.has(panelConfig.componentName)) {

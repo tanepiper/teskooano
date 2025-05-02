@@ -14,34 +14,27 @@ import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { OrbitManager } from "@teskooano/renderer-threejs-orbits";
 import * as THREE from "three";
 import { RendererStateAdapter } from "./RendererStateAdapter";
-// Import debug utilities
+
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { renderableObjects$ } from "@teskooano/core-state";
 
-// Export our new SpaceRenderer facade that uses the new modular architecture
 export class ModularSpaceRenderer {
-  // Core components
   public sceneManager: SceneManager;
   public animationLoop: AnimationLoop;
   public stateManager: StateManager;
 
-  // Visualization components
   public objectManager: ObjectManager;
   public orbitManager: OrbitManager;
   public backgroundManager: BackgroundManager;
 
-  // Interaction components
   public controlsManager: ControlsManager;
   public css2DManager?: CSS2DManager;
 
-  // Effects components
   public lightManager: LightManager;
   public lodManager: LODManager;
 
-  // NEW: State Adapter
   private stateAdapter: RendererStateAdapter;
 
-  // Optional canvas UI manager
   private canvasUIManager?: { render(): void };
 
   constructor(
@@ -59,46 +52,37 @@ export class ModularSpaceRenderer {
   ) {
     this.stateAdapter = new RendererStateAdapter();
 
-    // Initialize core components first
-    this.sceneManager = new SceneManager(container, options); // Initialize SceneManager WITHOUT css2DManager initially
+    this.sceneManager = new SceneManager(container, options);
     this.animationLoop = new AnimationLoop();
     this.stateManager = new StateManager();
 
     this.animationLoop.setRenderer(this.sceneManager.renderer);
     this.animationLoop.setCamera(this.sceneManager.camera);
 
-    // Initialize effects components (like LightManager needed by ObjectManager)
     this.lightManager = new LightManager(this.sceneManager.scene);
     this.lodManager = new LODManager(this.sceneManager.camera);
 
-    // Initialize interaction components (ControlsManager needs DOM element)
-    const showCelestialLabels = options.showCelestialLabels !== false; // Default to true
+    const showCelestialLabels = options.showCelestialLabels !== false;
     this.controlsManager = new ControlsManager(
       this.sceneManager.camera,
       this.sceneManager.renderer.domElement,
     );
 
-    // Only initialize CSS2D manager if UI is enabled
     if (showCelestialLabels) {
       this.css2DManager = new CSS2DManager(this.sceneManager.scene, container);
-      // Now pass the created CSS2DManager back to SceneManager
+
       this.sceneManager.setCSS2DManager(this.css2DManager);
     } else {
-      this.css2DManager = undefined; // Ensure it's undefined if UI is disabled
+      this.css2DManager = undefined;
     }
 
-    // Initialize visualization components AFTER interaction components (ObjectManager needs CSS2DManager)
-    // Pass css2DManager - ObjectManager constructor needs to handle undefined if UI is disabled
-    // OR ensure ObjectManager is only passed a valid instance.
     if (!this.css2DManager && showCelestialLabels) {
       throw new Error("CSS2DManager failed to initialize but UI was enabled.");
     } else if (!showCelestialLabels && this.css2DManager) {
-      // This case shouldn't happen based on above logic, but good practice
       console.warn("CSS2DManager initialized but UI is disabled?");
-      this.css2DManager = undefined; // Ensure consistency
+      this.css2DManager = undefined;
     }
 
-    // Pass the SHARED STORE to ObjectManager
     this.objectManager = new ObjectManager(
       this.sceneManager.scene,
       this.sceneManager.camera,
@@ -107,32 +91,27 @@ export class ModularSpaceRenderer {
       this.sceneManager.renderer,
       this.css2DManager,
     );
-    // Pass BOTH the store AND the adapter to OrbitManager
+
     this.orbitManager = new OrbitManager(
       this.objectManager,
-      this.stateAdapter, // For visual settings
-      renderableObjects$, // For object data
+      this.stateAdapter,
+      renderableObjects$,
     );
     this.backgroundManager = new BackgroundManager(this.sceneManager.scene);
     this.backgroundManager.setCamera(this.sceneManager.camera);
 
-    // Setup event listeners
     this.setupEventListeners(container);
 
-    // Setup animation callbacks
     this.setupAnimationCallbacks();
 
-    // Add window resize handler
     window.addEventListener("resize", () => {
       this.onResize(container.clientWidth, container.clientHeight);
     });
 
-    // Set initial grid state based on options
     if (options.showGrid !== undefined) {
       this.sceneManager.setGridVisible(options.showGrid);
     }
-    // Initial label state is handled by ObjectManager/LabelManager now
-    // Add initial AU marker state based on options
+
     if (options.showAuMarkers !== undefined) {
       this.sceneManager.setAuMarkersVisible(options.showAuMarkers);
     }
@@ -149,7 +128,6 @@ export class ModularSpaceRenderer {
       this.backgroundManager.toggleDebug();
     });
 
-    // Handle window resize
     window.addEventListener("resize", () => {
       if (container) {
         const width = container.clientWidth;
@@ -158,26 +136,21 @@ export class ModularSpaceRenderer {
       }
     });
 
-    // Add event listener for camera transition completion
     document.addEventListener("camera-transition-complete", (event) => {
       const customEvent = event as CustomEvent;
       if (customEvent.detail) {
-        // Maybe log that the transition completed, but don't rely on internal state here
       }
     });
   }
 
   private setupAnimationCallbacks(): void {
     const mainUpdateCallback = (deltaTime: number, elapsedTime: number) => {
-      // Update Orbit Manager visualizations (trails, predictions, Keplerian)
       this.orbitManager.updateAllVisualizations();
 
-      // Update CSS2D renderer if it exists
       if (this.css2DManager && typeof this.css2DManager.render === "function") {
         this.css2DManager.render(this.camera);
       }
 
-      // Call updateRenderers and pass the light map from LightManager
       this.objectManager.updateRenderers(
         elapsedTime,
         this.lightManager.getStarLightsData(),
@@ -186,17 +159,14 @@ export class ModularSpaceRenderer {
         this.sceneManager.camera,
       );
 
-      // Update the background with the current time delta
       this.backgroundManager.update(deltaTime);
 
-      // Final render for the frame
       this.render();
     };
 
     this.animationLoop.onAnimate(mainUpdateCallback);
   }
 
-  // Public API (Getters)
   /**
    * Gets the underlying Three.js scene instance.
    * @returns {THREE.Scene} The scene object.
@@ -226,7 +196,6 @@ export class ModularSpaceRenderer {
     return this.controlsManager.controls;
   }
 
-  // Start/Stop Loop
   /**
    * Starts the rendering loop.
    */
@@ -240,7 +209,6 @@ export class ModularSpaceRenderer {
     this.animationLoop.stop();
   }
 
-  // Resize Handling
   /**
    * Handles window resize events, updating camera aspect ratio and renderer size.
    * @param {number} width - The new width of the viewport.
@@ -248,12 +216,8 @@ export class ModularSpaceRenderer {
    */
   onResize(width: number, height: number): void {
     this.sceneManager.onResize(width, height);
-    // controlsManager doesn't seem to have onResize
-    // this.controlsManager.onResize();
-    // css2DManager handles its own resize
+
     this.css2DManager?.onResize(width, height);
-    // REMOVED: ObjectManager no longer needs onResize for labels
-    // this.objectManager.onResize(width, height);
   }
 
   /**
@@ -263,14 +227,14 @@ export class ModularSpaceRenderer {
    */
   render(): void {
     this.lodManager.update();
-    // ObjectManager update now handles its internal state/objects
+
     this.objectManager.update(this.renderer, this.scene, this.camera);
     this.css2DManager?.render(this.camera);
     this.animationLoop.getRenderCallbacks().forEach((callback) => callback());
-    // --- PASS DELTA TO CONTROLS --- //
-    const delta = this.animationLoop.getDelta(); // Get delta from animation loop (Corrected method name)
-    this.controlsManager.update(delta); // Pass delta to controls manager
-    // --- END PASS DELTA ---
+
+    const delta = this.animationLoop.getDelta();
+    this.controlsManager.update(delta);
+
     this.sceneManager.render();
     if (this.canvasUIManager) {
       this.canvasUIManager.render();
@@ -331,7 +295,6 @@ export class ModularSpaceRenderer {
    * @param {boolean} visible - True to show orbits, false to hide.
    */
   setOrbitsVisible(visible: boolean): void {
-    // TODO: Add setVisibility(visible: boolean) method to OrbitManager
     this.orbitManager.setVisibility(visible);
   }
   /**
@@ -354,7 +317,6 @@ export class ModularSpaceRenderer {
    * @param {THREE.Vector3} target - The new point for the camera to look at.
    */
   updateCamera(position: THREE.Vector3, target: THREE.Vector3): void {
-    // Deprecated: Use ControlsManager for camera movement
     this.controlsManager.pointCameraAtTarget(target);
   }
 
@@ -422,8 +384,8 @@ export class ModularSpaceRenderer {
    */
   setFollowTarget(
     objectId: string | null,
-    _targetPosition?: THREE.Vector3, // Mark as unused
-    _cameraPosition?: THREE.Vector3, // Mark as unused
+    _targetPosition?: THREE.Vector3,
+    _cameraPosition?: THREE.Vector3,
   ): void {
     if (!this.controlsManager) {
       console.error("[Renderer] ControlsManager not initialized.");
@@ -431,27 +393,21 @@ export class ModularSpaceRenderer {
     }
 
     if (objectId === null) {
-      // Stop following
       this.controlsManager.setFollowTarget(null);
       return;
     }
 
-    // Find the Three.js object to follow
     const objectToFollow = this.objectManager.getObject(objectId);
 
     if (!objectToFollow) {
       console.warn(
         `[Renderer] Could not find object with ID '${objectId}' to follow.`,
       );
-      // Optionally clear the follow target if the requested object doesn't exist
+
       this.controlsManager.setFollowTarget(null);
       return;
     }
 
-    // Delegate to ControlsManager
-    // We let ControlsManager calculate the position and target based on the object.
-    // The `false` argument for `keepCurrentDistance` means it will calculate
-    // a suitable distance instead of maintaining the current one.
     this.controlsManager.setFollowTarget(objectToFollow, undefined, false);
   }
 
@@ -469,7 +425,7 @@ export class ModularSpaceRenderer {
    */
   public toggleDebugVisualization(): boolean {
     const newState = !debugConfig.visualize;
-    this.setDebugVisualization(newState); // This now just sets the global flag
+    this.setDebugVisualization(newState);
     return newState;
   }
 

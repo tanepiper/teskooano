@@ -84,7 +84,6 @@ const subdivide = (
   const halfSize = node.size / 2;
   const children: OctreeNode[] = [];
 
-  // Create 8 children using OSVector3
   for (let x = -1; x <= 1; x += 2) {
     for (let y = -1; y <= 1; y += 2) {
       for (let z = -1; z <= 1; z += 2) {
@@ -99,14 +98,13 @@ const subdivide = (
   }
 
   node.children = children;
-  const assignedChildren = node.children; // Assign to new var for type checker
+  const assignedChildren = node.children;
 
-  // Redistribute bodies to children
   const bodiesToRedistribute = [...node.bodies];
   node.bodies = [];
 
   node.totalMass_kg = 0;
-  node.centerOfMass_m.copy(node.center); // Reset COM to geometric center initially
+  node.centerOfMass_m.copy(node.center);
 
   bodiesToRedistribute.forEach((body) => {
     let inserted = false;
@@ -117,16 +115,15 @@ const subdivide = (
         break;
       }
     }
-    // If body wasn't inserted into any child, keep it in this node
+
     if (!inserted) {
       node.bodies.push(body);
-      // Update node's mass properties
+
       updateMassProperties(node, body);
     }
   });
 
-  // Update the parent node's mass properties based on its children AFTER redistribution
-  node.totalMass_kg = 0; // Reset again before summing up children
+  node.totalMass_kg = 0;
   node.centerOfMass_m.set(0, 0, 0);
   let totalMassForParent = 0;
   const weightedCOMParent = new OSVector3(0, 0, 0);
@@ -141,7 +138,7 @@ const subdivide = (
       }
     });
   }
-  // Also include mass of bodies retained directly by the parent
+
   node.bodies.forEach((retainedBody) => {
     weightedCOMParent.add(
       retainedBody.position_m.clone().multiplyScalar(retainedBody.mass_kg),
@@ -155,7 +152,7 @@ const subdivide = (
     );
     node.totalMass_kg = totalMassForParent;
   } else {
-    node.centerOfMass_m.copy(node.center); // Fallback if node becomes empty
+    node.centerOfMass_m.copy(node.center);
     node.totalMass_kg = 0;
   }
 };
@@ -167,14 +164,12 @@ const updateMassProperties = (
   node: OctreeNode,
   body: PhysicsStateReal,
 ): void => {
-  // If this is the first body, just use its position as the center of mass
   if (node.totalMass_kg === 0) {
     node.totalMass_kg = body.mass_kg;
     node.centerOfMass_m = body.position_m.clone();
     return;
   }
 
-  // Calculate new center of mass
   const newTotalMass = node.totalMass_kg + body.mass_kg;
 
   const weightedOldCM = node.centerOfMass_m
@@ -199,31 +194,24 @@ const insertBody = (
   currentDepth: number,
   maxDepth: number,
 ): void => {
-  // Update mass properties before potential subdivision/insertion
   updateMassProperties(node, body);
 
-  // Stop subdividing if max depth is reached
   if (currentDepth >= maxDepth) {
     node.bodies.push(body);
     return;
   }
 
-  // If node has no children and meets criteria, subdivide
   if (!node.children && node.bodies.length + 1 > 1 && node.size > 0.1) {
-    // +1 for the body being inserted
-    // Check if we should subdivide (e.g., node has bodies already)
     if (node.bodies.length > 0) {
-      subdivide(node, currentDepth + 1, maxDepth); // Pass depth down
+      subdivide(node, currentDepth + 1, maxDepth);
     }
   }
 
-  // If node has children, try to insert into them
   if (node.children) {
     let insertedIntoChild = false;
-    const originalBodies = [...node.bodies]; // Bodies currently in this node before insert
-    node.bodies = []; // Clear bodies from this node as they should go to children if possible
+    const originalBodies = [...node.bodies];
+    node.bodies = [];
 
-    // Try inserting the new body
     for (const child of node.children) {
       if (isInBounds(body.position_m, child)) {
         insertBody(child, body, currentDepth + 1, maxDepth);
@@ -231,12 +219,11 @@ const insertBody = (
         break;
       }
     }
-    // If the new body couldn't fit in a child, add it back to this node
+
     if (!insertedIntoChild) {
       node.bodies.push(body);
     }
 
-    // Redistribute existing bodies that were in this node
     originalBodies.forEach((existingBody) => {
       let redistributed = false;
       for (const child of node.children!) {
@@ -246,13 +233,12 @@ const insertBody = (
           break;
         }
       }
-      // If an existing body couldn't fit in a child, keep it here
+
       if (!redistributed) {
         node.bodies.push(existingBody);
       }
     });
   } else {
-    // If no children (or subdivision didn't happen), store the body in this node
     node.bodies.push(body);
   }
 };
@@ -268,23 +254,19 @@ const findBodiesInRange = (
   result: PhysicsStateReal[] = [],
   seen: Set<string> = new Set(),
 ): PhysicsStateReal[] => {
-  // Check if this node intersects with the range query using OSVector3
   const closestPoint = new OSVector3(
     Math.max(node.minX, Math.min(point.x, node.maxX)),
     Math.max(node.minY, Math.min(point.y, node.maxY)),
     Math.max(node.minZ, Math.min(point.z, node.maxZ)),
   );
 
-  // Calculate distance using OSVector3
   const distSq = distanceSquared(closestPoint, point);
   const rangeSq = range * range;
 
-  // If the node is completely outside the range, return early
   if (distSq > rangeSq) {
     return result;
   }
 
-  // Check bodies in this node
   for (const body of node.bodies) {
     const bodyId = String(body.id);
     if (!seen.has(bodyId)) {
@@ -296,7 +278,6 @@ const findBodiesInRange = (
     }
   }
 
-  // If node has children, check them
   if (node.children) {
     for (const child of node.children) {
       findBodiesInRange(child, point, range, result, seen);
@@ -363,7 +344,6 @@ export class Octree {
     theta: number,
     accumulatedForce: OSVector3,
   ): void {
-    // Skip calculation if the node is empty or the target body is the only thing in it
     if (
       node.totalMass_kg === 0 ||
       (node.bodies.length === 1 &&
@@ -377,11 +357,9 @@ export class Octree {
       distanceSquared(targetBody.position_m, node.centerOfMass_m) +
       this.softeningFactorSquared;
     const distance = Math.sqrt(distanceSq);
-    const nodeWidth = node.size * 2; // Node size is half-width
+    const nodeWidth = node.size * 2;
 
-    // Barnes-Hut condition: Use node approximation if far enough away or if it's a leaf node
     if (nodeWidth / distance < theta || !node.children) {
-      // If the node directly contains the target body, calculate force from other bodies in the node directly
       if (node.bodies.some((b) => b.id === targetBody.id) && !node.children) {
         for (const otherBody of node.bodies) {
           if (otherBody.id !== targetBody.id) {
@@ -390,10 +368,8 @@ export class Octree {
           }
         }
       } else {
-        // Use the node's center of mass approximation
-        // Create a temporary body representing the node's mass
         const nodeBody: PhysicsStateReal = {
-          id: `node_${node.center.x}_${node.center.y}_${node.center.z}`, // Unique ID for the node
+          id: `node_${node.center.x}_${node.center.y}_${node.center.z}`,
           mass_kg: node.totalMass_kg,
           position_m: node.centerOfMass_m,
           velocity_mps: new OSVector3(0, 0, 0),
@@ -402,7 +378,6 @@ export class Octree {
         accumulatedForce.add(force);
       }
     } else {
-      // Node is too close, recurse into children
       if (node.children) {
         for (const child of node.children) {
           this.calculateNodeForce(child, targetBody, theta, accumulatedForce);

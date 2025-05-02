@@ -32,7 +32,7 @@ export function createAnimationLoop(
 
   const loop = (timestamp: DOMHighResTimeStamp) => {
     callback(timestamp);
-    // Continue the loop only if frameId is still set (i.e., not stopped)
+
     if (frameId !== null) {
       frameId = requestAnimationFrame(loop);
     }
@@ -65,7 +65,7 @@ export function createAnimationLoop(
       console.warn(
         "cancelAnimationFrame is not supported in this environment.",
       );
-      // Attempt to nullify frameId anyway to prevent loop continuation
+
       frameId = null;
     }
     cleanup?.();
@@ -90,23 +90,21 @@ export const animationFrames$ = new Observable<DOMHighResTimeStamp>(
 
     const callback = (timestamp: DOMHighResTimeStamp) => {
       observer.next(timestamp);
-      // Schedule next frame only if the observable is still subscribed
+
       if (!observer.closed) {
         frameId = requestAnimationFrame(callback);
       }
     };
 
-    // Start the loop
     if (typeof requestAnimationFrame !== "undefined") {
       frameId = requestAnimationFrame(callback);
     } else {
       console.warn(
         "requestAnimationFrame is not supported, animationFrames$ will not emit.",
       );
-      observer.complete(); // Complete if rAF not supported
+      observer.complete();
     }
 
-    // Cleanup function to cancel the animation frame on unsubscribe
     return () => {
       if (frameId !== null && typeof cancelAnimationFrame !== "undefined") {
         cancelAnimationFrame(frameId);
@@ -114,8 +112,4 @@ export const animationFrames$ = new Observable<DOMHighResTimeStamp>(
       frameId = null;
     };
   },
-).pipe(
-  share(), // Share the underlying rAF loop among subscribers
-  // No need for repeat() here, the rAF loop handles continuation
-  // No need for shareReplay - typically you want the *current* frame time
-);
+).pipe(share());

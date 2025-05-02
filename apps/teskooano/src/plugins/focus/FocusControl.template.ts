@@ -1,6 +1,6 @@
 import ArrowSyncCircleIcon from "@fluentui/svg-icons/icons/arrow_sync_circle_24_regular.svg?raw";
 import DismissCircleIcon from "@fluentui/svg-icons/icons/dismiss_circle_24_regular.svg?raw";
-import { CelestialType } from "@teskooano/data-types"; // Only needed for iconStyles map if kept
+import { CelestialType } from "@teskooano/data-types";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -147,7 +147,6 @@ template.innerHTML = `
   </div>
 `;
 
-// Keep iconStyles map if CelestialRow doesn't fully handle icon types yet
 const iconStyles: Record<string, string> = {
   [CelestialType.STAR]: "background-color: yellow;",
   [CelestialType.PLANET]: "background-color: skyblue;",
@@ -159,4 +158,4 @@ const iconStyles: Record<string, string> = {
   default: "background-color: white;",
 };
 
-export { template, iconStyles }; // Export map if still needed by list.ts or row.ts
+export { template, iconStyles };

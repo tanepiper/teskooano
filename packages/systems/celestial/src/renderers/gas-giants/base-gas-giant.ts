@@ -5,7 +5,6 @@ import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
 import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "../index";
 
-// Import the gas giant shaders
 import basicFragmentShader from "../../shaders/gas-giants/basic.fragment.glsl";
 import basicVertexShader from "../../shaders/gas-giants/basic.vertex.glsl";
 
@@ -13,29 +12,21 @@ import basicVertexShader from "../../shaders/gas-giants/basic.vertex.glsl";
  * Base material for gas giants
  */
 export abstract class BaseGasGiantMaterial extends THREE.ShaderMaterial {
-  // Add a method specifically for LOD updates
-  updateLOD(lodLevel: number): void {
-    // Default implementation does nothing
-    // Child classes (like ClassIMaterial) will override this
-  }
+  updateLOD(lodLevel: number): void {}
 
   /**
    * Update the material with current time
    */
   update(time: number, lightSourcePosition?: THREE.Vector3): void {
     if (this.uniforms.time) {
-      this.uniforms.time.value = time; // Update time if uniform exists
+      this.uniforms.time.value = time;
     }
     if (this.uniforms.sunPosition && lightSourcePosition) {
-      this.uniforms.sunPosition.value = lightSourcePosition; // Update light if uniform exists
+      this.uniforms.sunPosition.value = lightSourcePosition;
     }
   }
 
-  // Release resources
-  dispose(): void {
-    // No textures to dispose in this material by default
-    // Child classes can override if needed
-  }
+  dispose(): void {}
 }
 
 /**
@@ -46,11 +37,11 @@ export class BasicGasGiantMaterial extends BaseGasGiantMaterial {
     super({
       uniforms: {
         baseColor: { value: baseColor },
-        sunPosition: { value: new THREE.Vector3(1, 1, 1) }, // Default light position
-        time: { value: 0 }, // Needed by base class update
+        sunPosition: { value: new THREE.Vector3(1, 1, 1) },
+        time: { value: 0 },
       },
-      vertexShader: basicVertexShader, // Use the imported basic shader
-      fragmentShader: basicFragmentShader, // Use the imported basic shader
+      vertexShader: basicVertexShader,
+      fragmentShader: basicFragmentShader,
     });
   }
 }
@@ -82,27 +73,25 @@ export abstract class BaseGasGiantRenderer implements CelestialRenderer {
   ): LODLevel[] {
     this.objectIds.add(object.celestialObjectId);
     const scale = typeof SCALE === "number" ? SCALE : 1;
-    const baseRadius = object.radius ?? 10; // Default radius if missing
+    const baseRadius = object.radius ?? 10;
 
-    // --- Level 0: High Detail ---
     const highDetailSegments = options?.segments ?? 64;
     const highDetailGeometry = new THREE.SphereGeometry(
       baseRadius,
       highDetailSegments,
       highDetailSegments,
     );
-    const highDetailMaterial = this.getMaterial(object); // Get specific material from subclass
-    this.materials.set(object.celestialObjectId, highDetailMaterial); // Store for updates
+    const highDetailMaterial = this.getMaterial(object);
+    this.materials.set(object.celestialObjectId, highDetailMaterial);
     const highDetailMesh = new THREE.Mesh(
       highDetailGeometry,
       highDetailMaterial,
     );
     highDetailMesh.name = `${object.celestialObjectId}-high-lod`;
-    const level0Group = new THREE.Group(); // Create Group
-    level0Group.add(highDetailMesh); // Add Mesh to Group
-    const level0: LODLevel = { object: level0Group, distance: 0 }; // Assign Group
+    const level0Group = new THREE.Group();
+    level0Group.add(highDetailMesh);
+    const level0: LODLevel = { object: level0Group, distance: 0 };
 
-    // --- Level 1: Medium Detail ---
     const mediumSegments = 32;
     const mediumGeometry = new THREE.SphereGeometry(
       baseRadius,
@@ -114,11 +103,10 @@ export abstract class BaseGasGiantRenderer implements CelestialRenderer {
     );
     const mediumMesh = new THREE.Mesh(mediumGeometry, mediumMaterial);
     mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
-    const level1Group = new THREE.Group(); // Create Group
-    level1Group.add(mediumMesh); // Add Mesh to Group
-    const level1: LODLevel = { object: level1Group, distance: 150 * scale }; // Assign Group
+    const level1Group = new THREE.Group();
+    level1Group.add(mediumMesh);
+    const level1: LODLevel = { object: level1Group, distance: 150 * scale };
 
-    // --- Level 2: Low Detail ---
     const lowSegments = 16;
     const lowGeometry = new THREE.SphereGeometry(
       baseRadius,
@@ -127,13 +115,13 @@ export abstract class BaseGasGiantRenderer implements CelestialRenderer {
     );
     const lowMaterial = new THREE.MeshBasicMaterial({
       color: this._getBaseGasGiantColor(object),
-      wireframe: false, // Solid color sphere might look better than wireframe for gas giants
+      wireframe: false,
     });
     const lowMesh = new THREE.Mesh(lowGeometry, lowMaterial);
     lowMesh.name = `${object.celestialObjectId}-low-lod`;
-    const level2Group = new THREE.Group(); // Create Group
-    level2Group.add(lowMesh); // Add Mesh to Group
-    const level2: LODLevel = { object: level2Group, distance: 800 * scale }; // Assign Group
+    const level2Group = new THREE.Group();
+    level2Group.add(lowMesh);
+    const level2: LODLevel = { object: level2Group, distance: 800 * scale };
 
     return [level0, level1, level2];
   }
@@ -146,7 +134,7 @@ export abstract class BaseGasGiantRenderer implements CelestialRenderer {
     object: RenderableCelestialObject,
   ): THREE.Color {
     const properties = object.properties as GasGiantProperties | undefined;
-    // Use atmosphereColor if available, otherwise fallback
+
     try {
       if (properties?.atmosphereColor) {
         return new THREE.Color(properties.atmosphereColor);
@@ -157,9 +145,8 @@ export abstract class BaseGasGiantRenderer implements CelestialRenderer {
         properties?.atmosphereColor,
       );
     }
-    // Fallback based on class? Or generic default?
-    // For now, using a generic default.
-    return new THREE.Color(0xccaa88); // Tan/Brownish default
+
+    return new THREE.Color(0xccaa88);
   }
 
   /**
@@ -194,8 +181,6 @@ export abstract class BaseGasGiantRenderer implements CelestialRenderer {
       }
 
       material.update(t, lightSourcePosition);
-
-      // Removed old material.updateLOD call as LODManager handles mesh switching
     });
   }
 

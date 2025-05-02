@@ -42,7 +42,6 @@ export function createStarRenderer(
   spectralClass?: string,
   stellarType?: StellarType,
 ): BaseStarRenderer {
-  // First check for stellar type (takes precedence)
   if (stellarType) {
     switch (stellarType) {
       case StellarType.NEUTRON_STAR:
@@ -56,12 +55,10 @@ export function createStarRenderer(
       case StellarType.KERR_BLACK_HOLE:
         return new KerrBlackHoleRenderer();
       case StellarType.MAIN_SEQUENCE:
-        // For main sequence stars, we still want to use the spectral class if available
         break;
     }
   }
 
-  // Otherwise use spectral class
   switch (spectralClass?.toUpperCase()) {
     case "O":
       return new ClassOStarRenderer();
@@ -85,21 +82,21 @@ export function createStarRenderer(
 /**
  * Example usage in animation loop:
  *
- * // Create a star renderer based on spectral class or stellar type
+ *
  * const starRenderer = createStarRenderer(
  *   starObject.properties.spectralClass,
  *   starObject.properties.stellarType
  * );
  *
- * // Create a star mesh
+ *
  * const starMesh = starRenderer.createMesh(starObject);
  * scene.add(starMesh);
  *
- * // In your animation loop:
+ *
  * function animate() {
  *   requestAnimationFrame(animate);
  *
- *   // Update star animations
+ *
  *   starRenderer.animate();
  *
  *   renderer.render(scene, camera);

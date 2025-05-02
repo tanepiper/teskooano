@@ -16,11 +16,10 @@ import {
   type IceSurfaceProperties,
   type RockyTerrestrialSurfaceProperties,
 } from "@teskooano/data-types";
-import { SOLAR_MASS, SOLAR_RADIUS, AU, KM } from "@teskooano/core-physics"; // Removed VISUAL_AU_SCALE
+import { SOLAR_MASS, SOLAR_RADIUS, AU, KM } from "@teskooano/core-physics";
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 
-// Define JUPITER_MASS locally if not exported
-const JUPITER_MASS = 1.898e27; // kg
+const JUPITER_MASS = 1.898e27;
 
 /**
  * Initialize a system showcasing exotic stellar objects
@@ -28,11 +27,9 @@ const JUPITER_MASS = 1.898e27; // kg
  * Schwarzschild Black Hole, and Kerr Black Hole
  */
 export function initializeExoticStarsSystem() {
-  // Set up large distances between objects to make them visible
-  const largeOrbitDistanceAU = 100.0; // Define distance in AU - Increased
-  const largeOrbitDistance = largeOrbitDistanceAU * SCALE.RENDER_SCALE_AU; // Calculate visual distance
+  const largeOrbitDistanceAU = 100.0;
+  const largeOrbitDistance = largeOrbitDistanceAU * SCALE.RENDER_SCALE_AU;
 
-  // 1. NEUTRON STAR - Center
   const neutronStarId = actions.createSolarSystem({
     id: "pulsar-1",
     name: "Crab Pulsar",
@@ -62,8 +59,7 @@ export function initializeExoticStarsSystem() {
     } as StarProperties,
   });
 
-  // Companion planet to Neutron Star
-  const pulsarPlanetSMA_AU = 0.3; // Define distance in AU
+  const pulsarPlanetSMA_AU = 0.3;
   actions.addCelestial({
     id: "pulsar-1-planet",
     name: "Pulsar Planet",
@@ -103,9 +99,8 @@ export function initializeExoticStarsSystem() {
     } as PlanetProperties,
   });
 
-  // 2. WHITE DWARF - Orbiting Neutron Star
-  const whiteDwarfSMA_AU = largeOrbitDistanceAU; // Use the AU value for real calculation
-  const whiteDwarfId = "sirius-b"; // Assign ID directly
+  const whiteDwarfSMA_AU = largeOrbitDistanceAU;
+  const whiteDwarfId = "sirius-b";
   actions.addCelestial({
     id: whiteDwarfId,
     name: "Sirius B",
@@ -135,7 +130,6 @@ export function initializeExoticStarsSystem() {
     } as StarProperties,
   });
 
-  // Companion debris disk to White Dwarf
   const debrisDiskSMA_AU = 0.2;
   const debrisDiskInnerAU = 0.15;
   const debrisDiskOuterAU = 0.25;
@@ -148,7 +142,7 @@ export function initializeExoticStarsSystem() {
     visualScaleRadius: 0.01,
     realMass_kg: 1.0e22,
     realRadius_m: (debrisDiskOuterAU - debrisDiskInnerAU) * AU,
-    parentId: whiteDwarfId, // Use stored ID
+    parentId: whiteDwarfId,
     orbit: {
       realSemiMajorAxis_m: debrisDiskSMA_AU * AU,
       eccentricity: 0.12,
@@ -170,9 +164,8 @@ export function initializeExoticStarsSystem() {
     } as AsteroidFieldProperties,
   });
 
-  // 3. WOLF-RAYET STAR - Orbiting Neutron Star
   const wolfRayetSMA_AU = largeOrbitDistanceAU * 0.9;
-  const wolfRayetId = "wr-124"; // Assign ID directly
+  const wolfRayetId = "wr-124";
   actions.addCelestial({
     id: wolfRayetId,
     name: "WR 124",
@@ -202,8 +195,7 @@ export function initializeExoticStarsSystem() {
     } as StarProperties,
   });
 
-  // Distant Gas Giant orbiting Wolf-Rayet star
-  const wrPlanetSMA_AU = 1.5; // Estimated distance in AU
+  const wrPlanetSMA_AU = 1.5;
   actions.addCelestial({
     id: "wr-124-planet",
     name: "WR 124b",
@@ -212,7 +204,7 @@ export function initializeExoticStarsSystem() {
     visualScaleRadius: 3.0,
     realMass_kg: 2 * JUPITER_MASS,
     realRadius_m: 1.2 * 69911000,
-    parentId: wolfRayetId, // Use stored ID
+    parentId: wolfRayetId,
     orbit: {
       realSemiMajorAxis_m: wrPlanetSMA_AU * AU,
       eccentricity: 0.1,
@@ -233,9 +225,8 @@ export function initializeExoticStarsSystem() {
     } as GasGiantProperties,
   });
 
-  // 4. SCHWARZSCHILD BLACK HOLE - Orbiting Neutron Star
-  const schwarzschildSMA_AU = largeOrbitDistanceAU; // 100 AU
-  const schwarzschildId = "sgr-a"; // Assign ID directly
+  const schwarzschildSMA_AU = largeOrbitDistanceAU;
+  const schwarzschildId = "sgr-a";
   actions.addCelestial({
     id: schwarzschildId,
     name: "Sagittarius A*",
@@ -265,8 +256,7 @@ export function initializeExoticStarsSystem() {
     } as StarProperties,
   });
 
-  // Star orbiting the Black Hole
-  const s2StarSMA_AU = 0.001; // Very close orbit ~120 AU
+  const s2StarSMA_AU = 0.001;
   actions.addCelestial({
     id: "s2-star",
     name: "S2 Star",
@@ -296,9 +286,8 @@ export function initializeExoticStarsSystem() {
     },
   });
 
-  // 5. KERR BLACK HOLE - Orbiting Neutron Star
-  const kerrOrbitSMA_AU = largeOrbitDistanceAU * 1.1; // Slightly further out
-  const kerrId = "cygnus-x1"; // Assign ID directly
+  const kerrOrbitSMA_AU = largeOrbitDistanceAU * 1.1;
+  const kerrId = "cygnus-x1";
   actions.addCelestial({
     id: kerrId,
     name: "Cygnus X-1",
@@ -328,8 +317,7 @@ export function initializeExoticStarsSystem() {
     },
   });
 
-  // Companion star to Kerr Black Hole
-  const hdeStarSMA_AU = 0.2; // Close orbit
+  const hdeStarSMA_AU = 0.2;
   actions.addCelestial({
     id: "hde-226868",
     name: "HDE 226868",

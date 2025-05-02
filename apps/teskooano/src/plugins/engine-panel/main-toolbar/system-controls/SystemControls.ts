@@ -24,17 +24,7 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs/operators";
-import type { TeskooanoButton } from "../../../../core/components/button/Button.js";
-import {
-  CheckmarkIcon,
-  CopyIcon,
-  DeleteIcon,
-  DocumentAddIcon,
-  FolderOpenIcon,
-  SaveIcon,
-  SparkleIcon,
-  SystemControlsTemplate,
-} from "./SystemControls.template.js";
+import { SystemControlsTemplate } from "./SystemControls.template.js";
 import * as systemActions from "./system-controls.actions.js";
 import * as SystemControlsUI from "./system-controls.ui.js";
 
@@ -56,7 +46,6 @@ class SystemControls
   extends HTMLElement
   implements SystemControlsUI.SystemControlsUIContract
 {
-  // DOM elements
   /** @internal The main container element for the controls. */
   private container: HTMLElement | null = null;
   /** @internal The element shown when no system is loaded. */
@@ -76,19 +65,17 @@ class SystemControls
   /** @internal The overlay shown during loading/generation states. */
   private loadingOverlay: HTMLElement | null = null;
 
-  // --- RxJS State --- //
   private isGenerating$$ = new BehaviorSubject<boolean>(false);
   private mobile$$ = new BehaviorSubject<boolean>(false);
-  private subscriptions = new Subscription(); // Single subscription manager
+  private subscriptions = new Subscription();
 
-  // Expose internal state for UI functions (implementing contract)
   public isMobile(): boolean {
     return this.mobile$$.value;
   }
   public isGenerating(): boolean {
     return this.isGenerating$$.value;
   }
-  // Keep refs to elements needed by UI functions
+
   public get _loadingOverlay(): HTMLElement | null {
     return this.loadingOverlay;
   }
@@ -116,7 +103,6 @@ class SystemControls
    * @returns {string[]} An array of attribute names to observe.
    */
   static get observedAttributes() {
-    // Only observe mobile, other state comes from store
     return ["mobile"];
   }
 
@@ -131,7 +117,6 @@ class SystemControls
    * @internal
    */
   connectedCallback() {
-    // Cache DOM elements
     this.container =
       this.shadowRoot?.querySelector(".teskooano-system-controls-container") ||
       null;
@@ -150,14 +135,9 @@ class SystemControls
     this.loadingOverlay =
       this.shadowRoot?.querySelector(".loading-overlay") || null;
 
-    // Initialize mobile state
     this.mobile$$.next(this.hasAttribute("mobile"));
 
-    // --- Setup RxJS Streams --- //
     this.setupRxJSStreams();
-
-    // Add Tooltips (can remain as is)
-    this.setupTooltips();
   }
 
   /**
@@ -165,7 +145,7 @@ class SystemControls
    * @internal
    */
   disconnectedCallback() {
-    this.subscriptions.unsubscribe(); // Unsubscribe all streams
+    this.subscriptions.unsubscribe();
   }
 
   /**
@@ -192,7 +172,6 @@ class SystemControls
   private setupRxJSStreams(): void {
     if (!this.shadowRoot) return;
 
-    // --- Event Sources --- //
     const generateSubmitButton = this.seedForm?.querySelector<HTMLElement>(
       'teskooano-button[type="submit"]',
     );
@@ -215,7 +194,6 @@ class SystemControls
       'teskooano-button[data-action="create-blank"]',
     );
 
-    // Ensure all elements exist before creating streams
     if (
       !this.seedForm ||
       !generateSubmitButton ||
@@ -233,29 +211,24 @@ class SystemControls
       return;
     }
 
-    // Seed generation from submit BUTTON CLICK
     const seedSubmit$ = fromEvent(generateSubmitButton, "click").pipe(
       map(() => this.seedInput!.value || ""),
     );
 
-    // Random seed generation from button click
     const randomSubmit$ = fromEvent(randomButton, "click").pipe(
-      map(() => Math.random().toString(36).substring(2, 10)), // Generate random seed
+      map(() => Math.random().toString(36).substring(2, 10)),
     );
 
-    // Combined stream for triggering generation
     const generateSystemTrigger$ = merge(seedSubmit$, randomSubmit$);
 
-    // Action: Generate System (now using pluginManager)
     const generateSystemAction$ = generateSystemTrigger$.pipe(
       filter(() => !this.isGenerating$$.value),
       tap(() => this.isGenerating$$.next(true)),
-      // Use pluginManager.execute to call the registered generation function
+
       switchMap((seed) =>
         from(
           pluginManager.execute("system:generate_random", { seed: seed }),
         ).pipe(
-          // The result from pluginManager.execute should already be ActionResult-like
           tap((result: any) => {
             console.log("Generation result:", result);
             this.showFeedback(
@@ -287,7 +260,6 @@ class SystemControls
       tap(() => this.isGenerating$$.next(false)),
     );
 
-    // Action: Clear System
     const clearSystemAction$ = fromEvent(clearButton, "click").pipe(
       filter(() => !this.isGenerating$$.value),
       tap(() => this.isGenerating$$.next(true)),
@@ -315,10 +287,9 @@ class SystemControls
       tap(() => this.isGenerating$$.next(false)),
     );
 
-    // Action: Export System
     const exportSystemAction$ = fromEvent(exportButton, "click").pipe(
       filter(() => !this.isGenerating$$.value),
-      withLatestFrom(currentSeed, celestialObjects$), // Get current seed and objects
+      withLatestFrom(currentSeed, celestialObjects$),
       tap(() => this.isGenerating$$.next(true)),
       switchMap(([_, seed, objects]) =>
         from(systemActions.exportSystem(seed, objects)).pipe(
@@ -344,26 +315,23 @@ class SystemControls
       tap(() => this.isGenerating$$.next(false)),
     );
 
-    // Action: Import System (using pluginManager.execute)
     const importSystemAction$ = fromEvent(importButton, "click").pipe(
       filter(() => !this.isGenerating$$.value),
       tap(() => this.isGenerating$$.next(true)),
-      // Call pluginManager.execute for the import function
+
       switchMap(() =>
         from(pluginManager.execute("system:trigger_import_dialog")).pipe(
           tap((result: any) => {
-            // pluginManager.execute resolves with the result of the function's execute method
             console.log("Import result:", result);
             this.showFeedback(
               importButton,
-              result?.symbol || (result?.success ? "✅" : "❌"), // Add null checks
+              result?.symbol || (result?.success ? "✅" : "❌"),
               !result?.success,
             );
           }),
           catchError((err) => {
-            // Handle potential errors from pluginManager or the function execution
             console.error("Import error:", err);
-            // Check if it's the cancellation error (might be nested)
+
             const message = err instanceof Error ? err.message : String(err);
             if (message === "File selection cancelled.") {
               this.showFeedback(importButton, "🤷", false, 1000);
@@ -381,16 +349,13 @@ class SystemControls
       tap(() => this.isGenerating$$.next(false)),
     );
 
-    // Action: Copy Seed
     const copySeedAction$ = fromEvent(copySeedButton, "click").pipe(
       filter(() => !this.isGenerating$$.value),
       withLatestFrom(currentSeed),
-      // Call pluginManager for copy seed
+
       switchMap(([_, seed]) =>
         from(pluginManager.execute("system:copy_seed", seed)).pipe(
-          // Pass seed as argument
           tap((result: any) => {
-            // Add type assertion or check result type
             this.showFeedback(
               copySeedButton,
               result?.symbol || (result?.success ? "📋" : "❌"),
@@ -406,11 +371,10 @@ class SystemControls
       ),
     );
 
-    // Action: Create Blank System
     const createBlankAction$ = fromEvent(createBlankButton, "click").pipe(
       filter(() => !this.isGenerating$$.value),
       tap(() => this.isGenerating$$.next(true)),
-      // Call pluginManager for create blank
+
       switchMap(() =>
         from(pluginManager.execute("system:create_blank")).pipe(
           tap((result: any) => {
@@ -434,44 +398,34 @@ class SystemControls
       tap(() => this.isGenerating$$.next(false)),
     );
 
-    // --- State & UI Updates --- //
-
-    // Combined state stream for UI updates
     const displayState$ = combineLatest([
-      // Combine latest values from relevant streams
-      celestialObjects$.pipe(startWith(getCelestialObjects())), // Ensure initial value
-      currentSeed.pipe(startWith(currentSeed.getValue())), // Ensure initial value
+      celestialObjects$.pipe(startWith(getCelestialObjects())),
+      currentSeed.pipe(startWith(currentSeed.getValue())),
       this.isGenerating$$,
       this.mobile$$,
-    ]).pipe(
-      debounceTime(0), // Coalesce rapid updates
-    );
+    ]).pipe(debounceTime(0));
 
-    // Subscribe to combined state for UI updates
     this.subscriptions.add(
       displayState$.subscribe(([objects, seed, isGenerating, isMobile]) => {
-        // Update loading overlay directly
         if (this.loadingOverlay) {
           this.loadingOverlay.style.display = isGenerating ? "flex" : "none";
         }
-        // Call UI update functions, passing the component instance (this)
+
         SystemControlsUI.updateDisplayUI(this, objects, seed);
         SystemControlsUI.updateButtonSizesUI(this);
-        // Update seed input only if it doesn't have focus
+
         if (this.seedInput && !this.seedInput.matches(":focus")) {
           this.seedInput.value = seed || "";
         }
       }),
     );
 
-    // Update seed store when input changes (debounced)
     const seedInput$ = fromEvent(this.seedInput, "input").pipe(
       debounceTime(300),
       map((event) => (event.target as HTMLInputElement).value),
-      tap((seed) => updateSeed(seed)), // Update core state store
+      tap((seed) => updateSeed(seed)),
     );
 
-    // --- Subscribe to Actions --- //
     this.subscriptions.add(generateSystemAction$.subscribe());
     this.subscriptions.add(clearSystemAction$.subscribe());
     this.subscriptions.add(exportSystemAction$.subscribe());
@@ -500,7 +454,6 @@ class SystemControls
     const originalContent = element.innerHTML;
     const feedbackClass = isError ? "feedback--error" : "feedback--success";
 
-    // Clear previous feedback timeouts if any
     const existingTimeout = parseInt(
       element.dataset.feedbackTimeoutId || "0",
       10,
@@ -508,18 +461,17 @@ class SystemControls
     if (existingTimeout) {
       clearTimeout(existingTimeout);
       element.classList.remove("feedback--error", "feedback--success");
-      // Attempt to restore original content if stored
+
       element.innerHTML = element.dataset.originalContent || originalContent;
     }
 
-    // Store original content before changing
     element.dataset.originalContent = originalContent;
     element.innerHTML = `<span class="feedback-symbol">${symbol}</span>`;
     element.classList.add(feedbackClass);
-    element.setAttribute("disabled", ""); // Disable button during feedback
+    element.setAttribute("disabled", "");
 
     const timeoutId = window.setTimeout(() => {
-      element.innerHTML = element.dataset.originalContent || originalContent; // Restore original
+      element.innerHTML = element.dataset.originalContent || originalContent;
       element.classList.remove(feedbackClass);
       element.removeAttribute("disabled");
       delete element.dataset.feedbackTimeoutId;
@@ -528,108 +480,6 @@ class SystemControls
 
     element.dataset.feedbackTimeoutId = timeoutId.toString();
   }
-
-  /**
-   * Iterates through buttons and sets tooltip attributes based on action.
-   * @private
-   */
-  private setupTooltips(): void {
-    const submitButton = this.seedForm?.querySelector(
-      'teskooano-button[type="submit"]',
-    ) as TeskooanoButton | null;
-
-    if (submitButton) {
-      this.setButtonTooltip(
-        submitButton,
-        "Generate",
-        "Generate system from entered seed",
-        CheckmarkIcon,
-      );
-    }
-
-    this.buttons?.forEach((button) => {
-      const actionButton = button as TeskooanoButton; // Cast to specific type
-      const action = actionButton.dataset.action;
-      switch (action) {
-        case "random":
-          this.setButtonTooltip(
-            actionButton,
-            "Random Seed",
-            "Generate system using a random seed",
-            SparkleIcon,
-          );
-          break;
-        case "clear":
-          this.setButtonTooltip(
-            actionButton,
-            "Clear System",
-            "Clear all objects from the current system",
-            DeleteIcon,
-          );
-          break;
-        case "export":
-          this.setButtonTooltip(
-            actionButton,
-            "Export System",
-            "Export current system objects and seed to a JSON file",
-            SaveIcon,
-          );
-          break;
-        case "import":
-          this.setButtonTooltip(
-            actionButton,
-            "Import System",
-            "Import system from a JSON file",
-            FolderOpenIcon,
-          );
-          break;
-        case "create-blank":
-          this.setButtonTooltip(
-            actionButton,
-            "New Blank",
-            "Create a new blank system with just a star",
-            DocumentAddIcon,
-          );
-          break;
-        case "copy-seed":
-          this.setButtonTooltip(
-            actionButton,
-            "Copy Seed",
-            "Copy the current system seed to the clipboard",
-            CopyIcon,
-          );
-          break;
-        // Add cases for other buttons if they exist
-      }
-    });
-  }
-
-  /**
-   * Helper to set tooltip attributes on a button.
-   * @param button The button element.
-   * @param title Tooltip title.
-   * @param text Tooltip descriptive text.
-   * @param iconSvg SVG string for the tooltip icon.
-   * @private
-   */
-  private setButtonTooltip(
-    button: TeskooanoButton | null,
-    title: string | null,
-    text: string | null,
-    iconSvg: string | null,
-  ): void {
-    if (!button) return;
-    // Set attributes - the button component handles native title suppression
-    if (title) button.setAttribute("tooltip-title", title);
-    else button.removeAttribute("tooltip-title");
-
-    if (text) button.setAttribute("tooltip-text", text);
-    else button.removeAttribute("tooltip-text");
-
-    if (iconSvg) button.setAttribute("tooltip-icon-svg", iconSvg);
-    else button.removeAttribute("tooltip-icon-svg");
-  }
 }
 
-// Export for potential external usage or typing
 export { SystemControls };

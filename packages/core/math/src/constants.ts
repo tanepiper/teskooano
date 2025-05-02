@@ -14,5 +14,4 @@ export const TWO_PI = PI * 2;
 /** Half of π (π/2), commonly used in right-angle calculations */
 export const HALF_PI = PI / 2;
 
-// Conversion factor from degrees to radians
 export const DEG_TO_RAD = PI / 180;

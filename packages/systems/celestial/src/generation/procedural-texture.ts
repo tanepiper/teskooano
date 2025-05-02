@@ -1,6 +1,3 @@
-// packages/systems/celestial/src/generation/procedural-texture.ts
-// Uses 3D Simplex noise for seamless spherical texture generation.
-
 import {
   BaseSurfaceProperties,
   DesertSurfaceProperties,
@@ -11,12 +8,10 @@ import {
   ProceduralSurfaceProperties,
   SurfacePropertiesUnion,
 } from "@teskooano/data-types";
-import { createNoise3D } from "simplex-noise"; // Corrected import
+import { createNoise3D } from "simplex-noise";
 
-// Cache for generated textures
 const textureCache = new Map<string, GeneratedTerrainTextures>();
 
-// Simple seeded pseudo-random number generator (Mulberry32) - Keep if needed elsewhere, or remove if unused
 function mulberry32(seed: number) {
   return function () {
     let t = (seed += 0x6d2b79f5);
@@ -26,7 +21,6 @@ function mulberry32(seed: number) {
   };
 }
 
-// --- Helper function to map equirectangular UV to Sphere XYZ ---
 /**
  * Converts UV coordinates (equirectangular projection) to 3D Cartesian coordinates on a unit sphere.
  * @param u - Horizontal texture coordinate (0 to 1).
@@ -37,17 +31,16 @@ function mapEquirectangularToSphere(
   u: number,
   v: number,
 ): [number, number, number] {
-  const phi = u * 2 * Math.PI; // Azimuthal angle (longitude)
-  const theta = v * Math.PI; // Polar angle (latitude)
+  const phi = u * 2 * Math.PI;
+  const theta = v * Math.PI;
 
   const x = Math.sin(theta) * Math.cos(phi);
-  const y = Math.cos(theta); // Use Y as the up/down axis for typical sphere mapping
+  const y = Math.cos(theta);
   const z = Math.sin(theta) * Math.sin(phi);
 
   return [x, y, z];
 }
 
-// --- Keep Color Helper functions ---
 function hexToRgb(hex: string): [number, number, number] | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
@@ -64,7 +57,7 @@ function interpolateRgb(
   colorB: [number, number, number],
   factor: number,
 ): [number, number, number] {
-  const clampedFactor = Math.max(0, Math.min(1, factor)); // Ensure factor is 0-1
+  const clampedFactor = Math.max(0, Math.min(1, factor));
   const r = Math.round(colorA[0] + (colorB[0] - colorA[0]) * clampedFactor);
   const g = Math.round(colorA[1] + (colorB[1] - colorA[1]) * clampedFactor);
   const b = Math.round(colorA[2] + (colorB[2] - colorA[2]) * clampedFactor);
@@ -81,16 +74,14 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
 }
 
 function getColorForHeight(
-  height: number, // Expected to be normalized (0 to 1)
+  height: number,
   surfaceProperties: SurfacePropertiesUnion | undefined,
 ): string {
-  // Default grayscale if no properties
   if (!surfaceProperties) {
     const intensity = Math.floor(height * 255);
     return `rgb(${intensity}, ${intensity}, ${intensity})`;
   }
 
-  // Handle Rocky/Terrestrial/Barren specifically using ProceduralSurfaceProperties
   if (
     "planetType" in surfaceProperties &&
     (surfaceProperties.planetType === PlanetType.ROCKY ||
@@ -116,12 +107,11 @@ function getColorForHeight(
       console.error(
         "[getColorForHeight] Failed to parse one or more hex colors for ProceduralSurface.",
       );
-      return "rgb(128, 128, 128)"; // Fallback gray
+      return "rgb(128, 128, 128)";
     }
 
     let finalRgb: [number, number, number];
 
-    // Blending logic (remains the same)
     if (height < t2 - b12 / 2) {
       finalRgb = c1;
     } else if (height < t2 + b12 / 2) {
@@ -146,11 +136,8 @@ function getColorForHeight(
       finalRgb = c5;
     }
     return rgbToCssString(finalRgb);
-  }
-
-  // --- Handle other specific planet types ---
-  else if ("planetType" in surfaceProperties) {
-    let baseColor = surfaceProperties.color ?? "#808080"; // Use base color as fallback
+  } else if ("planetType" in surfaceProperties) {
+    let baseColor = surfaceProperties.color ?? "#808080";
 
     switch (surfaceProperties.planetType) {
       case PlanetType.DESERT:
@@ -177,7 +164,7 @@ function getColorForHeight(
         break;
       case PlanetType.LAVA:
         const lavaProps = surfaceProperties as LavaSurfaceProperties;
-        // Use smoothstep for a less abrupt transition
+
         const lavaFactor = smoothstep(0.55, 0.65, height);
         const rockLavaColor = hexToRgb(lavaProps.rockColor ?? "#303030");
         const lavaColor = hexToRgb(lavaProps.lavaColor ?? "#FF4500");
@@ -194,9 +181,9 @@ function getColorForHeight(
         break;
       case PlanetType.OCEAN:
         const oceanProps = surfaceProperties as OceanSurfaceProperties;
-        // Use smoothstep for blending near the coast
+
         const landRatio = oceanProps.landRatio ?? 0.3;
-        const blendRange = 0.05; // How wide the blend region is
+        const blendRange = 0.05;
         const oceanFactor = smoothstep(
           landRatio - blendRange / 2,
           landRatio + blendRange / 2,
@@ -219,7 +206,6 @@ function getColorForHeight(
     return baseColor;
   }
 
-  // Fallback
   console.warn(
     "[getColorForHeight] No planetType found or matched, using base surface color.",
   );
@@ -250,14 +236,13 @@ function drawColorCanvasFromNoise(
   if (!ctx) {
     throw new Error("Could not get 2D context from OffscreenCanvas");
   }
-  const canvasSize = canvas.width; // Assume square
+  const canvasSize = canvas.width;
   ctx.clearRect(0, 0, canvasSize, canvasSize);
 
   const heightMap: number[][] = Array(canvasSize)
     .fill(0)
     .map(() => Array(canvasSize).fill(0));
 
-  // --- Generate raw noise values (store directly) ---
   for (let py = 0; py < canvasSize; py++) {
     for (let px = 0; px < canvasSize; px++) {
       const u = px / (canvasSize - 1);
@@ -277,34 +262,28 @@ function drawColorCanvasFromNoise(
         frequency *= noiseLacunarity;
       }
 
-      // Normalize the octave noise to roughly [-1, 1] and store
-      const rawNoise = maxValue === 0 ? 0 : totalNoise / maxValue; // Avoid division by zero
-      heightMap[py][px] = rawNoise; // Store the raw noise value directly
+      const rawNoise = maxValue === 0 ? 0 : totalNoise / maxValue;
+      heightMap[py][px] = rawNoise;
     }
   }
 
-  // --- Normalize heightmap based on theoretical [-1, 1] range and draw ---
   for (let py = 0; py < canvasSize; py++) {
     for (let px = 0; px < canvasSize; px++) {
-      // Get the stored raw noise value (assumed to be roughly -1 to 1)
       const rawNoiseValue = heightMap[py][px];
 
-      // MODIFIED: Normalize directly from [-1, 1] range to [0, 1]
       const normalizedHeight = (rawNoiseValue + 1.0) * 0.5;
-      // --- End Modification ---
 
-      // Clamp just in case noise function goes slightly out of bounds
       const clampedHeight = Math.max(0.0, Math.min(1.0, normalizedHeight));
 
-      heightMap[py][px] = clampedHeight; // Store final normalized height
+      heightMap[py][px] = clampedHeight;
 
       const color = getColorForHeight(clampedHeight, surfaceProperties);
       ctx.fillStyle = color;
-      ctx.fillRect(px, py, 1, 1); // Draw single pixel
+      ctx.fillRect(px, py, 1, 1);
     }
   }
 
-  return heightMap; // Return the normalized heightmap
+  return heightMap;
 }
 
 /**
@@ -336,7 +315,6 @@ function generateNormalMapFromHeightData(
   const imgData = ctx.createImageData(canvasSize, canvasSize);
   const data = imgData.data;
 
-  // Helper to sample height, wrapping around edges of the heightMap
   const sampleHeightWrap = (px: number, py: number): number => {
     const wrappedX = ((px % width) + width) % width;
     const wrappedY = ((py % height) + height) % height;
@@ -345,19 +323,14 @@ function generateNormalMapFromHeightData(
 
   for (let py = 0; py < canvasSize; py++) {
     for (let px = 0; px < canvasSize; px++) {
-      // Sample neighboring heights using wrapped sampling
-      const hl = sampleHeightWrap(px - 1, py); // Height left
-      const hr = sampleHeightWrap(px + 1, py); // Height right
-      const hu = sampleHeightWrap(px, py - 1); // Height up
-      const hd = sampleHeightWrap(px, py + 1); // Height down
+      const hl = sampleHeightWrap(px - 1, py);
+      const hr = sampleHeightWrap(px + 1, py);
+      const hu = sampleHeightWrap(px, py - 1);
+      const hd = sampleHeightWrap(px, py + 1);
 
-      // Calculate derivatives (slopes) - adjust strength here
-      // Strength amplifies the height difference. Pixel distances are 1.
-      let dx = (hl - hr) * strength * 0.5; // Normalize difference by 2 pixels distance
-      let dy = (hu - hd) * strength * 0.5; // Normalize difference by 2 pixels distance
+      let dx = (hl - hr) * strength * 0.5;
+      let dy = (hu - hd) * strength * 0.5;
 
-      // Create normal vector (dx, dy, 1) and normalize
-      // Z component is 1 before normalization for heightmap normals
       const vec = [dx, dy, 1.0];
       const len = Math.sqrt(
         vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2],
@@ -365,24 +338,22 @@ function generateNormalMapFromHeightData(
 
       let nx = 0,
         ny = 0,
-        nz = 1; // Default to flat normal (0,0,1) if length is zero
+        nz = 1;
       if (len > 0) {
         nx = vec[0] / len;
         ny = vec[1] / len;
         nz = vec[2] / len;
       }
 
-      // Remap normal components from [-1, 1] to RGB [0, 255]
-      // Normal maps typically store (nx+1)/2, (ny+1)/2, (nz+1)/2
       const r = Math.floor((nx * 0.5 + 0.5) * 255);
-      const g = Math.floor((ny * 0.5 + 0.5) * 255); // Y component often maps to Green
-      const b = Math.floor((nz * 0.5 + 0.5) * 255); // Z component maps to Blue
+      const g = Math.floor((ny * 0.5 + 0.5) * 255);
+      const b = Math.floor((nz * 0.5 + 0.5) * 255);
 
       const index = (py * canvasSize + px) * 4;
-      data[index] = r; // Red
-      data[index + 1] = g; // Green
-      data[index + 2] = b; // Blue
-      data[index + 3] = 255; // Alpha
+      data[index] = r;
+      data[index + 1] = g;
+      data[index + 2] = b;
+      data[index + 3] = 255;
     }
   }
 
@@ -396,7 +367,7 @@ function generateNormalMapFromHeightData(
 export interface GeneratedTerrainTextures {
   colorCanvas: OffscreenCanvas;
   normalCanvas: OffscreenCanvas;
-  heightMap: number[][]; // Also return the raw height data if needed
+  heightMap: number[][];
 }
 
 /**
@@ -425,19 +396,15 @@ export function generateTerrainTexture(
     normalStrength?: number;
   },
 ): GeneratedTerrainTextures {
-  // Generate a cache key based on seed and options
-  // Simple stringification; consider a more robust hashing for complex options if needed.
   const optionsString = JSON.stringify(options ?? {});
   const cacheKey = `${seed}-${optionsString}`;
 
-  // Check cache first
   if (textureCache.has(cacheKey)) {
-    // Return a structured clone to avoid shared mutable state issues if canvases were modified elsewhere
     const cached = textureCache.get(cacheKey)!;
     return {
-      colorCanvas: cached.colorCanvas, // OffscreenCanvas should be transferable/clonable
+      colorCanvas: cached.colorCanvas,
       normalCanvas: cached.normalCanvas,
-      heightMap: cached.heightMap, // Assuming heightMap array is not mutated externally
+      heightMap: cached.heightMap,
     };
   }
 
@@ -445,9 +412,8 @@ export function generateTerrainTexture(
     `[generateTerrainTexture] Cache miss for key: ${cacheKey}. Generating...`,
   );
 
-  // Use mulberry32 PRNG for deterministic noise based on seed
   const rng = mulberry32(seed);
-  // Create the 3D noise function using the PRNG
+
   const noise3D = createNoise3D(rng);
 
   const surfaceProperties = options?.surfaceProperties;
@@ -457,10 +423,9 @@ export function generateTerrainTexture(
   const noisePersistence = options?.noisePersistence ?? 0.5;
   const noiseLacunarity = options?.noiseLacunarity ?? 2.0;
   const normalStrength = options?.normalStrength ?? 1.0;
-  // Create color canvas
+
   const colorCanvas = new OffscreenCanvas(canvasSize, canvasSize);
 
-  // Generate heightmap and draw color canvas simultaneously
   const heightMap = drawColorCanvasFromNoise(
     colorCanvas,
     noise3D,
@@ -471,7 +436,6 @@ export function generateTerrainTexture(
     noiseLacunarity,
   );
 
-  // Generate normal map from the height data
   const normalCanvas = generateNormalMapFromHeightData(
     heightMap,
     canvasSize,
@@ -484,7 +448,6 @@ export function generateTerrainTexture(
     heightMap,
   };
 
-  // Store the result in the cache
   textureCache.set(cacheKey, result);
 
   return result;

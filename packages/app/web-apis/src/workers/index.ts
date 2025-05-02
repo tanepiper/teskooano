@@ -34,11 +34,8 @@ export function createWorker(
 
     worker.onerror = (event) => {
       console.error("Error in Web Worker:", event.message, event);
-      // Optionally, terminate the worker on error or implement retry logic
-      // worker.terminate();
     };
 
-    // Basic message logging (can be removed or customized)
     worker.onmessage = (event) => {
       console.log("Message received from worker:", event.data);
     };

@@ -3,7 +3,7 @@ import {
   JUPITER_MASS,
   SOLAR_MASS,
   SOLAR_RADIUS,
-} from "@teskooano/core-physics"; // Removed VISUAL_AU_SCALE
+} from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import { DEG_TO_RAD } from "@teskooano/core-math";
 import {
@@ -24,7 +24,6 @@ import {
  * Blue giants are rare, massive, extremely luminous stars
  */
 export function initializeBlueGiantSystem(): string {
-  // Create a blue giant star
   const starId = actions.createSolarSystem({
     id: "rigel",
     name: "Rigel",
@@ -54,7 +53,6 @@ export function initializeBlueGiantSystem(): string {
     } as StarProperties,
   });
 
-  // Add a gas giant "hot jupiter" in a highly inclined, eccentric orbit
   const rigelB_SMA_AU = 0.85;
   actions.addCelestial({
     id: "rigel-b",
@@ -87,7 +85,6 @@ export function initializeBlueGiantSystem(): string {
     } as GasGiantProperties,
   });
 
-  // Add an extremely eccentric comet-like small rocky planet in a near-perpendicular orbit
   const rigelC_SMA_AU = 6.5;
   actions.addCelestial({
     id: "rigel-c",
@@ -136,7 +133,6 @@ export function initializeBlueGiantSystem(): string {
     } as PlanetProperties,
   });
 
-  // Add a distant gas giant in a perfect polar orbit
   const rigelD_SMA_AU = 15.0;
   actions.addCelestial({
     id: "rigel-d",
@@ -167,7 +163,6 @@ export function initializeBlueGiantSystem(): string {
     } as GasGiantProperties,
   });
 
-  // Add a retrograde ice planet
   const rigelE_SMA_AU = 18.0;
   actions.addCelestial({
     id: "rigel-e",
@@ -198,7 +193,6 @@ export function initializeBlueGiantSystem(): string {
     } as GasGiantProperties,
   });
 
-  // Add a super-Earth in a perpendicular orbit to all others
   const rigelF_SMA_AU = 12.0;
   actions.addCelestial({
     id: "rigel-f",

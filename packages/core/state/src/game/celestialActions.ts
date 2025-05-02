@@ -17,26 +17,22 @@ import { CustomEvents } from "@teskooano/data-types";
 export const celestialActions = {
   addCelestialObject: (object: CelestialObject) => {
     try {
-      // Get current objects and add the new one
       const currentObjects = getCelestialObjects();
-      // Use the setter which handles creating the new map
+
       setCelestialObject(object.id, object);
 
-      // Update hierarchy
       const parentId = object.parentId;
       if (parentId) {
         const currentHierarchy = getCelestialHierarchy();
         const siblings = currentHierarchy[parentId] || [];
         if (!siblings.includes(object.id)) {
-          // Create new hierarchy object for the update
           const newHierarchy = {
             ...currentHierarchy,
             [parentId]: [...siblings, object.id],
           };
-          setCelestialHierarchy(newHierarchy); // Update using the setter
+          setCelestialHierarchy(newHierarchy);
         }
       } else if (object.type === CelestialType.STAR) {
-        // Ensure top-level star entry exists even without parent
         const currentHierarchy = getCelestialHierarchy();
         if (!currentHierarchy[object.id]) {
           const newHierarchy = {
@@ -47,10 +43,8 @@ export const celestialActions = {
         }
       }
 
-      // Dispatch event after loading
       document.dispatchEvent(
         new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
-          // Use the new object map from the setter indirectly
           detail: { count: Object.keys(getCelestialObjects()).length },
         }),
       );
@@ -67,7 +61,6 @@ export const celestialActions = {
     const object = currentObjects[objectId];
 
     if (object) {
-      // Use the setter function
       setCelestialObject(objectId, { ...object, ...updates });
     } else {
       console.warn(
@@ -84,7 +77,6 @@ export const celestialActions = {
     const object = objects[objectId];
 
     if (object && object.orbit) {
-      // Use setter function
       setCelestialObject(objectId, {
         ...object,
         orbit: {
@@ -109,15 +101,14 @@ export const celestialActions = {
     const object = currentObjects[objectId];
     if (object) {
       if (object.status === CelestialStatus.DESTROYED) {
-        return; // Avoid unnecessary updates
+        return;
       }
-      // Use setter function
+
       setCelestialObject(objectId, {
         ...object,
         status: CelestialStatus.DESTROYED,
       });
 
-      // Dispatch event after destruction
       document.dispatchEvent(
         new CustomEvent(CustomEvents.CELESTIAL_OBJECT_DESTROYED, {
           detail: { objectId: objectId },
@@ -133,16 +124,12 @@ export const celestialActions = {
   removeCelestialObject: (objectId: string) => {
     const currentObjects = getCelestialObjects();
     if (currentObjects[objectId]) {
-      // Use the new store function to remove the object
       removeObjectFromStore(objectId);
 
-      // Remove from hierarchy
       removeCelestialHierarchyEntry(objectId);
 
-      // Also remove the corresponding renderable object
       renderableActions.removeRenderableObject(objectId);
 
-      // Dispatch event after destruction
       document.dispatchEvent(
         new CustomEvent(CustomEvents.CELESTIAL_OBJECT_DESTROYED, {
           detail: { objectId: objectId },

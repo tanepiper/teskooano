@@ -6,9 +6,9 @@ import { CelestialType } from "@teskooano/data-types";
 import {
   handleCollisions,
   type DestructionEvent,
-} from "../collision/collision"; // <-- Import collision handler
-import { velocityVerletIntegrate } from "../integrators/verlet"; // Use Velocity Verlet
-import { Octree } from "../spatial/octree"; // Import Octree
+} from "../collision/collision";
+import { velocityVerletIntegrate } from "../integrators/verlet";
+import { Octree } from "../spatial/octree";
 
 /**
  * Helper function to calculate the acceleration on a single body, given its state
@@ -21,13 +21,10 @@ import { Octree } from "../spatial/octree"; // Import Octree
  */
 const calculateAccelerationForBody = (
   targetBodyState: PhysicsStateReal,
-  // otherBodies: PhysicsStateReal[], // No longer needed directly
+
   octree: Octree,
-  theta: number = 0.7, // Default theta value
+  theta: number = 0.7,
 ): OSVector3 => {
-  // Calculate force using the Octree
-  // Note: If targetBodyState is a *predicted* state, it won't be *in* the octree.
-  // The octree's calculateForceOn method handles interactions with existing bodies/nodes.
   const netForce = octree.calculateForceOn(targetBodyState, theta);
 
   const acceleration = new OSVector3(0, 0, 0);
@@ -43,8 +40,8 @@ const calculateAccelerationForBody = (
 export interface SimulationStepResult {
   states: PhysicsStateReal[];
   accelerations: Map<string, OSVector3>;
-  destroyedIds: Set<string | number>; // <-- Add destroyed IDs
-  destructionEvents: DestructionEvent[]; // <-- Add destruction events
+  destroyedIds: Set<string | number>;
+  destructionEvents: DestructionEvent[];
 }
 
 /**
@@ -76,19 +73,13 @@ export const updateSimulation = (
     radii,
     isStar,
     bodyTypes,
-    octreeSize = 5e13, // Default octree size
-    barnesHutTheta = 0.7, // Default theta
+    octreeSize = 5e13,
+    barnesHutTheta = 0.7,
   } = params;
 
-  // --- Octree Setup ---
-
-  // Determine appropriate size if not provided (optional enhancement)
-  // For now, using provided/default size centered at origin.
   const octree = new Octree(octreeSize);
   bodies.forEach((body) => octree.insert(body));
-  // --- End Octree Setup ---
 
-  // Step 1: Calculate acceleration for all bodies based on current state using Octree
   const accelerations = new Map<string, OSVector3>();
   bodies.forEach((body) => {
     const force = octree.calculateForceOn(body, barnesHutTheta);
@@ -99,34 +90,28 @@ export const updateSimulation = (
     accelerations.set(body.id, acc);
   });
 
-  // Step 2: Update state using Velocity Verlet
   const integratedStates = bodies.map((body) => {
     const currentAcceleration =
       accelerations.get(body.id) || new OSVector3(0, 0, 0);
 
-    // Define the function needed by Velocity Verlet to calculate acceleration at a new state
     const calculateNewAcceleration = (
       newStateGuess: PhysicsStateReal,
     ): OSVector3 => {
-      // Calculate acceleration on the guessed state using the *current* Octree
-      // Pass the pre-built octree and theta parameter
       return calculateAccelerationForBody(
         newStateGuess,
-        octree, // Pass the octree constructed for this step
+        octree,
         barnesHutTheta,
       );
     };
 
-    // Apply Velocity Verlet integrator
     return velocityVerletIntegrate(
-      body, // Current state
-      currentAcceleration, // Acceleration at current state
-      calculateNewAcceleration, // Function to calc acceleration at predicted state
-      dt, // Time step
+      body,
+      currentAcceleration,
+      calculateNewAcceleration,
+      dt,
     );
   });
 
-  // Step 3: Handle Collisions - Capture destruction events
   const [finalStates, destroyedIds, destructionEvents] = handleCollisions(
     integratedStates,
     radii,
@@ -134,16 +119,12 @@ export const updateSimulation = (
     bodyTypes,
   );
 
-  // Octree is rebuilt next step, no need to explicitly clear here unless memory is critical
-  // octree.clear();
-
-  // Return the final states, accelerations, destroyed IDs, and destruction events
   return {
     states: finalStates,
     accelerations,
     destroyedIds,
     destructionEvents,
-  }; // <-- Include destructionEvents
+  };
 };
 
 /**
@@ -158,9 +139,8 @@ export const updateSimulation = (
 export const createSimulationStream = (
   initialState: PhysicsStateReal[],
   parameters$: Observable<SimulationParameters>,
-  tick$: Observable<number>, // Emits dt
+  tick$: Observable<number>,
 ): Observable<SimulationStepResult> => {
-  // Initial result seed for the scan operator
   const initialResult: SimulationStepResult = {
     states: initialState,
     accelerations: new Map<string, OSVector3>(),
@@ -174,14 +154,11 @@ export const createSimulationStream = (
         previousResult: SimulationStepResult,
         [dt, params]: [number, SimulationParameters],
       ) => {
-        // Run one simulation step using the state from the previous result
         return updateSimulation(previousResult.states, dt, params);
       },
-      initialResult, // Start with the initial state wrapped in a result object
+      initialResult,
     ),
-    // Start with the initial state so subscribers immediately get the starting point
-    // Note: scan's seed is the first ACCUMULATED value. startWith emits BEFORE scan runs.
-    // We map the initial result to ensure the type matches the stream output.
+
     startWith(initialResult),
   );
 };

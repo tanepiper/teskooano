@@ -8,7 +8,7 @@ import { CameraManager } from "./CameraManager";
  * using `getManagerInstance('camera-manager')` from `@teskooano/ui-plugin`.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "teskooano-camera-manager", // Updated ID
+  id: "teskooano-camera-manager",
   name: "Camera Manager",
   description: "Provides camera control and state management logic.",
   managerClasses: [
@@ -23,5 +23,4 @@ export const plugin: TeskooanoPlugin = {
   toolbarWidgets: [],
 };
 
-// Export the class directly as well
 export { CameraManager };

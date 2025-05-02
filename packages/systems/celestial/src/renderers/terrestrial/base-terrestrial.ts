@@ -1,7 +1,7 @@
 import {
   PlanetProperties,
   PlanetType,
-  ProceduralSurfaceProperties, // Added import
+  ProceduralSurfaceProperties,
   SCALE,
   SurfaceType,
 } from "@teskooano/data-types";
@@ -11,9 +11,7 @@ import { AtmosphereMaterial } from "./materials/atmosphere.material";
 import { CloudMaterial } from "./materials/clouds.material";
 import { ProceduralPlanetMaterial } from "./materials/procedural-planet.material";
 
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs"; // Import RenderableCelestialObject
-
-// --- IndexedDB Helper Functions ---
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 const DB_NAME = "textureCacheDB";
 const DB_VERSION = 1;
@@ -34,7 +32,7 @@ function openTextureDB(): Promise<IDBDatabase> {
         (event.target as IDBOpenDBRequest).error,
       );
       reject((event.target as IDBOpenDBRequest).error);
-      dbPromise = null; // Allow retry on next call
+      dbPromise = null;
     };
 
     request.onsuccess = (event) => {
@@ -46,7 +44,6 @@ function openTextureDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: "cacheKey" });
       }
-      // Handle future version upgrades here if needed
     };
   });
   return dbPromise;
@@ -84,7 +81,7 @@ async function getTextureFromDB(
     });
   } catch (error) {
     console.error("[IndexedDB] Failed to open DB for get operation:", error);
-    return null; // Return null if DB opening fails
+    return null;
   }
 }
 
@@ -110,7 +107,7 @@ async function saveTextureToDB(
           `[IndexedDB] Error putting item with key ${key}:`,
           (event.target as IDBRequest).error,
         );
-        // Consider specific error handling (e.g., QuotaExceededError)
+
         reject((event.target as IDBRequest).error);
       };
 
@@ -118,9 +115,7 @@ async function saveTextureToDB(
         resolve();
       };
 
-      transaction.oncomplete = () => {
-        // Optional: log transaction completion
-      };
+      transaction.oncomplete = () => {};
 
       transaction.onerror = (event) => {
         console.error(
@@ -132,27 +127,21 @@ async function saveTextureToDB(
     });
   } catch (error) {
     console.error("[IndexedDB] Failed to open DB for save operation:", error);
-    // Decide if failure to save should reject or just warn
-    // For caching, usually just warning is acceptable
   }
 }
 
-// --- Utility Functions ---
-
-// Simple hash function for string seeds (copied from diamond-square)
 function simpleHash(str: string): number {
   let hash = 0;
   if (str.length === 0) return hash;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32bit integer
+    hash |= 0;
   }
-  // Ensure the seed is somewhat constrained and positive for the PRNG
+
   return Math.abs(hash % 2147483647);
 }
 
-// Define MAX_LIGHTS constant matching the shader
 const MAX_LIGHTS = 4;
 
 /**
@@ -163,7 +152,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
   protected atmosphereMaterials: Map<string, AtmosphereMaterial> = new Map();
   protected cloudMaterials: Map<string, CloudMaterial> = new Map();
   protected textureLoader: THREE.TextureLoader;
-  // Cache holds color and potentially null normal textures
+
   protected loadedTextures: Map<
     string,
     { color: THREE.Texture | null; normal: THREE.Texture | null }
@@ -172,7 +161,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
   protected elapsedTime: number = 0;
   protected objectIds: Set<string> = new Set();
 
-  // Helper vectors for update calculations
   private _worldPos = new THREE.Vector3();
   private _lightWorldPos = new THREE.Vector3();
   private _viewLightDir = new THREE.Vector3();
@@ -181,7 +169,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
 
   constructor() {
     this.textureLoader = new THREE.TextureLoader();
-    // Attempt to open DB on init, errors handled in get/save
+
     openTextureDB();
   }
 
@@ -194,13 +182,9 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
   ): LODLevel[] {
     this.objectIds.add(object.celestialObjectId);
 
-    // FIXED: Using a proper radius for visualization
-    // The problem was using realRadius_m which is in meters (potentially millions of km)
-    // Instead, we should use the scaled radius directly
     const baseRadius = object.radius ?? 1;
     const scale = typeof SCALE === "number" ? SCALE : 1;
 
-    // --- Level 0: High Detail ---
     const highDetailGroup = this._createHighDetailGroup(
       object,
       options,
@@ -208,7 +192,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     );
     const level0: LODLevel = { object: highDetailGroup, distance: 0 };
 
-    // --- Level 1: Medium Detail ---
     const mediumSegments = 32;
     const mediumGeometry = new THREE.SphereGeometry(
       baseRadius,
@@ -226,7 +209,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     level1Group.add(mediumMesh);
     const level1: LODLevel = { object: level1Group, distance: 50 * scale };
 
-    // --- Level 2: Low Detail ---
     const lowSegments = 16;
     const lowGeometry = new THREE.SphereGeometry(
       baseRadius,
@@ -261,10 +243,8 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     const segments =
       options?.segments ?? (options?.detailLevel === "high" ? 64 : 48);
 
-    // --- Body ---
     let bodyMesh: THREE.Mesh;
     try {
-      // Use proper procedural material
       const bodyMaterial = this.createPlanetMaterial(object);
       this.initializeMaterialMap(object.celestialObjectId, bodyMaterial);
       const bodyGeometry = new THREE.SphereGeometry(
@@ -298,13 +278,11 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     bodyMesh.name = `${object.celestialObjectId}-body`;
     group.add(bodyMesh);
 
-    // --- Clouds (Optional) ---
     const cloudMesh = this.addClouds(object, segments, baseRadius);
     if (cloudMesh) {
       group.add(cloudMesh);
     }
 
-    // --- Atmosphere (Optional) ---
     const atmosphereMesh = this.addAtmosphere(object, segments, baseRadius);
     if (atmosphereMesh) {
       group.add(atmosphereMesh);
@@ -337,15 +315,13 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     const planetProps = object.properties as PlanetProperties | undefined;
     const planetType = planetProps?.planetType ?? (object as any).planetType;
 
-    // --- Define default simple colors ---
     let simplePalette = {
-      low: "#5179B5", // Default blueish low color
-      mid1: "#4C9341", // Default green
-      mid2: "#836F27", // Default yellow/brown
-      high: "#A0A0A0", // Default grey/rock high color
+      low: "#5179B5",
+      mid1: "#4C9341",
+      mid2: "#836F27",
+      high: "#A0A0A0",
     };
 
-    // --- Adjust simple palette based on planet type ---
     if (planetType) {
       switch (planetType) {
         case PlanetType.LAVA:
@@ -354,7 +330,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
             mid1: "#801800",
             mid2: "#D44000",
             high: "#FF6B00",
-          }; // Reds/Oranges
+          };
           break;
         case PlanetType.ICE:
           simplePalette = {
@@ -362,7 +338,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
             mid1: "#C0ECF1",
             mid2: "#E1FEFF",
             high: "#FFFFFF",
-          }; // Light blues/Whites
+          };
           break;
         case PlanetType.DESERT:
           simplePalette = {
@@ -370,10 +346,9 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
             mid1: "#D2B48C",
             mid2: "#E0C9A6",
             high: "#F5E6CA",
-          }; // Browns/Tans
+          };
           break;
         case PlanetType.TERRESTRIAL:
-          // Keep the default earth-like palette
           break;
         case PlanetType.ROCKY:
         case PlanetType.BARREN:
@@ -382,24 +357,21 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
             mid1: "#606060",
             mid2: "#808080",
             high: "#B0B0B0",
-          }; // Grayscale for rocky/barren
+          };
           break;
       }
     }
 
-    // --- Build final properties for the material constructor ---
     const finalProps: ProceduralSurfaceProperties = {
       type: specificSurfaceProps?.type ?? SurfaceType.FLAT,
-      color: specificSurfaceProps?.color ?? "#808080", // Fallback color (might not be used)
+      color: specificSurfaceProps?.color ?? "#808080",
       roughness: specificSurfaceProps?.roughness ?? 0.8,
 
-      // Noise parameters (for fragment shader)
       persistence: specificSurfaceProps?.persistence ?? 0.5,
       lacunarity: specificSurfaceProps?.lacunarity ?? 2.0,
       octaves: specificSurfaceProps?.octaves ?? 6,
       simplePeriod: specificSurfaceProps?.simplePeriod ?? 4.0,
 
-      // NEW Simple Colors - Use derived palette, allow overrides
       colorLow: specificSurfaceProps?.colorLow ?? simplePalette.low,
       colorMid1: specificSurfaceProps?.colorMid1 ?? simplePalette.mid1,
       colorMid2: specificSurfaceProps?.colorMid2 ?? simplePalette.mid2,
@@ -423,7 +395,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     >,
     camera?: THREE.Camera,
   ): void {
-    // Create default light if none provided
     if (!lightSources || lightSources.size === 0) {
       console.warn(
         "[BaseTerrestrialRenderer] No light sources provided, adding default light",
@@ -439,16 +410,12 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       });
     }
 
-    // Iterate through stored materials and update them
     this.materials.forEach((material) => {
       if (material instanceof ProceduralPlanetMaterial) {
         material.update(time, lightSources, camera);
       }
-      // Add updates for other material types if needed (e.g., MeshStandardMaterial for LOD levels?)
-      // Probably not needed here as LODManager handles switching meshes.
     });
 
-    // Update cloud materials
     this.cloudMaterials.forEach((material) => {
       let sunPos: THREE.Vector3 | undefined = undefined;
       if (lightSources && lightSources.size > 0) {
@@ -465,7 +432,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       }
     });
 
-    // Update atmosphere materials
     this.atmosphereMaterials.forEach((material) => {
       let sunPos: THREE.Vector3 | undefined = undefined;
       if (lightSources && lightSources.size > 0) {
@@ -489,7 +455,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     this.cloudMaterials.forEach((material) => material.dispose());
     this.cloudMaterials.clear();
 
-    // Dispose loaded textures
     this.loadedTextures.forEach((textures) => {
       textures.color?.dispose();
       textures.normal?.dispose();
@@ -508,7 +473,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     segments: number = 64,
     baseRadiusInput?: number,
   ): THREE.Mesh | null {
-    // Return type changed
     const props = object.properties as PlanetProperties | undefined;
     const clouds = props?.clouds;
     if (!clouds) return null;
@@ -550,7 +514,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     cloudMesh.name = `${object.celestialObjectId}-clouds`;
     cloudMesh.renderOrder = 1;
     this.cloudMaterials.set(object.celestialObjectId, cloudMaterial);
-    // group.add(cloudMesh); // REMOVED - Returning mesh instead
+
     return cloudMesh;
   }
 
@@ -563,7 +527,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     segments: number = 64,
     baseRadiusInput?: number,
   ): THREE.Mesh | null {
-    // Return type changed
     const props = object.properties as PlanetProperties | undefined;
     const atmosphereProps = props?.atmosphere;
     if (!atmosphereProps) return null;
@@ -599,7 +562,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     atmosphereMesh.name = `${object.celestialObjectId}-atmosphere`;
     atmosphereMesh.renderOrder = 2;
     this.atmosphereMaterials.set(object.celestialObjectId, atmosphereMaterial);
-    // group.add(atmosphereMesh); // REMOVED - Returning mesh instead
+
     return atmosphereMesh;
   }
 
@@ -614,29 +577,26 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       | ProceduralSurfaceProperties
       | undefined;
 
-    // Prefer the specific colorLow if defined
     if (specificSurfaceProps?.colorLow) {
       return new THREE.Color(specificSurfaceProps.colorLow);
     }
 
-    // Fallback based on planet type
     if (planetType) {
       switch (planetType) {
         case PlanetType.LAVA:
-          return new THREE.Color("#801800"); // Mid1
+          return new THREE.Color("#801800");
         case PlanetType.ICE:
-          return new THREE.Color("#C0ECF1"); // Mid1
+          return new THREE.Color("#C0ECF1");
         case PlanetType.DESERT:
-          return new THREE.Color("#D2B48C"); // Mid1
+          return new THREE.Color("#D2B48C");
         case PlanetType.TERRESTRIAL:
-          return new THREE.Color("#4C9341"); // Default Mid1 (Green)
+          return new THREE.Color("#4C9341");
         case PlanetType.ROCKY:
         case PlanetType.BARREN:
-          return new THREE.Color("#606060"); // Mid1
+          return new THREE.Color("#606060");
       }
     }
 
-    // Absolute fallback
-    return new THREE.Color("#808080"); // Grey
+    return new THREE.Color("#808080");
   }
 }

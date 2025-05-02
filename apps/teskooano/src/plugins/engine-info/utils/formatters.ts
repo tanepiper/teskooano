@@ -14,7 +14,7 @@ export function formatVector(
   const x = Math.round(vec.x * factor) / factor;
   const y = Math.round(vec.y * factor) / factor;
   const z = Math.round(vec.z * factor) / factor;
-  // Use toLocaleString for potential large numbers, though precision might limit its effect
+
   return `(${x.toLocaleString()}, ${y.toLocaleString()}, ${z.toLocaleString()})`;
 }
 
@@ -25,7 +25,6 @@ export function formatVector(
  * @returns A formatted string representation of the number, or '-' if input is invalid.
  */
 export function formatNumber(num?: number): string {
-  // Added check for finite numbers to avoid formatting Infinity or NaN
   return num != null && Number.isFinite(num) ? num.toLocaleString() : "-";
 }
 

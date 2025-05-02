@@ -1,3 +1,5 @@
+import "@teskooano/design-system/tokens.css";
+
 const template = document.createElement("template");
 template.innerHTML = `
   <style>

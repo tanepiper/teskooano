@@ -14,10 +14,9 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
       distortionScale?: number;
     } = {},
   ) {
-    // Set up the uniforms for the lensing effect
     const lensingShader = {
       uniforms: {
-        tBackground: { value: null }, // Will capture scene behind the object
+        tBackground: { value: null },
         intensity: { value: options.intensity ?? 1.0 },
         radius: { value: options.radius ?? 1.0 },
         distortionScale: { value: options.distortionScale ?? 1.0 },
@@ -47,46 +46,46 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
         varying vec2 vUv;
         
         void main() {
-          // Calculate position in object space
+          
           vec3 viewDir = normalize(cameraPosition - vPosition);
           float viewAngle = dot(normalize(vNormal), viewDir);
           
-          // Schwarzschild radius effect - stronger near center
+          
           float dist = length(vUv - vec2(0.5, 0.5)) * 2.0;
           
-          // Calculate distortion strength based on distance from center
-          // Stronger near the edge of the object for a lensing effect
+          
+          
           float distortionStrength = smoothstep(0.0, 1.0, dist) * intensity;
           
-          // The Einstein ring effect - stronger at a specific radius, but more subtle now
+          
           float einsteinRing = 1.0 - abs(dist - 0.8) * 5.0;
-          einsteinRing = max(0.0, einsteinRing) * 0.7; // Reduce ring intensity to 70%
+          einsteinRing = max(0.0, einsteinRing) * 0.7; 
           
-          // Dynamic distortion pattern - reduced intensity
+          
           float timeOffset = time * 0.05;
-          float dynamicDistortion = sin(dist * 10.0 + timeOffset) * 0.03 * distortionStrength; // Reduced from 0.05 to 0.03
+          float dynamicDistortion = sin(dist * 10.0 + timeOffset) * 0.03 * distortionStrength; 
           
-          // Calculate pixel offset for sampling the background
+          
           vec2 offset = normalize(vUv - vec2(0.5, 0.5)) * (distortionStrength * distortionScale + dynamicDistortion);
           
-          // Add Einstein ring enhancement - more subtle
-          offset *= (1.0 + einsteinRing * 0.3); // Reduced from 0.5 to 0.3
           
-          // Sample the background with distortion
+          offset *= (1.0 + einsteinRing * 0.3); 
+          
+          
           vec2 distortedUv = gl_FragCoord.xy / resolution + offset;
           vec4 backgroundColor = texture2D(tBackground, distortedUv);
           
-          // Intensify the ring - much more subtle now
-          backgroundColor.rgb += vec3(einsteinRing * 0.05); // Reduced from 0.1 to 0.05
           
-          // Final color with distortion
+          backgroundColor.rgb += vec3(einsteinRing * 0.05); 
+          
+          
           gl_FragColor = backgroundColor;
           
-          // Add transparency for areas outside the lensing effect - MUCH more transparent
-          // Reduced from distortionStrength * 1.5 to distortionStrength * 0.8
-          float alpha = min(0.7, distortionStrength * 0.8); // Also cap maximum alpha at 0.7 (was 1.0)
           
-          // Fade out alpha at edges for a smoother transition
+          
+          float alpha = min(0.7, distortionStrength * 0.8); 
+          
+          
           alpha *= smoothstep(1.0, 0.7, dist);
           
           gl_FragColor.a = alpha;
@@ -94,7 +93,6 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
       `,
     };
 
-    // We need to replace the resolution variable in the shader
     const resolutionLine = `
       uniform vec2 resolution;
     `;
@@ -154,9 +152,7 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
   /**
    * Dispose of material resources
    */
-  dispose(): void {
-    // Clean up resources
-  }
+  dispose(): void {}
 }
 
 /**
@@ -183,7 +179,6 @@ export class GravitationalLensingHelper {
       lensSphereScale?: number;
     } = {},
   ) {
-    // Create a render target to capture the scene at a lower resolution for better performance
     this.renderTarget = new THREE.WebGLRenderTarget(
       window.innerWidth * 0.5,
       window.innerHeight * 0.5,
@@ -195,15 +190,12 @@ export class GravitationalLensingHelper {
       },
     );
 
-    // Create the material for lensing effect
     this.material = new GravitationalLensingMaterial({
       intensity: options.intensity,
       radius: options.radius,
       distortionScale: options.distortionScale,
     });
 
-    // Create a large sphere around the object for the lensing effect
-    // Scale it based on the object's size (or use a default scaling)
     const boundingBox = new THREE.Box3().setFromObject(object);
     const objectSize = new THREE.Vector3();
     boundingBox.getSize(objectSize);
@@ -215,12 +207,10 @@ export class GravitationalLensingHelper {
     const geometry = new THREE.SphereGeometry(sphereRadius, 64, 64);
     this.mesh = new THREE.Mesh(geometry, this.material);
     this.mesh.name = "gravitational-lensing";
-    this.mesh.renderOrder = 1000; // Render after everything else
+    this.mesh.renderOrder = 1000;
 
-    // Position the lens mesh at the same position as the object
     object.add(this.mesh);
 
-    // Set up the resize handler
     window.addEventListener("resize", () => this.onWindowResize(renderer));
   }
 
@@ -232,20 +222,16 @@ export class GravitationalLensingHelper {
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
   ): void {
-    // Hide the lensing mesh temporarily
     this.mesh.visible = false;
 
-    // Render the scene to the render target
     const originalRenderTarget = renderer.getRenderTarget();
     renderer.setRenderTarget(this.renderTarget);
     renderer.render(scene, camera);
     renderer.setRenderTarget(originalRenderTarget);
 
-    // Update the material with the render target
     const elapsedTime = Date.now() / 1000 - this.startTime;
     this.material.update(elapsedTime, this.renderTarget);
 
-    // Make the lensing mesh visible again
     this.mesh.visible = true;
   }
 

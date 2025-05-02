@@ -7,11 +7,10 @@ export * from "./Select";
  * Plugin definition for the core Select component.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "core-select", // Match the registry key
+  id: "core-select",
   name: "Core Select Component",
   description: "Provides the teskooano-select custom element.",
 
-  // Register the custom element component
   components: [
     {
       tagName: "teskooano-select",
@@ -19,7 +18,6 @@ export const plugin: TeskooanoPlugin = {
     },
   ],
 
-  // No manager classes, panels, functions, or toolbar items for this component
   managerClasses: [],
   panels: [],
   functions: [],

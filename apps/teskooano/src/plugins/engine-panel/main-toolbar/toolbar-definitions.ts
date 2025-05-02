@@ -3,27 +3,27 @@ import type {
   ToolbarWidgetConfig,
 } from "@teskooano/ui-plugin";
 import AddIcon from "@fluentui/svg-icons/icons/add_24_regular.svg?raw";
-import { addCompositeEnginePanelFunction } from "./system-controls/engineview-functions"; // Assuming the function ID is stable
+import { addCompositeEnginePanelFunction } from "./system-controls/engineview-functions";
 
 export const simulationControlsWidget: ToolbarWidgetConfig = {
   id: "main-toolbar-sim-controls",
   target: "main-toolbar",
-  componentName: "teskooano-simulation-controls", // Ensure this web component is registered
+  componentName: "teskooano-simulation-controls",
   order: 10,
 };
 
 export const systemControlsWidget: ToolbarWidgetConfig = {
   id: "main-toolbar-teskooano-system-controls",
   target: "main-toolbar",
-  componentName: "teskooano-system-controls", // Ensure this web component is registered
+  componentName: "teskooano-system-controls",
   order: 20,
 };
 
 export const externalLinksWidget: ToolbarWidgetConfig = {
   id: "main-toolbar-external-links",
   target: "main-toolbar",
-  componentName: "teskooano-external-links-component", // Matches the registered component tag
-  order: 30, // Place it after system controls
+  componentName: "teskooano-external-links-component",
+  order: 30,
 };
 
 export const addViewButtonRegistration: ToolbarRegistration = {
@@ -34,7 +34,7 @@ export const addViewButtonRegistration: ToolbarRegistration = {
       type: "function",
       title: "Add Engine View",
       iconSvg: AddIcon,
-      functionId: addCompositeEnginePanelFunction.id, // Use imported function config id
+      functionId: addCompositeEnginePanelFunction.id,
       order: 150,
       tooltipText: "Add a new composite engine view panel to the layout.",
       tooltipTitle: "Add Engine View",

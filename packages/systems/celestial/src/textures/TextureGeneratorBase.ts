@@ -28,17 +28,14 @@ export class TextureResourceManager {
     if (this.initialized) return;
 
     try {
-      // Create renderer
       this.renderer = new THREE.WebGLRenderer({
         antialias: true,
         powerPreference: "high-performance",
       });
       this.renderer.setSize(size, size);
 
-      // Create render target for the specified size
       this.getRenderTarget(size);
 
-      // Create simple scene with orthographic camera
       this.scene = new THREE.Scene();
       this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
       this.camera.position.z = 1;
@@ -86,22 +83,17 @@ export class TextureResourceManager {
       throw new Error("Renderer resources not properly initialized");
     }
 
-    // Create a plane geometry that fills the entire camera view
     const geometry = new THREE.PlaneGeometry(2, 2);
 
-    // Create mesh and add to scene
     const mesh = new THREE.Mesh(geometry, material);
     this.scene.add(mesh);
 
-    // Get appropriate render target
     const renderTarget = this.getRenderTarget(textureSize);
 
     try {
-      // Render to texture
       this.renderer.setRenderTarget(renderTarget);
       this.renderer.render(this.scene, this.camera);
 
-      // Create a DataTexture with proper format specification
       const buffer = new Uint8Array(textureSize * textureSize * 4);
       this.renderer.readRenderTargetPixels(
         renderTarget,
@@ -112,7 +104,6 @@ export class TextureResourceManager {
         buffer,
       );
 
-      // Create a DataTexture with proper format specification
       const texture = new THREE.DataTexture(
         buffer,
         textureSize,
@@ -121,7 +112,6 @@ export class TextureResourceManager {
         THREE.UnsignedByteType,
       );
 
-      // Set appropriate texture properties
       texture.needsUpdate = true;
       texture.minFilter = generateMipmaps
         ? THREE.LinearMipmapLinearFilter
@@ -132,7 +122,6 @@ export class TextureResourceManager {
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.generateMipmaps = generateMipmaps;
 
-      // Reset render target
       this.renderer.setRenderTarget(null);
 
       return texture;
@@ -140,7 +129,6 @@ export class TextureResourceManager {
       console.error("Error during texture rendering:", error);
       throw new Error("Failed to render texture");
     } finally {
-      // Clean up
       if (this.scene) {
         this.scene.remove(mesh);
       }
@@ -152,7 +140,6 @@ export class TextureResourceManager {
    * Release all resources
    */
   public dispose(): void {
-    // Dispose of all render targets
     this.renderTargets.forEach((renderTarget) => {
       renderTarget.dispose();
     });
@@ -208,20 +195,16 @@ export class TextureGeneratorBase {
     generator: (opts: any) => TextureResult,
     cacheKey?: string,
   ): TextureResult {
-    // Create cache key from options if not provided
     if (!cacheKey) {
       cacheKey = this.createCacheKey(options);
     }
 
-    // Return cached texture if available
     if (this.textureCache.has(cacheKey)) {
       return this.textureCache.get(cacheKey)!;
     }
 
-    // Generate new texture
     const result = generator(options);
 
-    // Cache the result
     this.textureCache.set(cacheKey, result);
 
     return result;
@@ -232,7 +215,6 @@ export class TextureGeneratorBase {
    */
   protected createCacheKey(options: any): string {
     return JSON.stringify(options, (key, value) => {
-      // Handle non-serializable values like THREE.Color
       if (value instanceof THREE.Color) {
         return `#${value.getHexString()}`;
       }
@@ -244,7 +226,6 @@ export class TextureGeneratorBase {
    * Clear the texture cache
    */
   protected clearCache(): void {
-    // Dispose all cached textures
     this.textureCache.forEach((result) => {
       Object.values(result).forEach((texture) => {
         if (texture) {

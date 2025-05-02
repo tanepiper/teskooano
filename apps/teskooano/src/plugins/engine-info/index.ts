@@ -3,32 +3,27 @@ import type {
   PanelConfig,
   ToolbarRegistration,
 } from "@teskooano/ui-plugin";
-import { RendererInfoDisplay } from "./engine-info"; // Import the panel class
+import { RendererInfoDisplay } from "./engine-info";
 
-// Using DataUsageIcon from the component itself, but could define another like InfoIcon:
-// import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
-import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw"; // Using the same icon for now
+import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw";
 
-// --- Panel Configuration ---
 const panelConfig: PanelConfig = {
-  componentName: RendererInfoDisplay.componentName, // Use static property 'renderer-info-display'
-  panelClass: RendererInfoDisplay, // The class implementing IContentRenderer
+  componentName: RendererInfoDisplay.componentName,
+  panelClass: RendererInfoDisplay,
   defaultTitle: "Renderer Info",
 };
 
-// --- Toolbar Registration ---
 const toolbarRegistration: ToolbarRegistration = {
-  target: "engine-toolbar", // Add button to the engine's overlay toolbar
+  target: "engine-toolbar",
   items: [
     {
-      id: "engine-info-button", // Unique ID for this button
+      id: "engine-info-button",
       type: "panel",
-      title: "Engine Info", // Tooltip for the button
-      iconSvg: DataUsageIcon, // Icon for the button
-      componentName: panelConfig.componentName, // Panel to open ('renderer-info-display')
-      behaviour: "toggle", // Allow opening/closing the panel
-      order: 20, // Place it after Focus Control (order 10)
-      // No initial position specified, will use default cascade
+      title: "Engine Info",
+      iconSvg: DataUsageIcon,
+      componentName: panelConfig.componentName,
+      behaviour: "toggle",
+      order: 20,
     },
   ],
 };
@@ -40,16 +35,15 @@ const toolbarRegistration: ToolbarRegistration = {
  * for showing renderer statistics.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "teskooano-engine-info", // Updated ID
+  id: "teskooano-engine-info",
   name: "Engine Info Display",
   description:
     "Provides the engine information display panel and toolbar button.",
-  panels: [panelConfig], // Register the panel
-  toolbarRegistrations: [toolbarRegistration], // Register the toolbar item(s)
+  panels: [panelConfig],
+  toolbarRegistrations: [toolbarRegistration],
   functions: [],
   toolbarWidgets: [],
   managerClasses: [],
 };
 
-// Export the panel component directly if needed elsewhere
 export { RendererInfoDisplay };

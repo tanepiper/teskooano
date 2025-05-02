@@ -1,7 +1,8 @@
-import { Subscription } from "rxjs"; // Import Subscription
-import { DockviewController } from "../../controllers/dockview/DockviewController";
+import { Subscription, Observable, Subject, takeUntil } from "rxjs";
+import type { DockviewPanelApi, DockviewApi } from "dockview-core";
 
 import { EngineToolbarManager } from "./EngineToolbarManager";
+import { template } from "./engine-toolbar.template"; // Import the template
 
 import BoxMultipleArrowLeftFilled from "@fluentui/svg-icons/icons/box_multiple_arrow_left_24_regular.svg?raw";
 import BoxMultipleArrowRightFilled from "@fluentui/svg-icons/icons/box_multiple_arrow_right_24_filled.svg?raw";
@@ -14,21 +15,24 @@ import {
   ToolbarWidgetConfig,
 } from "@teskooano/ui-plugin";
 
-export interface EnginePanelWithToolbarToggle {
-  requestToolbarToggle(): void;
-}
+// Import types from the new file
+import type {
+  EnginePanelWithToolbarToggle,
+  IDockviewPanelControls,
+} from "./engine-toolbar.types";
 
 export class EngineToolbar {
   private readonly _element: HTMLElement;
   private _toggleButton: HTMLElement | null = null;
   private _collapsibleContainer: HTMLElement | null = null;
   private _widgetContainer: HTMLElement | null = null;
-  private _dockviewController: DockviewController;
+  private _dockviewController: IDockviewPanelControls;
   private _apiId: string;
   private _parentEngine: EnginePanelWithToolbarToggle;
   private _isExpanded: boolean = true;
   private _activeFloatingPanels: Map<string, string> = new Map();
-  private _expansionSubscription: Subscription | null = null;
+  // Use Subject for easier cleanup on dispose
+  private _destroy$ = new Subject<void>();
 
   /**
    * The root HTML element for the toolbar.
@@ -39,7 +43,7 @@ export class EngineToolbar {
 
   constructor(
     apiId: string,
-    dockviewController: DockviewController,
+    dockviewController: IDockviewPanelControls,
     parentEngine: EnginePanelWithToolbarToggle,
   ) {
     this._apiId = apiId;
@@ -49,7 +53,7 @@ export class EngineToolbar {
     this._element = document.createElement("div");
     this._element.classList.add("engine-overlay-toolbar-container");
 
-    this.injectStyles();
+    // injectStyles(); // Removed - styles are in the template
     this.createBaseStructure();
     this.subscribeToExpansionState();
     this.populateItemsFromPlugins();
@@ -57,115 +61,50 @@ export class EngineToolbar {
   }
 
   /** Inject CSS for toolbar structure, icons, and animation */
-  private injectStyles(): void {
-    const style = document.createElement("style");
-    style.textContent = `
-      .engine-overlay-toolbar-container {
-        position: absolute;
-        top: 0px;
-        left: 0px;
-        z-index: 9999;
-        display: inline-flex;
-        align-items: center; /* Align items vertically */
-        justify-content: space-between; /* Push widget area to the right */
-        background-color: rgba(40, 40, 60, 0.7);
-        border-radius: 4px;
-        padding: 4px;
-        gap: 4px;
-        overflow: visible; /* Allow content overflow */
-        color: white; /* Default text/icon color */
-      }
-
-      .engine-overlay-toolbar-container teskooano-button {
-        flex-shrink: 0; /* Prevent buttons from shrinking */
-        color: inherit; /* Inherit color from container */
-      }
-
-      .engine-overlay-toolbar-container teskooano-button svg {
-        width: 18px;
-        height: 18px;
-      }
-
-      teskooano-button.toolbar-toggle-button svg {
-        fill: rgba(191, 237, 9, 0.85);
-      }
-
-      .engine-overlay-toolbar-container teskooano-button:not(.toolbar-toggle-button):hover svg{
-        fill: rgba(191, 237, 9, 0.85);
-      }
-
-      .toolbar-collapsible-buttons {
-        display: inline-flex;
-        gap: 4px;
-        align-items: center;
-        max-width: 0; /* Initially hidden */
-        overflow: hidden;
-        transition: max-width 0.3s ease-in-out, opacity 0.3s ease-in-out;
-        white-space: nowrap; /* Prevent wrapping during transition */
-        opacity: 0; /* Start hidden */
-        visibility: hidden; /* Start hidden */
-      }
-
-      .toolbar-collapsible-buttons.expanded {
-        max-width: 500px; /* Adjust as needed */
-        opacity: 1;
-        visibility: visible;
-      }
-
-      .toolbar-widget-area {
-        display: inline-flex;
-        gap: 4px;
-        align-items: center;
-      }
-
-      .toolbar-widget-area > * {
-        flex-shrink: 0;
-      }
-    `;
-
-    document.head.appendChild(style);
-  }
+  // private injectStyles(): void { ... } // Removed
 
   /** Creates the main toggle button and the container for dynamic buttons and widgets */
   private createBaseStructure(): void {
-    this._element.innerHTML = ""; // Clear previous content
+    // Clone the template content
+    const templateContent = template.content.cloneNode(true);
+    this._element.appendChild(templateContent);
 
-    const leftSection = document.createElement("div");
-    leftSection.style.display = "inline-flex";
-    leftSection.style.alignItems = "center";
-    leftSection.style.gap = "4px";
+    // Get references to the elements defined in the template
+    // Use more specific selectors if necessary, especially if IDs change
+    this._toggleButton = this._element.querySelector<HTMLElement>(
+      "#engine-toolbar-toggle-button",
+    );
+    this._collapsibleContainer = this._element.querySelector<HTMLElement>(
+      ".toolbar-collapsible-buttons",
+    );
+    this._widgetContainer = this._element.querySelector<HTMLElement>(
+      ".toolbar-widget-area",
+    );
 
-    const toggleButton = document.createElement("teskooano-button");
-    toggleButton.id = `engine-toolbar-toggle-${this._apiId}`;
-    toggleButton.classList.add("toolbar-toggle-button");
-    toggleButton.setAttribute("variant", "icon");
-    toggleButton.setAttribute("size", "lg");
-    // Title and Icon will be set by updateExpansionUI
+    // Check if elements were found
+    if (!this._toggleButton) {
+      console.error(
+        `[EngineToolbar ${this._apiId}] Toggle button not found in template.`,
+      );
+      return; // Stop further setup if essential elements are missing
+    }
+    if (!this._collapsibleContainer) {
+      console.error(
+        `[EngineToolbar ${this._apiId}] Collapsible container not found in template.`,
+      );
+      // Decide if this is critical; maybe toolbar can function without it?
+    }
+    if (!this._widgetContainer) {
+      console.error(
+        `[EngineToolbar ${this._apiId}] Widget container not found in template.`,
+      );
+      // Decide if this is critical
+    }
 
-    const iconSpan = document.createElement("span");
-    iconSpan.slot = "icon";
-    // Icon will be set by updateExpansionUI
-    toggleButton.appendChild(iconSpan);
-
-    toggleButton.addEventListener("click", () => {
+    // Attach the toggle listener
+    this._toggleButton?.addEventListener("click", () => {
       this._parentEngine.requestToolbarToggle();
     });
-
-    leftSection.appendChild(toggleButton);
-    this._toggleButton = toggleButton;
-
-    const collapsibleContainer = document.createElement("div");
-    collapsibleContainer.classList.add("toolbar-collapsible-buttons");
-
-    leftSection.appendChild(collapsibleContainer);
-    this._collapsibleContainer = collapsibleContainer; // Store reference
-
-    this._element.appendChild(leftSection);
-
-    const widgetContainer = document.createElement("div");
-    widgetContainer.classList.add("toolbar-widget-area");
-    this._element.appendChild(widgetContainer);
-    this._widgetContainer = widgetContainer; // Store reference
   }
 
   private populateItemsFromPlugins(): void {
@@ -178,20 +117,22 @@ export class EngineToolbar {
     this.renderDynamicWidgets(widgetConfigs);
   }
 
-  /** Listen only for panel removals to clean up internal tracking */
+  /** Listen for panel removals to clean up internal tracking */
   private listenForPanelRemovals(): void {
-    this._dockviewController.onPanelRemoved$.subscribe((removedPanelId) => {
-      if (this._activeFloatingPanels.has(removedPanelId)) {
-        this._activeFloatingPanels.delete(removedPanelId);
-      }
-    });
+    this._dockviewController.onPanelRemoved$
+      .pipe(takeUntil(this._destroy$)) // Auto-unsubscribe on dispose
+      .subscribe((removedPanelId) => {
+        if (this._activeFloatingPanels.has(removedPanelId)) {
+          this._activeFloatingPanels.delete(removedPanelId);
+        }
+      });
   }
 
   /** Clears and re-renders buttons in the collapsible container */
   private renderDynamicButtons(buttons: ToolbarItemConfig[]): void {
     if (!this._collapsibleContainer) return;
 
-    this._collapsibleContainer.innerHTML = ""; // Clear existing buttons
+    this._collapsibleContainer.innerHTML = "";
 
     buttons.forEach((config) => {
       const button = document.createElement("teskooano-button");
@@ -221,7 +162,7 @@ export class EngineToolbar {
   private renderDynamicWidgets(widgets: ToolbarWidgetConfig[]): void {
     if (!this._widgetContainer) return;
 
-    this._widgetContainer.innerHTML = ""; // Clear existing widgets
+    this._widgetContainer.innerHTML = "";
 
     widgets.forEach((config) => {
       try {
@@ -261,34 +202,102 @@ export class EngineToolbar {
     });
   }
 
+  /** Calculates the position for a new floating panel */
+  private calculatePanelPosition(config: PanelToolbarItemConfig): {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } {
+    // Add type assertion for safety if PanelToolbarItemConfig definition is uncertain
+    const panelConfig = config as any;
+    if (panelConfig.initialPosition) {
+      return panelConfig.initialPosition;
+    }
+    const baseOffset = 50;
+    // Use a different approach to avoid overlap if many panels are opened quickly
+    const panelIndex = this._activeFloatingPanels.size;
+    const cascadeOffset = (panelIndex % 10) * 30; // Cascade up to 10 then repeat
+    const defaultWidth = panelConfig.initialPosition?.width ?? 500;
+    const defaultHeight = panelConfig.initialPosition?.height ?? 300;
+
+    return {
+      top: baseOffset + cascadeOffset,
+      left: baseOffset + cascadeOffset,
+      width: defaultWidth,
+      height: defaultHeight,
+    };
+  }
+
+  /** Creates or activates a floating panel */
+  private createOrActivatePanel(
+    config: PanelToolbarItemConfig,
+    panelId: string,
+  ): void {
+    const existingPanel = this._dockviewController.api.getPanel(panelId);
+    const position = this.calculatePanelPosition(config);
+    const title = config.panelTitle ?? config.title;
+    // Add type assertion for safety
+    const panelConfig = config as any;
+
+    if (existingPanel) {
+      try {
+        // Ensure panel is visible and sized correctly
+        if (!existingPanel.api.isVisible) {
+          // This might require specific Dockview logic if simply setting size/active doesn't show it
+          // For now, assume setActive brings it to front if hidden/inactive
+        }
+        existingPanel.api.setSize(position);
+        if (existingPanel.api.title !== title) {
+          existingPanel.api.updateParameters({ title });
+        }
+        existingPanel.api.setActive();
+        this._activeFloatingPanels.set(panelId, config.componentName);
+      } catch (e) {
+        console.error(
+          `[EngineToolbar ${this._apiId}] Error setting size/activating existing panel ${panelId}:`,
+          e,
+        );
+      }
+    } else {
+      const panelApi = this._dockviewController.addFloatingPanel(
+        {
+          id: panelId,
+          component: config.componentName,
+          title: title,
+          params: {
+            // Pass necessary params, ensure 'title' matches if Dockview uses it
+            title: title,
+            parentInstance: this._parentEngine, // Pass parent reference if needed by the panel
+            ...(panelConfig.params ?? {}), // Spread any additional params from config
+          },
+        },
+        position,
+      );
+      if (panelApi) {
+        this._activeFloatingPanels.set(panelId, config.componentName);
+        panelApi.setActive?.(); // Ensure it becomes active
+      } else {
+        console.error(
+          `[EngineToolbar ${this._apiId}] Failed to create floating panel ${panelId}`,
+        );
+      }
+    }
+  }
+
   /** Handles clicks for buttons configured as 'panel' type */
   private handlePanelButtonClick(config: PanelToolbarItemConfig): void {
-    const panelId = `${config.componentName}_${this._apiId}_float`;
+    const basePanelId = `${config.componentName}_${this._apiId}_float`;
     const behaviour = config.behaviour ?? "toggle";
 
-    const calculatePosition = () => {
-      if (config.initialPosition) {
-        return config.initialPosition;
-      }
-      const baseOffset = 50;
-      const panelIndex = this._activeFloatingPanels.size;
-      const cascadeOffset = panelIndex * 30;
-      let defaultWidth = 500;
-      let defaultHeight = 300;
-
-      return {
-        top: baseOffset + cascadeOffset,
-        left: baseOffset + cascadeOffset,
-        width: defaultWidth,
-        height: defaultHeight,
-      };
-    };
-
     if (behaviour === "toggle") {
+      const panelId = basePanelId;
       const existingPanel = this._dockviewController.api.getPanel(panelId);
       if (existingPanel?.api.isVisible) {
+        // If visible, remove it
         try {
           this._dockviewController.api.removePanel(existingPanel);
+          // No need to manage _activeFloatingPanels here, onPanelRemoved$ handles it
         } catch (error) {
           console.error(
             `[EngineToolbar ${this._apiId}] Error removing panel ${panelId}:`,
@@ -296,70 +305,13 @@ export class EngineToolbar {
           );
         }
       } else {
-        const position = calculatePosition();
-
-        if (existingPanel) {
-          try {
-            existingPanel.api.setSize(position);
-            const newTitle = config.panelTitle ?? config.title;
-            if (existingPanel.api.title !== newTitle) {
-              existingPanel.api.updateParameters({ title: newTitle });
-            }
-            existingPanel.api.setActive();
-            this._activeFloatingPanels.set(panelId, config.componentName);
-          } catch (e) {
-            console.error(
-              `[EngineToolbar ${this._apiId}] Error setting size/activating existing panel ${panelId}:`,
-              e,
-            );
-          }
-        } else {
-          const panelApi = this._dockviewController.addFloatingPanel(
-            {
-              id: panelId, // Use derived ID for toggle
-              component: config.componentName,
-              title: config.panelTitle ?? config.title,
-              params: {
-                title: config.panelTitle ?? config.title,
-                parentInstance: this._parentEngine, // CRITICAL
-              },
-            },
-            position,
-          );
-          if (panelApi) {
-            this._activeFloatingPanels.set(panelId, config.componentName);
-            panelApi.setActive?.();
-          } else {
-            console.error(
-              `[EngineToolbar ${this._apiId}] Failed to create floating panel ${panelId}`,
-            );
-          }
-        }
+        // If not visible (or doesn't exist), create or activate it
+        this.createOrActivatePanel(config, panelId);
       }
     } else if (behaviour === "create") {
-      const newPanelId = `${config.componentName}_${this._apiId}_float_${Date.now()}`;
-      const position = calculatePosition();
-
-      const panelApi = this._dockviewController.addFloatingPanel(
-        {
-          id: newPanelId,
-          component: config.componentName,
-          title: config.panelTitle ?? config.title,
-          params: {
-            title: config.panelTitle ?? config.title,
-            parentInstance: this._parentEngine, // CRITICAL
-          },
-        },
-        position,
-      );
-      if (panelApi) {
-        this._activeFloatingPanels.set(newPanelId, config.componentName);
-        panelApi.setActive?.();
-      } else {
-        console.error(
-          `[EngineToolbar ${this._apiId}] Failed to create floating panel ${newPanelId}`,
-        );
-      }
+      // Always create a new panel with a unique ID
+      const panelId = `${basePanelId}_${Date.now()}`;
+      this.createOrActivatePanel(config, panelId);
     }
   }
 
@@ -375,7 +327,7 @@ export class EngineToolbar {
       return;
     }
     try {
-      await pluginManager.execute(functionId); // Call with functionId
+      await pluginManager.execute(functionId);
     } catch (error) {
       console.error(
         `[EngineToolbar ${this._apiId}] Error executing function '${functionId}':`,
@@ -388,35 +340,30 @@ export class EngineToolbar {
    * @param isExpanded True if the toolbar should be expanded, false otherwise.
    */
   public updateExpansionUI(isExpanded: boolean): void {
-    // Store the state locally (optional, manager is source of truth but good for immediate UI)
     this._isExpanded = isExpanded;
 
     if (!this._toggleButton || !this._collapsibleContainer) return;
 
     const iconSpan = this._toggleButton.querySelector("span[slot='icon']");
 
-    // Update container class
     this._collapsibleContainer.classList.toggle("expanded", isExpanded);
 
-    // Update button icon and title
     if (iconSpan) {
+      // Use the stored SVG strings directly
       iconSpan.innerHTML = isExpanded
         ? BoxMultipleArrowLeftFilled
-        : BoxMultipleArrowRightFilled;
+        : BoxMultipleArrowRightFilled; // Use the imported SVG
     }
     this._toggleButton.title = isExpanded ? "Hide Tools" : "Show Tools";
   }
 
   /** Clean up listeners when the toolbar is destroyed */
   public dispose(): void {
-    // Unsubscribe from expansion state
-    this._expansionSubscription?.unsubscribe();
-    this._expansionSubscription = null;
+    this._destroy$.next(); // Signal completion for observables
+    this._destroy$.complete();
 
-    // Remove the element from the DOM
     this._element.remove();
 
-    // Clear internal references
     this._toggleButton = null;
     this._collapsibleContainer = null;
     this._widgetContainer = null;
@@ -432,16 +379,14 @@ export class EngineToolbar {
     );
 
     if (manager && typeof manager.getExpansionState$ === "function") {
-      // Get the specific observable for this panel ID
       const expansionState$ = manager.getExpansionState$(this._apiId);
 
-      // Subscribe only if the observable was found
       if (expansionState$) {
-        this._expansionSubscription = expansionState$.subscribe(
-          (isExpanded: boolean) => {
+        expansionState$
+          .pipe(takeUntil(this._destroy$)) // Auto-unsubscribe on dispose
+          .subscribe((isExpanded: boolean) => {
             this.updateExpansionUI(isExpanded);
-          },
-        );
+          });
       } else {
         console.warn(
           `[EngineToolbar ${this._apiId}] Could not get expansion state observable for this panel ID from manager.`,

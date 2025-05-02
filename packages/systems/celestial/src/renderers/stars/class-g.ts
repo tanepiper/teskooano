@@ -23,19 +23,17 @@ export class ClassGStarMaterial extends BaseStarMaterial {
       metallicEffect?: number;
     } = {},
   ) {
-    // Yellow color for G-class stars (like our Sun)
     const yellowColor = new THREE.Color(0xffcc00);
 
     super(yellowColor, {
-      // Medium-low corona intensity
       coronaIntensity: options.coronaIntensity ?? 0.4,
-      // Medium pulse speed
+
       pulseSpeed: options.pulseSpeed ?? 0.45,
-      // Medium glow intensity
+
       glowIntensity: options.glowIntensity ?? 0.45,
-      // Medium temperature variations
+
       temperatureVariation: options.temperatureVariation ?? 0.09,
-      // Higher metallic effect (Sun has more visible surface details)
+
       metallicEffect: options.metallicEffect ?? 0.6,
     });
   }

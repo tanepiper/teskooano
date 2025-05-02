@@ -18,7 +18,6 @@ import {
 import { simulationState } from "./simulation";
 import * as THREE from "three";
 
-// Helper to create minimal REAL state
 const createMinimalRealState = (
   id: string,
   mass: number = 1e6,
@@ -29,7 +28,6 @@ const createMinimalRealState = (
   velocity_mps: new OSVector3(0, 0, 0),
 });
 
-// Helper to create a mock CelestialObject using REAL state
 const createMockObject = (
   id: string,
   name: string = `Obj ${id}`,
@@ -39,11 +37,11 @@ const createMockObject = (
   id,
   name,
   type,
-  radius: 1000, // Scaled visual radius
-  mass: 1, // Scaled visual mass
+  radius: 1000,
+  mass: 1,
   realRadius_m: 1e6,
   realMass_kg: 1e22,
-  orbit: {} as OrbitalParameters, // Simplified
+  orbit: {} as OrbitalParameters,
   temperature: 273,
   physicsStateReal: createMinimalRealState(id, 1e22),
   parentId,
@@ -51,7 +49,6 @@ const createMockObject = (
 
 describe("Celestial Objects Store", () => {
   beforeEach(() => {
-    // Reset store before each test
     celestialObjectsStore.set({});
   });
 
@@ -93,7 +90,6 @@ describe("Celestial Objects Store", () => {
 
 describe("Simulation State Actions", () => {
   beforeEach(() => {
-    // Reset simulation state as well
     simulationState.set({
       time: 0,
       timeScale: 1,
@@ -102,9 +98,9 @@ describe("Simulation State Actions", () => {
       focusedObjectId: null,
       camera: {
         /* default camera */
-      } as any, // simplified
+      } as any,
     });
-    // Add some objects for testing selection/focus
+
     celestialObjectsStore.set({
       obj1: createMockObject("obj1"),
       obj2: createMockObject("obj2"),
@@ -134,7 +130,6 @@ describe("Simulation State Actions", () => {
     focusObject("obj2");
     const state = simulationState.get();
     expect(state.focusedObjectId).toBe("obj2");
-    // Add check for camera target update if implemented
   });
 
   it("should unfocus object if null is passed", () => {
@@ -147,13 +142,12 @@ describe("Simulation State Actions", () => {
   it("should not focus a non-existent object", () => {
     focusObject("nonexistent");
     const state = simulationState.get();
-    expect(state.focusedObjectId).toBeNull(); // Should remain null or previous value
+    expect(state.focusedObjectId).toBeNull();
   });
 });
 
 describe("Core State", () => {
   beforeEach(() => {
-    // Reset state before each test
     simulationState.set({
       time: 0,
       timeScale: 1,
@@ -266,7 +260,6 @@ describe("Core State", () => {
       const planetObj = objects[planetId!];
       expect(planetObj).toBeDefined();
       if (planetObj) {
-        // Type guard for TS
         expect(planetObj.type).toEqual(CelestialType.PLANET);
         expect(planetObj.parentId).toEqual(starId);
       }
@@ -323,7 +316,6 @@ describe("Core State", () => {
 
       const bodies = getPhysicsBodies();
 
-      // Simulate movement
       const updatedBodies = [
         {
           ...bodies[0],
@@ -337,7 +329,6 @@ describe("Core State", () => {
       const starObj = objects[starId];
 
       if (starObj) {
-        // Type guard for TS
         expect(starObj.position.x).toEqual(0.001);
         expect(starObj.physicsState.position.x).toEqual(0.001);
       }

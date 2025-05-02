@@ -89,7 +89,6 @@ export class TeskooanoSelect extends HTMLElement {
     this.labelSlot = this.shadowRoot!.querySelector('slot[name="label"]')!;
     this.helpTextElement = this.shadowRoot!.querySelector("#help-text")!;
 
-    // Create MutationObserver to watch for added/removed child option elements
     this.mutationObserver = new MutationObserver(this.handleOptionChanges);
   }
 
@@ -98,7 +97,6 @@ export class TeskooanoSelect extends HTMLElement {
     this.updateAttribute("disabled", this.getAttribute("disabled"));
     this.updateHelpTextAttribute(this.getAttribute("help-text"));
 
-    // Set up mutation observer to watch for option changes
     this.mutationObserver.observe(this, {
       childList: true,
       subtree: false,
@@ -106,19 +104,15 @@ export class TeskooanoSelect extends HTMLElement {
       attributes: false,
     });
 
-    // Initial synchronization of options
     this.syncOptions();
 
-    // Set initial value after options are synchronized
     requestAnimationFrame(() => {
       this.updateValueAttribute(this.getAttribute("value"));
     });
 
-    // Add listeners in connectedCallback
     this.selectElement.addEventListener("change", this.handleChange);
     this.addEventListener("click", this.handleClick);
 
-    // Ensure the select is accessible
     if (
       !this.selectElement.hasAttribute("aria-label") &&
       !this.hasAttribute("aria-labelledby")
@@ -136,19 +130,15 @@ export class TeskooanoSelect extends HTMLElement {
     this.removeEventListener("click", this.handleClick);
   }
 
-  // Handle option changes (added or removed from light DOM)
   private handleOptionChanges = (mutations: MutationRecord[]) => {
     this.syncOptions();
   };
 
-  // Sync options from light DOM to select element in shadow DOM
   private syncOptions() {
-    // Clear existing options in the shadow DOM select
     while (this.selectElement.firstChild) {
       this.selectElement.removeChild(this.selectElement.firstChild);
     }
 
-    // Add all options from light DOM to the shadow DOM select
     const lightDomOptions = Array.from(this.children).filter(
       (child) => child.tagName === "OPTION",
     );
@@ -157,7 +147,6 @@ export class TeskooanoSelect extends HTMLElement {
       const newOption = document.createElement("option");
       const originalOption = option as HTMLOptionElement;
 
-      // Copy attributes
       if (originalOption.value) {
         newOption.value = originalOption.value;
       }
@@ -168,19 +157,15 @@ export class TeskooanoSelect extends HTMLElement {
         newOption.selected = true;
       }
 
-      // Copy text content
       newOption.textContent = originalOption.textContent;
 
-      // Add to select
       this.selectElement.appendChild(newOption);
     });
 
-    // After syncing options, make sure to update the value
     const currentValue = this.getAttribute("value");
     if (currentValue !== null) {
       this.updateValueAttribute(currentValue);
     } else if (this.selectElement.options.length > 0) {
-      // Select first option if no value is specified
       this.selectElement.selectedIndex = 0;
       this._internalUpdate = true;
       this.setAttribute("value", this.selectElement.value);
@@ -218,7 +203,6 @@ export class TeskooanoSelect extends HTMLElement {
   }
 
   private updateLabelAttribute(value: string | null) {
-    // Only set textContent if no element is slotted into 'label'
     if (value !== null && !this.querySelector('[slot="label"]')) {
       this.labelSlot.textContent = value;
     } else if (
@@ -226,12 +210,10 @@ export class TeskooanoSelect extends HTMLElement {
       this.labelSlot.hasChildNodes() &&
       this.labelSlot.childNodes[0].nodeType === Node.TEXT_NODE
     ) {
-      // Clear generated label only if it was text set by the attribute
       this.labelSlot.textContent = "";
     }
     this.labelElement.setAttribute("for", "select-input");
 
-    // Update ARIA label when label changes
     const labelText =
       this.labelSlot.textContent?.trim() ||
       (this.querySelector('[slot="label"]')?.textContent?.trim() ?? "Select");
@@ -239,10 +221,8 @@ export class TeskooanoSelect extends HTMLElement {
   }
 
   private updateValueAttribute(value: string | null) {
-    // Only update if the select has options
     if (this.selectElement.options.length > 0) {
       if (value !== null) {
-        // Find if an option with this value exists
         const optionExists = Array.from(this.selectElement.options).some(
           (opt) => opt.value === value,
         );
@@ -250,12 +230,11 @@ export class TeskooanoSelect extends HTMLElement {
         if (optionExists) {
           this.selectElement.value = value;
         } else {
-          // Select first option if value doesn't match any option
           console.warn(
             `<teskooano-select>: Value "${value}" does not match any available options. Selecting first option.`,
           );
           this.selectElement.selectedIndex = 0;
-          // Update the attribute to reflect the actual selected value
+
           if (this.selectElement.value !== value) {
             this._internalUpdate = true;
             this.setAttribute("value", this.selectElement.value);
@@ -263,7 +242,6 @@ export class TeskooanoSelect extends HTMLElement {
           }
         }
       } else {
-        // Select first option if value is null
         this.selectElement.selectedIndex = 0;
         this._internalUpdate = true;
         this.setAttribute("value", this.selectElement.value);
@@ -278,7 +256,6 @@ export class TeskooanoSelect extends HTMLElement {
       this.selectElement.disabled = isDisabled;
       this.toggleAttribute("disabled", isDisabled);
 
-      // Add ARIA attributes for better accessibility
       this.selectElement.setAttribute(
         "aria-disabled",
         isDisabled ? "true" : "false",
@@ -289,7 +266,6 @@ export class TeskooanoSelect extends HTMLElement {
   private updateHelpTextAttribute(value: string | null) {
     this.helpTextElement.textContent = value || "";
 
-    // If help text is provided, link it to the input for accessibility
     if (value) {
       const helpTextId = "help-text-" + this.getUniqueId();
       this.helpTextElement.id = helpTextId;
@@ -299,22 +275,17 @@ export class TeskooanoSelect extends HTMLElement {
     }
   }
 
-  // Generate a simple unique ID for ARIA attributes
   private getUniqueId(): string {
     return Math.random().toString(36).substring(2, 9);
   }
 
-  // Event handler for internal select change
   private handleChange = (e: Event) => {
-    // Prevent the event from propagating up as we'll dispatch our own
     e.stopPropagation();
 
-    // Update the 'value' attribute to match the selected option
     this._internalUpdate = true;
     this.setAttribute("value", this.selectElement.value);
     this._internalUpdate = false;
 
-    // Dispatch a standard 'change' event and our custom event
     this.dispatchEvent(
       new CustomEvent(CustomEvents.SELECT_CHANGE, {
         bubbles: true,
@@ -324,23 +295,19 @@ export class TeskooanoSelect extends HTMLElement {
     );
   };
 
-  // Event handler for host click
   private handleClick = (e: MouseEvent) => {
     if (this.disabled) {
       e.stopPropagation();
       return;
     }
 
-    // For desktop browsers, programmatically clicking the select should open the dropdown
     if (e.target !== this.selectElement) {
       this.selectElement.click();
 
-      // Focus the select to ensure it receives keyboard events
       this.selectElement.focus();
     }
   };
 
-  // Getter/Setter for value property
   get value(): string {
     return this.selectElement.value;
   }
@@ -351,7 +318,6 @@ export class TeskooanoSelect extends HTMLElement {
     this._internalUpdate = false;
   }
 
-  // Getter/Setter for disabled property
   get disabled(): boolean {
     return this.hasAttribute("disabled");
   }

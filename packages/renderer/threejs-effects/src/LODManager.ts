@@ -1,25 +1,22 @@
 import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { Subscription } from "rxjs";
-// Import LODLevel from the correct location (adjust path if necessary)
+
 import type { LODLevel } from "@teskooano/systems-celestial";
-// --- Import simulation state ---
+
 import {
   getSimulationState,
   simulationState$,
   type PerformanceProfileType,
 } from "@teskooano/core-state";
-// --- End import ---
 
-// Debug Label related imports (assuming they are now in a separate utility file)
-// We might need to adjust paths or create this file if it doesn't exist
 import {
   createDebugLabel,
   updateDebugLabel,
   disposeDebugLabel,
   setDebugLabelVisibility,
   type DebugLabel,
-} from "./lod-manager/lod-debug-labels"; // Assuming a new file for debug label utils
+} from "./lod-manager/lod-debug-labels";
 
 /**
  * Manages Level of Detail (LOD) for celestial objects by creating THREE.LOD instances
@@ -30,20 +27,17 @@ export class LODManager {
   private objectLODs: Map<string, THREE.LOD> = new Map();
   private debugLabels: Map<string, DebugLabel> = new Map();
   private debugEnabled: boolean = false;
-  private currentProfile: PerformanceProfileType = "medium"; // Store current profile
-  private unsubscribeSimState: Subscription | null = null; // For unsubscribing
+  private currentProfile: PerformanceProfileType = "medium";
+  private unsubscribeSimState: Subscription | null = null;
 
   constructor(camera: THREE.PerspectiveCamera) {
     this.camera = camera;
-    // Get initial profile
+
     this.currentProfile = getSimulationState().performanceProfile;
-    // Subscribe to profile changes
+
     this.unsubscribeSimState = simulationState$.subscribe((state) => {
       if (state.performanceProfile !== this.currentProfile) {
         this.currentProfile = state.performanceProfile;
-        // Note: Existing LOD objects won't automatically update distances.
-        // A more complex implementation could potentially update them,
-        // but for now, new objects will use the new profile.
       }
     });
   }
@@ -68,7 +62,7 @@ export class LODManager {
     if (!debugLabel) {
       debugLabel = createDebugLabel();
       this.debugLabels.set(objectId, debugLabel);
-      // Add the label sprite directly to the LOD object so it follows it
+
       lod.add(debugLabel.sprite);
     }
 
@@ -97,9 +91,7 @@ export class LODManager {
     const lod = new THREE.LOD();
     lod.name = `${object.celestialObjectId}-LODContainer`;
 
-    // --- Scale distances based on profile ---
     const scaleFactor = this.getLODScaleFactor();
-    // --- End Scale ---
 
     levels.forEach((level) => {
       if (!level.object || typeof level.distance !== "number") {
@@ -107,22 +99,18 @@ export class LODManager {
           `[LODManager] Invalid LOD level provided for ${object.celestialObjectId}:`,
           level,
         );
-        // Skip invalid levels
+
         return;
       }
-      // Apply scaling factor to the distance
+
       const scaledDistance = level.distance * scaleFactor;
       lod.addLevel(level.object, scaledDistance);
-      // console.log(`[LODManager] Adding level for ${object.celestialObjectId} at scaled distance ${scaledDistance} (Original: ${level.distance}, Scale: ${scaleFactor})`);
     });
 
-    // Auto update needs to be true for LOD to work
     lod.autoUpdate = true;
 
-    // Store the created LOD object
     this.objectLODs.set(object.celestialObjectId, lod);
 
-    // Add debug label if enabled
     if (this.debugEnabled) {
       this._updateOrCreateDebugLabel(object.celestialObjectId, lod);
     }
@@ -135,11 +123,8 @@ export class LODManager {
    */
   update(): void {
     this.objectLODs.forEach((lod, objectId) => {
-      // THREE.LOD.update() handles distance checks and switches levels
-      // It requires the camera to be passed
       lod.update(this.camera);
 
-      // Update debug labels if enabled
       if (this.debugEnabled) {
         this._updateOrCreateDebugLabel(objectId, lod);
       }
@@ -154,13 +139,10 @@ export class LODManager {
     const debugLabel = this.debugLabels.get(objectId);
 
     if (debugLabel) {
-      // The sprite is parented to the LOD, so removing LOD removes the sprite implicitly.
-      // We just need to dispose the label's resources.
       disposeDebugLabel(debugLabel);
       this.debugLabels.delete(objectId);
     }
 
-    // If LOD exists, dispose its levels' resources before deleting from map
     if (lod) {
       lod.levels.forEach((levelData) => {
         levelData.object.traverse((child) => {
@@ -190,17 +172,14 @@ export class LODManager {
    * Clear all managed LODs and debug labels.
    */
   clear(): void {
-    // Dispose all debug labels first
     this.debugLabels.forEach(disposeDebugLabel);
     this.debugLabels.clear();
 
-    // Remove and dispose resources for all LOD objects
-    // Need to copy keys as `remove` modifies the map
     const objectIds = Array.from(this.objectLODs.keys());
     objectIds.forEach((id) => this.remove(id));
-    // Should be empty now, but clear just in case
+
     this.objectLODs.clear();
-    // Unsubscribe from state changes correctly
+
     this.unsubscribeSimState?.unsubscribe();
     this.unsubscribeSimState = null;
   }
@@ -212,7 +191,7 @@ export class LODManager {
    */
   getCurrentLODLevel(objectId: string): number | undefined {
     const lod = this.getLODById(objectId);
-    // THREE.LOD objects have a getCurrentLevel method
+
     return lod?.getCurrentLevel();
   }
 
@@ -239,9 +218,9 @@ export class LODManager {
       case "high":
         return 0.75;
       case "cosmic":
-        return 0.5; // Switch levels much closer for max detail
+        return 0.5;
       default:
-        return 1.0; // Default to medium if profile is unknown
+        return 1.0;
     }
   }
 }

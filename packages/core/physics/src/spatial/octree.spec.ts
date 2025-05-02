@@ -3,7 +3,6 @@ import { OSVector3 } from "@teskooano/core-math";
 import { PhysicsStateReal } from "@teskooano/data-types";
 import { Octree } from "./octree";
 
-// Helper to create REAL state
 const createRealState = (
   id: string | number,
   pos: { x: number; y: number; z: number },
@@ -12,14 +11,14 @@ const createRealState = (
   id,
   mass_kg: mass,
   position_m: new OSVector3(pos.x, pos.y, pos.z),
-  // Velocity is not used by Octree directly, can be zero
+
   velocity_mps: new OSVector3(0, 0, 0),
 });
 
 describe("Octree", () => {
   it("should initialize with correct root node size", () => {
     const octree = new Octree(100);
-    // Accessing private root for testing purposes
+
     const root = (octree as any).root;
     expect(root.size).toBe(100);
     expect(root.center.x).toBe(0);
@@ -49,19 +48,13 @@ describe("Octree", () => {
 
     expect(root.children).toBeDefined();
     expect(root.children?.length).toBe(8);
-    expect(root.bodies.length).toBe(0); // Bodies should be pushed to children
+    expect(root.bodies.length).toBe(0);
     expect(root.totalMass_kg).toBeCloseTo(30);
 
-    // Check Center of Mass for the root node after subdivision
-    // COM = (m1*p1 + m2*p2) / (m1 + m2)
-    // COM_x = (10*10 + 20*(-10)) / 30 = (100 - 200) / 30 = -100 / 30 = -3.33...
-    // COM_y = (10*10 + 20*(-10)) / 30 = -3.33...
-    // COM_z = (10*10 + 20*(-10)) / 30 = -3.33...
     expect(root.centerOfMass_m.x).toBeCloseTo(-100 / 30);
     expect(root.centerOfMass_m.y).toBeCloseTo(-100 / 30);
     expect(root.centerOfMass_m.z).toBeCloseTo(-100 / 30);
 
-    // Check if bodies ended up in the correct children (example check)
     let body1Found = false;
     let body2Found = false;
     root.children?.forEach((child) => {
@@ -76,7 +69,7 @@ describe("Octree", () => {
     const octree = new Octree(100);
     const body1 = createRealState(1, { x: 10, y: 0, z: 0 }, 1);
     const body2 = createRealState(2, { x: 50, y: 0, z: 0 }, 1);
-    const body3 = createRealState(3, { x: 90, y: 0, z: 0 }, 1); // Outside range
+    const body3 = createRealState(3, { x: 90, y: 0, z: 0 }, 1);
     octree.insert(body1);
     octree.insert(body2);
     octree.insert(body3);
@@ -104,30 +97,27 @@ describe("Octree", () => {
 
   it("should calculate approximate force using Barnes-Hut", () => {
     const octree = new Octree(10000);
-    // Body far away, should be approximated by root node's COM
+
     const distantBody = createRealState(
       "distant",
       { x: 5000, y: 0, z: 0 },
       100,
     );
-    // Target body at origin
+
     const targetBody = createRealState("target", { x: 0, y: 0, z: 0 }, 10);
 
     octree.insert(distantBody);
-    octree.insert(targetBody); // Insert target as well, force calc should ignore self
+    octree.insert(targetBody);
 
-    const theta = 0.5; // Barnes-Hut parameter
+    const theta = 0.5;
     const force = octree.calculateForceOn(targetBody, theta);
 
     const root = (octree as any).root;
-    // Force should approximate G * m_target * m_distant / dist^2 towards distantBody COM
-    // Root COM should be weighted average: (100*5000 + 10*0) / 110 = 500000 / 110 ~= 4545.45
-    // Distance from target (0,0,0) to root COM (~4545,0,0) is ~4545
-    // Approximation: force direction should be positive X
+
     expect(force.x).toBeGreaterThan(0);
     expect(force.y).toBeCloseTo(0);
     expect(force.z).toBeCloseTo(0);
-    // Check magnitude is reasonable (compare to direct calculation if needed for precision)
+
     expect(force.length()).toBeGreaterThan(0);
   });
 

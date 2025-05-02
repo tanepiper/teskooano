@@ -18,9 +18,8 @@ import {
   lastValueFrom,
   map,
   from,
-} from "rxjs"; // Import RxJS operators
+} from "rxjs";
 
-// Define the custom event for resetting simulation accumulated time
 export function dispatchSimulationTimeReset() {
   const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
   window.dispatchEvent(event);
@@ -46,7 +45,6 @@ export async function generateAndLoadSystem(
   let progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
 
   const generation$ = defer(() => {
-    // Initial synchronous setup
     updateSeed(inputSeed);
     const finalSeed = currentSeed.getValue();
     actions.clearState({
@@ -57,15 +55,12 @@ export async function generateAndLoadSystem(
     actions.resetTime();
     dispatchSimulationTimeReset();
 
-    // Close existing panel if found
     progressPanel?.api.close();
-    progressPanel = undefined; // Reset reference
+    progressPanel = undefined;
 
-    // Return an observable that starts the async generation
-    return from(generateSystem(finalSeed)); // Convert promise to observable
+    return from(generateSystem(finalSeed));
   }).pipe(
     tap((systemResult) => {
-      // Side effect: Prepare and show progress panel *after* generation data is ready
       const planetList = (systemResult?.objects || [])
         .filter(
           (obj) =>
@@ -85,11 +80,10 @@ export async function generateAndLoadSystem(
           height: 300,
         },
       });
-      // Update panel reference after adding
+
       progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
     }),
     switchMap((systemResult) => {
-      // Process the generated system data
       const { systemName, objects: systemData } = systemResult || {
         systemName: null,
         objects: [],
@@ -103,12 +97,10 @@ export async function generateAndLoadSystem(
 
       if (!systemData || systemData.length === 0) {
         console.warn("[SystemGenerator] Generator returned no objects.");
-        // If no objects, we still consider it a "successful" generation (of nothing)
-        // but return an empty array to skip state updates.
+
         return of({ success: true, data: [] });
       }
 
-      // Find the primary star
       let primaryStar = systemData.find((obj) => {
         if (obj.type !== CelestialType.STAR) return false;
         const props = obj.properties as StarProperties;
@@ -126,10 +118,8 @@ export async function generateAndLoadSystem(
       }
 
       if (primaryStar) {
-        // Create the system with the primary star first
         actions.createSolarSystem(primaryStar);
 
-        // Add all *other* objects
         systemData.forEach((objData) => {
           if (objData.id !== primaryStar!.id) {
             if (objData.type === CelestialType.STAR && !objData.parentId) {
@@ -143,7 +133,6 @@ export async function generateAndLoadSystem(
           }
         });
       } else {
-        // Fallback if no primary star found
         console.error(
           "[SystemGenerator] No primary star found! Adding stars with createSolarSystem and others with addCelestial.",
         );
@@ -155,42 +144,36 @@ export async function generateAndLoadSystem(
           .forEach((objData) => actions.addCelestial(objData));
       }
 
-      // Reset time again after adding objects
       actions.resetTime();
       dispatchSimulationTimeReset();
 
-      // Signal success for the stream
       return of({ success: true, data: systemData });
     }),
     tap(() => {
-      // Side effect after successful processing or empty generation
       dispatchTextureGenerationComplete();
     }),
-    map((result) => result.success), // Map to boolean indicating success
+    map((result) => result.success),
     catchError((error) => {
       console.error(
         "[SystemGenerator] Error during system generation or state update:",
         error,
       );
-      // Dispatch completion event even on error
+
       dispatchTextureGenerationComplete();
-      // Return an observable indicating failure
+
       return of(false);
     }),
     finalize(() => {
-      // Always try to close the progress panel, regardless of success/error
-      progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId); // Re-find panel just in case
+      progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
       progressPanel?.api.close();
       console.log("[SystemGenerator] Generation stream finalized.");
     }),
   );
 
-  // Execute the observable stream and return the resulting promise
   return lastValueFrom(generation$);
 }
 
 export const handleResetSimulationTime = () => {
-  // dispatch event to reset simulation time
   const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
   window.dispatchEvent(event);
 };

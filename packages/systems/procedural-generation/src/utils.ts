@@ -2,7 +2,6 @@ import * as CONST from "./constants";
 import {
   GRAVITATIONAL_CONSTANT,
   GasGiantClass,
-  // Add necessary types for surface properties
   PlanetType,
   SurfaceType,
   SurfacePropertiesUnion,
@@ -14,15 +13,11 @@ import {
   SpectralClass,
 } from "@teskooano/data-types";
 
-// --- Utility Functions ---
-
 /**
  * Gets a random item from an array using the provided random function.
  */
 export function getRandomItem<T>(arr: T[], randomFn: () => number): T {
   if (!arr || arr.length === 0) {
-    // Handle empty array case if necessary, perhaps return a default or throw error
-    // For now, returning undefined, but this might need adjustment based on usage
     return undefined as T;
   }
   return arr[Math.floor(randomFn() * arr.length)];
@@ -39,7 +34,7 @@ export function getRandomItem<T>(arr: T[], randomFn: () => number): T {
 export function calculateOrbitalPeriod_s(
   parentMass_kg: number,
   semiMajorAxis_m: number,
-  childMass_kg: number = 0, // Default child mass to 0 if negligible
+  childMass_kg: number = 0,
 ): number {
   if (parentMass_kg <= 0 || semiMajorAxis_m <= 0) {
     console.warn(
@@ -85,7 +80,7 @@ export function calculateRadius(
   mass_kg: number,
   density_kg_m3: number,
 ): number {
-  if (density_kg_m3 <= 0) return 0; // Avoid division by zero or negative density
+  if (density_kg_m3 <= 0) return 0;
   const volume_m3 = mass_kg / density_kg_m3;
   return Math.cbrt((3 * volume_m3) / (4 * Math.PI));
 }
@@ -98,10 +93,10 @@ export function getSpectralClass(temperature: number): SpectralClass {
   if (temperature >= 10000) return SpectralClass.B;
   if (temperature >= 7500) return SpectralClass.A;
   if (temperature >= 6000) return SpectralClass.F;
-  if (temperature >= 5200) return SpectralClass.G; // Sun-like
+  if (temperature >= 5200) return SpectralClass.G;
   if (temperature >= 3700) return SpectralClass.K;
   if (temperature >= 2400) return SpectralClass.M;
-  return SpectralClass.M; // Default to M for cooler temps
+  return SpectralClass.M;
 }
 
 /**
@@ -116,24 +111,23 @@ export function calculateLuminosity(
   const surfaceArea = 4 * Math.PI * radius_m ** 2;
   const totalPowerWatts =
     surfaceArea * CONST.STEFAN_BOLTZMANN * temperature_k ** 4;
-  return totalPowerWatts / CONST.SOLAR_LUMINOSITY; // Relative to Solar Luminosity (L☉)
+  return totalPowerWatts / CONST.SOLAR_LUMINOSITY;
 }
 
 /**
  * Gets a representative star color based on its temperature (simplified).
  */
 export function getStarColor(temperature: number): string {
-  if (temperature >= 25000) return "#aaccff"; // O/B - Blueish white
-  if (temperature >= 10000) return "#cadfff"; // B - Light blue
-  if (temperature >= 7500) return "#fbf8ff"; // A - White
-  if (temperature >= 6000) return "#fff4f3"; // F - Yellowish white
-  if (temperature >= 5200) return "#fffadc"; // G - Yellow (like Sun)
-  if (temperature >= 3700) return "#ffddb4"; // K - Orange
-  if (temperature >= 2400) return "#ffbd6f"; // M - Reddish orange
-  return "#ffae57"; // Default for cooler M - Deeper orange/red
+  if (temperature >= 25000) return "#aaccff";
+  if (temperature >= 10000) return "#cadfff";
+  if (temperature >= 7500) return "#fbf8ff";
+  if (temperature >= 6000) return "#fff4f3";
+  if (temperature >= 5200) return "#fffadc";
+  if (temperature >= 3700) return "#ffddb4";
+  if (temperature >= 2400) return "#ffbd6f";
+  return "#ffae57";
 }
 
-// --- Helper function to parse hex color to RGB array ---
 function hexToRgb(hex: string): [number, number, number] | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
@@ -145,7 +139,6 @@ function hexToRgb(hex: string): [number, number, number] | null {
     : null;
 }
 
-// --- Helper function to format RGB array back to hex color ---
 function rgbToHex(r: number, g: number, b: number): string {
   return (
     "#" +
@@ -156,7 +149,6 @@ function rgbToHex(r: number, g: number, b: number): string {
   );
 }
 
-// --- Helper function to interpolate between two hex colors ---
 export function mixColors(
   colorAHex: string,
   colorBHex: string,
@@ -171,10 +163,10 @@ export function mixColors(
       colorAHex,
       colorBHex,
     );
-    return colorAHex; // Return original color on error
+    return colorAHex;
   }
 
-  const clampedFactor = Math.max(0, Math.min(1, factor)); // Ensure factor is 0-1
+  const clampedFactor = Math.max(0, Math.min(1, factor));
   const r = Math.round(colorA[0] + (colorB[0] - colorA[0]) * clampedFactor);
   const g = Math.round(colorA[1] + (colorB[1] - colorA[1]) * clampedFactor);
   const b = Math.round(colorA[2] + (colorB[2] - colorA[2]) * clampedFactor);
@@ -193,19 +185,18 @@ export function estimateTemperature(
   starLuminosity: number,
   distanceAU: number,
 ): number {
-  if (distanceAU <= 0) return 10000; // Arbitrarily high temp if too close
+  if (distanceAU <= 0) return 10000;
 
   const luminosityWatts = starLuminosity * CONST.SOLAR_LUMINOSITY;
   const distanceMeters = distanceAU * CONST.AU_TO_METERS;
 
-  // Simplified Stefan-Boltzmann T = (L / (16 * pi * sigma * d^2))^(1/4)
   const denominator =
     16 * Math.PI * CONST.STEFAN_BOLTZMANN * distanceMeters ** 2;
-  if (denominator <= 0) return 0; // Avoid division by zero
+  if (denominator <= 0) return 0;
 
   const tempKelvin = Math.pow(luminosityWatts / denominator, 0.25);
 
-  return Math.max(0, tempKelvin); // Ensure temp is not negative
+  return Math.max(0, tempKelvin);
 }
 
 /**
@@ -213,19 +204,17 @@ export function estimateTemperature(
  * Uses simplified temperature thresholds based on Sudan classification.
  */
 export function classifyGasGiantByTemperature(
-  random: () => number, // Keep random for potential future use
+  random: () => number,
   distanceAU: number,
   starTemperature: number,
   starRadius: number,
 ): GasGiantClass {
-  const starLuminosity = calculateLuminosity(starRadius, starTemperature); // Use relative luminosity
+  const starLuminosity = calculateLuminosity(starRadius, starTemperature);
   const estimatedTemp = estimateTemperature(starLuminosity, distanceAU);
 
-  // Sudan Classification Temperature Thresholds (Approximate)
-  const CLASS_V_THRESHOLD = 1000; // K (Hot Jupiters)
-  const CLASS_II_THRESHOLD = 250; // K (Water Clouds)
-  const CLASS_I_THRESHOLD = 150; // K (Ammonia Clouds)
-  // Below Class I are generally Class III/IV (Ice Giants)
+  const CLASS_V_THRESHOLD = 1000;
+  const CLASS_II_THRESHOLD = 250;
+  const CLASS_I_THRESHOLD = 150;
 
   if (estimatedTemp >= CLASS_V_THRESHOLD) {
     return GasGiantClass.CLASS_V;
@@ -234,8 +223,6 @@ export function classifyGasGiantByTemperature(
   } else if (estimatedTemp >= CLASS_I_THRESHOLD) {
     return GasGiantClass.CLASS_I;
   } else {
-    // Colder than Class I - Treat as Ice Giant (Class III or IV)
-    // Could add mass check here later if needed to distinguish III/IV
     return getRandomItem(
       [GasGiantClass.CLASS_III, GasGiantClass.CLASS_IV],
       random,
@@ -251,11 +238,9 @@ export function createDetailedSurfaceProperties(
   planetType: PlanetType,
   surfaceType: SurfaceType,
 ): SurfacePropertiesUnion {
-  // Define base properties (will be spread)
   const baseProps = {
     type: surfaceType,
     roughness: random() * 0.5 + 0.2,
-    // color and planetType assigned below
   };
 
   switch (planetType) {
@@ -311,13 +296,13 @@ export function createDetailedSurfaceProperties(
         color: getRandomItem(CONST.ICE_COLORS.main, random),
         secondaryColor: getRandomItem(CONST.ICE_COLORS.crevasse, random),
       } as IceSurfaceProperties;
-    default: // Fallback to BARREN procedural properties
+    default:
       console.warn(
         `[createDetailedSurfaceProperties] Unknown planetType: ${planetType}, falling back to Barren Procedural.`,
       );
       return {
         ...baseProps,
-        planetType: PlanetType.BARREN, // Explicitly set fallback type
+        planetType: PlanetType.BARREN,
         color: getRandomItem(CONST.ROCKY_COLOR_BANDS.midLight, random),
         color1: getRandomItem(CONST.ROCKY_COLOR_BANDS.dark, random),
         color2: getRandomItem(CONST.ROCKY_COLOR_BANDS.midDark, random),

@@ -1,15 +1,13 @@
 import { PlanetType, AtmosphereType, RockyType } from "@teskooano/data-types";
 
-// --- Physical Constants ---
 export const AU_TO_METERS = 1.496e11;
 export const EARTH_MASS_KG = 5.972e24;
 export const EARTH_RADIUS_M = 6.371e6;
 export const SOLAR_MASS_KG = 1.989e30;
 export const SOLAR_RADIUS_M = 696340e3;
-export const SOLAR_LUMINOSITY = 3.828e26; // Watts
-export const STEFAN_BOLTZMANN = 5.670374e-8; // W⋅m−2⋅K−4
+export const SOLAR_LUMINOSITY = 3.828e26;
+export const STEFAN_BOLTZMANN = 5.670374e-8;
 
-// --- Composition Data ---
 export const ROCKY_COMPOSITION = ["silicates", "iron", "nickel", "carbon"];
 export const ICE_COMPOSITION = [
   "water ice",
@@ -48,19 +46,17 @@ export const ATMOSPHERE_COMPOSITION: Record<AtmosphereType, string[][]> = {
   [AtmosphereType.VERY_DENSE]: [["CO2", "SO2"], ["N2"], ["H2S", "CO2"]],
 };
 
-// --- Atmosphere Visual Properties ---
 export const ATMOSPHERE_DENSITY_RANGES: Record<
   AtmosphereType,
   { min: number; max: number }
 > = {
   [AtmosphereType.NONE]: { min: 0, max: 0 },
-  [AtmosphereType.THIN]: { min: 0.1, max: 0.4 }, // Subtle glow (Adjusted)
-  [AtmosphereType.NORMAL]: { min: 0.4, max: 0.8 }, // Earth-like glow (Adjusted)
-  [AtmosphereType.DENSE]: { min: 0.8, max: 1.2 }, // Noticeable haze (Adjusted)
-  [AtmosphereType.VERY_DENSE]: { min: 1.2, max: 1.6 }, // Thick, prominent haze (Adjusted)
+  [AtmosphereType.THIN]: { min: 0.1, max: 0.4 },
+  [AtmosphereType.NORMAL]: { min: 0.4, max: 0.8 },
+  [AtmosphereType.DENSE]: { min: 0.8, max: 1.2 },
+  [AtmosphereType.VERY_DENSE]: { min: 1.2, max: 1.6 },
 };
 
-// --- Color Palettes ---
 export const ROCKY_SURFACE_COLORS: Record<PlanetType, string[]> = {
   [PlanetType.ROCKY]: ["#8a8a8a", "#9a8e8e", "#7a7a7a"],
   [PlanetType.TERRESTRIAL]: ["#5f7a5f", "#6b8e6b", "#8fbc8f"],
@@ -87,8 +83,6 @@ export const RING_COLORS: Record<RockyType, string[]> = {
   [RockyType.ICE_DUST]: ["#d0e0f0", "#c8d8e8"],
   [RockyType.DUST]: ["#b0a090", "#a89888"],
 };
-
-// --- Procedural Texture Colors ---
 
 export const ROCKY_COLOR_BANDS = {
   dark: ["#444038", "#484040", "#384044"],
@@ -121,23 +115,18 @@ export const OCEAN_COLORS = {
   ice: ["#ffffff", "#f0f8ff", "#e0f0ff"],
 };
 
-// Add cloud color constants for different planet and gas giant types
-
-// Cloud colors for different types of planets
 export const CLOUD_COLORS: Record<string, string[]> = {
-  // Planet types
-  TERRESTRIAL: ["#ffffff", "#f8f8f8", "#f5f5f5"], // White fluffy clouds for Earth-like
-  DESERT: ["#ffe0c0", "#f0d0b0", "#e8d0c0"], // Dusty, tan-colored clouds
-  ICE: ["#f0f8ff", "#e0f0ff", "#d8e8f8"], // Light blue-white ice clouds
-  LAVA: ["#808080", "#707070", "#606060"], // Dark ash clouds for volcanic planets
-  ROCKY: ["#d0d0d0", "#c0c0c0", "#b0b0b0"], // Grey rocky dust clouds
-  BARREN: ["#c8c8c8", "#b8b8b8", "#a8a8a8"], // Thin grey dust clouds
-  OCEAN: ["#ffffff", "#f0f0f0", "#e0e0e0"], // White water vapor clouds
+  TERRESTRIAL: ["#ffffff", "#f8f8f8", "#f5f5f5"],
+  DESERT: ["#ffe0c0", "#f0d0b0", "#e8d0c0"],
+  ICE: ["#f0f8ff", "#e0f0ff", "#d8e8f8"],
+  LAVA: ["#808080", "#707070", "#606060"],
+  ROCKY: ["#d0d0d0", "#c0c0c0", "#b0b0b0"],
+  BARREN: ["#c8c8c8", "#b8b8b8", "#a8a8a8"],
+  OCEAN: ["#ffffff", "#f0f0f0", "#e0e0e0"],
 
-  // Gas giant classes
-  CLASS_I: ["#f0f0f0", "#e8e8e8", "#e0e0e0"], // White ammonia clouds (Jupiter-like)
-  CLASS_II: ["#f8f8f8", "#f0f0f0", "#e8e8e8"], // Slightly off-white clouds (Saturn-like)
-  CLASS_III: ["#d0e0f0", "#c0d0e0", "#b0c0d0"], // Blue-tinted clouds (Uranus/Neptune-like)
-  CLASS_IV: ["#f0d0c0", "#e0c0b0", "#d0b0a0"], // Warm-colored clouds for hot gas giants
-  CLASS_V: ["#d0c0b0", "#c0b0a0", "#b0a090"], // Silicate clouds for very hot gas giants
+  CLASS_I: ["#f0f0f0", "#e8e8e8", "#e0e0e0"],
+  CLASS_II: ["#f8f8f8", "#f0f0f0", "#e8e8e8"],
+  CLASS_III: ["#d0e0f0", "#c0d0e0", "#b0c0d0"],
+  CLASS_IV: ["#f0d0c0", "#e0c0b0", "#d0b0a0"],
+  CLASS_V: ["#d0c0b0", "#c0b0a0", "#b0a090"],
 };

@@ -8,19 +8,18 @@ import {
   type RockyTerrestrialSurfaceProperties,
 } from "@teskooano/data-types";
 
-// --- Constants (NASA Planetary Fact Sheet / JPL HORIZONS J2000) ---
 const MERCURY_MASS_KG = 3.3011e23;
-const MERCURY_RADIUS_M = 2439700; // Volumetric mean radius
-const MERCURY_TEMP_K = 340; // Surface Temperature (Mean)
-const MERCURY_ALBEDO = 0.142; // Geometric Albedo
-const MERCURY_SMA_AU = 0.387098; // Semi-major axis
-const MERCURY_ECC = 0.20563; // Eccentricity
-const MERCURY_INC_DEG = 7.00487; // Inclination (degrees)
-const MERCURY_LAN_DEG = 48.33167; // Longitude of Ascending Node (degrees)
-const MERCURY_AOP_DEG = 77.45645; // Argument of Periapsis (degrees)
-const MERCURY_MA_DEG = 252.25084; // Mean Anomaly at J2000 Epoch (degrees)
-const MERCURY_SIDEREAL_PERIOD_S = 7.60053e6; // Sidereal Orbit Period (~87.969 days)
-const MERCURY_AXIAL_TILT_DEG = 0.034; // Very small axial tilt
+const MERCURY_RADIUS_M = 2439700;
+const MERCURY_TEMP_K = 340;
+const MERCURY_ALBEDO = 0.142;
+const MERCURY_SMA_AU = 0.387098;
+const MERCURY_ECC = 0.20563;
+const MERCURY_INC_DEG = 7.00487;
+const MERCURY_LAN_DEG = 48.33167;
+const MERCURY_AOP_DEG = 77.45645;
+const MERCURY_MA_DEG = 252.25084;
+const MERCURY_SIDEREAL_PERIOD_S = 7.60053e6;
+const MERCURY_AXIAL_TILT_DEG = 0.034;
 
 /**
  * Initializes Mercury using accurate data.
@@ -34,29 +33,29 @@ export function initializeMercury(parentId: string): void {
     parentId: parentId,
     realMass_kg: MERCURY_MASS_KG,
     realRadius_m: MERCURY_RADIUS_M,
-    visualScaleRadius: 0.38, // Changed from radius
+    visualScaleRadius: 0.38,
     temperature: MERCURY_TEMP_K,
     albedo: MERCURY_ALBEDO,
     orbit: {
       realSemiMajorAxis_m: MERCURY_SMA_AU * AU,
       eccentricity: MERCURY_ECC,
-      inclination: MERCURY_INC_DEG * DEG_TO_RAD, // Convert to radians
-      longitudeOfAscendingNode: MERCURY_LAN_DEG * DEG_TO_RAD, // Convert to radians
-      argumentOfPeriapsis: MERCURY_AOP_DEG * DEG_TO_RAD, // Convert to radians
-      meanAnomaly: MERCURY_MA_DEG * DEG_TO_RAD, // Convert to radians
+      inclination: MERCURY_INC_DEG * DEG_TO_RAD,
+      longitudeOfAscendingNode: MERCURY_LAN_DEG * DEG_TO_RAD,
+      argumentOfPeriapsis: MERCURY_AOP_DEG * DEG_TO_RAD,
+      meanAnomaly: MERCURY_MA_DEG * DEG_TO_RAD,
       period_s: MERCURY_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ["O2", "Na", "H2", "He"], // Very tenuous exosphere
-      pressure: 1e-14, // Approx pressure in atm
-      color: "#E0E0E0", // Near-transparent/grey
+      composition: ["O2", "Na", "H2", "He"],
+      pressure: 1e-14,
+      color: "#E0E0E0",
     },
     surface: {
       type: SurfaceType.CRATERED,
       planetType: PlanetType.ROCKY,
-      color: "#9E9E9E", // Base grey color
+      color: "#9E9E9E",
       roughness: 0.8,
-      // Optional detailed colors for procedural generation
+
       color1: "#9E9E9E",
       color2: "#757575",
       color3: "#BDBDBD",

@@ -6,7 +6,6 @@ import { celestialFactory } from "@teskooano/core-state";
  */
 export function resetCelestialObjects(skipStateClear: boolean = false) {
   if (!skipStateClear) {
-    // Use the more robust clearState function we created
     celestialFactory.clearState({
       resetCamera: false,
       resetTime: true,

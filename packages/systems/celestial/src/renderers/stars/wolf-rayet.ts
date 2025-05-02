@@ -24,19 +24,17 @@ export class WolfRayetMaterial extends BaseStarMaterial {
       metallicEffect?: number;
     } = {},
   ) {
-    // Intense blue-white color
     const blueWhiteColor = new THREE.Color(0xa0c8ff);
 
     super(blueWhiteColor, {
-      // Extremely intense corona for stellar winds
       coronaIntensity: options.coronaIntensity ?? 1.2,
-      // Medium-fast pulse to simulate instability
+
       pulseSpeed: options.pulseSpeed ?? 1.0,
-      // Very strong glow
+
       glowIntensity: options.glowIntensity ?? 1.0,
-      // High temperature variations - turbulent surface
+
       temperatureVariation: options.temperatureVariation ?? 0.25,
-      // Medium metallic effect
+
       metallicEffect: options.metallicEffect ?? 0.5,
     });
   }
@@ -67,18 +65,14 @@ export class WolfRayetRenderer extends BaseStarRenderer {
     object: RenderableCelestialObject,
     group: THREE.Group,
   ): void {
-    // Call the base implementation first
     super.addCorona(object, group);
 
-    // Add additional outer, fainter corona layer to simulate stellar winds
     const radius = object.radius || 1;
     const coronaScale = radius * 5;
     const color = this.getStarColor(object);
 
-    // Use a sphere geometry for the stellar wind effect instead of planes
     const sphereGeometry = new THREE.SphereGeometry(coronaScale, 32, 32);
 
-    // Create a material for the stellar wind sphere with high transparency
     const stellarWindMaterial = new THREE.MeshBasicMaterial({
       color: color,
       transparent: true,
@@ -88,7 +82,6 @@ export class WolfRayetRenderer extends BaseStarRenderer {
       depthWrite: false,
     });
 
-    // Create the stellar wind sphere and add to group
     const stellarWindSphere = new THREE.Mesh(
       sphereGeometry,
       stellarWindMaterial,

@@ -25,11 +25,10 @@ export function observeIntersection(
 ): () => void {
   if (typeof IntersectionObserver === "undefined") {
     console.warn("IntersectionObserver is not supported in this environment.");
-    return () => {}; // Return no-op cleanup
+    return () => {};
   }
 
   const observer = new IntersectionObserver((entries) => {
-    // We should only have one entry as we observe one element
     if (entries[0]) {
       callback(entries[0]);
     }
@@ -67,9 +66,8 @@ export function observeIntersection$(
 
     observer.observe(element);
 
-    // Cleanup function
     return () => {
       observer.disconnect();
     };
-  }).pipe(share()); // Share the underlying observer
+  }).pipe(share());
 }

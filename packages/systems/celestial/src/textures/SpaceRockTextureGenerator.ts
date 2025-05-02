@@ -14,7 +14,6 @@ export class SpaceRockTextureGenerator extends TextureGeneratorBase {
    * @returns The generated texture result with color and normal maps
    */
   public generateTexture(options: SpaceRockTextureOptions): TextureResult {
-    // Use the cache mechanism from base class
     return this.getOrCreateTexture(options, (opts) =>
       this.createSpaceRockTexture(opts),
     );
@@ -40,7 +39,6 @@ export class SpaceRockTextureGenerator extends TextureGeneratorBase {
       generateMipmaps = true,
     } = options;
 
-    // Create a material for the space rock surface
     const material = new THREE.ShaderMaterial({
       uniforms: {
         baseColor: { value: new THREE.Color(baseColor) },
@@ -64,12 +62,12 @@ export class SpaceRockTextureGenerator extends TextureGeneratorBase {
         uniform float seed;
         varying vec2 vUv;
         
-        // Hash function for randomness
+        
         float hash(float n) {
           return fract(sin(n) * 43758.5453123);
         }
         
-        // Simple noise function
+        
         float noise(vec2 p) {
           vec2 ip = floor(p);
           vec2 fp = fract(p);
@@ -84,7 +82,7 @@ export class SpaceRockTextureGenerator extends TextureGeneratorBase {
           return mix(mix(a, b, fp.x), mix(c, d, fp.x), fp.y);
         }
         
-        // Fractal noise for more detail
+        
         float fractalNoise(vec2 p) {
           float f = 0.0;
           f += 0.5000 * noise(p * 1.0);
@@ -95,13 +93,13 @@ export class SpaceRockTextureGenerator extends TextureGeneratorBase {
         }
         
         void main() {
-          // Generate base noise patterns
+          
           float n = fractalNoise(vUv * 10.0);
           
-          // Create crater-like patterns
+          
           float craters = smoothstep(0.4, 0.6, noise(vUv * 8.0));
           
-          // Mix colors based on noise patterns
+          
           vec3 color = mix(baseColor, featureColor, n * 0.5);
           color = mix(color, featureColor * 0.8, craters * 0.3);
           
@@ -110,14 +108,12 @@ export class SpaceRockTextureGenerator extends TextureGeneratorBase {
       `,
     });
 
-    // Render the shader to a texture
     const colorMap = this.renderToTexture(
       material,
       textureSize,
       generateMipmaps,
     );
 
-    // Create a simple result with just the color map for now
     const result: TextureResult = {
       colorMap: colorMap,
     };
@@ -131,19 +127,19 @@ export class SpaceRockTextureGenerator extends TextureGeneratorBase {
   private getBaseColorForType(type: RockyType): THREE.ColorRepresentation {
     switch (type) {
       case RockyType.ICE:
-        return 0xd0e0f0; // Light blue-gray
+        return 0xd0e0f0;
       case RockyType.METALLIC:
-        return 0x8c8c8c; // Silvery gray
+        return 0x8c8c8c;
       case RockyType.LIGHT_ROCK:
-        return 0xb0a090; // Light tan
+        return 0xb0a090;
       case RockyType.DARK_ROCK:
-        return 0x605040; // Dark brown
+        return 0x605040;
       case RockyType.ICE_DUST:
-        return 0xb0b8c0; // Dusty gray
+        return 0xb0b8c0;
       case RockyType.DUST:
-        return 0xa09080; // Dusty brown
+        return 0xa09080;
       default:
-        return 0x808080; // Default gray
+        return 0x808080;
     }
   }
 }

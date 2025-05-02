@@ -17,7 +17,7 @@ export function generateRings(
   chance: number,
   allowedTypes: RockyType[],
   parentVisualRadius_m: number,
-  outerRadiusFactor: number = 1.5, // Controls max spread from inner radius
+  outerRadiusFactor: number = 1.5,
 ): RingProperties[] | undefined {
   const roll = random();
 
@@ -31,12 +31,10 @@ export function generateRings(
       return undefined;
     }
 
-    // Calculate radii multipliers relative to the PARENT'S VISUAL RADIUS
-    const innerRadiusMultiplier = 1.3 + random() * 0.7; // Rings start further out (1.3x to 2.0x parent radius)
+    const innerRadiusMultiplier = 1.3 + random() * 0.7;
     const outerRadiusMultiplier =
       innerRadiusMultiplier + (0.1 + random() * outerRadiusFactor);
 
-    // Calculate actual radii in METERS based on the visual radius
     const innerRadius_m = innerRadiusMultiplier * parentVisualRadius_m;
     const outerRadius_m = outerRadiusMultiplier * parentVisualRadius_m;
 
@@ -45,7 +43,7 @@ export function generateRings(
       console.warn(
         `[generateRings] No composition defined for ring type: ${ringType}`,
       );
-      return undefined; // Cannot create ring without composition
+      return undefined;
     }
     const ringColor = UTIL.getRandomItem(CONST.RING_COLORS[ringType], random);
     if (!ringColor) {
@@ -55,17 +53,16 @@ export function generateRings(
       return undefined;
     }
 
-    // Generate properties for a single ring band for now
     return [
       {
-        innerRadius: innerRadius_m, // Assign real meters
-        outerRadius: outerRadius_m, // Assign real meters
+        innerRadius: innerRadius_m,
+        outerRadius: outerRadius_m,
         density: 0.3 + random() * 0.7,
         opacity: 0.2 + random() * 0.4,
         color: ringColor,
-        tilt: (random() - 0.5) * 0.15, // Slight tilt relative to parent equator
-        rotationRate: 0, // Assuming static for now, could be dynamic
-        texture: "placeholder_ring_texture", // Placeholder
+        tilt: (random() - 0.5) * 0.15,
+        rotationRate: 0,
+        texture: "placeholder_ring_texture",
         composition: ringComp,
         type: ringType,
       },

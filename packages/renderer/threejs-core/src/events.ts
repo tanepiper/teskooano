@@ -16,7 +16,6 @@ class EventEmitter {
 
     this.events.get(event)!.push(callback);
 
-    // Return unsubscribe function
     return () => {
       const callbacks = this.events.get(event);
       if (callbacks) {

@@ -27,7 +27,7 @@ import {
   take,
   finalize,
   lastValueFrom,
-} from "rxjs"; // Import RxJS operators
+} from "rxjs";
 
 interface SystemImportData {
   seed: string;
@@ -48,11 +48,11 @@ interface ProcessResult {
  */
 function processImportedFile$(
   file: File,
-  dockviewApi: DockviewApi | null, // Keep DockviewApi reference if needed for future context
+  dockviewApi: DockviewApi | null,
 ): Observable<ProcessResult> {
   return new Observable<ProcessResult>((observer) => {
     const reader = new FileReader();
-    // Hold reference to the temporary input for cleanup in observer's cleanup function
+
     const inputElement: HTMLInputElement | null = document.querySelector(
       'input[type="file"][data-importer="system"]',
     );
@@ -71,7 +71,6 @@ function processImportedFile$(
           throw new Error("Invalid file format.");
         }
 
-        // Hydrate OSVector3 instances
         const hydratedObjects = parsedData.objects.map((obj) => {
           if (obj.physicsStateReal) {
             if (
@@ -114,12 +113,11 @@ function processImportedFile$(
 
         actions.createSolarSystem(star);
         hydratedObjects.forEach((obj) => {
-          if (obj.id !== star.id) actions.addCelestialObject(obj); // Use addCelestialObject for consistency
+          if (obj.id !== star.id) actions.addCelestialObject(obj);
         });
 
         currentSeed.next(parsedData.seed);
 
-        // Inform simulation/UI to reset time-based elements
         window.dispatchEvent(
           new CustomEvent(CustomEvents.SIMULATION_RESET_TIME),
         );
@@ -133,7 +131,7 @@ function processImportedFile$(
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown import error";
-        // Emit error result, don't throw error in observable stream directly
+
         observer.next({ success: false, symbol: "❌", message });
         observer.complete();
       }
@@ -151,7 +149,6 @@ function processImportedFile$(
 
     reader.readAsText(file);
 
-    // Cleanup function: remove the temporary input element if it still exists
     return () => {
       if (inputElement?.parentNode) {
         console.log(
@@ -183,7 +180,7 @@ export const generateRandomSystemFunction: FunctionConfig = {
     }
     try {
       const seed = options?.seed ?? Math.random().toString(36).substring(2, 10);
-      // Assuming generateAndLoadSystem handles progress updates via dockviewApi if needed
+
       await generateAndLoadSystem(seed, dockviewApi);
       return {
         success: true,
@@ -213,7 +210,7 @@ export const clearSystemFunction: FunctionConfig = {
         resetTime: true,
         resetSelection: true,
       });
-      actions.resetTime(); // Ensure time resets
+      actions.resetTime();
       return { success: true, symbol: "🗑️", message: "System cleared." };
     } catch (error) {
       console.error("[SystemFunctions] Error clearing system:", error);
@@ -278,10 +275,9 @@ export const triggerImportDialogFunction: FunctionConfig = {
     let inputElement: HTMLInputElement | null = null;
 
     const import$ = defer(() => {
-      // Create input element when subscribed
       document
         .querySelectorAll('input[type="file"][data-importer="system"]')
-        .forEach((el) => el.remove()); // Clean previous
+        .forEach((el) => el.remove());
 
       inputElement = document.createElement("input");
       inputElement.type = "file";
@@ -290,20 +286,16 @@ export const triggerImportDialogFunction: FunctionConfig = {
       inputElement.setAttribute("data-importer", "system");
       document.body.appendChild(inputElement);
 
-      // Trigger click immediately
       inputElement.click();
 
-      // Return an observable listening for the 'change' event
       return fromEvent(inputElement, "change");
     }).pipe(
-      take(1), // Only care about the first file selection
+      take(1),
       switchMap((event) => {
         const file = (event.target as HTMLInputElement)?.files?.[0];
         if (file) {
-          // Process the selected file using the observable helper
           return processImportedFile$(file, dockviewApi);
         } else {
-          // No file selected (user cancelled)
           return of<ProcessResult>({
             success: false,
             symbol: "🤷",
@@ -312,7 +304,6 @@ export const triggerImportDialogFunction: FunctionConfig = {
         }
       }),
       catchError((err) => {
-        // Handle errors during input creation or event listening
         console.error("[SystemFunctions] File input error:", err);
         return of<ProcessResult>({
           success: false,
@@ -321,18 +312,16 @@ export const triggerImportDialogFunction: FunctionConfig = {
         });
       }),
       finalize(() => {
-        // Ensure the input element is removed after completion, error, or cancellation
         if (inputElement?.parentNode) {
           console.log(
             "[SystemFunctions] Cleaning up file input element from triggerImportDialogFunction",
           );
           inputElement.parentNode.removeChild(inputElement);
-          inputElement = null; // Clear reference
+          inputElement = null;
         }
       }),
     );
 
-    // Execute the observable and return the final result as a Promise
     return lastValueFrom(import$);
   },
 };
@@ -352,13 +341,12 @@ export const createBlankSystemFunction: FunctionConfig = {
         resetTime: true,
         resetSelection: true,
       });
-      actions.resetTime(); // Ensure time resets
+      actions.resetTime();
 
-      const star = generateStar(Math.random); // Generate a default star
+      const star = generateStar(Math.random);
       actions.createSolarSystem(star);
-      currentSeed.next(""); // No seed for a blank system
+      currentSeed.next("");
 
-      // Inform simulation/UI to reset time-based elements
       window.dispatchEvent(new CustomEvent(CustomEvents.SIMULATION_RESET_TIME));
       return { success: true, symbol: "📄", message: "Blank system created." };
     } catch (error) {

@@ -9,16 +9,12 @@ export interface CameraState {
   fov: number;
 }
 
-// Define the possible physics engine types
 export type PhysicsEngineType = "euler" | "symplectic" | "verlet";
 
-// --- ADD Performance Profile Type ---
 export type PerformanceProfileType = "low" | "medium" | "high" | "cosmic";
-// --- END ADD ---
 
 export interface VisualSettingsState {
   trailLengthMultiplier: number;
-  // View-specific settings like label visibility belong in PanelViewState
 }
 
 export interface SimulationState {
@@ -28,41 +24,37 @@ export interface SimulationState {
   selectedObject: string | null;
   focusedObjectId: string | null;
   camera: CameraState;
-  physicsEngine: PhysicsEngineType; // Added physics engine state
-  visualSettings: VisualSettingsState; // Add visual settings group
+  physicsEngine: PhysicsEngineType;
+  visualSettings: VisualSettingsState;
   renderer?: {
-    // Add this optional field for renderer stats
     fps?: number;
     drawCalls?: number;
     triangles?: number;
-    memory?: { usedJSHeapSize?: number }; // Reflecting performance.memory structure
+    memory?: { usedJSHeapSize?: number };
   };
-  performanceProfile: PerformanceProfileType; // Added performance profile
+  performanceProfile: PerformanceProfileType;
 }
 
 const initialState: SimulationState = {
   time: 0,
-  timeScale: 1, // Default to 1x speed
+  timeScale: 1,
   paused: false,
   selectedObject: null,
   focusedObjectId: null,
   camera: {
-    position: new OSVector3(0, 100, 100), // Use OSVector3
-    target: new OSVector3(0, 0, 0), // Use OSVector3
-    fov: 75, // Default Field of View
+    position: new OSVector3(0, 100, 100),
+    target: new OSVector3(0, 0, 0),
+    fov: 75,
   },
-  physicsEngine: "verlet", // Changed default to Verlet
+  physicsEngine: "verlet",
   visualSettings: {
-    // Initialize visual settings
     trailLengthMultiplier: 100,
-    // Add other visual defaults here
   },
-  performanceProfile: "medium", // Default performance profile
+  performanceProfile: "medium",
 };
 
-// Define the BehaviorSubject internally
 const _simulationState = new BehaviorSubject<SimulationState>(initialState);
-// Export the observable for external use
+
 export const simulationState$ = _simulationState.asObservable();
 
 /**
@@ -132,7 +124,6 @@ export const simulationActions = {
     });
   },
 
-  // Action to set the physics engine
   setPhysicsEngine: (engine: PhysicsEngineType) => {
     _simulationState.next({
       ..._simulationState.getValue(),
@@ -140,7 +131,6 @@ export const simulationActions = {
     });
   },
 
-  // Action to set the performance profile
   setPerformanceProfile: (profile: PerformanceProfileType) => {
     const currentState = _simulationState.getValue();
     if (profile !== currentState.performanceProfile) {
@@ -151,7 +141,6 @@ export const simulationActions = {
     }
   },
 
-  // Action to set the trail length multiplier
   setTrailLengthMultiplier: (multiplier: number) => {
     const validatedMultiplier = Math.max(0, multiplier);
     const currentState = _simulationState.getValue();
@@ -173,8 +162,7 @@ export const simulationActions = {
   },
 };
 
-// Export getter for synchronous access (use with caution)
 export const getSimulationState = () => _simulationState.getValue();
-// Export setter for synchronous access (use with caution)
+
 export const setSimulationState = (newState: SimulationState) =>
   _simulationState.next(newState);

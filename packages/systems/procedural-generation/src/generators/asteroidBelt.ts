@@ -70,14 +70,12 @@ export function generateAsteroidBelt(
     period_s: 0,
   };
 
-  // Calculate orbital period (assuming negligible belt mass)
   beltOrbit.period_s = UTIL.calculateOrbitalPeriod_s(
     starMass_kg,
     beltOrbit.realSemiMajorAxis_m,
     0,
   );
 
-  // --- Validate Belt Orbit ---
   if (starMass_kg <= 0 || !Number.isFinite(starMass_kg)) {
     console.warn(
       `[generateAsteroidBelt] Invalid parent star mass (${starMass_kg}) for period calculation of ${beltId}. Skipping belt.`,
@@ -103,10 +101,7 @@ export function generateAsteroidBelt(
     );
     return null;
   }
-  // --- End Validation ---
 
-  // --- Calculate initial position and velocity from orbital parameters ---
-  // We'll assume the star is at (0,0,0) with zero velocity for initial placement
   const starPhysicsState: PhysicsStateReal = {
     id: starId,
     mass_kg: starMass_kg,
@@ -114,12 +109,10 @@ export function generateAsteroidBelt(
     velocity_mps: new OSVector3(0, 0, 0),
   };
 
-  // Calculate initial position and velocity
   let initialPosition: OSVector3;
   let initialVelocity: OSVector3;
 
   try {
-    // Use the imported calculation functions
     initialPosition = calculateOrbitalPosition(starPhysicsState, beltOrbit, 0);
     initialVelocity = calculateOrbitalVelocity(starPhysicsState, beltOrbit, 0);
   } catch (error) {
@@ -127,11 +120,10 @@ export function generateAsteroidBelt(
       `[generateAsteroidBelt] Error calculating initial state for ${beltId}, using default position.`,
       error,
     );
-    // Fallback to a simple position at the semi-major axis distance on the x-axis
+
     initialPosition = new OSVector3(beltOrbit.realSemiMajorAxis_m, 0, 0);
     initialVelocity = new OSVector3(0, 0, 0);
   }
-  // --- End calculate initial position and velocity ---
 
   const belt: CelestialObject = {
     id: beltId,

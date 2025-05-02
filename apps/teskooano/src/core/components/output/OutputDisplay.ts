@@ -116,10 +116,8 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     this.copyButton = this.shadowRoot!.querySelector(".copy-button")!;
     this.copyFeedback = this.shadowRoot!.querySelector(".copy-feedback")!;
 
-    // Listen for changes in slotted content to update internal state
     this.slotElement.addEventListener("slotchange", this.handleSlotChange);
 
-    // Add copy button click handler
     this.copyButton.addEventListener("click", this.handleCopyClick);
   }
 
@@ -128,22 +126,18 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     this.updateCopyEnabledAttribute(this.getAttribute("copy-enabled"));
     this.updateValueAttribute(this.getAttribute("value"));
 
-    // Make component focusable
     if (!this.hasAttribute("tabindex")) {
       this.setAttribute("tabindex", "0");
     }
 
-    // Set role for accessibility
     this.setAttribute("role", "textbox");
     this.setAttribute("aria-readonly", "true");
   }
 
   disconnectedCallback() {
-    // Remove event listeners
     this.slotElement.removeEventListener("slotchange", this.handleSlotChange);
     this.copyButton.removeEventListener("click", this.handleCopyClick);
 
-    // Clear any pending timeouts
     if (this._copyTimeout !== null) {
       window.clearTimeout(this._copyTimeout);
       this._copyTimeout = null;
@@ -173,7 +167,6 @@ export class TeskooanoOutputDisplay extends HTMLElement {
   }
 
   private handleSlotChange = () => {
-    // Update the value attribute to reflect slotted content
     const slottedText = this.getSlottedText();
     if (slottedText && !this.hasAttribute("value")) {
       this._internalUpdate = true;
@@ -181,7 +174,6 @@ export class TeskooanoOutputDisplay extends HTMLElement {
       this._internalUpdate = false;
     }
 
-    // Dispatch event when content changes
     this.dispatchEvent(
       new CustomEvent(CustomEvents.CONTENT_CHANGE, {
         bubbles: true,
@@ -213,7 +205,6 @@ export class TeskooanoOutputDisplay extends HTMLElement {
       await navigator.clipboard.writeText(this.value);
       this.showCopyFeedback();
 
-      // Dispatch event when content changes
       this.dispatchEvent(
         new CustomEvent(CustomEvents.COPY, {
           bubbles: true,
@@ -224,7 +215,6 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     } catch (error) {
       console.error("Failed to copy text:", error);
 
-      // Dispatch event when copy error occurs
       this.dispatchEvent(
         new CustomEvent(CustomEvents.COPY, {
           bubbles: true,
@@ -238,12 +228,10 @@ export class TeskooanoOutputDisplay extends HTMLElement {
   private showCopyFeedback() {
     this.copyFeedback.classList.add("visible");
 
-    // Clear any existing timeout
     if (this._copyTimeout !== null) {
       window.clearTimeout(this._copyTimeout);
     }
 
-    // Hide the feedback after 2 seconds
     this._copyTimeout = window.setTimeout(() => {
       this.copyFeedback.classList.remove("visible");
       this._copyTimeout = null;
@@ -251,18 +239,15 @@ export class TeskooanoOutputDisplay extends HTMLElement {
   }
 
   private updateValueAttribute(value: string | null) {
-    // Set textContent only if the default slot is empty
     if (value !== null && this.slotElement.assignedNodes().length === 0) {
-      this.textContent = value; // Directly set textContent on host
+      this.textContent = value;
     } else if (
       value === null &&
       this.slotElement.assignedNodes().length === 0
     ) {
-      // Clear if attribute removed and slot empty
       this.textContent = "";
     }
 
-    // Update ARIA attributes
     if (value !== null) {
       this.setAttribute(
         "aria-label",
@@ -272,10 +257,6 @@ export class TeskooanoOutputDisplay extends HTMLElement {
   }
 
   private updateMonospaceAttribute(value: string | null) {
-    // Attribute presence toggles the host style
-    // Styling is handled via :host([monospace]) CSS rule
-
-    // Update ARIA to indicate monospace format if enabled
     if (value !== null) {
       this.setAttribute("aria-description", "Displayed in monospace font");
     } else {
@@ -288,7 +269,6 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     this.copyButton.style.display = copyEnabled ? "block" : "none";
   }
 
-  // Public API
   get value(): string {
     const slottedText = this.getSlottedText();
     if (slottedText) {
@@ -303,7 +283,6 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     this._internalUpdate = false;
   }
 
-  // Copy text to clipboard programmatically
   public async copyToClipboard(): Promise<boolean> {
     try {
       await navigator.clipboard.writeText(this.value);
@@ -315,7 +294,6 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     }
   }
 
-  // Clear the display
   public clear() {
     this.textContent = "";
     this._internalUpdate = true;

@@ -5,7 +5,7 @@ import type { OSVector3 } from "@teskooano/core-math";
  */
 export interface PhysicsStateReal {
   /** Unique identifier matching the CelestialObject id. */
-  id: string; // Sticking to string IDs
+  id: string;
   /** Mass in kilograms (kg). */
   mass_kg: number;
   /** Position vector in meters (m). */
@@ -49,9 +49,8 @@ export type PairForceCalculator = (
  */
 export type Integrator = (
   currentState: PhysicsStateReal,
-  acceleration: OSVector3, // Current acceleration (m/s^2)
-  dt: number, // Time step (seconds)
-  // Optional function needed by some integrators (e.g., Velocity Verlet)
-  // Takes a predicted state and returns the acceleration at that state.
+  acceleration: OSVector3,
+  dt: number,
+
   calculateNewAcceleration?: (newStateGuess: PhysicsStateReal) => OSVector3,
 ) => PhysicsStateReal;

@@ -3,33 +3,29 @@ import type {
   TeskooanoPlugin,
   ToolbarRegistration,
 } from "@teskooano/ui-plugin";
-import { SettingsPanel } from "./SettingsPanel"; // Import the panel class
+import { SettingsPanel } from "./SettingsPanel";
 
-// Import the Fluent UI Settings icon
 import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
 
-// --- Constants ---
-const SETTINGS_PANEL_ID = "app_settings_panel"; // Consistent ID (though componentName is primary)
+const SETTINGS_PANEL_ID = "app_settings_panel";
 
-// --- Panel Configuration ---
 const settingsPanelConfig: PanelConfig = {
   componentName: SettingsPanel.componentName,
   panelClass: SettingsPanel,
   defaultTitle: "Settings",
 };
 
-// Toolbar Registration
 const settingsToolbarRegistration: ToolbarRegistration = {
-  target: "main-toolbar", // Target the main application toolbar
+  target: "main-toolbar",
   items: [
     {
       id: "core-settings-toggle",
       type: "panel",
       title: "Settings",
-      iconSvg: SettingsIcon, // Use the imported Fluent UI icon
-      componentName: settingsPanelConfig.componentName, // Panel to open
-      behaviour: "toggle", // Toggle the panel's visibility
-      order: 100, // Place it towards the end (adjust as needed)
+      iconSvg: SettingsIcon,
+      componentName: settingsPanelConfig.componentName,
+      behaviour: "toggle",
+      order: 100,
       tooltipText: "Open the application settings panel.",
       tooltipTitle: "Settings",
       tooltipIconSvg: SettingsIcon,
@@ -44,7 +40,7 @@ const settingsToolbarRegistration: ToolbarRegistration = {
  * on the main application toolbar.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "teskooano-settings", // Updated ID
+  id: "teskooano-settings",
   name: "Application Settings Panel",
   description:
     "Registers the main application settings panel and its toolbar toggle button.",
@@ -55,5 +51,4 @@ export const plugin: TeskooanoPlugin = {
   managerClasses: [],
 };
 
-// Export the panel component directly if needed elsewhere
 export { SettingsPanel };

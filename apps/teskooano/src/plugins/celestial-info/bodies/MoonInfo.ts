@@ -9,7 +9,6 @@ import { baseStyles } from "../utils/CelestialStyles";
 import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
 import { getCelestialObjects } from "@teskooano/core-state";
 
-// --- MOON INFO COMPONENT ---
 export class MoonInfoComponent
   extends HTMLElement
   implements CelestialInfoComponent
@@ -109,5 +108,4 @@ export class MoonInfoComponent
   }
 }
 
-// Define the custom element
 customElements.define("moon-info", MoonInfoComponent);

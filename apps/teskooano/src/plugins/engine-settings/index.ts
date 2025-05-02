@@ -11,7 +11,7 @@ const settingsButtonConfig =
  * for controlling engine view settings.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "teskooano-engine-settings", // Updated ID
+  id: "teskooano-engine-settings",
   name: "Engine Settings UI",
   description:
     "Provides the settings panel for controlling engine view options.",
@@ -26,14 +26,14 @@ export const plugin: TeskooanoPlugin = {
 
   toolbarRegistrations: [
     {
-      target: "engine-toolbar", // Target the specific toolbar instance
+      target: "engine-toolbar",
       items: [
         {
           id: settingsButtonConfig.id,
           title: settingsButtonConfig.title,
           iconSvg: settingsButtonConfig.iconSvg,
-          order: 100, // Example order, adjust as needed
-          type: "panel", // Indicates this button opens a panel
+          order: 100,
+          type: "panel",
           componentName: settingsButtonConfig.componentName,
           panelTitle: settingsButtonConfig.panelTitle,
           behaviour: settingsButtonConfig.behaviour,
@@ -41,10 +41,9 @@ export const plugin: TeskooanoPlugin = {
       ],
     },
   ],
-  functions: [], // No standalone functions
-  toolbarWidgets: [], // No toolbar widgets
-  managerClasses: [], // No manager classes
+  functions: [],
+  toolbarWidgets: [],
+  managerClasses: [],
 };
 
-// Export the panel component directly if needed elsewhere
 export { EngineUISettingsPanel };

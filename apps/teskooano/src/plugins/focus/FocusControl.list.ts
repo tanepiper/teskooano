@@ -3,7 +3,7 @@ import {
   CelestialStatus,
   CelestialType,
 } from "@teskooano/data-types";
-import "./CelestialRow"; // Ensure the component is defined before use
+import "./CelestialRow";
 
 /**
  * Gets the appropriate CSS class for a celestial object type icon.
@@ -17,7 +17,7 @@ function getIconClass(type: CelestialType): string {
     case CelestialType.GAS_GIANT:
       return "gas-giant-icon";
     case CelestialType.DWARF_PLANET:
-      return "planet-icon"; // Reusing planet icon
+      return "planet-icon";
     case CelestialType.MOON:
       return "moon-icon";
     case CelestialType.ASTEROID_FIELD:
@@ -42,7 +42,7 @@ export function populateFocusList(
   objects: Record<string, CelestialObject>,
   currentFocusedId: string | null,
 ): void {
-  rootUlElement.innerHTML = ""; // Clear previous list
+  rootUlElement.innerHTML = "";
 
   const objectMap = new Map(Object.entries(objects));
   const dynamicHierarchy = new Map<string | null, string[]>();
@@ -71,7 +71,6 @@ export function populateFocusList(
     }
   });
 
-  // Sort roots
   rootIds.sort((a, b) => {
     const objA = objectMap.get(a);
     const objB = objectMap.get(b);
@@ -90,7 +89,6 @@ export function populateFocusList(
     rootUlElement.innerHTML =
       '<li class="empty-message">No celestial objects loaded.</li>';
   } else {
-    // Recursive function to add items
     const addItem = (obj: CelestialObject, parentUl: HTMLElement) => {
       const isDestroyed = obj.status === CelestialStatus.DESTROYED;
       const isAnnihilated = obj.status === CelestialStatus.ANNIHILATED;
@@ -100,55 +98,46 @@ export function populateFocusList(
       const isFocused = !isInactive && obj.id === currentFocusedId;
 
       const listItem = document.createElement("li");
-      listItem.dataset.id = obj.id; // Keep ID on li for hierarchy/status targeting
+      listItem.dataset.id = obj.id;
       if (isDestroyed) listItem.classList.add("destroyed");
       if (isAnnihilated) listItem.classList.add("annihilated");
 
-      // Create the Celestial Row element
       const row = document.createElement("celestial-row");
       row.setAttribute("object-id", obj.id);
       row.setAttribute("object-name", obj.name);
       row.setAttribute("object-type", obj.type);
       if (isInactive) row.setAttribute("inactive", "");
       if (isFocused) row.setAttribute("focused", "");
-      // Add a class to easily find the row within the LI
+
       row.classList.add("focus-row-item");
 
-      // Content container within the LI
       const contentDiv = document.createElement("div");
-      contentDiv.classList.add("list-item-content"); // For styling flex/grid
+      contentDiv.classList.add("list-item-content");
 
       if (hasChildren) {
-        // --- Item with children: Add caret SPAN and the ROW ---
         const caretSpan = document.createElement("span");
         caretSpan.classList.add("caret");
-        // Add WAI-ARIA attributes for accessibility
-        caretSpan.setAttribute("role", "button");
-        caretSpan.setAttribute("aria-controls", `subtree-${obj.id}`); // Link to the nested UL
 
-        // --- START: Default expand for stars ---
+        caretSpan.setAttribute("role", "button");
+        caretSpan.setAttribute("aria-controls", `subtree-${obj.id}`);
+
         const shouldExpand = obj.type === CelestialType.STAR;
         caretSpan.setAttribute("aria-expanded", shouldExpand.toString());
         if (shouldExpand) {
           caretSpan.classList.add("caret-down");
         }
-        // --- END: Default expand for stars ---
 
-        // No text content for the caret itself, it's just the ::before pseudo-element
         contentDiv.appendChild(caretSpan);
-        contentDiv.appendChild(row); // Row is next to the caret
+        contentDiv.appendChild(row);
         listItem.appendChild(contentDiv);
 
-        // Create nested list
         const nestedUl = document.createElement("ul");
         nestedUl.classList.add("nested");
-        nestedUl.setAttribute("id", `subtree-${obj.id}`); // ID for aria-controls
+        nestedUl.setAttribute("id", `subtree-${obj.id}`);
 
-        // --- START: Default expand for stars (UL part) ---
         if (shouldExpand) {
           nestedUl.classList.add("active");
         }
-        // --- END: Default expand for stars (UL part) ---
 
         childrenIds.sort((a, b) =>
           (objectMap.get(a)?.name ?? "").localeCompare(
@@ -161,16 +150,14 @@ export function populateFocusList(
         });
         listItem.appendChild(nestedUl);
       } else {
-        // --- Leaf node: Just add the ROW ---
-        contentDiv.classList.add("leaf-node"); // Add class for potential specific styling (e.g., indent)
-        contentDiv.appendChild(row); // Only the row is needed
+        contentDiv.classList.add("leaf-node");
+        contentDiv.appendChild(row);
         listItem.appendChild(contentDiv);
       }
 
       parentUl.appendChild(listItem);
     };
 
-    // Start recursion
     rootIds.forEach((id) => {
       const rootObj = objectMap.get(id);
       if (rootObj) addItem(rootObj, rootUlElement);
@@ -189,18 +176,16 @@ export function updateFocusHighlight(
   listContainer: HTMLElement,
   focusedId: string | null,
 ): void {
-  // Remove focused attribute from previously focused row
   const currentlyFocused = listContainer.querySelector(
     "celestial-row[focused]",
   );
   currentlyFocused?.removeAttribute("focused");
 
-  // Add focused attribute to the new target row if it exists and is not inactive
   if (focusedId) {
     const targetLi = listContainer.querySelector(`li[data-id="${focusedId}"]`);
     const targetRow = targetLi?.querySelector<HTMLElement>(
       "celestial-row.focus-row-item",
-    ); // Find the specific row
+    );
     const isInactive =
       targetLi?.classList.contains("destroyed") ||
       targetLi?.classList.contains("annihilated");
@@ -238,29 +223,25 @@ export function updateObjectStatusInList(
   );
   const caretElement = listItem.querySelector<HTMLElement>(
     ":scope > .list-item-content > .caret",
-  ); // Direct child caret
+  );
 
   const isDestroyed = status === CelestialStatus.DESTROYED;
   const isAnnihilated = status === CelestialStatus.ANNIHILATED;
   const isInactive = isDestroyed || isAnnihilated;
 
-  // Update LI classes
   listItem.classList.toggle("destroyed", isDestroyed);
   listItem.classList.toggle("annihilated", isAnnihilated);
 
-  // Update row attribute
   if (rowElement) {
     rowElement.toggleAttribute("inactive", isInactive);
     if (isInactive) {
-      rowElement.removeAttribute("focused"); // Remove focus if it becomes inactive
+      rowElement.removeAttribute("focused");
     }
   }
 
-  // Update caret state (if applicable)
   if (caretElement) {
-    caretElement.classList.toggle("inactive-caret", isInactive); // Add class for specific styling
+    caretElement.classList.toggle("inactive-caret", isInactive);
     if (isInactive) {
-      // Collapse if it becomes inactive while expanded
       caretElement.classList.remove("caret-down");
       caretElement.setAttribute("aria-expanded", "false");
       const nestedUl =

@@ -70,7 +70,6 @@ export class GravitationalLensingHandler {
    */
   removeLensingObject(objectId: string): void {
     this.lensingObjectsToAdd.delete(objectId);
-    // TODO: Add logic here if lensing needs to be actively *removed* from an existing object
   }
 
   /**
@@ -93,7 +92,6 @@ export class GravitationalLensingHandler {
     camera: THREE.PerspectiveCamera,
     mesh: THREE.Object3D,
   ): void {
-    // Check if this object was marked for setup
     if (!this.lensingObjectsToAdd.has(objectData.celestialObjectId)) return;
 
     const starRenderer = this.starRenderers.get(objectData.celestialObjectId);
@@ -104,8 +102,6 @@ export class GravitationalLensingHandler {
         starRenderer instanceof KerrBlackHoleRenderer ||
         starRenderer instanceof NeutronStarRenderer
       ) {
-        // TODO: Update addGravitationalLensing in specific renderers to accept RenderableCelestialObject
-        // Pass the RenderableCelestialObject data down
         starRenderer.addGravitationalLensing(
           objectData,
           renderer,
@@ -114,11 +110,9 @@ export class GravitationalLensingHandler {
           mesh,
         );
 
-        // Remove from the pending set since it's now set up
         this.lensingObjectsToAdd.delete(objectData.celestialObjectId);
       }
     } else {
-      // Could happen if renderer/mesh not ready yet
       console.warn(
         `[LensingHandler] Mesh or StarRenderer not ready for lensing object ${objectData.celestialObjectId}`,
       );

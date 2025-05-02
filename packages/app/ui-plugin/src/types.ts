@@ -11,13 +11,12 @@ import type {
 export interface PluginExecutionContext {
   dockviewApi: DockviewApi | null;
   dockviewController?: any | null;
-  // Add access to manager instances and the execute function
+
   getManager: <T = any>(id: string) => T | undefined;
   executeFunction: <T = any>(
     functionId: string,
     args?: any,
   ) => Promise<T> | T | undefined;
-  // Add other shared dependencies here if needed in the future
 }
 
 /**
@@ -27,7 +26,7 @@ export interface PluginExecutionContext {
 export type PluginFunctionCallerSignature = (
   context: PluginExecutionContext,
   args?: any,
-) => any; // Allow any return type, including void, values, or promises
+) => any;
 
 /** Configuration for dynamically loading a component. */
 export interface ComponentLoadConfig {
@@ -95,7 +94,7 @@ export interface PanelConfig {
   /** Optional default parameters to pass to the panel on creation. */
   defaultParams?: Record<string, any>;
   /** Optional default options for adding the panel (e.g., floating behavior). */
-  defaultAddPanelOptions?: Partial<AddPanelOptions>; // Make specific options partial
+  defaultAddPanelOptions?: Partial<AddPanelOptions>;
 }
 
 /**
@@ -106,8 +105,6 @@ export interface FunctionDependencies {
     api?: boolean;
     controller?: boolean;
   };
-  // Add other dependency categories here if needed
-  // e.g., coreState?: { someStore?: boolean; }
 }
 
 /**
@@ -124,7 +121,7 @@ export interface FunctionConfig {
   execute: PluginFunctionCallerSignature;
 
   /** Optional: Specifies the dependencies required by this function. */
-  dependencies?: FunctionDependencies; // Use the new interface type
+  dependencies?: FunctionDependencies;
 }
 
 /**
@@ -137,12 +134,12 @@ export interface BaseToolbarItemConfig {
   /** The target toolbar where this item should appear. */
   target: ToolbarTarget;
   /** Tooltip text displayed on hover. Falls back to title if not provided. */
-  title?: string; // Keep title as it might be used elsewhere or as fallback
+  title?: string;
   /** Raw SVG string for the icon. */
-  iconSvg?: string; // Made optional as some items might not have icons
+  iconSvg?: string;
   /** Optional display order (lower numbers appear first). */
   order?: number;
-  // Add tooltip properties
+
   tooltipText?: string;
   tooltipTitle?: string;
   tooltipIconSvg?: string;
@@ -214,7 +211,7 @@ export interface ToolbarWidgetConfig {
   /** Optional rendering order (lower numbers appear first/earlier). */
   order?: number;
   /** Optional parameters or initial attributes to pass to the widget element. */
-  params?: Record<string, any>; // Could be used for initial state
+  params?: Record<string, any>;
 }
 
 /**
@@ -291,7 +288,7 @@ export type PluginRegistrationStatus =
   | { type: "registering_plugin"; pluginId: string }
   | { type: "registered_plugin"; pluginId: string }
   | { type: "register_error"; pluginId: string; error: Error }
-  | { type: "init_error"; pluginId: string; error: Error } // If initialization fails
+  | { type: "init_error"; pluginId: string; error: Error }
   | {
       type: "dependency_error";
       pluginId: string;
@@ -300,6 +297,6 @@ export type PluginRegistrationStatus =
   | {
       type: "loading_complete";
       successfullyRegistered: string[];
-      failed: string[]; // IDs that failed load, register, init, or dependency checks
-      notFound: string[]; // IDs requested but no loader found
+      failed: string[];
+      notFound: string[];
     };

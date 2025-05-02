@@ -22,19 +22,17 @@ export class ClassBStarMaterial extends BaseStarMaterial {
       metallicEffect?: number;
     } = {},
   ) {
-    // Bluish white color for B-class stars
     const bluishWhiteColor = new THREE.Color(0xaabfff);
 
     super(bluishWhiteColor, {
-      // High corona intensity but less than O-class
       coronaIntensity: options.coronaIntensity ?? 0.6,
-      // Slightly slower pulse than O-class
+
       pulseSpeed: options.pulseSpeed ?? 0.7,
-      // High glow intensity
+
       glowIntensity: options.glowIntensity ?? 0.7,
-      // Moderate temperature variations
+
       temperatureVariation: options.temperatureVariation ?? 0.14,
-      // Moderate metallic effect
+
       metallicEffect: options.metallicEffect ?? 0.45,
     });
   }

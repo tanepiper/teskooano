@@ -10,26 +10,15 @@ import {
   finalize,
 } from "rxjs/operators";
 
-// Define necessary types if not already globally available or need augmentation
-// Augmenting global types for MediaRecorder to include specific options,
-// properties, and ensure consistent event types across environments.
 declare global {
-  // Augment MediaRecorderOptions to include potentially non-standard properties
   interface MediaRecorderOptions {
-    bitsPerSecond?: number; // General fallback some browsers might support
-    audioBitrateMode?: "constant" | "variable"; // Non-standard property
+    bitsPerSecond?: number;
+    audioBitrateMode?: "constant" | "variable";
   }
 
-  // Augment MediaRecorder to include potentially non-standard properties
   interface MediaRecorder {
-    readonly audioBitrateMode?: "constant" | "variable"; // Non-standard property
+    readonly audioBitrateMode?: "constant" | "variable";
   }
-
-  // It's generally not needed to redeclare Window properties if @types/web is present
-  // interface Window {
-  //   MediaRecorder?: typeof MediaRecorder;
-  //   BlobEvent?: typeof BlobEvent;
-  // }
 }
 
 /**
@@ -123,7 +112,7 @@ export function manageMediaRecorder(
       resume: () => {},
       requestData: () => {},
       state$: stateSubject.asObservable(),
-      data$: new Observable<Blob>(), // Empty observable
+      data$: new Observable<Blob>(),
       recorder: null,
       destroy: () => stateSubject.complete(),
     };
@@ -141,7 +130,7 @@ export function manageMediaRecorder(
       ...defaultRecorderState,
       status: "error",
       lastError: err,
-      isSupported: true, // API exists, but creation failed
+      isSupported: true,
     });
     return {
       start: () => console.error("MediaRecorder creation failed."),
@@ -163,21 +152,20 @@ export function manageMediaRecorder(
 
   const updateState = (newState: Partial<MediaRecorderState>) => {
     Object.assign(internalState, newState);
-    // Ensure chunks array is updated correctly
+
     if (newState.recordedChunks) {
       internalState.recordedChunks = newState.recordedChunks;
     }
-    stateSubject.next({ ...internalState }); // Emit a new object instance
+    stateSubject.next({ ...internalState });
   };
 
-  // Event listeners -> State updates
   fromEvent<BlobEvent>(recorder, "dataavailable")
     .pipe(takeUntil(destroySubject))
     .subscribe((event) => {
       if (event.data.size > 0) {
         internalState.recordedChunks.push(event.data);
-        dataSubject.next(event.data); // Emit individual chunks
-        // Update state with the new chunks array reference
+        dataSubject.next(event.data);
+
         updateState({ recordedChunks: internalState.recordedChunks });
       }
     });
@@ -187,7 +175,7 @@ export function manageMediaRecorder(
     .subscribe((errorEvent) => {
       console.error("MediaRecorder error:", errorEvent);
       updateState({ status: "error", lastError: errorEvent });
-      destroySubject.next(); // Ensure cleanup on error
+      destroySubject.next();
       destroySubject.complete();
     });
 
@@ -208,7 +196,7 @@ export function manageMediaRecorder(
         stream.getTracks().forEach((track) => track.stop());
       } else {
       }
-      destroySubject.next(); // Signal completion on stop
+      destroySubject.next();
       destroySubject.complete();
     });
   fromEvent(recorder, "pause")
@@ -218,10 +206,9 @@ export function manageMediaRecorder(
     .pipe(takeUntil(destroySubject))
     .subscribe(() => updateState({ status: "recording" }));
 
-  // Control functions
   const start = (timeslice?: number) => {
     if (recorder && recorder.state === "inactive") {
-      internalState.recordedChunks = []; // Clear chunks on new start
+      internalState.recordedChunks = [];
       recorder.start(timeslice);
     } else {
       console.warn(`Cannot start recorder in state: ${recorder?.state}`);
@@ -253,20 +240,18 @@ export function manageMediaRecorder(
 
   const destroy = () => {
     if (recorder && recorder.state !== "inactive") {
-      recorder.stop(); // Ensure stop is called if active
+      recorder.stop();
     }
     if (stopTracksOnStop && recorder?.state === "inactive") {
-      // If already inactive but tracks shouldn't persist
       stream.getTracks().forEach((track) => track.stop());
     }
     destroySubject.next();
     destroySubject.complete();
     stateSubject.complete();
     dataSubject.complete();
-    recorder = null; // Release reference
+    recorder = null;
   };
 
-  // Complete subjects when destroy signal is received
   destroySubject.subscribe(() => {
     stateSubject.complete();
     dataSubject.complete();
@@ -283,13 +268,12 @@ export function manageMediaRecorder(
         (prev, curr) =>
           prev.status === curr.status &&
           prev.lastError === curr.lastError &&
-          // Shallow compare chunks array length as a proxy for change
           prev.recordedChunks.length === curr.recordedChunks.length,
       ),
       finalize(() => console.log("Recorder state observable finalized.")),
     ),
     data$: dataSubject.pipe(
-      takeUntil(destroySubject), // Ensure data stops when destroyed
+      takeUntil(destroySubject),
       finalize(() => console.log("Recorder data observable finalized.")),
     ),
     recorder,

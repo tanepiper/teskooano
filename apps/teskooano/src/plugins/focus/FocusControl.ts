@@ -2,7 +2,7 @@ import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
 import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
-import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel.js"; // Import parent panel type
+import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel.js";
 import {
   handleFocusRequest,
   handleFollowRequest,
@@ -29,24 +29,21 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
   private resetButton: HTMLElement | null = null;
   private clearButton: HTMLElement | null = null;
 
-  private _parentPanel: CompositeEnginePanel | null = null; // Store parent panel instance
+  private _parentPanel: CompositeEnginePanel | null = null;
 
   private _currentFocusedId: string | null = null;
-  private _currentFollowedId: string | null = null; // Added state for following
+  private _currentFollowedId: string | null = null;
 
-  // Event Handlers
   private _handleObjectsLoaded: () => void;
   private _handleObjectDestroyed: () => void;
   private _handleRendererFocusChange: (event: Event) => void;
   private _handleObjectStatusChanged: (event: Event) => void;
   private _handleInfluencesChanged: () => void;
-  private _handleTreeInteraction: (event: Event) => void; // Combined tree handler
+  private _handleTreeInteraction: (event: Event) => void;
 
-  // Store subscription for automatic updates
   private _celestialObjectsUnsubscribe: Subscription | null = null;
   private _previousObjectsState: Record<string, CelestialObject> = {};
 
-  // --- Static Configuration ---
   /** Unique identifier for registering this component with Dockview. */
   public static readonly componentName = "focus-control";
 
@@ -57,7 +54,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    */
   public static registerToolbarButtonConfig(): PanelToolbarItemConfig {
     return {
-      id: "focus_control", // Base ID
+      id: "focus_control",
       target: "engine-toolbar",
       iconSvg: TargetIcon,
       title: "Focus Control",
@@ -73,7 +70,6 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
       },
     };
   }
-  // --- End Static Configuration ---
 
   /**
    * Creates an instance of FocusControl.
@@ -84,14 +80,13 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
-    // Bind event handlers
     this._handleObjectsLoaded = this._populateListInternal.bind(this);
     this._handleObjectDestroyed = this._populateListInternal.bind(this);
     this._handleRendererFocusChange = (event: Event): void => {
       const customEvent = event as CustomEvent<{
         focusedObjectId: string | null;
       }>;
-      // Renderer focus change updates our highlight state
+
       this._updateHighlightInternal(
         customEvent.detail?.focusedObjectId ?? null,
       );
@@ -109,7 +104,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
       }
     };
     this._handleInfluencesChanged = this._populateListInternal.bind(this);
-    this._handleTreeInteraction = this.handleTreeInteraction.bind(this); // Bind combined handler
+    this._handleTreeInteraction = this.handleTreeInteraction.bind(this);
   }
 
   /**
@@ -130,15 +125,13 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     }
 
     this.addEventListeners();
-    this._populateListInternal(); // Initial population
+    this._populateListInternal();
 
-    // Subscribe to store
     this._previousObjectsState = { ...getCelestialObjects() };
     this._celestialObjectsUnsubscribe = celestialObjects$.subscribe(
       this.checkForStatusChanges.bind(this),
     );
 
-    // Global event listeners
     document.addEventListener(
       "celestial-objects-loaded",
       this._handleObjectsLoaded,
@@ -182,7 +175,6 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     this._parentPanel = panel;
   }
 
-  // --- Combined Event Handler for Tree Interactions ---
   /**
    * Handles various user interactions within the tree list:
    * - Toggling expand/collapse carets.
@@ -194,7 +186,6 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
   private handleTreeInteraction(event: Event): void {
     const target = event.target as HTMLElement;
 
-    // --- Handle Caret Toggle ---
     const caret = target.closest(".caret") as HTMLElement | null;
     if (caret) {
       const parentLi = caret.closest("li");
@@ -210,16 +201,14 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
           caret.setAttribute("aria-expanded", isExpanded.toString());
         }
       }
-      return; // Stop further processing if caret was clicked
+      return;
     }
 
-    // --- Handle Custom Events from CelestialRow ---
     if (event.type === "focus-request" || event.type === "follow-request") {
       const customEvent = event as CustomEvent<{ objectId: string }>;
       const objectId = customEvent.detail?.objectId;
       if (!objectId) return;
 
-      // Double-check state (might be redundant if row checks inactive)
       const currentObjects = getCelestialObjects();
       const currentObject = currentObjects[objectId];
       if (
@@ -237,19 +226,18 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
         console.debug(
           `[FocusControl] Focus requested via row event for: ${objectId}`,
         );
-        // Call the internal wrapper method
+
         this.requestFocus(objectId);
       } else if (event.type === "follow-request") {
         console.debug(
           `[FocusControl] Follow requested via row event for: ${objectId}`,
         );
-        // Call the internal wrapper method
+
         this.requestFollow(objectId);
       }
     }
   }
 
-  // --- Focus Request Logic (Wrapper) ---
   /**
    * Requests the parent renderer to point the camera towards a specific object.
    * Delegates the core logic to `handleFocusRequest`.
@@ -260,18 +248,14 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     const success = handleFocusRequest(
       this._parentPanel,
       objectId,
-      this.dispatchEvent.bind(this), // Pass dispatchEvent for the callback
+      this.dispatchEvent.bind(this),
     );
     if (success) {
-      // Focus initiated successfully by the handler
-      // Highlight update is driven by the 'renderer-focus-changed' event
-      // or potentially the parent panel's updateViewState call within the handler.
     } else {
       console.warn(`[FocusControl] handleFocusRequest failed for ${objectId}`);
     }
   }
 
-  // --- Follow Request Logic (Wrapper) ---
   /**
    * Requests the parent renderer to move the camera to track a specific object.
    * Delegates the core logic to `handleFollowRequest`.
@@ -283,23 +267,18 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     const success = handleFollowRequest(this._parentPanel, objectId);
 
     if (success) {
-      // Update internal state AFTER successfully telling renderer via handler
       this._currentFollowedId = objectId;
 
-      // Add visual indicator to the row
       const row = this.treeListContainer?.querySelector(
         `celestial-row[object-id="${objectId}"]`,
       );
-      // Clear previous following indicators
+
       this.treeListContainer
         ?.querySelectorAll(`celestial-row[following]`)
         .forEach((el) => el.removeAttribute("following"));
-      row?.toggleAttribute("following", true); // Set attribute on the newly followed row
+      row?.toggleAttribute("following", true);
     } else {
       console.warn(`[FocusControl] handleFollowRequest failed for ${objectId}`);
-      // Maybe clear follow state if it failed?
-      // this._currentFollowedId = null;
-      // this.treeListContainer?.querySelectorAll(`celestial-row[following]`) ... remove attribute
     }
   }
 
@@ -310,7 +289,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    */
   public tourFocus = (): void => {
     if (!this.treeListContainer) return;
-    // Find active, non-inactive rows
+
     const activeRows = Array.from(
       this.treeListContainer.querySelectorAll<HTMLElement>(
         "celestial-row:not([inactive])",
@@ -323,9 +302,8 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     const randomRow = activeRows[Math.floor(Math.random() * activeRows.length)];
     const objectId = randomRow.getAttribute("object-id");
     if (objectId) {
-      // Simulate clicking the focus button on the row
       const focusBtn = randomRow.shadowRoot?.getElementById("focus-btn");
-      focusBtn?.click(); // Trigger the row's internal focus handler
+      focusBtn?.click();
     }
   };
 
@@ -359,10 +337,8 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    * @deprecated Consider using direct UI interaction simulation or internal methods if calling from within the component scope.
    */
   public publicFocusOnObject = (objectId: string): boolean => {
-    // Just call the main requestFocus method
     this.requestFocus(objectId);
-    // Return true/false based on whether focus actually happened?
-    // For now, assume it was requested successfully.
+
     return true;
   };
 
@@ -372,7 +348,6 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    * @internal
    */
   private addEventListeners(): void {
-    // Add listeners to Reset/Clear buttons
     this.resetButton?.addEventListener("click", () =>
       this._parentPanel?.resetCameraView(),
     );
@@ -380,9 +355,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
       this._parentPanel?.clearFocus(),
     );
 
-    // Add the single interaction listener to the container
     if (this.treeListContainer) {
-      // Listen for both standard clicks (for carets) and custom events from rows
       this.treeListContainer.addEventListener(
         "click",
         this._handleTreeInteraction,
@@ -404,7 +377,6 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    * @internal
    */
   private removeEventListeners(): void {
-    // Remove interaction listeners
     if (this.treeListContainer) {
       this.treeListContainer.removeEventListener(
         "click",
@@ -419,7 +391,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
         this._handleTreeInteraction,
       );
     }
-    // Remove global listeners
+
     document.removeEventListener(
       "celestial-objects-loaded",
       this._handleObjectsLoaded,
@@ -450,11 +422,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
   private _populateListInternal = (): void => {
     if (!this.treeListContainer) return;
     const objects = getCelestialObjects();
-    populateFocusList(
-      this.treeListContainer,
-      objects,
-      this._currentFocusedId, // Pass current focus ID for initial render
-    );
+    populateFocusList(this.treeListContainer, objects, this._currentFocusedId);
   };
 
   /**
@@ -466,14 +434,12 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    */
   private _updateHighlightInternal(focusedId: string | null): void {
     if (!this.treeListContainer) return;
-    // Update internal state ONLY if it changed
+
     if (this._currentFocusedId === focusedId) return;
     this._currentFocusedId = focusedId;
 
-    // Update the visual highlight in the list
     updateFocusHighlight(this.treeListContainer, this._currentFocusedId);
 
-    // Expand parents if a child is focused
     if (focusedId) {
       let elementToReveal = this.treeListContainer.querySelector<HTMLElement>(
         `celestial-row[object-id="${focusedId}"]`,
@@ -496,7 +462,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
             caret.setAttribute("aria-expanded", "true");
           }
         }
-        parentLi = parentUl?.closest("li"); // Move up the tree
+        parentLi = parentUl?.closest("li");
       }
     }
   }
@@ -527,14 +493,12 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
         status === CelestialStatus.DESTROYED ||
         status === CelestialStatus.ANNIHILATED;
       if (isInactive && this._currentFocusedId === objectId) {
-        this._parentPanel?.clearFocus(); // Clear parent focus if the focused item becomes inactive
+        this._parentPanel?.clearFocus();
       }
-      // If the *followed* item becomes inactive, stop following
-      if (isInactive && this._currentFollowedId === objectId) {
-        // TODO: Tell renderer to stop following
 
+      if (isInactive && this._currentFollowedId === objectId) {
         this._currentFollowedId = null;
-        // Remove visual indicator?
+
         const row = this.treeListContainer?.querySelector(
           `celestial-row[object-id="${objectId}"]`,
         );
@@ -560,22 +524,19 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     let needsListUpdate = false;
     Object.entries(currentObjects).forEach(([id, obj]) => {
       const prevObj = this._previousObjectsState[id];
-      if (!prevObj)
-        needsListUpdate = true; // New object
+      if (!prevObj) needsListUpdate = true;
       else if (prevObj.status !== obj.status)
         this._updateObjectStatusInternal(id, obj.status);
       else if (prevObj.currentParentId !== obj.currentParentId)
-        needsListUpdate = true; // Hierarchy change
-      // Check for other potential changes that might require a refresh if needed
+        needsListUpdate = true;
     });
     Object.keys(this._previousObjectsState).forEach((id) => {
-      if (!currentObjects[id]) needsListUpdate = true; // Removed object
+      if (!currentObjects[id]) needsListUpdate = true;
     });
     this._previousObjectsState = { ...currentObjects };
     if (needsListUpdate) this._populateListInternal();
   };
 
-  // --- Dockview Required Methods ---
   /**
    * Initializes the panel when added to Dockview.
    * Extracts the parent `CompositeEnginePanel` instance from the parameters.
@@ -587,8 +548,8 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     };
     if (
       params?.parentInstance &&
-      typeof params.parentInstance === "object" && // More robust check
-      typeof (params.parentInstance as any).focusOnObject === "function" // Check method existence
+      typeof params.parentInstance === "object" &&
+      typeof (params.parentInstance as any).focusOnObject === "function"
     ) {
       this.setParentPanel(params.parentInstance);
     } else {
@@ -605,7 +566,6 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
   get element(): HTMLElement {
     return this;
   }
-  // --- End Dockview Required Methods ---
 }
 
 customElements.define("focus-control", FocusControl);

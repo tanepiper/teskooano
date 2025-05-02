@@ -1,7 +1,6 @@
-// Define basic character sets
 const vowels = "aeiou";
 const consonants = "bcdfghjklmnpqrstvwxyz";
-// Common consonant doubles allowed
+
 const consonantDoubles = [
   "b",
   "d",
@@ -15,7 +14,7 @@ const consonantDoubles = [
   "s",
   "t",
 ];
-// Common vowel doubles allowed
+
 const vowelDoubles = ["a", "e", "o"];
 
 /**
@@ -28,43 +27,40 @@ const vowelDoubles = ["a", "e", "o"];
  * @returns A generated name string, capitalized.
  */
 export function generateCelestialName(random: () => number): string {
-  const nameLength = 5 + Math.floor(random() * 5); // 5 to 9 chars
+  const nameLength = 5 + Math.floor(random() * 5);
   let name = "";
   let lastCharType: "vowel" | "consonant" | "none" = "none";
 
   for (let i = 0; i < nameLength; i++) {
     let nextChar = "";
-    const allowDoubleConsonant = random() < 0.1; // 10% chance
-    const allowDoubleVowel = random() < 0.08; // 8% chance
+    const allowDoubleConsonant = random() < 0.1;
+    const allowDoubleVowel = random() < 0.08;
 
     if (lastCharType === "vowel") {
-      // Last was vowel, prefer consonant
       if (
         allowDoubleVowel &&
         name.length > 0 &&
         vowelDoubles.includes(name[name.length - 1])
       ) {
-        nextChar = name[name.length - 1]; // Double the vowel
+        nextChar = name[name.length - 1];
         lastCharType = "vowel";
       } else {
         const consonantIndex = Math.floor(random() * consonants.length);
         nextChar = consonants[consonantIndex];
-        // Handle 'q' -> 'qu' sequence
+
         if (nextChar === "q" && i < nameLength - 1) {
-          // Ensure space for 'u'
           nextChar = "qu";
-          i++; // Skip next iteration as we added two chars
+          i++;
         }
         lastCharType = "consonant";
       }
     } else if (lastCharType === "consonant") {
-      // Last was consonant, prefer vowel
       if (
         allowDoubleConsonant &&
         name.length > 0 &&
         consonantDoubles.includes(name[name.length - 1])
       ) {
-        nextChar = name[name.length - 1]; // Double the consonant
+        nextChar = name[name.length - 1];
         lastCharType = "consonant";
       } else {
         const vowelIndex = Math.floor(random() * vowels.length);
@@ -72,9 +68,7 @@ export function generateCelestialName(random: () => number): string {
         lastCharType = "vowel";
       }
     } else {
-      // First character
       if (random() < 0.6) {
-        // Start with consonant ~60% of time
         const consonantIndex = Math.floor(random() * consonants.length);
         nextChar = consonants[consonantIndex];
         if (nextChar === "q" && i < nameLength - 1) {
@@ -91,11 +85,9 @@ export function generateCelestialName(random: () => number): string {
     name += nextChar;
   }
 
-  // Final cleanup: ensure 'q' is followed by 'u' if it ended up at the end somehow
   if (name.endsWith("q")) {
     name += "u";
   }
 
-  // Capitalize the first letter
   return name.charAt(0).toUpperCase() + name.slice(1);
 }

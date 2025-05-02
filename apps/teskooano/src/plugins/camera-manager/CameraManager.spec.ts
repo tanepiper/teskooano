@@ -5,25 +5,23 @@ import * as THREE from "three";
 import { atom } from "nanostores";
 import { renderableObjectsStore } from "@teskooano/core-state";
 
-// Mocks
 vi.mock("@teskooano/renderer-threejs");
 vi.mock("@teskooano/core-state", () => ({
   renderableObjectsStore: atom<Record<string, any>>({}),
 }));
 
-// Helper to create mock renderable objects
 const createMockRenderable = (id: string, position: THREE.Vector3) => ({
   celestialObjectId: id,
   position: position.clone(),
   name: `Mock ${id}`,
   type: "PLANET",
   status: "MOCK_STATUS",
-  // Add missing properties based on linter feedback
-  radius: 10, // Mock radius
-  mass: 1000, // Mock mass
-  rotation: new THREE.Euler(), // Mock rotation
-  realRadius_m: 100000, // Mock real radius
-  orbit: null, // Keep previous placeholders just in case
+
+  radius: 10,
+  mass: 1000,
+  rotation: new THREE.Euler(),
+  realRadius_m: 100000,
+  orbit: null,
   renderType: "mesh",
   celestialBodyType: "PLANET",
   isSelected: false,
@@ -34,14 +32,11 @@ describe("CameraManager", () => {
   let cameraManager: CameraManager;
 
   beforeEach(() => {
-    // Reset mocks and stores before each test
     vi.clearAllMocks();
-    renderableObjectsStore.set({}); // Clear renderables
+    renderableObjectsStore.set({});
 
-    // Create a new mock renderer instance for each test
     mockRenderer = new ModularSpaceRenderer({} as HTMLCanvasElement) as any;
 
-    // Mock necessary properties and methods on the renderer
     (mockRenderer as any).camera = new THREE.PerspectiveCamera();
     mockRenderer.sceneManager = {
       setFov: vi.fn(),
@@ -56,18 +51,17 @@ describe("CameraManager", () => {
     } as any;
     mockRenderer.setFollowTarget = vi.fn();
 
-    // Instantiate CameraManager
     cameraManager = new CameraManager({ renderer: mockRenderer });
   });
 
   it("should initialize with default values if none provided", () => {
     const state = cameraManager.getCameraStateAtom().getValue();
-    expect(state.fov).toBe(75); // DEFAULT_FOV
+    expect(state.fov).toBe(75);
     expect(state.focusedObjectId).toBeNull();
     expect(state.currentPosition.equals(new THREE.Vector3(200, 200, 200))).toBe(
       true,
-    ); // DEFAULT_CAMERA_POSITION
-    expect(state.currentTarget.equals(new THREE.Vector3(0, 0, 0))).toBe(true); // DEFAULT_CAMERA_TARGET
+    );
+    expect(state.currentTarget.equals(new THREE.Vector3(0, 0, 0))).toBe(true);
     expect(mockRenderer.sceneManager.setFov).toHaveBeenCalledWith(75);
   });
 
@@ -89,14 +83,14 @@ describe("CameraManager", () => {
       initialFov: initialFov,
       initialFocusedObjectId: initialFocusId,
       initialCameraPosition: initialPosition,
-      initialCameraTarget: new THREE.Vector3(99, 99, 99), // Target should be derived from focus object
+      initialCameraTarget: new THREE.Vector3(99, 99, 99),
     });
 
     const state = managerWithOptions.getCameraStateAtom().getValue();
     expect(state.fov).toBe(initialFov);
     expect(state.focusedObjectId).toBe(initialFocusId);
     expect(state.currentPosition.equals(initialPosition)).toBe(true);
-    expect(state.currentTarget.equals(initialTarget)).toBe(true); // Should match focus object
+    expect(state.currentTarget.equals(initialTarget)).toBe(true);
     expect(mockRenderer.sceneManager.setFov).toHaveBeenCalledWith(initialFov);
   });
 
@@ -128,7 +122,7 @@ describe("CameraManager", () => {
 
   it("setFov should not update if fov is the same", () => {
     const initialFov = cameraManager.getCameraStateAtom().getValue().fov;
-    vi.clearAllMocks(); // Clear initial setup call
+    vi.clearAllMocks();
     cameraManager.setFov(initialFov);
     expect(mockRenderer.sceneManager.setFov).not.toHaveBeenCalled();
   });
@@ -142,31 +136,27 @@ describe("CameraManager", () => {
 
     cameraManager.focusOnObject(objectId);
 
-    // Check internal state reflects the *intent* immediately
     expect(cameraManager.getCameraStateAtom().getValue().focusedObjectId).toBe(
       objectId,
     );
 
-    // Check renderer methods are called
     expect(mockRenderer.setFollowTarget).toHaveBeenCalledWith(
       objectId,
       expect.any(THREE.Vector3),
       expect.any(THREE.Vector3),
     );
     const expectedTarget = objectPosition;
-    const expectedPosition = expect.any(THREE.Vector3); // Position depends on offset and distance
+    const expectedPosition = expect.any(THREE.Vector3);
     expect(mockRenderer.setFollowTarget).toHaveBeenCalledWith(
       objectId,
       expectedTarget,
       expectedPosition,
     );
 
-    // Check controlsManager.moveToPosition is NOT called directly by focusOnObject
     expect(mockRenderer.controlsManager.moveToPosition).not.toHaveBeenCalled();
   });
 
   it("focusOnObject(null) should clear focus and move to default", () => {
-    // First focus on something
     const objectId = "testObj";
     const objectPosition = new THREE.Vector3(100, 0, 0);
     renderableObjectsStore.set({
@@ -175,18 +165,17 @@ describe("CameraManager", () => {
     cameraManager.focusOnObject(objectId);
     expect(cameraManager.getCameraStateAtom().getValue().focusedObjectId).toBe(
       objectId,
-    ); // Verify initial focus
+    );
 
-    // Now clear focus
     cameraManager.focusOnObject(null);
 
     expect(
       cameraManager.getCameraStateAtom().getValue().focusedObjectId,
-    ).toBeNull(); // Intent updated
+    ).toBeNull();
     expect(mockRenderer.setFollowTarget).toHaveBeenCalledWith(null);
     expect(mockRenderer.controlsManager.moveToPosition).toHaveBeenCalledWith(
-      expect.any(THREE.Vector3), // Default Position
-      expect.any(THREE.Vector3), // Default Target
+      expect.any(THREE.Vector3),
+      expect.any(THREE.Vector3),
     );
     expect(mockRenderer.controlsManager.moveToPosition).toHaveBeenCalledWith(
       expect.objectContaining({ x: 200, y: 200, z: 200 }),
@@ -198,17 +187,14 @@ describe("CameraManager", () => {
     const objectId = "nonExistent";
     cameraManager.focusOnObject(objectId);
 
-    // State should remain unfocused (or revert if previously focused)
     expect(
       cameraManager.getCameraStateAtom().getValue().focusedObjectId,
     ).toBeNull();
     expect(mockRenderer.setFollowTarget).not.toHaveBeenCalled();
     expect(mockRenderer.controlsManager.moveToPosition).not.toHaveBeenCalled();
-    // Optional: Check console.error was called? Requires spyOn(console, 'error')
   });
 
   it("resetCameraView should clear focus and move to default", () => {
-    // Focus on something first
     const objectId = "testObj";
     const objectPosition = new THREE.Vector3(100, 0, 0);
     renderableObjectsStore.set({
@@ -226,8 +212,8 @@ describe("CameraManager", () => {
     ).toBeNull();
     expect(mockRenderer.setFollowTarget).toHaveBeenCalledWith(null);
     expect(mockRenderer.controlsManager.moveToPosition).toHaveBeenCalledWith(
-      expect.objectContaining({ x: 200, y: 200, z: 200 }), // Default Position
-      expect.objectContaining({ x: 0, y: 0, z: 0 }), // Default Target
+      expect.objectContaining({ x: 200, y: 200, z: 200 }),
+      expect.objectContaining({ x: 0, y: 0, z: 0 }),
     );
   });
 
@@ -238,10 +224,10 @@ describe("CameraManager", () => {
     expect(
       mockRenderer.controlsManager.pointCameraAtTarget,
     ).toHaveBeenCalledWith(
-      expect.objectContaining({ x: 50, y: 50, z: 50 }), // Ensure it's the correct vector
-      true, // Use transition
+      expect.objectContaining({ x: 50, y: 50, z: 50 }),
+      true,
     );
-    // pointCameraAt should NOT change the focusedObjectId state
+
     expect(
       cameraManager.getCameraStateAtom().getValue().focusedObjectId,
     ).toBeNull();
@@ -260,7 +246,6 @@ describe("CameraManager", () => {
       },
     });
 
-    // Manually trigger the handler
     (cameraManager as any).handleCameraTransitionComplete(mockEvent);
 
     const state = cameraManager.getCameraStateAtom().getValue();
@@ -273,7 +258,6 @@ describe("CameraManager", () => {
     const finalPosition = new THREE.Vector3(1, 1, 1);
     const finalTarget = new THREE.Vector3(2, 2, 2);
 
-    // Set an initial focus
     const initialVal = cameraManager.getCameraStateAtom().getValue();
     cameraManager
       .getCameraStateAtom()
@@ -283,17 +267,15 @@ describe("CameraManager", () => {
       detail: {
         position: finalPosition,
         target: finalTarget,
-        // No focusedObjectId in this event (e.g., manual pan)
       },
     });
 
-    // Manually trigger the handler
     (cameraManager as any).handleCameraTransitionComplete(mockEvent);
 
     const state = cameraManager.getCameraStateAtom().getValue();
     expect(state.currentPosition.equals(finalPosition)).toBe(true);
     expect(state.currentTarget.equals(finalTarget)).toBe(true);
-    // Focus ID should remain unchanged if not provided in event
+
     expect(state.focusedObjectId).toBe("initialFocus");
   });
 
@@ -301,19 +283,17 @@ describe("CameraManager", () => {
     const newCamPos = new THREE.Vector3(55, 66, 77);
     const newTargetPos = new THREE.Vector3(5, 6, 7);
 
-    // Simulate renderer state after manual move
     mockRenderer.camera.position.copy(newCamPos);
     mockRenderer.controlsManager.controls.target.copy(newTargetPos);
 
-    const mockEvent = new Event("camera-transition-complete"); // Event without detail
+    const mockEvent = new Event("camera-transition-complete");
 
-    // Manually trigger the handler
     (cameraManager as any).handleCameraTransitionComplete(mockEvent);
 
     const state = cameraManager.getCameraStateAtom().getValue();
     expect(state.currentPosition.equals(newCamPos)).toBe(true);
     expect(state.currentTarget.equals(newTargetPos)).toBe(true);
-    // Manual interaction should clear focus
+
     expect(state.focusedObjectId).toBeNull();
   });
 
@@ -336,12 +316,11 @@ describe("CameraManager", () => {
     (managerWithCallback as any).handleCameraTransitionComplete(mockEvent);
     expect(mockCallback).toHaveBeenCalledWith(finalFocusId);
 
-    // Test clearing focus
     const mockEventClear = new CustomEvent("camera-transition-complete", {
       detail: {
         position: new THREE.Vector3(),
         target: new THREE.Vector3(),
-        focusedObjectId: null, // Explicitly clear focus
+        focusedObjectId: null,
       },
     });
     (managerWithCallback as any).handleCameraTransitionComplete(mockEventClear);
@@ -353,7 +332,7 @@ describe("CameraManager", () => {
     cameraManager.destroy();
     expect(removeSpy).toHaveBeenCalledWith(
       "camera-transition-complete",
-      (cameraManager as any).handleCameraTransitionComplete, // Ensure it's the bound handler instance
+      (cameraManager as any).handleCameraTransitionComplete,
     );
   });
 });

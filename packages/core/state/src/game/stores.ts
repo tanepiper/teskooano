@@ -2,12 +2,9 @@ import { BehaviorSubject } from "rxjs";
 import type { CelestialObject } from "@teskooano/data-types";
 import type { OSVector3 } from "@teskooano/core-math";
 
-// --- Seed State ---
-// localStorage key for the seed
 const LAST_SEED_STORAGE_KEY = "teskooano_last_seed";
 const DEFAULT_SEED = "42";
 
-// Function to safely get the initial seed from localStorage
 const getInitialSeed = (): string => {
   try {
     const storedSeed = localStorage.getItem(LAST_SEED_STORAGE_KEY);
@@ -44,7 +41,6 @@ export const updateSeed = (newSeed: string): void => {
     currentSeed.next(seedToSet);
   }
 };
-// --- End Seed State ---
 
 /**
  * Store that maps celestial object IDs to their full data including physics state
@@ -81,26 +77,23 @@ export const accelerationVectors$ = _accelerationVectorsStore.asObservable();
 export function updateAccelerationVectors(
   newAccelerations: Map<string, OSVector3>,
 ): void {
-  // Convert the Map to a plain Record<string, OSVector3> for the store
   const accelerationsRecord: Record<string, OSVector3> = {};
   newAccelerations.forEach((vec, id) => {
-    accelerationsRecord[id] = vec; // Store the actual OSVector3 object
+    accelerationsRecord[id] = vec;
   });
-  _accelerationVectorsStore.next(accelerationsRecord); // Use .next()
+  _accelerationVectorsStore.next(accelerationsRecord);
 }
 
 /**
  * Get children of a celestial object
  */
 export const getChildrenOfObject = (objectId: string): CelestialObject[] => {
-  // Use .getValue() for synchronous access
   const hierarchy = _celestialHierarchyStore.getValue();
   const objects = _celestialObjectsStore.getValue();
   const childIds = hierarchy[objectId] || [];
   return childIds.map((id) => objects[id]).filter(Boolean);
 };
 
-// Export actions/getters if needed, and synchronous accessors (use with caution)
 export const getCelestialObjects = () => _celestialObjectsStore.getValue();
 export const getCelestialHierarchy = () => _celestialHierarchyStore.getValue();
 export const setCelestialObject = (id: string, object: CelestialObject) => {
@@ -137,7 +130,6 @@ export const removeCelestialHierarchyEntry = (objectId: string) => {
   _celestialHierarchyStore.next(newHierarchy);
 };
 
-// --- Bulk Setters ---
 export const setAllCelestialObjects = (
   objects: Record<string, CelestialObject>,
 ) => {

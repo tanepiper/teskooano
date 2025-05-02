@@ -87,6 +87,5 @@ class SessionStorageWrapper extends BaseStorageWrapper {
   }
 }
 
-// Export instances for direct use
 export const safeLocalStorage = new LocalStorageWrapper();
 export const safeSessionStorage = new SessionStorageWrapper();

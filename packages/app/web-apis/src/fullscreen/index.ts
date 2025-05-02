@@ -41,7 +41,7 @@ export async function requestFullscreen(
     await element.requestFullscreen(options);
   } catch (err) {
     console.error("Failed to enter fullscreen mode:", err);
-    throw err; // Re-throw the error after logging
+    throw err;
   }
 }
 
@@ -54,13 +54,13 @@ export async function exitFullscreen(): Promise<void> {
     return Promise.reject(new Error("Fullscreen API is not supported."));
   }
   if (!isFullscreenActive()) {
-    return Promise.resolve(); // Already not in fullscreen
+    return Promise.resolve();
   }
   try {
     await document.exitFullscreen();
   } catch (err) {
     console.error("Failed to exit fullscreen mode:", err);
-    throw err; // Re-throw the error after logging
+    throw err;
   }
 }
 
@@ -91,7 +91,6 @@ export async function toggleFullscreen(
  */
 export const fullscreenChange$: Observable<Element | null> =
   new Observable<Element | null>((subscriber) => {
-    // Check for support initially
     if (
       typeof document === "undefined" ||
       document.fullscreenEnabled === undefined
@@ -102,15 +101,12 @@ export const fullscreenChange$: Observable<Element | null> =
       return;
     }
 
-    // Handler to emit the current fullscreen element
     const handler = () => {
       subscriber.next(document.fullscreenElement);
     };
 
-    // Attach listener
     document.addEventListener("fullscreenchange", handler);
 
-    // Cleanup function
     return () => {
       document.removeEventListener("fullscreenchange", handler);
     };

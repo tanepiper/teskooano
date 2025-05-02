@@ -22,7 +22,7 @@ export async function writeTextToClipboard(text: string): Promise<void> {
     await navigator.clipboard.writeText(text);
   } catch (err) {
     console.error("Failed to write text to clipboard:", err);
-    throw err; // Re-throw after logging
+    throw err;
   }
 }
 
@@ -41,6 +41,6 @@ export async function readTextFromClipboard(): Promise<string> {
     return text;
   } catch (err) {
     console.error("Failed to read text from clipboard:", err);
-    throw err; // Re-throw after logging
+    throw err;
   }
 }

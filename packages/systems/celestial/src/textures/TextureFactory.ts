@@ -67,7 +67,6 @@ export class TextureFactory {
    */
   private static createCacheKey(type: string, options: any): string {
     return `${type}:${JSON.stringify(options, (key, value) => {
-      // Handle non-serializable values like THREE.Color
       if (value instanceof THREE.Color) {
         return `#${value.getHexString()}`;
       }
@@ -90,7 +89,6 @@ export class TextureFactory {
       return this.textureCache.get(cacheKey)!;
     }
 
-    // Support both instance and static methods
     let result: TextureResult;
     const generator = this.getGasGiantGenerator();
 
@@ -116,7 +114,6 @@ export class TextureFactory {
       return this.textureCache.get(cacheKey)!;
     }
 
-    // Support both instance and static methods
     let result: TextureResult;
     const generator = this.getTerrestrialGenerator();
 
@@ -142,7 +139,6 @@ export class TextureFactory {
       return this.textureCache.get(cacheKey)!;
     }
 
-    // Support both instance and static methods
     let result: TextureResult;
     const generator = this.getStarGenerator();
 
@@ -168,7 +164,6 @@ export class TextureFactory {
       return this.textureCache.get(cacheKey)!;
     }
 
-    // Support both instance and static methods
     let result: TextureResult;
     const generator = this.getSpaceRockGenerator();
 
@@ -198,10 +193,8 @@ export class TextureFactory {
    * Dispose of all texture generation resources to free memory
    */
   public static dispose(): void {
-    // Clear the texture cache
     this.clearCache();
 
-    // Dispose of generators
     if (this.gasGiantGenerator) {
       this.gasGiantGenerator.dispose();
       this.gasGiantGenerator = null!;
@@ -222,7 +215,6 @@ export class TextureFactory {
       this.spaceRockGenerator = null!;
     }
 
-    // Dispose of global WebGL resources
     TextureResourceManager.getInstance().dispose();
   }
 }

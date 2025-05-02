@@ -50,7 +50,7 @@ export const addCompositeEnginePanelFunction: FunctionConfig = {
         `[EngineViewFunctions] Failed to add engine panel for counter ${counter}:`,
         error,
       );
-      enginePanelCounter--; // Decrement counter on failure
+      enginePanelCounter--;
       return { success: false, panelId: null };
     }
   },

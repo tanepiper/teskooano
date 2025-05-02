@@ -53,40 +53,28 @@ export class StateManager {
    * Subscribe to state changes
    */
   private subscribeToStateChanges(): void {
-    // Subscribe to simulation state changes (camera, etc.)
     const simUnsubscribe = simulationState$.subscribe((state) => {
-      // Notify camera subscribers
       this.cameraSubscribers.forEach((callback) => {
         callback(state.camera.position, state.camera.target);
       });
     });
 
-    // Subscribe to celestial objects changes, comparing previous and current state
-    const initialObjects = getCelestialObjects(); // Get initial state for startWith
+    const initialObjects = getCelestialObjects();
     const objUnsubscribe = celestialObjects$
-      .pipe(
-        startWith(initialObjects), // Emit initial state immediately so pairwise works on first emission
-        pairwise(), // Emit [previous, current]
-      )
+      .pipe(startWith(initialObjects), pairwise())
       .subscribe(([prevObjects, newObjects]) => {
-        // Destructure the pair
-        // Ensure prevObjects is not null/undefined if startWith provides the initial state
         const safePrevObjects = prevObjects ?? {};
 
-        // Process added and updated objects
         for (const id in newObjects) {
           const object = newObjects[id] as RendererCelestialObject;
 
           if (!safePrevObjects[id]) {
-            // New object
             this.objectSubscribers.forEach((callback) => {
               callback("add", object, id);
             });
           } else {
-            // Check if object has changed - focusing on physics state
             const prevObject = safePrevObjects[id];
 
-            // Compare physicsStateReal for position/velocity changes
             let physicsChanged = false;
             const currentPhysics = object.physicsStateReal;
             const prevPhysics = prevObject.physicsStateReal;
@@ -111,17 +99,10 @@ export class StateManager {
 
               physicsChanged = posChanged || velChanged;
             } else if (currentPhysics !== prevPhysics) {
-              // Fallback if state objects themselves changed (e.g., one added/removed)
               physicsChanged = true;
             }
 
-            // Rotation change can still be checked on the top level if needed,
-            // but it's not typically driven by physics state.
-            // Consider if rotation updates need a separate mechanism.
-
             if (physicsChanged) {
-              // Trigger update if physics state changed
-              // Object has been updated
               this.objectSubscribers.forEach((callback) => {
                 callback("update", object, id);
               });
@@ -129,10 +110,8 @@ export class StateManager {
           }
         }
 
-        // Process removed objects
         for (const id in safePrevObjects) {
           if (!newObjects[id]) {
-            // Object was removed
             this.objectSubscribers.forEach((callback) => {
               callback(
                 "remove",
@@ -153,7 +132,6 @@ export class StateManager {
   onObjectsChange(callback: ObjectStateCallback): () => void {
     this.objectSubscribers.add(callback);
 
-    // Return unsubscribe function
     return () => {
       this.objectSubscribers.delete(callback);
     };
@@ -165,7 +143,6 @@ export class StateManager {
   onCameraChange(callback: CameraStateCallback): () => void {
     this.cameraSubscribers.add(callback);
 
-    // Return unsubscribe function
     return () => {
       this.cameraSubscribers.delete(callback);
     };
@@ -189,7 +166,6 @@ export class StateManager {
    * Dispose of all resources and unsubscribe from state
    */
   dispose(): void {
-    // Call all unsubscribe functions
     this.unsubscribes.forEach((unsubscribe) => unsubscribe.unsubscribe());
     this.unsubscribes = [];
     this.objectSubscribers.clear();

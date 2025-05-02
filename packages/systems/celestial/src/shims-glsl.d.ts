@@ -13,7 +13,6 @@ declare module "*.frag" {
   export default content;
 }
 
-// Add declaration for Vite raw imports
 declare module "*.glsl?raw" {
   const content: string;
   export default content;

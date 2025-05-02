@@ -1,4 +1,3 @@
-// Import creation/initialization functions for each system component
 import { initializeAsteroidBelt } from "./asteroidBelt";
 import { initializeEarth } from "./earth";
 import { initializeJupiter } from "./jupiter";
@@ -17,10 +16,8 @@ import { initializeVenus } from "./venus";
  * for the star, planets, asteroid belt, and Oort cloud.
  */
 export function initializeSolarSystem() {
-  // Create the central star and get its ID
   const sunId = initializeSun();
 
-  // Create planets, passing the sun's ID and scale factor
   initializeMercury(sunId);
   initializeVenus(sunId);
   initializeEarth(sunId);
@@ -31,7 +28,6 @@ export function initializeSolarSystem() {
   initializeNeptune(sunId);
   initializePluto(sunId);
 
-  // Create other features
   initializeAsteroidBelt(sunId);
   initializeOortCloud(sunId);
 }

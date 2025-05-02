@@ -29,4 +29,7 @@ export const pluginConfig: PluginRegistryConfig = {
   "teskooano-system-controls": {
     path: "../plugins/engine-panel/main-toolbar/system-controls",
   },
+  "teskooano-about": {
+    path: "../plugins/about",
+  },
 };

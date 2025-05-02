@@ -1,4 +1,3 @@
-// Export all gas giant renderers
 export {
   BaseGasGiantMaterial,
   BasicGasGiantMaterial,

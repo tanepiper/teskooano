@@ -19,28 +19,24 @@ import {
   CelestialType,
 } from "@teskooano/data-types";
 import * as THREE from "three";
-// Remove direct renderer event import if no longer needed elsewhere in this file
-// import { rendererEvents } from "@teskooano/renderer-threejs-core";
+
 import { Subscription } from "rxjs";
 import {
   resetTime$,
   orbitUpdate$,
   destructionOccurred$,
   type OrbitUpdatePayload,
-} from "./simulationEvents"; // Import our new Subjects
+} from "./simulationEvents";
 
 let lastTime = performance.now();
 let running = true;
 let lastLoggedTime = 0;
-let accumulatedTime = 0; // Track simulation time accumulation
-let resetTimeSubscription: Subscription | null = null; // Store subscription
-
-// Removed window.addEventListener for resetSimulationTime
+let accumulatedTime = 0;
+let resetTimeSubscription: Subscription | null = null;
 
 export function startSimulationLoop() {
-  // Subscribe to reset time event when starting the loop
   resetTimeSubscription = resetTime$.subscribe(() => {
-    accumulatedTime = 0; // Reset accumulated time
+    accumulatedTime = 0;
     console.log(
       "[SimulationLoop] Resetting accumulated time via resetTime$ subject.",
     );
@@ -50,14 +46,13 @@ export function startSimulationLoop() {
     const acquiredVectors: THREE.Vector3[] = [];
 
     try {
-      // Wrap main logic in try block for cleanup
       if (!running) return;
 
       const currentTime = performance.now();
-      const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
+      const deltaTime = (currentTime - lastTime) / 1000;
       lastTime = currentTime;
 
-      const fixedDeltaTime = Math.min(deltaTime, 0.001); // Cap at 1000fps physics rate
+      const fixedDeltaTime = Math.min(deltaTime, 0.001);
 
       if (!getSimulationState().paused) {
         const timeScale = getSimulationState().timeScale;
@@ -102,39 +97,31 @@ export function startSimulationLoop() {
             }
           });
 
-        // Combine parameters into a single object
         const simParams: SimulationParameters = {
           radii,
           isStar,
           bodyTypes,
-          // octreeSize and barnesHutTheta can be added here if needed
-          // otherwise, they will use the defaults defined in updateSimulation
         };
 
         const stepResult: SimulationStepResult = updateSimulation(
           activeBodiesReal,
           scaledDeltaTime,
-          simParams, // Pass the combined parameters object
+          simParams,
         );
 
-        // --- Handle Destruction Events (Emit via Subject) ---
         if (
           stepResult.destructionEvents &&
           stepResult.destructionEvents.length > 0
         ) {
           stepResult.destructionEvents.forEach((event: DestructionEvent) => {
-            // Replace rendererEvents.emit with subject.next()
             destructionOccurred$.next(event);
           });
         }
-        // --- End Destruction Event Handling ---
 
-        // --- Prepare Final State for Store Update ---
         const finalStateMap: Record<string, CelestialObject> = {
           ...currentCelestialObjects,
         };
 
-        // 1. Update physics state for survivors
         stepResult.states.forEach((updatedState) => {
           const existingObject = finalStateMap[String(updatedState.id)];
           if (existingObject) {
@@ -145,7 +132,6 @@ export function startSimulationLoop() {
           }
         });
 
-        // 2. Mark destroyed objects (determine status based on survivor)
         stepResult.destroyedIds.forEach((id) => {
           const destroyedIdStr = String(id);
           const existingObject = finalStateMap[destroyedIdStr];
@@ -179,7 +165,6 @@ export function startSimulationLoop() {
           }
         });
 
-        // 3. Apply Rotations to the final state map
         Object.keys(finalStateMap).forEach((id) => {
           const obj = finalStateMap[id];
           if (
@@ -215,7 +200,6 @@ export function startSimulationLoop() {
         setAllCelestialObjects(finalStateMap);
         updateAccelerationVectors(stepResult.accelerations);
 
-        // --- Prepare data for orbit update event ---
         const updatedPositions: Record<
           string,
           { x: number; y: number; z: number }
@@ -228,10 +212,8 @@ export function startSimulationLoop() {
           };
         });
 
-        // Emit orbit update via Subject
         const payload: OrbitUpdatePayload = { positions: updatedPositions };
         orbitUpdate$.next(payload);
-        // Removed document.dispatchEvent
       }
 
       const currentSimTime = getSimulationState().time;
@@ -239,7 +221,6 @@ export function startSimulationLoop() {
         Math.floor(currentSimTime) % 5 === 0 &&
         Math.floor(currentSimTime) !== lastLoggedTime
       ) {
-        // ... logging code ...
       }
     } catch (error) {
       console.error("Error in simulation loop:", error);
@@ -255,14 +236,14 @@ export function startSimulationLoop() {
 
   running = true;
   lastTime = performance.now();
-  // Ensure accumulatedTime starts from the current state value
+
   accumulatedTime = getSimulationState().time;
   requestAnimationFrame(simulationLoop);
 }
 
 export function stopSimulationLoop() {
   running = false;
-  // Unsubscribe from reset time event when stopping the loop
+
   resetTimeSubscription?.unsubscribe();
   resetTimeSubscription = null;
   console.log("[SimulationLoop] Stopped and unsubscribed from resetTime$.");

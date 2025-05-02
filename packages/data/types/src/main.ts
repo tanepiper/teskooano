@@ -1,7 +1,6 @@
 export * from "./celestial";
 export * from "./scaling";
 
-// Import THREE.Vector3 directly for use in type definitions
 import * as THREE from "three";
 import { PhysicsStateReal } from "./physics";
 
@@ -36,7 +35,6 @@ export type Integrator = (
   dt: number,
 ) => PhysicsStateReal;
 
-// --- Simulation Settings Types ---
 export type PhysicsEngineType = "euler" | "symplectic" | "verlet";
 
 /**

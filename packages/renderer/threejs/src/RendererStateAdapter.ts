@@ -19,69 +19,55 @@ import {
 } from "@teskooano/data-types";
 import * as THREE from "three";
 import { Subscription, BehaviorSubject } from "rxjs";
-import { physicsToThreeJSPosition } from "./utils/coordinateUtils"; // Assuming this utility exists
+import { physicsToThreeJSPosition } from "./utils/coordinateUtils";
 
-// Define the structure of the state relevant specifically for rendering
 export interface RenderableCelestialObject {
   /** Link back to the core celestial object */
   celestialObjectId: string;
   name: string;
-  type: CelestialType; // Use string type from CelestialObject
+  type: CelestialType;
   /** Current status from the core object */
   status: CelestialStatus;
 
-  // Scaled visual properties
-  radius: number; // Visual radius in Three.js units (0 for RingSystem)
-  mass: number; // Scaled mass (0 for RingSystem)
-  position: THREE.Vector3; // Scaled position
-  rotation: THREE.Quaternion; // Scaled rotation
+  radius: number;
+  mass: number;
+  position: THREE.Vector3;
+  rotation: THREE.Quaternion;
 
-  // Properties needed directly by renderers (e.g., for material selection, colors, textures)
-  properties?: CelestialSpecificPropertiesUnion; // Use the specific union type
-  orbit?: OrbitalParameters; // Keep original orbit data for things like rings, maybe prediction?
+  properties?: CelestialSpecificPropertiesUnion;
+  orbit?: OrbitalParameters;
 
-  // Relationships / Lighting
   parentId?: string;
   primaryLightSourceId?: string;
 
-  // UI / Interaction State
   isVisible?: boolean;
   isTargetable?: boolean;
   isSelected?: boolean;
   isFocused?: boolean;
 
-  // Need real radius for mesh creation geometry (0 for RingSystem)
   realRadius_m: number;
 
-  // Store original axial tilt for things like rings
   axialTilt?: OSVector3;
 }
 
-// Define the structure for visual settings *derived from core state*
 export interface RendererVisualSettings {
   trailLengthMultiplier: number;
-  physicsEngine: "keplerian" | "verlet"; // Map core state engines to renderer-friendly types
+  physicsEngine: "keplerian" | "verlet";
 }
 
-// The main adapter class
 export class RendererStateAdapter {
-  // REMOVED internal renderable objects store instance
-  // public $renderableObjects: MapStore<Record<string, RenderableCelestialObject>>;
-
-  // Store for visual settings relevant to rendering (derived from core state)
   public $visualSettings: BehaviorSubject<RendererVisualSettings>;
 
   private unsubscribeObjects: Subscription | null = null;
   private unsubscribeSimState: Subscription | null = null;
-  private currentSimulationTime: number = 0; // Store current time
-  // Pre-allocate reusable objects for rotation calculation
+  private currentSimulationTime: number = 0;
+
   private rotationAxis = new THREE.Vector3(0, 1, 0);
   private tiltQuaternion = new THREE.Quaternion();
   private spinQuaternion = new THREE.Quaternion();
-  private euler = new THREE.Euler(); // RE-ADD Euler for OSVector3 tilt
+  private euler = new THREE.Euler();
 
   constructor() {
-    // Initialize visual settings directly from the current core state
     const initialSimState = getSimulationState();
     this.$visualSettings = new BehaviorSubject<RendererVisualSettings>({
       trailLengthMultiplier:
@@ -93,7 +79,6 @@ export class RendererStateAdapter {
     this.subscribeToCoreState();
   }
 
-  // --- Helper function to calculate rotation based on tilt and optional spin ---
   private calculateRotation(
     axialTilt: OSVector3 | number | undefined,
     siderealPeriod: number | undefined,
@@ -102,7 +87,6 @@ export class RendererStateAdapter {
     this.tiltQuaternion.identity();
     this.spinQuaternion.identity();
 
-    // Handle Axial Tilt
     if (axialTilt instanceof OSVector3) {
       this.euler.set(
         THREE.MathUtils.degToRad(axialTilt.x ?? 0),
@@ -118,7 +102,6 @@ export class RendererStateAdapter {
       );
     }
 
-    // Handle Spin (only if siderealPeriod is provided)
     if (siderealPeriod && siderealPeriod !== 0) {
       const rotationAngle =
         (this.currentSimulationTime / siderealPeriod) * 2 * Math.PI;
@@ -128,12 +111,11 @@ export class RendererStateAdapter {
         this.spinQuaternion,
       );
     } else {
-      finalRotation.copy(this.tiltQuaternion); // No spin, just use tilt
+      finalRotation.copy(this.tiltQuaternion);
     }
     return finalRotation;
   }
 
-  // --- Process function for standard celestial bodies (Planets, Moons, Stars, etc.) ---
   private processStandardObject(
     obj: CelestialObject,
     existing: RenderableCelestialObject | undefined,
@@ -171,14 +153,12 @@ export class RendererStateAdapter {
     };
   }
 
-  // --- Process function specifically for Ring Systems ---
   private processRingSystem(
     obj: CelestialObject,
-    objects: Record<string, CelestialObject>, // Need full map to find parent
+    objects: Record<string, CelestialObject>,
     existing: RenderableCelestialObject | undefined,
     determineLightSource: (id: string) => string | undefined,
   ): RenderableCelestialObject | null {
-    // Return null if parent is invalid
     const parentId = obj.parentId;
     if (!parentId) {
       console.warn(
@@ -192,42 +172,38 @@ export class RendererStateAdapter {
       !parent.physicsStateReal ||
       !parent.physicsStateReal.position_m
     ) {
-      // console.warn(`[RendererStateAdapter] Parent object ${parentId} for ring system ${obj.id} not found or invalid.`);
-      // Don't warn every frame if parent disappears temporarily
       return null;
     }
 
-    // Derive position from parent
     const position = physicsToThreeJSPosition(
       parent.physicsStateReal.position_m,
     );
-    // Derive rotation ONLY from parent's tilt (rings don't spin independently)
-    const rotation = this.calculateRotation(parent.axialTilt, undefined); // Pass undefined for siderealPeriod
-    const primaryLightSourceId = determineLightSource(obj.id); // Rings use parent's light source
+
+    const rotation = this.calculateRotation(parent.axialTilt, undefined);
+    const primaryLightSourceId = determineLightSource(obj.id);
 
     return {
       celestialObjectId: obj.id,
       name: obj.name,
       type: obj.type,
-      radius: 0, // Rings have no single radius
-      mass: 0, // Rings have negligible mass for rendering purposes
+      radius: 0,
+      mass: 0,
       position: position,
       rotation: rotation,
-      properties: obj.properties, // Contains RingSystemProperties with rings array
-      orbit: undefined, // Rings don't have independent orbits
+      properties: obj.properties,
+      orbit: undefined,
       parentId: obj.parentId,
       primaryLightSourceId: primaryLightSourceId,
       realRadius_m: 0,
-      axialTilt: parent.axialTilt, // Store parent's tilt for reference if needed
+      axialTilt: parent.axialTilt,
       isVisible: existing?.isVisible ?? true,
-      isTargetable: existing?.isTargetable ?? false, // Rings usually not targetable
+      isTargetable: existing?.isTargetable ?? false,
       isSelected: existing?.isSelected ?? false,
       isFocused: existing?.isFocused ?? false,
       status: obj.status,
     };
   }
 
-  // Define the main processing function
   private processCelestialObjectsUpdateNow(
     objects: Record<string, CelestialObject>,
   ): void {
@@ -239,7 +215,6 @@ export class RendererStateAdapter {
       return;
     }
 
-    // Pre-calculate light sources for efficiency
     const lightSourceMap: Record<string, string | undefined> = {};
     const determineLightSource = (id: string): string | undefined => {
       if (id in lightSourceMap) return lightSourceMap[id];
@@ -256,7 +231,7 @@ export class RendererStateAdapter {
       lightSourceMap[id] = determineLightSource(obj.parentId);
       return lightSourceMap[id];
     };
-    // Ensure all light sources are determined upfront
+
     Object.keys(objects).forEach((id) => determineLightSource(id));
 
     const existingRenderables = getRenderableObjects();
@@ -266,9 +241,7 @@ export class RendererStateAdapter {
         const obj = objects[id];
         const existing = existingRenderables[id];
 
-        // Skip objects without basic physics state (shouldn't happen often for valid objects)
         if (!obj.physicsStateReal || !obj.physicsStateReal.position_m) {
-          // Allow RING_SYSTEM through as it derives state from parent
           if (obj.type !== CelestialType.RING_SYSTEM) {
             console.warn(
               `[RendererStateAdapter] Skipping object ${id} due to missing physics state.`,
@@ -279,7 +252,6 @@ export class RendererStateAdapter {
 
         let renderableObject: RenderableCelestialObject | null = null;
 
-        // Route to the appropriate processing function based on type
         switch (obj.type) {
           case CelestialType.RING_SYSTEM:
             renderableObject = this.processRingSystem(
@@ -294,11 +266,11 @@ export class RendererStateAdapter {
           case CelestialType.MOON:
           case CelestialType.DWARF_PLANET:
           case CelestialType.GAS_GIANT:
-          // Add other standard types that need position/rotation/mass/radius
+
           case CelestialType.COMET:
-          case CelestialType.ASTEROID_FIELD: // Might need custom logic later
-          case CelestialType.OORT_CLOUD: // Might need custom logic later
-          case CelestialType.SPACE_ROCK: // Might need custom logic later
+          case CelestialType.ASTEROID_FIELD:
+          case CelestialType.OORT_CLOUD:
+          case CelestialType.SPACE_ROCK:
             renderableObject = this.processStandardObject(
               obj,
               existing,
@@ -314,8 +286,6 @@ export class RendererStateAdapter {
         if (renderableObject) {
           renderableMap[id] = renderableObject;
         } else {
-          // If processing failed (e.g., ring system with missing parent), remove from renderable map
-          // delete renderableMap[id]; // No, keep existing if possible? Or just don't add.
         }
       }
 
@@ -333,7 +303,6 @@ export class RendererStateAdapter {
       this.processCelestialObjectsUpdateNow(objects),
     );
 
-    // Subscribe to the simulation state store
     this.unsubscribeSimState = simulationState$.subscribe(
       (simState: SimulationState) => {
         this.currentSimulationTime = simState.time ?? 0;

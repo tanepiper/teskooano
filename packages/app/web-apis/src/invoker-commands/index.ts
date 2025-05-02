@@ -1,16 +1,14 @@
 import { Observable, fromEvent, Subject } from "rxjs";
 import { filter, map, share, takeUntil } from "rxjs/operators";
 
-// Extend HTMLButtonElement interface for type safety
 declare global {
   interface HTMLButtonElement {
     commandForElement: HTMLElement | null;
     command: string | null;
 
-    // Non-standard properties often associated (might exist depending on implementation)
-    commandTargetElement?: HTMLElement | null; // Alternative or older name?
+    commandTargetElement?: HTMLElement | null;
   }
-  // Define the CommandEvent if not already globally available
+
   interface CommandEvent extends Event {
     readonly command: string;
   }
@@ -20,7 +18,6 @@ declare global {
   }
 
   interface Window {
-    // Define the expected constructor signature for CommandEvent
     CommandEvent?: {
       new (
         type: "command",
@@ -58,7 +55,7 @@ export function isInvokerCommandsSupported(): boolean {
  * if (target) {
  *   createCommandObservable(target, '--custom-action').subscribe(event => {
  *     console.log('Custom action command received:', event);
- *     // Handle the command
+ *
  *   });
  * }
  * ```
@@ -74,11 +71,9 @@ export function createCommandObservable(
   abortSignal?: AbortSignal,
 ): Observable<CommandEvent> | null {
   if (!isInvokerCommandsSupported()) {
-    // Even if prototype check fails, basic event listening might work if polyfilled or partially implemented
     console.warn(
       'Invoker Commands API prototype properties not found, but attempting to listen for "command" event.',
     );
-    // Allow proceeding but with a warning.
   }
 
   const commandEvent$ = fromEvent<CommandEvent>(targetElement, "command").pipe(
@@ -88,7 +83,6 @@ export function createCommandObservable(
     share(),
   );
 
-  // Handle abortion
   if (abortSignal) {
     const stop$ = fromEvent(abortSignal, "abort");
     return commandEvent$.pipe(takeUntil(stop$));
@@ -108,29 +102,23 @@ export function createCommandObservable(
  * @returns `true` if the event was dispatched, `false` otherwise (e.g., CommandEvent constructor unsupported).
  */
 export function invokeCommand(
-  targetElement: EventTarget, // Can be any EventTarget, not just HTMLElement
+  targetElement: EventTarget,
   command: string,
   options: EventInit = { bubbles: true, cancelable: true },
 ): boolean {
   try {
-    // Check if CommandEvent constructor exists before trying to use it
     if (typeof window.CommandEvent === "undefined") {
       console.error(
         "CommandEvent constructor is not supported in this browser.",
       );
       return false;
     }
-    // Note: The standard CommandEvent constructor currently might not exist
-    // or might not have the 'command' property directly settable.
-    // This is based on the spec, but browser implementations vary.
-    // If this fails, a custom event might be needed as a fallback.
+
     const commandEvent = new CustomEvent("command", {
       ...options,
-      detail: { command: command }, // Using detail as a common way to pass data
-    }) as any; // Use 'any' as CommandEvent constructor might not match this shape
+      detail: { command: command },
+    }) as any;
 
-    // Attempt to set the command property directly if possible (might not work)
-    // This relies on potential future implementations or non-standard behavior.
     try {
       Object.defineProperty(commandEvent, "command", {
         value: command,
@@ -146,7 +134,6 @@ export function invokeCommand(
   } catch (err) {
     console.error(`Failed to dispatch command "${command}":`, err);
 
-    // Fallback attempt with a simple CustomEvent if CommandEvent fails
     try {
       const customEvent = new CustomEvent("command", {
         ...options,

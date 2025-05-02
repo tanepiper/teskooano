@@ -14,7 +14,6 @@ export class StarTextureGenerator extends TextureGeneratorBase {
    * @returns The generated texture result with color map
    */
   public generateTexture(options: StarTextureOptions): TextureResult {
-    // Use the cache mechanism from base class
     return this.getOrCreateTexture(options, (opts) =>
       this.createStarTexture(opts),
     );
@@ -37,7 +36,6 @@ export class StarTextureGenerator extends TextureGeneratorBase {
       generateMipmaps = true,
     } = options;
 
-    // Use spectralClass to determine the base color if not provided
     const starColor =
       baseColor instanceof THREE.Color
         ? baseColor
@@ -45,7 +43,6 @@ export class StarTextureGenerator extends TextureGeneratorBase {
             this.getColorForSpectralClass(spectralClass || SpectralClass.G),
           );
 
-    // Create a material for the star surface
     const material = new THREE.ShaderMaterial({
       uniforms: {
         baseColor: { value: starColor },
@@ -67,20 +64,20 @@ export class StarTextureGenerator extends TextureGeneratorBase {
         uniform float seed;
         varying vec2 vUv;
         
-        // Noise function
+        
         float hash(vec2 p) {
           return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
         }
         
         void main() {
-          // Create star surface granulation
+          
           float noise = hash(vUv * 100.0 + seed);
           float pattern = mix(1.0 - spotIntensity * 0.2, 1.0, noise);
           
-          // Apply color with intensity
+          
           vec3 color = baseColor * surfaceIntensity * pattern;
           
-          // Add glow at the edges
+          
           float dist = distance(vUv, vec2(0.5));
           float edgeGlow = 1.0 - smoothstep(0.4, 0.5, dist);
           color = mix(color * 0.8, color * 1.2, edgeGlow);
@@ -90,17 +87,15 @@ export class StarTextureGenerator extends TextureGeneratorBase {
       `,
     });
 
-    // Render the shader to a texture
     const colorMap = this.renderToTexture(
       material,
       textureSize,
       generateMipmaps,
     );
 
-    // Create a result with just the color map for now
     const result: TextureResult = {
       colorMap: colorMap,
-      emissiveMap: colorMap, // Stars emit light
+      emissiveMap: colorMap,
     };
 
     return result;
@@ -114,27 +109,27 @@ export class StarTextureGenerator extends TextureGeneratorBase {
   ): THREE.ColorRepresentation {
     switch (spectralClass) {
       case SpectralClass.O:
-        return 0x9bb0ff; // Blue
+        return 0x9bb0ff;
       case SpectralClass.B:
-        return 0xaabfff; // Blue-white
+        return 0xaabfff;
       case SpectralClass.A:
-        return 0xcad7ff; // White
+        return 0xcad7ff;
       case SpectralClass.F:
-        return 0xf8f7ff; // White-yellow
+        return 0xf8f7ff;
       case SpectralClass.G:
-        return 0xfff4ea; // Yellow (like Sun)
+        return 0xfff4ea;
       case SpectralClass.K:
-        return 0xffd2a1; // Orange
+        return 0xffd2a1;
       case SpectralClass.M:
-        return 0xffa366; // Red
+        return 0xffa366;
       case SpectralClass.L:
-        return 0xff6633; // Red-brown (dim)
+        return 0xff6633;
       case SpectralClass.T:
-        return 0xcc3333; // Magenta/Brown (dimmer)
+        return 0xcc3333;
       case SpectralClass.Y:
-        return 0xaa3333; // Dark Red/Infrared (dimmest)
+        return 0xaa3333;
       default:
-        return 0xffffff; // Default white
+        return 0xffffff;
     }
   }
 }

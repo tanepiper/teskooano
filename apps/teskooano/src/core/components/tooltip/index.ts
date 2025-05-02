@@ -11,7 +11,6 @@ export const plugin: TeskooanoPlugin = {
   name: "Core Tooltip Component",
   description: "Provides the teskooano-tooltip custom element.",
 
-  // Register the custom element component
   components: [
     {
       tagName: "teskooano-tooltip",
@@ -19,7 +18,6 @@ export const plugin: TeskooanoPlugin = {
     },
   ],
 
-  // No manager classes, panels, functions, or toolbar items for this component
   managerClasses: [],
   panels: [],
   functions: [],

@@ -23,19 +23,17 @@ export class ClassMStarMaterial extends BaseStarMaterial {
       metallicEffect?: number;
     } = {},
   ) {
-    // Light orangish red color for M-class stars
     const orangishRedColor = new THREE.Color(0xff6644);
 
     super(orangishRedColor, {
-      // Lowest corona intensity
       coronaIntensity: options.coronaIntensity ?? 0.3,
-      // Slowest pulse speed
+
       pulseSpeed: options.pulseSpeed ?? 0.35,
-      // Lowest glow intensity
+
       glowIntensity: options.glowIntensity ?? 0.35,
-      // Lowest temperature variations
+
       temperatureVariation: options.temperatureVariation ?? 0.07,
-      // Highest metallic effect (more surface texture visibility)
+
       metallicEffect: options.metallicEffect ?? 0.7,
     });
   }

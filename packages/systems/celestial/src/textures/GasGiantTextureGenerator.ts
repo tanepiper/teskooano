@@ -36,7 +36,6 @@ export class GasGiantTextureGenerator extends TextureGeneratorBase {
       generateMipmaps = true,
     } = options;
 
-    // Create a material for the gas giant bands
     const material = new THREE.ShaderMaterial({
       uniforms: {
         baseColor: { value: new THREE.Color(baseColor) },
@@ -58,12 +57,12 @@ export class GasGiantTextureGenerator extends TextureGeneratorBase {
         uniform int classType;
         varying vec2 vUv;
         
-        // Hash function for randomness
+        
         float hash(float n) {
           return fract(sin(n) * 43758.5453123);
         }
         
-        // Simple noise function
+        
         float noise(vec2 p) {
           vec2 ip = floor(p);
           vec2 fp = fract(p);
@@ -79,16 +78,16 @@ export class GasGiantTextureGenerator extends TextureGeneratorBase {
         }
         
         void main() {
-          // Number of bands varies by gas giant class
+          
           float bandFrequency = float(classType) * 2.0 + 10.0;
           
-          // Create horizontal bands
+          
           float bandPattern = noise(vec2(vUv.y * bandFrequency + seed, vUv.x * 2.0));
           
-          // Create more detail and variation
+          
           float detail = noise(vec2(vUv.x * 20.0 + seed, vUv.y * 20.0));
           
-          // Mix base and secondary colors based on the patterns
+          
           vec3 color = mix(baseColor, secondaryColor, bandPattern * 0.7 + detail * 0.3);
           
           gl_FragColor = vec4(color, 1.0);
@@ -96,14 +95,12 @@ export class GasGiantTextureGenerator extends TextureGeneratorBase {
       `,
     });
 
-    // Render the shader to a texture
     const colorMap = this.renderToTexture(
       material,
       textureSize,
       generateMipmaps,
     );
 
-    // Create a simple result with just the color map for now
     const result: TextureResult = {
       colorMap: colorMap,
     };

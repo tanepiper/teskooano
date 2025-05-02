@@ -1,9 +1,6 @@
 import { Observable, from, of, throwError } from "rxjs";
 import { catchError, tap, map } from "rxjs/operators";
 
-// Import standard type if needed (assuming @types/web is included)
-// type DisplayMediaStreamConstraints = globalThis.DisplayMediaStreamConstraints;
-
 /**
  * Checks if the Screen Capture API (getDisplayMedia) is likely supported.
  * @returns `true` if `navigator.mediaDevices.getDisplayMedia` exists, `false` otherwise.
@@ -37,25 +34,22 @@ export async function requestDisplayMedia(
     const stream = await navigator.mediaDevices.getDisplayMedia(options);
     console.log("Display media stream obtained.");
 
-    // Add listener to stop tracks when the stream ends (e.g., user clicks "Stop sharing")
     stream.getTracks().forEach((track) => {
       track.onended = () => {
         console.log(
           `Screen capture track (${track.kind}: ${track.label || "N/A"}) ended.`,
         );
-        // You might want to signal the end of capture here
-        // e.g., call a cleanup function or emit an event
       };
     });
 
     return stream;
   } catch (err: any) {
     console.error("Failed to get display media:", err);
-    // Handle specific errors (e.g., NotAllowedError for permission denial)
+
     if (err.name === "NotAllowedError") {
       console.warn("Screen capture permission denied by user.");
     }
-    throw err; // Re-throw the error for the caller to handle
+    throw err;
   }
 }
 
@@ -79,13 +73,8 @@ export function requestDisplayMediaObservable(
         "Error obtaining display media stream via Observable:",
         err,
       );
-      // Return an observable that emits the error
-      return throwError(() => err); // Use throwError factory
-      // Alternatively, return EMPTY or a specific error object:
-      // return of(err).pipe(map(e => { throw e; }));
-      // return EMPTY;
+
+      return throwError(() => err);
     }),
-    // Note: This observable completes after emitting the stream once.
-    // Further interaction (like track ending) needs separate handling if required reactively.
   );
 }

@@ -1,6 +1,6 @@
 import EyeIcon from "@fluentui/svg-icons/icons/eye_24_regular.svg?raw";
 import PersonRunningFilledIcon from "@fluentui/svg-icons/icons/person_running_20_regular.svg?raw";
-// Placeholder - replace with actual icon import if needed
+
 import { CelestialType } from "@teskooano/data-types";
 
 const template = document.createElement("template");
@@ -114,7 +114,6 @@ template.innerHTML = `
 </div>
 `;
 
-// Map types to placeholder colors/icons for now
 const iconStyles: Record<string, string> = {
   [CelestialType.STAR]: "background-color: yellow;",
   [CelestialType.PLANET]: "background-color: skyblue;",

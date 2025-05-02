@@ -12,7 +12,6 @@ import {
   tap,
 } from "rxjs";
 
-// Define the slider state interface - simplified as subjects manage state
 interface SliderUIState {
   value: number;
   min: number;
@@ -21,11 +20,8 @@ interface SliderUIState {
   isDisabled: boolean;
   isEditable: boolean;
   isInvalid: boolean;
-  inputValue: string; // Represents the current text in the input field
+  inputValue: string;
 }
-
-// Simple utility (can be kept or replaced if RxJS provides better)
-// function debounce(func: Function, delay: number) { ... } // Removed, using RxJS debounceTime
 
 export class TeskooanoSlider extends HTMLElement {
   static observedAttributes = [
@@ -39,7 +35,6 @@ export class TeskooanoSlider extends HTMLElement {
     "editable-value",
   ];
 
-  // --- DOM Elements ---
   private sliderElement!: HTMLInputElement;
   private labelElement!: HTMLLabelElement;
   private labelSlot!: HTMLSlotElement;
@@ -47,7 +42,6 @@ export class TeskooanoSlider extends HTMLElement {
   private helpTextElement!: HTMLElement;
   private valueInputElement!: HTMLInputElement;
 
-  // --- RxJS State Subjects ---
   private valueSubject = new BehaviorSubject<number>(50);
   private minSubject = new BehaviorSubject<number>(0);
   private maxSubject = new BehaviorSubject<number>(100);
@@ -55,19 +49,18 @@ export class TeskooanoSlider extends HTMLElement {
   private isDisabledSubject = new BehaviorSubject<boolean>(false);
   private isEditableSubject = new BehaviorSubject<boolean>(false);
   private isInvalidSubject = new BehaviorSubject<boolean>(false);
-  // Subject specifically for the raw value typed into the input field
+
   private inputValueSubject = new BehaviorSubject<string>("");
-  // Internal subject to trigger final value update after debounce
+
   private debouncedUpdateSubject = new Subject<number>();
 
-  // --- RxJS Subscriptions ---
   private subscriptions = new Subscription();
 
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
-    this.initializeElements(); // Moved element selection to a method
+    this.initializeElements();
   }
 
   private initializeElements(): void {
@@ -82,24 +75,18 @@ export class TeskooanoSlider extends HTMLElement {
   }
 
   connectedCallback() {
-    // Initialize subjects from attributes
     this.updateSubjectsFromAttributes();
 
-    // Setup listeners
     this.setupEventListeners();
 
-    // Setup RxJS pipelines
     this.setupRxJSPipelines();
-
-    // Initial UI update (driven by combineLatest)
   }
 
   disconnectedCallback() {
-    // Clean up event listeners (Optional if shadow DOM handles it, but good practice)
     this.removeEventListeners();
-    // Clean up RxJS subscriptions
+
     this.subscriptions.unsubscribe();
-    // Reset subscriptions container for potential re-connection
+
     this.subscriptions = new Subscription();
   }
 
@@ -133,7 +120,7 @@ export class TeskooanoSlider extends HTMLElement {
         }
         break;
       case "step":
-        const stepValue = this.parseAttributeSafe(newValue, 1, true); // step > 0
+        const stepValue = this.parseAttributeSafe(newValue, 1, true);
         if (stepValue !== this.stepSubject.getValue()) {
           this.stepSubject.next(stepValue);
         }
@@ -156,7 +143,6 @@ export class TeskooanoSlider extends HTMLElement {
     }
   }
 
-  // --- Helper Methods ---
   private parseAttributeSafe(
     value: string | null,
     defaultValue: number,
@@ -167,7 +153,7 @@ export class TeskooanoSlider extends HTMLElement {
       return defaultValue;
     }
     if (mustBePositive && num <= 0) {
-      return defaultValue; // Or maybe 1 if it's a step? Context matters.
+      return defaultValue;
     }
     return num;
   }
@@ -186,7 +172,6 @@ export class TeskooanoSlider extends HTMLElement {
     this.isDisabledSubject.next(this.hasAttribute("disabled"));
     this.isEditableSubject.next(this.hasAttribute("editable-value"));
 
-    // Initialize input value based on current value subject
     this.inputValueSubject.next(this.valueSubject.getValue().toString());
 
     this.updateLabelAttribute(this.getAttribute("label"));
@@ -206,7 +191,6 @@ export class TeskooanoSlider extends HTMLElement {
   }
 
   private setupRxJSPipelines(): void {
-    // Combine core subjects to update UI elements reactively
     const coreState$ = combineLatest([
       this.valueSubject.pipe(distinctUntilChanged()),
       this.minSubject.pipe(distinctUntilChanged()),
@@ -215,7 +199,7 @@ export class TeskooanoSlider extends HTMLElement {
       this.isDisabledSubject.pipe(distinctUntilChanged()),
       this.isEditableSubject.pipe(distinctUntilChanged()),
       this.isInvalidSubject.pipe(distinctUntilChanged()),
-      this.inputValueSubject.pipe(distinctUntilChanged()), // Include input value for direct binding
+      this.inputValueSubject.pipe(distinctUntilChanged()),
     ]).pipe(
       map(
         ([
@@ -240,23 +224,19 @@ export class TeskooanoSlider extends HTMLElement {
       ),
     );
 
-    // Subscription to update the actual DOM based on combined state
     this.subscriptions.add(
       coreState$.subscribe((state) => this.updateUI(state)),
     );
 
-    // --- Input Value Handling ---
-    // Debounced pipeline for updating the main valueSubject and dispatching event
     this.subscriptions.add(
       this.debouncedUpdateSubject
         .pipe(
-          debounceTime(400), // Debounce time for text input changes
-          distinctUntilChanged(), // Only proceed if the debounced value changes
-          filter((value) => !this.isInvalidSubject.getValue()), // Only update if valid
+          debounceTime(400),
+          distinctUntilChanged(),
+          filter((value) => !this.isInvalidSubject.getValue()),
           tap((finalValue) => {
-            // Update the main value subject *after* debounce and validation
             this.valueSubject.next(finalValue);
-            // Dispatch the custom event with the final, validated value
+
             this.dispatchEvent(
               new CustomEvent<SliderValueChangePayload>(
                 CustomEvents.SLIDER_CHANGE,
@@ -269,24 +249,21 @@ export class TeskooanoSlider extends HTMLElement {
             );
           }),
         )
-        .subscribe(), // No action needed in subscribe, tap handles side effects
+        .subscribe(),
     );
   }
 
-  // --- Event Handlers ---
   private handleSliderInput = (e: Event) => {
     const target = e.target as HTMLInputElement;
     const newValue = parseFloat(target.value);
 
     if (!isNaN(newValue) && !this.isDisabledSubject.getValue()) {
-      // Update the main value subject immediately
       this.valueSubject.next(newValue);
-      // Update the input field text to match
+
       this.inputValueSubject.next(newValue.toString());
-      // Reset invalid state if slider is moved
+
       this.isInvalidSubject.next(false);
 
-      // Dispatch event immediately for slider changes
       this.dispatchEvent(
         new CustomEvent<SliderValueChangePayload>(CustomEvents.SLIDER_CHANGE, {
           detail: { value: newValue },
@@ -300,7 +277,7 @@ export class TeskooanoSlider extends HTMLElement {
   private handleTextInput = (e: Event) => {
     const target = e.target as HTMLInputElement;
     const rawValue = target.value;
-    this.inputValueSubject.next(rawValue); // Update visual input state immediately
+    this.inputValueSubject.next(rawValue);
 
     const numValue = parseFloat(rawValue);
     const min = this.minSubject.getValue();
@@ -310,7 +287,7 @@ export class TeskooanoSlider extends HTMLElement {
       this.isInvalidSubject.next(true);
     } else {
       this.isInvalidSubject.next(false);
-      // Push the potentially valid number to the debounced update stream
+
       const step = this.stepSubject.getValue();
       const steppedValue = Math.round((numValue - min) / step) * step + min;
       const clampedValue = Math.max(min, Math.min(steppedValue, max));
@@ -319,19 +296,14 @@ export class TeskooanoSlider extends HTMLElement {
   };
 
   private handleInputBlur = () => {
-    // If the input is invalid when blurred, reset it to the last valid value
     if (this.isInvalidSubject.getValue()) {
       const lastValidValue = this.valueSubject.getValue();
       this.inputValueSubject.next(lastValidValue.toString());
-      this.isInvalidSubject.next(false); // Reset invalid state on blur reset
+      this.isInvalidSubject.next(false);
     }
-    // Optionally: if valid but different from slider, could snap here too,
-    // but debouncedUpdateSubject should handle the final valid update.
   };
 
-  // --- UI Update Logic ---
   private updateUI = (state: SliderUIState) => {
-    // Update slider attributes
     this._silentAttributeUpdate("value", state.value.toString());
     this._silentAttributeUpdate("min", state.min.toString());
     this._silentAttributeUpdate("max", state.max.toString());
@@ -339,7 +311,6 @@ export class TeskooanoSlider extends HTMLElement {
     this.sliderElement.disabled = state.isDisabled;
     this.valueInputElement.disabled = state.isDisabled;
 
-    // Update host attributes for styling
     if (state.isDisabled) {
       this.setAttribute("disabled", "");
     } else {
@@ -351,30 +322,25 @@ export class TeskooanoSlider extends HTMLElement {
       this.removeAttribute("editable-value");
     }
 
-    // Update value display/input
     this.valueDisplayElement.textContent = state.value.toFixed(
       this.calculatePrecision(state.step),
     );
-    // Directly bind input value to inputValue state
+
     if (this.valueInputElement.value !== state.inputValue) {
       this.valueInputElement.value = state.inputValue;
     }
 
-    // Update validity styling
     if (state.isInvalid) {
       this.valueInputElement.classList.add("invalid");
     } else {
       this.valueInputElement.classList.remove("invalid");
     }
 
-    // Ensure slider reflects the *committed* value, not necessarily the draft input value
-    // This handles cases where the input is invalid or being debounced.
     if (parseFloat(this.sliderElement.value) !== state.value) {
       this.sliderElement.value = state.value.toString();
     }
   };
 
-  // Prevent infinite loops when setting element attributes from state
   private _silentAttributeUpdate(name: string, value: string) {
     const currentAttr = this.sliderElement.getAttribute(name);
     if (currentAttr !== value) {
@@ -417,13 +383,11 @@ export class TeskooanoSlider extends HTMLElement {
     return Math.random().toString(36).substring(2, 9);
   }
 
-  // --- Public Accessors ---
   get value(): number {
     return this.valueSubject.getValue();
   }
 
   set value(newValue: number) {
-    // Consider clamping/stepping newValue based on min/max/step before updating
     const min = this.minSubject.getValue();
     const max = this.maxSubject.getValue();
     const step = this.stepSubject.getValue();
@@ -446,7 +410,6 @@ export class TeskooanoSlider extends HTMLElement {
   }
 }
 
-// Define the custom event type for better type checking
 declare global {
   interface HTMLElementEventMap {
     [CustomEvents.SLIDER_CHANGE]: CustomEvent<SliderValueChangePayload>;
