@@ -57,6 +57,9 @@ uniform vec3 uColorMid1;
 uniform vec3 uColorMid2;
 uniform vec3 uColorHigh;
 
+// Include Simplex noise implementation
+#include "../shared/simplex/3d" // Try without leading slash
+
 // --- Helper Functions ---
 
 // Function to calculate lighting contribution from a single light source
@@ -74,14 +77,15 @@ vec3 calculateLightContribution(vec3 lightPos, vec3 lightColor, float intensity,
 }
 
 // --- Noise Functions (Modified for vec3 input) --- 
-// Hash function for vec3
+/* REMOVED old hash function
 float hash(vec3 p) {
   p = fract(p * vec3(123.4, 234.5, 345.6));
   p += dot(p, p + 45.32);
   return fract(p.x * p.y * p.z);
 }
+*/
 
-// Gradient noise function for vec3
+/* REMOVED old gradientNoise function
 float gradientNoise(vec3 p) {
   vec3 i = floor(p);
   vec3 f = fract(p);
@@ -104,17 +108,28 @@ float gradientNoise(vec3 p) {
     u.z
   );
 }
+*/
 
-// Basic FBM for vec3 input
+// Basic FBM for vec3 input using Simplex Noise
 float fbm(vec3 p, int octaves_param, float persistence_param, float lacunarity_param) {
-    float t=0., f=1., a=1., mv=0.;
-    for(int i=0; i<octaves_param; i++) {
-        t += gradientNoise(p * f) * a;
-        mv += a;
-        f *= lacunarity_param;
-        a *= persistence_param;
+    float total = 0.0;
+    float frequency = 1.0;
+    float amplitude = 1.0;
+    float maxValue = 0.0;  // Used for normalizing result to 0.0 - 1.0
+
+    for(int i = 0; i < octaves_param; i++) {
+        // Use snoise (from included file) which returns roughly -1.0 to 1.0
+        total += snoise(p * frequency) * amplitude;
+        
+        maxValue += amplitude;
+        amplitude *= persistence_param;
+        frequency *= lacunarity_param;
     }
-    return mv > 0. ? clamp(t / mv, 0.0, 1.0) : 0.0;
+
+    // Normalize the result to be between 0.0 and 1.0
+    // snoise range is approx -1 to 1, so total range is approx -maxValue to +maxValue
+    // Shift and scale to [0, 1]
+    return (total / maxValue) * 0.5 + 0.5;
 }
 
 // Simple lighting calculation (Blinn-Phongish)

@@ -29,7 +29,16 @@ export default defineConfig({
         path.resolve(__dirname, "src/config/pluginRegistry.ts"),
       ],
     }),
-    glsl(),
+    glsl({
+      include: [
+        "**/*.glsl",
+        "**/*.vert",
+        "**/*.frag",
+        "../../**/*.glsl",
+        "../../**/*.vert",
+        "../../**/*.frag",
+      ],
+    }),
     VitePWA({
       registerType: "prompt",
       manifest: {

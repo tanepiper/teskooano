@@ -2,26 +2,12 @@ import { actions, currentSeed, updateSeed } from "@teskooano/core-state";
 import {
   CelestialType,
   CustomEvents,
-  StarProperties,
   type CelestialObject,
 } from "@teskooano/data-types";
 import { generateSystem as generateSystemObservable } from "@teskooano/procedural-generation";
 import { dispatchTextureGenerationComplete } from "@teskooano/systems-celestial";
 import { DockviewApi } from "dockview-core";
-import {
-  defer,
-  tap,
-  switchMap,
-  catchError,
-  finalize,
-  of,
-  lastValueFrom,
-  map,
-  from,
-  Observable,
-  EMPTY,
-  throwError,
-} from "rxjs";
+import { catchError, finalize, lastValueFrom, tap, throwError } from "rxjs";
 
 export function dispatchSimulationTimeReset() {
   const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
