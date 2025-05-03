@@ -1,3 +1,22 @@
+import {
+  Observable,
+  Subscriber,
+  concatMap,
+  from,
+  tap,
+  range,
+  of,
+  EMPTY,
+  catchError,
+  finalize,
+  map,
+  mergeMap,
+  toArray,
+  concat,
+  scan,
+  lastValueFrom,
+  iif,
+} from "rxjs";
 import { OSVector3 } from "@teskooano/core-math";
 import {
   calculateOrbitalPosition,
@@ -24,6 +43,57 @@ import { generateOortCloud } from "./generators/oortCloud";
 import { generateStar } from "./generators/star";
 import { createSeededRandom } from "./seeded-random";
 import * as UTIL from "./utils";
+
+// Helper function to generate moons for a planet as an Observable stream
+function generateMoonsObservable(
+  random: () => number,
+  planetObject: CelestialObject,
+  planetMass_kg: number,
+  planetRadius_m: number,
+  seed: string,
+): Observable<CelestialObject> {
+  return new Observable((moonSubscriber: Subscriber<CelestialObject>) => {
+    // Check if moon generation is appropriate (e.g., based on distance)
+    const parentOrbit = planetObject.orbit;
+    const parentDistanceAU =
+      (parentOrbit?.realSemiMajorAxis_m ?? 0) / CONST.AU_TO_METERS;
+    // Simple check: don't generate moons too close to the star
+    if (parentDistanceAU < 0.3) {
+      moonSubscriber.complete();
+      return;
+    }
+
+    try {
+      const numberOfMoons = Math.floor(random() * 5); // Max 4 moons
+      let lastMoonDistance_radii = 2.5; // Initial distance multiplier from planet radius
+
+      for (let m = 0; m < numberOfMoons; m++) {
+        // Pass planet state if needed by generateMoon in the future
+        const { moonData, nextLastMoonDistance_radii } = generateMoon(
+          random,
+          planetObject, // Parent object
+          planetMass_kg,
+          planetRadius_m,
+          lastMoonDistance_radii,
+          seed,
+          // planetObject.physicsStateReal // Pass state if needed
+        );
+
+        if (moonData) {
+          moonSubscriber.next(moonData); // Emit the generated moon
+          lastMoonDistance_radii = nextLastMoonDistance_radii; // Update distance for next moon
+        } else {
+          // Stop trying if generateMoon returns null (e.g., distance constraints)
+          break;
+        }
+      }
+      moonSubscriber.complete(); // Finish moon stream for this planet
+    } catch (error) {
+      console.error(`Error generating moons for ${planetObject.name}:`, error);
+      moonSubscriber.error(error); // Propagate error
+    }
+  });
+}
 
 function generateSystemName(random: () => number): string {
   const prefixes = [
@@ -99,30 +169,31 @@ function generateSystemName(random: () => number): string {
 /**
  * Generates the initial data for celestial objects and a name for a solar system based on a seed string.
  * @param seed The seed string to use for generation.
- * @returns A Promise resolving to an object containing the system name and an array of CelestialObjects.
+ * @returns A Promise resolving to an object containing the system name and an Observable stream of CelestialObjects.
  */
 export async function generateSystem(
   seed: string,
-): Promise<{ systemName: string; objects: CelestialObject[] }> {
+): Promise<{ systemName: string; objects$: Observable<CelestialObject> }> {
   const random = await createSeededRandom(seed);
-
   const systemName = generateSystemName(random);
 
+  // Generate stars first (synchronously within the async function)
   const systemTypeRoll = random();
   let numberOfStars = 1;
-
   if (systemTypeRoll > 0.1) numberOfStars = 2;
   if (systemTypeRoll > 0.6) numberOfStars = 3;
   if (systemTypeRoll > 0.85) numberOfStars = 4;
 
   const stars: CelestialObject[] = [];
+  let primaryStar: CelestialObject | null = null; // Track primary for binary adjustments
+
   for (let s = 0; s < numberOfStars; s++) {
     const starData = generateStar(random);
     if (s === 0) {
+      primaryStar = starData;
       stars.push(starData);
     } else {
-      const primaryStar = stars[0];
-      if (!primaryStar) continue;
+      if (!primaryStar) continue; // Should not happen if s > 0
 
       starData.parentId = primaryStar.id;
       (starData.properties as StarProperties).isMainStar = false;
@@ -303,174 +374,212 @@ export async function generateSystem(
     }
   }
 
-  const celestialObjects: CelestialObject[] = [...stars];
+  // Create the main Observable stream
+  const objects$ = new Observable<CelestialObject>((subscriber) => {
+    // Emit stars first
+    stars.forEach((star) => subscriber.next(star));
 
-  const minDistanceStepAU = 0.2;
-  const maxDistanceStepAU = 20;
+    const minDistanceStepAU = 0.2;
+    const maxDistanceStepAU = 20;
+    const totalPotentialOrbits = Math.floor(random() * 10) + 5;
+    const maxPlacementAU = 50;
 
-  const totalPotentialOrbits = Math.floor(random() * 10) + 5;
+    // Use RxJS stream for orbital bodies
+    const bodyGenerationPipeline$ = range(0, totalPotentialOrbits).pipe(
+      // Calculate state for each potential orbit slot (distance, parent star)
+      scan(
+        (acc, index) => {
+          const lambda = 0.25;
+          let distanceStepAU = -Math.log(1 - random()) / lambda;
+          distanceStepAU = Math.max(
+            minDistanceStepAU,
+            Math.min(maxDistanceStepAU, distanceStepAU),
+          );
 
-  let lastBodyDistanceAU = 0.3;
-  const maxPlacementAU = 50;
+          const nextDistanceAU = acc.lastBodyDistanceAU + distanceStepAU;
 
-  for (let i = 0; i < totalPotentialOrbits; i++) {
-    const lambda = 0.25;
-    let distanceStepAU = -Math.log(1 - random()) / lambda;
-
-    distanceStepAU = Math.max(
-      minDistanceStepAU,
-      Math.min(maxDistanceStepAU, distanceStepAU),
-    );
-
-    if (lastBodyDistanceAU + distanceStepAU > maxPlacementAU) {
-      console.warn(
-        ` -> Reached max placement distance (${maxPlacementAU} AU). Stopping body generation.`,
-      );
-      break;
-    }
-
-    let closestStar = stars[0];
-    let minDistanceDiff = Infinity;
-
-    for (const star of stars) {
-      const starOrbitRadiusAU =
-        (star.orbit?.realSemiMajorAxis_m ?? 0) / CONST.AU_TO_METERS;
-      const distanceDiff = Math.abs(
-        lastBodyDistanceAU + distanceStepAU - starOrbitRadiusAU,
-      );
-
-      if (distanceDiff < minDistanceDiff) {
-        minDistanceDiff = distanceDiff;
-        closestStar = star;
-      }
-    }
-
-    const parentStar = closestStar;
-    const parentStarMass_kg = parentStar.realMass_kg;
-    const parentStarTemp = parentStar.temperature;
-    const parentStarRadius = parentStar.realRadius_m;
-    const parentStarId = parentStar.id;
-
-    const parentStarOrbitRadiusAU =
-      (parentStar.orbit?.realSemiMajorAxis_m ?? 0) / CONST.AU_TO_METERS;
-    const distanceRelativeToParentAU = Math.abs(
-      lastBodyDistanceAU + distanceStepAU - parentStarOrbitRadiusAU,
-    );
-
-    if (
-      distanceRelativeToParentAU * CONST.AU_TO_METERS <
-      parentStarRadius * 1.5
-    ) {
-      console.warn(
-        ` -> Skipping body at ${lastBodyDistanceAU.toFixed(
-          2,
-        )} AU - calculated position relative to parent ${
-          parentStar.name
-        } (${distanceRelativeToParentAU.toFixed(
-          2,
-        )} AU) is too close to star radius (${(
-          parentStarRadius / CONST.AU_TO_METERS
-        ).toFixed(4)} AU).`,
-      );
-
-      continue;
-    }
-
-    const parentStarState = parentStar.physicsStateReal;
-
-    const bodyTypeRoll = random();
-    if (bodyTypeRoll < 0.15) {
-      if (
-        distanceRelativeToParentAU < 2.0 ||
-        distanceRelativeToParentAU > 10.0
-      ) {
-        lastBodyDistanceAU += distanceStepAU;
-        continue;
-      }
-
-      const beltData = generateAsteroidBelt(
-        random,
-        parentStarId,
-        parentStarMass_kg,
-        i,
-        distanceRelativeToParentAU,
-      );
-      if (beltData) {
-        celestialObjects.push(beltData);
-      }
-    } else {
-      const { generatedObjects, planetMass_kg, planetRadius_m } =
-        generatePlanet(
-          random,
-          parentStarId,
-          parentStarMass_kg,
-          parentStarTemp,
-          parentStarRadius,
-          distanceRelativeToParentAU,
-          seed,
-          parentStarState,
-        );
-
-      if (generatedObjects && generatedObjects.length > 0) {
-        const planetObject = generatedObjects.find(
-          (obj) => obj && obj.type !== CelestialType.RING_SYSTEM,
-        ) as CelestialObject | null;
-
-        generatedObjects.forEach((obj) => {
-          if (obj) {
-            celestialObjects.push(obj);
-          }
-        });
-
-        if (planetObject && distanceRelativeToParentAU > 0.3) {
-          const numberOfMoons = Math.floor(random() * 5);
-          let lastMoonDistance_radii = 2.5;
-
-          for (let m = 0; m < numberOfMoons; m++) {
-            const { moonData, nextLastMoonDistance_radii } = generateMoon(
-              random,
-              planetObject,
-              planetMass_kg,
-              planetRadius_m,
-              lastMoonDistance_radii,
-              seed,
+          if (nextDistanceAU > maxPlacementAU) {
+            console.warn(
+              ` -> Reached max placement distance (${maxPlacementAU} AU). Stopping body generation.`,
             );
-            if (moonData) {
-              celestialObjects.push(moonData);
-              lastMoonDistance_radii = nextLastMoonDistance_radii;
-            } else {
-              break;
+            // How to stop the range early? Throwing an error or using takeWhile perhaps.
+            // For now, just mark as invalid.
+            return { ...acc, index, isValidSlot: false };
+          }
+
+          // Find closest star for parenting
+          let closestStar = stars[0];
+          let minDistanceDiff = Infinity;
+          for (const star of stars) {
+            const starOrbitRadiusAU =
+              (star.orbit?.realSemiMajorAxis_m ?? 0) / CONST.AU_TO_METERS;
+            const distanceDiff = Math.abs(nextDistanceAU - starOrbitRadiusAU);
+            if (distanceDiff < minDistanceDiff) {
+              minDistanceDiff = distanceDiff;
+              closestStar = star;
             }
           }
+
+          const parentStar = closestStar;
+          const parentStarOrbitRadiusAU =
+            (parentStar.orbit?.realSemiMajorAxis_m ?? 0) / CONST.AU_TO_METERS;
+          const distanceRelativeToParentAU = Math.abs(
+            nextDistanceAU - parentStarOrbitRadiusAU,
+          );
+
+          // Check proximity to parent star radius
+          if (
+            distanceRelativeToParentAU * CONST.AU_TO_METERS <
+            parentStar.realRadius_m * 1.5
+          ) {
+            console.warn(
+              ` -> Skipping body at ${nextDistanceAU.toFixed(2)} AU - too close to parent star ${parentStar.name}.`,
+            );
+            return {
+              ...acc,
+              index,
+              lastBodyDistanceAU: nextDistanceAU,
+              isValidSlot: false,
+            }; // Update distance, but mark slot invalid
+          }
+
+          return {
+            index,
+            lastBodyDistanceAU: nextDistanceAU,
+            parentStar,
+            distanceRelativeToParentAU,
+            isValidSlot: true,
+          };
+        },
+        {
+          index: -1,
+          lastBodyDistanceAU: 0.3,
+          parentStar: stars[0],
+          distanceRelativeToParentAU: 0,
+          isValidSlot: false,
+        },
+      ),
+      // Generate bodies only for valid slots
+      concatMap((slotState) => {
+        if (!slotState.isValidSlot) {
+          return EMPTY; // Skip invalid slots
         }
-      }
-    }
 
-    lastBodyDistanceAU += distanceStepAU;
-  }
+        const { index, parentStar, distanceRelativeToParentAU } = slotState;
+        const parentStarId = parentStar.id;
+        const parentStarMass_kg = parentStar.realMass_kg;
+        const parentStarTemp = parentStar.temperature;
+        const parentStarRadius = parentStar.realRadius_m;
+        const parentStarState = parentStar.physicsStateReal;
 
-  const primaryStar = stars[0];
+        const bodyTypeRoll = random();
 
-  const hasAsteroidBelt = celestialObjects.some(
-    (obj) => obj.type === CelestialType.ASTEROID_FIELD,
-  );
-  if (!hasAsteroidBelt && primaryStar) {
-    const guaranteedBeltDistanceAU = 2.0 + random() * 4.0;
+        // Asteroid Belt
+        if (bodyTypeRoll < 0.15) {
+          if (
+            distanceRelativeToParentAU < 2.0 ||
+            distanceRelativeToParentAU > 10.0
+          ) {
+            return EMPTY; // Invalid distance for belt
+          }
+          const beltData = generateAsteroidBelt(
+            random,
+            parentStarId,
+            parentStarMass_kg,
+            index, // Use index from range
+            distanceRelativeToParentAU,
+          );
+          return beltData ? of(beltData) : EMPTY;
+        }
+        // Planet and Moons
+        else {
+          const planet$ = generatePlanet(
+            random,
+            parentStarId,
+            parentStarMass_kg,
+            parentStarTemp,
+            parentStarRadius,
+            distanceRelativeToParentAU,
+            seed,
+            parentStarState,
+          );
 
-    const beltData = generateAsteroidBelt(
-      random,
-      primaryStar.id,
-      primaryStar.realMass_kg,
-      totalPotentialOrbits,
-      guaranteedBeltDistanceAU,
+          return planet$.pipe(
+            // For each object emitted by generatePlanet (planet, then rings)
+            mergeMap((planetOrRingObject) => {
+              // If it's the planet object, generate moons for it
+              if (planetOrRingObject.type !== CelestialType.RING_SYSTEM) {
+                const moon$ = generateMoonsObservable(
+                  random,
+                  planetOrRingObject,
+                  planetOrRingObject.realMass_kg,
+                  planetOrRingObject.realRadius_m,
+                  seed,
+                );
+                // Emit planet, then its moons
+                return concat(of(planetOrRingObject), moon$);
+              }
+              // If it's the ring system, just emit it
+              else {
+                return of(planetOrRingObject);
+              }
+            }),
+          );
+        }
+      }),
+      // Collect all generated bodies into an array to check for asteroid belt
+      toArray(),
+      // Handle the guaranteed asteroid belt
+      mergeMap((generatedBodies) => {
+        const hasAsteroidBelt = generatedBodies.some(
+          (obj) => obj.type === CelestialType.ASTEROID_FIELD,
+        );
+        let guaranteedBelt$: Observable<CelestialObject> = EMPTY;
+
+        const effectivePrimaryStar =
+          stars.find(
+            (s) => (s.properties as StarProperties)?.isMainStar !== false,
+          ) ?? stars[0];
+
+        if (!hasAsteroidBelt && effectivePrimaryStar) {
+          const guaranteedBeltDistanceAU = 2.0 + random() * 4.0;
+          const beltData = generateAsteroidBelt(
+            random,
+            effectivePrimaryStar.id,
+            effectivePrimaryStar.realMass_kg,
+            totalPotentialOrbits, // Use a distinct index?
+            guaranteedBeltDistanceAU,
+          );
+          if (beltData) {
+            guaranteedBelt$ = of(beltData);
+          } else {
+            console.error("Failed to generate guaranteed asteroid belt.");
+          }
+        }
+
+        // Emit the bodies generated in the loop, then the guaranteed belt (if any)
+        return concat(from(generatedBodies), guaranteedBelt$);
+      }),
+      catchError((err) => {
+        console.error("Error in body generation pipeline:", err);
+        subscriber.error(err);
+        return EMPTY;
+      }),
     );
 
-    if (beltData) {
-      celestialObjects.push(beltData);
-    } else {
-      console.error("Failed to generate guaranteed asteroid belt.");
-    }
-  }
+    // Subscribe the main subscriber to the pipeline
+    const subscription = bodyGenerationPipeline$.subscribe({
+      next: (obj) => subscriber.next(obj),
+      error: (err) => subscriber.error(err),
+      complete: () => subscriber.complete(),
+    });
 
-  return { systemName, objects: celestialObjects };
+    // Return cleanup function
+    return () => {
+      subscription.unsubscribe();
+    };
+  });
+
+  // Return the system name and the fully constructed observable stream
+  return { systemName, objects$ };
 }
