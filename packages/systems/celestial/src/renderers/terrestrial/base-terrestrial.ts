@@ -157,28 +157,28 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     bodyMesh.name = `${object.celestialObjectId}-body`;
     group.add(bodyMesh);
 
-    // Use service to get mesh and material
-    const cloudResult: CloudMeshResult | null =
-      this.atmosphereCloudService.createCloudMesh(object, segments, baseRadius);
-    if (cloudResult) {
-      group.add(cloudResult.mesh);
-      this.cloudMaterials.set(object.celestialObjectId, cloudResult.material);
-    }
+    // // Use service to get mesh and material
+    // const cloudResult: CloudMeshResult | null =
+    //   this.atmosphereCloudService.createCloudMesh(object, segments, baseRadius);
+    // if (cloudResult) {
+    //   group.add(cloudResult.mesh);
+    //   this.cloudMaterials.set(object.celestialObjectId, cloudResult.material);
+    // }
 
-    // Use service to get mesh and material
-    const atmosphereResult: AtmosphereMeshResult | null =
-      this.atmosphereCloudService.createAtmosphereMesh(
-        object,
-        segments,
-        baseRadius,
-      );
-    if (atmosphereResult) {
-      group.add(atmosphereResult.mesh);
-      this.atmosphereMaterials.set(
-        object.celestialObjectId,
-        atmosphereResult.material,
-      );
-    }
+    // // Use service to get mesh and material
+    // const atmosphereResult: AtmosphereMeshResult | null =
+    //   this.atmosphereCloudService.createAtmosphereMesh(
+    //     object,
+    //     segments,
+    //     baseRadius,
+    //   );
+    // if (atmosphereResult) {
+    //   group.add(atmosphereResult.mesh);
+    //   this.atmosphereMaterials.set(
+    //     object.celestialObjectId,
+    //     atmosphereResult.material,
+    //   );
+    // }
     return group;
   }
 
@@ -221,30 +221,30 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       }
     });
 
-    this.cloudMaterials.forEach((material) => {
-      let sunPos: THREE.Vector3 | undefined = undefined;
-      if (lightSources && lightSources.size > 0) {
-        const firstLight = lightSources.values().next().value;
-        if (firstLight) sunPos = firstLight.position;
-      }
-      if (camera) {
-        material.update(time, camera.position, sunPos);
-      } else {
-        console.warn(
-          "[BaseTerrestrialRenderer] Camera not available for cloud material update.",
-        );
-        material.update(time, new THREE.Vector3(0, 0, 1), sunPos);
-      }
-    });
+    // this.cloudMaterials.forEach((material) => {
+    //   let sunPos: THREE.Vector3 | undefined = undefined;
+    //   if (lightSources && lightSources.size > 0) {
+    //     const firstLight = lightSources.values().next().value;
+    //     if (firstLight) sunPos = firstLight.position;
+    //   }
+    //   if (camera) {
+    //     material.update(time, camera.position, sunPos);
+    //   } else {
+    //     console.warn(
+    //       "[BaseTerrestrialRenderer] Camera not available for cloud material update.",
+    //     );
+    //     material.update(time, new THREE.Vector3(0, 0, 1), sunPos);
+    //   }
+    // });
 
-    this.atmosphereMaterials.forEach((material) => {
-      let sunPos: THREE.Vector3 | undefined = undefined;
-      if (lightSources && lightSources.size > 0) {
-        const firstLight = lightSources.values().next().value;
-        if (firstLight) sunPos = firstLight.position;
-      }
-      material.update(time, sunPos);
-    });
+    // this.atmosphereMaterials.forEach((material) => {
+    //   let sunPos: THREE.Vector3 | undefined = undefined;
+    //   if (lightSources && lightSources.size > 0) {
+    //     const firstLight = lightSources.values().next().value;
+    //     if (firstLight) sunPos = firstLight.position;
+    //   }
+    //   material.update(time, sunPos);
+    // });
   }
 
   /**

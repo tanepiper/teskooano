@@ -1,5 +1,3 @@
-// #extension GL_OES_standard_derivatives : enable
-
 // Define maximum number of lights the shader can handle
 #define MAX_LIGHTS 4
 
@@ -36,6 +34,7 @@ uniform vec3 uLightColors[MAX_LIGHTS];
 uniform float uLightIntensities[MAX_LIGHTS];
 uniform vec3 uAmbientLightColor;
 uniform float uAmbientLightIntensity;
+uniform float uBumpScale;
 
 // --- Noise/Shape Parameters (needed for fbm) ---
 uniform float persistence;
@@ -132,6 +131,35 @@ float fbm(vec3 p, int octaves_param, float persistence_param, float lacunarity_p
     return (total / maxValue) * 0.5 + 0.5;
 }
 
+// ADDED: Function to perturb normal based on noise gradient
+vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
+    float epsilon = 0.01; // Small offset for sampling gradient
+
+    // Calculate noise coordinate (same as in main)
+    vec3 noiseCoord = vObjectPosition * uSimplePeriod;
+
+    // Sample noise at slightly offset positions
+    float noiseX = fbm(noiseCoord + vec3(epsilon, 0.0, 0.0), uOctaves, persistence, lacunarity);
+    float noiseY = fbm(noiseCoord + vec3(0.0, epsilon, 0.0), uOctaves, persistence, lacunarity);
+    float noiseZ = fbm(noiseCoord + vec3(0.0, 0.0, epsilon), uOctaves, persistence, lacunarity);
+    float noiseHere = fbm(noiseCoord, uOctaves, persistence, lacunarity);
+
+    // Approximate gradient (how noise changes in each direction)
+    vec3 gradient = vec3(
+        (noiseX - noiseHere) / epsilon,
+        (noiseY - noiseHere) / epsilon,
+        (noiseZ - noiseHere) / epsilon 
+    );
+
+    // Project gradient onto the tangent plane (remove component along the normal)
+    gradient -= dot(gradient, baseNormal) * baseNormal;
+
+    // Perturb the normal using the gradient and scale
+    vec3 perturbedNormal = normalize(baseNormal + gradient * bumpScale);
+
+    return perturbedNormal;
+}
+
 // Simple lighting calculation (Blinn-Phongish)
 vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
     vec3 totalLight = uAmbientLightColor * uAmbientLightIntensity;
@@ -187,10 +215,15 @@ void main() {
     // DEBUG: Output baseColor directly
     gl_FragColor = vec4(baseColor, 1.0); 
 
-    // --- Lighting Calculation (Re-enabled) --- 
-    vec3 normal = normalize(vWorldNormal); // Use original normal from vertex shader
+    // --- Lighting Calculation (MODIFIED) --- 
+    vec3 baseNormal = normalize(vWorldNormal); // Original normal
     vec3 viewDir = normalize(uCameraPosition - vWorldPosition);
-    vec3 finalColor = calculateLighting(baseColor, normal, viewDir);
+
+    // Calculate perturbed normal for bump mapping
+    vec3 perturbedNormal = perturbNormal(baseNormal, vWorldPosition, uBumpScale); // Use the new function
+
+    // Use perturbed normal for lighting
+    vec3 finalColor = calculateLighting(baseColor, perturbedNormal, viewDir);
 
     // Output final lit color
     gl_FragColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);

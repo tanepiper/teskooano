@@ -27,6 +27,8 @@ interface ProceduralPlanetUniforms {
   uColorMid2: { value: THREE.Color };
   uColorHigh: { value: THREE.Color };
 
+  uBumpScale: { value: number };
+
   uTime: { value: number };
 
   [key: string]: { value: any };
@@ -38,7 +40,9 @@ interface ProceduralPlanetUniforms {
 export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
   declare uniforms: ProceduralPlanetUniforms;
 
-  constructor(surfaceProps: ProceduralSurfaceProperties) {
+  constructor(
+    surfaceProps: ProceduralSurfaceProperties & { bumpScale?: number },
+  ) {
     const parseColor = (
       hex: string | undefined,
       defaultColor: string,
@@ -81,6 +85,8 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       uColorMid2: { value: parseColor(surfaceProps.colorMid2, "#836F27") },
       uColorHigh: { value: parseColor(surfaceProps.colorHigh, "#A0A0A0") },
 
+      uBumpScale: { value: surfaceProps.bumpScale ?? 1 },
+
       uTime: { value: 0.0 },
     };
 
@@ -101,7 +107,6 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
     camera?: THREE.Camera,
   ): void {
     this.uniforms.uTime.value = time;
-
     if (camera) {
       this.uniforms.uCameraPosition.value.copy(camera.position);
     }
