@@ -28,6 +28,7 @@ export interface RenderableCelestialObject {
   type: CelestialType;
   /** Current status from the core object */
   status: CelestialStatus;
+  seed: string;
 
   radius: number;
   mass: number;
@@ -136,6 +137,7 @@ export class RendererStateAdapter {
       celestialObjectId: obj.id,
       name: obj.name,
       type: obj.type,
+      seed: obj?.seed ?? crypto.randomUUID(),
       radius: scaledRadius,
       mass: scaledMass,
       position: position,
@@ -188,6 +190,7 @@ export class RendererStateAdapter {
       celestialObjectId: obj.id,
       name: obj.name,
       type: obj.type,
+      seed: obj?.seed ?? crypto.randomUUID(),
       radius: 0,
       mass: 0,
       position: position,

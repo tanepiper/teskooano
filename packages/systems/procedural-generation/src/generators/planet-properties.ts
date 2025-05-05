@@ -13,6 +13,7 @@ import {
 import * as CONST from "../constants";
 import * as UTIL from "../utils";
 import type { PlanetBaseProperties } from "./planet-type";
+import { ProceduralSurfaceProperties } from "@teskooano/data-types";
 
 /**
  * Generates specific properties for a planet based on its determined type and base properties.
@@ -127,6 +128,9 @@ function generateRockyPlanetSpecificProperties(
         PlanetType.DESERT,
         PlanetType.LAVA,
         PlanetType.BARREN,
+        PlanetType.ROCKY,
+        PlanetType.TERRESTRIAL,
+        PlanetType.BARREN,
       ],
       random,
     );
@@ -137,6 +141,7 @@ function generateRockyPlanetSpecificProperties(
         SurfaceType.VOLCANIC,
         SurfaceType.FLAT,
         SurfaceType.CANYONOUS,
+        SurfaceType.VARIED,
       ],
       random,
     );
@@ -204,18 +209,37 @@ function generateRockyPlanetSpecificProperties(
     };
   }
 
-  const detailedSurface = UTIL.createDetailedSurfaceProperties(
-    random,
-    rockyPlanetType,
-    surfaceType,
-  );
+  let surfaceProperties: ProceduralSurfaceProperties;
+
+  switch (rockyPlanetType) {
+    case PlanetType.BARREN:
+    case PlanetType.ROCKY:
+    case PlanetType.TERRESTRIAL:
+    case PlanetType.ICE:
+    case PlanetType.DESERT:
+    case PlanetType.LAVA:
+      surfaceProperties = UTIL.createProceduralSurfaceProperties(
+        random,
+        rockyPlanetType,
+      );
+      break;
+    default:
+      console.warn(
+        `Unhandled rocky planet type: ${rockyPlanetType}. Using TERRESTRIAL defaults.`,
+      );
+      surfaceProperties = UTIL.createProceduralSurfaceProperties(
+        random,
+        PlanetType.TERRESTRIAL,
+      );
+      break;
+  }
 
   return {
     type: CelestialType.PLANET,
     planetType: rockyPlanetType,
     isMoon: false,
     composition: composition,
-    surface: detailedSurface,
+    surface: surfaceProperties as any,
     atmosphere: hasAtmosphere
       ? {
           composition: atmComposition,

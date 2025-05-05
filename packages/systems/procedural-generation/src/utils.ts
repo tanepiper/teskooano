@@ -1,17 +1,11 @@
-import * as CONST from "./constants";
 import {
   GRAVITATIONAL_CONSTANT,
   GasGiantClass,
   PlanetType,
-  SurfaceType,
-  SurfacePropertiesUnion,
   ProceduralSurfaceProperties,
-  DesertSurfaceProperties,
-  LavaSurfaceProperties,
-  OceanSurfaceProperties,
-  IceSurfaceProperties,
   SpectralClass,
 } from "@teskooano/data-types";
+import * as CONST from "./constants";
 
 /**
  * Gets a random item from an array using the provided random function.
@@ -231,92 +225,130 @@ export function classifyGasGiantByTemperature(
 }
 
 /**
- * Creates the appropriate detailed surface properties object based on planet and surface type.
+ * Creates detailed procedural surface properties based on planet type.
  */
-export function createDetailedSurfaceProperties(
+export function createProceduralSurfaceProperties(
   random: () => number,
   planetType: PlanetType,
-  surfaceType: SurfaceType,
-): SurfacePropertiesUnion {
-  const baseProps = {
-    type: surfaceType,
-    roughness: random() * 0.5 + 0.2,
-  };
+): ProceduralSurfaceProperties {
+  // Default procedural values - can be overridden by specific types
+  let persistence = getRandomInRange(0.45, 0.65, random);
+  let lacunarity = getRandomInRange(1.9, 2.4, random);
+  let simplePeriod = getRandomInRange(2.5, 7.0, random);
+  let octaves = Math.floor(getRandomInRange(5, 9, random));
+  let bumpScale = getRandomInRange(2, 3, random);
+  let roughness = getRandomInRange(0.5, 0.9, random); // Base roughness
+
+  let colorLow: string;
+  let colorMid1: string;
+  let colorMid2: string;
+  let colorHigh: string;
 
   switch (planetType) {
-    case PlanetType.ROCKY:
     case PlanetType.TERRESTRIAL:
+      colorLow = getRandomItem(["#1E4F6F", "#2A6F97", "#01497C"], random); // Blues (Water)
+      colorMid1 = getRandomItem(["#4C9341", "#6A994E", "#8AA36F"], random); // Greens (Land)
+      colorMid2 = getRandomItem(["#D4A373", "#E6B88A", "#C09463"], random); // Browns (Mountains)
+      colorHigh = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
+      //bumpScale = getRandomInRange(0.04, 0.1, random); // Slightly higher bump for terrain
+      lacunarity = getRandomInRange(2, 4, random);
+      persistence = getRandomInRange(0.5, 0.65, random);
+      roughness = getRandomInRange(0.1, 0.15, random);
+      break;
+
+    case PlanetType.ROCKY:
+      colorLow = getRandomItem(["#4A4A4A", "#6B6B6B", "#3E3E3E"], random); // Dark Grays/Browns
+      colorMid1 = getRandomItem(["#8B4513", "#A0522D", "#7A3C0F"], random); // Mid Browns/Oranges
+      colorMid2 = getRandomItem(["#A9A9A9", "#B8B8B8", "#9A9A9A"], random); // Grays
+      colorHigh = getRandomItem(["#D3D3D3", "#C0C0C0", "#BEBEBE"], random); // Light Grays
+      //bumpScale = getRandomInRange(0.05, 0.12, random); // Higher bump for rocky
+      persistence = getRandomInRange(0.5, 0.7, random);
+      roughness = getRandomInRange(0.7, 0.95, random);
+      simplePeriod = getRandomInRange(1.5, 5.0, random); // More detailed features possible
+      break;
+
     case PlanetType.BARREN:
-      return {
-        ...baseProps,
-        planetType: planetType,
-        color: getRandomItem(CONST.ROCKY_COLOR_BANDS.midLight, random),
-        color1: getRandomItem(CONST.ROCKY_COLOR_BANDS.dark, random),
-        color2: getRandomItem(CONST.ROCKY_COLOR_BANDS.midDark, random),
-        color3: getRandomItem(CONST.ROCKY_COLOR_BANDS.midLight, random),
-        color4: getRandomItem(CONST.ROCKY_COLOR_BANDS.light, random),
-        color5: getRandomItem(CONST.ROCKY_COLOR_BANDS.highlight, random),
-        transition2: 0.2 + random() * 0.2,
-        transition3: 0.4 + random() * 0.2,
-        transition4: 0.6 + random() * 0.2,
-        transition5: 0.8 + random() * 0.15,
-        blend12: 0.05 + random() * 0.1,
-        blend23: 0.05 + random() * 0.1,
-        blend34: 0.05 + random() * 0.1,
-        blend45: 0.05 + random() * 0.1,
-      } as ProceduralSurfaceProperties;
+      colorLow = getRandomItem(["#4A4A4A", "#555555", "#404040"], random); // Dark Grays
+      colorMid1 = getRandomItem(["#686868", "#707070", "#606060"], random); // Medium Grays
+      colorMid2 = getRandomItem(["#828282", "#8A8A8A", "#7A7A7A"], random); // Lighter Grays
+      colorHigh = getRandomItem(["#9A9A9A", "#A0A0A0", "#909090"], random); // Light Grays
+      persistence = getRandomInRange(0.55, 0.7, random); // Less variation
+      lacunarity = getRandomInRange(1.8, 2.1, random); // Smoother transitions
+      bumpScale = getRandomInRange(0.01, 1, random); // Lower bump
+      roughness = getRandomInRange(0.8, 0.98, random); // High roughness
+      break;
+
     case PlanetType.DESERT:
-      return {
-        ...baseProps,
-        planetType: planetType,
-        color: getRandomItem(CONST.DESERT_COLORS.dunes, random),
-        secondaryColor: getRandomItem(CONST.DESERT_COLORS.rocks, random),
-      } as DesertSurfaceProperties;
-    case PlanetType.LAVA:
-      return {
-        ...baseProps,
-        planetType: planetType,
-        color: getRandomItem(CONST.LAVA_COLORS.rock, random),
-        lavaColor: getRandomItem(CONST.LAVA_COLORS.lava, random),
-        rockColor: getRandomItem(CONST.LAVA_COLORS.rock, random),
-      } as LavaSurfaceProperties;
-    case PlanetType.OCEAN:
-      return {
-        ...baseProps,
-        planetType: planetType,
-        color: getRandomItem(CONST.OCEAN_COLORS.deep, random),
-        oceanColor: getRandomItem(CONST.OCEAN_COLORS.deep, random),
-        landColor: getRandomItem(CONST.OCEAN_COLORS.land, random),
-        landRatio: 0.1 + random() * 0.4,
-      } as OceanSurfaceProperties;
+      colorLow = getRandomItem(["#A0522D", "#B8860B", "#8B4513"], random); // Sienna, DarkGoldenrod, SaddleBrown (Deep Dunes/Rock)
+      colorMid1 = getRandomItem(["#D2B48C", "#F4A460", "#CD853F"], random); // Tan, SandyBrown, Peru (Sand)
+      colorMid2 = getRandomItem(["#E0C9A6", "#FFDEAD", "#DEB887"], random); // Lighter Tan, NavajoWhite, BurlyWood (Highlights)
+      colorHigh = getRandomItem(["#F5E6CA", "#FFF8DC", "#FAF0E6"], random); // Beige, Cornsilk, Linen (Peaks/Bright Sand)
+      persistence = getRandomInRange(0.35, 0.55, random); // Smoother dunes
+      lacunarity = getRandomInRange(2.2, 2.6, random); // Sharper dune details potentially
+      simplePeriod = getRandomInRange(5.0, 12.0, random); // Larger dune structures
+      //bumpScale = getRandomInRange(0.03, 0.07, random);
+      roughness = getRandomInRange(0.65, 0.9, random);
+      break;
+
     case PlanetType.ICE:
-      return {
-        ...baseProps,
-        planetType: planetType,
-        color: getRandomItem(CONST.ICE_COLORS.main, random),
-        secondaryColor: getRandomItem(CONST.ICE_COLORS.crevasse, random),
-      } as IceSurfaceProperties;
+      colorLow = getRandomItem(["#8fdef2", "#2d6370", "#226778"], random); // CadetBlue, CornflowerBlue, SteelBlue (Deep Ice/Shadows)
+      colorMid1 = getRandomItem(["#7e8e96", "#133647", "#3ca4d6"], random); // PowderBlue, LightBlue (Main Ice Field)
+      colorMid2 = getRandomItem(["#7facb5", "#4bbbd1", "#1b6f80"], random); // Lighter Blues/Cyans (Snow/Frost)
+      colorHigh = getRandomItem(["#FFFFFF", "#F0FFFF", "#F5FFFA"], random); // White, Azure, MintCream (Glints/Pure Snow)
+      persistence = getRandomInRange(0.5, 0.7, random);
+      roughness = getRandomInRange(0.7, 0.95, random);
+      simplePeriod = getRandomInRange(1.5, 5.0, random); //
+      bumpScale = getRandomInRange(0.01, 0.04, random); // Lower bump for ice
+      break;
+
+    case PlanetType.LAVA:
+      colorLow = getRandomItem(["#1A0000", "#2B0B00", "#000000"], random); // Very Dark Red/Black (Cooled Rock)
+      colorMid1 = getRandomItem(["#4E0000", "#6B0000", "#8B0000"], random); // Dark Reds (Cooling Lava/Rock)
+      colorMid2 = getRandomItem(["#AE1000", "#CC3300", "#FF4500"], random); // Bright Reds/Oranges (Hot Lava)
+      colorHigh = getRandomItem(["#FF8C00", "#FFA500", "#FFFF00"], random); // Orange/Yellow (Hottest Lava)
+      persistence = getRandomInRange(0.4, 0.6, random);
+      lacunarity = getRandomInRange(2.0, 2.5, random);
+      simplePeriod = getRandomInRange(1.0, 4.0, random); // Smaller, chaotic features
+      //bumpScale = getRandomInRange(0.05, 0.15, random); // Significant bump for lava flows/rock
+      roughness = getRandomInRange(0.6, 0.9, random); // Rough rock, smooth lava? Average out.
+      break;
+
+    case PlanetType.OCEAN:
+      colorLow = getRandomItem(["#001F3F", "#003366", "#004080"], random); // Deep Ocean Blue
+      colorMid1 = getRandomItem(["#0055A4", "#1E90FF", "#4169E1"], random); // Mid Ocean Blue, DodgerBlue, RoyalBlue
+      colorMid2 = getRandomItem(["#87CEEB", "#ADD8E6", "#B0E0E6"], random); // SkyBlue, LightBlue, PowderBlue (Shallows)
+      colorHigh = getRandomItem(["#F0F8FF", "#E0FFFF", "#FFFFFF"], random); // AliceBlue, LightCyan, White (Foam/Ice Caps?)
+      // Override procedural params for a mostly water world
+      persistence = getRandomInRange(0.6, 0.75, random); // Very smooth generally
+      lacunarity = getRandomInRange(1.8, 2.1, random); // Few sharp transitions
+      octaves = Math.floor(getRandomInRange(4, 6, random)); // Less detail needed
+      simplePeriod = getRandomInRange(8.0, 15.0, random); // Large, gentle swells
+      //bumpScale = getRandomInRange(0.005, 0.02, random); // Very low bump for water surface
+      roughness = getRandomInRange(0.1, 0.4, random); // Water is smooth
+      break;
+
     default:
       console.warn(
-        `[createDetailedSurfaceProperties] Unknown planetType: ${planetType}, falling back to Barren Procedural.`,
+        `[createProceduralSurfaceProperties] Unhandled planetType: ${planetType}, using fallback TERRESTRIAL palette.`,
       );
-      return {
-        ...baseProps,
-        planetType: PlanetType.BARREN,
-        color: getRandomItem(CONST.ROCKY_COLOR_BANDS.midLight, random),
-        color1: getRandomItem(CONST.ROCKY_COLOR_BANDS.dark, random),
-        color2: getRandomItem(CONST.ROCKY_COLOR_BANDS.midDark, random),
-        color3: getRandomItem(CONST.ROCKY_COLOR_BANDS.midLight, random),
-        color4: getRandomItem(CONST.ROCKY_COLOR_BANDS.light, random),
-        color5: getRandomItem(CONST.ROCKY_COLOR_BANDS.highlight, random),
-        transition2: 0.2 + random() * 0.2,
-        transition3: 0.4 + random() * 0.2,
-        transition4: 0.6 + random() * 0.2,
-        transition5: 0.8 + random() * 0.15,
-        blend12: 0.05 + random() * 0.1,
-        blend23: 0.05 + random() * 0.1,
-        blend34: 0.05 + random() * 0.1,
-        blend45: 0.05 + random() * 0.1,
-      } as ProceduralSurfaceProperties;
+      // Fallback to Terrestrial-like palette
+      colorLow = "#1E4F6F";
+      colorMid1 = "#4C9341";
+      colorMid2 = "#D4A373";
+      colorHigh = "#FFFFFF";
+      break;
   }
+
+  // Construct the final properties object
+  return {
+    persistence: persistence,
+    lacunarity: lacunarity,
+    simplePeriod: simplePeriod,
+    octaves: octaves,
+    bumpScale: bumpScale,
+    colorLow: colorLow,
+    colorMid1: colorMid1,
+    colorMid2: colorMid2,
+    colorHigh: colorHigh,
+  };
 }

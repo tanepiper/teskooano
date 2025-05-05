@@ -4,7 +4,6 @@ import type {
 } from "@teskooano/data-types";
 import * as THREE from "three";
 import { BaseGasGiantMaterial, BaseGasGiantRenderer } from "./base-gas-giant";
-import { TextureFactory } from "../../textures/TextureFactory";
 import classIVFragmentShader from "../../shaders/gas-giants/class-iv.fragment.glsl";
 import classIVVertexShader from "../../shaders/gas-giants/class-iv.vertex.glsl";
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
@@ -52,15 +51,15 @@ export class ClassIVGasGiantRenderer extends BaseGasGiantRenderer {
       : new THREE.Color(0x332211);
 
     let stormMap: THREE.Texture | undefined = undefined;
-    if (properties.stormColor) {
-      const stormTexture = TextureFactory.generateGasGiantTexture({
-        class: properties.gasGiantClass,
-        baseColor: baseColor,
-        secondaryColor: new THREE.Color(properties.stormColor),
-        seed: seed,
-      });
-      stormMap = stormTexture.colorMap;
-    }
+    // if (properties.stormColor) {
+    //   const stormTexture = TextureFactory.generateGasGiantTexture({
+    //     class: properties.gasGiantClass,
+    //     baseColor: baseColor,
+    //     secondaryColor: new THREE.Color(properties.stormColor),
+    //     seed: seed,
+    //   });
+    //   stormMap = stormTexture.colorMap;
+    // }
 
     return new ClassIVMaterial({
       baseColor: baseColor,

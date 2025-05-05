@@ -391,33 +391,38 @@ export interface OceanSurfaceProperties extends BaseSurfaceProperties {
   oceanDepth?: number;
 }
 
-/** Common properties for surfaces generated with procedural noise and color bands */
-export interface ProceduralSurfaceProperties extends BaseSurfaceProperties {
-  /** Density of impact craters on the surface (e.g., 0.0 - 1.0). */
-  craterDensity?: number;
-  variation?: number;
-  lightColor?: string;
+/**
+ * Defines the properties needed to render a procedurally generated surface,
+ * primarily used for planets and potentially moons using specific shaders.
+ */
+export interface ProceduralSurfaceProperties {
+  // Noise parameters
+  persistence: number; // Controls detail level vs smoothness
+  lacunarity: number; // Controls frequency increase per octave
+  simplePeriod: number; // Base scale/frequency of the noise pattern
+  octaves: number; // Number of noise layers combined
 
-  persistence?: number;
-  lacunarity?: number;
-  octaves?: number;
+  // Color ramp (hex strings)
+  colorLow: string; // Color for lowest elevation/noise value
+  colorMid1: string; // First mid-level color
+  colorMid2: string; // Second mid-level color
+  colorHigh: string; // Color for highest elevation/noise value
 
-  simplePeriod?: number;
-
-  colorLow?: string;
-  colorMid1?: string;
-  colorMid2?: string;
-  colorHigh?: string;
+  // Bump mapping
+  bumpScale: number; // Strength of the bump effect
 }
 
 /** Surface properties specific to Rocky/Terrestrial planets */
 export interface RockyTerrestrialSurfaceProperties
-  extends ProceduralSurfaceProperties {
+  extends ProceduralSurfaceProperties,
+    BaseSurfaceProperties {
   planetType: PlanetType.ROCKY | PlanetType.TERRESTRIAL;
 }
 
 /** Surface properties specific to Barren planets */
-export interface BarrenSurfaceProperties extends ProceduralSurfaceProperties {
+export interface BarrenSurfaceProperties
+  extends ProceduralSurfaceProperties,
+    BaseSurfaceProperties {
   planetType: PlanetType.BARREN;
 }
 
@@ -635,4 +640,12 @@ export interface CelestialObject {
 
   /** Current visual rotation of the object in the scene. */
   rotation?: THREE.Quaternion;
+}
+
+export interface CelestialObjectProperties {
+  planet?: PlanetProperties;
+  star?: StarProperties;
+  ringSystem?: RingSystemProperties;
+  asteroidField?: AsteroidFieldProperties;
+  proceduralSurface?: ProceduralSurfaceProperties;
 }

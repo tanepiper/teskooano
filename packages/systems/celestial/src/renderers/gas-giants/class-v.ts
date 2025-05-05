@@ -4,7 +4,6 @@ import type {
 } from "@teskooano/data-types";
 import * as THREE from "three";
 import { BaseGasGiantMaterial, BaseGasGiantRenderer } from "./base-gas-giant";
-import { TextureFactory } from "../../textures/TextureFactory";
 
 import classVFragmentShader from "../../shaders/gas-giants/class-v.fragment.glsl";
 import classVVertexShader from "../../shaders/gas-giants/class-v.vertex.glsl";
@@ -65,15 +64,15 @@ export class ClassVGasGiantRenderer extends BaseGasGiantRenderer {
     const emissiveIntensity = properties.emissiveIntensity ?? 0.1;
 
     let stormMap: THREE.Texture | undefined = undefined;
-    if (properties.stormColor) {
-      const stormTexture = TextureFactory.generateGasGiantTexture({
-        class: properties.gasGiantClass,
-        baseColor: baseColor,
-        secondaryColor: new THREE.Color(properties.stormColor),
-        seed: seed,
-      });
-      stormMap = stormTexture.colorMap;
-    }
+    // if (properties.stormColor) {
+    //   const stormTexture = TextureFactory.generateGasGiantTexture({
+    //     class: properties.gasGiantClass,
+    //     baseColor: baseColor,
+    //     secondaryColor: new THREE.Color(properties.stormColor),
+    //     seed: seed,
+    //   });
+    //   stormMap = stormTexture.colorMap;
+    // }
 
     return new ClassVMaterial({
       baseColor: baseColor,

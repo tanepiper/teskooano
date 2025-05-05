@@ -12,20 +12,7 @@ varying vec3 vObjectPosition; // Normalized object-space position for seamless n
 uniform float uTime;
 uniform vec3 uCameraPosition;
 
-// Color/Transition/Blend Uniforms
-uniform vec3 uColor1;
-uniform vec3 uColor2;
-uniform vec3 uColor3;
-uniform vec3 uColor4;
-uniform vec3 uColor5;
-uniform float uTransition2;
-uniform float uTransition3;
-uniform float uTransition4;
-uniform float uTransition5;
-uniform float uBlend12;
-uniform float uBlend23;
-uniform float uBlend34;
-uniform float uBlend45;
+
 
 // Multi-Light Uniforms
 uniform int uNumLights;
@@ -74,40 +61,6 @@ vec3 calculateLightContribution(vec3 lightPos, vec3 lightColor, float intensity,
 
     return diffuse + specular;
 }
-
-// --- Noise Functions (Modified for vec3 input) --- 
-/* REMOVED old hash function
-float hash(vec3 p) {
-  p = fract(p * vec3(123.4, 234.5, 345.6));
-  p += dot(p, p + 45.32);
-  return fract(p.x * p.y * p.z);
-}
-*/
-
-/* REMOVED old gradientNoise function
-float gradientNoise(vec3 p) {
-  vec3 i = floor(p);
-  vec3 f = fract(p);
-  vec3 u = f * f * (3.0 - 2.0 * f);
-
-  // Hash corners of cube
-  float a = hash(i + vec3(0.0, 0.0, 0.0));
-  float b = hash(i + vec3(1.0, 0.0, 0.0));
-  float c = hash(i + vec3(0.0, 1.0, 0.0));
-  float d = hash(i + vec3(1.0, 1.0, 0.0));
-  float e = hash(i + vec3(0.0, 0.0, 1.0));
-  float f_ = hash(i + vec3(1.0, 0.0, 1.0));
-  float g = hash(i + vec3(0.0, 1.0, 1.0));
-  float h = hash(i + vec3(1.0, 1.0, 1.0));
-
-  // Interpolate along x, then y, then z (trilinear interpolation)
-  return mix(
-    mix(mix(a, b, u.x), mix(c, d, u.x), u.y),
-    mix(mix(e, f_, u.x), mix(g, h, u.x), u.y),
-    u.z
-  );
-}
-*/
 
 // Basic FBM for vec3 input using Simplex Noise
 float fbm(vec3 p, int octaves_param, float persistence_param, float lacunarity_param) {

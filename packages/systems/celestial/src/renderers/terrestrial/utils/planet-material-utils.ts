@@ -61,30 +61,53 @@ export class PlanetMaterialService {
           };
           break;
         case PlanetType.TERRESTRIAL:
-          // Use default terrestrial palette
+          // Explicitly define Terrestrial palette (matches initial default)
+          simplePalette = {
+            low: "#5179B5", // Water/Deep Blue
+            mid1: "#4C9341", // Land/Green
+            mid2: "#836F27", // Mountains/Brownish
+            high: "#A0A0A0", // Peaks/Grayish
+          };
           break;
         case PlanetType.ROCKY:
-        case PlanetType.BARREN:
+          // More varied palette for Rocky
           simplePalette = {
-            low: "#303030",
-            mid1: "#606060",
-            mid2: "#808080",
-            high: "#B0B0B0",
+            low: "#5A4D41", // Darker Brownish-Gray
+            mid1: "#8B7D6B", // Mid Brownish-Gray
+            mid2: "#A9A9A9", // Standard Gray
+            high: "#D3CFC5", // Light Gray/Tan
+          };
+          break;
+        case PlanetType.BARREN:
+          // Less varied, more muted palette for Barren
+          simplePalette = {
+            low: "#4A4A4A", // Dark Gray
+            mid1: "#686868", // Medium Gray
+            mid2: "#828282", // Slightly Lighter Gray
+            high: "#9A9A9A", // Light Gray
+          };
+          break;
+        case PlanetType.OCEAN:
+          // Add a default palette for Ocean type
+          simplePalette = {
+            low: "#003366", // Deep Ocean Blue
+            mid1: "#0055A4", // Mid Ocean Blue
+            mid2: "#4169E1", // Royal Blue (Shallows?)
+            high: "#ADD8E6", // Light Blue (Foam/Ice?)
           };
           break;
       }
     }
 
     const finalProps: ProceduralSurfaceProperties = {
-      type: specificSurfaceProps?.type ?? SurfaceType.FLAT,
-      color: specificSurfaceProps?.color ?? "#808080", // Default base color if none specified
-      roughness: specificSurfaceProps?.roughness ?? 0.8,
-
+      // Procedural properties
       persistence: specificSurfaceProps?.persistence ?? 0.5,
       lacunarity: specificSurfaceProps?.lacunarity ?? 2.0,
       octaves: specificSurfaceProps?.octaves ?? 6,
       simplePeriod: specificSurfaceProps?.simplePeriod ?? 4.0,
+      bumpScale: (specificSurfaceProps as any)?.bumpScale ?? 3, // Add bumpScale here, cast needed as TS might not see it in the union
 
+      // Color ramp properties
       colorLow: specificSurfaceProps?.colorLow ?? simplePalette.low,
       colorMid1: specificSurfaceProps?.colorMid1 ?? simplePalette.mid1,
       colorMid2: specificSurfaceProps?.colorMid2 ?? simplePalette.mid2,

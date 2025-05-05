@@ -27,4 +27,3 @@ export * from "./gas-giants";
 export * from "./terrestrial";
 export * from "./particles";
 export * from "./rings";
-export * from "../textures/TextureFactory";

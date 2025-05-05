@@ -5,34 +5,9 @@ import { PlanetType } from "@teskooano/data-types";
 
 import proceduralVertexShaderSource from "../../../shaders/terrestrial/procedural.vertex.glsl";
 import proceduralFragmentShaderSource from "../../../shaders/terrestrial/procedural.fragment.glsl";
+import { ProceduralPlanetUniforms } from "../../../types/procedural";
 
 const MAX_LIGHTS = 4;
-
-interface ProceduralPlanetUniforms {
-  uNumLights: { value: number };
-  uLightPositions: { value: THREE.Vector3[] };
-  uLightColors: { value: THREE.Color[] };
-  uLightIntensities: { value: number[] };
-  uAmbientLightColor: { value: THREE.Color };
-  uAmbientLightIntensity: { value: number };
-  uCameraPosition: { value: THREE.Vector3 };
-
-  persistence: { value: number };
-  lacunarity: { value: number };
-  uSimplePeriod: { value: number };
-  uOctaves: { value: number };
-
-  uColorLow: { value: THREE.Color };
-  uColorMid1: { value: THREE.Color };
-  uColorMid2: { value: THREE.Color };
-  uColorHigh: { value: THREE.Color };
-
-  uBumpScale: { value: number };
-
-  uTime: { value: number };
-
-  [key: string]: { value: any };
-}
 
 /**
  * Material for rendering procedurally generated terrestrial planet surfaces using shaders.
@@ -94,7 +69,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       uniforms,
       vertexShader: proceduralVertexShaderSource,
       fragmentShader: proceduralFragmentShaderSource,
-      side: THREE.FrontSide,
+      precision: "highp",
     });
   }
 

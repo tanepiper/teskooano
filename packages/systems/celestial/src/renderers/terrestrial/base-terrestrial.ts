@@ -120,7 +120,8 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     const group = new THREE.Group();
     group.name = `${object.celestialObjectId}-high-lod-group`;
     const segments =
-      options?.segments ?? (options?.detailLevel === "high" ? 64 : 48);
+      options?.segments ??
+      (["high", "ultra"].includes(options?.detailLevel ?? "") ? 512 : 256);
 
     let bodyMesh: THREE.Mesh;
     try {
@@ -131,6 +132,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
         segments,
         segments,
       );
+
       bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
     } catch (error) {
       console.error(
