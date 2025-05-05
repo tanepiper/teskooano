@@ -91,7 +91,14 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       onNextClick: () => {
         const generator = document.querySelector("teskooano-system-controls");
         if (generator) {
-          (generator as any).tourRandomSeed();
+          const button = generator.shadowRoot?.querySelector(
+            "#generate-random-button",
+          );
+          if (button) {
+            (button as any).click();
+          }
+
+          //(generator as any).tourRandomSeed();
         }
         driverObj.moveNext();
       },
@@ -111,7 +118,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "ui-settings-1",
       element: ".engine-overlay-toolbar-container",
       popover: {
-        title: "🌁 View Settings",
+        title: "📦 Engine Toolbar",
         description:
           "This is the Engine Toolbar - it's a pluggable container that panels and functions can register with and display a button in the toolbar.",
         side: "bottom",
@@ -120,7 +127,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "ui-settings-2",
-      element: "#engine-toolbar-toggle-composite_engine_view_1",
+      element: "#engine-toolbar-toggle-button",
       popover: {
         title: "☾ Toggle the Toolbar",
         description:

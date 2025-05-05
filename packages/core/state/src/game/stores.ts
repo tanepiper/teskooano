@@ -26,6 +26,7 @@ export const currentSeed = new BehaviorSubject<string>(getInitialSeed());
  * @param newSeed The new seed value.
  */
 export const updateSeed = (newSeed: string): void => {
+  console.log("Updating seed:", newSeed);
   const trimmedSeed = newSeed.trim();
   const seedToSet = trimmedSeed || DEFAULT_SEED;
   try {

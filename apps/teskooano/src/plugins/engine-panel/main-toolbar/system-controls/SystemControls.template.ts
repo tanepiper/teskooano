@@ -252,6 +252,7 @@ template.innerHTML = `
         <input type="text" id="seed" name="seed" placeholder="Enter seed..."
                aria-label="System seed input">
         <teskooano-button 
+            id="generate-seed-button"
             type="submit" 
             variant="secondary" 
             size="sm" 
@@ -264,6 +265,7 @@ template.innerHTML = `
       </form>
       <div class="actions">
         <teskooano-button 
+            id="generate-random-button"
             data-action="random" 
             variant="secondary" 
             size="sm" 

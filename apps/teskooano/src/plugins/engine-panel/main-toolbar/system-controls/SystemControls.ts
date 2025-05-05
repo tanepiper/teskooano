@@ -422,7 +422,12 @@ class SystemControls
 
     const seedInput$ = fromEvent(this.seedInput, "input").pipe(
       debounceTime(300),
-      map((event) => (event.target as HTMLInputElement).value),
+      map((event) => {
+        const inputEl = (event.target as HTMLElement).shadowRoot?.querySelector(
+          "input#seed",
+        ) as HTMLInputElement;
+        return inputEl.value;
+      }),
       tap((seed) => updateSeed(seed)),
     );
 

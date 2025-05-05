@@ -7,12 +7,7 @@ varying float vHeight;       // Calculated height (0-1) from vertex shader
 varying vec3 vWorldPosition;  // World space position of the fragment
 varying vec3 vWorldNormal;    // Perturbed world normal from vertex shader
 varying vec3 vObjectPosition; // Normalized object-space position for seamless noise
-
-// --- Uniforms (Keep as they are) ---
-uniform float uTime;
 uniform vec3 uCameraPosition;
-
-
 
 // Multi-Light Uniforms
 uniform int uNumLights;
@@ -21,23 +16,14 @@ uniform vec3 uLightColors[MAX_LIGHTS];
 uniform float uLightIntensities[MAX_LIGHTS];
 uniform vec3 uAmbientLightColor;
 uniform float uAmbientLightIntensity;
-uniform float uBumpScale;
 
-// --- Noise/Shape Parameters (needed for fbm) ---
+// Procedural Generation Parameters
+uniform float uTime;
+uniform float uBumpScale;
 uniform float persistence;
 uniform float lacunarity;
-
-// --- New Simple Generation Parameters --- 
-uniform float uSimplePeriod; // Controls the scale of the new noise pattern
+uniform float uSimplePeriod;
 uniform int uOctaves;
-
-// --- NEW Color Uniforms for Simple Shader --- 
-uniform vec3 uWaterColor;       // Replaces hardcoded blue water
-uniform vec3 uTerrainColor1;    // Replaces hardcoded green terrain
-uniform vec3 uTerrainColor2;    // Replaces hardcoded yellow terrain
-uniform vec3 uTerrainEdgeColor; // Replaces hardcoded brown edge
-
-// Configurable Colors
 uniform vec3 uColorLow;
 uniform vec3 uColorMid1;
 uniform vec3 uColorMid2;
@@ -116,7 +102,7 @@ vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
 // Simple lighting calculation (Blinn-Phongish)
 vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
     vec3 totalLight = uAmbientLightColor * uAmbientLightIntensity;
-    float shininess = 32.0; // Example shininess
+    float shininess = 16.0; // Example shininess
     float specularStrength = 0.3; // Example specular strength
 
     for (int i = 0; i < uNumLights; ++i) {
