@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Major Refactor (Materials & Textures)**:
+  - Removed the entire old procedural texture generation system (deleted `textures/` directory including `TextureFactory.ts`, `TextureGeneratorBase.ts`, and individual generator classes like `GasGiantTextureGenerator.ts`, `TerrestrialTextureGenerator.ts`, etc.).
+  - Removed the old material management system (deleted `MaterialFactory.ts` and individual material classes like `PlanetMaterial.ts`, `StarMaterial.ts`, etc.).
+  - Introduced a new `materials/` directory with dedicated functions for material creation:
+    - `createProceduralPlanetMaterial.ts`: For generating planet materials, likely using shaders and uniforms defined in `types/procedural.ts`.
+    - `createRingMaterial.ts`: For ring system materials.
+    - `createStarMaterial.ts`: For star materials.
+  - Updated `BaseTerrestrialRenderer.ts`, `RingSystemRenderer.ts`, and `BaseStarRenderer.ts` to use these new material creation functions instead of the old factories.
+- Added `types/procedural.ts` defining `ProceduralPlanetUniforms` for shader-based planet rendering.
+- General comment cleanup and minor refactoring in `utils/event-dispatch.ts` and `vitest.config.ts`.
+
+### Removed
+
+- Deleted `AtmosphereMaterial.ts`, `BaseCelestialMaterial.ts`, `GasGiantMaterial.ts`, `SpaceRockMaterial.ts`, `SunMaterial.ts` as part of the material system overhaul.
+- Deleted `textures/RingTextureGenerator.ts` (and other texture generators as noted above).
+
 ## [0.1.0] - 2025-04-24
 
 ### Added
@@ -63,3 +83,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved texture caching with built-in caching in base generator class.
   - Enhanced resource management for efficient WebGL context usage.
   - Added support for both WebGL shader-based and canvas-based generation approaches.
+
+## [0.2.0] - 2025-05-15
+
+### Added
+
+- **New features and improvements**:
+  - Added new features and improvements to the existing system.
+
+### Changed
+
+- **Texture Generation System Refactor**:
+  - Added new texture generation capabilities.
+
+### Removed
+
+- **Removed obsolete features**:
+  - Removed obsolete features from the system.

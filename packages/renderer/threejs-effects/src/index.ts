@@ -6,10 +6,8 @@ export { LightManager } from "./LightManager";
 export { LODManager } from "./LODManager";
 export * from "./lod-manager";
 
-// Alias export to match the naming in the migration plan
 export { LODManager as GravitationalLensingManager } from "./LODManager";
 
-// Effects module class will be implemented here
 export class EffectsManager {
   lightManager: LightManager;
   lodManager: LODManager;
@@ -19,9 +17,7 @@ export class EffectsManager {
     this.lodManager = new LODManager(camera);
   }
 
-  applyLighting(): void {
-    // LightManager doesn't have an update method
-  }
+  applyLighting(): void {}
 
   applyLOD(): void {
     this.lodManager.update();
@@ -33,8 +29,6 @@ export class EffectsManager {
   }
 
   dispose(): void {
-    // Implement proper disposal logic
     this.lightManager.dispose?.();
-    // LODManager doesn't have a dispose method
   }
 }

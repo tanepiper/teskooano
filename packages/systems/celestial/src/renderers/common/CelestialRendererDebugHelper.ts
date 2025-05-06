@@ -52,18 +52,15 @@ export class CelestialRendererDebugHelper {
 
     const vectors: CelestialVectorPairs = {};
 
-    // Get primary light source direction
     if (lightSources && lightSources.size > 0) {
       let primaryLightSource;
 
-      // Try to find the primary light source for this object
       if (
         object.primaryLightSourceId &&
         lightSources.has(object.primaryLightSourceId)
       ) {
         primaryLightSource = lightSources.get(object.primaryLightSourceId);
       } else {
-        // Fall back to the first light source
         primaryLightSource = lightSources.values().next().value;
       }
 
@@ -77,15 +74,9 @@ export class CelestialRendererDebugHelper {
       }
     }
 
-    // Get parent position if available
     if (object.parentId) {
-      // The parent position would typically come from the renderable objects store
-      // We can't include that dependency here, so this would be added by the renderer
     }
 
-    // Add velocity if available - using explicit type checking to avoid TypeScript errors
-    // The physicsStateReal property is not part of the RenderableCelestialObject interface,
-    // so we need to be very careful when accessing it to avoid runtime errors
     if (
       "physicsStateReal" in object &&
       typeof object.physicsStateReal === "object" &&
@@ -100,7 +91,6 @@ export class CelestialRendererDebugHelper {
       ) {
         const velocity = physicsState.velocity as Record<string, unknown>;
 
-        // Check that velocity has the required x,y,z properties
         if (
           "x" in velocity &&
           "y" in velocity &&
@@ -118,7 +108,6 @@ export class CelestialRendererDebugHelper {
       }
     }
 
-    // Store the vectors
     celestialDebugger.setVectors(this._objectId, vectors);
   }
 
@@ -156,26 +145,21 @@ export class CelestialRendererDebugHelper {
 
     const physicsData: PhysicsDebugData = {};
 
-    // Add mass if available
     if ("realMass_kg" in object && typeof object.realMass_kg === "number") {
       physicsData.mass = object.realMass_kg;
     }
 
-    // Add radius if available
     if ("realRadius_m" in object && typeof object.realRadius_m === "number") {
       physicsData.radius = object.realRadius_m;
 
-      // Add mass-derived calculations if both mass and radius are available
       if ("realMass_kg" in object && typeof object.realMass_kg === "number") {
         const mass = object.realMass_kg;
         const radius = object.realRadius_m;
 
-        // Calculate density
         const volume = (4 / 3) * Math.PI * Math.pow(radius, 3);
         physicsData.density = mass / volume;
 
-        // Calculate escape velocity
-        const G = 6.6743e-11; // Gravitational constant in m^3 kg^-1 s^-2
+        const G = 6.6743e-11;
         physicsData.escapeVelocity = Math.sqrt((2 * G * mass) / radius);
       }
     }
@@ -210,7 +194,6 @@ export class CelestialRendererDebugHelper {
       primaryLightSource: object.primaryLightSourceId,
     };
 
-    // Add lighting details if available
     if (
       object.primaryLightSourceId &&
       lightSources &&
@@ -223,7 +206,6 @@ export class CelestialRendererDebugHelper {
       }
     }
 
-    // Add temperature if available from the object
     if ("temperature" in object && typeof object.temperature === "number") {
       lightingData.effectiveTemperature = object.temperature;
     }
@@ -262,7 +244,6 @@ export class CelestialRendererDebugHelper {
   public setDebugEnabled(enabled: boolean): void {
     this._debugEnabled = enabled;
 
-    // Clear debug data if disabling
     if (!enabled) {
       this.clearDebugData();
     }

@@ -90,17 +90,25 @@ template.innerHTML = `
   </style>
 
   <div class="controls-container">
-  <teskooano-button id="reverse" title="Reverse Direction">
-      ${ArrowClockwiseRegular}
+  <teskooano-button variant="icon" size="m" id="reverse" title="Reverse Direction" tooltip-text="Reverse simulation direction."
+        tooltip-title="Reverse" 
+        tooltip-horizontal-align="start">
+     <span slot="icon">${ArrowClockwiseRegular}</span>
   </teskooano-button>
-  <teskooano-button id="speed-down" title="Decrease Speed">
-      ${PreviousRegular}
+  <teskooano-button variant="icon" size="m" id="speed-down" title="Decrease Speed" tooltip-text="Decrease simulation speed (halve)."
+        tooltip-title="Decrease Speed" 
+        tooltip-horizontal-align="start">
+      <span slot="icon">${PreviousRegular}</span>
   </teskooano-button>
-  <teskooano-button id="play-pause" title="Play/Pause">
-      ${PauseRegular} <!-- Initial state: Pause icon -->
+  <teskooano-button variant="icon" size="m" id="play-pause" title="Play/Pause" tooltip-text="Pause simulation"
+        tooltip-title="Simulation Control" 
+        tooltip-horizontal-align="start">
+      <span slot="icon">${PauseRegular}</span>
   </teskooano-button>
-   <teskooano-button id="speed-up" title="Increase Speed">
-       ${NextRegular}
+   <teskooano-button variant="icon" size="m" id="speed-up" title="Increase Speed" tooltip-text="Increase simulation speed (double)."
+        tooltip-title="Increase Speed" 
+        tooltip-horizontal-align="start">
+       <span slot="icon">${NextRegular}</span>
    </teskooano-button>
   </div>
   <div class="separator"></div>

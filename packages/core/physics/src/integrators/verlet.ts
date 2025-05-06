@@ -1,4 +1,3 @@
-// import * as THREE from 'three';
 import { PhysicsStateReal } from "..";
 import { OSVector3 } from "@teskooano/core-math";
 
@@ -25,32 +24,22 @@ export const verletIntegrate = (
   acceleration: OSVector3,
   dt: number,
 ): PhysicsStateReal => {
-  // Handle zero time step case
   if (dt === 0) {
     return currentState;
   }
 
-  // Calculate new position using Verlet integration
-  // x_new = x_current + (x_current - x_previous) + a * dt²
   const dtSquared = dt * dt;
 
-  // Clone position vectors to avoid modifying originals
   const currentPos = currentState.position_m.clone();
   const prevPos = previousState.position_m.clone();
   const acc = acceleration.clone();
 
-  // Calculate displacement term: x_current - x_previous
   const displacement = currentPos.clone().sub(prevPos);
 
-  // Calculate acceleration term: a * dt²
   const accTerm = acc.multiplyScalar(dtSquared);
 
-  // Calculate new position: x_current + displacement + accTerm
   const newPosition = currentPos.clone().add(displacement).add(accTerm);
 
-  // Estimate new velocity: (new_position - previous_position) / (2 * dt)
-  // This is often recalculated or handled differently depending on the simulation needs.
-  // For consistency, let's keep this estimation.
   const newVelocity = newPosition
     .clone()
     .sub(prevPos)
@@ -88,40 +77,30 @@ export const velocityVerletIntegrate = (
   calculateNewAcceleration: (newStateGuess: PhysicsStateReal) => OSVector3,
   dt: number,
 ): PhysicsStateReal => {
-  // Handle zero time step case
   if (dt === 0) {
     return currentState;
   }
 
-  // Clone vectors to avoid modifying originals
   const pos = currentState.position_m.clone();
   const vel = currentState.velocity_mps.clone();
-  const acc = acceleration.clone(); // Current acceleration
+  const acc = acceleration.clone();
 
   const halfDt = 0.5 * dt;
   const halfDtSquared = 0.5 * dt * dt;
 
-  // Step 1: Update position using current velocity and acceleration
-  // x_new = x + v*dt + 0.5*a*dt²
   const velTerm = vel.clone().multiplyScalar(dt);
   const accTerm = acc.clone().multiplyScalar(halfDtSquared);
   const newPosition = pos.clone().add(velTerm).add(accTerm);
 
-  // Step 2: Calculate an intermediate velocity (v_half = v + 0.5*a*dt)
   const halfVel = vel.clone().add(acc.clone().multiplyScalar(halfDt));
 
-  // Step 3: Calculate acceleration at the new position
-  // Create a temporary state guess with the new position and intermediate velocity
   const stateGuess: PhysicsStateReal = {
     ...currentState,
     position_m: newPosition,
-    velocity_mps: halfVel, // Use intermediate velocity for a potentially better guess
+    velocity_mps: halfVel,
   };
-  const newAcceleration = calculateNewAcceleration(stateGuess); // Use OSVector3
+  const newAcceleration = calculateNewAcceleration(stateGuess);
 
-  // Step 4: Update velocity using average of old and new accelerations
-  // v_new = v_half + 0.5*a_new*dt
-  // (v_half already includes 0.5*a*dt, so we add 0.5*a_new*dt)
   const newAccTerm = newAcceleration.clone().multiplyScalar(halfDt);
   const newVelocity = halfVel.clone().add(newAccTerm);
 

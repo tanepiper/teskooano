@@ -1,7 +1,6 @@
 import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
 import { Config, Driver, PopoverDOM, State } from "driver.js";
 import { TourStep } from "../types";
-// Base tour steps definition - will be cloned and customized when driving
 
 export function createIntroTour(driverObj: Driver): TourStep[] {
   let hasCelestialObjects = false;
@@ -10,7 +9,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     {
       id: "app-intro",
       element: "#toolbar-logo",
-      overlayColor: "rgba(0, 0, 0, 0.75)", // Standard overlay
+      overlayColor: "rgba(0, 0, 0, 0.75)",
       popover: {
         title: "🔭 Welcome to Teskooano",
         description:
@@ -22,7 +21,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     {
       id: "app-intro-2",
       element: "#toolbar-logo",
-      overlayColor: "rgba(0, 0, 0, 0.75)", // Standard overlay
+      overlayColor: "rgba(0, 0, 0, 0.75)",
       popover: {
         title: "🛫 ...on to the tour!",
         description:
@@ -41,7 +40,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     {
       id: "engine-view",
       element: ".engine-view",
-      overlayColor: "rgba(0, 0, 0, 0.1)", // More transparent for the engine view
+      overlayColor: "rgba(0, 0, 0, 0.1)",
       popover: {
         title: "📽️ The Simulation View",
         description: `This is the main engine view, ${hasCelestialObjects ? "which you have currently loaded a system in to " : "which may be currently empty as you need to load a system (don't worry, we're coming to that!)"}. This is the main view of the simulation, in this view you can orbit and zoom around the system, and use the focus controls to focus on specific objects.`,
@@ -92,7 +91,14 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       onNextClick: () => {
         const generator = document.querySelector("teskooano-system-controls");
         if (generator) {
-          (generator as any).tourRandomSeed();
+          const button = generator.shadowRoot?.querySelector(
+            "#generate-random-button",
+          );
+          if (button) {
+            (button as any).click();
+          }
+
+          //(generator as any).tourRandomSeed();
         }
         driverObj.moveNext();
       },
@@ -112,7 +118,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
       id: "ui-settings-1",
       element: ".engine-overlay-toolbar-container",
       popover: {
-        title: "🌁 View Settings",
+        title: "📦 Engine Toolbar",
         description:
           "This is the Engine Toolbar - it's a pluggable container that panels and functions can register with and display a button in the toolbar.",
         side: "bottom",
@@ -121,7 +127,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
     {
       id: "ui-settings-2",
-      element: "#engine-toolbar-toggle-composite_engine_view_1",
+      element: "#engine-toolbar-toggle-button",
       popover: {
         title: "☾ Toggle the Toolbar",
         description:
@@ -134,8 +140,8 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     {
       id: "focus-control",
       element: "#engine-toolbar-button-focus-control-button",
-      overlayColor: "rgba(0, 0, 0, 0.3)", // More transparent for interactive controls
-      disableActiveInteraction: false, // Allow interaction with the focus control
+      overlayColor: "rgba(0, 0, 0, 0.3)",
+      disableActiveInteraction: false,
       popover: {
         title: "🔍 Focusing on Celestials",
         description:
@@ -149,7 +155,6 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
           return;
         }
 
-        // Get the focus control for this engine panel
         const focusControl = document.querySelector(
           `focus-control[engine-view-id="${engineViewId}"]`,
         );
@@ -200,11 +205,10 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     {
       id: "engine-view-final",
       element: ".engine-view",
-      overlayColor: "rgba(0, 0, 0, 0)", // Fully transparent for the final view
+      overlayColor: "rgba(0, 0, 0, 0)",
       popover: {
         title: "🔭 Viewing Systems",
         description:
-          // Using a placeholder that will be replaced dynamically
           "Now you should see the full system. If you've selected a celestial body, you can see more details about it in the Celestial Info panel.  Feel free to now play around, and try break things! If you do find any bugs please raise an issue on the GitHub repo.",
         side: "over",
         align: "center",

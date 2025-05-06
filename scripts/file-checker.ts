@@ -1,12 +1,12 @@
 import * as fs from "fs";
 import * as path from "path";
-import type { CelestialObject } from "@teskooano/data-types"; // Assuming this type is available
+import type { CelestialObject } from "@teskooano/data-types";
 
 interface OrbitalParams {
-  realSemiMajorAxis_m?: number; // Match potential real data name
-  semiMajorAxis_m?: number; // Keep original name for flexibility
+  realSemiMajorAxis_m?: number;
+  semiMajorAxis_m?: number;
   eccentricity: number;
-  inclination: number; // in radians
+  inclination: number;
   meanAnomaly: number;
   period_s: number;
 }
@@ -19,27 +19,22 @@ enum AccuracyLevel {
 }
 
 function analyzeOrbit(
-  params: Partial<OrbitalParams>, // Use Partial as structure might vary slightly
+  params: Partial<OrbitalParams>,
   bodyId: string,
   accuracyLevel: AccuracyLevel,
 ): void {
-  const G = 6.6743e-11; // Gravitational constant
-  const M = 1.989e30; // Assumed central body mass (Sun in kg) - MAKE CONFIGURABLE?
+  const G = 6.6743e-11;
+  const M = 1.989e30;
 
-  // Determine which semi-major axis property is available
   const semiMajorAxis = params.realSemiMajorAxis_m ?? params.semiMajorAxis_m;
 
   if (semiMajorAxis === undefined || params.period_s === undefined) {
-    // console.warn(`[${bodyId}] Missing semiMajorAxis or period_s in orbit data. Skipping period check.`);
-    // Don't warn by default, too noisy? Only warn if accuracy is high?
     if (accuracyLevel !== AccuracyLevel.NONE) {
       console.warn(
         `[${bodyId}] Missing semiMajorAxis or period_s in orbit data. Skipping period check.`,
       );
     }
-    // Cannot perform period check without these values
   } else {
-    // Calculate expected period based on semi-major axis (Kepler's Third Law)
     const expectedPeriod = Math.sqrt(
       (4 * Math.PI * Math.PI * semiMajorAxis ** 3) / (G * M),
     );
@@ -52,17 +47,17 @@ function analyzeOrbit(
 
     switch (accuracyLevel) {
       case AccuracyLevel.VERY_STRICT:
-        accuracyThreshold = 1; // Max 1% difference
+        accuracyThreshold = 1;
         break;
       case AccuracyLevel.SOMEWHAT_STRICT:
-        accuracyThreshold = 5; // Max 5% difference
+        accuracyThreshold = 5;
         break;
       case AccuracyLevel.LOOSE:
-        accuracyThreshold = 10; // Max 10% difference
+        accuracyThreshold = 10;
         break;
       case AccuracyLevel.NONE:
-      default: // Ensure default case
-        accuracyThreshold = Infinity; // No check
+      default:
+        accuracyThreshold = Infinity;
         break;
     }
 
@@ -73,16 +68,13 @@ function analyzeOrbit(
     }
   }
 
-  // Check for high eccentricity
   if (params.eccentricity !== undefined && params.eccentricity > 0.8) {
     console.warn(
       `[${bodyId}] High eccentricity: ${params.eccentricity.toFixed(4)}. Orbit may be unstable or require careful handling.`,
     );
   }
 
-  // Inclination check - flag if significantly different from zero (relative to ecliptic assumed)
   if (params.inclination !== undefined && Math.abs(params.inclination) > 0.5) {
-    // Increased threshold
     console.warn(
       `[${bodyId}] High inclination relative to assumed plane: ${params.inclination.toFixed(4)} radians`,
     );
@@ -91,8 +83,8 @@ function analyzeOrbit(
 
 /** Represents the expected structure of the input JSON file. */
 interface SystemData {
-  seed?: string; // Keep track of the seed if present
-  objects: Partial<CelestialObject>[]; // Use partial as objects might not be complete
+  seed?: string;
+  objects: Partial<CelestialObject>[];
 }
 
 /**
@@ -109,19 +101,13 @@ function validateSystem(
   );
   let warningCount = 0;
   for (const obj of systemData.objects) {
-    // Check if the object has an ID and orbit data
     if (obj.id && obj.orbit) {
-      // Call analyzeOrbit, passing the orbit object which should match OrbitalParams
-      // We cast obj.orbit because TS might not know it matches OrbitalParams exactly,
-      // but analyzeOrbit handles partial data.
-      const initialWarnCount = console.warn.length; // Primitive way to count calls
+      const initialWarnCount = console.warn.length;
       analyzeOrbit(obj.orbit as Partial<OrbitalParams>, obj.id, accuracyLevel);
       if (console.warn.length > initialWarnCount) {
         warningCount++;
       }
     } else if (obj.id && !obj.orbit && obj.type !== "STAR") {
-      // Optionally warn about non-star objects missing orbit data
-      // console.log(`[${obj.id}] Type: ${obj.type || 'Unknown'} - No orbit data found.`);
     } else if (!obj.id) {
       console.warn("Found object without an ID.");
       warningCount++;
@@ -131,8 +117,6 @@ function validateSystem(
     `Validation complete. ${warningCount} objects triggered warnings.`,
   );
 }
-
-// --- Script Execution ---
 
 /** Prints usage instructions and exits. */
 function printUsage(): void {
@@ -145,7 +129,6 @@ function printUsage(): void {
   process.exit(1);
 }
 
-// Get file path from command line arguments
 const filePathArg = process.argv[2];
 if (!filePathArg) {
   console.error("Error: JSON file path argument is missing.");
@@ -154,9 +137,8 @@ if (!filePathArg) {
 
 const filePath = path.resolve(filePathArg);
 
-// Determine accuracy level
 const accuracyArg = process.argv[3]?.toUpperCase();
-let accuracyLevel: AccuracyLevel = AccuracyLevel.SOMEWHAT_STRICT; // Default
+let accuracyLevel: AccuracyLevel = AccuracyLevel.SOMEWHAT_STRICT;
 
 if (accuracyArg) {
   if (accuracyArg in AccuracyLevel) {
@@ -167,18 +149,16 @@ if (accuracyArg) {
   }
 }
 
-// Check if file exists
 if (!fs.existsSync(filePath)) {
   console.error(`Error: File not found at "${filePath}"`);
   process.exit(1);
 }
 
-// Read and parse the JSON file
 let systemData: SystemData;
 try {
   const fileContent = fs.readFileSync(filePath, "utf-8");
   systemData = JSON.parse(fileContent) as SystemData;
-  // Basic validation of parsed structure
+
   if (!systemData || !Array.isArray(systemData.objects)) {
     throw new Error(
       "Invalid JSON structure: Expected root object with an 'objects' array.",
@@ -190,5 +170,4 @@ try {
   process.exit(1);
 }
 
-// Run the validation
 validateSystem(systemData, accuracyLevel);

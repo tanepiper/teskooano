@@ -54,7 +54,7 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
    */
   public static registerToolbarButtonConfig(): PanelToolbarItemConfig {
     return {
-      id: "celestial_info", // Base ID
+      id: "celestial_info",
       target: "engine-toolbar",
       iconSvg: InfoIcon,
       title: "Celestial Info",
@@ -73,7 +73,7 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
 
     this.components.set(CelestialType.STAR, new StarInfoComponent());
     this.components.set(CelestialType.PLANET, new PlanetInfoComponent());
-    this.components.set(CelestialType.DWARF_PLANET, new PlanetInfoComponent()); // Re-use Planet component
+    this.components.set(CelestialType.DWARF_PLANET, new PlanetInfoComponent());
     this.components.set(CelestialType.MOON, new MoonInfoComponent());
     this.components.set(CelestialType.GAS_GIANT, new GasGiantInfoComponent());
     this.components.set(
@@ -88,7 +88,7 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
     const container = this.shadow.querySelector(".container") as HTMLElement;
     if (container) {
       this.components.forEach((component) => {
-        component.style.display = "none"; // Hide initially
+        component.style.display = "none";
         container.appendChild(component);
       });
     }
@@ -115,7 +115,7 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
 
     document.addEventListener(
       "focus-request-initiated",
-      this.handleFocusRequestInitiated, // Use bound handler
+      this.handleFocusRequestInitiated,
     );
   }
 
@@ -128,10 +128,9 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
       this.handleRendererFocusChange,
     );
 
-    // REMOVE LISTENER FOR FOCUS REQUESTS
     document.removeEventListener(
       "focus-request-initiated",
-      this.handleFocusRequestInitiated, // Use bound handler
+      this.handleFocusRequestInitiated,
     );
   }
 
@@ -169,12 +168,12 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
             this.renderInfo(currentObject);
           } else if (!currentObject) {
             this.showPlaceholder("Selected object data not found.");
-            this.currentSelectedId = null; // Clear selection
+            this.currentSelectedId = null;
           } else {
             this.showPlaceholder(
               `Object '${currentObject.name}' has been destroyed.`,
             );
-            this.currentSelectedId = null; // Clear selection
+            this.currentSelectedId = null;
           }
         }
       },
@@ -182,7 +181,7 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   }
 
   private handleSelectionChange(selectedId: string | null) {
-    if (selectedId === this.currentSelectedId) return; // No change
+    if (selectedId === this.currentSelectedId) return;
 
     this.currentSelectedId = selectedId;
 
@@ -218,7 +217,7 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   private showPlaceholder(message: string) {
     if (this.activeComponent) {
       this.activeComponent.style.display = "none";
-      this.activeComponent = null; // Clear active component reference
+      this.activeComponent = null;
     }
 
     const placeholder = this.shadow.querySelector(

@@ -23,19 +23,17 @@ export class ClassOStarMaterial extends BaseStarMaterial {
       metallicEffect?: number;
     } = {},
   ) {
-    // Blue color for O-class stars
     const blueColor = new THREE.Color(0x9bb0ff);
 
     super(blueColor, {
-      // Hotter stars have more intense coronas
       coronaIntensity: options.coronaIntensity ?? 0.7,
-      // Faster pulse for hotter stars
+
       pulseSpeed: options.pulseSpeed ?? 0.8,
-      // More intense glow for massive stars
+
       glowIntensity: options.glowIntensity ?? 0.8,
-      // Higher temperature variations
+
       temperatureVariation: options.temperatureVariation ?? 0.15,
-      // Less metallic effect for hotter stars
+
       metallicEffect: options.metallicEffect ?? 0.4,
     });
   }

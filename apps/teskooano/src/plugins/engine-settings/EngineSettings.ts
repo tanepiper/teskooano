@@ -69,14 +69,14 @@ export class EngineUISettingsPanel
    */
   public static registerToolbarButtonConfig(): PanelToolbarItemConfig {
     return {
-      id: "engine_settings", // Unique ID for this toolbar item
-      target: "engine-toolbar", // ID of the target toolbar to add this to
-      iconSvg: SettingsIcon, // SVG icon for the button
-      title: "Engine Settings", // Tooltip / accessible label for the button
-      type: "panel", // Indicates this button controls a panel
-      componentName: this.componentName, // Tag name of the panel component
-      panelTitle: "Engine Settings", // Title displayed on the panel itself
-      behaviour: "toggle", // Button toggles the panel visibility
+      id: "engine_settings",
+      target: "engine-toolbar",
+      iconSvg: SettingsIcon,
+      title: "Engine Settings",
+      type: "panel",
+      componentName: this.componentName,
+      panelTitle: "Engine Settings",
+      behaviour: "toggle",
     };
   }
 
@@ -95,7 +95,7 @@ export class EngineUISettingsPanel
       console.error(
         "[EngineUISettingsPanel] Invalid template or template.content! Cannot initialize.",
       );
-      // Optionally throw an error or set an internal error state
+
       return;
     }
 
@@ -108,7 +108,6 @@ export class EngineUISettingsPanel
         "[EngineUISettingsPanel] Error appending template content to shadowRoot:",
         error,
       );
-      // Set an internal error state or display an error message within the component
     }
   }
 
@@ -119,7 +118,6 @@ export class EngineUISettingsPanel
    * and attempts to sync with the parent panel state if already set.
    */
   connectedCallback() {
-    // Query for elements within the shadow root
     this.gridToggle = this.shadowRoot!.getElementById(
       "grid-toggle",
     ) as HTMLInputElement;
@@ -140,7 +138,6 @@ export class EngineUISettingsPanel
       "debug-mode-toggle",
     ) as HTMLInputElement;
 
-    // Verify elements were found
     if (
       !this.gridToggle ||
       !this.labelsToggle ||
@@ -149,12 +146,10 @@ export class EngineUISettingsPanel
       console.warn(
         "[EngineUISettingsPanel] Could not find all expected elements in the shadow DOM.",
       );
-      // Potentially display an error or disable functionality
     }
 
     this.addEventListeners();
 
-    // If the parent panel was set before connection, sync now.
     if (this._parentPanel) {
       this.syncWithParentPanelState();
     }
@@ -190,11 +185,11 @@ export class EngineUISettingsPanel
       "change",
       this.handleDebrisEffectsToggleChange,
     );
-    // Ensure the slider element exists before adding listener
+
     if (this.fovSliderElement) {
       this.fovSliderElement.addEventListener(
         CustomEvents.SLIDER_CHANGE,
-        this.handleFovChange as EventListener, // Cast necessary for CustomEvent handling
+        this.handleFovChange as EventListener,
       );
     }
     this.debugModeToggle?.addEventListener(
@@ -234,8 +229,6 @@ export class EngineUISettingsPanel
     );
   }
 
-  // --- Dockview IContentRenderer Implementation ---
-
   /**
    * Dockview `IContentRenderer` initialization method.
    * Called by Dockview when the panel content is created.
@@ -245,17 +238,15 @@ export class EngineUISettingsPanel
    * @param {GroupPanelPartInitParameters} parameters - Initialization parameters provided by Dockview, potentially containing the parent panel instance.
    */
   public init(parameters: GroupPanelPartInitParameters): void {
-    // Type assertion for expected parameters
     const params = parameters.params as {
       parentInstance?: CompositeEnginePanel;
     };
 
     if (params?.parentInstance) {
-      // Basic check to see if it looks like the expected panel type
       if (
         typeof params.parentInstance === "object" &&
         params.parentInstance !== null &&
-        "getViewState" in params.parentInstance && // Check for a key method
+        "getViewState" in params.parentInstance &&
         typeof params.parentInstance.getViewState === "function"
       ) {
         this.setParentPanel(params.parentInstance);
@@ -286,8 +277,6 @@ export class EngineUISettingsPanel
     return this;
   }
 
-  // --- Component Logic ---
-
   /**
    * Stores the provided `CompositeEnginePanel` instance as the parent
    * and triggers the initial state synchronization if the component is connected.
@@ -299,11 +288,10 @@ export class EngineUISettingsPanel
       console.warn(
         "[EngineUISettingsPanel] setParentPanel called with the same panel instance.",
       );
-      return; // Avoid redundant setup
+      return;
     }
     this._parentPanel = panel;
-    // If connectedCallback has already run and elements are cached,
-    // sync state now. Otherwise, connectedCallback will handle the initial sync.
+
     if (this.isConnected) {
       this.syncWithParentPanelState();
     }
@@ -324,19 +312,15 @@ export class EngineUISettingsPanel
       return;
     }
 
-    // Unsubscribe from any previous subscription
     this._unsubscribeParentState?.unsubscribe();
 
     try {
-      // Get the current state immediately
       const initialState = this._parentPanel.getViewState();
-      this.updateUiState(initialState); // Update UI with initial values
-      this.clearError(); // Clear any previous errors
+      this.updateUiState(initialState);
+      this.clearError();
 
-      // Subscribe to subsequent state changes
       this._unsubscribeParentState = this._parentPanel.subscribeToViewState(
         (newState: CompositeEngineState) => {
-          // Defensively check if still connected when update arrives
           if (this.isConnected) {
             this.updateUiState(newState);
           }
@@ -347,7 +331,7 @@ export class EngineUISettingsPanel
         "Failed to get initial state or subscribe to parent panel.";
       this.showError(errMsg);
       console.error(`[EngineUISettingsPanel] ${errMsg}`, error);
-      // Ensure subscription is cleaned up if error occurred during setup
+
       this._unsubscribeParentState?.unsubscribe();
       this._unsubscribeParentState = null;
     }
@@ -362,7 +346,7 @@ export class EngineUISettingsPanel
   private handleGridToggleChange = (event: Event): void => {
     if (!this._parentPanel) return;
     const isChecked = (event.target as HTMLInputElement).checked;
-    // Consider adding error handling for the parent panel call
+
     this._parentPanel.setShowGrid(isChecked);
   };
 
@@ -435,7 +419,6 @@ export class EngineUISettingsPanel
     }
 
     try {
-      // Validate the detail payload
       if (
         !event.detail ||
         typeof event.detail.value !== "number" ||
@@ -450,9 +433,9 @@ export class EngineUISettingsPanel
       }
 
       const newValue = event.detail.value;
-      // Update the parent panel state
+
       this._parentPanel.updateViewState({ fov: newValue });
-      this.clearError(); // Clear error on successful update
+      this.clearError();
     } catch (error) {
       console.error(
         "[EngineUISettingsPanel] Error updating FOV via parent panel:",
@@ -471,7 +454,6 @@ export class EngineUISettingsPanel
    * @private
    */
   private updateUiState(viewState: CompositeEngineState): void {
-    // Don't try to update DOM elements if not connected
     if (!this.isConnected) {
       console.warn(
         "[EngineUISettingsPanel] Attempted to update UI state while disconnected.",
@@ -479,7 +461,6 @@ export class EngineUISettingsPanel
       return;
     }
 
-    // Update toggles, checking if the element exists first
     if (this.gridToggle) {
       this.gridToggle.checked = viewState.showGrid ?? false;
     }
@@ -496,16 +477,12 @@ export class EngineUISettingsPanel
       this.debugModeToggle.checked = viewState.isDebugMode ?? false;
     }
 
-    // Update slider, checking if the element exists and value is defined
     if (this.fovSliderElement && typeof viewState.fov === "number") {
-      // Only update if the value has actually changed to avoid potential event loops
       if (this.fovSliderElement.value !== viewState.fov) {
         this.fovSliderElement.value = viewState.fov;
       }
     }
   }
-
-  // --- Error Handling ---
 
   /**
    * Displays an error message within the panel's designated error area.
@@ -517,9 +494,8 @@ export class EngineUISettingsPanel
   private showError(message: string): void {
     if (this.errorMessageElement) {
       this.errorMessageElement.textContent = message;
-      this.errorMessageElement.style.display = "block"; // Make it visible
+      this.errorMessageElement.style.display = "block";
     } else {
-      // Fallback if the error element isn't found
       console.error(
         `[EngineUISettingsPanel] Error Display Failed (Element Missing): ${message}`,
       );
@@ -533,7 +509,7 @@ export class EngineUISettingsPanel
   private clearError(): void {
     if (this.errorMessageElement) {
       this.errorMessageElement.textContent = "";
-      this.errorMessageElement.style.display = "none"; // Hide it
+      this.errorMessageElement.style.display = "none";
     }
   }
 }

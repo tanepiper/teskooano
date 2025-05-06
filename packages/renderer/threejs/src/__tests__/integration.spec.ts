@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { ModularSpaceRenderer } from "../index";
 import { CelestialType } from "@teskooano/data-types";
 
-// Mock the core-state dependencies
 vi.mock("@teskooano/core-state", () => {
   const mockCelestialObjects = {};
   const mockSimState = {
@@ -17,14 +16,14 @@ vi.mock("@teskooano/core-state", () => {
       get: vi.fn(() => mockSimState),
       subscribe: vi.fn((callback) => {
         callback(mockSimState);
-        return vi.fn(); // Unsubscribe function
+        return vi.fn();
       }),
     },
     celestialObjectsStore: {
       get: vi.fn(() => mockCelestialObjects),
       subscribe: vi.fn((callback) => {
         callback(mockCelestialObjects);
-        return vi.fn(); // Unsubscribe function
+        return vi.fn();
       }),
     },
     getChildrenOfObject: vi.fn(() => []),
@@ -39,7 +38,6 @@ describe("ThreeJS Renderer Integration Tests", () => {
   let renderer: ModularSpaceRenderer;
 
   beforeEach(() => {
-    // Create a container for the renderer
     container = document.createElement("div");
     container.id = "renderer-container";
     container.style.width = "800px";
@@ -56,31 +54,24 @@ describe("ThreeJS Renderer Integration Tests", () => {
   });
 
   it("should initialize and subscribe to state changes", async () => {
-    // Initialize the renderer
     renderer = new ModularSpaceRenderer(container);
 
-    // Import the mocked state modules
     const { simulationState, celestialObjectsStore } = await import(
       "@teskooano/core-state"
     );
 
-    // Verify that the renderer has subscribed to state changes
     expect(simulationState.subscribe).toHaveBeenCalled();
     expect(celestialObjectsStore.subscribe).toHaveBeenCalled();
   });
 
   it("should update when celestial objects change", async () => {
-    // Initialize the renderer
     renderer = new ModularSpaceRenderer(container);
 
-    // Import the mocked state module
     const { celestialObjectsStore } = await import("@teskooano/core-state");
 
-    // Get the subscription callback
     const mockSubscribe = celestialObjectsStore.subscribe as any;
     const subscribeCallback = mockSubscribe.mock.calls[0][0];
 
-    // Create a test object
     const testStar = {
       id: "test-star",
       name: "Test Star",
@@ -92,28 +83,21 @@ describe("ThreeJS Renderer Integration Tests", () => {
       radius: 1000,
     };
 
-    // Mock the update with a new object
     const updatedObjects = { "test-star": testStar };
 
-    // Call the subscription callback with the updated objects
     subscribeCallback(updatedObjects);
 
-    // Verify that the renderer handles the update correctly
     expect(() => renderer.render()).not.toThrow();
   });
 
   it("should update when camera state changes", async () => {
-    // Initialize the renderer
     renderer = new ModularSpaceRenderer(container);
 
-    // Import the mocked state module
     const { simulationState } = await import("@teskooano/core-state");
 
-    // Get the subscription callback
     const mockSubscribe = simulationState.subscribe as any;
     const subscribeCallback = mockSubscribe.mock.calls[0][0];
 
-    // Create new camera state
     const newCameraState = {
       camera: {
         position: { x: 500, y: 1000, z: 1500 },
@@ -121,10 +105,8 @@ describe("ThreeJS Renderer Integration Tests", () => {
       },
     };
 
-    // Call the subscription callback with the updated camera state
     subscribeCallback(newCameraState);
 
-    // Verify that the renderer handles the update correctly
     expect(() => renderer.render()).not.toThrow();
   });
 });

@@ -1,13 +1,16 @@
 import type { DockviewApi } from "dockview-core";
 import { BehaviorSubject, Observable } from "rxjs";
-import { EngineToolbar } from "./EngineToolbar"; // Keep reference for now
-import type { CompositeEnginePanel } from "../../../plugins/engine-panel/panels/CompositeEnginePanel";
+import { EngineToolbar } from "./EngineToolbar";
+import {
+  EnginePanelWithToolbarToggle,
+  IDockviewPanelControls,
+} from "./engine-toolbar.types";
 
 export class EngineToolbarManager {
-  private dockviewApi: DockviewApi | null = null; // Dependency injection needed
-  // Map to store active toolbar instances, keyed by panel API ID
+  private dockviewApi: DockviewApi | null = null;
+
   private activeToolbars: Map<string, EngineToolbar> = new Map();
-  // Map to store expansion state Subjects per toolbar instance (apiId -> Subject<isExpanded>)
+
   private toolbarExpansionStateSubjects: Map<string, BehaviorSubject<boolean>> =
     new Map();
 
@@ -16,10 +19,9 @@ export class EngineToolbarManager {
   public createToolbarForPanel(
     apiId: string,
     parentElement: HTMLElement,
-    dockviewController: any,
-    parentEngine: CompositeEnginePanel,
+    dockviewController: IDockviewPanelControls,
+    parentEngine: EnginePanelWithToolbarToggle,
   ): EngineToolbar | null {
-    // 1. Check if toolbar already exists for apiId
     if (this.activeToolbars.has(apiId)) {
       console.warn(
         `[EngineToolbarManager] Toolbar already exists for ${apiId}. Returning existing instance.`,
@@ -28,7 +30,7 @@ export class EngineToolbarManager {
     }
 
     try {
-      const expansionSubject = new BehaviorSubject<boolean>(true); // Default to expanded
+      const expansionSubject = new BehaviorSubject<boolean>(true);
       this.toolbarExpansionStateSubjects.set(apiId, expansionSubject);
 
       const newToolbar = new EngineToolbar(
@@ -39,38 +41,32 @@ export class EngineToolbarManager {
 
       this.activeToolbars.set(apiId, newToolbar);
 
-      // 4. Append the toolbar element to parentElement
       parentElement.appendChild(newToolbar.element);
 
-      // 5. Return the instance
       return newToolbar;
     } catch (error) {
       console.error(
         `[EngineToolbarManager] Failed to create toolbar for ${apiId}:`,
         error,
       );
-      // 5. Handle errors
+
       return null;
     }
   }
 
   public disposeToolbarForPanel(apiId: string): void {
-    // 1. Find the toolbar instance for apiId
     const toolbarInstance = this.activeToolbars.get(apiId);
     const expansionSubject = this.toolbarExpansionStateSubjects.get(apiId);
 
-    // Complete and remove the subject
     if (expansionSubject) {
       expansionSubject.complete();
       this.toolbarExpansionStateSubjects.delete(apiId);
     }
 
-    // Dispose the toolbar instance
     if (toolbarInstance) {
       try {
-        // 2. Call dispose() on the EngineToolbar instance
         toolbarInstance.dispose();
-        // 3. Remove the instance from internal tracking
+
         this.activeToolbars.delete(apiId);
       } catch (error) {
         console.error(
@@ -107,7 +103,6 @@ export class EngineToolbarManager {
    * @returns True if expanded, false if collapsed (defaults to true if state unknown).
    */
   public getToolbarExpansionState(apiId: string): boolean {
-    // Return current value, default to true if subject doesn't exist (shouldn't happen)
     return this.toolbarExpansionStateSubjects.get(apiId)?.getValue() ?? true;
   }
 
@@ -120,7 +115,6 @@ export class EngineToolbarManager {
     return this.toolbarExpansionStateSubjects.get(apiId)?.asObservable();
   }
 
-  // Method to receive dependencies (alternative to constructor injection if needed later)
   public setDependencies(dependencies: { dockviewApi: DockviewApi }): void {
     this.dockviewApi = dependencies.dockviewApi;
   }

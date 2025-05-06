@@ -4,7 +4,7 @@ import type {
   ComponentConfig,
 } from "@teskooano/ui-plugin";
 import { SystemControls } from "./SystemControls";
-// Import individual function configs
+
 import {
   generateRandomSystemFunction,
   clearSystemFunction,
@@ -13,7 +13,6 @@ import {
 } from "./system-functions";
 import { addCompositeEnginePanelFunction } from "./engineview-functions";
 
-// Aggregate functions from different files
 const allFunctions: FunctionConfig[] = [
   generateRandomSystemFunction,
   clearSystemFunction,
@@ -22,7 +21,6 @@ const allFunctions: FunctionConfig[] = [
   addCompositeEnginePanelFunction,
 ];
 
-// Component configuration
 const systemControlsComponent: ComponentConfig = {
   tagName: "teskooano-system-controls",
   componentClass: SystemControls,
@@ -35,18 +33,17 @@ const systemControlsComponent: ComponentConfig = {
  * system generation, clearing, import/export, and adding engine panels.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "teskooano-system-controls", // Updated ID
+  id: "teskooano-system-controls",
   name: "System Controls",
   description:
     "Provides the system controls component and related system/view functions.",
   components: [systemControlsComponent],
   functions: allFunctions,
-  // No panels, toolbars, or managers
+
   panels: [],
   toolbarRegistrations: [],
-  toolbarWidgets: [], // Added for completeness
+  toolbarWidgets: [],
   managerClasses: [],
 };
 
-// Export the component class directly if needed elsewhere
 export { SystemControls };

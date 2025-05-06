@@ -23,19 +23,17 @@ export class ClassFStarMaterial extends BaseStarMaterial {
       metallicEffect?: number;
     } = {},
   ) {
-    // Yellowish white color for F-class stars
     const yellowishWhiteColor = new THREE.Color(0xfff4ea);
 
     super(yellowishWhiteColor, {
-      // Moderate-low corona intensity
       coronaIntensity: options.coronaIntensity ?? 0.45,
-      // Moderate-low pulse speed
+
       pulseSpeed: options.pulseSpeed ?? 0.5,
-      // Moderate-low glow intensity
+
       glowIntensity: options.glowIntensity ?? 0.5,
-      // Lower temperature variations
+
       temperatureVariation: options.temperatureVariation ?? 0.1,
-      // Moderate-high metallic effect
+
       metallicEffect: options.metallicEffect ?? 0.55,
     });
   }

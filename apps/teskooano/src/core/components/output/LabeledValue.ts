@@ -51,7 +51,6 @@ export class TeskooanoLabeledValue extends HTMLElement {
     this.labelSpan = this.shadowRoot!.querySelector(".label")!;
     this.valueSpan = this.shadowRoot!.querySelector(".value")!;
 
-    // Listen for changes in slotted content
     this.labelSlot.addEventListener("slotchange", () =>
       this.updateAttribute("label", this.getAttribute("label")),
     );
@@ -76,32 +75,26 @@ export class TeskooanoLabeledValue extends HTMLElement {
   private updateAttribute(name: string, value: string | null) {
     switch (name) {
       case "label":
-        // Update the text span only if the named slot is empty
         if (value !== null && this.labelSlot.assignedNodes().length === 0) {
           this.labelSpan.textContent = value;
         } else if (
           value === null &&
           this.labelSlot.assignedNodes().length === 0
         ) {
-          // Clear the span if attribute removed and slot empty
           this.labelSpan.textContent = "";
         } else if (this.labelSlot.assignedNodes().length > 0) {
-          // If slot has content, ensure the span is empty so slot takes over
           this.labelSpan.textContent = "";
         }
         break;
       case "value":
-        // Update the text span only if the default slot is empty
         if (value !== null && this.valueSlot.assignedNodes().length === 0) {
           this.valueSpan.textContent = value;
         } else if (
           value === null &&
           this.valueSlot.assignedNodes().length === 0
         ) {
-          // Clear the span if attribute removed and slot empty
           this.valueSpan.textContent = "";
         } else if (this.valueSlot.assignedNodes().length > 0) {
-          // If slot has content, ensure the span is empty so slot takes over
           this.valueSpan.textContent = "";
         }
         break;

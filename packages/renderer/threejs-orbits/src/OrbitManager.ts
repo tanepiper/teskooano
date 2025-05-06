@@ -8,7 +8,7 @@ import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { KeplerianOrbitManager } from "./orbit-manager";
-import { predictVerletTrajectory } from "./orbit-manager/verlet-predictor"; // Import predictVerletTrajectory directly
+import { predictVerletTrajectory } from "./orbit-manager/verlet-predictor";
 
 /**
  * Enum defining the available modes for orbit visualization.
@@ -23,16 +23,16 @@ export enum VisualizationMode {
 const isMobileWidth = window.innerWidth < 1024;
 
 const TRAIL_MATERIAL = new THREE.LineBasicMaterial({
-  color: 0xffffff, // Changed to white
-  linewidth: isMobileWidth ? 2 : 5, // Slightly thicker
+  color: 0xffffff,
+  linewidth: isMobileWidth ? 2 : 5,
   transparent: true,
-  opacity: 1, // Slightly less transparent
+  opacity: 1,
   depthTest: true,
 });
 
 const PREDICTION_MATERIAL = new THREE.LineBasicMaterial({
-  color: 0xff0000, // Red
-  linewidth: isMobileWidth ? 2 : 5, // Slightly thicker
+  color: 0xff0000,
+  linewidth: isMobileWidth ? 2 : 5,
   transparent: true,
   opacity: 1,
   depthTest: true,
@@ -60,7 +60,7 @@ export class OrbitManager {
   /** Stores recent position history for Verlet trails, keyed by object ID. */
   private positionHistory: Map<string, THREE.Vector3[]> = new Map();
   /** Duration (in seconds) into the future for Verlet predictions. */
-  private predictionDuration: number = 3600 * 12; // Default: 1 day
+  private predictionDuration: number = 3600 * 12;
   /** Number of steps used in Verlet prediction calculation. Affects resolution. */
   private predictionSteps: number = 200;
 
@@ -69,12 +69,12 @@ export class OrbitManager {
   /** Counter used to throttle how often Verlet predictions are recalculated. */
   private predictionUpdateCounter: number = 0;
   /** Recalculate predictions every N calls to `updateAllVisualizations`. */
-  private readonly predictionUpdateFrequency: number = 15; // Update prediction less frequently
+  private readonly predictionUpdateFrequency: number = 15;
 
   /** Counter used to throttle how often Verlet trail geometries are sent to the GPU. */
   private trailUpdateCounter: number = 0;
   /** Send trail geometry updates to the GPU every N calls to `updateAllVisualizations`. */
-  private readonly trailUpdateFrequency: number = 5; // Update geometry less frequently
+  private readonly trailUpdateFrequency: number = 5;
 
   /** Reference to the ObjectManager for adding/removing lines from the scene. */
   private objectManager: ObjectManager;
@@ -95,7 +95,7 @@ export class OrbitManager {
   /** ID of the currently highlighted celestial object, or null if none. */
   private highlightedObjectId: string | null = null;
   /** Color used to highlight orbit/trail/prediction lines. */
-  private highlightColor: THREE.Color = new THREE.Color(0xffff00); // Yellow
+  private highlightColor: THREE.Color = new THREE.Color(0xffff00);
 
   /** The current active visualization mode (`Keplerian` or `Verlet`). */
   private currentMode: VisualizationMode = VisualizationMode.Keplerian;
@@ -114,26 +114,22 @@ export class OrbitManager {
    */
   constructor(
     objectManager: ObjectManager,
-    stateAdapter: RendererStateAdapter, // Keep adapter for visual settings
+    stateAdapter: RendererStateAdapter,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
   ) {
     this.objectManager = objectManager;
     this.stateAdapter = stateAdapter;
     this.renderableObjects$ = renderableObjects$;
 
-    // Subscribe to the observable to keep the latest state
     this.objectsSubscription = this.renderableObjects$.subscribe((objects) => {
       this.latestRenderableObjects = objects;
-      // Note: updateAllVisualizations is called externally, so no need to trigger it here.
     });
 
-    // Instantiate the Keplerian manager with the Observable
     this.keplerianManager = new KeplerianOrbitManager(
       objectManager,
-      this.renderableObjects$, // Pass the Observable
+      this.renderableObjects$,
     );
 
-    // Subscribe to physics engine changes FROM THE ADAPTER
     this.unsubscribeAdapterSettings =
       this.stateAdapter.$visualSettings.subscribe((settings) => {
         const newMode =
@@ -146,7 +142,6 @@ export class OrbitManager {
         }
       });
 
-    // Set initial mode based on adapter's initial state
     const initialSettings = this.stateAdapter.$visualSettings.getValue();
     this.currentMode =
       initialSettings.physicsEngine === "verlet"
@@ -167,12 +162,9 @@ export class OrbitManager {
 
     this.currentMode = mode;
 
-    // Clear visualizations from the previous mode
     if (mode === VisualizationMode.Verlet) {
-      // Delegate clearing to the Keplerian manager
       this.keplerianManager.clearAll();
     } else {
-      // Switching to Keplerian
       this.trailLines.forEach((line, id) => this.removeVisualization(id));
       this.trailLines.clear();
       this.predictionLines.forEach((line, id) => this.removeVisualization(id));
@@ -193,7 +185,6 @@ export class OrbitManager {
    * - Calculating and updating Verlet predictions (throttled) for the highlighted object if in `Verlet` mode.
    */
   updateAllVisualizations(): void {
-    // Use the latest state from the subscription
     const objects = this.latestRenderableObjects;
     const visualSettings = this.stateAdapter.$visualSettings.getValue();
 
@@ -202,33 +193,27 @@ export class OrbitManager {
     if (this.currentMode === VisualizationMode.Keplerian) {
       Object.values(objects).forEach((obj) => {
         if (obj.orbit && obj.parentId) {
-          // Delegate to KeplerianOrbitManager
           this.keplerianManager.createOrUpdate(
             obj.celestialObjectId,
             obj.orbit,
             obj.parentId,
-            this.visualizationVisible, // Pass current visibility
-            this.highlightedObjectId, // Pass current highlight ID
-            this.highlightColor, // Pass highlight color
+            this.visualizationVisible,
+            this.highlightedObjectId,
+            this.highlightColor,
           );
         } else if (this.keplerianManager.lines.has(obj.celestialObjectId)) {
-          // If object no longer has orbit/parent, remove its line via manager
           this.keplerianManager.remove(obj.celestialObjectId);
         }
       });
     } else {
-      // Verlet Mode
-      // --- ADDED: Increment trail update counter ---
       this.trailUpdateCounter++;
       const shouldUpdateTrailGeometry =
         this.trailUpdateCounter >= this.trailUpdateFrequency;
       if (shouldUpdateTrailGeometry) {
-        this.trailUpdateCounter = 0; // Reset counter
+        this.trailUpdateCounter = 0;
       }
-      // --- END ADDED ---
 
       Object.values(objects).forEach((obj) => {
-        // Pass the update flag to the trail function
         this.createOrUpdateVerletTrail(
           obj.celestialObjectId,
           obj,
@@ -236,32 +221,26 @@ export class OrbitManager {
         );
       });
 
-      // --- Verlet Prediction Update ---
-      // Increment frame counter for prediction throttling
       this.predictionUpdateCounter++;
       const shouldUpdatePredictions =
         this.predictionUpdateCounter >= this.predictionUpdateFrequency;
 
       if (shouldUpdatePredictions) {
-        this.predictionUpdateCounter = 0; // Reset counter
+        this.predictionUpdateCounter = 0;
       }
 
-      // Get the full state for prediction calculation using the getter
       const fullObjectsMap = getCelestialObjects();
       const allCurrentPhysicsStates = Object.values(fullObjectsMap)
         .map((co) => co.physicsStateReal)
-        .filter((state): state is PhysicsStateReal => !!state); // Filter out any undefined states
+        .filter((state): state is PhysicsStateReal => !!state);
 
       Object.values(objects).forEach((renderableObj) => {
         const targetId = renderableObj.celestialObjectId;
         const fullTargetObject = fullObjectsMap[targetId];
 
-        // --- Prediction Logic (only for highlighted object) ---
         if (targetId === this.highlightedObjectId) {
-          // Only proceed if highlighted object has physics state
           if (fullTargetObject?.physicsStateReal) {
             if (shouldUpdatePredictions) {
-              // Time to recalculate
               const otherPhysicsStates = allCurrentPhysicsStates.filter(
                 (state) => state.id !== targetId,
               );
@@ -273,13 +252,10 @@ export class OrbitManager {
               this.predictedLinePoints.set(targetId, newPredictionPoints);
               this.updatePredictionLine(targetId, newPredictionPoints);
             } else {
-              // Use stored points
               const storedPoints = this.predictedLinePoints.get(targetId);
               if (storedPoints) {
                 this.updatePredictionLine(targetId, storedPoints);
               } else {
-                // If no stored points yet, calculate them now even if not on frequency
-                // This handles the case where an object is newly highlighted
                 const otherPhysicsStates = allCurrentPhysicsStates.filter(
                   (state) => state.id !== targetId,
                 );
@@ -292,19 +268,16 @@ export class OrbitManager {
                 this.updatePredictionLine(targetId, initialPoints);
               }
             }
-            // Ensure the line is visible if it exists
+
             const predictionLine = this.predictionLines.get(targetId);
             if (predictionLine)
               predictionLine.visible = this.visualizationVisible;
           } else {
-            // Highlighted object lacks physics state, remove prediction
             this.removePredictionLineVisually(targetId);
           }
         } else {
-          // This object is NOT highlighted, remove/hide its prediction line
           this.removePredictionLineVisually(targetId);
         }
-        // --- End Prediction Logic ---
       });
     }
   }
@@ -321,7 +294,7 @@ export class OrbitManager {
   ): void {
     const currentIds = new Set(Object.keys(currentRenderableObjects));
     const removalCandidates = new Set<string>();
-    // Check Keplerian lines via manager
+
     this.keplerianManager.lines.forEach((_, id) => {
       if (!currentIds.has(id)) removalCandidates.add(id);
     });
@@ -334,8 +307,6 @@ export class OrbitManager {
 
     removalCandidates.forEach((id) => this.removeVisualization(id));
   }
-
-  // --- Verlet Mode Methods --- //
 
   /**
    * Updates the position history for a specific object and triggers an update
@@ -388,13 +359,9 @@ export class OrbitManager {
     let line = this.trailLines.get(id);
     const safeMaxPoints = Math.max(1, Math.floor(maxPoints));
 
-    // --- REVERTED: Remove Smoothing Logic ---
-    // Use raw points directly
     const pointsToUse = points;
-    // --- End Revert ---
 
     if (!line) {
-      // Revert buffer size logic to original
       const bufferSize = safeMaxPoints;
       if (bufferSize <= 0) {
         return;
@@ -416,7 +383,7 @@ export class OrbitManager {
       let positionAttribute = geometry.attributes
         .position as THREE.BufferAttribute;
       const existingCapacity = positionAttribute.count;
-      // Revert buffer size logic to original
+
       const requiredCapacity = safeMaxPoints;
 
       if (existingCapacity < requiredCapacity) {
@@ -427,24 +394,28 @@ export class OrbitManager {
         geometry.deleteAttribute("position");
         positionAttribute = new THREE.BufferAttribute(newPositions, 3);
         geometry.setAttribute("position", positionAttribute);
-        geometry.setDrawRange(0, requiredCapacity); // Use required capacity
+        geometry.setDrawRange(0, requiredCapacity);
       }
 
-      // Use pointsToUse (which is now the raw points array)
       const pointsToDraw = Math.min(
         pointsToUse.length,
         positionAttribute.count,
       );
+
+      // Optimized loop: Directly access vector components
+      const positions = positionAttribute.array as Float32Array;
       for (let i = 0; i < pointsToDraw; i++) {
-        pointsToUse[i].toArray(positionAttribute.array, i * 3);
+        const point = pointsToUse[i];
+        const offset = i * 3;
+        positions[offset] = point.x;
+        positions[offset + 1] = point.y;
+        positions[offset + 2] = point.z;
       }
 
-      // --- MODIFIED: Conditional needsUpdate ---
       if (shouldUpdateGeometry) {
         positionAttribute.needsUpdate = true;
         geometry.setDrawRange(0, pointsToDraw);
       }
-      // --- END MODIFIED ---
 
       line.visible = this.visualizationVisible;
       this.applyHighlight(id, line);
@@ -464,45 +435,41 @@ export class OrbitManager {
    */
   updatePredictionLine(id: string, points: THREE.Vector3[]): void {
     if (points.length < 2) {
-      if (this.predictionLines.has(id)) this.removeVisualization(id); // Remove prediction if not enough points
+      if (this.predictionLines.has(id)) this.removeVisualization(id);
       return;
     }
     let line = this.predictionLines.get(id);
-    const maxPoints = this.predictionSteps; // Use the known max steps
+    const maxPoints = this.predictionSteps;
 
     if (!line) {
-      // Initialize geometry with max capacity
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(maxPoints * 3);
       geometry.setAttribute(
         "position",
         new THREE.BufferAttribute(positions, 3),
       );
-      geometry.setDrawRange(0, 0); // Initially draw nothing
+      geometry.setDrawRange(0, 0);
 
-      line = new THREE.Line(geometry, PREDICTION_MATERIAL.clone()); // Clone material
+      line = new THREE.Line(geometry, PREDICTION_MATERIAL.clone());
       line.name = `prediction-line-${id}`;
       line.frustumCulled = false;
       this.objectManager.addRawObjectToScene(line);
       this.predictionLines.set(id, line);
     }
 
-    // Update existing geometry attribute
     const geometry = line.geometry;
     const positionAttribute = geometry.attributes
       .position as THREE.BufferAttribute;
 
-    // Copy points into the buffer (ensure we don't exceed maxPoints)
     const numPointsToCopy = Math.min(points.length, maxPoints);
     for (let i = 0; i < numPointsToCopy; i++) {
       points[i].toArray(positionAttribute.array, i * 3);
     }
 
-    positionAttribute.needsUpdate = true; // Mark the attribute as needing update
-    geometry.setDrawRange(0, numPointsToCopy); // Set the range to draw based on actual points copied
-    geometry.computeBoundingSphere(); // Compute bounding sphere for predictions (might be useful)
+    positionAttribute.needsUpdate = true;
+    geometry.setDrawRange(0, numPointsToCopy);
+    geometry.computeBoundingSphere();
 
-    // Ensure the intended default color is stored before applying highlight
     if (
       !line.userData.defaultColor ||
       line.userData.defaultColor.getHex() !== PREDICTION_MATERIAL.color.getHex()
@@ -511,7 +478,7 @@ export class OrbitManager {
     }
 
     line.visible = this.visualizationVisible;
-    this.applyHighlight(id, line); // Apply highlight to prediction line
+    this.applyHighlight(id, line);
   }
 
   /**
@@ -532,8 +499,6 @@ export class OrbitManager {
     }
   }
 
-  // --- Shared Methods --- //
-
   /**
    * Removes all visualization elements (Keplerian line, trail line, prediction line)
    * associated with a given object ID from the scene and internal maps.
@@ -544,10 +509,9 @@ export class OrbitManager {
    * @param objectId - The ID of the object whose visualizations should be removed.
    */
   removeVisualization(objectId: string): void {
-    // Delegate Keplerian line removal
     this.keplerianManager.remove(objectId);
 
-    this.removeTrailLine(objectId); // Use helper
+    this.removeTrailLine(objectId);
 
     const predictionLine = this.predictionLines.get(objectId);
     if (predictionLine) {
@@ -557,8 +521,8 @@ export class OrbitManager {
       this.predictionLines.delete(objectId);
     }
 
-    this.positionHistory.delete(objectId); // Remove trail history
-    this.predictedLinePoints.delete(objectId); // Remove stored prediction points
+    this.positionHistory.delete(objectId);
+    this.predictedLinePoints.delete(objectId);
   }
 
   /**
@@ -567,7 +531,6 @@ export class OrbitManager {
    * @param visible - `true` to make lines visible, `false` to hide them.
    */
   toggleVisualization(): void {
-    // Use the new setVisibility method to avoid duplicating logic
     this.setVisibility(!this.visualizationVisible);
   }
 
@@ -586,12 +549,12 @@ export class OrbitManager {
    * @param visible - `true` to make lines visible, `false` to hide them.
    */
   setVisibility(visible: boolean): void {
-    if (visible === this.visualizationVisible) return; // No change needed
+    if (visible === this.visualizationVisible) return;
 
     this.visualizationVisible = visible;
-    // Delegate visibility setting
+
     this.keplerianManager.setVisibility(visible);
-    // Set visibility for Verlet lines
+
     const verletLines = new Map([...this.trailLines, ...this.predictionLines]);
     verletLines.forEach((line) => {
       line.visible = this.visualizationVisible;
@@ -606,15 +569,13 @@ export class OrbitManager {
 
     if (this.highlightedObjectId === objectId) {
       if (!line.userData.defaultColor) {
-        // Store the line's original default color before applying highlight
         line.userData.defaultColor = line.material.color.clone();
       }
-      // CORRECT: Apply the color directly to the provided line (Verlet trail/prediction)
+
       line.material.color.copy(this.highlightColor);
     } else if (line.userData.defaultColor) {
-      // Reset to default color if not highlighted or highlight cleared
       line.material.color.copy(line.userData.defaultColor);
-    } // else: No default color stored, likely already the default material color
+    }
   }
 
   /**
@@ -630,14 +591,12 @@ export class OrbitManager {
     const previouslyHighlightedId = this.highlightedObjectId;
     this.highlightedObjectId = objectId;
 
-    // Reset previous highlight
     if (previouslyHighlightedId && previouslyHighlightedId !== objectId) {
-      // Reset Keplerian via manager
       this.keplerianManager.resetPreviousHighlight(
         previouslyHighlightedId,
         objectId,
       );
-      // Reset Verlet (trails) directly
+
       const previousTrailLine = this.trailLines.get(previouslyHighlightedId);
       if (
         previousTrailLine &&
@@ -650,18 +609,16 @@ export class OrbitManager {
       }
     }
 
-    // Apply new highlight
     if (objectId) {
-      // Delegate Keplerian highlight
       this.keplerianManager.applyHighlightToObject(
         objectId,
         objectId,
         this.highlightColor,
       );
-      // Apply Verlet (trail) highlight directly
+
       const trailLineToHighlight = this.trailLines.get(objectId);
       if (trailLineToHighlight) {
-        this.applyHighlight(objectId, trailLineToHighlight); // Use existing private helper for this map
+        this.applyHighlight(objectId, trailLineToHighlight);
       }
     }
   }
@@ -673,23 +630,18 @@ export class OrbitManager {
    * disposes of their geometries and materials, and clears internal maps.
    */
   dispose(): void {
-    // Unsubscribe from adapter settings
     this.unsubscribeAdapterSettings?.unsubscribe();
     this.unsubscribeAdapterSettings = null;
 
-    // Unsubscribe from renderable objects
     this.objectsSubscription?.unsubscribe();
     this.objectsSubscription = null;
 
-    // Remove all visualizations
-    // Delegate Keplerian cleanup
     this.keplerianManager.dispose();
 
-    this.trailLines.forEach((line, id) => this.removeVisualization(id)); // This will call removeTrailLine
+    this.trailLines.forEach((line, id) => this.removeVisualization(id));
     this.trailLines.clear();
-    this.predictionLines.forEach((line, id) => this.removeVisualization(id)); // This will call removePredictionLineVisually
+    this.predictionLines.forEach((line, id) => this.removeVisualization(id));
 
-    // Reset the highlighted object ID
     this.highlightedObjectId = null;
   }
 
@@ -704,8 +656,8 @@ export class OrbitManager {
   private removePredictionLineVisually(objectId: string): void {
     const predictionLine = this.predictionLines.get(objectId);
     if (predictionLine) {
-      predictionLine.visible = false; // Just hide it
+      predictionLine.visible = false;
     }
-    this.predictedLinePoints.delete(objectId); // Remove stored points
+    this.predictedLinePoints.delete(objectId);
   }
 }

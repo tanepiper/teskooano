@@ -6,20 +6,21 @@ import {
   type ToolbarWidgetConfig,
 } from "@teskooano/ui-plugin";
 import type { DockviewController } from "../dockview/DockviewController.js";
-import "./ToolbarController.css";
+import { template as toolbarTemplate } from "./ToolbarController.template.js";
 
 import {
   createToolbarHandlers,
   type ToolbarTemplateHandlers,
 } from "./ToolbarController.handlers.js";
 
-import TourIcon from "@fluentui/svg-icons/icons/compass_northwest_24_regular.svg?raw";
+import { BehaviorSubject, fromEvent } from "rxjs";
+import { map, startWith, tap } from "rxjs/operators";
 
 /**
  * @class ToolbarController
  * @description Manages the main application toolbar, dynamically rendering buttons
  * and widgets based on plugin registrations and handling user interactions.
- * It also adapts the toolbar layout based on screen size (mobile/desktop).
+ * It also adapts the toolbar layout based on screen size (mobile/desktop) using RxJS.
  */
 export class ToolbarController {
   /**
@@ -33,10 +34,10 @@ export class ToolbarController {
    */
   private _dockviewController: DockviewController;
   /**
-   * Tracks whether the application is currently viewed on a mobile-like device width.
+   * Reactive state for mobile device detection.
    * @private
    */
-  private _isMobileDevice: boolean = false;
+  private _isMobileDevice$: BehaviorSubject<boolean>;
 
   /**
    * Reference to the Settings button element.
@@ -70,29 +71,28 @@ export class ToolbarController {
   constructor(element: HTMLElement, dockviewController: DockviewController) {
     this._element = element;
     this._dockviewController = dockviewController;
-    this._isMobileDevice = this.detectMobileDevice();
+    // Initialize the reactive mobile state
+    this._isMobileDevice$ = new BehaviorSubject<boolean>(
+      this.detectMobileDevice(),
+    );
     this._handlers = createToolbarHandlers(this);
 
-    window.addEventListener("resize", this.handleResize);
+    // Use RxJS for resize events
+    fromEvent(window, "resize")
+      .pipe(
+        map(() => this.detectMobileDevice()), // Check mobile state on resize
+        startWith(this._isMobileDevice$.value), // Emit initial state
+        // distinctUntilChanged(), // Optional: Only emit if state changes
+        tap((isMobile) => this._isMobileDevice$.next(isMobile)), // Update the subject
+        tap((isMobile) => this.updateToolbarStyles(isMobile)), // Update styles directly
+      )
+      .subscribe(); // Subscribe to start listening
 
     this.createToolbar();
   }
 
   /**
-   * Handles window resize events to check for mobile state changes and update the UI.
-   * @private
-   */
-  private handleResize = (): void => {
-    const wasMobile = this._isMobileDevice;
-    const isNowMobile = this.detectMobileDevice();
-    if (wasMobile !== isNowMobile) {
-      this.updateToolbarForMobileState();
-    }
-  };
-
-  /**
    * Detects if the current device context resembles a mobile device based on screen width or user agent.
-   * Updates the internal `_isMobileDevice` state.
    * @public
    * @returns {boolean} True if the device is considered mobile, false otherwise.
    */
@@ -103,102 +103,80 @@ export class ToolbarController {
       /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
         userAgent,
       );
-    this._isMobileDevice = isMobileWidth || isMobileDevice;
-    return this._isMobileDevice;
+    return isMobileWidth || isMobileDevice;
   }
 
   /**
-   * Cleans up resources, specifically removing the window resize event listener.
+   * Cleans up resources, specifically removing the window resize event listener subscription.
    * Should be called when the controller is no longer needed.
    * @public
    */
   public destroy(): void {
-    window.removeEventListener("resize", this.handleResize);
+    this._isMobileDevice$.complete(); // Signal completion
   }
 
   /**
    * Updates specific toolbar elements' visual appearance based on the current mobile state.
-   * For example, adjusts spacing and toggles mobile attributes on buttons.
-   * @public
+   * This is now triggered by the RxJS resize observable.
+   * @param {boolean} isMobile - The current mobile state.
+   * @private
    */
-  public updateToolbarForMobileState(): void {
-    this._element.style.gap = this._isMobileDevice
+  private updateToolbarStyles(isMobile: boolean): void {
+    this._element.style.gap = isMobile
       ? "var(--space-xs, 4px)"
       : "var(--space-md, 12px)";
 
-    this._tourButton?.toggleAttribute("mobile", this._isMobileDevice);
-    // Potentially add other elements that need mobile state adjustments here
-    // e.g., find the "Add View" button by its ID if it needs specific styling.
+    this._tourButton?.toggleAttribute("mobile", isMobile);
     const addViewButton = this._element.querySelector<HTMLElement>(
       "#main-toolbar-add-view",
     );
-    addViewButton?.toggleAttribute("mobile", this._isMobileDevice);
+    addViewButton?.toggleAttribute("mobile", isMobile);
   }
 
   /**
-   * Clears the existing toolbar content and rebuilds it by setting up layout,
-   * creating static buttons, and loading dynamic items from the plugin system.
+   * Clears the existing toolbar content and rebuilds it using the template,
+   * populating it with dynamic plugin items and attaching static listeners.
    * @private
    */
   private createToolbar(): void {
     this._element.innerHTML = "";
     this._element.classList.add("toolbar-container");
 
-    const { leftButtonGroup, widgetArea } = this._setupToolbarLayout();
-    this._createStaticButtons(leftButtonGroup);
-    this._loadAndCreatePluginItems(leftButtonGroup, widgetArea);
+    const templateContent = toolbarTemplate.content.cloneNode(
+      true,
+    ) as DocumentFragment;
 
-    this._element.appendChild(leftButtonGroup);
-    this._element.appendChild(widgetArea);
+    const leftButtonGroup = templateContent.querySelector(
+      ".left-button-group",
+    ) as HTMLElement;
+    const widgetArea = templateContent.querySelector(
+      ".widget-area",
+    ) as HTMLElement;
+    const logoButton = templateContent.querySelector(
+      "#toolbar-logo",
+    ) as HTMLElement;
 
-    this.updateToolbarForMobileState();
-  }
+    if (!leftButtonGroup || !widgetArea || !logoButton) {
+      console.error(
+        "[ToolbarController] Could not find required elements (button group, widget area, or logo) in template!",
+      );
+      return;
+    }
 
-  /**
-   * Creates the main layout containers (div elements) for the toolbar sections.
-   * @private
-   * @returns {{ leftButtonGroup: HTMLDivElement, widgetArea: HTMLDivElement }} An object containing the created container elements.
-   */
-  private _setupToolbarLayout(): {
-    leftButtonGroup: HTMLDivElement;
-    widgetArea: HTMLDivElement;
-  } {
-    const leftButtonGroup = document.createElement("div");
-    leftButtonGroup.classList.add("toolbar-section", "left-button-group");
-
-    const widgetArea = document.createElement("div");
-    widgetArea.classList.add("toolbar-section", "widget-area");
-
-    return { leftButtonGroup, widgetArea };
-  }
-
-  /**
-   * Creates and configures the static buttons (Logo, Tour, Settings)
-   * and appends them to the specified container.
-   * @private
-   * @param {HTMLElement} container - The container element (e.g., leftButtonGroup) to append the buttons to.
-   */
-  private _createStaticButtons(container: HTMLElement): void {
-    const logoButton = document.createElement("teskooano-button");
-    logoButton.id = "toolbar-logo";
-    logoButton.title = "Visit Teskooano Website";
-    logoButton.setAttribute("variant", "image");
-    logoButton.setAttribute("size", "sm");
-    logoButton.setAttribute("tooltip-text", "Visit Teskooano Website");
-    logoButton.setAttribute("tooltip-title", "Teskooano");
-    logoButton.setAttribute("tooltip-icon-svg", TourIcon);
-    logoButton.setAttribute("tooltip-horizontal-align", "start");
-    logoButton.innerHTML = `<span slot="icon"><img src="/assets/icon.png" alt="Teskooano Logo" style="width: 45px; height: 45px; object-fit: contain;"></span>`;
-    logoButton.addEventListener("click", () => {
+    // Attach listener for the static logo button found in the template
+    fromEvent(logoButton, "click").subscribe(() => {
       window.open(this.WEBSITE_URL, "_blank");
     });
-    container.appendChild(logoButton);
+
+    // Load dynamic items into their respective containers
+    this._loadAndCreatePluginItems(leftButtonGroup, widgetArea);
+
+    this._element.appendChild(templateContent);
   }
 
   /**
    * Fetches and creates toolbar items (widgets, buttons) registered via the plugin system
-   * for the "main-toolbar" target and appends them to the appropriate containers.
-   * Handles basic parameter setting for widgets and function execution for buttons.
+   * using the helper function for buttons.
    * @private
    * @param {HTMLElement} buttonContainer - The container for buttons.
    * @param {HTMLElement} widgetContainer - The container for widgets.
@@ -231,7 +209,6 @@ export class ToolbarController {
                 widgetElement.setAttribute(key, String(value));
               } else {
                 console.error(
-                  // Use error here as it's unexpected
                   `[ToolbarController] Cannot set complex param '${key}' as attribute on ${widgetConfig.componentName}`,
                 );
               }
@@ -261,46 +238,34 @@ export class ToolbarController {
         pluginManager.getToolbarItemsForTarget(targetId);
       items.forEach((item) => {
         try {
+          const configAny = item as any;
+          const buttonOptions = {
+            title: item.title,
+            variant: "icon" as const,
+            size: "sm" as const,
+            iconSvg: item.iconSvg,
+            tooltipText: configAny.tooltipText,
+            tooltipTitle: configAny.tooltipTitle,
+            tooltipIconSvg: configAny.tooltipIconSvg,
+            mobileAware: item.id === "main-toolbar-add-view",
+          };
+
           if (item.type === "function") {
             const buttonConfig = item as FunctionToolbarItemConfig;
             if (!buttonConfig.functionId) {
               console.error(
-                // Use error here as it's unexpected
                 `[ToolbarController] Skipping function item '${buttonConfig.id}' - missing functionId.`,
               );
               return;
             }
 
-            const buttonElement = document.createElement("teskooano-button");
-            buttonElement.id = buttonConfig.id;
-            buttonElement.setAttribute("variant", "icon");
-            buttonElement.setAttribute("size", "sm");
-            if (buttonConfig.iconSvg) {
-              buttonElement.innerHTML = `<span slot="icon">${buttonConfig.iconSvg}</span>`;
-            }
-
-            const configAny = buttonConfig as any;
-            if (configAny.tooltipText) {
-              buttonElement.setAttribute("tooltip-text", configAny.tooltipText);
-            }
-            if (configAny.tooltipTitle) {
-              buttonElement.setAttribute(
-                "tooltip-title",
-                configAny.tooltipTitle,
-              );
-            }
-            if (configAny.tooltipIconSvg) {
-              buttonElement.setAttribute(
-                "tooltip-icon-svg",
-                configAny.tooltipIconSvg,
-              );
-            }
-            if (!configAny.tooltipText && buttonConfig.title) {
-              buttonElement.setAttribute("title", buttonConfig.title);
-            }
+            const buttonElement = this._createButtonElement(
+              buttonConfig.id,
+              buttonOptions,
+            );
 
             const functionId = buttonConfig.functionId;
-            buttonElement.addEventListener("click", async () => {
+            fromEvent(buttonElement, "click").subscribe(async () => {
               try {
                 await pluginManager.execute(functionId);
               } catch (execError) {
@@ -319,35 +284,15 @@ export class ToolbarController {
               console.error(
                 `[ToolbarController] Skipping panel item '${panelConfig.id}' - missing componentName.`,
               );
-              return; // Continue to next item
+              return;
             }
 
-            const buttonElement = document.createElement("teskooano-button");
-            buttonElement.id = panelConfig.id;
-            buttonElement.setAttribute("variant", "icon");
-            buttonElement.setAttribute("size", "sm");
-            if (panelConfig.iconSvg) {
-              buttonElement.innerHTML = `<span slot="icon">${panelConfig.iconSvg}</span>`;
-            }
+            const buttonElement = this._createButtonElement(
+              panelConfig.id,
+              buttonOptions,
+            );
 
-            // Handle tooltips (similar to function buttons)
-            const configAny = panelConfig as any;
-            if (configAny.tooltipText)
-              buttonElement.setAttribute("tooltip-text", configAny.tooltipText);
-            if (configAny.tooltipTitle)
-              buttonElement.setAttribute(
-                "tooltip-title",
-                configAny.tooltipTitle,
-              );
-            if (configAny.tooltipIconSvg)
-              buttonElement.setAttribute(
-                "tooltip-icon-svg",
-                configAny.tooltipIconSvg,
-              );
-            if (!configAny.tooltipText && panelConfig.title)
-              buttonElement.setAttribute("title", panelConfig.title);
-
-            buttonElement.addEventListener("click", () => {
+            fromEvent(buttonElement, "click").subscribe(() => {
               this._dockviewController.handlePanelToggleAction(panelConfig);
             });
 
@@ -370,5 +315,64 @@ export class ToolbarController {
       errorEl.style.color = "red";
       buttonContainer.appendChild(errorEl);
     }
+  }
+
+  /**
+   * Helper function to create a 'teskooano-button' element with common configurations.
+   * @param id The ID for the button.
+   * @param options Configuration options (title, variant, size, iconSvg, tooltip, etc.).
+   * @returns The configured button element.
+   * @private
+   */
+  private _createButtonElement(
+    id: string,
+    options: {
+      title?: string;
+      variant?: "icon" | "image" | "text"; // Add other variants if needed
+      size?: "sm" | "md" | "lg";
+      iconSvg?: string;
+      imageUrl?: string; // For image variant
+      imageAlt?: string; // For image variant
+      tooltipText?: string;
+      tooltipTitle?: string;
+      tooltipIconSvg?: string;
+      tooltipHorizontalAlign?: "start" | "center" | "end";
+      mobileAware?: boolean; // Flag if it needs the mobile attribute toggled
+    },
+  ): HTMLElement {
+    const buttonElement = document.createElement("teskooano-button");
+    buttonElement.id = id;
+
+    if (options.title) buttonElement.title = options.title;
+    buttonElement.setAttribute("variant", options.variant ?? "icon");
+    buttonElement.setAttribute("size", options.size ?? "sm");
+
+    if (options.iconSvg) {
+      buttonElement.innerHTML = `<span slot="icon">${options.iconSvg}</span>`;
+    } else if (options.variant === "image" && options.imageUrl) {
+      buttonElement.innerHTML = `<span slot="icon"><img src="${options.imageUrl}" alt="${options.imageAlt ?? ""}" style="width: 45px; height: 45px; object-fit: contain;"></span>`;
+    }
+
+    if (options.tooltipText)
+      buttonElement.setAttribute("tooltip-text", options.tooltipText);
+    if (options.tooltipTitle)
+      buttonElement.setAttribute("tooltip-title", options.tooltipTitle);
+    if (options.tooltipIconSvg)
+      buttonElement.setAttribute("tooltip-icon-svg", options.tooltipIconSvg);
+    if (options.tooltipHorizontalAlign)
+      buttonElement.setAttribute(
+        "tooltip-horizontal-align",
+        options.tooltipHorizontalAlign,
+      );
+
+    if (!options.tooltipText && options.title) {
+      buttonElement.title = options.title;
+    }
+
+    if (options.mobileAware) {
+      buttonElement.dataset.mobileAware = "true";
+    }
+
+    return buttonElement;
   }
 }

@@ -18,16 +18,13 @@ export function observeMutations(
 ): () => void {
   if (typeof MutationObserver === "undefined") {
     console.warn("MutationObserver is not supported in this environment.");
-    return () => {}; // Return no-op cleanup
+    return () => {};
   }
 
-  // Create an observer instance linked to the callback function
   const observer = new MutationObserver(callback);
 
-  // Start observing the target node for configured mutations
   observer.observe(target, options);
 
-  // Return a cleanup function to stop observing
   return () => observer.disconnect();
 }
 
@@ -58,9 +55,8 @@ export function observeMutations$(
 
     observer.observe(target, options);
 
-    // Cleanup function
     return () => {
       observer.disconnect();
     };
-  }).pipe(share()); // Share the underlying observer
+  }).pipe(share());
 }

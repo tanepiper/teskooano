@@ -1,31 +1,40 @@
 import {
-  getCelestialObjects,
-  currentSeed,
   celestialObjects$,
+  currentSeed,
+  getCelestialObjects,
+  updateSeed,
 } from "@teskooano/core-state";
-import { type CelestialObject } from "@teskooano/data-types";
 import { pluginManager } from "@teskooano/ui-plugin";
-import type { TeskooanoButton } from "../../../../core/components/button/Button.js";
 import {
-  CheckmarkIcon,
-  CopyIcon,
-  DeleteIcon,
-  DocumentAddIcon,
-  FolderOpenIcon,
-  SaveIcon,
-  SparkleIcon,
-  SystemControlsTemplate,
-} from "./SystemControls.template.js";
+  BehaviorSubject,
+  Subscription,
+  combineLatest,
+  from,
+  fromEvent,
+  merge,
+  of,
+} from "rxjs";
+import {
+  catchError,
+  debounceTime,
+  filter,
+  map,
+  startWith,
+  switchMap,
+  tap,
+  withLatestFrom,
+} from "rxjs/operators";
+import { SystemControlsTemplate } from "./SystemControls.template.js";
+import * as systemActions from "./system-controls.actions.js";
 import * as SystemControlsUI from "./system-controls.ui.js";
-import { Subscription } from "rxjs";
 
 /**
  * @element teskooano-system-controls
  * @description
  * A custom element that provides UI controls for managing the star system generation,
  * loading, saving, and clearing within the Teskooano application.
- * It interacts with the core state stores (`celestialObjectsStore`, `currentSeed`)
- * and actions to modify the application state.
+ * It interacts with the core state stores (`celestialObjects$`, `currentSeed`)
+ * and actions/functions to modify the application state.
  *
  * @attr {boolean} mobile - Indicates if the component should render in a mobile-friendly layout.
  *
@@ -37,7 +46,6 @@ class SystemControls
   extends HTMLElement
   implements SystemControlsUI.SystemControlsUIContract
 {
-  // DOM elements
   /** @internal The main container element for the controls. */
   private container: HTMLElement | null = null;
   /** @internal The element shown when no system is loaded. */
@@ -57,22 +65,44 @@ class SystemControls
   /** @internal The overlay shown during loading/generation states. */
   private loadingOverlay: HTMLElement | null = null;
 
-  // State & Properties
-  /** @internal Flag indicating if the mobile layout is active. Controlled by the `mobile` attribute. */
-  private _isMobile: boolean = false;
-  /** @internal Flag indicating if a system generation/import/export process is currently running. */
-  private _isGenerating: boolean = false;
+  private isGenerating$$ = new BehaviorSubject<boolean>(false);
+  private mobile$$ = new BehaviorSubject<boolean>(false);
+  private subscriptions = new Subscription();
 
-  // Store Unsubscribers
-  /** @internal Array holding unsubscribe functions for Nanostore subscriptions. */
-  private unsubscribers: Subscription[] = [];
+  public isMobile(): boolean {
+    return this.mobile$$.value;
+  }
+  public isGenerating(): boolean {
+    return this.isGenerating$$.value;
+  }
+
+  public get _loadingOverlay(): HTMLElement | null {
+    return this.loadingOverlay;
+  }
+  public get _buttons(): NodeListOf<HTMLElement> | null {
+    return this.buttons;
+  }
+  public get _emptyState(): HTMLElement | null {
+    return this.emptyState;
+  }
+  public get _loadedState(): HTMLElement | null {
+    return this.loadedState;
+  }
+  public get _systemSeedEl(): HTMLElement | null {
+    return this.systemSeedEl;
+  }
+  public get _celestialCountEl(): HTMLElement | null {
+    return this.celestialCountEl;
+  }
+  public get _seedInput(): HTMLInputElement | null {
+    return this.seedInput;
+  }
 
   /**
    * Observed attributes for the custom element.
    * @returns {string[]} An array of attribute names to observe.
    */
   static get observedAttributes() {
-    // Only observe mobile, other state comes from store
     return ["mobile"];
   }
 
@@ -87,7 +117,6 @@ class SystemControls
    * @internal
    */
   connectedCallback() {
-    // Cache DOM elements
     this.container =
       this.shadowRoot?.querySelector(".teskooano-system-controls-container") ||
       null;
@@ -106,21 +135,9 @@ class SystemControls
     this.loadingOverlay =
       this.shadowRoot?.querySelector(".loading-overlay") || null;
 
-    // Add event listeners
-    this.addEventListeners();
+    this.mobile$$.next(this.hasAttribute("mobile"));
 
-    // Subscribe to stores
-    this.subscribeToStores();
-
-    // Initial UI update based on current store state
-    this.updateDisplay(getCelestialObjects(), currentSeed.getValue());
-    // Set initial seed input value
-    if (this.seedInput) {
-      this.seedInput.value = currentSeed.getValue() || "";
-    }
-
-    // --- Add Tooltips ---
-    this.setupTooltips();
+    this.setupRxJSStreams();
   }
 
   /**
@@ -128,10 +145,7 @@ class SystemControls
    * @internal
    */
   disconnectedCallback() {
-    this.removeEventListeners();
-    // Unsubscribe from all stores
-    this.unsubscribers.forEach((unsub) => unsub.unsubscribe());
-    this.unsubscribers = [];
+    this.subscriptions.unsubscribe();
   }
 
   /**
@@ -147,417 +161,330 @@ class SystemControls
     newValue: string | null,
   ) {
     if (name === "mobile") {
-      this._isMobile = newValue !== null;
-      this.updateButtonSizes();
-      // Re-run display logic if mobile status affects layout significantly
-      this.updateDisplay(getCelestialObjects(), currentSeed.getValue());
+      this.mobile$$.next(newValue !== null);
     }
   }
 
   /**
-   * Subscribes to the relevant Nanostores and stores the unsubscribe functions.
+   * Sets up all the RxJS streams for event handling and state management.
    * @private
    */
-  private subscribeToStores() {
-    // Subscribe to celestialObjectsStore
-    const unsubObjects = celestialObjects$.subscribe(
-      (objects: Record<string, CelestialObject>) => {
-        // Subscribe to correct store
-        // TODO: Still need systemName source
-        this.updateDisplay(objects, currentSeed.getValue()); // Pass objects map
-      },
-    );
-    this.unsubscribers.push(unsubObjects);
+  private setupRxJSStreams(): void {
+    if (!this.shadowRoot) return;
 
-    // Current Seed subscription remains the same
-    const unsubSeed = currentSeed.subscribe((seed: string) => {
-      // REMOVED: Don't force input value on every seed store change
-      // if (this.seedInput && this.seedInput.value !== seed) {
-      //   this.seedInput.value = seed;
-      // }
-      // Update display using current objects store value
-      // TODO: Still need systemName source
-      this.updateDisplay(getCelestialObjects(), seed);
-    });
-    this.unsubscribers.push(unsubSeed);
-  }
-
-  /**
-   * Generates a system using a random seed. Typically used for tours or demonstrations.
-   * @public
-   */
-  public tourRandomSeed() {
-    const randomSeed = Math.random().toString(36).substring(2, 10); // Simple random seed
-    this.handleSeedSubmit({ preventDefault: () => {} } as Event);
-  }
-
-  /**
-   * Updates the size and appearance of buttons based on the mobile state.
-   * Calls the external UI handler.
-   * @private
-   */
-  private updateButtonSizes() {
-    SystemControlsUI.updateButtonSizesUI(this);
-  }
-
-  /**
-   * Updates the component's display based on the current system state (objects and seed).
-   * Calls the external UI handler.
-   * @param {Record<string, CelestialObject>} objects - The current map of celestial objects.
-   * @param {string} seed - The current system seed.
-   * @private
-   */
-  private updateDisplay(
-    objects: Record<string, CelestialObject>,
-    seed: string,
-  ): void {
-    SystemControlsUI.updateDisplayUI(this, objects, seed);
-  }
-
-  /**
-   * Adds event listeners to the interactive elements within the component.
-   * @private
-   */
-  private addEventListeners() {
-    // Remove the listener from the form's submit event
-    // this.seedForm?.addEventListener('submit', this.handleSeedSubmit);
-
-    // Find the specific submit button within the form
-    const submitButton = this.seedForm?.querySelector(
+    const generateSubmitButton = this.seedForm?.querySelector<HTMLElement>(
       'teskooano-button[type="submit"]',
     );
-    // Add a click listener DIRECTLY to the submit button
-    submitButton?.addEventListener("click", this.handleSeedSubmit);
-
-    this.buttons?.forEach((button) => {
-      // This loop already skips the submit button, which is fine.
-      // We keep the listeners for the other action buttons (random, clear, etc.)
-      if (button.getAttribute("type") !== "submit") {
-        button.addEventListener("click", this.handleActionClick);
-      }
-    });
-  }
-
-  /**
-   * Removes event listeners added by `addEventListeners`.
-   * @private
-   */
-  private removeEventListeners() {
-    // Remove the listener from the form's submit event (if it was ever added)
-    // this.seedForm?.removeEventListener('submit', this.handleSeedSubmit);
-
-    // Find the specific submit button again
-    const submitButton = this.seedForm?.querySelector(
-      'teskooano-button[type="submit"]',
+    const randomButton = this.shadowRoot.querySelector<HTMLElement>(
+      'teskooano-button[data-action="random"]',
     );
-    // Remove the click listener DIRECTLY from the submit button
-    submitButton?.removeEventListener("click", this.handleSeedSubmit);
+    const clearButton = this.shadowRoot.querySelector<HTMLElement>(
+      'teskooano-button[data-action="clear"]',
+    );
+    const exportButton = this.shadowRoot.querySelector<HTMLElement>(
+      'teskooano-button[data-action="export"]',
+    );
+    const importButton = this.shadowRoot.querySelector<HTMLElement>(
+      'teskooano-button[data-action="import"]',
+    );
+    const copySeedButton = this.shadowRoot.querySelector<HTMLElement>(
+      'teskooano-button[data-action="copy-seed"]',
+    );
+    const createBlankButton = this.shadowRoot.querySelector<HTMLElement>(
+      'teskooano-button[data-action="create-blank"]',
+    );
 
-    this.buttons?.forEach((button) => {
-      if (button.getAttribute("type") !== "submit") {
-        button.removeEventListener("click", this.handleActionClick);
-      }
-    });
-  }
-
-  /**
-   * Handles the submission of the seed form (triggered by button click).
-   * Validates the seed input and calls the system generation function.
-   * @param {Event} event - The click event object.
-   * @private
-   */
-  private handleSeedSubmit = async (event: Event) => {
-    event.preventDefault(); // Keep this!
-
-    if (this._isGenerating) {
+    if (
+      !this.seedForm ||
+      !generateSubmitButton ||
+      !randomButton ||
+      !clearButton ||
+      !exportButton ||
+      !importButton ||
+      !copySeedButton ||
+      !createBlankButton ||
+      !this.seedInput
+    ) {
+      console.error(
+        "[SystemControls] One or more required elements not found.",
+      );
       return;
     }
 
-    const seed = this.seedInput?.value.trim() ?? ""; // Use empty string if null/undefined
+    const seedSubmit$ = fromEvent(generateSubmitButton, "click").pipe(
+      map(() => this.seedInput!.value || ""),
+    );
 
-    // Basic validation feedback
-    if (!seed && this.seedInput) {
-      console.warn("Seed input is empty");
-      this.seedInput.classList.add("error");
-      this.seedInput.setAttribute("placeholder", "Seed cannot be empty!");
-      const submitButton = this.seedForm?.querySelector(
-        'teskooano-button[type="submit"]',
-      );
-      if (submitButton)
-        this.showFeedback(submitButton as HTMLElement, "⚠️", true);
+    const randomSubmit$ = fromEvent(randomButton, "click").pipe(
+      map(() => Math.random().toString(36).substring(2, 10)),
+    );
 
-      setTimeout(() => {
-        this.seedInput?.classList.remove("error");
-        this.seedInput?.setAttribute("placeholder", "Enter seed...");
-      }, 2000);
-      return;
-    }
+    const generateSystemTrigger$ = merge(seedSubmit$, randomSubmit$);
 
-    this.setGenerating(true);
+    const generateSystemAction$ = generateSystemTrigger$.pipe(
+      filter(() => !this.isGenerating$$.value),
+      tap(() => this.isGenerating$$.next(true)),
 
-    try {
-      const result = await pluginManager.execute("system:generate_random", {
-        seed: seed,
-      });
-
-      const success = (result as any)?.success;
-      // Feedback is now implicitly handled by store updates triggering updateDisplay
-      if (success === false) {
-        console.error("System generation failed.");
-        const submitButton = this.seedForm?.querySelector(
-          'teskooano-button[type="submit"]',
-        );
-        if (submitButton)
-          this.showFeedback(submitButton as HTMLElement, "❌", true, 3000);
-      }
-    } catch (error) {
-      console.error("Error during system:generate_random call:", error);
-      const submitButton = this.seedForm?.querySelector(
-        'teskooano-button[type="submit"]',
-      );
-      if (submitButton)
-        this.showFeedback(submitButton as HTMLElement, "❌", true, 3000);
-    } finally {
-      this.setGenerating(false);
-    }
-  };
-
-  /**
-   * Handles clicks on buttons with `data-action` attributes.
-   * Dispatches calls to specific handler methods based on the action.
-   * @param {Event} event - The click event object.
-   * @private
-   */
-  private handleActionClick = async (event: Event) => {
-    if (this._isGenerating) return;
-
-    const button = event.currentTarget as HTMLElement;
-    const action = button.dataset.action;
-
-    if (!action) return;
-
-    this.setGenerating(true);
-    let result: any | null = null;
-
-    try {
-      switch (action) {
-        case "export":
-          result = await pluginManager.execute("system:export");
-          break;
-        case "import":
-          result = await pluginManager.execute("system:trigger_import_dialog");
-          break;
-        case "random":
-          result = await pluginManager.execute("system:generate_random");
-          break;
-        case "clear":
-          if (
-            confirm(
-              "Are you sure you want to clear the current system? This cannot be undone.",
-            )
-          ) {
-            result = await pluginManager.execute("system:clear");
-          } else {
-            result = {
+      switchMap((seed) =>
+        from(
+          pluginManager.execute("system:generate_random", { seed: seed }),
+        ).pipe(
+          tap((result: any) => {
+            console.log("Generation result:", result);
+            this.showFeedback(
+              generateSubmitButton,
+              result?.symbol || (result?.success ? "✅" : "❌"),
+              !result?.success,
+            );
+            const originalTriggerSeed = this.seedInput?.value;
+            if (
+              result?.success &&
+              result?.seed &&
+              this.seedInput &&
+              result.seed !== originalTriggerSeed
+            ) {
+              this.seedInput.value = result.seed;
+            }
+          }),
+          catchError((err) => {
+            console.error("Generation error:", err);
+            this.showFeedback(generateSubmitButton, "❌", true);
+            return of({
               success: false,
-              symbol: "🚫",
-              message: "Clear cancelled.",
-            };
-          }
-          break;
-        case "create-blank":
-          result = await pluginManager.execute("system:create_blank");
-          break;
-        case "copy-seed":
-          result = await pluginManager.execute("system:copy_seed", {
-            seed: currentSeed.getValue(),
-          });
-          break;
-        default:
-          console.warn(`Unhandled action: ${action}`);
-          this.setGenerating(false);
-          return;
-      }
+              symbol: "❌",
+              message: "Generation failed",
+            });
+          }),
+        ),
+      ),
+      tap(() => this.isGenerating$$.next(false)),
+    );
 
-      // Show feedback based on the result from the action handlers
-      if (result) {
-        this.showFeedback(button, result.symbol, !result.success);
-      } else {
-        // Handle cases where the action handler didn't return a result (e.g., import cancelled)
-      }
-    } catch (error) {
-      // Catch errors from the action handlers themselves (e.g., file dialog rejection)
-      console.error(`Error during action '${action}':`, error);
-      const message = error instanceof Error ? error.message : "Unknown error";
-      // Show generic error feedback if the action handler failed unexpectedly
-      // unless it's a cancellation error we want to ignore visually.
-      if (message !== "File selection cancelled.") {
-        this.showFeedback(button, "❌", true);
-      }
-    } finally {
-      // Always reset generating state unless it was already reset (e.g., for unhandled action)
-      if (this._isGenerating) {
-        this.setGenerating(false);
-      }
-    }
-  };
+    const clearSystemAction$ = fromEvent(clearButton, "click").pipe(
+      filter(() => !this.isGenerating$$.value),
+      tap(() => this.isGenerating$$.next(true)),
+      switchMap(() =>
+        from(systemActions.clearSystem()).pipe(
+          tap((result) => {
+            console.log("Clear result:", result);
+            this.showFeedback(
+              clearButton,
+              result.symbol || (result.success ? "🗑️" : "❌"),
+              !result.success,
+            );
+          }),
+          catchError((err) => {
+            console.error("Clear error:", err);
+            this.showFeedback(clearButton, "❌", true);
+            return of({
+              success: false,
+              symbol: "❌",
+              message: "Clear failed",
+            });
+          }),
+        ),
+      ),
+      tap(() => this.isGenerating$$.next(false)),
+    );
 
-  /**
-   * Sets the generating state of the component, updating the UI accordingly.
-   * @param {boolean} isGenerating - True if the component should be in a loading state, false otherwise.
-   * @private
-   */
-  private setGenerating(isGenerating: boolean) {
-    if (this._isGenerating === isGenerating) return; // No change
-    this._isGenerating = isGenerating;
-    this.updateDisplay(getCelestialObjects(), currentSeed.getValue());
+    const exportSystemAction$ = fromEvent(exportButton, "click").pipe(
+      filter(() => !this.isGenerating$$.value),
+      withLatestFrom(currentSeed, celestialObjects$),
+      tap(() => this.isGenerating$$.next(true)),
+      switchMap(([_, seed, objects]) =>
+        from(systemActions.exportSystem(seed, objects)).pipe(
+          tap((result) => {
+            console.log("Export result:", result);
+            this.showFeedback(
+              exportButton,
+              result.symbol || (result.success ? "💾" : "❌"),
+              !result.success,
+            );
+          }),
+          catchError((err) => {
+            console.error("Export error:", err);
+            this.showFeedback(exportButton, "❌", true);
+            return of({
+              success: false,
+              symbol: "❌",
+              message: "Export failed",
+            });
+          }),
+        ),
+      ),
+      tap(() => this.isGenerating$$.next(false)),
+    );
+
+    const importSystemAction$ = fromEvent(importButton, "click").pipe(
+      filter(() => !this.isGenerating$$.value),
+      tap(() => this.isGenerating$$.next(true)),
+
+      switchMap(() =>
+        from(pluginManager.execute("system:trigger_import_dialog")).pipe(
+          tap((result: any) => {
+            console.log("Import result:", result);
+            this.showFeedback(
+              importButton,
+              result?.symbol || (result?.success ? "✅" : "❌"),
+              !result?.success,
+            );
+          }),
+          catchError((err) => {
+            console.error("Import error:", err);
+
+            const message = err instanceof Error ? err.message : String(err);
+            if (message === "File selection cancelled.") {
+              this.showFeedback(importButton, "🤷", false, 1000);
+            } else {
+              this.showFeedback(importButton, "❌", true);
+            }
+            return of({
+              success: false,
+              symbol: "❌",
+              message: "Import failed",
+            });
+          }),
+        ),
+      ),
+      tap(() => this.isGenerating$$.next(false)),
+    );
+
+    const copySeedAction$ = fromEvent(copySeedButton, "click").pipe(
+      filter(() => !this.isGenerating$$.value),
+      withLatestFrom(currentSeed),
+
+      switchMap(([_, seed]) =>
+        from(pluginManager.execute("system:copy_seed", seed)).pipe(
+          tap((result: any) => {
+            this.showFeedback(
+              copySeedButton,
+              result?.symbol || (result?.success ? "📋" : "❌"),
+              !result?.success,
+            );
+          }),
+          catchError((err) => {
+            console.error("Copy seed error:", err);
+            this.showFeedback(copySeedButton, "❌", true);
+            return of({ success: false, symbol: "❌", message: "Copy failed" });
+          }),
+        ),
+      ),
+    );
+
+    const createBlankAction$ = fromEvent(createBlankButton, "click").pipe(
+      filter(() => !this.isGenerating$$.value),
+      tap(() => this.isGenerating$$.next(true)),
+
+      switchMap(() =>
+        from(pluginManager.execute("system:create_blank")).pipe(
+          tap((result: any) => {
+            this.showFeedback(
+              createBlankButton,
+              result?.symbol || (result?.success ? "📄" : "❌"),
+              !result?.success,
+            );
+          }),
+          catchError((err) => {
+            console.error("Create blank system error:", err);
+            this.showFeedback(createBlankButton, "❌", true);
+            return of({
+              success: false,
+              symbol: "❌",
+              message: "Create blank failed",
+            });
+          }),
+        ),
+      ),
+      tap(() => this.isGenerating$$.next(false)),
+    );
+
+    const displayState$ = combineLatest([
+      celestialObjects$.pipe(startWith(getCelestialObjects())),
+      currentSeed.pipe(startWith(currentSeed.getValue())),
+      this.isGenerating$$,
+      this.mobile$$,
+    ]).pipe(debounceTime(0));
+
+    this.subscriptions.add(
+      displayState$.subscribe(([objects, seed, isGenerating, isMobile]) => {
+        if (this.loadingOverlay) {
+          this.loadingOverlay.style.display = isGenerating ? "flex" : "none";
+        }
+
+        SystemControlsUI.updateDisplayUI(this, objects, seed);
+        SystemControlsUI.updateButtonSizesUI(this);
+
+        if (this.seedInput && !this.seedInput.matches(":focus")) {
+          this.seedInput.value = seed || "";
+        }
+      }),
+    );
+
+    const seedInput$ = fromEvent(this.seedInput, "input").pipe(
+      debounceTime(300),
+      map((event) => {
+        const inputEl = (event.target as HTMLElement).shadowRoot?.querySelector(
+          "input#seed",
+        ) as HTMLInputElement;
+        return inputEl.value;
+      }),
+      tap((seed) => updateSeed(seed)),
+    );
+
+    this.subscriptions.add(generateSystemAction$.subscribe());
+    this.subscriptions.add(clearSystemAction$.subscribe());
+    this.subscriptions.add(exportSystemAction$.subscribe());
+    this.subscriptions.add(importSystemAction$.subscribe());
+    this.subscriptions.add(copySeedAction$.subscribe());
+    this.subscriptions.add(createBlankAction$.subscribe());
+    this.subscriptions.add(seedInput$.subscribe());
   }
 
   /**
-   * Displays temporary feedback (a symbol) within a target element (usually a button).
-   * Replaces the element's content temporarily and restores it after a duration.
-   * @param {HTMLElement} element - The HTML element to display feedback within.
-   * @param {string} symbol - The feedback symbol/text to display.
-   * @param {boolean} [isError=false] - If true, applies an 'error' class for styling.
-   * @param {number} [duration=1500] - The duration in milliseconds to show the feedback.
+   * Shows temporary feedback (symbol) on a button.
+   * @param element The button element to show feedback on.
+   * @param symbol The symbol (emoji/char) to display.
+   * @param isError If true, adds an error class.
+   * @param duration Duration in ms to show the feedback.
    * @private
    */
   private showFeedback(
-    element: HTMLElement,
+    element: HTMLElement | null,
     symbol: string,
     isError: boolean = false,
     duration: number = 1500,
-  ) {
-    // Find the icon span within the button if possible
-    const targetElement = element; // The button itself
-    const originalContentHTML = targetElement.innerHTML; // Store original SVG etc.
+  ): void {
+    if (!element) return;
 
-    // Create feedback span
-    const feedback = document.createElement("span");
-    feedback.className = `feedback ${isError ? "error" : ""}`;
-    feedback.textContent = symbol;
-    feedback.style.display = "inline-block"; // Ensure it's visible
+    const originalContent = element.innerHTML;
+    const feedbackClass = isError ? "feedback--error" : "feedback--success";
 
-    // Temporarily replace or append
-    targetElement.innerHTML = ""; // Clear original content (SVG)
-    targetElement.appendChild(feedback);
+    const existingTimeout = parseInt(
+      element.dataset.feedbackTimeoutId || "0",
+      10,
+    );
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+      element.classList.remove("feedback--error", "feedback--success");
 
-    setTimeout(() => {
-      targetElement.innerHTML = originalContentHTML;
-    }, duration);
-  }
-
-  /** Public getter for the mobile state. */
-  public isMobile(): boolean {
-    return this._isMobile;
-  }
-
-  /** Public getter for the generating state. */
-  public isGenerating(): boolean {
-    return this._isGenerating;
-  }
-
-  /**
-   * Iterates through buttons and sets tooltip attributes based on action.
-   * @private
-   */
-  private setupTooltips(): void {
-    const submitButton = this.seedForm?.querySelector(
-      'teskooano-button[type="submit"]',
-    ) as TeskooanoButton | null;
-
-    if (submitButton) {
-      this.setButtonTooltip(
-        submitButton,
-        "Generate",
-        "Generate system from entered seed",
-        CheckmarkIcon,
-      );
+      element.innerHTML = element.dataset.originalContent || originalContent;
     }
 
-    this.buttons?.forEach((button) => {
-      const actionButton = button as TeskooanoButton; // Cast to specific type
-      const action = actionButton.dataset.action;
-      switch (action) {
-        case "random":
-          this.setButtonTooltip(
-            actionButton,
-            "Random Seed",
-            "Generate system using a random seed",
-            SparkleIcon,
-          );
-          break;
-        case "clear":
-          this.setButtonTooltip(
-            actionButton,
-            "Clear System",
-            "Clear all objects from the current system",
-            DeleteIcon,
-          );
-          break;
-        case "export":
-          this.setButtonTooltip(
-            actionButton,
-            "Export System",
-            "Export current system objects and seed to a JSON file",
-            SaveIcon,
-          );
-          break;
-        case "import":
-          this.setButtonTooltip(
-            actionButton,
-            "Import System",
-            "Import system from a JSON file",
-            FolderOpenIcon,
-          );
-          break;
-        case "create-blank":
-          this.setButtonTooltip(
-            actionButton,
-            "New Blank",
-            "Create a new blank system with just a star",
-            DocumentAddIcon,
-          );
-          break;
-        case "copy-seed":
-          this.setButtonTooltip(
-            actionButton,
-            "Copy Seed",
-            "Copy the current system seed to the clipboard",
-            CopyIcon,
-          );
-          break;
-        // Add cases for other buttons if they exist
-      }
-    });
-  }
+    element.dataset.originalContent = originalContent;
+    element.innerHTML = `<span class="feedback-symbol">${symbol}</span>`;
+    element.classList.add(feedbackClass);
+    element.setAttribute("disabled", "");
 
-  /**
-   * Helper to set tooltip attributes on a button.
-   * @param button The button element.
-   * @param title Tooltip title.
-   * @param text Tooltip descriptive text.
-   * @param iconSvg Optional SVG string for the tooltip icon.
-   * @private
-   */
-  private setButtonTooltip(
-    button: TeskooanoButton | null,
-    title: string | null,
-    text: string | null,
-    iconSvg: string | null,
-  ): void {
-    if (!button) return;
-    // Set attributes - the button component handles native title suppression
-    if (title) button.setAttribute("tooltip-title", title);
-    else button.removeAttribute("tooltip-title");
+    const timeoutId = window.setTimeout(() => {
+      element.innerHTML = element.dataset.originalContent || originalContent;
+      element.classList.remove(feedbackClass);
+      element.removeAttribute("disabled");
+      delete element.dataset.feedbackTimeoutId;
+      delete element.dataset.originalContent;
+    }, duration);
 
-    if (text) button.setAttribute("tooltip-text", text);
-    else button.removeAttribute("tooltip-text");
-
-    if (iconSvg) button.setAttribute("tooltip-icon-svg", iconSvg);
-    else button.removeAttribute("tooltip-icon-svg");
+    element.dataset.feedbackTimeoutId = timeoutId.toString();
   }
 }
 
-// Export for potential external usage or typing
 export { SystemControls };

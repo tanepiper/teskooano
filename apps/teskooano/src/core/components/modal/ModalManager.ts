@@ -1,6 +1,6 @@
-import type { DockviewController } from "../../controllers/dockview/DockviewController"; // Corrected path
-import { ModalResult } from "../../controllers/dockview/types"; // Corrected path
-import { TeskooanoModal } from "./Modal"; // Import for the TeskooanoModal web component class
+import type { DockviewController } from "../../controllers/dockview/DockviewController";
+import { ModalResult } from "../../controllers/dockview/types";
+import { TeskooanoModal } from "./Modal";
 
 export interface ModalOptions {
   id?: string;
@@ -21,16 +21,14 @@ export interface ModalOptions {
  * and the TeskooanoModal web component.
  */
 export class TeskooanoModalManager {
-  private _dockviewController: DockviewController | null = null; // Allow null initially
+  private _dockviewController: DockviewController | null = null;
   private isInitialized = false;
 
   /**
    * Create a new ModalManager
    * Dependencies are injected via initialize()
    */
-  constructor() {
-    // No dependencies in constructor
-  }
+  constructor() {}
 
   /**
    * Initializes the manager with necessary dependencies.
@@ -51,7 +49,6 @@ export class TeskooanoModalManager {
    * @returns Promise that resolves with the action taken
    */
   public show(options: ModalOptions): Promise<ModalResult> {
-    // Use the controller's showOverlay method
     const modalId =
       options.id ||
       `modal-overlay-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -59,20 +56,17 @@ export class TeskooanoModalManager {
     const width = options.width || 450;
     const height = options.height || 250;
 
-    // Check if initialized
     if (!this.isInitialized || !this._dockviewController) {
       console.error(
         "ModalManager not initialized. Call initialize() before show().",
       );
-      return Promise.resolve("dismissed"); // Cannot show modal
+      return Promise.resolve("dismissed");
     }
 
-    // --- Create the TeskooanoModal element ---
     const modalElement = new TeskooanoModal();
     modalElement.style.width = "100%";
     modalElement.style.height = "100%";
 
-    // Configure the modal element based on options
     try {
       if (options.title) {
         modalElement.setAttribute("title", options.title);
@@ -99,17 +93,14 @@ export class TeskooanoModalManager {
         options.hideSecondaryButton === undefined ||
         options.hideSecondaryButton === true
       ) {
-        // Default to hiding secondary if undefined or explicitly true
         modalElement.setAttribute("hide-secondary-button", "");
       }
     } catch (error) {
       console.error("ModalManager: Error configuring modal element:", error);
-      // Return a rejected promise or a promise resolved with 'dismissed'
-      return Promise.resolve("dismissed"); // Or Promise.reject(error)
+
+      return Promise.resolve("dismissed");
     }
 
-    // --- Add event listeners to the modal element ---
-    // These listeners will call the controller's hideOverlay method
     const handleConfirm = () =>
       this._dockviewController!.hideOverlay(modalId, "confirm");
     const handleClose = () =>
@@ -121,14 +112,12 @@ export class TeskooanoModalManager {
     modalElement.addEventListener("modal-close", handleClose);
     modalElement.addEventListener("modal-additional", handleSecondary);
 
-    // --- Show the overlay using the controller ---
     const overlayPromise = this._dockviewController!.showOverlay(
       modalId,
       modalElement,
       { width, height },
     );
 
-    // --- Cleanup listeners when the overlay promise resolves/rejects ---
     overlayPromise.finally(() => {
       modalElement.removeEventListener("modal-confirm", handleConfirm);
       modalElement.removeEventListener("modal-close", handleClose);
@@ -141,8 +130,5 @@ export class TeskooanoModalManager {
   /**
    * Cleans up all active modals (delegates to controller)
    */
-  public dispose(): void {
-    // Controller handles overlay disposal now
-    // If ModalManager had other resources, dispose them here
-  }
+  public dispose(): void {}
 }

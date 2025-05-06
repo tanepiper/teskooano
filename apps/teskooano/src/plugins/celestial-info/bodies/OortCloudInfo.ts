@@ -8,7 +8,6 @@ import { FormatUtils } from "../utils/FormatUtils";
 import { baseStyles } from "../utils/CelestialStyles";
 import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
 
-// --- OORT CLOUD INFO COMPONENT ---
 export class OortCloudInfoComponent
   extends HTMLElement
   implements CelestialInfoComponent
@@ -33,9 +32,7 @@ export class OortCloudInfoComponent
     const container = this.shadow.getElementById("container");
     if (!container) return;
 
-    // Add type guard for properties
     if (celestial.type === CelestialType.OORT_CLOUD && celestial.properties) {
-      // Force type assertion after checking celestial.type
       const properties = celestial.properties as OortCloudProperties;
 
       container.innerHTML = `
@@ -44,8 +41,8 @@ export class OortCloudInfoComponent
                     <dt>Type:</dt><dd>Oort Cloud</dd>
                     <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
                     
-                    ${properties.innerRadiusAU ? `<dt>Inner Radius:</dt><dd>${FormatUtils.formatDistanceAU(properties.innerRadiusAU * AU_METERS)}</dd>` : ""} // Convert AU to meters
-                    ${properties.outerRadiusAU ? `<dt>Outer Radius:</dt><dd>${FormatUtils.formatDistanceAU(properties.outerRadiusAU * AU_METERS)}</dd>` : ""} // Convert AU to meters
+                    ${properties.innerRadiusAU ? `<dt>Inner Radius:</dt><dd>${FormatUtils.formatDistanceAU(properties.innerRadiusAU * AU_METERS)}</dd>` : ""} 
+                    ${properties.outerRadiusAU ? `<dt>Outer Radius:</dt><dd>${FormatUtils.formatDistanceAU(properties.outerRadiusAU * AU_METERS)}</dd>` : ""} 
                     ${properties.visualParticleCount ? `<dt>Particle Count:</dt><dd>${properties.visualParticleCount.toLocaleString()}</dd>` : ""}
                     ${properties.visualDensity ? `<dt>Density (visual):</dt><dd>${FormatUtils.formatFix(properties.visualDensity, 3)}</dd>` : ""}
                     ${properties.composition ? `<dt>Composition:</dt><dd>${properties.composition.join(", ")}</dd>` : ""}
@@ -54,11 +51,9 @@ export class OortCloudInfoComponent
                 </dl>
             `;
     } else {
-      // Handle cases where properties might be missing or type is wrong
       container.innerHTML = `<div class="placeholder">Oort cloud data incomplete.</div>`;
     }
   }
 }
 
-// Define the custom element
 customElements.define("oort-cloud-info", OortCloudInfoComponent);

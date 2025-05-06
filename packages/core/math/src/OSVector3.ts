@@ -22,9 +22,6 @@ export class OSVector3 {
     this.z = z;
   }
 
-  // We'll add methods (add, subtract, scale, dot, cross, etc.) here as needed.
-  // For now, just the basic structure.
-
   /**
    * Creates a clone of this vector.
    * @returns A new OSVector3 instance with the same components.
@@ -122,7 +119,7 @@ export class OSVector3 {
     if (len > EPSILON) {
       this.multiplyScalar(1 / len);
     } else {
-      this.set(0, 0, 0); // Set to zero vector if length is negligible
+      this.set(0, 0, 0);
     }
     return this;
   }
@@ -205,13 +202,11 @@ export class OSVector3 {
       qz = q.z,
       qw = q.w;
 
-    // Calculate quat * vector
     const ix = qw * x + qy * z - qz * y;
     const iy = qw * y + qz * x - qx * z;
     const iz = qw * z + qx * y - qy * x;
     const iw = -qx * x - qy * y - qz * z;
 
-    // Calculate result * conjugate quat
     this.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
     this.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
     this.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;

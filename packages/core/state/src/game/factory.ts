@@ -65,7 +65,6 @@ export interface ClearStateOptions {
   resetSelection?: boolean;
 }
 
-// Internal helper function (now only creates and stores core object)
 const _createCelestialObjectInternal = (
   data: CelestialObjectCreationInput,
   calculatedPhysicsStateReal: PhysicsStateReal,
@@ -78,8 +77,6 @@ const _createCelestialObjectInternal = (
       ? data.seed.toString()
       : (data.seed ?? `${Math.floor(Math.random() * 1000000)}`);
 
-  // --- Create and Store the CORE CelestialObject using celestialActions ---
-  // celestialActions already uses the correct setters
   const coreObject: CelestialObject = {
     id: data.id,
     name: data.name,
@@ -103,19 +100,17 @@ const _createCelestialObjectInternal = (
   };
   celestialActions.addCelestialObject(coreObject);
 
-  // NOTE: Hierarchy update is now handled within celestialActions.addCelestialObject
-  // The logic below is removed as it's duplicated/obsolete.
   /*
-  // Update hierarchy (caller handles star root case)
+  
   if (data.parentId) {
-    const currentHierarchy = getCelestialHierarchy(); // Use getter
+    const currentHierarchy = getCelestialHierarchy(); 
     const siblings = currentHierarchy[data.parentId] || [];
     if (!siblings.includes(data.id)) {
-      const newHierarchy = { // Create new hierarchy object
+      const newHierarchy = { 
         ...currentHierarchy,
         [data.parentId]: [...siblings, data.id],
       };
-      setCelestialHierarchy(newHierarchy); // Use setter
+      setCelestialHierarchy(newHierarchy); 
     }
   }
   */
@@ -136,30 +131,24 @@ export const celestialFactory = {
       resetSelection = true,
     } = options;
 
-    // Use bulk setters
     setAllCelestialObjects({});
     setAllCelestialHierarchy({});
 
-    // Get current state to preserve what's needed using getter
     const currentState = getSimulationState();
 
-    // Build the new state
     const newState: any = { ...currentState };
 
-    // Reset time-related properties if requested
     if (resetTime) {
       newState.time = 0;
       newState.timeScale = 1;
       newState.paused = false;
     }
 
-    // Reset selection if requested
     if (resetSelection) {
       newState.selectedObject = null;
       newState.focusedObjectId = null;
     }
 
-    // Reset camera if requested
     if (resetCamera) {
       newState.camera = {
         position: new THREE.Vector3(0, 0, 1000),
@@ -168,10 +157,8 @@ export const celestialFactory = {
       };
     }
 
-    // Update the state using the setter
     setSimulationState(newState);
 
-    // Dispatch event indicating objects are cleared (or loaded with count 0)
     document.dispatchEvent(
       new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
         detail: { count: 0 },
@@ -179,7 +166,6 @@ export const celestialFactory = {
     );
   },
 
-  // Create a solar system with a star at the center
   createSolarSystem: (data: CelestialObjectCreationInput): string => {
     if (data.type !== CelestialType.STAR) {
       console.error(
@@ -190,8 +176,6 @@ export const celestialFactory = {
 
     celestialFactory.clearState({ resetCamera: false });
 
-    // --- Star Specific Defaults & Property Calculation ---
-    // (Keep the defaulting logic for spectral class, temp, color, etc. here)
     const inputStarProps =
       data.properties?.type === CelestialType.STAR
         ? data.properties
@@ -302,7 +286,6 @@ export const celestialFactory = {
     }
     if (albedo === undefined) albedo = 0.3;
 
-    // Construct the processed properties object
     const processedProperties: StarProperties = {
       type: CelestialType.STAR,
       isMainStar,
@@ -318,16 +301,13 @@ export const celestialFactory = {
       whiteDwarfType,
     };
 
-    // --- Define Star Initial State ---
     const starPhysicsReal: PhysicsStateReal = {
       id: data.id,
       mass_kg: data.realMass_kg,
       position_m: new OSVector3(0, 0, 0),
       velocity_mps: new OSVector3(0, 0, 0),
     };
-    // REMOVED: Render state calculation
 
-    // --- Call Internal Creator (only passes core data now) ---
     _createCelestialObjectInternal(
       data,
       starPhysicsReal,
@@ -336,9 +316,8 @@ export const celestialFactory = {
       albedo,
     );
 
-    // Initialize hierarchy root for the star using the setter
-    const currentHierarchy = getCelestialHierarchy(); // Get current
-    setCelestialHierarchy({ ...currentHierarchy, [data.id]: [] }); // Set new map
+    const currentHierarchy = getCelestialHierarchy();
+    setCelestialHierarchy({ ...currentHierarchy, [data.id]: [] });
 
     document.dispatchEvent(
       new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
@@ -349,26 +328,21 @@ export const celestialFactory = {
     return data.id;
   },
 
-  // Add a celestial object (planet, moon, etc.) to the system
   addCelestial: (data: CelestialObjectCreationInput): void => {
     if (data.type === CelestialType.STAR) {
       console.warn(
         `[celestialFactory] addCelestial called with star type: ${data.id}. Use createSolarSystem for the primary star.`,
       );
 
-      // Check if this is likely a primary star (no parent)
       if (!data.parentId) {
         console.error(
           `[celestialFactory] This appears to be a primary star. Using addCelestial for primary stars is not recommended. Please use createSolarSystem instead.`,
         );
-        // Continue anyway, but with caution
       } else {
-        // Allow adding companion stars
       }
     }
 
     if (!data.parentId) {
-      // Allow stars without parents (handled by createSolarSystem mainly)
       if (data.type !== CelestialType.STAR) {
         console.error(
           `[celestialFactory] Cannot add non-star object ${data.id}. Missing parentId.`,
@@ -380,11 +354,9 @@ export const celestialFactory = {
     let physicsStateReal: PhysicsStateReal;
     let orbitalParams = data.orbit;
 
-    // Use getter to find parent
     const objects = getCelestialObjects();
     const parent = data.parentId ? objects[data.parentId] : null;
 
-    // --- Handle RING_SYSTEM state derivation ---
     if (data.type === CelestialType.RING_SYSTEM) {
       if (!parent) {
         console.error(
@@ -398,14 +370,14 @@ export const celestialFactory = {
         );
         return;
       }
-      // Ring systems derive state directly from parent, ignore orbit calculation
+
       physicsStateReal = {
         id: data.id,
-        mass_kg: 0, // Ring systems have negligible mass for physics
+        mass_kg: 0,
         position_m: parent.physicsStateReal.position_m.clone(),
         velocity_mps: parent.physicsStateReal.velocity_mps.clone(),
       };
-      orbitalParams = undefined; // Clear orbital params as they are not used for state calculation
+      orbitalParams = undefined;
     } else if (data.type === CelestialType.OORT_CLOUD) {
       if (!parent) {
         console.error(
@@ -419,16 +391,15 @@ export const celestialFactory = {
         );
         return;
       }
-      // Oort clouds are static relative to their parent (usually the primary star)
+
       physicsStateReal = {
         id: data.id,
-        mass_kg: 0, // Negligible mass
-        position_m: parent.physicsStateReal.position_m.clone(), // Use parent's position
-        velocity_mps: parent.physicsStateReal.velocity_mps.clone(), // Use parent's velocity
+        mass_kg: 0,
+        position_m: parent.physicsStateReal.position_m.clone(),
+        velocity_mps: parent.physicsStateReal.velocity_mps.clone(),
       };
-      orbitalParams = undefined; // Oort clouds don't orbit in the standard way
+      orbitalParams = undefined;
     } else if (data.type === CelestialType.ASTEROID_FIELD) {
-      // Treat Asteroid Fields like static rings relative to parent
       if (!parent) {
         console.error(
           `[celestialFactory] Cannot add ASTEROID_FIELD ${data.id}. Parent ${data.parentId} not found.`,
@@ -443,22 +414,20 @@ export const celestialFactory = {
       }
       physicsStateReal = {
         id: data.id,
-        mass_kg: 0, // Negligible mass for physics
-        position_m: parent.physicsStateReal.position_m.clone(), // Use parent's position
-        velocity_mps: parent.physicsStateReal.velocity_mps.clone(), // Use parent's velocity
+        mass_kg: 0,
+        position_m: parent.physicsStateReal.position_m.clone(),
+        velocity_mps: parent.physicsStateReal.velocity_mps.clone(),
       };
-      orbitalParams = undefined; // Belts don't orbit independently in this model
+      orbitalParams = undefined;
     } else if (data.type === CelestialType.STAR && !data.parentId) {
-      // Handle manually added primary star (e.g., from ToolbarSeedForm?)
       physicsStateReal = {
         id: data.id,
         mass_kg: data.realMass_kg,
         position_m: new OSVector3(0, 0, 0),
         velocity_mps: new OSVector3(0, 0, 0),
       };
-      orbitalParams = undefined; // Root stars don't orbit anything via this factory method
+      orbitalParams = undefined;
     } else {
-      // --- Standard Orbit Calculation for Planets, Moons, Companion Stars etc. ---
       if (!orbitalParams) {
         console.error(
           `[celestialFactory] Cannot add object ${data.id} (Type: ${data.type}). Missing orbit parameters.`,
@@ -534,26 +503,19 @@ export const celestialFactory = {
         position_m: initialWorldPosReal,
         velocity_mps: initialWorldVelReal,
       };
-      // --- End Standard Orbit Calculation ---
     }
 
-    // --- Process Defaults (minimal for non-star) ---
-    // Note: Temperature/Albedo calculation is mainly in createSolarSystem for stars
-    const processedTemperature = data.temperature ?? 100; // Generic default
-    const processedAlbedo = data.albedo ?? 0.3; // Generic default
-    // Pass properties through, assuming they are correct for the type
+    const processedTemperature = data.temperature ?? 100;
+    const processedAlbedo = data.albedo ?? 0.3;
+
     const processedProperties = data.properties;
 
-    // --- Call Internal Creator (only passes core data now) ---
     _createCelestialObjectInternal(
       data,
-      physicsStateReal, // Use the derived or calculated state
+      physicsStateReal,
       processedProperties,
       processedTemperature,
       processedAlbedo,
     );
   },
 };
-
-// Remove internal action definition (if still present)
-// (celestialActions as any).addCelestialObjectInternal = (...) => { ... };

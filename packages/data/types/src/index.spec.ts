@@ -104,7 +104,6 @@ describe("Data Types", () => {
       expect(typeof params.meanAnomaly).toBe("number");
       expect(typeof params.period).toBe("number");
 
-      // Validate ranges
       expect(params.eccentricity).toBeGreaterThanOrEqual(0);
       expect(params.eccentricity).toBeLessThanOrEqual(1);
       expect(params.inclination).toBeGreaterThanOrEqual(-Math.PI);

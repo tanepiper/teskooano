@@ -10,9 +10,9 @@ export interface ExternalLink {
   /** An SVG string representing the icon for the button. */
   iconSvg: string;
   /** The main text content for the tooltip associated with the button. Falls back to `label` if not provided. */
-  tooltipText?: string; // Optional
+  tooltipText?: string;
   /** The title content for the tooltip. Falls back to `label` if not provided. */
-  tooltipTitle?: string; // Optional
+  tooltipTitle?: string;
   /** An SVG string for the icon within the tooltip. Falls back to `iconSvg` if not provided. */
-  tooltipIconSvg?: string; // Optional
+  tooltipIconSvg?: string;
 }

@@ -67,7 +67,6 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   ): void {
     this.elapsedTime = time - this.startTime;
 
-    // Update time-based uniforms for all materials
     this.materials.forEach((material) => {
       if (material instanceof THREE.ShaderMaterial) {
         if (material.uniforms && material.uniforms.time !== undefined) {
@@ -75,29 +74,20 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
         }
       }
     });
-
-    // Subclasses should extend this to update object-specific properties
   }
 
   /**
    * Default implementation of LOD updating
    * Subclasses should override if they use custom LOD handling
    */
-  updateLOD(objectId: string, distance: number, camera: THREE.Camera): void {
-    // Default implementation does nothing
-    // THREE.LOD objects handle this automatically
-    // Subclasses should override as needed
-  }
+  updateLOD(objectId: string, distance: number, camera: THREE.Camera): void {}
 
   /**
    * Clean up resources
    */
   dispose(): void {
-    // Dispose of all materials
     this.materials.forEach((material) => {
-      // Dispose of textures within materials
       if (material instanceof THREE.Material) {
-        // Check for textures in the material
         Object.keys(material).forEach((key) => {
           const value = (material as any)[key];
           if (value instanceof THREE.Texture) {
@@ -105,7 +95,6 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
           }
         });
 
-        // Handle ShaderMaterial uniforms
         if (material instanceof THREE.ShaderMaterial) {
           Object.keys(material.uniforms || {}).forEach((key) => {
             const value = material.uniforms[key].value;
@@ -115,12 +104,10 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
           });
         }
 
-        // Dispose the material itself
         material.dispose();
       }
     });
 
-    // Clear maps
     this.materials.clear();
   }
 
@@ -170,7 +157,6 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
         material.uniforms[textureKey].value = texture;
       }
     } else {
-      // For standard materials
       (material as any)[textureKey] = texture;
     }
   }
@@ -181,10 +167,8 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
    * 0 = highest detail, 1 = lowest detail
    */
   protected calculateLODLevel(distance: number, objectRadius: number): number {
-    // Normalize distance based on object radius
     const normalizedDistance = distance / (objectRadius * 100);
 
-    // Clamp between 0 and 1
     return Math.max(0, Math.min(1, normalizedDistance - 0.5));
   }
 
@@ -208,7 +192,6 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   ): LightSourceData | null {
     if (!lightSources || lightSources.size === 0) return null;
 
-    // Use the specified primary light source if available
     if (
       object.primaryLightSourceId &&
       lightSources.has(object.primaryLightSourceId)
@@ -216,7 +199,6 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
       return lightSources.get(object.primaryLightSourceId) || null;
     }
 
-    // Otherwise, just use the first light source
     return lightSources.values().next().value || null;
   }
 }

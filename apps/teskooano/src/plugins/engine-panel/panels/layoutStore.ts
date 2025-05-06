@@ -7,7 +7,6 @@ export type Orientation = "portrait" | "landscape";
  * @returns {Orientation} The initial orientation.
  */
 function getInitialOrientation(): Orientation {
-  // Check if window and matchMedia are available (for SSR or specific environments)
   if (
     typeof window !== "undefined" &&
     typeof window.matchMedia === "function"
@@ -16,7 +15,7 @@ function getInitialOrientation(): Orientation {
       ? "portrait"
       : "landscape";
   }
-  return "landscape"; // Default if window/matchMedia is not available
+  return "landscape";
 }
 
 /**
@@ -27,7 +26,6 @@ const orientationSubject = new BehaviorSubject<Orientation>(
   getInitialOrientation(),
 );
 
-// --- Media Query Listener ---
 let mediaQueryList: MediaQueryList | null = null;
 
 function handleOrientationChange(event: MediaQueryListEvent): void {
@@ -37,14 +35,12 @@ function handleOrientationChange(event: MediaQueryListEvent): void {
   }
 }
 
-// Setup listener only in browser environment
 if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
   mediaQueryList = window.matchMedia("(orientation: portrait)");
-  // Add listener using the recommended addEventListener method
+
   try {
     mediaQueryList.addEventListener("change", handleOrientationChange);
   } catch (e) {
-    // Fallback for older browsers
     try {
       mediaQueryList.addListener(handleOrientationChange);
     } catch (fallbackError) {
@@ -73,7 +69,6 @@ export function cleanupOrientationListener(): void {
     try {
       mediaQueryList.removeEventListener("change", handleOrientationChange);
     } catch (e) {
-      // Fallback for older browsers
       try {
         mediaQueryList.removeListener(handleOrientationChange);
       } catch (fallbackError) {

@@ -9,7 +9,7 @@ Open Space is a modular space simulation game built with TypeScript and Three.js
 ### Core Packages
 
 - [@teskooano/data-types](./packages/data-types.md) - Core type definitions and interfaces
-- [@teskooano/core-state](./packages/core-state.md) - State management using nanostores
+- [@teskooano/core-state](./packages/core-state.md) - State management using RxJS
 - [@teskooano/renderer-threejs](./packages/renderer-threejs.md) - Three.js-based rendering system
 
 ### Application Packages

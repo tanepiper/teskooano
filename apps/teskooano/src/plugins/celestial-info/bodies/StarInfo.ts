@@ -7,7 +7,6 @@ import { FormatUtils } from "../utils/FormatUtils";
 import { baseStyles } from "../utils/CelestialStyles";
 import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
 
-// --- STAR INFO COMPONENT ---
 export class StarInfoComponent
   extends HTMLElement
   implements CelestialInfoComponent
@@ -34,20 +33,15 @@ export class StarInfoComponent
 
     const starProps = celestial.properties as StarProperties;
 
-    // Add descriptive text for special star types
     let spectralDescription = "";
     if (starProps?.spectralClass) {
-      // Check for white dwarf (ends with D)
       if (starProps.spectralClass.includes("D")) {
         spectralDescription = ` (White Dwarf)`;
-      }
-      // Check for neutron star
-      else if (starProps.spectralClass === "N") {
+      } else if (starProps.spectralClass === "N") {
         spectralDescription = ` (Neutron Star)`;
       }
     }
 
-    // Get descriptive color name
     const colorName = FormatUtils.getStarColorName(starProps?.color);
     const colorDisplay = starProps?.color
       ? `${colorName} (${starProps.color})`
@@ -122,5 +116,4 @@ export class StarInfoComponent
   }
 }
 
-// Define the custom element
 customElements.define("star-info", StarInfoComponent);

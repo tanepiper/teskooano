@@ -9,14 +9,11 @@ import {
   type IceSurfaceProperties,
 } from "@teskooano/data-types";
 
-// --- Neptune Constants ---
 const NEPTUNE_AXIAL_TILT_DEG = 28.32;
-const NEPTUNE_SIDEREAL_DAY_S = 16.11 * 3600; // ~16.11 hours
+const NEPTUNE_SIDEREAL_DAY_S = 16.11 * 3600;
 
-// --- Triton Constants ---
 const TRITON_SMA_M = 354759 * KM;
 
-// --- Nereid Constants ---
 const NEREID_SMA_M = 5513800 * KM;
 
 /**
@@ -26,7 +23,6 @@ export function initializeNeptune(parentId: string): void {
   const neptuneId = "neptune";
   const sma_au = 30.07;
 
-  // --- Initialize Neptune ---
   actions.addCelestial({
     id: neptuneId,
     name: "Neptune",
@@ -64,7 +60,6 @@ export function initializeNeptune(parentId: string): void {
     ).normalize(),
   });
 
-  // --- Initialize Triton ---
   const sma_m_triton = TRITON_SMA_M;
   actions.addCelestial({
     id: "triton",
@@ -78,11 +73,11 @@ export function initializeNeptune(parentId: string): void {
     orbit: {
       realSemiMajorAxis_m: sma_m_triton,
       eccentricity: 0.000016,
-      inclination: 156.885 * DEG_TO_RAD, // Retrograde
-      longitudeOfAscendingNode: 0, // Simplified for near-circular/equatorial
-      argumentOfPeriapsis: 0, // Simplified
+      inclination: 156.885 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 0,
+      argumentOfPeriapsis: 0,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 5.877 * 24 * 3600 * -1, // Retrograde period
+      period_s: 5.877 * 24 * 3600 * -1,
     },
     temperature: 38,
     albedo: 0.76,
@@ -94,10 +89,10 @@ export function initializeNeptune(parentId: string): void {
     surface: {
       type: SurfaceType.ICE_FLATS,
       planetType: PlanetType.ICE,
-      color: "#FFFAFA", // Snow white
-      secondaryColor: "#FFB6C1", // Pinkish nitrogen ice areas
+      color: "#FFFAFA",
+      secondaryColor: "#FFB6C1",
       roughness: 0.4,
-      // Optional procedural details
+
       color1: "#A0522D",
       color2: "#FFB6C1",
       color3: "#FFFAFA",
@@ -118,11 +113,10 @@ export function initializeNeptune(parentId: string): void {
       parentPlanet: neptuneId,
       composition: ["nitrogen ice", "water ice", "rocky core"],
     },
-    siderealRotationPeriod_s: -507744, // Tidally locked, synchronous retrograde
-    axialTilt: new OSVector3(0, 1, 0), // Assume negligible tilt relative to orbit
+    siderealRotationPeriod_s: -507744,
+    axialTilt: new OSVector3(0, 1, 0),
   });
 
-  // --- Initialize Nereid ---
   const sma_m_nereid = NEREID_SMA_M;
   actions.addCelestial({
     id: "nereid",
@@ -131,27 +125,27 @@ export function initializeNeptune(parentId: string): void {
     type: CelestialType.MOON,
     parentId: neptuneId,
     realMass_kg: 3.1e19,
-    realRadius_m: 170000, // Approx radius
-    siderealRotationPeriod_s: 3.114e7, // Placeholder, likely chaotic rotation
-    axialTilt: new OSVector3(0, 1, 0).normalize(), // Assume simple tilt
+    realRadius_m: 170000,
+    siderealRotationPeriod_s: 3.114e7,
+    axialTilt: new OSVector3(0, 1, 0).normalize(),
     visualScaleRadius: 0.03,
     orbit: {
       realSemiMajorAxis_m: sma_m_nereid,
-      eccentricity: 0.7507, // Very high eccentricity
-      inclination: 7.232 * DEG_TO_RAD, // Inclination relative to Neptune's orbit
-      longitudeOfAscendingNode: 0, // Simplified
-      argumentOfPeriapsis: 0, // Simplified
+      eccentricity: 0.7507,
+      inclination: 7.232 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 0,
+      argumentOfPeriapsis: 0,
       meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
-      period_s: 3.114e7, // approx 360 days
+      period_s: 3.114e7,
     },
-    temperature: 50, // K
+    temperature: 50,
     albedo: 0.14,
     atmosphere: { composition: [], pressure: 0, color: "#444444" },
     surface: {
       type: SurfaceType.CRATERED,
       color: "#B0B0B0",
       roughness: 0.7,
-    } as IceSurfaceProperties, // Assumed icy/rocky
+    } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       planetType: PlanetType.ICE,

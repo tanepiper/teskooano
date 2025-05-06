@@ -9,7 +9,6 @@ export { StateManager } from "./StateManager";
 export type { RendererCelestialObject } from "./StateManager";
 export * from "./events";
 
-// Core module class will be implemented here
 export class CoreRenderer {
   sceneManager: SceneManager;
   animationLoop: AnimationLoop;
@@ -20,9 +19,8 @@ export class CoreRenderer {
     this.animationLoop = new AnimationLoop();
     this.stateManager = new StateManager();
 
-    // Pass the renderer instance to the animation loop
     this.animationLoop.setRenderer(this.sceneManager.renderer);
-    // Pass the camera instance to the animation loop
+
     this.animationLoop.setCamera(this.sceneManager.camera);
   }
 

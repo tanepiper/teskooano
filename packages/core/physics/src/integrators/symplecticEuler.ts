@@ -1,7 +1,3 @@
-// Remove THREE import
-// import * as THREE from 'three';
-
-// Import correct types
 import { Integrator, PhysicsStateReal } from "../types";
 import { OSVector3 } from "@teskooano/core-math";
 
@@ -24,27 +20,20 @@ import { OSVector3 } from "@teskooano/core-math";
  */
 export const symplecticEuler: Integrator = (
   currentState: PhysicsStateReal,
-  acceleration: OSVector3, // Use OSVector3
-  dt: number, // seconds
+  acceleration: OSVector3,
+  dt: number,
 ): PhysicsStateReal => {
-  // Clone REAL vectors to avoid modifying originals
   const pos_m = currentState.position_m.clone();
   const vel_mps = currentState.velocity_mps.clone();
-  const acc = acceleration.clone(); // Use OSVector3
+  const acc = acceleration.clone();
 
-  // Calculate new velocity first (m/s)
-  // Reuse acc vector scaled by dt
   acc.multiplyScalar(dt);
   const newVelocity_mps = vel_mps.clone().add(acc);
 
-  // Calculate new position using new velocity: p_new = p_old + v_new * dt (meters)
-  // Reuse acc vector (which is now acc*dt) and add vel_mps to get new velocity
-  // Clone new velocity and scale by dt for position update
   const newPosition_m = pos_m
     .clone()
     .add(newVelocity_mps.clone().multiplyScalar(dt));
 
-  // Return a new state object, preserving the original id and mass_kg
   return {
     ...currentState,
     position_m: newPosition_m,

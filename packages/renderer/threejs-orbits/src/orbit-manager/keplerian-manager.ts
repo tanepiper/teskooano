@@ -3,18 +3,17 @@ import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
-import { calculateOrbitPoints, updateOrbitLine } from "./"; // Import from index
+import { calculateOrbitPoints, updateOrbitLine } from "./";
 
-// --- Material Definitions ---
 const KEPLERIAN_DEFAULT_MATERIAL = new THREE.LineBasicMaterial({
-  color: 0xffffff, // White
+  color: 0xffffff,
   linewidth: 1.5,
   transparent: true,
   opacity: 0.7,
   depthTest: false,
 });
 const KEPLERIAN_MOON_MATERIAL = new THREE.LineBasicMaterial({
-  color: 0xaaaaaa, // Dim Gray
+  color: 0xaaaaaa,
   linewidth: 1.0,
   transparent: true,
   opacity: 0.5,
@@ -81,44 +80,41 @@ export class KeplerianOrbitManager {
 
     const parentWorldPosition = new THREE.Vector3();
     parentObject3D.getWorldPosition(parentWorldPosition);
-    const orbitPointsOS = calculateOrbitPoints(orbitalParameters); // Assumes this returns OSVector3[]
-    const orbitPointsTHREE = orbitPointsOS.map((p) => p.toThreeJS()); // Convert to THREE.Vector3[]
+    const orbitPointsOS = calculateOrbitPoints(orbitalParameters);
+    const orbitPointsTHREE = orbitPointsOS.map((p) => p.toThreeJS());
 
     if (orbitPointsTHREE.length === 0) {
       if (existingLine) this.remove(objectId);
       return;
     }
 
-    // Determine material based on parent type
-    const isMoon = parentState.type !== CelestialType.STAR; // Assuming CelestialType is available
+    const isMoon = parentState.type !== CelestialType.STAR;
     const targetMaterial = isMoon
       ? KEPLERIAN_MOON_MATERIAL
       : KEPLERIAN_DEFAULT_MATERIAL;
 
     if (existingLine) {
-      updateOrbitLine(existingLine, orbitPointsTHREE); // Update geometry using THREE vectors
-      existingLine.position.copy(parentWorldPosition); // Update position
-      existingLine.visible = isVisible; // Update visibility
+      updateOrbitLine(existingLine, orbitPointsTHREE);
+      existingLine.position.copy(parentWorldPosition);
+      existingLine.visible = isVisible;
 
-      // Update material if necessary
       if (existingLine.material !== targetMaterial) {
         if (existingLine.material instanceof THREE.Material) {
-          existingLine.material.dispose(); // Dispose old material
+          existingLine.material.dispose();
         }
-        existingLine.material = targetMaterial.clone(); // Assign cloned new material
+        existingLine.material = targetMaterial.clone();
       }
       this.applyHighlight(
         objectId,
         existingLine,
         highlightedObjectId,
         highlightColor,
-      ); // Apply highlight
+      );
     } else {
-      // Create new line
       const geometry = new THREE.BufferGeometry().setFromPoints(
         orbitPointsTHREE,
-      ); // Use THREE vectors
-      const material = targetMaterial.clone(); // Clone material for new line
+      );
+      const material = targetMaterial.clone();
       const newLine = new THREE.Line(geometry, material);
 
       newLine.name = `orbit-line-${objectId}`;
@@ -132,7 +128,7 @@ export class KeplerianOrbitManager {
         newLine,
         highlightedObjectId,
         highlightColor,
-      ); // Apply highlight
+      );
     }
   }
 
@@ -157,7 +153,7 @@ export class KeplerianOrbitManager {
    */
   clearAll(): void {
     this.lines.forEach((_, id) => this.remove(id));
-    this.lines.clear(); // Ensure map is empty
+    this.lines.clear();
   }
 
   /**
@@ -238,9 +234,7 @@ export class KeplerianOrbitManager {
       }
       line.material.color.copy(highlightColor);
     } else if (line.userData.defaultColor) {
-      // Only reset if it was previously highlighted (has defaultColor)
       line.material.color.copy(line.userData.defaultColor);
-      // Optional: delete line.userData.defaultColor; to signify it's no longer highlighted
     }
   }
 

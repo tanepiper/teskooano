@@ -1,6 +1,5 @@
-// Handlers for toolbar actions
 import type { ToolbarController } from "./ToolbarController";
-import { pluginManager } from "@teskooano/ui-plugin"; // Import the instance
+import { pluginManager } from "@teskooano/ui-plugin";
 
 /**
  * @interface ToolbarTemplateHandlers
@@ -48,20 +47,20 @@ export const createToolbarHandlers = (
 
   const handleAddViewClick = (event: MouseEvent): void => {
     const addPanelFuncConfig = pluginManager.getFunctionConfig(
-      "engine:add_composite_panel",
+      "view:addCompositeEnginePanel",
     );
     if (addPanelFuncConfig?.execute) {
       try {
-        pluginManager.execute("engine:add_composite_panel");
+        pluginManager.execute("view:addCompositeEnginePanel");
       } catch (error) {
         console.error(
-          "[Toolbar] Error executing engine:add_composite_panel:",
+          "[Toolbar] Error executing view:addCompositeEnginePanel:",
           error,
         );
       }
     } else {
       console.error(
-        "[Toolbar] Function engine:add_composite_panel not found in plugin manager.",
+        "[Toolbar] Function view:addCompositeEnginePanel not found in plugin manager.",
       );
     }
   };

@@ -7,6 +7,97 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **@teskooano/core-physics:** Introduced `createSimulationStream` in `simulation/simulation.ts`, an RxJS-based function to create an Observable stream of simulation step results. This replaces the previous imperative `runSimulation` function.
+- **@teskooano/core-physics:** Added `SimulationParameters` interface to group parameters for the `updateSimulation` function.
+- **@teskooano/systems-procedural-generation:** `generatePlanetObservable` function in `generators/planet.ts`: Returns an RxJS `Observable` to emit generated planet and associated ring system data reactively.
+- **@teskooano/data-types:** `CelestialObjectProperties` interface to `celestial.ts`.
+- **@teskooano/data-types:** `SliderValueChangePayload` interface to `events.ts`.
+
+### Changed
+
+- **@teskooano/web-apis:** Refactored various API utility modules for code clarity and conciseness, removing redundant comments and logging (including `idle-detection`, `invoker-commands`, `media-recorder`, `network`, `observers`, `popover`, `remote-playback`, `screen-capture`, `storage`, `workers`).
+- **@teskooano/web-apis:** Updated `resizeObserver.ts` to use `RxJS BehaviorSubject` for state management, replacing `nanostores`.
+- **@teskooano/web-apis:** Simplified type definitions and internal logic in several modules for better maintainability.
+- **@teskooano/renderer-threejs:** Updated `RendererStateAdapter.ts` to consume RxJS Observables (`celestialObjects$`, `simulationState$`) from `@teskooano/core-state`.
+- **@teskooano/renderer-threejs:** Modified `RendererStateAdapter.ts` to use `renderableActions.setAllRenderableObjects` and `visualSettings.next()` for state updates, aligning with RxJS patterns.
+- **@teskooano/renderer-threejs:** Added `seed` and `temperature` properties to `RenderableCelestialObject` within `RendererStateAdapter.ts`.
+- **@teskooano/renderer-threejs-core:** Updated `StateManager.ts` to use RxJS Observables (`celestialObjects$`, `simulationState$`) and helper functions (`getCelestialObjects`, `getSimulationState`) from `@teskooano/core-state`.
+- **@teskooano/renderer-threejs-core:** Subscription logic in `StateManager.ts` now uses RxJS `pipe`, `pairwise`, and `startWith` for more robust state diffing.
+- **@teskooano/renderer-threejs-core:** Unsubscribe logic now uses RxJS `Subscription` objects.
+- **@teskooano/renderer-threejs-core:** Exported `RendererCelestialObject` type from `index.ts`.
+- **@teskooano/renderer-threejs-core:** Extensive comment removal and minor code cleanup across various files, including `SceneManager.ts`, test files (`__tests__/*`), `events.ts`, `index.ts`, and `setup.ts`.
+- **@teskooano/renderer-threejs-effects:** Major Refactor (`LightManager.ts`):
+  - Now subscribes to `celestialObjects$` from `@teskooano/core-state` using RxJS (`pipe`, `map`, `filter`, `pairwise`).
+  - Star lights are now added, updated (position, intensity), and removed reactively based on changes to star objects in the core state.
+  - Intensity is now partly derived from star temperature via a new `calculateIntensity` placeholder method.
+  - Removed the manual `updateStarLight` method.
+  - Improved `dispose` method to correctly unsubscribe and dispose of light resources.
+- **@teskooano/renderer-threejs-effects:** Added `distance` and `decay` parameters to `LightManager.addStarLight`.
+- **@teskooano/renderer-threejs-effects:** `EffectComposerManager.update` now checks if `this.composer` exists before rendering.
+- **@teskooano/renderer-threejs-effects:** Added `../threejs` to `tsconfig.json` references.
+- **@teskooano/renderer-threejs-interaction:** `ControlsManager.ts` now uses `getSimulationState` and `setSimulationState` from `@teskooano/core-state` for camera state updates.
+- **@teskooano/renderer-threejs-interaction:** `CSS2DManager.ts`:
+  - Added pre-render checks to find and remove orphaned labels and to hide any `CSS2DObject` in the scene without a parent, improving stability.
+  - Simplified internal logic for managing `pointer-events`.
+- **@teskooano/renderer-threejs-interaction:** Extensive comment removal and minor code cleanup across various files, including test files and `setup.ts`.
+- **@teskooano/renderer-threejs-interaction:** Removed Playwright and Vitest browser-specific triple-slash directives from `setup.ts`.
+- **@teskooano/renderer-threejs-objects:** Major Refactor (Mesh Creation):
+  - Deleted the monolithic `MeshFactory.ts` class.
+  - Introduced a new `object-manager/mesh-creators/` directory with dedicated functions for creating meshes for specific celestial object types (e.g., `createStarMesh`, `createPlanetMesh`, `createRingSystemMesh`, etc.).
+  - Each creator function now handles fetching appropriate LOD levels from `CelestialRenderer` instances and constructing `THREE.LOD` objects.
+  - Added `createFallbackSphere.ts` for consistent fallback mesh generation.
+- **@teskooano/renderer-threejs-objects:** Updated exports in `object-manager/index.ts` to include new managers like `AccelerationVisualizer`, `DebrisEffectManager`, `ObjectLifecycleManager`, and the new mesh creator exports.
+- **@teskooano/renderer-threejs-objects:** Refactored `RendererUpdater.ts`:
+  - Simplified update logic for standard and specialized renderers.
+  - The `dispose()` method is now empty, indicating a change in how renderer resources are managed or disposed of.
+  - General comment cleanup.
+- **@teskooano/renderer-threejs-orbits:** Dependency Update: Replaced `nanostores` with `rxjs` for state management.
+- **@teskooano/renderer-threejs-orbits:** RxJS Integration:
+  - `OrbitManager.ts` and `orbit-manager/keplerian-manager.ts` now consume `renderableObjects$` (an RxJS Observable) and `getCelestialObjects()` from `@teskooano/core-state`.
+  - Both managers subscribe to `renderableObjects$` to get the latest data for orbit calculations.
+  - `OrbitManager.ts` subscription to `RendererStateAdapter.$visualSettings` now uses RxJS `subscribe` and `unsubscribe` methods.
+  - The `dispose` method in `KeplerianOrbitManager` now correctly unsubscribes from the `renderableObjects$` observable.
+- **@teskooano/renderer-threejs-orbits:** Extensive comment removal and minor code cleanup across most files, including `OrbitManager.ts`, `orbit-manager/keplerian-manager.ts`, `orbit-manager/orbit-calculator.ts`, and `orbit-manager/verlet-predictor.ts`.
+- **@teskooano/core-physics:** Refactored various modules (`orbital/orbital.ts`, `spatial/octree.ts`, `units/*`, `utils/*`) for code clarity and conciseness by removing redundant comments and performing minor cleanup.
+- **@teskooano/core-physics:** Simplified parameter passing to `updateSimulation` by using the new `SimulationParameters` interface.
+- **@teskooano/core-state:** Major Refactor: Migrated core game state management (`simulationState`, `celestialObjectsStore`, `celestialHierarchyStore`, `renderableObjectsStore`, `panelState`) from Nanostores (`atom`, `map`) to RxJS `BehaviorSubject`.
+  - State stores now expose an Observable (e.g., `simulationState$`) for reactive subscriptions and getter functions (e.g., `getSimulationState()`) for direct access.
+  - Setter functions (e.g., `setSimulationState()`) and specific action dispatchers are now used for state modification.
+- **@teskooano/core-state:** Updated `physics.ts` to use new RxJS-based state accessors (`getSimulationState`, `getCelestialObjects`).
+- **@teskooano/core-state:** Refactored `factory.ts` to use new state setters (`setSimulationState`, `setCelestialHierarchy`) and getters, and removed redundant comments.
+- **@teskooano/core-state:** Simplified `stores.ts`, `panelRegistry.ts`, and `panelState.ts` by removing unnecessary comments and adapting to RxJS.
+- **@teskooano/core-state:** Updated `currentSeed` in `stores.ts` to use `BehaviorSubject`.
+- **@teskooano/core-state:** Introduced `accelerationVectors$` observable in `stores.ts`.
+- **@teskooano/core-state:** Revised exports in `packages/core/state/src/game/index.ts` to reflect the new RxJS structure.
+- **@teskooano/systems-celestial:** Major Refactor (Materials & Textures):
+  - Removed the entire old procedural texture generation system (deleted `textures/` directory including `TextureFactory.ts`, `TextureGeneratorBase.ts`, and individual generator classes like `GasGiantTextureGenerator.ts`, `TerrestrialTextureGenerator.ts`, etc.).
+  - Removed the old material management system (deleted `MaterialFactory.ts` and individual material classes like `PlanetMaterial.ts`, `StarMaterial.ts`, etc.).
+  - Introduced a new `materials/` directory with dedicated functions for material creation:
+    - `createProceduralPlanetMaterial.ts`: For generating planet materials, likely using shaders and uniforms defined in `types/procedural.ts`.
+    - `createRingMaterial.ts`: For ring system materials.
+    - `createStarMaterial.ts`: For star materials.
+  - Updated `BaseTerrestrialRenderer.ts`, `RingSystemRenderer.ts`, and `BaseStarRenderer.ts` to use these new material creation functions instead of the old factories.
+- **@teskooano/systems-celestial:** Added `types/procedural.ts` defining `ProceduralPlanetUniforms` for shader-based planet rendering.
+- **@teskooano/systems-celestial:** General comment cleanup and minor refactoring in `utils/event-dispatch.ts` and `vitest.config.ts`.
+- **@teskooano/systems-procedural-generation:** Major Refactor (Planet Surface Properties):
+  - Renamed `createDetailedSurfaceProperties` to `createProceduralSurfaceProperties` in `utils.ts`.
+  - `createProceduralSurfaceProperties` now consistently returns a `ProceduralSurfaceProperties` object for all planet types.
+  - This function now defines specific procedural parameters (noise settings, bump scale) and detailed color palettes (low, mid1, mid2, high) tailored for each `PlanetType` (TERRESTRIAL, ROCKY, BARREN, DESERT, ICE, LAVA, OCEAN).
+  - Added `shininess` and `specularStrength` to the `ProceduralSurfaceProperties` output, supporting more unified shader-based rendering.
+- **@teskooano/systems-procedural-generation:** `generators/planet.ts` now uses the new `generatePlanetObservable` and `createProceduralSurfaceProperties`.
+- **@teskooano/systems-procedural-generation:** Extensive comment removal and minor code cleanup in `generators/star.ts`, `name-generator.ts`, `seeded-random.ts`, and `utils.ts`.
+- **@teskooano/data-types:** Significantly reduced comments across most files for brevity (`celestial.ts`, `events.ts`, `globals.d.ts`, `index.spec.ts`, `main.ts`, `scaling.ts`, `ui.ts`).
+- **@teskooano/data-types:** Reordered exports in `index.ts` and added `globals.d.ts` to the exports.
+
+### Removed
+
+- **@teskooano/systems-celestial:** Deleted `AtmosphereMaterial.ts`, `BaseCelestialMaterial.ts`, `GasGiantMaterial.ts`, `SpaceRockMaterial.ts`, `SunMaterial.ts` as part of the material system overhaul.
+- **@teskooano/systems-celestial:** Deleted `textures/RingTextureGenerator.ts` (and other texture generators as noted above).
+
 ## [0.2.0] - 2025-05-01
 
 ### Added

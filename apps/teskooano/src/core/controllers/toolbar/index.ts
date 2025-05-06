@@ -1,8 +1,8 @@
 import { ToolbarController } from "./ToolbarController";
-// Import handlers and template if needed by the plugin consumer, or keep them internal
+
 import { createToolbarHandlers } from "./ToolbarController.handlers";
-// import { renderToolbarTemplate } from './ToolbarController.template'; // Template is likely internal
-import type { DockviewController } from "../dockview/DockviewController"; // Dependency
+
+import type { DockviewController } from "../dockview/DockviewController";
 
 /**
  * Initialization options for the Toolbar Plugin.
@@ -28,8 +28,6 @@ interface ToolbarPlugin {
   initialize: (options: ToolbarPluginOptions) => {
     controller: ToolbarController;
   };
-  // Expose key types or components if necessary
-  // types: { ... };
 }
 
 /**
@@ -59,15 +57,11 @@ export const plugin: ToolbarPlugin & { id: string } = {
       options.dockviewController,
     );
 
-    // Return the controller instance
     return {
       controller,
     };
   },
 };
 
-// Re-export core components and types for direct usage if needed
 export * from "./ToolbarController";
-export { createToolbarHandlers }; // Export handlers if they might be useful externally
-// export * from './ToolbarController.template'; // Template likely internal
-// export * from './ToolbarController.handlers'; // Already exported above
+export { createToolbarHandlers };

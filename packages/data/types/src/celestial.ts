@@ -153,56 +153,56 @@ export enum StellarType {
  * From hottest to coolest: O, B, A, F, G, K, M, L, T, Y
  */
 export enum SpectralClass {
-  O = "O", // Hot blue stars
-  B = "B", // Blue-white stars
-  A = "A", // White stars
-  F = "F", // Yellow-white stars
-  G = "G", // Yellow stars (Sun is G2V)
-  K = "K", // Orange stars
-  M = "M", // Red stars
-  L = "L", // Brown dwarfs (cool)
-  T = "T", // Brown dwarfs (cooler)
-  Y = "Y", // Brown dwarfs (coolest)
+  O = "O",
+  B = "B",
+  A = "A",
+  F = "F",
+  G = "G",
+  K = "K",
+  M = "M",
+  L = "L",
+  T = "T",
+  Y = "Y",
 }
 
 /**
  * Special spectral classes for non-main sequence stars
  */
 export enum SpecialSpectralClass {
-  W = "W", // Wolf-Rayet stars
-  C = "C", // Carbon stars
-  S = "S", // S-type stars (zirconium oxide)
-  D = "D", // White dwarfs
-  Q = "Q", // Novae
-  P = "P", // Planetary nebulae
-  R = "R", // Legacy class, now part of C
-  N = "N", // Legacy class, now part of C
+  W = "W",
+  C = "C",
+  S = "S",
+  D = "D",
+  Q = "Q",
+  P = "P",
+  R = "R",
+  N = "N",
 }
 
 /**
  * Luminosity classes, indicating the size and evolutionary state of the star
  */
 export enum LuminosityClass {
-  I = "I", // Supergiants
-  II = "II", // Bright giants
-  III = "III", // Normal giants
-  IV = "IV", // Subgiants
-  V = "V", // Main sequence stars (dwarfs)
-  VI = "VI", // Subdwarfs
-  VII = "VII", // White dwarfs
+  I = "I",
+  II = "II",
+  III = "III",
+  IV = "IV",
+  V = "V",
+  VI = "VI",
+  VII = "VII",
 }
 
 /**
  * Specific white dwarf spectral types based on spectral features
  */
 export enum WhiteDwarfType {
-  DA = "DA", // Only hydrogen lines
-  DB = "DB", // Only helium lines
-  DC = "DC", // No spectral lines
-  DO = "DO", // Strong ionized helium lines
-  DZ = "DZ", // Metal lines only
-  DQ = "DQ", // Carbon features
-  DX = "DX", // Unclear spectrum
+  DA = "DA",
+  DB = "DB",
+  DC = "DC",
+  DO = "DO",
+  DZ = "DZ",
+  DQ = "DQ",
+  DX = "DX",
 }
 
 /**
@@ -216,8 +216,8 @@ export enum ExoticStellarType {
   QUASAR = "QUASAR",
   WHITE_DWARF = "WHITE_DWARF",
   WOLF_RAYET = "WOLF_RAYET",
-  T_TAURI = "T_TAURI", // Young pre-main-sequence stars
-  HERBIG_AE_BE = "HERBIG_AE_BE", // Young stars of spectral types A or B
+  T_TAURI = "T_TAURI",
+  HERBIG_AE_BE = "HERBIG_AE_BE",
   PROTOSTAR = "PROTOSTAR",
 }
 
@@ -238,7 +238,7 @@ export interface OrbitalParameters {
   /** The position in the orbit at a specific epoch (time) (RADIANS). */
   meanAnomaly: number;
   /** The time taken to complete one orbit (REAL SECONDS). */
-  period_s: number; // Renamed from period
+  period_s: number;
 }
 
 /**
@@ -254,7 +254,7 @@ export interface SpecificPropertiesBase {
  * Properties specific to Stars.
  */
 export interface StarProperties extends SpecificPropertiesBase {
-  type: CelestialType.STAR; // Ensure discriminator type
+  type: CelestialType.STAR;
   /** Whether this is the main star in the system, used for camera focus on startup. */
   isMainStar: boolean;
   /** The classification based on temperature and spectral lines (e.g., G, K, M). */
@@ -285,13 +285,13 @@ export interface StarProperties extends SpecificPropertiesBase {
 export interface PlanetProperties extends SpecificPropertiesBase {
   type: CelestialType.PLANET | CelestialType.MOON | CelestialType.DWARF_PLANET;
   /** The specific type classification of the planet (e.g., ROCKY, TERRESTRIAL). */
-  planetType?: PlanetType; // Made optional as surface type might be primary
+  planetType?: PlanetType;
   /** Indicates if this object orbits a planet rather than a star. */
   isMoon: boolean;
   /** The ID of the parent planet, required if isMoon is true. */
   parentPlanet?: string;
   /** Optional indicator for the desired 3D shape. Defaults to 'sphere' if omitted. */
-  shapeModel?: "sphere" | "asteroid" | string; // string for potential model paths later
+  shapeModel?: "sphere" | "asteroid" | string;
   /** Array listing the primary chemical or geological composition (e.g., ["silicates", "iron"]). */
   composition: string[];
   /** Optional atmospheric properties. */
@@ -304,7 +304,6 @@ export interface PlanetProperties extends SpecificPropertiesBase {
     color: string;
     cloudCoverage?: number;
 
-    // --- Additional Atmosphere Parameters (inspired by example) ---
     /** Density factor affecting visual thickness/haze. */
     density?: number;
     /** Overall opacity of the atmosphere layer. */
@@ -328,10 +327,7 @@ export interface PlanetProperties extends SpecificPropertiesBase {
   /** Optional surface characteristics, specific structure depends on PlanetType. */
   surface?: SurfacePropertiesUnion;
   /** Optional array defining planetary rings. */
-  // rings?: RingProperties[]; // REMOVED from here
 }
-
-// --- Define specific surface property interfaces ---
 
 /** Base interface for surface properties */
 export interface BaseSurfaceProperties {
@@ -351,7 +347,7 @@ export interface DesertSurfaceProperties extends BaseSurfaceProperties {
   /** Intensity of dune patterns (e.g., 0.0 - 1.0). */
   dunePattern?: number;
   /** Average height of dunes (in scaled units). */
-  duneHeight?: number; // Keep scaled units for visual details? Review later.
+  duneHeight?: number;
 }
 
 /** Surface properties specific to Ice planets */
@@ -362,7 +358,7 @@ export interface IceSurfaceProperties extends BaseSurfaceProperties {
   /** Surface glossiness or shininess (e.g., 0.0 - 1.0). */
   glossiness?: number;
   /** Average thickness of the ice layer (in scaled units). */
-  iceThickness?: number; // Keep scaled units for visual details? Review later.
+  iceThickness?: number;
 }
 
 /** Surface properties specific to Lava planets */
@@ -390,54 +386,48 @@ export interface OceanSurfaceProperties extends BaseSurfaceProperties {
   /** Ratio of land area to water area (0.0 - 1.0). */
   landRatio?: number;
   /** Average height of surface waves (e.g., 0.0 - 1.0). */
-  waveHeight?: number; // Keep scaled units for visual details? Review later.
+  waveHeight?: number;
   /** Average depth of the oceans (in scaled units). */
-  oceanDepth?: number; // Keep scaled units for visual details? Review later.
+  oceanDepth?: number;
 }
 
-/** Common properties for surfaces generated with procedural noise and color bands */
-export interface ProceduralSurfaceProperties extends BaseSurfaceProperties {
-  /** Density of impact craters on the surface (e.g., 0.0 - 1.0). */
-  craterDensity?: number;
-  variation?: number;
-  lightColor?: string;
+/**
+ * Defines the properties needed to render a procedurally generated surface,
+ * primarily used for planets and potentially moons using specific shaders.
+ */
+export interface ProceduralSurfaceProperties {
+  // Noise parameters
+  persistence: number; // Controls detail level vs smoothness
+  lacunarity: number; // Controls frequency increase per octave
+  simplePeriod: number; // Base scale/frequency of the noise pattern
+  octaves: number; // Number of noise layers combined
 
-  // --- Procedural Generation Parameters ---
-  // amplitude?: number; // Removed - Handled in fragment shader if needed
-  // sharpness?: number; // Removed - Handled in fragment shader if needed
-  // offset?: number;    // Removed - Handled in fragment shader if needed
-  // period?: number;    // Removed - Replaced by uSimplePeriod for fragment
-  persistence?: number; // Keep for fragment FBM
-  lacunarity?: number; // Keep for fragment FBM
-  octaves?: number; // Keep for fragment FBM
-  // undulation?: number; // Removed - Not used
-  // bodyScale?: number; // Removed - No vertex displacement
-  simplePeriod?: number; // Keep for fragment noise scale
+  // Color ramp (hex strings)
+  colorLow: string; // Color for lowest elevation/noise value
+  colorMid1: string; // First mid-level color
+  colorMid2: string; // Second mid-level color
+  colorHigh: string; // Color for highest elevation/noise value
 
-  // --- NEW Simple Color Parameters ---
-  colorLow?: string;
-  colorMid1?: string;
-  colorMid2?: string;
-  colorHigh?: string;
+  // Bump mapping
+  bumpScale: number; // Strength of the bump effect
 
-  // --- Removed Old Color/Blend Parameters ---
-  // color1..color5, transition2..transition5, blend12..blend45 removed
-
-  // --- Bump Mapping Parameters (Keep if normal mapping is desired later) ---
-  // bumpStrength?: number;
-  // bumpOffset?: number; // Removed - No vertex normal perturbation
+  // Lighting
+  shininess?: number;
+  specularStrength?: number;
 }
 
 /** Surface properties specific to Rocky/Terrestrial planets */
 export interface RockyTerrestrialSurfaceProperties
-  extends ProceduralSurfaceProperties {
+  extends ProceduralSurfaceProperties,
+    BaseSurfaceProperties {
   planetType: PlanetType.ROCKY | PlanetType.TERRESTRIAL;
 }
 
 /** Surface properties specific to Barren planets */
-export interface BarrenSurfaceProperties extends ProceduralSurfaceProperties {
+export interface BarrenSurfaceProperties
+  extends ProceduralSurfaceProperties,
+    BaseSurfaceProperties {
   planetType: PlanetType.BARREN;
-  // Can add Barren-specific properties here later if needed
 }
 
 /** Union type for all possible surface properties */
@@ -480,19 +470,16 @@ export interface RingProperties {
  * Properties specific to Gas Giants.
  */
 export interface GasGiantProperties extends SpecificPropertiesBase {
-  type: CelestialType.GAS_GIANT; // Ensure discriminator type
+  type: CelestialType.GAS_GIANT;
   gasGiantClass: GasGiantClass;
-  atmosphereColor: string; // Overall visual color tint
+  atmosphereColor: string;
   cloudColor: string;
   cloudSpeed: number;
 
-  // ADDED Optional atmosphere object for detailed composition/pressure
   atmosphere?: {
     composition: string[];
-    pressure: number; // Surface pressure or reference pressure level
-    type?: AtmosphereType; // ADDED: Store the classification (THIN, NORMAL, etc.)
-    // Add other potential Gas Giant specific atmosphere props if needed
-    // e.g., density, scale, opacity (might overlap with PlanetProperties atmosphere)
+    pressure: number;
+    type?: AtmosphereType;
   };
 
   stormColor?: string;
@@ -507,13 +494,12 @@ export interface GasGiantProperties extends SpecificPropertiesBase {
  * Properties specific to Comets.
  */
 export interface CometProperties extends SpecificPropertiesBase {
-  type: CelestialType.COMET; // Ensure discriminator type
+  type: CelestialType.COMET;
   /** Array listing the primary chemical components (e.g., ["water ice", "CO2"]). */
   composition: string[];
   /** A measure of the comet's outgassing activity, affecting tail and coma visibility (e.g., 0.0 - 1.0). */
   activity: number;
 
-  // --- Visual properties for coma and tail ---
   /** Visual radius of the coma (in scaled units). */
   visualComaRadius?: number;
   /** Color of the coma, usually a hex string with alpha. */
@@ -522,24 +508,19 @@ export interface CometProperties extends SpecificPropertiesBase {
   visualMaxTailLength?: number;
   /** Color of the comet's tail, usually a hex string with alpha. */
   visualTailColor?: string;
-
-  // Removed old structure:
-  // tailLength: number;
-  // tailColor: string;
-  // coma: { ... };
 }
 
 /**
  * Properties specific to Asteroid Fields.
  */
 export interface AsteroidFieldProperties extends SpecificPropertiesBase {
-  type: CelestialType.ASTEROID_FIELD; // Ensure discriminator type
+  type: CelestialType.ASTEROID_FIELD;
   /** The inner radius boundary of the field (REAL AU units). */
-  innerRadiusAU: number; // Renamed for clarity
+  innerRadiusAU: number;
   /** The outer radius boundary of the field (REAL AU units). */
-  outerRadiusAU: number; // Renamed for clarity
+  outerRadiusAU: number;
   /** The vertical thickness or height of the asteroid field (REAL AU units). */
-  heightAU: number; // Renamed for clarity
+  heightAU: number;
   /** The approximate number of individual asteroids to represent or render within the field. */
   count: number;
   /** The base color tint for the asteroids in the field, usually a hex string. */
@@ -547,39 +528,31 @@ export interface AsteroidFieldProperties extends SpecificPropertiesBase {
   /** Array listing the primary chemical composition (e.g., ["iron", "silicates"]). */
   composition: string[];
 
-  // --- Optional Visual parameters (if different from real boundaries scaled) ---
-  visualInnerRadius?: number; // Scaled units
-  visualOuterRadius?: number; // Scaled units
-  visualHeight?: number; // Scaled units
-  visualDensity?: number; // Abstract density for rendering
-  visualParticleColor?: string; // Optional override for visual color
+  visualInnerRadius?: number;
+  visualOuterRadius?: number;
+  visualHeight?: number;
+  visualDensity?: number;
+  visualParticleColor?: string;
 }
 
 /**
  * Properties specific to the Oort Cloud.
  */
 export interface OortCloudProperties extends SpecificPropertiesBase {
-  type: CelestialType.OORT_CLOUD; // Ensure discriminator type
+  type: CelestialType.OORT_CLOUD;
   /** Array listing the primary chemical composition (e.g., ["water ice", "ammonia ice"]). */
   composition: string[];
   /** The inner boundary radius of the cloud (REAL AU units). */
-  innerRadiusAU: number; // Renamed for clarity
+  innerRadiusAU: number;
   /** The outer boundary radius of the cloud (REAL AU units). */
-  outerRadiusAU: number; // Renamed for clarity
+  outerRadiusAU: number;
 
-  // --- Visual representation details ---
   /** Abstract density used for rendering. */
   visualDensity: number;
   /** Number of particles to use for visual representation. */
   visualParticleCount: number;
   /** Color of the visual particles. */
   visualParticleColor: string;
-
-  // Removed ambiguous fields:
-  // radius: number;
-  // thickness: number;
-  // count: number; // Replaced by visualParticleCount
-  // color: string; // Replaced by visualParticleColor
 }
 
 /**
@@ -587,11 +560,11 @@ export interface OortCloudProperties extends SpecificPropertiesBase {
  * This represents the rings themselves as a separate entity.
  */
 export interface RingSystemProperties extends SpecificPropertiesBase {
-  type: CelestialType.RING_SYSTEM; // Discriminator
+  type: CelestialType.RING_SYSTEM;
   /** Array defining the rings within this system. */
   rings: RingProperties[];
   /** The ID of the celestial object these rings orbit. */
-  parentId: string; // Required for positioning
+  parentId: string;
 }
 
 /** Union type for all specific celestial properties */
@@ -602,12 +575,12 @@ export type CelestialSpecificPropertiesUnion =
   | CometProperties
   | AsteroidFieldProperties
   | OortCloudProperties
-  | RingSystemProperties; // Added RingSystemProperties
+  | RingSystemProperties;
 
 export enum CelestialStatus {
   ACTIVE = "active",
-  DESTROYED = "destroyed", // Represents shattered/collided but potentially visually persistent
-  ANNIHILATED = "annihilated", // Represents absorbed by star, gone completely
+  DESTROYED = "destroyed",
+  ANNIHILATED = "annihilated",
 }
 
 /**
@@ -621,9 +594,7 @@ export interface CelestialObject {
   /** The display name of the celestial object. */
   name: string;
   /** Current status of the object in the simulation */
-  status: CelestialStatus; // Use the enum for status
-
-  // --- Real-World Physical Properties ---
+  status: CelestialStatus;
 
   /** The REAL physical radius of the object (in METERS). */
   realRadius_m: number;
@@ -645,24 +616,19 @@ export interface CelestialObject {
     composition: string[];
     pressure: number;
     color: string;
-    // Add other common atmosphere props if needed across types
   };
 
   /** Optional surface properties common to many bodies */
   surface?: SurfacePropertiesUnion;
 
   /** Object containing properties specific to the `type` (or `class`) of celestial object. Optional for types like OTHER. */
-  properties?: CelestialSpecificPropertiesUnion; // Updated union type
-
-  // --- Real Physics State ---
+  properties?: CelestialSpecificPropertiesUnion;
 
   /** Contains the object's state used by the physics engine (real units). */
   physicsStateReal: PhysicsStateReal;
 
-  // --- State Management / Relationships ---
-
   /** Optional: Reference to parent body ID */
-  parentId?: string; // ID of the parent object (e.g., planet for a moon)
+  parentId?: string;
 
   /** Optional: Tracks the current dominant gravitational parent (can change in multi-star systems) */
   currentParentId?: string;
@@ -678,24 +644,12 @@ export interface CelestialObject {
 
   /** Current visual rotation of the object in the scene. */
   rotation?: THREE.Quaternion;
+}
 
-  // --- REMOVED Scaled State for Renderer ---
-  // position: THREE.Vector3; // Scaled Position
-  // radius: number; // Scaled Radius
-  // mass: number; // Scaled Mass
-
-  // --- REMOVED Deprecated/Scaled physicsState ---
-  // physicsState: {
-  //     id: string;
-  //     mass: number; // scaled mass
-  //     position: THREE.Vector3; // scaled position
-  //     velocity: THREE.Vector3; // scaled velocity
-  // };
-
-  // --- REMOVED Runtime/UI Properties ---
-  // primaryLightSourceId?: string; // This might belong with render state? Needs review. Let's move it out for now.
-  // isVisible?: boolean;
-  // isTargetable?: boolean;
-  // isSelected?: boolean;
-  // isFocused?: boolean;
+export interface CelestialObjectProperties {
+  planet?: PlanetProperties;
+  star?: StarProperties;
+  ringSystem?: RingSystemProperties;
+  asteroidField?: AsteroidFieldProperties;
+  proceduralSurface?: ProceduralSurfaceProperties;
 }

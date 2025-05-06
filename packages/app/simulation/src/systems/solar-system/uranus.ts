@@ -10,8 +10,7 @@ import {
   type IceSurfaceProperties,
 } from "@teskooano/data-types";
 
-// Uranus Data
-const URANUS_SIDEREAL_DAY_S = -0.71833 * 24 * 3600; // ~17.2 hours, retrograde
+const URANUS_SIDEREAL_DAY_S = -0.71833 * 24 * 3600;
 const URANUS_AXIAL_TILT_DEG = 97.77;
 
 /**
@@ -22,7 +21,6 @@ export function initializeUranus(parentId: string): void {
   const uranusId = "uranus";
   const sma_au = 19.2184;
 
-  // --- Initialize Uranus ---
   actions.addCelestial({
     id: uranusId,
     name: "Uranus",
@@ -76,7 +74,6 @@ export function initializeUranus(parentId: string): void {
     },
   });
 
-  // --- Initialize Titania ---
   const sma_m_titania = 436300 * KM;
   actions.addCelestial({
     id: "titania",
@@ -86,8 +83,8 @@ export function initializeUranus(parentId: string): void {
     parentId: uranusId,
     realMass_kg: 3.527e21,
     realRadius_m: 788400,
-    siderealRotationPeriod_s: 7.526e5, // Tidally locked
-    axialTilt: new OSVector3(0, 1, 0).normalize(), // Negligible tilt
+    siderealRotationPeriod_s: 7.526e5,
+    axialTilt: new OSVector3(0, 1, 0).normalize(),
     visualScaleRadius: 0.12,
     orbit: {
       realSemiMajorAxis_m: sma_m_titania,
@@ -119,7 +116,6 @@ export function initializeUranus(parentId: string): void {
     },
   });
 
-  // --- Initialize Oberon ---
   const sma_m_oberon = 583520 * KM;
   actions.addCelestial({
     id: "oberon",
@@ -129,8 +125,8 @@ export function initializeUranus(parentId: string): void {
     parentId: uranusId,
     realMass_kg: 3.014e21,
     realRadius_m: 761400,
-    siderealRotationPeriod_s: 1.162e6, // Tidally locked
-    axialTilt: new OSVector3(0, 1, 0).normalize(), // Negligible tilt
+    siderealRotationPeriod_s: 1.162e6,
+    axialTilt: new OSVector3(0, 1, 0).normalize(),
     visualScaleRadius: 0.12,
     orbit: {
       realSemiMajorAxis_m: sma_m_oberon,
@@ -139,7 +135,7 @@ export function initializeUranus(parentId: string): void {
       longitudeOfAscendingNode: 0,
       argumentOfPeriapsis: 0,
       meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
-      period_s: 1.162e6, // approx 13.46 days
+      period_s: 1.162e6,
     },
     temperature: 75,
     albedo: 0.35,
@@ -159,7 +155,6 @@ export function initializeUranus(parentId: string): void {
     },
   });
 
-  // --- Initialize Umbriel ---
   const sma_m_umbriel = 266000 * KM;
   actions.addCelestial({
     id: "umbriel",
@@ -169,8 +164,8 @@ export function initializeUranus(parentId: string): void {
     parentId: uranusId,
     realMass_kg: 1.172e21,
     realRadius_m: 584700,
-    siderealRotationPeriod_s: 3.582e5, // Tidally locked
-    axialTilt: new OSVector3(0, 1, 0).normalize(), // Negligible tilt
+    siderealRotationPeriod_s: 3.582e5,
+    axialTilt: new OSVector3(0, 1, 0).normalize(),
     visualScaleRadius: 0.09,
     orbit: {
       realSemiMajorAxis_m: sma_m_umbriel,
@@ -179,10 +174,10 @@ export function initializeUranus(parentId: string): void {
       longitudeOfAscendingNode: 0,
       argumentOfPeriapsis: 0,
       meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
-      period_s: 3.582e5, // approx 4.14 days
+      period_s: 3.582e5,
     },
     temperature: 75,
-    albedo: 0.21, // Dark surface
+    albedo: 0.21,
     atmosphere: { composition: [], pressure: 0, color: "#444444" },
     surface: {
       type: SurfaceType.CRATERED,
@@ -198,7 +193,6 @@ export function initializeUranus(parentId: string): void {
     },
   });
 
-  // --- Initialize Ariel ---
   const sma_m_ariel = 191020 * KM;
   actions.addCelestial({
     id: "ariel",
@@ -208,8 +202,8 @@ export function initializeUranus(parentId: string): void {
     parentId: uranusId,
     realMass_kg: 1.353e21,
     realRadius_m: 578900,
-    siderealRotationPeriod_s: 2.178e5, // Tidally locked
-    axialTilt: new OSVector3(0, 1, 0).normalize(), // Negligible tilt
+    siderealRotationPeriod_s: 2.178e5,
+    axialTilt: new OSVector3(0, 1, 0).normalize(),
     visualScaleRadius: 0.09,
     orbit: {
       realSemiMajorAxis_m: sma_m_ariel,
@@ -218,10 +212,10 @@ export function initializeUranus(parentId: string): void {
       longitudeOfAscendingNode: 0,
       argumentOfPeriapsis: 0,
       meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
-      period_s: 2.178e5, // approx 2.52 days
+      period_s: 2.178e5,
     },
     temperature: 60,
-    albedo: 0.39, // Brightest moon of Uranus
+    albedo: 0.39,
     atmosphere: { composition: [], pressure: 0, color: "#444444" },
     surface: {
       type: SurfaceType.VARIED,
@@ -239,7 +233,6 @@ export function initializeUranus(parentId: string): void {
     },
   });
 
-  // --- Initialize Miranda ---
   const sma_m_miranda = 129390 * KM;
   actions.addCelestial({
     id: "miranda",
@@ -249,8 +242,8 @@ export function initializeUranus(parentId: string): void {
     parentId: uranusId,
     realMass_kg: 6.59e19,
     realRadius_m: 235800,
-    siderealRotationPeriod_s: 1.22e5, // Tidally locked
-    axialTilt: new OSVector3(0, 1, 0).normalize(), // Negligible tilt
+    siderealRotationPeriod_s: 1.22e5,
+    axialTilt: new OSVector3(0, 1, 0).normalize(),
     visualScaleRadius: 0.04,
     orbit: {
       realSemiMajorAxis_m: sma_m_miranda,
@@ -259,7 +252,7 @@ export function initializeUranus(parentId: string): void {
       longitudeOfAscendingNode: 0,
       argumentOfPeriapsis: 0,
       meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
-      period_s: 1.22e5, // approx 1.41 days
+      period_s: 1.22e5,
     },
     temperature: 60,
     albedo: 0.32,

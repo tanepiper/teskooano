@@ -15,7 +15,7 @@ export class OverlayManager {
    */
   constructor(container: HTMLElement) {
     this._overlayContainer = container;
-    // Ensure the container can be a positioning context for absolute overlays
+
     this._overlayContainer.style.position = "relative";
   }
 
@@ -38,7 +38,6 @@ export class OverlayManager {
         return;
       }
 
-      // --- Calculate Centered Bounds ---
       const containerRect = this._overlayContainer.getBoundingClientRect();
       const width = options.width;
       const height = options.height;
@@ -111,7 +110,6 @@ export class OverlayManager {
    */
   public dispose(): void {
     this._activeOverlays.forEach((_, id) => {
-      // Use "dismissed" as the default result when disposing all
       this.hideOverlay(id, "dismissed");
     });
   }

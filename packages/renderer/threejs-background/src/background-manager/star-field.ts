@@ -26,14 +26,13 @@ export function createStarField(
   const positions: number[] = [];
   const colors: number[] = [];
 
-  // Define some star colors for variation
   const starColors = [
-    new THREE.Color("#FFFFFF"), // White
-    new THREE.Color("#FFE4B5"), // Moccasin (warm white)
-    new THREE.Color("#B0C4DE"), // Light steel blue
-    new THREE.Color("#FFB6C1"), // Light pink
-    new THREE.Color("#87CEEB"), // Sky blue
-    new THREE.Color("#FFA07A"), // Light salmon
+    new THREE.Color("#FFFFFF"),
+    new THREE.Color("#FFE4B5"),
+    new THREE.Color("#B0C4DE"),
+    new THREE.Color("#FFB6C1"),
+    new THREE.Color("#87CEEB"),
+    new THREE.Color("#FFA07A"),
   ];
 
   for (let i = 0; i < count; i++) {
@@ -47,22 +46,18 @@ export function createStarField(
       radius * Math.cos(phi),
     );
 
-    // Create color variation
     const baseColor = starColors[Math.floor(Math.random() * starColors.length)];
     const starColor = new THREE.Color();
 
-    // Get HSL components
     const hsl = { h: 0, s: 0, l: 0 };
     baseColor.getHSL(hsl);
 
-    // Add some random variation to the color
     const newColor = new THREE.Color().setHSL(
-      hsl.h + (Math.random() * 0.1 - 0.05), // Slight hue variation
-      hsl.s * (0.5 + Math.random() * 0.5), // Moderate saturation variation
-      minBrightness + Math.random() * (maxBrightness - minBrightness), // Brightness within specified range
+      hsl.h + (Math.random() * 0.1 - 0.05),
+      hsl.s * (0.5 + Math.random() * 0.5),
+      minBrightness + Math.random() * (maxBrightness - minBrightness),
     );
 
-    // If a color tint is provided, blend with it
     if (colorTint) {
       newColor.lerp(colorTint, 0.3);
     }
@@ -102,39 +97,36 @@ export function createStarLayers(): THREE.Points[] {
   const baseDistance = 9000000;
   const starLayers: THREE.Points[] = [];
 
-  // Create closest layer - fewer, brighter stars with warm tint
   const closeLayer = createStarField(
-    10000, // count
-    baseDistance * 0.5, // baseDistance
-    400000, // distanceSpread
-    0.9, // minBrightness
-    1.0, // maxBrightness
-    5.0, // size
-    new THREE.Color("#FFE4B5").multiplyScalar(0.3), // Warm tint
+    10000,
+    baseDistance * 0.5,
+    400000,
+    0.9,
+    1.0,
+    5.0,
+    new THREE.Color("#FFE4B5").multiplyScalar(0.3),
   );
   starLayers.push(closeLayer);
 
-  // Create middle layer - medium density with slight blue tint
   const middleLayer = createStarField(
-    20000, // count
-    baseDistance, // baseDistance
-    500000, // distanceSpread
-    0.7, // minBrightness
-    0.9, // maxBrightness
-    4.0, // size
-    new THREE.Color("#B0C4DE").multiplyScalar(0.2), // Slight blue tint
+    20000,
+    baseDistance,
+    500000,
+    0.7,
+    0.9,
+    4.0,
+    new THREE.Color("#B0C4DE").multiplyScalar(0.2),
   );
   starLayers.push(middleLayer);
 
-  // Create distant layer - many dimmer stars with purple tint
   const distantLayer = createStarField(
-    50000, // count
-    baseDistance * 1.1, // baseDistance
-    600000, // distanceSpread
-    0.5, // minBrightness
-    0.7, // maxBrightness
-    3.0, // size
-    new THREE.Color("#9370DB").multiplyScalar(0.2), // Slight purple tint
+    50000,
+    baseDistance * 1.1,
+    600000,
+    0.5,
+    0.7,
+    3.0,
+    new THREE.Color("#9370DB").multiplyScalar(0.2),
   );
   starLayers.push(distantLayer);
 
@@ -155,14 +147,13 @@ export function updateStarColors(
 ): void {
   if (starLayers.length === 3) {
     const debugColors = [
-      new THREE.Color("#FF0000"), // Red for close layer
-      new THREE.Color("#00FF00"), // Green for middle layer
-      new THREE.Color("#0000FF"), // Blue for far layer
+      new THREE.Color("#FF0000"),
+      new THREE.Color("#00FF00"),
+      new THREE.Color("#0000FF"),
     ];
 
     starLayers.forEach((layer, index) => {
       if (isDebugMode) {
-        // In debug mode, set all stars in layer to debug color
         const colors = new Float32Array(
           layer.geometry.attributes.position.count * 3,
         );

@@ -15,7 +15,6 @@ export const formatScale = (scale: number): string => {
   } else if (absScale >= 1000) {
     scaleText = `${(scale / 1000).toFixed(1)}K`;
   } else {
-    // Use 1 decimal place for >= 1, 2 decimal places for < 1
     scaleText = absScale >= 1 ? scale.toFixed(1) : scale.toFixed(2);
   }
   return `${scaleText}x`;
@@ -44,15 +43,12 @@ export const formatTime = (timeSeconds: number = 0): string => {
 export const getEngineShortName = (engineName: string): string => {
   if (!engineName || engineName === "-") return "-";
 
-  // Get first letter or first letter of each word for acronym
-  const words = engineName.split(/[-\s_]+/); // Split by hyphen, space, or underscore
+  const words = engineName.split(/[-\s_]+/);
   if (words.length > 1 && words.every((word) => word.length > 0)) {
-    // Create acronym from first letter of each word
     return words.map((word) => word.charAt(0).toUpperCase()).join("");
   } else if (engineName.length > 0) {
-    // Just use first letter if it's a single word or invalid split
     return engineName.charAt(0).toUpperCase();
   } else {
-    return "-"; // Fallback
+    return "-";
   }
 };

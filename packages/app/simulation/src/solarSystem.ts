@@ -1,4 +1,3 @@
-// Export all solar system initialization functions
 export { initializeSolarSystem } from "./systems/solar-system";
 export { initializeRedDwarfSystem } from "./systems/redDwarfSystem";
 export { initializeBlueGiantSystem } from "./systems/blueGiantSystem";

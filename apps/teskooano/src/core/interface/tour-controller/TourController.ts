@@ -25,7 +25,6 @@ export class TourController {
    * Initializes driver.js with default configuration and loads the intro tour steps.
    */
   constructor() {
-    // Initialize driver.js with default configurations
     this.driverInstance = driver({
       animate: true,
       showProgress: true,
@@ -46,7 +45,6 @@ export class TourController {
         }
       },
       onNextClick: () => {
-        // Move to next step
         const currentStep =
           this.tourSteps[this.driverInstance.getActiveIndex()!];
         if (currentStep.onNextClick) {
@@ -56,7 +54,6 @@ export class TourController {
         }
       },
       onHighlightStarted: () => {
-        // Save current step to localStorage if not skipping
         if (!this.isSkippingTour()) {
           const currentStep =
             this.tourSteps[this.driverInstance.getActiveIndex()!];
@@ -67,14 +64,12 @@ export class TourController {
         }
       },
       onDeselected: () => {
-        // When tour is closed, don't automatically start it next time
         if (!this.isSkippingTour()) {
           localStorage.setItem("skipTour", "true");
         }
       },
     });
 
-    // Clone the base steps to our instance variable
     this.tourSteps = createIntroTour(this.driverInstance);
   }
 
@@ -103,12 +98,10 @@ export class TourController {
    * @private
    */
   private updateDynamicTourSteps(): void {
-    // Find the engine-view-final step and update its description
     const finalStepIndex = this.tourSteps.findIndex(
       (step) => step.id === "engine-view-final",
     );
     if (finalStepIndex !== -1) {
-      // Create a custom description based on the selected celestial
       let description =
         "Now you should see the full system in action. Feel free to now play around, and try break things! If you do find any bugs please raise an issue on the GitHub repo.";
 
@@ -119,7 +112,6 @@ export class TourController {
           "Now you should see the full system. Select a celestial body from the Focus Control panel to see more details about it. Feel free to now play around, and try break things! If you do find any bugs please raise an issue on the GitHub repo.";
       }
 
-      // Update the step description
       if (this.tourSteps[finalStepIndex].popover) {
         this.tourSteps[finalStepIndex].popover.description = description;
       }
@@ -167,7 +159,7 @@ export class TourController {
    */
   public startTour(): void {
     this.currentStepIndex = 0;
-    // Make sure dynamic content is up to date
+
     this.updateDynamicTourSteps();
     this.driverInstance.setSteps(this.tourSteps);
     this.driverInstance.drive();
@@ -182,7 +174,6 @@ export class TourController {
     const savedStepId = localStorage.getItem("tourCurrentStep");
 
     if (savedStepId) {
-      // Find the index of the saved step
       const stepIndex = this.tourSteps.findIndex(
         (step) => step.id === savedStepId,
       );
@@ -191,7 +182,6 @@ export class TourController {
       this.currentStepIndex = 0;
     }
 
-    // Make sure dynamic content is up to date
     this.updateDynamicTourSteps();
     this.driverInstance.setSteps(this.tourSteps);
     this.driverInstance.drive(this.currentStepIndex);

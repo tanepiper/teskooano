@@ -96,7 +96,6 @@ export class CelestialDebugger {
 
     const debugName = `celestial-${objectId}`;
 
-    // Store each vector if provided
     if (vectors.lightDirection) {
       threeVectorDebug.setVector(
         debugName,
@@ -141,7 +140,6 @@ export class CelestialDebugger {
 
     const debugName = `celestial-${objectId}-orbital`;
 
-    // Store as a custom property in localStorage for the UI to read
     try {
       localStorage.setItem(debugName, JSON.stringify(data));
     } catch (e) {
@@ -220,10 +218,8 @@ export class CelestialDebugger {
    * @param objectId The celestial object ID to clear
    */
   public clearObjectDebugData(objectId: string): void {
-    // Clear vectors
     threeVectorDebug.clearVectors(`celestial-${objectId}`);
 
-    // Clear localStorage data
     try {
       localStorage.removeItem(`celestial-${objectId}-orbital`);
       localStorage.removeItem(`celestial-${objectId}-material`);
@@ -238,15 +234,12 @@ export class CelestialDebugger {
    * Clear all celestial debug data
    */
   public clearAllCelestialDebugData(): void {
-    // Get all celestial debug names
     const celestialDebugNames = this.getCelestialDebugNames();
 
-    // Clear all vectors
     celestialDebugNames.forEach((name) => {
       threeVectorDebug.clearVectors(name);
     });
 
-    // Clear all localStorage data for celestial objects
     try {
       Object.keys(localStorage)
         .filter((key) => key.startsWith("celestial-"))

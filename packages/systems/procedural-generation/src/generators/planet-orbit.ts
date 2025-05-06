@@ -32,54 +32,48 @@ export function calculatePlanetOrbitAndInitialState(
   orbit: OrbitalParameters;
   initialPhysicsState: PhysicsStateReal | null;
 } {
-  // 1. Calculate Orbital Parameters
   const semiMajorAxis_m = bodyDistanceAU * CONST.AU_TO_METERS;
   const orbitalPeriod_s = UTIL.calculateOrbitalPeriod_s(
     starMass_kg,
     semiMajorAxis_m,
-    planetMass_kg, // Include planet mass for slightly more accuracy
+    planetMass_kg,
   );
 
   const orbit: OrbitalParameters = {
     realSemiMajorAxis_m: semiMajorAxis_m,
-    eccentricity: 0.01 + random() * 0.05, // Low eccentricity
-    inclination: (random() - 0.5) * 0.05, // Low inclination relative to star equator (radians)
+    eccentricity: 0.01 + random() * 0.05,
+    inclination: (random() - 0.5) * 0.05,
     longitudeOfAscendingNode: random() * 2 * Math.PI,
     argumentOfPeriapsis: random() * 2 * Math.PI,
-    meanAnomaly: random() * 2 * Math.PI, // Starting position in orbit
+    meanAnomaly: random() * 2 * Math.PI,
     period_s: orbitalPeriod_s,
-    // epoch: 0 // Assuming epoch is time 0 for initial state
   };
 
-  // 2. Calculate Initial Physics State (Absolute)
   let initialPhysicsState: PhysicsStateReal | null = null;
   try {
-    // Calculate position and velocity relative to the parent star at time 0
     const initialRelativePos_m = calculateOrbitalPosition(
-      parentStarState, // Treat star state as the central body for this calculation
-      orbit, // Planet's orbital params relative to star
-      0, // time = 0 for initial state
+      parentStarState,
+      orbit,
+      0,
     );
     const initialRelativeVel_mps = calculateOrbitalVelocity(
-      parentStarState, // Treat star state as the central body
+      parentStarState,
       orbit,
       0,
     );
 
-    // Absolute position = parent's position + relative orbital position
     const initialWorldPos_m = initialRelativePos_m
       .clone()
       .add(parentStarState.position_m);
-    // Absolute velocity = parent's velocity + relative orbital velocity
+
     const initialWorldVel_mps = initialRelativeVel_mps
       .clone()
       .add(parentStarState.velocity_mps);
 
-    // Basic validation
     if (
       !initialWorldPos_m ||
       !initialWorldVel_mps ||
-      !Number.isFinite(initialWorldPos_m.x) || // Check all components
+      !Number.isFinite(initialWorldPos_m.x) ||
       !Number.isFinite(initialWorldPos_m.y) ||
       !Number.isFinite(initialWorldPos_m.z) ||
       !Number.isFinite(initialWorldVel_mps.x) ||
@@ -107,7 +101,6 @@ export function calculatePlanetOrbitAndInitialState(
       orbitParams: orbit,
       planetMass_kg: planetMass_kg,
     });
-    // Leave initialPhysicsState as null if calculation fails
   }
 
   return { orbit, initialPhysicsState };

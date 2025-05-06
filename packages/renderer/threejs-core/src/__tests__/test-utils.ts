@@ -20,7 +20,6 @@ export function createMockVector3(x = 0, y = 0, z = 0): THREE.Vector3 {
     toSpherical: vi.fn(),
     fromSpherical: vi.fn(),
     distanceTo: vi.fn().mockReturnValue(100),
-    // Add any other required Vector3 properties
   } as unknown as THREE.Vector3;
 }
 

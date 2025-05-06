@@ -20,7 +20,6 @@ import {
   OverlayOptions,
   RegisteredComponentInfo,
 } from "./types";
-import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 
 /**
  * Controller class for managing a Dockview instance.
@@ -32,8 +31,8 @@ export class DockviewController {
   private _api: DockviewApi;
   /** @internal Component registry mapping names to constructors and config */
   private _registeredComponents = new Map<string, RegisteredComponentInfo>();
-  private _overlayManager: OverlayManager; // Add OverlayManager instance
-  private _groupManager: GroupManager; // Add GroupManager instance
+  private _overlayManager: OverlayManager;
+  private _groupManager: GroupManager;
 
   /** @internal Subject to emit panel IDs when they are removed */
   private _removedPanelSubject = new Subject<string>();
@@ -102,7 +101,7 @@ export class DockviewController {
    * @param componentConstructor - The constructor function of the component.
    */
   public registerComponent(
-    name: string, // Use the constructor type that might have static methods
+    name: string,
     componentConstructor: ComponentConstructorWithStaticConfig,
   ): void {
     if (this._registeredComponents.has(name)) {
@@ -111,7 +110,8 @@ export class DockviewController {
       );
     }
 
-    let toolbarConfig: PanelToolbarItemConfig | undefined = undefined;
+    let toolbarConfig: RegisteredComponentInfo["toolbarConfig"] | undefined =
+      undefined;
     if (
       typeof componentConstructor.registerToolbarButtonConfig === "function"
     ) {
@@ -125,7 +125,6 @@ export class DockviewController {
       }
     }
 
-    // Store both constructor and config
     this._registeredComponents.set(name, {
       constructor: componentConstructor as new () => IContentRenderer,
       toolbarConfig,
@@ -190,22 +189,18 @@ export class DockviewController {
     panelOptions: AddPanelOptions,
   ): IDockviewPanel | null {
     try {
-      // Create panel using the main API but target the specific group
       const panelWithPosition = {
         ...panelOptions,
       };
 
-      // Add position targeting if not already specified
       if (!panelWithPosition.position) {
         panelWithPosition.position = {
           referenceGroup: group.id,
         };
       }
 
-      // Add the panel using the main API
       const panel = this._api.addPanel(panelWithPosition);
 
-      // Activate the panel
       panel.api.setActive();
       return panel;
     } catch (error) {
@@ -268,7 +263,7 @@ export class DockviewController {
    */
   public getToolbarButtonConfig(
     componentName: string,
-  ): PanelToolbarItemConfig | undefined {
+  ): RegisteredComponentInfo["toolbarConfig"] {
     const componentInfo = this._registeredComponents.get(componentName);
     return componentInfo?.toolbarConfig;
   }
@@ -307,7 +302,6 @@ export class DockviewController {
     this._overlayManager.hideOverlay(id, result);
   }
 
-  // --- Dispose Method ---
   public dispose(): void {
     try {
       this._api.dispose();
@@ -318,7 +312,7 @@ export class DockviewController {
     this._removedPanelSubject.complete();
     this._registeredComponents.clear();
     this._overlayManager.dispose();
-    this._groupManager.dispose(); // Call GroupManager dispose
+    this._groupManager.dispose();
   }
 
   /**
@@ -347,7 +341,6 @@ export class DockviewController {
       }
 
       this._api.addFloatingGroup(temporaryPanel, {
-        // Pass the position object directly here
         position: position,
       });
 
@@ -362,7 +355,6 @@ export class DockviewController {
         }
       }
 
-      // Ensure it's active
       temporaryPanel.api.setActive();
       return temporaryPanel.api;
     } catch (error) {
@@ -370,7 +362,7 @@ export class DockviewController {
         `DockviewController: Error adding floating panel ${panelOptions.id}:`,
         error,
       );
-      // Clean up the temporary panel if it was created but floating failed
+
       if (temporaryPanel) {
         try {
           this._api.removePanel(temporaryPanel);
@@ -400,7 +392,6 @@ export class DockviewController {
     const group = panel.group;
 
     if (group && group.panels.length === 0 && groupId) {
-      // Group is empty, tell GroupManager to clean up tracking for this ID
       this._groupManager.cleanupGroupTracking(groupId);
     } else if (group) {
     } else {
@@ -415,14 +406,21 @@ export class DockviewController {
    * Toggles or creates a floating panel based on the provided configuration.
    * @param config - The configuration object for the panel button.
    */
-  public handlePanelToggleAction(config: PanelToolbarItemConfig): void {
-    // Derive a consistent ID for the floating panel instance
+  public handlePanelToggleAction(
+    config: RegisteredComponentInfo["toolbarConfig"],
+  ): void {
+    if (!config) {
+      console.error(
+        "[DockviewController] handlePanelToggleAction called with undefined config",
+      );
+      return;
+    }
+
     const panelId = `${config.componentName}_float`;
-    const behaviour = config.behaviour ?? "toggle"; // Default to toggle
+    const behaviour = config.behaviour ?? "toggle";
 
     const existingPanel = this.api.getPanel(panelId);
 
-    // --- Toggle Behaviour --- //
     if (behaviour === "toggle") {
       if (existingPanel?.api.isVisible) {
         try {
@@ -434,29 +432,24 @@ export class DockviewController {
           );
         }
       } else {
-        // Panel exists but hidden, or doesn't exist yet
         if (existingPanel) {
           existingPanel.api.setActive();
-          // Optionally resize/reposition if needed based on config?
         } else {
-          // Simplified position calculation for now
-          const position = { top: 100, left: 100, width: 500, height: 400 }; // TODO: Improve positioning
+          const position = { top: 100, left: 100, width: 500, height: 400 };
           this.addFloatingPanel(
             {
               id: panelId,
               component: config.componentName,
               title: config.panelTitle ?? config.title,
-              params: { title: config.panelTitle ?? config.title }, // Pass title, add other params if needed
+              params: { title: config.panelTitle ?? config.title },
             },
             position,
           );
         }
       }
-    }
-    // --- Create Behaviour --- //
-    else if (behaviour === "create") {
-      const newPanelId = `${config.componentName}_float_${Date.now()}`; // Ensure unique ID
-      const position = { top: 100, left: 100, width: 500, height: 400 }; // TODO: Improve positioning
+    } else if (behaviour === "create") {
+      const newPanelId = `${config.componentName}_float_${Date.now()}`;
+      const position = { top: 100, left: 100, width: 500, height: 400 };
       this.addFloatingPanel(
         {
           id: newPanelId,

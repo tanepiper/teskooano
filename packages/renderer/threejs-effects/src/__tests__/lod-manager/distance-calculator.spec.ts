@@ -26,9 +26,9 @@ describe("Distance Calculator Module", () => {
 
       const distances = calculateLODDistances(testObject);
 
-      expect(distances.closeDistance).toBe(10 * 10); // radius * 10
-      expect(distances.mediumDistance).toBe(10 * 100); // radius * 100
-      expect(distances.farDistance).toBe(10 * 1000); // radius * 1000
+      expect(distances.closeDistance).toBe(10 * 10);
+      expect(distances.mediumDistance).toBe(10 * 100);
+      expect(distances.farDistance).toBe(10 * 1000);
     });
 
     it("should adjust distances for moons", () => {
@@ -45,7 +45,6 @@ describe("Distance Calculator Module", () => {
 
       const distances = calculateLODDistances(testMoon);
 
-      // Moons use a 0.5 multiplier for all distances
       expect(distances.closeDistance).toBe(5 * 10 * 0.5);
       expect(distances.mediumDistance).toBe(5 * 100 * 0.5);
       expect(distances.farDistance).toBe(5 * 1000 * 0.5);
@@ -65,7 +64,6 @@ describe("Distance Calculator Module", () => {
 
       const distances = calculateLODDistances(testAsteroid);
 
-      // Asteroids use a 0.25 multiplier for all distances
       expect(distances.closeDistance).toBe(2 * 10 * 0.25);
       expect(distances.mediumDistance).toBe(2 * 100 * 0.25);
       expect(distances.farDistance).toBe(2 * 1000 * 0.25);
@@ -91,7 +89,6 @@ describe("Distance Calculator Module", () => {
 
       const distances = calculateLODDistances(testStar);
 
-      // Stars use a 2.0 multiplier for all distances
       expect(distances.closeDistance).toBe(100 * 10 * 2.0);
       expect(distances.mediumDistance).toBe(100 * 100 * 2.0);
       expect(distances.farDistance).toBe(100 * 1000 * 2.0);

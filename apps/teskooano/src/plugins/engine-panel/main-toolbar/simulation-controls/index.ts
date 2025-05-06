@@ -1,7 +1,6 @@
 import type { TeskooanoPlugin, ComponentConfig } from "@teskooano/ui-plugin";
 import { SimulationControls } from "./SimulationControls";
 
-// Component configuration
 const simulationControlsComponent: ComponentConfig = {
   tagName: "teskooano-simulation-controls",
   componentClass: SimulationControls,
@@ -13,17 +12,16 @@ const simulationControlsComponent: ComponentConfig = {
  * Registers the SimulationControls custom element.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "teskooano-simulation-controls", // Updated ID
+  id: "teskooano-simulation-controls",
   name: "Simulation Controls Component",
   description: "Provides the simulation playback controls component.",
   components: [simulationControlsComponent],
-  // No panels, functions, toolbars, or managers
+
   panels: [],
   functions: [],
   toolbarRegistrations: [],
-  toolbarWidgets: [], // Added for completeness
+  toolbarWidgets: [],
   managerClasses: [],
 };
 
-// Export the component class directly if needed elsewhere
 export { SimulationControls };

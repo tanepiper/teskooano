@@ -6,18 +6,18 @@ import { changelogSchema } from "./schemas/changelog";
 
 export const collections = {
   docs: defineCollection({
-    type: "content", // Starlight handles its own loading
+    type: "content",
     schema: docsSchema(),
   }),
-  // Define the new 'plan' collection as data
+
   plan: defineCollection({
-    type: "content", // Treat .plan files as data (frontmatter + raw body)
-    // Astro implicitly finds files in src/content/plan/
-    schema: planSchema(), // Apply our custom frontmatter schema
+    type: "content",
+
+    schema: planSchema(),
   }),
   changelog: defineCollection({
-    type: "content", // Treat .changelog files as data (frontmatter + raw body)
-    // Astro implicitly finds files in src/content/changelog/
-    schema: changelogSchema(), // Apply our custom frontmatter schema
+    type: "content",
+
+    schema: changelogSchema(),
   }),
 };

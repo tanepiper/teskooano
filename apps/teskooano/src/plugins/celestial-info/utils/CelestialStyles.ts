@@ -1,4 +1,3 @@
-// Base styles shared across all celestial info components
 export const baseStyles = `
 :host {
   display: block;

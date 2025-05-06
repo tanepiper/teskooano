@@ -21,14 +21,13 @@ export function observePerformance(
 
   try {
     const observer = new PerformanceObserver(callback);
-    // Observe the specified entry types
+
     observer.observe(options);
 
-    // Return a cleanup function to disconnect the observer
     return () => observer.disconnect();
   } catch (error) {
     console.error("Failed to create or observe PerformanceObserver:", error);
-    // Attempt to observe might fail if entryTypes are unsupported, etc.
+
     return null;
   }
 }
@@ -58,7 +57,6 @@ export function observePerformance$(
       });
       observer.observe(options);
 
-      // Cleanup function
       return () => {
         observer.disconnect();
       };
@@ -67,8 +65,8 @@ export function observePerformance$(
         "Failed to create or observe PerformanceObserver for observable:",
         error,
       );
-      subscriber.error(error); // Emit error if creation/observation fails
+      subscriber.error(error);
       return;
     }
-  }).pipe(share()); // Share the underlying observer
+  }).pipe(share());
 }

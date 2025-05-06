@@ -59,7 +59,6 @@ export const calculateDragForce = (
   const forceMagnitude =
     0.5 * drag.density * speed * speed * drag.coefficient * drag.referenceArea;
 
-  // Drag force opposes motion
   const direction = velocity.clone().normalize();
   direction.multiplyScalar(-forceMagnitude);
   return direction;

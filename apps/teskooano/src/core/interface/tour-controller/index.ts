@@ -4,19 +4,18 @@ import type {
   PluginExecutionContext,
   ToolbarRegistration,
 } from "@teskooano/ui-plugin";
-import { TourController } from "./TourController"; // Import the controller class
+import { TourController } from "./TourController";
 
-// Import the Fluent UI compass icon
 import TourIcon from "@fluentui/svg-icons/icons/compass_northwest_24_regular.svg?raw";
 
 export * from "./TourModal";
 export * from "./TourController";
 
-// Export the instance so it can be accessed if needed
 export const tourControllerInstance = new TourController();
 
 const startTourFunction: FunctionConfig = {
   id: "tour:start",
+  dependencies: {},
   execute: async () => {
     tourControllerInstance.startTour();
   },
@@ -24,6 +23,7 @@ const startTourFunction: FunctionConfig = {
 
 const restartTourFunction: FunctionConfig = {
   id: "tour:restart",
+  dependencies: {},
   execute: async () => {
     tourControllerInstance.restartTour();
   },
@@ -31,14 +31,14 @@ const restartTourFunction: FunctionConfig = {
 
 const setSkipTourFunction: FunctionConfig = {
   id: "tour:setSkip",
-  // Expects second argument: { skip: boolean }
+  dependencies: {},
+
   execute: async (_: PluginExecutionContext, args?: { skip?: boolean }) => {
     const skipValue = args?.skip ?? false;
     tourControllerInstance.setSkipTour(skipValue);
   },
 };
 
-// Toolbar Registration (NEW)
 const tourToolbarRegistration: ToolbarRegistration = {
   target: "main-toolbar",
   items: [
@@ -47,12 +47,12 @@ const tourToolbarRegistration: ToolbarRegistration = {
       type: "function",
       title: "Restart Tour",
       iconSvg: TourIcon,
-      functionId: restartTourFunction.id, // Call tour:restart
-      order: 90, // Place it before settings (adjust as needed)
-      // Add tooltip details
+      functionId: restartTourFunction.id,
+      order: 90,
+
       tooltipText: "Restart the application introduction tour.",
       tooltipTitle: "Restart Tour",
-      tooltipIconSvg: TourIcon, // Can use the same icon for the tooltip
+      tooltipIconSvg: TourIcon,
     },
   ],
 };

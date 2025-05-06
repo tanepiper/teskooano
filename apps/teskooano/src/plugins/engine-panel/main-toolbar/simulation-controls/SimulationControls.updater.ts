@@ -1,5 +1,5 @@
 import type { TeskooanoButton } from "../../../../core/components/button/Button";
-import { PlayIcon, PauseIcon } from "./SimulationControls.template"; // Import icons
+import { PlayIcon, PauseIcon } from "./SimulationControls.template";
 import {
   formatScale,
   formatTime,
@@ -50,12 +50,21 @@ export const updatePlayPauseButton = (
     const tooltipText = `${stateText} Simulation`;
     const iconSvg = isPaused ? PlayIcon : PauseIcon;
 
-    button.innerHTML = iconSvg; // Set button icon
-    button.title = tooltipText; // Keep native title for accessibility fallback
-    button.setAttribute("tooltip-text", tooltipText); // Set custom tooltip text
-    button.setAttribute("tooltip-title", stateText); // Set tooltip title (Play/Pause)
-    button.setAttribute("tooltip-icon-svg", iconSvg); // Set tooltip icon
+    const iconSpan = button.querySelector('[slot="icon"]');
+    if (iconSpan) {
+      iconSpan.innerHTML = iconSvg;
+    } else {
+      button.innerHTML = `<span slot="icon">${iconSvg}</span>`;
+    }
+
+    button.title = tooltipText;
+    button.setAttribute("tooltip-text", tooltipText);
+    button.setAttribute("tooltip-title", stateText);
+    button.setAttribute("tooltip-icon", iconSvg);
+
     button.toggleAttribute("active", !isPaused);
+
+    button.refreshTooltipContent();
   }
 };
 
@@ -71,10 +80,10 @@ export const updateScaleDisplay = (
 ): void => {
   if (element) {
     element.textContent = formatScale(timeScale);
-    // Use CSS custom properties for colors
+
     element.style.color =
       timeScale < 0
-        ? "var(--color-warning-emphasis)" // More prominent warning color
+        ? "var(--color-warning-emphasis)"
         : "var(--color-text-secondary)";
   }
 };
@@ -110,20 +119,18 @@ export const updateSpeedButtons = (
   timeScale: number,
 ): void => {
   if (speedDownButton) {
-    // Disable conditions: paused, OR (positive scale at min), OR (negative scale at max)
     const disableSpeedDown =
       isPaused ||
-      (timeScale > 0 && timeScale <= 0.1) || // Min positive speed
-      (timeScale < 0 && timeScale >= -0.1); // Max negative speed (closest to zero)
+      (timeScale > 0 && timeScale <= 0.1) ||
+      (timeScale < 0 && timeScale >= -0.1);
 
     speedDownButton.disabled = disableSpeedDown;
   }
   if (speedUpButton) {
-    // Disable conditions: paused, OR (negative scale at min), OR (positive scale at max)
     const disableSpeedUp =
       isPaused ||
-      (timeScale < 0 && timeScale <= -10_000_000) || // Min negative speed
-      (timeScale > 0 && timeScale >= 10_000_000); // Max positive speed
+      (timeScale < 0 && timeScale <= -10_000_000) ||
+      (timeScale > 0 && timeScale >= 10_000_000);
     speedUpButton.disabled = disableSpeedUp;
   }
 };
@@ -141,6 +148,6 @@ export const updateEngineDisplay = (
   if (element) {
     const name = engineName || "-";
     element.textContent = getEngineShortName(name);
-    element.setAttribute("data-full-name", name); // Keep full name for tooltip
+    element.setAttribute("data-full-name", name);
   }
 };

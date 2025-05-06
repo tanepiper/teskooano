@@ -23,11 +23,10 @@ export function observeResize(
 ): () => void {
   if (typeof ResizeObserver === "undefined") {
     console.warn("ResizeObserver is not supported in this environment.");
-    return () => {}; // Return no-op cleanup
+    return () => {};
   }
 
   const observer = new ResizeObserver((entries) => {
-    // We are only observing one element
     if (entries[0]) {
       callback(entries[0]);
     }
@@ -65,9 +64,8 @@ export function observeResize$(
 
     observer.observe(element, options);
 
-    // Cleanup function
     return () => {
       observer.disconnect();
     };
-  }).pipe(share()); // Share the underlying observer
+  }).pipe(share());
 }

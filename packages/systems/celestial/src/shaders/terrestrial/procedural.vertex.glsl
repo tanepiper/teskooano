@@ -3,8 +3,6 @@ varying vec3 vWorldPosition;
 varying vec3 vWorldNormal;
 varying vec3 vObjectPosition;
 
-// Removed: vViewPosition, vHeight
-
 void main() {
   vUv = uv;
 

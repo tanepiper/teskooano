@@ -3,7 +3,6 @@ import { ControlsManager } from "../ControlsManager";
 import * as THREE from "three";
 import { simulationState } from "@teskooano/core-state";
 
-// Mock simulationState since we need to verify state updates
 vi.mock("@teskooano/core-state", () => ({
   simulationState: {
     get: vi.fn().mockReturnValue({
@@ -22,22 +21,18 @@ describe("ControlsManager", () => {
   let container: HTMLElement;
 
   beforeEach(() => {
-    // Create a container for the controls
     container = document.createElement("div");
     container.style.width = "800px";
     container.style.height = "600px";
     document.body.appendChild(container);
 
-    // Create a camera
     camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 100000);
     camera.position.set(0, 0, 1000);
 
-    // Create controls manager
     controlsManager = new ControlsManager(camera, container);
   });
 
   afterEach(() => {
-    // Clean up
     controlsManager.dispose();
     document.body.removeChild(container);
     vi.clearAllMocks();
@@ -69,7 +64,6 @@ describe("ControlsManager", () => {
   });
 
   it("should update controls when called", () => {
-    // Create a spy on the controls update method
     const updateSpy = vi.spyOn(controlsManager.controls, "update");
 
     controlsManager.update();
@@ -86,14 +80,11 @@ describe("ControlsManager", () => {
   });
 
   it("should update simulation state when controls change", () => {
-    // Move the camera to trigger the change event
     camera.position.set(100, 200, 300);
     controlsManager.controls.target.set(10, 20, 30);
 
-    // Manually dispatch the change event
     controlsManager.controls.dispatchEvent({ type: "change" });
 
-    // Check if simulationState.set was called with the correct parameters
     expect(simulationState.set).toHaveBeenCalledWith({
       camera: {
         position: expect.any(THREE.Vector3),
@@ -101,33 +92,26 @@ describe("ControlsManager", () => {
       },
     });
 
-    // Get the actual call arguments
     const setCall = vi.mocked(simulationState.set).mock.calls[0][0];
     const cameraState = setCall.camera;
 
-    // Verify the position values
     expect(cameraState.position.x).toBe(100);
     expect(cameraState.position.y).toBe(200);
     expect(cameraState.position.z).toBe(300);
 
-    // Verify the target values
     expect(cameraState.target.x).toBe(10);
     expect(cameraState.target.y).toBe(20);
     expect(cameraState.target.z).toBe(30);
   });
 
   it("should not update simulation state when controls are disabled", () => {
-    // Disable controls
     controlsManager.setEnabled(false);
 
-    // Move the camera
     camera.position.set(100, 200, 300);
     controlsManager.controls.target.set(10, 20, 30);
 
-    // Manually dispatch the change event
     controlsManager.controls.dispatchEvent({ type: "change" });
 
-    // Check that simulationState.set was not called
     expect(simulationState.set).not.toHaveBeenCalled();
   });
 

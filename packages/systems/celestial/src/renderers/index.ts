@@ -16,19 +16,14 @@ export interface CelestialMeshOptions {
   segments?: number;
 }
 
-// Export interfaces and types from the common directory
 export * from "./common/CelestialRenderer";
 
-// Export the base renderer class
 export * from "./common/BaseCelestialRenderer";
 
-// Export the debug helper
 export * from "./common/CelestialRendererDebugHelper";
 
-// Export all specific renderers
 export * from "./stars";
 export * from "./gas-giants";
 export * from "./terrestrial";
 export * from "./particles";
 export * from "./rings";
-export * from "../textures/TextureFactory";

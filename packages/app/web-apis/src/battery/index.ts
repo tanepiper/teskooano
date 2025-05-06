@@ -24,7 +24,6 @@ const initialBatteryState: BatteryState = {
   isSupported: false,
 };
 
-// Extend navigator type if getBattery is missing
 declare global {
   interface Navigator {
     getBattery?: () => Promise<BatteryManager>;
@@ -67,7 +66,6 @@ function updateStore(manager: BatteryManager) {
  * Should be called once when the application starts.
  */
 function initializeBatteryMonitor() {
-  // Prevent double initialization
   if (batteryManager || removeListeners) {
     return;
   }
@@ -77,15 +75,13 @@ function initializeBatteryMonitor() {
       .getBattery()
       .then((manager) => {
         batteryManager = manager;
-        updateStore(manager); // Initial update
+        updateStore(manager);
 
-        // Define listeners
         const chargingChangeListener = () => updateStore(manager);
         const chargingTimeChangeListener = () => updateStore(manager);
         const dischargingTimeChangeListener = () => updateStore(manager);
         const levelChangeListener = () => updateStore(manager);
 
-        // Add listeners
         manager.addEventListener("chargingchange", chargingChangeListener);
         manager.addEventListener(
           "chargingtimechange",
@@ -97,7 +93,6 @@ function initializeBatteryMonitor() {
         );
         manager.addEventListener("levelchange", levelChangeListener);
 
-        // Store cleanup function
         removeListeners = () => {
           if (!batteryManager) return;
           batteryManager.removeEventListener(
@@ -138,6 +133,4 @@ export function cleanupBatteryMonitor() {
   removeListeners?.();
 }
 
-// Initialize automatically when the module is loaded
-// This mimics the onMount behavior
 initializeBatteryMonitor();

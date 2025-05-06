@@ -24,10 +24,8 @@ export class CSS2DManager {
   private container: HTMLElement;
   private scene: THREE.Scene;
 
-  // Organized by layer type then by object ID
   private elements: Map<CSS2DLayerType, Map<string, CSS2DObject>> = new Map();
 
-  // Visibility state for each layer
   private layerVisibility: Map<CSS2DLayerType, boolean> = new Map();
 
   /**
@@ -37,7 +35,6 @@ export class CSS2DManager {
     this.scene = scene;
     this.container = container;
 
-    // Setup renderer
     this.renderer = new CSS2DRenderer();
     this.renderer.setSize(
       this.container.clientWidth,
@@ -48,9 +45,7 @@ export class CSS2DManager {
     this.renderer.domElement.style.zIndex = "1";
     this.renderer.domElement.style.pointerEvents = "none";
 
-    // Make sure all children have pointer-events: none
     if (this.renderer.domElement instanceof HTMLElement) {
-      // Add CSS styles to ensure all elements have pointer-events: none
       const styleElement = document.createElement("style");
       styleElement.textContent = `
         .css2d-renderer,
@@ -64,7 +59,6 @@ export class CSS2DManager {
       `;
       document.head.appendChild(styleElement);
 
-      // Also apply to initial elements
       const allChildren = this.renderer.domElement.querySelectorAll("*");
       allChildren.forEach((child) => {
         if (child instanceof HTMLElement) {
@@ -72,19 +66,16 @@ export class CSS2DManager {
         }
       });
 
-      // Add class for styling
       this.renderer.domElement.classList.add("css2d-renderer");
     }
 
     container.appendChild(this.renderer.domElement);
 
-    // Initialize layer maps and visibility
     Object.values(CSS2DLayerType).forEach((layerType) => {
       this.elements.set(layerType, new Map());
       this.layerVisibility.set(layerType, true);
     });
 
-    // --- BEGIN ADD CSS CLASS INJECTION ---
     const styleElement = document.createElement("style");
     styleElement.textContent = `
       .label-hidden {
@@ -92,7 +83,6 @@ export class CSS2DManager {
       }
     `;
     document.head.appendChild(styleElement);
-    // --- END ADD CSS CLASS INJECTION ---
   }
 
   /**
@@ -125,10 +115,8 @@ export class CSS2DManager {
     const label = new CSS2DObject(labelDiv);
     label.position.copy(position);
 
-    // Add label directly to the provided parent mesh
     parentMesh.add(label);
 
-    // Store the label in the layer map if provided
     const layerType = options?.layerType || CSS2DLayerType.CELESTIAL_LABELS;
     const id = options?.id;
     if (id) {
@@ -138,7 +126,6 @@ export class CSS2DManager {
       }
     }
 
-    // Set visibility based on layer visibility
     const isVisible = this.layerVisibility.get(layerType) ?? true;
     label.visible = isVisible;
 
@@ -152,31 +139,23 @@ export class CSS2DManager {
   private calculateLabelPosition(
     object: RenderableCelestialObject,
   ): THREE.Vector3 {
-    // Special case: Position Oort Cloud label at inner radius rather than at center
     if (
       object.type === CelestialType.OORT_CLOUD &&
       object.properties?.type === CelestialType.OORT_CLOUD
     ) {
-      // Get inner radius from properties - this is in AU
       const oortCloudProps = object.properties as OortCloudProperties;
       const innerRadiusAU = oortCloudProps.innerRadiusAU;
       if (innerRadiusAU && typeof innerRadiusAU === "number") {
-        // Convert AU to scene units
         const scaledInnerRadius = innerRadiusAU * SCALE.RENDER_SCALE_AU;
 
-        // Position label slightly offset from parent star
-        // Use a fixed direction vector toward upper right (+x, +y)
-        // and multiply by inner radius to place at boundary
         const direction = new THREE.Vector3(0.7, 0.7, 0).normalize();
         return direction.multiplyScalar(scaledInnerRadius);
       } else {
-        // Fallback for Oort Cloud without proper properties
         return new THREE.Vector3(100, 100, 0);
       }
     } else {
-      // Regular object - position based on visual radius
       const visualRadius = object.radius || 1;
-      return new THREE.Vector3(0, visualRadius * 1.5, 0); // Offset based on visual radius
+      return new THREE.Vector3(0, visualRadius * 1.5, 0);
     }
   }
 
@@ -187,19 +166,16 @@ export class CSS2DManager {
     object: RenderableCelestialObject,
     parentMesh: THREE.Object3D,
   ): void {
-    // Check if a label already exists for this object ID within the layer
     const labelsMap = this.elements.get(CSS2DLayerType.CELESTIAL_LABELS);
     if (labelsMap?.has(object.celestialObjectId)) {
       console.warn(
         `[CSS2DManager] Label already exists for ${object.celestialObjectId}. Skipping creation.`,
       );
-      return; // Avoid creating duplicate labels
+      return;
     }
 
-    // Calculate the appropriate position for this object type
     const labelPosition = this.calculateLabelPosition(object);
 
-    // Create and position the label
     this.createPositionedLabel(object.name, labelPosition, parentMesh, {
       className: "celestial-label",
       layerType: CSS2DLayerType.CELESTIAL_LABELS,
@@ -227,32 +203,29 @@ export class CSS2DManager {
     }
 
     const labelDiv = document.createElement("div");
-    labelDiv.className = "au-marker-label"; // Use a specific class
+    labelDiv.className = "au-marker-label";
     labelDiv.textContent = `${auValue} AU`;
-    labelDiv.style.color = "#FFA500"; // Orange color for visibility against magenta
+    labelDiv.style.color = "#FFA500";
     labelDiv.style.backgroundColor = "rgba(0,0,0,0.6)";
     labelDiv.style.padding = "1px 4px";
     labelDiv.style.borderRadius = "2px";
     labelDiv.style.fontSize = "10px";
     labelDiv.style.pointerEvents = "none";
-    labelDiv.style.whiteSpace = "nowrap"; // Prevent wrapping
+    labelDiv.style.whiteSpace = "nowrap";
 
     const label = new CSS2DObject(labelDiv);
     label.position.copy(position);
 
-    // Add label directly to the scene
     this.scene.add(label);
 
-    // Store the label in the AU markers layer
     if (labelsMap) {
       labelsMap.set(id, label);
     }
 
-    // Set visibility based on layer visibility
     const isVisible =
       this.layerVisibility.get(CSS2DLayerType.AU_MARKERS) ?? true;
     label.visible = isVisible;
-    // Also set initial display style
+
     if (label.element instanceof HTMLElement) {
       label.element.style.display = isVisible ? "" : "none";
     }
@@ -266,10 +239,8 @@ export class CSS2DManager {
     if (layerMap) {
       const element = layerMap.get(id);
       if (element) {
-        // Use built-in method to remove from parent (handles null parent check)
         element.removeFromParent();
 
-        // Always remove from our internal tracking map afterwards
         layerMap.delete(id);
       }
     }
@@ -284,10 +255,10 @@ export class CSS2DManager {
     const layerMap = this.elements.get(layerType);
     if (layerMap) {
       layerMap.forEach((element) => {
-        element.visible = visible; // Keep setting the Three.js flag
-        // Also directly manipulate the DOM element's style for immediate effect
+        element.visible = visible;
+
         if (element.element instanceof HTMLElement) {
-          element.element.style.display = visible ? "" : "none"; // Use '' to revert to default display
+          element.element.style.display = visible ? "" : "none";
         }
       });
     }
@@ -297,11 +268,9 @@ export class CSS2DManager {
    * Render visible layers
    */
   render(camera: THREE.Camera): void {
-    // --- Pre-render check for orphaned labels ---
     let orphanedIdsToRemove: { layer: CSS2DLayerType; id: string }[] = [];
     this.elements.forEach((layerMap, layerType) => {
       layerMap.forEach((element, id) => {
-        // Check if element still has a parent and if that parent is connected to the scene
         let parentConnected = false;
         let current: THREE.Object3D | null = element.parent;
         while (current) {
@@ -316,37 +285,30 @@ export class CSS2DManager {
           console.warn(
             `[CSS2DManager] Found orphaned label ${id} in layer ${layerType}. Removing.`,
           );
-          // Don't remove directly while iterating, mark for removal
+
           orphanedIdsToRemove.push({ layer: layerType, id: id });
-          // Optionally hide it immediately to prevent rendering attempt this frame
+
           element.visible = false;
         }
       });
     });
 
-    // Remove orphaned elements found during the check
     orphanedIdsToRemove.forEach((orphan) => {
-      this.removeElement(orphan.layer, orphan.id); // Use existing remove method
+      this.removeElement(orphan.layer, orphan.id);
     });
-    // --- End pre-render check ---
 
-    // --- Final Check: Validate parents of ALL CSS2DObjects in scene immediately before render ---
     this.scene.traverseVisible((object) => {
-      // Check only visible objects
       if (object instanceof CSS2DObject) {
         if (!object.parent) {
-          // This ideally shouldn't happen if removeElement works, but as a safeguard:
           console.error(
             `[CSS2DManager] CRITICAL: Found visible CSS2DObject in scene WITHOUT parent just before render! Hiding.`,
             object,
           );
-          object.visible = false; // Hide it to hopefully prevent crash
+          object.visible = false;
         }
       }
     });
-    // --- End Final Check ---
 
-    // Only render if we have at least one visible layer with elements remaining
     let hasVisibleElements = false;
 
     for (const [layerType, isVisible] of this.layerVisibility.entries()) {
@@ -361,14 +323,12 @@ export class CSS2DManager {
 
     if (hasVisibleElements) {
       try {
-        // Add try-catch for extra safety
         this.renderer.render(this.scene, camera);
       } catch (e) {
         console.error(
           "[CSS2DManager] Error during internal CSS2DRenderer.render call:",
           e,
         );
-        // If this still happens, the issue might be deeper within the library or scene state.
       }
     }
   }
@@ -384,12 +344,10 @@ export class CSS2DManager {
    * Clean up resources
    */
   dispose(): void {
-    // Clear all layers using the new clearLayer method
     Object.values(CSS2DLayerType).forEach((layerType) => {
       this.clearLayer(layerType);
     });
 
-    // Remove the renderer DOM element
     if (this.renderer.domElement.parentNode) {
       this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
     }
@@ -422,10 +380,6 @@ export class CSS2DManager {
     const cssObject = layerMap?.get(id);
     if (cssObject?.element instanceof HTMLElement) {
       cssObject.element.classList.add("label-hidden");
-    } else {
-      console.warn(
-        `[CSS2DManager]   hideLabel: Could not find element or element is not HTMLElement for id=${id}`,
-      );
     }
   }
 
@@ -437,7 +391,7 @@ export class CSS2DManager {
     const layerMap = this.elements.get(layerType);
     if (layerMap) {
       layerMap.forEach((element) => {
-        element.removeFromParent(); // Use built-in method
+        element.removeFromParent();
       });
       layerMap.clear();
     }

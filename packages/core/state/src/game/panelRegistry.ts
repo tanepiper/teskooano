@@ -1,7 +1,4 @@
-// Remove the direct EnginePanel import
-
-// Simple registry to hold references to panel component instances
-const panelInstanceRegistry = new Map<string, any>(); // Use 'any' for now
+const panelInstanceRegistry = new Map<string, any>();
 
 export const panelRegistry = {
   registerPanel: (id: string, instance: any): void => {
@@ -13,7 +10,6 @@ export const panelRegistry = {
   },
 
   getPanelInstance: <T = any>(id: string): T | undefined => {
-    // Consumers will need to cast or perform type checks
     return panelInstanceRegistry.get(id) as T | undefined;
   },
 };

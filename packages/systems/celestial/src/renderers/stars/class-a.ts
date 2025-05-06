@@ -23,19 +23,17 @@ export class ClassAStarMaterial extends BaseStarMaterial {
       metallicEffect?: number;
     } = {},
   ) {
-    // White color for A-class stars
     const whiteColor = new THREE.Color(0xf8f7ff);
 
     super(whiteColor, {
-      // Moderate corona intensity
       coronaIntensity: options.coronaIntensity ?? 0.5,
-      // Moderate pulse speed
+
       pulseSpeed: options.pulseSpeed ?? 0.6,
-      // Moderate glow intensity
+
       glowIntensity: options.glowIntensity ?? 0.6,
-      // Moderate temperature variations
+
       temperatureVariation: options.temperatureVariation ?? 0.12,
-      // Moderate metallic effect
+
       metallicEffect: options.metallicEffect ?? 0.5,
     });
   }

@@ -1,9 +1,4 @@
-/// <reference types="@vitest/browser/matchers" />
-/// <reference types="@vitest/browser/providers/playwright" />
-/// <reference types="playwright" />
-
-// Add type declarations for browser testing
-export {}; // Make this a module
+export {};
 
 declare global {
   interface Window {
@@ -12,5 +7,3 @@ declare global {
     __resizeCalled?: boolean;
   }
 }
-
-// Add any global setup for browser tests here

@@ -13,7 +13,6 @@ describe("LOD Mesh Builder Module", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Create test object
     testObject = {
       id: "test-planet",
       type: CelestialType.PLANET,
@@ -25,7 +24,6 @@ describe("LOD Mesh Builder Module", () => {
       properties: { type: "rocky" },
     };
 
-    // Create material
     material = new THREE.MeshStandardMaterial();
   });
 

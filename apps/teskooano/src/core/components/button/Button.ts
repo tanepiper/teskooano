@@ -1,8 +1,39 @@
-import type { TeskooanoTooltip } from "../tooltip/Tooltip"; // Import the tooltip type
+import type { TeskooanoTooltip } from "../tooltip/Tooltip";
 
 import { template } from "./Button.template";
 
+/**
+ * A custom button element `<teskooano-button>` that extends standard button functionality
+ * with features like tooltips, different sizes, variants, and an active state.
+ * It supports disabling the button and handling tooltip display logic.
+ *
+ * @element teskooano-button
+ * @attr {boolean} [disabled=false] - Disables the button.
+ * @attr {"button" | "submit" | "reset"} [type="button"] - The type of the button.
+ * @attr {string} [title] - Standard HTML title attribute. Used as tooltip text if `tooltip-text` is not provided.
+ * @attr {boolean} [fullwidth=false] - Makes the button take up the full width of its container.
+ * @attr {"xs" | "sm" | "md" | "lg" | "xl"} [size="md"] - Sets the size of the button.
+ * @attr {string} [tooltip-text] - Text content for the tooltip. Overrides the `title` attribute for the tooltip.
+ * @attr {string} [tooltip-title] - Title content for the tooltip.
+ * @attr {string} [tooltip-icon] - SVG string or path for an icon within the tooltip. Overrides the button's icon if provided.
+ * @attr {boolean} [active=false] - Indicates if the button is in an active state (e.g., toggled on).
+ * @attr {"primary" | "secondary" | "tertiary" | "danger" | "icon"} [variant="primary"] - Sets the visual style variant of the button.
+ *
+ * @slot - Default slot for the button's text content.
+ * @slot icon - Slot for an icon to be displayed within the button.
+ * @slot tooltip-text - Slot for providing custom text content to the tooltip.
+ * @slot tooltip-title - Slot for providing custom title content to the tooltip.
+ * @slot tooltip-icon - Slot for providing a custom icon to the tooltip. Overrides `tooltip-icon` attribute and `icon` slot.
+ *
+ * @csspart button - The native button element.
+ * @csspart icon - The container for the icon slot.
+ * @csspart label - The container for the default slot (text).
+ */
 export class TeskooanoButton extends HTMLElement {
+  /**
+   * Attributes observed for changes.
+   * @internal
+   */
   static observedAttributes = [
     "disabled",
     "type",
@@ -11,12 +42,18 @@ export class TeskooanoButton extends HTMLElement {
     "size",
     "tooltip-text",
     "tooltip-title",
-    "tooltip-icon-svg",
+    "tooltip-icon",
+    "active",
+    "variant",
   ];
 
+  /** @internal */
   private buttonElement: HTMLButtonElement;
+  /** @internal */
   private tooltipElement: TeskooanoTooltip | null = null;
-  private tooltipOriginContainer: Node | null = null; // To remember where to put it back
+  /** @internal Holds the original parent node of the tooltip before it's moved to the body. */
+  private tooltipOriginContainer: Node | null = null;
+  /** @internal Tracks if the tooltip is currently appended to the document body. */
   private isTooltipInBody: boolean = false;
 
   constructor() {
@@ -25,7 +62,7 @@ export class TeskooanoButton extends HTMLElement {
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
     this.buttonElement = this.shadowRoot!.querySelector("button")!;
     this.tooltipElement = this.shadowRoot!.querySelector("teskooano-tooltip");
-    // Store the original parent (the shadow root fragment)
+
     this.tooltipOriginContainer = this.tooltipElement?.parentNode ?? null;
 
     this.addEventListener("click", this.handleClick);
@@ -35,13 +72,19 @@ export class TeskooanoButton extends HTMLElement {
     this.addEventListener("focusout", this.hideTooltip);
   }
 
+  /**
+   * Called when the element is added to the document's DOM.
+   * @internal
+   */
   connectedCallback() {
     this.updateDisabledState();
     this.updateAttribute("type", this.getAttribute("type") || "button");
     if (!this.hasAttribute("tooltip-text")) {
       this.setButtonAttribute("title", this.getAttribute("title"));
     }
-    this.updateTooltipContent(); // Populate content while it's in shadow DOM
+    this.updateActiveState();
+    this.updateTooltipContent();
+    this.updateVariant();
   }
 
   disconnectedCallback() {
@@ -51,7 +94,6 @@ export class TeskooanoButton extends HTMLElement {
     this.removeEventListener("mouseleave", this.hideTooltip);
     this.removeEventListener("focusout", this.hideTooltip);
 
-    // Ensure tooltip is removed from body if button disconnects while it's shown
     this.removeTooltipFromBody();
   }
 
@@ -79,45 +121,36 @@ export class TeskooanoButton extends HTMLElement {
       return;
     }
 
-    // Ensure content is up-to-date before showing/moving
     this.updateTooltipContent();
 
-    // Temporarily remove native title to prevent double tooltip
     const originalTitle = this.buttonElement.getAttribute("title");
     if (originalTitle) {
       this.buttonElement.removeAttribute("title");
-      // Store it temporarily if we need to restore it precisely
+
       this.buttonElement.dataset.originalTitle = originalTitle;
     }
 
-    // Move to body if not already there for correct fixed positioning context
     if (!this.isTooltipInBody) {
       document.body.appendChild(this.tooltipElement);
       this.isTooltipInBody = true;
     }
 
-    // Call the tooltip's show method, passing the button itself as the trigger
     this.tooltipElement.show(this);
   };
 
   private hideTooltip = () => {
     if (this.tooltipElement) {
-      // Let the tooltip handle its own internal state/transitions
       this.tooltipElement.hide();
 
-      // After the tooltip has finished hiding (or after a short delay),
-      // move it back from the body to the shadow DOM if it was moved.
-      // Using a small timeout to ensure hide() has started.
       setTimeout(() => {
         if (
           this.isTooltipInBody &&
           this.tooltipElement &&
-          this.tooltipElement.parentElement === document.body // Check if it's still in body
+          this.tooltipElement.parentElement === document.body
         ) {
           try {
             document.body.removeChild(this.tooltipElement);
             if (this.tooltipOriginContainer) {
-              // Check if the origin container still exists before appending
               if (document.contains(this.tooltipOriginContainer)) {
                 this.tooltipOriginContainer.appendChild(this.tooltipElement);
               } else {
@@ -128,20 +161,19 @@ export class TeskooanoButton extends HTMLElement {
             }
             this.isTooltipInBody = false;
 
-            // Restore native title ONLY if tooltip-text is not set AND original title existed
             const originalTitle = this.buttonElement.dataset.originalTitle;
             if (!this.hasAttribute("tooltip-text") && originalTitle) {
               this.setButtonAttribute("title", originalTitle);
             }
-            // Clean up dataset attribute
+
             delete this.buttonElement.dataset.originalTitle;
           } catch (error) {
             console.error("Error removing/restoring tooltip:", error);
             this.isTooltipInBody = false;
-            delete this.buttonElement.dataset.originalTitle; // Ensure cleanup even on error
+            delete this.buttonElement.dataset.originalTitle;
           }
         }
-      }, 50); // Small delay to allow hide() to initiate
+      }, 50);
     }
   };
 
@@ -154,8 +186,9 @@ export class TeskooanoButton extends HTMLElement {
       !!this.getAttribute("tooltip-title") ||
       !!this.querySelector('[slot="tooltip-title"]')?.textContent?.trim();
     const hasIcon =
-      !!this.getAttribute("tooltip-icon-svg") ||
-      !!this.querySelector('[slot="tooltip-icon"]');
+      !!this.getAttribute("tooltip-icon") ||
+      !!this.querySelector('[slot="tooltip-icon"]') ||
+      (this.variant === "icon" && !!this.querySelector('[slot="icon"]'));
 
     return hasText || hasTitle || hasIcon;
   }
@@ -174,21 +207,27 @@ export class TeskooanoButton extends HTMLElement {
         break;
       case "tooltip-text":
       case "tooltip-title":
-      case "tooltip-icon-svg":
-        this.updateTooltipContent(); // Update content
-        // Native title handling is now done in show/hide
+      case "tooltip-icon":
+        this.updateTooltipContent();
         break;
-      case "title": // Only update tooltip content if title changes (used as fallback)
+      case "title":
         if (!this.hasAttribute("tooltip-text")) {
           this.updateTooltipContent();
-          // Also update button title if custom tooltip isn't showing
           if (!this.isTooltipInBody) {
             this.setButtonAttribute("title", newValue);
           }
         }
         break;
+      case "active":
+        this.updateTooltipContent();
+        this.updateActiveState();
+        break;
       case "fullwidth":
       case "size":
+        break;
+      case "variant":
+        this.updateVariant();
+        this.updateTooltipContent();
         break;
       default:
         if (name === "type") {
@@ -198,14 +237,12 @@ export class TeskooanoButton extends HTMLElement {
     }
   }
 
-  // Helper to update attributes on the internal button (excluding title handling)
   private updateAttribute(name: string, value: string | null) {
-    if (name === "title") return; // Title is handled specially based on tooltip presence
+    if (name === "title") return;
 
     this.setButtonAttribute(name, value);
   }
 
-  // Internal helper to actually set attributes on the button element
   private setButtonAttribute(name: string, value: string | null) {
     if (value !== null) {
       this.buttonElement.setAttribute(name, value);
@@ -219,8 +256,9 @@ export class TeskooanoButton extends HTMLElement {
 
     const text =
       this.getAttribute("tooltip-text") ?? this.getAttribute("title") ?? "";
+
     const title = this.getAttribute("tooltip-title");
-    const iconSvg = this.getAttribute("tooltip-icon-svg");
+    const specificTooltipIconSvg = this.getAttribute("tooltip-icon");
 
     const textSlot = this.shadowRoot?.querySelector(
       'slot[name="tooltip-text"]',
@@ -228,36 +266,48 @@ export class TeskooanoButton extends HTMLElement {
     const titleSlot = this.shadowRoot?.querySelector(
       'slot[name="tooltip-title"]',
     ) as HTMLSlotElement | null;
-    const iconSlot = this.shadowRoot?.querySelector(
+    const tooltipIconSlot = this.shadowRoot?.querySelector(
       'slot[name="tooltip-icon"]',
+    ) as HTMLSlotElement | null;
+    const mainIconSlot = this.shadowRoot?.querySelector(
+      'slot[name="icon"]',
     ) as HTMLSlotElement | null;
 
     const hasTextSlotContent = !!this.querySelector('[slot="tooltip-text"]');
     const hasTitleSlotContent = !!this.querySelector('[slot="tooltip-title"]');
-    const hasIconSlotContent = !!this.querySelector('[slot="tooltip-icon"]');
+    const hasTooltipIconSlotContent = !!this.querySelector(
+      '[slot="tooltip-icon"]',
+    );
 
-    // Text Content
     if (textSlot && !hasTextSlotContent) {
       this.setTextSlotContent(textSlot, text);
     } else if (textSlot && hasTextSlotContent && textSlot.textContent !== "") {
       this.setTextSlotContent(textSlot, "");
     }
 
-    // Title Content
     if (titleSlot && !hasTitleSlotContent) {
       this.setTextSlotContent(titleSlot, title);
     } else if (titleSlot && hasTitleSlotContent && titleSlot.innerHTML !== "") {
       this.setTextSlotContent(titleSlot, null);
     }
 
-    // Icon Content
-    if (iconSlot && !hasIconSlotContent) {
-      this.setIconSlotContent(iconSlot, iconSvg);
-    } else if (iconSlot && hasIconSlotContent && iconSlot.innerHTML !== "") {
-      this.setIconSlotContent(iconSlot, null);
+    let finalIconSvg: string | null = null;
+    if (hasTooltipIconSlotContent) {
+      finalIconSvg = null;
+    } else if (specificTooltipIconSvg !== null) {
+      finalIconSvg = specificTooltipIconSvg;
+    } else {
+      const assignedElements = mainIconSlot?.assignedElements({
+        flatten: true,
+      });
+      if (assignedElements && assignedElements.length > 0) {
+        finalIconSvg = assignedElements[0].innerHTML ?? null;
+      } else {
+        finalIconSvg = mainIconSlot?.innerHTML ?? null;
+      }
     }
 
-    // REMOVED: Title attribute handling moved to show/hide tooltip methods
+    this.setIconSlotContent(tooltipIconSlot, finalIconSvg);
   }
 
   private setTextSlotContent(
@@ -265,7 +315,7 @@ export class TeskooanoButton extends HTMLElement {
     text: string | null,
   ) {
     if (!slotElement) return;
-    // Use textContent for safety, unless HTML is explicitly needed (which it isn't here)
+
     slotElement.textContent = text ?? "";
   }
 
@@ -274,11 +324,10 @@ export class TeskooanoButton extends HTMLElement {
     svgString: string | null,
   ) {
     if (!slotElement) return;
-    // Assuming svgString is safe, validated SVG markup
+
     slotElement.innerHTML = svgString ?? "";
   }
 
-  // Getter/setter for disabled state
   get disabled(): boolean {
     return this.hasAttribute("disabled");
   }
@@ -301,7 +350,6 @@ export class TeskooanoButton extends HTMLElement {
     }
   }
 
-  // Getter/setter for size property
   get size(): string | null {
     return this.getAttribute("size");
   }
@@ -318,6 +366,38 @@ export class TeskooanoButton extends HTMLElement {
       }
     } else {
       this.removeAttribute("size");
+    }
+  }
+
+  get variant(): string | null {
+    return this.getAttribute("variant");
+  }
+
+  private updateActiveState() {
+    if (this.hasAttribute("active")) {
+      this.buttonElement.classList.add("active");
+    } else {
+      this.buttonElement.classList.remove("active");
+    }
+  }
+
+  private updateVariant() {
+    this.setButtonAttribute("variant", this.variant);
+  }
+
+  public refreshTooltipContent() {
+    this.updateTooltipContent();
+  }
+
+  get active(): boolean {
+    return this.hasAttribute("active");
+  }
+
+  set active(isActive: boolean) {
+    if (isActive) {
+      this.setAttribute("active", "");
+    } else {
+      this.removeAttribute("active");
     }
   }
 }

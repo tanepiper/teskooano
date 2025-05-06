@@ -40,27 +40,22 @@ export function updateDebugLabel(
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Set up text style
   ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "#ffffff";
   ctx.font = "24px Arial";
   ctx.textAlign = "center";
 
-  // Calculate distance to camera
   const distance = lod
     .getWorldPosition(new THREE.Vector3())
     .distanceTo(cameraPosition);
 
-  // Get current LOD level
   const currentLevel = lod.getCurrentLevel();
   const totalLevels = lod.levels.length;
 
-  // Draw debug info
   ctx.fillText(`Distance: ${distance.toFixed(0)}`, canvas.width / 2, 40);
   ctx.fillText(`LOD: ${currentLevel}/${totalLevels - 1}`, canvas.width / 2, 80);
 
-  // Update texture
   texture.needsUpdate = true;
 }
 

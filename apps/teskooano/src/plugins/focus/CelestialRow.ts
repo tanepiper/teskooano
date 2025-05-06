@@ -49,7 +49,7 @@ export class CelestialRow extends HTMLElement {
     switch (name) {
       case "object-id":
         this._objectId = newValue;
-        // Update titles maybe?
+
         this.focusBtn?.setAttribute(
           "title",
           `Focus ${this.getAttribute("object-name") || newValue}`,
@@ -74,22 +74,21 @@ export class CelestialRow extends HTMLElement {
         const type = (newValue as CelestialType) ?? "default";
         const style = iconStyles[type] || iconStyles.default;
         this.iconEl?.setAttribute("style", style);
-        // Optionally set a class too: this.iconEl?.setAttribute('class', `celestial-icon ${type}-icon`);
+
         break;
       case "inactive":
         this._isInactive = newValue !== null;
-        this.toggleAttribute("inactive", this._isInactive); // Reflect attribute for styling
+        this.toggleAttribute("inactive", this._isInactive);
         break;
       case "focused":
         this._isFocused = newValue !== null;
-        this.toggleAttribute("focused", this._isFocused); // Reflect attribute for styling
+        this.toggleAttribute("focused", this._isFocused);
         break;
     }
   }
 
-  // --- Event Handlers ---
   private handleFocusClick = (event: MouseEvent) => {
-    event.stopPropagation(); // Prevent triggering parent listeners if needed
+    event.stopPropagation();
     if (this._objectId && !this._isInactive) {
       this.dispatchEvent(
         new CustomEvent(CustomEvents.FOCUS_REQUEST, {
@@ -111,11 +110,9 @@ export class CelestialRow extends HTMLElement {
           detail: { objectId: this._objectId },
         }),
       );
-      // TODO: Implement follow logic trigger - maybe toggle a 'following' state/attribute?
     }
   };
 
-  // --- Getters for attributes (optional but good practice) ---
   get objectId(): string | null {
     return this._objectId;
   }

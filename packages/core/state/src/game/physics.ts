@@ -1,13 +1,12 @@
 import type { CelestialObject, PhysicsStateReal } from "@teskooano/data-types";
 import { AU_METERS, SCALE } from "@teskooano/data-types";
 import * as THREE from "three";
-import { renderableActions } from "./renderableStore"; // Import renderable actions
-import { getSimulationState } from "./simulation"; // Import getter instead of old store name
+import { renderableActions } from "./renderableStore";
+import { getSimulationState } from "./simulation";
 import { getCelestialObjects, setCelestialObject } from "./stores";
 
-// Counter and Interval for periodic updates
 let updateCounter = 0;
-const ORBITAL_ELEMENT_UPDATE_INTERVAL = 60; // Recalculate every N updates
+const ORBITAL_ELEMENT_UPDATE_INTERVAL = 60;
 
 /**
  * Get REAL physics bodies array for simulation
@@ -45,8 +44,7 @@ export const updatePhysicsState = (
       return;
     }
 
-    // --- Calculate Rotation Quaternion ---
-    let rotationQuaternion = new THREE.Quaternion(); // Initialize to identity
+    let rotationQuaternion = new THREE.Quaternion();
     if (
       existingObject.siderealRotationPeriod_s &&
       existingObject.siderealRotationPeriod_s !== 0 &&
@@ -68,33 +66,25 @@ export const updatePhysicsState = (
         currentRotationAngle,
       );
     }
-    // --- End Rotation Calculation ---
 
-    // --- Calculate Scaled Position ---
     const updatedPositionScaled = bodyReal.position_m
       .clone()
       .multiplyScalar(METERS_TO_SCENE_UNITS)
       .toThreeJS();
 
-    // --- Update CORE CelestialObject (only physics state) ---
     const newObjectData: CelestialObject = {
       ...existingObject,
-      physicsStateReal: bodyReal, // Update only the real physics state
-      // orbit: existingObject.orbit, // Keep existing orbit (already spread)
+      physicsStateReal: bodyReal,
     };
     setCelestialObject(id, newObjectData);
 
-    // --- REMOVED ---
-    // Direct update to renderable store should NOT happen here.
-    // RendererStateAdapter handles this by listening to celestialObjectsStore.
     /*
-    const scaledPos = physicsToThreeJSPosition(bodyReal.position_m); // Need scaling util
-    const scaledRot = new THREE.Quaternion(); // Placeholder rotation
+    const scaledPos = physicsToThreeJSPosition(bodyReal.position_m); 
+    const scaledRot = new THREE.Quaternion(); 
     renderableActions.updateRenderableObject(id, {
         position: scaledPos,
         rotation: scaledRot,
     });
     */
-    // --- END REMOVED ---
   });
 };

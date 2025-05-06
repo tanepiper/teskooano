@@ -25,7 +25,7 @@ export function getDeviceMemory(): number | null {
     console.warn("Device Memory API is not supported.");
     return null;
   }
-  return navigator.deviceMemory ?? null; // Return null if undefined
+  return navigator.deviceMemory ?? null;
 }
 
 /**
@@ -43,7 +43,6 @@ const initialDeviceMemoryState: DeviceMemoryState = {
   isSupported: isDeviceMemorySupported(),
 };
 
-// Create a simple BehaviorSubject since the value doesn't change.
 const deviceMemorySubject = new BehaviorSubject<DeviceMemoryState>(
   initialDeviceMemoryState,
 );

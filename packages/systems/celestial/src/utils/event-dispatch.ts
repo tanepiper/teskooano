@@ -1,4 +1,4 @@
-import { TextureProgressEventDetail } from "./types"; // Assuming types.ts is created
+import { TextureProgressEventDetail } from "./types";
 import { CustomEvents } from "@teskooano/data-types";
 
 export function dispatchTextureProgress(current: number, total: number): void {

@@ -71,13 +71,12 @@ export function watchRemotePlaybackAvailability(
 
     const initialState: RemotePlaybackAvailabilityState = {
       isSupported: true,
-      isAvailable: false, // Assume not available until callback confirms
+      isAvailable: false,
     };
-    subscriber.next(initialState); // Emit initial state
+    subscriber.next(initialState);
 
     const callback = (available: boolean) => {
       if (isWatching) {
-        // Ensure callback doesn't fire after cleanup
         const newState = {
           ...initialState,
           isAvailable: available,
@@ -91,7 +90,6 @@ export function watchRemotePlaybackAvailability(
       .remote!.watchAvailability(callback)
       .then((id) => {
         if (!isWatching) {
-          // Handle race condition if unsubscribed before promise resolves
           element
             .remote!.cancelWatchAvailability(id)
             .catch((e) =>
@@ -104,12 +102,12 @@ export function watchRemotePlaybackAvailability(
         }
 
         watchId = id;
-        // Emit state again with the watchId included
+
         const newState = {
           ...initialState,
           isAvailable: initialState.isAvailable,
           watchId: watchId,
-        }; // Re-emit with ID
+        };
         subscriber.next(newState);
       })
       .catch((err) => {
@@ -118,10 +116,8 @@ export function watchRemotePlaybackAvailability(
           ...initialState,
           error: `Failed to watch availability: ${err.message}`,
         });
-        // Don't complete, allow potential retries or manual prompt
       });
 
-    // Cleanup function
     return () => {
       isWatching = false;
       if (watchId !== undefined && element.remote) {
@@ -134,7 +130,6 @@ export function watchRemotePlaybackAvailability(
             ),
           );
       } else if (watchId === undefined) {
-        // If promise hadn't resolved yet, try cancelling without ID (might work)
         element.remote
           ?.cancelWatchAvailability()
           .catch((err) =>
@@ -173,8 +168,6 @@ export async function promptRemotePlaybackDevice(
     );
   }
 
-  // Temporarily disable remote playback on the element itself to avoid conflicts
-  // although this might not be strictly necessary depending on UA behavior.
   const wasDisabled = element.disableRemotePlayback;
   element.disableRemotePlayback = true;
 
@@ -182,12 +175,10 @@ export async function promptRemotePlaybackDevice(
     console.log("Prompting for remote playback device...");
     await element.remote!.prompt();
     console.log("Remote playback prompt finished.");
-    // Note: This promise resolves even if the user cancels. Check state separately.
   } catch (err: any) {
     console.error("Failed to prompt for remote playback device:", err);
-    throw err; // Re-throw the error
+    throw err;
   } finally {
-    // Restore original setting
     element.disableRemotePlayback = wasDisabled;
   }
 }
@@ -204,7 +195,7 @@ export function getRemotePlaybackState(
 ): Observable<RemotePlaybackConnectionState> {
   const initialState: RemotePlaybackConnectionState = {
     isSupported: isRemotePlaybackSupported(element),
-    status: element.remote?.state ?? "disconnected", // Initial state from element
+    status: element.remote?.state ?? "disconnected",
   };
 
   if (!initialState.isSupported) {
@@ -214,7 +205,6 @@ export function getRemotePlaybackState(
     }).asObservable();
   }
 
-  // Events to trigger state updates
   const connecting$ = fromEvent(element.remote!, "connecting").pipe(
     map(() => "connecting" as const),
   );
@@ -226,13 +216,13 @@ export function getRemotePlaybackState(
   );
 
   return merge(connecting$, connect$, disconnect$).pipe(
-    startWith(initialState.status), // Emit initial state derived from element.remote.state
+    startWith(initialState.status),
     distinctUntilChanged(),
-    map((status) => ({ isSupported: true, status })), // Map event strings to state objects
+    map((status) => ({ isSupported: true, status })),
     shareReplay({ bufferSize: 1, refCount: true }),
     catchError((err, caught) => {
       console.error("Error in remote playback state stream:", err);
-      // Emit an error state but keep the stream alive if possible
+
       return of({
         isSupported: true,
         status: "disconnected" as RemotePlaybackStatus,

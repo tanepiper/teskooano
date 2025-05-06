@@ -48,10 +48,9 @@ export function requestIdleCallbackPromise(
 
     const handle = window.requestIdleCallback(
       (deadline) => {
-        // Clean up the abort listener once the callback executes
         options?.signal?.removeEventListener("abort", abortListener);
-        callback(deadline); // Execute the user's callback first
-        resolve(deadline); // Then resolve the promise
+        callback(deadline);
+        resolve(deadline);
       },
       options?.timeout ? { timeout: options.timeout } : undefined,
     );
@@ -61,10 +60,8 @@ export function requestIdleCallbackPromise(
       reject(new DOMException("Idle callback cancelled", "AbortError"));
     };
 
-    // If a signal is provided, listen for abort events
     if (options?.signal) {
       if (options.signal.aborted) {
-        // If already aborted, reject immediately
         abortListener();
       } else {
         options.signal.addEventListener("abort", abortListener, { once: true });

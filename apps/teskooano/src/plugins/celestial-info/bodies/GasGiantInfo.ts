@@ -9,7 +9,6 @@ import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
 import { baseStyles } from "../utils/CelestialStyles";
 import { FormatUtils } from "../utils/FormatUtils";
 
-// --- GAS GIANT INFO COMPONENT ---
 export class GasGiantInfoComponent
   extends HTMLElement
   implements CelestialInfoComponent
@@ -94,5 +93,4 @@ export class GasGiantInfoComponent
   }
 }
 
-// Define the custom element
 customElements.define("gas-giant-info", GasGiantInfoComponent);

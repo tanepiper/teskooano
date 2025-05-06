@@ -16,22 +16,48 @@ import { generateStar } from "@teskooano/procedural-generation";
 import { generateAndLoadSystem } from "./system-generator.js";
 import { OSVector3 } from "@teskooano/core-math";
 import type { DockviewApi } from "dockview-core";
+import {
+  Observable,
+  defer,
+  fromEvent,
+  switchMap,
+  map,
+  catchError,
+  of,
+  take,
+  finalize,
+  lastValueFrom,
+} from "rxjs";
 
 interface SystemImportData {
   seed: string;
   objects: CelestialObject[];
 }
 
-async function processImportedFile(
+interface ProcessResult {
+  success: boolean;
+  message?: string;
+  symbol: string;
+}
+
+/**
+ * Processes an imported system file using FileReader, returning an Observable result.
+ * @param file The File object to process.
+ * @param dockviewApi Optional Dockview API instance.
+ * @returns Observable<ProcessResult>
+ */
+function processImportedFile$(
   file: File,
-  dockviewApi: DockviewApi | null, // Keep DockviewApi reference if needed for future context
-): Promise<{ success: boolean; message?: string; symbol: string }> {
-  return new Promise((resolve) => {
+  dockviewApi: DockviewApi | null,
+): Observable<ProcessResult> {
+  return new Observable<ProcessResult>((observer) => {
     const reader = new FileReader();
-    reader.onload = async (event) => {
-      let inputElement: HTMLInputElement | null = document.querySelector(
-        'input[type="file"][data-importer="system"]',
-      );
+
+    const inputElement: HTMLInputElement | null = document.querySelector(
+      'input[type="file"][data-importer="system"]',
+    );
+
+    reader.onload = (event) => {
       try {
         const fileContent = event.target?.result as string;
         if (!fileContent) throw new Error("File content is empty.");
@@ -45,7 +71,6 @@ async function processImportedFile(
           throw new Error("Invalid file format.");
         }
 
-        // Hydrate OSVector3 instances
         const hydratedObjects = parsedData.objects.map((obj) => {
           if (obj.physicsStateReal) {
             if (
@@ -93,36 +118,55 @@ async function processImportedFile(
 
         currentSeed.next(parsedData.seed);
 
-        // Inform simulation/UI to reset time-based elements
         window.dispatchEvent(
           new CustomEvent(CustomEvents.SIMULATION_RESET_TIME),
         );
-        resolve({ success: true, symbol: "✅", message: "Import successful." });
+
+        observer.next({
+          success: true,
+          symbol: "✅",
+          message: "Import successful.",
+        });
+        observer.complete();
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown import error";
-        resolve({ success: false, symbol: "❌", message });
-      } finally {
-        if (inputElement?.parentNode)
-          inputElement.parentNode.removeChild(inputElement);
+
+        observer.next({ success: false, symbol: "❌", message });
+        observer.complete();
       }
     };
+
     reader.onerror = (error) => {
-      let inputElement: HTMLInputElement | null = document.querySelector(
-        'input[type="file"][data-importer="system"]',
-      );
       console.error("[SystemFunctions] Error reading file:", error);
-      resolve({ success: false, symbol: "❌", message: "Error reading file." });
-      if (inputElement?.parentNode)
-        inputElement.parentNode.removeChild(inputElement);
+      observer.next({
+        success: false,
+        symbol: "❌",
+        message: "Error reading file.",
+      });
+      observer.complete();
     };
+
     reader.readAsText(file);
+
+    return () => {
+      if (inputElement?.parentNode) {
+        console.log(
+          "[SystemFunctions] Cleaning up file input element from processImportedFile$",
+        );
+        inputElement.parentNode.removeChild(inputElement);
+      }
+    };
   });
 }
 
 export const generateRandomSystemFunction: FunctionConfig = {
   id: "system:generate_random",
-  requiresDockviewApi: true,
+  dependencies: {
+    dockView: {
+      api: true,
+    },
+  },
   execute: async (
     context: PluginExecutionContext,
     options?: { seed?: string },
@@ -136,7 +180,7 @@ export const generateRandomSystemFunction: FunctionConfig = {
     }
     try {
       const seed = options?.seed ?? Math.random().toString(36).substring(2, 10);
-      // Assuming generateAndLoadSystem handles progress updates via dockviewApi if needed
+
       await generateAndLoadSystem(seed, dockviewApi);
       return {
         success: true,
@@ -158,6 +202,7 @@ export const generateRandomSystemFunction: FunctionConfig = {
 
 export const clearSystemFunction: FunctionConfig = {
   id: "system:clear",
+  dependencies: {},
   execute: async () => {
     try {
       actions.clearState({
@@ -165,7 +210,7 @@ export const clearSystemFunction: FunctionConfig = {
         resetTime: true,
         resetSelection: true,
       });
-      actions.resetTime(); // Ensure time resets
+      actions.resetTime();
       return { success: true, symbol: "🗑️", message: "System cleared." };
     } catch (error) {
       console.error("[SystemFunctions] Error clearing system:", error);
@@ -180,6 +225,7 @@ export const clearSystemFunction: FunctionConfig = {
 
 export const exportSystemFunction: FunctionConfig = {
   id: "system:export",
+  dependencies: {},
   execute: async () => {
     try {
       const objects = getCelestialObjects();
@@ -219,55 +265,74 @@ export const exportSystemFunction: FunctionConfig = {
 
 export const triggerImportDialogFunction: FunctionConfig = {
   id: "system:trigger_import_dialog",
-  requiresDockviewApi: true,
+  dependencies: {
+    dockView: {
+      api: true,
+    },
+  },
   execute: async (context: PluginExecutionContext) => {
-    // Destructure dockviewApi here to make it available in nested scopes
     const { dockviewApi } = context;
+    let inputElement: HTMLInputElement | null = null;
 
-    return new Promise((resolve) => {
-      // Ensure previous importers are removed
+    const import$ = defer(() => {
       document
         .querySelectorAll('input[type="file"][data-importer="system"]')
         .forEach((el) => el.remove());
 
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".json";
-      input.style.display = "none";
-      input.setAttribute("data-importer", "system");
+      inputElement = document.createElement("input");
+      inputElement.type = "file";
+      inputElement.accept = ".json";
+      inputElement.style.display = "none";
+      inputElement.setAttribute("data-importer", "system");
+      document.body.appendChild(inputElement);
 
-      input.onchange = async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
+      inputElement.click();
+
+      return fromEvent(inputElement, "change");
+    }).pipe(
+      take(1),
+      switchMap((event) => {
+        const file = (event.target as HTMLInputElement)?.files?.[0];
         if (file) {
-          // Pass the captured dockviewApi variable
-          const result = await processImportedFile(file, dockviewApi);
-          resolve(result);
+          return processImportedFile$(file, dockviewApi);
         } else {
-          // No file selected, remove the input
-          if (input.parentNode) input.parentNode.removeChild(input);
-          resolve({
+          return of<ProcessResult>({
             success: false,
             symbol: "🤷",
             message: "File selection cancelled.",
           });
         }
-      };
-
-      input.onerror = (err) => {
-        if (input.parentNode) input.parentNode.removeChild(input);
+      }),
+      catchError((err) => {
         console.error("[SystemFunctions] File input error:", err);
-        resolve({ success: false, symbol: "❌", message: "File input error." });
-      };
+        return of<ProcessResult>({
+          success: false,
+          symbol: "❌",
+          message: "File input error.",
+        });
+      }),
+      finalize(() => {
+        if (inputElement?.parentNode) {
+          console.log(
+            "[SystemFunctions] Cleaning up file input element from triggerImportDialogFunction",
+          );
+          inputElement.parentNode.removeChild(inputElement);
+          inputElement = null;
+        }
+      }),
+    );
 
-      document.body.appendChild(input);
-      input.click(); // Trigger file selection dialog
-    });
+    return lastValueFrom(import$);
   },
 };
 
 export const createBlankSystemFunction: FunctionConfig = {
   id: "system:create_blank",
-  requiresDockviewApi: true,
+  dependencies: {
+    dockView: {
+      api: true,
+    },
+  },
   execute: async (context: PluginExecutionContext) => {
     const { dockviewApi } = context;
     try {
@@ -276,13 +341,12 @@ export const createBlankSystemFunction: FunctionConfig = {
         resetTime: true,
         resetSelection: true,
       });
-      actions.resetTime(); // Ensure time resets
+      actions.resetTime();
 
-      const star = generateStar(Math.random); // Generate a default star
+      const star = generateStar(Math.random);
       actions.createSolarSystem(star);
-      currentSeed.next(""); // No seed for a blank system
+      currentSeed.next("");
 
-      // Inform simulation/UI to reset time-based elements
       window.dispatchEvent(new CustomEvent(CustomEvents.SIMULATION_RESET_TIME));
       return { success: true, symbol: "📄", message: "Blank system created." };
     } catch (error) {
@@ -298,6 +362,7 @@ export const createBlankSystemFunction: FunctionConfig = {
 
 export const copySeedFunction: FunctionConfig = {
   id: "system:copy_seed",
+  dependencies: {},
   execute: async (context: PluginExecutionContext, seedToCopy?: string) => {
     const seed = seedToCopy ?? currentSeed.getValue() ?? "";
     if (!seed) {

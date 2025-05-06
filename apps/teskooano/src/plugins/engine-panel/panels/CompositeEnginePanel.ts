@@ -3,7 +3,7 @@ import {
   celestialObjects$,
   getSimulationState,
   panelRegistry,
-  simulationState$, // Import global simulation state
+  simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
@@ -12,27 +12,24 @@ import {
   GroupPanelPartInitParameters,
   IContentRenderer,
 } from "dockview-core";
-import { BehaviorSubject, Subscription } from "rxjs"; // Import BehaviorSubject
+import { BehaviorSubject, Subscription } from "rxjs";
 import * as THREE from "three";
 
 import { OrbitManager } from "@teskooano/renderer-threejs-orbits";
 
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
-import {
-  layoutOrientation$, // Import the RxJS Observable
-  Orientation,
-} from "./layoutStore";
+import { layoutOrientation$, Orientation } from "./layoutStore";
 
-import { CameraManager } from "../../camera-manager/CameraManager"; // Revert to direct import
+import { CameraManager } from "../../camera-manager/CameraManager";
 
-import type { DockviewController } from "../../../core/controllers/dockview/DockviewController"; // Import controller type
+import type { DockviewController } from "../../../core/controllers/dockview/DockviewController";
 
 import { CustomEvents } from "@teskooano/data-types";
 import { RendererStats } from "@teskooano/renderer-threejs-core";
-import { pluginManager } from "@teskooano/ui-plugin"; // Import the instance
+import { pluginManager } from "@teskooano/ui-plugin";
 import {
   EngineToolbar,
-  EngineToolbarManager, // Import the manager type
+  EngineToolbarManager,
 } from "../../../core/interface/engine-toolbar";
 
 /**
@@ -46,7 +43,7 @@ interface CompositePanelParams {
   /**
    * The controller for the panel
    */
-  dockviewController?: DockviewController; // Expect controller to be passed in
+  dockviewController?: DockviewController;
 }
 
 /**
@@ -124,29 +121,22 @@ export class CompositeEnginePanel implements IContentRenderer {
   private _renderer: ModularSpaceRenderer | undefined;
   private _resizeObserver: ResizeObserver | undefined;
 
-  // --- View Orientation Handling ---
   private _currentOrientation: Orientation | null = null;
   private _layoutOrientationSubscription: Subscription | null = null;
-  private _celestialObjectsUnsubscribe: Subscription | null = null; // Renamed for clarity
-  private _simulationStateUnsubscribe: Subscription | null = null; // For global state
+  private _celestialObjectsUnsubscribe: Subscription | null = null;
+  private _simulationStateUnsubscribe: Subscription | null = null;
   private _isInitialized = false;
 
-  // --- Add CameraManager instance ---
-  private _cameraManager: CameraManager | undefined = undefined; // Changed type to allow undefined
+  private _cameraManager: CameraManager | undefined = undefined;
 
-  // --- Internal View State Store (Copied from old EnginePanel) ---
   private _viewStateSubject: BehaviorSubject<CompositeEngineState>;
 
-  // --- Dockview Controller Instance ---
   private _dockviewController: DockviewController | null = null;
 
-  // --- Add EngineToolbar Instance ---
   private _engineToolbar: EngineToolbar | null = null;
 
-  // --- Track Open Floating Panels ---
   private _trackedFloatingPanels: Map<string, DockviewPanelApi> = new Map();
 
-  // --- RxJS Subscription for Panel Removal ---
   private _panelRemovedSubscription: Subscription | null = null;
 
   /**
@@ -172,8 +162,8 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._element.appendChild(this._engineContainer);
 
     this._viewStateSubject = new BehaviorSubject<CompositeEngineState>({
-      cameraPosition: new THREE.Vector3(200, 200, 200), // Default starting position
-      cameraTarget: new THREE.Vector3(0, 0, 0), // Default starting target
+      cameraPosition: new THREE.Vector3(200, 200, 200),
+      cameraTarget: new THREE.Vector3(0, 0, 0),
       focusedObjectId: null,
       showGrid: true,
       showCelestialLabels: true,
@@ -317,7 +307,6 @@ export class CompositeEnginePanel implements IContentRenderer {
     if (updates.isDebugMode !== undefined) {
       this._renderer.setDebugMode(updates.isDebugMode);
     }
-    // Add other state applications here as needed
   }
 
   /**
@@ -419,11 +408,10 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Ensures rendering adapts to container size changes.
    */
   private triggerResize(): void {
-    // Debounce resize slightly using requestAnimationFrame
     requestAnimationFrame(() => {
       if (this._engineContainer && this._renderer) {
         const { clientWidth, clientHeight } = this._engineContainer;
-        // Only resize if dimensions are valid
+
         if (clientWidth > 0 && clientHeight > 0) {
           this._renderer.onResize(clientWidth, clientHeight);
         }
@@ -449,7 +437,6 @@ export class CompositeEnginePanel implements IContentRenderer {
    * @param parameters - Initialization parameters provided by Dockview.
    */
   init(parameters: GroupPanelPartInitParameters): void {
-    // Check initialization flag AND if dockviewController is set
     if (this._isInitialized && this._dockviewController) {
       console.warn(
         `[CompositePanel ${this._api?.id}] Attempted to initialize already initialized panel.`,
@@ -460,56 +447,46 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._params = parameters as GroupPanelPartInitParameters & {
       params?: CompositePanelParams;
     };
-    // Store the DockviewController instance from params
+
     this._dockviewController = this._params?.params?.dockviewController ?? null;
 
     if (!this._dockviewController) {
       console.error(
         `[CompositePanel ${this._api?.id}] DockviewController instance was not provided in params. Toolbar actions will fail.`,
       );
-      // Optionally display an error message in the panel
     }
 
     this._api = parameters.api;
-    this._element.id = `composite-engine-view-${this._api?.id}`; // Ensure unique ID
+    this._element.id = `composite-engine-view-${this._api?.id}`;
 
-    // --- Set initial placeholder content ---
     if (this._engineContainer) {
       this._engineContainer.innerHTML = this._createPlaceholderContent();
     }
 
-    // Subscribe to celestial objects data to trigger renderer/UI setup
-    this._celestialObjectsUnsubscribe?.unsubscribe(); // Clean up previous listener if any
+    this._celestialObjectsUnsubscribe?.unsubscribe();
     this._celestialObjectsUnsubscribe = celestialObjects$.subscribe(
       (celestialObjects) => {
-        // Only proceed if the panel hasn't been disposed
         if (!this._element.isConnected) {
-          return; // Don't initialize if element is detached
+          return;
         }
 
         const objectCount = Object.keys(celestialObjects).length;
 
         if (!this._renderer && objectCount > 0) {
-          // Data available, renderer not initialized: Initialize
-
-          // Clear placeholder before initializing renderer
           if (this._engineContainer) this._engineContainer.innerHTML = "";
 
           this.initializeRenderer();
-          this.initializeToolbar(); // Initialize the new toolbar
+          this.initializeToolbar();
 
-          // Start simulation loop globally (if not already started)
           if (!isSimulationLoopStarted) {
             startSimulationLoop();
             isSimulationLoopStarted = true;
           }
 
-          this.triggerResize(); // Trigger initial resize
+          this.triggerResize();
         } else if (this._renderer && objectCount === 0) {
-          // Renderer exists, but data disappeared: Dispose renderer/UI
+          this.disposeRendererAndUI();
 
-          this.disposeRendererAndUI(); // Clean up
-          // Reset to placeholder state
           if (this._engineContainer && !this._renderer) {
             this._engineContainer.innerHTML = this._createPlaceholderContent();
           }
@@ -517,15 +494,13 @@ export class CompositeEnginePanel implements IContentRenderer {
       },
     );
 
-    this._isInitialized = true; // Mark as initialized *after* setup
+    this._isInitialized = true;
 
-    // Subscribe to global simulation state *after* initialization
-    this._simulationStateUnsubscribe?.unsubscribe(); // Clean up previous if any (unlikely here)
+    this._simulationStateUnsubscribe?.unsubscribe();
     this._simulationStateUnsubscribe = simulationState$.subscribe(
       this.handleSimulationStateChange,
     );
 
-    // --- Subscribe to Panel Removals from DockviewController ---
     if (this._dockviewController) {
       this._panelRemovedSubscription =
         this._dockviewController.onPanelRemoved$.subscribe((panelId) => {
@@ -536,17 +511,13 @@ export class CompositeEnginePanel implements IContentRenderer {
         "CompositeEnginePanel: DockviewController not provided, cannot subscribe to panel removals.",
       );
     }
-    // Subscribe to Layout Orientation Store (RxJS)
-    // Initial value is handled by BehaviorSubject emitting on subscribe
+
     this._layoutOrientationSubscription = layoutOrientation$.subscribe(
       (orientation) => {
-        // Set the current orientation when the value is emitted
         this._currentOrientation = orientation;
-        // Potentially trigger layout adjustments if needed when orientation changes
-        // e.g., this.adjustLayoutForOrientation(orientation);
+
         if (this._isInitialized) {
-          // Only trigger resize after init
-          this.triggerResize(); // Often a resize is enough
+          this.triggerResize();
         }
       },
     );
@@ -566,42 +537,33 @@ export class CompositeEnginePanel implements IContentRenderer {
         hdr: true,
         background: "black",
         showGrid: this._viewStateSubject.getValue().showGrid,
-        showCelestialLabels: true, // Defaulting to true, controlled by state later
+        showCelestialLabels: true,
         showAuMarkers: this._viewStateSubject.getValue().showAuMarkers,
       });
 
-      // --- Subscribe to simulation state for visual settings ---
-      // Note: We also subscribe in init(), but need to ensure we capture initial state
-      //       if the renderer initializes *after* the first state emit.
       if (!this._simulationStateUnsubscribe) {
-        // Avoid double subscription
         this._simulationStateUnsubscribe = simulationState$.subscribe(
           this.handleSimulationStateChange,
         );
       }
-      // Apply initial simulation state values that affect the renderer
+
       this.handleSimulationStateChange(getSimulationState());
 
-      // --- Initialize Camera Manager ---
-      // Get the singleton instance using pluginManager
       const cameraManagerInstance =
         pluginManager.getManagerInstance<CameraManager>("camera-manager");
-      this._cameraManager = cameraManagerInstance; // Store the singleton instance
+      this._cameraManager = cameraManagerInstance;
 
       if (!this._cameraManager) {
         console.error(
           `[CompositePanel ${this._api?.id}] Failed to get CameraManager instance! Camera controls will be unavailable.`,
         );
-        // Handle error appropriately - maybe show a message in the panel?
-        return; // Stop initialization if manager is missing
+
+        return;
       }
 
-      const initialViewState = this._viewStateSubject.getValue(); // Get initial state
+      const initialViewState = this._viewStateSubject.getValue();
 
-      // --- Set Dependencies (Requires method on CameraManager) --- //
       try {
-        // We need a method like setDependencies or initialize on CameraManager
-        // TODO: Verify/add setDependencies method to CameraManager class
         this._cameraManager.setDependencies({
           renderer: this._renderer,
           initialFov: initialViewState.fov,
@@ -613,19 +575,12 @@ export class CompositeEnginePanel implements IContentRenderer {
           },
         });
 
-        // REMOVE old direct instantiation:
-        // this._cameraManager = new CameraManager({ ... });
-
-        // Set initial camera position using the manager (only if initialized)
         if (this._cameraManager) this._cameraManager.initializeCameraPosition();
 
-        // Subscribe to the CameraManager's state changes (only if initialized)
         if (this._cameraManager) {
           this._cameraManager.getCameraState$().subscribe((cameraState) => {
-            // Only update if the panel itself is still active
             if (!this._isInitialized || !this.element.isConnected) return;
 
-            // Check against current panel state to avoid redundant updates/loops
             const currentPanelState = this._viewStateSubject.getValue();
             const updates: Partial<CompositeEngineState> = {};
 
@@ -650,9 +605,7 @@ export class CompositeEnginePanel implements IContentRenderer {
               updates.fov = cameraState.fov;
             }
 
-            // Apply updates if there are any changes
             if (Object.keys(updates).length > 0) {
-              // Use next directly on the subject
               this._viewStateSubject.next({
                 ...currentPanelState,
                 ...updates,
@@ -661,7 +614,6 @@ export class CompositeEnginePanel implements IContentRenderer {
           });
         }
 
-        // Dispatch event indicating the renderer is ready
         if (this._renderer && this.element.isConnected && this._api?.id) {
           this.element.dispatchEvent(
             new CustomEvent(CustomEvents.RENDERER_READY, {
@@ -674,23 +626,20 @@ export class CompositeEnginePanel implements IContentRenderer {
 
         this._renderer.startRenderLoop();
 
-        // Setup resize observer for the engine container
         this._resizeObserver = new ResizeObserver((entries) => {
           for (let _ of entries) {
-            // Use triggerResize for debouncing
             this.triggerResize();
           }
         });
         this._resizeObserver.observe(this._engineContainer);
 
-        // Apply Initial State Immediately after renderer creation
         this.applyViewStateToRenderer(this.getViewState());
       } catch (error) {
         console.error(
           `[CompositePanel ${this._api?.id}] Failed to set CameraManager dependencies:`,
           error,
         );
-        this._cameraManager = undefined; // Use undefined to match type
+        this._cameraManager = undefined;
       }
     } catch (error) {
       console.error(
@@ -710,14 +659,13 @@ export class CompositeEnginePanel implements IContentRenderer {
    * @param newState The latest simulation state.
    */
   private handleSimulationStateChange = (_: SimulationState): void => {
-    if (!this._renderer?.orbitManager) return; // Need orbit manager
+    if (!this._renderer?.orbitManager) return;
   };
 
   /**
    * Initializes the overlay toolbar using the EngineToolbar component.
    */
   private initializeToolbar(): void {
-    // Ensure we have the API ID before creating the toolbar
     if (!this._api?.id) {
       console.error(
         "CompositeEnginePanel: Cannot initialize toolbar without panel API ID.",
@@ -725,7 +673,6 @@ export class CompositeEnginePanel implements IContentRenderer {
       return;
     }
 
-    // --- Get the Toolbar Manager using pluginManager --- //
     const toolbarManager =
       pluginManager.getManagerInstance<EngineToolbarManager>(
         "engine-toolbar-manager",
@@ -737,21 +684,13 @@ export class CompositeEnginePanel implements IContentRenderer {
       );
       return;
     }
-    // Clean up any existing toolbar managed instance if necessary (manager might handle this)
-    // managerInstance.disposeToolbarForPanel(this._api.id);
 
-    // Create and append the new toolbar using the manager
     this._engineToolbar = toolbarManager.createToolbarForPanel(
       this._api.id,
-      this._element, // Parent element for appending the toolbar
+      this._element,
       this._dockviewController!,
       this,
     );
-
-    // The manager's createToolbarForPanel should handle appending the element
-    // if (this._engineToolbar) {
-    //   this._element.appendChild(this._engineToolbar.element);
-    // }
   }
 
   /**
@@ -759,31 +698,26 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Called when data disappears or the panel is disposed.
    */
   private disposeRendererAndUI(): void {
-    this._renderer?.dispose();
+    this._renderer?.dispose?.();
     this._renderer = undefined;
 
-    // --- Dispose EngineToolbar via Manager --- //
-    // Use pluginManager
     const toolbarManager =
       pluginManager.getManagerInstance<EngineToolbarManager>(
         "engine-toolbar-manager",
       );
 
     if (toolbarManager && this._api?.id) {
-      // Call method on the instance
       toolbarManager.disposeToolbarForPanel(this._api.id);
-      this._engineToolbar = null; // Clear local reference
+      this._engineToolbar = null;
     } else {
       console.error(
         "[CompositeEnginePanel] EngineToolbarManager not found or API ID missing during dispose!",
       );
-      // Fallback? Should not happen if initialized correctly
-      this._engineToolbar?.dispose();
+
+      this._engineToolbar?.dispose?.();
       this._engineToolbar = null;
     }
-    // --- End Dispose EngineToolbar ---
 
-    // Close any tracked floating panels when the engine panel is disposed
     this._trackedFloatingPanels.forEach((panelApi) => {
       try {
         panelApi.close();
@@ -801,13 +735,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       this._resizeObserver = undefined;
     }
 
-    // Destroy the CameraManager (handles its own listener cleanup)
-    // No need to call destroy directly if managed externally?
-    // Let the plugin manager handle lifecycle if appropriate, or if panel manages,
-    // we might need to tell the manager to release/clean up for this panel ID.
-    // For now, assume manager instance lives on.
-    // this._cameraManager?.destroy();
-    this._cameraManager = undefined; // Use undefined to match type
+    this._cameraManager = undefined;
   }
 
   /**
@@ -817,10 +745,8 @@ export class CompositeEnginePanel implements IContentRenderer {
   dispose(): void {
     this.disposeRendererAndUI();
 
-    // --- Unsubscribe from Panel Removals ---
     this._panelRemovedSubscription?.unsubscribe();
     this._panelRemovedSubscription = null;
-    // --- End Unsubscribe ---
 
     this._celestialObjectsUnsubscribe?.unsubscribe();
     this._celestialObjectsUnsubscribe = null;
@@ -830,20 +756,15 @@ export class CompositeEnginePanel implements IContentRenderer {
     this._layoutOrientationSubscription = null;
     this._currentOrientation = null;
 
-    // Unregister from Panel Registry
     panelRegistry.unregisterPanel(this._api?.id ?? "unknown");
   }
 
-  // --- Method to handle external panel removal (NO CHANGE NEEDED HERE) ---
   private handleExternalPanelRemoval(panelId: string): void {
     if (this._trackedFloatingPanels.has(panelId)) {
       this._trackedFloatingPanels.delete(panelId);
-      // Optionally, update toolbar button state if needed here
     } else {
-      // Panel removed was not one we were tracking (e.g., a different floating panel, or a docked panel)
     }
   }
-  // --- END ADDED ---
 
   /**
    * Points the camera towards a specific target position without changing
@@ -865,7 +786,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       );
       return;
     }
-    // Get the singleton manager instance using pluginManager
+
     const managerInstance =
       pluginManager.getManagerInstance<EngineToolbarManager>(
         "engine-toolbar-manager",
@@ -877,7 +798,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       );
       return;
     }
-    // Call method on the instance
+
     managerInstance.toggleToolbarExpansion(this._api.id);
   }
 
@@ -886,7 +807,6 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Called by EngineToolbar to subscribe to state.
    */
   public getToolbarManagerInstance(): EngineToolbarManager | null {
-    // Use pluginManager
     const managerInstance =
       pluginManager.getManagerInstance<EngineToolbarManager>(
         "engine-toolbar-manager",

@@ -7,13 +7,11 @@ describe("LightManager", () => {
   let scene: THREE.Scene;
 
   beforeEach(() => {
-    // Create a new scene for each test
     scene = new THREE.Scene();
     lightManager = new LightManager(scene);
   });
 
   afterEach(() => {
-    // Clean up
     lightManager.dispose();
   });
 
@@ -25,18 +23,16 @@ describe("LightManager", () => {
 
     lightManager.addStarLight(id, position, color, intensity);
 
-    // Get the light from the scene
     const light = scene.children[0] as THREE.PointLight;
 
-    // Verify light properties
     expect(light).toBeInstanceOf(THREE.PointLight);
     expect(light.color.getHex()).toBe(color);
     expect(light.intensity).toBe(intensity);
     expect(light.position.x).toBe(position.x);
     expect(light.position.y).toBe(position.y);
     expect(light.position.z).toBe(position.z);
-    expect(light.decay).toBe(0.5); // Check decay parameter
-    expect(light.distance).toBe(0); // Check distance parameter
+    expect(light.decay).toBe(0.5);
+    expect(light.distance).toBe(0);
   });
 
   it("should add a star light with default parameters", () => {
@@ -47,48 +43,17 @@ describe("LightManager", () => {
 
     const light = scene.children[0] as THREE.PointLight;
 
-    // Verify default properties
     expect(light.color.getHex()).toBe(0xffffff);
     expect(light.intensity).toBe(1.5);
-  });
-
-  it("should update star light position", () => {
-    const initialPosition = new THREE.Vector3(100, 200, 300);
-    const id = "star1";
-
-    // Add a light
-    lightManager.addStarLight(id, initialPosition);
-
-    // Update position
-    const newPosition = new THREE.Vector3(400, 500, 600);
-    lightManager.updateStarLight(id, newPosition);
-
-    const light = scene.children[0] as THREE.PointLight;
-
-    // Verify new position
-    expect(light.position.x).toBe(newPosition.x);
-    expect(light.position.y).toBe(newPosition.y);
-    expect(light.position.z).toBe(newPosition.z);
-  });
-
-  it("should not throw when updating non-existent light", () => {
-    const position = new THREE.Vector3(100, 200, 300);
-
-    // This should not throw
-    expect(() => {
-      lightManager.updateStarLight("nonexistent", position);
-    }).not.toThrow();
   });
 
   it("should remove star light from scene", () => {
     const position = new THREE.Vector3(100, 200, 300);
     const id = "star1";
 
-    // Add a light
     lightManager.addStarLight(id, position);
     expect(scene.children.length).toBe(1);
 
-    // Remove the light
     lightManager.removeStarLight(id);
     expect(scene.children.length).toBe(0);
   });
@@ -106,14 +71,12 @@ describe("LightManager", () => {
     ];
     const ids = ["star1", "star2"];
 
-    // Add multiple lights
     positions.forEach((pos, index) => {
       lightManager.addStarLight(ids[index], pos);
     });
 
     const lightPositions = lightManager.getStarLightPositions();
 
-    // Verify positions map
     expect(lightPositions.size).toBe(2);
     positions.forEach((pos, index) => {
       const lightPos = lightPositions.get(ids[index]);
@@ -125,7 +88,6 @@ describe("LightManager", () => {
   });
 
   it("should dispose all lights", () => {
-    // Add multiple lights
     const positions = [
       new THREE.Vector3(100, 200, 300),
       new THREE.Vector3(400, 500, 600),
@@ -136,10 +98,8 @@ describe("LightManager", () => {
 
     expect(scene.children.length).toBe(2);
 
-    // Dispose lights
     lightManager.dispose();
 
-    // Verify all lights are removed
     expect(scene.children.length).toBe(0);
   });
 
@@ -148,24 +108,14 @@ describe("LightManager", () => {
     const initialPos = new THREE.Vector3(100, 200, 300);
     const updatedPos = new THREE.Vector3(400, 500, 600);
 
-    // Add light
     lightManager.addStarLight(id, initialPos);
     expect(scene.children.length).toBe(1);
 
-    // Update position
-    lightManager.updateStarLight(id, updatedPos);
-    const light = scene.children[0] as THREE.PointLight;
-    expect(light.position.x).toBe(updatedPos.x);
-    expect(light.position.y).toBe(updatedPos.y);
-    expect(light.position.z).toBe(updatedPos.z);
-
-    // Remove light
     lightManager.removeStarLight(id);
     expect(scene.children.length).toBe(0);
 
-    // Try to update after removal (should not throw)
     expect(() => {
-      lightManager.updateStarLight(id, initialPos);
+      lightManager.addStarLight(id, initialPos);
     }).not.toThrow();
   });
 });

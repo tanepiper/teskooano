@@ -1,6 +1,5 @@
 import * as THREE from "three";
 
-// Import the atmosphere shaders
 import atmosphereVertexShaderSource from "../../../shaders/terrestrial/atmosphere.vertex.glsl?raw";
 import atmosphereFragmentShaderSource from "../../../shaders/terrestrial/atmosphere.fragment.glsl?raw";
 

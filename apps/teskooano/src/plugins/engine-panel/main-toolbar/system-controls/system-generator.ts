@@ -2,14 +2,13 @@ import { actions, currentSeed, updateSeed } from "@teskooano/core-state";
 import {
   CelestialType,
   CustomEvents,
-  StarProperties,
   type CelestialObject,
 } from "@teskooano/data-types";
-import { generateSystem } from "@teskooano/procedural-generation";
+import { generateSystem as generateSystemObservable } from "@teskooano/procedural-generation";
 import { dispatchTextureGenerationComplete } from "@teskooano/systems-celestial";
 import { DockviewApi } from "dockview-core";
+import { catchError, finalize, lastValueFrom, tap, throwError } from "rxjs";
 
-// Define the custom event for resetting simulation accumulated time
 export function dispatchSimulationTimeReset() {
   const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
   window.dispatchEvent(event);
@@ -31,11 +30,11 @@ export async function generateAndLoadSystem(
     return false;
   }
 
-  // Update seed store
+  const progressPanelId = "texture-progress-panel";
+  let progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
+
   updateSeed(inputSeed);
   const finalSeed = currentSeed.getValue();
-
-  // Clear state
   actions.clearState({
     resetCamera: false,
     resetTime: true,
@@ -44,136 +43,112 @@ export async function generateAndLoadSystem(
   actions.resetTime();
   dispatchSimulationTimeReset();
 
-  // --- Show Progress Panel ---
-  const progressPanelId = "texture-progress-panel";
-  let progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
-  // Close existing panel first if found
   progressPanel?.api.close();
+  progressPanel = undefined;
 
-  // Generate the system data (including name)
-  let systemData: CelestialObject[] = [];
-  let systemName: string | null = null;
-  let planetList: { id: string; name: string }[] = [];
-  let success = false;
+  dockviewApi.addPanel({
+    id: progressPanelId,
+    component: "progress_view",
+    title: "Generating System...",
+    params: { planetList: [] },
+    floating: {
+      position: { top: 100, left: 100 },
+      width: 400,
+      height: 300,
+    },
+  });
+  progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
 
   try {
-    // Destructure the result from generateSystem
-    const { systemName: generatedName, objects: generatedObjects } =
-      await generateSystem(finalSeed);
-    systemName = generatedName; // Store the name
-    systemData = generatedObjects; // Store the objects
+    const { systemName, objects$ } = await generateSystemObservable(finalSeed);
 
-    console.warn(
-      `[SystemGenerator] TODO: Need to implement setting system name "${systemName}" in core-state.`,
-    );
-    // --- End Update System Name ---
-
-    planetList = systemData
-      .filter(
-        (obj) =>
-          obj.type === CelestialType.PLANET ||
-          obj.type === CelestialType.GAS_GIANT,
-      )
-      .map((planet) => ({ id: planet.id, name: planet.name }));
-
-    // Add the progress panel *after* generating data but *before* adding to state
-    dockviewApi.addPanel({
-      id: progressPanelId,
-      component: "progress_view",
-      title: "Generating Textures...",
-      params: { planetList: planetList },
-      floating: {
-        position: { top: 100, left: 100 }, // TODO: Maybe center this later?
-        width: 400,
-        height: 300,
-      },
-    });
-
-    // Add objects to the state store
-    if (systemData && systemData.length > 0) {
-      // Find the primary star first
-      let primaryStar = systemData.find((obj) => {
-        if (obj.type !== CelestialType.STAR) return false;
-        const props = obj.properties as StarProperties;
-        return props?.isMainStar === true;
-      });
-
-      // Fallback to any star if no isMainStar flag is found
-      if (!primaryStar) {
-        console.warn(
-          "[SystemGenerator] No star with isMainStar=true found. Falling back to first star.",
-        );
-        primaryStar = systemData.find(
-          (obj) =>
-            obj.type === CelestialType.STAR || obj.id.startsWith("star-"),
-        );
-      }
-
-      if (primaryStar) {
-        // Create the system with the primary star first
-        actions.createSolarSystem(primaryStar);
-
-        // Add all *other* objects
-        systemData.forEach((objData) => {
-          if (objData.id !== primaryStar.id) {
-            // Check if this is another primary star (should use createSolarSystem)
-            if (objData.type === CelestialType.STAR && !objData.parentId) {
-              console.warn(
-                `[SystemGenerator] Found another root star: ${objData.id}. Using createSolarSystem.`,
-              );
-              actions.createSolarSystem(objData);
-            } else {
-              // Add other objects normally
-              actions.addCelestial(objData);
-            }
-          }
-        });
-      } else {
-        // Fallback if no primary star found
-        console.error(
-          "[SystemGenerator] No primary star found! Adding stars with createSolarSystem and others with addCelestial.",
-        );
-        // Add stars first
-        systemData
-          .filter((obj) => obj.type === CelestialType.STAR && !obj.parentId)
-          .forEach((star) => {
-            actions.createSolarSystem(star);
-          });
-        // Then add other objects
-        systemData
-          .filter((obj) => !(obj.type === CelestialType.STAR && !obj.parentId))
-          .forEach((objData) => {
-            actions.addCelestial(objData);
-          });
-      }
-
-      // Reset time again
-      actions.resetTime();
-      dispatchSimulationTimeReset();
-
-      dispatchTextureGenerationComplete();
-      success = true;
-    } else {
-      console.warn("[SystemGenerator] Generator returned no objects.");
-      dispatchTextureGenerationComplete();
-      dockviewApi.panels.find((p) => p.id === progressPanelId)?.api.close();
-      success = true;
+    if (systemName) {
+      console.warn(
+        `[SystemGenerator] System Name: ${systemName} (handling not implemented)`,
+      );
     }
+
+    let isFirstStar = true;
+
+    const processingPipeline$ = objects$.pipe(
+      tap((celestialObject: CelestialObject) => {
+        console.log(
+          "[SystemGenerator] Processing object:",
+          celestialObject.name,
+        );
+        progressPanel?.api.setTitle(`Processing: ${celestialObject.name}`);
+
+        if (celestialObject.type === CelestialType.STAR && isFirstStar) {
+          console.log(
+            `[SystemGenerator] Creating system with primary star: ${celestialObject.id}`,
+          );
+          actions.createSolarSystem(celestialObject);
+          isFirstStar = false;
+        } else {
+          if (
+            celestialObject.type === CelestialType.STAR &&
+            !celestialObject.parentId
+          ) {
+            console.warn(
+              `[SystemGenerator] Found another root star: ${celestialObject.id}. Using createSolarSystem anyway. Check generator logic.`,
+            );
+            actions.createSolarSystem(celestialObject);
+          } else {
+            actions.addCelestial(celestialObject);
+          }
+        }
+      }),
+      catchError((error) => {
+        console.error(
+          "[SystemGenerator] Error during object processing stream:",
+          error,
+        );
+        return throwError(() => error);
+      }),
+      finalize(() => {
+        console.log("[SystemGenerator] Object stream finalized.");
+        let finalPanel = dockviewApi.panels.find(
+          (p) => p.id === progressPanelId,
+        );
+        finalPanel?.api.setTitle("Generation Complete");
+
+        setTimeout(() => {
+          const panelToClose = dockviewApi.panels.find(
+            (p) => p.id === progressPanelId,
+          );
+          if (panelToClose) {
+            console.log(
+              `[SystemGenerator] Closing progress panel ${panelToClose.id}`,
+            );
+            panelToClose.api.close();
+          } else {
+            console.log(
+              "[SystemGenerator] Progress panel already closed before timeout.",
+            );
+          }
+        }, 1500);
+
+        dispatchTextureGenerationComplete();
+        actions.resetTime();
+        dispatchSimulationTimeReset();
+      }),
+    );
+
+    await lastValueFrom(processingPipeline$, { defaultValue: undefined });
+    return true;
   } catch (error) {
     console.error(
-      "[SystemGenerator] Error during system generation or state update:",
+      "[SystemGenerator] Overall error in generateAndLoadSystem:",
       error,
     );
-    dockviewApi.panels.find((p) => p.id === progressPanelId)?.api.close();
+    progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
+    progressPanel?.api.close();
     dispatchTextureGenerationComplete();
-    success = false;
-  } finally {
+    return false;
   }
-  return success;
 }
 
 export const handleResetSimulationTime = () => {
-  // dispatch event to reset simulation time
   const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
   window.dispatchEvent(event);
 };

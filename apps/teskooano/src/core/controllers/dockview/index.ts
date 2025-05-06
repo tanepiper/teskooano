@@ -7,7 +7,6 @@ import { DockviewController } from "./DockviewController";
 import { FallbackPanel } from "./FallbackPanel";
 import type { DockviewApi } from "dockview-core";
 
-// Re-export core components and types for direct usage if needed
 export * from "./DockviewController";
 export * from "./GroupManager";
 export * from "./OverlayManager";

@@ -25,7 +25,6 @@ import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
  * Red dwarfs are the most common type of star in the Milky Way
  */
 export function initializeRedDwarfSystem(): string {
-  // Create a red dwarf system
   const starId = actions.createSolarSystem({
     id: "proxima-centauri",
     name: "Proxima Centauri",
@@ -55,8 +54,6 @@ export function initializeRedDwarfSystem(): string {
     } as StarProperties,
   });
 
-  // Add a terrestrial planet in the habitable zone
-  // For an M-class star, the habitable zone is much closer to the star
   const proximaB_SMA_AU = 0.05;
   actions.addCelestial({
     id: "proxima-b",
@@ -97,7 +94,6 @@ export function initializeRedDwarfSystem(): string {
     } as PlanetProperties,
   });
 
-  // Add a second, more distant rocky planet
   const proximaC_SMA_AU = 1.5;
   actions.addCelestial({
     id: "proxima-c",
@@ -137,7 +133,6 @@ export function initializeRedDwarfSystem(): string {
     } as PlanetProperties,
   });
 
-  // Add a third planet - hot super-Earth in a highly eccentric orbit
   const proximaD_SMA_AU = 0.01;
   actions.addCelestial({
     id: "proxima-d",
@@ -178,7 +173,6 @@ export function initializeRedDwarfSystem(): string {
     } as PlanetProperties,
   });
 
-  // Add a small planet in a retrograde orbit
   const proximaE_SMA_AU = 0.35;
   actions.addCelestial({
     id: "proxima-e",
@@ -219,7 +213,6 @@ export function initializeRedDwarfSystem(): string {
     } as PlanetProperties,
   });
 
-  // Add a planet with orbit perpendicular to all others
   const proximaF_SMA_AU = 0.25;
   actions.addCelestial({
     id: "proxima-f",

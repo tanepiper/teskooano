@@ -33,9 +33,7 @@ export interface ActiveOverlay {
  * Interface representing the instance side of a component that can be rendered in Dockview.
  * Extends the core IContentRenderer.
  */
-export interface ComponentWithStaticConfig extends IContentRenderer {
-  // Add any required instance-side properties or methods common to your components here.
-}
+export interface ComponentWithStaticConfig extends IContentRenderer {}
 
 /**
  * Interface representing the constructor side of a Dockview component.

@@ -1,3 +1,6 @@
-export { GravitationalLensingHandler } from "./gravitational-lensing";
-export { MeshFactory } from "./mesh-factory";
-export { RendererUpdater } from "./renderer-updater";
+export * from "./AccelerationVisualizer";
+export * from "./DebrisEffectManager";
+export * from "./GravitationalLensing";
+export * from "./MeshFactory";
+export * from "./ObjectLifecycleManager";
+export * from "./RendererUpdater";

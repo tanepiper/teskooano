@@ -16,11 +16,9 @@ import {
 
 describe("Factory functions", () => {
   beforeEach(() => {
-    // Create OSVector3 objects and use toThreeJS() to get THREE.Vector3
     const cameraPos = new OSVector3(0, 0, 1000).toThreeJS();
     const cameraTarget = new OSVector3(0, 0, 0).toThreeJS();
 
-    // Reset state before each test
     simulationState.set({
       time: 0,
       timeScale: 1,
@@ -32,14 +30,13 @@ describe("Factory functions", () => {
         target: cameraTarget,
         fov: 60,
       },
-    } as any); // Use type assertion for test
+    } as any);
     celestialObjectsStore.set({});
     celestialHierarchyStore.set({});
   });
 
   describe("clearState", () => {
     it("should clear all celestial objects and hierarchy by default", () => {
-      // Add some fake data first
       const objectPos = new OSVector3(0, 0, 0).toThreeJS();
       const objectVel = new OSVector3(0, 0, 0).toThreeJS();
 
@@ -73,7 +70,7 @@ describe("Factory functions", () => {
             position: objectPos,
             velocity: objectVel,
           },
-        } as any, // Type assertion for test purposes
+        } as any,
       });
       celestialHierarchyStore.set({
         "parent-1": ["test-1"],
@@ -87,28 +84,23 @@ describe("Factory functions", () => {
         focusedObjectId: "test-1",
       });
 
-      // Verify data was added
       expect(Object.keys(celestialObjectsStore.get()).length).toBe(1);
       expect(Object.keys(celestialHierarchyStore.get()).length).toBe(1);
       expect(simulationState.get().timeScale).toBe(2);
       expect(simulationState.get().selectedObject).toBe("test-1");
 
-      // Call clearState
       celestialFactory.clearState();
 
-      // Verify state was cleared
       expect(Object.keys(celestialObjectsStore.get()).length).toBe(0);
       expect(Object.keys(celestialHierarchyStore.get()).length).toBe(0);
       expect(simulationState.get().timeScale).toBe(1);
       expect(simulationState.get().selectedObject).toBeNull();
       expect(simulationState.get().focusedObjectId).toBeNull();
 
-      // Camera settings should be preserved by default
       expect(simulationState.get().camera.position.z).toBe(1000);
     });
 
     it("should respect resetCamera option", () => {
-      // Change camera position first
       const customPos = new OSVector3(500, 500, 500).toThreeJS();
       const customTarget = new OSVector3(100, 100, 100).toThreeJS();
 
@@ -121,14 +113,11 @@ describe("Factory functions", () => {
         },
       });
 
-      // Verify custom position
       expect(simulationState.get().camera.position.x).toBe(500);
       expect(simulationState.get().camera.fov).toBe(45);
 
-      // Call clearState with resetCamera: true
       celestialFactory.clearState({ resetCamera: true });
 
-      // Verify camera was reset to default
       expect(simulationState.get().camera.position.x).toBe(0);
       expect(simulationState.get().camera.position.y).toBe(0);
       expect(simulationState.get().camera.position.z).toBe(1000);
@@ -136,7 +125,6 @@ describe("Factory functions", () => {
     });
 
     it("should respect resetTime option", () => {
-      // Set time-related values
       simulationState.set({
         ...simulationState.get(),
         time: 100,
@@ -144,27 +132,22 @@ describe("Factory functions", () => {
         paused: true,
       });
 
-      // Call clearState with resetTime: false
       celestialFactory.clearState({ resetTime: false });
 
-      // Verify time settings were preserved
       expect(simulationState.get().time).toBe(100);
       expect(simulationState.get().timeScale).toBe(2);
       expect(simulationState.get().paused).toBe(true);
     });
 
     it("should respect resetSelection option", () => {
-      // Set selection values
       simulationState.set({
         ...simulationState.get(),
         selectedObject: "test-1",
         focusedObjectId: "test-2",
       });
 
-      // Call clearState with resetSelection: false
       celestialFactory.clearState({ resetSelection: false });
 
-      // Verify selection settings were preserved
       expect(simulationState.get().selectedObject).toBe("test-1");
       expect(simulationState.get().focusedObjectId).toBe("test-2");
     });
@@ -172,7 +155,6 @@ describe("Factory functions", () => {
 
   describe("createSolarSystem", () => {
     it("should clear all state before creating a new system", () => {
-      // Add some fake data first
       const starPos = new OSVector3(0, 0, 0).toThreeJS();
       const stateRealPos = new OSVector3(0, 0, 0).toThreeJS();
       const stateRealVel = new OSVector3(0, 0, 0).toThreeJS();
@@ -216,7 +198,6 @@ describe("Factory functions", () => {
         } as any,
       });
 
-      // Set custom camera position
       const customPos = new OSVector3(500, 500, 500).toThreeJS();
       const customTarget = new OSVector3(100, 100, 100).toThreeJS();
 
@@ -229,12 +210,10 @@ describe("Factory functions", () => {
         },
       });
 
-      // Verify old data exists
       expect(Object.keys(celestialObjectsStore.get()).length).toBe(1);
       expect(celestialObjectsStore.get()["old-star"]).toBeDefined();
       expect(simulationState.get().camera.position.x).toBe(500);
 
-      // Create a new solar system
       const newStarId = celestialFactory.createSolarSystem({
         id: "new-star",
         name: "New Star",
@@ -243,13 +222,11 @@ describe("Factory functions", () => {
         realRadius_m: 696340000,
       });
 
-      // Verify old data was cleared and only new system exists
       const objects = celestialObjectsStore.get();
       expect(Object.keys(objects).length).toBe(1);
       expect(objects["old-star"]).toBeUndefined();
       expect(objects[newStarId]).toBeDefined();
 
-      // Verify camera position was preserved
       expect(simulationState.get().camera.position.x).toBe(500);
       expect(simulationState.get().camera.position.y).toBe(500);
       expect(simulationState.get().camera.position.z).toBe(500);

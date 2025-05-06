@@ -12,13 +12,10 @@ import {
 describe("Unit Conversion", () => {
   describe("convert", () => {
     it("converts between units correctly", () => {
-      // Test meters to AU conversion
       expect(convert(149597870700, CONVERSION.M_TO_AU, 1)).toBeCloseTo(1);
 
-      // Test days to seconds conversion
       expect(convert(1, CONVERSION.DAYS_TO_S, 1)).toBeCloseTo(86400);
 
-      // Test km/s to m/s conversion
       expect(convert(1, CONVERSION.KM_S_TO_M_S, 1)).toBeCloseTo(1000);
     });
 
@@ -67,7 +64,6 @@ describe("Unit Conversion", () => {
 
   describe("metersPerSecondToAUDay", () => {
     it("converts m/s to AU/day correctly", () => {
-      // 1 AU/day ≈ 1731.5 m/s
       expect(metersPerSecondToAUDay(1731.5)).toBeCloseTo(1);
       expect(metersPerSecondToAUDay(0)).toBe(0);
     });
@@ -75,7 +71,6 @@ describe("Unit Conversion", () => {
 
   describe("auDayToMetersPerSecond", () => {
     it("converts AU/day to m/s correctly", () => {
-      // 1 AU/day ≈ 1731.5 m/s
       expect(auDayToMetersPerSecond(1)).toBeCloseTo(1731.5);
       expect(auDayToMetersPerSecond(0)).toBe(0);
     });

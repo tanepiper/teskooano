@@ -1,6 +1,6 @@
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { startSimulationLoop, stopSimulationLoop } from "./loop";
-// Export simulation utilities
+
 export * from "./loop";
 export * from "./resetSystem";
 export * from "./solarSystem";
@@ -13,7 +13,6 @@ export * from "./solarSystem";
 export class Simulation {
   /** The ThreeJS renderer instance */
   private renderer: ModularSpaceRenderer;
-  // Removed unused properties: lastTime, animationFrameId
 
   /**
    * Creates an instance of Simulation.
@@ -29,16 +28,12 @@ export class Simulation {
    * @private
    */
   private setupEventListeners(): void {
-    // Handle window resize
     window.addEventListener("resize", () => {
       this.renderer.onResize(window.innerWidth, window.innerHeight);
     });
   }
 }
 
-// Export the simulation class as default
 export default Simulation;
 
-// Cleaned up exports - toolbar component exported above
-// export { SimulationControlsComponent, startSimulationLoop, stopSimulationLoop };
 export { startSimulationLoop, stopSimulationLoop };

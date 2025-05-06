@@ -13,7 +13,6 @@ import {
   updateEngineDisplay,
 } from "./SimulationControls.updater";
 
-// Store previous relevant state pieces to avoid unnecessary updates
 let previousPausedState: boolean | undefined = undefined;
 let previousTimeScaleState: number | undefined = undefined;
 let previousEngineState: string | undefined = undefined;
@@ -30,13 +29,11 @@ const handleStateUpdate = (
   state: SimulationState,
   uiElements: SimulationUIElements,
 ): void => {
-  // 1. Always update time display (most frequent change)
   updateTimeDisplay(uiElements.timeValueDisplay, state.time);
 
-  // 2. Update play/pause ONLY if paused state changed
   if (state.paused !== previousPausedState) {
     updatePlayPauseButton(uiElements.playPauseButton, state.paused);
-    // Also re-evaluate speed button disabled state when pause changes
+
     updateSpeedButtons(
       uiElements.speedDownButton,
       uiElements.speedUpButton,
@@ -46,21 +43,19 @@ const handleStateUpdate = (
     previousPausedState = state.paused;
   }
 
-  // 3. Update scale/speed/reverse ONLY if timeScale changed
   if (state.timeScale !== previousTimeScaleState) {
     updateScaleDisplay(uiElements.scaleValueDisplay, state.timeScale);
     updateReverseButton(uiElements.reverseButton, state.timeScale);
-    // Also re-evaluate speed button disabled state when scale changes
+
     updateSpeedButtons(
       uiElements.speedDownButton,
       uiElements.speedUpButton,
-      state.paused, // Use current paused state
+      state.paused,
       state.timeScale,
     );
     previousTimeScaleState = state.timeScale;
   }
 
-  // 4. Update engine ONLY if physicsEngine changed
   if (state.physicsEngine !== previousEngineState) {
     updateEngineDisplay(uiElements.engineValueDisplay, state.physicsEngine);
     previousEngineState = state.physicsEngine;
@@ -81,10 +76,10 @@ export const setupEventHandlers = (
     const currentScale = getSimulationState().timeScale;
     const newScale =
       currentScale === 0
-        ? 1 // Start forward from zero
+        ? 1
         : currentScale < 0
-          ? Math.min(currentScale / 2, -0.1) // Speed up towards -0.1 from negative
-          : Math.min(currentScale * 2, 10_000_000); // Speed up towards positive max
+          ? Math.min(currentScale / 2, -0.1)
+          : Math.min(currentScale * 2, 10_000_000);
     actions.setTimeScale(newScale);
   };
 
@@ -92,16 +87,16 @@ export const setupEventHandlers = (
     const currentScale = getSimulationState().timeScale;
     const newScale =
       currentScale > 0
-        ? Math.max(currentScale / 2, 0.1) // Slow down towards 0.1 from positive
+        ? Math.max(currentScale / 2, 0.1)
         : currentScale < 0
-          ? Math.max(currentScale * 2, -10_000_000) // Slow down towards negative max
-          : 0; // Already at zero, stay zero (should be disabled anyway)
+          ? Math.max(currentScale * 2, -10_000_000)
+          : 0;
     actions.setTimeScale(newScale);
   };
 
   const reverseHandler = (): void => {
     const currentScale = getSimulationState().timeScale;
-    actions.setTimeScale(currentScale === 0 ? -1 : -currentScale); // Toggle sign, or start at -1 from 0
+    actions.setTimeScale(currentScale === 0 ? -1 : -currentScale);
   };
 
   const add = (): void => {
@@ -130,10 +125,9 @@ export const setupEventHandlers = (
 export const createStateUpdateHandler = (
   uiElements: SimulationUIElements,
 ): ((state: SimulationState) => void) => {
-  // Reset previous state cache when handler is created
   previousPausedState = undefined;
   previousTimeScaleState = undefined;
   previousEngineState = undefined;
-  // Return the handler function, bound to the specific UI elements
+
   return (state) => handleStateUpdate(state, uiElements);
 };

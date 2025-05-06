@@ -24,23 +24,23 @@ export enum UIComponentType {
  * UI Layer definitions for z-index organization
  */
 export enum UILayer {
-  BASE = 0, // Base layer (lowest)
-  BACKGROUND = 1, // Background elements
-  CONTENT = 2, // Main content elements
-  TOOLTIP = 3, // Tooltip/hover elements
-  MODAL = 4, // Modal dialogs
-  DEBUG = 99, // Debug layer (highest)
+  BASE = 0,
+  BACKGROUND = 1,
+  CONTENT = 2,
+  TOOLTIP = 3,
+  MODAL = 4,
+  DEBUG = 99,
 }
 
 /**
  * UI Slot types for layout organization
  */
 export enum UISlotType {
-  HEADER = "header", // Top section of a container
-  CONTENT = "content", // Main content area
-  FOOTER = "footer", // Bottom section of a container
-  LEFT = "left", // Left side of a container
-  RIGHT = "right", // Right side of a container
+  HEADER = "header",
+  CONTENT = "content",
+  FOOTER = "footer",
+  LEFT = "left",
+  RIGHT = "right",
 }
 
 /**
@@ -106,8 +106,8 @@ export interface UIThemeOptions {
   accentColor?: string;
   textColor?: string;
   disabledColor?: string;
-  hoverColor?: string; // Color for hover state
-  activeColor?: string; // Color for active/selected state
+  hoverColor?: string;
+  activeColor?: string;
   spacing?: number;
   borderRadius?: number;
   opacity?: number;
@@ -156,7 +156,6 @@ export interface BaseUIComponent {
   layer?: UILayer;
   zIndex?: number;
 
-  // Methods all components should implement
   add(component: BaseUIComponent): BaseUIComponent;
   remove(component: BaseUIComponent): void;
   destroy(): void;
@@ -223,7 +222,7 @@ export interface BaseUISlot {
     bottom?: number;
     left?: number;
   };
-  elements?: string[]; // IDs of elements in this slot
+  elements?: string[];
 }
 
 /**

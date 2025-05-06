@@ -1,6 +1,6 @@
 {
   "name": "@teskooano/renderer-threejs-objects",
-  "version": "0.2.0",
+  "version": "0.3.0-dev.0",
   "private": true,
   "description": "Handles rendering of celestial object meshes in Three.js for Teskooano.",
   "keywords": [

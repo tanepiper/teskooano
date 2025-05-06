@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Refactored various API utility modules for code clarity and conciseness, removing redundant comments and logging (including `idle-detection`, `invoker-commands`, `media-recorder`, `network`, `observers`, `popover`, `remote-playback`, `screen-capture`, `storage`, `workers`).
+- Updated `resizeObserver.ts` to use `RxJS BehaviorSubject` for state management, replacing `nanostores`.
+- Simplified type definitions and internal logic in several modules for better maintainability.
+
 ## [0.1.0] - 2025-04-24
 
 ### Added

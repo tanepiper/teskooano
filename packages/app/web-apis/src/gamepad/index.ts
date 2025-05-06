@@ -39,12 +39,10 @@ const initialGamepadState: GamepadState = {
   isSupported: isGamepadSupported(),
 };
 
-// Subject to manually stop the polling
 const stopPolling$ = new Subject<void>();
-// Subject to trigger polling updates
+
 const pollTrigger$ = new BehaviorSubject<void>(undefined);
 
-// Observable for gamepad connection events
 const gamepadConnected$ = fromEvent<GamepadEvent>(
   window,
   "gamepadconnected",
@@ -52,7 +50,6 @@ const gamepadConnected$ = fromEvent<GamepadEvent>(
   map((event) => ({ type: "connected" as const, gamepad: event.gamepad })),
 );
 
-// Observable for gamepad disconnection events
 const gamepadDisconnected$ = fromEvent<GamepadEvent>(
   window,
   "gamepaddisconnected",
@@ -69,7 +66,7 @@ function pollGamepads(): (Gamepad | null)[] {
   if (!isGamepadSupported()) {
     return [];
   }
-  // Need to convert the GamepadList to a standard array
+
   const gamepads = navigator.getGamepads();
   return Array.from(gamepads);
 }
@@ -97,15 +94,11 @@ export const gamepadState$: Observable<GamepadState> =
       gamepadConnected$,
       gamepadDisconnected$,
     )
-      .pipe(
-        // When connection changes, immediately poll
-        tap(() => pollTrigger$.next()),
-      )
-      .subscribe(); // Simple subscription to trigger polling
+      .pipe(tap(() => pollTrigger$.next()))
+      .subscribe();
 
     const pollSubscription = pollTrigger$
       .pipe(
-        // Use requestAnimationFrame timing for polling efficiency
         switchMap(
           () =>
             new Observable<void>((sub) => {
@@ -122,10 +115,10 @@ export const gamepadState$: Observable<GamepadState> =
             }),
         ),
         map(pollGamepads),
-        // Only emit if the gamepads array has actually changed
+
         distinctUntilChanged((prev, curr) => {
           if (prev.length !== curr.length) return false;
-          // Basic check: might need deeper comparison if needed
+
           return prev.every(
             (p, i) =>
               p?.id === curr[i]?.id &&
@@ -133,24 +126,21 @@ export const gamepadState$: Observable<GamepadState> =
               p?.timestamp === curr[i]?.timestamp,
           );
         }),
-        tap((newState) => (previousState = newState)), // Update previous state
+        tap((newState) => (previousState = newState)),
         map((gamepads) => ({ gamepads, isSupported: true })),
-        startWith({ gamepads: pollGamepads(), isSupported: true }), // Emit initial state
-        // Keep polling as long as the outer observable is subscribed
+        startWith({ gamepads: pollGamepads(), isSupported: true }),
+
         tap(() => {
-          // Schedule the next poll if still subscribed
           if (!subscriber.closed && animationFrameId === null) {
-            // Avoid race conditions
             animationFrameId = requestAnimationFrame(() => {
-              animationFrameId = null; // Reset before next trigger
+              animationFrameId = null;
               pollTrigger$.next();
             });
           }
         }),
       )
-      .subscribe(subscriber); // Forward emissions to the main subscriber
+      .subscribe(subscriber);
 
-    // Cleanup function
     return () => {
       connectionSubscription.unsubscribe();
       pollSubscription.unsubscribe();
@@ -158,9 +148,7 @@ export const gamepadState$: Observable<GamepadState> =
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }).pipe(
-    shareReplay({ bufferSize: 1, refCount: true }), // Share polling among subscribers
-  );
+  }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
 /**
  * Retrieves the current state of all connected gamepads non-reactively.

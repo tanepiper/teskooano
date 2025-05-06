@@ -4,7 +4,6 @@ import { StateManager, RendererCelestialObject } from "../StateManager";
 import { simulationState, celestialObjectsStore } from "@teskooano/core-state";
 import { CelestialType, PlanetProperties } from "@teskooano/data-types";
 
-// Mock the state stores
 vi.mock("@teskooano/core-state", () => {
   return {
     simulationState: {
@@ -31,18 +30,14 @@ describe("StateManager", () => {
   let objUnsubscribe: () => void;
 
   beforeEach(() => {
-    // Reset mocks
     vi.clearAllMocks();
 
-    // Setup mock unsubscribe functions
     simUnsubscribe = vi.fn();
     objUnsubscribe = vi.fn();
 
-    // Setup mock subscribe functions
     (simulationState.subscribe as any).mockReturnValue(simUnsubscribe);
     (celestialObjectsStore.subscribe as any).mockReturnValue(objUnsubscribe);
 
-    // Setup default state
     (simulationState.get as any).mockReturnValue({
       camera: {
         position: { x: 0, y: 0, z: 10 },
@@ -52,12 +47,10 @@ describe("StateManager", () => {
 
     (celestialObjectsStore.get as any).mockReturnValue({});
 
-    // Create the state manager
     stateManager = new StateManager();
   });
 
   afterEach(() => {
-    // Clean up
     stateManager.dispose();
   });
 
@@ -67,14 +60,11 @@ describe("StateManager", () => {
   });
 
   it("should notify camera subscribers when camera state changes", () => {
-    // Setup a camera subscriber
     const cameraCallback = vi.fn();
     stateManager.onCameraChange(cameraCallback);
 
-    // Get the simulation state callback
     const simCallback = (simulationState.subscribe as any).mock.calls[0][0];
 
-    // Call the callback with new camera state
     simCallback({
       camera: {
         position: { x: 1, y: 2, z: 3 },
@@ -82,7 +72,6 @@ describe("StateManager", () => {
       },
     });
 
-    // Check that the camera callback was called with the new state
     expect(cameraCallback).toHaveBeenCalledWith(
       { x: 1, y: 2, z: 3 },
       { x: 4, y: 5, z: 6 },
@@ -90,15 +79,12 @@ describe("StateManager", () => {
   });
 
   it("should notify object subscribers when objects are added", () => {
-    // Setup an object subscriber
     const objectCallback = vi.fn();
     stateManager.onObjectsChange(objectCallback);
 
-    // Get the celestial objects callback
     const objCallback = (celestialObjectsStore.subscribe as any).mock
       .calls[0][0];
 
-    // Create a new object
     const newObject: RendererCelestialObject = {
       id: "test-object",
       type: CelestialType.PLANET,
@@ -122,10 +108,8 @@ describe("StateManager", () => {
       } as PlanetProperties,
     };
 
-    // Call the callback with the new object
     objCallback({ "test-object": newObject }, {});
 
-    // Check that the object callback was called with the new object
     expect(objectCallback).toHaveBeenCalledWith(
       "add",
       newObject,
@@ -134,15 +118,12 @@ describe("StateManager", () => {
   });
 
   it("should notify object subscribers when objects are updated", () => {
-    // Setup an object subscriber
     const objectCallback = vi.fn();
     stateManager.onObjectsChange(objectCallback);
 
-    // Get the celestial objects callback
     const objCallback = (celestialObjectsStore.subscribe as any).mock
       .calls[0][0];
 
-    // Create an existing object
     const existingObject: RendererCelestialObject = {
       id: "test-object",
       type: CelestialType.PLANET,
@@ -166,19 +147,16 @@ describe("StateManager", () => {
       } as PlanetProperties,
     };
 
-    // Create an updated object with a different position
     const updatedObject: RendererCelestialObject = {
       ...existingObject,
       position: new THREE.Vector3(1, 1, 1),
     };
 
-    // Call the callback with the updated object
     objCallback(
       { "test-object": updatedObject },
       { "test-object": existingObject },
     );
 
-    // Check that the object callback was called with the updated object
     expect(objectCallback).toHaveBeenCalledWith(
       "update",
       updatedObject,
@@ -187,15 +165,12 @@ describe("StateManager", () => {
   });
 
   it("should notify object subscribers when objects are removed", () => {
-    // Setup an object subscriber
     const objectCallback = vi.fn();
     stateManager.onObjectsChange(objectCallback);
 
-    // Get the celestial objects callback
     const objCallback = (celestialObjectsStore.subscribe as any).mock
       .calls[0][0];
 
-    // Create an existing object
     const existingObject: RendererCelestialObject = {
       id: "test-object",
       type: CelestialType.PLANET,
@@ -219,10 +194,8 @@ describe("StateManager", () => {
       } as PlanetProperties,
     };
 
-    // Call the callback with the object removed
     objCallback({}, { "test-object": existingObject });
 
-    // Check that the object callback was called with the removed object
     expect(objectCallback).toHaveBeenCalledWith(
       "remove",
       existingObject,
@@ -231,7 +204,6 @@ describe("StateManager", () => {
   });
 
   it("should return all current celestial objects", () => {
-    // Setup mock objects
     const mockObjects = {
       "test-object-1": {
         id: "test-object-1",
@@ -275,45 +247,34 @@ describe("StateManager", () => {
 
     (celestialObjectsStore.get as any).mockReturnValue(mockObjects);
 
-    // Get all objects
     const objects = stateManager.getAllObjects();
 
-    // Check that the objects are returned correctly
     expect(objects).toEqual(mockObjects);
   });
 
   it("should unsubscribe from state changes on dispose", () => {
-    // Dispose the state manager
     stateManager.dispose();
 
-    // Check that the unsubscribe functions were called
     expect(simUnsubscribe).toHaveBeenCalled();
     expect(objUnsubscribe).toHaveBeenCalled();
   });
 
   it("should allow adding custom unsubscribe functions", () => {
-    // Create a custom unsubscribe function
     const customUnsubscribe = vi.fn();
 
-    // Add the unsubscribe function
     stateManager.addUnsubscribe(customUnsubscribe);
 
-    // Dispose the state manager
     stateManager.dispose();
 
-    // Check that the custom unsubscribe function was called
     expect(customUnsubscribe).toHaveBeenCalled();
   });
 
   it("should allow unsubscribing from camera changes", () => {
-    // Setup a camera subscriber
     const cameraCallback = vi.fn();
     const unsubscribe = stateManager.onCameraChange(cameraCallback);
 
-    // Get the simulation state callback
     const simCallback = (simulationState.subscribe as any).mock.calls[0][0];
 
-    // Call the callback with new camera state
     simCallback({
       camera: {
         position: { x: 1, y: 2, z: 3 },
@@ -321,13 +282,10 @@ describe("StateManager", () => {
       },
     });
 
-    // Check that the camera callback was called
     expect(cameraCallback).toHaveBeenCalled();
 
-    // Unsubscribe from camera changes
     unsubscribe();
 
-    // Call the callback again
     simCallback({
       camera: {
         position: { x: 7, y: 8, z: 9 },
@@ -335,20 +293,16 @@ describe("StateManager", () => {
       },
     });
 
-    // Check that the camera callback was only called once
     expect(cameraCallback).toHaveBeenCalledTimes(1);
   });
 
   it("should allow unsubscribing from object changes", () => {
-    // Setup an object subscriber
     const objectCallback = vi.fn();
     const unsubscribe = stateManager.onObjectsChange(objectCallback);
 
-    // Get the celestial objects callback
     const objCallback = (celestialObjectsStore.subscribe as any).mock
       .calls[0][0];
 
-    // Create a new object
     const newObject: RendererCelestialObject = {
       id: "test-object",
       type: CelestialType.PLANET,
@@ -372,19 +326,14 @@ describe("StateManager", () => {
       } as PlanetProperties,
     };
 
-    // Call the callback with the new object
     objCallback({ "test-object": newObject }, {});
 
-    // Check that the object callback was called
     expect(objectCallback).toHaveBeenCalled();
 
-    // Unsubscribe from object changes
     unsubscribe();
 
-    // Call the callback again
     objCallback({ "test-object-2": newObject }, { "test-object": newObject });
 
-    // Check that the object callback was only called once
     expect(objectCallback).toHaveBeenCalledTimes(1);
   });
 });

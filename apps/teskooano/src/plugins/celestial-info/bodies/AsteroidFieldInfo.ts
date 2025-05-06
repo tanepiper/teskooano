@@ -8,7 +8,6 @@ import { FormatUtils } from "../utils/FormatUtils";
 import { baseStyles } from "../utils/CelestialStyles";
 import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
 
-// --- ASTEROID FIELD INFO COMPONENT ---
 export class AsteroidFieldInfoComponent
   extends HTMLElement
   implements CelestialInfoComponent
@@ -35,12 +34,10 @@ export class AsteroidFieldInfoComponent
     const container = this.shadow.getElementById("container");
     if (!container) return;
 
-    // Add type guard for properties
     if (
       celestial.type === CelestialType.ASTEROID_FIELD &&
       celestial.properties
     ) {
-      // Force type assertion after checking celestial.type
       const properties = celestial.properties as AsteroidFieldProperties;
 
       container.innerHTML = `
@@ -68,11 +65,9 @@ export class AsteroidFieldInfoComponent
                 </dl>
             `;
     } else {
-      // Handle cases where properties might be missing or type is wrong (though the outer check should prevent this)
       container.innerHTML = `<div class="placeholder">Asteroid field data incomplete.</div>`;
     }
   }
 }
 
-// Define the custom element
 customElements.define("asteroid-field-info", AsteroidFieldInfoComponent);

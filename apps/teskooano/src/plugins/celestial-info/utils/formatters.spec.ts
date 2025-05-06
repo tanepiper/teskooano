@@ -38,9 +38,9 @@ describe("FormatUtils", () => {
 
   describe("formatDistanceKm", () => {
     it("should convert meters to kilometers and format", () => {
-      expect(FormatUtils.formatDistanceKm(1500)).toBe("2 km"); // Rounds up with default 0 digits
+      expect(FormatUtils.formatDistanceKm(1500)).toBe("2 km");
       expect(FormatUtils.formatDistanceKm(1500, 1)).toBe("1.5 km");
-      expect(FormatUtils.formatDistanceKm(500, 0)).toBe("1 km"); // Rounds up
+      expect(FormatUtils.formatDistanceKm(500, 0)).toBe("1 km");
       expect(FormatUtils.formatDistanceKm(499, 0)).toBe("0 km");
     });
 
@@ -80,13 +80,13 @@ describe("FormatUtils", () => {
       expect(FormatUtils.formatPeriod(60)).toBe("60 s");
       expect(FormatUtils.formatPeriod(SECONDS_PER_DAY)).toBe("1.0 days");
       expect(FormatUtils.formatPeriod(SECONDS_PER_DAY * 1.49)).toBe("1.5 days");
-      expect(FormatUtils.formatPeriod(SECONDS_PER_DAY * 1.5)).toBe("1.5 days"); // Boundary for days
+      expect(FormatUtils.formatPeriod(SECONDS_PER_DAY * 1.5)).toBe("1.5 days");
       expect(FormatUtils.formatPeriod(SECONDS_PER_DAY * 1.51)).toBe("1.5 days");
-      expect(FormatUtils.formatPeriod(SECONDS_PER_YEAR)).toBe("365.2 days"); // Less than 1.5 years
+      expect(FormatUtils.formatPeriod(SECONDS_PER_YEAR)).toBe("365.2 days");
       expect(FormatUtils.formatPeriod(SECONDS_PER_YEAR * 1.49)).toBe(
         "544.2 days",
       );
-      expect(FormatUtils.formatPeriod(SECONDS_PER_YEAR * 1.5)).toBe("1.50 yrs"); // Boundary for years
+      expect(FormatUtils.formatPeriod(SECONDS_PER_YEAR * 1.5)).toBe("1.50 yrs");
       expect(FormatUtils.formatPeriod(SECONDS_PER_YEAR * 2)).toBe("2.00 yrs");
     });
 
@@ -108,13 +108,13 @@ describe("FormatUtils", () => {
     });
 
     it("should return approximate names for unknown hex codes", () => {
-      expect(FormatUtils.getStarColorName("#ffaaaa")).toBe("Yellowish"); // Starts with ff, doesn't contain 8 or 9
-      expect(FormatUtils.getStarColorName("#ff88aa")).toBe("Reddish"); // Starts with ff, contains 8
-      expect(FormatUtils.getStarColorName("#caaaaa")).toBe("Bluish"); // Starts with ca
-      expect(FormatUtils.getStarColorName("#9baaaa")).toBe("Bluish"); // Starts with 9b
-      expect(FormatUtils.getStarColorName("#aaaaaa")).toBe("Bluish"); // Starts with a
-      expect(FormatUtils.getStarColorName("#abcdef")).toBe("Bluish"); // Fallback approximation test
-      expect(FormatUtils.getStarColorName("#123456")).toBe("Unknown"); // Cannot approximate
+      expect(FormatUtils.getStarColorName("#ffaaaa")).toBe("Yellowish");
+      expect(FormatUtils.getStarColorName("#ff88aa")).toBe("Reddish");
+      expect(FormatUtils.getStarColorName("#caaaaa")).toBe("Bluish");
+      expect(FormatUtils.getStarColorName("#9baaaa")).toBe("Bluish");
+      expect(FormatUtils.getStarColorName("#aaaaaa")).toBe("Bluish");
+      expect(FormatUtils.getStarColorName("#abcdef")).toBe("Bluish");
+      expect(FormatUtils.getStarColorName("#123456")).toBe("Unknown");
     });
 
     it("should return Unknown for null or undefined input", () => {

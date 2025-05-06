@@ -1,5 +1,5 @@
 import { IContentRenderer, IDockviewPanelProps } from "dockview-core";
-// Import state and actions
+
 import {
   getSimulationState,
   simulationState$,
@@ -9,18 +9,16 @@ import {
 } from "@teskooano/core-state";
 
 import { type TeskooanoSlider } from "../../core/components/slider/Slider";
-import { template } from "./Settings.template"; // Import the template
+import { template } from "./Settings.template";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 import { Subscription } from "rxjs";
 
-// Define options for the select component
 const ENGINE_OPTIONS: { value: PhysicsEngineType; label: string }[] = [
   { value: "euler", label: "Euler Integrator" },
   { value: "symplectic", label: "Symplectic Euler" },
   { value: "verlet", label: "Verlet Integration" },
 ];
 
-// --- ADD Performance Profile Options ---
 const PERFORMANCE_PROFILE_OPTIONS: {
   value: PerformanceProfileType;
   label: string;
@@ -30,17 +28,14 @@ const PERFORMANCE_PROFILE_OPTIONS: {
   { value: "high", label: "High (Performance)" },
   { value: "cosmic", label: "Max Quality)" },
 ];
-// --- END ADD ---
 
 /**
  * Renders the content for the settings panel within Dockview.
  * Implemented as a Custom Element.
  */
 export class SettingsPanel extends HTMLElement implements IContentRenderer {
-  // Define the custom element tag name
   public static readonly componentName = "teskooano-settings-panel";
 
-  // Standard HTML Form element
   private formElement: HTMLFormElement | null = null;
   private trailSliderElement: TeskooanoSlider | null = null;
   private engineSelectElement: HTMLSelectElement | null = null;
@@ -49,12 +44,11 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
 
   constructor() {
     super();
-    // Attach shadow DOM and append template
+
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
   }
 
-  // --- IContentRenderer implementation ---
   get element(): HTMLElement {
     return this;
   }
@@ -63,14 +57,9 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
    * Called by Dockview to initialize the panel content.
    * @param params - Initialization parameters provided by Dockview (currently unused).
    */
-  init(params: IDockviewPanelProps<any>): void {
-    // Initialization logic now happens in connectedCallback
-    // We might pass params through if needed later
-  }
+  init(params: IDockviewPanelProps<any>): void {}
 
-  // --- Custom Element Lifecycle Callbacks ---
   connectedCallback() {
-    // Find elements within the shadow DOM
     this.formElement =
       this.shadowRoot!.querySelector<HTMLFormElement>("#settings-form");
     this.trailSliderElement = this.shadowRoot!.querySelector<TeskooanoSlider>(
@@ -94,29 +83,24 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
       console.error(
         "[SettingsPanel] Failed to find essential elements in template!",
       );
-      // Maybe add a user-facing error message in the shadow DOM?
+
       this.shadowRoot!.innerHTML =
         "<p style='color:red'>Error loading settings panel content.</p>";
       return;
     }
 
-    // Add styling to the host element (moved from constructor)
     this.style.display = "block";
     this.style.padding = "var(--space-md, 12px)";
     this.style.height = "100%";
     this.style.overflowY = "auto";
     this.style.boxSizing = "border-box";
 
-    // --- Add Event Listeners and Populate Data ---
     this.addEventListenersAndPopulate();
   }
 
   disconnectedCallback() {
-    // Remove listeners and unsubscribe
     this.removeEventListenersAndUnsubscribe();
   }
-
-  // --- Helper methods --- //
 
   private addEventListenersAndPopulate(): void {
     if (
@@ -125,20 +109,16 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
       !this.engineSelectElement ||
       !this.profileSelectElement
     ) {
-      return; // Already handled in connectedCallback
+      return;
     }
 
-    // Prevent default form submission
     this.formElement.addEventListener("submit", this.handleFormSubmit);
 
-    // Populate Selects
     this.populateSelect(this.engineSelectElement, ENGINE_OPTIONS);
     this.populateSelect(this.profileSelectElement, PERFORMANCE_PROFILE_OPTIONS);
 
-    // Set Initial Values & Attach Listeners
     const initialState = getSimulationState();
 
-    // Trail Slider
     this.trailSliderElement.value =
       initialState.visualSettings.trailLengthMultiplier;
     this.trailSliderElement.addEventListener(
@@ -146,21 +126,18 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
       this.handleTrailChange as EventListener,
     );
 
-    // Physics Engine Select
     this.engineSelectElement.value = initialState.physicsEngine;
     this.engineSelectElement.addEventListener(
       "change",
       this.handleEngineChange,
     );
 
-    // Performance Profile Select
     this.profileSelectElement.value = initialState.performanceProfile;
     this.profileSelectElement.addEventListener(
       "change",
       this.handleProfileChange,
     );
 
-    // Subscribe to state changes AFTER initial setup
     this.unsubscribeSimState = simulationState$.subscribe(
       this.updateControlStates,
     );
@@ -181,10 +158,9 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
       this.handleProfileChange,
     );
 
-    // Unsubscribe from state changes
     this.unsubscribeSimState?.unsubscribe();
     this.unsubscribeSimState = null;
-    // Clear references
+
     this.formElement = null;
     this.trailSliderElement = null;
     this.engineSelectElement = null;
@@ -197,7 +173,6 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
     selectElement: HTMLSelectElement,
     options: { value: string; label: string }[],
   ): void {
-    // Clear existing options first
     selectElement.innerHTML = "";
     options.forEach((option) => {
       const optionElement = document.createElement("option");
@@ -234,21 +209,21 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
 
   private updateControlStates = (): void => {
     const state = getSimulationState();
-    // Update Trail Slider
+
     if (this.trailSliderElement) {
       const currentMultiplier = state.visualSettings.trailLengthMultiplier;
       if (currentMultiplier !== this.trailSliderElement.value) {
         this.trailSliderElement.value = currentMultiplier;
       }
     }
-    // Update Engine Select
+
     if (this.engineSelectElement) {
       const currentEngine = state.physicsEngine;
       if (currentEngine !== this.engineSelectElement.value) {
         this.engineSelectElement.value = currentEngine;
       }
     }
-    // Update Performance Profile Select
+
     if (this.profileSelectElement) {
       const currentProfile = state.performanceProfile;
       if (currentProfile !== this.profileSelectElement.value) {

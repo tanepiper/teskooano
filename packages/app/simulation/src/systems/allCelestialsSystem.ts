@@ -22,7 +22,7 @@ import {
   OortCloudProperties,
 } from "@teskooano/data-types";
 
-import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math"; // Math constants and types
+import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import {
   AU,
   GRAVITATIONAL_CONSTANT,
@@ -30,7 +30,7 @@ import {
   JUPITER_MASS,
   SOLAR_MASS,
   SOLAR_RADIUS,
-} from "@teskooano/core-physics"; // Core physics constants
+} from "@teskooano/core-physics";
 
 /**
  * Calculate initial position and velocity in REAL units (m, m/s)
@@ -46,12 +46,11 @@ import {
 export function calculateInitialState(
   orbit: OrbitalParameters,
   parentMass_kg: number,
-  parentVelocity_mps: OSVector3 = new OSVector3(0, 0, 0), // Default to static parent
+  parentVelocity_mps: OSVector3 = new OSVector3(0, 0, 0),
 ): { position: OSVector3; velocity: OSVector3 } {
   const semiMajorAxis_m = orbit.realSemiMajorAxis_m ?? 0;
   const eccentricity = orbit.eccentricity ?? 0;
 
-  // --- Input Validation ---
   const zeroState = {
     position: new OSVector3(0, 0, 0),
     velocity: new OSVector3(0, 0, 0),
@@ -69,25 +68,17 @@ export function calculateInitialState(
     return zeroState;
   }
   if (eccentricity < 0 || eccentricity >= 1 || !Number.isFinite(eccentricity)) {
-    // Allow eccentricity >= 1 only if specifically handled for hyperbolic/parabolic
     console.warn(
       `[calculateInitialState] Invalid or unhandled eccentricity: ${eccentricity}. Returning zero state.`,
     );
     return zeroState;
   }
-  // --- End Validation ---
 
-  // For simplicity, start at periapsis (closest point)
-  // Position: x = a * (1 - e), y = 0, z = 0 (relative to parent)
   const distanceAtPeriapsis = semiMajorAxis_m * (1 - eccentricity);
   const position = new OSVector3(distanceAtPeriapsis, 0, 0);
 
-  // Velocity at periapsis
-  // v = sqrt( G * M_parent * ( (1+e) / (a*(1-e)) ) ) - More accurate for elliptical
-  // simplified: v = sqrt(G * M / r) using periapsis distance
   let orbitalSpeed = 0;
   if (distanceAtPeriapsis > 1e-6) {
-    // Avoid division by zero
     const speedSquared =
       (GRAVITATIONAL_CONSTANT * parentMass_kg) / distanceAtPeriapsis;
     if (speedSquared < 0 || !Number.isFinite(speedSquared)) {
@@ -97,38 +88,28 @@ export function calculateInitialState(
       return zeroState;
     }
     orbitalSpeed = Math.sqrt(speedSquared);
-    // More accurate calc (vis-viva eq. special case at periapsis):
-    // orbitalSpeed = Math.sqrt((GRAVITATIONAL_CONSTANT * parentMass_kg / semiMajorAxis_m) * ((1 + eccentricity) / (1 - eccentricity)));
   }
 
-  // Velocity vector: x = 0, y = orbitalSpeed, z = 0 (relative to parent in XY plane)
   const relativeVelocity = new OSVector3(0, orbitalSpeed, 0);
 
-  // TODO: Incorporate inclination, longitude of ascending node, argument of periapsis
-  // This would involve rotating the initial position and velocity vectors based on orbital plane.
-  // For now, we assume orbits are co-planar in the XY plane.
+  const velocity = relativeVelocity.add(parentVelocity_mps);
 
-  // Add parent's velocity to get absolute velocity
-  const velocity = relativeVelocity.add(parentVelocity_mps); // OSVector3.add
-
-  return { position, velocity }; // Return OSVector3 directly
+  return { position, velocity };
 }
 
 export function initializeAllCelestialsSystem(): string {
-  // --- Main Star ---
-  const sunName = "Solara Prime"; // Define name separately
+  const sunName = "Solara Prime";
   const sunData = {
     id: "star-main",
-    name: sunName, // Use variable
+    name: sunName,
     type: CelestialType.STAR,
     seed: "seed_star_1000",
     realMass_kg: 1.989e30,
     realRadius_m: 696340000,
-    visualScaleRadius: 10, // Fixed property name
+    visualScaleRadius: 10,
     temperature: 6000,
-    albedo: 0.3, // Added placeholder
+    albedo: 0.3,
     orbitalParameters: {
-      // Placeholder for stars
       realSemiMajorAxis_m: 0,
       eccentricity: 0,
       inclination: 0,
@@ -138,9 +119,8 @@ export function initializeAllCelestialsSystem(): string {
       period_s: 0,
     },
     properties: {
-      // Renamed
       type: CelestialType.STAR,
-      starName: sunName, // Use variable
+      starName: sunName,
       isMainStar: true,
       spectralClass: "G0V",
       luminosity: 1.2,
@@ -150,7 +130,6 @@ export function initializeAllCelestialsSystem(): string {
   };
   const sunId = actions.createSolarSystem(sunData);
 
-  // --- Rocky Planet --- Cinder (Mercury-like)
   const cinderSMA_AU = 0.387;
   const cinderData = {
     id: "planet-rocky",
@@ -160,7 +139,7 @@ export function initializeAllCelestialsSystem(): string {
     seed: "seed_cinder_1001",
     realMass_kg: 3.3011e23,
     realRadius_m: 2439700,
-    visualScaleRadius: 0.2, // Fixed property name
+    visualScaleRadius: 0.2,
     orbitalParameters: {
       realSemiMajorAxis_m: cinderSMA_AU * AU,
       eccentricity: 0.21,
@@ -168,13 +147,13 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: 48.3 * DEG_TO_RAD,
       argumentOfPeriapsis: 29.1 * DEG_TO_RAD,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 7.6e6, // ~88 days
+      period_s: 7.6e6,
     },
     temperature: 340,
     albedo: 0.14,
     atmosphere: {
       composition: ["minimal"],
-      pressure: 1e-14, // Very tenuous
+      pressure: 1e-14,
       color: "#999999",
     },
     surface: {
@@ -197,7 +176,6 @@ export function initializeAllCelestialsSystem(): string {
       blend45: 0.1,
     } as RockyTerrestrialSurfaceProperties,
     properties: {
-      // Renamed
       type: CelestialType.PLANET,
       isMoon: false,
       surfaceType: SurfaceType.CRATERED,
@@ -206,9 +184,8 @@ export function initializeAllCelestialsSystem(): string {
   };
   actions.addCelestial(cinderData);
 
-  // --- Terrestrial Planet --- Gaia Secundus (Earth-like)
   const gaiaSMA_AU = 1.05;
-  const gaiaId = "planet-terrestrial"; // Store ID
+  const gaiaId = "planet-terrestrial";
   const gaiaData = {
     id: gaiaId,
     name: "Gaia Secundus",
@@ -217,7 +194,7 @@ export function initializeAllCelestialsSystem(): string {
     seed: "seed_gaia_1002",
     realMass_kg: 5.97e24,
     realRadius_m: 6371000,
-    visualScaleRadius: 0.5, // Fixed property name
+    visualScaleRadius: 0.5,
     orbitalParameters: {
       realSemiMajorAxis_m: gaiaSMA_AU * AU,
       eccentricity: 0.018,
@@ -225,26 +202,26 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 3.154e7, // ~365.25 days
+      period_s: 3.154e7,
     },
-    temperature: 288, // Average K
-    albedo: 0.3, // Earth average
+    temperature: 288,
+    albedo: 0.3,
     atmosphere: {
       composition: ["N2", "O2", "Ar"],
-      pressure: 1, // atm
-      color: "#87CEEB", // Light blue sky
+      pressure: 1,
+      color: "#87CEEB",
     },
     surface: {
       type: SurfaceType.VARIED,
       planetType: PlanetType.TERRESTRIAL,
-      color: "#228B22", // Green land base
+      color: "#228B22",
       roughness: 0.3,
-      secondaryColor: "#1E90FF", // Blue water
-      color1: "#228B22", // Green land
-      color2: "#1E90FF", // Blue water
-      color3: "#3CB371", // Medium sea green
-      color4: "#8FBC8F", // Dark sea green (mountains?)
-      color5: "#F4A460", // Sandy brown (beaches/deserts)
+      secondaryColor: "#1E90FF",
+      color1: "#228B22",
+      color2: "#1E90FF",
+      color3: "#3CB371",
+      color4: "#8FBC8F",
+      color5: "#F4A460",
       transition2: 0.2,
       transition3: 0.4,
       transition4: 0.6,
@@ -255,7 +232,6 @@ export function initializeAllCelestialsSystem(): string {
       blend45: 0.1,
     } as RockyTerrestrialSurfaceProperties,
     properties: {
-      // Renamed
       type: CelestialType.PLANET,
       isMoon: false,
       surfaceType: SurfaceType.VARIED,
@@ -264,17 +240,16 @@ export function initializeAllCelestialsSystem(): string {
   };
   actions.addCelestial(gaiaData);
 
-  // --- Terrestrial Moon --- Luna Minor (Moon-like)
   const lunaSMA_m = 384400 * KM;
   const lunaData = {
     id: "moon-terrestrial",
     name: "Luna Minor",
     type: CelestialType.MOON,
-    parentId: gaiaId, // Use stored ID
+    parentId: gaiaId,
     seed: "seed_luna_1003",
     realMass_kg: 7.34e22,
     realRadius_m: 1737400,
-    visualScaleRadius: 0.15, // Fixed property name
+    visualScaleRadius: 0.15,
     orbitalParameters: {
       realSemiMajorAxis_m: lunaSMA_m,
       eccentricity: 0.06,
@@ -282,13 +257,13 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 2.36e6, // ~27.3 days
+      period_s: 2.36e6,
     },
-    temperature: 220, // Average K (varies wildly)
-    albedo: 0.12, // Moon average
+    temperature: 220,
+    albedo: 0.12,
     atmosphere: {
       composition: ["minimal"],
-      pressure: 3e-15, // Very tenuous
+      pressure: 3e-15,
       color: "#999999",
     },
     surface: {
@@ -311,7 +286,6 @@ export function initializeAllCelestialsSystem(): string {
       blend45: 0.1,
     } as RockyTerrestrialSurfaceProperties,
     properties: {
-      // Renamed
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: gaiaId,
@@ -320,7 +294,6 @@ export function initializeAllCelestialsSystem(): string {
   };
   actions.addCelestial(lunaData);
 
-  // --- Desert Planet --- Arrakis Prime (Mars-like)
   const arrakisSMA_AU = 1.6;
   const arrakisData = {
     id: "planet-desert",
@@ -330,7 +303,7 @@ export function initializeAllCelestialsSystem(): string {
     seed: "seed_arrakis_1004",
     realMass_kg: 6.417e23,
     realRadius_m: 3389500,
-    visualScaleRadius: 0.25, // Fixed property name
+    visualScaleRadius: 0.25,
     orbitalParameters: {
       realSemiMajorAxis_m: arrakisSMA_AU * AU,
       eccentricity: 0.1,
@@ -338,24 +311,23 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: 49.56 * DEG_TO_RAD,
       argumentOfPeriapsis: 286.5 * DEG_TO_RAD,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 5.94e7, // ~687 days
+      period_s: 5.94e7,
     },
-    temperature: 210, // Average K
-    albedo: 0.25, // Mars average
+    temperature: 210,
+    albedo: 0.25,
     atmosphere: {
       composition: ["CO2", "N2", "Ar"],
-      pressure: 0.006, // atm
-      color: "#FFDEAD", // Pale orange/pink sky
+      pressure: 0.006,
+      color: "#FFDEAD",
     },
     surface: {
       type: SurfaceType.DUNES,
       planetType: PlanetType.DESERT,
-      color: "#D2B48C", // Tan/Reddish
+      color: "#D2B48C",
       roughness: 0.5,
-      secondaryColor: "#A0522D", // Darker rock color
+      secondaryColor: "#A0522D",
     } as DesertSurfaceProperties,
     properties: {
-      // Renamed
       type: CelestialType.PLANET,
       isMoon: false,
       surfaceType: SurfaceType.DUNES,
@@ -364,7 +336,6 @@ export function initializeAllCelestialsSystem(): string {
   };
   actions.addCelestial(arrakisData);
 
-  // --- Ice Planet --- Hoth Beta (Fictional - between Mars/Jupiter)
   const hothSMA_AU = 3.5;
   const hothData = {
     id: "planet-ice",
@@ -372,9 +343,9 @@ export function initializeAllCelestialsSystem(): string {
     type: CelestialType.PLANET,
     parentId: sunId,
     seed: "seed_hoth_1005",
-    realMass_kg: 1.5e24, // Fictional mass
-    realRadius_m: 4000000, // Fictional radius
-    visualScaleRadius: 0.6, // Fixed property name
+    realMass_kg: 1.5e24,
+    realRadius_m: 4000000,
+    visualScaleRadius: 0.6,
     orbitalParameters: {
       realSemiMajorAxis_m: hothSMA_AU * AU,
       eccentricity: 0.08,
@@ -382,14 +353,14 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 1.5e8, // Approx 4.7 years
+      period_s: 1.5e8,
     },
-    temperature: 150, // K
-    albedo: 0.7, // High albedo for ice
+    temperature: 150,
+    albedo: 0.7,
     atmosphere: {
       composition: ["N2", "CH4"],
-      pressure: 0.5, // atm
-      color: "#ADD8E6", // Light blue/grey
+      pressure: 0.5,
+      color: "#ADD8E6",
     },
     surface: {
       type: SurfaceType.ICE_FLATS,
@@ -399,7 +370,6 @@ export function initializeAllCelestialsSystem(): string {
       glossiness: 0.8,
     } as IceSurfaceProperties,
     properties: {
-      // Renamed
       type: CelestialType.PLANET,
       isMoon: false,
       surfaceType: SurfaceType.ICE_FLATS,
@@ -408,7 +378,6 @@ export function initializeAllCelestialsSystem(): string {
   };
   actions.addCelestial(hothData);
 
-  // --- Lava Planet --- Mustafar Gamma (Fictional - Inner system)
   const mustafarSMA_AU = 0.15;
   const mustafarData = {
     id: "planet-lava",
@@ -416,9 +385,9 @@ export function initializeAllCelestialsSystem(): string {
     type: CelestialType.PLANET,
     parentId: sunId,
     seed: "seed_mustafar_1006",
-    realMass_kg: 4e24, // Fictional mass
-    realRadius_m: 5000000, // Fictional radius
-    visualScaleRadius: 0.6, // Fixed property name
+    realMass_kg: 4e24,
+    realRadius_m: 5000000,
+    visualScaleRadius: 0.6,
     orbitalParameters: {
       realSemiMajorAxis_m: mustafarSMA_AU * AU,
       eccentricity: 0.05,
@@ -426,14 +395,14 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 3.9e6, // Approx 45 days
+      period_s: 3.9e6,
     },
-    temperature: 1200, // K
-    albedo: 0.1, // Low albedo
+    temperature: 1200,
+    albedo: 0.1,
     atmosphere: {
       composition: ["SO2", "CO2"],
-      pressure: 0.1, // atm
-      color: "#FFA500", // Orange/Yellow haze
+      pressure: 0.1,
+      color: "#FFA500",
     },
     surface: {
       type: SurfaceType.VOLCANIC,
@@ -443,7 +412,6 @@ export function initializeAllCelestialsSystem(): string {
       rockColor: "#2F4F4F",
     } as LavaSurfaceProperties,
     properties: {
-      // Renamed
       type: CelestialType.PLANET,
       isMoon: false,
       surfaceType: SurfaceType.VOLCANIC,
@@ -452,7 +420,6 @@ export function initializeAllCelestialsSystem(): string {
   };
   actions.addCelestial(mustafarData);
 
-  // --- Ocean Planet --- Aqualon (Fictional - Habitable Zone)
   const aqualonSMA_AU = 1.3;
   const aqualonData = {
     id: "planet-ocean",
@@ -462,7 +429,7 @@ export function initializeAllCelestialsSystem(): string {
     seed: "seed_aqualon_1007",
     realMass_kg: 6.5e24,
     realRadius_m: 6500000,
-    visualScaleRadius: 0.7, // Fixed property name
+    visualScaleRadius: 0.7,
     orbitalParameters: {
       realSemiMajorAxis_m: aqualonSMA_AU * AU,
       eccentricity: 0.03,
@@ -470,14 +437,14 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 4.2e7, // Approx 1.3 years
+      period_s: 4.2e7,
     },
-    temperature: 295, // K
+    temperature: 295,
     albedo: 0.4,
     atmosphere: {
       composition: ["N2", "O2", "H2O"],
-      pressure: 1.1, // atm
-      color: "#87CEFA", // Light Sky Blue
+      pressure: 1.1,
+      color: "#87CEFA",
     },
     surface: {
       type: SurfaceType.OCEAN,
@@ -489,7 +456,6 @@ export function initializeAllCelestialsSystem(): string {
       landRatio: 0.0,
     } as OceanSurfaceProperties,
     properties: {
-      // Renamed
       type: CelestialType.PLANET,
       isMoon: false,
       surfaceType: SurfaceType.OCEAN,
@@ -498,7 +464,6 @@ export function initializeAllCelestialsSystem(): string {
   };
   actions.addCelestial(aqualonData);
 
-  // --- Asteroid Field --- The Divide (Main Belt analog)
   const asteroidFieldInnerAU = 2.2;
   const asteroidFieldOuterAU = 3.2;
   const asteroidFieldHeightAU = 0.5;
@@ -508,10 +473,9 @@ export function initializeAllCelestialsSystem(): string {
     type: CelestialType.ASTEROID_FIELD,
     parentId: sunId,
     seed: "seed_divide_1009",
-    realMass_kg: 3e21, // Total estimated mass of asteroid belt
-    realRadius_m: asteroidFieldOuterAU * AU, // Use outer radius for size reference
+    realMass_kg: 3e21,
+    realRadius_m: asteroidFieldOuterAU * AU,
     orbitalParameters: {
-      // Orbit of the field center
       realSemiMajorAxis_m:
         ((asteroidFieldInnerAU + asteroidFieldOuterAU) / 2) * AU,
       eccentricity: 0.08,
@@ -519,24 +483,22 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 1.6e8, // Approx 5 years
+      period_s: 1.6e8,
     },
-    temperature: 165, // Average K
+    temperature: 165,
     properties: {
-      // Renamed
       type: CelestialType.ASTEROID_FIELD,
       innerRadiusAU: asteroidFieldInnerAU,
       outerRadiusAU: asteroidFieldOuterAU,
       heightAU: asteroidFieldHeightAU,
-      count: 10000, // Number of asteroids to simulate/render
-      color: "#8B4513", // Saddle Brown
+      count: 10000,
+      color: "#8B4513",
       composition: ["rock", "iron", "nickel"],
-      visualDensity: 100, // Density for visualization
+      visualDensity: 100,
     } as AsteroidFieldProperties,
   };
   actions.addCelestial(asteroidFieldData);
 
-  // --- Asteroid --- Nomad (Large rogue asteroid/dwarf planet in belt)
   const nomadSMA_AU = 2.8;
   const nomadData = {
     id: "asteroid-nomad",
@@ -544,9 +506,9 @@ export function initializeAllCelestialsSystem(): string {
     type: CelestialType.DWARF_PLANET,
     parentId: sunId,
     seed: "seed_nomad_1010",
-    realMass_kg: 5e15, // ~10km radius size
+    realMass_kg: 5e15,
     realRadius_m: 10000,
-    visualScaleRadius: 0.05, // Fixed property name
+    visualScaleRadius: 0.05,
     orbitalParameters: {
       realSemiMajorAxis_m: nomadSMA_AU * AU,
       eccentricity: 0.18,
@@ -554,10 +516,10 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 1.64e8, // Approx 5.2 years
+      period_s: 1.64e8,
     },
-    temperature: 175, // Approx K
-    albedo: 0.06, // Dark asteroid
+    temperature: 175,
+    albedo: 0.06,
     atmosphere: {
       composition: ["minimal"],
       pressure: 0,
@@ -583,17 +545,15 @@ export function initializeAllCelestialsSystem(): string {
       blend45: 0.1,
     } as RockyTerrestrialSurfaceProperties,
     properties: {
-      // Added back for Dwarf Planet
       type: CelestialType.DWARF_PLANET,
       isMoon: false,
-      composition: ["rock", "ice"], // Example composition
+      composition: ["rock", "ice"],
     } as PlanetProperties,
   };
   actions.addCelestial(nomadData);
 
-  // --- Gas Giant Class I --- Jovian Prime (Jupiter analog)
   const jovianPrimeSMA_AU = 5.2;
-  const jovianId = "gas-giant-1"; // Store ID
+  const jovianId = "gas-giant-1";
   const jovianData = {
     id: jovianId,
     name: "Jovian Prime",
@@ -602,7 +562,7 @@ export function initializeAllCelestialsSystem(): string {
     seed: "seed_jovian_1011",
     realMass_kg: 1.898e27,
     realRadius_m: 69911000,
-    visualScaleRadius: 2.0, // Fixed property name
+    visualScaleRadius: 2.0,
     orbitalParameters: {
       realSemiMajorAxis_m: jovianPrimeSMA_AU * AU,
       eccentricity: 0.055,
@@ -610,28 +570,26 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: 100.46 * DEG_TO_RAD,
       argumentOfPeriapsis: 273.87 * DEG_TO_RAD,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 3.74e8, // Approx 11.86 years
+      period_s: 3.74e8,
     },
-    temperature: 165, // Cloud top temp K
+    temperature: 165,
     albedo: 0.52,
     properties: {
-      // Renamed
       type: CelestialType.GAS_GIANT,
       gasGiantClass: GasGiantClass.CLASS_I,
-      atmosphereColor: "#D2B48C", // Tan
-      cloudColor: "#FFFFFF", // White bands
-      cloudSpeed: 100, // Estimated cloud speed
-      stormColor: "#B22222", // Firebrick red spot
-      stormSpeed: 50, // m/s?
+      atmosphereColor: "#D2B48C",
+      cloudColor: "#FFFFFF",
+      cloudSpeed: 100,
+      stormColor: "#B22222",
+      stormSpeed: 50,
       rings: [
         {
-          // Faint main ring analog
           innerRadius: 1.7 * 69911000,
           outerRadius: 1.8 * 69911000,
           density: 0.1,
           opacity: 0.1,
-          color: "#8B4513", // Saddle Brown (dusty)
-          rotationRate: 0.0001, // rad/s?
+          color: "#8B4513",
+          rotationRate: 0.0001,
           texture: "ring_texture_dusty.png",
           composition: ["dust", "rock"],
           type: RockyType.DARK_ROCK,
@@ -641,17 +599,16 @@ export function initializeAllCelestialsSystem(): string {
   };
   actions.addCelestial(jovianData);
 
-  // --- Ice Moon orbiting Gas Giant I --- Europa Minor (Europa analog)
   const europaSMA_m = 671100 * KM;
   const europaData = {
     id: "moon-ice-1",
     name: "Europa Minor",
     type: CelestialType.MOON,
-    parentId: jovianId, // Use stored ID
+    parentId: jovianId,
     seed: "seed_europa_1008",
     realMass_kg: 4.8e22,
     realRadius_m: 1560800,
-    visualScaleRadius: 0.15, // Fixed property name
+    visualScaleRadius: 0.15,
     orbitalParameters: {
       realSemiMajorAxis_m: europaSMA_m,
       eccentricity: 0.015,
@@ -659,19 +616,19 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 3.07e5, // Approx 3.55 days
+      period_s: 3.07e5,
     },
-    temperature: 102, // K
+    temperature: 102,
     albedo: 0.67,
     atmosphere: {
       composition: ["O2"],
-      pressure: 1e-11, // atm
+      pressure: 1e-11,
       color: "#FFFFFF00",
     },
     surface: {
       type: SurfaceType.ICE_CRACKED,
       planetType: PlanetType.ICE,
-      color: "#E0FFFF", // Light Cyan
+      color: "#E0FFFF",
       roughness: 0.3,
       glossiness: 0.7,
       color1: "#E0FFFF",
@@ -689,7 +646,6 @@ export function initializeAllCelestialsSystem(): string {
       blend45: 0.1,
     } as IceSurfaceProperties,
     properties: {
-      // Renamed
       type: CelestialType.MOON,
       isMoon: true,
       parentPlanet: jovianId,
@@ -698,7 +654,6 @@ export function initializeAllCelestialsSystem(): string {
   };
   actions.addCelestial(europaData);
 
-  // --- Gas Giant Class II --- Saturnus Secundus (Saturn analog)
   const saturnusSMA_AU = 9.58;
   const saturnusData = {
     id: "gas-giant-2",
@@ -708,7 +663,7 @@ export function initializeAllCelestialsSystem(): string {
     seed: "seed_saturnus_1012",
     realMass_kg: 5.683e26,
     realRadius_m: 58232000,
-    visualScaleRadius: 1.8, // Fixed property name
+    visualScaleRadius: 1.8,
     orbitalParameters: {
       realSemiMajorAxis_m: saturnusSMA_AU * AU,
       eccentricity: 0.06,
@@ -716,16 +671,15 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: 113.66 * DEG_TO_RAD,
       argumentOfPeriapsis: 339.39 * DEG_TO_RAD,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 9.3e8, // Approx 29.5 years
+      period_s: 9.3e8,
     },
-    temperature: 134, // Cloud top K
+    temperature: 134,
     albedo: 0.47,
     properties: {
-      // Renamed
       type: CelestialType.GAS_GIANT,
       gasGiantClass: GasGiantClass.CLASS_II,
-      atmosphereColor: "#F5F5DC", // Beige
-      cloudColor: "#FFF8DC", // Cornsilk white
+      atmosphereColor: "#F5F5DC",
+      cloudColor: "#FFF8DC",
       cloudSpeed: 80,
       rings: [
         {
@@ -738,7 +692,7 @@ export function initializeAllCelestialsSystem(): string {
           texture: "ring_texture_sparse.png",
           composition: ["rock", "dust"],
           type: RockyType.DARK_ROCK,
-        }, // C Ring
+        },
         {
           innerRadius: 92000 * KM,
           outerRadius: 117580 * KM,
@@ -749,7 +703,7 @@ export function initializeAllCelestialsSystem(): string {
           texture: "ring_texture_icy.png",
           composition: ["water ice"],
           type: RockyType.ICE,
-        }, // B Ring
+        },
         {
           innerRadius: 117580 * KM,
           outerRadius: 136775 * KM,
@@ -760,13 +714,12 @@ export function initializeAllCelestialsSystem(): string {
           texture: "ring_texture_dense.png",
           composition: ["water ice"],
           type: RockyType.ICE,
-        }, // A Ring
+        },
       ],
     } as GasGiantProperties,
   };
   actions.addCelestial(saturnusData);
 
-  // --- Ice Giant --- Azureus (Uranus analog)
   const azureusSMA_AU = 19.2;
   const azureusData = {
     id: "ice-giant-1",
@@ -776,7 +729,7 @@ export function initializeAllCelestialsSystem(): string {
     seed: "seed_azureus_1013",
     realMass_kg: 8.681e25,
     realRadius_m: 25362000,
-    visualScaleRadius: 1.0, // Fixed property name
+    visualScaleRadius: 1.0,
     orbitalParameters: {
       realSemiMajorAxis_m: azureusSMA_AU * AU,
       eccentricity: 0.05,
@@ -784,19 +737,17 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: 74.0 * DEG_TO_RAD,
       argumentOfPeriapsis: 96.9 * DEG_TO_RAD,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 2.65e9, // Approx 84 years
+      period_s: 2.65e9,
     },
-    temperature: 76, // Cloud top K
+    temperature: 76,
     albedo: 0.51,
     properties: {
-      // Renamed
       type: CelestialType.GAS_GIANT,
       gasGiantClass: GasGiantClass.CLASS_III,
-      atmosphereColor: "#AFEEEE", // Pale Turquoise
-      cloudColor: "#E0FFFF", // Light cyan clouds
-      cloudSpeed: 100, // Estimated cloud speed
+      atmosphereColor: "#AFEEEE",
+      cloudColor: "#E0FFFF",
+      cloudSpeed: 100,
       rings: [
-        // Faint, dark rings
         {
           innerRadius: 41837 * KM,
           outerRadius: 51149 * KM,
@@ -807,13 +758,12 @@ export function initializeAllCelestialsSystem(): string {
           texture: "ring_texture_dark.png",
           composition: ["dark dust", "rock"],
           type: RockyType.DARK_ROCK,
-        }, // Epsilon ring is brightest, others fainter
+        },
       ],
     } as GasGiantProperties,
   };
   actions.addCelestial(azureusData);
 
-  // --- Ice Giant --- Poseidon Prime (Neptune analog)
   const poseidonSMA_AU = 30.1;
   const poseidonData = {
     id: "ice-giant-2",
@@ -823,7 +773,7 @@ export function initializeAllCelestialsSystem(): string {
     seed: "seed_poseidon_1014",
     realMass_kg: 1.024e26,
     realRadius_m: 24622000,
-    visualScaleRadius: 0.95, // Fixed property name
+    visualScaleRadius: 0.95,
     orbitalParameters: {
       realSemiMajorAxis_m: poseidonSMA_AU * AU,
       eccentricity: 0.015,
@@ -831,19 +781,17 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: 131.78 * DEG_TO_RAD,
       argumentOfPeriapsis: 276.3 * DEG_TO_RAD,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 5.2e9, // Approx 164.8 years
+      period_s: 5.2e9,
     },
-    temperature: 72, // Cloud top K
+    temperature: 72,
     albedo: 0.41,
     properties: {
-      // Renamed
       type: CelestialType.GAS_GIANT,
       gasGiantClass: GasGiantClass.CLASS_III,
-      atmosphereColor: "#6495ED", // Cornflower Blue
-      cloudColor: "#F0FFFF", // Azure white clouds
+      atmosphereColor: "#6495ED",
+      cloudColor: "#F0FFFF",
       cloudSpeed: 50,
       rings: [
-        // Faint rings/arcs
         {
           innerRadius: 41900 * KM,
           outerRadius: 53200 * KM,
@@ -854,7 +802,7 @@ export function initializeAllCelestialsSystem(): string {
           texture: "ring_texture_dark.png",
           composition: ["dust"],
           type: RockyType.DUST,
-        }, // Galle/LeVerrier
+        },
         {
           innerRadius: 62930 * KM,
           outerRadius: 62930 * KM + 500,
@@ -865,13 +813,12 @@ export function initializeAllCelestialsSystem(): string {
           texture: "ring_texture_dark.png",
           composition: ["dust"],
           type: RockyType.DUST,
-        }, // Adams ring (with arcs - simplified here)
+        },
       ],
     } as GasGiantProperties,
   };
   actions.addCelestial(poseidonData);
 
-  // --- Hot Jupiter Class IV --- Inferno (Fictional)
   const infernoSMA_AU = 0.05;
   const infernoData = {
     id: "hot-jupiter-1",
@@ -881,7 +828,7 @@ export function initializeAllCelestialsSystem(): string {
     seed: "seed_inferno_1015",
     realMass_kg: 1.5 * JUPITER_MASS,
     realRadius_m: 1.2 * 69911000,
-    visualScaleRadius: 2.5, // Fixed property name
+    visualScaleRadius: 2.5,
     orbitalParameters: {
       realSemiMajorAxis_m: infernoSMA_AU * AU,
       eccentricity: 0.03,
@@ -889,24 +836,22 @@ export function initializeAllCelestialsSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 3.37e5, // Approx 3.9 days based on Kepler's 3rd
+      period_s: 3.37e5,
     },
-    temperature: 1500, // K
+    temperature: 1500,
     albedo: 0.1,
     properties: {
-      // Renamed
       type: CelestialType.GAS_GIANT,
       gasGiantClass: GasGiantClass.CLASS_IV,
-      atmosphereColor: "#FF7F50", // Coral
-      cloudColor: "#FFE4B5", // Moccasin (alkali clouds)
+      atmosphereColor: "#FF7F50",
+      cloudColor: "#FFE4B5",
       cloudSpeed: 200,
-      emissiveColor: "#FF4500", // OrangeRed glow
+      emissiveColor: "#FF4500",
       emissiveIntensity: 0.3,
     } as GasGiantProperties,
   };
   actions.addCelestial(infernoData);
 
-  // --- Hot Jupiter Class V --- Forge (Fictional, very massive)
   const forgeSMA_AU = 0.04;
   const forgeData = {
     id: "hot-jupiter-2",
@@ -916,24 +861,23 @@ export function initializeAllCelestialsSystem(): string {
     seed: "seed_forge_1016",
     realMass_kg: 6 * JUPITER_MASS,
     realRadius_m: 1.1 * 69911000,
-    visualScaleRadius: 2.4, // Fixed property name
+    visualScaleRadius: 2.4,
     orbitalParameters: {
       realSemiMajorAxis_m: forgeSMA_AU * AU,
       eccentricity: 0.04,
-      inclination: 48 * DEG_TO_RAD, // Highly inclined
+      inclination: 48 * DEG_TO_RAD,
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 2.42e5, // Approx 2.8 days
+      period_s: 2.42e5,
     },
-    temperature: 1600, // K
+    temperature: 1600,
     albedo: 0.05,
     properties: {
-      // Renamed
       type: CelestialType.GAS_GIANT,
       gasGiantClass: GasGiantClass.CLASS_V,
-      atmosphereColor: "#DC143C", // Crimson
-      cloudColor: "#C0C0C0", // Silver (silicate clouds)
+      atmosphereColor: "#DC143C",
+      cloudColor: "#C0C0C0",
       cloudSpeed: 250,
       emissiveColor: "#FF4500",
       emissiveIntensity: 0.4,
@@ -941,7 +885,6 @@ export function initializeAllCelestialsSystem(): string {
   };
   actions.addCelestial(forgeData);
 
-  // --- Comet --- Harbinger (Long period)
   const cometPerihelionAU = 0.5;
   const cometAphelionAU = 100;
   const cometSemiMajorAxisAU = (cometPerihelionAU + cometAphelionAU) / 2;
@@ -955,33 +898,31 @@ export function initializeAllCelestialsSystem(): string {
     seed: "seed_harbinger_1017",
     realMass_kg: 1e13,
     realRadius_m: 5000,
-    visualScaleRadius: 0.05, // Fixed property name
+    visualScaleRadius: 0.05,
     orbitalParameters: {
       realSemiMajorAxis_m: cometSemiMajorAxisAU * AU,
       eccentricity: cometEccentricity,
       inclination: 25 * DEG_TO_RAD,
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
-      meanAnomaly: 0.1, // Start slightly past perihelion (radians)
-      period_s: 1.15e9, // Approx 365 years (recalculated based on SMA)
+      meanAnomaly: 0.1,
+      period_s: 1.15e9,
     },
-    temperature: 200, // Temperature near sun (variable)
+    temperature: 200,
     albedo: 0.04,
     properties: {
-      // Renamed
       type: CelestialType.COMET,
       composition: ["water ice", "dust", "CO2", "methane"],
-      activity: 0.9, // Current activity level (0-1)
-      // Visual properties
-      visualComaRadius: 10, // Visual scale units
-      visualComaColor: "#90EE90A0", // Light green with alpha
-      visualMaxTailLength: 15.0 * SCALE.RENDER_SCALE_AU, // Max visual tail length in scaled units
-      visualTailColor: "#ADD8E6A0", // Light blue with alpha
+      activity: 0.9,
+
+      visualComaRadius: 10,
+      visualComaColor: "#90EE90A0",
+      visualMaxTailLength: 15.0 * SCALE.RENDER_SCALE_AU,
+      visualTailColor: "#ADD8E6A0",
     } as CometProperties,
   };
   actions.addCelestial(cometData);
 
-  // --- Oort Cloud --- The Veil (Outer boundary)
   const oortInnerAU = 2000;
   const oortOuterAU = 50000;
   const oortData = {
@@ -990,10 +931,9 @@ export function initializeAllCelestialsSystem(): string {
     type: CelestialType.OORT_CLOUD,
     parentId: sunId,
     seed: "seed_oort_1018",
-    realMass_kg: 1e25, // Estimated total mass
-    realRadius_m: oortOuterAU * AU, // Outer boundary
+    realMass_kg: 1e25,
+    realRadius_m: oortOuterAU * AU,
     orbitalParameters: {
-      // Placeholder for the cloud center
       realSemiMajorAxis_m: ((oortInnerAU + oortOuterAU) / 2) * AU,
       eccentricity: 0,
       inclination: 0,
@@ -1002,25 +942,23 @@ export function initializeAllCelestialsSystem(): string {
       meanAnomaly: 0,
       period_s: 1e13,
     },
-    temperature: 10, // K
-    ignorePhysics: true, // Exclude from physics calculations
+    temperature: 10,
+    ignorePhysics: true,
     properties: {
-      // Renamed
       type: CelestialType.OORT_CLOUD,
       composition: ["ice", "ammonia", "methane"],
       innerRadiusAU: oortInnerAU,
       outerRadiusAU: oortOuterAU,
-      visualDensity: 1e-9, // For rendering
+      visualDensity: 1e-9,
       visualParticleCount: 20000,
-      visualParticleColor: "#E6E6FA", // Lavender tint
+      visualParticleColor: "#E6E6FA",
     } as OortCloudProperties,
   };
   actions.addCelestial(oortData);
 
-  return sunId; // Return primary star ID
+  return sunId;
 }
 
-// --- 70 Virginis System ---
 export function initialize70VirSystem(): string {
   const starData = {
     id: "star-70vir",
@@ -1029,11 +967,10 @@ export function initialize70VirSystem(): string {
     seed: "seed_70vir_star_1019",
     realMass_kg: 1.09 * SOLAR_MASS,
     realRadius_m: 1.94 * SOLAR_RADIUS,
-    visualScaleRadius: 19, // Fixed property name
+    visualScaleRadius: 19,
     temperature: 5473,
-    albedo: 0.3, // Placeholder
+    albedo: 0.3,
     orbitalParameters: {
-      // Placeholder for single star
       realSemiMajorAxis_m: 0,
       eccentricity: 0,
       inclination: 0,
@@ -1043,7 +980,6 @@ export function initialize70VirSystem(): string {
       period_s: 0,
     },
     properties: {
-      // Renamed
       type: CelestialType.STAR,
       starName: "70 Virginis",
       isMainStar: true,
@@ -1055,7 +991,6 @@ export function initialize70VirSystem(): string {
   };
   const starId = actions.createSolarSystem(starData);
 
-  // --- Exoplanet 70 Virginis b ---
   const seventyVirBSMA_AU = 0.484;
   const planetData = {
     id: "planet-70vir-b",
@@ -1064,8 +999,8 @@ export function initialize70VirSystem(): string {
     parentId: starId,
     seed: "seed_70vir_b_1020",
     realMass_kg: 7.4 * JUPITER_MASS,
-    realRadius_m: 1.1 * 69911000, // Estimated radius
-    visualScaleRadius: 2.5, // Fixed property name
+    realRadius_m: 1.1 * 69911000,
+    visualScaleRadius: 2.5,
     orbitalParameters: {
       realSemiMajorAxis_m: seventyVirBSMA_AU * AU,
       eccentricity: 0.41,
@@ -1075,10 +1010,9 @@ export function initialize70VirSystem(): string {
       meanAnomaly: Math.random() * 2 * Math.PI,
       period_s: 116.6926 * 24 * 3600,
     },
-    temperature: 830, // K
+    temperature: 830,
     albedo: 0.1,
     properties: {
-      // Renamed
       type: CelestialType.GAS_GIANT,
       gasGiantClass: GasGiantClass.CLASS_IV,
       atmosphereColor: "#FF7F50",
@@ -1090,7 +1024,6 @@ export function initialize70VirSystem(): string {
   };
   actions.addCelestial(planetData);
 
-  // --- Dust Disc ---
   const dustDiscInnerAU = 3.4;
   const dustDiscOuterAU = 16.5;
   const dustDiscData = {
@@ -1102,22 +1035,20 @@ export function initialize70VirSystem(): string {
     realMass_kg: 1e-5 * SOLAR_MASS,
     realRadius_m: dustDiscOuterAU * AU,
     orbitalParameters: {
-      // Orbit of the disc center
       realSemiMajorAxis_m: ((dustDiscInnerAU + dustDiscOuterAU) / 2) * AU,
       eccentricity: 0.05,
       inclination: 3 * DEG_TO_RAD,
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 4e8, // Approx 12 years
+      period_s: 4e8,
     },
-    temperature: 100, // K
+    temperature: 100,
     properties: {
-      // Renamed
       type: CelestialType.ASTEROID_FIELD,
       innerRadiusAU: dustDiscInnerAU,
       outerRadiusAU: dustDiscOuterAU,
-      heightAU: 0.2, // Relatively thin disc
+      heightAU: 0.2,
       count: 5000,
       color: "#A0522D",
       composition: ["dust", "ice"],

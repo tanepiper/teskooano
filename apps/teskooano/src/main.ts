@@ -102,7 +102,6 @@ async function initializeApp() {
     dockviewController,
   );
 
-  // --- Get ModalManager instance from plugin system and initialize ---
   const modalManager = pluginManager.getManagerInstance<any>("modal-manager");
 
   if (!modalManager) {
@@ -111,29 +110,25 @@ async function initializeApp() {
     );
     return;
   } else {
-    // Initialize the manager with the controller
     if (typeof modalManager.initialize === "function") {
       modalManager.initialize(dockviewController);
     } else {
       console.error(
         "[App] ModalManager instance from plugin system does not have an initialize method.",
       );
-      return; // Cannot proceed without initialized modal manager
+      return;
     }
   }
-  // --- End Initialization ---
 
-  appContext.modalManager = modalManager; // Store the initialized manager
+  appContext.modalManager = modalManager;
   TeskooanoTourModal.setModalManager(modalManager);
 
-  // --- Show Tour Prompt Modal Logic ---
   if (tourControllerInstance.shouldPromptForTour()) {
     const tourModalElement = document.createElement(
       "teskooano-tour-modal",
     ) as TeskooanoTourModal;
     tourModalElement.setCallbacks(
       () => {
-        // On Accept
         try {
           pluginManager.execute("tour:start");
           tourControllerInstance.markTourModalAsShown();
@@ -142,7 +137,6 @@ async function initializeApp() {
         }
       },
       () => {
-        // On Decline
         try {
           pluginManager.execute("tour:setSkip", { skip: true });
           tourControllerInstance.markTourModalAsShown();
@@ -153,7 +147,6 @@ async function initializeApp() {
     );
     document.body.appendChild(tourModalElement);
   }
-  // --- End Tour Prompt Modal Logic ---
 
   const plugins = pluginManager.getPlugins();
   plugins.forEach((plugin: TeskooanoPlugin) => {
@@ -211,10 +204,11 @@ async function initializeApp() {
   });
 
   try {
-    await pluginManager.execute("engine:add_composite_panel");
+    console.log("[App] Calling addCompositeEnginePanelFunction during init...");
+    await pluginManager.execute("view:addCompositeEnginePanel");
   } catch (error) {
     console.error(
-      "[App] Error calling engine:add_composite_panel function:",
+      "[App] Error calling view:addCompositeEnginePanel function:",
       error,
     );
   }

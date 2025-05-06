@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **Major Refactor**: Migrated core game state management (`simulationState`, `celestialObjectsStore`, `celestialHierarchyStore`, `renderableObjectsStore`, `panelState`) from Nanostores (`atom`, `map`) to RxJS `BehaviorSubject`.
+  - State stores now expose an Observable (e.g., `simulationState$`) for reactive subscriptions and getter functions (e.g., `getSimulationState()`) for direct access.
+  - Setter functions (e.g., `setSimulationState()`) and specific action dispatchers are now used for state modification.
+- Updated `physics.ts` to use new RxJS-based state accessors (`getSimulationState`, `getCelestialObjects`).
+- Refactored `factory.ts` to use new state setters (`setSimulationState`, `setCelestialHierarchy`) and getters, and removed redundant comments.
+- Simplified `stores.ts`, `panelRegistry.ts`, and `panelState.ts` by removing unnecessary comments and adapting to RxJS.
+- Updated `currentSeed` in `stores.ts` to use `BehaviorSubject`.
+- Introduced `accelerationVectors$` observable in `stores.ts`.
+- Revised exports in `packages/core/state/src/game/index.ts` to reflect the new RxJS structure.
+
 ## [0.1.0] - 2025-04-24
 
 ### Added

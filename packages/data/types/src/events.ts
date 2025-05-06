@@ -3,41 +3,36 @@
  * Using constants helps prevent typos and ensures consistency.
  */
 export const CustomEvents = {
-  // --- Simulation & Engine Events ---
-  SIMULATION_RESET_TIME: "resetSimulationTime", // Note: Also used as a constant RESET_SIMULATION_TIME_EVENT
+  SIMULATION_RESET_TIME: "resetSimulationTime",
   ORBIT_UPDATE: "orbitUpdate",
   RENDERER_READY: "renderer-ready",
   TEXTURE_PROGRESS: "texture-progress",
   TEXTURE_GENERATION_COMPLETE: "texture-generation-complete",
-  START_TOUR_REQUEST: "start-tour-request", // EnginePlaceholder
-  CAMERA_TRANSITION_COMPLETE: "camera-transition-complete", // ControlsManager
+  START_TOUR_REQUEST: "start-tour-request",
+  CAMERA_TRANSITION_COMPLETE: "camera-transition-complete",
 
-  // --- Celestial Object & Focus Events ---
   CELESTIAL_OBJECTS_LOADED: "celestial-objects-loaded",
   CELESTIAL_OBJECT_DESTROYED: "celestial-object-destroyed",
-  FOCUS_REQUEST: "focus-request", // CelestialRow, FocusControl.interactions
-  FOLLOW_REQUEST: "follow-request", // CelestialRow
-  FOCUS_REQUEST_INITIATED: "focus-request-initiated", // FocusControl.interactions
-  TRANSITION_COMPLETE: "transitioncomplete", // ControlsManager (Needs check for actual string)
+  FOCUS_REQUEST: "focus-request",
+  FOLLOW_REQUEST: "follow-request",
+  FOCUS_REQUEST_INITIATED: "focus-request-initiated",
+  TRANSITION_COMPLETE: "transitioncomplete",
 
-  // --- UI Component Events ---
-  TOGGLE: "toggle", // CollapsibleSection
-  CONTENT_CHANGE: "content-change", // OutputDisplay
-  COPY: "copy", // OutputDisplay
-  CLEAR: "clear", // OutputDisplay
-  CHANGE: "change", // Select, Slider
-  SUBMIT_CUSTOM: "submit-custom", // Form
-  RESET_CUSTOM: "reset-custom", // Form
-  MODAL_CONFIRM: "modal-confirm", // Modal
-  MODAL_CLOSE: "modal-close", // Modal
-  MODAL_ADDITIONAL: "modal-additional", // Modal
-  SELECT_CHANGE: "select:change", // Select (was generic 'change')
-  SLIDER_CHANGE: "slider:change", // Slider (was generic 'change')
+  TOGGLE: "toggle",
+  CONTENT_CHANGE: "content-change",
+  COPY: "copy",
+  CLEAR: "clear",
+  CHANGE: "change",
+  SUBMIT_CUSTOM: "submit-custom",
+  RESET_CUSTOM: "reset-custom",
+  MODAL_CONFIRM: "modal-confirm",
+  MODAL_CLOSE: "modal-close",
+  MODAL_ADDITIONAL: "modal-additional",
+  SELECT_CHANGE: "select:change",
+  SLIDER_CHANGE: "slider:change",
 
-  // --- General Application Events ---
-  COMMAND: "command", // invoker-commands
+  COMMAND: "command",
 
-  // UI Interaction Events
   UI_PANEL_OPEN: "ui:panel:open",
   UI_PANEL_CLOSE: "ui:panel:close",
   UI_BUTTON_CLICK: "ui:button:click",
@@ -45,19 +40,11 @@ export const CustomEvents = {
   UI_MODAL_HIDE: "ui:modal:hide",
   UI_NOTIFICATION_SHOW: "ui:notification:show",
 
-  // Game State Events
   GAME_STATE_UPDATE: "game:state:update",
   PLAYER_POSITION_UPDATE: "player:position:update",
   ENTITY_ADDED: "entity:added",
   ENTITY_REMOVED: "entity:removed",
-
-  // Add more events as needed...
 } as const;
-
-// You can also define specific event detail types if needed
-// export interface UIPanelOpenDetail { panelId: string; }
-// export interface EntityAddedDetail { entityId: string; type: string; }
-// export interface FocusRequestDetail { objectId: string; }
 
 export interface SliderValueChangePayload {
   value: number;

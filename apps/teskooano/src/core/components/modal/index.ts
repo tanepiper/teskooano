@@ -9,12 +9,11 @@ export * from "./ModalManager";
  * Plugin definition for the core Modal system.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "core-modal", // Match the registry key
+  id: "core-modal",
   name: "Core Modal System",
   description:
     "Provides the teskooano-modal custom element and the ModalManager service.",
 
-  // Register the custom element component
   components: [
     {
       tagName: "teskooano-modal",
@@ -22,15 +21,13 @@ export const plugin: TeskooanoPlugin = {
     },
   ],
 
-  // Register the non-UI manager class
   managerClasses: [
     {
-      id: "modal-manager", // Use a distinct ID for the manager
+      id: "modal-manager",
       managerClass: TeskooanoModalManager,
     },
   ],
 
-  // No panels, functions, or toolbar items specific to this plugin
   panels: [],
   functions: [],
   toolbarRegistrations: [],

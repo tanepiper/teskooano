@@ -14,7 +14,6 @@ export const plugin: TeskooanoPlugin = {
   description:
     "Provides the teskooano-output-display and teskooano-labeled-value custom elements.",
 
-  // Register the custom element components
   components: [
     {
       tagName: "teskooano-output-display",
@@ -26,7 +25,6 @@ export const plugin: TeskooanoPlugin = {
     },
   ],
 
-  // No manager classes, panels, functions, or toolbar items for these components
   managerClasses: [],
   panels: [],
   functions: [],

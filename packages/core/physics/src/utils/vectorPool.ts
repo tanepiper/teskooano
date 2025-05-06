@@ -5,7 +5,7 @@ import * as THREE from "three";
  */
 export class Vector3Pool {
   private pool: THREE.Vector3[] = [];
-  private acquiredCount = 0; // Track acquired vectors for debugging
+  private acquiredCount = 0;
 
   /**
    * Get a Vector3 instance from the pool or create a new one.
@@ -24,10 +24,10 @@ export class Vector3Pool {
   release(vector: THREE.Vector3): void {
     if (this.acquiredCount <= 0) {
       console.warn("Vector3Pool: Released more vectors than acquired!");
-      return; // Avoid negative counts or pushing extra vectors
+      return;
     }
     this.acquiredCount--;
-    vector.set(0, 0, 0); // Reset for reuse
+    vector.set(0, 0, 0);
     this.pool.push(vector);
   }
 
@@ -53,5 +53,4 @@ export class Vector3Pool {
   }
 }
 
-// Create a default global instance
 export const vectorPool = new Vector3Pool();

@@ -10,7 +10,6 @@ import {
   type AsteroidFieldProperties,
 } from "@teskooano/data-types";
 
-// Define JUPITER_MASS locally if not exported
 const JUPITER_MASS_KG = 1.898e27;
 
 /**
@@ -20,7 +19,6 @@ const JUPITER_MASS_KG = 1.898e27;
  * Current physics engine might not handle true barycentric motion accurately.
  */
 export function initializeMultiStarSystem(): string {
-  // Star A (Primary G-type)
   const starAId = actions.createSolarSystem({
     id: "alpha-centauri-a",
     name: "Toliman (Alpha Centauri A)",
@@ -50,7 +48,6 @@ export function initializeMultiStarSystem(): string {
     },
   });
 
-  // Star B (Secondary K-type) orbiting Star A
   const starB_SMA_AU = 23.4;
   const starBId = "alpha-centauri-b";
   actions.addCelestial({
@@ -64,12 +61,12 @@ export function initializeMultiStarSystem(): string {
     parentId: starAId,
     orbit: {
       realSemiMajorAxis_m: starB_SMA_AU * AU,
-      eccentricity: 0.518, // Highly eccentric binary orbit
+      eccentricity: 0.518,
       inclination: 79.2 * DEG_TO_RAD,
       longitudeOfAscendingNode: 204.85 * DEG_TO_RAD,
       argumentOfPeriapsis: 231.65 * DEG_TO_RAD,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 2.518e9, // Approx 79.9 years
+      period_s: 2.518e9,
     },
     temperature: 5260,
     albedo: 0.3,
@@ -83,9 +80,8 @@ export function initializeMultiStarSystem(): string {
     },
   });
 
-  // Proxima Centauri (Red Dwarf) orbiting the A-B pair (very far out)
-  const proximaSMA_AU = 13000; // Very distant orbit
-  const proximaId = "proxima-centauri"; // Store ID
+  const proximaSMA_AU = 13000;
+  const proximaId = "proxima-centauri";
   actions.addCelestial({
     id: proximaId,
     name: "Proxima Centauri",
@@ -94,7 +90,7 @@ export function initializeMultiStarSystem(): string {
     visualScaleRadius: 2.0,
     realMass_kg: 0.12 * SOLAR_MASS,
     realRadius_m: 0.15 * SOLAR_RADIUS,
-    parentId: starAId, // Orbiting the barycenter, approximated as Star A
+    parentId: starAId,
     orbit: {
       realSemiMajorAxis_m: proximaSMA_AU * AU,
       eccentricity: 0.05,
@@ -102,7 +98,7 @@ export function initializeMultiStarSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 1.7e13, // Approx 550,000 years
+      period_s: 1.7e13,
     },
     temperature: 3042,
     albedo: 0.3,
@@ -111,12 +107,11 @@ export function initializeMultiStarSystem(): string {
       isMainStar: false,
       spectralClass: "M5.5Ve",
       luminosity: 0.0017,
-      color: "#FF6666", // Reddish
-      stellarType: StellarType.MAIN_SEQUENCE, // Red Dwarf is Main Sequence M
+      color: "#FF6666",
+      stellarType: StellarType.MAIN_SEQUENCE,
     },
   });
 
-  // Hypothetical Planet orbiting Star A (Toliman)
   const tolimanPlanetSMA_AU = 1.2;
   actions.addCelestial({
     id: "toliman-b",
@@ -134,7 +129,7 @@ export function initializeMultiStarSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 4.1e7, // Approx 1.3 years
+      period_s: 4.1e7,
     },
     temperature: 280,
     albedo: 0.32,
@@ -146,8 +141,8 @@ export function initializeMultiStarSystem(): string {
     surface: {
       type: SurfaceType.VARIED,
       planetType: PlanetType.TERRESTRIAL,
-      color: "#556B2F", // Dark Olive Green land
-      secondaryColor: "#6495ED", // Cornflower Blue water
+      color: "#556B2F",
+      secondaryColor: "#6495ED",
       roughness: 0.4,
     } as RockyTerrestrialSurfaceProperties,
     properties: {
@@ -157,7 +152,6 @@ export function initializeMultiStarSystem(): string {
     },
   });
 
-  // Hypothetical Planet orbiting Star B (Rigil Kentaurus)
   const rigilPlanetSMA_AU = 0.7;
   actions.addCelestial({
     id: "rigil-kentaurus-b",
@@ -175,20 +169,20 @@ export function initializeMultiStarSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 2.1e7, // Approx 0.67 years
+      period_s: 2.1e7,
     },
     temperature: 310,
     albedo: 0.28,
     atmosphere: {
       composition: ["CO2", "N2"],
       pressure: 1.5,
-      color: "#F5F5DC", // Beige/Yellowish
+      color: "#F5F5DC",
     },
     surface: {
       type: SurfaceType.CANYONOUS,
       planetType: PlanetType.ROCKY,
-      color: "#B8860B", // Dark Goldenrod
-      secondaryColor: "#8B4513", // Saddle Brown
+      color: "#B8860B",
+      secondaryColor: "#8B4513",
       roughness: 0.6,
     } as RockyTerrestrialSurfaceProperties,
     properties: {
@@ -198,7 +192,6 @@ export function initializeMultiStarSystem(): string {
     },
   });
 
-  // Hypothetical Planet orbiting Proxima Centauri (Proxima b analog)
   const proximaPlanetSMA_AU = 0.05;
   actions.addCelestial({
     id: "proxima-centauri-b",
@@ -216,20 +209,20 @@ export function initializeMultiStarSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 9.6e5, // Approx 11 days
+      period_s: 9.6e5,
     },
     temperature: 234,
     albedo: 0.2,
     atmosphere: {
       composition: ["N2", "CO2?"],
       pressure: 0.8,
-      color: "#E6E6FA", // Lavender haze?
+      color: "#E6E6FA",
     },
     surface: {
       type: SurfaceType.CRATERED,
       planetType: PlanetType.TERRESTRIAL,
-      color: "#6A5ACD", // Slate Blue rock
-      secondaryColor: "#FFFAFA", // Frost/Ice?
+      color: "#6A5ACD",
+      secondaryColor: "#FFFAFA",
       roughness: 0.5,
     } as RockyTerrestrialSurfaceProperties,
     properties: {
@@ -239,7 +232,6 @@ export function initializeMultiStarSystem(): string {
     },
   });
 
-  // ---- Added Asteroid Field Around Star A ----
   const asteroidFieldInnerAU_A = 3.5;
   const asteroidFieldOuterAU_A = 4.5;
   actions.addCelestial({
@@ -247,12 +239,11 @@ export function initializeMultiStarSystem(): string {
     name: "Toliman Belt",
     type: CelestialType.ASTEROID_FIELD,
     seed: "toliman_belt_seed",
-    visualScaleRadius: 0.05, // Small visual scale for field center
-    realMass_kg: 5e21, // Mass guess
-    realRadius_m: asteroidFieldOuterAU_A * AU, // Outer radius for reference
+    visualScaleRadius: 0.05,
+    realMass_kg: 5e21,
+    realRadius_m: asteroidFieldOuterAU_A * AU,
     parentId: starAId,
     orbit: {
-      // Orbit around Star A
       realSemiMajorAxis_m:
         ((asteroidFieldInnerAU_A + asteroidFieldOuterAU_A) / 2) * AU,
       eccentricity: 0.1,
@@ -260,9 +251,9 @@ export function initializeMultiStarSystem(): string {
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: 8.5e7, // Approx 2.7 years
+      period_s: 8.5e7,
     },
-    temperature: 180, // Approx K
+    temperature: 180,
     properties: {
       type: CelestialType.ASTEROID_FIELD,
       innerRadiusAU: asteroidFieldInnerAU_A,
@@ -274,7 +265,6 @@ export function initializeMultiStarSystem(): string {
       visualDensity: 80,
     } as AsteroidFieldProperties,
   });
-  // ---------------------------------------------
 
-  return starAId; // Return the primary star ID
+  return starAId;
 }

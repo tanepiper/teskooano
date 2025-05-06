@@ -23,19 +23,17 @@ export class ClassKStarMaterial extends BaseStarMaterial {
       metallicEffect?: number;
     } = {},
   ) {
-    // Light orange color for K-class stars
     const lightOrangeColor = new THREE.Color(0xffaa55);
 
     super(lightOrangeColor, {
-      // Lower corona intensity
       coronaIntensity: options.coronaIntensity ?? 0.35,
-      // Slower pulse speed
+
       pulseSpeed: options.pulseSpeed ?? 0.4,
-      // Lower glow intensity
+
       glowIntensity: options.glowIntensity ?? 0.4,
-      // Lower temperature variations
+
       temperatureVariation: options.temperatureVariation ?? 0.08,
-      // Higher metallic effect
+
       metallicEffect: options.metallicEffect ?? 0.65,
     });
   }

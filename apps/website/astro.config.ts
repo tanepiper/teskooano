@@ -1,10 +1,8 @@
-// @ts-check
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import starlightClientMermaid from "@pasqal-io/starlight-client-mermaid";
 import starlightTypeDoc, { typeDocSidebarGroup } from "starlight-typedoc";
 
-// https://astro.build/config
 export default defineConfig({
   integrations: [
     starlight({
