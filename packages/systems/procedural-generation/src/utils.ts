@@ -238,6 +238,8 @@ export function createProceduralSurfaceProperties(
   let octaves = Math.floor(getRandomInRange(5, 9, random));
   let bumpScale = getRandomInRange(2, 3, random);
   let roughness = getRandomInRange(0.5, 0.9, random); // Base roughness
+  let shininess = getRandomInRange(16, 64, random); // Default shininess
+  let specularStrength = getRandomInRange(0.2, 0.5, random); // Default specular strength
 
   let colorLow: string;
   let colorMid1: string;
@@ -250,32 +252,49 @@ export function createProceduralSurfaceProperties(
       colorMid1 = getRandomItem(["#4C9341", "#6A994E", "#8AA36F"], random); // Greens (Land)
       colorMid2 = getRandomItem(["#D4A373", "#E6B88A", "#C09463"], random); // Browns (Mountains)
       colorHigh = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
-      //bumpScale = getRandomInRange(0.04, 0.1, random); // Slightly higher bump for terrain
-      lacunarity = getRandomInRange(2, 4, random);
-      persistence = getRandomInRange(0.5, 0.65, random);
-      roughness = getRandomInRange(0.1, 0.15, random);
+
+      persistence = getRandomInRange(0.5, 0.6, random);
+      lacunarity = getRandomInRange(1.5, 2.3, random);
+      simplePeriod = getRandomInRange(0.7, 1.0, random);
+      octaves = Math.floor(getRandomInRange(5, 9, random));
+      bumpScale = getRandomInRange(1, 2, random);
+      roughness = getRandomInRange(0.1, 0.2, random);
+      shininess = getRandomInRange(3, 7, random); // Moderate shine for Terran
+      specularStrength = getRandomInRange(0.3, 0.6, random);
       break;
 
     case PlanetType.ROCKY:
-      colorLow = getRandomItem(["#4A4A4A", "#6B6B6B", "#3E3E3E"], random); // Dark Grays/Browns
-      colorMid1 = getRandomItem(["#8B4513", "#A0522D", "#7A3C0F"], random); // Mid Browns/Oranges
-      colorMid2 = getRandomItem(["#A9A9A9", "#B8B8B8", "#9A9A9A"], random); // Grays
-      colorHigh = getRandomItem(["#D3D3D3", "#C0C0C0", "#BEBEBE"], random); // Light Grays
-      //bumpScale = getRandomInRange(0.05, 0.12, random); // Higher bump for rocky
-      persistence = getRandomInRange(0.5, 0.7, random);
-      roughness = getRandomInRange(0.7, 0.95, random);
+      console.log("Rocky", planetType);
+      colorLow = getRandomItem(["#4f2214", "#171719", "#312b2e"], random);
+      colorMid1 = getRandomItem(["#522f28", "#631100", "#3d1c15"], random);
+      colorMid2 = getRandomItem(["#3b3837", "#5d4a41", "#4d4542"], random);
+      colorHigh = getRandomItem(["#59392e", "#662d1a", "#242327"], random);
+
+      persistence = getRandomInRange(0.1, 0.3, random);
+      lacunarity = getRandomInRange(2, 3, random);
       simplePeriod = getRandomInRange(1.5, 5.0, random); // More detailed features possible
+      octaves = Math.floor(getRandomInRange(5, 9, random));
+      bumpScale = getRandomInRange(2, 3, random);
+      roughness = getRandomInRange(0.7, 0.95, random);
+      shininess = getRandomInRange(5, 10, random); // Very low shine
+      specularStrength = getRandomInRange(0.1, 0.9, random); // Very low strength
       break;
 
     case PlanetType.BARREN:
-      colorLow = getRandomItem(["#4A4A4A", "#555555", "#404040"], random); // Dark Grays
-      colorMid1 = getRandomItem(["#686868", "#707070", "#606060"], random); // Medium Grays
-      colorMid2 = getRandomItem(["#828282", "#8A8A8A", "#7A7A7A"], random); // Lighter Grays
-      colorHigh = getRandomItem(["#9A9A9A", "#A0A0A0", "#909090"], random); // Light Grays
-      persistence = getRandomInRange(0.55, 0.7, random); // Less variation
-      lacunarity = getRandomInRange(1.8, 2.1, random); // Smoother transitions
-      bumpScale = getRandomInRange(0.01, 1, random); // Lower bump
-      roughness = getRandomInRange(0.8, 0.98, random); // High roughness
+      console.log("Barren", planetType);
+      colorLow = getRandomItem(["#262323", "#201818", "#2e2a2a"], random); // Dark Grays
+      colorMid1 = getRandomItem(["#1d2422", "#111c19", "#2a2b2b"], random); // Medium Grays
+      colorMid2 = getRandomItem(["#5c3e3e", "#312727", "#2e290f"], random); // Lighter Grays
+      colorHigh = getRandomItem(["#333333", "#292525", "#1f0e0e"], random); // Light Grays
+
+      persistence = getRandomInRange(0.2, 0.25, random); // Less variation
+      lacunarity = getRandomInRange(3, 4, random); // Smoother transitions
+      simplePeriod = getRandomInRange(1.5, 5.0, random); // More detailed features possible
+      octaves = Math.floor(getRandomInRange(4, 6, random));
+      bumpScale = getRandomInRange(2, 3, random);
+      roughness = getRandomInRange(0.01, 0.09, random); // High roughness
+      shininess = getRandomInRange(1, 3, random); // Very low shine
+      specularStrength = getRandomInRange(0.01, 0.05, random); // Very low strength
       break;
 
     case PlanetType.DESERT:
@@ -283,22 +302,31 @@ export function createProceduralSurfaceProperties(
       colorMid1 = getRandomItem(["#D2B48C", "#F4A460", "#CD853F"], random); // Tan, SandyBrown, Peru (Sand)
       colorMid2 = getRandomItem(["#E0C9A6", "#FFDEAD", "#DEB887"], random); // Lighter Tan, NavajoWhite, BurlyWood (Highlights)
       colorHigh = getRandomItem(["#F5E6CA", "#FFF8DC", "#FAF0E6"], random); // Beige, Cornsilk, Linen (Peaks/Bright Sand)
-      persistence = getRandomInRange(0.35, 0.55, random); // Smoother dunes
-      lacunarity = getRandomInRange(2.2, 2.6, random); // Sharper dune details potentially
-      simplePeriod = getRandomInRange(5.0, 12.0, random); // Larger dune structures
-      //bumpScale = getRandomInRange(0.03, 0.07, random);
+
+      persistence = getRandomInRange(0.1, 0.5, random); // Smoother dunes
+      lacunarity = getRandomInRange(12, 20, random); // Sharper dune details potentially
+      simplePeriod = getRandomInRange(2.0, 6.0, random); // Larger dune structures
+      octaves = Math.floor(getRandomInRange(4, 6, random));
+      bumpScale = getRandomInRange(0.01, 0.04, random); // Lower bump for ice
       roughness = getRandomInRange(0.65, 0.9, random);
+      shininess = getRandomInRange(128, 512, random); // Very low shine
+      specularStrength = getRandomInRange(0.05, 0.15, random); // Slightly higher than barren/rocky but still low
       break;
 
     case PlanetType.ICE:
-      colorLow = getRandomItem(["#8fdef2", "#2d6370", "#226778"], random); // CadetBlue, CornflowerBlue, SteelBlue (Deep Ice/Shadows)
-      colorMid1 = getRandomItem(["#7e8e96", "#133647", "#3ca4d6"], random); // PowderBlue, LightBlue (Main Ice Field)
-      colorMid2 = getRandomItem(["#7facb5", "#4bbbd1", "#1b6f80"], random); // Lighter Blues/Cyans (Snow/Frost)
-      colorHigh = getRandomItem(["#FFFFFF", "#F0FFFF", "#F5FFFA"], random); // White, Azure, MintCream (Glints/Pure Snow)
-      persistence = getRandomInRange(0.5, 0.7, random);
-      roughness = getRandomInRange(0.7, 0.95, random);
-      simplePeriod = getRandomInRange(1.5, 5.0, random); //
-      bumpScale = getRandomInRange(0.01, 0.04, random); // Lower bump for ice
+      colorLow = getRandomItem(["#ffffff", "#edfbff", "#def4f9"], random); // CadetBlue, CornflowerBlue, SteelBlue (Deep Ice/Shadows)
+      colorMid1 = getRandomItem(["#fff3f3", "#ffffff", "#52c8ff"], random); // PowderBlue, LightBlue (Main Ice Field)
+      colorMid2 = getRandomItem(["#80ecff", "#ffffff", "#f5fdff"], random); // Lighter Blues/Cyans (Snow/Frost)
+      colorHigh = getRandomItem(["#FFFFFF", "#F0FFFF", "#c9c9c9"], random); // White, Azure, MintCream (Glints/Pure Snow)
+
+      persistence = getRandomInRange(0.2, 0.5, random);
+      lacunarity = getRandomInRange(3, 3, random);
+      simplePeriod = getRandomInRange(1, 2, random);
+      octaves = Math.floor(getRandomInRange(5, 9, random));
+      bumpScale = 3; //getRandomInRange(1, 2, random); // Lower bump for ice
+      roughness = getRandomInRange(0.1, 0.3, random);
+      shininess = getRandomInRange(10, 20, random); // Higher shine for ice
+      specularStrength = getRandomInRange(0.4, 0.8, random); // Stronger specular for ice
       break;
 
     case PlanetType.LAVA:
@@ -306,11 +334,15 @@ export function createProceduralSurfaceProperties(
       colorMid1 = getRandomItem(["#4E0000", "#6B0000", "#8B0000"], random); // Dark Reds (Cooling Lava/Rock)
       colorMid2 = getRandomItem(["#AE1000", "#CC3300", "#FF4500"], random); // Bright Reds/Oranges (Hot Lava)
       colorHigh = getRandomItem(["#FF8C00", "#FFA500", "#FFFF00"], random); // Orange/Yellow (Hottest Lava)
-      persistence = getRandomInRange(0.4, 0.6, random);
-      lacunarity = getRandomInRange(2.0, 2.5, random);
-      simplePeriod = getRandomInRange(1.0, 4.0, random); // Smaller, chaotic features
-      //bumpScale = getRandomInRange(0.05, 0.15, random); // Significant bump for lava flows/rock
-      roughness = getRandomInRange(0.6, 0.9, random); // Rough rock, smooth lava? Average out.
+
+      persistence = getRandomInRange(0.5, 0.65, random);
+      lacunarity = getRandomInRange(2, 3, random);
+      simplePeriod = getRandomInRange(1, 4, random);
+      octaves = Math.floor(getRandomInRange(5, 9, random));
+      bumpScale = getRandomInRange(2, 3, random);
+      roughness = getRandomInRange(0.1, 1, random);
+      shininess = getRandomInRange(10, 30, random); // Moderate shine for Terran
+      specularStrength = getRandomInRange(0.3, 0.6, random);
       break;
 
     case PlanetType.OCEAN:
@@ -318,13 +350,15 @@ export function createProceduralSurfaceProperties(
       colorMid1 = getRandomItem(["#0055A4", "#1E90FF", "#4169E1"], random); // Mid Ocean Blue, DodgerBlue, RoyalBlue
       colorMid2 = getRandomItem(["#87CEEB", "#ADD8E6", "#B0E0E6"], random); // SkyBlue, LightBlue, PowderBlue (Shallows)
       colorHigh = getRandomItem(["#F0F8FF", "#E0FFFF", "#FFFFFF"], random); // AliceBlue, LightCyan, White (Foam/Ice Caps?)
-      // Override procedural params for a mostly water world
+
       persistence = getRandomInRange(0.6, 0.75, random); // Very smooth generally
       lacunarity = getRandomInRange(1.8, 2.1, random); // Few sharp transitions
-      octaves = Math.floor(getRandomInRange(4, 6, random)); // Less detail needed
       simplePeriod = getRandomInRange(8.0, 15.0, random); // Large, gentle swells
-      //bumpScale = getRandomInRange(0.005, 0.02, random); // Very low bump for water surface
+      octaves = Math.floor(getRandomInRange(4, 6, random)); // Less detail needed
+      bumpScale = getRandomInRange(0.005, 0.02, random); // Very low bump for water surface
       roughness = getRandomInRange(0.1, 0.4, random); // Water is smooth
+      shininess = getRandomInRange(32, 96, random); // Water shine
+      specularStrength = getRandomInRange(0.5, 0.9, random); // Strong water reflections
       break;
 
     default:
@@ -350,5 +384,7 @@ export function createProceduralSurfaceProperties(
     colorMid1: colorMid1,
     colorMid2: colorMid2,
     colorHigh: colorHigh,
+    shininess: shininess,
+    specularStrength: specularStrength,
   };
 }

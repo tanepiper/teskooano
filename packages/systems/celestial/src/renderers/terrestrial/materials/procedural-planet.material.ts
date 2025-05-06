@@ -15,9 +15,7 @@ const MAX_LIGHTS = 4;
 export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
   declare uniforms: ProceduralPlanetUniforms;
 
-  constructor(
-    surfaceProps: ProceduralSurfaceProperties & { bumpScale?: number },
-  ) {
+  constructor(surfaceProps: ProceduralSurfaceProperties) {
     const parseColor = (
       hex: string | undefined,
       defaultColor: string,
@@ -61,6 +59,9 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       uColorHigh: { value: parseColor(surfaceProps.colorHigh, "#A0A0A0") },
 
       uBumpScale: { value: surfaceProps.bumpScale ?? 1 },
+
+      uShininess: { value: surfaceProps.shininess ?? 16.0 },
+      uSpecularStrength: { value: surfaceProps.specularStrength ?? 0.3 },
 
       uTime: { value: 0.0 },
     };

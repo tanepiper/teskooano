@@ -28,6 +28,8 @@ uniform vec3 uColorLow;
 uniform vec3 uColorMid1;
 uniform vec3 uColorMid2;
 uniform vec3 uColorHigh;
+uniform float uShininess;        // ADDED: Shininess factor
+uniform float uSpecularStrength; // ADDED: Specular intensity
 
 // Include Simplex noise implementation
 #include "../shared/simplex/3d" // Try without leading slash
@@ -102,8 +104,6 @@ vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
 // Simple lighting calculation (Blinn-Phongish)
 vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
     vec3 totalLight = uAmbientLightColor * uAmbientLightIntensity;
-    float shininess = 16.0; // Example shininess
-    float specularStrength = 0.3; // Example specular strength
 
     for (int i = 0; i < uNumLights; ++i) {
         if (i >= uNumLights) break; // Safety break
@@ -117,8 +117,8 @@ vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
 
         // Specular (Blinn-Phong)
         vec3 halfwayDir = normalize(lightDir + viewDir);
-        float spec = pow(max(dot(normal, halfwayDir), 0.0), shininess);
-        vec3 specular = specularStrength * spec * lightColor * lightIntensity;
+        float spec = pow(max(dot(normal, halfwayDir), 0.0), uShininess);
+        vec3 specular = uSpecularStrength * spec * lightColor * lightIntensity;
 
         totalLight += diffuse + specular;
     }

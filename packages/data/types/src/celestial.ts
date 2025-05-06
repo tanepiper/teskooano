@@ -410,6 +410,10 @@ export interface ProceduralSurfaceProperties {
 
   // Bump mapping
   bumpScale: number; // Strength of the bump effect
+
+  // Lighting
+  shininess?: number;
+  specularStrength?: number;
 }
 
 /** Surface properties specific to Rocky/Terrestrial planets */

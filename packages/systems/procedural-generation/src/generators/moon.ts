@@ -177,7 +177,7 @@ export function generateMoon(
           random,
         );
 
-  let detailedSurface: SurfacePropertiesUnion;
+  let detailedSurface: ProceduralSurfaceProperties;
 
   const baseProps = {
     type: moonSurfaceType,
@@ -185,54 +185,22 @@ export function generateMoon(
   };
 
   switch (moonPlanetType) {
-    case PlanetType.ROCKY:
     case PlanetType.BARREN:
-      detailedSurface = {
-        ...baseProps,
-        planetType: moonPlanetType,
-        color: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.midLight, random),
-        color1: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.dark, random),
-        color2: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.midDark, random),
-        color3: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.midLight, random),
-        color4: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.light, random),
-        color5: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.highlight, random),
-        transition2: 0.25 + random() * 0.2,
-        transition3: 0.5 + random() * 0.2,
-        transition4: 0.75 + random() * 0.15,
-        transition5: 0.9 + random() * 0.05,
-        blend12: 0.1,
-        blend23: 0.1,
-        blend34: 0.1,
-        blend45: 0.1,
-      } as ProceduralSurfaceProperties;
-      break;
+    case PlanetType.ROCKY:
+    case PlanetType.TERRESTRIAL:
     case PlanetType.ICE:
-      detailedSurface = {
-        ...baseProps,
-        planetType: moonPlanetType,
-        color: UTIL.getRandomItem(CONST.ICE_COLORS.main, random),
-        secondaryColor: UTIL.getRandomItem(CONST.ICE_COLORS.crevasse, random),
-      } as IceSurfaceProperties;
+    case PlanetType.DESERT:
+    case PlanetType.LAVA:
+      detailedSurface = UTIL.createProceduralSurfaceProperties(
+        random,
+        moonPlanetType,
+      );
       break;
     default:
-      detailedSurface = {
-        ...baseProps,
-        planetType: PlanetType.BARREN,
-        color: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.midLight, random),
-        color1: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.dark, random),
-        color2: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.midDark, random),
-        color3: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.midLight, random),
-        color4: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.light, random),
-        color5: UTIL.getRandomItem(CONST.ROCKY_COLOR_BANDS.highlight, random),
-        transition2: 0.25 + random() * 0.2,
-        transition3: 0.5 + random() * 0.2,
-        transition4: 0.75 + random() * 0.15,
-        transition5: 0.9 + random() * 0.05,
-        blend12: 0.1,
-        blend23: 0.1,
-        blend34: 0.1,
-        blend45: 0.1,
-      } as ProceduralSurfaceProperties;
+      detailedSurface = UTIL.createProceduralSurfaceProperties(
+        random,
+        PlanetType.ROCKY,
+      );
   }
 
   const moonSpecificProperties: PlanetProperties = {
@@ -246,7 +214,7 @@ export function generateMoon(
         : CONST.ROCKY_COMPOSITION,
       random,
     ).split(","),
-    surface: detailedSurface,
+    surface: detailedSurface as any,
     atmosphere: undefined,
   };
 
