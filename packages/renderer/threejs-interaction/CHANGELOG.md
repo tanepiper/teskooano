@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- `ControlsManager.ts` now uses `getSimulationState` and `setSimulationState` from `@teskooano/core-state` for camera state updates.
+- `CSS2DManager.ts`:
+  - Added pre-render checks to find and remove orphaned labels and to hide any `CSS2DObject` in the scene without a parent, improving stability.
+  - Simplified internal logic for managing `pointer-events`.
+- Extensive comment removal and minor code cleanup across various files, including test files and `setup.ts`.
+- Removed Playwright and Vitest browser-specific triple-slash directives from `setup.ts`.
+
 ## [0.1.0] - 2025-04-24
 
 ### Added
