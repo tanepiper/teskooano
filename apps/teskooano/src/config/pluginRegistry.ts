@@ -32,4 +32,7 @@ export const pluginConfig: PluginRegistryConfig = {
   "teskooano-about": {
     path: "../plugins/about",
   },
+  "teskooano-celestial-uniforms": {
+    path: "../plugins/celestial-uniforms",
+  },
 };

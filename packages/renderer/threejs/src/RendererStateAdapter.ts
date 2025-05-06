@@ -1,7 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import {
   celestialObjects$,
-  getCelestialObjects,
   getRenderableObjects,
   getSimulationState,
   renderableActions,
@@ -17,8 +16,8 @@ import {
   type CelestialSpecificPropertiesUnion,
   type OrbitalParameters,
 } from "@teskooano/data-types";
+import { BehaviorSubject, Subscription } from "rxjs";
 import * as THREE from "three";
-import { Subscription, BehaviorSubject } from "rxjs";
 import { physicsToThreeJSPosition } from "./utils/coordinateUtils";
 
 export interface RenderableCelestialObject {
@@ -295,6 +294,16 @@ export class RendererStateAdapter {
         }
       }
 
+      // Example: Find a specific object by ID or name to log its properties
+      // You'll need to know the ID or a unique name of an object you are testing
+      //   const testObjectId = "planet-star-utokolon-posequ"; // <<< REPLACE "earth" with the ID of an object you are testing
+      //  //console.log(renderableMap);
+      //   if (renderableMap[testObjectId] && renderableMap[testObjectId].properties) {
+      //     console.log(
+      //       `[RendererStateAdapter] Properties for ${renderableMap[testObjectId].name} before setAllRenderableObjects:`,
+      //       JSON.parse(JSON.stringify(renderableMap[testObjectId].properties)) // Deep clone for clean logging
+      //     );
+      //   }
       renderableActions.setAllRenderableObjects(renderableMap);
     } catch (error) {
       console.error(

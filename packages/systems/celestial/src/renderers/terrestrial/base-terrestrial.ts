@@ -1,10 +1,4 @@
-import {
-  PlanetProperties,
-  PlanetType,
-  ProceduralSurfaceProperties,
-  SCALE,
-  SurfaceType,
-} from "@teskooano/data-types";
+import { SCALE, CelestialType, PlanetProperties } from "@teskooano/data-types";
 import * as THREE from "three";
 import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "../index";
 import { AtmosphereMaterial } from "./materials/atmosphere.material";
@@ -12,11 +6,7 @@ import { CloudMaterial } from "./materials/clouds.material";
 import { ProceduralPlanetMaterial } from "./materials/procedural-planet.material";
 
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import {
-  AtmosphereCloudService,
-  AtmosphereMeshResult,
-  CloudMeshResult,
-} from "./utils/atmosphere-cloud-utils";
+import { AtmosphereCloudService } from "./utils/atmosphere-cloud-utils";
 import { PlanetMaterialService } from "./utils/planet-material-utils";
 
 const MAX_LIGHTS = 4;
@@ -269,5 +259,150 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     this.loadedTextures.clear();
 
     this.objectIds.clear();
+  }
+
+  public updateWith(
+    objectData: RenderableCelestialObject,
+    groupMesh: THREE.Object3D,
+  ): void {
+    console.log(
+      `[BaseTerrestrialRenderer] updateWith: Updating ${objectData.celestialObjectId} with groupMesh:`,
+      groupMesh,
+    );
+    // The main body mesh is usually the first child of the high-detail group, or the group itself if not an LOD group for this specific update context.
+    // We need to be careful how we retrieve the mesh that has the ProceduralPlanetMaterial.
+    // Let's assume groupMesh is the direct output from MeshFactory for the highest LOD, which should be a THREE.Group containing the body mesh.
+    let bodyMesh = groupMesh.children.find(
+      (child) => child.name === `${objectData.celestialObjectId}-body`,
+    ) as THREE.Mesh;
+
+    // If the groupMesh itself is the body (e.g., if LOD structure isn't used or this is a direct mesh reference)
+    if (
+      !bodyMesh &&
+      groupMesh instanceof THREE.Mesh &&
+      groupMesh.name === `${objectData.celestialObjectId}-body`
+    ) {
+      bodyMesh = groupMesh;
+    }
+
+    // Fallback: Attempt to get from the materials map if direct mesh access fails or is ambiguous
+    // This relies on initializeMaterialMap being called correctly during creation.
+    let material = this.materials.get(
+      objectData.celestialObjectId,
+    ) as ProceduralPlanetMaterial;
+
+    if (bodyMesh && bodyMesh.material instanceof ProceduralPlanetMaterial) {
+      material = bodyMesh.material as ProceduralPlanetMaterial;
+    } else if (
+      bodyMesh &&
+      !(bodyMesh.material instanceof ProceduralPlanetMaterial)
+    ) {
+      console.warn(
+        `[BaseTerrestrialRenderer] updateWith: Body mesh for ${objectData.celestialObjectId} does not have ProceduralPlanetMaterial.`,
+      );
+      // If material from map is not ProceduralPlanetMaterial either, we can't proceed.
+      if (!(material instanceof ProceduralPlanetMaterial)) return;
+    } else if (!bodyMesh && !(material instanceof ProceduralPlanetMaterial)) {
+      console.warn(
+        `[BaseTerrestrialRenderer] updateWith: Could not find body mesh or suitable material for ${objectData.celestialObjectId}`,
+      );
+      return;
+    }
+
+    // Add a type guard for PlanetProperties
+    if (
+      material &&
+      material.uniforms &&
+      objectData.properties &&
+      (objectData.properties.type === CelestialType.PLANET ||
+        objectData.properties.type === CelestialType.MOON ||
+        objectData.properties.type === CelestialType.DWARF_PLANET)
+    ) {
+      // Now we can more safely cast to PlanetProperties
+      const planetProps = objectData.properties as PlanetProperties;
+
+      if (planetProps.surface) {
+        console.log(
+          `[BaseTerrestrialRenderer] updateWith called for ${objectData.celestialObjectId}. Current surface props:`,
+          planetProps.surface,
+        );
+        const surfaceProps = planetProps.surface as any; // Or ProceduralSurfaceProperties if you're certain
+
+        // Update uniforms
+        if (
+          surfaceProps.persistence !== undefined &&
+          material.uniforms.persistence
+        ) {
+          material.uniforms.persistence.value = surfaceProps.persistence;
+        }
+        if (
+          surfaceProps.lacunarity !== undefined &&
+          material.uniforms.lacunarity
+        ) {
+          material.uniforms.lacunarity.value = surfaceProps.lacunarity;
+        }
+        if (
+          surfaceProps.simplePeriod !== undefined &&
+          material.uniforms.uSimplePeriod
+        ) {
+          material.uniforms.uSimplePeriod.value = surfaceProps.simplePeriod;
+        }
+        if (surfaceProps.octaves !== undefined && material.uniforms.uOctaves) {
+          material.uniforms.uOctaves.value = surfaceProps.octaves;
+        }
+        if (
+          surfaceProps.bumpScale !== undefined &&
+          material.uniforms.uBumpScale
+        ) {
+          material.uniforms.uBumpScale.value = surfaceProps.bumpScale;
+        }
+
+        // For colors, assuming uColorLow etc. are THREE.Color uniforms
+        // Ensure these uniform names match your ProceduralPlanetMaterial definition
+        if (surfaceProps.colorLow && material.uniforms.uColorLow) {
+          material.uniforms.uColorLow.value.set(surfaceProps.colorLow);
+        }
+        if (surfaceProps.colorMid1 && material.uniforms.uColorMid1) {
+          material.uniforms.uColorMid1.value.set(surfaceProps.colorMid1);
+        }
+        if (surfaceProps.colorMid2 && material.uniforms.uColorMid2) {
+          material.uniforms.uColorMid2.value.set(surfaceProps.colorMid2);
+        }
+        if (surfaceProps.colorHigh && material.uniforms.uColorHigh) {
+          material.uniforms.uColorHigh.value.set(surfaceProps.colorHigh);
+        }
+
+        if (
+          surfaceProps.shininess !== undefined &&
+          material.uniforms.uShininess
+        ) {
+          material.uniforms.uShininess.value = surfaceProps.shininess;
+        }
+        if (
+          surfaceProps.specularStrength !== undefined &&
+          material.uniforms.uSpecularStrength
+        ) {
+          material.uniforms.uSpecularStrength.value =
+            surfaceProps.specularStrength;
+        }
+
+        console.log(
+          `[BaseTerrestrialRenderer] Updated uniforms for ${objectData.celestialObjectId}:`,
+          JSON.parse(JSON.stringify(material.uniforms)),
+        );
+        // material.uniformsNeedUpdate = true; // Generally good for shader materials if unsure.
+      } else {
+        console.warn(
+          `[BaseTerrestrialRenderer] updateWith: Planet ${objectData.celestialObjectId} has no surface properties defined.`,
+        );
+      }
+    } else {
+      console.warn(
+        `[BaseTerrestrialRenderer] updateWith: Conditions not met for ${objectData.celestialObjectId}. Material:`,
+        material,
+        "Properties:",
+        objectData.properties,
+      );
+    }
   }
 }

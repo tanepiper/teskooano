@@ -1,10 +1,8 @@
-import * as THREE from "three";
 import type { ProceduralSurfaceProperties } from "@teskooano/data-types";
+import * as THREE from "three";
 
-import { PlanetType } from "@teskooano/data-types";
-
-import proceduralVertexShaderSource from "../../../shaders/terrestrial/procedural.vertex.glsl";
 import proceduralFragmentShaderSource from "../../../shaders/terrestrial/procedural.fragment.glsl";
+import proceduralVertexShaderSource from "../../../shaders/terrestrial/procedural.vertex.glsl";
 import { ProceduralPlanetUniforms } from "../../../types/procedural";
 
 const MAX_LIGHTS = 4;

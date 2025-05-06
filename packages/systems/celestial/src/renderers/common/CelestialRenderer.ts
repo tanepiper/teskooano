@@ -102,6 +102,21 @@ export interface CelestialRenderer {
   ): void;
 
   /**
+   * Update the renderer with the current simulation state
+   *
+   * This method should:
+   * 1. Update time-based shader uniforms
+   * 2. Update light source information in shaders
+   *
+   * @param object The celestial object data
+   * @param existingMesh The existing mesh to update
+   */
+  updateWith?(
+    object: RenderableCelestialObject,
+    existingMesh: THREE.Object3D,
+  ): void;
+
+  /**
    * Update the level of detail for an object based on camera distance
    *
    * This is an optional method that can be implemented by renderers that support LOD.

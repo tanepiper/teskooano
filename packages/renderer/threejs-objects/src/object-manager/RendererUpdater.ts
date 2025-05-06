@@ -6,6 +6,7 @@ import {
   SchwarzschildBlackHoleRenderer,
 } from "@teskooano/systems-celestial";
 import type * as THREE from "three";
+import { getRenderableObjects } from "@teskooano/core-state";
 
 /**
  * @internal
@@ -73,7 +74,7 @@ export class RendererUpdater {
     scene?: THREE.Scene,
     camera?: THREE.PerspectiveCamera,
   ): void {
-    this.updateStandardRenderers(time, lightSources, camera);
+    this.updateStandardRenderers(time, lightSources, camera, objects);
 
     this.updateSpecializedRenderers(
       time,
@@ -92,6 +93,7 @@ export class RendererUpdater {
    * @param time - Current simulation time or delta time.
    * @param lightSources - Map of active light sources.
    * @param camera - The main camera.
+   * @param objects - Map of the current THREE.Object3D instances managed by ObjectManager.
    */
   private updateStandardRenderers(
     time: number,
@@ -100,18 +102,43 @@ export class RendererUpdater {
       { position: THREE.Vector3; color: THREE.Color; intensity: number }
     >,
     camera?: THREE.Camera,
+    objects?: Map<string, THREE.Object3D>,
   ): void {
-    const renderersToUpdate = [
-      ...this.celestialRenderers.values(),
-      ...this.planetRenderers.values(),
-      ...this.moonRenderers.values(),
-    ];
+    const allRenderableObjects = getRenderableObjects();
 
-    renderersToUpdate.forEach((rendererInstance) => {
-      if (rendererInstance.update) {
-        rendererInstance.update(time, lightSources, camera);
-      }
-    });
+    const processRendererMap = (
+      rendererMap: Map<string, CelestialRenderer>,
+    ) => {
+      rendererMap.forEach((rendererInstance, id) => {
+        if (rendererInstance.updateWith) {
+          const renderableObject = allRenderableObjects[id];
+          const existingMesh = objects?.get(id);
+
+          if (renderableObject && existingMesh) {
+            rendererInstance.updateWith(renderableObject, existingMesh);
+          } else {
+            if (!renderableObject) {
+              console.warn(
+                `[RendererUpdater] No RenderableCelestialObject found for ID: ${id} during updateWith call.`,
+              );
+            }
+            if (!existingMesh) {
+              console.warn(
+                `[RendererUpdater] No existingMesh (THREE.Object3D) found for ID: ${id} from objects map during updateWith call.`,
+              );
+            }
+          }
+        }
+
+        if (rendererInstance.update) {
+          rendererInstance.update(time, lightSources, camera);
+        }
+      });
+    };
+
+    processRendererMap(this.celestialRenderers);
+    processRendererMap(this.planetRenderers);
+    processRendererMap(this.moonRenderers);
   }
 
   /**
