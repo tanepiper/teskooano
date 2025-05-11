@@ -28,72 +28,76 @@ export class PlanetMaterialService {
     const planetType = planetProps?.planetType ?? (object as any).planetType; // Consider a safer way to get planetType if needed
 
     let simplePalette = {
-      low: "#5179B5",
-      mid1: "#4C9341",
-      mid2: "#836F27",
-      high: "#A0A0A0",
+      color1: "#5179B5",
+      color2: "#4C9341",
+      color3: "#836F27",
+      color4: "#A0A0A0",
+      color6: "#FFFFFF",
     };
 
     if (planetType) {
       switch (planetType) {
         case PlanetType.LAVA:
           simplePalette = {
-            low: "#3B0B00",
-            mid1: "#801800",
-            mid2: "#D44000",
-            high: "#FF6B00",
+            color1: "#3B0B00",
+            color2: "#801800",
+            color3: "#D44000",
+            color4: "#FF6B00",
+            color6: "#FFA500",
           };
           break;
         case PlanetType.ICE:
           simplePalette = {
-            low: "#A0D2DB",
-            mid1: "#C0ECF1",
-            mid2: "#E1FEFF",
-            high: "#FFFFFF",
+            color1: "#A0D2DB",
+            color2: "#C0ECF1",
+            color3: "#E1FEFF",
+            color4: "#FFFFFF",
+            color6: "#F0FFFF",
           };
           break;
         case PlanetType.DESERT:
           simplePalette = {
-            low: "#A0522D",
-            mid1: "#D2B48C",
-            mid2: "#E0C9A6",
-            high: "#F5E6CA",
+            color1: "#A0522D",
+            color2: "#D2B48C",
+            color3: "#E0C9A6",
+            color4: "#F5E6CA",
+            color6: "#FFF8DC",
           };
           break;
         case PlanetType.TERRESTRIAL:
-          // Explicitly define Terrestrial palette (matches initial default)
           simplePalette = {
-            low: "#5179B5", // Water/Deep Blue
-            mid1: "#4C9341", // Land/Green
-            mid2: "#836F27", // Mountains/Brownish
-            high: "#A0A0A0", // Peaks/Grayish
+            color1: "#5179B5",
+            color2: "#4C9341",
+            color3: "#836F27",
+            color4: "#A0A0A0",
+            color6: "#FFFFFF",
           };
           break;
         case PlanetType.ROCKY:
-          // More varied palette for Rocky
           simplePalette = {
-            low: "#5A4D41", // Darker Brownish-Gray
-            mid1: "#8B7D6B", // Mid Brownish-Gray
-            mid2: "#A9A9A9", // Standard Gray
-            high: "#D3CFC5", // Light Gray/Tan
+            color1: "#5A4D41",
+            color2: "#8B7D6B",
+            color3: "#A9A9A9",
+            color4: "#D3CFC5",
+            color6: "#F5F5F5",
           };
           break;
         case PlanetType.BARREN:
-          // Less varied, more muted palette for Barren
           simplePalette = {
-            low: "#4A4A4A", // Dark Gray
-            mid1: "#686868", // Medium Gray
-            mid2: "#828282", // Slightly Lighter Gray
-            high: "#9A9A9A", // Light Gray
+            color1: "#583C3C",
+            color2: "#544A59",
+            color3: "#733217",
+            color4: "#756C61",
+            color6: "#8B8589",
           };
           break;
         case PlanetType.OCEAN:
-          // Add a default palette for Ocean type
           simplePalette = {
-            low: "#003366", // Deep Ocean Blue
-            mid1: "#0055A4", // Mid Ocean Blue
-            mid2: "#4169E1", // Royal Blue (Shallows?)
-            high: "#ADD8E6", // Light Blue (Foam/Ice?)
+            color1: "#003366",
+            color2: "#0055A4",
+            color3: "#4169E1",
+            color4: "#ADD8E6",
+            color6: "#F0F8FF",
           };
           break;
       }
@@ -105,13 +109,20 @@ export class PlanetMaterialService {
       lacunarity: specificSurfaceProps?.lacunarity ?? 2.0,
       octaves: specificSurfaceProps?.octaves ?? 6,
       simplePeriod: specificSurfaceProps?.simplePeriod ?? 4.0,
-      bumpScale: (specificSurfaceProps as any)?.bumpScale ?? 3, // Add bumpScale here, cast needed as TS might not see it in the union
+      bumpScale: (specificSurfaceProps as any)?.bumpScale ?? 3,
 
       // Color ramp properties
-      colorLow: specificSurfaceProps?.colorLow ?? simplePalette.low,
-      colorMid1: specificSurfaceProps?.colorMid1 ?? simplePalette.mid1,
-      colorMid2: specificSurfaceProps?.colorMid2 ?? simplePalette.mid2,
-      colorHigh: specificSurfaceProps?.colorHigh ?? simplePalette.high,
+      color1: specificSurfaceProps?.color1 ?? simplePalette.color1,
+      color2: specificSurfaceProps?.color2 ?? simplePalette.color2,
+      color3: specificSurfaceProps?.color3 ?? simplePalette.color3,
+      color4: specificSurfaceProps?.color4 ?? simplePalette.color4,
+      color5: specificSurfaceProps?.color5 ?? simplePalette.color6,
+
+      height1: specificSurfaceProps?.height1 ?? 0.1,
+      height2: specificSurfaceProps?.height2 ?? 0.2,
+      height3: specificSurfaceProps?.height3 ?? 0.4,
+      height4: specificSurfaceProps?.height4 ?? 0.6,
+      height5: specificSurfaceProps?.height5 ?? 0.8,
     };
 
     const material = new ProceduralPlanetMaterial(finalProps);
@@ -130,9 +141,9 @@ export class PlanetMaterialService {
       | ProceduralSurfaceProperties
       | undefined;
 
-    // Prioritize colorLow if defined in properties
-    if (specificSurfaceProps?.colorLow) {
-      return new THREE.Color(specificSurfaceProps.colorLow);
+    // Prioritize color1 if defined in properties
+    if (specificSurfaceProps?.color1) {
+      return new THREE.Color(specificSurfaceProps.color1);
     }
 
     // Fallback based on planet type

@@ -14,10 +14,17 @@ export interface ProceduralPlanetUniforms {
   uSimplePeriod: { value: number };
   uOctaves: { value: number };
 
-  uColorLow: { value: Color };
-  uColorMid1: { value: Color };
-  uColorMid2: { value: Color };
-  uColorHigh: { value: Color };
+  uColor1: { value: Color };
+  uColor2: { value: Color };
+  uColor3: { value: Color };
+  uColor4: { value: Color };
+  uColor5: { value: Color };
+
+  uHeight1: { value: number };
+  uHeight2: { value: number };
+  uHeight3: { value: number };
+  uHeight4: { value: number };
+  uHeight5: { value: number };
 
   uBumpScale: { value: number };
 

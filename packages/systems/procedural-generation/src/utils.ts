@@ -241,17 +241,25 @@ export function createProceduralSurfaceProperties(
   let shininess = getRandomInRange(16, 64, random); // Default shininess
   let specularStrength = getRandomInRange(0.2, 0.5, random); // Default specular strength
 
-  let colorLow: string;
-  let colorMid1: string;
-  let colorMid2: string;
-  let colorHigh: string;
+  let height1 = getRandomInRange(0.1, 0.2, random);
+  let height2 = getRandomInRange(0.2, 0.4, random);
+  let height3 = getRandomInRange(0.4, 0.6, random);
+  let height4 = getRandomInRange(0.6, 0.8, random);
+  let height5 = getRandomInRange(0.8, 1.0, random);
+
+  let color1: string;
+  let color2: string;
+  let color3: string;
+  let color4: string;
+  let color5: string;
 
   switch (planetType) {
     case PlanetType.TERRESTRIAL:
-      colorLow = getRandomItem(["#1E4F6F", "#2A6F97", "#01497C"], random); // Blues (Water)
-      colorMid1 = getRandomItem(["#4C9341", "#6A994E", "#8AA36F"], random); // Greens (Land)
-      colorMid2 = getRandomItem(["#D4A373", "#E6B88A", "#C09463"], random); // Browns (Mountains)
-      colorHigh = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
+      color1 = getRandomItem(["#1E4F6F", "#2A6F97", "#01497C"], random); // Blues (Water)
+      color2 = getRandomItem(["#4C9341", "#6A994E", "#8AA36F"], random); // Greens (Land)
+      color3 = getRandomItem(["#D4A373", "#E6B88A", "#C09463"], random); // Browns (Mountains)
+      color4 = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
+      color5 = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
 
       persistence = getRandomInRange(0.5, 0.6, random);
       lacunarity = getRandomInRange(1.5, 2.3, random);
@@ -265,10 +273,11 @@ export function createProceduralSurfaceProperties(
 
     case PlanetType.ROCKY:
       console.log("Rocky", planetType);
-      colorLow = getRandomItem(["#4f2214", "#171719", "#312b2e"], random);
-      colorMid1 = getRandomItem(["#522f28", "#631100", "#3d1c15"], random);
-      colorMid2 = getRandomItem(["#3b3837", "#5d4a41", "#4d4542"], random);
-      colorHigh = getRandomItem(["#59392e", "#662d1a", "#242327"], random);
+      color1 = getRandomItem(["#4f2214", "#171719", "#312b2e"], random);
+      color2 = getRandomItem(["#522f28", "#631100", "#3d1c15"], random);
+      color3 = getRandomItem(["#3b3837", "#5d4a41", "#4d4542"], random);
+      color4 = getRandomItem(["#59392e", "#662d1a", "#242327"], random);
+      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random); // Darker browns for rocky peaks
 
       persistence = getRandomInRange(0.1, 0.3, random);
       lacunarity = getRandomInRange(2, 3, random);
@@ -282,10 +291,18 @@ export function createProceduralSurfaceProperties(
 
     case PlanetType.BARREN:
       console.log("Barren", planetType);
-      colorLow = getRandomItem(["#262323", "#201818", "#2e2a2a"], random); // Dark Grays
-      colorMid1 = getRandomItem(["#1d2422", "#111c19", "#2a2b2b"], random); // Medium Grays
-      colorMid2 = getRandomItem(["#5c3e3e", "#312727", "#2e290f"], random); // Lighter Grays
-      colorHigh = getRandomItem(["#333333", "#292525", "#1f0e0e"], random); // Light Grays
+      // low: "#583C3C", // Dark Gray
+      // mid1: "#544A59", // Medium Gray
+      // mid2: "#733217", // Slightly Lighter Gray
+      // high: "#756C61", // Light Gray
+
+      //background-image: linear-gradient(to top, #583c3c, #5f3937, #653732, #6b352b, #6f3323, #703523, #723722, #733922, #723e2a, #714332, #6f4739, #6d4c41);
+
+      color1 = getRandomItem(["#583C3C", "#6d4c41", "#6f3323"], random); // Dark Grays
+      color2 = getRandomItem(["#544A59", "#111c19", "#2a2b2b"], random); // Medium Grays
+      color3 = getRandomItem(["#733217", "#312727", "#544A59"], random); // Lighter Grays
+      color4 = getRandomItem(["#756C61", "#292525", "#1f0e0e"], random); // Light Grays
+      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
 
       persistence = getRandomInRange(0.2, 0.25, random); // Less variation
       lacunarity = getRandomInRange(3, 4, random); // Smoother transitions
@@ -298,10 +315,11 @@ export function createProceduralSurfaceProperties(
       break;
 
     case PlanetType.DESERT:
-      colorLow = getRandomItem(["#A0522D", "#B8860B", "#8B4513"], random); // Sienna, DarkGoldenrod, SaddleBrown (Deep Dunes/Rock)
-      colorMid1 = getRandomItem(["#D2B48C", "#F4A460", "#CD853F"], random); // Tan, SandyBrown, Peru (Sand)
-      colorMid2 = getRandomItem(["#E0C9A6", "#FFDEAD", "#DEB887"], random); // Lighter Tan, NavajoWhite, BurlyWood (Highlights)
-      colorHigh = getRandomItem(["#F5E6CA", "#FFF8DC", "#FAF0E6"], random); // Beige, Cornsilk, Linen (Peaks/Bright Sand)
+      color1 = getRandomItem(["#A0522D", "#B8860B", "#8B4513"], random); // Sienna, DarkGoldenrod, SaddleBrown (Deep Dunes/Rock)
+      color2 = getRandomItem(["#D2B48C", "#F4A460", "#CD853F"], random); // Tan, SandyBrown, Peru (Sand)
+      color3 = getRandomItem(["#E0C9A6", "#FFDEAD", "#DEB887"], random); // Lighter Tan, NavajoWhite, BurlyWood (Highlights)
+      color4 = getRandomItem(["#F5E6CA", "#FFF8DC", "#FAF0E6"], random); // Beige, Cornsilk, Linen (Peaks/Bright Sand)
+      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
 
       persistence = getRandomInRange(0.1, 0.5, random); // Smoother dunes
       lacunarity = getRandomInRange(12, 20, random); // Sharper dune details potentially
@@ -314,10 +332,11 @@ export function createProceduralSurfaceProperties(
       break;
 
     case PlanetType.ICE:
-      colorLow = getRandomItem(["#ffffff", "#edfbff", "#def4f9"], random); // CadetBlue, CornflowerBlue, SteelBlue (Deep Ice/Shadows)
-      colorMid1 = getRandomItem(["#fff3f3", "#ffffff", "#52c8ff"], random); // PowderBlue, LightBlue (Main Ice Field)
-      colorMid2 = getRandomItem(["#80ecff", "#ffffff", "#f5fdff"], random); // Lighter Blues/Cyans (Snow/Frost)
-      colorHigh = getRandomItem(["#FFFFFF", "#F0FFFF", "#c9c9c9"], random); // White, Azure, MintCream (Glints/Pure Snow)
+      color1 = getRandomItem(["#ffffff", "#edfbff", "#def4f9"], random); // CadetBlue, CornflowerBlue, SteelBlue (Deep Ice/Shadows)
+      color2 = getRandomItem(["#fff3f3", "#ffffff", "#52c8ff"], random); // PowderBlue, LightBlue (Main Ice Field)
+      color3 = getRandomItem(["#80ecff", "#ffffff", "#f5fdff"], random); // Lighter Blues/Cyans (Snow/Frost)
+      color4 = getRandomItem(["#FFFFFF", "#F0FFFF", "#c9c9c9"], random); // White, Azure, MintCream (Glints/Pure Snow)
+      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
 
       persistence = getRandomInRange(0.2, 0.5, random);
       lacunarity = getRandomInRange(3, 3, random);
@@ -330,10 +349,11 @@ export function createProceduralSurfaceProperties(
       break;
 
     case PlanetType.LAVA:
-      colorLow = getRandomItem(["#1A0000", "#2B0B00", "#000000"], random); // Very Dark Red/Black (Cooled Rock)
-      colorMid1 = getRandomItem(["#4E0000", "#6B0000", "#8B0000"], random); // Dark Reds (Cooling Lava/Rock)
-      colorMid2 = getRandomItem(["#AE1000", "#CC3300", "#FF4500"], random); // Bright Reds/Oranges (Hot Lava)
-      colorHigh = getRandomItem(["#FF8C00", "#FFA500", "#FFFF00"], random); // Orange/Yellow (Hottest Lava)
+      color1 = getRandomItem(["#1A0000", "#2B0B00", "#000000"], random); // Very Dark Red/Black (Cooled Rock)
+      color2 = getRandomItem(["#4E0000", "#6B0000", "#8B0000"], random); // Dark Reds (Cooling Lava/Rock)
+      color3 = getRandomItem(["#AE1000", "#CC3300", "#FF4500"], random); // Bright Reds/Oranges (Hot Lava)
+      color4 = getRandomItem(["#FF8C00", "#FFA500", "#FFFF00"], random); // Orange/Yellow (Hottest Lava)
+      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
 
       persistence = getRandomInRange(0.5, 0.65, random);
       lacunarity = getRandomInRange(2, 3, random);
@@ -346,10 +366,11 @@ export function createProceduralSurfaceProperties(
       break;
 
     case PlanetType.OCEAN:
-      colorLow = getRandomItem(["#001F3F", "#003366", "#004080"], random); // Deep Ocean Blue
-      colorMid1 = getRandomItem(["#0055A4", "#1E90FF", "#4169E1"], random); // Mid Ocean Blue, DodgerBlue, RoyalBlue
-      colorMid2 = getRandomItem(["#87CEEB", "#ADD8E6", "#B0E0E6"], random); // SkyBlue, LightBlue, PowderBlue (Shallows)
-      colorHigh = getRandomItem(["#F0F8FF", "#E0FFFF", "#FFFFFF"], random); // AliceBlue, LightCyan, White (Foam/Ice Caps?)
+      color1 = getRandomItem(["#001F3F", "#003366", "#004080"], random); // Deep Ocean Blue
+      color2 = getRandomItem(["#0055A4", "#1E90FF", "#4169E1"], random); // Mid Ocean Blue, DodgerBlue, RoyalBlue
+      color3 = getRandomItem(["#87CEEB", "#ADD8E6", "#B0E0E6"], random); // SkyBlue, LightBlue, PowderBlue (Shallows)
+      color4 = getRandomItem(["#F0F8FF", "#E0FFFF", "#FFFFFF"], random); // AliceBlue, LightCyan, White (Foam/Ice Caps?)
+      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
 
       persistence = getRandomInRange(0.6, 0.75, random); // Very smooth generally
       lacunarity = getRandomInRange(1.8, 2.1, random); // Few sharp transitions
@@ -366,10 +387,11 @@ export function createProceduralSurfaceProperties(
         `[createProceduralSurfaceProperties] Unhandled planetType: ${planetType}, using fallback TERRESTRIAL palette.`,
       );
       // Fallback to Terrestrial-like palette
-      colorLow = "#1E4F6F";
-      colorMid1 = "#4C9341";
-      colorMid2 = "#D4A373";
-      colorHigh = "#FFFFFF";
+      color1 = "#1E4F6F";
+      color2 = "#4C9341";
+      color3 = "#D4A373";
+      color4 = "#FFFFFF";
+      color5 = "#795548";
       break;
   }
 
@@ -380,10 +402,16 @@ export function createProceduralSurfaceProperties(
     simplePeriod: simplePeriod,
     octaves: octaves,
     bumpScale: bumpScale,
-    colorLow: colorLow,
-    colorMid1: colorMid1,
-    colorMid2: colorMid2,
-    colorHigh: colorHigh,
+    color1: color1,
+    color2: color2,
+    color3: color3,
+    color4: color4,
+    color5: color5,
+    height1: height1,
+    height2: height2,
+    height3: height3,
+    height4: height4,
+    height5: height5,
     shininess: shininess,
     specularStrength: specularStrength,
   };

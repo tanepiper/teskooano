@@ -17,7 +17,7 @@ The current procedural fragment shader (`procedural.fragment.glsl`) uses a Fract
 
 1.  **Input**: Object-space position, world position, world normal, uniforms for noise, colors, and lighting.
 2.  **Noise**: Calculates FBM noise based on object position, using custom `gradientNoise` and parameters (`persistence`, `lacunarity`, `uOctaves`, `uSimplePeriod`).
-3.  **Color Mapping**: Blends between `uColorLow`, `uColorMid1`, `uColorMid2`, `uColorHigh` using cascaded `smoothstep` functions based on the noise value.
+3.  **Color Mapping**: Blends between `uColor1`, `uColor2`, `uColor3`, `uColor4` using cascaded `smoothstep` functions based on the noise value.
 4.  **Lighting**: Calculates ambient, diffuse, and basic Blinn-Phong specular contributions for up to `MAX_LIGHTS`.
 5.  **Output**: Final lit color.
 

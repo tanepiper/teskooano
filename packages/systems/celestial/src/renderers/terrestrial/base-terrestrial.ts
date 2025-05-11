@@ -357,19 +357,39 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
           material.uniforms.uBumpScale.value = surfaceProps.bumpScale;
         }
 
-        // For colors, assuming uColorLow etc. are THREE.Color uniforms
+        // For colors, assuming uColor1 etc. are THREE.Color uniforms
         // Ensure these uniform names match your ProceduralPlanetMaterial definition
-        if (surfaceProps.colorLow && material.uniforms.uColorLow) {
-          material.uniforms.uColorLow.value.set(surfaceProps.colorLow);
+        if (surfaceProps.color1 && material.uniforms.uColor1) {
+          material.uniforms.uColor1.value.set(surfaceProps.color1);
         }
-        if (surfaceProps.colorMid1 && material.uniforms.uColorMid1) {
-          material.uniforms.uColorMid1.value.set(surfaceProps.colorMid1);
+        if (surfaceProps.color2 && material.uniforms.uColor2) {
+          material.uniforms.uColor2.value.set(surfaceProps.color2);
         }
-        if (surfaceProps.colorMid2 && material.uniforms.uColorMid2) {
-          material.uniforms.uColorMid2.value.set(surfaceProps.colorMid2);
+        if (surfaceProps.color3 && material.uniforms.uColor3) {
+          material.uniforms.uColor3.value.set(surfaceProps.color3);
         }
-        if (surfaceProps.colorHigh && material.uniforms.uColorHigh) {
-          material.uniforms.uColorHigh.value.set(surfaceProps.colorHigh);
+        if (surfaceProps.color4 && material.uniforms.uColor4) {
+          material.uniforms.uColor4.value.set(surfaceProps.color4);
+        }
+        if (surfaceProps.color5 && material.uniforms.uColor5) {
+          material.uniforms.uColor5.value.set(surfaceProps.color5);
+        }
+
+        // Update height controls
+        if (surfaceProps.height1 !== undefined && material.uniforms.uHeight1) {
+          material.uniforms.uHeight1.value = surfaceProps.height1;
+        }
+        if (surfaceProps.height2 !== undefined && material.uniforms.uHeight2) {
+          material.uniforms.uHeight2.value = surfaceProps.height2;
+        }
+        if (surfaceProps.height3 !== undefined && material.uniforms.uHeight3) {
+          material.uniforms.uHeight3.value = surfaceProps.height3;
+        }
+        if (surfaceProps.height4 !== undefined && material.uniforms.uHeight4) {
+          material.uniforms.uHeight4.value = surfaceProps.height4;
+        }
+        if (surfaceProps.height5 !== undefined && material.uniforms.uHeight5) {
+          material.uniforms.uHeight5.value = surfaceProps.height5;
         }
 
         if (

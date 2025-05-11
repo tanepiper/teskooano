@@ -572,15 +572,61 @@ export class CelestialUniformsEditor
 
     const castedSurfaceProps = surfaceProps as ProceduralSurfaceProperties;
 
+    // Add a section header for noise parameters
+    const noiseHeader = document.createElement("h3");
+    noiseHeader.textContent = "Noise Parameters";
+    container.appendChild(noiseHeader);
+
     addControl("Persistence:", ["surface", "persistence"], "number");
     addControl("Lacunarity:", ["surface", "lacunarity"], "number");
     addControl("Period:", ["surface", "simplePeriod"], "number");
     addControl("Octaves:", ["surface", "octaves"], "number");
-    addControl("Color Low:", ["surface", "colorLow"], "color");
-    addControl("Color Mid 1:", ["surface", "colorMid1"], "color");
-    addControl("Color Mid 2:", ["surface", "colorMid2"], "color");
-    addControl("Color High:", ["surface", "colorHigh"], "color");
     addControl("Bump Scale:", ["surface", "bumpScale"], "number");
+
+    // Add a section header for colors
+    const colorHeader = document.createElement("h3");
+    colorHeader.textContent = "Color Ramp";
+    container.appendChild(colorHeader);
+
+    addControl("Color 1 (Lowest):", ["surface", "color1"], "color");
+    addControl("Color 2:", ["surface", "color2"], "color");
+    addControl("Color 3:", ["surface", "color3"], "color");
+    addControl("Color 4:", ["surface", "color4"], "color");
+    addControl("Color 5 (Highest):", ["surface", "color5"], "color");
+
+    // Add a section header for height controls
+    const heightHeader = document.createElement("h3");
+    heightHeader.textContent = "Height Controls";
+    container.appendChild(heightHeader);
+
+    // Add height controls with appropriate ranges
+    const heightControl = (label: string, path: string[]) => {
+      const { element, subscription } = this._createNumericInput(
+        label,
+        celestialId,
+        celestialObject,
+        path,
+      );
+      const input = element.querySelector("input") as HTMLInputElement;
+      if (input) {
+        input.min = "0";
+        input.max = "1";
+        input.step = "0.01";
+      }
+      container.appendChild(element);
+      this.activeInputSubscriptions.push(subscription);
+    };
+
+    heightControl("Height Level 1:", ["surface", "height1"]);
+    heightControl("Height Level 2:", ["surface", "height2"]);
+    heightControl("Height Level 3:", ["surface", "height3"]);
+    heightControl("Height Level 4:", ["surface", "height4"]);
+    heightControl("Height Level 5:", ["surface", "height5"]);
+
+    // Add a section header for material properties
+    const materialHeader = document.createElement("h3");
+    materialHeader.textContent = "Material Properties";
+    container.appendChild(materialHeader);
 
     if (Object.prototype.hasOwnProperty.call(castedSurfaceProps, "shininess")) {
       addControl("Shininess:", ["surface", "shininess"], "number");
@@ -597,7 +643,6 @@ export class CelestialUniformsEditor
         "number",
       );
     }
-    console.log("got here");
   }
 
   // --- End of Helper Methods ---

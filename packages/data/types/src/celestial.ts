@@ -403,10 +403,17 @@ export interface ProceduralSurfaceProperties {
   octaves: number; // Number of noise layers combined
 
   // Color ramp (hex strings)
-  colorLow: string; // Color for lowest elevation/noise value
-  colorMid1: string; // First mid-level color
-  colorMid2: string; // Second mid-level color
-  colorHigh: string; // Color for highest elevation/noise value
+  color1: string; // Color for lowest elevation/noise value
+  color2: string; // First mid-level color
+  color3: string; // Second mid-level color
+  color4: string; // Color for highest elevation/noise value
+  color5: string; // Color for extreme elevation/noise value
+
+  height1: number;
+  height2: number;
+  height3: number;
+  height4: number;
+  height5: number;
 
   // Bump mapping
   bumpScale: number; // Strength of the bump effect

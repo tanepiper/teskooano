@@ -51,10 +51,17 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       uSimplePeriod: { value: surfaceProps.simplePeriod ?? 4.0 },
       uOctaves: { value: surfaceProps.octaves ?? 6 },
 
-      uColorLow: { value: parseColor(surfaceProps.colorLow, "#5179B5") },
-      uColorMid1: { value: parseColor(surfaceProps.colorMid1, "#4C9341") },
-      uColorMid2: { value: parseColor(surfaceProps.colorMid2, "#836F27") },
-      uColorHigh: { value: parseColor(surfaceProps.colorHigh, "#A0A0A0") },
+      uColor1: { value: parseColor(surfaceProps.color1, "#5179B5") },
+      uColor2: { value: parseColor(surfaceProps.color2, "#4C9341") },
+      uColor3: { value: parseColor(surfaceProps.color3, "#836F27") },
+      uColor4: { value: parseColor(surfaceProps.color4, "#A0A0A0") },
+      uColor5: { value: parseColor(surfaceProps.color5, "#FFFFFF") },
+
+      uHeight1: { value: surfaceProps.height1 ?? 0.0 },
+      uHeight2: { value: surfaceProps.height2 ?? 0.2 },
+      uHeight3: { value: surfaceProps.height3 ?? 0.4 },
+      uHeight4: { value: surfaceProps.height4 ?? 0.6 },
+      uHeight5: { value: surfaceProps.height5 ?? 0.8 },
 
       uBumpScale: { value: surfaceProps.bumpScale ?? 1 },
 

@@ -1,5 +1,6 @@
 // Define maximum number of lights the shader can handle
 #define MAX_LIGHTS 4
+#define HEIGHT_LEVELS 5
 
 // MODIFIED: Added varyings from vertex shader
 varying vec2 vUv;
@@ -24,10 +25,16 @@ uniform float persistence;
 uniform float lacunarity;
 uniform float uSimplePeriod;
 uniform int uOctaves;
-uniform vec3 uColorLow;
-uniform vec3 uColorMid1;
-uniform vec3 uColorMid2;
-uniform vec3 uColorHigh;
+uniform vec3 uColor1;
+uniform vec3 uColor2;
+uniform vec3 uColor3;
+uniform vec3 uColor4;
+uniform vec3 uColor5;
+uniform float uHeight1;
+uniform float uHeight2;
+uniform float uHeight3;
+uniform float uHeight4;
+uniform float uHeight5;
 uniform float uShininess;        // ADDED: Shininess factor
 uniform float uSpecularStrength; // ADDED: Specular intensity
 
@@ -103,7 +110,7 @@ vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
 
 // Simple lighting calculation (Blinn-Phongish)
 vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
-    vec3 totalLight = uAmbientLightColor * uAmbientLightIntensity;
+    vec3 totalLight = uAmbientLightColor * uAmbientLightIntensity * 2.0;
 
     for (int i = 0; i < uNumLights; ++i) {
         if (i >= uNumLights) break; // Safety break
@@ -135,31 +142,39 @@ void main() {
     // Calculate noise value (0 to 1 range from our fbm)
     float noiseValue = fbm(noiseCoord, uOctaves, persistence, lacunarity);
 
-    // DEBUG: Output raw noise value as grayscale
-    // gl_FragColor = vec4(vec3(noiseValue), 1.0);
-
-    // Original color calculation (Uncommented)
-    // Determine terrain mix factor (0 = low, 1 = high)
-    float terrainFactor = smoothstep(0.5, 0.6, noiseValue); // Adjust thresholds as needed
-
-    // Blend mid-level colors
-    vec3 midColor = mix(uColorMid2, uColorMid1, smoothstep(0.3, 0.8, noiseValue)); 
-    
-    // Blend in high-level color
-    midColor = mix(midColor, uColorHigh, smoothstep(0.6, 0.9, noiseValue));
-    
-    // Blend low and mid/high colors
-    vec3 baseColor = mix(uColorLow, midColor, terrainFactor); 
-
-    // DEBUG: Output baseColor directly
-    gl_FragColor = vec4(baseColor, 1.0); 
-
-    // --- Lighting Calculation (MODIFIED) --- 
-    vec3 baseNormal = normalize(vWorldNormal); // Original normal
+    // --- Lighting Calculation --- 
+    vec3 baseNormal = normalize(vWorldNormal);
     vec3 viewDir = normalize(uCameraPosition - vWorldPosition);
 
+    // Initialize base color with the lowest level
+    vec3 baseColor = uColor1;
+    
+    // Array of colors and heights for the loop
+    vec3 colors[HEIGHT_LEVELS];
+    float heights[HEIGHT_LEVELS];
+    
+    colors[0] = uColor1;
+    colors[1] = uColor2;
+    colors[2] = uColor3;
+    colors[3] = uColor4;
+    colors[4] = uColor5;
+    
+    heights[0] = uHeight1;
+    heights[1] = uHeight2;
+    heights[2] = uHeight3;
+    heights[3] = uHeight4;
+    heights[4] = uHeight5;
+    
+    // Loop through height levels for color blending
+    for(int i = 1; i < HEIGHT_LEVELS; i++) {
+        float prevHeight = heights[i-1];
+        float currHeight = heights[i];
+        float blendFactor = smoothstep(prevHeight, currHeight, noiseValue);
+        baseColor = mix(baseColor, colors[i], blendFactor);
+    }
+
     // Calculate perturbed normal for bump mapping
-    vec3 perturbedNormal = perturbNormal(baseNormal, vWorldPosition, uBumpScale); // Use the new function
+    vec3 perturbedNormal = perturbNormal(baseNormal, vWorldPosition, uBumpScale);
 
     // Use perturbed normal for lighting
     vec3 finalColor = calculateLighting(baseColor, perturbedNormal, viewDir);
