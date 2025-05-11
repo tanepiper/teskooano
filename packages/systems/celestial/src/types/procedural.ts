@@ -28,6 +28,10 @@ export interface ProceduralPlanetUniforms {
 
   uBumpScale: { value: number };
 
+  uShininess: { value: number };
+  uSpecularStrength: { value: number };
+  uRoughness: { value: number };
+
   uTime: { value: number };
 
   [key: string]: { value: any };

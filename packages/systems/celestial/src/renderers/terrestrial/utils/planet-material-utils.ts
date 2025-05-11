@@ -123,6 +123,12 @@ export class PlanetMaterialService {
       height3: specificSurfaceProps?.height3 ?? 0.4,
       height4: specificSurfaceProps?.height4 ?? 0.6,
       height5: specificSurfaceProps?.height5 ?? 0.8,
+
+      shininess: specificSurfaceProps?.shininess ?? 100,
+      specularStrength: specificSurfaceProps?.specularStrength ?? 0.3,
+      roughness: specificSurfaceProps?.roughness ?? 0.5,
+      ambientLightIntensity:
+        specificSurfaceProps?.ambientLightIntensity ?? 0.0001,
     };
 
     const material = new ProceduralPlanetMaterial(finalProps);

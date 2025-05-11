@@ -396,31 +396,25 @@ export interface OceanSurfaceProperties extends BaseSurfaceProperties {
  * primarily used for planets and potentially moons using specific shaders.
  */
 export interface ProceduralSurfaceProperties {
-  // Noise parameters
-  persistence: number; // Controls detail level vs smoothness
-  lacunarity: number; // Controls frequency increase per octave
-  simplePeriod: number; // Base scale/frequency of the noise pattern
-  octaves: number; // Number of noise layers combined
-
-  // Color ramp (hex strings)
-  color1: string; // Color for lowest elevation/noise value
-  color2: string; // First mid-level color
-  color3: string; // Second mid-level color
-  color4: string; // Color for highest elevation/noise value
-  color5: string; // Color for extreme elevation/noise value
-
+  persistence: number;
+  lacunarity: number;
+  simplePeriod: number;
+  octaves: number;
+  bumpScale: number;
+  color1: string;
+  color2: string;
+  color3: string;
+  color4: string;
+  color5: string;
   height1: number;
   height2: number;
   height3: number;
   height4: number;
   height5: number;
-
-  // Bump mapping
-  bumpScale: number; // Strength of the bump effect
-
-  // Lighting
-  shininess?: number;
-  specularStrength?: number;
+  shininess: number;
+  specularStrength: number;
+  roughness: number;
+  ambientLightIntensity: number;
 }
 
 /** Surface properties specific to Rocky/Terrestrial planets */

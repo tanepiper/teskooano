@@ -238,8 +238,9 @@ export function createProceduralSurfaceProperties(
   let octaves = Math.floor(getRandomInRange(5, 9, random));
   let bumpScale = getRandomInRange(2, 3, random);
   let roughness = getRandomInRange(0.5, 0.9, random); // Base roughness
-  let shininess = getRandomInRange(16, 64, random); // Default shininess
+  let shininess = 100; //getRandomInRange(16, 64, random); // Default shininess
   let specularStrength = getRandomInRange(0.2, 0.5, random); // Default specular strength
+  let ambientLightIntensity = 0.0001; //getRandomInRange(0.1, 0.3, random); // Default ambient light
 
   let height1 = getRandomInRange(0.1, 0.2, random);
   let height2 = getRandomInRange(0.2, 0.4, random);
@@ -267,8 +268,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(5, 9, random));
       bumpScale = getRandomInRange(1, 2, random);
       roughness = getRandomInRange(0.1, 0.2, random);
-      shininess = getRandomInRange(3, 7, random); // Moderate shine for Terran
+      //shininess = getRandomInRange(3, 7, random); // Moderate shine for Terran
       specularStrength = getRandomInRange(0.3, 0.6, random);
+      //ambientLightIntensity = getRandomInRange(0.2, 0.4, random); // Higher ambient for Earth-like planets
       break;
 
     case PlanetType.ROCKY:
@@ -285,8 +287,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(5, 9, random));
       bumpScale = getRandomInRange(2, 3, random);
       roughness = getRandomInRange(0.7, 0.95, random);
-      shininess = getRandomInRange(5, 10, random); // Very low shine
+      //shininess = getRandomInRange(5, 10, random); // Very low shine
       specularStrength = getRandomInRange(0.1, 0.9, random); // Very low strength
+      //ambientLightIntensity = getRandomInRange(0.1, 0.2, random); // Lower ambient for rocky planets
       break;
 
     case PlanetType.BARREN:
@@ -310,8 +313,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(4, 6, random));
       bumpScale = getRandomInRange(2, 3, random);
       roughness = getRandomInRange(0.01, 0.09, random); // High roughness
-      shininess = getRandomInRange(1, 3, random); // Very low shine
+      //shininess = getRandomInRange(1, 3, random); // Very low shine
       specularStrength = getRandomInRange(0.01, 0.05, random); // Very low strength
+      //ambientLightIntensity = getRandomInRange(0.05, 0.15, random); // Very low ambient for barren planets
       break;
 
     case PlanetType.DESERT:
@@ -327,8 +331,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(4, 6, random));
       bumpScale = getRandomInRange(0.01, 0.04, random); // Lower bump for ice
       roughness = getRandomInRange(0.65, 0.9, random);
-      shininess = getRandomInRange(128, 512, random); // Very low shine
+      //shininess = getRandomInRange(128, 512, random); // Very low shine
       specularStrength = getRandomInRange(0.05, 0.15, random); // Slightly higher than barren/rocky but still low
+      //  ambientLightIntensity = getRandomInRange(0.3, 0.5, random); // Higher ambient for desert planets
       break;
 
     case PlanetType.ICE:
@@ -344,8 +349,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(5, 9, random));
       bumpScale = 3; //getRandomInRange(1, 2, random); // Lower bump for ice
       roughness = getRandomInRange(0.1, 0.3, random);
-      shininess = getRandomInRange(10, 20, random); // Higher shine for ice
+      //shininess = getRandomInRange(10, 20, random); // Higher shine for ice
       specularStrength = getRandomInRange(0.4, 0.8, random); // Stronger specular for ice
+      //ambientLightIntensity = getRandomInRange(0.4, 0.6, random); // High ambient for ice planets
       break;
 
     case PlanetType.LAVA:
@@ -361,8 +367,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(5, 9, random));
       bumpScale = getRandomInRange(2, 3, random);
       roughness = getRandomInRange(0.1, 1, random);
-      shininess = getRandomInRange(10, 30, random); // Moderate shine for Terran
+      //shininess = getRandomInRange(10, 30, random); // Moderate shine for Terran
       specularStrength = getRandomInRange(0.3, 0.6, random);
+      //ambientLightIntensity = getRandomInRange(0.2, 0.4, random); // Moderate ambient for lava planets
       break;
 
     case PlanetType.OCEAN:
@@ -378,8 +385,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(4, 6, random)); // Less detail needed
       bumpScale = getRandomInRange(0.005, 0.02, random); // Very low bump for water surface
       roughness = getRandomInRange(0.1, 0.4, random); // Water is smooth
-      shininess = getRandomInRange(32, 96, random); // Water shine
+      //shininess = getRandomInRange(32, 96, random); // Water shine
       specularStrength = getRandomInRange(0.5, 0.9, random); // Strong water reflections
+      //ambientLightIntensity = getRandomInRange(0.3, 0.5, random); // Higher ambient for ocean planets
       break;
 
     default:
@@ -392,6 +400,7 @@ export function createProceduralSurfaceProperties(
       color3 = "#D4A373";
       color4 = "#FFFFFF";
       color5 = "#795548";
+      //ambientLightIntensity = getRandomInRange(0.2, 0.3, random); // Default ambient
       break;
   }
 
@@ -414,5 +423,7 @@ export function createProceduralSurfaceProperties(
     height5: height5,
     shininess: shininess,
     specularStrength: specularStrength,
+    roughness: roughness,
+    ambientLightIntensity: ambientLightIntensity,
   };
 }

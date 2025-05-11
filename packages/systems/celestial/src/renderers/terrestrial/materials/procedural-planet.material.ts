@@ -43,7 +43,9 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       },
       uLightIntensities: { value: Array(MAX_LIGHTS).fill(1.0) },
       uAmbientLightColor: { value: new THREE.Color(0xffffff) },
-      uAmbientLightIntensity: { value: 0.2 },
+      uAmbientLightIntensity: {
+        value: surfaceProps.ambientLightIntensity ?? 0.2,
+      },
       uCameraPosition: { value: new THREE.Vector3() },
 
       persistence: { value: surfaceProps.persistence ?? 0.5 },
@@ -64,6 +66,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       uHeight5: { value: surfaceProps.height5 ?? 0.8 },
 
       uBumpScale: { value: surfaceProps.bumpScale ?? 1 },
+      uRoughness: { value: surfaceProps.roughness ?? 0.5 },
 
       uShininess: { value: surfaceProps.shininess ?? 16.0 },
       uSpecularStrength: { value: surfaceProps.specularStrength ?? 0.3 },

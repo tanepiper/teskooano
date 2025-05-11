@@ -540,6 +540,11 @@ export class CelestialUniformsEditor
       label: string,
       path: string[],
       type: "color" | "number",
+      options?: {
+        min?: number;
+        max?: number;
+        step?: number;
+      },
     ) => {
       let controlElement: HTMLElement | undefined;
       let inputSubscription: Subscription | undefined;
@@ -560,6 +565,12 @@ export class CelestialUniformsEditor
           celestialObject,
           path,
         );
+        const input = element.querySelector("input") as HTMLInputElement;
+        if (input && options) {
+          if (options.min !== undefined) input.min = String(options.min);
+          if (options.max !== undefined) input.max = String(options.max);
+          if (options.step !== undefined) input.step = String(options.step);
+        }
         controlElement = element;
         inputSubscription = subscription;
       }
@@ -570,18 +581,36 @@ export class CelestialUniformsEditor
       }
     };
 
-    const castedSurfaceProps = surfaceProps as ProceduralSurfaceProperties;
-
     // Add a section header for noise parameters
     const noiseHeader = document.createElement("h3");
     noiseHeader.textContent = "Noise Parameters";
     container.appendChild(noiseHeader);
 
-    addControl("Persistence:", ["surface", "persistence"], "number");
-    addControl("Lacunarity:", ["surface", "lacunarity"], "number");
-    addControl("Period:", ["surface", "simplePeriod"], "number");
-    addControl("Octaves:", ["surface", "octaves"], "number");
-    addControl("Bump Scale:", ["surface", "bumpScale"], "number");
+    addControl("Persistence:", ["surface", "persistence"], "number", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+    addControl("Lacunarity:", ["surface", "lacunarity"], "number", {
+      min: 0,
+      max: 10,
+      step: 0.1,
+    });
+    addControl("Period:", ["surface", "simplePeriod"], "number", {
+      min: 0.1,
+      max: 20,
+      step: 0.1,
+    });
+    addControl("Octaves:", ["surface", "octaves"], "number", {
+      min: 1,
+      max: 10,
+      step: 1,
+    });
+    addControl("Bump Scale:", ["surface", "bumpScale"], "number", {
+      min: 0,
+      max: 5,
+      step: 0.1,
+    });
 
     // Add a section header for colors
     const colorHeader = document.createElement("h3");
@@ -599,50 +628,65 @@ export class CelestialUniformsEditor
     heightHeader.textContent = "Height Controls";
     container.appendChild(heightHeader);
 
-    // Add height controls with appropriate ranges
-    const heightControl = (label: string, path: string[]) => {
-      const { element, subscription } = this._createNumericInput(
-        label,
-        celestialId,
-        celestialObject,
-        path,
-      );
-      const input = element.querySelector("input") as HTMLInputElement;
-      if (input) {
-        input.min = "0";
-        input.max = "1";
-        input.step = "0.01";
-      }
-      container.appendChild(element);
-      this.activeInputSubscriptions.push(subscription);
-    };
-
-    heightControl("Height Level 1:", ["surface", "height1"]);
-    heightControl("Height Level 2:", ["surface", "height2"]);
-    heightControl("Height Level 3:", ["surface", "height3"]);
-    heightControl("Height Level 4:", ["surface", "height4"]);
-    heightControl("Height Level 5:", ["surface", "height5"]);
+    addControl("Height Level 1:", ["surface", "height1"], "number", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+    addControl("Height Level 2:", ["surface", "height2"], "number", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+    addControl("Height Level 3:", ["surface", "height3"], "number", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+    addControl("Height Level 4:", ["surface", "height4"], "number", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+    addControl("Height Level 5:", ["surface", "height5"], "number", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
 
     // Add a section header for material properties
     const materialHeader = document.createElement("h3");
     materialHeader.textContent = "Material Properties";
     container.appendChild(materialHeader);
 
-    if (Object.prototype.hasOwnProperty.call(castedSurfaceProps, "shininess")) {
-      addControl("Shininess:", ["surface", "shininess"], "number");
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(
-        castedSurfaceProps,
-        "specularStrength",
-      )
-    ) {
-      addControl(
-        "Specular Strength:",
-        ["surface", "specularStrength"],
-        "number",
-      );
-    }
+    addControl("Shininess:", ["surface", "shininess"], "number", {
+      min: 1,
+      max: 512,
+      step: 1,
+    });
+    addControl(
+      "Specular Strength:",
+      ["surface", "specularStrength"],
+      "number",
+      { min: 0, max: 1, step: 0.01 },
+    );
+    addControl("Roughness:", ["surface", "roughness"], "number", {
+      min: 0,
+      max: 1,
+      step: 0.01,
+    });
+
+    // Add a section header for lighting properties
+    const lightingHeader = document.createElement("h3");
+    lightingHeader.textContent = "Lighting Properties";
+    container.appendChild(lightingHeader);
+
+    addControl(
+      "Ambient Light Intensity:",
+      ["surface", "ambientLightIntensity"],
+      "number",
+      { min: 0, max: 2, step: 0.1 },
+    );
   }
 
   // --- End of Helper Methods ---

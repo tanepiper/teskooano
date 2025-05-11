@@ -110,7 +110,7 @@ vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
 
 // Simple lighting calculation (Blinn-Phongish)
 vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
-    vec3 totalLight = uAmbientLightColor * uAmbientLightIntensity * 2.0;
+    vec3 totalLight = (uAmbientLightColor * uAmbientLightIntensity);
 
     for (int i = 0; i < uNumLights; ++i) {
         if (i >= uNumLights) break; // Safety break

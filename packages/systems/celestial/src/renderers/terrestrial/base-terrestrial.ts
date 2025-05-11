@@ -261,6 +261,80 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     this.objectIds.clear();
   }
 
+  private _updateUniformIfDefined(
+    material: ProceduralPlanetMaterial,
+    uniformName: string,
+    value: any,
+  ): void {
+    if (value !== undefined && material.uniforms[uniformName]) {
+      material.uniforms[uniformName].value = value;
+    }
+  }
+
+  private _updateColorUniform(
+    material: ProceduralPlanetMaterial,
+    uniformName: string,
+    colorValue: string,
+  ): void {
+    if (colorValue && material.uniforms[uniformName]) {
+      material.uniforms[uniformName].value.set(colorValue);
+    }
+  }
+
+  private _updateSurfaceUniforms(
+    material: ProceduralPlanetMaterial,
+    surfaceProps: any,
+  ): void {
+    // Update noise parameters
+    this._updateUniformIfDefined(
+      material,
+      "persistence",
+      surfaceProps.persistence,
+    );
+    this._updateUniformIfDefined(
+      material,
+      "lacunarity",
+      surfaceProps.lacunarity,
+    );
+    this._updateUniformIfDefined(
+      material,
+      "uSimplePeriod",
+      surfaceProps.simplePeriod,
+    );
+    this._updateUniformIfDefined(material, "uOctaves", surfaceProps.octaves);
+    this._updateUniformIfDefined(
+      material,
+      "uBumpScale",
+      surfaceProps.bumpScale,
+    );
+
+    // Update colors
+    this._updateColorUniform(material, "uColor1", surfaceProps.color1);
+    this._updateColorUniform(material, "uColor2", surfaceProps.color2);
+    this._updateColorUniform(material, "uColor3", surfaceProps.color3);
+    this._updateColorUniform(material, "uColor4", surfaceProps.color4);
+    this._updateColorUniform(material, "uColor5", surfaceProps.color5);
+
+    // Update height controls
+    this._updateUniformIfDefined(material, "uHeight1", surfaceProps.height1);
+    this._updateUniformIfDefined(material, "uHeight2", surfaceProps.height2);
+    this._updateUniformIfDefined(material, "uHeight3", surfaceProps.height3);
+    this._updateUniformIfDefined(material, "uHeight4", surfaceProps.height4);
+    this._updateUniformIfDefined(material, "uHeight5", surfaceProps.height5);
+
+    // Update material properties
+    this._updateUniformIfDefined(
+      material,
+      "uShininess",
+      surfaceProps.shininess,
+    );
+    this._updateUniformIfDefined(
+      material,
+      "uSpecularStrength",
+      surfaceProps.specularStrength,
+    );
+  }
+
   public updateWith(
     objectData: RenderableCelestialObject,
     groupMesh: THREE.Object3D,
@@ -269,14 +343,11 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       `[BaseTerrestrialRenderer] updateWith: Updating ${objectData.celestialObjectId} with groupMesh:`,
       groupMesh,
     );
-    // The main body mesh is usually the first child of the high-detail group, or the group itself if not an LOD group for this specific update context.
-    // We need to be careful how we retrieve the mesh that has the ProceduralPlanetMaterial.
-    // Let's assume groupMesh is the direct output from MeshFactory for the highest LOD, which should be a THREE.Group containing the body mesh.
+
     let bodyMesh = groupMesh.children.find(
       (child) => child.name === `${objectData.celestialObjectId}-body`,
     ) as THREE.Mesh;
 
-    // If the groupMesh itself is the body (e.g., if LOD structure isn't used or this is a direct mesh reference)
     if (
       !bodyMesh &&
       groupMesh instanceof THREE.Mesh &&
@@ -285,8 +356,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       bodyMesh = groupMesh;
     }
 
-    // Fallback: Attempt to get from the materials map if direct mesh access fails or is ambiguous
-    // This relies on initializeMaterialMap being called correctly during creation.
     let material = this.materials.get(
       objectData.celestialObjectId,
     ) as ProceduralPlanetMaterial;
@@ -300,7 +369,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       console.warn(
         `[BaseTerrestrialRenderer] updateWith: Body mesh for ${objectData.celestialObjectId} does not have ProceduralPlanetMaterial.`,
       );
-      // If material from map is not ProceduralPlanetMaterial either, we can't proceed.
       if (!(material instanceof ProceduralPlanetMaterial)) return;
     } else if (!bodyMesh && !(material instanceof ProceduralPlanetMaterial)) {
       console.warn(
@@ -309,7 +377,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       return;
     }
 
-    // Add a type guard for PlanetProperties
     if (
       material &&
       material.uniforms &&
@@ -318,7 +385,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
         objectData.properties.type === CelestialType.MOON ||
         objectData.properties.type === CelestialType.DWARF_PLANET)
     ) {
-      // Now we can more safely cast to PlanetProperties
       const planetProps = objectData.properties as PlanetProperties;
 
       if (planetProps.surface) {
@@ -326,91 +392,13 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
           `[BaseTerrestrialRenderer] updateWith called for ${objectData.celestialObjectId}. Current surface props:`,
           planetProps.surface,
         );
-        const surfaceProps = planetProps.surface as any; // Or ProceduralSurfaceProperties if you're certain
 
-        // Update uniforms
-        if (
-          surfaceProps.persistence !== undefined &&
-          material.uniforms.persistence
-        ) {
-          material.uniforms.persistence.value = surfaceProps.persistence;
-        }
-        if (
-          surfaceProps.lacunarity !== undefined &&
-          material.uniforms.lacunarity
-        ) {
-          material.uniforms.lacunarity.value = surfaceProps.lacunarity;
-        }
-        if (
-          surfaceProps.simplePeriod !== undefined &&
-          material.uniforms.uSimplePeriod
-        ) {
-          material.uniforms.uSimplePeriod.value = surfaceProps.simplePeriod;
-        }
-        if (surfaceProps.octaves !== undefined && material.uniforms.uOctaves) {
-          material.uniforms.uOctaves.value = surfaceProps.octaves;
-        }
-        if (
-          surfaceProps.bumpScale !== undefined &&
-          material.uniforms.uBumpScale
-        ) {
-          material.uniforms.uBumpScale.value = surfaceProps.bumpScale;
-        }
-
-        // For colors, assuming uColor1 etc. are THREE.Color uniforms
-        // Ensure these uniform names match your ProceduralPlanetMaterial definition
-        if (surfaceProps.color1 && material.uniforms.uColor1) {
-          material.uniforms.uColor1.value.set(surfaceProps.color1);
-        }
-        if (surfaceProps.color2 && material.uniforms.uColor2) {
-          material.uniforms.uColor2.value.set(surfaceProps.color2);
-        }
-        if (surfaceProps.color3 && material.uniforms.uColor3) {
-          material.uniforms.uColor3.value.set(surfaceProps.color3);
-        }
-        if (surfaceProps.color4 && material.uniforms.uColor4) {
-          material.uniforms.uColor4.value.set(surfaceProps.color4);
-        }
-        if (surfaceProps.color5 && material.uniforms.uColor5) {
-          material.uniforms.uColor5.value.set(surfaceProps.color5);
-        }
-
-        // Update height controls
-        if (surfaceProps.height1 !== undefined && material.uniforms.uHeight1) {
-          material.uniforms.uHeight1.value = surfaceProps.height1;
-        }
-        if (surfaceProps.height2 !== undefined && material.uniforms.uHeight2) {
-          material.uniforms.uHeight2.value = surfaceProps.height2;
-        }
-        if (surfaceProps.height3 !== undefined && material.uniforms.uHeight3) {
-          material.uniforms.uHeight3.value = surfaceProps.height3;
-        }
-        if (surfaceProps.height4 !== undefined && material.uniforms.uHeight4) {
-          material.uniforms.uHeight4.value = surfaceProps.height4;
-        }
-        if (surfaceProps.height5 !== undefined && material.uniforms.uHeight5) {
-          material.uniforms.uHeight5.value = surfaceProps.height5;
-        }
-
-        if (
-          surfaceProps.shininess !== undefined &&
-          material.uniforms.uShininess
-        ) {
-          material.uniforms.uShininess.value = surfaceProps.shininess;
-        }
-        if (
-          surfaceProps.specularStrength !== undefined &&
-          material.uniforms.uSpecularStrength
-        ) {
-          material.uniforms.uSpecularStrength.value =
-            surfaceProps.specularStrength;
-        }
+        this._updateSurfaceUniforms(material, planetProps.surface);
 
         console.log(
           `[BaseTerrestrialRenderer] Updated uniforms for ${objectData.celestialObjectId}:`,
           JSON.parse(JSON.stringify(material.uniforms)),
         );
-        // material.uniformsNeedUpdate = true; // Generally good for shader materials if unsure.
       } else {
         console.warn(
           `[BaseTerrestrialRenderer] updateWith: Planet ${objectData.celestialObjectId} has no surface properties defined.`,
