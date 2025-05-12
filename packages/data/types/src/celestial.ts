@@ -279,6 +279,17 @@ export interface StarProperties extends SpecificPropertiesBase {
   exoticType?: ExoticStellarType;
 }
 
+export interface PlanetAtmosphereProperties {
+  /** The color of the glow, usually a hex string. */
+  glowColor: string;
+  /** The intensity of the glow, usually a number between 0 and 1. */
+  intensity: number;
+  /** The power of the glow, usually a number between 0 and 1. */
+  power: number;
+  /** The thickness of the glow, usually a number between 0 and 1. */
+  thickness: number;
+}
+
 /**
  * Properties specific to Planets (including rocky, terrestrial, ice, etc.). Note: Moons use PlanetProperties.
  */
@@ -295,24 +306,7 @@ export interface PlanetProperties extends SpecificPropertiesBase {
   /** Array listing the primary chemical or geological composition (e.g., ["silicates", "iron"]). */
   composition: string[];
   /** Optional atmospheric properties. */
-  atmosphere?: {
-    /** Array listing the main gaseous components (e.g., ["N2", "O2"]). */
-    composition: string[];
-    /** Surface atmospheric pressure (e.g., in atmospheres or Pascals). */
-    pressure: number;
-    /** The visual color tint of the atmosphere, usually a hex string. */
-    color: string;
-    cloudCoverage?: number;
-
-    /** Density factor affecting visual thickness/haze. */
-    density?: number;
-    /** Overall opacity of the atmosphere layer. */
-    opacity?: number;
-    /** Scale factor for atmospheric effects (e.g., scattering distance). */
-    scale?: number;
-    /** Speed of visual changes in the atmosphere (e.g., cloud movement simulation). */
-    speed?: number;
-  };
+  atmosphere?: PlanetAtmosphereProperties;
   /** Optional cloud layer properties. */
   clouds?: {
     /** The visual color of the clouds, usually a hex string. */
@@ -392,36 +386,61 @@ export interface OceanSurfaceProperties extends BaseSurfaceProperties {
 }
 
 /**
- * Defines the properties needed to render a procedurally generated surface,
- * primarily used for planets and potentially moons using specific shaders.
+ * Interface defining properties for procedural surface generation and rendering.
+ * These properties control the appearance and characteristics of procedurally generated surfaces
+ * such as terrain, planets, or other celestial bodies.
  */
 export interface ProceduralSurfaceProperties {
+  /** Controls how quickly the noise amplitude decreases with each octave (0-1) */
   persistence: number;
+  /** Controls how quickly the frequency increases with each octave (typically > 1) */
   lacunarity: number;
+  /** Base frequency for the noise generation */
   simplePeriod: number;
+  /** Number of noise layers to combine for detail */
   octaves: number;
+  /** Scale factor for normal map/bump mapping effect */
   bumpScale: number;
+  /** Base color for the surface (lowest elevation) */
   color1: string;
+  /** Second color gradient point */
   color2: string;
+  /** Third color gradient point */
   color3: string;
+  /** Fourth color gradient point */
   color4: string;
+  /** Final color for the surface (highest elevation) */
   color5: string;
+  /** Height threshold for color1 transition */
   height1: number;
+  /** Height threshold for color2 transition */
   height2: number;
+  /** Height threshold for color3 transition */
   height3: number;
+  /** Height threshold for color4 transition */
   height4: number;
+  /** Height threshold for color5 transition */
   height5: number;
+  /** Surface shininess factor (0-1) */
   shininess: number;
+  /** Intensity of specular highlights (0-1) */
   specularStrength: number;
+  /** Surface roughness factor (0-1) */
   roughness: number;
+  /** Intensity of ambient lighting (0-1) */
   ambientLightIntensity: number;
+  /** Controls the amount of surface undulation/waviness */
   undulation: number;
 
   // Terrain generation properties
-  terrainType: number; // 1 = simple, 2 = sharp peaks, 3 = sharp valleys
-  terrainAmplitude: number; // Controls overall height scale
-  terrainSharpness: number; // Controls terrain feature definition
-  terrainOffset: number; // Base height offset
+  /** Type of terrain generation algorithm (1 = simple, 2 = sharp peaks, 3 = sharp valleys) */
+  terrainType: number;
+  /** Controls overall height scale of the terrain */
+  terrainAmplitude: number;
+  /** Controls how defined and sharp terrain features appear */
+  terrainSharpness: number;
+  /** Base height offset for the entire terrain */
+  terrainOffset: number;
 }
 
 /** Surface properties specific to Rocky/Terrestrial planets */
@@ -620,11 +639,7 @@ export interface CelestialObject {
   siderealRotationPeriod_s?: number;
 
   /** Optional atmospheric properties common to many bodies */
-  atmosphere?: {
-    composition: string[];
-    pressure: number;
-    color: string;
-  };
+  atmosphere?: PlanetAtmosphereProperties;
 
   /** Optional surface properties common to many bodies */
   surface?: SurfacePropertiesUnion;

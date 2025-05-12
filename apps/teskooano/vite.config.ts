@@ -41,6 +41,9 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: "prompt",
+      workbox: {
+        cleanupOutdatedCaches: false,
+      },
       manifest: {
         name: "Teskooano 3D N-Body Simulator",
         short_name: "Teskooano",

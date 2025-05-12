@@ -7,6 +7,8 @@ import {
   type PlanetProperties,
   type ProceduralSurfaceProperties,
   type StarProperties,
+  CustomEvents,
+  type SliderValueChangePayload,
 } from "@teskooano/data-types";
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 
@@ -398,13 +400,14 @@ export class CelestialUniformsEditor
   ): { element: HTMLElement; subscription: Subscription } {
     const wrapper = document.createElement("div");
     wrapper.className = "uniform-control";
-    const label = document.createElement("label");
-    label.textContent = labelText;
-    const input = document.createElement("input");
-    input.type = "number";
-    input.min = "-100";
-    input.max = "100";
-    input.step = "0.01";
+
+    // Use teskooano-slider instead of input
+    const slider = document.createElement("teskooano-slider");
+    slider.setAttribute("label", labelText);
+    slider.setAttribute("min", "-100"); // Default min, can be overridden by options
+    slider.setAttribute("max", "100"); // Default max, can be overridden by options
+    slider.setAttribute("step", "0.01"); // Default step, can be overridden by options
+    slider.setAttribute("editable-value", ""); // Add editable value attribute
 
     let initialValueForInput: any = currentCelestialObject.properties;
     try {
@@ -415,43 +418,20 @@ export class CelestialUniformsEditor
       console.warn(
         `Could not resolve path ${propertyPathToUniform.join(".")} for ${labelText}. Defaulting to 0.`,
       );
-      initialValueForInput = "0";
+      initialValueForInput = 0; // Default to number 0
     }
-    input.value = String(initialValueForInput ?? "0");
+    // Ensure initialValue is a number before setting attribute
+    const numericInitialValue = Number(initialValueForInput ?? 0);
+    slider.setAttribute("value", String(numericInitialValue));
 
-    const typedChange$ = fromEvent(input, "change").pipe(
-      map((event) => parseFloat((event.target as HTMLInputElement).value)),
-    );
-
-    const arrowKey$ = fromEvent<KeyboardEvent>(input, "keydown").pipe(
-      filter((event) => event.key === "ArrowUp" || event.key === "ArrowDown"),
-      tap((event) => event.preventDefault()),
-      map((event) => {
-        const currentValue = parseFloat(input.value);
-        const step = parseFloat(input.step);
-        const min = parseFloat(input.min);
-        const max = parseFloat(input.max);
-        let newValue = currentValue;
-
-        if (event.key === "ArrowUp") {
-          newValue = isNaN(currentValue)
-            ? step
-            : Math.min(max, currentValue + step);
-        } else {
-          newValue = isNaN(currentValue)
-            ? -step
-            : Math.max(min, currentValue - step);
-        }
-        const decimalPlaces = (String(step).split(".")[1] || "").length;
-        input.value = newValue.toFixed(decimalPlaces);
-        return newValue;
-      }),
-    );
-
-    const combinedUpdates$ = merge(typedChange$, arrowKey$);
-
-    const subscription = combinedUpdates$
+    // Listen to the 'SLIDER_CHANGE' event from the slider
+    const subscription = fromEvent<CustomEvent<SliderValueChangePayload>>(
+      slider,
+      CustomEvents.SLIDER_CHANGE,
+    )
       .pipe(
+        // Extract value from event detail
+        map((event) => event.detail.value),
         distinctUntilChanged((prev, curr) => prev === curr && !isNaN(prev)),
         tap((newValue) => {
           const latestCelestial = getCelestialObjects()[celestialId];
@@ -462,7 +442,7 @@ export class CelestialUniformsEditor
             const updatedProperties = this._updatePropertyPath(
               clonedProperties,
               propertyPathToUniform,
-              newValue,
+              newValue, // Use the numeric value directly
             );
             celestialActions.updateCelestialObject(celestialId, {
               properties: updatedProperties,
@@ -476,8 +456,7 @@ export class CelestialUniformsEditor
       )
       .subscribe();
 
-    wrapper.appendChild(label);
-    wrapper.appendChild(input);
+    wrapper.appendChild(slider); // Add the slider to the wrapper
     return { element: wrapper, subscription };
   }
 
@@ -576,11 +555,16 @@ export class CelestialUniformsEditor
           celestialObject,
           path,
         );
-        const input = element.querySelector("input") as HTMLInputElement;
-        if (input && options) {
-          if (options.min !== undefined) input.min = String(options.min);
-          if (options.max !== undefined) input.max = String(options.max);
-          if (options.step !== undefined) input.step = String(options.step);
+        // Get the slider element within the wrapper
+        const slider = element.querySelector("teskooano-slider");
+        if (slider && options) {
+          // Use setAttribute for slider properties
+          if (options.min !== undefined)
+            slider.setAttribute("min", String(options.min));
+          if (options.max !== undefined)
+            slider.setAttribute("max", String(options.max));
+          if (options.step !== undefined)
+            slider.setAttribute("step", String(options.step));
         }
         controlElement = element;
         inputSubscription = subscription;

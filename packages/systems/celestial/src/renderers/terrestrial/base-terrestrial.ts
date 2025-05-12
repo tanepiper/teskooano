@@ -2,11 +2,13 @@ import { SCALE, CelestialType, PlanetProperties } from "@teskooano/data-types";
 import * as THREE from "three";
 import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "../index";
 import { AtmosphereMaterial } from "./materials/atmosphere.material";
-import { CloudMaterial } from "./materials/clouds.material";
 import { ProceduralPlanetMaterial } from "./materials/procedural-planet.material";
 
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import { AtmosphereCloudService } from "./utils/atmosphere-cloud-utils";
+import {
+  AtmosphereService,
+  AtmosphereMeshResult,
+} from "./utils/atmosphere-cloud-utils";
 import { PlanetMaterialService } from "./utils/planet-material-utils";
 
 const MAX_LIGHTS = 4;
@@ -17,7 +19,6 @@ const MAX_LIGHTS = 4;
 export class BaseTerrestrialRenderer implements CelestialRenderer {
   protected materials: Map<string, THREE.Material> = new Map();
   protected atmosphereMaterials: Map<string, AtmosphereMaterial> = new Map();
-  protected cloudMaterials: Map<string, CloudMaterial> = new Map();
   protected textureLoader: THREE.TextureLoader;
 
   protected loadedTextures: Map<
@@ -34,12 +35,12 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
 
   protected material: ProceduralPlanetMaterial | null = null;
   protected materialService: PlanetMaterialService;
-  protected atmosphereCloudService: AtmosphereCloudService;
+  protected atmosphereCloudService: AtmosphereService;
 
   constructor() {
     this.textureLoader = new THREE.TextureLoader();
     this.materialService = new PlanetMaterialService();
-    this.atmosphereCloudService = new AtmosphereCloudService();
+    this.atmosphereCloudService = new AtmosphereService();
   }
 
   /**
@@ -149,28 +150,43 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     bodyMesh.name = `${object.celestialObjectId}-body`;
     group.add(bodyMesh);
 
-    // // Use service to get mesh and material
-    // const cloudResult: CloudMeshResult | null =
-    //   this.atmosphereCloudService.createCloudMesh(object, segments, baseRadius);
-    // if (cloudResult) {
-    //   group.add(cloudResult.mesh);
-    //   this.cloudMaterials.set(object.celestialObjectId, cloudResult.material);
-    // }
+    const planetProps = object.properties as PlanetProperties;
+    // Use service to get mesh and material
+    console.log(
+      `[BaseTerrestrialRenderer] Creating atmosphere for ${object.celestialObjectId}`,
+      {
+        hasAtmosphere: planetProps?.atmosphere,
+        atmosphereProps: planetProps?.atmosphere,
+        baseRadius,
+        segments,
+      },
+    );
 
-    // // Use service to get mesh and material
-    // const atmosphereResult: AtmosphereMeshResult | null =
-    //   this.atmosphereCloudService.createAtmosphereMesh(
-    //     object,
-    //     segments,
-    //     baseRadius,
-    //   );
-    // if (atmosphereResult) {
-    //   group.add(atmosphereResult.mesh);
-    //   this.atmosphereMaterials.set(
-    //     object.celestialObjectId,
-    //     atmosphereResult.material,
-    //   );
-    // }
+    const atmosphereResult: AtmosphereMeshResult | null =
+      this.atmosphereCloudService.createAtmosphereMesh(
+        object,
+        segments,
+        baseRadius,
+      );
+    if (atmosphereResult) {
+      console.log(
+        `[BaseTerrestrialRenderer] Added atmosphere mesh for ${object.celestialObjectId}`,
+        {
+          mesh: atmosphereResult.mesh,
+          material: atmosphereResult.material,
+          uniforms: atmosphereResult.material.uniforms,
+        },
+      );
+      group.add(atmosphereResult.mesh);
+      this.atmosphereMaterials.set(
+        object.celestialObjectId,
+        atmosphereResult.material,
+      );
+    } else {
+      console.warn(
+        `[BaseTerrestrialRenderer] No atmosphere created for ${object.celestialObjectId}`,
+      );
+    }
     return group;
   }
 
@@ -213,30 +229,10 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       }
     });
 
-    // this.cloudMaterials.forEach((material) => {
-    //   let sunPos: THREE.Vector3 | undefined = undefined;
-    //   if (lightSources && lightSources.size > 0) {
-    //     const firstLight = lightSources.values().next().value;
-    //     if (firstLight) sunPos = firstLight.position;
-    //   }
-    //   if (camera) {
-    //     material.update(time, camera.position, sunPos);
-    //   } else {
-    //     console.warn(
-    //       "[BaseTerrestrialRenderer] Camera not available for cloud material update.",
-    //     );
-    //     material.update(time, new THREE.Vector3(0, 0, 1), sunPos);
-    //   }
-    // });
-
-    // this.atmosphereMaterials.forEach((material) => {
-    //   let sunPos: THREE.Vector3 | undefined = undefined;
-    //   if (lightSources && lightSources.size > 0) {
-    //     const firstLight = lightSources.values().next().value;
-    //     if (firstLight) sunPos = firstLight.position;
-    //   }
-    //   material.update(time, sunPos);
-    // });
+    // Update atmosphere materials with current time and light sources
+    this.atmosphereMaterials.forEach((material) => {
+      material.update(time, camera, lightSources);
+    });
   }
 
   /**
@@ -248,9 +244,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
 
     this.atmosphereMaterials.forEach((material) => material.dispose());
     this.atmosphereMaterials.clear();
-
-    this.cloudMaterials.forEach((material) => material.dispose());
-    this.cloudMaterials.clear();
 
     this.loadedTextures.forEach((textures) => {
       textures.color?.dispose();

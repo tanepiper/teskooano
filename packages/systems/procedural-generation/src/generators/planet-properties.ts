@@ -150,10 +150,25 @@ function generateRockyPlanetSpecificProperties(
     );
   }
 
-  const hasAtmosphere =
-    baseProps.rockyPlanetType === PlanetType.ICE
-      ? random() < 0.1
-      : random() < 0.6;
+  // Determine if the planet has an atmosphere based on its type
+  let hasAtmosphere: boolean;
+  switch (baseProps.rockyPlanetType) {
+    case PlanetType.TERRESTRIAL:
+      hasAtmosphere = true;
+    case PlanetType.BARREN:
+      hasAtmosphere = false; // Barren planets never have an atmosphere
+      break;
+    case PlanetType.ICE:
+      hasAtmosphere = random() < 0.1; // 10% chance for Ice planets
+      break;
+    case PlanetType.ROCKY:
+    case PlanetType.DESERT:
+    case PlanetType.LAVA:
+    default: // Assume Terran or other rocky types suitable for atmosphere
+      hasAtmosphere = random() < 0.6; // 60% chance for Terran/other
+      break;
+  }
+
   let atmosphereType = AtmosphereType.NONE;
   let atmosphereColor: string | undefined = undefined;
   let atmComposition: string[] = [];
@@ -242,14 +257,25 @@ function generateRockyPlanetSpecificProperties(
     surface: surfaceProperties as any,
     atmosphere: hasAtmosphere
       ? {
-          composition: atmComposition,
-          pressure: pressure,
-          color: atmosphereColor!,
-          density: UTIL.getRandomInRange(
-            CONST.ATMOSPHERE_DENSITY_RANGES[atmosphereType].min,
-            CONST.ATMOSPHERE_DENSITY_RANGES[atmosphereType].max,
-            random,
-          ),
+          glowColor: atmosphereColor || "#8899ff",
+          intensity:
+            atmosphereType === AtmosphereType.THIN
+              ? 0.5
+              : atmosphereType === AtmosphereType.NORMAL
+                ? 1.0
+                : 1.5,
+          power:
+            atmosphereType === AtmosphereType.THIN
+              ? 1.5
+              : atmosphereType === AtmosphereType.NORMAL
+                ? 2.0
+                : 2.5,
+          thickness:
+            atmosphereType === AtmosphereType.THIN
+              ? 0.05
+              : atmosphereType === AtmosphereType.NORMAL
+                ? 0.1
+                : 0.15,
         }
       : undefined,
     clouds: cloudProps,

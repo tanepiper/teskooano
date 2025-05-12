@@ -1,11 +1,15 @@
 import { Observable, Subscriber } from "rxjs";
 import { OSVector3 } from "@teskooano/core-math";
-import type {
+import {
   CelestialObject,
   OrbitalParameters,
   PhysicsStateReal,
   RingProperties,
   RingSystemProperties,
+  PlanetProperties,
+  PlanetType,
+  PlanetAtmosphereProperties,
+  CelestialSpecificPropertiesUnion,
 } from "@teskooano/data-types";
 import {
   CelestialStatus,
@@ -125,6 +129,44 @@ export function generatePlanet(
       const starLuminosity = calculateLuminosity(starRadius, starTemperature);
       const planetTemp = estimateTemperature(starLuminosity, bodyDistanceAU);
 
+      let properties: CelestialSpecificPropertiesUnion = specificProperties;
+      if (
+        specificProperties.type === CelestialType.PLANET &&
+        (specificProperties as PlanetProperties).atmosphere
+      ) {
+        properties = {
+          ...specificProperties,
+          atmosphere: {
+            glowColor: UTIL.getRandomItem(
+              specificProperties.planetType === PlanetType.TERRESTRIAL
+                ? ["#dfe0e7", "#e7e9eb", "#f2f4f7"]
+                : specificProperties.planetType === PlanetType.ICE
+                  ? ["#aaccff", "#cceeff", "#ddeeff"]
+                  : ["#ff9966", "#ffaa88", "#ffbb99"],
+              random,
+            ),
+            intensity:
+              specificProperties.planetType === PlanetType.TERRESTRIAL
+                ? 1.0
+                : specificProperties.planetType === PlanetType.ICE
+                  ? 0.8
+                  : 1.2,
+            power:
+              specificProperties.planetType === PlanetType.TERRESTRIAL
+                ? 2.0
+                : specificProperties.planetType === PlanetType.ICE
+                  ? 1.8
+                  : 2.2,
+            thickness:
+              specificProperties.planetType === PlanetType.TERRESTRIAL
+                ? 0.1
+                : specificProperties.planetType === PlanetType.ICE
+                  ? 0.08
+                  : 0.12,
+          },
+        } as PlanetProperties;
+      }
+
       const planetData: CelestialObject = {
         id: planetId,
         name: planetName,
@@ -136,7 +178,7 @@ export function generatePlanet(
         realRadius_m: finalPlanetRadius_m,
         temperature: planetTemp,
         orbit: orbit,
-        properties: specificProperties,
+        properties,
         seed: planetSeed,
         siderealRotationPeriod_s: rotationPeriod_s,
         axialTilt: tiltAxis,
