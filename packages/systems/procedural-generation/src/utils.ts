@@ -238,9 +238,9 @@ export function createProceduralSurfaceProperties(
   let octaves = Math.floor(getRandomInRange(5, 9, random));
   let bumpScale = getRandomInRange(2, 3, random);
   let roughness = getRandomInRange(0.5, 0.9, random); // Base roughness
-  let shininess = 100; //getRandomInRange(16, 64, random); // Default shininess
-  let specularStrength = getRandomInRange(0.2, 0.5, random); // Default specular strength
-  let ambientLightIntensity = 0.0001; //getRandomInRange(0.1, 0.3, random); // Default ambient light
+  let shininess = getRandomInRange(8, 32, random); // Lower default shininess
+  let specularStrength = getRandomInRange(0.1, 0.3, random); // Lower default specular
+  let ambientLightIntensity = 0.5; //getRandomInRange(0.05, 0.15, random); // Lower default ambient
 
   let height1 = getRandomInRange(0.1, 0.2, random);
   let height2 = getRandomInRange(0.2, 0.4, random);
@@ -290,6 +290,7 @@ export function createProceduralSurfaceProperties(
       //shininess = getRandomInRange(5, 10, random); // Very low shine
       specularStrength = getRandomInRange(0.1, 0.9, random); // Very low strength
       //ambientLightIntensity = getRandomInRange(0.1, 0.2, random); // Lower ambient for rocky planets
+      ambientLightIntensity = 0.9;
       break;
 
     case PlanetType.BARREN:
@@ -316,6 +317,7 @@ export function createProceduralSurfaceProperties(
       //shininess = getRandomInRange(1, 3, random); // Very low shine
       specularStrength = getRandomInRange(0.01, 0.05, random); // Very low strength
       //ambientLightIntensity = getRandomInRange(0.05, 0.15, random); // Very low ambient for barren planets
+      ambientLightIntensity = 0.9;
       break;
 
     case PlanetType.DESERT:
@@ -352,6 +354,7 @@ export function createProceduralSurfaceProperties(
       //shininess = getRandomInRange(10, 20, random); // Higher shine for ice
       specularStrength = getRandomInRange(0.4, 0.8, random); // Stronger specular for ice
       //ambientLightIntensity = getRandomInRange(0.4, 0.6, random); // High ambient for ice planets
+      ambientLightIntensity = 0.5;
       break;
 
     case PlanetType.LAVA:
@@ -370,6 +373,7 @@ export function createProceduralSurfaceProperties(
       //shininess = getRandomInRange(10, 30, random); // Moderate shine for Terran
       specularStrength = getRandomInRange(0.3, 0.6, random);
       //ambientLightIntensity = getRandomInRange(0.2, 0.4, random); // Moderate ambient for lava planets
+      ambientLightIntensity = 0.9;
       break;
 
     case PlanetType.OCEAN:

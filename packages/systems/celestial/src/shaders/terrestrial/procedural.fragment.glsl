@@ -110,7 +110,9 @@ vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
 
 // Simple lighting calculation (Blinn-Phongish)
 vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
-    vec3 totalLight = (uAmbientLightColor * uAmbientLightIntensity);
+    // Start with ambient light
+    vec3 totalLight = uAmbientLightColor * uAmbientLightIntensity;
+    vec3 directionalLight = vec3(0.0);
 
     for (int i = 0; i < uNumLights; ++i) {
         if (i >= uNumLights) break; // Safety break
@@ -120,15 +122,18 @@ vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
 
         // Diffuse
         float diff = max(dot(normal, lightDir), 0.0);
-        vec3 diffuse = diff * lightColor * lightIntensity;
+        vec3 diffuse = diff * lightColor * lightIntensity * 0.3; // Reduced to 30%
 
         // Specular (Blinn-Phong)
         vec3 halfwayDir = normalize(lightDir + viewDir);
         float spec = pow(max(dot(normal, halfwayDir), 0.0), uShininess);
-        vec3 specular = uSpecularStrength * spec * lightColor * lightIntensity;
+        vec3 specular = uSpecularStrength * spec * lightColor * lightIntensity * 0.2; // Reduced to 20%
 
-        totalLight += diffuse + specular;
+        directionalLight += diffuse + specular;
     }
+
+    // Balance ambient and directional lighting
+    totalLight = mix(totalLight, totalLight + directionalLight, 0.4); // Only add 40% of directional light
 
     return baseColor * totalLight;
 }

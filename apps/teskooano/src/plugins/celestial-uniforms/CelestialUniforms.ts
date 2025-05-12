@@ -661,14 +661,14 @@ export class CelestialUniformsEditor
 
     addControl("Shininess:", ["surface", "shininess"], "number", {
       min: 1,
-      max: 512,
+      max: 64,
       step: 1,
     });
     addControl(
       "Specular Strength:",
       ["surface", "specularStrength"],
       "number",
-      { min: 0, max: 1, step: 0.01 },
+      { min: 0, max: 0.5, step: 0.01 },
     );
     addControl("Roughness:", ["surface", "roughness"], "number", {
       min: 0,
@@ -685,7 +685,7 @@ export class CelestialUniformsEditor
       "Ambient Light Intensity:",
       ["surface", "ambientLightIntensity"],
       "number",
-      { min: 0, max: 2, step: 0.1 },
+      { min: 0, max: 0.5, step: 0.01 },
     );
   }
 
