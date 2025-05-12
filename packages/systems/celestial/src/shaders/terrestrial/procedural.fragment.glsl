@@ -51,7 +51,6 @@ uniform float uSpecularStrength;
     #include "../shared/noise.glsl"
 #endif
 
-    
 #ifndef LIGHTING_GLSL
     #include "../shared/lighting.glsl"
 #endif
