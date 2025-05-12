@@ -262,10 +262,16 @@ export function createProceduralSurfaceProperties(
       color4 = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
       color5 = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
 
+      height1 = getRandomInRange(0.2, 0.3, random);
+      height2 = getRandomInRange(0.3, 0.45, random);
+      height3 = getRandomInRange(0.45, 0.6, random);
+      height4 = getRandomInRange(0.6, 0.75, random);
+      height5 = getRandomInRange(0.75, 1.0, random);
+
       persistence = getRandomInRange(0.5, 0.6, random);
-      lacunarity = getRandomInRange(1.5, 2.3, random);
+      lacunarity = getRandomInRange(1.7, 2.9, random);
       simplePeriod = getRandomInRange(0.7, 1.0, random);
-      octaves = Math.floor(getRandomInRange(5, 9, random));
+      octaves = Math.floor(getRandomInRange(6, 10, random));
       bumpScale = getRandomInRange(1, 2, random);
       roughness = getRandomInRange(0.1, 0.2, random);
       //shininess = getRandomInRange(3, 7, random); // Moderate shine for Terran
