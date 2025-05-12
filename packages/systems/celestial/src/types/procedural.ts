@@ -13,6 +13,13 @@ export interface ProceduralPlanetUniforms {
   lacunarity: { value: number };
   uSimplePeriod: { value: number };
   uOctaves: { value: number };
+  uUndulation: { value: number };
+
+  // Terrain generation parameters
+  uTerrainType: { value: number }; // 1 = simple, 2 = sharp peaks, 3 = sharp valleys
+  uTerrainAmplitude: { value: number }; // Controls overall height scale
+  uTerrainSharpness: { value: number }; // Controls terrain feature definition
+  uTerrainOffset: { value: number }; // Base height offset
 
   uColor1: { value: Color };
   uColor2: { value: Color };

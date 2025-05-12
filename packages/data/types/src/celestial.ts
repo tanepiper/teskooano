@@ -415,6 +415,13 @@ export interface ProceduralSurfaceProperties {
   specularStrength: number;
   roughness: number;
   ambientLightIntensity: number;
+  undulation: number;
+
+  // Terrain generation properties
+  terrainType: number; // 1 = simple, 2 = sharp peaks, 3 = sharp valleys
+  terrainAmplitude: number; // Controls overall height scale
+  terrainSharpness: number; // Controls terrain feature definition
+  terrainOffset: number; // Base height offset
 }
 
 /** Surface properties specific to Rocky/Terrestrial planets */

@@ -52,6 +52,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       lacunarity: { value: surfaceProps.lacunarity ?? 2.0 },
       uSimplePeriod: { value: surfaceProps.simplePeriod ?? 4.0 },
       uOctaves: { value: surfaceProps.octaves ?? 6 },
+      uUndulation: { value: surfaceProps.undulation ?? 0.1 },
 
       uColor1: { value: parseColor(surfaceProps.color1, "#5179B5") },
       uColor2: { value: parseColor(surfaceProps.color2, "#4C9341") },
@@ -70,6 +71,11 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
 
       uShininess: { value: surfaceProps.shininess ?? 16.0 },
       uSpecularStrength: { value: surfaceProps.specularStrength ?? 0.3 },
+
+      uTerrainType: { value: surfaceProps.terrainType ?? 2 },
+      uTerrainAmplitude: { value: surfaceProps.terrainAmplitude ?? 1.0 },
+      uTerrainSharpness: { value: surfaceProps.terrainSharpness ?? 1.0 },
+      uTerrainOffset: { value: surfaceProps.terrainOffset ?? 0.0 },
 
       uTime: { value: 0.0 },
     };

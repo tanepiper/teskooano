@@ -237,10 +237,17 @@ export function createProceduralSurfaceProperties(
   let simplePeriod = getRandomInRange(2.5, 7.0, random);
   let octaves = Math.floor(getRandomInRange(5, 9, random));
   let bumpScale = getRandomInRange(2, 3, random);
-  let roughness = getRandomInRange(0.5, 0.9, random); // Base roughness
-  let shininess = getRandomInRange(8, 32, random); // Lower default shininess
-  let specularStrength = getRandomInRange(0.1, 0.3, random); // Lower default specular
-  let ambientLightIntensity = 0.5; //getRandomInRange(0.05, 0.15, random); // Lower default ambient
+  let roughness = getRandomInRange(0.5, 0.9, random);
+  let shininess = getRandomInRange(8, 32, random);
+  let specularStrength = getRandomInRange(0.1, 0.3, random);
+  let ambientLightIntensity = 0.5;
+  let undulation = getRandomInRange(0.1, 0.3, random);
+
+  // Default terrain generation values
+  let terrainType = 2; // Default to sharp peaks
+  let terrainAmplitude = 1.0;
+  let terrainSharpness = 1.0;
+  let terrainOffset = 0.0;
 
   let height1 = getRandomInRange(0.1, 0.2, random);
   let height2 = getRandomInRange(0.2, 0.4, random);
@@ -277,6 +284,11 @@ export function createProceduralSurfaceProperties(
       //shininess = getRandomInRange(3, 7, random); // Moderate shine for Terran
       specularStrength = getRandomInRange(0.3, 0.6, random);
       //ambientLightIntensity = getRandomInRange(0.2, 0.4, random); // Higher ambient for Earth-like planets
+      undulation = getRandomInRange(0.3, 0.5, random); // Higher undulation for continent-like features
+      terrainType = 2; // Sharp peaks for mountains
+      terrainAmplitude = getRandomInRange(0.8, 1.2, random);
+      terrainSharpness = getRandomInRange(0.8, 1.2, random);
+      terrainOffset = getRandomInRange(-0.1, 0.1, random);
       break;
 
     case PlanetType.ROCKY:
@@ -297,6 +309,11 @@ export function createProceduralSurfaceProperties(
       specularStrength = getRandomInRange(0.1, 0.9, random); // Very low strength
       //ambientLightIntensity = getRandomInRange(0.1, 0.2, random); // Lower ambient for rocky planets
       ambientLightIntensity = 0.9;
+      undulation = getRandomInRange(0.2, 0.4, random); // Moderate undulation for rocky terrain
+      terrainType = 2; // Sharp peaks for rocky terrain
+      terrainAmplitude = getRandomInRange(1.0, 1.5, random);
+      terrainSharpness = getRandomInRange(1.2, 1.8, random);
+      terrainOffset = getRandomInRange(-0.2, 0.0, random);
       break;
 
     case PlanetType.BARREN:
@@ -324,6 +341,11 @@ export function createProceduralSurfaceProperties(
       specularStrength = getRandomInRange(0.01, 0.05, random); // Very low strength
       //ambientLightIntensity = getRandomInRange(0.05, 0.15, random); // Very low ambient for barren planets
       ambientLightIntensity = 0.9;
+      undulation = getRandomInRange(0.1, 0.2, random); // Lower undulation for barren planets
+      terrainType = 3; // Sharp valleys for barren planets
+      terrainAmplitude = getRandomInRange(0.5, 0.8, random);
+      terrainSharpness = getRandomInRange(1.5, 2.0, random);
+      terrainOffset = getRandomInRange(0.0, 0.2, random);
       break;
 
     case PlanetType.DESERT:
@@ -342,6 +364,11 @@ export function createProceduralSurfaceProperties(
       //shininess = getRandomInRange(128, 512, random); // Very low shine
       specularStrength = getRandomInRange(0.05, 0.15, random); // Slightly higher than barren/rocky but still low
       //  ambientLightIntensity = getRandomInRange(0.3, 0.5, random); // Higher ambient for desert planets
+      undulation = getRandomInRange(0.15, 0.25, random); // Moderate undulation for desert dunes
+      terrainType = 1; // Simple noise for dunes
+      terrainAmplitude = getRandomInRange(0.3, 0.6, random);
+      terrainSharpness = getRandomInRange(0.5, 0.8, random);
+      terrainOffset = getRandomInRange(0.1, 0.3, random);
       break;
 
     case PlanetType.ICE:
@@ -361,6 +388,11 @@ export function createProceduralSurfaceProperties(
       specularStrength = getRandomInRange(0.4, 0.8, random); // Stronger specular for ice
       //ambientLightIntensity = getRandomInRange(0.4, 0.6, random); // High ambient for ice planets
       ambientLightIntensity = 0.5;
+      undulation = getRandomInRange(0.05, 0.15, random); // Very low undulation for ice planets
+      terrainType = 1; // Simple noise for ice
+      terrainAmplitude = getRandomInRange(0.2, 0.4, random);
+      terrainSharpness = getRandomInRange(0.3, 0.6, random);
+      terrainOffset = getRandomInRange(0.2, 0.4, random);
       break;
 
     case PlanetType.LAVA:
@@ -380,6 +412,11 @@ export function createProceduralSurfaceProperties(
       specularStrength = getRandomInRange(0.3, 0.6, random);
       //ambientLightIntensity = getRandomInRange(0.2, 0.4, random); // Moderate ambient for lava planets
       ambientLightIntensity = 0.9;
+      undulation = getRandomInRange(0.2, 0.3, random); // Moderate undulation for lava flows
+      terrainType = 2; // Sharp peaks for volcanic terrain
+      terrainAmplitude = getRandomInRange(1.2, 1.8, random);
+      terrainSharpness = getRandomInRange(1.0, 1.5, random);
+      terrainOffset = getRandomInRange(-0.3, -0.1, random);
       break;
 
     case PlanetType.OCEAN:
@@ -398,6 +435,11 @@ export function createProceduralSurfaceProperties(
       //shininess = getRandomInRange(32, 96, random); // Water shine
       specularStrength = getRandomInRange(0.5, 0.9, random); // Strong water reflections
       //ambientLightIntensity = getRandomInRange(0.3, 0.5, random); // Higher ambient for ocean planets
+      undulation = getRandomInRange(0.4, 0.6, random); // High undulation for ocean planets
+      terrainType = 1; // Simple noise for ocean
+      terrainAmplitude = getRandomInRange(0.4, 0.7, random);
+      terrainSharpness = getRandomInRange(0.4, 0.7, random);
+      terrainOffset = getRandomInRange(0.3, 0.5, random);
       break;
 
     default:
@@ -411,6 +453,11 @@ export function createProceduralSurfaceProperties(
       color4 = "#FFFFFF";
       color5 = "#795548";
       //ambientLightIntensity = getRandomInRange(0.2, 0.3, random); // Default ambient
+      undulation = getRandomInRange(0.1, 0.3, random); // Default undulation
+      terrainType = 2;
+      terrainAmplitude = 1.0;
+      terrainSharpness = 1.0;
+      terrainOffset = 0.0;
       break;
   }
 
@@ -435,5 +482,10 @@ export function createProceduralSurfaceProperties(
     specularStrength: specularStrength,
     roughness: roughness,
     ambientLightIntensity: ambientLightIntensity,
+    undulation: undulation,
+    terrainType: terrainType,
+    terrainAmplitude: terrainAmplitude,
+    terrainSharpness: terrainSharpness,
+    terrainOffset: terrainOffset,
   };
 }

@@ -25,6 +25,14 @@ uniform float persistence;
 uniform float lacunarity;
 uniform float uSimplePeriod;
 uniform int uOctaves;
+uniform float uUndulation;
+
+// Terrain generation parameters
+uniform int uTerrainType; // 1 = simple, 2 = sharp peaks, 3 = sharp valleys
+uniform float uTerrainAmplitude; // Controls overall height scale
+uniform float uTerrainSharpness; // Controls terrain feature definition
+uniform float uTerrainOffset; // Base height offset
+
 uniform vec3 uColor1;
 uniform vec3 uColor2;
 uniform vec3 uColor3;
@@ -35,117 +43,41 @@ uniform float uHeight2;
 uniform float uHeight3;
 uniform float uHeight4;
 uniform float uHeight5;
-uniform float uShininess;        // ADDED: Shininess factor
-uniform float uSpecularStrength; // ADDED: Specular intensity
+uniform float uShininess;
+uniform float uSpecularStrength;
 
 // Include Simplex noise implementation
-#include "../shared/simplex/3d" // Try without leading slash
+#ifndef NOISE_GLSL
+    #include "../shared/noise.glsl"
+#endif
 
-// --- Helper Functions ---
+    
+#ifndef LIGHTING_GLSL
+    #include "../shared/lighting.glsl"
+#endif
 
-// Function to calculate lighting contribution from a single light source
-vec3 calculateLightContribution(vec3 lightPos, vec3 lightColor, float intensity, vec3 normal, vec3 viewDir, vec3 worldPos) {
-    vec3 lightDir = normalize(lightPos - worldPos);
-    float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = lightColor * diff * intensity;
-
-    // Basic Blinn-Phong Specular
-    vec3 halfwayDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0); // Shininess factor 32
-    vec3 specular = lightColor * spec * intensity * 0.3; // Specular intensity 0.3
-
-    return diffuse + specular;
-}
-
-// Basic FBM for vec3 input using Simplex Noise
-float fbm(vec3 p, int octaves_param, float persistence_param, float lacunarity_param) {
-    float total = 0.0;
-    float frequency = 1.0;
-    float amplitude = 1.0;
-    float maxValue = 0.0;  // Used for normalizing result to 0.0 - 1.0
-
-    for(int i = 0; i < octaves_param; i++) {
-        // Use snoise (from included file) which returns roughly -1.0 to 1.0
-        total += snoise(p * frequency) * amplitude;
-        
-        maxValue += amplitude;
-        amplitude *= persistence_param;
-        frequency *= lacunarity_param;
-    }
-
-    // Normalize the result to be between 0.0 and 1.0
-    // snoise range is approx -1 to 1, so total range is approx -maxValue to +maxValue
-    // Shift and scale to [0, 1]
-    return (total / maxValue) * 0.5 + 0.5;
-}
-
-// ADDED: Function to perturb normal based on noise gradient
-vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
-    float epsilon = 0.01; // Small offset for sampling gradient
-
-    // Calculate noise coordinate (same as in main)
-    vec3 noiseCoord = vObjectPosition * uSimplePeriod;
-
-    // Sample noise at slightly offset positions
-    float noiseX = fbm(noiseCoord + vec3(epsilon, 0.0, 0.0), uOctaves, persistence, lacunarity);
-    float noiseY = fbm(noiseCoord + vec3(0.0, epsilon, 0.0), uOctaves, persistence, lacunarity);
-    float noiseZ = fbm(noiseCoord + vec3(0.0, 0.0, epsilon), uOctaves, persistence, lacunarity);
-    float noiseHere = fbm(noiseCoord, uOctaves, persistence, lacunarity);
-
-    // Approximate gradient (how noise changes in each direction)
-    vec3 gradient = vec3(
-        (noiseX - noiseHere) / epsilon,
-        (noiseY - noiseHere) / epsilon,
-        (noiseZ - noiseHere) / epsilon 
-    );
-
-    // Project gradient onto the tangent plane (remove component along the normal)
-    gradient -= dot(gradient, baseNormal) * baseNormal;
-
-    // Perturb the normal using the gradient and scale
-    vec3 perturbedNormal = normalize(baseNormal + gradient * bumpScale);
-
-    return perturbedNormal;
-}
-
-// Simple lighting calculation (Blinn-Phongish)
-vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
-    // Start with ambient light
-    vec3 totalLight = uAmbientLightColor * uAmbientLightIntensity;
-    vec3 directionalLight = vec3(0.0);
-
-    for (int i = 0; i < uNumLights; ++i) {
-        if (i >= uNumLights) break; // Safety break
-        vec3 lightDir = normalize(uLightPositions[i] - vWorldPosition);
-        vec3 lightColor = uLightColors[i];
-        float lightIntensity = uLightIntensities[i];
-
-        // Diffuse
-        float diff = max(dot(normal, lightDir), 0.0);
-        vec3 diffuse = diff * lightColor * lightIntensity * 0.3; // Reduced to 30%
-
-        // Specular (Blinn-Phong)
-        vec3 halfwayDir = normalize(lightDir + viewDir);
-        float spec = pow(max(dot(normal, halfwayDir), 0.0), uShininess);
-        vec3 specular = uSpecularStrength * spec * lightColor * lightIntensity * 0.2; // Reduced to 20%
-
-        directionalLight += diffuse + specular;
-    }
-
-    // Balance ambient and directional lighting
-    totalLight = mix(totalLight, totalLight + directionalLight, 0.4); // Only add 40% of directional light
-
-    return baseColor * totalLight;
-}
+#ifndef TERRAIN_GLSL
+    #include "../shared/terrain.glsl"
+#endif
 
 // --- Main Function ---
-
 void main() {
     // Use normalized object position as the basis for noise
-    vec3 noiseCoord = vObjectPosition * uSimplePeriod; 
+    vec3 noiseCoord = vObjectPosition * uSimplePeriod;
 
-    // Calculate noise value (0 to 1 range from our fbm)
-    float noiseValue = fbm(noiseCoord, uOctaves, persistence, lacunarity);
+    // Calculate terrain height using the terrainHeight function with our uniforms
+    float noiseValue = terrainHeight(
+        uTerrainType,
+        noiseCoord,
+        uTerrainAmplitude,
+        uTerrainSharpness,
+        uTerrainOffset,
+        uSimplePeriod,
+        persistence,
+        lacunarity,
+        uOctaves,
+        uUndulation
+    );
 
     // --- Lighting Calculation --- 
     vec3 baseNormal = normalize(vWorldNormal);

@@ -1,6 +1,7 @@
 import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
 import {
   type CelestialObject,
+  CelestialSpecificPropertiesUnion,
   CelestialStatus,
   CelestialType,
   type PlanetProperties,
@@ -324,8 +325,11 @@ export class CelestialUniformsEditor
       case CelestialType.DWARF_PLANET:
         const planetProps = celestial.properties as PlanetProperties;
         if (planetProps && planetProps.surface) {
-          const surface = planetProps.surface as ProceduralSurfaceProperties;
-          this._renderProceduralSurfaceControls(container, celestial, surface);
+          this._renderProceduralSurfaceControls(
+            container,
+            celestial,
+            planetProps.surface as ProceduralSurfaceProperties,
+          );
         } else {
           this.showPlaceholder(
             `Planet ${celestial.name} has no surface properties defined for editing.`,
@@ -361,8 +365,20 @@ export class CelestialUniformsEditor
     return clonedObj;
   }
 
-  private _updatePropertyPath(obj: any, path: string[], value: any): void {
+  /**
+   * Updates a property path in an object.
+   * @param obj - The object to update.
+   * @param path - The path to the property to update.
+   * @param value - The value to set.
+   * @returns The updated object.
+   */
+  private _updatePropertyPath(
+    obj: any,
+    path: string[],
+    value: any,
+  ): CelestialSpecificPropertiesUnion {
     let current = obj;
+    // Now traverse the rest of the path
     for (let i = 0; i < path.length - 1; i++) {
       const key = path[i];
       if (typeof current[key] !== "object" || current[key] === null) {
@@ -371,6 +387,7 @@ export class CelestialUniformsEditor
       current = current[key];
     }
     current[path[path.length - 1]] = value;
+    return obj;
   }
 
   private _createNumericInput(
@@ -437,21 +454,18 @@ export class CelestialUniformsEditor
       .pipe(
         distinctUntilChanged((prev, curr) => prev === curr && !isNaN(prev)),
         tap((newValue) => {
-          console.log(
-            `[Uniform Editor] Numeric Input Committed via RxJS: ${labelText}, New Value: ${newValue}, Path: ${propertyPathToUniform.join(".")}`,
-          );
           const latestCelestial = getCelestialObjects()[celestialId];
           if (latestCelestial && latestCelestial.properties) {
             const clonedProperties = this._deepClone(
               latestCelestial.properties,
             );
-            this._updatePropertyPath(
+            const updatedProperties = this._updatePropertyPath(
               clonedProperties,
               propertyPathToUniform,
               newValue,
             );
             celestialActions.updateCelestialObject(celestialId, {
-              properties: clonedProperties,
+              properties: updatedProperties,
             });
           } else {
             console.warn(
@@ -498,21 +512,18 @@ export class CelestialUniformsEditor
         map((event) => (event.target as HTMLInputElement).value),
         distinctUntilChanged(),
         tap((newColor) => {
-          console.log(
-            `[Uniform Editor] Color Input Committed via RxJS: ${labelText}, New Value: ${newColor}, Path: ${propertyPathToUniform.join(".")}`,
-          );
           const latestCelestial = getCelestialObjects()[celestialId];
           if (latestCelestial && latestCelestial.properties) {
             const clonedProperties = this._deepClone(
               latestCelestial.properties,
             );
-            this._updatePropertyPath(
+            const updatedProperties = this._updatePropertyPath(
               clonedProperties,
               propertyPathToUniform,
               newColor,
             );
             celestialActions.updateCelestialObject(celestialId, {
-              properties: clonedProperties,
+              properties: updatedProperties,
             });
           } else {
             console.warn(
@@ -580,6 +591,47 @@ export class CelestialUniformsEditor
         this.activeInputSubscriptions.push(inputSubscription);
       }
     };
+
+    // Add a section header for terrain generation
+    const terrainHeader = document.createElement("h3");
+    terrainHeader.textContent = "Terrain Generation";
+    container.appendChild(terrainHeader);
+
+    addControl("Terrain Type:", ["surface", "terrainType"], "number", {
+      min: 1,
+      max: 3,
+      step: 1,
+    });
+    addControl(
+      "Terrain Amplitude:",
+      ["surface", "terrainAmplitude"],
+      "number",
+      {
+        min: 0.1,
+        max: 2.0,
+        step: 0.1,
+      },
+    );
+    addControl(
+      "Terrain Sharpness:",
+      ["surface", "terrainSharpness"],
+      "number",
+      {
+        min: 0.1,
+        max: 2.0,
+        step: 0.1,
+      },
+    );
+    addControl("Terrain Offset:", ["surface", "terrainOffset"], "number", {
+      min: -0.5,
+      max: 0.5,
+      step: 0.05,
+    });
+    addControl("Undulation:", ["surface", "undulation"], "number", {
+      min: 0,
+      max: 1,
+      step: 0.05,
+    });
 
     // Add a section header for noise parameters
     const noiseHeader = document.createElement("h3");
@@ -692,6 +744,6 @@ export class CelestialUniformsEditor
   // --- End of Helper Methods ---
 }
 
-customElements.define("celestial-uniforms-editor", CelestialUniformsEditor);
+// customElements.define("celestial-uniforms-editor", CelestialUniformsEditor);
 
 export { FormatUtils };

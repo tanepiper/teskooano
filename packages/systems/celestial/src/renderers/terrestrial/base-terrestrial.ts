@@ -285,6 +285,33 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     material: ProceduralPlanetMaterial,
     surfaceProps: any,
   ): void {
+    // Update terrain generation parameters
+    this._updateUniformIfDefined(
+      material,
+      "uTerrainType",
+      surfaceProps.terrainType,
+    );
+    this._updateUniformIfDefined(
+      material,
+      "uTerrainAmplitude",
+      surfaceProps.terrainAmplitude,
+    );
+    this._updateUniformIfDefined(
+      material,
+      "uTerrainSharpness",
+      surfaceProps.terrainSharpness,
+    );
+    this._updateUniformIfDefined(
+      material,
+      "uTerrainOffset",
+      surfaceProps.terrainOffset,
+    );
+    this._updateUniformIfDefined(
+      material,
+      "uUndulation",
+      surfaceProps.undulation,
+    );
+
     // Update noise parameters
     this._updateUniformIfDefined(
       material,
@@ -339,11 +366,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     objectData: RenderableCelestialObject,
     groupMesh: THREE.Object3D,
   ): void {
-    console.log(
-      `[BaseTerrestrialRenderer] updateWith: Updating ${objectData.celestialObjectId} with groupMesh:`,
-      groupMesh,
-    );
-
     let bodyMesh = groupMesh.children.find(
       (child) => child.name === `${objectData.celestialObjectId}-body`,
     ) as THREE.Mesh;
@@ -388,17 +410,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       const planetProps = objectData.properties as PlanetProperties;
 
       if (planetProps.surface) {
-        console.log(
-          `[BaseTerrestrialRenderer] updateWith called for ${objectData.celestialObjectId}. Current surface props:`,
-          planetProps.surface,
-        );
-
         this._updateSurfaceUniforms(material, planetProps.surface);
-
-        console.log(
-          `[BaseTerrestrialRenderer] Updated uniforms for ${objectData.celestialObjectId}:`,
-          JSON.parse(JSON.stringify(material.uniforms)),
-        );
       } else {
         console.warn(
           `[BaseTerrestrialRenderer] updateWith: Planet ${objectData.celestialObjectId} has no surface properties defined.`,

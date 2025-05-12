@@ -109,6 +109,7 @@ export class PlanetMaterialService {
       lacunarity: specificSurfaceProps?.lacunarity ?? 2.0,
       octaves: specificSurfaceProps?.octaves ?? 6,
       simplePeriod: specificSurfaceProps?.simplePeriod ?? 4.0,
+      undulation: specificSurfaceProps?.undulation ?? 0.1,
       bumpScale: (specificSurfaceProps as any)?.bumpScale ?? 3,
 
       // Color ramp properties
@@ -129,6 +130,11 @@ export class PlanetMaterialService {
       roughness: specificSurfaceProps?.roughness ?? 0.5,
       ambientLightIntensity:
         specificSurfaceProps?.ambientLightIntensity ?? 0.0001,
+
+      terrainAmplitude: specificSurfaceProps?.terrainAmplitude ?? 1.0,
+      terrainSharpness: specificSurfaceProps?.terrainSharpness ?? 1.0,
+      terrainOffset: specificSurfaceProps?.terrainOffset ?? 0.0,
+      terrainType: specificSurfaceProps?.terrainType ?? 2,
     };
 
     const material = new ProceduralPlanetMaterial(finalProps);
