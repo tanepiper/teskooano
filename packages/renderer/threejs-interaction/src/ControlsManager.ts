@@ -88,18 +88,22 @@ export class ControlsManager {
           },
         });
 
-        const userManipulationEvent = new CustomEvent(
-          CustomEvents.USER_CAMERA_MANIPULATION,
-          {
-            detail: {
-              position: position.clone(),
-              target: target.clone(),
+        // Only dispatch USER_CAMERA_MANIPULATION if we are NOT currently following an object.
+        // If we are following, the change is programmatic due to the follow logic, not direct user input.
+        if (!this.followingTargetObject) {
+          const userManipulationEvent = new CustomEvent(
+            CustomEvents.USER_CAMERA_MANIPULATION,
+            {
+              detail: {
+                position: position.clone(),
+                target: target.clone(),
+              },
+              bubbles: true,
+              composed: true,
             },
-            bubbles: true,
-            composed: true,
-          },
-        );
-        document.dispatchEvent(userManipulationEvent);
+          );
+          document.dispatchEvent(userManipulationEvent);
+        }
       }
     });
   }
