@@ -16,15 +16,15 @@ import {
   CelestialType,
   scaleSize,
 } from "@teskooano/data-types";
-import * as CONST from "../constants";
-import { generateCelestialName } from "../name-generator";
-import * as UTIL from "../utils";
+import * as CONST from "../../constants";
+import { generateCelestialName } from "../../generators/names/celestial-name";
+import * as UTIL from "../../utils";
 import { calculatePlanetOrbitAndInitialState } from "./planet-orbit";
 import { generatePlanetSpecificProperties } from "./planet-properties";
 import { generateRings } from "./planet-rings";
 import { determinePlanetTypeAndBaseProperties } from "./planet-type";
 
-import { calculateLuminosity, estimateTemperature } from "../utils";
+import { calculateLuminosity, estimateTemperature } from "../../utils";
 
 /**
  * Orchestrates the generation of data for a planet and potentially its ring system

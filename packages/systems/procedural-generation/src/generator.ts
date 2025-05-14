@@ -1,22 +1,3 @@
-import {
-  Observable,
-  Subscriber,
-  concatMap,
-  from,
-  tap,
-  range,
-  of,
-  EMPTY,
-  catchError,
-  finalize,
-  map,
-  mergeMap,
-  toArray,
-  concat,
-  scan,
-  lastValueFrom,
-  iif,
-} from "rxjs";
 import { OSVector3 } from "@teskooano/core-math";
 import {
   calculateOrbitalPosition,
@@ -27,144 +8,31 @@ import type {
   CelestialObject,
   OrbitalParameters,
   StarProperties,
-  OortCloudProperties,
 } from "@teskooano/data-types";
+import { CelestialType, SCALE, SpectralClass } from "@teskooano/data-types";
 import {
-  CelestialType,
-  SCALE,
-  SpectralClass,
-  CelestialStatus,
-} from "@teskooano/data-types";
+  EMPTY,
+  Observable,
+  catchError,
+  concat,
+  concatMap,
+  from,
+  mergeMap,
+  of,
+  range,
+  scan,
+  toArray,
+} from "rxjs";
 import * as CONST from "./constants";
-import { generateAsteroidBelt } from "./generators/asteroidBelt";
-import { generateMoon } from "./generators/moon";
-import { generatePlanet } from "./generators/planet";
-import { generateOortCloud } from "./generators/oortCloud";
-import { generateStar } from "./generators/star";
+import {
+  generateMoonsObservable,
+  generatePlanet,
+  generateStar,
+  generateSystemName,
+  generateAsteroidBelt,
+} from "./generators";
 import { createSeededRandom } from "./seeded-random";
 import * as UTIL from "./utils";
-
-// Helper function to generate moons for a planet as an Observable stream
-function generateMoonsObservable(
-  random: () => number,
-  planetObject: CelestialObject,
-  planetMass_kg: number,
-  planetRadius_m: number,
-  seed: string,
-): Observable<CelestialObject> {
-  return new Observable((moonSubscriber: Subscriber<CelestialObject>) => {
-    // Check if moon generation is appropriate (e.g., based on distance)
-    const parentOrbit = planetObject.orbit;
-    const parentDistanceAU =
-      (parentOrbit?.realSemiMajorAxis_m ?? 0) / CONST.AU_TO_METERS;
-    // Simple check: don't generate moons too close to the star
-    if (parentDistanceAU < 0.3) {
-      moonSubscriber.complete();
-      return;
-    }
-
-    try {
-      const numberOfMoons = Math.floor(random() * 5); // Max 4 moons
-      let lastMoonDistance_radii = 2.5; // Initial distance multiplier from planet radius
-
-      for (let m = 0; m < numberOfMoons; m++) {
-        // Pass planet state if needed by generateMoon in the future
-        const { moonData, nextLastMoonDistance_radii } = generateMoon(
-          random,
-          planetObject, // Parent object
-          planetMass_kg,
-          planetRadius_m,
-          lastMoonDistance_radii,
-          seed,
-          // planetObject.physicsStateReal // Pass state if needed
-        );
-
-        if (moonData) {
-          moonSubscriber.next(moonData); // Emit the generated moon
-          lastMoonDistance_radii = nextLastMoonDistance_radii; // Update distance for next moon
-        } else {
-          // Stop trying if generateMoon returns null (e.g., distance constraints)
-          break;
-        }
-      }
-      moonSubscriber.complete(); // Finish moon stream for this planet
-    } catch (error) {
-      console.error(`Error generating moons for ${planetObject.name}:`, error);
-      moonSubscriber.error(error); // Propagate error
-    }
-  });
-}
-
-function generateSystemName(random: () => number): string {
-  const prefixes = [
-    "Andromeda",
-    "Orion",
-    "Cygnus",
-    "Draco",
-    "Lyra",
-    "Aquila",
-    "Pegasus",
-    "Ursa",
-    "Virgo",
-    "Centaurus",
-    "Kepler",
-    "Gliese",
-    "HD",
-    "HIP",
-    "Tau",
-    "Epsilon",
-    "Zeta",
-  ];
-  const separators = ["-", " ", ""];
-  const suffixes = [
-    "Prime",
-    "Secundus",
-    "Tertius",
-    "Minor",
-    "Major",
-    "Alpha",
-    "Beta",
-    "Gamma",
-    "Delta",
-    "Epsilon",
-    "Zeta",
-    "Eta",
-    "Theta",
-    "Iota",
-    "Kappa",
-    "Lambda",
-    "Mu",
-    "Nu",
-    "Xi",
-    "Omicron",
-    "Pi",
-    "Rho",
-    "Sigma",
-    "Tau",
-    "Upsilon",
-    "Phi",
-    "Chi",
-    "Psi",
-    "Omega",
-  ];
-
-  const prefix = prefixes[Math.floor(random() * prefixes.length)];
-  const separator = separators[Math.floor(random() * separators.length)];
-
-  let designation = "";
-
-  if (random() < 0.7) {
-    designation = String(Math.floor(random() * 999) + 1);
-
-    if (random() < 0.3) {
-      designation += String.fromCharCode(65 + Math.floor(random() * 6));
-    }
-  } else {
-    designation = suffixes[Math.floor(random() * suffixes.length)];
-  }
-
-  return `${prefix}${separator}${designation}`;
-}
 
 /**
  * Generates the initial data for celestial objects and a name for a solar system based on a seed string.
@@ -198,74 +66,6 @@ export async function generateSystem(
       starData.parentId = primaryStar.id;
       (starData.properties as StarProperties).isMainStar = false;
       (starData.properties as StarProperties).partnerStars = [primaryStar.id];
-
-      if (starData.properties?.type === CelestialType.STAR) {
-        const starProps = starData.properties as StarProperties;
-        if (starProps.spectralClass) {
-          const spectralClass = starProps.spectralClass;
-          let starRadius_Solar = starData.realRadius_m / CONST.SOLAR_RADIUS_M;
-          let needsCorrection = false;
-
-          const hasSpecialSuffix =
-            typeof spectralClass === "string" &&
-            (spectralClass.includes("D") || spectralClass.includes("P"));
-
-          if (!hasSpecialSuffix) {
-            const mainSpectralClass =
-              starProps.mainSpectralClass ||
-              (typeof spectralClass === "string"
-                ? spectralClass.charAt(0)
-                : spectralClass);
-
-            const minRadii: Record<string, number> = {
-              [SpectralClass.O]: 6.6,
-              [SpectralClass.B]: 3.0,
-              [SpectralClass.A]: 1.5,
-              [SpectralClass.F]: 1.15,
-              [SpectralClass.G]: 0.85,
-              [SpectralClass.K]: 0.65,
-              [SpectralClass.M]: 0.4,
-              [SpectralClass.L]: 0.2,
-              [SpectralClass.T]: 0.1,
-              [SpectralClass.Y]: 0.05,
-            };
-
-            if (
-              mainSpectralClass in minRadii &&
-              starRadius_Solar < minRadii[mainSpectralClass as string]
-            ) {
-              const oldRadius = starData.realRadius_m;
-              const correctedRadius_Solar =
-                minRadii[mainSpectralClass as string];
-              const correctedRadius =
-                correctedRadius_Solar * CONST.SOLAR_RADIUS_M;
-
-              console.warn(
-                `Correcting undersized companion ${spectralClass}-type star radius: ` +
-                  `${(oldRadius / 1000).toFixed(0)} km -> ${(
-                    correctedRadius / 1000
-                  ).toFixed(0)} km`,
-              );
-
-              starData.realRadius_m = correctedRadius;
-
-              starData.realRadius_m = correctedRadius * SCALE.SIZE * 50.0;
-
-              needsCorrection = true;
-            }
-          } else {
-            console.warn(
-              `-> Skipping radius validation for exotic companion star ${starData.name} with spectral class ${spectralClass}`,
-            );
-          }
-
-          if (needsCorrection) {
-            console.warn(
-              `-> Applied radius correction to companion star ${starData.name}`,
-            );
-          }
-        }
-      }
 
       const companionDistanceAU = 0.1 + random() * 10;
       const companionSMA_m = companionDistanceAU * CONST.AU_TO_METERS;

@@ -1,2 +1,2 @@
 export { generateSystem } from "./generator";
-export { generateStar } from "./generators/star";
+export { generateStar } from "./generators/stars/star";

@@ -13,9 +13,9 @@ import {
   SpectralClass,
   StellarType,
 } from "@teskooano/data-types";
-import * as CONST from "../constants";
-import { generateCelestialName } from "../name-generator";
-import * as UTIL from "../utils";
+import * as CONST from "../../constants";
+import { generateCelestialName } from "../names/celestial-name";
+import * as UTIL from "../../utils";
 
 const G = 6.6743e-11;
 const C = 299792458;

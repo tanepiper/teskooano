@@ -6,8 +6,8 @@ import type {
   OrbitalParameters,
   PhysicsStateReal,
 } from "@teskooano/data-types";
-import * as CONST from "../constants";
-import * as UTIL from "../utils";
+import * as CONST from "../../constants";
+import * as UTIL from "../../utils";
 
 /**
  * Calculates the orbital parameters and initial absolute physics state (position, velocity)

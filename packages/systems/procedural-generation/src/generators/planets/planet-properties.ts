@@ -10,8 +10,8 @@ import {
   PlanetType,
   SurfaceType,
 } from "@teskooano/data-types";
-import * as CONST from "../constants";
-import * as UTIL from "../utils";
+import * as CONST from "../../constants";
+import * as UTIL from "../../utils";
 import type { PlanetBaseProperties } from "./planet-type";
 import { ProceduralSurfaceProperties } from "@teskooano/data-types";
 

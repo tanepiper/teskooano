@@ -5,11 +5,9 @@ import {
 } from "@teskooano/core-physics";
 import type {
   CelestialObject,
-  IceSurfaceProperties,
   OrbitalParameters,
   PlanetProperties,
   ProceduralSurfaceProperties,
-  SurfacePropertiesUnion,
 } from "@teskooano/data-types";
 import {
   CelestialStatus,
@@ -17,9 +15,9 @@ import {
   PlanetType,
   SurfaceType,
 } from "@teskooano/data-types";
-import * as CONST from "../constants";
-import { generateCelestialName } from "../name-generator";
-import * as UTIL from "../utils";
+import * as CONST from "../../constants";
+import * as UTIL from "../../utils";
+import { generateCelestialName } from "../names";
 
 /**
  * Generates data for a single moon orbiting a parent planet.

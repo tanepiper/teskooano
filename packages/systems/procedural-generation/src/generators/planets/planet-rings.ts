@@ -1,6 +1,6 @@
 import type { RingProperties, RockyType } from "@teskooano/data-types";
-import * as CONST from "../constants";
-import * as UTIL from "../utils";
+import * as CONST from "../../constants";
+import * as UTIL from "../../utils";
 
 /**
  * Generates ring properties for a planet based on chance, allowed types, and parent size.

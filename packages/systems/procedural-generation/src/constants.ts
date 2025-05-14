@@ -1,4 +1,4 @@
-import { PlanetType, AtmosphereType, RockyType } from "@teskooano/data-types";
+import { AtmosphereType, RockyType } from "@teskooano/data-types";
 
 export const AU_TO_METERS = 1.496e11;
 export const EARTH_MASS_KG = 5.972e24;
@@ -57,16 +57,6 @@ export const ATMOSPHERE_DENSITY_RANGES: Record<
   [AtmosphereType.VERY_DENSE]: { min: 1.2, max: 1.6 },
 };
 
-export const ROCKY_SURFACE_COLORS: Record<PlanetType, string[]> = {
-  [PlanetType.ROCKY]: ["#8a8a8a", "#9a8e8e", "#7a7a7a"],
-  [PlanetType.TERRESTRIAL]: ["#5f7a5f", "#6b8e6b", "#8fbc8f"],
-  [PlanetType.DESERT]: ["#c19a6b", "#d2b48c", "#f4a460"],
-  [PlanetType.LAVA]: ["#5a1d0f", "#a0301a", "#ff4500"],
-  [PlanetType.ICE]: ["#e0f0ff", "#d0e0f0", "#f0f8ff"],
-  [PlanetType.BARREN]: ["#708090", "#778899", "#a9a9a9"],
-  [PlanetType.OCEAN]: ["#4682b4", "#5f9ea0", "#add8e6"],
-};
-
 export const ATMOSPHERE_COLORS: Record<AtmosphereType, string[]> = {
   [AtmosphereType.NONE]: [],
   [AtmosphereType.THIN]: ["#add8e6", "#b0e0e6", "#afeeee"],
@@ -82,37 +72,6 @@ export const RING_COLORS: Record<RockyType, string[]> = {
   [RockyType.METALLIC]: ["#c0c0c0", "#d8d8d8"],
   [RockyType.ICE_DUST]: ["#d0e0f0", "#c8d8e8"],
   [RockyType.DUST]: ["#b0a090", "#a89888"],
-};
-
-export const ROCKY_COLOR_BANDS = {
-  dark: ["#444038", "#484040", "#384044"],
-  midDark: ["#5C5850", "#605858", "#585860"],
-  midLight: ["#7C7870", "#807878", "#787880"],
-  light: ["#9C9890", "#A09898", "#9898A0"],
-  highlight: ["#BCA0A0", "#C0B8B0", "#B8B8C0"],
-};
-
-export const DESERT_COLORS = {
-  dunes: ["#c19a6b", "#d2b48c", "#e0c8a0"],
-  rocks: ["#a0522d", "#8b4513", "#7a3e1a"],
-};
-
-export const LAVA_COLORS = {
-  rock: ["#282828", "#302828", "#282830"],
-  lava: ["#ff4500", "#ff6347", "#ff2000"],
-  emission: ["#ff8c00", "#ffa500", "#ff7000"],
-};
-
-export const ICE_COLORS = {
-  main: ["#e0f0ff", "#f0f8ff", "#d8e8f8"],
-  crevasse: ["#87ceeb", "#a0d8ef", "#70c0e0"],
-};
-
-export const OCEAN_COLORS = {
-  deep: ["#1e90ff", "#007acc", "#104e8b"],
-  shallow: ["#4682b4", "#5f9ea0", "#87ceeb"],
-  land: ["#90ee90", "#3cb371", "#8fbc8f"],
-  ice: ["#ffffff", "#f0f8ff", "#e0f0ff"],
 };
 
 export const CLOUD_COLORS: Record<string, string[]> = {

@@ -4,7 +4,7 @@ import {
   PlanetType,
   RockyType,
 } from "@teskooano/data-types";
-import * as UTIL from "../utils";
+import * as UTIL from "../../utils";
 
 /**
  * Return type for the determinePlanetTypeAndBaseProperties function.
