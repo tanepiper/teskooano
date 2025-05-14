@@ -232,10 +232,10 @@ export function createProceduralSurfaceProperties(
   planetType: PlanetType,
 ): ProceduralSurfaceProperties {
   // Default procedural values - can be overridden by specific types
-  let persistence = getRandomInRange(0.45, 0.65, random);
-  let lacunarity = getRandomInRange(1.9, 2.4, random);
-  let simplePeriod = getRandomInRange(2.5, 7.0, random);
-  let octaves = Math.floor(getRandomInRange(5, 9, random));
+  let persistence = getRandomInRange(0.5, 0.7, random); // Adjusted for more detail
+  let lacunarity = getRandomInRange(1.8, 2.2, random); // Tightened and slightly lowered
+  let simplePeriod = getRandomInRange(1.5, 4.0, random); // Higher frequency on average
+  let octaves = Math.floor(getRandomInRange(8, 12, random)); // Increased octaves
   let bumpScale = getRandomInRange(2, 3, random);
   let roughness = getRandomInRange(0.5, 0.9, random);
   let shininess = getRandomInRange(8, 32, random);
@@ -275,10 +275,10 @@ export function createProceduralSurfaceProperties(
       height4 = getRandomInRange(0.6, 0.75, random);
       height5 = getRandomInRange(0.75, 1.0, random);
 
-      persistence = getRandomInRange(0.5, 0.6, random);
-      lacunarity = getRandomInRange(1.7, 2.9, random);
-      simplePeriod = getRandomInRange(0.7, 1.0, random);
-      octaves = Math.floor(getRandomInRange(6, 10, random));
+      persistence = getRandomInRange(0.55, 0.65, random); // Slightly increased
+      lacunarity = getRandomInRange(1.8, 2.2, random); // Tightened range
+      simplePeriod = getRandomInRange(0.5, 0.9, random); // Higher frequency
+      octaves = Math.floor(getRandomInRange(10, 14, random)); // Increased octaves
       bumpScale = getRandomInRange(1, 2, random);
       roughness = getRandomInRange(0.1, 0.2, random);
       //shininess = getRandomInRange(3, 7, random); // Moderate shine for Terran
@@ -299,10 +299,10 @@ export function createProceduralSurfaceProperties(
       color4 = getRandomItem(["#59392e", "#662d1a", "#242327"], random);
       color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random); // Darker browns for rocky peaks
 
-      persistence = getRandomInRange(0.1, 0.3, random);
-      lacunarity = getRandomInRange(2, 3, random);
-      simplePeriod = getRandomInRange(1.5, 5.0, random); // More detailed features possible
-      octaves = Math.floor(getRandomInRange(5, 9, random));
+      persistence = getRandomInRange(0.45, 0.6, random); // Significantly increased for detail
+      lacunarity = getRandomInRange(1.9, 2.3, random); // Adjusted range
+      simplePeriod = getRandomInRange(1.0, 3.0, random); // Smaller period for more detail
+      octaves = Math.floor(getRandomInRange(9, 13, random)); // Increased octaves
       bumpScale = getRandomInRange(2, 3, random);
       roughness = getRandomInRange(0.7, 0.95, random);
       //shininess = getRandomInRange(5, 10, random); // Very low shine
@@ -331,10 +331,10 @@ export function createProceduralSurfaceProperties(
       color4 = getRandomItem(["#756C61", "#292525", "#1f0e0e"], random); // Light Grays
       color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
 
-      persistence = getRandomInRange(0.2, 0.25, random); // Less variation
-      lacunarity = getRandomInRange(3, 4, random); // Smoother transitions
-      simplePeriod = getRandomInRange(1.5, 5.0, random); // More detailed features possible
-      octaves = Math.floor(getRandomInRange(4, 6, random));
+      persistence = getRandomInRange(0.4, 0.55, random); // Significantly increased
+      lacunarity = getRandomInRange(2.0, 2.5, random); // Reduced to avoid overly chaotic noise
+      simplePeriod = getRandomInRange(1.0, 3.5, random); // Smaller period for more detail
+      octaves = Math.floor(getRandomInRange(8, 12, random)); // Increased octaves
       bumpScale = getRandomInRange(2, 3, random);
       roughness = getRandomInRange(0.01, 0.09, random); // High roughness
       //shininess = getRandomInRange(1, 3, random); // Very low shine
@@ -355,10 +355,10 @@ export function createProceduralSurfaceProperties(
       color4 = getRandomItem(["#F5E6CA", "#FFF8DC", "#FAF0E6"], random); // Beige, Cornsilk, Linen (Peaks/Bright Sand)
       color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
 
-      persistence = getRandomInRange(0.1, 0.5, random); // Smoother dunes
-      lacunarity = getRandomInRange(12, 20, random); // Sharper dune details potentially
-      simplePeriod = getRandomInRange(2.0, 6.0, random); // Larger dune structures
-      octaves = Math.floor(getRandomInRange(4, 6, random));
+      persistence = getRandomInRange(0.4, 0.6, random); // Adjusted for more consistent detail
+      lacunarity = getRandomInRange(1.9, 2.4, random); // Corrected from very high range
+      simplePeriod = getRandomInRange(1.5, 4.0, random); // Adjusted for finer details
+      octaves = Math.floor(getRandomInRange(8, 12, random)); // Increased octaves
       bumpScale = getRandomInRange(0.01, 0.04, random); // Lower bump for ice
       roughness = getRandomInRange(0.65, 0.9, random);
       //shininess = getRandomInRange(128, 512, random); // Very low shine
@@ -378,10 +378,10 @@ export function createProceduralSurfaceProperties(
       color4 = getRandomItem(["#FFFFFF", "#F0FFFF", "#c9c9c9"], random); // White, Azure, MintCream (Glints/Pure Snow)
       color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
 
-      persistence = getRandomInRange(0.2, 0.5, random);
-      lacunarity = getRandomInRange(3, 3, random);
-      simplePeriod = getRandomInRange(1, 2, random);
-      octaves = Math.floor(getRandomInRange(5, 9, random));
+      persistence = getRandomInRange(0.45, 0.6, random); // Adjusted persistence
+      lacunarity = getRandomInRange(1.9, 2.2, random); // Corrected lacunarity for smoother ice
+      simplePeriod = getRandomInRange(0.8, 1.8, random); // Adjusted for finer ice details
+      octaves = Math.floor(getRandomInRange(8, 12, random)); // Increased octaves
       bumpScale = 3; //getRandomInRange(1, 2, random); // Lower bump for ice
       roughness = getRandomInRange(0.1, 0.3, random);
       //shininess = getRandomInRange(10, 20, random); // Higher shine for ice
@@ -403,9 +403,9 @@ export function createProceduralSurfaceProperties(
       color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
 
       persistence = getRandomInRange(0.5, 0.65, random);
-      lacunarity = getRandomInRange(2, 3, random);
+      lacunarity = getRandomInRange(1.9, 2.3, random); // Adjusted range
       simplePeriod = getRandomInRange(1, 4, random);
-      octaves = Math.floor(getRandomInRange(5, 9, random));
+      octaves = Math.floor(getRandomInRange(9, 13, random)); // Increased octaves
       bumpScale = getRandomInRange(2, 3, random);
       roughness = getRandomInRange(0.1, 1, random);
       //shininess = getRandomInRange(10, 30, random); // Moderate shine for Terran

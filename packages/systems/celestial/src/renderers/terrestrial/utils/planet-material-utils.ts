@@ -105,10 +105,10 @@ export class PlanetMaterialService {
 
     const finalProps: ProceduralSurfaceProperties = {
       // Procedural properties
-      persistence: specificSurfaceProps?.persistence ?? 0.5,
+      persistence: specificSurfaceProps?.persistence ?? 0.55,
       lacunarity: specificSurfaceProps?.lacunarity ?? 2.0,
-      octaves: specificSurfaceProps?.octaves ?? 6,
-      simplePeriod: specificSurfaceProps?.simplePeriod ?? 4.0,
+      octaves: specificSurfaceProps?.octaves ?? 8,
+      simplePeriod: specificSurfaceProps?.simplePeriod ?? 16.0,
       undulation: specificSurfaceProps?.undulation ?? 0.1,
       bumpScale: (specificSurfaceProps as any)?.bumpScale ?? 3,
 

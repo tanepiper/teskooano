@@ -1,3 +1,5 @@
+precision highp float;
+
 // Define maximum number of lights the shader can handle
 #define MAX_LIGHTS 4
 #define HEIGHT_LEVELS 5
