@@ -41,9 +41,7 @@ export const addCompositeEnginePanelFunction: FunctionConfig = {
     try {
       const newPanel = dockviewApi.addPanel(panelOptions);
       newPanel.api.setActive();
-      console.log(
-        `[EngineViewFunctions] Added composite engine panel: ${compositeViewId}`,
-      );
+
       return { success: true, panelId: compositeViewId };
     } catch (error) {
       console.error(

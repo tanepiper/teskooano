@@ -112,7 +112,6 @@ export class MeshFactory {
    */
   public setDebugMode(enabled: boolean): void {
     this.debugMode = enabled;
-    console.log(`[MeshFactory] Debug mode ${enabled ? "enabled" : "disabled"}`);
     // Note: This only affects subsequently created meshes.
     // Consider adding logic to recreate existing meshes if needed.
   }
@@ -489,9 +488,7 @@ export class MeshFactory {
       wireframe: true,
     });
     const mesh = new THREE.Mesh(geometry, material);
-    console.log(
-      `[MeshFactory] Created fallback sphere for ${object.celestialObjectId}`,
-    );
+
     return mesh;
   }
 }

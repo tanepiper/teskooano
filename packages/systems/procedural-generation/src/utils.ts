@@ -292,7 +292,6 @@ export function createProceduralSurfaceProperties(
       break;
 
     case PlanetType.ROCKY:
-      console.log("Rocky", planetType);
       color1 = getRandomItem(["#4f2214", "#171719", "#312b2e"], random);
       color2 = getRandomItem(["#522f28", "#631100", "#3d1c15"], random);
       color3 = getRandomItem(["#3b3837", "#5d4a41", "#4d4542"], random);
@@ -317,14 +316,6 @@ export function createProceduralSurfaceProperties(
       break;
 
     case PlanetType.BARREN:
-      console.log("Barren", planetType);
-      // low: "#583C3C", // Dark Gray
-      // mid1: "#544A59", // Medium Gray
-      // mid2: "#733217", // Slightly Lighter Gray
-      // high: "#756C61", // Light Gray
-
-      //background-image: linear-gradient(to top, #583c3c, #5f3937, #653732, #6b352b, #6f3323, #703523, #723722, #733922, #723e2a, #714332, #6f4739, #6d4c41);
-
       color1 = getRandomItem(["#583C3C", "#6d4c41", "#6f3323"], random); // Dark Grays
       color2 = getRandomItem(["#544A59", "#111c19", "#2a2b2b"], random); // Medium Grays
       color3 = getRandomItem(["#733217", "#312727", "#544A59"], random); // Lighter Grays

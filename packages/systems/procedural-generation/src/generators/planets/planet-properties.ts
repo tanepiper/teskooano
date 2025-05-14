@@ -225,7 +225,6 @@ function generateRockyPlanetSpecificProperties(
   }
 
   let surfaceProperties: ProceduralSurfaceProperties;
-  console.log("Rocky Planet Type", rockyPlanetType);
   switch (rockyPlanetType) {
     case PlanetType.BARREN:
     case PlanetType.ROCKY:

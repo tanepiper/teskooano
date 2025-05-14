@@ -72,16 +72,9 @@ export async function generateAndLoadSystem(
 
     const processingPipeline$ = objects$.pipe(
       tap((celestialObject: CelestialObject) => {
-        console.log(
-          "[SystemGenerator] Processing object:",
-          celestialObject.name,
-        );
         progressPanel?.api.setTitle(`Processing: ${celestialObject.name}`);
 
         if (celestialObject.type === CelestialType.STAR && isFirstStar) {
-          console.log(
-            `[SystemGenerator] Creating system with primary star: ${celestialObject.id}`,
-          );
           actions.createSolarSystem(celestialObject);
           isFirstStar = false;
         } else {
@@ -106,7 +99,6 @@ export async function generateAndLoadSystem(
         return throwError(() => error);
       }),
       finalize(() => {
-        console.log("[SystemGenerator] Object stream finalized.");
         let finalPanel = dockviewApi.panels.find(
           (p) => p.id === progressPanelId,
         );
@@ -117,14 +109,7 @@ export async function generateAndLoadSystem(
             (p) => p.id === progressPanelId,
           );
           if (panelToClose) {
-            console.log(
-              `[SystemGenerator] Closing progress panel ${panelToClose.id}`,
-            );
             panelToClose.api.close();
-          } else {
-            console.log(
-              "[SystemGenerator] Progress panel already closed before timeout.",
-            );
           }
         }, 1500);
 

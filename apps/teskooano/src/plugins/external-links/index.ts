@@ -41,10 +41,10 @@ export const plugin: TeskooanoPlugin = {
   toolbarRegistrations: [],
   toolbarWidgets: [externalLinksWidget],
   initialize: () => {
-    console.log("External Links plugin initialized.");
+    // console.log("External Links plugin initialized.");
   },
   dispose: () => {
-    console.log("External Links plugin disposed.");
+    // console.log("External Links plugin disposed.");
   },
 };
 

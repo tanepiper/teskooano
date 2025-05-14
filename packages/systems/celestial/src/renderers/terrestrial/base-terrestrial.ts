@@ -151,16 +151,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     group.add(bodyMesh);
 
     const planetProps = object.properties as PlanetProperties;
-    // Use service to get mesh and material
-    console.log(
-      `[BaseTerrestrialRenderer] Creating atmosphere for ${object.celestialObjectId}`,
-      {
-        hasAtmosphere: planetProps?.atmosphere,
-        atmosphereProps: planetProps?.atmosphere,
-        baseRadius,
-        segments,
-      },
-    );
 
     const atmosphereResult: AtmosphereMeshResult | null =
       this.atmosphereCloudService.createAtmosphereMesh(
@@ -169,22 +159,10 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
         baseRadius,
       );
     if (atmosphereResult) {
-      console.log(
-        `[BaseTerrestrialRenderer] Added atmosphere mesh for ${object.celestialObjectId}`,
-        {
-          mesh: atmosphereResult.mesh,
-          material: atmosphereResult.material,
-          uniforms: atmosphereResult.material.uniforms,
-        },
-      );
       group.add(atmosphereResult.mesh);
       this.atmosphereMaterials.set(
         object.celestialObjectId,
         atmosphereResult.material,
-      );
-    } else {
-      console.warn(
-        `[BaseTerrestrialRenderer] No atmosphere created for ${object.celestialObjectId}`,
       );
     }
     return group;

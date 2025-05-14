@@ -32,8 +32,20 @@ export class CelestialRow extends HTMLElement {
   }
 
   connectedCallback() {
-    this.focusBtn?.addEventListener("click", this.handleFocusClick);
-    this.followBtn?.addEventListener("click", this.handleFollowClick);
+    if (this.focusBtn) {
+      this.focusBtn.addEventListener("click", this.handleFocusClick);
+    } else {
+      console.error(
+        `[CelestialRow connectedCallback] focusBtn NOT FOUND for ${this.getAttribute("object-id")}`,
+      );
+    }
+    if (this.followBtn) {
+      this.followBtn.addEventListener("click", this.handleFollowClick);
+    } else {
+      console.error(
+        `[CelestialRow connectedCallback] followBtn NOT FOUND for ${this.getAttribute("object-id")}`,
+      );
+    }
   }
 
   disconnectedCallback() {

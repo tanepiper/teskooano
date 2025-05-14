@@ -457,8 +457,6 @@ export class ObjectManager {
 
     // Clear the main object map (should be empty after lifecycle disposal, but good practice)
     this.objects.clear();
-
-    console.log("[ObjectManager] Disposed.");
   }
 
   /**
@@ -501,6 +499,5 @@ export class ObjectManager {
     this.objectLifecycleManager.syncObjectsWithState(
       this.latestRenderableObjects,
     );
-    console.log("[ObjectManager] Recreated all meshes.");
   }
 }

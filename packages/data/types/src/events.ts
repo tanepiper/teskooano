@@ -3,6 +3,7 @@
  * Using constants helps prevent typos and ensures consistency.
  */
 export const CustomEvents = {
+  COMPOSITE_ENGINE_INITIALIZED: "composite-engine-initialized",
   SIMULATION_RESET_TIME: "resetSimulationTime",
   ORBIT_UPDATE: "orbitUpdate",
   RENDERER_READY: "renderer-ready",

@@ -247,12 +247,6 @@ export class ObjectLifecycleManager {
     // Dispose of geometries and materials
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        // Log the child mesh and its material for debugging
-        console.log(
-          `[ObjectLifecycleManager] Disposing child mesh: ${child.name} (${child.uuid}), Material:`,
-          child.material,
-        );
-
         // Dispose geometry
         child.geometry?.dispose();
 
@@ -286,8 +280,6 @@ export class ObjectLifecycleManager {
 
     // Remove from the main tracking map
     this.objects.delete(objectId);
-
-    console.log(`[ObjectLifecycleManager] Removed object ${objectId}`);
   }
 
   /**

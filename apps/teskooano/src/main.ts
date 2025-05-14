@@ -204,7 +204,6 @@ async function initializeApp() {
   });
 
   try {
-    console.log("[App] Calling addCompositeEnginePanelFunction during init...");
     await pluginManager.execute("view:addCompositeEnginePanel");
   } catch (error) {
     console.error(

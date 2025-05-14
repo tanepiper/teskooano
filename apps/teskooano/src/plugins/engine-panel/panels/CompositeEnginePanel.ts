@@ -624,12 +624,19 @@ export class CompositeEnginePanel implements IContentRenderer {
           });
         }
 
-        if (this._renderer && this.element.isConnected && this._api?.id) {
+        // Dispatch an event indicating the composite panel and its managers are ready
+        if (this.element.isConnected && this._api?.id) {
+          console.debug(
+            `[CompositePanel ${this._api.id}] Dispatching ${CustomEvents.COMPOSITE_ENGINE_INITIALIZED}`,
+          );
           this.element.dispatchEvent(
-            new CustomEvent(CustomEvents.RENDERER_READY, {
+            new CustomEvent(CustomEvents.COMPOSITE_ENGINE_INITIALIZED, {
               bubbles: true,
               composed: true,
-              detail: { panelId: this._api.id, renderer: this._renderer },
+              detail: {
+                panelId: this._api.id,
+                parentInstance: this, // Pass the whole panel instance
+              },
             }),
           );
         }
@@ -710,6 +717,21 @@ export class CompositeEnginePanel implements IContentRenderer {
   private disposeRendererAndUI(): void {
     this._renderer?.dispose?.();
     this._renderer = undefined;
+
+    // Call destroy on the CameraManager instance this panel was using.
+    // This will reset its 'isInitialized' flag and remove document listeners.
+    if (this._cameraManager) {
+      if (typeof (this._cameraManager as any).destroy === "function") {
+        console.debug(
+          `[CompositePanel ${this._api?.id}] Calling destroy() on CameraManager instance.`,
+        );
+        (this._cameraManager as any).destroy();
+      } else {
+        console.warn(
+          `[CompositePanel ${this._api?.id}] CameraManager instance does not have a destroy method.`,
+        );
+      }
+    }
 
     const toolbarManager =
       pluginManager.getManagerInstance<EngineToolbarManager>(
