@@ -65,7 +65,6 @@ export default defineConfig({
         { label: "Docs", link: "/docs" },
         { label: "Plan", link: "/plan" },
         { label: "Changelog", link: "/changelog" },
-        
       ],
       customCss: ["./src/styles/custom.css"],
     }),

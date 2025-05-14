@@ -428,7 +428,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       <div style='display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center; padding: 1em; box-sizing: border-box;'>
         <img src='/assets/panel-icon.png' alt='Engine Placeholder Icon' style='max-width: 256px; max-height: 256px; margin-bottom: 1em; opacity: 0.5;' />
         <p style='color: #aaa; margin: 0;'>Load or Generate a System</p>
-        <teskooano-button as="a" href="https://teskooano.space/docs/getting-started">📚 Go To Documentation</teskooano-button>
+        <a href="https://teskooano.space/docs/getting-started" target="_blank">📚 Go To Documentation</teskooano-button>
       </div>
     `;
   }
