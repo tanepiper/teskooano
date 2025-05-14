@@ -91,7 +91,14 @@ const containerStyles = `width: ${width}; aspect-ratio: ${aspectRatio};`;
       });
 
       if (captionElement) {
-        captionElement.textContent = videos[index]?.caption || '';
+        const currentCaption = videos[index]?.caption?.trim();
+        if (currentCaption) {
+          captionElement.textContent = currentCaption;
+          captionElement.style.display = ''; // Or specific display value like 'block' if needed
+        } else {
+          captionElement.textContent = '';
+          captionElement.style.display = 'none';
+        }
       }
       currentIndex = index;
 
