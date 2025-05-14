@@ -86,6 +86,11 @@ export interface CompositeEngineState {
    */
   showDebrisEffects?: boolean;
   /**
+   * Whether to show orbit lines for celestial bodies.
+   * Defaults to true.
+   */
+  showOrbitLines?: boolean;
+  /**
    * Whether to show the debug mode
    * NOTE: This is still a work in progress and the camera controls are not yet fully integrated
    */
@@ -169,6 +174,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       showCelestialLabels: true,
       showAuMarkers: true,
       showDebrisEffects: false,
+      showOrbitLines: true,
       isDebugMode: false,
       fov: DEFAULT_PANEL_FOV,
     });
@@ -300,6 +306,9 @@ export class CompositeEnginePanel implements IContentRenderer {
     }
     if (updates.showAuMarkers !== undefined) {
       this._renderer.sceneManager.setAuMarkersVisible(updates.showAuMarkers);
+    }
+    if (updates.showOrbitLines !== undefined && this._renderer.orbitManager) {
+      this._renderer.orbitManager.setVisibility(updates.showOrbitLines);
     }
     if (updates.fov !== undefined) {
       this._renderer.sceneManager.setFov(updates.fov);

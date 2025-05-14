@@ -296,52 +296,6 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
   }
 
   /**
-   * Focuses the camera on a random, active (not destroyed/annihilated) celestial object
-   * from the list by simulating a click on its focus button.
-   * Used for demonstration or testing purposes.
-   */
-  public tourFocus = (): void => {
-    if (!this.treeListContainer) return;
-
-    const activeRows = Array.from(
-      this.treeListContainer.querySelectorAll<HTMLElement>(
-        "celestial-row:not([inactive])",
-      ),
-    );
-    if (activeRows.length === 0) {
-      console.warn("[FocusControl] No active rows found for tour focus");
-      return;
-    }
-    const randomRow = activeRows[Math.floor(Math.random() * activeRows.length)];
-    const objectId = randomRow.getAttribute("object-id");
-    if (objectId) {
-      const focusBtn = randomRow.shadowRoot?.getElementById("focus-btn");
-      focusBtn?.click();
-    }
-  };
-
-  /**
-   * Retrieves the ID of a random, active celestial object from the store.
-   * @returns {[string | null, string | null]} A tuple containing the object ID (or null if none found) and null (placeholder for potential parent ID).
-   * @internal Could be made public if needed for external testing/dev tools.
-   */
-  public getRandomActiveObjectId = (): [string | null, string | null] => {
-    const objects = getCelestialObjects();
-    const activeObjects = Object.values(objects).filter(
-      (obj) =>
-        obj.status !== CelestialStatus.DESTROYED &&
-        obj.status !== CelestialStatus.ANNIHILATED,
-    );
-    if (activeObjects.length === 0) {
-      console.warn("[FocusControl] No active objects available");
-      return [null, null];
-    }
-    const randomObject =
-      activeObjects[Math.floor(Math.random() * activeObjects.length)];
-    return [randomObject.id, null];
-  };
-
-  /**
    * Initiates a request to follow a specific celestial object.
    * @param objectId - The ID of the celestial object to follow.
    * @returns {boolean} True if the follow request was successfully initiated, false otherwise.

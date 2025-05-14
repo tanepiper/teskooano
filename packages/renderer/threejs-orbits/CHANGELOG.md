@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Integrated with the global "Show Orbit Lines" setting from the Engine Settings panel, allowing users to toggle the visibility of all orbit lines. The `OrbitManager`'s existing `setVisibility` method is now used by the `CompositeEnginePanel`.
+
 ### Changed
 
 - **Dependency Update**: Replaced `nanostores` with `rxjs` for state management.

@@ -1,0 +1,243 @@
+---
+interface VideoItem {
+  src: string;
+  type?: string;
+  caption?: string;
+  poster?: string;
+  altText?: string; // Important for accessibility
+}
+
+interface Props {
+  videos: VideoItem[];
+  id?: string; // Optional ID for multiple slideshows
+  loopSlideshow?: boolean; // Loop the slideshow itself
+  showNativeControls?: boolean; // Show native controls on active video
+  aspectRatio?: string; // e.g., "16/9"
+  width?: string; // Default 100%
+}
+
+const {
+  videos = [],
+  id = 'video-slideshow',
+  loopSlideshow = false,
+  showNativeControls = true,
+  aspectRatio = '16/9',
+  width = '100%',
+} = Astro.props;
+
+const containerStyles = `width: ${width}; aspect-ratio: ${aspectRatio};`;
+---
+
+<div class="video-slideshow-container" id={id} style={containerStyles}>
+  <div class="video-main-viewer">
+    <button class="nav-button prev" aria-label="Previous video" data-direction="-1">&lt;</button>
+    <div class="video-slide-wrapper">
+      {videos.map((video, index) => (
+        <div class="video-slide-item {index === 0 ? 'active' : ''}" data-index={index}>
+          <video
+            poster={video.poster}
+            controls={showNativeControls}
+            muted
+            autoplay
+            loop
+            playsinline
+            preload="metadata"
+            aria-label={video.altText || video.caption || `Video ${index + 1}`}
+            title={video.altText || video.caption || `Video ${index + 1}`}
+          >
+            <source src={video.src} type={video.type || 'video/mp4'} />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      ))}
+    </div>
+    <button class="nav-button next" aria-label="Next video" data-direction="1">&gt;</button>
+  </div>
+  <div class="video-slide-caption" aria-live="polite">
+    {videos[0]?.caption || ''}
+  </div>
+</div>
+
+<script define:vars={{ videos, id, loopSlideshow, showNativeControls }} is:inline>
+  const slideshowContainer = document.getElementById(id);
+  if (slideshowContainer) {
+    const videoSlides = slideshowContainer.querySelectorAll('.video-slide-item');
+    const videoElements = slideshowContainer.querySelectorAll('.video-slide-item video');
+    const captionElement = slideshowContainer.querySelector('.video-slide-caption');
+    const prevButton = slideshowContainer.querySelector('.nav-button.prev');
+    const nextButton = slideshowContainer.querySelector('.nav-button.next');
+
+    let currentIndex = 0;
+    const totalVideos = videos.length;
+
+    function showVideo(index) {
+      if (index < 0 || index >= totalVideos) return;
+
+      videoSlides.forEach((slide, i) => {
+        const videoEl = videoElements[i];
+        if (!videoEl) return;
+
+        if (i === index) {
+          slide.classList.add('active');
+          slide.removeAttribute('aria-hidden');
+          videoEl.play().catch(e => console.warn(`Autoplay prevented for video ${i}:`, e));
+        } else {
+          slide.classList.remove('active');
+          slide.setAttribute('aria-hidden', 'true');
+          if (!videoEl.paused) {
+            videoEl.pause();
+          }
+        }
+      });
+
+      if (captionElement) {
+        captionElement.textContent = videos[index]?.caption || '';
+      }
+      currentIndex = index;
+
+      if (prevButton) prevButton.disabled = !loopSlideshow && index === 0;
+      if (nextButton) nextButton.disabled = !loopSlideshow && index === totalVideos - 1;
+    }
+
+    function changeVideo(direction) {
+      let newIndex = currentIndex + direction;
+      if (loopSlideshow) {
+        newIndex = (newIndex + totalVideos) % totalVideos;
+      } else {
+        newIndex = Math.max(0, Math.min(newIndex, totalVideos - 1));
+      }
+      if (newIndex !== currentIndex) {
+        showVideo(newIndex);
+      }
+    }
+
+    prevButton?.addEventListener('click', () => changeVideo(-1));
+    nextButton?.addEventListener('click', () => changeVideo(1));
+
+    slideshowContainer.addEventListener('keydown', (e) => {
+        if (e.target === prevButton || e.target === nextButton) return;
+        if (e.key === 'ArrowLeft') changeVideo(-1);
+        if (e.key === 'ArrowRight') changeVideo(1);
+    });
+    if (slideshowContainer.getAttribute('tabindex') === null) {
+        slideshowContainer.setAttribute('tabindex', '0');
+    }
+
+    if (totalVideos > 0) {
+      showVideo(0);
+    } else {
+      if (prevButton) prevButton.style.display = 'none';
+      if (nextButton) nextButton.style.display = 'none';
+      if (captionElement) captionElement.textContent = 'No videos to display.';
+    }
+  }
+</script>
+
+<style>
+  .video-slideshow-container {
+    --slide-nav-button-bg: rgba(0, 0, 0, 0.4);
+    --slide-nav-button-text: white;
+    --slide-nav-button-bg-hover: rgba(0, 0, 0, 0.7);
+    --video-caption-bg: rgba(0, 0, 0, 0.7);
+    --video-caption-text: var(--sl-color-white);
+    --video-bg-color: var(--sl-color-black);
+    --video-border-color: var(--sl-color-gray-5);
+    --video-shadow: 0 4px 15px rgba(0,0,0,0.2);
+
+    margin: 1rem auto;
+    position: relative;
+    background-color: var(--video-bg-color);
+    border: 1px solid var(--video-border-color);
+    border-radius: var(--sl-radius-lg, 8px);
+    overflow: hidden;
+    box-shadow: var(--video-shadow);
+    outline: none;
+  }
+
+  .video-slideshow-container:focus-visible {
+    box-shadow: 0 0 0 3px var(--sl-color-accent);
+  }
+
+  .video-main-viewer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .video-slide-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .video-slide-item {
+    display: none;
+    width: 100%;
+    height: 100%;
+  }
+
+  .video-slide-item.active {
+    display: block;
+  }
+
+  .video-slide-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--slide-nav-button-bg);
+    color: var(--slide-nav-button-text);
+    border: none;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    z-index: 10;
+    font-size: 1.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    opacity: 0.7;
+  }
+
+  .nav-button:hover,
+  .nav-button:focus-visible {
+    background-color: var(--slide-nav-button-bg-hover);
+    opacity: 1;
+    outline: none;
+  }
+
+  .nav-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background-color: var(--slide-nav-button-bg);
+  }
+
+  .nav-button.prev {
+    left: 1rem;
+  }
+
+  .nav-button.next {
+    right: 1rem;
+  }
+
+  .video-slide-caption {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: var(--sl-text-sm);
+    color: var(--video-caption-text);
+    background-color: var(--video-caption-bg);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 5;
+  }
+</style> 

@@ -6,7 +6,6 @@ import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import * as THREE from "three";
 import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel";
 import { CustomEvents } from "@teskooano/data-types";
-import { calculateCameraDistance } from "./FocusControl.camera.js";
 
 /**
  * Handles the logic for requesting the camera to point at a specific object.
@@ -139,18 +138,6 @@ export function handleFollowRequest(
     return false;
   }
 
-  if (
-    renderer.camera &&
-    "zoom" in renderer.camera &&
-    "updateProjectionMatrix" in renderer.camera
-  ) {
-    const cameraWithZoom = renderer.camera as
-      | THREE.PerspectiveCamera
-      | THREE.OrthographicCamera;
-    cameraWithZoom.zoom = 1;
-    cameraWithZoom.updateProjectionMatrix();
-  }
-
   const cameraManager = parentPanel.cameraManager;
   if (!cameraManager) {
     console.error(
@@ -159,8 +146,7 @@ export function handleFollowRequest(
     return false;
   }
 
-  const distance = calculateCameraDistance(targetObject, renderer);
-  cameraManager.followObject(objectId, distance);
+  cameraManager.followObject(objectId);
 
   console.debug(`[FocusControl.interactions] Follow initiated for ${objectId}`);
   return true;

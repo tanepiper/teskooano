@@ -43,6 +43,8 @@ export class EngineUISettingsPanel
   private auMarkersToggle: HTMLInputElement | null = null;
   /** Reference to the debris effects toggle checkbox. */
   private debrisEffectsToggle: HTMLInputElement | null = null;
+  /** Reference to the orbit lines toggle checkbox. */
+  private orbitLinesToggle: HTMLInputElement | null = null;
   /** Reference to the Field of View (FOV) slider element. */
   private fovSliderElement: TeskooanoSlider | null = null;
   /** Reference to the element displaying error messages. */
@@ -130,6 +132,9 @@ export class EngineUISettingsPanel
     this.debrisEffectsToggle = this.shadowRoot!.getElementById(
       "debris-effects-toggle",
     ) as HTMLInputElement;
+    this.orbitLinesToggle = this.shadowRoot!.getElementById(
+      "orbit-lines-toggle",
+    ) as HTMLInputElement;
     this.fovSliderElement = this.shadowRoot!.getElementById(
       "fov-slider",
     ) as TeskooanoSlider;
@@ -141,6 +146,9 @@ export class EngineUISettingsPanel
     if (
       !this.gridToggle ||
       !this.labelsToggle ||
+      !this.auMarkersToggle ||
+      !this.debrisEffectsToggle ||
+      !this.orbitLinesToggle ||
       !this.fovSliderElement /* etc. */
     ) {
       console.warn(
@@ -185,6 +193,10 @@ export class EngineUISettingsPanel
       "change",
       this.handleDebrisEffectsToggleChange,
     );
+    this.orbitLinesToggle?.addEventListener(
+      "change",
+      this.handleOrbitLinesToggleChange,
+    );
 
     if (this.fovSliderElement) {
       this.fovSliderElement.addEventListener(
@@ -216,6 +228,10 @@ export class EngineUISettingsPanel
     this.debrisEffectsToggle?.removeEventListener(
       "change",
       this.handleDebrisEffectsToggleChange,
+    );
+    this.orbitLinesToggle?.removeEventListener(
+      "change",
+      this.handleOrbitLinesToggleChange,
     );
     if (this.fovSliderElement) {
       this.fovSliderElement.removeEventListener(
@@ -384,6 +400,20 @@ export class EngineUISettingsPanel
     if (!this._parentPanel) return;
     const isChecked = (event.target as HTMLInputElement).checked;
     this._parentPanel.setDebrisEffectsEnabled(isChecked);
+    console.debug(`Debris effects toggle changed: ${isChecked}`);
+  };
+
+  /**
+   * Event handler for the orbit lines toggle checkbox changes.
+   * Updates the parent panel's orbit lines visibility state.
+   * @param {Event} event - The change event object.
+   * @private
+   */
+  private handleOrbitLinesToggleChange = (event: Event): void => {
+    if (!this._parentPanel) return;
+    const isChecked = (event.target as HTMLInputElement).checked;
+    this._parentPanel.updateViewState({ showOrbitLines: isChecked });
+    console.debug(`Orbit lines toggle changed: ${isChecked}`);
   };
 
   /**
@@ -454,24 +484,22 @@ export class EngineUISettingsPanel
    * @private
    */
   private updateUiState(viewState: CompositeEngineState): void {
-    if (!this.isConnected) {
-      console.warn(
-        "[EngineUISettingsPanel] Attempted to update UI state while disconnected.",
-      );
-      return;
-    }
+    if (!this.isConnected || !this.shadowRoot) return;
 
     if (this.gridToggle) {
-      this.gridToggle.checked = viewState.showGrid ?? false;
+      this.gridToggle.checked = viewState.showGrid ?? true;
     }
     if (this.labelsToggle) {
-      this.labelsToggle.checked = viewState.showCelestialLabels ?? false;
+      this.labelsToggle.checked = viewState.showCelestialLabels ?? true;
     }
     if (this.auMarkersToggle) {
-      this.auMarkersToggle.checked = viewState.showAuMarkers ?? false;
+      this.auMarkersToggle.checked = viewState.showAuMarkers ?? true;
     }
     if (this.debrisEffectsToggle) {
       this.debrisEffectsToggle.checked = viewState.showDebrisEffects ?? false;
+    }
+    if (this.orbitLinesToggle) {
+      this.orbitLinesToggle.checked = viewState.showOrbitLines ?? true;
     }
     if (this.debugModeToggle) {
       this.debugModeToggle.checked = viewState.isDebugMode ?? false;

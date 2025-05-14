@@ -23,16 +23,34 @@ hero:
 ---
 
 import { Card, CardGrid } from "@astrojs/starlight/components";
+import VideoDisplay from "../../components/VideoDisplay.astro";
 
 <div class="homepage-video">
-  <video autoplay loop muted playsinline>
-    <source
-      src="/video/orbit-video.mp4"
-      type="video/mp4"
-      alt="A video of two stars in Orbit in Teskooano"
-    />
-    Your browser does not support the video tag.
-  </video>
+  <VideoDisplay
+    videos={[
+      {
+        src: "/video/orbit-video.mp4",
+        type: "video/webm",
+        altText: "A video of two stars in Orbit in Teskooano",
+      },
+      {
+        src: "/video/terrestrial-moon.webm",
+        type: "video/webm",
+        altText: "A video of a moon in orbit of a terrestrial in Teskooano",
+      },
+      {
+        src: "/plan/00003/00003-3.webm",
+        type: "video/webm",
+        altText:
+          "A video of a planet shader editor on a terrestrial planet with multiple views",
+      },
+    ]}
+    initialAutoplay={true}
+    loopSlideshow={false}
+    showNativeControls={false}
+    aspectRatio="16/9"
+    id="hero-video-slideshow"
+  />
   <section class="video-items">
     <Card title="'Realistic Physics'" icon="star">
       Experience N-Body gravitational simulation with orbital mechanics and

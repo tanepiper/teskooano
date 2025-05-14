@@ -113,6 +113,13 @@ template.innerHTML = `
     </label>
   </div>
   <div class="setting-row">
+    <label for="orbit-lines-toggle">Show Orbit Lines</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="orbit-lines-toggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="setting-row">
     <label for="debug-mode-toggle">Debug Mode</label>
     <label class="toggle-switch">
       <input type="checkbox" id="debug-mode-toggle">
