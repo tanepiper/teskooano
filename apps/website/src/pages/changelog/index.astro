@@ -13,6 +13,11 @@ const frontmatter = {
   title: 'Changelog',
   description: 'History of changes and releases for Teskooano components.',
 };
+
+console.log(changelogs);
+const latestReleased = changelogs.find(changelog => changelog.data.released)!;
+const unreleasedChangelogs = changelogs.filter(changelog => !changelog.data.released);
+
 ---
 
 <StarlightPage frontmatter={frontmatter}>
@@ -22,9 +27,9 @@ const frontmatter = {
     <>
       <h2>Latest Release</h2>
       <p>
-        The latest version is <a href={`/changelog/${changelogs[0].slug}/`}>v{changelogs[0].data.version}</a>
-        {changelogs[0].data.released &&
-          ` (Released: ${changelogs[0].data.released.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })})`
+        The latest version is <a href={`/changelog/${latestReleased.slug}/`}>v{latestReleased.data.version}</a>
+        {latestReleased.data.released &&
+          ` (Released: ${latestReleased.data.released.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })})`
         }
       </p>
 
@@ -33,9 +38,9 @@ const frontmatter = {
         {changelogs.map(entry => (
           <li>
             <a href={`/changelog/${entry.slug}/`}>v{entry.data.version}</a>
-            {entry.data.released &&
-              <span class="released"> - Released: {entry.data.released.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-            }
+            {entry.data.released ?
+              <span class="released"> - {entry.data.released.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+            : <span class="released"> - Unreleased</span>}
           </li>
         ))}
       </ul>

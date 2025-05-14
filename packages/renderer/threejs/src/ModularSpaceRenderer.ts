@@ -311,13 +311,17 @@ export class ModularSpaceRenderer {
   }
 
   /**
-   * @deprecated Use ControlsManager methods (`pointCameraAtTarget`, `moveCameraToTarget`, `setFollowTarget`) instead for camera manipulation.
-   * Updates the camera's position and target look-at point.
-   * @param {THREE.Vector3} position - The new camera position.
-   * @param {THREE.Vector3} target - The new point for the camera to look at.
+   * @deprecated Use ControlsManager methods (`transitionTo`, `transitionTargetTo`) and CameraManager for camera manipulation.
+   * This method is no longer suitable for high-level camera control.
    */
   updateCamera(position: THREE.Vector3, target: THREE.Vector3): void {
-    this.controlsManager.pointCameraAtTarget(target);
+    console.warn(
+      "[ModularSpaceRenderer.updateCamera] This method is deprecated. Use CameraManager or ControlsManager directly.",
+    );
+    // Preserving a semblance of old behavior, but this is not a smooth transition.
+    this.camera.position.copy(position);
+    this.controlsManager.controls.target.copy(target);
+    this.controlsManager.controls.update();
   }
 
   /**
@@ -375,25 +379,56 @@ export class ModularSpaceRenderer {
   }
 
   /**
-   * Sets the camera to follow a specific celestial object.
-   * This method now delegates the core follow logic to the ControlsManager.
+   * Directly tells the ControlsManager to start or stop following a THREE.Object3D.
+   * This is a lower-level method. For semantic focus and transitions, use CameraManager.
    *
-   * @param {string | null} objectId The ID of the object to follow, or null to stop following.
-   * @param {THREE.Vector3} [_targetPosition] Optional: Ignored. The final target position is calculated internally.
-   * @param {THREE.Vector3} [_cameraPosition] Optional: Ignored. The final camera position is calculated internally.
+   * @param {THREE.Object3D | null} object The THREE.Object3D to follow, or null to stop.
+   * @param {THREE.Vector3} [cameraOffset] The offset the camera should maintain from the object. Required if object is not null.
    */
-  setFollowTarget(
-    objectId: string | null,
-    _targetPosition?: THREE.Vector3,
-    _cameraPosition?: THREE.Vector3,
+  setFollowTargetObject(
+    object: THREE.Object3D | null,
+    cameraOffset?: THREE.Vector3,
   ): void {
     if (!this.controlsManager) {
       console.error("[Renderer] ControlsManager not initialized.");
       return;
     }
 
+    if (object) {
+      if (!cameraOffset) {
+        console.error(
+          "[Renderer.setFollowTargetObject] cameraOffset is required when providing an object to follow.",
+        );
+        return;
+      }
+      this.controlsManager.startFollowing(object, cameraOffset);
+    } else {
+      this.controlsManager.stopFollowing();
+    }
+  }
+
+  /**
+   * @deprecated Prefer using CameraManager for focus and follow behaviors.
+   * This method now acts as a way to look up an object by ID and then call `setFollowTargetObject`.
+   * It does NOT handle transitions; CameraManager does.
+   */
+  setFollowTarget(
+    objectId: string | null,
+    _targetPosition?: THREE.Vector3, // These are ignored as CameraManager handles positioning
+    _cameraPosition?: THREE.Vector3, // These are ignored
+  ): void {
+    if (!this.controlsManager) {
+      console.error(
+        "[Renderer.setFollowTarget] ControlsManager not initialized.",
+      );
+      return;
+    }
+    console.warn(
+      "[ModularSpaceRenderer.setFollowTarget] Deprecated. Use CameraManager for focus behaviors.",
+    );
+
     if (objectId === null) {
-      this.controlsManager.setFollowTarget(null);
+      this.controlsManager.stopFollowing();
       return;
     }
 
@@ -401,14 +436,22 @@ export class ModularSpaceRenderer {
 
     if (!objectToFollow) {
       console.warn(
-        `[Renderer] Could not find object with ID '${objectId}' to follow.`,
+        `[Renderer.setFollowTarget] Could not find object with ID '${objectId}' to follow.`,
       );
-
-      this.controlsManager.setFollowTarget(null);
+      this.controlsManager.stopFollowing(); // Ensure we stop if previous target is now invalid
       return;
     }
 
-    this.controlsManager.setFollowTarget(objectToFollow, undefined, false);
+    // This deprecated version won't have a specific offset. It will rely on ControlsManager's default or last offset if any.
+    // Or, better, we simply state it cannot determine offset and a direct call to startFollowing on controlsManager is needed.
+    // For now, it just sets the object, assuming CameraManager has ALREADY positioned the camera
+    // and ControlsManager.startFollowing will be called by CameraManager with the correct offset.
+    // Effectively, this method becomes a no-op if CameraManager is used correctly.
+    // To make it *somewhat* useful as a direct call for *just starting to follow an already positioned camera*:
+    const currentCameraPos = this.camera.position.clone();
+    const targetObjPos = objectToFollow.getWorldPosition(new THREE.Vector3());
+    const impliedOffset = currentCameraPos.sub(targetObjPos);
+    this.controlsManager.startFollowing(objectToFollow, impliedOffset);
   }
 
   /**

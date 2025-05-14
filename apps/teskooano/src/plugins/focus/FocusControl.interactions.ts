@@ -6,6 +6,7 @@ import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import * as THREE from "three";
 import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel";
 import { CustomEvents } from "@teskooano/data-types";
+import { calculateCameraDistance } from "./FocusControl.camera.js";
 
 /**
  * Handles the logic for requesting the camera to point at a specific object.
@@ -150,9 +151,16 @@ export function handleFollowRequest(
     cameraWithZoom.updateProjectionMatrix();
   }
 
-  renderer.controlsManager.setFollowTarget(objectToFollow, undefined, false);
+  const cameraManager = parentPanel.cameraManager;
+  if (!cameraManager) {
+    console.error(
+      "[FocusControl.interactions] CameraManager not available on parent panel, cannot follow.",
+    );
+    return false;
+  }
 
-  parentPanel.updateViewState({ focusedObjectId: objectId });
+  const distance = calculateCameraDistance(targetObject, renderer);
+  cameraManager.followObject(objectId, distance);
 
   console.debug(`[FocusControl.interactions] Follow initiated for ${objectId}`);
   return true;

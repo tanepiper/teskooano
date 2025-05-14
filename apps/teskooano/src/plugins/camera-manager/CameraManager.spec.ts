@@ -134,7 +134,7 @@ describe("CameraManager", () => {
       [objectId]: createMockRenderable(objectId, objectPosition) as any,
     });
 
-    cameraManager.focusOnObject(objectId);
+    cameraManager.followObject(objectId);
 
     expect(cameraManager.getCameraStateAtom().getValue().focusedObjectId).toBe(
       objectId,
@@ -162,12 +162,12 @@ describe("CameraManager", () => {
     renderableObjectsStore.set({
       [objectId]: createMockRenderable(objectId, objectPosition) as any,
     });
-    cameraManager.focusOnObject(objectId);
+    cameraManager.followObject(objectId);
     expect(cameraManager.getCameraStateAtom().getValue().focusedObjectId).toBe(
       objectId,
     );
 
-    cameraManager.focusOnObject(null);
+    cameraManager.followObject(null);
 
     expect(
       cameraManager.getCameraStateAtom().getValue().focusedObjectId,
@@ -185,7 +185,7 @@ describe("CameraManager", () => {
 
   it("focusOnObject should handle missing object", () => {
     const objectId = "nonExistent";
-    cameraManager.focusOnObject(objectId);
+    cameraManager.followObject(objectId);
 
     expect(
       cameraManager.getCameraStateAtom().getValue().focusedObjectId,
@@ -200,7 +200,7 @@ describe("CameraManager", () => {
     renderableObjectsStore.set({
       [objectId]: createMockRenderable(objectId, objectPosition) as any,
     });
-    cameraManager.focusOnObject(objectId);
+    cameraManager.followObject(objectId);
     expect(cameraManager.getCameraStateAtom().getValue().focusedObjectId).toBe(
       objectId,
     );

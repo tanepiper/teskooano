@@ -1,0 +1,48 @@
+---
+title: Getting Started with Teskooano
+description: How to load up your first system
+---
+
+import { Image } from "astro:assets";
+
+When starting Teskooano, you will first be presented with the main interface with
+toolbar, this is the main engine view
+
+<Image
+  width="720"
+  height="360"
+  src="/docs/getting-started/teskooano-interface.png"
+  alt="A screenshot of the Teskooano interface when you first open the browser"
+/>
+
+The controls with the red box are the _System Controls_ - here you can (in order):
+
+- Enter your own seed using the input
+- Press the first button to load this seed
+- Press the second button to create and load a random seed
+- Import an existing JSON file
+
+Once a system is loaded, you will see a solar system with the camera focused on the _barycenter_
+
+<Image
+  width="720"
+  height="360"
+  src="/docs/getting-started/engine-interface.png"
+  alt="A screenshot of the Teskooano engine when a system is loaded"
+/>
+
+The main _Simulation Controls_ are in the green box - these allow you to speed up, slow down or reverse the direction of time - as well as pausing the simulation at any time.
+
+The _Engine Controls_ are in the red box - here you have access to several panels:
+
+- **Focus Panel:** This is a list of all the celestial items in the system, and allows you focus the camera or follow the object
+- **Performance Panel:** This shows details of the performance of the scene
+- **Celestial Info Panel:** This displays information about the currently focused celestial
+- **Shader Editor Panel:** This displays the shader editor for planets
+- **Engine Settings Panel:** This displays engine settings such as displaying labels, AU markers or controlling the camera FOV
+
+Here is how you can move between planets:
+
+<video controls>
+  <source src="/docs/getting-started/focus-panel.webm" type="video/webm" />
+</video>

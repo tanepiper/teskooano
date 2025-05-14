@@ -20,7 +20,7 @@ const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 /**
  * Default distance multiplier used when calculating camera position based on object size or a default offset.
  */
-const DEFAULT_CAMERA_DISTANCE = 10;
+const DEFAULT_CAMERA_DISTANCE = 1;
 /**
  * Default Field of View (FOV) in degrees.
  */
@@ -47,6 +47,7 @@ export class CameraManager {
   private renderer: ModularSpaceRenderer | undefined;
   private onFocusChangeCallback?: (focusedObjectId: string | null) => void;
   private isInitialized = false;
+  private intendedFocusIdForTransition: string | null = null; // Store intended focus during transition
 
   /**
    * BehaviorSubject holding the current state of the camera.
@@ -128,6 +129,10 @@ export class CameraManager {
       "camera-transition-complete",
       this.handleCameraTransitionComplete,
     );
+    document.addEventListener(
+      "user-camera-manipulation",
+      this.handleUserCameraManipulation,
+    );
 
     this.isInitialized = true;
 
@@ -171,7 +176,7 @@ export class CameraManager {
    * @param {string | null} objectId - The unique ID of the object to focus on. Pass `null` to clear focus and reset to default view.
    * @param {number} [distance] - Optional distance multiplier. If not provided, `DEFAULT_CAMERA_DISTANCE` is used to calculate the offset.
    */
-  public focusOnObject(objectId: string | null, distance?: number): void {
+  public followObject(objectId: string | null, distance?: number): void {
     if (!this.isInitialized || !this.renderer?.controlsManager) {
       console.warn(
         "[CameraManager] Cannot focus on object: Manager or renderer components not initialized.",
@@ -186,13 +191,19 @@ export class CameraManager {
         ...currentState,
         focusedObjectId: objectId,
       });
+      this.intendedFocusIdForTransition = objectId;
+    } else if (objectId === null) {
+      this.intendedFocusIdForTransition = null;
     }
 
     if (objectId === null) {
-      this.renderer.setFollowTarget(null);
-      this.renderer.controlsManager.moveToPosition(
+      this.renderer.controlsManager.stopFollowing();
+      this.renderer.controlsManager.transitionTo(
+        this.renderer.camera.position.clone(),
+        this.renderer.controlsManager.controls.target.clone(),
         DEFAULT_CAMERA_POSITION.clone(),
         DEFAULT_CAMERA_TARGET.clone(),
+        { focusedObjectId: null },
       );
     } else {
       const renderables = getRenderableObjects();
@@ -206,16 +217,34 @@ export class CameraManager {
           ...currentState,
           focusedObjectId: null,
         });
+        this.intendedFocusIdForTransition = null;
         return;
       }
 
       const targetPosition = renderableObject.position.clone();
       const calculatedDistance = distance ?? DEFAULT_CAMERA_DISTANCE;
-      const cameraPosition = targetPosition
-        .clone()
-        .add(CAMERA_OFFSET.clone().multiplyScalar(calculatedDistance));
+      const cameraOffsetVector =
+        CAMERA_OFFSET.clone().multiplyScalar(calculatedDistance);
+      const cameraPosition = targetPosition.clone().add(cameraOffsetVector);
 
-      this.renderer.setFollowTarget(objectId, targetPosition, cameraPosition);
+      if (this.renderer.controlsManager) {
+        this.renderer.controlsManager.transitionTo(
+          this.renderer.camera.position.clone(),
+          this.renderer.controlsManager.controls.target.clone(),
+          cameraPosition,
+          targetPosition,
+          { focusedObjectId: objectId },
+        );
+      } else {
+        console.warn(
+          "[CameraManager] ControlsManager not available to focus on object.",
+        );
+        this.cameraStateSubject.next({
+          ...this.cameraStateSubject.getValue(),
+          focusedObjectId: null,
+        });
+        this.intendedFocusIdForTransition = null;
+      }
     }
   }
 
@@ -231,7 +260,7 @@ export class CameraManager {
       );
       return;
     }
-    this.renderer.controlsManager.pointCameraAtTarget(
+    this.renderer.controlsManager.transitionTargetTo(
       targetPosition.clone(),
       true,
     );
@@ -248,7 +277,7 @@ export class CameraManager {
       );
       return;
     }
-    this.focusOnObject(null);
+    this.followObject(null);
   }
 
   /**
@@ -256,7 +285,7 @@ export class CameraManager {
    * Equivalent to `focusOnObject(null)`.
    */
   public clearFocus(): void {
-    this.focusOnObject(null);
+    this.followObject(null);
   }
 
   /**
@@ -294,7 +323,7 @@ export class CameraManager {
     const detail = (event as CustomEvent).detail;
     const newPosition = detail.position as THREE.Vector3;
     const newTarget = detail.target as THREE.Vector3;
-    const intendedFocusId = detail.focusedObjectId as string | null;
+    const eventFocusId = detail.focusedObjectId as string | null;
 
     const currentState = this.cameraStateSubject.getValue();
     let stateChanged = false;
@@ -308,17 +337,95 @@ export class CameraManager {
       nextState.currentTarget.copy(newTarget);
       stateChanged = true;
     }
-    if (nextState.focusedObjectId !== intendedFocusId) {
-      nextState.focusedObjectId = intendedFocusId;
-      stateChanged = true;
+
+    if (
+      this.intendedFocusIdForTransition !== undefined &&
+      eventFocusId === this.intendedFocusIdForTransition
+    ) {
+      if (nextState.focusedObjectId !== eventFocusId) {
+        nextState.focusedObjectId = eventFocusId;
+        stateChanged = true;
+      }
+      if (eventFocusId && this.renderer?.controlsManager) {
+        const objectToFollow = this.renderer.getObjectById(eventFocusId);
+        if (objectToFollow) {
+          const cameraOffsetFromTarget = newPosition.clone().sub(newTarget);
+          this.renderer.controlsManager.startFollowing(
+            objectToFollow,
+            cameraOffsetFromTarget,
+          );
+        } else {
+          console.warn(
+            `[CameraManager] THREE.Object3D for ID ${eventFocusId} not found for following post-transition.`,
+          );
+          this.renderer.controlsManager.stopFollowing();
+          if (nextState.focusedObjectId === eventFocusId) {
+            nextState.focusedObjectId = null;
+            stateChanged = true;
+          }
+        }
+      } else if (!eventFocusId && this.renderer?.controlsManager) {
+        this.renderer.controlsManager.stopFollowing();
+      }
+    } else if (
+      this.intendedFocusIdForTransition !== undefined &&
+      eventFocusId !== this.intendedFocusIdForTransition
+    ) {
+      if (nextState.focusedObjectId !== null) {
+        nextState.focusedObjectId = null;
+        stateChanged = true;
+      }
+      this.renderer?.controlsManager.stopFollowing();
     }
+    this.intendedFocusIdForTransition = null;
 
     if (stateChanged) {
       this.cameraStateSubject.next(nextState);
     }
 
     if (this.onFocusChangeCallback) {
-      this.onFocusChangeCallback(intendedFocusId);
+      this.onFocusChangeCallback(
+        this.cameraStateSubject.getValue().focusedObjectId,
+      );
+    }
+  };
+
+  /**
+   * Handles user-initiated camera manipulation (e.g., via OrbitControls).
+   * Updates the internal state and clears any active semantic focus.
+   */
+  private handleUserCameraManipulation = (event: Event): void => {
+    if (!this.isInitialized) return;
+
+    const detail = (event as CustomEvent).detail;
+    const newPosition = detail.position as THREE.Vector3;
+    const newTarget = detail.target as THREE.Vector3;
+
+    const currentState = this.cameraStateSubject.getValue();
+    const nextState: CameraManagerState = { ...currentState };
+    let stateChanged = false;
+
+    if (!nextState.currentPosition.equals(newPosition)) {
+      nextState.currentPosition.copy(newPosition);
+      stateChanged = true;
+    }
+    if (!nextState.currentTarget.equals(newTarget)) {
+      nextState.currentTarget.copy(newTarget);
+      stateChanged = true;
+    }
+    if (nextState.focusedObjectId !== null) {
+      nextState.focusedObjectId = null;
+      stateChanged = true;
+      this.renderer?.controlsManager.stopFollowing();
+    }
+
+    this.intendedFocusIdForTransition = null;
+
+    if (stateChanged) {
+      this.cameraStateSubject.next(nextState);
+      if (this.onFocusChangeCallback) {
+        this.onFocusChangeCallback(null);
+      }
     }
   };
 
@@ -330,6 +437,10 @@ export class CameraManager {
     document.removeEventListener(
       "camera-transition-complete",
       this.handleCameraTransitionComplete,
+    );
+    document.removeEventListener(
+      "user-camera-manipulation",
+      this.handleUserCameraManipulation,
     );
     this.cameraStateSubject.complete();
     this.isInitialized = false;

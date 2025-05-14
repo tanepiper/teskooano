@@ -10,6 +10,7 @@ export const CustomEvents = {
   TEXTURE_GENERATION_COMPLETE: "texture-generation-complete",
   START_TOUR_REQUEST: "start-tour-request",
   CAMERA_TRANSITION_COMPLETE: "camera-transition-complete",
+  USER_CAMERA_MANIPULATION: "user-camera-manipulation",
 
   CELESTIAL_OBJECTS_LOADED: "celestial-objects-loaded",
   CELESTIAL_OBJECT_DESTROYED: "celestial-object-destroyed",
