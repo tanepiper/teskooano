@@ -4,7 +4,6 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import fs from "fs";
 import { execSync } from "child_process";
-
 import { teskooanoUiPlugin } from "@teskooano/ui-plugin/vite.js";
 
 const packageJson = JSON.parse(
@@ -42,13 +41,15 @@ export default defineConfig({
     VitePWA({
       registerType: "prompt",
       workbox: {
-        cleanupOutdatedCaches: false,
+        cleanupOutdatedCaches: true,
       },
       manifest: {
         name: "Teskooano 3D N-Body Simulator",
         short_name: "Teskooano",
         description: "N-Body Physics Simulation",
         theme_color: "#2a2a3e",
+        background_color: "#2a2a3e",
+        id: "space.teskooano",
         icons: [
           {
             src: "pwa-192x192.png",
