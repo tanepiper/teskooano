@@ -4,6 +4,8 @@
  */
 export const CustomEvents = {
   COMPOSITE_ENGINE_INITIALIZED: "composite-engine-initialized",
+  SYSTEM_GENERATION_START: "system-generation-start",
+  SYSTEM_GENERATION_COMPLETE: "system-generation-complete",
   SIMULATION_RESET_TIME: "resetSimulationTime",
   ORBIT_UPDATE: "orbitUpdate",
   RENDERER_READY: "renderer-ready",

@@ -27,11 +27,17 @@ export async function generateAndLoadSystem(
 ): Promise<boolean> {
   if (!dockviewApi) {
     console.error("Dockview API not provided to generateAndLoadSystem!");
+    // Still dispatch events even if dockviewApi is null for some reason,
+    // as other parts of the system might listen.
+    window.dispatchEvent(new CustomEvent(CustomEvents.SYSTEM_GENERATION_START));
+    window.dispatchEvent(
+      new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
+    );
     return false;
   }
 
-  const progressPanelId = "texture-progress-panel";
-  let progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
+  // Dispatch system generation start event
+  window.dispatchEvent(new CustomEvent(CustomEvents.SYSTEM_GENERATION_START));
 
   updateSeed(inputSeed);
   const finalSeed = currentSeed.getValue();
@@ -42,22 +48,6 @@ export async function generateAndLoadSystem(
   });
   actions.resetTime();
   dispatchSimulationTimeReset();
-
-  progressPanel?.api.close();
-  progressPanel = undefined;
-
-  dockviewApi.addPanel({
-    id: progressPanelId,
-    component: "progress_view",
-    title: "Generating System...",
-    params: { planetList: [] },
-    floating: {
-      position: { top: 100, left: 100 },
-      width: 400,
-      height: 300,
-    },
-  });
-  progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
 
   try {
     const { systemName, objects$ } = await generateSystemObservable(finalSeed);
@@ -72,8 +62,6 @@ export async function generateAndLoadSystem(
 
     const processingPipeline$ = objects$.pipe(
       tap((celestialObject: CelestialObject) => {
-        progressPanel?.api.setTitle(`Processing: ${celestialObject.name}`);
-
         if (celestialObject.type === CelestialType.STAR && isFirstStar) {
           actions.createSolarSystem(celestialObject);
           isFirstStar = false;
@@ -99,23 +87,13 @@ export async function generateAndLoadSystem(
         return throwError(() => error);
       }),
       finalize(() => {
-        let finalPanel = dockviewApi.panels.find(
-          (p) => p.id === progressPanelId,
-        );
-        finalPanel?.api.setTitle("Generation Complete");
-
-        setTimeout(() => {
-          const panelToClose = dockviewApi.panels.find(
-            (p) => p.id === progressPanelId,
-          );
-          if (panelToClose) {
-            panelToClose.api.close();
-          }
-        }, 1500);
-
         dispatchTextureGenerationComplete();
         actions.resetTime();
         dispatchSimulationTimeReset();
+        // Dispatch system generation complete event
+        window.dispatchEvent(
+          new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
+        );
       }),
     );
 
@@ -126,9 +104,11 @@ export async function generateAndLoadSystem(
       "[SystemGenerator] Overall error in generateAndLoadSystem:",
       error,
     );
-    progressPanel = dockviewApi.panels.find((p) => p.id === progressPanelId);
-    progressPanel?.api.close();
     dispatchTextureGenerationComplete();
+    // Dispatch system generation complete event even on error
+    window.dispatchEvent(
+      new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
+    );
     return false;
   }
 }

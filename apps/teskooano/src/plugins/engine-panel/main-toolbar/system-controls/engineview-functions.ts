@@ -30,7 +30,7 @@ export const addCompositeEnginePanelFunction: FunctionConfig = {
 
     const panelOptions: AddPanelOptions = {
       id: compositeViewId,
-      component: "composite_engine_view",
+      component: "teskooano-engine-view",
       title: compositeViewTitle,
       params: {
         title: compositeViewTitle,

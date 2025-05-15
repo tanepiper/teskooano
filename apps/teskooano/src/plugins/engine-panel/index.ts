@@ -1,6 +1,5 @@
 import type { TeskooanoPlugin, PanelConfig } from "@teskooano/ui-plugin";
 import { CompositeEnginePanel } from "./panels/CompositeEnginePanel";
-import { ProgressPanel } from "./panels/ProgressPanel";
 
 import { addCompositeEnginePanelFunction } from "./main-toolbar/system-controls/engineview-functions";
 import {
@@ -19,21 +18,15 @@ import {
 } from "./main-toolbar/toolbar-definitions";
 
 const enginePanelConfig: PanelConfig = {
-  componentName: "composite_engine_view",
+  componentName: "teskooano-engine-view",
   panelClass: CompositeEnginePanel,
   defaultTitle: "Engine View",
-};
-
-const progressPanelConfig: PanelConfig = {
-  componentName: "progress_view",
-  panelClass: ProgressPanel,
-  defaultTitle: "Processing...",
 };
 
 /**
  * Plugin definition for the core Engine Panel and related system actions.
  *
- * Registers the main engine view panel (CompositeEnginePanel), a progress panel,
+ * Registers the main engine view panel (CompositeEnginePanel),
  * various system control functions (generate, clear, import/export), and toolbar widgets/buttons.
  */
 export const plugin: TeskooanoPlugin = {
@@ -42,7 +35,7 @@ export const plugin: TeskooanoPlugin = {
   description:
     "Registers engine view panels and provides core system actions (generate, import, export, clear, etc.).",
 
-  panels: [enginePanelConfig, progressPanelConfig],
+  panels: [enginePanelConfig],
 
   functions: [
     addCompositeEnginePanelFunction,

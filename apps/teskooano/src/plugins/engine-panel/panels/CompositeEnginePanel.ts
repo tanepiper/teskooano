@@ -5,6 +5,7 @@ import {
   panelRegistry,
   simulationState$,
   type SimulationState,
+  getCelestialObjects,
 } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
@@ -31,6 +32,8 @@ import {
   EngineToolbar,
   EngineToolbarManager,
 } from "../../../core/interface/engine-toolbar";
+import { template } from "./CompositeEnginePanel.template.js"; // Import the template
+import { applyViewStateToRenderer } from "./CompositeEnginePanel.utils.js"; // Import the utility function
 
 /**
  * The parameters for the CompositeEnginePanel
@@ -115,9 +118,16 @@ let isSimulationLoopStarted = false;
  * - Initializes UI control components based on configuration parameters.
  * - Acts as a central point for interaction between UI controls and the renderer.
  */
-export class CompositeEnginePanel implements IContentRenderer {
-  private readonly _element: HTMLElement;
-  private _engineContainer: HTMLElement | undefined;
+export class CompositeEnginePanel
+  extends HTMLElement
+  implements IContentRenderer
+{
+  private _engineContainer: HTMLElement | null = null;
+  private _placeholderWrapper: HTMLElement | null = null;
+  private _placeholderMessage: HTMLParagraphElement | null = null;
+  private _placeholderActionArea: HTMLDivElement | null = null;
+
+  private _isGeneratingSystem = false;
 
   private _params:
     | (GroupPanelPartInitParameters & { params?: CompositePanelParams })
@@ -145,26 +155,28 @@ export class CompositeEnginePanel implements IContentRenderer {
   private _panelRemovedSubscription: Subscription | null = null;
 
   /**
-   * The root HTML element for this panel.
+   * The root HTML element for this panel (fulfills IContentRenderer for custom elements).
    */
   get element(): HTMLElement {
-    return this._element;
+    return this;
   }
 
   constructor() {
-    this._element = document.createElement("div");
-    this._element.classList.add("composite-engine-panel");
-    this._element.style.height = "100%";
-    this._element.style.width = "100%";
-    this._element.style.overflow = "hidden";
-    this._element.style.display = "flex";
-    this._element.style.position = "relative";
+    super(); // Call super for HTMLElement
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
-    this._engineContainer = document.createElement("div");
-    this._engineContainer.classList.add("engine-container");
-    this._engineContainer.style.position = "relative";
-    this._engineContainer.style.overflow = "hidden";
-    this._element.appendChild(this._engineContainer);
+    // Get references to elements in the shadow DOM
+    this._engineContainer = this.shadowRoot!.querySelector(".engine-container");
+    this._placeholderWrapper = this.shadowRoot!.querySelector(
+      "#engine-placeholder-wrapper",
+    );
+    this._placeholderMessage = this.shadowRoot!.querySelector(
+      "#placeholder-message",
+    );
+    this._placeholderActionArea = this.shadowRoot!.querySelector(
+      "#placeholder-action-area",
+    );
 
     this._viewStateSubject = new BehaviorSubject<CompositeEngineState>({
       cameraPosition: new THREE.Vector3(200, 200, 200),
@@ -178,6 +190,78 @@ export class CompositeEnginePanel implements IContentRenderer {
       isDebugMode: false,
       fov: DEFAULT_PANEL_FOV,
     });
+
+    this._handleSystemGenerationStart =
+      this._handleSystemGenerationStart.bind(this);
+    this._handleSystemGenerationComplete =
+      this._handleSystemGenerationComplete.bind(this);
+    this.handleSimulationStateChange =
+      this.handleSimulationStateChange.bind(this);
+  }
+
+  connectedCallback(): void {
+    console.debug(
+      `[CompositePanel ${this._api?.id || this.id}] connectedCallback`,
+    );
+    // Add window-level event listeners here
+    window.addEventListener(
+      CustomEvents.SYSTEM_GENERATION_START,
+      this._handleSystemGenerationStart,
+    );
+    window.addEventListener(
+      CustomEvents.SYSTEM_GENERATION_COMPLETE,
+      this._handleSystemGenerationComplete,
+    );
+
+    // If init has already run and provided an API, re-evaluate subscriptions
+    // This handles cases where the element is re-added to the DOM after init
+    if (this._isInitialized && this._api) {
+      // Re-establish subscriptions that might have been missed or need refresh
+      // if their setup was conditional on isConnected previously.
+      this._layoutOrientationSubscription?.unsubscribe();
+      this._layoutOrientationSubscription = layoutOrientation$.subscribe(
+        (orientation) => {
+          this._currentOrientation = orientation;
+          if (this.isConnected) {
+            // Check isConnected before triggering resize
+            this.triggerResize();
+          }
+        },
+      );
+
+      // The celestialObjects$ and simulationState$ subscriptions are typically set up in init
+      // and their internal callbacks already check this.isConnected.
+      // However, ensure they are active if init has run.
+      if (!this._celestialObjectsUnsubscribe) {
+        // Or some other flag indicating it needs re-subbing
+        this._subscribeToCelestialObjects();
+      }
+      if (!this._simulationStateUnsubscribe) {
+        this._subscribeToSimulationState();
+      }
+    }
+  }
+
+  disconnectedCallback(): void {
+    console.debug(
+      `[CompositePanel ${this._api?.id || this.id}] disconnectedCallback`,
+    );
+    // Remove window-level event listeners here
+    window.removeEventListener(
+      CustomEvents.SYSTEM_GENERATION_START,
+      this._handleSystemGenerationStart,
+    );
+    window.removeEventListener(
+      CustomEvents.SYSTEM_GENERATION_COMPLETE,
+      this._handleSystemGenerationComplete,
+    );
+
+    // Optionally, unsubscribe from RxJS subscriptions that don't clean up themselves
+    // or that shouldn't run if the element is not in the DOM.
+    // Dockview's dispose() is the primary cleanup for panel-specific resources.
+    this._layoutOrientationSubscription?.unsubscribe();
+    // Defer full cleanup of _celestialObjectsUnsubscribe & _simulationStateUnsubscribe to dispose(),
+    // as they are tied to the panel's lifecycle via init/dispose from Dockview.
   }
 
   /**
@@ -200,7 +284,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       ...currentState,
       ...updates,
     });
-    this.applyViewStateToRenderer(updates);
+    applyViewStateToRenderer(this._renderer, updates);
   }
 
   /**
@@ -280,42 +364,6 @@ export class CompositeEnginePanel implements IContentRenderer {
    */
   public get trackedFloatingPanels(): Map<string, DockviewPanelApi> {
     return this._trackedFloatingPanels;
-  }
-
-  /**
-   * Applies specific view state updates directly to the renderer's components.
-   * This is called internally when the view state is updated.
-   * @param updates - The partial view state containing changes to apply.
-   */
-  private applyViewStateToRenderer(
-    updates: Partial<CompositeEngineState>,
-  ): void {
-    if (!this._renderer) return;
-
-    if (updates.showGrid !== undefined) {
-      this._renderer.sceneManager?.setGridVisible(updates.showGrid);
-    }
-    if (
-      updates.showCelestialLabels !== undefined &&
-      this._renderer.css2DManager
-    ) {
-      this._renderer.css2DManager.setLayerVisibility(
-        CSS2DLayerType.CELESTIAL_LABELS,
-        updates.showCelestialLabels,
-      );
-    }
-    if (updates.showAuMarkers !== undefined) {
-      this._renderer.sceneManager.setAuMarkersVisible(updates.showAuMarkers);
-    }
-    if (updates.showOrbitLines !== undefined && this._renderer.orbitManager) {
-      this._renderer.orbitManager.setVisibility(updates.showOrbitLines);
-    }
-    if (updates.fov !== undefined) {
-      this._renderer.sceneManager.setFov(updates.fov);
-    }
-    if (updates.isDebugMode !== undefined) {
-      this._renderer.setDebugMode(updates.isDebugMode);
-    }
   }
 
   /**
@@ -429,27 +477,142 @@ export class CompositeEnginePanel implements IContentRenderer {
   }
 
   /**
-   * Creates placeholder content for the panel.
-   * @returns The placeholder content.
+   * Updates the placeholder content based on the generation state.
+   * @param isGenerating - True if the system is currently generating.
    */
-  private _createPlaceholderContent(): string {
-    return `
-      <div style='display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center; padding: 1em; box-sizing: border-box;'>
-        <img src='/assets/panel-icon.png' alt='Engine Placeholder Icon' style='max-width: 256px; max-height: 256px; margin-bottom: 1em; opacity: 0.5;' />
-        <p style='color: #aaa; margin: 0;'>Load or Generate a System</p>
-        <a href="https://teskooano.space/docs/getting-started" target="_blank">📚 Go To Documentation</teskooano-button>
-      </div>
-    `;
+  private _updatePlaceholderContent(isGenerating: boolean): void {
+    if (
+      !this._placeholderWrapper ||
+      !this._placeholderMessage ||
+      !this._placeholderActionArea
+    ) {
+      console.warn(
+        "[CompositePanel] Placeholder elements not found in shadow DOM.",
+      );
+      return;
+    }
+
+    if (isGenerating) {
+      this._placeholderMessage.textContent = "Generating System...";
+      this._placeholderActionArea.innerHTML = `<progress style='width: 100%;'></progress>`;
+      this._placeholderWrapper.classList.remove("hidden");
+      if (this._engineContainer) this._engineContainer.style.display = "none";
+    } else {
+      this._placeholderMessage.textContent = "Load or Generate a System";
+      this._placeholderActionArea.innerHTML = `<a href="https://teskooano.space/docs/getting-started" target="_blank" style="display: inline-block; padding: 8px 15px; background-color: #333; color: #fff; text-decoration: none; border-radius: 4px;">📚 Go To Documentation</a>`;
+      this._placeholderWrapper.classList.remove("hidden");
+      if (this._engineContainer) this._engineContainer.style.display = "none";
+    }
   }
+
+  private _hidePlaceholder(): void {
+    if (this._placeholderWrapper) {
+      this._placeholderWrapper.classList.add("hidden");
+    }
+    if (this._engineContainer) {
+      this._engineContainer.style.display = "block"; // Or 'flex' or whatever its default is
+    }
+  }
+
+  private _handleSystemGenerationStart(): void {
+    console.debug(
+      `[CompositePanel ${this._api?.id || this.id}] SYSTEM_GENERATION_START received.`,
+    );
+    this._isGeneratingSystem = true;
+    if (!this._renderer) {
+      // Only show if renderer isn't active
+      this._updatePlaceholderContent(true);
+    }
+  }
+
+  private _handleSystemGenerationComplete(): void {
+    console.debug(
+      `[CompositePanel ${this._api?.id || this.id}] SYSTEM_GENERATION_COMPLETE received.`,
+    );
+    this._isGeneratingSystem = false;
+    const objectCount = Object.keys(getCelestialObjects()).length;
+
+    if (!this._renderer) {
+      // If renderer is not yet up
+      if (objectCount > 0) {
+        console.debug(
+          `[CompositePanel ${this._api?.id || this.id}] Generation complete, objects present. Initializing renderer.`,
+        );
+        this._hidePlaceholder(); // Hide placeholder, show engine container
+
+        this.initializeRenderer();
+        this.initializeToolbar();
+
+        if (!isSimulationLoopStarted) {
+          startSimulationLoop();
+          isSimulationLoopStarted = true;
+        }
+        this.triggerResize();
+      } else {
+        // No objects, generation complete, no renderer. Show default placeholder.
+        this._updatePlaceholderContent(false);
+      }
+    }
+  }
+
+  // Helper method to encapsulate celestial object subscription logic
+  private _subscribeToCelestialObjects(): void {
+    this._celestialObjectsUnsubscribe?.unsubscribe();
+    this._celestialObjectsUnsubscribe = celestialObjects$.subscribe(
+      (celestialObjects) => {
+        if (!this.isConnected) {
+          return;
+        }
+        console.debug(
+          `[CompositePanel ${this._api?.id || this.id}] celestialObjects updated`,
+          Object.keys(celestialObjects).length,
+        );
+
+        const objectCount = Object.keys(celestialObjects).length;
+
+        if (!this._renderer && objectCount > 0 && !this._isGeneratingSystem) {
+          this._hidePlaceholder();
+
+          this.initializeRenderer();
+          this.initializeToolbar();
+
+          if (!isSimulationLoopStarted) {
+            startSimulationLoop();
+            isSimulationLoopStarted = true;
+          }
+          this.triggerResize();
+        } else if (this._renderer && objectCount === 0) {
+          this.disposeRendererAndUI();
+          this._updatePlaceholderContent(this._isGeneratingSystem); // Show appropriate placeholder
+        }
+      },
+    );
+  }
+
+  // Helper method for simulation state subscription
+  private _subscribeToSimulationState(): void {
+    this._simulationStateUnsubscribe?.unsubscribe();
+    this._simulationStateUnsubscribe = simulationState$.subscribe(
+      this.handleSimulationStateChange,
+    );
+  }
+
   /**
    * Dockview lifecycle method: Initializes the panel's content and renderer.
    * Sets up data listeners, placeholders, and the PanelResizer.
    * @param parameters - Initialization parameters provided by Dockview.
    */
   init(parameters: GroupPanelPartInitParameters): void {
+    // Dockview provides an API object through parameters.api
+    this._api = parameters.api;
+    // this.id is the HTMLElement id, this._api.id is Dockview's panel id.
+    // Ensure the element has an ID if needed for external styling or query, though shadow DOM encapsulates.
+    if (!this.id) this.id = `composite-engine-view-${this._api.id}`;
+    console.debug(`[CompositePanel ${this._api.id}] init called.`);
+
     if (this._isInitialized && this._dockviewController) {
       console.warn(
-        `[CompositePanel ${this._api?.id}] Attempted to initialize already initialized panel.`,
+        `[CompositePanel ${this._api.id}] Attempted to initialize already initialized panel.`,
       );
       return;
     }
@@ -462,56 +625,49 @@ export class CompositeEnginePanel implements IContentRenderer {
 
     if (!this._dockviewController) {
       console.error(
-        `[CompositePanel ${this._api?.id}] DockviewController instance was not provided in params. Toolbar actions will fail.`,
+        `[CompositePanel ${this._api.id}] DockviewController instance was not provided in params. Toolbar actions will fail.`,
       );
     }
 
-    this._api = parameters.api;
-    this._element.id = `composite-engine-view-${this._api?.id}`;
+    // Initial content setup based on current generation state
+    // Ensure _engineContainer is queried from shadowRoot if not done in constructor for some reason
+    if (!this._engineContainer)
+      this._engineContainer =
+        this.shadowRoot!.querySelector(".engine-container");
+    if (!this._placeholderWrapper)
+      this._placeholderWrapper = this.shadowRoot!.querySelector(
+        "#engine-placeholder-wrapper",
+      );
+    if (!this._placeholderMessage)
+      this._placeholderMessage = this.shadowRoot!.querySelector(
+        "#placeholder-message",
+      );
+    if (!this._placeholderActionArea)
+      this._placeholderActionArea = this.shadowRoot!.querySelector(
+        "#placeholder-action-area",
+      );
 
-    if (this._engineContainer) {
-      this._engineContainer.innerHTML = this._createPlaceholderContent();
+    this._updatePlaceholderContent(this._isGeneratingSystem);
+
+    // Subscriptions are now managed by connectedCallback or here if they depend on init params
+    this._subscribeToCelestialObjects();
+    this._subscribeToSimulationState();
+
+    // layoutOrientation$ subscription is better in connectedCallback as it doesn't depend on init params.
+    // Ensure it's active if already connected.
+    if (this.isConnected && !this._layoutOrientationSubscription) {
+      this._layoutOrientationSubscription = layoutOrientation$.subscribe(
+        (orientation) => {
+          this._currentOrientation = orientation;
+          if (this.isConnected) {
+            this.triggerResize();
+          }
+        },
+      );
     }
 
-    this._celestialObjectsUnsubscribe?.unsubscribe();
-    this._celestialObjectsUnsubscribe = celestialObjects$.subscribe(
-      (celestialObjects) => {
-        if (!this._element.isConnected) {
-          return;
-        }
-
-        const objectCount = Object.keys(celestialObjects).length;
-
-        if (!this._renderer && objectCount > 0) {
-          if (this._engineContainer) this._engineContainer.innerHTML = "";
-
-          this.initializeRenderer();
-          this.initializeToolbar();
-
-          if (!isSimulationLoopStarted) {
-            startSimulationLoop();
-            isSimulationLoopStarted = true;
-          }
-
-          this.triggerResize();
-        } else if (this._renderer && objectCount === 0) {
-          this.disposeRendererAndUI();
-
-          if (this._engineContainer && !this._renderer) {
-            this._engineContainer.innerHTML = this._createPlaceholderContent();
-          }
-        }
-      },
-    );
-
-    this._isInitialized = true;
-
-    this._simulationStateUnsubscribe?.unsubscribe();
-    this._simulationStateUnsubscribe = simulationState$.subscribe(
-      this.handleSimulationStateChange,
-    );
-
     if (this._dockviewController) {
+      this._panelRemovedSubscription?.unsubscribe(); // Ensure no duplicates if init is called again
       this._panelRemovedSubscription =
         this._dockviewController.onPanelRemoved$.subscribe((panelId) => {
           this.handleExternalPanelRemoval(panelId);
@@ -522,15 +678,7 @@ export class CompositeEnginePanel implements IContentRenderer {
       );
     }
 
-    this._layoutOrientationSubscription = layoutOrientation$.subscribe(
-      (orientation) => {
-        this._currentOrientation = orientation;
-
-        if (this._isInitialized) {
-          this.triggerResize();
-        }
-      },
-    );
+    this._isInitialized = true;
   }
 
   /**
@@ -539,6 +687,9 @@ export class CompositeEnginePanel implements IContentRenderer {
    */
   private initializeRenderer(): void {
     if (!this._engineContainer || this._renderer) return;
+    console.debug(
+      `[CompositePanel ${this._api?.id || this.id}] initializeRenderer`,
+    );
 
     try {
       this._renderer = new ModularSpaceRenderer(this._engineContainer, {
@@ -629,7 +780,8 @@ export class CompositeEnginePanel implements IContentRenderer {
           console.debug(
             `[CompositePanel ${this._api.id}] Dispatching ${CustomEvents.COMPOSITE_ENGINE_INITIALIZED}`,
           );
-          this.element.dispatchEvent(
+          this.dispatchEvent(
+            // Dispatch from the custom element itself
             new CustomEvent(CustomEvents.COMPOSITE_ENGINE_INITIALIZED, {
               bubbles: true,
               composed: true,
@@ -650,7 +802,8 @@ export class CompositeEnginePanel implements IContentRenderer {
         });
         this._resizeObserver.observe(this._engineContainer);
 
-        this.applyViewStateToRenderer(this.getViewState());
+        // Call the utility function, passing this._renderer and current view state
+        applyViewStateToRenderer(this._renderer, this.getViewState());
       } catch (error) {
         console.error(
           `[CompositePanel ${this._api?.id}] Failed to set CameraManager dependencies:`,
@@ -704,7 +857,7 @@ export class CompositeEnginePanel implements IContentRenderer {
 
     this._engineToolbar = toolbarManager.createToolbarForPanel(
       this._api.id,
-      this._element,
+      this,
       this._dockviewController!,
       this,
     );
@@ -775,7 +928,20 @@ export class CompositeEnginePanel implements IContentRenderer {
    * Stops listeners, disposes the renderer, and unregisters the panel.
    */
   dispose(): void {
+    console.debug(
+      `[CompositePanel ${this._api?.id || this.id}] dispose called`,
+    );
     this.disposeRendererAndUI();
+
+    // Remove event listeners for system generation (already in disconnectedCallback, but good for explicit dispose)
+    window.removeEventListener(
+      CustomEvents.SYSTEM_GENERATION_START,
+      this._handleSystemGenerationStart,
+    );
+    window.removeEventListener(
+      CustomEvents.SYSTEM_GENERATION_COMPLETE,
+      this._handleSystemGenerationComplete,
+    );
 
     this._panelRemovedSubscription?.unsubscribe();
     this._panelRemovedSubscription = null;

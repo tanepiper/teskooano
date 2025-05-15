@@ -41,7 +41,13 @@ export class EngineToolbarManager {
 
       this.activeToolbars.set(apiId, newToolbar);
 
-      parentElement.appendChild(newToolbar.element);
+      // If parentElement is a web component with a shadowRoot, append to the shadowRoot.
+      // Otherwise, append to the parentElement directly (legacy or non-shadowDOM components).
+      const targetContainer =
+        parentElement.shadowRoot instanceof ShadowRoot
+          ? parentElement.shadowRoot
+          : parentElement;
+      targetContainer.appendChild(newToolbar.element);
 
       return newToolbar;
     } catch (error) {
