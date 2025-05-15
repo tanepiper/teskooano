@@ -1,10 +1,7 @@
 import type { DockviewApi } from "dockview-core";
 import { BehaviorSubject, Observable } from "rxjs";
 import { EngineToolbar } from "./EngineToolbar";
-import {
-  EnginePanelWithToolbarToggle,
-  IDockviewPanelControls,
-} from "./engine-toolbar.types";
+import { IDockviewPanelControls } from "./engine-toolbar.types";
 
 export class EngineToolbarManager {
   private dockviewApi: DockviewApi | null = null;
@@ -20,7 +17,7 @@ export class EngineToolbarManager {
     apiId: string,
     parentElement: HTMLElement,
     dockviewController: IDockviewPanelControls,
-    parentEngine: EnginePanelWithToolbarToggle,
+    parentEngine: any,
   ): EngineToolbar | null {
     if (this.activeToolbars.has(apiId)) {
       console.warn(

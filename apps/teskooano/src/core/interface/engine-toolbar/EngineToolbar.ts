@@ -16,10 +16,7 @@ import {
 } from "@teskooano/ui-plugin";
 
 // Import types from the new file
-import type {
-  EnginePanelWithToolbarToggle,
-  IDockviewPanelControls,
-} from "./engine-toolbar.types";
+import type { IDockviewPanelControls } from "./engine-toolbar.types";
 
 export class EngineToolbar {
   private readonly _element: HTMLElement;
@@ -28,7 +25,7 @@ export class EngineToolbar {
   private _widgetContainer: HTMLElement | null = null;
   private _dockviewController: IDockviewPanelControls;
   private _apiId: string;
-  private _parentEngine: EnginePanelWithToolbarToggle;
+  private _parentEngine: any;
   private _isExpanded: boolean = true;
   private _activeFloatingPanels: Map<string, string> = new Map();
   // Use Subject for easier cleanup on dispose
@@ -44,7 +41,7 @@ export class EngineToolbar {
   constructor(
     apiId: string,
     dockviewController: IDockviewPanelControls,
-    parentEngine: EnginePanelWithToolbarToggle,
+    parentEngine: any,
   ) {
     this._apiId = apiId;
     this._dockviewController = dockviewController;
@@ -103,7 +100,16 @@ export class EngineToolbar {
 
     // Attach the toggle listener
     this._toggleButton?.addEventListener("click", () => {
-      this._parentEngine.requestToolbarToggle();
+      const manager = pluginManager.getManagerInstance<EngineToolbarManager>(
+        "engine-toolbar-manager",
+      );
+      if (manager) {
+        manager.toggleToolbarExpansion(this._apiId);
+      } else {
+        console.error(
+          `[EngineToolbar ${this._apiId}] EngineToolbarManager not found. Cannot toggle expansion.`,
+        );
+      }
     });
   }
 

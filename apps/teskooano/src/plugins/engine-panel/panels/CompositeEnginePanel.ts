@@ -39,8 +39,7 @@ import {
 import { CompositeEngineState, CompositePanelParams } from "./types.js";
 import { EngineCameraManager } from "./EngineCameraManager"; // Added import
 import { PlaceholderManager } from "./PlaceholderManager"; // Added import
-
-let isSimulationLoopStarted = false;
+import { ensureSimulationLoopStarted } from "../../../core/state/simulation-loop.state"; // Added import
 
 /**
  * A Dockview panel component that combines a 3D engine view (`ModularSpaceRenderer`)
@@ -400,12 +399,9 @@ export class CompositeEnginePanel
         this._placeholderManager?.hide(); // Hide placeholder, show engine container
 
         this.initializeRenderer();
-        this.initializeToolbar();
+        this.createEngineToolbar();
 
-        if (!isSimulationLoopStarted) {
-          startSimulationLoop();
-          isSimulationLoopStarted = true;
-        }
+        ensureSimulationLoopStarted();
         this.triggerResize();
       } else {
         // No objects, generation complete, no renderer. Show default placeholder.
@@ -433,12 +429,9 @@ export class CompositeEnginePanel
           this._placeholderManager?.hide();
 
           this.initializeRenderer();
-          this.initializeToolbar();
+          this.createEngineToolbar();
 
-          if (!isSimulationLoopStarted) {
-            startSimulationLoop();
-            isSimulationLoopStarted = true;
-          }
+          ensureSimulationLoopStarted();
           this.triggerResize();
         } else if (this._renderer && objectCount === 0) {
           this.disposeRendererAndUI();
@@ -538,6 +531,19 @@ export class CompositeEnginePanel
       `[CompositePanel ${this._api?.id || this.id}] initializeRenderer`,
     );
 
+    if (!this._createRendererInstance()) return;
+    if (!this._initializeCameraSystems()) return;
+    if (!this._configureAndLinkCamera()) return;
+
+    this._finalizePanelInitialization();
+  }
+
+  /**
+   * Creates and configures the core ModularSpaceRenderer instance.
+   * @returns True if successful, false otherwise.
+   */
+  private _createRendererInstance(): boolean {
+    if (!this._engineContainer) return false;
     try {
       this._renderer = new ModularSpaceRenderer(this._engineContainer, {
         antialias: true,
@@ -554,121 +560,11 @@ export class CompositeEnginePanel
           this.handleSimulationStateChange,
         );
       }
-
       this.handleSimulationStateChange(getSimulationState());
-
-      const cameraManagerInstance =
-        pluginManager.getManagerInstance<CameraManager>("camera-manager");
-      this._cameraManager = cameraManagerInstance;
-
-      if (!this._cameraManager) {
-        console.error(
-          `[CompositePanel ${this._api?.id}] Failed to get CameraManager instance! Camera controls will be unavailable.`,
-        );
-        // No CameraManager, so no EngineCameraManager either.
-        this._engineCameraManager = undefined;
-        return;
-      }
-
-      // Initialize EngineCameraManager
-      this._engineCameraManager = new EngineCameraManager(
-        this._cameraManager,
-        this,
-        this._api?.id,
-      );
-
-      const initialViewState = this._viewStateSubject.getValue();
-
-      try {
-        this._cameraManager.setDependencies({
-          renderer: this._renderer,
-          initialFov: initialViewState.fov,
-          initialFocusedObjectId: initialViewState.focusedObjectId,
-          initialCameraPosition: initialViewState.cameraPosition,
-          initialCameraTarget: initialViewState.cameraTarget,
-          onFocusChangeCallback: (focusedId: string | null) => {
-            this.updateViewState({ focusedObjectId: focusedId });
-          },
-        });
-
-        if (this._cameraManager) this._cameraManager.initializeCameraPosition();
-
-        if (this._cameraManager) {
-          this._cameraManager.getCameraState$().subscribe((cameraState) => {
-            if (!this._isInitialized || !this.element.isConnected) return;
-
-            const currentPanelState = this._viewStateSubject.getValue();
-            const updates: Partial<CompositeEngineState> = {};
-
-            if (
-              !currentPanelState.cameraPosition.equals(
-                cameraState.currentPosition,
-              )
-            ) {
-              updates.cameraPosition = cameraState.currentPosition.clone();
-            }
-            if (
-              !currentPanelState.cameraTarget.equals(cameraState.currentTarget)
-            ) {
-              updates.cameraTarget = cameraState.currentTarget.clone();
-            }
-            if (
-              currentPanelState.focusedObjectId !== cameraState.focusedObjectId
-            ) {
-              updates.focusedObjectId = cameraState.focusedObjectId;
-            }
-            if (currentPanelState.fov !== cameraState.fov) {
-              updates.fov = cameraState.fov;
-            }
-
-            if (Object.keys(updates).length > 0) {
-              this._viewStateSubject.next({
-                ...currentPanelState,
-                ...updates,
-              });
-            }
-          });
-        }
-
-        // Dispatch an event indicating the composite panel and its managers are ready
-        if (this.element.isConnected && this._api?.id) {
-          console.debug(
-            `[CompositePanel ${this._api.id}] Dispatching ${CustomEvents.COMPOSITE_ENGINE_INITIALIZED}`,
-          );
-          this.dispatchEvent(
-            // Dispatch from the custom element itself
-            new CustomEvent(CustomEvents.COMPOSITE_ENGINE_INITIALIZED, {
-              bubbles: true,
-              composed: true,
-              detail: {
-                panelId: this._api.id,
-                parentInstance: this, // Pass the whole panel instance
-              },
-            }),
-          );
-        }
-
-        this._renderer.startRenderLoop();
-
-        this._resizeObserver = new ResizeObserver((entries) => {
-          for (let _ of entries) {
-            this.triggerResize();
-          }
-        });
-        this._resizeObserver.observe(this._engineContainer);
-
-        // Call the utility function, passing this._renderer and current view state
-        applyViewStateToRenderer(this._renderer, this.getViewState());
-      } catch (error) {
-        console.error(
-          `[CompositePanel ${this._api?.id}] Failed to set CameraManager dependencies:`,
-          error,
-        );
-        this._cameraManager = undefined;
-      }
+      return true;
     } catch (error) {
       console.error(
-        `Failed to initialize CompositePanel [${this._api?.id}] renderer:`,
+        `Failed to create ModularSpaceRenderer for [${this._api?.id}]:`,
         error,
       );
       if (this._engineContainer) {
@@ -676,7 +572,133 @@ export class CompositeEnginePanel
         this._engineContainer.style.color = "red";
         this._engineContainer.style.padding = "1em";
       }
+      this._renderer = undefined;
+      return false;
     }
+  }
+
+  /**
+   * Initializes the main CameraManager and the panel-specific EngineCameraManager.
+   * @returns True if successful, false otherwise.
+   */
+  private _initializeCameraSystems(): boolean {
+    const cameraManagerInstance =
+      pluginManager.getManagerInstance<CameraManager>("camera-manager");
+    this._cameraManager = cameraManagerInstance;
+
+    if (!this._cameraManager) {
+      console.error(
+        `[CompositePanel ${this._api?.id}] Failed to get CameraManager instance! Camera controls will be unavailable.`,
+      );
+      this._engineCameraManager = undefined;
+      return false;
+    }
+
+    this._engineCameraManager = new EngineCameraManager(
+      this._cameraManager,
+      this,
+      this._api?.id,
+    );
+    return true;
+  }
+
+  /**
+   * Sets dependencies for the main CameraManager, initializes its position,
+   * and subscribes to its state changes to update the panel's view state.
+   * Assumes _renderer, _cameraManager, and _viewStateSubject are initialized.
+   * @returns True if successful, false otherwise.
+   */
+  private _configureAndLinkCamera(): boolean {
+    if (!this._renderer || !this._cameraManager) return false;
+
+    const initialViewState = this._viewStateSubject.getValue();
+    try {
+      this._cameraManager.setDependencies({
+        renderer: this._renderer,
+        initialFov: initialViewState.fov,
+        initialFocusedObjectId: initialViewState.focusedObjectId,
+        initialCameraPosition: initialViewState.cameraPosition,
+        initialCameraTarget: initialViewState.cameraTarget,
+        onFocusChangeCallback: (focusedId: string | null) => {
+          this.updateViewState({ focusedObjectId: focusedId });
+        },
+      });
+
+      this._cameraManager.initializeCameraPosition();
+
+      this._cameraManager.getCameraState$().subscribe((cameraState) => {
+        if (!this._isInitialized || !this.element.isConnected) return;
+
+        const currentPanelState = this._viewStateSubject.getValue();
+        const updates: Partial<CompositeEngineState> = {};
+
+        if (
+          !currentPanelState.cameraPosition.equals(cameraState.currentPosition)
+        ) {
+          updates.cameraPosition = cameraState.currentPosition.clone();
+        }
+        if (!currentPanelState.cameraTarget.equals(cameraState.currentTarget)) {
+          updates.cameraTarget = cameraState.currentTarget.clone();
+        }
+        if (currentPanelState.focusedObjectId !== cameraState.focusedObjectId) {
+          updates.focusedObjectId = cameraState.focusedObjectId;
+        }
+        if (currentPanelState.fov !== cameraState.fov) {
+          updates.fov = cameraState.fov;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          this._viewStateSubject.next({
+            ...currentPanelState,
+            ...updates,
+          });
+        }
+      });
+      return true;
+    } catch (error) {
+      console.error(
+        `[CompositePanel ${this._api?.id}] Failed to set CameraManager dependencies or subscribe to state:`,
+        error,
+      );
+      // Potentially clear _cameraManager or _engineCameraManager if this step is critical
+      return false;
+    }
+  }
+
+  /**
+   * Finalizes the renderer and panel setup by dispatching events,
+   * starting the render loop, and setting up observers.
+   * Assumes _renderer and _engineContainer are initialized.
+   */
+  private _finalizePanelInitialization(): void {
+    if (!this._renderer || !this._engineContainer) return;
+
+    // Dispatch an event indicating the composite panel and its managers are ready
+    if (this.element.isConnected && this._api?.id) {
+      console.debug(
+        `[CompositePanel ${this._api.id}] Dispatching ${CustomEvents.COMPOSITE_ENGINE_INITIALIZED}`,
+      );
+      this.dispatchEvent(
+        new CustomEvent(CustomEvents.COMPOSITE_ENGINE_INITIALIZED, {
+          bubbles: true,
+          composed: true,
+          detail: {
+            panelId: this._api.id,
+            parentInstance: this,
+          },
+        }),
+      );
+    }
+
+    this._renderer.startRenderLoop();
+
+    this._resizeObserver = new ResizeObserver(() => {
+      // Simplified ResizeObserver callback
+      this.triggerResize();
+    });
+    this._resizeObserver.observe(this._engineContainer);
+
+    applyViewStateToRenderer(this._renderer, this.getViewState());
   }
 
   /**
@@ -690,7 +712,7 @@ export class CompositeEnginePanel
   /**
    * Initializes the overlay toolbar using the EngineToolbar component.
    */
-  private initializeToolbar(): void {
+  private createEngineToolbar(): void {
     if (!this._api?.id) {
       console.error(
         "CompositeEnginePanel: Cannot initialize toolbar without panel API ID.",
@@ -825,32 +847,5 @@ export class CompositeEnginePanel
       // It's fine if the panel isn't in our tracked list, could be any panel.
       // No specific warning needed here unless we expect all removed panels to be tracked.
     }
-  }
-
-  /**
-   * Called by the EngineToolbar when its toggle button is clicked.
-   * This method requests the EngineToolbarManager to toggle the state.
-   */
-  public requestToolbarToggle(): void {
-    if (!this._api?.id) {
-      console.error(
-        "[CompositeEnginePanel] Cannot toggle toolbar without API ID.",
-      );
-      return;
-    }
-
-    const managerInstance =
-      pluginManager.getManagerInstance<EngineToolbarManager>(
-        "engine-toolbar-manager",
-      );
-
-    if (!managerInstance) {
-      console.error(
-        "[CompositeEnginePanel] EngineToolbarManager instance not found! Cannot toggle toolbar.",
-      );
-      return;
-    }
-
-    managerInstance.toggleToolbarExpansion(this._api.id);
   }
 }

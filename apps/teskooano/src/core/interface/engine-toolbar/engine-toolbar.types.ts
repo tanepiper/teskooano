@@ -6,14 +6,6 @@ import type {
 import type { Observable } from "rxjs";
 
 /**
- * Defines the contract for a panel that can have its toolbar toggled
- * by an external manager (like EngineToolbarManager via EngineToolbar).
- */
-export interface EnginePanelWithToolbarToggle {
-  requestToolbarToggle: () => void;
-}
-
-/**
  * Defines the essential Dockview API controls that EngineToolbar needs
  * from its hosting DockviewController or a similar provider.
  */
