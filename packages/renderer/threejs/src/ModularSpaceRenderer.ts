@@ -145,12 +145,12 @@ export class ModularSpaceRenderer {
 
   private setupAnimationCallbacks(): void {
     const mainUpdateCallback = (deltaTime: number, elapsedTime: number) => {
+      // Update controls and camera position first
+      this.controlsManager.update(deltaTime); // Assuming deltaTime from loop is same as controlsManager needs
+
       this.orbitManager.updateAllVisualizations();
 
-      if (this.css2DManager && typeof this.css2DManager.render === "function") {
-        this.css2DManager.render(this.camera);
-      }
-
+      // objectManager.updateRenderers might be better after LOD and before CSS2D if it places objects
       this.objectManager.updateRenderers(
         elapsedTime,
         this.lightManager.getStarLightsData(),
@@ -159,9 +159,27 @@ export class ModularSpaceRenderer {
         this.sceneManager.camera,
       );
 
-      this.backgroundManager.update(deltaTime);
+      this.backgroundManager.update(deltaTime); // Now uses updated camera
 
-      this.render();
+      this.lodManager.update(); // Update LODs based on new camera position
+
+      if (this.css2DManager && typeof this.css2DManager.render === "function") {
+        this.css2DManager.render(this.camera); // Render CSS2D with updated camera
+      }
+
+      // Run any custom render callbacks
+      this.animationLoop.getRenderCallbacks().forEach((callback) => callback());
+
+      // Perform the main scene render
+      this.sceneManager.render();
+
+      // Render any top-level canvas UI
+      if (this.canvasUIManager) {
+        this.canvasUIManager.render();
+      }
+
+      // Original position of this.render() call is removed as its logic is now inlined above.
+      // this.render();
     };
 
     this.animationLoop.onAnimate(mainUpdateCallback);
@@ -226,19 +244,21 @@ export class ModularSpaceRenderer {
    * updates controls, and renders the scene.
    */
   render(): void {
-    this.lodManager.update();
-
-    this.objectManager.update(this.renderer, this.scene, this.camera);
-    this.css2DManager?.render(this.camera);
-    this.animationLoop.getRenderCallbacks().forEach((callback) => callback());
-
-    const delta = this.animationLoop.getDelta();
-    this.controlsManager.update(delta);
-
-    this.sceneManager.render();
-    if (this.canvasUIManager) {
-      this.canvasUIManager.render();
-    }
+    // Most logic moved to mainUpdateCallback within animationLoop.onAnimate
+    // If there's anything that absolutely must happen outside the animation loop's direct callback
+    // but still be part of a "render" call, it would go here.
+    // For now, this method can be simplified or even removed if mainUpdateCallback handles all.
+    // If sceneManager.render() was the only substantive thing here and it's now in mainUpdateCallback,
+    // this method might become redundant unless called from elsewhere for a specific reason (e.g., forced single refresh).
+    // For safety, let's keep it for now but ensure it doesn't double-render.
+    // However, the primary rendering path is now mainUpdateCallback.
+    // If setupAnimationCallbacks correctly sets up the loop to call sceneManager.render(),
+    // calling it again here would be a double render per frame.
+    // Let's comment out the direct rendering here as it's handled by the animation loop.
+    // this.sceneManager.render();
+    // if (this.canvasUIManager) {
+    //   this.canvasUIManager.render();
+    // }
   }
 
   /**
