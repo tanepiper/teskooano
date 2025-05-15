@@ -204,6 +204,7 @@ export const clearSystemFunction: FunctionConfig = {
   id: "system:clear",
   dependencies: {},
   execute: async () => {
+    console.log("[SystemFunctions] Attempting to clear system...");
     try {
       actions.clearState({
         resetCamera: false,
@@ -211,6 +212,9 @@ export const clearSystemFunction: FunctionConfig = {
         resetSelection: true,
       });
       actions.resetTime();
+      console.log(
+        "[SystemFunctions] actions.clearState and actions.resetTime called.",
+      );
       return { success: true, symbol: "🗑️", message: "System cleared." };
     } catch (error) {
       console.error("[SystemFunctions] Error clearing system:", error);

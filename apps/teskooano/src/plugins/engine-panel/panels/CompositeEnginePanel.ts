@@ -145,9 +145,6 @@ export class CompositeEnginePanel
   }
 
   connectedCallback(): void {
-    console.debug(
-      `[CompositePanel ${this._api?.id || this.id}] connectedCallback`,
-    );
     // Add window-level event listeners here
     window.addEventListener(
       CustomEvents.SYSTEM_GENERATION_START,
@@ -188,9 +185,6 @@ export class CompositeEnginePanel
   }
 
   disconnectedCallback(): void {
-    console.debug(
-      `[CompositePanel ${this._api?.id || this.id}] disconnectedCallback`,
-    );
     // Remove window-level event listeners here
     window.removeEventListener(
       CustomEvents.SYSTEM_GENERATION_START,
@@ -373,9 +367,6 @@ export class CompositeEnginePanel
   }
 
   private _handleSystemGenerationStart(): void {
-    console.debug(
-      `[CompositePanel ${this._api?.id || this.id}] SYSTEM_GENERATION_START received.`,
-    );
     this._isGeneratingSystem = true;
     if (!this._renderer) {
       // Only show if renderer isn't active
@@ -384,18 +375,12 @@ export class CompositeEnginePanel
   }
 
   private _handleSystemGenerationComplete(): void {
-    console.debug(
-      `[CompositePanel ${this._api?.id || this.id}] SYSTEM_GENERATION_COMPLETE received.`,
-    );
     this._isGeneratingSystem = false;
     const objectCount = Object.keys(getCelestialObjects()).length;
 
     if (!this._renderer) {
       // If renderer is not yet up
       if (objectCount > 0) {
-        console.debug(
-          `[CompositePanel ${this._api?.id || this.id}] Generation complete, objects present. Initializing renderer.`,
-        );
         this._placeholderManager?.hide(); // Hide placeholder, show engine container
 
         this.initializeRenderer();
@@ -418,10 +403,6 @@ export class CompositeEnginePanel
         if (!this.isConnected) {
           return;
         }
-        console.debug(
-          `[CompositePanel ${this._api?.id || this.id}] celestialObjects updated`,
-          Object.keys(celestialObjects).length,
-        );
 
         const objectCount = Object.keys(celestialObjects).length;
 
@@ -460,7 +441,6 @@ export class CompositeEnginePanel
     // this.id is the HTMLElement id, this._api.id is Dockview's panel id.
     // Ensure the element has an ID if needed for external styling or query, though shadow DOM encapsulates.
     if (!this.id) this.id = `composite-engine-view-${this._api.id}`;
-    console.debug(`[CompositePanel ${this._api.id}] init called.`);
 
     if (this._isInitialized && this._dockviewController) {
       console.warn(
@@ -527,9 +507,6 @@ export class CompositeEnginePanel
    */
   private initializeRenderer(): void {
     if (!this._engineContainer || this._renderer) return;
-    console.debug(
-      `[CompositePanel ${this._api?.id || this.id}] initializeRenderer`,
-    );
 
     if (!this._createRendererInstance()) return;
     if (!this._initializeCameraSystems()) return;
@@ -675,9 +652,6 @@ export class CompositeEnginePanel
 
     // Dispatch an event indicating the composite panel and its managers are ready
     if (this.element.isConnected && this._api?.id) {
-      console.debug(
-        `[CompositePanel ${this._api.id}] Dispatching ${CustomEvents.COMPOSITE_ENGINE_INITIALIZED}`,
-      );
       this.dispatchEvent(
         new CustomEvent(CustomEvents.COMPOSITE_ENGINE_INITIALIZED, {
           bubbles: true,
@@ -752,9 +726,6 @@ export class CompositeEnginePanel
     // This will reset its 'isInitialized' flag and remove document listeners.
     if (this._cameraManager) {
       if (typeof (this._cameraManager as any).destroy === "function") {
-        console.debug(
-          `[CompositePanel ${this._api?.id}] Calling destroy() on CameraManager instance.`,
-        );
         (this._cameraManager as any).destroy();
       } else {
         console.warn(
@@ -801,9 +772,6 @@ export class CompositeEnginePanel
       this._resizeObserver.disconnect();
       this._resizeObserver = undefined;
     }
-
-    this._placeholderManager?.dispose();
-    this._placeholderManager = undefined;
   }
 
   /**
@@ -811,9 +779,6 @@ export class CompositeEnginePanel
    * Stops listeners, disposes the renderer, and unregisters the panel.
    */
   dispose(): void {
-    console.debug(
-      `[CompositePanel ${this._api?.id || this.id}] dispose called`,
-    );
     this.disposeRendererAndUI();
 
     // Remove event listeners for system generation (already in disconnectedCallback, but good for explicit dispose)
@@ -836,6 +801,8 @@ export class CompositeEnginePanel
     this._layoutOrientationSubscription?.unsubscribe();
     this._layoutOrientationSubscription = null;
     this._currentOrientation = null;
+
+    this._placeholderManager?.dispose();
 
     panelRegistry.unregisterPanel(this._api?.id ?? "unknown");
   }
