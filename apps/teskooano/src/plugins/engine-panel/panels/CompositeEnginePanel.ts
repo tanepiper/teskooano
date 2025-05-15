@@ -75,7 +75,6 @@ export class CompositeEnginePanel
   private _simulationStateUnsubscribe: Subscription | null = null;
   private _isInitialized = false;
 
-  private _cameraManager: CameraManager | undefined = undefined;
   private _engineCameraManager: EngineCameraManager | undefined = undefined;
 
   private _viewStateSubject: BehaviorSubject<CompositeEngineState>;
@@ -263,14 +262,6 @@ export class CompositeEnginePanel
    */
   public get orbitManager(): OrbitManager | undefined {
     return this._renderer?.orbitManager;
-  }
-
-  /**
-   * Provides access to the CameraManager instance.
-   * @returns The CameraManager instance or undefined if not initialized.
-   */
-  public get cameraManager(): CameraManager | undefined {
-    return this._cameraManager;
   }
 
   /**
@@ -559,23 +550,8 @@ export class CompositeEnginePanel
    * @returns True if successful, false otherwise.
    */
   private _initializeCameraSystems(): boolean {
-    const cameraManagerInstance =
-      pluginManager.getManagerInstance<CameraManager>("camera-manager");
-    this._cameraManager = cameraManagerInstance;
+    this._engineCameraManager = new EngineCameraManager(this, this._api?.id);
 
-    if (!this._cameraManager) {
-      console.error(
-        `[CompositePanel ${this._api?.id}] Failed to get CameraManager instance! Camera controls will be unavailable.`,
-      );
-      this._engineCameraManager = undefined;
-      return false;
-    }
-
-    this._engineCameraManager = new EngineCameraManager(
-      this._cameraManager,
-      this,
-      this._api?.id,
-    );
     return true;
   }
 
@@ -586,11 +562,11 @@ export class CompositeEnginePanel
    * @returns True if successful, false otherwise.
    */
   private _configureAndLinkCamera(): boolean {
-    if (!this._renderer || !this._cameraManager) return false;
+    if (!this._renderer || !this._engineCameraManager) return false;
 
     const initialViewState = this._viewStateSubject.getValue();
     try {
-      this._cameraManager.setDependencies({
+      this._engineCameraManager.setDependencies({
         renderer: this._renderer,
         initialFov: initialViewState.fov,
         initialFocusedObjectId: initialViewState.focusedObjectId,
@@ -601,9 +577,9 @@ export class CompositeEnginePanel
         },
       });
 
-      this._cameraManager.initializeCameraPosition();
+      this._engineCameraManager.initializeCameraPosition();
 
-      this._cameraManager.getCameraState$().subscribe((cameraState) => {
+      this._engineCameraManager.getCameraState$().subscribe((cameraState) => {
         if (!this._isInitialized || !this.element.isConnected) return;
 
         const currentPanelState = this._viewStateSubject.getValue();
@@ -721,19 +697,6 @@ export class CompositeEnginePanel
   private disposeRendererAndUI(): void {
     this._renderer?.dispose?.();
     this._renderer = undefined;
-
-    // Call destroy on the CameraManager instance this panel was using.
-    // This will reset its 'isInitialized' flag and remove document listeners.
-    if (this._cameraManager) {
-      if (typeof (this._cameraManager as any).destroy === "function") {
-        (this._cameraManager as any).destroy();
-      } else {
-        console.warn(
-          `[CompositePanel ${this._api?.id}] CameraManager instance does not have a destroy method.`,
-        );
-      }
-    }
-    this._cameraManager = undefined; // Clear the main camera manager
 
     // Dispose EngineCameraManager
     this._engineCameraManager?.dispose();

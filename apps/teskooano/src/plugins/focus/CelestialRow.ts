@@ -135,5 +135,3 @@ export class CelestialRow extends HTMLElement {
     return this._isFocused;
   }
 }
-
-customElements.define("celestial-row", CelestialRow);

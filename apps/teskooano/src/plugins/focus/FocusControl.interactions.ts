@@ -138,15 +138,15 @@ export function handleFollowRequest(
     return false;
   }
 
-  const cameraManager = parentPanel.cameraManager;
-  if (!cameraManager) {
+  const engineCameraManager = parentPanel.engineCameraManager;
+  if (!engineCameraManager) {
     console.error(
-      "[FocusControl.interactions] CameraManager not available on parent panel, cannot follow.",
+      "[FocusControl.interactions] EngineCameraManager not available on parent panel, cannot follow.",
     );
     return false;
   }
 
-  cameraManager.followObject(objectId);
+  engineCameraManager.focusOnObject(objectId);
 
   console.debug(`[FocusControl.interactions] Follow initiated for ${objectId}`);
   return true;

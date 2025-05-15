@@ -32,14 +32,24 @@ template.innerHTML = `
 
     .widget-area {
       flex-grow: 1; /* Allow widget area to take remaining space */
-      justify-content: flex-end; /* Align widgets to the right */
-      overflow: hidden; /* Hide overflow if too many widgets */
+      justify-content: flex-start; /* Align widgets to the right */
+      overflow-x: auto; /* Allow horizontal scrolling */
+      white-space: nowrap; /* Prevent widgets from wrapping */
       gap: var(--space-sm); /* Smaller gap for widgets */
+      display: flex; /* Explicitly ensure it's a flex container, though inherited via .toolbar-section */
+      align-items: center; /* Align items vertically in the center */
     }
 
-    /* Ensure buttons/widgets don't shrink */
+    .widget-area::-webkit-scrollbar, .widget-area::-webkit-scrollbar-button { display: none; }
+
+    /* Ensure buttons/widgets don't shrink and align correctly for scrolling */
     .toolbar-section > * {
         flex-shrink: 0;
+    }
+
+    .widget-area > * { /* Targeting direct children of widget-area */
+      display: flex; /* Or use flex properties on widget-area if preferred */
+      vertical-align: top; /* Align to top if using inline-block */
     }
 
     /* Basic styling for toolbar items (can be refined) */
@@ -57,8 +67,8 @@ template.innerHTML = `
     }
 
   </style>
-  <div class="toolbar-section left-button-group">
-    <!-- Static Logo Button -->
+  <div class="toolbar-section">
+  <!-- Static Logo Button -->
     <teskooano-button 
         id="toolbar-logo" 
         title="Visit Teskooano Website" 
@@ -69,6 +79,9 @@ template.innerHTML = `
         tooltip-horizontal-align="start">
         <span slot="icon"><img src="/assets/icon.png" alt="Teskooano Logo"></span>
     </teskooano-button>
+    </div>
+  <div class="toolbar-section left-button-group">
+    
     <!-- Dynamic plugin buttons will be added here -->
   </div>
   <div class="toolbar-section widget-area">

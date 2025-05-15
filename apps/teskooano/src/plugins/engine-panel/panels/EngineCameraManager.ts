@@ -1,6 +1,12 @@
 import * as THREE from "three";
 import type { CameraManager } from "../../camera-manager/CameraManager";
 import type { CompositeEnginePanel } from "./CompositeEnginePanel";
+import { pluginManager } from "@teskooano/ui-plugin";
+import type {
+  CameraManagerOptions,
+  CameraManagerState,
+} from "../../camera-manager/types";
+import { BehaviorSubject } from "rxjs";
 
 /**
  * Manages camera operations specifically for a CompositeEnginePanel instance.
@@ -8,18 +14,21 @@ import type { CompositeEnginePanel } from "./CompositeEnginePanel";
  * adding panel-specific context like API ID for logging.
  */
 export class EngineCameraManager {
-  private _cameraManager: CameraManager;
+  private _cameraManager: CameraManager | undefined;
   private _panelApiId: string | undefined;
   private _panelInstance: CompositeEnginePanel;
 
-  constructor(
-    cameraManager: CameraManager,
-    panelInstance: CompositeEnginePanel,
-    panelApiId?: string,
-  ) {
-    this._cameraManager = cameraManager;
+  constructor(panelInstance: CompositeEnginePanel, panelApiId?: string) {
+    this._cameraManager =
+      pluginManager.getManagerInstance<CameraManager>("camera-manager");
     this._panelInstance = panelInstance;
     this._panelApiId = panelApiId;
+
+    if (!this._cameraManager) {
+      console.error(
+        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] Failed to get CameraManager instance! Camera controls will be unavailable.`,
+      );
+    }
   }
 
   /**
@@ -107,5 +116,56 @@ export class EngineCameraManager {
     console.debug(
       `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] dispose called.`,
     );
+  }
+
+  /**
+   * Sets dependencies for the underlying CameraManager.
+   * @param options - Configuration options.
+   */
+  public setDependencies(options: CameraManagerOptions): void {
+    if (this._cameraManager) {
+      this._cameraManager.setDependencies(options);
+    } else {
+      console.error(
+        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] setDependencies called but CameraManager is not available.`,
+      );
+    }
+  }
+
+  /**
+   * Initializes the camera position via the underlying CameraManager.
+   */
+  public initializeCameraPosition(): void {
+    if (this._cameraManager) {
+      this._cameraManager.initializeCameraPosition();
+    } else {
+      console.error(
+        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] initializeCameraPosition called but CameraManager is not available.`,
+      );
+    }
+  }
+
+  /**
+   * Gets the camera state observable from the underlying CameraManager.
+   * @returns The BehaviorSubject stream of camera state, or a new one emitting an error state if CameraManager is unavailable.
+   */
+  public getCameraState$(): BehaviorSubject<CameraManagerState> {
+    if (this._cameraManager) {
+      return this._cameraManager.getCameraState$();
+    }
+    // Return a new BehaviorSubject that perhaps emits an error or a default/error state
+    // This prevents calling .subscribe on undefined if _cameraManager is missing.
+    console.error(
+      `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] getCameraState$ called but CameraManager is not available. Returning a new subject.`,
+    );
+    // Create a default/error state to satisfy the return type
+    const errorState: CameraManagerState = {
+      fov: 0,
+      focusedObjectId: null,
+      currentPosition: new THREE.Vector3(),
+      currentTarget: new THREE.Vector3(),
+      // Potentially add an error property if CameraManagerState supports it
+    };
+    return new BehaviorSubject<CameraManagerState>(errorState);
   }
 }

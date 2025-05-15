@@ -14,11 +14,10 @@ import {
 } from "./FocusControl.list.js";
 import { template } from "./FocusControl.template.js";
 
-import "./CelestialRow.js";
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 import { Subscription } from "rxjs";
-import { CameraManager } from "../camera-manager/CameraManager.js";
 import type { CameraManagerState } from "../camera-manager/types.js";
+import "./CelestialRow.js";
 
 /**
  * A custom element panel for Dockview that displays a hierarchical list
@@ -166,21 +165,21 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    */
   public setParentPanel(panel: CompositeEnginePanel): void {
     this._parentPanel = panel;
-    if (this._parentPanel && this._parentPanel.cameraManager) {
+    if (this._parentPanel && this._parentPanel.engineCameraManager) {
       this._cameraStateSubscription?.unsubscribe();
 
-      this._cameraStateSubscription = this._parentPanel.cameraManager
+      this._cameraStateSubscription = this._parentPanel.engineCameraManager
         .getCameraState$()
         .subscribe((state: CameraManagerState) => {
           this._updateHighlightInternal(state.focusedObjectId);
         });
-      const initialState = this._parentPanel.cameraManager
+      const initialState = this._parentPanel.engineCameraManager
         .getCameraState$()
         .getValue();
       this._updateHighlightInternal(initialState.focusedObjectId);
     } else {
       console.warn(
-        "[FocusControl] Parent panel or its CameraManager not available on setParentPanel.",
+        "[FocusControl] Parent panel or its EngineCameraManager not available on setParentPanel.",
       );
       this._cameraStateSubscription?.unsubscribe();
       this._cameraStateSubscription = null;
@@ -548,5 +547,3 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     return this;
   }
 }
-
-customElements.define("focus-control", FocusControl);

@@ -6,30 +6,6 @@ import {
 import "./CelestialRow";
 
 /**
- * Gets the appropriate CSS class for a celestial object type icon.
- */
-function getIconClass(type: CelestialType): string {
-  switch (type) {
-    case CelestialType.STAR:
-      return "star-icon";
-    case CelestialType.PLANET:
-      return "planet-icon";
-    case CelestialType.GAS_GIANT:
-      return "gas-giant-icon";
-    case CelestialType.DWARF_PLANET:
-      return "planet-icon";
-    case CelestialType.MOON:
-      return "moon-icon";
-    case CelestialType.ASTEROID_FIELD:
-      return "asteroid-field-icon";
-    case CelestialType.OORT_CLOUD:
-      return "oort-cloud-icon";
-    default:
-      return "default-icon";
-  }
-}
-
-/**
  * Populates the focus list container with a collapsible tree structure,
  * using <celestial-row> components for each item.
  *
@@ -249,9 +225,5 @@ export function updateObjectStatusInList(
       nestedUl?.classList.remove("active");
     }
   }
-
-  console.debug(
-    `[FocusControl.list] Updated status for LI/Row ${objectId} to ${status}.`,
-  );
   return false;
 }

@@ -5,6 +5,7 @@ import type {
 } from "@teskooano/ui-plugin";
 import { FocusControl } from "./FocusControl";
 import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
+import { CelestialRow } from "./CelestialRow";
 
 const panelConfig: PanelConfig = {
   componentName: "focus-control",
@@ -49,6 +50,12 @@ export const plugin: TeskooanoPlugin = {
   functions: [],
   toolbarWidgets: [],
   managerClasses: [],
+  components: [
+    {
+      componentClass: CelestialRow,
+      tagName: "celestial-row",
+    },
+  ],
 };
 
 export { FocusControl };
