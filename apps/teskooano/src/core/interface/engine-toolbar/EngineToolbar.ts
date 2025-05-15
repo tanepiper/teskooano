@@ -276,7 +276,7 @@ export class EngineToolbar {
       );
       if (panelApi) {
         this._activeFloatingPanels.set(panelId, config.componentName);
-        panelApi.setActive?.(); // Ensure it becomes active
+        panelApi?.setActive(); // Corrected optional chaining
       } else {
         console.error(
           `[EngineToolbar ${this._apiId}] Failed to create floating panel ${panelId}`,

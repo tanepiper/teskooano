@@ -1,17 +1,27 @@
-import type { DockviewPanelApi, DockviewApi } from "dockview-core";
-import { Observable } from "rxjs";
+import type {
+  DockviewApi,
+  IDockviewPanel,
+  DockviewPanelApi,
+} from "dockview-core";
+import type { Observable } from "rxjs";
 
-/** Interface defining the required methods for toggling the toolbar's parent panel */
+/**
+ * Defines the contract for a panel that can have its toolbar toggled
+ * by an external manager (like EngineToolbarManager via EngineToolbar).
+ */
 export interface EnginePanelWithToolbarToggle {
-  requestToolbarToggle(): void;
+  requestToolbarToggle: () => void;
 }
 
-/** Interface defining the required Dockview interactions for the toolbar */
+/**
+ * Defines the essential Dockview API controls that EngineToolbar needs
+ * from its hosting DockviewController or a similar provider.
+ */
 export interface IDockviewPanelControls {
-  readonly api: DockviewApi;
-  readonly onPanelRemoved$: Observable<string>;
-  addFloatingPanel(
-    contentComponent: any,
+  api: DockviewApi;
+  addFloatingPanel: (
+    options: any, // Replace with specific AddPanelOptions from Dockview if possible
     position?: { top: number; left: number; width: number; height: number },
-  ): DockviewPanelApi | null;
+  ) => DockviewPanelApi | null;
+  onPanelRemoved$: Observable<string>; // Observable emitting the ID of the removed panel
 }

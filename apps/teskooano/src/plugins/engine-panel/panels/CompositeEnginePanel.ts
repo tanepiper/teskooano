@@ -38,6 +38,7 @@ import {
 } from "./CompositeEnginePanel.utils.js"; // Import the utility function
 import { CompositeEngineState, CompositePanelParams } from "./types.js";
 import { EngineCameraManager } from "./EngineCameraManager"; // Added import
+import { PlaceholderManager } from "./PlaceholderManager"; // Added import
 
 let isSimulationLoopStarted = false;
 
@@ -58,9 +59,7 @@ export class CompositeEnginePanel
   implements IContentRenderer
 {
   private _engineContainer: HTMLElement | null = null;
-  private _placeholderWrapper: HTMLElement | null = null;
-  private _placeholderMessage: HTMLParagraphElement | null = null;
-  private _placeholderActionArea: HTMLDivElement | null = null;
+  private _placeholderManager: PlaceholderManager | undefined = undefined;
 
   private _isGeneratingSystem = false;
 
@@ -78,7 +77,7 @@ export class CompositeEnginePanel
   private _isInitialized = false;
 
   private _cameraManager: CameraManager | undefined = undefined;
-  private _engineCameraManager: EngineCameraManager | undefined = undefined; // Added property
+  private _engineCameraManager: EngineCameraManager | undefined = undefined;
 
   private _viewStateSubject: BehaviorSubject<CompositeEngineState>;
 
@@ -104,15 +103,37 @@ export class CompositeEnginePanel
 
     // Get references to elements in the shadow DOM
     this._engineContainer = this.shadowRoot!.querySelector(".engine-container");
-    this._placeholderWrapper = this.shadowRoot!.querySelector(
+
+    // Query placeholder elements locally for manager initialization
+    const placeholderWrapperEl = this.shadowRoot!.querySelector<HTMLElement>(
       "#engine-placeholder-wrapper",
     );
-    this._placeholderMessage = this.shadowRoot!.querySelector(
-      "#placeholder-message",
-    );
-    this._placeholderActionArea = this.shadowRoot!.querySelector(
-      "#placeholder-action-area",
-    );
+    const placeholderMessageEl =
+      this.shadowRoot!.querySelector<HTMLParagraphElement>(
+        "#placeholder-message",
+      );
+    const placeholderActionAreaEl =
+      this.shadowRoot!.querySelector<HTMLDivElement>(
+        "#placeholder-action-area",
+      );
+
+    if (
+      this._engineContainer &&
+      placeholderWrapperEl &&
+      placeholderMessageEl &&
+      placeholderActionAreaEl
+    ) {
+      this._placeholderManager = new PlaceholderManager(
+        placeholderWrapperEl,
+        placeholderMessageEl,
+        placeholderActionAreaEl,
+        this._engineContainer,
+      );
+    } else {
+      console.error(
+        `[CompositePanel ${this.id || "constructor"}] Critical elements for PlaceholderManager not found. Placeholder will not function.`,
+      );
+    }
 
     this._viewStateSubject = viewStateSubject$;
 
@@ -352,44 +373,6 @@ export class CompositeEnginePanel
     });
   }
 
-  /**
-   * Updates the placeholder content based on the generation state.
-   * @param isGenerating - True if the system is currently generating.
-   */
-  private _updatePlaceholderContent(isGenerating: boolean): void {
-    if (
-      !this._placeholderWrapper ||
-      !this._placeholderMessage ||
-      !this._placeholderActionArea
-    ) {
-      console.warn(
-        "[CompositePanel] Placeholder elements not found in shadow DOM.",
-      );
-      return;
-    }
-
-    if (isGenerating) {
-      this._placeholderMessage.textContent = "Generating System...";
-      this._placeholderActionArea.innerHTML = `<progress style='width: 100%;'></progress>`;
-      this._placeholderWrapper.classList.remove("hidden");
-      if (this._engineContainer) this._engineContainer.style.display = "none";
-    } else {
-      this._placeholderMessage.textContent = "Load or Generate a System";
-      this._placeholderActionArea.innerHTML = `<a href="https://teskooano.space/docs/getting-started" target="_blank" style="display: inline-block; padding: 8px 15px; background-color: #333; color: #fff; text-decoration: none; border-radius: 4px;">📚 Go To Documentation</a>`;
-      this._placeholderWrapper.classList.remove("hidden");
-      if (this._engineContainer) this._engineContainer.style.display = "none";
-    }
-  }
-
-  private _hidePlaceholder(): void {
-    if (this._placeholderWrapper) {
-      this._placeholderWrapper.classList.add("hidden");
-    }
-    if (this._engineContainer) {
-      this._engineContainer.style.display = "block"; // Or 'flex' or whatever its default is
-    }
-  }
-
   private _handleSystemGenerationStart(): void {
     console.debug(
       `[CompositePanel ${this._api?.id || this.id}] SYSTEM_GENERATION_START received.`,
@@ -397,7 +380,7 @@ export class CompositeEnginePanel
     this._isGeneratingSystem = true;
     if (!this._renderer) {
       // Only show if renderer isn't active
-      this._updatePlaceholderContent(true);
+      this._placeholderManager?.showMessage(true);
     }
   }
 
@@ -414,7 +397,7 @@ export class CompositeEnginePanel
         console.debug(
           `[CompositePanel ${this._api?.id || this.id}] Generation complete, objects present. Initializing renderer.`,
         );
-        this._hidePlaceholder(); // Hide placeholder, show engine container
+        this._placeholderManager?.hide(); // Hide placeholder, show engine container
 
         this.initializeRenderer();
         this.initializeToolbar();
@@ -426,7 +409,7 @@ export class CompositeEnginePanel
         this.triggerResize();
       } else {
         // No objects, generation complete, no renderer. Show default placeholder.
-        this._updatePlaceholderContent(false);
+        this._placeholderManager?.showMessage(false);
       }
     }
   }
@@ -447,7 +430,7 @@ export class CompositeEnginePanel
         const objectCount = Object.keys(celestialObjects).length;
 
         if (!this._renderer && objectCount > 0 && !this._isGeneratingSystem) {
-          this._hidePlaceholder();
+          this._placeholderManager?.hide();
 
           this.initializeRenderer();
           this.initializeToolbar();
@@ -459,7 +442,7 @@ export class CompositeEnginePanel
           this.triggerResize();
         } else if (this._renderer && objectCount === 0) {
           this.disposeRendererAndUI();
-          this._updatePlaceholderContent(this._isGeneratingSystem); // Show appropriate placeholder
+          this._placeholderManager?.showMessage(this._isGeneratingSystem); // Show appropriate placeholder
         }
       },
     );
@@ -510,20 +493,8 @@ export class CompositeEnginePanel
     if (!this._engineContainer)
       this._engineContainer =
         this.shadowRoot!.querySelector(".engine-container");
-    if (!this._placeholderWrapper)
-      this._placeholderWrapper = this.shadowRoot!.querySelector(
-        "#engine-placeholder-wrapper",
-      );
-    if (!this._placeholderMessage)
-      this._placeholderMessage = this.shadowRoot!.querySelector(
-        "#placeholder-message",
-      );
-    if (!this._placeholderActionArea)
-      this._placeholderActionArea = this.shadowRoot!.querySelector(
-        "#placeholder-action-area",
-      );
 
-    this._updatePlaceholderContent(this._isGeneratingSystem);
+    this._placeholderManager?.showMessage(this._isGeneratingSystem);
 
     // Subscriptions are now managed by connectedCallback or here if they depend on init params
     this._subscribeToCelestialObjects();
@@ -808,6 +779,9 @@ export class CompositeEnginePanel
       this._resizeObserver.disconnect();
       this._resizeObserver = undefined;
     }
+
+    this._placeholderManager?.dispose();
+    this._placeholderManager = undefined;
   }
 
   /**
@@ -878,23 +852,5 @@ export class CompositeEnginePanel
     }
 
     managerInstance.toggleToolbarExpansion(this._api.id);
-  }
-
-  /**
-   * Provides access to the singleton EngineToolbarManager instance.
-   * Called by EngineToolbar to subscribe to state.
-   */
-  public getToolbarManagerInstance(): EngineToolbarManager | null {
-    const managerInstance =
-      pluginManager.getManagerInstance<EngineToolbarManager>(
-        "engine-toolbar-manager",
-      );
-    if (!managerInstance) {
-      console.error(
-        "[CompositeEnginePanel] EngineToolbarManager instance not found!",
-      );
-      return null;
-    }
-    return managerInstance;
   }
 }
