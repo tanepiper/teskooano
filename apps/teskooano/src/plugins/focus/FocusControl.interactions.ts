@@ -71,7 +71,7 @@ export function handleFocusRequest(
     }),
   );
 
-  parentPanel.pointCameraAt(targetPosition);
+  parentPanel.engineCameraManager?.pointCameraAt(targetPosition);
 
   parentPanel.updateViewState({ focusedObjectId: objectId });
 

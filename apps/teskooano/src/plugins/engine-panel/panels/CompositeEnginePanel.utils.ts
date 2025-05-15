@@ -1,7 +1,26 @@
 import * as THREE from "three";
 import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
-import type { CompositeEngineState } from "./CompositeEnginePanel"; // Assuming CompositeEngineState is exported or can be moved too
+import type { CompositeEngineState } from "./types"; // Assuming CompositeEngineState is exported or can be moved too
+import { BehaviorSubject } from "rxjs";
+
+/**
+ * The default FOV for the panel state, aligning with SceneManager's default
+ */
+export const DEFAULT_PANEL_FOV = 75;
+
+export const viewStateSubject$ = new BehaviorSubject<CompositeEngineState>({
+  cameraPosition: new THREE.Vector3(200, 200, 200),
+  cameraTarget: new THREE.Vector3(0, 0, 0),
+  focusedObjectId: null,
+  showGrid: true,
+  showCelestialLabels: true,
+  showAuMarkers: true,
+  showDebrisEffects: false,
+  showOrbitLines: true,
+  isDebugMode: false,
+  fov: DEFAULT_PANEL_FOV,
+});
 
 /**
  * Applies specific view state updates directly to the renderer's components.

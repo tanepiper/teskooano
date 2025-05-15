@@ -321,10 +321,10 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    */
   private addEventListeners(): void {
     this.resetButton?.addEventListener("click", () =>
-      this._parentPanel?.resetCameraView(),
+      this._parentPanel?.engineCameraManager?.resetCameraView(),
     );
     this.clearButton?.addEventListener("click", () =>
-      this._parentPanel?.clearFocus(),
+      this._parentPanel?.engineCameraManager?.clearFocus(),
     );
 
     if (this.treeListContainer) {
@@ -461,7 +461,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
         status === CelestialStatus.DESTROYED ||
         status === CelestialStatus.ANNIHILATED;
       if (isInactive && this._currentFocusedId === objectId) {
-        this._parentPanel?.clearFocus();
+        this._parentPanel?.engineCameraManager?.clearFocus();
       }
 
       if (isInactive && this._currentFollowedId === objectId) {
@@ -511,19 +511,32 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    * @param parameters - Initialization parameters provided by Dockview.
    */
   public init(parameters: GroupPanelPartInitParameters): void {
-    const params = parameters.params as {
-      parentInstance?: CompositeEnginePanel;
-    };
+    const parent = (parameters.params as any)?.parentInstance as
+      | CompositeEnginePanel
+      | undefined;
+
+    // Check if parentInstance is a CompositeEnginePanel by a stable method like getRenderer
+    // and also check for engineCameraManager as its direct camera controls were moved there.
     if (
-      params?.parentInstance &&
-      typeof params.parentInstance === "object" &&
-      typeof (params.parentInstance as any).focusOnObject === "function"
+      parent &&
+      typeof parent.getRenderer === "function" &&
+      parent.engineCameraManager // Ensure the new manager is also present
     ) {
-      this.setParentPanel(params.parentInstance);
+      this.setParentPanel(parent);
     } else {
       console.error(
-        "[FocusControl] Initialization parameters did not include a valid 'parentInstance'. Cannot link to parent.",
+        `[FocusControl] Initialization parameters did not include a valid 'parentInstance' (CompositeEnginePanel with an engineCameraManager). Cannot link to parent. Received params:`,
+        parameters.params,
       );
+      if (
+        parent &&
+        typeof parent.getRenderer === "function" &&
+        !parent.engineCameraManager
+      ) {
+        console.error(
+          `[FocusControl] 'parentInstance' was found and appears to be a CompositeEnginePanel, but 'parentInstance.engineCameraManager' is missing. This is required after recent refactoring.`,
+        );
+      }
     }
   }
 

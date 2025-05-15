@@ -1,11 +1,11 @@
 import { startSimulationLoop } from "@teskooano/app-simulation";
 import {
   celestialObjects$,
+  getCelestialObjects,
   getSimulationState,
   panelRegistry,
   simulationState$,
   type SimulationState,
-  getCelestialObjects,
 } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
@@ -18,7 +18,6 @@ import * as THREE from "three";
 
 import { OrbitManager } from "@teskooano/renderer-threejs-orbits";
 
-import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
 import { layoutOrientation$, Orientation } from "./layoutStore";
 
 import { CameraManager } from "../../camera-manager/CameraManager";
@@ -33,76 +32,12 @@ import {
   EngineToolbarManager,
 } from "../../../core/interface/engine-toolbar";
 import { template } from "./CompositeEnginePanel.template.js"; // Import the template
-import { applyViewStateToRenderer } from "./CompositeEnginePanel.utils.js"; // Import the utility function
-
-/**
- * The parameters for the CompositeEnginePanel
- */
-interface CompositePanelParams {
-  /**
-   * The title of the panel
-   */
-  title?: string;
-  /**
-   * The controller for the panel
-   */
-  dockviewController?: DockviewController;
-}
-
-/**
- * The default FOV for the panel state, aligning with SceneManager's default
- */
-const DEFAULT_PANEL_FOV = 75;
-
-/**
- * Represents the internal view state of an engine panel, including camera,
- * focus, and display options.
- */
-export interface CompositeEngineState {
-  /**
-   * The position of the camera
-   */
-  cameraPosition: THREE.Vector3;
-  /**
-   * The target of the camera
-   */
-  cameraTarget: THREE.Vector3;
-  /**
-   * The focused object ID
-   */
-  focusedObjectId: string | null;
-  /**
-   * Whether to show the 5AU grid
-   */
-  showGrid?: boolean;
-  /**
-   * Whether to show the labels for celestial bodies
-   */
-  showCelestialLabels?: boolean;
-  /**
-   * Whether to show the AU markers (distance markers) at 1-100AU
-   */
-  showAuMarkers?: boolean;
-  /**
-   * Whether to show the debris effects
-   * NOTE: currently this is buggy and kill performance, which is why it's behind a feature flag
-   */
-  showDebrisEffects?: boolean;
-  /**
-   * Whether to show orbit lines for celestial bodies.
-   * Defaults to true.
-   */
-  showOrbitLines?: boolean;
-  /**
-   * Whether to show the debug mode
-   * NOTE: This is still a work in progress and the camera controls are not yet fully integrated
-   */
-  isDebugMode?: boolean;
-  /**
-   * The Field of View (FOV)
-   */
-  fov?: number;
-}
+import {
+  viewStateSubject$,
+  applyViewStateToRenderer,
+} from "./CompositeEnginePanel.utils.js"; // Import the utility function
+import { CompositeEngineState, CompositePanelParams } from "./types.js";
+import { EngineCameraManager } from "./EngineCameraManager"; // Added import
 
 let isSimulationLoopStarted = false;
 
@@ -143,6 +78,7 @@ export class CompositeEnginePanel
   private _isInitialized = false;
 
   private _cameraManager: CameraManager | undefined = undefined;
+  private _engineCameraManager: EngineCameraManager | undefined = undefined; // Added property
 
   private _viewStateSubject: BehaviorSubject<CompositeEngineState>;
 
@@ -178,18 +114,7 @@ export class CompositeEnginePanel
       "#placeholder-action-area",
     );
 
-    this._viewStateSubject = new BehaviorSubject<CompositeEngineState>({
-      cameraPosition: new THREE.Vector3(200, 200, 200),
-      cameraTarget: new THREE.Vector3(0, 0, 0),
-      focusedObjectId: null,
-      showGrid: true,
-      showCelestialLabels: true,
-      showAuMarkers: true,
-      showDebrisEffects: false,
-      showOrbitLines: true,
-      isDebugMode: false,
-      fov: DEFAULT_PANEL_FOV,
-    });
+    this._viewStateSubject = viewStateSubject$;
 
     this._handleSystemGenerationStart =
       this._handleSystemGenerationStart.bind(this);
@@ -335,6 +260,14 @@ export class CompositeEnginePanel
   }
 
   /**
+   * Provides access to the EngineCameraManager instance.
+   * @returns The EngineCameraManager instance or undefined if not initialized.
+   */
+  public get engineCameraManager(): EngineCameraManager | undefined {
+    return this._engineCameraManager;
+  }
+
+  /**
    * Provides access to the view state subject.
    * @returns The view state BehaviorSubject.
    */
@@ -393,63 +326,6 @@ export class CompositeEnginePanel
    */
   public setDebrisEffectsEnabled(visible: boolean): void {
     this.updateViewState({ showDebrisEffects: visible });
-  }
-  /**
-   * Sets the camera's Field of View (FOV).
-   * @param fov - The new FOV value.
-   */
-  public setFov(fov: number): void {
-    if (this._cameraManager) {
-      this._cameraManager.setFov(fov);
-    } else {
-      console.warn(
-        `[CompositePanel ${this._api?.id}] setFov called before CameraManager was initialized.`,
-      );
-    }
-  }
-
-  /**
-   * Moves the camera to focus on a specific celestial object or clears focus.
-   * Delegates the call to the CameraManager.
-   * @param objectId - The unique ID of the object to focus on, or null to clear focus.
-   * @param distance - Optional distance multiplier for the camera offset.
-   */
-  public focusOnObject(objectId: string | null, distance?: number): void {
-    if (this._cameraManager) {
-      this._cameraManager.followObject(objectId, distance);
-    } else {
-      console.warn(
-        `[CompositePanel ${this._api?.id}] focusOnObject called before CameraManager was initialized.`,
-      );
-    }
-  }
-
-  /**
-   * Resets the camera to its default position and target, clearing any focus.
-   * Delegates the call to the CameraManager.
-   */
-  public resetCameraView(): void {
-    if (this._cameraManager) {
-      this._cameraManager.resetCameraView();
-    } else {
-      console.warn(
-        `[CompositePanel ${this._api?.id}] resetCameraView called before CameraManager was initialized.`,
-      );
-    }
-  }
-
-  /**
-   * Clears the current focus, equivalent to focusing on null.
-   * Delegates the call to the CameraManager.
-   */
-  public clearFocus(): void {
-    if (this._cameraManager) {
-      this._cameraManager.clearFocus();
-    } else {
-      console.warn(
-        `[CompositePanel ${this._api?.id}] clearFocus called before CameraManager was initialized.`,
-      );
-    }
   }
 
   /**
@@ -718,9 +594,17 @@ export class CompositeEnginePanel
         console.error(
           `[CompositePanel ${this._api?.id}] Failed to get CameraManager instance! Camera controls will be unavailable.`,
         );
-
+        // No CameraManager, so no EngineCameraManager either.
+        this._engineCameraManager = undefined;
         return;
       }
+
+      // Initialize EngineCameraManager
+      this._engineCameraManager = new EngineCameraManager(
+        this._cameraManager,
+        this,
+        this._api?.id,
+      );
 
       const initialViewState = this._viewStateSubject.getValue();
 
@@ -885,6 +769,11 @@ export class CompositeEnginePanel
         );
       }
     }
+    this._cameraManager = undefined; // Clear the main camera manager
+
+    // Dispose EngineCameraManager
+    this._engineCameraManager?.dispose();
+    this._engineCameraManager = undefined;
 
     const toolbarManager =
       pluginManager.getManagerInstance<EngineToolbarManager>(
@@ -919,8 +808,6 @@ export class CompositeEnginePanel
       this._resizeObserver.disconnect();
       this._resizeObserver = undefined;
     }
-
-    this._cameraManager = undefined;
   }
 
   /**
@@ -961,16 +848,9 @@ export class CompositeEnginePanel
     if (this._trackedFloatingPanels.has(panelId)) {
       this._trackedFloatingPanels.delete(panelId);
     } else {
+      // It's fine if the panel isn't in our tracked list, could be any panel.
+      // No specific warning needed here unless we expect all removed panels to be tracked.
     }
-  }
-
-  /**
-   * Points the camera towards a specific target position without changing
-   * the camera's current position. Uses a smooth transition.
-   * @param targetPosition - The world coordinates to point the camera at.
-   */
-  public pointCameraAt(targetPosition: THREE.Vector3): void {
-    this._cameraManager?.pointCameraAt(targetPosition);
   }
 
   /**
