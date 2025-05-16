@@ -157,7 +157,7 @@ class SystemControls
    */
   attributeChangedCallback(
     name: string,
-    oldValue: string | null,
+    _: string | null,
     newValue: string | null,
   ) {
     if (name === "mobile") {
@@ -406,7 +406,7 @@ class SystemControls
     ]).pipe(debounceTime(0));
 
     this.subscriptions.add(
-      displayState$.subscribe(([objects, seed, isGenerating, isMobile]) => {
+      displayState$.subscribe(([objects, seed, isGenerating, _]) => {
         if (this.loadingOverlay) {
           this.loadingOverlay.style.display = isGenerating ? "flex" : "none";
         }

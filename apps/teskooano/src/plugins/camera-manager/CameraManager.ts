@@ -403,6 +403,24 @@ export class CameraManager {
         this.onFocusChangeCallback(newFocusedId);
       }
     }
+
+    // After transition and state update, (re-)engage or stop continuous following
+    if (newFocusedId && this.renderer?.controlsManager) {
+      const objectToFollow = this.renderer.getObjectById(newFocusedId);
+      if (objectToFollow) {
+        const offset = newPosition.clone().sub(newTarget);
+        this.renderer.controlsManager.startFollowing(objectToFollow, offset);
+      } else {
+        console.warn(
+          `[CameraManager] Object ${newFocusedId} not found for following post-transition. Stopping follow.`,
+        );
+        this.renderer.controlsManager.stopFollowing();
+      }
+    } else if (this.renderer?.controlsManager) {
+      // newFocusedId is null or renderer/controlsManager is not fully available.
+      this.renderer.controlsManager.stopFollowing();
+    }
+
     this.intendedFocusIdForTransition = null; // Reset after transition completes or is superseded
   };
 

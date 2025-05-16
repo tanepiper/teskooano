@@ -1,11 +1,8 @@
-import type {
-  FunctionConfig,
-  PluginExecutionContext,
-} from "@teskooano/ui-plugin";
+import { OSVector3 } from "@teskooano/core-math";
 import {
   actions,
-  getCelestialObjects,
   currentSeed,
+  getCelestialObjects,
 } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -13,21 +10,23 @@ import {
   type CelestialObject,
 } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
-import { generateAndLoadSystem } from "./system-generator.js";
-import { OSVector3 } from "@teskooano/core-math";
+import type {
+  FunctionConfig,
+  PluginExecutionContext,
+} from "@teskooano/ui-plugin";
 import type { DockviewApi } from "dockview-core";
 import {
   Observable,
-  defer,
-  fromEvent,
-  switchMap,
-  map,
   catchError,
-  of,
-  take,
+  defer,
   finalize,
+  fromEvent,
   lastValueFrom,
+  of,
+  switchMap,
+  take,
 } from "rxjs";
+import { generateAndLoadSystem } from "./system-generator.js";
 
 interface SystemImportData {
   seed: string;
@@ -48,7 +47,7 @@ interface ProcessResult {
  */
 function processImportedFile$(
   file: File,
-  dockviewApi: DockviewApi | null,
+  _: DockviewApi | null,
 ): Observable<ProcessResult> {
   return new Observable<ProcessResult>((observer) => {
     const reader = new FileReader();
@@ -337,8 +336,7 @@ export const createBlankSystemFunction: FunctionConfig = {
       api: true,
     },
   },
-  execute: async (context: PluginExecutionContext) => {
-    const { dockviewApi } = context;
+  execute: async (_: PluginExecutionContext) => {
     try {
       actions.clearState({
         resetCamera: false,
@@ -367,7 +365,7 @@ export const createBlankSystemFunction: FunctionConfig = {
 export const copySeedFunction: FunctionConfig = {
   id: "system:copy_seed",
   dependencies: {},
-  execute: async (context: PluginExecutionContext, seedToCopy?: string) => {
+  execute: async (_: PluginExecutionContext, seedToCopy?: string) => {
     const seed = seedToCopy ?? currentSeed.getValue() ?? "";
     if (!seed) {
       return { success: false, symbol: "🤷", message: "No seed to copy." };
