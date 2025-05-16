@@ -1,6 +1,6 @@
 import type { TeskooanoTooltip } from "../tooltip/Tooltip";
-
 import { template } from "./Button.template";
+import { ButtonTooltipManager } from "./ButtonTooltipManager";
 
 /**
  * A custom button element `<teskooano-button>` that extends standard button functionality
@@ -50,26 +50,29 @@ export class TeskooanoButton extends HTMLElement {
   /** @internal */
   private buttonElement: HTMLButtonElement;
   /** @internal */
-  private tooltipElement: TeskooanoTooltip | null = null;
-  /** @internal Holds the original parent node of the tooltip before it's moved to the body. */
-  private tooltipOriginContainer: Node | null = null;
-  /** @internal Tracks if the tooltip is currently appended to the document body. */
-  private isTooltipInBody: boolean = false;
+  private tooltipManager: ButtonTooltipManager;
 
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
     this.buttonElement = this.shadowRoot!.querySelector("button")!;
-    this.tooltipElement = this.shadowRoot!.querySelector("teskooano-tooltip");
 
-    this.tooltipOriginContainer = this.tooltipElement?.parentNode ?? null;
+    const tooltipElement = this.shadowRoot!.querySelector(
+      "teskooano-tooltip",
+    ) as TeskooanoTooltip | null;
 
-    this.addEventListener("click", this.handleClick);
-    this.addEventListener("mouseenter", this.showTooltip);
-    this.addEventListener("focusin", this.showTooltip);
-    this.addEventListener("mouseleave", this.hideTooltip);
-    this.addEventListener("focusout", this.hideTooltip);
+    this.tooltipManager = new ButtonTooltipManager(
+      this,
+      this.buttonElement,
+      tooltipElement,
+    );
+
+    this.addEventListener("click", this.handleClickProxy);
+    this.addEventListener("mouseenter", this.handleShowTooltipProxy);
+    this.addEventListener("focusin", this.handleShowTooltipProxy);
+    this.addEventListener("mouseleave", this.handleHideTooltipProxy);
+    this.addEventListener("focusout", this.handleHideTooltipProxy);
   }
 
   /**
@@ -79,36 +82,25 @@ export class TeskooanoButton extends HTMLElement {
   connectedCallback() {
     this.updateDisabledState();
     this.updateAttribute("type", this.getAttribute("type") || "button");
-    if (!this.hasAttribute("tooltip-text")) {
-      this.setButtonAttribute("title", this.getAttribute("title"));
+
+    if (!this.hasAttribute("tooltip-text") && this.hasAttribute("title")) {
+      // this.buttonElement.setAttribute("title", this.getAttribute("title")); // Manager handles this interaction now
     }
     this.updateActiveState();
-    this.updateTooltipContent();
+    this.tooltipManager.updateContent();
     this.updateVariant();
   }
 
   disconnectedCallback() {
-    this.removeEventListener("click", this.handleClick);
-    this.removeEventListener("mouseenter", this.showTooltip);
-    this.removeEventListener("focusin", this.showTooltip);
-    this.removeEventListener("mouseleave", this.hideTooltip);
-    this.removeEventListener("focusout", this.hideTooltip);
-
-    this.removeTooltipFromBody();
+    this.removeEventListener("click", this.handleClickProxy);
+    this.removeEventListener("mouseenter", this.handleShowTooltipProxy);
+    this.removeEventListener("focusin", this.handleShowTooltipProxy);
+    this.removeEventListener("mouseleave", this.handleHideTooltipProxy);
+    this.removeEventListener("focusout", this.handleHideTooltipProxy);
+    this.tooltipManager.disconnected();
   }
 
-  private removeTooltipFromBody() {
-    if (
-      this.isTooltipInBody &&
-      this.tooltipElement &&
-      document.body.contains(this.tooltipElement)
-    ) {
-      document.body.removeChild(this.tooltipElement);
-      this.isTooltipInBody = false;
-    }
-  }
-
-  private handleClick = (e: MouseEvent) => {
+  private handleClickProxy = (e: MouseEvent) => {
     if (this.disabled) {
       e.stopPropagation();
       e.preventDefault();
@@ -116,82 +108,13 @@ export class TeskooanoButton extends HTMLElement {
     }
   };
 
-  private showTooltip = () => {
-    if (this.disabled || !this.tooltipElement || !this.hasTooltipContent()) {
-      return;
-    }
-
-    this.updateTooltipContent();
-
-    const originalTitle = this.buttonElement.getAttribute("title");
-    if (originalTitle) {
-      this.buttonElement.removeAttribute("title");
-
-      this.buttonElement.dataset.originalTitle = originalTitle;
-    }
-
-    if (!this.isTooltipInBody) {
-      document.body.appendChild(this.tooltipElement);
-      this.isTooltipInBody = true;
-    }
-
-    this.tooltipElement.show(this);
+  private handleShowTooltipProxy = () => {
+    this.tooltipManager.show();
   };
 
-  private hideTooltip = () => {
-    if (this.tooltipElement) {
-      this.tooltipElement.hide();
-
-      setTimeout(() => {
-        if (
-          this.isTooltipInBody &&
-          this.tooltipElement &&
-          this.tooltipElement.parentElement === document.body
-        ) {
-          try {
-            document.body.removeChild(this.tooltipElement);
-            if (this.tooltipOriginContainer) {
-              if (document.contains(this.tooltipOriginContainer)) {
-                this.tooltipOriginContainer.appendChild(this.tooltipElement);
-              } else {
-                console.warn(
-                  "[Button] Tooltip origin container disconnected, cannot re-attach.",
-                );
-              }
-            }
-            this.isTooltipInBody = false;
-
-            const originalTitle = this.buttonElement.dataset.originalTitle;
-            if (!this.hasAttribute("tooltip-text") && originalTitle) {
-              this.setButtonAttribute("title", originalTitle);
-            }
-
-            delete this.buttonElement.dataset.originalTitle;
-          } catch (error) {
-            console.error("Error removing/restoring tooltip:", error);
-            this.isTooltipInBody = false;
-            delete this.buttonElement.dataset.originalTitle;
-          }
-        }
-      }, 50);
-    }
+  private handleHideTooltipProxy = () => {
+    this.tooltipManager.hide();
   };
-
-  private hasTooltipContent(): boolean {
-    const hasText =
-      !!this.getAttribute("tooltip-text") ||
-      !!this.querySelector('[slot="tooltip-text"]')?.textContent?.trim() ||
-      !!this.getAttribute("title");
-    const hasTitle =
-      !!this.getAttribute("tooltip-title") ||
-      !!this.querySelector('[slot="tooltip-title"]')?.textContent?.trim();
-    const hasIcon =
-      !!this.getAttribute("tooltip-icon") ||
-      !!this.querySelector('[slot="tooltip-icon"]') ||
-      (this.variant === "icon" && !!this.querySelector('[slot="icon"]'));
-
-    return hasText || hasTitle || hasIcon;
-  }
 
   attributeChangedCallback(
     name: string,
@@ -203,31 +126,28 @@ export class TeskooanoButton extends HTMLElement {
     switch (name) {
       case "disabled":
         this.updateDisabledState();
-        if (this.disabled) this.hideTooltip();
+        if (this.disabled) this.tooltipManager.hide();
         break;
       case "tooltip-text":
       case "tooltip-title":
       case "tooltip-icon":
-        this.updateTooltipContent();
+        this.tooltipManager.updateContent();
         break;
       case "title":
         if (!this.hasAttribute("tooltip-text")) {
-          this.updateTooltipContent();
-          if (!this.isTooltipInBody) {
-            this.setButtonAttribute("title", newValue);
-          }
+          this.tooltipManager.updateContent();
         }
         break;
       case "active":
-        this.updateTooltipContent();
         this.updateActiveState();
+        this.tooltipManager.updateContent();
         break;
       case "fullwidth":
       case "size":
         break;
       case "variant":
         this.updateVariant();
-        this.updateTooltipContent();
+        this.tooltipManager.updateContent();
         break;
       default:
         if (name === "type") {
@@ -238,9 +158,9 @@ export class TeskooanoButton extends HTMLElement {
   }
 
   private updateAttribute(name: string, value: string | null) {
-    if (name === "title") return;
-
-    this.setButtonAttribute(name, value);
+    if (name === "type") {
+      this.setButtonAttribute(name, value);
+    }
   }
 
   private setButtonAttribute(name: string, value: string | null) {
@@ -249,83 +169,6 @@ export class TeskooanoButton extends HTMLElement {
     } else {
       this.buttonElement.removeAttribute(name);
     }
-  }
-
-  private updateTooltipContent() {
-    if (!this.tooltipElement) return;
-
-    const text =
-      this.getAttribute("tooltip-text") ?? this.getAttribute("title") ?? "";
-
-    const title = this.getAttribute("tooltip-title");
-    const specificTooltipIconSvg = this.getAttribute("tooltip-icon");
-
-    const textSlot = this.shadowRoot?.querySelector(
-      'slot[name="tooltip-text"]',
-    ) as HTMLSlotElement | null;
-    const titleSlot = this.shadowRoot?.querySelector(
-      'slot[name="tooltip-title"]',
-    ) as HTMLSlotElement | null;
-    const tooltipIconSlot = this.shadowRoot?.querySelector(
-      'slot[name="tooltip-icon"]',
-    ) as HTMLSlotElement | null;
-    const mainIconSlot = this.shadowRoot?.querySelector(
-      'slot[name="icon"]',
-    ) as HTMLSlotElement | null;
-
-    const hasTextSlotContent = !!this.querySelector('[slot="tooltip-text"]');
-    const hasTitleSlotContent = !!this.querySelector('[slot="tooltip-title"]');
-    const hasTooltipIconSlotContent = !!this.querySelector(
-      '[slot="tooltip-icon"]',
-    );
-
-    if (textSlot && !hasTextSlotContent) {
-      this.setTextSlotContent(textSlot, text);
-    } else if (textSlot && hasTextSlotContent && textSlot.textContent !== "") {
-      this.setTextSlotContent(textSlot, "");
-    }
-
-    if (titleSlot && !hasTitleSlotContent) {
-      this.setTextSlotContent(titleSlot, title);
-    } else if (titleSlot && hasTitleSlotContent && titleSlot.innerHTML !== "") {
-      this.setTextSlotContent(titleSlot, null);
-    }
-
-    let finalIconSvg: string | null = null;
-    if (hasTooltipIconSlotContent) {
-      finalIconSvg = null;
-    } else if (specificTooltipIconSvg !== null) {
-      finalIconSvg = specificTooltipIconSvg;
-    } else {
-      const assignedElements = mainIconSlot?.assignedElements({
-        flatten: true,
-      });
-      if (assignedElements && assignedElements.length > 0) {
-        finalIconSvg = assignedElements[0].innerHTML ?? null;
-      } else {
-        finalIconSvg = mainIconSlot?.innerHTML ?? null;
-      }
-    }
-
-    this.setIconSlotContent(tooltipIconSlot, finalIconSvg);
-  }
-
-  private setTextSlotContent(
-    slotElement: HTMLSlotElement | null,
-    text: string | null,
-  ) {
-    if (!slotElement) return;
-
-    slotElement.textContent = text ?? "";
-  }
-
-  private setIconSlotContent(
-    slotElement: HTMLSlotElement | null,
-    svgString: string | null,
-  ) {
-    if (!slotElement) return;
-
-    slotElement.innerHTML = svgString ?? "";
   }
 
   get disabled(): boolean {
@@ -386,7 +229,7 @@ export class TeskooanoButton extends HTMLElement {
   }
 
   public refreshTooltipContent() {
-    this.updateTooltipContent();
+    this.tooltipManager.updateContent();
   }
 
   get active(): boolean {
