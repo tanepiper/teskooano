@@ -56,7 +56,7 @@ export function calculatePlanetOrbitAndInitialState(
       orbit,
       0,
     );
-    const initialRelativeVel_mps = calculateOrbitalVelocity(
+    const initialWorldVel_mps = calculateOrbitalVelocity(
       parentStarState,
       orbit,
       0,
@@ -65,10 +65,6 @@ export function calculatePlanetOrbitAndInitialState(
     const initialWorldPos_m = initialRelativePos_m
       .clone()
       .add(parentStarState.position_m);
-
-    const initialWorldVel_mps = initialRelativeVel_mps
-      .clone()
-      .add(parentStarState.velocity_mps);
 
     if (
       !initialWorldPos_m ||

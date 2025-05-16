@@ -7,8 +7,8 @@ export * from "./Select";
  * Plugin definition for the core Select component.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "core-select",
-  name: "Core Select Component",
+  id: "teskooano-select",
+  name: "Teskooano Select Component",
   description: "Provides the teskooano-select custom element.",
 
   components: [

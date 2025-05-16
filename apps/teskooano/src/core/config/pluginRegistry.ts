@@ -1,14 +1,14 @@
 import type { PluginRegistryConfig } from "@teskooano/ui-plugin";
 
 export const pluginConfig: PluginRegistryConfig = {
-  "core-button": { path: "../core/components/button" },
-  "core-modal": { path: "../core/components/modal" },
-  "core-card": { path: "../core/components/card" },
-  "core-output": { path: "../core/components/output" },
-  "core-select": { path: "../core/components/select" },
-  "core-slider": { path: "../core/components/slider" },
-  "core-tooltip": { path: "../core/components/tooltip" },
-  "core-dockview": { path: "../core/controllers/dockview" },
-  "core-tour": { path: "../core/interface/tour-controller" },
-  "core-engine-toolbar": { path: "../core/interface/engine-toolbar" },
+  "teskooano-button": { path: "../core/components/button" },
+  "teskooano-modal": { path: "../core/components/modal" },
+  "teskooano-card": { path: "../core/components/card" },
+  "teskooano-output": { path: "../core/components/output" },
+  "teskooano-select": { path: "../core/components/select" },
+  "teskooano-slider": { path: "../core/components/slider" },
+  "teskooano-tooltip": { path: "../core/components/tooltip" },
+  "teskooano-dockview": { path: "../core/controllers/dockview" },
+  "teskooano-tour": { path: "../core/interface/tour-controller" },
+  "teskooano-engine-toolbar": { path: "../core/interface/engine-toolbar" },
 };

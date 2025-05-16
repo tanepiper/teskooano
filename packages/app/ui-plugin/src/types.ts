@@ -242,10 +242,14 @@ export interface ManagerConfig {
 export interface TeskooanoPlugin {
   /** A unique identifier for the plugin (e.g., 'core-focus-controls'). */
   id: string;
+  /** The version of the plugin. */
+  version?: string;
   /** A user-friendly name for the plugin (e.g., 'Core Focus Controls'). */
   name: string;
   /** Optional description of the plugin's purpose. */
   description?: string;
+  /** Optional icon SVG for the plugin. */
+  icon?: string;
   /** Optional array of plugin IDs that this plugin depends on. */
   dependencies?: string[];
 

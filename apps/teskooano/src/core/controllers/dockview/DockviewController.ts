@@ -435,7 +435,39 @@ export class DockviewController {
         if (existingPanel) {
           existingPanel.api.setActive();
         } else {
-          const position = { top: 100, left: 100, width: 500, height: 400 };
+          // Default position if not specified in config
+          let position = { top: 100, left: 100, width: 500, height: 400 };
+
+          // Check if initialPosition is defined in the config and use it
+          // The type for 'config' is RegisteredComponentInfo["toolbarConfig"]
+          // We need to ensure it can hold initialPosition, or cast safely.
+          const toolbarItemConfig = config as any; // Cast to access potential custom fields
+
+          if (toolbarItemConfig.initialPosition) {
+            const ip = toolbarItemConfig.initialPosition;
+            // Ensure all values are numbers. If they were functions, they should be resolved before this point.
+            // Or, resolve them here if they are indeed functions.
+            // For now, assuming they are numbers or resolvable to numbers.
+            position = {
+              top:
+                typeof ip.top === "function"
+                  ? ip.top()
+                  : (ip.top ?? position.top),
+              left:
+                typeof ip.left === "function"
+                  ? ip.left()
+                  : (ip.left ?? position.left),
+              width:
+                typeof ip.width === "function"
+                  ? ip.width()
+                  : (ip.width ?? position.width),
+              height:
+                typeof ip.height === "function"
+                  ? ip.height()
+                  : (ip.height ?? position.height),
+            };
+          }
+
           this.addFloatingPanel(
             {
               id: panelId,

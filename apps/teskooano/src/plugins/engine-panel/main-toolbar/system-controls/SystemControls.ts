@@ -4,29 +4,37 @@ import {
   getCelestialObjects,
   updateSeed,
 } from "@teskooano/core-state";
-import { pluginManager } from "@teskooano/ui-plugin";
+import type { CelestialObject } from "@teskooano/data-types";
 import {
   BehaviorSubject,
   Subscription,
   combineLatest,
-  from,
   fromEvent,
   merge,
-  of,
+  Observable,
 } from "rxjs";
-import {
-  catchError,
-  debounceTime,
-  filter,
-  map,
-  startWith,
-  switchMap,
-  tap,
-  withLatestFrom,
-} from "rxjs/operators";
+import { debounceTime, map, startWith, tap } from "rxjs/operators";
 import { SystemControlsTemplate } from "./SystemControls.template.js";
-import * as systemActions from "./system-controls.actions.js";
 import * as SystemControlsUI from "./system-controls.ui.js";
+import {
+  createButtonClickStream$,
+  createRandomSeedStream$,
+  createSeedSubmitStream$,
+} from "./system-controls.streams.js";
+import {
+  generateSystemEffect$,
+  clearSystemEffect$,
+  exportSystemEffect$,
+  importSystemEffect$,
+  copySeedEffect$,
+  createBlankSystemEffect$,
+  SystemActionEffectResult,
+  CelestialObjectMap as EffectCelestialObjectMap,
+  Seed as EffectSeed,
+} from "./system-controls.effects.js";
+
+// Define core types based on usage
+type CoreCelestialObjectMap = Record<string, CelestialObject>;
 
 /**
  * @element teskooano-system-controls
@@ -53,9 +61,9 @@ class SystemControls
   /** @internal The element shown when a system is loaded. */
   private loadedState: HTMLElement | null = null;
   /** @internal The input field for the system seed. */
-  private seedInput: HTMLInputElement | null = null;
+  public seedInput: HTMLInputElement | null = null;
   /** @internal The form containing the seed input and submit button. */
-  private seedForm: HTMLFormElement | null = null;
+  public seedForm: HTMLFormElement | null = null;
   /** @internal The element displaying the current system seed. */
   private systemSeedEl: HTMLElement | null = null;
   /** @internal The element displaying the number of celestial objects. */
@@ -65,7 +73,7 @@ class SystemControls
   /** @internal The overlay shown during loading/generation states. */
   private loadingOverlay: HTMLElement | null = null;
 
-  private isGenerating$$ = new BehaviorSubject<boolean>(false);
+  public isGenerating$$ = new BehaviorSubject<boolean>(false);
   private mobile$$ = new BehaviorSubject<boolean>(false);
   private subscriptions = new Subscription();
 
@@ -170,9 +178,9 @@ class SystemControls
    * @private
    */
   private setupRxJSStreams(): void {
-    if (!this.shadowRoot) return;
+    if (!this.shadowRoot || !this.seedForm || !this.seedInput) return;
 
-    const generateSubmitButton = this.seedForm?.querySelector<HTMLElement>(
+    const generateSubmitButton = this.seedForm.querySelector<HTMLElement>(
       'teskooano-button[type="submit"]',
     );
     const randomButton = this.shadowRoot.querySelector<HTMLElement>(
@@ -195,211 +203,92 @@ class SystemControls
     );
 
     if (
-      !this.seedForm ||
       !generateSubmitButton ||
       !randomButton ||
       !clearButton ||
       !exportButton ||
       !importButton ||
       !copySeedButton ||
-      !createBlankButton ||
-      !this.seedInput
+      !createBlankButton
     ) {
       console.error(
-        "[SystemControls] One or more required elements not found.",
+        "[SystemControls] One or more required action buttons not found.",
       );
       return;
     }
 
-    const seedSubmit$ = fromEvent(generateSubmitButton, "click").pipe(
-      map(() => this.seedInput!.value || ""),
+    const seedSubmitTr$ = createSeedSubmitStream$(
+      generateSubmitButton,
+      this.seedInput,
     );
+    const randomSubmitTr$ = createRandomSeedStream$(randomButton);
+    const clearClick$ = createButtonClickStream$(clearButton);
+    const exportClick$ = createButtonClickStream$(exportButton);
+    const importClick$ = createButtonClickStream$(importButton);
+    const copySeedClick$ = createButtonClickStream$(copySeedButton);
+    const createBlankClick$ = createButtonClickStream$(createBlankButton);
 
-    const randomSubmit$ = fromEvent(randomButton, "click").pipe(
-      map(() => Math.random().toString(36).substring(2, 10)),
-    );
+    const generateSystemTrigger$: Observable<{
+      seed: string;
+      element: HTMLElement;
+    }> = merge(seedSubmitTr$, randomSubmitTr$);
 
-    const generateSystemTrigger$ = merge(seedSubmit$, randomSubmit$);
+    const handleEffectResult = (
+      effect$: Observable<SystemActionEffectResult>,
+    ) => {
+      return effect$.pipe(
+        tap((result) => {
+          this.showFeedback(
+            result.triggerElement,
+            result.symbol,
+            result.status === "error",
+            result.message === "File selection cancelled." ? 1000 : 1500,
+          );
+          if (result.triggerElement !== copySeedButton) {
+            this.isGenerating$$.next(false);
+          }
+        }),
+      );
+    };
 
-    const generateSystemAction$ = generateSystemTrigger$.pipe(
-      filter(() => !this.isGenerating$$.value),
-      tap(() => this.isGenerating$$.next(true)),
+    const typedCelestialObjects$ =
+      celestialObjects$ as Observable<EffectCelestialObjectMap>;
+    const typedCurrentSeed$ = currentSeed as Observable<EffectSeed>;
 
-      switchMap((seed) =>
-        from(
-          pluginManager.execute("system:generate_random", { seed: seed }),
-        ).pipe(
-          tap((result: any) => {
-            console.log("Generation result:", result);
-            this.showFeedback(
-              generateSubmitButton,
-              result?.symbol || (result?.success ? "✅" : "❌"),
-              !result?.success,
-            );
-            const originalTriggerSeed = this.seedInput?.value;
-            if (
-              result?.success &&
-              result?.seed &&
-              this.seedInput &&
-              result.seed !== originalTriggerSeed
-            ) {
-              this.seedInput.value = result.seed;
-            }
-          }),
-          catchError((err) => {
-            console.error("Generation error:", err);
-            this.showFeedback(generateSubmitButton, "❌", true);
-            return of({
-              success: false,
-              symbol: "❌",
-              message: "Generation failed",
-            });
-          }),
-        ),
-      ),
-      tap(() => this.isGenerating$$.next(false)),
-    );
-
-    const clearSystemAction$ = fromEvent(clearButton, "click").pipe(
-      filter(() => !this.isGenerating$$.value),
-      tap(() => this.isGenerating$$.next(true)),
-      switchMap(() =>
-        from(systemActions.clearSystem()).pipe(
-          tap((result) => {
-            console.log("Clear result:", result);
-            this.showFeedback(
-              clearButton,
-              result.symbol || (result.success ? "🗑️" : "❌"),
-              !result.success,
-            );
-          }),
-          catchError((err) => {
-            console.error("Clear error:", err);
-            this.showFeedback(clearButton, "❌", true);
-            return of({
-              success: false,
-              symbol: "❌",
-              message: "Clear failed",
-            });
-          }),
-        ),
-      ),
-      tap(() => this.isGenerating$$.next(false)),
-    );
-
-    const exportSystemAction$ = fromEvent(exportButton, "click").pipe(
-      filter(() => !this.isGenerating$$.value),
-      withLatestFrom(currentSeed, celestialObjects$),
-      tap(() => this.isGenerating$$.next(true)),
-      switchMap(([_, seed, objects]) =>
-        from(systemActions.exportSystem(seed, objects)).pipe(
-          tap((result) => {
-            console.log("Export result:", result);
-            this.showFeedback(
-              exportButton,
-              result.symbol || (result.success ? "💾" : "❌"),
-              !result.success,
-            );
-          }),
-          catchError((err) => {
-            console.error("Export error:", err);
-            this.showFeedback(exportButton, "❌", true);
-            return of({
-              success: false,
-              symbol: "❌",
-              message: "Export failed",
-            });
-          }),
-        ),
-      ),
-      tap(() => this.isGenerating$$.next(false)),
-    );
-
-    const importSystemAction$ = fromEvent(importButton, "click").pipe(
-      filter(() => !this.isGenerating$$.value),
-      tap(() => this.isGenerating$$.next(true)),
-
-      switchMap(() =>
-        from(pluginManager.execute("system:trigger_import_dialog")).pipe(
-          tap((result: any) => {
-            console.log("Import result:", result);
-            this.showFeedback(
-              importButton,
-              result?.symbol || (result?.success ? "✅" : "❌"),
-              !result?.success,
-            );
-          }),
-          catchError((err) => {
-            console.error("Import error:", err);
-
-            const message = err instanceof Error ? err.message : String(err);
-            if (message === "File selection cancelled.") {
-              this.showFeedback(importButton, "🤷", false, 1000);
-            } else {
-              this.showFeedback(importButton, "❌", true);
-            }
-            return of({
-              success: false,
-              symbol: "❌",
-              message: "Import failed",
-            });
-          }),
-        ),
-      ),
-      tap(() => this.isGenerating$$.next(false)),
-    );
-
-    const copySeedAction$ = fromEvent(copySeedButton, "click").pipe(
-      filter(() => !this.isGenerating$$.value),
-      withLatestFrom(currentSeed),
-
-      switchMap(([_, seed]) =>
-        from(pluginManager.execute("system:copy_seed", seed)).pipe(
-          tap((result: any) => {
-            this.showFeedback(
-              copySeedButton,
-              result?.symbol || (result?.success ? "📋" : "❌"),
-              !result?.success,
-            );
-          }),
-          catchError((err) => {
-            console.error("Copy seed error:", err);
-            this.showFeedback(copySeedButton, "❌", true);
-            return of({ success: false, symbol: "❌", message: "Copy failed" });
-          }),
-        ),
+    const generateSystem$ = handleEffectResult(
+      generateSystemEffect$(
+        generateSystemTrigger$,
+        this.isGenerating$$,
+        this.seedInput,
       ),
     );
-
-    const createBlankAction$ = fromEvent(createBlankButton, "click").pipe(
-      filter(() => !this.isGenerating$$.value),
-      tap(() => this.isGenerating$$.next(true)),
-
-      switchMap(() =>
-        from(pluginManager.execute("system:create_blank")).pipe(
-          tap((result: any) => {
-            this.showFeedback(
-              createBlankButton,
-              result?.symbol || (result?.success ? "📄" : "❌"),
-              !result?.success,
-            );
-          }),
-          catchError((err) => {
-            console.error("Create blank system error:", err);
-            this.showFeedback(createBlankButton, "❌", true);
-            return of({
-              success: false,
-              symbol: "❌",
-              message: "Create blank failed",
-            });
-          }),
-        ),
-      ),
-      tap(() => this.isGenerating$$.next(false)),
+    const clearSystem$ = handleEffectResult(
+      clearSystemEffect$(clearClick$, this.isGenerating$$),
     );
+    const exportSystem$ = handleEffectResult(
+      exportSystemEffect$(exportClick$, this.isGenerating$$),
+    );
+    const importSystem$ = handleEffectResult(
+      importSystemEffect$(importClick$, this.isGenerating$$),
+    );
+    const copySeed$ = handleEffectResult(
+      copySeedEffect$(copySeedClick$, typedCurrentSeed$),
+    );
+    const createBlankSystem$ = handleEffectResult(
+      createBlankSystemEffect$(createBlankClick$, this.isGenerating$$),
+    );
+
+    this.subscriptions.add(generateSystem$.subscribe());
+    this.subscriptions.add(clearSystem$.subscribe());
+    this.subscriptions.add(exportSystem$.subscribe());
+    this.subscriptions.add(importSystem$.subscribe());
+    this.subscriptions.add(copySeed$.subscribe());
+    this.subscriptions.add(createBlankSystem$.subscribe());
 
     const displayState$ = combineLatest([
-      celestialObjects$.pipe(startWith(getCelestialObjects())),
+      celestialObjects$.pipe(
+        startWith(getCelestialObjects() as CoreCelestialObjectMap),
+      ),
       currentSeed.pipe(startWith(currentSeed.getValue())),
       this.isGenerating$$,
       this.mobile$$,
@@ -410,34 +299,37 @@ class SystemControls
         if (this.loadingOverlay) {
           this.loadingOverlay.style.display = isGenerating ? "flex" : "none";
         }
-
-        SystemControlsUI.updateDisplayUI(this, objects, seed);
+        SystemControlsUI.updateDisplayUI(
+          this,
+          objects as CoreCelestialObjectMap,
+          seed,
+        );
         SystemControlsUI.updateButtonSizesUI(this);
 
         if (this.seedInput && !this.seedInput.matches(":focus")) {
-          this.seedInput.value = seed || "";
+          this.seedInput.value = seed === null ? "" : seed;
         }
       }),
     );
 
-    const seedInput$ = fromEvent(this.seedInput, "input").pipe(
+    const seedInputEvent$ = fromEvent(this.seedInput, "input").pipe(
       debounceTime(300),
       map((event) => {
-        const inputEl = (event.target as HTMLElement).shadowRoot?.querySelector(
-          "input#seed",
-        ) as HTMLInputElement;
-        return inputEl.value;
+        const target = event.target as HTMLElement;
+        // Attempt to get value from shadow DOM input, otherwise from target itself
+        const shadowInput =
+          target.shadowRoot?.querySelector<HTMLInputElement>("input#seed");
+        if (shadowInput) {
+          return shadowInput.value;
+        }
+        if (target instanceof HTMLInputElement) {
+          return target.value;
+        }
+        return ""; // Fallback if not an input element somehow
       }),
       tap((seed) => updateSeed(seed)),
     );
-
-    this.subscriptions.add(generateSystemAction$.subscribe());
-    this.subscriptions.add(clearSystemAction$.subscribe());
-    this.subscriptions.add(exportSystemAction$.subscribe());
-    this.subscriptions.add(importSystemAction$.subscribe());
-    this.subscriptions.add(copySeedAction$.subscribe());
-    this.subscriptions.add(createBlankAction$.subscribe());
-    this.subscriptions.add(seedInput$.subscribe());
+    this.subscriptions.add(seedInputEvent$.subscribe());
   }
 
   /**
@@ -466,7 +358,6 @@ class SystemControls
     if (existingTimeout) {
       clearTimeout(existingTimeout);
       element.classList.remove("feedback--error", "feedback--success");
-
       element.innerHTML = element.dataset.originalContent || originalContent;
     }
 

@@ -84,6 +84,8 @@ export function startSimulationLoop() {
         const radii = new Map<string | number, number>();
         const isStar = new Map<string | number, boolean>();
         const bodyTypes = new Map<string | number, CelestialType>();
+        const parentIds = new Map<string | number, string | undefined>();
+
         Object.values(currentCelestialObjects)
           .filter(
             (obj) =>
@@ -94,6 +96,7 @@ export function startSimulationLoop() {
               radii.set(obj.id, obj.realRadius_m);
               isStar.set(obj.id, obj.type === CelestialType.STAR);
               bodyTypes.set(obj.id, obj.type);
+              parentIds.set(obj.id, obj.parentId);
             }
           });
 
@@ -101,6 +104,8 @@ export function startSimulationLoop() {
           radii,
           isStar,
           bodyTypes,
+          parentIds,
+          physicsEngine: getSimulationState().physicsEngine,
         };
 
         const stepResult: SimulationStepResult = updateSimulation(

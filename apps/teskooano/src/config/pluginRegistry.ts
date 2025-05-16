@@ -35,4 +35,7 @@ export const pluginConfig: PluginRegistryConfig = {
   "teskooano-celestial-uniforms": {
     path: "../plugins/celestial-uniforms",
   },
+  "teskooano-plugin-manager": {
+    path: "../plugins/plugin-manager",
+  },
 };

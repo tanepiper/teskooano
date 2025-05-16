@@ -57,5 +57,5 @@ export const plugin: TeskooanoPlugin = {
   toolbarWidgets: [],
   managerClasses: [],
   // Add dependencies if needed, e.g., core components
-  dependencies: ["core-card"],
+  dependencies: ["teskooano-card"],
 };

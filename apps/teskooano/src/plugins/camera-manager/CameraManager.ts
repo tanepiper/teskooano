@@ -3,28 +3,13 @@ import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { BehaviorSubject } from "rxjs";
 import * as THREE from "three";
 import type { CameraManagerOptions, CameraManagerState } from "./types";
-
-/**
- * Default camera position offset relative to the target, normalized.
- * Used when focusing on an object.
- */
-const CAMERA_OFFSET = new THREE.Vector3(0.8, 0.4, 1.0).normalize();
-/**
- * Default camera position if no specific initial position is provided.
- */
-const DEFAULT_CAMERA_POSITION = new THREE.Vector3(200, 200, 200);
-/**
- * Default camera target point if no specific initial target is provided.
- */
-const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
-/**
- * Default distance multiplier used when calculating camera position based on object size or a default offset.
- */
-const DEFAULT_CAMERA_DISTANCE = 1;
-/**
- * Default Field of View (FOV) in degrees.
- */
-const DEFAULT_FOV = 75;
+import {
+  CAMERA_OFFSET,
+  DEFAULT_CAMERA_DISTANCE,
+  DEFAULT_CAMERA_POSITION,
+  DEFAULT_CAMERA_TARGET,
+  DEFAULT_FOV,
+} from "./constants";
 
 /**
  * Manages camera operations within a Teskooano engine view.
@@ -96,10 +81,7 @@ export class CameraManager {
     this._cleanupPriorRenderer();
 
     if (!options.renderer) {
-      console.error(
-        // Changed to error as a renderer is essential
-        "[CameraManager] No valid renderer provided to setDependencies. CameraManager will not function.",
-      );
+      // Likely a first-time call to setDependencies before the renderer is available.
       return;
     }
 

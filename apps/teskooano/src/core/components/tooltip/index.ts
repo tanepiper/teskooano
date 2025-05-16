@@ -7,8 +7,8 @@ export * from "./Tooltip";
  * Plugin definition for the core Tooltip component.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "core-tooltip",
-  name: "Core Tooltip Component",
+  id: "teskooano-tooltip",
+  name: "Teskooano Tooltip",
   description: "Provides the teskooano-tooltip custom element.",
 
   components: [

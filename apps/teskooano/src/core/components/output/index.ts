@@ -9,8 +9,8 @@ export * from "./LabeledValue";
  * Plugin definition for the core Output components.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "core-output",
-  name: "Core Output Components",
+  id: "teskooano-output",
+  name: "Teskooano Output Components",
   description:
     "Provides the teskooano-output-display and teskooano-labeled-value custom elements.",
 

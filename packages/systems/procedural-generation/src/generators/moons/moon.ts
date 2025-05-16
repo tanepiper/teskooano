@@ -134,8 +134,6 @@ export function generateMoon(
       .clone()
       .add(parentPlanetState.position_m);
 
-    initialWorldVel_mps.add(parentPlanetState.velocity_mps);
-
     if (
       !initialWorldPos_m ||
       !initialWorldVel_mps ||

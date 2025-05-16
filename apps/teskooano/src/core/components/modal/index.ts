@@ -9,8 +9,8 @@ export * from "./ModalManager";
  * Plugin definition for the core Modal system.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "core-modal",
-  name: "Core Modal System",
+  id: "teskooano-modal",
+  name: "Teskooano Modal",
   description:
     "Provides the teskooano-modal custom element and the ModalManager service.",
 

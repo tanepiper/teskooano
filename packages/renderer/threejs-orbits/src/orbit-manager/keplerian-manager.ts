@@ -3,7 +3,12 @@ import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
-import { calculateOrbitPoints, updateOrbitLine } from "./";
+import {
+  calculateOrbitPoints,
+  updateOrbitLine,
+  createOrbitLineGeometry,
+  disposeOrbitLine,
+} from "./";
 
 const KEPLERIAN_DEFAULT_MATERIAL = new THREE.LineBasicMaterial({
   color: 0xffffff,
@@ -72,6 +77,7 @@ export class KeplerianOrbitManager {
     const parentObject3D = this.objectManager.getObject(parentId);
     const allRenderableObjects = this.latestRenderableObjects;
     const parentState = allRenderableObjects[parentId];
+    const objectState = allRenderableObjects[objectId];
 
     if (!parentObject3D || !parentState) {
       if (existingLine) this.remove(objectId);
@@ -111,9 +117,7 @@ export class KeplerianOrbitManager {
         highlightColor,
       );
     } else {
-      const geometry = new THREE.BufferGeometry().setFromPoints(
-        orbitPointsTHREE,
-      );
+      const geometry = createOrbitLineGeometry(orbitPointsTHREE);
       const material = targetMaterial.clone();
       const newLine = new THREE.Line(geometry, material);
 
@@ -140,10 +144,7 @@ export class KeplerianOrbitManager {
     const line = this.lines.get(objectId);
     if (line) {
       this.objectManager.removeRawObjectFromScene(line);
-      line.geometry.dispose();
-      if (line.material instanceof THREE.Material) {
-        line.material.dispose();
-      }
+      disposeOrbitLine(line);
       this.lines.delete(objectId);
     }
   }

@@ -9,7 +9,7 @@ import { CameraManager } from "./CameraManager";
  */
 export const plugin: TeskooanoPlugin = {
   id: "teskooano-camera-manager",
-  name: "Camera Manager",
+  name: "Teskooano Camera Manager",
   description: "Provides camera control and state management logic.",
   managerClasses: [
     {

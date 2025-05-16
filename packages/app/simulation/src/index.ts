@@ -4,6 +4,7 @@ import { startSimulationLoop, stopSimulationLoop } from "./loop";
 export * from "./loop";
 export * from "./resetSystem";
 export * from "./solarSystem";
+export * from "./simulationEvents";
 
 /**
  * Manages the overall simulation setup, primarily by initializing the renderer

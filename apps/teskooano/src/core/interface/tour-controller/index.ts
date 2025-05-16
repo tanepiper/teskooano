@@ -58,9 +58,9 @@ const tourToolbarRegistration: ToolbarRegistration = {
 };
 
 export const plugin: TeskooanoPlugin = {
-  id: "core-tour",
-  name: "Application Tour",
-  description: "Manages the application tour using driver.js.",
+  id: "teskooano-tour",
+  name: "Teskooano Tour",
+  description: "Provides the interface for application tours using driver.js",
   functions: [startTourFunction, restartTourFunction, setSkipTourFunction],
   panels: [],
   toolbarRegistrations: [tourToolbarRegistration],

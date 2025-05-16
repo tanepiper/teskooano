@@ -43,8 +43,8 @@ const initializeDockview: FunctionConfig = {
  * The standard TeskooanoPlugin definition for the Dockview controller.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "core-dockview",
-  name: "Core Dockview Controller",
+  id: "teskooano-dockview",
+  name: "Teskooano Dockview",
   description:
     "Provides the main DockviewController instance via an initialization function.",
   functions: [initializeDockview],

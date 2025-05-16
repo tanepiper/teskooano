@@ -19,7 +19,7 @@ import { OSVector3 } from "@teskooano/core-math";
  * @returns An array of `THREE.Vector3` points representing the orbit in scaled visual units, relative to the focus at (0,0,0). Returns an empty array if essential parameters (period, semi-major axis) are invalid.
  * @internal This function calculates the raw relative points and is typically called by `calculateOrbitPoints`.
  */
-export function calculateRelativeOrbitPoints(
+function calculateRelativeOrbitPoints(
   orbitalParameters: OrbitalParameters,
   segments: number = 256,
 ): OSVector3[] {

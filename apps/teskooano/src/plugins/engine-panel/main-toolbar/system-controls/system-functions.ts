@@ -27,6 +27,7 @@ import {
   take,
 } from "rxjs";
 import { generateAndLoadSystem } from "./system-generator.js";
+import { resetTime$ } from "@teskooano/app-simulation";
 
 interface SystemImportData {
   seed: string;
@@ -117,9 +118,7 @@ function processImportedFile$(
 
         currentSeed.next(parsedData.seed);
 
-        window.dispatchEvent(
-          new CustomEvent(CustomEvents.SIMULATION_RESET_TIME),
-        );
+        resetTime$.next();
 
         observer.next({
           success: true,
@@ -211,9 +210,12 @@ export const clearSystemFunction: FunctionConfig = {
         resetSelection: true,
       });
       actions.resetTime();
+
+      resetTime$.next();
       console.log(
-        "[SystemFunctions] actions.clearState and actions.resetTime called.",
+        "[SystemFunctions] actions.resetTime called and resetTime$ subject notified.",
       );
+
       return { success: true, symbol: "🗑️", message: "System cleared." };
     } catch (error) {
       console.error("[SystemFunctions] Error clearing system:", error);
@@ -349,7 +351,7 @@ export const createBlankSystemFunction: FunctionConfig = {
       actions.createSolarSystem(star);
       currentSeed.next("");
 
-      window.dispatchEvent(new CustomEvent(CustomEvents.SIMULATION_RESET_TIME));
+      resetTime$.next();
       return { success: true, symbol: "📄", message: "Blank system created." };
     } catch (error) {
       console.error("[SystemFunctions] Error creating blank system:", error);
