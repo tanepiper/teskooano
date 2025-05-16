@@ -27,11 +27,13 @@ export class CelestialRow extends HTMLElement {
 
     this.iconEl = this.shadowRoot!.getElementById("icon");
     this.nameEl = this.shadowRoot!.getElementById("name");
-    this.focusBtn = this.shadowRoot!.getElementById("focus-btn");
-    this.followBtn = this.shadowRoot!.getElementById("follow-btn");
+    // focusBtn and followBtn will be initialized in connectedCallback
   }
 
   connectedCallback() {
+    this.focusBtn = this.shadowRoot!.getElementById("focus-btn");
+    this.followBtn = this.shadowRoot!.getElementById("follow-btn");
+
     if (this.focusBtn) {
       this.focusBtn.addEventListener("click", this.handleFocusClick);
     } else {
@@ -46,6 +48,7 @@ export class CelestialRow extends HTMLElement {
         `[CelestialRow connectedCallback] followBtn NOT FOUND for ${this.getAttribute("object-id")}`,
       );
     }
+    this.updateButtonTitles();
   }
 
   disconnectedCallback() {
@@ -61,32 +64,16 @@ export class CelestialRow extends HTMLElement {
     switch (name) {
       case "object-id":
         this._objectId = newValue;
-
-        this.focusBtn?.setAttribute(
-          "title",
-          `Focus ${this.getAttribute("object-name") || newValue}`,
-        );
-        this.followBtn?.setAttribute(
-          "title",
-          `Follow ${this.getAttribute("object-name") || newValue}`,
-        );
+        this.updateButtonTitles();
         break;
       case "object-name":
         if (this.nameEl) this.nameEl.textContent = newValue ?? "Unknown";
-        this.focusBtn?.setAttribute(
-          "title",
-          `Focus ${newValue || this._objectId}`,
-        );
-        this.followBtn?.setAttribute(
-          "title",
-          `Follow ${newValue || this._objectId}`,
-        );
+        this.updateButtonTitles();
         break;
       case "object-type":
         const type = (newValue as CelestialType) ?? "default";
         const style = iconStyles[type] || iconStyles.default;
         this.iconEl?.setAttribute("style", style);
-
         break;
       case "inactive":
         this._isInactive = newValue !== null;
@@ -96,6 +83,24 @@ export class CelestialRow extends HTMLElement {
         this._isFocused = newValue !== null;
         this.toggleAttribute("focused", this._isFocused);
         break;
+    }
+  }
+
+  private updateButtonTitles() {
+    const objectName = this.getAttribute("object-name");
+    const id = this._objectId;
+
+    if (this.focusBtn) {
+      this.focusBtn.setAttribute(
+        "title",
+        `Focus ${objectName || id || "Unknown"}`,
+      );
+    }
+    if (this.followBtn) {
+      this.followBtn.setAttribute(
+        "title",
+        `Follow ${objectName || id || "Unknown"}`,
+      );
     }
   }
 

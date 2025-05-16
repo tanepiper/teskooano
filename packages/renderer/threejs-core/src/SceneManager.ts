@@ -378,6 +378,10 @@ export class SceneManager {
       this.debugSphere = null;
     }
 
+    // Remove the canvas from the DOM before disposing the renderer itself
+    if (this.renderer.domElement.parentNode) {
+      this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+    }
     this.renderer.dispose();
 
     while (this.scene.children.length > 0) {

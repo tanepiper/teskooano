@@ -100,6 +100,10 @@ export class BackgroundManager {
   update(deltaTime: number): void {
     this.time += deltaTime;
 
+    if (this.camera) {
+      this.group.position.copy(this.camera.position);
+    }
+
     updateParallax(this.starsGroup, this.camera);
 
     animateStarField(this.starsGroup, this.starLayers, deltaTime);

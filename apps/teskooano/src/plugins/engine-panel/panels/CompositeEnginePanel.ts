@@ -407,7 +407,8 @@ export class CompositeEnginePanel
           this.triggerResize();
         } else if (this._renderer && objectCount === 0) {
           this.disposeRendererAndUI();
-          this._placeholderManager?.showMessage(this._isGeneratingSystem); // Show appropriate placeholder
+          this._isGeneratingSystem = false;
+          this._placeholderManager?.showMessage(false);
         }
       },
     );
