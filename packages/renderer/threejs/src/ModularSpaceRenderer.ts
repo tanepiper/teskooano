@@ -11,7 +11,10 @@ import {
   CSS2DManager,
 } from "@teskooano/renderer-threejs-interaction";
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import { OrbitManager } from "@teskooano/renderer-threejs-orbits";
+import {
+  OrbitsManager,
+  VisualizationMode,
+} from "@teskooano/renderer-threejs-orbits";
 import * as THREE from "three";
 import { RendererStateAdapter } from "./RendererStateAdapter";
 
@@ -24,7 +27,7 @@ export class ModularSpaceRenderer {
   public stateManager: StateManager;
 
   public objectManager: ObjectManager;
-  public orbitManager: OrbitManager;
+  public orbitManager: OrbitsManager;
   public backgroundManager: BackgroundManager;
 
   public controlsManager: ControlsManager;
@@ -92,7 +95,7 @@ export class ModularSpaceRenderer {
       this.css2DManager,
     );
 
-    this.orbitManager = new OrbitManager(
+    this.orbitManager = new OrbitsManager(
       this.objectManager,
       this.stateAdapter,
       renderableObjects$,

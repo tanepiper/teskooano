@@ -1,4 +1,3 @@
-import { startSimulationLoop } from "@teskooano/app-simulation";
 import {
   celestialObjects$,
   getCelestialObjects,
@@ -14,13 +13,10 @@ import {
   IContentRenderer,
 } from "dockview-core";
 import { BehaviorSubject, Subscription } from "rxjs";
-import * as THREE from "three";
 
-import { OrbitManager } from "@teskooano/renderer-threejs-orbits";
+import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 
 import { layoutOrientation$, Orientation } from "./layoutStore";
-
-import { CameraManager } from "../../camera-manager/CameraManager";
 
 import type { DockviewController } from "../../../core/controllers/dockview/DockviewController";
 
@@ -31,15 +27,15 @@ import {
   EngineToolbar,
   EngineToolbarManager,
 } from "../../../core/interface/engine-toolbar";
+import { ensureSimulationLoopStarted } from "../../../core/state/simulation-loop.state"; // Added import
 import { template } from "./CompositeEnginePanel.template.js"; // Import the template
 import {
-  viewStateSubject$,
   applyViewStateToRenderer,
+  viewStateSubject$,
 } from "./CompositeEnginePanel.utils.js"; // Import the utility function
-import { CompositeEngineState, CompositePanelParams } from "./types.js";
 import { EngineCameraManager } from "./EngineCameraManager"; // Added import
 import { PlaceholderManager } from "./PlaceholderManager"; // Added import
-import { ensureSimulationLoopStarted } from "../../../core/state/simulation-loop.state"; // Added import
+import { CompositeEngineState, CompositePanelParams } from "./types.js";
 
 /**
  * A Dockview panel component that combines a 3D engine view (`ModularSpaceRenderer`)
@@ -257,10 +253,10 @@ export class CompositeEnginePanel
   }
 
   /**
-   * Provides access to the OrbitManager instance within the renderer, if available.
+   * Provides access to the OrbitsManager instance within the renderer, if available.
    * Useful for direct manipulation or querying of orbit visualization data.
    */
-  public get orbitManager(): OrbitManager | undefined {
+  public get orbitManager(): OrbitsManager | undefined {
     return this._renderer?.orbitManager;
   }
 

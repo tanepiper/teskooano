@@ -5,8 +5,14 @@
  */
 
 // Original exports for backward compatibility
-import { OrbitManager, VisualizationMode as LegacyVisualizationMode } from "./OrbitManager";
-export { OrbitManager, VisualizationMode as LegacyVisualizationMode } from "./OrbitManager";
+import {
+  OrbitManager,
+  VisualizationMode as LegacyVisualizationMode,
+} from "./OrbitManager";
+export {
+  OrbitManager,
+  VisualizationMode as LegacyVisualizationMode,
+} from "./OrbitManager";
 export * from "./orbit-manager";
 
 // New refactored exports

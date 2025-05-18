@@ -132,7 +132,7 @@ It communicates with the main renderer through the `ObjectManager` and `Renderer
 ```
 packages/renderer/threejs-orbits/
 ├── src/
-│   ├── index.ts                    # Main exports 
+│   ├── index.ts                    # Main exports
 │   ├── OrbitManager.ts             # Legacy controller class (kept for backward compatibility)
 │   ├── core/                       # Core visualization components
 │   │   ├── index.ts                # Core exports
@@ -150,7 +150,7 @@ packages/renderer/threejs-orbits/
 │   │   ├── index.ts                # Utils exports
 │   │   ├── LineBuilder.ts          # THREE.js line creation helpers
 │   │   └── BufferPool.ts           # Buffer management utilities
-│   └── orbit-manager/              # Legacy code (kept for backward compatibility) 
+│   └── orbit-manager/              # Legacy code (kept for backward compatibility)
 │       ├── index.ts                # Legacy exports
 │       ├── keplerian-manager.ts    # Legacy keplerian orbit manager
 │       └── orbit-line-builder.ts   # Legacy utilities

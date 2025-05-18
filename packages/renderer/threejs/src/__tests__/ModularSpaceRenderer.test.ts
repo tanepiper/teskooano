@@ -11,7 +11,7 @@ import {
   CSS2DManager,
 } from "@teskooano/renderer-threejs-interaction";
 import { LightManager } from "@teskooano/renderer-threejs-effects";
-import { OrbitManager } from "@teskooano/renderer-threejs-orbits";
+import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { celestialObjectsStore, simulationState } from "@teskooano/core-state";
@@ -94,7 +94,7 @@ describe("ModularSpaceRenderer Integration Tests", () => {
     expect(renderer["animationLoop"]).toBeInstanceOf(AnimationLoop);
     expect(renderer["stateManager"]).toBeInstanceOf(StateManager);
     expect(renderer["objectManager"]).toBeInstanceOf(ObjectManager);
-    expect(renderer["orbitManager"]).toBeInstanceOf(OrbitManager);
+    expect(renderer["orbitManager"]).toBeInstanceOf(OrbitsManager);
     expect(renderer["backgroundManager"]).toBeInstanceOf(BackgroundManager);
     expect(renderer["controlsManager"]).toBeInstanceOf(ControlsManager);
     expect(renderer["css2DManager"]).toBeInstanceOf(CSS2DManager);
