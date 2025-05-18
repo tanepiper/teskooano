@@ -8,7 +8,7 @@ import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { KeplerianOrbitManager } from "./orbit-manager";
-import { predictVerletTrajectory } from "./orbit-manager/verlet-predictor";
+import { predictTrajectory } from "@teskooano/core-physics";
 
 /**
  * Enum defining the available modes for orbit visualization.
@@ -22,21 +22,26 @@ export enum VisualizationMode {
 
 const isMobileWidth = window.innerWidth < 1024;
 
-const TRAIL_MATERIAL = new THREE.LineBasicMaterial({
-  color: 0xffffff,
-  linewidth: isMobileWidth ? 2 : 5,
-  transparent: true,
-  opacity: 1,
-  depthTest: true,
-});
+// Shared materials to avoid unnecessary cloning and improve memory usage
+const SHARED_MATERIALS = {
+  // Trail material for showing object history
+  TRAIL: new THREE.LineBasicMaterial({
+    color: 0xffffff,
+    linewidth: isMobileWidth ? 2 : 5,
+    transparent: true,
+    opacity: 1,
+    depthTest: true,
+  }),
 
-const PREDICTION_MATERIAL = new THREE.LineBasicMaterial({
-  color: 0xff0000,
-  linewidth: isMobileWidth ? 2 : 5,
-  transparent: true,
-  opacity: 1,
-  depthTest: true,
-});
+  // Prediction material for showing future path
+  PREDICTION: new THREE.LineBasicMaterial({
+    color: 0xff0000,
+    linewidth: isMobileWidth ? 2 : 5,
+    transparent: true,
+    opacity: 1,
+    depthTest: true,
+  }),
+};
 
 /**
  * Manages the creation, update, and display of orbital path visualizations in the scene.
@@ -75,6 +80,12 @@ export class OrbitManager {
   private trailUpdateCounter: number = 0;
   /** Send trail geometry updates to the GPU every N calls to `updateAllVisualizations`. */
   private readonly trailUpdateFrequency: number = 5;
+
+  /** Cache of buffer attributes to reduce garbage collection */
+  private bufferCache: Map<number, THREE.BufferAttribute> = new Map();
+
+  /** Maximum size to store in the buffer cache */
+  private readonly MAX_CACHED_BUFFER_SIZE = 10000;
 
   /** Reference to the ObjectManager for adding/removing lines from the scene. */
   private objectManager: ObjectManager;
@@ -190,6 +201,11 @@ export class OrbitManager {
 
     this.cleanupRemovedObjects(objects);
 
+    // Periodically clean up excess memory usage
+    if (this.predictionUpdateCounter === 0) {
+      this.limitHistoryDataMemory();
+    }
+
     if (this.currentMode === VisualizationMode.Keplerian) {
       Object.values(objects).forEach((obj) => {
         if (obj.orbit && obj.parentId) {
@@ -244,7 +260,8 @@ export class OrbitManager {
               const otherPhysicsStates = allCurrentPhysicsStates.filter(
                 (state) => state.id !== targetId,
               );
-              const newPredictionPoints = predictVerletTrajectory(
+              const newPredictionPoints = predictTrajectory(
+                targetId,
                 [fullTargetObject.physicsStateReal, ...otherPhysicsStates],
                 this.predictionDuration,
                 this.predictionSteps,
@@ -259,7 +276,8 @@ export class OrbitManager {
                 const otherPhysicsStates = allCurrentPhysicsStates.filter(
                   (state) => state.id !== targetId,
                 );
-                const initialPoints = predictVerletTrajectory(
+                const initialPoints = predictTrajectory(
+                  targetId,
                   [fullTargetObject.physicsStateReal, ...otherPhysicsStates],
                   this.predictionDuration,
                   this.predictionSteps,
@@ -366,14 +384,29 @@ export class OrbitManager {
       if (bufferSize <= 0) {
         return;
       }
+
+      // Create or reuse a buffer attribute from the cache
+      let positionAttribute: THREE.BufferAttribute;
+
+      if (this.bufferCache.has(bufferSize)) {
+        // Reuse a cached buffer of the same size
+        positionAttribute = this.bufferCache.get(bufferSize)!;
+        this.bufferCache.delete(bufferSize);
+
+        // Reset the buffer data if needed
+        const positions = positionAttribute.array as Float32Array;
+        positions.fill(0);
+      } else {
+        // Create a new buffer
+        const positions = new Float32Array(bufferSize * 3);
+        positionAttribute = new THREE.BufferAttribute(positions, 3);
+      }
+
       const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(bufferSize * 3);
-      geometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(positions, 3),
-      );
+      geometry.setAttribute("position", positionAttribute);
       geometry.setDrawRange(0, 0);
-      line = new THREE.Line(geometry, TRAIL_MATERIAL.clone());
+
+      line = new THREE.Line(geometry, SHARED_MATERIALS.TRAIL.clone());
       line.name = `trail-line-${id}`;
       line.frustumCulled = false;
       this.objectManager.addRawObjectToScene(line);
@@ -387,12 +420,38 @@ export class OrbitManager {
       const requiredCapacity = safeMaxPoints;
 
       if (existingCapacity < requiredCapacity) {
-        const newPositions = new Float32Array(requiredCapacity * 3);
-        newPositions.set(
-          positionAttribute.array.slice(0, existingCapacity * 3),
-        );
+        // Need to allocate larger buffer
+        let newPositionAttribute: THREE.BufferAttribute;
+
+        // Try to get a buffer from cache first
+        if (this.bufferCache.has(requiredCapacity)) {
+          newPositionAttribute = this.bufferCache.get(requiredCapacity)!;
+          this.bufferCache.delete(requiredCapacity);
+
+          // Copy existing data to the new buffer
+          const newPositions = newPositionAttribute.array as Float32Array;
+          newPositions.set(
+            positionAttribute.array.slice(0, existingCapacity * 3),
+          );
+        } else {
+          // Create new buffer and copy data
+          const newPositions = new Float32Array(requiredCapacity * 3);
+          newPositions.set(
+            positionAttribute.array.slice(0, existingCapacity * 3),
+          );
+          newPositionAttribute = new THREE.BufferAttribute(newPositions, 3);
+        }
+
+        // Cache the old buffer if it's not too large
+        if (existingCapacity <= this.MAX_CACHED_BUFFER_SIZE) {
+          // Reset the old buffer data before caching
+          const oldArray = positionAttribute.array as Float32Array;
+          oldArray.fill(0);
+          this.bufferCache.set(existingCapacity, positionAttribute);
+        }
+
         geometry.deleteAttribute("position");
-        positionAttribute = new THREE.BufferAttribute(newPositions, 3);
+        positionAttribute = newPositionAttribute;
         geometry.setAttribute("position", positionAttribute);
         geometry.setDrawRange(0, requiredCapacity);
       }
@@ -442,15 +501,28 @@ export class OrbitManager {
     const maxPoints = this.predictionSteps;
 
     if (!line) {
+      // Create or reuse a buffer from the cache
+      let positionAttribute: THREE.BufferAttribute;
+
+      if (this.bufferCache.has(maxPoints)) {
+        // Reuse a cached buffer of the same size
+        positionAttribute = this.bufferCache.get(maxPoints)!;
+        this.bufferCache.delete(maxPoints);
+
+        // Reset the buffer data
+        const positions = positionAttribute.array as Float32Array;
+        positions.fill(0);
+      } else {
+        // Create a new buffer
+        const positions = new Float32Array(maxPoints * 3);
+        positionAttribute = new THREE.BufferAttribute(positions, 3);
+      }
+
       const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(maxPoints * 3);
-      geometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(positions, 3),
-      );
+      geometry.setAttribute("position", positionAttribute);
       geometry.setDrawRange(0, 0);
 
-      line = new THREE.Line(geometry, PREDICTION_MATERIAL.clone());
+      line = new THREE.Line(geometry, SHARED_MATERIALS.PREDICTION.clone());
       line.name = `prediction-line-${id}`;
       line.frustumCulled = false;
       this.objectManager.addRawObjectToScene(line);
@@ -472,9 +544,10 @@ export class OrbitManager {
 
     if (
       !line.userData.defaultColor ||
-      line.userData.defaultColor.getHex() !== PREDICTION_MATERIAL.color.getHex()
+      line.userData.defaultColor.getHex() !==
+        SHARED_MATERIALS.PREDICTION.color.getHex()
     ) {
-      line.userData.defaultColor = PREDICTION_MATERIAL.color.clone();
+      line.userData.defaultColor = SHARED_MATERIALS.PREDICTION.color.clone();
     }
 
     line.visible = this.visualizationVisible;
@@ -627,7 +700,7 @@ export class OrbitManager {
    * Cleans up resources used by the OrbitManager.
    *
    * Unsubscribes from listeners, removes all visualization lines from the scene,
-   * disposes of their geometries and materials, and clears internal maps.
+   * disposes of their geometries and materials, and clears internal maps and caches.
    */
   dispose(): void {
     this.unsubscribeAdapterSettings?.unsubscribe();
@@ -638,9 +711,44 @@ export class OrbitManager {
 
     this.keplerianManager.dispose();
 
-    this.trailLines.forEach((line, id) => this.removeVisualization(id));
+    // Clean up trail lines
+    this.trailLines.forEach((line) => {
+      this.objectManager.removeRawObjectFromScene(line);
+
+      if (line.geometry) {
+        line.geometry.dispose();
+      }
+
+      if (line.material instanceof THREE.Material) {
+        line.material.dispose();
+      } else if (Array.isArray(line.material)) {
+        line.material.forEach((mat) => mat.dispose());
+      }
+    });
     this.trailLines.clear();
-    this.predictionLines.forEach((line, id) => this.removeVisualization(id));
+
+    // Clean up prediction lines
+    this.predictionLines.forEach((line) => {
+      this.objectManager.removeRawObjectFromScene(line);
+
+      if (line.geometry) {
+        line.geometry.dispose();
+      }
+
+      if (line.material instanceof THREE.Material) {
+        line.material.dispose();
+      } else if (Array.isArray(line.material)) {
+        line.material.forEach((mat) => mat.dispose());
+      }
+    });
+    this.predictionLines.clear();
+
+    // Clear all cached data
+    this.bufferCache.clear();
+
+    // Clear all history and prediction data
+    this.positionHistory.clear();
+    this.predictedLinePoints.clear();
 
     this.highlightedObjectId = null;
   }
@@ -659,5 +767,35 @@ export class OrbitManager {
       predictionLine.visible = false;
     }
     this.predictedLinePoints.delete(objectId);
+  }
+
+  /**
+   * Limits the memory usage of the position history by trimming history data
+   * for objects that have accumulated too many points.
+   *
+   * This helps prevent memory leaks from accumulating position data over time.
+   * Called periodically to ensure memory usage remains reasonable.
+   */
+  private limitHistoryDataMemory(): void {
+    const visualSettings = this.stateAdapter.$visualSettings.getValue();
+    const maxHistoryLength = 100 * visualSettings.trailLengthMultiplier;
+
+    // Trim any history arrays that exceeded the maximum desired length
+    this.positionHistory.forEach((history, id) => {
+      if (history.length > maxHistoryLength) {
+        // Keep only the most recent points up to the maximum length
+        this.positionHistory.set(id, history.slice(-maxHistoryLength));
+      }
+    });
+
+    // Clear prediction points for objects not currently highlighted
+    // to avoid keeping unnecessary prediction data in memory
+    if (this.highlightedObjectId) {
+      this.predictedLinePoints.forEach((_, id) => {
+        if (id !== this.highlightedObjectId) {
+          this.predictedLinePoints.delete(id);
+        }
+      });
+    }
   }
 }

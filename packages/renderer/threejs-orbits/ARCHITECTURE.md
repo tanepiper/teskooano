@@ -151,11 +151,16 @@ packages/renderer/threejs-orbits/
    - Highlighting and visibility
    - Trail and prediction calculations
 
-3. **Physics Duplication**: The Verlet prediction logic partially duplicates physics calculations already available in the core-physics package.
+~~3. **Physics Duplication**: The Verlet prediction logic partially duplicates physics calculations already available in the core-physics package.~~ DONE
 
 4. **Hard-coded Parameters**: Many parameters (like prediction duration, update frequencies) are hard-coded and could be made configurable.
 
-5. **Memory Management**: While the code includes some memory optimization, it could benefit from more explicit buffer management and disposal.
+5. **Memory Management**: The package includes several memory optimization techniques:
+   - Buffer pooling system that reuses Float32Array buffers instead of creating new ones
+   - Shared materials instead of cloning for each line
+   - Periodic cleanup of position history data
+   - Proper disposal of THREE.js resources (geometries and materials)
+   - Limited storage of prediction data only for the highlighted object
 
 ## Conclusion
 
