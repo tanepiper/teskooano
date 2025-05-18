@@ -132,14 +132,28 @@ It communicates with the main renderer through the `ObjectManager` and `Renderer
 ```
 packages/renderer/threejs-orbits/
 ├── src/
-│   ├── index.ts                   # Main exports
-│   ├── OrbitManager.ts            # Primary controller class
-│   └── orbit-manager/             # Specialized components
-│       ├── index.ts               # Submodule exports
-│       ├── keplerian-manager.ts   # Manages Keplerian orbits
-│       ├── orbit-calculator.ts    # Calculates orbit points
-│       ├── orbit-line-builder.ts  # Utilities for line creation
-│       └── verlet-predictor.ts    # Trajectory prediction (Now removed)
+│   ├── index.ts                    # Main exports 
+│   ├── OrbitManager.ts             # Legacy controller class (kept for backward compatibility)
+│   ├── core/                       # Core visualization components
+│   │   ├── index.ts                # Core exports
+│   │   ├── OrbitsManager.ts        # Main controller (replaces OrbitManager)
+│   │   └── SharedMaterials.ts      # Shared materials definitions
+│   ├── keplerian/                  # Keplerian orbit visualization
+│   │   ├── index.ts                # Keplerian exports
+│   │   ├── KeplerianManager.ts     # Keplerian orbit manager
+│   │   └── OrbitCalculator.ts      # Orbit calculations
+│   ├── verlet/                     # Verlet-based visualizations
+│   │   ├── index.ts                # Verlet exports
+│   │   ├── TrailManager.ts         # Trail visualization
+│   │   └── PredictionManager.ts    # Prediction visualization
+│   ├── utils/                      # Shared utilities
+│   │   ├── index.ts                # Utils exports
+│   │   ├── LineBuilder.ts          # THREE.js line creation helpers
+│   │   └── BufferPool.ts           # Buffer management utilities
+│   └── orbit-manager/              # Legacy code (kept for backward compatibility) 
+│       ├── index.ts                # Legacy exports
+│       ├── keplerian-manager.ts    # Legacy keplerian orbit manager
+│       └── orbit-line-builder.ts   # Legacy utilities
 ```
 
 ### Improved Structure (Proposed)
@@ -168,16 +182,16 @@ packages/renderer/threejs-orbits/
 
 ## Known Limitations and Potential Improvements
 
-1. **File Organization**: The codebase would benefit from better file organization, with more cohesive naming and component placement.
+1. **File Organization**: The codebase would benefit from better file organization, with more cohesive naming and component placement. **DONE**
 
-2. **Separation of Concerns**: The `OrbitManager` class handles too many responsibilities. It could be refactored to better separate:
+2. **Separation of Concerns**: The `OrbitManager` class handles too many responsibilities. It could be refactored to better separate: **DONE**
 
    - Line management (creation, update, disposal)
    - Visualization mode handling
    - Highlighting and visibility
    - Trail and prediction calculations
 
-~~3. **Physics Duplication**: The Verlet prediction logic partially duplicates physics calculations already available in the core-physics package.~~ DONE
+3. **Physics Duplication**: The Verlet prediction logic partially duplicates physics calculations already available in the core-physics package. **DONE**
 
 4. **Hard-coded Parameters**: Many parameters (like prediction duration, update frequencies) are hard-coded and could be made configurable.
 

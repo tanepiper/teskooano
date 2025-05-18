@@ -15,7 +15,7 @@ This package is currently undergoing a refactoring process to improve its archit
 
 ## Current Refactoring Status
 
-The refactoring is being done incrementally to maintain backward compatibility:
+The refactoring is now complete while maintaining backward compatibility:
 
 - [x] Memory management improvements
 - [x] Physics calculation redundancy removed
@@ -23,9 +23,11 @@ The refactoring is being done incrementally to maintain backward compatibility:
 - [x] Utility classes extracted
 - [x] Keplerian orbit visualization refactored
 - [x] Verlet visualization refactored
-- [ ] Main OrbitManager refactored to OrbitsManager
+- [x] Main OrbitManager refactored to OrbitsManager
 
 ## Usage
+
+### Legacy API (backward compatible)
 
 ```typescript
 // Create an OrbitManager instance
@@ -36,8 +38,8 @@ const orbitManager = new OrbitManager(
 );
 
 // Toggle between Keplerian and Verlet modes
-orbitManager.setVisualizationMode(VisualizationMode.Keplerian);
-orbitManager.setVisualizationMode(VisualizationMode.Verlet);
+orbitManager.setVisualizationMode(LegacyVisualizationMode.Keplerian);
+orbitManager.setVisualizationMode(LegacyVisualizationMode.Verlet);
 
 // Toggle orbit visualization
 orbitManager.toggleVisualization();
@@ -50,4 +52,31 @@ orbitManager.updateAllVisualizations();
 
 // Clean up resources
 orbitManager.dispose();
+```
+
+### New API (preferred for new code)
+
+```typescript
+// Create an OrbitsManager instance
+const orbitsManager = new OrbitsManager(
+  objectManager,
+  stateAdapter,
+  renderableObjects$,
+);
+
+// Toggle between Keplerian and Verlet modes
+orbitsManager.setVisualizationMode(VisualizationMode.Keplerian);
+orbitsManager.setVisualizationMode(VisualizationMode.Verlet);
+
+// Toggle orbit visualization
+orbitsManager.toggleVisualization();
+
+// Highlight an object's orbit
+orbitsManager.highlightVisualization("celestialObjectId");
+
+// Update visualizations (call per frame)
+orbitsManager.updateAllVisualizations();
+
+// Clean up resources
+orbitsManager.dispose();
 ```

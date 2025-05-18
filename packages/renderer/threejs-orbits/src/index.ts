@@ -4,14 +4,15 @@
  * Visualization of orbital paths using ThreeJS
  */
 
-// For now, continue to export the existing OrbitManager for backward compatibility
-export * from "./OrbitManager";
-export type { VisualizationMode } from "./OrbitManager";
-
+// Original exports for backward compatibility
+import { OrbitManager, VisualizationMode as LegacyVisualizationMode } from "./OrbitManager";
+export { OrbitManager, VisualizationMode as LegacyVisualizationMode } from "./OrbitManager";
 export * from "./orbit-manager";
 
-// In future releases, replace with:
-// export * from "./core";
-// export * from "./keplerian";
-// export * from "./verlet";
-// export * from "./utils";
+// New refactored exports
+// These are the preferred imports for new code
+export { OrbitsManager, VisualizationMode } from "./core";
+export * from "./core/SharedMaterials";
+export * from "./keplerian";
+export * from "./verlet";
+export * from "./utils";
