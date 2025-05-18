@@ -127,6 +127,8 @@ It communicates with the main renderer through the `ObjectManager` and `Renderer
 
 ## Code Organization
 
+### Current Structure
+
 ```
 packages/renderer/threejs-orbits/
 ├── src/
@@ -137,7 +139,31 @@ packages/renderer/threejs-orbits/
 │       ├── keplerian-manager.ts   # Manages Keplerian orbits
 │       ├── orbit-calculator.ts    # Calculates orbit points
 │       ├── orbit-line-builder.ts  # Utilities for line creation
-│       └── verlet-predictor.ts    # Trajectory prediction
+│       └── verlet-predictor.ts    # Trajectory prediction (Now removed)
+```
+
+### Improved Structure (Proposed)
+
+```
+packages/renderer/threejs-orbits/
+├── src/
+│   ├── index.ts                    # Main exports
+│   ├── core/                       # Core visualization components
+│   │   ├── index.ts                # Core exports
+│   │   ├── OrbitsManager.ts        # Main controller (renamed from OrbitManager.ts)
+│   │   └── SharedMaterials.ts      # Shared materials definitions
+│   ├── keplerian/                  # Keplerian orbit visualization
+│   │   ├── index.ts                # Keplerian exports
+│   │   ├── KeplerianManager.ts     # Keplerian orbit manager (renamed)
+│   │   └── OrbitCalculator.ts      # Orbit calculations (renamed)
+│   ├── verlet/                     # Verlet-based visualizations
+│   │   ├── index.ts                # Verlet exports
+│   │   ├── TrailManager.ts         # Trail visualization
+│   │   └── PredictionManager.ts    # Prediction visualization
+│   └── utils/                      # Shared utilities
+│       ├── index.ts                # Utils exports
+│       ├── LineBuilder.ts          # THREE.js line creation helpers (renamed)
+│       └── BufferPool.ts           # Buffer management utilities
 ```
 
 ## Known Limitations and Potential Improvements
