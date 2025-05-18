@@ -523,4 +523,12 @@ export class ModularSpaceRenderer {
     this.objectManager.recreateAllMeshes();
     this.controlsManager.setDebugMode(enabled);
   }
+
+  /**
+   * Returns the OrbitsManager instance to allow configuration of orbit visualizations.
+   * @returns {OrbitsManager} The orbit manager instance
+   */
+  getOrbitsManager(): OrbitsManager {
+    return this.orbitManager;
+  }
 }

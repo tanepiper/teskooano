@@ -6,7 +6,7 @@ import {
 import type { Observable, Subscription } from "rxjs";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { KeplerianManager } from "../keplerian/KeplerianManager";
-import { TrailManager } from "../verlet/TrailManager";
+import { TrailManager, type TrailOptions } from "../verlet/TrailManager";
 import { PredictionManager } from "../verlet/PredictionManager";
 
 /**
@@ -308,5 +308,16 @@ export class OrbitsManager {
     this.predictionManager.dispose();
 
     this.highlightedObjectId = null;
+  }
+
+  /**
+   * Sets options for trail visualization.
+   *
+   * @param options - Configuration options for trail rendering
+   */
+  setTrailOptions(options: TrailOptions): void {
+    if (this.trailManager) {
+      this.trailManager.setOptions(options);
+    }
   }
 }
