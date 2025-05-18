@@ -441,16 +441,31 @@ export class ControlsManager {
     this.controls.update();
 
     if (this.followingTargetObject) {
+      // Always update the current position of the target object
       this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
 
-      const targetDelta = this.tempTargetPosition
-        .clone()
-        .sub(this.previousFollowTargetPos);
+      // Get simulation state to check if it's paused
+      const simulationState = getSimulationState();
+      const isPaused = simulationState.paused;
 
-      this.camera.position.add(targetDelta);
-      this.controls.target.add(targetDelta);
+      // Only apply position updates when the simulation is running
+      // Skip position updates when paused to allow manual camera control
+      if (!isPaused) {
+        // Regular delta-based following when simulation is running
+        const targetDelta = this.tempTargetPosition
+          .clone()
+          .sub(this.previousFollowTargetPos);
 
-      this.previousFollowTargetPos.copy(this.tempTargetPosition);
+        this.camera.position.add(targetDelta);
+        this.controls.target.add(targetDelta);
+
+        this.previousFollowTargetPos.copy(this.tempTargetPosition);
+      }
+      // When paused, just update the previousFollowTargetPos without moving the camera
+      // This prevents jarring snaps when unpausing
+      else {
+        this.previousFollowTargetPos.copy(this.tempTargetPosition);
+      }
     }
   }
 

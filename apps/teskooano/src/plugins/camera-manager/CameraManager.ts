@@ -1,8 +1,12 @@
-import { getRenderableObjects } from "@teskooano/core-state";
+import {
+  getRenderableObjects,
+  getSimulationState,
+} from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { BehaviorSubject } from "rxjs";
 import * as THREE from "three";
 import type { CameraManagerOptions, CameraManagerState } from "./types";
+import { CustomEvents } from "@teskooano/data-types";
 import {
   CAMERA_OFFSET,
   DEFAULT_CAMERA_DISTANCE,
@@ -247,6 +251,19 @@ export class CameraManager {
       const cameraPosition = targetPosition.clone().add(cameraOffsetVector);
 
       if (this.renderer.controlsManager) {
+        // Set up follow BEFORE initiating transition for better continuity
+        // Get the THREE.Object3D from the renderer that matches this objectId
+        const objectToFollow = this.renderer.getObjectById(objectId);
+
+        if (objectToFollow) {
+          // Start following immediately with the calculated offset
+          // This ensures we follow even during transition
+          this.renderer.controlsManager.startFollowing(
+            objectToFollow,
+            cameraOffsetVector,
+          );
+        }
+
         this.renderer.controlsManager.transitionTo(
           this.renderer.camera.position.clone(),
           this.renderer.controlsManager.controls.target.clone(),
@@ -386,12 +403,35 @@ export class CameraManager {
       }
     }
 
-    // After transition and state update, (re-)engage or stop continuous following
+    // After transition and state update, handle following behavior based on simulation state
     if (newFocusedId && this.renderer?.controlsManager) {
+      // Get simulation state to check if it's paused
+      const simulationState = getSimulationState();
+      const isPaused = simulationState.paused;
+
       const objectToFollow = this.renderer.getObjectById(newFocusedId);
       if (objectToFollow) {
         const offset = newPosition.clone().sub(newTarget);
+
+        // Only engage active following if simulation is running
+        // If paused, we'll just save the offset but not actively follow
+        // This allows the user to orbit freely when paused
         this.renderer.controlsManager.startFollowing(objectToFollow, offset);
+
+        // If simulation is paused, we want to disable active tracking
+        // but keep the follow target and offset data for when unpaused
+        if (isPaused) {
+          document.dispatchEvent(
+            new CustomEvent(CustomEvents.USER_CAMERA_MANIPULATION, {
+              detail: {
+                position: this.renderer.camera.position.clone(),
+                target: this.renderer.controlsManager.controls.target.clone(),
+              },
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        }
       } else {
         console.warn(
           `[CameraManager] Object ${newFocusedId} not found for following post-transition. Stopping follow.`,

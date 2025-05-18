@@ -120,17 +120,13 @@ export const updateSpeedButtons = (
 ): void => {
   if (speedDownButton) {
     const disableSpeedDown =
-      isPaused ||
-      (timeScale > 0 && timeScale <= 0.1) ||
-      (timeScale < 0 && timeScale >= -0.1);
+      isPaused || (Math.abs(timeScale) <= 1 / 16 && timeScale !== 0); // Minimum speed is 1/16
 
     speedDownButton.disabled = disableSpeedDown;
   }
   if (speedUpButton) {
-    const disableSpeedUp =
-      isPaused ||
-      (timeScale < 0 && timeScale <= -10_000_000) ||
-      (timeScale > 0 && timeScale >= 10_000_000);
+    const disableSpeedUp = isPaused || Math.abs(timeScale) >= 10000000; // Maximum speed is 10M
+
     speedUpButton.disabled = disableSpeedUp;
   }
 };

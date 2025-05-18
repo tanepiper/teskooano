@@ -52,7 +52,10 @@ export function startSimulationLoop() {
       const deltaTime = (currentTime - lastTime) / 1000;
       lastTime = currentTime;
 
-      const fixedDeltaTime = Math.min(deltaTime, 0.001);
+      // Use a fixed time step of 8ms (0.008s) for physics stability
+      // This allows x1 simulation speed to be closer to real-time
+      // while still maintaining numerical stability for orbital mechanics
+      const fixedDeltaTime = Math.min(deltaTime, 0.008);
 
       if (!getSimulationState().paused) {
         const timeScale = getSimulationState().timeScale;
