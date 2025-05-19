@@ -154,7 +154,7 @@ Before contributing, familiarize yourself with these core concepts:
 - **N-Body Physics**: How gravitational interactions are calculated between multiple bodies
 - **Orbital Mechanics**: Kepler's laws, orbital elements, and trajectory calculations
 - **ThreeJS Rendering**: How 3D rendering works with Three.js
-- **State Management**: How Nanostores are used for application state
+- **State Management**: How RxJS is used for application state
 - **Scaling and Units**: How real-world physical units are scaled for visualization
 
 ## Pull Request Process

@@ -1,6 +1,6 @@
-# @teskooano/app-web-apis
+# @teskooano/web-apis
 
-This package provides utility functions, reactive stores (Nanostores), and RxJS Observables built on top of standard browser Web APIs.
+This package provides utility functions and RxJS Observables built on top of standard browser Web APIs.
 The goal is to simplify common tasks, improve performance by using reactive patterns, and provide consistent interfaces for interacting with browser features within Teskooano engine applications.
 
 ## Features

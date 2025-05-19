@@ -200,7 +200,7 @@ export function predictTrajectory(
 
     // Add the new prediction point
     if (targetNextState !== null) {
-      const position = targetNextState.position_m;
+      const position = (targetNextState as PhysicsStateReal).position_m;
       const nextPoint = scaleToSceneUnits
         ? position.clone().multiplyScalar(METERS_TO_SCENE_UNITS).toThreeJS()
         : position.clone().toThreeJS();

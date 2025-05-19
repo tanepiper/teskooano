@@ -1,5 +1,9 @@
 # @teskooano/core-state
 
+## Overview
+
+The `@teskooano/core-state` package is a crucial component of the Teskooano engine, responsible for managing the simulation's core data, physics state, and game configuration. Using RxJS as its foundation, it enables efficient state updates and subscriptions across the application, ensuring consistent data flow throughout the system.
+
 ## What is it?
 
 The `@teskooano/core-state` library is the central state management system for the Open Space engine. It provides a reactive, atomic store for all game state including celestial objects, physics state, and game configuration. Using Nanostores as its foundation, it enables efficient state updates and subscriptions across the application, ensuring consistent data flow throughout the system.

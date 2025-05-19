@@ -121,9 +121,10 @@ Here is a table of all the packages in the repository:
 | Library Name                             | Library Path                           | Description                                                     | Status |
 | ---------------------------------------- | -------------------------------------- | --------------------------------------------------------------- | ------ |
 | @teskooano/core-math                     | packages/core/math                     | Mathematical utilities for the Teskooano engine                 | ⚠️     |
-| @teskooano/core-physics                  | packages/core/physics                  | Newtonian physics and orbital mechanics implementation          | ⚠️     |
-| @teskooano/core-state                    | packages/core/state                    | Central state management using Nanostores                       | ⚠️     |
+| @teskooano/core-physics                  | packages/core/physics                  | N-Body simulation and orbital mechanics                         | ✅     |
+| @teskooano/core-state                    | packages/core/state                    | Central state management using RxJS                             | ⚠️     |
 | @teskooano/core-debug                    | packages/core/debug                    | Debug utilities for the Teskooano engine                        | ⚠️     |
+| @teskooano/core-utils                    | packages/core/utils                    | General utility functions                                       | ✅     |
 | @teskooano/data-types                    | packages/data/types                    | TypeScript type definitions for all data structures             | ⚠️     |
 | @teskooano/app-simulation                | packages/app/simulation                | Simulation orchestration and game loop                          | ⚠️     |
 | @teskooano/systems-celestial             | packages/systems/celestial             | Handles the definition and rendering logic for celestial bodies | ⚠️     |
@@ -137,23 +138,22 @@ Here is a table of all the packages in the repository:
 | @teskooano/renderer-threejs-background   | packages/renderer/threejs-background   | Starfield background rendering and management                   |
 | @teskooano/design-system                 | packages/design-system                 | Global CSS variables, base styles, and potentially components   | ✅     |
 
-- **Core Libraries**
+### Core Packages
 
-  - `packages/core/math`: Mathematical utilities for vectors, matrices, and quaternions
-  - `packages/core/physics`: Newtonian physics and orbital mechanics
-  - `packages/core/state`: Central state management using Nanostores
-  - `packages/data/types`: TypeScript type definitions for all data structures
+- `packages/core/data-types`: TypeScript interfaces and enums for celestial objects, physics, etc.
+- `packages/core/math`: Mathematical utilities (vectors, quaternions, matrices).
+- `packages/core/physics`: N-Body simulation, orbital mechanics calculations.
+- `packages/core/state`: Central state management using RxJS
+- `packages/core/utils`: General utility functions.
 
-- **System Libraries**
+### Application Packages
 
-  - `packages/systems/celestial`: Celestial object implementations
-  - `packages/systems/procedural-generation`: Procedural generation of star systems
-  - `packages/renderer/threejs`: 3D rendering engine using Three.js
-  - `packages/app/simulation`: Simulation orchestration and game loop
+- `packages/systems/celestial`: Celestial object implementations
+- `packages/systems/procedural-generation`: Procedural generation of star systems
+- `packages/renderer/threejs`: 3D rendering engine using Three.js
+- `packages/app/simulation`: Simulation orchestration and game loop
 
-- **Applications**
-  - `apps/teskooano`: Main simulation application with UI components
-    components
+- `apps/teskooano`: Main simulation application with UI components
 
 <div class="screenshot-container">
   <div class="screenshot">
@@ -212,12 +212,13 @@ flowchart TD
 
 ## Technology Stack
 
-- **TypeScript**: Type-safe code throughout the codebase
-- **Three.js**: 3D rendering and visualization
-- **Nanostores**: Lightweight state management
-- **Driver.js**: Interactive tour and onboarding
-- **DockView**: Multi-panel UI layout system
-- **Vite**: Fast, modern frontend tooling
+- **TypeScript**: For robust, type-safe code.
+- **Vite**: For fast frontend development and bundling.
+- **RxJS**: For reactive state management and data streams.
+- **Three.js**: For 3D rendering and graphics.
+- **Express.js**: For the backend API service.
+- **Vitest**: For unit and integration testing.
+- **Playwright**: For end-to-end testing.
 
 ### Contributing
 
@@ -243,3 +244,61 @@ If you encounter any bugs or have suggestions for improvements, please [create a
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### UI and State Management
+
+- **DockView**: For the modular, dockable panel UI system.
+- **RxJS**: For reactive state management across the application.
+
+### 3D Engine
+
+```mermaid
+graph TD
+    subgraph Frontend
+        FE[Frontend App]
+        UI[UI Components]
+    end
+
+    subgraph Core
+        Math[core-math]
+        Physics[core-physics]
+        State[core-state]
+        Types[data-types]
+    end
+
+    subgraph Systems
+        Celestial[systems-celestial]
+        Renderer[renderer-threejs]
+        Simulation[app-simulation]
+    end
+
+    Math --> Physics
+    Math --> Types
+    Math --> Celestial
+    Math --> Renderer
+    Math --> Simulation
+    Math --> State
+
+    Physics --> State
+    Physics --> Celestial
+    Physics --> Simulation
+
+    Types --> State
+    Types --> Physics
+    Types --> Celestial
+    Types --> Renderer
+    Types --> Simulation
+
+    State --> Renderer
+    State --> Simulation
+    State --> Celestial
+    State --> UI
+
+    Celestial --> Renderer
+    Celestial --> Simulation
+
+    Simulation --> Renderer
+    Simulation --> FE
+
+    FE --> UI
+```

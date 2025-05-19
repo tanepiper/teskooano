@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { CameraManager } from "./CameraManager";
+import { CameraManager, type CameraState } from "./CameraManager";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
-import { atom } from "nanostores";
-import { renderableObjectsStore } from "@teskooano/core-state";
+import { renderableObjects$ } from "@teskooano/core-state";
+import { BehaviorSubject, firstValueFrom } from "rxjs";
 
 vi.mock("@teskooano/renderer-threejs");
 vi.mock("@teskooano/core-state", () => ({
-  renderableObjectsStore: atom<Record<string, any>>({}),
+  renderableObjects$: new BehaviorSubject<Record<string, any>>({}),
 }));
 
 const createMockRenderable = (id: string, position: THREE.Vector3) => ({
@@ -30,10 +30,14 @@ const createMockRenderable = (id: string, position: THREE.Vector3) => ({
 describe("CameraManager", () => {
   let mockRenderer: ModularSpaceRenderer;
   let cameraManager: CameraManager;
+  let mockRenderableObjects$: BehaviorSubject<Record<string, any>>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    renderableObjectsStore.set({});
+    mockRenderableObjects$ = renderableObjects$ as BehaviorSubject<
+      Record<string, any>
+    >;
+    mockRenderableObjects$.next({});
 
     mockRenderer = new ModularSpaceRenderer({} as HTMLCanvasElement) as any;
 
@@ -54,8 +58,13 @@ describe("CameraManager", () => {
     cameraManager = new CameraManager({ renderer: mockRenderer });
   });
 
+  const getCameraManagerValue = () =>
+    (
+      cameraManager.getCameraState$() as BehaviorSubject<CameraState>
+    ).getValue();
+
   it("should initialize with default values if none provided", () => {
-    const state = cameraManager.getCameraStateAtom().getValue();
+    const state = getCameraManagerValue();
     expect(state.fov).toBe(75);
     expect(state.focusedObjectId).toBeNull();
     expect(state.currentPosition.equals(new THREE.Vector3(200, 200, 200))).toBe(
@@ -71,14 +80,14 @@ describe("CameraManager", () => {
     const initialFov = 60;
     const initialFocusId = "obj1";
 
-    renderableObjectsStore.set({
+    mockRenderableObjects$.next({
       [initialFocusId]: createMockRenderable(
         initialFocusId,
         initialTarget,
       ) as any,
     });
 
-    const managerWithOptions = new CameraManager({
+    cameraManager = new CameraManager({
       renderer: mockRenderer,
       initialFov: initialFov,
       initialFocusedObjectId: initialFocusId,
@@ -86,7 +95,7 @@ describe("CameraManager", () => {
       initialCameraTarget: new THREE.Vector3(99, 99, 99),
     });
 
-    const state = managerWithOptions.getCameraStateAtom().getValue();
+    const state = getCameraManagerValue();
     expect(state.fov).toBe(initialFov);
     expect(state.focusedObjectId).toBe(initialFocusId);
     expect(state.currentPosition.equals(initialPosition)).toBe(true);
@@ -97,13 +106,13 @@ describe("CameraManager", () => {
   it("initializeCameraPosition should set renderer camera and controls target", () => {
     const initialPosition = new THREE.Vector3(10, 20, 30);
     const initialTarget = new THREE.Vector3(1, 2, 3);
-    const manager = new CameraManager({
+    cameraManager = new CameraManager({
       renderer: mockRenderer,
       initialCameraPosition: initialPosition,
       initialCameraTarget: initialTarget,
     });
 
-    manager.initializeCameraPosition();
+    cameraManager.initializeCameraPosition();
 
     expect(mockRenderer.camera.position.equals(initialPosition)).toBe(true);
     expect(
@@ -115,13 +124,17 @@ describe("CameraManager", () => {
   it("setFov should update state and call renderer", () => {
     const newFov = 90;
     cameraManager.setFov(newFov);
-    const state = cameraManager.getCameraStateAtom().getValue();
+    const state = (
+      cameraManager.getCameraState$() as BehaviorSubject<any>
+    ).getValue();
     expect(state.fov).toBe(newFov);
     expect(mockRenderer.sceneManager.setFov).toHaveBeenCalledWith(newFov);
   });
 
   it("setFov should not update if fov is the same", () => {
-    const initialFov = cameraManager.getCameraStateAtom().getValue().fov;
+    const initialFov = (
+      cameraManager.getCameraState$() as BehaviorSubject<any>
+    ).getValue().fov;
     vi.clearAllMocks();
     cameraManager.setFov(initialFov);
     expect(mockRenderer.sceneManager.setFov).not.toHaveBeenCalled();
@@ -130,15 +143,16 @@ describe("CameraManager", () => {
   it("focusOnObject should call renderer methods and update internal state intent", () => {
     const objectId = "testObj";
     const objectPosition = new THREE.Vector3(100, 0, 0);
-    renderableObjectsStore.set({
+    mockRenderableObjects$.next({
       [objectId]: createMockRenderable(objectId, objectPosition) as any,
     });
 
     cameraManager.followObject(objectId);
 
-    expect(cameraManager.getCameraStateAtom().getValue().focusedObjectId).toBe(
-      objectId,
-    );
+    expect(
+      (cameraManager.getCameraState$() as BehaviorSubject<any>).getValue()
+        .focusedObjectId,
+    ).toBe(objectId);
 
     expect(mockRenderer.setFollowTarget).toHaveBeenCalledWith(
       objectId,
@@ -159,18 +173,20 @@ describe("CameraManager", () => {
   it("focusOnObject(null) should clear focus and move to default", () => {
     const objectId = "testObj";
     const objectPosition = new THREE.Vector3(100, 0, 0);
-    renderableObjectsStore.set({
+    mockRenderableObjects$.next({
       [objectId]: createMockRenderable(objectId, objectPosition) as any,
     });
     cameraManager.followObject(objectId);
-    expect(cameraManager.getCameraStateAtom().getValue().focusedObjectId).toBe(
-      objectId,
-    );
+    expect(
+      (cameraManager.getCameraState$() as BehaviorSubject<any>).getValue()
+        .focusedObjectId,
+    ).toBe(objectId);
 
     cameraManager.followObject(null);
 
     expect(
-      cameraManager.getCameraStateAtom().getValue().focusedObjectId,
+      (cameraManager.getCameraState$() as BehaviorSubject<any>).getValue()
+        .focusedObjectId,
     ).toBeNull();
     expect(mockRenderer.setFollowTarget).toHaveBeenCalledWith(null);
     expect(mockRenderer.controlsManager.moveToPosition).toHaveBeenCalledWith(
@@ -188,7 +204,8 @@ describe("CameraManager", () => {
     cameraManager.followObject(objectId);
 
     expect(
-      cameraManager.getCameraStateAtom().getValue().focusedObjectId,
+      (cameraManager.getCameraState$() as BehaviorSubject<any>).getValue()
+        .focusedObjectId,
     ).toBeNull();
     expect(mockRenderer.setFollowTarget).not.toHaveBeenCalled();
     expect(mockRenderer.controlsManager.moveToPosition).not.toHaveBeenCalled();
@@ -197,18 +214,20 @@ describe("CameraManager", () => {
   it("resetCameraView should clear focus and move to default", () => {
     const objectId = "testObj";
     const objectPosition = new THREE.Vector3(100, 0, 0);
-    renderableObjectsStore.set({
+    mockRenderableObjects$.next({
       [objectId]: createMockRenderable(objectId, objectPosition) as any,
     });
     cameraManager.followObject(objectId);
-    expect(cameraManager.getCameraStateAtom().getValue().focusedObjectId).toBe(
-      objectId,
-    );
+    expect(
+      (cameraManager.getCameraState$() as BehaviorSubject<any>).getValue()
+        .focusedObjectId,
+    ).toBe(objectId);
 
     cameraManager.resetCameraView();
 
     expect(
-      cameraManager.getCameraStateAtom().getValue().focusedObjectId,
+      (cameraManager.getCameraState$() as BehaviorSubject<any>).getValue()
+        .focusedObjectId,
     ).toBeNull();
     expect(mockRenderer.setFollowTarget).toHaveBeenCalledWith(null);
     expect(mockRenderer.controlsManager.moveToPosition).toHaveBeenCalledWith(
@@ -229,7 +248,8 @@ describe("CameraManager", () => {
     );
 
     expect(
-      cameraManager.getCameraStateAtom().getValue().focusedObjectId,
+      (cameraManager.getCameraState$() as BehaviorSubject<any>).getValue()
+        .focusedObjectId,
     ).toBeNull();
   });
 
@@ -248,7 +268,9 @@ describe("CameraManager", () => {
 
     (cameraManager as any).handleCameraTransitionComplete(mockEvent);
 
-    const state = cameraManager.getCameraStateAtom().getValue();
+    const state = (
+      cameraManager.getCameraState$() as BehaviorSubject<any>
+    ).getValue();
     expect(state.currentPosition.equals(finalPosition)).toBe(true);
     expect(state.currentTarget.equals(finalTarget)).toBe(true);
     expect(state.focusedObjectId).toBe(finalFocusId);
@@ -258,10 +280,13 @@ describe("CameraManager", () => {
     const finalPosition = new THREE.Vector3(1, 1, 1);
     const finalTarget = new THREE.Vector3(2, 2, 2);
 
-    const initialVal = cameraManager.getCameraStateAtom().getValue();
-    cameraManager
-      .getCameraStateAtom()
-      .next({ ...initialVal, focusedObjectId: "initialFocus" });
+    const initialVal = (
+      cameraManager.getCameraState$() as BehaviorSubject<any>
+    ).getValue();
+    (cameraManager.getCameraState$() as BehaviorSubject<any>).next({
+      ...initialVal,
+      focusedObjectId: "initialFocus",
+    });
 
     const mockEvent = new CustomEvent("camera-transition-complete", {
       detail: {
@@ -272,7 +297,9 @@ describe("CameraManager", () => {
 
     (cameraManager as any).handleCameraTransitionComplete(mockEvent);
 
-    const state = cameraManager.getCameraStateAtom().getValue();
+    const state = (
+      cameraManager.getCameraState$() as BehaviorSubject<any>
+    ).getValue();
     expect(state.currentPosition.equals(finalPosition)).toBe(true);
     expect(state.currentTarget.equals(finalTarget)).toBe(true);
 
@@ -290,7 +317,9 @@ describe("CameraManager", () => {
 
     (cameraManager as any).handleCameraTransitionComplete(mockEvent);
 
-    const state = cameraManager.getCameraStateAtom().getValue();
+    const state = (
+      cameraManager.getCameraState$() as BehaviorSubject<any>
+    ).getValue();
     expect(state.currentPosition.equals(newCamPos)).toBe(true);
     expect(state.currentTarget.equals(newTargetPos)).toBe(true);
 

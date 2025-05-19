@@ -1,8 +1,8 @@
 {
-  "name": "@teskooano/app-web-apis",
-  "version": "0.2.0",
+  "name": "@teskooano/web-apis",
+  "version": "0.2.1",
   "private": true,
-  "description": "Provides reactive state based on browser Web APIs using Nanostores.",
+  "description": "Provides reactive state based on browser Web APIs using RxJS.",
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",

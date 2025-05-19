@@ -113,29 +113,23 @@ graph TD
 
 ### D. `core/state`
 
-**Purpose**: Manages the global application state using Nanostores as the central source of truth.
+**Purpose**: Manages the global application state using RxJS as the central source of truth.
 
 **Key Components**:
 
-- **`game/stores.ts`**: Core Nanostores:
-  - `celestialObjectsStore`: Map of all `CelestialObject` data keyed by ID.
-  - `celestialHierarchyStore`: Parent-child relationships between objects.
-- **`game/simulation.ts`**: Simulation control state:
-  - `simulationState`: Atom for global settings (time, timeScale, paused, camera, physicsEngine).
-  - `simulationActions`: Functions to modify simulation state.
-- **`game/physics.ts`**: Bridges physics and state:
-  - `getPhysicsBodies()`: Extracts `PhysicsStateReal` objects from the store.
-  - `updatePhysicsState()`: Updates store after physics calculations.
-- **`game/celestialActions.ts`**: CRUD operations for celestial objects.
-- **`game/factory.ts`**: Creates initialized `CelestialObject` instances.
+- **`game/stores.ts`**: Core RxJS Subjects/BehaviorSubjects:
+  - `celestialObjects$`: Holds all `CelestialObject` data.
+  - `simulationState$`: Global simulation settings (time, pause state, selected/focused objects).
+- **`game/actions.ts`**: Functions to modify state (e.g., `addCelestialObject`, `updateSimulationTime`).
+- **`game/factory.ts`**: Creates `CelestialObject` instances, including calculating initial physics state from orbital parameters.
 
-**Key Characteristics**:
+**Key Principles**:
 
-- Single source of truth for the entire simulation.
-- Reactive state management with Nanostores.
-- Clear separation of concerns between state storage, simulation control, and physics synchronization.
+- Reactive state management with RxJS.
+- Immutable state updates.
+- Unidirectional data flow (actions -> stores -> subscribers).
 
-**Dependencies**: `RxJS`, `@teskooano/data-types`, `@teskooano/core-math`, `@teskooano/core-physics`, `three`.
+**Dependencies**: `@teskooano/data-types`, `@teskooano/core-physics`.
 
 ## IV. Domain Systems
 
@@ -278,14 +272,14 @@ flowchart TB
         CP --> UpdatePhysics
     end
 
-    subgraph State["State Store (Nanostores)"]
-        CS[core/state]
-        CelStore["celestialObjectsStore"]
+    subgraph State["State Store (RxJS)"]
+        Sim[simulationState$]
+        CelStore["celestialObjects$"]
         SimState["simulationState"]
         PanelViewState["Panel View State\n(per EnginePanel)"]
-        CS --> CelStore
-        CS --> SimState
-        CS -.-> PanelViewState
+        Sim --> CelStore
+        Sim --> SimState
+        Sim --> PanelViewState
     end
 
     subgraph Render["Rendering Pipeline"]
@@ -368,7 +362,7 @@ flowchart TB
 
 1.  **State-Driven Architecture**:
 
-    - Central Nanostores (`celestialObjectsStore`, `simulationState`) for global state.
+    - Central RxJS stores (`celestialObjects$`, `simulationState$`) for global state.
     - **Adapter Pattern**: `RendererStateAdapter` decouples core state from renderer-specific needs (coordinate systems, derived data).
     - **Panel-Specific State**: View settings managed within `EnginePanel`'s internal store.
     - Unidirectional data flow remains key.
