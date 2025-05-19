@@ -6,6 +6,7 @@ import {
   getCelestialObjects,
   updateSeed,
 } from "@teskooano/core-state";
+import { simulationManager } from "@teskooano/app-simulation";
 import {
   CelestialType,
   CustomEvents,
@@ -29,7 +30,6 @@ import {
   take,
 } from "rxjs";
 import { generateAndLoadSystem } from "./system-generator.js";
-import { resetTime$ } from "@teskooano/app-simulation";
 
 interface SystemImportData {
   seed: string;
@@ -122,7 +122,7 @@ function processImportedFile$(
 
         updateSeed(parsedData.seed);
 
-        resetTime$.next();
+        simulationManager.resetSystem(true);
 
         observer.next({
           success: true,
@@ -211,7 +211,7 @@ export const clearSystemFunction: FunctionConfig = {
       });
       actions.resetTime();
 
-      resetTime$.next();
+      simulationManager.resetSystem(true);
 
       return { success: true, symbol: "🗑️", message: "System cleared." };
     } catch (error) {
@@ -345,7 +345,7 @@ export const createBlankSystemFunction: FunctionConfig = {
       celestialFactory.createSolarSystem(star);
       updateSeed("");
 
-      resetTime$.next();
+      simulationManager.resetSystem(true);
       return { success: true, symbol: "📄", message: "Blank system created." };
     } catch (error) {
       console.error("[SystemFunctions] Error creating blank system:", error);

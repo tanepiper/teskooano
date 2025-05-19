@@ -1,5 +1,5 @@
-import { startSimulationLoop } from "@teskooano/app-simulation";
-import { BehaviorSubject } from "rxjs";
+import { simulationManager } from "@teskooano/app-simulation";
+import { BehaviorSubject, Observable } from "rxjs";
 
 /**
  * Subject to track whether the main simulation loop has been initiated.
@@ -11,28 +11,32 @@ const simulationLoopStartedSubject = new BehaviorSubject<boolean>(false);
  * Observable stream for the simulation loop's started status.
  * Emits true once the loop has been started, false otherwise.
  */
-export const simulationLoopStarted$ =
+export const simulationLoopStarted$: Observable<boolean> =
   simulationLoopStartedSubject.asObservable();
 
 /**
- * Ensures that the main simulation loop is started, but only starts it once.
- * This function is idempotent after the first successful call.
+ * Ensures that the main simulation loop is started if it hasn't been already.
+ * This also updates the `simulationLoopStarted$` observable.
  */
 export function ensureSimulationLoopStarted(): void {
-  if (!simulationLoopStartedSubject.getValue()) {
+  if (!simulationManager.isLoopRunning) {
     try {
-      startSimulationLoop();
+      simulationManager.startLoop();
       simulationLoopStartedSubject.next(true);
-      console.debug("[SimulationLoopState] Main simulation loop initiated.");
+      console.log(
+        "[State] Main simulation loop initiated by ensureSimulationLoopStarted via SimulationManager.",
+      );
     } catch (error) {
       console.error(
-        "[SimulationLoopState] Failed to start simulation loop:",
+        "[State] Failed to start simulation loop via SimulationManager:",
         error,
       );
-      // Optionally, you might want to keep the subject as false or handle error state
+      simulationLoopStartedSubject.next(false);
     }
   } else {
-    // console.debug("[SimulationLoopState] Simulation loop already started."); // Optional: for verbose logging
+    if (!simulationLoopStartedSubject.getValue()) {
+      simulationLoopStartedSubject.next(true);
+    }
   }
 }
 

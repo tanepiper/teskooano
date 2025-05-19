@@ -37,7 +37,9 @@
       ],
       "@teskooano/core-state": ["packages/core/state/src/index.ts"],
       "@teskooano/data-types": ["packages/data/types/src/index.ts"],
-      "@teskooano/app-simulation": ["packages/app/simulation/src/index.ts"],
+      "@teskooano/app-simulation": [
+        "packages/app/simulation/src/Simulation.ts"
+      ],
       "@teskooano/core-physics": ["packages/core/physics/src/index.ts"],
       "@teskooano/systems-celestial": [
         "packages/systems/celestial/src/index.ts"

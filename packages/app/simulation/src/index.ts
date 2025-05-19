@@ -1,40 +1,17 @@
-import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-import { startSimulationLoop, stopSimulationLoop } from "./loop";
+import {
+  SimulationManager,
+  type OrbitUpdatePayload,
+} from "./SimulationManager";
+import type { DestructionEvent } from "@teskooano/core-physics"; // This is a type from another package
 
-export * from "./loop";
-export * from "./resetSystem";
-export * from "./solarSystem";
-export * from "./simulationEvents";
+// Export the singleton instance for easy access
+export const simulationManager = SimulationManager.getInstance();
 
-/**
- * Manages the overall simulation setup, primarily by initializing the renderer
- * and handling global events like window resizing.
- * The core physics and animation loop is handled separately in `loop.ts`.
- */
-export class Simulation {
-  /** The ThreeJS renderer instance */
-  private renderer: ModularSpaceRenderer;
+// Export the class itself if direct type access or static access is needed elsewhere
+export { SimulationManager };
 
-  /**
-   * Creates an instance of Simulation.
-   * @param container The HTML element to host the renderer canvas.
-   */
-  constructor(container: HTMLElement) {
-    this.renderer = new ModularSpaceRenderer(container);
-    this.setupEventListeners();
-  }
+// Re-export relevant types
+export type { OrbitUpdatePayload };
+export type { DestructionEvent }; // Re-export if it's part of the public API of this module
 
-  /**
-   * Sets up global event listeners, such as window resize.
-   * @private
-   */
-  private setupEventListeners(): void {
-    window.addEventListener("resize", () => {
-      this.renderer.onResize(window.innerWidth, window.innerHeight);
-    });
-  }
-}
-
-export default Simulation;
-
-export { startSimulationLoop, stopSimulationLoop };
+export * from "./solarSystem"; // Keep this as it relates to systems/

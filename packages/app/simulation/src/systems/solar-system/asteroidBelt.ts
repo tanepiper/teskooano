@@ -3,7 +3,6 @@ import { AU } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
-  RockyType,
   type AsteroidFieldProperties,
 } from "@teskooano/data-types";
 
@@ -26,22 +25,18 @@ export function initializeAsteroidBelt(parentId: string): void {
     type: CelestialType.ASTEROID_FIELD,
     parentId: parentId,
     realMass_kg: BELT_TOTAL_MASS_KG,
-
-    realRadius_m: ((BELT_OUTER_AU - BELT_INNER_AU) * AU) / 2,
-
+    realRadius_m: BELT_OUTER_AU * AU,
     orbit: {
       realSemiMajorAxis_m: BELT_CENTER_AU * AU,
       eccentricity: BELT_AVG_ECC,
       inclination: BELT_AVG_INC_DEG * DEG_TO_RAD,
-
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-
-      period_s: 4.4 * 3.15576e7,
+      period_s: Math.sqrt(Math.pow(BELT_CENTER_AU, 3)) * 3.15576e7,
     },
-
     temperature: 165,
+    ignorePhysics: true,
     properties: {
       type: CelestialType.ASTEROID_FIELD,
       innerRadiusAU: BELT_INNER_AU,
@@ -49,8 +44,7 @@ export function initializeAsteroidBelt(parentId: string): void {
       heightAU: BELT_HEIGHT_AU,
       count: BELT_ASTEROID_COUNT,
       color: "#8B4513",
-      composition: ["silicates", "carbonaceous", "metallic", "ice"],
-      asteroidType: RockyType.DARK_ROCK,
+      composition: ["silicates", "carbonaceous", "metallic", "icy fragments"],
     } as AsteroidFieldProperties,
   });
 }

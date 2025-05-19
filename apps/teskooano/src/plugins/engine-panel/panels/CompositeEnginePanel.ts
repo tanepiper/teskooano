@@ -1,7 +1,6 @@
 import {
   celestialObjects$,
   getCelestialObjects,
-  getSimulationState,
   panelService,
   simulationState$,
   type SimulationState,
@@ -20,6 +19,7 @@ import { layoutOrientation$ } from "./layoutStore";
 
 import type { DockviewController } from "../../../core/controllers/dockview/DockviewController";
 
+import { simulationManager } from "@teskooano/app-simulation"; // Added
 import { CustomEvents } from "@teskooano/data-types";
 import { RendererStats } from "@teskooano/renderer-threejs-core";
 import { pluginManager } from "@teskooano/ui-plugin";
@@ -493,9 +493,41 @@ export class CompositeEnginePanel
    * its initial state and event listeners.
    */
   private initializeRenderer(): void {
-    if (!this._engineContainer || this._renderer) return;
+    if (!this._engineContainer) {
+      console.error(
+        "[CompositeEnginePanel] Engine container not found, cannot initialize renderer.",
+      );
+      return;
+    }
+    if (this._renderer) {
+      console.warn(
+        "[CompositeEnginePanel] Renderer already appears initialized.",
+      );
+      return;
+    }
 
-    if (!this._createRendererInstance()) return;
+    // Initialize the SimulationManager, which creates the renderer
+    simulationManager.initialize(this._engineContainer);
+    this._renderer = simulationManager.getRenderer() || undefined; // Get the renderer from the manager, convert null to undefined
+
+    if (!this._renderer) {
+      console.error(
+        "[CompositeEnginePanel] Failed to get renderer from SimulationManager.",
+      );
+      // Display error in the panel container
+      if (this._engineContainer) {
+        this._engineContainer.textContent =
+          "Error initializing engine: Failed to get renderer from SimulationManager.";
+        this._engineContainer.style.color = "red";
+        this._engineContainer.style.padding = "1em";
+      }
+      return; // Stop further initialization if renderer isn't available
+    }
+
+    // Original _createRendererInstance logic is now handled by simulationManager.initialize()
+    // and getting the instance via simulationManager.getRenderer()
+
+    // The rest of the initialization depends on this._renderer being valid
     if (!this._initializeCameraSystems()) return;
     if (!this._configureAndLinkCamera()) return;
 
@@ -505,40 +537,17 @@ export class CompositeEnginePanel
   /**
    * Creates and configures the core ModularSpaceRenderer instance.
    * @returns True if successful, false otherwise.
+   * @deprecated This logic is now handled by SimulationManager.initialize() and getRenderer()
    */
   private _createRendererInstance(): boolean {
-    if (!this._engineContainer) return false;
-    try {
-      this._renderer = new ModularSpaceRenderer(this._engineContainer, {
-        antialias: true,
-        shadows: true,
-        hdr: true,
-        background: "black",
-        showGrid: this._viewStateSubject.getValue().showGrid,
-        showCelestialLabels: true,
-        showAuMarkers: this._viewStateSubject.getValue().showAuMarkers,
-      });
+    // This method is now effectively replaced.
+    // The renderer instance is obtained from simulationManager.
+    // Kept for context during refactor, should be removed or commented out thoroughly.
+    console.warn(
+      "[CompositeEnginePanel] _createRendererInstance is deprecated. Renderer is initialized via SimulationManager.",
+    );
 
-      if (!this._simulationStateUnsubscribe) {
-        this._simulationStateUnsubscribe = simulationState$.subscribe(
-          this.handleSimulationStateChange,
-        );
-      }
-      this.handleSimulationStateChange(getSimulationState());
-      return true;
-    } catch (error) {
-      console.error(
-        `Failed to create ModularSpaceRenderer for [${this._api?.id}]:`,
-        error,
-      );
-      if (this._engineContainer) {
-        this._engineContainer.textContent = `Error initializing engine renderer: ${error}`;
-        this._engineContainer.style.color = "red";
-        this._engineContainer.style.padding = "1em";
-      }
-      this._renderer = undefined;
-      return false;
-    }
+    return !!this._renderer; // Return true if this._renderer was successfully set from manager
   }
 
   /**

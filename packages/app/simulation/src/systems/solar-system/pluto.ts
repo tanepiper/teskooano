@@ -1,11 +1,13 @@
-import { DEG_TO_RAD } from "@teskooano/core-math";
+import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
-  IceSurfaceProperties,
+  type IceSurfaceProperties,
   PlanetType,
   SurfaceType,
+  type PlanetAtmosphereProperties,
+  type PlanetProperties,
 } from "@teskooano/data-types";
 
 const PLUTO_MASS_KG = 1.303e22;
@@ -18,7 +20,8 @@ const PLUTO_INC_DEG = 17.16;
 const PLUTO_LAN_DEG = 110.3;
 const PLUTO_AOP_DEG = 224.07;
 const PLUTO_MA_DEG = 238.93;
-const PLUTO_SIDEREAL_PERIOD_S = 7.824e9;
+const PLUTO_ORBITAL_PERIOD_S = 7.824e9;
+const PLUTO_SIDEREAL_ROTATION_PERIOD_S = -551855.0;
 const PLUTO_AXIAL_TILT_DEG = 119.59;
 
 const CHARON_MASS_KG = 1.586e21;
@@ -26,14 +29,16 @@ const CHARON_RADIUS_M = 606000;
 const CHARON_SMA_M = 19591.4 * KM;
 const CHARON_ECC = 0.00005;
 const CHARON_INC_DEG = 0.001;
-const CHARON_SIDEREAL_PERIOD_S = 551855;
+const CHARON_SIDEREAL_PERIOD_S = 551855.0;
 const CHARON_ALBEDO = 0.38;
+const CHARON_AXIAL_TILT_DEG = PLUTO_AXIAL_TILT_DEG;
 
 /**
  * Initializes Pluto and its largest moon Charon using accurate data.
  */
 export function initializePluto(parentId: string): void {
   const plutoId = "pluto";
+  const plutoAxialTiltRad = PLUTO_AXIAL_TILT_DEG * DEG_TO_RAD;
 
   actions.addCelestial({
     id: plutoId,
@@ -43,9 +48,14 @@ export function initializePluto(parentId: string): void {
     parentId: parentId,
     realMass_kg: PLUTO_MASS_KG,
     realRadius_m: PLUTO_RADIUS_M,
-    visualScaleRadius: 0.18,
     temperature: PLUTO_TEMP_K,
     albedo: PLUTO_ALBEDO,
+    siderealRotationPeriod_s: PLUTO_SIDEREAL_ROTATION_PERIOD_S,
+    axialTilt: new OSVector3(
+      0,
+      Math.cos(plutoAxialTiltRad),
+      Math.sin(plutoAxialTiltRad),
+    ).normalize(),
     orbit: {
       realSemiMajorAxis_m: PLUTO_SMA_AU * AU,
       eccentricity: PLUTO_ECC,
@@ -53,34 +63,40 @@ export function initializePluto(parentId: string): void {
       longitudeOfAscendingNode: PLUTO_LAN_DEG * DEG_TO_RAD,
       argumentOfPeriapsis: (PLUTO_AOP_DEG - PLUTO_LAN_DEG) * DEG_TO_RAD,
       meanAnomaly: PLUTO_MA_DEG * DEG_TO_RAD,
-      period_s: PLUTO_SIDEREAL_PERIOD_S,
+      period_s: PLUTO_ORBITAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ["N2", "CH4", "CO"],
-      pressure: 1e-5,
-      color: "#E0FFFF80",
-    },
+      glowColor: "#E0FFFF33",
+      intensity: 0.1,
+      power: 0.8,
+      thickness: 0.05,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.ICE_FLATS,
       planetType: PlanetType.ICE,
-      color: "#FFF8DC",
-      secondaryColor: "#DAA520",
+      color: "#F5E8D1",
+      secondaryColor: "#A0522D",
       roughness: 0.4,
-      glossiness: 0.6,
+      glossiness: 0.5,
+      crackIntensity: 0.2,
+      iceThickness: 5.0,
     } as IceSurfaceProperties,
     properties: {
       type: CelestialType.DWARF_PLANET,
+      planetType: PlanetType.ICE,
       isMoon: false,
       composition: [
         "nitrogen ice",
-        "water ice",
+        "water ice crust",
         "methane ice",
-        "rock",
+        "carbon monoxide ice",
+        "rocky core",
         "tholins",
       ],
-    },
+    } as PlanetProperties,
   });
 
+  const charonAxialTiltRad = CHARON_AXIAL_TILT_DEG * DEG_TO_RAD;
   actions.addCelestial({
     id: "charon",
     name: "Charon",
@@ -89,32 +105,45 @@ export function initializePluto(parentId: string): void {
     parentId: plutoId,
     realMass_kg: CHARON_MASS_KG,
     realRadius_m: CHARON_RADIUS_M,
-    visualScaleRadius: 0.09,
     temperature: 53,
     albedo: CHARON_ALBEDO,
+    siderealRotationPeriod_s: CHARON_SIDEREAL_PERIOD_S,
+    axialTilt: new OSVector3(
+      0,
+      Math.cos(charonAxialTiltRad),
+      Math.sin(charonAxialTiltRad),
+    ).normalize(),
     orbit: {
       realSemiMajorAxis_m: CHARON_SMA_M,
       eccentricity: CHARON_ECC,
       inclination: CHARON_INC_DEG * DEG_TO_RAD,
-
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
       period_s: CHARON_SIDEREAL_PERIOD_S,
     },
-    atmosphere: { composition: [], pressure: 0, color: "#00000000" },
+    atmosphere: {
+      glowColor: "#00000000",
+      intensity: 0,
+      power: 0,
+      thickness: 0,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.CRATERED,
       planetType: PlanetType.ICE,
-      color: "#B0B0B0",
+      color: "#B0B8C0",
       secondaryColor: "#8B4513",
       roughness: 0.6,
+      glossiness: 0.4,
+      crackIntensity: 0.3,
+      iceThickness: 10.0,
     } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
+      planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: plutoId,
-      composition: ["water ice", "ammonia ice", "rock"],
-    },
+      composition: ["water ice", "ammonia ice (hydrates)", "rocky interior"],
+    } as PlanetProperties,
   });
 }

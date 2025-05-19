@@ -1,4 +1,4 @@
-import { DEG_TO_RAD } from "@teskooano/core-math";
+import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
@@ -6,6 +6,7 @@ import {
   PlanetType,
   SurfaceType,
   type RockyTerrestrialSurfaceProperties,
+  type PlanetAtmosphereProperties,
 } from "@teskooano/data-types";
 
 const MERCURY_MASS_KG = 3.3011e23;
@@ -25,6 +26,8 @@ const MERCURY_AXIAL_TILT_DEG = 0.034;
  * Initializes Mercury using accurate data.
  */
 export function initializeMercury(parentId: string): void {
+  const mercuryAxialTiltRad = MERCURY_AXIAL_TILT_DEG * DEG_TO_RAD;
+
   actions.addCelestial({
     id: "mercury",
     name: "Mercury",
@@ -33,9 +36,14 @@ export function initializeMercury(parentId: string): void {
     parentId: parentId,
     realMass_kg: MERCURY_MASS_KG,
     realRadius_m: MERCURY_RADIUS_M,
-    visualScaleRadius: 0.38,
     temperature: MERCURY_TEMP_K,
     albedo: MERCURY_ALBEDO,
+    siderealRotationPeriod_s: MERCURY_SIDEREAL_PERIOD_S,
+    axialTilt: new OSVector3(
+      0,
+      Math.cos(mercuryAxialTiltRad),
+      Math.sin(mercuryAxialTiltRad),
+    ).normalize(),
     orbit: {
       realSemiMajorAxis_m: MERCURY_SMA_AU * AU,
       eccentricity: MERCURY_ECC,
@@ -46,32 +54,44 @@ export function initializeMercury(parentId: string): void {
       period_s: MERCURY_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ["O2", "Na", "H2", "He"],
-      pressure: 1e-14,
-      color: "#E0E0E0",
-    },
+      glowColor: "#E0E0E033",
+      intensity: 0.05,
+      power: 1.0,
+      thickness: 0.02,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.CRATERED,
       planetType: PlanetType.ROCKY,
       color: "#9E9E9E",
       roughness: 0.8,
 
+      persistence: 0.45,
+      lacunarity: 2.2,
+      simplePeriod: 8.0,
+      octaves: 6,
+      bumpScale: 0.1,
       color1: "#9E9E9E",
       color2: "#757575",
-      color3: "#BDBDBD",
-      color4: "#616161",
-      color5: "#E0E0E0",
-      transition2: 0.3,
-      transition3: 0.5,
-      transition4: 0.7,
-      transition5: 0.9,
-      blend12: 0.1,
-      blend23: 0.1,
-      blend34: 0.1,
-      blend45: 0.1,
+      color3: "#888888",
+      color4: "#A0A0A0",
+      color5: "#BDBDBD",
+      height1: 0.0,
+      height2: 0.25,
+      height3: 0.5,
+      height4: 0.75,
+      height5: 1.0,
+      shininess: 0.05,
+      specularStrength: 0.05,
+      ambientLightIntensity: 0.1,
+      undulation: 0.2,
+      terrainType: 1,
+      terrainAmplitude: 0.4,
+      terrainSharpness: 0.6,
+      terrainOffset: 0.0,
     } as RockyTerrestrialSurfaceProperties,
     properties: {
       type: CelestialType.PLANET,
+      planetType: PlanetType.ROCKY,
       isMoon: false,
       composition: ["silicates", "iron core"],
     },

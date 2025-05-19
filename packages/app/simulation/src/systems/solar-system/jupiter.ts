@@ -4,12 +4,15 @@ import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
   GasGiantClass,
-  IceSurfaceProperties,
-  LavaSurfaceProperties,
+  type IceSurfaceProperties,
+  type LavaSurfaceProperties,
   PlanetType,
   RockyType,
   SurfaceType,
   type GasGiantProperties,
+  type PlanetAtmosphereProperties,
+  type PlanetProperties,
+  type RingProperties,
 } from "@teskooano/data-types";
 
 const JUPITER_REAL_MASS_KG = 1.89819e27;
@@ -22,7 +25,8 @@ const JUPITER_INC_DEG = 1.305;
 const JUPITER_LAN_DEG = 100.464;
 const JUPITER_AOP_DEG = 14.331 + JUPITER_LAN_DEG;
 const JUPITER_MA_DEG = 34.351;
-const JUPITER_SIDEREAL_PERIOD_S = 3.74336e8;
+const JUPITER_ORBITAL_PERIOD_S = 3.74336e8;
+const JUPITER_SIDEREAL_ROTATION_PERIOD_S = 35730.0;
 const JUPITER_AXIAL_TILT_DEG = 3.13;
 
 const IO_MASS_KG = 8.9319e22;
@@ -62,6 +66,9 @@ const CALLISTO_ALBEDO = 0.17;
  */
 export function initializeJupiter(parentId: string): void {
   const jupiterId = "jupiter";
+  const jupiterAxialTiltRad = JUPITER_AXIAL_TILT_DEG * DEG_TO_RAD;
+
+  const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
   actions.addCelestial({
     id: jupiterId,
@@ -71,14 +78,13 @@ export function initializeJupiter(parentId: string): void {
     parentId: parentId,
     realMass_kg: JUPITER_REAL_MASS_KG,
     realRadius_m: JUPITER_REAL_RADIUS_M,
-    visualScaleRadius: 11.2,
     temperature: JUPITER_TEMP_K,
     albedo: JUPITER_ALBEDO,
-    siderealRotationPeriod_s: JUPITER_SIDEREAL_PERIOD_S,
+    siderealRotationPeriod_s: JUPITER_SIDEREAL_ROTATION_PERIOD_S,
     axialTilt: new OSVector3(
       0,
-      Math.cos(JUPITER_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(JUPITER_AXIAL_TILT_DEG * DEG_TO_RAD),
+      Math.cos(jupiterAxialTiltRad),
+      Math.sin(jupiterAxialTiltRad),
     ).normalize(),
     orbit: {
       realSemiMajorAxis_m: JUPITER_SMA_AU * AU,
@@ -87,7 +93,7 @@ export function initializeJupiter(parentId: string): void {
       longitudeOfAscendingNode: JUPITER_LAN_DEG * DEG_TO_RAD,
       argumentOfPeriapsis: (JUPITER_AOP_DEG - JUPITER_LAN_DEG) * DEG_TO_RAD,
       meanAnomaly: JUPITER_MA_DEG * DEG_TO_RAD,
-      period_s: JUPITER_SIDEREAL_PERIOD_S,
+      period_s: JUPITER_ORBITAL_PERIOD_S,
     },
     properties: {
       type: CelestialType.GAS_GIANT,
@@ -105,7 +111,10 @@ export function initializeJupiter(parentId: string): void {
           opacity: 0.05,
           color: "#A0522D",
           type: RockyType.DUST,
-        },
+          texture: "textures/ring_dust.png",
+          rotationRate: 0.001,
+          composition: ["dust"],
+        } as RingProperties,
         {
           innerRadius: 1.29 * JUPITER_REAL_RADIUS_M,
           outerRadius: 1.72 * JUPITER_REAL_RADIUS_M,
@@ -113,9 +122,11 @@ export function initializeJupiter(parentId: string): void {
           opacity: 0.02,
           color: "#A0522D",
           type: RockyType.DUST,
-        },
+          texture: "textures/ring_dust_faint.png",
+          rotationRate: 0.0015,
+          composition: ["fine dust"],
+        } as RingProperties,
       ],
-      axialTiltDeg: JUPITER_AXIAL_TILT_DEG,
     } as GasGiantProperties,
   });
 
@@ -127,9 +138,10 @@ export function initializeJupiter(parentId: string): void {
     parentId: jupiterId,
     realMass_kg: IO_MASS_KG,
     realRadius_m: IO_RADIUS_M,
-    visualScaleRadius: 0.29,
     temperature: 110,
     albedo: IO_ALBEDO,
+    siderealRotationPeriod_s: IO_SIDEREAL_PERIOD_S,
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: IO_SMA_M,
       eccentricity: IO_ECC,
@@ -140,24 +152,33 @@ export function initializeJupiter(parentId: string): void {
       period_s: IO_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ["SO2"],
-      pressure: 1e-9,
-      color: "#FFFF0030",
-    },
+      glowColor: "#FFFF0020",
+      intensity: 0.1,
+      power: 0.8,
+      thickness: 0.05,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.VOLCANIC,
       planetType: PlanetType.LAVA,
       color: "#FFFFA0",
-      lavaColor: "#FF4500",
-      roughness: 0.5,
-      rockColor: "#303030",
+      roughness: 0.6,
+      lavaColor: "#FF2000",
+      rockColor: "#201000",
+      lavaActivity: 0.7,
+      volcanicActivity: 0.8,
     } as LavaSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
+      planetType: PlanetType.LAVA,
       isMoon: true,
       parentPlanet: jupiterId,
-      composition: ["sulfur compounds", "silicates", "iron core"],
-    },
+      composition: [
+        "sulfur compounds",
+        "silicates",
+        "iron core",
+        "molten interior",
+      ],
+    } as PlanetProperties,
   });
 
   actions.addCelestial({
@@ -168,9 +189,10 @@ export function initializeJupiter(parentId: string): void {
     parentId: jupiterId,
     realMass_kg: EUROPA_MASS_KG,
     realRadius_m: EUROPA_RADIUS_M,
-    visualScaleRadius: 0.25,
     temperature: 102,
     albedo: EUROPA_ALBEDO,
+    siderealRotationPeriod_s: EUROPA_SIDEREAL_PERIOD_S,
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: EUROPA_SMA_M,
       eccentricity: EUROPA_ECC,
@@ -181,24 +203,23 @@ export function initializeJupiter(parentId: string): void {
       period_s: EUROPA_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ["O2"],
-      pressure: 1e-11,
-      color: "#FFFFFF00",
-    },
+      glowColor: "#FFFFFF05",
+      intensity: 0.02,
+      power: 0.5,
+      thickness: 0.01,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.ICE_CRACKED,
       planetType: PlanetType.ICE,
-      color: "#F0F8FF",
+      color: "#F0F4F8",
       roughness: 0.3,
-      glossiness: 0.6,
-      color1: "#F0F8FF",
-      color2: "#ADD8E6",
-      color3: "#FFE4B5",
-      color4: "#FFFFFF",
-      color5: "#D2B48C",
+      glossiness: 0.7,
+      crackIntensity: 0.6,
+      iceThickness: 15.0,
     } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
+      planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: jupiterId,
       composition: [
@@ -207,7 +228,7 @@ export function initializeJupiter(parentId: string): void {
         "iron core",
         "subsurface ocean",
       ],
-    },
+    } as PlanetProperties,
   });
 
   actions.addCelestial({
@@ -218,9 +239,10 @@ export function initializeJupiter(parentId: string): void {
     parentId: jupiterId,
     realMass_kg: GANYMEDE_MASS_KG,
     realRadius_m: GANYMEDE_RADIUS_M,
-    visualScaleRadius: 0.41,
     temperature: 110,
     albedo: GANYMEDE_ALBEDO,
+    siderealRotationPeriod_s: GANYMEDE_SIDEREAL_PERIOD_S,
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: GANYMEDE_SMA_M,
       eccentricity: GANYMEDE_ECC,
@@ -231,20 +253,24 @@ export function initializeJupiter(parentId: string): void {
       period_s: GANYMEDE_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ["O2"],
-      pressure: 1e-12,
-      color: "#FFFFFF00",
-    },
+      glowColor: "#FFFFFF03",
+      intensity: 0.01,
+      power: 0.4,
+      thickness: 0.005,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.ICE_FLATS,
       planetType: PlanetType.ICE,
-      color: "#D3D3D3",
-      secondaryColor: "#A9A9A9",
+      color: "#D0D8E0",
+      secondaryColor: "#A0A8B0",
       roughness: 0.4,
       glossiness: 0.5,
+      crackIntensity: 0.3,
+      iceThickness: 50.0,
     } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
+      planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: jupiterId,
       composition: [
@@ -253,7 +279,7 @@ export function initializeJupiter(parentId: string): void {
         "iron core",
         "possible subsurface ocean",
       ],
-    },
+    } as PlanetProperties,
   });
 
   actions.addCelestial({
@@ -264,9 +290,10 @@ export function initializeJupiter(parentId: string): void {
     parentId: jupiterId,
     realMass_kg: CALLISTO_MASS_KG,
     realRadius_m: CALLISTO_RADIUS_M,
-    visualScaleRadius: 0.38,
     temperature: 134,
     albedo: CALLISTO_ALBEDO,
+    siderealRotationPeriod_s: CALLISTO_SIDEREAL_PERIOD_S,
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: CALLISTO_SMA_M,
       eccentricity: CALLISTO_ECC,
@@ -277,27 +304,31 @@ export function initializeJupiter(parentId: string): void {
       period_s: CALLISTO_SIDEREAL_PERIOD_S,
     },
     atmosphere: {
-      composition: ["CO2", "O2"],
-      pressure: 7.5e-12,
-      color: "#FFFFFF00",
-    },
+      glowColor: "#E0E0E005",
+      intensity: 0.02,
+      power: 0.5,
+      thickness: 0.01,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.ICE_CRACKED,
       planetType: PlanetType.ICE,
-      color: "#A9A9A9",
+      color: "#707080",
       roughness: 0.8,
-      glossiness: 0.2,
-      color1: "#696969",
-      color2: "#808080",
-      color3: "#A9A9A9",
-      color4: "#BEBEBE",
-      color5: "#FFFFFF",
+      glossiness: 0.1,
+      crackIntensity: 0.2,
+      iceThickness: 100.0,
     } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
+      planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: jupiterId,
-      composition: ["ice", "rock", "possible subsurface ocean"],
-    },
+      composition: [
+        "ice",
+        "rock",
+        "possible subsurface ocean",
+        "undifferentiated interior",
+      ],
+    } as PlanetProperties,
   });
 }

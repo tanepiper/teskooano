@@ -8,10 +8,22 @@ import {
   RockyType,
   SurfaceType,
   type IceSurfaceProperties,
+  type GasGiantProperties,
+  type PlanetAtmosphereProperties,
+  type PlanetProperties,
+  type RingProperties,
 } from "@teskooano/data-types";
 
-const URANUS_SIDEREAL_DAY_S = -0.71833 * 24 * 3600;
+const URANUS_SIDEREAL_ROTATION_PERIOD_S = -0.71833 * 24 * 3600;
 const URANUS_AXIAL_TILT_DEG = 97.77;
+const URANUS_ORBITAL_PERIOD_S = 2.651e9;
+const URANUS_REAL_RADIUS_M = 25362000;
+
+const TITANIA_REAL_RADIUS_M = 788400;
+const OBERON_REAL_RADIUS_M = 761400;
+const UMBRIEL_REAL_RADIUS_M = 584700;
+const ARIEL_REAL_RADIUS_M = 578900;
+const MIRANDA_REAL_RADIUS_M = 235800;
 
 /**
  * Creates Uranus and its major moons.
@@ -19,7 +31,8 @@ const URANUS_AXIAL_TILT_DEG = 97.77;
  */
 export function initializeUranus(parentId: string): void {
   const uranusId = "uranus";
-  const sma_au = 19.2184;
+  const uranusAxialTiltRad = URANUS_AXIAL_TILT_DEG * DEG_TO_RAD;
+  const defaultMoonAxialTilt = new OSVector3(0, 1, 0).normalize();
 
   actions.addCelestial({
     id: uranusId,
@@ -28,24 +41,23 @@ export function initializeUranus(parentId: string): void {
     type: CelestialType.GAS_GIANT,
     parentId: parentId,
     realMass_kg: 8.681e25,
-    realRadius_m: 25362000,
-    visualScaleRadius: 4.0,
+    realRadius_m: URANUS_REAL_RADIUS_M,
     orbit: {
-      realSemiMajorAxis_m: sma_au * AU,
+      realSemiMajorAxis_m: 19.2184 * AU,
       eccentricity: 0.046381,
       inclination: 0.7733 * DEG_TO_RAD,
       longitudeOfAscendingNode: 74.006 * DEG_TO_RAD,
       argumentOfPeriapsis: 96.999 * DEG_TO_RAD,
       meanAnomaly: 142.234 * DEG_TO_RAD,
-      period_s: 2.651e9,
+      period_s: URANUS_ORBITAL_PERIOD_S,
     },
     temperature: 76,
     albedo: 0.51,
-    siderealRotationPeriod_s: URANUS_SIDEREAL_DAY_S,
+    siderealRotationPeriod_s: URANUS_SIDEREAL_ROTATION_PERIOD_S,
     axialTilt: new OSVector3(
       0,
-      Math.cos(URANUS_AXIAL_TILT_DEG * DEG_TO_RAD),
-      Math.sin(URANUS_AXIAL_TILT_DEG * DEG_TO_RAD),
+      Math.cos(uranusAxialTiltRad),
+      Math.sin(uranusAxialTiltRad),
     ).normalize(),
     properties: {
       type: CelestialType.GAS_GIANT,
@@ -53,28 +65,24 @@ export function initializeUranus(parentId: string): void {
       atmosphereColor: "#AFEEEE",
       cloudColor: "#E0FFFF",
       cloudSpeed: 150,
-      ringTilt: {
-        x: 0,
-        y: -1,
-        z: 0,
-      },
+      emissiveColor: "#AFEEEE1A",
+      emissiveIntensity: 0.03,
       rings: [
         {
-          innerRadius: 1.91 * 25362000,
-          outerRadius: 2.01 * 25362000,
-          density: 0.1,
-          opacity: 0.1,
-          color: "#696969",
-          rotationRate: 0.00005,
-          texture: "ring_texture_dark.png",
-          composition: ["dark dust", "ice boulders"],
+          innerRadius: 1.91 * URANUS_REAL_RADIUS_M,
+          outerRadius: 2.01 * URANUS_REAL_RADIUS_M,
+          density: 0.05,
+          opacity: 0.05,
+          color: "#4A4A4A",
           type: RockyType.DARK_ROCK,
-        },
+          texture: "textures/ring_uranus_epsilon.png",
+          rotationRate: 0.002,
+          composition: ["dark particles", "ice"],
+        } as RingProperties,
       ],
-    },
+    } as GasGiantProperties,
   });
 
-  const sma_m_titania = 436300 * KM;
   actions.addCelestial({
     id: "titania",
     name: "Titania",
@@ -82,12 +90,11 @@ export function initializeUranus(parentId: string): void {
     type: CelestialType.MOON,
     parentId: uranusId,
     realMass_kg: 3.527e21,
-    realRadius_m: 788400,
+    realRadius_m: TITANIA_REAL_RADIUS_M,
     siderealRotationPeriod_s: 7.526e5,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-    visualScaleRadius: 0.12,
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
-      realSemiMajorAxis_m: sma_m_titania,
+      realSemiMajorAxis_m: 436300 * KM,
       eccentricity: 0.0011,
       inclination: 0.34 * DEG_TO_RAD,
       longitudeOfAscendingNode: 0,
@@ -98,25 +105,29 @@ export function initializeUranus(parentId: string): void {
     temperature: 70,
     albedo: 0.27,
     atmosphere: {
-      composition: [],
-      pressure: 0,
-      color: "#444444",
-    },
+      glowColor: "#44444405",
+      intensity: 0.01,
+      power: 0.5,
+      thickness: 0.005,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.CRATERED,
-      color: "#B0B0B0",
+      planetType: PlanetType.ICE,
+      color: "#B0B0B8",
       roughness: 0.7,
-    },
+      glossiness: 0.3,
+      crackIntensity: 0.4,
+      iceThickness: 50.0,
+    } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: uranusId,
-      composition: ["water ice", "rock"],
-    },
+      composition: ["water ice", "rock", "carbon dioxide ice"],
+    } as PlanetProperties,
   });
 
-  const sma_m_oberon = 583520 * KM;
   actions.addCelestial({
     id: "oberon",
     name: "Oberon",
@@ -124,38 +135,45 @@ export function initializeUranus(parentId: string): void {
     type: CelestialType.MOON,
     parentId: uranusId,
     realMass_kg: 3.014e21,
-    realRadius_m: 761400,
+    realRadius_m: OBERON_REAL_RADIUS_M,
     siderealRotationPeriod_s: 1.162e6,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-    visualScaleRadius: 0.12,
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
-      realSemiMajorAxis_m: sma_m_oberon,
+      realSemiMajorAxis_m: 583520 * KM,
       eccentricity: 0.0014,
       inclination: 0.058 * DEG_TO_RAD,
-      longitudeOfAscendingNode: 0,
-      argumentOfPeriapsis: 0,
+      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
+      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
       period_s: 1.162e6,
     },
     temperature: 75,
     albedo: 0.35,
-    atmosphere: { composition: [], pressure: 0, color: "#444444" },
+    atmosphere: {
+      glowColor: "#44444405",
+      intensity: 0.01,
+      power: 0.5,
+      thickness: 0.005,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.CRATERED,
-      color: "#A0A0A0",
-      secondaryColor: "#505050",
+      planetType: PlanetType.ICE,
+      color: "#9898A0",
+      secondaryColor: "#403838",
       roughness: 0.8,
-    },
+      glossiness: 0.2,
+      crackIntensity: 0.2,
+      iceThickness: 60.0,
+    } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: uranusId,
-      composition: ["water ice", "rock"],
-    },
+      composition: ["water ice", "rock", "dark carbonaceous material"],
+    } as PlanetProperties,
   });
 
-  const sma_m_umbriel = 266000 * KM;
   actions.addCelestial({
     id: "umbriel",
     name: "Umbriel",
@@ -163,37 +181,49 @@ export function initializeUranus(parentId: string): void {
     type: CelestialType.MOON,
     parentId: uranusId,
     realMass_kg: 1.172e21,
-    realRadius_m: 584700,
+    realRadius_m: UMBRIEL_REAL_RADIUS_M,
     siderealRotationPeriod_s: 3.582e5,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-    visualScaleRadius: 0.09,
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
-      realSemiMajorAxis_m: sma_m_umbriel,
+      realSemiMajorAxis_m: 266000 * KM,
       eccentricity: 0.0039,
       inclination: 0.128 * DEG_TO_RAD,
-      longitudeOfAscendingNode: 0,
-      argumentOfPeriapsis: 0,
+      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
+      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
       period_s: 3.582e5,
     },
     temperature: 75,
     albedo: 0.21,
-    atmosphere: { composition: [], pressure: 0, color: "#444444" },
+    atmosphere: {
+      glowColor: "#33333305",
+      intensity: 0.01,
+      power: 0.5,
+      thickness: 0.005,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.CRATERED,
-      color: "#5A5A5A",
+      planetType: PlanetType.ICE,
+      color: "#50505A",
       roughness: 0.85,
-    },
+      glossiness: 0.1,
+      crackIntensity: 0.1,
+      iceThickness: 40.0,
+    } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: uranusId,
-      composition: ["water ice", "rock", "methane ice?"],
-    },
+      composition: [
+        "water ice",
+        "rock",
+        "methane ice?",
+        "dark material coating",
+      ],
+    } as PlanetProperties,
   });
 
-  const sma_m_ariel = 191020 * KM;
   actions.addCelestial({
     id: "ariel",
     name: "Ariel",
@@ -201,39 +231,45 @@ export function initializeUranus(parentId: string): void {
     type: CelestialType.MOON,
     parentId: uranusId,
     realMass_kg: 1.353e21,
-    realRadius_m: 578900,
+    realRadius_m: ARIEL_REAL_RADIUS_M,
     siderealRotationPeriod_s: 2.178e5,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-    visualScaleRadius: 0.09,
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
-      realSemiMajorAxis_m: sma_m_ariel,
+      realSemiMajorAxis_m: 191020 * KM,
       eccentricity: 0.0012,
       inclination: 0.26 * DEG_TO_RAD,
-      longitudeOfAscendingNode: 0,
-      argumentOfPeriapsis: 0,
+      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
+      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
       period_s: 2.178e5,
     },
     temperature: 60,
     albedo: 0.39,
-    atmosphere: { composition: [], pressure: 0, color: "#444444" },
+    atmosphere: {
+      glowColor: "#FFFFFF08",
+      intensity: 0.02,
+      power: 0.6,
+      thickness: 0.008,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.VARIED,
       planetType: PlanetType.ICE,
-      color: "#F0FFFF",
-      secondaryColor: "#ADD8E6",
+      color: "#E8E8F0",
+      secondaryColor: "#B0C4DE",
       roughness: 0.4,
+      glossiness: 0.5,
+      crackIntensity: 0.6,
+      iceThickness: 30.0,
     } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: uranusId,
-      composition: ["water ice", "rock"],
-    },
+      composition: ["water ice", "rock", "possible ammonia"],
+    } as PlanetProperties,
   });
 
-  const sma_m_miranda = 129390 * KM;
   actions.addCelestial({
     id: "miranda",
     name: "Miranda",
@@ -241,35 +277,42 @@ export function initializeUranus(parentId: string): void {
     type: CelestialType.MOON,
     parentId: uranusId,
     realMass_kg: 6.59e19,
-    realRadius_m: 235800,
+    realRadius_m: MIRANDA_REAL_RADIUS_M,
     siderealRotationPeriod_s: 1.22e5,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
-    visualScaleRadius: 0.04,
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
-      realSemiMajorAxis_m: sma_m_miranda,
+      realSemiMajorAxis_m: 129390 * KM,
       eccentricity: 0.0013,
       inclination: 4.232 * DEG_TO_RAD,
-      longitudeOfAscendingNode: 0,
-      argumentOfPeriapsis: 0,
+      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
+      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
       period_s: 1.22e5,
     },
     temperature: 60,
     albedo: 0.32,
-    atmosphere: { composition: [], pressure: 0, color: "#444444" },
+    atmosphere: {
+      glowColor: "#AAAAAA03",
+      intensity: 0.01,
+      power: 0.4,
+      thickness: 0.003,
+    } as PlanetAtmosphereProperties,
     surface: {
       type: SurfaceType.CANYONOUS,
       planetType: PlanetType.ICE,
-      color: "#C0C0C0",
-      secondaryColor: "#808080",
-      roughness: 0.7,
+      color: "#B8B8C0",
+      secondaryColor: "#707078",
+      roughness: 0.75,
+      glossiness: 0.3,
+      crackIntensity: 0.8,
+      iceThickness: 15.0,
     } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: uranusId,
-      composition: ["water ice", "silicates"],
-    },
+      composition: ["water ice", "silicates", "methane clathrates?"],
+    } as PlanetProperties,
   });
 }
