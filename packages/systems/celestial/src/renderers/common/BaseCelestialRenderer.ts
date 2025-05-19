@@ -8,10 +8,7 @@ import {
   LODLevel,
 } from "./CelestialRenderer";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import {
-  getCelestialObjects,
-  getRenderableObjects,
-} from "@teskooano/core-state";
+import { getCelestialObjects, renderableStore } from "@teskooano/core-state";
 
 /**
  * Abstract base class for all celestial renderers
@@ -177,7 +174,7 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
    * Using the celestialObjectsStore
    */
   protected getWorldPosition(objectId: string): THREE.Vector3 | null {
-    const object = getRenderableObjects()[objectId];
+    const object = renderableStore.getRenderableObjects()[objectId];
     if (!object || !object.position) return null;
 
     return object.position.clone();

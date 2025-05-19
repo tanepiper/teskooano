@@ -14,6 +14,8 @@ import type {
  * selected objects, camera, physics engine, and visual settings.
  */
 export class SimulationStateService {
+  private static instance: SimulationStateService;
+
   private readonly _initialState: SimulationState = {
     time: 0,
     timeScale: 1,
@@ -36,11 +38,24 @@ export class SimulationStateService {
   /** Observable for the current simulation state. */
   public readonly simulationState$: Observable<SimulationState>;
 
-  constructor() {
+  private constructor() {
     this._simulationState = new BehaviorSubject<SimulationState>(
       this._initialState,
     );
     this.simulationState$ = this._simulationState.asObservable();
+  }
+
+  /**
+   * @public
+   * @static
+   * @description Provides access to the singleton instance of the SimulationStateService.
+   * @returns {SimulationStateService} The singleton instance.
+   */
+  public static getInstance(): SimulationStateService {
+    if (!SimulationStateService.instance) {
+      SimulationStateService.instance = new SimulationStateService();
+    }
+    return SimulationStateService.instance;
   }
 
   /** Gets the current complete simulation state object. */
@@ -161,4 +176,4 @@ export class SimulationStateService {
 }
 
 /** Singleton instance of the SimulationStateService. */
-export const simulationStateService = new SimulationStateService();
+export const simulationStateService = SimulationStateService.getInstance();

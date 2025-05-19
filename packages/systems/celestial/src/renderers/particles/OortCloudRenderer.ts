@@ -6,10 +6,7 @@ import {
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
 import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "..";
-import {
-  getRenderableObjects,
-  getSimulationState,
-} from "@teskooano/core-state";
+import { renderableStore, getSimulationState } from "@teskooano/core-state";
 
 const oortCloudVertexShader = `
   attribute float size;
@@ -485,7 +482,7 @@ export class OortCloudRenderer implements CelestialRenderer {
       this.particles.visible = true;
     }
 
-    const currentRenderableObjects = getRenderableObjects();
+    const currentRenderableObjects = renderableStore.getRenderableObjects();
     const currentObject = currentRenderableObjects[this.objectId];
 
     if (!currentObject) {

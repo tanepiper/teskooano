@@ -1,4 +1,4 @@
-import { getRenderableObjects } from "@teskooano/core-state";
+import { renderableStore } from "@teskooano/core-state";
 import type { GasGiantProperties } from "@teskooano/data-types";
 import { SCALE } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
@@ -163,7 +163,7 @@ export abstract class BaseGasGiantRenderer implements CelestialRenderer {
     this.elapsedTime = (performance.now() - this.startTime) / 1000;
     const t = time ?? this.elapsedTime;
 
-    const currentRenderableObjects = getRenderableObjects();
+    const currentRenderableObjects = renderableStore.getRenderableObjects();
 
     this.objectIds.forEach((objectId) => {
       const material = this.materials.get(objectId);

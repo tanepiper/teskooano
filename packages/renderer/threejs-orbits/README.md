@@ -34,7 +34,7 @@ The refactoring is now complete while maintaining backward compatibility:
 const orbitManager = new OrbitManager(
   objectManager,
   stateAdapter,
-  renderableObjects$,
+  renderableStore.renderableObjects$,
 );
 
 // Toggle between Keplerian and Verlet modes
@@ -61,7 +61,7 @@ orbitManager.dispose();
 const orbitsManager = new OrbitsManager(
   objectManager,
   stateAdapter,
-  renderableObjects$,
+  renderableStore.renderableObjects$,
 );
 
 // Toggle between Keplerian and Verlet modes

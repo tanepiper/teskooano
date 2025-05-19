@@ -1,7 +1,7 @@
 import type { CelestialObject, OrbitalParameters } from "@teskooano/data-types";
 import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import { gameStateService } from "./stores";
-import { renderableActions } from "./renderableStore";
+import { renderableStore } from "./renderableStore";
 import { CustomEvents } from "@teskooano/data-types";
 
 /**
@@ -123,7 +123,7 @@ export const celestialActions = {
 
       gameStateService.removeCelestialHierarchyEntry(objectId);
 
-      renderableActions.removeRenderableObject(objectId);
+      renderableStore.removeRenderableObject(objectId);
 
       document.dispatchEvent(
         new CustomEvent(CustomEvents.CELESTIAL_OBJECT_DESTROYED, {

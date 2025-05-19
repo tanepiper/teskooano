@@ -3,7 +3,7 @@ import { IContentRenderer, IDockviewPanelProps } from "dockview-core";
 import {
   getSimulationState,
   simulationState$,
-  simulationActions,
+  simulationStateService,
   type PhysicsEngineType,
   type PerformanceProfileType,
 } from "@teskooano/core-state";
@@ -187,7 +187,7 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
   ): void => {
     const value = event.detail.value;
     if (typeof value === "number" && !isNaN(value)) {
-      simulationActions.setTrailLengthMultiplier(value);
+      simulationStateService.setTrailLengthMultiplier(value);
     }
   };
 
@@ -195,7 +195,7 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
     const target = event.target as HTMLSelectElement;
     const value = target.value as PhysicsEngineType;
     if (ENGINE_OPTIONS.some((opt) => opt.value === value)) {
-      simulationActions.setPhysicsEngine(value);
+      simulationStateService.setPhysicsEngine(value);
     }
   };
 
@@ -203,7 +203,7 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
     const target = event.target as HTMLSelectElement;
     const value = target.value as PerformanceProfileType;
     if (PERFORMANCE_PROFILE_OPTIONS.some((opt) => opt.value === value)) {
-      simulationActions.setPerformanceProfile(value);
+      simulationStateService.setPerformanceProfile(value);
     }
   };
 

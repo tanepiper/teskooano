@@ -1,8 +1,8 @@
-import { renderableObjects$ } from "@teskooano/core-state";
+import * as THREE from "three";
+import { renderableStore } from "@teskooano/core-state";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { CelestialType, StarProperties } from "@teskooano/data-types";
 import { Observable, Subscription, EMPTY } from "rxjs";
-import * as THREE from "three";
 import { tap, catchError, map } from "rxjs/operators";
 
 /**
@@ -45,13 +45,19 @@ export class LightManager {
   /**
    * Creates an instance of LightManager.
    * @param scene - The Three.js scene to manage lights within.
-   * @param objects$ - An optional Observable stream of renderable objects. Defaults to `renderableObjects$` from `@teskooano/core-state`.
+   * @param camera - The Three.js camera.
+   * @param enablePostProcessing - Whether post-processing is enabled.
+   * @param objects$ - An optional Observable stream of renderable objects. Defaults to `renderableStore.renderableObjects$` from `@teskooano/core-state`.
+   * @param textureLoader - An optional THREE.TextureLoader for loading textures.
    */
   constructor(
     scene: THREE.Scene,
+    camera: THREE.Camera,
+    enablePostProcessing: boolean,
     objects$: Observable<
       Record<string, RenderableCelestialObject>
-    > = renderableObjects$,
+    > = renderableStore.renderableObjects$,
+    private textureLoader?: THREE.TextureLoader,
   ) {
     this.scene = scene;
     this.objects$ = objects$;

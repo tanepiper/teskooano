@@ -12,6 +12,8 @@ const DEFAULT_SEED = "42";
  * Provides methods to update and access this state.
  */
 export class GameStateService {
+  private static instance: GameStateService;
+
   private readonly _currentSeed: BehaviorSubject<string>;
   /** Observable for the current seed used for system generation. */
   public readonly currentSeed$: Observable<string>;
@@ -36,7 +38,7 @@ export class GameStateService {
   /** Observable for the store of calculated acceleration vectors for celestial objects. */
   public readonly accelerationVectors$: Observable<Record<string, OSVector3>>;
 
-  constructor() {
+  private constructor() {
     this._currentSeed = new BehaviorSubject<string>(this.getInitialSeed());
     this.currentSeed$ = this._currentSeed.asObservable();
 
@@ -54,6 +56,19 @@ export class GameStateService {
       Record<string, OSVector3>
     >({});
     this.accelerationVectors$ = this._accelerationVectorsStore.asObservable();
+  }
+
+  /**
+   * @public
+   * @static
+   * @description Provides access to the singleton instance of the GameStateService.
+   * @returns {GameStateService} The singleton instance.
+   */
+  public static getInstance(): GameStateService {
+    if (!GameStateService.instance) {
+      GameStateService.instance = new GameStateService();
+    }
+    return GameStateService.instance;
   }
 
   private getInitialSeed(): string {
@@ -215,4 +230,4 @@ export class GameStateService {
 /**
  * Singleton instance of the GameStateService.
  */
-export const gameStateService = new GameStateService();
+export const gameStateService = GameStateService.getInstance();

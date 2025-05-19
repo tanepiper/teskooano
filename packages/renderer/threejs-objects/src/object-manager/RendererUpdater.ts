@@ -6,7 +6,7 @@ import {
   SchwarzschildBlackHoleRenderer,
 } from "@teskooano/systems-celestial";
 import type * as THREE from "three";
-import { getRenderableObjects } from "@teskooano/core-state";
+import { renderableStore } from "@teskooano/core-state";
 
 /**
  * @internal
@@ -104,7 +104,7 @@ export class RendererUpdater {
     camera?: THREE.Camera,
     objects?: Map<string, THREE.Object3D>,
   ): void {
-    const allRenderableObjects = getRenderableObjects();
+    const allRenderableObjects = renderableStore.getRenderableObjects();
 
     const processRendererMap = (
       rendererMap: Map<string, CelestialRenderer>,

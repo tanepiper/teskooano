@@ -19,7 +19,7 @@ import * as THREE from "three";
 import { RendererStateAdapter } from "./RendererStateAdapter";
 
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
-import { renderableObjects$ } from "@teskooano/core-state";
+import { renderableStore } from "@teskooano/core-state";
 
 export class ModularSpaceRenderer {
   public sceneManager: SceneManager;
@@ -62,7 +62,11 @@ export class ModularSpaceRenderer {
     this.animationLoop.setRenderer(this.sceneManager.renderer);
     this.animationLoop.setCamera(this.sceneManager.camera);
 
-    this.lightManager = new LightManager(this.sceneManager.scene);
+    this.lightManager = new LightManager(
+      this.sceneManager.scene,
+      this.sceneManager.camera,
+      options.hdr ?? false,
+    );
     this.lodManager = new LODManager(this.sceneManager.camera);
 
     const showCelestialLabels = options.showCelestialLabels !== false;
@@ -89,7 +93,7 @@ export class ModularSpaceRenderer {
     this.objectManager = new ObjectManager(
       this.sceneManager.scene,
       this.sceneManager.camera,
-      renderableObjects$,
+      renderableStore.renderableObjects$,
       this.lightManager,
       this.sceneManager.renderer,
       this.css2DManager,
@@ -98,7 +102,7 @@ export class ModularSpaceRenderer {
     this.orbitManager = new OrbitsManager(
       this.objectManager,
       this.stateAdapter,
-      renderableObjects$,
+      renderableStore.renderableObjects$,
     );
     this.backgroundManager = new BackgroundManager(this.sceneManager.scene);
     this.backgroundManager.setCamera(this.sceneManager.camera);

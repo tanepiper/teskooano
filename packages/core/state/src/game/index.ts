@@ -3,9 +3,9 @@ import { gameStateService } from "./stores";
 import { getPhysicsBodies, updatePhysicsState } from "./physics";
 import { celestialActions } from "./celestialActions";
 import { celestialFactory, type ClearStateOptions } from "./factory";
-import { renderableObjects$, renderableActions } from "./renderableStore";
+import { renderableStore } from "./renderableStore";
 
-export { gameStateService, simulationStateService };
+export { gameStateService, simulationStateService, renderableStore };
 
 export const currentSeed$ = gameStateService.currentSeed$;
 export const updateSeed = gameStateService.updateSeed.bind(gameStateService);
@@ -77,13 +77,12 @@ export const actions = {
     ),
   ...celestialActions,
   ...celestialFactory,
-  ...renderableActions,
   updateAccelerationVectors:
     gameStateService.updateAccelerationVectors.bind(gameStateService),
   updateSeed: gameStateService.updateSeed.bind(gameStateService),
 };
 
-export { getPhysicsBodies, updatePhysicsState, renderableObjects$ };
+export { getPhysicsBodies, updatePhysicsState };
 
 export type { ClearStateOptions };
 export type {

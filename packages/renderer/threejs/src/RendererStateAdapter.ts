@@ -1,9 +1,8 @@
 import { OSVector3 } from "@teskooano/core-math";
 import {
   celestialObjects$,
-  getRenderableObjects,
+  renderableStore,
   getSimulationState,
-  renderableActions,
   simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
@@ -216,7 +215,7 @@ export class RendererStateAdapter {
     const renderableMap: Record<string, RenderableCelestialObject> = {};
 
     if (objectCount === 0) {
-      renderableActions.setAllRenderableObjects({});
+      renderableStore.setAllRenderableObjects({});
       return;
     }
 
@@ -239,7 +238,7 @@ export class RendererStateAdapter {
 
     Object.keys(objects).forEach((id) => determineLightSource(id));
 
-    const existingRenderables = getRenderableObjects();
+    const existingRenderables = renderableStore.getRenderableObjects();
 
     try {
       for (const id in objects) {
@@ -304,7 +303,7 @@ export class RendererStateAdapter {
       //       JSON.parse(JSON.stringify(renderableMap[testObjectId].properties)) // Deep clone for clean logging
       //     );
       //   }
-      renderableActions.setAllRenderableObjects(renderableMap);
+      renderableStore.setAllRenderableObjects(renderableMap);
     } catch (error) {
       console.error(
         "[RendererStateAdapter] Error during object processing loop:",

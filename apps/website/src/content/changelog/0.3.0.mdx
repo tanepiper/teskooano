@@ -63,10 +63,10 @@ This document consolidates all unreleased changes from the main project changelo
   - General comment cleanup.
 - **@teskooano/renderer-threejs-orbits:** Dependency Update: Replaced `nanostores` with `rxjs` for state management.
 - **@teskooano/renderer-threejs-orbits:** RxJS Integration:
-  - `OrbitManager.ts` and `orbit-manager/keplerian-manager.ts` now consume `renderableObjects$` (an RxJS Observable) and `getCelestialObjects()` from `@teskooano/core-state`.
-  - Both managers subscribe to `renderableObjects$` to get the latest data for orbit calculations.
+  - `OrbitManager.ts` and `orbit-manager/keplerian-manager.ts` now consume `renderableStore.renderableObjects$` (an RxJS Observable) and `getCelestialObjects()` from `@teskooano/core-state` (note: `getCelestialObjects()` is part of `gameStateService`).
+  - Both managers subscribe to `renderableStore.renderableObjects$` to get the latest data for orbit calculations.
   - `OrbitManager.ts` subscription to `RendererStateAdapter.$visualSettings` now uses RxJS `subscribe` and `unsubscribe` methods.
-  - The `dispose` method in `KeplerianOrbitManager` now correctly unsubscribes from the `renderableObjects$` observable.
+  - The `dispose` method in `KeplerianOrbitManager` now correctly unsubscribes from the `renderableStore.renderableObjects$` observable.
 - **@teskooano/renderer-threejs-orbits:** Extensive comment removal and minor code cleanup across most files, including `OrbitManager.ts`, `orbit-manager/keplerian-manager.ts`, `orbit-manager/orbit-calculator.ts`, and `orbit-manager/verlet-predictor.ts`.
 - **@teskooano/core-physics:** Refactored various modules (`orbital/orbital.ts`, `spatial/octree.ts`, `units/*`, `utils/*`) for code clarity and conciseness by removing redundant comments and performing minor cleanup.
 - **@teskooano/core-physics:** Simplified parameter passing to `updateSimulation` by using the new `SimulationParameters` interface.

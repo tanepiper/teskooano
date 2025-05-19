@@ -14,7 +14,7 @@ import {
   threeVectorDebug,
   isVisualizationEnabled,
 } from "@teskooano/core-debug";
-import { getRenderableObjects } from "@teskooano/core-state";
+import { renderableStore } from "@teskooano/core-state";
 
 /**
  * Material for celestial object rings
@@ -217,7 +217,7 @@ export class RingSystemRenderer implements CelestialRenderer {
       { position: THREE.Vector3; color: THREE.Color; intensity?: number }
     >,
   ): void {
-    const currentRenderableObjects = getRenderableObjects();
+    const currentRenderableObjects = renderableStore.getRenderableObjects();
 
     if (isVisualizationEnabled()) {
       this.objectIds.forEach((id) => {
