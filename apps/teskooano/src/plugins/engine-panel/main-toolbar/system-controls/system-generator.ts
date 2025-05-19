@@ -1,4 +1,9 @@
-import { actions, getCurrentSeed, updateSeed } from "@teskooano/core-state";
+import {
+  actions,
+  celestialFactory,
+  getCurrentSeed,
+  updateSeed,
+} from "@teskooano/core-state";
 import {
   CelestialType,
   CustomEvents,
@@ -41,7 +46,7 @@ export async function generateAndLoadSystem(
 
   updateSeed(inputSeed);
   const finalSeed = getCurrentSeed();
-  actions.clearState({
+  celestialFactory.clearState({
     resetCamera: false,
     resetTime: true,
     resetSelection: true,
@@ -63,7 +68,7 @@ export async function generateAndLoadSystem(
     const processingPipeline$ = objects$.pipe(
       tap((celestialObject: CelestialObject) => {
         if (celestialObject.type === CelestialType.STAR && isFirstStar) {
-          actions.createSolarSystem(celestialObject);
+          celestialFactory.createSolarSystem(celestialObject);
           isFirstStar = false;
         } else {
           if (
@@ -73,9 +78,9 @@ export async function generateAndLoadSystem(
             console.warn(
               `[SystemGenerator] Found another root star: ${celestialObject.id}. Using createSolarSystem anyway. Check generator logic.`,
             );
-            actions.createSolarSystem(celestialObject);
+            celestialFactory.createSolarSystem(celestialObject);
           } else {
-            actions.addCelestial(celestialObject);
+            celestialFactory.addCelestial(celestialObject);
           }
         }
       }),

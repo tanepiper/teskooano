@@ -14,71 +14,102 @@ import {
   CelestialStatus,
   CelestialType,
   CustomEvents,
-  ExoticStellarType,
-  SpectralClass,
 } from "@teskooano/data-types";
 import { celestialActions } from "./celestialActions";
 import { simulationStateService } from "./simulation";
 import { gameStateService } from "./stores";
 import { CelestialObjectCreationInput, ClearStateOptions } from "./types";
-
-const _createCelestialObjectInternal = (
-  data: CelestialObjectCreationInput,
-  calculatedPhysicsStateReal: PhysicsStateReal,
-  processedProperties: CelestialSpecificPropertiesUnion | undefined,
-  processedTemperature: number,
-  processedAlbedo: number,
-) => {
-  const seedString =
-    typeof data.seed === "number"
-      ? data.seed.toString()
-      : (data.seed ?? `${Math.floor(Math.random() * 1000000)}`);
-
-  const coreObject: CelestialObject = {
-    id: data.id,
-    name: data.name,
-    type: data.type,
-    parentId: data.parentId,
-    realMass_kg: data.realMass_kg,
-    realRadius_m: data.realRadius_m,
-    status: CelestialStatus.ACTIVE,
-    orbit: data.orbit!,
-    temperature: processedTemperature,
-    albedo: processedAlbedo,
-    siderealRotationPeriod_s: data.siderealRotationPeriod_s,
-    axialTilt: data.axialTilt,
-    atmosphere: data.atmosphere,
-    surface: data.surface,
-    properties: processedProperties,
-    seed: seedString,
-    physicsStateReal: calculatedPhysicsStateReal,
-    currentParentId: data.parentId,
-    ignorePhysics: data.ignorePhysics,
-  };
-  celestialActions.addCelestialObject(coreObject);
-
-  if (data.parentId) {
-    const currentHierarchy = gameStateService.getCelestialHierarchy();
-    const siblings = currentHierarchy[data.parentId] || [];
-    if (!siblings.includes(data.id)) {
-      const newHierarchy = {
-        ...currentHierarchy,
-        [data.parentId]: [...siblings, data.id],
-      };
-      gameStateService.setCelestialHierarchy(newHierarchy);
-    }
-  }
-};
+import { determineStarThermalProperties } from "./utils/star-properties.utils";
 
 /**
- * Factory methods for creating celestial systems
+ * @class CelestialFactoryService
+ * @description Service responsible for creating and managing celestial objects within the game state.
+ * Implemented as a singleton.
  */
-export const celestialFactory = {
+class CelestialFactoryService {
+  private static instance: CelestialFactoryService;
+
+  private constructor() {
+    // Private constructor to prevent direct instantiation
+  }
+
   /**
-   * Clear all state before creating a new system
-   * @param options - Optional settings to customize what gets reset
+   * Gets the singleton instance of the CelestialFactoryService.
+   * @returns {CelestialFactoryService} The singleton instance.
    */
-  clearState: (options: ClearStateOptions = {}) => {
+  public static getInstance(): CelestialFactoryService {
+    if (!CelestialFactoryService.instance) {
+      CelestialFactoryService.instance = new CelestialFactoryService();
+    }
+    return CelestialFactoryService.instance;
+  }
+
+  /**
+   * Internal method to create and add a celestial object to the game state.
+   * It sets up the core object properties, physics state, and hierarchy.
+   * @private
+   * @param {CelestialObjectCreationInput} data - The input data for creating the celestial object.
+   * @param {PhysicsStateReal} calculatedPhysicsStateReal - The pre-calculated real physics state of the object.
+   * @param {CelestialSpecificPropertiesUnion | undefined} processedProperties - The specific properties of the celestial object (e.g., StarProperties, PlanetProperties).
+   * @param {number} processedTemperature - The processed temperature of the object.
+   * @param {number} processedAlbedo - The processed albedo of the object.
+   */
+  private _createCelestialObjectInternal(
+    data: CelestialObjectCreationInput,
+    calculatedPhysicsStateReal: PhysicsStateReal,
+    processedProperties: CelestialSpecificPropertiesUnion | undefined,
+    processedTemperature: number,
+    processedAlbedo: number,
+  ): void {
+    const seedString =
+      typeof data.seed === "number"
+        ? data.seed.toString()
+        : (data.seed ?? `${Math.floor(Math.random() * 1000000)}`);
+
+    const coreObject: CelestialObject = {
+      id: data.id,
+      name: data.name,
+      type: data.type,
+      parentId: data.parentId,
+      realMass_kg: data.realMass_kg,
+      realRadius_m: data.realRadius_m,
+      status: CelestialStatus.ACTIVE,
+      orbit: data.orbit!,
+      temperature: processedTemperature,
+      albedo: processedAlbedo,
+      siderealRotationPeriod_s: data.siderealRotationPeriod_s,
+      axialTilt: data.axialTilt,
+      atmosphere: data.atmosphere,
+      surface: data.surface,
+      properties: processedProperties,
+      seed: seedString,
+      physicsStateReal: calculatedPhysicsStateReal,
+      currentParentId: data.parentId,
+      ignorePhysics: data.ignorePhysics,
+    };
+    celestialActions.addCelestialObject(coreObject);
+
+    if (data.parentId) {
+      const currentHierarchy = gameStateService.getCelestialHierarchy();
+      const siblings = currentHierarchy[data.parentId] || [];
+      if (!siblings.includes(data.id)) {
+        const newHierarchy = {
+          ...currentHierarchy,
+          [data.parentId]: [...siblings, data.id],
+        };
+        gameStateService.setCelestialHierarchy(newHierarchy);
+      }
+    }
+  }
+
+  /**
+   * Clears the current game state, including celestial objects and hierarchy.
+   * Optionally resets camera, time, and selection state.
+   * Dispatches a `CELESTIAL_OBJECTS_LOADED` event with count 0 after clearing.
+   * @param {ClearStateOptions} [options={}] - Options to control what parts of the state are reset.
+   * @public
+   */
+  public clearState(options: ClearStateOptions = {}): void {
     const {
       resetCamera = false,
       resetTime = true,
@@ -118,17 +149,27 @@ export const celestialFactory = {
         detail: { count: 0 },
       }),
     );
-  },
+  }
 
-  createSolarSystem: (data: CelestialObjectCreationInput): string => {
+  /**
+   * Creates a new solar system, typically centered around a star.
+   * This involves clearing the current state (partially, camera isn't reset by default),
+   * processing the primary star's properties, and adding it to the game state.
+   * Dispatches a `CELESTIAL_OBJECTS_LOADED` event with count 1 and systemId after creation.
+   * @param {CelestialObjectCreationInput} data - The input data for the primary star of the solar system.
+   *                                              Must be of type `CelestialType.STAR`.
+   * @returns {string} The ID of the created star, or an empty string if creation failed.
+   * @public
+   */
+  public createSolarSystem(data: CelestialObjectCreationInput): string {
     if (data.type !== CelestialType.STAR) {
       console.error(
-        `[celestialFactory] createSolarSystem called with non-star type: ${data.type}. Aborting.`,
+        `[CelestialFactoryService] createSolarSystem called with non-star type: ${data.type}. Aborting.`,
       );
       return "";
     }
 
-    celestialFactory.clearState({ resetCamera: false });
+    this.clearState({ resetCamera: false });
 
     const inputStarProps =
       data.properties?.type === CelestialType.STAR
@@ -136,108 +177,28 @@ export const celestialFactory = {
         : undefined;
     const isMainStar = inputStarProps?.isMainStar ?? true;
     const spectralClass = inputStarProps?.spectralClass || "G2V";
-    let mainSpectralClass = inputStarProps?.mainSpectralClass;
-    let luminosityClass = inputStarProps?.luminosityClass;
+    const mainSpectralClass = inputStarProps?.mainSpectralClass;
+    const luminosityClass = inputStarProps?.luminosityClass;
     const specialSpectralClass = inputStarProps?.specialSpectralClass;
     const exoticType = inputStarProps?.exoticType;
     const whiteDwarfType = inputStarProps?.whiteDwarfType;
-    const luminosity = inputStarProps?.luminosity;
-    const color = inputStarProps?.color;
     const stellarType = inputStarProps?.stellarType;
     const partnerStars = inputStarProps?.partnerStars;
-    let temperature = data.temperature;
-    let defaultLuminosity = luminosity;
-    let defaultColor = color;
+
     let albedo = data.albedo;
 
-    if (!temperature || !defaultLuminosity || !defaultColor) {
-      switch (mainSpectralClass) {
-        case SpectralClass.O:
-          temperature = temperature ?? 40000;
-          defaultLuminosity = defaultLuminosity ?? 100000;
-          defaultColor = defaultColor ?? "#9BB0FF";
-          break;
-        case SpectralClass.B:
-          temperature = temperature ?? 20000;
-          defaultLuminosity = defaultLuminosity ?? 1000;
-          defaultColor = defaultColor ?? "#AABFFF";
-          break;
-        case SpectralClass.A:
-          temperature = temperature ?? 8500;
-          defaultLuminosity = defaultLuminosity ?? 20;
-          defaultColor = defaultColor ?? "#F8F7FF";
-          break;
-        case SpectralClass.F:
-          temperature = temperature ?? 6500;
-          defaultLuminosity = defaultLuminosity ?? 4;
-          defaultColor = defaultColor ?? "#FFF4EA";
-          break;
-        case SpectralClass.G:
-          temperature = temperature ?? 5778;
-          defaultLuminosity = defaultLuminosity ?? 1.0;
-          defaultColor = defaultColor ?? "#FFF9E5";
-          break;
-        case SpectralClass.K:
-          temperature = temperature ?? 4500;
-          defaultLuminosity = defaultLuminosity ?? 0.4;
-          defaultColor = defaultColor ?? "#FFAA55";
-          break;
-        case SpectralClass.M:
-          temperature = temperature ?? 3000;
-          defaultLuminosity = defaultLuminosity ?? 0.04;
-          defaultColor = defaultColor ?? "#FF6644";
-          break;
-        case SpectralClass.L:
-          temperature = temperature ?? 2000;
-          defaultLuminosity = defaultLuminosity ?? 0.001;
-          defaultColor = defaultColor ?? "#FF3300";
-          break;
-        case SpectralClass.T:
-          temperature = temperature ?? 1300;
-          defaultLuminosity = defaultLuminosity ?? 0.0001;
-          defaultColor = defaultColor ?? "#CC2200";
-          break;
-        case SpectralClass.Y:
-          temperature = temperature ?? 500;
-          defaultLuminosity = defaultLuminosity ?? 0.00001;
-          defaultColor = defaultColor ?? "#991100";
-          break;
-        default:
-          temperature = temperature ?? 5778;
-          defaultLuminosity = defaultLuminosity ?? 1.0;
-          defaultColor = defaultColor ?? "#FFF9E5";
-      }
+    const thermalProps = determineStarThermalProperties({
+      mainSpectralClass,
+      exoticType,
+      currentTemperature: data.temperature,
+      currentLuminosity: inputStarProps?.luminosity,
+      currentColor: inputStarProps?.color,
+    });
 
-      if (exoticType) {
-        switch (exoticType) {
-          case ExoticStellarType.WHITE_DWARF:
-            temperature = temperature ?? 25000;
-            defaultLuminosity = defaultLuminosity ?? 0.01;
-            defaultColor = defaultColor ?? "#FFFFFF";
-            break;
-          case ExoticStellarType.NEUTRON_STAR:
-            temperature = temperature ?? 1000000;
-            defaultLuminosity = defaultLuminosity ?? 0.1;
-            defaultColor = defaultColor ?? "#CCFFFF";
-            break;
-          case ExoticStellarType.BLACK_HOLE:
-            temperature = temperature ?? 0;
-            defaultLuminosity = defaultLuminosity ?? 0;
-            defaultColor = defaultColor ?? "#000000";
-            break;
-          case ExoticStellarType.PULSAR:
-            temperature = temperature ?? 1000000;
-            defaultLuminosity = defaultLuminosity ?? 0.5;
-            defaultColor = defaultColor ?? "#00FFFF";
-            break;
-          case ExoticStellarType.WOLF_RAYET:
-            temperature = temperature ?? 50000;
-            defaultLuminosity = defaultLuminosity ?? 100000;
-            defaultColor = defaultColor ?? "#99FFFF";
-            break;
-        }
-      }
-    }
+    const temperature = thermalProps.temperature;
+    const defaultLuminosity = thermalProps.luminosity;
+    const defaultColor = thermalProps.color;
+
     if (albedo === undefined) albedo = 0.3;
 
     const processedProperties: StarProperties = {
@@ -262,7 +223,7 @@ export const celestialFactory = {
       velocity_mps: new OSVector3(0, 0, 0),
     };
 
-    _createCelestialObjectInternal(
+    this._createCelestialObjectInternal(
       data,
       starPhysicsReal,
       processedProperties,
@@ -283,33 +244,42 @@ export const celestialFactory = {
     );
 
     return data.id;
-  },
+  }
 
-  addCelestial: (data: CelestialObjectCreationInput): void => {
+  /**
+   * Adds a celestial object (e.g., planet, moon, secondary star) to the game state.
+   * Calculates its initial physics state based on its orbital parameters and parent object.
+   * For objects like RING_SYSTEM, OORT_CLOUD, ASTEROID_FIELD, or parentless stars, specific
+   * logic is applied for their physics state.
+   * @param {CelestialObjectCreationInput} data - The input data for the celestial object to add.
+   * @public
+   */
+  public addCelestial(data: CelestialObjectCreationInput): void {
     if (data.type === CelestialType.STAR) {
-      console.warn(
-        `[celestialFactory] addCelestial called with star type: ${data.id}. Use createSolarSystem for the primary star.`,
-      );
-
       if (!data.parentId) {
         console.error(
-          `[celestialFactory] This appears to be a primary star. Using addCelestial for primary stars is not recommended. Please use createSolarSystem instead.`,
+          `[CelestialFactoryService] addCelestial (for object ID: ${data.id}) was called for a STAR type object that has no parentId. ` +
+            `Root/primary stars should be created using the 'createSolarSystem()' method instead. ` +
+            `Proceeding with addCelestial logic for a root star is not standard and may lead to unexpected system configuration.`,
         );
-      } else {
+        // Note: The current logic will still attempt to process this star as a root object
+        // in the physicsStateReal calculation section below if not returned here.
+        // This error serves as a strong warning for API misuse.
       }
+      // No general warning for stars with a parentId, as they are valid companion stars.
     }
 
     if (!data.parentId) {
       if (data.type !== CelestialType.STAR) {
         console.error(
-          `[celestialFactory] Cannot add non-star object ${data.id}. Missing parentId.`,
+          `[CelestialFactoryService] Cannot add non-star object ${data.id}. Missing parentId.`,
         );
         return;
       }
     }
 
     let physicsStateReal: PhysicsStateReal;
-    let orbitalParams = data.orbit;
+    let orbitalParams: OrbitalParameters | undefined = data.orbit;
 
     const objects = gameStateService.getCelestialObjects();
     const parent = data.parentId ? objects[data.parentId] : null;
@@ -317,13 +287,13 @@ export const celestialFactory = {
     if (data.type === CelestialType.RING_SYSTEM) {
       if (!parent) {
         console.error(
-          `[celestialFactory] Cannot add RING_SYSTEM ${data.id}. Parent ${data.parentId} not found.`,
+          `[CelestialFactoryService] Cannot add RING_SYSTEM ${data.id}. Parent ${data.parentId} not found.`,
         );
         return;
       }
       if (!parent.physicsStateReal) {
         console.error(
-          `[celestialFactory] Cannot add RING_SYSTEM ${data.id}. Parent ${data.parentId} is missing real physics state.`,
+          `[CelestialFactoryService] Cannot add RING_SYSTEM ${data.id}. Parent ${data.parentId} is missing real physics state.`,
         );
         return;
       }
@@ -338,13 +308,13 @@ export const celestialFactory = {
     } else if (data.type === CelestialType.OORT_CLOUD) {
       if (!parent) {
         console.error(
-          `[celestialFactory] Cannot add OORT_CLOUD ${data.id}. Parent ${data.parentId} not found.`,
+          `[CelestialFactoryService] Cannot add OORT_CLOUD ${data.id}. Parent ${data.parentId} not found.`,
         );
         return;
       }
       if (!parent.physicsStateReal) {
         console.error(
-          `[celestialFactory] Cannot add OORT_CLOUD ${data.id}. Parent ${data.parentId} is missing real physics state.`,
+          `[CelestialFactoryService] Cannot add OORT_CLOUD ${data.id}. Parent ${data.parentId} is missing real physics state.`,
         );
         return;
       }
@@ -359,13 +329,13 @@ export const celestialFactory = {
     } else if (data.type === CelestialType.ASTEROID_FIELD) {
       if (!parent) {
         console.error(
-          `[celestialFactory] Cannot add ASTEROID_FIELD ${data.id}. Parent ${data.parentId} not found.`,
+          `[CelestialFactoryService] Cannot add ASTEROID_FIELD ${data.id}. Parent ${data.parentId} not found.`,
         );
         return;
       }
       if (!parent.physicsStateReal) {
         console.error(
-          `[celestialFactory] Cannot add ASTEROID_FIELD ${data.id}. Parent ${data.parentId} is missing real physics state.`,
+          `[CelestialFactoryService] Cannot add ASTEROID_FIELD ${data.id}. Parent ${data.parentId} is missing real physics state.`,
         );
         return;
       }
@@ -387,19 +357,19 @@ export const celestialFactory = {
     } else {
       if (!orbitalParams) {
         console.error(
-          `[celestialFactory] Cannot add object ${data.id} (Type: ${data.type}). Missing orbit parameters.`,
+          `[CelestialFactoryService] Cannot add object ${data.id} (Type: ${data.type}). Missing orbit parameters.`,
         );
         return;
       }
       if (!parent) {
         console.error(
-          `[celestialFactory] Cannot add object ${data.id}. Parent ${data.parentId} not found.`,
+          `[CelestialFactoryService] Cannot add object ${data.id}. Parent ${data.parentId} not found.`,
         );
         return;
       }
       if (!parent.physicsStateReal) {
         console.error(
-          `[celestialFactory] Cannot add object ${data.id}. Parent ${data.parentId} is missing real physics state.`,
+          `[CelestialFactoryService] Cannot add object ${data.id}. Parent ${data.parentId} is missing real physics state.`,
         );
         return;
       }
@@ -422,7 +392,7 @@ export const celestialFactory = {
           .add(parent.physicsStateReal.position_m);
       } catch (error) {
         console.error(
-          `[celestialFactory] Error calculating initial physics state for ${data.id}:`,
+          `[CelestialFactoryService] Error calculating initial physics state for ${data.id}:`,
           error,
         );
         console.error("Input Data:", {
@@ -443,7 +413,7 @@ export const celestialFactory = {
         Number.isFinite(initialWorldVelReal.z);
       if (!posOk || !velOk) {
         console.error(
-          `[celestialFactory] Calculated non-finite initial state for ${data.id}. Aborting add. PosOK: ${posOk}, VelOK: ${velOk}`,
+          `[CelestialFactoryService] Calculated non-finite initial state for ${data.id}. Aborting add. PosOK: ${posOk}, VelOK: ${velOk}`,
           {
             orbitParams: orbitalParams,
             parentState: parent.physicsStateReal,
@@ -467,12 +437,17 @@ export const celestialFactory = {
 
     const processedProperties = data.properties;
 
-    _createCelestialObjectInternal(
+    this._createCelestialObjectInternal(
       data,
       physicsStateReal,
       processedProperties,
       processedTemperature,
       processedAlbedo,
     );
-  },
-};
+  }
+}
+
+/**
+ * Singleton instance of CelestialFactoryService for creating celestial objects and systems.
+ */
+export const celestialFactory = CelestialFactoryService.getInstance();

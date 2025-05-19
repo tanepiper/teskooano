@@ -95,8 +95,19 @@ export const actions = {
     simulationStateService.setTrailLengthMultiplier.bind(
       simulationStateService,
     ),
-  ...celestialActions,
-  ...celestialFactory,
+  addCelestialObject:
+    celestialActions.addCelestialObject.bind(celestialActions),
+  updateCelestialObject:
+    celestialActions.updateCelestialObject.bind(celestialActions),
+  updateOrbitalParameters:
+    celestialActions.updateOrbitalParameters.bind(celestialActions),
+  markObjectDestroyed:
+    celestialActions.markObjectDestroyed.bind(celestialActions),
+  removeCelestialObject:
+    celestialActions.removeCelestialObject.bind(celestialActions),
+  clearState: celestialFactory.clearState.bind(celestialFactory),
+  createSolarSystem: celestialFactory.createSolarSystem.bind(celestialFactory),
+  addCelestial: celestialFactory.addCelestial.bind(celestialFactory),
   updateAccelerationVectors:
     gameStateService.updateAccelerationVectors.bind(gameStateService),
   updateSeed: gameStateService.updateSeed.bind(gameStateService),

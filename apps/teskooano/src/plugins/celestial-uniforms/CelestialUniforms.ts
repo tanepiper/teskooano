@@ -76,32 +76,6 @@ export class CelestialUniformsEditor
     this.shadow = this.attachShadow({ mode: "open" });
 
     this.shadow.appendChild(template.content.cloneNode(true));
-
-    // TODO: Remove or repurpose this section.
-    // Old InfoComponent instantiations are removed.
-    // New UI generation logic will replace this.
-    // this.components.set(CelestialType.STAR, new StarInfoComponent());
-    // this.components.set(CelestialType.PLANET, new PlanetInfoComponent());
-    // this.components.set(CelestialType.DWARF_PLANET, new PlanetInfoComponent());
-    // this.components.set(CelestialType.MOON, new MoonInfoComponent());
-    // this.components.set(CelestialType.GAS_GIANT, new GasGiantInfoComponent());
-    // this.components.set(
-    //   CelestialType.ASTEROID_FIELD,
-    //   new AsteroidFieldInfoComponent(),
-    // );
-    // this.components.set(CelestialType.OORT_CLOUD, new OortCloudInfoComponent());
-    // this.components.set("generic", new GenericCelestialInfoComponent());
-
-    // this.activeComponent = this.components.get("generic")!;
-
-    const container = this.shadow.querySelector(".container") as HTMLElement;
-    if (container) {
-      // Clear out any old component display logic if present
-      // this.components.forEach((component) => {
-      //   component.style.display = "none";
-      //   container.appendChild(component);
-      // });
-    }
   }
 
   init(parameters: GroupPanelPartInitParameters): void {

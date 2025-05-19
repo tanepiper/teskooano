@@ -1,6 +1,7 @@
 import { OSVector3 } from "@teskooano/core-math";
 import {
   actions,
+  celestialFactory,
   getCurrentSeed,
   getCelestialObjects,
   updateSeed,
@@ -100,7 +101,7 @@ function processImportedFile$(
           return obj;
         });
 
-        actions.clearState({
+        celestialFactory.clearState({
           resetCamera: false,
           resetTime: true,
           resetSelection: true,
@@ -112,9 +113,11 @@ function processImportedFile$(
         );
         if (!star) throw new Error("Could not find a primary star.");
 
-        actions.createSolarSystem(star);
+        celestialFactory.createSolarSystem(star);
         hydratedObjects.forEach((obj) => {
-          if (obj.id !== star.id) actions.addCelestialObject(obj);
+          if (obj.id !== star.id) {
+            celestialFactory.addCelestial(obj);
+          }
         });
 
         updateSeed(parsedData.seed);
@@ -205,7 +208,7 @@ export const clearSystemFunction: FunctionConfig = {
   execute: async () => {
     console.log("[SystemFunctions] Attempting to clear system...");
     try {
-      actions.clearState({
+      celestialFactory.clearState({
         resetCamera: false,
         resetTime: true,
         resetSelection: true,
@@ -341,7 +344,7 @@ export const createBlankSystemFunction: FunctionConfig = {
   },
   execute: async (_: PluginExecutionContext) => {
     try {
-      actions.clearState({
+      celestialFactory.clearState({
         resetCamera: false,
         resetTime: true,
         resetSelection: true,
@@ -349,7 +352,7 @@ export const createBlankSystemFunction: FunctionConfig = {
       actions.resetTime();
 
       const star = generateStar(Math.random);
-      actions.createSolarSystem(star);
+      celestialFactory.createSolarSystem(star);
       updateSeed("");
 
       resetTime$.next();
