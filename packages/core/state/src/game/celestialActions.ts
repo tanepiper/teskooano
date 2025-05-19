@@ -1,13 +1,6 @@
 import type { CelestialObject, OrbitalParameters } from "@teskooano/data-types";
 import { CelestialStatus, CelestialType } from "@teskooano/data-types";
-import {
-  getCelestialObjects,
-  setCelestialObject,
-  getCelestialHierarchy,
-  setCelestialHierarchy,
-  removeCelestialObject as removeObjectFromStore,
-  removeCelestialHierarchyEntry,
-} from "./stores";
+import { gameStateService } from "./stores";
 import { renderableActions } from "./renderableStore";
 import { CustomEvents } from "@teskooano/data-types";
 
@@ -17,35 +10,37 @@ import { CustomEvents } from "@teskooano/data-types";
 export const celestialActions = {
   addCelestialObject: (object: CelestialObject) => {
     try {
-      const currentObjects = getCelestialObjects();
+      const currentObjects = gameStateService.getCelestialObjects();
 
-      setCelestialObject(object.id, object);
+      gameStateService.setCelestialObject(object.id, object);
 
       const parentId = object.parentId;
       if (parentId) {
-        const currentHierarchy = getCelestialHierarchy();
+        const currentHierarchy = gameStateService.getCelestialHierarchy();
         const siblings = currentHierarchy[parentId] || [];
         if (!siblings.includes(object.id)) {
           const newHierarchy = {
             ...currentHierarchy,
             [parentId]: [...siblings, object.id],
           };
-          setCelestialHierarchy(newHierarchy);
+          gameStateService.setCelestialHierarchy(newHierarchy);
         }
       } else if (object.type === CelestialType.STAR) {
-        const currentHierarchy = getCelestialHierarchy();
+        const currentHierarchy = gameStateService.getCelestialHierarchy();
         if (!currentHierarchy[object.id]) {
           const newHierarchy = {
             ...currentHierarchy,
             [object.id]: [],
           };
-          setCelestialHierarchy(newHierarchy);
+          gameStateService.setCelestialHierarchy(newHierarchy);
         }
       }
 
       document.dispatchEvent(
         new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
-          detail: { count: Object.keys(getCelestialObjects()).length },
+          detail: {
+            count: Object.keys(gameStateService.getCelestialObjects()).length,
+          },
         }),
       );
     } catch (error) {
@@ -57,11 +52,11 @@ export const celestialActions = {
     objectId: string,
     updates: Partial<CelestialObject>,
   ) => {
-    const currentObjects = getCelestialObjects();
+    const currentObjects = gameStateService.getCelestialObjects();
     const object = currentObjects[objectId];
 
     if (object) {
-      setCelestialObject(objectId, { ...object, ...updates });
+      gameStateService.setCelestialObject(objectId, { ...object, ...updates });
     } else {
       console.warn(
         `[celestialActions] updateCelestialObject: Object ${objectId} not found.`,
@@ -73,11 +68,11 @@ export const celestialActions = {
     objectId: string,
     parameters: Partial<OrbitalParameters>,
   ) => {
-    const objects = getCelestialObjects();
+    const objects = gameStateService.getCelestialObjects();
     const object = objects[objectId];
 
     if (object && object.orbit) {
-      setCelestialObject(objectId, {
+      gameStateService.setCelestialObject(objectId, {
         ...object,
         orbit: {
           ...object.orbit,
@@ -97,14 +92,14 @@ export const celestialActions = {
    * @param objectId The ID of the object to mark as destroyed.
    */
   markObjectDestroyed: (objectId: string) => {
-    const currentObjects = getCelestialObjects();
+    const currentObjects = gameStateService.getCelestialObjects();
     const object = currentObjects[objectId];
     if (object) {
       if (object.status === CelestialStatus.DESTROYED) {
         return;
       }
 
-      setCelestialObject(objectId, {
+      gameStateService.setCelestialObject(objectId, {
         ...object,
         status: CelestialStatus.DESTROYED,
       });
@@ -122,11 +117,11 @@ export const celestialActions = {
   },
 
   removeCelestialObject: (objectId: string) => {
-    const currentObjects = getCelestialObjects();
+    const currentObjects = gameStateService.getCelestialObjects();
     if (currentObjects[objectId]) {
-      removeObjectFromStore(objectId);
+      gameStateService.removeCelestialObject(objectId);
 
-      removeCelestialHierarchyEntry(objectId);
+      gameStateService.removeCelestialHierarchyEntry(objectId);
 
       renderableActions.removeRenderableObject(objectId);
 

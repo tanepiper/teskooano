@@ -1,34 +1,25 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-// import { atom } from "nanostores"; // Removed
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { OSVector3 } from "@teskooano/core-math";
 import {
-  CelestialObject,
-  PhysicsStateReal,
-  OrbitalParameters,
-  CelestialType,
-  CelestialStatus,
-  PlanetAtmosphereProperties,
-  SurfacePropertiesUnion,
   BaseSurfaceProperties,
+  CelestialObject,
+  CelestialStatus,
+  CelestialType,
+  OrbitalParameters,
+  PhysicsStateReal,
+  PlanetAtmosphereProperties,
   SurfaceType,
 } from "@teskooano/data-types";
-import { OSVector3 } from "@teskooano/core-math";
 
-// Updated imports:
-import {
-  getCelestialObjects,
-  setAllCelestialObjects,
-  // getCelestialHierarchy, // Not directly used in top-level assertions, but actions use it
-  // setCelestialHierarchy,
-} from "./stores";
+import { Quaternion } from "three";
 import { celestialActions } from "./celestialActions";
 import {
-  simulationActions,
   getSimulationState,
   setSimulationState,
-  type SimulationState, // Import type for setSimulationState
+  simulationActions,
 } from "./simulation";
-
-import * as THREE from "three"; // Keep THREE for camera state tests if any
+import { gameStateService } from "./stores";
 
 const createMinimalRealState = (
   id: string,
@@ -68,30 +59,30 @@ const createMockObject = (
     color: "#aaaaaa",
     roughness: 0.5,
   } as BaseSurfaceProperties,
-  rotation: new THREE.Quaternion(),
+  rotation: new Quaternion(),
   // celestialBodyType: type, // Removed, not a root property
   // properties field would contain more specific type info if needed
 });
 
 describe("Celestial Objects Store", () => {
   beforeEach(() => {
-    setAllCelestialObjects({}); // Reset store
+    gameStateService.setAllCelestialObjects({});
   });
 
   it("should add a celestial object", () => {
     const obj = createMockObject("planet1");
-    celestialActions.addCelestialObject(obj); // Use action
-    const state = getCelestialObjects(); // Use getter
+    celestialActions.addCelestialObject(obj);
+    const state = gameStateService.getCelestialObjects();
     expect(state["planet1"]).toEqual(obj);
     expect(Object.keys(state).length).toBe(1);
   });
 
   it("should update an existing celestial object", () => {
     const obj1 = createMockObject("star1", "Sol", CelestialType.STAR);
-    celestialActions.addCelestialObject(obj1); // Use action
+    celestialActions.addCelestialObject(obj1);
     const updatedFields = { name: "Updated Sol" };
-    celestialActions.updateCelestialObject(obj1.id, updatedFields); // Use action
-    const state = getCelestialObjects(); // Use getter
+    celestialActions.updateCelestialObject(obj1.id, updatedFields);
+    const state = gameStateService.getCelestialObjects();
     expect(state["star1"]).toEqual(expect.objectContaining(updatedFields));
     expect(state["star1"].name).toBe("Updated Sol");
   });
@@ -104,10 +95,10 @@ describe("Celestial Objects Store", () => {
       "planet1",
     );
     const obj2 = createMockObject("planet1");
-    celestialActions.addCelestialObject(obj1); // Use action
-    celestialActions.addCelestialObject(obj2); // Use action
-    celestialActions.removeCelestialObject("moon1"); // Use action
-    const state = getCelestialObjects(); // Use getter
+    celestialActions.addCelestialObject(obj1);
+    celestialActions.addCelestialObject(obj2);
+    celestialActions.removeCelestialObject("moon1");
+    const state = gameStateService.getCelestialObjects();
     expect(state["moon1"]).toBeUndefined();
     expect(state["planet1"]).toEqual(obj2);
     expect(Object.keys(state).length).toBe(1);
@@ -116,9 +107,7 @@ describe("Celestial Objects Store", () => {
 
 describe("Simulation State Actions", () => {
   beforeEach(() => {
-    // Reset simulation state to a known default
     setSimulationState({
-      // Use direct setter for test setup
       time: 0,
       timeScale: 1,
       paused: false,
@@ -134,67 +123,54 @@ describe("Simulation State Actions", () => {
       performanceProfile: "medium",
     });
 
-    setAllCelestialObjects({
-      // Reset objects store as actions might depend on it
+    gameStateService.setAllCelestialObjects({
       obj1: createMockObject("obj1"),
       obj2: createMockObject("obj2"),
     });
   });
 
   it("should select an object", () => {
-    simulationActions.selectObject("obj1"); // Use action
-    const state = getSimulationState(); // Use getter
+    simulationActions.selectObject("obj1");
+    const state = getSimulationState();
     expect(state.selectedObject).toBe("obj1");
   });
 
   it("should deselect object if null is passed", () => {
     simulationActions.selectObject("obj1");
-    simulationActions.selectObject(null); // Use action
-    const state = getSimulationState(); // Use getter
+    simulationActions.selectObject(null);
+    const state = getSimulationState();
     expect(state.selectedObject).toBeNull();
   });
 
   it("should not select a non-existent object", () => {
-    // The current selectObject action does not validate existence,
-    // it will happily set a non-existent ID.
-    // This test reflects current behavior.
-    simulationActions.selectObject("nonexistent"); // Use action
-    const state = getSimulationState(); // Use getter
+    simulationActions.selectObject("nonexistent");
+    const state = getSimulationState();
     expect(state.selectedObject).toBe("nonexistent");
-    // If validation is added, this test should change:
-    // expect(state.selectedObject).toBeNull();
   });
 
   it("should focus an object", () => {
-    simulationActions.setFocusedObject("obj2"); // Use action
-    const state = getSimulationState(); // Use getter
+    simulationActions.setFocusedObject("obj2");
+    const state = getSimulationState();
     expect(state.focusedObjectId).toBe("obj2");
   });
 
   it("should unfocus object if null is passed", () => {
     simulationActions.setFocusedObject("obj2");
-    simulationActions.setFocusedObject(null); // Use action
-    const state = getSimulationState(); // Use getter
+    simulationActions.setFocusedObject(null);
+    const state = getSimulationState();
     expect(state.focusedObjectId).toBeNull();
   });
 
   it("should not focus a non-existent object", () => {
-    // Similar to selectObject, setFocusedObject does not validate.
-    simulationActions.setFocusedObject("nonexistent"); // Use action
-    const state = getSimulationState(); // Use getter
+    simulationActions.setFocusedObject("nonexistent");
+    const state = getSimulationState();
     expect(state.focusedObjectId).toBe("nonexistent");
-    // If validation is added, this test should change:
-    // expect(state.focusedObjectId).toBeNull();
   });
 });
 
-// This "Core State" describe block seems to be testing actions that are now part of simulationActions
-// or celestialActions. Let's refactor it to directly test those.
-// The old tests used a global 'actions' object which is no longer the pattern.
 describe("Simulation Actions (Extended)", () => {
   beforeEach(() => {
     setSimulationState({
-      // Use direct setter for test setup
       time: 0,
       timeScale: 1,
       paused: false,
@@ -209,7 +185,7 @@ describe("Simulation Actions (Extended)", () => {
       visualSettings: { trailLengthMultiplier: 1 },
       performanceProfile: "medium",
     });
-    setAllCelestialObjects({});
+    gameStateService.setAllCelestialObjects({});
   });
 
   describe("simulation general actions", () => {
@@ -217,7 +193,6 @@ describe("Simulation Actions (Extended)", () => {
       const state = getSimulationState();
       expect(state.time).toBe(0);
       expect(state.timeScale).toBe(1);
-      // ... other initial state checks based on beforeEach
     });
 
     it("should update timeScale", () => {
@@ -232,8 +207,6 @@ describe("Simulation Actions (Extended)", () => {
       expect(getSimulationState().paused).toBe(false);
     });
 
-    // selectObject is already tested above
-
     it("should update camera position and target", () => {
       const newPosition = new OSVector3(100, 200, 300);
       const newTarget = new OSVector3(0, 0, 0);
@@ -247,42 +220,4 @@ describe("Simulation Actions (Extended)", () => {
       expect(cameraState.target.z).toBe(0);
     });
   });
-
-  // The solar system hierarchy tests were using a global `actions.createSolarSystem` and `actions.addCelestial`.
-  // These are likely now part of `celestialFactory.ts` or similar, which then uses `celestialActions`.
-  // For this spec file, we should test the actions from `celestialActions.ts` more directly,
-  // or mock the factory if testing interactions.
-  // Given this file is game.spec.ts, it should focus on the game state and its direct actions.
-  // Complex factory logic should be in its own spec file (e.g., factory.spec.ts).
-
-  // For now, I will comment out the "solar system hierarchy" tests as they rely on
-  // a global `actions` object that is not how the current codebase is structured.
-  // These tests need to be re-evaluated and potentially moved/rewritten
-  // to test `celestialFactory.ts` or direct `celestialActions.ts` more granularly.
-
-  /*
-  describe("solar system hierarchy", () => {
-    it("should create a solar system with a star", () => {
-      // This test needs access to a factory function like `createSolarSystem`
-      // which would internally use `celestialActions.addCelestialObject`.
-      // Example: const starId = celestialFactory.createSolarSystem(...);
-      // For now, this is out of scope for game.spec.ts refactor.
-    });
-
-    it("should add a planet to a star", () => {
-      // Similar to above, needs factory.
-    });
-
-    // getPhysicsBodies and updatePhysicsState are also not directly part of
-    // celestialActions or simulationActions. They seem to be utilities or part of a physics bridge.
-    // Their tests might belong elsewhere or need refactoring based on their actual module.
-    it("should get physics bodies for simulation", () => {
-      // Example: const bodies = getPhysicsBodiesFromState(getCelestialObjects());
-    });
-
-    it("should update physics state from simulation results", () => {
-      // Example: updatePhysicsStateInStore(updatedBodies, celestialActions.updateCelestialObject);
-    });
-  });
-  */
 });

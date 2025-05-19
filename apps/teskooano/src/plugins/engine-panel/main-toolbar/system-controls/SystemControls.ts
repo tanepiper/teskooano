@@ -1,7 +1,8 @@
 import {
   celestialObjects$,
-  currentSeed,
+  currentSeed$,
   getCelestialObjects,
+  getCurrentSeed,
   updateSeed,
 } from "@teskooano/core-state";
 import type { CelestialObject } from "@teskooano/data-types";
@@ -253,7 +254,7 @@ class SystemControls
 
     const typedCelestialObjects$ =
       celestialObjects$ as Observable<EffectCelestialObjectMap>;
-    const typedCurrentSeed$ = currentSeed as Observable<EffectSeed>;
+    const typedCurrentSeed$ = currentSeed$ as Observable<EffectSeed>;
 
     const generateSystem$ = handleEffectResult(
       generateSystemEffect$(
@@ -289,7 +290,7 @@ class SystemControls
       celestialObjects$.pipe(
         startWith(getCelestialObjects() as CoreCelestialObjectMap),
       ),
-      currentSeed.pipe(startWith(currentSeed.getValue())),
+      currentSeed$.pipe(startWith(getCurrentSeed())),
       this.isGenerating$$,
       this.mobile$$,
     ]).pipe(debounceTime(0));

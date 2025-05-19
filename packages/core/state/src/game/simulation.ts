@@ -1,5 +1,4 @@
 import { BehaviorSubject } from "rxjs";
-import * as THREE from "three";
 import { OSVector3 } from "@teskooano/core-math";
 import { AU_METERS, SCALE } from "@teskooano/data-types";
 

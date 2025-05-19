@@ -8,30 +8,18 @@ import type {
   CelestialObject,
   CelestialSpecificPropertiesUnion,
   OrbitalParameters,
-  PlanetProperties,
   StarProperties,
 } from "@teskooano/data-types";
 import {
   CelestialStatus,
   CelestialType,
+  CustomEvents,
   ExoticStellarType,
-  LuminosityClass,
-  METERS_TO_SCENE_UNITS,
-  SCALE,
-  scaleSize,
   SpectralClass,
 } from "@teskooano/data-types";
-import * as THREE from "three";
 import { celestialActions } from "./celestialActions";
 import { getSimulationState, setSimulationState } from "./simulation";
-import {
-  getCelestialObjects,
-  getCelestialHierarchy,
-  setCelestialHierarchy,
-  setAllCelestialObjects,
-  setAllCelestialHierarchy,
-} from "./stores";
-import { CustomEvents } from "@teskooano/data-types";
+import { gameStateService } from "./stores";
 
 /**
  * Input data required to create a new celestial object.
@@ -103,14 +91,14 @@ const _createCelestialObjectInternal = (
   /*
   
   if (data.parentId) {
-    const currentHierarchy = getCelestialHierarchy(); 
+    const currentHierarchy = gameStateService.getCelestialHierarchy(); 
     const siblings = currentHierarchy[data.parentId] || [];
     if (!siblings.includes(data.id)) {
       const newHierarchy = { 
         ...currentHierarchy,
         [data.parentId]: [...siblings, data.id],
       };
-      setCelestialHierarchy(newHierarchy); 
+      gameStateService.setCelestialHierarchy(newHierarchy); 
     }
   }
   */
@@ -131,8 +119,8 @@ export const celestialFactory = {
       resetSelection = true,
     } = options;
 
-    setAllCelestialObjects({});
-    setAllCelestialHierarchy({});
+    gameStateService.setAllCelestialObjects({});
+    gameStateService.setAllCelestialHierarchy({});
 
     const currentState = getSimulationState();
 
@@ -151,8 +139,8 @@ export const celestialFactory = {
 
     if (resetCamera) {
       newState.camera = {
-        position: new THREE.Vector3(0, 0, 1000),
-        target: new THREE.Vector3(0, 0, 0),
+        position: new OSVector3(0, 0, 1000),
+        target: new OSVector3(0, 0, 0),
         fov: 60,
       };
     }
@@ -316,8 +304,11 @@ export const celestialFactory = {
       albedo,
     );
 
-    const currentHierarchy = getCelestialHierarchy();
-    setCelestialHierarchy({ ...currentHierarchy, [data.id]: [] });
+    const currentHierarchy = gameStateService.getCelestialHierarchy();
+    gameStateService.setCelestialHierarchy({
+      ...currentHierarchy,
+      [data.id]: [],
+    });
 
     document.dispatchEvent(
       new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
@@ -354,7 +345,7 @@ export const celestialFactory = {
     let physicsStateReal: PhysicsStateReal;
     let orbitalParams = data.orbit;
 
-    const objects = getCelestialObjects();
+    const objects = gameStateService.getCelestialObjects();
     const parent = data.parentId ? objects[data.parentId] : null;
 
     if (data.type === CelestialType.RING_SYSTEM) {

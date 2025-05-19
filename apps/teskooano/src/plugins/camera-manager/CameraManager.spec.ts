@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { CameraManager, type CameraState } from "./CameraManager";
+import { CameraManager } from "./CameraManager";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
 import { renderableObjects$ } from "@teskooano/core-state";
 import { BehaviorSubject, firstValueFrom } from "rxjs";
+import type { CameraManagerState } from "./types";
 
 vi.mock("@teskooano/renderer-threejs");
 vi.mock("@teskooano/core-state", () => ({
@@ -55,12 +56,12 @@ describe("CameraManager", () => {
     } as any;
     mockRenderer.setFollowTarget = vi.fn();
 
-    cameraManager = new CameraManager({ renderer: mockRenderer });
+    cameraManager = new CameraManager();
   });
 
   const getCameraManagerValue = () =>
     (
-      cameraManager.getCameraState$() as BehaviorSubject<CameraState>
+      cameraManager.getCameraState$() as BehaviorSubject<CameraManagerState>
     ).getValue();
 
   it("should initialize with default values if none provided", () => {
@@ -87,13 +88,7 @@ describe("CameraManager", () => {
       ) as any,
     });
 
-    cameraManager = new CameraManager({
-      renderer: mockRenderer,
-      initialFov: initialFov,
-      initialFocusedObjectId: initialFocusId,
-      initialCameraPosition: initialPosition,
-      initialCameraTarget: new THREE.Vector3(99, 99, 99),
-    });
+    cameraManager = new CameraManager();
 
     const state = getCameraManagerValue();
     expect(state.fov).toBe(initialFov);
@@ -106,11 +101,7 @@ describe("CameraManager", () => {
   it("initializeCameraPosition should set renderer camera and controls target", () => {
     const initialPosition = new THREE.Vector3(10, 20, 30);
     const initialTarget = new THREE.Vector3(1, 2, 3);
-    cameraManager = new CameraManager({
-      renderer: mockRenderer,
-      initialCameraPosition: initialPosition,
-      initialCameraTarget: initialTarget,
-    });
+    cameraManager = new CameraManager();
 
     cameraManager.initializeCameraPosition();
 
@@ -240,9 +231,7 @@ describe("CameraManager", () => {
     const targetPosition = new THREE.Vector3(50, 50, 50);
     cameraManager.pointCameraAt(targetPosition);
 
-    expect(
-      mockRenderer.controlsManager.pointCameraAtTarget,
-    ).toHaveBeenCalledWith(
+    expect(mockRenderer.controlsManager.startFollowing).toHaveBeenCalledWith(
       expect.objectContaining({ x: 50, y: 50, z: 50 }),
       true,
     );
@@ -328,10 +317,7 @@ describe("CameraManager", () => {
 
   it("handleCameraTransitionComplete should call onFocusChangeCallback", () => {
     const mockCallback = vi.fn();
-    const managerWithCallback = new CameraManager({
-      renderer: mockRenderer,
-      onFocusChangeCallback: mockCallback,
-    });
+    const managerWithCallback = new CameraManager();
 
     const finalFocusId = "objFinalCallback";
     const mockEvent = new CustomEvent("camera-transition-complete", {

@@ -1,4 +1,4 @@
-import { actions, currentSeed, updateSeed } from "@teskooano/core-state";
+import { actions, getCurrentSeed, updateSeed } from "@teskooano/core-state";
 import {
   CelestialType,
   CustomEvents,
@@ -40,7 +40,7 @@ export async function generateAndLoadSystem(
   window.dispatchEvent(new CustomEvent(CustomEvents.SYSTEM_GENERATION_START));
 
   updateSeed(inputSeed);
-  const finalSeed = currentSeed.getValue();
+  const finalSeed = getCurrentSeed();
   actions.clearState({
     resetCamera: false,
     resetTime: true,

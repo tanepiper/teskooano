@@ -1,8 +1,9 @@
 import { OSVector3 } from "@teskooano/core-math";
 import {
   actions,
-  currentSeed,
+  getCurrentSeed,
   getCelestialObjects,
+  updateSeed,
 } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -116,7 +117,7 @@ function processImportedFile$(
           if (obj.id !== star.id) actions.addCelestialObject(obj);
         });
 
-        currentSeed.next(parsedData.seed);
+        updateSeed(parsedData.seed);
 
         resetTime$.next();
 
@@ -234,7 +235,7 @@ export const exportSystemFunction: FunctionConfig = {
   execute: async () => {
     try {
       const objects = getCelestialObjects();
-      const seed = currentSeed.getValue();
+      const seed = getCurrentSeed();
       const objectsArray = Object.values(objects);
 
       if (objectsArray.length === 0) {
@@ -349,7 +350,7 @@ export const createBlankSystemFunction: FunctionConfig = {
 
       const star = generateStar(Math.random);
       actions.createSolarSystem(star);
-      currentSeed.next("");
+      updateSeed("");
 
       resetTime$.next();
       return { success: true, symbol: "📄", message: "Blank system created." };
@@ -368,7 +369,7 @@ export const copySeedFunction: FunctionConfig = {
   id: "system:copy_seed",
   dependencies: {},
   execute: async (_: PluginExecutionContext, seedToCopy?: string) => {
-    const seed = seedToCopy ?? currentSeed.getValue() ?? "";
+    const seed = seedToCopy ?? getCurrentSeed() ?? "";
     if (!seed) {
       return { success: false, symbol: "🤷", message: "No seed to copy." };
     }

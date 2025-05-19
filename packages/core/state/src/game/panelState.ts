@@ -1,10 +1,10 @@
 import { BehaviorSubject } from "rxjs";
 import type { DockviewPanelApi } from "dockview-core";
-import type * as THREE from "three";
+import { OSVector3 } from "@teskooano/core-math";
 
 export interface PanelViewState {
-  cameraPosition: THREE.Vector3;
-  cameraTarget: THREE.Vector3;
+  cameraPosition: OSVector3;
+  cameraTarget: OSVector3;
   focusedObjectId: string | null;
   showGrid?: boolean;
   showCelestialLabels?: boolean;

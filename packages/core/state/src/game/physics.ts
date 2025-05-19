@@ -3,7 +3,7 @@ import { AU_METERS, SCALE } from "@teskooano/data-types";
 import * as THREE from "three";
 import { renderableActions } from "./renderableStore";
 import { getSimulationState } from "./simulation";
-import { getCelestialObjects, setCelestialObject } from "./stores";
+import { gameStateService } from "./stores";
 
 let updateCounter = 0;
 const ORBITAL_ELEMENT_UPDATE_INTERVAL = 60;
@@ -13,7 +13,7 @@ const ORBITAL_ELEMENT_UPDATE_INTERVAL = 60;
  */
 export const getPhysicsBodies = (): PhysicsStateReal[] => {
   const bodies: PhysicsStateReal[] = [];
-  Object.values(getCelestialObjects()).forEach((obj) => {
+  Object.values(gameStateService.getCelestialObjects()).forEach((obj) => {
     if (obj.physicsStateReal) {
       bodies.push(obj.physicsStateReal);
     } else {
@@ -36,7 +36,7 @@ export const updatePhysicsState = (
 
   updatedBodiesReal.forEach((bodyReal) => {
     const id = String(bodyReal.id);
-    const existingObject = getCelestialObjects()[id];
+    const existingObject = gameStateService.getCelestialObjects()[id];
     if (!existingObject) {
       console.warn(
         `[updatePhysicsState] Cannot find existing object with ID: ${id} (for state update)`,
@@ -76,15 +76,6 @@ export const updatePhysicsState = (
       ...existingObject,
       physicsStateReal: bodyReal,
     };
-    setCelestialObject(id, newObjectData);
-
-    /*
-    const scaledPos = physicsToThreeJSPosition(bodyReal.position_m); 
-    const scaledRot = new THREE.Quaternion(); 
-    renderableActions.updateRenderableObject(id, {
-        position: scaledPos,
-        rotation: scaledRot,
-    });
-    */
+    gameStateService.setCelestialObject(id, newObjectData);
   });
 };
