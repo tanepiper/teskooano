@@ -272,9 +272,6 @@ export class ObjectLifecycleManager {
             );
           }
         }
-      } else {
-        // Optionally log non-mesh children if needed
-        // console.log(`[ObjectLifecycleManager] Traversing non-mesh child: ${child.name} (${child.type})`);
       }
     });
 

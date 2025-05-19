@@ -55,7 +55,6 @@ export class CameraManager {
 
   private _cleanupPriorRenderer(): void {
     if (this.renderer) {
-      console.log("[CameraManager] Cleaning up resources for prior renderer.");
       // Assuming controlsManager.dispose() handles OrbitControls cleanup and listener removal from its DOM element.
       this.renderer.controlsManager?.dispose();
     }
@@ -85,11 +84,6 @@ export class CameraManager {
       // Likely a first-time call to setDependencies before the renderer is available.
       return;
     }
-
-    console.log(
-      "[CameraManager] Setting dependencies with new renderer:",
-      options.renderer,
-    );
     this.renderer = options.renderer;
     this.onFocusChangeCallback = options.onFocusChangeCallback;
 
@@ -147,9 +141,6 @@ export class CameraManager {
 
     // Call initializeCameraPosition to sync the new renderer's controls
     this.initializeCameraPosition();
-    console.log(
-      "[CameraManager] Dependencies set and camera position initialized.",
-    );
   }
 
   /**
@@ -494,7 +485,6 @@ export class CameraManager {
    * Removes event listeners and completes the state BehaviorSubject.
    */
   public destroy(): void {
-    console.log("[CameraManager] Destroying CameraManager.");
     this._cleanupPriorRenderer(); // Call the same cleanup
     // If CameraManager had its own direct subscriptions to external observables, unsubscribe here.
     // For now, it mainly manages renderer and document listeners.

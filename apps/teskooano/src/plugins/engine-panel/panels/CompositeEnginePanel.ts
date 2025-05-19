@@ -16,7 +16,7 @@ import { BehaviorSubject, Subscription } from "rxjs";
 
 import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 
-import { layoutOrientation$, Orientation } from "./layoutStore";
+import { layoutOrientation$ } from "./layoutStore";
 
 import type { DockviewController } from "../../../core/controllers/dockview/DockviewController";
 
@@ -28,6 +28,7 @@ import {
   EngineToolbarManager,
 } from "../../../core/interface/engine-toolbar";
 import { ensureSimulationLoopStarted } from "../../../core/state/simulation-loop.state"; // Added import
+import { CameraManager } from "../../camera-manager/CameraManager"; // Corrected import path
 import { template } from "./CompositeEnginePanel.template.js"; // Import the template
 import {
   applyViewStateToRenderer,
@@ -36,7 +37,6 @@ import {
 import { EngineCameraManager } from "./EngineCameraManager"; // Added import
 import { PlaceholderManager } from "./PlaceholderManager"; // Added import
 import { CompositeEngineState, CompositePanelParams } from "./types.js";
-import { CameraManager } from "../../camera-manager/CameraManager"; // Corrected import path
 
 /**
  * A Dockview panel component that combines a 3D engine view (`ModularSpaceRenderer`)
@@ -66,7 +66,6 @@ export class CompositeEnginePanel
   private _renderer: ModularSpaceRenderer | undefined;
   private _resizeObserver: ResizeObserver | undefined;
 
-  private _currentOrientation: Orientation | null = null;
   private _layoutOrientationSubscription: Subscription | null = null;
   private _celestialObjectsUnsubscribe: Subscription | null = null;
   private _simulationStateUnsubscribe: Subscription | null = null;
@@ -160,7 +159,6 @@ export class CompositeEnginePanel
       this._layoutOrientationSubscription?.unsubscribe();
       this._layoutOrientationSubscription = layoutOrientation$.subscribe(
         (orientation) => {
-          this._currentOrientation = orientation;
           if (this.isConnected) {
             // Check isConnected before triggering resize
             this.triggerResize();
@@ -468,7 +466,6 @@ export class CompositeEnginePanel
     if (this.isConnected && !this._layoutOrientationSubscription) {
       this._layoutOrientationSubscription = layoutOrientation$.subscribe(
         (orientation) => {
-          this._currentOrientation = orientation;
           if (this.isConnected) {
             this.triggerResize();
           }
@@ -795,7 +792,6 @@ export class CompositeEnginePanel
     this._simulationStateUnsubscribe = null;
     this._layoutOrientationSubscription?.unsubscribe();
     this._layoutOrientationSubscription = null;
-    this._currentOrientation = null;
 
     this._placeholderManager?.dispose();
 

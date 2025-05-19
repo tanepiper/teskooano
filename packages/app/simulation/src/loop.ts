@@ -34,9 +34,6 @@ let resetTimeSubscription: Subscription | null = null;
 export function startSimulationLoop() {
   resetTimeSubscription = resetTime$.subscribe(() => {
     accumulatedTime = 0;
-    console.log(
-      "[SimulationLoop] Resetting accumulated time via resetTime$ subject.",
-    );
   });
 
   function simulationLoop() {
@@ -218,5 +215,4 @@ export function stopSimulationLoop() {
 
   resetTimeSubscription?.unsubscribe();
   resetTimeSubscription = null;
-  console.log("[SimulationLoop] Stopped and unsubscribed from resetTime$.");
 }

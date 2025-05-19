@@ -1,12 +1,11 @@
+import { BehaviorSubject } from "rxjs";
 import * as THREE from "three";
 import type { CameraManager } from "../../camera-manager/CameraManager";
-import type { CompositeEnginePanel } from "./CompositeEnginePanel";
-import { pluginManager } from "@teskooano/ui-plugin";
 import type {
   CameraManagerOptions,
   CameraManagerState,
 } from "../../camera-manager/types";
-import { BehaviorSubject } from "rxjs";
+import type { CompositeEnginePanel } from "./CompositeEnginePanel";
 
 /**
  * Manages camera operations specifically for a CompositeEnginePanel instance.
@@ -15,14 +14,12 @@ import { BehaviorSubject } from "rxjs";
 export class EngineCameraManager {
   private _cameraManager: CameraManager | undefined;
   private _panelApiId: string | undefined;
-  private _panelInstance: CompositeEnginePanel;
 
   constructor(
     panelInstance: CompositeEnginePanel,
     cameraManagerInstance: CameraManager,
     panelApiId?: string,
   ) {
-    this._panelInstance = panelInstance;
     this._cameraManager = cameraManagerInstance;
     this._panelApiId = panelApiId;
 

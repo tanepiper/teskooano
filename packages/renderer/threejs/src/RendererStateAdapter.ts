@@ -292,17 +292,6 @@ export class RendererStateAdapter {
         } else {
         }
       }
-
-      // Example: Find a specific object by ID or name to log its properties
-      // You'll need to know the ID or a unique name of an object you are testing
-      //   const testObjectId = "planet-star-utokolon-posequ"; // <<< REPLACE "earth" with the ID of an object you are testing
-      //  //console.log(renderableMap);
-      //   if (renderableMap[testObjectId] && renderableMap[testObjectId].properties) {
-      //     console.log(
-      //       `[RendererStateAdapter] Properties for ${renderableMap[testObjectId].name} before setAllRenderableObjects:`,
-      //       JSON.parse(JSON.stringify(renderableMap[testObjectId].properties)) // Deep clone for clean logging
-      //     );
-      //   }
       renderableStore.setAllRenderableObjects(renderableMap);
     } catch (error) {
       console.error(

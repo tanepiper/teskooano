@@ -285,7 +285,5 @@ export class LightManager {
       this.scene.remove(this.ambientLight);
       this.ambientLight.dispose?.(); // Dispose if needed
     }
-
-    console.log("[LightManager] Disposed.");
   }
 }

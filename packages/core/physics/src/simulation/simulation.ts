@@ -123,26 +123,6 @@ export const updateSimulation = (
     physicsEngine = "verlet",
   } = params;
 
-  // DEBUGGING START for parentIds map (conditional for brevity)
-  // const MOON_ID_TO_DEBUG_PHYSICS = "planet-star-ibinequi-eduniqu"; // <--- REPLACE THIS with the same moon ID as above
-  // if ((physicsEngine === "euler" || physicsEngine === "symplectic")) {
-  //   const bodyToDebug = bodies.find(b => b.id === MOON_ID_TO_DEBUG_PHYSICS);
-  //   if (bodyToDebug) { // Only log if the specific moon is in the current bodies array
-  //     const now = new Date().getTime(); // Using getTime for more frequent, potentially less readable timestamp here
-  //     if (parentIds) {
-  //       const actualParentIdForMoon = parentIds.get(MOON_ID_TO_DEBUG_PHYSICS);
-  //       if (parentIds.has(MOON_ID_TO_DEBUG_PHYSICS)) {
-  //           console.log(`[PhysicsDebug ${now}] Moon: ${MOON_ID_TO_DEBUG_PHYSICS}, Expected Parent in Map: ${actualParentIdForMoon}`);
-  //       } else {
-  //           console.log(`[PhysicsDebug ${now}] Moon: ${MOON_ID_TO_DEBUG_PHYSICS} NOT FOUND in parentIds map. Map size: ${parentIds.size}`);
-  //       }
-  //     } else {
-  //       console.log(`[PhysicsDebug ${now}] Moon: ${MOON_ID_TO_DEBUG_PHYSICS} - parentIds map is UNDEFINED/NULL in simulation params.`);
-  //     }
-  //   }
-  // }
-  // DEBUGGING END
-
   const accelerations = new Map<string, OSVector3>();
   let nBodyOctree: Octree | undefined; // For Verlet N-body calculations
 

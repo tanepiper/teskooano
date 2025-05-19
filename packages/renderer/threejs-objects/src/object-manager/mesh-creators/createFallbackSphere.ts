@@ -20,8 +20,5 @@ export function createFallbackSphere(
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = `${object.celestialObjectId}-fallback`;
-  console.log(
-    `[MeshFactory:Fallback] Created fallback sphere for ${object.celestialObjectId}`,
-  );
   return mesh;
 }

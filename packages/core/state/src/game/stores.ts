@@ -86,7 +86,6 @@ export class GameStateService {
    * @param newSeed The new seed value.
    */
   public updateSeed(newSeed: string): void {
-    console.log("Updating seed:", newSeed);
     const trimmedSeed = newSeed.trim();
     const seedToSet = trimmedSeed || DEFAULT_SEED;
     try {

@@ -153,9 +153,6 @@ function processImportedFile$(
 
     return () => {
       if (inputElement?.parentNode) {
-        console.log(
-          "[SystemFunctions] Cleaning up file input element from processImportedFile$",
-        );
         inputElement.parentNode.removeChild(inputElement);
       }
     };
@@ -206,7 +203,6 @@ export const clearSystemFunction: FunctionConfig = {
   id: "system:clear",
   dependencies: {},
   execute: async () => {
-    console.log("[SystemFunctions] Attempting to clear system...");
     try {
       celestialFactory.clearState({
         resetCamera: false,
@@ -216,9 +212,6 @@ export const clearSystemFunction: FunctionConfig = {
       actions.resetTime();
 
       resetTime$.next();
-      console.log(
-        "[SystemFunctions] actions.resetTime called and resetTime$ subject notified.",
-      );
 
       return { success: true, symbol: "🗑️", message: "System cleared." };
     } catch (error) {
@@ -322,9 +315,6 @@ export const triggerImportDialogFunction: FunctionConfig = {
       }),
       finalize(() => {
         if (inputElement?.parentNode) {
-          console.log(
-            "[SystemFunctions] Cleaning up file input element from triggerImportDialogFunction",
-          );
           inputElement.parentNode.removeChild(inputElement);
           inputElement = null;
         }

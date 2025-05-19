@@ -422,10 +422,6 @@ class PluginManager {
       console.warn(
         `[PluginManager] Plugin loading/registration finished with issues.`,
       );
-    } else {
-      console.log(
-        "[PluginManager] All requested plugins loaded and registered successfully.",
-      );
     }
 
     this.#pluginStatusSubject.next({
