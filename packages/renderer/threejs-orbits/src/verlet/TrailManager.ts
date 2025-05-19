@@ -5,12 +5,40 @@ import { SharedMaterials } from "../core/SharedMaterials";
 import { LineBuilder } from "../utils/LineBuilder";
 
 /**
+ * Available methods for smoothing trail lines
+ */
+export enum SmoothingMethod {
+  /**
+   * No smoothing, just uses raw points (fastest)
+   */
+  NONE = "none",
+
+  /**
+   * Uses a simple Chaikin curve algorithm (fast, decent results)
+   */
+  CHAIKIN = "chaikin",
+
+  /**
+   * Uses Three.js CatmullRom spline (slower, best results)
+   */
+  CATMULL_ROM = "catmullRom",
+}
+
+/**
  * Configuration options for trail rendering
  */
 export interface TrailOptions {
-  /** Whether to apply smoothing to the trail lines */
-  smoothLines?: boolean;
-  /** Number of subdivisions to create between points when smoothing is enabled */
+  /**
+   * Method to use for smoothing trail lines
+   * @default SmoothingMethod.NONE
+   */
+  smoothingMethod?: SmoothingMethod;
+
+  /**
+   * Number of subdivisions to create when smoothing is enabled
+   * Higher values = smoother curves but more performance impact
+   * @default 1 for Chaikin, 8 for CatmullRom
+   */
   smoothingSubdivisions?: number;
 }
 
@@ -44,9 +72,12 @@ export class TrailManager {
 
   /** Options for trail rendering */
   private options: TrailOptions = {
-    smoothLines: true,
-    smoothingSubdivisions: 20,
+    smoothingMethod: SmoothingMethod.NONE,
+    smoothingSubdivisions: 6, // Default to 1 for Chaikin method
   };
+
+  private reusableSmoothedPointsArray: THREE.Vector3[] = [];
+  private reusablePointForCurve: THREE.Vector3 = new THREE.Vector3();
 
   /**
    * Creates a new TrailManager instance.
@@ -95,15 +126,18 @@ export class TrailManager {
     let line = this.trailLines.get(objectId);
     let requiredBufferSize: number;
 
-    if (this.options.smoothLines && maxHistoryLength >= 3) {
-      // Calculate buffer size needed for smoothed points
-      // Ensure at least 1 segment for smoothing, hence Math.max(1, maxHistoryLength -1)
-      requiredBufferSize =
-        Math.max(1, maxHistoryLength - 1) *
-        (this.options.smoothingSubdivisions || 6);
-      // If history is shorter than 3, actual smoothed points will be less, but buffer is for max potential
+    if (
+      this.options.smoothingMethod !== SmoothingMethod.NONE &&
+      maxHistoryLength >= 3
+    ) {
+      // For CatmullRom we need more buffer space due to the curve complexity
+      let multiplier =
+        this.options.smoothingMethod === SmoothingMethod.CATMULL_ROM
+          ? this.options.smoothingSubdivisions || 8
+          : (this.options.smoothingSubdivisions || 1) * 2; // For Chaikin, each iteration roughly doubles points
+
+      requiredBufferSize = Math.max(1, maxHistoryLength - 1) * multiplier;
     } else {
-      // Buffer size for raw points or if history too short for full smoothing effect
       requiredBufferSize = maxHistoryLength;
     }
     // Ensure buffer is at least 1, even if maxHistoryLength is 0 or 1 (and no smoothing)
@@ -128,15 +162,19 @@ export class TrailManager {
     // Update the line with current history points
     if (updateGeometry || !line.visible) {
       let pointsToDraw: THREE.Vector3[];
-      // Use smoothing if enabled AND history is long enough for CatmullRom curve (at least 3 points)
-      if (this.options.smoothLines && history.length >= 3) {
-        pointsToDraw = this.generateSmoothedPoints(history);
+
+      if (
+        history.length < 3 ||
+        this.options.smoothingMethod === SmoothingMethod.NONE
+      ) {
+        pointsToDraw = history; // Use raw history points
+      } else if (this.options.smoothingMethod === SmoothingMethod.CHAIKIN) {
+        pointsToDraw = this.generateChaikinSmoothedPoints(history);
       } else {
-        pointsToDraw = history; // Use raw history if not smoothing or history too short
+        // SmoothingMethod.CATMULL_ROM
+        pointsToDraw = this.generateCatmullRomPoints(history);
       }
-      // The third argument to lineBuilder.updateLine (maxPoints) is used by LineBuilder
-      // to determine if the buffer needs to be re-filled past the current draw range.
-      // We pass pointsToDraw.length as LineBuilder will use this for setDrawRange.
+
       this.lineBuilder.updateLine(line, pointsToDraw, pointsToDraw.length);
     }
 
@@ -148,30 +186,74 @@ export class TrailManager {
   }
 
   /**
-   * Generates smoothed points from position history using Catmull-Rom spline interpolation.
+   * Generates smoothed points using the Chaikin curve algorithm.
+   * This is a lightweight alternative to CatmullRom splines.
    *
-   * @param points - The original position points
-   * @returns An array of interpolated points forming a smooth curve
-   * @private
+   * @param points - Original control points
+   * @returns Smoothed points
    */
-  private generateSmoothedPoints(points: THREE.Vector3[]): THREE.Vector3[] {
+  private generateChaikinSmoothedPoints(
+    points: THREE.Vector3[],
+  ): THREE.Vector3[] {
+    if (points.length < 2) return [...points];
+
+    // Start with original points
+    let result = [...points];
+
+    // Number of smoothing iterations (1-2 usually sufficient)
+    const iterations = this.options.smoothingSubdivisions || 1;
+
+    // For each iteration of the algorithm
+    for (let iter = 0; iter < iterations; iter++) {
+      const smoothed: THREE.Vector3[] = [];
+
+      // Always keep the first point
+      smoothed.push(result[0].clone());
+
+      // For each segment between points, create two new points
+      for (let i = 0; i < result.length - 1; i++) {
+        const p0 = result[i];
+        const p1 = result[i + 1];
+
+        // Q is 1/4 along the segment from p0 to p1
+        const q = new THREE.Vector3().lerpVectors(p0, p1, 0.25);
+
+        // R is 3/4 along the segment from p0 to p1
+        const r = new THREE.Vector3().lerpVectors(p0, p1, 0.75);
+
+        smoothed.push(q, r);
+      }
+
+      // Always keep the last point
+      smoothed.push(result[result.length - 1].clone());
+
+      // Update result for next iteration or final output
+      result = smoothed;
+    }
+
+    return result;
+  }
+
+  /**
+   * Generates smoothed points using Three.js CatmullRom spline.
+   * More visually appealing but computationally expensive.
+   *
+   * @param points - Original control points
+   * @returns Smoothed points
+   */
+  private generateCatmullRomPoints(points: THREE.Vector3[]): THREE.Vector3[] {
+    // Use the existing getPoints method for CatmullRom
+    // It's more expensive but gives better results when quality matters
     if (points.length < 3) return [...points];
 
-    // Create a Catmull-Rom spline through the points
-    const curve = new THREE.CatmullRomCurve3(
-      points,
-      false, // Not a closed loop
-      "centripetal", // Curve type: good for preventing self-intersections/cusps
-      0.5, // Tension: 0.5 is default for centripetal
-    );
+    const curve = new THREE.CatmullRomCurve3(points, false, "centripetal", 0.5);
 
-    // Determine number of points in the final curve based on original segments and subdivisions
-    // More subdivisions = smoother curve between original history points
     const segments =
       Math.max(1, points.length - 1) *
-      (this.options.smoothingSubdivisions || 6);
+      (this.options.smoothingSubdivisions || 8);
 
-    // Generate points along the curve using the original parameterization
+    // Directly return the points for simplicity
+    // This is less optimized but used less frequently when the app is configured for performance
     return curve.getPoints(segments);
   }
 
@@ -188,16 +270,38 @@ export class TrailManager {
       this.trailLines.forEach((line, objectId) => {
         const history = this.positionHistory.get(objectId);
         if (history && history.length > 0) {
-          if (this.options.smoothLines && history.length > 2) {
-            const smoothedPoints = this.generateSmoothedPoints(history);
-            this.lineBuilder.updateLine(
-              line,
-              smoothedPoints,
-              smoothedPoints.length,
-            );
+          // Recalculate required buffer size based on new options
+          let requiredBufferSize: number;
+          const maxHistoryLength = history.length; // Current history length as reference
+          if (
+            this.options.smoothingMethod !== SmoothingMethod.NONE &&
+            maxHistoryLength >= 3
+          ) {
+            let multiplier =
+              this.options.smoothingMethod === SmoothingMethod.CATMULL_ROM
+                ? this.options.smoothingSubdivisions || 8
+                : (this.options.smoothingSubdivisions || 1) * 2; // For Chaikin, each iteration roughly doubles points
+
+            requiredBufferSize = Math.max(1, maxHistoryLength - 1) * multiplier;
           } else {
-            this.lineBuilder.updateLine(line, history, history.length);
+            requiredBufferSize = maxHistoryLength;
           }
+          requiredBufferSize = Math.max(1, requiredBufferSize);
+          this.lineBuilder.resizeLineBuffer(line, requiredBufferSize);
+
+          let pointsToDraw: THREE.Vector3[];
+          if (
+            history.length < 3 ||
+            this.options.smoothingMethod === SmoothingMethod.NONE
+          ) {
+            pointsToDraw = history; // Use raw history points
+          } else if (this.options.smoothingMethod === SmoothingMethod.CHAIKIN) {
+            pointsToDraw = this.generateChaikinSmoothedPoints(history);
+          } else {
+            // SmoothingMethod.CATMULL_ROM
+            pointsToDraw = this.generateCatmullRomPoints(history);
+          }
+          this.lineBuilder.updateLine(line, pointsToDraw, pointsToDraw.length);
         }
       });
     }
@@ -296,6 +400,7 @@ export class TrailManager {
     this.trailLines.clear();
     this.positionHistory.clear();
     this.lineBuilder.clear();
+    this.reusableSmoothedPointsArray.length = 0; // Clear reusable array on dispose
   }
 
   /**

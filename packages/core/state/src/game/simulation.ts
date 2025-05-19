@@ -48,7 +48,7 @@ const initialState: SimulationState = {
   },
   physicsEngine: "verlet",
   visualSettings: {
-    trailLengthMultiplier: 100,
+    trailLengthMultiplier: 2,
   },
   performanceProfile: "medium",
 };
