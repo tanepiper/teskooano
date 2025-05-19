@@ -20,38 +20,7 @@ import {
 import { celestialActions } from "./celestialActions";
 import { simulationStateService } from "./simulation";
 import { gameStateService } from "./stores";
-
-/**
- * Input data required to create a new celestial object.
- * Focuses on core blueprint properties.
- */
-export interface CelestialObjectCreationInput {
-  id: string;
-  name: string;
-  type: CelestialType;
-  realMass_kg: number;
-  realRadius_m: number;
-  parentId?: string;
-  orbit?: OrbitalParameters;
-  temperature?: number;
-  albedo?: number;
-  siderealRotationPeriod_s?: number;
-  axialTilt?: OSVector3;
-  atmosphere?: CelestialObject["atmosphere"];
-  surface?: CelestialObject["surface"];
-  properties?: CelestialSpecificPropertiesUnion;
-  seed?: string | number;
-  ignorePhysics?: boolean;
-}
-
-/**
- * Options for state clearing
- */
-export interface ClearStateOptions {
-  resetCamera?: boolean;
-  resetTime?: boolean;
-  resetSelection?: boolean;
-}
+import { CelestialObjectCreationInput, ClearStateOptions } from "./types";
 
 const _createCelestialObjectInternal = (
   data: CelestialObjectCreationInput,
@@ -88,20 +57,17 @@ const _createCelestialObjectInternal = (
   };
   celestialActions.addCelestialObject(coreObject);
 
-  /*
-  
   if (data.parentId) {
-    const currentHierarchy = gameStateService.getCelestialHierarchy(); 
+    const currentHierarchy = gameStateService.getCelestialHierarchy();
     const siblings = currentHierarchy[data.parentId] || [];
     if (!siblings.includes(data.id)) {
-      const newHierarchy = { 
+      const newHierarchy = {
         ...currentHierarchy,
         [data.parentId]: [...siblings, data.id],
       };
-      gameStateService.setCelestialHierarchy(newHierarchy); 
+      gameStateService.setCelestialHierarchy(newHierarchy);
     }
   }
-  */
 };
 
 /**

@@ -17,13 +17,16 @@
     - `simulationState`: An `atom` store holding a single `SimulationState` object.
     - `simulationActions`: An object containing functions to modify the `simulationState` atom (e.g., `setTimeScale`, `togglePause`, `selectObject`, `updateCamera`, `setPhysicsEngine`, `setTrailLengthMultiplier`).
 
-5.  **`game/physics.ts`**: Bridges the physics engine updates with the state store.
+5.  **`game/physicsSystemAdapter.ts`**: Defines the `PhysicsSystemAdapter` service.
+    This service acts as a crucial bridge between the application's core game state (managed by `GameStateService`) and the external physics engine (`@teskooano/core-physics`). Its responsibilities include:
 
-    - `getPhysicsBodies()`: Extracts an array of `PhysicsStateReal` objects from the `celestialObjectsStore` to feed into the `core/physics` engine.
-    - `updatePhysicsState(updatedBodiesReal)`: Takes the array of updated `PhysicsStateReal` objects from the physics engine. For each updated body, it:
-      - Calculates the new scaled position (`position: THREE.Vector3`) using `METERS_TO_SCENE_UNITS`.
-      - Calculates the new rotation quaternion (`rotation: THREE.Quaternion`) based on the object's `siderealRotationPeriod_s` and `axialTilt`.
-      - Updates the corresponding `CelestialObject` in the `celestialObjectsStore` using `setKey`, replacing the old `physicsStateReal`, `position`, and `rotation` with the newly calculated values. (_Note: It also updates a deprecated scaled `physicsState` property._)
+    - `physicsSystemAdapter.getPhysicsBodies()`: Retrieves an array of `PhysicsStateReal` objects representing all active (not destroyed or ignored) celestial bodies. This array is intended to be fed into the physics engine for a simulation step.
+    - `physicsSystemAdapter.getCelestialObjectsSnapshot()`: Provides a direct snapshot (a shallow copy) of the current `Record<string, CelestialObject>` from `GameStateService`. This is useful for parts of the simulation loop that need to build parameters based on the full state of all objects (e.g., for calculating radii, types for the physics engine).
+    - `physicsSystemAdapter.updateStateFromResult(result: SimulationStepResult)`: Takes a `SimulationStepResult` object (output from `@teskooano/core-physics`'s `updateSimulation` function). It then updates the `GameStateService` by:
+      - Applying the new `physicsStateReal` to each corresponding `CelestialObject`.
+      - Updating the `status` of objects listed in `result.destroyedIds` (e.g., to `DESTROYED` or `ANNIHILATED` based on `result.destructionEvents`).
+      - Updating the global acceleration vectors via `gameStateService.updateAccelerationVectors(result.accelerations)`.
+      - This method efficiently updates the game state, typically by preparing a new map of all celestial objects and calling `gameStateService.setAllCelestialObjects()`.
 
 6.  **`game/celestialActions.ts`**: Provides functions for CRUD operations on celestial objects within the state stores.
 
@@ -40,7 +43,13 @@
       - `createSolarSystem(data)`: Creates the central star. Calculates initial scaled properties and physics states (star is stationary). Uses `celestialActions.addCelestialObject`.
       - `addCelestial(data)`: Creates orbiting bodies (planets, moons). Calculates initial `PhysicsStateReal` (position and velocity) based on `OrbitalParameters` and parent state using helpers from `core/physics`. Calculates scaled properties. Uses `celestialActions.addCelestialObject`.
 
-8.  **`game/panelState.ts` & `game/panelRegistry.ts`**: Define stores and registration logic apparently related to UI panels (likely for debug/control panels).
+8.  **`game/panel.service.ts`**: Defines the `PanelService` singleton.
+    This service consolidates UI panel management. Its responsibilities include:
+    - Registering and unregistering panel instances by ID (e.g., `panelService.registerPanelInstance(id, instance)`).
+    - Providing access to registered panel instances (e.g., `panelService.getPanelInstance(id)`).
+    - Managing the state of the currently active DockView panel API:
+      - Exposing an `activePanelApi$: Observable<DockviewPanelApi | null>` for reactive updates.
+      - Providing methods `setActivePanelApi(api)` and `getActivePanelApi()` for imperative state management of the active panel.
 
 ## Key Design Principles
 
@@ -48,6 +57,9 @@
 - **Single Source of Truth**: Uses RxJS (`celestialObjects$`, `simulationState$`) to provide a central, reactive state.
 - **Unidirectional Data Flow**: State is modified by dispatching actions, which update the stores. UI components and other services subscribe to these stores to react to changes.
 
-**Dependencies**: `RxJS`, `@teskooano/data-types`, `@teskooano/core-math`, `@teskooano/core-physics`, `three` (for rotation calculation and deprecated scaled state properties within `game/physics.ts` and `game/factory.ts`).
+**Dependencies**: `RxJS`, `@teskooano/data-types`, `@teskooano/core-math`, `@teskooano/core-physics` (for `SimulationStepResult` type), `three` (potentially, if any types from it remain, though ideally minimized in core-state).
 
-**Areas for Review**: The remaining usage of `THREE.Vector3` and `THREE.Quaternion` within `game/physics.ts` and `game/factory.ts` should be reviewed to ensure `core/state` remains renderer-agnostic. Ideally, rotation should also be represented by a core type (e.g., a core Quaternion class or Euler angles) and converted by the renderer.
+**Areas for Review**:
+
+- The ad-hoc `rotation: THREE.Quaternion` property being added to celestial objects in `app/simulation/src/loop.ts` should be reviewed. `RendererStateAdapter` is responsible for calculating renderable rotations, and `CelestialObject` type does not formally include this Three.js-specific rotation. Ensure this doesn't cause conflicts or represent a misplaced responsibility.
+- Ensure type paths like `@teskooano/core-physics` are correctly resolved in `tsconfig.json` for `packages/core/state`.

@@ -17,7 +17,7 @@ import { FormatUtils } from "./utils/formatters";
 import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 
-import { celestialActions } from "@teskooano/core-state";
+import { actions } from "@teskooano/core-state";
 import { Subscription, fromEvent, merge } from "rxjs";
 import { map, distinctUntilChanged, tap, filter } from "rxjs/operators";
 import { template } from "./CelestialUniforms.template";
@@ -444,7 +444,7 @@ export class CelestialUniformsEditor
               propertyPathToUniform,
               newValue, // Use the numeric value directly
             );
-            celestialActions.updateCelestialObject(celestialId, {
+            actions.updateCelestialObject(celestialId, {
               properties: updatedProperties,
             });
           } else {
@@ -501,7 +501,7 @@ export class CelestialUniformsEditor
               propertyPathToUniform,
               newColor,
             );
-            celestialActions.updateCelestialObject(celestialId, {
+            actions.updateCelestialObject(celestialId, {
               properties: updatedProperties,
             });
           } else {

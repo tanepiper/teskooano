@@ -2,7 +2,7 @@ import {
   celestialObjects$,
   getCelestialObjects,
   getSimulationState,
-  panelRegistry,
+  panelService,
   simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
@@ -764,7 +764,7 @@ export class CompositeEnginePanel
 
     this._placeholderManager?.dispose();
 
-    panelRegistry.unregisterPanel(this._api?.id ?? "unknown");
+    panelService.unregisterPanelInstance(this._api?.id ?? "unknown");
   }
 
   private handleExternalPanelRemoval(panelId: string): void {

@@ -1,11 +1,19 @@
 import { simulationStateService } from "./simulation";
 import { gameStateService } from "./stores";
-import { getPhysicsBodies, updatePhysicsState } from "./physics";
+import { physicsSystemAdapter } from "./PhysicsSystemAdapter";
 import { celestialActions } from "./celestialActions";
-import { celestialFactory, type ClearStateOptions } from "./factory";
+import { celestialFactory } from "./factory";
 import { renderableStore } from "./renderableStore";
+import { panelService } from "./PanelService";
+import { ClearStateOptions } from "./types";
 
-export { gameStateService, simulationStateService, renderableStore };
+export {
+  gameStateService,
+  simulationStateService,
+  renderableStore,
+  physicsSystemAdapter,
+  panelService,
+};
 
 export const currentSeed$ = gameStateService.currentSeed$;
 export const updateSeed = gameStateService.updateSeed.bind(gameStateService);
@@ -49,6 +57,18 @@ export const setSimulationState = simulationStateService.setState.bind(
   simulationStateService,
 );
 
+export const activePanelApi$ = panelService.activePanelApi$;
+export const setActivePanelApi =
+  panelService.setActivePanelApi.bind(panelService);
+export const getActivePanelApi =
+  panelService.getActivePanelApi.bind(panelService);
+export const registerPanelInstance =
+  panelService.registerPanelInstance.bind(panelService);
+export const unregisterPanelInstance =
+  panelService.unregisterPanelInstance.bind(panelService);
+export const getPanelInstance =
+  panelService.getPanelInstance.bind(panelService);
+
 export const actions = {
   setTimeScale: simulationStateService.setTimeScale.bind(
     simulationStateService,
@@ -80,9 +100,8 @@ export const actions = {
   updateAccelerationVectors:
     gameStateService.updateAccelerationVectors.bind(gameStateService),
   updateSeed: gameStateService.updateSeed.bind(gameStateService),
+  setActivePanelApi: panelService.setActivePanelApi.bind(panelService),
 };
-
-export { getPhysicsBodies, updatePhysicsState };
 
 export type { ClearStateOptions };
 export type {
