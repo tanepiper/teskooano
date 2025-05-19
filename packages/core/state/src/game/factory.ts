@@ -18,7 +18,7 @@ import {
   SpectralClass,
 } from "@teskooano/data-types";
 import { celestialActions } from "./celestialActions";
-import { getSimulationState, setSimulationState } from "./simulation";
+import { simulationStateService } from "./simulation";
 import { gameStateService } from "./stores";
 
 /**
@@ -122,7 +122,7 @@ export const celestialFactory = {
     gameStateService.setAllCelestialObjects({});
     gameStateService.setAllCelestialHierarchy({});
 
-    const currentState = getSimulationState();
+    const currentState = simulationStateService.getCurrentState();
 
     const newState: any = { ...currentState };
 
@@ -145,7 +145,7 @@ export const celestialFactory = {
       };
     }
 
-    setSimulationState(newState);
+    simulationStateService.setState(newState);
 
     document.dispatchEvent(
       new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {

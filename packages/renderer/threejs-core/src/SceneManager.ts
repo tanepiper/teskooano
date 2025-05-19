@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
-import { getSimulationState } from "@teskooano/core-state";
+import { simulationStateService } from "@teskooano/core-state";
 import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
+import { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Default FOV value if not provided or found in state.
@@ -49,9 +50,8 @@ export class SceneManager {
   ) {
     this.scene = new THREE.Scene();
 
-    const initialSimState = getSimulationState();
-    const initialFov =
-      options.fov ?? initialSimState.camera?.fov ?? DEFAULT_FOV;
+    const initialState = simulationStateService.getCurrentState();
+    const initialFov = options.fov ?? initialState.camera?.fov ?? DEFAULT_FOV;
     this.fov = initialFov;
 
     this.camera = new THREE.PerspectiveCamera(
@@ -61,15 +61,20 @@ export class SceneManager {
       10000000,
     );
 
-    const { camera } = initialSimState;
-    this.camera.position.set(
-      camera.position.x,
-      camera.position.y,
-      camera.position.z,
-    );
-    this.camera.lookAt(camera.target.x, camera.target.y, camera.target.z);
+    if (initialState && initialState.camera) {
+      this.camera.position.set(
+        initialState.camera.position.x,
+        initialState.camera.position.y,
+        initialState.camera.position.z,
+      );
+      this.camera.lookAt(
+        initialState.camera.target.x,
+        initialState.camera.target.y,
+        initialState.camera.target.z,
+      );
+    }
 
-    const profile = initialSimState.performanceProfile;
+    const profile = initialState.performanceProfile;
     let powerPref: "default" | "high-performance" | "low-power" = "default";
     switch (profile) {
       case "low":

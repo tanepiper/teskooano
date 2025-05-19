@@ -8,7 +8,7 @@ import {
   type AsteroidFieldProperties as CentralAsteroidFieldProperties,
 } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import { getSimulationState } from "@teskooano/core-state";
+import { simulationStateService } from "@teskooano/core-state";
 
 const asteroidVertexShader = `
   attribute float size;
@@ -375,7 +375,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
   update(time: number): void {
     const currentTime = Date.now();
 
-    const timeScale = getSimulationState().timeScale;
+    const timeScale = simulationStateService.getCurrentState().timeScale;
 
     let timeDelta: number;
     let timeResetDetected = false;

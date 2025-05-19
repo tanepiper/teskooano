@@ -1,4 +1,4 @@
-import { getSimulationState, setSimulationState } from "@teskooano/core-state";
+import { simulationStateService } from "@teskooano/core-state";
 import * as THREE from "three";
 
 export interface RendererStats {
@@ -174,7 +174,7 @@ export class AnimationLoop {
       const memoryInfo = (window.performance as any)?.memory;
       const usedMemory = memoryInfo?.usedJSHeapSize;
 
-      const currentState = getSimulationState();
+      const currentState = simulationStateService.getCurrentState();
 
       if (
         currentState.renderer?.fps !== this.currentFPS ||
@@ -182,7 +182,7 @@ export class AnimationLoop {
         currentState.renderer?.triangles !== triangles ||
         currentState.renderer?.memory?.usedJSHeapSize !== usedMemory
       ) {
-        setSimulationState({
+        simulationStateService.setState({
           ...currentState,
           renderer: {
             ...currentState.renderer,

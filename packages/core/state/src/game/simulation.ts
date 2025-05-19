@@ -1,152 +1,151 @@
-import { BehaviorSubject } from "rxjs";
 import { OSVector3 } from "@teskooano/core-math";
-import { AU_METERS, SCALE } from "@teskooano/data-types";
-
-export interface CameraState {
-  position: OSVector3;
-  target: OSVector3;
-  fov: number;
-}
-
-export type PhysicsEngineType = "euler" | "symplectic" | "verlet";
-
-export type PerformanceProfileType = "low" | "medium" | "high" | "cosmic";
-
-export interface VisualSettingsState {
-  trailLengthMultiplier: number;
-}
-
-export interface SimulationState {
-  time: number;
-  timeScale: number;
-  paused: boolean;
-  selectedObject: string | null;
-  focusedObjectId: string | null;
-  camera: CameraState;
-  physicsEngine: PhysicsEngineType;
-  visualSettings: VisualSettingsState;
-  renderer?: {
-    fps?: number;
-    drawCalls?: number;
-    triangles?: number;
-    memory?: { usedJSHeapSize?: number };
-  };
-  performanceProfile: PerformanceProfileType;
-}
-
-const initialState: SimulationState = {
-  time: 0,
-  timeScale: 1,
-  paused: false,
-  selectedObject: null,
-  focusedObjectId: null,
-  camera: {
-    position: new OSVector3(0, 100, 100),
-    target: new OSVector3(0, 0, 0),
-    fov: 75,
-  },
-  physicsEngine: "verlet",
-  visualSettings: {
-    trailLengthMultiplier: 2,
-  },
-  performanceProfile: "medium",
-};
-
-const _simulationState = new BehaviorSubject<SimulationState>(initialState);
-
-export const simulationState$ = _simulationState.asObservable();
+import { BehaviorSubject, Observable } from "rxjs";
+import type {
+  PerformanceProfileType,
+  PhysicsEngineType,
+  SimulationState,
+  CameraState,
+  VisualSettingsState,
+} from "./types";
 
 /**
- * Actions for updating simulation state
+ * @class SimulationStateService
+ * @description Manages the simulation's control state including time, pause status,
+ * selected objects, camera, physics engine, and visual settings.
  */
-export const simulationActions = {
-  setTimeScale: (scale: number) => {
-    _simulationState.next({
-      ..._simulationState.getValue(),
+export class SimulationStateService {
+  private readonly _initialState: SimulationState = {
+    time: 0,
+    timeScale: 1,
+    paused: false,
+    selectedObject: null,
+    focusedObjectId: null,
+    camera: {
+      position: new OSVector3(0, 100, 100),
+      target: new OSVector3(0, 0, 0),
+      fov: 75,
+    },
+    physicsEngine: "verlet",
+    visualSettings: {
+      trailLengthMultiplier: 2,
+    },
+    performanceProfile: "medium",
+  };
+
+  private readonly _simulationState: BehaviorSubject<SimulationState>;
+  /** Observable for the current simulation state. */
+  public readonly simulationState$: Observable<SimulationState>;
+
+  constructor() {
+    this._simulationState = new BehaviorSubject<SimulationState>(
+      this._initialState,
+    );
+    this.simulationState$ = this._simulationState.asObservable();
+  }
+
+  /** Gets the current complete simulation state object. */
+  public getCurrentState(): SimulationState {
+    return this._simulationState.getValue();
+  }
+
+  /**
+   * Sets the entire simulation state. Use with caution.
+   * Prefer specific action methods for partial updates.
+   * @param newState The complete new simulation state.
+   */
+  public setState(newState: SimulationState): void {
+    this._simulationState.next(newState);
+  }
+
+  public setTimeScale(scale: number): void {
+    this.setState({
+      ...this.getCurrentState(),
       timeScale: scale,
     });
-  },
+  }
 
-  togglePause: () => {
-    _simulationState.next({
-      ..._simulationState.getValue(),
-      paused: !_simulationState.getValue().paused,
+  public togglePause(): void {
+    const currentState = this.getCurrentState();
+    this.setState({
+      ...currentState,
+      paused: !currentState.paused,
     });
-  },
+  }
 
-  resetTime: () => {
-    const currentState = _simulationState.getValue();
-    _simulationState.next({
+  public resetTime(): void {
+    const currentState = this.getCurrentState();
+    this.setState({
       ...currentState,
       time: 0,
       timeScale: 1,
       paused: false,
     });
-  },
+  }
 
-  stepTime: (dt: number = 1) => {
-    const currentState = _simulationState.getValue();
+  public stepTime(dt: number = 1): void {
+    const currentState = this.getCurrentState();
     if (currentState.paused) {
-      _simulationState.next({
+      this.setState({
         ...currentState,
         time: currentState.time + dt,
       });
     } else {
       console.warn(
-        "[simulationActions] Cannot step time while simulation is running.",
+        "[SimulationStateService] Cannot step time while simulation is running.",
       );
     }
-  },
+  }
 
-  selectObject: (objectId: string | null) => {
-    _simulationState.next({
-      ..._simulationState.getValue(),
+  public selectObject(objectId: string | null): void {
+    this.setState({
+      ...this.getCurrentState(),
       selectedObject: objectId,
     });
-  },
+  }
 
-  setFocusedObject: (objectId: string | null) => {
-    _simulationState.next({
-      ..._simulationState.getValue(),
+  public setFocusedObject(objectId: string | null): void {
+    this.setState({
+      ...this.getCurrentState(),
       focusedObjectId: objectId,
     });
-  },
+  }
 
-  updateCamera: (position: OSVector3, target: OSVector3) => {
-    _simulationState.next({
-      ..._simulationState.getValue(),
+  public updateCamera(position: OSVector3, target: OSVector3): void {
+    const currentState = this.getCurrentState();
+    this.setState({
+      ...currentState,
       camera: {
-        ..._simulationState.getValue().camera,
+        ...currentState.camera,
         position,
         target,
       },
     });
-  },
+  }
 
-  setPhysicsEngine: (engine: PhysicsEngineType) => {
-    _simulationState.next({
-      ..._simulationState.getValue(),
+  public setPhysicsEngine(engine: PhysicsEngineType): void {
+    this.setState({
+      ...this.getCurrentState(),
       physicsEngine: engine,
     });
-  },
+  }
 
-  setPerformanceProfile: (profile: PerformanceProfileType) => {
-    const currentState = _simulationState.getValue();
+  public setPerformanceProfile(profile: PerformanceProfileType): void {
+    const currentState = this.getCurrentState();
     if (profile !== currentState.performanceProfile) {
-      _simulationState.next({
+      this.setState({
         ...currentState,
         performanceProfile: profile,
       });
     }
-  },
+  }
 
-  setTrailLengthMultiplier: (multiplier: number) => {
+  public setTrailLengthMultiplier(multiplier: number): void {
     const validatedMultiplier = Math.max(0, multiplier);
-    const currentState = _simulationState.getValue();
+    const currentState = this.getCurrentState();
     if (
       validatedMultiplier !== currentState.visualSettings.trailLengthMultiplier
     ) {
-      _simulationState.next({
+      this.setState({
         ...currentState,
         visualSettings: {
           ...currentState.visualSettings,
@@ -155,13 +154,11 @@ export const simulationActions = {
       });
     } else {
       console.warn(
-        `[simulationActions] Multiplier unchanged (${validatedMultiplier}), skipping state set.`,
+        `[SimulationStateService] Multiplier unchanged (${validatedMultiplier}), skipping state set.`,
       );
     }
-  },
-};
+  }
+}
 
-export const getSimulationState = () => _simulationState.getValue();
-
-export const setSimulationState = (newState: SimulationState) =>
-  _simulationState.next(newState);
+/** Singleton instance of the SimulationStateService. */
+export const simulationStateService = new SimulationStateService();

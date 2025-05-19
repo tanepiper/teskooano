@@ -1,7 +1,7 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { CustomEvents } from "@teskooano/data-types";
 import gsap from "gsap";
-import { getSimulationState, setSimulationState } from "@teskooano/core-state";
+import { simulationStateService } from "@teskooano/core-state";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
@@ -51,62 +51,97 @@ export class ControlsManager {
   private _originalDampingEnabled: boolean = false;
   private _originalDampingFactor: number = 0.05;
 
+  private lastCameraPosition = new THREE.Vector3();
+  private lastCameraTarget = new THREE.Vector3();
+  private changeThreshold = 0.001; // Minimum change to trigger state update
+  private rendererElement: HTMLElement;
+
   /**
    * Creates an instance of ControlsManager.
    * @param {THREE.PerspectiveCamera} camera The camera to control.
    * @param {HTMLElement} domElement The HTML element for event listeners (typically the canvas).
    */
-  constructor(camera: THREE.PerspectiveCamera, domElement: HTMLElement) {
+  constructor(camera: THREE.PerspectiveCamera, rendererElement: HTMLElement) {
     this.camera = camera;
-
-    this.controls = new OrbitControls(camera, domElement);
-
+    this.rendererElement = rendererElement;
+    this.controls = new OrbitControls(camera, rendererElement);
     this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.1;
+    this.controls.dampingFactor = 0.05;
     this.controls.screenSpacePanning = false;
-    this.controls.minDistance = 0.00001;
-    this.controls.maxDistance = 5000;
-    this.controls.maxPolarAngle = Math.PI;
-    this.controls.enableZoom = true;
-    this.controls.zoomSpeed = 0.7;
-    this.controls.enableRotate = true;
-    this.controls.rotateSpeed = 0.5;
-    this.controls.enablePan = true;
-    this.controls.panSpeed = 1.0;
+    this.controls.minDistance = 1;
+    this.controls.maxDistance = 1e7; // Adjust as needed
+    this.controls.maxPolarAngle = Math.PI; // Allow looking from underneath
 
-    this.controls.addEventListener("change", () => {
-      if (this.controls.enabled && !this.isTransitioning) {
-        const position = camera.position;
-        const target = this.controls.target;
+    const initialState = simulationStateService.getCurrentState();
+    if (initialState && initialState.camera) {
+      this.camera.position.set(
+        initialState.camera.position.x,
+        initialState.camera.position.y,
+        initialState.camera.position.z,
+      );
+      this.controls.target.set(
+        initialState.camera.target.x,
+        initialState.camera.target.y,
+        initialState.camera.target.z,
+      );
+      this.lastCameraPosition.copy(this.camera.position);
+      this.lastCameraTarget.copy(this.controls.target);
+    }
 
-        setSimulationState({
-          ...getSimulationState(),
-          camera: {
-            ...getSimulationState().camera,
-            position: new OSVector3(position.x, position.y, position.z),
-            target: new OSVector3(target.x, target.y, target.z),
-          },
-        });
-
-        // Only dispatch USER_CAMERA_MANIPULATION if we are NOT currently following an object.
-        // If we are following, the change is programmatic due to the follow logic, not direct user input.
-        if (!this.followingTargetObject) {
-          const userManipulationEvent = new CustomEvent(
-            CustomEvents.USER_CAMERA_MANIPULATION,
-            {
-              detail: {
-                position: position.clone(),
-                target: target.clone(),
-              },
-              bubbles: true,
-              composed: true,
-            },
-          );
-          document.dispatchEvent(userManipulationEvent);
-        }
-      }
-    });
+    this.controls.addEventListener("change", this.onControlsChange);
+    this.controls.addEventListener("start", this.onControlsStart);
+    this.controls.addEventListener("end", this.onControlsEnd);
   }
+
+  private onControlsStart = () => {
+    this.isTransitioning = true; // User interaction is a type of transition
+  };
+
+  private onControlsEnd = () => {
+    this.isTransitioning = false;
+    this.handleStateUpdate(true); // Force update on interaction end
+  };
+
+  private onControlsChange = () => {
+    if (this.isTransitioning) {
+      // Only update if a transition (manual or programmatic) is active
+      this.handleStateUpdate();
+    }
+  };
+
+  private handleStateUpdate = (forceUpdate: boolean = false) => {
+    const positionChanged =
+      this.camera.position.distanceToSquared(this.lastCameraPosition) >
+      this.changeThreshold * this.changeThreshold;
+    const targetChanged =
+      this.controls.target.distanceToSquared(this.lastCameraTarget) >
+      this.changeThreshold * this.changeThreshold;
+
+    if (forceUpdate || positionChanged || targetChanged) {
+      const currentSimState = simulationStateService.getCurrentState();
+      const newPosOS = new OSVector3(
+        this.camera.position.x,
+        this.camera.position.y,
+        this.camera.position.z,
+      );
+      const newTargetOS = new OSVector3(
+        this.controls.target.x,
+        this.controls.target.y,
+        this.controls.target.z,
+      );
+
+      if (currentSimState.focusedObjectId !== null) {
+        simulationStateService.setFocusedObject(null);
+      }
+      simulationStateService.updateCamera(newPosOS, newTargetOS);
+
+      this.lastCameraPosition.copy(this.camera.position);
+      this.lastCameraTarget.copy(this.controls.target);
+
+      const event = new Event("camera-transition-complete");
+      this.rendererElement.dispatchEvent(event);
+    }
+  };
 
   /**
    * Returns whether the camera is currently undergoing an animated transition.
@@ -358,14 +393,10 @@ export class ControlsManager {
       this.controls.target.copy(target);
       this.controls.update();
 
-      setSimulationState({
-        ...getSimulationState(),
-        camera: {
-          ...getSimulationState().camera,
-          position: new OSVector3(position.x, position.y, position.z),
-          target: new OSVector3(target.x, target.y, target.z),
-        },
-      });
+      simulationStateService.updateCamera(
+        new OSVector3(position.x, position.y, position.z),
+        new OSVector3(target.x, target.y, target.z),
+      );
 
       if (this.followingTargetObject) {
         this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
@@ -445,7 +476,7 @@ export class ControlsManager {
       this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
 
       // Get simulation state to check if it's paused
-      const simulationState = getSimulationState();
+      const simulationState = simulationStateService.getCurrentState();
       const isPaused = simulationState.paused;
 
       // Only apply position updates when the simulation is running

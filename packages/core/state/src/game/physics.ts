@@ -2,7 +2,7 @@ import type { CelestialObject, PhysicsStateReal } from "@teskooano/data-types";
 import { AU_METERS, SCALE } from "@teskooano/data-types";
 import * as THREE from "three";
 import { renderableActions } from "./renderableStore";
-import { getSimulationState } from "./simulation";
+import { simulationStateService } from "./simulation";
 import { gameStateService } from "./stores";
 
 let updateCounter = 0;
@@ -50,7 +50,7 @@ export const updatePhysicsState = (
       existingObject.siderealRotationPeriod_s !== 0 &&
       existingObject.axialTilt
     ) {
-      const currentTime = getSimulationState().time;
+      const currentTime = simulationStateService.getCurrentState().time;
       const rotationSpeed =
         (2 * Math.PI) / existingObject.siderealRotationPeriod_s;
       const currentRotationAngle =

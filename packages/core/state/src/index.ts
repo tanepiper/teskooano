@@ -7,8 +7,4 @@ export * from "./game/factory";
 export * from "./game/celestialActions";
 export * from "./game/panelRegistry";
 export * from "./game/renderableStore";
-export type { PhysicsEngineType } from "./game/simulation";
-export {
-  type PerformanceProfileType,
-  simulationActions,
-} from "./game/simulation";
+export * from "./game/types";

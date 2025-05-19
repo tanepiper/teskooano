@@ -1,18 +1,11 @@
-import {
-  simulationState$,
-  simulationActions,
-  getSimulationState,
-  setSimulationState,
-} from "./simulation";
-
+import { simulationStateService } from "./simulation";
 import { gameStateService } from "./stores";
 import { getPhysicsBodies, updatePhysicsState } from "./physics";
 import { celestialActions } from "./celestialActions";
 import { celestialFactory, type ClearStateOptions } from "./factory";
-
 import { renderableObjects$, renderableActions } from "./renderableStore";
 
-export { gameStateService };
+export { gameStateService, simulationStateService };
 
 export const currentSeed$ = gameStateService.currentSeed$;
 export const updateSeed = gameStateService.updateSeed.bind(gameStateService);
@@ -48,8 +41,40 @@ export const getAccelerationVectors =
 export const getChildrenOfObject =
   gameStateService.getChildrenOfObject.bind(gameStateService);
 
+export const simulationState$ = simulationStateService.simulationState$;
+export const getSimulationState = simulationStateService.getCurrentState.bind(
+  simulationStateService,
+);
+export const setSimulationState = simulationStateService.setState.bind(
+  simulationStateService,
+);
+
 export const actions = {
-  ...simulationActions,
+  setTimeScale: simulationStateService.setTimeScale.bind(
+    simulationStateService,
+  ),
+  togglePause: simulationStateService.togglePause.bind(simulationStateService),
+  resetTime: simulationStateService.resetTime.bind(simulationStateService),
+  stepTime: simulationStateService.stepTime.bind(simulationStateService),
+  selectObject: simulationStateService.selectObject.bind(
+    simulationStateService,
+  ),
+  setFocusedObject: simulationStateService.setFocusedObject.bind(
+    simulationStateService,
+  ),
+  updateCamera: simulationStateService.updateCamera.bind(
+    simulationStateService,
+  ),
+  setPhysicsEngine: simulationStateService.setPhysicsEngine.bind(
+    simulationStateService,
+  ),
+  setPerformanceProfile: simulationStateService.setPerformanceProfile.bind(
+    simulationStateService,
+  ),
+  setTrailLengthMultiplier:
+    simulationStateService.setTrailLengthMultiplier.bind(
+      simulationStateService,
+    ),
   ...celestialActions,
   ...celestialFactory,
   ...renderableActions,
@@ -58,13 +83,13 @@ export const actions = {
   updateSeed: gameStateService.updateSeed.bind(gameStateService),
 };
 
-export {
-  simulationState$,
-  getSimulationState,
-  setSimulationState,
-  getPhysicsBodies,
-  updatePhysicsState,
-  renderableObjects$,
-};
+export { getPhysicsBodies, updatePhysicsState, renderableObjects$ };
 
 export type { ClearStateOptions };
+export type {
+  SimulationState,
+  CameraState,
+  PhysicsEngineType,
+  PerformanceProfileType,
+  VisualSettingsState,
+} from "./types";
