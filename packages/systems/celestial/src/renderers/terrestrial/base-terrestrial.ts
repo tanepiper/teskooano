@@ -62,38 +62,22 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     );
     const level0: LODLevel = { object: highDetailGroup, distance: 0 };
 
-    const mediumSegments = 32;
-    const mediumGeometry = new THREE.SphereGeometry(
+    const mediumDetailGroup = this._createMediumDetailGroup(
+      object,
       baseRadius,
-      mediumSegments,
-      mediumSegments,
+      scale,
     );
-    const mediumMaterial = new THREE.MeshStandardMaterial({
-      color: this.materialService.getBaseColor(object),
-      roughness: 0.8,
-      metalness: 0.1,
-    });
-    const mediumMesh = new THREE.Mesh(mediumGeometry, mediumMaterial);
-    mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
-    const level1Group = new THREE.Group();
-    level1Group.add(mediumMesh);
-    const level1: LODLevel = { object: level1Group, distance: 50 * scale };
+    const level1: LODLevel = {
+      object: mediumDetailGroup,
+      distance: 50 * scale,
+    };
 
-    const lowSegments = 16;
-    const lowGeometry = new THREE.SphereGeometry(
+    const lowDetailGroup = this._createLowDetailGroup(
+      object,
       baseRadius,
-      lowSegments,
-      lowSegments,
+      scale,
     );
-    const lowMaterial = new THREE.MeshBasicMaterial({
-      color: this.materialService.getBaseColor(object),
-      wireframe: true,
-    });
-    const lowMesh = new THREE.Mesh(lowGeometry, lowMaterial);
-    lowMesh.name = `${object.celestialObjectId}-low-lod`;
-    const level2Group = new THREE.Group();
-    level2Group.add(lowMesh);
-    const level2: LODLevel = { object: level2Group, distance: 200 * scale };
+    const level2: LODLevel = { object: lowDetailGroup, distance: Infinity };
 
     const levels = [level0, level1, level2];
     return levels;
@@ -166,6 +150,63 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       );
     }
     return group;
+  }
+
+  /**
+   * Helper to create the medium-detail group (Level 1 LOD).
+   * @internal
+   */
+  private _createMediumDetailGroup(
+    object: RenderableCelestialObject,
+    baseRadius: number,
+    scale: number,
+  ): THREE.Group {
+    const mediumSegments = 32;
+    const mediumGeometry = new THREE.SphereGeometry(
+      baseRadius,
+      mediumSegments,
+      mediumSegments,
+    );
+    const mediumMaterial = new THREE.MeshStandardMaterial({
+      color: this.materialService.getBaseColor(object),
+      roughness: 0.8,
+      metalness: 0.1,
+    });
+    const mediumMesh = new THREE.Mesh(mediumGeometry, mediumMaterial);
+    mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
+    const level1Group = new THREE.Group();
+    level1Group.add(mediumMesh);
+    return level1Group;
+  }
+
+  /**
+   * Helper to create the low-detail group (Level 2 LOD).
+   * @internal
+   */
+  private _createLowDetailGroup(
+    object: RenderableCelestialObject,
+    baseRadius: number,
+    scale: number,
+  ): THREE.Group {
+    const lowSegments = 8;
+    const lowLodEffectiveRadius = baseRadius * 0.01;
+    const lowGeometry = new THREE.SphereGeometry(
+      lowLodEffectiveRadius,
+      lowSegments,
+      lowSegments,
+    );
+    const lowMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+    });
+    lowMaterial.depthTest = false;
+
+    const lowMesh = new THREE.Mesh(lowGeometry, lowMaterial);
+    lowMesh.name = `${object.celestialObjectId}-low-lod`;
+    lowMesh.renderOrder = 999;
+
+    const level2Group = new THREE.Group();
+    level2Group.add(lowMesh);
+    return level2Group;
   }
 
   /**
