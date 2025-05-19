@@ -10,23 +10,25 @@ import { BehaviorSubject } from "rxjs";
 
 /**
  * Manages camera operations specifically for a CompositeEnginePanel instance.
- * It acts as an intermediary between the panel and the global CameraManager,
- * adding panel-specific context like API ID for logging.
+ * It acts as an intermediary between the panel and a panel-specific CameraManager instance.
  */
 export class EngineCameraManager {
   private _cameraManager: CameraManager | undefined;
   private _panelApiId: string | undefined;
   private _panelInstance: CompositeEnginePanel;
 
-  constructor(panelInstance: CompositeEnginePanel, panelApiId?: string) {
-    this._cameraManager =
-      pluginManager.getManagerInstance<CameraManager>("camera-manager");
+  constructor(
+    panelInstance: CompositeEnginePanel,
+    cameraManagerInstance: CameraManager,
+    panelApiId?: string,
+  ) {
     this._panelInstance = panelInstance;
+    this._cameraManager = cameraManagerInstance;
     this._panelApiId = panelApiId;
 
     if (!this._cameraManager) {
       console.error(
-        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] Failed to get CameraManager instance! Camera controls will be unavailable.`,
+        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] CameraManager instance was not provided! Camera controls will be unavailable.`,
       );
     }
   }

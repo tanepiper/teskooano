@@ -36,6 +36,7 @@ import {
 import { EngineCameraManager } from "./EngineCameraManager"; // Added import
 import { PlaceholderManager } from "./PlaceholderManager"; // Added import
 import { CompositeEngineState, CompositePanelParams } from "./types.js";
+import { CameraManager } from "../../camera-manager/CameraManager"; // Corrected import path
 
 /**
  * A Dockview panel component that combines a 3D engine view (`ModularSpaceRenderer`)
@@ -71,6 +72,7 @@ export class CompositeEnginePanel
   private _simulationStateUnsubscribe: Subscription | null = null;
   private _isInitialized = false;
 
+  private _cameraManagerInstance: CameraManager | undefined = undefined;
   private _engineCameraManager: EngineCameraManager | undefined = undefined;
 
   private _viewStateSubject: BehaviorSubject<CompositeEngineState>;
@@ -547,7 +549,28 @@ export class CompositeEnginePanel
    * @returns True if successful, false otherwise.
    */
   private _initializeCameraSystems(): boolean {
-    this._engineCameraManager = new EngineCameraManager(this, this._api?.id);
+    // Create the panel-specific CameraManager instance
+    this._cameraManagerInstance = new CameraManager();
+
+    // Pass the instance to EngineCameraManager
+    this._engineCameraManager = new EngineCameraManager(
+      this,
+      this._cameraManagerInstance, // Pass the new instance
+      this._api?.id,
+    );
+
+    if (!this._cameraManagerInstance) {
+      console.error(
+        `[CompositePanel ${this._api?.id}] Failed to create _cameraManagerInstance.`,
+      );
+      return false;
+    }
+    if (!this._engineCameraManager) {
+      console.error(
+        `[CompositePanel ${this._api?.id}] Failed to create _engineCameraManager with the new CameraManager instance.`,
+      );
+      return false;
+    }
 
     return true;
   }
@@ -555,15 +578,21 @@ export class CompositeEnginePanel
   /**
    * Sets dependencies for the main CameraManager, initializes its position,
    * and subscribes to its state changes to update the panel's view state.
-   * Assumes _renderer, _cameraManager, and _viewStateSubject are initialized.
+   * Assumes _renderer, _cameraManagerInstance, and _viewStateSubject are initialized.
    * @returns True if successful, false otherwise.
    */
   private _configureAndLinkCamera(): boolean {
-    if (!this._renderer || !this._engineCameraManager) return false;
+    if (
+      !this._renderer ||
+      !this._cameraManagerInstance ||
+      !this._engineCameraManager
+    )
+      return false; // Check _cameraManagerInstance
 
     const initialViewState = this._viewStateSubject.getValue();
     try {
-      this._engineCameraManager.setDependencies({
+      // Set dependencies on the panel-specific CameraManager instance
+      this._cameraManagerInstance.setDependencies({
         renderer: this._renderer,
         initialFov: initialViewState.fov,
         initialFocusedObjectId: initialViewState.focusedObjectId,
@@ -574,9 +603,11 @@ export class CompositeEnginePanel
         },
       });
 
-      this._engineCameraManager.initializeCameraPosition();
+      // Initialize position via the panel-specific CameraManager instance
+      this._cameraManagerInstance.initializeCameraPosition();
 
-      this._engineCameraManager.getCameraState$().subscribe((cameraState) => {
+      // Subscribe to state changes from the panel-specific CameraManager instance
+      this._cameraManagerInstance.getCameraState$().subscribe((cameraState) => {
         if (!this._isInitialized || !this.element.isConnected) return;
 
         const currentPanelState = this._viewStateSubject.getValue();
@@ -695,7 +726,11 @@ export class CompositeEnginePanel
     this._renderer?.dispose?.();
     this._renderer = undefined;
 
-    // Dispose EngineCameraManager
+    // Dispose the panel-specific CameraManager instance first
+    this._cameraManagerInstance?.destroy();
+    this._cameraManagerInstance = undefined;
+
+    // Dispose EngineCameraManager (which is now simpler)
     this._engineCameraManager?.dispose();
     this._engineCameraManager = undefined;
 
