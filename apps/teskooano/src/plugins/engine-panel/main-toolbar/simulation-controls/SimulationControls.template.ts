@@ -87,6 +87,19 @@ template.innerHTML = `
        min-width: 50px; /* Reduce width */
        font-size: 0.9em;
     }
+
+    #scale-select {
+      display: none; /* Hidden by default */
+      min-width: 70px; /* Match or slightly exceed span */
+      font-family: var(--font-family-mono);
+      font-size: var(--font-size-small);
+      color: var(--color-text-secondary);
+      padding: var(--space-1) var(--space-2);
+      border: var(--border-width-thin) solid var(--color-border-subtle);
+      border-radius: var(--radius-sm);
+      background-color: var(--color-surface-1);
+      cursor: pointer;
+    }
   </style>
 
   <div class="controls-container">
@@ -114,6 +127,7 @@ template.innerHTML = `
   <div class="separator"></div>
   <div class="display-container">
     <span class="display-value" id="scale-value" title="Time Scale">-</span>
+    <select id="scale-select" title="Select Time Scale"></select>
     <span class="display-value" id="time-value" title="Simulation Time">-</span>
     <span class="display-value" id="engine-value" title="Physics Engine">-</span>
   </div>

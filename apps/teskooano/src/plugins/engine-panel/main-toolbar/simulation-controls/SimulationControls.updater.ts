@@ -16,6 +16,7 @@ export interface SimulationUIElements {
   speedDownButton: TeskooanoButton | null;
   reverseButton: TeskooanoButton | null;
   scaleValueDisplay: HTMLElement | null;
+  scaleSelect: HTMLSelectElement | null;
   timeValueDisplay: HTMLElement | null;
   engineValueDisplay: HTMLElement | null;
 }

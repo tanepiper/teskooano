@@ -27,6 +27,7 @@ export class SimulationControls extends HTMLElement {
     speedDownButton: null,
     reverseButton: null,
     scaleValueDisplay: null,
+    scaleSelect: null,
     timeValueDisplay: null,
     engineValueDisplay: null,
   };
@@ -104,6 +105,9 @@ export class SimulationControls extends HTMLElement {
     ) as TeskooanoButton | null;
     this.uiElements.scaleValueDisplay =
       shadowRoot.getElementById("scale-value");
+    this.uiElements.scaleSelect = shadowRoot.getElementById(
+      "scale-select",
+    ) as HTMLSelectElement | null;
     this.uiElements.timeValueDisplay = shadowRoot.getElementById("time-value");
     this.uiElements.engineValueDisplay =
       shadowRoot.getElementById("engine-value");

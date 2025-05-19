@@ -465,38 +465,35 @@ export class ControlsManager {
    * positions when following an object.
    */
   update(delta: number): void {
-    if (this.isTransitioning) {
-      return;
-    }
-
-    this.controls.update();
-
+    // If following an object, update its position and apply delta first.
     if (this.followingTargetObject) {
-      // Always update the current position of the target object
       this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
-
-      // Get simulation state to check if it's paused
       const simulationState = simulationStateService.getCurrentState();
       const isPaused = simulationState.paused;
 
-      // Only apply position updates when the simulation is running
-      // Skip position updates when paused to allow manual camera control
       if (!isPaused) {
-        // Regular delta-based following when simulation is running
+        // Only apply follow updates if simulation is running
         const targetDelta = this.tempTargetPosition
           .clone()
           .sub(this.previousFollowTargetPos);
 
+        // Apply delta to camera position AND OrbitControls target
         this.camera.position.add(targetDelta);
-        this.controls.target.add(targetDelta);
+        this.controls.target.add(targetDelta); // Crucial: OrbitControls pivots around this
 
         this.previousFollowTargetPos.copy(this.tempTargetPosition);
-      }
-      // When paused, just update the previousFollowTargetPos without moving the camera
-      // This prevents jarring snaps when unpausing
-      else {
+      } else {
+        // When paused, keep previousFollowTargetPos updated to avoid snap on unpause
         this.previousFollowTargetPos.copy(this.tempTargetPosition);
       }
+    }
+
+    // Then, let OrbitControls process user input and apply damping.
+    // This call handles user input when no GSAP transition is active (as GSAP transitions
+    // temporarily disable controls via setEnabled(false) in _beginTransition).
+    // OrbitControls.update() is also called at the end of a GSAP transition in _endTransition.
+    if (this.controls.enabled) {
+      this.controls.update();
     }
   }
 
