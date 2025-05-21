@@ -29,6 +29,7 @@ import {
   importSystemEffect$,
   copySeedEffect$,
   createBlankSystemEffect$,
+  loadHomeSystemEffect$,
   SystemActionEffectResult,
   CelestialObjectMap as EffectCelestialObjectMap,
   Seed as EffectSeed,
@@ -202,6 +203,9 @@ class SystemControls
     const createBlankButton = this.shadowRoot.querySelector<HTMLElement>(
       'teskooano-button[data-action="create-blank"]',
     );
+    const homeButton = this.shadowRoot.querySelector<HTMLElement>(
+      'teskooano-button[data-action="home"]',
+    );
 
     if (
       !generateSubmitButton ||
@@ -210,7 +214,8 @@ class SystemControls
       !exportButton ||
       !importButton ||
       !copySeedButton ||
-      !createBlankButton
+      !createBlankButton ||
+      !homeButton
     ) {
       console.error(
         "[SystemControls] One or more required action buttons not found.",
@@ -228,6 +233,7 @@ class SystemControls
     const importClick$ = createButtonClickStream$(importButton);
     const copySeedClick$ = createButtonClickStream$(copySeedButton);
     const createBlankClick$ = createButtonClickStream$(createBlankButton);
+    const homeClick$ = createButtonClickStream$(homeButton);
 
     const generateSystemTrigger$: Observable<{
       seed: string;
@@ -278,6 +284,9 @@ class SystemControls
     const createBlankSystem$ = handleEffectResult(
       createBlankSystemEffect$(createBlankClick$, this.isGenerating$$),
     );
+    const loadHomeSystem$ = handleEffectResult(
+      loadHomeSystemEffect$(homeClick$, this.isGenerating$$),
+    );
 
     this.subscriptions.add(generateSystem$.subscribe());
     this.subscriptions.add(clearSystem$.subscribe());
@@ -285,6 +294,7 @@ class SystemControls
     this.subscriptions.add(importSystem$.subscribe());
     this.subscriptions.add(copySeed$.subscribe());
     this.subscriptions.add(createBlankSystem$.subscribe());
+    this.subscriptions.add(loadHomeSystem$.subscribe());
 
     const displayState$ = combineLatest([
       celestialObjects$.pipe(

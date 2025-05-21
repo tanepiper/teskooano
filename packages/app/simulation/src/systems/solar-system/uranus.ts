@@ -2,317 +2,377 @@ import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
+  AtmosphereType,
   CelestialType,
   GasGiantClass,
   PlanetType,
   RockyType,
   SurfaceType,
-  type IceSurfaceProperties,
   type GasGiantProperties,
+  type IceSurfaceProperties,
   type PlanetAtmosphereProperties,
   type PlanetProperties,
   type RingProperties,
 } from "@teskooano/data-types";
 
+const URANUS_REAL_MASS_KG = 8.681e25;
 const URANUS_SIDEREAL_ROTATION_PERIOD_S = -0.71833 * 24 * 3600;
 const URANUS_AXIAL_TILT_DEG = 97.77;
 const URANUS_ORBITAL_PERIOD_S = 2.651e9;
 const URANUS_REAL_RADIUS_M = 25362000;
+const URANUS_TEMP_K = 76;
+const URANUS_ALBEDO = 0.3;
+const URANUS_SMA_AU = 19.201;
+const URANUS_ECC = 0.0463;
+const URANUS_INC_DEG = 0.769;
+const URANUS_LAN_DEG = 74.23;
+const URANUS_AOP_DEG = 96.999 + URANUS_LAN_DEG;
+const URANUS_MA_DEG = 142.238;
 
 const TITANIA_REAL_RADIUS_M = 788400;
+const TITANIA_MASS_KG = 3.42e21;
+const TITANIA_RADIUS_M = TITANIA_REAL_RADIUS_M;
+const TITANIA_TEMP_K = 70;
+const TITANIA_ALBEDO = 0.22;
+const TITANIA_SMA_M = 435910 * KM;
+const TITANIA_ECC = 0.0011;
+const TITANIA_INC_DEG = 0.34;
+const TITANIA_SIDEREAL_PERIOD_S = 8.706e5;
+
 const OBERON_REAL_RADIUS_M = 761400;
+const OBERON_MASS_KG = 2.88e21;
+const OBERON_RADIUS_M = OBERON_REAL_RADIUS_M;
+const OBERON_TEMP_K = 61;
+const OBERON_ALBEDO = 0.23;
+const OBERON_SMA_M = 583520 * KM;
+const OBERON_ECC = 0.0014;
+const OBERON_INC_DEG = 0.058;
+const OBERON_SIDEREAL_PERIOD_S = 1.377e6;
+
 const UMBRIEL_REAL_RADIUS_M = 584700;
+const UMBRIEL_MASS_KG = 1.28e21;
+const UMBRIEL_RADIUS_M = UMBRIEL_REAL_RADIUS_M;
+const UMBRIEL_TEMP_K = 75;
+const UMBRIEL_ALBEDO = 0.18;
+const UMBRIEL_SMA_M = 266000 * KM;
+const UMBRIEL_ECC = 0.0039;
+const UMBRIEL_INC_DEG = 0.128;
+const UMBRIEL_SIDEREAL_PERIOD_S = 3.58e5;
+
 const ARIEL_REAL_RADIUS_M = 578900;
+const ARIEL_MASS_KG = 1.29e21;
+const ARIEL_RADIUS_M = ARIEL_REAL_RADIUS_M;
+const ARIEL_TEMP_K = 76;
+const ARIEL_ALBEDO = 0.39;
+const ARIEL_SMA_M = 190900 * KM;
+const ARIEL_ECC = 0.0012;
+const ARIEL_INC_DEG = 0.041;
+const ARIEL_SIDEREAL_PERIOD_S = 2.156e5;
+
 const MIRANDA_REAL_RADIUS_M = 235800;
+const MIRANDA_MASS_KG = 6.6e19;
+const MIRANDA_RADIUS_M = MIRANDA_REAL_RADIUS_M;
+const MIRANDA_TEMP_K = 77;
+const MIRANDA_ALBEDO = 0.32;
+const MIRANDA_SMA_M = 129900 * KM;
+const MIRANDA_ECC = 0.0013;
+const MIRANDA_INC_DEG = 4.232;
+const MIRANDA_SIDEREAL_PERIOD_S = 1.236e5;
 
 /**
- * Creates Uranus and its major moons.
- * @param parentId The ID of the parent object (Sun).
+ * Initializes Uranus, its rings, and major moons using accurate data.
  */
 export function initializeUranus(parentId: string): void {
   const uranusId = "uranus";
   const uranusAxialTiltRad = URANUS_AXIAL_TILT_DEG * DEG_TO_RAD;
-  const defaultMoonAxialTilt = new OSVector3(0, 1, 0).normalize();
 
   actions.addCelestial({
     id: uranusId,
     name: "Uranus",
-    seed: "uranus_seed_84",
+    seed: "uranus",
     type: CelestialType.GAS_GIANT,
     parentId: parentId,
-    realMass_kg: 8.681e25,
+    realMass_kg: URANUS_REAL_MASS_KG,
     realRadius_m: URANUS_REAL_RADIUS_M,
-    orbit: {
-      realSemiMajorAxis_m: 19.2184 * AU,
-      eccentricity: 0.046381,
-      inclination: 0.7733 * DEG_TO_RAD,
-      longitudeOfAscendingNode: 74.006 * DEG_TO_RAD,
-      argumentOfPeriapsis: 96.999 * DEG_TO_RAD,
-      meanAnomaly: 142.234 * DEG_TO_RAD,
-      period_s: URANUS_ORBITAL_PERIOD_S,
-    },
-    temperature: 76,
-    albedo: 0.51,
+    temperature: URANUS_TEMP_K,
+    albedo: URANUS_ALBEDO,
     siderealRotationPeriod_s: URANUS_SIDEREAL_ROTATION_PERIOD_S,
     axialTilt: new OSVector3(
       0,
       Math.cos(uranusAxialTiltRad),
       Math.sin(uranusAxialTiltRad),
     ).normalize(),
+    orbit: {
+      realSemiMajorAxis_m: URANUS_SMA_AU * AU,
+      eccentricity: URANUS_ECC,
+      inclination: URANUS_INC_DEG * DEG_TO_RAD,
+      longitudeOfAscendingNode: URANUS_LAN_DEG * DEG_TO_RAD,
+      argumentOfPeriapsis: (URANUS_AOP_DEG - URANUS_LAN_DEG) * DEG_TO_RAD,
+      meanAnomaly: URANUS_MA_DEG * DEG_TO_RAD,
+      period_s: URANUS_ORBITAL_PERIOD_S,
+    },
     properties: {
       type: CelestialType.GAS_GIANT,
       gasGiantClass: GasGiantClass.CLASS_III,
-      atmosphereColor: "#AFEEEE",
+      atmosphereColor: "#00BFFF",
       cloudColor: "#E0FFFF",
       cloudSpeed: 150,
-      emissiveColor: "#AFEEEE1A",
-      emissiveIntensity: 0.03,
+      atmosphere: {
+        composition: ["H2", "He", "CH4"],
+        pressure: 800000,
+        type: AtmosphereType.VERY_DENSE,
+        glowColor: "#00BFFF",
+        intensity: 0.5,
+        power: 1.2,
+        thickness: 0.25,
+      },
+      stormColor: "#006994",
+      stormSpeed: 100,
+      emissiveColor: "#00BFFF20",
+      emissiveIntensity: 0.05,
       rings: [
         {
-          innerRadius: 1.91 * URANUS_REAL_RADIUS_M,
-          outerRadius: 2.01 * URANUS_REAL_RADIUS_M,
-          density: 0.05,
-          opacity: 0.05,
-          color: "#4A4A4A",
+          innerRadius: 38000 * KM,
+          outerRadius: 51149 * KM,
+          density: 0.1,
+          opacity: 0.2,
+          color: "#303030",
           type: RockyType.DARK_ROCK,
-          texture: "textures/ring_uranus_epsilon.png",
-          rotationRate: 0.002,
-          composition: ["dark particles", "ice"],
+          texture: "textures/ring_dust.png",
+          rotationRate: 0.001,
+          composition: ["dust", "dark particles"],
         } as RingProperties,
       ],
     } as GasGiantProperties,
   });
 
-  actions.addCelestial({
-    id: "titania",
-    name: "Titania",
-    seed: "titania_seed_8706",
-    type: CelestialType.MOON,
-    parentId: uranusId,
-    realMass_kg: 3.527e21,
-    realRadius_m: TITANIA_REAL_RADIUS_M,
-    siderealRotationPeriod_s: 7.526e5,
-    axialTilt: defaultMoonAxialTilt,
-    orbit: {
-      realSemiMajorAxis_m: 436300 * KM,
-      eccentricity: 0.0011,
-      inclination: 0.34 * DEG_TO_RAD,
-      longitudeOfAscendingNode: 0,
-      argumentOfPeriapsis: 0,
-      meanAnomaly: 15.9 * DEG_TO_RAD,
-      period_s: 7.526e5,
-    },
-    temperature: 70,
-    albedo: 0.27,
-    atmosphere: {
-      glowColor: "#44444405",
-      intensity: 0.01,
-      power: 0.5,
-      thickness: 0.005,
-    } as PlanetAtmosphereProperties,
-    surface: {
-      type: SurfaceType.CRATERED,
-      planetType: PlanetType.ICE,
-      color: "#B0B0B8",
-      roughness: 0.7,
-      glossiness: 0.3,
-      crackIntensity: 0.4,
-      iceThickness: 50.0,
-    } as IceSurfaceProperties,
-    properties: {
-      type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
-      isMoon: true,
-      parentPlanet: uranusId,
-      composition: ["water ice", "rock", "carbon dioxide ice"],
-    } as PlanetProperties,
-  });
-
-  actions.addCelestial({
-    id: "oberon",
-    name: "Oberon",
-    seed: "oberon_seed_1346",
-    type: CelestialType.MOON,
-    parentId: uranusId,
-    realMass_kg: 3.014e21,
-    realRadius_m: OBERON_REAL_RADIUS_M,
-    siderealRotationPeriod_s: 1.162e6,
-    axialTilt: defaultMoonAxialTilt,
-    orbit: {
-      realSemiMajorAxis_m: 583520 * KM,
-      eccentricity: 0.0014,
-      inclination: 0.058 * DEG_TO_RAD,
-      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
-      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
-      meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
-      period_s: 1.162e6,
-    },
-    temperature: 75,
-    albedo: 0.35,
-    atmosphere: {
-      glowColor: "#44444405",
-      intensity: 0.01,
-      power: 0.5,
-      thickness: 0.005,
-    } as PlanetAtmosphereProperties,
-    surface: {
-      type: SurfaceType.CRATERED,
-      planetType: PlanetType.ICE,
-      color: "#9898A0",
-      secondaryColor: "#403838",
-      roughness: 0.8,
-      glossiness: 0.2,
-      crackIntensity: 0.2,
-      iceThickness: 60.0,
-    } as IceSurfaceProperties,
-    properties: {
-      type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
-      isMoon: true,
-      parentPlanet: uranusId,
-      composition: ["water ice", "rock", "dark carbonaceous material"],
-    } as PlanetProperties,
-  });
-
-  actions.addCelestial({
-    id: "umbriel",
-    name: "Umbriel",
-    seed: "umbriel_seed_4144",
-    type: CelestialType.MOON,
-    parentId: uranusId,
-    realMass_kg: 1.172e21,
-    realRadius_m: UMBRIEL_REAL_RADIUS_M,
-    siderealRotationPeriod_s: 3.582e5,
-    axialTilt: defaultMoonAxialTilt,
-    orbit: {
-      realSemiMajorAxis_m: 266000 * KM,
-      eccentricity: 0.0039,
-      inclination: 0.128 * DEG_TO_RAD,
-      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
-      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
-      meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
-      period_s: 3.582e5,
-    },
-    temperature: 75,
-    albedo: 0.21,
-    atmosphere: {
-      glowColor: "#33333305",
-      intensity: 0.01,
-      power: 0.5,
-      thickness: 0.005,
-    } as PlanetAtmosphereProperties,
-    surface: {
-      type: SurfaceType.CRATERED,
-      planetType: PlanetType.ICE,
-      color: "#50505A",
-      roughness: 0.85,
-      glossiness: 0.1,
-      crackIntensity: 0.1,
-      iceThickness: 40.0,
-    } as IceSurfaceProperties,
-    properties: {
-      type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
-      isMoon: true,
-      parentPlanet: uranusId,
-      composition: [
-        "water ice",
-        "rock",
-        "methane ice?",
-        "dark material coating",
-      ],
-    } as PlanetProperties,
-  });
-
-  actions.addCelestial({
-    id: "ariel",
-    name: "Ariel",
-    seed: "ariel_seed_2520",
-    type: CelestialType.MOON,
-    parentId: uranusId,
-    realMass_kg: 1.353e21,
-    realRadius_m: ARIEL_REAL_RADIUS_M,
-    siderealRotationPeriod_s: 2.178e5,
-    axialTilt: defaultMoonAxialTilt,
-    orbit: {
-      realSemiMajorAxis_m: 191020 * KM,
-      eccentricity: 0.0012,
-      inclination: 0.26 * DEG_TO_RAD,
-      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
-      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
-      meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
-      period_s: 2.178e5,
-    },
-    temperature: 60,
-    albedo: 0.39,
-    atmosphere: {
-      glowColor: "#FFFFFF08",
-      intensity: 0.02,
-      power: 0.6,
-      thickness: 0.008,
-    } as PlanetAtmosphereProperties,
-    surface: {
-      type: SurfaceType.VARIED,
-      planetType: PlanetType.ICE,
-      color: "#E8E8F0",
-      secondaryColor: "#B0C4DE",
-      roughness: 0.4,
-      glossiness: 0.5,
-      crackIntensity: 0.6,
-      iceThickness: 30.0,
-    } as IceSurfaceProperties,
-    properties: {
-      type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
-      isMoon: true,
-      parentPlanet: uranusId,
-      composition: ["water ice", "rock", "possible ammonia"],
-    } as PlanetProperties,
-  });
-
+  // Add Miranda
   actions.addCelestial({
     id: "miranda",
     name: "Miranda",
-    seed: "miranda_seed_1413",
+    seed: "miranda",
     type: CelestialType.MOON,
     parentId: uranusId,
-    realMass_kg: 6.59e19,
-    realRadius_m: MIRANDA_REAL_RADIUS_M,
-    siderealRotationPeriod_s: 1.22e5,
-    axialTilt: defaultMoonAxialTilt,
+    realMass_kg: MIRANDA_MASS_KG,
+    realRadius_m: MIRANDA_RADIUS_M,
+    temperature: MIRANDA_TEMP_K,
+    albedo: MIRANDA_ALBEDO,
+    siderealRotationPeriod_s: MIRANDA_SIDEREAL_PERIOD_S,
+    axialTilt: new OSVector3(0, 1, 0),
     orbit: {
-      realSemiMajorAxis_m: 129390 * KM,
-      eccentricity: 0.0013,
-      inclination: 4.232 * DEG_TO_RAD,
+      realSemiMajorAxis_m: MIRANDA_SMA_M,
+      eccentricity: MIRANDA_ECC,
+      inclination: MIRANDA_INC_DEG * DEG_TO_RAD,
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
-      meanAnomaly: Math.random() * 360 * DEG_TO_RAD,
-      period_s: 1.22e5,
+      meanAnomaly: Math.random() * 2 * Math.PI,
+      period_s: MIRANDA_SIDEREAL_PERIOD_S,
     },
-    temperature: 60,
-    albedo: 0.32,
-    atmosphere: {
-      glowColor: "#AAAAAA03",
-      intensity: 0.01,
-      power: 0.4,
-      thickness: 0.003,
-    } as PlanetAtmosphereProperties,
-    surface: {
-      type: SurfaceType.CANYONOUS,
-      planetType: PlanetType.ICE,
-      color: "#B8B8C0",
-      secondaryColor: "#707078",
-      roughness: 0.75,
-      glossiness: 0.3,
-      crackIntensity: 0.8,
-      iceThickness: 15.0,
-    } as IceSurfaceProperties,
     properties: {
       type: CelestialType.MOON,
       planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: uranusId,
-      composition: ["water ice", "silicates", "methane clathrates?"],
+      composition: ["water ice", "silicates", "possibly organic compounds"],
+      atmosphere: {
+        glowColor: "#FFFFFF01",
+        intensity: 0.0,
+        power: 0.0,
+        thickness: 0.0,
+      },
+      surface: {
+        type: SurfaceType.VARIED,
+        planetType: PlanetType.ICE,
+        color: "#D0D0D8",
+        roughness: 0.8,
+        crackIntensity: 0.7,
+        glossiness: 0.3,
+        iceThickness: 20.0,
+      },
+    } as PlanetProperties,
+  });
+
+  // Add Ariel
+  actions.addCelestial({
+    id: "ariel",
+    name: "Ariel",
+    seed: "ariel",
+    type: CelestialType.MOON,
+    parentId: uranusId,
+    realMass_kg: ARIEL_MASS_KG,
+    realRadius_m: ARIEL_RADIUS_M,
+    temperature: ARIEL_TEMP_K,
+    albedo: ARIEL_ALBEDO,
+    siderealRotationPeriod_s: ARIEL_SIDEREAL_PERIOD_S,
+    axialTilt: new OSVector3(0, 1, 0),
+    orbit: {
+      realSemiMajorAxis_m: ARIEL_SMA_M,
+      eccentricity: ARIEL_ECC,
+      inclination: ARIEL_INC_DEG * DEG_TO_RAD,
+      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
+      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
+      meanAnomaly: Math.random() * 2 * Math.PI,
+      period_s: ARIEL_SIDEREAL_PERIOD_S,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ICE,
+      isMoon: true,
+      parentPlanet: uranusId,
+      composition: ["water ice", "silicates", "carbon dioxide ice"],
+      atmosphere: {
+        glowColor: "#FFFFFF01",
+        intensity: 0.0,
+        power: 0.0,
+        thickness: 0.0,
+      },
+      surface: {
+        type: SurfaceType.VARIED,
+        planetType: PlanetType.ICE,
+        color: "#E0E0E8",
+        roughness: 0.7,
+        crackIntensity: 0.5,
+        glossiness: 0.4,
+        iceThickness: 30.0,
+      },
+    } as PlanetProperties,
+  });
+
+  // Add Umbriel
+  actions.addCelestial({
+    id: "umbriel",
+    name: "Umbriel",
+    seed: "umbriel",
+    type: CelestialType.MOON,
+    parentId: uranusId,
+    realMass_kg: UMBRIEL_MASS_KG,
+    realRadius_m: UMBRIEL_RADIUS_M,
+    temperature: UMBRIEL_TEMP_K,
+    albedo: UMBRIEL_ALBEDO,
+    siderealRotationPeriod_s: UMBRIEL_SIDEREAL_PERIOD_S,
+    axialTilt: new OSVector3(0, 1, 0),
+    orbit: {
+      realSemiMajorAxis_m: UMBRIEL_SMA_M,
+      eccentricity: UMBRIEL_ECC,
+      inclination: UMBRIEL_INC_DEG * DEG_TO_RAD,
+      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
+      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
+      meanAnomaly: Math.random() * 2 * Math.PI,
+      period_s: UMBRIEL_SIDEREAL_PERIOD_S,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ICE,
+      isMoon: true,
+      parentPlanet: uranusId,
+      composition: ["water ice", "silicates", "carbon compounds"],
+      atmosphere: {
+        glowColor: "#FFFFFF01",
+        intensity: 0.0,
+        power: 0.0,
+        thickness: 0.0,
+      },
+      surface: {
+        type: SurfaceType.CRATERED,
+        planetType: PlanetType.ICE,
+        color: "#808090",
+        roughness: 0.8,
+        crackIntensity: 0.3,
+        glossiness: 0.2,
+        iceThickness: 40.0,
+      },
+    } as PlanetProperties,
+  });
+
+  // Add Titania
+  actions.addCelestial({
+    id: "titania",
+    name: "Titania",
+    seed: "titania",
+    type: CelestialType.MOON,
+    parentId: uranusId,
+    realMass_kg: TITANIA_MASS_KG,
+    realRadius_m: TITANIA_RADIUS_M,
+    temperature: TITANIA_TEMP_K,
+    albedo: TITANIA_ALBEDO,
+    siderealRotationPeriod_s: TITANIA_SIDEREAL_PERIOD_S,
+    axialTilt: new OSVector3(0, 1, 0),
+    orbit: {
+      realSemiMajorAxis_m: TITANIA_SMA_M,
+      eccentricity: TITANIA_ECC,
+      inclination: TITANIA_INC_DEG * DEG_TO_RAD,
+      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
+      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
+      meanAnomaly: Math.random() * 2 * Math.PI,
+      period_s: TITANIA_SIDEREAL_PERIOD_S,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ICE,
+      isMoon: true,
+      parentPlanet: uranusId,
+      composition: ["water ice", "silicates", "possible subsurface water"],
+      atmosphere: {
+        glowColor: "#FFFFFF01",
+        intensity: 0.01,
+        power: 0.1,
+        thickness: 0.01,
+      },
+      surface: {
+        type: SurfaceType.VARIED,
+        planetType: PlanetType.ICE,
+        color: "#C0C0C8",
+        roughness: 0.7,
+        crackIntensity: 0.4,
+        glossiness: 0.3,
+        iceThickness: 50.0,
+      },
+    } as PlanetProperties,
+  });
+
+  // Add Oberon
+  actions.addCelestial({
+    id: "oberon",
+    name: "Oberon",
+    seed: "oberon",
+    type: CelestialType.MOON,
+    parentId: uranusId,
+    realMass_kg: OBERON_MASS_KG,
+    realRadius_m: OBERON_RADIUS_M,
+    temperature: OBERON_TEMP_K,
+    albedo: OBERON_ALBEDO,
+    siderealRotationPeriod_s: OBERON_SIDEREAL_PERIOD_S,
+    axialTilt: new OSVector3(0, 1, 0),
+    orbit: {
+      realSemiMajorAxis_m: OBERON_SMA_M,
+      eccentricity: OBERON_ECC,
+      inclination: OBERON_INC_DEG * DEG_TO_RAD,
+      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
+      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
+      meanAnomaly: Math.random() * 2 * Math.PI,
+      period_s: OBERON_SIDEREAL_PERIOD_S,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ICE,
+      isMoon: true,
+      parentPlanet: uranusId,
+      composition: ["water ice", "silicates", "carbon compounds"],
+      atmosphere: {
+        glowColor: "#FFFFFF01",
+        intensity: 0.0,
+        power: 0.0,
+        thickness: 0.0,
+      },
+      surface: {
+        type: SurfaceType.CRATERED,
+        planetType: PlanetType.ICE,
+        color: "#A0A0A8",
+        roughness: 0.8,
+        crackIntensity: 0.2,
+        glossiness: 0.25,
+        iceThickness: 40.0,
+      },
     } as PlanetProperties,
   });
 }

@@ -29,5 +29,5 @@ export function initializeSolarSystem() {
   initializePluto(sunId);
 
   initializeAsteroidBelt(sunId);
-  initializeOortCloud(sunId);
+  //initializeOortCloud(sunId);
 }

@@ -25,7 +25,7 @@ export function initializeAsteroidBelt(parentId: string): void {
     type: CelestialType.ASTEROID_FIELD,
     parentId: parentId,
     realMass_kg: BELT_TOTAL_MASS_KG,
-    realRadius_m: BELT_OUTER_AU * AU,
+    realRadius_m: 0,
     orbit: {
       realSemiMajorAxis_m: BELT_CENTER_AU * AU,
       eccentricity: BELT_AVG_ECC,

@@ -5,32 +5,34 @@ import {
   CelestialType,
   PlanetType,
   SurfaceType,
-  type LavaSurfaceProperties,
   type PlanetAtmosphereProperties,
+  type PlanetProperties,
+  type RockyTerrestrialSurfaceProperties,
 } from "@teskooano/data-types";
 
-const VENUS_MASS_KG = 4.8675e24;
+const VENUS_MASS_KG = 4.867e24;
 const VENUS_RADIUS_M = 6051800;
 const VENUS_TEMP_K = 737;
-const VENUS_ALBEDO = 0.76;
-const VENUS_SMA_AU = 0.723332;
-const VENUS_ECC = 0.006773;
-const VENUS_INC_DEG = 3.39471;
-const VENUS_LAN_DEG = 76.68069;
-const VENUS_AOP_DEG = 131.53298;
-const VENUS_MA_DEG = 181.97973;
-const VENUS_ORBITAL_PERIOD_S = 1.94142e7;
-const VENUS_SIDEREAL_ROTATION_PERIOD_S = -20997151;
+const VENUS_ALBEDO = 0.77;
+const VENUS_SMA_AU = 0.72333;
+const VENUS_ECC = 0.0068;
+const VENUS_INC_DEG = 3.395;
+const VENUS_LAN_DEG = 76.68;
+const VENUS_AOP_DEG = 54.85 + VENUS_LAN_DEG;
+const VENUS_MA_DEG = 50.44;
+const VENUS_ORBITAL_PERIOD_S = 1.9402e7;
+const VENUS_SIDEREAL_ROTATION_PERIOD_S = -5.8164e6;
 const VENUS_AXIAL_TILT_DEG = 177.36;
 
 /**
  * Initializes Venus using accurate data.
  */
 export function initializeVenus(parentId: string): void {
+  const venusId = "venus";
   const venusAxialTiltRad = VENUS_AXIAL_TILT_DEG * DEG_TO_RAD;
 
   actions.addCelestial({
-    id: "venus",
+    id: venusId,
     name: "Venus",
     seed: "venus",
     type: CelestialType.PLANET,
@@ -50,31 +52,55 @@ export function initializeVenus(parentId: string): void {
       eccentricity: VENUS_ECC,
       inclination: VENUS_INC_DEG * DEG_TO_RAD,
       longitudeOfAscendingNode: VENUS_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: VENUS_AOP_DEG * DEG_TO_RAD,
+      argumentOfPeriapsis: (VENUS_AOP_DEG - VENUS_LAN_DEG) * DEG_TO_RAD,
       meanAnomaly: VENUS_MA_DEG * DEG_TO_RAD,
       period_s: VENUS_ORBITAL_PERIOD_S,
     },
-    atmosphere: {
-      glowColor: "#FDD835",
-      intensity: 0.7,
-      power: 1.5,
-      thickness: 0.4,
-    } as PlanetAtmosphereProperties,
-    surface: {
-      type: SurfaceType.VOLCANIC,
-      planetType: PlanetType.LAVA,
-      color: "#B07D48",
-      roughness: 0.6,
-      lavaColor: "#DD2C00",
-      rockColor: "#5D4037",
-      lavaActivity: 0.2,
-      volcanicActivity: 0.4,
-    } as LavaSurfaceProperties,
     properties: {
       type: CelestialType.PLANET,
-      planetType: PlanetType.LAVA,
+      planetType: PlanetType.TERRESTRIAL,
       isMoon: false,
-      composition: ["silicates", "iron core", "dense CO2 atmosphere"],
-    },
+      composition: [
+        "silicates",
+        "iron core",
+        "carbon dioxide atmosphere",
+        "sulfuric acid clouds",
+      ],
+      atmosphere: {
+        glowColor: "#FFCC8060",
+        intensity: 1.8,
+        power: 1.1,
+        thickness: 0.3,
+      },
+      surface: {
+        type: SurfaceType.VOLCANIC,
+        planetType: PlanetType.TERRESTRIAL,
+        color: "#D2B48C",
+        roughness: 0.8,
+        persistence: 0.5,
+        lacunarity: 2.2,
+        simplePeriod: 5.0,
+        octaves: 6,
+        bumpScale: 0.3,
+        color1: "#8B4513",
+        color2: "#A0522D",
+        color3: "#CD853F",
+        color4: "#DEB887",
+        color5: "#F5DEB3",
+        height1: 0.0,
+        height2: 0.3,
+        height3: 0.55,
+        height4: 0.75,
+        height5: 0.9,
+        shininess: 0.06,
+        specularStrength: 0.08,
+        ambientLightIntensity: 0.25,
+        undulation: 0.2,
+        terrainType: 2,
+        terrainAmplitude: 0.4,
+        terrainSharpness: 0.7,
+        terrainOffset: 0.05,
+      },
+    } as PlanetProperties,
   });
 }

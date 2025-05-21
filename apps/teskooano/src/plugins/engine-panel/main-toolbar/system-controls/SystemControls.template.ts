@@ -5,6 +5,7 @@ import ArrowDownloadRegular from "@fluentui/svg-icons/icons/arrow_download_20_re
 import CopyRegular from "@fluentui/svg-icons/icons/copy_20_regular.svg?raw";
 import ArrowUploadRegular from "@fluentui/svg-icons/icons/arrow_upload_20_regular.svg?raw";
 import DeleteRegular from "@fluentui/svg-icons/icons/delete_20_regular.svg?raw";
+import HomeRegular from "@fluentui/svg-icons/icons/home_20_regular.svg?raw";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -264,6 +265,16 @@ template.innerHTML = `
         </teskooano-button>
       </form>
       <div class="actions">
+        <teskooano-button
+            data-action="home" 
+            variant="ghost" 
+            size="sm" 
+            title="Load Home System (Solar System)"
+            tooltip-title="Home System"
+            tooltip-text="Load the Solar System as the current system"
+            tooltip-icon='${HomeRegular}'>
+          ${HomeRegular}
+        </teskooano-button>
         <teskooano-button 
             id="generate-random-button"
             data-action="random" 
@@ -305,6 +316,16 @@ template.innerHTML = `
         <span class="celestial-count">0 Celestials</span>
       </div>
       <div class="actions">
+        <teskooano-button
+            data-action="home"
+            variant="ghost"
+            size="sm"
+            title="Load Home System (Solar System)"
+            tooltip-title="Home System"
+            tooltip-text="Load the Solar System as the current system"
+            tooltip-icon='${HomeRegular}'>
+          ${HomeRegular}
+        </teskooano-button>
         <teskooano-button 
             data-action="copy-seed" 
             variant="ghost" 

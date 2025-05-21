@@ -9,6 +9,8 @@ import {
 } from "rxjs/operators";
 import { pluginManager } from "@teskooano/ui-plugin";
 import type { CelestialObject } from "@teskooano/data-types"; // Assuming CelestialObject is here
+import { initializeSolarSystem } from "@teskooano/app-simulation";
+import { updateSeed, celestialFactory } from "@teskooano/core-state";
 
 // Representing the type for the value emitted by celestialObjects$
 export type CelestialObjectMap = Record<string, CelestialObject>;
@@ -254,5 +256,79 @@ export function createBlankSystemEffect$(
         }),
       ),
     ),
+  );
+}
+
+/**
+ * Effect for loading the Home System (Solar System).
+ */
+export function loadHomeSystemEffect$(
+  trigger$: Observable<HTMLElement>,
+  isGenerating$$: BehaviorSubject<boolean>,
+): Observable<SystemActionEffectResult> {
+  return trigger$.pipe(
+    filter(() => !isGenerating$$.value),
+    tap(() => isGenerating$$.next(true)),
+    switchMap((element) => {
+      try {
+        // Clear existing objects using celestialFactory.
+        celestialFactory.clearState({
+          resetCamera: false, // Keep camera as is
+          resetTime: true, // Reset simulation time
+          resetSelection: true, // Clear any selected/focused objects
+        });
+
+        // Initialize the Solar System.
+        // This function still needs to be refactored to properly update core state
+        // (celestialObjects$ and currentSeed$) via `addCelestialObject` and `updateSeed` from core-state,
+        // potentially through celestialFactory or celestialActions.
+        initializeSolarSystem();
+
+        // Manually set a seed. Ideally, initializeSolarSystem would handle this.
+        updateSeed("SOLARSYSTEM");
+
+        // After refactoring initializeSolarSystem, it should populate celestialObjects$
+        // and the count would be reflected automatically by SystemControls.ts via its subscription.
+
+        return of<SystemActionEffectResult>({
+          status: "success",
+          symbol: "🏡",
+          message: "Solar System loaded",
+          triggerElement: element,
+          seed: "SOLARSYSTEM",
+        });
+      } catch (err: any) {
+        console.error("Load Home System error:", err);
+        // Ensure isGenerating is set to false in the catch block as well
+        isGenerating$$.next(false);
+        return of<SystemActionEffectResult>({
+          status: "error",
+          symbol: "❌",
+          message: err.message || "Failed to load Solar System",
+          triggerElement: element,
+        });
+      } finally {
+        // This finally block might run before the observable from `of(...)` emits
+        // if initializeSolarSystem is synchronous.
+        // Setting to false here ensures it's reset if the above try/catch completes synchronously.
+        // If initializeSolarSystem becomes async, this needs careful review.
+        if (isGenerating$$.value) {
+          // Only set if still true
+          isGenerating$$.next(false);
+        }
+      }
+    }),
+    catchError((err, caught) => {
+      const element =
+        (err as any).triggerElement || document.createElement("div");
+      console.error("Stream error in loadHomeSystemEffect:", err);
+      isGenerating$$.next(false);
+      return of<SystemActionEffectResult>({
+        status: "error",
+        symbol: "❌",
+        message: (err as Error).message || "Stream error",
+        triggerElement: element,
+      });
+    }),
   );
 }
