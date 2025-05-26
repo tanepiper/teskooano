@@ -1,6 +1,10 @@
 import * as THREE from "three";
 import type { OSVector3 } from "@teskooano/core-math";
 import type { PhysicsStateReal } from "./physics";
+import {
+  StellarType as NewStellarType,
+  SpectralClass,
+} from "./celestials/common/stellar-classification";
 
 /**
  * Defines the primary classification of a celestial body.
@@ -129,99 +133,6 @@ export enum RockyType {
 }
 
 /**
- * Classification of stars based on their spectral characteristics and evolutionary stage.
- */
-export enum StellarType {
-  /** Stars fusing hydrogen in their core, like the Sun. */
-  MAIN_SEQUENCE = "MAIN_SEQUENCE",
-  /** Specific main sequence star type (Sun-like). */
-  MAIN_SEQUENCE_G = "MAIN_SEQUENCE_G",
-  /** Extremely dense remnant of a massive star's supernova. */
-  NEUTRON_STAR = "NEUTRON_STAR",
-  /** Dense remnant of a low-to-medium mass star. */
-  WHITE_DWARF = "WHITE_DWARF",
-  /** Massive, hot star losing mass via strong stellar winds. */
-  WOLF_RAYET = "WOLF_RAYET",
-  /** Region of spacetime where gravity is so strong nothing can escape. */
-  BLACK_HOLE = "BLACK_HOLE",
-  /** A rotating black hole. */
-  KERR_BLACK_HOLE = "KERR_BLACK_HOLE",
-}
-
-/**
- * Spectral classes for main sequence stars and brown dwarfs
- * From hottest to coolest: O, B, A, F, G, K, M, L, T, Y
- */
-export enum SpectralClass {
-  O = "O",
-  B = "B",
-  A = "A",
-  F = "F",
-  G = "G",
-  K = "K",
-  M = "M",
-  L = "L",
-  T = "T",
-  Y = "Y",
-}
-
-/**
- * Special spectral classes for non-main sequence stars
- */
-export enum SpecialSpectralClass {
-  W = "W",
-  C = "C",
-  S = "S",
-  D = "D",
-  Q = "Q",
-  P = "P",
-  R = "R",
-  N = "N",
-}
-
-/**
- * Luminosity classes, indicating the size and evolutionary state of the star
- */
-export enum LuminosityClass {
-  I = "I",
-  II = "II",
-  III = "III",
-  IV = "IV",
-  V = "V",
-  VI = "VI",
-  VII = "VII",
-}
-
-/**
- * Specific white dwarf spectral types based on spectral features
- */
-export enum WhiteDwarfType {
-  DA = "DA",
-  DB = "DB",
-  DC = "DC",
-  DO = "DO",
-  DZ = "DZ",
-  DQ = "DQ",
-  DX = "DX",
-}
-
-/**
- * Types of exotic stellar objects
- */
-export enum ExoticStellarType {
-  NEUTRON_STAR = "NEUTRON_STAR",
-  PULSAR = "PULSAR",
-  MAGNETAR = "MAGNETAR",
-  BLACK_HOLE = "BLACK_HOLE",
-  QUASAR = "QUASAR",
-  WHITE_DWARF = "WHITE_DWARF",
-  WOLF_RAYET = "WOLF_RAYET",
-  T_TAURI = "T_TAURI",
-  HERBIG_AE_BE = "HERBIG_AE_BE",
-  PROTOSTAR = "PROTOSTAR",
-}
-
-/**
  * Defines the orbital elements required to describe the path of a celestial body around its parent.
  */
 export interface OrbitalParameters {
@@ -252,31 +163,24 @@ export interface SpecificPropertiesBase {
 
 /**
  * Properties specific to Stars.
+ * Cleaned up for data-driven approach - classifications are computed from physics data.
  */
 export interface StarProperties extends SpecificPropertiesBase {
   type: CelestialType.STAR;
   /** Whether this is the main star in the system, used for camera focus on startup. */
   isMainStar: boolean;
-  /** The classification based on temperature and spectral lines (e.g., G, K, M). */
+  /** The classification based on temperature and spectral lines (e.g., G2V, M3III, WN7). */
   spectralClass: string;
   /** The total energy output of the star, often relative to the Sun (L☉). */
   luminosity: number;
   /** The primary color tint of the star, usually represented as a hex string. */
   color: string;
-  /** Optional classification for exotic star types like Neutron Stars, Black Holes, etc. */
-  stellarType?: StellarType;
+  /** Core stellar type - drives physics simulation and rendering selection. */
+  stellarType: NewStellarType;
   /** Optional array of partner star IDs, used for multi-star systems orbital calculations. */
   partnerStars?: string[];
-  /** Main spectral class (O, B, A, F, G, K, M, etc.) */
-  mainSpectralClass?: SpectralClass;
-  /** Special spectral class for non-main sequence stars */
-  specialSpectralClass?: SpecialSpectralClass;
-  /** Luminosity class indicating the size/evolutionary state */
-  luminosityClass?: LuminosityClass;
-  /** White dwarf specific classification */
-  whiteDwarfType?: WhiteDwarfType;
-  /** Type for exotic stellar objects like neutron stars */
-  exoticType?: ExoticStellarType;
+  /** Optional stellar characteristics computed from physics data (variability, wind rates, etc.) */
+  characteristics?: Record<string, any>;
 }
 
 export interface PlanetAtmosphereProperties {

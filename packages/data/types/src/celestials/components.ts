@@ -1,0 +1,96 @@
+import type {
+  SurfaceType,
+  AtmosphereType,
+  CompositionType,
+  RingType,
+} from "./common";
+
+/**
+ * Surface properties for solid bodies
+ */
+export interface SurfaceProperties {
+  surfaceType: SurfaceType;
+  composition: CompositionType[]; // Use proper composition enum
+  proceduralData?: ProceduralSurfaceData;
+}
+
+/**
+ * Atmospheric properties with proper typing
+ */
+export interface AtmosphereProperties {
+  type: AtmosphereType; // Atmospheric density classification
+  composition: CompositionType[]; // Gas composition using enum
+  pressure_pa: number; // Surface pressure in Pascals
+  density_kgm3: number; // Atmospheric density
+  scaleHeight_m: number; // Atmospheric scale height
+
+  // Visual properties
+  glowColor?: string; // Atmospheric glow color (hex)
+  intensity?: number; // Glow intensity (0-1)
+  power?: number; // Atmospheric scattering power
+  thickness?: number; // Visual thickness (0-1)
+}
+
+/**
+ * Individual ring properties with proper typing
+ */
+export interface RingProperties {
+  innerRadius: number; // Inner radius (normalized to planet radius)
+  outerRadius: number; // Outer radius (normalized to planet radius)
+  density: number; // Particle density (0-1)
+  opacity: number; // Visual opacity (0-1)
+  color: string; // Hex color
+  tilt?: number; // Ring tilt in radians
+  rotationRate?: number; // Ring rotation rate
+  texture?: string; // Texture identifier
+  composition: CompositionType[]; // Ring material using enum
+  type: RingType; // Ring classification
+}
+
+/**
+ * Procedural surface generation data
+ */
+export interface ProceduralSurfaceData {
+  persistence: number; // Noise persistence
+  lacunarity: number; // Noise lacunarity
+  simplePeriod: number; // Simple noise period
+  octaves: number; // Number of noise octaves
+  bumpScale: number; // Height variation scale
+
+  // Color gradients
+  color1: string; // Primary color (hex)
+  color2: string; // Secondary color (hex)
+  color3: string; // Tertiary color (hex)
+  color4: string; // Quaternary color (hex)
+  color5: string; // Quinary color (hex)
+
+  // Height thresholds
+  height1: number; // First height threshold (0-1)
+  height2: number; // Second height threshold (0-1)
+  height3: number; // Third height threshold (0-1)
+  height4: number; // Fourth height threshold (0-1)
+  height5: number; // Fifth height threshold (0-1)
+
+  // Material properties
+  shininess: number; // Surface shininess
+  specularStrength: number; // Specular reflection strength
+  roughness: number; // Surface roughness
+  ambientLightIntensity: number; // Ambient light intensity
+  undulation: number; // Surface undulation
+
+  // Terrain generation
+  terrainType: number; // Terrain generation type
+  terrainAmplitude: number; // Terrain height amplitude
+  terrainSharpness: number; // Terrain feature sharpness
+  terrainOffset: number; // Terrain height offset
+}
+
+/**
+ * Cloud properties for atmospheric bodies
+ */
+export interface CloudProperties {
+  color: string; // Cloud color (hex)
+  opacity: number; // Cloud opacity (0-1)
+  coverage: number; // Cloud coverage (0-1)
+  speed: number; // Cloud movement speed
+}

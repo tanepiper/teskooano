@@ -4,72 +4,85 @@ export * from "./common";
 // Re-export all physics-related interfaces
 export * from "./physics";
 
-// Re-export all details-related interfaces and unions
-export * from "./details";
+// Re-export base celestial interface
+export * from "./base";
 
-// Re-export all appearance-related interfaces and unions
-export * from "./appearance/appearance";
+// Re-export component properties
+export * from "./components";
 
-// Import necessary base types for CelestialObject
-import type { CelestialType, CelestialStatus } from "./common";
+// Re-export specific celestial types
+export * from "./stars";
+export * from "./planets";
+export * from "./gas-giants";
+export * from "./comets";
+export * from "./asteroids";
+
+// Import all celestial types for the union
+import type { Star, StellarRemnant, BrownDwarf } from "./stars";
+import type { Planet, Moon } from "./planets";
+import type { GasGiant } from "./gas-giants";
+import type { Comet } from "./comets";
 import type {
-  PhysicalProperties,
-  OrbitalParameters,
-  PhysicsStateReal,
-} from "./physics";
-import type { CelestialDetailsBase, CelestialDetailsUnion } from "./details";
-import type {
-  CelestialAppearanceBase,
-  CelestialAppearanceUnion,
-} from "./appearance/appearance";
+  Asteroid,
+  AsteroidField,
+  DwarfPlanet,
+  OortCloud,
+} from "./asteroids";
+
+// ============================================================================
+// UNION TYPES
+// ============================================================================
 
 /**
- * Represents the complete state and definition of a celestial object within the simulation.
- * This is a generic interface, parameterized by the specific Details (D) and Appearance (A)
- * types relevant to the particular celestial object.
+ * All stellar objects (including remnants)
  */
-export interface CelestialObject<
-  D extends CelestialDetailsBase = CelestialDetailsUnion, // Default to the union if not specified
-  A extends CelestialAppearanceBase = CelestialAppearanceUnion, // Default to the union if not specified
-> {
-  // --- Core Identification & Status ---
-  id: string;
-  name: string;
-  type: CelestialType;
-  status: CelestialStatus;
+export type StellarObject = Star | StellarRemnant | BrownDwarf;
 
-  // --- Physics Engine Relationships & Flags (Top Level) ---
-  parentId?: string;
-  currentParentId?: string;
-  ignorePhysics?: boolean;
+/**
+ * All planetary objects (planets, moons, gas giants)
+ */
+export type PlanetaryObject = Planet | Moon | GasGiant;
 
-  // --- Fundamental Physical Characteristics ---
-  physical: PhysicalProperties;
+/**
+ * All small bodies (asteroids, comets, dwarf planets)
+ */
+export type SmallBodyObject = Asteroid | Comet | DwarfPlanet;
 
-  // --- Orbital Mechanics ---
-  orbit: OrbitalParameters;
+/**
+ * All extended structures (belts, clouds, discs)
+ */
+export type ExtendedStructureObject = AsteroidField | OortCloud;
 
-  // --- Physics Engine State ---
-  physicsState: {
-    stateReal: PhysicsStateReal;
-  };
+/**
+ * Union type of all possible celestial bodies in the simulation
+ */
+export type CelestialBody =
+  | StellarObject
+  | PlanetaryObject
+  | SmallBodyObject
+  | ExtendedStructureObject;
 
-  // --- Type-Specific Descriptive Properties (Generic) ---
-  details: D;
+/**
+ * Objects that can have solid surfaces
+ */
+export type SolidBodyObject = Planet | Moon | Asteroid | Comet | DwarfPlanet;
 
-  // --- Rendering & Appearance Properties (Generic) ---
-  appearance: A;
+/**
+ * Objects that can have atmospheres
+ */
+export type AtmosphericBodyObject = Planet | Moon | GasGiant;
 
-  // --- Procedural Generation ---
-  seed?: string;
-}
+/**
+ * Objects that can have ring systems
+ */
+export type RingedBodyObject = Planet | GasGiant;
 
-// Example of how you might define a specific Star object type:
-// import { StarDetails } from './details';
-// import { StarAppearance } from './appearance';
-// export type StarCelestialObject = CelestialObject<StarDetails, StarAppearance>;
+/**
+ * Objects that can have moons
+ */
+export type MoonHostObject = Planet | GasGiant | DwarfPlanet;
 
-// Example for a generic Planet object type (could be rocky, icy, etc.)
-// import { PlanetDetails } from './details';
-// import { StandardPlanetAppearance } from './appearance';
-// export type PlanetCelestialObject = CelestialObject<PlanetDetails, StandardPlanetAppearance>;
+/**
+ * Objects that emit light
+ */
+export type LuminousObject = Star | StellarRemnant;

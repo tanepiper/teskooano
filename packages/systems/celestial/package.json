@@ -50,7 +50,8 @@
     "ora": "8.2.0",
     "simplex-noise": "4.0.3",
     "squirrel-noise": "1.0.0",
-    "three": "0.176.0"
+    "three": "0.176.0",
+    "three-custom-shader-material": "6.3.6"
   },
   "devDependencies": {
     "@playwright/test": "1.52.0",

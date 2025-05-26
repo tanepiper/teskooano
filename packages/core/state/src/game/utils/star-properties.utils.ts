@@ -1,8 +1,7 @@
-import { SpectralClass, ExoticStellarType } from "@teskooano/data-types";
+import { StellarType } from "@teskooano/data-types";
 
 interface StarThermalPropertiesInput {
-  mainSpectralClass?: SpectralClass;
-  exoticType?: ExoticStellarType;
+  stellarType?: StellarType;
   currentTemperature?: number;
   currentLuminosity?: number;
   currentColor?: string;
@@ -16,19 +15,18 @@ interface StarThermalPropertiesOutput {
 
 /**
  * Determines the default temperature, luminosity, and color for a star based on its
- * spectral class and exotic type, if these properties are not already provided.
+ * stellar type, if these properties are not already provided.
+ * Uses data-driven approach with the new StellarType classification.
  *
  * @param {StarThermalPropertiesInput} options - The input properties to base the determination on.
- * @param {SpectralClass} [options.mainSpectralClass] - The main spectral class of the star (e.g., G, K, M).
- * @param {ExoticStellarType} [options.exoticType] - The exotic type of the star, if applicable (e.g., WHITE_DWARF, NEUTRON_STAR).
+ * @param {StellarType} [options.stellarType] - The stellar type (e.g., MAIN_SEQUENCE, RED_GIANT, WHITE_DWARF).
  * @param {number} [options.currentTemperature] - The star's current temperature, if already known.
  * @param {number} [options.currentLuminosity] - The star's current luminosity, if already known.
  * @param {string} [options.currentColor] - The star's current color, if already known.
  * @returns {StarThermalPropertiesOutput} An object containing the determined temperature, luminosity, and color.
  */
 export function determineStarThermalProperties({
-  mainSpectralClass,
-  exoticType,
+  stellarType,
   currentTemperature,
   currentLuminosity,
   currentColor,
@@ -42,96 +40,97 @@ export function determineStarThermalProperties({
     luminosity === undefined ||
     color === undefined
   ) {
-    switch (mainSpectralClass) {
-      case SpectralClass.O:
-        temperature = temperature ?? 40000;
-        luminosity = luminosity ?? 100000;
-        color = color ?? "#9BB0FF";
-        break;
-      case SpectralClass.B:
-        temperature = temperature ?? 20000;
-        luminosity = luminosity ?? 1000;
-        color = color ?? "#AABFFF";
-        break;
-      case SpectralClass.A:
-        temperature = temperature ?? 8500;
-        luminosity = luminosity ?? 20;
-        color = color ?? "#F8F7FF";
-        break;
-      case SpectralClass.F:
-        temperature = temperature ?? 6500;
-        luminosity = luminosity ?? 4;
-        color = color ?? "#FFF4EA";
-        break;
-      case SpectralClass.G:
-        temperature = temperature ?? 5778;
+    switch (stellarType) {
+      // Main sequence stars - typical values
+      case StellarType.MAIN_SEQUENCE:
+        temperature = temperature ?? 5778; // G-type default
         luminosity = luminosity ?? 1.0;
         color = color ?? "#FFF9E5";
         break;
-      case SpectralClass.K:
+
+      // Evolved stars
+      case StellarType.RED_GIANT:
+        temperature = temperature ?? 4000;
+        luminosity = luminosity ?? 100;
+        color = color ?? "#FF8844";
+        break;
+      case StellarType.BLUE_GIANT:
+        temperature = temperature ?? 25000;
+        luminosity = luminosity ?? 10000;
+        color = color ?? "#AABFFF";
+        break;
+      case StellarType.SUPERGIANT:
         temperature = temperature ?? 4500;
-        luminosity = luminosity ?? 0.4;
-        color = color ?? "#FFAA55";
+        luminosity = luminosity ?? 50000;
+        color = color ?? "#FFAA44";
         break;
-      case SpectralClass.M:
+      case StellarType.HYPERGIANT:
+        temperature = temperature ?? 5000;
+        luminosity = luminosity ?? 500000;
+        color = color ?? "#FFCC66";
+        break;
+      case StellarType.SUBGIANT:
+        temperature = temperature ?? 5500;
+        luminosity = luminosity ?? 5;
+        color = color ?? "#FFF8E0";
+        break;
+
+      // Special evolved types
+      case StellarType.WOLF_RAYET:
+        temperature = temperature ?? 50000;
+        luminosity = luminosity ?? 100000;
+        color = color ?? "#99FFFF";
+        break;
+      case StellarType.CARBON_STAR:
         temperature = temperature ?? 3000;
-        luminosity = luminosity ?? 0.04;
-        color = color ?? "#FF6644";
+        luminosity = luminosity ?? 1000;
+        color = color ?? "#FF4422";
         break;
-      case SpectralClass.L:
+      case StellarType.VARIABLE_STAR:
+        temperature = temperature ?? 6000;
+        luminosity = luminosity ?? 10;
+        color = color ?? "#FFFF88";
+        break;
+
+      // Pre-main sequence
+      case StellarType.PROTOSTAR:
         temperature = temperature ?? 2000;
-        luminosity = luminosity ?? 0.001;
-        color = color ?? "#FF3300";
+        luminosity = luminosity ?? 0.1;
+        color = color ?? "#CC4400";
         break;
-      case SpectralClass.T:
-        temperature = temperature ?? 1300;
-        luminosity = luminosity ?? 0.0001;
-        color = color ?? "#CC2200";
+      case StellarType.T_TAURI:
+        temperature = temperature ?? 4000;
+        luminosity = luminosity ?? 0.5;
+        color = color ?? "#FF6633";
         break;
-      case SpectralClass.Y:
-        temperature = temperature ?? 500;
-        luminosity = luminosity ?? 0.00001;
-        color = color ?? "#991100";
+      case StellarType.HERBIG_AE_BE:
+        temperature = temperature ?? 8000;
+        luminosity = luminosity ?? 50;
+        color = color ?? "#CCDDFF";
         break;
+
+      // Stellar remnants
+      case StellarType.WHITE_DWARF:
+        temperature = temperature ?? 25000;
+        luminosity = luminosity ?? 0.01;
+        color = color ?? "#FFFFFF";
+        break;
+      case StellarType.NEUTRON_STAR:
+        temperature = temperature ?? 1000000;
+        luminosity = luminosity ?? 0.1;
+        color = color ?? "#CCFFFF";
+        break;
+      case StellarType.BLACK_HOLE:
+        temperature = temperature ?? 2.7; // CMB temperature
+        luminosity = luminosity ?? 0;
+        color = color ?? "#000000";
+        break;
+
       default:
-        // Default to G-type if mainSpectralClass is not provided or unrecognized,
-        // but only if temperature, luminosity, or color are still undefined.
+        // Default to main sequence G-type if stellarType is not provided or unrecognized
         if (temperature === undefined) temperature = 5778;
         if (luminosity === undefined) luminosity = 1.0;
         if (color === undefined) color = "#FFF9E5";
-    }
-
-    if (exoticType) {
-      // If an exotic type is present, it might override the spectral class defaults or provide its own.
-      // We use the original currentTemperature/Luminosity/Color to see if the exotic type should set them
-      // or if they were already explicitly provided for the exotic star.
-      switch (exoticType) {
-        case ExoticStellarType.WHITE_DWARF:
-          temperature = currentTemperature ?? 25000;
-          luminosity = currentLuminosity ?? 0.01;
-          color = currentColor ?? "#FFFFFF";
-          break;
-        case ExoticStellarType.NEUTRON_STAR:
-          temperature = currentTemperature ?? 1000000;
-          luminosity = currentLuminosity ?? 0.1;
-          color = currentColor ?? "#CCFFFF";
-          break;
-        case ExoticStellarType.BLACK_HOLE:
-          temperature = currentTemperature ?? 0;
-          luminosity = currentLuminosity ?? 0;
-          color = currentColor ?? "#000000";
-          break;
-        case ExoticStellarType.PULSAR:
-          temperature = currentTemperature ?? 1000000;
-          luminosity = currentLuminosity ?? 0.5;
-          color = currentColor ?? "#00FFFF";
-          break;
-        case ExoticStellarType.WOLF_RAYET:
-          temperature = currentTemperature ?? 50000;
-          luminosity = currentLuminosity ?? 100000;
-          color = currentColor ?? "#99FFFF";
-          break;
-      }
     }
   }
 
