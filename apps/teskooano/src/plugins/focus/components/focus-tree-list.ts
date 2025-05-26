@@ -3,7 +3,9 @@ import {
   CelestialStatus,
   CelestialType,
 } from "@teskooano/data-types";
-import "./CelestialRow";
+import { BaseCelestialList } from "./base-celestial-list";
+import "./celestial-row.js";
+import { buildHierarchy } from "../utils/hierarchy-builder";
 
 /**
  * Custom web component that displays a hierarchical tree of celestial objects.
@@ -12,124 +14,20 @@ import "./CelestialRow";
  * @element focus-tree-list
  *
  * @fires focus-object - Fired when a celestial object is clicked
+ * @fires follow-object - Fired when a celestial object follow is requested
  *
  * @example
  * ```html
  * <focus-tree-list></focus-tree-list>
  * ```
- *
- * ```javascript
- * const treeList = document.querySelector('focus-tree-list');
- * treeList.updateObjects(celestialObjects);
- * treeList.setFocusedObject('object-id');
- * ```
  */
-export class FocusTreeList extends HTMLElement {
-  private _objects: Record<string, CelestialObject> = {};
+export class FocusTreeList extends BaseCelestialList {
   private _focusedId: string | null = null;
-  private _rootUl: HTMLUListElement;
 
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
-
-    // Create the root UL element
-    this._rootUl = document.createElement("ul");
     this._rootUl.id = "focus-tree-list";
     this._rootUl.classList.add("focus-tree");
-
-    // Set up styles
-    const style = document.createElement("style");
-    style.textContent = `
-      :host {
-        display: block;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-      }
-      
-      ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      
-      li {
-        position: relative;
-      }
-      
-      .list-item-content {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-      
-      .leaf-node {
-        padding-left: 20px;
-      }
-      
-      .caret {
-        cursor: pointer;
-        user-select: none;
-        display: inline-block;
-        width: 16px;
-        transition: transform 0.2s;
-      }
-      
-      .caret::before {
-        content: '▶';
-        font-size: 12px;
-      }
-      
-      .caret-down {
-        transform: rotate(90deg);
-      }
-      
-      .caret.inactive-caret {
-        opacity: 0.5;
-        pointer-events: none;
-      }
-      
-      .nested {
-        display: none;
-        padding-left: 20px;
-      }
-      
-      .nested.active {
-        display: block;
-      }
-      
-      .destroyed {
-        opacity: 0.7;
-      }
-      
-      .annihilated {
-        opacity: 0.5;
-      }
-      
-      .empty-message {
-        padding: 16px;
-        text-align: center;
-        opacity: 0.6;
-        font-style: italic;
-      }
-    `;
-
-    this.shadowRoot!.appendChild(style);
-    this.shadowRoot!.appendChild(this._rootUl);
-
-    // Set up event delegation
-    this._rootUl.addEventListener("click", this._handleClick.bind(this));
-  }
-
-  /**
-   * Updates the celestial objects and rebuilds the tree.
-   * @param objects - The celestial objects to display
-   * @returns The count of active objects
-   */
-  updateObjects(objects: Record<string, CelestialObject>): number {
-    this._objects = objects;
-    return this._rebuild();
   }
 
   /**
@@ -200,18 +98,71 @@ export class FocusTreeList extends HTMLElement {
     ).length;
   }
 
-  private _rebuild(): number {
-    this._rootUl.innerHTML = "";
+  protected getEmptyMessage(): string {
+    return "No active celestial objects";
+  }
 
-    // Filter out destroyed/annihilated objects
-    const activeObjects: Record<string, CelestialObject> = {};
-    Object.entries(this._objects).forEach(([id, obj]) => {
-      if (obj.status === CelestialStatus.ACTIVE) {
-        activeObjects[id] = obj;
+  protected getBaseStyles(): string {
+    return (
+      super.getBaseStyles() +
+      `
+      .list-item-content {
+        display: flex;
+        align-items: center;
+        gap: 4px;
       }
-    });
+      
+      .leaf-node {
+        padding-left: 20px;
+      }
+      
+      .caret {
+        cursor: pointer;
+        user-select: none;
+        display: inline-block;
+        width: 16px;
+        transition: transform 0.2s;
+      }
+      
+      .caret::before {
+        content: '▶';
+        font-size: 12px;
+      }
+      
+      .caret-down {
+        transform: rotate(90deg);
+      }
+      
+      .caret.inactive-caret {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+      
+      .nested {
+        display: none;
+        padding-left: 20px;
+      }
+      
+      .nested.active {
+        display: block;
+      }
+    `
+    );
+  }
 
-    const objectMap = new Map(Object.entries(activeObjects));
+  protected filterObjects(
+    objects: Record<string, CelestialObject>,
+  ): CelestialObject[] {
+    // Filter out destroyed/annihilated objects
+    return Object.values(objects).filter(
+      (obj) => obj.status === CelestialStatus.ACTIVE,
+    );
+  }
+
+  protected renderItem(obj: CelestialObject, parentUl: HTMLElement): void {
+    // Build hierarchy for this specific render
+    const activeObjects = this.filterObjects(this._objects);
+    const objectMap = new Map(activeObjects.map((o) => [o.id, o]));
     const dynamicHierarchy = new Map<string | null, string[]>();
 
     // Build hierarchy
@@ -223,56 +174,23 @@ export class FocusTreeList extends HTMLElement {
       dynamicHierarchy.get(parentKey)!.push(id);
     });
 
-    // Find root objects - use a Set to prevent duplicates
-    const rootIdsSet = new Set<string>();
+    this._addItem(obj, parentUl, dynamicHierarchy, objectMap);
+  }
 
-    // Add objects with no parent
-    const directRoots = dynamicHierarchy.get(null) || [];
-    directRoots.forEach((id) => rootIdsSet.add(id));
+  protected _rebuild(): number {
+    this._rootUl.innerHTML = "";
 
-    // Handle orphaned objects (whose parents don't exist)
-    dynamicHierarchy.forEach((children, parentId) => {
-      if (parentId !== null && !objectMap.has(parentId)) {
-        children.forEach((id) => rootIdsSet.add(id));
-      }
-    });
-
-    // Ensure all stars without parents are included
-    objectMap.forEach((obj, id) => {
-      if (
-        obj.type === CelestialType.STAR &&
-        !obj.parentId &&
-        !obj.currentParentId
-      ) {
-        rootIdsSet.add(id);
-      }
-    });
-
-    // Convert to array for sorting
-    const rootIds = Array.from(rootIdsSet);
-
-    // Sort root objects
-    rootIds.sort((a, b) => {
-      const objA = objectMap.get(a);
-      const objB = objectMap.get(b);
-      if (!objA || !objB) return 0;
-
-      if (objA.type === CelestialType.STAR && objB.type !== CelestialType.STAR)
-        return -1;
-      if (objA.type !== CelestialType.STAR && objB.type === CelestialType.STAR)
-        return 1;
-
-      return (objA.name ?? "").localeCompare(objB.name ?? "");
-    });
+    const { objectMap, dynamicHierarchy, rootIds } = buildHierarchy(
+      this._objects,
+    );
 
     if (rootIds.length === 0 && objectMap.size > 0) {
       this._rootUl.innerHTML =
         '<li class="empty-message">Loading hierarchy...</li>';
     } else if (objectMap.size === 0) {
-      this._rootUl.innerHTML =
-        '<li class="empty-message">No active celestial objects</li>';
+      this._rootUl.appendChild(this._emptyMessage);
     } else {
-      rootIds.forEach((id) => {
+      rootIds.forEach((id: string) => {
         const rootObj = objectMap.get(id);
         if (rootObj)
           this._addItem(rootObj, this._rootUl, dynamicHierarchy, objectMap);
@@ -377,7 +295,7 @@ export class FocusTreeList extends HTMLElement {
     }
   }
 
-  private _handleClick(event: Event): void {
+  protected _handleClick(event: Event): void {
     const target = event.target as HTMLElement;
 
     // Handle caret clicks
@@ -394,58 +312,8 @@ export class FocusTreeList extends HTMLElement {
       }
       return;
     }
-
-    // Check if the event is a focus-request from a celestial-row
-    if (event.type === "focus-request") {
-      const customEvent = event as CustomEvent<{ objectId: string }>;
-      if (customEvent.detail?.objectId) {
-        // Re-dispatch as focus-object event at the component level
-        this.dispatchEvent(
-          new CustomEvent("focus-object", {
-            detail: { objectId: customEvent.detail.objectId },
-            bubbles: true,
-            composed: true,
-          }),
-        );
-      }
-    }
-
-    // Check if the event is a follow-request from a celestial-row
-    if (event.type === "follow-request") {
-      const customEvent = event as CustomEvent<{ objectId: string }>;
-      if (customEvent.detail?.objectId) {
-        // Re-dispatch as follow-object event at the component level
-        this.dispatchEvent(
-          new CustomEvent("follow-object", {
-            detail: { objectId: customEvent.detail.objectId },
-            bubbles: true,
-            composed: true,
-          }),
-        );
-      }
-    }
-  }
-
-  connectedCallback() {
-    // Listen for focus-request and follow-request events from celestial-row components
-    this._rootUl.addEventListener(
-      "focus-request",
-      this._handleClick.bind(this),
-    );
-    this._rootUl.addEventListener(
-      "follow-request",
-      this._handleClick.bind(this),
-    );
-  }
-
-  disconnectedCallback() {
-    this._rootUl.removeEventListener(
-      "focus-request",
-      this._handleClick.bind(this),
-    );
-    this._rootUl.removeEventListener(
-      "follow-request",
-      this._handleClick.bind(this),
-    );
   }
 }
+
+// Register the custom element
+customElements.define("focus-tree-list", FocusTreeList);

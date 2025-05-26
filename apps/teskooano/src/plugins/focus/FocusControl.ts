@@ -12,15 +12,15 @@ import {
   handleFollowRequest,
 } from "./FocusControl.interactions.js";
 import { template } from "./FocusControl.template.js";
+import { StarDestructionHandler } from "./utils/star-destruction-handler.js";
 
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 import { Subscription } from "rxjs";
 import type { CameraManagerState } from "../camera-manager/types.js";
-import "./CelestialRow.js";
-import "./DestroyedObjectsList.js";
-import type { DestroyedObjectsList } from "./DestroyedObjectsList.js";
-import "./FocusTreeList.js";
-import type { FocusTreeList } from "./FocusTreeList.js";
+import "./components/focus-tree-list.js";
+import "./components/destroyed-objects-list.js";
+import type { FocusTreeList } from "./components/focus-tree-list.js";
+import type { DestroyedObjectsList } from "./components/destroyed-objects-list.js";
 
 /**
  * A custom element panel for Dockview that displays a hierarchical list
@@ -40,15 +40,6 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
 
   private _currentFocusedId: string | null = null;
   private _currentFollowedId: string | null = null;
-
-  // Track destroyed objects in order of destruction
-  private _destroyedObjects: Array<{
-    id: string;
-    name: string;
-    type: CelestialType;
-    status: CelestialStatus;
-    destroyedAt: number;
-  }> = [];
 
   private _handleObjectsLoaded: () => void;
   private _handleObjectDestroyed: (event: Event) => void;
@@ -505,157 +496,42 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
       return;
     }
 
-    const currentObjects = getCelestialObjects();
-    const destroyedObject =
-      this._previousObjectsState[destroyedObjectId] ||
-      currentObjects[destroyedObjectId];
+    // Use the new service to handle star destruction logic
+    const newRootStar =
+      StarDestructionHandler.handleStarDestruction(destroyedObjectId);
 
-    // Check if the destroyed object was a star
-    if (destroyedObject && destroyedObject.type === CelestialType.STAR) {
-      console.log(
-        `[FocusControl] Star ${destroyedObject.name} (${destroyedObjectId}) was destroyed. Checking for root star reassignment.`,
+    if (newRootStar) {
+      console.debug(
+        `[FocusControl] New root star identified: ${newRootStar.name} (${newRootStar.id})`,
       );
 
-      // Check if this was a root star (no parent)
-      const wasRootStar =
-        !destroyedObject.parentId && !destroyedObject.currentParentId;
-
-      if (wasRootStar) {
-        console.log(
-          `[FocusControl] Destroyed star was a root star. Finding new root star for UI hierarchy.`,
+      // If the destroyed star was being focused or followed, switch to the new root star
+      if (this._currentFocusedId === destroyedObjectId) {
+        console.debug(
+          `[FocusControl] Switching focus from destroyed star to new root star: ${newRootStar.id}`,
         );
+        this.requestFocus(newRootStar.id);
+      }
 
-        // Find the new root star (should be the one that orphaned objects were reassigned to)
-        const newRootStar = this._findNewRootStar(
-          currentObjects,
-          destroyedObjectId,
+      if (this._currentFollowedId === destroyedObjectId) {
+        console.debug(
+          `[FocusControl] Switching follow from destroyed star to new root star: ${newRootStar.id}`,
         );
-
-        if (newRootStar) {
-          console.log(
-            `[FocusControl] New root star identified: ${newRootStar.name} (${newRootStar.id})`,
-          );
-
-          // If the destroyed star was being focused or followed, switch to the new root star
-          if (this._currentFocusedId === destroyedObjectId) {
-            console.log(
-              `[FocusControl] Switching focus from destroyed star to new root star: ${newRootStar.id}`,
-            );
-            this.requestFocus(newRootStar.id);
-          }
-
-          if (this._currentFollowedId === destroyedObjectId) {
-            console.log(
-              `[FocusControl] Switching follow from destroyed star to new root star: ${newRootStar.id}`,
-            );
-            this.requestFollow(newRootStar.id);
-          }
-        } else {
-          console.warn(
-            `[FocusControl] No suitable new root star found after destruction of ${destroyedObjectId}`,
-          );
-
-          // Clear focus/follow if they were on the destroyed star
-          if (this._currentFocusedId === destroyedObjectId) {
-            this._parentPanel?.engineCameraManager?.clearFocus();
-          }
-          if (this._currentFollowedId === destroyedObjectId) {
-            this._currentFollowedId = null;
-          }
-        }
+        this.requestFollow(newRootStar.id);
+      }
+    } else {
+      // Clear focus/follow if they were on the destroyed object
+      if (this._currentFocusedId === destroyedObjectId) {
+        this._parentPanel?.engineCameraManager?.clearFocus();
+      }
+      if (this._currentFollowedId === destroyedObjectId) {
+        this._currentFollowedId = null;
       }
     }
 
     // Always rebuild the list to reflect the new hierarchy
     this._updateLists();
   };
-
-  /**
-   * Finds the new root star after a root star destruction.
-   * This should be the star that orphaned objects were reassigned to by the physics system.
-   * @param currentObjects - Current celestial objects state
-   * @param destroyedStarId - ID of the destroyed star
-   * @returns The new root star object, or null if none found
-   * @internal
-   */
-  private _findNewRootStar(
-    currentObjects: Record<string, CelestialObject>,
-    destroyedStarId: string,
-  ): CelestialObject | null {
-    // Find all active stars that could be the new root
-    const activeStars = Object.values(currentObjects).filter(
-      (obj) =>
-        obj.type === CelestialType.STAR &&
-        obj.status === CelestialStatus.ACTIVE &&
-        obj.id !== destroyedStarId,
-    );
-
-    if (activeStars.length === 0) {
-      return null;
-    }
-
-    // Look for objects that were reassigned from the destroyed star
-    // The new root star should be the one that received the most reassignments
-    const reassignmentCounts = new Map<string, number>();
-
-    Object.values(currentObjects).forEach((obj) => {
-      // Check if this object was originally parented to the destroyed star
-      // but now has a different currentParentId (indicating reassignment)
-      if (
-        obj.parentId === destroyedStarId &&
-        obj.currentParentId &&
-        obj.currentParentId !== destroyedStarId &&
-        obj.status === CelestialStatus.ACTIVE
-      ) {
-        const newParentId = obj.currentParentId;
-        reassignmentCounts.set(
-          newParentId,
-          (reassignmentCounts.get(newParentId) || 0) + 1,
-        );
-      }
-    });
-
-    // If we found reassignments, return the star with the most reassignments
-    if (reassignmentCounts.size > 0) {
-      let maxReassignments = 0;
-      let newRootStarId: string | null = null;
-
-      reassignmentCounts.forEach((count, starId) => {
-        if (count > maxReassignments) {
-          maxReassignments = count;
-          newRootStarId = starId;
-        }
-      });
-
-      if (newRootStarId) {
-        const newRootStar = currentObjects[newRootStarId];
-        if (newRootStar && newRootStar.type === CelestialType.STAR) {
-          console.log(
-            `[FocusControl] Found new root star ${newRootStar.name} with ${maxReassignments} reassigned objects`,
-          );
-          return newRootStar;
-        }
-      }
-    }
-
-    // Fallback: return the first active star (preferring main stars)
-    const mainStar = activeStars.find((star) => {
-      const starProps = star.properties as any;
-      return starProps?.isMainStar === true;
-    });
-
-    if (mainStar) {
-      console.log(`[FocusControl] Fallback to main star: ${mainStar.name}`);
-      return mainStar;
-    }
-
-    // Final fallback: return the first active star
-    const fallbackStar = activeStars[0];
-    console.log(
-      `[FocusControl] Final fallback to first active star: ${fallbackStar.name}`,
-    );
-    return fallbackStar;
-  }
 
   /**
    * Initializes the panel when added to Dockview.

@@ -1,7 +1,14 @@
 import { CelestialType } from "@teskooano/data-types";
-import { template, iconStyles } from "./CelestialRow.template";
+import { template } from "./celestial-row.template";
+import { iconStyles } from "../utils/celestial-icon-styles";
 import { CustomEvents } from "@teskooano/data-types";
 
+/**
+ * Web component representing a single row in any celestial list (active or destroyed).
+ * Handles its own focus/follow button events and visual state.
+ *
+ * NOTE: File renamed to kebab-case to maintain consistency across component filenames.
+ */
 export class CelestialRow extends HTMLElement {
   static observedAttributes = [
     "object-id",
@@ -12,8 +19,8 @@ export class CelestialRow extends HTMLElement {
   ];
 
   private _objectId: string | null = null;
-  private _isInactive: boolean = false;
-  private _isFocused: boolean = false;
+  private _isInactive = false;
+  private _isFocused = false;
 
   private iconEl: HTMLElement | null = null;
   private nameEl: HTMLElement | null = null;
@@ -27,7 +34,6 @@ export class CelestialRow extends HTMLElement {
 
     this.iconEl = this.shadowRoot!.getElementById("icon");
     this.nameEl = this.shadowRoot!.getElementById("name");
-    // focusBtn and followBtn will be initialized in connectedCallback
   }
 
   connectedCallback() {
@@ -36,18 +42,11 @@ export class CelestialRow extends HTMLElement {
 
     if (this.focusBtn) {
       this.focusBtn.addEventListener("click", this.handleFocusClick);
-    } else {
-      console.error(
-        `[CelestialRow connectedCallback] focusBtn NOT FOUND for ${this.getAttribute("object-id")}`,
-      );
     }
     if (this.followBtn) {
       this.followBtn.addEventListener("click", this.handleFollowClick);
-    } else {
-      console.error(
-        `[CelestialRow connectedCallback] followBtn NOT FOUND for ${this.getAttribute("object-id")}`,
-      );
     }
+
     this.updateButtonTitles();
   }
 
@@ -58,7 +57,7 @@ export class CelestialRow extends HTMLElement {
 
   attributeChangedCallback(
     name: string,
-    oldValue: string | null,
+    _oldValue: string | null,
     newValue: string | null,
   ) {
     switch (name) {
@@ -71,9 +70,11 @@ export class CelestialRow extends HTMLElement {
         this.updateButtonTitles();
         break;
       case "object-type":
-        const type = (newValue as CelestialType) ?? "default";
-        const style = iconStyles[type] || iconStyles.default;
-        this.iconEl?.setAttribute("style", style);
+        {
+          const type = (newValue as CelestialType) ?? "default";
+          const style = iconStyles[type] || iconStyles.default;
+          this.iconEl?.setAttribute("style", style);
+        }
         break;
       case "inactive":
         this._isInactive = newValue !== null;
@@ -86,6 +87,9 @@ export class CelestialRow extends HTMLElement {
     }
   }
 
+  // -------------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------------
   private updateButtonTitles() {
     const objectName = this.getAttribute("object-name");
     const id = this._objectId;
@@ -130,6 +134,9 @@ export class CelestialRow extends HTMLElement {
     }
   };
 
+  // -------------------------------------------------------------
+  // Public API
+  // -------------------------------------------------------------
   get objectId(): string | null {
     return this._objectId;
   }
@@ -140,3 +147,6 @@ export class CelestialRow extends HTMLElement {
     return this._isFocused;
   }
 }
+
+// Register the custom element with its kebab-case tag name.
+customElements.define("celestial-row", CelestialRow);

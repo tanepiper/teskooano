@@ -1,6 +1,5 @@
 import ArrowSyncCircleIcon from "@fluentui/svg-icons/icons/arrow_sync_circle_24_regular.svg?raw";
 import DismissCircleIcon from "@fluentui/svg-icons/icons/dismiss_circle_24_regular.svg?raw";
-import { CelestialType } from "@teskooano/data-types";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -103,15 +102,4 @@ template.innerHTML = `
   </div>
 `;
 
-const iconStyles: Record<string, string> = {
-  [CelestialType.STAR]: "background-color: yellow;",
-  [CelestialType.PLANET]: "background-color: skyblue;",
-  [CelestialType.GAS_GIANT]: "background-color: orange;",
-  [CelestialType.DWARF_PLANET]: "background-color: lightblue;",
-  [CelestialType.MOON]: "background-color: lightgrey;",
-  [CelestialType.ASTEROID_FIELD]: "background-color: brown;",
-  [CelestialType.OORT_CLOUD]: "background-color: darkgrey;",
-  default: "background-color: white;",
-};
-
-export { template, iconStyles };
+export { template };

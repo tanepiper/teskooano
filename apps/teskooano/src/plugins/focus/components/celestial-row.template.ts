@@ -1,7 +1,6 @@
 import EyeIcon from "@fluentui/svg-icons/icons/eye_24_regular.svg?raw";
 import PersonRunningFilledIcon from "@fluentui/svg-icons/icons/person_running_20_regular.svg?raw";
-
-import { CelestialType } from "@teskooano/data-types";
+import { iconStyles } from "../utils/celestial-icon-styles";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -102,16 +101,5 @@ template.innerHTML = `
   </teskooano-button>
 </div>
 `;
-
-const iconStyles: Record<string, string> = {
-  [CelestialType.STAR]: "background-color: yellow;",
-  [CelestialType.PLANET]: "background-color: skyblue;",
-  [CelestialType.GAS_GIANT]: "background-color: orange;",
-  [CelestialType.DWARF_PLANET]: "background-color: lightblue;",
-  [CelestialType.MOON]: "background-color: lightgrey;",
-  [CelestialType.ASTEROID_FIELD]: "background-color: brown;",
-  [CelestialType.OORT_CLOUD]: "background-color: darkgrey;",
-  default: "background-color: white;",
-};
 
 export { iconStyles, template };
