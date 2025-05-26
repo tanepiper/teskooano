@@ -26,245 +26,361 @@ export function calculateDistance(
 }
 
 /**
- * Finds the nearest active star to a given celestial object.
- * @param targetObject The object that needs a new parent
- * @param allObjects All celestial objects in the system
- * @param excludeStarIds Optional array of star IDs to exclude from consideration
- * @returns The nearest star object, or null if no suitable star is found
+ * Calculates the gravitational influence of one object on another.
+ * Uses Newton's law of gravitation: F = G * m1 * m2 / r^2
+ * We return G * m1 / r^2 as the "gravitational influence score"
+ * @param influencer The object exerting gravitational influence
+ * @param target The object being influenced
+ * @returns Gravitational influence score, or 0 if calculation fails
  */
-export function findNearestStar(
-  targetObject: CelestialObject,
-  allObjects: Record<string, CelestialObject>,
-  excludeStarIds: string[] = [],
-): CelestialObject | null {
-  let nearestStar: CelestialObject | null = null;
-  let minDistance = Infinity;
-
-  // Find all active stars
-  const activeStars = Object.values(allObjects).filter(
-    (obj) =>
-      obj.type === CelestialType.STAR &&
-      obj.status === CelestialStatus.ACTIVE &&
-      !excludeStarIds.includes(obj.id) &&
-      obj.physicsStateReal,
-  );
-
-  if (activeStars.length === 0) {
-    console.warn(
-      `[findNearestStar] No active stars available for reassignment of ${targetObject.id}`,
-    );
-    return null;
-  }
-
-  // Calculate distances and find the nearest
-  for (const star of activeStars) {
-    const distance = calculateDistance(targetObject, star);
-    if (distance < minDistance) {
-      minDistance = distance;
-      nearestStar = star;
-    }
-  }
-
-  if (nearestStar) {
-    console.log(
-      `[findNearestStar] Found nearest star ${nearestStar.id} (${nearestStar.name}) for ${targetObject.id} at distance ${(minDistance / 1.496e11).toFixed(2)} AU`,
-    );
-  }
-
-  return nearestStar;
+export function calculateGravitationalInfluence(
+  influencer: CelestialObject,
+  target: CelestialObject,
+): number {
+  const distance = calculateDistance(influencer, target);
+  if (distance === Infinity || distance === 0) return 0;
+  
+  const mass = influencer.realMass_kg || 0;
+  if (mass === 0) return 0;
+  
+  // G * m / r^2 (we don't need the actual force, just relative influence)
+  // Using normalized units to avoid huge numbers
+  const distanceAU = distance / 1.496e11; // Convert to AU for manageable numbers
+  return mass / (distanceAU * distanceAU);
 }
 
 /**
- * Reassigns orphaned objects to the nearest available star when their parent is destroyed.
- * @param destroyedStarIds Array of star IDs that were destroyed
+ * Determines if an object can capture another based on mass and velocity.
+ * A simple check based on whether the target is within the Hill sphere
+ * and has low enough velocity relative to the capturer.
+ * @param capturer The object attempting to capture
+ * @param target The object being captured
+ * @param primaryMass The mass of the primary body (e.g., star) in kg
+ * @returns true if capture is possible
+ */
+export function canCapture(
+  capturer: CelestialObject,
+  target: CelestialObject,
+  primaryMass: number,
+): boolean {
+  if (!capturer.physicsStateReal || !target.physicsStateReal) return false;
+  
+  const distance = calculateDistance(capturer, target);
+  const capturerMass = capturer.realMass_kg || 0;
+  const targetMass = target.realMass_kg || 0;
+  
+  // Skip if capturer is less massive than target (can't capture something bigger)
+  if (capturerMass <= targetMass) return false;
+  
+  // Calculate Hill sphere radius (simplified)
+  // r_H ≈ a * (m_planet / 3*m_star)^(1/3)
+  const semiMajorAxis = capturer.orbit?.realSemiMajorAxis_m || distance;
+  const hillRadius = semiMajorAxis * Math.pow(capturerMass / (3 * primaryMass), 1/3);
+  
+  // Check if target is within Hill sphere
+  if (distance > hillRadius) return false;
+  
+  // Check relative velocity (simplified - just check if it's not too high)
+  const vel1 = capturer.physicsStateReal.velocity_mps;
+  const vel2 = target.physicsStateReal.velocity_mps;
+  const relVel = Math.sqrt(
+    Math.pow(vel1.x - vel2.x, 2) +
+    Math.pow(vel1.y - vel2.y, 2) +
+    Math.pow(vel1.z - vel2.z, 2)
+  );
+  
+  // Escape velocity from capturer at current distance
+  const G = 6.67430e-11;
+  const escapeVel = Math.sqrt(2 * G * capturerMass / distance);
+  
+  // Can capture if relative velocity is less than escape velocity
+  return relVel < escapeVel;
+}
+
+/**
+ * Finds the most suitable parent for an object based on gravitational influence.
+ * Considers mass and distance to find the dominant gravitational attractor.
+ * @param targetObject The object that needs a new parent
+ * @param allObjects All celestial objects in the system
+ * @param excludeIds Optional array of object IDs to exclude from consideration
+ * @returns The most suitable parent object, or null if none found
+ */
+export function findBestGravitationalParent(
+  targetObject: CelestialObject,
+  allObjects: Record<string, CelestialObject>,
+  excludeIds: string[] = [],
+): CelestialObject | null {
+  let bestParent: CelestialObject | null = null;
+  let maxInfluence = 0;
+  
+  // Consider all active objects that could be parents
+  const potentialParents = Object.values(allObjects).filter((obj) => {
+    if (obj.id === targetObject.id) return false;
+    if (excludeIds.includes(obj.id)) return false;
+    if (obj.status !== CelestialStatus.ACTIVE) return false;
+    if (!obj.physicsStateReal) return false;
+    
+    // Stars can be parents to anything
+    if (obj.type === CelestialType.STAR) return true;
+    
+    // Gas giants and large planets can capture smaller objects
+    if (obj.type === CelestialType.GAS_GIANT) return true;
+    if (obj.type === CelestialType.PLANET && obj.realMass_kg && obj.realMass_kg > (targetObject.realMass_kg || 0)) return true;
+    
+    return false;
+  });
+  
+  // Find the object with the highest gravitational influence
+  for (const parent of potentialParents) {
+    const influence = calculateGravitationalInfluence(parent, targetObject);
+    
+    if (influence > maxInfluence) {
+      maxInfluence = influence;
+      bestParent = parent;
+    }
+  }
+  
+  if (bestParent) {
+    const distance = calculateDistance(targetObject, bestParent) / 1.496e11; // Convert to AU
+    console.log(
+      `[findBestGravitationalParent] Best parent for ${targetObject.id} (${targetObject.name}) is ${bestParent.id} (${bestParent.name}) with influence score ${maxInfluence.toExponential(2)} at ${distance.toFixed(2)} AU`
+    );
+  }
+  
+  return bestParent;
+}
+
+/**
+ * Finds the new main star when the current main star is destroyed.
+ * The most massive remaining star becomes the new main star.
+ * @param allObjects All celestial objects in the system
+ * @param excludeStarIds Star IDs to exclude (destroyed stars)
+ * @returns The new main star, or null if no stars remain
+ */
+export function findNewMainStar(
+  allObjects: Record<string, CelestialObject>,
+  excludeStarIds: string[] = [],
+): CelestialObject | null {
+  const remainingStars = Object.values(allObjects).filter(
+    (obj) =>
+      obj.type === CelestialType.STAR &&
+      obj.status === CelestialStatus.ACTIVE &&
+      !excludeStarIds.includes(obj.id)
+  );
+  
+  if (remainingStars.length === 0) return null;
+  
+  // Sort by mass (descending) and pick the most massive
+  remainingStars.sort((a, b) => (b.realMass_kg || 0) - (a.realMass_kg || 0));
+  
+  const newMainStar = remainingStars[0];
+  console.log(
+    `[findNewMainStar] Selected ${newMainStar.id} (${newMainStar.name}) as new main star with mass ${newMainStar.realMass_kg?.toExponential(2)} kg`
+  );
+  
+  return newMainStar;
+}
+
+/**
+ * Handles the special case of moon reassignment when their parent planet is destroyed.
+ * Moons can either be captured by the star or become independent bodies.
+ * @param moons Array of moon objects that lost their parent
+ * @param allObjects All celestial objects in the system
+ * @param destroyedPlanetId The ID of the destroyed planet
+ * @returns Updated moon objects with new parents or as independent bodies
+ */
+export function reassignOrphanedMoons(
+  moons: CelestialObject[],
+  allObjects: Record<string, CelestialObject>,
+  destroyedPlanetId: string,
+): Record<string, CelestialObject> {
+  const updatedMoons: Record<string, CelestialObject> = {};
+  
+  // Sort moons by mass (largest first)
+  const sortedMoons = [...moons].sort((a, b) => (b.realMass_kg || 0) - (a.realMass_kg || 0));
+  
+  if (sortedMoons.length > 1) {
+    // Multiple moons - they might form a new system
+    const largestMoon = sortedMoons[0];
+    console.log(
+      `[reassignOrphanedMoons] Multiple moons orphaned. Largest moon ${largestMoon.id} (${largestMoon.name}) may become primary.`
+    );
+    
+    // Check if the largest moon can gravitationally bind the others
+    let boundMoons = false;
+    for (let i = 1; i < sortedMoons.length; i++) {
+      const moon = sortedMoons[i];
+      const primaryMass = Object.values(allObjects).find(obj => obj.type === CelestialType.STAR && obj.status === CelestialStatus.ACTIVE)?.realMass_kg || 1e30;
+      
+      if (canCapture(largestMoon, moon, primaryMass)) {
+        // This moon is captured by the largest moon
+        updatedMoons[moon.id] = {
+          ...moon,
+          parentId: largestMoon.id,
+          currentParentId: largestMoon.id,
+        };
+        boundMoons = true;
+        console.log(
+          `[reassignOrphanedMoons] Moon ${moon.id} (${moon.name}) captured by larger moon ${largestMoon.id}`
+        );
+      }
+    }
+    
+    // The largest moon needs a new parent (star or large planet)
+    const bestParent = findBestGravitationalParent(largestMoon, allObjects, [destroyedPlanetId]);
+    if (bestParent) {
+      updatedMoons[largestMoon.id] = {
+        ...largestMoon,
+        parentId: bestParent.id,
+        currentParentId: bestParent.id,
+      };
+      console.log(
+        `[reassignOrphanedMoons] Largest moon ${largestMoon.id} reassigned to ${bestParent.id} (${bestParent.name})`
+      );
+    }
+    
+    // Handle any moons not captured by the largest
+    for (const moon of sortedMoons) {
+      if (!updatedMoons[moon.id]) {
+        const bestParent = findBestGravitationalParent(moon, allObjects, [destroyedPlanetId]);
+        if (bestParent) {
+          updatedMoons[moon.id] = {
+            ...moon,
+            parentId: bestParent.id,
+            currentParentId: bestParent.id,
+          };
+        }
+      }
+    }
+  } else if (sortedMoons.length === 1) {
+    // Single moon - find best gravitational parent
+    const moon = sortedMoons[0];
+    const bestParent = findBestGravitationalParent(moon, allObjects, [destroyedPlanetId]);
+    
+    if (bestParent) {
+      updatedMoons[moon.id] = {
+        ...moon,
+        parentId: bestParent.id,
+        currentParentId: bestParent.id,
+      };
+      console.log(
+        `[reassignOrphanedMoons] Single moon ${moon.id} (${moon.name}) reassigned to ${bestParent.id} (${bestParent.name})`
+      );
+    }
+  }
+  
+  return updatedMoons;
+}
+
+/**
+ * Reassigns orphaned objects when their parent is destroyed.
+ * Handles star destruction, planet destruction, and capture mechanics.
+ * @param destroyedIds Array of object IDs that were destroyed
  * @param allObjects All celestial objects in the system
  * @returns Updated celestial objects map with reassigned parents
  */
 export function reassignOrphanedObjects(
-  destroyedStarIds: string[],
+  destroyedIds: string[],
   allObjects: Record<string, CelestialObject>,
 ): Record<string, CelestialObject> {
-  if (destroyedStarIds.length === 0) {
-    return allObjects;
-  }
-
+  if (destroyedIds.length === 0) return allObjects;
+  
   const updatedObjects = { ...allObjects };
+  const destroyedStarIds = destroyedIds.filter(id => allObjects[id]?.type === CelestialType.STAR);
+  const destroyedPlanetIds = destroyedIds.filter(id => 
+    allObjects[id]?.type === CelestialType.PLANET || 
+    allObjects[id]?.type === CelestialType.GAS_GIANT
+  );
   
-  // Check if any destroyed star was a root star (main star with no parent)
-  const destroyedRootStars = destroyedStarIds.filter(starId => {
-    const star = allObjects[starId];
-    return star && !star.parentId && !star.currentParentId;
-  });
-  
-  if (destroyedRootStars.length > 0) {
-    console.log(
-      `[reassignOrphanedObjects] Destroyed stars include ${destroyedRootStars.length} root star(s). Need to find new main star.`
-    );
-    
-    // Find all remaining active stars
-    const remainingStars = Object.values(allObjects).filter(
-      (obj) =>
-        obj.type === CelestialType.STAR &&
-        obj.status === CelestialStatus.ACTIVE &&
-        !destroyedStarIds.includes(obj.id)
-    );
-    
-    if (remainingStars.length === 0) {
-      console.error(
-        `[reassignOrphanedObjects] No remaining stars after destruction. System has no stars!`
-      );
-      return updatedObjects;
-    }
-    
-    // Choose the new main star (prefer one that already has isMainStar property, or just the first one)
-    let newMainStar = remainingStars.find(star => {
-      const props = star.properties as any;
-      return props?.isMainStar === true;
+  // Handle destroyed stars first
+  if (destroyedStarIds.length > 0) {
+    // Check if the main star was destroyed
+    const destroyedMainStar = destroyedStarIds.find(id => {
+      const star = allObjects[id];
+      return star && (!star.parentId && !star.currentParentId);
     });
     
-    if (!newMainStar) {
-      newMainStar = remainingStars[0];
-    }
-    
-    console.log(
-      `[reassignOrphanedObjects] Selected ${newMainStar.id} (${newMainStar.name}) as new main star`
-    );
-    
-    // Update the new main star to have no parent and set isMainStar property
-    updatedObjects[newMainStar.id] = {
-      ...newMainStar,
-      parentId: undefined,
-      currentParentId: undefined,
-    };
-    
-    if (updatedObjects[newMainStar.id].properties) {
-      (updatedObjects[newMainStar.id].properties as any).isMainStar = true;
-    }
-    
-    // Now find all objects that need reassignment
-    // This includes both direct orphans and objects that were in the hierarchy under the destroyed root star
-    const objectsToReassign: CelestialObject[] = [];
-    
-    Object.values(updatedObjects).forEach((obj) => {
-      // Skip the new main star itself
-      if (obj.id === newMainStar!.id) return;
+    if (destroyedMainStar) {
+      // Find new main star (most massive remaining star)
+      const newMainStar = findNewMainStar(allObjects, destroyedStarIds);
       
-      // Skip other destroyed objects
-      if (obj.status !== CelestialStatus.ACTIVE) return;
+      if (!newMainStar) {
+        console.error("[reassignOrphanedObjects] No stars remain in the system!");
+        return updatedObjects;
+      }
       
-      // Check if this object's parent chain leads to a destroyed star
-      let needsReassignment = false;
-      let currentParent = obj.parentId || obj.currentParentId;
+      // Update the new main star
+      updatedObjects[newMainStar.id] = {
+        ...newMainStar,
+        parentId: undefined,
+        currentParentId: undefined,
+      };
       
-      while (currentParent) {
-        if (destroyedStarIds.includes(currentParent)) {
-          needsReassignment = true;
-          break;
+      if (updatedObjects[newMainStar.id].properties) {
+        (updatedObjects[newMainStar.id].properties as any).isMainStar = true;
+      }
+      
+      // Reassign all stars that had the old main star as parent
+      Object.values(updatedObjects).forEach((obj) => {
+        if (
+          obj.type === CelestialType.STAR &&
+          obj.status === CelestialStatus.ACTIVE &&
+          (obj.parentId === destroyedMainStar || obj.currentParentId === destroyedMainStar) &&
+          obj.id !== newMainStar.id
+        ) {
+          updatedObjects[obj.id] = {
+            ...obj,
+            parentId: newMainStar.id,
+            currentParentId: newMainStar.id,
+          };
+          console.log(
+            `[reassignOrphanedObjects] Star ${obj.id} (${obj.name}) reassigned to new main star ${newMainStar.id}`
+          );
         }
-        const parent = allObjects[currentParent];
-        if (!parent) break;
-        currentParent = parent.parentId || parent.currentParentId;
-      }
-      
-      // Also check if object has no parent (was at root level) and isn't a star
-      if (!obj.parentId && !obj.currentParentId && obj.type !== CelestialType.STAR) {
-        needsReassignment = true;
-      }
-      
-      if (needsReassignment) {
-        objectsToReassign.push(obj);
-      }
-    });
+      });
+    }
     
-    console.log(
-      `[reassignOrphanedObjects] Found ${objectsToReassign.length} objects to reassign to new hierarchy`
-    );
-    
-    // Reassign each object to the nearest star (which might be the new main star)
-    objectsToReassign.forEach((orphan) => {
-      const nearestStar = findNearestStar(
-        orphan,
-        updatedObjects,
-        destroyedStarIds,
-      );
-
-      if (nearestStar) {
-        console.log(
-          `[reassignOrphanedObjects] Reassigning ${orphan.id} (${orphan.name}) to ${nearestStar.id} (${nearestStar.name})`
-        );
-
-        updatedObjects[orphan.id] = {
-          ...orphan,
-          parentId: nearestStar.id,
-          currentParentId: nearestStar.id,
-        };
-      }
-    });
-    
-  } else {
-    // Original logic for non-root stars
-    const orphanedObjects: CelestialObject[] = [];
-
-    // Find all objects that are now orphaned
+    // Handle orphaned planets from destroyed stars
     Object.values(updatedObjects).forEach((obj) => {
       if (
-        obj.parentId &&
-        destroyedStarIds.includes(obj.parentId) &&
         obj.status === CelestialStatus.ACTIVE &&
-        obj.type !== CelestialType.STAR // Don't reassign stars
+        (obj.type === CelestialType.PLANET || obj.type === CelestialType.GAS_GIANT) &&
+        obj.parentId && destroyedStarIds.includes(obj.parentId)
       ) {
-        orphanedObjects.push(obj);
-      }
-    });
-
-    if (orphanedObjects.length === 0) {
-      console.log(
-        `[reassignOrphanedObjects] No orphaned objects found for destroyed stars: ${destroyedStarIds.join(", ")}`,
-      );
-      return updatedObjects;
-    }
-
-    console.log(
-      `[reassignOrphanedObjects] Found ${orphanedObjects.length} orphaned objects to reassign`,
-    );
-
-    // Reassign each orphaned object to the nearest star
-    orphanedObjects.forEach((orphan) => {
-      const nearestStar = findNearestStar(
-        orphan,
-        updatedObjects,
-        destroyedStarIds,
-      );
-
-      if (nearestStar) {
-        console.log(
-          `[reassignOrphanedObjects] Reassigning ${orphan.id} (${orphan.name}) from destroyed parent ${orphan.parentId} to new parent ${nearestStar.id} (${nearestStar.name})`,
-        );
-
-        updatedObjects[orphan.id] = {
-          ...orphan,
-          parentId: nearestStar.id,
-          currentParentId: nearestStar.id,
-        };
-
-        // Also reassign any children of this object (like moons)
-        const children = Object.values(updatedObjects).filter(
-          (obj) =>
-            obj.parentId === orphan.id && obj.status === CelestialStatus.ACTIVE,
-        );
-
-        children.forEach((child) => {
+        // Find best gravitational parent (might not be the closest star!)
+        const bestParent = findBestGravitationalParent(obj, updatedObjects, destroyedStarIds);
+        
+        if (bestParent) {
+          updatedObjects[obj.id] = {
+            ...obj,
+            parentId: bestParent.id,
+            currentParentId: bestParent.id,
+          };
           console.log(
-            `[reassignOrphanedObjects] Child ${child.id} (${child.name}) will inherit new grandparent ${nearestStar.id} through parent ${orphan.id}`,
+            `[reassignOrphanedObjects] Planet ${obj.id} (${obj.name}) reassigned from destroyed star to ${bestParent.id} (${bestParent.name})`
           );
-        });
-      } else {
-        console.warn(
-          `[reassignOrphanedObjects] Could not find a suitable star to reassign ${orphan.id} (${orphan.name}). Object will remain orphaned.`,
-        );
+        }
       }
     });
   }
-
+  
+  // Handle destroyed planets (moon reassignment)
+  if (destroyedPlanetIds.length > 0) {
+    destroyedPlanetIds.forEach((planetId) => {
+      // Find all moons of this planet
+      const orphanedMoons = Object.values(updatedObjects).filter(
+        (obj) =>
+          obj.type === CelestialType.MOON &&
+          obj.status === CelestialStatus.ACTIVE &&
+          obj.parentId === planetId
+      );
+      
+      if (orphanedMoons.length > 0) {
+        const reassignedMoons = reassignOrphanedMoons(orphanedMoons, updatedObjects, planetId);
+        Object.assign(updatedObjects, reassignedMoons);
+      }
+    });
+  }
+  
   return updatedObjects;
 }
