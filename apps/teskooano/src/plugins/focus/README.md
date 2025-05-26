@@ -17,7 +17,7 @@ To offer a discoverable list of objects within the simulated system and provide 
 - **Filtering/Searching:** Includes functionality to filter the list of objects.
 - **Customizable Rows:** Uses a `CelestialRow` component to render each item in the list.
 - **Smart Hierarchy Management:** Automatically updates hierarchy when parent stars are destroyed, using currentParentId or parentId for relationships.
-- **Separated Object Lists:** 
+- **Separated Object Lists:**
   - Active objects displayed in a hierarchical tree structure
   - Destroyed objects shown in a separate chronological list with time since destruction
 - **Visual Status Indicators:** Different visual states for active and destroyed/annihilated objects.

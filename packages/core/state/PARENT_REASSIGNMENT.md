@@ -7,6 +7,7 @@ The parent reassignment system addresses a critical bug in the Teskooano N-Body 
 ## The Problem
 
 When a star is destroyed in a collision or other event:
+
 1. The star is marked as `DESTROYED` or `ANNIHILATED`
 2. Planets orbiting that star retain their `parentId` pointing to the destroyed star
 3. These orphaned planets no longer have a proper gravitational parent
@@ -15,6 +16,7 @@ When a star is destroyed in a collision or other event:
 ## The Solution
 
 The parent reassignment system automatically:
+
 1. **Detects** when stars are destroyed during physics simulation steps
 2. **Identifies** all objects that become orphaned (have the destroyed star as their parent)
 3. **Finds** the nearest remaining active star for each orphaned object
@@ -25,11 +27,13 @@ The parent reassignment system automatically:
 ### Core Components
 
 #### `parent-reassignment.ts`
+
 - `calculateDistance()`: Calculates 3D distance between celestial objects
 - `findNearestStar()`: Locates the closest active star to an orphaned object
 - `reassignOrphanedObjects()`: Main function that handles the reassignment process
 
 #### `PhysicsSystemAdapter.ts`
+
 - `handleParentReassignment()`: Integrates reassignment into the physics update cycle
 - Called automatically after destruction events are processed
 - Ensures orphaned objects get new parents before the next simulation step
@@ -39,7 +43,7 @@ The parent reassignment system automatically:
 1. **Physics Simulation Step**: Objects collide, stars may be destroyed
 2. **Update Physics States**: Apply new positions, velocities, masses
 3. **Handle Destruction Events**: Mark destroyed objects, handle cascading effects
-4. **Parent Reassignment**: 
+4. **Parent Reassignment**:
    - Identify destroyed stars
    - Find orphaned objects
    - Calculate distances to remaining stars
@@ -51,7 +55,7 @@ The parent reassignment system automatically:
 ```
 Initial State:
 - Star A (position: 0, 0, 0)
-- Star B (position: 1 AU, 0, 0)  
+- Star B (position: 1 AU, 0, 0)
 - Planet 1 (parent: Star A, position: 0.5 AU, 0, 0)
 - Planet 2 (parent: Star A, position: 1.2 AU, 0, 0)
 
@@ -73,6 +77,7 @@ After Reassignment:
 ## Logging
 
 The system provides detailed console logging:
+
 - When stars are destroyed and reassignment begins
 - Distance calculations and nearest star selection
 - Successful reassignments with old/new parent information
@@ -89,6 +94,6 @@ The system provides detailed console logging:
 ## Future Enhancements
 
 - **Orbital parameter adjustment**: Recalculate orbits based on new parent star
-- **Velocity corrections**: Adjust velocities for new gravitational environment  
+- **Velocity corrections**: Adjust velocities for new gravitational environment
 - **Mass-based selection**: Prefer more massive stars for reassignment
-- **Distance thresholds**: Only reassign if within reasonable gravitational influence 
+- **Distance thresholds**: Only reassign if within reasonable gravitational influence

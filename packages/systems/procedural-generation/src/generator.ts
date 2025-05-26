@@ -62,10 +62,10 @@ export async function generateSystem(
     const starData = generateStar(random);
     generatedStars.push(starData);
   }
-  
+
   // Sort by mass to ensure main star is most massive
   generatedStars.sort((a, b) => (b.realMass_kg || 0) - (a.realMass_kg || 0));
-  
+
   // Process stars with correct hierarchy
   for (let s = 0; s < generatedStars.length; s++) {
     const starData = generatedStars[s];
@@ -400,15 +400,19 @@ export async function generateSystem(
   const validatedObjects$ = objects$.pipe(
     toArray(),
     mergeMap((allObjects) => {
-      console.log(`[generateSystem] Generated ${allObjects.length} objects. Validating hierarchy...`);
+      console.log(
+        `[generateSystem] Generated ${allObjects.length} objects. Validating hierarchy...`,
+      );
       const validatedObjects = validateAndCorrectHierarchy(allObjects);
-      console.log(`[generateSystem] Validation complete. Emitting ${validatedObjects.length} validated objects.`);
+      console.log(
+        `[generateSystem] Validation complete. Emitting ${validatedObjects.length} validated objects.`,
+      );
       return from(validatedObjects);
     }),
     catchError((err) => {
       console.error("[generateSystem] Error during validation:", err);
       throw err;
-    })
+    }),
   );
 
   // Return the system name and the validated observable stream

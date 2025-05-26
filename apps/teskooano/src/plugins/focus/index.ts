@@ -3,9 +3,13 @@ import type {
   PanelConfig,
   ToolbarRegistration,
 } from "@teskooano/ui-plugin";
-import { FocusControl } from "./FocusControl";
+import { FocusControl } from "./FocusControl.js";
 import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
-import { CelestialRow } from "./CelestialRow";
+import { CelestialRow } from "./CelestialRow.js";
+import { FocusTreeList } from "./FocusTreeList.js";
+import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
+import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel.js";
+import { DestroyedObjectsList } from "./DestroyedObjectsList.js";
 
 const panelConfig: PanelConfig = {
   componentName: "focus-control",
@@ -55,7 +59,14 @@ export const plugin: TeskooanoPlugin = {
       componentClass: CelestialRow,
       tagName: "celestial-row",
     },
+    {
+      componentClass: FocusTreeList,
+      tagName: "focus-tree-list",
+    },
   ],
 };
 
 export { FocusControl };
+export { FocusTreeList } from "./FocusTreeList.js";
+export { DestroyedObjectsList } from "./DestroyedObjectsList.js";
+export { CelestialRow } from "./CelestialRow.js";

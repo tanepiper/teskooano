@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - **Major Refactor**: Migrated core game state management (`simulationState`, `celestialObjectsStore`, `celestialHierarchyStore`, `renderableObjectsStore`, `panelState`) from Nanostores (`atom`, `map`) to RxJS `BehaviorSubject`.
 - **PhysicsSystemAdapter Refactor**: Split the complex `updateStateFromResult()` method into smaller, focused functions for better maintainability:
   - `updatePhysicsStates()`: Handles position/velocity updates
-  - `handleDestructionEvents()`: Manages object destruction and cascading effects  
+  - `handleDestructionEvents()`: Manages object destruction and cascading effects
   - `handleParentReassignment()`: Processes orphaned object reassignment
   - Added comprehensive documentation and comments explaining each step of the physics update process.
   - State stores now expose an Observable (e.g., `simulationState$`) for reactive subscriptions and getter functions (e.g., `getSimulationState()`) for direct access.
