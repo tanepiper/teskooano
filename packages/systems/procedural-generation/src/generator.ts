@@ -33,6 +33,7 @@ import {
 } from "./generators";
 import { createSeededRandom } from "./seeded-random";
 import * as UTIL from "./utils";
+import { validateAndCorrectHierarchy } from "./validation";
 
 /**
  * Generates the initial data for celestial objects and a name for a solar system based on a seed string.
@@ -55,10 +56,25 @@ export async function generateSystem(
   const stars: CelestialObject[] = [];
   let primaryStar: CelestialObject | null = null; // Track primary for binary adjustments
 
+  // Generate all stars first
+  const generatedStars: CelestialObject[] = [];
   for (let s = 0; s < numberOfStars; s++) {
     const starData = generateStar(random);
+    generatedStars.push(starData);
+  }
+  
+  // Sort by mass to ensure main star is most massive
+  generatedStars.sort((a, b) => (b.realMass_kg || 0) - (a.realMass_kg || 0));
+  
+  // Process stars with correct hierarchy
+  for (let s = 0; s < generatedStars.length; s++) {
+    const starData = generatedStars[s];
     if (s === 0) {
+      // This is the most massive star - make it the main star
       primaryStar = starData;
+      (starData.properties as StarProperties).isMainStar = true;
+      starData.parentId = undefined;
+      starData.currentParentId = undefined;
       stars.push(starData);
     } else {
       if (!primaryStar) continue; // Should not happen if s > 0
@@ -380,6 +396,21 @@ export async function generateSystem(
     };
   });
 
-  // Return the system name and the fully constructed observable stream
-  return { systemName, objects$ };
+  // Collect all objects, validate hierarchy, then emit validated objects
+  const validatedObjects$ = objects$.pipe(
+    toArray(),
+    mergeMap((allObjects) => {
+      console.log(`[generateSystem] Generated ${allObjects.length} objects. Validating hierarchy...`);
+      const validatedObjects = validateAndCorrectHierarchy(allObjects);
+      console.log(`[generateSystem] Validation complete. Emitting ${validatedObjects.length} validated objects.`);
+      return from(validatedObjects);
+    }),
+    catchError((err) => {
+      console.error("[generateSystem] Error during validation:", err);
+      throw err;
+    })
+  );
+
+  // Return the system name and the validated observable stream
+  return { systemName, objects$: validatedObjects$ };
 }
