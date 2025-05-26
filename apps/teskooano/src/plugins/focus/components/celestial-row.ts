@@ -1,6 +1,9 @@
-import { CelestialType } from "@teskooano/data-types";
+import { CelestialType, StellarType } from "@teskooano/data-types";
 import { template } from "./celestial-row.template";
-import { iconStyles } from "../utils/celestial-icon-styles";
+import {
+  iconStyles,
+  getCelestialIconStyle,
+} from "../utils/celestial-icon-styles";
 import { CustomEvents } from "@teskooano/data-types";
 
 /**
@@ -14,6 +17,7 @@ export class CelestialRow extends HTMLElement {
     "object-id",
     "object-name",
     "object-type",
+    "stellar-type",
     "inactive",
     "focused",
   ];
@@ -70,11 +74,8 @@ export class CelestialRow extends HTMLElement {
         this.updateButtonTitles();
         break;
       case "object-type":
-        {
-          const type = (newValue as CelestialType) ?? "default";
-          const style = iconStyles[type] || iconStyles.default;
-          this.iconEl?.setAttribute("style", style);
-        }
+      case "stellar-type":
+        this.updateIconStyle();
         break;
       case "inactive":
         this._isInactive = newValue !== null;
@@ -90,6 +91,16 @@ export class CelestialRow extends HTMLElement {
   // -------------------------------------------------------------
   // Helpers
   // -------------------------------------------------------------
+  private updateIconStyle() {
+    if (!this.iconEl) return;
+
+    const celestialType = this.getAttribute("object-type") as CelestialType;
+    const stellarType = this.getAttribute("stellar-type") as StellarType;
+
+    const style = getCelestialIconStyle(celestialType, stellarType);
+    this.iconEl.setAttribute("style", style);
+  }
+
   private updateButtonTitles() {
     const objectName = this.getAttribute("object-name");
     const id = this._objectId;

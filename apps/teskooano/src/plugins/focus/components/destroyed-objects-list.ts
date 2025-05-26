@@ -1,4 +1,9 @@
-import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  CelestialStatus,
+  CelestialType,
+  StarProperties,
+} from "@teskooano/data-types";
 import { BaseCelestialList } from "./base-celestial-list";
 import "./relative-time";
 import "./celestial-row.js";
@@ -134,6 +139,15 @@ export class DestroyedObjectsList extends BaseCelestialList {
     row.setAttribute("object-id", obj.id);
     row.setAttribute("object-name", obj.name);
     row.setAttribute("object-type", obj.type);
+
+    // Add stellar type for stars
+    if (obj.type === CelestialType.STAR && obj.properties) {
+      const starProps = obj.properties as StarProperties;
+      if (starProps.stellarType) {
+        row.setAttribute("stellar-type", starProps.stellarType);
+      }
+    }
+
     row.setAttribute("inactive", "");
 
     // Create relative time element

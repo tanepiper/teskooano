@@ -336,7 +336,10 @@ export function getStellarIconStyle(stellarType: StellarType): string {
 /**
  * Get the appropriate icon style for any celestial type (fallback to general types)
  */
-export function getCelestialIconStyle(celestialType: CelestialType, stellarType?: StellarType): string {
+export function getCelestialIconStyle(
+  celestialType: CelestialType,
+  stellarType?: StellarType,
+): string {
   if (celestialType === CelestialType.STAR && stellarType) {
     return getStellarIconStyle(stellarType);
   }

@@ -1,6 +1,6 @@
 import EyeIcon from "@fluentui/svg-icons/icons/eye_24_regular.svg?raw";
 import PersonRunningFilledIcon from "@fluentui/svg-icons/icons/person_running_20_regular.svg?raw";
-import { iconStyles } from "../utils/celestial-icon-styles";
+import { iconStyles, stellarAnimations } from "../utils/celestial-icon-styles";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -86,6 +86,9 @@ template.innerHTML = `
     --button-icon-color: currentColor; /* Added: Make icon inherit text color */
   }
 
+  /* Stellar animations */
+  ${stellarAnimations}
+
 </style>
 
 <div class="icon-name-container">
@@ -94,12 +97,16 @@ template.innerHTML = `
 </div>
 <div class="action-buttons">
   <teskooano-button size="sm" id="focus-btn" title="Focus Camera" appearance="stealth">
-    <span slot="icon">${EyeIcon}</span>
+    <span slot="icon">
+      ${EyeIcon}
+    </span>
   </teskooano-button>
   <teskooano-button size="sm" id="follow-btn" title="Follow Object" appearance="stealth">
-    <span slot="icon">${PersonRunningFilledIcon}</span>
+    <span slot="icon">
+      ${PersonRunningFilledIcon}
+    </span>
   </teskooano-button>
 </div>
 `;
 
-export { iconStyles, template };
+export { template };

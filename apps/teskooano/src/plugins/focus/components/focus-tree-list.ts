@@ -2,6 +2,7 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
+  StarProperties,
 } from "@teskooano/data-types";
 import { BaseCelestialList } from "./base-celestial-list";
 import "./celestial-row.js";
@@ -218,6 +219,15 @@ export class FocusTreeList extends BaseCelestialList {
     row.setAttribute("object-id", obj.id);
     row.setAttribute("object-name", obj.name);
     row.setAttribute("object-type", obj.type);
+
+    // Add stellar type for stars
+    if (obj.type === CelestialType.STAR && obj.properties) {
+      const starProps = obj.properties as StarProperties;
+      if (starProps.stellarType) {
+        row.setAttribute("stellar-type", starProps.stellarType);
+      }
+    }
+
     if (isFocused) row.setAttribute("focused", "");
     row.classList.add("focus-row-item");
 
