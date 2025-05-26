@@ -87,7 +87,15 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
-    this._handleObjectsLoaded = this._populateListInternal.bind(this);
+    this._handleObjectsLoaded = () => {
+      const objects = getCelestialObjects();
+      // If there are no objects, clear the destroyed list too (system was cleared)
+      if (Object.keys(objects).length === 0) {
+        this._destroyedObjects = [];
+        this._updateDestroyedList();
+      }
+      this._populateListInternal();
+    };
     this._handleObjectDestroyed = this._handleStarDestructionEvent.bind(this);
     this._handleObjectStatusChanged = (event: Event): void => {
       const customEvent = event as CustomEvent<{
