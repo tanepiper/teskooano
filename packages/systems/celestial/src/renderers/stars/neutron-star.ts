@@ -5,7 +5,7 @@ import {
   BaseStarRenderer,
   CoronaMaterial,
 } from "./base-star";
-import { GravitationalLensingHelper } from "../common/gravitational-lensing";
+import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import type { CelestialMeshOptions } from "../common/CelestialRenderer";
 

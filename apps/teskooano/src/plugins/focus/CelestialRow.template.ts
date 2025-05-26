@@ -40,23 +40,12 @@ template.innerHTML = `
    }
 
 
-  /* Inactive state styling */
-  :host([inactive]) {
-    color: var(--color-text-disabled, #888);
-    text-decoration: line-through;
-    cursor: not-allowed;
-    background-color: transparent !important; /* Override hover/focus */
-    opacity: 0.6;
+  /* Inactive state styling - only hide buttons */
+  :host([inactive]) .action-buttons {
+    display: none; /* Hide buttons for destroyed items */
   }
-   :host([inactive]) .celestial-icon {
-      filter: grayscale(100%) opacity(50%);
-   }
-   :host([inactive]) .object-name {
-      /* Styles for inactive name */
-   }
-   :host([inactive]) .action-buttons {
-      display: none; /* Hide buttons for inactive items */
-   }
+
+
 
   .icon-name-container {
     display: flex;

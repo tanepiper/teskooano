@@ -5,7 +5,7 @@ import {
   SchwarzschildBlackHoleMaterial,
   AccretionDiskMaterial,
 } from "./schwarzschild-black-hole";
-import { GravitationalLensingHelper } from "../common/gravitational-lensing";
+import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import type { CelestialMeshOptions } from "../common/CelestialRenderer";
 

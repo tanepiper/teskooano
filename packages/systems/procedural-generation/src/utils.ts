@@ -3,7 +3,7 @@ import {
   GasGiantClass,
   PlanetType,
   ProceduralSurfaceProperties,
-  SpectralClass,
+  MainSequenceSpectralClass,
 } from "@teskooano/data-types";
 import * as CONST from "./constants";
 
@@ -82,15 +82,17 @@ export function calculateRadius(
 /**
  * Estimates the spectral class of a star based on its temperature (simplified).
  */
-export function getSpectralClass(temperature: number): SpectralClass {
-  if (temperature >= 30000) return SpectralClass.O;
-  if (temperature >= 10000) return SpectralClass.B;
-  if (temperature >= 7500) return SpectralClass.A;
-  if (temperature >= 6000) return SpectralClass.F;
-  if (temperature >= 5200) return SpectralClass.G;
-  if (temperature >= 3700) return SpectralClass.K;
-  if (temperature >= 2400) return SpectralClass.M;
-  return SpectralClass.M;
+export function getSpectralClass(
+  temperature: number,
+): MainSequenceSpectralClass {
+  if (temperature >= 30000) return MainSequenceSpectralClass.O;
+  if (temperature >= 10000) return MainSequenceSpectralClass.B;
+  if (temperature >= 7500) return MainSequenceSpectralClass.A;
+  if (temperature >= 6000) return MainSequenceSpectralClass.F;
+  if (temperature >= 5200) return MainSequenceSpectralClass.G;
+  if (temperature >= 3700) return MainSequenceSpectralClass.K;
+  if (temperature >= 2400) return MainSequenceSpectralClass.M;
+  return MainSequenceSpectralClass.M;
 }
 
 /**

@@ -16,6 +16,13 @@ To offer a discoverable list of objects within the simulated system and provide 
   - Calls the parent engine panel's `focusOnObject` method when a user selects an object in the list.
 - **Filtering/Searching:** Includes functionality to filter the list of objects.
 - **Customizable Rows:** Uses a `CelestialRow` component to render each item in the list.
+- **Smart Hierarchy Management:** Automatically updates hierarchy when parent stars are destroyed, using currentParentId or parentId for relationships.
+- **Separated Object Lists:** 
+  - Active objects displayed in a hierarchical tree structure
+  - Destroyed objects shown in a separate chronological list with time since destruction
+- **Visual Status Indicators:** Different visual states for active and destroyed/annihilated objects.
+- **Root Star Reassignment:** When a root star is destroyed, automatically finds and focuses on the new root star.
+- **Object Counters:** Shows count of active and destroyed objects in section headers.
 
 ## Usage
 

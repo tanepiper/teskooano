@@ -12,16 +12,27 @@ import "./CelestialRow";
  * @param rootUlElement - The root UL element to populate (should have id="focus-tree-list").
  * @param objects - The current map of all celestial objects.
  * @param currentFocusedId - The ID of the currently focused object, if any.
+ * @returns The count of active objects
  */
 export function populateFocusList(
   rootUlElement: HTMLElement,
   objects: Record<string, CelestialObject>,
   currentFocusedId: string | null,
-): void {
+): number {
   rootUlElement.innerHTML = "";
 
-  const objectMap = new Map(Object.entries(objects));
+  // Filter out destroyed/annihilated objects
+  const activeObjects: Record<string, CelestialObject> = {};
+  Object.entries(objects).forEach(([id, obj]) => {
+    if (obj.status === CelestialStatus.ACTIVE) {
+      activeObjects[id] = obj;
+    }
+  });
+
+  const objectMap = new Map(Object.entries(activeObjects));
   const dynamicHierarchy = new Map<string | null, string[]>();
+  
+  // Build hierarchy using currentParentId if available, otherwise fall back to parentId
   objectMap.forEach((obj, id) => {
     const parentKey = obj.currentParentId ?? obj.parentId ?? null;
     if (!dynamicHierarchy.has(parentKey)) {
@@ -30,12 +41,18 @@ export function populateFocusList(
     dynamicHierarchy.get(parentKey)!.push(id);
   });
 
+  // Find root objects (objects with no parent)
   const rootIds = dynamicHierarchy.get(null) || [];
+  
+  // Handle objects whose parents no longer exist
   dynamicHierarchy.forEach((children, parentId) => {
     if (parentId !== null && !objectMap.has(parentId)) {
+      // Parent doesn't exist, move children to root
       rootIds.push(...children);
     }
   });
+  
+  // Ensure all stars without parents are included at root level
   objectMap.forEach((obj, id) => {
     if (
       obj.type === CelestialType.STAR &&
@@ -47,14 +64,18 @@ export function populateFocusList(
     }
   });
 
+  // Sort root objects: stars first, then by name
   rootIds.sort((a, b) => {
     const objA = objectMap.get(a);
     const objB = objectMap.get(b);
     if (!objA || !objB) return 0;
+    
+    // Stars before non-stars
     if (objA.type === CelestialType.STAR && objB.type !== CelestialType.STAR)
       return -1;
     if (objA.type !== CelestialType.STAR && objB.type === CelestialType.STAR)
       return 1;
+    
     return (objA.name ?? "").localeCompare(objB.name ?? "");
   });
 
@@ -63,26 +84,20 @@ export function populateFocusList(
       '<li class="empty-message">Loading hierarchy...</li>';
   } else if (objectMap.size === 0) {
     rootUlElement.innerHTML =
-      '<li class="empty-message">No celestial objects loaded.</li>';
+      '<li class="empty-message">No active celestial objects</li>';
   } else {
     const addItem = (obj: CelestialObject, parentUl: HTMLElement) => {
-      const isDestroyed = obj.status === CelestialStatus.DESTROYED;
-      const isAnnihilated = obj.status === CelestialStatus.ANNIHILATED;
-      const isInactive = isDestroyed || isAnnihilated;
       const childrenIds = dynamicHierarchy.get(obj.id) || [];
       const hasChildren = childrenIds.length > 0;
-      const isFocused = !isInactive && obj.id === currentFocusedId;
+      const isFocused = obj.id === currentFocusedId;
 
       const listItem = document.createElement("li");
       listItem.dataset.id = obj.id;
-      if (isDestroyed) listItem.classList.add("destroyed");
-      if (isAnnihilated) listItem.classList.add("annihilated");
 
       const row = document.createElement("celestial-row");
       row.setAttribute("object-id", obj.id);
       row.setAttribute("object-name", obj.name);
       row.setAttribute("object-type", obj.type);
-      if (isInactive) row.setAttribute("inactive", "");
       if (isFocused) row.setAttribute("focused", "");
 
       row.classList.add("focus-row-item");
@@ -97,6 +112,7 @@ export function populateFocusList(
         caretSpan.setAttribute("role", "button");
         caretSpan.setAttribute("aria-controls", `subtree-${obj.id}`);
 
+        // Expand stars by default
         const shouldExpand = obj.type === CelestialType.STAR;
         caretSpan.setAttribute("aria-expanded", shouldExpand.toString());
         if (shouldExpand) {
@@ -115,11 +131,15 @@ export function populateFocusList(
           nestedUl.classList.add("active");
         }
 
-        childrenIds.sort((a, b) =>
-          (objectMap.get(a)?.name ?? "").localeCompare(
-            objectMap.get(b)?.name ?? "",
-          ),
-        );
+        // Sort children by name
+        childrenIds.sort((a, b) => {
+          const childA = objectMap.get(a);
+          const childB = objectMap.get(b);
+          if (!childA || !childB) return 0;
+          
+          return (childA.name ?? "").localeCompare(childB.name ?? "");
+        });
+        
         childrenIds.forEach((childId) => {
           const childObj = objectMap.get(childId);
           if (childObj) addItem(childObj, nestedUl);
@@ -139,6 +159,8 @@ export function populateFocusList(
       if (rootObj) addItem(rootObj, rootUlElement);
     });
   }
+  
+  return objectMap.size;
 }
 
 /**
@@ -217,12 +239,18 @@ export function updateObjectStatusInList(
 
   if (caretElement) {
     caretElement.classList.toggle("inactive-caret", isInactive);
+    // Don't automatically collapse the hierarchy when a parent is destroyed
+    // The children might still be active and accessible after parent reassignment
+    // Only disable the caret interaction for the destroyed object itself
     if (isInactive) {
-      caretElement.classList.remove("caret-down");
-      caretElement.setAttribute("aria-expanded", "false");
-      const nestedUl =
-        listItem.querySelector<HTMLUListElement>(":scope > .nested");
-      nestedUl?.classList.remove("active");
+      // Keep the hierarchy expanded so users can still access child objects
+      // that may have been reassigned to new parents
+      caretElement.style.pointerEvents = "none"; // Disable caret interaction
+      caretElement.style.opacity = "0.5"; // Visual indication it's disabled
+    } else {
+      // Re-enable caret interaction if object becomes active again
+      caretElement.style.pointerEvents = "";
+      caretElement.style.opacity = "";
     }
   }
   return false;

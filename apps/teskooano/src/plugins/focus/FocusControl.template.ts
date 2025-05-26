@@ -30,17 +30,45 @@ template.innerHTML = `
       flex-grow: 1;
     }
 
+    .lists-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-height: 550px;
+      overflow-y: auto;
+    }
+
+    .list-section {
+      flex-shrink: 0;
+    }
+
+    .section-header {
+      font-weight: bold;
+      color: var(--color-text-primary, #fff);
+      margin: 0 0 10px 0;
+      padding: 5px 10px;
+      background-color: var(--color-surface-secondary, rgba(255, 255, 255, 0.1));
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-header .count {
+      font-size: 0.85em;
+      font-weight: normal;
+      color: var(--color-text-secondary, #aaa);
+    }
+
     .target-list-container {
-        max-height: 400px; /* Or adjust as needed */
-        overflow-y: auto;
         padding-right: 5px; /* Space for scrollbar */
     }
 
     /* --- Tree View Styles --- */
-    ul, #focus-tree-list {
+    ul, #focus-tree-list, #destroyed-list {
       list-style-type: none;
     }
-    #focus-tree-list {
+    #focus-tree-list, #destroyed-list {
       margin: 0;
       padding: 0;
     }
@@ -123,6 +151,22 @@ template.innerHTML = `
 
     /* --- End Status Styling --- */
 
+    /* --- Destroyed List Styles --- */
+    #destroyed-list li {
+      padding: 2px 0;
+      opacity: 0.7;
+    }
+    
+    #destroyed-list li.annihilated {
+      opacity: 0.5;
+    }
+    
+    #destroyed-list .destruction-time {
+      font-size: 0.8em;
+      color: var(--color-text-secondary, #888);
+      margin-left: 10px;
+    }
+    /* --- End Destroyed List Styles --- */
 
     .empty-message {
         padding: 10px;
@@ -140,10 +184,30 @@ template.innerHTML = `
     </div>
   </div>
 
-  <div class="target-list-container">
-     <ul id="focus-tree-list">
-       <!-- Tree populated here -->
-     </ul>
+  <div class="lists-container">
+    <div class="list-section">
+      <h3 class="section-header">
+        Active Objects
+        <span class="count" id="active-count">(0)</span>
+      </h3>
+      <div class="target-list-container">
+        <ul id="focus-tree-list">
+          <!-- Active tree populated here -->
+        </ul>
+      </div>
+    </div>
+    
+    <div class="list-section">
+      <h3 class="section-header">
+        Destroyed Objects
+        <span class="count" id="destroyed-count">(0)</span>
+      </h3>
+      <div class="target-list-container">
+        <ul id="destroyed-list">
+          <!-- Destroyed objects listed here -->
+        </ul>
+      </div>
+    </div>
   </div>
 `;
 

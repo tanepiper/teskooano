@@ -1,10 +1,7 @@
 import * as THREE from "three";
 import type { OSVector3 } from "@teskooano/core-math";
 import type { PhysicsStateReal } from "./physics";
-import {
-  StellarType as NewStellarType,
-  SpectralClass,
-} from "./celestials/common/stellar-classification";
+import { StellarType as NewStellarType } from "./celestials/common/stellar-classification";
 
 /**
  * Defines the primary classification of a celestial body.

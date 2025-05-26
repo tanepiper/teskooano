@@ -34,55 +34,13 @@ export enum StellarType {
 }
 
 // ============================================================================
-// LEGACY ENUMS - MARKED FOR REMOVAL
+// LEGACY ENUMS - REMOVED
 // ============================================================================
-// These enums are being phased out in favor of data-driven classification
-
-/**
- * @deprecated Use data-driven classification functions instead
- * Stellar spectral classification (Morgan-Keenan system)
- */
-export enum SpectralClass {
-  O = "O", // Blue, very hot
-  B = "B", // Blue-white, hot
-  A = "A", // White
-  F = "F", // Yellow-white
-  G = "G", // Yellow (like our Sun)
-  K = "K", // Orange
-  M = "M", // Red, cool
-  L = "L", // Brown dwarf
-  T = "T", // Methane brown dwarf
-  Y = "Y", // Ultra-cool brown dwarf
-}
-
-/**
- * @deprecated Use data-driven classification functions instead
- * Luminosity class (Yerkes classification)
- */
-export enum LuminosityClass {
-  I = "I", // Supergiants
-  II = "II", // Bright giants
-  III = "III", // Giants
-  IV = "IV", // Subgiants
-  V = "V", // Main sequence (dwarfs)
-  VI = "VI", // Subdwarfs
-  VII = "VII", // White dwarfs
-}
-
-/**
- * @deprecated Use data-driven classification functions instead
- * Special spectral classes for peculiar stars
- */
-export enum SpecialSpectralClass {
-  W = "W", // Wolf-Rayet
-  C = "C", // Carbon star
-  S = "S", // S-type star
-  D = "D", // White dwarf
-  Q = "Q", // Novae
-  P = "P", // Planetary nebula central star
-  R = "R", // Carbon star (old classification)
-  N = "N", // Carbon star (old classification)
-}
+// The deprecated SpectralClass, LuminosityClass, and SpecialSpectralClass enums
+// have been removed in favor of data-driven classification functions.
+//
+// For main sequence stars, use MainSequenceSpectralClass instead.
+// For other stellar types, spectral properties are determined from physical data.
 
 // ============================================================================
 // MAIN SEQUENCE SPECTRAL CLASSIFICATION

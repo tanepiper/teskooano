@@ -9,7 +9,7 @@ import type {
   OrbitalParameters,
   StarProperties,
 } from "@teskooano/data-types";
-import { CelestialType, SCALE, SpectralClass } from "@teskooano/data-types";
+import { CelestialType } from "@teskooano/data-types";
 import {
   EMPTY,
   Observable,

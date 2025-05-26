@@ -11,7 +11,6 @@ import {
   StellarType,
 } from "@teskooano/data-types";
 import {
-  StellarType as NewCelestialStellarType,
   type StellarPhysicsData,
   type StellarRenderingData,
 } from "../../../../../data/types/src/celestials/common/stellar-classification";
@@ -30,33 +29,33 @@ const G = 6.6743e-11;
 const C = 299792458;
 
 const STELLAR_TYPE_WEIGHTS: {
-  type: NewCelestialStellarType;
+  type: StellarType;
   weight: number;
 }[] = [
   // Still common but not overwhelming
-  { type: NewCelestialStellarType.MAIN_SEQUENCE, weight: 35 },
+  { type: StellarType.MAIN_SEQUENCE, weight: 35 },
 
   // Much more exciting evolved states
-  { type: NewCelestialStellarType.RED_GIANT, weight: 15 },
-  { type: NewCelestialStellarType.WHITE_DWARF, weight: 10 },
-  { type: NewCelestialStellarType.SUPERGIANT, weight: 8 },
-  { type: NewCelestialStellarType.BLUE_GIANT, weight: 6 },
+  { type: StellarType.RED_GIANT, weight: 15 },
+  { type: StellarType.WHITE_DWARF, weight: 10 },
+  { type: StellarType.SUPERGIANT, weight: 8 },
+  { type: StellarType.BLUE_GIANT, weight: 6 },
 
   // Action-packed exotic types
-  { type: NewCelestialStellarType.BLACK_HOLE, weight: 5 },
-  { type: NewCelestialStellarType.NEUTRON_STAR, weight: 4 },
-  { type: NewCelestialStellarType.WOLF_RAYET, weight: 4 },
-  { type: NewCelestialStellarType.HYPERGIANT, weight: 3 },
+  { type: StellarType.BLACK_HOLE, weight: 5 },
+  { type: StellarType.NEUTRON_STAR, weight: 4 },
+  { type: StellarType.WOLF_RAYET, weight: 4 },
+  { type: StellarType.HYPERGIANT, weight: 3 },
 
   // Interesting evolved and variable stars
-  { type: NewCelestialStellarType.VARIABLE_STAR, weight: 3 },
-  { type: NewCelestialStellarType.CARBON_STAR, weight: 2 },
-  { type: NewCelestialStellarType.SUBGIANT, weight: 2 },
+  { type: StellarType.VARIABLE_STAR, weight: 3 },
+  { type: StellarType.CARBON_STAR, weight: 2 },
+  { type: StellarType.SUBGIANT, weight: 2 },
 
   // Pre-main sequence drama
-  { type: NewCelestialStellarType.PROTOSTAR, weight: 2 },
-  { type: NewCelestialStellarType.T_TAURI, weight: 1 },
-  { type: NewCelestialStellarType.HERBIG_AE_BE, weight: 1 },
+  { type: StellarType.PROTOSTAR, weight: 2 },
+  { type: StellarType.T_TAURI, weight: 1 },
+  { type: StellarType.HERBIG_AE_BE, weight: 1 },
 ];
 
 function getMainSequenceProperties(mass: number): [number, number] {
@@ -118,7 +117,7 @@ export function generateStar(random: () => number): CelestialObject {
     0,
   );
   let roll = random() * totalWeight;
-  let chosenType = NewCelestialStellarType.MAIN_SEQUENCE;
+  let chosenType = StellarType.MAIN_SEQUENCE;
   for (const item of STELLAR_TYPE_WEIGHTS) {
     if (roll <= item.weight) {
       chosenType = item.type;
@@ -133,7 +132,7 @@ export function generateStar(random: () => number): CelestialObject {
   let starTemperature: number;
   let additionalData: any = {};
   switch (chosenType) {
-    case NewCelestialStellarType.WHITE_DWARF:
+    case StellarType.WHITE_DWARF:
       starMass_Solar = 0.1 + random() * 1.3;
       starRadius_Solar =
         (0.005 + random() * 0.01) *
@@ -148,7 +147,7 @@ export function generateStar(random: () => number): CelestialObject {
       };
       break;
 
-    case NewCelestialStellarType.NEUTRON_STAR:
+    case StellarType.NEUTRON_STAR:
       starMass_Solar = 1.1 + random() * 1.4;
       const neutronStarRadiusKm = 10 + random() * 10;
       starRadius_Solar = (neutronStarRadiusKm * 1000) / CONST.SOLAR_RADIUS_M;
@@ -156,7 +155,7 @@ export function generateStar(random: () => number): CelestialObject {
       additionalData.rotationPeriod = random() * 20; // Fast rotation for pulsars
       break;
 
-    case NewCelestialStellarType.BLACK_HOLE:
+    case StellarType.BLACK_HOLE:
       starMass_Solar = 3 + random() * 47;
       starRadius_Solar =
         calculateSchwarzschildRadius(starMass_Solar * CONST.SOLAR_MASS_KG) /
@@ -164,49 +163,49 @@ export function generateStar(random: () => number): CelestialObject {
       starTemperature = 2.7; // Cosmic microwave background
       break;
 
-    case NewCelestialStellarType.WOLF_RAYET:
+    case StellarType.WOLF_RAYET:
       starMass_Solar = 20 + random() * 60;
       starRadius_Solar = 5 + random() * 15;
       starTemperature = 30000 + random() * 170000;
       break;
 
-    case NewCelestialStellarType.RED_GIANT:
+    case StellarType.RED_GIANT:
       starMass_Solar = 0.8 + random() * 7;
       starRadius_Solar = 10 + random() * 90; // Much larger radius
       starTemperature = 3000 + random() * 2000; // Cooler surface
       break;
 
-    case NewCelestialStellarType.BLUE_GIANT:
+    case StellarType.BLUE_GIANT:
       starMass_Solar = 10 + random() * 40;
       starRadius_Solar = 5 + random() * 20;
       starTemperature = 20000 + random() * 30000; // Very hot
       break;
 
-    case NewCelestialStellarType.SUPERGIANT:
+    case StellarType.SUPERGIANT:
       starMass_Solar = 15 + random() * 60;
       starRadius_Solar = 100 + random() * 1000; // Enormous radius
       starTemperature = 3000 + random() * 37000; // Wide temperature range
       break;
 
-    case NewCelestialStellarType.HYPERGIANT:
+    case StellarType.HYPERGIANT:
       starMass_Solar = 50 + random() * 150;
       starRadius_Solar = 1000 + random() * 1500; // Extreme size
       starTemperature = 3000 + random() * 47000; // Very wide range
       break;
 
-    case NewCelestialStellarType.SUBGIANT:
+    case StellarType.SUBGIANT:
       starMass_Solar = 0.8 + random() * 3;
       starRadius_Solar = 1.2 + random() * 3; // Slightly larger than main sequence
       starTemperature = 4000 + random() * 2000; // Similar to main sequence
       break;
 
-    case NewCelestialStellarType.CARBON_STAR:
+    case StellarType.CARBON_STAR:
       starMass_Solar = 1 + random() * 8;
       starRadius_Solar = 50 + random() * 300; // Large, evolved giant
       starTemperature = 2500 + random() * 1500; // Cool, carbon-rich atmosphere
       break;
 
-    case NewCelestialStellarType.VARIABLE_STAR:
+    case StellarType.VARIABLE_STAR:
       starMass_Solar = 0.5 + random() * 10;
       starRadius_Solar = 1 + random() * 50; // Wide range depending on type
       starTemperature = 3000 + random() * 7000;
@@ -214,28 +213,28 @@ export function generateStar(random: () => number): CelestialObject {
       additionalData.variableAmplitude = 0.1 + random() * 2; // Magnitude variation
       break;
 
-    case NewCelestialStellarType.PROTOSTAR:
+    case StellarType.PROTOSTAR:
       starMass_Solar = 0.1 + random() * 10;
       starRadius_Solar = 2 + random() * 10; // Large, contracting
       starTemperature = 1000 + random() * 3000; // Still forming, cool
       additionalData.accretionRate = random() * 1e-6; // Solar masses per year
       break;
 
-    case NewCelestialStellarType.T_TAURI:
+    case StellarType.T_TAURI:
       starMass_Solar = 0.1 + random() * 3;
       starRadius_Solar = 1.5 + random() * 3; // Larger than main sequence equivalent
       starTemperature = 3000 + random() * 1500; // Pre-main sequence
       additionalData.stellarWind = 1e-8 + random() * 1e-6; // Strong stellar winds
       break;
 
-    case NewCelestialStellarType.HERBIG_AE_BE:
+    case StellarType.HERBIG_AE_BE:
       starMass_Solar = 2 + random() * 8; // Intermediate to high mass
       starRadius_Solar = 2 + random() * 5;
       starTemperature = 7000 + random() * 23000; // A and B type temperatures
       additionalData.accretionDisk = true; // Usually have disks
       break;
 
-    case NewCelestialStellarType.MAIN_SEQUENCE:
+    case StellarType.MAIN_SEQUENCE:
     default:
       const massRoll = random();
       if (massRoll < 0.7) {
@@ -250,7 +249,7 @@ export function generateStar(random: () => number): CelestialObject {
 
       [starRadius_Solar, starTemperature] =
         getMainSequenceProperties(starMass_Solar);
-      chosenType = NewCelestialStellarType.MAIN_SEQUENCE;
+      chosenType = StellarType.MAIN_SEQUENCE;
       break;
   }
 
@@ -263,15 +262,14 @@ export function generateStar(random: () => number): CelestialObject {
     mass: starMass_Solar,
     radius: starRadius_Solar,
     temperature: starTemperature,
-    luminosity:
-      chosenType === NewCelestialStellarType.BLACK_HOLE ? 0 : starLuminosity,
+    luminosity: chosenType === StellarType.BLACK_HOLE ? 0 : starLuminosity,
     metallicity: -0.5 + random() * 1.0, // Random metallicity between -0.5 and +0.5
     age: random() * 13.8e9, // Random age up to age of universe
     rotationPeriod: 24 + random() * 1000, // Random rotation period in hours
-    ...(chosenType === NewCelestialStellarType.NEUTRON_STAR && {
+    ...(chosenType === StellarType.NEUTRON_STAR && {
       magneticFieldStrength: 1e8 + random() * 1e15,
     }),
-    ...(chosenType === NewCelestialStellarType.BLACK_HOLE && {
+    ...(chosenType === StellarType.BLACK_HOLE && {
       schwarzschildRadius:
         calculateSchwarzschildRadius(starMass_Solar * CONST.SOLAR_MASS_KG) /
         1000,
@@ -282,19 +280,19 @@ export function generateStar(random: () => number): CelestialObject {
   const starColor = UTIL.getStarColor(starTemperature);
   const renderingData: StellarRenderingData = {
     color: hexToRgb(
-      chosenType === NewCelestialStellarType.BLACK_HOLE ? "#000000" : starColor,
+      chosenType === StellarType.BLACK_HOLE ? "#000000" : starColor,
     ),
     lightIntensity:
-      chosenType === NewCelestialStellarType.BLACK_HOLE
+      chosenType === StellarType.BLACK_HOLE
         ? 0
         : Math.min(physicsData.luminosity, 100),
     lightColor: hexToRgb(starColor),
-    ...(chosenType === NewCelestialStellarType.BLACK_HOLE && {
+    ...(chosenType === StellarType.BLACK_HOLE && {
       accretionDisk: random() > 0.7,
       gravitationalLensing: true,
     }),
-    ...(chosenType !== NewCelestialStellarType.BLACK_HOLE &&
-      chosenType !== NewCelestialStellarType.WHITE_DWARF && {
+    ...(chosenType !== StellarType.BLACK_HOLE &&
+      chosenType !== StellarType.WHITE_DWARF && {
         coronaSize: 1 + random() * 2,
         surfaceActivity: random(),
       }),
@@ -302,12 +300,12 @@ export function generateStar(random: () => number): CelestialObject {
 
   // Use factory functions for proper classification
   let classifiedStar: any;
-  if (chosenType === NewCelestialStellarType.MAIN_SEQUENCE) {
+  if (chosenType === StellarType.MAIN_SEQUENCE) {
     classifiedStar = createMainSequenceStar(physicsData, renderingData);
   } else if (
-    chosenType === NewCelestialStellarType.WHITE_DWARF ||
-    chosenType === NewCelestialStellarType.NEUTRON_STAR ||
-    chosenType === NewCelestialStellarType.BLACK_HOLE
+    chosenType === StellarType.WHITE_DWARF ||
+    chosenType === StellarType.NEUTRON_STAR ||
+    chosenType === StellarType.BLACK_HOLE
   ) {
     // Stellar remnants
     classifiedStar = createStellarRemnant(
@@ -317,14 +315,14 @@ export function generateStar(random: () => number): CelestialObject {
       additionalData,
     );
   } else if (
-    chosenType === NewCelestialStellarType.RED_GIANT ||
-    chosenType === NewCelestialStellarType.BLUE_GIANT ||
-    chosenType === NewCelestialStellarType.SUPERGIANT ||
-    chosenType === NewCelestialStellarType.HYPERGIANT ||
-    chosenType === NewCelestialStellarType.SUBGIANT ||
-    chosenType === NewCelestialStellarType.WOLF_RAYET ||
-    chosenType === NewCelestialStellarType.CARBON_STAR ||
-    chosenType === NewCelestialStellarType.VARIABLE_STAR
+    chosenType === StellarType.RED_GIANT ||
+    chosenType === StellarType.BLUE_GIANT ||
+    chosenType === StellarType.SUPERGIANT ||
+    chosenType === StellarType.HYPERGIANT ||
+    chosenType === StellarType.SUBGIANT ||
+    chosenType === StellarType.WOLF_RAYET ||
+    chosenType === StellarType.CARBON_STAR ||
+    chosenType === StellarType.VARIABLE_STAR
   ) {
     // Evolved stars
     classifiedStar = createEvolvedStar(
@@ -334,9 +332,9 @@ export function generateStar(random: () => number): CelestialObject {
       additionalData,
     );
   } else if (
-    chosenType === NewCelestialStellarType.PROTOSTAR ||
-    chosenType === NewCelestialStellarType.T_TAURI ||
-    chosenType === NewCelestialStellarType.HERBIG_AE_BE
+    chosenType === StellarType.PROTOSTAR ||
+    chosenType === StellarType.T_TAURI ||
+    chosenType === StellarType.HERBIG_AE_BE
   ) {
     // Pre-main sequence stars
     classifiedStar = createPreMainSequenceStar(
@@ -373,13 +371,13 @@ export function generateStar(random: () => number): CelestialObject {
   } else {
     // Fallback based on stellar type
     switch (chosenType) {
-      case NewCelestialStellarType.BLACK_HOLE:
+      case StellarType.BLACK_HOLE:
         spectralClassString = "X";
         break;
-      case NewCelestialStellarType.NEUTRON_STAR:
+      case StellarType.NEUTRON_STAR:
         spectralClassString = "P";
         break;
-      case NewCelestialStellarType.WHITE_DWARF:
+      case StellarType.WHITE_DWARF:
         spectralClassString =
           classifiedStar.characteristics?.atmosphericType || "D";
         break;
