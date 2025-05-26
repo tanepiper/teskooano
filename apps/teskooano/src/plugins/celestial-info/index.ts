@@ -6,6 +6,7 @@ import type {
 import { CelestialInfo } from "./CelestialInfo";
 
 import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
+import { StarInfoComponent } from "./bodies/StarInfo";
 
 const panelConfig: PanelConfig = {
   componentName: CelestialInfo.componentName,
@@ -44,6 +45,12 @@ export const plugin: TeskooanoPlugin = {
   functions: [],
   toolbarWidgets: [],
   managerClasses: [],
+  components: [
+    {
+      tagName: "star-info",
+      componentClass: StarInfoComponent,
+    },
+  ],
 };
 
 export { CelestialInfo };

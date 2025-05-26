@@ -33,14 +33,47 @@ export class StarInfoComponent
 
     const starProps = celestial.properties as StarProperties;
 
-    let spectralDescription = "";
-    if (starProps?.spectralClass) {
-      if (starProps.spectralClass.includes("D")) {
-        spectralDescription = ` (White Dwarf)`;
-      } else if (starProps.spectralClass === "N") {
-        spectralDescription = ` (Neutron Star)`;
+    // Get stellar type description from our data-driven approach
+    const getStellarTypeDescription = (stellarType?: string): string => {
+      switch (stellarType) {
+        case "MAIN_SEQUENCE":
+          return "Main Sequence";
+        case "RED_GIANT":
+          return "Red Giant";
+        case "BLUE_GIANT":
+          return "Blue Giant";
+        case "SUPERGIANT":
+          return "Supergiant";
+        case "HYPERGIANT":
+          return "Hypergiant";
+        case "SUBGIANT":
+          return "Subgiant";
+        case "WOLF_RAYET":
+          return "Wolf-Rayet";
+        case "CARBON_STAR":
+          return "Carbon Star";
+        case "VARIABLE_STAR":
+          return "Variable Star";
+        case "PROTOSTAR":
+          return "Protostar";
+        case "T_TAURI":
+          return "T Tauri";
+        case "HERBIG_AE_BE":
+          return "Herbig Ae/Be";
+        case "WHITE_DWARF":
+          return "White Dwarf";
+        case "NEUTRON_STAR":
+          return "Neutron Star";
+        case "BLACK_HOLE":
+          return "Black Hole";
+        default:
+          return stellarType || "Unknown";
       }
-    }
+    };
+
+    const stellarTypeDescription = getStellarTypeDescription(
+      starProps?.stellarType,
+    );
 
     const colorName = FormatUtils.getStarColorName(starProps?.color);
     const colorDisplay = starProps?.color
@@ -72,9 +105,8 @@ export class StarInfoComponent
                   celestial.temperature,
                 )} K</dd>
                 
-                <dt>Spectral:</dt><dd>${
-                  starProps?.spectralClass ?? "N/A"
-                }${spectralDescription}</dd>
+                <dt>Stellar Type:</dt><dd>${stellarTypeDescription}</dd>
+                <dt>Spectral Class:</dt><dd>${starProps?.spectralClass ?? "N/A"}</dd>
                 <dt>Luminosity:</dt><dd>${FormatUtils.formatExp(
                   starProps?.luminosity,
                   2,
@@ -99,8 +131,47 @@ export class StarInfoComponent
                 }
                 
                 ${
-                  starProps?.stellarType
-                    ? `<dt>Stellar Type:</dt><dd>${starProps.stellarType}</dd>`
+                  starProps?.characteristics &&
+                  Object.keys(starProps.characteristics).length > 0
+                    ? `<dt>Special Properties:</dt><dd>${Object.entries(
+                        starProps.characteristics,
+                      )
+                        .map(([key, value]) => {
+                          // Format special characteristics for better readability
+                          const formattedKey = key
+                            .replace(/([A-Z])/g, " $1")
+                            .replace(/^./, (str) => str.toUpperCase());
+                          let formattedValue = value;
+
+                          // Format specific types of values
+                          if (typeof value === "number") {
+                            if (key.includes("Rate") || key.includes("rate")) {
+                              formattedValue = FormatUtils.formatExp(value, 2);
+                            } else if (
+                              key.includes("Period") ||
+                              key.includes("period")
+                            ) {
+                              formattedValue = `${FormatUtils.formatFix(value, 1)} days`;
+                            } else if (
+                              key.includes("Velocity") ||
+                              key.includes("velocity")
+                            ) {
+                              formattedValue = `${FormatUtils.formatFix(value, 0)} km/s`;
+                            } else if (
+                              key.includes("Ratio") ||
+                              key.includes("ratio")
+                            ) {
+                              formattedValue = FormatUtils.formatFix(value, 2);
+                            } else {
+                              formattedValue = FormatUtils.formatFix(value, 2);
+                            }
+                          } else if (typeof value === "boolean") {
+                            formattedValue = value ? "Yes" : "No";
+                          }
+
+                          return `${formattedKey}: ${formattedValue}`;
+                        })
+                        .join("<br/>")}</dd>`
                     : ""
                 }
                 
@@ -115,5 +186,3 @@ export class StarInfoComponent
         `;
   }
 }
-
-customElements.define("star-info", StarInfoComponent);
