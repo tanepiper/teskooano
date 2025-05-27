@@ -1,5 +1,8 @@
 import * as THREE from "three";
-import { PhysicsStateReal, predictTrajectory } from "@teskooano/core-physics";
+import {
+  PhysicsStateReal,
+  trajectoryPredictionService,
+} from "@teskooano/core-physics";
 import { getCelestialObjects } from "@teskooano/core-state";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
@@ -74,7 +77,7 @@ export class PredictionManager {
 
     if (forceRecalculate || !this.predictedLinePoints.has(objectId)) {
       // Calculate new prediction
-      const newPoints = predictTrajectory(
+      const newPoints = trajectoryPredictionService.predictTrajectory(
         objectId,
         [targetObject.physicsStateReal, ...otherPhysicsStates],
         this.predictionDuration,
