@@ -7,7 +7,7 @@ import {
   SurfaceType,
   type PlanetAtmosphereProperties,
   type PlanetProperties,
-  type RockyTerrestrialSurfaceProperties,
+  type ProceduralSurfaceProperties,
 } from "@teskooano/data-types";
 
 const VENUS_MASS_KG = 4.867e24;
@@ -30,6 +30,34 @@ const VENUS_AXIAL_TILT_DEG = 177.36;
 export function initializeVenus(parentId: string): void {
   const venusId = "venus";
   const venusAxialTiltRad = VENUS_AXIAL_TILT_DEG * DEG_TO_RAD;
+
+  // Venus procedural surface data (volcanic world with thick atmosphere)
+  const venusProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.5,
+    lacunarity: 2.2,
+    simplePeriod: 5.0,
+    octaves: 6,
+    bumpScale: 0.3,
+    color1: "#8B4513", // Dark volcanic rock
+    color2: "#A0522D", // Reddish volcanic rock
+    color3: "#CD853F", // Lighter volcanic surfaces
+    color4: "#DEB887", // Weathered surfaces
+    color5: "#F5DEB3", // Bright highland areas
+    height1: 0.0,
+    height2: 0.3,
+    height3: 0.55,
+    height4: 0.75,
+    height5: 0.9,
+    shininess: 0.06,
+    specularStrength: 0.08,
+    roughness: 0.8,
+    ambientLightIntensity: 0.25,
+    undulation: 0.2,
+    terrainType: 2,
+    terrainAmplitude: 0.4,
+    terrainSharpness: 0.7,
+    terrainOffset: 0.05,
+  };
 
   actions.addCelestial({
     id: venusId,
@@ -73,33 +101,10 @@ export function initializeVenus(parentId: string): void {
         thickness: 0.3,
       },
       surface: {
+        ...venusProceduralSurface,
         type: SurfaceType.VOLCANIC,
         planetType: PlanetType.TERRESTRIAL,
         color: "#D2B48C",
-        roughness: 0.8,
-        persistence: 0.5,
-        lacunarity: 2.2,
-        simplePeriod: 5.0,
-        octaves: 6,
-        bumpScale: 0.3,
-        color1: "#8B4513",
-        color2: "#A0522D",
-        color3: "#CD853F",
-        color4: "#DEB887",
-        color5: "#F5DEB3",
-        height1: 0.0,
-        height2: 0.3,
-        height3: 0.55,
-        height4: 0.75,
-        height5: 0.9,
-        shininess: 0.06,
-        specularStrength: 0.08,
-        ambientLightIntensity: 0.25,
-        undulation: 0.2,
-        terrainType: 2,
-        terrainAmplitude: 0.4,
-        terrainSharpness: 0.7,
-        terrainOffset: 0.05,
       },
     } as PlanetProperties,
   });

@@ -2,6 +2,7 @@ import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
+  CelestialStatus,
   CelestialType,
   GasGiantClass,
   type IceSurfaceProperties,
@@ -12,7 +13,9 @@ import {
   type GasGiantProperties,
   type PlanetAtmosphereProperties,
   type PlanetProperties,
+  type ProceduralSurfaceProperties,
   type RingProperties,
+  type RingSystemProperties,
 } from "@teskooano/data-types";
 
 const JUPITER_REAL_MASS_KG = 1.89819e27;
@@ -103,32 +106,89 @@ export function initializeJupiter(parentId: string): void {
       cloudSpeed: 100,
       stormColor: "#B7410E",
       stormSpeed: 50,
-      rings: [
-        {
-          innerRadius: 1.72 * JUPITER_REAL_RADIUS_M,
-          outerRadius: 1.81 * JUPITER_REAL_RADIUS_M,
-          density: 0.05,
-          opacity: 0.05,
-          color: "#A0522D",
-          type: RockyType.DUST,
-          texture: "textures/ring_dust.png",
-          rotationRate: 0.001,
-          composition: ["dust"],
-        } as RingProperties,
-        {
-          innerRadius: 1.29 * JUPITER_REAL_RADIUS_M,
-          outerRadius: 1.72 * JUPITER_REAL_RADIUS_M,
-          density: 0.01,
-          opacity: 0.02,
-          color: "#A0522D",
-          type: RockyType.DUST,
-          texture: "textures/ring_dust_faint.png",
-          rotationRate: 0.0015,
-          composition: ["fine dust"],
-        } as RingProperties,
-      ],
+      ringTilt: {
+        x: 0,
+        y: Math.cos(jupiterAxialTiltRad),
+        z: Math.sin(jupiterAxialTiltRad),
+      },
     } as GasGiantProperties,
   });
+
+  // Jupiter Ring System - Create as separate celestial object
+  actions.addCelestial({
+    id: "jupiter-rings",
+    name: "Jupiter Rings",
+    seed: "jupiter-rings",
+    type: CelestialType.RING_SYSTEM,
+    parentId: jupiterId,
+    realMass_kg: 0,
+    realRadius_m: 0,
+    temperature: JUPITER_TEMP_K,
+    albedo: 0.05,
+    siderealRotationPeriod_s: JUPITER_SIDEREAL_ROTATION_PERIOD_S,
+    axialTilt: new OSVector3(
+      0,
+      Math.cos(jupiterAxialTiltRad),
+      Math.sin(jupiterAxialTiltRad),
+    ).normalize(),
+    orbit: {} as any,
+    properties: {
+      type: CelestialType.RING_SYSTEM,
+      parentId: jupiterId,
+      rings: [
+        {
+          innerRadius: 1.4,
+          outerRadius: 1.5,
+          density: 0.2,
+          opacity: 0.15,
+          color: "#B0B0B8",
+          type: RockyType.DUST,
+          texture: "placeholder_ring_texture",
+          rotationRate: 0.001,
+          composition: ["dark dust", "meteorite debris"],
+        },
+        {
+          innerRadius: 1.5,
+          outerRadius: 1.75,
+          density: 0.15,
+          opacity: 0.12,
+          color: "#A0A0A8",
+          type: RockyType.DUST,
+          texture: "placeholder_ring_texture",
+          rotationRate: 0.0008,
+          composition: ["fine dust", "ring moon debris"],
+        },
+      ],
+    } as RingSystemProperties,
+  });
+
+  // Io procedural surface data (volcanic world)
+  const ioProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.6,
+    lacunarity: 2.3,
+    simplePeriod: 4.0,
+    octaves: 7,
+    bumpScale: 0.4,
+    color1: "#201000", // Dark volcanic rock
+    color2: "#8B4513", // Brown volcanic surface
+    color3: "#CD853F", // Lighter volcanic areas
+    color4: "#FFFFA0", // Sulfur deposits
+    color5: "#FF2000", // Active lava flows
+    height1: 0.0,
+    height2: 0.2,
+    height3: 0.5,
+    height4: 0.8,
+    height5: 0.95,
+    shininess: 0.1,
+    specularStrength: 0.2,
+    roughness: 0.6,
+    ambientLightIntensity: 0.15,
+    undulation: 0.3,
+    terrainType: 2,
+    terrainAmplitude: 0.5,
+    terrainSharpness: 0.8,
+    terrainOffset: 0.1,
+  };
 
   actions.addCelestial({
     id: "io",
@@ -169,17 +229,41 @@ export function initializeJupiter(parentId: string): void {
         thickness: 0.05,
       },
       surface: {
+        ...ioProceduralSurface,
         type: SurfaceType.VOLCANIC,
         planetType: PlanetType.LAVA,
         color: "#FFFFA0",
-        roughness: 0.6,
-        lavaColor: "#FF2000",
-        rockColor: "#201000",
-        lavaActivity: 0.7,
-        volcanicActivity: 0.8,
       },
     } as PlanetProperties,
   });
+
+  // Europa procedural surface data (icy world with cracks)
+  const europaProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.4,
+    lacunarity: 2.0,
+    simplePeriod: 8.0,
+    octaves: 6,
+    bumpScale: 0.1,
+    color1: "#E0F0FF", // Pure ice
+    color2: "#F0F8FF", // Clean ice
+    color3: "#FFFFFF", // Bright ice
+    color4: "#F8F8FF", // Reflective ice
+    color5: "#FFFAFA", // Snow-like ice
+    height1: 0.0,
+    height2: 0.4,
+    height3: 0.6,
+    height4: 0.8,
+    height5: 1.0,
+    shininess: 0.8,
+    specularStrength: 0.7,
+    roughness: 0.3,
+    ambientLightIntensity: 0.2,
+    undulation: 0.05,
+    terrainType: 1,
+    terrainAmplitude: 0.1,
+    terrainSharpness: 0.4,
+    terrainOffset: 0.0,
+  };
 
   actions.addCelestial({
     id: "europa",
@@ -215,16 +299,41 @@ export function initializeJupiter(parentId: string): void {
         thickness: 0.03,
       },
       surface: {
+        ...europaProceduralSurface,
         type: SurfaceType.ICE_CRACKED,
         planetType: PlanetType.ICE,
         color: "#FFFFFF",
-        roughness: 0.3,
-        crackIntensity: 0.7,
-        glossiness: 0.6,
-        iceThickness: 15.0,
       },
     } as PlanetProperties,
   });
+
+  // Ganymede procedural surface data (mixed ice and rock)
+  const ganymedeProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.5,
+    lacunarity: 2.1,
+    simplePeriod: 6.0,
+    octaves: 7,
+    bumpScale: 0.2,
+    color1: "#666666", // Dark terrain
+    color2: "#888888", // Mixed terrain
+    color3: "#AAAAAA", // Intermediate terrain
+    color4: "#C0C0C0", // Bright terrain
+    color5: "#E0E0E0", // Very bright ice
+    height1: 0.0,
+    height2: 0.3,
+    height3: 0.5,
+    height4: 0.7,
+    height5: 0.9,
+    shininess: 0.4,
+    specularStrength: 0.3,
+    roughness: 0.5,
+    ambientLightIntensity: 0.1,
+    undulation: 0.1,
+    terrainType: 1,
+    terrainAmplitude: 0.2,
+    terrainSharpness: 0.6,
+    terrainOffset: 0.0,
+  };
 
   actions.addCelestial({
     id: "ganymede",
@@ -260,16 +369,41 @@ export function initializeJupiter(parentId: string): void {
         thickness: 0.02,
       },
       surface: {
+        ...ganymedeProceduralSurface,
         type: SurfaceType.VARIED,
         planetType: PlanetType.ICE,
         color: "#B8B8C0",
-        roughness: 0.5,
-        crackIntensity: 0.3,
-        glossiness: 0.3,
-        iceThickness: 800.0,
       },
     } as PlanetProperties,
   });
+
+  // Callisto procedural surface data (heavily cratered dark surface)
+  const callistoProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.45,
+    lacunarity: 2.0,
+    simplePeriod: 5.0,
+    octaves: 6,
+    bumpScale: 0.25,
+    color1: "#1A1A1A", // Very dark ancient surface
+    color2: "#2A2A2A", // Dark terrain
+    color3: "#3A3A3A", // Medium dark terrain
+    color4: "#4A4A4A", // Lighter dark terrain
+    color5: "#5A5A5A", // Brightest areas
+    height1: 0.0,
+    height2: 0.25,
+    height3: 0.5,
+    height4: 0.75,
+    height5: 0.9,
+    shininess: 0.05,
+    specularStrength: 0.05,
+    roughness: 0.7,
+    ambientLightIntensity: 0.05,
+    undulation: 0.15,
+    terrainType: 1,
+    terrainAmplitude: 0.3,
+    terrainSharpness: 0.7,
+    terrainOffset: 0.0,
+  };
 
   actions.addCelestial({
     id: "callisto",
@@ -298,20 +432,12 @@ export function initializeJupiter(parentId: string): void {
       isMoon: true,
       parentPlanet: jupiterId,
       composition: ["water ice", "silicates", "possible iron core"],
-      atmosphere: {
-        glowColor: "#333333",
-        intensity: 0.01,
-        power: 0.2,
-        thickness: 0.01,
-      },
+      atmosphere: undefined, // Callisto has no significant atmosphere
       surface: {
+        ...callistoProceduralSurface,
         type: SurfaceType.CRATERED,
         planetType: PlanetType.ICE,
         color: "#443322",
-        roughness: 0.7,
-        crackIntensity: 0.1,
-        glossiness: 0.1,
-        iceThickness: 200.0,
       },
     } as PlanetProperties,
   });

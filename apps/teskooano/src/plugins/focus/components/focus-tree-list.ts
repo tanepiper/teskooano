@@ -9,6 +9,14 @@ import "./celestial-row.js";
 import { buildHierarchy } from "../utils/hierarchy-builder";
 
 /**
+ * Helper function to get the orbital distance for sorting.
+ * Returns the real semi-major axis in meters, or 0 for objects without orbits (like stars).
+ */
+function getOrbitalDistance(obj: CelestialObject): number {
+  return obj.orbit?.realSemiMajorAxis_m || 0;
+}
+
+/**
  * Custom web component that displays a hierarchical tree of celestial objects.
  * Handles collapsible/expandable nodes and focus highlighting.
  *
@@ -258,12 +266,15 @@ export class FocusTreeList extends BaseCelestialList {
         nestedUl.classList.add("active");
       }
 
-      // Sort children
+      // Sort children by distance from barycenter instead of name
       childrenIds.sort((a, b) => {
         const childA = objectMap.get(a);
         const childB = objectMap.get(b);
         if (!childA || !childB) return 0;
-        return (childA.name ?? "").localeCompare(childB.name ?? "");
+
+        const distanceA = getOrbitalDistance(childA);
+        const distanceB = getOrbitalDistance(childB);
+        return distanceA - distanceB;
       });
 
       childrenIds.forEach((childId) => {

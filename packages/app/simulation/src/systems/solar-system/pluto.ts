@@ -3,11 +3,11 @@ import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
-  type IceSurfaceProperties,
   PlanetType,
   SurfaceType,
   type PlanetAtmosphereProperties,
   type PlanetProperties,
+  type ProceduralSurfaceProperties,
 } from "@teskooano/data-types";
 
 const PLUTO_MASS_KG = 1.303e22;
@@ -39,6 +39,34 @@ const CHARON_AXIAL_TILT_DEG = PLUTO_AXIAL_TILT_DEG;
 export function initializePluto(parentId: string): void {
   const plutoId = "pluto";
   const plutoAxialTiltRad = PLUTO_AXIAL_TILT_DEG * DEG_TO_RAD;
+
+  // Pluto procedural surface data (varied nitrogen and water ice)
+  const plutoProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.45,
+    lacunarity: 2.1,
+    simplePeriod: 5.0,
+    octaves: 5,
+    bumpScale: 0.8,
+    color1: "#606070", // Dark areas
+    color2: "#808090", // Medium areas
+    color3: "#B0B0C0", // Light areas
+    color4: "#D0D0E0", // Bright nitrogen ice
+    color5: "#F0F0F8", // Brilliant white ice
+    height1: 0.0,
+    height2: 0.3,
+    height3: 0.5,
+    height4: 0.7,
+    height5: 0.85,
+    shininess: 0.2,
+    specularStrength: 0.1,
+    roughness: 0.4,
+    ambientLightIntensity: 0.15,
+    undulation: 0.05,
+    terrainType: 2,
+    terrainAmplitude: 0.3,
+    terrainSharpness: 0.6,
+    terrainOffset: 0.0,
+  };
 
   actions.addCelestial({
     id: plutoId,
@@ -77,47 +105,43 @@ export function initializePluto(parentId: string): void {
         "rocky core",
         "tholins",
       ],
-      atmosphere: {
-        glowColor: "#E0FFFF",
-        intensity: 0.1,
-        power: 0.8,
-        thickness: 0.05,
-      },
+      atmosphere: undefined,
       surface: {
+        ...plutoProceduralSurface,
         type: SurfaceType.VARIED,
         planetType: PlanetType.ICE,
         color: "#F5E8D1",
-        secondaryColor: "#A0522D",
-        roughness: 0.4,
-        glossiness: 0.5,
-        crackIntensity: 0.2,
-        iceThickness: 5.0,
-        persistence: 0.45,
-        lacunarity: 2.1,
-        simplePeriod: 5.0,
-        octaves: 5,
-        bumpScale: 0.8,
-        color1: "#606070",
-        color2: "#808090",
-        color3: "#B0B0C0",
-        color4: "#D0D0E0",
-        color5: "#F0F0F8",
-        height1: 0.0,
-        height2: 0.3,
-        height3: 0.5,
-        height4: 0.7,
-        height5: 0.85,
-        shininess: 0.2,
-        specularStrength: 0.1,
-        ambientLightIntensity: 0.15,
-        undulation: 0.05,
-        terrainType: 2,
-        terrainAmplitude: 0.3,
-        terrainSharpness: 0.6,
-        terrainOffset: 0.0,
-      } as IceSurfaceProperties,
+      },
     } as PlanetProperties,
   });
+
+  // Charon procedural surface data (water ice surface, darker than Pluto)
+  const charonProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.45,
+    lacunarity: 2.1,
+    simplePeriod: 5.0,
+    octaves: 5,
+    bumpScale: 0.8,
+    color1: "#505060", // Dark gray
+    color2: "#707080", // Medium gray
+    color3: "#A0A0B0", // Light gray
+    color4: "#C0C0D0", // Bright areas
+    color5: "#E0E0F0", // Very bright spots
+    height1: 0.0,
+    height2: 0.3,
+    height3: 0.5,
+    height4: 0.7,
+    height5: 0.85,
+    shininess: 0.2,
+    specularStrength: 0.1,
+    roughness: 0.6,
+    ambientLightIntensity: 0.15,
+    undulation: 0.05,
+    terrainType: 2,
+    terrainAmplitude: 0.3,
+    terrainSharpness: 0.6,
+    terrainOffset: 0.0,
+  };
 
   const charonAxialTiltRad = CHARON_AXIAL_TILT_DEG * DEG_TO_RAD;
   actions.addCelestial({
@@ -151,45 +175,13 @@ export function initializePluto(parentId: string): void {
       isMoon: true,
       parentPlanet: plutoId,
       composition: ["water ice", "ammonia ice (hydrates)", "rocky interior"],
-      atmosphere: {
-        glowColor: "#000000",
-        intensity: 0,
-        power: 0,
-        thickness: 0,
-      },
+      atmosphere: undefined, // Charon has no atmosphere
       surface: {
+        ...charonProceduralSurface,
         type: SurfaceType.VARIED,
         planetType: PlanetType.ICE,
         color: "#B0B8C0",
-        secondaryColor: "#8B4513",
-        roughness: 0.6,
-        glossiness: 0.4,
-        crackIntensity: 0.3,
-        iceThickness: 10.0,
-        persistence: 0.45,
-        lacunarity: 2.1,
-        simplePeriod: 5.0,
-        octaves: 5,
-        bumpScale: 0.8,
-        color1: "#505060",
-        color2: "#707080",
-        color3: "#A0A0B0",
-        color4: "#C0C0D0",
-        color5: "#E0E0F0",
-        height1: 0.0,
-        height2: 0.3,
-        height3: 0.5,
-        height4: 0.7,
-        height5: 0.85,
-        shininess: 0.2,
-        specularStrength: 0.1,
-        ambientLightIntensity: 0.15,
-        undulation: 0.05,
-        terrainType: 2,
-        terrainAmplitude: 0.3,
-        terrainSharpness: 0.6,
-        terrainOffset: 0.0,
-      } as IceSurfaceProperties,
+      },
     } as PlanetProperties,
   });
 }

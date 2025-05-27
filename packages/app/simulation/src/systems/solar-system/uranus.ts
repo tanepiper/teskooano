@@ -3,6 +3,7 @@ import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   AtmosphereType,
+  CelestialStatus,
   CelestialType,
   GasGiantClass,
   PlanetType,
@@ -12,7 +13,9 @@ import {
   type IceSurfaceProperties,
   type PlanetAtmosphereProperties,
   type PlanetProperties,
+  type ProceduralSurfaceProperties,
   type RingProperties,
+  type RingSystemProperties,
 } from "@teskooano/data-types";
 
 const URANUS_REAL_MASS_KG = 8.681e25;
@@ -130,23 +133,101 @@ export function initializeUranus(parentId: string): void {
       stormSpeed: 100,
       emissiveColor: "#00BFFF",
       emissiveIntensity: 0.05,
-      rings: [
-        {
-          innerRadius: 38000 * KM,
-          outerRadius: 51149 * KM,
-          density: 0.1,
-          opacity: 0.2,
-          color: "#303030",
-          type: RockyType.DARK_ROCK,
-          texture: "textures/ring_dust.png",
-          rotationRate: 0.001,
-          composition: ["dust", "dark particles"],
-        } as RingProperties,
-      ],
+      ringTilt: {
+        x: 0,
+        y: Math.cos(uranusAxialTiltRad),
+        z: Math.sin(uranusAxialTiltRad),
+      },
     } as GasGiantProperties,
   });
 
-  // Add Miranda
+  // Uranus Ring System - Create as separate celestial object
+  actions.addCelestial({
+    id: "uranus-rings",
+    name: "Uranus Rings",
+    seed: "uranus-rings",
+    type: CelestialType.RING_SYSTEM,
+    parentId: uranusId,
+    realMass_kg: 0,
+    realRadius_m: 0,
+    temperature: URANUS_TEMP_K,
+    albedo: 0.05,
+    siderealRotationPeriod_s: URANUS_SIDEREAL_ROTATION_PERIOD_S,
+    axialTilt: new OSVector3(
+      0,
+      Math.cos(uranusAxialTiltRad),
+      Math.sin(uranusAxialTiltRad),
+    ).normalize(),
+    orbit: {} as any,
+    properties: {
+      type: CelestialType.RING_SYSTEM,
+      parentId: uranusId,
+      rings: [
+        {
+          innerRadius: 1.6,
+          outerRadius: 1.62,
+          density: 0.5,
+          opacity: 0.3,
+          color: "#B0B0B8",
+          type: RockyType.DARK_ROCK,
+          texture: "placeholder_ring_texture",
+          rotationRate: 0.001,
+          composition: ["carbon-rich particles"],
+        },
+        {
+          innerRadius: 1.7,
+          outerRadius: 1.72,
+          density: 0.6,
+          opacity: 0.35,
+          color: "#A8A8B0",
+          type: RockyType.DARK_ROCK,
+          texture: "placeholder_ring_texture",
+          rotationRate: 0.0009,
+          composition: ["dark rock fragments"],
+        },
+        {
+          innerRadius: 1.95,
+          outerRadius: 1.97,
+          density: 0.7,
+          opacity: 0.4,
+          color: "#C0C0C8",
+          type: RockyType.DARK_ROCK,
+          texture: "placeholder_ring_texture",
+          rotationRate: 0.0008,
+          composition: ["dark particles", "carbon compounds"],
+        },
+      ],
+    } as RingSystemProperties,
+  });
+
+  // Miranda procedural surface data (bizarre patchwork terrain)
+  const mirandaProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.7,
+    lacunarity: 2.5,
+    simplePeriod: 3.0,
+    octaves: 8,
+    bumpScale: 0.4,
+    color1: "#808080", // Dark grayish terrain
+    color2: "#A0A0A0", // Medium gray
+    color3: "#C0C0C0", // Light gray
+    color4: "#D0D0D8", // Very light gray
+    color5: "#E0E0E8", // Bright patches
+    height1: 0.0,
+    height2: 0.2,
+    height3: 0.5,
+    height4: 0.7,
+    height5: 0.9,
+    shininess: 0.3,
+    specularStrength: 0.2,
+    roughness: 0.8,
+    ambientLightIntensity: 0.1,
+    undulation: 0.2,
+    terrainType: 1,
+    terrainAmplitude: 0.4,
+    terrainSharpness: 0.8,
+    terrainOffset: 0.0,
+  };
+
   actions.addCelestial({
     id: "miranda",
     name: "Miranda",
@@ -174,25 +255,44 @@ export function initializeUranus(parentId: string): void {
       isMoon: true,
       parentPlanet: uranusId,
       composition: ["water ice", "silicates", "possibly organic compounds"],
-      atmosphere: {
-        glowColor: "#FFFFFF",
-        intensity: 0.0,
-        power: 0.0,
-        thickness: 0.0,
-      },
+      atmosphere: undefined, // Miranda has no atmosphere
       surface: {
+        ...mirandaProceduralSurface,
         type: SurfaceType.VARIED,
         planetType: PlanetType.ICE,
         color: "#D0D0D8",
-        roughness: 0.8,
-        crackIntensity: 0.7,
-        glossiness: 0.3,
-        iceThickness: 20.0,
       },
     } as PlanetProperties,
   });
 
-  // Add Ariel
+  // Ariel procedural surface data (bright icy surface with valleys)
+  const arielProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.5,
+    lacunarity: 2.2,
+    simplePeriod: 4.0,
+    octaves: 6,
+    bumpScale: 0.25,
+    color1: "#C0C0C8", // Light gray ice
+    color2: "#D0D0D8", // Bright ice
+    color3: "#E0E0E8", // Very bright ice
+    color4: "#F0F0F8", // Brilliant ice
+    color5: "#FFFFFF", // Pure white ice
+    height1: 0.0,
+    height2: 0.3,
+    height3: 0.5,
+    height4: 0.7,
+    height5: 0.9,
+    shininess: 0.5,
+    specularStrength: 0.4,
+    roughness: 0.7,
+    ambientLightIntensity: 0.12,
+    undulation: 0.1,
+    terrainType: 1,
+    terrainAmplitude: 0.3,
+    terrainSharpness: 0.6,
+    terrainOffset: 0.0,
+  };
+
   actions.addCelestial({
     id: "ariel",
     name: "Ariel",
@@ -220,25 +320,44 @@ export function initializeUranus(parentId: string): void {
       isMoon: true,
       parentPlanet: uranusId,
       composition: ["water ice", "silicates", "carbon dioxide ice"],
-      atmosphere: {
-        glowColor: "#FFFFFF",
-        intensity: 0.0,
-        power: 0.0,
-        thickness: 0.0,
-      },
+      atmosphere: undefined, // Ariel has no atmosphere
       surface: {
+        ...arielProceduralSurface,
         type: SurfaceType.VARIED,
         planetType: PlanetType.ICE,
         color: "#E0E0E8",
-        roughness: 0.7,
-        crackIntensity: 0.5,
-        glossiness: 0.4,
-        iceThickness: 30.0,
       },
     } as PlanetProperties,
   });
 
-  // Add Umbriel
+  // Umbriel procedural surface data (dark, heavily cratered)
+  const umbreilProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.45,
+    lacunarity: 2.0,
+    simplePeriod: 5.0,
+    octaves: 5,
+    bumpScale: 0.3,
+    color1: "#404040", // Very dark surface
+    color2: "#606060", // Dark gray
+    color3: "#808080", // Medium gray
+    color4: "#A0A0A0", // Light gray
+    color5: "#C0C0C0", // Bright spots
+    height1: 0.0,
+    height2: 0.25,
+    height3: 0.5,
+    height4: 0.75,
+    height5: 0.9,
+    shininess: 0.15,
+    specularStrength: 0.1,
+    roughness: 0.8,
+    ambientLightIntensity: 0.08,
+    undulation: 0.15,
+    terrainType: 1,
+    terrainAmplitude: 0.35,
+    terrainSharpness: 0.7,
+    terrainOffset: 0.0,
+  };
+
   actions.addCelestial({
     id: "umbriel",
     name: "Umbriel",
@@ -266,25 +385,44 @@ export function initializeUranus(parentId: string): void {
       isMoon: true,
       parentPlanet: uranusId,
       composition: ["water ice", "silicates", "carbon compounds"],
-      atmosphere: {
-        glowColor: "#FFFFFF",
-        intensity: 0.0,
-        power: 0.0,
-        thickness: 0.0,
-      },
+      atmosphere: undefined, // Umbriel has no atmosphere
       surface: {
+        ...umbreilProceduralSurface,
         type: SurfaceType.CRATERED,
         planetType: PlanetType.ICE,
         color: "#808090",
-        roughness: 0.8,
-        crackIntensity: 0.3,
-        glossiness: 0.2,
-        iceThickness: 40.0,
       },
     } as PlanetProperties,
   });
 
-  // Add Titania
+  // Titania procedural surface data (largest moon, mixed terrain)
+  const titaniaProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.5,
+    lacunarity: 2.1,
+    simplePeriod: 6.0,
+    octaves: 6,
+    bumpScale: 0.2,
+    color1: "#A0A0A8", // Medium gray ice
+    color2: "#B0B0B8", // Light gray
+    color3: "#C0C0C8", // Bright gray
+    color4: "#D0D0D8", // Very bright
+    color5: "#E0E0E8", // Brilliant white areas
+    height1: 0.0,
+    height2: 0.3,
+    height3: 0.5,
+    height4: 0.7,
+    height5: 0.9,
+    shininess: 0.3,
+    specularStrength: 0.25,
+    roughness: 0.7,
+    ambientLightIntensity: 0.1,
+    undulation: 0.1,
+    terrainType: 1,
+    terrainAmplitude: 0.25,
+    terrainSharpness: 0.6,
+    terrainOffset: 0.0,
+  };
+
   actions.addCelestial({
     id: "titania",
     name: "Titania",
@@ -312,25 +450,44 @@ export function initializeUranus(parentId: string): void {
       isMoon: true,
       parentPlanet: uranusId,
       composition: ["water ice", "silicates", "possible subsurface water"],
-      atmosphere: {
-        glowColor: "#FFFFFF",
-        intensity: 0.01,
-        power: 0.1,
-        thickness: 0.01,
-      },
+      atmosphere: undefined, // Titania has no significant atmosphere
       surface: {
+        ...titaniaProceduralSurface,
         type: SurfaceType.VARIED,
         planetType: PlanetType.ICE,
         color: "#C0C0C8",
-        roughness: 0.7,
-        crackIntensity: 0.4,
-        glossiness: 0.3,
-        iceThickness: 50.0,
       },
     } as PlanetProperties,
   });
 
-  // Add Oberon
+  // Oberon procedural surface data (second largest, heavily cratered)
+  const oberonProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.45,
+    lacunarity: 2.0,
+    simplePeriod: 5.5,
+    octaves: 6,
+    bumpScale: 0.25,
+    color1: "#909098", // Dark grayish
+    color2: "#A0A0A8", // Medium gray
+    color3: "#B0B0B8", // Light gray
+    color4: "#C0C0C8", // Bright areas
+    color5: "#D0D0D8", // Very bright spots
+    height1: 0.0,
+    height2: 0.25,
+    height3: 0.5,
+    height4: 0.75,
+    height5: 0.9,
+    shininess: 0.25,
+    specularStrength: 0.2,
+    roughness: 0.8,
+    ambientLightIntensity: 0.09,
+    undulation: 0.12,
+    terrainType: 1,
+    terrainAmplitude: 0.3,
+    terrainSharpness: 0.7,
+    terrainOffset: 0.0,
+  };
+
   actions.addCelestial({
     id: "oberon",
     name: "Oberon",
@@ -358,20 +515,12 @@ export function initializeUranus(parentId: string): void {
       isMoon: true,
       parentPlanet: uranusId,
       composition: ["water ice", "silicates", "carbon compounds"],
-      atmosphere: {
-        glowColor: "#FFFFFF",
-        intensity: 0.0,
-        power: 0.0,
-        thickness: 0.0,
-      },
+      atmosphere: undefined, // Oberon has no atmosphere
       surface: {
+        ...oberonProceduralSurface,
         type: SurfaceType.CRATERED,
         planetType: PlanetType.ICE,
         color: "#A0A0A8",
-        roughness: 0.8,
-        crackIntensity: 0.2,
-        glossiness: 0.25,
-        iceThickness: 40.0,
       },
     } as PlanetProperties,
   });
