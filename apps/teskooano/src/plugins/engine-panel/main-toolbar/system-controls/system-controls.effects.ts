@@ -11,6 +11,7 @@ import { pluginManager } from "@teskooano/ui-plugin";
 import type { CelestialObject } from "@teskooano/data-types"; // Assuming CelestialObject is here
 import { initializeSolarSystem } from "@teskooano/app-simulation";
 import { updateSeed, celestialFactory } from "@teskooano/core-state";
+import { showSolarSystemModal } from "./modal-solar-system";
 
 // Representing the type for the value emitted by celestialObjects$
 export type CelestialObjectMap = Record<string, CelestialObject>;
@@ -270,53 +271,63 @@ export function loadHomeSystemEffect$(
     filter(() => !isGenerating$$.value),
     tap(() => isGenerating$$.next(true)),
     switchMap((element) => {
-      try {
-        // Clear existing objects using celestialFactory.
-        celestialFactory.clearState({
-          resetCamera: false, // Keep camera as is
-          resetTime: true, // Reset simulation time
-          resetSelection: true, // Clear any selected/focused objects
-        });
+      return from(
+        Promise.resolve().then(async () => {
+          try {
+            // Clear existing objects using celestialFactory.
+            celestialFactory.clearState({
+              resetCamera: false, // Keep camera as is
+              resetTime: true, // Reset simulation time
+              resetSelection: true, // Clear any selected/focused objects
+            });
 
-        // Initialize the Solar System.
-        // This function still needs to be refactored to properly update core state
-        // (celestialObjects$ and currentSeed$) via `addCelestialObject` and `updateSeed` from core-state,
-        // potentially through celestialFactory or celestialActions.
-        initializeSolarSystem();
+            // Initialize the Solar System.
+            // This function still needs to be refactored to properly update core state
+            // (celestialObjects$ and currentSeed$) via `addCelestialObject` and `updateSeed` from core-state,
+            // potentially through celestialFactory or celestialActions.
+            initializeSolarSystem();
 
-        // Manually set a seed. Ideally, initializeSolarSystem would handle this.
-        updateSeed("SOLARSYSTEM");
+            // Manually set a seed. Ideally, initializeSolarSystem would handle this.
+            updateSeed("");
 
-        // After refactoring initializeSolarSystem, it should populate celestialObjects$
-        // and the count would be reflected automatically by SystemControls.ts via its subscription.
+            // Show the Solar System information modal
+            await showSolarSystemModal();
 
-        return of<SystemActionEffectResult>({
-          status: "success",
-          symbol: "🏡",
-          message: "Solar System loaded",
-          triggerElement: element,
-          seed: "SOLARSYSTEM",
-        });
-      } catch (err: any) {
-        console.error("Load Home System error:", err);
-        // Ensure isGenerating is set to false in the catch block as well
-        isGenerating$$.next(false);
-        return of<SystemActionEffectResult>({
-          status: "error",
-          symbol: "❌",
-          message: err.message || "Failed to load Solar System",
-          triggerElement: element,
-        });
-      } finally {
-        // This finally block might run before the observable from `of(...)` emits
-        // if initializeSolarSystem is synchronous.
-        // Setting to false here ensures it's reset if the above try/catch completes synchronously.
-        // If initializeSolarSystem becomes async, this needs careful review.
-        if (isGenerating$$.value) {
-          // Only set if still true
+            // After refactoring initializeSolarSystem, it should populate celestialObjects$
+            // and the count would be reflected automatically by SystemControls.ts via its subscription.
+
+            return {
+              status: "success" as const,
+              symbol: "🏡",
+              message: "Solar System loaded",
+              triggerElement: element,
+              seed: "SOLARSYSTEM",
+            };
+          } catch (err: any) {
+            console.error("Load Home System error:", err);
+            return {
+              status: "error" as const,
+              symbol: "❌",
+              message: err.message || "Failed to load Solar System",
+              triggerElement: element,
+            };
+          } finally {
+            // Ensure isGenerating is reset
+            isGenerating$$.next(false);
+          }
+        }),
+      ).pipe(
+        catchError((err) => {
+          console.error("Load Home System promise error:", err);
           isGenerating$$.next(false);
-        }
-      }
+          return of<SystemActionEffectResult>({
+            status: "error",
+            symbol: "❌",
+            message: err.message || "Failed to load Solar System",
+            triggerElement: element,
+          });
+        }),
+      );
     }),
     catchError((err, caught) => {
       const element =

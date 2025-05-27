@@ -316,16 +316,6 @@ template.innerHTML = `
         <span class="celestial-count">0 Celestials</span>
       </div>
       <div class="actions">
-        <teskooano-button
-            data-action="home"
-            variant="ghost"
-            size="sm"
-            title="Load Home System (Solar System)"
-            tooltip-title="Home System"
-            tooltip-text="Load the Solar System as the current system"
-            tooltip-icon='${HomeRegular}'>
-          ${HomeRegular}
-        </teskooano-button>
         <teskooano-button 
             data-action="copy-seed" 
             variant="ghost" 
