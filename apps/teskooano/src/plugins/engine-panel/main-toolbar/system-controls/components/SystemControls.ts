@@ -21,7 +21,7 @@ import {
   createButtonClickStream$,
   createRandomSeedStream$,
   createSeedSubmitStream$,
-} from "./system-controls.streams.js";
+} from "../streams/system-controls.streams.js";
 import {
   generateSystemEffect$,
   clearSystemEffect$,
@@ -33,7 +33,7 @@ import {
   SystemActionEffectResult,
   CelestialObjectMap as EffectCelestialObjectMap,
   Seed as EffectSeed,
-} from "./system-controls.effects.js";
+} from "../effects/system-controls.effects.js";
 
 // Define core types based on usage
 type CoreCelestialObjectMap = Record<string, CelestialObject>;

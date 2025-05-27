@@ -1,7 +1,7 @@
 import type { TeskooanoPlugin, PanelConfig } from "@teskooano/ui-plugin";
 import { CompositeEnginePanel } from "./panels/CompositeEnginePanel";
 
-import { addCompositeEnginePanelFunction } from "./main-toolbar/system-controls/engineview-functions";
+import { addCompositeEnginePanelFunction } from "./main-toolbar/system-controls/functions/engineview-functions";
 import {
   generateRandomSystemFunction,
   clearSystemFunction,
@@ -9,13 +9,17 @@ import {
   triggerImportDialogFunction,
   createBlankSystemFunction,
   copySeedFunction,
-} from "./main-toolbar/system-controls/system-functions";
+} from "./main-toolbar/system-controls/functions/system-functions";
 
 import {
   simulationControlsWidget,
   systemControlsWidget,
   addViewButtonRegistration,
 } from "./main-toolbar/toolbar-definitions";
+import {
+  showSolarSystemModal,
+  showGeneratedSystemModal,
+} from "./main-toolbar/system-controls";
 
 const enginePanelConfig: PanelConfig = {
   componentName: "teskooano-engine-view",
@@ -51,6 +55,7 @@ export const plugin: TeskooanoPlugin = {
 
   toolbarWidgets: [simulationControlsWidget, systemControlsWidget],
   managerClasses: [],
+  components: [],
 };
 
 export { CompositeEnginePanel };

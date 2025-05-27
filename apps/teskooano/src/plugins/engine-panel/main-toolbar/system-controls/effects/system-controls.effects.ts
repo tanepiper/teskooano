@@ -8,10 +8,15 @@ import {
   withLatestFrom,
 } from "rxjs/operators";
 import { pluginManager } from "@teskooano/ui-plugin";
-import type { CelestialObject } from "@teskooano/data-types"; // Assuming CelestialObject is here
+import type { CelestialObject } from "@teskooano/data-types";
 import { initializeSolarSystem } from "@teskooano/app-simulation";
-import { updateSeed, celestialFactory } from "@teskooano/core-state";
-import { showSolarSystemModal } from "./modal-solar-system";
+import {
+  updateSeed,
+  celestialFactory,
+  simulationStateService,
+} from "@teskooano/core-state";
+import { showSolarSystemModal } from "../modals/modal-solar-system";
+import { showGeneratedSystemModal } from "../modals/modal-system-generator";
 
 // Representing the type for the value emitted by celestialObjects$
 export type CelestialObjectMap = Record<string, CelestialObject>;
@@ -238,14 +243,22 @@ export function createBlankSystemEffect$(
     tap(() => isGenerating$$.next(true)),
     switchMap((element) =>
       from(pluginManager.execute("system:create_blank")).pipe(
-        map(
-          (result: any): SystemActionEffectResult => ({
+        map((result: any): SystemActionEffectResult => {
+          // Always set physics engine to verlet (advanced) for blank systems
+          if (result?.success) {
+            simulationStateService.setPhysicsEngine("verlet");
+
+            // Show modal for blank system
+            showGeneratedSystemModal("BLANK_SYSTEM");
+          }
+
+          return {
             status: result?.success ? "success" : "error",
             symbol: result?.symbol || (result?.success ? "📄" : "❌"),
             message: result?.message,
             triggerElement: element,
-          }),
-        ),
+          };
+        }),
         catchError((err) => {
           console.error("Create blank system error:", err);
           return of<SystemActionEffectResult>({

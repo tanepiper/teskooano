@@ -28,7 +28,6 @@ import {
   generateMoonsObservable,
   generatePlanet,
   generateStar,
-  generateSystemName,
   generateAsteroidBelt,
 } from "./generators";
 import { createSeededRandom } from "./seeded-random";
@@ -36,15 +35,14 @@ import * as UTIL from "./utils";
 import { validateAndCorrectHierarchy } from "./validation";
 
 /**
- * Generates the initial data for celestial objects and a name for a solar system based on a seed string.
+ * Generates the initial data for celestial objects in a solar system based on a seed string.
  * @param seed The seed string to use for generation.
- * @returns A Promise resolving to an object containing the system name and an Observable stream of CelestialObjects.
+ * @returns A Promise resolving to an Observable stream of CelestialObjects.
  */
 export async function generateSystem(
   seed: string,
-): Promise<{ systemName: string; objects$: Observable<CelestialObject> }> {
+): Promise<{ objects$: Observable<CelestialObject> }> {
   const random = await createSeededRandom(seed);
-  const systemName = generateSystemName(random);
 
   // Generate stars first (synchronously within the async function)
   const systemTypeRoll = random();
@@ -415,6 +413,6 @@ export async function generateSystem(
     }),
   );
 
-  // Return the system name and the validated observable stream
-  return { systemName, objects$: validatedObjects$ };
+  // Return the validated observable stream
+  return { objects$: validatedObjects$ };
 }

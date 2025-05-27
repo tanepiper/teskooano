@@ -1,3 +1,7 @@
+/**
+ * DEPRECATED: This file is no longer used. System names are now derived from the primary star name.
+ * Kept for reference purposes.
+ */
 export function generateSystemName(random: () => number): string {
   const prefixes = [
     "Andromeda",

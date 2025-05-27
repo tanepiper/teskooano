@@ -3,6 +3,7 @@ import {
   celestialFactory,
   getCurrentSeed,
   updateSeed,
+  simulationStateService,
 } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -13,6 +14,7 @@ import { generateSystem as generateSystemObservable } from "@teskooano/procedura
 import { dispatchTextureGenerationComplete } from "@teskooano/systems-celestial";
 import { DockviewApi } from "dockview-core";
 import { catchError, finalize, lastValueFrom, tap, throwError } from "rxjs";
+import { showGeneratedSystemModal } from "../modals/modal-system-generator";
 
 export function dispatchSimulationTimeReset() {
   const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
@@ -55,13 +57,7 @@ export async function generateAndLoadSystem(
   dispatchSimulationTimeReset();
 
   try {
-    const { systemName, objects$ } = await generateSystemObservable(finalSeed);
-
-    if (systemName) {
-      console.warn(
-        `[SystemGenerator] System Name: ${systemName} (handling not implemented)`,
-      );
-    }
+    const { objects$ } = await generateSystemObservable(finalSeed);
 
     let isFirstStar = true;
 
@@ -95,10 +91,17 @@ export async function generateAndLoadSystem(
         dispatchTextureGenerationComplete();
         actions.resetTime();
         dispatchSimulationTimeReset();
+
+        // Always set physics engine to verlet (advanced) for all newly generated systems
+        simulationStateService.setPhysicsEngine("verlet");
+
         // Dispatch system generation complete event
         window.dispatchEvent(
           new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
         );
+
+        // Show the system information modal with seed
+        showGeneratedSystemModal(finalSeed);
       }),
     );
 

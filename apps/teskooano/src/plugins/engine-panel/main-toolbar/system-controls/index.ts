@@ -3,15 +3,23 @@ import type {
   FunctionConfig,
   ComponentConfig,
 } from "@teskooano/ui-plugin";
-import { SystemControls } from "./SystemControls";
+import { SystemControls } from "./components/SystemControls";
+import {
+  showGeneratedSystemModal,
+  SystemGeneratorModal,
+} from "./modals/modal-system-generator";
+import {
+  showSolarSystemModal,
+  SolarSystemModal,
+} from "./modals/modal-solar-system";
 
 import {
   generateRandomSystemFunction,
   clearSystemFunction,
   exportSystemFunction,
   triggerImportDialogFunction,
-} from "./system-functions";
-import { addCompositeEnginePanelFunction } from "./engineview-functions";
+} from "./functions/system-functions";
+import { addCompositeEnginePanelFunction } from "./functions/engineview-functions";
 
 const allFunctions: FunctionConfig[] = [
   generateRandomSystemFunction,
@@ -26,6 +34,16 @@ const systemControlsComponent: ComponentConfig = {
   componentClass: SystemControls,
 };
 
+const systemGeneratorModalComponent: ComponentConfig = {
+  tagName: "teskooano-system-generator-modal",
+  componentClass: SystemGeneratorModal,
+};
+
+const solarSystemModalComponent: ComponentConfig = {
+  tagName: "teskooano-solar-system-modal",
+  componentClass: SolarSystemModal,
+};
+
 /**
  * Plugin definition for the System Controls component and related functions.
  *
@@ -37,7 +55,11 @@ export const plugin: TeskooanoPlugin = {
   name: "System Controls",
   description:
     "Provides the system controls component and related system/view functions.",
-  components: [systemControlsComponent],
+  components: [
+    systemControlsComponent,
+    systemGeneratorModalComponent,
+    solarSystemModalComponent,
+  ],
   functions: allFunctions,
 
   panels: [],
@@ -46,4 +68,10 @@ export const plugin: TeskooanoPlugin = {
   managerClasses: [],
 };
 
-export { SystemControls };
+export {
+  SystemControls,
+  showGeneratedSystemModal,
+  SystemGeneratorModal,
+  showSolarSystemModal,
+  SolarSystemModal,
+};
