@@ -3,7 +3,7 @@ import {
   BaseStarRenderer,
   BaseStarMaterial,
   CoronaMaterial,
-} from "./base-star";
+} from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**

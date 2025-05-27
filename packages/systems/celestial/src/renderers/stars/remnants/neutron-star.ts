@@ -4,10 +4,10 @@ import {
   BaseStarMaterial,
   BaseStarRenderer,
   CoronaMaterial,
-} from "./base-star";
-import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
+} from "../base/base-star";
+import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import type { CelestialMeshOptions } from "../common/CelestialRenderer";
+import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 /**
  * Material for neutron stars
@@ -148,7 +148,7 @@ export class NeutronStarRenderer extends BaseStarRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): THREE.Object3D {
-    const group = super.createMesh(object, options) as THREE.Group;
+    const group = this._createHighDetailGroup(object, options) as THREE.Group;
 
     this.addRadiationJets(object, group);
 

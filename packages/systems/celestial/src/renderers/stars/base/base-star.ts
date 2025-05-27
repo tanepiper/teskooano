@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import type { CelestialObject, StarProperties } from "@teskooano/data-types";
-import { CelestialRenderer, LODLevel } from "../index";
+import { CelestialRenderer, LODLevel } from "../../index";
 import { SCALE } from "@teskooano/data-types";
-import type { CelestialMeshOptions } from "../common/CelestialRenderer";
+import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**

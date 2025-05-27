@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import type { CelestialObject } from "@teskooano/data-types";
-import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
-import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
-import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import type { CelestialMeshOptions } from "../common/CelestialRenderer";
+import { BaseStarRenderer, BaseStarMaterial } from "../base/base-star";
+import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 /**
  * Material for Schwarzschild black holes
@@ -184,14 +184,14 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
   private lensingHelpers: Map<string, GravitationalLensingHelper> = new Map();
 
   /**
-   * Create the black hole mesh with event horizon and accretion disk
+   * Override the createMesh method to handle black hole-specific rendering
    */
   createMesh(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): THREE.Object3D {
     const group = new THREE.Group();
-    group.name = `blackhole-${object.celestialObjectId}`;
+    group.name = `${object.celestialObjectId}-black-hole-group`;
 
     this.addEventHorizon(object, group);
 

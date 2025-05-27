@@ -1,13 +1,13 @@
 import * as THREE from "three";
 import type { CelestialObject } from "@teskooano/data-types";
-import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
+import { BaseStarRenderer, BaseStarMaterial } from "../base/base-star";
 import {
   SchwarzschildBlackHoleMaterial,
   AccretionDiskMaterial,
 } from "./schwarzschild-black-hole";
-import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
+import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import type { CelestialMeshOptions } from "../common/CelestialRenderer";
+import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 /**
  * Material for Kerr black holes' ergosphere

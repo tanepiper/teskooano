@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { BaseStarRenderer, BaseStarMaterial } from "./base-star";
+import { BaseStarRenderer, BaseStarMaterial } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**

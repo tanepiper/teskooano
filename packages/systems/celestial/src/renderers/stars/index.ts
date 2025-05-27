@@ -1,62 +1,66 @@
 /**
- * Exports for star renderers
+ * Star Renderers - organized by StellarType categories
  */
-export * from "./base-star";
-export * from "./main-sequence-star";
-export * from "./class-o";
-export * from "./class-b";
-export * from "./class-a";
-export * from "./class-f";
-export * from "./class-g";
-export * from "./class-k";
-export * from "./class-m";
-export * from "./neutron-star";
-export * from "./white-dwarf";
-export * from "./wolf-rayet";
-export * from "./schwarzschild-black-hole";
-export * from "./kerr-black-hole";
-// New stellar type renderers
-export * from "./protostar";
-export * from "./t-tauri";
-export * from "./herbig-ae-be";
-export * from "./subgiant";
-export * from "./red-giant";
-export * from "./blue-giant";
-export * from "./supergiant";
-export * from "./hypergiant";
-export * from "./carbon-star";
-export * from "./variable-star";
 
-import { BaseStarRenderer } from "./base-star";
-import { MainSequenceStarRenderer } from "./main-sequence-star";
-import { ClassOStarRenderer } from "./class-o";
-import { ClassBStarRenderer } from "./class-b";
-import { ClassAStarRenderer } from "./class-a";
-import { ClassFStarRenderer } from "./class-f";
-import { ClassGStarRenderer } from "./class-g";
-import { ClassKStarRenderer } from "./class-k";
-import { ClassMStarRenderer } from "./class-m";
-import { NeutronStarRenderer } from "./neutron-star";
-import { WhiteDwarfRenderer } from "./white-dwarf";
-import { WolfRayetRenderer } from "./wolf-rayet";
-import { SchwarzschildBlackHoleRenderer } from "./schwarzschild-black-hole";
-import { KerrBlackHoleRenderer } from "./kerr-black-hole";
-// New stellar type renderers
-import { ProtostarRenderer } from "./protostar";
-import { TTauriRenderer } from "./t-tauri";
-import { HerbigAeBeRenderer } from "./herbig-ae-be";
-import { SubgiantRenderer } from "./subgiant";
-import { RedGiantRenderer } from "./red-giant";
-import { BlueGiantRenderer } from "./blue-giant";
-import { SupergiantRenderer } from "./supergiant";
-import { HypergiantRenderer } from "./hypergiant";
-import { CarbonStarRenderer } from "./carbon-star";
-import { VariableStarRenderer } from "./variable-star";
 import { StellarType, MainSequenceSpectralClass } from "@teskooano/data-types";
+
+// ============================================================================
+// BASE CLASSES
+// ============================================================================
+export * from "./base";
+import { BaseStarRenderer } from "./base/base-star";
+
+// ============================================================================
+// PRE-MAIN SEQUENCE STARS
+// ============================================================================
+export * from "./pre-main-sequence";
+import { ProtostarRenderer } from "./pre-main-sequence/protostar";
+import { TTauriRenderer } from "./pre-main-sequence/t-tauri";
+import { HerbigAeBeRenderer } from "./pre-main-sequence/herbig-ae-be";
+
+// ============================================================================
+// MAIN SEQUENCE STARS
+// ============================================================================
+export * from "./main-sequence";
+import { MainSequenceStarRenderer } from "./main-sequence/main-sequence-star";
+import { ClassOStarRenderer } from "./main-sequence/class-o";
+import { ClassBStarRenderer } from "./main-sequence/class-b";
+import { ClassAStarRenderer } from "./main-sequence/class-a";
+import { ClassFStarRenderer } from "./main-sequence/class-f";
+import { ClassGStarRenderer } from "./main-sequence/class-g";
+import { ClassKStarRenderer } from "./main-sequence/class-k";
+import { ClassMStarRenderer } from "./main-sequence/class-m";
+
+// ============================================================================
+// POST-MAIN SEQUENCE STARS
+// ============================================================================
+export * from "./post-main-sequence";
+import { SubgiantRenderer } from "./post-main-sequence/subgiant";
+import { RedGiantRenderer } from "./post-main-sequence/red-giant";
+import { BlueGiantRenderer } from "./post-main-sequence/blue-giant";
+import { SupergiantRenderer } from "./post-main-sequence/supergiant";
+import { HypergiantRenderer } from "./post-main-sequence/hypergiant";
+
+// ============================================================================
+// EVOLVED/SPECIAL TYPES
+// ============================================================================
+export * from "./evolved-special";
+import { WolfRayetRenderer } from "./evolved-special/wolf-rayet";
+import { CarbonStarRenderer } from "./evolved-special/carbon-star";
+import { VariableStarRenderer } from "./evolved-special/variable-star";
+
+// ============================================================================
+// STELLAR REMNANTS
+// ============================================================================
+export * from "./remnants";
+import { WhiteDwarfRenderer } from "./remnants/white-dwarf";
+import { NeutronStarRenderer } from "./remnants/neutron-star";
+import { SchwarzschildBlackHoleRenderer } from "./remnants/schwarzschild-black-hole";
+import { KerrBlackHoleRenderer } from "./remnants/kerr-black-hole";
 
 /**
  * Factory function to create the appropriate star renderer based on stellar type
- * @param stellarType The stellar type from the new classification system
+ * @param stellarType The stellar type from the classification system
  * @param spectralClass Optional spectral class for main sequence stars
  * @returns A renderer appropriate for the given stellar type
  */
@@ -121,7 +125,7 @@ export function createStarRenderer(
     case StellarType.NEUTRON_STAR:
       return new NeutronStarRenderer();
     case StellarType.BLACK_HOLE:
-      // For now, default to Schwarzschild - could be enhanced to detect rotation
+      // Default to Schwarzschild - could be enhanced to detect rotation
       return new SchwarzschildBlackHoleRenderer();
 
     default:
@@ -189,7 +193,7 @@ export function createStarRendererLegacy(
 /**
  * Example usage:
  *
- * // New way - using stellar type classification
+ * // Using stellar type classification
  * const starRenderer = createStarRenderer(
  *   StellarType.MAIN_SEQUENCE,
  *   MainSequenceSpectralClass.G
