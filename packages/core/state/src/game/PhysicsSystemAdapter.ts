@@ -39,7 +39,9 @@ class PhysicsSystemAdapter {
         (obj) =>
           obj.status !== CelestialStatus.DESTROYED &&
           obj.status !== CelestialStatus.ANNIHILATED && // Also exclude annihilated
-          !obj.ignorePhysics,
+          // Allow stars through even when they are flagged to ignore physics so that simplified
+          // integrators always have a central attractor to reference.
+          (!obj.ignorePhysics || obj.type === CelestialType.STAR),
       )
       .forEach((obj) => {
         if (obj.physicsStateReal) {

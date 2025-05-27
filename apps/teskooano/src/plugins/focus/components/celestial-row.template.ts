@@ -1,6 +1,6 @@
 import EyeIcon from "@fluentui/svg-icons/icons/eye_24_regular.svg?raw";
 import PersonRunningFilledIcon from "@fluentui/svg-icons/icons/person_running_20_regular.svg?raw";
-import { iconStyles, stellarAnimations } from "../utils/celestial-icon-styles";
+import { stellarAnimations } from "../utils/celestial-icon-styles";
 
 const template = document.createElement("template");
 template.innerHTML = `

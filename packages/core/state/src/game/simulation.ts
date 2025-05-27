@@ -2,11 +2,11 @@ import { OSVector3 } from "@teskooano/core-math";
 import { BehaviorSubject, Observable } from "rxjs";
 import type {
   PerformanceProfileType,
-  PhysicsEngineType,
   SimulationState,
   CameraState,
   VisualSettingsState,
 } from "./types";
+import { PhysicsEngineType } from "@teskooano/data-types";
 
 /**
  * @class SimulationStateService

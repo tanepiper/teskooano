@@ -4,8 +4,7 @@ export * from "./units/units";
 
 export * from "./collision/collision";
 export * from "./forces";
-export * from "./simulation/simulation";
-export * from "./simulation/prediction";
+export * from "./simulation";
 export * from "./spatial/octree";
 export * from "./orbital";
 export * from "./utils";

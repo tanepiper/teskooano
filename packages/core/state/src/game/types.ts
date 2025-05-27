@@ -4,6 +4,7 @@ import {
   CelestialSpecificPropertiesUnion,
   CelestialType,
   OrbitalParameters,
+  PhysicsEngineType,
 } from "@teskooano/data-types";
 
 /**
@@ -17,14 +18,6 @@ export interface CameraState {
   /** The vertical field of view of the camera in degrees. */
   fov: number;
 }
-
-/**
- * Defines the available types of physics engines for the simulation.
- * - `euler`: Standard Euler integration (simple, less accurate).
- * - `symplectic`: Symplectic Euler integration (better energy conservation than standard Euler).
- * - `verlet`: Velocity Verlet integration (good stability and energy conservation, often default).
- */
-export type PhysicsEngineType = "euler" | "symplectic" | "verlet";
 
 /**
  * Defines the performance profile settings for the simulation.

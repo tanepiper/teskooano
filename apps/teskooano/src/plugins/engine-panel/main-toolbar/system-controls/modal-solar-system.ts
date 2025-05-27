@@ -1,4 +1,7 @@
-import { getCelestialObjects } from "@teskooano/core-state";
+import {
+  getCelestialObjects,
+  simulationStateService,
+} from "@teskooano/core-state";
 
 /**
  * Creates a modal content with Solar System information
@@ -115,15 +118,35 @@ export async function showSolarSystemModal(): Promise<void> {
       return;
     }
 
+    // Pause simulation while the user chooses physics mode
+    const wasPaused = simulationStateService.getCurrentState().paused;
+    if (!wasPaused) {
+      simulationStateService.togglePause();
+    }
+
     const result = await modalManager.show({
       title: "Solar System Loaded",
       content: createSolarSystemModalContent(),
       width: 500,
-      height: 600,
-      confirmText: "Explore System",
+      height: 620,
+      confirmText: "Ideal Physics",
+      secondaryText: "Accurate Physics",
       closeText: "Close",
-      hideSecondaryButton: true,
+      hideSecondaryButton: false,
     });
+
+    // Handle selection – default to Kepler/Ideal
+    if (result === "secondary") {
+      simulationStateService.setPhysicsEngine("verlet");
+    } else {
+      // "confirm", "close", or anything else defaults to ideal rails
+      simulationStateService.setPhysicsEngine("kepler");
+    }
+
+    // Resume simulation if it was running before modal
+    if (!wasPaused) {
+      simulationStateService.togglePause();
+    }
 
     console.log("Solar System modal result:", result);
   } catch (error) {

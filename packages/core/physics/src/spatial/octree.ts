@@ -293,12 +293,22 @@ const findBodiesInRange = (
 export class Octree {
   private root: OctreeNode;
   private maxDepth: number;
-  private softeningFactorSquared: number = 0.1 * 0.1;
+  private softeningFactorSquared: number;
 
-  constructor(size: number, maxDepth: number = 8) {
+  /**
+   * @param size            Half-width of the world cube this tree covers (m)
+   * @param maxDepth        Maximum subdivision depth
+   * @param softeningLength Characteristic length for Plummer softening (m). Defaults to 1 000 000 m (≈1000 km)
+   */
+  constructor(
+    size: number,
+    maxDepth: number = 8,
+    softeningLength: number = 1e6,
+  ) {
     const actualSize = Math.max(size, 0.1);
     this.root = createNode(new OSVector3(0, 0, 0), actualSize);
     this.maxDepth = maxDepth;
+    this.softeningFactorSquared = softeningLength * softeningLength;
   }
 
   /**

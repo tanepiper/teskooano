@@ -29,9 +29,7 @@ export const calculateOrbitalPosition = (
   } = orbitalParameters;
 
   if (period_s === 0) {
-    console.error(
-      `[OrbitalCalc Error] period is zero for object orbiting ${parentStateReal.id}! Calculation skipped. Returning zero relative vector.`,
-    );
+    // Silently return zero vector - validation should happen before calling this function
     return new OSVector3(0, 0, 0);
   }
 
@@ -141,9 +139,7 @@ export const calculateOrbitalVelocity = (
   const p = realSemiMajorAxis_m * (1 - eccentricity * eccentricity);
 
   if (p <= 0) {
-    console.warn(
-      `[OrbitalCalc Velocity] Semi-latus rectum p is zero or negative (p=${p}). Cannot calculate velocity.`,
-    );
+    // Silently return zero vector - validation should happen before calling this function
     return new OSVector3(0, 0, 0);
   }
 
@@ -175,16 +171,26 @@ export const calculateOrbitalVelocity = (
 
   const relativeVelocity_mps = new OSVector3(vx, vy, vz);
 
+  // NOTE: Coordinate system in this engine is left-handed (X right, Y up, Z *towards* the observer).
+  // The classical derivation gives a prograde tangential velocity in a right-handed frame.
+  // We therefore flip the sign so that planets/moons orbit counter-clockwise when viewed from +Y,
+  // matching the visual renderer.  Do *not* remove this unless you flip the whole scene.
   relativeVelocity_mps.multiplyScalar(-1);
 
   return relativeVelocity_mps.add(parentStateReal.velocity_mps);
 };
 
 /**
- * @deprecated Use N-body integration instead of direct orbital calculation for updates.
- * Updates a body's state based on its orbital parameters (REAL units).
+ * Updates a body's position and velocity analytically using Keplerian elements.
+ * This is used by the "Ideal / Kepler" physics mode where objects are placed on rails.
+ *
+ * @param body          The current physics state of the body to update.
+ * @param parent        The parent body's physics state (usually the star or planet being orbited).
+ * @param orbitalParameters  The orbital elements describing the path.
+ * @param currentTime   Simulation time in seconds (can be negative to reverse direction).
+ * @returns A *new* PhysicsStateReal representing the body at `currentTime`.
  */
-export const updateOrbitalBody = (
+export const updateOrbitalBodyKepler = (
   body: PhysicsStateReal,
   parent: PhysicsStateReal,
   orbitalParameters: OrbitalParameters,
@@ -210,3 +216,6 @@ export const updateOrbitalBody = (
     velocity_mps: world_vel_mps,
   };
 };
+
+// Backwards-compatible alias (to be removed in future major version)
+export const updateOrbitalBody = updateOrbitalBodyKepler;

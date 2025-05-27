@@ -1,10 +1,6 @@
 import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
 import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
-import {
-  CelestialObject,
-  CelestialStatus,
-  CelestialType,
-} from "@teskooano/data-types";
+import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel.js";
 import {
@@ -17,10 +13,10 @@ import { StarDestructionHandler } from "./utils/star-destruction-handler.js";
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 import { Subscription } from "rxjs";
 import type { CameraManagerState } from "../camera-manager/types.js";
-import "./components/focus-tree-list.js";
 import "./components/destroyed-objects-list.js";
-import type { FocusTreeList } from "./components/focus-tree-list.js";
 import type { DestroyedObjectsList } from "./components/destroyed-objects-list.js";
+import "./components/focus-tree-list.js";
+import type { FocusTreeList } from "./components/focus-tree-list.js";
 
 /**
  * A custom element panel for Dockview that displays a hierarchical list

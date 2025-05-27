@@ -1,16 +1,14 @@
+import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
 import type {
-  TeskooanoPlugin,
   PanelConfig,
+  TeskooanoPlugin,
   ToolbarRegistration,
 } from "@teskooano/ui-plugin";
-import { FocusControl } from "./FocusControl.js";
-import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
 import { CelestialRow } from "./components/celestial-row.js";
-import { FocusTreeList } from "./components/focus-tree-list.js";
 import { DestroyedObjectsList } from "./components/destroyed-objects-list.js";
+import { FocusTreeList } from "./components/focus-tree-list.js";
 import { RelativeTime } from "./components/relative-time.js";
-import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
-import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel.js";
+import { FocusControl } from "./FocusControl.js";
 
 const panelConfig: PanelConfig = {
   componentName: "focus-control",
@@ -75,8 +73,8 @@ export const plugin: TeskooanoPlugin = {
   ],
 };
 
-export { FocusControl };
-export { FocusTreeList } from "./components/focus-tree-list.js";
-export { DestroyedObjectsList } from "./components/destroyed-objects-list.js";
-export { RelativeTime } from "./components/relative-time.js";
 export { CelestialRow } from "./components/celestial-row.js";
+export { DestroyedObjectsList } from "./components/destroyed-objects-list.js";
+export { FocusTreeList } from "./components/focus-tree-list.js";
+export { RelativeTime } from "./components/relative-time.js";
+export { FocusControl };

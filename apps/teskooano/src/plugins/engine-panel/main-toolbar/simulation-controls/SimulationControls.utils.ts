@@ -43,12 +43,25 @@ export const formatTime = (timeSeconds: number = 0): string => {
 export const getEngineShortName = (engineName: string): string => {
   if (!engineName || engineName === "-") return "-";
 
+  // Friendly mapping to match the new labels in SettingsPanel
+  switch (engineName) {
+    case "verlet":
+      return "A"; // Accurate
+    case "euler":
+      return "S"; // Simple
+    case "symplectic":
+      return "SY";
+    case "kepler":
+      return "K"; // Kepler
+    default:
+      break;
+  }
+
   const words = engineName.split(/[-\s_]+/);
   if (words.length > 1 && words.every((word) => word.length > 0)) {
     return words.map((word) => word.charAt(0).toUpperCase()).join("");
   } else if (engineName.length > 0) {
     return engineName.charAt(0).toUpperCase();
-  } else {
-    return "-";
   }
+  return "-";
 };

@@ -13,10 +13,12 @@ import { template } from "./Settings.template";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 import { Subscription } from "rxjs";
 
+// Physics engine options – user-friendly labels
 const ENGINE_OPTIONS: { value: PhysicsEngineType; label: string }[] = [
-  { value: "euler", label: "Euler Integrator" },
-  { value: "symplectic", label: "Symplectic Euler" },
-  { value: "verlet", label: "Verlet Integration" },
+  { value: "verlet", label: "Accurate Physics (N-Body)" },
+  { value: "euler", label: "Simple Physics (Stable Orbits)" },
+  { value: "symplectic", label: "Symplectic Euler (Experimental)" },
+  { value: "kepler", label: "Ideal Orbits (Kepler)" },
 ];
 
 const PERFORMANCE_PROFILE_OPTIONS: {

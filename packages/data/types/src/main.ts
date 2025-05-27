@@ -35,7 +35,7 @@ export type Integrator = (
   dt: number,
 ) => PhysicsStateReal;
 
-export type PhysicsEngineType = "euler" | "symplectic" | "verlet";
+export type PhysicsEngineType = "euler" | "symplectic" | "verlet" | "kepler";
 
 /**
  * Represents the fundamental properties of a celestial body required for rendering and simulation.

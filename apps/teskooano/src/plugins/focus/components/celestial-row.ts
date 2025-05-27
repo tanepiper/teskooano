@@ -1,10 +1,10 @@
-import { CelestialType, StellarType } from "@teskooano/data-types";
-import { template } from "./celestial-row.template";
 import {
-  iconStyles,
-  getCelestialIconStyle,
-} from "../utils/celestial-icon-styles";
-import { CustomEvents } from "@teskooano/data-types";
+  CelestialType,
+  CustomEvents,
+  StellarType,
+} from "@teskooano/data-types";
+import { getCelestialIconStyle } from "../utils/celestial-icon-styles";
+import { template } from "./celestial-row.template";
 
 /**
  * Web component representing a single row in any celestial list (active or destroyed).

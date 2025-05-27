@@ -1,6 +1,6 @@
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
-  updateSimulation,
+  physicsEngineService,
   vectorPool,
   type SimulationStepResult,
   type DestructionEvent,
@@ -16,6 +16,7 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
+  OrbitalParameters,
 } from "@teskooano/data-types";
 import * as THREE from "three";
 import { Subject, Subscription, Observable } from "rxjs";
@@ -190,6 +191,7 @@ export class SimulationManager {
         const isStar = new Map<string | number, boolean>();
         const bodyTypes = new Map<string | number, CelestialType>();
         const parentIds = new Map<string | number, string | undefined>();
+        const orbitalParams = new Map<string | number, OrbitalParameters>();
 
         Object.values(allCelestialObjectsForParams)
           .filter(
@@ -204,6 +206,9 @@ export class SimulationManager {
               isStar.set(obj.id, obj.type === CelestialType.STAR);
               bodyTypes.set(obj.id, obj.type);
               parentIds.set(obj.id, obj.parentId);
+              if (obj.orbit) {
+                orbitalParams.set(obj.id, obj.orbit);
+              }
             }
           });
 
@@ -212,14 +217,19 @@ export class SimulationManager {
           isStar,
           bodyTypes,
           parentIds,
+          orbitalParams,
+          currentTime: this.accumulatedTime,
+          octreeMaxDepth: 20, // high depth for accurate close-body interactions
+          softeningLength: 1e6, // 1000 km softening to calm close passes
           physicsEngine: getSimulationState().physicsEngine,
         };
 
-        const stepResult: SimulationStepResult = updateSimulation(
-          activeBodiesReal,
-          scaledDeltaTime,
-          simParams,
-        );
+        const stepResult: SimulationStepResult =
+          physicsEngineService.executeStep(
+            activeBodiesReal,
+            scaledDeltaTime,
+            simParams,
+          );
 
         if (
           stepResult.destructionEvents &&
