@@ -441,4 +441,390 @@ export function initializeJupiter(parentId: string): void {
       },
     } as PlanetProperties,
   });
+
+  // --- BEGIN: Additional Major Moons (NASA/JPL data, see https://ssd.jpl.nasa.gov/sats/elem/) ---
+  // Amalthea
+  actions.addCelestial({
+    id: "amalthea",
+    name: "Amalthea",
+    seed: "amalthea",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 2.08e18, // Approximate
+    realRadius_m: 83500,
+    temperature: 120,
+    albedo: 0.09,
+    siderealRotationPeriod_s: 0.499918 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 181400 * KM,
+      eccentricity: 0.003,
+      inclination: 0.4 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 282.9 * DEG_TO_RAD,
+      argumentOfPeriapsis: 180.1 * DEG_TO_RAD,
+      meanAnomaly: 310.6 * DEG_TO_RAD,
+      period_s: 0.499918 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#A0522D" },
+    } as PlanetProperties,
+  });
+
+  // Thebe
+  actions.addCelestial({
+    id: "thebe",
+    name: "Thebe",
+    seed: "thebe",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 4.3e17, // Approximate
+    realRadius_m: 49300,
+    temperature: 120,
+    albedo: 0.08,
+    siderealRotationPeriod_s: 0.676105 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 221900 * KM,
+      eccentricity: 0.018,
+      inclination: 1.1 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 340.4 * DEG_TO_RAD,
+      argumentOfPeriapsis: 26.6 * DEG_TO_RAD,
+      meanAnomaly: 182.1 * DEG_TO_RAD,
+      period_s: 0.676105 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#B8860B" },
+    } as PlanetProperties,
+  });
+
+  // Adrastea
+  actions.addCelestial({
+    id: "adrastea",
+    name: "Adrastea",
+    seed: "adrastea",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 1.91e16, // Approximate
+    realRadius_m: 8200,
+    temperature: 120,
+    albedo: 0.05,
+    siderealRotationPeriod_s: 0.29826 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 129000 * KM,
+      eccentricity: 0.0,
+      inclination: 0.0,
+      longitudeOfAscendingNode: 0.0,
+      argumentOfPeriapsis: 0.0,
+      meanAnomaly: 214.5 * DEG_TO_RAD,
+      period_s: 0.29826 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+    } as PlanetProperties,
+  });
+
+  // Metis
+  actions.addCelestial({
+    id: "metis",
+    name: "Metis",
+    seed: "metis",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 9.56e16, // Approximate
+    realRadius_m: 21500,
+    temperature: 120,
+    albedo: 0.05,
+    siderealRotationPeriod_s: 0.294779 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 128000 * KM,
+      eccentricity: 0.0,
+      inclination: 0.0,
+      longitudeOfAscendingNode: 0.0,
+      argumentOfPeriapsis: 0.0,
+      meanAnomaly: 166.0 * DEG_TO_RAD,
+      period_s: 0.294779 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+    } as PlanetProperties,
+  });
+
+  // Himalia
+  actions.addCelestial({
+    id: "himalia",
+    name: "Himalia",
+    seed: "himalia",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 6.7e18, // Approximate
+    realRadius_m: 85000,
+    temperature: 100,
+    albedo: 0.04,
+    siderealRotationPeriod_s: 250.56221 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 11440600 * KM,
+      eccentricity: 0.16,
+      inclination: 28.1 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 68.2 * DEG_TO_RAD,
+      argumentOfPeriapsis: 328.4 * DEG_TO_RAD,
+      meanAnomaly: 66.5 * DEG_TO_RAD,
+      period_s: 250.56221 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#A9A9A9" },
+    } as PlanetProperties,
+  });
+
+  // Elara
+  actions.addCelestial({
+    id: "elara",
+    name: "Elara",
+    seed: "elara",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 8.7e17, // Approximate
+    realRadius_m: 43000,
+    temperature: 100,
+    albedo: 0.04,
+    siderealRotationPeriod_s: 259.639884 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 11712300 * KM,
+      eccentricity: 0.211,
+      inclination: 27.9 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 118.1 * DEG_TO_RAD,
+      argumentOfPeriapsis: 140.1 * DEG_TO_RAD,
+      meanAnomaly: 330.7 * DEG_TO_RAD,
+      period_s: 259.639884 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#A9A9A9" },
+    } as PlanetProperties,
+  });
+
+  // Pasiphae
+  actions.addCelestial({
+    id: "pasiphae",
+    name: "Pasiphae",
+    seed: "pasiphae",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 3.0e17, // Approximate
+    realRadius_m: 30000,
+    temperature: 90,
+    albedo: 0.04,
+    siderealRotationPeriod_s: 743.612321 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 23468200 * KM,
+      eccentricity: 0.412,
+      inclination: 148.4 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 312.3 * DEG_TO_RAD,
+      argumentOfPeriapsis: 264.8 * DEG_TO_RAD,
+      meanAnomaly: 277.8 * DEG_TO_RAD,
+      period_s: 743.612321 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+    } as PlanetProperties,
+  });
+
+  // Sinope
+  actions.addCelestial({
+    id: "sinope",
+    name: "Sinope",
+    seed: "sinope",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 7.5e16, // Approximate
+    realRadius_m: 19000,
+    temperature: 90,
+    albedo: 0.04,
+    siderealRotationPeriod_s: 758.849903 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 23683900 * KM,
+      eccentricity: 0.264,
+      inclination: 157.3 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 304.6 * DEG_TO_RAD,
+      argumentOfPeriapsis: 96.6 * DEG_TO_RAD,
+      meanAnomaly: 167.5 * DEG_TO_RAD,
+      period_s: 758.849903 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+    } as PlanetProperties,
+  });
+
+  // Lysithea
+  actions.addCelestial({
+    id: "lysithea",
+    name: "Lysithea",
+    seed: "lysithea",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 6.3e16, // Approximate
+    realRadius_m: 18000,
+    temperature: 90,
+    albedo: 0.04,
+    siderealRotationPeriod_s: 259.198081 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 11700800 * KM,
+      eccentricity: 0.117,
+      inclination: 27.2 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 7.1 * DEG_TO_RAD,
+      argumentOfPeriapsis: 47.4 * DEG_TO_RAD,
+      meanAnomaly: 331.5 * DEG_TO_RAD,
+      period_s: 259.198081 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+    } as PlanetProperties,
+  });
+
+  // Carme
+  actions.addCelestial({
+    id: "carme",
+    name: "Carme",
+    seed: "carme",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 4.6e16, // Approximate
+    realRadius_m: 23000,
+    temperature: 90,
+    albedo: 0.04,
+    siderealRotationPeriod_s: 734.18528 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 23144400 * KM,
+      eccentricity: 0.256,
+      inclination: 164.6 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 117.5 * DEG_TO_RAD,
+      argumentOfPeriapsis: 155.0 * DEG_TO_RAD,
+      meanAnomaly: 234.0 * DEG_TO_RAD,
+      period_s: 734.18528 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+    } as PlanetProperties,
+  });
+
+  // Ananke
+  actions.addCelestial({
+    id: "ananke",
+    name: "Ananke",
+    seed: "ananke",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 3.0e16, // Approximate
+    realRadius_m: 14000,
+    temperature: 90,
+    albedo: 0.04,
+    siderealRotationPeriod_s: 629.791691 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 21034500 * KM,
+      eccentricity: 0.237,
+      inclination: 147.6 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 17.6 * DEG_TO_RAD,
+      argumentOfPeriapsis: 56.2 * DEG_TO_RAD,
+      meanAnomaly: 259.4 * DEG_TO_RAD,
+      period_s: 629.791691 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+    } as PlanetProperties,
+  });
+
+  // Leda
+  actions.addCelestial({
+    id: "leda",
+    name: "Leda",
+    seed: "leda",
+    type: CelestialType.MOON,
+    parentId: jupiterId,
+    realMass_kg: 5.6e15, // Approximate
+    realRadius_m: 10000,
+    temperature: 90,
+    albedo: 0.04,
+    siderealRotationPeriod_s: 240.926609 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 11146400 * KM,
+      eccentricity: 0.162,
+      inclination: 28.6 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 215.7 * DEG_TO_RAD,
+      argumentOfPeriapsis: 270.9 * DEG_TO_RAD,
+      meanAnomaly: 233.4 * DEG_TO_RAD,
+      period_s: 240.926609 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: jupiterId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+    } as PlanetProperties,
+  });
+  // --- END: Additional Major Moons ---
 }

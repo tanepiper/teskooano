@@ -46,6 +46,8 @@ export function createSolarSystemModalContent(): HTMLElement {
         This is a hand-crafted system, currently used for testing and eventually to have as accurate as possible.
         <br />
         During development you might find moons flying off (don't worry! it's not real), planets not looking correct, and not all features are implemented.
+        <br />
+        For the best experience, use the "Ideal Physics" mode.
       </p>
     </div>
 

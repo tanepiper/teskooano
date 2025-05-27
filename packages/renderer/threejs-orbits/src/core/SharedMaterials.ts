@@ -38,7 +38,7 @@ export const SharedMaterials = {
    * Material for rendering Keplerian orbit lines.
    */
   KEPLERIAN: new THREE.LineBasicMaterial({
-    color: 0x444444,
+    color: 0xffffff,
     linewidth: isMobileWidth ? 1 : 3,
     transparent: true,
     opacity: 0.7,
@@ -49,7 +49,7 @@ export const SharedMaterials = {
    * Material for rendering Keplerian orbit lines for moons.
    */
   KEPLERIAN_MOON: new THREE.LineBasicMaterial({
-    color: 0xaaaaaa,
+    color: 0xcccccc,
     linewidth: isMobileWidth ? 1 : 2,
     transparent: true,
     opacity: 0.5,

@@ -545,4 +545,358 @@ export function initializeSaturn(parentId: string): void {
       },
     } as PlanetProperties,
   });
+
+  // --- BEGIN: Additional Major Moons (NASA/JPL data, see https://ssd.jpl.nasa.gov/sats/elem/) ---
+  // Mimas
+  actions.addCelestial({
+    id: "mimas",
+    name: "Mimas",
+    seed: "mimas",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: 3.7493e19,
+    realRadius_m: 198200,
+    temperature: 64,
+    albedo: 0.96,
+    siderealRotationPeriod_s: 0.942422 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 186000 * KM,
+      eccentricity: 0.02,
+      inclination: 1.6 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 66.2 * DEG_TO_RAD,
+      argumentOfPeriapsis: 160.4 * DEG_TO_RAD,
+      meanAnomaly: 275.3 * DEG_TO_RAD,
+      period_s: 0.942422 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ICE,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: ["water ice", "rock"],
+      surface: { type: SurfaceType.CRATERED, color: "#E0E0E0" },
+    } as PlanetProperties,
+  });
+
+  // Enceladus
+  actions.addCelestial({
+    id: "enceladus",
+    name: "Enceladus",
+    seed: "enceladus",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: 1.0802e20,
+    realRadius_m: 252100,
+    temperature: 75,
+    albedo: 1.0,
+    siderealRotationPeriod_s: 1.370218 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 238400 * KM,
+      eccentricity: 0.005,
+      inclination: 0.0,
+      longitudeOfAscendingNode: 0.0,
+      argumentOfPeriapsis: 119.5 * DEG_TO_RAD,
+      meanAnomaly: 57.0 * DEG_TO_RAD,
+      period_s: 1.370218 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ICE,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: ["water ice", "subsurface ocean"],
+      surface: { type: SurfaceType.ICE_CRACKED, color: "#F8F8FF" },
+    } as PlanetProperties,
+  });
+
+  // Hyperion
+  actions.addCelestial({
+    id: "hyperion",
+    name: "Hyperion",
+    seed: "hyperion",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: 5.6e18,
+    realRadius_m: 135000,
+    temperature: 70,
+    albedo: 0.3,
+    siderealRotationPeriod_s: 21.276658 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 1481500 * KM,
+      eccentricity: 0.105,
+      inclination: 0.6 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 87.1 * DEG_TO_RAD,
+      argumentOfPeriapsis: 214.0 * DEG_TO_RAD,
+      meanAnomaly: 122.9 * DEG_TO_RAD,
+      period_s: 21.276658 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ICE,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: ["water ice", "porous rock"],
+      surface: { type: SurfaceType.CRATERED, color: "#D2B48C" },
+    } as PlanetProperties,
+  });
+
+  // Phoebe
+  actions.addCelestial({
+    id: "phoebe",
+    name: "Phoebe",
+    seed: "phoebe",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: 8.292e18,
+    realRadius_m: 106500,
+    temperature: 75,
+    albedo: 0.08,
+    siderealRotationPeriod_s: 550.30391 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 12929400 * KM,
+      eccentricity: 0.164,
+      inclination: 175.2 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 192.7 * DEG_TO_RAD,
+      argumentOfPeriapsis: 240.3 * DEG_TO_RAD,
+      meanAnomaly: 308.0 * DEG_TO_RAD,
+      period_s: 550.30391 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+    } as PlanetProperties,
+  });
+
+  // Janus
+  actions.addCelestial({
+    id: "janus",
+    name: "Janus",
+    seed: "janus",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: 1.897e18,
+    realRadius_m: 89200,
+    temperature: 75,
+    albedo: 0.2,
+    siderealRotationPeriod_s: 0.697353 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 151500 * KM,
+      eccentricity: 0.007,
+      inclination: 0.2 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 159.9 * DEG_TO_RAD,
+      argumentOfPeriapsis: 11.1 * DEG_TO_RAD,
+      meanAnomaly: 111.7 * DEG_TO_RAD,
+      period_s: 0.697353 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+    } as PlanetProperties,
+  });
+
+  // Epimetheus
+  actions.addCelestial({
+    id: "epimetheus",
+    name: "Epimetheus",
+    seed: "epimetheus",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: 5.3e17,
+    realRadius_m: 58200,
+    temperature: 75,
+    albedo: 0.2,
+    siderealRotationPeriod_s: 0.697012 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 151400 * KM,
+      eccentricity: 0.02,
+      inclination: 0.3 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 189.8 * DEG_TO_RAD,
+      argumentOfPeriapsis: 96.3 * DEG_TO_RAD,
+      meanAnomaly: 197.2 * DEG_TO_RAD,
+      period_s: 0.697012 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+    } as PlanetProperties,
+  });
+
+  // Pandora
+  actions.addCelestial({
+    id: "pandora",
+    name: "Pandora",
+    seed: "pandora",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: 1.37e17,
+    realRadius_m: 40600,
+    temperature: 75,
+    albedo: 0.2,
+    siderealRotationPeriod_s: 0.631369 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 141700 * KM,
+      eccentricity: 0.004,
+      inclination: 0.0,
+      longitudeOfAscendingNode: 0.0,
+      argumentOfPeriapsis: 217.9 * DEG_TO_RAD,
+      meanAnomaly: 123.9 * DEG_TO_RAD,
+      period_s: 0.631369 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+    } as PlanetProperties,
+  });
+
+  // Prometheus
+  actions.addCelestial({
+    id: "prometheus",
+    name: "Prometheus",
+    seed: "prometheus",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: 1.59e17,
+    realRadius_m: 43100,
+    temperature: 75,
+    albedo: 0.2,
+    siderealRotationPeriod_s: 0.615878 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 139400 * KM,
+      eccentricity: 0.002,
+      inclination: 0.0,
+      longitudeOfAscendingNode: 0.0,
+      argumentOfPeriapsis: 341.9 * DEG_TO_RAD,
+      meanAnomaly: 135.4 * DEG_TO_RAD,
+      period_s: 0.615878 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+    } as PlanetProperties,
+  });
+
+  // Pan
+  actions.addCelestial({
+    id: "pan",
+    name: "Pan",
+    seed: "pan",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: 4.95e15,
+    realRadius_m: 14000,
+    temperature: 75,
+    albedo: 0.2,
+    siderealRotationPeriod_s: 0.575051 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 133600 * KM,
+      eccentricity: 0.0,
+      inclination: 0.0,
+      longitudeOfAscendingNode: 0.0,
+      argumentOfPeriapsis: 0.0,
+      meanAnomaly: 146.6 * DEG_TO_RAD,
+      period_s: 0.575051 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+    } as PlanetProperties,
+  });
+
+  // Atlas
+  actions.addCelestial({
+    id: "atlas",
+    name: "Atlas",
+    seed: "atlas",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: 6.6e15,
+    realRadius_m: 15100,
+    temperature: 75,
+    albedo: 0.2,
+    siderealRotationPeriod_s: 0.604602 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 137700 * KM,
+      eccentricity: 0.001,
+      inclination: 0.0,
+      longitudeOfAscendingNode: 0.0,
+      argumentOfPeriapsis: 82.3 * DEG_TO_RAD,
+      meanAnomaly: 289.1 * DEG_TO_RAD,
+      period_s: 0.604602 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+    } as PlanetProperties,
+  });
+
+  // Daphnis
+  actions.addCelestial({
+    id: "daphnis",
+    name: "Daphnis",
+    seed: "daphnis",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: 6.8e13,
+    realRadius_m: 4000,
+    temperature: 75,
+    albedo: 0.2,
+    siderealRotationPeriod_s: 0.59408 * 86400,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 136500 * KM,
+      eccentricity: 0.0,
+      inclination: 0.0,
+      longitudeOfAscendingNode: 0.0,
+      argumentOfPeriapsis: 0.0,
+      meanAnomaly: 153.6 * DEG_TO_RAD,
+      period_s: 0.59408 * 86400,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.ROCKY,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: ["rock", "ice"],
+      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+    } as PlanetProperties,
+  });
+  // --- END: Additional Major Moons ---
 }
