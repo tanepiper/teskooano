@@ -3,12 +3,12 @@ import { AU } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
-  type OceanSurfaceProperties,
   PlanetType,
   SurfaceType,
+  AtmosphereType,
   type PlanetProperties,
-  type RockyTerrestrialSurfaceProperties,
   type PlanetAtmosphereProperties,
+  type ProceduralSurfaceProperties,
 } from "@teskooano/data-types";
 
 const EARTH_MASS_KG = 5.97237e24;
@@ -43,6 +43,34 @@ const LUNA_ALBEDO = 0.136;
 export function initializeEarth(parentId: string): void {
   const earthId = "earth";
   const earthAxialTiltRad = EARTH_AXIAL_TILT_DEG * DEG_TO_RAD;
+
+  // Earth procedural surface data (terrestrial with oceans)
+  const earthProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.59,
+    lacunarity: 2.0,
+    simplePeriod: 5.2,
+    octaves: 8,
+    bumpScale: 0.1,
+    color1: "#003B8F", // Deep ocean
+    color2: "#1E90FF", // Shallow ocean
+    color3: "#32CD32", // Coastal/lowlands
+    color4: "#228B22", // Forests/highlands
+    color5: "#FFFFFF", // Snow peaks
+    height1: 0.06,
+    height2: 0.15,
+    height3: 0.24,
+    height4: 0.27,
+    height5: 0.82,
+    shininess: 50,
+    specularStrength: 0.14,
+    roughness: 0.3,
+    ambientLightIntensity: 0.15,
+    undulation: 0.4,
+    terrainType: 2,
+    terrainAmplitude: 1.2,
+    terrainSharpness: 1.9,
+    terrainOffset: -0.4,
+  };
 
   actions.addCelestial({
     id: earthId,
@@ -86,19 +114,41 @@ export function initializeEarth(parentId: string): void {
         thickness: 0.25,
       },
       surface: {
-        type: SurfaceType.OCEAN,
+        ...earthProceduralSurface,
+        type: SurfaceType.VARIED,
         planetType: PlanetType.TERRESTRIAL,
         color: "#1E90FF",
-        roughness: 0.3,
-        oceanColor: "#3A79FF",
-        deepOceanColor: "#003B8F",
-        landColor: "#558B2F",
-        landRatio: 0.29,
-        waveHeight: 0.05,
-        oceanDepth: 3.5,
       },
     } as PlanetProperties,
   });
+
+  // Luna with proper procedural surface data structure
+  const lunaProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.5,
+    lacunarity: 2.1,
+    simplePeriod: 6.0,
+    octaves: 7,
+    bumpScale: 0.15,
+    color1: "#808080",
+    color2: "#A9A9A9",
+    color3: "#BEBEBE",
+    color4: "#D3D3D3",
+    color5: "#E0E0E0",
+    height1: 0.0,
+    height2: 0.3,
+    height3: 0.55,
+    height4: 0.75,
+    height5: 1.0,
+    shininess: 0.02,
+    specularStrength: 0.02,
+    roughness: 0.75,
+    ambientLightIntensity: 0.05,
+    undulation: 0.1,
+    terrainType: 1,
+    terrainAmplitude: 0.35,
+    terrainSharpness: 0.7,
+    terrainOffset: 0.0,
+  };
 
   const lunaAxialTiltRad = LUNA_AXIAL_TILT_DEG * DEG_TO_RAD;
   actions.addCelestial({
@@ -132,40 +182,12 @@ export function initializeEarth(parentId: string): void {
       isMoon: true,
       parentPlanet: earthId,
       composition: ["silicates", "anorthosite crust", "possible small core"],
-      atmosphere: {
-        glowColor: "#CCCCCC08",
-        intensity: 0.01,
-        power: 0.5,
-        thickness: 0.005,
-      },
+      atmosphere: undefined,
       surface: {
+        ...lunaProceduralSurface,
         type: SurfaceType.VARIED,
         planetType: PlanetType.ROCKY,
         color: "#BEBEBE",
-        roughness: 0.75,
-        persistence: 0.5,
-        lacunarity: 2.1,
-        simplePeriod: 6.0,
-        octaves: 7,
-        bumpScale: 0.15,
-        color1: "#808080",
-        color2: "#A9A9A9",
-        color3: "#BEBEBE",
-        color4: "#D3D3D3",
-        color5: "#E0E0E0",
-        height1: 0.0,
-        height2: 0.3,
-        height3: 0.55,
-        height4: 0.75,
-        height5: 1.0,
-        shininess: 0.02,
-        specularStrength: 0.02,
-        ambientLightIntensity: 0.05,
-        undulation: 0.1,
-        terrainType: 1,
-        terrainAmplitude: 0.35,
-        terrainSharpness: 0.7,
-        terrainOffset: 0.0,
       },
     } as PlanetProperties,
   });

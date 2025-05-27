@@ -9,6 +9,7 @@ import {
   type RockyTerrestrialSurfaceProperties,
   type PlanetAtmosphereProperties,
   type PlanetProperties,
+  type ProceduralSurfaceProperties,
 } from "@teskooano/data-types";
 
 const MARS_MASS_KG = 6.4171e23;
@@ -55,6 +56,34 @@ export function initializeMars(parentId: string): void {
   const marsAxialTiltRad = MARS_AXIAL_TILT_DEG * DEG_TO_RAD;
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
+  // Mars procedural surface data (desert planet)
+  const marsProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.5,
+    lacunarity: 2.5,
+    simplePeriod: 5.0,
+    octaves: 6,
+    bumpScale: 0.2,
+    color1: "#7F2929", // Dark red valleys
+    color2: "#BC5A4D", // Red lowlands
+    color3: "#CD7F32", // Bronze mid-elevations
+    color4: "#E5AA70", // Sandy highlands
+    color5: "#F5DEB3", // Light sand peaks
+    height1: 0.0,
+    height2: 0.3,
+    height3: 0.6,
+    height4: 0.8,
+    height5: 0.95,
+    shininess: 0.05,
+    specularStrength: 0.08,
+    roughness: 0.7,
+    ambientLightIntensity: 0.1,
+    undulation: 0.15,
+    terrainType: 2,
+    terrainAmplitude: 0.3,
+    terrainSharpness: 0.65,
+    terrainOffset: 0.05,
+  };
+
   actions.addCelestial({
     id: marsId,
     name: "Mars",
@@ -97,38 +126,41 @@ export function initializeMars(parentId: string): void {
         thickness: 0.15,
       },
       surface: {
+        ...marsProceduralSurface,
         type: SurfaceType.VARIED,
         planetType: PlanetType.DESERT,
         color: "#CD5C5C",
-        roughness: 0.7,
-        dunePattern: 0.5,
-        duneHeight: 0.2,
-        persistence: 0.5,
-        lacunarity: 2.5,
-        simplePeriod: 5.0,
-        octaves: 6,
-        bumpScale: 0.2,
-        color1: "#7F2929",
-        color2: "#BC5A4D",
-        color3: "#CD7F32",
-        color4: "#E5AA70",
-        color5: "#F5DEB3",
-        height1: 0.0,
-        height2: 0.3,
-        height3: 0.6,
-        height4: 0.8,
-        height5: 0.95,
-        shininess: 0.05,
-        specularStrength: 0.08,
-        ambientLightIntensity: 0.1,
-        undulation: 0.15,
-        terrainType: 2,
-        terrainAmplitude: 0.3,
-        terrainSharpness: 0.65,
-        terrainOffset: 0.05,
       },
     } as PlanetProperties,
   });
+
+  // Phobos procedural surface data
+  const phobosProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.45,
+    lacunarity: 2.0,
+    simplePeriod: 3.0,
+    octaves: 5,
+    bumpScale: 0.35,
+    color1: "#3E2723", // Dark brown/black
+    color2: "#4E342E", // Dark brown
+    color3: "#5D4037", // Medium brown
+    color4: "#6D4C41", // Light brown
+    color5: "#795548", // Lightest brown
+    height1: 0.0,
+    height2: 0.25,
+    height3: 0.5,
+    height4: 0.75,
+    height5: 0.9,
+    shininess: 0.02,
+    specularStrength: 0.01,
+    roughness: 0.9,
+    ambientLightIntensity: 0.05,
+    undulation: 0.2,
+    terrainType: 1,
+    terrainAmplitude: 0.4,
+    terrainSharpness: 0.8,
+    terrainOffset: 0.0,
+  };
 
   actions.addCelestial({
     id: "phobos",
@@ -158,42 +190,47 @@ export function initializeMars(parentId: string): void {
       parentPlanet: marsId,
       composition: ["carbon-rich silicates", "possibly captured asteroid"],
       atmosphere: {
-        glowColor: "#33333301",
+        glowColor: "#333333",
         intensity: 0.0,
         power: 0.0,
         thickness: 0.0,
       },
       surface: {
+        ...phobosProceduralSurface,
         type: SurfaceType.CRATERED,
         planetType: PlanetType.ROCKY,
         color: "#5D4037",
-        roughness: 0.9,
-        persistence: 0.45,
-        lacunarity: 2.0,
-        simplePeriod: 3.0,
-        octaves: 5,
-        bumpScale: 0.35,
-        color1: "#3E2723",
-        color2: "#4E342E",
-        color3: "#5D4037",
-        color4: "#6D4C41",
-        color5: "#795548",
-        height1: 0.0,
-        height2: 0.25,
-        height3: 0.5,
-        height4: 0.75,
-        height5: 0.9,
-        shininess: 0.02,
-        specularStrength: 0.01,
-        ambientLightIntensity: 0.05,
-        undulation: 0.2,
-        terrainType: 1,
-        terrainAmplitude: 0.4,
-        terrainSharpness: 0.8,
-        terrainOffset: 0.0,
       },
     } as PlanetProperties,
   });
+
+  // Deimos procedural surface data
+  const deimosProceduralSurface: ProceduralSurfaceProperties = {
+    persistence: 0.45,
+    lacunarity: 2.0,
+    simplePeriod: 3.0,
+    octaves: 5,
+    bumpScale: 0.3,
+    color1: "#424242", // Dark gray
+    color2: "#525252", // Medium dark gray
+    color3: "#616161", // Medium gray
+    color4: "#757575", // Light gray
+    color5: "#9E9E9E", // Lightest gray
+    height1: 0.0,
+    height2: 0.25,
+    height3: 0.5,
+    height4: 0.75,
+    height5: 0.9,
+    shininess: 0.03,
+    specularStrength: 0.02,
+    roughness: 0.85,
+    ambientLightIntensity: 0.05,
+    undulation: 0.15,
+    terrainType: 1,
+    terrainAmplitude: 0.35,
+    terrainSharpness: 0.75,
+    terrainOffset: 0.0,
+  };
 
   actions.addCelestial({
     id: "deimos",
@@ -223,39 +260,16 @@ export function initializeMars(parentId: string): void {
       parentPlanet: marsId,
       composition: ["carbon-rich silicates", "possibly captured asteroid"],
       atmosphere: {
-        glowColor: "#33333301",
+        glowColor: "#333333",
         intensity: 0.0,
         power: 0.0,
         thickness: 0.0,
       },
       surface: {
+        ...deimosProceduralSurface,
         type: SurfaceType.CRATERED,
         planetType: PlanetType.ROCKY,
         color: "#6D6E70",
-        roughness: 0.85,
-        persistence: 0.45,
-        lacunarity: 2.0,
-        simplePeriod: 3.0,
-        octaves: 5,
-        bumpScale: 0.3,
-        color1: "#424242",
-        color2: "#525252",
-        color3: "#616161",
-        color4: "#757575",
-        color5: "#9E9E9E",
-        height1: 0.0,
-        height2: 0.25,
-        height3: 0.5,
-        height4: 0.75,
-        height5: 0.9,
-        shininess: 0.03,
-        specularStrength: 0.02,
-        ambientLightIntensity: 0.05,
-        undulation: 0.15,
-        terrainType: 1,
-        terrainAmplitude: 0.35,
-        terrainSharpness: 0.75,
-        terrainOffset: 0.0,
       },
     } as PlanetProperties,
   });

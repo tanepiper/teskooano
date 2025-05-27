@@ -163,7 +163,7 @@ export function initializeJupiter(parentId: string): void {
         "molten interior",
       ],
       atmosphere: {
-        glowColor: "#FFFF0020",
+        glowColor: "#FFFF00",
         intensity: 0.1,
         power: 0.8,
         thickness: 0.05,
@@ -209,7 +209,7 @@ export function initializeJupiter(parentId: string): void {
       parentPlanet: jupiterId,
       composition: ["water ice", "silicates", "iron core", "subsurface ocean"],
       atmosphere: {
-        glowColor: "#AAFFFF20",
+        glowColor: "#AAFFFF",
         intensity: 0.05,
         power: 0.5,
         thickness: 0.03,
@@ -254,7 +254,7 @@ export function initializeJupiter(parentId: string): void {
       parentPlanet: jupiterId,
       composition: ["water ice", "silicates", "iron core", "internal ocean"],
       atmosphere: {
-        glowColor: "#CCDDFF10",
+        glowColor: "#CCDDFF",
         intensity: 0.02,
         power: 0.3,
         thickness: 0.02,
@@ -299,7 +299,7 @@ export function initializeJupiter(parentId: string): void {
       parentPlanet: jupiterId,
       composition: ["water ice", "silicates", "possible iron core"],
       atmosphere: {
-        glowColor: "#33333310",
+        glowColor: "#333333",
         intensity: 0.01,
         power: 0.2,
         thickness: 0.01,

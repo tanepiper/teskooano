@@ -63,7 +63,7 @@ export class LightManager {
     this.objects$ = objects$;
 
     // Initialize with a soft white ambient light
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     this.scene.add(this.ambientLight);
 
     this.subscribeToStore();
@@ -111,9 +111,9 @@ export class LightManager {
                 const color = starProps.color
                   ? new THREE.Color(starProps.color).getHex()
                   : undefined;
-                const intensity = objectData.temperature
-                  ? this.calculateIntensity(objectData.temperature)
-                  : undefined;
+                const intensity = starProps.luminosity
+                  ? this.calculateIntensityFromLuminosity(starProps.luminosity)
+                  : this.calculateIntensity(objectData.temperature || 5778);
                 const position = objectData.position; // Already a THREE.Vector3
 
                 incomingStarIds.add(id);
@@ -262,6 +262,25 @@ export class LightManager {
     // Basic placeholder: Intensity increases with temperature.
     // Scale factor needs tuning based on visual requirements.
     return 1.0 + Math.max(0, (temperature - 3000) / 5000); // Example scaling
+  }
+
+  /**
+   * @internal
+   * Calculates light intensity based on star luminosity.
+   * @param luminosity - Star luminosity in solar units.
+   * @returns Calculated light intensity.
+   */
+  private calculateIntensityFromLuminosity(luminosity: number): number {
+    // Scale luminosity to appropriate light intensity for the simulation
+    // Use a logarithmic scale since stellar luminosity can vary enormously
+    // Base intensity starts at 1.0 for solar luminosity (1.0)
+    if (luminosity <= 0) return 0.1; // Minimum light for very dim objects
+
+    // Logarithmic scaling with a cap to prevent excessive brightness
+    const logScale = Math.log10(luminosity) + 1.0; // +1 so solar luminosity (log10(1)=0) gives 1.0
+    const scaledIntensity = Math.max(0.1, Math.min(50.0, logScale * 10.0)); // Cap between 0.1 and 50.0
+
+    return scaledIntensity;
   }
 
   /**

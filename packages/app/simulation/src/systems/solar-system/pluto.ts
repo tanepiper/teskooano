@@ -78,7 +78,7 @@ export function initializePluto(parentId: string): void {
         "tholins",
       ],
       atmosphere: {
-        glowColor: "#E0FFFF33",
+        glowColor: "#E0FFFF",
         intensity: 0.1,
         power: 0.8,
         thickness: 0.05,
@@ -152,7 +152,7 @@ export function initializePluto(parentId: string): void {
       parentPlanet: plutoId,
       composition: ["water ice", "ammonia ice (hydrates)", "rocky interior"],
       atmosphere: {
-        glowColor: "#00000000",
+        glowColor: "#000000",
         intensity: 0,
         power: 0,
         thickness: 0,

@@ -67,7 +67,7 @@ export function initializeVenus(parentId: string): void {
         "sulfuric acid clouds",
       ],
       atmosphere: {
-        glowColor: "#FFCC8060",
+        glowColor: "#FFCC80",
         intensity: 1.8,
         power: 1.1,
         thickness: 0.3,

@@ -128,7 +128,7 @@ export function initializeUranus(parentId: string): void {
       },
       stormColor: "#006994",
       stormSpeed: 100,
-      emissiveColor: "#00BFFF20",
+      emissiveColor: "#00BFFF",
       emissiveIntensity: 0.05,
       rings: [
         {
@@ -175,7 +175,7 @@ export function initializeUranus(parentId: string): void {
       parentPlanet: uranusId,
       composition: ["water ice", "silicates", "possibly organic compounds"],
       atmosphere: {
-        glowColor: "#FFFFFF01",
+        glowColor: "#FFFFFF",
         intensity: 0.0,
         power: 0.0,
         thickness: 0.0,
@@ -221,7 +221,7 @@ export function initializeUranus(parentId: string): void {
       parentPlanet: uranusId,
       composition: ["water ice", "silicates", "carbon dioxide ice"],
       atmosphere: {
-        glowColor: "#FFFFFF01",
+        glowColor: "#FFFFFF",
         intensity: 0.0,
         power: 0.0,
         thickness: 0.0,
@@ -267,7 +267,7 @@ export function initializeUranus(parentId: string): void {
       parentPlanet: uranusId,
       composition: ["water ice", "silicates", "carbon compounds"],
       atmosphere: {
-        glowColor: "#FFFFFF01",
+        glowColor: "#FFFFFF",
         intensity: 0.0,
         power: 0.0,
         thickness: 0.0,
@@ -313,7 +313,7 @@ export function initializeUranus(parentId: string): void {
       parentPlanet: uranusId,
       composition: ["water ice", "silicates", "possible subsurface water"],
       atmosphere: {
-        glowColor: "#FFFFFF01",
+        glowColor: "#FFFFFF",
         intensity: 0.01,
         power: 0.1,
         thickness: 0.01,
@@ -359,7 +359,7 @@ export function initializeUranus(parentId: string): void {
       parentPlanet: uranusId,
       composition: ["water ice", "silicates", "carbon compounds"],
       atmosphere: {
-        glowColor: "#FFFFFF01",
+        glowColor: "#FFFFFF",
         intensity: 0.0,
         power: 0.0,
         thickness: 0.0,

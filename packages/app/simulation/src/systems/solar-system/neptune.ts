@@ -76,7 +76,7 @@ export function initializeNeptune(parentId: string): void {
       },
       stormColor: "#0000CD",
       stormSpeed: 150,
-      emissiveColor: "#4169E140",
+      emissiveColor: "#4169E1",
       emissiveIntensity: 0.1,
       rings: [
         {
@@ -127,7 +127,7 @@ export function initializeNeptune(parentId: string): void {
       parentPlanet: neptuneId,
       composition: ["nitrogen ice", "water ice", "carbon dioxide ice"],
       atmosphere: {
-        glowColor: "#88AACC20",
+        glowColor: "#88AACC",
         intensity: 0.04,
         power: 0.5,
         thickness: 0.02,
@@ -173,7 +173,7 @@ export function initializeNeptune(parentId: string): void {
       composition: ["water ice", "rock?"],
       shapeModel: "asteroid",
       atmosphere: {
-        glowColor: "#44444400",
+        glowColor: "#444444",
         intensity: 0,
         power: 0,
         thickness: 0,

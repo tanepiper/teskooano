@@ -112,7 +112,7 @@ export function initializeSaturn(parentId: string): void {
         composition: ["H2", "He", "CH4"],
         pressure: 900000,
         type: AtmosphereType.VERY_DENSE,
-        glowColor: "#F0E68C60",
+        glowColor: "#F0E68C",
         intensity: 0.6,
         power: 1.2,
         thickness: 0.25,
@@ -238,7 +238,7 @@ export function initializeSaturn(parentId: string): void {
         "liquid methane/ethane lakes",
       ],
       atmosphere: {
-        glowColor: "#FFA50060",
+        glowColor: "#FFA500",
         intensity: 0.7,
         power: 1.3,
         thickness: 0.35,
@@ -307,7 +307,7 @@ export function initializeSaturn(parentId: string): void {
       parentPlanet: saturnId,
       composition: ["water ice", "rocky core"],
       atmosphere: {
-        glowColor: "#FFFFFF03",
+        glowColor: "#FFFFFF",
         intensity: 0.01,
         power: 0.5,
         thickness: 0.005,
@@ -375,7 +375,7 @@ export function initializeSaturn(parentId: string): void {
       parentPlanet: saturnId,
       composition: ["water ice", "rock", "carbonaceous material on one side"],
       atmosphere: {
-        glowColor: "#FFFFFF00",
+        glowColor: "#FFFFFF",
         intensity: 0,
         power: 0,
         thickness: 0,
@@ -444,7 +444,7 @@ export function initializeSaturn(parentId: string): void {
       parentPlanet: saturnId,
       composition: ["water ice", "rocky core"],
       atmosphere: {
-        glowColor: "#FFFFFF00",
+        glowColor: "#FFFFFF",
         intensity: 0,
         power: 0,
         thickness: 0,
@@ -513,7 +513,7 @@ export function initializeSaturn(parentId: string): void {
       parentPlanet: saturnId,
       composition: ["mostly water ice", "small amount of rock"],
       atmosphere: {
-        glowColor: "#FFFFFF00",
+        glowColor: "#FFFFFF",
         intensity: 0,
         power: 0,
         thickness: 0,

@@ -4,7 +4,7 @@ import { CelestialType, StellarType } from "@teskooano/data-types";
 const SUN_MASS_KG = 1.9885e30;
 const SUN_RADIUS_M = 696340000;
 const SUN_TEMP_K = 5778;
-const SUN_LUMINOSITY = 1.0;
+const SUN_LUMINOSITY = 100.0;
 
 /**
  * Initializes the Sun object using accurate data.
@@ -36,7 +36,7 @@ export function initializeSun(): string {
       spectralClass: "G2V",
       luminosity: SUN_LUMINOSITY,
       color: "#FFFFE0",
-      stellarType: StellarType.MAIN_SEQUENCE_G,
+      stellarType: StellarType.MAIN_SEQUENCE,
     },
   });
 
