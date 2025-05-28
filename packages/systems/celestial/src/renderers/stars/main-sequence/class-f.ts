@@ -1,16 +1,14 @@
 import * as THREE from "three";
 // import type { CelestialObject } from "@teskooano/data-types"; // This seems unused
 import {
-  MainSequenceStarRenderer,
   MainSequenceStarMaterial,
+  MainSequenceStarRenderer,
 } from "./main-sequence-star";
 // import { BaseStarMaterial } from "../base/base-star"; // No longer needed
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 // Import main sequence shaders as these will be used by Class F stars as well
-import mainSequenceVertexShader from "../../../shaders/star/main-sequence/vertex.glsl";
-import mainSequenceFragmentShader from "../../../shaders/star/main-sequence/fragment.glsl";
 
 /**
  * Material for F-class stars

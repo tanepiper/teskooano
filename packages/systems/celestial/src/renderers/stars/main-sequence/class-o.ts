@@ -1,8 +1,8 @@
 import * as THREE from "three";
 // import type { CelestialObject } from "@teskooano/data-types"; // This seems unused now
 import {
-  MainSequenceStarRenderer,
   MainSequenceStarMaterial,
+  MainSequenceStarRenderer,
 } from "./main-sequence-star";
 // import { BaseStarMaterial } from "../base/base-star"; // No longer needed
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";

@@ -1,10 +1,10 @@
-import * as THREE from "three";
-import {
-  MainSequenceStarRenderer,
-  MainSequenceStarMaterial,
-} from "./main-sequence-star";
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import * as THREE from "three";
 import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
+import {
+  MainSequenceStarMaterial,
+  MainSequenceStarRenderer,
+} from "./main-sequence-star";
 
 /**
  * Material for K-class stars
