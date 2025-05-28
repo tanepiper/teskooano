@@ -1,7 +1,10 @@
 import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
-import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
+import {
+  MainSequenceStarRenderer,
+  MainSequenceStarMaterial,
+} from "./main-sequence-star";
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 /**
  * Material for M-class stars
@@ -13,45 +16,36 @@ import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
  * - Hydrogen lines: Very weak
  * - Frequency: 76% of main-sequence stars (most common)
  */
-export class ClassMStarMaterial extends BaseStarMaterial {
-  constructor(
-    options: {
-      coronaIntensity?: number;
-      pulseSpeed?: number;
-      glowIntensity?: number;
-      temperatureVariation?: number;
-      metallicEffect?: number;
-    } = {},
-  ) {
-    const orangishRedColor = new THREE.Color(0xff6644);
-
-    super(orangishRedColor, {
-      coronaIntensity: options.coronaIntensity ?? 0.3,
-
-      pulseSpeed: options.pulseSpeed ?? 0.35,
-
-      glowIntensity: options.glowIntensity ?? 0.35,
-
-      temperatureVariation: options.temperatureVariation ?? 0.07,
-
-      metallicEffect: options.metallicEffect ?? 0.7,
-    });
-  }
-}
 
 /**
- * Renderer for M-class stars
+ * Renderer for M-class stars (Red Dwarfs)
  */
-export class ClassMStarRenderer extends BaseStarRenderer {
+export class ClassMStarRenderer extends MainSequenceStarRenderer {
+  constructor(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ) {
+    super(object, options);
+  }
+
   /**
    * Returns the appropriate material for an M-class star
    */
-  protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
-    return new ClassMStarMaterial();
+  protected getMaterial(
+    object: RenderableCelestialObject,
+  ): THREE.ShaderMaterial {
+    const color = this.getStarColor(object);
+    return new MainSequenceStarMaterial(color, {
+      coronaIntensity: 0.2,
+      pulseSpeed: 0.2,
+      glowIntensity: 0.25,
+      temperatureVariation: 0.05,
+      metallicEffect: 0.7,
+    });
   }
 
   /**
-   * M-class stars are light orangish red
+   * M-class stars are red
    */
   protected getStarColor(star: RenderableCelestialObject): THREE.Color {
     return new THREE.Color(0xff6644);

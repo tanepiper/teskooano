@@ -1,263 +1,11 @@
-import * as THREE from "three";
-import type { CelestialObject, StarProperties } from "@teskooano/data-types";
-import { CelestialRenderer, LODLevel } from "../../index";
-import { SCALE } from "@teskooano/data-types";
-import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
+import type { StarProperties } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-
-/**
- * Vertex shader for stars
- */
-export const starVertexShader = `
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  varying vec3 vPosition;
-  
-  void main() {
-    vUv = uv;
-    vNormal = normalize(normalMatrix * normal);
-    vPosition = position;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-/**
- * Fragment shader for stars with corona effect
- */
-export const starFragmentShader = `
-  uniform float time;
-  uniform vec3 starColor;
-  uniform float coronaIntensity;
-  uniform float pulseSpeed;
-  uniform float glowIntensity;
-  uniform float temperatureVariation;
-  uniform float metallicEffect;
-  
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  varying vec3 vPosition;
-  
-  
-  float noise(vec2 p) {
-    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
-  }
-  
-  
-  float turbulence(vec2 p) {
-    float t = 0.0;
-    float f = 1.0;
-    for(int i = 0; i < 4; i++) {
-      t += abs(noise(p * f) / f);
-      f *= 2.0;
-      p = p * 1.4 + vec2(3.2, 1.7);
-    }
-    return t;
-  }
-  
-  
-  vec3 metallicFluid(vec2 uv, float time) {
-    
-    float flowSpeed = time * 0.1; 
-    
-    
-    vec2 flowUv = uv + vec2(
-      sin(uv.y * 8.0 + flowSpeed) * 0.05 + cos(uv.x * 4.0 + flowSpeed * 0.7) * 0.03,
-      cos(uv.x * 6.0 + flowSpeed * 0.8) * 0.05 + sin(uv.y * 5.0 + flowSpeed * 0.9) * 0.03
-    );
-    
-    
-    flowUv += vec2(
-      sin(uv.y * 20.0 + flowSpeed * 1.2) * 0.02,
-      cos(uv.x * 15.0 + flowSpeed * 1.1) * 0.02
-    );
-    
-    
-    float largeScaleTurbulence = turbulence(flowUv * 1.5 + vec2(0.0, flowSpeed * 0.5));
-    float smallScaleTurbulence = turbulence(flowUv * 3.0 + vec2(flowSpeed * 0.3, 0.0));
-    float microTurbulence = turbulence(flowUv * 6.0 - vec2(flowSpeed * 0.2, flowSpeed * 0.1));
-    
-    
-    float combinedTurbulence = largeScaleTurbulence * 0.5 + smallScaleTurbulence * 0.3 + microTurbulence * 0.2;
-    
-    
-    vec3 highlight = mix(starColor * 1.3, vec3(1.0, 1.0, 0.9), 0.35);
-    vec3 midtone = mix(starColor * 1.1, vec3(1.0, 0.9, 0.5), 0.2);
-    vec3 shadow = mix(starColor * 0.8, vec3(0.9, 0.7, 0.3), 0.15);
-    
-    
-    float cellPattern = smoothstep(0.4, 0.6, combinedTurbulence);
-    
-    
-    vec3 metalColor = mix(shadow, midtone, smoothstep(0.3, 0.5, combinedTurbulence));
-    metalColor = mix(metalColor, highlight, smoothstep(0.6, 0.8, combinedTurbulence));
-    
-    return metalColor;
-  }
-  
-  void main() {
-    
-    vec3 color = starColor;
-    
-    
-    float dist = length(vPosition);
-    
-    
-    float turb = turbulence(vUv * 3.0 + time * 0.1);
-    
-    float surfaceDetail = smoothstep(0.2, 0.7, turb);
-    
-    
-    vec3 viewDir = normalize(cameraPosition - vPosition);
-    float viewDot = dot(normalize(vNormal), viewDir);
-    
-    
-    
-    float limbFactor = 0.8 + 0.2 * viewDot;
-    
-    
-    float corona = min(1.0, 1.3 - smoothstep(0.5, 1.0, dist));
-    
-    
-    float pulse = sin(time * pulseSpeed) * 0.08 + 0.92;
-    
-    
-    float tempVar = sin(time * 0.15 + turb * 3.0) * temperatureVariation * 1.2;
-    vec3 finalColor = mix(color, color * (1.0 + tempVar), surfaceDetail);
-    
-    
-    vec3 metalColor = metallicFluid(vUv, time);
-    
-    finalColor = mix(finalColor, metalColor, metallicEffect * 1.5 * surfaceDetail * pulse);
-    
-    
-    finalColor = mix(finalColor * 0.9, finalColor * 1.2, limbFactor);
-    
-    
-    finalColor = max(finalColor, color * 0.75);
-    
-    
-    finalColor = mix(finalColor, vec3(1.0, 0.9, 0.7), corona * coronaIntensity * 0.8);
-    
-    
-    float glow = 1.0 - smoothstep(0.4, 1.3, dist);
-    glow = pow(glow, 1.2); 
-    finalColor += color * glow * glowIntensity * 1.0;
-    
-    gl_FragColor = vec4(finalColor, 1.0);
-  }
-`;
-
-/**
- * Fragment shader for corona effect
- */
-export const coronaFragmentShader = `
-  uniform float time;
-  uniform vec3 starColor;
-  uniform float opacity;
-  uniform float pulseSpeed;
-  uniform float noiseScale;
-  
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  varying vec3 vPosition;
-  
-  float noise(vec2 p) {
-    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
-  }
-  
-  float fbm(vec2 p) {
-    float sum = 0.0;
-    float amp = 1.0;
-    float freq = 1.0;
-    for(int i = 0; i < 4; i++) {
-      sum += noise(p * freq) * amp;
-      amp *= 0.5;
-      freq *= 2.0;
-      p = p * 1.1 + vec2(0.5, 0.8);
-    }
-    return sum;
-  }
-  
-  void main() {
-    
-    vec2 centeredUV = vUv * 2.0 - 1.0;
-    float dist = length(centeredUV);
-    
-    
-    float edgeFade = smoothstep(0.8, 1.05, dist);
-    
-    
-    float basePattern = fbm((centeredUV * 0.5 + 0.5) * noiseScale + time * 0.03);
-    float detailPattern = fbm((centeredUV * 1.2 + 0.5) * noiseScale * 2.0 + time * 0.05);
-    float pattern = basePattern * 0.7 + detailPattern * 0.3;
-    
-    
-    float pulse = 0.9 + sin(time * pulseSpeed) * 0.1;
-    
-    
-    float alpha = (1.0 - edgeFade) * opacity * pulse * 1.2;
-    
-    
-    alpha *= (0.6 + pattern * 0.4);
-    
-    
-    alpha = max(alpha, 0.05 * opacity * (1.0 - edgeFade));
-    
-    
-    vec3 innerColor = mix(starColor * 1.3, vec3(1.0, 0.95, 0.8), 0.15);
-    vec3 outerColor = mix(starColor * 0.9, vec3(1.0, 0.8, 0.5), 0.25);
-    vec3 finalColor = mix(innerColor, outerColor, smoothstep(0.0, 0.75, dist));
-    
-    
-    finalColor = mix(finalColor, finalColor * (1.0 + pattern * 0.3), 0.4);
-    
-    gl_FragColor = vec4(finalColor, alpha);
-  }
-`;
-
-/**
- * Base material for stars with shader effects
- */
-export abstract class BaseStarMaterial extends THREE.ShaderMaterial {
-  constructor(
-    color: THREE.Color = new THREE.Color(0xffff00),
-    options: {
-      coronaIntensity?: number;
-      pulseSpeed?: number;
-      glowIntensity?: number;
-      temperatureVariation?: number;
-      metallicEffect?: number;
-    } = {},
-  ) {
-    super({
-      uniforms: {
-        time: { value: 0 },
-        starColor: { value: color },
-        coronaIntensity: { value: options.coronaIntensity ?? 0.3 },
-        pulseSpeed: { value: options.pulseSpeed ?? 0.5 },
-        glowIntensity: { value: options.glowIntensity ?? 0.4 },
-        temperatureVariation: { value: options.temperatureVariation ?? 0.1 },
-        metallicEffect: { value: options.metallicEffect ?? 0.6 },
-      },
-      vertexShader: starVertexShader,
-      fragmentShader: starFragmentShader,
-      transparent: true,
-      side: THREE.FrontSide,
-    });
-  }
-
-  /**
-   * Update the material with the current time
-   */
-  update(time: number): void {
-    this.uniforms.time.value = time;
-  }
-
-  /**
-   * Dispose of any resources
-   */
-  dispose(): void {}
-}
+import * as THREE from "three";
+import type {
+  CelestialMeshOptions,
+  LightSourceData,
+} from "../../common/CelestialRenderer";
+import { CelestialRenderer, LODLevel } from "../../index";
 
 /**
  * Material for corona effect around stars
@@ -271,6 +19,8 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
       pulseSpeed?: number;
       noiseScale?: number;
     } = {},
+    vertexShader: string,
+    fragmentShader: string,
   ) {
     super({
       uniforms: {
@@ -280,8 +30,8 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
         pulseSpeed: { value: options.pulseSpeed ?? 0.3 },
         noiseScale: { value: options.noiseScale ?? 3.0 },
       },
-      vertexShader: starVertexShader,
-      fragmentShader: coronaFragmentShader,
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
       transparent: true,
       side: THREE.DoubleSide,
       depthWrite: false,
@@ -301,47 +51,223 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
   dispose(): void {}
 }
 
+interface BillboardInfo {
+  sprite: THREE.Sprite;
+  activationDistance: number;
+  maxFadeDistance: number; // Distance at which opacity reaches its minimum
+}
+
 /**
  * Abstract base class for star renderers, implementing the LOD system.
  */
 export abstract class BaseStarRenderer implements CelestialRenderer {
-  protected materials: Map<string, BaseStarMaterial> = new Map();
+  protected materials: Map<string, THREE.ShaderMaterial> = new Map();
   protected coronaMaterials: Map<string, CoronaMaterial[]> = new Map();
-  protected startTime: number = Date.now() / 1000;
+  private glowMaterials: Map<string, THREE.ShaderMaterial[]> = new Map();
+  public startTime: number;
   protected elapsedTime: number = 0;
+  protected billboardsInfo: Map<string, BillboardInfo> = new Map();
+
+  protected object: RenderableCelestialObject;
+  protected options?: CelestialMeshOptions;
+
+  constructor(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ) {
+    this.object = object;
+    this.options = options;
+    this.startTime = Date.now() / 1000;
+  }
+
+  /**
+   * Get the custom LOD levels for the specific star type (high and medium detail).
+   * Subclasses must implement this.
+   */
+  protected abstract getCustomLODs(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): LODLevel[];
+
+  /**
+   * Get the distance at which the billboard LOD should activate for this star type.
+   * Subclasses must implement this.
+   */
+  protected abstract getBillboardLODDistance(
+    object: RenderableCelestialObject,
+  ): number;
+
+  protected abstract getCoronaVertexShader(
+    object: RenderableCelestialObject,
+  ): string;
+
+  protected abstract getCoronaFragmentShader(
+    object: RenderableCelestialObject,
+  ): string;
+
+  /**
+   * Creates a canvas texture for the star billboard.
+   * @returns A THREE.CanvasTexture.
+   */
+  private _createBillboardTexture(): THREE.CanvasTexture {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext("2d");
+    if (context) {
+      const gradient = context.createRadialGradient(
+        canvas.width / 2,
+        canvas.height / 2,
+        0,
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.width / 2,
+      );
+      gradient.addColorStop(0, "rgba(255,255,255,1)");
+      gradient.addColorStop(1, "rgba(255,255,255,0)");
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  /**
+   * Calculates the size for the distant sprite based on the star's radius.
+   * @param object - The renderable celestial object.
+   * @returns The calculated sprite size.
+   */
+  private _calculateDistantSpriteSize(
+    object: RenderableCelestialObject,
+  ): number {
+    const minSpriteSize = 0.03;
+    const maxSpriteSize = 0.15;
+    const radiusScaleFactor = 0.0001;
+    let calculatedSpriteSize = object.radius * radiusScaleFactor;
+    return Math.max(
+      minSpriteSize,
+      Math.min(maxSpriteSize, calculatedSpriteSize),
+    );
+  }
+
+  /**
+   * Creates the sprite for the star billboard.
+   * @param object - The renderable celestial object.
+   * @param texture - The texture for the sprite.
+   * @param size - The size of the sprite.
+   * @returns A THREE.Sprite.
+   */
+  private _createBillboardSprite(
+    object: RenderableCelestialObject,
+    texture: THREE.Texture,
+    size: number,
+  ): THREE.Sprite {
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      color: this.getStarColor(object),
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: false, // Size is in screen space
+      transparent: true,
+      opacity: 0.85,
+    });
+
+    const distantSprite = new THREE.Sprite(spriteMaterial);
+    distantSprite.name = `${object.celestialObjectId}-distant-sprite`;
+    distantSprite.scale.set(size, size, 1.0);
+    return distantSprite;
+  }
+
+  /**
+   * Creates the point light for the star billboard.
+   * @param object - The renderable celestial object.
+   * @returns A THREE.PointLight.
+   */
+  private _createBillboardPointLight(
+    object: RenderableCelestialObject,
+  ): THREE.PointLight {
+    const starMaterial = this.getMaterial(object) as any;
+    let lightIntensity = 5.0;
+    if (
+      starMaterial &&
+      starMaterial.uniforms &&
+      starMaterial.uniforms.glowIntensity
+    ) {
+      const materialGlowIntensity = starMaterial.uniforms.glowIntensity.value;
+      lightIntensity = materialGlowIntensity * 10.0;
+      lightIntensity = Math.max(0.5, Math.min(lightIntensity, 20.0));
+    }
+
+    const pointLight = new THREE.PointLight(
+      this.getStarColor(object),
+      lightIntensity,
+      0,
+      2,
+    );
+    pointLight.name = `${object.celestialObjectId}-low-lod-light`;
+    return pointLight;
+  }
+
+  /**
+   * Creates the LODLevel for the star billboard.
+   * @param object - The renderable celestial object.
+   * @param sprite - The sprite for the billboard.
+   * @param pointLight - The point light for the billboard.
+   * @param billboardDistance - The distance at which this LOD becomes active.
+   * @returns An LODLevel object.
+   */
+  private _createBillboardLODLevel(
+    object: RenderableCelestialObject,
+    sprite: THREE.Sprite,
+    pointLight: THREE.PointLight,
+    billboardDistance: number,
+  ): LODLevel {
+    const billboardGroup = new THREE.Group();
+    billboardGroup.name = `${object.celestialObjectId}-billboard-lod`;
+    billboardGroup.add(sprite);
+    billboardGroup.add(pointLight);
+
+    return {
+      object: billboardGroup,
+      distance: billboardDistance,
+    };
+  }
 
   /**
    * Creates and returns an array of LOD levels for the star object.
+   * Combines custom LODs from subclasses with a base billboard LOD.
    */
   getLODLevels(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    const scale = typeof SCALE === "number" ? SCALE : 1;
+    const customLODs = this.getCustomLODs(object, options);
+    const billboardDistance = this.getBillboardLODDistance(object);
 
-    const highDetailGroup = this._createHighDetailGroup(object, options);
-    const level0: LODLevel = { object: highDetailGroup, distance: 0 };
-
-    const mediumDetailGroup = this._createHighDetailGroup(object, {
-      ...options,
-      segments: 32,
-    });
-    mediumDetailGroup.name = `${object.celestialObjectId}-medium-lod`;
-    const level1: LODLevel = {
-      object: mediumDetailGroup,
-      distance: 200 * scale,
-    };
-
-    const lowDetailMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(object.radius * 0.8, 8, 8),
-      new THREE.MeshBasicMaterial({ color: this.getStarColor(object) }),
+    const circleTexture = this._createBillboardTexture();
+    const distantPointSize = this._calculateDistantSpriteSize(object);
+    const distantSprite = this._createBillboardSprite(
+      object,
+      circleTexture,
+      distantPointSize,
     );
-    lowDetailMesh.name = `${object.celestialObjectId}-low-lod`;
-    const level2Group = new THREE.Group();
-    level2Group.add(lowDetailMesh);
-    const level2: LODLevel = { object: level2Group, distance: 1500 * scale };
+    const pointLight = this._createBillboardPointLight(object);
+    const billboardLOD = this._createBillboardLODLevel(
+      object,
+      distantSprite,
+      pointLight,
+      billboardDistance,
+    );
 
-    return [level0, level1, level2];
+    // Store info for dynamic updates
+    this.billboardsInfo.set(object.celestialObjectId, {
+      sprite: distantSprite,
+      activationDistance: billboardDistance,
+      maxFadeDistance: billboardDistance * 5, // Fade out over 5x the activation distance
+    });
+
+    // Ensure LODs are sorted by distance, though typically customLODs will be closer.
+    return [...customLODs, billboardLOD].sort(
+      (a, b) => a.distance - b.distance,
+    );
   }
 
   /**
@@ -356,7 +282,8 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     const group = new THREE.Group();
     group.name = `${object.celestialObjectId}-high-lod-group`;
 
-    const segments = options?.detailLevel === "high" ? 64 : 48;
+    const segments =
+      options?.segments ?? (options?.detailLevel === "high" ? 128 : 96);
     const geometry = new THREE.SphereGeometry(
       object.radius,
       segments,
@@ -386,15 +313,23 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     const coronaScales = [1.1, 1.2];
     const opacities = [0.1, 0.05];
 
+    const coronaVertexShader = this.getCoronaVertexShader(object);
+    const coronaFragmentShaderToUse = this.getCoronaFragmentShader(object);
+
     coronaScales.forEach((scale, index) => {
       const coronaRadius = object.radius * scale;
-      const coronaGeometry = new THREE.SphereGeometry(coronaRadius, 24, 24);
-      const coronaMaterial = new CoronaMaterial(starColor, {
-        scale: scale,
-        opacity: opacities[index],
-        pulseSpeed: 0.12 + index * 0.03,
-        noiseScale: 1.2 + index * 0.3,
-      });
+      const coronaGeometry = new THREE.SphereGeometry(coronaRadius, 64, 64);
+      const coronaMaterial = new CoronaMaterial(
+        starColor,
+        {
+          scale: scale,
+          opacity: opacities[index],
+          pulseSpeed: 0.12 + index * 0.03,
+          noiseScale: 1.2 + index * 0.3,
+        },
+        coronaVertexShader,
+        coronaFragmentShaderToUse,
+      );
       coronaMaterials.push(coronaMaterial);
       const coronaMesh = new THREE.Mesh(coronaGeometry, coronaMaterial);
       coronaMesh.name = `${object.celestialObjectId}-corona-${index}`;
@@ -410,20 +345,24 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
    */
   protected abstract getMaterial(
     object: RenderableCelestialObject,
-  ): BaseStarMaterial;
+  ): THREE.ShaderMaterial;
 
   /**
    * Update the renderer with the current time
    */
-  update(time?: number): void {
-    if (time === undefined) {
-      this.elapsedTime = Date.now() / 1000 - this.startTime;
-    } else {
-      this.elapsedTime = time;
-    }
+  update(
+    time: number,
+    lightSources?: Map<string, LightSourceData>,
+    camera?: THREE.Camera,
+  ): void {
+    const currentTime =
+      time === undefined ? Date.now() / 1000 - this.startTime : time;
+    this.elapsedTime = currentTime;
 
-    this.materials.forEach((material) => {
-      material.update(this.elapsedTime);
+    this.materials.forEach((material: any) => {
+      if (typeof material.update === "function") {
+        material.update(this.elapsedTime);
+      }
     });
 
     this.coronaMaterials.forEach((materials) => {
@@ -431,14 +370,64 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
         material.update(this.elapsedTime);
       });
     });
+
+    this.glowMaterials.forEach((materials) => {
+      materials.forEach((material: any) => {
+        if (material.uniforms && material.uniforms.time) {
+          material.uniforms.time.value = this.elapsedTime;
+        }
+      });
+    });
+
+    if (camera && this.billboardsInfo.size > 0) {
+      const cameraPosition = new THREE.Vector3();
+      camera.getWorldPosition(cameraPosition);
+
+      this.billboardsInfo.forEach((info) => {
+        const { sprite, activationDistance, maxFadeDistance } = info;
+
+        const material = sprite.material as THREE.SpriteMaterial;
+        if (!material) return;
+
+        const spriteWorldPosition = new THREE.Vector3();
+        sprite.getWorldPosition(spriteWorldPosition);
+        const distanceToCamera = cameraPosition.distanceTo(spriteWorldPosition);
+
+        // Determine target opacity for smooth fade-in/out of the billboard
+        let targetOpacity;
+        // The initial opacity set in _createBillboardSprite is 0.85
+        const baseSpriteOpacity = 0.85;
+
+        if (distanceToCamera >= activationDistance) {
+          // Billboard LOD is active (camera is far enough),
+          // maintain its standard visible opacity.
+          targetOpacity = baseSpriteOpacity;
+        } else {
+          // Billboard LOD is not active (a closer LOD should be visible),
+          // so fade the billboard out.
+          targetOpacity = 0.0;
+        }
+
+        material.opacity = THREE.MathUtils.lerp(
+          material.opacity,
+          targetOpacity,
+          0.1,
+        );
+
+        if (material.opacity > 0 && !sprite.visible) {
+        }
+      });
+    }
   }
 
   /**
    * Clean up resources
    */
   dispose(): void {
-    this.materials.forEach((material) => {
-      material.dispose();
+    this.materials.forEach((material: any) => {
+      if (typeof material.dispose === "function") {
+        material.dispose();
+      }
     });
 
     this.coronaMaterials.forEach((materials) => {
@@ -447,8 +436,18 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
       });
     });
 
+    this.glowMaterials.forEach((materials) => {
+      materials.forEach((material: any) => {
+        if (typeof material.dispose === "function") {
+          material.dispose();
+        }
+      });
+    });
+
     this.materials.clear();
     this.coronaMaterials.clear();
+    this.glowMaterials.clear();
+    this.billboardsInfo.clear();
   }
 
   /**
@@ -482,5 +481,20 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     }
 
     return new THREE.Color(0xffcc00);
+  }
+
+  /**
+   * Adds gravitational lensing effects. Base implementation does nothing.
+   * Subclasses like black hole or neutron star renderers should override this.
+   */
+  addGravitationalLensing(
+    objectData: RenderableCelestialObject,
+    renderer: THREE.WebGLRenderer,
+    scene: THREE.Scene,
+    camera: THREE.PerspectiveCamera,
+    mesh: THREE.Object3D,
+  ): void {
+    // Base stars do not typically have gravitational lensing of this type.
+    // console.warn(`[BaseStarRenderer] addGravitationalLensing called for ${objectData.celestialObjectId}, but not implemented for this star type.`);
   }
 }

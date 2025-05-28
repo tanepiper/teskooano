@@ -1,7 +1,16 @@
 import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
-import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
+// import type { CelestialObject } from "@teskooano/data-types"; // This seems unused
+import {
+  MainSequenceStarRenderer,
+  MainSequenceStarMaterial,
+} from "./main-sequence-star";
+// import { BaseStarMaterial } from "../base/base-star"; // No longer needed
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { CelestialMeshOptions } from "../../common/CelestialRenderer"; // Added this import
+
+// Unused shader imports can be removed if MainSequenceStarMaterial handles them
+// import mainSequenceVertexShader from "../../../shaders/star/main-sequence/vertex.glsl";
+// import mainSequenceFragmentShader from "../../../shaders/star/main-sequence/fragment.glsl";
 
 /**
  * Material for A-class stars
@@ -13,41 +22,33 @@ import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
  * - Hydrogen lines: Strong
  * - Frequency: 0.61% of main-sequence stars
  */
-export class ClassAStarMaterial extends BaseStarMaterial {
-  constructor(
-    options: {
-      coronaIntensity?: number;
-      pulseSpeed?: number;
-      glowIntensity?: number;
-      temperatureVariation?: number;
-      metallicEffect?: number;
-    } = {},
-  ) {
-    const whiteColor = new THREE.Color(0xf8f7ff);
-
-    super(whiteColor, {
-      coronaIntensity: options.coronaIntensity ?? 0.5,
-
-      pulseSpeed: options.pulseSpeed ?? 0.6,
-
-      glowIntensity: options.glowIntensity ?? 0.6,
-
-      temperatureVariation: options.temperatureVariation ?? 0.12,
-
-      metallicEffect: options.metallicEffect ?? 0.5,
-    });
-  }
-}
+// export class ClassAStarMaterial extends THREE.ShaderMaterial { ... } // Entire class removed
 
 /**
  * Renderer for A-class stars
  */
-export class ClassAStarRenderer extends BaseStarRenderer {
+export class ClassAStarRenderer extends MainSequenceStarRenderer {
+  constructor(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ) {
+    super(object, options);
+  }
+
   /**
    * Returns the appropriate material for an A-class star
    */
-  protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
-    return new ClassAStarMaterial();
+  protected getMaterial(
+    object: RenderableCelestialObject,
+  ): THREE.ShaderMaterial {
+    const color = this.getStarColor(object);
+    return new MainSequenceStarMaterial(color, {
+      coronaIntensity: 0.5,
+      pulseSpeed: 0.6,
+      glowIntensity: 0.6,
+      temperatureVariation: 0.12,
+      metallicEffect: 0.5,
+    });
   }
 
   /**

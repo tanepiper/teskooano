@@ -138,6 +138,24 @@ export interface CelestialRenderer {
    * 3. Remove any event listeners or other references
    */
   dispose(): void;
+
+  /**
+   * Optional method to add gravitational lensing effects. Specific to renderers
+   * that support this (e.g., Black Holes, Neutron Stars).
+   *
+   * @param objectData - The data for the celestial object.
+   * @param renderer - The main WebGLRenderer instance.
+   * @param scene - The main Three.js scene.
+   * @param camera - The main Three.js camera.
+   * @param mesh - The specific Three.js mesh/Object3D for the celestial object.
+   */
+  addGravitationalLensing?: (
+    objectData: RenderableCelestialObject,
+    renderer: THREE.WebGLRenderer,
+    scene: THREE.Scene,
+    camera: THREE.PerspectiveCamera,
+    mesh: THREE.Object3D,
+  ) => void;
 }
 
 /**

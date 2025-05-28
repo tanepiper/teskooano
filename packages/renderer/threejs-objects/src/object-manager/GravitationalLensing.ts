@@ -44,7 +44,7 @@ export class GravitationalLensingHandler {
 
   /**
    * Checks if a given celestial object requires gravitational lensing based on its type and properties.
-   * Currently checks for `StellarType.BLACK_HOLE`, `StellarType.KERR_BLACK_HOLE`, and `StellarType.NEUTRON_STAR`.
+   * Currently checks for `StellarType.BLACK_HOLE` and `StellarType.NEUTRON_STAR`.
    *
    * @param object - The celestial object data.
    * @returns `true` if the object requires lensing, `false` otherwise.
@@ -52,14 +52,12 @@ export class GravitationalLensingHandler {
   needsGravitationalLensing(object: RenderableCelestialObject): boolean {
     if (object.type === CelestialType.STAR) {
       const starProps = object.properties as StarProperties;
-
+      // Check if the object is a type that should have lensing
       return (
         starProps?.stellarType === StellarType.BLACK_HOLE ||
-        starProps?.stellarType === StellarType.KERR_BLACK_HOLE ||
         starProps?.stellarType === StellarType.NEUTRON_STAR
       );
     }
-
     return false;
   }
 
@@ -109,26 +107,35 @@ export class GravitationalLensingHandler {
 
     const starRenderer = this.starRenderers.get(objectData.celestialObjectId);
 
-    if (mesh && starRenderer) {
-      if (
-        starRenderer instanceof SchwarzschildBlackHoleRenderer ||
-        starRenderer instanceof KerrBlackHoleRenderer ||
-        starRenderer instanceof NeutronStarRenderer
-      ) {
-        starRenderer.addGravitationalLensing(
-          objectData,
-          renderer,
-          scene,
-          camera,
-          mesh,
-        );
-
-        this.lensingObjectsToAdd.delete(objectData.celestialObjectId);
-      }
-    } else {
-      console.warn(
-        `[LensingHandler] Mesh or StarRenderer not ready for lensing object ${objectData.celestialObjectId}`,
+    if (
+      mesh &&
+      starRenderer &&
+      typeof starRenderer.addGravitationalLensing === "function"
+    ) {
+      starRenderer.addGravitationalLensing(
+        objectData,
+        renderer,
+        scene,
+        camera,
+        mesh,
       );
+      this.lensingObjectsToAdd.delete(objectData.celestialObjectId);
+    } else {
+      if (this.needsGravitationalLensing(objectData)) {
+        console.warn(
+          `[LensingHandler] StarRenderer for lensing object ${objectData.celestialObjectId} (${starRenderer?.constructor.name}) does not have an 'addGravitationalLensing' method. Lensing not applied.`,
+        );
+        // Still remove it from pending if we determined it needs lensing but can't apply it
+        this.lensingObjectsToAdd.delete(objectData.celestialObjectId);
+      } else if (!mesh) {
+        console.warn(
+          `[LensingHandler] Mesh not ready for lensing object ${objectData.celestialObjectId}.`,
+        );
+      } else if (!starRenderer) {
+        console.warn(
+          `[LensingHandler] StarRenderer not found for lensing object ${objectData.celestialObjectId}.`,
+        );
+      }
     }
   }
 

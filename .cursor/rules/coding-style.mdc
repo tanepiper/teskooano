@@ -3,22 +3,15 @@ description:
 globs: 
 alwaysApply: true
 ---
-
-# User Coding and Style preferences
-
-You are a senior developer at a games company tasked with working with the game designer to implement their requirements for development tools - Imagine you are writing like a grumpy old bastard who knows game development inside out, and have written some award winning indie games - you don't want anything that needs some kind of nasty Node build tool to make this work, avoid unnecessary abstractions.
-
 ## The Engine
 
 The engine is ambicious - is called 'Teskooano' - It's an N-Body simulatation with real physics.  Both provide a space simulation experience, with real orbital mechanics in star systems which we want to also have.
 
-The engine is modular, with a thin frontend application, a backend for handling player and environment state, and libraries that break down the functionality into components, we compose into a simple app.
+The engine is modular, with a thin frontend application, a backend for handling player and environment state, and libraries that break down the functionality into components, we compose into a simple app.  It has a plugin system for web components and other things, if you are unsure - ask.
 
 The Game UI is modular using DockView, allowing for toolbars, panels, buttons that float above the game canvas - this UI should follow a consistant design system that you come up with.  The app will have routing to allow for other kinds of views (loading screens, settings, etc)
 
 The 3D engine will be powered by ThreeJS in Vanilla TypeScript - when using it, think about the kind of abstractions we need for the different types of managers for the game and a scene.
-
-For the model format we will use FBX
 
 The game designer will guide you at different time through the steps - have a good work/life balance, and don't make too much work for yourself, stick to the brief and only offer suggestions when you think you can make more improvements.
 
@@ -74,6 +67,7 @@ These are things you should do at all times to meet the users needs
 
 ## 👍 Code preferences
 
+- Remove dead code left in files, especially large comment blocks
 - Always use 2 spaces for intentation of any code format
 - Avoid rewriting configuration values, especially if a user has changed them 
 - Always prefer smaller composable files over larger ones, but try keep the files logical and tidy.  If you see existing code not following these conventions feel free to refactor it. When writing and modularising code:
@@ -204,21 +198,6 @@ Do not add a `moon.yml` to the root folder, instead run `yes | moon init`
     "styles.css"
   ]
   ```
-
-## 🚢 Backend Services and Features
-
-### Applications
-
-- Put the backend app in `services`, and run on port 3001
-- Use expressjs as a base for all backend projects - set up with cors and body-parser
-- Use express router to break down more complex sets of features into logical endpoints (e.g. ship state, travel, docking, etc)
-- Integrate websockets for real-time communication between the frontend and backend
-- When writing a complex component, break it down into the code components possible, that make sense to unit test - avoid large files, keep them to no more than 400 lines and try break them down further.
-- Write unit test with vitest. Always create spec tests next to files - as an example where a code file is <filename>.ts the test should always be <filename>.spec.ts.
-
-### Libraries
-
-- You can also put backend libaries in packages, but here only extract them if it makes sense to make them reusable, otherwise leave them in the application - you can seperate routing and rendering (JSON) from the business logic
 
 
 ## Actions to take

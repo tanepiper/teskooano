@@ -1,59 +1,164 @@
 import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
-import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
-import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import {
+  RemnantStarRenderer,
+  RemnantStarMaterial,
+} from "./remnant-star-renderer";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import { LODLevel } from "../../index";
+import { SCALE } from "@teskooano/data-types";
+import type {
+  CelestialMeshOptions,
+  LightSourceData,
+} from "../../common/CelestialRenderer";
+
+// Shaders for White Dwarf pulsating aura
+const WHITE_DWARF_AURA_VERTEX_SHADER = `
+varying vec3 vNormal;
+varying vec3 vWorldPosition;
+void main() {
+  vNormal = normalize(normalMatrix * normal);
+  vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+  vWorldPosition = worldPosition.xyz;
+  gl_Position = projectionMatrix * viewMatrix * worldPosition;
+}
+`;
+
+const WHITE_DWARF_AURA_FRAGMENT_SHADER = `
+uniform float time;
+uniform vec3 glowColor;
+uniform float glowIntensity;
+varying vec3 vNormal;
+varying vec3 vWorldPosition;
+
+void main() {
+  float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0); // Rim lighting effect
+  float pulse = 0.8 + sin(time * 2.0 + vWorldPosition.x * 0.5) * 0.2; // Gentle pulse
+  gl_FragColor = vec4(glowColor, intensity * pulse * glowIntensity);
+}
+`;
 
 /**
- * Material for white dwarf stars
- * - Temperature: 8,000-40,000 K
- * - Color: White to pale blue
- * - Typical mass: 0.5-0.7 M☉
- * - Typical radius: ~0.01 R☉ (Earth-sized)
- * - Very high density
- * - No fusion - cooling remnant of a star
- * - Electron-degenerate matter
+ * Material for White Dwarf stars.
  */
-export class WhiteDwarfMaterial extends BaseStarMaterial {
-  constructor(
-    options: {
-      coronaIntensity?: number;
-      pulseSpeed?: number;
-      glowIntensity?: number;
-      temperatureVariation?: number;
-      metallicEffect?: number;
-    } = {},
-  ) {
-    const whiteColor = new THREE.Color(0xf8fcff);
-
-    super(whiteColor, {
-      coronaIntensity: options.coronaIntensity ?? 0.4,
-
-      pulseSpeed: options.pulseSpeed ?? 0.2,
-
-      glowIntensity: options.glowIntensity ?? 0.7,
-
-      temperatureVariation: options.temperatureVariation ?? 0.05,
-
-      metallicEffect: options.metallicEffect ?? 0.8,
+export class WhiteDwarfMaterial extends RemnantStarMaterial {
+  constructor(color: THREE.Color = new THREE.Color(0xe0e0ff)) {
+    super({
+      starColor: color, // Very hot, white to bluish-white
+      coronaIntensity: 0.02, // Minimal corona, reduced to make aura more visible
+      pulseSpeed: 0.01, // Very stable
+      glowIntensity: 0.3, // Intense but small, reduced for aura
+      temperatureVariation: 0.05, // Relatively uniform surface
+      metallicEffect: 0.0,
     });
   }
 }
 
 /**
- * Renderer for white dwarf stars
+ * Renderer for White Dwarf stars - dense remnants of low-to-medium mass stars.
  */
-export class WhiteDwarfRenderer extends BaseStarRenderer {
-  /**
-   * Returns the appropriate material for a white dwarf star
-   */
-  protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
-    return new WhiteDwarfMaterial();
+export class WhiteDwarfRenderer extends RemnantStarRenderer {
+  constructor(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ) {
+    super(object, options);
+  }
+
+  protected getMaterial(
+    object: RenderableCelestialObject,
+  ): RemnantStarMaterial {
+    const color = this.getStarColor(object);
+    return new WhiteDwarfMaterial(color);
+  }
+
+  protected getStarColor(object: RenderableCelestialObject): THREE.Color {
+    // Based on temperature, but typically very hot and white/blue
+    // For simplicity, a default white-blue.
+    // Could use object.properties.temperature if available.
+    return new THREE.Color(0xe0e0ff);
   }
 
   /**
-   * White dwarfs are white with slight blue tint
+   * White dwarfs typically don't have prominent effect layers like disks or jets.
+   * A very young one might have a fading planetary nebula, but we'll keep it simple for now.
    */
-  protected getStarColor(star: RenderableCelestialObject): THREE.Color {
-    return new THREE.Color(0xf8fcff);
+  protected getEffectLayer(
+    object: RenderableCelestialObject,
+    mainStarGroup: THREE.Group,
+  ): THREE.Object3D | null {
+    const starRadius = object.radius || 0.05; // White dwarfs are small
+    const auraRadius = starRadius * 1.5; // Aura slightly larger than the star
+
+    const auraGeometry = new THREE.SphereGeometry(auraRadius, 32, 32);
+    const auraMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 0.0 },
+        glowColor: { value: new THREE.Color(0xadc8ff) }, // Pale blue glow
+        glowIntensity: { value: 0.3 },
+      },
+      vertexShader: WHITE_DWARF_AURA_VERTEX_SHADER,
+      fragmentShader: WHITE_DWARF_AURA_FRAGMENT_SHADER,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.BackSide, // Render on the inside for a halo effect
+    });
+
+    this.effectMaterials.set(`${object.celestialObjectId}-aura`, auraMaterial);
+
+    const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial);
+    auraMesh.name = `${object.celestialObjectId}-aura`;
+
+    // Ensure the aura is part of the main star group for transformations
+    // mainStarGroup.add(auraMesh); // This should be handled by the base class when returning the mesh
+    return auraMesh;
+  }
+
+  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
+    const scale = typeof SCALE === "number" ? SCALE : 1;
+    return 10 * scale; // White dwarfs are small and faint from afar
+  }
+
+  protected getCustomLODs(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): LODLevel[] {
+    const scale = typeof SCALE === "number" ? SCALE : 1;
+
+    // White dwarfs are small, so segments can be lower by default
+    const highDetailGroup = this._createHighDetailGroup(object, {
+      ...options,
+      segments: options?.segments ?? 48,
+    });
+    const level0: LODLevel = { object: highDetailGroup, distance: 0 };
+
+    // Medium detail: just a slightly simpler sphere, as they are not complex visually.
+    const mediumStarOnlyGroup = super._createHighDetailGroup(object, {
+      ...options,
+      segments: options?.segments ?? 48,
+    });
+    // No effect layer to remove for white dwarfs as per current getEffectLayer
+    mediumStarOnlyGroup.name = `${object.celestialObjectId}-medium-lod`;
+    const level1: LODLevel = {
+      object: mediumStarOnlyGroup,
+      distance: 5 * scale,
+    };
+
+    return [level0, level1];
+  }
+
+  update(
+    time: number,
+    lightSources?: Map<string, LightSourceData>,
+    camera?: THREE.Camera,
+  ): void {
+    super.update(time, lightSources, camera);
+
+    const auraMaterial = this.effectMaterials.get(
+      `${this.object.celestialObjectId}-aura`,
+    );
+    if (auraMaterial && auraMaterial instanceof THREE.ShaderMaterial) {
+      auraMaterial.uniforms.time.value = this.elapsedTime;
+    }
   }
 }

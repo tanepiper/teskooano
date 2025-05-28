@@ -1,4 +1,9 @@
-import { CelestialType, StarProperties } from "@teskooano/data-types";
+import {
+  CelestialType,
+  StarProperties,
+  StellarType,
+  MainSequenceSpectralClass,
+} from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import {
   createStarRenderer,
@@ -33,8 +38,12 @@ export function createStarMesh(
       const starProps = object.properties as StarProperties;
       try {
         const newRenderer = createStarRenderer(
-          starProps.spectralClass,
+          object,
           starProps.stellarType,
+          undefined,
+          starProps.stellarType === StellarType.MAIN_SEQUENCE
+            ? (starProps.spectralClass as MainSequenceSpectralClass)
+            : undefined,
         );
         if (newRenderer) {
           renderer = newRenderer;

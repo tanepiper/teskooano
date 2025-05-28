@@ -1,7 +1,10 @@
 import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
-import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
+import {
+  MainSequenceStarRenderer,
+  MainSequenceStarMaterial,
+} from "./main-sequence-star";
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 /**
  * Material for K-class stars
@@ -13,45 +16,36 @@ import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
  * - Hydrogen lines: Very weak
  * - Frequency: 12% of main-sequence stars
  */
-export class ClassKStarMaterial extends BaseStarMaterial {
-  constructor(
-    options: {
-      coronaIntensity?: number;
-      pulseSpeed?: number;
-      glowIntensity?: number;
-      temperatureVariation?: number;
-      metallicEffect?: number;
-    } = {},
-  ) {
-    const lightOrangeColor = new THREE.Color(0xffaa55);
-
-    super(lightOrangeColor, {
-      coronaIntensity: options.coronaIntensity ?? 0.35,
-
-      pulseSpeed: options.pulseSpeed ?? 0.4,
-
-      glowIntensity: options.glowIntensity ?? 0.4,
-
-      temperatureVariation: options.temperatureVariation ?? 0.08,
-
-      metallicEffect: options.metallicEffect ?? 0.65,
-    });
-  }
-}
 
 /**
  * Renderer for K-class stars
  */
-export class ClassKStarRenderer extends BaseStarRenderer {
-  /**
-   * Returns the appropriate material for a K-class star
-   */
-  protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
-    return new ClassKStarMaterial();
+export class ClassKStarRenderer extends MainSequenceStarRenderer {
+  constructor(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ) {
+    super(object, options);
   }
 
   /**
-   * K-class stars are light orange
+   * Returns the appropriate material for a K-class star
+   */
+  protected getMaterial(
+    object: RenderableCelestialObject,
+  ): THREE.ShaderMaterial {
+    const color = this.getStarColor(object);
+    return new MainSequenceStarMaterial(color, {
+      coronaIntensity: 0.3,
+      pulseSpeed: 0.3,
+      glowIntensity: 0.35,
+      temperatureVariation: 0.07,
+      metallicEffect: 0.65,
+    });
+  }
+
+  /**
+   * K-class stars are orange to red-orange
    */
   protected getStarColor(star: RenderableCelestialObject): THREE.Color {
     return new THREE.Color(0xffaa55);
