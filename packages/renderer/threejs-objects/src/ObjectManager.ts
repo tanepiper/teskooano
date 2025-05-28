@@ -116,6 +116,16 @@ export class ObjectManager {
   private tempVector3 = new THREE.Vector3();
 
   /**
+   * Public getter for the latest renderable objects as a ReadonlyMap.
+   */
+  public getRenderableObjectsMap(): ReadonlyMap<
+    string,
+    RenderableCelestialObject
+  > {
+    return new Map(Object.entries(this.latestRenderableObjects));
+  }
+
+  /**
    * Creates an instance of ObjectManager.
    *
    * @param scene - The main Three.js scene.

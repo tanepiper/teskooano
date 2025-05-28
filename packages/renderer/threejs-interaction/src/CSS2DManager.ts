@@ -1,30 +1,40 @@
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import { CelestialType } from "@teskooano/data-types";
 import {
   CSS2DRendererService,
   CSS2DLabelFactory,
   CSS2DLayerManager,
   CSS2DLayerType,
+  CSS2DSciFiLabelFactory,
+  type SciFiLabelFactoryContext,
+  SciFiLabelComponent,
 } from "./css2d";
 
 /**
  * Singleton facade for managing all CSS2D rendered UI elements.
- * Orchestrates CSS2DRendererService, CSS2DLabelFactory, and CSS2DLayerManager.
+ * Orchestrates CSS2DRendererService, CSS2DSciFiLabelFactory, and CSS2DLayerManager.
  */
 export class CSS2DManager {
   private static instance: CSS2DManager;
   private scene: THREE.Scene;
+  private camera: THREE.Camera;
   private rendererService: CSS2DRendererService;
-  private labelFactory: CSS2DLabelFactory;
+  private labelFactory: CSS2DSciFiLabelFactory;
   private layerManager: CSS2DLayerManager;
 
-  private constructor(scene: THREE.Scene, container: HTMLElement) {
+  private constructor(
+    scene: THREE.Scene,
+    camera: THREE.Camera,
+    container: HTMLElement,
+  ) {
     this.scene = scene;
+    this.camera = camera;
     this.rendererService = CSS2DRendererService.getInstance();
     this.rendererService.initialize(container); // Initialize with the container
 
-    this.labelFactory = new CSS2DLabelFactory(); // Not a singleton, can be instantiated
+    this.labelFactory = new CSS2DSciFiLabelFactory(this.camera);
     this.layerManager = CSS2DLayerManager.getInstance();
   }
 
@@ -34,15 +44,16 @@ export class CSS2DManager {
    */
   public static getInstance(
     scene?: THREE.Scene,
+    camera?: THREE.Camera,
     container?: HTMLElement,
   ): CSS2DManager {
     if (!CSS2DManager.instance) {
-      if (!scene || !container) {
+      if (!scene || !camera || !container) {
         throw new Error(
-          "[CSS2DManager] Singleton not initialized. Call initialize() first with scene and container.",
+          "[CSS2DManager] Singleton not initialized. Call initialize() first with scene, camera, and container.",
         );
       }
-      CSS2DManager.instance = new CSS2DManager(scene, container);
+      CSS2DManager.instance = new CSS2DManager(scene, camera, container);
     }
     return CSS2DManager.instance;
   }
@@ -51,10 +62,12 @@ export class CSS2DManager {
    * Initializes the singleton instance of the CSS2DManager.
    * This method should be called once at the beginning of the application.
    * @param scene - The main THREE.Scene.
+   * @param camera - The main THREE.Camera.
    * @param container - The HTMLElement that will contain the CSS2D renderer's DOM element.
    */
   public static initialize(
     scene: THREE.Scene,
+    camera: THREE.Camera,
     container: HTMLElement,
   ): CSS2DManager {
     if (CSS2DManager.instance) {
@@ -63,34 +76,75 @@ export class CSS2DManager {
       );
       return CSS2DManager.instance;
     }
-    CSS2DManager.instance = new CSS2DManager(scene, container);
+    CSS2DManager.instance = new CSS2DManager(scene, camera, container);
     return CSS2DManager.instance;
   }
 
   /**
    * Create a celestial object label and add it to the appropriate layer and parent mesh.
+   * @param objectData - The data for the celestial object for which to create the label.
+   * @param parentMesh - The THREE.Object3D representing the celestial object in the scene.
+   * @param allRenderableObjects - A map of all currently renderable objects, to look up parent data.
    */
   createCelestialLabel(
-    object: RenderableCelestialObject,
+    objectData: RenderableCelestialObject,
     parentMesh: THREE.Object3D,
+    allRenderableObjects?: ReadonlyMap<string, RenderableCelestialObject>,
   ): void {
     const existingLayerElements = this.layerManager.getLayerElements(
       CSS2DLayerType.CELESTIAL_LABELS,
     );
-    if (existingLayerElements?.has(object.celestialObjectId)) {
-      console.warn(
-        `[CSS2DManager] Label already exists for ${object.celestialObjectId}. Skipping creation.`,
+    if (existingLayerElements?.has(objectData.celestialObjectId)) {
+      const existingLabel = existingLayerElements.get(
+        objectData.celestialObjectId,
       );
+      if (
+        existingLabel &&
+        this.labelFactory &&
+        typeof (this.labelFactory as any).updateSciFiLabel === "function"
+      ) {
+        let parentDataForUpdate: RenderableCelestialObject | undefined =
+          undefined;
+        if (objectData.parentId && allRenderableObjects) {
+          parentDataForUpdate = allRenderableObjects.get(objectData.parentId);
+        }
+        const updateContext: SciFiLabelFactoryContext = {
+          objectData: objectData,
+          visualObject: parentMesh,
+          parentData: parentDataForUpdate,
+        };
+        existingLabel.userData.factoryContext = updateContext;
+        (this.labelFactory as any).updateSciFiLabel(existingLabel);
+      }
       return;
     }
 
-    const labelObject = this.labelFactory.createCelestialLabel(object);
-    this.layerManager.addElement(
-      CSS2DLayerType.CELESTIAL_LABELS,
-      object.celestialObjectId,
-      labelObject,
-      parentMesh, // Attach to the parent mesh
-    );
+    let parentData: RenderableCelestialObject | undefined = undefined;
+    if (
+      objectData.type === CelestialType.MOON &&
+      objectData.parentId &&
+      allRenderableObjects
+    ) {
+      parentData = allRenderableObjects.get(objectData.parentId);
+    }
+
+    const context: SciFiLabelFactoryContext = {
+      objectData: objectData,
+      visualObject: parentMesh,
+      parentData: parentData,
+    };
+
+    const labelObject = this.labelFactory.createCelestialSciFiLabel(context);
+
+    if (labelObject) {
+      this.layerManager.addElement(
+        CSS2DLayerType.CELESTIAL_LABELS,
+        objectData.celestialObjectId,
+        labelObject,
+        parentMesh,
+      );
+    } else {
+    }
   }
 
   /**
@@ -111,7 +165,8 @@ export class CSS2DManager {
       return;
     }
 
-    const labelObject = this.labelFactory.createAuMarkerLabel(
+    const genericLabelFactory = new CSS2DLabelFactory();
+    const labelObject = genericLabelFactory.createAuMarkerLabel(
       id,
       auValue,
       position,
@@ -165,23 +220,20 @@ export class CSS2DManager {
 
   /**
    * Render visible layers.
-   * This method also handles cleanup of orphaned labels.
+   * This method also handles cleanup of orphaned labels and updates active ones.
    */
-  render(camera: THREE.Camera): void {
+  render(
+    camera: THREE.Camera,
+    allRenderableObjects?: ReadonlyMap<string, RenderableCelestialObject>,
+  ): void {
     let orphanedIdsToRemove: { layer: CSS2DLayerType; id: string }[] = [];
 
-    // Check for orphaned labels (labels whose parent is no longer in the scene)
     this.layerManager.forEachElement((element, id, layerType) => {
       let parentConnectedToScene = false;
       let current: THREE.Object3D | null = element.parent;
-
-      // For AU markers and other scene-level elements, their direct parent is the scene.
       if (layerType === CSS2DLayerType.AU_MARKERS) {
-        if (element.parent === this.scene) {
-          parentConnectedToScene = true;
-        }
+        if (element.parent === this.scene) parentConnectedToScene = true;
       } else {
-        // For other elements (like celestial labels), trace up to the scene.
         while (current) {
           if (current === this.scene) {
             parentConnectedToScene = true;
@@ -190,13 +242,41 @@ export class CSS2DManager {
           current = current.parent;
         }
       }
-
       if (!element.parent || !parentConnectedToScene) {
-        console.warn(
-          `[CSS2DManager] Found orphaned label ${id} in layer ${layerType}. Removing. Parent: ${element.parent}, Connected: ${parentConnectedToScene}`,
-        );
         orphanedIdsToRemove.push({ layer: layerType, id: id });
-        element.visible = false; // Hide it immediately
+        element.visible = false;
+      }
+
+      if (
+        layerType === CSS2DLayerType.CELESTIAL_LABELS &&
+        element.userData.isSciFiLabel &&
+        this.labelFactory &&
+        typeof (this.labelFactory as any).updateSciFiLabel === "function"
+      ) {
+        const currentObjectData = allRenderableObjects?.get(
+          element.userData.celestialObjectId,
+        );
+        if (currentObjectData) {
+          let currentParentData: RenderableCelestialObject | undefined =
+            undefined;
+          if (currentObjectData.parentId && allRenderableObjects) {
+            currentParentData = allRenderableObjects.get(
+              currentObjectData.parentId,
+            );
+          }
+          const updatedContext: SciFiLabelFactoryContext = {
+            objectData: currentObjectData,
+            visualObject: element.parent as THREE.Object3D,
+            parentData: currentParentData,
+          };
+          element.userData.factoryContext = updatedContext;
+          (this.labelFactory as any).updateSciFiLabel(element);
+        } else {
+          element.visible = false;
+          if (element.element instanceof SciFiLabelComponent) {
+            (element.element as SciFiLabelComponent).setVisibility(false);
+          }
+        }
       }
     });
 
@@ -204,8 +284,6 @@ export class CSS2DManager {
       this.layerManager.removeElement(orphan.layer, orphan.id);
     });
 
-    // Ensure no visible CSS2DObjects are parentless just before render.
-    // This is a safety check.
     this.scene.traverseVisible((object) => {
       if (object instanceof CSS2DObject) {
         if (!object.parent) {
@@ -213,20 +291,21 @@ export class CSS2DManager {
             `[CSS2DManager] CRITICAL: Found visible CSS2DObject in scene WITHOUT parent just before render! Hiding. ID: ${object.uuid}`,
             object,
           );
-          object.visible = false; // Hide to prevent render error
+          object.visible = false;
         }
       }
     });
 
-    // Check if there are any visible elements across all managed layers
     let hasVisibleElements = false;
     for (const layerType of Object.values(CSS2DLayerType)) {
       if (this.layerManager.isLayerVisible(layerType)) {
         const layerMap = this.layerManager.getLayerElements(layerType);
         if (layerMap && layerMap.size > 0) {
-          // Further check if any element in this visible layer is actually visible
           for (const element of layerMap.values()) {
-            if (element.visible && element.element.style.display !== "none") {
+            if (
+              element.visible &&
+              (element.element as HTMLElement).style.display !== "none"
+            ) {
               hasVisibleElements = true;
               break;
             }
@@ -237,6 +316,8 @@ export class CSS2DManager {
     }
 
     if (hasVisibleElements) {
+      /** Use if we need to force update */
+      // this.scene.updateMatrixWorld(true);
       this.rendererService.render(this.scene, camera);
     }
   }

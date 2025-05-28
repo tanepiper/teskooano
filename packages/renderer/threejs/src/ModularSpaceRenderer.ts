@@ -76,7 +76,11 @@ export class ModularSpaceRenderer {
     );
 
     if (showCelestialLabels) {
-      CSS2DManager.initialize(this.sceneManager.scene, container);
+      CSS2DManager.initialize(
+        this.sceneManager.scene,
+        this.sceneManager.camera,
+        container,
+      );
       this.css2DManager = CSS2DManager.getInstance();
 
       this.sceneManager.setCSS2DManager(this.css2DManager);
@@ -153,12 +157,8 @@ export class ModularSpaceRenderer {
 
   private setupAnimationCallbacks(): void {
     const mainUpdateCallback = (deltaTime: number, elapsedTime: number) => {
-      // Update controls and camera position first
-      this.controlsManager.update(deltaTime); // Assuming deltaTime from loop is same as controlsManager needs
-
+      this.controlsManager.update(deltaTime);
       this.orbitManager.updateAllVisualizations();
-
-      // objectManager.updateRenderers might be better after LOD and before CSS2D if it places objects
       this.objectManager.updateRenderers(
         elapsedTime,
         this.lightManager.getStarLightsData(),
@@ -166,28 +166,21 @@ export class ModularSpaceRenderer {
         this.sceneManager.scene,
         this.sceneManager.camera,
       );
+      this.backgroundManager.update(deltaTime);
+      this.lodManager.update();
 
-      this.backgroundManager.update(deltaTime); // Now uses updated camera
-
-      this.lodManager.update(); // Update LODs based on new camera position
-
-      if (this.css2DManager && typeof this.css2DManager.render === "function") {
-        this.css2DManager.render(this.camera); // Render CSS2D with updated camera
-      }
-
-      // Run any custom render callbacks
       this.animationLoop.getRenderCallbacks().forEach((callback) => callback());
-
-      // Perform the main scene render
       this.sceneManager.render();
 
-      // Render any top-level canvas UI
+      if (this.css2DManager && typeof this.css2DManager.render === "function") {
+        const allRenderableObjectsMap =
+          this.objectManager.getRenderableObjectsMap();
+        this.css2DManager.render(this.camera, allRenderableObjectsMap);
+      }
+
       if (this.canvasUIManager) {
         this.canvasUIManager.render();
       }
-
-      // Original position of this.render() call is removed as its logic is now inlined above.
-      // this.render();
     };
 
     this.animationLoop.onAnimate(mainUpdateCallback);

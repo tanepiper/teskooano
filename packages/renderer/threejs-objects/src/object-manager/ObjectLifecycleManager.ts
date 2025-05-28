@@ -78,24 +78,24 @@ export class ObjectLifecycleManager {
    * @param newState - The latest state of renderable objects.
    */
   syncObjectsWithState(
-    newState: Record<string, RenderableCelestialObject>,
+    newStateRecord: Record<string, RenderableCelestialObject>,
   ): void {
-    const newStateIds = new Set(Object.keys(newState));
+    const newStateMap = new Map(Object.entries(newStateRecord));
+    const newStateIds = new Set(newStateMap.keys());
     const currentIds = new Set(this.objects.keys());
 
-    // Remove objects not in the new state
     currentIds.forEach((id) => {
       if (!newStateIds.has(id)) {
         this.removeObject(id);
       }
     });
 
-    // Add or update objects from the new state
     newStateIds.forEach((id) => {
-      const objectData = newState[id];
+      const objectData = newStateMap.get(id);
+      if (!objectData) return;
+
       const mesh = this.objects.get(id);
 
-      // Handle destroyed/annihilated objects explicitly
       if (
         objectData.status === CelestialStatus.DESTROYED ||
         objectData.status === CelestialStatus.ANNIHILATED
@@ -103,16 +103,15 @@ export class ObjectLifecycleManager {
         if (mesh) {
           this.removeObject(id);
         }
-        return; // Skip further processing for destroyed objects
+        return;
       }
 
-      // Update existing active object or add new active object
       if (mesh) {
         if (objectData.status === CelestialStatus.ACTIVE) {
-          this.updateObject(objectData);
+          this.updateObject(objectData, newStateMap);
         }
       } else if (objectData.status === CelestialStatus.ACTIVE) {
-        this.addObject(objectData);
+        this.addObject(objectData, newStateMap);
       }
     });
   }
@@ -120,14 +119,18 @@ export class ObjectLifecycleManager {
   /**
    * Creates and adds a new Three.js mesh representation for a celestial object.
    * @param object - The data for the new celestial object.
+   * @param allRenderableObjects - A map of all currently renderable objects, to look up parent data for labels.
    */
-  addObject(object: RenderableCelestialObject): void {
+  addObject(
+    object: RenderableCelestialObject,
+    allRenderableObjects: ReadonlyMap<string, RenderableCelestialObject>,
+  ): void {
     const objectId = object.celestialObjectId;
     if (this.objects.has(objectId)) {
       console.warn(
         `[ObjectLifecycleManager] Attempted to add existing object ${objectId}. Updating instead.`,
       );
-      this.updateObject(object);
+      this.updateObject(object, allRenderableObjects);
       return;
     }
 
@@ -148,7 +151,11 @@ export class ObjectLifecycleManager {
     }
 
     if (this.css2DManager) {
-      this.css2DManager.createCelestialLabel(object, mesh);
+      this.css2DManager.createCelestialLabel(
+        object,
+        mesh,
+        allRenderableObjects,
+      );
     }
 
     if (this.lensingHandler.needsGravitationalLensing(object)) {
@@ -171,18 +178,21 @@ export class ObjectLifecycleManager {
   /**
    * Updates the position and rotation of an existing Three.js mesh.
    * @param object - The updated data for the celestial object.
+   * @param allRenderableObjects - A map of all currently renderable objects, for context if needed.
    */
-  updateObject(object: RenderableCelestialObject): void {
+  updateObject(
+    object: RenderableCelestialObject,
+    allRenderableObjects: ReadonlyMap<string, RenderableCelestialObject>,
+  ): void {
     const objectId = object.celestialObjectId;
     const existingMesh = this.objects.get(objectId);
 
     if (!existingMesh) {
-      // This case should ideally be handled by syncObjectsWithState, but as a fallback:
       if (object.status === CelestialStatus.ACTIVE) {
         console.warn(
           `[ObjectLifecycleManager] updateObject called for non-existent active object ${objectId}. Adding.`,
         );
-        this.addObject(object);
+        this.addObject(object, allRenderableObjects);
       }
       return;
     }
