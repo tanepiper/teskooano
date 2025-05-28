@@ -47,15 +47,28 @@ export class CSS2DRendererService {
    * @param container - The HTMLElement to append the renderer's DOM element to.
    */
   public initialize(container: HTMLElement): void {
-    if (this.container) {
-      console.warn(
-        "[CSS2DRendererService] Already initialized. Ignoring subsequent call.",
+    // If the renderer's DOM element is already parented and that parent is not the new container, remove it.
+    if (
+      this.renderer.domElement.parentNode &&
+      this.renderer.domElement.parentNode !== container
+    ) {
+      (this.renderer.domElement.parentNode as HTMLElement).removeChild(
+        this.renderer.domElement,
       );
-      return;
     }
-    this.container = container;
-    this.renderer.setSize(container.clientWidth, container.clientHeight);
-    container.appendChild(this.renderer.domElement);
+
+    this.container = container; // Update internal reference
+
+    // Append to the new container if it's not already the parent.
+    // This ensures it's added if it was never parented or was removed from a different parent.
+    if (this.renderer.domElement.parentNode !== this.container) {
+      this.container.appendChild(this.renderer.domElement);
+    }
+
+    this.renderer.setSize(
+      this.container.clientWidth,
+      this.container.clientHeight,
+    );
   }
 
   /**

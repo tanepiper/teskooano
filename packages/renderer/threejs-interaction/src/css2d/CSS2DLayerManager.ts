@@ -89,7 +89,7 @@ export class CSS2DLayerManager {
     const element = layerMap?.get(id);
     if (element) {
       element.removeFromParent();
-      // element.element.remove(); // Clean up the DOM element itself
+      element.element.remove(); // Clean up the DOM element itself
       layerMap?.delete(id);
     }
   }
@@ -154,7 +154,7 @@ export class CSS2DLayerManager {
     if (layerMap) {
       layerMap.forEach((element) => {
         element.removeFromParent();
-        // element.element.remove();
+        element.element.remove();
       });
       layerMap.clear();
     }

@@ -7,9 +7,9 @@ import {
   CSS2DLabelFactory,
   CSS2DLayerManager,
   CSS2DLayerType,
-  CSS2DSciFiLabelFactory,
-  type SciFiLabelFactoryContext,
-  SciFiLabelComponent,
+  CSS2DCelestialLabelFactory,
+  type CelestialLabelFactoryContext,
+  CelestialLabelComponent,
 } from "./css2d";
 
 /**
@@ -17,11 +17,11 @@ import {
  * Orchestrates CSS2DRendererService, CSS2DSciFiLabelFactory, and CSS2DLayerManager.
  */
 export class CSS2DManager {
-  private static instance: CSS2DManager;
+  private static instance: CSS2DManager | undefined;
   private scene: THREE.Scene;
   private camera: THREE.Camera;
   private rendererService: CSS2DRendererService;
-  private labelFactory: CSS2DSciFiLabelFactory;
+  private labelFactory: CSS2DCelestialLabelFactory;
   private layerManager: CSS2DLayerManager;
 
   private constructor(
@@ -34,8 +34,28 @@ export class CSS2DManager {
     this.rendererService = CSS2DRendererService.getInstance();
     this.rendererService.initialize(container); // Initialize with the container
 
-    this.labelFactory = new CSS2DSciFiLabelFactory(this.camera);
+    this.labelFactory = new CSS2DCelestialLabelFactory(this.camera);
     this.layerManager = CSS2DLayerManager.getInstance();
+  }
+
+  private _reconfigure(
+    scene: THREE.Scene,
+    camera: THREE.Camera,
+    container: HTMLElement,
+  ): void {
+    this.scene = scene;
+    this.camera = camera;
+    // Re-initialize renderer service with the new container.
+    // The CSS2DRendererService.initialize method is now idempotent and handles container changes.
+    this.rendererService.initialize(container);
+    // Re-create label factory with the new camera
+    this.labelFactory = new CSS2DCelestialLabelFactory(this.camera);
+    // Layer manager can persist, but ensure it's clean for a new context if necessary
+    // For now, assuming layers are cleared elsewhere when a system changes.
+    // If not, might need: this.layerManager.clearAllLayers();
+    console.log(
+      "[CSS2DManager] Reconfigured with new scene, camera, and container.",
+    );
   }
 
   /**
@@ -72,11 +92,13 @@ export class CSS2DManager {
   ): CSS2DManager {
     if (CSS2DManager.instance) {
       console.warn(
-        "[CSS2DManager] Already initialized. Returning existing instance.",
+        "[CSS2DManager] Instance already exists. Reconfiguring with new parameters.",
       );
+      CSS2DManager.instance._reconfigure(scene, camera, container);
       return CSS2DManager.instance;
     }
     CSS2DManager.instance = new CSS2DManager(scene, camera, container);
+    console.log("[CSS2DManager] Initialized new instance.");
     return CSS2DManager.instance;
   }
 
@@ -101,20 +123,20 @@ export class CSS2DManager {
       if (
         existingLabel &&
         this.labelFactory &&
-        typeof (this.labelFactory as any).updateSciFiLabel === "function"
+        typeof this.labelFactory.updateCelestialLabel === "function"
       ) {
         let parentDataForUpdate: RenderableCelestialObject | undefined =
           undefined;
         if (objectData.parentId && allRenderableObjects) {
           parentDataForUpdate = allRenderableObjects.get(objectData.parentId);
         }
-        const updateContext: SciFiLabelFactoryContext = {
+        const updateContext: CelestialLabelFactoryContext = {
           objectData: objectData,
           visualObject: parentMesh,
           parentData: parentDataForUpdate,
         };
         existingLabel.userData.factoryContext = updateContext;
-        (this.labelFactory as any).updateSciFiLabel(existingLabel);
+        this.labelFactory.updateCelestialLabel(existingLabel);
       }
       return;
     }
@@ -128,13 +150,13 @@ export class CSS2DManager {
       parentData = allRenderableObjects.get(objectData.parentId);
     }
 
-    const context: SciFiLabelFactoryContext = {
+    const context: CelestialLabelFactoryContext = {
       objectData: objectData,
       visualObject: parentMesh,
       parentData: parentData,
     };
 
-    const labelObject = this.labelFactory.createCelestialSciFiLabel(context);
+    const labelObject = this.labelFactory.createCelestialLabel(context);
 
     if (labelObject) {
       this.layerManager.addElement(
@@ -249,9 +271,9 @@ export class CSS2DManager {
 
       if (
         layerType === CSS2DLayerType.CELESTIAL_LABELS &&
-        element.userData.isSciFiLabel &&
+        element.userData.isCelestialLabel &&
         this.labelFactory &&
-        typeof (this.labelFactory as any).updateSciFiLabel === "function"
+        typeof this.labelFactory.updateCelestialLabel === "function"
       ) {
         const currentObjectData = allRenderableObjects?.get(
           element.userData.celestialObjectId,
@@ -264,17 +286,17 @@ export class CSS2DManager {
               currentObjectData.parentId,
             );
           }
-          const updatedContext: SciFiLabelFactoryContext = {
+          const updatedContext: CelestialLabelFactoryContext = {
             objectData: currentObjectData,
             visualObject: element.parent as THREE.Object3D,
             parentData: currentParentData,
           };
           element.userData.factoryContext = updatedContext;
-          (this.labelFactory as any).updateSciFiLabel(element);
+          this.labelFactory.updateCelestialLabel(element);
         } else {
           element.visible = false;
-          if (element.element instanceof SciFiLabelComponent) {
-            (element.element as SciFiLabelComponent).setVisibility(false);
+          if (element.element instanceof CelestialLabelComponent) {
+            (element.element as CelestialLabelComponent).setVisibility(false);
           }
         }
       }
@@ -335,6 +357,6 @@ export class CSS2DManager {
   dispose(): void {
     this.layerManager.clearAllLayers();
     this.rendererService.dispose();
-    // CSS2DManager.instance = undefined; // Allow re-initialization if needed
+    // CSS2DManager.instance = undefined; // Keep instance for potential reconfiguration
   }
 }

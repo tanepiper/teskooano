@@ -58,6 +58,33 @@ export function handleFocusRequest(
     );
     return false;
   }
+
+  // --- Update isFocused state in renderableStore ---
+  const updatedRenderables = { ...currentRenderables }; // Create a shallow copy
+  let storeNeedsUpdate = false;
+
+  for (const id in updatedRenderables) {
+    if (id === objectId) {
+      if (!updatedRenderables[id].isFocused) {
+        updatedRenderables[id] = { ...updatedRenderables[id], isFocused: true };
+        storeNeedsUpdate = true;
+      }
+    } else {
+      if (updatedRenderables[id].isFocused) {
+        updatedRenderables[id] = {
+          ...updatedRenderables[id],
+          isFocused: false,
+        };
+        storeNeedsUpdate = true;
+      }
+    }
+  }
+
+  if (storeNeedsUpdate) {
+    renderableStore.setAllRenderableObjects(updatedRenderables);
+  }
+  // --- End of isFocused update ---
+
   const targetPosition = targetObjectRenderable.position.clone();
 
   dispatchEventCallback(
