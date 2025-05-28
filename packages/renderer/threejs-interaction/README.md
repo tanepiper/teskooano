@@ -39,7 +39,11 @@ const container = document.getElementById("renderer-container");
 
 if (rendererElement && container) {
   const controlsManager = new ControlsManager(camera, rendererElement);
-  const css2dManager = new CSS2DManager(scene, container);
+  // const css2dManager = new CSS2DManager(scene, container); OLD WAY
+
+  // Initialize CSS2DManager singleton
+  CSS2DManager.initialize(scene, container);
+  const css2dManager = CSS2DManager.getInstance(); // NEW WAY
 
   // Example: Creating a label for a celestial object
   const sunObject = getCelestialObject("Sol"); // Your function to get the object

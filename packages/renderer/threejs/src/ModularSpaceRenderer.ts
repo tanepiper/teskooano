@@ -76,7 +76,8 @@ export class ModularSpaceRenderer {
     );
 
     if (showCelestialLabels) {
-      this.css2DManager = new CSS2DManager(this.sceneManager.scene, container);
+      CSS2DManager.initialize(this.sceneManager.scene, container);
+      this.css2DManager = CSS2DManager.getInstance();
 
       this.sceneManager.setCSS2DManager(this.css2DManager);
     } else {

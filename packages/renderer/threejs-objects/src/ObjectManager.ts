@@ -42,6 +42,7 @@ import { rendererEvents } from "@teskooano/renderer-threejs-core";
 interface LabelVisibilityManager {
   showLabel(layer: CSS2DLayerType, id: string): void;
   hideLabel(layer: CSS2DLayerType, id: string): void;
+  isLayerVisible(layer: CSS2DLayerType): boolean;
 }
 
 /**
@@ -351,6 +352,30 @@ export class ObjectManager {
   private updateLabelVisibility(): void {
     if (!this.css2DManager) return; // Skip if no CSS2D manager
 
+    // First, check if the entire celestial labels layer is globally visible
+    const isCelestialLayerGloballyVisible = this.css2DManager.isLayerVisible(
+      CSS2DLayerType.CELESTIAL_LABELS,
+    );
+
+    // If the layer is globally hidden, ensure all our managed labels are also explicitly hidden.
+    // This prevents this method from re-showing labels that the user globally hid.
+    if (!isCelestialLayerGloballyVisible) {
+      const allRenderableObjects = this.latestRenderableObjects;
+      for (const objectId in allRenderableObjects) {
+        // Only act if the object is one that *could* have a label this manager handles
+        const objectData = allRenderableObjects[objectId];
+        if (objectData && this.objects.has(objectId)) {
+          // Check if we manage this object
+          this.css2DManager.hideLabel(
+            CSS2DLayerType.CELESTIAL_LABELS,
+            objectId,
+          );
+        }
+      }
+      return; // Do not proceed with individual show/hide logic if layer is off
+    }
+
+    // If the layer is globally visible, proceed with LOD-based and type-based visibility
     const allRenderableObjects = this.latestRenderableObjects;
 
     for (const objectId in allRenderableObjects) {
@@ -397,7 +422,13 @@ export class ObjectManager {
 
       // Apply visibility change
       if (showLabel) {
-        this.css2DManager.showLabel(CSS2DLayerType.CELESTIAL_LABELS, objectId);
+        // Only show if the layer is globally visible (redundant check now, but safe)
+        if (isCelestialLayerGloballyVisible) {
+          this.css2DManager.showLabel(
+            CSS2DLayerType.CELESTIAL_LABELS,
+            objectId,
+          );
+        }
       } else {
         this.css2DManager.hideLabel(CSS2DLayerType.CELESTIAL_LABELS, objectId);
       }
