@@ -83,6 +83,17 @@ export class IntegrationManager {
   ): PhysicsStateReal {
     const orbit = params.orbitalParams?.get(body.id);
     const parentIdForBody = params.parentIds?.get(body.id);
+    const isStar = params.isStar?.get(body.id) || false;
+
+    // Special handling for primary stars in Kepler mode
+    // Main star should stay fixed at origin in ideal orbits mode
+    if (isStar && !parentIdForBody) {
+      // This is a primary star with no parent - keep it fixed at its current position
+      return {
+        ...body,
+        velocity_mps: new OSVector3(0, 0, 0), // No velocity for primary star
+      };
+    }
 
     let parentState: PhysicsStateReal | undefined;
     if (parentIdForBody && params.allBodies) {

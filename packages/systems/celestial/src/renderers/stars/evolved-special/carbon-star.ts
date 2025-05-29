@@ -5,7 +5,7 @@ import {
 } from "./evolved-special-star-renderer";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import { SCALE } from "@teskooano/data-types";
+import { AU_METERS, SCALE } from "@teskooano/data-types";
 import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 // Placeholder shaders for Carbon Star dusty shell
@@ -57,7 +57,7 @@ export class CarbonStarMaterial extends EvolvedSpecialStarMaterial {
 }
 
 /**
- * Renderer for Carbon stars - cool giants with carbon-rich atmospheres.
+ * Renderer for Carbon Stars - old, cool stars rich in carbon.
  */
 export class CarbonStarRenderer extends EvolvedSpecialStarRenderer {
   protected getMaterial(
@@ -68,7 +68,41 @@ export class CarbonStarRenderer extends EvolvedSpecialStarRenderer {
   }
 
   protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    return new THREE.Color(0xff4422); // Deep, rich red
+    // Carbon stars are distinctly red-orange to reddish-purple
+    return new THREE.Color(0xff3300);
+  }
+
+  /**
+   * Override billboard size calculation for Carbon stars.
+   * Carbon stars are typically larger than main sequence stars and have dusty shells.
+   *
+   * @param object The renderable celestial object
+   * @returns The calculated sprite size for billboard rendering
+   */
+  protected override calculateBillboardSize(
+    object: RenderableCelestialObject,
+  ): number {
+    const starRadius_AU = object.radius / AU_METERS;
+
+    // Carbon stars can be large with prominent dust shells
+    const minSpriteSize = 0.12;
+    const maxSpriteSize = 0.7;
+
+    // Add scaling for the dust shell effect
+    const calculatedSpriteSize = 0.12 + starRadius_AU * 0.15;
+
+    return Math.max(
+      minSpriteSize,
+      Math.min(maxSpriteSize, calculatedSpriteSize),
+    );
+  }
+
+  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
+    const scale = typeof SCALE === "number" ? SCALE : 1;
+    // Adjust distance based on star size for smooth transition
+    const starRadius_AU = object.radius / AU_METERS;
+    const sizeBasedDistance = 35000 + starRadius_AU * 2000;
+    return Math.min(60000, sizeBasedDistance) * scale;
   }
 
   protected getEffectLayer(
@@ -99,11 +133,6 @@ export class CarbonStarRenderer extends EvolvedSpecialStarRenderer {
     const shellMesh = new THREE.Mesh(shellGeometry, shellMaterial);
     shellMesh.name = `${object.celestialObjectId}-dust-shell`;
     return shellMesh;
-  }
-
-  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
-    const scale = typeof SCALE === "number" ? SCALE : 1;
-    return 12000 * scale;
   }
 
   protected getCustomLODs(

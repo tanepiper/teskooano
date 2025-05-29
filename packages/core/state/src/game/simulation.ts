@@ -138,8 +138,57 @@ export class SimulationStateService {
   }
 
   public setPhysicsEngine(engine: PhysicsEngineType): void {
+    const currentState = this.getCurrentState();
+
+    // Fix for binary/multi-star systems when switching to ideal orbits mode
+    if (engine === "kepler") {
+      try {
+        // Import here to avoid circular dependency
+        const {
+          celestialFactory,
+          getCelestialObjects,
+        } = require("../factory/celestial-factory");
+        const { CelestialType } = require("@teskooano/data-types");
+        const { OSVector3 } = require("@teskooano/core-math");
+
+        // Find the main star
+        const objects = getCelestialObjects();
+        const stars = Object.values(objects).filter(
+          (obj: any) => obj.type === CelestialType.STAR,
+        );
+
+        // Sort stars by mass to find the primary
+        stars.sort(
+          (a: any, b: any) => (b.realMass_kg || 0) - (a.realMass_kg || 0),
+        );
+
+        if (stars.length > 0) {
+          const primaryStar: any = stars[0];
+
+          // Reset primary star position and velocity to origin
+          // This prevents the entire system from moving as one unit
+          if (primaryStar.physicsStateReal) {
+            primaryStar.physicsStateReal.position_m = new OSVector3(0, 0, 0);
+            primaryStar.physicsStateReal.velocity_mps = new OSVector3(0, 0, 0);
+
+            // Update the star in the factory
+            celestialFactory.updateCelestial(primaryStar);
+
+            console.log(
+              `[SimulationState] Reset primary star ${primaryStar.name} position for ideal orbits mode`,
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          "[SimulationState] Error fixing star positions for ideal orbits:",
+          error,
+        );
+      }
+    }
+
     this.setState({
-      ...this.getCurrentState(),
+      ...currentState,
       physicsEngine: engine,
     });
   }

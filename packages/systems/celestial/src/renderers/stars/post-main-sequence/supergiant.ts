@@ -5,7 +5,7 @@ import {
 } from "./post-main-sequence-star-renderer";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import { SCALE } from "@teskooano/data-types";
+import { AU_METERS, SCALE } from "@teskooano/data-types";
 import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 /**
@@ -54,9 +54,37 @@ export class SupergiantRenderer extends PostMainSequenceStarRenderer {
     return new THREE.Color(0xff8855);
   }
 
+  /**
+   * Override billboard size calculation for supergiants to ensure proper scaling.
+   * Supergiants can be extremely large (multiple AU), so we need a custom scale factor.
+   *
+   * @param object The renderable celestial object
+   * @returns The calculated sprite size for billboard rendering
+   */
+  protected override calculateBillboardSize(
+    object: RenderableCelestialObject,
+  ): number {
+    // For supergiants, we need a much more aggressive scaling
+    const starRadius_AU = object.radius / AU_METERS;
+
+    // Scale based on radius in AU rather than meters
+    // Minimum 0.15 for visibility, scaling up to 1.2 for very large stars
+    const minSpriteSize = 0.15;
+    const maxSpriteSize = 1.2;
+
+    // Quadratic scaling to ensure very large stars get proper representation
+    // This will cause a 5 AU star to have a significantly larger billboard
+    const calculatedSpriteSize = 0.2 + starRadius_AU * starRadius_AU * 0.05;
+
+    return Math.max(
+      minSpriteSize,
+      Math.min(maxSpriteSize, calculatedSpriteSize),
+    );
+  }
+
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-    return 15000 * scale; // Retaining the original sprite distance
+    return 50000 * scale; // Retaining the original sprite distance
   }
 
   protected getCustomLODs(

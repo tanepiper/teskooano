@@ -5,7 +5,7 @@ import {
 } from "./post-main-sequence-star-renderer";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import { SCALE } from "@teskooano/data-types";
+import { AU_METERS, SCALE } from "@teskooano/data-types";
 import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 /**
@@ -49,13 +49,41 @@ export class SubgiantRenderer extends PostMainSequenceStarRenderer {
   }
 
   protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    // Subgiants are typically yellowish to orange
-    return new THREE.Color(0xffddaa);
+    // Subgiants tend to be yellowish-white
+    return new THREE.Color(0xfff4d9);
+  }
+
+  /**
+   * Override billboard size calculation for subgiants.
+   * Subgiants are larger than main sequence stars but smaller than giants.
+   *
+   * @param object The renderable celestial object
+   * @returns The calculated sprite size for billboard rendering
+   */
+  protected override calculateBillboardSize(
+    object: RenderableCelestialObject,
+  ): number {
+    const starRadius_AU = object.radius / AU_METERS;
+
+    // Subgiants are moderately sized
+    const minSpriteSize = 0.08;
+    const maxSpriteSize = 0.3; // Smaller maximum for subgiants
+
+    // Linear scaling is sufficient for subgiants
+    const calculatedSpriteSize = 0.08 + starRadius_AU * 0.1;
+
+    return Math.max(
+      minSpriteSize,
+      Math.min(maxSpriteSize, calculatedSpriteSize),
+    );
   }
 
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-    return 15000 * scale; // Retaining the original sprite distance
+    // Use a modest distance for subgiants
+    const starRadius_AU = object.radius / AU_METERS;
+    const sizeBasedDistance = 35000 + starRadius_AU * 1000;
+    return Math.min(45000, sizeBasedDistance) * scale;
   }
 
   protected getCustomLODs(

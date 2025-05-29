@@ -6,6 +6,7 @@ import type {
   CelestialMeshOptions,
   LightSourceData,
 } from "../../common/CelestialRenderer";
+import { AU_METERS } from "@teskooano/data-types";
 
 // Assuming direct .glsl imports work as strings in your Vite setup
 import EVOLVED_SPECIAL_VERTEX_SHADER from "../../../shaders/star/evolved-special/vertex.glsl";
@@ -75,6 +76,29 @@ export abstract class EvolvedSpecialStarRenderer extends BaseStarRenderer {
 
   protected getCoronaFragmentShader(object: RenderableCelestialObject): string {
     return EVOLVED_SPECIAL_CORONA_FRAGMENT_SHADER;
+  }
+
+  /**
+   * Calculate the appropriate billboard sprite size based on the star's real radius.
+   * This can be overridden by specific star type renderers to customize billboard scaling.
+   *
+   * @param object The renderable celestial object
+   * @returns The calculated sprite size
+   */
+  protected calculateBillboardSize(object: RenderableCelestialObject): number {
+    const starRadius_AU = object.radius / AU_METERS;
+
+    // Evolved special stars may have varied sizes
+    const minSpriteSize = 0.08;
+    const maxSpriteSize = 0.5;
+
+    // Linear scaling with modest exponential component for evolved stars
+    const calculatedSpriteSize = 0.1 + starRadius_AU * 0.15;
+
+    return Math.max(
+      minSpriteSize,
+      Math.min(maxSpriteSize, calculatedSpriteSize),
+    );
   }
 
   /**

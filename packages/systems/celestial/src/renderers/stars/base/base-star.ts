@@ -243,7 +243,15 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     const billboardDistance = this.getBillboardLODDistance(object);
 
     const circleTexture = this._createBillboardTexture();
-    const distantPointSize = this._calculateDistantSpriteSize(object);
+
+    // Use calculateBillboardSize if the subclass has implemented it, otherwise fall back to default calculation
+    let distantPointSize: number;
+    if (typeof (this as any).calculateBillboardSize === "function") {
+      distantPointSize = (this as any).calculateBillboardSize(object);
+    } else {
+      distantPointSize = this._calculateDistantSpriteSize(object);
+    }
+
     const distantSprite = this._createBillboardSprite(
       object,
       circleTexture,

@@ -27,6 +27,12 @@ export interface CelestialMeshOptions {
    * Default: false
    */
   debug?: boolean;
+
+  /**
+   * Whether to enable gravitational lensing effects for compatible objects (e.g., black holes).
+   * Default: false
+   */
+  enableGravitationalLensing?: boolean;
 }
 
 /**

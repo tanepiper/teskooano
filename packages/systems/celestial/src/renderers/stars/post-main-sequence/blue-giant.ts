@@ -5,7 +5,7 @@ import {
 } from "./post-main-sequence-star-renderer";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import { SCALE } from "@teskooano/data-types";
+import { AU_METERS, SCALE } from "@teskooano/data-types";
 import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 /**
@@ -50,13 +50,40 @@ export class BlueGiantRenderer extends PostMainSequenceStarRenderer {
   }
 
   protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    // Blue giants are hot and blue
-    return new THREE.Color(0xaaccff);
+    // Blue giants are blue-white
+    return new THREE.Color(0x8aa6ff);
+  }
+
+  /**
+   * Override billboard size calculation for blue giants.
+   *
+   * @param object The renderable celestial object
+   * @returns The calculated sprite size for billboard rendering
+   */
+  protected override calculateBillboardSize(
+    object: RenderableCelestialObject,
+  ): number {
+    const starRadius_AU = object.radius / AU_METERS;
+
+    // Blue giants are large but not as large as supergiants
+    const minSpriteSize = 0.12;
+    const maxSpriteSize = 0.7;
+
+    // Linear scaling with modest exponential component
+    const calculatedSpriteSize = 0.12 + starRadius_AU * 0.13;
+
+    return Math.max(
+      minSpriteSize,
+      Math.min(maxSpriteSize, calculatedSpriteSize),
+    );
   }
 
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-    return 15000 * scale; // Retaining the original sprite distance
+    // Adjust distance based on star size
+    const starRadius_AU = object.radius / AU_METERS;
+    const sizeBasedDistance = 45000 + starRadius_AU * 2000;
+    return Math.min(65000, sizeBasedDistance) * scale;
   }
 
   protected getCustomLODs(

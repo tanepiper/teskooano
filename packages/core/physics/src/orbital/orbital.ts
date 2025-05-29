@@ -208,7 +208,8 @@ export const updateOrbitalBodyKepler = (
     currentTime,
   );
 
-  const world_pos_m = relative_pos_m.add(parent.position_m);
+  // Use clone() to prevent accidental mutation of the relative position
+  const world_pos_m = relative_pos_m.clone().add(parent.position_m);
 
   return {
     ...body,

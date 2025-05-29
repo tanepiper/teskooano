@@ -50,15 +50,14 @@ export class GravitationalLensingHandler {
    * @returns `true` if the object requires lensing, `false` otherwise.
    */
   needsGravitationalLensing(object: RenderableCelestialObject): boolean {
+    let needsLensing = false;
     if (object.type === CelestialType.STAR) {
       const starProps = object.properties as StarProperties;
-      // Check if the object is a type that should have lensing
-      return (
+      needsLensing =
         starProps?.stellarType === StellarType.BLACK_HOLE ||
-        starProps?.stellarType === StellarType.NEUTRON_STAR
-      );
+        starProps?.stellarType === StellarType.NEUTRON_STAR;
     }
-    return false;
+    return needsLensing;
   }
 
   /**
@@ -103,7 +102,9 @@ export class GravitationalLensingHandler {
     camera: THREE.PerspectiveCamera,
     mesh: THREE.Object3D,
   ): void {
-    if (!this.lensingObjectsToAdd.has(objectData.celestialObjectId)) return;
+    if (!this.lensingObjectsToAdd.has(objectData.celestialObjectId)) {
+      return;
+    }
 
     const starRenderer = this.starRenderers.get(objectData.celestialObjectId);
 

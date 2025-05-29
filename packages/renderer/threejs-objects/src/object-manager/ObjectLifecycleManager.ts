@@ -159,6 +159,7 @@ export class ObjectLifecycleManager {
     }
 
     if (this.lensingHandler.needsGravitationalLensing(object)) {
+      this.lensingHandler.addLensingObject(object.celestialObjectId);
       if (this.renderer) {
         this.lensingHandler.applyGravitationalLensing(
           object,

@@ -38,6 +38,7 @@ SystemGeneratorModalTemplate.innerHTML = `
       padding: 12px;
       border-radius: 6px;
       margin-bottom: 8px;
+      border-left: 3px solid rgba(60, 130, 255, 0.5);
     }
     
     .section-title {
@@ -50,6 +51,10 @@ SystemGeneratorModalTemplate.innerHTML = `
       margin: 0;
       font-size: 14px;
       opacity: 0.9;
+    }
+    
+    .section-content strong {
+      color: var(--color-text-primary, #eeeef5);
     }
     
     .system-summary, .star-info {

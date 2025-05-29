@@ -5,7 +5,7 @@ import {
 } from "./post-main-sequence-star-renderer";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import { SCALE } from "@teskooano/data-types";
+import { AU_METERS, SCALE } from "@teskooano/data-types";
 import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 /**
@@ -49,13 +49,41 @@ export class HypergiantRenderer extends PostMainSequenceStarRenderer {
   }
 
   protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    // Hypergiants can be red, yellow, or blue - default to red
-    return new THREE.Color(0xff4433);
+    // Hypergiants can be various colors - default to bright yellowish-white
+    return new THREE.Color(0xffffcc);
+  }
+
+  /**
+   * Override billboard size calculation for hypergiants.
+   * Hypergiants are among the largest stars, so their billboards should reflect this.
+   *
+   * @param object The renderable celestial object
+   * @returns The calculated sprite size for billboard rendering
+   */
+  protected override calculateBillboardSize(
+    object: RenderableCelestialObject,
+  ): number {
+    const starRadius_AU = object.radius / AU_METERS;
+
+    // Hypergiants are even larger than supergiants
+    const minSpriteSize = 0.2;
+    const maxSpriteSize = 1.5; // Higher max size for hypergiants
+
+    // Quadratic scaling with higher factor for these extremely large stars
+    const calculatedSpriteSize = 0.25 + starRadius_AU * starRadius_AU * 0.06;
+
+    return Math.max(
+      minSpriteSize,
+      Math.min(maxSpriteSize, calculatedSpriteSize),
+    );
   }
 
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-    return 150000 * scale; // Retaining the original sprite distance
+    // Hypergiants should be visible from very far away
+    const starRadius_AU = object.radius / AU_METERS;
+    const sizeBasedDistance = 50000 + starRadius_AU * 3000;
+    return Math.min(80000, sizeBasedDistance) * scale;
   }
 
   protected getCustomLODs(

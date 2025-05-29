@@ -5,7 +5,7 @@ import {
 } from "./evolved-special-star-renderer";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import { SCALE, type StarProperties } from "@teskooano/data-types";
+import { AU_METERS, SCALE, type StarProperties } from "@teskooano/data-types";
 import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 /**
@@ -41,16 +41,8 @@ export class VariableStarRenderer extends EvolvedSpecialStarRenderer {
   }
 
   protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    // Default to a yellowish-white, actual color might vary based on star type
-    const starProps = object.properties as StarProperties;
-    if (starProps?.color) {
-      try {
-        return new THREE.Color(starProps.color as THREE.ColorRepresentation);
-      } catch (e) {
-        // Fallback if color string is invalid
-      }
-    }
-    return new THREE.Color(0xffffcc);
+    // Variable stars can have a range of colors - yellow-white is a common one
+    return new THREE.Color(0xffee66);
   }
 
   /**
@@ -106,9 +98,38 @@ export class VariableStarRenderer extends EvolvedSpecialStarRenderer {
     // this.effectMaterials.forEach( ... );
   }
 
+  /**
+   * Override billboard size calculation for Variable stars.
+   * These stars can pulsate in size, so the billboard should reflect their average size.
+   *
+   * @param object The renderable celestial object
+   * @returns The calculated sprite size for billboard rendering
+   */
+  protected override calculateBillboardSize(
+    object: RenderableCelestialObject,
+  ): number {
+    const starRadius_AU = object.radius / AU_METERS;
+
+    // Variable stars can change in size
+    const minSpriteSize = 0.1;
+    const maxSpriteSize = 0.6;
+
+    // Use a slightly more dynamic formula for variable stars
+    const pulseEffect = 0.15 + Math.sin(Date.now() * 0.0005) * 0.05; // Small oscillation
+    const calculatedSpriteSize = pulseEffect + starRadius_AU * 0.13;
+
+    return Math.max(
+      minSpriteSize,
+      Math.min(maxSpriteSize, calculatedSpriteSize),
+    );
+  }
+
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-    return 10000 * scale;
+    // Dynamic LOD distance based on star size
+    const starRadius_AU = object.radius / AU_METERS;
+    const sizeBasedDistance = 30000 + starRadius_AU * 2000;
+    return Math.min(55000, sizeBasedDistance) * scale;
   }
 
   protected getCustomLODs(

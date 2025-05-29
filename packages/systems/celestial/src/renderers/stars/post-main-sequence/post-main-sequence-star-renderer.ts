@@ -78,6 +78,28 @@ export abstract class PostMainSequenceStarRenderer extends BaseStarRenderer {
     return SHARED_CORONA_FRAGMENT_SHADER;
   }
 
+  /**
+   * Calculate the appropriate billboard sprite size based on the star's real radius.
+   * This can be overridden by specific star type renderers to customize billboard scaling.
+   *
+   * @param object The renderable celestial object
+   * @returns The calculated sprite size
+   */
+  protected calculateBillboardSize(object: RenderableCelestialObject): number {
+    const minSpriteSize = 0.05;
+    const maxSpriteSize = 0.4; // Increased max size for post-main-sequence stars
+    const radiusScaleFactor = 0.0003; // Increased scale factor
+
+    // Calculate size based on radius
+    let calculatedSpriteSize = object.radius * radiusScaleFactor;
+
+    // Apply clamping
+    return Math.max(
+      minSpriteSize,
+      Math.min(maxSpriteSize, calculatedSpriteSize),
+    );
+  }
+
   // These remain abstract
   protected abstract override getCustomLODs(
     object: RenderableCelestialObject,

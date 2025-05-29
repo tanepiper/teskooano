@@ -109,11 +109,11 @@ export class SystemGeneratorModal extends HTMLElement {
       </div>
 
       <div class="physics-info">
-        <h5 class="section-title">ℹ️ Physics Information</h5>
+        <h5 class="section-title">ℹ️ Physics Options</h5>
         <p class="section-content">
-          This system is using Accurate Physics (N-Body Verlet) to provide realistic orbital mechanics.
-          <br/>
-          You may observe some orbits evolving over time as gravitational interactions affect the bodies.
+          <strong>Accurate Physics (Recommended):</strong> N-Body Verlet integration provides realistic orbital mechanics. Orbits will evolve over time as gravitational interactions affect the bodies.
+          <br/><br/>
+          <strong>Ideal Physics:</strong> Kepler orbital mechanics keeps bodies on perfect elliptical paths. Useful for stable visualization but less realistic.
         </p>
       </div>
 
@@ -243,11 +243,22 @@ export async function showGeneratedSystemModal(seed: string): Promise<void> {
       content: modalElement,
       width: 500,
       height: 620,
-      confirmText: "Continue",
+      confirmText: "Accurate Physics",
+      secondaryText: "Ideal Physics",
       closeText: "Close",
-      hideCloseButton: true,
-      hideSecondaryButton: true,
+      hideCloseButton: false,
+      hideSecondaryButton: false,
     });
+
+    // Handle physics engine selection
+    if (result === "confirm") {
+      // Accurate physics (N-Body) - preferred
+      simulationStateService.setPhysicsEngine("verlet");
+    } else if (result === "secondary") {
+      // Ideal orbits (Kepler)
+      simulationStateService.setPhysicsEngine("kepler");
+    }
+    // If "close" was clicked, keep the current physics engine
 
     // Resume simulation if it was running before modal
     if (!wasPaused) {

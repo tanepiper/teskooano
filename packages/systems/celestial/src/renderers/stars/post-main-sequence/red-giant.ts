@@ -6,7 +6,7 @@ import {
 import { CoronaMaterial } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import { SCALE } from "@teskooano/data-types";
+import { AU_METERS, SCALE } from "@teskooano/data-types";
 import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 /**
@@ -51,13 +51,43 @@ export class RedGiantRenderer extends PostMainSequenceStarRenderer {
   }
 
   protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    // Red giants are cooler and redder
-    return new THREE.Color(0xff6633);
+    // Red giants are, as the name suggests, red
+    return new THREE.Color(0xff3300);
+  }
+
+  /**
+   * Override billboard size calculation for red giants.
+   * Red giants can be quite large, requiring custom scaling.
+   *
+   * @param object The renderable celestial object
+   * @returns The calculated sprite size for billboard rendering
+   */
+  protected override calculateBillboardSize(
+    object: RenderableCelestialObject,
+  ): number {
+    // For red giants, scale based on radius
+    const starRadius_AU = object.radius / AU_METERS;
+
+    // Scale based on radius in AU
+    const minSpriteSize = 0.1; // Slightly smaller minimum
+    const maxSpriteSize = 0.6; // Smaller maximum for red giants
+
+    // Linear scaling with modest exponential component
+    const calculatedSpriteSize = 0.1 + starRadius_AU * 0.12;
+
+    return Math.max(
+      minSpriteSize,
+      Math.min(maxSpriteSize, calculatedSpriteSize),
+    );
   }
 
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-    return 100000 * scale; // Same distance as before for the sprite
+    // Adjust distance based on star size to make transition smoother
+    const AU_IN_METERS = 149597870700; // 1 AU in meters
+    const starRadius_AU = object.radius / AU_IN_METERS;
+    const sizeBasedDistance = 40000 + starRadius_AU * 2000;
+    return Math.min(60000, sizeBasedDistance) * scale;
   }
 
   protected getCustomLODs(

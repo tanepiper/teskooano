@@ -142,22 +142,22 @@ export class AccretionDiskMaterial extends THREE.ShaderMaterial {
           if (ringShape < 0.01) discard; // Discard fragments outside the visible disk area
 
           float angle = atan(centerOffset.y, centerOffset.x);
-          float rotationSpeed = 0.15; // Adjusted rotation speed
+          float rotationSpeed = 0.35; // Increased rotation speed
           // Simulate differential rotation (inner parts faster)
           float adjustedRotation = (time * rotationSpeed * (1.0 / (distFromCenter + 0.1))) + angle;
           
           vec2 rotatedUv = vec2(cos(adjustedRotation) * distFromCenter, sin(adjustedRotation) * distFromCenter) + vec2(0.5);
 
-          float turbulence = fbm(rotatedUv * 8.0 + time * 0.05); // Scaled UVs for turbulence
+          float turbulence = fbm(rotatedUv * 12.0 + time * 0.05); // Increased scale for finer texture
 
           // Color gradient based on distance from center
           vec3 color = mix(diskColor1, diskColor2, smoothstep(innerRadius, (innerRadius + outerRadius) / 2.0, distFromCenter));
           color = mix(color, diskColor3, smoothstep((innerRadius + outerRadius) / 2.0, outerRadius, distFromCenter));
 
-          color *= (0.8 + turbulence * 0.4); // Modulate color by turbulence
+          color *= (0.7 + turbulence * 0.6); // Modulate color by turbulence more strongly
           
           // Fade out alpha at the edges of the disk
-          float alpha = ringShape * (0.7 + turbulence * 0.2);
+          float alpha = ringShape * (0.6 + turbulence * 0.3); // Adjusted alpha modulation
           alpha = clamp(alpha, 0.0, 0.9);
 
           gl_FragColor = vec4(color, alpha);
@@ -191,7 +191,7 @@ export class SchwarzschildBlackHoleRenderer extends BaseBlackHoleRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ) {
-    super(object, options);
+    super(object, { ...options, enableGravitationalLensing: true });
   }
 
   /**

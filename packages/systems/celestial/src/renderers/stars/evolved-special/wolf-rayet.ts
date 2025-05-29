@@ -5,7 +5,7 @@ import {
 } from "./evolved-special-star-renderer";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import { SCALE } from "@teskooano/data-types";
+import { AU_METERS, SCALE } from "@teskooano/data-types";
 import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
 // Placeholder shaders for Wolf-Rayet wind shell
@@ -70,6 +70,30 @@ export class WolfRayetRenderer extends EvolvedSpecialStarRenderer {
     return new THREE.Color(0xcad7ff);
   }
 
+  /**
+   * Override billboard size calculation for Wolf-Rayet stars.
+   *
+   * @param object The renderable celestial object
+   * @returns The calculated sprite size for billboard rendering
+   */
+  protected override calculateBillboardSize(
+    object: RenderableCelestialObject,
+  ): number {
+    const starRadius_AU = object.radius / AU_METERS;
+
+    // Wolf-Rayet stars should have a prominent billboard due to their wind shells
+    const minSpriteSize = 0.15;
+    const maxSpriteSize = 0.8;
+
+    // Add a multiplier for the wind shell effect
+    const calculatedSpriteSize = 0.15 + starRadius_AU * 0.2;
+
+    return Math.max(
+      minSpriteSize,
+      Math.min(maxSpriteSize, calculatedSpriteSize),
+    );
+  }
+
   protected getEffectLayer(
     object: RenderableCelestialObject,
     mainStarGroup: THREE.Group,
@@ -102,7 +126,10 @@ export class WolfRayetRenderer extends EvolvedSpecialStarRenderer {
 
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-    return 20000 * scale; // Adjusted distance for these unique stars
+    // Adjust distance based on star size to ensure smooth transition
+    const starRadius_AU = object.radius / AU_METERS;
+    const sizeBasedDistance = 40000 + starRadius_AU * 2500;
+    return Math.min(70000, sizeBasedDistance) * scale;
   }
 
   protected getCustomLODs(

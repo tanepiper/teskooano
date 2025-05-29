@@ -81,16 +81,21 @@ export abstract class BaseBlackHoleRenderer extends BaseStarRenderer {
   protected createLensingEffectMesh(
     object: RenderableCelestialObject,
   ): THREE.Mesh | null {
-    if (!this._lensingRenderer) return null;
+    if (!this._lensingRenderer) {
+      console.warn(
+        "[LENSING] createLensingEffectMesh: No _lensingRenderer available.",
+      );
+      return null;
+    }
 
-    const eventHorizonRadius =
-      object.radius || 0.1 * (typeof SCALE === "number" ? SCALE : 1);
-    const lensingSphereRadius = eventHorizonRadius * 2.5; // Slightly increased for better visual effect
+    const scaleValue = typeof SCALE === "number" ? SCALE : 1;
+    const eventHorizonRadius = object.radius || 0.1 * scaleValue;
+    const lensingSphereRadius = eventHorizonRadius * 5.0; // Increased multiplier for lensing sphere size
 
     this.lensingMaterialInstance = new GravitationalLensingMaterial({
-      intensity: 1.5,
+      intensity: 2.5, // Increased intensity
       radius: lensingSphereRadius,
-      distortionScale: 0.03, // Adjusted distortion scale
+      distortionScale: 0.1, // Increased distortion scale
     });
 
     const { width, height } = this._lensingRenderer.getSize(
@@ -350,12 +355,13 @@ export abstract class BaseBlackHoleRenderer extends BaseStarRenderer {
       let highDetailGroup = meshGroup.getObjectByName(
         `${objectData.celestialObjectId}-black-hole-high-detail`,
       );
+
       if (!highDetailGroup && meshGroup instanceof THREE.Group) {
         // If meshGroup is already the high-detail group (e.g. if LOD is handled externally)
         highDetailGroup = meshGroup;
       } else if (!highDetailGroup) {
         console.warn(
-          `[BaseBlackHoleRenderer] Could not find high-detail group in`,
+          `[LENSING] Could not find high-detail group in`,
           meshGroup,
           `to add lensing mesh for ${objectData.celestialObjectId}. Lensing may not appear.`,
         );
@@ -366,16 +372,23 @@ export abstract class BaseBlackHoleRenderer extends BaseStarRenderer {
 
       if (highDetailGroup) {
         const lensingMeshInstance = this.createLensingEffectMesh(objectData);
-        if (lensingMeshInstance && !lensingMeshInstance.parent) {
-          // Add only if not already parented
-          highDetailGroup.add(lensingMeshInstance);
+        if (lensingMeshInstance) {
+          if (!lensingMeshInstance.parent) {
+            // Add only if not already parented
+            highDetailGroup.add(lensingMeshInstance);
+          } else {
+          }
+        } else {
+          console.warn(
+            `[LENSING] Lensing mesh instance was NOT created for ${objectData.celestialObjectId}.`,
+          );
         }
       } else {
         // Fallback: if no specific group, create and store, but it might not be added to scene correctly.
         // This indicates a potential issue with how lensing mesh is integrated into LOD system.
-        this.createLensingEffectMesh(objectData);
+        this.createLensingEffectMesh(objectData); // Call it to log internal details
         console.warn(
-          `[BaseBlackHoleRenderer] Lensing mesh for ${objectData.celestialObjectId} created but not added to a high-detail group.`,
+          `[LENSING] Lensing mesh for ${objectData.celestialObjectId} created (or attempted) but NOT ADDED to a high-detail group.`,
         );
       }
     } else if (
