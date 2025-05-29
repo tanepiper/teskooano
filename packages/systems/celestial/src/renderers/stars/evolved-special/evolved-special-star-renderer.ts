@@ -28,6 +28,7 @@ export class EvolvedSpecialStarMaterial extends THREE.ShaderMaterial {
       metallicEffect?: number;
       time?: number; // Optional initial time
       noiseEvolutionSpeed?: number; // Added for controlling noise animation speed
+      timeOffset?: number; // Added
     } = {},
     vertexShader: string = EVOLVED_SPECIAL_VERTEX_SHADER,
     fragmentShader: string = EVOLVED_SPECIAL_FRAGMENT_SHADER,
@@ -47,6 +48,9 @@ export class EvolvedSpecialStarMaterial extends THREE.ShaderMaterial {
       noiseEvolutionSpeed: {
         value: shaderParameters.noiseEvolutionSpeed ?? 1.0,
       }, // Default to 1.0
+      timeOffset: {
+        value: shaderParameters.timeOffset ?? Math.random() * 1000.0,
+      }, // Added
     };
 
     super({
@@ -60,9 +64,6 @@ export class EvolvedSpecialStarMaterial extends THREE.ShaderMaterial {
   }
 
   update(time: number): void {
-    console.log(
-      `[EvolvedSpecialStarMaterial] update called. Time: ${time}, Uniform exists: ${!!this.uniforms.time}`,
-    ); // DIAGNOSTIC LOG
     if (this.uniforms.time) {
       this.uniforms.time.value = time;
     }

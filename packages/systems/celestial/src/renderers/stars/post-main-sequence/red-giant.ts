@@ -138,6 +138,7 @@ export class RedGiantRenderer extends PostMainSequenceStarRenderer {
         opacity: 0.03,
         pulseSpeed: 0.1, // Slightly different pulse for this layer
         noiseScale: 1.5, // Different noise characteristics
+        noiseEvolutionSpeed: 0.5, // Added for more dynamic mass loss envelope
       },
       this.getCoronaVertexShader(object), // Use the shared (simple) vertex shader
       this.getCoronaFragmentShader(object), // Use the shared corona fragment shader

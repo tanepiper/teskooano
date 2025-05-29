@@ -23,6 +23,8 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
       glowIntensity?: number;
       temperatureVariation?: number;
       metallicEffect?: number;
+      noiseEvolutionSpeed?: number;
+      timeOffset?: number;
     } = {},
   ) {
     super({
@@ -34,6 +36,8 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
         glowIntensity: { value: options.glowIntensity ?? 0.4 },
         temperatureVariation: { value: options.temperatureVariation ?? 0.1 },
         metallicEffect: { value: options.metallicEffect ?? 0.6 },
+        noiseEvolutionSpeed: { value: options.noiseEvolutionSpeed ?? 0.05 },
+        timeOffset: { value: options.timeOffset ?? Math.random() * 1000.0 },
       },
       vertexShader: mainSequenceVertexShader,
       fragmentShader: mainSequenceFragmentShader,
@@ -69,7 +73,19 @@ export class MainSequenceStarRenderer extends BaseStarRenderer {
   protected getMaterial(
     object: RenderableCelestialObject,
   ): THREE.ShaderMaterial {
-    return new MainSequenceStarMaterial(this.getStarColor(object));
+    const materialOptions = {
+      coronaIntensity: this.options?.coronaIntensity,
+      pulseSpeed: this.options?.pulseSpeed,
+      glowIntensity: this.options?.glowIntensity,
+      temperatureVariation: this.options?.temperatureVariation,
+      metallicEffect: this.options?.metallicEffect,
+      noiseEvolutionSpeed: this.options?.noiseEvolutionSpeed,
+      timeOffset: this.options?.timeOffset,
+    };
+    return new MainSequenceStarMaterial(
+      this.getStarColor(object),
+      materialOptions,
+    );
   }
 
   /**

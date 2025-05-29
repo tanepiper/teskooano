@@ -17,6 +17,11 @@ import {
  * - Frequency: 7.6% of main-sequence stars
  */
 
+// Define the type for the second constructor parameter of MainSequenceStarMaterial
+type StarMaterialCtorOptions = ConstructorParameters<
+  typeof MainSequenceStarMaterial
+>[1];
+
 /**
  * Renderer for G-class stars
  */
@@ -35,13 +40,43 @@ export class ClassGStarRenderer extends MainSequenceStarRenderer {
     object: RenderableCelestialObject,
   ): THREE.ShaderMaterial {
     const color = this.getStarColor(object);
-    return new MainSequenceStarMaterial(color, {
+
+    const classDefaults: StarMaterialCtorOptions = {
       coronaIntensity: 0.4,
       pulseSpeed: 0.45,
       glowIntensity: 0.45,
       temperatureVariation: 0.09,
       metallicEffect: 0.6,
-    });
+      noiseEvolutionSpeed: 0.15, // Faster default for G-class
+      timeOffset: Math.random() * 1000.0,
+    };
+
+    const optsFromMesh: StarMaterialCtorOptions = {};
+    if (this.options) {
+      if (this.options.coronaIntensity !== undefined)
+        optsFromMesh.coronaIntensity = this.options.coronaIntensity;
+      if (this.options.pulseSpeed !== undefined)
+        optsFromMesh.pulseSpeed = this.options.pulseSpeed;
+      if (this.options.glowIntensity !== undefined)
+        optsFromMesh.glowIntensity = this.options.glowIntensity;
+      if (this.options.temperatureVariation !== undefined)
+        optsFromMesh.temperatureVariation = this.options.temperatureVariation;
+      if (this.options.metallicEffect !== undefined)
+        optsFromMesh.metallicEffect = this.options.metallicEffect;
+      if (this.options.noiseEvolutionSpeed !== undefined)
+        optsFromMesh.noiseEvolutionSpeed = this.options.noiseEvolutionSpeed;
+      if (this.options.timeOffset !== undefined)
+        optsFromMesh.timeOffset = this.options.timeOffset;
+      // noiseScale is in CelestialMeshOptions, but not in MainSequenceStarMaterial's constructor options yet.
+      // If it were, it would be: if (this.options.noiseScale !== undefined) optsFromMesh.noiseScale = this.options.noiseScale;
+    }
+
+    const finalMaterialOptions: StarMaterialCtorOptions = {
+      ...classDefaults,
+      ...optsFromMesh, // Options from CelestialMeshOptions override class defaults
+    };
+
+    return new MainSequenceStarMaterial(color, finalMaterialOptions);
   }
 
   /**

@@ -1,4 +1,8 @@
+import { celestialFactory } from "./factory";
+import { CelestialType } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
+import { gameStateService } from "./stores";
+import { celestialActions } from "./celestialActions";
 import { BehaviorSubject, Observable } from "rxjs";
 import type {
   PerformanceProfileType,
@@ -143,16 +147,8 @@ export class SimulationStateService {
     // Fix for binary/multi-star systems when switching to ideal orbits mode
     if (engine === "kepler") {
       try {
-        // Import here to avoid circular dependency
-        const {
-          celestialFactory,
-          getCelestialObjects,
-        } = require("../factory/celestial-factory");
-        const { CelestialType } = require("@teskooano/data-types");
-        const { OSVector3 } = require("@teskooano/core-math");
-
         // Find the main star
-        const objects = getCelestialObjects();
+        const objects = gameStateService.getCelestialObjects();
         const stars = Object.values(objects).filter(
           (obj: any) => obj.type === CelestialType.STAR,
         );
@@ -172,7 +168,9 @@ export class SimulationStateService {
             primaryStar.physicsStateReal.velocity_mps = new OSVector3(0, 0, 0);
 
             // Update the star in the factory
-            celestialFactory.updateCelestial(primaryStar);
+            celestialActions.updateCelestialObject(primaryStar.id, {
+              physicsStateReal: primaryStar.physicsStateReal,
+            });
 
             console.log(
               `[SimulationState] Reset primary star ${primaryStar.name} position for ideal orbits mode`,

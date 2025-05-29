@@ -18,6 +18,8 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
       opacity?: number;
       pulseSpeed?: number;
       noiseScale?: number;
+      noiseEvolutionSpeed?: number;
+      timeOffset?: number;
     } = {},
     vertexShader: string,
     fragmentShader: string,
@@ -29,6 +31,8 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
         opacity: { value: options.opacity ?? 0.6 },
         pulseSpeed: { value: options.pulseSpeed ?? 0.3 },
         noiseScale: { value: options.noiseScale ?? 3.0 },
+        noiseEvolutionSpeed: { value: options.noiseEvolutionSpeed ?? 1.0 },
+        timeOffset: { value: options.timeOffset ?? Math.random() * 1000.0 },
       },
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,

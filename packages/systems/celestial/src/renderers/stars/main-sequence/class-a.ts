@@ -12,6 +12,11 @@ import type { CelestialMeshOptions } from "../../common/CelestialRenderer"; // A
 // import mainSequenceVertexShader from "../../../shaders/star/main-sequence/vertex.glsl";
 // import mainSequenceFragmentShader from "../../../shaders/star/main-sequence/fragment.glsl";
 
+// Define the type for the second constructor parameter of MainSequenceStarMaterial
+type StarMaterialCtorOptions = ConstructorParameters<
+  typeof MainSequenceStarMaterial
+>[1];
+
 /**
  * Material for A-class stars
  * - Temperature: 7,300–10,000 K
@@ -42,19 +47,47 @@ export class ClassAStarRenderer extends MainSequenceStarRenderer {
     object: RenderableCelestialObject,
   ): THREE.ShaderMaterial {
     const color = this.getStarColor(object);
-    return new MainSequenceStarMaterial(color, {
+
+    const classDefaults: StarMaterialCtorOptions = {
       coronaIntensity: 0.5,
-      pulseSpeed: 0.6,
+      pulseSpeed: 0.5,
       glowIntensity: 0.6,
-      temperatureVariation: 0.12,
+      temperatureVariation: 0.1,
       metallicEffect: 0.5,
-    });
+      noiseEvolutionSpeed: 0.16,
+      timeOffset: Math.random() * 1000.0,
+    };
+
+    const optsFromMesh: StarMaterialCtorOptions = {};
+    if (this.options) {
+      if (this.options.coronaIntensity !== undefined)
+        optsFromMesh.coronaIntensity = this.options.coronaIntensity;
+      if (this.options.pulseSpeed !== undefined)
+        optsFromMesh.pulseSpeed = this.options.pulseSpeed;
+      if (this.options.glowIntensity !== undefined)
+        optsFromMesh.glowIntensity = this.options.glowIntensity;
+      if (this.options.temperatureVariation !== undefined)
+        optsFromMesh.temperatureVariation = this.options.temperatureVariation;
+      if (this.options.metallicEffect !== undefined)
+        optsFromMesh.metallicEffect = this.options.metallicEffect;
+      if (this.options.noiseEvolutionSpeed !== undefined)
+        optsFromMesh.noiseEvolutionSpeed = this.options.noiseEvolutionSpeed;
+      if (this.options.timeOffset !== undefined)
+        optsFromMesh.timeOffset = this.options.timeOffset;
+    }
+
+    const finalMaterialOptions: StarMaterialCtorOptions = {
+      ...classDefaults,
+      ...optsFromMesh,
+    };
+
+    return new MainSequenceStarMaterial(color, finalMaterialOptions);
   }
 
   /**
    * A-class stars are white
    */
   protected getStarColor(star: RenderableCelestialObject): THREE.Color {
-    return new THREE.Color(0xf8f7ff);
+    return new THREE.Color(0xcadaff); // White to bluish-white for A-class
   }
 }

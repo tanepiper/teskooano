@@ -5,9 +5,6 @@ import {
   CelestialType,
   PlanetType,
   SurfaceType,
-  type DesertSurfaceProperties,
-  type RockyTerrestrialSurfaceProperties,
-  type PlanetAtmosphereProperties,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
 } from "@teskooano/data-types";

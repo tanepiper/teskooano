@@ -2,7 +2,6 @@ import {
   PlanetProperties,
   PlanetType,
   ProceduralSurfaceProperties,
-  SurfaceType,
 } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
@@ -22,10 +21,12 @@ export class PlanetMaterialService {
       );
     }
 
-    const specificSurfaceProps = (object.properties as PlanetProperties)
-      ?.surface as ProceduralSurfaceProperties | undefined;
-    const planetProps = object.properties as PlanetProperties | undefined;
-    const planetType = planetProps?.planetType ?? (object as any).planetType; // Consider a safer way to get planetType if needed
+    const planetBaseProps = object.properties as PlanetProperties | undefined;
+    const specificSurfaceProps = planetBaseProps?.surface?.proceduralData as
+      | ProceduralSurfaceProperties
+      | undefined;
+    const planetType =
+      planetBaseProps?.planetType ?? (object as any).planetType; // Consider a safer way to get planetType if needed
 
     let simplePalette = {
       color1: "#5179B5",
@@ -147,9 +148,10 @@ export class PlanetMaterialService {
    * Gets a representative base color for the planet (used for simpler LOD levels).
    */
   getBaseColor(object: RenderableCelestialObject): THREE.Color {
-    const planetProps = object.properties as PlanetProperties | undefined;
-    const planetType = planetProps?.planetType ?? (object as any).planetType;
-    const specificSurfaceProps = planetProps?.surface as
+    const planetBaseProps = object.properties as PlanetProperties | undefined;
+    const planetType =
+      planetBaseProps?.planetType ?? (object as any).planetType;
+    const specificSurfaceProps = planetBaseProps?.surface?.proceduralData as
       | ProceduralSurfaceProperties
       | undefined;
 

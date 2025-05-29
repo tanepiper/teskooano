@@ -2,6 +2,9 @@ import * as THREE from "three";
 import type { OSVector3 } from "@teskooano/core-math";
 import type { PhysicsStateReal } from "./physics";
 import { StellarType as NewStellarType } from "./celestials/common/stellar-classification";
+import type { ProceduralSurfaceProperties } from "./celestials/common/procedural-surface-properties";
+import type { SurfaceProperties } from "./celestials/components";
+import { SurfaceType } from "./celestials/common/physical-properties";
 
 /**
  * Defines the primary classification of a celestial body.
@@ -84,34 +87,6 @@ export enum AtmosphereType {
 }
 
 /**
- * Describes the general topography or covering of a celestial body's surface.
- */
-export enum SurfaceType {
-  /** Characterized by numerous impact craters. */
-  CRATERED = "CRATERED",
-  /** Characterized by canyons and valleys. */
-  CANYONOUS = "CANYONOUS",
-  /** Characterized by volcanic activity. */
-  VOLCANIC = "VOLCANIC",
-  /** Dominated by mountain ranges and high relief. */
-  MOUNTAINOUS = "MOUNTAINOUS",
-  /** Relatively level terrain with low relief. */
-  FLAT = "FLAT",
-  /** Highlands and plateaus. */
-  HIGHLANDS = "HIGHLANDS",
-  /** Surface is predominantly liquid water or another fluid. */
-  OCEAN = "OCEAN",
-  /** Surface features earth-like variety (land, water, mountains). */
-  VARIED = "VARIED",
-  /** Characterized by large sand dunes. */
-  DUNES = "DUNES",
-  /** Dominated by flat expanses of ice. */
-  ICE_FLATS = "ICE_FLATS",
-  /** Surface ice showing significant cracking or fissures. */
-  ICE_CRACKED = "ICE_CRACKED",
-}
-
-/**
  * Describes the primary composition type of rocky bodies like asteroids or ring particles.
  */
 export enum RockyType {
@@ -178,6 +153,7 @@ export interface StarProperties extends SpecificPropertiesBase {
   partnerStars?: string[];
   /** Optional stellar characteristics computed from physics data (variability, wind rates, etc.) */
   characteristics?: Record<string, any>;
+  timeOffset?: number;
 }
 
 export interface PlanetAtmosphereProperties {
@@ -206,6 +182,8 @@ export interface PlanetProperties extends SpecificPropertiesBase {
   shapeModel?: "sphere" | "asteroid" | string;
   /** Array listing the primary chemical or geological composition (e.g., ["silicates", "iron"]). */
   composition: string[];
+  /** Optional surface properties, including procedural data. */
+  surface?: SurfaceProperties;
   /** Optional atmospheric properties. */
   atmosphere?: PlanetAtmosphereProperties;
   /** Optional cloud layer properties. */
@@ -219,154 +197,7 @@ export interface PlanetProperties extends SpecificPropertiesBase {
     /** Speed of cloud movement/animation. */
     speed?: number;
   };
-  /** Optional surface characteristics, specific structure depends on PlanetType. */
-  surface?: SurfacePropertiesUnion;
-  /** Optional array defining planetary rings. */
 }
-
-/** Base interface for surface properties */
-export interface BaseSurfaceProperties {
-  /** The general topographic type (e.g., CRATERED, MOUNTAINOUS). */
-  type: SurfaceType;
-  /** The base color of the surface, usually a hex string. */
-  color: string;
-  /** A value indicating surface texture roughness (e.g., 0.0 - 1.0). */
-  roughness: number;
-  /** An optional secondary color for surface variations, usually a hex string. */
-  secondaryColor?: string;
-}
-
-/** Surface properties specific to Desert planets */
-export interface DesertSurfaceProperties extends BaseSurfaceProperties {
-  planetType: PlanetType.DESERT;
-  /** Intensity of dune patterns (e.g., 0.0 - 1.0). */
-  dunePattern?: number;
-  /** Average height of dunes (in scaled units). */
-  duneHeight?: number;
-}
-
-/** Surface properties specific to Ice planets */
-export interface IceSurfaceProperties extends BaseSurfaceProperties {
-  planetType: PlanetType.ICE;
-  /** Intensity of surface cracks or fissures (e.g., 0.0 - 1.0). */
-  crackIntensity?: number;
-  /** Surface glossiness or shininess (e.g., 0.0 - 1.0). */
-  glossiness?: number;
-  /** Average thickness of the ice layer (in scaled units). */
-  iceThickness?: number;
-}
-
-/** Surface properties specific to Lava planets */
-export interface LavaSurfaceProperties extends BaseSurfaceProperties {
-  planetType: PlanetType.LAVA;
-  /** Color of the cooled rock areas, usually a hex string. */
-  rockColor?: string;
-  /** Color of the molten lava, usually a hex string. */
-  lavaColor?: string;
-  /** Level of surface lava flow activity (e.g., 0.0 - 1.0). */
-  lavaActivity?: number;
-  /** Level of volcanic eruptions or hotspots (e.g., 0.0 - 1.0). */
-  volcanicActivity?: number;
-}
-
-/** Surface properties specific to Ocean planets */
-export interface OceanSurfaceProperties extends BaseSurfaceProperties {
-  planetType: PlanetType.OCEAN;
-  /** Color of the shallow surface water, usually a hex string. */
-  oceanColor?: string;
-  /** Color of the deeper water, usually a hex string. */
-  deepOceanColor?: string;
-  /** Color of any landmasses or islands, usually a hex string. */
-  landColor?: string;
-  /** Ratio of land area to water area (0.0 - 1.0). */
-  landRatio?: number;
-  /** Average height of surface waves (e.g., 0.0 - 1.0). */
-  waveHeight?: number;
-  /** Average depth of the oceans (in scaled units). */
-  oceanDepth?: number;
-}
-
-/**
- * Interface defining properties for procedural surface generation and rendering.
- * These properties control the appearance and characteristics of procedurally generated surfaces
- * such as terrain, planets, or other celestial bodies.
- */
-export interface ProceduralSurfaceProperties {
-  /** Controls how quickly the noise amplitude decreases with each octave (0-1) */
-  persistence: number;
-  /** Controls how quickly the frequency increases with each octave (typically > 1) */
-  lacunarity: number;
-  /** Base frequency for the noise generation */
-  simplePeriod: number;
-  /** Number of noise layers to combine for detail */
-  octaves: number;
-  /** Scale factor for normal map/bump mapping effect */
-  bumpScale: number;
-  /** Base color for the surface (lowest elevation) */
-  color1: string;
-  /** Second color gradient point */
-  color2: string;
-  /** Third color gradient point */
-  color3: string;
-  /** Fourth color gradient point */
-  color4: string;
-  /** Final color for the surface (highest elevation) */
-  color5: string;
-  /** Height threshold for color1 transition */
-  height1: number;
-  /** Height threshold for color2 transition */
-  height2: number;
-  /** Height threshold for color3 transition */
-  height3: number;
-  /** Height threshold for color4 transition */
-  height4: number;
-  /** Height threshold for color5 transition */
-  height5: number;
-  /** Surface shininess factor (0-1) */
-  shininess: number;
-  /** Intensity of specular highlights (0-1) */
-  specularStrength: number;
-  /** Surface roughness factor (0-1) */
-  roughness: number;
-  /** Intensity of ambient lighting (0-1) */
-  ambientLightIntensity: number;
-  /** Controls the amount of surface undulation/waviness */
-  undulation: number;
-
-  // Terrain generation properties
-  /** Type of terrain generation algorithm (1 = simple, 2 = sharp peaks, 3 = sharp valleys) */
-  terrainType: number;
-  /** Controls overall height scale of the terrain */
-  terrainAmplitude: number;
-  /** Controls how defined and sharp terrain features appear */
-  terrainSharpness: number;
-  /** Base height offset for the entire terrain */
-  terrainOffset: number;
-}
-
-/** Surface properties specific to Rocky/Terrestrial planets */
-export interface RockyTerrestrialSurfaceProperties
-  extends ProceduralSurfaceProperties,
-    BaseSurfaceProperties {
-  planetType: PlanetType.ROCKY | PlanetType.TERRESTRIAL;
-}
-
-/** Surface properties specific to Barren planets */
-export interface BarrenSurfaceProperties
-  extends ProceduralSurfaceProperties,
-    BaseSurfaceProperties {
-  planetType: PlanetType.BARREN;
-}
-
-/** Union type for all possible surface properties */
-export type SurfacePropertiesUnion =
-  | DesertSurfaceProperties
-  | IceSurfaceProperties
-  | LavaSurfaceProperties
-  | OceanSurfaceProperties
-  | RockyTerrestrialSurfaceProperties
-  | BarrenSurfaceProperties
-  | BaseSurfaceProperties;
 
 /**
  * Represents the properties defining a single planetary ring or a segment of a ring system.
@@ -541,9 +372,6 @@ export interface CelestialObject {
 
   /** Optional atmospheric properties common to many bodies */
   atmosphere?: PlanetAtmosphereProperties;
-
-  /** Optional surface properties common to many bodies */
-  surface?: SurfacePropertiesUnion;
 
   /** Object containing properties specific to the `type` (or `class`) of celestial object. Optional for types like OTHER. */
   properties?: CelestialSpecificPropertiesUnion;

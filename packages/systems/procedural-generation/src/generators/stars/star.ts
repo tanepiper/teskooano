@@ -394,6 +394,7 @@ export function generateStar(random: () => number): CelestialObject {
     color: rgbToHex(renderingData.color),
     stellarType: chosenType,
     characteristics: classifiedStar.characteristics || {},
+    timeOffset: random() * 1000.0,
   };
 
   const star: CelestialObject = {

@@ -3,19 +3,15 @@ import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   AtmosphereType,
-  CelestialStatus,
   CelestialType,
   GasGiantClass,
   PlanetType,
   RockyType,
   SurfaceType,
   type GasGiantProperties,
-  type IceSurfaceProperties,
-  type RingProperties,
-  type RingSystemProperties,
-  type PlanetAtmosphereProperties,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
+  type RingSystemProperties,
 } from "@teskooano/data-types";
 
 const SATURN_MASS_KG = 5.6834e26;

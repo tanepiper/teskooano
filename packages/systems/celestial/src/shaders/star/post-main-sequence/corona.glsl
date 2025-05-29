@@ -3,6 +3,8 @@ uniform vec3 starColor;
 uniform float opacity;
 uniform float pulseSpeed;
 uniform float noiseScale;
+uniform float noiseEvolutionSpeed;
+uniform float timeOffset;
 
 varying vec2 vUv;
 varying vec3 vNormal;
@@ -32,11 +34,14 @@ void main() {
 
     float edgeFade = smoothstep(0.8, 1.05, dist);
 
-    float basePattern = fbm((centeredUV * 0.5 + 0.5) * noiseScale + time * 0.03);
-    float detailPattern = fbm((centeredUV * 1.2 + 0.5) * noiseScale * 2.0 + time * 0.05);
+    float basePatternTime = (time + timeOffset) * 0.03 * noiseEvolutionSpeed;
+    float detailPatternTime = (time + timeOffset) * 0.05 * noiseEvolutionSpeed;
+
+    float basePattern = fbm((centeredUV * 0.5 + 0.5) * noiseScale + basePatternTime);
+    float detailPattern = fbm((centeredUV * 1.2 + 0.5) * noiseScale * 2.0 + detailPatternTime);
     float pattern = basePattern * 0.7 + detailPattern * 0.3;
 
-    float pulse = 0.9 + sin(time * pulseSpeed) * 0.1;
+    float pulse = 0.9 + sin((time + timeOffset) * pulseSpeed) * 0.1;
 
     float alpha = (1.0 - edgeFade) * opacity * pulse * 1.2;
 

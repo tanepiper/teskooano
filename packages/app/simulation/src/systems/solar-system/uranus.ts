@@ -3,18 +3,14 @@ import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   AtmosphereType,
-  CelestialStatus,
   CelestialType,
   GasGiantClass,
   PlanetType,
   RockyType,
   SurfaceType,
   type GasGiantProperties,
-  type IceSurfaceProperties,
-  type PlanetAtmosphereProperties,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
-  type RingProperties,
   type RingSystemProperties,
 } from "@teskooano/data-types";
 

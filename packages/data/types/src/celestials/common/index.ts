@@ -16,3 +16,5 @@ export * from "./small-body-classification";
 
 // Physical properties (surfaces, atmospheres, compositions)
 export * from "./physical-properties";
+
+export * from "./procedural-surface-properties";

@@ -33,6 +33,16 @@ export interface CelestialMeshOptions {
    * Default: false
    */
   enableGravitationalLensing?: boolean;
+
+  // Shader-specific options for stars
+  coronaIntensity?: number;
+  pulseSpeed?: number;
+  glowIntensity?: number;
+  temperatureVariation?: number;
+  metallicEffect?: number;
+  noiseEvolutionSpeed?: number;
+  noiseScale?: number; // For corona, etc.
+  timeOffset?: number; // For varied animation start
 }
 
 /**

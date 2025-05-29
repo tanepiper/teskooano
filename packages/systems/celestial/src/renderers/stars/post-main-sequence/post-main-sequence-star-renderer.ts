@@ -23,6 +23,8 @@ export class PostMainSequenceStarMaterial extends THREE.ShaderMaterial {
       temperatureVariation?: number;
       metallicEffect?: number;
       time?: number; // Optional initial time
+      noiseEvolutionSpeed?: number;
+      timeOffset?: number; // Added
     } = {},
     vertexShader: string = SHARED_VERTEX_SHADER,
     fragmentShader: string = SHARED_FRAGMENT_SHADER,
@@ -39,15 +41,21 @@ export class PostMainSequenceStarMaterial extends THREE.ShaderMaterial {
         value: shaderParameters.temperatureVariation ?? 0.2,
       },
       metallicEffect: { value: shaderParameters.metallicEffect ?? 0.3 },
+      noiseEvolutionSpeed: {
+        value: shaderParameters.noiseEvolutionSpeed ?? 0.01,
+      },
+      timeOffset: {
+        value: shaderParameters.timeOffset ?? Math.random() * 1000.0,
+      }, // Added
     };
 
     super({
       uniforms: uniforms,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
-      transparent: true, // Stars are often additive or transparent
-      blending: THREE.AdditiveBlending, // Good for stars
-      depthWrite: false,
+      // transparent: true, // Stars are often additive or transparent
+      // blending: THREE.AdditiveBlending, // Good for stars
+      // depthWrite: false,
     });
   }
 

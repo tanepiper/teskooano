@@ -2,19 +2,14 @@ import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
-  CelestialStatus,
   CelestialType,
   GasGiantClass,
-  type IceSurfaceProperties,
-  type LavaSurfaceProperties,
   PlanetType,
   RockyType,
   SurfaceType,
   type GasGiantProperties,
-  type PlanetAtmosphereProperties,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
-  type RingProperties,
   type RingSystemProperties,
 } from "@teskooano/data-types";
 

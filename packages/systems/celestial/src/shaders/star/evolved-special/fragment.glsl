@@ -8,24 +8,28 @@ uniform float glowIntensity;
 uniform float temperatureVariation;
 uniform float metallicEffect;
 uniform float noiseEvolutionSpeed;
+uniform float timeOffset;
 
 varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vPosition;
 
-// Use FBM for more complex noise patterns
-float complexNoise(vec2 p) {
-    return fbm(vec3(p, time * noiseEvolutionSpeed), 4, 0.5, 2.0);
+// complexNoise now takes spatial position and time value separately
+// It combines them before calling fbm, e.g., by adding time to z-component
+float complexNoise(vec3 spatial_pos, float time_val) {
+    return fbm(spatial_pos + vec3(0.0, 0.0, time_val), 4, 0.5, 2.0);
 }
 
-// Update turbulence to use complex noise
-float turbulence(vec2 p) {
+// turbulence uses the modified complexNoise
+float turbulence(vec3 pos, float time_val_for_evolution) {
     float t = 0.0;
     float f = 1.0;
+    vec3 p_loop = pos;
     for(int i = 0; i < 4; i++) {
-        t += abs(complexNoise(p * f) / f);
+        // Higher frequency noise layers (larger f) evolve faster due to time_val_for_evolution * f
+        t += abs(complexNoise(p_loop * f, time_val_for_evolution * f) / f);
         f *= 2.0;
-        p = p * 1.4 + vec2(3.2, 1.7);
+        p_loop = p_loop * 1.4 + vec3(3.2, 1.7, 0.8);
     }
     return t;
 }
@@ -35,65 +39,58 @@ vec3 dynamicColorVariation(vec3 baseColor, float time) {
     return baseColor * (1.0 + variation);
 }
 
-vec3 metallicFluid(vec2 uv, float time) {
+vec3 metallicFluid(vec3 pos, float current_time) { // Renamed time to current_time to avoid conflict with uniform
+    float flowSpeed = current_time * 0.1;
+    // This is the time value that drives the evolution of noise within metallicFluid
+    float noise_time_component = (current_time + timeOffset) * noiseEvolutionSpeed;
 
-    float flowSpeed = time * 0.1;
+    vec3 flowPos = pos + vec3(sin(pos.y * 8.0 + flowSpeed) * 0.05 + cos(pos.x * 4.0 + flowSpeed * 0.7) * 0.03,
+                               cos(pos.x * 6.0 + flowSpeed * 0.8) * 0.05 + sin(pos.y * 5.0 + flowSpeed * 0.9) * 0.03,
+                               sin(pos.z * 7.0 + flowSpeed * 0.6) * 0.04);
 
-    vec2 flowUv = uv + vec2(sin(uv.y * 8.0 + flowSpeed) * 0.05 + cos(uv.x * 4.0 + flowSpeed * 0.7) * 0.03, cos(uv.x * 6.0 + flowSpeed * 0.8) * 0.05 + sin(uv.y * 5.0 + flowSpeed * 0.9) * 0.03);
+    flowPos += vec3(sin(pos.y * 20.0 + flowSpeed * 1.2) * 0.02,
+                    cos(pos.x * 15.0 + flowSpeed * 1.1) * 0.02,
+                    sin(pos.z * 18.0 + flowSpeed * 1.0) * 0.015);
 
-    flowUv += vec2(sin(uv.y * 20.0 + flowSpeed * 1.2) * 0.02, cos(uv.x * 15.0 + flowSpeed * 1.1) * 0.02);
-
-    float largeScaleTurbulence = turbulence(flowUv * 1.5 + vec2(0.0, flowSpeed * 0.5));
-    float smallScaleTurbulence = turbulence(flowUv * 3.0 + vec2(flowSpeed * 0.3, 0.0));
-    float microTurbulence = turbulence(flowUv * 6.0 - vec2(flowSpeed * 0.2, flowSpeed * 0.1));
+    float largeScaleTurbulence = turbulence(flowPos * 1.5 + vec3(0.0, flowSpeed * 0.5, 0.0), noise_time_component);
+    float smallScaleTurbulence = turbulence(flowPos * 3.0 + vec3(flowSpeed * 0.3, 0.0, flowSpeed * 0.1), noise_time_component);
+    float microTurbulence = turbulence(flowPos * 6.0 - vec3(flowSpeed * 0.2, flowSpeed * 0.1, 0.0), noise_time_component);
 
     float combinedTurbulence = largeScaleTurbulence * 0.5 + smallScaleTurbulence * 0.3 + microTurbulence * 0.2;
-
     vec3 highlight = mix(starColor * 1.3, vec3(1.0, 1.0, 0.9), 0.35);
     vec3 midtone = mix(starColor * 1.1, vec3(1.0, 0.9, 0.5), 0.2);
     vec3 shadow = mix(starColor * 0.8, vec3(0.9, 0.7, 0.3), 0.15);
-
-    float cellPattern = smoothstep(0.4, 0.6, combinedTurbulence);
-
     vec3 metalColor = mix(shadow, midtone, smoothstep(0.3, 0.5, combinedTurbulence));
     metalColor = mix(metalColor, highlight, smoothstep(0.6, 0.8, combinedTurbulence));
-
     return metalColor;
 }
 
 void main() {
-
     vec3 color = dynamicColorVariation(starColor, time);
-
     float dist = length(vPosition);
 
-    float turb = turbulence(vUv * 3.0 + time * 0.1);
+    // Calculate the time component for surface turbulence
+    float surface_noise_time_component = (time + timeOffset) * noiseEvolutionSpeed;
+    float turb = turbulence(vPosition * 0.1, surface_noise_time_component); // Use the dedicated time component
 
     float surfaceDetail = smoothstep(0.2, 0.7, turb);
 
     vec3 viewDir = normalize(cameraPosition - vPosition);
     float viewDot = dot(normalize(vNormal), viewDir);
-
     float limbFactor = 0.8 + 0.2 * viewDot;
-
     float corona = min(1.0, 1.3 - smoothstep(0.5, 1.0, dist));
-
     float pulse = sin(time * pulseSpeed) * 0.08 + 0.92;
-
     float tempVar = sin(time * 0.15 + turb * 3.0) * temperatureVariation * 1.2;
     vec3 finalColor = mix(color, color * (1.0 + tempVar), surfaceDetail);
 
-    vec3 metalColor = metallicFluid(vUv, time);
+    // metallicFluid uses the global 'time' uniform internally to derive its noise_time_component
+    vec3 metalColor = metallicFluid(vPosition * 0.1, time);
 
     finalColor = mix(finalColor, metalColor, metallicEffect * 1.5 * surfaceDetail * pulse);
-
     finalColor = mix(finalColor * 0.9, finalColor * 1.2, limbFactor);
-
-    finalColor = max(finalColor, color * 0.75);
-
     finalColor = mix(finalColor, vec3(1.0, 0.9, 0.7), corona * coronaIntensity * 0.8);
-
-    float glow = 1.0 - smoothstep(0.4, 1.3, dist);
+    float effective_dist_for_glow = max(dist, 0.9);
+    float glow = 1.0 - smoothstep(0.4, 1.3, effective_dist_for_glow);
     glow = pow(glow, 1.2);
     finalColor += color * glow * glowIntensity * 1.0;
 

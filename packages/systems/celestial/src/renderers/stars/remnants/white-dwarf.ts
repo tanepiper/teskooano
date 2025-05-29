@@ -11,31 +11,9 @@ import type {
   LightSourceData,
 } from "../../common/CelestialRenderer";
 
-// Shaders for White Dwarf pulsating aura
-const WHITE_DWARF_AURA_VERTEX_SHADER = `
-varying vec3 vNormal;
-varying vec3 vWorldPosition;
-void main() {
-  vNormal = normalize(normalMatrix * normal);
-  vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-  vWorldPosition = worldPosition.xyz;
-  gl_Position = projectionMatrix * viewMatrix * worldPosition;
-}
-`;
-
-const WHITE_DWARF_AURA_FRAGMENT_SHADER = `
-uniform float time;
-uniform vec3 glowColor;
-uniform float glowIntensity;
-varying vec3 vNormal;
-varying vec3 vWorldPosition;
-
-void main() {
-  float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0); // Rim lighting effect
-  float pulse = 0.8 + sin(time * 2.0 + vWorldPosition.x * 0.5) * 0.2; // Gentle pulse
-  gl_FragColor = vec4(glowColor, intensity * pulse * glowIntensity);
-}
-`;
+// Import shaders using Vite's ?raw syntax
+import whiteDwarfAuraVertexShader from "../../../shaders/star/remnants/white-dwarf/white_dwarf_aura.vert.glsl";
+import whiteDwarfAuraFragmentShader from "../../../shaders/star/remnants/white-dwarf/white_dwarf_aura.frag.glsl";
 
 /**
  * Material for White Dwarf stars.
@@ -96,8 +74,8 @@ export class WhiteDwarfRenderer extends RemnantStarRenderer {
         glowColor: { value: new THREE.Color(0xadc8ff) }, // Pale blue glow
         glowIntensity: { value: 0.3 },
       },
-      vertexShader: WHITE_DWARF_AURA_VERTEX_SHADER,
-      fragmentShader: WHITE_DWARF_AURA_FRAGMENT_SHADER,
+      vertexShader: whiteDwarfAuraVertexShader,
+      fragmentShader: whiteDwarfAuraFragmentShader,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,

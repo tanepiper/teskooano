@@ -2,13 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { OSVector3 } from "@teskooano/core-math";
 import {
-  BaseSurfaceProperties,
   CelestialObject,
   CelestialStatus,
   CelestialType,
+  CompositionType,
   OrbitalParameters,
   PhysicsStateReal,
   PlanetAtmosphereProperties,
+  PlanetProperties,
+  SurfaceProperties,
   SurfaceType,
 } from "@teskooano/data-types";
 
@@ -34,32 +36,49 @@ const createMockObject = (
   name: string = `Obj ${id}`,
   type: CelestialType = CelestialType.PLANET,
   parentId?: string,
-): CelestialObject => ({
-  id,
-  name,
-  type,
-  realRadius_m: 1e6,
-  realMass_kg: 1e22,
-  orbit: {} as OrbitalParameters,
-  temperature: 273,
-  physicsStateReal: createMinimalRealState(id, 1e22),
-  parentId,
-  status: CelestialStatus.ACTIVE,
-  atmosphere: {
-    glowColor: "#ffffff",
-    intensity: 0.5,
-    power: 1,
-    thickness: 0.1,
-  } as PlanetAtmosphereProperties,
-  surface: {
-    type: SurfaceType.VARIED,
-    color: "#aaaaaa",
-    roughness: 0.5,
-  } as BaseSurfaceProperties,
-  rotation: new Quaternion(),
-  // celestialBodyType: type, // Removed, not a root property
-  // properties field would contain more specific type info if needed
-});
+): CelestialObject => {
+  const baseObject: CelestialObject = {
+    id,
+    name,
+    type,
+    realRadius_m: 1e6,
+    realMass_kg: 1e22,
+    orbit: {} as OrbitalParameters,
+    temperature: 273,
+    physicsStateReal: createMinimalRealState(id, 1e22),
+    parentId,
+    status: CelestialStatus.ACTIVE,
+    atmosphere: {
+      glowColor: "#ffffff",
+      intensity: 0.5,
+      power: 1,
+      thickness: 0.1,
+    },
+    rotation: new Quaternion(),
+  };
+
+  if (
+    type === CelestialType.PLANET ||
+    type === CelestialType.MOON ||
+    type === CelestialType.DWARF_PLANET
+  ) {
+    baseObject.properties = {
+      type: type,
+      isMoon: type === CelestialType.MOON,
+      planetType:
+        type === CelestialType.DWARF_PLANET ? undefined : "TERRESTRIAL", // Example
+      composition: [CompositionType.SILICATE],
+      surface: {
+        surfaceType: SurfaceType.VARIED,
+        composition: [CompositionType.SILICATE],
+        // proceduralData: undefined, // No procedural data in basic mock
+      } as SurfaceProperties,
+    } as PlanetProperties;
+  }
+  // Add other types like STAR if needed for tests
+
+  return baseObject;
+};
 
 describe("Celestial Objects Store", () => {
   beforeEach(() => {
