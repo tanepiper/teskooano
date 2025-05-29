@@ -363,9 +363,10 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     lightSources?: Map<string, LightSourceData>,
     camera?: THREE.Camera,
   ): void {
-    const currentTime =
-      time === undefined ? Date.now() / 1000 - this.startTime : time;
-    this.elapsedTime = currentTime;
+    this.elapsedTime = Date.now() / 1000 - this.startTime; // Always use total elapsed time
+
+    // DIAGNOSTIC LOG
+    // console.log(`[BaseStarRenderer] update. Input time: ${time}, Calculated elapsedTime: ${this.elapsedTime}`);
 
     this.materials.forEach((material: any) => {
       if (typeof material.update === "function") {

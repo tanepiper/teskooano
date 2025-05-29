@@ -27,6 +27,7 @@ export class EvolvedSpecialStarMaterial extends THREE.ShaderMaterial {
       temperatureVariation?: number;
       metallicEffect?: number;
       time?: number; // Optional initial time
+      noiseEvolutionSpeed?: number; // Added for controlling noise animation speed
     } = {},
     vertexShader: string = EVOLVED_SPECIAL_VERTEX_SHADER,
     fragmentShader: string = EVOLVED_SPECIAL_FRAGMENT_SHADER,
@@ -43,19 +44,25 @@ export class EvolvedSpecialStarMaterial extends THREE.ShaderMaterial {
         value: shaderParameters.temperatureVariation ?? 0.2,
       },
       metallicEffect: { value: shaderParameters.metallicEffect ?? 0.3 },
+      noiseEvolutionSpeed: {
+        value: shaderParameters.noiseEvolutionSpeed ?? 1.0,
+      }, // Default to 1.0
     };
 
     super({
       uniforms: uniforms,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
+      transparent: false,
+      blending: THREE.NoBlending,
+      depthWrite: true,
     });
   }
 
   update(time: number): void {
+    console.log(
+      `[EvolvedSpecialStarMaterial] update called. Time: ${time}, Uniform exists: ${!!this.uniforms.time}`,
+    ); // DIAGNOSTIC LOG
     if (this.uniforms.time) {
       this.uniforms.time.value = time;
     }

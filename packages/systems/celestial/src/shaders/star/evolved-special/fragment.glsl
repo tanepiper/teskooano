@@ -1,3 +1,5 @@
+#include "../common/star_noise.glsl"
+
 uniform float time;
 uniform vec3 starColor;
 uniform float coronaIntensity;
@@ -5,24 +7,32 @@ uniform float pulseSpeed;
 uniform float glowIntensity;
 uniform float temperatureVariation;
 uniform float metallicEffect;
+uniform float noiseEvolutionSpeed;
 
 varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vPosition;
 
-float noise(vec2 p) {
-    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+// Use FBM for more complex noise patterns
+float complexNoise(vec2 p) {
+    return fbm(vec3(p, time * noiseEvolutionSpeed), 4, 0.5, 2.0);
 }
 
+// Update turbulence to use complex noise
 float turbulence(vec2 p) {
     float t = 0.0;
     float f = 1.0;
     for(int i = 0; i < 4; i++) {
-        t += abs(noise(p * f) / f);
+        t += abs(complexNoise(p * f) / f);
         f *= 2.0;
         p = p * 1.4 + vec2(3.2, 1.7);
     }
     return t;
+}
+
+vec3 dynamicColorVariation(vec3 baseColor, float time) {
+    float variation = sin(time * 0.5) * 0.1;
+    return baseColor * (1.0 + variation);
 }
 
 vec3 metallicFluid(vec2 uv, float time) {
@@ -53,7 +63,7 @@ vec3 metallicFluid(vec2 uv, float time) {
 
 void main() {
 
-    vec3 color = starColor;
+    vec3 color = dynamicColorVariation(starColor, time);
 
     float dist = length(vPosition);
 

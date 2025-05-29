@@ -8,49 +8,28 @@ import { LODLevel } from "../../index";
 import { AU_METERS, SCALE } from "@teskooano/data-types";
 import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
 
-// Placeholder shaders for Wolf-Rayet wind shell
-const WOLF_RAYET_SHELL_VERTEX_SHADER = `
-varying vec3 vNormal;
-varying vec2 vUv;
-void main() {
-  vNormal = normalize(normalMatrix * normal);
-  vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
-`;
-
-const WOLF_RAYET_SHELL_FRAGMENT_SHADER = `
-uniform float time;
-uniform vec3 shellColor;
-uniform float opacity;
-varying vec3 vNormal;
-varying vec2 vUv;
-
-float simpleNoise(vec2 uv, float scale) {
-  return fract(sin(dot(uv * scale, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
-void main() {
-  float noise = simpleNoise(vUv + time * 0.02, 5.0) * 0.5 + simpleNoise(vUv * 2.0 - time * 0.01, 15.0) * 0.5;
-  float edgeFactor = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
-  float finalAlpha = noise * edgeFactor * opacity;
-  gl_FragColor = vec4(shellColor, finalAlpha);
-}
-`;
+// Import shaders from separate files
+import WOLF_RAYET_SHELL_VERTEX_SHADER from "../../../shaders/star/evolved-special/wolf-rayet/wolf-rayet-shell-vertex.glsl";
+import WOLF_RAYET_SHELL_FRAGMENT_SHADER from "../../../shaders/star/evolved-special/wolf-rayet/wolf-rayet-shell-fragment.glsl";
 
 /**
  * Material for the main body of Wolf-Rayet stars.
  */
 export class WolfRayetMaterial extends EvolvedSpecialStarMaterial {
   constructor(color: THREE.Color = new THREE.Color(0xcad7ff)) {
-    super({
-      starColor: color,
-      coronaIntensity: 0.5, // Intense radiation field, less defined corona visually
-      pulseSpeed: 0.4,
-      glowIntensity: 1.5, // Very luminous
-      temperatureVariation: 0.6, // Turbulent surface
-      metallicEffect: 0.1, // Often obscured by dense winds
-    });
+    super(
+      {
+        starColor: color,
+        coronaIntensity: 0.5, // Intense radiation field, less defined corona visually
+        pulseSpeed: 0.4,
+        glowIntensity: 1.5, // Very luminous
+        temperatureVariation: 0.6, // Turbulent surface
+        metallicEffect: 0.1, // Often obscured by dense winds
+      },
+      undefined,
+      undefined,
+    );
+    this.transparent = false; // Ensure transparency is set to false
   }
 }
 
@@ -128,8 +107,8 @@ export class WolfRayetRenderer extends EvolvedSpecialStarRenderer {
     const scale = typeof SCALE === "number" ? SCALE : 1;
     // Adjust distance based on star size to ensure smooth transition
     const starRadius_AU = object.radius / AU_METERS;
-    const sizeBasedDistance = 40000 + starRadius_AU * 2500;
-    return Math.min(70000, sizeBasedDistance) * scale;
+    const sizeBasedDistance = 20000 + starRadius_AU * 1500; // Reduced distance
+    return Math.min(50000, sizeBasedDistance) * scale; // Reduced max distance
   }
 
   protected getCustomLODs(
