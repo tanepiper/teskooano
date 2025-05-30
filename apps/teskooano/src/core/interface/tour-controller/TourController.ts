@@ -25,12 +25,24 @@ export class TourController {
    * Initializes driver.js with default configuration and loads the intro tour steps.
    */
   constructor() {
+    // Get scrim color from CSS custom property
+    let scrimColor = "rgba(0, 0, 0, 0.75)"; // Default fallback
+    try {
+      const rootStyle = getComputedStyle(document.documentElement);
+      const tokenValue = rootStyle.getPropertyValue("--color-scrim").trim();
+      if (tokenValue) {
+        scrimColor = tokenValue;
+      }
+    } catch (e) {
+      // console.warn("Could not read --color-scrim for tour overlay, using default.", e);
+    }
+
     this.driverInstance = driver({
       animate: true,
       showProgress: true,
       showButtons: ["next", "previous"],
       steps: [],
-      overlayColor: "rgba(0, 0, 0, 0.75)",
+      overlayColor: scrimColor, // Use the token value or fallback
       allowClose: true,
       disableActiveInteraction: false,
 

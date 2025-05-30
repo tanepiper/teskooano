@@ -3,63 +3,59 @@ import BoxMultipleArrowRightFilled from "@fluentui/svg-icons/icons/box_multiple_
 const template = document.createElement("template");
 template.innerHTML = `
 <style>
-  /* Styles previously in EngineToolbar.injectStyles */
   .engine-overlay-toolbar-container {
     position: absolute;
-    top: 0px;
-    left: 0px;
-    z-index: 9999;
+    top: 0;
+    left: 0;
+    z-index: var(--z-index-engine-toolbar);
     display: inline-flex;
-    align-items: center; /* Align items vertically */
-    justify-content: space-between; /* Push widget area to the right */
-    background-color: rgba(40, 40, 60, 0.7);
-    border-radius: 4px;
-    padding: 4px;
-    gap: 4px;
-    overflow: visible; /* Allow content overflow */
-    color: white; /* Default text/icon color */
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--color-surface-2-alpha-70);
+    border-radius: var(--radius-sm);
+    padding: var(--space-1);
+    gap: var(--space-1);
+    overflow: visible;
+    color: var(--color-text-primary);
     fill: var(--color-text-primary);
   }
 
   .engine-overlay-toolbar-container teskooano-button {
-    flex-shrink: 0; /* Prevent buttons from shrinking */
-    color: inherit; /* Inherit color from container */
+    flex-shrink: 0;
+    color: inherit;
   }
 
   .engine-overlay-toolbar-container teskooano-button svg {
-    width: 18px;
-    height: 18px;
+    width: var(--font-size-4);
+    height: var(--font-size-4);
   }
 
-  teskooano-button.toolbar-toggle-button svg {
-    fill: rgba(191, 237, 9, 0.85);
-  }
-
-  .engine-overlay-toolbar-container teskooano-button:not(.toolbar-toggle-button):hover svg{
-    fill: rgba(191, 237, 9, 0.85);
+  teskooano-button#engine-toolbar-toggle-button svg,
+  .engine-overlay-toolbar-container teskooano-button:not(#engine-toolbar-toggle-button):hover svg {
+    fill: var(--color-accent-attention-fill);
   }
 
   .toolbar-collapsible-buttons {
     display: inline-flex;
-    gap: 4px;
+    gap: var(--space-1);
     align-items: center;
-    max-width: 0; /* Initially hidden */
+    max-width: 0;
     overflow: hidden;
     transition: max-width 0.3s ease-in-out, opacity 0.3s ease-in-out;
-    white-space: nowrap; /* Prevent wrapping during transition */
-    opacity: 0; /* Start hidden */
-    visibility: hidden; /* Start hidden */
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
   }
 
   .toolbar-collapsible-buttons.expanded {
-    max-width: 500px; /* Adjust as needed */
+    max-width: 500px;
     opacity: 1;
     visibility: visible;
   }
 
   .toolbar-widget-area {
     display: inline-flex;
-    gap: 4px;
+    gap: var(--space-1);
     align-items: center;
   }
 

@@ -118,24 +118,24 @@ export class FocusTreeList extends BaseCelestialList {
       .list-item-content {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: var(--space-1); /* 4px */
       }
       
       .leaf-node {
-        padding-left: 20px;
+        padding-left: var(--spacing-md); /* 20px -> 16px */
       }
       
       .caret {
         cursor: pointer;
         user-select: none;
         display: inline-block;
-        width: 16px;
-        transition: transform 0.2s;
+        width: var(--spacing-md); /* 16px */
+        transition: transform var(--transition-duration-fast);
       }
       
       .caret::before {
         content: '▶';
-        font-size: 12px;
+        font-size: var(--font-size-1); /* 12px */
       }
       
       .caret-down {
@@ -149,7 +149,7 @@ export class FocusTreeList extends BaseCelestialList {
       
       .nested {
         display: none;
-        padding-left: 20px;
+        padding-left: var(--spacing-md); /* 20px -> 16px */
       }
       
       .nested.active {

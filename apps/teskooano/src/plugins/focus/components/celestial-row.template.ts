@@ -9,23 +9,23 @@ template.innerHTML = `
     display: flex; /* Use flexbox for the row itself */
     align-items: center;
     width: 100%;
-    padding: 2px 4px; /* Reduced padding */
-    border-radius: 3px;
-    transition: background-color 0.15s ease;
+    padding: calc(var(--space-1) / 2) var(--space-1); /* 2px 4px */
+    border-radius: var(--radius-sm); /* 3px -> 4px */
+    transition: background-color var(--transition-duration-fast) ease;
     box-sizing: border-box; /* Include padding in width */
-    gap: 4px; /* Space between elements */
-    font-size: 0.95em; /* Slightly smaller font */
+    gap: var(--space-1); /* 4px */
+    font-size: var(--font-size-1); /* ~0.95em of base, now fixed token */
   }
 
   :host(:hover) {
-     background-color: var(--color-surface-hover, rgba(255, 255, 255, 0.1));
+     background-color: var(--color-surface-row-hover);
   }
 
   /* Focused state styling */
   :host([focused]) {
-    background-color: var(--color-primary-muted, #5551cc); /* Use a muted primary */
-    color: var(--color-text-on-primary, white);
-    font-weight: bold;
+    background-color: var(--color-primary-hover); /* Muted primary */
+    color: var(--color-text-on-primary);
+    font-weight: var(--font-weight-bold);
   }
   :host([focused]) .celestial-icon {
       filter: brightness(0) invert(1);
@@ -35,7 +35,7 @@ template.innerHTML = `
   }
    :host([focused]) teskooano-button {
         /* Ensure buttons are visible on focused background */
-        --button-icon-color: var(--color-text-on-primary, white);
+        --button-icon-color: var(--color-text-on-primary);
    }
 
 
@@ -51,12 +51,12 @@ template.innerHTML = `
     align-items: center;
     flex-grow: 1; /* Take remaining space */
     overflow: hidden; /* Prevent overflow */
-    gap: 6px;
+    gap: var(--space-2); /* 6px -> 8px */
   }
 
   .celestial-icon {
-    width: 14px;
-    height: 14px;
+    width: var(--font-size-1); /* 14px, scale with text */
+    height: var(--font-size-1); /* 14px, scale with text */
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -74,15 +74,15 @@ template.innerHTML = `
   .action-buttons {
     display: flex;
     align-items: center;
-    gap: 2px; /* Small gap between action buttons */
+    gap: calc(var(--space-1) / 2); /* 2px */
     flex-shrink: 0; /* Prevent buttons shrinking */
   }
 
   teskooano-button {
-    /* Use small variant, icon-only */
-    --button-padding: 2px;
-    --button-min-height: 18px; /* Adjust size */
-    --button-icon-size: 14px;
+    /* Rely on TeskooanoButton's 'sm' size variant for padding, min-height, icon-size */
+    /* --button-padding: 2px; */
+    /* --button-min-height: 18px; */
+    /* --button-icon-size: 14px; */
     --button-icon-color: currentColor; /* Added: Make icon inherit text color */
   }
 

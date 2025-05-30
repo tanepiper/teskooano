@@ -6,14 +6,14 @@ template.innerHTML = `
   <style>
     :host {
       display: block;
-      font-family: var(--font-family, sans-serif);
-      font-size: 0.9em;
-      fill: #fff;
+      font-family: var(--font-family-base);
+      font-size: var(--font-size-1);
+      fill: var(--color-text-primary);
     }
     .control-section {
-      margin-bottom: 15px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--color-border, #4a4a6a);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--space-3);
+      border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
     }
     .control-section:last-child {
        border-bottom: none;
@@ -22,7 +22,7 @@ template.innerHTML = `
     }
     .button-row {
       display: flex;
-      gap: 8px;
+      gap: var(--space-2); /* 8px */
     }
     teskooano-button#reset-view,
     teskooano-button#clear-focus {
@@ -32,7 +32,7 @@ template.innerHTML = `
     .lists-container {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: var(--spacing-md); /* 16px */
       max-height: 550px;
       overflow-y: auto;
     }
@@ -42,25 +42,25 @@ template.innerHTML = `
     }
 
     .section-header {
-      font-weight: bold;
-      color: var(--color-text-primary, #fff);
-      margin: 0 0 10px 0;
-      padding: 5px 10px;
-      background-color: var(--color-surface-secondary, rgba(255, 255, 255, 0.1));
-      border-radius: 4px;
+      /* Base h3 styles are applied by default, override/add specifics below */
+      margin: 0 0 var(--space-3) 0; /* Override default h3 margins */
+      padding: var(--space-1) var(--space-3);
+      background-color: var(--color-surface-3); /* Closest opaque alternative */
+      border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      /* font-weight and color are inherited or set by h3 base style */
     }
 
     .section-header .count {
-      font-size: 0.85em;
-      font-weight: normal;
-      color: var(--color-text-secondary, #aaa);
+      font-size: var(--font-size-1); /* Use smallest standard token */
+      font-weight: normal; /* Explicitly set if different from parent */
+      color: var(--color-text-secondary);
     }
 
     .target-list-container {
-      padding-right: 5px; /* Space for scrollbar */
+      padding-right: var(--space-1); /* Space for scrollbar */
       min-height: 100px; /* Ensure minimum height for lists */
     }
 

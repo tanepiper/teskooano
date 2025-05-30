@@ -8,7 +8,6 @@ template.innerHTML = `
       box-sizing: border-box;
       --icon-size: var(--font-size-base); 
       --icon-gap: var(--space-2);
-      z-index: 9999;
     }
 
     :host([fullwidth]) {
@@ -91,8 +90,8 @@ template.innerHTML = `
         border-color: var(--color-primary-active);
     }
     :host([variant="primary"]) button:focus-visible {
-       box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-primary);
-       outline: none; 
+       box-shadow: 0 0 0 var(--border-width-medium) var(--color-background), 0 0 0 calc(var(--border-width-medium) * 2) var(--color-primary);
+       outline: none;
     }
     
     :host([variant="ghost"]) button {
@@ -114,35 +113,66 @@ template.innerHTML = `
 
     /* --- Image Variant --- */
     :host([variant="image"]) button {
-      padding: 0; 
+      padding: 0;
       min-height: auto;
       min-width: auto;
-      width: 45px;
-      height: 45px;
+      width: var(--space-8);
+      height: var(--space-8);
       background-color: transparent;
       border-color: transparent;
       gap: 0;
-      line-height: 0; 
-      display: flex; 
+      line-height: 0;
+      display: flex;
       align-items: center;
     }
     :host([variant="image"]) {
-      display: inline-flex; 
-      align-items: center; 
-      margin-right: var(--space-sm, 8px);
+      display: inline-flex;
+      align-items: center;
+      margin-right: var(--space-2);
     }
     :host([variant="image"]) button:hover:not([disabled]) {
-        background-color: var(--color-surface-hover);
+        background-color: var(--color-surface-row-hover);
         border-color: transparent;
     }
     :host([variant="image"]) button:active:not([disabled]) {
-        background-color: var(--color-surface-active);
+        background-color: var(--color-surface-interactive-active);
         border-color: transparent;
     }
     :host([variant="image"]) button:focus-visible {
        outline: var(--border-width-medium) solid var(--color-border-focus); 
        outline-offset: 1px; 
        border-color: transparent;
+    }
+
+    /* --- Icon Variant (New) --- */
+    :host([variant="icon"]) button {
+        background-color: transparent;
+        border-color: transparent;
+        color: var(--color-text-secondary);
+        padding: var(--space-2);
+    }
+    :host([variant="icon"]) button:hover:not([disabled]) {
+        background-color: var(--color-surface-2);
+        color: var(--color-text-primary);
+    }
+    :host([variant="icon"]) button:active:not([disabled]) {
+        background-color: var(--color-surface-1);
+    }
+    :host([variant="icon"]) button:focus-visible {
+       border-color: var(--color-border-focus);
+       box-shadow: 0 0 0 var(--border-width-medium) var(--color-border-focus);
+    }
+
+    /* Adjust padding for icon variant based on size */
+    :host([variant="icon"][size="xs"]) button,
+    :host([variant="icon"][size="sm"]) button {
+        padding: var(--space-1);
+    }
+    :host([variant="icon"][size="lg"]) button {
+        padding: var(--space-3);
+    }
+    :host([variant="icon"][size="xl"]) button {
+        padding: var(--space-4);
     }
 
     /* --- Sizes using host attributes --- */

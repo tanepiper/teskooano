@@ -1,6 +1,8 @@
 import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
 import { TeskooanoButton } from "./Button";
 
+export * from "./Button";
+
 /**
  * Plugin definition for the core Button component.
  */

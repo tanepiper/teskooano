@@ -5,27 +5,27 @@ template.innerHTML = `
       display: flex;
       justify-content: space-between; /* Align label and value */
       align-items: baseline; /* Align text baselines */
-      gap: var(--space-md, 12px);
-      font-family: var(--font-family, sans-serif);
-      font-size: var(--font-size-md, 1em);
-      color: var(--color-text, #e0e0fc);
-      padding: var(--space-xs, 4px) 0; /* Add some vertical padding */
-      border-bottom: 1px solid var(--color-border-subtle, #30304a); /* Optional separator */
+      gap: var(--space-3); /* Was var(--space-md, 12px) -> var(--space-3) is 12px */
+      font-family: var(--font-family-base);
+      font-size: var(--font-size-base);
+      color: var(--color-text-primary);
+      padding: var(--space-1) 0; /* Add some vertical padding */
+      border-bottom: var(--border-width-thin) solid var(--color-border-subtle); /* Optional separator */
     }
     :host(:last-child) {
         border-bottom: none; /* Remove border for the last item in a group */
     }
 
     .label {
-      font-weight: var(--font-weight-medium, 500);
-      color: var(--color-text-secondary, #aaa);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text-secondary);
       white-space: nowrap; /* Prevent label wrapping */
       margin-right: auto; /* Push value to the right */
     }
 
     .value {
-      font-weight: var(--font-weight-regular, 400);
-      color: var(--color-text, #e0e0fc);
+      font-weight: var(--font-weight-normal); /* Was var(--font-weight-regular, 400) */
+      color: var(--color-text-primary);
       text-align: right;
       word-break: break-word; /* Allow long values to wrap */
     }

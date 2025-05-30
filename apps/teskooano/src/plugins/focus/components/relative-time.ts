@@ -23,8 +23,8 @@ export class RelativeTime extends HTMLElement {
     style.textContent = `
       :host {
         display: inline;
-        font-size: 0.8em;
-        color: var(--color-text-secondary, #888);
+        font-size: var(--font-size-1);
+        color: var(--color-text-secondary);
         white-space: nowrap;
       }
     `;

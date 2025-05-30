@@ -6,125 +6,52 @@ template.innerHTML = `
       width: 100%;
       height: 100%;
       overflow: auto;
-      padding: 10px;
-      font-family: var(--font-family, sans-serif);
-      font-size: 0.9em;
-      border-top: 1px solid var(--color-border-alt, #5a5a7a); /* Add separator */
+      padding: var(--spacing-md); /* 10px -> 16px */
+      font-family: var(--font-family-base);
+      font-size: var(--font-size-1);
+      border-top: var(--border-width-thin) solid var(--color-border-subtle);
     }
     .setting-row {
       display: flex;
-      justify-content: space-between;
+      justify-content: space-between; /* This will space out the label (inside toggle) and the switch part */
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: var(--space-3); /* Increased margin a bit for better spacing */
     }
-    .setting-row input[type=range] {
-      flex-grow: 1;
-      margin: 0 10px;
+    .setting-row + teskooano-slider,
+    .setting-row + teskooano-toggle {
+        /* This might not be needed if margin-bottom on .setting-row is enough */
+        /* margin-top: var(--space-3); */ 
     }
-    .setting-row .value-display {
-      min-width: 30px; /* Ensure space for value */
-      text-align: right;
-      color: var(--color-text-primary, #eee);
-    }
-    label {
-      margin-right: 10px;
-      color: var(--color-text-secondary, #aaa);
-    }
-    /* Basic toggle switch styles */
-    .toggle-switch {
-      position: relative;
-      display: inline-block;
-      width: 34px;
-      height: 20px;
-    }
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: var(--color-surface-alt, #3a3a4e);
-      transition: .4s;
-      border-radius: 20px;
-      border: 1px solid var(--color-border-alt, #5a5a7a);
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 12px;
-      width: 12px;
-      left: 3px;
-      bottom: 3px;
-      background-color: var(--color-text-secondary, #aaa);
-      transition: .4s;
-      border-radius: 50%;
-    }
-    input:checked + .slider {
-      background-color: var(--color-primary, #6c63ff);
-      border-color: var(--color-primary, #6c63ff);
-    }
-    input:checked + .slider:before {
-      transform: translateX(14px);
-      background-color: white;
-    }
-    /* Add margin to the slider component */
+
+    /* Removed custom label styling as toggle handles its own label */
+
     teskooano-slider {
-      /* Override default margin if needed, or use existing variables */
-      /* Example: margin-bottom: var(--space-sm, 8px); */
+      margin-top: var(--space-3); /* Add some space above the slider */
+      margin-bottom: var(--space-3);
     }
     .error-message {
-        color: var(--color-error, #f44336);
+        color: var(--color-error);
         font-style: italic;
-        margin-top: 10px;
+        margin-top: var(--space-3);
     }
   </style>
   <div class="setting-row">
-    <label for="grid-toggle">Show Grid</label>
-    <label class="toggle-switch">
-      <input type="checkbox" id="grid-toggle">
-      <span class="slider"></span>
-    </label>
+    <teskooano-toggle label="Show Grid" id="grid-toggle"></teskooano-toggle>
   </div>
   <div class="setting-row">
-    <label for="labels-toggle">Show Celestial Labels</label>
-    <label class="toggle-switch">
-      <input type="checkbox" id="labels-toggle">
-      <span class="slider"></span>
-    </label>
+    <teskooano-toggle label="Show Celestial Labels" id="labels-toggle"></teskooano-toggle>
   </div>
   <div class="setting-row">
-    <label for="au-markers-toggle">Show AU Markers</label>
-    <label class="toggle-switch">
-      <input type="checkbox" id="au-markers-toggle">
-      <span class="slider"></span>
-    </label>
+    <teskooano-toggle label="Show AU Markers" id="au-markers-toggle"></teskooano-toggle>
   </div>
   <div class="setting-row">
-    <label for="debris-effects-toggle">Show Debris Effects</label>
-    <label class="toggle-switch">
-      <input type="checkbox" id="debris-effects-toggle">
-      <span class="slider"></span>
-    </label>
+    <teskooano-toggle label="Show Debris Effects" id="debris-effects-toggle"></teskooano-toggle>
   </div>
   <div class="setting-row">
-    <label for="orbit-lines-toggle">Show Orbit Lines</label>
-    <label class="toggle-switch">
-      <input type="checkbox" id="orbit-lines-toggle">
-      <span class="slider"></span>
-    </label>
+    <teskooano-toggle label="Show Orbit Lines" id="orbit-lines-toggle"></teskooano-toggle>
   </div>
   <div class="setting-row">
-    <label for="debug-mode-toggle">Debug Mode</label>
-    <label class="toggle-switch">
-      <input type="checkbox" id="debug-mode-toggle">
-      <span class="slider"></span>
-    </label>
+    <teskooano-toggle label="Debug Mode" id="debug-mode-toggle"></teskooano-toggle>
   </div>
   <teskooano-slider 
     id="fov-slider" 

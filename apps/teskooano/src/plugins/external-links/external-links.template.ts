@@ -6,7 +6,7 @@ template.innerHTML = `
 
   .external-links-component-container {
     display: flex;
-    gap: var(--space-xs, 4px); /* Add a small gap between buttons */
+    /* gap property is now handled by external-links.css */
     align-items: center;
   }
 </style>

@@ -6,71 +6,72 @@ export const SolarSystemModalTemplate = document.createElement("template");
 SolarSystemModalTemplate.innerHTML = `
 <style>
   .solar-system-modal-content {
-    font-family: var(--font-family-base, system-ui);
-    line-height: 1.5;
-    color: var(--color-text-secondary, #ccccdd);
+    font-family: var(--font-family-base);
+    line-height: var(--line-height-base);
+    color: var(--color-text-secondary);
   }
   
   .system-header {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4); /* Was 16px */
   }
   
   .system-title {
-    margin: 0 0 8px 0; 
-    color: var(--color-text-primary, #eeeef5); 
-    font-size: 18px;
+    margin: 0 0 var(--space-2) 0; /* Was 8px */
+    color: var(--color-text-primary);
+    font-size: var(--font-size-3); /* Was 18px */
   }
   
   .system-description {
-    margin: 0; 
-    font-size: 14px; 
+    margin: 0;
+    font-size: var(--font-size-base); /* Was 14px */
     opacity: 0.9;
   }
   
   .warning-box {
-    background: rgba(255, 0, 0, 0.1); 
-    padding: 12px; 
-    border-radius: 6px; 
-    margin-bottom: 16px;
+    background: var(--color-surface-1);
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-4);
+    border-left: var(--border-width-thick) solid var(--color-error);
   }
   
   .section-title {
-    margin: 0 0 8px 0; 
-    color: var(--color-text-primary, #eeeef5); 
-    font-size: 14px;
+    margin: 0 0 var(--space-2) 0; /* Was 8px */
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base); /* Was 14px */
   }
   
   .section-content {
-    margin: 0; 
-    font-size: 14px; 
+    margin: 0;
+    font-size: var(--font-size-base); /* Was 14px */
     opacity: 0.9;
   }
   
   .info-box {
-    background: var(--color-surface-1, #1e1e2a); 
-    padding: 12px; 
-    border-radius: 6px; 
-    margin-bottom: 16px;
+    background: var(--color-surface-1);
+    padding: var(--space-3); /* Was 12px */
+    border-radius: var(--radius-sm); /* Was 6px */
+    margin-bottom: var(--space-4); /* Was 16px */
   }
   
   .summary-grid {
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 8px; 
-    font-size: 13px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2); /* Was 8px */
+    font-size: var(--font-size-1); /* Was 13px */
   }
   
   .feature-list {
-    margin: 0; 
-    padding-left: 16px;
-    font-size: 13px; 
-    line-height: 1.4;
+    margin: 0;
+    padding-left: var(--space-4); /* Was 16px */
+    font-size: var(--font-size-1); /* Was 13px */
+    line-height: var(--line-height-base); /* Was 1.4 */
   }
   
   .footer-info {
-    margin-top: 16px; 
-    font-size: 12px; 
-    opacity: 0.7; 
+    margin-top: var(--space-4); /* Was 16px */
+    font-size: var(--font-size-1); /* Was 12px */
+    opacity: var(--opacity-text-muted); /* Was 0.7 */
     text-align: center;
   }
 </style>

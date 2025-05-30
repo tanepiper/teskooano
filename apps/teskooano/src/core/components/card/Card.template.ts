@@ -6,7 +6,7 @@ template.innerHTML = `
     :host {
       /* Default to fixed width */
       display: inline-block;
-      width: var(--card-fixed-width, 300px); /* Default fixed width, customizable via CSS variable */
+      width: var(--layout-card-width-default); /* Use new token */
       background-color: var(--color-surface-2);
       border: var(--border-width-thin) solid var(--color-border-subtle);
       border-radius: var(--radius-md);
@@ -56,12 +56,12 @@ template.innerHTML = `
 
     ::slotted([slot="label"]) {
       display: block;
-      font-size: var(--font-size-small);
+      font-size: var(--font-size-1);
       color: var(--color-text-secondary);
       margin-bottom: var(--space-1);
       text-transform: uppercase;
       font-weight: var(--font-weight-medium);
-      letter-spacing: 0.5px;
+      letter-spacing: var(--letter-spacing-label); /* Use new token */
     }
 
     ::slotted([slot="title"]) {

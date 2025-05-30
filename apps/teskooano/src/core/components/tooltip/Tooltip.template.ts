@@ -11,33 +11,33 @@ template.innerHTML = `
       /* Prevent host from interfering with layout */
       /* width: 0; 
       height: 0; */
-      z-index: 9999999999;
+      z-index: var(--z-index-tooltip, 150); /* Use token from JSDoc or component default */
+      fill: var(--color-text-primary);
     }
 
     /* --- Positioning Base --- */
     /* Style the tooltip bubble */
     .tooltip {
        position: absolute; /* Base positioning, JS changes to fixed when shown */
-      background-color: var(--color-tooltip-background, var(--color-surface-inverse, #333)); /* Inverse surface */
-      color: var(--color-tooltip-text, var(--color-text-inverse, #fff)); /* Inverse text */
-      padding: var(--space-2, 8px) var(--space-3, 12px);
-      border-radius: var(--radius-md, 6px);
-      border: var(--border-width-thin) solid var(--color-border-inverse, var(--color-surface-3, #555));
+      background-color: var(--color-tooltip-background, var(--color-surface-inverse));
+      color: var(--color-tooltip-text, var(--color-text-inverse));
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      border: var(--border-width-thin) solid var(--color-border-inverse, var(--color-surface-3));
       box-shadow: var(--shadow-md); 
-      font-size: var(--font-size-small, 0.875rem);
-      line-height: var(--line-height-tight, 1.4);
-      z-index: var(--z-index-tooltip, 150); /* Ensure high z-index */
+      font-size: var(--font-size-1); /* Was --font-size-small */
+      line-height: var(--line-height-tight);
+      z-index: var(--z-index-tooltip, 150); /* Consistent with host, or could be +1 */
       
       /* Hide by default, show on hover/focus of the parent/trigger */
       opacity: 0;
       visibility: hidden;
-      transition: opacity var(--transition-duration-fast, 150ms) var(--transition-timing-base, ease-in-out), 
-                  visibility var(--transition-duration-fast, 150ms) var(--transition-timing-base, ease-in-out);
+      transition: opacity var(--transition-duration-fast) var(--transition-timing-base), 
+                  visibility var(--transition-duration-fast) var(--transition-timing-base);
       pointer-events: none; /* Allow clicks to pass through */
       white-space: normal; /* Ensure text wrapping is allowed */
-      max-width: 250px; /* Set a reasonable max-width */
+      max-width: var(--layout-tooltip-max-width); /* Use new token */
       text-wrap: auto;
-      fill: #fff;
     }
 
     /* --- Arrow Base --- */
@@ -45,31 +45,29 @@ template.innerHTML = `
     .tooltip::after {
       content: '';
       position: absolute;
-      border-width: 5px;
+      border-width: var(--size-tooltip-arrow-base); /* Use new token */
       border-style: solid;
-      /* Colors are set based on vertical alignment */
       border-color: transparent;
-      /* Positioning set based on alignment classes */
     }
 
     /* Arrow for Vertical Alignment */
     .tooltip.vertical-above::after {
-      bottom: -10px; /* Position arrow pointing up from bottom edge */
+      bottom: calc(-1 * var(--size-tooltip-arrow-base) * 2); /* Use token */
       /* Make bottom border visible, others transparent */
-      border-color: transparent transparent var(--color-tooltip-background, var(--color-surface-inverse, #333)) transparent;
+      border-color: transparent transparent var(--color-tooltip-background, var(--color-surface-inverse)) transparent;
     }
 
     .tooltip.vertical-below::after {
-      top: -10px; /* Position arrow pointing down from top edge */
+      top: calc(-1 * var(--size-tooltip-arrow-base) * 2); /* Use token */
       /* Make top border visible, others transparent */
-      border-color: var(--color-tooltip-background, var(--color-surface-inverse, #333)) transparent transparent transparent;
+      border-color: var(--color-tooltip-background, var(--color-surface-inverse)) transparent transparent transparent;
     }
 
     /* Content layout */
     .tooltip-content {
        display: flex;
        align-items: flex-start; /* Align items to the start */
-       gap: var(--space-2, 8px);
+       gap: var(--space-2);
        min-width: 100px; /* Give content area a minimum width */
     }
     
@@ -78,8 +76,8 @@ template.innerHTML = `
         flex-shrink: 0; 
         line-height: 0; 
         /* Add explicit size constraints to the container */
-        width: 48px; /* Match max image size */
-        height: 48px;
+        width: var(--space-8); /* 48px */
+        height: var(--space-8); /* 48px */
         display: flex; /* Use flex to center content if needed */
         align-items: center;
         justify-content: center;
@@ -91,8 +89,8 @@ template.innerHTML = `
        display: block;
        width: 100%; 
        height: 100%;
-       max-width: 24px; /* Keep smaller max for SVG */
-       max-height: 24px;
+       max-width: var(--space-5); /* 24px */
+       max-height: var(--space-5); /* 24px */
        object-fit: contain; /* Good practice even for SVG */
        fill: currentColor; /* Apply fill only to SVGs */
      }
@@ -104,8 +102,8 @@ template.innerHTML = `
         /* Make image fill the container */
         width: 100%;
         height: 100%;
-        max-width: 48px; /* Redundant? Keep for clarity */
-        max-height: 48px;
+        max-width: var(--space-8); /* 48px, matches icon container */
+        max-height: var(--space-8);
         object-fit: contain;
     }
 
@@ -127,8 +125,8 @@ template.innerHTML = `
 
     .title {
         font-weight: var(--font-weight-semibold);
-        margin-bottom: var(--space-1, 4px);
-        color: var(--color-tooltip-title-text, var(--color-text-inverse, #fff)); /* Can override */
+        margin-bottom: var(--space-1);
+        color: var(--color-tooltip-title-text, var(--color-text-inverse));
     }
 
   </style>

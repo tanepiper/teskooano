@@ -97,7 +97,7 @@ export abstract class BaseCelestialList extends HTMLElement {
       }
       
       .empty-message {
-        padding: 16px;
+        padding: var(--spacing-md); /* 16px */
         text-align: center;
         opacity: 0.6;
         font-style: italic;

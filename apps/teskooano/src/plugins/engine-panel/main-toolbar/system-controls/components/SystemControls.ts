@@ -325,19 +325,7 @@ class SystemControls
 
     const seedInputEvent$ = fromEvent(this.seedInput, "input").pipe(
       debounceTime(300),
-      map((event) => {
-        const target = event.target as HTMLElement;
-        // Attempt to get value from shadow DOM input, otherwise from target itself
-        const shadowInput =
-          target.shadowRoot?.querySelector<HTMLInputElement>("input#seed");
-        if (shadowInput) {
-          return shadowInput.value;
-        }
-        if (target instanceof HTMLInputElement) {
-          return target.value;
-        }
-        return ""; // Fallback if not an input element somehow
-      }),
+      map(() => this.seedInput!.value),
       tap((seed) => updateSeed(seed)),
     );
     this.subscriptions.add(seedInputEvent$.subscribe());

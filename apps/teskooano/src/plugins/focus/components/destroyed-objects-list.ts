@@ -89,7 +89,7 @@ export class DestroyedObjectsList extends BaseCelestialList {
       super.getBaseStyles() +
       `
       li {
-        padding: 2px 0;
+        padding: calc(var(--space-1) / 2) 0; /* 2px 0 */
         opacity: 0.7;
       }
       
@@ -100,7 +100,7 @@ export class DestroyedObjectsList extends BaseCelestialList {
       .destruction-info {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: var(--space-2); /* 8px */
       }
       
       celestial-row {

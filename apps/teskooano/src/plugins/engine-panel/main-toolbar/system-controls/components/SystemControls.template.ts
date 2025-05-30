@@ -13,15 +13,14 @@ template.innerHTML = `
     :host {
       display: inline-flex;
       align-items: center;
-      font-family: var(--font-family-base, sans-serif);
+      font-family: var(--font-family-base);
       height: 100%;
-      min-width: 240px; /* Default min width */
-      width: auto; /* Let it size based on content */
+      min-width: calc(var(--space-10) * 3 + var(--space-8)); /* 240px */
+      width: auto;
     }
 
-    /* When in mobile mode, adjust to fit more compactly into toolbar */
     :host([mobile]) {
-      min-width: auto; /* Let it shrink */
+      min-width: auto;
       width: auto;
     }
 
@@ -29,189 +28,154 @@ template.innerHTML = `
       display: flex;
       flex-direction: row;
       align-items: center;
-      justify-content: space-between; /* Align items nicely */
+      justify-content: space-between;
       width: 100%;
-      padding: 0 var(--spacing-sm, 8px);
+      padding: 0 var(--space-2);
       height: 100%;
     }
 
-     /* Ensure states take up appropriate space */
      .state {
-       display: flex; /* Use flex for internal layout */
-       flex-grow: 1; /* Allow state container to grow */
+       display: flex;
+       flex-grow: 1;
        align-items: center;
-       gap: var(--spacing-md, 12px);
-       width: 100%; /* Take full width within parent */
+       gap: var(--space-3);
+       width: 100%;
      }
 
-     /* When mobile, stack items more readily if needed */
      :host([mobile]) .state {
-       flex-wrap: wrap; /* Allow wrapping on small screens */
+       flex-wrap: wrap;
      }
 
-
-    /* Styles for action groups */
     .actions {
       display: flex;
-      flex-wrap: nowrap; /* Keep actions in a single row */
-      align-items: center; /* Align buttons vertically */
+      flex-wrap: nowrap;
+      align-items: center;
     }
 
-    /* Style the danger button specifically using the class */
     teskooano-button.danger::part(button) {
-      background-color: var(--color-error, #e74c3c);
-      border-color: var(--color-error, #e74c3c);
-      color: var(--color-text-on-primary, white);
+      background-color: var(--color-error);
+      border-color: var(--color-error);
+      color: var(--color-text-on-primary); /* Text on error buttons */
+      transition: filter var(--transition-duration-fast) var(--transition-timing-base);
     }
-     teskooano-button.danger:hover::part(button) {
-       background-color: var(--color-error-dark, #c0392b);
-       border-color: var(--color-error-dark, #c0392b);
-     }
-
-    /* Icon styles */
-    /* REMOVED .icon class styles */
-
-    /* Style the SVG icons */
-    teskooano-button svg {
-      width: 1.1em; /* Match previous .icon size */
-      height: 1.1em;
-      fill: currentColor; /* Use button text color */
-      display: block; /* Ensure proper layout */
-      margin: auto; /* Center if needed */
-    }
-    /* Remove margin from icon-only buttons on mobile */
+    
     :host([mobile]) teskooano-button:not(:has(span:not([slot='icon']))) svg {
         margin: 0;
     }
 
-
-    /* State-specific styles */
      .state--empty {
-       /* display: flex; Inherited from .state */
-       justify-content: flex-start; /* Align form and actions */
+       justify-content: flex-start;
      }
 
     .state--empty .seed-form {
       display: flex;
-      gap: var(--spacing-sm, 8px);
+      gap: var(--space-2);
       align-items: center;
-      flex-grow: 1; /* Allow form to take available space */
-      min-width: 150px; /* Prevent excessive shrinking */
-      max-width: 250px; /* Limit max width */
+      flex-grow: 1;
+      min-width: calc(var(--space-10) * 2 + var(--space-4) + var(--space-2)); /* ~152px */
+      max-width: calc(var(--space-10) * 4 - var(--space-1)); /* ~252px */
     }
 
-    /* When in mobile mode, make the form more compact */
     :host([mobile]) .state--empty .seed-form {
-       min-width: 120px;
-       max-width: 180px;
-       gap: var(--spacing-xs, 4px);
+       min-width: calc(var(--space-10) * 2 - var(--space-2)); /* 120px */
+       max-width: calc(var(--space-10) * 3 - var(--space-3)); /* 180px */
+       gap: var(--space-1);
     }
 
     .state--empty .seed-form label {
-      /* Keep hidden for space */
       display: none;
     }
 
     .state--empty .seed-form input[type="text"] {
       flex-grow: 1;
-      height: calc(var(--control-height-sm, 32px) - 2px); /* Match button height */
-      min-width: 80px; /* Minimum sensible width */
-      padding: var(--space-1, 4px) var(--space-2, 8px);
-      border: var(--border-width-thin, 1px) solid var(--color-border-subtle, #4a4a6a);
-      border-radius: var(--radius-md, 4px);
-      background-color: var(--color-surface-1, #1a1a2e);
-      color: var(--color-text-primary, #e0e0fc);
-      font-size: var(--font-size-small, 0.85rem);
+      height: calc(var(--control-height-sm) - 2px); /* Adjust for border */
+      min-width: calc(var(--space-10) + var(--space-4)); /* 80px */
+      padding: var(--space-1) var(--space-2);
+      border: var(--border-width-thin) solid var(--color-border-subtle);
+      border-radius: var(--radius-sm); /* Smaller radius for inputs */
+      background-color: var(--color-surface-1);
+      color: var(--color-text-primary);
+      font-size: var(--font-size-1);
     }
      :host([mobile]) .state--empty .seed-form input[type="text"] {
-        height: calc(var(--control-height-xs, 28px) - 2px); /* Even smaller on mobile */
+        height: calc(var(--control-height-xs) - 2px); /* Adjust for border */
      }
-
 
     .state--empty .seed-form input.error {
-      border-color: var(--color-error, #e74c3c);
-      outline: 1px solid var(--color-error, #e74c3c); /* Add outline for visibility */
+      border-color: var(--color-error);
+      outline: var(--border-width-thin) solid var(--color-error);
     }
 
-     /* Hide regular submit button, use action button */
      .state--empty .seed-form teskooano-button[type="submit"] {
-       /* Use dedicated button now */
-       /* display: none; */
-       /* Instead, let's make it an icon button */
-       padding: 0; /* Remove padding if needed */
-       min-width: fit-content; /* Adjust width for icon */
+       padding: 0;
+       min-width: fit-content;
      }
      :host([mobile]) .state--empty .seed-form teskooano-button[type="submit"] span:not([slot='icon']) {
-       display: none; /* Hide text on mobile */
+       display: none;
      }
      :host([mobile]) .state--empty .seed-form teskooano-button[type="submit"] span[slot='icon'] {
-       margin: 0; /* Remove margin */
+       margin: 0;
      }
 
-    /* Loaded state adjustments */
-     .state--loaded {
-        /* display: flex; Inherited */
-        justify-content: space-between; /* Space out info and actions */
+    .state--loaded {
+        justify-content: space-between;
      }
 
     .state--loaded .system-info {
       display: flex;
-      gap: var(--spacing-md, 12px);
+      gap: var(--space-3);
       align-items: center;
-      min-width: 120px; /* Give it some space */
-      flex-shrink: 0; /* Don't let it shrink too easily */
+      min-width: calc(var(--space-10) * 2 - var(--space-2)); /* 120px */
+      flex-shrink: 0;
     }
 
     .state--loaded .system-info .system-seed {
-      color: var(--color-text-secondary, #a0a0cc);
-      font-family: var(--font-family-monospace, monospace);
-      font-size: var(--font-size-small, 0.85rem);
+      color: var(--color-text-secondary);
+      font-family: var(--font-family-monospace);
+      font-size: var(--font-size-1);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 150px;
-      background-color: var(--color-surface-1, #1a1a2e);
-      padding: 2px 6px;
-      border-radius: var(--radius-sm, 2px);
-      border: 1px solid var(--color-border-subtle, #4a4a6a);
+      max-width: calc(var(--space-10) * 2 + var(--space-4) + var(--space-2)); /* ~152px, was 150px */
+      background-color: var(--color-surface-1);
+      padding: var(--space-1) var(--space-2); /* Was 2px 6px */
+      border-radius: var(--radius-sm);
+      border: var(--border-width-thin) solid var(--color-border-subtle);
     }
 
     .state--loaded .system-info .celestial-count {
-      color: var(--color-text-secondary, #a0a0cc);
-      font-size: var(--font-size-small, 0.85rem);
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-1);
       white-space: nowrap;
     }
 
-    /* Compact layout for mobile toolbar */
     :host([mobile]) .state--loaded {
-        gap: var(--spacing-sm, 8px);
-        flex-wrap: wrap; /* Allow wrap */
+        gap: var(--space-2); /* Was var(--spacing-sm, 8px) */
+        flex-wrap: wrap;
     }
     :host([mobile]) .state--loaded .system-info {
       flex-direction: row;
       align-items: flex-start;
-      gap: var(--spacing-xs, 4px);
-      min-width: 100px;
-      width: 100%; /* Take full width when wrapped */
-      order: 1; /* Put info first */
+      gap: var(--space-1); /* Was var(--spacing-xs, 4px) */
+      min-width: calc(var(--space-10) + var(--space-6) + var(--space-1)); /* 100px */
+      width: 100%;
+      order: 1;
     }
     :host([mobile]) .state--loaded .actions {
-       width: 100%; /* Take full width when wrapped */
-       justify-content: flex-end; /* Align buttons right */
-       order: 2; /* Put actions second */
+       width: 100%;
+       justify-content: flex-end;
+       order: 2;
     }
 
-
-    /* Feedback indicator */
     .feedback {
       display: inline-block;
-      margin-left: 4px;
+      margin-left: var(--space-1); /* Was 4px */
       animation: fadeIn 0.3s ease-in;
-      color: var(--color-success, #2ecc71); /* Green for success */
+      color: var(--color-success);
       font-weight: bold;
     }
      .feedback.error {
-       color: var(--color-warning, #f39c12); /* Orange for warning/error */
+       color: var(--color-warning); /* Was #f39c12 */
      }
 
     @keyframes fadeIn {
@@ -219,24 +183,23 @@ template.innerHTML = `
       to { opacity: 1; transform: scale(1); }
     }
 
-    /* Loading state overlay */
      .loading-overlay {
        position: absolute;
        inset: 0;
-       background-color: rgba(0, 0, 0, 0.5);
+       background-color: var(--color-scrim); /* Was --color-scrim-light */
        display: flex;
        align-items: center;
        justify-content: center;
-       color: white;
+       color: var(--color-text-on-dark, var(--color-text-primary));
        font-size: 1.2em;
        z-index: 10;
-       border-radius: var(--radius-md, 4px);
+       border-radius: var(--radius-md);
      }
      .loading-overlay::after {
-       content: '⏳'; /* Loading emoji */
+       content: '⏳';
        animation: spin 1s linear infinite;
        display: inline-block;
-       margin-left: 8px;
+       margin-left: var(--space-2); /* Was 8px */
      }
 
      @keyframes spin {
@@ -353,7 +316,7 @@ template.innerHTML = `
     <!-- Loading Overlay -->
     <div class="loading-overlay" style="display: none;">Generating...</div>
 
-    <slot></slot> <!-- Keep slot for potential extensions -->
+    <slot></slot>
   </div>
 `;
 

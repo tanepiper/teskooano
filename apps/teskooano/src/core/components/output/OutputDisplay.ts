@@ -6,43 +6,43 @@ template.innerHTML = `
     :host {
       display: block;
       position: relative;
-      font-family: var(--font-family, sans-serif);
-      font-size: var(--font-size-md, 1em);
-      color: var(--color-text, #e0e0fc);
-      background-color: var(--color-surface-inset, #1a1a2e);
-      padding: var(--space-sm, 8px) var(--space-md, 12px);
-      border-radius: var(--border-radius-md, 5px);
-      border: 1px solid var(--color-border, #50506a);
-      margin-bottom: var(--space-md, 12px);
+      font-family: var(--font-family-base);
+      font-size: var(--font-size-base);
+      color: var(--color-text-primary);
+      background-color: var(--color-surface-1);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      border: var(--border-width-thin) solid var(--color-border-subtle);
+      margin-bottom: var(--space-md);
       overflow-x: auto; /* Allow horizontal scrolling for long content */
       white-space: pre-wrap; /* Preserve whitespace and wrap lines */
       word-break: break-word;
     }
     :host([monospace]) {
-        font-family: var(--font-family-monospace, monospace);
+        font-family: var(--font-family-monospace);
         white-space: pre; /* Preserve all whitespace with monospace */
     }
     /* Add a subtle scrollbar style */
     ::-webkit-scrollbar {
-        height: 6px;
+        height: var(--space-1); /* 4px */
         background-color: transparent;
     }
     ::-webkit-scrollbar-thumb {
-        background-color: var(--color-border, #50506a);
-        border-radius: 3px;
+        background-color: var(--color-border-subtle);
+        border-radius: var(--radius-sm); /* Match height/2 for pill*/
     }
     
     /* Copy button styles */
     .copy-button {
       position: absolute;
-      top: var(--space-xs, 4px);
-      right: var(--space-xs, 4px);
-      background-color: var(--color-surface, #2a2a3e);
-      color: var(--color-text-secondary, #aaa);
-      border: 1px solid var(--color-border, #50506a);
-      border-radius: var(--border-radius-sm, 3px);
-      padding: var(--space-xxs, 2px) var(--space-xs, 4px);
-      font-size: var(--font-size-sm, 0.9em);
+      top: var(--space-1);
+      right: var(--space-1);
+      background-color: var(--color-surface-2);
+      color: var(--color-text-secondary);
+      border: var(--border-width-thin) solid var(--color-border-subtle);
+      border-radius: var(--radius-sm);
+      padding: calc(var(--space-1) / 2) var(--space-1);
+      font-size: var(--font-size-1);
       cursor: pointer;
       opacity: 0;
       transition: opacity 0.2s ease, background-color 0.2s ease;
@@ -55,28 +55,28 @@ template.innerHTML = `
     }
     
     .copy-button:hover {
-      background-color: var(--color-surface-highlight, #3a3a5e);
+      background-color: var(--color-surface-3);
     }
     
     .copy-button:active {
-      background-color: var(--color-surface-pressed, #1a1a2e);
+      background-color: var(--color-surface-1);
     }
     
     .copy-button:focus {
-      outline: 2px solid var(--color-primary, #6c63ff);
+      outline: var(--border-width-medium) solid var(--color-primary);
       outline-offset: -1px;
     }
     
     /* Copy feedback message */
     .copy-feedback {
       position: absolute;
-      top: var(--space-xs, 4px);
-      right: var(--space-xl, 32px);
-      background-color: var(--color-success-bg, #1e3a2d);
-      color: var(--color-success-text, #a0d9b5);
-      border-radius: var(--border-radius-sm, 3px);
-      padding: var(--space-xxs, 2px) var(--space-xs, 4px);
-      font-size: var(--font-size-sm, 0.9em);
+      top: var(--space-1);
+      right: var(--space-6);
+      background-color: var(--color-success-background);
+      color: var(--color-success-text);
+      border-radius: var(--radius-sm);
+      padding: calc(var(--space-1) / 2) var(--space-1);
+      font-size: var(--font-size-1);
       opacity: 0;
       transition: opacity 0.3s ease;
       pointer-events: none;

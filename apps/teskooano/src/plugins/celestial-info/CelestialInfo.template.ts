@@ -8,8 +8,8 @@ template.innerHTML = `
     }
 
     .placeholder {
-      padding: 10px;
-      color: var(--ui-text-color-dim, #888);
+      padding: var(--space-3);
+      color: var(--color-text-secondary);
       font-style: italic;
     }
 

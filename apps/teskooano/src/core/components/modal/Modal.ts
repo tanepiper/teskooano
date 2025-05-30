@@ -7,13 +7,13 @@ template.innerHTML = `
       display: block;
       --modal-width: var(--width, 450px);
       --modal-height: var(--height, 250px);
-      --header-background: var(--color-surface-3, #333344);
-      --body-background: var(--color-surface-2, #272736);
-      --footer-background: var(--color-surface-3, #333344);
-      --border-color: var(--color-border, #50506a);
-      --title-color: var(--color-text-primary, #eeeef5);
-      --content-color: var(--color-text-secondary, #ccccdd);
-      font-family: var(--font-family-base, system-ui);
+      --header-background: var(--color-surface-3);
+      --body-background: var(--color-surface-2);
+      --footer-background: var(--color-surface-3);
+      --border-color: var(--color-border-subtle);
+      --title-color: var(--color-text-primary);
+      --content-color: var(--color-text-secondary);
+      font-family: var(--font-family-base);
     }
 
     .modal-container {
@@ -22,8 +22,8 @@ template.innerHTML = `
       width: 100%;
       height: 100%;
       background-color: var(--body-background);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md, 4px);
+      border: var(--border-width-thin) solid var(--border-color);
+      border-radius: var(--radius-md);
       overflow: hidden;
     }
 
@@ -31,22 +31,22 @@ template.innerHTML = `
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: var(--space-3, 12px);
+      padding: var(--space-3);
       background-color: var(--header-background);
-      border-bottom: 1px solid var(--border-color);
-      min-height: 40px;
+      border-bottom: var(--border-width-thin) solid var(--border-color);
+      min-height: var(--space-8);
     }
 
     .modal-title {
       margin: 0;
-      font-size: var(--font-size-large, 16px);
-      font-weight: var(--font-weight-semibold, 600);
+      font-size: var(--font-size-large);
+      font-weight: var(--font-weight-bold);
       color: var(--title-color);
     }
 
     .modal-body {
       flex: 1;
-      padding: var(--space-4, 16px);
+      padding: var(--space-4);
       overflow-y: auto;
       color: var(--content-color);
     }
@@ -54,10 +54,10 @@ template.innerHTML = `
     .modal-footer {
       display: flex;
       justify-content: flex-end;
-      gap: var(--space-2, 8px);
-      padding: var(--space-3, 12px);
+      gap: var(--space-2);
+      padding: var(--space-3);
       background-color: var(--footer-background);
-      border-top: 1px solid var(--border-color);
+      border-top: var(--border-width-thin) solid var(--border-color);
     }
 
     ::slotted([slot="content"]) {

@@ -1,29 +1,29 @@
 export const baseStyles = `
 :host {
   display: block;
-  padding: 5px 10px; /* Add some horizontal padding */
-  font-family: sans-serif;
-  font-size: 12px;
-  color: var(--ui-text-color, #ccc); /* Use CSS variable for text color */
-  background-color: var(--ui-panel-background, #2a2a2a); /* Use CSS variable */
+  padding: var(--space-1) var(--space-3); /* Add some horizontal padding */
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-1);
+  color: var(--color-text-primary); /* Use CSS variable for text color */
+  background-color: var(--color-surface-2); /* Use CSS variable */
 }
 h3 {
     margin-top: 0;
-    margin-bottom: 8px;
-    color: var(--ui-text-color-strong, #eee);
-    border-bottom: 1px solid var(--ui-border-color, #444);
-    padding-bottom: 4px;
+    margin-bottom: var(--space-2); /* 8px */
+    color: var(--color-text-primary); /* Standard heading color */
+    border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
+    padding-bottom: var(--space-1); /* 4px */
 }
 .info-grid {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 4px 10px; /* Adjust spacing */
+    gap: var(--space-1) var(--space-3); /* 4px 12px, Adjust spacing */
     align-items: baseline; /* Align text better */
 }
 .info-grid dt {
     font-weight: bold;
     grid-column: 1;
-    color: var(--ui-text-color-medium, #aaa); /* Slightly dimmer label */
+    color: var(--color-text-secondary); /* Slightly dimmer label */
     text-align: right;
 }
 .info-grid dd {
@@ -34,7 +34,9 @@ h3 {
     text-overflow: ellipsis; /* Add ellipsis if text overflows */
 }
 .placeholder {
-    color: var(--ui-text-color-dim, #888);
+    color: var(--color-text-secondary);
     font-style: italic;
+    padding: var(--space-3); /* Added for consistent spacing */
+    text-align: center; /* Added for better visual centering */
 }
 `;

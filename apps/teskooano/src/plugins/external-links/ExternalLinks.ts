@@ -123,7 +123,7 @@ export class ExternalLinksComponent extends HTMLElement {
     ) as TeskooanoButton;
 
     // Configure Button Appearance and Behavior
-    button.setAttribute("variant", "icon-toolbar");
+    button.setAttribute("variant", "ghost");
     button.setAttribute("aria-label", linkData.label); // Accessibility
     button.onclick = () =>
       window.open(linkData.url, "_blank", "noopener,noreferrer"); // Security best practice

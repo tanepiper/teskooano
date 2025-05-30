@@ -6,84 +6,84 @@ SystemGeneratorModalTemplate.innerHTML = `
   <style>
     :host {
       display: block;
-      font-family: var(--font-family-base, system-ui);
-      line-height: 1.5;
-      color: var(--color-text-secondary, #ccccdd);
+      font-family: var(--font-family-base);
+      line-height: var(--line-height-base);
+      color: var(--color-text-secondary);
     }
     
     .system-generator-modal-content {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: var(--space-4);
     }
     
     .system-header {
-      margin-bottom: 8px;
+      margin-bottom: var(--space-2);
     }
     
     .system-title {
-      margin: 0 0 8px 0;
-      color: var(--color-text-primary, #eeeef5);
-      font-size: 18px;
+      margin: 0 0 var(--space-2) 0;
+      color: var(--color-text-primary);
+      font-size: var(--font-size-3);
     }
     
     .system-description {
       margin: 0;
-      font-size: 14px;
+      font-size: var(--font-size-base);
       opacity: 0.9;
     }
     
     .physics-info {
-      background: rgba(0, 100, 255, 0.1);
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      border-left: 3px solid rgba(60, 130, 255, 0.5);
+      background: var(--color-surface-1);
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
+      border-left: var(--border-width-thick) solid var(--color-info);
     }
     
     .section-title {
-      margin: 0 0 8px 0;
-      color: var(--color-text-primary, #eeeef5);
-      font-size: 14px;
+      margin: 0 0 var(--space-2) 0;
+      color: var(--color-text-primary);
+      font-size: var(--font-size-base);
     }
     
     .section-content {
       margin: 0;
-      font-size: 14px;
+      font-size: var(--font-size-base);
       opacity: 0.9;
     }
     
     .section-content strong {
-      color: var(--color-text-primary, #eeeef5);
+      color: var(--color-text-primary);
     }
     
     .system-summary, .star-info {
-      background: var(--color-surface-1, #1e1e2a);
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 8px;
+      background: var(--color-surface-1);
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--space-2);
     }
     
     .summary-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      font-size: 13px;
+      gap: var(--space-2);
+      font-size: var(--font-size-1);
     }
     
     .star-details {
-      font-size: 13px;
-      line-height: 1.4;
+      font-size: var(--font-size-1);
+      line-height: var(--line-height-base);
     }
     
     .star-details p {
-      margin: 0 0 6px 0;
+      margin: 0 0 var(--space-1) 0;
     }
     
     .footer-info {
-      margin-top: 16px;
-      font-size: 12px;
-      opacity: 0.7;
+      margin-top: var(--space-4);
+      font-size: var(--font-size-1);
+      opacity: var(--opacity-text-muted);
       text-align: center;
     }
   </style>

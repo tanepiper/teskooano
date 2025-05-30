@@ -8,12 +8,44 @@
   --color-surface-1: #1a1a2e; /* Dark Navy (Prev Background) */
   --color-surface-2: #2a2a3e; /* Lighter Navy/Grey (Prev Surface) */
   --color-surface-3: #3a3a4e; /* Even Lighter Surface */
+  --color-surface-2-alpha-70: rgba(
+    42,
+    42,
+    62,
+    0.7
+  ); /* Transparent version of surface-2 for overlays */
   --color-text-primary: #e0e0fc; /* Light Lavender/White (Prev Text) */
   --color-text-secondary: #a0a0cc; /* Muted Lavender */
   --color-text-disabled: #6a6a8a; /* Greyed Out */
   --color-border-strong: #6a6a8a; /* Visible Border */
   --color-border-subtle: #4a4a6a; /* Muted Border (Prev Border) */
   --color-border-focus: var(--color-primary); /* Focus Indicator */
+  --color-surface-row-hover: rgba(
+    224,
+    224,
+    252,
+    0.05
+  ); /* Subtle hover for rows */
+  --color-surface-interactive-active: rgba(
+    224,
+    224,
+    252,
+    0.1
+  ); /* Subtle active state for interactive transparent surfaces */
+
+  /* Overlays / Scrims */
+  --color-scrim: rgba(0, 0, 0, 0.75); /* Standard dark scrim for overlays */
+
+  /* Inverse / Special Surfaces (e.g., for Tooltips, Popovers against dark theme) */
+  --color-surface-inverse: var(
+    --color-surface-3
+  ); /* Dark background for tooltips */
+  --color-text-inverse: var(
+    --color-text-primary
+  ); /* Light text for on inverse surfaces */
+  --color-border-inverse: var(
+    --color-border-strong
+  ); /* Contrasting border for inverse surfaces */
 
   /* Primary Action */
   --color-primary: #6c63ff; /* Purple/Blue Accent */
@@ -33,8 +65,19 @@
   --color-accent-active: #0d8a7f;
   --color-text-on-accent: #12121e;
 
+  /* Specific Accent Colors */
+  --color-accent-attention: #bfed09; /* Bright green/yellow for specific highlights */
+  --color-accent-attention-fill: rgba(
+    191,
+    237,
+    9,
+    0.85
+  ); /* Fill version for SVGs */
+
   /* Semantic Colors */
   --color-success: #2ecc71;
+  --color-success-background: #1e3a2d;
+  --color-success-text: #a0d9b5;
   --color-warning: #f1c40f;
   --color-error: #e74c3c;
   --color-info: #3498db;
@@ -123,6 +166,14 @@
   --transition-duration-slow: 400ms;
   --transition-timing-base: ease-in-out;
 
+  /* --- Z-Index --- */
+  --z-index-dropdown: 50;
+  --z-index-sticky: 75;
+  --z-index-overlay: 100;
+  --z-index-tooltip: 150;
+  --z-index-modal: 200;
+  --z-index-engine-toolbar: 9999; /* For engine overlay elements */
+
   /* --- Base Styles Application --- */
   /* NOTE: These are NOT variables, but actual style rules.
      They *should* ideally be in a separate `base.css`, 
@@ -194,4 +245,38 @@
   --dv-tab-close-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23a0a0c0" viewBox="0 0 12 12"><path d="M9.3 2.7l-6.6 6.6-0.7-0.7 6.6-6.6 0.7 0.7z"/><path d="M2.7 2.7l6.6 6.6-0.7 0.7-6.6-6.6 0.7-0.7z"/></svg>'); /* Muted lavender 'X' icon */
   --dv-tabs-container-scrollbar-color: #4a4a7f #1f1f38; /* Scrollbar track and thumb */
   --dv-floating-box-shadow: 0 5px 15px rgba(127, 127, 220, 0.2); /* Subtle lavender glow */
+
+  /* Letter Spacing */
+  --letter-spacing-base: 0;
+  --letter-spacing-loose: 0.05em; /* Wider spacing */
+  --letter-spacing-tight: -0.025em; /* Tighter spacing */
+  --letter-spacing-label: 0.5px; /* Added for precise label spacing */
+
+  /* Layout & Sizing Utilities */
+  --container-max-width: 1200px;
+  --sidebar-width: 250px;
+  --toolbar-height: 50px; /* Consistent height for toolbars */
+  --layout-card-width-default: 300px; /* Added for default card width */
+  --layout-tooltip-max-width: 250px; /* Added for tooltip max width */
+
+  /* Component Specific Sizes (can be expanded) */
+  --size-icon-sm: 16px; /* var(--space-4) */
+  --size-icon-lg: 32px; /* var(--space-6) */
+  --size-tooltip-arrow-base: 5px; /* Added for tooltip arrow */
+
+  /* Opacity */
+  --opacity-disabled: 0.6;
+  --opacity-medium: 0.5;
+  --opacity-low: 0.3;
+  --opacity-placeholder-icon: 0.5;
+  --opacity-text-muted: 0.7; /* For less prominent text */
+
+  /* Control Heights */
+  --control-height-base: calc(
+    var(--space-2) * 2 + var(--line-height-base) * 1em
+  ); /* Default button height basis */
+  --control-height-sm: var(--space-6); /* 32px, For small inputs/controls */
+  --control-height-xs: calc(
+    var(--space-5) + var(--space-1)
+  ); /* 28px, For extra-small inputs/controls */
 }

@@ -1,14 +1,17 @@
-import type {
-  CompositeEnginePanel,
-  CompositeEngineState,
-} from "../engine-panel/panels/CompositeEnginePanel.js";
-import type { TeskooanoSlider } from "../../core/components/slider/Slider.js";
+import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel.js";
+import type { CompositeEngineState } from "../engine-panel/panels/types.js";
+import type { TeskooanoSlider } from "../../core/components/slider/Slider";
+import type { TeskooanoToggle } from "../../core/components/toggle/Toggle";
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 import { Subscription } from "rxjs";
 import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
 import { template } from "./EngineSettings.template.js";
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
+
+// Ensure core components are loaded if not already by plugin system for type casting
+import "../../core/components/slider";
+import "../../core/components/toggle";
 
 /**
  * @element engine-ui-settings-panel
@@ -36,21 +39,21 @@ export class EngineUISettingsPanel
   implements IContentRenderer
 {
   /** Reference to the grid visibility toggle checkbox. */
-  private gridToggle: HTMLInputElement | null = null;
+  private gridToggle: TeskooanoToggle | null = null;
   /** Reference to the celestial labels toggle checkbox. */
-  private labelsToggle: HTMLInputElement | null = null;
+  private labelsToggle: TeskooanoToggle | null = null;
   /** Reference to the AU markers toggle checkbox. */
-  private auMarkersToggle: HTMLInputElement | null = null;
+  private auMarkersToggle: TeskooanoToggle | null = null;
   /** Reference to the debris effects toggle checkbox. */
-  private debrisEffectsToggle: HTMLInputElement | null = null;
+  private debrisEffectsToggle: TeskooanoToggle | null = null;
   /** Reference to the orbit lines toggle checkbox. */
-  private orbitLinesToggle: HTMLInputElement | null = null;
+  private orbitLinesToggle: TeskooanoToggle | null = null;
   /** Reference to the Field of View (FOV) slider element. */
   private fovSliderElement: TeskooanoSlider | null = null;
   /** Reference to the element displaying error messages. */
   private errorMessageElement: HTMLElement | null = null;
   /** Reference to the debug mode toggle checkbox. */
-  private debugModeToggle: HTMLInputElement | null = null;
+  private debugModeToggle: TeskooanoToggle | null = null;
 
   /** Stores the reference to the parent `CompositeEnginePanel` instance. */
   private _parentPanel: CompositeEnginePanel | null = null;
@@ -122,26 +125,26 @@ export class EngineUISettingsPanel
   connectedCallback() {
     this.gridToggle = this.shadowRoot!.getElementById(
       "grid-toggle",
-    ) as HTMLInputElement;
+    ) as TeskooanoToggle;
     this.labelsToggle = this.shadowRoot!.getElementById(
       "labels-toggle",
-    ) as HTMLInputElement;
+    ) as TeskooanoToggle;
     this.auMarkersToggle = this.shadowRoot!.getElementById(
       "au-markers-toggle",
-    ) as HTMLInputElement;
+    ) as TeskooanoToggle;
     this.debrisEffectsToggle = this.shadowRoot!.getElementById(
       "debris-effects-toggle",
-    ) as HTMLInputElement;
+    ) as TeskooanoToggle;
     this.orbitLinesToggle = this.shadowRoot!.getElementById(
       "orbit-lines-toggle",
-    ) as HTMLInputElement;
+    ) as TeskooanoToggle;
     this.fovSliderElement = this.shadowRoot!.getElementById(
       "fov-slider",
     ) as TeskooanoSlider;
     this.errorMessageElement = this.shadowRoot!.getElementById("error-message");
     this.debugModeToggle = this.shadowRoot!.getElementById(
       "debug-mode-toggle",
-    ) as HTMLInputElement;
+    ) as TeskooanoToggle;
 
     if (
       !this.gridToggle ||
@@ -360,10 +363,9 @@ export class EngineUISettingsPanel
    * @private
    */
   private handleGridToggleChange = (event: Event): void => {
-    if (!this._parentPanel) return;
-    const isChecked = (event.target as HTMLInputElement).checked;
-
-    this._parentPanel.setShowGrid(isChecked);
+    if (this._parentPanel && this.gridToggle) {
+      this._parentPanel.setShowGrid((event.target as TeskooanoToggle).checked);
+    }
   };
 
   /**
@@ -373,9 +375,11 @@ export class EngineUISettingsPanel
    * @private
    */
   private handleLabelsToggleChange = (event: Event): void => {
-    if (!this._parentPanel) return;
-    const isChecked = (event.target as HTMLInputElement).checked;
-    this._parentPanel.setShowCelestialLabels(isChecked);
+    if (this._parentPanel && this.labelsToggle) {
+      this._parentPanel.setShowCelestialLabels(
+        (event.target as TeskooanoToggle).checked,
+      );
+    }
   };
 
   /**
@@ -385,9 +389,11 @@ export class EngineUISettingsPanel
    * @private
    */
   private handleAuMarkersToggleChange = (event: Event): void => {
-    if (!this._parentPanel) return;
-    const isChecked = (event.target as HTMLInputElement).checked;
-    this._parentPanel.setShowAuMarkers(isChecked);
+    if (this._parentPanel && this.auMarkersToggle) {
+      this._parentPanel.setShowAuMarkers(
+        (event.target as TeskooanoToggle).checked,
+      );
+    }
   };
 
   /**
@@ -397,10 +403,11 @@ export class EngineUISettingsPanel
    * @private
    */
   private handleDebrisEffectsToggleChange = (event: Event): void => {
-    if (!this._parentPanel) return;
-    const isChecked = (event.target as HTMLInputElement).checked;
-    this._parentPanel.setDebrisEffectsEnabled(isChecked);
-    console.debug(`Debris effects toggle changed: ${isChecked}`);
+    if (this._parentPanel && this.debrisEffectsToggle) {
+      this._parentPanel.setDebrisEffectsEnabled(
+        (event.target as TeskooanoToggle).checked,
+      );
+    }
   };
 
   /**
@@ -410,10 +417,11 @@ export class EngineUISettingsPanel
    * @private
    */
   private handleOrbitLinesToggleChange = (event: Event): void => {
-    if (!this._parentPanel) return;
-    const isChecked = (event.target as HTMLInputElement).checked;
-    this._parentPanel.updateViewState({ showOrbitLines: isChecked });
-    console.debug(`Orbit lines toggle changed: ${isChecked}`);
+    if (this._parentPanel && this.orbitLinesToggle) {
+      this._parentPanel.updateViewState({
+        showOrbitLines: (event.target as TeskooanoToggle).checked,
+      });
+    }
   };
 
   /**
@@ -423,9 +431,9 @@ export class EngineUISettingsPanel
    * @private
    */
   private handleDebugModeToggleChange = (event: Event): void => {
-    if (!this._parentPanel) return;
-    const isChecked = (event.target as HTMLInputElement).checked;
-    this._parentPanel.setDebugMode(isChecked);
+    if (this._parentPanel && this.debugModeToggle) {
+      this._parentPanel.setDebugMode((event.target as TeskooanoToggle).checked);
+    }
   };
 
   /**
@@ -505,10 +513,12 @@ export class EngineUISettingsPanel
       this.debugModeToggle.checked = viewState.isDebugMode ?? false;
     }
 
-    if (this.fovSliderElement && typeof viewState.fov === "number") {
-      if (this.fovSliderElement.value !== viewState.fov) {
-        this.fovSliderElement.value = viewState.fov;
-      }
+    if (
+      this.fovSliderElement &&
+      viewState.fov !== undefined &&
+      this.fovSliderElement.value !== viewState.fov
+    ) {
+      this.fovSliderElement.value = viewState.fov;
     }
   }
 

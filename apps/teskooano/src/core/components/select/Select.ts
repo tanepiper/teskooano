@@ -5,59 +5,63 @@ template.innerHTML = `
   <style>
     :host {
       display: block;
-      margin-bottom: var(--space-md, 12px);
-      font-family: var(--font-family, sans-serif);
-      --select-bg: var(--color-surface-inset, #1a1a2e);
-      --select-border: var(--color-border, #50506a);
-      --select-text: var(--color-text, #e0e0fc);
-      --select-arrow-color: var(--color-text-secondary, #aaa);
-      --select-padding: var(--space-sm, 8px) var(--space-md, 12px);
-      --select-border-radius: var(--border-radius-md, 5px);
+      margin-bottom: var(--space-md);
+      font-family: var(--font-family-base);
+      --select-bg: var(--color-surface-1);
+      --select-border: var(--color-border-subtle);
+      --select-text: var(--color-text-primary);
+      /* --select-arrow-color: var(--color-text-secondary); */ /* Not directly used if relying on global arrow */
+      --select-padding: var(--space-2) var(--space-3);
+      --select-border-radius: var(--radius-md);
       --select-disabled-opacity: 0.6;
     }
     .select-wrapper {
       display: flex;
       flex-direction: column;
-      gap: var(--space-xxs, 2px);
+      gap: calc(var(--space-1) / 2);
     }
     label {
-      font-size: var(--font-size-sm, 0.9em);
-      color: var(--color-text-secondary, #aaa);
-      font-weight: var(--font-weight-medium, 500);
-      margin-bottom: var(--space-xxs, 2px);
+      font-size: var(--font-size-1);
+      color: var(--color-text-secondary);
+      font-weight: var(--font-weight-medium);
+      margin-bottom: calc(var(--space-1) / 2);
     }
     select {
       display: block;
       width: 100%;
       padding: var(--select-padding);
-      font-size: var(--font-size-md, 1em);
+      font-size: var(--font-size-base);
       font-family: inherit;
       color: var(--select-text);
       background-color: var(--select-bg);
-      border: 1px solid var(--select-border);
+      border: var(--border-width-thin) solid var(--select-border);
       border-radius: var(--select-border-radius);
       cursor: pointer;
+      appearance: none; /* Crucial for custom/global arrow styling */
+      /* Assuming global styles.css provides the arrow and its necessary padding-right */
+      /* If not, padding-right for arrow would be needed here if appearance:none is set */
     }
     select:focus {
       outline: none;
-      border-color: var(--color-primary, #6c63ff);
-      box-shadow: 0 0 0 2px var(--color-primary-alpha, rgba(108, 99, 255, 0.3));
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 var(--border-width-medium) var(--color-primary);
     }
     /* Disabled state */
     :host([disabled]) select {
         opacity: var(--select-disabled-opacity);
         cursor: not-allowed;
-        background-color: var(--color-surface-disabled, #333);
+        background-color: var(--color-surface-1);
+        color: var(--color-text-disabled); /* Added disabled text color */
     }
     :host([disabled]) label {
         opacity: var(--select-disabled-opacity);
     }
     /* Help text styles */
     .help-text {
-        font-size: var(--font-size-xs, 0.8em);
-        color: var(--color-text-secondary, #aaa);
+        font-size: var(--font-size-1);
+        color: var(--color-text-secondary);
         display: block;
-        margin-top: var(--space-xxs, 2px);
+        margin-top: calc(var(--space-1) / 2);
     }
     :host([disabled]) .help-text {
         opacity: var(--select-disabled-opacity);
