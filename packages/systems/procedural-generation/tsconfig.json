@@ -9,7 +9,10 @@
     },
     "noEmit": false
   },
-  "include": ["src/**/*.ts", "../../data/types/src/celestials/common/procedural-surface-properties.ts"],
+  "include": [
+    "src/**/*.ts",
+    "../../data/types/src/celestials/common/procedural-surface-properties.ts"
+  ],
   "exclude": ["node_modules", "dist"],
   "references": [
     {

@@ -37,14 +37,13 @@ export interface CameraManagerOptions {
   initialFov?: number;
   /**
    * Optional ID of an object to focus on initially.
+   * Note: If the camera always calculates its position based on the main star,
+   * this might be overridden or primarily used if main star calculation fails.
    */
   initialFocusedObjectId?: string | null;
   /**
-   * Optional initial position for the camera.
-   */
-  initialCameraPosition?: THREE.Vector3;
-  /**
    * Optional initial target point for the camera.
+   * Note: Similar to initialFocusedObjectId, this may be overridden by main star logic.
    */
   initialCameraTarget?: THREE.Vector3;
   /**

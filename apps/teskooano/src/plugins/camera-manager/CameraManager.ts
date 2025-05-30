@@ -90,32 +90,118 @@ export class CameraManager {
     const initialFov = options.initialFov ?? DEFAULT_FOV;
     let initialTarget: THREE.Vector3;
     let initialPosition: THREE.Vector3;
-    let initialFocusedObjectId = options.initialFocusedObjectId ?? null;
+    let initialFocusedObjectId: string | null = null; // Initialize to null
 
-    if (initialFocusedObjectId) {
-      const initialFocusObject =
-        renderableStore.getRenderableObjects()[initialFocusedObjectId];
-      if (initialFocusObject?.position) {
-        initialTarget = initialFocusObject.position.clone();
-      } else {
-        console.warn(
-          `[CameraManager Init] Initial focused object ${initialFocusedObjectId} not found or has no position. Using default target.`,
-        );
-        initialFocusedObjectId = null;
-        initialTarget =
-          options.initialCameraTarget ?? DEFAULT_CAMERA_TARGET.clone();
+    // ALWAYS calculate from the main star.
+    // options.initialFocusedObjectId and options.initialCameraTarget might be used as fallbacks
+    // if main star calculation fails, or can be ignored if a strict default is preferred then.
+
+    const allObjects = renderableStore.getRenderableObjects();
+    let mainStar: RenderableCelestialObject | undefined = undefined;
+
+    // Find main star: parentless, ideally type STAR.
+    for (const id in allObjects) {
+      const obj = allObjects[id];
+      if (obj.parentId === null || obj.parentId === undefined) {
+        if (obj.type && obj.type.toUpperCase() === "STAR") {
+          mainStar = obj; // Prefer a parentless STAR
+          break;
+        }
+        if (!mainStar) {
+          // If no STAR found yet, take any parentless as candidate
+          mainStar = obj;
+        }
       }
-    } else {
-      initialTarget =
-        options.initialCameraTarget ?? DEFAULT_CAMERA_TARGET.clone();
+    }
+    console.log("[CameraManager] Main star found:", mainStar);
+
+    // If the first candidate wasn't a star, check if there's a parentless STAR at origin
+    if (mainStar && mainStar.type.toUpperCase() !== "STAR") {
+      for (const id in allObjects) {
+        const obj = allObjects[id];
+        if (
+          (obj.parentId === null || obj.parentId === undefined) &&
+          obj.type &&
+          obj.type.toUpperCase() === "STAR" &&
+          obj.position &&
+          obj.position.lengthSq() === 0
+        ) {
+          mainStar = obj; // Found a parentless STAR at origin
+          break;
+        }
+      }
     }
 
-    // If initialCameraPosition is not given for a subsequent call,
-    // we might want to preserve the current camera position from cameraStateSubject
-    // instead of resetting to DEFAULT_CAMERA_POSITION. For now, we'll use provided or default.
-    initialPosition =
-      options.initialCameraPosition ?? DEFAULT_CAMERA_POSITION.clone();
+    // Final check: if still no mainStar, or it's not at origin, try to find one at origin
+    if (
+      !mainStar ||
+      (mainStar.position && mainStar.position.lengthSq() !== 0)
+    ) {
+      for (const id in allObjects) {
+        const obj = allObjects[id];
+        if (
+          obj.position &&
+          obj.position.lengthSq() === 0 &&
+          obj.type &&
+          obj.type.toUpperCase() === "STAR"
+        ) {
+          mainStar = obj; // Found a star at origin
+          break;
+        }
+      }
+    }
 
+    if (mainStar?.position && typeof mainStar.radius === "number") {
+      initialTarget = mainStar.position.clone(); // Should be (0,0,0) for the main star
+      const starRadius = mainStar.radius;
+      const offsetFactor = 3.0;
+      const cameraDirection = new THREE.Vector3(1, 0.5, 1).normalize();
+
+      initialPosition = initialTarget
+        .clone()
+        .add(cameraDirection.multiplyScalar(starRadius * offsetFactor));
+
+      // Sanity check: if star is huge and position is still too close (e.g. inside), push further
+      if (initialPosition.distanceTo(initialTarget) < starRadius * 1.1) {
+        initialPosition = initialTarget
+          .clone()
+          .add(
+            cameraDirection.multiplyScalar(starRadius * (offsetFactor + 1.5)),
+          );
+      }
+
+      initialFocusedObjectId = mainStar.celestialObjectId;
+      console.log(
+        `[CameraManager Init] Smart positioning enforced. Main star: '${mainStar.name}' (ID: ${mainStar.celestialObjectId}, Radius: ${starRadius}). Initial Pos:`,
+        initialPosition,
+        "Target:",
+        initialTarget,
+      );
+    } else {
+      // Fallback to absolute defaults if smart positioning fails
+      // Consider if options.initialFocusedObjectId or options.initialCameraTarget should be used here as a secondary fallback.
+      // For now, sticking to absolute default as per stricter interpretation.
+      console.warn(
+        "[CameraManager Init] Smart positioning failed to find suitable main star. Using absolute default position and target (200,200,200 -> 0,0,0).",
+      );
+      initialTarget =
+        options.initialCameraTarget ?? DEFAULT_CAMERA_TARGET.clone(); // Use option target if available, else default
+      initialPosition = DEFAULT_CAMERA_POSITION.clone(); // No smart position, use default
+      initialFocusedObjectId = options.initialFocusedObjectId ?? null; // Use option focus if available, else null
+      // If initialFocusedObjectId is set and target was default, try to target focused object
+      if (
+        initialFocusedObjectId &&
+        initialTarget.equals(DEFAULT_CAMERA_TARGET)
+      ) {
+        const focusObjectFallback =
+          renderableStore.getRenderableObjects()[initialFocusedObjectId];
+        if (focusObjectFallback?.position) {
+          initialTarget = focusObjectFallback.position.clone();
+        }
+      }
+    }
+
+    // Update the BehaviorSubject with the determined state
     this.cameraStateSubject.next({
       fov: initialFov,
       focusedObjectId: initialFocusedObjectId,
