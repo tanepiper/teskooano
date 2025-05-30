@@ -1,6 +1,11 @@
-import { getSimulationState, renderableStore } from "@teskooano/core-state";
+import {
+  getSimulationState,
+  renderableStore,
+  simulationState$,
+  type SimulationState,
+} from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, Subscription } from "rxjs";
 import * as THREE from "three";
 import type { CameraManagerOptions, CameraManagerState } from "./types";
 import { CustomEvents } from "@teskooano/data-types";
@@ -40,6 +45,9 @@ export class CameraManager {
    */
   private cameraStateSubject: BehaviorSubject<CameraManagerState>;
 
+  private simulationStateSubscription: Subscription | undefined; // For simulation state
+  private lastKnownFollowOffset: THREE.Vector3 | null = null; // To store offset
+
   /**
    * Constructs the CameraManager.
    * Initializes the camera state with default values.
@@ -67,6 +75,7 @@ export class CameraManager {
       "user-camera-manipulation",
       this.handleUserCameraManipulation,
     );
+    this.simulationStateSubscription?.unsubscribe(); // Unsubscribe here
     this.renderer = undefined; // Clear the old renderer reference
   }
 
@@ -86,6 +95,12 @@ export class CameraManager {
     }
     this.renderer = options.renderer;
     this.onFocusChangeCallback = options.onFocusChangeCallback;
+
+    // Subscribe to simulation state changes
+    this.simulationStateSubscription?.unsubscribe(); // Unsubscribe from previous if any
+    this.simulationStateSubscription = simulationState$.subscribe(
+      (state: SimulationState) => this.handleSimulationStateChange(state),
+    );
 
     const initialFov = options.initialFov ?? DEFAULT_FOV;
     let initialTarget: THREE.Vector3;
@@ -255,6 +270,13 @@ export class CameraManager {
       initialState.currentTarget,
     );
     this.renderer.controlsManager.controls.update(); // Crucial for OrbitControls
+
+    // If there's an initial focus, store its offset
+    if (initialState.focusedObjectId && initialState.currentTarget) {
+      this.lastKnownFollowOffset = initialState.currentPosition
+        .clone()
+        .sub(initialState.currentTarget);
+    }
   }
 
   /**
@@ -520,42 +542,36 @@ export class CameraManager {
 
     // After transition and state update, handle following behavior based on simulation state
     if (newFocusedId && this.renderer?.controlsManager) {
-      // Get simulation state to check if it's paused
       const simulationState = getSimulationState();
       const isPaused = simulationState.paused;
 
       const objectToFollow = this.renderer.getObjectById(newFocusedId);
       if (objectToFollow) {
-        const offset = newPosition.clone().sub(newTarget);
+        // Calculate the offset based on the new camera position and target post-transition.
+        this.lastKnownFollowOffset = newPosition.clone().sub(newTarget);
 
-        // Only engage active following if simulation is running
-        // If paused, we'll just save the offset but not actively follow
-        // This allows the user to orbit freely when paused
-        this.renderer.controlsManager.startFollowing(objectToFollow, offset);
+        this.renderer.controlsManager.startFollowing(
+          objectToFollow,
+          this.lastKnownFollowOffset,
+        );
 
-        // If simulation is paused, we want to disable active tracking
-        // but keep the follow target and offset data for when unpaused
         if (isPaused) {
-          document.dispatchEvent(
-            new CustomEvent(CustomEvents.USER_CAMERA_MANIPULATION, {
-              detail: {
-                position: this.renderer.camera.position.clone(),
-                target: this.renderer.controlsManager.controls.target.clone(),
-              },
-              bubbles: true,
-              composed: true,
-            }),
+          console.log(
+            `[CameraManager] Transition complete, following ${newFocusedId} while paused. Offset stored.`,
           );
         }
+        // The problematic dispatch of USER_CAMERA_MANIPULATION when paused is now removed.
       } else {
         console.warn(
           `[CameraManager] Object ${newFocusedId} not found for following post-transition. Stopping follow.`,
         );
         this.renderer.controlsManager.stopFollowing();
+        this.lastKnownFollowOffset = null;
       }
     } else if (this.renderer?.controlsManager) {
       // newFocusedId is null or renderer/controlsManager is not fully available.
       this.renderer.controlsManager.stopFollowing();
+      this.lastKnownFollowOffset = null;
     }
 
     this.intendedFocusIdForTransition = null; // Reset after transition completes or is superseded
@@ -606,14 +622,78 @@ export class CameraManager {
     }
   };
 
+  private handleSimulationStateChange(newState: SimulationState): void {
+    if (!this.renderer || !this.renderer.controlsManager) return;
+
+    const cameraState = this.cameraStateSubject.getValue();
+    const currentlyFocusedId = cameraState.focusedObjectId;
+
+    if (newState.paused) {
+      // When pausing, if we are following, ensure the controlsManager has the latest offset
+      // but it should ideally stop actively moving the camera.
+      // OrbitControls will allow free orbit when not actively updated by follow.
+      if (currentlyFocusedId) {
+        const objectToFollow = this.renderer.getObjectById(currentlyFocusedId);
+        if (objectToFollow?.position && this.renderer.camera?.position) {
+          // Store the current visual offset, user might have orbited
+          this.lastKnownFollowOffset = this.renderer.camera.position
+            .clone()
+            .sub(objectToFollow.position);
+          // Re-affirm follow with potentially new offset, ControlsManager should handle pause
+          // This call primarily updates the ControlsManager's internal target and offset.
+          // The active movement should be handled by ControlsManager based on simulation state.
+          this.renderer.controlsManager.startFollowing(
+            objectToFollow,
+            this.lastKnownFollowOffset,
+          );
+          console.log(
+            `[CameraManager] Paused. Stored follow offset for ${currentlyFocusedId}.`,
+          );
+        }
+      }
+    } else {
+      // Unpausing
+      if (currentlyFocusedId) {
+        const objectToFollow = this.renderer.getObjectById(currentlyFocusedId);
+        if (objectToFollow && this.lastKnownFollowOffset) {
+          // Re-initiate follow with the last known/calculated offset
+          this.renderer.controlsManager.startFollowing(
+            objectToFollow,
+            this.lastKnownFollowOffset,
+          );
+          console.log(
+            `[CameraManager] Resumed following ${currentlyFocusedId} on unpause with stored offset.`,
+          );
+        } else if (objectToFollow) {
+          // If no lastKnownFollowOffset (e.g. focus set while paused, or app start paused), calculate a default one
+          const renderable =
+            renderableStore.getRenderableObjects()[currentlyFocusedId];
+          const objectRadius = renderable?.radius ?? 50;
+          const effectiveFactor = 3.0; // Default like in followObject
+          const offsetMagnitude = objectRadius * effectiveFactor;
+          const defaultOffset = CAMERA_OFFSET.clone()
+            .normalize()
+            .multiplyScalar(offsetMagnitude);
+          this.renderer.controlsManager.startFollowing(
+            objectToFollow,
+            defaultOffset,
+          );
+          this.lastKnownFollowOffset = defaultOffset.clone();
+          console.log(
+            `[CameraManager] Re-initiated following ${currentlyFocusedId} on unpause with default offset.`,
+          );
+        }
+      }
+    }
+  }
+
   /**
    * Cleans up resources and listeners when the CameraManager is no longer needed.
    * Removes event listeners and completes the state BehaviorSubject.
    */
   public destroy(): void {
-    this._cleanupPriorRenderer(); // Call the same cleanup
-    // If CameraManager had its own direct subscriptions to external observables, unsubscribe here.
-    // For now, it mainly manages renderer and document listeners.
+    this._cleanupPriorRenderer();
+    this.simulationStateSubscription?.unsubscribe(); // Also here for completeness
     this.cameraStateSubject.complete(); // Complete the subject
   }
 }
