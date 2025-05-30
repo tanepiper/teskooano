@@ -6,49 +6,41 @@ import { CSS2DLayerType } from "./CSS2DLayerType";
  * Manages CSS2D layers, their visibility, and the elements within them.
  */
 export class CSS2DLayerManager {
-  private static instance: CSS2DLayerManager;
   private elements: Map<CSS2DLayerType, Map<string, CSS2DObject>> = new Map();
   private layerVisibility: Map<CSS2DLayerType, boolean> = new Map();
 
-  private constructor() {
+  constructor() {
     Object.values(CSS2DLayerType).forEach((layerType) => {
       this.elements.set(layerType, new Map());
       this.layerVisibility.set(layerType, true); // Layers are visible by default
     });
 
-    // Inject global styles for label visibility
-    const styleElement = document.createElement("style");
-    styleElement.textContent = `
-      .label-hidden {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        width: 0 !important;
-        height: 0 !important;
-        overflow: hidden !important;
-        position: absolute !important;
-        z-index: -9999 !important;
-        clip: rect(0, 0, 0, 0) !important;
-      }
-      .celestial-label,
-      .celestial-label *,
-      .au-marker-label,
-      .au-marker-label * {
-        pointer-events: none !important;
-      }
-    `;
-    document.head.appendChild(styleElement);
-  }
-
-  /**
-   * Get the singleton instance of the CSS2DLayerManager.
-   */
-  public static getInstance(): CSS2DLayerManager {
-    if (!CSS2DLayerManager.instance) {
-      CSS2DLayerManager.instance = new CSS2DLayerManager();
+    // Inject global styles for label visibility - ensure this happens only once per application load
+    if (!document.head.querySelector("style[data-css2d-layer-styles]")) {
+      const styleElement = document.createElement("style");
+      styleElement.setAttribute("data-css2d-layer-styles", "true");
+      styleElement.textContent = `
+        .label-hidden {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          width: 0 !important;
+          height: 0 !important;
+          overflow: hidden !important;
+          position: absolute !important;
+          z-index: -9999 !important;
+          clip: rect(0, 0, 0, 0) !important;
+        }
+        .celestial-label,
+        .celestial-label *,
+        .au-marker-label,
+        .au-marker-label * {
+          pointer-events: none !important;
+        }
+      `;
+      document.head.appendChild(styleElement);
     }
-    return CSS2DLayerManager.instance;
   }
 
   /**

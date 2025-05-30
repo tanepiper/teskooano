@@ -240,25 +240,21 @@ export class EngineToolbar {
     config: PanelToolbarItemConfig,
     panelId: string,
   ): void {
-    const existingPanel = this._dockviewController.api.getPanel(panelId);
+    const existingPanel = this._dockviewController.api.getPanel(panelId); // Assuming api is how you get to full DockviewAPI from IDockviewPanelControls
     const position = this.calculatePanelPosition(config);
     const title = config.panelTitle ?? config.title;
-    // Add type assertion for safety
-    const panelConfig = config as any;
 
     if (existingPanel) {
       try {
-        // Ensure panel is visible and sized correctly
         if (!existingPanel.api.isVisible) {
-          // This might require specific Dockview logic if simply setting size/active doesn't show it
-          // For now, assume setActive brings it to front if hidden/inactive
+          // Logic to show if not visible, might vary by Dockview setup
         }
-        existingPanel.api.setSize(position);
+        existingPanel.api.setSize(position); // setSize might not be the right method, Dockview API specific
         if (existingPanel.api.title !== title) {
           existingPanel.api.updateParameters({ title });
         }
         existingPanel.api.setActive();
-        this._activeFloatingPanels.set(panelId, config.componentName);
+        this._activeFloatingPanels.set(panelId, config.componentName); // Using componentName as value, consider panelId or api.id if more appropriate
       } catch (e) {
         console.error(
           `[EngineToolbar ${this._apiId}] Error setting size/activating existing panel ${panelId}:`,
@@ -266,23 +262,33 @@ export class EngineToolbar {
         );
       }
     } else {
+      // Ensure config.params is accessed safely, providing an empty object if it's undefined
+      const additionalParams = (config as any).params || {};
+
       const panelApi = this._dockviewController.addFloatingPanel(
         {
           id: panelId,
           component: config.componentName,
           title: title,
           params: {
-            // Pass necessary params, ensure 'title' matches if Dockview uses it
-            title: title,
-            parentInstance: this._parentEngine, // Pass parent reference if needed by the panel
-            ...(panelConfig.params ?? {}), // Spread any additional params from config
+            ...additionalParams, // Spread any additional params from config
+            parentInstance: this._parentEngine, // Pass parent reference
           },
         },
         position,
       );
       if (panelApi) {
-        this._activeFloatingPanels.set(panelId, config.componentName);
-        panelApi?.setActive(); // Corrected optional chaining
+        this._activeFloatingPanels.set(panelId, panelApi.id); // Store the actual panel API id
+        if (
+          this._parentEngine &&
+          typeof this._parentEngine.trackedFloatingPanels?.set === "function"
+        ) {
+          this._parentEngine.trackedFloatingPanels.set(
+            panelApi.id,
+            panelApi, // Store the panel API instance
+          );
+        }
+        panelApi?.setActive();
       } else {
         console.error(
           `[EngineToolbar ${this._apiId}] Failed to create floating panel ${panelId}`,

@@ -107,13 +107,21 @@ export class ModularSpaceRenderer {
       );
     }
 
-    CSS2DManager.initialize(
+    // CSS2DManager.initialize( // REMOVED static initialization
+    //   this.sceneManager.scene,
+    //   this.sceneManager.camera,
+    //   container,
+    //   this.labelFactoriesMap,
+    // );
+    // this.css2DManager = CSS2DManager.getInstance(); // REMOVED singleton getInstance
+
+    // Instantiate CSS2DManager directly
+    this.css2DManager = new CSS2DManager(
       this.sceneManager.scene,
       this.sceneManager.camera,
-      container,
+      container, // Pass the main container for the renderer
       this.labelFactoriesMap,
     );
-    this.css2DManager = CSS2DManager.getInstance();
 
     this.sceneManager.setCSS2DManager(this.css2DManager);
 

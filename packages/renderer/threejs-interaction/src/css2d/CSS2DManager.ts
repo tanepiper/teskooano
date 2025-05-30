@@ -18,18 +18,17 @@ import type {
 export type LabelFactoryMap = Map<CSS2DLayerType, ILabelFactory>;
 
 /**
- * Singleton facade for managing all CSS2D rendered UI elements.
+ * Facade for managing all CSS2D rendered UI elements.
  * Orchestrates CSS2DRendererService, CSS2DLayerManager, and configured ILabelFactory instances.
  */
 export class CSS2DManager {
-  private static instance: CSS2DManager | undefined;
   private scene: THREE.Scene;
   private camera: THREE.Camera;
   private rendererService: CSS2DRendererService;
   private layerManager: CSS2DLayerManager;
   private labelFactories: LabelFactoryMap;
 
-  private constructor(
+  public constructor(
     scene: THREE.Scene,
     camera: THREE.Camera,
     container: HTMLElement,
@@ -37,9 +36,8 @@ export class CSS2DManager {
   ) {
     this.scene = scene;
     this.camera = camera;
-    this.rendererService = CSS2DRendererService.getInstance();
-    this.rendererService.initialize(container);
-    this.layerManager = CSS2DLayerManager.getInstance();
+    this.rendererService = new CSS2DRendererService(container);
+    this.layerManager = new CSS2DLayerManager();
     this.labelFactories = labelFactories;
 
     if (!this.labelFactories || this.labelFactories.size === 0) {
@@ -47,71 +45,6 @@ export class CSS2DManager {
         "[CSS2DManager] Initialized without any label factories. No labels can be created.",
       );
     }
-  }
-
-  private _reconfigure(
-    scene: THREE.Scene,
-    camera: THREE.Camera,
-    container: HTMLElement,
-    labelFactories: LabelFactoryMap,
-  ): void {
-    this.scene = scene;
-    this.camera = camera;
-    this.rendererService.initialize(container);
-    this.labelFactories = labelFactories;
-    console.log(
-      "[CSS2DManager] Reconfigured with new scene, camera, container, and factories.",
-    );
-  }
-
-  public static getInstance(
-    scene?: THREE.Scene,
-    camera?: THREE.Camera,
-    container?: HTMLElement,
-    labelFactories?: LabelFactoryMap,
-  ): CSS2DManager {
-    if (!CSS2DManager.instance) {
-      if (!scene || !camera || !container || !labelFactories) {
-        throw new Error(
-          "[CSS2DManager] Singleton not initialized. Call initialize() first with scene, camera, container, and labelFactories.",
-        );
-      }
-      CSS2DManager.instance = new CSS2DManager(
-        scene,
-        camera,
-        container,
-        labelFactories,
-      );
-    }
-    return CSS2DManager.instance;
-  }
-
-  public static initialize(
-    scene: THREE.Scene,
-    camera: THREE.Camera,
-    container: HTMLElement,
-    labelFactories: LabelFactoryMap,
-  ): CSS2DManager {
-    if (CSS2DManager.instance) {
-      console.warn(
-        "[CSS2DManager] Instance already exists. Reconfiguring with new parameters.",
-      );
-      CSS2DManager.instance._reconfigure(
-        scene,
-        camera,
-        container,
-        labelFactories,
-      );
-      return CSS2DManager.instance;
-    }
-    CSS2DManager.instance = new CSS2DManager(
-      scene,
-      camera,
-      container,
-      labelFactories,
-    );
-    console.log("[CSS2DManager] Initialized new instance with factories.");
-    return CSS2DManager.instance;
   }
 
   private getFactoryForLayer(

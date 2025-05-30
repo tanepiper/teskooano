@@ -9,18 +9,20 @@ import { BehaviorSubject } from "rxjs";
  */
 export const DEFAULT_PANEL_FOV = 75;
 
-export const viewStateSubject$ = new BehaviorSubject<CompositeEngineState>({
-  cameraPosition: new THREE.Vector3(200, 200, 200),
-  cameraTarget: new THREE.Vector3(0, 0, 0),
-  focusedObjectId: null,
-  showGrid: true,
-  showCelestialLabels: true,
-  showAuMarkers: true,
-  showDebrisEffects: false,
-  showOrbitLines: true,
-  isDebugMode: false,
-  fov: DEFAULT_PANEL_FOV,
-});
+export function createViewStateSubject(): BehaviorSubject<CompositeEngineState> {
+  return new BehaviorSubject<CompositeEngineState>({
+    cameraPosition: new THREE.Vector3(200, 200, 200),
+    cameraTarget: new THREE.Vector3(0, 0, 0),
+    focusedObjectId: null,
+    showGrid: true,
+    showCelestialLabels: true,
+    showAuMarkers: true,
+    showDebrisEffects: false,
+    showOrbitLines: true,
+    isDebugMode: false,
+    fov: DEFAULT_PANEL_FOV,
+  });
+}
 
 /**
  * Applies specific view state updates directly to the renderer's components.

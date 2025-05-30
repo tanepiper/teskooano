@@ -6,11 +6,10 @@ import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
  * It handles the initialization, styling, and rendering calls for the CSS2D overlay.
  */
 export class CSS2DRendererService {
-  private static instance: CSS2DRendererService;
   private renderer: CSS2DRenderer;
   private container: HTMLElement | null = null;
 
-  private constructor() {
+  constructor(container: HTMLElement) {
     this.renderer = new CSS2DRenderer();
     this.renderer.domElement.style.position = "absolute";
     this.renderer.domElement.style.top = "0";
@@ -18,6 +17,8 @@ export class CSS2DRendererService {
     this.renderer.domElement.style.pointerEvents = "none"; // Default to no pointer events
 
     // Add class for global styling and ensure children also don't intercept pointer events
+    // This global style injection might be problematic if multiple instances are truly independent
+    // and don't want to share this exact style. For now, keeping it, but flag for review.
     if (this.renderer.domElement instanceof HTMLElement) {
       const styleElement = document.createElement("style");
       styleElement.textContent = `
@@ -26,45 +27,17 @@ export class CSS2DRendererService {
           pointer-events: none !important;
         }
       `;
-      document.head.appendChild(styleElement);
+      // Consider if this style should be scoped or applied differently for multi-instance
+      if (!document.head.querySelector("style[data-css2d-common-styles]")) {
+        styleElement.setAttribute("data-css2d-common-styles", "true");
+        document.head.appendChild(styleElement);
+      }
       this.renderer.domElement.classList.add("css2d-renderer");
     }
-  }
 
-  /**
-   * Get the singleton instance of the CSS2DRendererService.
-   */
-  public static getInstance(): CSS2DRendererService {
-    if (!CSS2DRendererService.instance) {
-      CSS2DRendererService.instance = new CSS2DRendererService();
-    }
-    return CSS2DRendererService.instance;
-  }
-
-  /**
-   * Initializes the renderer service with the parent container and sets its size.
-   * This must be called once before the service can be used.
-   * @param container - The HTMLElement to append the renderer's DOM element to.
-   */
-  public initialize(container: HTMLElement): void {
-    // If the renderer's DOM element is already parented and that parent is not the new container, remove it.
-    if (
-      this.renderer.domElement.parentNode &&
-      this.renderer.domElement.parentNode !== container
-    ) {
-      (this.renderer.domElement.parentNode as HTMLElement).removeChild(
-        this.renderer.domElement,
-      );
-    }
-
-    this.container = container; // Update internal reference
-
-    // Append to the new container if it's not already the parent.
-    // This ensures it's added if it was never parented or was removed from a different parent.
-    if (this.renderer.domElement.parentNode !== this.container) {
-      this.container.appendChild(this.renderer.domElement);
-    }
-
+    // Logic from initialize() moved here:
+    this.container = container;
+    this.container.appendChild(this.renderer.domElement);
     this.renderer.setSize(
       this.container.clientWidth,
       this.container.clientHeight,

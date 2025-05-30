@@ -32,7 +32,7 @@ import { CameraManager } from "../../camera-manager/CameraManager"; // Corrected
 import { template } from "./CompositeEnginePanel.template.js"; // Import the template
 import {
   applyViewStateToRenderer,
-  viewStateSubject$,
+  createViewStateSubject,
 } from "./CompositeEnginePanel.utils.js"; // Import the utility function
 import { EngineCameraManager } from "./EngineCameraManager"; // Added import
 import { PlaceholderManager } from "./PlaceholderManager"; // Added import
@@ -134,7 +134,7 @@ export class CompositeEnginePanel
       );
     }
 
-    this._viewStateSubject = viewStateSubject$;
+    this._viewStateSubject = createViewStateSubject();
 
     this._handleSystemGenerationStart =
       this._handleSystemGenerationStart.bind(this);
@@ -513,55 +513,63 @@ export class CompositeEnginePanel
     // Define the factory function that creates CelestialLabelComponent instances
     const celestialLabelFactoryFn: CelestialLabelComponentFactory =
       (/*initialData*/) => {
-        // initialData is implicitly handled by the component itself when updateData is called by the factory system.
-        // The factory function just needs to return an instance of the component.
         return new CelestialLabelComponent();
       };
 
-    // Initialize the SimulationManager, which creates the renderer
-    simulationManager.initialize(this._engineContainer, {
-      celestialLabelComponentFactory: celestialLabelFactoryFn,
-    });
-    this._renderer = simulationManager.getRenderer() || undefined; // Get the renderer from the manager, convert null to undefined
-
-    if (!this._renderer) {
+    // Directly create the ModularSpaceRenderer instance
+    try {
+      this._renderer = new ModularSpaceRenderer(this._engineContainer, {
+        celestialLabelComponentFactory: celestialLabelFactoryFn,
+      });
+    } catch (error) {
       console.error(
-        "[CompositeEnginePanel] Failed to get renderer from SimulationManager.",
+        `[CompositePanel ${this._api?.id}] Failed to create ModularSpaceRenderer:`,
+        error,
       );
-      // Display error in the panel container
       if (this._engineContainer) {
         this._engineContainer.textContent =
-          "Error initializing engine: Failed to get renderer from SimulationManager.";
+          "Error initializing engine: Failed to create ModularSpaceRenderer.";
         this._engineContainer.style.color = "red";
         this._engineContainer.style.padding = "1em";
       }
       return; // Stop further initialization if renderer isn't available
     }
 
-    // Original _createRendererInstance logic is now handled by simulationManager.initialize()
-    // and getting the instance via simulationManager.getRenderer()
+    if (!this._renderer) {
+      console.error(
+        "[CompositeEnginePanel] Failed to create local renderer instance.", // UPDATED error message
+      );
+      // Display error in the panel container
+      if (this._engineContainer) {
+        this._engineContainer.textContent =
+          "Error initializing engine: Failed to create local renderer instance."; // UPDATED error message
+        this._engineContainer.style.color = "red";
+        this._engineContainer.style.padding = "1em";
+      }
+      return; // Stop further initialization if renderer isn't available
+    }
+
+    // Original _createRendererInstance logic is now handled by direct instantiation above.
 
     // The rest of the initialization depends on this._renderer being valid
     if (!this._initializeCameraSystems()) return;
     if (!this._configureAndLinkCamera()) return;
 
-    this._finalizePanelInitialization();
+    this._finalizePanelInitialization(); // This already calls renderer.startRenderLoop() and sets up resize observer
   }
 
   /**
    * Creates and configures the core ModularSpaceRenderer instance.
    * @returns True if successful, false otherwise.
-   * @deprecated This logic is now handled by SimulationManager.initialize() and getRenderer()
+   * @deprecated This logic is now handled by direct instantiation in initializeRenderer()
    */
   private _createRendererInstance(): boolean {
     // This method is now effectively replaced.
-    // The renderer instance is obtained from simulationManager.
-    // Kept for context during refactor, should be removed or commented out thoroughly.
+    // The renderer instance is created directly in initializeRenderer.
     console.warn(
-      "[CompositeEnginePanel] _createRendererInstance is deprecated. Renderer is initialized via SimulationManager.",
+      "[CompositeEnginePanel] _createRendererInstance is deprecated. Renderer is instantiated directly in initializeRenderer.",
     );
-
-    return !!this._renderer; // Return true if this._renderer was successfully set from manager
+    return !!this._renderer; // Return true if this._renderer was successfully set
   }
 
   /**
@@ -688,7 +696,7 @@ export class CompositeEnginePanel
       );
     }
 
-    this._renderer.startRenderLoop();
+    this._renderer.startRenderLoop(); // Ensure render loop is started here
 
     this._resizeObserver = new ResizeObserver(() => {
       // Simplified ResizeObserver callback
