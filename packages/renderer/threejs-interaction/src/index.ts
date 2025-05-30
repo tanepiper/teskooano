@@ -1,5 +1,5 @@
 export { ControlsManager } from "./ControlsManager";
-export { CSS2DManager } from "./CSS2DManager";
+export { CSS2DManager } from "./css2d";
 
 // Exports from css2d subdirectory
 export {
@@ -16,6 +16,6 @@ export type {
   CelestialLabelComponentFactory, // Explicit type export
 } from "./css2d";
 
-export type { LabelFactoryMap } from "./CSS2DManager";
+export type { LabelFactoryMap } from "./css2d";
 
 export { ControlsManager as CameraManager } from "./ControlsManager";

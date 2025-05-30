@@ -4,3 +4,4 @@ export * from "./CSS2DLayerType";
 export * from "./CSS2DLabelFactory";
 export * from "./CSS2DCelestialLabelFactory";
 export * from "./ILabelFactory";
+export * from "./CSS2DManager";

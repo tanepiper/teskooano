@@ -8,6 +8,7 @@ import { CSS2DLayerType } from "./CSS2DLayerType";
 export class CSS2DLayerManager {
   private elements: Map<CSS2DLayerType, Map<string, CSS2DObject>> = new Map();
   private layerVisibility: Map<CSS2DLayerType, boolean> = new Map();
+  private _hasAnyVisibleElements: boolean = false;
 
   constructor() {
     Object.values(CSS2DLayerType).forEach((layerType) => {
@@ -40,6 +41,36 @@ export class CSS2DLayerManager {
         }
       `;
       document.head.appendChild(styleElement);
+    }
+    this._recalculateOverallVisibility(); // Initial calculation
+  }
+
+  /**
+   * Checks if there are any visible elements across all managed layers.
+   * @returns True if at least one element is visible, false otherwise.
+   */
+  public hasAnyVisibleElements(): boolean {
+    return this._hasAnyVisibleElements;
+  }
+
+  private _recalculateOverallVisibility(): void {
+    this._hasAnyVisibleElements = false;
+    for (const layerType of Object.values(CSS2DLayerType)) {
+      if (this.isLayerVisible(layerType)) {
+        const layerElements = this.elements.get(layerType);
+        if (layerElements) {
+          for (const element of layerElements.values()) {
+            if (
+              element.visible &&
+              element.element instanceof HTMLElement &&
+              element.element.style.display !== "none"
+            ) {
+              this._hasAnyVisibleElements = true;
+              return; // Found one, no need to check further
+            }
+          }
+        }
+      }
     }
   }
 
@@ -78,6 +109,7 @@ export class CSS2DLayerManager {
 
     layerMap.set(id, element);
     this.updateElementVisibility(element, layerType);
+    this._recalculateOverallVisibility();
   }
 
   /**
@@ -92,6 +124,7 @@ export class CSS2DLayerManager {
       element.removeFromParent();
       element.element.remove(); // Clean up the DOM element itself
       layerMap?.delete(id);
+      this._recalculateOverallVisibility();
     }
   }
 
@@ -106,6 +139,7 @@ export class CSS2DLayerManager {
     layerMap?.forEach((element) => {
       this.updateElementVisibility(element, layerType);
     });
+    this._recalculateOverallVisibility();
   }
 
   /**
@@ -127,7 +161,19 @@ export class CSS2DLayerManager {
     const layerIsVisible = this.layerVisibility.get(layerType) ?? true;
 
     // element.visible controls THREE.js rendering of the object
-    element.visible = layerIsVisible;
+    // Only change element.visible if layer visibility dictates it
+    // Individual show/hideLabel methods will manage element.visible directly if layer is visible
+    if (!layerIsVisible) {
+      element.visible = false;
+    } else if (
+      layerIsVisible &&
+      !element.visible &&
+      !(element.element as HTMLElement).classList.contains("label-hidden")
+    ) {
+      // If layer is visible, and element was previously hidden by layer, make it visible
+      // unless it was explicitly hidden by hideLabel (which adds label-hidden)
+      element.visible = true;
+    }
 
     // HTML element display style for actual browser rendering
     if (element.element instanceof HTMLElement) {
@@ -218,6 +264,7 @@ export class CSS2DLayerManager {
         element.element.remove();
       });
       layerMap.clear();
+      this._recalculateOverallVisibility();
     }
   }
 
@@ -228,6 +275,8 @@ export class CSS2DLayerManager {
     Object.values(CSS2DLayerType).forEach((layerType) => {
       this.clearLayer(layerType);
     });
+    // Potentially redundant, but ensures correct state if clearLayer logic changes
+    this._recalculateOverallVisibility();
   }
 
   /**
@@ -236,9 +285,21 @@ export class CSS2DLayerManager {
   public showLabel(layerType: CSS2DLayerType, id: string): void {
     const element = this.elements.get(layerType)?.get(id);
     if (element?.element instanceof HTMLElement) {
-      element.element.classList.remove("label-hidden");
-      element.element.style.display = "";
-      element.visible = true; // Also ensure THREE object is visible
+      // Only proceed if the layer itself is visible
+      if (this.isLayerVisible(layerType)) {
+        element.element.classList.remove("label-hidden");
+        element.element.style.display = ""; // Revert to default display
+        element.element.style.visibility = "visible";
+        element.element.style.opacity = "1";
+        // Ensure pointer events are correctly set if they were globally none for the component type
+        if (element.element.matches(".celestial-label, .au-marker-label")) {
+          element.element.style.pointerEvents = "none";
+        } else {
+          element.element.style.pointerEvents = ""; // Or "auto" or whatever default is
+        }
+        element.visible = true; // Also ensure THREE object is visible
+        this._recalculateOverallVisibility();
+      }
     }
   }
 
@@ -249,8 +310,13 @@ export class CSS2DLayerManager {
     const element = this.elements.get(layerType)?.get(id);
     if (element?.element instanceof HTMLElement) {
       element.element.classList.add("label-hidden");
+      // Explicitly set styles for hiding, as .label-hidden might be overridden or take time to apply
       element.element.style.display = "none";
-      // element.visible = false; // Optionally hide THREE object too if layer is globally visible
+      element.element.style.visibility = "hidden";
+      element.element.style.opacity = "0";
+      element.element.style.pointerEvents = "none";
+      element.visible = false; // Also ensure THREE object is hidden
+      this._recalculateOverallVisibility();
     }
   }
 
