@@ -272,9 +272,9 @@ export class CameraManager {
    * Initiates a smooth transition managed by the renderer.
    *
    * @param {string | null} objectId - The unique ID of the object to focus on. Pass `null` to clear focus and reset to default view.
-   * @param {number} [distance] - Optional distance multiplier. If not provided, `DEFAULT_CAMERA_DISTANCE` is used to calculate the offset.
+   * @param {number} [distanceFactor] - Optional radius factor. If not provided, `FOLLOW_RADIUS_OFFSET_FACTOR` is used to calculate the offset.
    */
-  public followObject(objectId: string | null, distance?: number): void {
+  public followObject(objectId: string | null, distanceFactor?: number): void {
     if (!this.renderer?.controlsManager) {
       console.warn(
         "[CameraManager] Cannot focus on object: Manager or renderer components not initialized.",
@@ -299,31 +299,71 @@ export class CameraManager {
       this.renderer.controlsManager.transitionTo(
         this.renderer.camera.position.clone(),
         this.renderer.controlsManager.controls.target.clone(),
-        DEFAULT_CAMERA_POSITION.clone(),
-        DEFAULT_CAMERA_TARGET.clone(),
+        DEFAULT_CAMERA_POSITION.clone(), // Reset to absolute default position
+        DEFAULT_CAMERA_TARGET.clone(), // Reset to absolute default target
         { focusedObjectId: null },
       );
     } else {
       const renderables = renderableStore.getRenderableObjects();
       const renderableObject = renderables[objectId];
 
-      if (!renderableObject?.position) {
+      if (
+        !renderableObject?.position ||
+        typeof renderableObject.radius !== "number"
+      ) {
         console.error(
-          `[CameraManager] focusOnObject: Cannot focus on ${objectId}. Object data not found or missing position.`,
+          `[CameraManager] focusOnObject: Cannot focus on ${objectId}. Object data not found, or missing position/radius.`,
         );
         this.cameraStateSubject.next({
           ...currentState,
-          focusedObjectId: null,
+          focusedObjectId: null, // Clear focus if object is invalid
         });
         this.intendedFocusIdForTransition = null;
         return;
       }
 
       const targetPosition = renderableObject.position.clone();
-      const calculatedDistance = distance ?? DEFAULT_CAMERA_DISTANCE;
-      const cameraOffsetVector =
-        CAMERA_OFFSET.clone().multiplyScalar(calculatedDistance);
-      const cameraPosition = targetPosition.clone().add(cameraOffsetVector);
+      const objectRadius = renderableObject.radius;
+
+      // Use the provided distanceFactor, or a default. Ensure it's not too small.
+      const FOLLOW_RADIUS_OFFSET_FACTOR = 3.0; // Default factor of radii to be away
+      const MIN_RADIUS_OFFSET_FACTOR = 1.5; // Minimum factor to prevent being too close
+
+      let effectiveFactor = distanceFactor ?? FOLLOW_RADIUS_OFFSET_FACTOR;
+      if (effectiveFactor < MIN_RADIUS_OFFSET_FACTOR) {
+        console.warn(
+          `[CameraManager] followObject: Requested distanceFactor ${distanceFactor} is too small. Using minimum ${MIN_RADIUS_OFFSET_FACTOR}.`,
+        );
+        effectiveFactor = MIN_RADIUS_OFFSET_FACTOR;
+      }
+
+      const offsetMagnitude = objectRadius * effectiveFactor;
+
+      // Use the existing CAMERA_OFFSET for direction, scaled by the new magnitude.
+      // This maintains a consistent viewing angle relative to the target.
+      const cameraOffsetVector = CAMERA_OFFSET.clone()
+        .normalize()
+        .multiplyScalar(offsetMagnitude);
+      let cameraPosition = targetPosition.clone().add(cameraOffsetVector);
+
+      // Sanity check similar to initial load: if still too close (e.g., inside a very large, non-spherical, or oddly shaped object)
+      // This can happen if CAMERA_OFFSET is pointed directly at a flat part of a large object.
+      // A simple distance check might not be enough. We rely on CAMERA_OFFSET being a good general direction.
+      // However, ensuring we are at least `objectRadius * MIN_RADIUS_OFFSET_FACTOR` might be a good backup.
+      if (
+        cameraPosition.distanceTo(targetPosition) <
+        objectRadius * MIN_RADIUS_OFFSET_FACTOR * 0.9
+      ) {
+        // 0.9 for a small tolerance
+        console.warn(
+          `[CameraManager] followObject: Calculated camera position for ${objectId} is too close. Adjusting further.`,
+        );
+        cameraPosition = targetPosition.clone().add(
+          CAMERA_OFFSET.clone()
+            .normalize()
+            .multiplyScalar(objectRadius * MIN_RADIUS_OFFSET_FACTOR * 1.1),
+        );
+      }
 
       if (this.renderer.controlsManager) {
         // Set up follow BEFORE initiating transition for better continuity
