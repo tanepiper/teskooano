@@ -128,7 +128,6 @@ export class CameraManager {
         }
       }
     }
-    console.log("[CameraManager] Main star found:", mainStar);
 
     // If the first candidate wasn't a star, check if there's a parentless STAR at origin
     if (mainStar && mainStar.type.toUpperCase() !== "STAR") {
@@ -186,12 +185,6 @@ export class CameraManager {
       }
 
       initialFocusedObjectId = mainStar.celestialObjectId;
-      console.log(
-        `[CameraManager Init] Smart positioning enforced. Main star: '${mainStar.name}' (ID: ${mainStar.celestialObjectId}, Radius: ${starRadius}). Initial Pos:`,
-        initialPosition,
-        "Target:",
-        initialTarget,
-      );
     } else {
       // Fallback to absolute defaults if smart positioning fails
       // Consider if options.initialFocusedObjectId or options.initialCameraTarget should be used here as a secondary fallback.
@@ -554,13 +547,6 @@ export class CameraManager {
           objectToFollow,
           this.lastKnownFollowOffset,
         );
-
-        if (isPaused) {
-          console.log(
-            `[CameraManager] Transition complete, following ${newFocusedId} while paused. Offset stored.`,
-          );
-        }
-        // The problematic dispatch of USER_CAMERA_MANIPULATION when paused is now removed.
       } else {
         console.warn(
           `[CameraManager] Object ${newFocusedId} not found for following post-transition. Stopping follow.`,
@@ -646,9 +632,6 @@ export class CameraManager {
             objectToFollow,
             this.lastKnownFollowOffset,
           );
-          console.log(
-            `[CameraManager] Paused. Stored follow offset for ${currentlyFocusedId}.`,
-          );
         }
       }
     } else {
@@ -660,9 +643,6 @@ export class CameraManager {
           this.renderer.controlsManager.startFollowing(
             objectToFollow,
             this.lastKnownFollowOffset,
-          );
-          console.log(
-            `[CameraManager] Resumed following ${currentlyFocusedId} on unpause with stored offset.`,
           );
         } else if (objectToFollow) {
           // If no lastKnownFollowOffset (e.g. focus set while paused, or app start paused), calculate a default one
