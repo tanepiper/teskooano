@@ -3,12 +3,18 @@ import {
   AnimationLoop,
   SceneManager,
   StateManager,
+  type RendererCelestialObject as RenderableCelestialObject,
 } from "@teskooano/renderer-threejs-core";
 import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
 import {
   ControlsManager,
   CSS2DLayerType,
   CSS2DManager,
+  CSS2DLabelFactory,
+  CSS2DCelestialLabelFactory,
+  type LabelFactoryMap,
+  type ILabelFactory,
+  type CelestialLabelComponentFactory,
 } from "@teskooano/renderer-threejs-interaction";
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import {
@@ -16,10 +22,14 @@ import {
   VisualizationMode,
 } from "@teskooano/renderer-threejs-orbits";
 import * as THREE from "three";
-import { RendererStateAdapter } from "./RendererStateAdapter";
+import { RendererStateAdapter } from "./RendererStateAdapter.js";
 
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { renderableStore } from "@teskooano/core-state";
+import type {
+  CelestialType,
+  ICelestialLabelComponent,
+} from "@teskooano/data-types";
 
 export class ModularSpaceRenderer {
   public sceneManager: SceneManager;
@@ -31,12 +41,13 @@ export class ModularSpaceRenderer {
   public backgroundManager: BackgroundManager;
 
   public controlsManager: ControlsManager;
-  public css2DManager?: CSS2DManager;
+  public css2DManager: CSS2DManager;
 
   public lightManager: LightManager;
   public lodManager: LODManager;
 
   private stateAdapter: RendererStateAdapter;
+  private labelFactoriesMap: LabelFactoryMap;
 
   private canvasUIManager?: { render(): void };
 
@@ -51,6 +62,7 @@ export class ModularSpaceRenderer {
       showCelestialLabels?: boolean;
       showAuMarkers?: boolean;
       showDebrisEffects?: boolean;
+      celestialLabelComponentFactory?: CelestialLabelComponentFactory;
     } = {},
   ) {
     this.stateAdapter = new RendererStateAdapter();
@@ -75,24 +87,43 @@ export class ModularSpaceRenderer {
       this.sceneManager.renderer.domElement,
     );
 
-    // Always initialize CSS2DManager regardless of initial visibility settings
+    this.labelFactoriesMap = new Map<CSS2DLayerType, ILabelFactory>();
+
+    const auMarkerFactory = new CSS2DLabelFactory();
+    this.labelFactoriesMap.set(CSS2DLayerType.AU_MARKERS, auMarkerFactory);
+
+    if (options.celestialLabelComponentFactory) {
+      const celestialLabelFactory = new CSS2DCelestialLabelFactory(
+        this.sceneManager.camera,
+        options.celestialLabelComponentFactory,
+      );
+      this.labelFactoriesMap.set(
+        CSS2DLayerType.CELESTIAL_LABELS,
+        celestialLabelFactory,
+      );
+    } else {
+      console.warn(
+        "[ModularSpaceRenderer] No celestialLabelComponentFactory provided. Celestial labels will not be available.",
+      );
+    }
+
     CSS2DManager.initialize(
       this.sceneManager.scene,
       this.sceneManager.camera,
       container,
+      this.labelFactoriesMap,
     );
     this.css2DManager = CSS2DManager.getInstance();
 
-    // Set the CSS2DManager in SceneManager, but this doesn't create the AU markers yet
     this.sceneManager.setCSS2DManager(this.css2DManager);
 
-    // Explicitly set initial visibility for celestial labels (independent of AU markers)
-    this.css2DManager.setLayerVisibility(
-      CSS2DLayerType.CELESTIAL_LABELS,
-      showCelestialLabels,
-    );
+    if (this.labelFactoriesMap.has(CSS2DLayerType.CELESTIAL_LABELS)) {
+      this.css2DManager.setLayerVisibility(
+        CSS2DLayerType.CELESTIAL_LABELS,
+        showCelestialLabels,
+      );
+    }
 
-    // Create and set visibility of AU markers (if specified in options)
     const showAuMarkers = options.showAuMarkers !== false;
     if (options.showAuMarkers !== undefined) {
       this.sceneManager.setAuMarkersVisible(showAuMarkers);
@@ -142,14 +173,6 @@ export class ModularSpaceRenderer {
     });
     container.addEventListener("toggleBackgroundDebug", () => {
       this.backgroundManager.toggleDebug();
-    });
-
-    window.addEventListener("resize", () => {
-      if (container) {
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-        this.onResize(width, height);
-      }
     });
 
     document.addEventListener("camera-transition-complete", (event) => {
@@ -296,7 +319,11 @@ export class ModularSpaceRenderer {
    * @param {boolean} visible - True to show labels, false to hide.
    */
   setCelestialLabelsVisible(visible: boolean): void {
-    if (!this.css2DManager) return;
+    if (
+      !this.css2DManager ||
+      !this.labelFactoriesMap.has(CSS2DLayerType.CELESTIAL_LABELS)
+    )
+      return;
 
     // Only set visibility for the celestial labels layer, independent of AU markers
     this.css2DManager.setLayerVisibility(

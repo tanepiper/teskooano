@@ -6,17 +6,14 @@ import {
   CSS2DRendererService,
   CSS2DLayerManager,
   CSS2DLayerType,
-} from "./css2d"; // Assuming css2d/index.ts exports these
+} from "./index";
 import type {
   ILabelFactory,
   LabelCreationContext,
   CelestialLabelCreationContext,
   LabelUpdateContext,
   CelestialLabelUpdateContext,
-} from "./css2d/ILabelFactory"; // Correct path
-// Removed direct import of CSS2DCelestialLabelFactory and CelestialLabelComponent
-// import { CSS2DCelestialLabelFactory, type CelestialLabelFactoryContext } from "./css2d/CSS2DCelestialLabelFactory";
-// import { CelestialLabelComponent } from "./css2d/label-component/CelestialLabelComponent";
+} from "./ILabelFactory";
 
 export type LabelFactoryMap = Map<CSS2DLayerType, ILabelFactory>;
 
@@ -56,14 +53,12 @@ export class CSS2DManager {
     scene: THREE.Scene,
     camera: THREE.Camera,
     container: HTMLElement,
-    labelFactories: LabelFactoryMap, // Allow factories to be updated on reconfigure
+    labelFactories: LabelFactoryMap,
   ): void {
     this.scene = scene;
     this.camera = camera;
     this.rendererService.initialize(container);
-    this.labelFactories = labelFactories; // Update factories
-    // Layer manager can persist, but ensure it's clean for a new context if necessary
-    // this.layerManager.clearAllLayers(); // Consider if layers should be cleared on reconfigure
+    this.labelFactories = labelFactories;
     console.log(
       "[CSS2DManager] Reconfigured with new scene, camera, container, and factories.",
     );
@@ -73,7 +68,7 @@ export class CSS2DManager {
     scene?: THREE.Scene,
     camera?: THREE.Camera,
     container?: HTMLElement,
-    labelFactories?: LabelFactoryMap, // Optional for getInstance if already initialized
+    labelFactories?: LabelFactoryMap,
   ): CSS2DManager {
     if (!CSS2DManager.instance) {
       if (!scene || !camera || !container || !labelFactories) {
@@ -156,7 +151,7 @@ export class CSS2DManager {
           visualObject: parentMesh,
           parentData: parentDataForUpdate,
         };
-        existingLabel.userData.factoryContext = updateContext; // Keep for consistency with old logic if needed
+        existingLabel.userData.factoryContext = updateContext;
         factory.updateLabel(existingLabel, updateContext);
       }
       return;
@@ -204,30 +199,23 @@ export class CSS2DManager {
       console.warn(
         `[CSS2DManager] AU Marker Label already exists for ${id}. Skipping creation or update.`,
       );
-      // Optionally, could update here if factory supports it and it makes sense for AU markers
       return;
     }
 
-    // Assuming the generic CSS2DLabelFactory has a specific method or handles context for AU markers
-    // If createAuMarkerLabel was moved to the generic factory, it will handle this.
-    // Otherwise, construct context for generic createLabel:
-    const labelDiv = document.createElement("div"); // Temporary for example
-    labelDiv.className = "au-marker-label";
-    labelDiv.textContent = `${auValue} AU`;
-    labelDiv.style.color = "#ccc";
-    labelDiv.style.fontSize = "10px";
-
     const creationContext: LabelCreationContext = {
       id: id,
-      elementContent: labelDiv, // The generic factory expects HTMLElement or string
       position: position,
-      userData: { isAuMarkerLabel: true, auValue: auValue },
+      userData: {
+        isAuMarkerLabel: true,
+        auValue: auValue,
+        textContent: `${auValue} AU`,
+      },
     };
 
     const labelObject = factory.createLabel(creationContext);
 
     if (labelObject) {
-      this.scene.add(labelObject); // AU markers are added directly to the scene
+      this.scene.add(labelObject);
       this.layerManager.addElement(layerType, id, labelObject);
     } else {
       console.warn(
@@ -236,153 +224,120 @@ export class CSS2DManager {
     }
   }
 
-  /**
-   * Remove an element by ID and layer type.
-   */
   removeElement(layerType: CSS2DLayerType, id: string): void {
     this.layerManager.removeElement(layerType, id);
   }
 
-  /**
-   * Set visibility for a specific layer.
-   */
   setLayerVisibility(layerType: CSS2DLayerType, visible: boolean): void {
     this.layerManager.setLayerVisibility(layerType, visible);
   }
 
-  /**
-   * Get visibility for a specific layer.
-   */
   isLayerVisible(layerType: CSS2DLayerType): boolean {
     return this.layerManager.isLayerVisible(layerType);
   }
 
-  /**
-   * Shows a specific 2D label element within a layer.
-   */
   showLabel(layer: CSS2DLayerType, id: string): void {
     this.layerManager.showLabel(layer, id);
   }
 
-  /**
-   * Hides a specific 2D label element within a layer.
-   */
   hideLabel(layer: CSS2DLayerType, id: string): void {
     this.layerManager.hideLabel(layer, id);
   }
 
-  /**
-   * Clears all elements from a specific layer.
-   */
   clearLayer(layerType: CSS2DLayerType): void {
     this.layerManager.clearLayer(layerType);
   }
 
-  /**
-   * Render visible layers.
-   * This method also handles cleanup of orphaned labels and updates active ones.
-   */
   render(
-    camera: THREE.Camera, // Camera passed for rendering, also used by factories if they need it dynamically
+    camera: THREE.Camera,
     allRenderableObjects?: ReadonlyMap<string, RenderableCelestialObject>,
   ): void {
     let orphanedIdsToRemove: { layer: CSS2DLayerType; id: string }[] = [];
 
-    this.layerManager.forEachElement((element, id, layerType) => {
-      let parentConnectedToScene = false;
-      let currentObject: THREE.Object3D | null = element.parent;
-      if (layerType === CSS2DLayerType.AU_MARKERS) {
-        // AU Markers are parented to the scene directly
-        if (element.parent === this.scene) parentConnectedToScene = true;
-      } else {
-        // Other labels are parented to a mesh in the scene
-        while (currentObject) {
-          if (currentObject === this.scene) {
-            parentConnectedToScene = true;
-            break;
-          }
-          currentObject = currentObject.parent;
-        }
-      }
-      if (!element.parent || !parentConnectedToScene) {
-        orphanedIdsToRemove.push({ layer: layerType, id: id });
-        element.visible = false;
-      }
-
-      // Generic update logic using the factory's updateLabel method if available
-      const factory = this.labelFactories.get(layerType);
-      if (
-        factory?.updateLabel &&
-        element.userData.factoryContext // Check if factoryContext exists for update
-      ) {
-        const currentObjectData = allRenderableObjects?.get(
-          element.userData.celestialObjectId || element.userData.labelId, // Use appropriate ID field
-        );
-
-        // For CELESTIAL_LABELS, we need full CelestialLabelUpdateContext
-        if (layerType === CSS2DLayerType.CELESTIAL_LABELS) {
-          if (currentObjectData && element.parent) {
-            // element.parent should be the visualObject
-            let currentParentData: RenderableCelestialObject | undefined;
-            if (currentObjectData.parentId && allRenderableObjects) {
-              currentParentData = allRenderableObjects.get(
-                currentObjectData.parentId,
-              );
+    this.layerManager.forEachElement(
+      (element: CSS2DObject, id: string, layerType: CSS2DLayerType) => {
+        let parentConnectedToScene = false;
+        let currentObject: THREE.Object3D | null = element.parent;
+        if (layerType === CSS2DLayerType.AU_MARKERS) {
+          if (element.parent === this.scene) parentConnectedToScene = true;
+        } else {
+          while (currentObject) {
+            if (currentObject === this.scene) {
+              parentConnectedToScene = true;
+              break;
             }
-            const updateContext: CelestialLabelUpdateContext = {
-              id: currentObjectData.celestialObjectId,
-              objectData: currentObjectData,
-              visualObject: element.parent as THREE.Object3D,
-              parentData: currentParentData,
+            currentObject = currentObject.parent;
+          }
+        }
+        if (!element.parent || !parentConnectedToScene) {
+          orphanedIdsToRemove.push({ layer: layerType, id: id });
+          element.visible = false;
+        }
+
+        const factory = this.labelFactories.get(layerType);
+        if (factory?.updateLabel && element.userData.factoryContext) {
+          const objectIdToUpdate =
+            element.userData.celestialObjectId || element.userData.labelId;
+          const currentObjectData = allRenderableObjects?.get(objectIdToUpdate);
+
+          if (layerType === CSS2DLayerType.CELESTIAL_LABELS) {
+            if (currentObjectData && element.parent) {
+              let currentParentData: RenderableCelestialObject | undefined;
+              if (currentObjectData.parentId && allRenderableObjects) {
+                currentParentData = allRenderableObjects.get(
+                  currentObjectData.parentId,
+                );
+              }
+              const updateContext: CelestialLabelUpdateContext = {
+                id: currentObjectData.celestialObjectId,
+                objectData: currentObjectData,
+                visualObject: element.parent as THREE.Object3D,
+                parentData: currentParentData,
+              };
+              element.userData.factoryContext = updateContext;
+              factory.updateLabel(element, updateContext);
+            } else if (!currentObjectData && element.visible) {
+              element.visible = false;
+              if (
+                element.element &&
+                typeof (element.element as any).setVisibility === "function"
+              ) {
+                (element.element as any).setVisibility(false);
+              }
+            }
+          } else if (element.userData.labelId) {
+            const genericUpdateContext: LabelUpdateContext = {
+              id: element.userData.labelId,
+              ...(element.userData.factoryContext || {}),
             };
-            element.userData.factoryContext = updateContext; // Update stored context
-            factory.updateLabel(element, updateContext);
-          } else if (!currentObjectData && element.visible) {
-            // If celestial object data is gone, hide the label
-            element.visible = false;
             if (
-              element.element &&
-              typeof (element.element as any).setVisibility === "function"
+              Object.keys(genericUpdateContext).length > 1 ||
+              factory.updateLabel.length === 2
             ) {
-              (element.element as any).setVisibility(false);
+              factory.updateLabel(element, genericUpdateContext);
             }
           }
-        } else if (element.userData.labelId) {
-          // For other generic labels, use a generic context
-          // If other label types need specific update contexts, expand this logic
-          const genericUpdateContext: LabelUpdateContext = {
-            id: element.userData.labelId,
-            // Potentially add other updatable properties if needed for generic labels
-            // e.g., position from element.userData.factoryContext.position if it changes
-          };
-          // Only call update if there's actually something to update based on context
-          if (Object.keys(genericUpdateContext).length > 1) {
-            // more than just 'id'
-            factory.updateLabel(element, genericUpdateContext);
+        } else if (
+          !factory?.updateLabel &&
+          element.visible &&
+          layerType === CSS2DLayerType.CELESTIAL_LABELS &&
+          !allRenderableObjects?.has(element.userData.celestialObjectId)
+        ) {
+          element.visible = false;
+          if (
+            element.element &&
+            typeof (element.element as any).setVisibility === "function"
+          ) {
+            (element.element as any).setVisibility(false);
           }
         }
-      } else if (
-        !factory?.updateLabel &&
-        element.visible &&
-        layerType === CSS2DLayerType.CELESTIAL_LABELS &&
-        !allRenderableObjects?.has(element.userData.celestialObjectId)
-      ) {
-        // If no updateLabel method but it's a celestial label and its object is gone, hide it.
-        element.visible = false;
-        if (
-          element.element &&
-          typeof (element.element as any).setVisibility === "function"
-        ) {
-          (element.element as any).setVisibility(false);
-        }
-      }
-    });
+      },
+    );
 
     orphanedIdsToRemove.forEach((orphan) => {
       this.layerManager.removeElement(orphan.layer, orphan.id);
     });
 
-    // Safety check for orphaned CSS2DObjects directly in scene (mostly for AU markers if mishandled)
     this.scene.traverseVisible((object) => {
       if (object instanceof CSS2DObject) {
         if (!object.parent) {
@@ -417,23 +372,16 @@ export class CSS2DManager {
     }
 
     if (hasVisibleElements) {
-      this.rendererService.render(this.scene, this.camera); // Use internal camera for rendering call
+      this.rendererService.render(this.scene, this.camera);
     }
   }
 
-  /**
-   * Handle resize event.
-   */
   onResize(width: number, height: number): void {
     this.rendererService.onResize(width, height);
   }
 
-  /**
-   * Clean up resources.
-   */
   dispose(): void {
     this.layerManager.clearAllLayers();
     this.rendererService.dispose();
-    // CSS2DManager.instance = undefined; // Decide on singleton re-init strategy
   }
 }

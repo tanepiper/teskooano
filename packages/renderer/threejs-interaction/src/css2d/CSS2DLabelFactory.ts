@@ -4,6 +4,11 @@ import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { CelestialType, SCALE } from "@teskooano/data-types";
 import type { OortCloudProperties } from "@teskooano/data-types";
 import { CSS2DLayerType } from "./CSS2DLayerType";
+import type {
+  ILabelFactory,
+  LabelCreationContext,
+  LabelUpdateContext,
+} from "./ILabelFactory";
 
 /**
  * Options for creating a positioned label.
@@ -22,9 +27,118 @@ export interface PositionedLabelOptions {
 }
 
 /**
- * Factory class for creating CSS2DObject labels.
+ * A generic factory for creating simple CSS2DObject labels.
+ * This can be used for markers, annotations, or other non-celestial UI elements in 2D space.
  */
-export class CSS2DLabelFactory {
+export class CSS2DLabelFactory implements ILabelFactory {
+  constructor() {
+    // Constructor might take general configuration options in the future
+  }
+
+  /**
+   * Creates a generic CSS2DObject label.
+   * The context should provide an `id` and `elementContent` (which can be an HTMLElement or string).
+   * An optional `position` (THREE.Vector3) can be provided for initial placement.
+   */
+  createLabel(context: LabelCreationContext): CSS2DObject | null {
+    if (!context.id || context.elementContent === undefined) {
+      console.error(
+        "[CSS2DLabelFactory] Missing id or elementContent in context for createLabel",
+        context,
+      );
+      return null;
+    }
+
+    let labelElement: HTMLElement;
+    if (typeof context.elementContent === "string") {
+      labelElement = document.createElement("div");
+      labelElement.textContent = context.elementContent;
+      // Apply some default styling for string content
+      labelElement.style.padding = "2px 5px";
+      labelElement.style.background = "rgba(0,0,0,0.6)";
+      labelElement.style.color = "white";
+      labelElement.style.borderRadius = "3px";
+      labelElement.style.fontSize = "12px";
+    } else if (context.elementContent instanceof HTMLElement) {
+      labelElement = context.elementContent;
+    } else {
+      console.error(
+        "[CSS2DLabelFactory] elementContent must be a string or HTMLElement",
+        context,
+      );
+      return null;
+    }
+
+    labelElement.id = labelElement.id || `css2d-label-${context.id}`;
+    labelElement.setAttribute("tabindex", "-1");
+    labelElement.style.pointerEvents = "auto"; // Generic labels might be interactive
+
+    const label = new CSS2DObject(labelElement);
+    label.name = `CSS2DLabel_${context.id}`;
+    if (context.position && context.position instanceof THREE.Vector3) {
+      label.position.copy(context.position);
+    }
+
+    // Store any additional userData passed in context
+    if (context.userData) {
+      label.userData = { ...label.userData, ...context.userData };
+    }
+    label.userData.labelId = context.id;
+
+    return label;
+  }
+
+  /**
+   * Updates an existing generic CSS2DObject label.
+   * The context can provide `elementContent` to replace the label's HTML element
+   * or other properties to update specific parts if the labelElement has corresponding methods/attributes.
+   */
+  updateLabel(label: CSS2DObject, context: LabelUpdateContext): void {
+    if (!label.element) {
+      console.warn(
+        "[CSS2DLabelFactory] Cannot update label, element is missing.",
+        label,
+      );
+      return;
+    }
+
+    if (context.elementContent !== undefined) {
+      if (typeof context.elementContent === "string") {
+        label.element.textContent = context.elementContent;
+      } else if (context.elementContent instanceof HTMLElement) {
+        // Replace the entire element if a new one is provided
+        // This is a simple replacement; more sophisticated updates would require knowledge of the element's structure
+        if (label.element.parentNode) {
+          label.element.parentNode.replaceChild(
+            context.elementContent,
+            label.element,
+          );
+        }
+        (label as any).element = context.elementContent; // Update the reference in CSS2DObject
+        // Ensure new element has required attributes
+        context.elementContent.setAttribute("tabindex", "-1");
+        context.elementContent.style.pointerEvents = "auto";
+        if (context.id) {
+          context.elementContent.id =
+            context.elementContent.id || `css2d-label-${context.id}`;
+        }
+      } else {
+        console.warn(
+          "[CSS2DLabelFactory] Invalid elementContent type for updateLabel.",
+        );
+      }
+    }
+
+    if (context.position && context.position instanceof THREE.Vector3) {
+      label.position.copy(context.position);
+    }
+
+    // Update any additional userData passed in context
+    if (context.userData) {
+      label.userData = { ...label.userData, ...context.userData };
+    }
+  }
+
   /**
    * Create a generic positioned label.
    */
@@ -105,16 +219,24 @@ export class CSS2DLabelFactory {
     auValue: number,
     position: THREE.Vector3,
   ): CSS2DObject {
-    return this.createPositionedLabel(`${auValue} AU`, position, {
-      className: "au-marker-label",
-      color: "#FFA500", // Orange color for AU markers
-      backgroundColor: "rgba(0,0,0,0.6)",
-      padding: "1px 4px",
-      borderRadius: "2px",
-      fontSize: "10px",
-      whiteSpace: "nowrap",
-      layerType: CSS2DLayerType.AU_MARKERS,
-      id: id,
-    });
+    const labelDiv = document.createElement("div");
+    labelDiv.className = "au-marker-label";
+    labelDiv.textContent = `${auValue} AU`;
+    // Basic styling, can be externalized to CSS
+    labelDiv.style.color = "#ccc";
+    labelDiv.style.fontSize = "10px";
+    labelDiv.style.padding = "1px 3px";
+    labelDiv.style.backgroundColor = "rgba(0,0,0,0.5)";
+    labelDiv.style.borderRadius = "2px";
+    labelDiv.style.pointerEvents = "none"; // AU markers are not interactive
+
+    const creationContext: LabelCreationContext = {
+      id: `au-marker-${id}`,
+      elementContent: labelDiv,
+      position: position,
+      userData: { isAuMarkerLabel: true, auValue: auValue },
+    };
+
+    return this.createLabel(creationContext)!; // Assuming createLabel doesn't return null here
   }
 }

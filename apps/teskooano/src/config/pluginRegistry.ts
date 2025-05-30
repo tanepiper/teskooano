@@ -38,4 +38,7 @@ export const pluginConfig: PluginRegistryConfig = {
   "teskooano-plugin-manager": {
     path: "../plugins/plugin-manager",
   },
+  "teskooano-celestial-label": {
+    path: "../plugins/celestial-label",
+  },
 };

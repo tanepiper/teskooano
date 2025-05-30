@@ -38,6 +38,10 @@ import { EngineCameraManager } from "./EngineCameraManager"; // Added import
 import { PlaceholderManager } from "./PlaceholderManager"; // Added import
 import { CompositeEngineState, CompositePanelParams } from "./types.js";
 
+// Import the concrete component and the factory type
+import { CelestialLabelComponent } from "../../celestial-label/celestial-label.component";
+import type { CelestialLabelComponentFactory } from "@teskooano/renderer-threejs-interaction";
+
 /**
  * A Dockview panel component that combines a 3D engine view (`ModularSpaceRenderer`)
  * with a dynamically generated UI controls section.
@@ -506,8 +510,18 @@ export class CompositeEnginePanel
       return;
     }
 
+    // Define the factory function that creates CelestialLabelComponent instances
+    const celestialLabelFactoryFn: CelestialLabelComponentFactory =
+      (/*initialData*/) => {
+        // initialData is implicitly handled by the component itself when updateData is called by the factory system.
+        // The factory function just needs to return an instance of the component.
+        return new CelestialLabelComponent();
+      };
+
     // Initialize the SimulationManager, which creates the renderer
-    simulationManager.initialize(this._engineContainer);
+    simulationManager.initialize(this._engineContainer, {
+      celestialLabelComponentFactory: celestialLabelFactoryFn,
+    });
     this._renderer = simulationManager.getRenderer() || undefined; // Get the renderer from the manager, convert null to undefined
 
     if (!this._renderer) {

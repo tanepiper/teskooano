@@ -1,4 +1,5 @@
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
+import type { CelestialLabelComponentFactory } from "@teskooano/renderer-threejs-interaction";
 import {
   physicsEngineService,
   vectorPool,
@@ -79,15 +80,23 @@ export class SimulationManager {
    * Initializes the SimulationManager with the container for the renderer.
    * This must be called before starting the loop.
    * @param container The HTML element to host the renderer canvas.
+   * @param options - Optional options for the renderer
    */
-  public initialize(container: HTMLElement): void {
+  public initialize(
+    container: HTMLElement,
+    options?: {
+      celestialLabelComponentFactory?: CelestialLabelComponentFactory;
+    },
+  ): void {
     if (this.renderer) {
       console.warn("SimulationManager already initialized.");
       // Optionally, dispose existing renderer or handle re-initialization
       this.disposeRenderer();
     }
     this.container = container;
-    this.renderer = new ModularSpaceRenderer(this.container);
+    this.renderer = new ModularSpaceRenderer(this.container, {
+      celestialLabelComponentFactory: options?.celestialLabelComponentFactory,
+    });
     this.setupEventListeners();
     console.log("SimulationManager initialized.");
   }

@@ -3,240 +3,256 @@ import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import {
   CelestialType,
-  SCALE,
-  StarProperties,
-  StellarType,
+  SCALE, // Import SCALE for AU conversion
+  // StarProperties, // No longer needed here
+  // StellarType, // No longer needed here
 } from "@teskooano/data-types";
-import { CSS2DLayerType } from "./CSS2DLayerType";
-import { CelestialLabelComponent, CelestialLabelMode } from "./label-component";
+// import { CSS2DLayerType } from "./CSS2DLayerType"; // No longer used directly in this file
+import {
+  ILabelFactory,
+  CelestialLabelCreationContext,
+  CelestialLabelUpdateContext,
+  LabelCreationContext,
+  LabelUpdateContext,
+} from "./ILabelFactory";
+import type { ICelestialLabelComponent } from "@teskooano/data-types"; // Import the new interface
 
-const MAX_LABEL_DISTANCE_AU = 50;
-const CLOSE_ZOOM_DISTANCE_THRESHOLD_AU = 0.1;
-const VERY_LARGE_BODY_CLOSE_ZOOM_DISTANCE_THRESHOLD_AU = 2;
-const MOON_FOCUSED_FULL_DETAIL_THRESHOLD_AU = 0.0002;
-const MINIMAL_LABEL_DISTANCE_THRESHOLD_AU = 1.5;
-const GENERAL_MAX_LABEL_DISTANCE_AU = 500;
+/**
+ * @deprecated Use CelestialLabelCreationContext directly from ILabelFactory
+ */
+export type CelestialLabelFactoryContext = CelestialLabelCreationContext; // Alias for backwards compatibility
 
-export interface CelestialLabelFactoryContext {
-  objectData: RenderableCelestialObject;
-  visualObject: THREE.Object3D;
-  parentData?: RenderableCelestialObject;
-}
+export type CelestialLabelComponentFactory = (
+  initialData: Partial<RenderableCelestialObject> & {
+    objectType?: CelestialType;
+    parentName?: string;
+    parentType?: CelestialType;
+    distanceToCameraAU?: number;
+    // Allow any other properties that the concrete component might expect via updateData
+    [key: string]: any;
+  },
+) => HTMLElement & ICelestialLabelComponent; // Corrected return type
 
-export class CSS2DCelestialLabelFactory {
+/**
+ * Factory for creating and updating CSS2DObject labels specifically for celestial bodies.
+ * It uses a provided componentFactoryFunction to generate the HTML content of the labels.
+ */
+export class CSS2DCelestialLabelFactory implements ILabelFactory {
   private camera: THREE.Camera;
+  private componentFactory: CelestialLabelComponentFactory;
 
-  constructor(camera: THREE.Camera) {
+  constructor(
+    camera: THREE.Camera,
+    componentFactory: CelestialLabelComponentFactory,
+  ) {
     this.camera = camera;
+    this.componentFactory = componentFactory;
+    if (!this.componentFactory) {
+      throw new Error(
+        "[CSS2DCelestialLabelFactory] A componentFactory function is required.",
+      );
+    }
   }
 
-  private calculateDistanceToCameraAU(objectPosition: THREE.Vector3): number {
+  private _getDistanceToCameraAU(objectPosition: THREE.Vector3): number {
     const distance = this.camera.position.distanceTo(objectPosition);
     return distance / SCALE.RENDER_SCALE_AU;
   }
 
-  private determineLabelState(
-    context: CelestialLabelFactoryContext,
-    distanceAU: number,
-  ): {
-    visible: boolean;
-    mode: CelestialLabelMode;
-    name: string;
-    type: string | null;
-    distanceDisplay: number | null;
-  } {
-    const { objectData, parentData } = context;
-    let visible = true;
-    let mode: CelestialLabelMode = "full";
-    const name = objectData.name;
-    let typeName: string | null = objectData.type || "Unknown";
-    let distanceDisplay: number | null = distanceAU;
-
-    const veryLargeBody =
-      objectData.type === CelestialType.STAR &&
-      [
-        StellarType.SUPERGIANT,
-        StellarType.RED_GIANT,
-        StellarType.HYPERGIANT,
-        StellarType.SUBGIANT,
-        StellarType.BLACK_HOLE,
-      ].includes((objectData.properties as StarProperties).stellarType);
-
-    const isMajorBody =
-      objectData.type === CelestialType.STAR ||
-      objectData.type === CelestialType.PLANET ||
-      objectData.type === CelestialType.GAS_GIANT ||
-      objectData.type === CelestialType.DWARF_PLANET;
-
-    if (isMajorBody) {
-      visible = true;
-      const isObjectFocused = objectData.isFocused === true;
-      if (isObjectFocused) {
-        mode =
-          distanceAU <=
-          (veryLargeBody
-            ? VERY_LARGE_BODY_CLOSE_ZOOM_DISTANCE_THRESHOLD_AU
-            : CLOSE_ZOOM_DISTANCE_THRESHOLD_AU)
-            ? "full"
-            : "minimal";
-      } else {
-        mode =
-          distanceAU <=
-          (veryLargeBody
-            ? VERY_LARGE_BODY_CLOSE_ZOOM_DISTANCE_THRESHOLD_AU
-            : CLOSE_ZOOM_DISTANCE_THRESHOLD_AU)
-            ? "full"
-            : "minimal";
-      }
-    } else if (objectData.type === CelestialType.MOON) {
-      const isMoonFocused = objectData.isFocused === true;
-      const isParentFocused = parentData?.isFocused === true;
-
-      if (isMoonFocused) {
-        visible = true;
-        mode =
-          distanceAU <= MOON_FOCUSED_FULL_DETAIL_THRESHOLD_AU
-            ? "full"
-            : "minimal";
-      } else {
-        if (isParentFocused) {
-          if (
-            distanceAU <=
-            (veryLargeBody
-              ? VERY_LARGE_BODY_CLOSE_ZOOM_DISTANCE_THRESHOLD_AU
-              : CLOSE_ZOOM_DISTANCE_THRESHOLD_AU)
-          ) {
-            visible = true;
-            mode = "full";
-          } else if (distanceAU <= MINIMAL_LABEL_DISTANCE_THRESHOLD_AU) {
-            visible = true;
-            mode = "minimal";
-          } else {
-            visible = false;
-          }
-        } else {
-          if (distanceAU <= MINIMAL_LABEL_DISTANCE_THRESHOLD_AU) {
-            visible = true;
-            mode = "minimal";
-          } else {
-            visible = false;
-          }
-        }
-      }
-
-      if (visible && distanceAU > MAX_LABEL_DISTANCE_AU) {
-        visible = false;
-      }
-    } else {
-      if (distanceAU > MAX_LABEL_DISTANCE_AU) {
-        visible = false;
-      }
-
-      if (visible) {
-        const isObjectFocused = objectData.isFocused === true;
-        if (isObjectFocused) {
-          mode =
-            distanceAU <=
-            (veryLargeBody
-              ? VERY_LARGE_BODY_CLOSE_ZOOM_DISTANCE_THRESHOLD_AU
-              : CLOSE_ZOOM_DISTANCE_THRESHOLD_AU)
-              ? "full"
-              : "minimal";
-        } else {
-          if (
-            distanceAU <=
-            (veryLargeBody
-              ? VERY_LARGE_BODY_CLOSE_ZOOM_DISTANCE_THRESHOLD_AU
-              : CLOSE_ZOOM_DISTANCE_THRESHOLD_AU)
-          ) {
-            mode = "full";
-          } else if (distanceAU <= MINIMAL_LABEL_DISTANCE_THRESHOLD_AU) {
-            mode = "minimal";
-          } else {
-            visible = false;
-          }
-        }
-      }
+  /**
+   * Creates a new CSS2DObject for a celestial label.
+   * @param context - The context containing data for the celestial object.
+   * @returns A CSS2DObject or null if creation failed.
+   */
+  createLabel(context: LabelCreationContext): CSS2DObject | null {
+    const celestialContext = context as CelestialLabelCreationContext;
+    if (!celestialContext.objectData || !celestialContext.visualObject) {
+      console.error(
+        "[CSS2DCelestialLabelFactory] Missing objectData or visualObject in context for createLabel",
+        context,
+      );
+      return null;
     }
 
-    const isMainStar =
-      objectData.type === CelestialType.STAR && !objectData.parentId;
-    if (visible && !isMainStar && distanceAU > GENERAL_MAX_LABEL_DISTANCE_AU) {
-      visible = false;
-    }
+    const { objectData, visualObject, parentData } = celestialContext;
 
-    if (mode === "minimal") {
-      typeName = null;
-    }
-
-    return { visible, mode, name, type: typeName, distanceDisplay };
-  }
-
-  public createCelestialLabel(
-    context: CelestialLabelFactoryContext,
-  ): CSS2DObject | null {
-    const { objectData, visualObject } = context;
-    const objectWorldPosition = new THREE.Vector3();
-    visualObject.getWorldPosition(objectWorldPosition);
-    const distanceAU = this.calculateDistanceToCameraAU(objectWorldPosition);
-
-    const state = this.determineLabelState(context, distanceAU);
-
-    const labelComponent = new CelestialLabelComponent();
-    labelComponent.updateData(
-      state.name,
-      state.type,
-      state.distanceDisplay,
-      state.mode,
+    const objectWorldPosition = visualObject.getWorldPosition(
+      new THREE.Vector3(),
     );
-    labelComponent.setVisibility(state.visible);
+    const distanceToCameraAU = this._getDistanceToCameraAU(objectWorldPosition);
 
-    const label = new CSS2DObject(labelComponent);
-    const visualRadius = objectData.radius || 1;
-    const offsetPosition = new THREE.Vector3(0, visualRadius * 1.5, 0);
-    label.position.copy(offsetPosition);
-
-    label.visible = state.visible;
-
-    label.userData = {
-      layerType: CSS2DLayerType.CELESTIAL_LABELS,
-      isCelestialLabel: true,
-      celestialObjectId: objectData.celestialObjectId,
-      factoryContext: context,
+    const componentInitialData: Partial<RenderableCelestialObject> & {
+      objectType?: CelestialType;
+      parentName?: string;
+      parentType?: CelestialType;
+      distanceToCameraAU?: number;
+    } = {
+      ...objectData, // Spread all objectData properties
+      objectType: objectData.type,
+      parentName: parentData?.name,
+      parentType: parentData?.type,
+      distanceToCameraAU: distanceToCameraAU,
     };
 
-    if (objectData.celestialObjectId) {
-      labelComponent.id = `celestial-label-${objectData.celestialObjectId}`;
+    // Use the provided factory function to create the label element
+    const labelElement = this.componentFactory(componentInitialData);
+
+    if (!labelElement) {
+      console.error(
+        `[CSS2DCelestialLabelFactory] Component factory failed to create an element for ${objectData.name}.`,
+      );
+      return null;
     }
+
+    labelElement.setAttribute("tabindex", "-1");
+    labelElement.style.pointerEvents = "none";
+
+    const label = new CSS2DObject(labelElement);
+    label.name = `CSS2DLabel_${objectData.celestialObjectId}`;
+    label.userData = {
+      isCelestialLabel: true,
+      celestialObjectId: objectData.celestialObjectId,
+      factoryContext: { ...celestialContext },
+    };
+
+    this.updateLabelPosition(label, objectData, visualObject);
+
+    const initialVisibility = this.shouldLabelBeVisible(
+      objectData,
+      visualObject,
+      labelElement,
+      parentData,
+    );
+    label.visible = initialVisibility;
+    if (typeof (labelElement as any).setVisibility === "function") {
+      (labelElement as any).setVisibility(initialVisibility);
+    } else {
+      labelElement.style.display = initialVisibility ? "" : "none";
+    }
+
+    if (objectData.celestialObjectId && labelElement.id === "") {
+      labelElement.id = `celestial-label-${objectData.celestialObjectId}`;
+    }
+
     return label;
   }
 
-  public updateCelestialLabel(labelObject: CSS2DObject) {
+  /**
+   * Updates an existing CSS2DObject celestial label.
+   * @param label - The CSS2DObject to update.
+   * @param context - The context containing new data for the celestial object.
+   */
+  updateLabel(label: CSS2DObject, context: LabelUpdateContext): void {
+    const celestialContext = context as CelestialLabelUpdateContext;
     if (
-      !(labelObject.element instanceof CelestialLabelComponent) ||
-      !labelObject.userData.factoryContext
+      !celestialContext.objectData ||
+      !celestialContext.visualObject ||
+      !label.element
     ) {
+      console.warn(
+        "[CSS2DCelestialLabelFactory] Missing required data for updateLabel or label element is missing.",
+        { label, context },
+      );
       return;
     }
 
-    const component = labelObject.element as CelestialLabelComponent;
-    const context = labelObject.userData
-      .factoryContext as CelestialLabelFactoryContext;
-    const { visualObject } = context;
+    const { objectData, visualObject, parentData } = celestialContext;
 
-    const objectWorldPosition = new THREE.Vector3();
-    visualObject.getWorldPosition(objectWorldPosition);
-    const distanceAU = this.calculateDistanceToCameraAU(objectWorldPosition);
+    label.userData.celestialObjectId = objectData.celestialObjectId;
+    label.userData.factoryContext = { ...celestialContext };
 
-    const state = this.determineLabelState(context, distanceAU);
+    const labelElement = label.element as HTMLElement;
 
-    component.updateData(
-      state.name,
-      state.type,
-      state.distanceDisplay,
-      state.mode,
+    if (typeof (labelElement as any).updateData === "function") {
+      const objectWorldPosition = visualObject.getWorldPosition(
+        new THREE.Vector3(),
+      );
+      const distanceToCameraAU =
+        this._getDistanceToCameraAU(objectWorldPosition);
+
+      const componentUpdateData: Partial<RenderableCelestialObject> & {
+        objectType?: CelestialType;
+        parentName?: string;
+        parentType?: CelestialType;
+        distanceToCameraAU?: number;
+      } = {
+        ...objectData,
+        objectType: objectData.type,
+        parentName: parentData?.name,
+        parentType: parentData?.type,
+        distanceToCameraAU: distanceToCameraAU,
+      };
+      (labelElement as any).updateData(componentUpdateData);
+    } else {
+      // Fallback basic update if no updateData method
+      const nameEl = labelElement.querySelector(".celestial-name");
+      if (nameEl) nameEl.textContent = objectData.name || "Unknown";
+    }
+
+    this.updateLabelPosition(label, objectData, visualObject);
+
+    const currentVisibility = this.shouldLabelBeVisible(
+      objectData,
+      visualObject,
+      labelElement,
+      parentData,
     );
-    component.setVisibility(state.visible);
-    labelObject.visible = state.visible;
+
+    if (label.visible !== currentVisibility) {
+      label.visible = currentVisibility;
+    }
+
+    if (typeof (labelElement as any).setVisibility === "function") {
+      (labelElement as any).setVisibility(currentVisibility);
+    } else {
+      labelElement.style.display = currentVisibility ? "" : "none";
+    }
+  }
+
+  /**
+   * Updates the position of the label relative to its 3D object.
+   * @internal
+   */
+  private updateLabelPosition(
+    label: CSS2DObject,
+    objectData: RenderableCelestialObject,
+    visualObject: THREE.Object3D,
+  ): void {
+    const radius = objectData.radius ?? 1;
+    const offsetFactor = objectData.type === CelestialType.STAR ? 1.1 : 1.5; // Closer for stars
+    const offset = new THREE.Vector3(0, radius * offsetFactor, 0);
+    label.position.copy(offset);
+  }
+
+  /**
+   * Determines if a label should be visible based on object data and camera.
+   * @internal
+   */
+  private shouldLabelBeVisible(
+    objectData: RenderableCelestialObject,
+    visualObject: THREE.Object3D,
+    labelElement: HTMLElement,
+    parentData?: RenderableCelestialObject,
+  ): boolean {
+    if (!visualObject.visible) {
+      // Basic check: if 3D object isn't visible, label shouldn't be.
+      return false;
+    }
+
+    // Delegate to component if it has a more sophisticated visibility check
+    if (typeof (labelElement as any).shouldBeVisible === "function") {
+      // Pass necessary context for the component to decide
+      return (labelElement as any).shouldBeVisible(
+        objectData,
+        this.camera,
+        visualObject,
+      );
+    }
+
+    // Fallback to always visible if the component doesn't provide its own logic
+    // and the parent 3D object is visible.
+    // More complex generic logic (like distance culling) could be added here if needed
+    // as a default when the component doesn't specify.
+    return true;
   }
 }

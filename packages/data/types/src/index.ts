@@ -16,3 +16,4 @@ export * from "./ui";
 export * from "./events";
 export * from "./globals.d";
 export * from "./main";
+export type { ICelestialLabelComponent } from "./ui-plugin-types"; // Export the new interface
