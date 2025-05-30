@@ -34,6 +34,12 @@ export const plugin: TeskooanoPlugin = {
           iconSvg: settingsButtonConfig.iconSvg,
           order: 100,
           type: "panel",
+          initialPosition: {
+            top: 150,
+            left: 50,
+            width: 640,
+            height: 400,
+          },
           componentName: settingsButtonConfig.componentName,
           panelTitle: settingsButtonConfig.panelTitle,
           behaviour: settingsButtonConfig.behaviour,

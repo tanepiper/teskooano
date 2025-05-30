@@ -17,6 +17,9 @@ template.innerHTML = `
       align-items: center;
       margin-bottom: var(--space-3); /* Increased margin a bit for better spacing */
     }
+    .setting-row > teskooano-toggle {
+      flex-grow: 1; /* Make the toggle take all available space in the row */
+    }
     .setting-row + teskooano-slider,
     .setting-row + teskooano-toggle {
         /* This might not be needed if margin-bottom on .setting-row is enough */

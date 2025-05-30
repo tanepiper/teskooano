@@ -69,14 +69,49 @@ export class CelestialLabelComponent extends HTMLElement {
   public setVisibility(visible: boolean): void {
     if (visible) {
       this.classList.remove("hidden");
+      this.classList.remove("label-hidden");
       this.style.opacity = "1";
       this.style.visibility = "visible";
       this.style.transform = "scale(1)";
+      this.style.display = "";
+      this.style.pointerEvents = "none"; // Always none for celestial labels
+
+      // Make sure content elements are also shown
+      if (this.shadowRoot) {
+        const content = this.shadowRoot.querySelector(
+          ".celestial-label-content",
+        );
+        if (content instanceof HTMLElement) {
+          content.style.display = "";
+          content.style.visibility = "visible";
+          content.style.opacity = "1";
+        }
+      }
     } else {
       this.classList.add("hidden");
+      this.classList.add("label-hidden");
       this.style.opacity = "0";
       this.style.visibility = "hidden";
-      this.style.transform = "scale(0.8)";
+      this.style.transform = "scale(0)";
+      this.style.display = "none";
+      this.style.pointerEvents = "none";
+      this.style.width = "0";
+      this.style.height = "0";
+      this.style.overflow = "hidden";
+      this.style.position = "absolute";
+      this.style.zIndex = "-9999";
+
+      // Also hide content elements
+      if (this.shadowRoot) {
+        const content = this.shadowRoot.querySelector(
+          ".celestial-label-content",
+        );
+        if (content instanceof HTMLElement) {
+          content.style.display = "none";
+          content.style.visibility = "hidden";
+          content.style.opacity = "0";
+        }
+      }
     }
   }
 }

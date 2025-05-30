@@ -159,12 +159,10 @@ export class SceneManager {
   public setCSS2DManager(manager: CSS2DManager): void {
     this.css2DManager = manager;
 
-    this._clearAuDistanceMarkers();
-    this._createAuDistanceMarkers();
-    if (this.auDistanceMarkers) {
-      this.auDistanceMarkers.visible = this.showAuMarkers;
-    }
+    // Note: We no longer automatically create AU markers here
+    // They will be created when setAuMarkersVisible is called
 
+    // Only initialize the layer visibility for AU markers based on current state
     this.css2DManager?.setLayerVisibility(
       CSS2DLayerType.AU_MARKERS,
       this.showAuMarkers,

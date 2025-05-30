@@ -1,25 +1,21 @@
-import type { TeskooanoPlugin, PanelConfig } from "@teskooano/ui-plugin";
+import type { PanelConfig, TeskooanoPlugin } from "@teskooano/ui-plugin";
 import { CompositeEnginePanel } from "./panels/CompositeEnginePanel";
 
 import { addCompositeEnginePanelFunction } from "./main-toolbar/system-controls/functions/engineview-functions";
 import {
-  generateRandomSystemFunction,
   clearSystemFunction,
-  exportSystemFunction,
-  triggerImportDialogFunction,
-  createBlankSystemFunction,
   copySeedFunction,
+  createBlankSystemFunction,
+  exportSystemFunction,
+  generateRandomSystemFunction,
+  triggerImportDialogFunction,
 } from "./main-toolbar/system-controls/functions/system-functions";
 
 import {
+  addViewButtonRegistration,
   simulationControlsWidget,
   systemControlsWidget,
-  addViewButtonRegistration,
 } from "./main-toolbar/toolbar-definitions";
-import {
-  showSolarSystemModal,
-  showGeneratedSystemModal,
-} from "./main-toolbar/system-controls";
 
 const enginePanelConfig: PanelConfig = {
   componentName: "teskooano-engine-view",

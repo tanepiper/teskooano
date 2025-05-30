@@ -21,6 +21,15 @@ export class CSS2DLayerManager {
     styleElement.textContent = `
       .label-hidden {
         display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        z-index: -9999 !important;
+        clip: rect(0, 0, 0, 0) !important;
       }
       .celestial-label,
       .celestial-label *,
@@ -124,15 +133,75 @@ export class CSS2DLayerManager {
     layerType: CSS2DLayerType,
   ): void {
     const layerIsVisible = this.layerVisibility.get(layerType) ?? true;
+
     // element.visible controls THREE.js rendering of the object
     element.visible = layerIsVisible;
+
     // HTML element display style for actual browser rendering
     if (element.element instanceof HTMLElement) {
-      element.element.style.display = layerIsVisible ? "" : "none";
       if (layerIsVisible) {
+        // Show element: remove hiding class and explicitly set display/visibility/opacity
         element.element.classList.remove("label-hidden");
+        element.element.style.display = ""; // Default display (e.g., 'flex' or 'block' from its own styles)
+        element.element.style.visibility = "visible";
+        element.element.style.opacity = "1";
+        element.element.style.pointerEvents = "none"; // Specific to labels
+        element.element.style.width = ""; // Revert to default
+        element.element.style.height = ""; // Revert to default
+        element.element.style.overflow = ""; // Revert to default
+        element.element.style.position = "absolute"; // CSS2DObject default
+        element.element.style.zIndex = ""; // Revert to default (or what CSS2DRenderer assigns)
+
+        // For celestial labels with shadow DOM, make sure inner elements are also visible
+        if (
+          layerType === CSS2DLayerType.CELESTIAL_LABELS &&
+          element.element.shadowRoot
+        ) {
+          const content = element.element.shadowRoot.querySelector(
+            ".celestial-label-content",
+          );
+          if (content instanceof HTMLElement) {
+            content.style.display = "";
+            content.style.visibility = "visible";
+            content.style.opacity = "1";
+          }
+        }
+
+        // For custom elements with a setVisibility method, call it
+        if (typeof (element.element as any).setVisibility === "function") {
+          (element.element as any).setVisibility(true);
+        }
       } else {
-        element.element.classList.add("label-hidden");
+        // Hide element with multiple techniques
+        element.element.classList.add("label-hidden"); // This class should have !important
+        element.element.style.display = "none";
+        element.element.style.visibility = "hidden";
+        element.element.style.opacity = "0";
+        element.element.style.pointerEvents = "none";
+        element.element.style.width = "0px"; // Explicitly set to 0
+        element.element.style.height = "0px"; // Explicitly set to 0
+        element.element.style.overflow = "hidden";
+        // Position and z-index are mostly handled by .label-hidden now
+
+        // For celestial labels with shadow DOM, make sure inner elements are also hidden
+        if (
+          layerType === CSS2DLayerType.CELESTIAL_LABELS &&
+          element.element.shadowRoot
+        ) {
+          const content = element.element.shadowRoot.querySelector(
+            ".celestial-label-content",
+          );
+          if (content instanceof HTMLElement) {
+            content.style.display = "none";
+            content.style.visibility = "hidden";
+            content.style.opacity = "0";
+          }
+        }
+
+        // For custom elements with a setVisibility method, call it
+        if (typeof (element.element as any).setVisibility === "function") {
+          (element.element as any).setVisibility(false);
+        }
       }
     }
   }

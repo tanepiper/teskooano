@@ -2,9 +2,10 @@ const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
-      display: inline-flex;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: var(--space-2); /* 8px gap between label and switch */
+      gap: var(--space-2); /* 8px gap between label and switch - might be overridden by space-between */
       cursor: pointer;
       font-family: var(--font-family-base);
       font-size: var(--font-size-base);

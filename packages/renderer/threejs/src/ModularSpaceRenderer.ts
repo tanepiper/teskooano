@@ -75,24 +75,31 @@ export class ModularSpaceRenderer {
       this.sceneManager.renderer.domElement,
     );
 
-    if (showCelestialLabels) {
-      CSS2DManager.initialize(
-        this.sceneManager.scene,
-        this.sceneManager.camera,
-        container,
-      );
-      this.css2DManager = CSS2DManager.getInstance();
+    // Always initialize CSS2DManager regardless of initial visibility settings
+    CSS2DManager.initialize(
+      this.sceneManager.scene,
+      this.sceneManager.camera,
+      container,
+    );
+    this.css2DManager = CSS2DManager.getInstance();
 
-      this.sceneManager.setCSS2DManager(this.css2DManager);
-    } else {
-      this.css2DManager = undefined;
+    // Set the CSS2DManager in SceneManager, but this doesn't create the AU markers yet
+    this.sceneManager.setCSS2DManager(this.css2DManager);
+
+    // Explicitly set initial visibility for celestial labels (independent of AU markers)
+    this.css2DManager.setLayerVisibility(
+      CSS2DLayerType.CELESTIAL_LABELS,
+      showCelestialLabels,
+    );
+
+    // Create and set visibility of AU markers (if specified in options)
+    const showAuMarkers = options.showAuMarkers !== false;
+    if (options.showAuMarkers !== undefined) {
+      this.sceneManager.setAuMarkersVisible(showAuMarkers);
     }
 
-    if (!this.css2DManager && showCelestialLabels) {
-      throw new Error("CSS2DManager failed to initialize but UI was enabled.");
-    } else if (!showCelestialLabels && this.css2DManager) {
-      console.warn("CSS2DManager initialized but UI is disabled?");
-      this.css2DManager = undefined;
+    if (!this.css2DManager) {
+      throw new Error("CSS2DManager failed to initialize.");
     }
 
     this.objectManager = new ObjectManager(
@@ -124,9 +131,6 @@ export class ModularSpaceRenderer {
       this.sceneManager.setGridVisible(options.showGrid);
     }
 
-    if (options.showAuMarkers !== undefined) {
-      this.sceneManager.setAuMarkersVisible(options.showAuMarkers);
-    }
     if (options.showDebrisEffects !== undefined) {
       this.setDebrisEffectsEnabled(options.showDebrisEffects);
     }
@@ -292,7 +296,10 @@ export class ModularSpaceRenderer {
    * @param {boolean} visible - True to show labels, false to hide.
    */
   setCelestialLabelsVisible(visible: boolean): void {
-    this.css2DManager?.setLayerVisibility(
+    if (!this.css2DManager) return;
+
+    // Only set visibility for the celestial labels layer, independent of AU markers
+    this.css2DManager.setLayerVisibility(
       CSS2DLayerType.CELESTIAL_LABELS,
       visible,
     );
