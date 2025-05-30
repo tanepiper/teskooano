@@ -4,13 +4,16 @@ import {
   getSimulationState,
   simulationState$,
   simulationStateService,
-  type PhysicsEngineType,
   type PerformanceProfileType,
 } from "@teskooano/core-state";
 
 import { type TeskooanoSlider } from "../../core/components/slider/Slider";
 import { template } from "./Settings.template";
-import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
+import {
+  CustomEvents,
+  PhysicsEngineType,
+  SliderValueChangePayload,
+} from "@teskooano/data-types";
 import { Subscription } from "rxjs";
 
 // Physics engine options – user-friendly labels
@@ -121,6 +124,14 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
 
     const initialState = getSimulationState();
 
+    // Explicitly set min/max/step attributes, then value attribute and property.
+    this.trailSliderElement.setAttribute("min", "0");
+    this.trailSliderElement.setAttribute("max", "500");
+    this.trailSliderElement.setAttribute("step", "1");
+    this.trailSliderElement.setAttribute(
+      "value",
+      initialState.visualSettings.trailLengthMultiplier.toString(),
+    );
     this.trailSliderElement.value =
       initialState.visualSettings.trailLengthMultiplier;
     this.trailSliderElement.addEventListener(

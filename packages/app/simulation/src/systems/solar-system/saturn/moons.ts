@@ -1,32 +1,14 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
-  AtmosphereType,
   CelestialType,
-  GasGiantClass,
+  CompositionType,
   PlanetType,
-  RockyType,
   SurfaceType,
-  type GasGiantProperties,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
-  type RingSystemProperties,
 } from "@teskooano/data-types";
-
-const SATURN_MASS_KG = 5.6834e26;
-const SATURN_REAL_RADIUS_M = 58232 * KM;
-const SATURN_TEMP_K = 134;
-const SATURN_ALBEDO = 0.499;
-const SATURN_SMA_AU = 9.5826;
-const SATURN_ECC = 0.0565;
-const SATURN_INC_DEG = 2.485;
-const SATURN_LAN_DEG = 113.665;
-const SATURN_AOP_DEG = 93.056 + SATURN_LAN_DEG;
-const SATURN_MA_DEG = 49.954;
-const SATURN_ORBITAL_PERIOD_S = 9.29598e8;
-const SATURN_SIDEREAL_ROTATION_PERIOD_S = 38362.0;
-const SATURN_AXIAL_TILT_DEG = 26.73;
 
 const TITAN_MASS_KG = 1.3452e23;
 const TITAN_RADIUS_M = 2574700;
@@ -69,142 +51,11 @@ const TETHYS_SIDEREAL_PERIOD_S = 163475;
 const TETHYS_ALBEDO = 1.229;
 
 /**
- * Initializes Saturn, its rings, and major moons using accurate data.
+ * Initializes Saturn's major moons using accurate data.
+ * @param saturnId The ID of Saturn.
  */
-export function initializeSaturn(parentId: string): void {
-  const saturnId = "saturn";
-  const saturnAxialTiltRad = SATURN_AXIAL_TILT_DEG * DEG_TO_RAD;
+export function initializeSaturnMoons(saturnId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
-
-  actions.addCelestial({
-    id: saturnId,
-    name: "Saturn",
-    seed: "saturn",
-    type: CelestialType.GAS_GIANT,
-    parentId: parentId,
-    realMass_kg: SATURN_MASS_KG,
-    realRadius_m: SATURN_REAL_RADIUS_M,
-    temperature: SATURN_TEMP_K,
-    albedo: SATURN_ALBEDO,
-    siderealRotationPeriod_s: SATURN_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(saturnAxialTiltRad),
-      Math.sin(saturnAxialTiltRad),
-    ).normalize(),
-    orbit: {
-      realSemiMajorAxis_m: SATURN_SMA_AU * AU,
-      eccentricity: SATURN_ECC,
-      inclination: SATURN_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: SATURN_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: (SATURN_AOP_DEG - SATURN_LAN_DEG) * DEG_TO_RAD,
-      meanAnomaly: SATURN_MA_DEG * DEG_TO_RAD,
-      period_s: SATURN_ORBITAL_PERIOD_S,
-    },
-    properties: {
-      type: CelestialType.GAS_GIANT,
-      gasGiantClass: GasGiantClass.CLASS_II,
-      atmosphereColor: "#F0E68C",
-      cloudColor: "#FFF8DC",
-      cloudSpeed: 80,
-      atmosphere: {
-        composition: ["H2", "He", "CH4"],
-        pressure: 900000,
-        type: AtmosphereType.VERY_DENSE,
-        glowColor: "#F0E68C",
-        intensity: 0.6,
-        power: 1.2,
-        thickness: 0.25,
-      },
-      stormColor: "#E6D9A3",
-      stormSpeed: 50,
-      emissiveColor: "#F0E68C",
-      emissiveIntensity: 0.05,
-      ringTilt: { x: 0, y: 0, z: 0 },
-    } as GasGiantProperties,
-  });
-
-  // Saturn Ring System - Create as separate celestial object
-  // Note: Ring systems need to be positioned at the same location as their parent
-  actions.addCelestial({
-    id: "saturn-rings",
-    name: "Saturn Rings",
-    seed: "saturn-rings",
-    type: CelestialType.RING_SYSTEM,
-    parentId: saturnId,
-    realMass_kg: 0,
-    realRadius_m: 0,
-    temperature: SATURN_TEMP_K,
-    albedo: 0.1,
-    siderealRotationPeriod_s: SATURN_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(saturnAxialTiltRad),
-      Math.sin(saturnAxialTiltRad),
-    ).normalize(),
-    orbit: {} as any, // Empty orbit like procedural generation
-    properties: {
-      type: CelestialType.RING_SYSTEM,
-      parentId: saturnId,
-      rings: [
-        {
-          innerRadius: 1.15,
-          outerRadius: 1.28,
-          density: 0.2,
-          opacity: 0.25,
-          color: "#BDB7AB",
-          type: RockyType.DUST,
-          texture: "placeholder_ring_texture",
-          rotationRate: 0.002,
-          composition: ["fine dust"],
-        },
-        {
-          innerRadius: 1.28,
-          outerRadius: 1.58,
-          density: 0.4,
-          opacity: 0.45,
-          color: "#A9A190",
-          type: RockyType.ICE_DUST,
-          texture: "placeholder_ring_texture",
-          rotationRate: 0.0018,
-          composition: ["dirty ice", "dust"],
-        },
-        {
-          innerRadius: 1.58,
-          outerRadius: 2.02,
-          density: 0.9,
-          opacity: 0.8,
-          color: "#E0DDCF",
-          type: RockyType.ICE,
-          texture: "placeholder_ring_texture",
-          rotationRate: 0.0015,
-          composition: ["water ice particles"],
-        },
-        {
-          innerRadius: 2.1,
-          outerRadius: 2.35,
-          density: 0.7,
-          opacity: 0.7,
-          color: "#DAD4C5",
-          type: RockyType.ICE,
-          texture: "placeholder_ring_texture",
-          rotationRate: 0.0012,
-          composition: ["water ice"],
-        },
-        {
-          innerRadius: 2.41,
-          outerRadius: 2.42,
-          density: 0.3,
-          opacity: 0.5,
-          color: "#CCC5B8",
-          type: RockyType.ICE_DUST,
-          texture: "placeholder_ring_texture",
-          rotationRate: 0.0011,
-          composition: ["ice particles", "dust"],
-        },
-      ],
-    } as RingSystemProperties,
-  });
 
   // Titan procedural surface data (orange hazy surface)
   const titanProceduralSurface: ProceduralSurfaceProperties = {
@@ -272,12 +123,21 @@ export function initializeSaturn(parentId: string): void {
         intensity: 0.7,
         power: 1.3,
         thickness: 0.35,
+        composition: ["N2", "CH4"], // Added for completeness
+        pressure: 146700, // Titan's surface pressure in Pa
       },
       surface: {
-        ...titanProceduralSurface,
-        type: SurfaceType.VARIED,
-        planetType: PlanetType.ICE,
-        color: "#A06A42",
+        surfaceType: SurfaceType.VARIED,
+        composition: [
+          CompositionType.WATER_ICE,
+          CompositionType.METHANE_ICE,
+          CompositionType.ORGANIC,
+          CompositionType.SILICATE,
+        ],
+        proceduralData: {
+          ...titanProceduralSurface,
+          planetType: PlanetType.ICE,
+        },
       },
     } as PlanetProperties,
   });
@@ -339,10 +199,12 @@ export function initializeSaturn(parentId: string): void {
       composition: ["water ice", "rocky core"],
       atmosphere: undefined, // Rhea has essentially no atmosphere
       surface: {
-        ...rheaProceduralSurface,
-        type: SurfaceType.VARIED,
-        planetType: PlanetType.ICE,
-        color: "#EAEAEA",
+        surfaceType: SurfaceType.VARIED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          ...rheaProceduralSurface,
+          planetType: PlanetType.ICE,
+        },
       },
     } as PlanetProperties,
   });
@@ -404,10 +266,16 @@ export function initializeSaturn(parentId: string): void {
       composition: ["water ice", "rock", "carbonaceous material on one side"],
       atmosphere: undefined, // Iapetus has no significant atmosphere
       surface: {
-        ...iapetusProceduralSurface,
-        type: SurfaceType.VARIED,
-        planetType: PlanetType.ICE,
-        color: "#A0A0A0",
+        surfaceType: SurfaceType.VARIED,
+        composition: [
+          CompositionType.WATER_ICE,
+          CompositionType.SILICATE,
+          CompositionType.CARBON,
+        ],
+        proceduralData: {
+          ...iapetusProceduralSurface,
+          planetType: PlanetType.ICE,
+        },
       },
     } as PlanetProperties,
   });
@@ -469,10 +337,12 @@ export function initializeSaturn(parentId: string): void {
       composition: ["water ice", "rocky core"],
       atmosphere: undefined, // Dione has no significant atmosphere
       surface: {
-        ...dioneProceduralSurface,
-        type: SurfaceType.VARIED,
-        planetType: PlanetType.ICE,
-        color: "#E0E0E0",
+        surfaceType: SurfaceType.VARIED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          ...dioneProceduralSurface,
+          planetType: PlanetType.ICE,
+        },
       },
     } as PlanetProperties,
   });
@@ -534,15 +404,16 @@ export function initializeSaturn(parentId: string): void {
       composition: ["water ice", "rocky core"],
       atmosphere: undefined, // Tethys has no significant atmosphere
       surface: {
-        ...tethysProceduralSurface,
-        type: SurfaceType.VARIED,
-        planetType: PlanetType.ICE,
-        color: "#F8F8F8",
+        surfaceType: SurfaceType.VARIED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          ...tethysProceduralSurface,
+          planetType: PlanetType.ICE,
+        },
       },
     } as PlanetProperties,
   });
 
-  // --- BEGIN: Additional Major Moons (NASA/JPL data, see https://ssd.jpl.nasa.gov/sats/elem/) ---
   // Mimas
   actions.addCelestial({
     id: "mimas",
@@ -570,8 +441,38 @@ export function initializeSaturn(parentId: string): void {
       planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#E0E0E0" },
+      composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#E0E0E0",
+          color2: "#E0E0E0",
+          color3: "#E0E0E0",
+          color4: "#E0E0E0",
+          color5: "#E0E0E0",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -602,8 +503,38 @@ export function initializeSaturn(parentId: string): void {
       planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ["water ice", "subsurface ocean"],
-      surface: { type: SurfaceType.ICE_CRACKED, color: "#F8F8FF" },
+      composition: [CompositionType.WATER_ICE, CompositionType.UNKNOWN],
+      surface: {
+        surfaceType: SurfaceType.ICE_CRACKED,
+        composition: [CompositionType.WATER_ICE],
+        proceduralData: {
+          color1: "#F8F8FF",
+          color2: "#F8F8FF",
+          color3: "#F8F8FF",
+          color4: "#F8F8FF",
+          color5: "#F8F8FF",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -618,8 +549,8 @@ export function initializeSaturn(parentId: string): void {
     realRadius_m: 135000,
     temperature: 70,
     albedo: 0.3,
-    siderealRotationPeriod_s: 21.276658 * 86400,
-    axialTilt: defaultMoonAxialTilt,
+    siderealRotationPeriod_s: 21.276658 * 86400, // Note: Hyperion has chaotic rotation
+    axialTilt: defaultMoonAxialTilt, // Simplified, actual axial tilt is chaotic
     orbit: {
       realSemiMajorAxis_m: 1481500 * KM,
       eccentricity: 0.105,
@@ -631,11 +562,41 @@ export function initializeSaturn(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE, // Primarily icy, but irregular
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ["water ice", "porous rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#D2B48C" },
+      composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+      surface: {
+        surfaceType: SurfaceType.CRATERED, // Highly cratered and irregular
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#D2B48C",
+          color2: "#D2B48C",
+          color3: "#D2B48C",
+          color4: "#D2B48C",
+          color5: "#D2B48C",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -650,24 +611,62 @@ export function initializeSaturn(parentId: string): void {
     realRadius_m: 106500,
     temperature: 75,
     albedo: 0.08,
-    siderealRotationPeriod_s: 550.30391 * 86400,
-    axialTilt: defaultMoonAxialTilt,
+    siderealRotationPeriod_s: 0.40379 * 86400, // Roughly 9.7 hours
+    axialTilt: defaultMoonAxialTilt, // Assuming synchronous rotation, axial tilt is complex for irregulars
     orbit: {
       realSemiMajorAxis_m: 12929400 * KM,
       eccentricity: 0.164,
-      inclination: 175.2 * DEG_TO_RAD,
+      inclination: 175.2 * DEG_TO_RAD, // Retrograde orbit
       longitudeOfAscendingNode: 192.7 * DEG_TO_RAD,
       argumentOfPeriapsis: 240.3 * DEG_TO_RAD,
       meanAnomaly: 308.0 * DEG_TO_RAD,
-      period_s: 550.30391 * 86400,
+      period_s: 550.30391 * 86400, // Retrograde, hence negative could be used if system supports it.
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY, // Dark, carbonaceous object, likely captured asteroid
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ["rock", "ice"],
-      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+      composition: [
+        CompositionType.SILICATE,
+        CompositionType.WATER_ICE,
+        CompositionType.CARBON,
+      ],
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [
+          CompositionType.SILICATE,
+          CompositionType.WATER_ICE,
+          CompositionType.CARBON,
+        ],
+        proceduralData: {
+          color1: "#808080",
+          color2: "#808080",
+          color3: "#808080",
+          color4: "#808080",
+          color5: "#808080",
+          planetType: PlanetType.ROCKY,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -695,11 +694,41 @@ export function initializeSaturn(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY, // Porous, icy/rocky body
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ["rock", "ice"],
-      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+        proceduralData: {
+          color1: "#C2B280",
+          color2: "#C2B280",
+          color3: "#C2B280",
+          color4: "#C2B280",
+          color5: "#C2B280",
+          planetType: PlanetType.ROCKY,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -717,7 +746,7 @@ export function initializeSaturn(parentId: string): void {
     siderealRotationPeriod_s: 0.697012 * 86400,
     axialTilt: defaultMoonAxialTilt,
     orbit: {
-      realSemiMajorAxis_m: 151400 * KM,
+      realSemiMajorAxis_m: 151400 * KM, // Note: Co-orbital with Janus
       eccentricity: 0.02,
       inclination: 0.3 * DEG_TO_RAD,
       longitudeOfAscendingNode: 189.8 * DEG_TO_RAD,
@@ -727,11 +756,41 @@ export function initializeSaturn(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY, // Porous, icy/rocky body
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ["rock", "ice"],
-      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+        proceduralData: {
+          color1: "#C2B280",
+          color2: "#C2B280",
+          color3: "#C2B280",
+          color4: "#C2B280",
+          color5: "#C2B280",
+          planetType: PlanetType.ROCKY,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -749,21 +808,51 @@ export function initializeSaturn(parentId: string): void {
     siderealRotationPeriod_s: 0.631369 * 86400,
     axialTilt: defaultMoonAxialTilt,
     orbit: {
-      realSemiMajorAxis_m: 141700 * KM,
+      realSemiMajorAxis_m: 141700 * KM, // Shepherd moon of the F Ring
       eccentricity: 0.004,
       inclination: 0.0,
-      longitudeOfAscendingNode: 0.0,
+      longitudeOfAscendingNode: 0.0, // Relative to Saturn's equatorial plane
       argumentOfPeriapsis: 217.9 * DEG_TO_RAD,
       meanAnomaly: 123.9 * DEG_TO_RAD,
       period_s: 0.631369 * 86400,
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY, // Icy/rocky
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ["rock", "ice"],
-      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+        proceduralData: {
+          color1: "#C2B280",
+          color2: "#C2B280",
+          color3: "#C2B280",
+          color4: "#C2B280",
+          color5: "#C2B280",
+          planetType: PlanetType.ROCKY,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -781,7 +870,7 @@ export function initializeSaturn(parentId: string): void {
     siderealRotationPeriod_s: 0.615878 * 86400,
     axialTilt: defaultMoonAxialTilt,
     orbit: {
-      realSemiMajorAxis_m: 139400 * KM,
+      realSemiMajorAxis_m: 139400 * KM, // Shepherd moon of the F Ring
       eccentricity: 0.002,
       inclination: 0.0,
       longitudeOfAscendingNode: 0.0,
@@ -791,11 +880,41 @@ export function initializeSaturn(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY, // Icy/rocky
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ["rock", "ice"],
-      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+        proceduralData: {
+          color1: "#C2B280",
+          color2: "#C2B280",
+          color3: "#C2B280",
+          color4: "#C2B280",
+          color5: "#C2B280",
+          planetType: PlanetType.ROCKY,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -813,7 +932,7 @@ export function initializeSaturn(parentId: string): void {
     siderealRotationPeriod_s: 0.575051 * 86400,
     axialTilt: defaultMoonAxialTilt,
     orbit: {
-      realSemiMajorAxis_m: 133600 * KM,
+      realSemiMajorAxis_m: 133600 * KM, // Orbits within Encke Gap in A Ring
       eccentricity: 0.0,
       inclination: 0.0,
       longitudeOfAscendingNode: 0.0,
@@ -823,11 +942,41 @@ export function initializeSaturn(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY, // Icy/rocky, unique "walnut" shape
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ["rock", "ice"],
-      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      surface: {
+        surfaceType: SurfaceType.CRATERED, // Has an equatorial ridge
+        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+        proceduralData: {
+          color1: "#C2B280",
+          color2: "#C2B280",
+          color3: "#C2B280",
+          color4: "#C2B280",
+          color5: "#C2B280",
+          planetType: PlanetType.ROCKY,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -845,7 +994,7 @@ export function initializeSaturn(parentId: string): void {
     siderealRotationPeriod_s: 0.604602 * 86400,
     axialTilt: defaultMoonAxialTilt,
     orbit: {
-      realSemiMajorAxis_m: 137700 * KM,
+      realSemiMajorAxis_m: 137700 * KM, // Orbits at outer edge of A Ring
       eccentricity: 0.001,
       inclination: 0.0,
       longitudeOfAscendingNode: 0.0,
@@ -855,11 +1004,41 @@ export function initializeSaturn(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY, // Icy/rocky, "flying saucer" shape
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ["rock", "ice"],
-      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      surface: {
+        surfaceType: SurfaceType.SMOOTH_PLAINS, // Smooth equatorial ridge
+        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+        proceduralData: {
+          color1: "#C2B280",
+          color2: "#C2B280",
+          color3: "#C2B280",
+          color4: "#C2B280",
+          color5: "#C2B280",
+          planetType: PlanetType.ROCKY,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -870,14 +1049,14 @@ export function initializeSaturn(parentId: string): void {
     seed: "daphnis",
     type: CelestialType.MOON,
     parentId: saturnId,
-    realMass_kg: 6.8e13,
-    realRadius_m: 4000,
+    realMass_kg: 6.8e13, // Very small mass
+    realRadius_m: 4000, // Small radius
     temperature: 75,
     albedo: 0.2,
     siderealRotationPeriod_s: 0.59408 * 86400,
     axialTilt: defaultMoonAxialTilt,
     orbit: {
-      realSemiMajorAxis_m: 136500 * KM,
+      realSemiMajorAxis_m: 136500 * KM, // Orbits within Keeler Gap in A Ring
       eccentricity: 0.0,
       inclination: 0.0,
       longitudeOfAscendingNode: 0.0,
@@ -887,12 +1066,41 @@ export function initializeSaturn(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY, // Icy/rocky
       isMoon: true,
       parentPlanet: saturnId,
-      composition: ["rock", "ice"],
-      surface: { type: SurfaceType.CRATERED, color: "#C2B280" },
+      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      surface: {
+        surfaceType: SurfaceType.CRATERED, // Creates waves in ring edges
+        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+        proceduralData: {
+          color1: "#C2B280",
+          color2: "#C2B280",
+          color3: "#C2B280",
+          color4: "#C2B280",
+          color5: "#C2B280",
+          planetType: PlanetType.ROCKY,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
-  // --- END: Additional Major Moons ---
 }

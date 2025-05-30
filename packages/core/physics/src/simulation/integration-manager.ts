@@ -1,7 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { PhysicsStateReal } from "../types";
-import { CelestialType } from "@teskooano/data-types";
-import type { PhysicsEngineType } from "@teskooano/core-state";
+import { CelestialType, PhysicsEngineType } from "@teskooano/data-types";
 import {
   velocityVerletIntegrate,
   standardEuler,

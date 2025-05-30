@@ -11,47 +11,9 @@ import type {
   LightSourceData,
 } from "../../common/CelestialRenderer";
 
-// Placeholder shaders for Protostar accretion disk
-const PROTOSTAR_DISK_VERTEX_SHADER = `
-varying vec2 vUv;
-varying vec3 vWorldPosition;
-varying vec3 vNormal;
-void main() {
-  vUv = uv;
-  vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-  vWorldPosition = worldPosition.xyz;
-  vNormal = normalize(normalMatrix * normal);
-  gl_Position = projectionMatrix * viewMatrix * worldPosition;
-}
-`;
-
-const PROTOSTAR_DISK_FRAGMENT_SHADER = `
-uniform float time;
-uniform vec3 diskColor;
-uniform sampler2D noiseTexture; // Optional: for more complex patterns
-varying vec2 vUv;
-varying vec3 vWorldPosition;
-varying vec3 vNormal;
-
-float simpleNoise(vec2 uv, float scale) {
-  return fract(sin(dot(uv * scale, vec2(12.9898, 78.233 + time * 0.001))) * 43758.5453);
-}
-
-void main() {
-  float distFromCenter = length(vUv - vec2(0.5)); // Assuming UVs are 0-1 for the disk
-  float radialPattern = smoothstep(0.1, 0.5, distFromCenter) * (1.0 - smoothstep(0.45, 0.5, distFromCenter));
-  
-  float azimuthalNoise = simpleNoise(vUv, 20.0 + sin(vUv.x * 10.0 + time * 0.05) * 5.0);
-  float density = radialPattern * (0.6 + azimuthalNoise * 0.4);
-  density = clamp(density, 0.0, 1.0);
-
-  // Lighting (simple lambertian)
-  vec3 lightDir = normalize(vec3(0.5, 0.5, 1.0)); // Example light direction
-  float lightIntensity = max(0.0, dot(normalize(vNormal), lightDir)) * 0.5 + 0.5;
-
-  gl_FragColor = vec4(diskColor * lightIntensity * density, density * 0.9); // Alpha based on density
-}
-`;
+// Import shaders for Protostar accretion disk
+import PROTOSTAR_DISK_VERTEX_SHADER from "../../../shaders/star/pre-main-sequence/protostar-disk.vertex.glsl";
+import PROTOSTAR_DISK_FRAGMENT_SHADER from "../../../shaders/star/pre-main-sequence/protostar-disk.fragment.glsl";
 
 /**
  * Material for the main body of Protostars.
@@ -157,12 +119,6 @@ export class ProtostarRenderer extends PreMainSequenceStarRenderer {
       ...options,
       segments: 32,
     });
-    const existingEffect = mediumStarOnlyGroup.getObjectByName(
-      `${object.celestialObjectId}-accretion-disk`,
-    );
-    if (existingEffect) {
-      mediumStarOnlyGroup.remove(existingEffect);
-    }
     mediumStarOnlyGroup.name = `${object.celestialObjectId}-medium-lod`;
     const level1: LODLevel = {
       object: mediumStarOnlyGroup,
@@ -170,6 +126,114 @@ export class ProtostarRenderer extends PreMainSequenceStarRenderer {
     };
 
     return [level0, level1];
+  }
+
+  protected _createDiskBillboardTexture(
+    diskColor: THREE.Color,
+  ): THREE.CanvasTexture {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext("2d");
+
+    if (context) {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      const outerRadius = canvas.width / 3;
+      const innerRadius = outerRadius * 0.6;
+
+      // Use the provided diskColor, with a fixed alpha for the billboard
+      const fillStyle = `rgba(${Math.round(diskColor.r * 255)}, ${Math.round(diskColor.g * 255)}, ${Math.round(diskColor.b * 255)}, 0.7)`;
+      context.fillStyle = fillStyle;
+
+      // Draw outer circle
+      context.beginPath();
+      context.arc(centerX, centerY, outerRadius, 0, 2 * Math.PI);
+      context.fill();
+
+      // Punch out the center to make it a circular ring
+      context.globalCompositeOperation = "destination-out";
+      context.beginPath();
+      context.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+      context.fill();
+
+      // Reset composite operation
+      context.globalCompositeOperation = "source-over";
+    }
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  protected override _createBillboardLODLevel(
+    object: RenderableCelestialObject,
+    sprite: THREE.Sprite,
+    pointLight: THREE.PointLight,
+    billboardDistance: number,
+  ): LODLevel {
+    // Get the base billboard group (star sprite + light)
+    const billboardGroup = super._createBillboardLODLevel(
+      object,
+      sprite,
+      pointLight,
+      billboardDistance,
+    ).object as THREE.Group;
+
+    // Determine the disk color for the billboard
+    let actualDiskColor = new THREE.Color(0x8b4513); // Default saddle brown
+    const diskEffectMaterial = this.effectMaterials.get(
+      `${object.celestialObjectId}-accretion-disk`,
+    ) as THREE.ShaderMaterial | undefined;
+
+    if (
+      diskEffectMaterial &&
+      diskEffectMaterial.uniforms &&
+      diskEffectMaterial.uniforms.diskColor
+    ) {
+      actualDiskColor = diskEffectMaterial.uniforms.diskColor
+        .value as THREE.Color;
+    }
+
+    // Create disk billboard texture and material
+    const diskTexture = this._createDiskBillboardTexture(actualDiskColor);
+
+    const diskPlaneMaterial = new THREE.MeshBasicMaterial({
+      map: diskTexture,
+      transparent: true,
+      blending: THREE.NormalBlending,
+      side: THREE.DoubleSide, // So it's visible when looking from below/above
+      depthWrite: true, // Interacts with depth for correct occlusion
+      // opacity: 0.7, // Opacity is handled by the texture's alpha
+    });
+
+    const diskWorldDiameter = (object.radius || 0.1) * 20;
+    const diskPlaneGeometry = new THREE.PlaneGeometry(
+      diskWorldDiameter,
+      diskWorldDiameter,
+    );
+    const diskPlaneMesh = new THREE.Mesh(diskPlaneGeometry, diskPlaneMaterial);
+    diskPlaneMesh.name = `${object.celestialObjectId}-disk-plane-lod`;
+
+    // Rotate the plane to be flat (e.g., in the XZ plane if Y is up)
+    diskPlaneMesh.rotation.x = -Math.PI / 2;
+
+    // Add disk plane to the group, then re-add star sprite to ensure it's on top
+    const starSpriteInGroup = billboardGroup.getObjectByName(
+      `${object.celestialObjectId}-distant-sprite`,
+    );
+    const lightInGroup = billboardGroup.getObjectByName(
+      `${object.celestialObjectId}-low-lod-light`,
+    );
+
+    billboardGroup.remove(...billboardGroup.children); // Clear existing children
+
+    billboardGroup.add(diskPlaneMesh); // Add disk plane first
+    if (starSpriteInGroup) billboardGroup.add(starSpriteInGroup); // Then star sprite
+    if (lightInGroup) billboardGroup.add(lightInGroup); // Then light
+
+    return {
+      object: billboardGroup,
+      distance: billboardDistance,
+    };
   }
 
   /**

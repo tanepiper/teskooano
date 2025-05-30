@@ -312,7 +312,7 @@ export class RendererStateAdapter {
 
         const currentVisSettings = this.$visualSettings.getValue();
         const newMultiplier =
-          simState.visualSettings.trailLengthMultiplier ?? 150;
+          simState.visualSettings.trailLengthMultiplier ?? 300;
         const newEngine =
           simState.physicsEngine === "verlet" ? "verlet" : "keplerian";
 

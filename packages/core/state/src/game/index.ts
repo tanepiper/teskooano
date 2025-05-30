@@ -118,7 +118,6 @@ export type { ClearStateOptions };
 export type {
   SimulationState,
   CameraState,
-  PhysicsEngineType,
   PerformanceProfileType,
   VisualSettingsState,
 } from "./types";

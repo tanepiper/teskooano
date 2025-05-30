@@ -6,50 +6,14 @@ import {
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
 import { SCALE } from "@teskooano/data-types";
-import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
+import type {
+  CelestialMeshOptions,
+  LightSourceData,
+} from "../../common/CelestialRenderer";
 
-// Placeholder shaders for Herbig Ae/Be accretion disk
-const HERBIG_DISK_VERTEX_SHADER = `
-varying vec2 vUv;
-varying vec3 vWorldPosition;
-varying vec3 vNormal;
-void main() {
-  vUv = uv;
-  vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-  vWorldPosition = worldPosition.xyz;
-  vNormal = normalize(normalMatrix * normal);
-  gl_Position = projectionMatrix * viewMatrix * worldPosition;
-}
-`;
-
-const HERBIG_DISK_FRAGMENT_SHADER = `
-uniform float time;
-uniform vec3 diskColor;
-uniform float diskOpacity;
-varying vec2 vUv;
-varying vec3 vWorldPosition;
-varying vec3 vNormal;
-
-float simpleNoise(vec2 uv, float scale) {
-  return fract(sin(dot(uv * scale + time * 0.002, vec2(15.9898, 72.233))) * 41758.5453);
-}
-
-void main() {
-  float distFromCenter = length(vUv - vec2(0.5));
-  float radialFalloff = smoothstep(0.0, 0.5, distFromCenter) * (1.0 - smoothstep(0.48, 0.5, distFromCenter));
-
-  float densityPattern = simpleNoise(vUv * vec2(30.0, 5.0) + vec2(0.0, time * 0.02), 1.0);
-  densityPattern = pow(densityPattern, 1.5);
-  
-  float finalDensity = radialFalloff * (0.4 + densityPattern * 0.6);
-  finalDensity = clamp(finalDensity, 0.0, 1.0);
-
-  vec3 lightDir = normalize(vec3(0.5, 0.8, 0.7)); 
-  float lightIntensity = max(0.1, dot(normalize(vNormal), lightDir)) * 0.7 + 0.3;
-  
-  gl_FragColor = vec4(diskColor * lightIntensity, finalDensity * diskOpacity);
-}
-`;
+// Import shaders for Herbig Ae/Be accretion disk
+import HERBIG_DISK_VERTEX_SHADER from "../../../shaders/star/pre-main-sequence/herbig-disk.vertex.glsl";
+import HERBIG_DISK_FRAGMENT_SHADER from "../../../shaders/star/pre-main-sequence/herbig-disk.fragment.glsl";
 
 /**
  * Material for the main body of Herbig Ae/Be stars.
@@ -134,6 +98,102 @@ export class HerbigAeBeRenderer extends PreMainSequenceStarRenderer {
     return 10000 * scale;
   }
 
+  protected _createDiskBillboardTexture(
+    diskColor: THREE.Color,
+  ): THREE.CanvasTexture {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext("2d");
+
+    if (context) {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      const outerRadius = canvas.width / 2.5; // Slightly smaller than protostar for a potentially thinner disk impression
+      const innerRadius = outerRadius * 0.5; // Larger inner hole
+
+      const fillStyle = `rgba(${Math.round(diskColor.r * 255)}, ${Math.round(diskColor.g * 255)}, ${Math.round(diskColor.b * 255)}, 0.6)`; // Slightly less opaque for Herbig disk
+      context.fillStyle = fillStyle;
+
+      context.beginPath();
+      context.arc(centerX, centerY, outerRadius, 0, 2 * Math.PI);
+      context.fill();
+
+      context.globalCompositeOperation = "destination-out";
+      context.beginPath();
+      context.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+      context.fill();
+
+      context.globalCompositeOperation = "source-over";
+    }
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  protected override _createBillboardLODLevel(
+    object: RenderableCelestialObject,
+    sprite: THREE.Sprite,
+    pointLight: THREE.PointLight,
+    billboardDistance: number,
+  ): LODLevel {
+    const billboardGroup = super._createBillboardLODLevel(
+      object,
+      sprite,
+      pointLight,
+      billboardDistance,
+    ).object as THREE.Group;
+
+    let actualDiskColor = new THREE.Color(0xeeeeff); // Default Herbig disk color
+    const diskEffectMaterial = this.effectMaterials.get(
+      `${object.celestialObjectId}-circumstellar-disk`,
+    ) as THREE.ShaderMaterial | undefined;
+
+    if (
+      diskEffectMaterial &&
+      diskEffectMaterial.uniforms &&
+      diskEffectMaterial.uniforms.diskColor
+    ) {
+      actualDiskColor = diskEffectMaterial.uniforms.diskColor
+        .value as THREE.Color;
+    }
+
+    const diskTexture = this._createDiskBillboardTexture(actualDiskColor);
+    const diskPlaneMaterial = new THREE.MeshBasicMaterial({
+      map: diskTexture,
+      transparent: true,
+      blending: THREE.NormalBlending,
+      side: THREE.DoubleSide,
+      depthWrite: true,
+      // opacity: 0.6, // Opacity handled by texture
+    });
+
+    const diskWorldDiameter = (object.radius || 0.15) * 30; // Herbig disks can be large (2 * outerRadius of disk)
+    const diskPlaneGeometry = new THREE.PlaneGeometry(
+      diskWorldDiameter,
+      diskWorldDiameter,
+    );
+    const diskPlaneMesh = new THREE.Mesh(diskPlaneGeometry, diskPlaneMaterial);
+    diskPlaneMesh.name = `${object.celestialObjectId}-disk-plane-lod`;
+    diskPlaneMesh.rotation.x = -Math.PI / 2;
+
+    const starSpriteInGroup = billboardGroup.getObjectByName(
+      `${object.celestialObjectId}-distant-sprite`,
+    );
+    const lightInGroup = billboardGroup.getObjectByName(
+      `${object.celestialObjectId}-low-lod-light`,
+    );
+
+    billboardGroup.remove(...billboardGroup.children);
+    billboardGroup.add(diskPlaneMesh);
+    if (starSpriteInGroup) billboardGroup.add(starSpriteInGroup);
+    if (lightInGroup) billboardGroup.add(lightInGroup);
+
+    return {
+      object: billboardGroup,
+      distance: billboardDistance,
+    };
+  }
+
   protected getCustomLODs(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
@@ -150,12 +210,6 @@ export class HerbigAeBeRenderer extends PreMainSequenceStarRenderer {
       ...options,
       segments: 48,
     });
-    const existingEffect = mediumStarOnlyGroup.getObjectByName(
-      `${object.celestialObjectId}-circumstellar-disk`,
-    );
-    if (existingEffect) {
-      mediumStarOnlyGroup.remove(existingEffect);
-    }
     mediumStarOnlyGroup.name = `${object.celestialObjectId}-medium-lod`;
     const level1: LODLevel = {
       object: mediumStarOnlyGroup,
@@ -163,5 +217,19 @@ export class HerbigAeBeRenderer extends PreMainSequenceStarRenderer {
     };
 
     return [level0, level1];
+  }
+
+  update(
+    time: number,
+    lightSources?: Map<string, LightSourceData>,
+    camera?: THREE.Camera,
+  ): void {
+    super.update(time, lightSources, camera);
+
+    this.effectMaterials.forEach((material: any) => {
+      if (material.uniforms?.time) {
+        material.uniforms.time.value = this.elapsedTime;
+      }
+    });
   }
 }

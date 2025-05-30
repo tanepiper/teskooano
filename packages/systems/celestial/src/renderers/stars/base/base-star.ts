@@ -113,7 +113,7 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
    * Creates a canvas texture for the star billboard.
    * @returns A THREE.CanvasTexture.
    */
-  private _createBillboardTexture(): THREE.CanvasTexture {
+  protected _createBillboardTexture(): THREE.CanvasTexture {
     const canvas = document.createElement("canvas");
     canvas.width = 64;
     canvas.height = 64;
@@ -140,7 +140,7 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
    * @param object - The renderable celestial object.
    * @returns The calculated sprite size.
    */
-  private _calculateDistantSpriteSize(
+  protected _calculateDistantSpriteSize(
     object: RenderableCelestialObject,
   ): number {
     const minSpriteSize = 0.03;
@@ -160,7 +160,7 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
    * @param size - The size of the sprite.
    * @returns A THREE.Sprite.
    */
-  private _createBillboardSprite(
+  protected _createBillboardSprite(
     object: RenderableCelestialObject,
     texture: THREE.Texture,
     size: number,
@@ -218,7 +218,7 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
    * @param billboardDistance - The distance at which this LOD becomes active.
    * @returns An LODLevel object.
    */
-  private _createBillboardLODLevel(
+  protected _createBillboardLODLevel(
     object: RenderableCelestialObject,
     sprite: THREE.Sprite,
     pointLight: THREE.PointLight,

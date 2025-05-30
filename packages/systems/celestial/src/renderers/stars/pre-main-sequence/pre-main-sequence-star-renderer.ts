@@ -48,9 +48,9 @@ export class PreMainSequenceStarMaterial extends THREE.ShaderMaterial {
       uniforms: uniforms,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
+      transparent: false,
+      blending: THREE.NormalBlending,
+      depthWrite: true,
     });
   }
 

@@ -5,9 +5,9 @@ import {
   CelestialType,
   PlanetType,
   SurfaceType,
-  type PlanetAtmosphereProperties,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
+  CompositionType,
 } from "@teskooano/data-types";
 
 const VENUS_MASS_KG = 4.867e24;
@@ -21,28 +21,27 @@ const VENUS_LAN_DEG = 76.68;
 const VENUS_AOP_DEG = 54.85 + VENUS_LAN_DEG;
 const VENUS_MA_DEG = 50.44;
 const VENUS_ORBITAL_PERIOD_S = 1.9402e7;
-const VENUS_SIDEREAL_ROTATION_PERIOD_S = -5.8164e6;
+const VENUS_SIDEREAL_ROTATION_PERIOD_S = -5.8164e6; // Note: Retrograde rotation
 const VENUS_AXIAL_TILT_DEG = 177.36;
 
 /**
- * Initializes Venus using accurate data.
+ * Initializes Venus planet data.
  */
-export function initializeVenus(parentId: string): void {
+export function initializeVenusPlanet(parentId: string): void {
   const venusId = "venus";
   const venusAxialTiltRad = VENUS_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  // Venus procedural surface data (volcanic world with thick atmosphere)
   const venusProceduralSurface: ProceduralSurfaceProperties = {
     persistence: 0.5,
     lacunarity: 2.2,
     simplePeriod: 5.0,
     octaves: 6,
     bumpScale: 0.3,
-    color1: "#8B4513", // Dark volcanic rock
-    color2: "#A0522D", // Reddish volcanic rock
-    color3: "#CD853F", // Lighter volcanic surfaces
-    color4: "#DEB887", // Weathered surfaces
-    color5: "#F5DEB3", // Bright highland areas
+    color1: "#8B4513",
+    color2: "#A0522D",
+    color3: "#CD853F",
+    color4: "#DEB887",
+    color5: "#F5DEB3",
     height1: 0.0,
     height2: 0.3,
     height3: 0.55,
@@ -103,6 +102,8 @@ export function initializeVenus(parentId: string): void {
       surface: {
         ...venusProceduralSurface,
         type: SurfaceType.VOLCANIC,
+        surfaceType: SurfaceType.VOLCANIC,
+        composition: [CompositionType.SILICATE, CompositionType.IRON],
         planetType: PlanetType.TERRESTRIAL,
         color: "#D2B48C",
       },

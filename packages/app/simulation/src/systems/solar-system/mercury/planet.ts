@@ -5,9 +5,9 @@ import {
   CelestialType,
   PlanetType,
   SurfaceType,
-  type PlanetAtmosphereProperties,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
+  CompositionType,
 } from "@teskooano/data-types";
 
 const MERCURY_MASS_KG = 3.3011e23;
@@ -27,7 +27,7 @@ const MERCURY_AXIAL_TILT_DEG = 0.034;
 /**
  * Initializes Mercury using accurate data.
  */
-export function initializeMercury(parentId: string): void {
+export function initializeMercuryPlanet(parentId: string): void {
   const mercuryId = "mercury";
   const mercuryAxialTiltRad = MERCURY_AXIAL_TILT_DEG * DEG_TO_RAD;
 
@@ -93,6 +93,8 @@ export function initializeMercury(parentId: string): void {
       surface: {
         ...mercuryProceduralSurface,
         type: SurfaceType.CRATERED,
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.SILICATE, CompositionType.IRON],
         planetType: PlanetType.ROCKY,
         color: "#8A7F80",
       },

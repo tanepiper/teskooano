@@ -22,6 +22,8 @@ import {
   range,
   scan,
   toArray,
+  filter,
+  take,
 } from "rxjs";
 import * as CONST from "./constants";
 import {
@@ -43,6 +45,7 @@ export async function generateSystem(
   seed: string,
 ): Promise<{ objects$: Observable<CelestialObject> }> {
   const random = await createSeededRandom(seed);
+  const maxOrbitalSystemsToGenerate = Math.floor(random() * 8) + 5; // 5-12 primary orbital systems
 
   // Generate stars first (synchronously within the async function)
   const systemTypeRoll = random();
@@ -195,8 +198,11 @@ export async function generateSystem(
 
     const minDistanceStepAU = 0.2;
     const maxDistanceStepAU = 20;
-    const totalPotentialOrbits = Math.floor(random() * 10) + 5;
-    const maxPlacementAU = 50;
+    const totalPotentialOrbits = 300; // Increased to allow generation attempts up to maxPlacementAU
+    const maxPlacementAU = 500;
+
+    const PARENT_STAR_PROXIMITY_MULTIPLIER = 1.5;
+    const OTHER_STAR_PROXIMITY_MULTIPLIER = 1.2;
 
     // Use RxJS stream for orbital bodies
     const bodyGenerationPipeline$ = range(0, totalPotentialOrbits).pipe(
@@ -214,11 +220,16 @@ export async function generateSystem(
 
           if (nextDistanceAU > maxPlacementAU) {
             console.warn(
-              ` -> Reached max placement distance (${maxPlacementAU} AU). Stopping body generation.`,
+              ` -> Slot at ${nextDistanceAU.toFixed(2)} AU is beyond max placement distance (${maxPlacementAU} AU). Marking slot invalid.`,
             );
-            // How to stop the range early? Throwing an error or using takeWhile perhaps.
-            // For now, just mark as invalid.
-            return { ...acc, index, isValidSlot: false };
+            // Ensure lastBodyDistanceAU is updated for the next accumulation step,
+            // even though this slot is invalid.
+            return {
+              ...acc,
+              index,
+              lastBodyDistanceAU: nextDistanceAU,
+              isValidSlot: false,
+            };
           }
 
           // Find closest star for parenting
@@ -241,20 +252,62 @@ export async function generateSystem(
             nextDistanceAU - parentStarOrbitRadiusAU,
           );
 
-          // Check proximity to parent star radius
+          // Check 1: Proximity to parent star radius
           if (
             distanceRelativeToParentAU * CONST.AU_TO_METERS <
-            parentStar.realRadius_m * 1.5
+            parentStar.realRadius_m * PARENT_STAR_PROXIMITY_MULTIPLIER
           ) {
             console.warn(
-              ` -> Skipping body at ${nextDistanceAU.toFixed(2)} AU - too close to parent star ${parentStar.name}.`,
+              ` -> Slot at ${nextDistanceAU.toFixed(2)} AU (rel: ${distanceRelativeToParentAU.toFixed(2)} AU from ${parentStar.name}) too close to parent. Skipping. Parent radius: ${(parentStar.realRadius_m / CONST.AU_TO_METERS).toFixed(2)} AU.`,
             );
             return {
               ...acc,
               index,
-              lastBodyDistanceAU: nextDistanceAU,
+              lastBodyDistanceAU: nextDistanceAU, // Still advance overall distance cursor
               isValidSlot: false,
             }; // Update distance, but mark slot invalid
+          }
+
+          // Check 2: Proximity to *other* stars in the system
+          for (const otherStar of stars) {
+            if (otherStar.id === parentStar.id) {
+              continue; // Already checked against parent
+            }
+
+            // Position of parentStar relative to system origin
+            const parentPosVec =
+              parentStar.physicsStateReal?.position_m || new OSVector3(0, 0, 0);
+            // Position of otherStar relative to system origin
+            const otherPosVec =
+              otherStar.physicsStateReal?.position_m || new OSVector3(0, 0, 0);
+
+            // Vector from otherStar to parentStar
+            const vecOtherToParent = parentPosVec.clone().sub(otherPosVec);
+            const distOtherToParent_m = vecOtherToParent.length();
+
+            // Planet orbits parentStar at distance_m = distanceRelativeToParentAU * CONST.AU_TO_METERS
+            const planetOrbitRadius_m =
+              distanceRelativeToParentAU * CONST.AU_TO_METERS;
+
+            // Minimum possible distance from the planet (in its orbit around parentStar) to the center of otherStar
+            const minPlanetToOtherStarCenter_m = Math.abs(
+              distOtherToParent_m - planetOrbitRadius_m,
+            );
+
+            if (
+              minPlanetToOtherStarCenter_m <
+              otherStar.realRadius_m * OTHER_STAR_PROXIMITY_MULTIPLIER
+            ) {
+              console.warn(
+                ` -> Slot at ${nextDistanceAU.toFixed(2)} AU (orbiting ${parentStar.name} at ${distanceRelativeToParentAU.toFixed(2)} AU) potentially too close to OTHER star ${otherStar.name}. Min separation to other star center: ${(minPlanetToOtherStarCenter_m / CONST.AU_TO_METERS).toFixed(2)} AU. Other star radius: ${(otherStar.realRadius_m / CONST.AU_TO_METERS).toFixed(2)} AU. Dist Parent-Other: ${(distOtherToParent_m / CONST.AU_TO_METERS).toFixed(2)} AU. Skipping.`,
+              );
+              return {
+                ...acc,
+                index, // ensure index is explicitly part of the return
+                lastBodyDistanceAU: nextDistanceAU,
+                isValidSlot: false,
+              };
+            }
           }
 
           return {
@@ -273,12 +326,11 @@ export async function generateSystem(
           isValidSlot: false,
         },
       ),
-      // Generate bodies only for valid slots
+      filter((slotState) => slotState.isValidSlot), // Only process valid slots
+      take(maxOrbitalSystemsToGenerate), // Limit to a number of systems
+      // Generate bodies only for these valid and taken slots
       concatMap((slotState) => {
-        if (!slotState.isValidSlot) {
-          return EMPTY; // Skip invalid slots
-        }
-
+        // slotState here is guaranteed to be valid due to the filter above
         const { index, parentStar, distanceRelativeToParentAU } = slotState;
         const parentStarId = parentStar.id;
         const parentStarMass_kg = parentStar.realMass_kg;

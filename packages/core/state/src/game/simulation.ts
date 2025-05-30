@@ -33,7 +33,7 @@ export class SimulationStateService {
     },
     physicsEngine: "verlet",
     visualSettings: {
-      trailLengthMultiplier: 2,
+      trailLengthMultiplier: 300,
     },
     performanceProfile: "medium",
   };

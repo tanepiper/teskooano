@@ -1,151 +1,30 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU, KM } from "@teskooano/core-physics";
+import { KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
-  AtmosphereType,
-  CelestialStatus,
   CelestialType,
-  GasGiantClass,
   PlanetType,
-  RockyType,
   SurfaceType,
-  type GasGiantProperties,
-  type PlanetAtmosphereProperties,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
-  type RingProperties,
-  type RingSystemProperties,
+  CompositionType,
 } from "@teskooano/data-types";
 
-const NEPTUNE_AXIAL_TILT_DEG = 28.32;
-const NEPTUNE_SIDEREAL_ROTATION_PERIOD_S = 16.11 * 3600;
-const NEPTUNE_ORBITAL_PERIOD_S = 5.199e9;
-const NEPTUNE_REAL_RADIUS_M = 24622000;
+const NEPTUNE_AXIAL_TILT_DEG = 28.32; // Used for Triton's axial tilt consistency
 
 const TRITON_SMA_M = 354759 * KM;
-const TRITON_SIDEREAL_ROTATION_PERIOD_S = -5.877 * 24 * 3600;
+const TRITON_SIDEREAL_ROTATION_PERIOD_S = -5.877 * 24 * 3600; // Retrograde
 
 const NEREID_SMA_M = 5513800 * KM;
 const NEREID_ORBITAL_PERIOD_S = 3.114e7;
 const NEREID_SIDEREAL_ROTATION_PERIOD_S = 11.52 * 3600;
 
 /**
- * Initializes Neptune and its largest moon Triton using accurate data.
+ * Initializes Neptune's moons.
+ * @param neptuneId The ID of Neptune.
  */
-export function initializeNeptune(parentId: string): void {
-  const neptuneId = "neptune";
-  const neptuneAxialTiltRad = NEPTUNE_AXIAL_TILT_DEG * DEG_TO_RAD;
-
-  actions.addCelestial({
-    id: neptuneId,
-    name: "Neptune",
-    seed: "neptune",
-    type: CelestialType.GAS_GIANT,
-    parentId: parentId,
-    realMass_kg: 1.024e26,
-    realRadius_m: NEPTUNE_REAL_RADIUS_M,
-    temperature: 72,
-    albedo: 0.41,
-    siderealRotationPeriod_s: NEPTUNE_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(neptuneAxialTiltRad),
-      Math.sin(neptuneAxialTiltRad),
-    ).normalize(),
-    orbit: {
-      realSemiMajorAxis_m: 30.07 * AU,
-      eccentricity: 0.008678,
-      inclination: 1.769 * DEG_TO_RAD,
-      longitudeOfAscendingNode: 131.783 * DEG_TO_RAD,
-      argumentOfPeriapsis: 273.187 * DEG_TO_RAD,
-      meanAnomaly: 256.328 * DEG_TO_RAD,
-      period_s: NEPTUNE_ORBITAL_PERIOD_S,
-    },
-    properties: {
-      type: CelestialType.GAS_GIANT,
-      gasGiantClass: GasGiantClass.CLASS_III,
-      atmosphereColor: "#4169E1",
-      cloudColor: "#FFFFFF",
-      cloudSpeed: 200,
-      atmosphere: {
-        composition: ["H2", "He", "CH4"],
-        pressure: 1000000,
-        type: AtmosphereType.VERY_DENSE,
-        glowColor: "#4682B4",
-        intensity: 0.8,
-        power: 1.5,
-        thickness: 0.3,
-      },
-      stormColor: "#0000CD",
-      stormSpeed: 150,
-      emissiveColor: "#4169E1",
-      emissiveIntensity: 0.1,
-      ringTilt: {
-        x: 0,
-        y: Math.cos(neptuneAxialTiltRad),
-        z: Math.sin(neptuneAxialTiltRad),
-      },
-    } as GasGiantProperties,
-  });
-
-  // Neptune Ring System - Create as separate celestial object
-  actions.addCelestial({
-    id: "neptune-rings",
-    name: "Neptune Rings",
-    seed: "neptune-rings",
-    type: CelestialType.RING_SYSTEM,
-    parentId: neptuneId,
-    realMass_kg: 0,
-    realRadius_m: 0,
-    temperature: 72,
-    albedo: 0.05,
-    siderealRotationPeriod_s: NEPTUNE_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(neptuneAxialTiltRad),
-      Math.sin(neptuneAxialTiltRad),
-    ).normalize(),
-    orbit: {} as any,
-    properties: {
-      type: CelestialType.RING_SYSTEM,
-      parentId: neptuneId,
-      rings: [
-        {
-          innerRadius: 1.7,
-          outerRadius: 1.72,
-          density: 0.4,
-          opacity: 0.25,
-          color: "#A8A8B0",
-          type: RockyType.DUST,
-          texture: "placeholder_ring_texture",
-          rotationRate: 0.001,
-          composition: ["dark dust"],
-        },
-        {
-          innerRadius: 2.1,
-          outerRadius: 2.12,
-          density: 0.5,
-          opacity: 0.3,
-          color: "#B8B8C0",
-          type: RockyType.DUST,
-          texture: "placeholder_ring_texture",
-          rotationRate: 0.0009,
-          composition: ["dust", "ice particles"],
-        },
-        {
-          innerRadius: 2.5,
-          outerRadius: 2.52,
-          density: 0.45,
-          opacity: 0.28,
-          color: "#C8C8D0",
-          type: RockyType.DUST,
-          texture: "placeholder_ring_texture",
-          rotationRate: 0.0008,
-          composition: ["reddish arcs", "dust clumps"],
-        },
-      ],
-    } as RingSystemProperties,
-  });
+export function initializeNeptuneMoons(neptuneId: string): void {
+  const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
   const tritonProceduralSurface: ProceduralSurfaceProperties = {
     persistence: 0.4,
@@ -190,15 +69,15 @@ export function initializeNeptune(parentId: string): void {
       0,
       Math.cos(tritonAxialTiltRad),
       Math.sin(tritonAxialTiltRad),
-    ).normalize(),
+    ).normalize(), // Triton's tilt is complex, often aligned with Neptune's plane or its own orbital plane due to capture
     orbit: {
       realSemiMajorAxis_m: TRITON_SMA_M,
       eccentricity: 0.000016,
-      inclination: 156.885 * DEG_TO_RAD,
+      inclination: 156.885 * DEG_TO_RAD, // Retrograde orbit
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
       meanAnomaly: Math.random() * 2 * Math.PI,
-      period_s: Math.abs(TRITON_SIDEREAL_ROTATION_PERIOD_S),
+      period_s: Math.abs(TRITON_SIDEREAL_ROTATION_PERIOD_S), // Absolute value for period
     },
     properties: {
       type: CelestialType.MOON,
@@ -207,16 +86,24 @@ export function initializeNeptune(parentId: string): void {
       parentPlanet: neptuneId,
       composition: ["nitrogen ice", "water ice", "carbon dioxide ice"],
       atmosphere: {
+        composition: ["N2"], // Thin nitrogen atmosphere
+        pressure: 1.4, // Very low pressure in Pascals
         glowColor: "#88AACC",
         intensity: 0.04,
         power: 0.5,
         thickness: 0.02,
       },
       surface: {
-        ...tritonProceduralSurface,
-        type: SurfaceType.ICE_CRACKED,
-        planetType: PlanetType.ICE,
-        color: "#E0F0FF",
+        surfaceType: SurfaceType.ICE_CRACKED, // Cantaloupe terrain, cryovolcanism
+        composition: [
+          CompositionType.NITROGEN_ICE,
+          CompositionType.WATER_ICE,
+          CompositionType.CO2_ICE,
+        ],
+        proceduralData: {
+          ...tritonProceduralSurface,
+          planetType: PlanetType.ICE,
+        },
       },
     } as PlanetProperties,
   });
@@ -257,10 +144,10 @@ export function initializeNeptune(parentId: string): void {
     realMass_kg: 3.1e19,
     realRadius_m: 170000,
     siderealRotationPeriod_s: NEREID_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(0, 1, 0).normalize(),
+    axialTilt: defaultMoonAxialTilt, // Nereid has a chaotic rotation, simplified here
     orbit: {
       realSemiMajorAxis_m: NEREID_SMA_M,
-      eccentricity: 0.7507,
+      eccentricity: 0.7507, // Highly eccentric orbit
       inclination: 7.232 * DEG_TO_RAD,
       longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
       argumentOfPeriapsis: Math.random() * 2 * Math.PI,
@@ -274,19 +161,19 @@ export function initializeNeptune(parentId: string): void {
       planetType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: neptuneId,
-      composition: ["water ice", "rock?"],
-      shapeModel: "asteroid",
-      atmosphere: undefined,
+      composition: ["water ice", "rock?"], // Composition is uncertain
+      atmosphere: undefined, // No significant atmosphere
       surface: {
-        ...nereidProceduralSurface,
-        type: SurfaceType.VARIED,
-        planetType: PlanetType.ICE,
-        color: "#A0A0A8",
+        surfaceType: SurfaceType.VARIED, // Likely cratered, but details are sparse
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          ...nereidProceduralSurface,
+          planetType: PlanetType.ICE,
+        },
       },
     } as PlanetProperties,
   });
 
-  // --- BEGIN: Additional Major Moons (NASA/JPL data, see https://ssd.jpl.nasa.gov/sats/elem/) ---
   // Proteus
   actions.addCelestial({
     id: "proteus",
@@ -299,7 +186,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 50,
     albedo: 0.1,
     siderealRotationPeriod_s: 1.122315 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 117600 * KM,
       eccentricity: 0.0,
@@ -315,7 +202,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#B0C4DE" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#B0C4DE",
+          color2: "#B0C4DE",
+          color3: "#B0C4DE",
+          color4: "#B0C4DE",
+          color5: "#B0C4DE",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -331,7 +248,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 50,
     albedo: 0.09,
     siderealRotationPeriod_s: 0.554989 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 73500 * KM,
       eccentricity: 0.001,
@@ -347,7 +264,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#B0C4DE" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#B0C4DE",
+          color2: "#B0C4DE",
+          color3: "#B0C4DE",
+          color4: "#B0C4DE",
+          color5: "#B0C4DE",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -363,7 +310,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 50,
     albedo: 0.08,
     siderealRotationPeriod_s: 0.428744 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 62000 * KM,
       eccentricity: 0.0,
@@ -379,7 +326,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#B0C4DE" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#B0C4DE",
+          color2: "#B0C4DE",
+          color3: "#B0C4DE",
+          color4: "#B0C4DE",
+          color5: "#B0C4DE",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -395,7 +372,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 50,
     albedo: 0.09,
     siderealRotationPeriod_s: 0.334656 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 52500 * KM,
       eccentricity: 0.0,
@@ -411,7 +388,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#B0C4DE" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#B0C4DE",
+          color2: "#B0C4DE",
+          color3: "#B0C4DE",
+          color4: "#B0C4DE",
+          color5: "#B0C4DE",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -427,7 +434,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 50,
     albedo: 0.09,
     siderealRotationPeriod_s: 0.311078 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 50100 * KM,
       eccentricity: 0.0,
@@ -443,7 +450,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#B0C4DE" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#B0C4DE",
+          color2: "#B0C4DE",
+          color3: "#B0C4DE",
+          color4: "#B0C4DE",
+          color5: "#B0C4DE",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -459,7 +496,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 50,
     albedo: 0.07,
     siderealRotationPeriod_s: 0.29398 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 48200 * KM,
       eccentricity: 0.0,
@@ -475,7 +512,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#B0C4DE" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#B0C4DE",
+          color2: "#B0C4DE",
+          color3: "#B0C4DE",
+          color4: "#B0C4DE",
+          color5: "#B0C4DE",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -491,7 +558,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 40,
     albedo: 0.04,
     siderealRotationPeriod_s: 1879 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 16590500 * KM,
       eccentricity: 0.521,
@@ -507,7 +574,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#808080",
+          color2: "#808080",
+          color3: "#808080",
+          color4: "#808080",
+          color5: "#808080",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -523,7 +620,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 40,
     albedo: 0.04,
     siderealRotationPeriod_s: 2919 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 22239900 * KM,
       eccentricity: 0.296,
@@ -539,7 +636,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#808080",
+          color2: "#808080",
+          color3: "#808080",
+          color4: "#808080",
+          color5: "#808080",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -555,7 +682,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 40,
     albedo: 0.04,
     siderealRotationPeriod_s: 3168 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 23499900 * KM,
       eccentricity: 0.419,
@@ -571,7 +698,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#808080",
+          color2: "#808080",
+          color3: "#808080",
+          color4: "#808080",
+          color5: "#808080",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -587,7 +744,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 40,
     albedo: 0.04,
     siderealRotationPeriod_s: 9149 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 47646600 * KM,
       eccentricity: 0.413,
@@ -603,7 +760,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#808080",
+          color2: "#808080",
+          color3: "#808080",
+          color4: "#808080",
+          color5: "#808080",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -619,7 +806,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 40,
     albedo: 0.04,
     siderealRotationPeriod_s: 9805 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 49897800 * KM,
       eccentricity: 0.455,
@@ -635,7 +822,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#808080" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#808080",
+          color2: "#808080",
+          color3: "#808080",
+          color4: "#808080",
+          color5: "#808080",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
 
@@ -651,7 +868,7 @@ export function initializeNeptune(parentId: string): void {
     temperature: 40,
     albedo: 0.1,
     siderealRotationPeriod_s: 0.95039 * 86400,
-    axialTilt: new OSVector3(0, 1, 0),
+    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 105300 * KM,
       eccentricity: 0.001,
@@ -667,8 +884,37 @@ export function initializeNeptune(parentId: string): void {
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
-      surface: { type: SurfaceType.CRATERED, color: "#B0C4DE" },
+      surface: {
+        surfaceType: SurfaceType.CRATERED,
+        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        proceduralData: {
+          color1: "#B0C4DE",
+          color2: "#B0C4DE",
+          color3: "#B0C4DE",
+          color4: "#B0C4DE",
+          color5: "#B0C4DE",
+          planetType: PlanetType.ICE,
+          persistence: 0.5,
+          lacunarity: 2.0,
+          simplePeriod: 5.0,
+          octaves: 5,
+          bumpScale: 0.3,
+          height1: 0,
+          height2: 0.25,
+          height3: 0.5,
+          height4: 0.75,
+          height5: 1,
+          shininess: 0.1,
+          specularStrength: 0.1,
+          roughness: 0.8,
+          ambientLightIntensity: 0.1,
+          undulation: 0.1,
+          terrainType: 1,
+          terrainAmplitude: 0.3,
+          terrainSharpness: 0.7,
+          terrainOffset: 0,
+        },
+      },
     } as PlanetProperties,
   });
-  // --- END: Additional Major Moons ---
 }
