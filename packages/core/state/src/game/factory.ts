@@ -14,6 +14,7 @@ import {
   CelestialStatus,
   CelestialType,
   CustomEvents,
+  StellarType,
 } from "@teskooano/data-types";
 import { celestialActions } from "./celestialActions";
 import { simulationStateService } from "./simulation";
@@ -80,7 +81,6 @@ class CelestialFactoryService {
       siderealRotationPeriod_s: data.siderealRotationPeriod_s,
       axialTilt: data.axialTilt,
       atmosphere: data.atmosphere,
-      surface: data.surface,
       properties: processedProperties,
       seed: seedString,
       physicsStateReal: calculatedPhysicsStateReal,
@@ -177,19 +177,14 @@ class CelestialFactoryService {
         : undefined;
     const isMainStar = inputStarProps?.isMainStar ?? true;
     const spectralClass = inputStarProps?.spectralClass || "G2V";
-    const mainSpectralClass = inputStarProps?.mainSpectralClass;
-    const luminosityClass = inputStarProps?.luminosityClass;
-    const specialSpectralClass = inputStarProps?.specialSpectralClass;
-    const exoticType = inputStarProps?.exoticType;
-    const whiteDwarfType = inputStarProps?.whiteDwarfType;
-    const stellarType = inputStarProps?.stellarType;
+    const stellarType =
+      inputStarProps?.stellarType ?? StellarType.MAIN_SEQUENCE;
     const partnerStars = inputStarProps?.partnerStars;
 
     let albedo = data.albedo;
 
     const thermalProps = determineStarThermalProperties({
-      mainSpectralClass,
-      exoticType,
+      stellarType: stellarType,
       currentTemperature: data.temperature,
       currentLuminosity: inputStarProps?.luminosity,
       currentColor: inputStarProps?.color,
@@ -201,6 +196,30 @@ class CelestialFactoryService {
 
     if (albedo === undefined) albedo = 0.3;
 
+    // Ensure shaderUniforms are present
+    let shaderUniformsData = inputStarProps?.shaderUniforms;
+    if (!shaderUniformsData) {
+      // If not provided in input, set up defaults.
+      // These defaults should ideally match procedural generation's defaults
+      // and/or material defaults for consistency.
+      shaderUniformsData = {
+        baseStar: {
+          coronaIntensity: 1,
+          pulseSpeed: 0.5,
+          glowIntensity: 1,
+          temperatureVariation: 0.2,
+          metallicEffect: 0.1,
+          noiseEvolutionSpeed: 0.05,
+        },
+        corona: {
+          opacity: 0.5,
+          pulseSpeed: 0.7,
+          noiseScale: 1,
+          noiseEvolutionSpeed: 1.0,
+        },
+      };
+    }
+
     const processedProperties: StarProperties = {
       type: CelestialType.STAR,
       isMainStar,
@@ -209,11 +228,8 @@ class CelestialFactoryService {
       color: defaultColor,
       stellarType,
       partnerStars,
-      mainSpectralClass,
-      luminosityClass,
-      specialSpectralClass,
-      exoticType,
-      whiteDwarfType,
+      shaderUniforms: shaderUniformsData,
+      timeOffset: inputStarProps?.timeOffset ?? Math.random() * 1000.0,
     };
 
     const starPhysicsReal: PhysicsStateReal = {

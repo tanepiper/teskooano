@@ -2,10 +2,9 @@ import * as THREE from "three";
 import { BaseStarRenderer } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import type {
-  CelestialMeshOptions,
-  LightSourceData,
-} from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions, LightSourceData } from "../../common/types";
+import type { StarProperties } from "@teskooano/data-types";
+import type { BaseStarUniformArgs } from "../main-sequence/main-sequence-star";
 
 // Assuming direct .glsl imports work as strings in your Vite setup
 import PRE_MAIN_SEQUENCE_VERTEX_SHADER from "../../../shaders/star/pre-main-sequence/vertex.glsl";
@@ -18,30 +17,24 @@ import PRE_MAIN_SEQUENCE_CORONA_FRAGMENT_SHADER from "../../../shaders/star/pre-
  */
 export class PreMainSequenceStarMaterial extends THREE.ShaderMaterial {
   constructor(
-    shaderParameters: {
-      starColor?: THREE.Color;
-      coronaIntensity?: number;
-      pulseSpeed?: number;
-      glowIntensity?: number;
-      temperatureVariation?: number;
-      metallicEffect?: number; // Though less relevant for young stars, keep for consistency
-      time?: number;
-    } = {},
+    color: THREE.Color = new THREE.Color(0xffddaa),
+    uniformOverrides?: Partial<BaseStarUniformArgs> & { timeOffset?: number },
     vertexShader: string = PRE_MAIN_SEQUENCE_VERTEX_SHADER,
     fragmentShader: string = PRE_MAIN_SEQUENCE_FRAGMENT_SHADER,
   ) {
     const uniforms = {
-      time: { value: shaderParameters.time ?? 0.0 },
-      starColor: {
-        value: shaderParameters.starColor ?? new THREE.Color(0xffddaa),
-      }, // Young stars are often reddish/orange
-      coronaIntensity: { value: shaderParameters.coronaIntensity ?? 0.2 },
-      pulseSpeed: { value: shaderParameters.pulseSpeed ?? 0.3 },
-      glowIntensity: { value: shaderParameters.glowIntensity ?? 0.6 },
+      time: { value: uniformOverrides?.timeOffset ?? Math.random() * 1000.0 },
+      starColor: { value: color },
+      coronaIntensity: { value: uniformOverrides?.coronaIntensity ?? 0.2 },
+      pulseSpeed: { value: uniformOverrides?.pulseSpeed ?? 0.3 },
+      glowIntensity: { value: uniformOverrides?.glowIntensity ?? 0.6 },
       temperatureVariation: {
-        value: shaderParameters.temperatureVariation ?? 0.5,
-      }, // Can be quite turbulent
-      metallicEffect: { value: shaderParameters.metallicEffect ?? 0.05 },
+        value: uniformOverrides?.temperatureVariation ?? 0.5,
+      },
+      metallicEffect: { value: uniformOverrides?.metallicEffect ?? 0.05 },
+      noiseEvolutionSpeed: {
+        value: uniformOverrides?.noiseEvolutionSpeed ?? 0.1,
+      },
     };
 
     super({

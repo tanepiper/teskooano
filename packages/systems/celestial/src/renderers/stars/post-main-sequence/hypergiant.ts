@@ -6,7 +6,7 @@ import {
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
 import { AU_METERS, SCALE } from "@teskooano/data-types";
-import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions } from "../../common/types";
 
 /**
  * Material for hypergiant stars.

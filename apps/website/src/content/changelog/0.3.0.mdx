@@ -1,7 +1,7 @@
 ---
 title: "Teskooano v0.3.0-dev Release Notes"
-version: "0.3.0"
-description: "Upcoming changelog notes for 0.3.0"
+version: "0.3.0-dev"
+description: "Version 0.3.0 is a major refactoring of the underlaying type system, and of the stellar rendering system for stars"
 author: "The Teskooano Team"
 image:
   url: "/images/blog/release-notes.jpg"
@@ -10,6 +10,26 @@ tags: ["release", "changelog", "teskooano", "simulation"]
 ---
 
 # Unreleased Changes
+
+## Major Changes
+
+### Added
+
+- New system modal for showing the system data on load, and option to select either N-Body or Ideal physics
+
+### Changed
+
+- New star rendering system, breaking down stars into distinct rendering types by their main shader, and then allows for different effect layers to be added
+
+  - Main Sequence: The most standard star renderer with a surface and corona
+  - Post-Main Sequence: Larger stars with some additional effects like ejections shells
+  - Pre-Main Sequence: Stars like T-Tauri and Protostars with additional effects
+  - Exotic Stars: Stars like Wolf-Rayet or Carbon stars with their own effects layer
+  - Remnants: White Dwarf and Neutron stars with their own effects
+  - Black Holes: Special rendererers and properties for black hole effects
+
+- Updated types for Terrestrial procedural rendering and star rendering
+- Updated all UI components to use design system
 
 This document consolidates all unreleased changes from the main project changelog.
 

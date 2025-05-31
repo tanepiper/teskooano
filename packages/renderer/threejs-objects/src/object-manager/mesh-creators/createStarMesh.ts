@@ -30,7 +30,13 @@ export function createStarMesh(
   object: RenderableCelestialObject,
   deps: CreateStarMeshDeps,
 ): THREE.Object3D {
+  console.log(
+    `[createStarMesh for '${object.celestialObjectId}'] Using key: '${object.celestialObjectId}' for GET`,
+  );
   let renderer = deps.starRenderers.get(object.celestialObjectId);
+  console.log(
+    `[createStarMesh for ${object.celestialObjectId}] Attempting to get renderer. Found existing: ${!!renderer}`,
+  );
 
   // If no ID-specific renderer, try to create one
   if (!renderer) {
@@ -47,6 +53,9 @@ export function createStarMesh(
         );
         if (newRenderer) {
           renderer = newRenderer;
+          console.log(
+            `[createStarMesh for '${object.celestialObjectId}'] Setting new renderer in map with key: '${object.celestialObjectId}'`,
+          );
           deps.starRenderers.set(object.celestialObjectId, renderer);
         } else {
           console.warn(

@@ -1,135 +1,131 @@
 import * as THREE from "three";
+import { SCALE } from "@teskooano/data-types";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type {
+  CelestialMeshOptions,
+  LODLevel,
+  LightSourceData,
+} from "../../common/types";
+import type { StarProperties } from "@teskooano/data-types";
 import {
   EvolvedSpecialStarRenderer,
   EvolvedSpecialStarMaterial,
 } from "./evolved-special-star-renderer";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import { LODLevel } from "../../index";
-import { AU_METERS, SCALE, type StarProperties } from "@teskooano/data-types";
-import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
+import type { BaseStarUniformArgs } from "../main-sequence/main-sequence-star";
 
 /**
- * Material for the main body of Variable stars.
- * Variability will primarily be controlled by modulating uniforms.
- */
-export class VariableStarMaterial extends EvolvedSpecialStarMaterial {
-  constructor(color: THREE.Color = new THREE.Color(0xffffcc)) {
-    super({
-      starColor: color,
-      coronaIntensity: 0.5,
-      pulseSpeed: 0.5, // Base pulse, can be modulated
-      glowIntensity: 0.8, // Base glow, can be modulated
-      temperatureVariation: 0.3, // Base temp variation
-      metallicEffect: 0.2,
-    });
-  }
-}
-
-/**
- * Renderer for Variable stars - stars that change in brightness over time.
+ * Renderer for Variable Stars.
+ * This is a broad category. Visuals can vary greatly (Cepheids, Mira variables, etc.).
+ * The core EvolvedSpecialStarMaterial will handle general pulsation via pulseSpeed uniform.
  */
 export class VariableStarRenderer extends EvolvedSpecialStarRenderer {
-  private lastBrightness: number = 1.0;
-  private lastPulseSpeed: number = 0.5;
+  private baseColor: THREE.Color = new THREE.Color(0xffcc99); // Default base color
+  private lastPulseValue: number = 0;
+  private variabilityPeriod_s: number = 86400; // Default 1 day period
+  private variabilityMagnitude: number = 0.5; // Default 0.5 magnitude variation
+
+  constructor(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ) {
+    super(object, options);
+    this.baseColor = this.getStarColor(object).clone(); // Store initial color
+    const props = object.properties as StarProperties;
+    // TODO: These characteristics should be defined in StarProperties.characteristics ideally
+    this.variabilityPeriod_s =
+      (props.characteristics?.variabilityPeriod_s as number) || 86400;
+    this.variabilityMagnitude =
+      (props.characteristics?.variabilityMagnitude as number) || 0.5;
+  }
 
   protected getMaterial(
     object: RenderableCelestialObject,
   ): EvolvedSpecialStarMaterial {
-    const color = this.getStarColor(object);
-    // Could use object properties to set initial material parameters if needed
-    return new VariableStarMaterial(color);
+    // Color is handled by getStarColor, which is now dynamic in update for variable stars
+    const color = this.baseColor; // Use the stored base color for initial material creation
+    const properties = object.properties as StarProperties;
+
+    const classDefaults: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
+      coronaIntensity: 0.4,
+      pulseSpeed: (2 * Math.PI) / this.variabilityPeriod_s, // Link pulseSpeed to variability period
+      glowIntensity: 0.6, // Base glow, will be modulated
+      temperatureVariation: 0.3, // Can have surface activity
+      metallicEffect: 0.2,
+      noiseEvolutionSpeed: 0.2,
+    };
+
+    const propsUniforms = properties.shaderUniforms?.baseStar;
+    const propsTimeOffset = properties.timeOffset;
+
+    const finalMaterialOptions: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
+      ...classDefaults,
+      ...(propsUniforms || {}),
+      glowIntensity:
+        propsUniforms?.glowIntensity ?? classDefaults.glowIntensity, // Will be modulated in update
+      timeOffset:
+        propsTimeOffset ?? classDefaults.timeOffset ?? Math.random() * 1000.0,
+    };
+
+    return new EvolvedSpecialStarMaterial(color, finalMaterialOptions);
   }
 
-  protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    // Variable stars can have a range of colors - yellow-white is a common one
-    return new THREE.Color(0xffee66);
+  // getStarColor provides the base color. Brightness variation is handled in update.
+  protected getStarColor(star: RenderableCelestialObject): THREE.Color {
+    const properties = star.properties as StarProperties;
+    if (properties?.color) {
+      try {
+        return new THREE.Color(properties.color);
+      } catch (e) {
+        console.warn(
+          `[VariableStarRenderer] Invalid color '${properties.color}' in star properties. Falling back to default.`,
+        );
+      }
+    }
+    // Default for variable stars can be very broad, often G, K, M giants or supergiants
+    return new THREE.Color(0xffcc99); // Default: Orangey yellow
   }
 
-  /**
-   * Variable stars in this generic renderer don't add a distinct geometric effect layer.
-   * Their variability is handled by modulating the main material's uniforms.
-   * Specific variable star sub-types could override this to add shells (e.g., for Miras).
-   */
+  // Variable stars don't typically have a persistent, distinct effect layer like a shell.
+  // Their variability is intrinsic. Some, like Mira variables, have mass loss, but that's more complex.
   protected getEffectLayer(
     object: RenderableCelestialObject,
     mainStarGroup: THREE.Group,
   ): THREE.Object3D | null {
-    return null; // No separate geometric effect layer for the generic variable star
+    return null;
   }
 
-  // Override update to modulate material properties for variability
+  // Override update to modulate brightness/color based on variability
   override update(
     time: number,
-    lightSources?: Map<string, any>,
+    lightSources?: Map<string, LightSourceData>,
     camera?: THREE.Camera,
   ): void {
-    super.update(time, lightSources, camera); // Call base update for star body, corona, and any (null) effect layer
+    super.update(time, lightSources, camera); // Updates elapsedTime
 
-    // Example variability: A slow sine wave for brightness and pulse speed modulation
-    // This is a very basic example. Real variable stars have complex light curves.
-    const period = 10; // seconds for a full cycle
-    const phase = (this.elapsedTime / period) * 2 * Math.PI;
+    const phase = (this.elapsedTime * (2 * Math.PI)) / this.variabilityPeriod_s;
+    // Simple sine wave for magnitude variation. Max brightness at sin = 1, min at sin = -1.
+    // Magnitude is logarithmic, so a linear change in luminosity is more appropriate for shaders.
+    // Let's assume variabilityMagnitude is a factor applied to base luminosity/glow.
+    // A 0.5 mag variation means brightness changes by a factor of 10^(0.5/2.5) ~ 1.58x.
+    // For simplicity, let pulse be factor from 0.5 to 1.5 (approx) around 1.
+    const pulseFactor =
+      1.0 + Math.sin(phase) * (this.variabilityMagnitude / 2.5) * 0.58; // Simplified factor variation
+    this.lastPulseValue = pulseFactor;
 
-    // Modulate glowIntensity (brightness)
-    const minGlow = 0.5;
-    const maxGlow = 1.2;
-    const currentGlow =
-      minGlow + (Math.sin(phase) * 0.5 + 0.5) * (maxGlow - minGlow);
-
-    // Modulate pulseSpeed
-    const minPulseSpeed = 0.2;
-    const maxPulseSpeed = 0.8;
-    const currentPulseSpeed =
-      minPulseSpeed +
-      (Math.cos(phase * 0.7) * 0.5 + 0.5) * (maxPulseSpeed - minPulseSpeed); // Different phase for variety
-
-    this.materials.forEach((material: any) => {
-      if (material instanceof EvolvedSpecialStarMaterial) {
-        if (material.uniforms.glowIntensity) {
-          material.uniforms.glowIntensity.value = currentGlow;
-        }
-        if (material.uniforms.pulseSpeed) {
-          material.uniforms.pulseSpeed.value = currentPulseSpeed;
-        }
-        // Could also modulate starColor, temperatureVariation etc.
-      }
-    });
-    // If there were effect materials that also needed dynamic updates based on variability:
-    // this.effectMaterials.forEach( ... );
-  }
-
-  /**
-   * Override billboard size calculation for Variable stars.
-   * These stars can pulsate in size, so the billboard should reflect their average size.
-   *
-   * @param object The renderable celestial object
-   * @returns The calculated sprite size for billboard rendering
-   */
-  protected override calculateBillboardSize(
-    object: RenderableCelestialObject,
-  ): number {
-    const starRadius_AU = object.radius / AU_METERS;
-
-    // Variable stars can change in size
-    const minSpriteSize = 0.1;
-    const maxSpriteSize = 0.6;
-
-    // Use a slightly more dynamic formula for variable stars
-    const pulseEffect = 0.15 + Math.sin(Date.now() * 0.0005) * 0.05; // Small oscillation
-    const calculatedSpriteSize = pulseEffect + starRadius_AU * 0.13;
-
-    return Math.max(
-      minSpriteSize,
-      Math.min(maxSpriteSize, calculatedSpriteSize),
-    );
-  }
-
-  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
-    const scale = typeof SCALE === "number" ? SCALE : 1;
-    // Dynamic LOD distance based on star size
-    const starRadius_AU = object.radius / AU_METERS;
-    const sizeBasedDistance = 30000 + starRadius_AU * 2000;
-    return Math.min(55000, sizeBasedDistance) * scale;
+    const mainMaterial = this.starBodyMaterials.get(
+      this.object.celestialObjectId,
+    ) as EvolvedSpecialStarMaterial;
+    if (mainMaterial && mainMaterial.uniforms.glowIntensity) {
+      const baseGlow =
+        (this.object.properties as StarProperties).shaderUniforms?.baseStar
+          ?.glowIntensity ?? 0.6;
+      mainMaterial.uniforms.glowIntensity.value = baseGlow * pulseFactor;
+      mainMaterial.needsUpdate = true;
+    }
   }
 
   protected getCustomLODs(
@@ -137,25 +133,29 @@ export class VariableStarRenderer extends EvolvedSpecialStarRenderer {
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-
-    // High detail (no separate effect layer for this generic variable star)
     const highDetailGroup = this._createHighDetailGroup(object, {
       ...options,
-      segments: 96,
+      segments: 64,
     });
     const level0: LODLevel = { object: highDetailGroup, distance: 0 };
 
-    // Medium detail
     const mediumStarOnlyGroup = super._createHighDetailGroup(object, {
       ...options,
-      segments: 48,
+      segments: 32,
+      includeEffects: false, // No specific effect layer
     });
     mediumStarOnlyGroup.name = `${object.celestialObjectId}-medium-lod`;
     const level1: LODLevel = {
       object: mediumStarOnlyGroup,
-      distance: 1200 * scale,
+      distance: 3000 * scale,
     };
 
     return [level0, level1];
+  }
+
+  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
+    const scale = typeof SCALE === "number" ? SCALE : 1;
+    // Variable stars can be quite luminous at their peak
+    return 10000 * scale;
   }
 }

@@ -1,80 +1,6 @@
-import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-
-/**
- * Options for creating celestial object meshes
- */
-export interface CelestialMeshOptions {
-  /**
-   * Level of detail to use for the mesh
-   */
-  detailLevel?: "high" | "medium" | "low" | "very-low";
-
-  /**
-   * Specific number of segments to use (overrides detailLevel)
-   */
-  segments?: number;
-
-  /**
-   * Whether to include special effects like atmospheres, rings, etc.
-   * Default: true
-   */
-  includeEffects?: boolean;
-
-  /**
-   * Whether to include debug helpers (e.g., wireframes, normals)
-   * Default: false
-   */
-  debug?: boolean;
-
-  /**
-   * Whether to enable gravitational lensing effects for compatible objects (e.g., black holes).
-   * Default: false
-   */
-  enableGravitationalLensing?: boolean;
-
-  // Shader-specific options for stars
-  coronaIntensity?: number;
-  pulseSpeed?: number;
-  glowIntensity?: number;
-  temperatureVariation?: number;
-  metallicEffect?: number;
-  noiseEvolutionSpeed?: number;
-  noiseScale?: number; // For corona, etc.
-  timeOffset?: number; // For varied animation start
-}
-
-/**
- * Options for light sources in the scene
- */
-export interface LightSourceData {
-  /**
-   * World position of the light source
-   */
-  position: THREE.Vector3;
-
-  /**
-   * Color of the light source
-   */
-  color: THREE.Color;
-
-  /**
-   * Optional intensity of the light source
-   * Default: 1.0
-   */
-  intensity?: number;
-}
-
-/**
- * Defines a single level of detail for a celestial object.
- */
-export interface LODLevel {
-  /** The Three.js object (Mesh, Group, Points, etc.) for this level. */
-  object: THREE.Object3D;
-  /** The distance threshold at which this level becomes active. */
-  distance: number;
-}
+import * as THREE from "three";
+import { CelestialMeshOptions, LightSourceData, LODLevel } from "./types";
 
 /**
  * Common interface for all celestial renderers
@@ -156,25 +82,12 @@ export interface CelestialRenderer {
   dispose(): void;
 
   /**
-   * Optional method to add gravitational lensing effects. Specific to renderers
-   * that support this (e.g., Black Holes, Neutron Stars).
-   *
-   * @param objectData - The data for the celestial object.
-   * @param renderer - The main WebGLRenderer instance.
-   * @param scene - The main Three.js scene.
-   * @param camera - The main Three.js camera.
-   * @param mesh - The specific Three.js mesh/Object3D for the celestial object.
+   * Update the lighting and shadows for the renderer
+   * @param directLight The direct light source
+   * @param ambientLight The ambient light source
    */
-  addGravitationalLensing?: (
-    objectData: RenderableCelestialObject,
-    renderer: THREE.WebGLRenderer,
-    scene: THREE.Scene,
-    camera: THREE.PerspectiveCamera,
-    mesh: THREE.Object3D,
+  updateLightingAndShadows?: (
+    directLight?: THREE.DirectionalLight,
+    ambientLight?: THREE.AmbientLight,
   ) => void;
 }
-
-/**
- * Map of light sources
- */
-export type LightSourcesMap = Map<string, LightSourceData>;

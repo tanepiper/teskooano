@@ -1,10 +1,7 @@
 import * as THREE from "three";
 import { BaseStarRenderer } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import type {
-  CelestialMeshOptions,
-  LightSourceData,
-} from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions, LightSourceData } from "../../common/types";
 import { GravitationalLensingMaterial } from "../../effects/gravitational-lensing";
 import { LODLevel } from "../../index";
 import { SCALE } from "@teskooano/data-types";

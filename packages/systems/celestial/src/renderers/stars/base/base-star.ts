@@ -4,89 +4,103 @@ import * as THREE from "three";
 import type {
   CelestialMeshOptions,
   LightSourceData,
-} from "../../common/CelestialRenderer";
-import { CelestialRenderer, LODLevel } from "../../index";
+  LODLevel,
+} from "../../common/types";
+import { CelestialRenderer } from "../../common/CelestialRenderer";
+import { BaseCelestialRenderer } from "../../common/BaseCelestialRenderer";
+import {
+  createBillboardLODLevel,
+  createBillboardPointLight,
+  createBillboardSprite,
+  createBillboardTexture,
+  calculateDistantSpriteSize,
+} from "./billboard-utils";
+import { CoronaMaterial } from "./base-star.material";
+import { getStarColor } from "./star-color-utils";
+import { BillboardInfo } from "./types";
 
 /**
- * Material for corona effect around stars
+ * @module BaseStarRenderer
+ * @description Abstract base class for rendering stars in a 3D scene.
+ * It manages Level of Detail (LOD) for stars, transitioning from a detailed 3D model
+ * at close distances to a 2D billboard sprite when far away.
+ * This class provides foundational structures for star materials, corona effects,
+ * and billboard management, which can be extended by specific star type renderers
+ * (e.g., MainSequenceStarRenderer, RedGiantRenderer).
+ *
+ * Key responsibilities include:
+ * - Defining the LOD structure, including a billboard for distant viewing.
+ * - Handling the creation and update of star-specific shader materials.
+ * - Managing corona effects and their materials.
+ * - Providing a mechanism for subclasses to define custom LODs and billboard behavior.
+ * - Updating animations and visual properties over time.
+ * - Disposing of THREE.js resources when the renderer is no longer needed.
  */
-export class CoronaMaterial extends THREE.ShaderMaterial {
-  constructor(
-    color: THREE.Color = new THREE.Color(0xffff00),
-    options: {
-      scale?: number;
-      opacity?: number;
-      pulseSpeed?: number;
-      noiseScale?: number;
-      noiseEvolutionSpeed?: number;
-      timeOffset?: number;
-    } = {},
-    vertexShader: string,
-    fragmentShader: string,
-  ) {
-    super({
-      uniforms: {
-        time: { value: 0 },
-        starColor: { value: color },
-        opacity: { value: options.opacity ?? 0.6 },
-        pulseSpeed: { value: options.pulseSpeed ?? 0.3 },
-        noiseScale: { value: options.noiseScale ?? 3.0 },
-        noiseEvolutionSpeed: { value: options.noiseEvolutionSpeed ?? 1.0 },
-        timeOffset: { value: options.timeOffset ?? Math.random() * 1000.0 },
-      },
-      vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
-      transparent: true,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-  }
-
-  /**
-   * Update the material with the current time
-   */
-  update(time: number): void {
-    this.uniforms.time.value = time;
-  }
-
-  /**
-   * Dispose of any resources
-   */
-  dispose(): void {}
-}
-
-interface BillboardInfo {
-  sprite: THREE.Sprite;
-  activationDistance: number;
-  maxFadeDistance: number; // Distance at which opacity reaches its minimum
-}
-
-/**
- * Abstract base class for star renderers, implementing the LOD system.
- */
-export abstract class BaseStarRenderer implements CelestialRenderer {
-  protected materials: Map<string, THREE.ShaderMaterial> = new Map();
+export abstract class BaseStarRenderer extends BaseCelestialRenderer {
+  /** Map to store primary shader materials for star bodies, keyed by celestial object ID. */
+  protected starBodyMaterials: Map<string, THREE.ShaderMaterial> = new Map();
+  /** Map to store arrays of CoronaMaterial instances for corona effects, keyed by celestial object ID. */
   protected coronaMaterials: Map<string, CoronaMaterial[]> = new Map();
+  /** @deprecated Map to store glow materials, potentially for effects not covered by corona. Consider refactoring or removing. */
   private glowMaterials: Map<string, THREE.ShaderMaterial[]> = new Map();
-  public startTime: number;
-  protected elapsedTime: number = 0;
+  /** Map to store BillboardInfo for managing dynamic billboard properties, keyed by celestial object ID. */
   protected billboardsInfo: Map<string, BillboardInfo> = new Map();
 
+  /** The renderable celestial object data this renderer is responsible for. */
   protected object: RenderableCelestialObject;
-  protected options?: CelestialMeshOptions;
+  /** Options configuring the rendering of the celestial object, such as detail level and effects. */
+  protected options: CelestialMeshOptions;
+  /** @internal Flag to control whether LOD is enabled for this renderer instance. */
+  protected _internalEnableLOD: boolean;
+  /** @internal Flag to indicate if this renderer should only render as a billboard. */
+  protected _internalIsBillboard: boolean;
+  /** @internal Flag to disable automatic rotation, if managed externally. */
+  protected _internalDisableAutomaticRotation: boolean;
 
+  /**
+   * Constructs a BaseStarRenderer instance.
+   * @param {RenderableCelestialObject} object - The data for the celestial object to be rendered.
+   * @param {CelestialMeshOptions & { enableLOD?: boolean; isBillboard?: boolean; disableAutomaticRotation?: boolean; enableCorona?: boolean; }} [options] - Optional configuration for rendering.
+   */
   constructor(
     object: RenderableCelestialObject,
-    options?: CelestialMeshOptions,
+    options?: CelestialMeshOptions & {
+      enableLOD?: boolean;
+      isBillboard?: boolean;
+      disableAutomaticRotation?: boolean;
+      enableCorona?: boolean;
+    },
   ) {
+    super();
     this.object = object;
-    this.options = options;
-    this.startTime = Date.now() / 1000;
+    this._internalEnableLOD = options?.enableLOD ?? true;
+    this._internalIsBillboard = options?.isBillboard ?? false;
+    this._internalDisableAutomaticRotation =
+      options?.disableAutomaticRotation ?? false;
+
+    const standardOptions: CelestialMeshOptions = { ...options };
+    delete (standardOptions as any).enableLOD;
+    delete (standardOptions as any).isBillboard;
+    delete (standardOptions as any).disableAutomaticRotation;
+    if (
+      options?.enableCorona !== undefined &&
+      standardOptions.includeEffects === undefined
+    ) {
+      standardOptions.includeEffects = options.enableCorona;
+    }
+    delete (standardOptions as any).enableCorona;
+
+    this.options = standardOptions;
+    this.trackObject(object.celestialObjectId);
   }
 
   /**
-   * Get the custom LOD levels for the specific star type (high and medium detail).
-   * Subclasses must implement this.
+   * Abstract method to be implemented by subclasses.
+   * Should return an array of custom LODLevels (typically high and medium detail meshes)
+   * for the specific star type. These levels are combined with the base billboard LOD.
+   * @param {RenderableCelestialObject} object - The celestial object data.
+   * @param {CelestialMeshOptions} [options] - Rendering options.
+   * @returns {LODLevel[]} An array of LODLevel objects, sorted from closest to farthest.
    */
   protected abstract getCustomLODs(
     object: RenderableCelestialObject,
@@ -94,150 +108,40 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
   ): LODLevel[];
 
   /**
-   * Get the distance at which the billboard LOD should activate for this star type.
-   * Subclasses must implement this.
+   * Abstract method to be implemented by subclasses.
+   * Should return the distance at which the billboard LOD (lowest detail) becomes active.
+   * @param {RenderableCelestialObject} object - The celestial object data.
+   * @returns {number} The activation distance for the billboard LOD.
    */
   protected abstract getBillboardLODDistance(
     object: RenderableCelestialObject,
   ): number;
 
+  /**
+   * Abstract method for subclasses to provide the vertex shader for corona effects.
+   * @param {RenderableCelestialObject} object - The celestial object data.
+   * @returns {string} The GLSL vertex shader code for the corona.
+   */
   protected abstract getCoronaVertexShader(
     object: RenderableCelestialObject,
   ): string;
 
+  /**
+   * Abstract method for subclasses to provide the fragment shader for corona effects.
+   * @param {RenderableCelestialObject} object - The celestial object data.
+   * @returns {string} The GLSL fragment shader code for the corona.
+   */
   protected abstract getCoronaFragmentShader(
     object: RenderableCelestialObject,
   ): string;
 
   /**
-   * Creates a canvas texture for the star billboard.
-   * @returns A THREE.CanvasTexture.
-   */
-  protected _createBillboardTexture(): THREE.CanvasTexture {
-    const canvas = document.createElement("canvas");
-    canvas.width = 64;
-    canvas.height = 64;
-    const context = canvas.getContext("2d");
-    if (context) {
-      const gradient = context.createRadialGradient(
-        canvas.width / 2,
-        canvas.height / 2,
-        0,
-        canvas.width / 2,
-        canvas.height / 2,
-        canvas.width / 2,
-      );
-      gradient.addColorStop(0, "rgba(255,255,255,1)");
-      gradient.addColorStop(1, "rgba(255,255,255,0)");
-      context.fillStyle = gradient;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    return new THREE.CanvasTexture(canvas);
-  }
-
-  /**
-   * Calculates the size for the distant sprite based on the star's radius.
-   * @param object - The renderable celestial object.
-   * @returns The calculated sprite size.
-   */
-  protected _calculateDistantSpriteSize(
-    object: RenderableCelestialObject,
-  ): number {
-    const minSpriteSize = 0.03;
-    const maxSpriteSize = 0.15;
-    const radiusScaleFactor = 0.0001;
-    let calculatedSpriteSize = object.radius * radiusScaleFactor;
-    return Math.max(
-      minSpriteSize,
-      Math.min(maxSpriteSize, calculatedSpriteSize),
-    );
-  }
-
-  /**
-   * Creates the sprite for the star billboard.
-   * @param object - The renderable celestial object.
-   * @param texture - The texture for the sprite.
-   * @param size - The size of the sprite.
-   * @returns A THREE.Sprite.
-   */
-  protected _createBillboardSprite(
-    object: RenderableCelestialObject,
-    texture: THREE.Texture,
-    size: number,
-  ): THREE.Sprite {
-    const spriteMaterial = new THREE.SpriteMaterial({
-      map: texture,
-      color: this.getStarColor(object),
-      blending: THREE.AdditiveBlending,
-      sizeAttenuation: false, // Size is in screen space
-      transparent: true,
-      opacity: 0.85,
-    });
-
-    const distantSprite = new THREE.Sprite(spriteMaterial);
-    distantSprite.name = `${object.celestialObjectId}-distant-sprite`;
-    distantSprite.scale.set(size, size, 1.0);
-    return distantSprite;
-  }
-
-  /**
-   * Creates the point light for the star billboard.
-   * @param object - The renderable celestial object.
-   * @returns A THREE.PointLight.
-   */
-  private _createBillboardPointLight(
-    object: RenderableCelestialObject,
-  ): THREE.PointLight {
-    const starMaterial = this.getMaterial(object) as any;
-    let lightIntensity = 5.0;
-    if (
-      starMaterial &&
-      starMaterial.uniforms &&
-      starMaterial.uniforms.glowIntensity
-    ) {
-      const materialGlowIntensity = starMaterial.uniforms.glowIntensity.value;
-      lightIntensity = materialGlowIntensity * 10.0;
-      lightIntensity = Math.max(0.5, Math.min(lightIntensity, 20.0));
-    }
-
-    const pointLight = new THREE.PointLight(
-      this.getStarColor(object),
-      lightIntensity,
-      0,
-      2,
-    );
-    pointLight.name = `${object.celestialObjectId}-low-lod-light`;
-    return pointLight;
-  }
-
-  /**
-   * Creates the LODLevel for the star billboard.
-   * @param object - The renderable celestial object.
-   * @param sprite - The sprite for the billboard.
-   * @param pointLight - The point light for the billboard.
-   * @param billboardDistance - The distance at which this LOD becomes active.
-   * @returns An LODLevel object.
-   */
-  protected _createBillboardLODLevel(
-    object: RenderableCelestialObject,
-    sprite: THREE.Sprite,
-    pointLight: THREE.PointLight,
-    billboardDistance: number,
-  ): LODLevel {
-    const billboardGroup = new THREE.Group();
-    billboardGroup.name = `${object.celestialObjectId}-billboard-lod`;
-    billboardGroup.add(sprite);
-    billboardGroup.add(pointLight);
-
-    return {
-      object: billboardGroup,
-      distance: billboardDistance,
-    };
-  }
-
-  /**
-   * Creates and returns an array of LOD levels for the star object.
-   * Combines custom LODs from subclasses with a base billboard LOD.
+   * Assembles and returns all LOD levels for the star, including custom mesh levels
+   * from subclasses and a base billboard level for distant viewing.
+   * The billboard uses a dynamically generated texture and a point light.
+   * @param {RenderableCelestialObject} object - The celestial object data.
+   * @param {CelestialMeshOptions} [options] - Rendering options.
+   * @returns {LODLevel[]} An array of all LODLevel objects, sorted by distance.
    */
   getLODLevels(
     object: RenderableCelestialObject,
@@ -245,47 +149,55 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
   ): LODLevel[] {
     const customLODs = this.getCustomLODs(object, options);
     const billboardDistance = this.getBillboardLODDistance(object);
+    const starColor = this.getStarColor(object);
+    const starMaterial = this.getMaterial(object);
 
-    const circleTexture = this._createBillboardTexture();
+    const circleTexture = createBillboardTexture();
 
-    // Use calculateBillboardSize if the subclass has implemented it, otherwise fall back to default calculation
     let distantPointSize: number;
     if (typeof (this as any).calculateBillboardSize === "function") {
       distantPointSize = (this as any).calculateBillboardSize(object);
     } else {
-      distantPointSize = this._calculateDistantSpriteSize(object);
+      distantPointSize = calculateDistantSpriteSize(object);
     }
 
-    const distantSprite = this._createBillboardSprite(
+    const distantSprite = createBillboardSprite(
       object,
       circleTexture,
       distantPointSize,
+      starColor,
     );
-    const pointLight = this._createBillboardPointLight(object);
-    const billboardLOD = this._createBillboardLODLevel(
+    const pointLight = createBillboardPointLight(
+      object,
+      starColor,
+      starMaterial,
+    );
+    const billboardLOD = createBillboardLODLevel(
       object,
       distantSprite,
       pointLight,
       billboardDistance,
     );
 
-    // Store info for dynamic updates
     this.billboardsInfo.set(object.celestialObjectId, {
       sprite: distantSprite,
       activationDistance: billboardDistance,
-      maxFadeDistance: billboardDistance * 5, // Fade out over 5x the activation distance
+      maxFadeDistance: billboardDistance * 5,
     });
 
-    // Ensure LODs are sorted by distance, though typically customLODs will be closer.
     return [...customLODs, billboardLOD].sort(
       (a, b) => a.distance - b.distance,
     );
   }
 
   /**
-   * Helper to create the high-detail group (Level 0 LOD).
-   * Contains the logic previously in createMesh.
-   * @internal
+   * Creates the high-detail THREE.Group for the star, typically used as the closest LOD (Level 0).
+   * This group includes the main star mesh (SphereGeometry) and its associated material,
+   * as well as corona effects if enabled.
+   * @protected
+   * @param {RenderableCelestialObject} object - The celestial object data.
+   * @param {CelestialMeshOptions} [options] - Rendering options.
+   * @returns {THREE.Group} The high-detail group for the star.
    */
   protected _createHighDetailGroup(
     object: RenderableCelestialObject,
@@ -302,77 +214,118 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
       segments,
     );
     const material = this.getMaterial(object);
-    this.materials.set(object.celestialObjectId, material);
+    this.starBodyMaterials.set(object.celestialObjectId, material);
+    this.registerMaterial(object.celestialObjectId, material);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.name = `${object.celestialObjectId}-body`;
     group.add(mesh);
-    this.addCorona(object, group);
+    // TODO: Consider making corona scales and base opacity configurable or dynamic
+    this.addCorona(group, object, [1.1, 1.2], 0.1);
     return group;
   }
 
   /**
-   * Add corona effect to the star
+   * Adds corona effects to the star's visual representation.
+   * Creates multiple layers of corona planes with varying scales and opacities.
+   * Uses CoronaMaterial for the shader effects.
+   * @protected
+   * @param {THREE.Group} group - The parent group to which corona planes will be added.
+   * @param {RenderableCelestialObject} object - The celestial object data.
+   * @param {number[]} coronaScales - An array of scales for different corona layers.
+   * @param {number} baseOpacity - The base opacity for the corona layers, which is then modulated.
+   * @param {{ vertex: string; fragment: string; }} [shaderOverride] - Optional custom shaders for the corona.
    */
   protected addCorona(
-    object: RenderableCelestialObject,
     group: THREE.Group,
+    object: RenderableCelestialObject,
+    coronaScales: number[],
+    baseOpacity: number,
+    shaderOverride?: {
+      vertex: string;
+      fragment: string;
+    },
   ): void {
+    if (this.options.includeEffects === false) return;
+
+    const coronaInstances: CoronaMaterial[] = [];
     const starColor = this.getStarColor(object);
-    const coronaMaterials: CoronaMaterial[] = [];
+    const properties = object.properties as StarProperties;
+    const coronaUniforms = properties.shaderUniforms?.corona;
+    const timeOffset = properties.timeOffset;
 
-    this.coronaMaterials.set(object.celestialObjectId, coronaMaterials);
+    const defaultVertex =
+      shaderOverride?.vertex ?? this.getCoronaVertexShader(object);
+    const defaultFragment =
+      shaderOverride?.fragment ?? this.getCoronaFragmentShader(object);
 
-    const coronaScales = [1.1, 1.2];
-    const opacities = [0.1, 0.05];
+    for (let i = 0; i < coronaScales.length; i++) {
+      for (let j = 0; j < 3; j++) {
+        const materialOptions = {
+          scale: coronaScales[i],
+          opacity: baseOpacity / (i + 1),
+          pulseSpeed: coronaUniforms?.pulseSpeed,
+          noiseScale: coronaUniforms?.noiseScale,
+          noiseEvolutionSpeed: coronaUniforms?.noiseEvolutionSpeed,
+          timeOffset: timeOffset,
+        };
 
-    const coronaVertexShader = this.getCoronaVertexShader(object);
-    const coronaFragmentShaderToUse = this.getCoronaFragmentShader(object);
+        const cleanMaterialOptions = Object.fromEntries(
+          Object.entries(materialOptions).filter(
+            ([, value]) => value !== undefined,
+          ),
+        ) as typeof materialOptions;
 
-    coronaScales.forEach((scale, index) => {
-      const coronaRadius = object.radius * scale;
-      const coronaGeometry = new THREE.SphereGeometry(coronaRadius, 64, 64);
-      const coronaMaterial = new CoronaMaterial(
-        starColor,
-        {
-          scale: scale,
-          opacity: opacities[index],
-          pulseSpeed: 0.12 + index * 0.03,
-          noiseScale: 1.2 + index * 0.3,
-        },
-        coronaVertexShader,
-        coronaFragmentShaderToUse,
-      );
-      coronaMaterials.push(coronaMaterial);
-      const coronaMesh = new THREE.Mesh(coronaGeometry, coronaMaterial);
-      coronaMesh.name = `${object.celestialObjectId}-corona-${index}`;
-      coronaMesh.material.depthWrite = false;
-      coronaMesh.material.side = THREE.DoubleSide;
-      group.add(coronaMesh);
-    });
+        const coronaMaterial = new CoronaMaterial(
+          starColor,
+          cleanMaterialOptions,
+          defaultVertex,
+          defaultFragment,
+        );
+        coronaInstances.push(coronaMaterial);
+
+        // Use SphereGeometry instead of PlaneGeometry for a volumetric corona
+        const sphereGeo = new THREE.SphereGeometry(1, 32, 16); // Radius 1, 32 width segments, 16 height segments
+        const sphereMesh = new THREE.Mesh(sphereGeo, coronaMaterial);
+
+        // Scale the sphere uniformly relative to the star's radius.
+        // coronaScales[i] now acts as a multiplier for the object.radius.
+        const scaleFactor = object.radius * coronaScales[i];
+        sphereMesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        sphereMesh.name = `corona_sphere_${i}_${j}`;
+        group.add(sphereMesh);
+      }
+    }
+    this.coronaMaterials.set(object.celestialObjectId, coronaInstances);
   }
 
   /**
-   * Get the appropriate material for the star type
-   * Subclasses must implement this
+   * Abstract method to be implemented by subclasses.
+   * Should return the primary THREE.ShaderMaterial for the star's body.
+   * @param {RenderableCelestialObject} object - The celestial object data.
+   * @returns {THREE.ShaderMaterial} The shader material for the star.
    */
   protected abstract getMaterial(
     object: RenderableCelestialObject,
   ): THREE.ShaderMaterial;
 
   /**
-   * Update the renderer with the current time
+   * Updates the renderer's state based on the elapsed time and camera position.
+   * This method handles:
+   * - Updating time-dependent uniforms in shader materials (star body, corona).
+   * - Dynamically adjusting billboard sprite opacity for smooth LOD transitions.
+   * - Explicitly managing billboard sprite visibility based on its opacity.
+   * @param {number} time - The current global simulation time (often ignored in favor of internally calculated elapsed time).
+   * @param {Map<string, LightSourceData>} [lightSources] - Optional map of light sources in the scene (currently unused in BaseStarRenderer).
+   * @param {THREE.Camera} [camera] - The active camera, used for distance calculations for billboard fading.
    */
   update(
-    time: number,
+    time: number, // Note: elapsedTime is used internally for shader time
     lightSources?: Map<string, LightSourceData>,
     camera?: THREE.Camera,
   ): void {
-    this.elapsedTime = Date.now() / 1000 - this.startTime; // Always use total elapsed time
+    super.update(time, lightSources, camera);
 
-    // DIAGNOSTIC LOG
-    // console.log(`[BaseStarRenderer] update. Input time: ${time}, Calculated elapsedTime: ${this.elapsedTime}`);
-
-    this.materials.forEach((material: any) => {
+    this.starBodyMaterials.forEach((material: any) => {
       if (typeof material.update === "function") {
         material.update(this.elapsedTime);
       }
@@ -397,8 +350,7 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
       camera.getWorldPosition(cameraPosition);
 
       this.billboardsInfo.forEach((info) => {
-        const { sprite, activationDistance, maxFadeDistance } = info;
-
+        const { sprite, activationDistance } = info;
         const material = sprite.material as THREE.SpriteMaterial;
         if (!material) return;
 
@@ -406,48 +358,50 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
         sprite.getWorldPosition(spriteWorldPosition);
         const distanceToCamera = cameraPosition.distanceTo(spriteWorldPosition);
 
-        // Determine target opacity for smooth fade-in/out of the billboard
         let targetOpacity;
-        // The initial opacity set in _createBillboardSprite is 0.85
         const baseSpriteOpacity = 0.85;
 
         if (distanceToCamera >= activationDistance) {
-          // Billboard LOD is active (camera is far enough),
-          // maintain its standard visible opacity.
           targetOpacity = baseSpriteOpacity;
         } else {
-          // Billboard LOD is not active (a closer LOD should be visible),
-          // so fade the billboard out.
           targetOpacity = 0.0;
         }
 
-        material.opacity = THREE.MathUtils.lerp(
-          material.opacity,
+        const currentOpacity = material.opacity;
+        let newOpacity = THREE.MathUtils.lerp(
+          currentOpacity,
           targetOpacity,
           0.1,
         );
 
-        if (material.opacity > 0 && !sprite.visible) {
+        if (targetOpacity < 0.01 && newOpacity < 0.01) {
+          newOpacity = 0;
         }
+        material.opacity = newOpacity;
+        sprite.visible = newOpacity > 0.001;
       });
     }
   }
 
   /**
-   * Clean up resources
+   * Cleans up and disposes of all THREE.js resources (materials, textures, geometries)
+   * managed by this renderer instance. This should be called when the renderer
+   * is no longer needed to prevent memory leaks.
    */
   dispose(): void {
-    this.materials.forEach((material: any) => {
+    this.starBodyMaterials.forEach((material: any) => {
       if (typeof material.dispose === "function") {
         material.dispose();
       }
     });
+    this.starBodyMaterials.clear();
 
     this.coronaMaterials.forEach((materials) => {
       materials.forEach((material) => {
         material.dispose();
       });
     });
+    this.coronaMaterials.clear();
 
     this.glowMaterials.forEach((materials) => {
       materials.forEach((material: any) => {
@@ -456,49 +410,42 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
         }
       });
     });
-
-    this.materials.clear();
-    this.coronaMaterials.clear();
     this.glowMaterials.clear();
+
+    // Clear textures associated with billboards if they are CanvasTexture
+    this.billboardsInfo.forEach(({ sprite }) => {
+      if (
+        sprite.material.map &&
+        sprite.material.map instanceof THREE.CanvasTexture
+      ) {
+        sprite.material.map.dispose();
+      }
+      sprite.material.dispose();
+    });
+
     this.billboardsInfo.clear();
+
+    super.dispose();
   }
 
   /**
-   * Get the primary color for the star based on its properties
-   * Subclasses can override this for specific star types
+   * Retrieves the star's color. This method is a wrapper around the utility function.
+   * @param {RenderableCelestialObject} object - The renderable celestial object.
+   * @returns {THREE.Color} The color of the star.
    */
   protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    const starProps = object.properties as StarProperties;
-
-    if (starProps?.color) {
-      return new THREE.Color(starProps.color);
-    }
-
-    if (starProps?.spectralClass) {
-      switch (starProps.spectralClass.toUpperCase()) {
-        case "O":
-          return new THREE.Color(0x9bb0ff);
-        case "B":
-          return new THREE.Color(0xaabfff);
-        case "A":
-          return new THREE.Color(0xf8f7ff);
-        case "F":
-          return new THREE.Color(0xfff4ea);
-        case "G":
-          return new THREE.Color(0xffcc00);
-        case "K":
-          return new THREE.Color(0xffaa55);
-        case "M":
-          return new THREE.Color(0xff6644);
-      }
-    }
-
-    return new THREE.Color(0xffcc00);
+    return getStarColor(object);
   }
 
   /**
-   * Adds gravitational lensing effects. Base implementation does nothing.
-   * Subclasses like black hole or neutron star renderers should override this.
+   * Placeholder for gravitational lensing effects. Base stars do not typically have this.
+   * Subclasses like black hole or neutron star renderers should override this method
+   * if they implement gravitational lensing.
+   * @param {RenderableCelestialObject} objectData - The data for the celestial object.
+   * @param {THREE.WebGLRenderer} renderer - The main WebGLRenderer instance.
+   * @param {THREE.Scene} scene - The main Three.js scene.
+   * @param {THREE.PerspectiveCamera} camera - The main Three.js camera.
+   * @param {THREE.Object3D} mesh - The specific Three.js mesh/Object3D for the celestial object.
    */
   addGravitationalLensing(
     objectData: RenderableCelestialObject,
@@ -506,8 +453,5 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
     mesh: THREE.Object3D,
-  ): void {
-    // Base stars do not typically have gravitational lensing of this type.
-    // console.warn(`[BaseStarRenderer] addGravitationalLensing called for ${objectData.celestialObjectId}, but not implemented for this star type.`);
-  }
+  ): void {}
 }

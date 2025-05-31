@@ -2,11 +2,10 @@ import * as THREE from "three";
 import { BaseStarRenderer } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import type {
-  CelestialMeshOptions,
-  LightSourceData,
-} from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions, LightSourceData } from "../../common/types";
 import { AU_METERS } from "@teskooano/data-types";
+import type { StarProperties } from "@teskooano/data-types";
+import type { BaseStarUniformArgs } from "../main-sequence/main-sequence-star";
 
 // Assuming direct .glsl imports work as strings in your Vite setup
 import EVOLVED_SPECIAL_VERTEX_SHADER from "../../../shaders/star/evolved-special/vertex.glsl";
@@ -19,38 +18,24 @@ import EVOLVED_SPECIAL_CORONA_FRAGMENT_SHADER from "../../../shaders/star/evolve
  */
 export class EvolvedSpecialStarMaterial extends THREE.ShaderMaterial {
   constructor(
-    shaderParameters: {
-      starColor?: THREE.Color;
-      coronaIntensity?: number;
-      pulseSpeed?: number;
-      glowIntensity?: number;
-      temperatureVariation?: number;
-      metallicEffect?: number;
-      time?: number; // Optional initial time
-      noiseEvolutionSpeed?: number; // Added for controlling noise animation speed
-      timeOffset?: number; // Added
-    } = {},
+    color: THREE.Color = new THREE.Color(0xffccaa),
+    uniformOverrides?: Partial<BaseStarUniformArgs> & { timeOffset?: number },
     vertexShader: string = EVOLVED_SPECIAL_VERTEX_SHADER,
     fragmentShader: string = EVOLVED_SPECIAL_FRAGMENT_SHADER,
   ) {
     const uniforms = {
-      time: { value: shaderParameters.time ?? 0.0 },
-      starColor: {
-        value: shaderParameters.starColor ?? new THREE.Color(0xffccaa),
-      },
-      coronaIntensity: { value: shaderParameters.coronaIntensity ?? 0.5 },
-      pulseSpeed: { value: shaderParameters.pulseSpeed ?? 0.1 },
-      glowIntensity: { value: shaderParameters.glowIntensity ?? 0.7 },
+      time: { value: uniformOverrides?.timeOffset ?? Math.random() * 1000.0 },
+      starColor: { value: color },
+      coronaIntensity: { value: uniformOverrides?.coronaIntensity ?? 0.5 },
+      pulseSpeed: { value: uniformOverrides?.pulseSpeed ?? 0.1 },
+      glowIntensity: { value: uniformOverrides?.glowIntensity ?? 0.7 },
       temperatureVariation: {
-        value: shaderParameters.temperatureVariation ?? 0.2,
+        value: uniformOverrides?.temperatureVariation ?? 0.2,
       },
-      metallicEffect: { value: shaderParameters.metallicEffect ?? 0.3 },
+      metallicEffect: { value: uniformOverrides?.metallicEffect ?? 0.3 },
       noiseEvolutionSpeed: {
-        value: shaderParameters.noiseEvolutionSpeed ?? 1.0,
-      }, // Default to 1.0
-      timeOffset: {
-        value: shaderParameters.timeOffset ?? Math.random() * 1000.0,
-      }, // Added
+        value: uniformOverrides?.noiseEvolutionSpeed ?? 1.0,
+      },
     };
 
     super({

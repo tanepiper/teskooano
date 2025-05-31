@@ -1,39 +1,14 @@
-import { SCALE, type StarProperties } from "@teskooano/data-types";
+import { SCALE, type StarProperties, StellarType } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
-import type {
-  CelestialMeshOptions,
-  LightSourceData,
-} from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions, LightSourceData } from "../../common/types";
 import { GravitationalLensingMaterial } from "../../effects/gravitational-lensing";
 import { LODLevel } from "../../index";
 import {
   RemnantStarMaterial,
   RemnantStarRenderer,
 } from "./remnant-star-renderer";
-
-/**
- * Material for neutron stars
- * - Temperature: ~600,000 K
- * - Color: Pale blue
- * - Typical mass: 1.4-2.16 M☉
- * - Typical radius: ~10-15 km (extremely small)
- * - Extremely dense, rapid rotation
- * - Strong magnetic fields
- * - Pulsars are rotating neutron stars
- */
-export class NeutronStarMaterial extends RemnantStarMaterial {
-  constructor(color: THREE.Color = new THREE.Color(0xddddff)) {
-    super({
-      starColor: color, // Very hot, often appearing bluish-white
-      coronaIntensity: 0.01, // Almost no visible corona, extreme gravity
-      pulseSpeed: 0.0, // Pulsation is via jets, not surface typically
-      glowIntensity: 0.2, // Intense for its size, but small
-      temperatureVariation: 0.01, // Extremely uniform or unobservable due to conditions
-      metallicEffect: 0.0,
-    });
-  }
-}
+import type { BaseStarUniformArgs } from "../main-sequence/main-sequence-star";
 
 /**
  * Material for neutron star pulsing jets (for pulsars)
@@ -118,15 +93,12 @@ uniform float time;
 
 void main() {
   vUv = uv;
-  // Assuming the jet geometry is a cylinder aligned with Y-axis
-  // and its base is at y = 0, extending to y = 1 (before scaling)
   vDistanceFromBase = position.y; 
 
   vec3 pos = position;
   
-  // Pulsating width for the jet
-  float pulseFactor = 0.5 + sin(time * 10.0 + position.y * 2.0) * 0.5; // Faster, more dynamic pulse
-  pos.xz *= (1.0 + pulseFactor * 0.2); // Modest width pulsation
+  float pulseFactor = 0.5 + sin(time * 10.0 + position.y * 2.0) * 0.5;
+  pos.xz *= (1.0 + pulseFactor * 0.2);
 
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }
@@ -135,25 +107,21 @@ void main() {
 const PULSAR_JET_FRAGMENT_SHADER = `
 uniform float time;
 uniform vec3 jetColor;
-uniform float jetOpacity; // Renamed for clarity
+uniform float jetOpacity;
 varying vec2 vUv;
-varying float vDistanceFromBase; // Normalized distance from 0 to 1 along the jet
+varying float vDistanceFromBase;
 
 float simpleNoise(vec2 uv, float scale) {
   return fract(sin(dot(uv * scale + time * 0.1, vec2(13.9898, 75.233))) * 43758.5453);
 }
 
 void main() {
-  // vDistanceFromBase is used to fade the jet along its length
-  float intensityFalloff = pow(1.0 - vDistanceFromBase, 1.5); // Stronger falloff near the tip
-
-  // Create a more focused beam effect using vUv.x (radial distance from center of jet)
-  // This assumes UVs are set up such that vUv.x = 0.5 is the center of the jet.
-  float radialDistance = abs(vUv.x - 0.5) * 2.0; // Map 0..1 to 0..1 across the jet width
-  float beamConcentration = 1.0 - pow(radialDistance, 2.0); // Sharper core
+  float intensityFalloff = pow(1.0 - vDistanceFromBase, 1.5);
+  float radialDistance = abs(vUv.x - 0.5) * 2.0;
+  float beamConcentration = 1.0 - pow(radialDistance, 2.0);
   beamConcentration = smoothstep(0.0, 1.0, beamConcentration);
   
-  float noise = simpleNoise(vUv * vec2(1.0, 5.0), 1.0); // Noise for texture
+  float noise = simpleNoise(vUv * vec2(1.0, 5.0), 1.0);
   
   float finalAlpha = intensityFalloff * beamConcentration * (0.5 + noise * 0.5) * jetOpacity;
   finalAlpha = clamp(finalAlpha, 0.0, 1.0);
@@ -179,7 +147,7 @@ export class NeutronStarRenderer extends RemnantStarRenderer {
     options?: CelestialMeshOptions,
   ) {
     super(object, options);
-    // Simplified: No specific property reading for now
+    this._currentRenderableObject = object;
   }
 
   /**
@@ -189,14 +157,49 @@ export class NeutronStarRenderer extends RemnantStarRenderer {
     object: RenderableCelestialObject,
   ): RemnantStarMaterial {
     const color = this.getStarColor(object);
-    return new NeutronStarMaterial(color);
+    const properties = object.properties as StarProperties;
+
+    const classDefaults: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
+      coronaIntensity: 0.01,
+      pulseSpeed: 0.0, // Pulsation usually via jets
+      glowIntensity: 0.2,
+      temperatureVariation: 0.01,
+      metallicEffect: 0.0,
+      noiseEvolutionSpeed: 0.005, // Extremely stable visually, apart from jets
+    };
+
+    const propsUniforms = properties.shaderUniforms?.baseStar;
+    const propsTimeOffset = properties.timeOffset;
+
+    const finalMaterialOptions: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
+      ...classDefaults,
+      ...(propsUniforms || {}),
+      timeOffset:
+        propsTimeOffset ?? classDefaults.timeOffset ?? Math.random() * 1000.0,
+    };
+    // Pass RemnantStarMaterial's specific shaders if needed, else it uses its defaults.
+    return new RemnantStarMaterial(color, finalMaterialOptions);
   }
 
   /**
    * Neutron stars are pale blue/white
    */
   protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    return new THREE.Color(0xddddff);
+    const properties = object.properties as StarProperties;
+    if (properties?.color) {
+      try {
+        return new THREE.Color(properties.color);
+      } catch (e) {
+        console.warn(
+          `[NeutronStarRenderer] Invalid color '${properties.color}' in star properties. Falling back to class default.`,
+        );
+      }
+    }
+    return new THREE.Color(0xddddff); // Default Neutron star color (Pale blue/white)
   }
 
   /**
@@ -207,71 +210,59 @@ export class NeutronStarRenderer extends RemnantStarRenderer {
     object: RenderableCelestialObject,
     mainStarGroup: THREE.Group,
   ): THREE.Object3D | null {
-    // For now, always assume it's a pulsar for demonstration.
-    // In a real scenario, check object.properties.isPulsar or similar.
-    const isPulsar = true; // Placeholder
+    const starProps = object.properties as StarProperties;
+    const isPulsar =
+      starProps.stellarType === StellarType.NEUTRON_STAR &&
+      starProps.characteristics?.isPulsar === true;
 
     if (!isPulsar) {
       return null;
     }
 
-    const starRadius = object.radius || 0.01; // Neutron stars are tiny
-    const jetLength = starRadius * 200; // Jets are very long
-    const jetRadius = starRadius * 2; // Jets are relatively thin
+    const starRadius = object.radius || 0.00001; // Neutron stars are extremely small (e.g. 10km = 1e-5 solar radii approx)
+    const jetLength = starRadius * 20000; // Jets are very long relative to star size
+    const jetRadius = starRadius * 200;
 
-    // Create two jets, one for each pole
     const jetsGroup = new THREE.Group();
     jetsGroup.name = `${object.celestialObjectId}-pulsar-jets`;
 
     const jetGeometry = new THREE.CylinderGeometry(
-      jetRadius * 0.5, // Tapered jet: radiusTop
-      jetRadius, // radiusBottom
-      jetLength, // height
-      12, // radialSegments
-      1, // heightSegments
-      true, // openEnded (no caps)
+      jetRadius * 0.5,
+      jetRadius,
+      jetLength,
+      12,
+      1,
+      true,
     );
-    // Adjust UVs for the cylinder to map vUv.y along the length
-    // and vUv.x around the circumference.
-    // This might require manual UV generation if the default isn't suitable.
-    // For PULSAR_JET_FRAGMENT_SHADER, vUv.y is vDistanceFromBase (0 to 1 up the cylinder)
-    // and vUv.x is for radial patterns.
 
-    const jetMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0.0 },
-        jetColor: { value: new THREE.Color(0x99ccff) }, // Light blue/cyan jet
-        jetOpacity: { value: 0.7 },
-      },
-      vertexShader: PULSAR_JET_VERTEX_SHADER,
-      fragmentShader: PULSAR_JET_FRAGMENT_SHADER,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide, // Render both sides if the geometry is open
+    // Use hardcoded defaults for jet material as shaderUniforms.pulsarJet is not defined yet
+    const jetColor = new THREE.Color(0x99ccff); // Default jet color
+    const jetPulseSpeed = 10.0; // Default pulse speed
+    const jetOpacity = 0.7; // Default opacity
+
+    const jetMaterial = new PulsarJetMaterial(jetColor, {
+      pulseSpeed: jetPulseSpeed,
+      opacity: jetOpacity,
     });
 
+    this.effectMaterials.set(`${object.celestialObjectId}-jets`, jetMaterial);
+
+    const topJet = new THREE.Mesh(jetGeometry, jetMaterial);
+    topJet.position.y = jetLength / 2;
+    topJet.name = "top-jet";
+
+    const bottomJetMaterial = jetMaterial.clone(); // Clone for potentially different animation phase or if uniforms were to diverge
     this.effectMaterials.set(
-      `${object.celestialObjectId}-jet-material`,
-      jetMaterial,
+      `${object.celestialObjectId}-bottom-jet`,
+      bottomJetMaterial,
     );
+    const bottomJet = new THREE.Mesh(jetGeometry, bottomJetMaterial);
+    bottomJet.position.y = -jetLength / 2;
+    bottomJet.rotation.x = Math.PI;
+    bottomJet.name = "bottom-jet";
 
-    // Jet 1 (e.g., North pole)
-    const jetMesh1 = new THREE.Mesh(jetGeometry, jetMaterial);
-    jetMesh1.position.y = jetLength / 2 + starRadius * 0.5; // Position above the star surface
-    jetMesh1.name = `${object.celestialObjectId}-jet-N`;
-    jetsGroup.add(jetMesh1);
-
-    // Jet 2 (e.g., South pole)
-    const jetMesh2 = new THREE.Mesh(jetGeometry.clone(), jetMaterial); // Use clone for geometry
-    jetMesh2.position.y = -(jetLength / 2 + starRadius * 0.5); // Position below the star surface
-    jetMesh2.rotation.x = Math.PI; // Rotate to point downwards
-    jetMesh2.name = `${object.celestialObjectId}-jet-S`;
-    jetsGroup.add(jetMesh2);
-
-    // Optional: Add a slight tilt to the jets
-    // jetsGroup.rotation.z = Math.PI / 12; // ~15 degrees tilt
-
+    jetsGroup.add(topJet);
+    jetsGroup.add(bottomJet);
     return jetsGroup;
   }
 
@@ -283,23 +274,21 @@ export class NeutronStarRenderer extends RemnantStarRenderer {
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-
-    // High detail group - will use base corona from RemnantStarRenderer
     const highDetailGroup = this._createHighDetailGroup(object, {
       ...options,
-      segments: 32, // Neutron stars are tiny, high segments less critical for the body
+      segments: 16, // Neutron stars are tiny and smooth
     });
     const level0: LODLevel = { object: highDetailGroup, distance: 0 };
 
-    // Medium detail: star body only (no effects)
-    const mediumStarOnlyGroup = super._createHighDetailGroup(object, {
+    const mediumDetailGroup = super._createHighDetailGroup(object, {
       ...options,
-      segments: 16,
+      segments: 8,
+      includeEffects: false, // Jets likely too small/thin to see at medium distance relative to star point
     });
-    mediumStarOnlyGroup.name = `${object.celestialObjectId}-medium-lod`;
+    mediumDetailGroup.name = `${object.celestialObjectId}-medium-lod`;
     const level1: LODLevel = {
-      object: mediumStarOnlyGroup,
-      distance: 2000 * scale,
+      object: mediumDetailGroup,
+      distance: 100 * scale,
     };
 
     return [level0, level1];
@@ -310,7 +299,52 @@ export class NeutronStarRenderer extends RemnantStarRenderer {
    */
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-    return 15000 * scale; // Still visually distinct at a distance due to brightness/jets (if re-added)
+    return 500 * scale; // Neutron stars are very small, billboard relatively soon
+  }
+
+  // Override _createHighDetailGroup to add the lensing sphere
+  protected override _createHighDetailGroup(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): THREE.Group {
+    // Get the standard high detail group (star body, corona, pulsar jets if any)
+    const group = super._createHighDetailGroup(object, options);
+
+    // Create and add the gravitational lensing effect sphere if enabled
+    if (
+      this.options.enableGravitationalLensing &&
+      this.lensingMaterialInstance
+    ) {
+      const starRadius = object.radius || 0.00001;
+      // Lensing sphere should be larger than the star, e.g., 5-10 times the star's radius.
+      // This factor might need tuning.
+      const lensingSphereRadius = starRadius * 5.0;
+
+      const lensingGeometry = new THREE.SphereGeometry(
+        lensingSphereRadius,
+        32,
+        16,
+      );
+      this.lensingMesh = new THREE.Mesh(
+        lensingGeometry,
+        this.lensingMaterialInstance,
+      );
+      this.lensingMesh.name = `${object.celestialObjectId}-lensing-sphere`;
+      // Lensing sphere should render after the star body but before transparent effects if order matters.
+      // Or rely on depth testing and blending.
+      // this.lensingMesh.renderOrder = 1; // Optional: adjust render order if needed
+      group.add(this.lensingMesh);
+      // console.warn(`[NeutronStarRenderer] Lensing sphere created for ${object.celestialObjectId}`);
+    } else if (
+      this.options.enableGravitationalLensing &&
+      !this.lensingMaterialInstance
+    ) {
+      console.warn(
+        `[NeutronStarRenderer] Lensing enabled for ${object.celestialObjectId} but lensingMaterialInstance is not ready in _createHighDetailGroup.`,
+      );
+    }
+
+    return group;
   }
 
   override addGravitationalLensing(
@@ -318,139 +352,101 @@ export class NeutronStarRenderer extends RemnantStarRenderer {
     renderer: THREE.WebGLRenderer,
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
-    meshGroup: THREE.Object3D,
+    meshGroup: THREE.Object3D, // meshGroup is the LOD object, not directly modified here anymore
   ): void {
-    this._lensingScene = scene;
     this._lensingRenderer = renderer;
+    this._lensingScene = scene;
     this._lensingCamera = camera;
-    this._currentRenderableObject = objectData;
+    this._currentRenderableObject = objectData; // Ensure this is set
 
-    if (!this.lensingMesh) {
-      const starRadius = objectData.radius || 0.01;
-      // Neutron star lensing is weaker, adjust parameters accordingly
-      const lensingSphereRadius = starRadius * 10; // Larger apparent radius for lensing effect due to extreme density
-
-      this.lensingMaterialInstance = new GravitationalLensingMaterial({
-        intensity: 0.5, // Lower intensity for neutron stars vs black holes
-        radius: lensingSphereRadius,
-        distortionScale: 0.01, // Smaller distortion
-      });
-
-      const { width, height } = renderer.getSize(new THREE.Vector2());
-      if (
-        this.lensingRenderTarget &&
-        (this.lensingRenderTarget.width !== width ||
-          this.lensingRenderTarget.height !== height)
-      ) {
-        this.lensingRenderTarget.dispose();
-        this.lensingRenderTarget = null;
-      }
-      if (!this.lensingRenderTarget) {
-        this.lensingRenderTarget = new THREE.WebGLRenderTarget(width, height, {
-          minFilter: THREE.LinearFilter,
-          magFilter: THREE.LinearFilter,
-          format: THREE.RGBAFormat,
-        });
-      }
-      this.lensingMaterialInstance.uniforms.resolution.value.set(width, height);
-
-      const lensingGeometry = new THREE.SphereGeometry(
-        lensingSphereRadius,
-        32,
-        32,
-      ); // Fewer segments
-      this.lensingMesh = new THREE.Mesh(
-        lensingGeometry,
-        this.lensingMaterialInstance,
+    if (!this.lensingRenderTarget) {
+      this.lensingRenderTarget = new THREE.WebGLRenderTarget(
+        renderer.domElement.width,
+        renderer.domElement.height,
       );
-      this.lensingMesh.name = `${objectData.celestialObjectId}-lensing-effect`;
-      this.lensingMesh.renderOrder = 1;
-
-      // Add to a specific group or the main meshGroup. For LOD, this needs care.
-      // Assuming high-detail group exists as a child of meshGroup (the THREE.LOD object)
-      let highDetailGroup = meshGroup.getObjectByName(
-        `${objectData.celestialObjectId}-high-lod`,
-      ); // Adapt name if different
-      if (
-        !highDetailGroup &&
-        meshGroup.getObjectByName(
-          `${objectData.celestialObjectId}-high-lod-group`,
-        )
-      ) {
-        highDetailGroup = meshGroup.getObjectByName(
-          `${objectData.celestialObjectId}-high-lod-group`,
-        );
-      } else if (!highDetailGroup && meshGroup instanceof THREE.Group) {
-        highDetailGroup = meshGroup; // Assume meshGroup is the target if no specific LOD group name found
-      }
-
-      if (highDetailGroup) {
-        highDetailGroup.add(this.lensingMesh);
-      } else {
-        console.warn(
-          `[NeutronStarRenderer] Could not find high-detail group in`,
-          meshGroup,
-          `to add lensing mesh for ${objectData.celestialObjectId}. Lensing may not appear correctly.`,
-        );
-        // As a fallback, add to the main mesh group, but this might be the LOD object itself.
-        // meshGroup.add(this.lensingMesh);
-      }
-      this.materials.set(this.lensingMesh.name, this.lensingMaterialInstance); // So super.update() updates time
     }
+    if (!this.lensingMaterialInstance) {
+      // It's crucial that objectRadius and objectWorldPosition are part of the material's defined uniforms.
+      // We ensured this in the previous step for GravitationalLensingMaterial.
+      this.lensingMaterialInstance = new GravitationalLensingMaterial();
+    }
+
+    // The lensingMesh (the effect sphere) will be created and assigned
+    // in _createHighDetailGroup or similar LOD setup method.
+    // We no longer find and replace the star body material here.
+    // console.warn(`[NeutronStarRenderer] Gravitational lensing initialized for ${objectData.celestialObjectId}.`);
   }
 
   override update(
     time: number,
     lightSources?: Map<string, LightSourceData>,
     camera?: THREE.PerspectiveCamera,
-    // scene and renderer are not standard in BaseStarRenderer's update, but needed for lensing pass
-    // We stored them from addGravitationalLensing call
   ): void {
-    super.update(time, lightSources, camera);
+    super.update(time, lightSources, camera); // Update base star, corona, and elapsedTime
 
+    // Update Jets
+    const jetMaterial = this.effectMaterials.get(
+      `${this._currentRenderableObject?.celestialObjectId}-jets`,
+    ) as PulsarJetMaterial | THREE.ShaderMaterial;
+    const bottomJetMaterial = this.effectMaterials.get(
+      `${this._currentRenderableObject?.celestialObjectId}-bottom-jet`,
+    ) as PulsarJetMaterial | THREE.ShaderMaterial;
+
+    if (jetMaterial && typeof (jetMaterial as any).update === "function") {
+      (jetMaterial as any).update(this.elapsedTime);
+    }
     if (
-      this.lensingMaterialInstance &&
-      this.lensingRenderTarget &&
-      this._lensingScene &&
-      this._lensingCamera &&
-      this._lensingRenderer &&
-      this.lensingMesh
+      bottomJetMaterial &&
+      typeof (bottomJetMaterial as any).update === "function"
     ) {
-      let isLensingPotentiallyVisible = false;
-      if (this.lensingMesh.parent) {
-        isLensingPotentiallyVisible =
-          this.lensingMesh.parent.visible && this.lensingMesh.visible;
-      } else {
-        isLensingPotentiallyVisible = this.lensingMesh.visible; // Should be parented though
-      }
+      (bottomJetMaterial as any).update(this.elapsedTime + Math.PI); // Phase offset for bottom jet if needed
+    }
 
-      if (isLensingPotentiallyVisible) {
-        this.lensingMesh.visible = false;
-        const originalRenderTarget = this._lensingRenderer.getRenderTarget();
-        const originalClearAlpha = this._lensingRenderer.getClearAlpha();
+    // Gravitational Lensing Pass
+    if (
+      this.lensingRenderTarget &&
+      this.lensingMaterialInstance &&
+      this._lensingScene &&
+      this._lensingRenderer &&
+      this._lensingCamera &&
+      this.lensingMesh && // Ensure we have the mesh with the lensing material
+      this._currentRenderableObject
+    ) {
+      this.lensingMesh.visible = false; // Hide the lensing effect sphere itself
+      // The actual star body (from super._createHighDetailGroup) remains visible and gets rendered to the target.
 
-        this._lensingRenderer.setClearAlpha(0.0);
-        this._lensingRenderer.setRenderTarget(this.lensingRenderTarget);
-        this._lensingRenderer.clear(true, true, true);
-        this._lensingRenderer.render(this._lensingScene, this._lensingCamera);
+      this._lensingRenderer.setRenderTarget(this.lensingRenderTarget);
+      this._lensingRenderer.clear();
+      this._lensingRenderer.render(this._lensingScene, this._lensingCamera);
 
-        this._lensingRenderer.setRenderTarget(originalRenderTarget);
-        this._lensingRenderer.setClearAlpha(originalClearAlpha);
+      this.lensingMesh.visible = true; // Make the lensing effect sphere visible again for its pass
+      // this.lensingMesh.material = this.lensingMaterialInstance; // Already set during creation
 
-        this.lensingMesh.visible = true;
-        this.lensingMaterialInstance.uniforms.tBackground.value =
-          this.lensingRenderTarget.texture;
-      }
+      this.lensingMaterialInstance.uniforms.tBackground.value =
+        this.lensingRenderTarget.texture;
+
+      // objectWorldPosition should be the world position of the actual neutron star,
+      // not necessarily the lensingMesh if it has a different origin or scaling logic.
+      // Assuming lensingMesh is centered on the star, its matrixWorld can be used.
+      this.lensingMaterialInstance.uniforms.objectWorldPosition.value.setFromMatrixPosition(
+        this.lensingMesh.matrixWorld,
+      );
+
+      // objectRadius is the actual radius of the neutron star.
+      this.lensingMaterialInstance.uniforms.objectRadius.value =
+        this._currentRenderableObject.radius;
+      // No need to multiply by this.lensingMesh.scale.x as objectRadius is the true radius of the lensed object.
+
+      this._lensingRenderer.setRenderTarget(null); // Reset render target
     }
   }
 
   override dispose(): void {
     super.dispose();
-    if (this.lensingRenderTarget) {
-      this.lensingRenderTarget.dispose();
-      this.lensingRenderTarget = null;
-    }
-    this.lensingMaterialInstance = null; // Already disposed by super if in this.materials
+    this.lensingRenderTarget?.dispose();
+    this.lensingMaterialInstance?.dispose();
+    this.lensingRenderTarget = null;
+    this.lensingMaterialInstance = null;
     this.lensingMesh = null;
   }
 }

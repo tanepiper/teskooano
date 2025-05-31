@@ -3,13 +3,13 @@ import type { CelestialObject } from "@teskooano/data-types";
 import { BaseStarRenderer } from "../base/base-star";
 import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import type {
-  CelestialMeshOptions,
-  LightSourceData,
-} from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions, LightSourceData } from "../../common/types";
 import { LODLevel } from "../../index";
 import { SCALE } from "@teskooano/data-types";
-import { BaseBlackHoleRenderer } from "./base-black-hole-renderer";
+import {
+  BaseBlackHoleRenderer,
+  EventHorizonMaterial,
+} from "./base-black-hole-renderer";
 
 /**
  * Material for Schwarzschild black holes
@@ -69,7 +69,7 @@ export class SchwarzschildBlackHoleMaterial extends THREE.ShaderMaterial {
    * Update the material with the current time
    */
   update(time: number): void {
-    this.uniforms.time.value = time;
+    if (this.uniforms.time) this.uniforms.time.value = time;
   }
 
   /**
@@ -186,12 +186,27 @@ export class AccretionDiskMaterial extends THREE.ShaderMaterial {
  */
 export class SchwarzschildBlackHoleRenderer extends BaseBlackHoleRenderer {
   private accretionDiskMaterialInstance: AccretionDiskMaterial | null = null;
+  private schwarzschildHorizonMaterial: SchwarzschildBlackHoleMaterial;
 
   constructor(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ) {
-    super(object, { ...options, enableGravitationalLensing: true });
+    super(object, { ...options });
+    this.schwarzschildHorizonMaterial = new SchwarzschildBlackHoleMaterial();
+    this.registerMaterial(
+      `${object.celestialObjectId}-schwarzschild-horizon`,
+      this.schwarzschildHorizonMaterial,
+    );
+  }
+
+  /**
+   * Override to use the custom SchwarzschildBlackHoleMaterial for the event horizon.
+   */
+  protected override getMaterial(
+    object: RenderableCelestialObject,
+  ): THREE.ShaderMaterial {
+    return this.schwarzschildHorizonMaterial;
   }
 
   /**
@@ -223,8 +238,7 @@ export class SchwarzschildBlackHoleRenderer extends BaseBlackHoleRenderer {
 
     if (!this.accretionDiskMaterialInstance) {
       this.accretionDiskMaterialInstance = new AccretionDiskMaterial();
-      // Add to materials map in BaseStarRenderer so its update() is called
-      this.materials.set(
+      this.registerMaterial(
         `${object.celestialObjectId}-accretion-disk`,
         this.accretionDiskMaterialInstance,
       );

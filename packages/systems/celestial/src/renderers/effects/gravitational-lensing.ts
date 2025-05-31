@@ -21,6 +21,8 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
         radius: { value: options.radius ?? 1.0 },
         distortionScale: { value: options.distortionScale ?? 1.0 },
         time: { value: 0 },
+        objectWorldPosition: { value: new THREE.Vector3() },
+        objectRadius: { value: 0.0 },
       },
       vertexShader: `
         varying vec3 vPosition;
@@ -40,6 +42,9 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
         uniform float radius;
         uniform float distortionScale;
         uniform float time;
+        uniform vec3 objectWorldPosition;
+        uniform float objectRadius;
+        uniform vec2 resolution;
         
         varying vec3 vPosition;
         varying vec3 vNormal;
@@ -92,13 +97,6 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
         }
       `,
     };
-
-    const resolutionLine = `
-      uniform vec2 resolution;
-    `;
-
-    lensingShader.fragmentShader =
-      resolutionLine + lensingShader.fragmentShader;
 
     super({
       uniforms: {

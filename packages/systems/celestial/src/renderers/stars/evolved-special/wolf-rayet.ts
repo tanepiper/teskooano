@@ -1,100 +1,102 @@
 import * as THREE from "three";
+import { SCALE } from "@teskooano/data-types";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { CelestialMeshOptions, LODLevel } from "../../common/types";
+import type { StarProperties } from "@teskooano/data-types";
 import {
   EvolvedSpecialStarRenderer,
   EvolvedSpecialStarMaterial,
 } from "./evolved-special-star-renderer";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import { LODLevel } from "../../index";
-import { AU_METERS, SCALE } from "@teskooano/data-types";
-import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
+import type { BaseStarUniformArgs } from "../main-sequence/main-sequence-star";
 
-// Import shaders from separate files
+// Wolf-Rayet specific shaders (if any, otherwise uses EvolvedSpecialStarMaterial defaults)
 import WOLF_RAYET_SHELL_VERTEX_SHADER from "../../../shaders/star/evolved-special/wolf-rayet/wolf-rayet-shell-vertex.glsl";
 import WOLF_RAYET_SHELL_FRAGMENT_SHADER from "../../../shaders/star/evolved-special/wolf-rayet/wolf-rayet-shell-fragment.glsl";
 
 /**
- * Material for the main body of Wolf-Rayet stars.
- */
-export class WolfRayetMaterial extends EvolvedSpecialStarMaterial {
-  constructor(color: THREE.Color = new THREE.Color(0xcad7ff)) {
-    super(
-      {
-        starColor: color,
-        coronaIntensity: 0.5, // Intense radiation field, less defined corona visually
-        pulseSpeed: 0.4,
-        glowIntensity: 1.5, // Very luminous
-        temperatureVariation: 0.6, // Turbulent surface
-        metallicEffect: 0.1, // Often obscured by dense winds
-      },
-      undefined,
-      undefined,
-    );
-    this.transparent = false; // Ensure transparency is set to false
-  }
-}
-
-/**
- * Renderer for Wolf-Rayet stars - hot, massive stars with strong stellar winds.
+ * Renderer for Wolf-Rayet stars.
+ * These are massive, evolved stars with strong stellar winds and emission lines.
  */
 export class WolfRayetRenderer extends EvolvedSpecialStarRenderer {
+  constructor(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ) {
+    super(object, options);
+  }
+
   protected getMaterial(
     object: RenderableCelestialObject,
   ): EvolvedSpecialStarMaterial {
     const color = this.getStarColor(object);
-    return new WolfRayetMaterial(color);
+    const properties = object.properties as StarProperties;
+
+    const classDefaults: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
+      coronaIntensity: 0.8, // Very bright, obscured star
+      pulseSpeed: 0.2,
+      glowIntensity: 0.9, // Intense glow from winds
+      temperatureVariation: 0.1, // Hot, but winds dominate view
+      metallicEffect: 0.1, // Less distinct surface features
+      noiseEvolutionSpeed: 0.5, // Rapidly evolving winds
+    };
+
+    const propsUniforms = properties.shaderUniforms?.baseStar;
+    const propsTimeOffset = properties.timeOffset;
+
+    const finalMaterialOptions: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
+      ...classDefaults,
+      ...(propsUniforms || {}),
+      timeOffset:
+        propsTimeOffset ?? classDefaults.timeOffset ?? Math.random() * 1000.0,
+    };
+
+    return new EvolvedSpecialStarMaterial(color, finalMaterialOptions);
   }
 
-  protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    // Wolf-Rayet stars are very hot, typically bluish or whitish
-    return new THREE.Color(0xcad7ff);
-  }
-
-  /**
-   * Override billboard size calculation for Wolf-Rayet stars.
-   *
-   * @param object The renderable celestial object
-   * @returns The calculated sprite size for billboard rendering
-   */
-  protected override calculateBillboardSize(
-    object: RenderableCelestialObject,
-  ): number {
-    const starRadius_AU = object.radius / AU_METERS;
-
-    // Wolf-Rayet stars should have a prominent billboard due to their wind shells
-    const minSpriteSize = 0.15;
-    const maxSpriteSize = 0.8;
-
-    // Add a multiplier for the wind shell effect
-    const calculatedSpriteSize = 0.15 + starRadius_AU * 0.2;
-
-    return Math.max(
-      minSpriteSize,
-      Math.min(maxSpriteSize, calculatedSpriteSize),
-    );
+  protected getStarColor(star: RenderableCelestialObject): THREE.Color {
+    const properties = star.properties as StarProperties;
+    if (properties?.color) {
+      try {
+        return new THREE.Color(properties.color);
+      } catch (e) {
+        console.warn(
+          `[WolfRayetRenderer] Invalid color '${properties.color}' in star properties. Falling back to class default.`,
+        );
+      }
+    }
+    // Wolf-Rayet stars are typically very hot and blue, though often obscured by their winds.
+    // The visual color can vary based on the wind composition (WN, WC, WO types).
+    return new THREE.Color(0x60a0ff); // Default: Bright, slightly violet blue
   }
 
   protected getEffectLayer(
     object: RenderableCelestialObject,
     mainStarGroup: THREE.Group,
   ): THREE.Object3D | null {
-    const shellRadius = object.radius * 2.5; // Example: shell is 2.5x star radius
-    const shellGeometry = new THREE.SphereGeometry(shellRadius, 64, 64);
+    const starRadius = object.radius || 10; // Wolf-Rayets are large
+    const shellOuterRadius = starRadius * 3; // Prominent stellar wind shell
+
+    const shellGeometry = new THREE.SphereGeometry(shellOuterRadius, 48, 48);
     const shellMaterial = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0.0 },
-        shellColor: { value: new THREE.Color(0x88aaff) }, // Bluish-white, typical of ionized gas
-        opacity: { value: 0.3 }, // Semi-transparent shell
+        shellColor: { value: new THREE.Color(0x88aaff) }, // Bluish-white, slightly transparent wind
+        density: { value: 0.3 }, // Lower density for a more ethereal look
+        noiseScale: { value: 5.0 },
       },
       vertexShader: WOLF_RAYET_SHELL_VERTEX_SHADER,
       fragmentShader: WOLF_RAYET_SHELL_FRAGMENT_SHADER,
       transparent: true,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide, // Render both sides for a voluminous effect
-      depthWrite: false,
+      blending: THREE.AdditiveBlending, // Good for luminous gas
+      side: THREE.DoubleSide, // Render both sides for a volumetric feel
+      depthWrite: false, // Allows transparency to work correctly with depth
     });
-
     this.effectMaterials.set(
-      `${object.celestialObjectId}-shell`,
+      `${object.celestialObjectId}-wind-shell`,
       shellMaterial,
     );
 
@@ -103,41 +105,22 @@ export class WolfRayetRenderer extends EvolvedSpecialStarRenderer {
     return shellMesh;
   }
 
-  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
-    const scale = typeof SCALE === "number" ? SCALE : 1;
-    // Adjust distance based on star size to ensure smooth transition
-    const starRadius_AU = object.radius / AU_METERS;
-    const sizeBasedDistance = 20000 + starRadius_AU * 1500; // Reduced distance
-    return Math.min(50000, sizeBasedDistance) * scale; // Reduced max distance
-  }
-
   protected getCustomLODs(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-
-    // High detail (includes effect layer via _createHighDetailGroup override)
     const highDetailGroup = this._createHighDetailGroup(object, {
       ...options,
-      segments: 128,
+      segments: 64,
     });
     const level0: LODLevel = { object: highDetailGroup, distance: 0 };
 
-    // Medium detail: star body + corona, but no complex effect layer for performance.
-    // We can refine this later if a simplified effect layer is needed for mid-LOD.
     const mediumStarOnlyGroup = super._createHighDetailGroup(object, {
       ...options,
-      segments: 64, // Reduced segments for star body at medium LOD
+      segments: 32,
+      includeEffects: false, // Shell might be too complex or not visible at this range
     });
-    // Remove any pre-existing effect layer if super._createHighDetailGroup added one
-    // (though our current EvolvedSpecialStarRenderer._createHighDetailGroup adds it *after* super call)
-    const existingEffect = mediumStarOnlyGroup.getObjectByName(
-      `${object.celestialObjectId}-wind-shell`,
-    );
-    if (existingEffect) {
-      mediumStarOnlyGroup.remove(existingEffect);
-    }
     mediumStarOnlyGroup.name = `${object.celestialObjectId}-medium-lod`;
     const level1: LODLevel = {
       object: mediumStarOnlyGroup,
@@ -145,5 +128,10 @@ export class WolfRayetRenderer extends EvolvedSpecialStarRenderer {
     };
 
     return [level0, level1];
+  }
+
+  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
+    const scale = typeof SCALE === "number" ? SCALE : 1;
+    return 8000 * scale; // Wolf-Rayets are very luminous
   }
 }

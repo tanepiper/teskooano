@@ -1,9 +1,11 @@
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
-import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions } from "../../common/types";
+import type { StarProperties } from "@teskooano/data-types";
 import {
   MainSequenceStarMaterial,
   MainSequenceStarRenderer,
+  BaseStarUniformArgs,
 } from "./main-sequence-star";
 
 // Define the type for the second constructor parameter of MainSequenceStarMaterial
@@ -40,38 +42,29 @@ export class ClassMStarRenderer extends MainSequenceStarRenderer {
     object: RenderableCelestialObject,
   ): THREE.ShaderMaterial {
     const color = this.getStarColor(object);
+    const properties = object.properties as StarProperties;
 
-    const classDefaults: StarMaterialCtorOptions = {
-      coronaIntensity: 0.3,
-      pulseSpeed: 0.35,
+    const classDefaults: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
+      coronaIntensity: 0.2,
+      pulseSpeed: 0.25,
       glowIntensity: 0.3,
-      temperatureVariation: 0.05,
-      metallicEffect: 0.7,
-      noiseEvolutionSpeed: 0.1, // Slower, more gentle animation for red dwarfs
-      timeOffset: Math.random() * 1000.0,
+      temperatureVariation: 0.15,
+      metallicEffect: 0.8,
+      noiseEvolutionSpeed: 0.2,
     };
 
-    const optsFromMesh: StarMaterialCtorOptions = {};
-    if (this.options) {
-      if (this.options.coronaIntensity !== undefined)
-        optsFromMesh.coronaIntensity = this.options.coronaIntensity;
-      if (this.options.pulseSpeed !== undefined)
-        optsFromMesh.pulseSpeed = this.options.pulseSpeed;
-      if (this.options.glowIntensity !== undefined)
-        optsFromMesh.glowIntensity = this.options.glowIntensity;
-      if (this.options.temperatureVariation !== undefined)
-        optsFromMesh.temperatureVariation = this.options.temperatureVariation;
-      if (this.options.metallicEffect !== undefined)
-        optsFromMesh.metallicEffect = this.options.metallicEffect;
-      if (this.options.noiseEvolutionSpeed !== undefined)
-        optsFromMesh.noiseEvolutionSpeed = this.options.noiseEvolutionSpeed;
-      if (this.options.timeOffset !== undefined)
-        optsFromMesh.timeOffset = this.options.timeOffset;
-    }
+    const propsUniforms = properties.shaderUniforms?.baseStar;
+    const propsTimeOffset = properties.timeOffset;
 
-    const finalMaterialOptions: StarMaterialCtorOptions = {
+    const finalMaterialOptions: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
       ...classDefaults,
-      ...optsFromMesh,
+      ...(propsUniforms || {}),
+      timeOffset:
+        propsTimeOffset ?? classDefaults.timeOffset ?? Math.random() * 1000.0,
     };
 
     return new MainSequenceStarMaterial(color, finalMaterialOptions);
@@ -81,6 +74,16 @@ export class ClassMStarRenderer extends MainSequenceStarRenderer {
    * M-class stars are red
    */
   protected getStarColor(star: RenderableCelestialObject): THREE.Color {
-    return new THREE.Color(0xff6347); // Red to orange-red for M-class
+    const properties = star.properties as StarProperties;
+    if (properties?.color) {
+      try {
+        return new THREE.Color(properties.color);
+      } catch (e) {
+        console.warn(
+          `[ClassMStarRenderer] Invalid color '${properties.color}' in star properties. Falling back to class default.`,
+        );
+      }
+    }
+    return new THREE.Color(0xffb089); // Default M-class color (Red)
   }
 }

@@ -2,10 +2,9 @@ import * as THREE from "three";
 import { BaseStarRenderer } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import type {
-  CelestialMeshOptions,
-  LightSourceData,
-} from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions, LightSourceData } from "../../common/types";
+import type { StarProperties } from "@teskooano/data-types";
+import type { BaseStarUniformArgs } from "../main-sequence/main-sequence-star";
 
 import REMNANT_VERTEX_SHADER from "../../../shaders/star/remnants/vertex.glsl";
 import REMNANT_FRAGMENT_SHADER from "../../../shaders/star/remnants/fragment.glsl";
@@ -16,30 +15,24 @@ import REMNANT_CORONA_FRAGMENT_SHADER from "../../../shaders/star/remnants/coron
  */
 export class RemnantStarMaterial extends THREE.ShaderMaterial {
   constructor(
-    shaderParameters: {
-      starColor?: THREE.Color;
-      coronaIntensity?: number;
-      pulseSpeed?: number;
-      glowIntensity?: number;
-      temperatureVariation?: number;
-      metallicEffect?: number; // Less relevant, but for consistency
-      time?: number;
-    } = {},
+    color: THREE.Color = new THREE.Color(0xaaaaff), // Default pale blue/white
+    uniformOverrides?: Partial<BaseStarUniformArgs> & { timeOffset?: number },
     vertexShader: string = REMNANT_VERTEX_SHADER,
     fragmentShader: string = REMNANT_FRAGMENT_SHADER,
   ) {
     const uniforms = {
-      time: { value: shaderParameters.time ?? 0.0 },
-      starColor: {
-        value: shaderParameters.starColor ?? new THREE.Color(0xaaaaff),
-      }, // Default to a pale blue/white
-      coronaIntensity: { value: shaderParameters.coronaIntensity ?? 0.1 },
-      pulseSpeed: { value: shaderParameters.pulseSpeed ?? 0.05 },
-      glowIntensity: { value: shaderParameters.glowIntensity ?? 0.3 },
+      time: { value: uniformOverrides?.timeOffset ?? Math.random() * 1000.0 },
+      starColor: { value: color },
+      coronaIntensity: { value: uniformOverrides?.coronaIntensity ?? 0.1 },
+      pulseSpeed: { value: uniformOverrides?.pulseSpeed ?? 0.05 },
+      glowIntensity: { value: uniformOverrides?.glowIntensity ?? 0.3 },
       temperatureVariation: {
-        value: shaderParameters.temperatureVariation ?? 0.1,
+        value: uniformOverrides?.temperatureVariation ?? 0.1,
       },
-      metallicEffect: { value: shaderParameters.metallicEffect ?? 0.0 },
+      metallicEffect: { value: uniformOverrides?.metallicEffect ?? 0.0 },
+      noiseEvolutionSpeed: {
+        value: uniformOverrides?.noiseEvolutionSpeed ?? 0.02,
+      }, // Typically very slow or static
     };
 
     super({

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { BaseStarRenderer } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LODLevel } from "../../index";
-import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions } from "../../common/types";
 
 // Import GLSL shaders as raw strings
 import SHARED_VERTEX_SHADER from "../../../shaders/star/post-main-sequence/vertex.glsl";

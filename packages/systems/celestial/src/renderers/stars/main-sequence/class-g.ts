@@ -1,9 +1,11 @@
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
-import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions } from "../../common/types";
+import type { StarProperties } from "@teskooano/data-types";
 import {
   MainSequenceStarMaterial,
   MainSequenceStarRenderer,
+  BaseStarUniformArgs,
 } from "./main-sequence-star";
 
 /**
@@ -16,11 +18,6 @@ import {
  * - Hydrogen lines: Weak
  * - Frequency: 7.6% of main-sequence stars
  */
-
-// Define the type for the second constructor parameter of MainSequenceStarMaterial
-type StarMaterialCtorOptions = ConstructorParameters<
-  typeof MainSequenceStarMaterial
->[1];
 
 /**
  * Renderer for G-class stars
@@ -40,41 +37,37 @@ export class ClassGStarRenderer extends MainSequenceStarRenderer {
     object: RenderableCelestialObject,
   ): THREE.ShaderMaterial {
     const color = this.getStarColor(object);
+    const properties = object.properties as StarProperties;
 
-    const classDefaults: StarMaterialCtorOptions = {
+    // Defaults specific to G-Class stars
+    const classDefaults: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
       coronaIntensity: 0.4,
       pulseSpeed: 0.45,
       glowIntensity: 0.45,
       temperatureVariation: 0.09,
       metallicEffect: 0.6,
-      noiseEvolutionSpeed: 0.15, // Faster default for G-class
-      timeOffset: Math.random() * 1000.0,
+      noiseEvolutionSpeed: 0.15,
+      // timeOffset is better sourced from properties.timeOffset or randomized if not present
     };
 
-    const optsFromMesh: StarMaterialCtorOptions = {};
-    if (this.options) {
-      if (this.options.coronaIntensity !== undefined)
-        optsFromMesh.coronaIntensity = this.options.coronaIntensity;
-      if (this.options.pulseSpeed !== undefined)
-        optsFromMesh.pulseSpeed = this.options.pulseSpeed;
-      if (this.options.glowIntensity !== undefined)
-        optsFromMesh.glowIntensity = this.options.glowIntensity;
-      if (this.options.temperatureVariation !== undefined)
-        optsFromMesh.temperatureVariation = this.options.temperatureVariation;
-      if (this.options.metallicEffect !== undefined)
-        optsFromMesh.metallicEffect = this.options.metallicEffect;
-      if (this.options.noiseEvolutionSpeed !== undefined)
-        optsFromMesh.noiseEvolutionSpeed = this.options.noiseEvolutionSpeed;
-      if (this.options.timeOffset !== undefined)
-        optsFromMesh.timeOffset = this.options.timeOffset;
-      // noiseScale is in CelestialMeshOptions, but not in MainSequenceStarMaterial's constructor options yet.
-      // If it were, it would be: if (this.options.noiseScale !== undefined) optsFromMesh.noiseScale = this.options.noiseScale;
-    }
+    // Shader uniforms from object properties take precedence
+    const propsUniforms = properties.shaderUniforms?.baseStar;
+    const propsTimeOffset = properties.timeOffset;
 
-    const finalMaterialOptions: StarMaterialCtorOptions = {
-      ...classDefaults,
-      ...optsFromMesh, // Options from CelestialMeshOptions override class defaults
+    const finalMaterialOptions: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
+      ...classDefaults, // Apply class-specific defaults first
+      ...(propsUniforms || {}), // Override with any defined properties from shaderUniforms.baseStar
+      timeOffset:
+        propsTimeOffset ?? classDefaults.timeOffset ?? Math.random() * 1000.0, // Prioritize properties.timeOffset
     };
+
+    // Options from CelestialMeshOptions (this.options) are no longer used for shader parameters here
+    // as they've been removed from CelestialMeshOptions.
+    // If there were any general options from CelestialMeshOptions to pass, they would be handled differently.
 
     return new MainSequenceStarMaterial(color, finalMaterialOptions);
   }
@@ -83,6 +76,18 @@ export class ClassGStarRenderer extends MainSequenceStarRenderer {
    * G-class stars are yellow (like our Sun)
    */
   protected getStarColor(star: RenderableCelestialObject): THREE.Color {
-    return new THREE.Color(0xffcc00);
+    // If star.properties.color is available, it should take precedence
+    // This allows data-driven color overriding the class default.
+    const properties = star.properties as StarProperties;
+    if (properties?.color) {
+      try {
+        return new THREE.Color(properties.color);
+      } catch (e) {
+        console.warn(
+          `[ClassGStarRenderer] Invalid color '${properties.color}' in star properties. Falling back to class default.`,
+        );
+      }
+    }
+    return new THREE.Color(0xffcc00); // Default G-class color
   }
 }

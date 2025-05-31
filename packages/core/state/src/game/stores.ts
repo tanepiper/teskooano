@@ -156,8 +156,16 @@ export class GameStateService {
    * @param object The celestial object data.
    */
   public setCelestialObject(id: string, object: CelestialObject): void {
-    const current = this._celestialObjectsStore.getValue();
-    this._celestialObjectsStore.next({ ...current, [id]: object });
+    const currentObjects = { ...this.getCelestialObjects() };
+    currentObjects[id] = object;
+    console.log(
+      `[GameStateService] setCelestialObject for ID: ${id}. About to call _celestialObjectsStore.next(). New map:`,
+      JSON.parse(JSON.stringify(currentObjects)),
+    );
+    console.log(
+      `[GameStateService] _celestialObjectsStore has ${this._celestialObjectsStore.observers.length} observers.`,
+    );
+    this._celestialObjectsStore.next(currentObjects);
   }
 
   /**

@@ -1,29 +1,19 @@
 import { OSVector3 } from "@teskooano/core-math";
-import type {
-  CelestialObject,
-  OrbitalParameters,
-  StarProperties,
-} from "@teskooano/data-types";
 import {
   CelestialStatus,
   CelestialType,
   SCALE,
   StellarType,
-} from "@teskooano/data-types";
-import {
   type StellarPhysicsData,
   type StellarRenderingData,
-} from "../../../../../data/types/src/celestials/common/stellar-classification";
+  CelestialObject,
+  OrbitalParameters,
+  StarProperties,
+} from "@teskooano/data-types";
 import * as CONST from "../../constants";
 import { generateCelestialName } from "../names/celestial-name";
 import * as UTIL from "../../utils";
-import {
-  createMainSequenceStar,
-  createStellarRemnant,
-  createEvolvedStar,
-  createPreMainSequenceStar,
-  determineLuminosityClass,
-} from "./stellar-classification-functions";
+import { stellarClassifier } from "./stellar-classification-functions";
 
 const G = 6.6743e-11;
 const C = 299792458;
@@ -301,14 +291,17 @@ export function generateStar(random: () => number): CelestialObject {
   // Use factory functions for proper classification
   let classifiedStar: any;
   if (chosenType === StellarType.MAIN_SEQUENCE) {
-    classifiedStar = createMainSequenceStar(physicsData, renderingData);
+    classifiedStar = stellarClassifier.createMainSequenceStar(
+      physicsData,
+      renderingData,
+    );
   } else if (
     chosenType === StellarType.WHITE_DWARF ||
     chosenType === StellarType.NEUTRON_STAR ||
     chosenType === StellarType.BLACK_HOLE
   ) {
     // Stellar remnants
-    classifiedStar = createStellarRemnant(
+    classifiedStar = stellarClassifier.createStellarRemnant(
       chosenType,
       physicsData,
       renderingData,
@@ -325,7 +318,7 @@ export function generateStar(random: () => number): CelestialObject {
     chosenType === StellarType.VARIABLE_STAR
   ) {
     // Evolved stars
-    classifiedStar = createEvolvedStar(
+    classifiedStar = stellarClassifier.createEvolvedStar(
       chosenType,
       physicsData,
       renderingData,
@@ -337,7 +330,7 @@ export function generateStar(random: () => number): CelestialObject {
     chosenType === StellarType.HERBIG_AE_BE
   ) {
     // Pre-main sequence stars
-    classifiedStar = createPreMainSequenceStar(
+    classifiedStar = stellarClassifier.createPreMainSequenceStar(
       chosenType,
       physicsData,
       renderingData,
@@ -395,6 +388,22 @@ export function generateStar(random: () => number): CelestialObject {
     stellarType: chosenType,
     characteristics: classifiedStar.characteristics || {},
     timeOffset: random() * 1000.0,
+    shaderUniforms: {
+      baseStar: {
+        coronaIntensity: 1,
+        pulseSpeed: 0.5,
+        glowIntensity: 1,
+        temperatureVariation: 0.2,
+        metallicEffect: 0.1,
+        noiseEvolutionSpeed: 0.05,
+      },
+      corona: {
+        opacity: 0.5,
+        pulseSpeed: 0.7,
+        noiseScale: 1,
+        noiseEvolutionSpeed: 1.0,
+      },
+    },
   };
 
   const star: CelestialObject = {

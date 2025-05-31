@@ -10,35 +10,30 @@ import {
   AtmosphereMeshResult,
 } from "./utils/atmosphere-cloud-utils";
 import { PlanetMaterialService } from "./utils/planet-material-utils";
+import { BaseCelestialRenderer } from "../common/BaseCelestialRenderer";
 
 const MAX_LIGHTS = 4;
 
 /**
  * Base renderer for terrestrial planets and moons
  */
-export class BaseTerrestrialRenderer implements CelestialRenderer {
-  protected materials: Map<string, THREE.Material> = new Map();
+export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
   protected atmosphereMaterials: Map<string, AtmosphereMaterial> = new Map();
-  protected textureLoader: THREE.TextureLoader;
 
   protected loadedTextures: Map<
     string,
     { color: THREE.Texture | null; normal: THREE.Texture | null }
   > = new Map();
-  protected startTime: number = Date.now() / 1000;
-  protected elapsedTime: number = 0;
-  protected objectIds: Set<string> = new Set();
 
   private _worldPos = new THREE.Vector3();
   private _lightWorldPos = new THREE.Vector3();
   private _viewLightDir = new THREE.Vector3();
 
-  protected material: ProceduralPlanetMaterial | null = null;
   protected materialService: PlanetMaterialService;
   protected atmosphereCloudService: AtmosphereService;
 
   constructor() {
-    this.textureLoader = new THREE.TextureLoader();
+    super();
     this.materialService = new PlanetMaterialService();
     this.atmosphereCloudService = new AtmosphereService();
   }
@@ -50,7 +45,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    this.objectIds.add(object.celestialObjectId);
+    this.trackObject(object.celestialObjectId);
 
     const baseRadius = object.radius ?? 1;
     const scale = typeof SCALE === "number" ? SCALE : 1;
@@ -101,7 +96,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     let bodyMesh: THREE.Mesh;
     try {
       const bodyMaterial = this.materialService.createMaterial(object);
-      this.initializeMaterialMap(object.celestialObjectId, bodyMaterial);
+      this.registerMaterial(object.celestialObjectId, bodyMaterial);
       const bodyGeometry = new THREE.SphereGeometry(
         baseRadius,
         segments,
@@ -119,7 +114,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
         roughness: 0.8,
         metalness: 0.1,
       });
-      this.initializeMaterialMap(object.celestialObjectId, fallbackMaterial);
+      this.registerMaterial(object.celestialObjectId, fallbackMaterial);
       const bodyGeometry = new THREE.SphereGeometry(
         baseRadius,
         segments,
@@ -210,13 +205,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
   }
 
   /**
-   * Initialize the materials map with the created material
-   */
-  protected initializeMaterialMap(id: string, material: THREE.Material): void {
-    this.materials.set(id, material);
-  }
-
-  /**
    * Update uniforms for the planet based on time and lighting.
    */
   update(
@@ -227,6 +215,8 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     >,
     camera?: THREE.Camera,
   ): void {
+    super.update(time, lightSources, camera);
+
     if (!lightSources || lightSources.size === 0) {
       console.warn(
         "[BaseTerrestrialRenderer] No light sources provided, adding default light",
@@ -242,15 +232,8 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       });
     }
 
-    this.materials.forEach((material) => {
-      if (material instanceof ProceduralPlanetMaterial) {
-        material.update(time, lightSources, camera);
-      }
-    });
-
-    // Update atmosphere materials with current time and light sources
     this.atmosphereMaterials.forEach((material) => {
-      material.update(time, camera, lightSources);
+      material.update(this.elapsedTime, camera, lightSources);
     });
   }
 
@@ -258,9 +241,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
    * Dispose of all materials and textures
    */
   dispose(): void {
-    this.materials.forEach((material) => material.dispose());
-    this.materials.clear();
-
     this.atmosphereMaterials.forEach((material) => material.dispose());
     this.atmosphereMaterials.clear();
 
@@ -270,7 +250,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     });
     this.loadedTextures.clear();
 
-    this.objectIds.clear();
+    super.dispose();
   }
 
   private _updateUniformIfDefined(

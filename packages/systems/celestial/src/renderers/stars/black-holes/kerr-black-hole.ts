@@ -1,11 +1,7 @@
-import { SCALE } from "@teskooano/data-types";
+import { SCALE, type StarProperties } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
-import type {
-  CelestialMeshOptions,
-  LightSourceData,
-} from "../../common/CelestialRenderer";
-import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
+import type { CelestialMeshOptions, LightSourceData } from "../../common/types";
 import { LODLevel } from "../../index";
 import { BaseBlackHoleRenderer } from "./base-black-hole-renderer";
 import { AccretionDiskMaterial as SchwarzschildAccretionDiskMaterial } from "./schwarzschild-black-hole";
@@ -63,7 +59,13 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
       `,
     };
 
-    super(ergosphereShader);
+    super({
+      ...ergosphereShader,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
   }
 
   /**
@@ -185,7 +187,6 @@ export class KerrBlackHoleRenderer extends BaseBlackHoleRenderer {
     null;
   private jetMaterialInstance: KerrJetMaterial | null = null;
   private rotationSpeed: number;
-  private lensingHelpers: Map<string, GravitationalLensingHelper> = new Map();
 
   /**
    * Constructor allows setting rotation speed
@@ -196,7 +197,7 @@ export class KerrBlackHoleRenderer extends BaseBlackHoleRenderer {
     rotationSpeed: number = 0.5,
   ) {
     super(object, options);
-    this.rotationSpeed = rotationSpeed;
+    this.rotationSpeed = Math.min(0.999, Math.max(0, rotationSpeed));
   }
 
   /**
@@ -213,102 +214,128 @@ export class KerrBlackHoleRenderer extends BaseBlackHoleRenderer {
 
     const eventHorizonRadius =
       object.radius || 0.1 * (typeof SCALE === "number" ? SCALE : 1);
+    const starProps = object.properties as StarProperties | undefined;
 
-    // 1. Accretion Disk (potentially flatter or warped due to frame-dragging)
-    const diskInnerRadius = eventHorizonRadius * 1.2; // Closer for Kerr due to ergosphere
-    const diskOuterRadius = eventHorizonRadius * 4.0;
-    const diskGeometry = new THREE.RingGeometry(
-      diskInnerRadius,
-      diskOuterRadius,
-      64,
-      8,
-    );
-    diskGeometry.rotateX(-Math.PI / 2);
-    if (!this.accretionDiskMaterialInstance) {
-      this.accretionDiskMaterialInstance = new KerrAccretionDiskMaterial(
-        this.rotationSpeed,
+    const enableEffects = this.options.includeEffects !== false;
+
+    // 1. Accretion Disk
+    if (
+      enableEffects &&
+      starProps?.characteristics?.hasAccretionDisk !== false
+    ) {
+      const diskInnerRadius = eventHorizonRadius * 1.2;
+      const diskOuterRadius = eventHorizonRadius * 4.0;
+      const diskGeometry = new THREE.RingGeometry(
+        diskInnerRadius,
+        diskOuterRadius,
+        64,
+        8,
       );
-      this.materials.set(
-        `${object.celestialObjectId}-accretion-disk`,
+      diskGeometry.rotateX(-Math.PI / 2);
+      if (!this.accretionDiskMaterialInstance) {
+        this.accretionDiskMaterialInstance = new KerrAccretionDiskMaterial(
+          this.rotationSpeed,
+        );
+        this.registerMaterial(
+          `${object.celestialObjectId}-accretion-disk`,
+          this.accretionDiskMaterialInstance,
+        );
+      }
+      const diskMesh = new THREE.Mesh(
+        diskGeometry,
         this.accretionDiskMaterialInstance,
       );
+      diskMesh.name = `${object.celestialObjectId}-accretion-disk`;
+      effectsGroup.add(diskMesh);
     }
-    const diskMesh = new THREE.Mesh(
-      diskGeometry,
-      this.accretionDiskMaterialInstance,
-    );
-    diskMesh.name = `${object.celestialObjectId}-accretion-disk`;
-    effectsGroup.add(diskMesh);
 
-    // 2. Ergosphere (a transparent, dynamic region)
-    const ergosphereMaxRadius =
-      eventHorizonRadius *
-      (1.0 +
-        Math.sqrt(1.0 - Math.pow(Math.min(0.99, this.rotationSpeed), 2.0))); // rotationSpeed capped at 0.99 to avoid sqrt(negative)
-    const ergosphereEffectiveRadius = Math.max(
-      eventHorizonRadius * 1.05,
-      ergosphereMaxRadius,
-    ); // Ensure it's outside EH
-    // Shape of ergosphere is oblate spheroid, approximated here with a sphere or slightly flattened sphere
-    const ergosphereGeometry = new THREE.SphereGeometry(
-      ergosphereEffectiveRadius,
-      48,
-      32,
-    );
-    if (!this.ergosphereMaterialInstance) {
-      this.ergosphereMaterialInstance = new ErgosphereMaterial(
-        this.rotationSpeed,
+    // 2. Ergosphere
+    if (enableEffects && starProps?.characteristics?.hasErgosphere !== false) {
+      const ergosphereOuterRadius =
+        eventHorizonRadius *
+        (1 + Math.sqrt(1 - this.rotationSpeed * this.rotationSpeed));
+      const ergosphereInnerRadius = eventHorizonRadius * 1.01;
+      const finalErgosphereOuterRadius = Math.max(
+        ergosphereInnerRadius * 1.1,
+        ergosphereOuterRadius,
       );
-      this.materials.set(
-        `${object.celestialObjectId}-ergosphere`,
+
+      const ergosphereGeometry = new THREE.SphereGeometry(
+        finalErgosphereOuterRadius,
+        48,
+        48,
+      );
+
+      if (!this.ergosphereMaterialInstance) {
+        this.ergosphereMaterialInstance = new ErgosphereMaterial(
+          this.rotationSpeed,
+        );
+        this.registerMaterial(
+          `${object.celestialObjectId}-ergosphere`,
+          this.ergosphereMaterialInstance,
+        );
+      }
+      const ergosphereMesh = new THREE.Mesh(
+        ergosphereGeometry,
         this.ergosphereMaterialInstance,
       );
+      ergosphereMesh.name = `${object.celestialObjectId}-ergosphere`;
+      effectsGroup.add(ergosphereMesh);
     }
-    const ergosphereMesh = new THREE.Mesh(
-      ergosphereGeometry,
-      this.ergosphereMaterialInstance,
-    );
-    ergosphereMesh.name = `${object.celestialObjectId}-ergosphere`;
-    effectsGroup.add(ergosphereMesh);
 
-    // 3. Relativistic Jets (if applicable, based on properties or always for Kerr)
-    const jetLength = eventHorizonRadius * 150;
-    const jetRadius = eventHorizonRadius * 1.5;
-    const jetGeometry = new THREE.CylinderGeometry(
-      jetRadius * 0.3,
-      jetRadius,
-      jetLength,
-      12,
-      1,
-      true,
-    );
-
-    if (!this.jetMaterialInstance) {
-      this.jetMaterialInstance = new KerrJetMaterial(
-        new THREE.Color(0x88aaff),
-        7.0,
+    // 3. Relativistic Jets
+    if (enableEffects && starProps?.characteristics?.hasJets !== false) {
+      const jetLength = eventHorizonRadius * 50;
+      const jetRadius = eventHorizonRadius * 0.3;
+      const jetGeometry = new THREE.CylinderGeometry(
+        jetRadius * 0.5,
+        jetRadius,
+        jetLength,
+        12,
+        1,
+        true,
       );
-      this.materials.set(
-        `${object.celestialObjectId}-jets`,
+
+      if (!this.jetMaterialInstance) {
+        this.jetMaterialInstance = new KerrJetMaterial(
+          new THREE.Color(0x88aaff),
+          7.0,
+        );
+        this.registerMaterial(
+          `${object.celestialObjectId}-jets`,
+          this.jetMaterialInstance,
+        );
+      }
+
+      const jet1 = new THREE.Mesh(
+        jetGeometry.clone(),
         this.jetMaterialInstance,
       );
+      jet1.position.y = jetLength / 2;
+      jet1.name = `${object.celestialObjectId}-jet-north`;
+      effectsGroup.add(jet1);
+
+      const jet2Material = this.jetMaterialInstance.clone();
+      this.registerMaterial(
+        `${object.celestialObjectId}-jet-south-material`,
+        jet2Material,
+      );
+      const jet2 = new THREE.Mesh(jetGeometry.clone(), jet2Material);
+      jet2.position.y = -jetLength / 2;
+      jet2.rotation.x = Math.PI;
+      jet2.name = `${object.celestialObjectId}-jet-south`;
+      effectsGroup.add(jet2);
+
+      const rotationAxis =
+        (starProps?.characteristics?.rotationAxis as THREE.Vector3) ||
+        new THREE.Vector3(0, 1, 0);
+      effectsGroup.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        rotationAxis.normalize(),
+      );
     }
 
-    const jetN = new THREE.Mesh(jetGeometry.clone(), this.jetMaterialInstance);
-    jetN.position.y = jetLength / 2 + eventHorizonRadius * 0.8; // Adjusted offset
-    jetN.name = `${object.celestialObjectId}-jet-N`;
-    effectsGroup.add(jetN);
-
-    const jetS = new THREE.Mesh(jetGeometry.clone(), this.jetMaterialInstance);
-    jetS.position.y = -(jetLength / 2 + eventHorizonRadius * 0.8);
-    jetS.rotation.x = Math.PI;
-    jetS.name = `${object.celestialObjectId}-jet-S`;
-    effectsGroup.add(jetS);
-
-    // TODO: Orient jets along rotation axis if available from object.properties
-    // effectsGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), rotationAxis);
-
-    return effectsGroup;
+    return effectsGroup.children.length > 0 ? effectsGroup : null;
   }
 
   /**
@@ -322,56 +349,15 @@ export class KerrBlackHoleRenderer extends BaseBlackHoleRenderer {
     const highDetailGroup = this._createHighDetailGroup(object, options);
     const level0: LODLevel = { object: highDetailGroup, distance: 0 };
 
-    // Medium LOD: Event Horizon + Ergosphere (simpler jets or no jets)
-    const mediumGroup = new THREE.Group();
-    mediumGroup.name = `${object.celestialObjectId}-medium-lod`;
-    mediumGroup.add(this.createEventHorizonMesh(object));
-
-    // Simplified Ergosphere for medium LOD
-    const eventHorizonRadius = object.radius || 0.1 * scale;
-    const ergosphereEffectiveRadiusMed = Math.max(
-      eventHorizonRadius * 1.05,
-      eventHorizonRadius *
-        (1.0 +
-          Math.sqrt(1.0 - Math.pow(Math.min(0.99, this.rotationSpeed), 2.0))),
-    );
-    const ergosphereGeoMed = new THREE.SphereGeometry(
-      ergosphereEffectiveRadiusMed,
-      24,
-      16,
-    );
-    // Reuse ergosphere material instance if already created
-    if (!this.ergosphereMaterialInstance) {
-      this.ergosphereMaterialInstance = new ErgosphereMaterial(
-        this.rotationSpeed,
-      );
-      this.materials.set(
-        `${object.celestialObjectId}-ergosphere-med`,
-        this.ergosphereMaterialInstance,
-      );
-    } else {
-      // If ergosphereMaterialInstance is shared, ensure it's in the materials map for update by BaseStarRenderer
-      if (
-        !this.materials.has(`${object.celestialObjectId}-ergosphere-med`) &&
-        !this.materials.has(`${object.celestialObjectId}-ergosphere`)
-      ) {
-        this.materials.set(
-          `${object.celestialObjectId}-ergosphere`,
-          this.ergosphereMaterialInstance,
-        );
-      }
-    }
-    const ergosphereMeshMed = new THREE.Mesh(
-      ergosphereGeoMed,
-      this.ergosphereMaterialInstance,
-    );
-    mediumGroup.add(ergosphereMeshMed);
-    // No jets for medium LOD to save performance
-
+    const mediumDetailGroup = new THREE.Group();
+    mediumDetailGroup.name = `${object.celestialObjectId}-medium-lod`;
+    const eventHorizonMeshMedium = this.createEventHorizonMesh(object);
+    mediumDetailGroup.add(eventHorizonMeshMedium);
     const level1: LODLevel = {
-      object: mediumGroup,
-      distance: 2500 * scale, // Effects fade out further for Kerr due to jets potential
+      object: mediumDetailGroup,
+      distance: 1500 * scale,
     };
+
     return [level0, level1];
   }
 
@@ -382,7 +368,7 @@ export class KerrBlackHoleRenderer extends BaseBlackHoleRenderer {
     object: RenderableCelestialObject,
   ): number {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-    return 25000 * scale; // Kerr black holes with jets might be noticeable from further away
+    return 6000 * scale;
   }
 
   /**
@@ -458,9 +444,7 @@ export class KerrBlackHoleRenderer extends BaseBlackHoleRenderer {
     this.accretionDiskMaterialInstance?.update(currentTime);
 
     if (renderer && scene && camera) {
-      this.lensingHelpers.forEach((helper) => {
-        helper.update(renderer, scene, camera as THREE.PerspectiveCamera);
-      });
+      // Implement lensing update logic here
     }
   }
 
@@ -476,11 +460,16 @@ export class KerrBlackHoleRenderer extends BaseBlackHoleRenderer {
     this.accretionDiskMaterialInstance = null;
     this.jetMaterialInstance = null;
 
-    this.lensingHelpers.forEach((helper) => {
-      helper.dispose();
+    this.materials.forEach((material, key) => {
+      if (
+        key.startsWith(`${this.object.celestialObjectId}-`) &&
+        key.endsWith("-material")
+      ) {
+        material.dispose();
+      }
     });
 
-    this.lensingHelpers.clear();
+    this.materials.clear();
 
     this.ergosphereMaterialInstance = null;
   }

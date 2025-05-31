@@ -113,7 +113,6 @@ export interface CelestialObjectCreationInput {
   siderealRotationPeriod_s?: number;
   axialTilt?: OSVector3;
   atmosphere?: CelestialObject["atmosphere"];
-  surface?: CelestialObject["surface"];
   properties?: CelestialSpecificPropertiesUnion;
   seed?: string | number;
   ignorePhysics?: boolean;

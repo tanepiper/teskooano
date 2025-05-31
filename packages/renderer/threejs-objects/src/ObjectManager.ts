@@ -20,6 +20,7 @@ import {
   RingSystemRenderer,
 } from "@teskooano/systems-celestial";
 import type { Observable, Subscription } from "rxjs";
+import { distinctUntilChanged, tap } from "rxjs/operators";
 import * as THREE from "three";
 import {
   GravitationalLensingHandler,
@@ -153,6 +154,8 @@ export class ObjectManager {
     this.css2DManager = css2DManager;
     this.acceleration$ = acceleration$; // Assign the observable
 
+    console.log("[ObjectManager CONSTRUCTOR] Initializing ObjectManager...");
+
     this.lodManager = new LODManager(camera);
     this.initCelestialRenderers(); // Initialize specialized renderers
     this.lensingHandler = new GravitationalLensingHandler({
@@ -247,14 +250,31 @@ export class ObjectManager {
    */
   private subscribeToStateChanges(): void {
     // Subscribe to renderable objects and sync the scene via ObjectLifecycleManager
-    this.objectsSubscription = this.renderableObjects$.subscribe(
-      (objects: Record<string, RenderableCelestialObject>) => {
+    console.log(
+      "[ObjectManager SUB_TO_STATE_CHANGES] Setting up subscription to renderableObjects$",
+    );
+    this.objectsSubscription = this.renderableObjects$
+      .pipe(
+        // tap(allObjects => console.log(`[ObjectManager RX Debug BEFORE JSON DISTINCT] renderableObjects$ emitted ${Object.keys(allObjects).length} objects.`)),
+        distinctUntilChanged((prev, curr) => {
+          // Only stringify if both are non-null to avoid errors if the stream starts with null/undefined
+          if (prev && curr) {
+            return JSON.stringify(prev) === JSON.stringify(curr);
+          }
+          return prev === curr; // Standard reference check if one is null/undefined
+        }),
+        tap((allObjects) =>
+          console.log(
+            `[ObjectManager RX Debug AFTER JSON DISTINCT] renderableObjects$ emitted ${Object.keys(allObjects).length} objects. Syncing...`,
+          ),
+        ),
+      )
+      .subscribe((objects: Record<string, RenderableCelestialObject>) => {
         this.latestRenderableObjects = objects;
         this.objectLifecycleManager.syncObjectsWithState(
           this.latestRenderableObjects,
         );
-      },
-    );
+      });
 
     // Subscribe to acceleration vectors and update the visualization
     this.accelerationsSubscription = this.acceleration$.subscribe(

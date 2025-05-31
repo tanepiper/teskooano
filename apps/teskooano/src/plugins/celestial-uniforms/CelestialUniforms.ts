@@ -1,14 +1,12 @@
 import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
 import {
   type CelestialObject,
-  CelestialSpecificPropertiesUnion,
   CelestialStatus,
   CelestialType,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
   type StarProperties,
-  CustomEvents,
-  type SliderValueChangePayload,
+  StellarType,
 } from "@teskooano/data-types";
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 
@@ -17,10 +15,12 @@ import { FormatUtils } from "./utils/formatters";
 import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 
-import { actions } from "@teskooano/core-state";
-import { Subscription, fromEvent, merge } from "rxjs";
-import { map, distinctUntilChanged, tap, filter } from "rxjs/operators";
+import { Subscription } from "rxjs";
 import { template } from "./CelestialUniforms.template";
+import { UniformControlUtils } from "./utils/UniformControlUtils";
+
+// Import the star uniform panel
+import { MainSequenceStarUniforms } from "./bodies/stars"; // Assuming index.ts exports it
 
 /**
  * Custom Element `celestial-uniforms-editor`.
@@ -273,6 +273,7 @@ export class CelestialUniformsEditor
       this._lastRenderedObjectId = null;
       return;
     }
+    container.innerHTML = ""; // Clear previous content before rendering new UI
     container.style.display = "block";
 
     if (!celestial.properties) {
@@ -285,28 +286,58 @@ export class CelestialUniformsEditor
 
     switch (celestial.type) {
       case CelestialType.STAR:
-        if (celestial.properties.type === CelestialType.STAR) {
-          const { element, subscription } = this._createColorInput(
-            "Star Color:",
-            celestial.id,
-            celestial,
-            ["color"],
+        const starProps = celestial.properties as StarProperties;
+        if (starProps && starProps.stellarType) {
+          switch (starProps.stellarType) {
+            case StellarType.MAIN_SEQUENCE:
+              const mainSequencePanel = new MainSequenceStarUniforms();
+              if (
+                typeof (mainSequencePanel as any).updateStarData === "function"
+              ) {
+                (mainSequencePanel as any).updateStarData(celestial);
+              } else {
+                console.warn(
+                  "MainSequenceStarUniforms panel is missing updateStarData method.",
+                );
+              }
+              container.appendChild(mainSequencePanel);
+              break;
+            // Add cases for other stellar types here later
+            // e.g., PreMainSequenceStarUniforms, BlackHoleUniforms etc.
+            default:
+              this.showPlaceholder(
+                `No specific uniform editor for star type: ${starProps.stellarType}`,
+              );
+              break;
+          }
+        } else {
+          this.showPlaceholder(
+            `Star ${celestial.name} has no stellarType property defined for uniform editing.`,
           );
-          container.appendChild(element);
-          this.activeInputSubscriptions.push(subscription);
         }
         break;
       case CelestialType.PLANET:
       case CelestialType.MOON:
       case CelestialType.DWARF_PLANET:
         const planetProps = celestial.properties as PlanetProperties;
-        if (planetProps && planetProps.surface) {
+        if (
+          planetProps &&
+          planetProps.surface &&
+          planetProps.surface.proceduralData
+        ) {
+          // Procedural data exists, pass it to the controls renderer
           this._renderProceduralSurfaceControls(
             container,
-            celestial,
-            planetProps.surface as ProceduralSurfaceProperties,
+            celestial, // Pass the whole celestial object for context
+            planetProps.surface.proceduralData, // Pass the proceduralData directly
+          );
+        } else if (planetProps && planetProps.surface) {
+          // Surface exists but no proceduralData
+          this.showPlaceholder(
+            `Planet ${celestial.name} has surface properties, but no editable procedural data.`,
           );
         } else {
+          // No surface properties at all
           this.showPlaceholder(
             `Planet ${celestial.name} has no surface properties defined for editing.`,
           );
@@ -322,230 +353,64 @@ export class CelestialUniformsEditor
 
   // --- Start of Helper Methods ---
 
-  private _deepClone<T>(obj: T): T {
-    if (obj === null || typeof obj !== "object") {
-      return obj;
-    }
-    if (obj instanceof Date) {
-      return new Date(obj.getTime()) as any;
-    }
-    if (Array.isArray(obj)) {
-      return obj.map((item) => this._deepClone(item)) as any;
-    }
-    const clonedObj = {} as T;
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        clonedObj[key] = this._deepClone(obj[key]);
-      }
-    }
-    return clonedObj;
-  }
-
-  /**
-   * Updates a property path in an object.
-   * @param obj - The object to update.
-   * @param path - The path to the property to update.
-   * @param value - The value to set.
-   * @returns The updated object.
-   */
-  private _updatePropertyPath(
-    obj: any,
-    path: string[],
-    value: any,
-  ): CelestialSpecificPropertiesUnion {
-    let current = obj;
-    // Now traverse the rest of the path
-    for (let i = 0; i < path.length - 1; i++) {
-      const key = path[i];
-      if (typeof current[key] !== "object" || current[key] === null) {
-        current[key] = {};
-      }
-      current = current[key];
-    }
-    current[path[path.length - 1]] = value;
-    return obj;
-  }
-
-  private _createNumericInput(
-    labelText: string,
-    celestialId: string,
-    currentCelestialObject: CelestialObject,
-    propertyPathToUniform: string[],
-  ): { element: HTMLElement; subscription: Subscription } {
-    const wrapper = document.createElement("div");
-    wrapper.className = "uniform-control";
-
-    // Use teskooano-slider instead of input
-    const slider = document.createElement("teskooano-slider");
-    slider.setAttribute("label", labelText);
-    slider.setAttribute("min", "-100"); // Default min, can be overridden by options
-    slider.setAttribute("max", "100"); // Default max, can be overridden by options
-    slider.setAttribute("step", "0.01"); // Default step, can be overridden by options
-    slider.setAttribute("editable-value", ""); // Add editable value attribute
-
-    let initialValueForInput: any = currentCelestialObject.properties;
-    try {
-      for (const key of propertyPathToUniform) {
-        initialValueForInput = initialValueForInput[key];
-      }
-    } catch (e) {
-      console.warn(
-        `Could not resolve path ${propertyPathToUniform.join(".")} for ${labelText}. Defaulting to 0.`,
-      );
-      initialValueForInput = 0; // Default to number 0
-    }
-    // Ensure initialValue is a number before setting attribute
-    const numericInitialValue = Number(initialValueForInput ?? 0);
-    slider.setAttribute("value", String(numericInitialValue));
-
-    // Listen to the 'SLIDER_CHANGE' event from the slider
-    const subscription = fromEvent<CustomEvent<SliderValueChangePayload>>(
-      slider,
-      CustomEvents.SLIDER_CHANGE,
-    )
-      .pipe(
-        // Extract value from event detail
-        map((event) => event.detail.value),
-        distinctUntilChanged((prev, curr) => prev === curr && !isNaN(prev)),
-        tap((newValue) => {
-          const latestCelestial = getCelestialObjects()[celestialId];
-          if (latestCelestial && latestCelestial.properties) {
-            const clonedProperties = this._deepClone(
-              latestCelestial.properties,
-            );
-            const updatedProperties = this._updatePropertyPath(
-              clonedProperties,
-              propertyPathToUniform,
-              newValue, // Use the numeric value directly
-            );
-            actions.updateCelestialObject(celestialId, {
-              properties: updatedProperties,
-            });
-          } else {
-            console.warn(
-              `[Uniform Editor] Could not find celestial object ${celestialId} or its properties for update.`,
-            );
-          }
-        }),
-      )
-      .subscribe();
-
-    wrapper.appendChild(slider); // Add the slider to the wrapper
-    return { element: wrapper, subscription };
-  }
-
-  private _createColorInput(
-    labelText: string,
-    celestialId: string,
-    currentCelestialObject: CelestialObject,
-    propertyPathToUniform: string[],
-  ): { element: HTMLElement; subscription: Subscription } {
-    const wrapper = document.createElement("div");
-    wrapper.className = "uniform-control";
-    const label = document.createElement("label");
-    label.textContent = labelText;
-    const input = document.createElement("input");
-    input.type = "color";
-
-    let initialValueForInput: any = currentCelestialObject.properties;
-    try {
-      for (const key of propertyPathToUniform) {
-        initialValueForInput = initialValueForInput[key];
-      }
-    } catch (e) {
-      console.warn(
-        `Could not resolve path ${propertyPathToUniform.join(".")} for ${labelText}. Defaulting to #000000.`,
-      );
-      initialValueForInput = "#000000";
-    }
-    input.value = String(initialValueForInput ?? "#000000");
-
-    const subscription = fromEvent(input, "change")
-      .pipe(
-        map((event) => (event.target as HTMLInputElement).value),
-        distinctUntilChanged(),
-        tap((newColor) => {
-          const latestCelestial = getCelestialObjects()[celestialId];
-          if (latestCelestial && latestCelestial.properties) {
-            const clonedProperties = this._deepClone(
-              latestCelestial.properties,
-            );
-            const updatedProperties = this._updatePropertyPath(
-              clonedProperties,
-              propertyPathToUniform,
-              newColor,
-            );
-            actions.updateCelestialObject(celestialId, {
-              properties: updatedProperties,
-            });
-          } else {
-            console.warn(
-              `[Uniform Editor] Could not find celestial object ${celestialId} or its properties for update.`,
-            );
-          }
-        }),
-      )
-      .subscribe();
-
-    wrapper.appendChild(label);
-    wrapper.appendChild(input);
-    return { element: wrapper, subscription };
-  }
-
   private _renderProceduralSurfaceControls(
     container: HTMLElement,
-    celestialObject: CelestialObject,
-    surfaceProps: ProceduralSurfaceProperties,
+    celestialObject: CelestialObject, // Keep celestialObject for ID and full properties access
+    proceduralSurfaceData: ProceduralSurfaceProperties, // Now receives ProceduralSurfaceProperties directly
   ) {
-    const { id: celestialId, properties } = celestialObject;
-    if (!properties) return;
+    const { id: celestialId } = celestialObject;
+    // We don't need 'properties' from celestialObject directly here anymore for the paths,
+    // as proceduralSurfaceData is already the specific part we need for UI values.
+    // However, UniformControlUtils will need the full celestialObject to construct update paths.
+
+    // Keep track of subscriptions specific to these procedural controls
+    // const proceduralControlSubscriptions: Subscription[] = []; // This seems unused, consider removing if not needed later
 
     const addControl = (
       label: string,
       path: string[],
       type: "color" | "number",
       options?: {
-        min?: number;
-        max?: number;
-        step?: number;
+        min?: string; // Changed to string for consistency with teskooano-slider attributes
+        max?: string;
+        step?: string;
+        initialValue?: number | string; // Allow string for color, number for numeric
       },
     ) => {
       let controlElement: HTMLElement | undefined;
       let inputSubscription: Subscription | undefined;
 
       if (type === "color") {
-        const { element, subscription } = this._createColorInput(
+        const { element, subscription } = UniformControlUtils.createColorInput(
           label,
           celestialId,
           celestialObject,
           path,
+          options?.initialValue as string | undefined, // Pass initialValue if provided
         );
         controlElement = element;
         inputSubscription = subscription;
       } else if (type === "number") {
-        const { element, subscription } = this._createNumericInput(
-          label,
-          celestialId,
-          celestialObject,
-          path,
-        );
-        // Get the slider element within the wrapper
-        const slider = element.querySelector("teskooano-slider");
-        if (slider && options) {
-          // Use setAttribute for slider properties
-          if (options.min !== undefined)
-            slider.setAttribute("min", String(options.min));
-          if (options.max !== undefined)
-            slider.setAttribute("max", String(options.max));
-          if (options.step !== undefined)
-            slider.setAttribute("step", String(options.step));
-        }
+        const { element, subscription } =
+          UniformControlUtils.createNumericInput(
+            label,
+            celestialId,
+            celestialObject,
+            path,
+            {
+              min: options?.min,
+              max: options?.max,
+              step: options?.step,
+              initialValue: options?.initialValue as number | undefined,
+            },
+          );
         controlElement = element;
         inputSubscription = subscription;
       }
 
       if (controlElement && inputSubscription) {
         container.appendChild(controlElement);
+        // Add to the main activeInputSubscriptions array managed by the class
         this.activeInputSubscriptions.push(inputSubscription);
       }
     };
@@ -555,136 +420,244 @@ export class CelestialUniformsEditor
     terrainHeader.textContent = "Terrain Generation";
     container.appendChild(terrainHeader);
 
-    addControl("Terrain Type:", ["surface", "terrainType"], "number", {
-      min: 1,
-      max: 3,
-      step: 1,
-    });
     addControl(
-      "Terrain Amplitude:",
-      ["surface", "terrainAmplitude"],
+      "Terrain Type:",
+      ["surface", "proceduralData", "terrainType"],
       "number",
       {
-        min: 0.1,
-        max: 2.0,
-        step: 0.1,
+        min: "1",
+        max: "3",
+        step: "1",
+        initialValue: proceduralSurfaceData.terrainType,
+      },
+    );
+    addControl(
+      "Terrain Amplitude:",
+      ["surface", "proceduralData", "terrainAmplitude"],
+      "number",
+      {
+        min: "0.1",
+        max: "2.0",
+        step: "0.1",
+        initialValue: proceduralSurfaceData.terrainAmplitude,
       },
     );
     addControl(
       "Terrain Sharpness:",
-      ["surface", "terrainSharpness"],
+      ["surface", "proceduralData", "terrainSharpness"],
       "number",
       {
-        min: 0.1,
-        max: 2.0,
-        step: 0.1,
+        min: "0.1",
+        max: "2.0",
+        step: "0.1",
+        initialValue: proceduralSurfaceData.terrainSharpness,
       },
     );
-    addControl("Terrain Offset:", ["surface", "terrainOffset"], "number", {
-      min: -0.5,
-      max: 0.5,
-      step: 0.05,
-    });
-    addControl("Undulation:", ["surface", "undulation"], "number", {
-      min: 0,
-      max: 1,
-      step: 0.05,
-    });
+    addControl(
+      "Terrain Offset:",
+      ["surface", "proceduralData", "terrainOffset"],
+      "number",
+      {
+        min: "-0.5",
+        max: "0.5",
+        step: "0.05",
+        initialValue: proceduralSurfaceData.terrainOffset,
+      },
+    );
+    addControl(
+      "Undulation:",
+      ["surface", "proceduralData", "undulation"],
+      "number",
+      {
+        min: "0",
+        max: "1",
+        step: "0.05",
+        initialValue: proceduralSurfaceData.undulation,
+      },
+    );
 
     // Add a section header for noise parameters
     const noiseHeader = document.createElement("h3");
     noiseHeader.textContent = "Noise Parameters";
     container.appendChild(noiseHeader);
 
-    addControl("Persistence:", ["surface", "persistence"], "number", {
-      min: 0,
-      max: 1,
-      step: 0.01,
+    addControl(
+      "Persistence:",
+      ["surface", "proceduralData", "persistence"],
+      "number",
+      {
+        min: "0",
+        max: "1",
+        step: "0.01",
+        initialValue: proceduralSurfaceData.persistence,
+      },
+    );
+    addControl(
+      "Lacunarity:",
+      ["surface", "proceduralData", "lacunarity"],
+      "number",
+      {
+        min: "0",
+        max: "10",
+        step: "0.1",
+        initialValue: proceduralSurfaceData.lacunarity,
+      },
+    );
+    addControl(
+      "Period:",
+      ["surface", "proceduralData", "simplePeriod"],
+      "number",
+      {
+        min: "0.1",
+        max: "20",
+        step: "0.1",
+        initialValue: proceduralSurfaceData.simplePeriod,
+      },
+    );
+    addControl("Octaves:", ["surface", "proceduralData", "octaves"], "number", {
+      min: "1",
+      max: "10",
+      step: "1",
+      initialValue: proceduralSurfaceData.octaves,
     });
-    addControl("Lacunarity:", ["surface", "lacunarity"], "number", {
-      min: 0,
-      max: 10,
-      step: 0.1,
-    });
-    addControl("Period:", ["surface", "simplePeriod"], "number", {
-      min: 0.1,
-      max: 20,
-      step: 0.1,
-    });
-    addControl("Octaves:", ["surface", "octaves"], "number", {
-      min: 1,
-      max: 10,
-      step: 1,
-    });
-    addControl("Bump Scale:", ["surface", "bumpScale"], "number", {
-      min: 0,
-      max: 5,
-      step: 0.1,
-    });
+    addControl(
+      "Bump Scale:",
+      ["surface", "proceduralData", "bumpScale"],
+      "number",
+      {
+        min: "0",
+        max: "5",
+        step: "0.1",
+        initialValue: proceduralSurfaceData.bumpScale,
+      },
+    );
 
     // Add a section header for colors
     const colorHeader = document.createElement("h3");
     colorHeader.textContent = "Color Ramp";
     container.appendChild(colorHeader);
 
-    addControl("Color 1 (Lowest):", ["surface", "color1"], "color");
-    addControl("Color 2:", ["surface", "color2"], "color");
-    addControl("Color 3:", ["surface", "color3"], "color");
-    addControl("Color 4:", ["surface", "color4"], "color");
-    addControl("Color 5 (Highest):", ["surface", "color5"], "color");
+    addControl(
+      "Color 1 (Lowest):",
+      ["surface", "proceduralData", "color1"],
+      "color",
+      { initialValue: proceduralSurfaceData.color1 },
+    );
+    addControl("Color 2:", ["surface", "proceduralData", "color2"], "color", {
+      initialValue: proceduralSurfaceData.color2,
+    });
+    addControl("Color 3:", ["surface", "proceduralData", "color3"], "color", {
+      initialValue: proceduralSurfaceData.color3,
+    });
+    addControl("Color 4:", ["surface", "proceduralData", "color4"], "color", {
+      initialValue: proceduralSurfaceData.color4,
+    });
+    addControl(
+      "Color 5 (Highest):",
+      ["surface", "proceduralData", "color5"],
+      "color",
+      { initialValue: proceduralSurfaceData.color5 },
+    );
 
     // Add a section header for height controls
     const heightHeader = document.createElement("h3");
     heightHeader.textContent = "Height Controls";
     container.appendChild(heightHeader);
 
-    addControl("Height Level 1:", ["surface", "height1"], "number", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-    addControl("Height Level 2:", ["surface", "height2"], "number", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-    addControl("Height Level 3:", ["surface", "height3"], "number", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-    addControl("Height Level 4:", ["surface", "height4"], "number", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
-    addControl("Height Level 5:", ["surface", "height5"], "number", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
+    addControl(
+      "Height Level 1:",
+      ["surface", "proceduralData", "height1"],
+      "number",
+      {
+        min: "0",
+        max: "1",
+        step: "0.01",
+        initialValue: proceduralSurfaceData.height1,
+      },
+    );
+    addControl(
+      "Height Level 2:",
+      ["surface", "proceduralData", "height2"],
+      "number",
+      {
+        min: "0",
+        max: "1",
+        step: "0.01",
+        initialValue: proceduralSurfaceData.height2,
+      },
+    );
+    addControl(
+      "Height Level 3:",
+      ["surface", "proceduralData", "height3"],
+      "number",
+      {
+        min: "0",
+        max: "1",
+        step: "0.01",
+        initialValue: proceduralSurfaceData.height3,
+      },
+    );
+    addControl(
+      "Height Level 4:",
+      ["surface", "proceduralData", "height4"],
+      "number",
+      {
+        min: "0",
+        max: "1",
+        step: "0.01",
+        initialValue: proceduralSurfaceData.height4,
+      },
+    );
+    addControl(
+      "Height Level 5:",
+      ["surface", "proceduralData", "height5"],
+      "number",
+      {
+        min: "0",
+        max: "1",
+        step: "0.01",
+        initialValue: proceduralSurfaceData.height5,
+      },
+    );
 
     // Add a section header for material properties
     const materialHeader = document.createElement("h3");
     materialHeader.textContent = "Material Properties";
     container.appendChild(materialHeader);
 
-    addControl("Shininess:", ["surface", "shininess"], "number", {
-      min: 1,
-      max: 64,
-      step: 1,
-    });
+    addControl(
+      "Shininess:",
+      ["surface", "proceduralData", "shininess"],
+      "number",
+      {
+        min: "1",
+        max: "64", // Shininess might actually be 0-1 in some contexts, or higher for Phong. Check material. Max 64 for typical Phong. Let's assume 0-100 or similar based on typical sliders.
+        step: "1",
+        initialValue: proceduralSurfaceData.shininess,
+      },
+    );
     addControl(
       "Specular Strength:",
-      ["surface", "specularStrength"],
+      ["surface", "proceduralData", "specularStrength"],
       "number",
-      { min: 0, max: 0.5, step: 0.01 },
+      {
+        min: "0",
+        max: "1",
+        step: "0.01",
+        initialValue: proceduralSurfaceData.specularStrength,
+      }, // Max typically 1
     );
-    addControl("Roughness:", ["surface", "roughness"], "number", {
-      min: 0,
-      max: 1,
-      step: 0.01,
-    });
+    addControl(
+      "Roughness:",
+      ["surface", "proceduralData", "roughness"],
+      "number",
+      {
+        min: "0",
+        max: "1",
+        step: "0.01",
+        initialValue: proceduralSurfaceData.roughness,
+      },
+    );
 
     // Add a section header for lighting properties
     const lightingHeader = document.createElement("h3");
@@ -693,9 +666,14 @@ export class CelestialUniformsEditor
 
     addControl(
       "Ambient Light Intensity:",
-      ["surface", "ambientLightIntensity"],
+      ["surface", "proceduralData", "ambientLightIntensity"],
       "number",
-      { min: 0, max: 0.5, step: 0.01 },
+      {
+        min: "0",
+        max: "1",
+        step: "0.01",
+        initialValue: proceduralSurfaceData.ambientLightIntensity,
+      }, // Max typically 1
     );
   }
 

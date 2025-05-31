@@ -12,11 +12,7 @@ export interface CelestialMeshOptions {
   segments?: number;
 }
 
-export * from "./common/CelestialRenderer";
-
-export * from "./common/BaseCelestialRenderer";
-
-export * from "./common/CelestialRendererDebugHelper";
+export * from "./common";
 
 export * from "./gas-giants";
 export * from "./particles";

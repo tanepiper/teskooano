@@ -7,6 +7,9 @@ export type { SurfaceProperties } from "./celestials/components"; // Export Surf
 export {
   StellarType,
   MainSequenceSpectralClass,
+  BrownDwarfSpectralClass,
+  type StellarPhysicsData,
+  type StellarRenderingData,
 } from "./celestials/common/stellar-classification"; // Export stellar enums
 export {
   SurfaceType,

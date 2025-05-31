@@ -3,11 +3,10 @@ import {
   PostMainSequenceStarRenderer,
   PostMainSequenceStarMaterial,
 } from "./post-main-sequence-star-renderer";
-import { CoronaMaterial } from "../base/base-star";
+import { CoronaMaterial } from "../base/base-star.material";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import { LODLevel } from "../../index";
 import { AU_METERS, SCALE } from "@teskooano/data-types";
-import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions, LODLevel } from "../../common/types";
 
 /**
  * Material for red giant stars.
@@ -116,38 +115,46 @@ export class RedGiantRenderer extends PostMainSequenceStarRenderer {
   }
 
   protected addCorona(
-    object: RenderableCelestialObject,
     group: THREE.Group,
+    object: RenderableCelestialObject,
+    coronaScales: number[] = [
+      object.radius * 1.5,
+      object.radius * 2.0,
+      object.radius * 2.5,
+    ],
+    baseOpacity: number = 0.2,
+    shaderOverride?: { vertex: string; fragment: string },
   ): void {
     // Enhanced corona due to stellar wind mass loss
-    super.addCorona(object, group);
+    super.addCorona(group, object, coronaScales, baseOpacity, shaderOverride);
 
     // Add additional mass loss envelope using standard corona approach
-    const starColor = this.getStarColor(object);
     const existingMaterials =
       this.coronaMaterials.get(object.celestialObjectId) || [];
 
     const massLossRadius = object.radius * 2.5;
     const massLossGeometry = new THREE.SphereGeometry(massLossRadius, 96, 96);
 
-    // CoronaMaterial constructor expects: color, options, vertexShader, fragmentShader
     const massLossMaterial = new CoronaMaterial(
-      new THREE.Color(0x441100), // Darker, dustier color for mass loss
+      new THREE.Color(0x441100),
       {
         scale: 2.5,
         opacity: 0.03,
-        pulseSpeed: 0.1, // Slightly different pulse for this layer
-        noiseScale: 1.5, // Different noise characteristics
-        noiseEvolutionSpeed: 0.5, // Added for more dynamic mass loss envelope
+        pulseSpeed: 0.1,
+        noiseScale: 1.5,
+        noiseEvolutionSpeed: 0.5,
+        timeOffset:
+          (object.properties as any)?.timeOffset ?? Math.random() * 1000.0,
       },
-      this.getCoronaVertexShader(object), // Use the shared (simple) vertex shader
-      this.getCoronaFragmentShader(object), // Use the shared corona fragment shader
+      shaderOverride?.vertex ?? this.getCoronaVertexShader(object),
+      shaderOverride?.fragment ?? this.getCoronaFragmentShader(object),
     );
 
     existingMaterials.push(massLossMaterial);
-    this.coronaMaterials.set(object.celestialObjectId, existingMaterials); // Ensure the map is updated
+    this.coronaMaterials.set(object.celestialObjectId, existingMaterials);
     const massLossMesh = new THREE.Mesh(massLossGeometry, massLossMaterial);
     massLossMesh.name = `${object.celestialObjectId}-mass-loss-envelope`;
+
     group.add(massLossMesh);
   }
 }

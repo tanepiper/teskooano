@@ -1,15 +1,13 @@
 import * as THREE from "three";
+import { SCALE } from "@teskooano/data-types";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { CelestialMeshOptions, LODLevel } from "../../common/types";
+import type { StarProperties } from "@teskooano/data-types";
 import {
   PreMainSequenceStarRenderer,
   PreMainSequenceStarMaterial,
 } from "./pre-main-sequence-star-renderer";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import { type StarProperties, SCALE } from "@teskooano/data-types";
-import { LODLevel } from "../../index";
-import type {
-  CelestialMeshOptions,
-  LightSourceData,
-} from "../../common/CelestialRenderer";
+import type { BaseStarUniformArgs } from "../main-sequence/main-sequence-star";
 
 // Placeholder shaders for T-Tauri jets
 const TTAURI_JET_VERTEX_SHADER = `
@@ -60,23 +58,8 @@ void main() {
 `;
 
 /**
- * Material for the main body of T-Tauri stars.
- */
-export class TTauriMaterial extends PreMainSequenceStarMaterial {
-  constructor(color: THREE.Color = new THREE.Color(0xffcc99)) {
-    super({
-      starColor: color, // Orangish-yellow
-      coronaIntensity: 0.3,
-      pulseSpeed: 0.6, // Often variable and active
-      glowIntensity: 0.7,
-      temperatureVariation: 0.6, // Active, turbulent surfaces
-      metallicEffect: 0.0,
-    });
-  }
-}
-
-/**
- * Renderer for T-Tauri stars - young, variable stars with disks and jets.
+ * Renderer for T-Tauri stars.
+ * These are young, variable stars, often with disks and strong stellar winds.
  */
 export class TTauriRenderer extends PreMainSequenceStarRenderer {
   constructor(
@@ -90,76 +73,82 @@ export class TTauriRenderer extends PreMainSequenceStarRenderer {
     object: RenderableCelestialObject,
   ): PreMainSequenceStarMaterial {
     const color = this.getStarColor(object);
-    return new TTauriMaterial(color);
+    const properties = object.properties as StarProperties;
+
+    const classDefaults: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
+      coronaIntensity: 0.3,
+      pulseSpeed: 0.5, // Variable stars, so pulse can be more pronounced
+      glowIntensity: 0.5,
+      temperatureVariation: 0.6, // Highly variable surface
+      metallicEffect: 0.02,
+      noiseEvolutionSpeed: 0.3, // Active surfaces
+    };
+
+    const propsUniforms = properties.shaderUniforms?.baseStar;
+    const propsTimeOffset = properties.timeOffset;
+
+    const finalMaterialOptions: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
+      ...classDefaults,
+      ...(propsUniforms || {}),
+      timeOffset:
+        propsTimeOffset ?? classDefaults.timeOffset ?? Math.random() * 1000.0,
+    };
+
+    return new PreMainSequenceStarMaterial(color, finalMaterialOptions);
   }
 
-  protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    return new THREE.Color(0xffcc99);
+  protected getStarColor(star: RenderableCelestialObject): THREE.Color {
+    const properties = star.properties as StarProperties;
+    if (properties?.color) {
+      try {
+        return new THREE.Color(properties.color);
+      } catch (e) {
+        console.warn(
+          `[TTauriRenderer] Invalid color '${properties.color}' in star properties. Falling back to class default.`,
+        );
+      }
+    }
+    return new THREE.Color(0xffc8a0); // Default T-Tauri color (Orangey-yellow)
   }
 
+  // T-Tauri stars often have disks, similar to protostars but perhaps less dense or different structure.
+  // The getEffectLayer from PreMainSequenceStarRenderer might be specialized here.
   protected getEffectLayer(
     object: RenderableCelestialObject,
     mainStarGroup: THREE.Group,
   ): THREE.Object3D | null {
+    // Example: T-Tauri might have a less dense disk or just stellar winds visuals
+    // For now, let's assume a simple disk, similar to a less prominent protostar disk
     const starRadius = object.radius || 0.1;
-    const jetLength = starRadius * 20; // Jets can be quite long
-    const jetBaseRadius = starRadius * 0.5;
+    const diskInnerRadius = starRadius * 2.0; // Disk further out
+    const diskOuterRadius = starRadius * 8;
 
-    const jetGroup = new THREE.Group();
+    const diskGeometry = new THREE.RingGeometry(
+      diskInnerRadius,
+      diskOuterRadius,
+      32,
+      5,
+      0,
+      Math.PI * 2,
+    );
+    diskGeometry.rotateX(-Math.PI / 2);
 
-    const jetGeometry = new THREE.ConeGeometry(
-      jetBaseRadius,
-      jetLength,
-      16,
-      1,
-      true,
-    ); // Open ended cone
-    // Position and orient the jets (one up, one down)
-    const jetMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0.0 },
-        jetColor: { value: new THREE.Color(0xaaddff) }, // Bluish, ionized gas
-        opacity: { value: 0.4 },
-      },
-      vertexShader: TTAURI_JET_VERTEX_SHADER,
-      fragmentShader: TTAURI_JET_FRAGMENT_SHADER,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
+    // Could use a specific T-Tauri disk shader or a generic one
+    const diskMaterial = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(0xaf8c73), // Dusty, slightly less dense than protostar
       side: THREE.DoubleSide,
-      depthWrite: false,
+      transparent: true,
+      opacity: 0.6,
     });
-    this.effectMaterials.set(`${object.celestialObjectId}-jets`, jetMaterial);
+    this.effectMaterials.set(`${object.celestialObjectId}-disk`, diskMaterial);
 
-    const jetTop = new THREE.Mesh(jetGeometry, jetMaterial);
-    jetTop.position.y = starRadius + jetLength / 2;
-    jetTop.name = `${object.celestialObjectId}-jet-top`;
-    jetGroup.add(jetTop);
-
-    const jetBottom = new THREE.Mesh(jetGeometry, jetMaterial);
-    jetBottom.position.y = -(starRadius + jetLength / 2);
-    jetBottom.rotation.x = Math.PI; // Rotate to point downwards
-    jetBottom.name = `${object.celestialObjectId}-jet-bottom`;
-    jetGroup.add(jetBottom);
-
-    jetGroup.name = `${object.celestialObjectId}-bipolar-jets`;
-    return jetGroup;
-  }
-
-  // Override update to include T-Tauri specific variability if desired (e.g. jet brightness, star spots)
-  override update(
-    time: number,
-    lightSources?: Map<string, any>,
-    camera?: THREE.Camera,
-  ): void {
-    super.update(time, lightSources, camera);
-    // Example: Modulate jet opacity or star material based on T-Tauri specific properties
-    // const starProps = object.properties as StarProperties;
-    // if (starProps && starProps.variabilityType === 'T_TAURI_FLARE') { ... }
-  }
-
-  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
-    const scale = typeof SCALE === "number" ? SCALE : 1;
-    return 8000 * scale;
+    const diskMesh = new THREE.Mesh(diskGeometry, diskMaterial);
+    diskMesh.name = `${object.celestialObjectId}-ttauri-disk`;
+    return diskMesh;
   }
 
   protected getCustomLODs(
@@ -167,23 +156,17 @@ export class TTauriRenderer extends PreMainSequenceStarRenderer {
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     const scale = typeof SCALE === "number" ? SCALE : 1;
-
     const highDetailGroup = this._createHighDetailGroup(object, {
       ...options,
-      segments: 80,
+      segments: 48, // T-Tauri stars are more defined than protostars but still young
     });
     const level0: LODLevel = { object: highDetailGroup, distance: 0 };
 
     const mediumStarOnlyGroup = super._createHighDetailGroup(object, {
       ...options,
-      segments: 40,
+      segments: 24,
+      includeEffects: false,
     });
-    const existingEffect = mediumStarOnlyGroup.getObjectByName(
-      `${object.celestialObjectId}-bipolar-jets`,
-    );
-    if (existingEffect) {
-      mediumStarOnlyGroup.remove(existingEffect);
-    }
     mediumStarOnlyGroup.name = `${object.celestialObjectId}-medium-lod`;
     const level1: LODLevel = {
       object: mediumStarOnlyGroup,
@@ -191,5 +174,10 @@ export class TTauriRenderer extends PreMainSequenceStarRenderer {
     };
 
     return [level0, level1];
+  }
+
+  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
+    const scale = typeof SCALE === "number" ? SCALE : 1;
+    return 4000 * scale; // Brighter/more distinct than protostars usually
   }
 }

@@ -3,19 +3,16 @@ import * as THREE from "three";
 import {
   MainSequenceStarMaterial,
   MainSequenceStarRenderer,
+  BaseStarUniformArgs,
 } from "./main-sequence-star";
 // import { BaseStarMaterial } from "../base/base-star"; // No longer needed
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import type { CelestialMeshOptions } from "../../common/CelestialRenderer";
+import type { CelestialMeshOptions } from "../../common/types";
+import type { StarProperties } from "@teskooano/data-types";
 
 // Removed shader imports as MainSequenceStarMaterial handles them
 // import mainSequenceVertexShader from "../../../shaders/star/main-sequence/vertex.glsl";
 // import mainSequenceFragmentShader from "../../../shaders/star/main-sequence/fragment.glsl";
-
-// Define the type for the second constructor parameter of MainSequenceStarMaterial
-type StarMaterialCtorOptions = ConstructorParameters<
-  typeof MainSequenceStarMaterial
->[1];
 
 /**
  * Material for O-class stars
@@ -47,39 +44,29 @@ export class ClassOStarRenderer extends MainSequenceStarRenderer {
     object: RenderableCelestialObject,
   ): THREE.ShaderMaterial {
     const color = this.getStarColor(object);
+    const properties = object.properties as StarProperties;
 
-    // Class-specific defaults for O-Class stars (hot, blue, intense)
-    const classDefaults: StarMaterialCtorOptions = {
-      coronaIntensity: 0.7,
-      pulseSpeed: 0.6,
-      glowIntensity: 0.8,
-      temperatureVariation: 0.15,
-      metallicEffect: 0.4,
-      noiseEvolutionSpeed: 0.2, // Faster animation for more dynamic O-type stars
-      timeOffset: Math.random() * 1000.0,
+    const classDefaults: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
+      coronaIntensity: 0.8,
+      pulseSpeed: 0.8,
+      glowIntensity: 0.7,
+      temperatureVariation: 0.02,
+      metallicEffect: 0.2,
+      noiseEvolutionSpeed: 0.03,
     };
 
-    const optsFromMesh: StarMaterialCtorOptions = {};
-    if (this.options) {
-      if (this.options.coronaIntensity !== undefined)
-        optsFromMesh.coronaIntensity = this.options.coronaIntensity;
-      if (this.options.pulseSpeed !== undefined)
-        optsFromMesh.pulseSpeed = this.options.pulseSpeed;
-      if (this.options.glowIntensity !== undefined)
-        optsFromMesh.glowIntensity = this.options.glowIntensity;
-      if (this.options.temperatureVariation !== undefined)
-        optsFromMesh.temperatureVariation = this.options.temperatureVariation;
-      if (this.options.metallicEffect !== undefined)
-        optsFromMesh.metallicEffect = this.options.metallicEffect;
-      if (this.options.noiseEvolutionSpeed !== undefined)
-        optsFromMesh.noiseEvolutionSpeed = this.options.noiseEvolutionSpeed;
-      if (this.options.timeOffset !== undefined)
-        optsFromMesh.timeOffset = this.options.timeOffset;
-    }
+    const propsUniforms = properties.shaderUniforms?.baseStar;
+    const propsTimeOffset = properties.timeOffset;
 
-    const finalMaterialOptions: StarMaterialCtorOptions = {
+    const finalMaterialOptions: Partial<BaseStarUniformArgs> & {
+      timeOffset?: number;
+    } = {
       ...classDefaults,
-      ...optsFromMesh,
+      ...(propsUniforms || {}),
+      timeOffset:
+        propsTimeOffset ?? classDefaults.timeOffset ?? Math.random() * 1000.0,
     };
 
     return new MainSequenceStarMaterial(color, finalMaterialOptions);
@@ -89,6 +76,16 @@ export class ClassOStarRenderer extends MainSequenceStarRenderer {
    * O-class stars are blue
    */
   protected getStarColor(star: RenderableCelestialObject): THREE.Color {
-    return new THREE.Color(0x9bb0ff);
+    const properties = star.properties as StarProperties;
+    if (properties?.color) {
+      try {
+        return new THREE.Color(properties.color);
+      } catch (e) {
+        console.warn(
+          `[ClassOStarRenderer] Invalid color '${properties.color}' in star properties. Falling back to class default.`,
+        );
+      }
+    }
+    return new THREE.Color(0x9bb0ff); // Default O-class color (Blue)
   }
 }

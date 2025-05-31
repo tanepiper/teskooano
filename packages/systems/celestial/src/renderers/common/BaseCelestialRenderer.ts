@@ -1,14 +1,13 @@
+import { renderableStore } from "@teskooano/core-state";
+import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
 import {
   CelestialMeshOptions,
-  CelestialRenderer,
   LightSourceData,
   LightSourcesMap,
   LODLevel,
-} from "./CelestialRenderer";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import { getCelestialObjects, renderableStore } from "@teskooano/core-state";
+} from "./types";
+import { CelestialRenderer } from "./CelestialRenderer";
 
 /**
  * Abstract base class for all celestial renderers
@@ -35,6 +34,16 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
    * The current elapsed time
    */
   protected elapsedTime: number = 0;
+
+  /**
+   * Set of object IDs managed by this renderer instance.
+   */
+  protected objectIds: Set<string> = new Set();
+
+  /**
+   * Reusable texture loader for subclasses.
+   */
+  protected textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
 
   /**
    * Reusable vectors for calculations
@@ -106,6 +115,7 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     });
 
     this.materials.clear();
+    this.objectIds.clear(); // Clear tracked object IDs
   }
 
   /**
@@ -136,6 +146,31 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
    */
   protected registerMaterial(objectId: string, material: THREE.Material): void {
     this.materials.set(objectId, material);
+  }
+
+  /**
+   * Tracks an object ID managed by this renderer.
+   * @param objectId The ID of the celestial object.
+   */
+  protected trackObject(objectId: string): void {
+    this.objectIds.add(objectId);
+  }
+
+  /**
+   * Stops tracking an object ID.
+   * @param objectId The ID of the celestial object.
+   */
+  protected untrackObject(objectId: string): void {
+    this.objectIds.delete(objectId);
+  }
+
+  /**
+   * Checks if an object ID is currently tracked by this renderer.
+   * @param objectId The ID of the celestial object.
+   * @returns True if the object is tracked, false otherwise.
+   */
+  protected isTrackingObject(objectId: string): boolean {
+    return this.objectIds.has(objectId);
   }
 
   /**

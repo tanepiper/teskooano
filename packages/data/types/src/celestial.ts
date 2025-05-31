@@ -154,6 +154,30 @@ export interface StarProperties extends SpecificPropertiesBase {
   /** Optional stellar characteristics computed from physics data (variability, wind rates, etc.) */
   characteristics?: Record<string, any>;
   timeOffset?: number;
+
+  /** NEW: Configuration for shader uniforms specific to this star's rendering materials. */
+  shaderUniforms?: {
+    baseStar?: {
+      // color is handled by the root StarProperties.color for the main shader starColor
+      coronaIntensity?: number;
+      pulseSpeed?: number;
+      glowIntensity?: number;
+      temperatureVariation?: number;
+      metallicEffect?: number;
+      noiseEvolutionSpeed?: number;
+      // timeOffset is already a root prop, but could be mirrored/sourced here if needed by specific logic
+    };
+    corona?: {
+      // starColor for corona will also typically derive from root StarProperties.color
+      opacity?: number;
+      pulseSpeed?: number;
+      noiseScale?: number;
+      noiseEvolutionSpeed?: number;
+    };
+    // Future: Add configurations for other specific materials like pulsar jets, accretion disks etc.
+    // neutronStarJet?: { ... };
+    // accretionDisk?: { ... };
+  };
 }
 
 export interface PlanetAtmosphereProperties {
