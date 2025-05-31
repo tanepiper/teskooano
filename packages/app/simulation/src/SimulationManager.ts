@@ -40,9 +40,14 @@ export class SimulationManager {
   private lastTime = 0;
   private isRunning = false;
   // private lastLoggedTime = 0; // This wasn't used for logging, can be removed if confirmed
-  private accumulatedTime = 0;
+  private accumulatedTime = 0; // Total elapsed simulation time (scaled)
   private resetTimeSubscription: Subscription | null = null;
   private animationFrameId: number | null = null;
+
+  // Fixed time step properties
+  private readonly PHYSICS_TICK_RATE_HZ = 125; // Target physics updates per second
+  private readonly FIXED_PHYSICS_DT_S = 1.0 / this.PHYSICS_TICK_RATE_HZ;
+  private timeAccumulatorForPhysics = 0; // Accumulates wall-clock time for physics steps
 
   // Event Subjects
   private readonly _resetTime$ = new Subject<void>();
@@ -177,127 +182,157 @@ export class SimulationManager {
     const acquiredVectors: THREE.Vector3[] = []; // For vectorPool
 
     try {
-      const deltaTime = (currentTime - this.lastTime) / 1000;
+      const elapsedFrameTime_s = (currentTime - this.lastTime) / 1000;
       this.lastTime = currentTime;
 
-      const fixedDeltaTime = Math.min(deltaTime, 0.008); // 8ms fixed step
+      this.timeAccumulatorForPhysics += elapsedFrameTime_s;
 
+      // Cap the accumulator to prevent spiral of death if frames take too long
+      // e.g., max 5 physics steps per frame to prevent freezing if performance tanks
+      const MAX_ACCUMULATED_STEPS = 5;
+      if (
+        this.timeAccumulatorForPhysics >
+        this.FIXED_PHYSICS_DT_S * MAX_ACCUMULATED_STEPS
+      ) {
+        this.timeAccumulatorForPhysics =
+          this.FIXED_PHYSICS_DT_S * MAX_ACCUMULATED_STEPS;
+        // Optionally log a warning if this happens frequently
+        // console.warn("Simulation falling behind real-time, capping accumulated physics steps.");
+      }
+
+      while (this.timeAccumulatorForPhysics >= this.FIXED_PHYSICS_DT_S) {
+        if (!getSimulationState().paused) {
+          const timeScale = getSimulationState().timeScale;
+          // Use the fixed physics dt, scaled by the current timeScale
+          const scaledFixedDeltaTime = this.FIXED_PHYSICS_DT_S * timeScale;
+          this.accumulatedTime += scaledFixedDeltaTime; // This is the total simulation time
+
+          // Note: setSimulationState for time will be called once after the while loop
+          // to ensure it reflects the final accumulatedTime for this frame.
+
+          const activeBodiesReal = physicsSystemAdapter.getPhysicsBodies();
+          const allCelestialObjectsForParams =
+            physicsSystemAdapter.getCelestialObjectsSnapshot();
+
+          const radii = new Map<string | number, number>();
+          const isStar = new Map<string | number, boolean>();
+          const bodyTypes = new Map<string | number, CelestialType>();
+          const parentIds = new Map<string | number, string | undefined>();
+          const orbitalParams = new Map<string | number, OrbitalParameters>();
+
+          Object.values(allCelestialObjectsForParams)
+            .filter(
+              (obj: CelestialObject) =>
+                obj.status !== CelestialStatus.DESTROYED &&
+                obj.status !== CelestialStatus.ANNIHILATED &&
+                !obj.ignorePhysics,
+            )
+            .forEach((obj: CelestialObject) => {
+              if (obj.physicsStateReal) {
+                radii.set(obj.id, obj.realRadius_m);
+                isStar.set(obj.id, obj.type === CelestialType.STAR);
+                bodyTypes.set(obj.id, obj.type);
+                parentIds.set(obj.id, obj.parentId);
+                if (obj.orbit) {
+                  orbitalParams.set(obj.id, obj.orbit);
+                }
+              }
+            });
+
+          const simParams: SimulationParameters = {
+            radii,
+            isStar,
+            bodyTypes,
+            parentIds,
+            orbitalParams,
+            currentTime: this.accumulatedTime, // Pass the accumulated simulation time
+            octreeMaxDepth: 20, // high depth for accurate close-body interactions
+            softeningLength: 1e6, // 1000 km softening to calm close passes
+            physicsEngine: getSimulationState().physicsEngine,
+          };
+
+          const stepResult: SimulationStepResult =
+            physicsEngineService.executeStep(
+              activeBodiesReal,
+              scaledFixedDeltaTime, // Pass the scaled *fixed* delta time
+              simParams,
+            );
+
+          if (
+            stepResult.destructionEvents &&
+            stepResult.destructionEvents.length > 0
+          ) {
+            stepResult.destructionEvents.forEach((event: DestructionEvent) => {
+              this._destructionOccurred$.next(event);
+            });
+          }
+
+          physicsSystemAdapter.updateStateFromResult(stepResult);
+
+          // Rotation logic (remains a bit problematic as in original, might need adjustment)
+          const currentCelestialObjectsAfterUpdate =
+            physicsSystemAdapter.getCelestialObjectsSnapshot();
+          const finalStateMapWithRotations: Record<string, CelestialObject> = {
+            ...currentCelestialObjectsAfterUpdate,
+          };
+
+          Object.keys(finalStateMapWithRotations).forEach((id) => {
+            const obj = finalStateMapWithRotations[id];
+            if (
+              obj.status !== CelestialStatus.DESTROYED &&
+              obj.status !== CelestialStatus.ANNIHILATED &&
+              obj.siderealRotationPeriod_s &&
+              obj.siderealRotationPeriod_s > 0 &&
+              obj.axialTilt
+            ) {
+              const angle =
+                ((2 * Math.PI * this.accumulatedTime) /
+                  obj.siderealRotationPeriod_s) %
+                (2 * Math.PI);
+              const tiltAxisTHREE = new THREE.Vector3(
+                obj.axialTilt.x,
+                obj.axialTilt.y,
+                obj.axialTilt.z,
+              ).normalize();
+              const newRotation = new THREE.Quaternion().setFromAxisAngle(
+                tiltAxisTHREE,
+                angle,
+              );
+              (finalStateMapWithRotations[id] as any).rotation = newRotation; // Ad-hoc property
+            }
+          });
+          // If these rotations are critical, physicsSystemAdapter.updateStateFromResult might need to be aware of them,
+          // or another mechanism to persist them to the global state is needed if consumers expect them.
+
+          const updatedPositions: Record<
+            string,
+            { x: number; y: number; z: number }
+          > = {};
+          stepResult.states.forEach((state) => {
+            updatedPositions[String(state.id)] = {
+              x: state.position_m.x,
+              y: state.position_m.y,
+              z: state.position_m.z,
+            };
+          });
+          this._orbitUpdate$.next({ positions: updatedPositions });
+        }
+        // Decrement accumulator by one fixed step
+        this.timeAccumulatorForPhysics -= this.FIXED_PHYSICS_DT_S;
+
+        // If paused, break out of the physics step loop, but still consume the accumulated time for this iteration.
+        if (getSimulationState().paused) {
+          break;
+        }
+      }
+
+      // Update the global simulation time state once after all physics steps for this frame are done
+      // This ensures the UI reflects the most up-to-date simulation time.
       if (!getSimulationState().paused) {
-        const timeScale = getSimulationState().timeScale;
-        const scaledDeltaTime = fixedDeltaTime * timeScale;
-        this.accumulatedTime += scaledDeltaTime;
-
         setSimulationState({
           ...getSimulationState(),
           time: this.accumulatedTime,
         });
-
-        const activeBodiesReal = physicsSystemAdapter.getPhysicsBodies();
-        const allCelestialObjectsForParams =
-          physicsSystemAdapter.getCelestialObjectsSnapshot();
-
-        const radii = new Map<string | number, number>();
-        const isStar = new Map<string | number, boolean>();
-        const bodyTypes = new Map<string | number, CelestialType>();
-        const parentIds = new Map<string | number, string | undefined>();
-        const orbitalParams = new Map<string | number, OrbitalParameters>();
-
-        Object.values(allCelestialObjectsForParams)
-          .filter(
-            (obj: CelestialObject) =>
-              obj.status !== CelestialStatus.DESTROYED &&
-              obj.status !== CelestialStatus.ANNIHILATED &&
-              !obj.ignorePhysics,
-          )
-          .forEach((obj: CelestialObject) => {
-            if (obj.physicsStateReal) {
-              radii.set(obj.id, obj.realRadius_m);
-              isStar.set(obj.id, obj.type === CelestialType.STAR);
-              bodyTypes.set(obj.id, obj.type);
-              parentIds.set(obj.id, obj.parentId);
-              if (obj.orbit) {
-                orbitalParams.set(obj.id, obj.orbit);
-              }
-            }
-          });
-
-        const simParams: SimulationParameters = {
-          radii,
-          isStar,
-          bodyTypes,
-          parentIds,
-          orbitalParams,
-          currentTime: this.accumulatedTime,
-          octreeMaxDepth: 20, // high depth for accurate close-body interactions
-          softeningLength: 1e6, // 1000 km softening to calm close passes
-          physicsEngine: getSimulationState().physicsEngine,
-        };
-
-        const stepResult: SimulationStepResult =
-          physicsEngineService.executeStep(
-            activeBodiesReal,
-            scaledDeltaTime,
-            simParams,
-          );
-
-        if (
-          stepResult.destructionEvents &&
-          stepResult.destructionEvents.length > 0
-        ) {
-          stepResult.destructionEvents.forEach((event: DestructionEvent) => {
-            this._destructionOccurred$.next(event);
-          });
-        }
-
-        physicsSystemAdapter.updateStateFromResult(stepResult);
-
-        // Rotation logic (remains a bit problematic as in original, might need adjustment)
-        const currentCelestialObjectsAfterUpdate =
-          physicsSystemAdapter.getCelestialObjectsSnapshot();
-        const finalStateMapWithRotations: Record<string, CelestialObject> = {
-          ...currentCelestialObjectsAfterUpdate,
-        };
-
-        Object.keys(finalStateMapWithRotations).forEach((id) => {
-          const obj = finalStateMapWithRotations[id];
-          if (
-            obj.status !== CelestialStatus.DESTROYED &&
-            obj.status !== CelestialStatus.ANNIHILATED &&
-            obj.siderealRotationPeriod_s &&
-            obj.siderealRotationPeriod_s > 0 &&
-            obj.axialTilt
-          ) {
-            const angle =
-              ((2 * Math.PI * this.accumulatedTime) /
-                obj.siderealRotationPeriod_s) %
-              (2 * Math.PI);
-            const tiltAxisTHREE = new THREE.Vector3(
-              obj.axialTilt.x,
-              obj.axialTilt.y,
-              obj.axialTilt.z,
-            ).normalize();
-            const newRotation = new THREE.Quaternion().setFromAxisAngle(
-              tiltAxisTHREE,
-              angle,
-            );
-            (finalStateMapWithRotations[id] as any).rotation = newRotation; // Ad-hoc property
-          }
-        });
-        // If these rotations are critical, physicsSystemAdapter.updateStateFromResult might need to be aware of them,
-        // or another mechanism to persist them to the global state is needed if consumers expect them.
-
-        const updatedPositions: Record<
-          string,
-          { x: number; y: number; z: number }
-        > = {};
-        stepResult.states.forEach((state) => {
-          updatedPositions[String(state.id)] = {
-            x: state.position_m.x,
-            y: state.position_m.y,
-            z: state.position_m.z,
-          };
-        });
-        this._orbitUpdate$.next({ positions: updatedPositions });
       }
     } catch (error) {
       console.error("Error in simulation step:", error);
