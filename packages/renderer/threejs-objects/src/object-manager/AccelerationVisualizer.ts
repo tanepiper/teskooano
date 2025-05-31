@@ -1,15 +1,6 @@
 import type { OSVector3 } from "@teskooano/core-math";
 import * as THREE from "three";
-
-/**
- * @internal
- * Configuration for AccelerationVisualizer.
- */
-export interface AccelerationVisualizerConfig {
-  objects: Map<string, THREE.Object3D>;
-  arrowScaleFactor?: number; // Optional, provide default
-  arrowColor?: number; // Optional, provide default
-}
+import { AccelerationVisualizerConfig } from "../types";
 
 /**
  * @internal

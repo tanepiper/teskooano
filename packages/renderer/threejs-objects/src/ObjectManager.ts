@@ -1,50 +1,31 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { accelerationVectors$ } from "@teskooano/core-state";
-import {
-  CelestialStatus,
-  CelestialType,
-  GasGiantClass,
-} from "@teskooano/data-types";
+import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
 import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
 import {
-  AsteroidFieldRenderer,
   CelestialRenderer,
-  ClassIGasGiantRenderer,
-  ClassIIGasGiantRenderer,
-  ClassIIIGasGiantRenderer,
-  ClassIVGasGiantRenderer,
-  ClassVGasGiantRenderer,
   RingSystemRenderer,
 } from "@teskooano/systems-celestial";
 import type { Observable, Subscription } from "rxjs";
 import { distinctUntilChanged, tap } from "rxjs/operators";
 import * as THREE from "three";
 import {
-  GravitationalLensingHandler,
-  MeshFactory,
-  RendererUpdater,
-  ObjectLifecycleManager,
   AccelerationVisualizer,
   DebrisEffectManager,
+  GravitationalLensingHandler,
+  MeshFactory,
+  ObjectLifecycleManager,
+  RendererUpdater,
 } from "./object-manager";
 
 import type { LODLevel } from "@teskooano/systems-celestial";
 
 import type { DestructionEvent } from "@teskooano/core-physics";
 import { rendererEvents } from "@teskooano/renderer-threejs-core";
-
-/**
- * @internal Interface defining the required methods for managing label visibility.
- *          This allows decoupling from the full CSS2DManager if needed.
- */
-interface LabelVisibilityManager {
-  showLabel(layer: CSS2DLayerType, id: string): void;
-  hideLabel(layer: CSS2DLayerType, id: string): void;
-  isLayerVisible(layer: CSS2DLayerType): boolean;
-}
+import { LabelVisibilityManager } from "./types";
 
 /**
  * @class ObjectManager
@@ -67,15 +48,17 @@ export class ObjectManager {
   /** @internal Manages Levels of Detail for objects based on camera distance. */
   private lodManager: LODManager;
   /** @internal Map storing specialized renderers keyed by their specific type (e.g., GasGiantClass). */
-  private celestialRenderers: Map<string, CelestialRenderer> = new Map();
+  private celestialRenderers: Map<string, CelestialRenderer>;
   /** @internal Map storing specialized renderers specifically for stars, keyed by object ID. */
-  private starRenderers: Map<string, CelestialRenderer> = new Map();
+  private starRenderers: Map<string, CelestialRenderer>;
   /** @internal Map storing specialized renderers specifically for planets, keyed by object ID. */
-  private planetRenderers: Map<string, CelestialRenderer> = new Map();
+  private planetRenderers: Map<string, CelestialRenderer>;
   /** @internal Map storing specialized renderers specifically for moons, keyed by object ID. */
-  private moonRenderers: Map<string, CelestialRenderer> = new Map();
+  private moonRenderers: Map<string, CelestialRenderer>;
   /** @internal Map storing specialized renderers specifically for ring systems, keyed by object ID. */
-  private ringSystemRenderers: Map<string, RingSystemRenderer> = new Map();
+  private ringSystemRenderers: Map<string, RingSystemRenderer>;
+  /** @internal Map storing specialized renderers specifically for asteroids, keyed by object ID. */
+  private asteroidRenderers: Map<string, CelestialRenderer>;
 
   /** @internal Observable stream of renderable object data from the core state. */
   private renderableObjects$: Observable<
@@ -136,6 +119,12 @@ export class ObjectManager {
    * @param renderer - The WebGLRenderer instance.
    * @param css2DManager - Optional manager for CSS2D labels and interactions.
    * @param acceleration$ - Optional observable stream for acceleration vectors.
+   * @param celestialRenderers - Map of specialized celestial renderers.
+   * @param starRenderers - Map of specialized star renderers.
+   * @param planetRenderers - Map of specialized planet renderers.
+   * @param moonRenderers - Map of specialized moon renderers.
+   * @param ringSystemRenderers - Map of specialized ring system renderers.
+   * @param asteroidRenderers - Map of specialized asteroid renderers.
    */
   constructor(
     scene: THREE.Scene,
@@ -145,6 +134,12 @@ export class ObjectManager {
     renderer: THREE.WebGLRenderer,
     css2DManager?: LabelVisibilityManager & CSS2DManager,
     acceleration$: Observable<Record<string, OSVector3>> = accelerationVectors$,
+    celestialRenderers: Map<string, CelestialRenderer> = new Map(),
+    starRenderers: Map<string, CelestialRenderer> = new Map(),
+    planetRenderers: Map<string, CelestialRenderer> = new Map(),
+    moonRenderers: Map<string, CelestialRenderer> = new Map(),
+    ringSystemRenderers: Map<string, RingSystemRenderer> = new Map(),
+    asteroidRenderers: Map<string, CelestialRenderer> = new Map(),
   ) {
     this.scene = scene;
     this.camera = camera;
@@ -154,10 +149,17 @@ export class ObjectManager {
     this.css2DManager = css2DManager;
     this.acceleration$ = acceleration$; // Assign the observable
 
+    // Assign renderer maps from parameters
+    this.celestialRenderers = celestialRenderers;
+    this.starRenderers = starRenderers;
+    this.planetRenderers = planetRenderers;
+    this.moonRenderers = moonRenderers;
+    this.ringSystemRenderers = ringSystemRenderers;
+    this.asteroidRenderers = asteroidRenderers;
+
     console.log("[ObjectManager CONSTRUCTOR] Initializing ObjectManager...");
 
     this.lodManager = new LODManager(camera);
-    this.initCelestialRenderers(); // Initialize specialized renderers
     this.lensingHandler = new GravitationalLensingHandler({
       starRenderers: this.starRenderers,
     });
@@ -169,6 +171,7 @@ export class ObjectManager {
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
       ringSystemRenderers: this.ringSystemRenderers,
+      asteroidRenderers: this.asteroidRenderers,
       lodManager: this.lodManager,
       camera: this.camera,
       createLodCallback: (
@@ -190,6 +193,7 @@ export class ObjectManager {
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
       ringSystemRenderers: this.ringSystemRenderers,
+      asteroidRenderers: this.asteroidRenderers,
       camera: this.camera,
       css2DManager: this.css2DManager,
     });
@@ -205,44 +209,12 @@ export class ObjectManager {
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
       ringSystemRenderers: this.ringSystemRenderers,
+      asteroidRenderers: this.asteroidRenderers,
     });
 
     // Start listening to state changes and events
     this.subscribeToStateChanges();
     this.subscribeToDestructionEvents();
-  }
-
-  /**
-   * @internal Initializes the map of specialized celestial renderers (e.g., for different Gas Giant classes).
-   */
-  private initCelestialRenderers(): void {
-    // Initialize renderers for specific types like Gas Giants
-    this.celestialRenderers.set(
-      GasGiantClass.CLASS_I,
-      new ClassIGasGiantRenderer(),
-    );
-    this.celestialRenderers.set(
-      GasGiantClass.CLASS_II,
-      new ClassIIGasGiantRenderer(),
-    );
-    this.celestialRenderers.set(
-      GasGiantClass.CLASS_III,
-      new ClassIIIGasGiantRenderer(),
-    );
-    this.celestialRenderers.set(
-      GasGiantClass.CLASS_IV,
-      new ClassIVGasGiantRenderer(),
-    );
-    this.celestialRenderers.set(
-      GasGiantClass.CLASS_V,
-      new ClassVGasGiantRenderer(),
-    );
-
-    // Add renderer for asteroid fields
-    this.celestialRenderers.set(
-      CelestialType.ASTEROID_FIELD,
-      new AsteroidFieldRenderer() as any, // Cast might be needed depending on specific interfaces
-    );
   }
 
   /**
@@ -515,6 +487,7 @@ export class ObjectManager {
     this.planetRenderers.clear();
     this.moonRenderers.clear();
     this.ringSystemRenderers.clear();
+    this.asteroidRenderers.clear();
 
     // Clear the main object map (should be empty after lifecycle disposal, but good practice)
     this.objects.clear();

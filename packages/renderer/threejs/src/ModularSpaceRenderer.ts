@@ -3,33 +3,36 @@ import {
   AnimationLoop,
   SceneManager,
   StateManager,
-  type RendererCelestialObject as RenderableCelestialObject,
 } from "@teskooano/renderer-threejs-core";
 import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
 import {
   ControlsManager,
+  CSS2DCelestialLabelFactory,
+  CSS2DLabelFactory,
   CSS2DLayerType,
   CSS2DManager,
-  CSS2DLabelFactory,
-  CSS2DCelestialLabelFactory,
-  type LabelFactoryMap,
-  type ILabelFactory,
   type CelestialLabelComponentFactory,
+  type ILabelFactory,
+  type LabelFactoryMap,
 } from "@teskooano/renderer-threejs-interaction";
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import {
-  OrbitsManager,
-  VisualizationMode,
-} from "@teskooano/renderer-threejs-orbits";
+import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import * as THREE from "three";
 import { RendererStateAdapter } from "./RendererStateAdapter.js";
 
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
-import { renderableStore } from "@teskooano/core-state";
-import type {
-  CelestialType,
-  ICelestialLabelComponent,
-} from "@teskooano/data-types";
+import { accelerationVectors$, renderableStore } from "@teskooano/core-state";
+import { CelestialType, GasGiantClass } from "@teskooano/data-types";
+import {
+  AsteroidFieldRenderer,
+  ClassIGasGiantRenderer,
+  ClassIIGasGiantRenderer,
+  ClassIIIGasGiantRenderer,
+  ClassIVGasGiantRenderer,
+  ClassVGasGiantRenderer,
+  type CelestialRenderer,
+  type RingSystemRenderer,
+} from "@teskooano/systems-celestial";
 
 export class ModularSpaceRenderer {
   public sceneManager: SceneManager;
@@ -141,6 +144,21 @@ export class ModularSpaceRenderer {
       throw new Error("CSS2DManager failed to initialize.");
     }
 
+    // Initialize renderer maps
+    const celestialRenderers = new Map<string, CelestialRenderer>();
+    const starRenderers = new Map<string, CelestialRenderer>();
+    const planetRenderers = new Map<string, CelestialRenderer>();
+    const moonRenderers = new Map<string, CelestialRenderer>();
+    const ringSystemRenderers = new Map<string, RingSystemRenderer>();
+    const asteroidRenderers = new Map<string, CelestialRenderer>();
+
+    // Populate celestialRenderers (specific Gas Giant class renderers are removed)
+    // The AsteroidFieldRenderer remains as it's tied to a CelestialType
+    celestialRenderers.set(
+      CelestialType.ASTEROID_FIELD,
+      new AsteroidFieldRenderer() as any, // Cast might be needed
+    );
+
     this.objectManager = new ObjectManager(
       this.sceneManager.scene,
       this.sceneManager.camera,
@@ -148,6 +166,13 @@ export class ModularSpaceRenderer {
       this.lightManager,
       this.sceneManager.renderer,
       this.css2DManager,
+      accelerationVectors$, // Ensure accelerationVectors$ is passed
+      celestialRenderers,
+      starRenderers,
+      planetRenderers,
+      moonRenderers,
+      ringSystemRenderers,
+      asteroidRenderers,
     );
 
     this.orbitManager = new OrbitsManager(

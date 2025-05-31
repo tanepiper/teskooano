@@ -7,18 +7,7 @@ import {
 } from "@teskooano/systems-celestial";
 import type * as THREE from "three";
 import { renderableStore } from "@teskooano/core-state";
-
-/**
- * @internal
- * Configuration for RendererUpdater.
- */
-export interface RendererUpdaterConfig {
-  celestialRenderers: Map<string, CelestialRenderer>;
-  starRenderers: Map<string, CelestialRenderer>;
-  planetRenderers: Map<string, CelestialRenderer>;
-  moonRenderers: Map<string, CelestialRenderer>;
-  ringSystemRenderers: Map<string, RingSystemRenderer>;
-}
+import { RendererUpdaterConfig } from "../types";
 
 /**
  * Helper class responsible for iterating through different categories of celestial renderers
@@ -38,6 +27,8 @@ export class RendererUpdater {
   private moonRenderers: Map<string, CelestialRenderer>;
   /** @internal Map storing ring system renderers. Keyed by object ID. */
   private ringSystemRenderers: Map<string, RingSystemRenderer>;
+  /** @internal Map storing asteroid renderers. Keyed by object ID. */
+  private asteroidRenderers: Map<string, CelestialRenderer>;
 
   /**
    * Creates an instance of RendererUpdater.
@@ -49,6 +40,7 @@ export class RendererUpdater {
     this.planetRenderers = config.planetRenderers;
     this.moonRenderers = config.moonRenderers;
     this.ringSystemRenderers = config.ringSystemRenderers;
+    this.asteroidRenderers = config.asteroidRenderers;
   }
 
   /**
@@ -139,6 +131,7 @@ export class RendererUpdater {
     processRendererMap(this.celestialRenderers);
     processRendererMap(this.planetRenderers);
     processRendererMap(this.moonRenderers);
+    processRendererMap(this.asteroidRenderers);
   }
 
   /**

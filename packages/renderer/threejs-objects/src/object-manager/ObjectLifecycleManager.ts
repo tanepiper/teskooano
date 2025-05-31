@@ -15,26 +15,7 @@ import type {
 import * as THREE from "three";
 import type { MeshFactory } from "./MeshFactory";
 import type { GravitationalLensingHandler } from "./GravitationalLensing";
-
-/**
- * @internal
- * Configuration object for ObjectLifecycleManager dependencies.
- */
-export interface ObjectLifecycleManagerConfig {
-  objects: Map<string, THREE.Object3D>;
-  scene: THREE.Scene;
-  meshFactory: MeshFactory;
-  lodManager: LODManager;
-  lightManager: LightManager;
-  lensingHandler: GravitationalLensingHandler;
-  renderer: THREE.WebGLRenderer | null;
-  starRenderers: Map<string, CelestialRenderer>;
-  planetRenderers: Map<string, CelestialRenderer>;
-  moonRenderers: Map<string, CelestialRenderer>;
-  ringSystemRenderers: Map<string, RingSystemRenderer>;
-  camera: THREE.PerspectiveCamera;
-  css2DManager?: CSS2DManager;
-}
+import { ObjectLifecycleManagerConfig } from "../types";
 
 /**
  * @internal
@@ -54,6 +35,7 @@ export class ObjectLifecycleManager {
   private planetRenderers: Map<string, CelestialRenderer>;
   private moonRenderers: Map<string, CelestialRenderer>;
   private ringSystemRenderers: Map<string, RingSystemRenderer>;
+  private asteroidRenderers: Map<string, CelestialRenderer>;
   private camera: THREE.PerspectiveCamera; // Add camera reference
 
   constructor(config: ObjectLifecycleManagerConfig) {
@@ -68,6 +50,7 @@ export class ObjectLifecycleManager {
     this.planetRenderers = config.planetRenderers;
     this.moonRenderers = config.moonRenderers;
     this.ringSystemRenderers = config.ringSystemRenderers;
+    this.asteroidRenderers = config.asteroidRenderers;
     this.camera = config.camera;
     this.css2DManager = config.css2DManager;
   }
@@ -255,6 +238,10 @@ export class ObjectLifecycleManager {
     const ringSystemRenderer = this.ringSystemRenderers.get(objectId);
     if (ringSystemRenderer?.dispose) ringSystemRenderer.dispose();
     this.ringSystemRenderers.delete(objectId);
+
+    const asteroidRenderer = this.asteroidRenderers.get(objectId);
+    if (asteroidRenderer?.dispose) asteroidRenderer.dispose();
+    this.asteroidRenderers.delete(objectId);
 
     // Remove the main mesh from the scene
     this.scene.remove(mesh);

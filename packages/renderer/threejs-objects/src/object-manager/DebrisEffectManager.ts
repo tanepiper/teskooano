@@ -1,23 +1,7 @@
 import type { DestructionEvent } from "@teskooano/core-physics";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import * as THREE from "three";
-
-// New structure for active debris effects using InstancedMesh
-interface ActiveInstancedDebris {
-  mesh: THREE.InstancedMesh;
-  startTime: number;
-  lifetime: number;
-  // Material might need updating (uniforms)
-  material: THREE.ShaderMaterial; // Or RawShaderMaterial
-}
-
-/**
- * @internal
- * Configuration for DebrisEffectManager.
- */
-export interface DebrisEffectManagerConfig {
-  scene: THREE.Scene;
-}
+import { ActiveInstancedDebris, DebrisEffectManagerConfig } from "../types";
 
 // Placeholder basic shaders - These will need significant work
 const debrisVertexShader = `

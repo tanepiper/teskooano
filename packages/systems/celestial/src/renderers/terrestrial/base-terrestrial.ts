@@ -12,8 +12,6 @@ import {
 import { PlanetMaterialService } from "./utils/planet-material-utils";
 import { BaseCelestialRenderer } from "../common/BaseCelestialRenderer";
 
-const MAX_LIGHTS = 4;
-
 /**
  * Base renderer for terrestrial planets and moons
  */
@@ -217,23 +215,38 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
   ): void {
     super.update(time, lightSources, camera);
 
-    if (!lightSources || lightSources.size === 0) {
-      console.warn(
-        "[BaseTerrestrialRenderer] No light sources provided, adding default light",
-      );
-      lightSources = new Map<
+    const effectiveLightSources =
+      lightSources ??
+      new Map<
         string,
         { position: THREE.Vector3; color: THREE.Color; intensity: number }
       >();
-      lightSources.set("default_sun", {
-        position: new THREE.Vector3(1, 0.3, 0.5).normalize(),
+    if (effectiveLightSources.size === 0) {
+      effectiveLightSources.set("default_sun_internal", {
+        position: new THREE.Vector3(1e11, 0.3e11, 0.5e11).normalize(),
         color: new THREE.Color(0xffffff),
-        intensity: 1.5,
+        intensity: 1.0,
       });
     }
 
+    this.materials.forEach((material, objectId) => {
+      if (material && typeof (material as any).update === "function") {
+        if (this.isTrackingObject(objectId)) {
+          try {
+            (material as any).update(
+              this.elapsedTime,
+              effectiveLightSources,
+              camera,
+            );
+          } catch (e) {
+            console.error(`Error updating material for object ${objectId}:`, e);
+          }
+        }
+      }
+    });
+
     this.atmosphereMaterials.forEach((material) => {
-      material.update(this.elapsedTime, camera, lightSources);
+      material.update(this.elapsedTime, camera, effectiveLightSources);
     });
   }
 

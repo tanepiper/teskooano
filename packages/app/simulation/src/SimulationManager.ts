@@ -1,17 +1,15 @@
-import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-import type { CelestialLabelComponentFactory } from "@teskooano/renderer-threejs-interaction";
 import {
   physicsEngineService,
   vectorPool,
-  type SimulationStepResult,
   type DestructionEvent,
   type SimulationParameters,
+  type SimulationStepResult,
 } from "@teskooano/core-physics";
 import {
-  getSimulationState,
-  setSimulationState,
-  physicsSystemAdapter,
   celestialFactory,
+  getSimulationState,
+  physicsSystemAdapter,
+  setSimulationState,
 } from "@teskooano/core-state";
 import {
   CelestialObject,
@@ -19,45 +17,60 @@ import {
   CelestialType,
   OrbitalParameters,
 } from "@teskooano/data-types";
+import { Observable, Subject, Subscription } from "rxjs";
 import * as THREE from "three";
-import { Subject, Subscription, Observable } from "rxjs";
-
-/**
- * Defines the payload for the orbit update event stream.
- */
-export interface OrbitUpdatePayload {
-  positions: Record<string, { x: number; y: number; z: number }>;
-}
+import { OrbitUpdatePayload } from "./types";
 
 /**
  * Manages the overall simulation lifecycle, physics loop, state, and events.
  * Implemented as a singleton.
  */
 export class SimulationManager {
+  /** @internal Singleton instance of the SimulationManager. */
   private static instance: SimulationManager;
 
   // Loop properties
+  /** @internal Timestamp of the last simulation step. Used to calculate delta time. */
   private lastTime = 0;
+  /** @internal Flag indicating if the simulation loop is currently active. */
   private isRunning = false;
   // private lastLoggedTime = 0; // This wasn't used for logging, can be removed if confirmed
+  /** @internal Accumulated simulation time, scaled by timeScale. Represents the in-simulation time. */
   private accumulatedTime = 0; // Total elapsed simulation time (scaled)
+  /** @internal Subscription to the resetTime event, used for internal cleanup. */
   private resetTimeSubscription: Subscription | null = null;
+  /** @internal ID of the current animation frame request. Used to cancel the frame. */
   private animationFrameId: number | null = null;
 
   // Fixed time step properties
+  /** @internal Maximum number of physics steps to accumulate before processing. */
+  private readonly MAX_ACCUMULATED_STEPS = 5;
+  /** @internal Target number of physics updates per second. */
   private readonly PHYSICS_TICK_RATE_HZ = 125; // Target physics updates per second
+  /** @internal The fixed time step duration in seconds for each physics update. */
   private readonly FIXED_PHYSICS_DT_S = 1.0 / this.PHYSICS_TICK_RATE_HZ;
+  /** @internal Accumulates real-world time elapsed between frames, used to determine how many fixed physics steps to run. */
   private timeAccumulatorForPhysics = 0; // Accumulates wall-clock time for physics steps
 
   // Event Subjects
+  /** @internal RxJS Subject for resetTime events. */
   private readonly _resetTime$ = new Subject<void>();
+  /** @internal RxJS Subject for orbitUpdate events. */
   private readonly _orbitUpdate$ = new Subject<OrbitUpdatePayload>();
+  /** @internal RxJS Subject for destructionOccurred events. */
   private readonly _destructionOccurred$ = new Subject<DestructionEvent>();
 
+  /**
+   * @private Private constructor to enforce singleton pattern.
+   */
   private constructor() {
     // Private constructor for singleton
   }
 
+  /**
+   * Gets the singleton instance of the SimulationManager.
+   * @returns The singleton SimulationManager instance.
+   */
   public static getInstance(): SimulationManager {
     if (!SimulationManager.instance) {
       SimulationManager.instance = new SimulationManager();
@@ -66,75 +79,42 @@ export class SimulationManager {
   }
 
   // Public Observables for events
+  /**
+   * Observable that emits when the simulation time and state are reset.
+   * @returns An Observable that emits void on reset.
+   */
   public get onResetTime(): Observable<void> {
     return this._resetTime$.asObservable();
   }
 
+  /**
+   * Observable that emits updated celestial object positions after each relevant physics step.
+   * The payload contains a map of object IDs to their new x, y, z coordinates.
+   * @returns An Observable emitting OrbitUpdatePayload.
+   */
   public get onOrbitUpdate(): Observable<OrbitUpdatePayload> {
     return this._orbitUpdate$.asObservable();
   }
 
+  /**
+   * Observable that emits when a destruction event occurs in the simulation.
+   * The payload contains details about the destruction event.
+   * @returns An Observable emitting DestructionEvent.
+   */
   public get onDestructionOccurred(): Observable<DestructionEvent> {
     return this._destructionOccurred$.asObservable();
   }
 
   /**
-   * Initializes the SimulationManager with the container for the renderer.
-   * This must be called before starting the loop.
-   * @param container The HTML element to host the renderer canvas.
-   * @param options - Optional options for the renderer
+   * Starts the main simulation loop.
+   * If the loop is already running, a warning is logged, and the call is ignored.
+   * Initializes timing mechanisms and schedules the first animation frame.
    */
-  public initialize() // container: HTMLElement, // REMOVED container argument
-  // options?: { // REMOVED options argument
-  //   celestialLabelComponentFactory?: CelestialLabelComponentFactory;
-  // },
-  : void {
-    // if (this.renderer) { // REMOVED renderer check
-    //   console.warn("SimulationManager already initialized.");
-    //   // Optionally, dispose existing renderer or handle re-initialization
-    //   this.disposeRenderer();
-    // }
-    // this.container = container; // REMOVED
-    // this.renderer = new ModularSpaceRenderer(this.container, { // REMOVED
-    //   celestialLabelComponentFactory: options?.celestialLabelComponentFactory,
-    // });
-    // this.setupEventListeners(); // We might not need this version of setupEventListeners
-    console.log("SimulationManager initialized (global aspects only).");
-  }
-
-  // public getRenderer(): ModularSpaceRenderer | null { // REMOVED
-  //   return this.renderer;
-  // }
-
-  private setupEventListeners(): void {
-    // window.addEventListener("resize", this.handleResize); // Potentially re-evaluate if global resize handling is needed beyond individual panels
-  }
-
-  private removeEventListeners(): void {
-    // window.removeEventListener("resize", this.handleResize); // Potentially re-evaluate
-  }
-
-  // private handleResize = (): void => { // REMOVED direct renderer resizing
-  // if (this.renderer && this.container) {
-  //   // Use container dimensions for renderer, not necessarily full window
-  //   this.renderer.onResize(
-  //     this.container.clientWidth,
-  //     this.container.clientHeight,
-  //   );
-  // }
-  // };
-
   public startLoop(): void {
     if (this.isRunning) {
       console.warn("Simulation loop is already running.");
       return;
     }
-    // if (!this.renderer) { // REMOVED renderer check
-    //   console.error(
-    //     "Renderer not initialized. Call initialize() before starting the loop.",
-    //   );
-    //   return;
-    // }
 
     this.isRunning = true;
     this.lastTime = performance.now();
@@ -150,9 +130,13 @@ export class SimulationManager {
       cancelAnimationFrame(this.animationFrameId);
     }
     this.animationFrameId = requestAnimationFrame(this.simulationStep);
-    console.log("Simulation loop started.");
   }
 
+  /**
+   * Stops the main simulation loop.
+   * If the loop is not running, a warning is logged, and the call is ignored.
+   * Cancels any pending animation frame and cleans up loop-related subscriptions.
+   */
   public stopLoop(): void {
     if (!this.isRunning) {
       console.warn("Simulation loop is not running.");
@@ -165,19 +149,25 @@ export class SimulationManager {
     }
     this.resetTimeSubscription?.unsubscribe();
     this.resetTimeSubscription = null;
-    console.log("Simulation loop stopped.");
   }
 
+  /**
+   * Checks if the simulation loop is currently active.
+   * @returns True if the loop is running, false otherwise.
+   */
   public get isLoopRunning(): boolean {
     return this.isRunning;
   }
 
+  /**
+   * @private The main simulation loop callback, executed via requestAnimationFrame.
+   * This method calculates elapsed time, manages the physics step accumulator, and calls
+   * `_performSinglePhysicsStep` for each fixed physics tick.
+   * It also updates the global simulation time state and schedules the next animation frame.
+   * @param currentTime The high-resolution timestamp provided by requestAnimationFrame.
+   */
   private simulationStep = (currentTime: number): void => {
     if (!this.isRunning) return;
-
-    // Renderer-specific updates (like this.renderer.update()) would be removed from here.
-    // Each renderer will have its own update mechanism triggered by the animation frame or this loop.
-    // For now, this simulationStep focuses on updating the core physics state.
 
     const acquiredVectors: THREE.Vector3[] = []; // For vectorPool
 
@@ -189,15 +179,12 @@ export class SimulationManager {
 
       // Cap the accumulator to prevent spiral of death if frames take too long
       // e.g., max 5 physics steps per frame to prevent freezing if performance tanks
-      const MAX_ACCUMULATED_STEPS = 5;
       if (
         this.timeAccumulatorForPhysics >
-        this.FIXED_PHYSICS_DT_S * MAX_ACCUMULATED_STEPS
+        this.FIXED_PHYSICS_DT_S * this.MAX_ACCUMULATED_STEPS
       ) {
         this.timeAccumulatorForPhysics =
-          this.FIXED_PHYSICS_DT_S * MAX_ACCUMULATED_STEPS;
-        // Optionally log a warning if this happens frequently
-        // console.warn("Simulation falling behind real-time, capping accumulated physics steps.");
+          this.FIXED_PHYSICS_DT_S * this.MAX_ACCUMULATED_STEPS;
       }
 
       while (this.timeAccumulatorForPhysics >= this.FIXED_PHYSICS_DT_S) {
@@ -207,115 +194,7 @@ export class SimulationManager {
           const scaledFixedDeltaTime = this.FIXED_PHYSICS_DT_S * timeScale;
           this.accumulatedTime += scaledFixedDeltaTime; // This is the total simulation time
 
-          // Note: setSimulationState for time will be called once after the while loop
-          // to ensure it reflects the final accumulatedTime for this frame.
-
-          const activeBodiesReal = physicsSystemAdapter.getPhysicsBodies();
-          const allCelestialObjectsForParams =
-            physicsSystemAdapter.getCelestialObjectsSnapshot();
-
-          const radii = new Map<string | number, number>();
-          const isStar = new Map<string | number, boolean>();
-          const bodyTypes = new Map<string | number, CelestialType>();
-          const parentIds = new Map<string | number, string | undefined>();
-          const orbitalParams = new Map<string | number, OrbitalParameters>();
-
-          Object.values(allCelestialObjectsForParams)
-            .filter(
-              (obj: CelestialObject) =>
-                obj.status !== CelestialStatus.DESTROYED &&
-                obj.status !== CelestialStatus.ANNIHILATED &&
-                !obj.ignorePhysics,
-            )
-            .forEach((obj: CelestialObject) => {
-              if (obj.physicsStateReal) {
-                radii.set(obj.id, obj.realRadius_m);
-                isStar.set(obj.id, obj.type === CelestialType.STAR);
-                bodyTypes.set(obj.id, obj.type);
-                parentIds.set(obj.id, obj.parentId);
-                if (obj.orbit) {
-                  orbitalParams.set(obj.id, obj.orbit);
-                }
-              }
-            });
-
-          const simParams: SimulationParameters = {
-            radii,
-            isStar,
-            bodyTypes,
-            parentIds,
-            orbitalParams,
-            currentTime: this.accumulatedTime, // Pass the accumulated simulation time
-            octreeMaxDepth: 20, // high depth for accurate close-body interactions
-            softeningLength: 1e6, // 1000 km softening to calm close passes
-            physicsEngine: getSimulationState().physicsEngine,
-          };
-
-          const stepResult: SimulationStepResult =
-            physicsEngineService.executeStep(
-              activeBodiesReal,
-              scaledFixedDeltaTime, // Pass the scaled *fixed* delta time
-              simParams,
-            );
-
-          if (
-            stepResult.destructionEvents &&
-            stepResult.destructionEvents.length > 0
-          ) {
-            stepResult.destructionEvents.forEach((event: DestructionEvent) => {
-              this._destructionOccurred$.next(event);
-            });
-          }
-
-          physicsSystemAdapter.updateStateFromResult(stepResult);
-
-          // Rotation logic (remains a bit problematic as in original, might need adjustment)
-          const currentCelestialObjectsAfterUpdate =
-            physicsSystemAdapter.getCelestialObjectsSnapshot();
-          const finalStateMapWithRotations: Record<string, CelestialObject> = {
-            ...currentCelestialObjectsAfterUpdate,
-          };
-
-          Object.keys(finalStateMapWithRotations).forEach((id) => {
-            const obj = finalStateMapWithRotations[id];
-            if (
-              obj.status !== CelestialStatus.DESTROYED &&
-              obj.status !== CelestialStatus.ANNIHILATED &&
-              obj.siderealRotationPeriod_s &&
-              obj.siderealRotationPeriod_s > 0 &&
-              obj.axialTilt
-            ) {
-              const angle =
-                ((2 * Math.PI * this.accumulatedTime) /
-                  obj.siderealRotationPeriod_s) %
-                (2 * Math.PI);
-              const tiltAxisTHREE = new THREE.Vector3(
-                obj.axialTilt.x,
-                obj.axialTilt.y,
-                obj.axialTilt.z,
-              ).normalize();
-              const newRotation = new THREE.Quaternion().setFromAxisAngle(
-                tiltAxisTHREE,
-                angle,
-              );
-              (finalStateMapWithRotations[id] as any).rotation = newRotation; // Ad-hoc property
-            }
-          });
-          // If these rotations are critical, physicsSystemAdapter.updateStateFromResult might need to be aware of them,
-          // or another mechanism to persist them to the global state is needed if consumers expect them.
-
-          const updatedPositions: Record<
-            string,
-            { x: number; y: number; z: number }
-          > = {};
-          stepResult.states.forEach((state) => {
-            updatedPositions[String(state.id)] = {
-              x: state.position_m.x,
-              y: state.position_m.y,
-              z: state.position_m.z,
-            };
-          });
-          this._orbitUpdate$.next({ positions: updatedPositions });
+          this._performSinglePhysicsStep(scaledFixedDeltaTime, acquiredVectors);
         }
         // Decrement accumulator by one fixed step
         this.timeAccumulatorForPhysics -= this.FIXED_PHYSICS_DT_S;
@@ -347,9 +226,163 @@ export class SimulationManager {
   };
 
   /**
+   * Executes a single step of the physics simulation and updates related game state.
+   * This includes physics calculations, collision handling, rotation updates, and event emissions.
+   * @param scaledFixedDeltaTime The fixed time step, scaled by the simulation's timeScale.
+   * @param acquiredVectors An array to track acquired vectors for the vectorPool (currently unused here but kept for potential future use if direct vectorPool ops are needed).
+   */
+  private _performSinglePhysicsStep(
+    scaledFixedDeltaTime: number,
+    acquiredVectors: THREE.Vector3[],
+  ): void {
+    const allCelestialObjectsForParams =
+      physicsSystemAdapter.getCelestialObjectsSnapshot();
+
+    const simParams = this._prepareSimulationParameters(
+      allCelestialObjectsForParams,
+      this.accumulatedTime,
+    );
+
+    const stepResult: SimulationStepResult = physicsEngineService.executeStep(
+      physicsSystemAdapter.getPhysicsBodies(), // Get fresh bodies before step
+      scaledFixedDeltaTime,
+      simParams,
+    );
+
+    if (
+      stepResult.destructionEvents &&
+      stepResult.destructionEvents.length > 0
+    ) {
+      stepResult.destructionEvents.forEach((event: DestructionEvent) => {
+        this._destructionOccurred$.next(event);
+      });
+    }
+
+    physicsSystemAdapter.updateStateFromResult(stepResult);
+
+    // Get the state *after* the main physics update to apply rotations
+    const currentCelestialObjectsAfterPhysicsUpdate =
+      physicsSystemAdapter.getCelestialObjectsSnapshot();
+
+    this._applyObjectRotations(
+      currentCelestialObjectsAfterPhysicsUpdate,
+      this.accumulatedTime,
+    );
+
+    // Note: The ad-hoc `rotation` property applied by _applyObjectRotations
+    // isn't persisted back to the global state via physicsSystemAdapter.
+    // If other systems need this rotation, this needs to be addressed more formally.
+
+    const updatedPositions: Record<
+      string,
+      { x: number; y: number; z: number }
+    > = {};
+    stepResult.states.forEach((state) => {
+      updatedPositions[String(state.id)] = {
+        x: state.position_m.x,
+        y: state.position_m.y,
+        z: state.position_m.z,
+      };
+    });
+    this._orbitUpdate$.next({ positions: updatedPositions });
+  }
+
+  /**
+   * Prepares the SimulationParameters object needed for the physics engine step.
+   * @param celestialObjectsSnapshot A snapshot of all current celestial objects.
+   * @param currentTime The current accumulated simulation time.
+   * @returns SimulationParameters object.
+   */
+  private _prepareSimulationParameters(
+    celestialObjectsSnapshot: Record<string, CelestialObject>,
+    currentTime: number,
+  ): SimulationParameters {
+    const radii = new Map<string | number, number>();
+    const isStar = new Map<string | number, boolean>();
+    const bodyTypes = new Map<string | number, CelestialType>();
+    const parentIds = new Map<string | number, string | undefined>();
+    const orbitalParams = new Map<string | number, OrbitalParameters>();
+
+    Object.values(celestialObjectsSnapshot)
+      .filter(
+        (obj: CelestialObject) =>
+          obj.status !== CelestialStatus.DESTROYED &&
+          obj.status !== CelestialStatus.ANNIHILATED &&
+          !obj.ignorePhysics,
+      )
+      .forEach((obj: CelestialObject) => {
+        if (obj.physicsStateReal) {
+          radii.set(obj.id, obj.realRadius_m);
+          isStar.set(obj.id, obj.type === CelestialType.STAR);
+          bodyTypes.set(obj.id, obj.type);
+          parentIds.set(obj.id, obj.parentId);
+          if (obj.orbit) {
+            orbitalParams.set(obj.id, obj.orbit);
+          }
+        }
+      });
+
+    return {
+      radii,
+      isStar,
+      bodyTypes,
+      parentIds,
+      orbitalParams,
+      currentTime,
+      octreeMaxDepth: 20,
+      softeningLength: 1e6,
+      physicsEngine: getSimulationState().physicsEngine,
+    };
+  }
+
+  /**
+   * Calculates and applies ad-hoc rotation quaternions to celestial objects.
+   * Note: This rotation is not formally part of the persisted PhysicsStateReal.
+   * @param celestialObjects A map of celestial objects to apply rotations to.
+   * @param currentTime The current accumulated simulation time.
+   */
+  private _applyObjectRotations(
+    celestialObjects: Record<string, CelestialObject>,
+    currentTime: number,
+  ): void {
+    Object.keys(celestialObjects).forEach((id) => {
+      const obj = celestialObjects[id];
+      if (
+        obj.status !== CelestialStatus.DESTROYED &&
+        obj.status !== CelestialStatus.ANNIHILATED &&
+        obj.siderealRotationPeriod_s &&
+        obj.siderealRotationPeriod_s > 0 &&
+        obj.axialTilt
+      ) {
+        const angle =
+          ((2 * Math.PI * currentTime) / obj.siderealRotationPeriod_s) %
+          (2 * Math.PI);
+        const tiltAxisTHREE = new THREE.Vector3(
+          obj.axialTilt.x,
+          obj.axialTilt.y,
+          obj.axialTilt.z,
+        ).normalize();
+        const newRotation = new THREE.Quaternion().setFromAxisAngle(
+          tiltAxisTHREE,
+          angle,
+        );
+        // This is an ad-hoc property. If this rotation needs to be more formally part
+        // of the object's state for other systems (e.g., rendering, detailed physics),
+        // it should be integrated into the CelestialObject type and state management.
+        (obj as any).rotation = newRotation;
+      }
+    });
+  }
+
+  /**
    * Resets celestial objects and simulation state.
-   * This also emits the onResetTime event.
-   * @param skipStateClear - Set to true if calling code will use createSolarSystem which also clears state
+   * Clears all existing celestial objects, resets simulation time, and selection states
+   * unless `skipStateClear` is true. Always resets internal accumulated time and emits
+   * the `onResetTime` event.
+   *
+   * @param skipStateClear - Set to true if the calling code (e.g., a system initializer like
+   *                         `createSolarSystem`) will handle clearing the global simulation state.
+   *                         This is to avoid redundant state clearing operations.
    */
   public resetSystem(skipStateClear: boolean = false): void {
     if (!skipStateClear) {
@@ -362,37 +395,27 @@ export class SimulationManager {
       console.warn(
         "[SimulationManager] Skipping state clear as external system creation will handle it.",
       );
-      // Even if skipping full state clear, internal time and resetTime$ event might be relevant.
       if (getSimulationState().time !== 0) {
-        // If time is not already zero
         setSimulationState({ ...getSimulationState(), time: 0 });
       }
     }
     // Always reset internal accumulated time and emit event
     this.accumulatedTime = 0;
     this._resetTime$.next();
-    console.log("System reset triggered.");
   }
 
-  // private disposeRenderer(): void { // REMOVED
-  //   if (this.renderer) {
-  //     this.renderer.dispose();
-  //     this.renderer = null;
-  //     console.log("Renderer disposed by SimulationManager.");
-  //   }
-  // }
+  /**
+   * Stops the simulation loop and completes all event observables.
+   * This prepares the SimulationManager for disposal or re-initialization in test environments.
+   */
   public dispose(): void {
     this.stopLoop();
-    // this.disposeRenderer(); // REMOVED
-    this.removeEventListeners(); // Call to remove any global listeners it might still manage
 
-    // Complete subjects to prevent further emissions and signal completion
     this._resetTime$.complete();
     this._orbitUpdate$.complete();
     this._destructionOccurred$.complete();
-
-    // Clear the static instance for potential re-instantiation in test environments or special cases
-    // (SimulationManager as any).instance = null; // Consider if this is desired for your testing strategy
-    console.log("SimulationManager disposed.");
   }
 }
+
+// Export the singleton instance for easy access
+export const simulationManager = SimulationManager.getInstance();

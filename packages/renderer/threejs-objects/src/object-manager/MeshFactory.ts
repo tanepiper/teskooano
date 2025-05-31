@@ -1,20 +1,13 @@
-import {
-  CelestialType,
-  GasGiantClass,
-  GasGiantProperties,
-  StarProperties,
-  StellarType,
-} from "@teskooano/data-types";
+import { CelestialType } from "@teskooano/data-types";
+import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import type { LODManager } from "@teskooano/renderer-threejs-effects";
 import {
-  BaseTerrestrialRenderer,
-  createStarRenderer,
+  RingSystemRenderer,
   type CelestialRenderer,
   type LODLevel,
 } from "@teskooano/systems-celestial";
-import { RingSystemRenderer } from "@teskooano/systems-celestial";
-import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
+import { CreatorDependencies, MeshFactoryConfig } from "../types";
 import {
   createAsteroidFieldMesh,
   createAsteroidMesh,
@@ -28,24 +21,6 @@ import {
 
 /**
  * @internal
- * Configuration for MeshFactory.
- */
-export interface MeshFactoryConfig {
-  celestialRenderers: Map<string, CelestialRenderer>;
-  starRenderers: Map<string, CelestialRenderer>;
-  planetRenderers: Map<string, CelestialRenderer>;
-  moonRenderers: Map<string, CelestialRenderer>;
-  ringSystemRenderers: Map<string, RingSystemRenderer>;
-  lodManager: LODManager;
-  camera: THREE.PerspectiveCamera; // Needed for LOD registration?
-  createLodCallback: (
-    object: RenderableCelestialObject,
-    levels: LODLevel[],
-  ) => THREE.LOD;
-}
-
-/**
- * @internal
  * Factory class responsible for creating appropriate Three.js mesh objects
  * for different types of celestial bodies based on their data.
  * It delegates the actual creation logic to specialized functions.
@@ -56,6 +31,7 @@ export class MeshFactory {
   private planetRenderers: Map<string, CelestialRenderer>;
   private moonRenderers: Map<string, CelestialRenderer>;
   private ringSystemRenderers: Map<string, RingSystemRenderer>;
+  private asteroidRenderers: Map<string, CelestialRenderer>;
   private lodManager: LODManager;
   private createLodCallback: (
     object: RenderableCelestialObject,
@@ -65,17 +41,7 @@ export class MeshFactory {
   private debugMode: boolean = false;
 
   // Store deps needed by creator functions
-  private creatorDeps: {
-    starRenderers: Map<string, CelestialRenderer>;
-    planetRenderers: Map<string, CelestialRenderer>;
-    moonRenderers: Map<string, CelestialRenderer>;
-    ringSystemRenderers: Map<string, RingSystemRenderer>;
-    celestialRenderers: Map<string, CelestialRenderer>;
-    createLodCallback: (
-      object: RenderableCelestialObject,
-      levels: LODLevel[],
-    ) => THREE.LOD;
-  };
+  private creatorDeps: CreatorDependencies;
 
   constructor(config: MeshFactoryConfig) {
     this.celestialRenderers = config.celestialRenderers;
@@ -83,6 +49,7 @@ export class MeshFactory {
     this.planetRenderers = config.planetRenderers;
     this.moonRenderers = config.moonRenderers;
     this.ringSystemRenderers = config.ringSystemRenderers;
+    this.asteroidRenderers = config.asteroidRenderers;
     this.lodManager = config.lodManager;
     this.createLodCallback = config.createLodCallback;
     this.camera = config.camera;
@@ -93,6 +60,7 @@ export class MeshFactory {
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
       ringSystemRenderers: this.ringSystemRenderers,
+      asteroidRenderers: this.asteroidRenderers,
       celestialRenderers: this.celestialRenderers,
       createLodCallback: this.createLodCallback,
     };
