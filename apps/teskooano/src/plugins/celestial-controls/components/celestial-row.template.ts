@@ -89,6 +89,11 @@ template.innerHTML = `
   /* Stellar animations */
   ${stellarAnimations}
 
+  .button-group {
+    display: flex;
+    gap: var(--space-1); /* smaller gap between action buttons */
+  }
+
 </style>
 
 <div class="icon-name-container">
@@ -96,16 +101,11 @@ template.innerHTML = `
   <span id="name" class="object-name">Object Name</span>
 </div>
 <div class="action-buttons">
-  <teskooano-button size="sm" id="focus-btn" title="Focus Camera" appearance="stealth">
-    <span slot="icon">
-      ${EyeIcon}
-    </span>
-  </teskooano-button>
-  <teskooano-button size="sm" id="follow-btn" title="Follow Object" appearance="stealth">
-    <span slot="icon">
-      ${PersonRunningFilledIcon}
-    </span>
-  </teskooano-button>
+  <div class="button-group">
+    <teskooano-button size="sm" id="move-to-btn" title="Move camera to orbit this object" appearance="stealth">Move To</teskooano-button>
+    <teskooano-button size="sm" id="look-at-btn" title="Look at this object from current position" appearance="stealth">Look At</teskooano-button>
+    <teskooano-button size="sm" id="follow-btn" title="Follow this object with camera" appearance="stealth">Follow</teskooano-button>
+  </div>
 </div>
 `;
 

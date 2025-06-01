@@ -17,9 +17,11 @@ export const CustomEvents = {
 
   CELESTIAL_OBJECTS_LOADED: "celestial-objects-loaded",
   CELESTIAL_OBJECT_DESTROYED: "celestial-object-destroyed",
-  FOCUS_REQUEST: "focus-request",
-  FOLLOW_REQUEST: "follow-request",
-  FOCUS_REQUEST_INITIATED: "focus-request-initiated",
+  FOCUS_REQUEST: "focus-request", // This will likely be deprecated or repurposed for general selection
+  MOVE_TO_REQUEST: "move-to-request", // New for Move To action
+  LOOK_AT_REQUEST: "look-at-request", // New for Look At action
+  FOLLOW_REQUEST: "follow-request", // Existing, ensure it maps to followCelestial
+  FOCUS_REQUEST_INITIATED: "focus-request-initiated", // May need renaming if FOCUS_REQUEST changes meaning
   TRANSITION_COMPLETE: "transitioncomplete",
 
   TOGGLE: "toggle",

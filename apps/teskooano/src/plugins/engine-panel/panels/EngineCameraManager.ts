@@ -45,17 +45,37 @@ export class EngineCameraManager {
   }
 
   /**
-   * Moves the camera to focus on a specific celestial object or clears focus.
-   * Delegates the call to the CameraManager.
-   * @param objectId - The unique ID of the object to focus on, or null to clear focus.
-   * @param distance - Optional distance multiplier for the camera offset.
+   * Instantly moves the camera to a calculated viewing position around the specified celestial object.
+   * The camera will orbit this object, but it is not a persistent follow.
+   *
+   * @param {string} objectId - The unique ID of the object to move to.
+   * @param {number} [distanceFactor] - Optional radius factor for calculating camera distance.
    */
-  public focusOnObject(objectId: string | null, distance?: number): void {
+  public moveToCelestial(objectId: string, distanceFactor?: number): void {
     if (this._cameraManager) {
-      this._cameraManager.followObject(objectId, distance);
+      this._cameraManager.moveToCelestial(objectId, distanceFactor);
     } else {
       console.warn(
-        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] focusOnObject called but CameraManager is not available.`,
+        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] moveToCelestial called but CameraManager is not available.`,
+      );
+    }
+  }
+
+  /**
+   * Moves the camera to follow a specific celestial object or clears follow.
+   * Initiates a smooth transition and establishes persistent follow.
+   * @param objectId - The unique ID of the object to follow, or null to clear follow.
+   * @param distanceFactor - Optional distance multiplier for the camera offset.
+   */
+  public followCelestial(
+    objectId: string | null,
+    distanceFactor?: number,
+  ): void {
+    if (this._cameraManager) {
+      this._cameraManager.followCelestial(objectId, distanceFactor);
+    } else {
+      console.warn(
+        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] followCelestial called but CameraManager is not available.`,
       );
     }
   }
@@ -161,10 +181,27 @@ export class EngineCameraManager {
     const errorState: CameraManagerState = {
       fov: 0,
       focusedObjectId: null,
+      followedObjectId: null,
       currentPosition: new THREE.Vector3(),
       currentTarget: new THREE.Vector3(),
       // Potentially add an error property if CameraManagerState supports it
     };
     return new BehaviorSubject<CameraManagerState>(errorState);
+  }
+
+  /**
+   * Orients the camera to look at a specific celestial object from its current position.
+   * This does not change the camera's position or initiate a persistent follow.
+   *
+   * @param {string} objectId - The unique ID of the object to look at.
+   */
+  public lookAtCelestial(objectId: string): void {
+    if (this._cameraManager) {
+      this._cameraManager.lookAtCelestial(objectId);
+    } else {
+      console.warn(
+        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] lookAtCelestial called but CameraManager is not available.`,
+      );
+    }
   }
 }

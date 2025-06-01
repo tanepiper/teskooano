@@ -624,7 +624,6 @@ export class CompositeEnginePanel
         renderer: this._renderer,
         initialFov: initialViewState.fov,
         initialFocusedObjectId: initialViewState.focusedObjectId,
-        initialCameraPosition: initialViewState.cameraPosition,
         initialCameraTarget: initialViewState.cameraTarget,
         onFocusChangeCallback: (focusedId: string | null) => {
           this.updateViewState({ focusedObjectId: focusedId });

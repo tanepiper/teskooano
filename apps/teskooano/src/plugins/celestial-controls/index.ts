@@ -8,23 +8,23 @@ import { CelestialRow } from "./components/celestial-row.js";
 import { DestroyedObjectsList } from "./components/destroyed-objects-list.js";
 import { FocusTreeList } from "./components/focus-tree-list.js";
 import { RelativeTime } from "./components/relative-time.js";
-import { FocusControl } from "./FocusControl.js";
+import { CelestialControls } from "./CelestialControls.js";
 
 const panelConfig: PanelConfig = {
-  componentName: "focus-control",
-  panelClass: FocusControl,
-  defaultTitle: "Focus Control",
+  componentName: "teskooano-celestial-controls",
+  panelClass: CelestialControls,
+  defaultTitle: "Celestial Controls",
 };
 
 const toolbarRegistration: ToolbarRegistration = {
   target: "engine-toolbar",
   items: [
     {
-      id: "focus-control-button",
+      id: "teskooano-celestial-controls-button",
       type: "panel",
-      title: "Focus Control",
+      title: "Celestial Controls",
       iconSvg: TargetIcon,
-      componentName: "focus-control",
+      componentName: "teskooano-celestial-controls",
       behaviour: "toggle",
 
       initialPosition: {
@@ -45,7 +45,7 @@ const toolbarRegistration: ToolbarRegistration = {
  * for selecting and focusing on celestial objects.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "teskooano-focus-controls",
+  id: "teskooano-celestial-controls",
   name: "Focus Controls",
   description: "Provides the focus control panel and toolbar button.",
   panels: [panelConfig],
@@ -77,4 +77,4 @@ export { CelestialRow } from "./components/celestial-row.js";
 export { DestroyedObjectsList } from "./components/destroyed-objects-list.js";
 export { FocusTreeList } from "./components/focus-tree-list.js";
 export { RelativeTime } from "./components/relative-time.js";
-export { FocusControl };
+export { CelestialControls as FocusControl };

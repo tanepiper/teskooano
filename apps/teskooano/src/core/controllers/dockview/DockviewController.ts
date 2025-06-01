@@ -21,6 +21,10 @@ import {
   RegisteredComponentInfo,
 } from "./types";
 
+// Import pluginManager to get CameraManager instance
+import { pluginManager } from "@teskooano/ui-plugin";
+import type { CameraManager } from "../../../plugins/camera-manager/CameraManager"; // Adjust path as needed
+
 /**
  * Controller class for managing a Dockview instance.
  * Handles component registration, panel/group management, overlays,
@@ -416,81 +420,85 @@ export class DockviewController {
       return;
     }
 
-    const panelId = `${config.componentName}_float`;
-    const behaviour = config.behaviour ?? "toggle";
+    const panelIdBase = config.componentName;
+    const behaviour = config.behaviour ?? "toggle"; // Default to toggle
+    let panelIdToUse: string;
 
-    const existingPanel = this.api.getPanel(panelId);
-
+    // For 'toggle', use a consistent ID. For 'create', generate a new one.
     if (behaviour === "toggle") {
-      if (existingPanel?.api.isVisible) {
+      panelIdToUse = `${panelIdBase}_singleton_panel`; // Or just panelIdBase if only one instance is ever desired
+    } else {
+      // behaviour === "create" or any other not explicitly "toggle"
+      panelIdToUse = `${panelIdBase}_float_${Date.now()}`;
+    }
+
+    const existingPanel = this.api.getPanel(panelIdToUse);
+
+    if (behaviour === "toggle" && existingPanel) {
+      if (existingPanel.api.isVisible) {
         try {
           this.api.removePanel(existingPanel);
         } catch (error) {
           console.error(
-            `[DockviewController] Error removing panel ${panelId}:`,
+            `[DockviewController] Error removing panel ${panelIdToUse}:`,
             error,
           );
         }
       } else {
-        if (existingPanel) {
-          existingPanel.api.setActive();
+        // If it exists but is not visible (e.g., in a tabbed group but not the active tab)
+        existingPanel.api.setActive(); // setActive should bring the panel to front and make it visible
+      }
+      return; // Toggle action complete
+    }
+
+    // If panel doesn't exist (for toggle) or behaviour is 'create', then create it.
+    const panelParams: { [key: string]: any } = {
+      title: config.panelTitle ?? config.title,
+    };
+
+    // Special handling for celestial-uniforms-editor to inject CameraManager
+    if (config.componentName === "celestial-uniforms-editor") {
+      try {
+        const cameraManagerInstance =
+          pluginManager.getManagerInstance<CameraManager>("camera-manager");
+        if (cameraManagerInstance) {
+          panelParams.cameraManager = cameraManagerInstance;
         } else {
-          // Default position if not specified in config
-          let position = { top: 100, left: 100, width: 500, height: 400 };
-
-          // Check if initialPosition is defined in the config and use it
-          // The type for 'config' is RegisteredComponentInfo["toolbarConfig"]
-          // We need to ensure it can hold initialPosition, or cast safely.
-          const toolbarItemConfig = config as any; // Cast to access potential custom fields
-
-          if (toolbarItemConfig.initialPosition) {
-            const ip = toolbarItemConfig.initialPosition;
-            // Ensure all values are numbers. If they were functions, they should be resolved before this point.
-            // Or, resolve them here if they are indeed functions.
-            // For now, assuming they are numbers or resolvable to numbers.
-            position = {
-              top:
-                typeof ip.top === "function"
-                  ? ip.top()
-                  : (ip.top ?? position.top),
-              left:
-                typeof ip.left === "function"
-                  ? ip.left()
-                  : (ip.left ?? position.left),
-              width:
-                typeof ip.width === "function"
-                  ? ip.width()
-                  : (ip.width ?? position.width),
-              height:
-                typeof ip.height === "function"
-                  ? ip.height()
-                  : (ip.height ?? position.height),
-            };
-          }
-
-          this.addFloatingPanel(
-            {
-              id: panelId,
-              component: config.componentName,
-              title: config.panelTitle ?? config.title,
-              params: { title: config.panelTitle ?? config.title },
-            },
-            position,
+          console.warn(
+            `[DockviewController] CameraManager instance not found. CelestialUniformsEditor might not function as expected.`,
           );
         }
+      } catch (e) {
+        console.error(
+          "[DockviewController] Error getting CameraManager instance:",
+          e,
+        );
       }
-    } else if (behaviour === "create") {
-      const newPanelId = `${config.componentName}_float_${Date.now()}`;
-      const position = { top: 100, left: 100, width: 500, height: 400 };
-      this.addFloatingPanel(
-        {
-          id: newPanelId,
-          component: config.componentName,
-          title: config.panelTitle ?? config.title,
-          params: { title: config.panelTitle ?? config.title },
-        },
-        position,
+    }
+
+    const panelOptions: AddPanelOptions = {
+      id: panelIdToUse,
+      component: config.componentName,
+      title: config.panelTitle ?? config.title,
+      params: panelParams,
+      // Default to floating for new panels, can be overridden by config if needed
+      // position: { referencePanel: this.api.activePanel?.id , direction: 'right' } // Example, adjust as needed
+    };
+
+    try {
+      const newPanel = this.api.addPanel(panelOptions); // Use the unified panelIdToUse
+      newPanel.api.setActive();
+
+      // Optional: If it's a floating panel and behaviour is 'toggle', manage its position or state
+      // This part depends on how floating panels are handled (e.g., always centered, last position, etc.)
+      // For now, let's assume default Dockview floating behavior is acceptable.
+    } catch (error) {
+      console.error(
+        `[DockviewController] Failed to add panel ${config.componentName}:`,
+        error,
       );
+      // If it was a 'create' action that failed with a unique ID, it might not matter as much,
+      // but for a 'toggle' with a singleton ID, this is an issue.
     }
   }
 }

@@ -138,8 +138,8 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
     },
 
     {
-      id: "focus-control",
-      element: "#engine-toolbar-button-focus-control-button",
+      id: "teskooano-celestial-controls",
+      element: "#engine-toolbar-button-teskooano-celestial-controls-button",
       overlayColor: "rgba(0, 0, 0, 0.3)",
       disableActiveInteraction: false,
       popover: {
@@ -156,7 +156,7 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
         }
 
         const focusControl = document.querySelector(
-          `focus-control[engine-view-id="${engineViewId}"]`,
+          `teskooano-celestial-controls[engine-view-id="${engineViewId}"]`,
         );
 
         if (

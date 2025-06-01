@@ -69,7 +69,7 @@ export type ToolbarTarget = "main-toolbar" | "engine-toolbar";
  * NOTE: This might become deprecated if components are always registered separately.
  */
 export interface ComponentConfig {
-  /** The HTML tag name for the custom element (e.g., 'focus-control'). */
+  /** The HTML tag name for the custom element (e.g., 'teskooano-celestial-controls'). */
   tagName: string;
   /** The class implementing the custom element. */
   componentClass: CustomElementConstructor;

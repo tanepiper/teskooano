@@ -21,6 +21,10 @@ export interface CameraManagerState {
    * The unique ID of the object currently being focused on, or null if no object is focused.
    */
   focusedObjectId: string | null;
+  /**
+   * The unique ID of the object being actively tracked, or null if no object is being tracked.
+   */
+  followedObjectId: string | null;
 }
 
 /**

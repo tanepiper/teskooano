@@ -8,19 +8,32 @@ import {
   type StarProperties,
   StellarType,
 } from "@teskooano/data-types";
-import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
+import {
+  GroupPanelPartInitParameters,
+  IContentRenderer,
+  DockviewPanelApi,
+} from "dockview-core";
 
 import { FormatUtils } from "./utils/formatters";
 
 import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 
-import { Subscription } from "rxjs";
+import { BehaviorSubject, Subscription } from "rxjs";
 import { template } from "./CelestialUniforms.template";
 import { UniformControlUtils } from "./utils/UniformControlUtils";
 
 // Import the star uniform panel
 import { MainSequenceStarUniforms } from "./bodies/stars"; // Assuming index.ts exports it
+
+// Import CameraManager types
+import type { CameraManager } from "../camera-manager/CameraManager";
+import type { CameraManagerState } from "../camera-manager/types";
+
+interface CelestialUniformsPanelParams {
+  focusedObjectId?: string;
+  cameraManager?: CameraManager; // Expect CameraManager to be passed in params
+}
 
 /**
  * Custom Element `celestial-uniforms-editor`.
@@ -47,6 +60,12 @@ export class CelestialUniformsEditor
   // private components: Map<CelestialType | "generic", CelestialInfoComponent> =
   //   new Map();
   // private activeComponent: CelestialInfoComponent | null = null;
+
+  private cameraManager: CameraManager | null = null;
+  private cameraStateSubscription: Subscription | null = null;
+  private cameraState$: BehaviorSubject<CameraManagerState> | null = null;
+  // private isPanelActive: boolean = false; // Removed direct usage of Dockview focus events for now
+  private dockviewPanelApi: DockviewPanelApi | undefined;
 
   /**
    * Unique identifier for the custom element.
@@ -76,13 +95,45 @@ export class CelestialUniformsEditor
     this.shadow = this.attachShadow({ mode: "open" });
 
     this.shadow.appendChild(template.content.cloneNode(true));
+
+    // CameraManager will be initialized via init() params
   }
 
   init(parameters: GroupPanelPartInitParameters): void {
-    const params = (parameters.params as { focusedObjectId?: string }) || {};
-    if (params.focusedObjectId) {
-      this.handleSelectionChange(params.focusedObjectId);
+    this.dockviewPanelApi = parameters.api;
+    const panelParams =
+      (parameters.params as CelestialUniformsPanelParams) || {};
+
+    if (panelParams.cameraManager) {
+      this.cameraManager = panelParams.cameraManager;
+      this.cameraState$ = this.cameraManager.getCameraState$();
+    } else {
+      console.warn(
+        "[CelestialUniformsEditor] CameraManager instance not provided in init params. Automatic focus on followed object will not work.",
+      );
     }
+
+    // Removed onDidFocus/onDidBlur handling from dockviewPanelApi due to linter errors.
+    // Panel active state will be inferred by isConnected for cameraState$ subscription.
+
+    let initialObjectIdToFocus: string | null =
+      panelParams.focusedObjectId || null;
+
+    if (!initialObjectIdToFocus && this.cameraState$) {
+      const currentCameraState = this.cameraState$.getValue();
+      if (currentCameraState.followedObjectId) {
+        initialObjectIdToFocus = currentCameraState.followedObjectId;
+        console.log(
+          `[CelestialUniformsEditor] Init: No explicit focusId, using followed object: ${initialObjectIdToFocus}`,
+        );
+      }
+    }
+
+    this.handleSelectionChange(initialObjectIdToFocus);
+
+    // if (this.dockviewPanelApi?.isFocused) { // isFocused also caused linter errors
+    //   this.isPanelActive = this.dockviewPanelApi.isFocused;
+    // }
   }
 
   get element(): HTMLElement {
@@ -101,12 +152,53 @@ export class CelestialUniformsEditor
       "focus-request-initiated",
       this.handleFocusRequestInitiated,
     );
+
+    if (this.cameraState$) {
+      this.cameraStateSubscription = this.cameraState$.subscribe(
+        (cameraState) => {
+          // If panel is not connected to DOM, don't react.
+          if (!this.element.isConnected) return;
+
+          const currentFollowedId = cameraState.followedObjectId;
+
+          if (
+            currentFollowedId &&
+            this.currentSelectedId !== currentFollowedId
+          ) {
+            if (this._lastRenderedObjectId !== currentFollowedId) {
+              console.log(
+                `[CelestialUniformsEditor] Panel reacting to camera follow change: ${currentFollowedId}`,
+              );
+              this.handleSelectionChange(currentFollowedId);
+            }
+          } else if (
+            currentFollowedId === null &&
+            this.currentSelectedId !== null &&
+            this.currentSelectedId === this._lastRenderedObjectId
+          ) {
+            const previousCameraState = this.cameraState$?.value;
+            if (
+              previousCameraState &&
+              this.currentSelectedId === previousCameraState.followedObjectId
+            ) {
+              console.log(
+                `[CelestialUniformsEditor] Panel reacting to camera follow cleared. Was showing: ${this.currentSelectedId}`,
+              );
+              this.handleSelectionChange(null);
+            }
+          }
+        },
+      );
+    }
   }
 
   disconnectedCallback() {
     this._cleanupSubscriptions();
     this.unsubscribeObjectsStore?.unsubscribe();
     this.unsubscribeObjectsStore = null;
+
+    this.cameraStateSubscription?.unsubscribe();
+    this.cameraStateSubscription = null;
 
     document.removeEventListener(
       "renderer-focus-changed",
@@ -117,6 +209,7 @@ export class CelestialUniformsEditor
       "focus-request-initiated",
       this.handleFocusRequestInitiated,
     );
+    // No need to operate on dockviewPanelApi listeners here as they are tied to the panel instance life
   }
 
   private _cleanupSubscriptions() {
@@ -128,21 +221,22 @@ export class CelestialUniformsEditor
     const customEvent = event as CustomEvent<{
       focusedObjectId: string | null;
     }>;
-    if (customEvent.detail) {
-      if (this.currentSelectedId !== customEvent.detail.focusedObjectId) {
-        this.handleSelectionChange(customEvent.detail.focusedObjectId);
-      }
+    if (
+      customEvent.detail &&
+      this.currentSelectedId !== customEvent.detail.focusedObjectId
+    ) {
+      this.handleSelectionChange(customEvent.detail.focusedObjectId);
     }
   };
 
   private handleFocusRequestInitiated = (event: Event): void => {
     const customEvent = event as CustomEvent<{ objectId: string | null }>;
-    if (customEvent.detail && customEvent.detail.objectId) {
-      if (this.currentSelectedId !== customEvent.detail.objectId) {
-        this.handleSelectionChange(customEvent.detail.objectId);
-      }
-    } else {
-      console.warn("[CelestialInfo] Received focus request with no objectId.");
+    if (
+      customEvent.detail &&
+      customEvent.detail.objectId &&
+      this.currentSelectedId !== customEvent.detail.objectId
+    ) {
+      this.handleSelectionChange(customEvent.detail.objectId);
     }
   };
 
@@ -177,9 +271,12 @@ export class CelestialUniformsEditor
       selectedId === this._lastRenderedObjectId &&
       selectedId !== null
     ) {
+      // No change, and already rendered this ID, so no need to proceed.
+      // This prevents re-rendering if focus events re-trigger with the same ID.
       return;
     }
 
+    // If selection is cleared, but was already clear, do nothing.
     if (
       selectedId === null &&
       this.currentSelectedId === null &&
@@ -193,25 +290,20 @@ export class CelestialUniformsEditor
 
     this._cleanupSubscriptions();
     const container = this.shadow.querySelector(".container") as HTMLElement;
-    if (container) container.innerHTML = "";
+    if (container) container.innerHTML = ""; // Clear previous content
 
     const titleEl = this.shadow.querySelector("#uniforms-title") as HTMLElement;
 
     if (!selectedId) {
-      this._lastRenderedObjectId = null;
+      this._lastRenderedObjectId = null; // Clear last rendered ID
       let message = "Select a celestial object...";
       if (
         potentiallyDestroyedObject &&
         potentiallyDestroyedObject.status === CelestialStatus.DESTROYED
       ) {
         message = `Object '${potentiallyDestroyedObject.name}' has been destroyed.`;
-      } else if (oldSelectedId && !potentiallyDestroyedObject) {
-        const allCelestials = getCelestialObjects();
-        const oldObjectData = allCelestials[oldSelectedId];
-        if (!oldObjectData) {
-          message = `Object previously selected (${oldSelectedId}) is no longer available.`;
-        }
       }
+      // Removed redundant check for oldSelectedId as it's covered by initial placeholder
       this.showPlaceholder(message);
       if (titleEl) titleEl.textContent = "Celestial Uniforms Editor";
       return;
@@ -225,18 +317,19 @@ export class CelestialUniformsEditor
           `Object '${celestialData.name}' has been destroyed.`,
         );
         if (titleEl) titleEl.textContent = "Celestial Uniforms Editor";
-        this._lastRenderedObjectId = null;
+        this._lastRenderedObjectId = null; // Clear last rendered ID
       } else {
         if (titleEl)
           titleEl.textContent = `Editing: ${celestialData.name} (${celestialData.type})`;
         this.renderUniformsUI(celestialData);
+        this._lastRenderedObjectId = celestialData.id; // Set last rendered ID
       }
     } else {
       this.showPlaceholder(
         `Selected object data not found for ID: ${selectedId}.`,
       );
       if (titleEl) titleEl.textContent = "Celestial Uniforms Editor";
-      this._lastRenderedObjectId = null;
+      this._lastRenderedObjectId = null; // Clear last rendered ID
     }
   }
 

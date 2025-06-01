@@ -4,9 +4,9 @@ import {
   CelestialType,
   StarProperties,
 } from "@teskooano/data-types";
-import { BaseCelestialList } from "./base-celestial-list";
+import { BaseCelestialList } from "./base-celestial-list.js";
 import "./celestial-row.js";
-import "./relative-time";
+import "./relative-time.js";
 
 interface DestroyedObjectInfo {
   object: CelestialObject;

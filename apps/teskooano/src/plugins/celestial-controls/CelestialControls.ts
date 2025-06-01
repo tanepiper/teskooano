@@ -1,13 +1,18 @@
 import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
 import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
-import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  CelestialStatus,
+  CustomEvents,
+} from "@teskooano/data-types";
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 import type { CompositeEnginePanel } from "../engine-panel/panels/CompositeEnginePanel.js";
 import {
-  handleFocusRequest,
+  handleMoveToRequest,
+  handleLookAtRequest,
   handleFollowRequest,
-} from "./FocusControl.interactions.js";
-import { template } from "./FocusControl.template.js";
+} from "./CelestialControls.interactions.js";
+import { template } from "./CelestialControls.template.js";
 import { StarDestructionHandler } from "./utils/star-destruction-handler.js";
 
 import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
@@ -24,7 +29,7 @@ import type { FocusTreeList } from "./components/focus-tree-list.js";
  * Allows users to focus (look at) or follow (track with camera) specific objects.
  * Interacts with the core state stores and the parent engine panel/renderer.
  */
-export class FocusControl extends HTMLElement implements IContentRenderer {
+export class CelestialControls extends HTMLElement implements IContentRenderer {
   private focusTreeList: FocusTreeList | null = null;
   private destroyedObjectsList: DestroyedObjectsList | null = null;
   private resetButton: HTMLElement | null = null;
@@ -41,7 +46,8 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
   private _handleObjectDestroyed: (event: Event) => void;
   private _handleObjectStatusChanged: (event: Event) => void;
   private _handleInfluencesChanged: () => void;
-  private _handleFocusRequest: (event: Event) => void;
+  private _handleMoveToRequest: (event: Event) => void;
+  private _handleLookAtRequest: (event: Event) => void;
   private _handleFollowRequest: (event: Event) => void;
 
   private _celestialObjectsUnsubscribe: Subscription | null = null;
@@ -49,7 +55,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
   private _previousObjectsState: Record<string, CelestialObject> = {};
 
   /** Unique identifier for registering this component with Dockview. */
-  public static readonly componentName = "focus-control";
+  public static readonly componentName = "teskooano-celestial-controls";
 
   /**
    * Generates the configuration required to add a button for this panel
@@ -58,13 +64,13 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    */
   public static registerToolbarButtonConfig(): PanelToolbarItemConfig {
     return {
-      id: "focus_control",
+      id: "celestial_controls",
       target: "engine-toolbar",
       iconSvg: TargetIcon,
-      title: "Focus Control",
+      title: "Celestial Controls",
       type: "panel",
       componentName: this.componentName,
-      panelTitle: "Focus Control",
+      panelTitle: "Celestial Controls",
       behaviour: "toggle",
       initialPosition: {
         top: 150,
@@ -106,12 +112,21 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
       }
     };
     this._handleInfluencesChanged = this._updateLists.bind(this);
-    this._handleFocusRequest = (event: Event) => {
+
+    this._handleMoveToRequest = (event: Event) => {
       const customEvent = event as CustomEvent<{ objectId: string }>;
       if (customEvent.detail?.objectId) {
-        this.requestFocus(customEvent.detail.objectId);
+        this.requestMoveTo(customEvent.detail.objectId);
       }
     };
+
+    this._handleLookAtRequest = (event: Event) => {
+      const customEvent = event as CustomEvent<{ objectId: string }>;
+      if (customEvent.detail?.objectId) {
+        this.requestLookAt(customEvent.detail.objectId);
+      }
+    };
+
     this._handleFollowRequest = (event: Event) => {
       const customEvent = event as CustomEvent<{ objectId: string }>;
       if (customEvent.detail?.objectId) {
@@ -261,21 +276,37 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
 
   /**
    * Requests the parent renderer to point the camera towards a specific object.
-   * Delegates the core logic to `handleFocusRequest`.
+   * Delegates the core logic to `handleMoveToRequest`.
    * @param objectId - The ID of the celestial object to focus on.
    * @internal
    */
-  private requestFocus(objectId: string): void {
-    const success = handleFocusRequest(
+  private requestMoveTo(objectId: string): void {
+    const success = handleMoveToRequest(
       this._parentPanel,
       objectId,
-      this.dispatchEvent.bind(this),
+      (event: CustomEvent) => this.dispatchEvent(event),
     );
-    if (success) {
-      // Focus highlighting is handled by camera state subscription
-    } else {
-      console.warn(`[FocusControl] handleFocusRequest failed for ${objectId}`);
+    if (!success) {
+      console.warn(`[CelestialControls] requestMoveTo failed for ${objectId}`);
     }
+    // Visual highlighting is managed by camera state subscription (_updateHighlightInternal)
+  }
+
+  /**
+   * Initiates a "Look At" camera action for the specified object.
+   * The camera pivots to look at the object from its current position.
+   * @param objectId - The ID of the celestial object to look at.
+   */
+  private requestLookAt(objectId: string): void {
+    const success = handleLookAtRequest(
+      this._parentPanel,
+      objectId,
+      // No dispatchEventCallback needed as handleLookAtRequest is instantaneous and doesn't dispatch its own sub-events here
+    );
+    if (!success) {
+      console.warn(`[CelestialControls] requestLookAt failed for ${objectId}`);
+    }
+    // Visual highlighting related to CameraManager's focusedObjectId will be handled by _updateHighlightInternal
   }
 
   /**
@@ -325,18 +356,21 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
       this._parentPanel?.engineCameraManager?.resetCameraView(),
     );
     this.clearButton?.addEventListener("click", () =>
-      this._parentPanel?.engineCameraManager?.clearFocus(),
+      this._parentPanel?.engineCameraManager?.followCelestial(null),
     );
 
-    // Listen for events from the web components
     if (this.focusTreeList) {
       this.focusTreeList.addEventListener(
-        "focus-object",
-        this._handleFocusRequest,
+        CustomEvents.MOVE_TO_REQUEST as keyof HTMLElementEventMap,
+        this._handleMoveToRequest as EventListener,
       );
       this.focusTreeList.addEventListener(
-        "follow-object",
-        this._handleFollowRequest,
+        CustomEvents.LOOK_AT_REQUEST as keyof HTMLElementEventMap,
+        this._handleLookAtRequest as EventListener,
+      );
+      this.focusTreeList.addEventListener(
+        CustomEvents.FOLLOW_REQUEST as keyof HTMLElementEventMap,
+        this._handleFollowRequest as EventListener,
       );
     }
   }
@@ -347,14 +381,25 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
    * @internal
    */
   private removeEventListeners(): void {
+    this.resetButton?.removeEventListener("click", () =>
+      this._parentPanel?.engineCameraManager?.resetCameraView(),
+    );
+    this.clearButton?.removeEventListener("click", () =>
+      this._parentPanel?.engineCameraManager?.followCelestial(null),
+    );
+
     if (this.focusTreeList) {
       this.focusTreeList.removeEventListener(
-        "focus-object",
-        this._handleFocusRequest,
+        CustomEvents.MOVE_TO_REQUEST as keyof HTMLElementEventMap,
+        this._handleMoveToRequest as EventListener,
       );
       this.focusTreeList.removeEventListener(
-        "follow-object",
-        this._handleFollowRequest,
+        CustomEvents.LOOK_AT_REQUEST as keyof HTMLElementEventMap,
+        this._handleLookAtRequest as EventListener,
+      );
+      this.focusTreeList.removeEventListener(
+        CustomEvents.FOLLOW_REQUEST as keyof HTMLElementEventMap,
+        this._handleFollowRequest as EventListener,
       );
     }
 
@@ -506,7 +551,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
         console.debug(
           `[FocusControl] Switching focus from destroyed star to new root star: ${newRootStar.id}`,
         );
-        this.requestFocus(newRootStar.id);
+        this.requestMoveTo(newRootStar.id);
       }
 
       if (this._currentFollowedId === destroyedObjectId) {

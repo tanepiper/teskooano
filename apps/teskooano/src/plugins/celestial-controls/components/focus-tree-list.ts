@@ -4,9 +4,9 @@ import {
   CelestialType,
   StarProperties,
 } from "@teskooano/data-types";
-import { BaseCelestialList } from "./base-celestial-list";
+import { BaseCelestialList } from "./base-celestial-list.js";
 import "./celestial-row.js";
-import { buildHierarchy } from "../utils/hierarchy-builder";
+import { buildHierarchy } from "../utils/hierarchy-builder.js";
 
 /**
  * Helper function to get the orbital distance for sorting.

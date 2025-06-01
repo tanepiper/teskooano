@@ -25,10 +25,12 @@ export class CelestialRow extends HTMLElement {
   private _objectId: string | null = null;
   private _isInactive = false;
   private _isFocused = false;
+  private _isFollowed = false;
 
   private iconEl: HTMLElement | null = null;
   private nameEl: HTMLElement | null = null;
-  private focusBtn: HTMLElement | null = null;
+  private moveToBtn: HTMLElement | null = null;
+  private lookAtBtn: HTMLElement | null = null;
   private followBtn: HTMLElement | null = null;
 
   constructor() {
@@ -41,21 +43,20 @@ export class CelestialRow extends HTMLElement {
   }
 
   connectedCallback() {
-    this.focusBtn = this.shadowRoot!.getElementById("focus-btn");
+    this.moveToBtn = this.shadowRoot!.getElementById("move-to-btn");
+    this.lookAtBtn = this.shadowRoot!.getElementById("look-at-btn");
     this.followBtn = this.shadowRoot!.getElementById("follow-btn");
 
-    if (this.focusBtn) {
-      this.focusBtn.addEventListener("click", this.handleFocusClick);
-    }
-    if (this.followBtn) {
-      this.followBtn.addEventListener("click", this.handleFollowClick);
-    }
+    this.moveToBtn?.addEventListener("click", this.handleMoveToClick);
+    this.lookAtBtn?.addEventListener("click", this.handleLookAtClick);
+    this.followBtn?.addEventListener("click", this.handleFollowClick);
 
     this.updateButtonTitles();
   }
 
   disconnectedCallback() {
-    this.focusBtn?.removeEventListener("click", this.handleFocusClick);
+    this.moveToBtn?.removeEventListener("click", this.handleMoveToClick);
+    this.lookAtBtn?.removeEventListener("click", this.handleLookAtClick);
     this.followBtn?.removeEventListener("click", this.handleFollowClick);
   }
 
@@ -85,6 +86,10 @@ export class CelestialRow extends HTMLElement {
         this._isFocused = newValue !== null;
         this.toggleAttribute("focused", this._isFocused);
         break;
+      case "followed":
+        this._isFollowed = newValue !== null;
+        this.toggleAttribute("followed", this._isFollowed);
+        break;
     }
   }
 
@@ -105,25 +110,44 @@ export class CelestialRow extends HTMLElement {
     const objectName = this.getAttribute("object-name");
     const id = this._objectId;
 
-    if (this.focusBtn) {
-      this.focusBtn.setAttribute(
+    if (this.moveToBtn) {
+      this.moveToBtn.setAttribute(
         "title",
-        `Focus ${objectName || id || "Unknown"}`,
+        `Move camera to orbit ${objectName || id || "Unknown"}`,
+      );
+    }
+    if (this.lookAtBtn) {
+      this.lookAtBtn.setAttribute(
+        "title",
+        `Look at ${objectName || id || "Unknown"} from current position`,
       );
     }
     if (this.followBtn) {
       this.followBtn.setAttribute(
         "title",
-        `Follow ${objectName || id || "Unknown"}`,
+        `Follow ${objectName || id || "Unknown"} with camera`,
       );
     }
   }
 
-  private handleFocusClick = (event: MouseEvent) => {
+  private handleMoveToClick = (event: MouseEvent) => {
     event.stopPropagation();
     if (this._objectId && !this._isInactive) {
       this.dispatchEvent(
-        new CustomEvent(CustomEvents.FOCUS_REQUEST, {
+        new CustomEvent(CustomEvents.MOVE_TO_REQUEST, {
+          bubbles: true,
+          composed: true,
+          detail: { objectId: this._objectId },
+        }),
+      );
+    }
+  };
+
+  private handleLookAtClick = (event: MouseEvent) => {
+    event.stopPropagation();
+    if (this._objectId && !this._isInactive) {
+      this.dispatchEvent(
+        new CustomEvent(CustomEvents.LOOK_AT_REQUEST, {
           bubbles: true,
           composed: true,
           detail: { objectId: this._objectId },
@@ -156,6 +180,9 @@ export class CelestialRow extends HTMLElement {
   }
   get isFocused(): boolean {
     return this._isFocused;
+  }
+  get isFollowed(): boolean {
+    return this._isFollowed;
   }
 }
 

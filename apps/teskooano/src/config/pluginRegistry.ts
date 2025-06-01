@@ -9,8 +9,8 @@ export const pluginConfig: PluginRegistryConfig = {
   "teskooano-engine-settings": {
     path: "../plugins/engine-settings",
   },
-  "teskooano-focus-controls": {
-    path: "../plugins/focus",
+  "teskooano-celestial-controls": {
+    path: "../plugins/celestial-controls",
   },
   "teskooano-engine-info": {
     path: "../plugins/engine-info",
