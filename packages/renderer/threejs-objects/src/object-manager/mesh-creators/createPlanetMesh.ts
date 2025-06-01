@@ -34,7 +34,6 @@ export function createPlanetMesh(
       // Planets, like moons, typically use the BaseTerrestrialRenderer.
       const newRenderer = new BaseTerrestrialRenderer();
       renderer = newRenderer;
-      console.log(object);
       deps.planetRenderers.set(object.celestialObjectId, renderer);
     } catch (error) {
       console.error(

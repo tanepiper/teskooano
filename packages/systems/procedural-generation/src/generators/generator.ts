@@ -25,7 +25,6 @@ export async function generateSystem(
       console.error("[generateSystem] No stars were generated. Aborting.");
       return { objects$: throwError(() => new Error("No stars generated")) };
     }
-    console.log(`[generateSystem] Generated ${stars.length} star(s).`);
 
     // Create an observable that emits stars first
     const stars$ = from(stars);
@@ -37,7 +36,6 @@ export async function generateSystem(
       seed,
       maxOrbitalSystemsToGenerate,
     );
-    console.log("[generateSystem] Planetary body generation initiated.");
 
     // Concatenate stars and then planetary bodies
     const allGeneratedObjects$ = concat(stars$, planetaryBodies$).pipe(
@@ -52,7 +50,6 @@ export async function generateSystem(
 
     // 3. Validate System
     const validatedObjects$ = validateSystemObjects(allGeneratedObjects$);
-    console.log("[generateSystem] System validation initiated.");
 
     return { objects$: validatedObjects$ };
   } catch (error) {

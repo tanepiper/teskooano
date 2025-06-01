@@ -19,8 +19,8 @@ export class ControlsManager {
   public controls: OrbitControls;
   /** The camera being controlled. */
   private camera: THREE.PerspectiveCamera;
-  /** Flag indicating if the camera is currently undergoing a GSAP animation. */
-  private isTransitioning: boolean = false;
+  /** Flag indicating if the camera is currently undergoing a GSAP programmatic animation. */
+  private isProgrammaticTransitioning: boolean = false;
   /** Factor controlling how much distance affects transition duration (logarithmic scaling). */
   private transitionDistanceFactor: number = 0.5;
   /** Minimum duration for camera transitions in seconds. */
@@ -94,62 +94,50 @@ export class ControlsManager {
   }
 
   private onControlsStart = () => {
-    this.isTransitioning = true; // User interaction is a type of transition
+    // This event indicates the user has started interacting.
+    // If a programmatic transition was active and OrbitControls weren't fully disabled,
+    // this interaction should signal CameraManager to potentially cancel the semantic intent
+    // of that transition. This happens when onControlsEnd dispatches USER_CAMERA_MANIPULATION.
+    // We don't set isProgrammaticTransitioning here.
   };
 
   private onControlsEnd = () => {
-    this.isTransitioning = false;
-    this.handleStateUpdate(true); // Force update on interaction end
+    // User has finished manipulating the camera.
+    // Dispatch an event for CameraManager to update its state and follow offset if needed.
+    const userManipulationEvent = new CustomEvent(
+      CustomEvents.USER_CAMERA_MANIPULATION,
+      {
+        detail: {
+          position: this.camera.position.clone(),
+          target: this.controls.target.clone(),
+        },
+        bubbles: true, // Ensure it bubbles to document if rendererElement is not document
+        composed: true,
+      },
+    );
+    // Dispatch on the rendererElement, assuming CameraManager listens on document or this bubbles.
+    // If CameraManager strictly listens on document, then document.dispatchEvent might be more direct.
+    this.rendererElement.dispatchEvent(userManipulationEvent);
+
+    // No longer setting isProgrammaticTransitioning or calling handleStateUpdate here.
+    // simulationStateService updates should be driven by CameraManager or its observers.
   };
 
   private onControlsChange = () => {
-    if (this.isTransitioning) {
-      // Only update if a transition (manual or programmatic) is active
-      this.handleStateUpdate();
-    }
-  };
-
-  private handleStateUpdate = (forceUpdate: boolean = false) => {
-    const positionChanged =
-      this.camera.position.distanceToSquared(this.lastCameraPosition) >
-      this.changeThreshold * this.changeThreshold;
-    const targetChanged =
-      this.controls.target.distanceToSquared(this.lastCameraTarget) >
-      this.changeThreshold * this.changeThreshold;
-
-    if (forceUpdate || positionChanged || targetChanged) {
-      const currentSimState = simulationStateService.getCurrentState();
-      const newPosOS = new OSVector3(
-        this.camera.position.x,
-        this.camera.position.y,
-        this.camera.position.z,
-      );
-      const newTargetOS = new OSVector3(
-        this.controls.target.x,
-        this.controls.target.y,
-        this.controls.target.z,
-      );
-
-      if (currentSimState.focusedObjectId !== null) {
-        simulationStateService.setFocusedObject(null);
-      }
-      simulationStateService.updateCamera(newPosOS, newTargetOS);
-
-      this.lastCameraPosition.copy(this.camera.position);
-      this.lastCameraTarget.copy(this.controls.target);
-
-      const event = new Event("camera-transition-complete");
-      this.rendererElement.dispatchEvent(event);
-    }
+    // This fires continuously during drag.
+    // We now primarily act on onControlsEnd for dispatching USER_CAMERA_MANIPULATION.
+    // If any real-time updates were needed based on 'change', they'd go here,
+    // but generally, CameraManager should react to the manipulation being complete.
+    // The old handleStateUpdate() logic is removed.
   };
 
   /**
-   * Returns whether the camera is currently undergoing an animated transition.
+   * Returns whether the camera is currently undergoing an animated programmatic transition.
    * @readonly
    * @type {boolean}
    */
   get getIsTransitioning(): boolean {
-    return this.isTransitioning;
+    return this.isProgrammaticTransitioning;
   }
 
   /**
@@ -157,12 +145,12 @@ export class ControlsManager {
    * Cancels existing transitions, disables controls, and stores original damping.
    */
   private _beginTransition(): void {
-    this.cancelTransition();
+    this.cancelTransition(); // Cancels based on this.activeTimeline
     this._originalDampingEnabled = this.controls.enableDamping;
     this._originalDampingFactor = this.controls.dampingFactor;
     this.controls.enableDamping = false;
-    this.setEnabled(false);
-    this.isTransitioning = true;
+    this.setEnabled(false); // Disables OrbitControls
+    this.isProgrammaticTransitioning = true;
   }
 
   /**
@@ -175,7 +163,7 @@ export class ControlsManager {
     type: "target-only" | "position-and-target",
     focusedObjectId?: string | null,
   ): void {
-    this.isTransitioning = false;
+    this.isProgrammaticTransitioning = false; // GSAP transition ended
     this.activeTimeline = null;
 
     this.camera.position.copy(finalCameraPos);
@@ -183,7 +171,7 @@ export class ControlsManager {
 
     this.controls.enableDamping = this._originalDampingEnabled;
     this.controls.dampingFactor = this._originalDampingFactor;
-    this.setEnabled(true); // Re-enable controls AFTER setting final position/target
+    this.setEnabled(true); // Re-enable OrbitControls AFTER setting final position/target
     this.controls.update(); // Ensure controls are internally consistent
 
     const transitionCompleteEvent = new CustomEvent(
@@ -465,33 +453,41 @@ export class ControlsManager {
    * positions when following an object.
    */
   update(delta: number): void {
-    // If following an object, update its position and apply delta first.
-    if (this.followingTargetObject) {
-      this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
+    if (this.followingTargetObject && !this.isProgrammaticTransitioning) {
       const simulationState = simulationStateService.getCurrentState();
       const isPaused = simulationState.paused;
 
       if (!isPaused) {
-        // Only apply follow updates if simulation is running
-        const targetDelta = this.tempTargetPosition
+        // Get the object's current world position
+        this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
+
+        // Calculate how much the OrbitControls.target needs to move
+        // to stay with the object. This maintains the camera's relative position
+        // as set by user interaction or initial setup.
+        const targetMovementDelta = this.tempTargetPosition
           .clone()
-          .sub(this.previousFollowTargetPos);
+          .sub(this.controls.target);
 
-        // Apply delta to camera position AND OrbitControls target
-        this.camera.position.add(targetDelta);
-        this.controls.target.add(targetDelta); // Crucial: OrbitControls pivots around this
+        // Update the OrbitControls target to the object's current position.
+        // This ensures OrbitControls pivots around the correct, moving point.
+        this.controls.target.copy(this.tempTargetPosition);
 
-        this.previousFollowTargetPos.copy(this.tempTargetPosition);
-      } else {
-        // When paused, keep previousFollowTargetPos updated to avoid snap on unpause
-        this.previousFollowTargetPos.copy(this.tempTargetPosition);
+        // Also move the camera by the same amount the target moved.
+        // This keeps the camera's relative position (which might include user orbiting/zooming)
+        // correctly translated with the object.
+        this.camera.position.add(targetMovementDelta);
       }
+      // If paused, the target and camera effectively remain fixed relative to their last state.
+      // OrbitControls won't update them against a paused object that might be visually drifting.
+    } else if (this.followingTargetObject && this.isProgrammaticTransitioning) {
+      // During a programmatic (GSAP) transition, GSAP is in full control of
+      // camera.position and often controls.target directly.
+      // OrbitControls are disabled (this.controls.enabled = false).
+      // No special follow logic needed here as GSAP dictates the path.
     }
 
-    // Then, let OrbitControls process user input and apply damping.
-    // This call handles user input when no GSAP transition is active (as GSAP transitions
-    // temporarily disable controls via setEnabled(false) in _beginTransition).
-    // OrbitControls.update() is also called at the end of a GSAP transition in _endTransition.
+    // Let OrbitControls process user input (orbiting, zooming, panning relative to its target)
+    // and apply damping. If following, it uses the target we just updated.
     if (this.controls.enabled) {
       this.controls.update();
     }
@@ -522,11 +518,11 @@ export class ControlsManager {
    * Re-enables user controls.
    */
   public cancelTransition(): void {
-    if (this.isTransitioning && this.activeTimeline) {
+    if (this.isProgrammaticTransitioning && this.activeTimeline) {
       this.activeTimeline.kill();
       this.activeTimeline = null;
-      this.isTransitioning = false;
-      this.setEnabled(true);
+      this.isProgrammaticTransitioning = false;
+      this.setEnabled(true); // Re-enable controls if transition is cancelled
     }
   }
 

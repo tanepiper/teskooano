@@ -4,7 +4,10 @@ import {
   simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
-import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
+import {
+  ModularSpaceRenderer,
+  RenderableCelestialObject,
+} from "@teskooano/renderer-threejs";
 import { BehaviorSubject, Subscription } from "rxjs";
 import * as THREE from "three";
 import type { CameraManagerOptions, CameraManagerState } from "./types";
@@ -68,11 +71,11 @@ export class CameraManager {
     }
     // Remove document-level listeners, they will be re-added if setDependencies completes.
     document.removeEventListener(
-      "camera-transition-complete",
+      CustomEvents.CAMERA_TRANSITION_COMPLETE,
       this.handleCameraTransitionComplete,
     );
     document.removeEventListener(
-      "user-camera-manipulation",
+      CustomEvents.USER_CAMERA_MANIPULATION,
       this.handleUserCameraManipulation,
     );
     this.simulationStateSubscription?.unsubscribe(); // Unsubscribe here
@@ -225,11 +228,11 @@ export class CameraManager {
 
     // Re-add document event listeners
     document.addEventListener(
-      "camera-transition-complete",
+      CustomEvents.CAMERA_TRANSITION_COMPLETE,
       this.handleCameraTransitionComplete,
     );
     document.addEventListener(
-      "user-camera-manipulation",
+      CustomEvents.USER_CAMERA_MANIPULATION,
       this.handleUserCameraManipulation,
     );
 
@@ -321,7 +324,7 @@ export class CameraManager {
     } else {
       const renderables = renderableStore.getRenderableObjects();
       const renderableObject = renderables[objectId];
-
+      console.log(renderableObject);
       if (
         !renderableObject?.position ||
         typeof renderableObject.radius !== "number"
@@ -480,82 +483,102 @@ export class CameraManager {
    * Handles the `camera-transition-complete` event dispatched by the renderer.
    * Updates the internal camera state (position, target) and triggers the focus change callback
    * if the focus ID was set *before* the transition started.
+   * Also re-establishes follow state if the transition was to a focused object.
    *
    * @param {Event} event - The custom event containing transition details.
    */
   private handleCameraTransitionComplete = (event: Event): void => {
-    const detail = (event as CustomEvent).detail;
+    const detail = (event as CustomEvent).detail; // From CAMERA_TRANSITION_COMPLETE
     const currentState = this.cameraStateSubject.getValue();
 
-    // Update position and target from the transition's end state
-    const newPosition = detail.position
-      ? detail.position.clone()
-      : currentState.currentPosition.clone();
-    const newTarget = detail.target
-      ? detail.target.clone()
-      : currentState.currentTarget.clone();
+    const eventEndPosition = detail.position?.clone() as
+      | THREE.Vector3
+      | undefined;
+    const eventEndTarget = detail.target?.clone() as THREE.Vector3 | undefined;
 
-    let newFocusedId = this.intendedFocusIdForTransition;
+    // Use transition's end state if available, otherwise maintain current (should not happen often)
+    const newPosition =
+      eventEndPosition ?? currentState.currentPosition.clone();
+    const newTarget = eventEndTarget ?? currentState.currentTarget.clone();
 
-    // If the transition had a specific focusId, use it.
-    // Otherwise, if the transition implies a default view (e.g. target is 0,0,0), clear focus.
+    // Determine the focused object ID after transition
+    let finalNewFocusedId = this.intendedFocusIdForTransition; // Default to what was intended for this transition
+
     if (detail.metadata && detail.metadata.focusedObjectId !== undefined) {
-      newFocusedId = detail.metadata.focusedObjectId;
+      // If the transition itself carried a focusedObjectId (e.g. from ControlsManager.transitionTo),
+      // that should usually take precedence for what the focus *became*.
+      finalNewFocusedId = detail.metadata.focusedObjectId;
     } else if (
+      // Heuristic: if transition ends at default system view, and no explicit focus was intended for *this* transition
+      // or carried by the event, assume focus is cleared.
       newTarget.equals(DEFAULT_CAMERA_TARGET) &&
-      newPosition.equals(DEFAULT_CAMERA_POSITION)
+      newPosition.equals(DEFAULT_CAMERA_POSITION) &&
+      this.intendedFocusIdForTransition === null // Check if a focus was specifically set for *this* transition sequence
     ) {
-      // Heuristic: if transition ends at default position/target, assume focus is cleared
-      // unless intendedFocusIdForTransition was explicitly set to something else during this transition start.
-      if (this.intendedFocusIdForTransition === null) {
-        // Only clear if it was meant to be cleared
-        newFocusedId = null;
-      }
+      finalNewFocusedId = null;
     }
+    // If intendedFocusIdForTransition was set (e.g. by followObject), but metadata.focusedObjectId is null (e.g. resetView)
+    // we might need to reconcile. The current logic seems to prioritize metadata if present, then intended, then heuristic.
 
+    // Update CameraManager's internal state subject BEFORE potentially re-evaluating follow
     if (
-      currentState.focusedObjectId !== newFocusedId ||
+      currentState.focusedObjectId !== finalNewFocusedId ||
       !currentState.currentPosition.equals(newPosition) ||
       !currentState.currentTarget.equals(newTarget)
     ) {
       this.cameraStateSubject.next({
         ...currentState,
-        focusedObjectId: newFocusedId,
+        focusedObjectId: finalNewFocusedId,
         currentPosition: newPosition,
         currentTarget: newTarget,
       });
 
       if (
         this.onFocusChangeCallback &&
-        currentState.focusedObjectId !== newFocusedId
+        currentState.focusedObjectId !== finalNewFocusedId
       ) {
-        this.onFocusChangeCallback(newFocusedId);
+        this.onFocusChangeCallback(finalNewFocusedId);
       }
     }
 
-    // After transition and state update, handle following behavior based on simulation state
-    if (newFocusedId && this.renderer?.controlsManager) {
-      const simulationState = getSimulationState();
-      const isPaused = simulationState.paused;
-
-      const objectToFollow = this.renderer.getObjectById(newFocusedId);
-      if (objectToFollow) {
-        // Calculate the offset based on the new camera position and target post-transition.
-        this.lastKnownFollowOffset = newPosition.clone().sub(newTarget);
+    // After transition and state update, (re-)establish following behavior if needed.
+    if (finalNewFocusedId && this.renderer?.controlsManager) {
+      const objectToFollow = this.renderer.getObjectById(finalNewFocusedId);
+      if (objectToFollow?.position) {
+        // Calculate the offset based on the actual end position and target of the camera transition.
+        // The target of the camera after a focus transition should be the object's position.
+        this.lastKnownFollowOffset = newPosition
+          .clone()
+          .sub(objectToFollow.position); // Or newTarget if newTarget is guaranteed to be object's center
 
         this.renderer.controlsManager.startFollowing(
           objectToFollow,
-          this.lastKnownFollowOffset,
+          this.lastKnownFollowOffset ?? undefined,
         );
       } else {
+        // Object not found or has no position, cannot follow.
         console.warn(
-          `[CameraManager] Object ${newFocusedId} not found for following post-transition. Stopping follow.`,
+          `[CameraManager] Object ${finalNewFocusedId} not found or has no position for following post-transition. Stopping follow.`,
         );
         this.renderer.controlsManager.stopFollowing();
         this.lastKnownFollowOffset = null;
+        // If focus was intended but object not found, should we clear focusedObjectId in subject again?
+        // Current logic updates subject first, then tries to follow. If follow fails, subject still has bad ID.
+        // Consider: if objectToFollow is null here, and finalNewFocusedId was not null, we should clear finalNewFocusedId
+        // and re-update subject, or ensure the earlier subject update reflects this reality.
+        if (
+          this.cameraStateSubject.getValue().focusedObjectId ===
+          finalNewFocusedId
+        ) {
+          this.cameraStateSubject.next({
+            ...this.cameraStateSubject.getValue(),
+            focusedObjectId: null,
+          });
+          if (this.onFocusChangeCallback) this.onFocusChangeCallback(null);
+        }
       }
     } else if (this.renderer?.controlsManager) {
-      // newFocusedId is null or renderer/controlsManager is not fully available.
+      // No focused object ID after transition, so ensure following is stopped.
       this.renderer.controlsManager.stopFollowing();
       this.lastKnownFollowOffset = null;
     }
@@ -565,40 +588,71 @@ export class CameraManager {
 
   /**
    * Handles user-initiated camera manipulation (e.g., via OrbitControls).
-   * Updates the internal state and clears any active semantic focus.
+   * If actively following an object, adjusts the follow offset.
+   * Otherwise, sets camera to free-roam and clears any semantic focus.
    */
   private handleUserCameraManipulation = (event: Event): void => {
-    if (!this.renderer) return;
+    if (!this.renderer?.controlsManager) return; // Essential check for controlsManager
 
-    const detail = (event as CustomEvent).detail;
-    const newPosition = detail.position.clone();
-    const newTarget = detail.target.clone();
+    const detail = (event as CustomEvent).detail; // From USER_CAMERA_MANIPULATION
+    const newCameraPosition = detail.position.clone() as THREE.Vector3;
+    const newOrbitControlsTarget = detail.target.clone() as THREE.Vector3;
 
     const currentState = this.cameraStateSubject.getValue();
+    let newFocusedId = currentState.focusedObjectId;
+    let newCameraTargetForState = newOrbitControlsTarget.clone(); // Default to OrbitControls target
 
-    // If user manipulates camera, they are implicitly breaking any "follow"
-    // The focusedObjectId might still be relevant if they are orbiting it,
-    // but a "hard follow" (camera auto-moves with object) should be off.
-    // For now, we'll set focusedObjectId to null to signify "free camera".
-    // A more sophisticated approach might distinguish between orbit of a target vs. free pan/zoom.
-    let newFocusedId = null;
-    this.intendedFocusIdForTransition = null; // User took over
+    if (currentState.focusedObjectId) {
+      // Was previously focused/following an object
+      const followedObject = this.renderer.getObjectById(
+        currentState.focusedObjectId,
+      );
 
-    // If the new target is very close to an existing object's known position,
-    // we could infer they are still focused on it. This is more complex.
-    // For now, any manual manipulation clears programmatic focus.
+      if (followedObject?.position) {
+        // Object exists, user is orbiting it while it's being followed.
+        // Update the follow offset based on the new camera position relative to the object.
+        this.lastKnownFollowOffset = newCameraPosition
+          .clone()
+          .sub(followedObject.position);
 
+        this.renderer.controlsManager.startFollowing(
+          followedObject,
+          this.lastKnownFollowOffset ?? undefined,
+        );
+        newFocusedId = currentState.focusedObjectId; // Keep the focus
+        newCameraTargetForState = followedObject.position.clone(); // State target is the object
+      } else {
+        // Object not found, or was focused but not really in a 'follow' state that makes sense to persist.
+        // Revert to free camera.
+        this.renderer.controlsManager.stopFollowing();
+        this.lastKnownFollowOffset = null;
+        newFocusedId = null;
+        // newCameraTargetForState is already newOrbitControlsTarget
+      }
+    } else {
+      // Was not following anything (free camera). Ensure any residual follow is stopped.
+      this.renderer.controlsManager.stopFollowing();
+      this.lastKnownFollowOffset = null;
+      newFocusedId = null;
+      // newCameraTargetForState is already newOrbitControlsTarget
+    }
+
+    // User manipulation always cancels any programmatically intended transition.
+    this.intendedFocusIdForTransition = null;
+
+    // Update camera state if anything has changed
     if (
-      !currentState.currentPosition.equals(newPosition) ||
-      !currentState.currentTarget.equals(newTarget) ||
+      !currentState.currentPosition.equals(newCameraPosition) ||
+      !currentState.currentTarget.equals(newCameraTargetForState) ||
       currentState.focusedObjectId !== newFocusedId
     ) {
       this.cameraStateSubject.next({
         ...currentState,
-        currentPosition: newPosition,
-        currentTarget: newTarget,
-        focusedObjectId: newFocusedId, // User interaction clears programmatic focus
+        currentPosition: newCameraPosition,
+        currentTarget: newCameraTargetForState,
+        focusedObjectId: newFocusedId,
       });
+
       if (
         this.onFocusChangeCallback &&
         currentState.focusedObjectId !== newFocusedId
@@ -630,7 +684,7 @@ export class CameraManager {
           // The active movement should be handled by ControlsManager based on simulation state.
           this.renderer.controlsManager.startFollowing(
             objectToFollow,
-            this.lastKnownFollowOffset,
+            this.lastKnownFollowOffset ?? undefined,
           );
         }
       }
@@ -642,7 +696,7 @@ export class CameraManager {
           // Re-initiate follow with the last known/calculated offset
           this.renderer.controlsManager.startFollowing(
             objectToFollow,
-            this.lastKnownFollowOffset,
+            this.lastKnownFollowOffset ?? undefined,
           );
         } else if (objectToFollow) {
           // If no lastKnownFollowOffset (e.g. focus set while paused, or app start paused), calculate a default one
