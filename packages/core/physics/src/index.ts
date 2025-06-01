@@ -2,7 +2,7 @@ export * from "./types";
 export * from "./units/constants";
 export * from "./units/units";
 
-export * from "./collision/collision";
+export * from "./collision";
 export * from "./forces";
 export * from "./simulation";
 export * from "./spatial/octree";

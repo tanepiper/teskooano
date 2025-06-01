@@ -30,19 +30,19 @@ export const verletIntegrate = (
 
   const dtSquared = dt * dt;
 
-  const currentPos = currentState.position_m.clone();
-  const prevPos = previousState.position_m.clone();
-  const acc = acceleration.clone();
+  const stateCurrentPos = currentState.position_m;
+  const statePrevPos = previousState.position_m;
+  const stateAcc = acceleration;
 
-  const displacement = currentPos.clone().sub(prevPos);
+  const displacement = stateCurrentPos.clone().sub(statePrevPos);
 
-  const accTerm = acc.multiplyScalar(dtSquared);
+  const accEffect = stateAcc.clone().multiplyScalar(dtSquared);
 
-  const newPosition = currentPos.clone().add(displacement).add(accTerm);
+  const newPosition = stateCurrentPos.clone().add(displacement).add(accEffect);
 
   const newVelocity = newPosition
     .clone()
-    .sub(prevPos)
+    .sub(statePrevPos)
     .multiplyScalar(0.5 / dt);
 
   return {
@@ -81,28 +81,29 @@ export const velocityVerletIntegrate = (
     return currentState;
   }
 
-  const pos = currentState.position_m.clone();
-  const vel = currentState.velocity_mps.clone();
-  const acc = acceleration.clone();
+  const statePos = currentState.position_m;
+  const stateVel = currentState.velocity_mps;
+  const currentAcc = acceleration;
 
   const halfDt = 0.5 * dt;
   const halfDtSquared = 0.5 * dt * dt;
 
-  const velTerm = vel.clone().multiplyScalar(dt);
-  const accTerm = acc.clone().multiplyScalar(halfDtSquared);
-  const newPosition = pos.clone().add(velTerm).add(accTerm);
+  const velContrib = stateVel.clone().multiplyScalar(dt);
+  const accContrib = currentAcc.clone().multiplyScalar(halfDtSquared);
+  const newPosition = statePos.clone().add(velContrib).add(accContrib);
 
-  const halfVel = vel.clone().add(acc.clone().multiplyScalar(halfDt));
+  const firstHalfAccEffect = currentAcc.clone().multiplyScalar(halfDt);
+  const v_intermediate = stateVel.clone().add(firstHalfAccEffect);
 
   const stateGuess: PhysicsStateReal = {
     ...currentState,
     position_m: newPosition,
-    velocity_mps: halfVel,
+    velocity_mps: v_intermediate,
   };
-  const newAcceleration = calculateNewAcceleration(stateGuess);
+  const newCalculatedAcc = calculateNewAcceleration(stateGuess);
 
-  const newAccTerm = newAcceleration.clone().multiplyScalar(halfDt);
-  const newVelocity = halfVel.clone().add(newAccTerm);
+  const secondHalfAccEffect = newCalculatedAcc.clone().multiplyScalar(halfDt);
+  const newVelocity = v_intermediate.clone().add(secondHalfAccEffect);
 
   return {
     ...currentState,

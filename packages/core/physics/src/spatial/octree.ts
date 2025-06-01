@@ -1,6 +1,7 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { PhysicsStateReal } from "../types";
-import { calculateNewtonianGravitationalForce as calculateGravitationalForce } from "../forces/gravity";
+import { calculateGravitationalForce } from "../forces";
+import { GRAVITATIONAL_CONSTANT } from "../units/constants";
 
 /**
  * Represents a node in the octree
@@ -294,21 +295,25 @@ export class Octree {
   private root: OctreeNode;
   private maxDepth: number;
   private softeningFactorSquared: number;
+  private gravitationalConstant: number;
 
   /**
    * @param size            Half-width of the world cube this tree covers (m)
    * @param maxDepth        Maximum subdivision depth
    * @param softeningLength Characteristic length for Plummer softening (m). Defaults to 1 000 000 m (≈1000 km)
+   * @param G               Gravitational constant. Defaults to the standard value.
    */
   constructor(
     size: number,
     maxDepth: number = 8,
     softeningLength: number = 1e6,
+    G: number = GRAVITATIONAL_CONSTANT,
   ) {
     const actualSize = Math.max(size, 0.1);
     this.root = createNode(new OSVector3(0, 0, 0), actualSize);
     this.maxDepth = maxDepth;
     this.softeningFactorSquared = softeningLength * softeningLength;
+    this.gravitationalConstant = G;
   }
 
   /**
@@ -337,11 +342,26 @@ export class Octree {
    * Calculate the total gravitational force exerted on a body using Barnes-Hut.
    * @param body The body to calculate the force on.
    * @param theta The Barnes-Hut approximation parameter (lower = more accurate, higher = faster).
+   * @param forceCalculationFn Optional custom force calculation function.
    * @returns The calculated force vector (OSVector3).
    */
-  calculateForceOn(body: PhysicsStateReal, theta: number): OSVector3 {
+  calculateForceOn(
+    body: PhysicsStateReal,
+    theta: number,
+    forceCalculationFn?: (
+      body1: PhysicsStateReal,
+      body2: PhysicsStateReal,
+      G: number,
+    ) => OSVector3,
+  ): OSVector3 {
     const totalForce = new OSVector3(0, 0, 0);
-    this.calculateNodeForce(this.root, body, theta, totalForce);
+    this.calculateNodeForce(
+      this.root,
+      body,
+      theta,
+      totalForce,
+      forceCalculationFn,
+    );
     return totalForce;
   }
 
@@ -353,6 +373,11 @@ export class Octree {
     targetBody: PhysicsStateReal,
     theta: number,
     accumulatedForce: OSVector3,
+    forceCalculationFn?: (
+      body1: PhysicsStateReal,
+      body2: PhysicsStateReal,
+      G: number,
+    ) => OSVector3,
   ): void {
     if (
       node.totalMass_kg === 0 ||
@@ -373,7 +398,17 @@ export class Octree {
       if (node.bodies.some((b) => b.id === targetBody.id) && !node.children) {
         for (const otherBody of node.bodies) {
           if (otherBody.id !== targetBody.id) {
-            const force = calculateGravitationalForce(otherBody, targetBody);
+            const force = forceCalculationFn
+              ? forceCalculationFn(
+                  otherBody,
+                  targetBody,
+                  this.gravitationalConstant,
+                )
+              : calculateGravitationalForce(
+                  otherBody,
+                  targetBody,
+                  this.gravitationalConstant,
+                );
             accumulatedForce.add(force);
           }
         }
@@ -384,13 +419,25 @@ export class Octree {
           position_m: node.centerOfMass_m,
           velocity_mps: new OSVector3(0, 0, 0),
         };
-        const force = calculateGravitationalForce(nodeBody, targetBody);
+        const force = forceCalculationFn
+          ? forceCalculationFn(nodeBody, targetBody, this.gravitationalConstant)
+          : calculateGravitationalForce(
+              nodeBody,
+              targetBody,
+              this.gravitationalConstant,
+            );
         accumulatedForce.add(force);
       }
     } else {
       if (node.children) {
         for (const child of node.children) {
-          this.calculateNodeForce(child, targetBody, theta, accumulatedForce);
+          this.calculateNodeForce(
+            child,
+            targetBody,
+            theta,
+            accumulatedForce,
+            forceCalculationFn,
+          );
         }
       }
     }

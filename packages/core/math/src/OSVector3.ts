@@ -213,4 +213,62 @@ export class OSVector3 {
 
     return this;
   }
+
+  /**
+   * Creates a new OSVector3 instance from the sum of two vectors.
+   * @param a - The first vector.
+   * @param b - The second vector.
+   * @param target - Optional. If provided, the result will be stored in this vector.
+   * @returns The vector sum (a new instance if target is not provided, otherwise target).
+   */
+  static addVectors(a: OSVector3, b: OSVector3, target?: OSVector3): OSVector3 {
+    if (target) {
+      return target.copy(a).add(b);
+    }
+    return new OSVector3(a.x + b.x, a.y + b.y, a.z + b.z);
+  }
+
+  /**
+   * Creates a new OSVector3 instance from the subtraction of two vectors (a - b).
+   * @param a - The vector to subtract from.
+   * @param b - The vector to subtract.
+   * @param target - Optional. If provided, the result will be stored in this vector.
+   * @returns The vector difference (a new instance if target is not provided, otherwise target).
+   */
+  static subVectors(a: OSVector3, b: OSVector3, target?: OSVector3): OSVector3 {
+    if (target) {
+      return target.copy(a).sub(b);
+    }
+    return new OSVector3(a.x - b.x, a.y - b.y, a.z - b.z);
+  }
+
+  /**
+   * Creates a new OSVector3 instance by multiplying a vector by a scalar.
+   * @param v - The vector to multiply.
+   * @param scalar - The scalar value.
+   * @param target - Optional. If provided, the result will be stored in this vector.
+   * @returns The scaled vector (a new instance if target is not provided, otherwise target).
+   */
+  static multiplyVectorByScalar(
+    v: OSVector3,
+    scalar: number,
+    target?: OSVector3,
+  ): OSVector3 {
+    if (target) {
+      return target.copy(v).multiplyScalar(scalar);
+    }
+    return new OSVector3(v.x * scalar, v.y * scalar, v.z * scalar);
+  }
+
+  /**
+   * Creates a new OSVector3 instance by normalizing a vector.
+   * If the vector's length is zero, a zero vector is returned.
+   * @param v - The vector to normalize.
+   * @param target - Optional. If provided, the result will be stored in this vector.
+   * @returns The normalized vector (a new instance if target is not provided, otherwise target).
+   */
+  static normalized(v: OSVector3, target?: OSVector3): OSVector3 {
+    const result = target ? target.copy(v) : v.clone();
+    return result.normalize(); // normalize() instance method handles zero length
+  }
 }

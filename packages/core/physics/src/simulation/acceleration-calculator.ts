@@ -2,7 +2,8 @@ import { OSVector3 } from "@teskooano/core-math";
 import { PhysicsStateReal } from "../types";
 import { GRAVITATIONAL_CONSTANT } from "../units/constants";
 import { Octree } from "../spatial/octree";
-import type { PhysicsEngineType } from "@teskooano/core-state";
+import type { PhysicsEngineType } from "@teskooano/data-types";
+import { calculateNewtonianForce } from "../forces/postNewtonian/newtonian";
 
 /**
  * @class AccelerationCalculator
@@ -24,7 +25,20 @@ export class AccelerationCalculator {
     octree: Octree,
     theta: number = 0.7,
   ): OSVector3 {
-    const netForce = octree.calculateForceOn(targetBodyState, theta);
+    // EXPERIMENT: Use pure Newtonian force for performance comparison
+    const forceFunction = (
+      body1: PhysicsStateReal,
+      body2: PhysicsStateReal,
+      G: number,
+    ) => {
+      return calculateNewtonianForce(body1, body2, G);
+    };
+
+    const netForce = octree.calculateForceOn(
+      targetBodyState,
+      theta,
+      forceFunction, // Pass the Newtonian force function
+    );
     const acceleration = new OSVector3(0, 0, 0);
 
     if (targetBodyState.mass_kg !== 0) {
