@@ -19,14 +19,12 @@ import * as UTIL from "../utils";
  * @param random The seeded random function.
  * @returns An array of generated star CelestialObjects.
  */
-export function generateStarsInSystem(
-  random: () => number,
-): CelestialObject[] {
+export function generateStarsInSystem(random: () => number): CelestialObject[] {
   const systemTypeRoll = random();
   let numberOfStars = 1;
-  if (systemTypeRoll > 0.10) numberOfStars = 2;
-  if (systemTypeRoll > 0.40) numberOfStars = 3;
-  if (systemTypeRoll > 0.60) numberOfStars = 4;
+  if (systemTypeRoll > 0.1) numberOfStars = 2;
+  if (systemTypeRoll > 0.4) numberOfStars = 3;
+  if (systemTypeRoll > 0.6) numberOfStars = 4;
   if (systemTypeRoll > 0.75) numberOfStars = 5;
   if (systemTypeRoll > 0.85) numberOfStars = 6;
   if (systemTypeRoll > 0.92) numberOfStars = 7;
@@ -165,4 +163,4 @@ export function generateStarsInSystem(
     }
   }
   return stars;
-} 
+}

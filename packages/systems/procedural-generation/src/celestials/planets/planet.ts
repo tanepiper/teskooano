@@ -22,7 +22,10 @@ import * as CONST from "../../constants";
 import { generateCelestialName } from "../names/celestial-name";
 import * as UTIL from "../../utils";
 import { calculatePlanetOrbitAndInitialState } from "./planet-orbit";
-import { generatePlanetSpecificProperties, generateRenderingAtmosphereProperties } from "./planet-properties";
+import {
+  generatePlanetSpecificProperties,
+  generateRenderingAtmosphereProperties,
+} from "./planet-properties";
 import { generateRings } from "./planet-rings";
 import { determinePlanetTypeAndBaseProperties } from "./planet-type";
 
@@ -132,27 +135,36 @@ export function generatePlanet(
       const planetTemp = estimateTemperature(starLuminosity, bodyDistanceAU);
 
       const specificDataProperties = specificProperties;
-      
-      let renderingAtmosphereProps: PlanetAtmosphereProperties | undefined = undefined;
+
+      let renderingAtmosphereProps: PlanetAtmosphereProperties | undefined =
+        undefined;
 
       if (specificDataProperties.type === CelestialType.PLANET) {
         const planetProps = specificDataProperties as PlanetPropertiesType;
         renderingAtmosphereProps = planetProps.atmosphere;
       } else if (specificDataProperties.type === CelestialType.GAS_GIANT) {
         const gasGiantProps = specificDataProperties as GasGiantProperties;
-        if (gasGiantProps.atmosphere && typeof gasGiantProps.atmosphere.type !== 'undefined' && gasGiantProps.atmosphere.type !== AtmosphereType.NONE) {
+        if (
+          gasGiantProps.atmosphere &&
+          typeof gasGiantProps.atmosphere.type !== "undefined" &&
+          gasGiantProps.atmosphere.type !== AtmosphereType.NONE
+        ) {
           const descriptiveType: AtmosphereType = gasGiantProps.atmosphere.type;
-          renderingAtmosphereProps = generateRenderingAtmosphereProperties(random, descriptiveType, PlanetType.ROCKY);
+          renderingAtmosphereProps = generateRenderingAtmosphereProperties(
+            random,
+            descriptiveType,
+            PlanetType.ROCKY,
+          );
         } else if (gasGiantProps.atmosphereColor) {
           renderingAtmosphereProps = {
             glowColor: gasGiantProps.atmosphereColor,
             intensity: UTIL.getRandomInRange(0.5, 1.0, random),
             power: UTIL.getRandomInRange(1.5, 2.5, random),
-            thickness: UTIL.getRandomInRange(0.1, 0.3, random)
+            thickness: UTIL.getRandomInRange(0.1, 0.3, random),
           };
         }
       }
-      
+
       const planetData: CelestialObject = {
         id: planetId,
         name: planetName,

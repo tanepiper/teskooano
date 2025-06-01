@@ -26,7 +26,7 @@ export function validateSystemObjects(
     catchError((err) => {
       console.error("[validateSystemObjects] Error during validation:", err);
       // Rethrow or return an error observable if needed by the caller
-      throw err; 
+      throw err;
     }),
   );
-} 
+}

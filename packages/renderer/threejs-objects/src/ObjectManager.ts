@@ -157,7 +157,6 @@ export class ObjectManager {
     this.ringSystemRenderers = ringSystemRenderers;
     this.asteroidRenderers = asteroidRenderers;
 
-
     this.lodManager = new LODManager(camera);
     this.lensingHandler = new GravitationalLensingHandler({
       starRenderers: this.starRenderers,
@@ -220,7 +219,6 @@ export class ObjectManager {
    * @internal Subscribes to the renderable objects and acceleration vector streams from the core state.
    */
   private subscribeToStateChanges(): void {
-
     this.objectsSubscription = this.renderableObjects$
       .pipe(
         distinctUntilChanged((prev, curr) => {
@@ -230,7 +228,6 @@ export class ObjectManager {
           }
           return prev === curr; // Standard reference check if one is null/undefined
         }),
-        
       )
       .subscribe((objects: Record<string, RenderableCelestialObject>) => {
         this.latestRenderableObjects = objects;

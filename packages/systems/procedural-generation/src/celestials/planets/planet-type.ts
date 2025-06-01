@@ -76,7 +76,7 @@ export function determinePlanetTypeAndBaseProperties(
   }
   // Zone 2: Frost Line Transition (2.0 <= bodyDistanceAU < 5.0 AU)
   else if (bodyDistanceAU < 5.0) {
-    const gasOrIceGiantChance = 0.40; // 40% chance of gas/ice giant
+    const gasOrIceGiantChance = 0.4; // 40% chance of gas/ice giant
 
     if (typeRoll < gasOrIceGiantChance) {
       planetType = CelestialType.GAS_GIANT;
@@ -84,7 +84,11 @@ export function determinePlanetTypeAndBaseProperties(
       targetDensity_kg_m3 = preliminaryDensity_kg_m3;
       massMultiplierFactor = 5 + random() * 50; // Smaller to medium gas giants
       ringChance = 0.15;
-      ringAllowedTypes = [RockyType.DUST, RockyType.ICE_DUST, RockyType.LIGHT_ROCK];
+      ringAllowedTypes = [
+        RockyType.DUST,
+        RockyType.ICE_DUST,
+        RockyType.LIGHT_ROCK,
+      ];
       gasGiantClass = UTIL.classifyGasGiantByTemperature(
         random,
         bodyDistanceAU,
@@ -98,7 +102,11 @@ export function determinePlanetTypeAndBaseProperties(
       targetDensity_kg_m3 = preliminaryDensity_kg_m3;
       massMultiplierFactor = 0.5 + random() * 5; // Larger rocky or small icy cores
       ringChance = 0.05;
-      ringAllowedTypes = [RockyType.LIGHT_ROCK, RockyType.DARK_ROCK, RockyType.ICE];
+      ringAllowedTypes = [
+        RockyType.LIGHT_ROCK,
+        RockyType.DARK_ROCK,
+        RockyType.ICE,
+      ];
       // rockyPlanetType will be determined by generatePlanetSpecificProperties based on temp/distance
       // Forcing it to PlanetType.ICE here might be too soon.
       if (bodyDistanceAU > 3.5 && random() > 0.5) {
@@ -118,7 +126,11 @@ export function determinePlanetTypeAndBaseProperties(
       targetDensity_kg_m3 = preliminaryDensity_kg_m3;
       massMultiplierFactor = 20 + random() * 200; // Large gas giants
       ringChance = 0.25;
-      ringAllowedTypes = [RockyType.ICE, RockyType.ICE_DUST, RockyType.METALLIC];
+      ringAllowedTypes = [
+        RockyType.ICE,
+        RockyType.ICE_DUST,
+        RockyType.METALLIC,
+      ];
       gasGiantClass = UTIL.classifyGasGiantByTemperature(
         random,
         bodyDistanceAU,
@@ -130,7 +142,7 @@ export function determinePlanetTypeAndBaseProperties(
       planetType = CelestialType.PLANET; // 15% chance of an icy body
       targetDensity_kg_m3 = 1000 + random() * 1000;
       massMultiplierFactor = 0.5 + random() * 10; // Could be a larger icy dwarf
-      ringChance = 0.10;
+      ringChance = 0.1;
       ringAllowedTypes = [RockyType.ICE, RockyType.ICE_DUST];
       rockyPlanetType = PlanetType.ICE;
     }
@@ -138,14 +150,18 @@ export function determinePlanetTypeAndBaseProperties(
   // Zone 4: Outer System / Ice Giant Region (bodyDistanceAU >= 20.0 AU)
   else {
     preliminaryDensity_kg_m3 = 1000 + random() * 1000; // Icy body/Ice Giant densities
-    const iceGiantChance = 0.90; // 90% chance of Ice Giant
+    const iceGiantChance = 0.9; // 90% chance of Ice Giant
 
     if (typeRoll < iceGiantChance) {
       planetType = CelestialType.GAS_GIANT;
       targetDensity_kg_m3 = preliminaryDensity_kg_m3;
       massMultiplierFactor = 10 + random() * 80; // Uranus/Neptune sized
       ringChance = 0.35;
-      ringAllowedTypes = [RockyType.ICE, RockyType.ICE_DUST, RockyType.DARK_ROCK];
+      ringAllowedTypes = [
+        RockyType.ICE,
+        RockyType.ICE_DUST,
+        RockyType.DARK_ROCK,
+      ];
       gasGiantClass = UTIL.getRandomItem(
         [GasGiantClass.CLASS_III, GasGiantClass.CLASS_IV], // Ice Giants
         random,

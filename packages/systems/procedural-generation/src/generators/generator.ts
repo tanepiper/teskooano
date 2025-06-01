@@ -12,7 +12,7 @@ import { validateSystemObjects } from "./system-validator";
  */
 export async function generateSystem(
   seed: string,
-  maxSystemModifier: number = 20
+  maxSystemModifier: number = 20,
 ): Promise<{ objects$: Observable<CelestialObject> }> {
   try {
     const random = await createSeededRandom(seed);
@@ -35,7 +35,7 @@ export async function generateSystem(
       random,
       stars,
       seed,
-      maxOrbitalSystemsToGenerate
+      maxOrbitalSystemsToGenerate,
     );
     console.log("[generateSystem] Planetary body generation initiated.");
 
@@ -44,10 +44,10 @@ export async function generateSystem(
       catchError((err) => {
         console.error(
           "[generateSystem] Error in object generation stream:",
-          err
+          err,
         );
         return throwError(() => err); // Propagate the error
-      })
+      }),
     );
 
     // 3. Validate System
@@ -61,8 +61,8 @@ export async function generateSystem(
       objects$: throwError(
         () =>
           new Error(
-            `Critical error in generateSystem setup: ${error instanceof Error ? error.message : String(error)}`
-          )
+            `Critical error in generateSystem setup: ${error instanceof Error ? error.message : String(error)}`,
+          ),
       ),
     };
   }

@@ -1,5 +1,9 @@
 import type { CelestialObject } from "@teskooano/data-types";
-import { CelestialStatus, CelestialType, type PhysicsEngineType } from "@teskooano/data-types";
+import {
+  CelestialStatus,
+  CelestialType,
+  type PhysicsEngineType,
+} from "@teskooano/data-types";
 import { simulationStateService } from "../simulation";
 
 import { calculateGravitationalInfluence } from "@teskooano/core-physics";
@@ -16,8 +20,12 @@ export function reassignOrphanedObjects(
   destroyedIds: string[],
   allObjects: Record<string, CelestialObject>,
 ): Record<string, CelestialObject> {
-  const currentPhysicsEngine: PhysicsEngineType = simulationStateService.getCurrentState().physicsEngine;
-  if (currentPhysicsEngine !== "verlet" && currentPhysicsEngine !== "symplectic") {
+  const currentPhysicsEngine: PhysicsEngineType =
+    simulationStateService.getCurrentState().physicsEngine;
+  if (
+    currentPhysicsEngine !== "verlet" &&
+    currentPhysicsEngine !== "symplectic"
+  ) {
     // In non-N-body modes (like Kepler or Euler for stable orbits), do not reassign parents dynamically.
     return allObjects;
   }
@@ -120,8 +128,12 @@ export function reassignOrphanedObjects(
 export function checkAndReassignPlanetsToProperStars(
   allObjects: Record<string, CelestialObject>,
 ): Record<string, CelestialObject> {
-  const currentPhysicsEngine: PhysicsEngineType = simulationStateService.getCurrentState().physicsEngine;
-  if (currentPhysicsEngine !== "verlet" && currentPhysicsEngine !== "symplectic") {
+  const currentPhysicsEngine: PhysicsEngineType =
+    simulationStateService.getCurrentState().physicsEngine;
+  if (
+    currentPhysicsEngine !== "verlet" &&
+    currentPhysicsEngine !== "symplectic"
+  ) {
     return allObjects;
   }
   const updated = { ...allObjects };

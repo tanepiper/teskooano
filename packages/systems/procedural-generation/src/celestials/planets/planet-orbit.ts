@@ -27,7 +27,7 @@ export function calculatePlanetOrbitAndInitialState(
   planetMass_kg: number,
   bodyDistanceAU: number,
   parentStarState: PhysicsStateReal,
-  planetId: string
+  planetId: string,
 ): {
   orbit: OrbitalParameters;
   initialPhysicsState: PhysicsStateReal | null;
@@ -36,7 +36,7 @@ export function calculatePlanetOrbitAndInitialState(
   const orbitalPeriod_s = UTIL.calculateOrbitalPeriod_s(
     starMass_kg,
     semiMajorAxis_m,
-    planetMass_kg
+    planetMass_kg,
   );
 
   const orbit: OrbitalParameters = {
@@ -54,12 +54,12 @@ export function calculatePlanetOrbitAndInitialState(
     const initialRelativePos_m = calculateOrbitalPosition(
       parentStarState,
       orbit,
-      0
+      0,
     );
     const initialWorldVel_mps = calculateOrbitalVelocity(
       parentStarState,
       orbit,
-      0
+      0,
     );
 
     // Calculate and log relative velocity
@@ -82,7 +82,7 @@ export function calculatePlanetOrbitAndInitialState(
       !Number.isFinite(initialWorldVel_mps.z)
     ) {
       throw new Error(
-        "Calculated initial planet state contains non-finite values."
+        "Calculated initial planet state contains non-finite values.",
       );
     }
 
@@ -95,7 +95,7 @@ export function calculatePlanetOrbitAndInitialState(
   } catch (error) {
     console.error(
       `[PlanetOrbit] Error calculating initial physics state for ${planetId}:`,
-      error
+      error,
     );
     console.error("Inputs:", {
       parentState: parentStarState,

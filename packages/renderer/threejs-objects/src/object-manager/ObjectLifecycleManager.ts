@@ -207,7 +207,6 @@ export class ObjectLifecycleManager {
       return; // Already removed or never existed
     }
 
-
     // Remove associated components first
     if (this.css2DManager) {
       this.css2DManager.removeElement(

@@ -471,7 +471,7 @@ export function createProceduralSurfaceProperties(
     shininess: shininess,
     specularStrength: specularStrength,
     roughness: roughness,
-    ambientLightIntensity: ambientLightIntensity,
+    ambientLightIntensity: 1.0,
     undulation: undulation,
     terrainType: terrainType,
     terrainAmplitude: terrainAmplitude,

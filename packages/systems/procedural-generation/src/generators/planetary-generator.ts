@@ -217,8 +217,9 @@ export function generatePlanetaryBodiesObservable(
       let guaranteedBelt$: Observable<CelestialObject> = EMPTY;
 
       const effectivePrimaryStar =
-        stars.find((s) => (s.properties as StarProperties)?.isMainStar !== false) ??
-        stars[0];
+        stars.find(
+          (s) => (s.properties as StarProperties)?.isMainStar !== false,
+        ) ?? stars[0];
 
       if (!hasAsteroidBelt && effectivePrimaryStar) {
         const guaranteedBeltDistanceAU = 2.0 + random() * 4.0;
@@ -243,4 +244,4 @@ export function generatePlanetaryBodiesObservable(
       throw err;
     }),
   );
-} 
+}

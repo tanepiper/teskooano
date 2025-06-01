@@ -1,5 +1,9 @@
 import type { CelestialObject } from "@teskooano/data-types";
-import { CelestialStatus, CelestialType, type PhysicsEngineType } from "@teskooano/data-types";
+import {
+  CelestialStatus,
+  CelestialType,
+  type PhysicsEngineType,
+} from "@teskooano/data-types";
 import {
   calculateDistance,
   calculateGravitationalInfluence,
@@ -41,8 +45,12 @@ export function findBestGravitationalParent(
   allObjects: Record<string, CelestialObject>,
   excludeIds: string[] = [],
 ): CelestialObject | null {
-  const currentPhysicsEngine: PhysicsEngineType = simulationStateService.getCurrentState().physicsEngine;
-  if (currentPhysicsEngine !== "verlet" && currentPhysicsEngine !== "symplectic") {
+  const currentPhysicsEngine: PhysicsEngineType =
+    simulationStateService.getCurrentState().physicsEngine;
+  if (
+    currentPhysicsEngine !== "verlet" &&
+    currentPhysicsEngine !== "symplectic"
+  ) {
     // In ideal modes, if the object has a valid current parent, stick with it.
     if (targetObject.parentId) {
       const currentParent = allObjects[targetObject.parentId];
@@ -127,8 +135,12 @@ export function findNewMainStar(
   allObjects: Record<string, CelestialObject>,
   excludeStarIds: string[] = [],
 ): CelestialObject | null {
-  const currentPhysicsEngine: PhysicsEngineType = simulationStateService.getCurrentState().physicsEngine;
-  if (currentPhysicsEngine !== "verlet" && currentPhysicsEngine !== "symplectic") {
+  const currentPhysicsEngine: PhysicsEngineType =
+    simulationStateService.getCurrentState().physicsEngine;
+  if (
+    currentPhysicsEngine !== "verlet" &&
+    currentPhysicsEngine !== "symplectic"
+  ) {
     // Don't select a *new* main star if not in N-body mode.
     // If a current main star exists (no parentId) and isn't excluded, it remains main implicitly.
     // This function's purpose is to find a *replacement* if the old main is gone.

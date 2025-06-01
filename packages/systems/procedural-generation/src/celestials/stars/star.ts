@@ -244,8 +244,9 @@ export function generateStar(random: () => number): CelestialObject {
   }
 
   // Create physics data for the star
+  const starRadius_meters = starRadius_Solar * CONST.SOLAR_RADIUS_M;
   const starLuminosity = UTIL.calculateLuminosity(
-    starRadius_Solar,
+    starRadius_meters,
     starTemperature,
   );
   const physicsData: StellarPhysicsData = {

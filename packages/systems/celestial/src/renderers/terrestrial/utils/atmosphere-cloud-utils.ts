@@ -27,7 +27,7 @@ export class AtmosphereService {
   ): AtmosphereMeshResult | null {
     const props = object.properties as PlanetProperties | undefined;
     const atmosphereProps = props?.atmosphere || (object as any).atmosphere;
-    
+
     if (!atmosphereProps || !object.celestialObjectId) return null;
 
     const baseRadius =

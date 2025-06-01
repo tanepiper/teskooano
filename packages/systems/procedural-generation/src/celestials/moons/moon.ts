@@ -122,8 +122,10 @@ export function generateMoon(
   try {
     console.log(
       `[MoonGen DEBUG ${moonId}] Inputs for orbital calculation:`,
-      'Parent Planet State:', JSON.stringify(parentPlanetState),
-      'Moon Orbital Params:', JSON.stringify(moonOrbit),
+      "Parent Planet State:",
+      JSON.stringify(parentPlanetState),
+      "Moon Orbital Params:",
+      JSON.stringify(moonOrbit),
     );
 
     const initialRelativePos_m = calculateOrbitalPosition(
@@ -190,7 +192,11 @@ export function generateMoon(
     moonPlanetType === PlanetType.ICE
       ? SurfaceType.ICE_PLAINS
       : UTIL.getRandomItem(
-          [SurfaceType.CRATERED, SurfaceType.SMOOTH_PLAINS, SurfaceType.MOUNTAINS],
+          [
+            SurfaceType.CRATERED,
+            SurfaceType.SMOOTH_PLAINS,
+            SurfaceType.MOUNTAINS,
+          ],
           random,
         );
 
@@ -240,7 +246,7 @@ export function generateMoon(
       if (hasAtmosphere) {
         atmosphereType = UTIL.getRandomItem(
           [AtmosphereType.THIN, AtmosphereType.NORMAL],
-          random
+          random,
         );
       }
       break;
@@ -249,10 +255,14 @@ export function generateMoon(
   }
 
   // Set atmosphere color if needed
-  if (hasAtmosphere && CONST.ATMOSPHERE_COLORS && CONST.ATMOSPHERE_COLORS[atmosphereType]) {
+  if (
+    hasAtmosphere &&
+    CONST.ATMOSPHERE_COLORS &&
+    CONST.ATMOSPHERE_COLORS[atmosphereType]
+  ) {
     atmosphereColor = UTIL.getRandomItem(
       CONST.ATMOSPHERE_COLORS[atmosphereType],
-      random
+      random,
     );
   }
 
@@ -261,7 +271,7 @@ export function generateMoon(
     ? {
         glowColor: atmosphereColor || "#8899ff",
         intensity: atmosphereType === AtmosphereType.THIN ? 0.3 : 0.5,
-        power: atmosphereType === AtmosphereType.THIN ? 1.2 : 1.5, 
+        power: atmosphereType === AtmosphereType.THIN ? 1.2 : 1.5,
         thickness: atmosphereType === AtmosphereType.THIN ? 0.03 : 0.05,
       }
     : undefined;
@@ -311,7 +321,7 @@ export function generateMoon(
       position_m: initialWorldPos_m,
       velocity_mps: initialWorldVel_mps,
     },
-    atmosphere: moonSpecificProperties.atmosphere
+    atmosphere: moonSpecificProperties.atmosphere,
   };
 
   return { moonData, nextLastMoonDistance_radii: moonDistance_radii };
