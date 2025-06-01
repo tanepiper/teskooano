@@ -204,12 +204,9 @@ export class ObjectLifecycleManager {
   removeObject(objectId: string): void {
     const mesh = this.objects.get(objectId);
     if (!mesh) {
-      // console.log(`[ObjectLifecycleManager REMOVE_OBJECT] Object ${objectId} not found or already removed.`); // Optional: Log if not found
       return; // Already removed or never existed
     }
-    console.log(
-      `[ObjectLifecycleManager REMOVE_OBJECT] Removing object: ${objectId}`,
-    );
+
 
     // Remove associated components first
     if (this.css2DManager) {

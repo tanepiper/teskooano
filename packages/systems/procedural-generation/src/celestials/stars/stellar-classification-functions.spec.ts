@@ -3,12 +3,12 @@ import {
   StellarType,
   MainSequenceSpectralClass,
   BrownDwarfSpectralClass,
-} from "../../../../../data/types/src/celestials/common/stellar-classification";
+} from "@teskooano/data-types/src/celestials/common/stellar-classification";
 
 import type {
   StellarPhysicsData,
   StellarRenderingData,
-} from "../../../../../data/types/src/celestials/common/stellar-classification";
+} from "@teskooano/data-types/src/celestials/common/stellar-classification";
 
 import {
   determineLuminosityClass,

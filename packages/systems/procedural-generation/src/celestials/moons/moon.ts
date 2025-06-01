@@ -10,6 +10,7 @@ import type {
   ProceduralSurfaceProperties,
 } from "@teskooano/data-types";
 import {
+  AtmosphereType,
   CelestialStatus,
   CelestialType,
   PlanetType,
@@ -119,6 +120,12 @@ export function generateMoon(
   let initialWorldVel_mps: OSVector3;
   const parentPlanetState = parentPlanetData.physicsStateReal;
   try {
+    console.log(
+      `[MoonGen DEBUG ${moonId}] Inputs for orbital calculation:`,
+      'Parent Planet State:', JSON.stringify(parentPlanetState),
+      'Moon Orbital Params:', JSON.stringify(moonOrbit),
+    );
+
     const initialRelativePos_m = calculateOrbitalPosition(
       parentPlanetState,
       moonOrbit,
@@ -128,6 +135,20 @@ export function generateMoon(
       parentPlanetState,
       moonOrbit,
       0,
+    );
+
+    console.log(
+      `[MoonGen DEBUG ${moonId}] Calculated initial velocity:`,
+      JSON.stringify(initialWorldVel_mps),
+    );
+
+    // Calculate and log relative velocity
+    const initialRelativeVel_mps = initialWorldVel_mps
+      .clone()
+      .sub(parentPlanetState.velocity_mps);
+    console.log(
+      `[MoonGen DEBUG ${moonId}] Calculated RELATIVE velocity to parent:`,
+      JSON.stringify(initialRelativeVel_mps),
     );
 
     initialWorldPos_m = initialRelativePos_m
@@ -167,9 +188,9 @@ export function generateMoon(
       );
   const moonSurfaceType =
     moonPlanetType === PlanetType.ICE
-      ? SurfaceType.ICE_FLATS
+      ? SurfaceType.ICE_PLAINS
       : UTIL.getRandomItem(
-          [SurfaceType.CRATERED, SurfaceType.FLAT, SurfaceType.MOUNTAINOUS],
+          [SurfaceType.CRATERED, SurfaceType.SMOOTH_PLAINS, SurfaceType.MOUNTAINS],
           random,
         );
 
@@ -199,6 +220,52 @@ export function generateMoon(
       );
   }
 
+  // Determine if the moon has an atmosphere based on its type
+  let hasAtmosphere = false;
+  let atmosphereType = AtmosphereType.NONE;
+  let atmosphereColor: string | undefined = undefined;
+
+  // Assign atmosphere randomly for certain moon types
+  switch (moonPlanetType) {
+    case PlanetType.BARREN:
+      hasAtmosphere = false; // Barren moons never have atmospheres
+      break;
+    case PlanetType.ICE:
+      hasAtmosphere = random() < 0.05; // 5% chance for ice moons
+      if (hasAtmosphere) atmosphereType = AtmosphereType.THIN;
+      break;
+    case PlanetType.ROCKY:
+    case PlanetType.TERRESTRIAL:
+      hasAtmosphere = random() < 0.2; // 20% chance for rocky/terrestrial moons
+      if (hasAtmosphere) {
+        atmosphereType = UTIL.getRandomItem(
+          [AtmosphereType.THIN, AtmosphereType.NORMAL],
+          random
+        );
+      }
+      break;
+    default:
+      hasAtmosphere = false;
+  }
+
+  // Set atmosphere color if needed
+  if (hasAtmosphere && CONST.ATMOSPHERE_COLORS && CONST.ATMOSPHERE_COLORS[atmosphereType]) {
+    atmosphereColor = UTIL.getRandomItem(
+      CONST.ATMOSPHERE_COLORS[atmosphereType],
+      random
+    );
+  }
+
+  // Create atmosphere properties if needed
+  const atmosphereProps = hasAtmosphere
+    ? {
+        glowColor: atmosphereColor || "#8899ff",
+        intensity: atmosphereType === AtmosphereType.THIN ? 0.3 : 0.5,
+        power: atmosphereType === AtmosphereType.THIN ? 1.2 : 1.5, 
+        thickness: atmosphereType === AtmosphereType.THIN ? 0.03 : 0.05,
+      }
+    : undefined;
+
   const moonSpecificProperties: PlanetProperties = {
     type: CelestialType.PLANET,
     planetType: moonPlanetType,
@@ -211,7 +278,7 @@ export function generateMoon(
       random,
     ).split(","),
     surface: detailedSurface as any,
-    atmosphere: undefined,
+    atmosphere: atmosphereProps,
   };
 
   const moonSeed = `${systemSeed}-${moonId}`;
@@ -244,17 +311,8 @@ export function generateMoon(
       position_m: initialWorldPos_m,
       velocity_mps: initialWorldVel_mps,
     },
+    atmosphere: moonSpecificProperties.atmosphere
   };
-
-  if (
-    moonData.properties?.type === CelestialType.MOON ||
-    moonData.properties?.type === CelestialType.PLANET ||
-    moonData.properties?.type === CelestialType.DWARF_PLANET
-  ) {
-    const props = moonData.properties as PlanetProperties;
-    moonData.atmosphere = props.atmosphere;
-    moonData.surface = props.surface;
-  }
 
   return { moonData, nextLastMoonDistance_radii: moonDistance_radii };
 }

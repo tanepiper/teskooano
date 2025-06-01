@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateSystem } from "./generator";
+import { generateSystem } from "./generators/generator";
 import type { CelestialObjectInputData } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
 

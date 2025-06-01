@@ -6,10 +6,12 @@ import {
   PhysicsStateReal,
   RingProperties,
   RingSystemProperties,
-  PlanetProperties,
-  PlanetType,
   PlanetAtmosphereProperties,
   CelestialSpecificPropertiesUnion,
+  AtmosphereType,
+  GasGiantProperties,
+  PlanetProperties as PlanetPropertiesType,
+  PlanetType,
 } from "@teskooano/data-types";
 import {
   CelestialStatus,
@@ -17,10 +19,10 @@ import {
   scaleSize,
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
-import { generateCelestialName } from "../../generators/names/celestial-name";
+import { generateCelestialName } from "../names/celestial-name";
 import * as UTIL from "../../utils";
 import { calculatePlanetOrbitAndInitialState } from "./planet-orbit";
-import { generatePlanetSpecificProperties } from "./planet-properties";
+import { generatePlanetSpecificProperties, generateRenderingAtmosphereProperties } from "./planet-properties";
 import { generateRings } from "./planet-rings";
 import { determinePlanetTypeAndBaseProperties } from "./planet-type";
 
@@ -129,44 +131,28 @@ export function generatePlanet(
       const starLuminosity = calculateLuminosity(starRadius, starTemperature);
       const planetTemp = estimateTemperature(starLuminosity, bodyDistanceAU);
 
-      let properties: CelestialSpecificPropertiesUnion = specificProperties;
-      if (
-        specificProperties.type === CelestialType.PLANET &&
-        (specificProperties as PlanetProperties).atmosphere
-      ) {
-        properties = {
-          ...specificProperties,
-          atmosphere: {
-            glowColor: UTIL.getRandomItem(
-              specificProperties.planetType === PlanetType.TERRESTRIAL
-                ? ["#dfe0e7", "#e7e9eb", "#f2f4f7"]
-                : specificProperties.planetType === PlanetType.ICE
-                  ? ["#aaccff", "#cceeff", "#ddeeff"]
-                  : ["#ff9966", "#ffaa88", "#ffbb99"],
-              random,
-            ),
-            intensity:
-              specificProperties.planetType === PlanetType.TERRESTRIAL
-                ? 1.0
-                : specificProperties.planetType === PlanetType.ICE
-                  ? 0.8
-                  : 1.2,
-            power:
-              specificProperties.planetType === PlanetType.TERRESTRIAL
-                ? 2.0
-                : specificProperties.planetType === PlanetType.ICE
-                  ? 1.8
-                  : 2.2,
-            thickness:
-              specificProperties.planetType === PlanetType.TERRESTRIAL
-                ? 0.1
-                : specificProperties.planetType === PlanetType.ICE
-                  ? 0.08
-                  : 0.12,
-          },
-        } as PlanetProperties;
-      }
+      const specificDataProperties = specificProperties;
+      
+      let renderingAtmosphereProps: PlanetAtmosphereProperties | undefined = undefined;
 
+      if (specificDataProperties.type === CelestialType.PLANET) {
+        const planetProps = specificDataProperties as PlanetPropertiesType;
+        renderingAtmosphereProps = planetProps.atmosphere;
+      } else if (specificDataProperties.type === CelestialType.GAS_GIANT) {
+        const gasGiantProps = specificDataProperties as GasGiantProperties;
+        if (gasGiantProps.atmosphere && typeof gasGiantProps.atmosphere.type !== 'undefined' && gasGiantProps.atmosphere.type !== AtmosphereType.NONE) {
+          const descriptiveType: AtmosphereType = gasGiantProps.atmosphere.type;
+          renderingAtmosphereProps = generateRenderingAtmosphereProperties(random, descriptiveType, PlanetType.ROCKY);
+        } else if (gasGiantProps.atmosphereColor) {
+          renderingAtmosphereProps = {
+            glowColor: gasGiantProps.atmosphereColor,
+            intensity: UTIL.getRandomInRange(0.5, 1.0, random),
+            power: UTIL.getRandomInRange(1.5, 2.5, random),
+            thickness: UTIL.getRandomInRange(0.1, 0.3, random)
+          };
+        }
+      }
+      
       const planetData: CelestialObject = {
         id: planetId,
         name: planetName,
@@ -178,11 +164,12 @@ export function generatePlanet(
         realRadius_m: finalPlanetRadius_m,
         temperature: planetTemp,
         orbit: orbit,
-        properties,
+        properties: specificDataProperties,
         seed: planetSeed,
         siderealRotationPeriod_s: rotationPeriod_s,
         axialTilt: tiltAxis,
         physicsStateReal: initialPhysicsState,
+        atmosphere: renderingAtmosphereProps,
       };
       subscriber.next(planetData);
 

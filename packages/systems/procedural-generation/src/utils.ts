@@ -283,9 +283,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(10, 14, random)); // Increased octaves
       bumpScale = getRandomInRange(1, 2, random);
       roughness = getRandomInRange(0.1, 0.2, random);
-      //shininess = getRandomInRange(3, 7, random); // Moderate shine for Terran
+      shininess = getRandomInRange(3, 7, random); // Moderate shine for Terran
       specularStrength = getRandomInRange(0.3, 0.6, random);
-      //ambientLightIntensity = getRandomInRange(0.2, 0.4, random); // Higher ambient for Earth-like planets
+      ambientLightIntensity = getRandomInRange(0.2, 0.4, random); // Higher ambient for Earth-like planets
       undulation = getRandomInRange(0.3, 0.5, random); // Higher undulation for continent-like features
       terrainType = 2; // Sharp peaks for mountains
       terrainAmplitude = getRandomInRange(0.8, 1.2, random);
@@ -306,10 +306,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(9, 13, random)); // Increased octaves
       bumpScale = getRandomInRange(2, 3, random);
       roughness = getRandomInRange(0.7, 0.95, random);
-      //shininess = getRandomInRange(5, 10, random); // Very low shine
+      shininess = getRandomInRange(5, 10, random); // Very low shine
       specularStrength = getRandomInRange(0.1, 0.9, random); // Very low strength
-      //ambientLightIntensity = getRandomInRange(0.1, 0.2, random); // Lower ambient for rocky planets
-      ambientLightIntensity = 0.9;
+      ambientLightIntensity = getRandomInRange(0.1, 0.2, random); // Lower ambient for rocky planets
       undulation = getRandomInRange(0.2, 0.4, random); // Moderate undulation for rocky terrain
       terrainType = 2; // Sharp peaks for rocky terrain
       terrainAmplitude = getRandomInRange(1.0, 1.5, random);
@@ -330,10 +329,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(8, 12, random)); // Increased octaves
       bumpScale = getRandomInRange(2, 3, random);
       roughness = getRandomInRange(0.01, 0.09, random); // High roughness
-      //shininess = getRandomInRange(1, 3, random); // Very low shine
+      shininess = getRandomInRange(1, 3, random); // Very low shine
       specularStrength = getRandomInRange(0.01, 0.05, random); // Very low strength
-      //ambientLightIntensity = getRandomInRange(0.05, 0.15, random); // Very low ambient for barren planets
-      ambientLightIntensity = 0.9;
+      ambientLightIntensity = getRandomInRange(0.05, 0.15, random); // Very low ambient for barren planets
       undulation = getRandomInRange(0.1, 0.2, random); // Lower undulation for barren planets
       terrainType = 3; // Sharp valleys for barren planets
       terrainAmplitude = getRandomInRange(0.5, 0.8, random);
@@ -354,9 +352,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(8, 12, random)); // Increased octaves
       bumpScale = getRandomInRange(0.01, 0.04, random); // Lower bump for ice
       roughness = getRandomInRange(0.65, 0.9, random);
-      //shininess = getRandomInRange(128, 512, random); // Very low shine
+      shininess = getRandomInRange(2, 5, random); // Very low shine // Adjusted from 128-512, which seemed too high
       specularStrength = getRandomInRange(0.05, 0.15, random); // Slightly higher than barren/rocky but still low
-      //  ambientLightIntensity = getRandomInRange(0.3, 0.5, random); // Higher ambient for desert planets
+      ambientLightIntensity = getRandomInRange(0.3, 0.5, random); // Higher ambient for desert planets
       undulation = getRandomInRange(0.15, 0.25, random); // Moderate undulation for desert dunes
       terrainType = 1; // Simple noise for dunes
       terrainAmplitude = getRandomInRange(0.3, 0.6, random);
@@ -377,10 +375,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(8, 12, random)); // Increased octaves
       bumpScale = 3; //getRandomInRange(1, 2, random); // Lower bump for ice
       roughness = getRandomInRange(0.1, 0.3, random);
-      //shininess = getRandomInRange(10, 20, random); // Higher shine for ice
+      shininess = getRandomInRange(10, 20, random); // Higher shine for ice
       specularStrength = getRandomInRange(0.4, 0.8, random); // Stronger specular for ice
-      //ambientLightIntensity = getRandomInRange(0.4, 0.6, random); // High ambient for ice planets
-      ambientLightIntensity = 0.5;
+      ambientLightIntensity = getRandomInRange(0.4, 0.6, random); // High ambient for ice planets
       undulation = getRandomInRange(0.05, 0.15, random); // Very low undulation for ice planets
       terrainType = 1; // Simple noise for ice
       terrainAmplitude = getRandomInRange(0.2, 0.4, random);
@@ -401,10 +398,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(9, 13, random)); // Increased octaves
       bumpScale = getRandomInRange(2, 3, random);
       roughness = getRandomInRange(0.1, 1, random);
-      //shininess = getRandomInRange(10, 30, random); // Moderate shine for Terran
+      shininess = getRandomInRange(10, 30, random); // Moderate shine for Terran
       specularStrength = getRandomInRange(0.3, 0.6, random);
-      //ambientLightIntensity = getRandomInRange(0.2, 0.4, random); // Moderate ambient for lava planets
-      ambientLightIntensity = 0.9;
+      ambientLightIntensity = getRandomInRange(0.2, 0.4, random); // Moderate ambient for lava planets
       undulation = getRandomInRange(0.2, 0.3, random); // Moderate undulation for lava flows
       terrainType = 2; // Sharp peaks for volcanic terrain
       terrainAmplitude = getRandomInRange(1.2, 1.8, random);
@@ -425,9 +421,9 @@ export function createProceduralSurfaceProperties(
       octaves = Math.floor(getRandomInRange(4, 6, random)); // Less detail needed
       bumpScale = getRandomInRange(0.005, 0.02, random); // Very low bump for water surface
       roughness = getRandomInRange(0.1, 0.4, random); // Water is smooth
-      //shininess = getRandomInRange(32, 96, random); // Water shine
+      shininess = getRandomInRange(32, 96, random); // Water shine
       specularStrength = getRandomInRange(0.5, 0.9, random); // Strong water reflections
-      //ambientLightIntensity = getRandomInRange(0.3, 0.5, random); // Higher ambient for ocean planets
+      ambientLightIntensity = getRandomInRange(0.3, 0.5, random); // Higher ambient for ocean planets
       undulation = getRandomInRange(0.4, 0.6, random); // High undulation for ocean planets
       terrainType = 1; // Simple noise for ocean
       terrainAmplitude = getRandomInRange(0.4, 0.7, random);
@@ -445,7 +441,8 @@ export function createProceduralSurfaceProperties(
       color3 = "#D4A373";
       color4 = "#FFFFFF";
       color5 = "#795548";
-      //ambientLightIntensity = getRandomInRange(0.2, 0.3, random); // Default ambient
+      shininess = getRandomInRange(8, 32, random); // Default shininess
+      ambientLightIntensity = getRandomInRange(0.2, 0.3, random); // Default ambient
       undulation = getRandomInRange(0.1, 0.3, random); // Default undulation
       terrainType = 2;
       terrainAmplitude = 1.0;
@@ -455,7 +452,7 @@ export function createProceduralSurfaceProperties(
   }
 
   // Construct the final properties object
-  return {
+  const finalProperties = {
     persistence: persistence,
     lacunarity: lacunarity,
     simplePeriod: simplePeriod,
@@ -481,4 +478,6 @@ export function createProceduralSurfaceProperties(
     terrainSharpness: terrainSharpness,
     terrainOffset: terrainOffset,
   };
+
+  return finalProperties;
 }

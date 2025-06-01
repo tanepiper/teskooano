@@ -1,5 +1,5 @@
-export * from "./planets/planet";
-export * from "./stars/star";
+export * from "./planets";
+export * from "./stars";
 export * from "./moons";
 export * from "./names";
 export * from "./belts";

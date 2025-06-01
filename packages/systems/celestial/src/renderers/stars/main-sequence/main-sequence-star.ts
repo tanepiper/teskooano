@@ -68,10 +68,7 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
    * Updates the material's uniforms based on new star properties.
    */
   public updateUniforms(properties: StarProperties): void {
-    console.log(
-      `[MainSequenceStarMaterial] updateUniforms called. Received properties:`,
-      JSON.parse(JSON.stringify(properties)),
-    );
+ 
     let changesMade = false;
 
     // The primary star color is directly on StarProperties
@@ -80,9 +77,7 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
       // Ensure newColorHex has a '#' prefix for comparison if getHexString() doesn't include it
       const currentColorHex = this.uniforms.starColor.value.getHexString();
       if (currentColorHex !== newColorHex.replace("#", "")) {
-        console.log(
-          `[MainSequenceStarMaterial] Updating starColor from ${currentColorHex} to ${newColorHex}`,
-        );
+
         this.uniforms.starColor.value.set(newColorHex);
         changesMade = true;
       }
@@ -98,9 +93,7 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
           this.uniforms.coronaIntensity.value !==
           baseStarUniforms.coronaIntensity
         ) {
-          console.log(
-            `[MainSequenceStarMaterial] Updating coronaIntensity from ${this.uniforms.coronaIntensity.value} to ${baseStarUniforms.coronaIntensity}`,
-          );
+
           this.uniforms.coronaIntensity.value =
             baseStarUniforms.coronaIntensity;
           changesMade = true;
@@ -111,9 +104,7 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
         this.uniforms.pulseSpeed
       ) {
         if (this.uniforms.pulseSpeed.value !== baseStarUniforms.pulseSpeed) {
-          console.log(
-            `[MainSequenceStarMaterial] Updating pulseSpeed from ${this.uniforms.pulseSpeed.value} to ${baseStarUniforms.pulseSpeed}`,
-          );
+
           this.uniforms.pulseSpeed.value = baseStarUniforms.pulseSpeed;
           changesMade = true;
         }
@@ -125,9 +116,7 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
         if (
           this.uniforms.glowIntensity.value !== baseStarUniforms.glowIntensity
         ) {
-          console.log(
-            `[MainSequenceStarMaterial] Updating glowIntensity from ${this.uniforms.glowIntensity.value} to ${baseStarUniforms.glowIntensity}`,
-          );
+
           this.uniforms.glowIntensity.value = baseStarUniforms.glowIntensity;
           changesMade = true;
         }
@@ -140,9 +129,7 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
           this.uniforms.temperatureVariation.value !==
           baseStarUniforms.temperatureVariation
         ) {
-          console.log(
-            `[MainSequenceStarMaterial] Updating temperatureVariation from ${this.uniforms.temperatureVariation.value} to ${baseStarUniforms.temperatureVariation}`,
-          );
+
           this.uniforms.temperatureVariation.value =
             baseStarUniforms.temperatureVariation;
           changesMade = true;
@@ -155,9 +142,7 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
         if (
           this.uniforms.metallicEffect.value !== baseStarUniforms.metallicEffect
         ) {
-          console.log(
-            `[MainSequenceStarMaterial] Updating metallicEffect from ${this.uniforms.metallicEffect.value} to ${baseStarUniforms.metallicEffect}`,
-          );
+    
           this.uniforms.metallicEffect.value = baseStarUniforms.metallicEffect;
           changesMade = true;
         }
@@ -170,9 +155,7 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
           this.uniforms.noiseEvolutionSpeed.value !==
           baseStarUniforms.noiseEvolutionSpeed
         ) {
-          console.log(
-            `[MainSequenceStarMaterial] Updating noiseEvolutionSpeed from ${this.uniforms.noiseEvolutionSpeed.value} to ${baseStarUniforms.noiseEvolutionSpeed}`,
-          );
+
           this.uniforms.noiseEvolutionSpeed.value =
             baseStarUniforms.noiseEvolutionSpeed;
           changesMade = true;
@@ -182,9 +165,7 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
     // timeOffset is a root property of StarProperties
     if (properties.timeOffset !== undefined && this.uniforms.timeOffset) {
       if (this.uniforms.timeOffset.value !== properties.timeOffset) {
-        console.log(
-          `[MainSequenceStarMaterial] Updating timeOffset from ${this.uniforms.timeOffset.value} to ${properties.timeOffset}`,
-        );
+ 
         this.uniforms.timeOffset.value = properties.timeOffset;
         changesMade = true;
       }
@@ -192,14 +173,8 @@ export class MainSequenceStarMaterial extends THREE.ShaderMaterial {
 
     if (changesMade) {
       this.needsUpdate = true;
-      console.log(
-        "[MainSequenceStarMaterial] Material updated, needsUpdate set to true.",
-      );
-    } else {
-      console.log(
-        "[MainSequenceStarMaterial] updateUniforms called, but no new values detected that differ from current material uniforms.",
-      );
-    }
+
+    } 
   }
 }
 
@@ -230,9 +205,7 @@ export class MainSequenceStarRenderer extends BaseStarRenderer {
 
   private subscribeToStarProperties(starId: string) {
     this.unsubscribeFromStarProperties();
-    console.log(
-      `[MainSequenceStarRenderer ${starId}] Attempting to subscribe to celestialObjects$`,
-    );
+
 
     this.propertiesSubscription = celestialObjects$
       .pipe(
@@ -241,26 +214,18 @@ export class MainSequenceStarRenderer extends BaseStarRenderer {
         filter((starData) => !!starData && !!starData.properties),
         map((starData) => starData.properties as StarProperties),
         tap((properties) => {
-          console.log(
-            `[MainSequenceStarRenderer ${starId}] Received property update:`,
-            JSON.parse(JSON.stringify(properties)),
-          );
+
           const material = this.starBodyMaterials.get(
             starId,
           ) as MainSequenceStarMaterial;
           if (material && typeof material.updateUniforms === "function") {
-            console.log(
-              `[MainSequenceStarRenderer ${starId}] Updating main material uniforms.`,
-            );
+
             material.updateUniforms(properties);
           }
 
           const coronaMaterials = this.coronaMaterials.get(starId);
           if (coronaMaterials && properties.shaderUniforms?.corona) {
-            // Guard against undefined shaderUniforms
-            console.log(
-              `[MainSequenceStarRenderer ${starId}] Updating corona material uniforms.`,
-            );
+
             coronaMaterials.forEach((coronaMat) => {
               if (typeof coronaMat.updateUniforms === "function") {
                 // Pass only the corona part of shaderUniforms
@@ -281,9 +246,7 @@ export class MainSequenceStarRenderer extends BaseStarRenderer {
           ),
       });
 
-    console.log(
-      `[MainSequenceStarRenderer ${starId}] Subscribed to celestialObjects$ for property updates.`,
-    );
+
   }
 
   private unsubscribeFromStarProperties() {
@@ -294,9 +257,7 @@ export class MainSequenceStarRenderer extends BaseStarRenderer {
   }
 
   public dispose(): void {
-    console.log(
-      `[MainSequenceStarRenderer ${this.currentStarId}] Dispose called. Unsubscribing from properties.`,
-    );
+
     this.unsubscribeFromStarProperties();
     super.dispose();
   }
@@ -305,9 +266,7 @@ export class MainSequenceStarRenderer extends BaseStarRenderer {
    * Returns the appropriate material for a main sequence star
    */
   protected getMaterial(star: RenderableCelestialObject): THREE.ShaderMaterial {
-    console.log(
-      `[MainSequenceStarRenderer ${star.celestialObjectId}] getMaterial called.`,
-    );
+
     const starColor = this.getStarColor(star);
     const properties = star.properties as StarProperties;
 

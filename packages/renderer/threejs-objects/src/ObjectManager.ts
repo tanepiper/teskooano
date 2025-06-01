@@ -157,7 +157,6 @@ export class ObjectManager {
     this.ringSystemRenderers = ringSystemRenderers;
     this.asteroidRenderers = asteroidRenderers;
 
-    console.log("[ObjectManager CONSTRUCTOR] Initializing ObjectManager...");
 
     this.lodManager = new LODManager(camera);
     this.lensingHandler = new GravitationalLensingHandler({
@@ -221,13 +220,9 @@ export class ObjectManager {
    * @internal Subscribes to the renderable objects and acceleration vector streams from the core state.
    */
   private subscribeToStateChanges(): void {
-    // Subscribe to renderable objects and sync the scene via ObjectLifecycleManager
-    console.log(
-      "[ObjectManager SUB_TO_STATE_CHANGES] Setting up subscription to renderableObjects$",
-    );
+
     this.objectsSubscription = this.renderableObjects$
       .pipe(
-        // tap(allObjects => console.log(`[ObjectManager RX Debug BEFORE JSON DISTINCT] renderableObjects$ emitted ${Object.keys(allObjects).length} objects.`)),
         distinctUntilChanged((prev, curr) => {
           // Only stringify if both are non-null to avoid errors if the stream starts with null/undefined
           if (prev && curr) {
@@ -235,11 +230,7 @@ export class ObjectManager {
           }
           return prev === curr; // Standard reference check if one is null/undefined
         }),
-        tap((allObjects) =>
-          console.log(
-            `[ObjectManager RX Debug AFTER JSON DISTINCT] renderableObjects$ emitted ${Object.keys(allObjects).length} objects. Syncing...`,
-          ),
-        ),
+        
       )
       .subscribe((objects: Record<string, RenderableCelestialObject>) => {
         this.latestRenderableObjects = objects;

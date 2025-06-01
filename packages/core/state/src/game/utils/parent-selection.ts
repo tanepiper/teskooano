@@ -1,10 +1,11 @@
 import type { CelestialObject } from "@teskooano/data-types";
-import { CelestialStatus, CelestialType } from "@teskooano/data-types";
+import { CelestialStatus, CelestialType, type PhysicsEngineType } from "@teskooano/data-types";
 import {
   calculateDistance,
   calculateGravitationalInfluence,
   AU,
 } from "@teskooano/core-physics";
+import { simulationStateService } from "../simulation";
 
 /**
  * Finds the nearest active star to the given object (straight-line distance).
@@ -40,6 +41,22 @@ export function findBestGravitationalParent(
   allObjects: Record<string, CelestialObject>,
   excludeIds: string[] = [],
 ): CelestialObject | null {
+  const currentPhysicsEngine: PhysicsEngineType = simulationStateService.getCurrentState().physicsEngine;
+  if (currentPhysicsEngine !== "verlet" && currentPhysicsEngine !== "symplectic") {
+    // In ideal modes, if the object has a valid current parent, stick with it.
+    if (targetObject.parentId) {
+      const currentParent = allObjects[targetObject.parentId];
+      if (
+        currentParent &&
+        currentParent.status === CelestialStatus.ACTIVE &&
+        !excludeIds.includes(currentParent.id)
+      ) {
+        return currentParent;
+      }
+    }
+    return null; // Otherwise, no change or no clear parent in ideal mode.
+  }
+
   let best: CelestialObject | null = null;
   let maxInfluence = 0;
 
@@ -110,6 +127,15 @@ export function findNewMainStar(
   allObjects: Record<string, CelestialObject>,
   excludeStarIds: string[] = [],
 ): CelestialObject | null {
+  const currentPhysicsEngine: PhysicsEngineType = simulationStateService.getCurrentState().physicsEngine;
+  if (currentPhysicsEngine !== "verlet" && currentPhysicsEngine !== "symplectic") {
+    // Don't select a *new* main star if not in N-body mode.
+    // If a current main star exists (no parentId) and isn't excluded, it remains main implicitly.
+    // This function's purpose is to find a *replacement* if the old main is gone.
+    // In ideal modes, such a replacement shouldn't automatically occur via this specific logic.
+    return null;
+  }
+
   const remaining = Object.values(allObjects).filter(
     (obj) =>
       obj.type === CelestialType.STAR &&
