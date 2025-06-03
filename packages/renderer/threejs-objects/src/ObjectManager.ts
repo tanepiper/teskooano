@@ -1,31 +1,27 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { accelerationVectors$ } from "@teskooano/core-state";
-import { CelestialStatus, CelestialType } from "@teskooano/data-types";
+
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
 import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
-import {
-  CelestialRenderer,
-  RingSystemRenderer,
-} from "@teskooano/systems-celestial";
 import type { Observable, Subscription } from "rxjs";
 import { distinctUntilChanged, tap } from "rxjs/operators";
 import * as THREE from "three";
 import {
-  AccelerationVisualizer,
-  DebrisEffectManager,
-  GravitationalLensingHandler,
   MeshFactory,
   ObjectLifecycleManager,
   RendererUpdater,
 } from "./object-manager";
 
-import type { LODLevel } from "@teskooano/systems-celestial";
+import { BasicCelestialRenderer } from "@teskooano/celestials-base";
 
-import type { DestructionEvent } from "@teskooano/core-physics";
-import { rendererEvents } from "@teskooano/renderer-threejs-core";
 import { LabelVisibilityManager } from "./types";
+import {
+  CelestialStatus,
+  CelestialType,
+  LODLevel,
+} from "@teskooano/celestial-object";
 
 /**
  * @class ObjectManager
@@ -47,18 +43,8 @@ export class ObjectManager {
   private renderer: THREE.WebGLRenderer | null = null;
   /** @internal Manages Levels of Detail for objects based on camera distance. */
   private lodManager: LODManager;
-  /** @internal Map storing specialized renderers keyed by their specific type (e.g., GasGiantClass). */
-  private celestialRenderers: Map<string, CelestialRenderer>;
-  /** @internal Map storing specialized renderers specifically for stars, keyed by object ID. */
-  private starRenderers: Map<string, CelestialRenderer>;
-  /** @internal Map storing specialized renderers specifically for planets, keyed by object ID. */
-  private planetRenderers: Map<string, CelestialRenderer>;
-  /** @internal Map storing specialized renderers specifically for moons, keyed by object ID. */
-  private moonRenderers: Map<string, CelestialRenderer>;
-  /** @internal Map storing specialized renderers specifically for ring systems, keyed by object ID. */
-  private ringSystemRenderers: Map<string, RingSystemRenderer>;
-  /** @internal Map storing specialized renderers specifically for asteroids, keyed by object ID. */
-  private asteroidRenderers: Map<string, CelestialRenderer>;
+  /** @internal Map storing active BasicCelestialRenderer instances, keyed by object ID. */
+  private activeRenderers: Map<string, BasicCelestialRenderer> = new Map();
 
   /** @internal Observable stream of renderable object data from the core state. */
   private renderableObjects$: Observable<
@@ -72,29 +58,16 @@ export class ObjectManager {
   private lightManager: LightManager;
   /** @internal Manages CSS2D labels and potentially other 2D elements, optional. */
   private css2DManager?: LabelVisibilityManager & CSS2DManager;
-  /** @internal Observable stream of acceleration vectors from the core state. */
-  private acceleration$: Observable<Record<string, OSVector3>>;
 
-  /** @internal Manages the visualization of acceleration vectors as arrows in the scene. */
-  private accelerationVisualizer: AccelerationVisualizer;
-
-  /** @internal Handles gravitational lensing effects for massive objects like black holes. */
-  private lensingHandler: GravitationalLensingHandler;
   /** @internal Factory responsible for creating the appropriate Three.js mesh for each celestial object type. */
   private meshFactory: MeshFactory;
   /** @internal Updates specialized renderers (e.g., for stars, planets) each frame. */
   private rendererUpdater: RendererUpdater;
-  /** @internal Manages particle effects for object destruction events. */
-  private debrisEffectManager: DebrisEffectManager;
-  /** @internal Handles the core logic of adding, updating, and removing objects from the scene based on state. */
+  /** @internal Manages the core logic of adding, updating, and removing objects from the scene based on state. */
   private objectLifecycleManager: ObjectLifecycleManager;
 
   /** @internal RxJS subscription to the renderable objects stream. */
   private objectsSubscription: Subscription | null = null;
-  /** @internal RxJS subscription to the acceleration vectors stream. */
-  private accelerationsSubscription: Subscription | null = null;
-  /** @internal Unsubscribe function for the destruction event listener. */
-  private destructionSubscription: (() => void) | null = null;
 
   /** @internal Reusable vector to avoid allocations in loops. */
   private tempVector3 = new THREE.Vector3();
@@ -118,13 +91,6 @@ export class ObjectManager {
    * @param lightManager - The LightManager instance.
    * @param renderer - The WebGLRenderer instance.
    * @param css2DManager - Optional manager for CSS2D labels and interactions.
-   * @param acceleration$ - Optional observable stream for acceleration vectors.
-   * @param celestialRenderers - Map of specialized celestial renderers.
-   * @param starRenderers - Map of specialized star renderers.
-   * @param planetRenderers - Map of specialized planet renderers.
-   * @param moonRenderers - Map of specialized moon renderers.
-   * @param ringSystemRenderers - Map of specialized ring system renderers.
-   * @param asteroidRenderers - Map of specialized asteroid renderers.
    */
   constructor(
     scene: THREE.Scene,
@@ -133,13 +99,6 @@ export class ObjectManager {
     lightManager: LightManager,
     renderer: THREE.WebGLRenderer,
     css2DManager?: LabelVisibilityManager & CSS2DManager,
-    acceleration$: Observable<Record<string, OSVector3>> = accelerationVectors$,
-    celestialRenderers: Map<string, CelestialRenderer> = new Map(),
-    starRenderers: Map<string, CelestialRenderer> = new Map(),
-    planetRenderers: Map<string, CelestialRenderer> = new Map(),
-    moonRenderers: Map<string, CelestialRenderer> = new Map(),
-    ringSystemRenderers: Map<string, RingSystemRenderer> = new Map(),
-    asteroidRenderers: Map<string, CelestialRenderer> = new Map(),
   ) {
     this.scene = scene;
     this.camera = camera;
@@ -147,76 +106,39 @@ export class ObjectManager {
     this.lightManager = lightManager;
     this.renderer = renderer;
     this.css2DManager = css2DManager;
-    this.acceleration$ = acceleration$; // Assign the observable
-
-    // Assign renderer maps from parameters
-    this.celestialRenderers = celestialRenderers;
-    this.starRenderers = starRenderers;
-    this.planetRenderers = planetRenderers;
-    this.moonRenderers = moonRenderers;
-    this.ringSystemRenderers = ringSystemRenderers;
-    this.asteroidRenderers = asteroidRenderers;
 
     this.lodManager = new LODManager(camera);
-    this.lensingHandler = new GravitationalLensingHandler({
-      starRenderers: this.starRenderers,
-    });
 
     // Setup the MeshFactory with dependencies
     this.meshFactory = new MeshFactory({
-      celestialRenderers: this.celestialRenderers,
-      starRenderers: this.starRenderers,
-      planetRenderers: this.planetRenderers,
-      moonRenderers: this.moonRenderers,
-      ringSystemRenderers: this.ringSystemRenderers,
-      asteroidRenderers: this.asteroidRenderers,
       lodManager: this.lodManager,
       camera: this.camera,
-      createLodCallback: (
-        object: RenderableCelestialObject,
-        levels: LODLevel[],
-      ) => this.lodManager.createAndRegisterLOD(object, levels),
     });
 
     // Setup the ObjectLifecycleManager with dependencies
     this.objectLifecycleManager = new ObjectLifecycleManager({
       objects: this.objects,
+      activeRenderers: this.activeRenderers,
       scene: this.scene,
       meshFactory: this.meshFactory,
       lodManager: this.lodManager,
       lightManager: this.lightManager,
-      lensingHandler: this.lensingHandler,
       renderer: this.renderer,
-      starRenderers: this.starRenderers,
-      planetRenderers: this.planetRenderers,
-      moonRenderers: this.moonRenderers,
-      ringSystemRenderers: this.ringSystemRenderers,
-      asteroidRenderers: this.asteroidRenderers,
       camera: this.camera,
       css2DManager: this.css2DManager,
     });
 
     // Setup other managers
-    this.accelerationVisualizer = new AccelerationVisualizer({
-      objects: this.objects,
-    });
-    this.debrisEffectManager = new DebrisEffectManager({ scene: this.scene });
     this.rendererUpdater = new RendererUpdater({
-      celestialRenderers: this.celestialRenderers,
-      starRenderers: this.starRenderers,
-      planetRenderers: this.planetRenderers,
-      moonRenderers: this.moonRenderers,
-      ringSystemRenderers: this.ringSystemRenderers,
-      asteroidRenderers: this.asteroidRenderers,
+      activeRenderers: this.activeRenderers,
     });
 
     // Start listening to state changes and events
     this.subscribeToStateChanges();
-    this.subscribeToDestructionEvents();
   }
 
   /**
-   * @internal Subscribes to the renderable objects and acceleration vector streams from the core state.
+   * @internal Subscribes to the renderable objects stream from the core state.
    */
   private subscribeToStateChanges(): void {
     this.objectsSubscription = this.renderableObjects$
@@ -235,26 +157,6 @@ export class ObjectManager {
           this.latestRenderableObjects,
         );
       });
-
-    // Subscribe to acceleration vectors and update the visualization
-    this.accelerationsSubscription = this.acceleration$.subscribe(
-      (accelerations: Record<string, OSVector3>) => {
-        this.accelerationVisualizer.syncAccelerationArrows(accelerations);
-      },
-    );
-  }
-
-  /**
-   * @internal Subscribes to destruction events emitted via the rendererEvents bus.
-   */
-  private subscribeToDestructionEvents(): void {
-    // Listen for object destruction events and trigger debris effects
-    this.destructionSubscription = rendererEvents.on(
-      "destruction:occurred",
-      (event: DestructionEvent) => {
-        this.debrisEffectManager.createDebrisEffect(event);
-      },
-    );
   }
 
   /**
@@ -270,29 +172,14 @@ export class ObjectManager {
   }
 
   /**
-   * Enables or disables the creation of debris particle effects on destruction events.
-   * @param enabled - True to enable effects, false to disable.
-   */
-  public setDebrisEffectsEnabled(enabled: boolean): void {
-    this.debrisEffectManager.setDebrisEffectsEnabled(enabled);
-  }
-
-  /**
-   * Toggles the enabled state of debris particle effects.
-   * @returns The new enabled state (true if enabled, false if disabled).
-   */
-  public toggleDebrisEffects(): boolean {
-    return this.debrisEffectManager.toggleDebrisEffects();
-  }
-
-  /**
    * Retrieves the main Three.js Object3D associated with a celestial object ID.
    *
    * @param id - The celestial object ID.
    * @returns The corresponding Object3D, or null if not found.
    */
   getObject(id: string): THREE.Object3D | null {
-    return this.objects.get(id) || null;
+    const renderer = this.activeRenderers.get(id);
+    return renderer ? renderer.lod : null;
   }
 
   /**
@@ -301,9 +188,6 @@ export class ObjectManager {
    *
    * @param time - The current simulation time (or frame time).
    * @param lightSources - Map of active light sources and their data.
-   * @param renderer - Optional override for the WebGLRenderer instance.
-   * @param scene - Optional override for the Scene instance.
-   * @param camera - Optional override for the Camera instance.
    */
   updateRenderers(
     time: number,
@@ -311,28 +195,15 @@ export class ObjectManager {
       string,
       { position: THREE.Vector3; color: THREE.Color; intensity: number }
     >,
-    renderer?: THREE.WebGLRenderer,
-    scene?: THREE.Scene,
-    camera?: THREE.PerspectiveCamera,
   ): void {
     // Update LOD system first
     this.lodManager.update();
 
     // Update specialized renderers (stars, planets, etc.)
-    this.rendererUpdater.updateRenderers(
-      time,
-      lightSources,
-      this.objects, // Pass current objects map if needed by renderers
-      renderer || this.renderer || undefined,
-      scene || this.scene,
-      camera || this.camera,
-    );
+    this.rendererUpdater.updateRenderers(time, lightSources);
 
     // Update visibility of CSS2D labels based on LOD and object type
     this.updateLabelVisibility();
-
-    // Update active debris particle effects
-    this.debrisEffectManager.update(this.getDeltaTime()); // Needs a delta time source
   }
 
   /**
@@ -455,27 +326,17 @@ export class ObjectManager {
     // Unsubscribe from all observables and event listeners
     this.objectsSubscription?.unsubscribe();
     this.objectsSubscription = null;
-    this.accelerationsSubscription?.unsubscribe();
-    this.accelerationsSubscription = null;
-    this.destructionSubscription?.();
-    this.destructionSubscription = null;
 
     // Dispose sub-managers in logical order (e.g., lifecycle last?)
     this.objectLifecycleManager.dispose(); // Disposes individual objects and their resources
-    this.debrisEffectManager.dispose();
-    this.accelerationVisualizer.clear(); // Clear arrows
 
     // Dispose renderers and clear their maps
     this.rendererUpdater.dispose();
     this.lodManager.clear();
-    this.lensingHandler.clear();
 
-    this.celestialRenderers.clear();
-    this.starRenderers.clear();
-    this.planetRenderers.clear();
-    this.moonRenderers.clear();
-    this.ringSystemRenderers.clear();
-    this.asteroidRenderers.clear();
+    // Dispose active renderers
+    this.activeRenderers.forEach((renderer) => renderer.dispose());
+    this.activeRenderers.clear();
 
     // Clear the main object map (should be empty after lifecycle disposal, but good practice)
     this.objects.clear();
@@ -516,8 +377,10 @@ export class ObjectManager {
    */
   public recreateAllMeshes(): void {
     // Dispose all current objects via the lifecycle manager
-    this.objectLifecycleManager.dispose();
+    this.objectLifecycleManager.dispose(); // This should also dispose BasicCelestialRenderers via activeRenderers
     // Immediately resync with the latest state to recreate objects
+    // The syncObjectsWithState method in ObjectLifecycleManager will need to handle
+    // creating new BasicCelestialRenderer instances.
     this.objectLifecycleManager.syncObjectsWithState(
       this.latestRenderableObjects,
     );

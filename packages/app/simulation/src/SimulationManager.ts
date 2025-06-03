@@ -15,8 +15,8 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
-  OrbitalParameters,
-} from "@teskooano/data-types";
+  type CelestialOrbitalProperties,
+} from "@teskooano/celestial-object";
 import { Observable, Subject, Subscription } from "rxjs";
 import * as THREE from "three";
 import { OrbitUpdatePayload } from "./types";
@@ -301,24 +301,23 @@ export class SimulationManager {
     const isStar = new Map<string | number, boolean>();
     const bodyTypes = new Map<string | number, CelestialType>();
     const parentIds = new Map<string | number, string | undefined>();
-    const orbitalParams = new Map<string | number, OrbitalParameters>();
+    const orbitalParams = new Map<
+      string | number,
+      CelestialOrbitalProperties
+    >();
 
     Object.values(celestialObjectsSnapshot)
       .filter(
         (obj: CelestialObject) =>
-          obj.status !== CelestialStatus.DESTROYED &&
-          obj.status !== CelestialStatus.ANNIHILATED &&
-          !obj.ignorePhysics,
+          obj.status !== CelestialStatus.DESTROYED && !obj.ignorePhysics,
       )
       .forEach((obj: CelestialObject) => {
-        if (obj.physicsStateReal) {
-          radii.set(obj.id, obj.realRadius_m);
-          isStar.set(obj.id, obj.type === CelestialType.STAR);
-          bodyTypes.set(obj.id, obj.type);
-          parentIds.set(obj.id, obj.parentId);
-          if (obj.orbit) {
-            orbitalParams.set(obj.id, obj.orbit);
-          }
+        radii.set(obj.id, obj.physicalProperties.radius);
+        isStar.set(obj.id, obj.type === CelestialType.STAR);
+        bodyTypes.set(obj.id, obj.type.toUpperCase() as any);
+        parentIds.set(obj.id, obj.parent?.id);
+        if (obj.orbit) {
+          orbitalParams.set(obj.id, obj.orbit);
         }
       });
 
@@ -349,18 +348,18 @@ export class SimulationManager {
       const obj = celestialObjects[id];
       if (
         obj.status !== CelestialStatus.DESTROYED &&
-        obj.status !== CelestialStatus.ANNIHILATED &&
-        obj.siderealRotationPeriod_s &&
-        obj.siderealRotationPeriod_s > 0 &&
-        obj.axialTilt
+        obj.physicalProperties.siderealRotationPeriod_s &&
+        obj.physicalProperties.siderealRotationPeriod_s > 0 &&
+        obj.physicalProperties.axialTilt
       ) {
         const angle =
-          ((2 * Math.PI * currentTime) / obj.siderealRotationPeriod_s) %
+          ((2 * Math.PI * currentTime) /
+            obj.physicalProperties.siderealRotationPeriod_s) %
           (2 * Math.PI);
         const tiltAxisTHREE = new THREE.Vector3(
-          obj.axialTilt.x,
-          obj.axialTilt.y,
-          obj.axialTilt.z,
+          obj.physicalProperties.axialTilt.x,
+          obj.physicalProperties.axialTilt.y,
+          obj.physicalProperties.axialTilt.z,
         ).normalize();
         const newRotation = new THREE.Quaternion().setFromAxisAngle(
           tiltAxisTHREE,

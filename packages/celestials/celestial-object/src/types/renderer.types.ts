@@ -27,12 +27,29 @@ export interface LODDistances {
 }
 
 /**
+ * Defines the geometry segment counts for different Levels of Detail (LOD).
+ * These are typically used for THREE.SphereGeometry's widthSegments and heightSegments.
+ */
+export interface LODGeometrySegments {
+  /** Segment counts for high detail LOD. */
+  high?: { widthSegments: number; heightSegments: number };
+  /** Segment counts for medium detail LOD. */
+  medium?: { widthSegments: number; heightSegments: number };
+  /** Segment counts for low detail LOD. */
+  low?: { widthSegments: number; heightSegments: number };
+}
+
+/**
  * Options for configuring the BasicCelestialRenderer instance.
  * This interface can be extended by subclasses for more specific renderer options.
  */
-export interface BasicRendererOptions {
+export interface BasicRendererOptions<
+  TUniforms extends Record<string, any> = Record<string, any>,
+> {
   /** Optional configuration for LOD distances. These are factors multiplied by object radius. */
   lodDistances?: LODDistances;
+  /** Optional: Configuration for geometry segments at different LOD levels. */
+  geometrySegments?: LODGeometrySegments;
   /** Optional: Configuration for the billboard, including visuals and associated light. */
   billboardConfig?: CelestialBillboardConfig;
   /**
@@ -40,6 +57,8 @@ export interface BasicRendererOptions {
    * This allows for different types of billboards (e.g., standard star flare, black hole lensing).
    */
   billboardGenerator?: Billboard;
+  /** Optional: Custom uniforms to be passed to the shader materials. */
+  uniforms?: TUniforms;
 }
 
 /**

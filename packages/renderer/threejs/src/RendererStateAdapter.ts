@@ -6,24 +6,25 @@ import {
   simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
+
 import {
-  CelestialStatus,
-  CelestialType,
-  SCALE,
-  scaleSize,
   type CelestialObject,
-  type CelestialSpecificPropertiesUnion,
-  type OrbitalParameters,
-} from "@teskooano/data-types";
+  CelestialType,
+  type CelestialOrbitalProperties,
+  type CelestialPhysicalProperties,
+  CelestialStatus,
+} from "@teskooano/celestial-object";
 import { BehaviorSubject, Subscription } from "rxjs";
 import * as THREE from "three";
 import { physicsToThreeJSPosition } from "./utils/coordinateUtils";
+import { scaleSize, SCALE } from "./utils/scalingUtils"; // Import new scaleSize and SCALE
+// Potentially import SCALE from ./utils/scalingUtils if needed directly in this file, otherwise scaleSize handles it.
 
 export interface RenderableCelestialObject {
   /** Link back to the core celestial object */
   celestialObjectId: string;
   name: string;
-  type: CelestialType;
+  type: string;
   /** Current status from the core object */
   status: CelestialStatus;
   seed: string;
@@ -33,8 +34,8 @@ export interface RenderableCelestialObject {
   position: THREE.Vector3;
   rotation: THREE.Quaternion;
 
-  properties?: CelestialSpecificPropertiesUnion;
-  orbit?: OrbitalParameters;
+  properties?: CelestialPhysicalProperties;
+  orbit?: CelestialOrbitalProperties;
 
   parentId?: string;
   primaryLightSourceId?: string;
@@ -121,13 +122,13 @@ export class RendererStateAdapter {
     existing: RenderableCelestialObject | undefined,
     determineLightSource: (id: string) => string | undefined,
   ): RenderableCelestialObject {
-    const realRadius = obj.realRadius_m ?? 0;
+    const realRadius = obj.physicalProperties.radius ?? 0;
     const scaledRadius = scaleSize(realRadius, obj.type);
-    const scaledMass = (obj.realMass_kg ?? 0) * SCALE.MASS;
-    const position = physicsToThreeJSPosition(obj.physicsStateReal.position_m);
+    const scaledMass = (obj.physicsState.mass_kg ?? 0) * SCALE.MASS;
+    const position = physicsToThreeJSPosition(obj.physicsState.position_m);
     const rotation = this.calculateRotation(
-      obj.axialTilt,
-      obj.siderealRotationPeriod_s,
+      obj.physicalProperties.axialTilt,
+      obj.physicalProperties.siderealRotationPeriod_s,
     );
     const primaryLightSourceId = determineLightSource(obj.id);
 
@@ -135,23 +136,23 @@ export class RendererStateAdapter {
       celestialObjectId: obj.id,
       name: obj.name,
       type: obj.type,
-      seed: obj?.seed ?? crypto.randomUUID(),
+      seed: (obj as any).seed ?? crypto.randomUUID(),
       radius: scaledRadius,
       mass: scaledMass,
       position: position,
       rotation: rotation,
-      properties: obj.properties,
+      properties: obj.physicalProperties,
       orbit: obj.orbit,
-      parentId: obj.parentId,
+      parentId: obj.parent?.id,
       primaryLightSourceId: primaryLightSourceId,
       realRadius_m: realRadius,
-      axialTilt: obj.axialTilt,
+      axialTilt: obj.physicalProperties.axialTilt,
       isVisible: existing?.isVisible ?? true,
       isTargetable: existing?.isTargetable ?? true,
       isSelected: existing?.isSelected ?? false,
       isFocused: existing?.isFocused ?? false,
       status: obj.status,
-      temperature: obj.temperature,
+      temperature: obj.physicalProperties.temperature_k,
     };
   }
 
@@ -161,7 +162,7 @@ export class RendererStateAdapter {
     existing: RenderableCelestialObject | undefined,
     determineLightSource: (id: string) => string | undefined,
   ): RenderableCelestialObject | null {
-    const parentId = obj.parentId;
+    const parentId = obj.parent?.id;
     if (!parentId) {
       console.warn(
         `[RendererStateAdapter] Ring system ${obj.id} is missing parentId.`,
@@ -169,42 +170,39 @@ export class RendererStateAdapter {
       return null;
     }
     const parent = objects[parentId];
-    if (
-      !parent ||
-      !parent.physicsStateReal ||
-      !parent.physicsStateReal.position_m
-    ) {
+    if (!parent || !parent.physicsState || !parent.physicsState.position_m) {
       return null;
     }
 
-    const position = physicsToThreeJSPosition(
-      parent.physicsStateReal.position_m,
-    );
+    const position = physicsToThreeJSPosition(parent.physicsState.position_m);
 
-    const rotation = this.calculateRotation(parent.axialTilt, undefined);
+    const rotation = this.calculateRotation(
+      parent.physicalProperties.axialTilt,
+      undefined,
+    );
     const primaryLightSourceId = determineLightSource(obj.id);
 
     return {
       celestialObjectId: obj.id,
       name: obj.name,
       type: obj.type,
-      seed: obj?.seed ?? crypto.randomUUID(),
+      seed: (obj as any).seed ?? crypto.randomUUID(),
       radius: 0,
       mass: 0,
       position: position,
       rotation: rotation,
-      properties: obj.properties,
+      properties: obj.physicalProperties,
       orbit: undefined,
-      parentId: obj.parentId,
+      parentId: obj.parent?.id,
       primaryLightSourceId: primaryLightSourceId,
       realRadius_m: 0,
-      axialTilt: parent.axialTilt,
+      axialTilt: parent.physicalProperties.axialTilt,
       isVisible: existing?.isVisible ?? true,
       isTargetable: existing?.isTargetable ?? false,
       isSelected: existing?.isSelected ?? false,
       isFocused: existing?.isFocused ?? false,
       status: obj.status,
-      temperature: obj.temperature,
+      temperature: obj.physicalProperties.temperature_k,
     };
   }
 
@@ -228,11 +226,11 @@ export class RendererStateAdapter {
         lightSourceMap[id] = id;
         return id;
       }
-      if (!obj.parentId) {
+      if (!obj.parent) {
         lightSourceMap[id] = undefined;
         return undefined;
       }
-      lightSourceMap[id] = determineLightSource(obj.parentId);
+      lightSourceMap[id] = determineLightSource(obj.parent!.id);
       return lightSourceMap[id];
     };
 
@@ -245,7 +243,7 @@ export class RendererStateAdapter {
         const obj = objects[id];
         const existing = existingRenderables[id];
 
-        if (!obj.physicsStateReal || !obj.physicsStateReal.position_m) {
+        if (!obj.physicsState || !obj.physicsState.position_m) {
           if (obj.type !== CelestialType.RING_SYSTEM) {
             console.warn(
               `[RendererStateAdapter] Skipping object ${id} due to missing physics state.`,
@@ -274,7 +272,6 @@ export class RendererStateAdapter {
           case CelestialType.COMET:
           case CelestialType.ASTEROID_FIELD:
           case CelestialType.OORT_CLOUD:
-          case CelestialType.SPACE_ROCK:
             renderableObject = this.processStandardObject(
               obj,
               existing,

@@ -1,5 +1,5 @@
 import { CelestialObject } from "../celestial-object";
-import { CelestialStatus, CelestialType } from "../types";
+import { CelestialStatus, CelestialTypes } from "../types";
 import {
   AU,
   GRAVITATIONAL_CONSTANT,
@@ -60,10 +60,10 @@ export function isChildBoundToParent(
   if (!child.physicsState || !parent.physicsState) return false;
   // This logic is specific to MOON type children orbiting PLANET or GAS_GIANT parents.
   // It could be generalized if other child-parent type pairings need similar checks.
-  if (child.type !== CelestialType.MOON) return false;
+  if (child.type !== CelestialTypes.MOON) return false;
   if (
-    parent.type !== CelestialType.PLANET &&
-    parent.type !== CelestialType.GAS_GIANT
+    parent.type !== CelestialTypes.PLANET &&
+    parent.type !== CelestialTypes.GAS_GIANT
   )
     return false;
 
@@ -121,7 +121,7 @@ function isChildBoundToParentWithContext(
   let maxStarAccel = 0;
   for (const obj of Object.values(allObjects)) {
     if (
-      obj.type !== CelestialType.STAR ||
+      obj.type !== CelestialTypes.STAR ||
       obj.status !== CelestialStatus.ACTIVE
     )
       continue;
@@ -161,7 +161,7 @@ export function determineNewParentsForOrphanedChildren(
   const primaryStarMass =
     Object.values(allObjects).find(
       (o) =>
-        o.type === CelestialType.STAR &&
+        o.type === CelestialTypes.STAR &&
         o.status === CelestialStatus.ACTIVE &&
         !o.parent,
     )?.physicsState.mass_kg ?? 1e30;
@@ -230,7 +230,7 @@ export function identifyEscapedChildren(
 
   const primaryStar = Object.values(allObjects).find(
     (o) =>
-      o.type === CelestialType.STAR &&
+      o.type === CelestialTypes.STAR &&
       o.status === CelestialStatus.ACTIVE &&
       !o.parent, // A main star doesn't have a parent in this context
   );
@@ -243,7 +243,7 @@ export function identifyEscapedChildren(
     (o) =>
       o.parent &&
       o.status === CelestialStatus.ACTIVE &&
-      o.type !== CelestialType.STAR,
+      o.type !== CelestialTypes.STAR,
   );
 
   for (const child of childrenToCheck) {
@@ -257,9 +257,9 @@ export function identifyEscapedChildren(
     }
     // If child is a moon and parent is planet/gas_giant, perform specific bound check
     if (
-      child.type === CelestialType.MOON &&
-      (parent.type === CelestialType.PLANET ||
-        parent.type === CelestialType.GAS_GIANT)
+      child.type === CelestialTypes.MOON &&
+      (parent.type === CelestialTypes.PLANET ||
+        parent.type === CelestialTypes.GAS_GIANT)
     ) {
       if (
         !isChildBoundToParentWithContext(
@@ -300,7 +300,7 @@ export function identifyEscapedChildren(
           }
         }
       }
-    } else if (parent.type === CelestialType.STAR) {
+    } else if (parent.type === CelestialTypes.STAR) {
       // If child is orbiting a star, this specific escape logic might not apply in the same way,
       // or would be covered by findBestGravitationalParent if it switches stars.
       // For now, we don't reassign children of stars with this specific function.

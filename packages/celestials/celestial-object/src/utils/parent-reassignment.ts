@@ -1,5 +1,5 @@
 import { CelestialObject } from "../celestial-object";
-import { CelestialStatus, CelestialType, PhysicsEngineType } from "../types";
+import { CelestialStatus, CelestialTypes, PhysicsEngineType } from "../types";
 
 import { calculateGravitationalInfluence } from "@teskooano/core-physics";
 import {
@@ -10,6 +10,7 @@ import {
   determineNewParentsForOrphanedChildren,
   identifyEscapedChildren,
 } from "./child-logic";
+import { CelestialType } from "packages/data/types/src";
 
 /**
  * Adapts a `CelestialObject` instance to the data structure expected by
@@ -63,14 +64,14 @@ export function reassignOrphanedObjects(
   if (destroyedIds.length === 0) return;
 
   const destroyedStarIds = destroyedIds.filter(
-    (id) => allObjects[id]?.type === CelestialType.STAR,
+    (id) => allObjects[id]?.type === CelestialTypes.STAR,
   );
   const destroyedPlanetIds = destroyedIds.filter((id) => {
     const obj = allObjects[id];
     return (
       obj &&
-      (obj.type === CelestialType.PLANET ||
-        obj.type === CelestialType.GAS_GIANT)
+      (obj.type === CelestialTypes.PLANET ||
+        obj.type === CelestialTypes.GAS_GIANT)
     );
   });
 

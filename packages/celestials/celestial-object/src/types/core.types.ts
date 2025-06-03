@@ -1,6 +1,7 @@
 import { OSVector3 } from "@teskooano/core-math";
 import type { CelestialRenderer, BasicRendererOptions } from "./renderer.types";
 import { Quaternion } from "three";
+import { CelestialObject } from "../celestial-object";
 
 /**
  * Defines the physical properties of a celestial object relevant for rendering aspects like billboards and direct physical calculations.
@@ -25,7 +26,7 @@ export interface CelestialPhysicalProperties {
 /**
  * The type of celestial object, encompassing general categories and specific implemented types.
  */
-export const CelestialType = {
+export const CelestialTypes = {
   // General categories for broad classification and hierarchy logic
   /** A general star type. Specific star types (e.g., MAIN_SEQUENCE_STAR) provide detailed classifications. */
   STAR: "STAR",
@@ -102,9 +103,10 @@ export const CelestialType = {
    * Use the Other class for its implementation.
    */
   OTHER: "OTHER",
-};
+} as const;
 
-export type CelestialType = keyof typeof CelestialType;
+export type CelestialType =
+  (typeof CelestialTypes)[keyof typeof CelestialTypes];
 
 /**
  * Defines the type of physics engine being used for simulation.
@@ -154,6 +156,8 @@ export interface CelestialObjectConstructorParams {
   status?: CelestialStatus;
   /** The type of celestial object. */
   type: CelestialType;
+  /** The light sources of the celestial object. */
+  lightSources: CelestialObject[];
   /** The orbital properties of the celestial object. */
   orbit: CelestialOrbitalProperties;
   /** The physics state of the celestial object (mass, position, velocity). */

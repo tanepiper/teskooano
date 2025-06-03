@@ -54,6 +54,8 @@ export abstract class CelestialObject {
   /** The renderer of the celestial object. */
   public renderer: CelestialRenderer;
 
+  public lightSources: CelestialObject[];
+
   /** The state subject of the celestial object. */
   private readonly _stateSubject: BehaviorSubject<CelestialCoreProperties>;
   /** The observable state of the celestial object. */
@@ -63,7 +65,9 @@ export abstract class CelestialObject {
     this.id = params.id;
     this.name = params.name;
     this.status = params.status ?? CelestialStatus.ACTIVE;
+    this.ignorePhysics = params.ignorePhysics ?? false;
     this.type = params.type;
+    this.lightSources = params.lightSources ?? [];
     this.physicalProperties = params.physicalProperties;
     this.orbit = params.orbit;
     this.physicsState = params.physicsState;

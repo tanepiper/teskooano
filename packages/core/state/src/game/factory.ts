@@ -49,6 +49,7 @@ export interface CelestialFactoryInput {
   ignorePhysics?: boolean;
   isMainStar?: boolean; // Optional: if not provided, will be deduced for stars
   status?: CelestialStatus; // Optional: defaults to ACTIVE
+  lightSources?: CelestialObject[];
 }
 
 const defaultOrbit: CelestialOrbitalProperties = {
@@ -87,6 +88,7 @@ class CelestialFactoryService {
       id: data.id,
       name: data.name,
       type: data.type,
+      lightSources: data.lightSources ?? [],
       status: data.status ?? CelestialStatus.ACTIVE,
       physicalProperties: data.physicalProperties,
       orbit: data.orbit ?? defaultOrbit, // Use provided orbit or default

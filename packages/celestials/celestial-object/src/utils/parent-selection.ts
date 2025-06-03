@@ -1,5 +1,5 @@
 import { CelestialObject } from "../celestial-object";
-import { CelestialStatus, CelestialType, PhysicsEngineType } from "../types";
+import { CelestialStatus, CelestialTypes, PhysicsEngineType } from "../types";
 import {
   calculateDistance,
   calculateGravitationalInfluence,
@@ -21,7 +21,7 @@ export function findNearestStar(
 
   for (const cand of Object.values(allObjects)) {
     if (
-      cand.type !== CelestialType.STAR ||
+      cand.type !== CelestialTypes.STAR ||
       cand.status !== CelestialStatus.ACTIVE ||
       !cand.physicsState?.position_m // Ensure candidate star also has physics state for distance
     ) {
@@ -85,15 +85,15 @@ export function findBestGravitationalParent(
     )
       return false;
 
-    if (obj.type === CelestialType.STAR) return true;
+    if (obj.type === CelestialTypes.STAR) return true;
 
     if (
-      targetObject.type === CelestialType.MOON ||
-      targetObject.type === CelestialType.ASTEROID_FIELD
+      targetObject.type === CelestialTypes.MOON ||
+      targetObject.type === CelestialTypes.ASTEROID_FIELD
     ) {
-      if (obj.type === CelestialType.GAS_GIANT) return true;
+      if (obj.type === CelestialTypes.GAS_GIANT) return true;
       if (
-        obj.type === CelestialType.PLANET &&
+        obj.type === CelestialTypes.PLANET &&
         obj.physicsState.mass_kg > targetObject.physicsState.mass_kg // Both guaranteed non-null by checks above
       )
         return true;
@@ -102,10 +102,10 @@ export function findBestGravitationalParent(
   });
 
   if (
-    targetObject.type === CelestialType.PLANET ||
-    targetObject.type === CelestialType.GAS_GIANT
+    targetObject.type === CelestialTypes.PLANET ||
+    targetObject.type === CelestialTypes.GAS_GIANT
   ) {
-    const stars = candidates.filter((c) => c.type === CelestialType.STAR);
+    const stars = candidates.filter((c) => c.type === CelestialTypes.STAR);
     for (const star of stars) {
       // star.physicsState and targetObject.physicsState are guaranteed by prior checks
       // Pass new CelestialObject directly
@@ -126,7 +126,7 @@ export function findBestGravitationalParent(
     // Pass new CelestialObject directly
     let influence = calculateGravitationalInfluence(candidate, targetObject);
 
-    if (candidate.type !== CelestialType.STAR && distAU > 0.1) {
+    if (candidate.type !== CelestialTypes.STAR && distAU > 0.1) {
       influence *= Math.exp(-distAU * 10);
     }
 
@@ -152,7 +152,7 @@ export function findNewMainStar(
 
   const remainingStars = Object.values(allObjects).filter(
     (obj) =>
-      obj.type === CelestialType.STAR &&
+      obj.type === CelestialTypes.STAR &&
       obj.status === CelestialStatus.ACTIVE &&
       !excludeStarIds.includes(obj.id) &&
       obj.physicsState &&

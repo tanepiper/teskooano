@@ -17,10 +17,17 @@ const DEFAULT_BILLBOARD_DISTANCE = 100;
 // const DEFAULT_BILLBOARD_LIGHT_INTENSITY = 1.0; // No longer used here, handled by DefaultBillboard or config
 
 // Constants for geometry
-const HIGH_DETAIL_SEGMENTS = 32;
-const MEDIUM_DETAIL_SEGMENTS = 16;
-const LOW_DETAIL_SEGMENTS = 8;
-// const BILLBOARD_SIZE = 0.5; // No longer used here, handled by billboard generator/config
+// const HIGH_DETAIL_SEGMENTS = 32; // Replaced by configurable options
+// const MEDIUM_DETAIL_SEGMENTS = 16; // Replaced by configurable options
+// const LOW_DETAIL_SEGMENTS = 8; // Replaced by configurable options
+
+// Default values for geometry segments if not provided in options
+const DEFAULT_HIGH_DETAIL_WIDTH_SEGMENTS = 64; // Increased for better visuals on high LOD
+const DEFAULT_HIGH_DETAIL_HEIGHT_SEGMENTS = 32;
+const DEFAULT_MEDIUM_DETAIL_WIDTH_SEGMENTS = 32;
+const DEFAULT_MEDIUM_DETAIL_HEIGHT_SEGMENTS = 16;
+const DEFAULT_LOW_DETAIL_WIDTH_SEGMENTS = 16;
+const DEFAULT_LOW_DETAIL_HEIGHT_SEGMENTS = 8;
 
 /**
  * A basic fallback renderer for celestial objects with multiple LOD support.
@@ -31,15 +38,15 @@ const LOW_DETAIL_SEGMENTS = 8;
  */
 export class BasicCelestialRenderer implements CelestialRenderer {
   public lod: THREE.LOD;
-  private celestial: CelestialObject;
+  protected celestial: CelestialObject;
 
-  private highDetailGroup!: THREE.Group;
-  private mediumDetailGroup!: THREE.Group;
-  private lowDetailGroup!: THREE.Group;
-  private billboardLODObject!: THREE.Object3D; // Stores the object part of the billboard LODLevel
+  protected highDetailGroup!: THREE.Group;
+  protected mediumDetailGroup!: THREE.Group;
+  protected lowDetailGroup!: THREE.Group;
+  protected billboardLODObject!: THREE.Object3D;
 
-  private options: BasicRendererOptions;
-  private billboardGenerator: Billboard;
+  protected options: BasicRendererOptions;
+  protected billboardGenerator: Billboard;
 
   /**
    * Creates an instance of BasicCelestialRenderer.
@@ -109,10 +116,16 @@ export class BasicCelestialRenderer implements CelestialRenderer {
       `BasicCelestialRenderer: createHighDetailGroupLOD is using the default base implementation for ${this.celestial.name || this.celestial.id}. Consider overriding it.`,
     );
     const group = new THREE.Group();
+    const widthSegments =
+      this.options?.geometrySegments?.high?.widthSegments ??
+      DEFAULT_HIGH_DETAIL_WIDTH_SEGMENTS;
+    const heightSegments =
+      this.options?.geometrySegments?.high?.heightSegments ??
+      DEFAULT_HIGH_DETAIL_HEIGHT_SEGMENTS;
     const geometry = new THREE.SphereGeometry(
       radius,
-      HIGH_DETAIL_SEGMENTS,
-      HIGH_DETAIL_SEGMENTS,
+      widthSegments,
+      heightSegments,
     );
     const material = new THREE.MeshBasicMaterial({
       color: new THREE.Color(color),
@@ -137,10 +150,16 @@ export class BasicCelestialRenderer implements CelestialRenderer {
       `BasicCelestialRenderer: createMediumDetailGroupLOD is using the default base implementation for ${this.celestial.name || this.celestial.id}. Consider overriding it.`,
     );
     const group = new THREE.Group();
+    const widthSegments =
+      this.options?.geometrySegments?.medium?.widthSegments ??
+      DEFAULT_MEDIUM_DETAIL_WIDTH_SEGMENTS;
+    const heightSegments =
+      this.options?.geometrySegments?.medium?.heightSegments ??
+      DEFAULT_MEDIUM_DETAIL_HEIGHT_SEGMENTS;
     const geometry = new THREE.SphereGeometry(
       radius,
-      MEDIUM_DETAIL_SEGMENTS,
-      MEDIUM_DETAIL_SEGMENTS,
+      widthSegments,
+      heightSegments,
     );
     const material = new THREE.MeshBasicMaterial({
       color: new THREE.Color(color),
@@ -165,10 +184,16 @@ export class BasicCelestialRenderer implements CelestialRenderer {
       `BasicCelestialRenderer: createLowDetailGroupLOD is using the default base implementation for ${this.celestial.name || this.celestial.id}. Consider overriding it.`,
     );
     const group = new THREE.Group();
+    const widthSegments =
+      this.options?.geometrySegments?.low?.widthSegments ??
+      DEFAULT_LOW_DETAIL_WIDTH_SEGMENTS;
+    const heightSegments =
+      this.options?.geometrySegments?.low?.heightSegments ??
+      DEFAULT_LOW_DETAIL_HEIGHT_SEGMENTS;
     const geometry = new THREE.SphereGeometry(
       radius,
-      LOW_DETAIL_SEGMENTS,
-      LOW_DETAIL_SEGMENTS,
+      widthSegments,
+      heightSegments,
     );
     const material = new THREE.MeshBasicMaterial({
       color: new THREE.Color(color),

@@ -2,19 +2,14 @@ import {
   CSS2DLayerType,
   CSS2DManager,
 } from "@teskooano/renderer-threejs-interaction";
-import {
-  CelestialRenderer,
-  RingSystemRenderer,
-  LODLevel,
-} from "packages/systems/celestial/src";
 import * as THREE from "three";
 import type { MeshFactory } from "./object-manager/MeshFactory";
-import type { GravitationalLensingHandler } from "./object-manager/GravitationalLensing";
 import type {
   LightManager,
   LODManager,
 } from "@teskooano/renderer-threejs-effects";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import { BasicCelestialRenderer } from "@teskooano/celestials-base";
 
 /**
  * @internal Interface defining the required methods for managing label visibility.
@@ -31,22 +26,13 @@ export interface LabelVisibilityManager {
  * Configuration for RendererUpdater.
  */
 export interface RendererUpdaterConfig {
-  celestialRenderers: Map<string, CelestialRenderer>;
-  starRenderers: Map<string, CelestialRenderer>;
-  planetRenderers: Map<string, CelestialRenderer>;
-  moonRenderers: Map<string, CelestialRenderer>;
-  ringSystemRenderers: Map<string, RingSystemRenderer>;
-  asteroidRenderers: Map<string, CelestialRenderer>;
+  activeRenderers: Map<string, BasicCelestialRenderer>;
 }
 
 /**
  * @internal
  * Configuration for GravitationalLensingHandler.
  */
-export interface GravitationalLensingHandlerConfig {
-  starRenderers: Map<string, CelestialRenderer>;
-  // Add other dependencies if they exist, e.g., post-processing manager
-}
 
 /**
  * @internal
@@ -54,17 +40,12 @@ export interface GravitationalLensingHandlerConfig {
  */
 export interface ObjectLifecycleManagerConfig {
   objects: Map<string, THREE.Object3D>;
+  activeRenderers: Map<string, BasicCelestialRenderer>;
   scene: THREE.Scene;
   meshFactory: MeshFactory;
   lodManager: LODManager;
   lightManager: LightManager;
-  lensingHandler: GravitationalLensingHandler;
   renderer: THREE.WebGLRenderer | null;
-  starRenderers: Map<string, CelestialRenderer>;
-  planetRenderers: Map<string, CelestialRenderer>;
-  moonRenderers: Map<string, CelestialRenderer>;
-  ringSystemRenderers: Map<string, RingSystemRenderer>;
-  asteroidRenderers: Map<string, CelestialRenderer>;
   camera: THREE.PerspectiveCamera;
   css2DManager?: CSS2DManager;
 }
@@ -74,18 +55,8 @@ export interface ObjectLifecycleManagerConfig {
  * Configuration for MeshFactory.
  */
 export interface MeshFactoryConfig {
-  celestialRenderers: Map<string, CelestialRenderer>;
-  starRenderers: Map<string, CelestialRenderer>;
-  planetRenderers: Map<string, CelestialRenderer>;
-  moonRenderers: Map<string, CelestialRenderer>;
-  ringSystemRenderers: Map<string, RingSystemRenderer>;
-  asteroidRenderers: Map<string, CelestialRenderer>;
   lodManager: LODManager;
   camera: THREE.PerspectiveCamera;
-  createLodCallback: (
-    object: RenderableCelestialObject,
-    levels: LODLevel[],
-  ) => THREE.LOD;
 }
 
 /**
@@ -93,16 +64,8 @@ export interface MeshFactoryConfig {
  * Dependencies for mesh creator functions used by MeshFactory.
  */
 export interface CreatorDependencies {
-  starRenderers: Map<string, CelestialRenderer>;
-  planetRenderers: Map<string, CelestialRenderer>;
-  moonRenderers: Map<string, CelestialRenderer>;
-  ringSystemRenderers: Map<string, RingSystemRenderer>;
-  asteroidRenderers: Map<string, CelestialRenderer>;
-  celestialRenderers: Map<string, CelestialRenderer>;
-  createLodCallback: (
-    object: RenderableCelestialObject,
-    levels: LODLevel[],
-  ) => THREE.LOD;
+  lodManager: LODManager;
+  camera: THREE.PerspectiveCamera;
 }
 
 /**

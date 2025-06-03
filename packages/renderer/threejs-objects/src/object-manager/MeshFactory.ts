@@ -1,69 +1,23 @@
 import { CelestialType } from "@teskooano/data-types";
 import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import type { LODManager } from "@teskooano/renderer-threejs-effects";
-import {
-  RingSystemRenderer,
-  type CelestialRenderer,
-  type LODLevel,
-} from "@teskooano/systems-celestial";
 import * as THREE from "three";
-import { CreatorDependencies, MeshFactoryConfig } from "../types";
-import {
-  createAsteroidFieldMesh,
-  createAsteroidMesh,
-  createFallbackSphere,
-  createGasGiantMesh,
-  createMoonMesh,
-  createPlanetMesh,
-  createRingSystemMesh,
-  createStarMesh,
-} from "./mesh-creators"; // Import creator functions
+import { MeshFactoryConfig } from "../types";
+import { BasicCelestialRenderer } from "@teskooano/celestials-base";
 
 /**
  * @internal
- * Factory class responsible for creating appropriate Three.js mesh objects
+ * Factory class responsible for creating BasicCelestialRenderer instances
  * for different types of celestial bodies based on their data.
- * It delegates the actual creation logic to specialized functions.
  */
 export class MeshFactory {
-  private celestialRenderers: Map<string, CelestialRenderer>;
-  private starRenderers: Map<string, CelestialRenderer>;
-  private planetRenderers: Map<string, CelestialRenderer>;
-  private moonRenderers: Map<string, CelestialRenderer>;
-  private ringSystemRenderers: Map<string, RingSystemRenderer>;
-  private asteroidRenderers: Map<string, CelestialRenderer>;
   private lodManager: LODManager;
-  private createLodCallback: (
-    object: RenderableCelestialObject,
-    levels: LODLevel[],
-  ) => THREE.LOD;
   private camera: THREE.PerspectiveCamera;
   private debugMode: boolean = false;
 
-  // Store deps needed by creator functions
-  private creatorDeps: CreatorDependencies;
-
   constructor(config: MeshFactoryConfig) {
-    this.celestialRenderers = config.celestialRenderers;
-    this.starRenderers = config.starRenderers;
-    this.planetRenderers = config.planetRenderers;
-    this.moonRenderers = config.moonRenderers;
-    this.ringSystemRenderers = config.ringSystemRenderers;
-    this.asteroidRenderers = config.asteroidRenderers;
     this.lodManager = config.lodManager;
-    this.createLodCallback = config.createLodCallback;
     this.camera = config.camera;
-
-    // Prepare deps object for creator functions
-    this.creatorDeps = {
-      starRenderers: this.starRenderers,
-      planetRenderers: this.planetRenderers,
-      moonRenderers: this.moonRenderers,
-      ringSystemRenderers: this.ringSystemRenderers,
-      asteroidRenderers: this.asteroidRenderers,
-      celestialRenderers: this.celestialRenderers,
-      createLodCallback: this.createLodCallback,
-    };
   }
 
   /**
@@ -82,83 +36,72 @@ export class MeshFactory {
   public setDebugMode(enabled: boolean): void {
     this.debugMode = enabled;
     // Note: This only affects subsequently created meshes.
-    // Consider adding logic to recreate existing meshes if needed.
+    // To apply debug mode to existing objects, they would need to be recreated.
+    // Consider how BasicCelestialRenderer might handle a debug mode internally.
   }
 
   /**
-   * Creates a Three.js Object3D (usually a Mesh or Group) for a given celestial object.
-   * Selects the appropriate creation method based on the object's type and potentially
-   * its class (e.g., for Gas Giants).
+   * Creates a BasicCelestialRenderer instance for a given celestial object.
+   * The actual Three.js Object3D (LOD object) is accessible via the .lod property of the renderer.
    * @param object - The data defining the celestial object.
-   * @returns A Three.js Object3D representing the object, or null if creation fails.
+   * @returns A BasicCelestialRenderer instance, or null if creation fails.
    */
-  public createObjectMesh(
-    object: RenderableCelestialObject,
-  ): THREE.Object3D | null {
-    if (this.debugMode) {
-      // Use the imported fallback function
-      return createFallbackSphere(object);
-    }
+  public createObjectRenderer(
+    object: import("@teskooano/celestials-base").CelestialObject,
+  ): BasicCelestialRenderer | null {
+    // TODO: Implement debug mode handling for BasicCelestialRenderer if needed.
+    // if (this.debugMode) {
+    //   // BasicCelestialRenderer might need a debug option in its constructor or a method.
+    //   // For now, debug mode in MeshFactory won't directly create a different *type* of renderer,
+    //   // but could pass a debug flag to BasicCelestialRenderer if supported.
+    // }
 
     try {
-      let mesh: THREE.Object3D | null = null;
-
-      // Prepare common arguments/dependencies for creators
-      const deps = this.creatorDeps;
-
-      // Call the appropriate imported creator function
-      switch (object.type) {
-        case CelestialType.STAR:
-          mesh = createStarMesh(object, deps);
-          break;
-        case CelestialType.PLANET:
-        case CelestialType.DWARF_PLANET:
-          mesh = createPlanetMesh(object, deps);
-          break;
-        case CelestialType.MOON:
-          mesh = createMoonMesh(object, deps);
-          break;
-        case CelestialType.GAS_GIANT:
-          mesh = createGasGiantMesh(object, deps);
-          break;
-        case CelestialType.SPACE_ROCK:
-          mesh = createAsteroidMesh(object, deps);
-          break;
-        case CelestialType.RING_SYSTEM:
-          mesh = createRingSystemMesh(object, deps);
-          break;
-        case CelestialType.ASTEROID_FIELD:
-          mesh = createAsteroidFieldMesh(object, deps);
-          break;
-        default:
-          console.warn(
-            `[MeshFactory] No mesh creation logic for type: ${object.type} (${object.celestialObjectId}). Creating fallback sphere.`,
-          );
-          // Use imported fallback function
-          mesh = createFallbackSphere(object);
+      // Determine radius and color for the BasicCelestialRenderer constructor
+      // These are placeholders; specific object types might have different defaults or ways to get this.
+      const radius = object.physicalProperties.radius || 1;
+      let color = 0xffffff;
+      if (object.type === CelestialType.STAR) {
+        // Example: stars might have a color derived from temperature or specific properties
+        // This logic would ideally be inside a StarRenderer subclass of BasicCelestialRenderer
+        color = 0xffff00; // Placeholder yellow for stars
+      } else if (object.type === CelestialType.PLANET) {
+        color = 0x0000ff; // Placeholder blue for planets
       }
+      // Add more type-specific color/parameter logic as needed, or move to specialized renderers.
 
-      if (mesh) {
-        mesh.name = `${object.type}_${object.celestialObjectId}`;
-        mesh.userData = {
-          celestialId: object.celestialObjectId,
-          type: object.type,
-        };
-        // Set initial position and rotation
-        mesh.position.copy(object.position);
-        mesh.quaternion.copy(object.rotation);
-      }
+      // TODO: BasicCelestialRenderer options might need to be configured based on object type or properties.
+      // For example, LOD distances, billboard settings, etc.
+      const rendererOptions = {
+        /* ... */
+      };
 
-      return mesh;
+      const celestialRenderer = new BasicCelestialRenderer(
+        object,
+        radius,
+        color,
+        rendererOptions,
+      );
+
+      // The LOD object itself is renderer.lod
+      // The name and userData for the LOD object should be set by BasicCelestialRenderer ideally,
+      // or here if BasicCelestialRenderer doesn't handle it.
+      // celestialRenderer.lod.name = `${object.type}_${object.celestialObjectId}`;
+      // celestialRenderer.lod.userData = {
+      //   celestialId: object.celestialObjectId,
+      //   type: object.type,
+      // };
+      // Set initial position and rotation on the LOD object within BasicCelestialRenderer's update or constructor.
+      // celestialRenderer.lod.position.copy(object.position);
+      // celestialRenderer.lod.quaternion.copy(object.rotation);
+
+      return celestialRenderer;
     } catch (error) {
       console.error(
-        `[MeshFactory] Error creating mesh for ${object.celestialObjectId} (${object.type}):`,
+        `[MeshFactory] Error creating BasicCelestialRenderer for ${object.id} (${object.type}):`,
         error,
       );
-      // Use imported fallback function
-      return createFallbackSphere(object); // Return fallback on error
+      return null;
     }
   }
-
-  // --- Private Creation Methods --- (These will be removed, including the class's private createFallbackSphere)
 }

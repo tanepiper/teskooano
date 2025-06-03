@@ -8,14 +8,14 @@ import {
   CSS2DLayerType,
   type CSS2DManager,
 } from "@teskooano/renderer-threejs-interaction";
-import type {
-  CelestialRenderer,
-  RingSystemRenderer,
-} from "@teskooano/systems-celestial";
 import * as THREE from "three";
 import type { MeshFactory } from "./MeshFactory";
-import type { GravitationalLensingHandler } from "./GravitationalLensing";
 import { ObjectLifecycleManagerConfig } from "../types";
+import {
+  BasicCelestialRenderer,
+  CelestialObject,
+} from "@teskooano/celestials-base";
+import { gameStateService } from "@teskooano/core-state";
 
 /**
  * @internal
@@ -28,29 +28,19 @@ export class ObjectLifecycleManager {
   private meshFactory: MeshFactory;
   private lodManager: LODManager;
   private lightManager: LightManager;
-  private lensingHandler: GravitationalLensingHandler;
   private css2DManager?: CSS2DManager;
   private renderer: THREE.WebGLRenderer | null;
-  private starRenderers: Map<string, CelestialRenderer>;
-  private planetRenderers: Map<string, CelestialRenderer>;
-  private moonRenderers: Map<string, CelestialRenderer>;
-  private ringSystemRenderers: Map<string, RingSystemRenderer>;
-  private asteroidRenderers: Map<string, CelestialRenderer>;
-  private camera: THREE.PerspectiveCamera; // Add camera reference
+  private camera: THREE.PerspectiveCamera;
+  private activeRenderers: Map<string, BasicCelestialRenderer>;
 
   constructor(config: ObjectLifecycleManagerConfig) {
     this.objects = config.objects;
+    this.activeRenderers = config.activeRenderers;
     this.scene = config.scene;
     this.meshFactory = config.meshFactory;
     this.lodManager = config.lodManager;
     this.lightManager = config.lightManager;
-    this.lensingHandler = config.lensingHandler;
     this.renderer = config.renderer;
-    this.starRenderers = config.starRenderers;
-    this.planetRenderers = config.planetRenderers;
-    this.moonRenderers = config.moonRenderers;
-    this.ringSystemRenderers = config.ringSystemRenderers;
-    this.asteroidRenderers = config.asteroidRenderers;
     this.camera = config.camera;
     this.css2DManager = config.css2DManager;
   }
@@ -67,34 +57,43 @@ export class ObjectLifecycleManager {
     const newStateIds = new Set(newStateMap.keys());
     const currentIds = new Set(this.objects.keys());
 
+    // Remove objects that are no longer in the new state
     currentIds.forEach((id) => {
       if (!newStateIds.has(id)) {
         this.removeObject(id);
       }
     });
 
+    // Process objects in the new state
     newStateIds.forEach((id) => {
       const objectData = newStateMap.get(id);
-      if (!objectData) return;
+      if (!objectData) return; // Should not happen if newStateIds comes from newStateMap.keys()
 
-      const mesh = this.objects.get(id);
+      const mesh = this.objects.get(id); // Check if a THREE.Object3D (the renderer.lod) exists
 
-      if (
-        objectData.status === CelestialStatus.DESTROYED ||
-        objectData.status === CelestialStatus.ANNIHILATED
-      ) {
+      // Handle destroyed or annihilated objects first
+      if (objectData.status === CelestialStatus.DESTROYED) {
         if (mesh) {
+          // If a mesh exists for a destroyed object, remove it
           this.removeObject(id);
         }
+        // If no mesh, and it's destroyed, do nothing further with this object.
         return;
       }
 
+      // At this point, objectData.status is not DESTROYED or ANNIHILATED.
       if (mesh) {
+        // Object has an existing mesh and is not marked for destruction, so update it.
+        // The updateObject method will call renderer.update(), which should use the object's current state.
+        this.updateObject(objectData, newStateMap);
+      } else {
+        // No mesh exists for this object, and it's not marked for destruction.
+        // Add it only if it's ACTIVE.
         if (objectData.status === CelestialStatus.ACTIVE) {
-          this.updateObject(objectData, newStateMap);
+          this.addObject(objectData, newStateMap);
         }
-      } else if (objectData.status === CelestialStatus.ACTIVE) {
-        this.addObject(objectData, newStateMap);
+        // If it's INACTIVE or some other non-destructive, non-active state, and no mesh exists,
+        // we don't create one here. It will be created if/when its status changes to ACTIVE.
       }
     });
   }
@@ -109,29 +108,40 @@ export class ObjectLifecycleManager {
     allRenderableObjects: ReadonlyMap<string, RenderableCelestialObject>,
   ): void {
     const objectId = object.celestialObjectId;
-    if (this.objects.has(objectId)) {
+    if (this.objects.has(objectId) || this.activeRenderers.has(objectId)) {
       console.warn(
-        `[ObjectLifecycleManager] Attempted to add existing object ${objectId}. Updating instead.`,
+        `[ObjectLifecycleManager] Attempted to add existing object or renderer for ${objectId}. Updating instead.`,
       );
       this.updateObject(object, allRenderableObjects);
       return;
     }
 
-    const mesh = this.meshFactory.createObjectMesh(object);
-    if (!mesh) {
-      console.warn(
-        `[ObjectLifecycleManager] MeshFactory failed to create mesh for ${objectId}. Skipping add.`,
+    const allCoreCelestialObjects = gameStateService.getCelestialObjects();
+    const fullCelestialObject = allCoreCelestialObjects[objectId];
+
+    if (!fullCelestialObject) {
+      console.error(
+        `[ObjectLifecycleManager] CRITICAL: CelestialObject with ID '${objectId}' not found in gameStateService. Cannot create renderer. RenderableCelestialObject received:`,
+        object,
       );
       return;
     }
 
+    const newRenderer =
+      this.meshFactory.createObjectRenderer(fullCelestialObject);
+
+    if (!newRenderer || !newRenderer.lod) {
+      console.warn(
+        `[ObjectLifecycleManager] MeshFactory failed to create renderer or LOD for ${objectId}. Skipping add.`,
+      );
+      return;
+    }
+
+    const mesh = newRenderer.lod;
+
     this.scene.add(mesh);
     this.objects.set(objectId, mesh);
-
-    // Handle associated components (lights, labels, lensing)
-    if (object.type === CelestialType.STAR && object.position) {
-      this.lightManager.addStarLight(objectId, object.position);
-    }
+    this.activeRenderers.set(objectId, newRenderer);
 
     if (this.css2DManager) {
       this.css2DManager.createCelestialLabel(
@@ -139,23 +149,6 @@ export class ObjectLifecycleManager {
         mesh,
         allRenderableObjects,
       );
-    }
-
-    if (this.lensingHandler.needsGravitationalLensing(object)) {
-      this.lensingHandler.addLensingObject(object.celestialObjectId);
-      if (this.renderer) {
-        this.lensingHandler.applyGravitationalLensing(
-          object,
-          this.renderer,
-          this.scene,
-          this.camera, // Use stored camera reference
-          mesh,
-        );
-      } else {
-        console.warn(
-          `[ObjectLifecycleManager] Cannot apply lensing for ${objectId}: Renderer instance not available.`,
-        );
-      }
     }
   }
 
@@ -165,36 +158,26 @@ export class ObjectLifecycleManager {
    * @param allRenderableObjects - A map of all currently renderable objects, for context if needed.
    */
   updateObject(
-    object: RenderableCelestialObject,
+    objectData: RenderableCelestialObject,
     allRenderableObjects: ReadonlyMap<string, RenderableCelestialObject>,
   ): void {
-    const objectId = object.celestialObjectId;
+    const objectId = objectData.celestialObjectId;
+    const existingRenderer = this.activeRenderers.get(objectId);
     const existingMesh = this.objects.get(objectId);
 
-    if (!existingMesh) {
-      if (object.status === CelestialStatus.ACTIVE) {
-        console.warn(
-          `[ObjectLifecycleManager] updateObject called for non-existent active object ${objectId}. Adding.`,
-        );
-        this.addObject(object, allRenderableObjects);
-      }
+    if (!existingRenderer || !existingMesh) {
+      console.warn(
+        `[ObjectLifecycleManager] updateObject called for ${objectId}, but no existing renderer or mesh was found. This might indicate an object that was previously filtered out or an issue in the overall synchronization logic. It will not be added or updated by this method call.`,
+      );
       return;
     }
 
-    // Check if the object was marked destroyed previously and is now active again (unlikely but possible)
-    // This might require resetting visual appearance if a "destroyed look" was applied.
+    existingRenderer.update();
 
-    // Apply updates
-    existingMesh.position.copy(object.position);
-    existingMesh.quaternion.copy(object.rotation);
-
-    // Update light position if it's a star
-    if (object.type === CelestialType.STAR && object.position) {
-      // This is now handled by the store subscription in LightManager
-      // this.lightManager.updateStarLight(objectId, object.position);
+    if (this.css2DManager && existingMesh) {
+      // Example: If label content needs to be updated from RenderableCelestialObject explicitly
+      // this.css2DManager.updateCelestialLabel(objectData, existingMesh, allRenderableObjects);
     }
-
-    // Update LOD, CSS labels, etc. if necessary (often handled in the main update loop)
   }
 
   /**
@@ -203,86 +186,68 @@ export class ObjectLifecycleManager {
    */
   removeObject(objectId: string): void {
     const mesh = this.objects.get(objectId);
-    if (!mesh) {
-      return; // Already removed or never existed
-    }
+    const rendererInstance = this.activeRenderers.get(objectId);
 
-    // Remove associated components first
-    if (this.css2DManager) {
-      this.css2DManager.removeElement(
-        CSS2DLayerType.CELESTIAL_LABELS,
-        objectId,
+    if (rendererInstance) {
+      rendererInstance.dispose();
+      this.activeRenderers.delete(objectId);
+    } else {
+      console.warn(
+        `[ObjectLifecycleManager] No active renderer found for ${objectId} during removal.`,
       );
     }
-    this.lodManager.remove(objectId); // Remove from LOD manager
-    this.lensingHandler.removeLensingObject(objectId); // Remove from lensing
-    this.lightManager.removeStarLight(objectId); // Remove associated light
 
-    // Clean up specialized renderers associated with this object ID
-    const starRenderer = this.starRenderers.get(objectId);
-    if (starRenderer?.dispose) starRenderer.dispose();
-    this.starRenderers.delete(objectId);
+    if (mesh) {
+      if (this.css2DManager) {
+        this.css2DManager.removeElement(
+          CSS2DLayerType.CELESTIAL_LABELS,
+          objectId,
+        );
+      }
+      this.lodManager.remove(objectId);
+      this.scene.remove(mesh);
 
-    const planetRenderer = this.planetRenderers.get(objectId);
-    if (planetRenderer?.dispose) planetRenderer.dispose();
-    this.planetRenderers.delete(objectId);
-
-    const moonRenderer = this.moonRenderers.get(objectId);
-    if (moonRenderer?.dispose) moonRenderer.dispose();
-    this.moonRenderers.delete(objectId);
-
-    const ringSystemRenderer = this.ringSystemRenderers.get(objectId);
-    if (ringSystemRenderer?.dispose) ringSystemRenderer.dispose();
-    this.ringSystemRenderers.delete(objectId);
-
-    const asteroidRenderer = this.asteroidRenderers.get(objectId);
-    if (asteroidRenderer?.dispose) asteroidRenderer.dispose();
-    this.asteroidRenderers.delete(objectId);
-
-    // Remove the main mesh from the scene
-    this.scene.remove(mesh);
-
-    // Dispose of geometries and materials
-    mesh.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        // Dispose geometry
-        child.geometry?.dispose();
-
-        // Dispose material(s)
-        if (Array.isArray(child.material)) {
-          child.material.forEach((mat) => {
-            if (mat && typeof mat.dispose === "function") {
-              mat.dispose();
-            } else if (mat) {
+      mesh.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry?.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => {
+              if (mat && typeof mat.dispose === "function") {
+                mat.dispose();
+              } else if (mat) {
+                console.warn(
+                  `[ObjectLifecycleManager] Child mesh material in array for ${child.name} lacks dispose method:`,
+                  mat,
+                );
+              }
+            });
+          } else if (child.material) {
+            if (typeof child.material.dispose === "function") {
+              child.material.dispose();
+            } else {
               console.warn(
-                `[ObjectLifecycleManager] Child mesh material in array for ${child.name} lacks dispose method:`,
-                mat,
+                `[ObjectLifecycleManager] Child mesh material for ${child.name} lacks dispose method:`,
+                child.material,
               );
             }
-          });
-        } else if (child.material) {
-          if (typeof child.material.dispose === "function") {
-            child.material.dispose();
-          } else {
-            console.warn(
-              `[ObjectLifecycleManager] Child mesh material for ${child.name} lacks dispose method:`,
-              child.material,
-            );
           }
         }
-      }
-    });
+      });
 
-    // Remove from the main tracking map
-    this.objects.delete(objectId);
+      this.objects.delete(objectId);
+    }
   }
 
   /**
    * Cleans up all managed objects.
    */
   dispose(): void {
-    const currentIds = Array.from(this.objects.keys());
-    currentIds.forEach((id) => this.removeObject(id));
-    this.objects.clear(); // Ensure the map is cleared
+    this.activeRenderers.forEach((renderer, id) => {
+      renderer.dispose();
+    });
+    this.activeRenderers.clear();
+
+    this.objects.forEach((obj, id) => this.removeObject(id));
+    this.objects.clear();
   }
 }

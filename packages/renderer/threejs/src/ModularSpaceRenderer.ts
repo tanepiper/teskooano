@@ -22,17 +22,7 @@ import { RendererStateAdapter } from "./RendererStateAdapter.js";
 
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { accelerationVectors$, renderableStore } from "@teskooano/core-state";
-import { CelestialType, GasGiantClass } from "@teskooano/data-types";
-import {
-  AsteroidFieldRenderer,
-  ClassIGasGiantRenderer,
-  ClassIIGasGiantRenderer,
-  ClassIIIGasGiantRenderer,
-  ClassIVGasGiantRenderer,
-  ClassVGasGiantRenderer,
-  type CelestialRenderer,
-  type RingSystemRenderer,
-} from "@teskooano/systems-celestial";
+import { CelestialType } from "@teskooano/celestial-object";
 
 export class ModularSpaceRenderer {
   public sceneManager: SceneManager;
@@ -145,19 +135,19 @@ export class ModularSpaceRenderer {
     }
 
     // Initialize renderer maps
-    const celestialRenderers = new Map<string, CelestialRenderer>();
-    const starRenderers = new Map<string, CelestialRenderer>();
-    const planetRenderers = new Map<string, CelestialRenderer>();
-    const moonRenderers = new Map<string, CelestialRenderer>();
-    const ringSystemRenderers = new Map<string, RingSystemRenderer>();
-    const asteroidRenderers = new Map<string, CelestialRenderer>();
+    // const celestialRenderers = new Map<string, CelestialRenderer>();
+    // const starRenderers = new Map<string, CelestialRenderer>();
+    // const planetRenderers = new Map<string, CelestialRenderer>();
+    // const moonRenderers = new Map<string, CelestialRenderer>();
+    // const ringSystemRenderers = new Map<string, RingSystemRenderer>();
+    // const asteroidRenderers = new Map<string, CelestialRenderer>();
 
     // Populate celestialRenderers (specific Gas Giant class renderers are removed)
     // The AsteroidFieldRenderer remains as it's tied to a CelestialType
-    celestialRenderers.set(
-      CelestialType.ASTEROID_FIELD,
-      new AsteroidFieldRenderer() as any, // Cast might be needed
-    );
+    // celestialRenderers.set(
+    //   CelestialType.ASTEROID_FIELD,
+    //   new AsteroidFieldRenderer() as any, // Cast might be needed
+    // );
 
     this.objectManager = new ObjectManager(
       this.sceneManager.scene,
@@ -166,13 +156,13 @@ export class ModularSpaceRenderer {
       this.lightManager,
       this.sceneManager.renderer,
       this.css2DManager,
-      accelerationVectors$, // Ensure accelerationVectors$ is passed
-      celestialRenderers,
-      starRenderers,
-      planetRenderers,
-      moonRenderers,
-      ringSystemRenderers,
-      asteroidRenderers,
+      // accelerationVectors$, // Removed: No longer expected by ObjectManager
+      // celestialRenderers,  // Removed
+      // starRenderers,     // Removed
+      // planetRenderers,   // Removed
+      // moonRenderers,     // Removed
+      // ringSystemRenderers, // Removed
+      // asteroidRenderers,   // Removed
     );
 
     this.orbitManager = new OrbitsManager(
@@ -195,9 +185,9 @@ export class ModularSpaceRenderer {
       this.sceneManager.setGridVisible(options.showGrid);
     }
 
-    if (options.showDebrisEffects !== undefined) {
-      this.setDebrisEffectsEnabled(options.showDebrisEffects);
-    }
+    // if (options.showDebrisEffects !== undefined) { // Call REMOVED
+    //   this.setDebrisEffectsEnabled(options.showDebrisEffects);
+    // }
   }
 
   private setupEventListeners(container: HTMLElement): void {
@@ -222,9 +212,9 @@ export class ModularSpaceRenderer {
       this.objectManager.updateRenderers(
         elapsedTime,
         this.lightManager.getStarLightsData(),
-        this.sceneManager.renderer,
-        this.sceneManager.scene,
-        this.sceneManager.camera,
+        // Removed: this.sceneManager.renderer,
+        // Removed: this.sceneManager.scene,
+        // Removed: this.sceneManager.camera,
       );
       this.backgroundManager.update(deltaTime);
       this.lodManager.update();
@@ -269,10 +259,10 @@ export class ModularSpaceRenderer {
   }
   /**
    * Gets the associated OrbitControls instance.
-   * @returns {OrbitControls} The controls instance.
+   * @returns The controls instance.
    */
   get controls() {
-    return this.controlsManager.controls;
+    return this.controlsManager.getOrbitControls();
   }
 
   /**
@@ -298,30 +288,6 @@ export class ModularSpaceRenderer {
 
     this.css2DManager?.onResize(width, height);
   }
-
-  /**
-   * Executes a single render frame.
-   * Updates LODs, objects, CSS2D elements, calls custom render callbacks,
-   * updates controls, and renders the scene.
-   */
-  render(): void {
-    // Most logic moved to mainUpdateCallback within animationLoop.onAnimate
-    // If there's anything that absolutely must happen outside the animation loop's direct callback
-    // but still be part of a "render" call, it would go here.
-    // For now, this method can be simplified or even removed if mainUpdateCallback handles all.
-    // If sceneManager.render() was the only substantive thing here and it's now in mainUpdateCallback,
-    // this method might become redundant unless called from elsewhere for a specific reason (e.g., forced single refresh).
-    // For safety, let's keep it for now but ensure it doesn't double-render.
-    // However, the primary rendering path is now mainUpdateCallback.
-    // If setupAnimationCallbacks correctly sets up the loop to call sceneManager.render(),
-    // calling it again here would be a double render per frame.
-    // Let's comment out the direct rendering here as it's handled by the animation loop.
-    // this.sceneManager.render();
-    // if (this.canvasUIManager) {
-    //   this.canvasUIManager.render();
-    // }
-  }
-
   /**
    * Cleans up resources used by the renderer and its managers.
    * Stops the animation loop and removes event listeners.
@@ -396,20 +362,6 @@ export class ModularSpaceRenderer {
    */
   toggleOrbits(): void {
     this.orbitManager.toggleVisualization();
-  }
-
-  /**
-   * @deprecated Use ControlsManager methods (`transitionTo`, `transitionTargetTo`) and CameraManager for camera manipulation.
-   * This method is no longer suitable for high-level camera control.
-   */
-  updateCamera(position: THREE.Vector3, target: THREE.Vector3): void {
-    console.warn(
-      "[ModularSpaceRenderer.updateCamera] This method is deprecated. Use CameraManager or ControlsManager directly.",
-    );
-    // Preserving a semblance of old behavior, but this is not a smooth transition.
-    this.camera.position.copy(position);
-    this.controlsManager.controls.target.copy(target);
-    this.controlsManager.controls.update();
   }
 
   /**
@@ -558,22 +510,6 @@ export class ModularSpaceRenderer {
     const newState = !debugConfig.visualize;
     this.setDebugVisualization(newState);
     return newState;
-  }
-
-  /**
-   * Set whether debris effects should be shown when objects are destroyed
-   * @param enabled Whether debris effects should be shown
-   */
-  public setDebrisEffectsEnabled(enabled: boolean): void {
-    this.objectManager.setDebrisEffectsEnabled(enabled);
-  }
-
-  /**
-   * Toggle debris effects on/off
-   * @returns The new state (true if enabled, false if disabled)
-   */
-  public toggleDebrisEffects(): boolean {
-    return this.objectManager.toggleDebrisEffects();
   }
 
   /**

@@ -193,10 +193,21 @@ Each distinct type of celestial object (e.g., Class 1 Gas Giant, G-type Star) is
 - **Defining Specific Characteristics**: Adding properties unique to that celestial type. This primarily includes:
   - **Shader Uniforms**: Data required by their custom shaders (e.g., atmospheric density, color palettes, texture IDs for procedural generation).
   - **Metadata**: In-engine data that facilitates interaction, special behaviors, or provides additional information not directly used by the physics simulation (e.g., habitable zone information for a star, resource types for a planet).
-- **Providing a Specialized Renderer**: Each module will typically create and manage its own renderer instance (e.g., `GasGiantClass1Renderer`) that implements the `CelestialRenderer` interface. This renderer is passed to the `CelestialObject` base during construction (or set by the subclass constructor), overriding the fallback `BasicCelestialRenderer`.
+  - **Type-Specific Properties**: Additional properties that define the specific celestial type (e.g., `spectralClass` for a star that indicates its specific classification like "G2V" for our Sun).
+- **Providing a Specialized Renderer**: Each module will typically create and manage its own renderer instance (e.g., `GasGiantClass1Renderer`, `ClassGStarRenderer`) that implements the `CelestialRenderer` interface. This renderer is passed to the `CelestialObject` base during construction (or set by the subclass constructor), overriding the fallback `BasicCelestialRenderer`.
   - The specialized renderer is responsible for setting up its own `THREE.LOD` object.
   - Each level of detail within the LOD can be a `THREE.Group` containing meshes, materials, lights, and effects specific to the celestial type (e.g., atmospheres, coronas, rings, gravitational lensing).
 - **Implementing `updatePhysics()`**: Providing concrete logic for how the object interacts with the physics simulation, potentially calling services from the core physics engine.
+
+### Star Type Implementation
+
+Star types are specialized implementations of celestial objects that represent different types of stars based on their spectral classification. For example:
+
+- **Main Sequence Stars**: Implement different spectral classes (O, B, A, F, G, K, M) each with their own physical characteristics:
+  - `ClassGCelestial`: Represents G-type main-sequence stars (like our Sun) with a yellow color and surface temperatures around 5,200-6,000 K.
+  - Each star type has a `spectralClass` property that specifies its particular classification (e.g., "G2V" for a G-type star like our Sun).
+
+These specialized celestial objects use the core mechanism of the `CelestialObject` abstract class while providing specific implementations tailored to their astronomical characteristics.
 
 ## State Management, Interaction, and Data Flow (RxJS)
 
