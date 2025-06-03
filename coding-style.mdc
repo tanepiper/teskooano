@@ -1,0 +1,123 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+**Project Teskooano (N-Body Sim):**
+*   **Core:** N-Body simulation with real physics & orbital mechanics.
+*   **Architecture:** Modular: Frontend, Backend (player/env state), Libraries. Supports web component plugins.
+*   **UI:** DockView for modular UI (toolbars, panels, buttons). Requires a new, consistent design system. Routing for different views (loading, settings).
+*   **3D Engine:** ThreeJS (Vanilla TypeScript). Requires abstractions for game/scene managers.
+*   **Workflow:** Follow game designer's guidance. Commit frequently (suggest commitizen-formatted messages). Keep library READMEs and CHANGELOGs updated.
+
+**Key Dev Rules & Tools:**
+*   **Monorepo:** Use `proto` and `moon`.
+*   **TypeScript:** Strict, linted, formatted for all code.
+*   **CSS:** Vanilla CSS ONLY. Create design system tokens (color, typography, layout, animation). No CSS frameworks.
+*   **Frontend/Libraries:** Vite, Vanilla TypeScript, Web Components.
+    *   **State Management:** RxJS (for mappable data interfaces and Observable I/O).
+    *   **Documentation:** Use well-typed TypeScript, export interfaces. Provide API docs and clear READMEs for libraries.
+*   **Shell Scripts:** Clean, portable bash.
+
+**AI Agent Behaviour:**
+*   **Accuracy:** No hallucination.
+*   **Scope:** Edit only requested code. No unprompted UI changes.
+*   **Conciseness:** Keep features minimal per request; avoid over-explaining.
+*   **Problem Solving:** After 3 failed attempts on a problem, ask user for help with suggestions.
+*   **Debugging:** Address one error at a time.
+*   **Configuration:** Respect user-modified settings (e.g., ports, names, config values).
+*   **Dependencies:** Verify NPM package existence before use.
+*   **Explanations:** Use Markdown for complex topics, Mermaid diagrams for visualizations. When using Mermaid diagrams, ensure that any text within nodes, edges, or notes that contains special characters (e.g., `()`, `[]`, `<>`, `/`, `|`) or newlines (`<br>`) is enclosed in double quotes to prevent syntax errors.
+
+**Code Style & Structure:**
+*   **Cleanliness:** Remove dead code and large comment blocks. Use 2-space indentation.
+*   **Modularity:** Prefer small, composable files (target max 300-400 lines). Refactor larger files.
+    *   Extract long handlers/complex data processing into utility or library functions.
+    *   Decompose HTML into smaller, testable leaf components using props for data flow.
+*   **Frontend Pattern:** Apply Model-View-Controller (MVC) structure.
+
+**Testing (TDD Approach):**
+*   **File Convention:** Test files (`<filename>.spec.ts`) adjacent to source files.
+*   **Unit Tests:** Use Vitest for both backend and frontend.
+*   **Frontend (Apps):**
+    *   Playwright for user story and integration testing (focus on practical UI/complex features).
+    *   Avoid testing DOM or library features directly.
+    *   If a unit test requires JSDOM, write it as a Playwright test instead.
+*   **Backend (Services):**
+    *   Playwright for API test cases (focus on practical tests).
+
+**Monorepo Setup (`proto` & `moon`):**
+*   **Initial Check:** Verify if already working within a monorepo.
+*   **`proto` (Dependency Management):**
+    *   Use for local copies of system dependencies (node, npm).
+    *   `.protofile` content:
+        ```toml
+        jq = "1.7.1"
+        moon = "1.31.2"
+        node = "22.13.0"
+        npm = "11.0.0"
+
+        [plugins]
+        jq = "https://raw.githubusercontent.com/appthrust/proto-toml-plugins/main/jq/plugin.toml"
+        moon = "https://raw.githubusercontent.com/moonrepo/moon/master/proto-plugin.toml"
+        ```
+    *   After creating/updating `.protofile`, run `proto use`.
+*   **`moon` (Repository Management):**
+    *   Use for overall monorepo structure and tasks.
+    *   Project `moon.yml` files required in each project directory (`apps/`, `packages/`, `services/`).
+    *   No `moon.yml` in the root; initialize with `yes | moon init`.
+    *   **Example Monorepo Structure:**
+        ```
+        - monorepo-root
+            - README.md
+            - package.json # Root package.json with workspaces
+            - tsconfig.json # Monorepo-compatible tsconfig with paths
+            - apps/
+                - app1/
+                    - src/
+                    - package.json
+                    - moon.yml
+                    - tsconfig.json
+                    - vite.config.ts
+            - packages/
+                - library1/ # (similar structure to app1)
+            - services/
+                - rest-service-1/ # (similar structure)
+        ```
+    *   **Package Management:** Use `npm` exclusively.
+        *   Root `package.json` workspaces example: `"workspaces": ["./apps/*", "./package/*"]` (Note: `package` singular as per original example, while directories are `packages` plural).
+        *   Inter-package dependencies: Use `file:../../packages/<package_name>` format (NOT `workspace:*`).
+    *   **Running TypeScript:** Use `tsx` (e.g., `npx tsx src/index.ts`; for dev: `npx tsx watch src/index.ts`).
+
+**Frontend Development Details:**
+*   **Applications (`apps/` directory):**
+    *   Run on port 3000.
+    *   Utilize RxJS for state management and building data pipelines with operators.
+    *   Components: Keep small and testable (max 400 lines). Encapsulate loops or complex logic in child components.
+    *   Structure: Use controller components for views, compose views from smaller components.
+    *   Testing: Vitest unit tests (`<filename>.spec.ts`).
+    *   **CSS:** STRICTLY NO Tailwind CSS. If encountered, offer to replace with Vanilla CSS (Sass is permissible if syntax remains vanilla-like). Implement the design system.
+    *   **Real-time:** Integrate WebSockets for frontend-backend communication.
+*   **Libraries (`packages/` directory):**
+    *   Ensure libraries are exportable with correct TypeScript and Vite configurations.
+    *   Write well-typed TypeScript; export types and provide comprehensive documentation.
+    *   **README:** Create a thorough README for each library (covering What, Why, Where, When, How).
+    *   **`package.json` for Direct TypeScript Export:**
+        ```json
+        {
+          "type": "module",
+          "main": "src/index.ts",
+          "types": "src/index.d.ts",
+          "exports": {
+            ".": {
+              "import": "./src/index.ts",
+              "types": "./src/index.d.ts"
+            },
+            "./styles.css": "./src/styles.css"
+          },
+          "files": [
+            "src",
+            "styles.css"
+          ]
+        }
+        ```

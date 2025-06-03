@@ -1,6 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import type { CelestialObject, StarProperties } from "@teskooano/data-types";
-import { CelestialType } from "@teskooano/data-types";
+import { AU_METERS, CelestialType } from "@teskooano/data-types";
 import {
   EMPTY,
   Observable,
@@ -73,7 +73,7 @@ export function generatePlanetaryBodiesObservable(
         let minDistanceDiff = Infinity;
         for (const star of stars) {
           const starOrbitRadiusAU =
-            (star.orbit?.realSemiMajorAxis_m ?? 0) / CONST.AU_TO_METERS;
+            (star.orbit?.realSemiMajorAxis_m ?? 0) / AU_METERS;
           const distanceDiff = Math.abs(nextDistanceAU - starOrbitRadiusAU);
           if (distanceDiff < minDistanceDiff) {
             minDistanceDiff = distanceDiff;
@@ -83,17 +83,17 @@ export function generatePlanetaryBodiesObservable(
 
         const parentStar = closestStar;
         const parentStarOrbitRadiusAU =
-          (parentStar.orbit?.realSemiMajorAxis_m ?? 0) / CONST.AU_TO_METERS;
+          (parentStar.orbit?.realSemiMajorAxis_m ?? 0) / AU_METERS;
         const distanceRelativeToParentAU = Math.abs(
           nextDistanceAU - parentStarOrbitRadiusAU,
         );
 
         if (
-          distanceRelativeToParentAU * CONST.AU_TO_METERS <
+          distanceRelativeToParentAU * AU_METERS <
           parentStar.realRadius_m * PARENT_STAR_PROXIMITY_MULTIPLIER
         ) {
           console.warn(
-            ` -> Slot at ${nextDistanceAU.toFixed(2)} AU (rel: ${distanceRelativeToParentAU.toFixed(2)} AU from ${parentStar.name}) too close to parent. Skipping. Parent radius: ${(parentStar.realRadius_m / CONST.AU_TO_METERS).toFixed(2)} AU.`,
+            ` -> Slot at ${nextDistanceAU.toFixed(2)} AU (rel: ${distanceRelativeToParentAU.toFixed(2)} AU from ${parentStar.name}) too close to parent. Skipping. Parent radius: ${(parentStar.realRadius_m / AU_METERS).toFixed(2)} AU.`,
           );
           return {
             ...acc,
@@ -114,8 +114,7 @@ export function generatePlanetaryBodiesObservable(
             otherStar.physicsStateReal?.position_m || new OSVector3(0, 0, 0);
           const vecOtherToParent = parentPosVec.clone().sub(otherPosVec);
           const distOtherToParent_m = vecOtherToParent.length();
-          const planetOrbitRadius_m =
-            distanceRelativeToParentAU * CONST.AU_TO_METERS;
+          const planetOrbitRadius_m = distanceRelativeToParentAU * AU_METERS;
           const minPlanetToOtherStarCenter_m = Math.abs(
             distOtherToParent_m - planetOrbitRadius_m,
           );
@@ -125,7 +124,7 @@ export function generatePlanetaryBodiesObservable(
             otherStar.realRadius_m * OTHER_STAR_PROXIMITY_MULTIPLIER
           ) {
             console.warn(
-              ` -> Slot at ${nextDistanceAU.toFixed(2)} AU (orbiting ${parentStar.name} at ${distanceRelativeToParentAU.toFixed(2)} AU) potentially too close to OTHER star ${otherStar.name}. Min separation to other star center: ${(minPlanetToOtherStarCenter_m / CONST.AU_TO_METERS).toFixed(2)} AU. Other star radius: ${(otherStar.realRadius_m / CONST.AU_TO_METERS).toFixed(2)} AU. Dist Parent-Other: ${(distOtherToParent_m / CONST.AU_TO_METERS).toFixed(2)} AU. Skipping.`,
+              ` -> Slot at ${nextDistanceAU.toFixed(2)} AU (orbiting ${parentStar.name} at ${distanceRelativeToParentAU.toFixed(2)} AU) potentially too close to OTHER star ${otherStar.name}. Min separation to other star center: ${(minPlanetToOtherStarCenter_m / AU_METERS).toFixed(2)} AU. Other star radius: ${(otherStar.realRadius_m / AU_METERS).toFixed(2)} AU. Dist Parent-Other: ${(distOtherToParent_m / AU_METERS).toFixed(2)} AU. Skipping.`,
             );
             return {
               ...acc,

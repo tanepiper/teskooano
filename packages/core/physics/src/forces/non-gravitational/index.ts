@@ -1,4 +1,4 @@
-import { PhysicsStateReal } from "../../types";
+import { CelestialPhysicsState } from "@teskooano/celestial-object";
 import { OSVector3, EPSILON } from "@teskooano/core-math";
 
 /**
@@ -46,7 +46,7 @@ export const calculateThrustForce = (thrust: ThrustForce): OSVector3 => {
  * A is the reference area
  */
 export const calculateDragForce = (
-  body: PhysicsStateReal,
+  body: CelestialPhysicsState,
   drag: DragForce,
 ): OSVector3 => {
   const velocity = body.velocity_mps;

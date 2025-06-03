@@ -3,7 +3,6 @@ import { KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
-  CompositionType,
   PlanetType,
   SurfaceType,
   type PlanetProperties,
@@ -88,16 +87,15 @@ export function initializeMarsMoons(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY_WORLD,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["carbonaceous chondrite material"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.CARBON, CompositionType.SILICATE],
         proceduralData: {
           ...phobosProceduralSurface,
-          planetType: PlanetType.ROCKY,
+          planetType: PlanetType.ROCKY_WORLD,
         },
       },
     } as PlanetProperties,
@@ -153,16 +151,15 @@ export function initializeMarsMoons(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY_WORLD,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["carbonaceous material"],
       surface: {
         surfaceType: SurfaceType.SMOOTH_PLAINS, // Deimos is smoother than Phobos
-        composition: [CompositionType.CARBON, CompositionType.SILICATE],
         proceduralData: {
           ...deimosProceduralSurface,
-          planetType: PlanetType.ROCKY,
+          planetType: PlanetType.ROCKY_WORLD,
         },
       },
     } as PlanetProperties,

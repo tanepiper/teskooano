@@ -183,13 +183,13 @@ export function generateMoon(
   }
 
   const moonPlanetType = isCaptured
-    ? PlanetType.BARREN
+    ? PlanetType.BARREN_WORLD
     : UTIL.getRandomItem(
-        [PlanetType.ROCKY, PlanetType.ICE, PlanetType.BARREN],
+        [PlanetType.ROCKY_WORLD, PlanetType.ICE_WORLD, PlanetType.BARREN_WORLD],
         random,
       );
   const moonSurfaceType =
-    moonPlanetType === PlanetType.ICE
+    moonPlanetType === PlanetType.ICE_WORLD
       ? SurfaceType.ICE_PLAINS
       : UTIL.getRandomItem(
           [
@@ -208,12 +208,12 @@ export function generateMoon(
   };
 
   switch (moonPlanetType) {
-    case PlanetType.BARREN:
-    case PlanetType.ROCKY:
+    case PlanetType.BARREN_WORLD:
+    case PlanetType.ROCKY_WORLD:
     case PlanetType.TERRESTRIAL:
-    case PlanetType.ICE:
-    case PlanetType.DESERT:
-    case PlanetType.LAVA:
+    case PlanetType.ICE_WORLD:
+    case PlanetType.DESERT_WORLD:
+    case PlanetType.LAVA_WORLD:
       detailedSurface = UTIL.createProceduralSurfaceProperties(
         random,
         moonPlanetType,
@@ -222,7 +222,7 @@ export function generateMoon(
     default:
       detailedSurface = UTIL.createProceduralSurfaceProperties(
         random,
-        PlanetType.ROCKY,
+        PlanetType.ROCKY_WORLD,
       );
   }
 
@@ -233,14 +233,14 @@ export function generateMoon(
 
   // Assign atmosphere randomly for certain moon types
   switch (moonPlanetType) {
-    case PlanetType.BARREN:
+    case PlanetType.BARREN_WORLD:
       hasAtmosphere = false; // Barren moons never have atmospheres
       break;
-    case PlanetType.ICE:
+    case PlanetType.ICE_WORLD:
       hasAtmosphere = random() < 0.05; // 5% chance for ice moons
       if (hasAtmosphere) atmosphereType = AtmosphereType.THIN;
       break;
-    case PlanetType.ROCKY:
+    case PlanetType.ROCKY_WORLD:
     case PlanetType.TERRESTRIAL:
       hasAtmosphere = random() < 0.2; // 20% chance for rocky/terrestrial moons
       if (hasAtmosphere) {
@@ -281,12 +281,7 @@ export function generateMoon(
     planetType: moonPlanetType,
     isMoon: true,
     parentPlanet: parentPlanetData.id,
-    composition: UTIL.getRandomItem(
-      moonPlanetType === PlanetType.ICE
-        ? CONST.ICE_COMPOSITION
-        : CONST.ROCKY_COMPOSITION,
-      random,
-    ).split(","),
+    composition: [],
     surface: detailedSurface as any,
     atmosphere: atmosphereProps,
   };

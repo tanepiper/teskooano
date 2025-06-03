@@ -5,6 +5,7 @@ import type {
   OrbitalParameters,
 } from "@teskooano/data-types";
 import {
+  AU_METERS,
   CelestialStatus,
   CelestialType,
   RockyType,
@@ -61,7 +62,7 @@ export function generateAsteroidBelt(
   };
 
   const beltOrbit: OrbitalParameters = {
-    realSemiMajorAxis_m: bodyDistanceAU * CONST.AU_TO_METERS,
+    realSemiMajorAxis_m: bodyDistanceAU * AU_METERS,
     eccentricity: random() * 0.05,
     inclination: (random() - 0.5) * 0.02,
     longitudeOfAscendingNode: random() * 2 * Math.PI,
@@ -134,7 +135,7 @@ export function generateAsteroidBelt(
     realMass_kg: 0,
     realRadius_m:
       Math.max(beltProperties.outerRadiusAU, beltProperties.innerRadiusAU) *
-      CONST.AU_TO_METERS,
+      AU_METERS,
     temperature: 150 - bodyDistanceAU * 10,
     orbit: beltOrbit,
     properties: beltProperties,

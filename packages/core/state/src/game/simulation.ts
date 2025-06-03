@@ -1,5 +1,5 @@
 import { celestialFactory } from "./factory";
-import { CelestialType } from "@teskooano/data-types";
+import { CelestialType, PhysicsEngineType } from "@teskooano/celestial-object";
 import { OSVector3 } from "@teskooano/core-math";
 import { gameStateService } from "./stores";
 import { celestialActions } from "./celestialActions";
@@ -10,7 +10,6 @@ import type {
   CameraState,
   VisualSettingsState,
 } from "./types";
-import { PhysicsEngineType } from "@teskooano/data-types";
 
 /**
  * @class SimulationStateService
@@ -150,36 +149,38 @@ export class SimulationStateService {
         // Find the main star
         const objects = gameStateService.getCelestialObjects();
         const stars = Object.values(objects).filter(
-          (obj: any) => obj.type === CelestialType.STAR,
+          (obj) => obj.type === CelestialType.STAR,
         );
 
         // Sort stars by mass to find the primary
         stars.sort(
-          (a: any, b: any) => (b.realMass_kg || 0) - (a.realMass_kg || 0),
+          (a, b) =>
+            (b.physicsState.mass_kg || 0) - (a.physicsState.mass_kg || 0),
         );
 
         if (stars.length > 0) {
-          const primaryStar: any = stars[0];
+          const primaryStar = stars[0];
 
           // Reset primary star position and velocity to origin
           // This prevents the entire system from moving as one unit
-          if (primaryStar.physicsStateReal) {
-            primaryStar.physicsStateReal.position_m = new OSVector3(0, 0, 0);
-            primaryStar.physicsStateReal.velocity_mps = new OSVector3(0, 0, 0);
+          const updatedPhysicsState = {
+            ...primaryStar.physicsState,
+            position_m: new OSVector3(0, 0, 0),
+            velocity_mps: new OSVector3(0, 0, 0),
+          };
 
-            // Update the star in the factory
-            celestialActions.updateCelestialObject(primaryStar.id, {
-              physicsStateReal: primaryStar.physicsStateReal,
-            });
+          // Update the star
+          celestialActions.updateCelestialObject(primaryStar.id, {
+            physicsState: updatedPhysicsState,
+          });
 
-            console.log(
-              `[SimulationState] Reset primary star ${primaryStar.name} position for ideal orbits mode`,
-            );
-          }
+          console.log(
+            `[SimulationStateService] Reset primary star ${primaryStar.name} position for ideal orbits mode`,
+          );
         }
       } catch (error) {
         console.error(
-          "[SimulationState] Error fixing star positions for ideal orbits:",
+          "[SimulationStateService] Error fixing star positions for ideal orbits:",
           error,
         );
       }

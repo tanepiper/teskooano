@@ -1,4 +1,4 @@
-import type { CelestialType, SmallBodyType, CompositionType } from "./common";
+import type { CelestialType, SmallBodyType } from "./common";
 import type { CelestialBase } from "./base";
 import type { SurfaceProperties } from "./components";
 
@@ -14,7 +14,7 @@ export interface Comet extends CelestialBase {
 
   // Physical properties
   surface: SurfaceProperties; // Nucleus surface
-  composition: CompositionType[]; // Nucleus composition (ices + dust)
+  composition: string[]; // Nucleus composition (ices + dust)
 
   // Activity properties
   activity: number; // Outgassing activity level (0-1)

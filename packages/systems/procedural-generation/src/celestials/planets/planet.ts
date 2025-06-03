@@ -12,6 +12,7 @@ import {
   GasGiantProperties,
   PlanetProperties as PlanetPropertiesType,
   PlanetType,
+  EARTH_MASS_KG,
 } from "@teskooano/data-types";
 import {
   CelestialStatus,
@@ -74,7 +75,7 @@ export function generatePlanet(
         (0.1 + random() * 10) *
         massRangeMultiplier *
         baseProps.massMultiplierFactor;
-      const planetMass_kg = planetMassMultiplier * CONST.EARTH_MASS_KG;
+      const planetMass_kg = planetMassMultiplier * EARTH_MASS_KG;
 
       const finalPlanetRadius_m = UTIL.calculateRadius(
         planetMass_kg,
@@ -153,7 +154,7 @@ export function generatePlanet(
           renderingAtmosphereProps = generateRenderingAtmosphereProperties(
             random,
             descriptiveType,
-            PlanetType.ROCKY,
+            PlanetType.ROCKY_WORLD,
           );
         } else if (gasGiantProps.atmosphereColor) {
           renderingAtmosphereProps = {

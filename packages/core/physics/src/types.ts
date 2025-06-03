@@ -1,20 +1,5 @@
 import type { OSVector3 } from "@teskooano/core-math";
-
-/**
- * Represents the physics state of a body in REAL-WORLD units.
- */
-export interface PhysicsStateReal {
-  /** Unique identifier matching the CelestialObject id. */
-  id: string;
-  /** Mass in kilograms (kg). */
-  mass_kg: number;
-  /** Position vector in meters (m). */
-  position_m: OSVector3;
-  /** Velocity vector in meters per second (m/s). */
-  velocity_mps: OSVector3;
-  /** Optional: Tracks ticks since last update for throttling */
-  ticksSinceLastPhysicsUpdate?: number;
-}
+import { CelestialPhysicsState } from "@teskooano/celestial-object";
 
 /**
  * Interface for a function that calculates the net force acting on a specific body
@@ -25,8 +10,8 @@ export interface PhysicsStateReal {
  * @returns The net force vector acting on the targetBody (Newtons - kg*m/s^2).
  */
 export type NetForceCalculator = (
-  targetBody: PhysicsStateReal,
-  allBodies: readonly PhysicsStateReal[],
+  targetBody: CelestialPhysicsState,
+  allBodies: readonly CelestialPhysicsState[],
 ) => OSVector3;
 
 /**
@@ -38,8 +23,8 @@ export type NetForceCalculator = (
  * @returns The force vector acting on body2 due to body1 (Newtons - kg*m/s^2).
  */
 export type PairForceCalculator = (
-  body1: PhysicsStateReal,
-  body2: PhysicsStateReal,
+  body1: CelestialPhysicsState,
+  body2: CelestialPhysicsState,
 ) => OSVector3;
 
 /**
@@ -48,9 +33,11 @@ export type PairForceCalculator = (
  * For methods like Velocity Verlet, it might also need a way to recalculate acceleration.
  */
 export type Integrator = (
-  currentState: PhysicsStateReal,
+  currentState: CelestialPhysicsState,
   acceleration: OSVector3,
   dt: number,
 
-  calculateNewAcceleration?: (newStateGuess: PhysicsStateReal) => OSVector3,
-) => PhysicsStateReal;
+  calculateNewAcceleration?: (
+    newStateGuess: CelestialPhysicsState,
+  ) => OSVector3,
+) => CelestialPhysicsState;

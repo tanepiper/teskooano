@@ -3,7 +3,6 @@ import { KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
-  CompositionType,
   PlanetType,
   SurfaceType,
   type PlanetProperties,
@@ -108,7 +107,7 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: saturnId,
       composition: [
@@ -128,15 +127,10 @@ export function initializeSaturnMoons(saturnId: string): void {
       },
       surface: {
         surfaceType: SurfaceType.VARIED,
-        composition: [
-          CompositionType.WATER_ICE,
-          CompositionType.METHANE_ICE,
-          CompositionType.ORGANIC,
-          CompositionType.SILICATE,
-        ],
+
         proceduralData: {
           ...titanProceduralSurface,
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
         },
       },
     } as PlanetProperties,
@@ -193,17 +187,17 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: saturnId,
       composition: ["water ice", "rocky core"],
       atmosphere: undefined, // Rhea has essentially no atmosphere
       surface: {
         surfaceType: SurfaceType.VARIED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           ...rheaProceduralSurface,
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
         },
       },
     } as PlanetProperties,
@@ -260,21 +254,17 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: saturnId,
       composition: ["water ice", "rock", "carbonaceous material on one side"],
       atmosphere: undefined, // Iapetus has no significant atmosphere
       surface: {
         surfaceType: SurfaceType.VARIED,
-        composition: [
-          CompositionType.WATER_ICE,
-          CompositionType.SILICATE,
-          CompositionType.CARBON,
-        ],
+
         proceduralData: {
           ...iapetusProceduralSurface,
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
         },
       },
     } as PlanetProperties,
@@ -331,17 +321,17 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: saturnId,
       composition: ["water ice", "rocky core"],
       atmosphere: undefined, // Dione has no significant atmosphere
       surface: {
         surfaceType: SurfaceType.VARIED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           ...dioneProceduralSurface,
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
         },
       },
     } as PlanetProperties,
@@ -398,17 +388,17 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: saturnId,
       composition: ["water ice", "rocky core"],
       atmosphere: undefined, // Tethys has no significant atmosphere
       surface: {
         surfaceType: SurfaceType.VARIED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           ...tethysProceduralSurface,
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
         },
       },
     } as PlanetProperties,
@@ -438,20 +428,20 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: saturnId,
-      composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+      composition: ["water ice", "silicates"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+        composition: ["water ice", "silicates"],
         proceduralData: {
           color1: "#E0E0E0",
           color2: "#E0E0E0",
           color3: "#E0E0E0",
           color4: "#E0E0E0",
           color5: "#E0E0E0",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -500,20 +490,19 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: saturnId,
-      composition: [CompositionType.WATER_ICE, CompositionType.UNKNOWN],
+      composition: ["water ice", "unknown"],
       surface: {
         surfaceType: SurfaceType.ICE_CRACKED,
-        composition: [CompositionType.WATER_ICE],
         proceduralData: {
           color1: "#F8F8FF",
           color2: "#F8F8FF",
           color3: "#F8F8FF",
           color4: "#F8F8FF",
           color5: "#F8F8FF",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -562,20 +551,19 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE, // Primarily icy, but irregular
+      planetType: PlanetType.ICE_WORLD, // Primarily icy, but irregular
       isMoon: true,
       parentPlanet: saturnId,
-      composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+      composition: ["water ice", "silicates"],
       surface: {
         surfaceType: SurfaceType.CRATERED, // Highly cratered and irregular
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
         proceduralData: {
           color1: "#D2B48C",
           color2: "#D2B48C",
           color3: "#D2B48C",
           color4: "#D2B48C",
           color5: "#D2B48C",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -624,28 +612,19 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY, // Dark, carbonaceous object, likely captured asteroid
+      planetType: PlanetType.ROCKY_WORLD, // Dark, carbonaceous object, likely captured asteroid
       isMoon: true,
       parentPlanet: saturnId,
-      composition: [
-        CompositionType.SILICATE,
-        CompositionType.WATER_ICE,
-        CompositionType.CARBON,
-      ],
+      composition: ["silicates", "water ice", "carbon"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [
-          CompositionType.SILICATE,
-          CompositionType.WATER_ICE,
-          CompositionType.CARBON,
-        ],
         proceduralData: {
           color1: "#808080",
           color2: "#808080",
           color3: "#808080",
           color4: "#808080",
           color5: "#808080",
-          planetType: PlanetType.ROCKY,
+          planetType: PlanetType.ROCKY_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -694,20 +673,19 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY, // Porous, icy/rocky body
+      planetType: PlanetType.ROCKY_WORLD, // Porous, icy/rocky body
       isMoon: true,
       parentPlanet: saturnId,
-      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      composition: ["silicates", "water ice"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
         proceduralData: {
           color1: "#C2B280",
           color2: "#C2B280",
           color3: "#C2B280",
           color4: "#C2B280",
           color5: "#C2B280",
-          planetType: PlanetType.ROCKY,
+          planetType: PlanetType.ROCKY_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -756,20 +734,19 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY, // Porous, icy/rocky body
+      planetType: PlanetType.ROCKY_WORLD, // Porous, icy/rocky body
       isMoon: true,
       parentPlanet: saturnId,
-      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      composition: ["silicates", "water ice"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
         proceduralData: {
           color1: "#C2B280",
           color2: "#C2B280",
           color3: "#C2B280",
           color4: "#C2B280",
           color5: "#C2B280",
-          planetType: PlanetType.ROCKY,
+          planetType: PlanetType.ROCKY_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -818,20 +795,19 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY, // Icy/rocky
+      planetType: PlanetType.ROCKY_WORLD, // Icy/rocky
       isMoon: true,
       parentPlanet: saturnId,
-      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      composition: ["silicates", "water ice"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
         proceduralData: {
           color1: "#C2B280",
           color2: "#C2B280",
           color3: "#C2B280",
           color4: "#C2B280",
           color5: "#C2B280",
-          planetType: PlanetType.ROCKY,
+          planetType: PlanetType.ROCKY_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -880,20 +856,19 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY, // Icy/rocky
+      planetType: PlanetType.ROCKY_WORLD, // Icy/rocky
       isMoon: true,
       parentPlanet: saturnId,
-      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      composition: ["silicates", "water ice"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
         proceduralData: {
           color1: "#C2B280",
           color2: "#C2B280",
           color3: "#C2B280",
           color4: "#C2B280",
           color5: "#C2B280",
-          planetType: PlanetType.ROCKY,
+          planetType: PlanetType.ROCKY_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -942,20 +917,19 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY, // Icy/rocky, unique "walnut" shape
+      planetType: PlanetType.ROCKY_WORLD, // Icy/rocky, unique "walnut" shape
       isMoon: true,
       parentPlanet: saturnId,
-      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      composition: ["silicates", "water ice"],
       surface: {
         surfaceType: SurfaceType.CRATERED, // Has an equatorial ridge
-        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
         proceduralData: {
           color1: "#C2B280",
           color2: "#C2B280",
           color3: "#C2B280",
           color4: "#C2B280",
           color5: "#C2B280",
-          planetType: PlanetType.ROCKY,
+          planetType: PlanetType.ROCKY_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -1004,20 +978,19 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY, // Icy/rocky, "flying saucer" shape
+      planetType: PlanetType.ROCKY_WORLD, // Icy/rocky, "flying saucer" shape
       isMoon: true,
       parentPlanet: saturnId,
-      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      composition: ["silicates", "water ice"],
       surface: {
         surfaceType: SurfaceType.SMOOTH_PLAINS, // Smooth equatorial ridge
-        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
         proceduralData: {
           color1: "#C2B280",
           color2: "#C2B280",
           color3: "#C2B280",
           color4: "#C2B280",
           color5: "#C2B280",
-          planetType: PlanetType.ROCKY,
+          planetType: PlanetType.ROCKY_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -1066,20 +1039,19 @@ export function initializeSaturnMoons(saturnId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY, // Icy/rocky
+      planetType: PlanetType.ROCKY_WORLD, // Icy/rocky
       isMoon: true,
       parentPlanet: saturnId,
-      composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
+      composition: ["silicates", "water ice"],
       surface: {
         surfaceType: SurfaceType.CRATERED, // Creates waves in ring edges
-        composition: [CompositionType.SILICATE, CompositionType.WATER_ICE],
         proceduralData: {
           color1: "#C2B280",
           color2: "#C2B280",
           color3: "#C2B280",
           color4: "#C2B280",
           color5: "#C2B280",
-          planetType: PlanetType.ROCKY,
+          planetType: PlanetType.ROCKY_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,

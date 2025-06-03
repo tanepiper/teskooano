@@ -53,6 +53,12 @@
       "@teskooano/ui-plugin/ts": ["packages/app/ui-plugin/src/index.ts"],
       "@teskooano/ui-plugin/vite.js": [
         "packages/app/ui-plugin/src/vite-plugin.ts"
+      ],
+      "@teskooano/celestials-base": [
+        "packages/celestials/celestial-object/src/index.ts"
+      ],
+      "@teskooano/celestials-gas-giants": [
+        "packages/celestials/gas-giants/src/index.ts"
       ]
     }
   },
@@ -101,6 +107,12 @@
     },
     {
       "path": "./packages/systems/celestial"
+    },
+    {
+      "path": "./packages/celestials/celestial-object"
+    },
+    {
+      "path": "./packages/celestials/gas-giants"
     }
   ],
   "include": ["packages/**/*", "apps/**/*", "glsl.d.ts"],

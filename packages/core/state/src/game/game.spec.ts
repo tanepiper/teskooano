@@ -5,7 +5,6 @@ import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
-  CompositionType,
   OrbitalParameters,
   PhysicsStateReal,
   PlanetAtmosphereProperties,
@@ -67,10 +66,10 @@ const createMockObject = (
       isMoon: type === CelestialType.MOON,
       planetType:
         type === CelestialType.DWARF_PLANET ? undefined : "TERRESTRIAL", // Example
-      composition: [CompositionType.SILICATE],
+      composition: ["silicates"],
       surface: {
         surfaceType: SurfaceType.VARIED,
-        composition: [CompositionType.SILICATE],
+
         // proceduralData: undefined, // No procedural data in basic mock
       } as SurfaceProperties,
     } as PlanetProperties;

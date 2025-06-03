@@ -18,3 +18,5 @@ export * from "./small-body-classification";
 export * from "./physical-properties";
 
 export * from "./procedural-surface-properties";
+
+export * from "./orbital";

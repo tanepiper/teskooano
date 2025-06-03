@@ -1,5 +1,5 @@
 import { OSVector3, EPSILON } from "@teskooano/core-math";
-import { PhysicsStateReal } from "../../types";
+import { CelestialPhysicsState } from "@teskooano/celestial-object";
 
 /**
  * Calculates the Newtonian gravitational force between two point masses.
@@ -12,8 +12,8 @@ import { PhysicsStateReal } from "../../types";
  * @returns The gravitational force vector acting on body1 due to body2.
  */
 export const calculateNewtonianForce = (
-  body1: PhysicsStateReal,
-  body2: PhysicsStateReal,
+  body1: CelestialPhysicsState,
+  body2: CelestialPhysicsState,
   G: number,
 ): OSVector3 => {
   // Displacement should point from body2 to body1 for the force ON body1

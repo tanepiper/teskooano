@@ -129,6 +129,3 @@ export interface StellarRenderingData {
   accretionDisk?: boolean;
   gravitationalLensing?: boolean;
 }
-
-// NOTE: Classification functions have been moved to
-// packages/systems/procedural-generation/src/generators/stars/stellar-classification-functions.ts

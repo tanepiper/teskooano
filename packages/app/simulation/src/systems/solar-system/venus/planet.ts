@@ -7,7 +7,6 @@ import {
   SurfaceType,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
-  CompositionType,
 } from "@teskooano/data-types";
 
 const VENUS_MASS_KG = 4.867e24;
@@ -103,7 +102,6 @@ export function initializeVenusPlanet(parentId: string): void {
         ...venusProceduralSurface,
         type: SurfaceType.VOLCANIC,
         surfaceType: SurfaceType.VOLCANIC,
-        composition: [CompositionType.SILICATE, CompositionType.IRON],
         planetType: PlanetType.TERRESTRIAL,
         color: "#D2B48C",
       },

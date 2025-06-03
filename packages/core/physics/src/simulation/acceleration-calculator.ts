@@ -1,8 +1,8 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { PhysicsStateReal } from "../types";
+import { CelestialPhysicsState } from "@teskooano/celestial-object";
 import { GRAVITATIONAL_CONSTANT } from "../units/constants";
 import { Octree } from "../spatial/octree";
-import type { PhysicsEngineType } from "@teskooano/data-types";
+import type { PhysicsEngineType } from "@teskooano/celestial-object";
 import { calculateNewtonianForce } from "../forces/postNewtonian/newtonian";
 
 /**
@@ -21,14 +21,14 @@ export class AccelerationCalculator {
    * @returns Acceleration vector in m/s²
    */
   public calculateNBodyAcceleration(
-    targetBodyState: PhysicsStateReal,
+    targetBodyState: CelestialPhysicsState,
     octree: Octree,
     theta: number = 0.7,
   ): OSVector3 {
     // EXPERIMENT: Use pure Newtonian force for performance comparison
     const forceFunction = (
-      body1: PhysicsStateReal,
-      body2: PhysicsStateReal,
+      body1: CelestialPhysicsState,
+      body2: CelestialPhysicsState,
       G: number,
     ) => {
       return calculateNewtonianForce(body1, body2, G);
@@ -55,8 +55,8 @@ export class AccelerationCalculator {
    * @returns Acceleration vector in m/s²
    */
   public calculateSimpleAcceleration(
-    targetBodyState: PhysicsStateReal,
-    centralStar: PhysicsStateReal,
+    targetBodyState: CelestialPhysicsState,
+    centralStar: CelestialPhysicsState,
   ): OSVector3 {
     const acceleration = new OSVector3(0, 0, 0);
 
@@ -100,7 +100,7 @@ export class AccelerationCalculator {
    * @returns Map of body IDs to their acceleration vectors
    */
   public calculateAccelerationsForAllBodies(
-    bodies: PhysicsStateReal[],
+    bodies: CelestialPhysicsState[],
     physicsEngine: PhysicsEngineType,
     octreeSize: number,
     octreeMaxDepth: number,
@@ -111,11 +111,11 @@ export class AccelerationCalculator {
   ): {
     accelerations: Map<string, OSVector3>;
     octree?: Octree;
-    centralStar?: PhysicsStateReal;
+    centralStar?: CelestialPhysicsState;
   } {
     const accelerations = new Map<string, OSVector3>();
     let octree: Octree | undefined;
-    let centralStar: PhysicsStateReal | undefined;
+    let centralStar: CelestialPhysicsState | undefined;
 
     if (physicsEngine === "verlet") {
       octree = new Octree(octreeSize, octreeMaxDepth, softeningLength);
@@ -165,10 +165,10 @@ export class AccelerationCalculator {
    * Find the central star for simplified physics calculations
    */
   private findCentralStar(
-    bodies: PhysicsStateReal[],
+    bodies: CelestialPhysicsState[],
     isStar: Map<string | number, boolean>,
     parentIds?: Map<string | number, string | undefined>,
-  ): PhysicsStateReal | undefined {
+  ): CelestialPhysicsState | undefined {
     // Prefer a star that has no parentId (main/root star)
     let centralStar = bodies.find(
       (b) => isStar.get(b.id) && (!parentIds || !parentIds.get(b.id)),
@@ -186,9 +186,9 @@ export class AccelerationCalculator {
    * Calculate accelerations for simplified physics modes (euler/symplectic)
    */
   private calculateSimplifiedAccelerations(
-    bodies: PhysicsStateReal[],
+    bodies: CelestialPhysicsState[],
     accelerations: Map<string, OSVector3>,
-    centralStar: PhysicsStateReal | undefined,
+    centralStar: CelestialPhysicsState | undefined,
     isStar: Map<string | number, boolean>,
     parentIds?: Map<string | number, string | undefined>,
   ): void {
@@ -201,7 +201,7 @@ export class AccelerationCalculator {
         return;
       }
 
-      let attractorState: PhysicsStateReal | undefined;
+      let attractorState: CelestialPhysicsState | undefined;
       const parentId = parentIds?.get(body.id);
 
       if (parentId) {

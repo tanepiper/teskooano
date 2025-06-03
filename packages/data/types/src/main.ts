@@ -1,4 +1,4 @@
-export * from "./celestial";
+export * from "./old-celestial";
 export * from "./scaling";
 
 import * as THREE from "three";

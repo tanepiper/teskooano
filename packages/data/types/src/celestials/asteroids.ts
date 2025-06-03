@@ -3,7 +3,6 @@ import type {
   SmallBodyType,
   AsteroidType,
   ExtendedStructureType,
-  CompositionType,
 } from "./common";
 import type { CelestialBase } from "./base";
 import type { SurfaceProperties } from "./components";
@@ -21,7 +20,7 @@ export interface Asteroid extends CelestialBase {
 
   // Physical properties
   surface: SurfaceProperties; // Surface composition and terrain
-  composition: CompositionType[]; // Bulk composition
+  composition: string[]; // Bulk composition
 
   // Orbital characteristics
   isNearEarth?: boolean; // Potentially hazardous object
@@ -49,7 +48,7 @@ export interface AsteroidField extends CelestialBase {
   // Population properties
   asteroidCount: number; // Approximate number of asteroids
   totalMass_kg?: number; // Total belt mass
-  composition: CompositionType[]; // Average composition
+  composition: string[]; // Average composition
   color: string; // Visual color for rendering
 
   // Notable members
@@ -66,7 +65,6 @@ export interface DwarfPlanet extends CelestialBase {
 
   // Physical properties
   surface: SurfaceProperties; // Always has a surface
-  composition: CompositionType[]; // Bulk composition
 
   // Orbital characteristics
   isKuiperBelt?: boolean; // In Kuiper Belt
@@ -93,7 +91,7 @@ export interface OortCloud extends CelestialBase {
   // Population properties
   cometCount: number; // Approximate number of comets
   totalMass_kg?: number; // Total cloud mass
-  composition: CompositionType[]; // Average composition
+  composition: string[]; // Average composition
 
   // Special properties
   isInner?: boolean; // Inner Oort cloud (Hills cloud)

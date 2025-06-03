@@ -5,32 +5,53 @@
  * (which needs realistic values) and the visualization (which needs visually appropriate scales).
  */
 
-import { CelestialType } from "./celestial";
+import { CelestialType } from "./celestials/common/celestial-types";
+import { PlanetType } from "./celestials/common/planetary-classification";
 
 export const GRAVITATIONAL_CONSTANT = 6.6743e-11;
 
 export const AU_METERS = 149597870700;
+
+// Fundamental Physical Constants
+export const EARTH_MASS_KG = 5.972e24; // kg
+export const EARTH_RADIUS_M = 6.371e6; // meters
+export const SOLAR_MASS_KG = 1.989e30; // kg
+export const SOLAR_RADIUS_M = 696340e3; // meters
+export const SOLAR_LUMINOSITY = 3.828e26; // Watts
+export const STEFAN_BOLTZMANN = 5.670374e-8; // W m^-2 K^-4
+
+/**
+ * Interface to provide detailed classification for scaling purposes.
+ */
+export interface CelestialScalingClassification {
+  celestialType: CelestialType;
+  planetType?: PlanetType; // Relevant if celestialType is PLANET
+  // stellarType?: StellarType; // Could be added if stars need sub-type scaling beyond CelestialType.STAR
+}
 
 /**
  * Scaling constants for the simulation.
  *
  * These values help maintain consistent scaling across the simulation:
  * - DISTANCE_SCALE: Factor for scaling distances between objects (orbital radii)
- * - SIZE_SCALE: Factor for scaling physical size of objects (radii)
+ * - SIZE_SCALE: Factor for scaling physical size of objects (radii) - general fallback
  * - MASS_SCALE: Factor for adjusting mass values to prevent numerical precision issues
  * - TIME_SCALE: Factor for time adjustments if needed
  * - RENDER_SCALE_AU: Units in the ThreeJS scene per Astronomical Unit (AU)
+ * - GAS_GIANT_SIZE: Specific size multiplier for gas giants relative to base scaled size
+ * - STAR_SIZE: Specific size multiplier for stars relative to base scaled size
+ * - MOON_DISTANCE: Multiplier for visual distance of moons (not size)
  */
 export const SCALE = {
   DISTANCE: 1.0,
-  SIZE: 1.0,
+  SIZE: 1.0, // Default size multiplier
   TIME: 1.0,
   MASS: 1.0e-20,
 
   RENDER_SCALE_AU: 1000,
 
-  GAS_GIANT_SIZE: 1.0,
-  STAR_SIZE: 1.0,
+  GAS_GIANT_SIZE: 1.0, // Example: 1.0 means no additional scaling beyond base
+  STAR_SIZE: 1.0, // Example: 1.0 means no additional scaling beyond base
   MOON_DISTANCE: 50.0,
 };
 
@@ -61,16 +82,34 @@ export function unscaleDistance(
 /**
  * Convert a physical size (radius, meters) to a visualization size (in Scene Units)
  */
-export function scaleSize(realSize: number, type: CelestialType): number {
+export function scaleSize(
+  realSize: number,
+  classification: CelestialScalingClassification,
+): number {
   const baseScaledSize = realSize * METERS_TO_SCENE_UNITS;
 
-  switch (type) {
-    case CelestialType.GAS_GIANT:
-      return baseScaledSize * SCALE.GAS_GIANT_SIZE;
+  switch (classification.celestialType) {
     case CelestialType.STAR:
+      // Future: Could use classification.stellarType if different StellarTypes (e.g., RED_GIANT vs MAIN_SEQUENCE)
+      // under CelestialType.STAR need distinct scaling factors from SCALE.STAR_SIZE.
       return baseScaledSize * SCALE.STAR_SIZE;
-    case CelestialType.MOON:
     case CelestialType.PLANET:
+      if (classification.planetType === PlanetType.GAS_GIANT) {
+        return baseScaledSize * SCALE.GAS_GIANT_SIZE;
+      }
+
+      // Default for other planet types (TERRESTRIAL, SUPER_EARTH, ICE_WORLD, etc.)
+      return baseScaledSize * SCALE.SIZE;
+    case CelestialType.SMALL_BODY:
+      // Add more specific scaling for subtypes of SMALL_BODY if needed (e.g., asteroids vs comets vs dwarf planets)
+      return baseScaledSize * SCALE.SIZE;
+    case CelestialType.STELLAR_REMNANT:
+      // e.g. White Dwarf, Neutron Star, Black Hole might have specific scaling factors.
+      // For now, using default SCALE.SIZE
+      return baseScaledSize * SCALE.SIZE;
+    case CelestialType.EXTENDED_STRUCTURE:
+      // e.g. Nebulae, Accretion Disks might need very different scaling.
+      return baseScaledSize * SCALE.SIZE; // Placeholder, likely needs its own logic
     default:
       return baseScaledSize * SCALE.SIZE;
   }
@@ -79,22 +118,41 @@ export function scaleSize(realSize: number, type: CelestialType): number {
 /**
  * Convert a visual size back to a physical size (meters)
  */
-export function unscaleSize(visualSize: number, type: CelestialType): number {
-  let baseVisualSize = visualSize;
+export function unscaleSize(
+  visualSize: number,
+  classification: CelestialScalingClassification,
+): number {
+  let baseVisualSize = visualSize; // This is the size after a potential type-specific multiplier has been applied
 
-  switch (type) {
-    case CelestialType.GAS_GIANT:
-      baseVisualSize = visualSize / SCALE.GAS_GIANT_SIZE;
-      break;
+  // Determine the multiplier that was used during scaling
+  let multiplier = SCALE.SIZE; // Default multiplier
+
+  switch (classification.celestialType) {
     case CelestialType.STAR:
-      baseVisualSize = visualSize / SCALE.STAR_SIZE;
+      multiplier = SCALE.STAR_SIZE;
       break;
-    case CelestialType.MOON:
     case CelestialType.PLANET:
+      if (classification.planetType === PlanetType.GAS_GIANT) {
+        multiplier = SCALE.GAS_GIANT_SIZE;
+      } else {
+        multiplier = SCALE.SIZE; // Default for other planet types
+      }
+      break;
+    // Cases for SMALL_BODY, STELLAR_REMNANT, EXTENDED_STRUCTURE could be added if they use multipliers other than SCALE.SIZE
     default:
-      baseVisualSize = visualSize / SCALE.SIZE;
+      multiplier = SCALE.SIZE;
       break;
   }
+
+  // Remove the type-specific multiplier to get the base scaled size
+  if (multiplier === 0) {
+    // Avoid division by zero if a scale factor is incorrectly set to 0
+    console.warn(
+      "unscaleSize: Multiplier is zero, cannot reliably unscale. Visual size returned.",
+    );
+    return visualSize / METERS_TO_SCENE_UNITS; // Or handle error appropriately
+  }
+  baseVisualSize = visualSize / multiplier;
 
   return baseVisualSize / METERS_TO_SCENE_UNITS;
 }

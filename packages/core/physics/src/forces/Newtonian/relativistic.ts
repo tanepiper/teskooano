@@ -1,4 +1,4 @@
-import { PhysicsStateReal } from "../../types";
+import { CelestialPhysicsState } from "@teskooano/celestial-object";
 import { OSVector3, EPSILON } from "@teskooano/core-math";
 
 /**
@@ -26,8 +26,8 @@ const calculateGamma = (velocity: OSVector3): number => {
  * we would need to use the Einstein field equations.
  */
 export const calculateRelativisticGravitationalForce = (
-  body1: PhysicsStateReal,
-  body2: PhysicsStateReal,
+  body1: CelestialPhysicsState,
+  body2: CelestialPhysicsState,
   G: number,
 ): OSVector3 => {
   const displacement = new OSVector3()

@@ -7,7 +7,6 @@ import {
   SurfaceType,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
-  CompositionType,
 } from "@teskooano/data-types";
 
 const NEPTUNE_AXIAL_TILT_DEG = 28.32; // Used for Triton's axial tilt consistency
@@ -81,7 +80,7 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["nitrogen ice", "water ice", "carbon dioxide ice"],
@@ -95,14 +94,10 @@ export function initializeNeptuneMoons(neptuneId: string): void {
       },
       surface: {
         surfaceType: SurfaceType.ICE_CRACKED, // Cantaloupe terrain, cryovolcanism
-        composition: [
-          CompositionType.NITROGEN_ICE,
-          CompositionType.WATER_ICE,
-          CompositionType.CO2_ICE,
-        ],
+
         proceduralData: {
           ...tritonProceduralSurface,
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
         },
       },
     } as PlanetProperties,
@@ -158,17 +153,17 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     albedo: 0.14,
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock?"], // Composition is uncertain
       atmosphere: undefined, // No significant atmosphere
       surface: {
         surfaceType: SurfaceType.VARIED, // Likely cratered, but details are sparse
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           ...nereidProceduralSurface,
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
         },
       },
     } as PlanetProperties,
@@ -198,20 +193,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#B0C4DE",
           color2: "#B0C4DE",
           color3: "#B0C4DE",
           color4: "#B0C4DE",
           color5: "#B0C4DE",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -260,20 +255,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#B0C4DE",
           color2: "#B0C4DE",
           color3: "#B0C4DE",
           color4: "#B0C4DE",
           color5: "#B0C4DE",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -322,20 +317,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#B0C4DE",
           color2: "#B0C4DE",
           color3: "#B0C4DE",
           color4: "#B0C4DE",
           color5: "#B0C4DE",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -384,20 +379,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#B0C4DE",
           color2: "#B0C4DE",
           color3: "#B0C4DE",
           color4: "#B0C4DE",
           color5: "#B0C4DE",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -446,20 +441,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#B0C4DE",
           color2: "#B0C4DE",
           color3: "#B0C4DE",
           color4: "#B0C4DE",
           color5: "#B0C4DE",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -508,20 +503,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#B0C4DE",
           color2: "#B0C4DE",
           color3: "#B0C4DE",
           color4: "#B0C4DE",
           color5: "#B0C4DE",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -570,20 +565,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#808080",
           color2: "#808080",
           color3: "#808080",
           color4: "#808080",
           color5: "#808080",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -632,20 +627,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#808080",
           color2: "#808080",
           color3: "#808080",
           color4: "#808080",
           color5: "#808080",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -694,20 +689,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#808080",
           color2: "#808080",
           color3: "#808080",
           color4: "#808080",
           color5: "#808080",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -756,20 +751,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#808080",
           color2: "#808080",
           color3: "#808080",
           color4: "#808080",
           color5: "#808080",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -818,20 +813,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#808080",
           color2: "#808080",
           color3: "#808080",
           color4: "#808080",
           color5: "#808080",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,
@@ -880,20 +875,20 @@ export function initializeNeptuneMoons(neptuneId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: neptuneId,
       composition: ["water ice", "rock"],
       surface: {
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.WATER_ICE, CompositionType.SILICATE],
+
         proceduralData: {
           color1: "#B0C4DE",
           color2: "#B0C4DE",
           color3: "#B0C4DE",
           color4: "#B0C4DE",
           color5: "#B0C4DE",
-          planetType: PlanetType.ICE,
+          planetType: PlanetType.ICE_WORLD,
           persistence: 0.5,
           lacunarity: 2.0,
           simplePeriod: 5.0,

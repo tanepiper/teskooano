@@ -1,90 +1,17 @@
-import * as THREE from "three";
 import type { OSVector3 } from "@teskooano/core-math";
-import type { PhysicsStateReal } from "./physics";
-import { StellarType as NewStellarType } from "./celestials/common/stellar-classification";
+import * as THREE from "three";
+import {
+  AtmosphereType,
+  CelestialStatus,
+  CelestialType,
+  GasGiantClass,
+  OrbitalParameters,
+  PlanetType,
+} from "./celestials";
 import type { ProceduralSurfaceProperties } from "./celestials/common/procedural-surface-properties";
+import { StellarType as NewStellarType } from "./celestials/common/stellar-classification";
 import type { SurfaceProperties } from "./celestials/components";
-import { SurfaceType } from "./celestials/common/physical-properties";
-
-/**
- * Defines the primary classification of a celestial body.
- */
-export enum CelestialType {
-  /** A star, the central body of a system. */
-  STAR = "STAR",
-  /** A planet orbiting a star. */
-  PLANET = "PLANET",
-  /** A planet that meets some but not all criteria for a full planet. */
-  DWARF_PLANET = "DWARF_PLANET",
-  /** A moon orbiting a planet or gas giant. */
-  MOON = "MOON",
-  /** Individual space rock objects, used for asteroid fields or rings. */
-  SPACE_ROCK = "SPACE_ROCK",
-  /** A collection of space rocks, typically forming a belt. */
-  ASTEROID_FIELD = "ASTEROID_FIELD",
-  /** A large planet composed mostly of gases. */
-  GAS_GIANT = "GAS_GIANT",
-  /** An icy body that displays a coma and sometimes a tail when near a star. */
-  COMET = "COMET",
-  /** A theoretical cloud of icy planetesimals proposed to surround the sun at a great distance. */
-  OORT_CLOUD = "OORT_CLOUD",
-  /** A distinct system of rings orbiting a celestial body. */
-  RING_SYSTEM = "RING_SYSTEM",
-  /** Catch-all for other or undefined celestial types. */
-  OTHER = "OTHER",
-}
-
-/**
- * Classification system for gas giants based on atmospheric properties.
- */
-export enum GasGiantClass {
-  /** Ammonia clouds, typical of Jupiter. */
-  CLASS_I = "CLASS_I",
-  /** Water clouds, typical of Saturn. */
-  CLASS_II = "CLASS_II",
-  /** Ice Giant - Cloudless, clear hydrogen atmosphere, typical of Uranus and Neptune. */
-  CLASS_III = "CLASS_III",
-  /** Alkali metal clouds, very hot. */
-  CLASS_IV = "CLASS_IV",
-  /** Silicate clouds, even hotter. */
-  CLASS_V = "CLASS_V",
-}
-
-/**
- * Defines the primary type of a planet based on its composition and surface characteristics.
- */
-export enum PlanetType {
-  /** A very barren plane with lots of craters. */
-  BARREN = "BARREN",
-  /** Primarily composed of rock and metal, often cratered. */
-  ROCKY = "ROCKY",
-  /** Earth-like planet with potential for liquid water and complex atmospheres. */
-  TERRESTRIAL = "TERRESTRIAL",
-  /** Dry, arid surface, possibly with dunes. */
-  DESERT = "DESERT",
-  /** Covered primarily in ice. */
-  ICE = "ICE",
-  /** Surface dominated by molten lava flows. */
-  LAVA = "LAVA",
-  /** Surface predominantly covered by liquid oceans. */
-  OCEAN = "OCEAN",
-}
-
-/**
- * Describes the general density of a celestial body's atmosphere.
- */
-export enum AtmosphereType {
-  /** No atmosphere. */
-  NONE = "NONE",
-  /** Very low pressure, minimal atmospheric effects. */
-  THIN = "THIN",
-  /** Earth-like atmospheric pressure. */
-  NORMAL = "NORMAL",
-  /** High pressure, significant atmospheric effects. */
-  DENSE = "DENSE",
-  /** A very dense atmosphere, potentially hazardous. */
-  VERY_DENSE = "VERY_DENSE",
-}
+import type { PhysicsStateReal } from "./physics";
 
 /**
  * Describes the primary composition type of rocky bodies like asteroids or ring particles.
@@ -102,26 +29,6 @@ export enum RockyType {
   ICE_DUST = "ICE_DUST",
   /** Composed primarily of fine dust particles. */
   DUST = "DUST",
-}
-
-/**
- * Defines the orbital elements required to describe the path of a celestial body around its parent.
- */
-export interface OrbitalParameters {
-  /** The average distance from the parent body (REAL METERS). */
-  realSemiMajorAxis_m: number;
-  /** The shape of the orbit (0 = circular, <1 = elliptical, 1 = parabolic). */
-  eccentricity: number;
-  /** The tilt of the orbital plane relative to a reference plane (RADIANS). */
-  inclination: number;
-  /** The angle where the orbit crosses the reference plane heading north (RADIANS). */
-  longitudeOfAscendingNode: number;
-  /** The angle from the ascending node to the point of closest approach (periapsis) (RADIANS). */
-  argumentOfPeriapsis: number;
-  /** The position in the orbit at a specific epoch (time) (RADIANS). */
-  meanAnomaly: number;
-  /** The time taken to complete one orbit (REAL SECONDS). */
-  period_s: number;
 }
 
 /**
@@ -359,12 +266,6 @@ export type CelestialSpecificPropertiesUnion =
   | AsteroidFieldProperties
   | OortCloudProperties
   | RingSystemProperties;
-
-export enum CelestialStatus {
-  ACTIVE = "active",
-  DESTROYED = "destroyed",
-  ANNIHILATED = "annihilated",
-}
 
 /**
  * Represents the complete state and definition of a celestial object within the simulation.

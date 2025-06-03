@@ -1,9 +1,4 @@
-import type {
-  CelestialType,
-  PlanetType,
-  PlanetSubtype,
-  MoonType,
-} from "./common";
+import type { CelestialType, PlanetType } from "./common";
 import type { CelestialBase } from "./base";
 import type {
   SurfaceProperties,
@@ -17,12 +12,10 @@ import type {
 export interface Planet extends CelestialBase {
   type: CelestialType.PLANET;
   planetType: PlanetType;
-  planetSubtype?: PlanetSubtype; // Additional classification
 
   // Physical properties
   surface?: SurfaceProperties; // Solid planets only
   atmosphere?: AtmosphereProperties; // If it has an atmosphere
-  clouds?: CloudProperties; // If it has clouds
 
   // Orbital characteristics
   isTidallyLocked?: boolean; // Tidally locked to parent star
@@ -39,7 +32,6 @@ export interface Planet extends CelestialBase {
 export interface Moon extends CelestialBase {
   type: CelestialType.PLANET; // Still use PLANET type but with isMoon flag
   planetType: PlanetType; // Use same planet types
-  moonType: MoonType; // Moon-specific classification
 
   // Physical properties
   surface: SurfaceProperties; // Moons always have surfaces

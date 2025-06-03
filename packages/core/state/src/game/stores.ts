@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable } from "rxjs";
-import type { CelestialObject } from "@teskooano/data-types";
+import type { CelestialObject } from "@teskooano/celestial-object";
 import type { OSVector3 } from "@teskooano/core-math";
 
 const LAST_SEED_STORAGE_KEY = "teskooano_last_seed";
@@ -190,8 +190,8 @@ export class GameStateService {
    */
   public removeCelestialHierarchyEntry(objectId: string): void {
     const currentHierarchy = this._celestialHierarchyStore.getValue();
-    const objectToRemove = this.getCelestialObjects()[objectId]; // Use class method
-    const parentId = objectToRemove?.parentId;
+    const objectToRemove = this.getCelestialObjects()[objectId];
+    const parentId = objectToRemove?.parent?.id;
     const newHierarchy = { ...currentHierarchy };
 
     if (newHierarchy[objectId]) {

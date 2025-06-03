@@ -1,10 +1,12 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { PhysicsStateReal } from "../types";
+import {
+  CelestialPhysicsState,
+  CelestialType,
+} from "@teskooano/celestial-object";
 import { Octree } from "../spatial/octree";
 import { velocityVerletIntegrate } from "../integrators";
 import * as THREE from "three";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
-import { CelestialType } from "@teskooano/data-types";
 
 /**
  * Options for trajectory prediction
@@ -57,7 +59,7 @@ export class TrajectoryPredictionService {
    */
   public predictTrajectory(
     targetBodyId: string | number,
-    allBodiesInitialStates: PhysicsStateReal[],
+    allBodiesInitialStates: CelestialPhysicsState[],
     duration_s: number,
     steps: number,
     options: TrajectoryPredictionOptions = {},
@@ -95,7 +97,7 @@ export class TrajectoryPredictionService {
     const predictedPoints: THREE.Vector3[] = [];
 
     // Make a deep copy of the initial states to avoid modifying the original data
-    let currentStates: PhysicsStateReal[] = this.clonePhysicsStates(
+    let currentStates: CelestialPhysicsState[] = this.clonePhysicsStates(
       allBodiesInitialStates,
     );
 
@@ -171,7 +173,7 @@ export class TrajectoryPredictionService {
    */
   public predictMultipleTrajectories(
     targetBodyIds: (string | number)[],
-    allBodiesInitialStates: PhysicsStateReal[],
+    allBodiesInitialStates: CelestialPhysicsState[],
     duration_s: number,
     steps: number,
     options: TrajectoryPredictionOptions = {},
@@ -251,7 +253,9 @@ export class TrajectoryPredictionService {
   /**
    * Clone physics states to avoid modifying original data
    */
-  private clonePhysicsStates(states: PhysicsStateReal[]): PhysicsStateReal[] {
+  private clonePhysicsStates(
+    states: CelestialPhysicsState[],
+  ): CelestialPhysicsState[] {
     return states.map((body) => ({
       ...body,
       position_m: body.position_m.clone(),
@@ -275,13 +279,13 @@ export class TrajectoryPredictionService {
    * Perform one integration step for all bodies
    */
   private integrateOneStep(
-    currentStates: PhysicsStateReal[],
+    currentStates: CelestialPhysicsState[],
     dt: number,
     octreeSize: number,
     octreeMaxDepth: number,
     softeningLength: number,
     barnesHutTheta: number,
-  ): PhysicsStateReal[] | null {
+  ): CelestialPhysicsState[] | null {
     // Calculate accelerations using Octree (same as in main simulation)
     const octree = new Octree(octreeSize, octreeMaxDepth, softeningLength);
     currentStates.forEach((body) => octree.insert(body));
@@ -297,7 +301,7 @@ export class TrajectoryPredictionService {
     });
 
     // Integration
-    const nextStates: PhysicsStateReal[] = [];
+    const nextStates: CelestialPhysicsState[] = [];
     let integrationError = false;
 
     for (const body of currentStates) {
@@ -312,7 +316,7 @@ export class TrajectoryPredictionService {
       try {
         // Create acceleration calculator function for Verlet integration
         const calculateNewAcceleration = (
-          stateGuess: PhysicsStateReal,
+          stateGuess: CelestialPhysicsState,
         ): OSVector3 => {
           const force = octree.calculateForceOn(stateGuess, barnesHutTheta);
           const acc = new OSVector3(0, 0, 0);
@@ -351,7 +355,7 @@ export class TrajectoryPredictionService {
   /**
    * Validate that a physics state has finite values
    */
-  private isValidPhysicsState(state: PhysicsStateReal): boolean {
+  private isValidPhysicsState(state: CelestialPhysicsState): boolean {
     const posOk =
       Number.isFinite(state.position_m.x) &&
       Number.isFinite(state.position_m.y) &&
@@ -367,7 +371,7 @@ export class TrajectoryPredictionService {
    * Detect if there's a collision involving the target body
    */
   private detectCollisionWithTarget(
-    nextStates: PhysicsStateReal[],
+    nextStates: CelestialPhysicsState[],
     targetBodyId: string | number,
     radii: Map<string | number, number>,
     stepIndex: number,

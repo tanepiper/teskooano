@@ -9,6 +9,9 @@ import {
   CelestialObject,
   OrbitalParameters,
   StarProperties,
+  EARTH_RADIUS_M,
+  SOLAR_RADIUS_M,
+  SOLAR_MASS_KG,
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 import { generateCelestialName } from "../names/celestial-name";
@@ -125,8 +128,7 @@ export function generateStar(random: () => number): CelestialObject {
     case StellarType.WHITE_DWARF:
       starMass_Solar = 0.1 + random() * 1.3;
       starRadius_Solar =
-        (0.005 + random() * 0.01) *
-        (CONST.EARTH_RADIUS_M / CONST.SOLAR_RADIUS_M);
+        (0.005 + random() * 0.01) * (EARTH_RADIUS_M / SOLAR_RADIUS_M);
       starTemperature = 8000 + random() * 50000;
       // Generate atmospheric composition for white dwarf classification
       additionalData.composition = {
@@ -140,7 +142,7 @@ export function generateStar(random: () => number): CelestialObject {
     case StellarType.NEUTRON_STAR:
       starMass_Solar = 1.1 + random() * 1.4;
       const neutronStarRadiusKm = 10 + random() * 10;
-      starRadius_Solar = (neutronStarRadiusKm * 1000) / CONST.SOLAR_RADIUS_M;
+      starRadius_Solar = (neutronStarRadiusKm * 1000) / SOLAR_RADIUS_M;
       starTemperature = 500000 + random() * 500000;
       additionalData.rotationPeriod = random() * 20; // Fast rotation for pulsars
       break;
@@ -148,8 +150,8 @@ export function generateStar(random: () => number): CelestialObject {
     case StellarType.BLACK_HOLE:
       starMass_Solar = 3 + random() * 47;
       starRadius_Solar =
-        calculateSchwarzschildRadius(starMass_Solar * CONST.SOLAR_MASS_KG) /
-        CONST.SOLAR_RADIUS_M;
+        calculateSchwarzschildRadius(starMass_Solar * SOLAR_MASS_KG) /
+        SOLAR_RADIUS_M;
       starTemperature = 2.7; // Cosmic microwave background
       break;
 
@@ -244,7 +246,7 @@ export function generateStar(random: () => number): CelestialObject {
   }
 
   // Create physics data for the star
-  const starRadius_meters = starRadius_Solar * CONST.SOLAR_RADIUS_M;
+  const starRadius_meters = starRadius_Solar * SOLAR_RADIUS_M;
   const starLuminosity = UTIL.calculateLuminosity(
     starRadius_meters,
     starTemperature,
@@ -262,8 +264,7 @@ export function generateStar(random: () => number): CelestialObject {
     }),
     ...(chosenType === StellarType.BLACK_HOLE && {
       schwarzschildRadius:
-        calculateSchwarzschildRadius(starMass_Solar * CONST.SOLAR_MASS_KG) /
-        1000,
+        calculateSchwarzschildRadius(starMass_Solar * SOLAR_MASS_KG) / 1000,
     }),
   };
 
@@ -349,8 +350,8 @@ export function generateStar(random: () => number): CelestialObject {
   }
 
   // Convert to CelestialObject format for compatibility
-  const starMass = physicsData.mass * CONST.SOLAR_MASS_KG;
-  const realStarRadius = physicsData.radius * CONST.SOLAR_RADIUS_M;
+  const starMass = physicsData.mass * SOLAR_MASS_KG;
+  const realStarRadius = physicsData.radius * SOLAR_RADIUS_M;
   const visualStarRadius =
     realStarRadius * SCALE.SIZE * STAR_VISUAL_SCALE_MULTIPLIER;
 

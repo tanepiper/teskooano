@@ -7,7 +7,6 @@ import {
   SurfaceType,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
-  CompositionType,
 } from "@teskooano/data-types";
 
 const MERCURY_MASS_KG = 3.3011e23;
@@ -86,7 +85,7 @@ export function initializeMercuryPlanet(parentId: string): void {
     },
     properties: {
       type: CelestialType.PLANET,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY_WORLD,
       isMoon: false,
       composition: ["silicates", "iron core"],
       atmosphere: undefined,
@@ -94,8 +93,7 @@ export function initializeMercuryPlanet(parentId: string): void {
         ...mercuryProceduralSurface,
         type: SurfaceType.CRATERED,
         surfaceType: SurfaceType.CRATERED,
-        composition: [CompositionType.SILICATE, CompositionType.IRON],
-        planetType: PlanetType.ROCKY,
+        planetType: PlanetType.ROCKY_WORLD,
         color: "#8A7F80",
       },
     } as PlanetProperties,

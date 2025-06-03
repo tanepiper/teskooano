@@ -1,9 +1,4 @@
-import type {
-  // SurfaceType,
-  AtmosphereType,
-  CompositionType,
-  RingType,
-} from "./common";
+import type { AtmosphereType, RingType } from "./common";
 import { ProceduralSurfaceProperties } from "./common/procedural-surface-properties";
 import { SurfaceType } from "./common/physical-properties";
 
@@ -12,7 +7,6 @@ import { SurfaceType } from "./common/physical-properties";
  */
 export interface SurfaceProperties {
   surfaceType: SurfaceType;
-  composition: CompositionType[]; // Use proper composition enum
   proceduralData?: ProceduralSurfaceProperties;
 }
 
@@ -21,7 +15,6 @@ export interface SurfaceProperties {
  */
 export interface AtmosphereProperties {
   type: AtmosphereType; // Atmospheric density classification
-  composition: CompositionType[]; // Gas composition using enum
   pressure_pa: number; // Surface pressure in Pascals
   density_kgm3: number; // Atmospheric density
   scaleHeight_m: number; // Atmospheric scale height
@@ -45,7 +38,6 @@ export interface RingProperties {
   tilt?: number; // Ring tilt in radians
   rotationRate?: number; // Ring rotation rate
   texture?: string; // Texture identifier
-  composition: CompositionType[]; // Ring material using enum
   type: RingType; // Ring classification
 }
 

@@ -1,4 +1,4 @@
-import type { CelestialObject } from "@teskooano/data-types";
+import { AU_METERS, type CelestialObject } from "@teskooano/data-types";
 import { Observable, Subscriber } from "rxjs";
 import * as CONST_PROC_GEN from "../../constants"; // Aliasing to avoid conflict if CONST is used locally
 import { generateMoon } from "./moon"; // Assuming generateMoon is in the same directory
@@ -15,7 +15,7 @@ export function generateMoonsObservable(
     // Check if moon generation is appropriate (e.g., based on distance)
     const parentOrbit = planetObject.orbit;
     const parentDistanceAU =
-      (parentOrbit?.realSemiMajorAxis_m ?? 0) / CONST_PROC_GEN.AU_TO_METERS;
+      (parentOrbit?.realSemiMajorAxis_m ?? 0) / AU_METERS;
     // Simple check: don't generate moons too close to the star
     if (parentDistanceAU < 0.3) {
       moonSubscriber.complete();

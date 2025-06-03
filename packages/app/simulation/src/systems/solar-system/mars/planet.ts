@@ -4,7 +4,6 @@ import { actions } from "@teskooano/core-state";
 import {
   AtmosphereType,
   CelestialType,
-  CompositionType,
   PlanetType,
   SurfaceType,
   type PlanetProperties,
@@ -102,11 +101,6 @@ export function initializeMarsPlanet(parentId: string): string {
       },
       surface: {
         surfaceType: SurfaceType.VARIED,
-        composition: [
-          CompositionType.SILICATE,
-          CompositionType.IRON,
-          CompositionType.DUST,
-        ],
         proceduralData: {
           ...marsProceduralSurface,
           planetType: PlanetType.TERRESTRIAL,

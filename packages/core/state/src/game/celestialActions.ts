@@ -1,5 +1,9 @@
-import type { CelestialObject, OrbitalParameters } from "@teskooano/data-types";
-import { CelestialStatus, CelestialType } from "@teskooano/data-types";
+import type { OrbitalParameters } from "@teskooano/data-types";
+import {
+  CelestialStatus,
+  CelestialType,
+} from "@teskooano/celestial-object/src/types";
+import type { CelestialObject } from "@teskooano/celestial-object";
 import { gameStateService } from "./stores";
 import { renderableStore } from "./renderableStore";
 import { CustomEvents } from "@teskooano/data-types";
@@ -35,7 +39,7 @@ class CelestialActionsService {
     try {
       gameStateService.setCelestialObject(object.id, object);
 
-      const parentId = object.parentId;
+      const parentId = object.parent?.id;
       if (parentId) {
         const currentHierarchy = gameStateService.getCelestialHierarchy();
         const siblings = currentHierarchy[parentId] || [];
@@ -85,7 +89,8 @@ class CelestialActionsService {
     const object = currentObjects[objectId];
 
     if (object) {
-      gameStateService.setCelestialObject(objectId, { ...object, ...updates });
+      Object.assign(object, updates);
+      gameStateService.setCelestialObject(objectId, object);
     } else {
       console.warn(
         `[CelestialActionsService] updateCelestialObject: Object ${objectId} not found.`,
@@ -106,13 +111,34 @@ class CelestialActionsService {
     const object = objects[objectId];
 
     if (object && object.orbit) {
-      gameStateService.setCelestialObject(objectId, {
-        ...object,
-        orbit: {
-          ...object.orbit,
-          ...parameters,
-        },
-      });
+      const updatedOrbitData = {
+        ...object.orbit,
+        ...(parameters.realSemiMajorAxis_m !== undefined && {
+          semiMajorAxis_m: parameters.realSemiMajorAxis_m,
+        }),
+        ...(parameters.eccentricity !== undefined && {
+          eccentricity: parameters.eccentricity,
+        }),
+        ...(parameters.inclination !== undefined && {
+          inclination: parameters.inclination,
+        }),
+        ...(parameters.longitudeOfAscendingNode !== undefined && {
+          longitudeOfAscendingNode: parameters.longitudeOfAscendingNode,
+        }),
+        ...(parameters.argumentOfPeriapsis !== undefined && {
+          argumentOfPeriapsis: parameters.argumentOfPeriapsis,
+        }),
+        ...(parameters.meanAnomaly !== undefined && {
+          meanAnomaly: parameters.meanAnomaly,
+        }),
+        ...(parameters.period_s !== undefined && {
+          period_s: parameters.period_s,
+        }),
+      };
+
+      object.orbit = updatedOrbitData;
+
+      gameStateService.setCelestialObject(objectId, object);
     } else if (object) {
       console.warn(
         `[CelestialActionsService] Object ${objectId} doesn't have an 'orbit' property to update orbital parameters.`,
@@ -138,10 +164,9 @@ class CelestialActionsService {
         return; // Already destroyed
       }
 
-      gameStateService.setCelestialObject(objectId, {
-        ...object,
-        status: CelestialStatus.DESTROYED,
-      });
+      object.status = CelestialStatus.DESTROYED;
+
+      gameStateService.setCelestialObject(objectId, object);
 
       document.dispatchEvent(
         new CustomEvent(CustomEvents.CELESTIAL_OBJECT_DESTROYED, {

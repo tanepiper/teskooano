@@ -1,5 +1,5 @@
 import { OSVector3, EPSILON } from "@teskooano/core-math";
-import { PhysicsStateReal } from "../../types";
+import { CelestialPhysicsState } from "@teskooano/celestial-object";
 
 const SPEED_OF_LIGHT = 299792458;
 const C_SQUARED = SPEED_OF_LIGHT * SPEED_OF_LIGHT;
@@ -22,8 +22,8 @@ const C_FIFTH = C_SQUARED * C_SQUARED * SPEED_OF_LIGHT; // c^5
  * @returns The 2.5PN radiation reaction force vector acting on body1.
  */
 export const calculate2_5PNForce = (
-  body1: PhysicsStateReal,
-  body2: PhysicsStateReal,
+  body1: CelestialPhysicsState,
+  body2: CelestialPhysicsState,
   G: number,
 ): OSVector3 => {
   const m1 = body1.mass_kg;

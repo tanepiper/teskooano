@@ -1,4 +1,7 @@
-import { PhysicsStateReal } from "../types";
+import {
+  CelestialOrbitalProperties,
+  CelestialPhysicsState,
+} from "@teskooano/celestial-object";
 import {
   OrbitalParameters,
   GRAVITATIONAL_CONSTANT,
@@ -8,19 +11,19 @@ import { OSVector3 } from "@teskooano/core-math";
 /**
  * Calculates the position of an object based on its orbital parameters around a parent object (REAL units).
  *
- * @param parentStateReal The parent body's REAL physics state (kg, m, m/s)
+ * @param parentPhysicsState The parent body's REAL physics state (kg, m, m/s) - now new CelestialPhysicsState
  * @param orbitalParameters The orbital parameters (needs realSMA_m, period_s, angles in radians)
  * @param currentTime The current simulation time (seconds)
  * @returns The RELATIVE position vector in meters (m)
  */
 export const calculateOrbitalPosition = (
-  parentStateReal: PhysicsStateReal,
-  orbitalParameters: OrbitalParameters,
+  parentPhysicsState: CelestialPhysicsState,
+  orbitalParameters: CelestialOrbitalProperties,
   currentTime: number,
 ): OSVector3 => {
   const {
     period_s,
-    realSemiMajorAxis_m,
+    semiMajorAxis_m,
     eccentricity,
     inclination,
     meanAnomaly,
@@ -67,7 +70,7 @@ export const calculateOrbitalPosition = (
   const trueAnomaly = 2 * Math.atan2(term1, term2);
 
   const cosEccAnomaly = Math.cos(eccentricAnomaly);
-  const distance = realSemiMajorAxis_m * (1 - eccentricity * cosEccAnomaly);
+  const distance = semiMajorAxis_m * (1 - eccentricity * cosEccAnomaly);
 
   const v = trueAnomaly;
   const omega = argumentOfPeriapsis;
@@ -94,19 +97,19 @@ export const calculateOrbitalPosition = (
 /**
  * Calculates the orbital velocity of an object based on its orbital parameters (REAL units).
  *
- * @param parentStateReal The parent body's REAL physics state (kg, m, m/s)
+ * @param parentPhysicsState The parent body's REAL physics state (kg, m, m/s) - now new CelestialPhysicsState
  * @param orbitalParameters The orbital parameters (needs realSMA_m, period_s, angles in radians)
  * @param currentTime The current simulation time (seconds)
  * @returns The WORLD velocity vector in meters per second (m/s)
  */
 export const calculateOrbitalVelocity = (
-  parentStateReal: PhysicsStateReal,
-  orbitalParameters: OrbitalParameters,
+  parentPhysicsState: CelestialPhysicsState,
+  orbitalParameters: CelestialOrbitalProperties,
   currentTime: number,
 ): OSVector3 => {
   const {
     period_s,
-    realSemiMajorAxis_m,
+    semiMajorAxis_m,
     eccentricity,
     inclination,
     meanAnomaly,
@@ -134,9 +137,9 @@ export const calculateOrbitalVelocity = (
       Math.sqrt(1 - eccentricity) * Math.cos(eccentricAnomaly / 2),
     );
 
-  const mu = GRAVITATIONAL_CONSTANT * parentStateReal.mass_kg;
+  const mu = GRAVITATIONAL_CONSTANT * parentPhysicsState.mass_kg;
 
-  const p = realSemiMajorAxis_m * (1 - eccentricity * eccentricity);
+  const p = semiMajorAxis_m * (1 - eccentricity * eccentricity);
 
   if (p <= 0) {
     // Silently return zero vector - validation should happen before calling this function
@@ -177,44 +180,46 @@ export const calculateOrbitalVelocity = (
   // matching the visual renderer.  Do *not* remove this unless you flip the whole scene.
   relativeVelocity_mps.multiplyScalar(-1);
 
-  return relativeVelocity_mps.add(parentStateReal.velocity_mps);
+  return relativeVelocity_mps.add(parentPhysicsState.velocity_mps);
 };
 
 /**
  * Updates a body's position and velocity analytically using Keplerian elements.
  * This is used by the "Ideal / Kepler" physics mode where objects are placed on rails.
  *
- * @param body          The current physics state of the body to update.
- * @param parent        The parent body's physics state (usually the star or planet being orbited).
+ * @param bodyState          The current physics state of the body to update (new CelestialPhysicsState).
+ * @param parentPhysicsState The parent body's physics state (new CelestialPhysicsState).
  * @param orbitalParameters  The orbital elements describing the path.
  * @param currentTime   Simulation time in seconds (can be negative to reverse direction).
- * @returns A *new* PhysicsStateReal representing the body at `currentTime`.
+ * @returns A *new* CelestialPhysicsState representing the body at `currentTime`.
  */
 export const updateOrbitalBodyKepler = (
-  body: PhysicsStateReal,
-  parent: PhysicsStateReal,
-  orbitalParameters: OrbitalParameters,
+  bodyState: CelestialPhysicsState,
+  parentPhysicsState: CelestialPhysicsState,
+  orbitalParameters: CelestialOrbitalProperties,
   currentTime: number,
-): PhysicsStateReal => {
+): CelestialPhysicsState => {
   const relative_pos_m = calculateOrbitalPosition(
-    parent,
+    parentPhysicsState,
     orbitalParameters,
     currentTime,
   );
 
   const world_vel_mps = calculateOrbitalVelocity(
-    parent,
+    parentPhysicsState,
     orbitalParameters,
     currentTime,
   );
 
-  // Use clone() to prevent accidental mutation of the relative position
-  const world_pos_m = relative_pos_m.clone().add(parent.position_m);
+  const world_pos_m = relative_pos_m.clone().add(parentPhysicsState.position_m);
 
   return {
-    ...body,
+    ...bodyState,
     position_m: world_pos_m,
     velocity_mps: world_vel_mps,
+    id: bodyState.id,
+    mass_kg: bodyState.mass_kg,
+    ticksSinceLastPhysicsUpdate: bodyState.ticksSinceLastPhysicsUpdate,
   };
 };
 

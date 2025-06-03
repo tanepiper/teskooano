@@ -1,7 +1,8 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { PhysicsStateReal } from "../types";
+import { CelestialPhysicsState } from "@teskooano/celestial-object";
 import { calculateGravitationalForce } from "../forces";
 import { GRAVITATIONAL_CONSTANT } from "../units/constants";
+import { Quaternion } from "three";
 
 /**
  * Represents a node in the octree
@@ -12,7 +13,7 @@ interface OctreeNode {
   /** The size of this node (half-width, meters) */
   size: number;
   /** The bodies contained directly in this node */
-  bodies: PhysicsStateReal[];
+  bodies: CelestialPhysicsState[];
   /** Child nodes (if any) */
   children?: OctreeNode[];
   /** The total mass of all bodies within this node and its children (kg) */
@@ -163,7 +164,7 @@ const subdivide = (
  */
 const updateMassProperties = (
   node: OctreeNode,
-  body: PhysicsStateReal,
+  body: CelestialPhysicsState,
 ): void => {
   if (node.totalMass_kg === 0) {
     node.totalMass_kg = body.mass_kg;
@@ -191,7 +192,7 @@ const updateMassProperties = (
  */
 const insertBody = (
   node: OctreeNode,
-  body: PhysicsStateReal,
+  body: CelestialPhysicsState,
   currentDepth: number,
   maxDepth: number,
 ): void => {
@@ -252,9 +253,9 @@ const findBodiesInRange = (
   node: OctreeNode,
   point: OSVector3,
   range: number,
-  result: PhysicsStateReal[] = [],
+  result: CelestialPhysicsState[] = [],
   seen: Set<string> = new Set(),
-): PhysicsStateReal[] => {
+): CelestialPhysicsState[] => {
   const closestPoint = new OSVector3(
     Math.max(node.minX, Math.min(point.x, node.maxX)),
     Math.max(node.minY, Math.min(point.y, node.maxY)),
@@ -319,7 +320,7 @@ export class Octree {
   /**
    * Inserts a body into the octree
    */
-  insert(body: PhysicsStateReal): void {
+  insert(body: CelestialPhysicsState): void {
     insertBody(this.root, body, 0, this.maxDepth);
   }
 
@@ -327,7 +328,7 @@ export class Octree {
    * Finds all bodies within a given distance of a point.
    * Point should be OSVector3.
    */
-  findBodiesInRange(point: OSVector3, range: number): PhysicsStateReal[] {
+  findBodiesInRange(point: OSVector3, range: number): CelestialPhysicsState[] {
     return findBodiesInRange(this.root, point, range);
   }
 
@@ -346,11 +347,11 @@ export class Octree {
    * @returns The calculated force vector (OSVector3).
    */
   calculateForceOn(
-    body: PhysicsStateReal,
+    body: CelestialPhysicsState,
     theta: number,
     forceCalculationFn?: (
-      body1: PhysicsStateReal,
-      body2: PhysicsStateReal,
+      body1: CelestialPhysicsState,
+      body2: CelestialPhysicsState,
       G: number,
     ) => OSVector3,
   ): OSVector3 {
@@ -370,12 +371,12 @@ export class Octree {
    */
   private calculateNodeForce(
     node: OctreeNode,
-    targetBody: PhysicsStateReal,
+    targetBody: CelestialPhysicsState,
     theta: number,
     accumulatedForce: OSVector3,
     forceCalculationFn?: (
-      body1: PhysicsStateReal,
-      body2: PhysicsStateReal,
+      body1: CelestialPhysicsState,
+      body2: CelestialPhysicsState,
       G: number,
     ) => OSVector3,
   ): void {
@@ -413,11 +414,13 @@ export class Octree {
           }
         }
       } else {
-        const nodeBody: PhysicsStateReal = {
+        const nodeBody: CelestialPhysicsState = {
           id: `node_${node.center.x}_${node.center.y}_${node.center.z}`,
           mass_kg: node.totalMass_kg,
           position_m: node.centerOfMass_m,
           velocity_mps: new OSVector3(0, 0, 0),
+          orientation: new Quaternion(0, 0, 0, 1),
+          angularVelocity_radps: new OSVector3(0, 0, 0),
         };
         const force = forceCalculationFn
           ? forceCalculationFn(nodeBody, targetBody, this.gravitationalConstant)

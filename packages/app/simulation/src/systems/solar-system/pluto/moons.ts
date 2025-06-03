@@ -7,7 +7,6 @@ import {
   SurfaceType,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
-  CompositionType,
 } from "@teskooano/data-types";
 
 const CHARON_MASS_KG = 1.586e21;
@@ -76,7 +75,7 @@ export function initializePlutoMoons(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "ammonia ice (hydrates)", "rocky interior"],
@@ -85,8 +84,7 @@ export function initializePlutoMoons(parentId: string): void {
         ...charonProceduralSurface,
         type: SurfaceType.VARIED,
         surfaceType: SurfaceType.VARIED,
-        composition: [CompositionType.WATER_ICE, CompositionType.AMMONIA_ICE],
-        planetType: PlanetType.ICE,
+        planetType: PlanetType.ICE_WORLD,
         color: "#B0B8C0",
       },
     } as PlanetProperties,

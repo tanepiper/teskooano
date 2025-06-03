@@ -1,0 +1,19 @@
+{
+  "name": "@teskooano/celestials-base",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@teskooano/core-math": "file:../../core/math",
+    "@teskooano/data-types": "file:../../data/types",
+    "@teskooano/core-physics": "file:../../core/physics"
+  }
+}

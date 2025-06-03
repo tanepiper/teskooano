@@ -1,6 +1,6 @@
 import { Observable, combineLatest, BehaviorSubject } from "rxjs";
 import { scan, startWith } from "rxjs/operators";
-import { PhysicsStateReal } from "../types";
+import { CelestialPhysicsState } from "@teskooano/celestial-object";
 import {
   SimulationOrchestrator,
   SimulationStepResult,
@@ -59,7 +59,7 @@ export class PhysicsEngineService {
    * @returns Updated simulation result
    */
   public executeStep(
-    bodies: PhysicsStateReal[],
+    bodies: CelestialPhysicsState[],
     dt: number,
     params: SimulationParameters,
   ): SimulationStepResult {
@@ -72,7 +72,7 @@ export class PhysicsEngineService {
    * Reset the simulation to initial state
    * @param initialBodies Initial physics bodies
    */
-  public reset(initialBodies: PhysicsStateReal[] = []): void {
+  public reset(initialBodies: CelestialPhysicsState[] = []): void {
     const initialResult = this.orchestrator.createInitialResult(initialBodies);
     this._currentState.next(initialResult);
   }
@@ -85,7 +85,7 @@ export class PhysicsEngineService {
    * @returns Observable stream of simulation results
    */
   public createSimulationStream(
-    initialState: PhysicsStateReal[],
+    initialState: CelestialPhysicsState[],
     parameters$: Observable<SimulationParameters>,
     tick$: Observable<number>,
   ): Observable<SimulationStepResult> {
@@ -117,7 +117,7 @@ export class PhysicsEngineService {
    * @param params Current simulation parameters
    */
   public updateBodies(
-    bodies: PhysicsStateReal[],
+    bodies: CelestialPhysicsState[],
     params?: SimulationParameters,
   ): void {
     if (params) {

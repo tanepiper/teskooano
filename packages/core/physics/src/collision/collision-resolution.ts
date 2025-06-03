@@ -1,6 +1,8 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { CelestialType } from "@teskooano/data-types";
-import { PhysicsStateReal } from "../types";
+import {
+  CelestialType,
+  CelestialPhysicsState,
+} from "@teskooano/celestial-object";
 import {
   Collision,
   DestructionEvent,
@@ -11,33 +13,33 @@ import {
 /**
  * Resolves a detected collision between two bodies using the principles of elastic collision.
  * Calculates and applies impulses to conserve momentum and kinetic energy (based on restitution).
- * Operates directly on the `PhysicsStateReal` objects.
+ * Operates directly on the `CelestialPhysicsState` objects.
  *
  * @param collision - The detailed collision information obtained from `detectSphereCollision`.
- * @param body1Real - The complete `PhysicsStateReal` of the first body.
- * @param body2Real - The complete `PhysicsStateReal` of the second body.
- * @returns A tuple containing the two updated `PhysicsStateReal` objects `[newState1, newState2]` after applying the collision impulse.
+ * @param body1State - The complete `CelestialPhysicsState` of the first body.
+ * @param body2State - The complete `CelestialPhysicsState` of the second body.
+ * @returns A tuple containing the two updated `CelestialPhysicsState` objects `[newState1, newState2]` after applying the collision impulse.
  */
 export const resolveCollision = (
   collision: Collision,
-  body1Real: PhysicsStateReal,
-  body2Real: PhysicsStateReal,
-): [PhysicsStateReal, PhysicsStateReal] => {
+  body1State: CelestialPhysicsState,
+  body2State: CelestialPhysicsState,
+): [CelestialPhysicsState, CelestialPhysicsState] => {
   const { normal, relativeVelocity } = collision;
-  const mass1 = body1Real.mass_kg;
-  const mass2 = body2Real.mass_kg;
+  const mass1 = body1State.mass_kg;
+  const mass2 = body2State.mass_kg;
 
   if (mass1 <= 0 || mass2 <= 0) {
     console.warn(
-      `Collision resolution skipped between ${body1Real.id} and ${body2Real.id}: Invalid mass (<= 0).`,
+      `Collision resolution skipped between ${body1State.id} and ${body2State.id}: Invalid mass (<= 0).`,
     );
-    return [body1Real, body2Real];
+    return [body1State, body2State];
   }
 
   const normalVelocity = relativeVelocity.dot(normal);
 
   if (normalVelocity > 0) {
-    return [body1Real, body2Real];
+    return [body1State, body2State];
   }
 
   const restitution = 1.0;
@@ -46,21 +48,21 @@ export const resolveCollision = (
 
   const impulseVector = normal.clone().multiplyScalar(j);
 
-  const newVelocity1_mps = body1Real.velocity_mps
+  const newVelocity1_mps = body1State.velocity_mps
     .clone()
     .add(impulseVector.clone().multiplyScalar(1 / mass1));
 
-  const newVelocity2_mps = body2Real.velocity_mps
+  const newVelocity2_mps = body2State.velocity_mps
     .clone()
     .sub(impulseVector.clone().multiplyScalar(1 / mass2));
 
-  const newBody1: PhysicsStateReal = {
-    ...body1Real,
+  const newBody1: CelestialPhysicsState = {
+    ...body1State,
     velocity_mps: newVelocity1_mps,
   };
 
-  const newBody2: PhysicsStateReal = {
-    ...body2Real,
+  const newBody2: CelestialPhysicsState = {
+    ...body2State,
     velocity_mps: newVelocity2_mps,
   };
 
@@ -83,7 +85,7 @@ export const isPlanetOrMoon = (type: CelestialType): boolean => {
 export const handleInelasticAbsorption = (
   survivorId: string | number,
   destroyedId: string | number,
-  updatedBodiesMap: Map<string | number, PhysicsStateReal>,
+  updatedBodiesMap: Map<string | number, CelestialPhysicsState>,
   destroyedIds: Set<string | number>,
   destructionEvents: DestructionEvent[],
   radii: Map<string | number, number>,
@@ -149,9 +151,9 @@ export const handleInelasticAbsorption = (
 export const resolveStarCollision = (
   id1: string | number,
   id2: string | number,
-  body1: PhysicsStateReal,
-  body2: PhysicsStateReal,
-  updatedBodiesMap: Map<string | number, PhysicsStateReal>,
+  body1: CelestialPhysicsState,
+  body2: CelestialPhysicsState,
+  updatedBodiesMap: Map<string | number, CelestialPhysicsState>,
   destroyedIds: Set<string | number>,
   destructionEvents: DestructionEvent[],
   radii: Map<string | number, number>,
@@ -181,7 +183,7 @@ export const resolveStarCollision = (
 export const resolveStarNonStarCollision = (
   starId: string | number,
   nonStarId: string | number,
-  updatedBodiesMap: Map<string | number, PhysicsStateReal>,
+  updatedBodiesMap: Map<string | number, CelestialPhysicsState>,
   destroyedIds: Set<string | number>,
   destructionEvents: DestructionEvent[],
   radii: Map<string | number, number>,
@@ -200,8 +202,8 @@ export const resolveStarNonStarCollision = (
 export const resolveMoonMoonCollision = (
   id1: string | number,
   id2: string | number,
-  body1: PhysicsStateReal,
-  body2: PhysicsStateReal,
+  body1: CelestialPhysicsState,
+  body2: CelestialPhysicsState,
   destroyedIds: Set<string | number>,
   destructionEvents: DestructionEvent[],
   radii: Map<string | number, number>,
@@ -231,10 +233,10 @@ export const resolveMoonMoonCollision = (
 export const resolvePlanetGasGiantCollision = (
   id1: string | number,
   id2: string | number,
-  body1: PhysicsStateReal,
-  body2: PhysicsStateReal,
+  body1: CelestialPhysicsState,
+  body2: CelestialPhysicsState,
   collision: Collision,
-  updatedBodiesMap: Map<string | number, PhysicsStateReal>,
+  updatedBodiesMap: Map<string | number, CelestialPhysicsState>,
 ) => {
   const [resolvedBody1, resolvedBody2] = resolveCollision(
     collision,
@@ -249,10 +251,11 @@ export const resolvePlanetGasGiantCollision = (
 export const resolveGeneralNonStarCollision = (
   id1: string | number,
   id2: string | number,
-  body1: PhysicsStateReal,
-  body2: PhysicsStateReal,
-  collision: Collision,
-  updatedBodiesMap: Map<string | number, PhysicsStateReal>,
+  body1: CelestialPhysicsState,
+  body2: CelestialPhysicsState,
+  collisionInfo: Collision,
+  types: Map<string | number, CelestialType>,
+  updatedBodiesMap: Map<string | number, CelestialPhysicsState>,
   destroyedIds: Set<string | number>,
   destructionEvents: DestructionEvent[],
   radii: Map<string | number, number>,
@@ -260,20 +263,24 @@ export const resolveGeneralNonStarCollision = (
   const mass1 = body1.mass_kg;
   const mass2 = body2.mass_kg;
 
-  if (mass1 <= 0 || mass2 <= 0) {
-    console.warn(
-      `Skipping collision resolution between non-stars ${id1} and ${id2}: Invalid mass.`,
-    );
-    return;
-  }
+  const type1 = types.get(id1);
+  const type2 = types.get(id2);
 
-  const massRatio = Math.min(mass1, mass2) / Math.max(mass1, mass2);
+  // Determine if it's a significantly mass-imbalanced collision leading to absorption
+  const largeMassDiff =
+    mass1 < mass2 * MASS_DIFF_THRESHOLD || mass2 < mass1 * MASS_DIFF_THRESHOLD;
 
-  if (massRatio < MASS_DIFF_THRESHOLD) {
-    if (mass1 < mass2) {
+  // Special case: Gas Giant vs. Planet/Moon (elastic despite mass difference)
+  const isGasGiantPlanetMoonCollision =
+    (type1 === CelestialType.GAS_GIANT && isPlanetOrMoon(type2!)) ||
+    (type2 === CelestialType.GAS_GIANT && isPlanetOrMoon(type1!));
+
+  if (largeMassDiff && !isGasGiantPlanetMoonCollision) {
+    // Inelastic: larger absorbs smaller
+    if (mass1 > mass2) {
       handleInelasticAbsorption(
-        id2,
         id1,
+        id2,
         updatedBodiesMap,
         destroyedIds,
         destructionEvents,
@@ -281,8 +288,8 @@ export const resolveGeneralNonStarCollision = (
       );
     } else {
       handleInelasticAbsorption(
-        id1,
         id2,
+        id1,
         updatedBodiesMap,
         destroyedIds,
         destructionEvents,
@@ -290,8 +297,9 @@ export const resolveGeneralNonStarCollision = (
       );
     }
   } else {
+    // Elastic collision for others or Gas Giant vs Planet/Moon
     const [resolvedBody1, resolvedBody2] = resolveCollision(
-      collision,
+      collisionInfo,
       body1,
       body2,
     );

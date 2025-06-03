@@ -9,7 +9,7 @@ import type {
   OrbitalParameters,
   StarProperties,
 } from "@teskooano/data-types";
-import { CelestialType } from "@teskooano/data-types";
+import { AU_METERS, CelestialType } from "@teskooano/data-types";
 import { generateStar } from "../celestials";
 import * as CONST from "../constants";
 import * as UTIL from "../utils";
@@ -58,7 +58,7 @@ export function generateStarsInSystem(random: () => number): CelestialObject[] {
 
       // Allow companion stars to be placed much further out, with a skew towards closer distances
       const companionDistanceAU = 0.1 + Math.pow(random(), 3) * 199.9; // Range: 0.1 to 200 AU
-      const companionSMA_m = companionDistanceAU * CONST.AU_TO_METERS;
+      const companionSMA_m = companionDistanceAU * AU_METERS;
       const companionEcc = 0.1 + random() * 0.4;
       const companionInc = (random() - 0.5) * 0.2;
       const companionLAN = random() * 2 * Math.PI;

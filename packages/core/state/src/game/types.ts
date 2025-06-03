@@ -1,11 +1,11 @@
 import { OSVector3 } from "@teskooano/core-math";
+// No longer importing OldCelestialObject, CelestialSpecificPropertiesUnion from data-types for this input
+// OldOrbitalParameters and OldCelestialType are also replaced by new types.
 import {
-  CelestialObject,
-  CelestialSpecificPropertiesUnion,
-  CelestialType,
-  OrbitalParameters,
-  PhysicsEngineType,
-} from "@teskooano/data-types";
+  type CelestialType, // From @teskooano/celestial-object
+  type CelestialOrbitalProperties, // From @teskooano/celestial-object
+  type PhysicsEngineType,
+} from "@teskooano/celestial-object";
 
 /**
  * Defines the state of the camera in the simulation.
@@ -97,28 +97,6 @@ export interface PanelViewState {
 }
 
 /**
- * Input data required to create a new celestial object.
- * Focuses on core blueprint properties.
- */
-export interface CelestialObjectCreationInput {
-  id: string;
-  name: string;
-  type: CelestialType;
-  realMass_kg: number;
-  realRadius_m: number;
-  parentId?: string;
-  orbit?: OrbitalParameters;
-  temperature?: number;
-  albedo?: number;
-  siderealRotationPeriod_s?: number;
-  axialTilt?: OSVector3;
-  atmosphere?: CelestialObject["atmosphere"];
-  properties?: CelestialSpecificPropertiesUnion;
-  seed?: string | number;
-  ignorePhysics?: boolean;
-}
-
-/**
  * Options for state clearing
  */
 export interface ClearStateOptions {
@@ -126,3 +104,6 @@ export interface ClearStateOptions {
   resetTime?: boolean;
   resetSelection?: boolean;
 }
+
+// Re-export PhysicsEngineType
+export type { PhysicsEngineType };

@@ -1,21 +1,21 @@
 import type {
   CelestialSpecificPropertiesUnion,
   GasGiantProperties,
-  PlanetProperties,
   PlanetAtmosphereProperties,
+  PlanetProperties,
+  SurfaceProperties,
 } from "@teskooano/data-types";
 import {
   AtmosphereType,
   CelestialType,
   GasGiantClass,
   PlanetType,
+  ProceduralSurfaceProperties,
   SurfaceType,
-  CompositionType,
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 import type { PlanetBaseProperties } from "./planet-type";
-import { ProceduralSurfaceProperties } from "@teskooano/data-types";
 
 /**
  * Generates specific properties for a planet based on its determined type and base properties.
@@ -56,14 +56,14 @@ function generateGasGiantSpecificProperties(
   let atmosphereColor: string;
   let cloudColor: string;
   let cloudSpeed: number;
-  let atmosphereType: AtmosphereType;
+  let atmosphereType: AtmosphereType | undefined;
 
   if (bodyDistanceAU < 2.5) {
-    atmosphereType = AtmosphereType.VERY_DENSE;
+    atmosphereType = AtmosphereType.SUPER_DENSE;
     atmComposition = ["H2", "He", "Na", "K"];
     atmPressure = 10 + random() * 100;
     atmosphereColor = UTIL.getRandomItem(
-      CONST.ATMOSPHERE_COLORS[AtmosphereType.VERY_DENSE],
+      CONST.ATMOSPHERE_COLORS[AtmosphereType.SUPER_DENSE],
       random,
     );
     cloudColor = UTIL.getRandomItem(["#E0E0E0", "#D8D8D8", "#F5F5F5"], random);
@@ -115,24 +115,21 @@ function generateRockyPlanetSpecificProperties(
   let surfaceType: SurfaceType;
   let planetComposition: string[];
 
-  if (baseProps.rockyPlanetType === PlanetType.ICE) {
-    rockyPlanetType = PlanetType.ICE;
+  if (baseProps.rockyPlanetType === PlanetType.ICE_WORLD) {
+    rockyPlanetType = PlanetType.ICE_WORLD;
     surfaceType = UTIL.getRandomItem(
       [SurfaceType.CRATERED, SurfaceType.SMOOTH_PLAINS, SurfaceType.ICE_PLAINS],
       random,
     );
-    planetComposition = [...CONST.ICE_COMPOSITION];
   } else {
     rockyPlanetType = UTIL.getRandomItem(
       [
-        PlanetType.ROCKY,
+        PlanetType.ROCKY_WORLD,
         PlanetType.TERRESTRIAL,
-        PlanetType.DESERT,
-        PlanetType.LAVA,
-        PlanetType.BARREN,
-        PlanetType.ROCKY,
+        PlanetType.DESERT_WORLD,
+        PlanetType.LAVA_WORLD,
+        PlanetType.BARREN_WORLD,
         PlanetType.TERRESTRIAL,
-        PlanetType.BARREN,
       ],
       random,
     );
@@ -147,11 +144,6 @@ function generateRockyPlanetSpecificProperties(
       ],
       random,
     );
-    const baseRockyComp = UTIL.getRandomItem(CONST.ROCKY_COMPOSITION, random);
-    planetComposition =
-      typeof baseRockyComp === "string"
-        ? baseRockyComp.split(",")
-        : [...baseRockyComp];
   }
 
   let hasAtmosphereProperty: boolean;
@@ -159,15 +151,15 @@ function generateRockyPlanetSpecificProperties(
     case PlanetType.TERRESTRIAL:
       hasAtmosphereProperty = true;
       break;
-    case PlanetType.BARREN:
+    case PlanetType.BARREN_WORLD:
       hasAtmosphereProperty = false;
       break;
-    case PlanetType.ICE:
+    case PlanetType.ICE_WORLD:
       hasAtmosphereProperty = random() < 0.1;
       break;
-    case PlanetType.ROCKY:
-    case PlanetType.DESERT:
-    case PlanetType.LAVA:
+    case PlanetType.ROCKY_WORLD:
+    case PlanetType.DESERT_WORLD:
+    case PlanetType.LAVA_WORLD:
     default:
       hasAtmosphereProperty = random() < 0.6;
       break;
@@ -178,12 +170,11 @@ function generateRockyPlanetSpecificProperties(
   let atmosphereColor: string | undefined = undefined;
   let atmCompositionStrings: string[] = [];
   let pressure: number = 0;
-  let cloudProps: PlanetProperties["clouds"] = undefined;
   let atmosphereRenderingProps: PlanetAtmosphereProperties | undefined =
     undefined;
 
   if (hasAtmosphereProperty) {
-    if (baseProps.rockyPlanetType === PlanetType.ICE) {
+    if (baseProps.rockyPlanetType === PlanetType.ICE_WORLD) {
       atmosphereType = AtmosphereType.THIN;
       pressure = random() * 0.1;
     } else {
@@ -202,14 +193,6 @@ function generateRockyPlanetSpecificProperties(
       CONST.ATMOSPHERE_COLORS[atmosphereType] || ["#87CEEB"],
       random,
     );
-    atmCompositionStrings = UTIL.getRandomItem(
-      CONST.ATMOSPHERE_COMPOSITION[atmosphereType] || [["Nitrogen", "Oxygen"]],
-      random,
-    );
-
-    planetComposition.push(
-      ...atmCompositionStrings.map((gas) => `${gas} atmosphere`),
-    );
 
     atmosphereRenderingProps = {
       glowColor: atmosphereColor || "#87CEEB",
@@ -217,39 +200,16 @@ function generateRockyPlanetSpecificProperties(
       power: UTIL.getRandomInRange(1.0, 1.5, random),
       thickness: UTIL.getRandomInRange(0.1, 0.3, random),
     };
-
-    const cloudTypeKey = rockyPlanetType === PlanetType.ICE ? "ICE" : "ROCKY";
-    cloudProps = {
-      color: UTIL.getRandomItem(CONST.CLOUD_COLORS[cloudTypeKey], random),
-      opacity:
-        atmosphereType === AtmosphereType.THIN
-          ? 0.3 + random() * 0.2
-          : atmosphereType === AtmosphereType.NORMAL
-            ? 0.5 + random() * 0.3
-            : 0.7 + random() * 0.2,
-      coverage:
-        atmosphereType === AtmosphereType.THIN
-          ? 0.1 + random() * 0.3
-          : atmosphereType === AtmosphereType.NORMAL
-            ? 0.4 + random() * 0.4
-            : 0.7 + random() * 0.3,
-      speed:
-        atmosphereType === AtmosphereType.THIN
-          ? 0.1 + random() * 0.2
-          : atmosphereType === AtmosphereType.NORMAL
-            ? 0.5 + random() * 0.5
-            : 0.8 + random() * 0.7,
-    };
   }
 
   let proceduralSurfaceParams: ProceduralSurfaceProperties;
   switch (rockyPlanetType) {
-    case PlanetType.BARREN:
-    case PlanetType.ROCKY:
+    case PlanetType.BARREN_WORLD:
+    case PlanetType.ROCKY_WORLD:
     case PlanetType.TERRESTRIAL:
-    case PlanetType.ICE:
-    case PlanetType.DESERT:
-    case PlanetType.LAVA:
+    case PlanetType.ICE_WORLD:
+    case PlanetType.DESERT_WORLD:
+    case PlanetType.LAVA_WORLD:
       proceduralSurfaceParams = UTIL.createProceduralSurfaceProperties(
         random,
         rockyPlanetType,
@@ -266,70 +226,45 @@ function generateRockyPlanetSpecificProperties(
       break;
   }
 
-  let surfaceComposition: CompositionType[];
+  let surfaceComposition: string[];
   switch (rockyPlanetType) {
     case PlanetType.TERRESTRIAL:
-      surfaceComposition = [
-        CompositionType.SILICATE,
-        CompositionType.WATER_ICE,
-        CompositionType.ORGANIC,
-      ];
+      surfaceComposition = ["silicates", "water ice", "organic"];
       break;
-    case PlanetType.ROCKY:
-      surfaceComposition = [
-        CompositionType.SILICATE,
-        CompositionType.IRON,
-        CompositionType.CARBON,
-      ];
+    case PlanetType.ROCKY_WORLD:
+      surfaceComposition = ["silicates", "iron", "carbon"];
       break;
-    case PlanetType.BARREN:
-      surfaceComposition = [CompositionType.SILICATE, CompositionType.DUST];
+    case PlanetType.BARREN_WORLD:
+      surfaceComposition = ["silicates", "dust"];
       break;
-    case PlanetType.DESERT:
-      surfaceComposition = [
-        CompositionType.SILICATE,
-        CompositionType.IRON,
-        CompositionType.DUST,
-      ];
+    case PlanetType.DESERT_WORLD:
+      surfaceComposition = ["silicates", "iron", "dust"];
       break;
-    case PlanetType.ICE:
-      surfaceComposition = [
-        CompositionType.WATER_ICE,
-        CompositionType.AMMONIA_ICE,
-        CompositionType.METHANE_ICE,
-      ];
+    case PlanetType.ICE_WORLD:
+      surfaceComposition = ["water ice", "ammonia ice", "methane ice"];
       break;
-    case PlanetType.LAVA:
-      surfaceComposition = [
-        CompositionType.SILICATE,
-        CompositionType.IRON,
-        CompositionType.CARBON,
-      ];
+    case PlanetType.LAVA_WORLD:
+      surfaceComposition = ["silicates", "iron", "carbon"];
       break;
     default:
-      surfaceComposition = [CompositionType.SILICATE];
+      surfaceComposition = ["silicates"];
       break;
   }
 
-  const finalSurfaceProperties = {
-    ...proceduralSurfaceParams,
-    type: surfaceType,
+  const finalSurfaceProperties: SurfaceProperties = {
     surfaceType: surfaceType,
-    composition: surfaceComposition,
-    planetType: rockyPlanetType,
-    color: proceduralSurfaceParams.color2 || "#808080",
+    proceduralData: proceduralSurfaceParams,
   };
 
   const finalPlanetProperties: PlanetProperties = {
     type: CelestialType.PLANET,
     planetType: rockyPlanetType,
     isMoon: false,
-    composition: planetComposition,
+    composition: [],
     surface: finalSurfaceProperties,
     atmosphere: atmosphereRenderingProps,
     clouds: undefined,
   };
-  console.log(finalPlanetProperties);
   return finalPlanetProperties;
 }
 
@@ -361,7 +296,7 @@ export function generateRenderingAtmosphereProperties(
     random,
   );
 
-  if (baseRockyPlanetType === PlanetType.LAVA) {
+  if (baseRockyPlanetType === PlanetType.LAVA_WORLD) {
     glowColor = UTIL.getRandomItem(["#FF4500", "#FF6347", "#FF7F50"], random);
   } else if (baseRockyPlanetType === PlanetType.TERRESTRIAL) {
     const terrestrialColors = CONST.ATMOSPHERE_COLORS[planetAtmosphereType] || [

@@ -1,15 +1,10 @@
-import type { CelestialObject } from "@teskooano/data-types";
-import {
-  CelestialStatus,
-  CelestialType,
-  type PhysicsEngineType,
-} from "@teskooano/data-types";
+import { CelestialObject } from "../celestial-object";
+import { CelestialStatus, CelestialType, PhysicsEngineType } from "../types";
 import {
   calculateDistance,
   calculateGravitationalInfluence,
   AU,
 } from "@teskooano/core-physics";
-import { simulationStateService } from "../simulation";
 
 /**
  * Finds the nearest active star to the given object (straight-line distance).
@@ -21,16 +16,23 @@ export function findNearestStar(
   let nearest: CelestialObject | null = null;
   let minDist = Infinity;
 
-  for (const obj of Object.values(allObjects)) {
+  // Ensure the primary object has physics state for distance calculation
+  if (!object.physicsState?.position_m) return null;
+
+  for (const cand of Object.values(allObjects)) {
     if (
-      obj.type !== CelestialType.STAR ||
-      obj.status !== CelestialStatus.ACTIVE
-    )
+      cand.type !== CelestialType.STAR ||
+      cand.status !== CelestialStatus.ACTIVE ||
+      !cand.physicsState?.position_m // Ensure candidate star also has physics state for distance
+    ) {
       continue;
-    const d = calculateDistance(object, obj);
+    }
+
+    // Pass new CelestialObject directly
+    const d = calculateDistance(object, cand);
     if (d < minDist) {
       minDist = d;
-      nearest = obj;
+      nearest = cand;
     }
   }
   return nearest;
@@ -38,22 +40,16 @@ export function findNearestStar(
 
 /**
  * Chooses the best gravitational parent for `targetObject` from the provided map.
- * See inline comments for the rule-set – essentially: stars win, massive planets can grab moons, etc.
  */
 export function findBestGravitationalParent(
   targetObject: CelestialObject,
   allObjects: Record<string, CelestialObject>,
+  physicsEngine: PhysicsEngineType,
   excludeIds: string[] = [],
 ): CelestialObject | null {
-  const currentPhysicsEngine: PhysicsEngineType =
-    simulationStateService.getCurrentState().physicsEngine;
-  if (
-    currentPhysicsEngine !== "verlet" &&
-    currentPhysicsEngine !== "symplectic"
-  ) {
-    // In ideal modes, if the object has a valid current parent, stick with it.
-    if (targetObject.parentId) {
-      const currentParent = allObjects[targetObject.parentId];
+  if (physicsEngine !== "verlet" && physicsEngine !== "symplectic") {
+    if (targetObject.parent) {
+      const currentParent = targetObject.parent;
       if (
         currentParent &&
         currentParent.status === CelestialStatus.ACTIVE &&
@@ -62,22 +58,35 @@ export function findBestGravitationalParent(
         return currentParent;
       }
     }
-    return null; // Otherwise, no change or no clear parent in ideal mode.
+    return null;
   }
 
   let best: CelestialObject | null = null;
   let maxInfluence = 0;
 
+  // Ensure target object has necessary physics data for calculations and filtering
+  if (
+    !targetObject.physicsState?.position_m ||
+    targetObject.physicsState.mass_kg === undefined
+  )
+    return null;
+
   const candidates = Object.values(allObjects).filter((obj) => {
     if (obj.id === targetObject.id) return false;
     if (excludeIds.includes(obj.id)) return false;
     if (obj.status !== CelestialStatus.ACTIVE) return false;
-    if (!obj.physicsStateReal) return false;
+    // Ensure candidate has a complete physics state for calculations and filtering
+    if (
+      !(
+        obj.physicsState?.position_m &&
+        obj.physicsState.velocity_mps &&
+        obj.physicsState.mass_kg !== undefined
+      )
+    )
+      return false;
 
-    // Stars can parent anything.
     if (obj.type === CelestialType.STAR) return true;
 
-    // Moons / asteroid-fields can be captured by big planets / gas-giants.
     if (
       targetObject.type === CelestialType.MOON ||
       targetObject.type === CelestialType.ASTEROID_FIELD
@@ -85,11 +94,10 @@ export function findBestGravitationalParent(
       if (obj.type === CelestialType.GAS_GIANT) return true;
       if (
         obj.type === CelestialType.PLANET &&
-        (obj.realMass_kg ?? 0) > (targetObject.realMass_kg ?? 0)
+        obj.physicsState.mass_kg > targetObject.physicsState.mass_kg // Both guaranteed non-null by checks above
       )
         return true;
     }
-
     return false;
   });
 
@@ -97,9 +105,10 @@ export function findBestGravitationalParent(
     targetObject.type === CelestialType.PLANET ||
     targetObject.type === CelestialType.GAS_GIANT
   ) {
-    // For planets choose among stars only.
     const stars = candidates.filter((c) => c.type === CelestialType.STAR);
     for (const star of stars) {
+      // star.physicsState and targetObject.physicsState are guaranteed by prior checks
+      // Pass new CelestialObject directly
       const inf = calculateGravitationalInfluence(star, targetObject);
       if (inf > maxInfluence) {
         maxInfluence = inf;
@@ -109,14 +118,16 @@ export function findBestGravitationalParent(
     return best;
   }
 
-  // For moons etc – mix of stars and planets with distance decay for planets.
   for (const candidate of candidates) {
+    // candidate.physicsState and targetObject.physicsState are guaranteed non-null by prior checks
+    // Pass new CelestialObject directly
     const dist = calculateDistance(targetObject, candidate);
     const distAU = dist / AU;
+    // Pass new CelestialObject directly
     let influence = calculateGravitationalInfluence(candidate, targetObject);
 
     if (candidate.type !== CelestialType.STAR && distAU > 0.1) {
-      influence *= Math.exp(-distAU * 10); // steep fall-off for far planets.
+      influence *= Math.exp(-distAU * 10);
     }
 
     if (influence > maxInfluence) {
@@ -124,7 +135,6 @@ export function findBestGravitationalParent(
       best = candidate;
     }
   }
-
   return best;
 }
 
@@ -133,30 +143,28 @@ export function findBestGravitationalParent(
  */
 export function findNewMainStar(
   allObjects: Record<string, CelestialObject>,
+  physicsEngine: PhysicsEngineType,
   excludeStarIds: string[] = [],
 ): CelestialObject | null {
-  const currentPhysicsEngine: PhysicsEngineType =
-    simulationStateService.getCurrentState().physicsEngine;
-  if (
-    currentPhysicsEngine !== "verlet" &&
-    currentPhysicsEngine !== "symplectic"
-  ) {
-    // Don't select a *new* main star if not in N-body mode.
-    // If a current main star exists (no parentId) and isn't excluded, it remains main implicitly.
-    // This function's purpose is to find a *replacement* if the old main is gone.
-    // In ideal modes, such a replacement shouldn't automatically occur via this specific logic.
+  if (physicsEngine !== "verlet" && physicsEngine !== "symplectic") {
     return null;
   }
 
-  const remaining = Object.values(allObjects).filter(
+  const remainingStars = Object.values(allObjects).filter(
     (obj) =>
       obj.type === CelestialType.STAR &&
       obj.status === CelestialStatus.ACTIVE &&
-      !excludeStarIds.includes(obj.id),
+      !excludeStarIds.includes(obj.id) &&
+      obj.physicsState &&
+      obj.physicsState.mass_kg !== undefined, // Ensure mass is present for sorting
   );
 
-  if (remaining.length === 0) return null;
+  if (remainingStars.length === 0) return null;
 
-  remaining.sort((a, b) => (b.realMass_kg ?? 0) - (a.realMass_kg ?? 0));
-  return remaining[0];
+  remainingStars.sort(
+    (a, b) => (b.physicsState!.mass_kg ?? 0) - (a.physicsState!.mass_kg ?? 0),
+  );
+
+  const newMainStar = remainingStars[0];
+  return newMainStar;
 }

@@ -1,6 +1,6 @@
 import type { RendererCelestialObject } from "@teskooano/renderer-threejs-core"; // Corrected import path
 import type * as THREE from "three"; // For Camera type
-import type { CelestialType } from "./celestial"; // Corrected Import CelestialType
+import type { CelestialType } from "./old-celestial"; // Corrected Import CelestialType
 
 /**
  * Defines the contract for a UI component used as a celestial label.

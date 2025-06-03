@@ -1,5 +1,7 @@
-import { CelestialType } from "@teskooano/data-types";
-import { PhysicsStateReal } from "../types";
+import {
+  CelestialType,
+  CelestialPhysicsState,
+} from "@teskooano/celestial-object";
 import { detectSphereCollision } from "./collision-detection";
 import {
   isPlanetOrMoon,
@@ -11,10 +13,6 @@ import {
 } from "./collision-resolution";
 import { DestructionEvent } from "./collision-types";
 
-export * from "./collision-detection";
-export * from "./collision-resolution";
-export * from "./collision-types";
-
 /**
  * Iterates through all pairs of bodies, detects collisions, and applies appropriate resolution.
  * Handles different scenarios using helper functions:
@@ -24,35 +22,35 @@ export * from "./collision-types";
  * - General Non-Star vs Non-Star (Elastic/Inelastic based on mass)
  * - Ignores collisions involving `RING_SYSTEM` objects.
  *
- * @param bodiesReal - An array of the current real-world physics states for all bodies.
+ * @param bodiesStates - An array of the current real-world physics states for all bodies.
  * @param radii - A Map associating body IDs with their real-world radii in meters.
  * @param isStar - A Map associating body IDs with a boolean indicating if the body is a star.
  * @param bodyTypes - A Map associating body IDs with their `CelestialType`.
  * @returns A tuple: `[finalStates, destroyedIds, destructionEvents]` where
- *          `finalStates` is the updated array of `PhysicsStateReal` objects (excluding destroyed ones),
+ *          `finalStates` is the updated array of `CelestialPhysicsState` objects (excluding destroyed ones),
  *          `destroyedIds` is a Set containing the IDs of bodies destroyed in this collision pass,
  *          `destructionEvents` is an array containing details about each destructive collision.
  */
 export const handleCollisions = (
-  bodiesReal: PhysicsStateReal[],
+  bodiesStates: CelestialPhysicsState[],
   radii: Map<string | number, number>,
   isStar: Map<string | number, boolean>,
   bodyTypes: Map<string | number, CelestialType>,
-): [PhysicsStateReal[], Set<string | number>, DestructionEvent[]] => {
-  const updatedBodiesMap = new Map<string | number, PhysicsStateReal>();
-  bodiesReal.forEach((body) => updatedBodiesMap.set(body.id, { ...body }));
+): [CelestialPhysicsState[], Set<string | number>, DestructionEvent[]] => {
+  const updatedBodiesMap = new Map<string | number, CelestialPhysicsState>();
+  bodiesStates.forEach((body) => updatedBodiesMap.set(body.id, { ...body }));
 
   const destroyedIds = new Set<string | number>();
   const destructionEvents: DestructionEvent[] = [];
-  const numBodies = bodiesReal.length;
+  const numBodies = bodiesStates.length;
 
   for (let i = 0; i < numBodies; i++) {
-    const id1 = bodiesReal[i].id;
+    const id1 = bodiesStates[i].id;
 
     if (destroyedIds.has(id1)) continue;
 
     for (let j = i + 1; j < numBodies; j++) {
-      const id2 = bodiesReal[j].id;
+      const id2 = bodiesStates[j].id;
 
       if (destroyedIds.has(id2) || id1 === id2) continue;
 
@@ -152,6 +150,7 @@ export const handleCollisions = (
             body1,
             body2,
             collision,
+            bodyTypes,
             updatedBodiesMap,
             destroyedIds,
             destructionEvents,

@@ -7,7 +7,6 @@ import {
   SurfaceType,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
-  CompositionType,
 } from "@teskooano/data-types";
 
 const EARTH_MASS_KG = 5.97237e24;
@@ -103,11 +102,6 @@ export function initializeEarthPlanet(parentId: string): string {
         ...earthProceduralSurface,
         type: SurfaceType.VARIED,
         surfaceType: SurfaceType.VARIED,
-        composition: [
-          CompositionType.SILICATE,
-          CompositionType.IRON,
-          CompositionType.WATER_ICE,
-        ],
         planetType: PlanetType.TERRESTRIAL,
         color: "#1E90FF",
       },

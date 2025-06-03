@@ -7,7 +7,6 @@ import {
   SurfaceType,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
-  CompositionType,
 } from "@teskooano/data-types";
 
 const PLUTO_MASS_KG = 1.303e22;
@@ -83,7 +82,7 @@ export function initializePlutoPlanet(parentId: string): string {
     },
     properties: {
       type: CelestialType.DWARF_PLANET,
-      planetType: PlanetType.ICE,
+      planetType: PlanetType.ICE_WORLD,
       isMoon: false,
       composition: [
         "nitrogen ice",
@@ -98,12 +97,8 @@ export function initializePlutoPlanet(parentId: string): string {
         ...plutoProceduralSurface,
         type: SurfaceType.VARIED,
         surfaceType: SurfaceType.VARIED,
-        composition: [
-          CompositionType.NITROGEN_ICE,
-          CompositionType.WATER_ICE,
-          CompositionType.METHANE_ICE,
-        ],
-        planetType: PlanetType.ICE,
+
+        planetType: PlanetType.ICE_WORLD,
         color: "#F5E8D1",
       },
     } as PlanetProperties,

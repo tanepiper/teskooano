@@ -6,7 +6,6 @@ import {
   SurfaceType,
   type PlanetProperties,
   type ProceduralSurfaceProperties,
-  CompositionType,
 } from "@teskooano/data-types";
 
 const LUNA_MASS_KG = 7.342e22;
@@ -80,7 +79,7 @@ export function initializeEarthMoons(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.ROCKY_WORLD,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["silicates", "anorthosite crust", "possible small core"],
@@ -89,8 +88,7 @@ export function initializeEarthMoons(parentId: string): void {
         ...lunaProceduralSurface,
         type: SurfaceType.VARIED, // Changed from CRATERED to VARIED for more nuance
         surfaceType: SurfaceType.VARIED,
-        composition: [CompositionType.SILICATE],
-        planetType: PlanetType.ROCKY,
+        planetType: PlanetType.ROCKY_WORLD,
         color: "#BEBEBE",
       },
     } as PlanetProperties,

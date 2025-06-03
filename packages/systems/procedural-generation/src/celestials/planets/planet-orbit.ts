@@ -2,9 +2,10 @@ import {
   calculateOrbitalPosition,
   calculateOrbitalVelocity,
 } from "@teskooano/core-physics";
-import type {
-  OrbitalParameters,
-  PhysicsStateReal,
+import {
+  AU_METERS,
+  type OrbitalParameters,
+  type PhysicsStateReal,
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
@@ -32,7 +33,7 @@ export function calculatePlanetOrbitAndInitialState(
   orbit: OrbitalParameters;
   initialPhysicsState: PhysicsStateReal | null;
 } {
-  const semiMajorAxis_m = bodyDistanceAU * CONST.AU_TO_METERS;
+  const semiMajorAxis_m = bodyDistanceAU * AU_METERS;
   const orbitalPeriod_s = UTIL.calculateOrbitalPeriod_s(
     starMass_kg,
     semiMajorAxis_m,

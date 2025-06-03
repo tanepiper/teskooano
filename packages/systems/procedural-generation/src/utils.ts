@@ -1,11 +1,13 @@
 import {
+  AU_METERS,
   GRAVITATIONAL_CONSTANT,
   GasGiantClass,
+  MainSequenceSpectralClass,
   PlanetType,
   ProceduralSurfaceProperties,
-  MainSequenceSpectralClass,
+  SOLAR_LUMINOSITY,
+  STEFAN_BOLTZMANN,
 } from "@teskooano/data-types";
-import * as CONST from "./constants";
 
 /**
  * Gets a random item from an array using the provided random function.
@@ -105,9 +107,8 @@ export function calculateLuminosity(
 ): number {
   if (radius_m <= 0 || temperature_k <= 0) return 0;
   const surfaceArea = 4 * Math.PI * radius_m ** 2;
-  const totalPowerWatts =
-    surfaceArea * CONST.STEFAN_BOLTZMANN * temperature_k ** 4;
-  return totalPowerWatts / CONST.SOLAR_LUMINOSITY;
+  const totalPowerWatts = surfaceArea * STEFAN_BOLTZMANN * temperature_k ** 4;
+  return totalPowerWatts / SOLAR_LUMINOSITY;
 }
 
 /**
@@ -183,11 +184,10 @@ export function estimateTemperature(
 ): number {
   if (distanceAU <= 0) return 10000;
 
-  const luminosityWatts = starLuminosity * CONST.SOLAR_LUMINOSITY;
-  const distanceMeters = distanceAU * CONST.AU_TO_METERS;
+  const luminosityWatts = starLuminosity * SOLAR_LUMINOSITY;
+  const distanceMeters = distanceAU * AU_METERS;
 
-  const denominator =
-    16 * Math.PI * CONST.STEFAN_BOLTZMANN * distanceMeters ** 2;
+  const denominator = 16 * Math.PI * STEFAN_BOLTZMANN * distanceMeters ** 2;
   if (denominator <= 0) return 0;
 
   const tempKelvin = Math.pow(luminosityWatts / denominator, 0.25);
@@ -293,7 +293,7 @@ export function createProceduralSurfaceProperties(
       terrainOffset = getRandomInRange(-0.1, 0.1, random);
       break;
 
-    case PlanetType.ROCKY:
+    case PlanetType.ROCKY_WORLD:
       color1 = getRandomItem(["#4f2214", "#171719", "#312b2e"], random);
       color2 = getRandomItem(["#522f28", "#631100", "#3d1c15"], random);
       color3 = getRandomItem(["#3b3837", "#5d4a41", "#4d4542"], random);
@@ -316,7 +316,7 @@ export function createProceduralSurfaceProperties(
       terrainOffset = getRandomInRange(-0.2, 0.0, random);
       break;
 
-    case PlanetType.BARREN:
+    case PlanetType.BARREN_WORLD:
       color1 = getRandomItem(["#583C3C", "#6d4c41", "#6f3323"], random); // Dark Grays
       color2 = getRandomItem(["#544A59", "#111c19", "#2a2b2b"], random); // Medium Grays
       color3 = getRandomItem(["#733217", "#312727", "#544A59"], random); // Lighter Grays
@@ -339,7 +339,7 @@ export function createProceduralSurfaceProperties(
       terrainOffset = getRandomInRange(0.0, 0.2, random);
       break;
 
-    case PlanetType.DESERT:
+    case PlanetType.DESERT_WORLD:
       color1 = getRandomItem(["#A0522D", "#B8860B", "#8B4513"], random); // Sienna, DarkGoldenrod, SaddleBrown (Deep Dunes/Rock)
       color2 = getRandomItem(["#D2B48C", "#F4A460", "#CD853F"], random); // Tan, SandyBrown, Peru (Sand)
       color3 = getRandomItem(["#E0C9A6", "#FFDEAD", "#DEB887"], random); // Lighter Tan, NavajoWhite, BurlyWood (Highlights)
@@ -362,7 +362,7 @@ export function createProceduralSurfaceProperties(
       terrainOffset = getRandomInRange(0.1, 0.3, random);
       break;
 
-    case PlanetType.ICE:
+    case PlanetType.ICE_WORLD:
       color1 = getRandomItem(["#ffffff", "#edfbff", "#def4f9"], random); // CadetBlue, CornflowerBlue, SteelBlue (Deep Ice/Shadows)
       color2 = getRandomItem(["#fff3f3", "#ffffff", "#52c8ff"], random); // PowderBlue, LightBlue (Main Ice Field)
       color3 = getRandomItem(["#80ecff", "#ffffff", "#f5fdff"], random); // Lighter Blues/Cyans (Snow/Frost)
@@ -385,7 +385,7 @@ export function createProceduralSurfaceProperties(
       terrainOffset = getRandomInRange(0.2, 0.4, random);
       break;
 
-    case PlanetType.LAVA:
+    case PlanetType.LAVA_WORLD:
       color1 = getRandomItem(["#1A0000", "#2B0B00", "#000000"], random); // Very Dark Red/Black (Cooled Rock)
       color2 = getRandomItem(["#4E0000", "#6B0000", "#8B0000"], random); // Dark Reds (Cooling Lava/Rock)
       color3 = getRandomItem(["#AE1000", "#CC3300", "#FF4500"], random); // Bright Reds/Oranges (Hot Lava)
@@ -408,7 +408,7 @@ export function createProceduralSurfaceProperties(
       terrainOffset = getRandomInRange(-0.3, -0.1, random);
       break;
 
-    case PlanetType.OCEAN:
+    case PlanetType.OCEAN_WORLD:
       color1 = getRandomItem(["#001F3F", "#003366", "#004080"], random); // Deep Ocean Blue
       color2 = getRandomItem(["#0055A4", "#1E90FF", "#4169E1"], random); // Mid Ocean Blue, DodgerBlue, RoyalBlue
       color3 = getRandomItem(["#87CEEB", "#ADD8E6", "#B0E0E6"], random); // SkyBlue, LightBlue, PowderBlue (Shallows)

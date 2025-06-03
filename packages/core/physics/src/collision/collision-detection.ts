@@ -1,5 +1,5 @@
 import { EPSILON, OSVector3 } from "@teskooano/core-math";
-import { PhysicsStateReal } from "../types";
+import { CelestialPhysicsState } from "@teskooano/celestial-object";
 import { Collision } from "./collision-types";
 
 /**
@@ -13,9 +13,9 @@ import { Collision } from "./collision-types";
  * @returns A `Collision` object containing details if the spheres intersect, otherwise `null`.
  */
 export function detectSphereCollision(
-  body1: PhysicsStateReal,
+  body1: CelestialPhysicsState,
   radius1: number,
-  body2: PhysicsStateReal,
+  body2: CelestialPhysicsState,
   radius2: number,
 ): Collision | null {
   const displacement = new OSVector3()

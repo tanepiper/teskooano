@@ -1,0 +1,13 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@teskooano/core-math": ["../../core/math/src"],
+      "@teskooano/data-types": ["../../data/types/src"],
+      "@teskooano/core-physics": ["../../core/physics/src"]
+    }
+  },
+  "include": ["src/**/*"]
+}

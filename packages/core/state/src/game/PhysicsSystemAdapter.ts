@@ -1,12 +1,13 @@
-import type { CelestialObject, PhysicsStateReal } from "@teskooano/data-types";
-import { CelestialStatus, CelestialType } from "@teskooano/data-types";
-import type { SimulationStepResult } from "@teskooano/core-physics"; // Assuming this path is correct or will be resolved by TS
-import { gameStateService } from "./stores";
+import type { SimulationStepResult } from "@teskooano/core-physics";
 import {
-  reassignOrphanedObjects,
-  checkAndReassignEscapedMoons,
-  checkAndReassignPlanetsToProperStars,
-} from "./utils/parent-reassignment";
+  CelestialObject,
+  type CelestialPhysicsState,
+  CelestialStatus,
+  CelestialType,
+  type PhysicsEngineType,
+} from "@teskooano/celestial-object";
+import { gameStateService } from "./stores";
+import { simulationStateService } from "./simulation";
 
 /**
  * @class PhysicsSystemAdapter
@@ -30,25 +31,22 @@ class PhysicsSystemAdapter {
 
   /**
    * Get an array of REAL physics states for active celestial objects to be fed into the simulation.
-   * Filters out destroyed objects or those explicitly ignoring physics.
+   * Filters out destroyed objects.
+   * Note: The 'ignorePhysics' flag from the old CelestialObject is not present in the new one.
+   * Logic is simplified to process non-destroyed objects. Stars are inherently processed.
    */
-  public getPhysicsBodies(): PhysicsStateReal[] {
-    const bodies: PhysicsStateReal[] = [];
+  public getPhysicsBodies(): CelestialPhysicsState[] {
+    const bodies: CelestialPhysicsState[] = [];
     Object.values(gameStateService.getCelestialObjects())
       .filter(
-        (obj) =>
-          obj.status !== CelestialStatus.DESTROYED &&
-          obj.status !== CelestialStatus.ANNIHILATED && // Also exclude annihilated
-          // Allow stars through even when they are flagged to ignore physics so that simplified
-          // integrators always have a central attractor to reference.
-          (!obj.ignorePhysics || obj.type === CelestialType.STAR),
+        (obj) => obj.status !== CelestialStatus.DESTROYED && !obj.ignorePhysics,
       )
       .forEach((obj) => {
-        if (obj.physicsStateReal) {
-          bodies.push(obj.physicsStateReal);
+        if (obj.physicsState) {
+          bodies.push(obj.physicsState);
         } else {
           console.warn(
-            `[PhysicsSystemAdapter] Object ${obj.id} is active for physics but missing physicsStateReal, skipping in simulation.`,
+            `[PhysicsSystemAdapter] Object ${obj.id} is active for physics but missing physicsState, skipping in simulation.`,
           );
         }
       });
@@ -78,6 +76,8 @@ class PhysicsSystemAdapter {
    */
   public updateStateFromResult(result: SimulationStepResult): void {
     const currentCelestialObjects = gameStateService.getCelestialObjects();
+    const physicsEngine =
+      simulationStateService.getCurrentState().physicsEngine;
 
     // Step 1: Update physics states for all objects
     let updatedObjectsMap = this.updatePhysicsStates(
@@ -93,24 +93,30 @@ class PhysicsSystemAdapter {
     );
 
     // Step 3: Reassign orphaned objects when stars are destroyed
-    updatedObjectsMap = this.handleParentReassignment(
-      result,
-      currentCelestialObjects,
-      updatedObjectsMap,
-    );
+    const destroyedStarIds = Array.from(result.destroyedIds)
+      .map(String)
+      .filter((id) => {
+        const obj = currentCelestialObjects[id];
+        return obj && obj.type === CelestialType.STAR;
+      });
 
-    // Step 4: Check and reassign escaped moons
-    // This runs periodically to ensure moons that drift too far from their parent planets
-    // are reassigned to the nearest star
-    if (this.shouldCheckMoons()) {
-      updatedObjectsMap = checkAndReassignEscapedMoons(updatedObjectsMap);
+    if (destroyedStarIds.length > 0) {
+      console.log(
+        `[PhysicsSystemAdapter] Handling parent reassignment for ${destroyedStarIds.length} destroyed stars: ${destroyedStarIds.join(", ")}`,
+      );
+      CelestialObject.handleDestroyedObjects(
+        destroyedStarIds,
+        updatedObjectsMap,
+        physicsEngine,
+      );
     }
 
-    // Step 5: Check and reassign planets to proper stars
-    // This runs periodically to ensure planets orbit the star with the strongest gravitational influence
-    if (this.shouldCheckPlanets()) {
-      updatedObjectsMap =
-        checkAndReassignPlanetsToProperStars(updatedObjectsMap);
+    // Step 4 & 5: System-wide hierarchy maintenance (escaped moons, planet-star assignment)
+    if (this.shouldPerformHierarchyMaintenance()) {
+      CelestialObject.performSystemHierarchyMaintenance(
+        updatedObjectsMap,
+        physicsEngine,
+      );
     }
 
     // Step 6: Apply final state and update acceleration vectors
@@ -137,10 +143,7 @@ class PhysicsSystemAdapter {
       const existingObject = updatedObjectsMap[id];
 
       if (existingObject) {
-        updatedObjectsMap[id] = {
-          ...existingObject,
-          physicsStateReal: updatedState,
-        };
+        existingObject.physicsState = updatedState as CelestialPhysicsState;
       } else {
         console.warn(
           `[PhysicsSystemAdapter] Received updated state for object ID: ${id}, which was not found in the current celestial objects map. This might happen if the object was created and destroyed in the same tick or if getPhysicsBodies was not perfectly synced.`,
@@ -186,14 +189,12 @@ class PhysicsSystemAdapter {
           idToDestroy,
           result,
           currentObjects,
-          existingObject,
+          existingObject as CelestialObject,
         );
 
         objectsMap[idToDestroy] = {
           ...existingObject,
           status: finalStatus,
-          // Store destruction time for UI display
-          destroyedTime: Date.now(),
         } as CelestialObject;
       }
     });
@@ -218,13 +219,14 @@ class PhysicsSystemAdapter {
       const destroyedIdStr = String(id);
       const parentObject = currentObjects[destroyedIdStr];
 
-      if (parentObject && this.canHaveRings(parentObject)) {
+      if (parentObject && this.canHaveRings(parentObject as CelestialObject)) {
         const ringSystemId = `ring-system-${parentObject.id}`;
         const ringSystemObject = currentObjects[ringSystemId];
 
         if (
           ringSystemObject &&
-          ringSystemObject.type === CelestialType.RING_SYSTEM
+          (ringSystemObject as CelestialObject).type ===
+            CelestialType.RING_SYSTEM
         ) {
           allIdsToDestroy.add(ringSystemId);
           console.debug(
@@ -254,11 +256,7 @@ class PhysicsSystemAdapter {
   private shouldProcessDestruction(
     object: CelestialObject | undefined,
   ): object is CelestialObject {
-    return !!(
-      object &&
-      object.status !== CelestialStatus.DESTROYED &&
-      object.status !== CelestialStatus.ANNIHILATED
-    );
+    return !!(object && object.status !== CelestialStatus.DESTROYED);
   }
 
   /**
@@ -311,15 +309,18 @@ class PhysicsSystemAdapter {
     const survivorIdStr = String(event.survivorId);
     const survivorObject = currentObjects[survivorIdStr];
 
-    if (survivorObject && survivorObject.type === CelestialType.STAR) {
-      return CelestialStatus.ANNIHILATED; // Absorbed by a star
+    if (
+      survivorObject &&
+      (survivorObject as CelestialObject).type === CelestialType.STAR
+    ) {
+      return CelestialStatus.DESTROYED;
     }
 
     if (event.survivorId === "MUTUAL_DESTRUCTION") {
-      return CelestialStatus.ANNIHILATED; // Mutual destruction
+      return CelestialStatus.DESTROYED;
     }
 
-    return CelestialStatus.DESTROYED; // Regular collision
+    return CelestialStatus.DESTROYED;
   }
 
   /**
@@ -331,8 +332,8 @@ class PhysicsSystemAdapter {
   ): boolean {
     return (
       object.type === CelestialType.RING_SYSTEM &&
-      !!object.parentId &&
-      result.destroyedIds.has(object.parentId)
+      !!object.parent?.id &&
+      result.destroyedIds.has(object.parent.id)
     );
   }
 
@@ -345,7 +346,7 @@ class PhysicsSystemAdapter {
     currentObjects: Record<string, CelestialObject>,
   ): CelestialStatus {
     const parentDestroyEvent = result.destructionEvents.find(
-      (event) => String(event.destroyedId) === object.parentId,
+      (event) => String(event.destroyedId) === object.parent?.id,
     );
 
     if (parentDestroyEvent) {
@@ -359,67 +360,15 @@ class PhysicsSystemAdapter {
   }
 
   /**
-   * Handles parent reassignment for objects that become orphaned when their parent star is destroyed.
-   *
-   * This is crucial for maintaining simulation stability - when a star is destroyed, any planets
-   * orbiting it need to be reassigned to the nearest remaining star to continue participating
-   * in the gravitational simulation properly.
-   *
-   * @param result - The simulation step result
-   * @param currentObjects - The original celestial objects map
-   * @param updatedObjects - The celestial objects map with destruction events applied
-   * @returns Updated celestial objects map with parent reassignments applied
+   * Determines if system-wide hierarchy maintenance should be performed this update.
+   * Combines previous moon and planet check frequencies.
+   * @returns true if hierarchy maintenance should be performed
    */
-  private handleParentReassignment(
-    result: SimulationStepResult,
-    currentObjects: Record<string, CelestialObject>,
-    updatedObjects: Record<string, CelestialObject>,
-  ): Record<string, CelestialObject> {
-    // Identify which destroyed objects were stars
-    const destroyedStarIds = Array.from(result.destroyedIds)
-      .map(String)
-      .filter((id) => {
-        const obj = currentObjects[id];
-        return obj && obj.type === CelestialType.STAR;
-      });
-
-    // If no stars were destroyed, no reassignment needed
-    if (destroyedStarIds.length === 0) {
-      return updatedObjects;
-    }
-
-    console.log(
-      `[PhysicsSystemAdapter] Handling parent reassignment for ${destroyedStarIds.length} destroyed stars: ${destroyedStarIds.join(", ")}`,
-    );
-
-    // Use the reassignment utility to find new parents for orphaned objects
-    return reassignOrphanedObjects(destroyedStarIds, updatedObjects);
-  }
-
-  /**
-   * Determines if moon checking should be performed this update.
-   * We don't need to check every frame - moons don't suddenly escape their orbits.
-   * Checking roughly once per simulated week should be sufficient for realistic scenarios.
-   * @returns true if moon checking should be performed
-   */
-  private shouldCheckMoons(): boolean {
-    // Check roughly every 1000 physics updates (about once per simulated week at typical time scales)
+  private shouldPerformHierarchyMaintenance(): boolean {
+    // Check roughly every 1000 physics updates (adjust as needed)
     const updateCount = (this as any)._updateCount || 0;
     (this as any)._updateCount = updateCount + 1;
-
     return updateCount % 1000 === 0;
-  }
-
-  /**
-   * Determines if planet checking should be performed this update.
-   * Planets move slowly, so we can check less frequently than moons.
-   * @returns true if planet checking should be performed
-   */
-  private shouldCheckPlanets(): boolean {
-    // Check roughly every 5000 physics updates (about once per simulated month at typical time scales)
-    const updateCount = (this as any)._updateCount || 0;
-
-    return updateCount % 5000 === 0;
   }
 }
 

@@ -7,6 +7,7 @@
     "apps/website",
     "./apps/*",
     "./packages/app/*",
+    "./packages/celestials/*",
     "./packages/data/*",
     "./packages/core/*",
     "./packages/systems/*",

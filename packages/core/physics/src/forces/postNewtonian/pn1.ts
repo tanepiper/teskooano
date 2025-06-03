@@ -1,5 +1,5 @@
 import { OSVector3, EPSILON } from "@teskooano/core-math";
-import { PhysicsStateReal } from "../../types";
+import { CelestialPhysicsState } from "@teskooano/celestial-object";
 
 const SPEED_OF_LIGHT = 299792458;
 const C_SQ = SPEED_OF_LIGHT * SPEED_OF_LIGHT;
@@ -17,8 +17,8 @@ const C_SQ = SPEED_OF_LIGHT * SPEED_OF_LIGHT;
  * @returns The 1PN corrective force vector acting on body1.
  */
 export const calculate1PNForce = (
-  body1: PhysicsStateReal,
-  body2: PhysicsStateReal,
+  body1: CelestialPhysicsState,
+  body2: CelestialPhysicsState,
   G: number,
 ): OSVector3 => {
   const m1 = body1.mass_kg;

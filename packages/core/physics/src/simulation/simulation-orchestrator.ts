@@ -1,22 +1,24 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { PhysicsStateReal } from "../types";
-import { CelestialType } from "@teskooano/data-types";
-import type { PhysicsEngineType } from "@teskooano/core-state";
+import {
+  CelestialPhysicsState,
+  CelestialStatus,
+  CelestialType,
+  PhysicsEngineType,
+  CelestialOrbitalProperties,
+} from "@teskooano/celestial-object";
 import { AccelerationCalculator } from "./acceleration-calculator";
 import {
   IntegrationManager,
   IntegrationParameters,
 } from "./integration-manager";
-import {
-  handleCollisions,
-  type DestructionEvent,
-} from "../collision/collision";
+import { handleCollisions } from "../collision/collision";
+import type { DestructionEvent } from "../collision/collision-types";
 
 /**
  * Result of a single simulation step
  */
 export interface SimulationStepResult {
-  states: PhysicsStateReal[];
+  states: CelestialPhysicsState[];
   accelerations: Map<string, OSVector3>;
   destroyedIds: Set<string | number>;
   destructionEvents: DestructionEvent[];
@@ -35,10 +37,7 @@ export interface SimulationParameters {
   softeningLength?: number;
   barnesHutTheta?: number;
   physicsEngine?: PhysicsEngineType;
-  orbitalParams?: Map<
-    string | number,
-    import("@teskooano/data-types").OrbitalParameters
-  >;
+  orbitalParams?: Map<string | number, CelestialOrbitalProperties>;
   currentTime?: number;
 }
 
@@ -64,7 +63,7 @@ export class SimulationOrchestrator {
    * @returns Complete simulation step result
    */
   public executeSimulationStep(
-    bodies: PhysicsStateReal[],
+    bodies: CelestialPhysicsState[],
     dt: number,
     params: SimulationParameters,
   ): SimulationStepResult {
@@ -138,7 +137,7 @@ export class SimulationOrchestrator {
    * @returns Initial simulation step result
    */
   public createInitialResult(
-    initialStates: PhysicsStateReal[],
+    initialStates: CelestialPhysicsState[],
   ): SimulationStepResult {
     return {
       states: initialStates,
