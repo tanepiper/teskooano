@@ -17,7 +17,6 @@ import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 
 import { layoutOrientation$ } from "./layoutStore";
 
-import { simulationManager } from "@teskooano/app-simulation"; // Added
 import { CustomEvents } from "@teskooano/data-types";
 import { RendererStats } from "@teskooano/renderer-threejs-core";
 import { EngineToolbar } from "../../../core/interface/engine-toolbar";
@@ -171,14 +170,7 @@ export class CompositeEnginePanel
 
   disconnectedCallback(): void {
     // Remove window-level event listeners here
-    window.removeEventListener(
-      CustomEvents.SYSTEM_GENERATION_START,
-      this._handleSystemGenerationStart,
-    );
-    window.removeEventListener(
-      CustomEvents.SYSTEM_GENERATION_COMPLETE,
-      this._handleSystemGenerationComplete,
-    );
+    this._removeGlobalEventListeners();
 
     // Optionally, unsubscribe from RxJS subscriptions that don't clean up themselves
     // or that shouldn't run if the element is not in the DOM.
@@ -327,34 +319,45 @@ export class CompositeEnginePanel
     });
   }
 
-  private _handleSystemGenerationStart(): void {
-    this._isGeneratingSystem = true;
-    if (!this._renderer) {
-      // Only show if renderer isn't active
-      this._placeholderManager?.showMessage(true);
-    }
+  private _removeGlobalEventListeners(): void {
+    window.removeEventListener(
+      CustomEvents.SYSTEM_GENERATION_START,
+      this._handleSystemGenerationStart,
+    );
+    window.removeEventListener(
+      CustomEvents.SYSTEM_GENERATION_COMPLETE,
+      this._handleSystemGenerationComplete,
+    );
   }
 
-  private _handleSystemGenerationComplete(): void {
+  private _handleSystemGenerationStart = (): void => {
+    this._isGeneratingSystem = true;
+    // Show placeholder only if the main renderer isn't already visible
+    if (!this._renderer) {
+      this._placeholderManager?.showMessage(true);
+    }
+  };
+
+  private _handleSystemGenerationComplete = (): void => {
     this._isGeneratingSystem = false;
     const objectCount = Object.keys(getCelestialObjects()).length;
 
     if (!this._renderer) {
-      // If renderer is not yet up
       if (objectCount > 0) {
-        this._placeholderManager?.hide(); // Hide placeholder, show engine container
-
+        // System is loaded, hide placeholder and initialize engine
+        this._placeholderManager?.hide();
         this.initializeRenderer();
         this.createEngineToolbar();
-
-        ensureSimulationLoopStarted();
         this.triggerResize();
       } else {
-        // No objects, generation complete, no renderer. Show default placeholder.
+        // Generation finished but no objects, show initial placeholder
         this._placeholderManager?.showMessage(false);
       }
+    } else {
+      // If renderer already exists, just ensure placeholder is hidden
+      this._placeholderManager?.hide();
     }
-  }
+  };
 
   // Helper method to encapsulate celestial object subscription logic
   private _subscribeToCelestialObjects(): void {
@@ -454,48 +457,36 @@ export class CompositeEnginePanel
       return;
     }
 
-    // Initialize the SimulationManager, which creates the renderer
-    simulationManager.initialize(this._engineContainer);
-    this._renderer = simulationManager.getRenderer() || undefined; // Get the renderer from the manager, convert null to undefined
+    const initialViewState = this.getViewState();
+    this._renderer = new ModularSpaceRenderer(this._engineContainer, {
+      antialias: true,
+      shadows: true,
+      hdr: true,
+      showGrid: initialViewState.showGrid,
+      showCelestialLabels: initialViewState.showCelestialLabels,
+      showAuMarkers: initialViewState.showAuMarkers,
+      showDebrisEffects: initialViewState.showDebrisEffects,
+    });
 
     if (!this._renderer) {
       console.error(
-        "[CompositeEnginePanel] Failed to get renderer from SimulationManager.",
+        "[CompositeEnginePanel] Failed to create ModularSpaceRenderer instance.",
       );
       // Display error in the panel container
       if (this._engineContainer) {
         this._engineContainer.textContent =
-          "Error initializing engine: Failed to get renderer from SimulationManager.";
+          "Error initializing engine: Failed to create renderer instance.";
         this._engineContainer.style.color = "red";
         this._engineContainer.style.padding = "1em";
       }
       return; // Stop further initialization if renderer isn't available
     }
 
-    // Original _createRendererInstance logic is now handled by simulationManager.initialize()
-    // and getting the instance via simulationManager.getRenderer()
-
     // The rest of the initialization depends on this._renderer being valid
     if (!this._initializeCameraSystems()) return;
     if (!this._configureAndLinkCamera()) return;
 
     this._finalizePanelInitialization();
-  }
-
-  /**
-   * Creates and configures the core ModularSpaceRenderer instance.
-   * @returns True if successful, false otherwise.
-   * @deprecated This logic is now handled by SimulationManager.initialize() and getRenderer()
-   */
-  private _createRendererInstance(): boolean {
-    // This method is now effectively replaced.
-    // The renderer instance is obtained from simulationManager.
-    // Kept for context during refactor, should be removed or commented out thoroughly.
-    console.warn(
-      "[CompositeEnginePanel] _createRendererInstance is deprecated. Renderer is initialized via SimulationManager.",
-    );
-
-    return !!this._renderer; // Return true if this._renderer was successfully set from manager
   }
 
   /**
@@ -712,14 +703,7 @@ export class CompositeEnginePanel
     this.disposeRendererAndUI();
 
     // Remove event listeners for system generation (already in disconnectedCallback, but good for explicit dispose)
-    window.removeEventListener(
-      CustomEvents.SYSTEM_GENERATION_START,
-      this._handleSystemGenerationStart,
-    );
-    window.removeEventListener(
-      CustomEvents.SYSTEM_GENERATION_COMPLETE,
-      this._handleSystemGenerationComplete,
-    );
+    this._removeGlobalEventListeners();
 
     this._panelRemovedSubscription?.unsubscribe();
     this._panelRemovedSubscription = null;

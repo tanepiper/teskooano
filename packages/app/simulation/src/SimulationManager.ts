@@ -1,4 +1,3 @@
-import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
   updateSimulation,
   vectorPool,
@@ -34,13 +33,9 @@ export interface OrbitUpdatePayload {
 export class SimulationManager {
   private static instance: SimulationManager;
 
-  private renderer: ModularSpaceRenderer | null = null;
-  private container: HTMLElement | null = null;
-
   // Loop properties
   private lastTime = 0;
   private isRunning = false;
-  // private lastLoggedTime = 0; // This wasn't used for logging, can be removed if confirmed
   private accumulatedTime = 0;
   private resetTimeSubscription: Subscription | null = null;
   private animationFrameId: number | null = null;
@@ -74,54 +69,9 @@ export class SimulationManager {
     return this._destructionOccurred$.asObservable();
   }
 
-  /**
-   * Initializes the SimulationManager with the container for the renderer.
-   * This must be called before starting the loop.
-   * @param container The HTML element to host the renderer canvas.
-   */
-  public initialize(container: HTMLElement): void {
-    if (this.renderer) {
-      console.warn("SimulationManager already initialized.");
-      // Optionally, dispose existing renderer or handle re-initialization
-      this.disposeRenderer();
-    }
-    this.container = container;
-    this.renderer = new ModularSpaceRenderer(this.container);
-    this.setupEventListeners();
-    console.log("SimulationManager initialized.");
-  }
-
-  public getRenderer(): ModularSpaceRenderer | null {
-    return this.renderer;
-  }
-
-  private setupEventListeners(): void {
-    window.addEventListener("resize", this.handleResize);
-  }
-
-  private removeEventListeners(): void {
-    window.removeEventListener("resize", this.handleResize);
-  }
-
-  private handleResize = (): void => {
-    if (this.renderer && this.container) {
-      // Use container dimensions for renderer, not necessarily full window
-      this.renderer.onResize(
-        this.container.clientWidth,
-        this.container.clientHeight,
-      );
-    }
-  };
-
   public startLoop(): void {
     if (this.isRunning) {
       console.warn("Simulation loop is already running.");
-      return;
-    }
-    if (!this.renderer) {
-      console.error(
-        "Renderer not initialized. Call initialize() before starting the loop.",
-      );
       return;
     }
 
@@ -320,31 +270,23 @@ export class SimulationManager {
     console.log("System reset triggered.");
   }
 
-  /**
-   * Disposes the renderer instance.
-   */
-  private disposeRenderer(): void {
-    this.renderer?.dispose();
-    this.renderer = null;
-    console.log("Renderer disposed.");
+  public resetTime(): void {
+    this._resetTime$.next();
   }
 
   /**
    * Cleans up resources used by the SimulationManager.
-   * Stops the loop, disposes the renderer, and removes event listeners.
+   * Stops the loop, and removes event listeners.
    */
   public dispose(): void {
     this.stopLoop();
-    this.disposeRenderer();
-    this.removeEventListeners();
-
-    // Complete subjects to prevent further emissions and signal completion
     this._resetTime$.complete();
     this._orbitUpdate$.complete();
     this._destructionOccurred$.complete();
+    this.resetTimeSubscription?.unsubscribe();
 
-    // Clear the static instance for potential re-instantiation in test environments or special cases
-    // (SimulationManager as any).instance = null; // Be cautious with this in production
     console.log("SimulationManager disposed.");
   }
 }
+
+export const simulationManager = SimulationManager.getInstance();

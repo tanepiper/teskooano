@@ -1,5 +1,7 @@
 import { simulationManager } from "@teskooano/app-simulation";
+import { celestialObjects$ } from "@teskooano/core-state";
 import { BehaviorSubject, Observable } from "rxjs";
+import { distinctUntilChanged, map } from "rxjs/operators";
 
 /**
  * Subject to track whether the main simulation loop has been initiated.
@@ -13,6 +15,29 @@ const simulationLoopStartedSubject = new BehaviorSubject<boolean>(false);
  */
 export const simulationLoopStarted$: Observable<boolean> =
   simulationLoopStartedSubject.asObservable();
+
+/**
+ * Subscribes to the celestial objects store and automatically starts or stops
+ * the simulation loop based on whether any objects exist.
+ */
+celestialObjects$
+  .pipe(
+    map((objects) => Object.keys(objects).length > 0),
+    distinctUntilChanged(),
+  )
+  .subscribe((hasObjects) => {
+    if (hasObjects) {
+      ensureSimulationLoopStarted();
+    } else {
+      if (simulationManager.isLoopRunning) {
+        simulationManager.stopLoop();
+        simulationLoopStartedSubject.next(false);
+        console.log(
+          "[State] Main simulation loop stopped as no objects exist.",
+        );
+      }
+    }
+  });
 
 /**
  * Ensures that the main simulation loop is started if it hasn't been already.
