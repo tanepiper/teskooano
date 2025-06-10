@@ -51,8 +51,6 @@ export class CompositeEnginePanel
   private _engineContainer: HTMLElement | null = null;
   private _placeholderManager: PlaceholderManager | undefined = undefined;
 
-  private _isGeneratingSystem = false;
-
   private _params:
     | (GroupPanelPartInitParameters & { params?: CompositePanelParams })
     | undefined;
@@ -123,10 +121,6 @@ export class CompositeEnginePanel
     }
 
     // Bind handlers once
-    this._handleSystemGenerationStart =
-      this._handleSystemGenerationStart.bind(this);
-    this._handleSystemGenerationComplete =
-      this._handleSystemGenerationComplete.bind(this);
     this.handleSimulationStateChange =
       this.handleSimulationStateChange.bind(this);
 
@@ -143,8 +137,6 @@ export class CompositeEnginePanel
       panelIsConnected: () => this.isConnected,
       triggerResize: () => this.triggerResize(),
       handleSimulationStateChange: this.handleSimulationStateChange,
-      handleSystemGenerationStart: this._handleSystemGenerationStart,
-      handleSystemGenerationComplete: this._handleSystemGenerationComplete,
     });
   }
 
@@ -287,51 +279,6 @@ export class CompositeEnginePanel
   }
 
   /**
-   * Requests the renderer to resize on the next animation frame.
-   * Ensures rendering adapts to container size changes.
-   */
-  private triggerResize(): void {
-    requestAnimationFrame(() => {
-      if (this._engineContainer && this._renderer) {
-        const { clientWidth, clientHeight } = this._engineContainer;
-
-        if (clientWidth > 0 && clientHeight > 0) {
-          this._renderer.onResize(clientWidth, clientHeight);
-        }
-      }
-    });
-  }
-
-  private _handleSystemGenerationStart = (): void => {
-    this._isGeneratingSystem = true;
-    if (!this._renderer) {
-      this._placeholderManager?.showMessage(true);
-    }
-  };
-
-  private _handleSystemGenerationComplete = (): void => {
-    this._isGeneratingSystem = false;
-    // The celestialObjects$ subscription will handle the renderer creation.
-    // We just need to ensure the placeholder is updated if no objects were created.
-    const objectCount = Object.keys(getCelestialObjects()).length;
-    if (objectCount === 0) {
-      this._placeholderManager?.showMessage(false);
-    }
-  };
-
-  /**
-   * Sets up all RxJS subscriptions for the panel by delegating to managers.
-   */
-  private setupSubscriptions(): void {
-    // Ensure existing subscriptions are cleaned up before creating new ones.
-    this._subscriptions.unsubscribe();
-    this._subscriptions = new Subscription();
-
-    this._subscriptions.add(this._lifecycleManager.listen());
-    this._subscriptions.add(this._eventManager.listen());
-  }
-
-  /**
    * Dockview lifecycle method: Initializes the panel's content and renderer.
    * Sets up data listeners, placeholders, and the PanelResizer.
    * @param parameters - Initialization parameters provided by Dockview.
@@ -356,11 +303,52 @@ export class CompositeEnginePanel
     };
     this._context = parameters.context;
 
-    this._placeholderManager?.showMessage(this._isGeneratingSystem);
-
     this.setupSubscriptions();
 
     this._isInitialized = true;
+  }
+
+  /**
+   * Dockview lifecycle method: Cleans up all resources associated with the panel.
+   * Stops listeners, disposes the renderer, and unregisters the panel.
+   */
+  dispose(): void {
+    this.disposeRendererAndUI();
+
+    this._subscriptions.unsubscribe();
+    this._lifecycleManager.dispose();
+
+    this._placeholderManager?.dispose();
+
+    panelService.unregisterPanelInstance(this._api?.id ?? "unknown");
+  }
+
+  /**
+   * Requests the renderer to resize on the next animation frame.
+   * Ensures rendering adapts to container size changes.
+   */
+  private triggerResize(): void {
+    requestAnimationFrame(() => {
+      if (this._engineContainer && this._renderer) {
+        const { clientWidth, clientHeight } = this._engineContainer;
+
+        if (clientWidth > 0 && clientHeight > 0) {
+          this._renderer.onResize(clientWidth, clientHeight);
+        }
+      }
+    });
+  }
+
+  /**
+   * Sets up all RxJS subscriptions for the panel by delegating to managers.
+   */
+  private setupSubscriptions(): void {
+    // Ensure existing subscriptions are cleaned up before creating new ones.
+    this._subscriptions.unsubscribe();
+    this._subscriptions = new Subscription();
+
+    this._subscriptions.add(this._lifecycleManager.listen());
+    this._subscriptions.add(this._eventManager.listen());
   }
 
   /**
@@ -519,20 +507,5 @@ export class CompositeEnginePanel
 
     this._resizeObserver?.disconnect();
     this._resizeObserver = undefined;
-  }
-
-  /**
-   * Dockview lifecycle method: Cleans up all resources associated with the panel.
-   * Stops listeners, disposes the renderer, and unregisters the panel.
-   */
-  dispose(): void {
-    this.disposeRendererAndUI();
-
-    this._subscriptions.unsubscribe();
-    this._lifecycleManager.dispose();
-
-    this._placeholderManager?.dispose();
-
-    panelService.unregisterPanelInstance(this._api?.id ?? "unknown");
   }
 }

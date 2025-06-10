@@ -7,7 +7,7 @@ This directory contains manager and coordinator classes responsible for handling
 ### `PanelLifecycleManager`
 
 - **Responsibility**: Manages the core lifecycle of the panel's renderer and UI.
-- **Mechanism**: It subscribes to the global `celestialObjects$` state stream. When celestial objects are added to the simulation, it triggers the creation of the `ModularSpaceRenderer` and its associated UI elements (like the toolbar). When the last object is removed, it tears down the renderer and UI to conserve resources, showing a placeholder instead.
+- **Mechanism**: It subscribes to the global `celestialObjects$` state stream. When celestial objects are added to the simulation, it triggers the creation of the `ModularSpaceRenderer` and its associated UI elements (like the toolbar). When the last object is removed, it tears down the renderer and UI to conserve resources, showing a placeholder instead. It also listens to global system generation events to show a loading/progress state on the placeholder.
 
 ### `PanelCameraCoordinator`
 
@@ -17,7 +17,7 @@ This directory contains manager and coordinator classes responsible for handling
 ### `PanelEventManager`
 
 - **Responsibility**: Manages all other event subscriptions for the panel.
-- **Mechanism**: It consolidates subscriptions to various streams like `simulationState$`, `layoutOrientation$`, and global `window` events (e.g., `SYSTEM_GENERATION_START`). This keeps the main panel's subscription logic clean and centralized.
+- **Mechanism**: It consolidates subscriptions to various streams like `simulationState$` and `layoutOrientation$`. This keeps the main panel's subscription logic clean and centralized.
 
 ## Flow Diagram
 
@@ -39,7 +39,7 @@ graph TD
         direction RL
         E[celestialObjects$]
         F[simulationState$]
-        G[Window Events]
+        G[Window Events <br/> (system-generation)]
         H[layoutOrientation$]
     end
 
@@ -48,6 +48,7 @@ graph TD
     A -- "instantiates" --> D;
 
     E --> B;
+    G --> B;
     B -- "triggers create/destroy" --> A;
 
     A -- "passes renderer, viewState$" --> C;
@@ -55,7 +56,6 @@ graph TD
 
 
     F --> D;
-    G --> D;
     H --> D;
     D -- "triggers methods on" --> A;
 ```

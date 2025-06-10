@@ -1,5 +1,4 @@
 import { simulationState$, type SimulationState } from "@teskooano/core-state";
-import { CustomEvents } from "@teskooano/data-types";
 import { Subscription } from "rxjs";
 import { layoutOrientation$ } from "../../state";
 
@@ -7,8 +6,6 @@ interface PanelEventManagerOptions {
   panelIsConnected: () => boolean;
   triggerResize: () => void;
   handleSimulationStateChange: (state: SimulationState) => void;
-  handleSystemGenerationStart: () => void;
-  handleSystemGenerationComplete: () => void;
 }
 
 /**
@@ -42,32 +39,6 @@ export class PanelEventManager {
         }
       }),
     );
-
-    // Bind for adding/removing listeners
-    const boundGenStart = this._options.handleSystemGenerationStart;
-    const boundGenComplete = this._options.handleSystemGenerationComplete;
-
-    // Subscribe to global events
-    window.addEventListener(
-      CustomEvents.SYSTEM_GENERATION_START,
-      boundGenStart,
-    );
-    window.addEventListener(
-      CustomEvents.SYSTEM_GENERATION_COMPLETE,
-      boundGenComplete,
-    );
-
-    // Add a cleanup function to the subscription for the window event listeners
-    subscription.add(() => {
-      window.removeEventListener(
-        CustomEvents.SYSTEM_GENERATION_START,
-        boundGenStart,
-      );
-      window.removeEventListener(
-        CustomEvents.SYSTEM_GENERATION_COMPLETE,
-        boundGenComplete,
-      );
-    });
 
     return subscription;
   }
