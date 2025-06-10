@@ -1,4 +1,5 @@
-import { Config, DriveStep, PopoverDOM, State } from "driver.js";
+import { Config, DriveStep, PopoverDOM, State, Driver } from "driver.js";
+import { PluginExecutionContext } from "@teskooano/ui-plugin";
 
 export interface TourStep extends DriveStep {
   id: string;
@@ -11,3 +12,8 @@ export interface TourStep extends DriveStep {
   ) => void;
   onHighlightStarted?: () => void;
 }
+
+export type TourFactory = (
+  driver: Driver,
+  context: PluginExecutionContext,
+) => TourStep[];

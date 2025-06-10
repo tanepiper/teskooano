@@ -5,6 +5,7 @@ import type {
   ToolbarRegistration,
 } from "@teskooano/ui-plugin";
 import { TourController } from "./TourController";
+import { createIntroTour } from "./tours/intro-tour";
 
 import TourIcon from "@fluentui/svg-icons/icons/compass_northwest_24_regular.svg?raw";
 
@@ -18,6 +19,8 @@ const initializeTourFunction: FunctionConfig = {
   execute: async (context: PluginExecutionContext) => {
     if (!tourControllerInstance) {
       tourControllerInstance = new TourController(context);
+      // Register the default tour immediately after creation.
+      tourControllerInstance.registerTour("intro", createIntroTour);
     }
     await tourControllerInstance.promptIfNeeded();
     return tourControllerInstance;
@@ -26,9 +29,9 @@ const initializeTourFunction: FunctionConfig = {
 
 const startTourFunction: FunctionConfig = {
   id: "tour:start",
-  execute: async () => {
+  execute: async (_: PluginExecutionContext, args?: { tourId?: string }) => {
     if (tourControllerInstance) {
-      tourControllerInstance.startTour();
+      tourControllerInstance.startTour(args?.tourId);
     } else {
       console.error(
         "[TourPlugin] Cannot start tour: Controller not initialized.",
@@ -39,9 +42,9 @@ const startTourFunction: FunctionConfig = {
 
 const restartTourFunction: FunctionConfig = {
   id: "tour:restart",
-  execute: async () => {
+  execute: async (_: PluginExecutionContext, args?: { tourId?: string }) => {
     if (tourControllerInstance) {
-      tourControllerInstance.restartTour();
+      tourControllerInstance.restartTour(args?.tourId);
     } else {
       console.error(
         "[TourPlugin] Cannot restart tour: Controller not initialized.",

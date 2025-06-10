@@ -1,8 +1,12 @@
 import { getCelestialObjects } from "@teskooano/core-state";
 import { Config, Driver, PopoverDOM, State } from "driver.js";
+import { PluginExecutionContext } from "@teskooano/ui-plugin";
 import { TourStep } from "../types";
 
-export function createIntroTour(driverObj: Driver): TourStep[] {
+export function createIntroTour(
+  driverObj: Driver,
+  context: PluginExecutionContext,
+): TourStep[] {
   let hasCelestialObjects = false;
 
   const BASE_TOUR_STEPS: TourStep[] = [
@@ -89,16 +93,13 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
         align: "center",
       },
       onNextClick: () => {
-        const generator = document.querySelector("teskooano-system-controls");
-        if (generator) {
-          const button = generator.shadowRoot?.querySelector(
-            "#generate-random-button",
+        try {
+          context.pluginManager.execute("system:generate_random");
+        } catch (e) {
+          console.error(
+            "Failed to execute system:generate_random from tour",
+            e,
           );
-          if (button) {
-            (button as any).click();
-          }
-
-          //(generator as any).tourRandomSeed();
         }
         driverObj.moveNext();
       },
@@ -155,15 +156,12 @@ export function createIntroTour(driverObj: Driver): TourStep[] {
           return;
         }
 
-        const focusControl = document.querySelector(
-          `focus-control[engine-view-id="${engineViewId}"]`,
-        );
-
-        if (
-          focusControl &&
-          typeof (focusControl as any).tourFocus === "function"
-        ) {
-          (focusControl as any).tourFocus();
+        try {
+          context.pluginManager.execute("focus:focus_on_body", {
+            engineViewId,
+          });
+        } catch (e) {
+          console.error("Failed to execute focus:focus_on_body from tour", e);
         }
 
         driverObj.moveNext();
