@@ -1,5 +1,5 @@
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
-import { PanelInitParameters } from "./types";
+import { PanelInitParameters } from "../types";
 
 /**
  * A basic fallback panel component used by DockviewController when

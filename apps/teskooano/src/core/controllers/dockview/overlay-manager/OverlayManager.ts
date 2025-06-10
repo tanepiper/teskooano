@@ -1,5 +1,5 @@
 import { Overlay } from "dockview-core/dist/esm/overlay/overlay";
-import { ActiveOverlay, ModalResult, OverlayOptions } from "./types";
+import { ActiveOverlay, ModalResult, OverlayOptions } from "../types";
 
 /**
  * Manages modal-like overlays within a Dockview container.

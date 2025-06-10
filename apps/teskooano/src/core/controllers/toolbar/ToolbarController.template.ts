@@ -66,6 +66,10 @@ template.innerHTML = `
         object-fit: contain;
     }
 
+    teskooano-button {
+        fill: var(--color-text-primary);
+    }
+
   </style>
   <div class="toolbar-section">
   <!-- Static Logo Button -->

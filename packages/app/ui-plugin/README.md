@@ -193,20 +193,20 @@ To support this, a plugin can now export an optional `dispose` function. This fu
 
 ```typescript
 export const plugin: TeskooanoPlugin = {
-  id: 'my-resource-intensive-plugin',
-  name: 'My Plugin',
+  id: "my-resource-intensive-plugin",
+  name: "My Plugin",
   initialize: () => {
     // Setup listeners or intervals
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     const intervalId = setInterval(doSomething, 1000);
     // Store intervalId to clear it later
   },
   dispose: () => {
     // Clean up what was done in initialize
-    window.removeEventListener('resize', handleResize);
+    window.removeEventListener("resize", handleResize);
     clearInterval(intervalId); // Assuming intervalId was stored
-    console.log('Plugin cleaned up successfully.');
-  }
+    console.log("Plugin cleaned up successfully.");
+  },
 };
 ```
 

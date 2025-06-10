@@ -12,7 +12,7 @@ import type {
   ToolbarItemConfig,
   ToolbarRegistration,
   ToolbarTarget,
-  ToolbarWidgetConfig
+  ToolbarWidgetConfig,
 } from "./types.js";
 
 import { pluginLoaders } from "virtual:teskooano-loaders";
@@ -372,7 +372,9 @@ class PluginManager {
 
     const plugin = this.#pluginRegistry.get(pluginId);
     if (!plugin) {
-      console.warn(`[PluginManager] Plugin '${pluginId}' not found for unload.`);
+      console.warn(
+        `[PluginManager] Plugin '${pluginId}' not found for unload.`,
+      );
       return;
     }
 
@@ -594,7 +596,8 @@ class PluginManager {
     }
 
     const requiresApi = registeredItem.dependencies?.dockView?.api;
-    const requiresController = registeredItem.dependencies?.dockView?.controller;
+    const requiresController =
+      registeredItem.dependencies?.dockView?.controller;
 
     if (requiresApi && !this.#dockviewApi) {
       const message = `[PluginManager] Execution of function '${functionId}' prevented: It requires the Dockview API, which has not been set.`;
@@ -609,6 +612,7 @@ class PluginManager {
 
     try {
       const context: PluginExecutionContext = {
+        pluginManager: this,
         dockviewApi: this.#dockviewApi,
         dockviewController: this.#dockviewController,
         getManager: this.getManagerInstance.bind(this),
@@ -649,7 +653,9 @@ class PluginManager {
     const widgets: ToolbarWidgetConfig[] = [];
     for (const plugin of this.#pluginRegistry.values()) {
       if (plugin.toolbarWidgets) {
-        widgets.push(...plugin.toolbarWidgets.filter((w) => w.target === target));
+        widgets.push(
+          ...plugin.toolbarWidgets.filter((w) => w.target === target),
+        );
       }
       plugin.toolbarRegistrations?.forEach((reg) => {
         if (reg.target === target && reg.widgets) {
@@ -657,7 +663,9 @@ class PluginManager {
         }
       });
     }
-    return widgets.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
+    return widgets.sort(
+      (a, b) => (a.order ?? Infinity) - (b.order ?? Infinity),
+    );
   }
 
   /**

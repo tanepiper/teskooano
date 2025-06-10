@@ -85,9 +85,7 @@ export function teskooanoUiPlugin(options: TeskooanoUiPluginOptions): Plugin {
               );
             }
             const configDir = path.dirname(configPath);
-            for (const [pluginId, loadConfig] of Object.entries(
-              pluginConfig,
-            )) {
+            for (const [pluginId, loadConfig] of Object.entries(pluginConfig)) {
               pluginConfigsWithPaths.push({
                 id: pluginId,
                 config: loadConfig,

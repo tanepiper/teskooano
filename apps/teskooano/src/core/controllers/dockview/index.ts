@@ -3,14 +3,14 @@ import type {
   FunctionConfig,
   PluginExecutionContext,
 } from "@teskooano/ui-plugin";
-import { DockviewController } from "./DockviewController";
-import { FallbackPanel } from "./FallbackPanel";
+import { DockviewController } from "./dockview-controller";
+import { FallbackPanel } from "./fallback-panel";
 import type { DockviewApi } from "dockview-core";
 
-export * from "./DockviewController";
-export * from "./GroupManager";
-export * from "./OverlayManager";
-export * from "./FallbackPanel";
+export * from "./dockview-controller";
+export * from "./group-manager";
+export * from "./overlay-manager";
+export * from "./fallback-panel";
 export * from "./types";
 
 /**

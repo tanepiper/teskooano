@@ -10,16 +10,19 @@ import {
 
 import { Observable, Subject } from "rxjs";
 
-import { FallbackPanel } from "./FallbackPanel";
-import { GroupManager } from "./GroupManager";
-import { OverlayManager } from "./OverlayManager";
+import { FallbackPanel } from "../fallback-panel";
+import { GroupManager } from "../group-manager";
+import { OverlayManager } from "../overlay-manager";
 import {
   ComponentConstructorWithStaticConfig,
   DockviewGroup,
   ModalResult,
   OverlayOptions,
   RegisteredComponentInfo,
-} from "./types";
+} from "../types";
+import { addPanel, addFloatingPanel } from "./DockviewController.api";
+import { handlePanelRemoval } from "./DockviewController.events";
+import { handlePanelToggleAction } from "./DockviewController.toggle";
 
 /**
  * Controller class for managing a Dockview instance.
@@ -89,7 +92,7 @@ export class DockviewController {
     this._overlayManager = new OverlayManager(element);
     this._groupManager = new GroupManager(this._api);
     this._api.onDidRemovePanel((panel: IDockviewPanel) => {
-      this.handlePanelRemoval(panel);
+      handlePanelRemoval(panel, this._removedPanelSubject, this._groupManager);
     });
   }
 
@@ -110,23 +113,9 @@ export class DockviewController {
       );
     }
 
-    let toolbarConfig: RegisteredComponentInfo["toolbarConfig"] | undefined =
-      undefined;
-    if (
-      typeof componentConstructor.registerToolbarButtonConfig === "function"
-    ) {
-      try {
-        toolbarConfig = componentConstructor.registerToolbarButtonConfig();
-      } catch (err) {
-        console.error(
-          `DockviewController: Error calling registerToolbarButtonConfig for '${name}':`,
-          err,
-        );
-      }
-    }
-
+    const toolbarConfig = componentConstructor.registerToolbarButtonConfig?.();
     this._registeredComponents.set(name, {
-      constructor: componentConstructor as new () => IContentRenderer,
+      constructor: componentConstructor,
       toolbarConfig,
     });
   }
@@ -142,17 +131,7 @@ export class DockviewController {
   public addPanel(
     options: Parameters<DockviewApi["addPanel"]>[0],
   ): IDockviewPanel {
-    if (
-      typeof options.component === "string" &&
-      !this._registeredComponents.has(options.component) &&
-      options.component !== "default"
-    ) {
-      console.warn(
-        `DockviewController: Component '${options.component}' not pre-registered. Panel may fail to render.`,
-      );
-    }
-
-    return this._api.addPanel(options);
+    return addPanel(this._api, this._registeredComponents, options);
   }
 
   /**
@@ -199,7 +178,7 @@ export class DockviewController {
         };
       }
 
-      const panel = this._api.addPanel(panelWithPosition);
+      const panel = this.addPanel(panelWithPosition);
 
       panel.api.setActive();
       return panel;
@@ -221,7 +200,7 @@ export class DockviewController {
     panelOptions: AddPanelOptions,
     groupOptions?: AddGroupOptions,
   ): IDockviewPanel | null {
-    const group = this._groupManager.createOrGetGroup(groupName, groupOptions);
+    const group = this.createOrGetGroup(groupName, groupOptions);
 
     if (!group) {
       console.error(
@@ -264,8 +243,7 @@ export class DockviewController {
   public getToolbarButtonConfig(
     componentName: string,
   ): RegisteredComponentInfo["toolbarConfig"] {
-    const componentInfo = this._registeredComponents.get(componentName);
-    return componentInfo?.toolbarConfig;
+    return this._registeredComponents.get(componentName)?.toolbarConfig;
   }
 
   /**
@@ -324,81 +302,9 @@ export class DockviewController {
   public addFloatingPanel(
     panelOptions: AddPanelOptions,
     position?: { top: number; left: number; width: number; height: number },
-  ): DockviewPanelApi | null {
-    let temporaryPanel: IDockviewPanel | null = null;
-    try {
-      const initialPanelOptions: AddPanelOptions = {
-        ...panelOptions,
-        position: undefined,
-      };
-      temporaryPanel = this._api.addPanel(initialPanelOptions);
-
-      if (!temporaryPanel || !temporaryPanel.api) {
-        console.error(
-          `DockviewController: Failed to create initial panel instance for ${panelOptions.id}.`,
-        );
-        return null;
-      }
-
-      this._api.addFloatingGroup(temporaryPanel, {
-        position: position,
-      });
-
-      if (position && temporaryPanel.api) {
-        try {
-          temporaryPanel.api.setSize(position);
-        } catch (e) {
-          console.error(
-            `DockviewController: Error calling setSize after addFloatingGroup for ${panelOptions.id}:`,
-            e,
-          );
-        }
-      }
-
-      temporaryPanel.api.setActive();
-      return temporaryPanel.api;
-    } catch (error) {
-      console.error(
-        `DockviewController: Error adding floating panel ${panelOptions.id}:`,
-        error,
-      );
-
-      if (temporaryPanel) {
-        try {
-          this._api.removePanel(temporaryPanel);
-        } catch (cleanupError) {
-          console.error(
-            `DockviewController: Error cleaning up temporary panel ${panelOptions.id}:`,
-            cleanupError,
-          );
-        }
-      }
-      return null;
-    }
-  }
-
-  /**
-   * Internal handler called when a panel is removed from the Dockview instance.
-   * Notifies subscribers via `onPanelRemoved$` and triggers group tracking cleanup.
-   * @param panel - The panel that was removed.
-   * @internal
-   */
-  private handlePanelRemoval(panel: IDockviewPanel): void {
-    const groupId = panel.group?.id;
-    const panelId = panel.id;
-
-    this._removedPanelSubject.next(panelId);
-
-    const group = panel.group;
-
-    if (group && group.panels.length === 0 && groupId) {
-      this._groupManager.cleanupGroupTracking(groupId);
-    } else if (group) {
-    } else {
-      console.warn(
-        `DockviewController: Removed panel '${panelId}' did not have an associated group.`,
-      );
-    }
+  ): DockviewPanelApi | undefined {
+    const panel = addFloatingPanel(this._api, panelOptions, position);
+    return panel?.api;
   }
 
   /**
@@ -409,88 +315,6 @@ export class DockviewController {
   public handlePanelToggleAction(
     config: RegisteredComponentInfo["toolbarConfig"],
   ): void {
-    if (!config) {
-      console.error(
-        "[DockviewController] handlePanelToggleAction called with undefined config",
-      );
-      return;
-    }
-
-    const panelId = `${config.componentName}_float`;
-    const behaviour = config.behaviour ?? "toggle";
-
-    const existingPanel = this.api.getPanel(panelId);
-
-    if (behaviour === "toggle") {
-      if (existingPanel?.api.isVisible) {
-        try {
-          this.api.removePanel(existingPanel);
-        } catch (error) {
-          console.error(
-            `[DockviewController] Error removing panel ${panelId}:`,
-            error,
-          );
-        }
-      } else {
-        if (existingPanel) {
-          existingPanel.api.setActive();
-        } else {
-          // Default position if not specified in config
-          let position = { top: 100, left: 100, width: 500, height: 400 };
-
-          // Check if initialPosition is defined in the config and use it
-          // The type for 'config' is RegisteredComponentInfo["toolbarConfig"]
-          // We need to ensure it can hold initialPosition, or cast safely.
-          const toolbarItemConfig = config as any; // Cast to access potential custom fields
-
-          if (toolbarItemConfig.initialPosition) {
-            const ip = toolbarItemConfig.initialPosition;
-            // Ensure all values are numbers. If they were functions, they should be resolved before this point.
-            // Or, resolve them here if they are indeed functions.
-            // For now, assuming they are numbers or resolvable to numbers.
-            position = {
-              top:
-                typeof ip.top === "function"
-                  ? ip.top()
-                  : (ip.top ?? position.top),
-              left:
-                typeof ip.left === "function"
-                  ? ip.left()
-                  : (ip.left ?? position.left),
-              width:
-                typeof ip.width === "function"
-                  ? ip.width()
-                  : (ip.width ?? position.width),
-              height:
-                typeof ip.height === "function"
-                  ? ip.height()
-                  : (ip.height ?? position.height),
-            };
-          }
-
-          this.addFloatingPanel(
-            {
-              id: panelId,
-              component: config.componentName,
-              title: config.panelTitle ?? config.title,
-              params: { title: config.panelTitle ?? config.title },
-            },
-            position,
-          );
-        }
-      }
-    } else if (behaviour === "create") {
-      const newPanelId = `${config.componentName}_float_${Date.now()}`;
-      const position = { top: 100, left: 100, width: 500, height: 400 };
-      this.addFloatingPanel(
-        {
-          id: newPanelId,
-          component: config.componentName,
-          title: config.panelTitle ?? config.title,
-          params: { title: config.panelTitle ?? config.title },
-        },
-        position,
-      );
-    }
+    handlePanelToggleAction(this._api, config);
   }
 }

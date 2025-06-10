@@ -1,5 +1,5 @@
 import { AddGroupOptions, DockviewApi } from "dockview-core";
-import { DockviewGroup } from "./types";
+import { DockviewGroup } from "../types";
 
 /**
  * Manages named groups within a Dockview instance.

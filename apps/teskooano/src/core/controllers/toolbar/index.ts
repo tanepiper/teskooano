@@ -1,67 +1,62 @@
-import { ToolbarController } from "./ToolbarController";
+import {
+  type FunctionConfig,
+  type PluginExecutionContext,
+  type TeskooanoPlugin,
+} from "@teskooano/ui-plugin";
 
-import { createToolbarHandlers } from "./ToolbarController.handlers";
-
-import type { DockviewController } from "../dockview/DockviewController";
+import { ToolbarController } from "./ToolbarController.js";
 
 /**
- * Initialization options for the Toolbar Plugin.
+ * Options required to initialize the toolbar.
  */
-export interface ToolbarPluginOptions {
-  /** The target HTMLElement where the toolbar should be rendered. */
+export interface ToolbarInitOptions {
+  /** The HTMLElement where the toolbar will be rendered. */
   targetElement: HTMLElement;
-  /** An instance of the DockviewController for panel interactions. */
-  dockviewController: DockviewController;
 }
 
 /**
- * Defines the structure for the Toolbar plugin.
- */
-interface ToolbarPlugin {
-  name: string;
-  type: "toolbar";
-  /**
-   * Initializes the Toolbar integration.
-   * @param options Configuration options for the toolbar.
-   * @returns An API object exposing the toolbar controller instance.
-   */
-  initialize: (options: ToolbarPluginOptions) => {
-    controller: ToolbarController;
-  };
-}
-
-/**
- * The Toolbar plugin definition.
+ * A plugin function that initializes the main application toolbar.
  *
- * This plugin creates and manages the main application toolbar,
- * populating it with static and dynamic items.
+ * This function creates and configures the `ToolbarController` which is
+ * responsible for rendering and managing the toolbar's lifecycle.
  */
-export const plugin: ToolbarPlugin & { id: string } = {
-  id: "teskooano-toolbar",
-  name: "@teskooano/toolbar",
-  type: "toolbar",
-  initialize: (options: ToolbarPluginOptions) => {
-    if (!options.targetElement) {
-      throw new Error(
-        "ToolbarPlugin: Initialization failed - targetElement is required.",
+const initializeToolbar: FunctionConfig = {
+  id: "toolbar:initialize",
+  dependencies: {
+    dockView: {
+      api: true,
+      controller: true,
+    },
+  },
+  execute: async (
+    context: PluginExecutionContext,
+    args: ToolbarInitOptions,
+  ) => {
+    if (!args.targetElement) {
+      console.error(
+        "[core-toolbar] Initialization failed: targetElement is missing.",
       );
-    }
-    if (!options.dockviewController) {
-      throw new Error(
-        "ToolbarPlugin: Initialization failed - dockviewController is required.",
-      );
+      return;
     }
 
-    const controller = new ToolbarController(
-      options.targetElement,
-      options.dockviewController,
-    );
-
-    return {
-      controller,
-    };
+    try {
+      const controller = new ToolbarController(args.targetElement, context);
+      return controller;
+    } catch (error) {
+      console.error("[core-toolbar] Failed to initialize:", error);
+      throw error;
+    }
   },
 };
 
+export const functions = [initializeToolbar];
+
+export const plugin: TeskooanoPlugin = {
+  id: "core-toolbar",
+  name: "Core Toolbar",
+  description: "Initializes the main application toolbar.",
+  functions: [initializeToolbar],
+};
+
 export * from "./ToolbarController";
-export { createToolbarHandlers };
+export * from "./ToolbarController.utils";

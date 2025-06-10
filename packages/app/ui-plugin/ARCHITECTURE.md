@@ -142,8 +142,8 @@ The system supports HMR for a better development experience.
     - The `PluginManager` listens for the `teskooano-plugin-update` event.
     - Upon receiving the event, it triggers `reloadPlugin(pluginId)`.
     - This method first calls `unloadPlugin(pluginId)`:
-        - It calls the plugin's optional `dispose()` method for cleanup.
-        - It removes all panels, functions, toolbar items, and manager instances associated with that plugin from its registries.
+      - It calls the plugin's optional `dispose()` method for cleanup.
+      - It removes all panels, functions, toolbar items, and manager instances associated with that plugin from its registries.
     - Then, it calls `loadAndRegisterPlugins([pluginId])` to load the new module version and register it, following the standard initialization flow.
 
 ```mermaid

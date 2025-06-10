@@ -4,11 +4,13 @@ import type {
   IDockviewPanelProps,
   DockviewApi,
 } from "dockview-core";
+import type { pluginManager } from "./pluginManager.js";
 
 /**
  * Context object passed to plugin function execute methods.
  */
 export interface PluginExecutionContext {
+  pluginManager: typeof pluginManager;
   dockviewApi: DockviewApi | null;
   dockviewController?: any | null;
 

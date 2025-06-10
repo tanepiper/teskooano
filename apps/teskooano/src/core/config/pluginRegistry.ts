@@ -9,6 +9,7 @@ export const pluginConfig: PluginRegistryConfig = {
   "teskooano-slider": { path: "../components/slider" },
   "teskooano-tooltip": { path: "../components/tooltip" },
   "teskooano-dockview": { path: "../controllers/dockview" },
+  "teskooano-toolbar": { path: "../controllers/toolbar" },
   "teskooano-tour": { path: "../interface/tour-controller" },
   "teskooano-engine-toolbar": { path: "../interface/engine-toolbar" },
 };

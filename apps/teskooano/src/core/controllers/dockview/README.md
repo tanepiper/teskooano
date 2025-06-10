@@ -1,27 +1,36 @@
-# Dockview Plugin (@teskooano/dockview)
+# Dockview Plugin (`teskooano-dockview`)
 
-This plugin provides the core integration and management for the Dockview library within the Teskooano engine.
+This plugin provides the core integration for the Dockview library, which is responsible for the entire panel-based layout of the Teskooano application.
 
 ## Purpose
 
-Manages the creation, layout, and interaction of panels and groups within the main application window using Dockview.
+This plugin's primary role is to provide an initialization function that creates and returns a singleton instance of the `DockviewController`. This controller then serves as the central API for all other parts of the application to interact with the UI layout.
 
 ## Features
 
-- Initializes the main Dockview container.
-- Provides controllers (`DockviewController`, `GroupManager`, `OverlayManager`) for managing panels, groups, and overlays.
-- Handles component registration and rendering within Dockview panels.
-- Defines standard panel types and behaviors.
+- **Initialization Function**: Exports a `dockview:initialize` function that sets up the Dockview instance within a given DOM element.
+- **Core Controllers**: Internally uses `DockviewController`, `GroupManager`, and `OverlayManager` to provide a clean and powerful layout management API.
+- **Component Registration**: The `DockviewController` allows other plugins to register panel components.
+- **Fallback Panel**: Includes a default `fallback-panel` to gracefully handle rendering errors.
 
 ## Usage
 
-Import the plugin and call its `initialize` method during application setup.
+This plugin is foundational and is loaded by the main application bootstrap process. Other plugins typically interact with the `DockviewController` instance that this plugin creates, rather than interacting with this plugin directly.
+
+The initialization is handled by the `pluginManager`:
 
 ```typescript
-import { dockviewPlugin } from "./index";
+import { pluginManager } from "@teskooano/ui-plugin";
+import type { DockviewController } from "@teskooano/core"; // Assuming core barrel file
 
-// During app initialization
-const dockviewApi = dockviewPlugin.initialize(/* options */);
+// In application setup code:
+const appElement = document.getElementById("root");
 
-// Use dockviewApi.DockviewController, etc.
+// The plugin manager executes the initialize function
+const { controller, api } = await pluginManager.execute("dockview:initialize", {
+  appElement,
+});
+
+// The 'controller' (DockviewController instance) can now be used
+// or injected into other services.
 ```

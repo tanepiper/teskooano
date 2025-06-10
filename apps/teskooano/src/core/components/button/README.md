@@ -1,56 +1,56 @@
 # `teskooano-button`
 
-A custom button element with different variants (text, icon, image) and built-in tooltip integration.
+A versatile custom button element with multiple variants, sizes, and deeply integrated tooltip functionality managed by a `ButtonTooltipManager`.
 
 ## Usage
 
 ```html
+<!-- Standard Button -->
 <teskooano-button>Default</teskooano-button>
 
-<teskooano-button variant="icon" title="Settings" tooltip-text="Open Settings">
-  <span slot="icon">[Settings SVG code here]</span>
+<!-- Primary action button -->
+<teskooano-button variant="primary" size="lg">Submit</teskooano-button>
+
+<!-- Icon-only button with a tooltip -->
+<teskooano-button variant="ghost" tooltip-text="Open Settings">
+  <span slot="icon">[SVG for settings icon]</span>
 </teskooano-button>
 
-<teskooano-button
-  variant="primary"
-  size="lg"
-  tooltip-text="Click to proceed"
-  tooltip-title="Next Step"
-  tooltip-icon="[SVG code here]"
->
-  Proceed
+<!-- Image button -->
+<teskooano-button variant="image" tooltip-text="View Profile">
+  <span slot="icon"><img src="/path/to/avatar.png" alt="User Avatar" /></span>
 </teskooano-button>
 ```
 
 ## Attributes
 
-- `variant`: `text` (default), `icon`, `image`, `primary`, `secondary`, etc. (Based on design system)
-- `size`: `xs`, `sm`, `md` (default), `lg`, `xl`
+- `variant`: `primary` | `ghost` | `image`. Sets the visual style. Defaults to a standard bordered button.
+- `size`: `xs` | `sm` | `md` (default) | `lg` | `xl`.
 - `disabled`: Boolean attribute to disable the button.
-- `fullwidth`: Boolean attribute to make the button take full container width.
-- `type`: Standard button type (`button`, `submit`, `reset`). Default is `button`.
-- `title`: Standard title attribute (used as fallback tooltip if `tooltip-text` is not provided).
-- `tooltip-text`: The main text content for the tooltip.
-- `tooltip-title`: An optional title for the tooltip.
-- `tooltip-icon`: (Optional) A string containing SVG markup for an icon within the tooltip. If omitted, the tooltip will attempt to use the button's main icon (from `<slot name="icon">`) by default.
+- `fullwidth`: Boolean attribute to make the button span the full width of its container.
+- `active`: Boolean attribute to give the button a visual "active" or "toggled on" state.
+- `mobile`: Boolean attribute that hides the button's text label, leaving only the icon visible.
+- `type`: Standard button type: `button` (default), `submit`, `reset`.
 
 ## Tooltip Integration
 
-The button integrates with `<teskooano-tooltip>`. Attributes like `tooltip-text`, `tooltip-title`, and `tooltip-icon` are used to populate the content of the corresponding named slots (`<slot name="tooltip-text">`, etc.) within the button's shadow DOM.
+The button has a powerful, built-in tooltip system. You can provide content via attributes or slots.
 
-**Default Icon Behavior:** If the `tooltip-icon` attribute is _not_ provided, and no content is slotted into `<slot name="tooltip-icon">`, the component will automatically use the content of the main button icon slot (`<slot name="icon">`) for the tooltip's icon.
+### Tooltip Attributes
 
-These slots project the content into the `<teskooano-tooltip>` component when the button is hovered or focused.
+- `title`: Standard HTML attribute. Used as the tooltip's main text if `tooltip-text` is not set.
+- `tooltip-text`: The main text content for the tooltip.
+- `tooltip-title`: An optional title for the tooltip.
+- `tooltip-icon`: An SVG string for an icon within the tooltip.
 
-Alternatively, you can provide tooltip content directly using slotted elements:
+### Tooltip Slots
 
-```html
-<teskooano-button>
-  My Button
-  <span slot="tooltip-title">Custom Title</span>
-  <span slot="tooltip-text">More detailed explanation.</span>
-  <span slot="tooltip-icon">[Specific Tooltip SVG code here]</span>
-</teskooano-button>
-```
+You can also provide rich content using slots, which will take priority over attributes.
 
-When slotted content is provided for a tooltip part (e.g., `<span slot="tooltip-icon">`), the corresponding attribute (e.g., `tooltip-icon`) and the default icon behavior will be ignored for that part.
+- `tooltip-icon`: For an element (like an `<img>` or `<svg>`) to use as the tooltip's icon.
+- `tooltip-title`: For text or elements to use as the tooltip's title.
+- `tooltip-text`: For text or elements to use as the tooltip's main body.
+
+### Automatic Icon Fallback
+
+If no `tooltip-icon` attribute or `tooltip-icon` slot is provided, the tooltip will automatically use the content from the button's main `icon` slot.

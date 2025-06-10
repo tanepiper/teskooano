@@ -4,7 +4,6 @@ import "./vite-env.d";
 
 import { getCelestialObjects } from "@teskooano/core-state";
 
-import { ToolbarController } from "./core/controllers/toolbar/ToolbarController";
 import {
   TeskooanoTourModal,
   tourControllerInstance,
@@ -97,10 +96,19 @@ async function initializeApp() {
 
   appContext.dockviewController = dockviewController;
 
-  const toolbarController = new ToolbarController(
-    toolbarElement,
-    dockviewController,
-  );
+  try {
+    await pluginManager.execute("toolbar:initialize", {
+      targetElement: toolbarElement,
+    });
+  } catch (error) {
+    console.error(
+      "[App] Unhandled error during toolbar initialization:",
+      error,
+    );
+    // Depending on the desired behavior, you might want to re-throw or
+    // display a more user-friendly error message.
+    return; // Stop execution if toolbar fails
+  }
 
   const modalManager = pluginManager.getManagerInstance<any>("modal-manager");
 

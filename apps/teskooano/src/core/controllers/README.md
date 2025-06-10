@@ -1,82 +1,74 @@
-# Teskooano Controllers
+# Teskooano Core Controllers
 
-This directory contains controller classes that manage various aspects of the Teskooano application.
+This directory contains the core controller classes that manage the application's UI layout, state, and user interactions. They are designed to be modular and extensible, integrating deeply with the `@teskooano/ui-plugin` system.
 
-## DockviewController
+## Architecture: A Plugin-Driven UI
 
-The `DockviewController` is responsible for managing the UI layout of the application using the Dockview library. It provides a simple API for creating and managing panel groups, adding panels to these groups, and controlling the UI layout.
+The controllers follow a decoupled, plugin-driven architecture. The central `PluginManager` acts as a service locator and registry, while the controllers consume registered configurations and provide core application functionality.
 
-### Key Features:
+The key interaction between the `DockviewController` and `ToolbarController` illustrates this pattern, creating a "self-registering panel" that is highly encapsulated:
 
-- **Component Registry**: Register component classes that can be instantiated by Dockview
-- **Named Group Management**: Create logical groups and refer to them by name instead of ID
-- **Panel Management**: Add panels to groups, either by group reference or name
-- **View Maximization**: Toggle between normal and maximized views
+<div align="center">
 
-### Usage Examples:
+```mermaid
+graph TD
+    subgraph Plugin Scope
+        A["Panel Component defines<br>static registerToolbarButtonConfig()"]
+    end
 
-#### Initialize the Controller
+    subgraph App Bootstrap Scope
+        B(PluginManager registers plugin) --> C{Reads toolbarConfig};
+    end
 
-```typescript
-// In your main application initialization
-const dockviewContainer = document.getElementById("dockview-container");
-const dockviewController = new DockviewController(dockviewContainer);
+    subgraph Toolbar Scope
+        D["ToolbarController queries<br>PluginManager for toolbar items"] --> E[Renders Button in Toolbar];
+    end
 
-// Pass the controller to other components that need to interact with the UI
-const toolbarController = new ToolbarController(
-  document.getElementById("toolbar-container"),
-  dockviewController,
-);
+    subgraph User Interaction Scope
+        F(User Clicks Button)
+    end
+
+    subgraph Dockview Scope
+        G[DockviewController.handlePanelToggleAction] --> H["Shows/Hides<br>Floating Panel"];
+    end
+
+    A --> B;
+    C --> D;
+    E -- on click --> F;
+    F --> G;
 ```
 
-#### Register Component Types
+</div>
 
-```typescript
-// Register a custom panel component
-dockviewController.registerComponent("my_custom_panel", MyCustomPanelClass);
-```
+This pattern makes panel components easy to add or remove without modifying the core controllers.
 
-#### Working with Groups
+## Controllers
 
-```typescript
-// Create (or get existing) named group
-const controlsGroup = dockviewController.createOrGetGroup("controls");
+### `DockviewController`
 
-// Add a panel directly to a group
-dockviewController.addPanelToGroup(controlsGroup, {
-  id: "settings_panel",
-  component: "settings",
-  title: "Settings",
-});
+The `DockviewController` is the central orchestrator for the application's panel-based UI. It wraps the `dockview-core` library and provides a simplified, powerful API for managing the layout.
 
-// Add a panel to a named group (creates the group if it doesn't exist)
-dockviewController.addPanelToNamedGroup("engine_views", {
-  id: "main_engine_view",
-  component: "composite_engine_view",
-  title: "Main Engine View",
-});
+- **Responsibilities**:
+  - Manages the lifecycle of the Dockview instance.
+  - Registers panel components that can be rendered.
+  - Provides APIs to add, remove, and find panels and groups (`addPanelToNamedGroup`, `getGroupByName`, etc.).
+  - Manages floating panels and modal overlays.
+- **Internal Structure**: Its logic is broken down into smaller, specialized modules for API interaction (`DockviewController.api.ts`), event handling (`.events.ts`), and panel toggling (`.toggle.ts`), making the main class a lean composer of this functionality.
 
-// Maximize a group by name
-dockviewController.maximizeGroupByName("engine_views");
+### `ToolbarController`
 
-// Exit maximized view
-dockviewController.exitMaximizedGroup();
-```
+This controller builds and manages the main application toolbar. It is entirely dynamic.
 
-### Best Practices
+- **Responsibilities**:
+  - On initialization, queries the `PluginManager` for all registered toolbar items and widgets targeting `"main-toolbar"`.
+  - Creates `teskooano-button` elements and other custom elements based on the retrieved configurations.
+  - Wires up button click events to execute plugin functions or to call `DockviewController` methods for panel-related actions.
+  - Handles responsive layout for mobile devices using RxJS to monitor screen size.
 
-1. **Use Logical Group Names**: Always use consistent, logical names for groups, such as 'engine_views' or 'controls'.
+### `TourController`
 
-2. **Panel IDs**: Give each panel a unique, descriptive ID. This helps with tracking and manipulating panels later.
+Manages interactive application tours using `driver.js`.
 
-3. **Component Registration**: Register all custom panel components before attempting to use them.
-
-4. **Error Handling**: The controller methods provide robust error handling and return `null` when operations fail. Always check return values.
-
-## ToolbarController
-
-The `ToolbarController` is responsible for managing the toolbar UI and adding engine views. It uses the DockviewController to add panels to the UI.
-
-## TourController
-
-The `TourController` manages application tours that guide users through features of the application.
+- **Responsibilities**:
+  - Provides functions for starting, restarting, and skipping tours.
+  - Registers its own "Restart Tour" button into the toolbar system via its plugin configuration, demonstrating the extensibility of the toolbar.
