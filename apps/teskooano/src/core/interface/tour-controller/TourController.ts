@@ -2,6 +2,8 @@ import { Config, driver, PopoverDOM, State } from "driver.js";
 import "driver.js/dist/driver.css";
 import { createIntroTour } from "./tours/intro-tour";
 import { type TourStep } from "./types";
+import { PluginExecutionContext } from "@teskooano/ui-plugin";
+import { ModalResult } from "../../controllers/dockview";
 
 /**
  * Manages the application tour using driver.js.
@@ -19,12 +21,15 @@ export class TourController {
   private tourSteps: TourStep[] = [];
   /** The ID of the active engine view panel, used by some step actions. */
   private engineViewId: string | null = null;
+  private _context: PluginExecutionContext;
 
   /**
    * Creates an instance of TourController.
-   * Initializes driver.js with default configuration and loads the intro tour steps.
+   * @param context The main plugin execution context.
    */
-  constructor() {
+  constructor(context: PluginExecutionContext) {
+    this._context = context;
+
     this.driverInstance = driver({
       animate: true,
       showProgress: true,
@@ -71,6 +76,42 @@ export class TourController {
     });
 
     this.tourSteps = createIntroTour(this.driverInstance);
+  }
+
+  /**
+   * Checks if the tour should be prompted and, if so, displays a modal.
+   * This should be called once during application initialization.
+   */
+  public async promptIfNeeded(): Promise<void> {
+    if (!this.shouldPromptForTour()) {
+      return;
+    }
+
+    this.markTourModalAsShown();
+
+    try {
+      const result: ModalResult =
+        await this._context.dockviewController.showModal({
+          id: "tour-prompt-modal",
+          title: "Welcome to Teskooano!",
+          content: `<p>Would you like to take a quick tour of the interface?</p>
+                  <p><small>You can restart the tour later from the help menu.</small></p>`,
+          confirmText: "Start Tour",
+          closeText: "Maybe Later",
+          hideSecondaryButton: true,
+          width: 400,
+          height: 220,
+        });
+
+      if (result === "confirm") {
+        this.startTour();
+      } else {
+        this.setSkipTour(true);
+      }
+    } catch (error) {
+      console.error("Error showing tour modal:", error);
+      this.setSkipTour(true);
+    }
   }
 
   /**
@@ -171,6 +212,12 @@ export class TourController {
    * Ensures dynamic steps are updated before starting.
    */
   public resumeTour(): void {
+    if (!this.driverInstance) {
+      console.error(
+        "Cannot resume tour: TourController has not been initialized.",
+      );
+      return;
+    }
     const savedStepId = localStorage.getItem("tourCurrentStep");
 
     if (savedStepId) {

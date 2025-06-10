@@ -8,34 +8,59 @@ import { TourController } from "./TourController";
 
 import TourIcon from "@fluentui/svg-icons/icons/compass_northwest_24_regular.svg?raw";
 
-export * from "./TourModal";
 export * from "./TourController";
 
-export const tourControllerInstance = new TourController();
+// A module-scoped variable to hold the singleton instance.
+let tourControllerInstance: TourController | null = null;
+
+const initializeTourFunction: FunctionConfig = {
+  id: "tour:initialize",
+  execute: async (context: PluginExecutionContext) => {
+    if (!tourControllerInstance) {
+      tourControllerInstance = new TourController(context);
+    }
+    await tourControllerInstance.promptIfNeeded();
+    return tourControllerInstance;
+  },
+};
 
 const startTourFunction: FunctionConfig = {
   id: "tour:start",
-  dependencies: {},
   execute: async () => {
-    tourControllerInstance.startTour();
+    if (tourControllerInstance) {
+      tourControllerInstance.startTour();
+    } else {
+      console.error(
+        "[TourPlugin] Cannot start tour: Controller not initialized.",
+      );
+    }
   },
 };
 
 const restartTourFunction: FunctionConfig = {
   id: "tour:restart",
-  dependencies: {},
   execute: async () => {
-    tourControllerInstance.restartTour();
+    if (tourControllerInstance) {
+      tourControllerInstance.restartTour();
+    } else {
+      console.error(
+        "[TourPlugin] Cannot restart tour: Controller not initialized.",
+      );
+    }
   },
 };
 
 const setSkipTourFunction: FunctionConfig = {
   id: "tour:setSkip",
-  dependencies: {},
-
   execute: async (_: PluginExecutionContext, args?: { skip?: boolean }) => {
-    const skipValue = args?.skip ?? false;
-    tourControllerInstance.setSkipTour(skipValue);
+    if (tourControllerInstance) {
+      const skipValue = args?.skip ?? false;
+      tourControllerInstance.setSkipTour(skipValue);
+    } else {
+      console.error(
+        "[TourPlugin] Cannot set skip preference: Controller not initialized.",
+      );
+    }
   },
 };
 
@@ -61,7 +86,12 @@ export const plugin: TeskooanoPlugin = {
   id: "teskooano-tour",
   name: "Teskooano Tour",
   description: "Provides the interface for application tours using driver.js",
-  functions: [startTourFunction, restartTourFunction, setSkipTourFunction],
+  functions: [
+    initializeTourFunction,
+    startTourFunction,
+    restartTourFunction,
+    setSkipTourFunction,
+  ],
   panels: [],
   toolbarRegistrations: [tourToolbarRegistration],
 };

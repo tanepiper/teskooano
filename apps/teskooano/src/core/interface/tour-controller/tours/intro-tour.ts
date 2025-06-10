@@ -1,4 +1,4 @@
-import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
+import { getCelestialObjects } from "@teskooano/core-state";
 import { Config, Driver, PopoverDOM, State } from "driver.js";
 import { TourStep } from "../types";
 

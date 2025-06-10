@@ -4,10 +4,7 @@ import "./vite-env.d";
 
 import { getCelestialObjects } from "@teskooano/core-state";
 
-import {
-  TeskooanoTourModal,
-  tourControllerInstance,
-} from "./core/interface/tour-controller";
+import { TourController } from "./core/interface/tour-controller";
 
 import {
   pluginManager,
@@ -129,31 +126,12 @@ async function initializeApp() {
   }
 
   appContext.modalManager = modalManager;
-  TeskooanoTourModal.setModalManager(modalManager);
 
-  if (tourControllerInstance.shouldPromptForTour()) {
-    const tourModalElement = document.createElement(
-      "teskooano-tour-modal",
-    ) as TeskooanoTourModal;
-    tourModalElement.setCallbacks(
-      () => {
-        try {
-          pluginManager.execute("tour:start");
-          tourControllerInstance.markTourModalAsShown();
-        } catch (error) {
-          console.error("[App] Error executing tour:start:", error);
-        }
-      },
-      () => {
-        try {
-          pluginManager.execute("tour:setSkip", { skip: true });
-          tourControllerInstance.markTourModalAsShown();
-        } catch (error) {
-          console.error("[App] Error executing tour:setSkip:", error);
-        }
-      },
-    );
-    document.body.appendChild(tourModalElement);
+  // Initialize the tour controller and prompt if needed.
+  try {
+    await pluginManager.execute("tour:initialize");
+  } catch (error) {
+    console.error("[App] Failed to initialize tour controller:", error);
   }
 
   const plugins = pluginManager.getPlugins();
