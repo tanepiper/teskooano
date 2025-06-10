@@ -129,9 +129,91 @@ After initialization, UI controllers (e.g., `ToolbarController`, `EngineToolbar`
 
 This architecture ensures that UI controllers remain generic and simply render or invoke based on the configurations provided by the registered plugins, while plugins receive necessary dependencies transparently.
 
+## 5. HMR (Hot Module Replacement) and Unloading Flow
+
+The system supports HMR for a better development experience.
+
+1.  **File Change:** A developer saves a file belonging to a registered plugin module.
+2.  **Vite Server:**
+    - The `teskooanoUiPlugin`'s `handleHotUpdate` hook is triggered.
+    - It looks up the changed file path in its internal map to find the corresponding `pluginId`.
+    - If found, it sends a custom WebSocket message (`teskooano-plugin-update`) to the client with the `pluginId`.
+3.  **Browser Client (`PluginManager`):**
+    - The `PluginManager` listens for the `teskooano-plugin-update` event.
+    - Upon receiving the event, it triggers `reloadPlugin(pluginId)`.
+    - This method first calls `unloadPlugin(pluginId)`:
+        - It calls the plugin's optional `dispose()` method for cleanup.
+        - It removes all panels, functions, toolbar items, and manager instances associated with that plugin from its registries.
+    - Then, it calls `loadAndRegisterPlugins([pluginId])` to load the new module version and register it, following the standard initialization flow.
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant ViteServer as Vite Dev Server
+    participant TeskooanoPlugin as teskooanoUiPlugin
+    participant Browser as Browser/Runtime
+    participant PluginManager as UI Plugin Manager
+    participant PluginModule as Plugin Module Code
+
+    Dev->>ViteServer: Saves plugin file
+    ViteServer->>TeskooanoPlugin: handleHotUpdate(file)
+    TeskooanoPlugin->>TeskooanoPlugin: Find pluginId for file
+    TeskooanoPlugin->>Browser: ws.send({ event: 'teskooano-plugin-update', data: { pluginId } })
+
+    Browser->>PluginManager: HMR listener receives event
+    PluginManager->>PluginManager: reloadPlugin(pluginId)
+
+    Note over PluginManager: --- Unloading Phase ---
+    PluginManager->>PluginModule: plugin.dispose()
+    PluginModule-->>PluginManager: Cleanup complete
+    PluginManager->>PluginManager: Remove all items for pluginId
+
+    Note over PluginManager: --- Reloading Phase ---
+    PluginManager->>Browser: await import('/path/to/new/plugin.ts')
+    Browser->>PluginModule: Load NEW module code
+    PluginModule-->>Browser: Return new module
+    Browser-->>PluginManager: newModule
+    PluginManager->>PluginManager: registerPlugin(newModule.plugin)
+    PluginManager->>PluginModule: newModule.plugin.initialize()
+
+```
+
+## 6. Consumption Flow
+
+After initialization, UI controllers (e.g., `ToolbarController`, `EngineToolbar`, `DockviewController`) interact with the `PluginManager` to build the dynamic parts of the UI:
+
+1.  **Toolbar Creation:**
+
+    - A toolbar instance (e.g., `EngineToolbar`) is created for a specific target (e.g., `'engine-toolbar'`).
+    - It calls `getToolbarItemsForTarget('engine-toolbar')` and potentially `getToolbarWidgetsForTarget('engine-toolbar')` on the `PluginManager`.
+    - The `PluginManager` returns arrays of `ToolbarItemConfig` and `ToolbarWidgetConfig` objects registered for that target.
+    - The toolbar iterates through the configurations and renders the corresponding buttons (e.g., `<teskooano-button>`) or widgets (using the `componentName` from the widget config, which should correspond to a loaded custom element or require retrieving a class via `getLoadedModuleClass` if it's not a custom element - **TODO**: Clarify widget rendering flow).
+    - Click handlers on buttons use the configuration details (e.g., `componentName` for panels, `functionId` for functions) to trigger actions.
+
+2.  **Panel Handling:**
+
+    - When a toolbar button configured to open a panel (`type: 'panel'`) is clicked:
+      - The handler retrieves the `componentName` (which must be a defined custom element tag) from the button's configuration.
+      - It uses the `DockviewController` (accessing the stored `dockviewApi`) to add a panel using the `componentName`. Dockview uses the already-defined custom element.
+
+3.  **Function Handling:**
+
+    - When a toolbar button configured to execute a function (`type: 'function'`) is clicked:
+      - The handler retrieves the `functionId`.
+      - It calls `getFunctionConfig(functionId)` on the `PluginManager`.
+      - If found, it simply calls the `execute` method returned (e.g., `const func = getFunctionConfig('myFunc'); func.execute(arg1, arg2);`).
+      - The wrapper function inside `getFunctionConfig` automatically injects the necessary `PluginExecutionContext` (containing `dockviewApi`, `dockviewController`) before calling the original plugin's function.
+
+4.  **Module Class Retrieval:**
+    - If a part of the application needs an instance of a non-custom-element module loaded via `loadAndRegisterComponents` (e.g., a Modal Manager):
+      - It calls `getLoadedModuleClass('teskooano-modal-manager')` on the `PluginManager`.
+      - If the class is found, it can instantiate it: `const ModalManager = getLoadedModuleClass('teskooano-modal-manager'); const manager = new ModalManager();`.
+
+This architecture ensures that UI controllers remain generic and simply render or invoke based on the configurations provided by the registered plugins, while plugins receive necessary dependencies transparently.
+
 ## TODO
 
 - Clarify and document the expected rendering flow for `ToolbarWidgetConfig`. Does the toolbar instantiate components directly, or does it expect the `componentName` to always be a custom element tag?
 - Consider error handling strategies for failed plugin loading or initialization (currently emits error status via observable).
-- Evaluate if the dependency injection mechanism needs to be more granular or support different dependency scopes (currently global via `setAppDependencies`).
+- Evaluate if the dependency injection mechanism needs to be more granular or support different dependency scopes.
 - Update Mermaid diagram to reflect singleton manager and removal of component loading phase.

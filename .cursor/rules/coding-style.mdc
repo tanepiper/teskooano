@@ -3,225 +3,121 @@ description:
 globs: 
 alwaysApply: true
 ---
+**Project Teskooano (N-Body Sim):**
+*   **Core:** N-Body simulation with real physics & orbital mechanics.
+*   **Architecture:** Modular: Frontend, Backend (player/env state), Libraries. Supports web component plugins.
+*   **UI:** DockView for modular UI (toolbars, panels, buttons). Requires a new, consistent design system. Routing for different views (loading, settings).
+*   **3D Engine:** ThreeJS (Vanilla TypeScript). Requires abstractions for game/scene managers.
+*   **Workflow:** Follow game designer's guidance. Commit frequently (suggest commitizen-formatted messages). Keep library READMEs and CHANGELOGs updated.
 
-# User Coding and Style preferences
+**Key Dev Rules & Tools:**
+*   **Monorepo:** Use `proto` and `moon`.
+*   **TypeScript:** Strict, linted, formatted for all code.
+*   **CSS:** Vanilla CSS ONLY. Create design system tokens (color, typography, layout, animation). No CSS frameworks.
+*   **Frontend/Libraries:** Vite, Vanilla TypeScript, Web Components.
+    *   **State Management:** RxJS (for mappable data interfaces and Observable I/O).
+    *   **Documentation:** Use well-typed TypeScript, export interfaces. Provide API docs and clear READMEs for libraries.
+*   **Shell Scripts:** Clean, portable bash.
 
-You are a senior developer at a games company tasked with working with the game designer to implement their requirements for development tools - Imagine you are writing like a grumpy old bastard who knows game development inside out, and have written some award winning indie games - you don't want anything that needs some kind of nasty Node build tool to make this work, avoid unnecessary abstractions.
+**AI Agent Behaviour:**
+*   **Accuracy:** No hallucination.
+*   **Scope:** Edit only requested code. No unprompted UI changes.
+*   **Conciseness:** Keep features minimal per request; avoid over-explaining.
+*   **Problem Solving:** After 3 failed attempts on a problem, ask user for help with suggestions.
+*   **Debugging:** Address one error at a time.
+*   **Configuration:** Respect user-modified settings (e.g., ports, names, config values).
+*   **Dependencies:** Verify NPM package existence before use.
+*   **Explanations:** Use Markdown for complex topics, Mermaid diagrams for visualizations.
 
-## The Engine
+**Code Style & Structure:**
+*   **Cleanliness:** Remove dead code and large comment blocks. Use 2-space indentation.
+*   **Modularity:** Prefer small, composable files (target max 300-400 lines). Refactor larger files.
+    *   Extract long handlers/complex data processing into utility or library functions.
+    *   Decompose HTML into smaller, testable leaf components using props for data flow.
+*   **Frontend Pattern:** Apply Model-View-Controller (MVC) structure.
 
-The engine is ambicious - is called 'Teskooano' - It's an N-Body simulatation with real physics.  Both provide a space simulation experience, with real orbital mechanics in star systems which we want to also have.
+**Testing (TDD Approach):**
+*   **File Convention:** Test files (`<filename>.spec.ts`) adjacent to source files.
+*   **Unit Tests:** Use Vitest for both backend and frontend.
+*   **Frontend (Apps):**
+    *   Playwright for user story and integration testing (focus on practical UI/complex features).
+    *   Avoid testing DOM or library features directly.
+    *   If a unit test requires JSDOM, write it as a Playwright test instead.
+*   **Backend (Services):**
+    *   Playwright for API test cases (focus on practical tests).
 
-The engine is modular, with a thin frontend application, a backend for handling player and environment state, and libraries that break down the functionality into components, we compose into a simple app.
+**Monorepo Setup (`proto` & `moon`):**
+*   **Initial Check:** Verify if already working within a monorepo.
+*   **`proto` (Dependency Management):**
+    *   Use for local copies of system dependencies (node, npm).
+    *   `.protofile` content:
+        ```toml
+        jq = "1.7.1"
+        moon = "1.31.2"
+        node = "22.13.0"
+        npm = "11.0.0"
 
-The Game UI is modular using DockView, allowing for toolbars, panels, buttons that float above the game canvas - this UI should follow a consistant design system that you come up with.  The app will have routing to allow for other kinds of views (loading screens, settings, etc)
+        [plugins]
+        jq = "https://raw.githubusercontent.com/appthrust/proto-toml-plugins/main/jq/plugin.toml"
+        moon = "https://raw.githubusercontent.com/moonrepo/moon/master/proto-plugin.toml"
+        ```
+    *   After creating/updating `.protofile`, run `proto use`.
+*   **`moon` (Repository Management):**
+    *   Use for overall monorepo structure and tasks.
+    *   Project `moon.yml` files required in each project directory (`apps/`, `packages/`, `services/`).
+    *   No `moon.yml` in the root; initialize with `yes | moon init`.
+    *   **Example Monorepo Structure:**
+        ```
+        - monorepo-root
+            - README.md
+            - package.json # Root package.json with workspaces
+            - tsconfig.json # Monorepo-compatible tsconfig with paths
+            - apps/
+                - app1/
+                    - src/
+                    - package.json
+                    - moon.yml
+                    - tsconfig.json
+                    - vite.config.ts
+            - packages/
+                - library1/ # (similar structure to app1)
+            - services/
+                - rest-service-1/ # (similar structure)
+        ```
+    *   **Package Management:** Use `npm` exclusively.
+        *   Root `package.json` workspaces example: `"workspaces": ["./apps/*", "./package/*"]` (Note: `package` singular as per original example, while directories are `packages` plural).
+        *   Inter-package dependencies: Use `file:../../packages/<package_name>` format (NOT `workspace:*`).
+    *   **Running TypeScript:** Use `tsx` (e.g., `npx tsx src/index.ts`; for dev: `npx tsx watch src/index.ts`).
 
-The 3D engine will be powered by ThreeJS in Vanilla TypeScript - when using it, think about the kind of abstractions we need for the different types of managers for the game and a scene.
-
-For the model format we will use FBX
-
-The game designer will guide you at different time through the steps - have a good work/life balance, and don't make too much work for yourself, stick to the brief and only offer suggestions when you think you can make more improvements.
-
-Remind the designer to commit often!  Bugs always crop up, so we should be committing to git, you can also suggest a good git commit message (using the commitizen format) they can use to encourage them.
-
-You should also check to see if the library has a readme and changelog, and update the changelog often.
-
-## 📏 Tools and Rules
-
-This is a set of rules and conventions you should always follow - check to see if you are already working with these set up (e.g. in a monorepo)
-
-- Prefered languages and tools:
-    - `proto` and `moon` for monorepo dependency management
-    - TypeScript for all Frontend and Backend applications
-    - Use strict types, linting and formatting
-    - Vanilla CSS - no frameworks or additional tooling is needed for styling, when creating CSS from scratch - take a design system approach and provide tokens for color, typography, layout and animation
-    - Backend/Node - Clean typescript in a ESM Module format, focus on modular routing of different parts of the application, use tsx and tsx watch as the starter for all apps
-    - Frontend & libraries - Vite with Vanilla Typescript and Web Components
-        - Use `RxJS` for state management - compose it in a way that provides a mappable interface for data
-        - Use `rxjs` for creating Observable interfaces that can either take incoming data from another Observable, or export an Obserable of a value ()
-        - Use well-typed Typescript, and export interfaces needed with good documentation
-        - Provide well written API documentation and a clear readme on how to use the library
-    - Clean and portable bash code for shell scripts and other utilities (especially where installing a lot of dependencies via npm would not make sense )
-    - For Backend, unless asked used expressjs. Here are the versions you should use:
-```
-    "dependencies": {
-        "body-parser": "1.20.3",
-        "cors": "2.8.5",
-        "express": "4.21.2",
-        "express-rate-limit": "7.5.0"
-    }
-     "devDependencies": {
-        "@types/body-parser": "1.19.5",
-        "@types/cors": "2.8.17"
-        "@types/express": "4.17.21",
-        "@types/node": "22.13.10",
-     }
-```
-
-## ✋ Your Behaviour
-
-These are things you should do at all times to meet the users needs
-
-- Do not hallucinate
-- Avoid rewriting code you have not been asked to look at, especially don't make any fundamental UI changes without asking
-- Do not ruminate or overexplain a feature - when building someting, keep it concise and neat and keep to a small number of features, do not keep adding more
-- Loop no more than 3 times on a problem before asking for the users help, explain the problem and show them your suggested changes
-- If you are debugging, only debug one error at a time
-- Avoid changing settings values like urls or names. For example if you set a port number, and the user changes it - assume the user knows what they are doing
-- Be sure a dependency exists like library on npm exists - don't dream one up
-- Where possible, when you do something complex you should create a markdown file to explain it
-- Use mermaid diagrams to visualise the concept with a complete description
-
-## 👍 Code preferences
-
-- Always use 2 spaces for intentation of any code format
-- Avoid rewriting configuration values, especially if a user has changed them 
-- Always prefer smaller composable files over larger ones, but try keep the files logical and tidy.  If you see existing code not following these conventions feel free to refactor it. When writing and modularising code:
-
-    - Keep files to a maximum of 300-400 lines of code - If you do end up writing a large file, immediatly split it down.
-    - Focus on moving functions that can easily be put in a utility or library file (for example long handler functions in React components, or complex processing of data)
-    - Break down large pieces of HTML into smaller leaf components that have boundaries of only taking data or return data via props (these components can have functionality but should be isolated and testable)
-    - Take a Model-View-Controller approach to frontend components, breaking down routes and views into smaller parts with a controller, and connecting with a datasource model
-
-## 🧪 Testing
-
-- use a Test Driven Development (TDD) approach to building code
-- When writing a file, it should be accompanied by a test file in the same folder:  For example where a code file is <filename>.ts the unit test should always be <filename>.spec.ts
-
-    - Write unit tests for vitest, both for backend and frontend code.
-    - For frontend apps:
-        - Use Playwrite for user story and integration testing
-        - Tests should be practical UI tests or complex features of the app
-        - Avoid testing DOM or library features
-        - If a unit test requires JSDOM, instead write it to run in Playwrite
-    - For backend apps:
-        - Use Playwrite for automated testing for API test cases
-        - Tests should be practical 
-
-## 🎁 Monorepo Approach
-
-- Check to see if you are already working in a monorepo
-
-## `proto`
-
-- Use `proto` for any repository that is set up, this sets up a local copy of system dependencies like `node` and `npm` for this repo only, giving consistancy.  Here is a starter `.protofile`:
-
-```
-jq = "1.7.1"
-moon = "1.31.2"
-node = "22.13.0"
-npm = "11.0.0"
-
-[plugins]
-jq = "https://raw.githubusercontent.com/appthrust/proto-toml-plugins/main/jq/plugin.toml"
-moon = "https://raw.githubusercontent.com/moonrepo/moon/master/proto-plugin.toml"
-```
-
-- Once created, run `proto use`
-
-## `moon`
-
-- Use `moon` for repo management and ensure you add a `moon.yml` file to each project, the stucture should be:
-
-    - apps: Applications that have a frontend component
-    - packages: libraries and other features
-    - services: backend services that can be containerised
-
-Do not add a `moon.yml` to the root folder, instead run `yes | moon init`
-
-```
-- monorepo-root
-    - README.md
-    - package.json # monorepo package json - use workspaces here
-    - tsconfig.json # monorepo compatible typescript setup with paths
-    - apps
-        - app1
-            - src
-            - package.json
-            - moon.yml
-            - tsconfig.json
-            - vite.config.ts
-        - app2
-    - packages
-        - library1
-            - src
-            - package.json
-            - moon.yml
-            - tsconfig.json
-            - vite.config.ts
-        - library2
-    - services
-        - rest-service-1
-            - src
-            - package.json
-            - moon.yml
-            - tsconfig.json
-        - graphql-service-1
-```
-
-- Only use `npm` for node dependencies, do not use any alternative package manager
-    - use `workspaces`, for example `"workspaces": ["./apps/*", "./package/*"]
-    - Do not use the 'workspace:*' format for dependencies, but rather 'file:../../packages/<package>' for example
-
-- Use `tsx` to run typescript scripts directly (e.g. `npx tsx src/index.ts`)
-    - for dev tasks you can use watch `npx tsx watch src/index.ts`
-
-## 🌈 Frontend Apps and Libraries
-
-### Applications
-
-- Put the frontend application in the `apps` folder, and run on port 3000
-- When starting a project, use RxJS for state and think about how operators can be used to make better data pipelines
-- When writing a complex component, break it down into the smallest code possible, that make sense to unit test - avoid large files, especially over 400 lines.
-    - When writing HTML fragments - If there is a loop or logic, put this into it's own component
-    - When writing functional code - put complex loops or logic into their own component
-- Use the to define the controller components for that particular view, and build up views from smaller (ideally reusable) components
-- Write unit test with vitest. Always create spec tests next to files - as an example where a code file is <filename>.ts the test should always be <filename>.spec.ts.
-- DO NOT use tailwind css - if you encounter tailwind css you should offer to provide a vanilla css implementation instead and create the file, you are free to to use sass if it help, but keep the syntax vanilla
-- Create a general set of design system tokens for a project so that it has some consistant design, offer to provide design system components if appropriate
-- Integrate websockets for real-time communication between the frontend and backend
-
-### Libraries
-
-- When writing libraries, put these in the `packages` folder - libraries should be exportable and the correct typescript and vite setup in place to load these libraries
-- Libraries should be written with well typed Typescript, make sure to export types and provide good documentation
-- Always provide a thourough readme on the purpose and use of the library (ask What, Why, Where, When How? when considering the answers to put into this document)
-- When building libraries in the monorepo way, you can directly export typescript - just make sure the package.json is set up like the following snippet:
-
-```
-"type": "module",
-  "main": "src/index.ts",
-  "types": "src/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./src/index.ts",
-      "types": "./src/index.d.ts"
-    },
-    "./styles.css": "./src/styles.css"
-  },
-  "files": [
-    "src",
-    "styles.css"
-  ]
-  ```
-
-## 🚢 Backend Services and Features
-
-### Applications
-
-- Put the backend app in `services`, and run on port 3001
-- Use expressjs as a base for all backend projects - set up with cors and body-parser
-- Use express router to break down more complex sets of features into logical endpoints (e.g. ship state, travel, docking, etc)
-- Integrate websockets for real-time communication between the frontend and backend
-- When writing a complex component, break it down into the code components possible, that make sense to unit test - avoid large files, keep them to no more than 400 lines and try break them down further.
-- Write unit test with vitest. Always create spec tests next to files - as an example where a code file is <filename>.ts the test should always be <filename>.spec.ts.
-
-### Libraries
-
-- You can also put backend libaries in packages, but here only extract them if it makes sense to make them reusable, otherwise leave them in the application - you can seperate routing and rendering (JSON) from the business logic
-
-
-## Actions to take
-
-
-
+**Frontend Development Details:**
+*   **Applications (`apps/` directory):**
+    *   Run on port 3000.
+    *   Utilize RxJS for state management and building data pipelines with operators.
+    *   Components: Keep small and testable (max 400 lines). Encapsulate loops or complex logic in child components.
+    *   Structure: Use controller components for views, compose views from smaller components.
+    *   Testing: Vitest unit tests (`<filename>.spec.ts`).
+    *   **CSS:** STRICTLY NO Tailwind CSS. If encountered, offer to replace with Vanilla CSS (Sass is permissible if syntax remains vanilla-like). Implement the design system.
+    *   **Real-time:** Integrate WebSockets for frontend-backend communication.
+*   **Libraries (`packages/` directory):**
+    *   Ensure libraries are exportable with correct TypeScript and Vite configurations.
+    *   Write well-typed TypeScript; export types and provide comprehensive documentation.
+    *   **README:** Create a thorough README for each library (covering What, Why, Where, When, How).
+    *   **`package.json` for Direct TypeScript Export:**
+        ```json
+        {
+          "type": "module",
+          "main": "src/index.ts",
+          "types": "src/index.d.ts",
+          "exports": {
+            ".": {
+              "import": "./src/index.ts",
+              "types": "./src/index.d.ts"
+            },
+            "./styles.css": "./src/styles.css"
+          },
+          "files": [
+            "src",
+            "styles.css"
+          ]
+        }
+        ```

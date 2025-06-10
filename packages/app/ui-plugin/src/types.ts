@@ -283,6 +283,12 @@ export interface TeskooanoPlugin {
   toolbarWidgets?: ToolbarWidgetConfig[];
 }
 
+/**
+ * Internal type used by the PluginManager to store registered items
+ * along with the ID of the plugin that provided them.
+ */
+export type RegisteredItem<T> = T & { pluginId: string };
+
 export type PluginRegistrationStatus =
   | { type: "loading_started"; pluginIds: string[] }
   | { type: "loading_plugin"; pluginId: string }
@@ -293,6 +299,11 @@ export type PluginRegistrationStatus =
   | { type: "registered_plugin"; pluginId: string }
   | { type: "register_error"; pluginId: string; error: Error }
   | { type: "init_error"; pluginId: string; error: Error }
+  | { type: "disposing"; pluginId: string }
+  | { type: "disposed"; pluginId: string }
+  | { type: "dispose_error"; pluginId: string; error: any }
+  | { type: "unloading"; pluginId: string }
+  | { type: "unloaded"; pluginId: string }
   | {
       type: "dependency_error";
       pluginId: string;

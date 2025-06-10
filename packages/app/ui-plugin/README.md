@@ -173,10 +173,50 @@ Plugin loading is driven by configuration files, analyzed by the Vite plugin at 
       initialize: () => {
         console.log("My Feature plugin initialized");
       },
+      // Optional dispose function for cleanup (runs before unload/reload)
+      dispose: () => {
+        console.log("My Feature plugin is being unloaded");
+        // e.g., remove event listeners created in initialize()
+      },
     };
     ```
 
 6.  **Consume Registered Items:** UI controllers (like `ToolbarController`, `DockviewController`) use getter functions on the `pluginManager` instance (`getToolbarItemsForTarget`, `getPanelConfig`, `getManagerInstance`, etc.) to dynamically build the UI based on what plugins were loaded.
+
+## Hot Module Replacement (HMR) and Lifecycle
+
+The plugin system now supports Hot Module Replacement during development. When a plugin's source file is changed, the Vite plugin will notify the `PluginManager` to automatically unload the old version and load the new one.
+
+### The `dispose` Method
+
+To support this, a plugin can now export an optional `dispose` function. This function is called just before the plugin is unloaded, giving it a chance to clean up any resources it allocated. This is the ideal place to remove event listeners, close connections, or dispose of complex objects that were set up in the `initialize` function.
+
+```typescript
+export const plugin: TeskooanoPlugin = {
+  id: 'my-resource-intensive-plugin',
+  name: 'My Plugin',
+  initialize: () => {
+    // Setup listeners or intervals
+    window.addEventListener('resize', handleResize);
+    const intervalId = setInterval(doSomething, 1000);
+    // Store intervalId to clear it later
+  },
+  dispose: () => {
+    // Clean up what was done in initialize
+    window.removeEventListener('resize', handleResize);
+    clearInterval(intervalId); // Assuming intervalId was stored
+    console.log('Plugin cleaned up successfully.');
+  }
+};
+```
+
+### HMR Limitations: Custom Elements
+
+Due to limitations in the browser's Custom Elements API, it is **not possible to un-register a custom element tag name**.
+
+When a plugin that defines custom elements (including panel components that are custom elements) is reloaded via HMR, the `PluginManager` will **not** attempt to redefine the tag. It will log a warning, and the **old component implementation will remain active**.
+
+To see changes in a custom element's definition, **a full page reload is required**. Logic within the component's methods, however, can often be hot-reloaded without a full page refresh.
 
 ## Advanced Usage Examples
 
