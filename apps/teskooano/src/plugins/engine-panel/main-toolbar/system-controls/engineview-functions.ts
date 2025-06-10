@@ -3,6 +3,7 @@ import type {
   PluginExecutionContext,
 } from "@teskooano/ui-plugin";
 import type { AddPanelOptions } from "dockview-core";
+import { EngineToolbarManager } from "../../../../core/interface/engine-toolbar";
 
 let enginePanelCounter = 0;
 
@@ -14,11 +15,23 @@ export const addCompositeEnginePanelFunction: FunctionConfig = {
       controller: true,
     },
   },
-  execute: (context: PluginExecutionContext) => {
-    const { dockviewApi } = context;
+  execute: async (context: PluginExecutionContext) => {
+    const { dockviewApi, pluginManager } = context;
     if (!dockviewApi) {
       console.error(
         "[EngineViewFunctions] Cannot add panel: Dockview API not available.",
+      );
+      return;
+    }
+
+    const engineToolbarManager =
+      await pluginManager.execute<EngineToolbarManager>(
+        "engine-toolbar:initialize",
+      );
+
+    if (!engineToolbarManager) {
+      console.error(
+        "[EngineViewFunctions] Cannot add panel: EngineToolbarManager could not be initialized.",
       );
       return;
     }
@@ -35,6 +48,7 @@ export const addCompositeEnginePanelFunction: FunctionConfig = {
       params: {
         title: compositeViewTitle,
         dockviewController: context.dockviewController,
+        engineToolbarManager,
       },
     };
 

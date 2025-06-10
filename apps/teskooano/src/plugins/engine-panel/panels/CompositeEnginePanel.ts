@@ -17,16 +17,10 @@ import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 
 import { layoutOrientation$ } from "./layoutStore";
 
-import type { DockviewController } from "../../../core/controllers/dockview/DockviewController";
-
 import { simulationManager } from "@teskooano/app-simulation"; // Added
 import { CustomEvents } from "@teskooano/data-types";
 import { RendererStats } from "@teskooano/renderer-threejs-core";
-import { pluginManager } from "@teskooano/ui-plugin";
-import {
-  EngineToolbar,
-  EngineToolbarManager,
-} from "../../../core/interface/engine-toolbar";
+import { EngineToolbar } from "../../../core/interface/engine-toolbar";
 import { ensureSimulationLoopStarted } from "../../../core/state/simulation-loop.state"; // Added import
 import { CameraManager } from "../../camera-manager/CameraManager"; // Corrected import path
 import { template } from "./CompositeEnginePanel.template.js"; // Import the template
@@ -76,11 +70,7 @@ export class CompositeEnginePanel
 
   private _viewStateSubject: BehaviorSubject<CompositeEngineState>;
 
-  private _dockviewController: DockviewController | null = null;
-
   private _engineToolbar: EngineToolbar | null = null;
-
-  private _trackedFloatingPanels: Map<string, DockviewPanelApi> = new Map();
 
   private _panelRemovedSubscription: Subscription | null = null;
 
@@ -277,27 +267,11 @@ export class CompositeEnginePanel
   }
 
   /**
-   * Provides access to the DockviewController instance.
-   * @returns The DockviewController instance or null if not initialized.
-   */
-  public get dockviewController(): DockviewController | null {
-    return this._dockviewController;
-  }
-
-  /**
    * Provides access to the EngineToolbar instance.
    * @returns The EngineToolbar instance or null if not initialized.
    */
   public get engineToolbar(): EngineToolbar | null {
     return this._engineToolbar;
-  }
-
-  /**
-   * Provides access to the tracked floating panels.
-   * @returns The tracked floating panels.
-   */
-  public get trackedFloatingPanels(): Map<string, DockviewPanelApi> {
-    return this._trackedFloatingPanels;
   }
 
   /**
@@ -430,7 +404,7 @@ export class CompositeEnginePanel
     // Ensure the element has an ID if needed for external styling or query, though shadow DOM encapsulates.
     if (!this.id) this.id = `composite-engine-view-${this._api.id}`;
 
-    if (this._isInitialized && this._dockviewController) {
+    if (this._isInitialized && this._api) {
       console.warn(
         `[CompositePanel ${this._api.id}] Attempted to initialize already initialized panel.`,
       );
@@ -440,20 +414,6 @@ export class CompositeEnginePanel
     this._params = parameters as GroupPanelPartInitParameters & {
       params?: CompositePanelParams;
     };
-
-    this._dockviewController = this._params?.params?.dockviewController ?? null;
-
-    if (!this._dockviewController) {
-      console.error(
-        `[CompositePanel ${this._api.id}] DockviewController instance was not provided in params. Toolbar actions will fail.`,
-      );
-    }
-
-    // Initial content setup based on current generation state
-    // Ensure _engineContainer is queried from shadowRoot if not done in constructor for some reason
-    if (!this._engineContainer)
-      this._engineContainer =
-        this.shadowRoot!.querySelector(".engine-container");
 
     this._placeholderManager?.showMessage(this._isGeneratingSystem);
 
@@ -470,18 +430,6 @@ export class CompositeEnginePanel
             this.triggerResize();
           }
         },
-      );
-    }
-
-    if (this._dockviewController) {
-      this._panelRemovedSubscription?.unsubscribe(); // Ensure no duplicates if init is called again
-      this._panelRemovedSubscription =
-        this._dockviewController.onPanelRemoved$.subscribe((panelId) => {
-          this.handleExternalPanelRemoval(panelId);
-        });
-    } else {
-      console.warn(
-        "CompositeEnginePanel: DockviewController not provided, cannot subscribe to panel removals.",
       );
     }
 
@@ -704,10 +652,7 @@ export class CompositeEnginePanel
       return;
     }
 
-    const toolbarManager =
-      pluginManager.getManagerInstance<EngineToolbarManager>(
-        "engine-toolbar-manager",
-      );
+    const toolbarManager = this._params?.params?.engineToolbarManager;
 
     if (!toolbarManager) {
       console.error(
@@ -719,7 +664,6 @@ export class CompositeEnginePanel
     this._engineToolbar = toolbarManager.createToolbarForPanel(
       this._api.id,
       this,
-      this._dockviewController!,
       this,
     );
   }
@@ -740,10 +684,7 @@ export class CompositeEnginePanel
     this._engineCameraManager?.dispose();
     this._engineCameraManager = undefined;
 
-    const toolbarManager =
-      pluginManager.getManagerInstance<EngineToolbarManager>(
-        "engine-toolbar-manager",
-      );
+    const toolbarManager = this._params?.params?.engineToolbarManager;
 
     if (toolbarManager && this._api?.id) {
       toolbarManager.disposeToolbarForPanel(this._api.id);
@@ -756,18 +697,6 @@ export class CompositeEnginePanel
       this._engineToolbar?.dispose?.();
       this._engineToolbar = null;
     }
-
-    this._trackedFloatingPanels.forEach((panelApi) => {
-      try {
-        panelApi.close();
-      } catch (e) {
-        console.warn(
-          `Error closing tracked panel ${panelApi.id} during dispose:`,
-          e,
-        );
-      }
-    });
-    this._trackedFloatingPanels.clear();
 
     if (this._resizeObserver) {
       this._resizeObserver.disconnect();
@@ -805,14 +734,5 @@ export class CompositeEnginePanel
     this._placeholderManager?.dispose();
 
     panelService.unregisterPanelInstance(this._api?.id ?? "unknown");
-  }
-
-  private handleExternalPanelRemoval(panelId: string): void {
-    if (this._trackedFloatingPanels.has(panelId)) {
-      this._trackedFloatingPanels.delete(panelId);
-    } else {
-      // It's fine if the panel isn't in our tracked list, could be any panel.
-      // No specific warning needed here unless we expect all removed panels to be tracked.
-    }
   }
 }

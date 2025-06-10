@@ -46,7 +46,6 @@ export type { ToolbarInitOptions } from "./controllers/toolbar";
 // --- Interfaces & High-Level Controllers ---
 export { EngineToolbar } from "./interface/engine-toolbar/EngineToolbar";
 export { EngineToolbarManager } from "./interface/engine-toolbar/EngineToolbarManager";
-export type { IDockviewPanelControls } from "./interface/engine-toolbar/engine-toolbar.types";
 
 export { TourController } from "./interface/tour-controller/TourController";
 export type { TourStep } from "./interface/tour-controller/types";

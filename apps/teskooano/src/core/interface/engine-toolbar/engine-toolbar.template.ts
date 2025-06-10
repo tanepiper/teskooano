@@ -72,7 +72,7 @@ template.innerHTML = `
     id="engine-toolbar-toggle-button"
     class="toolbar-toggle-button"
     variant="icon"
-    size="lg"
+    size="md"
     title="Show Tools"
   >
     <span slot="icon">${BoxMultipleArrowRightFilled}</span>

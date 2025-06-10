@@ -1,22 +1,42 @@
-import type { DockviewApi } from "dockview-core";
+import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import { BehaviorSubject, Observable } from "rxjs";
 import { EngineToolbar } from "./EngineToolbar";
-import { IDockviewPanelControls } from "./engine-toolbar.types";
 
+/**
+ * Manages the lifecycle of multiple {@link EngineToolbar} instances.
+ * This class acts as a factory and state manager for toolbars that are
+ * associated with specific engine panels.
+ *
+ * This class is designed to be a singleton, instantiated via the
+ * `engine-toolbar:initialize` plugin function, which provides the
+ * required {@link PluginExecutionContext}.
+ */
 export class EngineToolbarManager {
-  private dockviewApi: DockviewApi | null = null;
-
   private activeToolbars: Map<string, EngineToolbar> = new Map();
-
   private toolbarExpansionStateSubjects: Map<string, BehaviorSubject<boolean>> =
     new Map();
+  private _context: PluginExecutionContext;
 
-  constructor() {}
+  /**
+   * Initializes a new instance of the EngineToolbarManager.
+   * @param context - The plugin execution context from the PluginManager.
+   * @remark This constructor should only be called by its initialization function.
+   */
+  constructor(context: PluginExecutionContext) {
+    this._context = context;
+  }
 
+  /**
+   * Creates and registers a new toolbar for a specific panel.
+   * If a toolbar for the given ID already exists, it returns the existing instance.
+   * @param apiId - A unique identifier for the panel, typically `panel.api.id`.
+   * @param parentElement - The HTML element to which the toolbar will be appended.
+   * @param parentEngine - A reference to the parent engine instance, passed to child panels.
+   * @returns The created or existing {@link EngineToolbar} instance, or null on failure.
+   */
   public createToolbarForPanel(
     apiId: string,
     parentElement: HTMLElement,
-    dockviewController: IDockviewPanelControls,
     parentEngine: any,
   ): EngineToolbar | null {
     if (this.activeToolbars.has(apiId)) {
@@ -32,8 +52,9 @@ export class EngineToolbarManager {
 
       const newToolbar = new EngineToolbar(
         apiId,
-        dockviewController,
+        this._context,
         parentEngine,
+        this,
       );
 
       this.activeToolbars.set(apiId, newToolbar);
@@ -57,6 +78,11 @@ export class EngineToolbarManager {
     }
   }
 
+  /**
+   * Disposes and cleans up a toolbar associated with a given panel ID.
+   * This removes the toolbar from the DOM and releases any related resources.
+   * @param apiId - The unique identifier of the toolbar to dispose.
+   */
   public disposeToolbarForPanel(apiId: string): void {
     const toolbarInstance = this.activeToolbars.get(apiId);
     const expansionSubject = this.toolbarExpansionStateSubjects.get(apiId);
@@ -86,7 +112,7 @@ export class EngineToolbarManager {
 
   /**
    * Toggles the expansion state of a specific toolbar.
-   * @param apiId The API ID of the toolbar instance.
+   * @param apiId - The API ID of the toolbar instance.
    */
   public toggleToolbarExpansion(apiId: string): void {
     const expansionSubject = this.toolbarExpansionStateSubjects.get(apiId);
@@ -102,8 +128,8 @@ export class EngineToolbarManager {
 
   /**
    * Gets the current expansion state of a specific toolbar.
-   * @param apiId The API ID of the toolbar instance.
-   * @returns True if expanded, false if collapsed (defaults to true if state unknown).
+   * @param apiId - The API ID of the toolbar instance.
+   * @returns `true` if expanded, `false` if collapsed (defaults to `true` if state is unknown).
    */
   public getToolbarExpansionState(apiId: string): boolean {
     return this.toolbarExpansionStateSubjects.get(apiId)?.getValue() ?? true;
@@ -111,14 +137,10 @@ export class EngineToolbarManager {
 
   /**
    * Gets the expansion state as an Observable for a specific toolbar.
-   * @param apiId The API ID of the toolbar instance.
-   * @returns An Observable emitting the expansion state (boolean), or undefined if not found.
+   * @param apiId - The API ID of the toolbar instance.
+   * @returns An `Observable<boolean>` emitting the expansion state, or `undefined` if not found.
    */
   public getExpansionState$(apiId: string): Observable<boolean> | undefined {
     return this.toolbarExpansionStateSubjects.get(apiId)?.asObservable();
-  }
-
-  public setDependencies(dependencies: { dockviewApi: DockviewApi }): void {
-    this.dockviewApi = dependencies.dockviewApi;
   }
 }

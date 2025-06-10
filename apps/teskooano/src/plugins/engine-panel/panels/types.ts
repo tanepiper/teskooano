@@ -1,5 +1,6 @@
 import type { Vector3 } from "three";
 import type { DockviewController } from "../../../core/controllers/dockview";
+import type { EngineToolbarManager } from "../../../core/interface/engine-toolbar";
 
 /**
  * The parameters for the CompositeEnginePanel
@@ -13,6 +14,10 @@ export interface CompositePanelParams {
    * The controller for the panel
    */
   dockviewController?: DockviewController;
+  /**
+   * The manager for the engine toolbar
+   */
+  engineToolbarManager?: EngineToolbarManager;
 }
 
 /**

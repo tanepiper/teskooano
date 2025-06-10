@@ -4,7 +4,6 @@ import {
   createDockview,
   DockviewApi,
   DockviewPanelApi,
-  IContentRenderer,
   IDockviewPanel,
 } from "dockview-core";
 
@@ -20,7 +19,7 @@ import {
   OverlayOptions,
   RegisteredComponentInfo,
 } from "../types";
-import { addPanel, addFloatingPanel } from "./DockviewController.api";
+import { addFloatingPanel, addPanel } from "./DockviewController.api";
 import { handlePanelRemoval } from "./DockviewController.events";
 import { handlePanelToggleAction } from "./DockviewController.toggle";
 
