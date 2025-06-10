@@ -1,6 +1,5 @@
-import type { TeskooanoPlugin, PanelConfig } from "@teskooano/ui-plugin";
-import { CompositeEnginePanel } from "./panels/CompositeEnginePanel";
-
+import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
+import { plugin as viewsPlugin } from "./panels";
 import { addCompositeEnginePanelFunction } from "./main-toolbar/system-controls/engineview-functions";
 import {
   generateRandomSystemFunction,
@@ -17,17 +16,13 @@ import {
   addViewButtonRegistration,
 } from "./main-toolbar/toolbar-definitions";
 
-const enginePanelConfig: PanelConfig = {
-  componentName: "teskooano-engine-view",
-  panelClass: CompositeEnginePanel,
-  defaultTitle: "Engine View",
-};
-
 /**
- * Plugin definition for the core Engine Panel and related system actions.
+ * A composite plugin that aggregates all functionality related to the engine panel.
  *
- * Registers the main engine view panel (CompositeEnginePanel),
- * various system control functions (generate, clear, import/export), and toolbar widgets/buttons.
+ * This plugin bundles:
+ * - The engine view panel itself (`engine-panel-views`).
+ * - Core system control functions (generate, clear, import/export).
+ * - Toolbar widgets for simulation and system controls.
  */
 export const plugin: TeskooanoPlugin = {
   id: "teskooano-engine-panel",
@@ -35,7 +30,7 @@ export const plugin: TeskooanoPlugin = {
   description:
     "Registers engine view panels and provides core system actions (generate, import, export, clear, etc.).",
 
-  panels: [enginePanelConfig],
+  panels: [...(viewsPlugin.panels ?? [])],
 
   functions: [
     addCompositeEnginePanelFunction,
@@ -52,5 +47,3 @@ export const plugin: TeskooanoPlugin = {
   toolbarWidgets: [simulationControlsWidget, systemControlsWidget],
   managerClasses: [],
 };
-
-export { CompositeEnginePanel };

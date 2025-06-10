@@ -1,11 +1,11 @@
 import { BehaviorSubject } from "rxjs";
 import * as THREE from "three";
-import type { CameraManager } from "../../camera-manager/CameraManager";
+import type { CameraManager } from "../../../camera-manager/CameraManager";
 import type {
   CameraManagerOptions,
   CameraManagerState,
-} from "../../camera-manager/types";
-import type { CompositeEnginePanel } from "./CompositeEnginePanel";
+} from "../../../camera-manager/types";
+import type { CompositeEnginePanel } from "../../panels/composite-panel/CompositeEnginePanel";
 
 /**
  * Manages camera operations specifically for a CompositeEnginePanel instance.

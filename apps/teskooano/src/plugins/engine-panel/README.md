@@ -1,40 +1,32 @@
 # Engine Panel Plugin (`@teskooano/engine-panel`)
 
-This is a composite plugin that bundles the core engine view panels and related system control functionality.
+This is a composite plugin that bundles all functionality related to the main 3D engine view. It acts as an aggregator for several more granular plugins.
 
-## Purpose
+## Architecture
 
-To provide the main 3D rendering view (`CompositeEnginePanel`), a progress indicator panel (`ProgressPanel`), and register associated functions and toolbar elements for managing the simulation and system data.
+The `engine-panel` plugin follows a modular, composite pattern. It doesn't contain much logic itself; instead, it imports and re-exports the capabilities of other, more focused plugins. This makes the system easier to maintain and extend.
 
-## Features
+### Core Sub-Plugins & Components
 
-- **Engine View Panel:** Registers `CompositeEnginePanel` (`composite_engine_view`) which displays the 3D simulation.
-- **Progress Panel:** Registers `ProgressPanel` (`progress_view`) used for displaying progress during texture generation.
-- **System Functions:** Registers several functions (used by other components like `SystemControls`) for:
-  - Adding new engine views (`engine:add_composite_panel`)
-  - Generating random systems (`system:generate_random`)
-  - Clearing the current system (`system:clear`)
-  - Exporting system data (`system:export`)
-  - Triggering the import dialog (`system:import_dialog`)
-  - Creating a blank system (`system:create_blank`)
-  - Copying the current seed (`system:copy_seed`)
-- **Toolbar Widgets/Buttons:** Registers:
-  - The simulation controls widget (`teskooano-simulation-controls`) onto the `main-toolbar`.
-  - The system controls widget (`teskooano-system-controls`) onto the `main-toolbar`.
-  - The "Add View" button onto the `main-toolbar` (which likely triggers `engine:add_composite_panel`).
+- **`engine-panel-views` (from `./panels`)**:
+
+  - Registers the main `CompositeEnginePanel` (`teskooano-engine-view`). Each instance of this panel is a self-contained 3D view with its own renderer and view state, allowing for multiple independent viewpoints into the simulation. See the `panels/README.md` for a detailed architectural breakdown.
+
+- **System Functions (from `./main-toolbar/system-controls`)**:
+
+  - Registers several crucial functions for managing the simulation lifecycle. These are used by other components (like the `SystemControls` widget) to perform actions.
+  - `view:addCompositeEnginePanel`: Adds a new, independent engine view panel.
+  - `system:generate_random`, `system:create_blank`: Creates new celestial systems.
+  - `system:clear`, `system:export`, `system:import_dialog`: Manages the current system's state.
+
+- **Toolbar Widgets (from `./main-toolbar`)**:
+  - Registers the primary toolbar components:
+  - `teskooano-simulation-controls`: The play/pause, speed, and time display widget.
+  - `teskooano-system-controls`: The widget for generating, loading, and saving systems.
 
 ## Usage
 
-1.  **Registration:** The plugin is automatically registered when loaded via `loadAndRegisterPlugins` if `teskooano-engine-panel` is included in the `pluginConfig`.
-2.  **Functionality:**
-    - The registered panels can be added via Dockview API using their component names.
-    - The registered functions can be called via `getFunctionConfig(id).execute()`.
-    - The toolbar widgets and buttons appear automatically on the `main-toolbar`.
-
-## Implementation Details
-
-- This plugin primarily acts as an aggregator, importing and registering components, functions, and toolbar items defined in sub-directories.
-- Panel, function, and toolbar configurations are defined within `index.ts`.
+The entire suite of engine panel functionality is loaded by including the `teskooano-engine-panel` plugin in the main application's plugin registry. The `PluginManager` handles the registration of all the aggregated panels, functions, and widgets automatically.
 
 ## Dependencies
 
