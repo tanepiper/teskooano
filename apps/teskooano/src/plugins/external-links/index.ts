@@ -4,8 +4,8 @@ import type {
   ToolbarWidgetConfig,
 } from "@teskooano/ui-plugin";
 
-import { ExternalLinksComponent } from "./ExternalLinks";
-export * from "./types";
+import { ExternalLinksComponent } from "./view/ExternalLinks.view.js";
+export * from "./types.js";
 
 /** Configuration for the ExternalLinksComponent custom element. */
 const externalLinksComponentConfig: ComponentConfig = {

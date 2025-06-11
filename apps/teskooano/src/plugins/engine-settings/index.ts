@@ -1,5 +1,5 @@
 import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
-import { EngineUISettingsPanel } from "./EngineSettings";
+import { EngineUISettingsPanel } from "./view/EngineSettings.view.js";
 
 const settingsButtonConfig =
   EngineUISettingsPanel.registerToolbarButtonConfig();

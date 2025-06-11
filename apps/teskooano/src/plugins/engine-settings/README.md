@@ -8,31 +8,40 @@ To offer a consistent interface for users to toggle visual elements and other op
 
 ## Features
 
-- **UI Panel:** Defines the `EngineUISettingsPanel` which renders controls (buttons, sliders, toggles) for engine settings.
+- **UI Panel:** Defines the `EngineUISettingsPanel` which renders controls for engine settings.
 - **Toolbar Integration:** Registers a button on the `engine-toolbar` to open the settings panel.
-- **State Interaction:** Interacts with the parent engine panel's view state (e.g., `CompositeEnginePanel.getViewState()`, `updateViewState()`) to read and modify settings like:
+- **State Interaction:** The controller interacts with the parent engine panel to read and modify settings like:
   - Grid visibility
   - Celestial label visibility
   - AU marker visibility
   - Field of View (FOV)
   - Debug mode
-  - Debris effects (if implemented)
+  - Debris effects
+  - Orbit lines
 
 ## Usage
 
-1.  **Registration:** The plugin is automatically registered when loaded via `loadAndRegisterPlugins` if `teskooano-engine-settings` is included in the `pluginConfig`.
-2.  **Toolbar Button:** A settings icon will appear on toolbars associated with engine panels (specifically those targeted by `engine-toolbar`). Clicking this button opens the `EngineUISettingsPanel`.
-3.  **Panel Functionality:** The panel, once opened, finds its parent engine panel and uses its API (`updateViewState`, `getViewState`, `subscribeToViewState`) to control settings.
+1.  **Registration:** The plugin is automatically registered when loaded if `teskooano-engine-settings` is included in the `pluginConfig`.
+2.  **Toolbar Button:** A settings icon will appear on toolbars associated with engine panels. Clicking this opens the `EngineUISettingsPanel`.
+3.  **Panel Functionality:** The panel, once opened, links to its parent engine panel to control settings.
 
-## Implementation Details
+## Architecture (MVC)
 
-- The `EngineUISettingsPanel` uses standard `@teskooano/button`, `@teskooano/slider`, etc., components for its UI.
-- It relies on being rendered within a Dockview context where it can access its parent panel's API.
-- The component name (`engine-settings-panel`) and toolbar button configuration are defined statically within `EngineUISettingsPanel.ts`.
+This plugin follows the project's standard Model-View-Controller pattern.
+
+- **View (`view/EngineSettings.view.ts`):** This is a "dumb" custom element (`<engine-ui-settings-panel>`). Its responsibility is to create its Shadow DOM, query for all the interactive UI elements (toggles, sliders), and instantiate the `EngineSettingsController`. It passes the collection of elements to the controller.
+
+- **Controller (`controller/EngineSettings.controller.ts`):** This class contains all the logic. It receives the UI elements from the view and is responsible for:
+  - Adding and removing all event listeners.
+  - Subscribing to the parent panel's state.
+  - Updating the view's element states (e.g., checking a box, setting a slider value) when the parent's state changes.
+  - Calling methods on the parent panel to update the application state when a user interacts with a control.
+
+This structure ensures a clear separation of concerns, making the component easier to manage and debug.
 
 ## Dependencies
 
 - `@teskooano/ui-plugin`: For plugin registration.
-- Relies on the API provided by its parent panel (typically `CompositeEnginePanel`) for state interaction.
-- Uses core UI components (`@teskooano/button`, etc.).
+- Relies on the API provided by its parent panel (typically `CompositeEnginePanel`).
+- Uses core UI components like `@teskooano/slider`.
 - `@fluentui/svg-icons`: For the toolbar icon.
