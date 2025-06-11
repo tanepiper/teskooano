@@ -21,8 +21,6 @@ export const pluginConfig: PluginRegistryConfig = {
   "teskooano-settings": {
     path: "../plugins/settings",
   },
-  "teskooano-camera-manager": { path: "../plugins/camera-manager" },
-
   "teskooano-simulation-controls": {
     path: "../plugins/engine-panel/main-toolbar/simulation-controls",
   },

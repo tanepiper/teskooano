@@ -145,6 +145,13 @@ export interface BaseToolbarItemConfig {
   tooltipText?: string;
   tooltipTitle?: string;
   tooltipIconSvg?: string;
+  /** Optional keyboard shortcut to display */
+  shortcut?: string;
+  /**
+   * Optional dependencies that must be met before this item is registered.
+   * This is crucial for items that rely on functions created by initializers.
+   */
+  dependencies?: PluginDependencies;
 }
 
 /**
@@ -184,12 +191,24 @@ export interface FunctionToolbarItemConfig extends BaseToolbarItemConfig {
 }
 
 /**
+ * Configuration for a toolbar item that acts as a toggle.
+ */
+export interface ToggleToolbarItemConfig extends BaseToolbarItemConfig {
+  type: "toggle";
+  /** The function to call to get the current toggle state (e.g., `() => state.isSomeFeatureOn`). */
+  getState: () => boolean;
+  /** The function to call when the toggle is clicked. */
+  onToggle: (currentState: boolean) => void;
+}
+
+/**
  * Union type representing any possible toolbar item configuration.
  * This includes the 'target' property.
  */
 export type ToolbarItemConfig =
   | PanelToolbarItemConfig
-  | FunctionToolbarItemConfig;
+  | FunctionToolbarItemConfig
+  | ToggleToolbarItemConfig;
 
 /**
  * Helper type for defining toolbar items within a plugin registration,
@@ -197,7 +216,8 @@ export type ToolbarItemConfig =
  */
 export type ToolbarItemDefinition =
   | Omit<PanelToolbarItemConfig, "target">
-  | Omit<FunctionToolbarItemConfig, "target">;
+  | Omit<FunctionToolbarItemConfig, "target">
+  | Omit<ToggleToolbarItemConfig, "target">;
 
 /**
  * Configuration for a custom element widget to be directly embedded
@@ -239,6 +259,18 @@ export interface ManagerConfig {
 }
 
 /**
+ * Defines dependencies for a plugin, function, or other resource.
+ */
+export interface PluginDependencies {
+  /** A list of plugin IDs that must be loaded before this plugin. */
+  plugins?: string[];
+  /** A list of function IDs that must be registered before this plugin's contents are processed. */
+  functions?: string[];
+  /** A list of initializer function IDs that must be successfully executed before this. */
+  initializers?: string[];
+}
+
+/**
  * Defines the structure of a Teskooano UI plugin.
  */
 export interface TeskooanoPlugin {
@@ -252,8 +284,13 @@ export interface TeskooanoPlugin {
   description?: string;
   /** Optional icon SVG for the plugin. */
   icon?: string;
-  /** Optional array of plugin IDs that this plugin depends on. */
+  /**
+   * Optional dependencies for the entire plugin.
+   * @deprecated Use the more specific 'dependencies' object instead.
+   */
   dependencies?: string[];
+  /** Optional, more specific dependency declaration. */
+  pluginDependencies?: PluginDependencies;
 
   /** Array of Dockview panels provided by this plugin. */
   panels?: PanelConfig[];

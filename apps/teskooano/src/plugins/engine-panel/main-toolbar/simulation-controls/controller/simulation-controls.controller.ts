@@ -1,10 +1,12 @@
 import {
   actions,
   getSimulationState,
+  simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
+import { Subscription } from "rxjs";
 import type { TeskooanoButton } from "../../../../../core/components/button/Button";
-import { PlayIcon, PauseIcon } from "../view/simulation-controls.template";
+import { PauseIcon, PlayIcon } from "../view/simulation-controls.template";
 import {
   formatScale,
   formatTime,
@@ -37,9 +39,8 @@ export interface SimulationUIElements {
  * - Setting up and tearing down all event listeners.
  */
 export class SimulationControlsController {
-  private view: HTMLElement;
   private uiElements: SimulationUIElements;
-  private previousState: Partial<SimulationState> = {};
+  private subscriptions = new Subscription();
   private readonly speedValues = [
     0.0625, 0.125, 0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 20, 24,
     32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024, 2048, 4096, 8192, 16384,
@@ -49,56 +50,49 @@ export class SimulationControlsController {
 
   /**
    * Constructs the controller.
-   * @param {HTMLElement} view - The view instance (the custom element).
-   * @param {SimulationUIElements} uiElements - A collection of the view's DOM elements.
+   * @param {HTMLElement} view - The view instance this controller will manage.
+   * @param {SimulationUIElements} uiElements - The collection of UI elements from the view.
    */
-  constructor(view: HTMLElement, uiElements: SimulationUIElements) {
-    this.view = view;
+  constructor(uiElements: SimulationUIElements) {
     this.uiElements = uiElements;
   }
 
   /**
-   * Initializes the controller by attaching all necessary event handlers.
+   * Initializes the controller by attaching all necessary event handlers and subscribing to state.
    */
   public init(): void {
     this.addEventListeners();
     // Initialize display with current state
     this.handleStateUpdate(getSimulationState());
+
+    // Subscribe to the simulation state and pass updates to the controller.
+    this.subscriptions.add(
+      simulationState$.subscribe((state) => {
+        this.handleStateUpdate(state);
+      }),
+    );
   }
 
   /**
-   * Cleans up the controller by removing all event listeners.
+   * Cleans up the controller by removing all event listeners and unsubscribing.
    */
   public dispose(): void {
     this.removeEventListeners();
+    this.subscriptions.unsubscribe();
   }
 
   /**
    * The main state update handler.
-   * It compares the new state with the previous state and calls specific UI
-   * update methods only for the parts of the state that have changed.
+   * It calls specific UI update methods to reflect the current state.
    * @param {SimulationState} state - The new simulation state from the store.
    */
   public handleStateUpdate(state: SimulationState): void {
     this._updateTimeDisplay(state.time);
-
-    if (state.paused !== this.previousState.paused) {
-      this._updatePlayPauseButton(state.paused);
-      this._updateSpeedButtons(state.paused, state.timeScale);
-      this.previousState.paused = state.paused;
-    }
-
-    if (state.timeScale !== this.previousState.timeScale) {
-      this._updateScaleDisplay(state.timeScale);
-      this._updateReverseButton(state.timeScale);
-      this._updateSpeedButtons(state.paused, state.timeScale);
-      this.previousState.timeScale = state.timeScale;
-    }
-
-    if (state.physicsEngine !== this.previousState.physicsEngine) {
-      this._updateEngineDisplay(state.physicsEngine);
-      this.previousState.physicsEngine = state.physicsEngine;
-    }
+    this._updatePlayPauseButton(state.paused);
+    this._updateScaleDisplay(state.timeScale);
+    this._updateReverseButton(state.timeScale);
+    this._updateSpeedButtons(state.paused, state.timeScale);
+    this._updateEngineDisplay(state.physicsEngine);
   }
 
   private addEventListeners(): void {
@@ -252,6 +246,7 @@ export class SimulationControlsController {
 
   private handleScaleSelectChange = () => this.hideScaleSelectAndApply(true);
   private handleScaleSelectBlur = () => {
+    // Use setTimeout to allow a potential 'change' event to fire first
     setTimeout(() => {
       if (document.activeElement !== this.uiElements.scaleSelect) {
         this.hideScaleSelectAndApply(false);
@@ -277,24 +272,31 @@ export class SimulationControlsController {
   };
 
   private _updatePlayPauseButton = (isPaused: boolean): void => {
-    const { playPauseButton } = this.uiElements;
-    if (playPauseButton) {
+    const button = this.uiElements.playPauseButton;
+    if (button) {
       const stateText = isPaused ? "Play" : "Pause";
+      const tooltipText = `${stateText} Simulation`;
       const iconSvg = isPaused ? PlayIcon : PauseIcon;
-      const iconSpan = playPauseButton.querySelector('[slot="icon"]');
+
+      const iconSpan = button.querySelector('[slot="icon"]');
       if (iconSpan) {
         iconSpan.innerHTML = iconSvg;
+      } else {
+        button.innerHTML = `<span slot="icon">${iconSvg}</span>`;
       }
-      playPauseButton.title = `${stateText} Simulation`;
-      playPauseButton.toggleAttribute("active", !isPaused);
+
+      button.title = tooltipText;
+      // Note: Assuming teskooano-button has a method to refresh its tooltip content if needed.
+      // button.refreshTooltipContent();
+      button.toggleAttribute("active", !isPaused);
     }
   };
 
   private _updateScaleDisplay = (timeScale: number): void => {
-    const { scaleValueDisplay } = this.uiElements;
-    if (scaleValueDisplay) {
-      scaleValueDisplay.textContent = formatScale(timeScale);
-      scaleValueDisplay.style.color =
+    const element = this.uiElements.scaleValueDisplay;
+    if (element) {
+      element.textContent = formatScale(timeScale);
+      element.style.color =
         timeScale < 0
           ? "var(--color-warning-emphasis)"
           : "var(--color-text-secondary)";
@@ -302,9 +304,9 @@ export class SimulationControlsController {
   };
 
   private _updateReverseButton = (timeScale: number): void => {
-    const { reverseButton } = this.uiElements;
-    if (reverseButton) {
-      reverseButton.toggleAttribute("active", timeScale < 0);
+    const button = this.uiElements.reverseButton;
+    if (button) {
+      button.toggleAttribute("active", timeScale < 0);
     }
   };
 
@@ -326,11 +328,11 @@ export class SimulationControlsController {
   };
 
   private _updateEngineDisplay = (engineName: string | undefined): void => {
-    const { engineValueDisplay } = this.uiElements;
-    if (engineValueDisplay) {
+    const element = this.uiElements.engineValueDisplay;
+    if (element) {
       const name = engineName || "-";
-      engineValueDisplay.textContent = getEngineShortName(name);
-      engineValueDisplay.setAttribute("data-full-name", name);
+      element.textContent = getEngineShortName(name);
+      element.setAttribute("data-full-name", name);
     }
   };
 }

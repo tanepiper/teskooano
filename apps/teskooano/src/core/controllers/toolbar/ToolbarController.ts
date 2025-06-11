@@ -3,7 +3,10 @@ import {
   type FunctionToolbarItemConfig,
   type PanelToolbarItemConfig,
   type PluginExecutionContext,
+  type RegisteredItem,
   type ToolbarItemConfig,
+  type ToolbarItemDefinition,
+  type ToolbarRegistration,
   type ToolbarWidgetConfig,
 } from "@teskooano/ui-plugin";
 import { template as toolbarTemplate } from "./ToolbarController.template.js";
@@ -96,7 +99,7 @@ export class ToolbarController {
       const items: ToolbarItemConfig[] =
         this._context.pluginManager.getToolbarItemsForTarget("main-toolbar");
 
-      items.forEach((item) => {
+      items.forEach((item: ToolbarItemConfig) => {
         try {
           const configAny = item as any;
           const buttonOptions = {
@@ -137,7 +140,10 @@ export class ToolbarController {
         }
       });
     } catch (error) {
-      console.error("[ToolbarController] Error populating toolbar items.");
+      console.error(
+        "[ToolbarController] Error populating toolbar items.",
+        error,
+      );
     }
   }
 
@@ -150,7 +156,7 @@ export class ToolbarController {
     try {
       const widgets: ToolbarWidgetConfig[] =
         this._context.pluginManager.getToolbarWidgetsForTarget("main-toolbar");
-      widgets.forEach((widget) => {
+      widgets.forEach((widget: ToolbarWidgetConfig) => {
         try {
           const widgetElement = document.createElement(widget.componentName);
           if (widget.id) widgetElement.id = widget.id;

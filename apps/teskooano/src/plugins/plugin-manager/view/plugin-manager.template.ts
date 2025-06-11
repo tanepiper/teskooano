@@ -47,11 +47,31 @@ template.innerHTML = `
   .plugin-description {
     font-size: 0.9em;
     margin-top: 4px;
+    margin-bottom: 12px;
   }
   .no-plugins {
     padding: 10px;
     text-align: center;
     color: var(--text-color-warning, #e5c07b);
+  }
+  .plugin-details {
+    margin-top: 8px;
+    padding-left: 12px;
+    border-left: 2px solid var(--border-color-default, #3f444f);
+  }
+  .plugin-details strong {
+    color: var(--text-color-subtle, #98c379);
+  }
+  .plugin-details ul {
+    font-size: 0.9em;
+    padding-left: 16px;
+    list-style-type: disc;
+  }
+  .plugin-details ul li {
+    background: none;
+    border: none;
+    padding: 2px 0;
+    margin: 0;
   }
 </style>
 <div class="plugin-manager-container">

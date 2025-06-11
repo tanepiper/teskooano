@@ -48,16 +48,14 @@ interface ProcessResult {
  * to the `PluginManager`.
  */
 export class SystemFunctionsManager {
-  private context: PluginExecutionContext;
   private generator: SystemGenerator;
 
   /**
    * Constructs the manager for system functions.
-   * @param {PluginExecutionContext} context - The shared application context.
-   * @param {SystemGenerator} generator - The service responsible for system generation.
+   * @param context - The shared application context.
+   * @param generator - The service responsible for system generation.
    */
-  constructor(context: PluginExecutionContext, generator: SystemGenerator) {
-    this.context = context;
+  constructor(_: PluginExecutionContext, generator: SystemGenerator) {
     this.generator = generator;
   }
 
@@ -185,9 +183,9 @@ export class SystemFunctionsManager {
    * Plugin function to generate a new system. If a seed is provided, it's used;
    * otherwise, a random seed is generated.
    *
-   * @param {PluginExecutionContext} _ - The execution context (unused).
-   * @param {{ seed?: string }} [options] - Optional parameters.
-   * @returns {Promise<ProcessResult>} The result of the generation process.
+   * @param  _ - The execution context (unused).
+   * @param  [options] - Optional parameters.
+   * @returns The result of the generation process.
    */
   public async generateRandomSystem(
     _: PluginExecutionContext,

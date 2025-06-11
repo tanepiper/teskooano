@@ -93,6 +93,9 @@ async function initializeApp() {
 
   appContext.dockviewController = dockviewController;
 
+  // Initialize managers that provide functions other components depend on.
+  await pluginManager.execute("engine-view:initialize");
+
   try {
     await pluginManager.execute("toolbar:initialize", {
       targetElement: toolbarElement,
@@ -191,11 +194,12 @@ async function initializeApp() {
     });
   });
 
+  // Create the initial engine view panel on startup.
   try {
     await pluginManager.execute("view:addCompositeEnginePanel");
   } catch (error) {
     console.error(
-      "[App] Error calling view:addCompositeEnginePanel function:",
+      "[App] Error calling view:addCompositeEnginePanel function on startup:",
       error,
     );
   }

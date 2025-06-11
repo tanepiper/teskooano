@@ -1,6 +1,6 @@
 # Panel Managers
 
-This directory contains manager and coordinator classes responsible for handling specific pieces of logic for the `CompositeEnginePanel`. This pattern keeps the main panel component lean and focused on orchestration and DOM management, while delegating complex tasks to these specialized classes.
+This directory contains manager and coordinator classes responsible for handling specific pieces of logic for the `CompositeEnginePanel`. This pattern keeps the main panel component lean and focused on orchestration and DOM management, while delegating complex tasks to these specialized classes. This aligns with the **Orchestrator Panel** pattern described in the parent directory's `README.md`.
 
 ## Managers
 
@@ -12,14 +12,16 @@ This directory contains manager and coordinator classes responsible for handling
 ### `PanelCameraCoordinator`
 
 - **Responsibility**: Orchestrates the setup and state synchronization of all camera-related components.
-- **Mechanism**: It creates and inits the main `CameraManager` (which handles the Three.js camera's position, target, and controls) and the `EngineCameraManager` (which provides panel-specific camera actions). It ensures that the panel's internal view state is kept in sync with the camera's state (e.g., position, FOV, focused object) and vice-versa.
+- **Mechanism**: It creates and initializes the main `CameraManager` (which handles the Three.js camera's position, target, and controls) and the `EngineCameraManager` (which provides a clean, panel-specific API for camera actions). It ensures that the panel's internal view state is kept in sync with the camera's state (e.g., position, FOV, focused object) and vice-versa.
 
 ### `PanelEventManager`
 
 - **Responsibility**: Manages all other event subscriptions for the panel.
-- **Mechanism**: It consolidates subscriptions to various streams like `simulationState$` and `layoutOrientation$`. This keeps the main panel's subscription logic clean and centralized.
+- **Mechanism**: It consolidates subscriptions to various streams like `simulationState$` and `layoutOrientation$`. This keeps the main panel's subscription logic clean and centralized, preventing subscription spaghetti in the main component.
 
 ## Flow Diagram
+
+This diagram shows how the `CompositeEnginePanel` instantiates the managers and how they subscribe to different event sources to do their work.
 
 ```mermaid
 graph TD
@@ -49,13 +51,13 @@ graph TD
 
     E --> B;
     G --> B;
-    B -- "triggers create/destroy" --> A;
+    B -- "triggers create/destroy on" --> A;
 
-    A -- "passes renderer, viewState$" --> C;
-    C -- "controls" --> A;
+    A -- "passes renderer, viewState$ to" --> C;
+    C -- "controls camera for" --> A;
 
 
     F --> D;
     H --> D;
-    D -- "triggers methods on" --> A;
+    D -- "triggers resize/updates on" --> A;
 ```

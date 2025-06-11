@@ -1,6 +1,6 @@
 import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
 import { plugin as viewsPlugin } from "./panels";
-import { addCompositeEnginePanelFunction } from "./main-toolbar/engine-view/EngineViewManager";
+import { plugin as engineViewPlugin } from "./main-toolbar/engine-view";
 import { plugin as systemControlsPlugin } from "./main-toolbar/system-controls";
 
 import {
@@ -15,6 +15,7 @@ import {
  * This plugin bundles:
  * - The engine view panel itself from the 'panels' module.
  * - The system controls plugin, which provides its own functions and components.
+ * - The engine view initializer plugin.
  * - Toolbar widgets and registrations.
  */
 export const plugin: TeskooanoPlugin = {
@@ -26,7 +27,7 @@ export const plugin: TeskooanoPlugin = {
   // Aggregate all parts from sub-modules directly
   panels: [...(viewsPlugin.panels ?? [])],
   functions: [
-    addCompositeEnginePanelFunction,
+    ...(engineViewPlugin.functions ?? []),
     ...(systemControlsPlugin.functions ?? []),
   ],
   components: [...(systemControlsPlugin.components ?? [])],

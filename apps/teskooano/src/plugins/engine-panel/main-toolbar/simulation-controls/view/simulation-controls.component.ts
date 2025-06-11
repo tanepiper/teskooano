@@ -1,5 +1,3 @@
-import { simulationState$ } from "@teskooano/core-state";
-import { Subscription } from "rxjs";
 import type { TeskooanoButton } from "../../../../../core/components/button/Button";
 import {
   SimulationControlsController,
@@ -33,8 +31,6 @@ export class SimulationControls extends HTMLElement {
 
   /** @internal The controller instance that manages all component logic. */
   private controller: SimulationControlsController | null = null;
-  /** @internal The RxJS subscription to the global simulation state. */
-  private stateSubscription: Subscription | null = null;
 
   constructor() {
     super();
@@ -59,13 +55,8 @@ export class SimulationControls extends HTMLElement {
     this.queryElements();
 
     // Instantiate the controller and initialize it.
-    this.controller = new SimulationControlsController(this, this.uiElements);
+    this.controller = new SimulationControlsController(this.uiElements);
     this.controller.init();
-
-    // Subscribe to the simulation state and pass updates to the controller.
-    this.stateSubscription = simulationState$.subscribe((state) => {
-      this.controller?.handleStateUpdate(state);
-    });
   }
 
   /**
@@ -74,11 +65,8 @@ export class SimulationControls extends HTMLElement {
    * @internal
    */
   disconnectedCallback(): void {
-    this.stateSubscription?.unsubscribe();
     this.controller?.dispose();
-
     this.controller = null;
-    this.stateSubscription = null;
   }
 
   /**

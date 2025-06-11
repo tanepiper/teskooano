@@ -15,3 +15,6 @@ export type { OrbitUpdatePayload };
 export type { DestructionEvent }; // Re-export if it's part of the public API of this module
 
 export * from "./solarSystem"; // Keep this as it relates to systems/
+export * from "./camera/CameraManager";
+export * from "./camera/types";
+export * from "./camera/constants";

@@ -2,49 +2,65 @@
 
 This directory contains the core UI component for rendering the 3D space simulation: the `CompositeEnginePanel`.
 
-## Architecture
+## Architecture: The Orchestrator Panel Pattern
 
-The `CompositeEnginePanel` is a self-contained, stateful component responsible for a single "view" into the shared simulation. It's designed to be instantiated multiple times within the Dockview layout, allowing users to have multiple independent camera angles, display settings, and interactions with the same underlying celestial data.
+The `CompositeEnginePanel` is a self-contained, stateful component responsible for a single "view" into the shared simulation. It's designed to be instantiated multiple times, allowing users to have multiple independent camera angles and view settings.
 
-### Core Components
+It follows an **Orchestrator Panel** pattern. The `CompositeEnginePanel` custom element acts as a lean orchestrator, delegating complex logic to specialized manager classes. This keeps the component itself focused on its core responsibilities: managing its shadow DOM, handling Dockview lifecycle events, and coordinating its managers.
 
-- **`CompositeEnginePanel.ts`**: The main `HTMLElement` custom element.
+### Core Responsibilities & Managers
 
-  - **State Management**: Each instance creates and manages its own private RxJS `BehaviorSubject` for its view state (`CompositeEngineState`). This includes camera position, focused object, and visibility toggles (e.g., `showGrid`, `showCelestialLabels`). This ensures that changes in one panel do not affect others.
-  - **Renderer Lifecycle**: It is responsible for the complete lifecycle of its own `ModularSpaceRenderer` instance. It creates the renderer when a system is loaded (i.e., when `celestialObjects$` emits a non-empty map) and destroys it when the system is cleared.
-  - **Subscription Management**: All RxJS subscriptions and global event listeners are managed within a single `_subscriptions` object, ensuring robust setup and teardown as the component is added to or removed from the DOM.
-  - **Placeholder**: It uses the `PlaceholderManager` to display a helpful message or a loading indicator when no system is loaded or is in the process of generating.
+- **`CompositeEnginePanel.ts` (The Orchestrator)**:
 
-- **`EngineCameraManager.ts`**: A dedicated wrapper that provides a clean, panel-specific API for all camera operations. It holds an instance of the main `CameraManager` and acts as a proxy, simplifying camera control from the panel's perspective.
+  - **State Management**: Manages its own private RxJS `BehaviorSubject` for its view state (`CompositeEngineState`), ensuring panel independence.
+  - **DOM & Lifecycle**: Owns the shadow DOM and implements the `IContentRenderer` interface for Dockview integration.
+  - **Manager Coordination**: Instantiates and orchestrates the three dedicated managers described below.
 
-- **`PlaceholderManager.ts`**: A simple UI utility that controls the visibility and content of the placeholder element shown before the 3D renderer is active.
+- **`PanelLifecycleManager`**:
 
-- **`layoutStore.ts`**: A simple RxJS-based store that emits the current screen orientation (`portrait` or `landscape`), allowing panels to react to layout changes.
+  - **Responsibility**: Manages the creation and destruction of the `ModularSpaceRenderer`.
+  - **Mechanism**: Subscribes to the global `celestialObjects$` state. When objects appear, it triggers the renderer's initialization. When objects disappear, it tears the renderer down to conserve resources and shows a placeholder. It also listens for global `SYSTEM_GENERATION` events to display loading indicators.
 
-- **`CompositeEnginePanel.utils.ts`**: Contains helper functions, most notably `createDefaultViewState()` which acts as a factory to ensure each new panel starts with a clean, consistent state.
+- **`PanelCameraCoordinator`**:
+
+  - **Responsibility**: Orchestrates all camera-related components (`CameraManager` and `EngineCameraManager`).
+  - **Mechanism**: It creates the camera systems and links their state to the panel's view state, ensuring that camera position, FOV, and focused object are synchronized.
+
+- **`PanelEventManager`**:
+  - **Responsibility**: Manages all other event subscriptions.
+  - **Mechanism**: Consolidates subscriptions to streams like `simulationState$` and `layoutOrientation$` to keep the main panel's logic clean.
 
 ### Data Flow & Component Interaction
 
-The following diagram illustrates the relationship between the `CompositeEnginePanel` and its key dependencies.
+The following diagram illustrates how the `CompositeEnginePanel` delegates its work to the managers, which in turn interact with global state and the underlying renderer.
 
 ```mermaid
 graph TD
-    subgraph Global State
-        A[celestialObjects$] -->|Objects Exist?| B;
-        C[simulationState$] -->|Physics Ticks| B;
-        D[layoutOrientation$] -->|Resize Events| B;
+    subgraph "Global State & Events"
+        A[celestialObjects$] -->|Objects Exist?| E;
+        C[simulationState$] -->|Physics Ticks| D;
+        G[Window Events: system-generation] -->|Start/Complete| E;
     end
 
-    subgraph Panel Instance
-        B(CompositeEnginePanel);
-        B -->|Creates & Owns| E(ModularSpaceRenderer);
-        B -->|Creates & Owns| F(EngineCameraManager);
-        B -->|Uses| G(PlaceholderManager);
-        F -->|Controls| H[CameraManager];
-        H -->|Manipulates| I[Three.js Camera];
-        E -->|Contains| I;
+    subgraph "CompositeEnginePanel (Orchestrator)"
+        B(CompositeEnginePanel Instance);
+        B -- "instantiates & delegates to" --> D[PanelEventManager];
+        B -- "instantiates & delegates to" --> E[PanelLifecycleManager];
+        B -- "instantiates & delegates to" --> F[PanelCameraCoordinator];
     end
 
-    style Global State fill:#f9f,stroke:#333,stroke-width:2px;
-    style Panel Instance fill:#ccf,stroke:#333,stroke-width:2px;
+    subgraph "Owned Components"
+        E -- "creates/destroys" --> H(ModularSpaceRenderer);
+        F -- "creates/controls" --> I(EngineCameraManager);
+    end
+
+    subgraph "Core Dependencies"
+        I -- "wraps" --> J(CameraManager);
+        H -- "contains" --> J
+    end
+
+    style "Global State & Events" fill:#f9f,stroke:#333,stroke-width:2px;
+    style "CompositeEnginePanel (Orchestrator)" fill:#ccf,stroke:#333,stroke-width:2px;
+    style "Owned Components" fill:#cfc,stroke:#333,stroke-width:2px;
+    style "Core Dependencies" fill:#e6e6e6,stroke:#333,stroke-width:2px
 ```

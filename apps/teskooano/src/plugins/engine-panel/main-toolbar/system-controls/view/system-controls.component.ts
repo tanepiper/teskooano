@@ -102,7 +102,7 @@ export class SystemControls extends HTMLElement {
 
   /**
    * Observed attributes for the custom element.
-   * @returns {string[]} An array of attribute names to observe for changes.
+   * @returns An array of attribute names to observe for changes.
    */
   static get observedAttributes() {
     return ["mobile"];

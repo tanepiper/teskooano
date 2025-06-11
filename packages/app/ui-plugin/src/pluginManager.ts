@@ -48,6 +48,8 @@ class PluginManager {
   /** @internal A registry of toolbar items, grouped by their target toolbar ID. */
   #toolbarRegistry: Map<ToolbarTarget, RegisteredItem<ToolbarItemConfig>[]> =
     new Map();
+  /** @internal A queue for toolbar items with unmet dependencies. */
+  #pendingToolbarRegistrations: RegisteredItem<ToolbarRegistration>[] = [];
   /** @internal A registry of instantiated manager class instances, keyed by manager ID. */
   #managerInstances: Map<string, RegisteredManager> = new Map();
   /** @internal A registry of all registered component configurations, keyed by tag name. */
@@ -61,6 +63,9 @@ class PluginManager {
   /** @internal The RxJS subject for broadcasting plugin status updates. */
   #pluginStatusSubject = new Subject<PluginRegistrationStatus>();
 
+  /** @internal The RxJS subject for broadcasting when the list of plugins changes. */
+  #pluginsChangedSubject = new Subject<void>();
+
   /**
    * An observable stream that emits status updates throughout the plugin
    * loading, registration, and unloading lifecycle.
@@ -69,6 +74,14 @@ class PluginManager {
    */
   public readonly pluginStatus$: Observable<PluginRegistrationStatus> =
     this.#pluginStatusSubject.asObservable();
+
+  /**
+   * An observable stream that emits whenever a plugin is registered or unregistered.
+   *
+   * Subscribe to this to react to changes in the overall plugin collection.
+   */
+  public readonly pluginsChanged$: Observable<void> =
+    this.#pluginsChangedSubject.asObservable();
 
   /** @internal The singleton instance of the PluginManager. */
   private static instance: PluginManager;
@@ -163,6 +176,8 @@ class PluginManager {
     this.#registerToolbarItems(plugin);
     this.#registerManagerClasses(plugin);
     this.#registerComponents(plugin);
+
+    this.#pluginsChangedSubject.next();
   }
 
   /**
@@ -231,42 +246,92 @@ class PluginManager {
         pluginId: plugin.id,
       });
     });
+
+    // After registering new functions, try to process any pending toolbar items
+    // that might have been waiting for those functions.
+    this.#processPendingToolbarItems();
+  }
+
+  /**
+   * Processes toolbar items that were deferred due to unmet dependencies.
+   * This method iterates through the pending queue and moves items to the
+   * main toolbar registry if their dependencies are now satisfied.
+   * @private
+   */
+  #processPendingToolbarItems(): void {
+    const stillPending: RegisteredItem<ToolbarRegistration>[] = [];
+
+    this.#pendingToolbarRegistrations.forEach((pendingRegistration) => {
+      const initializers = pendingRegistration.items
+        ?.flatMap((item) => item.dependencies?.initializers)
+        .filter((id): id is string => !!id);
+
+      let allDepsMet = true;
+      if (initializers && initializers.length > 0) {
+        for (const initId of initializers) {
+          if (!this.#functionRegistry.has(initId)) {
+            allDepsMet = false;
+            break;
+          }
+        }
+      }
+
+      if (allDepsMet) {
+        this.#addToolbarRegistration(pendingRegistration);
+      } else {
+        stillPending.push(pendingRegistration);
+      }
+    });
+
+    this.#pendingToolbarRegistrations = stillPending;
   }
 
   /**
    * Registers all toolbar items from a given plugin.
-   * Items are added to the correct toolbar target and sorted by their `order` property.
+   * If an item has unmet dependencies, it is added to a pending queue for later processing.
    * @param {TeskooanoPlugin} plugin - The plugin providing the toolbar items.
    * @private
    */
   #registerToolbarItems(plugin: TeskooanoPlugin): void {
     plugin.toolbarRegistrations?.forEach(
       (registration: ToolbarRegistration) => {
-        const target = registration.target;
-        if (!this.#toolbarRegistry.has(target)) {
-          this.#toolbarRegistry.set(target, []);
-        }
-        const targetItems = this.#toolbarRegistry.get(target)!;
-
-        registration.items?.forEach((itemDefinition) => {
-          const fullItemConfig: RegisteredItem<ToolbarItemConfig> = {
-            ...itemDefinition,
-            target: target,
-            pluginId: plugin.id,
-          };
-          if (targetItems.some((item) => item.id === fullItemConfig.id)) {
-            console.warn(
-              `[PluginManager] Toolbar item ID '${fullItemConfig.id}' for target '${target}' from plugin '${plugin.id}' already exists. Skipping.`,
-            );
-            return;
-          }
-          targetItems.push(fullItemConfig);
-        });
-        targetItems.sort(
-          (a, b) => (a.order ?? Infinity) - (b.order ?? Infinity),
-        );
+        const registeredRegistration: RegisteredItem<ToolbarRegistration> = {
+          ...registration,
+          pluginId: plugin.id,
+        };
+        this.#pendingToolbarRegistrations.push(registeredRegistration);
       },
     );
+  }
+
+  /**
+   * Adds a given toolbar registration to the main toolbar registry and sorts the items.
+   * @param {RegisteredItem<ToolbarRegistration>} registration - The registration to add.
+   * @private
+   */
+  #addToolbarRegistration(
+    registration: RegisteredItem<ToolbarRegistration>,
+  ): void {
+    const target = registration.target;
+    if (!this.#toolbarRegistry.has(target)) {
+      this.#toolbarRegistry.set(target, []);
+    }
+    const targetItems = this.#toolbarRegistry.get(target)!;
+
+    if (registration.items) {
+      const itemsWithPluginId = registration.items.map((item) => ({
+        ...item,
+        target: target, // ensure target is set on the item itself
+        pluginId: registration.pluginId,
+      }));
+
+      targetItems.push(
+        ...(itemsWithPluginId as RegisteredItem<ToolbarItemConfig>[]),
+      );
+    }
+
+    // Sort the entire list for that target by order
+    targetItems.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
   }
 
   /**
@@ -402,10 +467,19 @@ class PluginManager {
       registry: Map<string, RegisteredItem<T>>,
       itemType: string,
     ) => {
-      const itemsToRemove = [...registry.entries()]
-        .filter(([, item]) => item.pluginId === pluginId)
-        .map(([key]) => key);
-      itemsToRemove.forEach((key) => registry.delete(key));
+      const itemsToRemove: string[] = [];
+      for (const [key, item] of registry.entries()) {
+        if (item.pluginId === pluginId) {
+          itemsToRemove.push(key);
+        }
+      }
+      itemsToRemove.forEach((key) => {
+        registry.delete(key);
+        console.log(`[PluginManager] Unregistered ${itemType}: ${key}`);
+      });
+      if (itemsToRemove.length > 0) {
+        this.#pluginsChangedSubject.next();
+      }
     };
 
     unregister(this.#panelRegistry, "Panel");
@@ -650,22 +724,17 @@ class PluginManager {
   public getToolbarWidgetsForTarget(
     target: ToolbarTarget,
   ): ToolbarWidgetConfig[] {
-    const widgets: ToolbarWidgetConfig[] = [];
-    for (const plugin of this.#pluginRegistry.values()) {
+    // This is a simplified implementation. In a real-world scenario,
+    // you might need a more complex registry for widgets if they also have dependencies.
+    const allWidgets: ToolbarWidgetConfig[] = [];
+    this.#pluginRegistry.forEach((plugin) => {
       if (plugin.toolbarWidgets) {
-        widgets.push(
-          ...plugin.toolbarWidgets.filter((w) => w.target === target),
+        allWidgets.push(
+          ...plugin.toolbarWidgets.filter((widget) => widget.target === target),
         );
       }
-      plugin.toolbarRegistrations?.forEach((reg) => {
-        if (reg.target === target && reg.widgets) {
-          widgets.push(...reg.widgets);
-        }
-      });
-    }
-    return widgets.sort(
-      (a, b) => (a.order ?? Infinity) - (b.order ?? Infinity),
-    );
+    });
+    return allWidgets.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
   }
 
   /**
@@ -758,6 +827,16 @@ class PluginManager {
         await resolve(id);
       }
     }
+  }
+
+  /**
+   * Returns toolbar registrations that have unmet dependencies.
+   * This is used by controllers that need to dynamically build their UI
+   * and wait for initializers to complete.
+   * @returns An array of toolbar registrations that are pending.
+   */
+  public getPendingToolbarRegistrations(): RegisteredItem<ToolbarRegistration>[] {
+    return this.#pendingToolbarRegistrations;
   }
 }
 

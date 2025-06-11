@@ -1,10 +1,10 @@
 import { BehaviorSubject } from "rxjs";
 import * as THREE from "three";
-import type { CameraManager } from "../../../camera-manager/CameraManager";
 import type {
+  CameraManager,
   CameraManagerOptions,
   CameraManagerState,
-} from "../../../camera-manager/types";
+} from "@teskooano/app-simulation";
 import type { CompositeEnginePanel } from "../../panels/composite-panel/CompositeEnginePanel";
 
 /**
@@ -16,7 +16,7 @@ export class EngineCameraManager {
   private _panelApiId: string | undefined;
 
   constructor(
-    panelInstance: CompositeEnginePanel,
+    _: CompositeEnginePanel,
     cameraManagerInstance: CameraManager,
     panelApiId?: string,
   ) {

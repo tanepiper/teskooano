@@ -1,6 +1,6 @@
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
+import { CameraManager } from "@teskooano/app-simulation";
 import { BehaviorSubject, Subscription } from "rxjs";
-import { CameraManager } from "../../../../camera-manager/CameraManager";
 import { EngineCameraManager } from "../../camera-manager";
 import type { CompositeEngineState } from "../../types";
 import type { CompositeEnginePanel } from "../CompositeEnginePanel";

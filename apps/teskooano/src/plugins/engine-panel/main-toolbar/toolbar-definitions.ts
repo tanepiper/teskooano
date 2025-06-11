@@ -3,7 +3,6 @@ import type {
   ToolbarWidgetConfig,
 } from "@teskooano/ui-plugin";
 import AddIcon from "@fluentui/svg-icons/icons/add_24_regular.svg?raw";
-import { addCompositeEnginePanelFunction } from "./engine-view/EngineViewManager";
 
 export const simulationControlsWidget: ToolbarWidgetConfig = {
   id: "main-toolbar-sim-controls",
@@ -34,11 +33,14 @@ export const addViewButtonRegistration: ToolbarRegistration = {
       type: "function",
       title: "Add Engine View",
       iconSvg: AddIcon,
-      functionId: addCompositeEnginePanelFunction.id,
+      functionId: "view:addCompositeEnginePanel",
       order: 150,
       tooltipText: "Add a new composite engine view panel to the layout.",
       tooltipTitle: "Add Engine View",
       tooltipIconSvg: AddIcon,
+      dependencies: {
+        initializers: ["engine-view:initialize"],
+      },
     },
   ],
 };

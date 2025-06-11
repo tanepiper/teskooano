@@ -1,11 +1,12 @@
 // Attempt imports - paths might need adjustment based on TS path mappings
+import PluginIcon from "@fluentui/svg-icons/icons/plug_connected_24_regular.svg?raw"; // Changed icon
 import type {
   TeskooanoPlugin,
-  PanelConfig,
   ToolbarRegistration,
+  ComponentConfig,
 } from "@teskooano/ui-plugin";
-import PluginIcon from "@fluentui/svg-icons/icons/plug_connected_24_regular.svg?raw"; // Changed icon
-import { PluginManagerPanel } from "./PluginManagerPanel";
+import { PluginManagerPanel } from "./view/plugin-manager.panel";
+import { PluginDetailCard } from "./components/plugin-detail-card/plugin-detail-card.component";
 
 // Define the toolbar button registration for Plugin Manager
 const toolbarRegistration: ToolbarRegistration = {
@@ -33,6 +34,14 @@ const toolbarRegistration: ToolbarRegistration = {
 };
 
 /**
+ * Configuration for the PluginDetailCard custom element.
+ */
+const pluginDetailCardComponent: ComponentConfig = {
+  tagName: "teskooano-plugin-detail-card",
+  componentClass: PluginDetailCard,
+};
+
+/**
  * Plugin definition for the Plugin Manager panel.
  *
  * Registers the PluginManagerPanel and its associated toolbar button.
@@ -51,6 +60,7 @@ export const plugin: TeskooanoPlugin = {
   toolbarRegistrations: [toolbarRegistration],
   functions: [],
   toolbarWidgets: [],
+  components: [pluginDetailCardComponent],
   managerClasses: [],
   dependencies: [], // No specific dependencies for now
 };
