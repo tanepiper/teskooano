@@ -3,7 +3,7 @@ import type {
   TeskooanoPlugin,
   ToolbarRegistration,
 } from "@teskooano/ui-plugin";
-import { SettingsPanel } from "./SettingsPanel";
+import { SettingsPanel } from "./view/SettingsPanel";
 
 import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
 

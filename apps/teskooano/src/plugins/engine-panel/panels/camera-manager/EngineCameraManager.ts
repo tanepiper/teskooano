@@ -25,7 +25,9 @@ export class EngineCameraManager {
 
     if (!this._cameraManager) {
       console.error(
-        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] CameraManager instance was not provided! Camera controls will be unavailable.`,
+        `[EngineCameraManager for Panel ${
+          this._panelApiId || "N/A"
+        }] CameraManager instance was not provided! Camera controls will be unavailable.`,
       );
     }
   }
@@ -50,14 +52,8 @@ export class EngineCameraManager {
    * @param objectId - The unique ID of the object to focus on, or null to clear focus.
    * @param distance - Optional distance multiplier for the camera offset.
    */
-  public focusOnObject(objectId: string | null, distance?: number): void {
-    if (this._cameraManager) {
-      this._cameraManager.followObject(objectId, distance);
-    } else {
-      console.warn(
-        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] focusOnObject called but CameraManager is not available.`,
-      );
-    }
+  public focusOnObject(objectId: string): void {
+    this._cameraManager?.followObject(objectId);
   }
 
   /**
@@ -65,13 +61,7 @@ export class EngineCameraManager {
    * Delegates the call to the CameraManager.
    */
   public resetCameraView(): void {
-    if (this._cameraManager) {
-      this._cameraManager.resetCameraView();
-    } else {
-      console.warn(
-        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] resetCameraView called but CameraManager is not available.`,
-      );
-    }
+    this._cameraManager?.resetCameraView();
   }
 
   /**
@@ -79,13 +69,7 @@ export class EngineCameraManager {
    * Delegates the call to the CameraManager.
    */
   public clearFocus(): void {
-    if (this._cameraManager) {
-      this._cameraManager.clearFocus();
-    } else {
-      console.warn(
-        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] clearFocus called but CameraManager is not available.`,
-      );
-    }
+    this._cameraManager?.clearFocus();
   }
 
   /**
@@ -93,14 +77,8 @@ export class EngineCameraManager {
    * the camera's current position. Uses a smooth transition.
    * @param targetPosition - The world coordinates to point the camera at.
    */
-  public pointCameraAt(targetPosition: THREE.Vector3): void {
-    if (this._cameraManager) {
-      this._cameraManager.pointCameraAt(targetPosition);
-    } else {
-      console.warn(
-        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] pointCameraAt called but CameraManager is not available.`,
-      );
-    }
+  public pointCameraAt(position: THREE.Vector3): void {
+    this._cameraManager?.pointCameraAt(position);
   }
 
   /**
@@ -152,18 +130,16 @@ export class EngineCameraManager {
     if (this._cameraManager) {
       return this._cameraManager.getCameraState$();
     }
-    // Return a new BehaviorSubject that perhaps emits an error or a default/error state
-    // This prevents calling .subscribe on undefined if _cameraManager is missing.
     console.error(
-      `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] getCameraState$ called but CameraManager is not available. Returning a new subject.`,
+      `[EngineCameraManager for Panel ${
+        this._panelApiId || "N/A"
+      }] getCameraState$ called but CameraManager is not available. Returning a new subject.`,
     );
-    // Create a default/error state to satisfy the return type
     const errorState: CameraManagerState = {
-      fov: 0,
       focusedObjectId: null,
+      fov: 0,
       currentPosition: new THREE.Vector3(),
       currentTarget: new THREE.Vector3(),
-      // Potentially add an error property if CameraManagerState supports it
     };
     return new BehaviorSubject<CameraManagerState>(errorState);
   }
