@@ -1,10 +1,10 @@
-import { currentSeed$, celestialObjects$ } from "@teskooano/core-state";
+import { currentSeed$ } from "@teskooano/core-state";
+import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import { BehaviorSubject, merge, Observable, Subscription } from "rxjs";
 import { tap } from "rxjs/operators";
-import type { PluginExecutionContext } from "@teskooano/ui-plugin";
+import type { SystemControls } from "../view/system-controls.component";
 import {
   SystemControlsEffects,
-  type CelestialObjectMap as EffectCelestialObjectMap,
   type Seed as EffectSeed,
   type SystemActionEffectResult,
 } from "./system-controls.effects";
@@ -13,7 +13,6 @@ import {
   createRandomSeedStream$,
   createSeedSubmitStream$,
 } from "./system-controls.streams";
-import type { SystemControls } from "../view/system-controls.component";
 
 /**
  * The controller for the SystemControls component.

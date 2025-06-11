@@ -4,6 +4,14 @@ import PreviousRegular from "@fluentui/svg-icons/icons/previous_20_regular.svg?r
 import NextRegular from "@fluentui/svg-icons/icons/next_20_regular.svg?raw";
 import ArrowClockwiseRegular from "@fluentui/svg-icons/icons/arrow_clockwise_20_regular.svg?raw";
 
+/**
+ * @file Defines the HTML template and styles for the SimulationControls component.
+ *
+ * This file exports a single `<template>` element containing the entire
+ * Shadow DOM structure for the `teskooano-simulation-controls` custom element.
+ * It also exports the raw SVG content for the icons used within the template,
+ * allowing the controller to dynamically change them.
+ */
 export const template = document.createElement("template");
 template.innerHTML = `
   <style>

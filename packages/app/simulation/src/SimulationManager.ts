@@ -120,11 +120,12 @@ export class SimulationManager {
       const deltaTime = (currentTime - this.lastTime) / 1000;
       this.lastTime = currentTime;
 
-      const fixedDeltaTime = Math.min(deltaTime, 0.008); // 8ms fixed step
+      // Cap delta time to a minimum of 30 FPS to prevent physics instability on freezes or massive frame drops.
+      const cappedDeltaTime = Math.min(deltaTime, 1 / 30);
 
       if (!getSimulationState().paused) {
         const timeScale = getSimulationState().timeScale;
-        const scaledDeltaTime = fixedDeltaTime * timeScale;
+        const scaledDeltaTime = cappedDeltaTime * timeScale;
         this.accumulatedTime += scaledDeltaTime;
 
         setSimulationState({
@@ -165,22 +166,19 @@ export class SimulationManager {
           physicsEngine: getSimulationState().physicsEngine,
         };
 
-        const stepResult: SimulationStepResult = updateSimulation(
+        const result: SimulationStepResult = updateSimulation(
           activeBodiesReal,
           scaledDeltaTime,
           simParams,
         );
 
-        if (
-          stepResult.destructionEvents &&
-          stepResult.destructionEvents.length > 0
-        ) {
-          stepResult.destructionEvents.forEach((event: DestructionEvent) => {
+        if (result.destructionEvents && result.destructionEvents.length > 0) {
+          result.destructionEvents.forEach((event: DestructionEvent) => {
             this._destructionOccurred$.next(event);
           });
         }
 
-        physicsSystemAdapter.updateStateFromResult(stepResult);
+        physicsSystemAdapter.updateStateFromResult(result);
 
         // Rotation logic (remains a bit problematic as in original, might need adjustment)
         const currentCelestialObjectsAfterUpdate =
@@ -221,7 +219,7 @@ export class SimulationManager {
           string,
           { x: number; y: number; z: number }
         > = {};
-        stepResult.states.forEach((state) => {
+        result.states.forEach((state) => {
           updatedPositions[String(state.id)] = {
             x: state.position_m.x,
             y: state.position_m.y,

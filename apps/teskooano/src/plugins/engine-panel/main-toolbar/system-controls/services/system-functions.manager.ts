@@ -1,3 +1,4 @@
+import { simulationManager } from "@teskooano/app-simulation";
 import { OSVector3 } from "@teskooano/core-math";
 import {
   actions,
@@ -6,14 +7,12 @@ import {
   getCurrentSeed,
   updateSeed,
 } from "@teskooano/core-state";
-import { simulationManager } from "@teskooano/app-simulation";
 import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
 import type {
   FunctionConfig,
   PluginExecutionContext,
 } from "@teskooano/ui-plugin";
-import type { DockviewApi } from "dockview-core";
 import {
   catchError,
   defer,
