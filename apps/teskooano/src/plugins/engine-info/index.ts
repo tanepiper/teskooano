@@ -2,8 +2,9 @@ import type {
   TeskooanoPlugin,
   PanelConfig,
   ToolbarRegistration,
+  ComponentConfig,
 } from "@teskooano/ui-plugin";
-import { RendererInfoDisplay } from "./engine-info";
+import { RendererInfoDisplay } from "./view/RendererInfoDisplay.view.js";
 
 import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw";
 
@@ -28,6 +29,11 @@ const toolbarRegistration: ToolbarRegistration = {
   ],
 };
 
+const componentConfig: ComponentConfig = {
+  tagName: RendererInfoDisplay.componentName,
+  componentClass: RendererInfoDisplay,
+};
+
 /**
  * Plugin definition for the Engine Info display panel.
  *
@@ -42,7 +48,7 @@ export const plugin: TeskooanoPlugin = {
   panels: [panelConfig],
   toolbarRegistrations: [toolbarRegistration],
   functions: [],
-  toolbarWidgets: [],
+  components: [componentConfig],
   managerClasses: [],
 };
 

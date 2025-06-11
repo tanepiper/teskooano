@@ -1,13 +1,10 @@
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
+import type { CompositeEngineState } from "../../engine-panel/panels/types.js";
 import type { TeskooanoSlider } from "../../../core/components/slider/Slider.js";
 import { Subscription } from "rxjs";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 
-/**
- * Defines the structure for the UI elements passed from the view
- * to the controller.
- */
-export interface EngineSettingsElements {
+type ControlRefs = {
   gridToggle: HTMLInputElement;
   labelsToggle: HTMLInputElement;
   auMarkersToggle: HTMLInputElement;
@@ -16,37 +13,37 @@ export interface EngineSettingsElements {
   fovSliderElement: TeskooanoSlider;
   debugModeToggle: HTMLInputElement;
   errorMessageElement: HTMLElement;
-}
+};
 
 /**
  * Controller for the EngineUISettingsPanel view.
  *
- * This class contains all the business logic for the engine settings panel.
+ * This class encapsulates all business logic for the engine settings panel.
  * It handles UI element interactions, manages state synchronization with the
- * parent `CompositeEnginePanel`, and updates the view in response to state changes.
+ * parent CompositeEnginePanel, and displays error messages.
  */
 export class EngineSettingsController {
-  private _elements: EngineSettingsElements;
+  private _refs: ControlRefs;
   private _parentPanel: CompositeEnginePanel | null = null;
   private _unsubscribeParentState: Subscription | null = null;
 
   /**
    * Creates an instance of EngineSettingsController.
-   * @param elements The UI elements from the view that this controller will manage.
+   * @param controlRefs An object containing references to the view's DOM elements.
    */
-  constructor(elements: EngineSettingsElements) {
-    this._elements = elements;
+  constructor(controlRefs: ControlRefs) {
+    this._refs = controlRefs;
   }
 
   /**
-   * Initializes the controller by attaching event listeners.
+   * Initializes the controller by adding event listeners.
    */
   public initialize(): void {
     this.addEventListeners();
   }
 
   /**
-   * Cleans up resources by removing event listeners and subscriptions.
+   * Cleans up resources by removing event listeners and unsubscribing from state.
    */
   public dispose(): void {
     this.removeEventListeners();
@@ -55,9 +52,8 @@ export class EngineSettingsController {
   }
 
   /**
-   * Sets the parent panel, which is the source of truth for settings,
-   * and triggers the initial state synchronization.
-   * @param panel The parent CompositeEnginePanel instance.
+   * Sets the reference to the parent CompositeEnginePanel and syncs the UI state.
+   * @param panel The parent engine panel instance.
    */
   public setParentPanel(panel: CompositeEnginePanel): void {
     if (this._parentPanel === panel) {
@@ -71,73 +67,72 @@ export class EngineSettingsController {
    * Attaches event listeners to the interactive UI elements.
    */
   private addEventListeners(): void {
-    this._elements.gridToggle.addEventListener(
+    this._refs.gridToggle?.addEventListener(
       "change",
       this.handleGridToggleChange,
     );
-    this._elements.labelsToggle.addEventListener(
+    this._refs.labelsToggle?.addEventListener(
       "change",
       this.handleLabelsToggleChange,
     );
-    this._elements.auMarkersToggle.addEventListener(
+    this._refs.auMarkersToggle?.addEventListener(
       "change",
       this.handleAuMarkersToggleChange,
     );
-    this._elements.debrisEffectsToggle.addEventListener(
+    this._refs.debrisEffectsToggle?.addEventListener(
       "change",
       this.handleDebrisEffectsToggleChange,
     );
-    this._elements.orbitLinesToggle.addEventListener(
+    this._refs.orbitLinesToggle?.addEventListener(
       "change",
       this.handleOrbitLinesToggleChange,
     );
-    this._elements.fovSliderElement.addEventListener(
+    this._refs.fovSliderElement?.addEventListener(
       CustomEvents.SLIDER_CHANGE,
       this.handleFovChange as EventListener,
     );
-    this._elements.debugModeToggle.addEventListener(
+    this._refs.debugModeToggle?.addEventListener(
       "change",
       this.handleDebugModeToggleChange,
     );
   }
 
   /**
-   * Removes event listeners from the UI elements.
+   * Removes all attached event listeners for cleanup.
    */
   private removeEventListeners(): void {
-    this._elements.gridToggle.removeEventListener(
+    this._refs.gridToggle?.removeEventListener(
       "change",
       this.handleGridToggleChange,
     );
-    this._elements.labelsToggle.removeEventListener(
+    this._refs.labelsToggle?.removeEventListener(
       "change",
       this.handleLabelsToggleChange,
     );
-    this._elements.auMarkersToggle.removeEventListener(
+    this._refs.auMarkersToggle?.removeEventListener(
       "change",
       this.handleAuMarkersToggleChange,
     );
-    this._elements.debrisEffectsToggle.removeEventListener(
+    this._refs.debrisEffectsToggle?.removeEventListener(
       "change",
       this.handleDebrisEffectsToggleChange,
     );
-    this._elements.orbitLinesToggle.removeEventListener(
+    this._refs.orbitLinesToggle?.removeEventListener(
       "change",
       this.handleOrbitLinesToggleChange,
     );
-    this._elements.fovSliderElement.removeEventListener(
+    this._refs.fovSliderElement?.removeEventListener(
       CustomEvents.SLIDER_CHANGE,
       this.handleFovChange as EventListener,
     );
-    this._elements.debugModeToggle.removeEventListener(
+    this._refs.debugModeToggle?.removeEventListener(
       "change",
       this.handleDebugModeToggleChange,
     );
   }
 
   /**
-   * Connects to the parent panel's state, gets the initial state,
-   * and subscribes to future updates.
+   * Establishes connection to the parent panel's state and updates the UI.
    */
   private syncWithParentPanelState(): void {
     if (!this._parentPanel) {
@@ -153,7 +148,7 @@ export class EngineSettingsController {
       this.clearError();
 
       this._unsubscribeParentState = this._parentPanel.subscribeToViewState(
-        (newState) => this.updateUiState(newState),
+        (newState: CompositeEngineState) => this.updateUiState(newState),
       );
     } catch (error) {
       const errMsg =
@@ -161,30 +156,7 @@ export class EngineSettingsController {
       this.showError(errMsg);
       console.error(`[EngineSettingsController] ${errMsg}`, error);
       this._unsubscribeParentState?.unsubscribe();
-    }
-  }
-
-  /**
-   * Updates the UI controls to reflect the provided state.
-   * @param viewState The latest state object from the parent panel.
-   */
-  private updateUiState(
-    viewState: ReturnType<CompositeEnginePanel["getViewState"]>,
-  ): void {
-    this._elements.gridToggle.checked = viewState.showGrid ?? true;
-    this._elements.labelsToggle.checked = viewState.showCelestialLabels ?? true;
-    this._elements.auMarkersToggle.checked = viewState.showAuMarkers ?? true;
-    this._elements.debrisEffectsToggle.checked =
-      viewState.showDebrisEffects ?? false;
-    this._elements.orbitLinesToggle.checked = viewState.showOrbitLines ?? true;
-    this._elements.debugModeToggle.checked = viewState.isDebugMode ?? false;
-
-    if (
-      this._elements.fovSliderElement &&
-      typeof viewState.fov === "number" &&
-      this._elements.fovSliderElement.value !== viewState.fov
-    ) {
-      this._elements.fovSliderElement.value = viewState.fov;
+      this._unsubscribeParentState = null;
     }
   }
 
@@ -231,15 +203,13 @@ export class EngineSettingsController {
     }
 
     try {
-      if (
-        !event.detail ||
-        typeof event.detail.value !== "number" ||
-        isNaN(event.detail.value)
-      ) {
+      const newValue = event.detail?.value;
+      if (typeof newValue !== "number" || isNaN(newValue)) {
         this.showError("Invalid FOV value received from slider event.");
         return;
       }
-      this._parentPanel.updateViewState({ fov: event.detail.value });
+
+      this._parentPanel.updateViewState({ fov: newValue });
       this.clearError();
     } catch (error) {
       this.showError("An error occurred while updating Field of View (FOV).");
@@ -247,19 +217,55 @@ export class EngineSettingsController {
   };
 
   /**
+   * Synchronizes the UI controls with the provided state object.
+   * @param viewState The latest state from the parent panel.
+   */
+  private updateUiState(viewState: CompositeEngineState): void {
+    if (this._refs.gridToggle) {
+      this._refs.gridToggle.checked = viewState.showGrid ?? true;
+    }
+    if (this._refs.labelsToggle) {
+      this._refs.labelsToggle.checked = viewState.showCelestialLabels ?? true;
+    }
+    if (this._refs.auMarkersToggle) {
+      this._refs.auMarkersToggle.checked = viewState.showAuMarkers ?? true;
+    }
+    if (this._refs.debrisEffectsToggle) {
+      this._refs.debrisEffectsToggle.checked =
+        viewState.showDebrisEffects ?? false;
+    }
+    if (this._refs.orbitLinesToggle) {
+      this._refs.orbitLinesToggle.checked = viewState.showOrbitLines ?? true;
+    }
+    if (this._refs.debugModeToggle) {
+      this._refs.debugModeToggle.checked = viewState.isDebugMode ?? false;
+    }
+
+    if (this._refs.fovSliderElement && typeof viewState.fov === "number") {
+      if (this._refs.fovSliderElement.value !== viewState.fov) {
+        this._refs.fovSliderElement.value = viewState.fov;
+      }
+    }
+  }
+
+  /**
    * Displays an error message in the view.
    * @param message The error message to display.
    */
-  private showError(message: string): void {
-    this._elements.errorMessageElement.textContent = message;
-    this._elements.errorMessageElement.style.display = "block";
+  public showError(message: string): void {
+    if (this._refs.errorMessageElement) {
+      this._refs.errorMessageElement.textContent = message;
+      this._refs.errorMessageElement.style.display = "block";
+    }
   }
 
   /**
    * Hides the error message area in the view.
    */
   private clearError(): void {
-    this._elements.errorMessageElement.textContent = "";
-    this._elements.errorMessageElement.style.display = "none";
+    if (this._refs.errorMessageElement) {
+      this._refs.errorMessageElement.textContent = "";
+      this._refs.errorMessageElement.style.display = "none";
+    }
   }
 }

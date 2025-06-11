@@ -1,9 +1,8 @@
 import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
 import { EngineUISettingsPanel } from "./view/EngineSettings.view.js";
+import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw";
 
-const settingsButtonConfig =
-  EngineUISettingsPanel.registerToolbarButtonConfig();
-
+const COMPONENT_NAME = "engine-ui-settings-panel";
 /**
  * Plugin definition for the Engine Settings UI panel.
  *
@@ -18,7 +17,7 @@ export const plugin: TeskooanoPlugin = {
 
   panels: [
     {
-      componentName: EngineUISettingsPanel.componentName,
+      componentName: COMPONENT_NAME,
       panelClass: EngineUISettingsPanel,
       defaultTitle: "Engine Settings",
     },
@@ -29,14 +28,14 @@ export const plugin: TeskooanoPlugin = {
       target: "engine-toolbar",
       items: [
         {
-          id: settingsButtonConfig.id,
-          title: settingsButtonConfig.title,
-          iconSvg: settingsButtonConfig.iconSvg,
+          id: "engine_settings",
+          title: "Engine Settings",
+          iconSvg: SettingsIcon,
           order: 100,
           type: "panel",
-          componentName: settingsButtonConfig.componentName,
-          panelTitle: settingsButtonConfig.panelTitle,
-          behaviour: settingsButtonConfig.behaviour,
+          componentName: COMPONENT_NAME,
+          panelTitle: "Engine Settings",
+          behaviour: "toggle",
         },
       ],
     },
