@@ -30,6 +30,9 @@ template.innerHTML = `
         App Version: <span id="app-version">loading...</span> - <span id="git-commit-hash">loading...</span>
       </p>
       <p>
+        Deployed: <span id="build-timestamp"></span>
+      </p>
+      <p>
         Developed by: <a href="https://tane.dev">Tane Piper</a><br>
         Powered by: ThreeJS, Dockview, RxJS, and more!<br>
         

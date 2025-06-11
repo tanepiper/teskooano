@@ -18,6 +18,7 @@ try {
   console.warn("Could not get git commit hash:", e);
 }
 
+const buildTimestamp = new Date().toISOString();
 const basePath = process.env.CI ? "/teskooano" : "/";
 
 export default defineConfig({
@@ -70,6 +71,7 @@ export default defineConfig({
   define: {
     "import.meta.env.PACKAGE_VERSION": JSON.stringify(appVersion),
     "import.meta.env.GIT_COMMIT_HASH": JSON.stringify(gitCommitHash),
+    "import.meta.env.BUILD_TIMESTAMP": JSON.stringify(buildTimestamp),
   },
 
   server: {

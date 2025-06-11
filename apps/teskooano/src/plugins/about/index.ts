@@ -3,15 +3,16 @@ import type {
   TeskooanoPlugin,
   PanelConfig,
   ToolbarRegistration,
+  ComponentConfig,
 } from "@teskooano/ui-plugin";
-import { AboutPanel } from "./AboutPanel";
+import { AboutPanel } from "./view/AboutPanel.view.js";
 import QuestionIcon from "@fluentui/svg-icons/icons/question_circle_24_regular.svg?raw"; // Using info icon
 
 // Define how the AboutPanel is registered in Dockview
 const panelConfig: PanelConfig = {
   componentName: AboutPanel.componentName,
   panelClass: AboutPanel,
-  defaultTitle: `About Teskooano ${import.meta.env.PACKAGE_VERSION}`,
+  defaultTitle: `About Teskooano`,
   // Removed dependencies from here
 };
 
@@ -23,7 +24,7 @@ const toolbarRegistration: ToolbarRegistration = {
     {
       id: "about-panel-button",
       type: "panel",
-      title: `About Teskooano ${import.meta.env.PACKAGE_VERSION}`, // Tooltip/label for the button
+      title: `About Teskooano`,
       iconSvg: QuestionIcon,
       componentName: panelConfig.componentName, // Links button to the panel
       behaviour: "toggle", // Open/close panel on click
@@ -42,6 +43,11 @@ const toolbarRegistration: ToolbarRegistration = {
   ],
 };
 
+const componentConfig: ComponentConfig = {
+  tagName: AboutPanel.componentName,
+  componentClass: AboutPanel,
+};
+
 /**
  * Plugin definition for the About panel.
  *
@@ -54,7 +60,7 @@ export const plugin: TeskooanoPlugin = {
   panels: [panelConfig],
   toolbarRegistrations: [toolbarRegistration],
   functions: [],
-  toolbarWidgets: [],
+  components: [componentConfig],
   managerClasses: [],
   // Add dependencies if needed, e.g., core components
   dependencies: ["teskooano-card"],
