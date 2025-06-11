@@ -1,4 +1,8 @@
 /**
+ * Utility functions for formatting data for display in the Renderer Info panel.
+ */
+
+/**
  * Formats a 3D vector object into a readable string '(x, y, z)'.
  *
  * @param vec - The vector object with x, y, z properties.

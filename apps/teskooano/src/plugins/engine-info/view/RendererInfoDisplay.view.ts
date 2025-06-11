@@ -1,19 +1,18 @@
-import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
-import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
-import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw";
+import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
+import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
+import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
+import { RendererInfoDisplayController } from "../controller/RendererInfoDisplay.controller.js";
 import type { RendererInfoParams } from "../types";
 import { template } from "./RendererInfoDisplay.template.js";
-import { RendererInfoDisplayController } from "../controller/RendererInfoDisplay.controller.js";
 
 /**
- * Custom Element `renderer-info-display`.
+ * A custom element (`<renderer-info-display>`) that displays real-time
+ * statistics from the `ModularSpaceRenderer`.
  *
- * Displays real-time statistics from the `ModularSpaceRenderer`.
  * This view component is responsible for rendering the UI and delegating all
- * business logic to the `RendererInfoDisplayController`.
- *
- * Implements Dockview `IContentRenderer` to be used as panel content.
+ * business logic to the `RendererInfoDisplayController`. It implements Dockview's
+ * `IContentRenderer` interface to be used as panel content.
  */
 export class RendererInfoDisplay
   extends HTMLElement
@@ -28,8 +27,10 @@ export class RendererInfoDisplay
 
   /**
    * Generates the configuration required to register this panel as a toolbar button.
+   * This static method is used by the plugin system to create a corresponding
+   * toolbar item.
    *
-   * @returns {PanelToolbarItemConfig} Configuration object for the UI plugin manager.
+   * @returns The configuration object for the UI plugin manager.
    */
   public static registerToolbarButtonConfig(): PanelToolbarItemConfig {
     return {
@@ -45,9 +46,11 @@ export class RendererInfoDisplay
   }
 
   /**
-   * Constructs the RendererInfoDisplay panel.
-   * Sets up the shadow DOM, applies the HTML template, queries DOM elements,
-   * and instantiates the controller.
+   * Constructs the `RendererInfoDisplay` panel.
+   *
+   * This sets up the shadow DOM, clones the HTML template, queries for necessary
+   * DOM element references, and instantiates the controller, passing it the view
+   * instance and the element references.
    */
   constructor() {
     super();
@@ -61,36 +64,37 @@ export class RendererInfoDisplay
       memoryValue: this.shadowRoot!.getElementById("memory-value")!,
       camPosValue: this.shadowRoot!.getElementById("cam-pos-value")!,
       fovValue: this.shadowRoot!.getElementById("fov-value")!,
-      connectionStatus: this.shadowRoot!.getElementById("connection-status")!,
-      refreshButton: this.shadowRoot!.getElementById(
-        "refresh-button",
-      ) as HTMLButtonElement,
     };
 
     this._controller = new RendererInfoDisplayController(this, elements);
   }
 
   /**
-   * Called when the element is added to the document's DOM.
-   * Initializes the controller.
+   * Standard custom element lifecycle callback.
+   * Called when the element is added to the document's DOM. This method
+   * initializes the controller.
    */
   connectedCallback() {
     this._controller.initialize();
   }
 
   /**
-   * Called when the element is removed from the document's DOM.
-   * Cleans up the controller to prevent memory leaks.
+   * Standard custom element lifecycle callback.
+   * Called when the element is removed from the document's DOM. This method
+   * cleans up the controller to prevent memory leaks.
    */
   disconnectedCallback() {
     this._controller.dispose();
   }
 
   /**
-   * Dockview panel initialization method.
-   * Passes the parent panel instance to the controller.
+   * Dockview `IContentRenderer` initialization method.
    *
-   * @param {GroupPanelPartInitParameters} parameters - Initialization parameters from Dockview.
+   * This method is called by Dockview when the panel is created. It receives the
+   * parent `CompositeEnginePanel` instance via the parameters and passes it to
+   * the controller.
+   *
+   * @param parameters - Initialization parameters from Dockview.
    */
   public init(parameters: GroupPanelPartInitParameters): void {
     const params = parameters.params as RendererInfoParams;
@@ -110,9 +114,9 @@ export class RendererInfoDisplay
   }
 
   /**
-   * Required by Dockview `IContentRenderer`.
+   * Required by Dockview's `IContentRenderer` interface.
    *
-   * @returns {HTMLElement} The root element of the panel content.
+   * @returns The root element of the panel content, which is the custom element itself.
    */
   get element(): HTMLElement {
     return this;

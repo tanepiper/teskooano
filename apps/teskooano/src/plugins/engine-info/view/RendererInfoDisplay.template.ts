@@ -79,10 +79,6 @@ template.innerHTML = `
       <span class="label">FOV:</span>
       <span class="value" id="fov-value">-</span>
   </div>
-  <div class="controls">
-    <button id="refresh-button" title="Manually refresh renderer statistics">Refresh Stats</button>
-    <div class="status" id="connection-status">Waiting for renderer...</div>
-  </div>
 `;
 
 export { template };

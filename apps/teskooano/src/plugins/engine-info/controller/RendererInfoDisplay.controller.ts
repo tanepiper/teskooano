@@ -5,14 +5,19 @@ import { formatMemory, formatNumber, formatVector } from "../utils/formatters";
 import type { RendererInfoDisplay } from "../view/RendererInfoDisplay.view.js";
 
 const UPDATE_INTERVAL_MS = 1000;
-const MAX_CONNECTION_ATTEMPTS = 10;
-const CONNECTION_ATTEMPT_DELAY_MS = 2000;
 
 const FPS_THRESHOLDS = {
   GOOD: 50,
   WARN: 30,
 };
 
+/**
+ * Controller for the RendererInfoDisplay view.
+ *
+ * This class encapsulates all the business logic for the renderer info panel.
+ * It manages the connection to the renderer, periodically fetches statistics,
+ * and updates the view with the formatted data.
+ */
 export class RendererInfoDisplayController {
   private _view: RendererInfoDisplay;
   private _fpsValue: HTMLElement;
@@ -21,16 +26,17 @@ export class RendererInfoDisplayController {
   private _memoryValue: HTMLElement;
   private _camPosValue: HTMLElement;
   private _fovValue: HTMLElement;
-  private _connectionStatus: HTMLElement;
-  private _refreshButton: HTMLButtonElement;
 
   private _renderer: ModularSpaceRenderer | null = null;
   private _updateInterval: number | null = null;
   private _parentPanel: CompositeEnginePanel | null = null;
   private _boundHandleRendererReady: (event: Event) => void;
-  private _connectionAttemptCount: number = 0;
-  private _connectionAttemptTimer: number | null = null;
 
+  /**
+   * Creates an instance of RendererInfoDisplayController.
+   * @param view The RendererInfoDisplay view instance this controller manages.
+   * @param elements A record of the HTML elements from the view's shadow DOM.
+   */
   constructor(
     view: RendererInfoDisplay,
     elements: {
@@ -40,8 +46,6 @@ export class RendererInfoDisplayController {
       memoryValue: HTMLElement;
       camPosValue: HTMLElement;
       fovValue: HTMLElement;
-      connectionStatus: HTMLElement;
-      refreshButton: HTMLButtonElement;
     },
   ) {
     this._view = view;
@@ -51,17 +55,16 @@ export class RendererInfoDisplayController {
     this._memoryValue = elements.memoryValue;
     this._camPosValue = elements.camPosValue;
     this._fovValue = elements.fovValue;
-    this._connectionStatus = elements.connectionStatus;
-    this._refreshButton = elements.refreshButton;
 
     this._boundHandleRendererReady = this.handleRendererReady.bind(this);
-    this.handleRefreshClick = this.handleRefreshClick.bind(this);
     this.updateDisplay = this.updateDisplay.bind(this);
   }
 
+  /**
+   * Initializes the controller.
+   * Sets up event listeners and begins the process of connecting to the renderer.
+   */
   public initialize(): void {
-    this._refreshButton.addEventListener("click", this.handleRefreshClick);
-
     if (this._renderer) {
       if (!this._updateInterval) {
         this.startUpdateTimer();
@@ -78,17 +81,17 @@ export class RendererInfoDisplayController {
         "renderer-ready",
         this._boundHandleRendererReady,
       );
-
-      this.updateConnectionStatus("Listening for renderer...");
     } else if (!this._parentPanel) {
       this.tryConnectToRenderer();
     }
   }
 
+  /**
+   * Cleans up the controller's resources.
+   * Removes event listeners and stops any active timers to prevent memory leaks.
+   */
   public dispose(): void {
     this.stopUpdateTimer();
-    this.stopConnectionAttempts();
-    this._refreshButton.removeEventListener("click", this.handleRefreshClick);
 
     if (this._parentPanel?.element) {
       this._parentPanel.element.removeEventListener(
@@ -98,80 +101,30 @@ export class RendererInfoDisplayController {
     }
   }
 
+  /**
+   * Sets the reference to the parent engine panel.
+   * This is the entry point for the controller to find the renderer.
+   * @param panel The parent `CompositeEnginePanel` instance.
+   */
   public setParentPanel(panel: CompositeEnginePanel): void {
     this._parentPanel = panel;
     this.tryConnectToRenderer();
   }
 
-  private handleRefreshClick(): void {
-    if (this._renderer) {
-      this.updateConnectionStatus("Manual refresh triggered...");
-      this.fetchAndUpdateDisplay();
-    } else {
-      this.updateConnectionStatus("Attempting reconnect on refresh...");
-      this.tryConnectToRenderer();
-    }
-  }
-
-  private updateConnectionStatus(
-    message: string,
-    isError: boolean = false,
-  ): void {
-    if (this._connectionStatus) {
-      this._connectionStatus.textContent = message;
-      this._connectionStatus.style.color = isError
-        ? "var(--color-error, #f44336)"
-        : "var(--color-text-secondary, #aaa)";
-    }
-    if (this._refreshButton) {
-      this._refreshButton.disabled = isError || !this._renderer;
-    }
-  }
-
   private setRenderer(renderer: ModularSpaceRenderer): void {
     this._renderer = renderer;
-    this.stopConnectionAttempts();
 
     if (this._renderer && this._view.isConnected) {
-      this.updateConnectionStatus("Renderer connected.");
       this.startUpdateTimer();
       this.fetchAndUpdateDisplay();
-    } else {
-      this.updateConnectionStatus(
-        this._view.isConnected
-          ? "Renderer connection failed."
-          : "Component disconnected.",
-        true,
-      );
     }
   }
 
   private tryConnectToRenderer(): void {
-    if (
-      this._renderer ||
-      this._connectionAttemptCount >= MAX_CONNECTION_ATTEMPTS
-    ) {
-      if (
-        !this._renderer &&
-        this._connectionAttemptCount >= MAX_CONNECTION_ATTEMPTS
-      ) {
-        this.updateConnectionStatus(
-          `Failed to connect after ${MAX_CONNECTION_ATTEMPTS} attempts.`,
-          true,
-        );
-      }
-      this.stopConnectionAttempts();
+    if (this._renderer) {
       return;
     }
 
-    this.updateConnectionStatus(
-      `Connecting... (Attempt ${
-        this._connectionAttemptCount + 1
-      }/${MAX_CONNECTION_ATTEMPTS})`,
-    );
-    this._connectionAttemptCount++;
-
-    let foundRenderer = false;
     if (
       this._parentPanel &&
       typeof this._parentPanel.getRenderer === "function"
@@ -180,7 +133,6 @@ export class RendererInfoDisplayController {
         const renderer = this._parentPanel.getRenderer();
         if (renderer) {
           this.setRenderer(renderer);
-          foundRenderer = true;
         }
       } catch (error) {
         console.error(
@@ -188,26 +140,6 @@ export class RendererInfoDisplayController {
           error,
         );
       }
-    }
-
-    if (!foundRenderer) {
-      if (this._parentPanel) {
-        // If we have a parent panel, we should be listening to the 'renderer-ready' event.
-        // No need for a timeout loop in that case.
-        this.stopConnectionAttempts();
-      } else {
-        this.stopConnectionAttempts();
-        this._connectionAttemptTimer = window.setTimeout(() => {
-          this.tryConnectToRenderer();
-        }, CONNECTION_ATTEMPT_DELAY_MS);
-      }
-    }
-  }
-
-  private stopConnectionAttempts(): void {
-    if (this._connectionAttemptTimer !== null) {
-      clearTimeout(this._connectionAttemptTimer);
-      this._connectionAttemptTimer = null;
     }
   }
 
@@ -229,30 +161,15 @@ export class RendererInfoDisplayController {
 
   private fetchAndUpdateDisplay(): void {
     if (!this._renderer) {
-      this.updateConnectionStatus(
-        "Cannot fetch: Renderer not available.",
-        true,
-      );
       this.updateDisplay(null);
       return;
     }
 
     try {
       const stats = this._renderer.animationLoop?.getCurrentStats();
-      if (!stats) {
-        this.updateConnectionStatus("Could not retrieve stats.", true);
-        this.updateDisplay(null);
-        return;
-      }
       this.updateDisplay(stats);
-      if (
-        this._connectionStatus?.style.color !== "var(--color-error, #f44336)"
-      ) {
-        this.updateConnectionStatus("Stats updated.");
-      }
     } catch (error) {
       console.error("[RendererInfoDisplay] Error fetching stats:", error);
-      this.updateConnectionStatus("Error fetching stats.", true);
       this.updateDisplay(null);
     }
   }

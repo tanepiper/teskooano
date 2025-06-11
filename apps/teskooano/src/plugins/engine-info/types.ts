@@ -1,7 +1,8 @@
 import type { CompositeEnginePanel } from "../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 
 /**
- * Optional parameters passed during the initialization of the RendererInfoDisplay panel.
+ * Defines the type for optional parameters passed during the initialization
+ * of the `RendererInfoDisplay` panel.
  */
 export type RendererInfoParams = {
   /**

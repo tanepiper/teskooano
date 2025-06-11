@@ -35,10 +35,11 @@ const componentConfig: ComponentConfig = {
 };
 
 /**
- * Plugin definition for the Engine Info display panel.
+ * The Teskooano plugin definition for the Engine Info feature.
  *
- * Registers the RendererInfoDisplay panel and its associated toolbar button
- * for showing renderer statistics.
+ * This object bundles all the necessary configurations (panels, components,
+ * toolbar items) for the `PluginManager` to register and integrate the
+ * engine info display into the application.
  */
 export const plugin: TeskooanoPlugin = {
   id: "teskooano-engine-info",
