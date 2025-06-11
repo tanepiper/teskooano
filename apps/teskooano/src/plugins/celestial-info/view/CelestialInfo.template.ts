@@ -8,9 +8,7 @@ template.innerHTML = `
     }
 
     .placeholder {
-      padding: 10px;
-      color: var(--ui-text-color-dim, #888);
-      font-style: italic;
+      /* Placeholder is now styled by baseStyles */
     }
 
     .container {

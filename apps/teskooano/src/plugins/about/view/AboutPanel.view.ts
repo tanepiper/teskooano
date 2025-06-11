@@ -33,7 +33,7 @@ export class AboutPanel extends HTMLElement implements IContentRenderer {
    * Dockview initialization function.
    * @param params
    */
-  init(params: GroupPanelPartInitParameters): void {
+  init(_: GroupPanelPartInitParameters): void {
     // No specific parameters needed for this simple panel.
   }
 

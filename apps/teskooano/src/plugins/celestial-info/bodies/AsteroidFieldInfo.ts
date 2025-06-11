@@ -4,70 +4,40 @@ import {
   AsteroidFieldProperties,
   AU_METERS,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/FormatUtils";
-import { baseStyles } from "../utils/CelestialStyles";
-import { CelestialInfoComponent } from "../utils/CelestialInfoInterface";
+import { FormatUtils } from "../utils/FormatUtils.js";
+import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 
-export class AsteroidFieldInfoComponent
-  extends HTMLElement
-  implements CelestialInfoComponent
-{
-  private shadow: ShadowRoot;
-
+export class AsteroidFieldInfoComponent extends BaseCelestialInfoComponent {
   constructor() {
-    super();
-    this.shadow = this.attachShadow({ mode: "open" });
-    this.shadow.innerHTML = `
-            <style>${baseStyles}</style>
-            <div id="container" class="placeholder">Loading asteroid field data...</div>
-        `;
+    super("Loading asteroid field data...");
   }
 
-  updateData(celestial: CelestialObject): void {
-    if (celestial.type !== CelestialType.ASTEROID_FIELD) {
-      console.warn(
-        "AsteroidFieldInfoComponent received non-asteroid field data",
-      );
-      return;
-    }
+  protected render(celestial: CelestialObject): string {
+    const properties = celestial.properties as AsteroidFieldProperties;
 
-    const container = this.shadow.getElementById("container");
-    if (!container) return;
-
-    if (
-      celestial.type === CelestialType.ASTEROID_FIELD &&
-      celestial.properties
-    ) {
-      const properties = celestial.properties as AsteroidFieldProperties;
-
-      container.innerHTML = `
-                <h3>${celestial.name}</h3>
-                <dl class="info-grid">
-                    <dt>Type:</dt><dd>Asteroid Field</dd>
-                    <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
-                    
-                    ${
-                      celestial.orbit
-                        ? `
-                    <dt>Inner Radius:</dt><dd>${FormatUtils.formatDistanceAU(celestial.orbit.realSemiMajorAxis_m * (1 - celestial.orbit.eccentricity))}</dd>
-                    <dt>Outer Radius:</dt><dd>${FormatUtils.formatDistanceAU(celestial.orbit.realSemiMajorAxis_m * (1 + celestial.orbit.eccentricity))}</dd>
-                    <dt>Width:</dt><dd>${FormatUtils.formatDistanceAU(celestial.orbit.realSemiMajorAxis_m * celestial.orbit.eccentricity * 2)}</dd>
-                    <dt>Inclination:</dt><dd>${FormatUtils.formatDegrees(celestial.orbit.inclination)}</dd>
-                    `
-                        : ""
-                    }
-                    
-                    ${properties.innerRadiusAU ? `<dt>Inner Radius (Prop):</dt><dd>${FormatUtils.formatDistanceAU(properties.innerRadiusAU * AU_METERS)}</dd>` : ""} 
-                    ${properties.outerRadiusAU ? `<dt>Outer Radius (Prop):</dt><dd>${FormatUtils.formatDistanceAU(properties.outerRadiusAU * AU_METERS)}</dd>` : ""} 
-                    ${properties.count ? `<dt>Count:</dt><dd>${properties.count.toLocaleString()}</dd>` : ""} 
-                    ${properties.composition ? `<dt>Composition:</dt><dd>${properties.composition.join(", ")}</dd>` : ""}
-                    ${properties.color ? `<dt>Color:</dt><dd>${properties.color}</dd>` : ""} 
-                </dl>
-            `;
-    } else {
-      container.innerHTML = `<div class="placeholder">Asteroid field data incomplete.</div>`;
-    }
+    return `
+      <h3>${celestial.name}</h3>
+      <dl class="info-grid">
+          <dt>Type:</dt><dd>Asteroid Field</dd>
+          <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
+          
+          ${
+            celestial.orbit
+              ? `
+          <dt>Inner Radius:</dt><dd>${FormatUtils.formatDistanceAU(celestial.orbit.realSemiMajorAxis_m * (1 - celestial.orbit.eccentricity))}</dd>
+          <dt>Outer Radius:</dt><dd>${FormatUtils.formatDistanceAU(celestial.orbit.realSemiMajorAxis_m * (1 + celestial.orbit.eccentricity))}</dd>
+          <dt>Width:</dt><dd>${FormatUtils.formatDistanceAU(celestial.orbit.realSemiMajorAxis_m * celestial.orbit.eccentricity * 2)}</dd>
+          <dt>Inclination:</dt><dd>${FormatUtils.formatDegrees(celestial.orbit.inclination)}</dd>
+          `
+              : ""
+          }
+          
+          ${properties.innerRadiusAU ? `<dt>Inner Radius (Prop):</dt><dd>${FormatUtils.formatDistanceAU(properties.innerRadiusAU * AU_METERS)}</dd>` : ""} 
+          ${properties.outerRadiusAU ? `<dt>Outer Radius (Prop):</dt><dd>${FormatUtils.formatDistanceAU(properties.outerRadiusAU * AU_METERS)}</dd>` : ""} 
+          ${properties.count ? `<dt>Count:</dt><dd>${properties.count.toLocaleString()}</dd>` : ""} 
+          ${properties.composition ? `<dt>Composition:</dt><dd>${properties.composition.join(", ")}</dd>` : ""}
+          ${properties.color ? `<dt>Color:</dt><dd>${properties.color}</dd>` : ""} 
+      </dl>
+    `;
   }
 }
-
-customElements.define("asteroid-field-info", AsteroidFieldInfoComponent);
