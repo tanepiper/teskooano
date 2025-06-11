@@ -72,9 +72,7 @@ export class PanelLifecycleManager {
           // If objects exist but we have no renderer, create it.
           this._options.placeholderManager?.hide();
           this._options.initializeRendererAndUI();
-          if (!simulationManager.isLoopRunning) {
-            simulationManager.startLoop();
-          }
+          simulationManager.startLoop();
         } else if (!hasObjects && hasRenderer) {
           // If no objects exist but we have a renderer, tear it down.
           this._options.disposeRendererAndUI();

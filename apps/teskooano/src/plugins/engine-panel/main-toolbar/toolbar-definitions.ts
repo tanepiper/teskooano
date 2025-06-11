@@ -3,7 +3,7 @@ import type {
   ToolbarWidgetConfig,
 } from "@teskooano/ui-plugin";
 import AddIcon from "@fluentui/svg-icons/icons/add_24_regular.svg?raw";
-import { addCompositeEnginePanelFunction } from "./system-controls/engineview-functions";
+import { addCompositeEnginePanelFunction } from "./engine-view/EngineViewManager";
 
 export const simulationControlsWidget: ToolbarWidgetConfig = {
   id: "main-toolbar-sim-controls",

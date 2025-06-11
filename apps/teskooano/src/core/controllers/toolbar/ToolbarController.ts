@@ -160,6 +160,11 @@ export class ToolbarController {
             });
           }
           widgetContainer.appendChild(widgetElement);
+
+          // After appending, check for and call setContext if it exists
+          if (typeof (widgetElement as any).setContext === "function") {
+            (widgetElement as any).setContext(this._context);
+          }
         } catch (error) {
           console.error(
             `[ToolbarController] Error creating widget '${widget.id}'`,

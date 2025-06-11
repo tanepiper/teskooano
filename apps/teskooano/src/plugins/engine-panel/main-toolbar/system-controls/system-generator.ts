@@ -11,110 +11,112 @@ import {
 } from "@teskooano/data-types";
 import { generateSystem as generateSystemObservable } from "@teskooano/procedural-generation";
 import { dispatchTextureGenerationComplete } from "@teskooano/systems-celestial";
-import { DockviewApi } from "dockview-core";
+import { type DockviewApi } from "dockview-core";
 import { catchError, finalize, lastValueFrom, tap, throwError } from "rxjs";
 
-export function dispatchSimulationTimeReset() {
-  const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
-  window.dispatchEvent(event);
-}
+export class SystemGenerator {
+  private dockviewApi: DockviewApi | null;
 
-/**
- * Generates a new solar system based on a seed, updates the state,
- * and handles UI feedback via DockviewApi.
- * @param inputSeed The seed string to use for generation. If empty, a default may be used.
- * @param dockviewApi The Dockview API instance for managing panels (e.g., progress).
- * @returns Promise<boolean> True if generation and state update succeeded, false otherwise.
- */
-export async function generateAndLoadSystem(
-  inputSeed: string,
-  dockviewApi: DockviewApi | null,
-): Promise<boolean> {
-  if (!dockviewApi) {
-    console.error("Dockview API not provided to generateAndLoadSystem!");
-    // Still dispatch events even if dockviewApi is null for some reason,
-    // as other parts of the system might listen.
-    window.dispatchEvent(new CustomEvent(CustomEvents.SYSTEM_GENERATION_START));
-    window.dispatchEvent(
-      new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
-    );
-    return false;
+  constructor(dockviewApi: DockviewApi | null) {
+    this.dockviewApi = dockviewApi;
   }
 
-  // Dispatch system generation start event
-  window.dispatchEvent(new CustomEvent(CustomEvents.SYSTEM_GENERATION_START));
+  private static dispatchSimulationTimeReset() {
+    const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
+    window.dispatchEvent(event);
+  }
 
-  updateSeed(inputSeed);
-  const finalSeed = getCurrentSeed();
-  celestialFactory.clearState({
-    resetCamera: false,
-    resetTime: true,
-    resetSelection: true,
-  });
-  actions.resetTime();
-  dispatchSimulationTimeReset();
-
-  try {
-    const { systemName, objects$ } = await generateSystemObservable(finalSeed);
-
-    if (systemName) {
-      console.warn(
-        `[SystemGenerator] System Name: ${systemName} (handling not implemented)`,
+  /**
+   * Generates a new solar system based on a seed, updates the state,
+   * and handles UI feedback via DockviewApi.
+   * @param inputSeed The seed string to use for generation. If empty, a default may be used.
+   * @returns Promise<boolean> True if generation and state update succeeded, false otherwise.
+   */
+  public async generateAndLoadSystem(inputSeed: string): Promise<boolean> {
+    if (!this.dockviewApi) {
+      console.error("Dockview API not provided to generateAndLoadSystem!");
+      window.dispatchEvent(
+        new CustomEvent(CustomEvents.SYSTEM_GENERATION_START),
       );
+      window.dispatchEvent(
+        new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
+      );
+      return false;
     }
 
-    let isFirstStar = true;
+    window.dispatchEvent(new CustomEvent(CustomEvents.SYSTEM_GENERATION_START));
 
-    const processingPipeline$ = objects$.pipe(
-      tap((celestialObject: CelestialObject) => {
-        if (celestialObject.type === CelestialType.STAR && isFirstStar) {
-          celestialFactory.createSolarSystem(celestialObject);
-          isFirstStar = false;
-        } else {
-          if (
-            celestialObject.type === CelestialType.STAR &&
-            !celestialObject.parentId
-          ) {
-            console.warn(
-              `[SystemGenerator] Found another root star: ${celestialObject.id}. Using createSolarSystem anyway. Check generator logic.`,
-            );
+    updateSeed(inputSeed);
+    const finalSeed = getCurrentSeed();
+    celestialFactory.clearState({
+      resetCamera: false,
+      resetTime: true,
+      resetSelection: true,
+    });
+    actions.resetTime();
+    SystemGenerator.dispatchSimulationTimeReset();
+
+    try {
+      const { systemName, objects$ } =
+        await generateSystemObservable(finalSeed);
+
+      if (systemName) {
+        console.warn(
+          `[SystemGenerator] System Name: ${systemName} (handling not implemented)`,
+        );
+      }
+
+      let isFirstStar = true;
+
+      const processingPipeline$ = objects$.pipe(
+        tap((celestialObject: CelestialObject) => {
+          if (celestialObject.type === CelestialType.STAR && isFirstStar) {
             celestialFactory.createSolarSystem(celestialObject);
+            isFirstStar = false;
           } else {
-            celestialFactory.addCelestial(celestialObject);
+            if (
+              celestialObject.type === CelestialType.STAR &&
+              !celestialObject.parentId
+            ) {
+              console.warn(
+                `[SystemGenerator] Found another root star: ${celestialObject.id}. Using createSolarSystem anyway. Check generator logic.`,
+              );
+              celestialFactory.createSolarSystem(celestialObject);
+            } else {
+              celestialFactory.addCelestial(celestialObject);
+            }
           }
-        }
-      }),
-      catchError((error) => {
-        console.error(
-          "[SystemGenerator] Error during object processing stream:",
-          error,
-        );
-        return throwError(() => error);
-      }),
-      finalize(() => {
-        dispatchTextureGenerationComplete();
-        actions.resetTime();
-        dispatchSimulationTimeReset();
-        // Dispatch system generation complete event
-        window.dispatchEvent(
-          new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
-        );
-      }),
-    );
+        }),
+        catchError((error) => {
+          console.error(
+            "[SystemGenerator] Error during object processing stream:",
+            error,
+          );
+          return throwError(() => error);
+        }),
+        finalize(() => {
+          dispatchTextureGenerationComplete();
+          actions.resetTime();
+          SystemGenerator.dispatchSimulationTimeReset();
+          window.dispatchEvent(
+            new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
+          );
+        }),
+      );
 
-    await lastValueFrom(processingPipeline$, { defaultValue: undefined });
-    return true;
-  } catch (error) {
-    console.error(
-      "[SystemGenerator] Overall error in generateAndLoadSystem:",
-      error,
-    );
-    dispatchTextureGenerationComplete();
-    // Dispatch system generation complete event even on error
-    window.dispatchEvent(
-      new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
-    );
-    return false;
+      await lastValueFrom(processingPipeline$, { defaultValue: undefined });
+      return true;
+    } catch (error) {
+      console.error(
+        "[SystemGenerator] Overall error in generateAndLoadSystem:",
+        error,
+      );
+      dispatchTextureGenerationComplete();
+      window.dispatchEvent(
+        new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
+      );
+      return false;
+    }
   }
 }
 

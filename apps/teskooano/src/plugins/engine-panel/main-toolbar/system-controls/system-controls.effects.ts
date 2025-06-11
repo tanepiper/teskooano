@@ -7,7 +7,7 @@ import {
   tap,
   withLatestFrom,
 } from "rxjs/operators";
-import { pluginManager } from "@teskooano/ui-plugin";
+import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import type { CelestialObject } from "@teskooano/data-types"; // Assuming CelestialObject is here
 
 // Representing the type for the value emitted by celestialObjects$
@@ -24,235 +24,203 @@ export interface SystemActionEffectResult {
 }
 
 /**
- * Effect for generating a new system (randomly or from seed).
+ * A class that encapsulates all the side effects for the SystemControls component.
+ * This includes generating, clearing, exporting, importing, and managing system state
+ * through RxJS-based effect pipelines.
  */
-export function generateSystemEffect$(
-  trigger$: Observable<{ seed: string; element: HTMLElement }>, // from createSeedSubmitStream$ or createRandomSeedStream$
-  isGenerating$$: BehaviorSubject<boolean>,
-  seedInputElement: HTMLInputElement | null, // To potentially update its value
-): Observable<SystemActionEffectResult> {
-  return trigger$.pipe(
-    filter(() => !isGenerating$$.value),
-    tap(() => isGenerating$$.next(true)),
-    switchMap(({ seed: inputSeed, element }) =>
-      from(
-        pluginManager.execute("system:generate_random", { seed: inputSeed }),
-      ).pipe(
-        map((result: any): SystemActionEffectResult => {
-          const success = result?.success === true;
-          if (
-            success &&
-            result?.seed &&
-            seedInputElement &&
-            result.seed !== inputSeed
-          ) {
-            seedInputElement.value = result.seed;
-          }
-          return {
-            status: success ? "success" : "error",
-            symbol: result?.symbol || (success ? "✨" : "❌"),
-            message: result?.message,
-            triggerElement: element,
-            seed: result?.seed,
-          };
-        }),
-        catchError((err) => {
-          console.error("Generation error:", err);
-          return of<SystemActionEffectResult>({
-            status: "error",
-            symbol: "❌",
-            message: err.message || "Generation failed",
-            triggerElement: element,
-          });
-        }),
-      ),
-    ),
-  );
-}
+export class SystemControlsEffects {
+  private isGenerating$$: BehaviorSubject<boolean>;
+  private seedInputElement: HTMLInputElement | null;
+  private context: PluginExecutionContext;
 
-/**
- * Effect for clearing the current system.
- */
-export function clearSystemEffect$(
-  trigger$: Observable<HTMLElement>,
-  isGenerating$$: BehaviorSubject<boolean>,
-): Observable<SystemActionEffectResult> {
-  return trigger$.pipe(
-    filter(() => !isGenerating$$.value),
-    tap(() => isGenerating$$.next(true)),
-    switchMap((element) =>
-      from(pluginManager.execute("system:clear")).pipe(
-        map(
-          (result: any): SystemActionEffectResult => ({
-            status: result.success ? "success" : "error",
-            symbol: result.symbol || (result.success ? "🗑️" : "❌"),
-            message: result.message,
-            triggerElement: element,
-          }),
-        ),
-        catchError((err) => {
-          console.error("Clear error:", err);
-          return of<SystemActionEffectResult>({
-            status: "error",
-            symbol: "❌",
-            message: err.message || "Clear failed",
-            triggerElement: element,
-          });
-        }),
-      ),
-    ),
-  );
-}
+  constructor(
+    isGenerating$$: BehaviorSubject<boolean>,
+    seedInputElement: HTMLInputElement | null,
+    context: PluginExecutionContext,
+  ) {
+    this.isGenerating$$ = isGenerating$$;
+    this.seedInputElement = seedInputElement;
+    this.context = context;
+  }
 
-/**
- * Effect for exporting the current system.
- */
-export function exportSystemEffect$(
-  trigger$: Observable<HTMLElement>,
-  isGenerating$$: BehaviorSubject<boolean>,
-): Observable<SystemActionEffectResult> {
-  return trigger$.pipe(
-    filter(() => !isGenerating$$.value),
-    tap(() => isGenerating$$.next(true)),
-    switchMap((element) => {
-      return from(pluginManager.execute("system:export")).pipe(
-        map(
-          (result: any): SystemActionEffectResult => ({
-            status: result.success ? "success" : "error",
-            symbol: result.symbol || (result.success ? "💾" : "❌"),
-            message: result.message,
-            triggerElement: element,
-          }),
+  /**
+   * Creates a standardized effect pipeline for simple plugin commands.
+   * It handles loading state, plugin execution, and default result/error mapping.
+   * @param pluginName - The name of the plugin function to execute.
+   * @param successSymbol - The symbol to show on success.
+   * @param options - Optional customizations for mapping and error handling.
+   * @returns An RxJS operator function.
+   */
+  private createStandardEffect(
+    pluginName: string,
+    successSymbol: string,
+    options: {
+      customCatch?: (
+        err: any,
+        element: HTMLElement,
+      ) => Observable<SystemActionEffectResult>;
+    } = {},
+  ) {
+    return (
+      trigger$: Observable<HTMLElement>,
+    ): Observable<SystemActionEffectResult> =>
+      trigger$.pipe(
+        filter(() => !this.isGenerating$$.value),
+        tap(() => this.isGenerating$$.next(true)),
+        switchMap((element) =>
+          from(this.context.pluginManager.execute(pluginName)).pipe(
+            map(
+              (result: any): SystemActionEffectResult => ({
+                status: result?.success ? "success" : "error",
+                symbol:
+                  result?.symbol || (result?.success ? successSymbol : "❌"),
+                message: result?.message,
+                triggerElement: element,
+              }),
+            ),
+            catchError((err) => {
+              if (options.customCatch) {
+                return options.customCatch(err, element);
+              }
+              console.error(`${pluginName} error:`, err);
+              return of<SystemActionEffectResult>({
+                status: "error",
+                symbol: "❌",
+                message: err.message || `${pluginName} failed`,
+                triggerElement: element,
+              });
+            }),
+          ),
         ),
-        catchError((err) => {
-          console.error("Export error:", err);
-          return of<SystemActionEffectResult>({
-            status: "error",
-            symbol: "❌",
-            message: err.message || "Export failed",
-            triggerElement: element,
-          });
-        }),
       );
-    }),
-  );
-}
+  }
 
-/**
- * Effect for importing a system.
- */
-export function importSystemEffect$(
-  trigger$: Observable<HTMLElement>,
-  isGenerating$$: BehaviorSubject<boolean>,
-): Observable<SystemActionEffectResult> {
-  return trigger$.pipe(
-    filter(() => !isGenerating$$.value),
-    tap(() => isGenerating$$.next(true)),
-    switchMap((element) =>
-      from(pluginManager.execute("system:trigger_import_dialog")).pipe(
-        map(
-          (result: any): SystemActionEffectResult => ({
-            status: result?.success ? "success" : "error",
-            symbol: result?.symbol || (result?.success ? "✅" : "❌"),
-            message: result?.message,
-            triggerElement: element,
+  /**
+   * Effect for generating a new system (randomly or from seed).
+   */
+  public generateSystemEffect$(
+    trigger$: Observable<{ seed: string; element: HTMLElement }>,
+  ): Observable<SystemActionEffectResult> {
+    return trigger$.pipe(
+      filter(() => !this.isGenerating$$.value),
+      tap(() => this.isGenerating$$.next(true)),
+      switchMap(({ seed: inputSeed, element }) =>
+        from(
+          this.context.pluginManager.execute("system:generate_random", {
+            seed: inputSeed,
           }),
-        ),
-        catchError((err) => {
-          console.error("Import error:", err);
-          const message = err instanceof Error ? err.message : String(err);
-          if (message === "File selection cancelled.") {
+        ).pipe(
+          map((result: any): SystemActionEffectResult => {
+            const success = result?.success === true;
+            if (
+              success &&
+              result?.seed &&
+              this.seedInputElement &&
+              result.seed !== inputSeed
+            ) {
+              this.seedInputElement.value = result.seed;
+            }
+            return {
+              status: success ? "success" : "error",
+              symbol: result?.symbol || (success ? "✨" : "❌"),
+              message: result?.message,
+              triggerElement: element,
+              seed: result?.seed,
+            };
+          }),
+          catchError((err) => {
+            console.error("Generation error:", err);
             return of<SystemActionEffectResult>({
-              status: "success", // Consider this a success in terms of flow
-              symbol: "🤷",
-              message: message,
+              status: "error",
+              symbol: "❌",
+              message: err.message || "Generation failed",
               triggerElement: element,
             });
-          }
+          }),
+        ),
+      ),
+    );
+  }
+
+  /** Effect for clearing the current system. */
+  public clearSystemEffect$ = this.createStandardEffect("system:clear", "🗑️");
+
+  /** Effect for exporting the current system. */
+  public exportSystemEffect$ = this.createStandardEffect("system:export", "💾");
+
+  /** Effect for importing a system. */
+  public importSystemEffect$ = this.createStandardEffect(
+    "system:trigger_import_dialog",
+    "✅",
+    {
+      customCatch: (err, element) => {
+        const message = err instanceof Error ? err.message : String(err);
+        if (message === "File selection cancelled.") {
           return of<SystemActionEffectResult>({
-            status: "error",
-            symbol: "❌",
-            message: message || "Import failed",
+            status: "success", // Consider this a success in terms of flow
+            symbol: "🤷",
+            message: message,
             triggerElement: element,
           });
-        }),
-      ),
-    ),
-  );
-}
-
-/**
- * Effect for copying the current system seed.
- */
-export function copySeedEffect$(
-  trigger$: Observable<HTMLElement>,
-  currentSeed$: Observable<Seed>,
-): Observable<SystemActionEffectResult> {
-  return trigger$.pipe(
-    withLatestFrom(currentSeed$),
-    switchMap(([element, seedValue]) => {
-      if (seedValue === null) {
+        }
+        console.error("Import error:", err);
         return of<SystemActionEffectResult>({
           status: "error",
-          symbol: "🤷",
-          message: "No seed to copy",
+          symbol: "❌",
+          message: message || "Import failed",
           triggerElement: element,
         });
-      }
-      const nonNullSeed: string = seedValue;
-      return from(pluginManager.execute("system:copy_seed", nonNullSeed)).pipe(
-        map(
-          (result: any): SystemActionEffectResult => ({
-            status: result?.success ? "success" : "error",
-            symbol: result?.symbol || (result?.success ? "📋" : "❌"),
-            message: result?.message,
-            triggerElement: element,
-          }),
-        ),
-        catchError((err) => {
-          console.error("Copy seed error:", err);
-          return of<SystemActionEffectResult>({
-            status: "error",
-            symbol: "❌",
-            message: err.message || "Copy failed",
-            triggerElement: element,
-          });
-        }),
-      );
-    }),
+      },
+    },
   );
-}
 
-/**
- * Effect for creating a blank system.
- */
-export function createBlankSystemEffect$(
-  trigger$: Observable<HTMLElement>,
-  isGenerating$$: BehaviorSubject<boolean>,
-): Observable<SystemActionEffectResult> {
-  return trigger$.pipe(
-    filter(() => !isGenerating$$.value),
-    tap(() => isGenerating$$.next(true)),
-    switchMap((element) =>
-      from(pluginManager.execute("system:create_blank")).pipe(
-        map(
-          (result: any): SystemActionEffectResult => ({
-            status: result?.success ? "success" : "error",
-            symbol: result?.symbol || (result?.success ? "📄" : "❌"),
-            message: result?.message,
-            triggerElement: element,
-          }),
-        ),
-        catchError((err) => {
-          console.error("Create blank system error:", err);
+  /**
+   * Effect for copying the current system seed.
+   */
+  public copySeedEffect$(
+    trigger$: Observable<HTMLElement>,
+    currentSeed$: Observable<Seed>,
+  ): Observable<SystemActionEffectResult> {
+    return trigger$.pipe(
+      withLatestFrom(currentSeed$),
+      switchMap(([element, seedValue]) => {
+        if (seedValue === null) {
           return of<SystemActionEffectResult>({
             status: "error",
-            symbol: "❌",
-            message: err.message || "Create blank failed",
+            symbol: "🤷",
+            message: "No seed to copy",
             triggerElement: element,
           });
-        }),
-      ),
-    ),
+        }
+        const nonNullSeed: string = seedValue;
+        return from(
+          this.context.pluginManager.execute("system:copy_seed", nonNullSeed),
+        ).pipe(
+          map(
+            (result: any): SystemActionEffectResult => ({
+              status: result?.success ? "success" : "error",
+              symbol: result?.symbol || (result?.success ? "📋" : "❌"),
+              message: result?.message,
+              triggerElement: element,
+            }),
+          ),
+          catchError((err) => {
+            console.error("Copy seed error:", err);
+            return of<SystemActionEffectResult>({
+              status: "error",
+              symbol: "❌",
+              message: err.message || "Copy failed",
+              triggerElement: element,
+            });
+          }),
+        );
+      }),
+    );
+  }
+
+  /** Effect for creating a blank system. */
+  public createBlankSystemEffect$ = this.createStandardEffect(
+    "system:create_blank",
+    "📄",
   );
 }

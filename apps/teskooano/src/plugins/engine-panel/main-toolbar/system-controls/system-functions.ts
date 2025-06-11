@@ -2,16 +2,12 @@ import { OSVector3 } from "@teskooano/core-math";
 import {
   actions,
   celestialFactory,
-  getCurrentSeed,
   getCelestialObjects,
+  getCurrentSeed,
   updateSeed,
 } from "@teskooano/core-state";
 import { simulationManager } from "@teskooano/app-simulation";
-import {
-  CelestialType,
-  CustomEvents,
-  type CelestialObject,
-} from "@teskooano/data-types";
+import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
 import type {
   FunctionConfig,
@@ -19,17 +15,18 @@ import type {
 } from "@teskooano/ui-plugin";
 import type { DockviewApi } from "dockview-core";
 import {
-  Observable,
   catchError,
   defer,
   finalize,
   fromEvent,
   lastValueFrom,
+  Observable,
   of,
   switchMap,
   take,
+  type Observable as ObservableType,
 } from "rxjs";
-import { generateAndLoadSystem } from "./system-generator.js";
+import { SystemGenerator } from "./system-generator";
 
 interface SystemImportData {
   seed: string;
@@ -42,145 +39,134 @@ interface ProcessResult {
   symbol: string;
 }
 
-/**
- * Processes an imported system file using FileReader, returning an Observable result.
- * @param file The File object to process.
- * @param dockviewApi Optional Dockview API instance.
- * @returns Observable<ProcessResult>
- */
-function processImportedFile$(
-  file: File,
-  _: DockviewApi | null,
-): Observable<ProcessResult> {
-  return new Observable<ProcessResult>((observer) => {
-    const reader = new FileReader();
+export class SystemFunctionsManager {
+  private context: PluginExecutionContext;
+  private generator: SystemGenerator;
 
-    const inputElement: HTMLInputElement | null = document.querySelector(
-      'input[type="file"][data-importer="system"]',
-    );
+  constructor(context: PluginExecutionContext, generator: SystemGenerator) {
+    this.context = context;
+    this.generator = generator;
+  }
 
-    reader.onload = (event) => {
-      try {
-        const fileContent = event.target?.result as string;
-        if (!fileContent) throw new Error("File content is empty.");
-        const parsedData = JSON.parse(fileContent) as SystemImportData;
-        if (
-          !parsedData ||
-          typeof parsedData !== "object" ||
-          typeof parsedData.seed !== "string" ||
-          !Array.isArray(parsedData.objects)
-        ) {
-          throw new Error("Invalid file format.");
-        }
+  private processImportedFile$(
+    file: File,
+    _: DockviewApi | null,
+  ): ObservableType<ProcessResult> {
+    return new Observable<ProcessResult>((observer) => {
+      const reader = new FileReader();
 
-        const hydratedObjects = parsedData.objects.map((obj) => {
-          if (obj.physicsStateReal) {
-            if (
-              obj.physicsStateReal.position_m &&
-              !(obj.physicsStateReal.position_m instanceof OSVector3)
-            ) {
-              const pos = obj.physicsStateReal.position_m as any;
-              obj.physicsStateReal.position_m = new OSVector3(
-                pos.x,
-                pos.y,
-                pos.z,
-              );
-            }
-            if (
-              obj.physicsStateReal.velocity_mps &&
-              !(obj.physicsStateReal.velocity_mps instanceof OSVector3)
-            ) {
-              const vel = obj.physicsStateReal.velocity_mps as any;
-              obj.physicsStateReal.velocity_mps = new OSVector3(
-                vel.x,
-                vel.y,
-                vel.z,
-              );
-            }
-          }
-          return obj;
-        });
-
-        celestialFactory.clearState({
-          resetCamera: false,
-          resetTime: true,
-          resetSelection: true,
-        });
-        actions.resetTime();
-
-        const star = hydratedObjects.find(
-          (obj) => obj.type === CelestialType.STAR && obj.parentId == null,
-        );
-        if (!star) throw new Error("Could not find a primary star.");
-
-        celestialFactory.createSolarSystem(star);
-        hydratedObjects.forEach((obj) => {
-          if (obj.id !== star.id) {
-            celestialFactory.addCelestial(obj);
-          }
-        });
-
-        updateSeed(parsedData.seed);
-
-        simulationManager.resetSystem(true);
-
-        observer.next({
-          success: true,
-          symbol: "✅",
-          message: "Import successful.",
-        });
-        observer.complete();
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unknown import error";
-
-        observer.next({ success: false, symbol: "❌", message });
-        observer.complete();
-      }
-    };
-
-    reader.onerror = (error) => {
-      console.error("[SystemFunctions] Error reading file:", error);
-      observer.next({
-        success: false,
-        symbol: "❌",
-        message: "Error reading file.",
-      });
-      observer.complete();
-    };
-
-    reader.readAsText(file);
-
-    return () => {
-      if (inputElement?.parentNode) {
-        inputElement.parentNode.removeChild(inputElement);
-      }
-    };
-  });
-}
-
-export const generateRandomSystemFunction: FunctionConfig = {
-  id: "system:generate_random",
-  dependencies: {
-    dockView: {
-      api: true,
-    },
-  },
-  execute: async (
-    context: PluginExecutionContext,
-    options?: { seed?: string },
-  ) => {
-    const { dockviewApi } = context;
-    if (!dockviewApi) {
-      console.error(
-        "[SystemFunctions] Cannot generate random: Dockview API not available.",
+      const inputElement: HTMLInputElement | null = document.querySelector(
+        'input[type="file"][data-importer="system"]',
       );
-      return;
-    }
+
+      reader.onload = (event) => {
+        try {
+          const fileContent = event.target?.result as string;
+          if (!fileContent) throw new Error("File content is empty.");
+          const parsedData = JSON.parse(fileContent) as SystemImportData;
+          if (
+            !parsedData ||
+            typeof parsedData !== "object" ||
+            typeof parsedData.seed !== "string" ||
+            !Array.isArray(parsedData.objects)
+          ) {
+            throw new Error("Invalid file format.");
+          }
+
+          const hydratedObjects = parsedData.objects.map((obj) => {
+            if (obj.physicsStateReal) {
+              if (
+                obj.physicsStateReal.position_m &&
+                !(obj.physicsStateReal.position_m instanceof OSVector3)
+              ) {
+                const pos = obj.physicsStateReal.position_m as any;
+                obj.physicsStateReal.position_m = new OSVector3(
+                  pos.x,
+                  pos.y,
+                  pos.z,
+                );
+              }
+              if (
+                obj.physicsStateReal.velocity_mps &&
+                !(obj.physicsStateReal.velocity_mps instanceof OSVector3)
+              ) {
+                const vel = obj.physicsStateReal.velocity_mps as any;
+                obj.physicsStateReal.velocity_mps = new OSVector3(
+                  vel.x,
+                  vel.y,
+                  vel.z,
+                );
+              }
+            }
+            return obj;
+          });
+
+          celestialFactory.clearState({
+            resetCamera: false,
+            resetTime: true,
+            resetSelection: true,
+          });
+          actions.resetTime();
+
+          const star = hydratedObjects.find(
+            (obj) => obj.type === CelestialType.STAR && obj.parentId == null,
+          );
+          if (!star) throw new Error("Could not find a primary star.");
+
+          celestialFactory.createSolarSystem(star);
+          hydratedObjects.forEach((obj) => {
+            if (obj.id !== star.id) {
+              celestialFactory.addCelestial(obj);
+            }
+          });
+
+          updateSeed(parsedData.seed);
+
+          simulationManager.resetSystem(true);
+
+          observer.next({
+            success: true,
+            symbol: "✅",
+            message: "Import successful.",
+          });
+          observer.complete();
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Unknown import error";
+
+          observer.next({ success: false, symbol: "❌", message });
+          observer.complete();
+        }
+      };
+
+      reader.onerror = (error) => {
+        console.error("[SystemFunctions] Error reading file:", error);
+        observer.next({
+          success: false,
+          symbol: "❌",
+          message: "Error reading file.",
+        });
+        observer.complete();
+      };
+
+      reader.readAsText(file);
+
+      return () => {
+        if (inputElement?.parentNode) {
+          inputElement.parentNode.removeChild(inputElement);
+        }
+      };
+    });
+  }
+
+  public async generateRandomSystem(
+    _: PluginExecutionContext,
+    options?: { seed?: string },
+  ) {
     try {
       const seed = options?.seed ?? Math.random().toString(36).substring(2, 10);
 
-      await generateAndLoadSystem(seed, dockviewApi);
+      await this.generator.generateAndLoadSystem(seed);
       return {
         success: true,
         symbol: "✨",
@@ -196,13 +182,9 @@ export const generateRandomSystemFunction: FunctionConfig = {
         message: "Failed to generate random system.",
       };
     }
-  },
-};
+  }
 
-export const clearSystemFunction: FunctionConfig = {
-  id: "system:clear",
-  dependencies: {},
-  execute: async () => {
+  public async clearSystem() {
     try {
       celestialFactory.clearState({
         resetCamera: false,
@@ -222,13 +204,9 @@ export const clearSystemFunction: FunctionConfig = {
         message: "Failed to clear system.",
       };
     }
-  },
-};
+  }
 
-export const exportSystemFunction: FunctionConfig = {
-  id: "system:export",
-  dependencies: {},
-  execute: async () => {
+  public async exportSystem() {
     try {
       const objects = getCelestialObjects();
       const seed = getCurrentSeed();
@@ -262,18 +240,10 @@ export const exportSystemFunction: FunctionConfig = {
         error instanceof Error ? error.message : "Unknown export error";
       return { success: false, symbol: "❌", message };
     }
-  },
-};
+  }
 
-export const triggerImportDialogFunction: FunctionConfig = {
-  id: "system:trigger_import_dialog",
-  dependencies: {
-    dockView: {
-      api: true,
-    },
-  },
-  execute: async (context: PluginExecutionContext) => {
-    const { dockviewApi } = context;
+  public async triggerImportDialog() {
+    const { dockviewApi } = this.context;
     let inputElement: HTMLInputElement | null = null;
 
     const import$ = defer(() => {
@@ -296,7 +266,7 @@ export const triggerImportDialogFunction: FunctionConfig = {
       switchMap((event) => {
         const file = (event.target as HTMLInputElement)?.files?.[0];
         if (file) {
-          return processImportedFile$(file, dockviewApi);
+          return this.processImportedFile$(file, dockviewApi);
         } else {
           return of<ProcessResult>({
             success: false,
@@ -322,17 +292,9 @@ export const triggerImportDialogFunction: FunctionConfig = {
     );
 
     return lastValueFrom(import$);
-  },
-};
+  }
 
-export const createBlankSystemFunction: FunctionConfig = {
-  id: "system:create_blank",
-  dependencies: {
-    dockView: {
-      api: true,
-    },
-  },
-  execute: async (_: PluginExecutionContext) => {
+  public async createBlankSystem() {
     try {
       celestialFactory.clearState({
         resetCamera: false,
@@ -355,13 +317,9 @@ export const createBlankSystemFunction: FunctionConfig = {
         message: "Failed to create blank system.",
       };
     }
-  },
-};
+  }
 
-export const copySeedFunction: FunctionConfig = {
-  id: "system:copy_seed",
-  dependencies: {},
-  execute: async (_: PluginExecutionContext, seedToCopy?: string) => {
+  public async copySeed(_: PluginExecutionContext, seedToCopy?: string) {
     const seed = seedToCopy ?? getCurrentSeed() ?? "";
     if (!seed) {
       return { success: false, symbol: "🤷", message: "No seed to copy." };
@@ -373,5 +331,40 @@ export const copySeedFunction: FunctionConfig = {
       console.error("[SystemFunctions] Failed to copy seed: ", err);
       return { success: false, symbol: "❌", message: "Failed to copy seed." };
     }
-  },
-};
+  }
+
+  public getFunctions(): FunctionConfig[] {
+    return [
+      {
+        id: "system:generate_random",
+        dependencies: { dockView: { api: true } },
+        execute: this.generateRandomSystem.bind(this),
+      },
+      {
+        id: "system:clear",
+        dependencies: {},
+        execute: this.clearSystem.bind(this),
+      },
+      {
+        id: "system:export",
+        dependencies: {},
+        execute: this.exportSystem.bind(this),
+      },
+      {
+        id: "system:trigger_import_dialog",
+        dependencies: { dockView: { api: true } },
+        execute: this.triggerImportDialog.bind(this),
+      },
+      {
+        id: "system:create_blank",
+        dependencies: { dockView: { api: true } },
+        execute: this.createBlankSystem.bind(this),
+      },
+      {
+        id: "system:copy_seed",
+        dependencies: {},
+        execute: this.copySeed.bind(this),
+      },
+    ];
+  }
+}

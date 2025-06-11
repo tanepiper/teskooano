@@ -6,33 +6,11 @@ import {
   updateSeed,
 } from "@teskooano/core-state";
 import type { CelestialObject } from "@teskooano/data-types";
-import {
-  BehaviorSubject,
-  Subscription,
-  combineLatest,
-  fromEvent,
-  merge,
-  Observable,
-} from "rxjs";
+import { BehaviorSubject, combineLatest, fromEvent, Subscription } from "rxjs";
 import { debounceTime, map, startWith, tap } from "rxjs/operators";
+import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import { SystemControlsTemplate } from "./SystemControls.template.js";
-import * as SystemControlsUI from "./system-controls.ui.js";
-import {
-  createButtonClickStream$,
-  createRandomSeedStream$,
-  createSeedSubmitStream$,
-} from "./system-controls.streams.js";
-import {
-  generateSystemEffect$,
-  clearSystemEffect$,
-  exportSystemEffect$,
-  importSystemEffect$,
-  copySeedEffect$,
-  createBlankSystemEffect$,
-  SystemActionEffectResult,
-  CelestialObjectMap as EffectCelestialObjectMap,
-  Seed as EffectSeed,
-} from "./system-controls.effects.js";
+import { SystemControlsController } from "./system-controls.controller.js";
 
 // Define core types based on usage
 type CoreCelestialObjectMap = Record<string, CelestialObject>;
@@ -51,10 +29,7 @@ type CoreCelestialObjectMap = Record<string, CelestialObject>;
  *                        (Note: This is currently handled internally via `actions.clearState`).
  * @fires resetSimulationTime - Dispatched after importing a system to reset the simulation loop timer.
  */
-class SystemControls
-  extends HTMLElement
-  implements SystemControlsUI.SystemControlsUIContract
-{
+class SystemControls extends HTMLElement {
   /** @internal The main container element for the controls. */
   private container: HTMLElement | null = null;
   /** @internal The element shown when no system is loaded. */
@@ -77,12 +52,13 @@ class SystemControls
   public isGenerating$$ = new BehaviorSubject<boolean>(false);
   private mobile$$ = new BehaviorSubject<boolean>(false);
   private subscriptions = new Subscription();
+  private controller: SystemControlsController | undefined;
 
   public isMobile(): boolean {
     return this.mobile$$.value;
   }
   public isGenerating(): boolean {
-    return this.isGenerating$$.value;
+    return this.controller?.isGenerating$$.value ?? false;
   }
 
   public get _loadingOverlay(): HTMLElement | null {
@@ -145,8 +121,23 @@ class SystemControls
       this.shadowRoot?.querySelector(".loading-overlay") || null;
 
     this.mobile$$.next(this.hasAttribute("mobile"));
+  }
 
-    this.setupRxJSStreams();
+  /**
+   * Sets the plugin execution context and initializes the controller.
+   * This method should be called by the code that creates this element.
+   * @param {PluginExecutionContext} context - The plugin execution context.
+   */
+  public setContext(context: PluginExecutionContext) {
+    if (this.controller) {
+      console.warn(
+        "[SystemControls] Context already set. Re-initialization is not supported.",
+      );
+      return;
+    }
+    this.controller = new SystemControlsController(this, context);
+    this.controller.init();
+    this.setupUIStreams();
   }
 
   /**
@@ -155,6 +146,7 @@ class SystemControls
    */
   disconnectedCallback() {
     this.subscriptions.unsubscribe();
+    this.controller?.dispose();
   }
 
   /**
@@ -175,173 +167,13 @@ class SystemControls
   }
 
   /**
-   * Sets up all the RxJS streams for event handling and state management.
-   * @private
-   */
-  private setupRxJSStreams(): void {
-    if (!this.shadowRoot || !this.seedForm || !this.seedInput) return;
-
-    const generateSubmitButton = this.seedForm.querySelector<HTMLElement>(
-      'teskooano-button[type="submit"]',
-    );
-    const randomButton = this.shadowRoot.querySelector<HTMLElement>(
-      'teskooano-button[data-action="random"]',
-    );
-    const clearButton = this.shadowRoot.querySelector<HTMLElement>(
-      'teskooano-button[data-action="clear"]',
-    );
-    const exportButton = this.shadowRoot.querySelector<HTMLElement>(
-      'teskooano-button[data-action="export"]',
-    );
-    const importButton = this.shadowRoot.querySelector<HTMLElement>(
-      'teskooano-button[data-action="import"]',
-    );
-    const copySeedButton = this.shadowRoot.querySelector<HTMLElement>(
-      'teskooano-button[data-action="copy-seed"]',
-    );
-    const createBlankButton = this.shadowRoot.querySelector<HTMLElement>(
-      'teskooano-button[data-action="create-blank"]',
-    );
-
-    if (
-      !generateSubmitButton ||
-      !randomButton ||
-      !clearButton ||
-      !exportButton ||
-      !importButton ||
-      !copySeedButton ||
-      !createBlankButton
-    ) {
-      console.error(
-        "[SystemControls] One or more required action buttons not found.",
-      );
-      return;
-    }
-
-    const seedSubmitTr$ = createSeedSubmitStream$(
-      generateSubmitButton,
-      this.seedInput,
-    );
-    const randomSubmitTr$ = createRandomSeedStream$(randomButton);
-    const clearClick$ = createButtonClickStream$(clearButton);
-    const exportClick$ = createButtonClickStream$(exportButton);
-    const importClick$ = createButtonClickStream$(importButton);
-    const copySeedClick$ = createButtonClickStream$(copySeedButton);
-    const createBlankClick$ = createButtonClickStream$(createBlankButton);
-
-    const generateSystemTrigger$: Observable<{
-      seed: string;
-      element: HTMLElement;
-    }> = merge(seedSubmitTr$, randomSubmitTr$);
-
-    const handleEffectResult = (
-      effect$: Observable<SystemActionEffectResult>,
-    ) => {
-      return effect$.pipe(
-        tap((result) => {
-          this.showFeedback(
-            result.triggerElement,
-            result.symbol,
-            result.status === "error",
-            result.message === "File selection cancelled." ? 1000 : 1500,
-          );
-          if (result.triggerElement !== copySeedButton) {
-            this.isGenerating$$.next(false);
-          }
-        }),
-      );
-    };
-
-    const typedCelestialObjects$ =
-      celestialObjects$ as Observable<EffectCelestialObjectMap>;
-    const typedCurrentSeed$ = currentSeed$ as Observable<EffectSeed>;
-
-    const generateSystem$ = handleEffectResult(
-      generateSystemEffect$(
-        generateSystemTrigger$,
-        this.isGenerating$$,
-        this.seedInput,
-      ),
-    );
-    const clearSystem$ = handleEffectResult(
-      clearSystemEffect$(clearClick$, this.isGenerating$$),
-    );
-    const exportSystem$ = handleEffectResult(
-      exportSystemEffect$(exportClick$, this.isGenerating$$),
-    );
-    const importSystem$ = handleEffectResult(
-      importSystemEffect$(importClick$, this.isGenerating$$),
-    );
-    const copySeed$ = handleEffectResult(
-      copySeedEffect$(copySeedClick$, typedCurrentSeed$),
-    );
-    const createBlankSystem$ = handleEffectResult(
-      createBlankSystemEffect$(createBlankClick$, this.isGenerating$$),
-    );
-
-    this.subscriptions.add(generateSystem$.subscribe());
-    this.subscriptions.add(clearSystem$.subscribe());
-    this.subscriptions.add(exportSystem$.subscribe());
-    this.subscriptions.add(importSystem$.subscribe());
-    this.subscriptions.add(copySeed$.subscribe());
-    this.subscriptions.add(createBlankSystem$.subscribe());
-
-    const displayState$ = combineLatest([
-      celestialObjects$.pipe(
-        startWith(getCelestialObjects() as CoreCelestialObjectMap),
-      ),
-      currentSeed$.pipe(startWith(getCurrentSeed())),
-      this.isGenerating$$,
-      this.mobile$$,
-    ]).pipe(debounceTime(0));
-
-    this.subscriptions.add(
-      displayState$.subscribe(([objects, seed, isGenerating, _]) => {
-        if (this.loadingOverlay) {
-          this.loadingOverlay.style.display = isGenerating ? "flex" : "none";
-        }
-        SystemControlsUI.updateDisplayUI(
-          this,
-          objects as CoreCelestialObjectMap,
-          seed,
-        );
-        SystemControlsUI.updateButtonSizesUI(this);
-
-        if (this.seedInput && !this.seedInput.matches(":focus")) {
-          this.seedInput.value = seed === null ? "" : seed;
-        }
-      }),
-    );
-
-    const seedInputEvent$ = fromEvent(this.seedInput, "input").pipe(
-      debounceTime(300),
-      map((event) => {
-        const target = event.target as HTMLElement;
-        // Attempt to get value from shadow DOM input, otherwise from target itself
-        const shadowInput =
-          target.shadowRoot?.querySelector<HTMLInputElement>("input#seed");
-        if (shadowInput) {
-          return shadowInput.value;
-        }
-        if (target instanceof HTMLInputElement) {
-          return target.value;
-        }
-        return ""; // Fallback if not an input element somehow
-      }),
-      tap((seed) => updateSeed(seed)),
-    );
-    this.subscriptions.add(seedInputEvent$.subscribe());
-  }
-
-  /**
    * Shows temporary feedback (symbol) on a button.
    * @param element The button element to show feedback on.
    * @param symbol The symbol (emoji/char) to display.
    * @param isError If true, adds an error class.
    * @param duration Duration in ms to show the feedback.
-   * @private
    */
-  private showFeedback(
+  public showFeedback(
     element: HTMLElement | null,
     symbol: string,
     isError: boolean = false,
@@ -376,6 +208,148 @@ class SystemControls
     }, duration);
 
     element.dataset.feedbackTimeoutId = timeoutId.toString();
+  }
+
+  /**
+   * Sets up the RxJS streams for updating the UI display and handling direct
+   * UI-to-state interactions like the seed input.
+   * @private
+   */
+  private setupUIStreams(): void {
+    if (
+      !this.shadowRoot ||
+      !this.seedForm ||
+      !this.seedInput ||
+      !this.controller
+    ) {
+      return;
+    }
+
+    const displayState$ = combineLatest([
+      celestialObjects$.pipe(
+        startWith(getCelestialObjects() as CoreCelestialObjectMap),
+      ),
+      currentSeed$.pipe(startWith(getCurrentSeed())),
+      this.controller.isGenerating$$,
+      this.mobile$$,
+    ]).pipe(debounceTime(0));
+
+    this.subscriptions.add(
+      displayState$.subscribe(([objects, seed, isGenerating, _]) => {
+        this._updateDisplay(
+          objects as CoreCelestialObjectMap,
+          seed,
+          isGenerating,
+        );
+
+        if (this.seedInput && !this.seedInput.matches(":focus")) {
+          this.seedInput.value = seed === null ? "" : seed;
+        }
+      }),
+    );
+
+    const seedInputEvent$ = fromEvent(this.seedInput, "input").pipe(
+      debounceTime(300),
+      map((event) => {
+        const target = event.target as HTMLElement;
+        // Attempt to get value from shadow DOM input, otherwise from target itself
+        const shadowInput =
+          target.shadowRoot?.querySelector<HTMLInputElement>("input#seed");
+        if (shadowInput) {
+          return shadowInput.value;
+        }
+        if (target instanceof HTMLInputElement) {
+          return target.value;
+        }
+        return ""; // Fallback if not an input element somehow
+      }),
+      tap((seed) => updateSeed(seed)),
+    );
+    this.subscriptions.add(seedInputEvent$.subscribe());
+
+    this.subscriptions.add(
+      this.mobile$$.subscribe((isMobile) => {
+        this._updateButtonStylesForMobileState(isMobile);
+      }),
+    );
+  }
+
+  /**
+   * Updates the component's display based on the current system state.
+   * Toggles between empty and loaded states, and updates displayed info.
+   * @param objects The current map of celestial objects.
+   * @param seed The current system seed.
+   * @param isGenerating Whether a system is currently being generated.
+   * @private
+   */
+  private _updateDisplay(
+    objects: Record<string, CelestialObject>,
+    seed: string,
+    isGenerating: boolean,
+  ): void {
+    const objectCount = Object.keys(objects).length;
+    const systemLoaded = objectCount > 0;
+
+    if (this.emptyState && this.loadedState) {
+      this.emptyState.style.display = systemLoaded ? "none" : "";
+      this.loadedState.style.display = systemLoaded ? "" : "none";
+    }
+
+    if (systemLoaded) {
+      const count = objectCount;
+      const currentSystemSeed = seed || "---------";
+      if (this.systemSeedEl) {
+        this.systemSeedEl.textContent = currentSystemSeed;
+        this.systemSeedEl.title = `Seed: ${currentSystemSeed}`;
+      }
+      if (this.celestialCountEl) {
+        this.celestialCountEl.textContent = `${count} Celestial${
+          count !== 1 ? "s" : ""
+        }`;
+      }
+    }
+
+    if (this.loadingOverlay) {
+      this.loadingOverlay.style.display = isGenerating ? "flex" : "none";
+    }
+
+    this.buttons?.forEach((button) => {
+      (button as HTMLButtonElement).disabled = isGenerating;
+    });
+  }
+
+  /**
+   * Updates button sizes and styles based on the mobile state.
+   * @param isMobile - True if the component is in mobile mode.
+   * @private
+   */
+  private _updateButtonStylesForMobileState(isMobile: boolean): void {
+    if (!this.buttons || !this.seedForm) return;
+
+    this.buttons.forEach((button) => {
+      if (isMobile) {
+        button.setAttribute("size", "sm");
+      } else {
+        if (button.getAttribute("size") === "sm") {
+          button.removeAttribute("size");
+        }
+      }
+    });
+
+    // Special handling for the submit button text
+    const submitButton = this.seedForm.querySelector<HTMLElement>(
+      'teskooano-button[type="submit"]',
+    );
+    if (!submitButton) return;
+
+    const submitText = submitButton.querySelector('span:not([slot="icon"])');
+    if (submitText) {
+      (submitText as HTMLElement).style.display = isMobile ? "none" : "";
+    }
+    const submitIcon = submitButton.querySelector('span[slot="icon"]');
+    if (submitIcon) {
+      (submitIcon as HTMLElement).style.marginRight = isMobile ? "0" : "";
+    }
   }
 }
 

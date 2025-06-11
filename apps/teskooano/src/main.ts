@@ -134,6 +134,8 @@ async function initializeApp() {
     console.error("[App] Failed to initialize tour controller:", error);
   }
 
+  await pluginManager.execute("system-controls:initialize");
+
   const plugins = pluginManager.getPlugins();
   plugins.forEach((plugin: TeskooanoPlugin) => {
     plugin.panels?.forEach((panelConfig: PanelConfig) => {

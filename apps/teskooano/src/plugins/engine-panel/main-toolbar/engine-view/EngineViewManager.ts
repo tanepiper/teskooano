@@ -5,21 +5,14 @@ import type {
 import type { AddPanelOptions } from "dockview-core";
 import { EngineToolbarManager } from "../../../../core/interface/engine-toolbar";
 
-let enginePanelCounter = 0;
+export class EngineViewManager {
+  private _enginePanelCounter = 0;
 
-export const addCompositeEnginePanelFunction: FunctionConfig = {
-  id: "view:addCompositeEnginePanel",
-  dependencies: {
-    dockView: {
-      api: true,
-      controller: true,
-    },
-  },
-  execute: async (context: PluginExecutionContext) => {
+  public async createPanel(context: PluginExecutionContext) {
     const { dockviewApi, pluginManager } = context;
     if (!dockviewApi) {
       console.error(
-        "[EngineViewFunctions] Cannot add panel: Dockview API not available.",
+        "[EngineViewManager] Cannot add panel: Dockview API not available.",
       );
       return;
     }
@@ -31,13 +24,13 @@ export const addCompositeEnginePanelFunction: FunctionConfig = {
 
     if (!engineToolbarManager) {
       console.error(
-        "[EngineViewFunctions] Cannot add panel: EngineToolbarManager could not be initialized.",
+        "[EngineViewManager] Cannot add panel: EngineToolbarManager could not be initialized.",
       );
       return;
     }
 
-    enginePanelCounter++;
-    const counter = enginePanelCounter;
+    this._enginePanelCounter++;
+    const counter = this._enginePanelCounter;
     const compositeViewId = `composite_engine_view_${counter}`;
     const compositeViewTitle = `Teskooano ${counter}`;
 
@@ -59,11 +52,26 @@ export const addCompositeEnginePanelFunction: FunctionConfig = {
       return { success: true, panelId: compositeViewId };
     } catch (error) {
       console.error(
-        `[EngineViewFunctions] Failed to add engine panel for counter ${counter}:`,
+        `[EngineViewManager] Failed to add engine panel for counter ${counter}:`,
         error,
       );
-      enginePanelCounter--;
+      this._enginePanelCounter--;
       return { success: false, panelId: null };
     }
+  }
+}
+
+const engineViewManager = new EngineViewManager();
+
+export const addCompositeEnginePanelFunction: FunctionConfig = {
+  id: "view:addCompositeEnginePanel",
+  dependencies: {
+    dockView: {
+      api: true,
+      controller: true,
+    },
+  },
+  execute: (context: PluginExecutionContext) => {
+    return engineViewManager.createPanel(context);
   },
 };
