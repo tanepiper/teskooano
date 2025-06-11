@@ -13,8 +13,19 @@ import {
   createRandomSeedStream$,
   createSeedSubmitStream$,
 } from "./system-controls.streams";
-import type { SystemControls } from "./SystemControls";
+import type { SystemControls } from "../view/system-controls.component";
 
+/**
+ * The controller for the SystemControls component.
+ *
+ * This class embodies the "Controller" in an MVC-like pattern for the
+ * `<teskooano-system-controls>` custom element. It is responsible for all
+ * business logic, including:
+ * - Setting up event streams from the view's user interactions.
+ * - Managing the RxJS-based effect pipelines that call plugin functions.
+ * - Handling the component's internal state (e.g., loading indicators).
+ * - Tearing down all subscriptions when the component is destroyed.
+ */
 export class SystemControlsController {
   private view: SystemControls;
   private subscriptions = new Subscription();
@@ -22,11 +33,21 @@ export class SystemControlsController {
   private effects: SystemControlsEffects | undefined;
   private context: PluginExecutionContext;
 
+  /**
+   * Constructs the controller.
+   * @param {SystemControls} view - The view instance this controller will manage.
+   * @param {PluginExecutionContext} context - The application context for plugin interaction.
+   */
   constructor(view: SystemControls, context: PluginExecutionContext) {
     this.view = view;
     this.context = context;
   }
 
+  /**
+   * Initializes the controller. This method sets up all the necessary
+   * event streams and effect pipelines. It should be called once the
+   * view has been connected to the DOM.
+   */
   public init(): void {
     const { shadowRoot, seedForm, seedInput } = this.view;
 
@@ -144,6 +165,11 @@ export class SystemControlsController {
     this.subscriptions.add(createBlankSystem$.subscribe());
   }
 
+  /**
+   * Disposes of the controller, unsubscribing from all active RxJS streams
+   * to prevent memory leaks. This should be called when the associated
+   * view is disconnected from the DOM.
+   */
   public dispose(): void {
     this.subscriptions.unsubscribe();
   }

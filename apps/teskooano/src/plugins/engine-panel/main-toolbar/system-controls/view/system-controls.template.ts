@@ -6,8 +6,17 @@ import CopyRegular from "@fluentui/svg-icons/icons/copy_20_regular.svg?raw";
 import ArrowUploadRegular from "@fluentui/svg-icons/icons/arrow_upload_20_regular.svg?raw";
 import DeleteRegular from "@fluentui/svg-icons/icons/delete_20_regular.svg?raw";
 
-const template = document.createElement("template");
-template.innerHTML = `
+/**
+ * @file Defines the HTML template and styles for the SystemControls component.
+ *
+ * This file exports a single `<template>` element containing the entire
+ * Shadow DOM structure for the `teskooano-system-controls` custom element.
+ * This includes all CSS styles and the HTML layout for its different states
+ * (empty, loaded, and loading overlay).
+ */
+
+const systemControlsTemplate = document.createElement("template");
+systemControlsTemplate.innerHTML = `
   <style>
     :host {
       display: inline-flex;
@@ -346,4 +355,4 @@ template.innerHTML = `
   </div>
 `;
 
-export { template as SystemControlsTemplate };
+export { systemControlsTemplate as SystemControlsTemplate };

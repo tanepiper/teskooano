@@ -26,32 +26,52 @@ import {
   take,
   type Observable as ObservableType,
 } from "rxjs";
-import { SystemGenerator } from "./system-generator";
+import { SystemGenerator } from "./system-generator.service";
 
+/** Represents the data structure for an imported system file. */
 interface SystemImportData {
   seed: string;
   objects: CelestialObject[];
 }
 
+/** Represents the standardized result of processing an imported file. */
 interface ProcessResult {
   success: boolean;
   message?: string;
   symbol: string;
 }
 
+/**
+ * Manages the registration and execution of all system-level functions.
+ * This class contains the core business logic for actions like clearing,
+ * exporting, importing, and generating systems. It is instantiated by the
+ * plugin's initializer and provides its methods as executable functions
+ * to the `PluginManager`.
+ */
 export class SystemFunctionsManager {
   private context: PluginExecutionContext;
   private generator: SystemGenerator;
 
+  /**
+   * Constructs the manager for system functions.
+   * @param {PluginExecutionContext} context - The shared application context.
+   * @param {SystemGenerator} generator - The service responsible for system generation.
+   */
   constructor(context: PluginExecutionContext, generator: SystemGenerator) {
     this.context = context;
     this.generator = generator;
   }
 
-  private processImportedFile$(
-    file: File,
-    _: DockviewApi | null,
-  ): ObservableType<ProcessResult> {
+  /**
+   * Processes a file imported by the user. This involves reading the file,
+   * parsing the JSON, validating the structure, and rehydrating the celestial
+   * objects (including vector instances) before updating the application state.
+   *
+   * @param {File} file - The file selected by the user.
+   * @returns {ObservableType<ProcessResult>} An observable that emits the result of the process.
+   * @private
+   */
+  private processImportedFile$(file: File): ObservableType<ProcessResult> {
     return new Observable<ProcessResult>((observer) => {
       const reader = new FileReader();
 
@@ -73,6 +93,7 @@ export class SystemFunctionsManager {
             throw new Error("Invalid file format.");
           }
 
+          // Re-hydrate plain objects into class instances (e.g., OSVector3)
           const hydratedObjects = parsedData.objects.map((obj) => {
             if (obj.physicsStateReal) {
               if (
@@ -101,6 +122,7 @@ export class SystemFunctionsManager {
             return obj;
           });
 
+          // Clear existing state before loading new data
           celestialFactory.clearState({
             resetCamera: false,
             resetTime: true,
@@ -113,6 +135,7 @@ export class SystemFunctionsManager {
           );
           if (!star) throw new Error("Could not find a primary star.");
 
+          // Load the new system into the state
           celestialFactory.createSolarSystem(star);
           hydratedObjects.forEach((obj) => {
             if (obj.id !== star.id) {
@@ -121,7 +144,6 @@ export class SystemFunctionsManager {
           });
 
           updateSeed(parsedData.seed);
-
           simulationManager.resetSystem(true);
 
           observer.next({
@@ -151,6 +173,7 @@ export class SystemFunctionsManager {
 
       reader.readAsText(file);
 
+      // Cleanup the temporary input element
       return () => {
         if (inputElement?.parentNode) {
           inputElement.parentNode.removeChild(inputElement);
@@ -159,6 +182,14 @@ export class SystemFunctionsManager {
     });
   }
 
+  /**
+   * Plugin function to generate a new system. If a seed is provided, it's used;
+   * otherwise, a random seed is generated.
+   *
+   * @param {PluginExecutionContext} _ - The execution context (unused).
+   * @param {{ seed?: string }} [options] - Optional parameters.
+   * @returns {Promise<ProcessResult>} The result of the generation process.
+   */
   public async generateRandomSystem(
     _: PluginExecutionContext,
     options?: { seed?: string },
@@ -184,6 +215,10 @@ export class SystemFunctionsManager {
     }
   }
 
+  /**
+   * Plugin function to clear all celestial objects from the state and reset the simulation.
+   * @returns {Promise<ProcessResult>} The result of the clear operation.
+   */
   public async clearSystem() {
     try {
       celestialFactory.clearState({
@@ -206,6 +241,10 @@ export class SystemFunctionsManager {
     }
   }
 
+  /**
+   * Plugin function to export the current system state (objects and seed) to a JSON file.
+   * @returns {Promise<ProcessResult>} The result of the export operation.
+   */
   public async exportSystem() {
     try {
       const objects = getCelestialObjects();
@@ -242,15 +281,21 @@ export class SystemFunctionsManager {
     }
   }
 
+  /**
+   * Plugin function that triggers a native file input dialog to allow the user
+   * to select a system JSON file for import.
+   * @returns {Promise<ProcessResult>} The result of the entire import flow.
+   */
   public async triggerImportDialog() {
-    const { dockviewApi } = this.context;
     let inputElement: HTMLInputElement | null = null;
 
     const import$ = defer(() => {
+      // Clean up any stray input elements first
       document
         .querySelectorAll('input[type="file"][data-importer="system"]')
         .forEach((el) => el.remove());
 
+      // Create a new, temporary input element
       inputElement = document.createElement("input");
       inputElement.type = "file";
       inputElement.accept = ".json";
@@ -260,14 +305,16 @@ export class SystemFunctionsManager {
 
       inputElement.click();
 
+      // Listen for the 'change' event
       return fromEvent(inputElement, "change");
     }).pipe(
       take(1),
       switchMap((event) => {
         const file = (event.target as HTMLInputElement)?.files?.[0];
         if (file) {
-          return this.processImportedFile$(file, dockviewApi);
+          return this.processImportedFile$(file);
         } else {
+          // User cancelled the file dialog
           return of<ProcessResult>({
             success: false,
             symbol: "🤷",
@@ -284,6 +331,7 @@ export class SystemFunctionsManager {
         });
       }),
       finalize(() => {
+        // Ensure the temporary input element is always removed
         if (inputElement?.parentNode) {
           inputElement.parentNode.removeChild(inputElement);
           inputElement = null;
@@ -294,6 +342,10 @@ export class SystemFunctionsManager {
     return lastValueFrom(import$);
   }
 
+  /**
+   * Plugin function to create a new, blank system containing only a single star.
+   * @returns {Promise<ProcessResult>} The result of the creation operation.
+   */
   public async createBlankSystem() {
     try {
       celestialFactory.clearState({
@@ -319,6 +371,14 @@ export class SystemFunctionsManager {
     }
   }
 
+  /**
+   * Plugin function to copy a given seed string to the clipboard.
+   * If no seed is provided, it uses the current seed from the state.
+   *
+   * @param {PluginExecutionContext} _ - The execution context (unused).
+   * @param {string} [seedToCopy] - The specific seed string to copy.
+   * @returns {Promise<ProcessResult>} The result of the copy operation.
+   */
   public async copySeed(_: PluginExecutionContext, seedToCopy?: string) {
     const seed = seedToCopy ?? getCurrentSeed() ?? "";
     if (!seed) {
@@ -333,6 +393,12 @@ export class SystemFunctionsManager {
     }
   }
 
+  /**
+   * Gathers all public methods intended for plugin registration and returns
+   * them as an array of `FunctionConfig` objects.
+   *
+   * @returns {FunctionConfig[]} An array of function configurations for the plugin manager.
+   */
   public getFunctions(): FunctionConfig[] {
     return [
       {
