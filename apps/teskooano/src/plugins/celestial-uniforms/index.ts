@@ -3,7 +3,7 @@ import type {
   PanelConfig,
   ToolbarRegistration,
 } from "@teskooano/ui-plugin";
-import { CelestialUniformsEditor } from "./CelestialUniforms";
+import { CelestialUniformsEditor } from "./view/CelestialUniforms.view";
 
 import Icon from "@fluentui/svg-icons/icons/code_circle_20_regular.svg?raw";
 
@@ -29,16 +29,22 @@ const toolbarRegistration: ToolbarRegistration = {
 };
 
 /**
- * Plugin definition for the Celestial Info display panel.
+ * Plugin definition for the Celestial Uniforms Editor.
  *
- * Registers the CelestialInfo panel and its associated toolbar button
- * for showing detailed information about the currently focused celestial object.
+ * Registers the `CelestialUniformsEditor` panel and its associated toolbar button,
+ * providing a developer tool for real-time editing of object properties.
  */
 export const plugin: TeskooanoPlugin = {
   id: "teskooano-celestial-uniforms",
-  name: "Celestial Uniforms",
+  name: "Celestial Uniforms Editor",
   description:
-    "Provides the celestial uniforms display panel and toolbar button.",
+    "Provides the celestial uniforms editor panel and toolbar button.",
+  components: [
+    {
+      tagName: CelestialUniformsEditor.componentName,
+      componentClass: CelestialUniformsEditor,
+    },
+  ],
   panels: [panelConfig],
   toolbarRegistrations: [toolbarRegistration],
   functions: [],
