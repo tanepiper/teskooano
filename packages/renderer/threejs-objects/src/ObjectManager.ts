@@ -1,5 +1,9 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { accelerationVectors$ } from "@teskooano/core-state";
+import {
+  accelerationVectors$,
+  getCelestialObjects,
+  celestialObjects$,
+} from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
@@ -27,13 +31,14 @@ import {
   RendererUpdater,
   ObjectLifecycleManager,
   AccelerationVisualizer,
-  DebrisEffectManager,
 } from "./object-manager";
 
 import type { LODLevel } from "@teskooano/systems-celestial";
 
 import type { DestructionEvent } from "@teskooano/core-physics";
-import { rendererEvents } from "@teskooano/renderer-threejs-core";
+import { rendererEvents } from "@teskooano/renderer-threejs";
+import { createDebris, type DebrisParticle } from "./debris/create-debris";
+import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 
 /**
  * @internal Interface defining the required methods for managing label visibility.
@@ -61,7 +66,7 @@ export class ObjectManager {
   /** @internal Reference to the main camera, used for LOD and potentially other effects. */
   private camera: THREE.PerspectiveCamera;
   /** @internal Reference to the WebGLRenderer, potentially used by sub-managers (e.g., lensing). */
-  private renderer: THREE.WebGLRenderer | null = null;
+  private renderer: THREE.WebGLRenderer;
   /** @internal Manages Levels of Detail for objects based on camera distance. */
   private lodManager: LODManager;
   /** @internal Map storing specialized renderers keyed by their specific type (e.g., GasGiantClass). */
@@ -100,8 +105,6 @@ export class ObjectManager {
   /** @internal Updates specialized renderers (e.g., for stars, planets) each frame. */
   private rendererUpdater: RendererUpdater;
   /** @internal Manages particle effects for object destruction events. */
-  private debrisEffectManager: DebrisEffectManager;
-  /** @internal Handles the core logic of adding, updating, and removing objects from the scene based on state. */
   private objectLifecycleManager: ObjectLifecycleManager;
 
   /** @internal RxJS subscription to the renderable objects stream. */
@@ -109,7 +112,9 @@ export class ObjectManager {
   /** @internal RxJS subscription to the acceleration vectors stream. */
   private accelerationsSubscription: Subscription | null = null;
   /** @internal Unsubscribe function for the destruction event listener. */
-  private destructionSubscription: (() => void) | null = null;
+  private destructionSubscription: Subscription | null = null;
+  private debugMode: boolean = false;
+  private debrisEffectsEnabled: boolean = true;
 
   /** @internal Reusable vector to avoid allocations in loops. */
   private tempVector3 = new THREE.Vector3();
@@ -184,7 +189,6 @@ export class ObjectManager {
     this.accelerationVisualizer = new AccelerationVisualizer({
       objects: this.objects,
     });
-    this.debrisEffectManager = new DebrisEffectManager({ scene: this.scene });
     this.rendererUpdater = new RendererUpdater({
       celestialRenderers: this.celestialRenderers,
       starRenderers: this.starRenderers,
@@ -257,11 +261,19 @@ export class ObjectManager {
    * @internal Subscribes to destruction events emitted via the rendererEvents bus.
    */
   private subscribeToDestructionEvents(): void {
-    // Listen for object destruction events and trigger debris effects
-    this.destructionSubscription = rendererEvents.on(
-      "destruction:occurred",
-      (event: DestructionEvent) => {
-        this.debrisEffectManager.createDebrisEffect(event);
+    if (this.destructionSubscription) {
+      this.destructionSubscription.unsubscribe();
+    }
+    this.destructionSubscription = rendererEvents.destruction$.subscribe(
+      (payload) => {
+        if (this.debrisEffectsEnabled) {
+          const debris = createDebris(
+            payload.object,
+            this.scene,
+            this.renderer,
+          );
+          debris.forEach((d: DebrisParticle) => this.scene.add(d.mesh));
+        }
       },
     );
   }
@@ -276,22 +288,6 @@ export class ObjectManager {
       this.meshFactory.setDebugMode(enabled);
       this.recreateAllMeshes(); // Recreate meshes to apply debug visuals
     }
-  }
-
-  /**
-   * Enables or disables the creation of debris particle effects on destruction events.
-   * @param enabled - True to enable effects, false to disable.
-   */
-  public setDebrisEffectsEnabled(enabled: boolean): void {
-    this.debrisEffectManager.setDebrisEffectsEnabled(enabled);
-  }
-
-  /**
-   * Toggles the enabled state of debris particle effects.
-   * @returns The new enabled state (true if enabled, false if disabled).
-   */
-  public toggleDebrisEffects(): boolean {
-    return this.debrisEffectManager.toggleDebrisEffects();
   }
 
   /**
@@ -339,9 +335,6 @@ export class ObjectManager {
 
     // Update visibility of CSS2D labels based on LOD and object type
     this.updateLabelVisibility();
-
-    // Update active debris particle effects
-    this.debrisEffectManager.update(this.getDeltaTime()); // Needs a delta time source
   }
 
   /**
@@ -436,12 +429,11 @@ export class ObjectManager {
     this.objectsSubscription = null;
     this.accelerationsSubscription?.unsubscribe();
     this.accelerationsSubscription = null;
-    this.destructionSubscription?.();
+    this.destructionSubscription?.unsubscribe();
     this.destructionSubscription = null;
 
     // Dispose sub-managers in logical order (e.g., lifecycle last?)
     this.objectLifecycleManager.dispose(); // Disposes individual objects and their resources
-    this.debrisEffectManager.dispose();
     this.accelerationVisualizer.clear(); // Clear arrows
 
     // Dispose renderers and clear their maps
@@ -499,5 +491,36 @@ export class ObjectManager {
     this.objectLifecycleManager.syncObjectsWithState(
       this.latestRenderableObjects,
     );
+  }
+
+  public setDebugVisualization(enabled: boolean): void {
+    setVisualizationEnabled(enabled);
+  }
+
+  /**
+   * Toggles debug visualizations on or off.
+   * @returns The new state (true if enabled, false if disabled).
+   */
+  public toggleDebugVisualization(): boolean {
+    const newState = !debugConfig.visualize;
+    this.setDebugVisualization(newState);
+    return newState;
+  }
+
+  /**
+   * Enables or disables the particle effects shown when objects are destroyed.
+   * @param enabled Whether debris effects should be shown.
+   */
+  public setDebrisEffectsEnabled(enabled: boolean): void {
+    this.debrisEffectsEnabled = enabled;
+  }
+
+  /**
+   * Toggles debris effects on or off.
+   * @returns The new state (true if enabled, false if disabled).
+   */
+  public toggleDebrisEffects(): boolean {
+    this.debrisEffectsEnabled = !this.debrisEffectsEnabled;
+    return this.debrisEffectsEnabled;
   }
 }

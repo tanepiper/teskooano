@@ -1,44 +1,53 @@
-/**
- * Simple event emitter for renderer events
- */
-type EventCallback = (...args: any[]) => void;
+import { Subject } from "rxjs";
+import type { RendererStats } from "./AnimationLoop";
 
-class EventEmitter {
-  private events: Map<string, EventCallback[]> = new Map();
+/** Payload for the `beforeRender` and `afterRender` events. */
+export interface RenderLoopPayload {
+  /** Time elapsed since the last frame, in seconds. */
+  deltaTime: number;
+  /** Total time elapsed since the loop started, in seconds. */
+  elapsedTime: number;
+}
 
-  /**
-   * Register an event listener
-   */
-  on(event: string, callback: EventCallback): () => void {
-    if (!this.events.has(event)) {
-      this.events.set(event, []);
-    }
-
-    this.events.get(event)!.push(callback);
-
-    return () => {
-      const callbacks = this.events.get(event);
-      if (callbacks) {
-        const index = callbacks.indexOf(callback);
-        if (index !== -1) {
-          callbacks.splice(index, 1);
-        }
-      }
-    };
-  }
-
-  /**
-   * Emit an event
-   */
-  emit(event: string, ...args: any[]): void {
-    const callbacks = this.events.get(event);
-    if (callbacks) {
-      callbacks.forEach((callback) => callback(...args));
-    }
-  }
+/** Payload for the `resize` event. */
+export interface ResizePayload {
+  /** The new width of the render viewport. */
+  width: number;
+  /** The new height of the render viewport. */
+  height: number;
 }
 
 /**
- * Events that can be emitted by the renderer
+ * A centralized, type-safe event bus for core renderer events, powered by RxJS.
+ *
+ * This provides a consistent, observable-based mechanism for internal communication
+ * between the various renderer sub-modules.
  */
-export const rendererEvents = new EventEmitter();
+export const rendererEvents = {
+  /**
+   * Fires at the beginning of each animation frame, before any updates.
+   * @event
+   */
+  beforeRender$: new Subject<RenderLoopPayload>(),
+  /**
+   * Fires at the end of each animation frame, after the scene has been rendered.
+   * @event
+   */
+  afterRender$: new Subject<RenderLoopPayload>(),
+  /**
+   * Fires when the renderer viewport is resized.
+   * @event
+   */
+  resize$: new Subject<ResizePayload>(),
+  /**
+   * Fires when the renderer's main `dispose` method is called.
+   * Provides a global signal for all modules to clean up resources.
+   * @event
+   */
+  dispose$: new Subject<void>(),
+  /**
+   * Fires when the performance statistics are updated.
+   * @event
+   */
+  statsUpdated$: new Subject<RendererStats>(),
+};

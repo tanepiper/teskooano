@@ -25,7 +25,6 @@ export class CSS2DManager {
   private scene: THREE.Scene;
 
   private elements: Map<CSS2DLayerType, Map<string, CSS2DObject>> = new Map();
-
   private layerVisibility: Map<CSS2DLayerType, boolean> = new Map();
 
   /**
@@ -73,7 +72,7 @@ export class CSS2DManager {
 
     Object.values(CSS2DLayerType).forEach((layerType) => {
       this.elements.set(layerType, new Map());
-      this.layerVisibility.set(layerType, true);
+      this.layerVisibility.set(layerType, true); // Default to visible
     });
 
     const styleElement = document.createElement("style");
@@ -92,7 +91,7 @@ export class CSS2DManager {
   private createPositionedLabel(
     text: string,
     position: THREE.Vector3,
-    parentMesh: THREE.Object3D,
+    parentMesh: THREE.Object3D | null, // Allow null for scene-level labels
     options?: {
       className?: string;
       color?: string;
@@ -115,10 +114,15 @@ export class CSS2DManager {
     const label = new CSS2DObject(labelDiv);
     label.position.copy(position);
 
-    parentMesh.add(label);
-
     const layerType = options?.layerType || CSS2DLayerType.CELESTIAL_LABELS;
     const id = options?.id;
+
+    if (parentMesh) {
+      parentMesh.add(label);
+    } else {
+      this.scene.add(label); // Add scene-level labels directly to the scene
+    }
+
     if (id) {
       const labelsMap = this.elements.get(layerType);
       if (labelsMap) {
@@ -126,8 +130,8 @@ export class CSS2DManager {
       }
     }
 
-    const isVisible = this.layerVisibility.get(layerType) ?? true;
-    label.visible = isVisible;
+    // Set initial visibility based on the layer's state
+    label.visible = this.layerVisibility.get(layerType) ?? true;
 
     return label;
   }
@@ -194,41 +198,25 @@ export class CSS2DManager {
     auValue: number,
     position: THREE.Vector3,
   ): void {
-    const labelsMap = this.elements.get(CSS2DLayerType.AU_MARKERS);
-    if (labelsMap?.has(id)) {
+    if (this.elements.get(CSS2DLayerType.AU_MARKERS)?.has(id)) {
       console.warn(
         `[CSS2DManager] AU Marker Label already exists for ${id}. Skipping creation.`,
       );
       return;
     }
 
-    const labelDiv = document.createElement("div");
-    labelDiv.className = "au-marker-label";
-    labelDiv.textContent = `${auValue} AU`;
-    labelDiv.style.color = "#FFA500";
-    labelDiv.style.backgroundColor = "rgba(0,0,0,0.6)";
-    labelDiv.style.padding = "1px 4px";
-    labelDiv.style.borderRadius = "2px";
-    labelDiv.style.fontSize = "10px";
-    labelDiv.style.pointerEvents = "none";
-    labelDiv.style.whiteSpace = "nowrap";
-
-    const label = new CSS2DObject(labelDiv);
-    label.position.copy(position);
-
-    this.scene.add(label);
-
-    if (labelsMap) {
-      labelsMap.set(id, label);
-    }
-
-    const isVisible =
-      this.layerVisibility.get(CSS2DLayerType.AU_MARKERS) ?? true;
-    label.visible = isVisible;
-
-    if (label.element instanceof HTMLElement) {
-      label.element.style.display = isVisible ? "" : "none";
-    }
+    this.createPositionedLabel(
+      `${auValue} AU`,
+      position,
+      null, // Add to scene-level group, not a specific mesh
+      {
+        id,
+        className: "au-marker-label",
+        layerType: CSS2DLayerType.AU_MARKERS,
+        color: "#FFA500",
+        backgroundColor: "rgba(0,0,0,0.6)",
+      },
+    );
   }
 
   /**
@@ -251,85 +239,33 @@ export class CSS2DManager {
    */
   setLayerVisibility(layerType: CSS2DLayerType, visible: boolean): void {
     this.layerVisibility.set(layerType, visible);
-
     const layerMap = this.elements.get(layerType);
     if (layerMap) {
       layerMap.forEach((element) => {
         element.visible = visible;
-
-        if (element.element instanceof HTMLElement) {
-          element.element.style.display = visible ? "" : "none";
-        }
       });
+    } else {
+      console.warn(
+        `[CSS2DManager] No elements map found for layer: ${layerType}`,
+      );
     }
   }
 
   /**
-   * Render visible layers
+   * Renders the CSS2D scene
+   * @param camera The camera to use for rendering
    */
   render(camera: THREE.Camera): void {
-    let orphanedIdsToRemove: { layer: CSS2DLayerType; id: string }[] = [];
-    this.elements.forEach((layerMap, layerType) => {
-      layerMap.forEach((element, id) => {
-        let parentConnected = false;
-        let current: THREE.Object3D | null = element.parent;
-        while (current) {
-          if (current === this.scene) {
-            parentConnected = true;
-            break;
-          }
-          current = current.parent;
-        }
-
-        if (!element.parent || !parentConnected) {
-          console.warn(
-            `[CSS2DManager] Found orphaned label ${id} in layer ${layerType}. Removing.`,
-          );
-
-          orphanedIdsToRemove.push({ layer: layerType, id: id });
-
-          element.visible = false;
-        }
-      });
-    });
-
-    orphanedIdsToRemove.forEach((orphan) => {
-      this.removeElement(orphan.layer, orphan.id);
-    });
-
-    this.scene.traverseVisible((object) => {
-      if (object instanceof CSS2DObject) {
-        if (!object.parent) {
-          console.error(
-            `[CSS2DManager] CRITICAL: Found visible CSS2DObject in scene WITHOUT parent just before render! Hiding.`,
-            object,
-          );
-          object.visible = false;
-        }
-      }
-    });
-
-    let hasVisibleElements = false;
-
-    for (const [layerType, isVisible] of this.layerVisibility.entries()) {
-      const layerMap = this.elements.get(layerType);
-      if (isVisible) {
-        if (layerMap && layerMap.size > 0) {
-          hasVisibleElements = true;
-          break;
-        }
+    let hasAnyElements = false;
+    for (const map of this.elements.values()) {
+      if (map.size > 0) {
+        hasAnyElements = true;
+        break;
       }
     }
 
-    if (hasVisibleElements) {
-      try {
-        this.renderer.render(this.scene, camera);
-      } catch (e) {
-        console.error(
-          "[CSS2DManager] Error during internal CSS2DRenderer.render call:",
-          e,
-        );
-      }
+    if (hasAnyElements) {
+      this.renderer.render(this.scene, camera);
     }
   }
 
@@ -347,9 +283,10 @@ export class CSS2DManager {
     Object.values(CSS2DLayerType).forEach((layerType) => {
       this.clearLayer(layerType);
     });
-
-    if (this.renderer.domElement.parentNode) {
-      this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+    if (this.renderer.domElement.parentElement) {
+      this.renderer.domElement.parentElement.removeChild(
+        this.renderer.domElement,
+      );
     }
   }
 
@@ -359,14 +296,14 @@ export class CSS2DManager {
    * @param id - The unique ID of the element to show.
    */
   showLabel(layer: CSS2DLayerType, id: string): void {
+    const isLayerVisible = this.layerVisibility.get(layer) ?? false;
+    if (!isLayerVisible) {
+      return; // Do not show labels on a hidden layer
+    }
     const layerMap = this.elements.get(layer);
     const cssObject = layerMap?.get(id);
-    if (cssObject?.element instanceof HTMLElement) {
-      cssObject.element.classList.remove("label-hidden");
-    } else {
-      console.warn(
-        `[CSS2DManager]   showLabel: Could not find element or element is not HTMLElement for id=${id}`,
-      );
+    if (cssObject) {
+      cssObject.visible = true;
     }
   }
 
@@ -378,8 +315,8 @@ export class CSS2DManager {
   hideLabel(layer: CSS2DLayerType, id: string): void {
     const layerMap = this.elements.get(layer);
     const cssObject = layerMap?.get(id);
-    if (cssObject?.element instanceof HTMLElement) {
-      cssObject.element.classList.add("label-hidden");
+    if (cssObject) {
+      cssObject.visible = false;
     }
   }
 

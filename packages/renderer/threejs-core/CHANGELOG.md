@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replaced the custom `EventEmitter` in `events.ts` with a type-safe, RxJS-based structure for consistency with other packages.
+
+### Removed
+
+- Removed the unused `CoreRenderer` facade class from `index.ts`.
+- Removed the `StateManager.ts` file and its associated tests, as its functionality was superseded by `RendererStateAdapter` in the parent `@teskooano/renderer-threejs` package.
+
+## [0.2.0] - 2025-05-07
+
+### Changed
+
 - Updated `StateManager.ts` to use RxJS Observables (`celestialObjects$`, `simulationState$`) and helper functions (`getCelestialObjects`, `getSimulationState`) from `@teskooano/core-state`.
   - Subscription logic in `StateManager.ts` now uses RxJS `pipe`, `pairwise`, and `startWith` for more robust state diffing.
   - Unsubscribe logic now uses RxJS `Subscription` objects.

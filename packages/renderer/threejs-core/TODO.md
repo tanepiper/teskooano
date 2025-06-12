@@ -1,6 +1,6 @@
-# TODO - @teskooano/renderer-threejs-core
+# TODO for @teskooano/renderer-threejs-core
 
-This list tracks planned improvements and tasks for the core Three.js renderer package.
+This is a list of tasks for the core renderer package.
 
 ## Features
 
@@ -10,12 +10,7 @@ This list tracks planned improvements and tasks for the core Three.js renderer p
 
 ## Refactoring & Improvements
 
-- [ ] Refine the state change detection logic in `StateManager` for performance, especially with large numbers of objects.
-- [ ] Improve performance stat calculation and reporting in `AnimationLoop`.
-- [ ] Add more granular error handling and logging.
-- [ ] Evaluate if `CoreRenderer` facade is still necessary or if components are always used individually by the integrator package.
-- [ ] Ensure proper disposal and cleanup of all resources in edge cases.
-- [ ] Optimize `SceneManager`'s debug helper management.
+- [ ] Add more detailed error handling and logging.
 
 ## Testing
 
@@ -27,5 +22,6 @@ This list tracks planned improvements and tasks for the core Three.js renderer p
 
 ## Documentation
 
-- [ ] Add detailed TSDoc comments to all public classes, methods, and properties.
-- [ ] Clarify the expected units and coordinate systems in method parameters/return values.
+- [x] Review and update all package documentation (`README.md`, `ARCHITECTURE.md`) to reflect latest changes.
+- [x] Add detailed API documentation using TSDoc comments in the source code.
+- [ ] Expand the README with examples for more advanced features once implemented.

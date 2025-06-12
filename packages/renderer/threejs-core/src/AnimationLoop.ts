@@ -1,11 +1,20 @@
 import { simulationStateService } from "@teskooano/core-state";
 import * as THREE from "three";
+import { rendererEvents } from "./events";
 
+/**
+ * Defines the structure for the renderer statistics object.
+ */
 export interface RendererStats {
+  /** The current frames per second. */
   fps: number;
+  /** The number of draw calls in the last rendered frame. */
   drawCalls: number;
+  /** The number of triangles in the last rendered frame. */
   triangles: number;
+  /** Browser memory usage statistics. */
   memory?: { usedJSHeapSize?: number };
+  /** Information about the camera state. */
   camera?: {
     position?: { x: number; y: number; z: number };
     fov?: number;
@@ -13,10 +22,24 @@ export interface RendererStats {
 }
 
 /**
- * Manages the animation and render loop for the scene
+ * Manages the core `requestAnimationFrame` loop, tracks time, executes callbacks,
+ * and reports performance statistics to the global state. This class is the
+ * heartbeat of the rendering engine.
+ *
+ * @example
+ * const animationLoop = new AnimationLoop();
+ * animationLoop.setRenderer(renderer);
+ * animationLoop.setCamera(camera);
+ *
+ * // Register a function to be called every frame
+ * animationLoop.onAnimate((time, delta) => {
+ *   console.log(`Time: ${time}, Delta: ${delta}`);
+ * });
+ *
+ * animationLoop.start();
  */
 export class AnimationLoop {
-  private renderLoop: number | null = null;
+  private renderLoopId: number | null = null;
   private clock: THREE.Clock;
   private onAnimateCallbacks: ((time: number, delta: number) => void)[] = [];
   private onRenderCallbacks: (() => void)[] = [];
@@ -24,77 +47,85 @@ export class AnimationLoop {
   private renderer: THREE.WebGLRenderer | null = null;
   private camera: THREE.Camera | null = null;
 
+  // --- Stats-related properties ---
   private fpsFrameCount = 0;
   private lastFPSUpdateTime = 0;
   private currentFPS = 0;
-  private readonly fpsUpdateInterval = 0.5;
-
   private lastStatsUpdateTime = 0;
-  private readonly statsUpdateInterval = 0.5;
-
-  private lastDetailedStatsUpdateTime = 0;
-  private readonly detailedStatsUpdateInterval = 2.0;
+  private readonly statsUpdateInterval = 0.5; // Update stats every 500ms
 
   /**
-   * Create a new AnimationLoop
+   * Creates a new AnimationLoop instance.
    */
   constructor() {
     this.clock = new THREE.Clock();
   }
 
+  /**
+   * Sets the `WebGLRenderer` instance for the loop.
+   * This is required for collecting performance statistics.
+   * @param renderer The main Three.js renderer.
+   */
   setRenderer(renderer: THREE.WebGLRenderer): void {
     this.renderer = renderer;
   }
 
+  /**
+   * Sets the `Camera` instance for the loop.
+   * This is required for collecting camera statistics.
+   * @param camera The main Three.js camera.
+   */
   setCamera(camera: THREE.Camera): void {
     this.camera = camera;
   }
 
   /**
-   * Start the render loop
+   * Starts the animation loop if it is not already running.
    */
   start(): void {
-    if (this.renderLoop === null) {
+    if (this.renderLoopId === null) {
       this.clock.start();
-      this.lastFPSUpdateTime = this.clock.getElapsedTime();
-      this.lastStatsUpdateTime = this.clock.getElapsedTime();
-
-      const animate = () => {
-        this.renderLoop = requestAnimationFrame(animate);
-        this.tick();
-      };
-
-      animate();
+      this.lastFPSUpdateTime = performance.now();
+      this.lastStatsUpdateTime = performance.now();
+      this.animate();
     }
   }
 
   /**
-   * Stop the render loop
+   * Stops the animation loop if it is running.
    */
   stop(): void {
-    if (this.renderLoop !== null) {
-      cancelAnimationFrame(this.renderLoop);
-      this.renderLoop = null;
+    if (this.renderLoopId !== null) {
+      cancelAnimationFrame(this.renderLoopId);
+      this.renderLoopId = null;
       this.clock.stop();
     }
   }
 
   /**
-   * Add a callback to be called during animation update
+   * Registers a callback to be executed on each frame.
+   * These callbacks are executed first and receive the elapsed time and delta.
+   * They are intended for primary update logic (e.g., physics, controls).
+   * @param callback The function to call, which receives `time` and `delta`.
    */
   onAnimate(callback: (time: number, delta: number) => void): void {
     this.onAnimateCallbacks.push(callback);
   }
 
   /**
-   * Add a callback to be called during render
+   * Registers a callback to be executed on each frame, after all `onAnimate`
+   * callbacks have completed.
+   * These callbacks are intended for secondary logic that does not require
+   * timing information (e.g., final rendering steps, UI updates).
+   * @param callback The function to call.
    */
   onRender(callback: () => void): void {
     this.onRenderCallbacks.push(callback);
   }
 
   /**
-   * Remove an animation callback
+   * Removes a previously registered `onAnimate` callback.
+   * @param callback The exact callback function to remove.
    */
   removeAnimateCallback(callback: (time: number, delta: number) => void): void {
     const index = this.onAnimateCallbacks.indexOf(callback);
@@ -104,7 +135,8 @@ export class AnimationLoop {
   }
 
   /**
-   * Remove a render callback
+   * Removes a previously registered `onRender` callback.
+   * @param callback The exact callback function to remove.
    */
   removeRenderCallback(callback: () => void): void {
     const index = this.onRenderCallbacks.indexOf(callback);
@@ -114,119 +146,75 @@ export class AnimationLoop {
   }
 
   /**
-   * Get the render callbacks array
+   * Gets the array of `onRender` callbacks.
+   * @returns The array of render callbacks.
+   * @internal Be cautious with this. Modifying the returned array directly
+   * can lead to unexpected behavior. It is exposed for iteration purposes.
    */
   getRenderCallbacks(): (() => void)[] {
     return this.onRenderCallbacks;
   }
 
   /**
-   * Process one animation frame
+   * Collects statistics from the renderer and updates the global simulation state.
    */
-  public tick(): void {
-    const delta = this.clock.getDelta();
-    const time = this.clock.getElapsedTime();
-    this.fpsFrameCount++;
-
-    for (const callback of this.onAnimateCallbacks) {
-      callback(time, delta);
-    }
-
-    for (const callback of this.onRenderCallbacks) {
-      callback();
-    }
-
-    this.updateFPS(time);
-    this.updateOtherStats(time);
-  }
-
-  private updateFPS(currentTime: number): void {
-    const elapsedTime = currentTime - this.lastFPSUpdateTime;
-
-    if (elapsedTime >= this.fpsUpdateInterval) {
-      this.currentFPS = Math.round(this.fpsFrameCount / elapsedTime);
-      this.fpsFrameCount = 0;
-      this.lastFPSUpdateTime = currentTime;
-
-      if (currentTime - this.lastStatsUpdateTime >= this.statsUpdateInterval) {
-        this.updateSimulationStateStats();
-      }
-    }
-  }
-
-  private updateOtherStats(currentTime: number): void {
-    const elapsedTime = currentTime - this.lastStatsUpdateTime;
-    if (elapsedTime >= this.statsUpdateInterval) {
-      this.lastStatsUpdateTime = currentTime;
-      this.updateSimulationStateStats();
-    }
-  }
-
   private updateSimulationStateStats(): void {
     if (!this.renderer) {
-      console.warn("AnimationLoop: Update aborted, renderer not set.");
-      return;
+      return; // Can't collect stats without a renderer
     }
 
     try {
       const drawCalls = this.renderer.info.render.calls;
       const triangles = this.renderer.info.render.triangles;
-      const memoryInfo = (window.performance as any)?.memory;
+      const memoryInfo = (performance as any)?.memory;
       const usedMemory = memoryInfo?.usedJSHeapSize;
 
       const currentState = simulationStateService.getCurrentState();
+      const stats = this.getCurrentStats();
 
+      // Avoid setting state if the values haven't changed
       if (
-        currentState.renderer?.fps !== this.currentFPS ||
-        currentState.renderer?.drawCalls !== drawCalls ||
-        currentState.renderer?.triangles !== triangles ||
-        currentState.renderer?.memory?.usedJSHeapSize !== usedMemory
+        stats &&
+        currentState.renderer?.fps === stats.fps &&
+        currentState.renderer?.drawCalls === stats.drawCalls &&
+        currentState.renderer?.triangles === stats.triangles &&
+        currentState.renderer?.memory?.usedJSHeapSize ===
+          stats.memory?.usedJSHeapSize
       ) {
+        return;
+      }
+
+      if (stats) {
         simulationStateService.setState({
           ...currentState,
           renderer: {
             ...currentState.renderer,
-            fps: this.currentFPS,
-            drawCalls: drawCalls,
-            triangles: triangles,
-            memory: { usedJSHeapSize: usedMemory },
+            ...stats,
           },
         });
-      } else {
+        rendererEvents.statsUpdated$.next(stats);
       }
     } catch (error) {
       console.error(
-        "AnimationLoop: Error collecting/updating renderer stats:",
+        "[AnimationLoop] Error collecting/updating renderer stats:",
         error,
       );
     }
   }
 
   /**
-   * Get the time elapsed since the last frame
+   * Retrieves an object containing the current performance statistics.
+   * @returns A `RendererStats` object, or `null` if the renderer is not set.
    */
-  getDelta(): number {
-    return this.clock.getDelta();
-  }
-
-  /**
-   * Clean up resources
-   */
-  dispose(): void {
-    this.stop();
-    this.onAnimateCallbacks = [];
-    this.onRenderCallbacks = [];
-  }
-
   public getCurrentStats(): RendererStats | null {
     if (!this.renderer) {
       return null;
     }
     try {
       const rendererInfo = this.renderer.info;
-      const memoryInfo = (window.performance as any)?.memory;
+      const memoryInfo = (performance as any)?.memory;
 
-      let cameraStats: { position?: THREE.Vector3; fov?: number } | undefined;
+      let cameraStats: RendererStats["camera"];
       if (this.camera) {
         cameraStats = {
           position: this.camera.position.clone(),
@@ -245,8 +233,47 @@ export class AnimationLoop {
         camera: cameraStats,
       };
     } catch (error) {
-      console.error("AnimationLoop: Error getting current stats:", error);
+      console.error("[AnimationLoop] Error getting current stats:", error);
       return null;
     }
   }
+
+  private _updateStats(): void {
+    this.fpsFrameCount++;
+    const now = performance.now();
+
+    const timeSinceLastFPSUpdate = now - this.lastFPSUpdateTime;
+    if (timeSinceLastFPSUpdate >= this.statsUpdateInterval * 1000) {
+      this.currentFPS = Math.round(
+        (this.fpsFrameCount * 1000) / timeSinceLastFPSUpdate,
+      );
+      this.fpsFrameCount = 0;
+      this.lastFPSUpdateTime = now;
+    }
+
+    if (now >= this.lastStatsUpdateTime + this.statsUpdateInterval * 1000) {
+      this.lastStatsUpdateTime = now;
+      this.updateSimulationStateStats();
+    }
+  }
+
+  private animate = (): void => {
+    this.renderLoopId = requestAnimationFrame(this.animate);
+    const deltaTime = this.clock.getDelta();
+    const elapsedTime = this.clock.getElapsedTime();
+
+    rendererEvents.beforeRender$.next({ deltaTime, elapsedTime });
+
+    this._updateStats();
+
+    for (const callback of this.onAnimateCallbacks) {
+      callback(elapsedTime, deltaTime);
+    }
+
+    for (const callback of this.onRenderCallbacks) {
+      callback();
+    }
+
+    rendererEvents.afterRender$.next({ deltaTime, elapsedTime });
+  };
 }

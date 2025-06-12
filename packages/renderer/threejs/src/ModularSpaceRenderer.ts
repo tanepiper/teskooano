@@ -1,9 +1,5 @@
 import { BackgroundManager } from "@teskooano/renderer-threejs-background";
-import {
-  AnimationLoop,
-  SceneManager,
-  StateManager,
-} from "@teskooano/renderer-threejs-core";
+import { AnimationLoop, SceneManager } from "@teskooano/renderer-threejs-core";
 import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
 import {
   ControlsManager,
@@ -22,6 +18,7 @@ import { RenderPipeline } from "./RenderPipeline";
 
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { renderableStore } from "@teskooano/core-state";
+import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 
 /**
  * The main orchestrator for the Three.js rendering engine.
@@ -40,8 +37,6 @@ export class ModularSpaceRenderer {
   public sceneManager: SceneManager;
   /** Controls the `requestAnimationFrame` loop. */
   public animationLoop: AnimationLoop;
-  /** Manages renderer-specific state. */
-  public stateManager: StateManager;
 
   /** Manages the lifecycle of celestial `THREE.Object3D` instances. */
   public objectManager: ObjectManager;
@@ -67,6 +62,7 @@ export class ModularSpaceRenderer {
 
   /** An optional, injectable manager for rendering custom 2D canvas UI. */
   private canvasUIManager?: { render(): void };
+  private debrisEffectsEnabled: boolean = true;
 
   /**
    * Initializes the renderer and all its subordinate managers.
@@ -82,7 +78,6 @@ export class ModularSpaceRenderer {
 
     this.sceneManager = new SceneManager(container, options);
     this.animationLoop = new AnimationLoop();
-    this.stateManager = new StateManager();
 
     this.animationLoop.setRenderer(this.sceneManager.renderer);
     this.animationLoop.setCamera(this.sceneManager.camera);
@@ -102,8 +97,9 @@ export class ModularSpaceRenderer {
 
     if (showCelestialLabels) {
       this.css2DManager = new CSS2DManager(this.sceneManager.scene, container);
-
-      this.sceneManager.setCSS2DManager(this.css2DManager);
+      if (options.showAuMarkers) {
+        this._createAuMarkerLabels();
+      }
     } else {
       this.css2DManager = undefined;
     }
@@ -156,11 +152,39 @@ export class ModularSpaceRenderer {
     }
 
     if (options.showAuMarkers !== undefined) {
-      this.sceneManager.setAuMarkersVisible(options.showAuMarkers);
+      this.setAuMarkersVisible(options.showAuMarkers);
     }
     if (options.showDebrisEffects !== undefined) {
       this.setDebrisEffectsEnabled(options.showDebrisEffects);
+    } else {
+      this.setDebrisEffectsEnabled(this.debrisEffectsEnabled);
     }
+  }
+
+  /**
+   * Orchestrates the creation of 2D labels for the AU distance markers.
+   * This is called from the constructor after the necessary managers are available.
+   * @internal
+   */
+  private _createAuMarkerLabels(): void {
+    if (!this.css2DManager) return;
+    const auDistances = [1, 2, 3, 4, 5, 10, 20, 50, 100];
+    auDistances.forEach((au) => {
+      const radiusSceneUnits = au * AU_METERS * METERS_TO_SCENE_UNITS;
+      if (!Number.isFinite(radiusSceneUnits) || radiusSceneUnits <= 0) {
+        return;
+      }
+      const labelPositions = {
+        Xpos: new THREE.Vector3(radiusSceneUnits, 0, 0),
+        Xneg: new THREE.Vector3(-radiusSceneUnits, 0, 0),
+        Zpos: new THREE.Vector3(0, 0, radiusSceneUnits),
+        Zneg: new THREE.Vector3(0, 0, -radiusSceneUnits),
+      };
+      for (const [dir, pos] of Object.entries(labelPositions)) {
+        const labelId = `au-label-${dir}-${au}`;
+        this.css2DManager?.createAuMarkerLabel(labelId, au, pos);
+      }
+    });
   }
 
   /**
@@ -282,8 +306,6 @@ export class ModularSpaceRenderer {
     if (typeof (this.lodManager as any).dispose === "function") {
       (this.lodManager as any).dispose();
     }
-    this.stateManager.dispose();
-    this.animationLoop.dispose();
 
     window.removeEventListener("resize", () => {
       this.onResize(window.innerWidth, window.innerHeight);
@@ -313,6 +335,7 @@ export class ModularSpaceRenderer {
    */
   setAuMarkersVisible(visible: boolean): void {
     this.sceneManager.setAuMarkersVisible(visible);
+    this.css2DManager?.setLayerVisibility(CSS2DLayerType.AU_MARKERS, visible);
   }
   /**
    * Sets the visibility of all orbital lines.
@@ -460,6 +483,7 @@ export class ModularSpaceRenderer {
    * @param enabled Whether debris effects should be shown.
    */
   public setDebrisEffectsEnabled(enabled: boolean): void {
+    this.debrisEffectsEnabled = enabled;
     this.objectManager.setDebrisEffectsEnabled(enabled);
   }
 
@@ -468,7 +492,9 @@ export class ModularSpaceRenderer {
    * @returns The new state (true if enabled, false if disabled).
    */
   public toggleDebrisEffects(): boolean {
-    return this.objectManager.toggleDebrisEffects();
+    this.debrisEffectsEnabled = !this.debrisEffectsEnabled;
+    this.objectManager.setDebrisEffectsEnabled(this.debrisEffectsEnabled);
+    return this.debrisEffectsEnabled;
   }
 
   /**
