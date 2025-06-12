@@ -4,17 +4,17 @@ This list tracks planned improvements and tasks for the Three.js renderer packag
 
 ## Features
 
-- [ ] Implement Level of Detail (LOD) for celestial bodies to improve performance with many objects or distant views.
-- [ ] Add basic lighting (e.g., an ambient light and a directional light representing a star).
+- [x] Implement Level of Detail (LOD) for celestial bodies to improve performance with many objects or distant views.
+- [x] Add basic lighting (e.g., an ambient light and a directional light representing a star).
 - [ ] Implement realistic star rendering (e.g., using point sprites or custom shaders).
 - [ ] Add support for loading and displaying 3D models (FBX format specified) for ships or stations.
 - [ ] Implement post-processing effects (e.g., bloom for stars/lights).
-- [ ] Add skybox/environment map for space background instead of just a solid color/simple texture.
+- [x] Add skybox/environment map for space background instead of just a solid color/simple texture.
 - [ ] Visualize gravitational fields or other physics data.
 
 ## Refactoring & Improvements
 
-- [ ] Refine the `ObjectManager` logic within `RendererStateAdapter` - potentially extract it into its own class for clarity if `RendererStateAdapter` becomes too complex.
+- [x] Refactor the render loop orchestration out of `ModularSpaceRenderer` and into a dedicated `RenderPipeline` class for better Separation of Concerns.
 - [ ] Improve performance of orbit line updates (e.g., buffer geometry updates vs recreating lines).
 - [ ] Optimize label rendering performance.
 - [ ] Add more detailed error handling and logging.
@@ -30,5 +30,5 @@ This list tracks planned improvements and tasks for the Three.js renderer packag
 
 ## Documentation
 
-- [ ] Add more detailed API documentation using TSDoc comments in the source code.
+- [x] Add more detailed API documentation using TSDoc comments in the source code.
 - [ ] Expand the README with examples for more advanced features once implemented.

@@ -17,41 +17,66 @@ import {
 } from "@teskooano/renderer-threejs-orbits";
 import * as THREE from "three";
 import { RendererStateAdapter } from "./RendererStateAdapter";
+import type { ModularSpaceRendererOptions } from "./types";
+import { RenderPipeline } from "./RenderPipeline";
 
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { renderableStore } from "@teskooano/core-state";
 
+/**
+ * The main orchestrator for the Three.js rendering engine.
+ *
+ * This class acts as a facade, composing and managing a suite of specialized
+ * managers to handle different aspects of the 3D scene, such as objects,
+ * lighting, controls, and background rendering. It provides a unified API
+ * for controlling the entire rendering process.
+ *
+ * @example
+ * const renderer = new ModularSpaceRenderer(containerElement, { antialias: true });
+ * renderer.startRenderLoop();
+ */
 export class ModularSpaceRenderer {
+  /** Manages the core THREE.Scene, camera, and renderer instances. */
   public sceneManager: SceneManager;
+  /** Controls the `requestAnimationFrame` loop. */
   public animationLoop: AnimationLoop;
+  /** Manages renderer-specific state. */
   public stateManager: StateManager;
 
+  /** Manages the lifecycle of celestial `THREE.Object3D` instances. */
   public objectManager: ObjectManager;
+  /** Manages the visualization of orbital paths. */
   public orbitManager: OrbitsManager;
+  /** Manages the skybox and distant starfield. */
   public backgroundManager: BackgroundManager;
 
+  /** Manages user interaction and camera controls (e.g., OrbitControls). */
   public controlsManager: ControlsManager;
+  /** Manages the 2D HTML labels overlaid on the 3D scene. */
   public css2DManager?: CSS2DManager;
 
+  /** Manages scene lighting, including star-based light sources. */
   public lightManager: LightManager;
+  /** Manages Level of Detail for objects to optimize performance. */
   public lodManager: LODManager;
 
+  /** Bridges core application state to the renderer-consumable `renderableStore`. */
   private stateAdapter: RendererStateAdapter;
+  /** Orchestrates the per-frame update sequence. */
+  private renderPipeline: RenderPipeline;
 
+  /** An optional, injectable manager for rendering custom 2D canvas UI. */
   private canvasUIManager?: { render(): void };
 
+  /**
+   * Initializes the renderer and all its subordinate managers.
+   *
+   * @param container The HTML element that will host the renderer's canvas.
+   * @param options Configuration options for the renderer.
+   */
   constructor(
     container: HTMLElement,
-    options: {
-      antialias?: boolean;
-      shadows?: boolean;
-      hdr?: boolean;
-      background?: string | THREE.Texture;
-      showGrid?: boolean;
-      showCelestialLabels?: boolean;
-      showAuMarkers?: boolean;
-      showDebrisEffects?: boolean;
-    } = {},
+    options: ModularSpaceRendererOptions = {},
   ) {
     this.stateAdapter = new RendererStateAdapter();
 
@@ -107,13 +132,24 @@ export class ModularSpaceRenderer {
     this.backgroundManager = new BackgroundManager(this.sceneManager.scene);
     this.backgroundManager.setCamera(this.sceneManager.camera);
 
+    this.renderPipeline = new RenderPipeline({
+      sceneManager: this.sceneManager,
+      controlsManager: this.controlsManager,
+      orbitManager: this.orbitManager,
+      objectManager: this.objectManager,
+      backgroundManager: this.backgroundManager,
+      lightManager: this.lightManager,
+      lodManager: this.lodManager,
+      css2DManager: this.css2DManager,
+      animationLoop: this.animationLoop,
+      canvasUIManager: this.canvasUIManager,
+    });
+
     this.setupEventListeners(container);
 
     this.setupAnimationCallbacks();
 
-    window.addEventListener("resize", () => {
-      this.onResize(container.clientWidth, container.clientHeight);
-    });
+    this.onResize(container.clientWidth, container.clientHeight);
 
     if (options.showGrid !== undefined) {
       this.sceneManager.setGridVisible(options.showGrid);
@@ -127,6 +163,10 @@ export class ModularSpaceRenderer {
     }
   }
 
+  /**
+   * Sets up event listeners for the renderer.
+   * @param container The main HTML container for the renderer.
+   */
   private setupEventListeners(container: HTMLElement): void {
     container.addEventListener("toggleGrid", () => {
       this.sceneManager.toggleGrid();
@@ -143,79 +183,47 @@ export class ModularSpaceRenderer {
       }
     });
 
+    // This listener is a hook for responding to camera system events.
     document.addEventListener("camera-transition-complete", (event) => {
       const customEvent = event as CustomEvent;
       if (customEvent.detail) {
+        // Future logic can be placed here, e.g., for analytics or UI updates.
       }
     });
   }
 
+  /**
+   * Defines the sequence of operations for each frame of the animation loop.
+   * The order is critical for ensuring effects are based on the latest data.
+   */
   private setupAnimationCallbacks(): void {
-    const mainUpdateCallback = (deltaTime: number, elapsedTime: number) => {
-      // Update controls and camera position first
-      this.controlsManager.update(deltaTime); // Assuming deltaTime from loop is same as controlsManager needs
-
-      this.orbitManager.updateAllVisualizations();
-
-      // objectManager.updateRenderers might be better after LOD and before CSS2D if it places objects
-      this.objectManager.updateRenderers(
-        elapsedTime,
-        this.lightManager.getStarLightsData(),
-        this.sceneManager.renderer,
-        this.sceneManager.scene,
-        this.sceneManager.camera,
-      );
-
-      this.backgroundManager.update(deltaTime); // Now uses updated camera
-
-      this.lodManager.update(); // Update LODs based on new camera position
-
-      if (this.css2DManager && typeof this.css2DManager.render === "function") {
-        this.css2DManager.render(this.camera); // Render CSS2D with updated camera
-      }
-
-      // Run any custom render callbacks
-      this.animationLoop.getRenderCallbacks().forEach((callback) => callback());
-
-      // Perform the main scene render
-      this.sceneManager.render();
-
-      // Render any top-level canvas UI
-      if (this.canvasUIManager) {
-        this.canvasUIManager.render();
-      }
-
-      // Original position of this.render() call is removed as its logic is now inlined above.
-      // this.render();
-    };
-
-    this.animationLoop.onAnimate(mainUpdateCallback);
+    this.animationLoop.onAnimate(this.renderPipeline.update);
   }
 
   /**
    * Gets the underlying Three.js scene instance.
-   * @returns {THREE.Scene} The scene object.
+   * @returns The scene object.
    */
   get scene(): THREE.Scene {
     return this.sceneManager.scene;
   }
   /**
    * Gets the active Three.js perspective camera instance.
-   * @returns {THREE.PerspectiveCamera} The camera object.
+   * @returns The camera object.
    */
   get camera(): THREE.PerspectiveCamera {
     return this.sceneManager.camera;
   }
   /**
    * Gets the underlying Three.js WebGL renderer instance.
-   * @returns {THREE.WebGLRenderer} The renderer object.
+   * @returns The renderer object.
    */
   get renderer(): THREE.WebGLRenderer {
     return this.sceneManager.renderer;
   }
   /**
    * Gets the associated OrbitControls instance.
-   * @returns {OrbitControls} The controls instance.
+   * @returns The controls instance.
    */
   get controls() {
     return this.controlsManager.controls;
@@ -236,8 +244,8 @@ export class ModularSpaceRenderer {
 
   /**
    * Handles window resize events, updating camera aspect ratio and renderer size.
-   * @param {number} width - The new width of the viewport.
-   * @param {number} height - The new height of the viewport.
+   * @param width - The new width of the viewport.
+   * @param height - The new height of the viewport.
    */
   onResize(width: number, height: number): void {
     this.sceneManager.onResize(width, height);
@@ -247,25 +255,14 @@ export class ModularSpaceRenderer {
 
   /**
    * Executes a single render frame.
-   * Updates LODs, objects, CSS2D elements, calls custom render callbacks,
-   * updates controls, and renders the scene.
+   *
+   * @deprecated The rendering logic is now managed by the internal animation loop.
+   * Calling this method is unnecessary and may have no effect.
    */
   render(): void {
     // Most logic moved to mainUpdateCallback within animationLoop.onAnimate
-    // If there's anything that absolutely must happen outside the animation loop's direct callback
-    // but still be part of a "render" call, it would go here.
-    // For now, this method can be simplified or even removed if mainUpdateCallback handles all.
-    // If sceneManager.render() was the only substantive thing here and it's now in mainUpdateCallback,
-    // this method might become redundant unless called from elsewhere for a specific reason (e.g., forced single refresh).
-    // For safety, let's keep it for now but ensure it doesn't double-render.
-    // However, the primary rendering path is now mainUpdateCallback.
-    // If setupAnimationCallbacks correctly sets up the loop to call sceneManager.render(),
-    // calling it again here would be a double render per frame.
-    // Let's comment out the direct rendering here as it's handled by the animation loop.
-    // this.sceneManager.render();
-    // if (this.canvasUIManager) {
-    //   this.canvasUIManager.render();
-    // }
+    // This method is kept for API compatibility but is effectively a no-op,
+    // as the primary rendering path is the animation loop.
   }
 
   /**
@@ -295,7 +292,7 @@ export class ModularSpaceRenderer {
 
   /**
    * Sets the visibility of celestial object labels (CSS2D layer).
-   * @param {boolean} visible - True to show labels, false to hide.
+   * @param visible - True to show labels, false to hide.
    */
   setCelestialLabelsVisible(visible: boolean): void {
     this.css2DManager?.setLayerVisibility(
@@ -305,21 +302,21 @@ export class ModularSpaceRenderer {
   }
   /**
    * Sets the visibility of the background grid helper.
-   * @param {boolean} visible - True to show the grid, false to hide.
+   * @param visible - True to show the grid, false to hide.
    */
   setGridVisible(visible: boolean): void {
     this.sceneManager.setGridVisible(visible);
   }
   /**
    * Sets the visibility of the AU (Astronomical Unit) marker lines.
-   * @param {boolean} visible - True to show AU markers, false to hide.
+   * @param visible - True to show AU markers, false to hide.
    */
   setAuMarkersVisible(visible: boolean): void {
     this.sceneManager.setAuMarkersVisible(visible);
   }
   /**
    * Sets the visibility of all orbital lines.
-   * @param {boolean} visible - True to show orbits, false to hide.
+   * @param visible - True to show orbits, false to hide.
    */
   setOrbitsVisible(visible: boolean): void {
     this.orbitManager.setVisibility(visible);
@@ -338,31 +335,35 @@ export class ModularSpaceRenderer {
   }
 
   /**
-   * @deprecated Use ControlsManager methods (`transitionTo`, `transitionTargetTo`) and CameraManager for camera manipulation.
-   * This method is no longer suitable for high-level camera control.
-   */
-  updateCamera(position: THREE.Vector3, target: THREE.Vector3): void {
-    console.warn(
-      "[ModularSpaceRenderer.updateCamera] This method is deprecated. Use CameraManager or ControlsManager directly.",
-    );
-    // Preserving a semblance of old behavior, but this is not a smooth transition.
-    this.camera.position.copy(position);
-    this.controlsManager.controls.target.copy(target);
-    this.controlsManager.controls.update();
-  }
-
-  /**
    * Sets an optional Canvas UI manager to be rendered on top of the 3D scene.
-   * @param {object} uiManager - An object with a `render()` method.
-   * @param {function} uiManager.render - The function to call during the render loop.
+   * The provided object must have a `render()` method that will be called
+   * at the end of each frame.
+   *
+   * @param uiManager - An object with a `render()` method.
    */
   setCanvasUIManager(uiManager: { render(): void }): void {
     this.canvasUIManager = uiManager;
+    // We need to recreate the pipeline if the UI manager is set after initialization.
+    // This is a simple way to handle it, though a more robust solution might
+    // involve a setter on the pipeline itself.
+    this.renderPipeline = new RenderPipeline({
+      sceneManager: this.sceneManager,
+      controlsManager: this.controlsManager,
+      orbitManager: this.orbitManager,
+      objectManager: this.objectManager,
+      backgroundManager: this.backgroundManager,
+      lightManager: this.lightManager,
+      lodManager: this.lodManager,
+      css2DManager: this.css2DManager,
+      animationLoop: this.animationLoop,
+      canvasUIManager: this.canvasUIManager,
+    });
+    this.setupAnimationCallbacks();
   }
 
   /**
    * Adds a callback function to be executed during each render frame.
-   * @param {function} callback - The function to execute.
+   * @param callback - The function to execute.
    */
   addRenderCallback(callback: () => void): void {
     this.animationLoop.onRender(callback);
@@ -370,7 +371,7 @@ export class ModularSpaceRenderer {
 
   /**
    * Removes a previously added render callback function.
-   * @param {function} callback - The callback function to remove.
+   * @param callback - The callback function to remove.
    */
   removeRenderCallback(callback: () => void): void {
     this.animationLoop.removeRenderCallback(callback);
@@ -378,8 +379,8 @@ export class ModularSpaceRenderer {
 
   /**
    * Retrieves a specific 3D object from the scene by its ID.
-   * @param {string} id - The unique identifier of the object.
-   * @returns {THREE.Object3D | null} The found object, or null if not found.
+   * @param id - The unique identifier of the object.
+   * @returns The found object, or null if not found.
    */
   public getObjectById(id: string): THREE.Object3D | null {
     return this.objectManager.getObject(id);
@@ -387,8 +388,9 @@ export class ModularSpaceRenderer {
 
   /**
    * Calculates the total number of triangles currently being rendered in the scene.
-   * Traverses the scene graph and sums up triangles from Mesh geometries.
-   * @returns {number} The total triangle count.
+   * This is a costly operation and should only be used for debugging purposes.
+   *
+   * @returns The total triangle count.
    */
   public getTriangleCount(): number {
     let count = 0;
@@ -407,10 +409,11 @@ export class ModularSpaceRenderer {
 
   /**
    * Directly tells the ControlsManager to start or stop following a THREE.Object3D.
-   * This is a lower-level method. For semantic focus and transitions, use CameraManager.
+   * This is a low-level method. For semantic focus and smooth transitions,
+   * use the application's `CameraManager`.
    *
-   * @param {THREE.Object3D | null} object The THREE.Object3D to follow, or null to stop.
-   * @param {THREE.Vector3} [cameraOffset] The offset the camera should maintain from the object. Required if object is not null.
+   * @param object The THREE.Object3D to follow, or null to stop.
+   * @param cameraOffset The offset the camera should maintain from the object. Required if `object` is not null.
    */
   setFollowTargetObject(
     object: THREE.Object3D | null,
@@ -435,63 +438,16 @@ export class ModularSpaceRenderer {
   }
 
   /**
-   * @deprecated Prefer using CameraManager for focus and follow behaviors.
-   * This method now acts as a way to look up an object by ID and then call `setFollowTargetObject`.
-   * It does NOT handle transitions; CameraManager does.
-   */
-  setFollowTarget(
-    objectId: string | null,
-    _targetPosition?: THREE.Vector3, // These are ignored as CameraManager handles positioning
-    _cameraPosition?: THREE.Vector3, // These are ignored
-  ): void {
-    if (!this.controlsManager) {
-      console.error(
-        "[Renderer.setFollowTarget] ControlsManager not initialized.",
-      );
-      return;
-    }
-    console.warn(
-      "[ModularSpaceRenderer.setFollowTarget] Deprecated. Use CameraManager for focus behaviors.",
-    );
-
-    if (objectId === null) {
-      this.controlsManager.stopFollowing();
-      return;
-    }
-
-    const objectToFollow = this.objectManager.getObject(objectId);
-
-    if (!objectToFollow) {
-      console.warn(
-        `[Renderer.setFollowTarget] Could not find object with ID '${objectId}' to follow.`,
-      );
-      this.controlsManager.stopFollowing(); // Ensure we stop if previous target is now invalid
-      return;
-    }
-
-    // This deprecated version won't have a specific offset. It will rely on ControlsManager's default or last offset if any.
-    // Or, better, we simply state it cannot determine offset and a direct call to startFollowing on controlsManager is needed.
-    // For now, it just sets the object, assuming CameraManager has ALREADY positioned the camera
-    // and ControlsManager.startFollowing will be called by CameraManager with the correct offset.
-    // Effectively, this method becomes a no-op if CameraManager is used correctly.
-    // To make it *somewhat* useful as a direct call for *just starting to follow an already positioned camera*:
-    const currentCameraPos = this.camera.position.clone();
-    const targetObjPos = objectToFollow.getWorldPosition(new THREE.Vector3());
-    const impliedOffset = currentCameraPos.sub(targetObjPos);
-    this.controlsManager.startFollowing(objectToFollow, impliedOffset);
-  }
-
-  /**
-   * Set whether debug visualization is enabled
-   * @param enabled Whether debug visualizations should be shown
+   * Enables or disables debug visualizations for various renderer components.
+   * @param enabled Whether debug visualizations should be shown.
    */
   public setDebugVisualization(enabled: boolean): void {
     setVisualizationEnabled(enabled);
   }
 
   /**
-   * Toggle debug visualization on/off
-   * @returns The new state (true if enabled, false if disabled)
+   * Toggles debug visualizations on or off.
+   * @returns The new state (true if enabled, false if disabled).
    */
   public toggleDebugVisualization(): boolean {
     const newState = !debugConfig.visualize;
@@ -500,16 +456,16 @@ export class ModularSpaceRenderer {
   }
 
   /**
-   * Set whether debris effects should be shown when objects are destroyed
-   * @param enabled Whether debris effects should be shown
+   * Enables or disables the particle effects shown when objects are destroyed.
+   * @param enabled Whether debris effects should be shown.
    */
   public setDebrisEffectsEnabled(enabled: boolean): void {
     this.objectManager.setDebrisEffectsEnabled(enabled);
   }
 
   /**
-   * Toggle debris effects on/off
-   * @returns The new state (true if enabled, false if disabled)
+   * Toggles debris effects on or off.
+   * @returns The new state (true if enabled, false if disabled).
    */
   public toggleDebrisEffects(): boolean {
     return this.objectManager.toggleDebrisEffects();
@@ -517,8 +473,9 @@ export class ModularSpaceRenderer {
 
   /**
    * Sets the global debug mode for the renderer.
-   * Toggles the origin debug sphere and forces fallback meshes.
+   * This enables various visual helpers and may impact performance.
    * Note: Forcing fallback meshes currently requires object recreation.
+   *
    * @param enabled - If true, enables debug mode.
    */
   public setDebugMode(enabled: boolean): void {
@@ -529,8 +486,10 @@ export class ModularSpaceRenderer {
   }
 
   /**
-   * Returns the OrbitsManager instance to allow configuration of orbit visualizations.
-   * @returns {OrbitsManager} The orbit manager instance
+   * Returns the `OrbitsManager` instance to allow for advanced configuration
+   * of orbit visualizations, such as changing the visualization mode.
+   *
+   * @returns The orbit manager instance.
    */
   getOrbitsManager(): OrbitsManager {
     return this.orbitManager;

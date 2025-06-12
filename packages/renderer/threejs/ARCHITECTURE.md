@@ -4,124 +4,107 @@ This document describes the architecture of the `@teskooano/renderer-threejs` pa
 
 ## Overview
 
-This package does not contain the core rendering logic itself. Instead, it imports components from the other `@teskooano/renderer-threejs-*` packages and wires them together to provide a unified rendering facade.
+This package does not contain core rendering logic itself. Instead, it imports and wires together managers from the other `@teskooano/renderer-threejs-*` packages to provide a unified rendering facade.
 
-Its primary class, `ModularSpaceRenderer`, instantiates and coordinates managers for:
-
-- **Core**: Scene, Camera, Renderer, Animation Loop, State (`@teskooano/renderer-threejs-core`)
-- **Object Rendering**: Meshes (`@teskooano/renderer-threejs-objects`)
-- **Orbit Rendering**: Lines (`@teskooano/renderer-threejs-orbits`)
-- **Background Rendering**: Starfield (`@teskooano/renderer-threejs-background`)
-- **Interaction**: Controls, UI Overlays (`@teskooano/renderer-threejs-interaction`)
-- **Effects**: Lighting, LOD (`@teskooano/renderer-threejs-effects`)
-
-It also includes `RendererStateAdapter` to manage visual settings or states specific to the integrated renderer.
-
-These are then used by the main application (`@teskooano/teskooano`) or potentially a simulation orchestration layer (`@teskooano/app-simulation`).
+Its primary class, `ModularSpaceRenderer`, instantiates and coordinates these managers. Its other key component, `RendererStateAdapter`, acts as the bridge between the application's core state and the data format required by the rendering engine.
 
 ```mermaid
 graph TD
-    subgraph Application
-        State[Core State @teskooano/core-state];
-        AppUI[Application UI]
+    subgraph "Application"
+        CoreState["Core State<br/>(@teskooano/core-state)"];
+        AppUI["Application UI"];
     end
 
-    subgraph Integrator[@teskooano/renderer-threejs]
+    subgraph "Integrator (@teskooano/renderer-threejs)"
         direction TB
-        MSR[ModularSpaceRenderer];
-        RSA[RendererStateAdapter];
+        MSR["ModularSpaceRenderer"];
+        RSA["RendererStateAdapter"];
+        RP["RenderPipeline"];
     end
 
-    subgraph Core[@teskooano/renderer-threejs-core]
-        SceneMgr(SceneManager);
-        AnimLoop(AnimationLoop);
-        StateMgr(StateManager);
+    subgraph "Renderer Data"
+        RenderableStore["renderableStore"];
     end
 
-    subgraph VisualizationComponents
-        ObjMgr(ObjectManager - @teskooano/renderer-threejs-objects);
-        OrbitMgr(OrbitManager - @teskooano/renderer-threejs-orbits);
-        BgMgr(BackgroundManager - @teskooano/renderer-threejs-background);
+    subgraph "Core (@teskooano/renderer-threejs-core)"
+        SceneMgr("SceneManager");
+        AnimLoop("AnimationLoop");
     end
 
-    subgraph Interaction[@teskooano/renderer-threejs-interaction]
-        Interaction -- Provides --> ControlsM[ControlsManager]
-        Interaction -- Provides --> CSS2DM[CSS2DManager]
+    subgraph "Visualization"
+        ObjMgr("ObjectManager<br/>@teskooano/renderer-threejs-objects");
+        OrbitMgr("OrbitManager<br/>@teskooano/renderer-threejs-orbits");
+        BgMgr("BackgroundManager<br/>@teskooano/renderer-threejs-background");
     end
 
-    subgraph Effects[@teskooano/renderer-threejs-effects]
-        Effects -- Provides --> LightM[LightManager]
-        Effects -- Provides --> LODM[LODManager]
+    subgraph "Interaction (@teskooano/renderer-threejs-interaction)"
+        ControlsM("ControlsManager");
+        CSS2DM("CSS2DManager");
     end
 
-    AppUI -- Instantiates --> MSR;
-    MSR -- Instantiates & Coordinates --> SceneMgr;
-    MSR -- Instantiates & Coordinates --> AnimLoop;
-    MSR -- Instantiates & Coordinates --> StateMgr;
-    MSR -- Instantiates & Coordinates --> ObjMgr;
-    MSR -- Instantiates & Coordinates --> OrbitMgr;
-    MSR -- Instantiates & Coordinates --> BgMgr;
-    MSR -- Instantiates & Coordinates --> ControlsM;
-    MSR -- Instantiates & Coordinates --> CSS2DM;
-    MSR -- Instantiates & Coordinates --> LightM;
-    MSR -- Instantiates & Coordinates --> LODM;
-    MSR -- Uses --> RSA;
+    subgraph "Effects (@teskooano/renderer-threejs-effects)"
+        LightM("LightManager");
+        LODM("LODManager");
+    end
 
-    StateMgr -- Reads --> State;
-    ObjMgr -- Reads --> State;
-    OrbitMgr -- Reads --> State;
-    SceneMgr -- Reads --> State;
+    AppUI -- "Instantiates" --> MSR;
+    MSR -- "Instantiates" --> RSA;
+    MSR -- "Instantiates" --> RP;
+    MSR -- "Instantiates & Coordinates" --> SceneMgr;
+    MSR -- "Instantiates & Coordinates" --> AnimLoop;
+    MSR -- "Instantiates & Coordinates" --> ObjMgr;
+    MSR -- "Instantiates & Coordinates" --> OrbitMgr;
+    MSR -- "Instantiates & Coordinates" --> BgMgr;
+    MSR -- "Instantiates & Coordinates" --> ControlsM;
+    MSR -- "Instantiates & Coordinates" --> CSS2DM;
+    MSR -- "Instantiates & Coordinates" --> LightM;
+    MSR -- "Instantiates & Coordinates" --> LODM;
 
-    AnimLoop -- Calls Update --> MSRCallback[MSR Main Callback];
-    MSRCallback -- Updates --> ObjMgr;
-    MSRCallback -- Updates --> OrbitMgr;
-    MSRCallback -- Updates --> BgMgr;
-    MSRCallback -- Renders --> SceneMgr;
-    MSRCallback -- Renders --> CSS2DM;
+    RSA -- "Subscribes to" --> CoreState;
+    RSA -- "Processes & Pushes to" --> RenderableStore;
 
-    OrbitMgr -- Uses --> RSA;
+    ObjMgr -- "Subscribes to" --> RenderableStore;
+    OrbitMgr -- "Subscribes to" --> RenderableStore;
 
-    ObjMgr -- Uses --> LightM;
-    ObjMgr -- Uses --> CSS2DM;
-    LODM -- Uses --> SceneMgr(Camera);
-    ControlsM -- Uses --> SceneMgr(Camera, DOM Element);
-    LightM -- Modifies --> SceneMgr(Scene);
-    BgMgr -- Modifies --> SceneMgr(Scene);
-    ObjMgr -- Modifies --> SceneMgr(Scene);
-    OrbitMgr -- Modifies --> SceneMgr(Scene);
+    RSA -- "Provides Visual Settings" --> OrbitMgr;
 
-    Integrator -- Uses --> Core
-    Integrator -- Uses --> Interaction
-    Integrator -- Uses --> Effects
-    Integrator -- Uses --> VisualizationComponents
+    AnimLoop -- "Calls" --> RP;
+    RP -- "Updates" --> ObjMgr;
+    RP -- "Updates" --> OrbitMgr;
+    RP -- "Updates" --> BgMgr;
+    RP -- "Renders via" --> SceneMgr;
+    RP -- "Renders via" --> CSS2DM;
 
-    Application[Application Code] -- Creates --> Integrator
-    Application -- Interacts With --> Integrator
+    ObjMgr -- "Uses" --> LightM;
+    ObjMgr -- "Uses" --> CSS2DM;
+    LODM -- "Uses Camera from" --> SceneMgr;
+    ControlsM -- "Uses Camera &<br/>DOM Element from" --> SceneMgr;
+    LightM -- "Modifies" --> SceneMgr;
+    BgMgr -- "Modifies" --> SceneMgr;
+    ObjMgr -- "Modifies" --> SceneMgr;
+    OrbitMgr -- "Modifies" --> SceneMgr;
 ```
 
 ## Core Components within this Package
 
 1.  **`ModularSpaceRenderer` (`ModularSpaceRenderer.ts`)**: The primary facade class.
 
-    - **Responsibility**: Instantiates managers from all the `threejs-*` sub-modules, passes necessary dependencies between them (e.g., scene, camera, state store references), sets up the main animation loop callbacks, provides high-level control methods (start/stop loop, toggle features), and handles disposal.
-    - It acts as the central point of configuration and control for the entire rendering system.
+    - **Responsibility**: Instantiates all managers from the `threejs-*` sub-modules, passes necessary dependencies between them (e.g., scene, camera), instantiates the `RenderPipeline`, provides high-level control methods (start/stop loop, toggle features), and handles disposal. It serves as the primary configuration and control point for the entire rendering system.
 
-2.  **`RendererStateAdapter` (`RendererStateAdapter.ts`)**:
+2.  **`RendererStateAdapter` (`RendererStateAdapter.ts`)**: The state bridge.
 
-    - **Responsibility**: Seems to primarily manage state related to visual settings or modes that affect multiple visualization components (like orbit visibility preferences). It might subscribe to specific state atoms or provide methods for the `ModularSpaceRenderer` or other managers to call to change these settings.
-    - It works alongside the `StateManager` from `threejs-core`, which handles the main object and camera state subscriptions.
+    - **Responsibility**: Acts as an adapter between the core application state and the rendering engine. It subscribes to `celestialObjects$` and `simulationState$`. Its primary job is to transform the raw physics-based `CelestialObject` data into the `RenderableCelestialObject` format, which involves scaling positions, calculating rotations, and determining lighting relationships. It then publishes this ready-to-render data to the `renderableStore`, which the visualization managers consume.
 
-3.  **`index.ts`**: Exports `ModularSpaceRenderer` and potentially other necessary types/interfaces.
+3.  **`RenderPipeline` (`RenderPipeline.ts`)**: The frame-by-frame orchestrator.
+
+    - **Responsibility**: Encapsulates the logic for the sequence of operations that occur each frame. It is instantiated by `ModularSpaceRenderer` and holds references to all the managers. Its `update` method is called by the `AnimationLoop` on each tick, and it calls the individual `update` methods on the managers in the correct order.
 
 ## Data Flow & Coordination
 
-1.  The application instantiates `ModularSpaceRenderer`, passing the container element and configuration options.
-2.  `ModularSpaceRenderer` constructor initializes all required managers from the sub-modules in the correct order, resolving dependencies (e.g., `SceneManager` first, then components needing the scene).
-3.  It registers a main update callback with the `AnimationLoop` from `threejs-core`.
-4.  When the loop runs (`tick`), it calls the main update callback.
-5.  This callback orchestrates the `update` calls for various managers (e.g., `OrbitManager.updateAllVisualizations`, `ObjectManager.updateRenderers`, `BackgroundManager.update`).
-6.  It triggers rendering via `SceneManager.render()` and `CSS2DManager.render()`.
-7.  State changes from `@teskooano/core-state` are primarily handled by `StateManager` (in `threejs-core`), which notifies relevant managers (like `ObjectManager`) via callbacks/subscriptions set up during initialization.
-8.  User interactions (like camera control) are handled by `ControlsManager` (in `threejs-interaction`), which directly updates the camera managed by `SceneManager`.
-
-This architecture keeps the concerns separated: core setup, specific visualizations, interaction logic, and effects are in their own packages, while this package focuses solely on integrating them into a cohesive whole.
+1.  The application instantiates `ModularSpaceRenderer`, passing in the container element.
+2.  `ModularSpaceRenderer`'s constructor initializes `RendererStateAdapter`, all required managers from the sub-modules, and the `RenderPipeline`.
+3.  The `RendererStateAdapter` automatically subscribes to the core state (`celestialObjects$`). As data arrives, it transforms it and pushes the processed `RenderableCelestialObject[]` into the `renderableStore`.
+4.  Managers like `ObjectManager` and `OrbitManager` subscribe to the `renderableStore` and react to its updates by creating, updating, or removing Three.js objects (meshes, lines, etc.) from the scene.
+5.  `ModularSpaceRenderer` tells the `AnimationLoop` to use the `RenderPipeline`'s `update` method as its callback.
+6.  When the loop runs (`tick`), the `RenderPipeline` orchestrates the `update` calls for all active managers in the correct order (e.g., controls first, then object positions, then final render).
+7.  User interactions (like camera control) are handled by `ControlsManager`, which directly updates the camera managed by `SceneManager`.

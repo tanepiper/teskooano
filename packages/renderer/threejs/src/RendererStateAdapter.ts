@@ -1,8 +1,8 @@
 import { OSVector3 } from "@teskooano/core-math";
 import {
   celestialObjects$,
-  renderableStore,
   getSimulationState,
+  renderableStore,
   simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
@@ -12,61 +12,51 @@ import {
   SCALE,
   scaleSize,
   type CelestialObject,
-  type CelestialSpecificPropertiesUnion,
-  type OrbitalParameters,
 } from "@teskooano/data-types";
 import { BehaviorSubject, Subscription } from "rxjs";
 import * as THREE from "three";
 import { physicsToThreeJSPosition } from "./utils/coordinateUtils";
+import type {
+  RenderableCelestialObject,
+  RendererVisualSettings,
+} from "./types";
 
-export interface RenderableCelestialObject {
-  /** Link back to the core celestial object */
-  celestialObjectId: string;
-  name: string;
-  type: CelestialType;
-  /** Current status from the core object */
-  status: CelestialStatus;
-  seed: string;
-
-  radius: number;
-  mass: number;
-  position: THREE.Vector3;
-  rotation: THREE.Quaternion;
-
-  properties?: CelestialSpecificPropertiesUnion;
-  orbit?: OrbitalParameters;
-
-  parentId?: string;
-  primaryLightSourceId?: string;
-
-  isVisible?: boolean;
-  isTargetable?: boolean;
-  isSelected?: boolean;
-  isFocused?: boolean;
-
-  realRadius_m: number;
-
-  axialTilt?: OSVector3;
-  temperature?: number;
-}
-
-export interface RendererVisualSettings {
-  trailLengthMultiplier: number;
-  physicsEngine: "keplerian" | "verlet";
-}
-
+/**
+ * Acts as a bridge between the core application state and the rendering engine.
+ *
+ * This class subscribes to the main application state observables (`celestialObjects$`
+ * and `simulationState$`). It transforms the raw, physics-based data into a
+ * `RenderableCelestialObject` format that the various rendering managers can
+ * consume. This transformation includes scaling positions, calculating rotations,
+ * and determining lighting relationships.
+ *
+ * It then publishes the transformed data to the central `renderableStore`,
+ * decoupling the renderer from the core application logic.
+ */
 export class RendererStateAdapter {
+  /** An observable for visual settings that renderer components can subscribe to. */
   public $visualSettings: BehaviorSubject<RendererVisualSettings>;
 
+  /** Subscription to the main celestial objects store. */
   private unsubscribeObjects: Subscription | null = null;
+  /** Subscription to the main simulation state store. */
   private unsubscribeSimState: Subscription | null = null;
+  /** The current simulation time, used for calculating rotations. */
   private currentSimulationTime: number = 0;
 
+  // --- Reusable scratch variables for performance ---
+  /** A reusable vector defining the 'up' axis for sidereal rotation. */
   private rotationAxis = new THREE.Vector3(0, 1, 0);
+  /** A reusable quaternion for storing the calculated axial tilt. */
   private tiltQuaternion = new THREE.Quaternion();
+  /** A reusable quaternion for storing the calculated spin based on time. */
   private spinQuaternion = new THREE.Quaternion();
+  /** A reusable Euler for converting tilt angles to a quaternion. */
   private euler = new THREE.Euler();
 
+  /**
+   * Initializes the adapter and subscribes to the core state.
+   */
   constructor() {
     const initialSimState = getSimulationState();
     this.$visualSettings = new BehaviorSubject<RendererVisualSettings>({
@@ -79,6 +69,19 @@ export class RendererStateAdapter {
     this.subscribeToCoreState();
   }
 
+  /**
+   * Calculates the final orientation of a celestial object.
+   *
+   * This method combines the object's fixed axial tilt with its continuous
+   * sidereal rotation based on the current simulation time.
+   * It reuses private class members (`tiltQuaternion`, `spinQuaternion`, etc.)
+   * to avoid creating new objects in the render loop, which is a key
+   * performance optimization.
+   *
+   * @param axialTilt The object's axial tilt in degrees (either an OSVector3 or a number).
+   * @param siderealPeriod The time it takes for one full rotation, in seconds.
+   * @returns A THREE.Quaternion representing the object's final orientation.
+   */
   private calculateRotation(
     axialTilt: OSVector3 | number | undefined,
     siderealPeriod: number | undefined,
@@ -116,6 +119,14 @@ export class RendererStateAdapter {
     return finalRotation;
   }
 
+  /**
+   * Processes a standard celestial object into its renderable equivalent.
+   *
+   * @param obj The raw celestial object from the core state.
+   * @param existing The previously existing renderable object, if any.
+   * @param determineLightSource A function to find the primary light source for this object.
+   * @returns A fully formed `RenderableCelestialObject`.
+   */
   private processStandardObject(
     obj: CelestialObject,
     existing: RenderableCelestialObject | undefined,
@@ -151,10 +162,24 @@ export class RendererStateAdapter {
       isSelected: existing?.isSelected ?? false,
       isFocused: existing?.isFocused ?? false,
       status: obj.status,
-      temperature: obj.temperature,
+      uniforms: {
+        temperature: obj.temperature,
+      },
     };
   }
 
+  /**
+   * Processes a ring system celestial object.
+   *
+   * A ring system's position and orientation are derived from its parent object.
+   * This method ensures the ring is correctly placed and tilted relative to its parent.
+   *
+   * @param obj The ring system object from the core state.
+   * @param objects The full map of all celestial objects.
+   * @param existing The previously existing renderable object, if any.
+   * @param determineLightSource A function to find the primary light source.
+   * @returns A `RenderableCelestialObject` for the ring, or `null` if the parent is not found.
+   */
   private processRingSystem(
     obj: CelestialObject,
     objects: Record<string, CelestialObject>,
@@ -204,10 +229,25 @@ export class RendererStateAdapter {
       isSelected: existing?.isSelected ?? false,
       isFocused: existing?.isFocused ?? false,
       status: obj.status,
-      temperature: obj.temperature,
+      uniforms: {
+        temperature: obj.temperature,
+      },
     };
   }
 
+  /**
+   * The main processing handler for celestial object updates.
+   *
+   * This method is called whenever the `celestialObjects$` observable emits.
+   * It iterates through all objects, transforms them into `RenderableCelestialObject`s
+   * using the appropriate helper methods (`processStandardObject`, `processRingSystem`),
+   * and then updates the central `renderableStore` with the complete new set of
+   * renderable objects.
+   *
+   * It also pre-calculates the lighting hierarchy for all objects.
+   *
+   * @param objects The complete record of celestial objects from the core state.
+   */
   private processCelestialObjectsUpdateNow(
     objects: Record<string, CelestialObject>,
   ): void {
@@ -270,7 +310,6 @@ export class RendererStateAdapter {
           case CelestialType.MOON:
           case CelestialType.DWARF_PLANET:
           case CelestialType.GAS_GIANT:
-
           case CelestialType.COMET:
           case CelestialType.ASTEROID_FIELD:
           case CelestialType.OORT_CLOUD:
@@ -301,6 +340,12 @@ export class RendererStateAdapter {
     }
   }
 
+  /**
+   * Subscribes to the core application state observables.
+   *
+   * Sets up the subscriptions to `celestialObjects$` and `simulationState$` that
+   * drive all the updates within this adapter.
+   */
   private subscribeToCoreState(): void {
     this.unsubscribeObjects = celestialObjects$.subscribe((objects) =>
       this.processCelestialObjectsUpdateNow(objects),
@@ -330,6 +375,9 @@ export class RendererStateAdapter {
     );
   }
 
+  /**
+   * Cleans up all subscriptions to prevent memory leaks.
+   */
   public dispose(): void {
     this.unsubscribeObjects?.unsubscribe();
     this.unsubscribeSimState?.unsubscribe();

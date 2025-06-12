@@ -47,16 +47,3 @@ export function threeJSToPhysicsPosition(
 
   return result;
 }
-
-/**
- * Converts a physics orientation (OSQuaternion - assuming it exists and is Y-up)
- * to a ThreeJS scene orientation (THREE.Quaternion, Y-up).
- *
- * NOTE: Currently assumes OSQuaternion is identical to THREE.Quaternion.
- * If OSQuaternion is implemented differently (e.g., different component order),
- * this function will need adjustments.
- *
- * @param physicsOrientation - The orientation quaternion from the physics engine.
- * @param target - Optional THREE.Quaternion to store the result in.
- * @returns The orientation quaternion for the ThreeJS scene.
- */

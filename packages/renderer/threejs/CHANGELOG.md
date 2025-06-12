@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refactored `ModularSpaceRenderer` to delegate its frame-by-frame update logic to a new, more modular `RenderPipeline` class.
+- Replaced the custom `EventEmitter` in `events.ts` with type-safe RxJS `Subject`s, aligning with the project's state management patterns.
+- Created dedicated interfaces (`ModularSpaceRendererOptions`, `RenderPipelineOptions`) for constructor options to improve type safety.
+
+### Removed
+
+- Removed deprecated methods `setFollowTarget` and `updateCamera` from `ModularSpaceRenderer` to clean up the public API.
+- Deleted unused `setup.ts` file.
+
+### Fixed
+
+- Completed the `coordinateUtils.ts` file by removing a documented but unimplemented function.
+
+## [0.2.0] - 2025-05-07
+
+### Changed
+
 - Updated `RendererStateAdapter.ts` to consume RxJS Observables (`celestialObjects$`, `simulationState$`) from `@teskooano/core-state`.
 - Modified `RendererStateAdapter.ts` to use `renderableActions.setAllRenderableObjects` and `visualSettings.next()` for state updates, aligning with RxJS patterns.
 - Added `seed` and `temperature` properties to `RenderableCelestialObject` within `RendererStateAdapter.ts`..
