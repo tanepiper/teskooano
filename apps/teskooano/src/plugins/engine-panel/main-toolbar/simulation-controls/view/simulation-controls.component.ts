@@ -98,5 +98,3 @@ export class SimulationControls extends HTMLElement {
       shadowRoot.getElementById("engine-value");
   }
 }
-
-customElements.define("teskooano-simulation-controls", SimulationControls);

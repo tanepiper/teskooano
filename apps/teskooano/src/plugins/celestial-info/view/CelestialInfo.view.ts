@@ -68,6 +68,4 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   }
 }
 
-customElements.define(CelestialInfo.componentName, CelestialInfo);
-
 export { FormatUtils };

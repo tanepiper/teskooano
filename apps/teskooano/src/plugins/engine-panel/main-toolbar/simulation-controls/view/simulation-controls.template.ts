@@ -40,6 +40,7 @@ template.innerHTML = `
         fill: var(--color-text-primary);
         display: block;
         margin: auto;
+        pointer-events: none; /* Prevent icon from capturing click events */
     }
 
     /* Keep styles for separator and scale display */

@@ -381,4 +381,3 @@ export class SystemControls extends HTMLElement {
 }
 
 // Define the custom element now that the class is defined.
-customElements.define("teskooano-system-controls", SystemControls);

@@ -45,8 +45,3 @@ export class AboutPanel extends HTMLElement implements IContentRenderer {
     this._controller.dispose();
   }
 }
-
-// Define the custom element if not already defined
-if (!customElements.get(AboutPanel.componentName)) {
-  customElements.define(AboutPanel.componentName, AboutPanel);
-}
