@@ -4,6 +4,7 @@ import "../../../../core/components/card";
 
 export class PluginDetailCard extends HTMLElement {
   private cardElement: HTMLElement | null = null;
+  private titleElement: HTMLElement | null = null;
   private idElement: HTMLElement | null = null;
   private descriptionElement: HTMLElement | null = null;
   private contentWrapper: HTMLElement | null = null;
@@ -14,6 +15,7 @@ export class PluginDetailCard extends HTMLElement {
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
     this.cardElement = this.shadowRoot!.querySelector("teskooano-card");
+    this.titleElement = this.shadowRoot!.querySelector('[slot="title"]');
     this.idElement = this.shadowRoot!.querySelector(".plugin-id");
     this.descriptionElement = this.shadowRoot!.querySelector(
       ".plugin-description",
@@ -26,16 +28,14 @@ export class PluginDetailCard extends HTMLElement {
   set plugin(plugin: TeskooanoPlugin) {
     if (
       !this.cardElement ||
+      !this.titleElement ||
       !this.idElement ||
       !this.descriptionElement ||
       !this.contentWrapper
     )
       return;
 
-    this.cardElement.setAttribute(
-      "card-title",
-      plugin.name || "Unnamed Plugin",
-    );
+    this.titleElement.textContent = plugin.name || "Unnamed Plugin";
     this.idElement.textContent = `ID: ${plugin.id}`;
     this.descriptionElement.textContent =
       plugin.description || "No description provided.";

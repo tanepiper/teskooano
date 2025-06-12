@@ -36,6 +36,7 @@ template.innerHTML = `
   }
 </style>
 <teskooano-card variant="fluid">
+  <span slot="title"></span>
   <div class="plugin-id" slot="header-actions">
     <!-- ID will be populated here -->
   </div>
