@@ -19,3 +19,6 @@ tasks:
   dev:
     command: npm run dev
     local: true
+  test:
+    command: npm run test
+    local: true

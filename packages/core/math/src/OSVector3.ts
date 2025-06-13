@@ -172,6 +172,61 @@ export class OSVector3 {
   }
 
   /**
+   * Linearly interpolates between this vector and another vector.
+   * @param v The vector to interpolate towards.
+   * @param alpha The interpolation factor, typically in the range [0, 1].
+   * @returns This vector for chaining.
+   */
+  lerp(v: OSVector3, alpha: number): this {
+    this.x += (v.x - this.x) * alpha;
+    this.y += (v.y - this.y) * alpha;
+    this.z += (v.z - this.z) * alpha;
+    return this;
+  }
+
+  /**
+   * Calculates the angle between this vector and another vector in radians.
+   * @param v The other vector.
+   * @returns The angle in radians. Returns 0 if either vector has zero length.
+   */
+  angleTo(v: OSVector3): number {
+    const denominator = Math.sqrt(this.lengthSq() * v.lengthSq());
+    if (denominator === 0) return 0;
+
+    const theta = this.dot(v) / denominator;
+    return Math.acos(Math.max(-1, Math.min(1, theta))); // clamp to avoid floating point errors
+  }
+
+  /**
+   * Projects this vector onto another vector.
+   * @param v The vector to project onto.
+   * @returns This vector for chaining.
+   */
+  projectOnVector(v: OSVector3): this {
+    const denominator = v.lengthSq();
+    if (denominator === 0) {
+      this.set(0, 0, 0);
+      return this;
+    }
+    const scalar = this.dot(v) / denominator;
+    return this.copy(v).multiplyScalar(scalar);
+  }
+
+  /**
+   * Reflects this vector off a plane specified by its normal vector.
+   * @param normal The normal vector of the plane (must be a unit vector).
+   * @returns This vector for chaining.
+   */
+  reflect(normal: OSVector3): this {
+    // Uses the formula: v' = v - 2 * (v . n) * n
+    const dotProduct = this.dot(normal);
+    this.x -= 2 * dotProduct * normal.x;
+    this.y -= 2 * dotProduct * normal.y;
+    this.z -= 2 * dotProduct * normal.z;
+    return this;
+  }
+
+  /**
    * Converts this OSVector3 to a string representation.
    * @returns A string in the format (x, y, z).
    */

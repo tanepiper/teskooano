@@ -11,9 +11,11 @@
   - Some tests in dependent packages use `THREE.Vector3` where `OSVector3` is expected.
   - Perform a full audit of test suites across all core packages to ensure they exclusively use `OSVector3` when interacting with functions that expect it to enforce type safety.
 
-- [ ] **Add More Vector Operations**: Consider adding common operations like `lerp`, `angleTo`, projection, reflection to `OSVector3` if needed by physics or simulation.
-- [ ] **Quaternion Implementation**: Evaluate if a custom `OSQuaternion` class is needed or if using `THREE.Quaternion` directly (passed in) is sufficient.
-- [ ] **Matrix Implementation**: Consider adding `OSMatrix3` and `OSMatrix4` if complex transformations beyond quaternions are required internally.
-- [ ] **Performance**: Profile vector operations if they become a bottleneck.
-- [ ] **Testing**: Ensure comprehensive test coverage for all `OSVector3` methods and utility functions (looks like utils has tests, need to check OSVector3).
+- [x] **Add More Vector Operations**: Added `lerp`, `angleTo`, `projectOnVector`, and `reflect`.
+- [x] **Quaternion Implementation**: Basic `OSQuaternion` class created with `clone`, `set`, `copy`, and `setFromAxisAngle`.
+- [x] **Implement Full Quaternion Math**: Flesh out the `OSQuaternion` class with multiplication, inversion, slerp, and other common quaternion operations.
+- [x] **Matrix Implementation**: Consider adding `OSMatrix3` and `OSMatrix4` if complex transformations beyond quaternions are required internally.
+- [x] **Performance**: Profile vector operations if they become a bottleneck. Refactored `OSMatrix4.multiply` and `OSMatrix4.lookAt` to be allocation-free.
+- [x] **Testing**: Ensure comprehensive test coverage for all `OSVector3`, `OSQuaternion`, `OSMatrix3` and `OSMatrix4` methods.
+- [ ] **Fix Moon Runner**: Investigate why `moon run math:test` is failing and correct the project configuration.
 - [ ] **Documentation**: Add more detailed JSDoc comments to utility functions explaining edge cases or usage examples.

@@ -16,7 +16,8 @@
   ],
   "scripts": {
     "build": "tsc --build",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test": "vitest run"
   },
   "dependencies": {
     "three": "0.176.0"
