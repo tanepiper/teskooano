@@ -1,126 +1,87 @@
 # Celestial System Architecture Analysis
 
-This document provides a consolidated overview of the architecture within the `packages/systems/celestial` package, synthesizing analyses from its subdirectories (renderers, generation, textures, shaders, utils).
+This document provides a consolidated overview of the architecture within the `packages/systems/celestial` package. It describes the current state after the refactoring of the material and texture systems.
 
 ## I. Overview
 
-The `celestial` package is responsible for defining, generating, and rendering various celestial objects within the Open Space engine. It encompasses:
+The `@teskooano/systems-celestial` package is responsible for defining and creating the `THREE.js` visual representations for all celestial objects in the engine. It bridges the abstract data definitions in `@teskooano/data-types` with concrete, renderable `THREE.Object3D` instances.
 
-- **Data Representation**: (Assumed, defined in `@teskooano/data-types`) Defines the properties and types of celestial objects (Stars, Planets, Moons, Asteroids, Black Holes, etc.).
-- **Procedural Generation**: Creates procedural textures (color, normal maps) for object surfaces, primarily using 3D Simplex noise.
-- **Texture Management**: Provides a framework for generating and potentially caching different types of textures.
-- **Rendering**: Contains various renderers responsible for creating and managing the Three.js visual representations (`Object3D`) of different celestial object types, utilizing custom shaders and materials.
-- **Shaders**: Holds the GLSL shader code implementing visual effects, lighting, and procedural patterns.
-- **Common Utilities**: Includes shared components like gravitational lensing effects and event dispatchers.
+Its core responsibilities include:
+
+- **Rendering**: Containing various `CelestialRenderer` implementations responsible for creating and managing the visual representation (meshes, materials, shaders) of different celestial object types.
+- **Procedural Generation**: Generating complex, procedural surfaces and effects primarily on the GPU using custom shaders, especially for planets, stars, and gas giants.
+- **Shaders**: Housing the GLSL shader code that implements all visual effects, lighting models, and procedural patterns.
+- **Common Utilities**: Providing shared, reusable components for complex effects like gravitational lensing.
 
 ## II. Core Sub-Systems Analysis
 
 ### A. Renderers (`src/renderers/`)
 
-This is the largest and most complex part, containing specific logic for different object categories.
+This is the heart of the package, containing the logic for instantiating different object categories. The system is a collection of specialized sub-systems rather than a single monolithic renderer.
 
-- **Overall Structure**: Organized into subdirectories per object type (terrestrial, stars, gas-giants, rings, particles, earth, common).
-- **Renderer Interface**: Most renderers implement a common (though not formally defined in a shared file) `CelestialRenderer` interface with methods like `createMesh`, `update`, and `dispose`.
-- **Common Patterns**:
-  - **Mesh Creation (`createMesh`)**: Typically creates a `THREE.Group`, determines appropriate geometry (often `SphereGeometry`, `RingGeometry`, `PlaneGeometry`, or `Points`), instantiates custom materials, potentially adds secondary elements (atmosphere, clouds, rings, corona, jets), and loads/assigns textures or triggers procedural generation.
-  - **Material Management**: Renderers often manage instances of custom `THREE.ShaderMaterial` subclasses, storing them in Maps keyed by object ID.
-  - **Update Loop (`update`)**: Called per frame to update time-based uniforms in materials, handle animations, update LOD, and potentially react to changes in light sources or camera position.
-  - **Disposal (`dispose`)**: Cleans up associated Three.js resources (geometries, materials, textures) for specific objects.
-- **Variations & Inconsistencies**:
-  - **Base Classes**: Some renderers use abstract base classes (`BaseStarRenderer`, `BaseGasGiantRenderer`) to share logic, while others are self-contained (`Terrestrial`, `Earth`, `Particles`).
-  - **Factory Functions**: Some have factory functions (`createStarRenderer`, `createEarthRenderer`, `createTerrestrialRenderer`), while others don't (`GasGiants`, `Particles`, `Rings`).
-  - **LOD**: Level of Detail is handled differently: via external helpers (`createLODMesh`, `createLODSphereMesh` used by Terrestrial/Earth), integrated into the material (`updateLOD` in Gas Giants), or by adjusting particle counts (`OortCloudRenderer`). Stars use multiple fixed meshes/planes for corona LOD.
-  - **Shader Handling**: Most load external `.glsl` files, but the `Star` renderer embeds shaders as strings.
-  - **Lighting**: Lighting calculations and uniform requirements vary. Some shaders expect world-space positions, others might use view-space. Multi-light support exists in some shaders but isn't consistently applied across all renderers. Update methods fetch light source info from a `lightSources` map passed in, often falling back to defaults.
-  - **State Dependency**: Many `update` methods rely on fetching object state (position, `primaryLightSourceId`) directly from `celestialObjectsStore`.
-  - **Texture Handling**: Terrestrial renderer handles procedural texture generation _and_ IndexedDB caching directly within its `loadPlanetTextures` method. Earth renderer loads specific static textures. Other renderers likely expect textures to be provided or generated via the `TextureFactory`.
-- **Specialized Renderers**:
-  - **Terrestrial**: Focuses on procedural texture generation (using `../generation/procedural-texture.ts`) and IndexedDB caching. Includes atmosphere rendering.
-  - **Stars**: Handles various spectral types and exotics (neutron stars, black holes). Uses embedded shaders, billboarded corona effects, and integrates the common `GravitationalLensingHelper`.
-  - **Gas Giants**: Uses a class-based system (Sudarsky classification) with distinct shaders per class. Integrates the `rings` renderer and has material-level LOD.
-  - **Rings**: A modular, data-driven system using `RingGeometry` and shaders with shadow calculations. Designed to be used by other renderers.
-  - **Particles**: Uses `THREE.Points` and `PointsMaterial` for asteroid fields and Oort clouds, with procedural placement and distinct `sizeAttenuation` settings.
-  - **Earth**: A highly specialized renderer for Earth using specific textures, layered materials (body, clouds), and LOD.
-- **Common (`src/renderers/common/`)**:
-  - **`GravitationalLensingHelper`**: Provides reusable lensing effect via render-to-texture and a custom shader material. Implies multi-pass rendering.
+- **Overall Structure**: Organized into subdirectories by celestial type (`stars`, `gas-giants`, `terrestrial`, `particles`, `rings`, `common`).
+- **Core Interface & Base Class**:
+  - `CelestialRenderer` (`renderers/common/CelestialRenderer.ts`): A shared interface defining the public contract for all renderers. Its most critical method is `getLODLevels`, which returns an array of `LODLevel` objects that are consumed by the `@teskooano/renderer-threejs-lod` package's `LODManager`.
+  - `BaseCelestialRenderer` (`renderers/common/BaseCelestialRenderer.ts`): An abstract base class providing common functionality like time tracking and default `update` and `dispose` methods. Most specific renderers extend a more specialized base class (e.g., `BaseStarRenderer`) rather than this one directly.
+- **Level of Detail (LOD) Strategy**: LOD is a key concept, but it is implemented differently across the various sub-systems, representing a major inconsistency. The `getLODLevels` method is the unifying API, but its implementation varies:
+  - **Terrestrial/Gas Giants**: The `getLODLevels` method returns multiple `LODLevel` objects, each with a completely different `THREE.Mesh` (using simpler geometry and materials for lower detail). For example, a high-detail gas giant uses a complex procedural shader, while its low-detail version is a simple `MeshBasicMaterial`.
+  - **Stars**: The `getLODLevels` method returns a single high-detail group and several low-detail billboards for the corona.
+  - **Particles (Asteroids/Oort Clouds)**: The `getLODLevels` method for asteroid fields returns multiple `THREE.Points` objects with progressively fewer particles. The Oort cloud renderer returns one high-detail particle system and then empty groups for lower LODs.
+- **Factory Functions**: Instantiation patterns are inconsistent.
+  - **Stars**: A central factory function, `createStarRenderer`, exists in `renderers/stars/index.ts`. It inspects the star's `spectralClass` and `stellarType` to return the correct concrete `BaseStarRenderer` implementation (e.g., `ClassGStarRenderer`, `NeutronStarRenderer`, `KerrBlackHoleRenderer`).
+  - **Gas Giants & Others**: No factory exists. The consuming code is responsible for selecting and instantiating the correct renderer class (e.g., `ClassIGasGiantRenderer`) based on the object's properties.
+- **Inconsistent `update` Signatures**: Most renderers adhere to the `update(time, lightSources, camera)` signature. However, renderers for exotic objects like black holes, which require multi-pass rendering for effects like gravitational lensing, have a custom signature: `update(time, renderer, scene, camera)`.
 
-### B. Procedural Generation (`src/generation/`)
+### B. Materials & Shaders (`src/materials/`, `src/shaders/`)
 
-Responsible for creating procedural textures on the CPU.
+This system was heavily refactored to favor GPU-based proceduralism.
 
-- **Primary Method**: Uses 3D Simplex Noise via `simplex-noise` library (`procedural-texture.ts`).
-- **Key Technique**: Maps 2D texture coordinates to 3D sphere coordinates (`mapEquirectangularToSphere`) before sampling 3D noise, ensuring seamless spherical textures.
-- **Color Mapping**: Complex `getColorForHeight` function maps normalized noise values (height) to colors based on detailed `SurfacePropertiesUnion` types, supporting blending.
-- **Output**: Generates color and normal maps as `OffscreenCanvas` objects.
-- **Caching**: Simple in-memory cache for generated textures.
-- **Legacy Code**: Contains an apparently unused `diamond-square.ts` implementation with significant code duplication (helpers, `getColorForHeight`).
+- **Shader-First Approach**: The visual appearance of most objects is defined in GLSL shaders located in `src/shaders/`. These are organized by object type. They implement procedural noise (Simplex, FBM), various lighting models, and complex effects.
+- **Inconsistent Shader Handling**: A significant inconsistency remains:
+  - **External `.glsl` files**: Most renderers (Gas Giants, Terrestrial, Rings) load shaders from external `.glsl` files. This is the preferred approach for maintainability.
+  - **Embedded GLSL strings**: The `BaseStarRenderer` and `GravitationalLensingMaterial` embed their GLSL shader code directly as template literals within their TypeScript files. This makes them difficult to edit and manage.
+- **Procedural Planet Rendering**: The old CPU-based texture generation system has been entirely replaced. Terrestrial planets are now rendered using a single, powerful procedural shader.
+  - `procedural-planet.material.ts`: A `ShaderMaterial` that takes a large `ProceduralPlanetUniforms` object.
+  - `procedural.fragment.glsl`: A complex fragment shader that generates the entire planet surface on the fly using the provided uniforms.
+  - `procedural.ts`: Defines the `ProceduralPlanetUniforms` type, which exposes dozens of parameters controlling every aspect of the planet's appearance (noise functions, terrain shape, color bands, height levels, shininess, etc.).
+- **Material Services**: The `terrestrial` renderer uses service classes (`PlanetMaterialService`, `AtmosphereService`) to encapsulate the logic for creating and configuring materials, which is a good separation of concerns.
 
-### C. Texture System (`src/textures/`)
+### C. Specialized Renderer Deep Dive
 
-Provides a framework and factory for accessing texture generators.
-
-- **Resource Management**: `TextureResourceManager` provides centralized management of WebGL resources (renderer, render target, scene, camera) for efficient texture generation.
-- **Generators**: Separate generator classes (`TerrestrialTextureGenerator`, `GasGiantTextureGenerator`, etc.) extend `TextureGeneratorBase`.
-- **Base Class**: `TextureGeneratorBase` provides shared WebGL resources (via the resource manager) for texture generation with built-in caching.
-- **Factory**: `TextureFactory` manages instances of texture generators and provides a simplified API with additional caching.
-- **Mixed Approaches**: Supports both WebGL shader-based generation and CPU canvas-based generation as appropriate for each texture type.
-- **Standardized Results**: All generators return a consistent `TextureResult` interface from `TextureTypes.ts`.
-- **Instance Methods**: Uses instance-based architecture instead of static methods for better state management and resource control.
-- **Type Integration**: Leverages types from `@teskooano/data-types` for configuration options.
-
-### D. Shaders (`src/shaders/`)
-
-Contains GLSL code defining the visual appearance and effects.
-
-- **Organization**: Grouped into subdirectories by object type.
-- **Techniques**: Employs procedural noise (Simplex, FBM), various lighting models (Ambient/Diffuse, Blinn-Phong, Multi-light), texturing (including day/night blending, specular, normal maps), atmospheric scattering (Fresnel), shadow mapping (rings), and distortion effects (lensing).
-- **Configuration**: Highly configurable via uniforms passed from materials.
-- **Inconsistency**: Star shaders are embedded in TypeScript, unlike others which are external `.glsl` files.
-
-### E. Utilities (`src/utils/`)
-
-Small helper modules.
-
-- **Event Dispatch**: Provides functions (`dispatchTextureProgress`, `dispatchTextureGenerationComplete`) to dispatch custom DOM events for texture generation status, enabling decoupled communication (used by `BaseTerrestrialRenderer`).
-- **Types**: Defines the structure for event details (`TextureProgressEventDetail`).
+- **Stars**: The most complex sub-system. It handles main-sequence stars, exotic remnants, and black holes.
+  - `BaseStarRenderer`: Provides common logic for a star body and a billboarded corona.
+  - **Exotics**: `NeutronStarRenderer`, `SchwarzschildBlackHoleRenderer`, and `KerrBlackHoleRenderer` are highly specialized. They create composite objects with multiple parts (jets, accretion disks, ergospheres) and integrate the `GravitationalLensingHelper` from `renderers/common/`.
+- **Gas Giants**: Organized by the Sudarsky classification (Class I-V).
+  - Each class has its own `...Renderer` and `...Material` class.
+  - They feature material-level LOD, where the `updateLOD` method on the material changes shader uniforms (e.g., reducing noise octaves) to decrease complexity at a distance.
+  - Seamlessly integrates the `RingSystemRenderer`.
+- **Terrestrial**: The `BaseTerrestrialRenderer` uses a service-based approach to compose the final object, combining a procedurally rendered planet body with optional atmosphere and cloud layers. This is one of the cleanest architectures in the package.
+- **Particles**: `AsteroidFieldRenderer` and `OortCloudRenderer` use `THREE.Points` with custom shaders. They are highly efficient but differ on a key `PointsMaterial` setting: `sizeAttenuation` is `true` for asteroid fields (particles shrink with distance) but `false` for Oort clouds (particles maintain screen size, for a distant-sky effect).
+- **Rings**: `RingSystemRenderer` is a modular, data-driven renderer that creates planetary ring systems with lighting and shadow casting from the parent body.
 
 ## III. Strengths
 
-1.  **Modularity (Partial)**: Dividing renderers and shaders by celestial type allows for specialization (e.g., detailed Earth, specific Gas Giant classes, complex Star effects). The `rings` and `common/gravitational-lensing` modules are good examples of reusable components.
-2.  **Procedural Power**: Leverages procedural generation effectively (especially 3D Simplex noise for seamless spherical textures) for creating varied terrestrial surfaces and potentially other effects (gas giants, stars).
-3.  **Data-Driven Configuration**: Uses data types (`@teskooano/data-types`) and specific options (`TextureTypes.ts`) to configure object appearance and generation. Ring creation is purely data-driven.
-4.  **Advanced Effects**: Implements complex visual effects like gravitational lensing, day/night cycles (Earth), atmospheric glow, and planetary shadows on rings.
-5.  **Decoupled Communication**: Uses DOM events (`utils/event-dispatch.ts`) for texture progress reporting, avoiding tight coupling between generation and UI.
+1.  **Powerful Proceduralism**: The shift to GPU-based procedural rendering for terrestrial planets is a major strength, allowing for infinite variation and detail without texture assets. The procedural gas giant shaders are also highly effective.
+2.  **Modularity (in places)**: The `RingSystemRenderer` and `GravitationalLensingHelper` are excellent examples of reusable, modular components that can be composed into more complex scenes. The service-based approach in the terrestrial renderer is also a strong pattern.
+3.  **Advanced Effects**: The system successfully implements very complex visual effects, including gravitational lensing (via multi-pass render-to-texture), planetary shadows on rings, and dynamic surfaces on stars.
+4.  **Specialization**: Separating renderers by celestial type (and sub-type) allows for highly specialized and optimized rendering for each category.
 
 ## IV. Weaknesses & Inconsistencies
 
-1.  **Inconsistent Renderer Structure**: Lack of a strictly enforced base class or interface for all renderers leads to variations in structure and capabilities (e.g., factory functions, LOD handling, update method signatures).
-2.  **Inconsistent Shader Handling**: Star renderer embeds shaders, while others load external files. This makes star shaders harder to manage and edit.
-3.  **Code Duplication**: Significant duplication of helper functions (color math, `getColorForHeight`) between `generation/diamond-square.ts` (legacy) and `generation/procedural-texture.ts`.
-4.  **Tight Coupling (Specific Cases)**:
-    - `BaseTerrestrialRenderer` directly handles IndexedDB caching logic instead of using a dedicated caching service/module.
-    - Many renderer `update` methods directly access the global `celestialObjectsStore` for position/lighting info, creating a dependency.
-5.  **LOD Handling Variations**: Level of Detail is implemented differently across renderers (external helpers, material methods, particle counts, fixed meshes), lacking a unified strategy.
-6.  **Legacy Code**: Presence of the apparently unused `diamond-square.ts` adds clutter.
+1.  **Inconsistent Architecture**: This is the primary weakness. There is no single, unified pattern for creating or managing renderers. The use of factories (stars) vs. direct instantiation (gas giants), varying `update` signatures, and different LOD strategies makes the system hard to reason about as a whole.
+2.  **Inconsistent Shader Handling**: The use of both external `.glsl` files and embedded GLSL strings is a significant inconsistency that impacts maintainability.
+3.  **State Management Coupling**: Many renderers (e.g., `BaseGasGiantRenderer`) are tightly coupled to the global `renderableStore` from `@teskooano/core-state`, fetching object data directly within their `update` loops. This makes the renderers less pure and harder to test.
+4.  **LOD Strategy**: The lack of a unified LOD strategy leads to different behaviors and performance characteristics across object types.
+5.  **Code Duplication**: Some logic, especially around material setup and color handling, is duplicated across different renderer classes.
 
 ## V. Suggestions & Next Steps
 
-1.  **Define a Unified Renderer Interface/Base Class**: Create a formal `CelestialRenderer` interface or an abstract base class in a central location (e.g., `src/renderers/index.ts` or `src/renderers/common/`). Enforce consistent methods (`createMesh`, `update`, `dispose`) and potentially common utility functions or properties (e.g., managing materials).
-2.  **Consolidate Texture Generation**:
-    - A new `TextureResourceManager` for efficient WebGL resource sharing.
-    - Standardized `TextureResult` interface across all generators.
-    - Instance-based generators with built-in caching.
-    - Support for both WebGL and canvas-based approaches as appropriate.
-3.  **Refactor Shader Handling**: Modify the `Star` renderer to load shaders from external `.glsl` files, consistent with other renderers. Store these in `src/shaders/star/`.
-4.  **Decouple Concerns**:
-    - Extract IndexedDB logic from `BaseTerrestrialRenderer` into a dedicated caching module/service (e.g., `packages/core/caching` or `src/caching`).
-    - Reduce direct dependency on `celestialObjectsStore` in renderer `update` methods. Consider passing necessary object state (position, light source ID) explicitly as arguments to `update` or via subscription patterns if renderers become more stateful.
-5.  **Standardize LOD**: Develop a common LOD strategy. This could involve:
-    - Using the external helpers (`createLODMesh`, `createLODSphereMesh`) more broadly.
-    - Standardizing the material `updateLOD` method approach used by Gas Giants.
-    - Defining clear LOD thresholds and corresponding actions (geometry change, shader complexity change, texture resolution change) centrally.
-6.  **Review Static Usage**: Evaluate if the static nature of `TextureFactory` and generators is optimal. Consider if instance-based approaches might offer more flexibility or testability, especially if generators need internal state or dependencies.
-7.  **Refine Atmosphere Rendering**: Address the transparency issue noted for the terrestrial atmosphere by adjusting the Fresnel/opacity logic in `shaders/terrestrial/atmosphere.fragment.glsl`.
-8.  **Improve Normal Maps**: Investigate why terrestrial procedural normal maps appear flat. Check the `generateNormalMapFromHeightData` logic, the `normalStrength` parameter, and ensure the procedural shader (`procedural.fragment.glsl`) correctly samples `normalMap` and applies `normalScale`.
+This analysis aligns with the existing `TODO.md` and `MIGRATION_PLAN.md`. The highest-priority actions should be:
 
-**Priority Suggestion:** Start by unifying the renderer structure (Suggestion 1), then tackle decoupling (Suggestion 4).
+1.  **Unify Renderer Architecture**:
+    - Create a single, standard factory function or class (`CelestialRendererFactory`?) that is the sole entry point for creating any celestial renderer. This factory would encapsulate the logic for choosing the correct renderer class.
+    - Standardize the `update` method signature across all renderers. For special cases like lensing, the factory could return a "wrapper" renderer that handles the multi-pass logic internally.
+2.  **Standardize Shader Handling**: Refactor all renderers that use embedded GLSL strings (primarily `BaseStarRenderer` and `GravitationalLensingMaterial`) to load their shaders from external `.glsl` files in the `src/shaders/` directory.
+3.  **Decouple from Global State**: Refactor renderer `update` methods. Instead of pulling from a global store, the necessary data (`RenderableCelestialObject`) should be passed into the `update` method (or a new `updateObject(objectData, ...)` method) by the calling manager (e.g., `ObjectManager`).
+4.  **Develop a Unified LOD Strategy**: Design a single, consistent approach to LOD. This could involve standardizing on the multi-geometry approach (returning multiple `LODLevel`s from `getLODLevels`) and ensuring all renderers conform to it.
+5.  **Continue Refactoring into Services**: Extend the service pattern from the terrestrial renderer to other areas (e.g., a `StarEffectsService` for coronas/jets, a `GasGiantMaterialService`) to reduce code duplication in the renderer classes themselves.

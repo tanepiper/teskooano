@@ -83,68 +83,102 @@ This package uses a combination of specialized renderers, procedural generation 
 
 ### Core Concepts
 
-1.  **Renderers (`src/renderers/`)**: Each major category of celestial object (terrestrial, star, gas giant, etc.) has a dedicated renderer or set of renderers. These implement a common conceptual interface (`CelestialRenderer`) with methods like `createMesh`, `update`, and `dispose`.
+1.  **Renderers (`src/renderers/`)**: Each major category of celestial object (terrestrial, star, gas giant, etc.) has a dedicated renderer or set of renderers. These classes are responsible for generating the appropriate `THREE.Object3D` for a given celestial object from `@teskooano/data-types`.
 
-    - They are responsible for creating Three.js geometry, applying scaling, instantiating materials (often custom `ShaderMaterial` subclasses), loading textures or triggering generation, and assembling the final `Object3D`.
-    - Specific renderers exist for unique objects like Earth or handle classifications like gas giant types or star spectral classes.
-    - Particle systems (`THREE.Points`) are used for asteroid fields and Oort clouds.
-    - Renderers may incorporate common helpers (like `GravitationalLensingHelper`) or modular components (like the `rings` renderer).
-    - Factory functions (e.g., `createTerrestrialRenderer`, `createStarRenderer`) are often provided for easier instantiation.
+    - The key method is `getLODLevels()`, which returns an array of `LODLevel` objects. Each level contains a `THREE.Object3D` and a distance threshold. This array is consumed by `@teskooano/renderer-threejs-lod` to handle automatic Level of Detail switching.
+    - **Instantiation is inconsistent**:
+      - For stars, a factory function (`createStarRenderer`) is provided to select the correct renderer based on the star's properties.
+      - For other types like Gas Giants, the consumer must manually choose and instantiate the correct renderer class (e.g., `ClassIGasGiantRenderer`).
 
-2.  **Procedural Texture Generation (`src/generation/`)**: Primarily uses 3D Simplex noise (`simplex-noise` library) mapped onto a sphere to generate seamless color and normal map textures (`OffscreenCanvas`) for planets and moons.
+2.  **GPU-Based Procedural Generation**: The system has moved away from CPU-based texture generation towards a more powerful, shader-based approach.
 
-    - Includes sophisticated logic (`getColorForHeight`) to map noise values to realistic color bands based on planetary surface properties.
+    - **Terrestrial Planets**: A single, complex shader (`procedural.fragment.glsl`) generates the entire planet surface on the fly. Its appearance is controlled by a large set of uniforms defined in the `ProceduralPlanetMaterial`.
+    - **Gas Giants & Stars**: Also rely heavily on procedural shaders for their dynamic, turbulent surfaces.
 
-3.  **Texture System (`src/textures/`)**: Provides a `TextureFactory` facade to access different texture generators (`TerrestrialTextureGenerator`, etc.).
-
-    - While a `TextureGeneratorBase` exists for potential GPU/shader-based generation, the current terrestrial generation uses the CPU/Canvas method from `src/generation`.
-    - Uses typed options (`TextureTypes.ts`) for configuring texture generation.
-
-4.  **Shaders (`src/shaders/`)**: Contains the GLSL code defining the visual appearance.
+3.  **Shaders (`src/shaders/`)**: Contains the GLSL code defining the visual appearance.
     - Organized by object type.
-    - Implements various techniques: procedural noise (Simplex, FBM), different lighting models, texturing (day/night, specular, normal maps), atmospheric effects (Fresnel), shadows (rings), distortion (lensing).
-    - Configured via uniforms set by the materials in the renderers.
+    - Implements various techniques: procedural noise (Simplex, FBM), different lighting models, atmospheric effects (Fresnel), shadows (rings), and distortion (lensing).
+    - **Inconsistency**: Most shaders are loaded from external `.glsl` files, but star and gravitational lensing shaders are embedded as strings within their TypeScript files.
+
+### Example Usage
 
 ```typescript
-import { ObjectManager } from '@teskooano/renderer-threejs-objects'; // Hypothetical manager
-import { CelestialObject, CelestialType } from '@teskooano/data-types';
+import { ObjectManager } from "@teskooano/renderer-threejs-objects"; // The primary consumer
+import { LODManager } from "@teskooano/renderer-threejs-lod";
 import {
-  createTerrestrialRenderer,
+  type RenderableCelestialObject,
+  CelestialType,
+  StellarType,
+} from "@teskooano/data-types";
+import {
   createStarRenderer,
-  // ... other factories
-  CelestialRenderer // Assuming common interface/type export
-} from '@teskooano/systems-celestial';
-import { CelestialMeshOptions } from './src/renderers';
+  ClassIGasGiantRenderer, // No factory, so import the class directly
+  BaseTerrestrialRenderer,
+  type CelestialRenderer,
+} from "@teskooano/systems-celestial";
+import * as THREE from "three";
 
-// Inside ObjectManager or similar...
-const objectData: CelestialObject = /* ... get object data ... */;
-const lodOptions: CelestialMeshOptions = { detailLevel: 'high' }; // Example LOD
-let mesh: THREE.Object3D;
-let renderer: CelestialRenderer;
+// Hypothetical usage within a consuming manager (like ObjectManager)
+class VisualizationManager {
+  private lodManager: LODManager;
+  private scene: THREE.Scene;
+  private objectRenderers: Map<string, CelestialRenderer> = new Map();
 
-// Example: Get the appropriate renderer using a factory
-switch (objectData.type) {
-  case CelestialType.PLANET:
-  case CelestialType.MOON:
-    renderer = createTerrestrialRenderer(objectData);
-    break;
-  case CelestialType.STAR:
-    // Factory might use spectralClass or stellarType from objectData.properties
-    renderer = createStarRenderer(objectData.properties.spectralClass, objectData.properties.stellarType);
-    break;
-  // ... other types based on objectData.type or properties
-  default:
-    throw new Error(`Unsupported celestial type: ${objectData.type}`);
+  constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
+    this.scene = scene;
+    this.lodManager = new LODManager(camera, scene);
+  }
+
+  createCelestialObject(objectData: RenderableCelestialObject): void {
+    let renderer: CelestialRenderer | undefined;
+
+    // 1. Select the appropriate renderer
+    switch (objectData.type) {
+      case CelestialType.PLANET:
+      case CelestialType.MOON:
+        if ((objectData.properties as any).type === "GasGiant") {
+          // Example of manual selection for Gas Giants
+          renderer = new ClassIGasGiantRenderer();
+        } else {
+          renderer = new BaseTerrestrialRenderer();
+        }
+        break;
+      case CelestialType.STAR:
+        // Use the factory for stars
+        renderer = createStarRenderer(
+          objectData.properties.spectralClass,
+          objectData.properties.stellarType as StellarType,
+        );
+        break;
+      // ... other cases
+    }
+
+    if (!renderer) {
+      console.error(`No renderer found for type: ${objectData.type}`);
+      return;
+    }
+
+    // 2. Get the LOD levels from the renderer
+    const lodLevels = renderer.getLODLevels(objectData);
+
+    // 3. Create the LOD object and add it to the scene and manager
+    const lodObject = this.lodManager.createLOD(lodLevels);
+    lodObject.position.copy(objectData.position);
+    this.scene.add(lodObject);
+
+    // 4. Store the renderer instance to call its update/dispose methods later
+    this.objectRenderers.set(objectData.celestialObjectId, renderer);
+  }
+
+  update(time: number, lightSources: any) {
+    // In the main loop, update all registered renderers
+    this.objectRenderers.forEach((renderer) => {
+      renderer.update(time, lightSources);
+    });
+    // LODManager is also updated here
+    this.lodManager.update();
+  }
 }
-
-// Create the visual mesh using the selected renderer
-mesh = renderer.createMesh(objectData, lodOptions);
-
-// Store the renderer instance alongside the mesh to call its update/dispose methods later
-// manager.storeObject(objectData.id, mesh, renderer);
-
-// Add mesh to scene, set position using physicsToThreeJSPosition, etc.
-// scene.add(mesh);
 ```
 
 ## Installation
@@ -158,30 +192,23 @@ npm install @teskooano/systems-celestial --workspace=@your-app-or-package
 
 _(See [CHANGELOG.md](./CHANGELOG.md) for version history)_
 
-**Current Features (v0.1.0):**
+**Current Features:**
 
-- Renderers for Terrestrial Planets, Moons, Stars (Main Sequence + Exotics), Gas Giants (Class I-V), Planetary Rings, Asteroid Fields, Oort Clouds, and a specialized Earth renderer.
-- Procedural texture generation (Color + Normal maps) using 3D Simplex Noise for terrestrial bodies.
-- Texture generation framework and factory.
-- Custom shaders for various effects (procedural noise, lighting, day/night cycles, atmospheres, shadows, lensing).
-- Common helper for Gravitational Lensing.
-- Event dispatch system for texture generation progress.
-- Basic LOD handling implemented inconsistently across different renderers.
-- IndexedDB caching for terrestrial procedural textures.
+- **Renderers**: Comprehensive set of renderers for Terrestrial Planets, Moons, Stars (Main Sequence + Exotics like Black Holes and Neutron Stars), Gas Giants (Class I-V), Planetary Rings, Asteroid Fields, and Oort Clouds.
+- **Procedural Generation**: Advanced GPU-based procedural generation for terrestrial and gas giant surfaces via shaders.
+- **Shaders**: A rich library of custom GLSL shaders for various effects (procedural noise, lighting, day/night cycles, atmospheres, shadows, lensing).
+- **Advanced Effects**: Includes complex, reusable helpers for effects like Gravitational Lensing.
+- **LOD System**: All renderers integrate with the `LODManager` by providing LOD levels, though implementation strategies vary.
 
 **Planned / Future Work:**
 
-- Unify renderer structure (Interface/Base Class).
-- Consolidate texture generation strategies.
-- Standardize shader loading (remove embedded star shaders).
-- Decouple dependencies (IndexedDB caching, `celestialObjectsStore` access).
-- Implement a consistent LOD strategy.
-- Refine atmosphere rendering (address transparency issues).
-- Improve procedural normal map quality.
-- Add renderers for Comets, Stations, Ships.
-- Improve test coverage (Vitest).
-- Review static class usage.
-- Remove legacy code (`diamond-square.ts`).
+- **Unify Renderer Architecture**: Create a standard factory for all renderer types and standardize `update` method signatures.
+- **Standardize Shader Handling**: Refactor all renderers to load shaders from external `.glsl` files, removing all embedded GLSL strings.
+- **Decouple from Global State**: Remove direct dependencies on `@teskooano/core-state` from within renderer `update` loops.
+- **Implement a Consistent LOD Strategy**: Unify the different LOD implementation methods into a single, consistent pattern.
+- **Refactor into Services**: Continue to extract logic into reusable services to reduce code duplication, following the pattern in the terrestrial renderer.
+- **Add New Renderers**: Comets, Stations, Ships.
+- **Improve Test Coverage** (Vitest).
 
 ## Contributing
 

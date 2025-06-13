@@ -1,70 +1,41 @@
 ## Particle System Renderers Analysis
 
-This directory contains renderers that utilize Three.js particle systems (`THREE.Points`) to represent large collections of small objects, specifically Asteroid Fields and Oort Clouds.
+This directory contains renderers that create large collections of small objects, specifically Asteroid Fields and Oort Clouds. Both renderers have been significantly refactored to use custom shaders and materials instead of the basic `THREE.PointsMaterial`.
 
-**Core Components:**
+### 1. Core Architecture: Self-Contained, Shader-Driven Renderers
 
-1.  **`index.ts`**:
+Unlike other rendering systems, this module does not have a shared base class. `AsteroidFieldRenderer` and `OortCloudRenderer` are two independent, self-contained classes that both implement the `CelestialRenderer` interface. Their primary similarity is the use of `THREE.Points` to render particles, but their implementations are highly specialized.
 
-    - Exports the `AsteroidFieldRenderer` and `OortCloudRenderer` classes.
-    - Does not define a base class or factory function; each renderer is self-contained.
+### 2. `AsteroidFieldRenderer.ts`
 
-2.  **`AsteroidFieldRenderer.ts` (`AsteroidFieldRenderer` class)**:
+This renderer is responsible for creating disk-shaped asteroid belts. Its implementation is significantly more advanced than a standard particle system.
 
-    - Implements the `CelestialRenderer` interface.
-    - Designed to render a disk-shaped collection of particles representing an asteroid field.
-    - **`createMesh(object, options)`**: Creates the particle system.
-      - Reads `AsteroidFieldProperties` from the `object.properties` (handling potential nesting like `object.properties.asteroidFieldProperties`). Includes validation and default values if properties are missing or invalid.
-      - Creates a `THREE.BufferGeometry`.
-      - Generates particle positions within a ring defined by `innerRadius` and `outerRadius`, and with a thickness defined by `height`.
-      - Generates random color variations based on the provided `color` property.
-      - Generates random sizes for each particle.
-      - Sets `position`, `color`, and `size` attributes on the geometry.
-      - Loads a shared point sprite texture (a small blurry dot encoded as a base64 data URL) for the particle appearance.
-      - Creates a `THREE.PointsMaterial`:
-        - Uses `vertexColors: true`.
-        - Sets the loaded `sprite` texture as the `map`.
-        - Configured for transparency (`transparent: true`, `opacity: 1.0`, `alphaTest: 0.1`).
-        - Uses `AdditiveBlending`.
-        - Uses `depthWrite: false`.
-        - Uses `sizeAttenuation: true` (particles appear smaller further away).
-      - Creates the `THREE.Points` object using the geometry and material.
-      - Optionally offsets the particle system's position based on `properties.parentPosition`.
-      - Returns the `THREE.Points` object.
-    - **`update(time)`**: Updates the `time` property and applies a very slow rotation to the entire particle system around the Y-axis.
-    - **`dispose()`**: Disposes of the geometry and material.
+- **Custom Shaders**: It uses a custom vertex and fragment shader (`asteroidVertexShader`, `asteroidFragmentShader`) embedded as strings.
+  - The vertex shader handles the rotation of the entire belt and calculates the screen-space size of each particle (`gl_PointSize`) to achieve proper size attenuation (particles get smaller with distance).
+  - The fragment shader is particularly advanced. It implements a **texture atlas** system in the shader, using a `vTextureIndex` varying to select one of five different asteroid textures from a `sampler2D` array (`uniform sampler2D asteroidTextures[5]`). It also applies an individual rotation to each particle's UV coordinates, making each asteroid appear to tumble independently.
+- **Asynchronous Texture Loading**: It asynchronously loads an array of 5 distinct asteroid `.png` textures. The `sharedMaterial` is created immediately, but the textures are populated in the material's uniforms as they finish loading.
+- **LOD Strategy**: It implements a robust LOD system in its `getLODLevels` method. It creates **multiple, separate `THREE.BufferGeometry` instances**, one for each LOD level (`High`, `Medium`, `Low`). Each geometry has a progressively smaller number of particles, significantly reducing the data sent to the GPU at a distance. All these geometries share the same custom `ShaderMaterial`.
+- **Mesh Creation**: The `getLODLevels` method returns an array of `LODLevel` objects, each containing a `THREE.Points` object with the appropriate geometry for that distance.
 
-3.  **`OortCloudRenderer.ts` (`OortCloudRenderer` class)**:
-    - Implements the `CelestialRenderer` interface.
-    - Designed to render a spherical shell of particles representing an Oort cloud.
-    - **`createMesh(object, options)`**: Creates the particle system.
-      - Reads `OortCloudProperties` from `object.properties` (handling nesting like `object.properties.oortCloudProperties`). Includes validation and default values.
-      - Creates a `THREE.BufferGeometry`.
-      - Determines the number of particles to actually render (`renderCount`) based on `properties.count`, the `options.detailLevel`, and a hard cap (e.g., 50,000).
-      - Generates particle positions within a spherical shell defined by `radius` and `thickness`, using spherical coordinates (`phi`, `theta`) for better distribution.
-      - Includes validation to skip particles with non-finite coordinates (NaN, Infinity) and logs a warning once per object ID.
-      - Generates random color variations based on the `color` property.
-      - Generates random sizes for each particle.
-      - Sets `position`, `color`, and `size` attributes on the geometry.
-      - Loads the _same_ shared point sprite texture (base64 data URL) as the `AsteroidFieldRenderer`.
-      - Creates a `THREE.PointsMaterial`:
-        - Similar settings to `AsteroidFieldRenderer` (vertex colors, map, transparency, additive blending, depthWrite: false).
-        - Key Difference: Uses `sizeAttenuation: false` (particles maintain the same screen size regardless of distance, suitable for very distant objects like Oort clouds).
-        - Has a lower default `opacity` (e.g., 0.6).
-      - Creates the `THREE.Points` object.
-      - Optionally offsets the particle system based on `properties.parentPosition`.
-      - Returns the `THREE.Points` object (or an empty `THREE.Group` if initial validation fails).
-    - **`update(time)`**: Updates `time` and applies an extremely slow rotation to the entire particle system around the Y-axis.
-    - **`dispose()`**: Disposes of the geometry and material, and clears the `invalidParticleLogged` set.
+### 3. `OortCloudRenderer.ts`
 
-**Key Characteristics & Design:**
+This renderer creates a vast, spherical Oort cloud at the edge of a star system. While also using custom shaders, its implementation is simpler than the asteroid field's.
 
-- **Particle System Focus**: Specifically uses `THREE.Points` for rendering large numbers of small, distant objects where individual geometry is impractical.
-- **Self-Contained Renderers**: Each renderer (`AsteroidFieldRenderer`, `OortCloudRenderer`) is independent, with no shared base class within this module.
-- **Procedural Placement**: Particle positions are generated procedurally within `createMesh` based on distribution parameters (ring vs. sphere).
-- **BufferGeometry**: Directly manipulates `THREE.BufferGeometry` and its attributes (`position`, `color`, `size`) for efficiency.
-- **PointsMaterial**: Uses `THREE.PointsMaterial` with point sprites (textures) for particle appearance.
-- **Performance/LOD**: `OortCloudRenderer` implements a simple form of LOD by adjusting the `renderCount` based on `detailLevel` options.
-- **Size Attenuation**: Key difference in `PointsMaterial` settings (`sizeAttenuation: true` for asteroids, `false` for Oort cloud) reflects the different visual requirements for varying distances.
-- **Shared Texture**: Both renderers use the exact same embedded base64 point sprite texture.
-- **Validation**: Includes checks for valid properties and particle coordinates to prevent errors.
+- **Custom Shaders**: It also uses custom, embedded GLSL shaders.
+  - The vertex shader is simpler and notably **does not implement size attenuation**. It calculates `gl_PointSize` directly from a `size` attribute and a uniform scale, meaning particles appear as a consistent size on screen regardless of distance. This is a deliberate choice suitable for representing extremely distant objects.
+  - The fragment shader is much simpler than the asteroid's. It uses a single texture (`uniform sampler2D cloudTexture`) and does not apply individual particle rotation.
+- **Procedural Placement**: The `_createOortCloudGeometry` method generates particle positions procedurally within a spherical shell defined by an inner and outer radius. It uses spherical coordinates to ensure an even distribution.
+- **LOD Strategy**: It implements a simpler form of LOD. Instead of creating multiple geometries, it generates a single `THREE.BufferGeometry` but adjusts the number of vertices written to it based on the `detailLevel` provided in the options.
+
+### 4. Key Characteristics & Design Summary
+
+- **Strengths**:
+
+  - **Advanced Visuals**: The custom shader approach, especially in the `AsteroidFieldRenderer`, allows for sophisticated effects like individual particle rotation and texture variation that would be impossible with `THREE.PointsMaterial`.
+  - **Performant LOD**: Both renderers have effective LOD strategies tailored to their needs. The multi-geometry approach for asteroids is excellent for distinct distance breaks, while the adjustable vertex count for the Oort cloud is efficient for a more uniform field.
+  - **Procedural Generation**: Both renderers create their particle distributions procedurally, making them flexible and data-driven.
+
+- **Weaknesses / Inconsistencies**:
+  - **Embedded Shaders**: Like the star renderer, this system embeds its GLSL code in TypeScript files, which makes the shaders harder to develop and maintain compared to external `.glsl` files.
+  - **No Shared Logic**: Despite their conceptual similarity, the two renderers share no code. Common functionalities (like procedural particle generation or the basic structure of a particle renderer) could potentially be abstracted into a shared base class or utility functions to reduce duplication.
+  - **Asynchronous Complexity**: The async texture loading in `AsteroidFieldRenderer` adds complexity to its initialization sequence that must be carefully managed by the consuming code.

@@ -1,79 +1,63 @@
-## Terrestrial Renderer Analysis
+## Terrestrial Renderer Architecture
 
-This directory contains the rendering logic for terrestrial planets and moons within the Open Space engine.
+This document provides a detailed breakdown of the rendering system for terrestrial planets and moons, located in `packages/systems/celestial/src/renderers/terrestrial/`.
 
-**Core Components:**
+### 1. Core Architecture: Service-Oriented Orchestration
 
-1.  **`index.ts`**:
+The terrestrial renderer is the most modular and service-oriented of the celestial rendering systems. It is built around a central orchestrator class, `BaseTerrestrialRenderer`, which delegates specific creation tasks to specialized service classes.
 
-    - Acts as the main export point for the terrestrial rendering module.
-    - Provides a factory function `createTerrestrialRenderer(object: CelestialObject)`. This function currently instantiates and returns `BaseTerrestrialRenderer` for any `CelestialObject` of type `PLANET`, `MOON`, or `DWARF_PLANET`. It doesn't differentiate renderer types based on the object, relying on the object's properties passed during mesh creation to define its appearance.
-    - Exports the `BaseTerrestrialRenderer` class and the associated material classes (`AtmosphereMaterial`, `ProceduralPlanetMaterial`, `TexturedPlanetMaterial`).
+- **`BaseTerrestrialRenderer`**: This is the primary and only renderer class in this module. It acts as an orchestrator, responsible for constructing the final `THREE.Object3D` for a planet. It does not contain material or atmosphere generation logic itself, but instead instantiates and uses services to do so.
+- **No Factory Function**: Unlike the star renderer, this module does not provide a `createTerrestrialRenderer` factory function. The consuming code must directly instantiate `BaseTerrestrialRenderer`.
 
-2.  **`base-terrestrial.ts` (`BaseTerrestrialRenderer` class)**:
+### 2. The Orchestrator (`base-terrestrial.ts`)
 
-    - This is the primary class responsible for creating and managing the visual representation (Three.js `Object3D`) of a terrestrial body.
-    - **Instantiation**: Creates instances of `PlanetMaterialService` and `AtmosphereCloudService` from the `./utils/` directory to handle specific creation tasks.
-    - **Mesh Creation (`getLODLevels`)**:
-      - Generates an array of `LODLevel` objects suitable for a `THREE.LOD` instance.
-      - **High Detail (Level 0)**: Creates a `THREE.Group` for the highest detail level.
-        - Calls the `materialService.createMaterial` method to get the appropriate material (e.g., `ProceduralPlanetMaterial`) for the planet body based on `object.properties`.
-        - Creates the main planet body mesh (`THREE.Mesh`) with `THREE.SphereGeometry` and the created material.
-        - Calls the `atmosphereCloudService.createCloudMesh` method. If clouds are defined and a mesh/material result is returned, it adds the cloud mesh to the group and stores the material.
-        - Calls the `atmosphereCloudService.createAtmosphereMesh` method. If an atmosphere is defined and a mesh/material result is returned, it adds the atmosphere mesh to the group and stores the material.
-      - **Medium/Low Detail (Level 1+)**: Creates simpler representations, often using `THREE.MeshStandardMaterial` or `THREE.MeshBasicMaterial` with a base color derived from `materialService.getBaseColor(object)`.
-    - **Material Storage**: Maintains `Map` instances (`materials`, `atmosphereMaterials`, `cloudMaterials`) to hold references to the materials created via the services, keyed by the object ID. This allows the `update` method to access them.
-    - **Update (`update`)**:
-      - Updates shader uniforms for time (`elapsedTime`) for all relevant stored materials (`ProceduralPlanetMaterial`, `CloudMaterial`, `AtmosphereMaterial`).
-      - Updates lighting uniforms (e.g., `sunPosition`, `lightPositions`) in the stored materials based on provided `lightSources` and the camera position.
+`BaseTerrestrialRenderer` implements the `CelestialRenderer` interface and manages the object's entire lifecycle.
 
-3.  **`utils/planet-material-utils.ts` (`PlanetMaterialService` class)**:
+- **Service Instantiation**: In its constructor, it creates instances of `PlanetMaterialService` and `AtmosphereService`.
+- **LOD Strategy (`getLODLevels`)**: This is the main entry point for creating the visual representation. It generates a three-tiered `LODLevel` array:
+  1.  **Level 0 (High Detail)**: Creates a `THREE.Group` containing the full-detail planet.
+      - It calls `materialService.createMaterial()` to generate the planet body's complex `ProceduralPlanetMaterial`.
+      - It calls `atmosphereCloudService.createAtmosphereMesh()` to generate the separate atmosphere mesh and material.
+      - The body and atmosphere meshes are added to the group.
+  2.  **Level 1 (Medium Detail)**: Creates a medium-resolution sphere with a simple `THREE.MeshStandardMaterial`. The color for this material is determined by calling `materialService.getBaseColor()`.
+  3.  **Level 2 (Low Detail)**: For maximum performance at great distances, this level renders the planet as a simple, billboard-like sprite. It uses a tiny `SphereGeometry` with a basic, emissive `MeshBasicMaterial` that ignores depth testing, making it behave like a bright pixel.
+- **Update Loop (`update`)**: Iterates through all managed materials (planet body and atmosphere) and calls their respective `update` methods, passing the current time and lighting information.
 
-    - Encapsulates the logic for creating planet body materials and determining base colors.
-    - **`createMaterial`**: Takes a `RenderableCelestialObject` and returns an appropriate material (currently focused on `ProceduralPlanetMaterial`) based on the object's surface properties.
-    - **`getBaseColor`**: Determines a representative `THREE.Color` for the planet, often used for lower LOD levels, based on surface properties or planet type.
+### 3. Service Layer (`utils/`)
 
-4.  **`utils/atmosphere-cloud-utils.ts` (`AtmosphereCloudService` class)**:
+The core logic is encapsulated in two service classes, promoting a clean separation of concerns.
 
-    - Encapsulates the logic for creating atmosphere and cloud meshes and their associated materials.
-    - **`createCloudMesh`**: Creates a `THREE.SphereGeometry` and `CloudMaterial`. Returns an object containing the `THREE.Mesh` and the `CloudMaterial` instance, or `null` if no clouds are defined.
-    - **`createAtmosphereMesh`**: Creates a slightly larger `THREE.SphereGeometry` and `AtmosphereMaterial`. Returns an object containing the `THREE.Mesh` and the `AtmosphereMaterial` instance, or `null` if no atmosphere is defined.
+- **`PlanetMaterialService` (`planet-material-utils.ts`)**:
 
-5.  **`materials/procedural-planet.material.ts` (`ProceduralPlanetMaterial` class)**:
+  - **`createMaterial()`**: This is its primary method. It is responsible for creating a `ProceduralPlanetMaterial`. It reads the `ProceduralSurfaceProperties` from the celestial object's data.
+  - **Fallback Logic**: If specific surface properties (like colors) are not defined on the object, this service contains crucial fallback logic. It uses the object's `PlanetType` (e.g., `LAVA`, `ICE`, `DESERT`) to generate a suitable default color palette and set of procedural parameters. This makes the procedural system robust even with incomplete input data.
+  - **`getBaseColor()`**: A helper method that provides a single representative color for an object, used by the medium LOD level.
 
-    - Extends `THREE.ShaderMaterial`.
-    - Loads vertex (`procedural.vertex.glsl`) and fragment (`procedural.fragment.glsl`) shader code.
-    - Defines uniforms required by the procedural shaders, including noise parameters, color bands, and lighting (supports multiple lights via uniform arrays).
-    - Takes `ProceduralSurfaceProperties` in its constructor to initialize the relevant uniforms.
-    - Includes an `update` method to update time and lighting uniforms.
+- **`AtmosphereService` (`atmosphere-cloud-utils.ts`)**:
+  - **`createAtmosphereMesh()`**: Creates the visual effect for a planet's atmosphere. It returns both the `THREE.Mesh` and the `AtmosphereMaterial`.
+  - The mesh is a `THREE.SphereGeometry` that is slightly larger than the planet body.
+  - The material is a new `AtmosphereMaterial`.
+  - **Note**: The documentation's mention of cloud-related logic is obsolete; this service now only handles atmospheres.
 
-6.  **`materials/atmosphere.material.ts` (`AtmosphereMaterial` class)**:
+### 4. Materials (`materials/`)
 
-    - Extends `THREE.ShaderMaterial`.
-    - Loads vertex (`atmosphere.vertex.glsl`) and fragment (`atmosphere.fragment.glsl`) shader code.
-    - Defines uniforms: `time`, `atmosphereColor`, `atmosphereOpacity`, `sunPosition`.
-    - **Rendering Style**: Configured with `transparent: true`, `side: THREE.BackSide` (key for halo effect), `blending: THREE.NormalBlending`, and `depthWrite: false`.
-    - Includes an `update` method to update `time` and `sunPosition`.
+The materials use external `.glsl` shaders, which is a significant improvement over the star renderer's embedded shader approach.
 
-7.  **`materials/clouds.material.ts` (`CloudMaterial` class)**:
+- **`ProceduralPlanetMaterial` (`procedural-planet.material.ts`)**:
 
-    - Extends `THREE.ShaderMaterial`.
-    - Loads vertex (`clouds.vertex.glsl`) and fragment (`clouds.fragment.glsl`) shader code.
-    - Defines uniforms: `time`, `sunPosition`, `cameraPosition`, `cloudColor`, `cloudOpacity`, `cloudSpeed`.
-    - **Rendering Style**: Configured with `transparent: true`, `depthWrite: false`, `blending: THREE.NormalBlending`, `side: THREE.FrontSide`.
-    - Includes an `update` method to update `time`, `cameraPosition`, and `sunPosition`.
+  - The heart of the terrestrial renderer. It extends `THREE.ShaderMaterial` and uses the complex `procedural.vertex.glsl` and `procedural.fragment.glsl` shaders.
+  - These shaders generate the planet's entire surface—including continents, oceans, mountains, and ice caps—procedurally using noise functions.
+  - The material's constructor takes a `ProceduralSurfaceProperties` object, which is used to populate a large number of uniforms that control the noise, color ramps, terrain shape, and lighting.
+  - Its `update` method is responsible for passing updated time, camera position, and multi-light source data (positions, colors, intensities) to the shader each frame.
 
-8.  **`materials/textured-planet.material.ts` (`TexturedPlanetMaterial` class)**:
-    - Extends `THREE.ShaderMaterial`.
-    - Designed for pre-baked textures (color, normal, height).
-    - Loads vertex (`simple_texture.vertex.glsl`) and fragment (`simple_texture.fragment.glsl`) shader code.
-    - Defines uniforms for textures and basic Blinn-Phong lighting (supports only a _single_ light source).
-    - Includes helper methods (`setNormalScale`, `setLightingStyle`) for easier parameter adjustment.
-    - Includes an `update` method to update light direction and color.
+- **`AtmosphereMaterial` (`atmosphere.material.ts`)**:
+  - Also extends `THREE.ShaderMaterial` and uses the `atmosphere.vertex.glsl` and `atmosphere.fragment.glsl` shaders.
+  - This material creates the characteristic atmospheric halo or glow effect.
+  - **Rendering Technique**: The key to its effect is being rendered on the **back side** of the atmosphere sphere (`side: THREE.BackSide`). This means we only see the material on the edges of the sphere from the camera's perspective, creating a natural-looking limb brightening and scattering effect. It uses transparent, additive blending.
 
-**Key Changes & Observations:**
+### 5. Obsolete / Removed Features
 
-- **Service Layer**: Material, cloud, and atmosphere creation logic is now delegated to dedicated services (`PlanetMaterialService`, `AtmosphereCloudService`) in the `utils` directory, improving separation of concerns in `BaseTerrestrialRenderer`.
-- **No More IndexedDB**: The tight coupling to IndexedDB within `BaseTerrestrialRenderer` has been removed.
-- **Focus**: The primary renderer (`BaseTerrestrialRenderer`) coordinates the use of these services and materials to build the final visual representation with LOD.
-- **Material Differences**: Note the lighting differences between `ProceduralPlanetMaterial` (multi-light) and `TexturedPlanetMaterial` (single-light).
+Analysis of the code reveals several features described in previous documentation that are no longer present:
+
+- **Clouds**: There is no longer a `CloudMaterial` or any logic for creating a separate cloud layer. This has been removed from the `AtmosphereService`.
+- **`TexturedPlanetMaterial`**: There is no evidence of a material for applying pre-baked textures. The system is currently focused exclusively on procedural generation for the planet body.
