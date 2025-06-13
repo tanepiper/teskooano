@@ -34,8 +34,7 @@ export class BackgroundManager {
     this.group.add(this.debugGroup);
     scene.add(this.group);
 
-    // Currently disabled because it's too slow to bake.
-    // this.createDefaultNebula();
+    this.createDefaultNebula();
     this.createDefaultStarField();
   }
 
@@ -51,8 +50,8 @@ export class BackgroundManager {
       alpha: 0.9,
       noiseConfig: {
         scale: 900000000,
-        octaves: 8,
-        persistence: 0.4,
+        octaves: 2,
+        persistence: 0.5,
         lacunarity: 2.2,
         seed: Math.random(),
       },

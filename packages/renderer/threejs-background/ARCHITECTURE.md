@@ -70,6 +70,7 @@ graph TD
     - **`NebulaField.ts`**: The main class that creates the geometry and the custom shader material for the nebula.
     - **`shaders/`**: Contains the GLSL vertex and fragment shaders responsible for rendering the nebula. The fragment shader uses multiple layers of domain-warped 3D Simplex noise to generate complex, swirling patterns and blend colors.
     - **`palettes.ts`**: Provides a set of scientifically-inspired color palettes that the `BackgroundManager` can randomly select from to color the nebula.
+    - **Performance Note**: The nebula shader is computationally intensive. The visual quality and performance are directly tied to the `octaves` parameter in the noise configuration. A lower number of octaves (e.g., 2-4) is recommended for real-time performance, while a higher number (e.g., 8+) can be used for high-quality static renders at the cost of framerate.
 
 5.  **`background-manager/debug-visualizer.ts`**: A module for providing debug visuals.
     - **Responsibility**: Contains functions to aid in debugging the background layers. It can create wireframe spheres to show the boundaries of each star field layer. This functionality is controlled by the `toggleDebug()` method in `BackgroundManager`.

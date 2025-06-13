@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-05-09
+
+### Fixed
+
+- **Performance**: Drastically improved the performance of the `NebulaField` by reducing the default geometry subdivision level and lowering the number of octaves in the procedural noise shader. This makes the nebula usable by default without a significant framerate drop.
+
+### Changed
+
+- Re-enabled the `createDefaultNebula()` call in `BackgroundManager` as performance is now acceptable.
+- Added extensive JSDoc comments and performed minor code cleanup across all `star-field` and `nebula-field` files for better maintainability.
+
 ## [0.3.0] - 2025-05-09
 
 ### Added

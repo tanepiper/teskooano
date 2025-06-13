@@ -2,10 +2,17 @@ import * as THREE from "three";
 import { StarFieldLayerOptions } from "./types";
 
 /**
- * Creates a single layer of stars as a `THREE.Points` object based on provided options.
- * Stars are distributed spherically around the origin.
+ * Creates a single layer of stars as a `THREE.Points` object.
  *
- * @returns A `THREE.Points` object representing the star field layer.
+ * This function generates a spherical distribution of points, each with a
+ * unique color and brightness, based on the provided options. It's used
+ * by the `StarField` class to build its composite layers.
+ *
+ * @param baseDistance The core distance from the origin, used as a basis for
+ *   calculating the layer's final distance.
+ * @param options A configuration object defining the properties of the star
+ *   layer, such as count, color, and size.
+ * @returns A `THREE.Points` object representing the generated star field layer.
  */
 export function createStarField(
   baseDistance: number,
