@@ -59,6 +59,9 @@ export class ModularSpaceRenderer {
   /** Manages Level of Detail for objects to optimize performance. */
   public lodManager: LODManager;
 
+  /** A group to hold the AU marker rings for easy visibility toggling. */
+  private auMarkersGroup: THREE.Group;
+
   /** Bridges core application state to the renderer-consumable `renderableStore`. */
   private stateAdapter: RendererStateAdapter;
   /** Orchestrates the per-frame update sequence. */
@@ -79,8 +82,11 @@ export class ModularSpaceRenderer {
     options: ModularSpaceRendererOptions = {},
   ) {
     this.stateAdapter = new RendererStateAdapter();
+    this.auMarkersGroup = new THREE.Group();
+    this.auMarkersGroup.name = "AuMarkersGroup";
 
     this.sceneManager = new SceneManager(container, options);
+    this.sceneManager.scene.add(this.auMarkersGroup);
     this.animationLoop = new AnimationLoop();
 
     this.animationLoop.setRenderer(this.sceneManager.renderer);
@@ -171,22 +177,74 @@ export class ModularSpaceRenderer {
    * @internal
    */
   private _createAuMarkerLabels(): void {
-    if (!this.css2DManager) return;
-    const auDistances = [1, 2, 3, 4, 5, 10, 20, 50, 100];
-    auDistances.forEach((au) => {
+    const auMarkers = [
+      { au: 1, color: "#FFA500" },
+      { au: 2, color: "#FFA500" },
+      { au: 3, color: "#FFA500" },
+      { au: 4, color: "#FFA500" },
+      { au: 5, color: "#FFA500" },
+      { au: 6, color: "#FFA500" },
+      { au: 7, color: "#FFA500" },
+      { au: 8, color: "#FFA500" },
+      { au: 9, color: "#FFA500" },
+      { au: 10, color: "#FFA500" },
+      { au: 20, color: "#FFA500" },
+      { au: 50, color: "#FFA500" },
+      { au: 100, color: "#FFA500" },
+      { au: 150, color: "#FFA500" },
+      { au: 200, color: "#FFA500" },
+      { au: 300, color: "#FFA500" },
+      { au: 400, color: "#FFA500" },
+      { au: 500, color: "#FFA500" },
+      { au: 600, color: "#FFA500" },
+      { au: 700, color: "#FFA500" },
+      { au: 800, color: "#FFA500" },
+      { au: 900, color: "#FFA500" },
+      { au: 1000, color: "#FFA500" },
+      { au: 2000, color: "#FFA500" },
+      { au: 3000, color: "#FFA500" },
+      { au: 4000, color: "#FFA500" },
+      { au: 5000, color: "#FFA500" },
+      { au: 6000, color: "#FFA500" },
+      { au: 7000, color: "#FFA500" },
+      { au: 8000, color: "#FFA500" },
+      { au: 9000, color: "#FFA500" },
+      { au: 10000, color: "#FFA500" },
+      { au: 20000, color: "#FFA500" },
+      { au: 30000, color: "#FFA500" },
+      { au: 40000, color: "#FFA500" },
+      { au: 50000, color: "#FFA500" },
+      { au: 60000, color: "#FFA500" },
+    ];
+
+    auMarkers.forEach(({ au, color }) => {
       const radiusSceneUnits = au * AU_METERS * METERS_TO_SCENE_UNITS;
-      if (!Number.isFinite(radiusSceneUnits) || radiusSceneUnits <= 0) {
-        return;
-      }
+      const ringThickness = radiusSceneUnits * 0.01; // 1% of the radius
+      const circleGeometry = new THREE.RingGeometry(
+        radiusSceneUnits - ringThickness / 2,
+        radiusSceneUnits + ringThickness / 2,
+        128,
+      );
+      const circleMaterial = new THREE.MeshBasicMaterial({
+        color: color,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.1,
+      });
+      const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+      circle.rotation.x = -Math.PI / 2;
+      this.auMarkersGroup.add(circle);
+
       const labelPositions = {
         Xpos: new THREE.Vector3(radiusSceneUnits, 0, 0),
         Xneg: new THREE.Vector3(-radiusSceneUnits, 0, 0),
         Zpos: new THREE.Vector3(0, 0, radiusSceneUnits),
         Zneg: new THREE.Vector3(0, 0, -radiusSceneUnits),
       };
+
       for (const [dir, pos] of Object.entries(labelPositions)) {
         const labelId = `au-label-${dir}-${au}`;
-        this.css2DManager?.createAuMarkerLabel(labelId, au, pos);
+        this.css2DManager?.createAuMarkerLabel(labelId, au, pos, color);
       }
     });
   }
@@ -338,7 +396,7 @@ export class ModularSpaceRenderer {
    * @param visible - True to show AU markers, false to hide.
    */
   setAuMarkersVisible(visible: boolean): void {
-    this.sceneManager.setAuMarkersVisible(visible);
+    this.auMarkersGroup.visible = visible;
     this.css2DManager?.setLayerVisibility(CSS2DLayerType.AU_MARKERS, visible);
   }
   /**

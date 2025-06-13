@@ -25,8 +25,6 @@ export class SceneManager {
   private debugSphere: THREE.Mesh | null = null;
   private gridHelper: THREE.GridHelper | null = null;
   private showGrid: boolean = true;
-  private auDistanceMarkers: THREE.Group | null = null;
-  private showAuMarkers: boolean = true;
   private backgroundColor: THREE.Color | THREE.Texture;
   private width: number;
   private height: number;
@@ -45,7 +43,6 @@ export class SceneManager {
       hdr?: boolean;
       background?: string | THREE.Texture;
       showGrid?: boolean;
-      showAuMarkers?: boolean;
       fov?: number;
     } = {},
   ) {
@@ -61,13 +58,9 @@ export class SceneManager {
     // Configure scene features
     this.backgroundColor = this._parseBackground(options.background);
     this.showGrid = options.showGrid !== false;
-    this.showAuMarkers = options.showAuMarkers !== false;
 
     if (this.showGrid) {
       this._createGridHelper();
-    }
-    if (this.showAuMarkers) {
-      this._createAuDistanceMarkers();
     }
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
@@ -250,13 +243,6 @@ export class SceneManager {
   }
 
   /**
-   * Toggles the visibility of the AU distance markers.
-   */
-  toggleAuMarkers(): void {
-    this.setAuMarkersVisible(!this.showAuMarkers);
-  }
-
-  /**
    * Sets the visibility of the grid helper.
    * @param visible True to show the grid, false to hide.
    */
@@ -275,30 +261,18 @@ export class SceneManager {
   }
 
   /**
-   * Sets the visibility of the AU distance markers (lines and labels).
-   * @param visible True to show the markers, false to hide.
-   */
-  setAuMarkersVisible(visible: boolean): void {
-    this.showAuMarkers = visible;
-    if (this.auDistanceMarkers) {
-      this.auDistanceMarkers.visible = visible;
-    }
-  }
-
-  /**
    * Disposes of all resources used by the `SceneManager`.
    * This includes helpers, the renderer, and all objects in the scene.
    */
   dispose(): void {
-    this._clearAuDistanceMarkers();
-    this._clearGridHelper();
+    this.renderer.dispose();
     this._clearDebugSphere();
+    this._clearGridHelper();
 
     // Remove the canvas from the DOM before disposing the renderer itself
     if (this.renderer.domElement.parentNode) {
       this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
     }
-    this.renderer.dispose();
 
     // Clear remaining scene children
     while (this.scene.children.length > 0) {
@@ -346,69 +320,6 @@ export class SceneManager {
       this.gridHelper.geometry.dispose();
       (this.gridHelper.material as THREE.Material).dispose();
       this.gridHelper = null;
-    }
-  }
-
-  /**
-   * Creates the AU distance marker circles (XZ plane).
-   * @internal
-   */
-  private _createAuDistanceMarkers(): void {
-    if (this.auDistanceMarkers) return; // Already created
-    this.auDistanceMarkers = new THREE.Group();
-    this.auDistanceMarkers.name = "AU_Distance_Markers_Group";
-    const auDistances = [1, 2, 3, 4, 5, 10, 20, 50, 100];
-    const segments = 128;
-
-    const material = new THREE.LineBasicMaterial({
-      color: 0xff00ff,
-      transparent: true,
-      opacity: 0.3,
-      depthWrite: false,
-    });
-
-    auDistances.forEach((au) => {
-      const radiusSceneUnits = au * AU_METERS * METERS_TO_SCENE_UNITS;
-      if (!Number.isFinite(radiusSceneUnits) || radiusSceneUnits <= 0) {
-        return;
-      }
-
-      const geometry = new THREE.BufferGeometry();
-      const points: THREE.Vector3[] = [];
-      for (let i = 0; i <= segments; i++) {
-        const theta = (i / segments) * Math.PI * 2;
-        points.push(
-          new THREE.Vector3(
-            Math.cos(theta) * radiusSceneUnits,
-            0,
-            Math.sin(theta) * radiusSceneUnits,
-          ),
-        );
-      }
-      geometry.setFromPoints(points);
-      const circleXZ = new THREE.LineLoop(geometry, material);
-      circleXZ.name = `AU_Marker_XZ_${au}`;
-      this.auDistanceMarkers?.add(circleXZ);
-    });
-
-    this.scene.add(this.auDistanceMarkers);
-    this.auDistanceMarkers.visible = this.showAuMarkers;
-  }
-
-  /**
-   * Disposes of AU distance markers.
-   * @internal
-   */
-  private _clearAuDistanceMarkers(): void {
-    if (this.auDistanceMarkers) {
-      this.scene.remove(this.auDistanceMarkers);
-      this.auDistanceMarkers.children.forEach((child) => {
-        if (child instanceof THREE.LineLoop) {
-          child.geometry.dispose();
-          (child.material as THREE.Material).dispose();
-        }
-      });
-      this.auDistanceMarkers = null;
     }
   }
 }

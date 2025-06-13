@@ -1,11 +1,17 @@
 import * as THREE from "three";
+import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+import { type RenderableCelestialObject } from "@teskooano/data-types";
 import {
-  CSS2DRenderer,
-  CSS2DObject,
-} from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import { CelestialType, SCALE } from "@teskooano/data-types";
-import type { OortCloudProperties } from "@teskooano/data-types";
+  CelestialLabelComponent,
+  CELESTIAL_LABEL_TAG,
+} from "./components/celestial-label/CelestialLabelComponent";
+import {
+  AuMarkerLabelComponent,
+  AU_MARKER_LABEL_TAG,
+} from "./components/au-marker-label/AuMarkerLabelComponent";
+import { AuMarkerLabelLayer } from "./layers/AuMarkerLabelLayer";
+import { CelestialLabelLayer } from "./layers/CelestialLabelLayer";
+import { BaseLabelLayer } from "./layers/BaseLabelLayer";
 
 /**
  * Layer types enum for different UI elements
@@ -23,9 +29,7 @@ export class CSS2DManager {
   private renderer: CSS2DRenderer;
   private container: HTMLElement;
   private scene: THREE.Scene;
-
-  private elements: Map<CSS2DLayerType, Map<string, CSS2DObject>> = new Map();
-  private layerVisibility: Map<CSS2DLayerType, boolean> = new Map();
+  private layers: Map<CSS2DLayerType, BaseLabelLayer>;
 
   /**
    * Create a new CSS2DManager
@@ -34,133 +38,36 @@ export class CSS2DManager {
     this.scene = scene;
     this.container = container;
 
-    this.renderer = new CSS2DRenderer();
-    this.renderer.setSize(
-      this.container.clientWidth,
-      this.container.clientHeight,
-    );
-    this.renderer.domElement.style.position = "absolute";
-    this.renderer.domElement.style.top = "0";
-    this.renderer.domElement.style.zIndex = "1";
-    this.renderer.domElement.style.pointerEvents = "none";
+    this.registerWebComponents();
 
-    if (this.renderer.domElement instanceof HTMLElement) {
-      const styleElement = document.createElement("style");
-      styleElement.textContent = `
-        .css2d-renderer,
-        .css2d-renderer * {
-          pointer-events: none !important;
-        }
-        .celestial-label,
-        .celestial-label * {
-          pointer-events: none !important;
-        }
-      `;
-      document.head.appendChild(styleElement);
-
-      const allChildren = this.renderer.domElement.querySelectorAll("*");
-      allChildren.forEach((child) => {
-        if (child instanceof HTMLElement) {
-          child.style.pointerEvents = "none";
-        }
-      });
-
-      this.renderer.domElement.classList.add("css2d-renderer");
-    }
-
+    this.renderer = this.createRenderer();
     container.appendChild(this.renderer.domElement);
 
-    Object.values(CSS2DLayerType).forEach((layerType) => {
-      this.elements.set(layerType, new Map());
-      this.layerVisibility.set(layerType, true); // Default to visible
-    });
-
-    const styleElement = document.createElement("style");
-    styleElement.textContent = `
-      .label-hidden {
-        display: none !important;
-      }
-    `;
-    document.head.appendChild(styleElement);
+    this.layers = new Map();
+    this.layers.set(
+      CSS2DLayerType.CELESTIAL_LABELS,
+      new CelestialLabelLayer(scene),
+    );
+    this.layers.set(CSS2DLayerType.AU_MARKERS, new AuMarkerLabelLayer(scene));
   }
 
-  /**
-   * Create a positioned label with customizable position
-   * @private
-   */
-  private createPositionedLabel(
-    text: string,
-    position: THREE.Vector3,
-    parentMesh: THREE.Object3D | null, // Allow null for scene-level labels
-    options?: {
-      className?: string;
-      color?: string;
-      backgroundColor?: string;
-      layerType?: CSS2DLayerType;
-      id?: string;
-    },
-  ): CSS2DObject {
-    const labelDiv = document.createElement("div");
-    labelDiv.className = options?.className || "celestial-label";
-    labelDiv.textContent = text;
-    labelDiv.style.color = options?.color || "white";
-    labelDiv.style.backgroundColor =
-      options?.backgroundColor || "rgba(0,0,0,0.5)";
-    labelDiv.style.padding = "2px 5px";
-    labelDiv.style.borderRadius = "3px";
-    labelDiv.style.fontSize = "12px";
-    labelDiv.style.pointerEvents = "none";
-
-    const label = new CSS2DObject(labelDiv);
-    label.position.copy(position);
-
-    const layerType = options?.layerType || CSS2DLayerType.CELESTIAL_LABELS;
-    const id = options?.id;
-
-    if (parentMesh) {
-      parentMesh.add(label);
-    } else {
-      this.scene.add(label); // Add scene-level labels directly to the scene
+  private registerWebComponents(): void {
+    if (!customElements.get(CELESTIAL_LABEL_TAG)) {
+      customElements.define(CELESTIAL_LABEL_TAG, CelestialLabelComponent);
     }
-
-    if (id) {
-      const labelsMap = this.elements.get(layerType);
-      if (labelsMap) {
-        labelsMap.set(id, label);
-      }
+    if (!customElements.get(AU_MARKER_LABEL_TAG)) {
+      customElements.define(AU_MARKER_LABEL_TAG, AuMarkerLabelComponent);
     }
-
-    // Set initial visibility based on the layer's state
-    label.visible = this.layerVisibility.get(layerType) ?? true;
-
-    return label;
   }
 
-  /**
-   * Determine label position for a celestial object
-   * @private
-   */
-  private calculateLabelPosition(
-    object: RenderableCelestialObject,
-  ): THREE.Vector3 {
-    if (
-      object.type === CelestialType.OORT_CLOUD &&
-      object.properties?.type === CelestialType.OORT_CLOUD
-    ) {
-      const oortCloudProps = object.properties as OortCloudProperties;
-      const innerRadiusAU = oortCloudProps.innerRadiusAU;
-      if (innerRadiusAU && typeof innerRadiusAU === "number") {
-        const scaledInnerRadius = innerRadiusAU * SCALE.RENDER_SCALE_AU;
-
-        const direction = new THREE.Vector3(0.7, 0.7, 0).normalize();
-        return direction.multiplyScalar(scaledInnerRadius);
-      } else {
-        return new THREE.Vector3(100, 100, 0);
-      }
-    } else {
-      const visualRadius = object.radius || 1;
-      return new THREE.Vector3(0, visualRadius * 1.5, 0);
-    }
+  private createRenderer(): CSS2DRenderer {
+    const renderer = new CSS2DRenderer();
+    renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+    renderer.domElement.style.position = "absolute";
+    renderer.domElement.style.top = "0";
+    renderer.domElement.style.zIndex = "1";
+    renderer.domElement.style.pointerEvents = "none";
+    return renderer;
   }
 
   /**
@@ -170,21 +77,9 @@ export class CSS2DManager {
     object: RenderableCelestialObject,
     parentMesh: THREE.Object3D,
   ): void {
-    const labelsMap = this.elements.get(CSS2DLayerType.CELESTIAL_LABELS);
-    if (labelsMap?.has(object.celestialObjectId)) {
-      console.warn(
-        `[CSS2DManager] Label already exists for ${object.celestialObjectId}. Skipping creation.`,
-      );
-      return;
-    }
-
-    const labelPosition = this.calculateLabelPosition(object);
-
-    this.createPositionedLabel(object.name, labelPosition, parentMesh, {
-      className: "celestial-label",
-      layerType: CSS2DLayerType.CELESTIAL_LABELS,
-      id: object.celestialObjectId,
-    });
+    (
+      this.layers.get(CSS2DLayerType.CELESTIAL_LABELS) as CelestialLabelLayer
+    )?.createLabel(object, parentMesh);
   }
 
   /**
@@ -197,58 +92,25 @@ export class CSS2DManager {
     id: string,
     auValue: number,
     position: THREE.Vector3,
+    color: string,
   ): void {
-    if (this.elements.get(CSS2DLayerType.AU_MARKERS)?.has(id)) {
-      console.warn(
-        `[CSS2DManager] AU Marker Label already exists for ${id}. Skipping creation.`,
-      );
-      return;
-    }
-
-    this.createPositionedLabel(
-      `${auValue} AU`,
-      position,
-      null, // Add to scene-level group, not a specific mesh
-      {
-        id,
-        className: "au-marker-label",
-        layerType: CSS2DLayerType.AU_MARKERS,
-        color: "#FFA500",
-        backgroundColor: "rgba(0,0,0,0.6)",
-      },
-    );
+    (
+      this.layers.get(CSS2DLayerType.AU_MARKERS) as AuMarkerLabelLayer
+    )?.createLabel(id, auValue, position, color);
   }
 
   /**
    * Remove an element by ID and layer type
    */
   removeElement(layerType: CSS2DLayerType, id: string): void {
-    const layerMap = this.elements.get(layerType);
-    if (layerMap) {
-      const element = layerMap.get(id);
-      if (element) {
-        element.removeFromParent();
-
-        layerMap.delete(id);
-      }
-    }
+    this.layers.get(layerType)?.removeElement(id);
   }
 
   /**
    * Set visibility for a specific layer
    */
   setLayerVisibility(layerType: CSS2DLayerType, visible: boolean): void {
-    this.layerVisibility.set(layerType, visible);
-    const layerMap = this.elements.get(layerType);
-    if (layerMap) {
-      layerMap.forEach((element) => {
-        element.visible = visible;
-      });
-    } else {
-      console.warn(
-        `[CSS2DManager] No elements map found for layer: ${layerType}`,
-      );
-    }
+    this.layers.get(layerType)?.setVisibility(visible);
   }
 
   /**
@@ -257,8 +119,8 @@ export class CSS2DManager {
    */
   render(camera: THREE.Camera): void {
     let hasAnyElements = false;
-    for (const map of this.elements.values()) {
-      if (map.size > 0) {
+    for (const layer of this.layers.values()) {
+      if (layer.hasElements()) {
         hasAnyElements = true;
         break;
       }
@@ -280,9 +142,7 @@ export class CSS2DManager {
    * Clean up resources
    */
   dispose(): void {
-    Object.values(CSS2DLayerType).forEach((layerType) => {
-      this.clearLayer(layerType);
-    });
+    this.layers.forEach((layer) => layer.clear());
     if (this.renderer.domElement.parentElement) {
       this.renderer.domElement.parentElement.removeChild(
         this.renderer.domElement,
@@ -296,14 +156,12 @@ export class CSS2DManager {
    * @param id - The unique ID of the element to show.
    */
   showLabel(layer: CSS2DLayerType, id: string): void {
-    const isLayerVisible = this.layerVisibility.get(layer) ?? false;
-    if (!isLayerVisible) {
-      return; // Do not show labels on a hidden layer
-    }
-    const layerMap = this.elements.get(layer);
-    const cssObject = layerMap?.get(id);
-    if (cssObject) {
-      cssObject.visible = true;
+    const layerInstance = this.layers.get(layer);
+    if (layerInstance?.isVisible) {
+      const cssObject = layerInstance.getElement(id);
+      if (cssObject) {
+        cssObject.visible = true;
+      }
     }
   }
 
@@ -313,8 +171,7 @@ export class CSS2DManager {
    * @param id - The unique ID of the element to hide.
    */
   hideLabel(layer: CSS2DLayerType, id: string): void {
-    const layerMap = this.elements.get(layer);
-    const cssObject = layerMap?.get(id);
+    const cssObject = this.layers.get(layer)?.getElement(id);
     if (cssObject) {
       cssObject.visible = false;
     }
@@ -325,12 +182,6 @@ export class CSS2DManager {
    * @param layerType - The layer to clear.
    */
   clearLayer(layerType: CSS2DLayerType): void {
-    const layerMap = this.elements.get(layerType);
-    if (layerMap) {
-      layerMap.forEach((element) => {
-        element.removeFromParent();
-      });
-      layerMap.clear();
-    }
+    this.layers.get(layerType)?.clear();
   }
 }
