@@ -29,15 +29,16 @@
       "@teskooano/renderer-threejs-background": [
         "packages/renderer/threejs-background/src/index.ts"
       ],
-      "@teskooano/renderer-threejs-interaction": [
-        "packages/renderer/threejs-interaction/src/index.ts"
+      "@teskooano/renderer-threejs-controls": [
+        "packages/renderer/threejs-controls/src"
+      ],
+      "@teskooano/renderer-threejs-labels": [
+        "packages/renderer/threejs-labels/src"
       ],
       "@teskooano/renderer-threejs-lighting": [
-        "packages/renderer/threejs-lighting/src/index.ts"
+        "packages/renderer/threejs-lighting/src"
       ],
-      "@teskooano/renderer-threejs-lod": [
-        "packages/renderer/threejs-lod/src/index.ts"
-      ],
+      "@teskooano/renderer-threejs-lod": ["packages/renderer/threejs-lod/src"],
       "@teskooano/core-state": ["packages/core/state/src/index.ts"],
       "@teskooano/data-types": ["packages/data/types/src/index.ts"],
       "@teskooano/app-simulation": [
@@ -57,7 +58,8 @@
       "@teskooano/ui-plugin/vite.js": [
         "packages/app/ui-plugin/src/vite-plugin.ts"
       ]
-    }
+    },
+    "types": ["node", "vitest/globals"]
   },
   "references": [
     {
@@ -85,7 +87,10 @@
       "path": "./packages/renderer/threejs-lod"
     },
     {
-      "path": "./packages/renderer/threejs-interaction"
+      "path": "./packages/renderer/threejs-controls"
+    },
+    {
+      "path": "./packages/renderer/threejs-labels"
     },
     {
       "path": "./packages/renderer/threejs-objects"

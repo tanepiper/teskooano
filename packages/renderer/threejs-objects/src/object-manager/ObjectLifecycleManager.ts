@@ -1,19 +1,21 @@
-import { CelestialStatus, CelestialType } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
-import type { LightManager } from "@teskooano/renderer-threejs-lighting";
-import type { LODManager } from "@teskooano/renderer-threejs-lod";
+import {
+  CelestialStatus,
+  CelestialType,
+  type RenderableCelestialObject,
+} from "@teskooano/data-types";
 import {
   CSS2DLayerType,
   type CSS2DManager,
-} from "@teskooano/renderer-threejs-interaction";
+} from "@teskooano/renderer-threejs-labels";
+import type { LightManager } from "@teskooano/renderer-threejs-lighting";
+import type { LODManager } from "@teskooano/renderer-threejs-lod";
 import type {
   CelestialRenderer,
   RingSystemRenderer,
 } from "@teskooano/systems-celestial";
 import * as THREE from "three";
-import type { MeshFactory } from "./MeshFactory";
 import type { GravitationalLensingHandler } from "./GravitationalLensing";
-import type { ObjectManager } from "../ObjectManager";
+import type { MeshFactory } from "./MeshFactory";
 
 /**
  * @internal

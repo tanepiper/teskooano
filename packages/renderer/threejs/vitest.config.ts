@@ -27,6 +27,18 @@ export default defineConfig({
         __dirname,
         "../threejs-lod/src",
       ),
+      "@teskooano/renderer-threejs-controls": resolve(
+        __dirname,
+        "../threejs-controls/src",
+      ),
+      "@teskooano/renderer-threejs-labels": resolve(
+        __dirname,
+        "../threejs-labels/src",
+      ),
+      "@teskooano/renderer-threejs-objects": resolve(
+        __dirname,
+        "../threejs-objects/src",
+      ),
       "@teskooano/systems-celestial": resolve(
         __dirname,
         "../../systems/celestial/src",

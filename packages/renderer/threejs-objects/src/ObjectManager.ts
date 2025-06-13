@@ -1,5 +1,5 @@
-import { OSVector3 } from "@teskooano/core-math";
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
+import { OSVector3 } from "@teskooano/core-math";
 import { accelerationVectors$ } from "@teskooano/core-state";
 import {
   CelestialStatus,
@@ -8,8 +8,8 @@ import {
   type RenderableCelestialObject,
 } from "@teskooano/data-types";
 import { rendererEvents } from "@teskooano/renderer-threejs";
-import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
-import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
+import type { CSS2DManager } from "@teskooano/renderer-threejs-labels";
+import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 import { LightManager } from "@teskooano/renderer-threejs-lighting";
 import { LODManager, type LODLevel } from "@teskooano/renderer-threejs-lod";
 import {

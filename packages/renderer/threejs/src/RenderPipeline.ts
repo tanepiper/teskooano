@@ -1,16 +1,14 @@
+import type { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import type {
   AnimationLoop,
   SceneManager,
 } from "@teskooano/renderer-threejs-core";
+import type { ControlsManager } from "@teskooano/renderer-threejs-controls";
+import type { CSS2DManager } from "@teskooano/renderer-threejs-labels";
 import type { LightManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
-import type {
-  ControlsManager,
-  CSS2DManager,
-} from "@teskooano/renderer-threejs-interaction";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
-import type { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import type * as THREE from "three";
 import type { RenderPipelineOptions } from "./types";
 

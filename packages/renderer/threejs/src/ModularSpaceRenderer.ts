@@ -4,9 +4,12 @@ import { LightManager } from "@teskooano/renderer-threejs-lighting";
 import { LODManager } from "@teskooano/renderer-threejs-lod";
 import {
   ControlsManager,
-  CSS2DLayerType,
+  CameraManager,
+} from "@teskooano/renderer-threejs-controls";
+import {
   CSS2DManager,
-} from "@teskooano/renderer-threejs-interaction";
+  CSS2DLayerType,
+} from "@teskooano/renderer-threejs-labels";
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import {
   OrbitsManager,

@@ -1,5 +1,5 @@
 {
-  "name": "@teskooano/renderer-threejs-interaction",
+  "name": "@teskooano/renderer-threejs-controls",
   "version": "0.2.0",
   "private": true,
   "type": "module",

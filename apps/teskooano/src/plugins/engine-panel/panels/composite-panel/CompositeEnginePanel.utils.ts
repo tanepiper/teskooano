@@ -1,6 +1,5 @@
-import * as THREE from "three";
 import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
+import * as THREE from "three";
 import type { CompositeEngineState } from "../types";
 
 /**
