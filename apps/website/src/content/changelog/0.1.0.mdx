@@ -323,7 +323,7 @@ All notable changes to this project will be documented in this file.
 
 - **`ObjectManager`:** Manages creation, update, and removal of celestial object meshes based on `renderableObjectsStore`.
   - Integrates specialized renderers from `@teskooano/systems-celestial` (Gas Giants, Asteroid Fields, Rings).
-  - Integrates `LODManager` from `@teskooano/renderer-threejs-effects`.
+  - Integrates `LODManager` from `@teskooano/renderer-threejs-lod`.
   - Handles basic label creation/removal via `CSS2DManager`.
   - Manages light source updates via `LightManager`.
   - Includes `GravitationalLensingHandler` for potential lensing effects.
@@ -368,11 +368,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Initial release of the `@teskooano/renderer-threejs-effects` package.
-- `EffectsManager`: Facade class to coordinate effects.
-- `LightManager`: Manages ambient light and dynamic star point lights.
-- `LODManager`: Manages Level of Detail for scene objects using `THREE.LOD`.
-- Helper functions in `lod-manager/` for building LOD meshes, calculating distances, and debug visualization.
+- Initial release of the `@teskooano/renderer-threejs-lighting` package.
+- Initial release of the `@teskooano/renderer-threejs-lod` package.
 
 ## Package: Renderer ThreeJS Core
 

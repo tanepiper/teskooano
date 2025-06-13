@@ -29,7 +29,8 @@ The `ObjectManager` is typically instantiated and managed by the main `@teskooan
 ```typescript
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SceneManager } from "@teskooano/renderer-threejs-core";
-import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
+import { LightManager } from "@teskooano/renderer-threejs-lighting";
+import { LODManager } from "@teskooano/renderer-threejs-lod";
 import { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
 import * as THREE from "three";
 

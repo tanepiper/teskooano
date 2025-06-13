@@ -145,81 +145,37 @@ Remember that these priorities may shift based on feedback, discoveries during i
 
 ```mermaid
 graph TD
-  subgraph CoreAppState ["@teskooano/core-state"]
-      CS[celestialObjectsStore]
-      SS[simulationState]
-  end
-
-  subgraph Renderer ["@teskooano/renderer/threejs"]
-      RSA[RendererStateAdapter]
-      MRS[ModularSpaceRenderer]
-
-      subgraph Core ["@teskooano/renderer-threejs-core"]
-          SM[SceneManager]
-          AL[AnimationLoop]
-          RE[RendererEvents?]
-      end
-
-      subgraph VisualizationComponents
-          OM[ObjectManager]
-          OrbM[OrbitManager]
-          BM[BackgroundManager]
-          LM[LabelManager]
-      end
-
-      subgraph Effects ["@teskooano/renderer-threejs-effects"]
-          LiM[LightManager]
-          LODM[LODManager]
-      end
-      subgraph Interact ["@teskooano/renderer-threejs-interaction"]
-          CM[ControlsManager]
-          CSSM[CSS2DManager]
-      end
-      subgraph Objects ["@teskooano/renderer-threejs-objects"]
-          // Placeholder - used by OM in Viz
-      end
-      subgraph Orbits ["@teskooano/renderer-threejs-orbits"]
-          // Placeholder - used by OrbM in Viz
-      end
-      subgraph Background ["@teskooano/renderer-threejs-background"]
-          // Placeholder - used by BM in Viz
-      end
+    subgraph Renderer
+        ThreeJS["@teskooano/renderer-threejs"]
+        Objects["@teskooano/renderer-threejs-objects"]
+        Orbits["@teskooano/renderer-threejs-orbits"]
+        Interaction["@teskooano/renderer-threejs-interaction"]
+        Lighting["@teskooano/renderer-threejs-lighting"]
+        LOD["@teskooano/renderer-threejs-lod"]
+        Background["@teskooano/renderer-threejs-background"]
     end
 
-      MRS -- Initiates --> AL
-      MRS -- Orchestrates Updates --> OM
-      MRS -- Orchestrates Updates --> OrbM
-      MRS -- Orchestrates Updates --> BM
-      MRS -- Orchestrates Updates --> LM
-      MRS -- Orchestrates Updates --> LiM
-      MRS -- Orchestrates Updates --> LODM
-      MRS -- Orchestrates Updates --> CM
-      MRS -- Calls Render --> SM
-      MRS -- Calls Render --> CSSM
+    subgraph App
+        Teskooano["apps/teskooano"]
+    end
 
-      RSA -- Subscribes --> CS
-      RSA -- Subscribes --> SS
-      RSA -- Emits Events/Provides Data --> OM
-      RSA -- Emits Events/Provides Data --> OrbM
-      RSA -- Emits Events/Provides Data --> LiM
-      RSA -- Emits Events/Provides Data --> LM
-      RSA -- Emits Events/Provides Data --> BM
-      RSA -- Emits Events/Provides Data --> CSSM
+    Teskooano --> ThreeJS
+    Teskooano --> CoreState
+    Teskooano --> CorePhysics
 
-      AL -- Drives --> MRS[Update Callback]
+    ThreeJS --> CoreState
+    ThreeJS --> CoreMath
+    ThreeJS --> Objects
+    ThreeJS --> Orbits
+    ThreeJS --> Interaction
+    ThreeJS --> Lighting
+    ThreeJS --> LOD
+    ThreeJS --> Background
 
-      OM -- Uses --> SM[Scene]
-      OM -- Uses --> Objects[Object Renderers]
-      OrbM -- Uses --> OM
-      OrbM -- Uses --> Orbits[Orbit Renderers]
-      BM -- Uses --> SM[Scene]
-      BM -- Uses --> Background[Background Renderers]
-      LM -- Uses --> OM & CSSM?
-      LiM -- Uses --> SM[Scene]
-      LODM -- Uses --> OM & Camera
-      CM -- Uses --> Camera & DOM
-      CSSM -- Uses --> SM[Scene] & DOM
-      SM -- Manages --> Scene & Camera & Renderer
-
-  CoreAppState --> RSA
+    Interaction --> CoreState
+    Objects --> Celestial
+    Objects --> CoreState
+    Objects --> Lighting
+    Objects --> LOD
+    Celestial --> CoreState
 ```

@@ -131,8 +131,9 @@ Here is a table of all the packages in the repository:
 | @teskooano/systems-procedural-generation | packages/systems/procedural-generation | Procedural generation of star systems                           | ⚠️     |
 | @teskooano/renderer-threejs              | packages/renderer/threejs              | Main Three.js rendering engine implementation                   | ⚠️     |
 | @teskooano/renderer-threejs-core         | packages/renderer/threejs-core         | Core Three.js rendering foundation                              | ⚠️     |
-| @teskooano/renderer-threejs-effects      | packages/renderer/threejs-effects      | Visual effects for the Three.js renderer                        | ⚠️     |
-| @teskooano/renderer-threejs-interaction  | packages/renderer/threejs-interaction  | User interaction (controls, labels) components                  |
+| @teskooano/renderer-threejs-lighting     | packages/renderer/threejs-lighting     | Handles lighting for the Three.js renderer                      | ✅     |
+| @teskooano/renderer-threejs-lod          | packages/renderer/threejs-lod          | Handles Level of Detail (LOD) for the Three.js renderer         | ✅     |
+| @teskooano/renderer-threejs-interaction  | packages/renderer/threejs-interaction  | Handles user interaction for the Three.js renderer              | ✅     |
 | @teskooano/renderer-threejs-objects      | packages/renderer/threejs-objects      | Object mesh rendering and management                            |
 | @teskooano/renderer-threejs-orbits       | packages/renderer/threejs-orbits       | Orbit line rendering and management                             |
 | @teskooano/renderer-threejs-background   | packages/renderer/threejs-background   | Starfield background rendering and management                   |

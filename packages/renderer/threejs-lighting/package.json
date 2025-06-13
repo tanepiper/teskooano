@@ -1,7 +1,14 @@
 {
-  "name": "@teskooano/renderer-threejs-effects",
-  "version": "0.2.0",
+  "name": "@teskooano/renderer-threejs-lighting",
+  "version": "0.1.0",
   "private": true,
+  "description": "Handles scene lighting for the Teskooano Three.js renderer.",
+  "keywords": [
+    "teskooano",
+    "threejs",
+    "renderer",
+    "lighting"
+  ],
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.d.ts",

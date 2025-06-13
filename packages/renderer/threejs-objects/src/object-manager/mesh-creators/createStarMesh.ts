@@ -8,7 +8,7 @@ import {
   createStarRenderer,
   type CelestialRenderer,
 } from "@teskooano/systems-celestial";
-import type { LODLevel } from "@teskooano/renderer-threejs-effects";
+import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { createFallbackSphere } from "./createFallbackSphere";
 

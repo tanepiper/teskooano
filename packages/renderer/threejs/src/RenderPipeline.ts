@@ -2,10 +2,8 @@ import type {
   AnimationLoop,
   SceneManager,
 } from "@teskooano/renderer-threejs-core";
-import type {
-  LightManager,
-  LODManager,
-} from "@teskooano/renderer-threejs-effects";
+import type { LightManager } from "@teskooano/renderer-threejs-lighting";
+import type { LODManager } from "@teskooano/renderer-threejs-lod";
 import type {
   ControlsManager,
   CSS2DManager,

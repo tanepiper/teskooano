@@ -13,22 +13,22 @@
     "resolveJsonModule": true,
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "paths": {
-      "@teskooano/core-debug": ["../../../packages/core/debug/src"],
-      "@teskooano/core-math": ["../../../packages/core/math/src"],
-      "@teskooano/core-physics": ["../../../packages/core/physics/src"],
-      "@teskooano/data-types": ["../../../packages/data/types/src"],
-      "@teskooano/threejs-effects": [
-        "../../../packages/renderer/threejs-effects/src"
+      "@teskooano/core-state": ["../../core/state/src"],
+      "@teskooano/data-types": ["../../data/types/src"],
+      "@teskooano/renderer-threejs-core": ["../../renderer/threejs-core/src"],
+      "@teskooano/renderer-threejs-lod": ["../../renderer/threejs-lod/src"],
+      "@teskooano/renderer-threejs-objects": [
+        "../../renderer/threejs-objects/src"
       ]
     },
     "noEmit": false
   },
   "references": [
-    { "path": "../../../packages/data/types" },
-    { "path": "../../../packages/core/physics" },
-    { "path": "../../../packages/renderer/threejs-effects" },
-    { "path": "../../../packages/core/debug" },
-    { "path": "../../../packages/core/math" }
+    { "path": "../../core/state" },
+    { "path": "../../data/types" },
+    { "path": "../../renderer/threejs-core" },
+    { "path": "../../renderer/threejs-lod" },
+    { "path": "../../renderer/threejs-objects" }
   ],
   "include": ["src/**/*", "src/shims-glsl.d.ts"],
   "exclude": ["node_modules", "dist"]

@@ -15,22 +15,6 @@ export default defineConfig({
         __dirname,
         "../threejs-core/src",
       ),
-      "@teskooano/renderer-threejs-interaction": resolve(
-        __dirname,
-        "../threejs-interaction/src",
-      ),
-      "@teskooano/renderer-threejs-lighting": resolve(
-        __dirname,
-        "../threejs-lighting/src",
-      ),
-      "@teskooano/renderer-threejs-lod": resolve(
-        __dirname,
-        "../threejs-lod/src",
-      ),
-      "@teskooano/systems-celestial": resolve(
-        __dirname,
-        "../../systems/celestial/src",
-      ),
     },
   },
 });

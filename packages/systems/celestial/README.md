@@ -20,18 +20,34 @@ The `@teskooano/systems-celestial` library provides concrete **renderer implemen
 
 ```mermaid
 graph TD
-    subgraph Data ["@teskooano/data-types"]
-        CTypes[CelestialObject Types]
+    subgraph Application
+        A[Application Logic]
     end
-    subgraph State ["@teskooano/core-state"]
-        SimState[simulationState]
-        ObjStore[renderableObjectsStore]
+
+    subgraph Core State ["@teskooano/core-state"]
+        B(State Stores)
     end
-    subgraph Effects ["@teskooano/renderer-threejs-effects"]
-        LODM[LODManager]
-        LightM[LightManager]
-        LensH[GravitationalLensingHandler]
+
+    subgraph Data Types ["@teskooano/data-types"]
+        C(Data Contracts)
     end
+
+    subgraph This Package ["@teskooano/systems-celestial"]
+        D(Celestial Object Classes)
+        E(Renderer Classes)
+    end
+
+    subgraph Lighting ["@teskooano/renderer-threejs-lighting"]
+        F(Lighting System)
+    end
+
+    subgraph LOD ["@teskooano/renderer-threejs-lod"]
+        G(LOD System)
+    end
+
+    A --> B
+    D --> B
+    D --> C
     subgraph ObjectsManager ["<b>@teskooano/renderer-threejs-objects</b><br/><i>ObjectManager</i>"]
         OM(ObjectManager)
     end

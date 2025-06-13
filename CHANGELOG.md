@@ -31,14 +31,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **@teskooano/renderer-threejs-core:** Exported `RendererCelestialObject` type from `index.ts`.
 - **@teskooano/renderer-threejs-core:** Extensive comment removal and minor code cleanup across various files, including `SceneManager.ts`, test files (`__tests__/*`), `events.ts`, `index.ts`, and `setup.ts`.
 - **@teskooano/renderer-threejs-effects:** Major Refactor (`LightManager.ts`):
-  - Now subscribes to `celestialObjects$` from `@teskooano/core-state` using RxJS (`pipe`, `map`, `filter`, `pairwise`).
-  - Star lights are now added, updated (position, intensity), and removed reactively based on changes to star objects in the core state.
-  - Intensity is now partly derived from star temperature via a new `calculateIntensity` placeholder method.
-  - Removed the manual `updateStarLight` method.
-  - Improved `dispose` method to correctly unsubscribe and dispose of light resources.
+  - Now uses a `starLights` map to manage lights by object ID.
+  - `updatePointLight` is now private.
+  - `getStarLightPositions` and `getStarLightsData` added for shader consumption.
 - **@teskooano/renderer-threejs-effects:** Added `distance` and `decay` parameters to `LightManager.addStarLight`.
 - **@teskooano/renderer-threejs-effects:** `EffectComposerManager.update` now checks if `this.composer` exists before rendering.
 - **@teskooano/renderer-threejs-effects:** Added `../threejs` to `tsconfig.json` references.
+- **Refactor:** The `@teskooano/renderer-threejs-effects` package has been split into `@teskooano/renderer-threejs-lighting` and `@teskooano/renderer-threejs-lod` for better separation of concerns.
+- chore: Initial release of `@teskooano/renderer-threejs-lod`
+- chore: Initial release of `@teskooano/renderer-threejs-lighting`
+- **Docs:** Updated all documentation and diagrams to reflect the `effects` package refactor.
+- **Fix:** Corrected several `tsconfig.json` files to include correct paths for the new `lighting` and `lod` packages.
 - **@teskooano/renderer-threejs-interaction:** `ControlsManager.ts` now uses `getSimulationState` and `setSimulationState` from `@teskooano/core-state` for camera state updates.
 - **@teskooano/renderer-threejs-interaction:** `CSS2DManager.ts`:
   - Added pre-render checks to find and remove orphaned labels and to hide any `CSS2DObject` in the scene without a parent, improving stability.

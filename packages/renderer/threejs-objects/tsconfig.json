@@ -10,7 +10,10 @@
       "@teskooano/core-state": ["../../core/state/src"],
       "@teskooano/data-types": ["../../data/types/src"],
       "@teskooano/renderer-threejs-core": ["../threejs-core/src"],
-      "@teskooano/renderer-threejs-effects": ["../threejs-effects/src"],
+      "@teskooano/renderer-threejs-lighting": ["../threejs-lighting/src"],
+      "@teskooano/renderer-threejs-lod": ["../threejs-lod/src"],
+      "@teskooano/renderer-threejs-orbits": ["../threejs-orbits/src"],
+      "@teskooano/renderer-threejs-interaction": ["../threejs-interaction/src"],
       "@teskooano/systems-celestial": ["../../systems/celestial/src"]
     },
     "noEmit": false
@@ -21,7 +24,10 @@
     { "path": "../../core/state" },
     { "path": "../../data/types" },
     { "path": "../threejs-core" },
-    { "path": "../threejs-effects" },
+    { "path": "../threejs-lighting" },
+    { "path": "../threejs-lod" },
+    { "path": "../threejs-orbits" },
+    { "path": "../threejs-interaction" },
     { "path": "../../systems/celestial" }
   ]
 }

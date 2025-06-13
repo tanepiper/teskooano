@@ -36,15 +36,7 @@ This document consolidates all unreleased changes from the main project changelo
 - **@teskooano/renderer-threejs-core:** Unsubscribe logic now uses RxJS `Subscription` objects.
 - **@teskooano/renderer-threejs-core:** Exported `RendererCelestialObject` type from `index.ts`.
 - **@teskooano/renderer-threejs-core:** Extensive comment removal and minor code cleanup across various files, including `SceneManager.ts`, test files (`__tests__/*`), `events.ts`, `index.ts`, and `setup.ts`.
-- **@teskooano/renderer-threejs-effects:** Major Refactor (`LightManager.ts`):
-  - Now subscribes to `celestialObjects$` from `@teskooano/core-state` using RxJS (`pipe`, `map`, `filter`, `pairwise`).
-  - Star lights are now added, updated (position, intensity), and removed reactively based on changes to star objects in the core state.
-  - Intensity is now partly derived from star temperature via a new `calculateIntensity` placeholder method.
-  - Removed the manual `updateStarLight` method.
-  - Improved `dispose` method to correctly unsubscribe and dispose of light resources.
-- **@teskooano/renderer-threejs-effects:** Added `distance` and `decay` parameters to `LightManager.addStarLight`.
-- **@teskooano/renderer-threejs-effects:** `EffectComposerManager.update` now checks if `this.composer` exists before rendering.
-- **@teskooano/renderer-threejs-effects:** Added `../threejs` to `tsconfig.json` references.
+- **Refactor:** The `@teskooano/renderer-threejs-effects` package has been split into `@teskooano/renderer-threejs-lighting` and `@teskooano/renderer-threejs-lod`.
 - **@teskooano/renderer-threejs-interaction:** `ControlsManager.ts` now uses `getSimulationState` and `setSimulationState` from `@teskooano/core-state` for camera state updates.
 - **@teskooano/renderer-threejs-interaction:** `CSS2DManager.ts`:
   - Added pre-render checks to find and remove orphaned labels and to hide any `CSS2DObject` in the scene without a parent, improving stability.
@@ -129,6 +121,5 @@ This document consolidates all unreleased changes from the main project changelo
   - The `setFollowTarget` method has been deprecated; its responsibilities are now split between `CameraManager` (initiating transitions) and the simplified `startFollowing`.
   - Now emits `CustomEvents.USER_CAMERA_MANIPULATION` when the user manually changes the camera via controls.
   - Now emits `CustomEvents.CAMERA_TRANSITION_COMPLETE` when a GSAP transition finishes, providing details about the transition type and any focused object.
-- Adjusted `rotationPercent` in `ControlsManager.transitionTo` to allow more time for camera rotation during transitions, improving the feel of pre-movement orientation.
 
 ---

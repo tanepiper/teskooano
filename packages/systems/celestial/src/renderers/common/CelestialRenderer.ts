@@ -1,9 +1,11 @@
 import * as THREE from "three";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import type {
   CelestialObject,
   RenderableCelestialObject,
 } from "@teskooano/data-types";
-import { LODLevel } from "@teskooano/renderer-threejs-effects";
+import type { SceneManager } from "@teskooano/renderer-threejs-core";
+import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 
 /**
  * Options for creating celestial object meshes

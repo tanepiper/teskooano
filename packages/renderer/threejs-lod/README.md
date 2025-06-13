@@ -1,4 +1,4 @@
-# @teskooano/renderer-threejs-effects
+# @teskooano/renderer-threejs-lod
 
 This package provides managers and utilities for handling visual effects and optimizations within the Teskooano Three.js rendering pipeline.
 
@@ -18,10 +18,10 @@ For more details, see the `ARCHITECTURE.md` file.
 
 This package is used internally by the main `@teskooano/renderer-threejs` package. The `ModularSpaceRenderer` class instantiates both `LightManager` and `LODManager` and integrates them into its render loop.
 
-A conceptual example:
+An example of how to use the `LODManager` can be found in the main `ModularSpaceRenderer` class, but a simple example is shown below:
 
 ```typescript
-import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
+import { LODManager } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 
 // Assuming scene and camera are already initialized

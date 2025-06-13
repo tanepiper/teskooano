@@ -26,63 +26,68 @@ graph TD
         RenderableStore["renderableStore"];
     end
 
-    subgraph "Core (@teskooano/renderer-threejs-core)"
-        SceneMgr("SceneManager");
-        AnimLoop("AnimationLoop");
+    subgraph "Feature Packages"
+        direction LR
+        ObjMgr["ObjectManager<br/>(@teskooano/renderer-threejs-objects)"]
+        OrbitMgr["OrbitsManager<br/>(@teskooano/renderer-threejs-orbits)"]
+        BgMgr["BackgroundManager<br/>(@teskooano/renderer-threejs-background)"]
     end
 
-    subgraph "Visualization"
-        ObjMgr("ObjectManager<br/>@teskooano/renderer-threejs-objects");
-        OrbitMgr("OrbitManager<br/>@teskooano/renderer-threejs-orbits");
-        BgMgr("BackgroundManager<br/>@teskooano/renderer-threejs-background");
+    subgraph "Core (@teskooano/renderer-threejs-core)"
+        SceneManager
+        AnimationLoop
+    end
+
+    subgraph "Lighting (@teskooano/renderer-threejs-lighting)"
+        LightManager
+    end
+
+    subgraph "LOD (@teskooano/renderer-threejs-lod)"
+        LODManager
     end
 
     subgraph "Interaction (@teskooano/renderer-threejs-interaction)"
-        ControlsM("ControlsManager");
-        CSS2DM("CSS2DManager");
-    end
-
-    subgraph "Effects (@teskooano/renderer-threejs-effects)"
-        LightM("LightManager");
-        LODM("LODManager");
+        ControlsManager
+        CSS2DManager
     end
 
     AppUI -- "Instantiates" --> MSR;
     MSR -- "Instantiates" --> RSA;
     MSR -- "Instantiates" --> RP;
-    MSR -- "Instantiates & Coordinates" --> SceneMgr;
-    MSR -- "Instantiates & Coordinates" --> AnimLoop;
+    MSR -- "Instantiates & Coordinates" --> SceneManager;
+    MSR -- "Instantiates & Coordinates" --> AnimationLoop;
     MSR -- "Instantiates & Coordinates" --> ObjMgr;
     MSR -- "Instantiates & Coordinates" --> OrbitMgr;
     MSR -- "Instantiates & Coordinates" --> BgMgr;
-    MSR -- "Instantiates & Coordinates" --> ControlsM;
-    MSR -- "Instantiates & Coordinates" --> CSS2DM;
-    MSR -- "Instantiates & Coordinates" --> LightM;
-    MSR -- "Instantiates & Coordinates" --> LODM;
+    MSR -- "Instantiates & Coordinates" --> ControlsManager;
+    MSR -- "Instantiates & Coordinates" --> CSS2DManager;
+    MSR -- "Instantiates & Coordinates" --> LightManager;
+    MSR -- "Instantiates & Coordinates" --> LODManager;
 
     RSA -- "Subscribes to" --> CoreState;
-    RSA -- "Processes & Pushes to" --> RenderableStore;
-
-    ObjMgr -- "Subscribes to" --> RenderableStore;
-    OrbitMgr -- "Subscribes to" --> RenderableStore;
-
+    RSA -- "Provides Renderables to" --> ObjMgr;
     RSA -- "Provides Visual Settings" --> OrbitMgr;
 
-    AnimLoop -- "Calls" --> RP;
+    AnimationLoop -- "Calls" --> RP;
     RP -- "Updates" --> ObjMgr;
     RP -- "Updates" --> OrbitMgr;
     RP -- "Updates" --> BgMgr;
-    RP -- "Renders via" --> SceneMgr;
-    RP -- "Renders via" --> CSS2DM;
+    RP -- "Updates" --> ControlsManager;
+    RP -- "Updates" --> LODManager;
+    RP -- "Renders via" --> SceneManager;
+    RP -- "Renders via" --> CSS2DManager;
 
-    ObjMgr -- "Uses" --> LightM;
-    ObjMgr -- "Uses" --> CSS2DM;
-    LODM -- "Uses Camera from" --> SceneMgr;
-    ControlsM -- "Uses Camera &<br/>DOM Element from" --> SceneMgr;
-    LightM -- "Modifies" --> SceneMgr;
-    BgMgr -- "Modifies" --> SceneMgr;
-    ObjMgr -- "Modifies" --> SceneMgr;
-    OrbitMgr -- "Modifies" --> SceneMgr;
+    ObjMgr -- "Uses" --> LightManager;
+    ObjMgr -- "Uses" --> CSS2DManager;
+    ObjMgr -- "Registers with" --> LODManager;
+
+    LODManager -- "Uses Camera from" --> SceneManager;
+    ControlsManager -- "Uses Camera &<br/>DOM Element from" --> SceneManager;
+
+    LightManager -- "Modifies" --> SceneManager;
+    BgMgr -- "Modifies" --> SceneManager;
+    ObjMgr -- "Modifies" --> SceneManager;
+    OrbitMgr -- "Modifies" --> SceneManager;
 ```
 
 ## Core Components within this Package

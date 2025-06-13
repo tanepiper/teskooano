@@ -1,6 +1,7 @@
 import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { AnimationLoop, SceneManager } from "@teskooano/renderer-threejs-core";
-import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
+import { LightManager } from "@teskooano/renderer-threejs-lighting";
+import { LODManager } from "@teskooano/renderer-threejs-lod";
 import {
   ControlsManager,
   CSS2DLayerType,

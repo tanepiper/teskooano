@@ -4,7 +4,7 @@ import {
   GasGiantProperties,
   StarProperties,
 } from "@teskooano/data-types";
-import type { LODLevel, LODManager } from "@teskooano/renderer-threejs-effects";
+import type { LODManager, LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
   BaseTerrestrialRenderer,
   createStarRenderer,
@@ -23,6 +23,7 @@ import {
   createRingSystemMesh,
   createStarMesh,
 } from "./mesh-creators"; // Import creator functions
+import type { ObjectManager } from "../ObjectManager";
 
 /**
  * @internal

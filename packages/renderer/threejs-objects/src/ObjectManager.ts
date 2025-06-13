@@ -1,19 +1,17 @@
 import { OSVector3 } from "@teskooano/core-math";
-import {
-  accelerationVectors$,
-  getCelestialObjects,
-  celestialObjects$,
-  renderableStore,
-} from "@teskooano/core-state";
+import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
+import { accelerationVectors$ } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
   GasGiantClass,
+  type RenderableCelestialObject,
 } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
+import { rendererEvents } from "@teskooano/renderer-threejs";
 import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
+import { LightManager } from "@teskooano/renderer-threejs-lighting";
+import { LODManager, type LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
   AsteroidFieldRenderer,
   CelestialRenderer,
@@ -26,20 +24,14 @@ import {
 } from "@teskooano/systems-celestial";
 import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
+import { createDebris, type DebrisParticle } from "./debris/create-debris";
 import {
+  AccelerationVisualizer,
   GravitationalLensingHandler,
   MeshFactory,
-  RendererUpdater,
   ObjectLifecycleManager,
-  AccelerationVisualizer,
+  RendererUpdater,
 } from "./object-manager";
-
-import type { LODLevel } from "@teskooano/renderer-threejs-effects";
-
-import type { DestructionEvent } from "@teskooano/core-physics";
-import { rendererEvents } from "@teskooano/renderer-threejs";
-import { createDebris, type DebrisParticle } from "./debris/create-debris";
-import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 
 /**
  * @internal Interface defining the required methods for managing label visibility.

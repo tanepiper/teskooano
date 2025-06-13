@@ -9,15 +9,18 @@
     "paths": {
       "@teskooano/core-state": ["../../core/state/src"],
       "@teskooano/data-types": ["../../data/types/src"],
+      "@teskooano/core-math": ["../../core/math/src"],
       "@teskooano/renderer-threejs-core": ["../threejs-core/src"]
     },
     "noEmit": false
   },
-  "include": ["src/**/*.ts", "src/vite-env.d.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [
     { "path": "../../core/state" },
     { "path": "../../data/types" },
-    { "path": "../threejs-core" }
+    { "path": "../../core/math" },
+    { "path": "../threejs-core" },
+    { "path": "../threejs" }
   ]
 }
