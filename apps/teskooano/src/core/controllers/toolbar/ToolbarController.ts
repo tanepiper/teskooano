@@ -1,4 +1,11 @@
-import { fromEvent, BehaviorSubject, map, startWith, tap } from "rxjs";
+import {
+  fromEvent,
+  BehaviorSubject,
+  map,
+  startWith,
+  tap,
+  Subscription,
+} from "rxjs";
 import {
   type FunctionToolbarItemConfig,
   type PanelToolbarItemConfig,
@@ -24,6 +31,7 @@ export class ToolbarController {
   private _widgetContainer: HTMLElement;
   private _context: PluginExecutionContext;
   private _isMobileDevice$: BehaviorSubject<boolean>;
+  private _pluginChangesSubscription: Subscription;
 
   /**
    * URL for the main Teskooano website.
@@ -61,7 +69,20 @@ export class ToolbarController {
       )
       .subscribe();
 
-    this.render();
+    this.setupStaticListeners();
+    this.setupMobileAttributeToggle();
+
+    this._pluginChangesSubscription =
+      this._context.pluginManager.pluginsChanged$.subscribe(() => {
+        this.reRenderToolbars();
+      });
+  }
+
+  /**
+   * Cleans up subscriptions when the controller is no longer needed.
+   */
+  public destroy(): void {
+    this._pluginChangesSubscription.unsubscribe();
   }
 
   /**
@@ -73,20 +94,31 @@ export class ToolbarController {
   }
 
   /**
-   * Renders the basic toolbar structure from the template.
+   * Sets up event listeners for static elements like the logo.
    * @private
    */
-  private render(): void {
+  private setupStaticListeners(): void {
     const logoButton = this._element.querySelector("#toolbar-logo");
     if (logoButton) {
       logoButton.addEventListener("click", () => {
         window.open(this.WEBSITE_URL, "_blank");
       });
     }
+  }
 
+  /**
+   * Clears and re-populates the toolbar items and widgets.
+   * This is called initially and whenever plugins change.
+   * @private
+   */
+  private reRenderToolbars(): void {
+    // Clear existing dynamic items
+    this._buttonContainer.innerHTML = "";
+    this._widgetContainer.innerHTML = "";
+
+    // Repopulate
     this.populateItems(this._buttonContainer);
     this.populateWidgets(this._widgetContainer);
-    this.setupMobileAttributeToggle();
   }
 
   /**

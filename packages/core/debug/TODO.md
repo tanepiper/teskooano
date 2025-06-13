@@ -6,8 +6,13 @@
   - The pattern used here should be the standard. `@teskooano/core-math` should be refactored to align with this approach for better decoupling.
 
 - [ ] **Move Beyond `localStorage` for Debug State**:
+
   - `celestial-debug.ts` uses `localStorage`, which can be slow and is not ideal for complex state.
   - The long-term goal should be to create a dedicated in-memory Debug UI Panel that can read from the debug services, making `localStorage` unnecessary.
+
+- [x] **Move Beyond `localStorage` for Debug State**:
+  - `celestial-debug.ts` previously used `localStorage`, which was slow and not ideal for complex state.
+  - This has been refactored to use a performant in-memory cache within the `celestialDebugger` service. The next step is building a UI to consume this data.
 
 Items to address for future development:
 

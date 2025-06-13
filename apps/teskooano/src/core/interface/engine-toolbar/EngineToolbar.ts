@@ -68,6 +68,7 @@ export class EngineToolbar {
     this.subscribeToExpansionState();
     this.populateItemsFromPlugins();
     this.listenForPanelRemovals();
+    this.listenForPluginChanges();
   }
 
   /** Inject CSS for toolbar structure, icons, and animation */
@@ -127,7 +128,10 @@ export class EngineToolbar {
       this._context.pluginManager.getToolbarItemsForTarget("engine-toolbar");
     const widgetConfigs =
       this._context.pluginManager.getToolbarWidgetsForTarget("engine-toolbar");
-
+    console.log(`[EngineToolbar ${this._apiId}] Populating with items:`, {
+      itemConfigs,
+      widgetConfigs,
+    });
     this.renderDynamicButtons(itemConfigs);
     this.renderDynamicWidgets(widgetConfigs);
   }
@@ -143,6 +147,21 @@ export class EngineToolbar {
         if (this._activeFloatingPanels.has(removedPanelId)) {
           this._activeFloatingPanels.delete(removedPanelId);
         }
+      });
+  }
+
+  /**
+   * Subscribes to the PluginManager's `pluginsChanged$` observable and
+   * repopulates the toolbar items whenever plugins are added or removed.
+   */
+  private listenForPluginChanges(): void {
+    this._context.pluginManager.pluginsChanged$
+      .pipe(takeUntil(this._destroy$))
+      .subscribe(() => {
+        console.log(
+          `[EngineToolbar ${this._apiId}] Repopulating items due to plugin change.`,
+        );
+        this.populateItemsFromPlugins();
       });
   }
 

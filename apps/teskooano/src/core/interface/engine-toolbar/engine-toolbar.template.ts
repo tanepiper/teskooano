@@ -52,7 +52,7 @@ template.innerHTML = `
   }
 
   .toolbar-collapsible-buttons.expanded {
-    max-width: 500px; /* Adjust as needed */
+    max-width: 600px; /* Adjust as needed */
     opacity: 1;
     visibility: visible;
   }

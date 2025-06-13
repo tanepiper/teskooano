@@ -39,7 +39,8 @@ export class CircularBuffer<T> {
   getOrderedItems(): T[] {
     const ordered = new Array<T>(this._size);
     for (let i = 0; i < this._size; i++) {
-      const index = (this.head - this._size + i + this.capacity) % this.capacity;
+      const index =
+        (this.head - this._size + i + this.capacity) % this.capacity;
       ordered[i] = this.buffer[index] as T;
     }
     return ordered;
@@ -75,4 +76,4 @@ export class CircularBuffer<T> {
   get size(): number {
     return this._size;
   }
-} 
+}

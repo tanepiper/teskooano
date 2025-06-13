@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import type { DockviewApi } from "dockview-core";
-import { Observable, Subject } from "rxjs";
+import { Observable, Subject, BehaviorSubject } from "rxjs";
 import {
   RegistrationManager,
   type PluginRegistries,
@@ -61,7 +61,7 @@ class PluginManager {
   #dockviewController: any | null = null;
 
   #pluginStatusSubject = new Subject<PluginRegistrationStatus>();
-  #pluginsChangedSubject = new Subject<void>();
+  #pluginsChangedSubject = new BehaviorSubject<void>(undefined);
 
   public readonly pluginStatus$: Observable<PluginRegistrationStatus> =
     this.#pluginStatusSubject.asObservable();

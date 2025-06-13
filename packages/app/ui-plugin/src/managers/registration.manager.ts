@@ -103,7 +103,6 @@ export class RegistrationManager {
         pluginId: plugin.id,
       });
     });
-    this.processPendingToolbarItems();
   }
 
   private processPendingToolbarItems(): void {
@@ -163,6 +162,8 @@ export class RegistrationManager {
         pluginId: plugin.id,
       });
     });
+
+    this.processPendingToolbarItems();
   }
 
   private registerManagerClasses(plugin: TeskooanoPlugin): void {
@@ -229,7 +230,6 @@ export class RegistrationManager {
       }
       itemsToRemove.forEach((key) => {
         registry.delete(key);
-        console.log(`[PluginManager] Unregistered ${itemType}: ${key}`);
       });
     };
 

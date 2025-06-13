@@ -5,7 +5,6 @@ export const pluginConfig: PluginRegistryConfig = {
     path: "../plugins/external-links",
   },
   "teskooano-engine-panel": { path: "../plugins/engine-panel" },
-
   "teskooano-engine-settings": {
     path: "../plugins/engine-settings",
   },
@@ -35,5 +34,8 @@ export const pluginConfig: PluginRegistryConfig = {
   },
   "teskooano-plugin-manager": {
     path: "../plugins/plugin-manager",
+  },
+  "teskooano-debug-panel": {
+    path: "../plugins/debug-panel",
   },
 };

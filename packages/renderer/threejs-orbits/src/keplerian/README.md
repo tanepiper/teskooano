@@ -19,9 +19,9 @@ This directory contains the logic for calculating and rendering static, elliptic
 
 1.  **Coordination**: This manager is the bridge between the calculated orbit points and the visual representation in the scene.
 2.  **Data Flow & Type Conversion**: It follows the project's standard architectural pattern for physics-to-renderer data flow:
-    -   It calls `OrbitCalculator.calculateOrbitPoints()` to get the raw orbital path as `OSVector3[]`.
-    -   It then uses the `updateThreeVector3Array` utility to convert the `OSVector3[]` data into a `THREE.Vector3[]` array. This conversion is the final step before the data is passed to the rendering-specific `LineBuilder`.
-    -   It caches the resulting `THREE.Vector3[]` to avoid unnecessary conversions on every frame.
+    - It calls `OrbitCalculator.calculateOrbitPoints()` to get the raw orbital path as `OSVector3[]`.
+    - It then uses the `updateThreeVector3Array` utility to convert the `OSVector3[]` data into a `THREE.Vector3[]` array. This conversion is the final step before the data is passed to the rendering-specific `LineBuilder`.
+    - It caches the resulting `THREE.Vector3[]` to avoid unnecessary conversions on every frame.
 3.  **Scene Management**: It uses the `ObjectManager` to add and remove the final `THREE.Line` objects from the scene and manages their materials and positions.
 
-This clear separation ensures that core orbital math is not tied to the rendering library, while the manager class handles all the `three.js`-specific implementation details. 
+This clear separation ensures that core orbital math is not tied to the rendering library, while the manager class handles all the `three.js`-specific implementation details.

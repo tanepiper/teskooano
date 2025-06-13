@@ -22,4 +22,4 @@ This directory contains the central components that orchestrate the entire orbit
 
 1.  **Performance**: The primary goal is to improve performance and reduce memory usage by preventing the creation of duplicate materials. Creating new materials in `three.js` can be expensive, and this utility ensures that only a few instances are created and reused throughout the application.
 2.  **Centralized Styling**: It provides a single, centralized location to define the visual style (color, opacity, line width) for different types of orbit lines (`KEPLERIAN`, `TRAIL`, `PREDICTION`, etc.).
-3.  **Cloning**: The `clone()` method allows each line to have its own unique material instance, which is necessary for individual highlighting and color changes, while still starting from a shared base definition. 
+3.  **Cloning**: The `clone()` method allows each line to have its own unique material instance, which is necessary for individual highlighting and color changes, while still starting from a shared base definition.

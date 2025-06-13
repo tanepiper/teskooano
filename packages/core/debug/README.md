@@ -6,7 +6,7 @@ A utility package providing debug tools for the Teskooano engine.
 
 - **Central Debug Configuration**: Global settings (`debugConfig`) to control log level (`DebugLevel`), enable/disable console logging (`debugConfig.logging`), and toggle debug visualizations (`debugConfig.visualize`). Includes helper functions (`isDebugEnabled`, `isVisualizationEnabled`, `setVisualizationEnabled`).
 - **Custom Logger**: A logger (`logger.ts`) with multiple levels (ERROR, WARN, INFO, DEBUG, TRACE), support for context/module names (`createLogger`), and basic performance timing (`logger.time`).
-- **Celestial Debugging**: Utilities (`celestial-debug.ts`) specifically for logging or visualizing state related to celestial objects (e.g., orbits, properties). _(Details TBD based on implementation)_
+- **Celestial Debugging**: In-memory storage (`celestial-debug.ts`) for caching and retrieving detailed debug information about celestial objects, including physics, orbital, material, and lighting properties.
 - **Vector Debugging**: Helpers (`vector-debug.ts`) for storing, retrieving, and potentially logging `OSVector3` instances associated with specific objects or contexts.
 - **THREE.js Vector Debugging**: Specific helpers (`three-vector-debug.ts`) for storing, retrieving, and potentially logging `THREE.Vector3` instances, useful for debugging rendering and geometry calculations.
 
@@ -150,8 +150,53 @@ threeVectorDebug.clearVectors(renderId);
 // threeVectorDebug.clearAll();
 ```
 
-_(Note: The celestial-debug utilities usage depends on its specific implementation details)_
+### Celestial Object Debugging
+
+Store and retrieve a rich set of debug data for celestial objects. This system uses a performant in-memory cache, making it safe to use in performance-critical code paths when visualization is enabled.
+
+```typescript
+import {
+  celestialDebugger,
+  isVisualizationEnabled,
+} from "@teskooano/core-debug";
+
+const objectId = "earth";
+
+if (isVisualizationEnabled()) {
+  // Store physics data
+  celestialDebugger.setPhysicsData(objectId, {
+    mass: 5.972e24,
+    radius: 6371000,
+    density: 5514,
+  });
+
+  // Store orbital data
+  celestialDebugger.setOrbitalData(objectId, {
+    semiMajorAxis: 149.6e9,
+    eccentricity: 0.0167,
+  });
+}
+
+// --- Later, in a debug panel or console ---
+
+// Get all data for an object
+const allDebugData = celestialDebugger.getDebugData(objectId);
+if (allDebugData) {
+  console.log(`Physics data for ${objectId}:`, allDebugData.physics);
+  console.log(`Orbital data for ${objectId}:`, allDebugData.orbital);
+}
+
+// Get all object IDs being tracked
+const trackedIds = celestialDebugger.getTrackedObjectIds();
+console.log("Tracked celestial objects:", trackedIds);
+
+// Clean up data for a specific object
+celestialDebugger.clearObjectDebugData(objectId);
+
+// Clean up all data
+celestialDebugger.clearAllCelestialDebugData();
+```
 
 ---
 
-_Remember to commit often! `git commit -m "docs(debug): update README for v0.1.0"`_
+_Remember to commit often! `git commit -m "docs(debug): update README for v0.2.0"`_

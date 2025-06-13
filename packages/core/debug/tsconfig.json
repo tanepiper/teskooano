@@ -2,7 +2,10 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "noEmit": false
+    "rootDir": "src",
+    "noEmit": false,
+    "composite": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "references": [{ "path": "../state" }, { "path": "../../data/types" }]
 }

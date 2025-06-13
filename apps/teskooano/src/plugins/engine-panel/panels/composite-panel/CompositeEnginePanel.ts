@@ -1,10 +1,4 @@
-import {
-  celestialObjects$,
-  getCelestialObjects,
-  simulationState$,
-  type SimulationState,
-} from "@teskooano/core-state";
-import { panelService } from "../../../../core/controllers/dockview/panel.service";
+import { type SimulationState } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
   DockviewPanelApi,
@@ -12,6 +6,7 @@ import {
   IContentRenderer,
 } from "dockview-core";
 import { BehaviorSubject, Subscription } from "rxjs";
+import { panelService } from "../../../../core/controllers/dockview/panel.service";
 
 import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 

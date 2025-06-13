@@ -2,6 +2,18 @@
 
 All notable changes to the `@teskooano/core-debug` package will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **BREAKING**: Refactored `celestial-debug.ts` to remove all usage of `localStorage`. Debug data is now stored in a performant, in-memory cache within the `celestialDebugger` singleton.
+- Replaced `celestialDebugger.getCelestialDebugNames()` with `getTrackedObjectIds()` to provide a more comprehensive list of all objects being debugged.
+- Added `celestialDebugger.getDebugData()` to programmatically retrieve all cached (non-vector) debug data for an object.
+
+### Fixed
+
+- Eliminated a major performance bottleneck caused by synchronous `localStorage` writes during the simulation loop.
+
 ## [0.1.0] - 2025-04-24
 
 ### Added

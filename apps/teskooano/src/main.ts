@@ -37,8 +37,8 @@ async function initializeApp() {
   }
 
   const pluginIds = [
-    ...Object.keys(pluginConfig),
     ...Object.keys(corePluginConfig),
+    ...Object.keys(pluginConfig),
   ];
   await pluginManager.loadAndRegisterPlugins(pluginIds);
 
