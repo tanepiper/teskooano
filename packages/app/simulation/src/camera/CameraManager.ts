@@ -354,23 +354,9 @@ export class CameraManager {
       ? detail.target.clone()
       : currentState.currentTarget.clone();
 
-    let newFocusedId = this.intendedFocusIdForTransition;
-
-    // If the transition had a specific focusId, use it.
-    // Otherwise, if the transition implies a default view (e.g. target is 0,0,0), clear focus.
-    if (detail.metadata && detail.metadata.focusedObjectId !== undefined) {
-      newFocusedId = detail.metadata.focusedObjectId;
-    } else if (
-      newTarget.equals(DEFAULT_CAMERA_TARGET) &&
-      newPosition.equals(DEFAULT_CAMERA_POSITION)
-    ) {
-      // Heuristic: if transition ends at default position/target, assume focus is cleared
-      // unless intendedFocusIdForTransition was explicitly set to something else during this transition start.
-      if (this.intendedFocusIdForTransition === null) {
-        // Only clear if it was meant to be cleared
-        newFocusedId = null;
-      }
-    }
+    // The focusedObjectId for a programmatic transition is whatever we intended it to be
+    // when we started the transition.
+    const newFocusedId = this.intendedFocusIdForTransition;
 
     if (
       currentState.focusedObjectId !== newFocusedId ||
@@ -392,47 +378,8 @@ export class CameraManager {
       }
     }
 
-    // After transition and state update, handle following behavior based on simulation state
-    if (newFocusedId && this.renderer?.controlsManager) {
-      // Get simulation state to check if it's paused
-      const simulationState = getSimulationState();
-      const isPaused = simulationState.paused;
-
-      const objectToFollow = this.renderer.getObjectById(newFocusedId);
-      if (objectToFollow) {
-        const offset = newPosition.clone().sub(newTarget);
-
-        // Only engage active following if simulation is running
-        // If paused, we'll just save the offset but not actively follow
-        // This allows the user to orbit freely when paused
-        this.renderer.controlsManager.startFollowing(objectToFollow, offset);
-
-        // If simulation is paused, we want to disable active tracking
-        // but keep the follow target and offset data for when unpaused
-        if (isPaused) {
-          document.dispatchEvent(
-            new CustomEvent(CustomEvents.USER_CAMERA_MANIPULATION, {
-              detail: {
-                position: this.renderer.camera.position.clone(),
-                target: this.renderer.controlsManager.controls.target.clone(),
-              },
-              bubbles: true,
-              composed: true,
-            }),
-          );
-        }
-      } else {
-        console.warn(
-          `[CameraManager] Object ${newFocusedId} not found for following post-transition. Stopping follow.`,
-        );
-        this.renderer.controlsManager.stopFollowing();
-      }
-    } else if (this.renderer?.controlsManager) {
-      // newFocusedId is null or renderer/controlsManager is not fully available.
-      this.renderer.controlsManager.stopFollowing();
-    }
-
-    this.intendedFocusIdForTransition = null; // Reset after transition completes or is superseded
+    // Reset the intent after the transition is complete.
+    this.intendedFocusIdForTransition = null;
   };
 
   /**

@@ -60,73 +60,68 @@ The primary goal of this package is to provide robust and intuitive camera contr
 1.  **Standard Orbit Controls:** Leveraging `THREE.OrbitControls` for basic user navigation (zoom, pan, rotate) via `ControlsManager`.
 2.  **Animated Transitions:** Using GSAP for smooth, non-jarring camera movements when programmatically changing the view (e.g., focusing on an object) via `ControlsManager`.
 3.  **Object Following:** Enabling the camera to track a moving `THREE.Object3D` while preserving the user's ability to orbit around that object, managed by `ControlsManager`.
-4.  **State Management Integration:** Communicating camera state changes to the central `@teskooano/core-state` via `ControlsManager`.
-5.  **HTML Overlays:** Rendering HTML elements (like labels and markers) positioned relative to 3D objects using `CSS2DRenderer` via `CSS2DManager`.
+4.  **HTML Overlays:** Rendering HTML elements (like labels and markers) positioned relative to 3D objects using `CSS2DRenderer` via `CSS2DManager`.
 
 ## Core Class: `ControlsManager`
 
-This is the central orchestrator for camera control and movement logic.
+This is the central low-level driver for all camera control and movement logic. It is designed to be stateless regarding the application's overall simulation state.
 
 ### Responsibilities:
 
 - **Initialization:** Creates and configures an `OrbitControls` instance, attaching it to the camera and DOM element.
-- **Update Loop (`update()`):** This method is crucial and **must** be called every frame. It performs:
-  - **Following Logic:** If `followingTargetObject` is set and not transitioning, calculates the target's movement delta since the last frame, applies this delta to the camera position, and updates the `controls.target`.
-  - **OrbitControls Update:** Calls `controls.update()` to apply damping and process any user input relative to the current camera/target state.
-- **Transitions (`moveTo`, `updateTarget`, `startTransition`):** Handles animated camera movements.
-  - `moveTo`/`updateTarget`: Public API methods to request a camera move.
-  - `startTransition`: Private method that orchestrates the GSAP timeline. It calculates duration based on distance and angle, then animates the `controls.target` (rotation) followed by the `camera.position`.
-  - Uses GSAP timelines for smooth sequencing and cancellation (`cancelTransition`).
-- **Following (`setFollowTarget`):** Public API method to initiate following.
-  - Calculates the desired final camera position relative to the target (considering `keepCurrentDistance` or object size).
-  - Initiates a `moveTo` transition to get the camera to that starting point.
-  - Sets the `followingTargetObject` flag, which activates the delta logic in the `update()` loop.
-- **State Synchronization:** Listens to the `OrbitControls` `change` event. When the user interacts (and not transitioning), it updates the `simulationState` nanostore with the current camera position and target.
-- **Event Dispatching:** Fires a `camera-transition-complete` custom event when a GSAP transition finishes.
-- **Cleanup (`dispose`):** Removes event listeners, disposes of `OrbitControls`, and cancels any active GSAP animations.
+- **Update Loop (`update()`):** This method is crucial and **must** be called every frame from the main renderer loop. It performs two key functions:
+  - **Following Logic:** If `followingTargetObject` is set and not programmatically animating (`isAnimating`), it calculates the target's movement delta since the last frame and applies this delta to both the camera position and the `controls.target`.
+  - **OrbitControls Update:** It calls `controls.update()` to apply damping and process any user input relative to the camera's current state.
+- **Transitions (`transitionTo`, `transitionTargetTo`):** Provides a public API for programmatic, animated camera movements using GSAP for smooth sequencing and cancellation.
+  - A transition temporarily sets an `isAnimating` flag to prevent the `update()` loop's follow logic from interfering with the animation.
+- **Following (`startFollowing`, `stopFollowing`):** Provides a public API to make the camera track a moving `THREE.Object3D`. This is typically called by a higher-level manager (`CameraManager`) after a transition is complete.
+- **Event Dispatching:**
+  - Fires a `USER_CAMERA_MANIPULATION` custom event when the user finishes a manual camera movement (e.g., dragging with the mouse).
+  - Fires a `CAMERA_TRANSITION_COMPLETE` custom event when a programmatic GSAP transition finishes.
+- **Cleanup (`dispose()`):** Removes event listeners, disposes of `OrbitControls`, and cancels any active GSAP animations.
 
 ### Interactions Diagram:
 
 ```mermaid
 graph TD
-    A[User Input (Mouse/Touch)] --> B(OrbitControls);
-    C[Render Loop] --> D{ControlsManager.update(delta)};
-    E[UI / External Logic] -- focus request --> F(ControlsManager.setFollowTarget);
-    F -- calculates positions --> G(ControlsManager.moveToPosition);
-    G -- calls --> H(ControlsManager._transitionPositionAndTarget);
-    H -- creates --> I(GSAP Timeline);
-    I -- animates --> B;
-    I -- animates --> J(Camera Position);
-    I -- onComplete calls --> K(ControlsManager onTimelineComplete);
-    K -- updates --> L(previousFollowTargetPos);
-    K -- dispatches --> M(Event: camera-transition-complete);
-    D -- when following --> N{Calculates Delta};
-    N -- updates --> J;
-    N -- updates --> B(OrbitControls.target);
-    D -- calls --> O(OrbitControls.update());
-    B -- change event --> P{ControlsManager Change Listener};
-    P -- updates --> Q(@teskooano/core-state);
-
-    subgraph ControlsManager
-        D
-        F
-        G
-        H
-        K
-        N
-        P
+    subgraph "External Callers (e.g., CameraManager)"
+        A[High-Level Logic]
     end
+
+    subgraph "User"
+        B[Mouse/Touch Input]
+    end
+
+    subgraph "ControlsManager"
+        C(OrbitControls)
+        D(GSAP Timeline)
+        E[Update Loop]
+        F[Event Dispatcher]
+    end
+
+    subgraph "Events Dispatched"
+        G[USER_CAMERA_MANIPULATION]
+        H[CAMERA_TRANSITION_COMPLETE]
+    end
+
+    A -- "Commands (e.g., transitionTo, startFollowing)" --> ControlsManager;
+    B --> C;
+    C -- "triggers" --> F -- "on user interaction end" --> G;
+    ControlsManager -- "creates" --> D;
+    D -- "animates" --> C;
+    D -- "onComplete triggers" --> F -- "on transition end" --> H;
+    E -- "is called every frame" --> C;
+
 ```
 
 ### Key Design Decisions for `ControlsManager`:
 
-- **GSAP for Transitions:** Provides reliable, controllable, and cancellable animations superior to simple lerping for both position and target rotation.
+- **Stateless Driver:** `ControlsManager` has no knowledge of the application's simulation state (like `focusedObjectId` or whether the simulation is paused). It simply executes commands and reports its actions.
+- **GSAP for Transitions:** Provides reliable, controllable, and cancellable animations superior to simple lerping. The `isAnimating` flag ensures these transitions are not interrupted by the follow logic.
 - **Delta-Based Following:** The `update` loop calculates the target's frame-to-frame movement delta and applies it directly to both the camera position and the `OrbitControls` target. This ensures the camera keeps pace precisely.
 - **`OrbitControls.update()` is Key:** Crucially, `controls.update()` is called _after_ the delta logic. This allows `OrbitControls` to apply damping and user input _relative_ to the camera's new position/target dictated by the follow logic.
-- **Separation of Concerns:** Transitions (`_transitionPositionAndTarget`) are distinct from continuous following (`update` loop logic). `setFollowTarget` bridges these by initiating a transition (using `moveToPosition`) and then enabling the follow state.
-- **State Update on User Input:** The global state is primarily updated when the _user_ directly manipulates the controls via the `change` event, preventing potential feedback loops from programmatic updates.
-- **Initialization of `previousFollowTargetPos`:** This value is crucial for the delta calculation. It's initialized _at the end_ of the transition animation (`onTimelineComplete`) to the target's final position, ensuring the first frame of following doesn't apply an incorrect delta based on the pre-transition state.
-- **Sequenced Transitions:** Position and target transitions are handled by a single GSAP timeline (`_transitionPositionAndTarget`), ensuring smooth, coordinated movement.
+- **Event-Driven Communication:** Instead of writing to a state store, the manager dispatches specific events. This decouples it from higher-level application logic, which can listen for these events and update state accordingly.
+- **Initialization of `previousFollowTargetPos`:** This value is crucial for the delta calculation. It's initialized when following begins (`startFollowing`) and at the end of a transition (`_endTransition`) to ensure the first frame of following is always correct.
 
 ## Core Class: `CSS2DManager`
 

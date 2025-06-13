@@ -21,6 +21,7 @@
     - **State Emission**: Exposes its state via an RxJS `BehaviorSubject` (`getCameraState$`), allowing UI components to react to camera changes.
     - **API for Intent**: Provides a clean API for camera actions like `followObject(objectId)`, `pointCameraAt(position)`, `setFov(fov)`, and `resetCameraView()`. These actions are translated into commands for the renderer's `ControlsManager`.
     - **Dependency Injection**: It receives the `ModularSpaceRenderer` instance and other dependencies via a `setDependencies` method, making it independent of how the renderer is created.
+    - **Event Listening**: Listens for `USER_CAMERA_MANIPULATION` and `CAMERA_TRANSITION_COMPLETE` events from the `ControlsManager` to keep its own state synchronized with the actual camera position and focus.
 
 3.  **`systems/`**: This directory contains modules for initializing predefined star systems (e.g., `solar-system/`).
     - **Data-Driven**: These modules are not part of the core simulation logic. They are simply data initializers that use `actions` from `@teskooano/core-state` to populate the stores with the celestial objects that the `SimulationManager` will then act upon. The `initializeSun` function in `star.ts`, for instance, calls `actions.createSolarSystem`, which clears previous state and sets up the new primary star.
@@ -44,6 +45,10 @@
 4.  **Physics Update**: In each frame, `simulationManager` reads from `core-state` (via adapter), calls `core-physics`, and writes results back to `core-state`.
 5.  **Event Emission**: `simulationManager` emits an `onOrbitUpdate` event with the new positions.
 6.  **Rendering**: (Managed externally) `@teskooano/renderer-threejs` listens to state changes (`renderableObjects$`) and draws the scene.
-7.  **Camera Control**: UI components call methods on `CameraManager` (e.g., `followObject('earth')`), which then directs the renderer's `ControlsManager` to perform the action.
+7.  **Camera Control**:
+    - A UI component calls a high-level method on `CameraManager` (e.g., `followObject('earth')`).
+    - `CameraManager` updates its own state and sends a low-level command (e.g., `transitionTo()`) to the renderer's `ControlsManager`.
+    - If the user moves the camera manually, `ControlsManager` fires a `USER_CAMERA_MANIPULATION` event.
+    - `CameraManager` listens for this event and updates its state (e.g., clearing the `focusedObjectId`).
 
 **Dependencies**: `@teskooano/core-state`, `@teskooano/core-physics`, `@teskooano/data-types`, `three`.

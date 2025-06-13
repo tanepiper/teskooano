@@ -1,7 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { CustomEvents } from "@teskooano/data-types";
 import gsap from "gsap";
-import { simulationStateService } from "@teskooano/core-state";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
@@ -74,23 +73,6 @@ export class ControlsManager {
     this.controls.maxDistance = 1e7; // Adjust as needed
     this.controls.maxPolarAngle = Math.PI; // Allow looking from underneath
 
-    const initialState = simulationStateService.getCurrentState();
-    if (initialState && initialState.camera) {
-      this.camera.position.set(
-        initialState.camera.position.x,
-        initialState.camera.position.y,
-        initialState.camera.position.z,
-      );
-      this.controls.target.set(
-        initialState.camera.target.x,
-        initialState.camera.target.y,
-        initialState.camera.target.z,
-      );
-      this.lastCameraPosition.copy(this.camera.position);
-      this.lastCameraTarget.copy(this.controls.target);
-    }
-
-    this.controls.addEventListener("change", this.onControlsChange);
     this.controls.addEventListener("start", this.onControlsStart);
     this.controls.addEventListener("end", this.onControlsEnd);
   }
@@ -101,48 +83,15 @@ export class ControlsManager {
 
   private onControlsEnd = () => {
     this.isTransitioning = false;
-    this.handleStateUpdate(true); // Force update on interaction end
-  };
-
-  private onControlsChange = () => {
-    if (this.isTransitioning) {
-      // Only update if a transition (manual or programmatic) is active
-      this.handleStateUpdate();
-    }
-  };
-
-  private handleStateUpdate = (forceUpdate: boolean = false) => {
-    const positionChanged =
-      this.camera.position.distanceToSquared(this.lastCameraPosition) >
-      this.changeThreshold * this.changeThreshold;
-    const targetChanged =
-      this.controls.target.distanceToSquared(this.lastCameraTarget) >
-      this.changeThreshold * this.changeThreshold;
-
-    if (forceUpdate || positionChanged || targetChanged) {
-      const currentSimState = simulationStateService.getCurrentState();
-      const newPosOS = new OSVector3(
-        this.camera.position.x,
-        this.camera.position.y,
-        this.camera.position.z,
-      );
-      const newTargetOS = new OSVector3(
-        this.controls.target.x,
-        this.controls.target.y,
-        this.controls.target.z,
-      );
-
-      if (currentSimState.focusedObjectId !== null) {
-        simulationStateService.setFocusedObject(null);
-      }
-      simulationStateService.updateCamera(newPosOS, newTargetOS);
-
-      this.lastCameraPosition.copy(this.camera.position);
-      this.lastCameraTarget.copy(this.controls.target);
-
-      const event = new Event("camera-transition-complete");
-      this.rendererElement.dispatchEvent(event);
-    }
+    const event = new CustomEvent(CustomEvents.USER_CAMERA_MANIPULATION, {
+      detail: {
+        position: this.camera.position.clone(),
+        target: this.controls.target.clone(),
+      },
+      bubbles: true,
+      composed: true,
+    });
+    this.rendererElement.dispatchEvent(event);
   };
 
   /**
@@ -386,11 +335,6 @@ export class ControlsManager {
       this.controls.target.copy(target);
       this.controls.update();
 
-      simulationStateService.updateCamera(
-        new OSVector3(position.x, position.y, position.z),
-        new OSVector3(target.x, target.y, target.z),
-      );
-
       if (this.followingTargetObject) {
         this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
 
@@ -454,25 +398,18 @@ export class ControlsManager {
   update(delta: number): void {
     if (this.followingTargetObject && !this.isAnimating) {
       this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
-      const simulationState = simulationStateService.getCurrentState();
-      const isPaused = simulationState.paused;
+      const targetDelta = this.tempTargetPosition
+        .clone()
+        .sub(this.previousFollowTargetPos);
 
-      if (!isPaused) {
-        const targetDelta = this.tempTargetPosition
-          .clone()
-          .sub(this.previousFollowTargetPos);
+      this.camera.position.add(targetDelta);
+      this.controls.target.add(targetDelta);
 
-        this.camera.position.add(targetDelta);
-        this.controls.target.add(targetDelta);
-
-        this.previousFollowTargetPos.copy(this.tempTargetPosition);
-      } else {
-        this.previousFollowTargetPos.copy(this.tempTargetPosition);
-      }
+      this.previousFollowTargetPos.copy(this.tempTargetPosition);
     }
 
     if (this.controls.enabled) {
-      this.controls.update();
+      this.controls.update(delta);
     }
   }
 
@@ -536,82 +473,6 @@ export class ControlsManager {
    */
   public stopFollowing(): void {
     this.startFollowing(null);
-  }
-
-  /**
-   * @deprecated This method is being refactored. CameraManager will orchestrate movement using
-   * `transitionTo`, and then instruct `ControlsManager` to follow using `startFollowing`.
-   */
-  public setFollowTarget(
-    object: THREE.Object3D | null,
-    targetPointOffset: THREE.Vector3 = new THREE.Vector3(), // This is offset for the LOOK AT point, not camera position offset
-    keepCurrentDistance: boolean = false,
-  ): void {
-    this.cancelTransition();
-    console.warn(
-      "[ControlsManager.setFollowTarget] Deprecated. CameraManager should use transitionTo() then startFollowing().",
-    );
-
-    if (!object) {
-      this.stopFollowing();
-      return;
-    }
-
-    const finalTargetPosition = new THREE.Vector3();
-    object.getWorldPosition(finalTargetPosition).add(targetPointOffset);
-
-    let finalCameraPosition: THREE.Vector3;
-    const currentCameraPosition = this.camera.position.clone();
-    const objectActualCenter = object.getWorldPosition(new THREE.Vector3());
-    const directionToTarget = currentCameraPosition
-      .clone()
-      .sub(objectActualCenter);
-
-    let calculatedCameraOffsetFromTarget = directionToTarget.clone();
-
-    if (keepCurrentDistance) {
-      finalCameraPosition = finalTargetPosition.clone().add(directionToTarget);
-      calculatedCameraOffsetFromTarget.copy(directionToTarget);
-    } else {
-      const currentDistance = directionToTarget.length();
-      let objectRadius = 1;
-      if (
-        object instanceof THREE.Mesh &&
-        object.geometry &&
-        object.geometry.boundingSphere
-      ) {
-        objectRadius =
-          object.geometry.boundingSphere.radius *
-          Math.max(object.scale.x, object.scale.y, object.scale.z);
-      }
-      const minSafeDistance = objectRadius * 3;
-      const desiredDistance = Math.max(currentDistance, minSafeDistance);
-
-      if (directionToTarget.lengthSq() > 0.0001) {
-        directionToTarget.normalize();
-      } else {
-        directionToTarget.set(0, 0, 1);
-      }
-      calculatedCameraOffsetFromTarget = directionToTarget
-        .clone()
-        .multiplyScalar(desiredDistance);
-      finalCameraPosition = finalTargetPosition
-        .clone()
-        .add(calculatedCameraOffsetFromTarget);
-    }
-
-    this.transitionTo(
-      this.camera.position.clone(),
-      this.controls.target.clone(),
-      finalCameraPosition,
-      finalTargetPosition,
-      { focusedObjectId: object?.uuid },
-    );
-
-    const relativeOffsetForFollowing = finalCameraPosition
-      .clone()
-      .sub(finalTargetPosition);
-    this.startFollowing(object, relativeOffsetForFollowing);
   }
 
   /**

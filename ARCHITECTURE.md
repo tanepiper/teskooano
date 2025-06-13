@@ -169,8 +169,7 @@ This section describes the core runtime packages that handle the visualization a
   - **`SceneManager`**: Manages the core `THREE.Scene`, `THREE.WebGLRenderer`, and the main animation loop (`requestAnimationFrame`).
   - **`ObjectManager`**: The most critical component. It subscribes to the `renderableObjects$` state and is responsible for creating, updating, and removing `THREE.Object3D` representations from the scene. It uses a factory pattern to instantiate the correct renderer (e.g., `StarRenderer`, `TerrestrialPlanetRenderer`) for each celestial object.
   - **`OrbitManager`**: Visualizes orbital paths.
-  - **`ControlsManager`**: Integrates and configures `THREE.OrbitControls`, handling user camera input and smooth programmatic transitions.
-  - **`CameraManager`**: A separate, high-level manager (part of `app/simulation`) that controls camera state (focus, FOV) and directs the `ControlsManager`.
+  - **`ControlsManager`**: A low-level driver that integrates and configures `THREE.OrbitControls`. It is responsible for executing smooth, programmatic camera transitions (e.g., `transitionTo`) and for capturing raw user input. It is stateless and reports user interactions via a `USER_CAMERA_MANIPULATION` event, and programmatic transition completions via a `CAMERA_TRANSITION_COMPLETE` event.
   - **`EffectManager`**: Handles post-processing effects like bloom and gravitational lensing.
   - **`LightManager`**: Manages light sources, typically representing stars.
 - **`renderers/`**: Contains the actual renderer classes (e.g. `BaseStarRenderer`, `BaseTerrestrialRenderer`) that are instantiated by the `ObjectManager`. These classes build the `THREE.Mesh` and `THREE.Material` using shaders from `systems/celestial`.
@@ -194,7 +193,7 @@ This section describes the core runtime packages that handle the visualization a
   - **Physics Loop**: Contains the `requestAnimationFrame` loop. It's started and stopped reactively based on the presence of celestial objects.
   - **State Integration**: Reads from `@teskooano/core-state` via the `physicsSystemAdapter`, calls `updateSimulation` from `@teskooano/core-physics`, and writes the results back.
   - **Event Bus**: Uses RxJS `Subject`s (`onOrbitUpdate$`, `onDestructionOccurred$`) to broadcast simulation events.
-- **`CameraManager`**: Manages the semantic state of the camera (e.g., "what object are we focused on?"). It provides a public API (`followObject`, `setFov`) and emits its state via a `BehaviorSubject`. It directs the `ControlsManager` in the renderer.
+- **`CameraManager`**: Manages the semantic state of the camera (e.g., "what object are we focused on?"). It listens for events from the `ControlsManager` to detect user input. It provides a public API (`followObject`, `setFov`) and emits its state via a `BehaviorSubject`. It directs the `ControlsManager` in the renderer to execute camera movements.
 - **`systems/`**: Contains initializer functions (e.g., `initializeSolarSystem`) that use `actions` from `@teskooano/core-state` to populate the simulation with its initial set of celestial bodies.
 
 **Dependencies**: `@teskooano/core-state`, `@teskooano/core-physics`, `@teskooano/data-types`.
@@ -248,28 +247,55 @@ flowchart TB
         ToolbarController["ToolbarController"]
 
         Toolbar --> ToolbarController
-        ToolbarController -- "query for items" --> PluginManager
-        Panels -- "interact" --> DockviewController
-        DockviewController -- "query for panels" --> PluginManager
+        ToolbarController --> PluginManager
+        Panels -- Registers with --> PluginManager
+        PluginManager -- Creates Panels --> DockviewController
     end
 
-    subgraph Simulation["Simulation & Rendering"]
+    subgraph SimAndState["Simulation & State"]
         direction TB
-        SimMan[app/simulation/SimulationManager]
-        Renderer[renderer/threejs/ModularSpaceRenderer]
-        CoreState[core/state]
-        CorePhysics[core/physics]
+        subgraph SimLoop["Simulation Loop (app/simulation)"]
+            SimulationManager
+            CameraManager
+        end
+        subgraph StateStore["Global State (core/state)"]
+            simulationState$["simulationState$"]
+            celestialObjects$["celestialObjects$"]
+            renderableObjects$["renderableObjects$"]
+        end
+        subgraph Physics["Physics Engine (core/physics)"]
+            PhysicsEngine["updateSimulation()"]
+        end
 
-        SimMan -- "drives" --> CorePhysics
-        CorePhysics -- "updates" --> CoreState
-        CoreState -- "is read by" --> SimMan
-        CoreState -- "is read by" --> Renderer
-        Renderer -- "displays" --> Scene
+        PluginManager -- "e.g. startSystem()" --> SimulationManager
+        SimulationManager -- "Reads/Writes" --> celestialObjects$
+        SimulationManager -- "Calls" --> PhysicsEngine
+        CameraManager -- "Reads/Writes" --> simulationState$
     end
 
-    UserInput --> AppCore
-    AppCore -- "loads system / controls sim" --> Simulation
-    Simulation -- "renders to" --> Scene
+    subgraph Renderer["Renderer (renderer/threejs)"]
+        direction TB
+        ModularSpaceRenderer["ModularSpaceRenderer"]
+        ControlsManager["ControlsManager"]
+        ObjectManager["ObjectManager"]
+    end
+
+    UserInput -- "e.g. Focus on Object" --> CameraManager
+    CameraManager -- "Commands (e.g. transitionTo)" --> ControlsManager
+    ControlsManager -- "Events (e.g. USER_CAMERA_MANIPULATION)" --> CameraManager
+
+    renderableObjects$ --> ObjectManager
+    ObjectManager -- "Creates/Updates Meshes" --> ModularSpaceRenderer
+
+    classDef userInput fill:#fff3e0,stroke:#e65100
+    classDef appCore fill:#e0f7fa,stroke:#006064
+    classDef simState fill:#f3e5f5,stroke:#4a148c
+    classDef renderer fill:#e8f5e9,stroke:#1b5e20
+
+    class UserInput,Toolbar,Panels userInput
+    class AppCore,PluginManager,DockviewController,ToolbarController appCore
+    class SimAndState,SimLoop,SimulationManager,CameraManager,StateStore,simulationState$,celestialObjects$,renderableObjects$,Physics,PhysicsEngine simState
+    class Renderer,ModularSpaceRenderer,ControlsManager,ObjectManager renderer
 ```
 
 **Flow Description:**
