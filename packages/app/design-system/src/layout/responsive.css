@@ -1,0 +1,136 @@
+/* ==========================================================================
+   Responsive Styles & Media Queries
+   ========================================================================== */
+
+/* --- Larger Screens (Example: > 1200px) --- */
+@media only screen and (min-width: 1200px) {
+  /* Optionally increase base font size or tweak layout */
+  /* :root { --font-size-base: var(--font-size-3); } */
+}
+
+/* --- Medium Screens (Example: Tablets, ~769px - 1024px) --- */
+@media only screen and (max-width: 1024px) {
+  #toolbar {
+    gap: var(--spacing-sm); /* Less gap */
+    flex-wrap: wrap;
+    height: auto; /* Allow wrapping */
+    min-height: var(--toolbar-height); /* Ensure min height */
+    padding: var(--spacing-sm) var(--spacing-md); /* Adjust padding */
+  }
+
+  #toolbar > * {
+    flex-shrink: 1;
+    flex-basis: auto;
+    min-width: 0;
+  }
+
+  /* Make toolbar buttons slightly smaller */
+  #toolbar button {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-small);
+  }
+
+  /* Example: Hide text on specific buttons */
+  #toolbar #github-button span:not([slot="icon"]),
+  #toolbar #settings-button span:not([slot="icon"]) {
+    /* display: none; */ /* Keep this if still needed */
+  }
+
+  /* Adjust composite panel layout responsiveness if needed */
+  .composite-engine-panel.layout-internal-portrait .ui-container {
+    max-height: 50%; /* Allow more height on tablet */
+    min-height: 180px;
+  }
+  .composite-engine-panel.layout-internal-landscape
+    .ui-container
+    > .left-ui-container,
+  .composite-engine-panel.layout-internal-portrait
+    .ui-container
+    > .left-ui-container {
+    min-height: 120px;
+  }
+  .composite-engine-panel.layout-internal-landscape
+    .ui-container
+    > .right-ui-container,
+  .composite-engine-panel.layout-internal-portrait
+    .ui-container
+    > .right-ui-container {
+    min-height: 150px;
+  }
+}
+
+/* --- Small Screens (Example: Mobile, < 768px) --- */
+@media only screen and (max-width: 768px) {
+  :root {
+    /* Reduce base font size slightly on mobile */
+    /* --font-size-base: var(--font-size-1); */
+  }
+
+  #toolbar {
+    padding: var(--spacing-sm); /* Tighter padding */
+    gap: var(--spacing-sm);
+  }
+
+  .app-logo,
+  #app-logo {
+    max-height: 26px; /* Smaller logo */
+  }
+
+  /* Further compact toolbar buttons */
+  #toolbar button {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-small);
+    /* Maybe hide text on most buttons */
+  }
+
+  /* Example: Hide text on almost all buttons */
+  #toolbar button:not(#add-view-button) span:not([slot="icon"]) {
+    /* display: none; */ /* Keep this if still needed */
+  }
+
+  /* Adjust composite panel for mobile */
+  .composite-engine-panel.layout-internal-portrait .ui-container {
+    flex-direction: column; /* Stack UI sections vertically */
+    max-height: 60%; /* More height allowed */
+    min-height: 150px;
+  }
+  .composite-engine-panel.layout-internal-portrait
+    .ui-container
+    > .left-ui-container {
+    flex-basis: auto; /* Height based on content */
+    width: 100%;
+    border-right: none;
+    border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
+    min-height: 80px; /* Adjust min-height */
+  }
+  .composite-engine-panel.layout-internal-portrait
+    .ui-container
+    > .right-ui-container {
+    flex-basis: auto; /* Height based on content */
+    width: 100%;
+    flex-grow: 1; /* Take remaining space */
+    min-height: 100px; /* Adjust min-height */
+  }
+}
+
+/* --- Extra Small Screens (Example: Small Mobile, < 480px) --- */
+@media only screen and (max-width: 480px) {
+  #toolbar {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  .app-logo,
+  #app-logo {
+    max-height: 24px;
+  }
+
+  #toolbar button {
+    padding: var(--space-1); /* Even smaller padding */
+    /* Hide all text? */
+  }
+  /* Example: Hide text on add button too */
+  #toolbar #add-view-button span:not([slot="icon"]) {
+    /* display: none; */ /* Keep this if still needed */
+  }
+}

@@ -12,7 +12,6 @@
       "types": "./src/index.d.ts"
     },
     "./styles.css": "./src/styles.css",
-    "./colors.css": "./src/colors.css",
     "./tokens.css": "./src/tokens.css"
   },
   "files": [

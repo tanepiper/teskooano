@@ -1,0 +1,73 @@
+/* ==========================================================================
+   Dockview Theme Overrides
+   ========================================================================== */
+
+.dockview-container {
+  width: 100%;
+  height: 100%; /* Ensure it fills space below toolbar */
+  flex-grow: 1; /* Allow it to take remaining space */
+  overflow: hidden; /* Prevent Dockview's own scrollbars if desired */
+}
+
+/* These overrides are applied via tokens in tokens.css, 
+   but this class is the target */
+.dockview-theme-abyss {
+}
+
+/* Improve touch dragging for Dockview floating panels */
+.dockview-floating-group .dv-group-control {
+  touch-action: none;
+}
+
+.dv-groupview-floating,
+.dv-resize-container {
+  border-radius: var(--radius-md);
+}
+.dv-groupview-floating {
+  container-name: floating-groupview;
+  container-type: inline-size;
+}
+
+@container floating-groupview (max-width: 1920px) {
+  .dv-tabs-and-actions-container {
+    background-color: rgba(0, 0, 0, 0);
+  }
+}
+
+/* Add roundness to tabs */
+.dockview-theme-abyss .dv-tab {
+  /* Apply to top corners, assuming tabs are on top */
+  border-top-left-radius: var(--radius-sm);
+  border-top-right-radius: var(--radius-sm);
+  /* Remove default bottom border if it looks weird with radius */
+  /* border-bottom: none; */
+  /* Add subtle padding if text looks cramped */
+  /* padding-left: calc(var(--space-2) + 2px); */
+  /* padding-right: calc(var(--space-2) + 2px); */
+}
+
+/* Ensure active tab background fills the rounded corners */
+.dockview-theme-abyss .dv-tab.active-tab {
+  /* Use the active tab background variable */
+  background-color: var(--dv-activegroup-visiblepanel-tab-background-color);
+}
+
+/* Add roundness to the group control/header area */
+.dockview-theme-abyss .dv-group-control {
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+  /* Hide potential overflow from content if needed */
+  /* overflow: hidden; */
+}
+
+/* Add roundness to floating panels */
+.dockview-floating-group {
+  border-radius: var(--radius-md);
+  /* Ensure the header inside also gets rounded corners */
+  & > .dv-group-view > .dv-group-control {
+    border-top-left-radius: var(--radius-md);
+    border-top-right-radius: var(--radius-md);
+  }
+  /* Hide overflow to maintain the rounded shape */
+  overflow: hidden;
+}

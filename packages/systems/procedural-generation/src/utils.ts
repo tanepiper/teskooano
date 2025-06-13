@@ -100,12 +100,13 @@ export function getSpectralClass(temperature: number): SpectralClass {
 export function calculateLuminosity(
   radius_m: number,
   temperature_k: number,
+  luminosity_multiplier: number = 10,
 ): number {
   if (radius_m <= 0 || temperature_k <= 0) return 0;
   const surfaceArea = 4 * Math.PI * radius_m ** 2;
   const totalPowerWatts =
     surfaceArea * CONST.STEFAN_BOLTZMANN * temperature_k ** 4;
-  return totalPowerWatts / CONST.SOLAR_LUMINOSITY;
+  return (totalPowerWatts / CONST.SOLAR_LUMINOSITY) * luminosity_multiplier;
 }
 
 /**

@@ -1,0 +1,85 @@
+/* ==========================================================================
+   Application Layout
+   ========================================================================== */
+
+#app {
+  touch-action: none;
+  width: 100%;
+  flex: 1;
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+  display: flex; /* Add back flex for main layout */
+  flex-direction: column; /* Stack toolbar and content */
+}
+
+#toolbar {
+  height: var(--toolbar-height);
+  width: 100%;
+  background-color: var(--color-surface-2); /* Use surface-2 */
+  border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 var(--spacing-md); /* Use new spacing */
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+  gap: var(--spacing-md); /* Use new spacing */
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Style the basic button within the toolbar using the new base style */
+/* Remove specific button overrides if base styles are sufficient */
+/* Or apply button variant classes like .button-ghost */
+#toolbar button {
+  /* Inherits base button styles */
+  /* Example: Make toolbar buttons ghost by default */
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border-color: transparent;
+  padding: var(--space-1) var(--space-2); /* Smaller padding for toolbar */
+}
+#toolbar button:hover {
+  background-color: var(--color-surface-3);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-subtle);
+}
+#toolbar button:active {
+  background-color: var(--color-surface-1);
+}
+#toolbar button:focus,
+#toolbar button:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary);
+  border-color: var(--color-primary); /* Add border on focus too */
+}
+
+/* --- Logo Styling --- */
+.app-logo,
+#app-logo {
+  /* Adjust size using height relative to toolbar or fixed value */
+  height: calc(var(--toolbar-height) * 0.65);
+  max-height: 30px; /* Cap max size */
+  width: auto;
+  display: block; /* Remove potential inline spacing issues */
+}
+
+/* --- Toolbar Background Effect --- */
+.toolbar-cosmic-background {
+  background-color: var(--color-surface-2); /* Base color */
+  /* Keep the gradient for flair, adjust colors if needed */
+  background-image:
+    linear-gradient(160deg, hsla(280, 40%, 25%, 0.15) 0%, transparent 40%),
+    radial-gradient(
+      ellipse at 25% 35%,
+      hsla(260, 55%, 40%, 0.35) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse at 75% 65%,
+      hsla(180, 60%, 35%, 0.3) 0%,
+      transparent 55%
+    );
+  background-repeat: no-repeat;
+}

@@ -1,0 +1,10 @@
+/* --- Lists --- */
+ul,
+ol {
+  margin-left: var(--spacing-md);
+  padding-left: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+li {
+  margin-bottom: var(--spacing-sm);
+}

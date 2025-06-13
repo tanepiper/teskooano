@@ -1,0 +1,161 @@
+/* --- Buttons --- */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  display: inline-flex; /* Allows alignment of text/icons */
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--space-2) var(--space-4); /* Base padding */
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  white-space: nowrap; /* Prevent wrapping */
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  border: var(--border-width-thin) solid transparent;
+  border-radius: var(--radius-md);
+  transition:
+    background-color var(--transition-duration-fast)
+      var(--transition-timing-base),
+    border-color var(--transition-duration-fast) var(--transition-timing-base),
+    color var(--transition-duration-fast) var(--transition-timing-base),
+    box-shadow var(--transition-duration-fast) var(--transition-timing-base);
+
+  /* Default Button Style (Subtle Surface) */
+  background-color: var(--color-surface-2);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-subtle);
+}
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover {
+  background-color: var(--color-surface-3);
+  border-color: var(--color-border-strong);
+}
+button:focus,
+input[type="button"]:focus,
+input[type="submit"]:focus,
+input[type="reset"]:focus,
+button:focus-visible,
+input[type="button"]:focus-visible,
+input[type="submit"]:focus-visible,
+input[type="reset"]:focus-visible {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+button:active,
+input[type="button"]:active,
+input[type="submit"]:active,
+input[type="reset"]:active {
+  background-color: var(--color-surface-1);
+}
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Primary Button Style */
+.button-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border-color: var(--color-primary);
+}
+.button-primary:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+.button-primary:active {
+  background-color: var(--color-primary-active);
+  border-color: var(--color-primary-active);
+}
+.button-primary:focus,
+.button-primary:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--color-background),
+    0 0 0 4px var(--color-primary);
+}
+
+/* Secondary Button Style (Example) */
+.button-secondary {
+  background-color: var(--color-secondary);
+  color: var(--color-text-on-secondary);
+  border-color: var(--color-secondary);
+}
+.button-secondary:hover {
+  background-color: var(--color-secondary-hover);
+  border-color: var(--color-secondary-hover);
+}
+.button-secondary:active {
+  background-color: var(--color-secondary-active);
+  border-color: var(--color-secondary-active);
+}
+.button-secondary:focus,
+.button-secondary:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--color-background),
+    0 0 0 4px var(--color-secondary);
+}
+
+/* Outline Button Style */
+.button-outline {
+  background-color: transparent;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.button-outline:hover {
+  background-color: rgba(
+    var(--color-primary-rgb, 108, 99, 255),
+    0.1
+  ); /* Needs --color-primary-rgb defined or manual rgb */
+  color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+.button-outline:active {
+  background-color: rgba(var(--color-primary-rgb, 108, 99, 255), 0.2);
+}
+.button-outline:focus,
+.button-outline:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+/* Ghost Button Style (No background or border until hover) */
+.button-ghost {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border-color: transparent;
+}
+.button-ghost:hover {
+  background-color: var(--color-surface-2);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-subtle);
+}
+.button-ghost:active {
+  background-color: var(--color-surface-1);
+}
+.button-ghost:focus,
+.button-ghost:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+/* Button Sizes */
+.button-sm {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-small);
+  gap: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+}
+.button-lg {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-large);
+  gap: var(--spacing-sm);
+  border-radius: var(--radius-lg);
+}

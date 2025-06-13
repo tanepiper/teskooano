@@ -123,24 +123,6 @@
   --transition-duration-slow: 400ms;
   --transition-timing-base: ease-in-out;
 
-  /* --- Base Styles Application --- */
-  /* NOTE: These are NOT variables, but actual style rules.
-     They *should* ideally be in a separate `base.css`, 
-     but are kept here for now until further refactoring. */
-  font-family: var(--font-family-base);
-  line-height: var(--line-height-base);
-  font-weight: var(--font-weight-normal);
-  font-size: var(--font-size-base);
-
-  color-scheme: light dark; /* Assuming dark theme primarily */
-  color: var(--color-text-primary);
-  background-color: var(--color-background);
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
   /* =================================== */
   /* === Dockview Cosmic Dark Theme === */
   /* =================================== */

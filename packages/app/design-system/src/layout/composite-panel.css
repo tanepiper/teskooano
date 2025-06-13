@@ -1,0 +1,135 @@
+/* --- Composite Panel Layout --- */
+/* Keep the layout structure but use new tokens */
+.composite-engine-panel {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* Portrait Layout (Device Landscape) */
+.composite-engine-panel.layout-internal-landscape {
+  flex-direction: row;
+}
+.composite-engine-panel.layout-internal-landscape .engine-container {
+  /* flex: 2; */ /* Removed, let it take remaining space */
+  overflow: hidden;
+  position: relative;
+}
+.composite-engine-panel.layout-internal-landscape .ui-container {
+  /* flex: 1; */ /* Removed */
+  flex: 0 0 300px; /* Set initial width, don't grow/shrink */
+  border-left: var(--border-width-thin) solid var(--color-border-subtle);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface-1); /* Give UI panel a surface color */
+}
+.composite-engine-panel.layout-internal-landscape
+  .ui-container
+  > .left-ui-container {
+  flex: 0 0 auto;
+  width: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  max-height: 40%;
+  min-height: 100px;
+}
+.composite-engine-panel.layout-internal-landscape
+  .ui-container
+  > .right-ui-container {
+  flex: 1;
+  width: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+  min-height: 60%;
+}
+
+/* Landscape Layout (Device Portrait) */
+.composite-engine-panel.layout-internal-portrait {
+  flex-direction: column;
+}
+.composite-engine-panel.layout-internal-portrait .engine-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.composite-engine-panel.layout-internal-portrait .ui-container {
+  flex: 0 0 auto;
+  max-height: 40%;
+  min-height: 200px;
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+  display: flex;
+  flex-direction: row;
+  background-color: var(--color-surface-1); /* Give UI panel a surface color */
+}
+.composite-engine-panel.layout-internal-portrait
+  .ui-container
+  > .left-ui-container {
+  flex: 0 0 33%;
+  height: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  border-right: var(--border-width-thin) solid var(--color-border-subtle);
+  min-height: unset; /* Remove explicit min-height */
+}
+.composite-engine-panel.layout-internal-portrait
+  .ui-container
+  > .right-ui-container {
+  flex: 0 0 67%;
+  height: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: unset; /* Remove explicit min-height */
+}
+
+/* Ensure engine container takes up remaining space */
+.composite-engine-panel > .engine-container {
+  flex: 1 1 auto; /* Allow grow/shrink, basis is auto */
+  min-width: 0; /* Prevent content from forcing minimum size */
+  min-height: 0;
+}
+
+/* UI container should not grow/shrink by default, basis is set by resize */
+.composite-engine-panel > .ui-container {
+  flex: 0 0 auto; /* Don't grow/shrink initially, basis set by resize/CSS */
+}
+
+/* Landscape Layout (Device Landscape) */
+.composite-engine-panel.layout-internal-landscape
+  .ui-container
+  > .right-ui-container {
+  flex: 1;
+  width: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+  min-height: 60%; /* Remove explicit min-height if resizing handles it */
+}
+
+/* Landscape Layout (Device Portrait) */
+.composite-engine-panel.layout-internal-portrait
+  .ui-container
+  > .left-ui-container {
+  flex: 0 0 33%;
+  height: 100%;
+  padding: var(--spacing-md); /* Use new spacing */
+  overflow-y: auto;
+  box-sizing: border-box;
+  border-right: var(--border-width-thin) solid var(--color-border-subtle);
+  min-height: unset; /* Remove explicit min-height */
+}
+.composite-engine-panel.layout-internal-portrait
+  .ui-container
+  > .right-ui-container {
+  width: 100%;
+  flex-grow: 1; /* Take remaining space */
+  min-height: unset; /* Remove explicit min-height */
+}

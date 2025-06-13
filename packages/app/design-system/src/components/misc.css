@@ -1,0 +1,75 @@
+/* --- Collapsible Section --- */
+/* Basic styling for the custom element - could be replaced with <details> */
+.composite-engine-panel .ui-container collapsible-section {
+  width: 100%;
+  margin-bottom: var(--spacing-md); /* Use new spacing */
+  min-height: fit-content;
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-2);
+  overflow: hidden; /* Contain background and borders */
+}
+/* Style header/content within the collapsible section if needed */
+collapsible-section > header {
+  /* Assuming a header element */
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-surface-3);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+}
+collapsible-section > div {
+  /* Assuming content is in a div */
+  padding: var(--spacing-md);
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+}
+
+/* --- Styles for Internal Resizer --- */
+.internal-resizer {
+  background-color: var(--color-border-interactive, #606080);
+  transition: background-color 0.2s ease-in-out;
+  /* Width/height and cursor set dynamically based on orientation */
+}
+
+.internal-resizer:hover {
+  background-color: var(--color-border-interactive-hover, #8080a0);
+}
+
+.internal-resizer.resizing {
+  background-color: var(--color-border-interactive-active, #a0a0c0);
+}
+
+/* --- Legacy / Component Specific Styles (Review & Refactor) --- */
+/* Styles targeting custom elements - review if they can use base styles/classes */
+toolbar-teskooano-simulation-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm); /* Use new spacing */
+}
+
+toolbar-teskooano-simulation-controls .display-value {
+  /* Style like a regular text element or perhaps a disabled input */
+  font-family: var(--font-family-mono);
+  background-color: var(--color-surface-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  min-width: 5ch; /* Example min-width */
+  text-align: right;
+}
+
+/* Specific styles for info displays inside collapsible sections */
+/* Ensure these elements exist or adjust selectors */
+.composite-engine-panel
+  .right-ui-container
+  collapsible-section
+  renderer-info-display,
+.composite-engine-panel .right-ui-container collapsible-section celestial-info,
+.composite-engine-panel
+  .right-ui-container
+  collapsible-section
+  engine-ui-settings-panel {
+  display: block; /* Keep if these are custom elements needing block display */
+  width: 100%;
+  min-height: 30px; /* Keep or adjust as needed */
+}

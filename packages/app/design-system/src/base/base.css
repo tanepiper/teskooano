@@ -1,0 +1,64 @@
+/* ==========================================================================
+   Base HTML Element Styles
+   ========================================================================== */
+
+/* --- Reset & Box Sizing --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+:root {
+  /* --- Base Styles Application --- */
+  font-family: var(--font-family-base);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-normal);
+  font-size: var(--font-size-base);
+
+  color-scheme: light dark; /* Assuming dark theme primarily */
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  overscroll-behavior: none;
+  min-width: 320px;
+  min-height: 100vh;
+  display: flex; /* Keep for overall layout */
+  flex-direction: column; /* Keep for overall layout */
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+}
+
+/* --- Media --- */
+img,
+video,
+svg {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle; /* Fix potential baseline issues */
+}
