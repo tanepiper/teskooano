@@ -3,6 +3,7 @@ import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineBuilder } from "../utils/LineBuilder";
+import { CircularBuffer } from "../utils/CircularBuffer";
 
 /**
  * Available methods for smoothing trail lines
@@ -53,7 +54,8 @@ export class TrailManager {
   public trailLines: Map<string, THREE.Line> = new Map();
 
   /** Position history for each object */
-  private positionHistory: Map<string, THREE.Vector3[]> = new Map();
+  private positionHistory: Map<string, CircularBuffer<THREE.Vector3>> =
+    new Map();
 
   /** Line builder utility for efficient line creation and updates */
   private lineBuilder: LineBuilder;
@@ -72,8 +74,8 @@ export class TrailManager {
 
   /** Options for trail rendering */
   private options: TrailOptions = {
-    smoothingMethod: SmoothingMethod.NONE,
-    smoothingSubdivisions: 6, // Default to 1 for Chaikin method
+    smoothingMethod: SmoothingMethod.CATMULL_ROM,
+    smoothingSubdivisions: 8,
   };
 
   private reusableSmoothedPointsArray: THREE.Vector3[] = [];
@@ -111,30 +113,36 @@ export class TrailManager {
     // Get or initialize position history for this object
     let history = this.positionHistory.get(objectId);
     if (!history) {
-      history = [];
+      history = new CircularBuffer<THREE.Vector3>(maxHistoryLength);
       this.positionHistory.set(objectId, history);
     }
 
-    // Add current position to history
-    history.push(object.position.clone());
-
-    // Trim history if it exceeds maximum length
-    if (history.length > maxHistoryLength) {
-      history.shift();
+    // Ensure the buffer has the correct capacity
+    if (history.capacity !== maxHistoryLength) {
+      history.resize(maxHistoryLength);
     }
 
-    let line = this.trailLines.get(objectId);
-    let requiredBufferSize: number;
+    // Add current position to history, replacing the slow shift()
+    history.push(object.position.clone());
 
+    let line = this.trailLines.get(objectId);
+
+    // Dynamic LOD based on distance
+    const distanceToCamera = this.objectManager
+      .getCamera()
+      .position.distanceTo(object.position);
+    const lodOptions = this.getLodOptions(distanceToCamera);
+
+    let requiredBufferSize: number;
     if (
-      this.options.smoothingMethod !== SmoothingMethod.NONE &&
+      lodOptions.smoothingMethod !== SmoothingMethod.NONE &&
       maxHistoryLength >= 3
     ) {
       // For CatmullRom we need more buffer space due to the curve complexity
       let multiplier =
-        this.options.smoothingMethod === SmoothingMethod.CATMULL_ROM
-          ? this.options.smoothingSubdivisions || 8
-          : (this.options.smoothingSubdivisions || 1) * 2; // For Chaikin, each iteration roughly doubles points
+        lodOptions.smoothingMethod === SmoothingMethod.CATMULL_ROM
+          ? lodOptions.smoothingSubdivisions || 8
+          : (lodOptions.smoothingSubdivisions || 1) * 2; // For Chaikin, each iteration roughly doubles points
 
       requiredBufferSize = Math.max(1, maxHistoryLength - 1) * multiplier;
     } else {
@@ -162,17 +170,24 @@ export class TrailManager {
     // Update the line with current history points
     if (updateGeometry || !line.visible) {
       let pointsToDraw: THREE.Vector3[];
+      const orderedHistory = history.getOrderedItems();
 
       if (
-        history.length < 3 ||
-        this.options.smoothingMethod === SmoothingMethod.NONE
+        orderedHistory.length < 3 ||
+        lodOptions.smoothingMethod === SmoothingMethod.NONE
       ) {
-        pointsToDraw = history; // Use raw history points
-      } else if (this.options.smoothingMethod === SmoothingMethod.CHAIKIN) {
-        pointsToDraw = this.generateChaikinSmoothedPoints(history);
+        pointsToDraw = orderedHistory; // Use raw history points
+      } else if (lodOptions.smoothingMethod === SmoothingMethod.CHAIKIN) {
+        pointsToDraw = this.generateChaikinSmoothedPoints(
+          orderedHistory,
+          lodOptions.smoothingSubdivisions,
+        );
       } else {
         // SmoothingMethod.CATMULL_ROM
-        pointsToDraw = this.generateCatmullRomPoints(history);
+        pointsToDraw = this.generateCatmullRomPoints(
+          orderedHistory,
+          lodOptions.smoothingSubdivisions,
+        );
       }
 
       this.lineBuilder.updateLine(line, pointsToDraw, pointsToDraw.length);
@@ -194,6 +209,7 @@ export class TrailManager {
    */
   private generateChaikinSmoothedPoints(
     points: THREE.Vector3[],
+    subdivisions: number = 1,
   ): THREE.Vector3[] {
     if (points.length < 2) return [...points];
 
@@ -201,7 +217,7 @@ export class TrailManager {
     let result = [...points];
 
     // Number of smoothing iterations (1-2 usually sufficient)
-    const iterations = this.options.smoothingSubdivisions || 1;
+    const iterations = subdivisions;
 
     // For each iteration of the algorithm
     for (let iter = 0; iter < iterations; iter++) {
@@ -237,24 +253,39 @@ export class TrailManager {
   /**
    * Generates smoothed points using Three.js CatmullRom spline.
    * More visually appealing but computationally expensive.
+   * This implementation is optimized to reduce memory allocation.
    *
    * @param points - Original control points
    * @returns Smoothed points
    */
-  private generateCatmullRomPoints(points: THREE.Vector3[]): THREE.Vector3[] {
-    // Use the existing getPoints method for CatmullRom
-    // It's more expensive but gives better results when quality matters
+  private generateCatmullRomPoints(
+    points: THREE.Vector3[],
+    subdivisions: number = 8,
+  ): THREE.Vector3[] {
     if (points.length < 3) return [...points];
 
     const curve = new THREE.CatmullRomCurve3(points, false, "centripetal", 0.5);
 
-    const segments =
-      Math.max(1, points.length - 1) *
-      (this.options.smoothingSubdivisions || 8);
+    const segments = Math.max(1, points.length - 1) * subdivisions;
 
-    // Directly return the points for simplicity
-    // This is less optimized but used less frequently when the app is configured for performance
-    return curve.getPoints(segments);
+    // Resize the reusable array to fit the new number of points
+    if (this.reusableSmoothedPointsArray.length !== segments + 1) {
+      this.reusableSmoothedPointsArray.length = segments + 1;
+    }
+
+    // Populate the reusable array with points from the curve
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const point = this.reusableSmoothedPointsArray[i];
+
+      if (point) {
+        curve.getPoint(t, point); // Reuse existing vector
+      } else {
+        this.reusableSmoothedPointsArray[i] = curve.getPoint(t); // Allocate new vector
+      }
+    }
+
+    return this.reusableSmoothedPointsArray;
   }
 
   /**
@@ -269,18 +300,26 @@ export class TrailManager {
     if (this.visualizationVisible) {
       this.trailLines.forEach((line, objectId) => {
         const history = this.positionHistory.get(objectId);
-        if (history && history.length > 0) {
+        if (history && history.size > 0) {
+          const renderableObject = this.objectManager.getObject(objectId);
+          if (!renderableObject) return;
+
+          const distance = this.objectManager
+            .getCamera()
+            .position.distanceTo(renderableObject.position);
+          const lodOptions = this.getLodOptions(distance);
+
           // Recalculate required buffer size based on new options
           let requiredBufferSize: number;
-          const maxHistoryLength = history.length; // Current history length as reference
+          const maxHistoryLength = history.size; // Current history length as reference
           if (
-            this.options.smoothingMethod !== SmoothingMethod.NONE &&
+            lodOptions.smoothingMethod !== SmoothingMethod.NONE &&
             maxHistoryLength >= 3
           ) {
             let multiplier =
-              this.options.smoothingMethod === SmoothingMethod.CATMULL_ROM
-                ? this.options.smoothingSubdivisions || 8
-                : (this.options.smoothingSubdivisions || 1) * 2; // For Chaikin, each iteration roughly doubles points
+              lodOptions.smoothingMethod === SmoothingMethod.CATMULL_ROM
+                ? lodOptions.smoothingSubdivisions
+                : (lodOptions.smoothingSubdivisions || 1) * 2; // For Chaikin, each iteration roughly doubles points
 
             requiredBufferSize = Math.max(1, maxHistoryLength - 1) * multiplier;
           } else {
@@ -290,20 +329,65 @@ export class TrailManager {
           this.lineBuilder.resizeLineBuffer(line, requiredBufferSize);
 
           let pointsToDraw: THREE.Vector3[];
+          const orderedHistory = history.getOrderedItems();
           if (
-            history.length < 3 ||
-            this.options.smoothingMethod === SmoothingMethod.NONE
+            orderedHistory.length < 3 ||
+            lodOptions.smoothingMethod === SmoothingMethod.NONE
           ) {
-            pointsToDraw = history; // Use raw history points
-          } else if (this.options.smoothingMethod === SmoothingMethod.CHAIKIN) {
-            pointsToDraw = this.generateChaikinSmoothedPoints(history);
+            pointsToDraw = orderedHistory; // Use raw history points
+          } else if (lodOptions.smoothingMethod === SmoothingMethod.CHAIKIN) {
+            pointsToDraw = this.generateChaikinSmoothedPoints(
+              orderedHistory,
+              lodOptions.smoothingSubdivisions,
+            );
           } else {
             // SmoothingMethod.CATMULL_ROM
-            pointsToDraw = this.generateCatmullRomPoints(history);
+            pointsToDraw = this.generateCatmullRomPoints(
+              orderedHistory,
+              lodOptions.smoothingSubdivisions,
+            );
           }
           this.lineBuilder.updateLine(line, pointsToDraw, pointsToDraw.length);
         }
       });
+    }
+  }
+
+  /**
+   * Determines the appropriate TrailOptions based on distance from the camera.
+   *
+   * @param distance - The distance from the camera to the object.
+   * @returns The TrailOptions to use for this level of detail.
+   * @private
+   */
+  private getLodOptions(distance: number): Required<TrailOptions> {
+    const AU = 149597870700; // a rough AU in meters for distance checks.
+    const distanceInAU = distance / (AU * 0.0001); // Using visual scale for LOD checks
+
+    if (distanceInAU < 50) {
+      // High detail
+      return {
+        smoothingMethod: SmoothingMethod.CATMULL_ROM,
+        smoothingSubdivisions: 8,
+      };
+    } else if (distanceInAU < 250) {
+      // Medium detail
+      return {
+        smoothingMethod: SmoothingMethod.CATMULL_ROM,
+        smoothingSubdivisions: 2,
+      };
+    } else if (distanceInAU < 1000) {
+      // Low detail
+      return {
+        smoothingMethod: SmoothingMethod.CHAIKIN,
+        smoothingSubdivisions: 1,
+      };
+    } else {
+      // No smoothing, lowest detail
+      return {
+        smoothingMethod: SmoothingMethod.NONE,
+        smoothingSubdivisions: 0,
+      };
     }
   }
 
@@ -409,9 +493,9 @@ export class TrailManager {
    * @param maxHistoryLength - Maximum history length to enforce
    */
   limitHistoryMemory(maxHistoryLength: number): void {
-    this.positionHistory.forEach((history, id) => {
-      if (history.length > maxHistoryLength) {
-        this.positionHistory.set(id, history.slice(-maxHistoryLength));
+    this.positionHistory.forEach((history) => {
+      if (history.capacity > maxHistoryLength) {
+        history.resize(maxHistoryLength);
       }
     });
   }

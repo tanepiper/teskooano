@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { PhysicsStateReal, predictTrajectory } from "@teskooano/core-physics";
+import { OSVector3 } from "@teskooano/core-math";
 import { getCelestialObjects } from "@teskooano/core-state";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
@@ -16,7 +17,7 @@ export class PredictionManager {
   public predictionLines: Map<string, THREE.Line> = new Map();
 
   /** Cached prediction points for each object to avoid recalculation every frame */
-  private predictedLinePoints: Map<string, THREE.Vector3[]> = new Map();
+  private predictedLinePoints: Map<string, OSVector3[]> = new Map();
 
   /** Line builder utility for efficient line creation and updates */
   private lineBuilder: LineBuilder;
@@ -70,7 +71,7 @@ export class PredictionManager {
     );
 
     // Calculate or retrieve prediction points
-    let predictionPoints: THREE.Vector3[];
+    let predictionPoints: OSVector3[];
 
     if (forceRecalculate || !this.predictedLinePoints.has(objectId)) {
       // Calculate new prediction
@@ -79,6 +80,9 @@ export class PredictionManager {
         [targetObject.physicsStateReal, ...otherPhysicsStates],
         this.predictionDuration,
         this.predictionSteps,
+        {
+          // Add options here if needed, e.g., collision detection
+        },
       );
 
       this.predictedLinePoints.set(objectId, newPoints);
@@ -88,8 +92,11 @@ export class PredictionManager {
       predictionPoints = this.predictedLinePoints.get(objectId)!;
     }
 
+    // Convert to THREE.Vector3 for rendering
+    const predictionPointsTHREE = predictionPoints.map((p) => p.toThreeJS());
+
     // If not enough points for a line, remove any existing prediction
-    if (predictionPoints.length < 2) {
+    if (predictionPointsTHREE.length < 2) {
       this.removePrediction(objectId);
       return false;
     }
@@ -112,7 +119,11 @@ export class PredictionManager {
     }
 
     // Update the line with current prediction points
-    this.lineBuilder.updateLine(line, predictionPoints, this.predictionSteps);
+    this.lineBuilder.updateLine(
+      line,
+      predictionPointsTHREE,
+      this.predictionSteps,
+    );
 
     // Store the default color for future reference
     if (

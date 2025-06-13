@@ -215,41 +215,6 @@ export class SimulationManager {
 
         physicsSystemAdapter.updateStateFromResult(result);
 
-        // Rotation logic (remains a bit problematic as in original, might need adjustment)
-        const currentCelestialObjectsAfterUpdate =
-          physicsSystemAdapter.getCelestialObjectsSnapshot();
-        const finalStateMapWithRotations: Record<string, CelestialObject> = {
-          ...currentCelestialObjectsAfterUpdate,
-        };
-
-        Object.keys(finalStateMapWithRotations).forEach((id) => {
-          const obj = finalStateMapWithRotations[id];
-          if (
-            obj.status !== CelestialStatus.DESTROYED &&
-            obj.status !== CelestialStatus.ANNIHILATED &&
-            obj.siderealRotationPeriod_s &&
-            obj.siderealRotationPeriod_s > 0 &&
-            obj.axialTilt
-          ) {
-            const angle =
-              ((2 * Math.PI * this.accumulatedTime) /
-                obj.siderealRotationPeriod_s) %
-              (2 * Math.PI);
-            const tiltAxisTHREE = new THREE.Vector3(
-              obj.axialTilt.x,
-              obj.axialTilt.y,
-              obj.axialTilt.z,
-            ).normalize();
-            const newRotation = new THREE.Quaternion().setFromAxisAngle(
-              tiltAxisTHREE,
-              angle,
-            );
-            (finalStateMapWithRotations[id] as any).rotation = newRotation; // Ad-hoc property
-          }
-        });
-        // If these rotations are critical, physicsSystemAdapter.updateStateFromResult might need to be aware of them,
-        // or another mechanism to persist them to the global state is needed if consumers expect them.
-
         const updatedPositions: Record<
           string,
           { x: number; y: number; z: number }

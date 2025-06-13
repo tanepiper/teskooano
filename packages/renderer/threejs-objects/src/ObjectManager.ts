@@ -120,6 +120,14 @@ export class ObjectManager {
   private tempVector3 = new THREE.Vector3();
 
   /**
+   * Public accessor for the camera.
+   * @returns The THREE.PerspectiveCamera instance.
+   */
+  public getCamera(): THREE.PerspectiveCamera {
+    return this.camera;
+  }
+
+  /**
    * Creates an instance of ObjectManager.
    *
    * @param scene - The main Three.js scene.

@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { OrbitCalculator } from "./OrbitCalculator";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineBuilder } from "../utils/LineBuilder";
+import { updateThreeVector3Array } from "../utils/arrayUtils";
 
 /**
  * Manages the creation, update, visibility, and highlighting of static Keplerian orbit lines.
@@ -17,6 +18,9 @@ import { LineBuilder } from "../utils/LineBuilder";
 export class KeplerianManager {
   /** Map storing static Keplerian orbit lines, keyed by celestial object ID. */
   public lines: Map<string, THREE.Line> = new Map();
+
+  /** Cache for THREE.Vector3 arrays to avoid reallocation */
+  private positionCache: Map<string, THREE.Vector3[]> = new Map();
 
   /** Object manager for adding/removing objects from the scene */
   private objectManager: ObjectManager;
@@ -91,7 +95,14 @@ export class KeplerianManager {
     // Calculate orbit points
     const orbitPointsOS =
       OrbitCalculator.calculateOrbitPoints(orbitalParameters);
-    const orbitPointsTHREE = orbitPointsOS.map((p) => p.toThreeJS());
+
+    // Efficiently update or create the THREE.Vector3 array
+    const cachedPositions = this.positionCache.get(objectId) ?? [];
+    const orbitPointsTHREE = updateThreeVector3Array(
+      orbitPointsOS,
+      cachedPositions,
+    );
+    this.positionCache.set(objectId, orbitPointsTHREE);
 
     if (orbitPointsTHREE.length === 0) {
       if (existingLine) this.remove(objectId);
@@ -162,6 +173,7 @@ export class KeplerianManager {
       this.objectManager.removeRawObjectFromScene(line);
       this.lineBuilder.disposeLine(line);
       this.lines.delete(objectId);
+      this.positionCache.delete(objectId);
     }
   }
 

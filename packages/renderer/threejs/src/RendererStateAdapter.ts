@@ -1,4 +1,4 @@
-import { OSVector3 } from "@teskooano/core-math";
+import { OSQuaternion, OSVector3 } from "@teskooano/core-math";
 import {
   celestialObjects$,
   getSimulationState,
@@ -46,13 +46,15 @@ export class RendererStateAdapter {
 
   // --- Reusable scratch variables for performance ---
   /** A reusable vector defining the 'up' axis for sidereal rotation. */
-  private rotationAxis = new THREE.Vector3(0, 1, 0);
+  private rotationAxis = new OSVector3(0, 1, 0);
   /** A reusable quaternion for storing the calculated axial tilt. */
-  private tiltQuaternion = new THREE.Quaternion();
+  private tiltQuaternion = new OSQuaternion();
   /** A reusable quaternion for storing the calculated spin based on time. */
-  private spinQuaternion = new THREE.Quaternion();
-  /** A reusable Euler for converting tilt angles to a quaternion. */
-  private euler = new THREE.Euler();
+  private spinQuaternion = new OSQuaternion();
+  /** A reusable quaternion for the final combined rotation result. */
+  private finalRotation = new OSQuaternion();
+  /** A reusable vector for the z-axis. */
+  private zAxis = new OSVector3(0, 0, 1);
 
   /**
    * Initializes the adapter and subscribes to the core state.
@@ -80,43 +82,33 @@ export class RendererStateAdapter {
    *
    * @param axialTilt The object's axial tilt in degrees (either an OSVector3 or a number).
    * @param siderealPeriod The time it takes for one full rotation, in seconds.
-   * @returns A THREE.Quaternion representing the object's final orientation.
+   * @returns An OSQuaternion representing the object's final orientation.
    */
   private calculateRotation(
     axialTilt: OSVector3 | number | undefined,
     siderealPeriod: number | undefined,
-  ): THREE.Quaternion {
-    const finalRotation = new THREE.Quaternion();
-    this.tiltQuaternion.identity();
-    this.spinQuaternion.identity();
+  ): OSQuaternion {
+    this.tiltQuaternion = new OSQuaternion();
+    this.spinQuaternion = new OSQuaternion();
 
     if (axialTilt instanceof OSVector3) {
-      this.euler.set(
-        THREE.MathUtils.degToRad(axialTilt.x ?? 0),
-        THREE.MathUtils.degToRad(axialTilt.y ?? 0),
-        THREE.MathUtils.degToRad(axialTilt.z ?? 0),
-        "XYZ",
-      );
-      this.tiltQuaternion.setFromEuler(this.euler);
+      this.tiltQuaternion.setFromEuler(axialTilt, "XYZ");
     } else if (typeof axialTilt === "number" && !isNaN(axialTilt)) {
-      this.tiltQuaternion.setFromAxisAngle(
-        new THREE.Vector3(0, 0, 1),
-        THREE.MathUtils.degToRad(axialTilt),
-      );
+      const rad = axialTilt * (Math.PI / 180);
+      this.tiltQuaternion.setFromAxisAngle(this.zAxis, rad);
     }
 
     if (siderealPeriod && siderealPeriod !== 0) {
       const rotationAngle =
         (this.currentSimulationTime / siderealPeriod) * 2 * Math.PI;
       this.spinQuaternion.setFromAxisAngle(this.rotationAxis, rotationAngle);
-      finalRotation.multiplyQuaternions(
-        this.tiltQuaternion,
-        this.spinQuaternion,
-      );
+      this.finalRotation
+        .copy(this.tiltQuaternion)
+        .multiply(this.spinQuaternion);
     } else {
-      finalRotation.copy(this.tiltQuaternion);
+      this.finalRotation.copy(this.tiltQuaternion);
     }
-    return finalRotation;
+    return this.finalRotation;
   }
 
   /**
@@ -132,40 +124,44 @@ export class RendererStateAdapter {
     existing: RenderableCelestialObject | undefined,
     determineLightSource: (id: string) => string | undefined,
   ): RenderableCelestialObject {
-    const realRadius = obj.realRadius_m ?? 0;
-    const scaledRadius = scaleSize(realRadius, obj.type);
-    const scaledMass = (obj.realMass_kg ?? 0) * SCALE.MASS;
-    const position = physicsToThreeJSPosition(obj.physicsStateReal.position_m);
-    const rotation = this.calculateRotation(
-      obj.axialTilt,
-      obj.siderealRotationPeriod_s,
-    );
-    const primaryLightSourceId = determineLightSource(obj.id);
+    const target =
+      existing ??
+      ({
+        celestialObjectId: obj.id,
+        position: new THREE.Vector3(),
+        rotation: new THREE.Quaternion(),
+        isVisible: true,
+        isTargetable: true,
+        isSelected: false,
+        isFocused: false,
+        uniforms: {},
+      } as RenderableCelestialObject);
 
-    return {
-      celestialObjectId: obj.id,
-      name: obj.name,
-      type: obj.type,
-      seed: obj?.seed ?? crypto.randomUUID(),
-      radius: scaledRadius,
-      mass: scaledMass,
-      position: position,
-      rotation: rotation,
-      properties: obj.properties,
-      orbit: obj.orbit,
-      parentId: obj.parentId,
-      primaryLightSourceId: primaryLightSourceId,
-      realRadius_m: realRadius,
-      axialTilt: obj.axialTilt,
-      isVisible: existing?.isVisible ?? true,
-      isTargetable: existing?.isTargetable ?? true,
-      isSelected: existing?.isSelected ?? false,
-      isFocused: existing?.isFocused ?? false,
-      status: obj.status,
-      uniforms: {
-        temperature: obj.temperature,
-      },
-    };
+    const realRadius = obj.realRadius_m ?? 0;
+
+    physicsToThreeJSPosition(target.position, obj.physicsStateReal.position_m);
+    target.rotation.copy(
+      this.calculateRotation(
+        obj.axialTilt,
+        obj.siderealRotationPeriod_s,
+      ).toThreeJS(),
+    );
+
+    target.name = obj.name;
+    target.type = obj.type;
+    target.seed = obj?.seed ?? (target.seed || crypto.randomUUID());
+    target.radius = scaleSize(realRadius, obj.type);
+    target.mass = (obj.realMass_kg ?? 0) * SCALE.MASS;
+    target.properties = obj.properties;
+    target.orbit = obj.orbit;
+    target.parentId = obj.parentId;
+    target.primaryLightSourceId = determineLightSource(obj.id);
+    target.realRadius_m = realRadius;
+    target.axialTilt = obj.axialTilt;
+    target.status = obj.status;
+    target.uniforms.temperature = obj.temperature;
+
+    return target;
   }
 
   /**
@@ -202,37 +198,42 @@ export class RendererStateAdapter {
       return null;
     }
 
-    const position = physicsToThreeJSPosition(
+    const target =
+      existing ??
+      ({
+        celestialObjectId: obj.id,
+        position: new THREE.Vector3(),
+        rotation: new THREE.Quaternion(),
+        isVisible: true,
+        isTargetable: false,
+        isSelected: false,
+        isFocused: false,
+        uniforms: {},
+      } as RenderableCelestialObject);
+
+    physicsToThreeJSPosition(
+      target.position,
       parent.physicsStateReal.position_m,
     );
+    target.rotation.copy(
+      this.calculateRotation(parent.axialTilt, undefined).toThreeJS(),
+    );
 
-    const rotation = this.calculateRotation(parent.axialTilt, undefined);
-    const primaryLightSourceId = determineLightSource(obj.id);
+    target.name = obj.name;
+    target.type = obj.type;
+    target.seed = obj?.seed ?? (target.seed || crypto.randomUUID());
+    target.radius = 0;
+    target.mass = 0;
+    target.properties = obj.properties;
+    target.orbit = undefined;
+    target.parentId = obj.parentId;
+    target.primaryLightSourceId = determineLightSource(obj.id);
+    target.realRadius_m = 0;
+    target.axialTilt = parent.axialTilt;
+    target.status = obj.status;
+    target.uniforms.temperature = obj.temperature;
 
-    return {
-      celestialObjectId: obj.id,
-      name: obj.name,
-      type: obj.type,
-      seed: obj?.seed ?? crypto.randomUUID(),
-      radius: 0,
-      mass: 0,
-      position: position,
-      rotation: rotation,
-      properties: obj.properties,
-      orbit: undefined,
-      parentId: obj.parentId,
-      primaryLightSourceId: primaryLightSourceId,
-      realRadius_m: 0,
-      axialTilt: parent.axialTilt,
-      isVisible: existing?.isVisible ?? true,
-      isTargetable: existing?.isTargetable ?? false,
-      isSelected: existing?.isSelected ?? false,
-      isFocused: existing?.isFocused ?? false,
-      status: obj.status,
-      uniforms: {
-        temperature: obj.temperature,
-      },
-    };
+    return target;
   }
 
   /**

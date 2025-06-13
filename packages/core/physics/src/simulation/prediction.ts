@@ -2,7 +2,6 @@ import { OSVector3 } from "@teskooano/core-math";
 import { PhysicsStateReal } from "../types";
 import { Octree } from "../spatial/octree";
 import { velocityVerletIntegrate } from "../integrators";
-import * as THREE from "three";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
 
@@ -15,7 +14,7 @@ import { CelestialType } from "@teskooano/data-types";
  * @param duration_s - The total time duration (in seconds) for which to predict the trajectory.
  * @param steps - The number of discrete time steps to use for the integration.
  * @param options - Optional parameters for the prediction.
- * @returns An array of THREE.Vector3 points representing the predicted trajectory, scaled for visualization.
+ * @returns An array of OSVector3 points representing the predicted trajectory in meters.
  */
 export function predictTrajectory(
   targetBodyId: string | number,
@@ -30,7 +29,7 @@ export function predictTrajectory(
     bodyTypes?: Map<string | number, CelestialType>;
     radii?: Map<string | number, number>;
   } = {},
-): THREE.Vector3[] {
+): OSVector3[] {
   const {
     octreeSize = 5e13,
     barnesHutTheta = 0.7,
@@ -57,7 +56,12 @@ export function predictTrajectory(
   }
 
   const dt = duration_s / steps;
-  const predictedPoints: THREE.Vector3[] = [];
+
+  // Pre-allocate arrays and objects to be reused in the loop
+  const predictedPointsOS: OSVector3[] = [];
+  const accelerations = new Map<string | number, OSVector3>();
+  const octree = new Octree(octreeSize);
+  const reusableAccVector = new OSVector3(0, 0, 0);
 
   // Make a deep copy of the initial states to avoid modifying the original data
   let currentStates: PhysicsStateReal[] = allBodiesInitialStates.map(
@@ -67,17 +71,17 @@ export function predictTrajectory(
       velocity_mps: body.velocity_mps.clone(),
     }),
   );
+  // Second array for state swapping to avoid reallocation
+  let nextStates: PhysicsStateReal[] = currentStates.map((body) => ({
+    ...body,
+    position_m: body.position_m.clone(),
+    velocity_mps: body.velocity_mps.clone(),
+  }));
 
   // Add the initial position
   const initialTargetState = currentStates[targetBodyIndex];
   if (initialTargetState.position_m) {
-    const initialPoint = scaleToSceneUnits
-      ? initialTargetState.position_m
-          .clone()
-          .multiplyScalar(METERS_TO_SCENE_UNITS)
-          .toThreeJS()
-      : initialTargetState.position_m.clone().toThreeJS();
-    predictedPoints.push(initialPoint);
+    predictedPointsOS.push(initialTargetState.position_m.clone());
   } else {
     console.warn(`Initial target position missing for ${targetBodyId}`);
     return [];
@@ -86,32 +90,34 @@ export function predictTrajectory(
   // Simulation loop
   for (let i = 0; i < steps; i++) {
     // Calculate accelerations using Octree (same as in main simulation)
-    const octree = new Octree(octreeSize);
-    currentStates.forEach((body) => octree.insert(body));
+    octree.clear();
+    for (const body of currentStates) {
+      octree.insert(body);
+    }
 
-    const accelerations = new Map<string | number, OSVector3>();
-    currentStates.forEach((body) => {
+    accelerations.clear();
+    for (const body of currentStates) {
       const netForce = octree.calculateForceOn(body, barnesHutTheta);
-      const acc = new OSVector3(0, 0, 0);
+      reusableAccVector.set(0, 0, 0);
       if (body.mass_kg !== 0) {
-        acc.copy(netForce).multiplyScalar(1 / body.mass_kg);
+        reusableAccVector.copy(netForce).multiplyScalar(1 / body.mass_kg);
       }
-      accelerations.set(body.id, acc);
-    });
+      accelerations.set(body.id, reusableAccVector.clone()); // Clone here as it's stored
+    }
 
     // Integration
-    const nextStates: PhysicsStateReal[] = [];
     let targetNextState: PhysicsStateReal | null = null;
     let integrationError = false;
 
-    currentStates.forEach((body) => {
-      if (integrationError) return;
+    for (let j = 0; j < currentStates.length; j++) {
+      const body = currentStates[j];
+      if (integrationError) break;
 
       const acceleration = accelerations.get(body.id);
       if (!acceleration) {
         console.error(`Acceleration calculation failed for body ${body.id}`);
         integrationError = true;
-        return;
+        break;
       }
 
       try {
@@ -120,48 +126,48 @@ export function predictTrajectory(
           stateGuess: PhysicsStateReal,
         ): OSVector3 => {
           const force = octree.calculateForceOn(stateGuess, barnesHutTheta);
-          const acc = new OSVector3(0, 0, 0);
+          reusableAccVector.set(0, 0, 0); // Reuse the vector
           if (stateGuess.mass_kg !== 0) {
-            acc.copy(force).multiplyScalar(1 / stateGuess.mass_kg);
+            reusableAccVector
+              .copy(force)
+              .multiplyScalar(1 / stateGuess.mass_kg);
           }
-          return acc;
+          return reusableAccVector;
         };
 
         // Use the same Verlet integrator as the main simulation
-        const nextState = velocityVerletIntegrate(
+        // IMPORTANT: The result MUST be written to the `nextStates` array to avoid mutation bugs
+        const resultState = velocityVerletIntegrate(
           body,
           acceleration,
           calculateNewAcceleration,
           dt,
         );
 
+        // Copy result into the pre-allocated next state object
+        nextStates[j].position_m.copy(resultState.position_m);
+        nextStates[j].velocity_mps.copy(resultState.velocity_mps);
+
         // Validate state
-        const posOk =
-          Number.isFinite(nextState.position_m.x) &&
-          Number.isFinite(nextState.position_m.y) &&
-          Number.isFinite(nextState.position_m.z);
-        const velOk =
-          Number.isFinite(nextState.velocity_mps.x) &&
-          Number.isFinite(nextState.velocity_mps.y) &&
-          Number.isFinite(nextState.velocity_mps.z);
+        const posOk = Number.isFinite(nextStates[j].position_m.x);
+        const velOk = Number.isFinite(nextStates[j].velocity_mps.x);
 
         if (!posOk || !velOk) {
           console.error(
             `Non-finite state detected for body ${body.id}. Aborting prediction.`,
           );
           integrationError = true;
-          return;
+          break;
         }
 
-        nextStates.push(nextState);
         if (body.id === targetBodyId) {
-          targetNextState = nextState;
+          targetNextState = nextStates[j];
         }
       } catch (error) {
         console.error(`Error during integration for body ${body.id}:`, error);
         integrationError = true;
       }
-    });
+    }
 
     if (integrationError) {
       console.warn(`Prediction aborted at step ${i} due to integration error.`);
@@ -200,22 +206,26 @@ export function predictTrajectory(
 
     // Add the new prediction point
     if (targetNextState !== null) {
-      const position = (targetNextState as PhysicsStateReal).position_m;
-      const nextPoint = scaleToSceneUnits
-        ? position.clone().multiplyScalar(METERS_TO_SCENE_UNITS).toThreeJS()
-        : position.clone().toThreeJS();
-
-      predictedPoints.push(nextPoint);
+      predictedPointsOS.push(targetNextState.position_m.clone());
     } else {
       console.warn(`Target state not found after step ${i}. Aborting.`);
       break;
     }
 
-    // Update current states for next step
+    // Swap state arrays for the next iteration to avoid reallocation
+    const temp = currentStates;
     currentStates = nextStates;
+    nextStates = temp;
   }
 
-  return predictedPoints;
+  // If scaling is requested, apply it.
+  if (scaleToSceneUnits) {
+    return predictedPointsOS.map((p) =>
+      p.multiplyScalar(METERS_TO_SCENE_UNITS),
+    );
+  }
+
+  return predictedPointsOS;
 }
 
 /**

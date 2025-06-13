@@ -8,21 +8,18 @@ const METERS_TO_SCENE_UNITS = SCALE.RENDER_SCALE_AU / AU_METERS;
  * Converts a physics position vector (OSVector3 in meters, Y-up)
  * to a ThreeJS scene position vector (THREE.Vector3 in scene units, Y-up).
  *
- * @param physicsPosition - The position vector from the physics engine (meters).
  * @param target - Optional THREE.Vector3 to store the result in.
+ * @param physicsPosition - The position vector from the physics engine (meters).
  * @returns The position vector scaled for the ThreeJS scene.
  */
 export function physicsToThreeJSPosition(
+  target: THREE.Vector3,
   physicsPosition: OSVector3,
-  target?: THREE.Vector3,
 ): THREE.Vector3 {
-  const result = target || new THREE.Vector3();
-
-  result.x = physicsPosition.x * METERS_TO_SCENE_UNITS;
-  result.y = physicsPosition.y * METERS_TO_SCENE_UNITS;
-  result.z = physicsPosition.z * METERS_TO_SCENE_UNITS;
-
-  return result;
+  target.x = physicsPosition.x * METERS_TO_SCENE_UNITS;
+  target.y = physicsPosition.y * METERS_TO_SCENE_UNITS;
+  target.z = physicsPosition.z * METERS_TO_SCENE_UNITS;
+  return target;
 }
 
 /**
