@@ -18,12 +18,14 @@ const consonantDoubles = [
 const vowelDoubles = ["a", "e", "o"];
 
 /**
- * Generates a procedural celestial body name with slightly more natural structure.
+ * Generates a procedural, pronounceable name for a celestial body.
  *
- * Constructs names by pseudo-randomly combining consonants and vowels,
- * allowing occasional double letters and slight variations in the C/V pattern.
+ * It constructs names by pseudo-randomly combining consonants and vowels,
+ * following simple grammatical rules to create natural-sounding results. It allows
+ * for occasional double letters and handles special cases like 'qu' to improve
+ * the quality of the generated names.
  *
- * @param random - A function returning a pseudo-random number between 0 (inclusive) and 1 (exclusive).
+ * @param random A function returning a pseudo-random number between 0 (inclusive) and 1 (exclusive).
  * @returns A generated name string, capitalized.
  */
 export function generateCelestialName(random: () => number): string {

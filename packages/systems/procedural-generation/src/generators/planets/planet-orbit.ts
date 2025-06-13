@@ -10,16 +10,23 @@ import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 
 /**
- * Calculates the orbital parameters and initial absolute physics state (position, velocity)
- * for a planet relative to its parent star.
+ * Calculates the orbital parameters and initial physics state for a planet.
  *
- * @param random The seeded random function.
- * @param starMass_kg Mass of the parent star (kg).
- * @param planetMass_kg Mass of the planet (kg).
- * @param bodyDistanceAU Distance from the star (AU).
- * @param parentStarState Initial physics state of the parent star.
- * @param planetId The unique ID of the planet (for physics state).
- * @returns An object containing the calculated OrbitalParameters and the initial PhysicsStateReal, or null for PhysicsStateReal if calculation fails.
+ * This function determines a stable, pseudo-random orbit for a planet around
+ * its parent star. It sets parameters like eccentricity and inclination, calculates
+ * the orbital period, and then computes the initial position and velocity vectors
+ * required by the physics engine.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param starMass_kg Mass of the parent star in kilograms.
+ * @param planetMass_kg Mass of the planet in kilograms.
+ * @param bodyDistanceAU The target semi-major axis for the orbit in AU.
+ * @param parentStarState The physics state of the parent star, which provides the
+ *   frame of reference for the new orbit.
+ * @param planetId The unique ID of the planet (for the new physics state).
+ * @returns An object containing the `OrbitalParameters` and the initial
+ *   `PhysicsStateReal` for the planet. Returns `null` for `initialPhysicsState` if
+ *   the calculation fails.
  */
 export function calculatePlanetOrbitAndInitialState(
   random: () => number,

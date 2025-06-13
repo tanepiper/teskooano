@@ -14,14 +14,21 @@ import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 import type { PlanetBaseProperties } from "./planet-type";
 import { ProceduralSurfaceProperties } from "@teskooano/data-types";
+import { createProceduralSurfaceProperties } from "../../utils";
 
 /**
- * Generates specific properties for a planet based on its determined type and base properties.
+ * Generates the specific properties for a planet based on its high-level type.
  *
- * @param random The seeded random function.
- * @param baseProps Base properties determined by `determinePlanetTypeAndBaseProperties`.
- * @param bodyDistanceAU Distance from the star in AU.
- * @returns The specific properties object (either PlanetProperties or GasGiantProperties).
+ * This function acts as a router, delegating to either
+ * `generateGasGiantSpecificProperties` or `generateRockyPlanetSpecificProperties`
+ * depending on the `planetType` in the base properties.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param baseProps The base properties object, which includes the determined `planetType`.
+ * @param bodyDistanceAU The planet's distance from the star in AU, used for
+ *   temperature-dependent properties like those of gas giants.
+ * @returns A `CelestialSpecificPropertiesUnion` containing the detailed
+ *   properties for either a gas giant or a rocky planet.
  */
 export function generatePlanetSpecificProperties(
   random: () => number,
@@ -40,7 +47,17 @@ export function generatePlanetSpecificProperties(
 }
 
 /**
- * Generates properties specific to Gas Giants (including Ice Giants).
+ * @internal
+ * Generates properties specific to Gas Giants, including Ice Giants.
+ *
+ * It determines the atmospheric composition, pressure, color, and cloud details
+ * based on the planet's distance from its star, simulating different classes of
+ * gas giants (e.g., Hot Jupiters vs. cold gas giants).
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param baseProps The planet's base properties.
+ * @param bodyDistanceAU The planet's distance from the star in AU.
+ * @returns A `GasGiantProperties` object.
  */
 function generateGasGiantSpecificProperties(
   random: () => number,
@@ -103,7 +120,18 @@ function generateGasGiantSpecificProperties(
 }
 
 /**
- * Generates properties specific to Rocky/Planet types.
+ * @internal
+ * Generates properties specific to rocky planets (e.g., Terrestrial, Ice, Lava).
+ *
+ * This function determines the planet's detailed surface type, composition, and
+ * atmosphere. It uses a probability-based approach to decide if a planet has an
+ * atmosphere and, if so, its type and characteristics (color, density, clouds).
+ * It then calls `createProceduralSurfaceProperties` to generate the detailed
+ * data needed for shader-based rendering.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param baseProps The planet's base properties.
+ * @returns A `PlanetProperties` object.
  */
 function generateRockyPlanetSpecificProperties(
   random: () => number,

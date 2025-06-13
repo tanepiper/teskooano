@@ -3,7 +3,20 @@ import { Observable, Subscriber } from "rxjs";
 import * as CONST_PROC_GEN from "../../constants"; // Aliasing to avoid conflict if CONST is used locally
 import { generateMoon } from "./moon"; // Assuming generateMoon is in the same directory
 
-// Helper function to generate moons for a planet as an Observable stream
+/**
+ * Creates an RxJS Observable that generates and emits moons for a given parent planet.
+ *
+ * It determines a random number of moons (0-4) and then calls `generateMoon`
+ * for each one, emitting the resulting `CelestialObject` downstream.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param planetObject The parent `CelestialObject` (the planet).
+ * @param planetMass_kg The mass of the parent planet in kilograms.
+ * @param planetRadius_m The radius of the parent planet in meters.
+ * @param seed The main system seed string.
+ * @returns An `Observable<CelestialObject>` that emits each generated moon and
+ *   then completes.
+ */
 export function generateMoonsObservable(
   random: () => number,
   planetObject: CelestialObject,

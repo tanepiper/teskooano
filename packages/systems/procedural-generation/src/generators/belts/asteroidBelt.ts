@@ -18,13 +18,16 @@ import {
 } from "@teskooano/core-physics";
 
 /**
- * Generates data for an asteroid belt at a given distance.
- * @param random The seeded random function.
+ * Generates the data for a single asteroid belt at a specified orbital distance.
+ *
+ * @param random The seeded pseudo-random number generator function.
  * @param starId The ID of the parent star.
- * @param starMass_kg The mass of the parent star (kg).
- * @param index The index in the generation loop (for naming).
- * @param bodyDistanceAU The distance of the belt center from the star (AU).
- * @returns The generated asteroid belt's data.
+ * @param starMass_kg The mass of the parent star in kilograms.
+ * @param index The index in the generation loop, used for deterministic naming.
+ * @param bodyDistanceAU The distance of the belt's center from the star, in
+ *   Astronomical Units (AU).
+ * @returns The generated `CelestialObject` for the asteroid belt, or `null` if
+ *   the input parameters are invalid (e.g., non-positive mass).
  */
 export function generateAsteroidBelt(
   random: () => number,

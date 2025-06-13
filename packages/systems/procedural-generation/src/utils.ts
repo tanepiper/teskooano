@@ -8,7 +8,10 @@ import {
 import * as CONST from "./constants";
 
 /**
- * Gets a random item from an array using the provided random function.
+ * Retrieves a random item from an array using a seeded random function.
+ * @param arr The array to select an item from.
+ * @param randomFn The seeded pseudo-random number generator function.
+ * @returns A random item from the array, or `undefined` if the array is empty.
  */
 export function getRandomItem<T>(arr: T[], randomFn: () => number): T {
   if (!arr || arr.length === 0) {
@@ -22,8 +25,9 @@ export function getRandomItem<T>(arr: T[], randomFn: () => number): T {
  * T = 2 * PI * sqrt(a^3 / (G * (M_parent + M_child)))
  * @param parentMass_kg Mass of the parent body (kg).
  * @param semiMajorAxis_m Semi-major axis of the orbit (m).
- * @param childMass_kg Mass of the orbiting body (kg) - often negligible for planets around stars.
- * @returns The orbital period in seconds (s).
+ * @param childMass_kg Mass of the orbiting body (kg). This is often negligible
+ *   for planets around stars but is important for binary systems.
+ * @returns The orbital period in seconds (s), or 0 if inputs are invalid.
  */
 export function calculateOrbitalPeriod_s(
   parentMass_kg: number,
@@ -57,7 +61,11 @@ export function calculateOrbitalPeriod_s(
 }
 
 /**
- * Gets a random number within a specified range using the provided random function.
+ * Gets a random number within a specified inclusive range.
+ * @param min The minimum value of the range.
+ * @param max The maximum value of the range.
+ * @param randomFn The seeded pseudo-random number generator function.
+ * @returns A random number within the range.
  */
 export function getRandomInRange(
   min: number,
@@ -69,6 +77,9 @@ export function getRandomInRange(
 
 /**
  * Calculates the radius of a sphere given its mass and average density.
+ * @param mass_kg Mass of the sphere in kilograms.
+ * @param density_kg_m3 Average density in kilograms per cubic meter.
+ * @returns The calculated radius in meters.
  */
 export function calculateRadius(
   mass_kg: number,
@@ -80,7 +91,9 @@ export function calculateRadius(
 }
 
 /**
- * Estimates the spectral class of a star based on its temperature (simplified).
+ * Estimates the spectral class of a star based on its temperature.
+ * @param temperature The star's surface temperature in Kelvin.
+ * @returns The corresponding `SpectralClass` enum.
  */
 export function getSpectralClass(temperature: number): SpectralClass {
   if (temperature >= 30000) return SpectralClass.O;
@@ -95,7 +108,13 @@ export function getSpectralClass(temperature: number): SpectralClass {
 
 /**
  * Calculates the luminosity of a star relative to the Sun
- * using the Stefan-Boltzmann law (simplified).
+ * using the Stefan-Boltzmann law.
+ *
+ * @param radius_m The star's radius in meters.
+ * @param temperature_k The star's surface temperature in Kelvin.
+ * @param luminosity_multiplier An artificial multiplier to enhance visual
+ *   brightness differences in the renderer.
+ * @returns The calculated luminosity relative to the Sun (L☉).
  */
 export function calculateLuminosity(
   radius_m: number,
@@ -110,7 +129,9 @@ export function calculateLuminosity(
 }
 
 /**
- * Gets a representative star color based on its temperature (simplified).
+ * Gets a representative star color as a hex string based on its temperature.
+ * @param temperature The star's surface temperature in Kelvin.
+ * @returns A hex color string (e.g., "#aaccff").
  */
 export function getStarColor(temperature: number): string {
   if (temperature >= 25000) return "#aaccff";
@@ -134,6 +155,10 @@ function hexToRgb(hex: string): [number, number, number] | null {
     : null;
 }
 
+/**
+ * @internal
+ * Converts an RGB color array to a hex string.
+ */
 function rgbToHex(r: number, g: number, b: number): string {
   return (
     "#" +
@@ -144,6 +169,13 @@ function rgbToHex(r: number, g: number, b: number): string {
   );
 }
 
+/**
+ * Blends two hex colors together by a given factor.
+ * @param colorAHex The first color as a hex string.
+ * @param colorBHex The second color as a hex string.
+ * @param factor The blend factor (0-1). 0 returns colorA, 1 returns colorB.
+ * @returns The resulting blended hex color string.
+ */
 export function mixColors(
   colorAHex: string,
   colorBHex: string,
@@ -170,11 +202,12 @@ export function mixColors(
 }
 
 /**
- * Estimates the equilibrium temperature of a planet.
- * Simplified: Ignores albedo and greenhouse effect for classification purposes.
- * @param starLuminosity Luminosity of the star (relative to Sun, L☉).
- * @param distanceAU Distance from the star (AU).
- * @returns Estimated equilibrium temperature (K).
+ * Ignores albedo and greenhouse effects for simplicity, intended for initial
+ * classification rather than precise physics.
+ *
+ * @param starLuminosity Luminosity of the star relative to the Sun (L☉).
+ * @param distanceAU Distance from the star in Astronomical Units (AU).
+ * @returns The estimated equilibrium temperature in Kelvin (K).
  */
 export function estimateTemperature(
   starLuminosity: number,
@@ -195,8 +228,14 @@ export function estimateTemperature(
 }
 
 /**
- * Classifies a gas giant based on estimated temperature.
- * Uses simplified temperature thresholds based on Sudan classification.
+ * Classifies a gas giant based on its estimated temperature, using a simplified
+ * version of the Sudan classification system.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param distanceAU The planet's distance from its star in AU.
+ * @param starTemperature The temperature of the parent star in Kelvin.
+ * @param starRadius The radius of the parent star in meters.
+ * @returns The `GasGiantClass` enum (e.g., CLASS_I, CLASS_V).
  */
 export function classifyGasGiantByTemperature(
   random: () => number,
@@ -226,7 +265,18 @@ export function classifyGasGiantByTemperature(
 }
 
 /**
- * Creates detailed procedural surface properties based on planet type.
+ * Creates detailed procedural surface properties for a planet based on its type.
+ *
+ * This function is crucial for the visual appearance of planets. It defines
+ * a set of parameters (noise settings, bump scales, colors, etc.) that are fed
+ * into the shaders to procedurally generate the planet's surface texture. Each
+ * `PlanetType` has a unique, handcrafted set of parameters to give it a distinct
+ * look, from the continents of a Terrestrial world to the dunes of a Desert planet.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param planetType The `PlanetType` of the planet.
+ * @returns A `ProceduralSurfaceProperties` object containing all the data
+ *   needed by the planet surface shader.
  */
 export function createProceduralSurfaceProperties(
   random: () => number,

@@ -27,18 +27,29 @@ import { determinePlanetTypeAndBaseProperties } from "./planet-type";
 import { calculateLuminosity, estimateTemperature } from "../../utils";
 
 /**
- * Orchestrates the generation of data for a planet and potentially its ring system
- * by calling specialized generator functions.
+ * Creates an RxJS Observable that generates and emits data for a single planet
+ * and its potential ring system.
  *
- * @param random The seeded random function.
+ * This function acts as an orchestrator, calling specialized helper functions to:
+ * 1. Determine the planet's base type (Rocky, Gas Giant, etc.).
+ * 2. Calculate its physical properties (mass, radius).
+ * 3. Generate specific characteristics (atmosphere, surface type).
+ * 4. Generate a ring system based on probability.
+ * 5. Calculate its final orbit and initial physics state.
+ *
+ * It emits the main planet `CelestialObject` first, followed by a
+ * `CelestialObject` for the ring system if one was generated.
+ *
+ * @param random The seeded pseudo-random number generator function.
  * @param starId The ID of the parent star.
- * @param starMass_kg The mass of the parent star (kg).
- * @param starTemperature The temperature of the parent star (K).
- * @param starRadius The radius of the parent star (m).
- * @param bodyDistanceAU The distance of this planet from the star (AU).
- * @param systemSeed The main system seed.
- * @param parentStarState The state of the parent star for physics calculations.
- * @returns An Observable stream emitting the planet and its ring system (if any).
+ * @param starMass_kg The mass of the parent star in kilograms.
+ * @param starTemperature The temperature of the parent star in Kelvin.
+ * @param starRadius The radius of the parent star in meters.
+ * @param bodyDistanceAU The orbital distance of the planet from the star in AU.
+ * @param systemSeed The main system seed string.
+ * @param parentStarState The physics state of the parent star, used for orbital calculations.
+ * @returns An `Observable<CelestialObject>` that emits the planet and then its
+ *   ring system (if any), then completes.
  */
 export function generatePlanet(
   random: () => number,

@@ -3,14 +3,23 @@ import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 
 /**
- * Generates ring properties for a planet based on chance, allowed types, and parent size.
+ * Generates properties for a planetary ring system.
  *
- * @param random The seeded random function.
- * @param chance Probability (0-1) of rings being generated.
- * @param allowedTypes Array of permissible ring material types.
- * @param parentVisualRadius_m The VISUAL radius of the parent body in METERS (used for scaling).
- * @param outerRadiusFactor Maximum outer radius multiplier relative to inner radius (default 1.5).
- * @returns An array containing the generated ring properties, or undefined if no rings are generated.
+ * This function determines whether a planet should have rings based on a given
+ * probability (`chance`). If rings are generated, it calculates their properties,
+ * such as inner and outer radii, density, color, and composition, based on the
+ * provided parameters.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param chance The probability (0-1) that rings will be generated.
+ * @param allowedTypes An array of `RockyType` values that are permissible for
+ *   the ring's composition.
+ * @param parentVisualRadius_m The visual radius of the parent body in meters,
+ *   used for scaling the ring system appropriately.
+ * @param outerRadiusFactor A multiplier that controls the maximum width of the
+ *   ring system relative to its inner radius. Defaults to 1.5.
+ * @returns An array containing a single `RingProperties` object if rings are
+ *   generated, or `undefined` otherwise.
  */
 export function generateRings(
   random: () => number,

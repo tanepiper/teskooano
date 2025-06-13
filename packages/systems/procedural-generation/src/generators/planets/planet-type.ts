@@ -7,7 +7,10 @@ import {
 import * as UTIL from "../../utils";
 
 /**
- * Return type for the determinePlanetTypeAndBaseProperties function.
+ * @internal
+ * The return type for the `determinePlanetTypeAndBaseProperties` function.
+ * Defines the preliminary characteristics of a planet before detailed
+ * properties are generated.
  */
 export interface PlanetBaseProperties {
   planetType: CelestialType;
@@ -21,14 +24,20 @@ export interface PlanetBaseProperties {
 }
 
 /**
- * Determines the base type (Rocky, Gas Giant, Ice Giant) and initial properties
- * of a planet based on its distance from the star.
+ * Determines the fundamental type of a planet (e.g., Rocky, Gas Giant) and its
+ * initial physical properties based on its distance from a star.
  *
- * @param random The seeded random function.
- * @param bodyDistanceAU Distance from the star in AU.
- * @param starTemperature Temperature of the parent star (K).
- * @param starRadius Radius of the parent star (m).
- * @returns An object containing the determined base properties.
+ * This is a key step in the planet generation pipeline. It uses the orbital
+ * distance to decide whether a celestial body is more likely to be a dense,
+ * rocky world or a less-dense gas or ice giant. It also sets the initial
+ * probability for having a ring system.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param bodyDistanceAU The planet's distance from its star in AU.
+ * @param starTemperature The temperature of the parent star in Kelvin.
+ * @param starRadius The radius of the parent star in meters.
+ * @returns A `PlanetBaseProperties` object containing the determined
+ *   preliminary characteristics.
  */
 export function determinePlanetTypeAndBaseProperties(
   random: () => number,

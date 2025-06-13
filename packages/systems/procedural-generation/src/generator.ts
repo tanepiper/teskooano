@@ -35,9 +35,21 @@ import { createSeededRandom } from "./seeded-random";
 import * as UTIL from "./utils";
 
 /**
- * Generates the initial data for celestial objects and a name for a solar system based on a seed string.
- * @param seed The seed string to use for generation.
- * @returns A Promise resolving to an object containing the system name and an Observable stream of CelestialObjects.
+ * Generates the initial data for celestial objects and a name for a solar system
+ * based on a seed string.
+ *
+ * This function orchestrates the entire procedural generation process. It begins
+ * by creating stars, handling single and multi-star systems with internal
+ * barycentric physics calculations. It then uses a reactive RxJS pipeline to
+ * generate planets, moons, and asteroid belts in a deterministic sequence.
+ *
+ * @param seed The seed string to use for generation. This ensures that the same
+ *   seed always produces the same system.
+ * @returns A Promise that resolves to an object containing:
+ *   - `systemName`: A procedurally generated name for the star system.
+ *   - `objects$`: An RxJS `Observable` that emits each generated
+ *     `CelestialObject` one by one. The stream completes after all objects for
+ *     the system have been emitted.
  */
 export async function generateSystem(
   seed: string,

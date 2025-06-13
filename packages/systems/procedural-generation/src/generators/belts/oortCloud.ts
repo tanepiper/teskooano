@@ -8,9 +8,13 @@ import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 
 /**
  * Generates data for an Oort cloud surrounding a star.
- * @param random The seeded random function.
- * @param parentStar The parent star object.
- * @returns The generated Oort cloud's data.
+ *
+ * @note This function is currently not used in the main `generateSystem` pipeline.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param parentStar The parent star `CelestialObject`.
+ * @returns The generated `CelestialObject` for the Oort cloud, or `null` if the
+ *   parent star is invalid.
  */
 export function generateOortCloud(
   random: () => number,

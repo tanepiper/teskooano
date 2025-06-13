@@ -1,3 +1,13 @@
+/**
+ * Generates a procedural name for a star system.
+ *
+ * It combines a prefix (often a real constellation or star catalog name) with a
+ * numeric or suffixed designator, joined by a random separator. This creates
+ * names that feel familiar and astronomical, like "Kepler-186f" or "Gliese 581".
+ *
+ * @param random A function returning a pseudo-random number between 0 (inclusive) and 1 (exclusive).
+ * @returns A generated star system name string.
+ */
 export function generateSystemName(random: () => number): string {
   const prefixes = [
     "Andromeda",

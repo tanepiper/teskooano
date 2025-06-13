@@ -21,13 +21,26 @@ import { generateCelestialName } from "../names";
 
 /**
  * Generates data for a single moon orbiting a parent planet.
- * @param random The seeded random function.
- * @param parentPlanetData The data of the parent planet.
- * @param parentPlanetMass The mass of the parent planet (kg).
- * @param parentPlanetRadius The radius of the parent planet (m).
- * @param lastMoonDistance_radii The distance of the previous moon (in parent radii).
- * @param systemSeed The main system seed.
- * @returns The generated moon's data and the new last distance.
+ *
+ * This function calculates the moon's physical properties (mass, radius),
+ * determines its orbital parameters, and generates its surface characteristics.
+ * It handles potential "captured" moons by adjusting their properties for a more
+ * irregular appearance. It also performs validation to ensure the generated orbit
+ * is stable and does not intersect the parent planet.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param parentPlanetData The data of the parent planet `CelestialObject`.
+ * @param parentPlanetMass The mass of the parent planet in kilograms.
+ * @param parentPlanetRadius The radius of the parent planet in meters.
+ * @param lastMoonDistance_radii The orbital distance of the previous moon in
+ *   multiples of the parent's radius. This is used to place subsequent moons
+ *   further out.
+ * @param systemSeed The main system seed, used for generating a unique seed for the moon.
+ * @returns An object containing:
+ *  - `moonData`: The generated `CelestialObject` for the moon, or `null` if
+ *    generation fails (e.g., due to an unstable orbit).
+ *  - `nextLastMoonDistance_radii`: The new orbital distance to be used for the
+ *    next moon in the sequence.
  */
 export function generateMoon(
   random: () => number,

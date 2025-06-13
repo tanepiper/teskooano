@@ -71,12 +71,24 @@ const defaultStarOrbit: OrbitalParameters = {
   period_s: 0,
 };
 
+/**
+ * A multiplier applied to the calculated visual radius of stars to make them
+ * more prominent and visible from a distance in the renderer.
+ */
 const STAR_VISUAL_SCALE_MULTIPLIER = 50.0;
 
 /**
- * Generates the primary star for the system.
- * @param random The seeded random function.
- * @returns The generated star's data.
+ * Generates the data for a single star, determining its type, size, and properties.
+ *
+ * This function uses a weighted roll to determine the star's `StellarType`
+ * (e.g., Main Sequence, White Dwarf, Black Hole). It then calculates the
+ * appropriate physical properties such as mass, radius, temperature, and
+ * luminosity based on that type. It also handles special cases and performs
+ * validation to ensure the generated properties are within reasonable bounds for
+ * the given spectral class.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @returns The generated `CelestialObject` for the star.
  */
 export function generateStar(random: () => number): CelestialObject {
   const starName = generateCelestialName(random);

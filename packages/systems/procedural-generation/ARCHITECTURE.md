@@ -1,108 +1,118 @@
-# Architecture: systems/procedural-generation
+# Architecture: @teskooano/systems-procedural-generation
 
-This document outlines the architecture for the procedural generation system within the Teskooano engine. Since the actual source code is yet to be written, this describes the intended design and components.
+This document outlines the architecture for the procedural generation system within the Teskooano engine.
 
 ## 1. Purpose
 
-The `procedural-generation` package is responsible for creating celestial bodies (stars, planets, moons, asteroid belts) and arranging them into star systems based on deterministic algorithms fed by a seed string. This allows for vast, varied, and replayable game worlds.
+The `@teskooano/systems-procedural-generation` package is responsible for creating celestial bodies (stars, planets, moons, asteroid belts) and arranging them into star systems based on deterministic algorithms fed by a seed string. This allows for vast, varied, and replayable game worlds. The system is designed to be reactive, streaming generated objects via an RxJS Observable.
 
 ## 2. Core Concepts
 
-- **Determinism:** Given the same input seed string, the `generateSystem` function must always produce the exact same array of `CelestialObject` data. A custom seeded pseudo-random number generator (PRNG) ensures this.
+- **Determinism:** Given the same input seed string, the `generateSystem` function must always produce the exact same sequence of `CelestialObject` data. A custom seeded pseudo-random number generator (PRNG) ensures this.
+- **Reactivity:** The primary `generateSystem` function is asynchronous and returns an `Observable<CelestialObject>`. This allows the application to process objects as they are generated without blocking the UI, which is crucial for large systems.
 - **Modularity:** Specific generation logic for different celestial types (Star, Planet, Moon, Asteroid Belt) is encapsulated in separate files within the `src/generators/` directory.
-- **Physics Integration:** Leverages `core-physics` to calculate initial orbital parameters and positions/velocities, especially for binary star systems.
-- **Configurability:** While currently driven primarily by the seed, the internal constants and generation logic offer points for future parameterization.
+- **Procedural Visuals:** For rocky planets, the system generates a rich `ProceduralSurfaceProperties` object. This data is designed to be consumed directly by shaders to create detailed and varied planet surfaces without requiring pre-made textures.
+- **Physics Integration:** The main `generator.ts` contains internal logic to calculate initial orbital parameters and `PhysicsStateReal` (position/velocity vectors), especially for complex binary and multi-star systems.
 
 ## 3. Components
 
-Based on the current implementation (`generator.ts` and `src/generators/`):
-
-| Component                   | Location (`src/`)            | Description                                                                                                                                                  | Key Inputs                                         | Key Outputs                   | Dependencies                                                                        |
-| :-------------------------- | :--------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------- | :---------------------------- | :---------------------------------------------------------------------------------- |
-| **System Generator**        | `generator.ts`               | Orchestrates the entire system generation process (`generateSystem` function). Determines number of stars, loops to place bodies, calls specific generators. | Seed string                                        | `CelestialObject[]`           | `seeded-random`, `generators/*`, `core-physics`, `data-types`                       |
-| **Seeded PRNG**             | `seeded-random.ts`           | Provides a deterministic pseudo-random number generator based on an initial seed string.                                                                     | Seed string                                        | Random number function        | -                                                                                   |
-| **Star Generator**          | `generators/star.ts`         | Generates properties for a single star (spectral class, mass, radius, temperature, etc.).                                                                    | Seeded random function                             | `CelestialObject` (Star Data) | `utils`, `constants`, `data-types`                                                  |
-| **Planet Generator**        | `generators/planet.ts`       | Generates properties for a planet (type, radius, mass, atmosphere, etc.) based on distance from parent star and other factors. Includes orbit calculation.   | Seeded random function, Parent Star Data, Distance | `{ generatedObjects, ... }`   | `generators/*` (sub-generators), `core-physics`, `utils`, `constants`, `data-types` |
-| **Moon Generator**          | `generators/moon.ts`         | Generates properties for a moon orbiting a planet. Includes orbit calculation relative to the planet.                                                        | Seeded random function, Parent Planet Data         | `moonData`                    | `utils`, `constants`, `data-types`, `core-physics`                                  |
-| **Asteroid Belt Generator** | `generators/asteroidBelt.ts` | Generates data for an asteroid belt at a specific orbital distance.                                                                                          | Seeded random function, Parent Star Data, Distance | `CelestialObject` (Belt Data) | `utils`, `constants`, `data-types`, `core-physics`                                  |
-| **Planet Sub-Generators**   | `generators/planet-*.ts`     | Helper modules for specific planet aspects (orbit, properties, rings, type). Called by `generators/planet.ts`.                                               | Seeded random function, Planet Data (partial)      | Specific planet properties    | `utils`, `constants`, `data-types`                                                  |
-| **Utilities & Constants**   | `utils.ts`, `constants.ts`   | Helper functions (e.g., orbit calculations not in core-physics) and constant values (AU, Solar Radius, etc.) used across generators.                         | Various                                            | Various                       | `core-math` (for utils)                                                             |
+| Component                   | Location (`src/`)              | Description                                                                                                                                                       | Key Inputs                              | Key Outputs                   | Dependencies                                                                           |
+| :-------------------------- | :----------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------- | :---------------------------- | :------------------------------------------------------------------------------------- |
+| **System Generator**        | `generator.ts`                 | Orchestrates the entire system generation process (`generateSystem` function). Determines star count, then sets up an RxJS pipeline to generate all other bodies. | Seed string                             | `{ systemName, objects$ }`    | `seeded-random`, `generators/*`, `core-physics`, `rxjs`                                |
+| **Seeded PRNG**             | `seeded-random.ts`             | Provides a deterministic pseudo-random number generator (PRNG) based on a hashed seed string, using the Web Crypto API.                                           | Seed string                             | `() => number` (PRNG func)    | -                                                                                      |
+| **Star Generator**          | `generators/stars/star.ts`     | Generates properties for a single star (type, class, mass, radius, etc.).                                                                                         | Seeded PRNG                             | `CelestialObject` (Star)      | `utils`, `constants`, `data-types`                                                     |
+| **Planet Generator**        | `generators/planets/planet.ts` | An orchestrator that returns an `Observable`. It combines helpers for type, properties, orbit, and rings to generate a complete planet and its ring system.       | Seeded PRNG, Parent Star Data, Distance | `Observable<CelestialObject>` | `generators/planets/*`, `core-physics`, `utils`, `constants`, `data-types`, `rxjs`     |
+| **Moon Generator**          | `generators/moons/moons.ts`    | Returns an `Observable` that generates 0-4 moons for a parent planet, each with its own orbit and properties.                                                     | Seeded PRNG, Parent Planet Data         | `Observable<CelestialObject>` | `generators/moons/moon.ts`, `core-physics`, `utils`, `constants`, `data-types`, `rxjs` |
+| **Asteroid Belt Generator** | `generators/belts/*.ts`        | Generates data for an asteroid belt at a specific orbital distance.                                                                                               | Seeded PRNG, Parent Star Data, Distance | `CelestialObject` (Belt)      | `utils`, `constants`, `data-types`, `core-physics`                                     |
+| **Planet Sub-Generators**   | `generators/planets/*.ts`      | Helper modules for specific planet aspects (orbit, properties, rings, type). These are composed by `generators/planets/planet.ts`.                                | Seeded PRNG, Planet Data (partial)      | Specific planet properties    | `utils`, `constants`, `data-types`                                                     |
+| **Utilities & Constants**   | `utils.ts`, `constants.ts`     | Helper functions (e.g., orbit calculations, color mixing, procedural surface data) and constant values (AU, Solar Radius, etc.) used across generators.           | Various                                 | Various                       | `core-math`, `data-types`                                                              |
 
 ## 4. Data Flow (`generateSystem` function)
 
+The data flow is based on RxJS operators, creating a processing pipeline.
+
 ```mermaid
-graph LR
+graph TD
     A[Input: Seed String] --> B(Create Seeded PRNG);
-    B --> C{Determine Star Count};
-    C -- Loop --> D[Generate Star(s)];
-    D -- Uses --> SG(generators/star.ts);
-    D -- Handles Binary? --> E{Calculate Barycentric Orbits};
-    E -- Uses --> CP(core-physics);
-    subgraph Star Generation
-        D; SG; E; CP;
+    B --> C{Determine & Generate Stars};
+    C -- Internally handles --> CB(Barycentric Orbits);
+    C -- Uses --> SG(generators/stars/star.ts);
+
+    subgraph "Star Generation (Sync)"
+        C; CB; SG;
     end
 
-    F[Initialize Object List with Stars] --> G{Loop for Potential Orbits};
-    G -- Uses --> B;
-    G --> H{Determine Distance & Parent Star};
-    H --> I{Roll: Planet or Belt?};
+    D(Create Base Body Generation Observable);
+    D -- For each potential orbit --> E{Determine Distance & Parent};
+    E --> F{Roll: Planet or Belt?};
 
-    subgraph Body Placement Loop
-        G; H; I;
+    subgraph "Body Placement Stream (RxJS)"
+        style D fill:#cde4ff
+        D; E; F;
     end
 
-    I -- Belt --> J[Generate Asteroid Belt];
-    J -- Uses --> ABG(generators/asteroidBelt.ts);
-    J --> K(Add Belt to List);
+    F -- Belt --> G[Generate Asteroid Belt];
+    G -- Uses --> ABG(generators/belts/asteroidBelt.ts);
 
+    F -- Planet --> H(Call Planet Generator);
+    H -- Returns Observable --> I{flatMap};
+    I -- Planet Emitted --> J[Planet Object];
+    I -- Rings Emitted --> K[Rings Object];
+    H -- Internally calls --> PG(generators/planets/planet.ts);
 
-    I -- Planet --> L[Generate Planet];
-    L -- Uses --> PG(generators/planet.ts);
-    L -- Has Planet? --> M{Generate Moons};
-    M -- Uses --> MG(generators/moon.ts);
-    M -- Loop --> N(Add Moon to List);
-    L --> O(Add Planet/Rings to List);
-
-
-    subgraph Generators
-        PG -- Calls --> PSG(generators/planet-*.ts);
-        SG; ABG; PG; PSG; MG;
+    subgraph "Planet Generation (Sub-stream)"
+        style H fill:#d2ffd2
+        H; I; J; K; PG;
     end
 
-    K --> P{Next Orbit};
-    N --> P;
-    O --> P;
-    G -- More Orbits? --> H;
-    G -- No More Orbits --> Q[Output: CelestialObject[]];
+    J -- Has Moons? --> L(Call Moon Generator)
+    L -- Returns Observable --> M{flatMap};
+    M -- Moon Emitted --> N[Moon Object]
+    L -- Internally calls --> MG(generators/moons/moons.ts)
+
+    subgraph "Moon Generation (Sub-stream)"
+        style L fill:#fff2cd
+        L;M;N;MG;
+    end
+
+    O(Combine All Streams: Stars, Belts, Planets, Rings, Moons);
+    O --> P[Output: Observable<CelestialObject>];
+
+
+    %% Connections
+    C --> D;
+    G --> O;
+    K --> O;
+    N --> O;
+    J --> O
+    J -- If no moons --> O
 
     %% Styling (Optional)
     classDef core fill:#f9f,stroke:#333,stroke-width:2px;
-    class CP,SG,ABG,PG,PSG,MG core;
+    class SG,ABG,PG,MG core;
 ```
 
-1.  **Initialization:** Takes a `seed` string.
-2.  **PRNG Setup:** Creates a deterministic pseudo-random number generator (`seeded-random.ts`).
-3.  **Star Generation:**
-    - Determines the number of stars (1-4).
-    - Calls `generators/star.ts` to generate properties for each star.
-    - If binary/multiple, calculates barycentric orbits and initial physics states using `core-physics`. Adds stars to the output list.
-4.  **Body Placement Loop:**
-    - Iterates a set number of times, calculating potential orbital distances using the PRNG and an exponential distribution favoring closer orbits.
-    - Determines the closest star to be the parent.
-    - Rolls to decide between generating a planet or an asteroid belt.
-5.  **Asteroid Belt Generation:** If rolled, calls `generators/asteroidBelt.ts` and adds the result to the list.
-6.  **Planet & Moon Generation:**
-    - If rolled, calls `generators/planet.ts` (which internally uses `planet-*.ts` helpers) to generate the planet and potentially rings.
-    - Adds the planet/rings to the list.
-    - If a planet was successfully generated, potentially generates 0-4 moons by calling `generators/moon.ts` in a loop, adding each to the list.
-7.  **Output:** Returns the complete list of generated `CelestialObject` data.
+1.  **Initialization:** The `generateSystem` function takes a `seed` string.
+2.  **PRNG Setup:** It creates a deterministic pseudo-random number generator (`seeded-random.ts`).
+3.  **Star Generation (Synchronous):**
+    - It first determines the number of stars (1-4) and generates them synchronously.
+    - If it's a multi-star system, it performs internal calculations to set up barycentric orbits and update their physics states.
+    - The generated stars are the first items emitted by the final `Observable`.
+4.  **Body Generation Pipeline (Asynchronous / Reactive):**
+    - An RxJS `Observable` is created to represent the potential orbital slots (5-14 of them).
+    - A `concatMap` operator is used to process each slot sequentially, ensuring deterministic placement.
+    - Inside the `concatMap`, the generator logic decides whether to create a planet or an asteroid belt.
+    - **If Belt:** `generateAsteroidBelt` is called, and the resulting object is emitted.
+    - **If Planet:** `generatePlanet` is called. This function itself returns an `Observable`. A `flatMap` is used to merge the emitted planet (and its potential rings) into the main stream.
+    - **Moons:** If a planet is generated, `generateMoonsObservable` is called, which returns another `Observable`. This is also merged via `flatMap` to emit all the moons for that planet.
+5.  **Output:** The final result is an `Observable<CelestialObject>` that emits all generated objects (stars, belts, planets, rings, moons) in a deterministic order. The consumer can then subscribe to this stream to process each object as it arrives.
 
 ## 5. Design Considerations
 
-- **Binary Star Handling:** Includes logic to calculate mutual orbits around a barycenter for binary systems.
-- **Orbital Placement:** Uses an exponential distribution for placing planets/belts, leading to denser configurations closer to stars. Placement is relative to the _closest_ star in multi-star systems.
-- **Physics State:** Calculates and stores initial `physicsStateReal` (position, velocity) for objects, crucial for the simulation engine.
-- **Dependencies:** Relies heavily on `core-physics` for orbital calculations and `data-types` for object structures.
+- **Binary Star Handling:** The main `generator.ts` contains all logic to calculate mutual orbits around a barycenter for multi-star systems. This is handled synchronously before the main reactive pipeline begins.
+- **Orbital Placement:** Uses an exponential distribution for placing planets/belts, leading to denser configurations closer to stars.
+- **Procedural Surfaces:** The `utils.ts` file contains `createProceduralSurfaceProperties`, a large function that defines the "look" of each rocky planet type by outputting a data structure for use in shaders. This is a key part of the visual generation.
+- **Dependencies:** Relies heavily on `@teskooano/core-physics`, `@teskooano/data-types`, and `rxjs`.
 
 ## 6. Future Extensions
 

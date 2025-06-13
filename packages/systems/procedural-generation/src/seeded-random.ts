@@ -1,10 +1,14 @@
 /**
  * Creates a seeded pseudo-random number generator (PRNG) using the Web Crypto API.
- * Takes a string seed, hashes it using SHA-256, and uses the hash to initialize
- * a simple linear congruential generator (LCG) state.
+ *
+ * This function takes a string seed, hashes it using SHA-256, and then uses the
+ * resulting hash to initialize the state of a simple linear congruential
+ * generator (LCG). This ensures that for the same seed, the sequence of
+ * generated numbers will always be identical.
  *
  * @param seed The input string seed.
- * @returns A function that returns a pseudo-random number between 0 (inclusive) and 1 (exclusive) when called.
+ * @returns A Promise that resolves to a function. When called, this function
+ *   returns a pseudo-random number between 0 (inclusive) and 1 (exclusive).
  */
 export async function createSeededRandom(seed: string): Promise<() => number> {
   const encoder = new TextEncoder();
