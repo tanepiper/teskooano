@@ -19,17 +19,11 @@ This pattern enforces a strict one-way data flow: `Physics Engine (OSVector3) ->
 
 ## `TrailManager.ts`
 
-**Purpose**: Renders an object's recent historical path, with options for high-quality visual smoothing.
+**Purpose**: Renders an object's recent historical path.
 
 ### Core Design & Performance Considerations
 
 1.  **Data Source**: The manager receives `RenderableCelestialObject` data on each frame, which already contains the object's position as a `THREE.Vector3`.
-2.  **Internal Data Type**: The `positionHistory` is stored as a `Map<string, THREE.Vector3[]>`.
+2.  **Internal Data Type**: The `positionHistory` is stored as a `Map<string, CircularBuffer<THREE.Vector3>>`. This uses a circular buffer for efficient, non-blocking additions and to prevent garbage collection hits from array shifting.
 3.  **Architectural Exception**: Unlike `PredictionManager`, `TrailManager` works **natively with `THREE.Vector3`** for its internal state.
-4.  **Rationale**: This is a deliberate performance optimization.
-    - The primary feature of `TrailManager` is its ability to apply high-quality smoothing algorithms, specifically `THREE.CatmullRomCurve3`.
-    - `CatmullRomCurve3` is a `three.js`-native utility that requires `THREE.Vector3[]` as input.
-    - If the `positionHistory` were stored as `OSVector3[]`, every single frame would require converting the entire history to `THREE.Vector3[]` just to pass it to the curve algorithm. This would generate significant garbage and hurt performance, negating the benefits of the reusable array optimizations.
-    - Since the manager's input is already a `THREE.Vector3` and its output target is a `three.js` line object, it is far more efficient to keep the entire internal pipeline in the `three.js` format.
-
-In summary, while the project standard is to keep physics and rendering separate, the `TrailManager` is a case where the tight coupling with a renderer-specific utility (`CatmullRomCurve3`) makes it more practical and performant to handle `three.js` types directly.
+4.  **Rationale**: This is a deliberate performance optimization. The manager's input is already a `THREE.Vector3` and its output target is a `three.js` line object, so it is far more efficient to keep the entire internal pipeline in the `three.js` format, avoiding costly per-frame conversions.
