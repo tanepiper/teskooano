@@ -4,7 +4,6 @@ import { physicsSystemAdapter } from "./PhysicsSystemAdapter";
 import { celestialActions } from "./celestialActions";
 import { celestialFactory } from "./factory";
 import { renderableStore } from "./renderableStore";
-import { panelService } from "./PanelService";
 import { ClearStateOptions } from "./types";
 
 export {
@@ -12,7 +11,6 @@ export {
   simulationStateService,
   renderableStore,
   physicsSystemAdapter,
-  panelService,
 };
 
 export const currentSeed$ = gameStateService.currentSeed$;
@@ -57,18 +55,6 @@ export const setSimulationState = simulationStateService.setState.bind(
   simulationStateService,
 );
 
-export const activePanelApi$ = panelService.activePanelApi$;
-export const setActivePanelApi =
-  panelService.setActivePanelApi.bind(panelService);
-export const getActivePanelApi =
-  panelService.getActivePanelApi.bind(panelService);
-export const registerPanelInstance =
-  panelService.registerPanelInstance.bind(panelService);
-export const unregisterPanelInstance =
-  panelService.unregisterPanelInstance.bind(panelService);
-export const getPanelInstance =
-  panelService.getPanelInstance.bind(panelService);
-
 export const actions = {
   setTimeScale: simulationStateService.setTimeScale.bind(
     simulationStateService,
@@ -111,7 +97,6 @@ export const actions = {
   updateAccelerationVectors:
     gameStateService.updateAccelerationVectors.bind(gameStateService),
   updateSeed: gameStateService.updateSeed.bind(gameStateService),
-  setActivePanelApi: panelService.setActivePanelApi.bind(panelService),
 };
 
 export type { ClearStateOptions };

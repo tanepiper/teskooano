@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { OSVector3 } from "@teskooano/core-math";
-import { PhysicsStateReal } from "@teskooano/data-types";
+import { PhysicsStateReal } from "../types";
 import { Octree } from "./octree";
 
 const createRealState = (
-  id: string | number,
+  id: string,
   pos: { x: number; y: number; z: number },
   mass: number,
 ): PhysicsStateReal => ({
@@ -28,7 +28,7 @@ describe("Octree", () => {
 
   it("should insert a single body correctly", () => {
     const octree = new Octree(100);
-    const body = createRealState(1, { x: 10, y: 10, z: 10 }, 10);
+    const body = createRealState("1", { x: 10, y: 10, z: 10 }, 10);
     octree.insert(body);
     const root = (octree as any).root;
     expect(root.bodies).toContain(body);
@@ -40,8 +40,8 @@ describe("Octree", () => {
 
   it("should subdivide when inserting multiple bodies", () => {
     const octree = new Octree(100);
-    const body1 = createRealState(1, { x: 10, y: 10, z: 10 }, 10);
-    const body2 = createRealState(2, { x: -10, y: -10, z: -10 }, 20);
+    const body1 = createRealState("1", { x: 10, y: 10, z: 10 }, 10);
+    const body2 = createRealState("2", { x: -10, y: -10, z: -10 }, 20);
     octree.insert(body1);
     octree.insert(body2);
     const root = (octree as any).root;
@@ -57,9 +57,9 @@ describe("Octree", () => {
 
     let body1Found = false;
     let body2Found = false;
-    root.children?.forEach((child) => {
-      if (child.bodies.some((b) => b.id === 1)) body1Found = true;
-      if (child.bodies.some((b) => b.id === 2)) body2Found = true;
+    root.children?.forEach((child: any) => {
+      if (child.bodies.some((b: any) => b.id === "1")) body1Found = true;
+      if (child.bodies.some((b: any) => b.id === "2")) body2Found = true;
     });
     expect(body1Found).toBe(true);
     expect(body2Found).toBe(true);
@@ -67,9 +67,9 @@ describe("Octree", () => {
 
   it("should find bodies within a given range", () => {
     const octree = new Octree(100);
-    const body1 = createRealState(1, { x: 10, y: 0, z: 0 }, 1);
-    const body2 = createRealState(2, { x: 50, y: 0, z: 0 }, 1);
-    const body3 = createRealState(3, { x: 90, y: 0, z: 0 }, 1);
+    const body1 = createRealState("1", { x: 10, y: 0, z: 0 }, 1);
+    const body2 = createRealState("2", { x: 50, y: 0, z: 0 }, 1);
+    const body3 = createRealState("3", { x: 90, y: 0, z: 0 }, 1);
     octree.insert(body1);
     octree.insert(body2);
     octree.insert(body3);
@@ -79,14 +79,14 @@ describe("Octree", () => {
     const foundBodies = octree.findBodiesInRange(centerPoint, range);
 
     expect(foundBodies.length).toBe(2);
-    expect(foundBodies.some((b) => b.id === 1)).toBe(true);
-    expect(foundBodies.some((b) => b.id === 2)).toBe(true);
-    expect(foundBodies.some((b) => b.id === 3)).toBe(false);
+    expect(foundBodies.some((b) => b.id === "1")).toBe(true);
+    expect(foundBodies.some((b) => b.id === "2")).toBe(true);
+    expect(foundBodies.some((b) => b.id === "3")).toBe(false);
   });
 
   it("findBodiesInRange should return empty array if no bodies in range", () => {
     const octree = new Octree(100);
-    const body1 = createRealState(1, { x: 1000, y: 0, z: 0 }, 1);
+    const body1 = createRealState("1", { x: 1000, y: 0, z: 0 }, 1);
     octree.insert(body1);
 
     const centerPoint = new OSVector3(0, 0, 0);
@@ -142,7 +142,7 @@ describe("Octree", () => {
 
   it("should clear the octree correctly", () => {
     const octree = new Octree(100);
-    const body1 = createRealState(1, { x: 10, y: 10, z: 10 }, 10);
+    const body1 = createRealState("1", { x: 10, y: 10, z: 10 }, 10);
     octree.insert(body1);
     octree.clear();
     const root = (octree as any).root;

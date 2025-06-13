@@ -1,5 +1,3 @@
-import { Observable, combineLatest } from "rxjs";
-import { scan, startWith, map } from "rxjs/operators";
 import { PhysicsStateReal } from "../types";
 import { OSVector3 } from "@teskooano/core-math";
 import { CelestialType } from "@teskooano/data-types";
@@ -265,40 +263,4 @@ export const updateSimulation = (
     destroyedIds,
     destructionEvents,
   };
-};
-
-/**
- * Creates an Observable stream representing the physics simulation.
- *
- * @param initialState - The initial state of all bodies.
- * @param parameters$ - An Observable emitting the simulation parameters (radii, types, octree settings).
- *                      These parameters can change over time.
- * @param tick$ - An Observable emitting the delta time (dt) for each simulation step.
- * @returns An Observable emitting the SimulationStepResult after each step.
- */
-export const createSimulationStream = (
-  initialState: PhysicsStateReal[],
-  parameters$: Observable<SimulationParameters>,
-  tick$: Observable<number>,
-): Observable<SimulationStepResult> => {
-  const initialResult: SimulationStepResult = {
-    states: initialState,
-    accelerations: new Map<string, OSVector3>(),
-    destroyedIds: new Set<string | number>(),
-    destructionEvents: [],
-  };
-
-  return combineLatest([tick$, parameters$]).pipe(
-    scan(
-      (
-        previousResult: SimulationStepResult,
-        [dt, params]: [number, SimulationParameters],
-      ) => {
-        return updateSimulation(previousResult.states, dt, params);
-      },
-      initialResult,
-    ),
-
-    startWith(initialResult),
-  );
 };

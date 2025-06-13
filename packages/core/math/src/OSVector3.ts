@@ -1,5 +1,6 @@
 import { EPSILON } from "./constants";
 import * as THREE from "three";
+import { OSQuaternion } from "./OSQuaternion";
 
 /**
  * Represents a 3-dimensional vector using the Open Space engine's
@@ -189,11 +190,20 @@ export class OSVector3 {
   }
 
   /**
-   * Applies a THREE.Quaternion rotation to this vector.
-   * @param q - The THREE.Quaternion to apply.
+   * Creates an OSVector3 from a THREE.Vector3.
+   * @param v - The THREE.Vector3 to convert from.
+   * @returns A new OSVector3 instance.
+   */
+  static fromThreeJS(v: THREE.Vector3): OSVector3 {
+    return new OSVector3(v.x, v.y, v.z);
+  }
+
+  /**
+   * Applies an OSQuaternion rotation to this vector.
+   * @param q - The OSQuaternion to apply.
    * @returns This vector for chaining.
    */
-  applyQuaternion(q: THREE.Quaternion): this {
+  applyQuaternion(q: OSQuaternion): this {
     const x = this.x,
       y = this.y,
       z = this.z;
@@ -202,11 +212,13 @@ export class OSVector3 {
       qz = q.z,
       qw = q.w;
 
+    // calculate quat * vector
     const ix = qw * x + qy * z - qz * y;
     const iy = qw * y + qz * x - qx * z;
     const iz = qw * z + qx * y - qy * x;
     const iw = -qx * x - qy * y - qz * z;
 
+    // calculate result * inverse quat
     this.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
     this.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
     this.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;

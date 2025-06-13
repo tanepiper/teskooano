@@ -1,15 +1,15 @@
 # TODO - @teskooano/core-state
 
-- [ ] **Renderer-Agnostic State**: Refactor `game/physics.ts` and `game/factory.ts` to remove direct dependencies on `THREE.Vector3` and `THREE.Quaternion` for scaled positions and rotations. These should ideally be calculated and handled by the rendering layer or via conversion utilities, keeping the core state purely physics-based (SI units) or using engine-agnostic types.
-- [ ] **UI State Management**: Expand state management to properly handle the upcoming dockable UI system (window positions, visibility, focused elements, panel-specific configurations).
-- [ ] **Persistence**: Implement loading/saving mechanisms for simulation state (celestial objects, simulation settings) potentially using JSON or another format.
-- [ ] **Player State**: Add dedicated stores and actions for managing player-specific state (ship position, velocity, orientation, inventory, status).
-- [ ] **Time Synchronization**: Improve handling of time across different parts of the system (game time, physics time step, render time) to ensure consistency, especially when paused or changing time scale.
-- [ ] **Error Handling**: Add more robust error handling and validation, particularly in the factory and action functions.
-- [ ] **Event System**: Review the use of DOM events (`dispatchEvent`) in `celestialActions` and consider using RxJS Subjects or a dedicated event bus for better decoupling.
-- [ ] **Optimization**: Profile store updates and reads, especially `celestialObjectsStore` with a large number of objects, and optimize if necessary (e.g., selective updates, derived stores).
-- [ ] **Refactor `RenderableObject`**: Consider splitting `RenderableObject` into a smaller, core data structure and a separate, richer display/interaction-focused object to improve clarity and reduce coupling between physics/game state and rendering concerns.
-- [ ] **Physics Engine Integration**: Abstract the physics engine interactions further to allow for easier swapping or testing.
-- [ ] **Performance**: Identify and optimize any performance bottlenecks in state updates or calculations, especially for large numbers of celestial objects.
-- [ ] **Testing**: Increase test coverage, particularly for complex interactions and edge cases.
-- [ ] **Documentation**: Add more detailed JSDoc comments for all public APIs and complex internal logic.
+- [ ] **Decouple UI Logic from Core State**:
+
+  - The `PanelService` and `PanelViewState` type are UI-specific constructs related to Dockview and should not reside in a core state package.
+  - Move these components to `apps/teskooano/src/core/controllers/dockview/` to create a clean separation between core application state and UI presentation logic.
+
+- [ ] **Refine Celestial Object Creation**: Improve the `createCelestialObject` method to be more flexible, possibly allowing partial property overrides or using a builder pattern for complex objects.
+- [ ] **State Snapshots and History**: Implement a mechanism to take snapshots of the entire game state and revert to them, enabling save/load functionality and a more robust undo/redo system.
+- [ ] **Optimize State Subscriptions**: Audit subscriptions across the application to ensure there are no memory leaks. Consider using `takeUntil` patterns more broadly for component-level subscriptions.
+- [ ] **Selector Granularity**: Develop more granular selectors for derived state to avoid unnecessary re-renders in components that only depend on a small slice of a larger state object.
+- [ ] **Immutable State Operations**: Enforce immutability more strictly on state updates. While `BehaviorSubject` requires emitting new objects, ensure nested objects are also treated as immutable to prevent side effects.
+- [ ] **Tests for Actions and Reducers**: Add comprehensive unit tests for all actions and reducer-like logic to ensure state transitions are predictable and correct.
+
+- [ ] **Renderer-Agnostic State**: Refactor `game/physics.ts` and `game/factory.ts`

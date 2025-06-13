@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Removed
+
+- Removed the unused, RxJS-based `createSimulationStream` function from `simulation/simulation.ts`. This was done to resolve a conflicting architectural pattern, as the engine's simulation loop is driven imperatively by `SimulationManager`.
+
+### Fixed
+
+- Resolved circular dependency issues by ensuring all internal files, especially tests, import `PhysicsStateReal` from the local `src/types.ts` instead of from `@teskooano/data-types`.
+
 ### Added
 
 - Introduced `createSimulationStream` in `simulation/simulation.ts`, an RxJS-based function to create an Observable stream of simulation step results. This replaces the previous imperative `runSimulation` function.

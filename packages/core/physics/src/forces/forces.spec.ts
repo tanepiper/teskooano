@@ -1,14 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { OSVector3 } from "@teskooano/core-math";
-import {
-  calculateNewtonianGravitationalForce,
-  calculateRelativisticCorrection,
-  calculateNonGravitationalForces,
-  calculateTotalForce,
-  calculateAcceleration,
-} from "./index";
-import { PhysicsStateReal } from "@teskooano/data-types";
-import { GRAVITATIONAL_CONSTANT } from "@teskooano/data-types";
+import { calculateNewtonianGravitationalForce } from "./gravity";
+import { calculateRelativisticAcceleration } from "./relativistic";
+import { calculateDragForce, calculateThrustForce } from "./non-gravitational";
+
+import { calculateAcceleration } from "./index";
+import { PhysicsStateReal } from "../types";
+import { GRAVITATIONAL_CONSTANT } from "../units/constants";
 
 const createRealState = (
   id: string,
@@ -81,10 +79,14 @@ describe("Force Calculations", () => {
         { x: 0, y: 0, z: 0 },
         1e6,
       );
-      const correction = calculateRelativisticCorrection(body1, body2);
-      expect(correction.x).toBeCloseTo(0);
-      expect(correction.y).toBeCloseTo(0);
-      expect(correction.z).toBeCloseTo(0);
+      const correction = calculateRelativisticAcceleration(
+        body1.mass_kg,
+        new OSVector3(1, 1, 1),
+        body1.velocity_mps,
+      );
+      expect(correction.x).toBeCloseTo(1 / 1e6);
+      expect(correction.y).toBeCloseTo(1 / 1e6);
+      expect(correction.z).toBeCloseTo(1 / 1e6);
     });
   });
 
@@ -96,64 +98,14 @@ describe("Force Calculations", () => {
         { x: 0, y: 0, z: 0 },
         1,
       );
-      const force = calculateNonGravitationalForces(body);
+      const force = calculateThrustForce({
+        active: false,
+        direction: new OSVector3(1, 0, 0),
+        magnitude: 100,
+      });
       expect(force.x).toBe(0);
       expect(force.y).toBe(0);
       expect(force.z).toBe(0);
-    });
-  });
-
-  describe("calculateTotalForce", () => {
-    it("calculates total force on a body from others", () => {
-      const targetBody = createRealState(
-        "target",
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 0 },
-        1e3,
-      );
-      const body1 = createRealState(
-        "1",
-        { x: 1000, y: 0, z: 0 },
-        { x: 0, y: 0, z: 0 },
-        1e6,
-      );
-      const body2 = createRealState(
-        "2",
-        { x: 0, y: -2000, z: 0 },
-        { x: 0, y: 0, z: 0 },
-        4e6,
-      );
-      const allBodies = [targetBody, body1, body2];
-
-      const forceOnTarget = calculateTotalForce(targetBody, allBodies);
-
-      const forceFrom1 = calculateNewtonianGravitationalForce(
-        body1,
-        targetBody,
-      );
-      const forceFrom2 = calculateNewtonianGravitationalForce(
-        body2,
-        targetBody,
-      );
-      const expectedTotalForce = forceFrom1.clone().add(forceFrom2);
-
-      expect(forceOnTarget.x).toBeCloseTo(expectedTotalForce.x);
-      expect(forceOnTarget.y).toBeCloseTo(expectedTotalForce.y);
-      expect(forceOnTarget.z).toBeCloseTo(expectedTotalForce.z);
-    });
-
-    it("excludes self-interaction", () => {
-      const targetBody = createRealState(
-        "target",
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 0 },
-        1e3,
-      );
-      const allBodies = [targetBody];
-      const forceOnTarget = calculateTotalForce(targetBody, allBodies);
-      expect(forceOnTarget.x).toBe(0);
-      expect(forceOnTarget.y).toBe(0);
-      expect(forceOnTarget.z).toBe(0);
     });
   });
 

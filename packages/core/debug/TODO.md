@@ -1,5 +1,14 @@
 # TODO - @teskooano/core-debug
 
+- [ ] **Standardize `three` Dependency Handling**:
+
+  - This package correctly uses a local `ThreeVector3` interface to avoid a hard dependency on `three`, while `@teskooano/core-math` imports `three` directly.
+  - The pattern used here should be the standard. `@teskooano/core-math` should be refactored to align with this approach for better decoupling.
+
+- [ ] **Move Beyond `localStorage` for Debug State**:
+  - `celestial-debug.ts` uses `localStorage`, which can be slow and is not ideal for complex state.
+  - The long-term goal should be to create a dedicated in-memory Debug UI Panel that can read from the debug services, making `localStorage` unnecessary.
+
 Items to address for future development:
 
 - **Implement Celestial Debug**: Flesh out `celestial-debug.ts` with useful functions (e.g., `logCelestialState`, `visualizeOrbit`, `comparePhysicsStates`).

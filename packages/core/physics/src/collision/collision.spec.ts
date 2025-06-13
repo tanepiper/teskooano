@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { PhysicsStateReal } from "@teskooano/data-types";
-import { OSVector3 } from "../math/OSVector3";
+import { PhysicsStateReal } from "../types";
+import { OSVector3 } from "@teskooano/core-math";
 import {
   detectSphereCollision,
   resolveCollision,
   handleCollisions,
 } from "./collision";
 import { Collision } from "./collision";
+import { CelestialType } from "@teskooano/data-types";
 
 const createRealState = (
   id: string,
@@ -214,8 +215,18 @@ describe("Collision Handling (handleCollisions)", () => {
       ["3", radius],
     ]);
     const bodies = [body1, body2, body3];
+    const isStar = new Map<string | number, boolean>([
+      ["1", false],
+      ["2", false],
+      ["3", false],
+    ]);
+    const bodyTypes = new Map<string | number, CelestialType>([
+      ["1", CelestialType.SPACE_ROCK],
+      ["2", CelestialType.SPACE_ROCK],
+      ["3", CelestialType.SPACE_ROCK],
+    ]);
 
-    const updatedBodies = handleCollisions(bodies, radii);
+    const [updatedBodies] = handleCollisions(bodies, radii, isStar, bodyTypes);
 
     const finalV1 = updatedBodies.find((b) => b.id === "1")?.velocity_mps;
     const finalV2 = updatedBodies.find((b) => b.id === "2")?.velocity_mps;

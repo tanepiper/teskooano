@@ -1,10 +1,10 @@
 import {
   celestialObjects$,
   getCelestialObjects,
-  panelService,
   simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
+import { panelService } from "../../../../core/controllers/dockview/panel.service";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
   DockviewPanelApi,

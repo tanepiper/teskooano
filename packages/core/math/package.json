@@ -18,6 +18,9 @@
     "build": "tsc --build",
     "dev": "tsc --watch"
   },
+  "dependencies": {
+    "three": "0.176.0"
+  },
   "devDependencies": {
     "typescript": "5.8.3",
     "@types/node": "22.15.3"
