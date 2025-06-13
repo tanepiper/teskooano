@@ -34,7 +34,8 @@ export class BackgroundManager {
     this.group.add(this.debugGroup);
     scene.add(this.group);
 
-    this.createDefaultNebula();
+    // Currently disabled because it's too slow to bake.
+    // this.createDefaultNebula();
     this.createDefaultStarField();
   }
 
