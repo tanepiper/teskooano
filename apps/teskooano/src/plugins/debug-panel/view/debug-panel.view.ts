@@ -10,23 +10,30 @@ const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
       height: 100%;
       width: 100%;
       overflow: auto;
       padding: 1rem;
       box-sizing: border-box;
+      font-family: var(--font-family-monospace);
+      font-size: var(--font-size-sm);
     }
   </style>
-  <div class="container">
-    <h2>System Hierarchy</h2>
-    <div id="hierarchy-container"></div>
-  </div>
+  <teskooano-renderer-stats></teskooano-renderer-stats>
+  <teskooano-system-hierarchy></teskooano-system-hierarchy>
 `;
 
 export class DebugPanel extends HTMLElement implements IContentRenderer {
   private controller!: DebugPanelController;
+  private updateInterval: number | null = null;
   readonly element = this;
+
+  // Component refs
+  private statsComponent!: HTMLElement;
+  private hierarchyComponent!: HTMLElement;
 
   constructor() {
     super();
@@ -43,7 +50,47 @@ export class DebugPanel extends HTMLElement implements IContentRenderer {
 
   // Standard web component lifecycle
   connectedCallback(): void {
-    // Controller is initialized in init() by Dockview
+    this.statsComponent = this.shadowRoot!.querySelector(
+      "teskooano-renderer-stats",
+    ) as HTMLElement;
+    this.hierarchyComponent = this.shadowRoot!.querySelector(
+      "teskooano-system-hierarchy",
+    ) as HTMLElement;
+    this.startUpdates();
+  }
+
+  disconnectedCallback(): void {
+    this.stopUpdates();
+    this.controller?.dispose();
+  }
+
+  private startUpdates(): void {
+    if (this.updateInterval) return; // Already running
+    this.updateInterval = window.setInterval(() => {
+      this.controller?.updateData();
+    }, 2000);
+  }
+
+  private stopUpdates(): void {
+    if (this.updateInterval) {
+      window.clearInterval(this.updateInterval);
+      this.updateInterval = null;
+    }
+  }
+
+  /**
+   * Updates the renderer statistics display.
+   * @param stats - The statistics to render.
+   */
+  public renderStats(stats: {
+    predictionLines: number;
+    predictionSegments: number;
+    trailLines: number;
+    trailSegments: number;
+    drawCalls: number;
+    triangles: number;
+  }): void {
+    (this.statsComponent as any)?.renderStats(stats);
   }
 
   /**
@@ -51,30 +98,6 @@ export class DebugPanel extends HTMLElement implements IContentRenderer {
    * @param nodes - The root nodes of the system hierarchy.
    */
   public renderHierarchy(nodes: SystemHierarchyNode[]): void {
-    const container = this.shadowRoot!.getElementById("hierarchy-container");
-    if (!container) return;
-
-    if (nodes.length === 0) {
-      container.innerHTML = "<p>No celestial objects loaded.</p>";
-      return;
-    }
-
-    const buildList = (nodes: SystemHierarchyNode[]): HTMLUListElement => {
-      const ul = document.createElement("ul");
-      ul.style.paddingLeft = "20px";
-      nodes.forEach((node) => {
-        const li = document.createElement("li");
-        li.textContent = `${node.name} (${node.type})`;
-        li.dataset.id = node.id;
-        if (node.children && node.children.length > 0) {
-          li.appendChild(buildList(node.children));
-        }
-        ul.appendChild(li);
-      });
-      return ul;
-    };
-
-    container.innerHTML = ""; // Clear previous content
-    container.appendChild(buildList(nodes));
+    (this.hierarchyComponent as any)?.renderHierarchy(nodes);
   }
 }

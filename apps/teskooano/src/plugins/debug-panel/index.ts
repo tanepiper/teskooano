@@ -1,6 +1,8 @@
 import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
 import { DebugPanel } from "./view/debug-panel.view";
 import bugIcon from "./assets/bug_icon.svg?raw";
+import { RendererStatsComponent } from "./components/renderer-stats/renderer-stats.component";
+import { SystemHierarchyComponent } from "./components/system-hierarchy/system-hierarchy.component";
 
 const COMPONENT_NAME = "teskooano-debug-panel";
 
@@ -15,6 +17,14 @@ export const plugin: TeskooanoPlugin = {
     {
       tagName: COMPONENT_NAME,
       componentClass: DebugPanel,
+    },
+    {
+      tagName: "teskooano-renderer-stats",
+      componentClass: RendererStatsComponent,
+    },
+    {
+      tagName: "teskooano-system-hierarchy",
+      componentClass: SystemHierarchyComponent,
     },
   ],
   panels: [

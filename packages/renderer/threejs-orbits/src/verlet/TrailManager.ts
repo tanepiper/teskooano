@@ -112,7 +112,7 @@ export class TrailManager {
   removeTrail(objectId: string): void {
     const line = this.trailLines.get(objectId);
     if (line) {
-      this.objectManager.removeObjectFromScene(line);
+      this.objectManager.removeRawObjectFromScene(line);
       this.lineBuilder.disposeLine(line);
       this.trailLines.delete(objectId);
     }

@@ -40,7 +40,53 @@ export class DebugPanelController {
       "DebugPanelController initialized for parent:",
       this.parentPanel?.id,
     );
+    this.updateData();
+  }
+
+  public dispose(): void {
+    // No-op, interval is now managed by the view
+  }
+
+  public updateData(): void {
+    console.log("[DebugPanel] Tick: Firing update...");
     this.renderSystemHierarchy();
+    this.renderRendererStats();
+  }
+
+  private renderRendererStats(): void {
+    const orbitsManager = this.parentPanel?.orbitManager;
+    const rendererStats = this.parentPanel?.getRendererStats();
+
+    if (!orbitsManager) {
+      return;
+    }
+
+    const predictionManager = orbitsManager.getPredictionManager();
+    const trailManager = orbitsManager.getTrailManager();
+
+    const predictionLineCount = predictionManager.predictionLines.size;
+    let predictionSegmentCount = 0;
+    for (const line of predictionManager.predictionLines.values()) {
+      predictionSegmentCount += line.geometry.drawRange.count;
+    }
+
+    const trailLineCount = trailManager.trailLines.size;
+    let trailSegmentCount = 0;
+    for (const line of trailManager.trailLines.values()) {
+      trailSegmentCount += line.geometry.drawRange.count;
+    }
+
+    this.view.renderStats({
+      predictionLines: predictionLineCount,
+      predictionSegments: predictionSegmentCount,
+      trailLines: trailLineCount,
+      trailSegments: trailSegmentCount,
+      drawCalls: rendererStats?.drawCalls ?? 0,
+      triangles: rendererStats?.triangles ?? 0,
+    });
+    console.log(
+      `[DebugPanel] Stats updated. Trail Segments: ${trailSegmentCount}`,
+    );
   }
 
   public renderSystemHierarchy(): void {
