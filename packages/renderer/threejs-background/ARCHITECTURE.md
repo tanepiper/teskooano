@@ -1,23 +1,29 @@
 # Architecture: `@teskooano/renderer-threejs-background`
 
-This document outlines the architecture of the `@teskooano/renderer-threejs-background` package, which is responsible for creating and managing the dynamic, multi-layered starfield background of the simulation.
+This document outlines the architecture of the `@teskooano/renderer-threejs-background` package, which is responsible for creating and managing the dynamic, multi-layered background of the simulation.
 
 ## Overview
 
-The package's primary goal is to produce a visually appealing and performant space background that enhances the sense of depth and scale through parallax and subtle animation. It is orchestrated by a single manager class, `BackgroundManager`, which composes functionality from several specialized modules.
+The package is designed around a flexible, layer-based system. The primary goal is to produce a visually appealing and performant space background by composing different types of environmental effects, called "Fields". The system is orchestrated by a single manager class, `BackgroundManager`, which handles the lifecycle of all registered fields.
+
+This architecture allows for easy extension. New background elements, like asteroid fields or different types of nebulae, can be created by simply implementing a new `Field` class.
 
 ```mermaid
 graph TD
-    subgraph "Integrator (@teskooano/renderer-threejs)"
+    subgraph "Integrator (e.g., @/renderer-threejs)"
         MSR["ModularSpaceRenderer"];
     end
 
-    subgraph "This Package (@teskooano/renderer-threejs-background)"
+    subgraph "This Package (@/renderer-threejs-background)"
         direction TB
         BM["BackgroundManager"];
-        SF["Star Field Module<br/>(star-field.ts)"];
-        PH["Parallax Handler Module<br/>(parallax-handler.ts)"];
-        DV["Debug Visualizer Module<br/>(debug-visualizer.ts)"];
+        AbstractField["«abstract»<br/>Field"];
+        StarField["StarField"];
+        NebulaField["NebulaField"];
+        SFG["Star Field<br/>Generator"];
+        NFS["Nebula Shaders<br/>(GLSL)"];
+        NFP["Nebula<br/>Palettes"];
+        DV["Debug<br/>Visualizer"];
     end
 
     subgraph "Three.js Scene"
@@ -26,34 +32,44 @@ graph TD
     end
 
     MSR -- "Instantiates & Updates" --> BM;
-    BM -- "Uses" --> SF;
-    BM -- "Uses" --> PH;
-    BM -- "Uses" --> DV;
-    BM -- "Adds/Removes content from" --> Scene;
+
+    BM -- "Creates & Manages" --> StarField;
+    BM -- "Creates & Manages" --> NebulaField;
+    BM -- "Uses for Debugging" --> DV;
     BM -- "Reads position from" --> Camera;
+    BM -- "Adds/Removes Fields" --> Scene;
 
-    SF -- "Creates star layers (THREE.Points)" --> BM;
-    PH -- "Provides parallax & animation logic" --> BM;
-    DV -- "Provides debug shapes & colors" --> BM;
 
+    StarField -- "Extends" --> AbstractField;
+    NebulaField -- "Extends" --> AbstractField;
+
+    StarField -- "Uses" --> SFG;
+    NebulaField -- "Uses" --> NFS;
+    BM -- "Selects from" --> NFP;
+    NebulaField -- "Receives Palette" --> BM;
 ```
 
 ## Core Components
 
 1.  **`BackgroundManager.ts`**: The central orchestrator class.
 
-    - **Responsibility**: Manages the entire lifecycle of the background elements. It instantiates the star layers, handles debug mode toggling, updates animations and parallax effects each frame, and cleans up all associated resources on disposal.
+    - **Responsibility**: Manages the entire lifecycle of the background. It instantiates and manages a collection of `Field` objects, handles debug mode toggling, updates all fields each frame, and cleans up resources on disposal. By default, it creates a `StarField` and a `NebulaField`.
     - **Instantiation**: It is instantiated by the main `ModularSpaceRenderer`, which also calls its `update()` method within the main render loop.
 
-2.  **`background-manager/star-field.ts`**: A module for generating the star layers.
+2.  **`fields/core/Field.ts`**: An abstract base class for all environmental effects.
 
-    - **Responsibility**: Contains the `createStarLayers` function, which is the factory for the starfield. It creates multiple `THREE.Points` objects, each representing a layer of stars with different densities, sizes, and colors to create an illusion of depth.
+    - **Responsibility**: Defines the common interface for all `Field` implementations, including `update()`, `dispose()`, and `toggleDebug()` methods. This ensures that the `BackgroundManager` can handle any type of field in a generic way.
 
-3.  **`background-manager/parallax-handler.ts`**: A module for handling all motion.
+3.  **`fields/star-field/`**: A `Field` implementation for creating multi-layered star fields.
 
-    - **Responsibility**: Provides pure functions to handle the background's movement.
-      - `updateParallax`: Moves the entire background group based on the camera's current position to create a parallax effect.
-      - `animateStarField`: Applies a subtle, continuous rotation to each star layer at different speeds to give the background a dynamic feel.
+    - **`StarField.ts`**: The main class that manages the star layers, handles their animation, and implements parallax effects.
+    - **`star-field.generator.ts`**: A utility function that procedurally generates the positions and colors for the stars in a single layer.
 
-4.  **`background-manager/debug-visualizer.ts`**: A module for providing debug visuals.
-    - **Responsibility**: Contains functions to aid in debugging the background layers. It can create wireframe spheres to show the boundaries of each layer and apply distinct colors (red, green, blue) to the stars of each layer, making them easy to distinguish. This functionality is controlled by the `toggleDebug()` method in `BackgroundManager`.
+4.  **`fields/nebula-field/`**: A `Field` implementation for creating a complex, procedural nebula.
+
+    - **`NebulaField.ts`**: The main class that creates the geometry and the custom shader material for the nebula.
+    - **`shaders/`**: Contains the GLSL vertex and fragment shaders responsible for rendering the nebula. The fragment shader uses multiple layers of domain-warped 3D Simplex noise to generate complex, swirling patterns and blend colors.
+    - **`palettes.ts`**: Provides a set of scientifically-inspired color palettes that the `BackgroundManager` can randomly select from to color the nebula.
+
+5.  **`background-manager/debug-visualizer.ts`**: A module for providing debug visuals.
+    - **Responsibility**: Contains functions to aid in debugging the background layers. It can create wireframe spheres to show the boundaries of each star field layer. This functionality is controlled by the `toggleDebug()` method in `BackgroundManager`.

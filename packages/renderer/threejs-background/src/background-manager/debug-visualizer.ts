@@ -1,11 +1,15 @@
 import * as THREE from "three";
-import { BASE_DISTANCE } from "./star-field";
 
 /**
  * Create debug visualization objects
  */
-export function createDebugVisuals(): THREE.Group {
+export function createDebugVisuals(
+  baseDistance: number,
+  layerMultipliers: number[],
+): THREE.Group {
   const debugGroup = new THREE.Group();
+
+  const colors = ["#FF0000", "#00FF00", "#0000FF"];
 
   const createLayerSphere = (radius: number, color: string) => {
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
@@ -19,11 +23,11 @@ export function createDebugVisuals(): THREE.Group {
     debugGroup.add(sphere);
   };
 
-  createLayerSphere(BASE_DISTANCE * 0.5, "#FF0000");
-  createLayerSphere(BASE_DISTANCE, "#00FF00");
-  createLayerSphere(BASE_DISTANCE * 1.1, "#0000FF");
+  layerMultipliers.forEach((multiplier, index) => {
+    createLayerSphere(baseDistance * multiplier, colors[index % colors.length]);
+  });
 
-  const axesHelper = new THREE.AxesHelper(BASE_DISTANCE * 0.1);
+  const axesHelper = new THREE.AxesHelper(baseDistance * 0.1);
   debugGroup.add(axesHelper);
 
   return debugGroup;

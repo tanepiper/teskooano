@@ -1,46 +1,126 @@
 import * as THREE from "three";
-import {
-  createStarLayers,
-  updateStarColors,
-  createDebugVisuals,
-  cleanupDebugVisuals,
-  updateParallax,
-  animateStarField,
-} from "./background-manager";
+import { createDebugVisuals, cleanupDebugVisuals } from "./background-manager";
+import { Field } from "./fields/core/Field";
+import { StarField } from "./fields/star-field/StarField";
+import { StarFieldOptions } from "./fields/star-field/types";
+import { NebulaField } from "./fields/nebula-field/NebulaField";
+import { NebulaFieldOptions } from "./fields/nebula-field/types";
+import { NEBULA_PALETTES } from "./fields/nebula-field/palettes";
 
 /**
- * Manages the space background with multiple star field layers
+ * Defines the base distance for star field layers, used as a reference
+ * for creating parallax and depth effects.
+ */
+const BASE_DISTANCE = 180000000;
+
+/**
+ * Manages the space background, which is composed of multiple `Field` layers.
  */
 export class BackgroundManager {
   private group: THREE.Group;
-  private starsGroup: THREE.Group;
   private debugGroup: THREE.Group;
   private camera: THREE.PerspectiveCamera | null = null;
   private scene: THREE.Scene;
-  private time: number = 0;
   private isDebugMode: boolean = false;
-  private starLayers: THREE.Points[] = [];
+  private fields: Field[] = [];
 
   /**
-   * Creates a new BackgroundManager
-   * @param scene The scene to add the background to
+   * Creates a new BackgroundManager.
    */
   constructor(scene: THREE.Scene) {
     this.scene = scene;
     this.group = new THREE.Group();
-    this.starsGroup = new THREE.Group();
     this.debugGroup = new THREE.Group();
-
-    this.createStars();
-
-    this.group.add(this.starsGroup);
     this.group.add(this.debugGroup);
-
     scene.add(this.group);
+
+    this.createDefaultNebula();
+    this.createDefaultStarField();
   }
 
   /**
-   * Toggle debug visualization mode
+   * Creates the default nebula field and adds it to the manager.
+   */
+  private createDefaultNebula(): void {
+    // Select a random palette
+    const selectedPalette =
+      NEBULA_PALETTES[Math.floor(Math.random() * NEBULA_PALETTES.length)];
+
+    const defaultOptions = {
+      alpha: 0.9,
+      noiseConfig: {
+        scale: 900000000,
+        octaves: 8,
+        persistence: 0.4,
+        lacunarity: 2.2,
+        seed: Math.random(),
+      },
+    };
+
+    const nebulaOptions: NebulaFieldOptions = {
+      name: "deep-space-nebula",
+      baseDistance: BASE_DISTANCE * 2,
+      size: BASE_DISTANCE * 4,
+      colors: selectedPalette.map((color) => new THREE.Color(color)),
+      ...defaultOptions,
+    };
+
+    const nebulaField = new NebulaField(nebulaOptions);
+    this.addField(nebulaField);
+  }
+
+  /**
+   * Creates the default star field and adds it to the manager.
+   */
+  private createDefaultStarField(): void {
+    const starFieldOptions: StarFieldOptions = {
+      name: "background-stars",
+      baseDistance: BASE_DISTANCE,
+      layers: [
+        {
+          count: 10000,
+          distanceMultiplier: 1,
+          distanceSpread: 400000,
+          minBrightness: 0.9,
+          maxBrightness: 1.0,
+          size: 5.0,
+          colorTint: new THREE.Color("#FFE4B5").multiplyScalar(0.3),
+        },
+        {
+          count: 20000,
+          distanceMultiplier: 1.1,
+          distanceSpread: 500000,
+          minBrightness: 0.7,
+          maxBrightness: 0.9,
+          size: 4.0,
+          colorTint: new THREE.Color("#B0C4DE").multiplyScalar(0.2),
+        },
+        {
+          count: 50000,
+          distanceMultiplier: 1.2,
+          distanceSpread: 600000,
+          minBrightness: 0.5,
+          maxBrightness: 0.7,
+          size: 3.0,
+          colorTint: new THREE.Color("#9370DB").multiplyScalar(0.2),
+        },
+      ],
+    };
+
+    const starField = new StarField(starFieldOptions);
+    this.addField(starField);
+  }
+
+  /**
+   * Adds a new field to the background.
+   */
+  public addField(field: Field): void {
+    this.fields.push(field);
+    this.group.add(field.object);
+  }
+
+  /**
+   * Toggles debug visualization mode.
    */
   public toggleDebug(): void {
     this.isDebugMode = !this.isDebugMode;
@@ -48,88 +128,50 @@ export class BackgroundManager {
     cleanupDebugVisuals(this.debugGroup);
 
     if (this.isDebugMode) {
-      const newDebugGroup = createDebugVisuals();
-
+      const newDebugGroup = createDebugVisuals(BASE_DISTANCE, [1, 0.5, 1.1]);
       while (newDebugGroup.children.length > 0) {
         this.debugGroup.add(newDebugGroup.children[0]);
       }
     }
 
-    updateStarColors(this.starLayers, this.isDebugMode);
-
-    if (!this.isDebugMode) {
-      this.createStars();
-    }
+    this.fields.forEach((field) => field.toggleDebug(this.isDebugMode));
   }
 
   /**
-   * Create the star field layers
+   * Sets the camera for parallax and positioning effects.
    */
-  private createStars(): void {
-    while (this.starsGroup.children.length > 0) {
-      const child = this.starsGroup.children[0];
-      if (child instanceof THREE.Points) {
-        child.geometry.dispose();
-        (child.material as THREE.Material).dispose();
-      }
-      this.starsGroup.remove(child);
-    }
-
-    this.starLayers = createStarLayers();
-
-    this.starLayers.forEach((layer) => this.starsGroup.add(layer));
-  }
-
-  /**
-   * Set the camera for parallax effects
-   */
-  setCamera(camera: THREE.PerspectiveCamera): void {
+  public setCamera(camera: THREE.PerspectiveCamera): void {
     this.camera = camera;
   }
 
   /**
-   * Get the background group
+   * Gets the main background group.
    */
-  getGroup(): THREE.Group {
+  public getGroup(): THREE.Group {
     return this.group;
   }
 
   /**
-   * Update the background with animation and parallax effects
+   * Updates all fields and handles camera-based positioning.
    */
-  update(deltaTime: number): void {
-    this.time += deltaTime;
-
+  public update(deltaTime: number): void {
     if (this.camera) {
       this.group.position.copy(this.camera.position);
     }
 
-    updateParallax(this.starsGroup, this.camera);
-
-    animateStarField(this.starsGroup, this.starLayers, deltaTime);
+    this.fields.forEach((field) => field.update(deltaTime, this.camera!));
   }
 
   /**
-   * Clean up resources
+   * Cleans up all resources used by the manager and its fields.
    */
-  dispose(): void {
+  public dispose(): void {
     this.scene.remove(this.group);
 
-    this.starLayers.forEach((stars) => {
-      stars.geometry.dispose();
-      (stars.material as THREE.Material).dispose();
-    });
-
-    this.starLayers = [];
+    this.fields.forEach((field) => field.dispose());
+    this.fields = [];
 
     cleanupDebugVisuals(this.debugGroup);
-
-    while (this.starsGroup.children.length > 0) {
-      this.starsGroup.remove(this.starsGroup.children[0]);
-    }
-
-    while (this.group.children.length > 0) {
-      this.group.remove(this.group.children[0]);
-    }
+    this.group.remove(this.debugGroup);
   }
 }
