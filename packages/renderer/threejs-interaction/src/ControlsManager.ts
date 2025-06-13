@@ -19,8 +19,10 @@ export class ControlsManager {
   public controls: OrbitControls;
   /** The camera being controlled. */
   private camera: THREE.PerspectiveCamera;
-  /** Flag indicating if the camera is currently undergoing a GSAP animation. */
+  /** Flag indicating if the camera is currently undergoing a user- or programmatically-driven transition. */
   private isTransitioning: boolean = false;
+  /** Flag indicating if the camera is currently undergoing a programmatic GSAP animation. */
+  private isAnimating: boolean = false;
   /** Factor controlling how much distance affects transition duration (logarithmic scaling). */
   private transitionDistanceFactor: number = 0.5;
   /** Minimum duration for camera transitions in seconds. */
@@ -29,8 +31,6 @@ export class ControlsManager {
   private maxTransitionDuration: number = 10.0;
   /** Stores the active GSAP timeline during transitions to allow cancellation. */
   private activeTimeline: gsap.core.Timeline | null = null;
-  /** Flag indicating if the camera is currently undergoing a programmatic GSAP animation. */
-  private isAnimating: boolean = false;
   /** Reusable temporary vector for calculations to avoid allocations. */
   private tempVector = new THREE.Vector3();
   /** The THREE.Object3D instance the camera is currently following, or null. */
@@ -39,7 +39,7 @@ export class ControlsManager {
   private followOffset: THREE.Vector3 = new THREE.Vector3();
   /** Reusable vector to store the target object's world position. */
   private tempTargetPosition = new THREE.Vector3();
-  /** Stores the world position of the followed object from the previous frame for delta calculations (used by old follow logic). */
+  /** Stores the world position of the followed object from the previous frame for delta calculations. */
   private previousFollowTargetPos = new THREE.Vector3();
   /** Stores the calculated camera offset relative to the target at the end of a transition. (Currently unused in update loop but kept for reference). */
   /** Tracks whether debug/fly controls are active. */
@@ -237,18 +237,6 @@ export class ControlsManager {
     const currentTarget = this.controls.target.clone(); // Current look-at point
     const currentPosition = this.camera.position.clone(); // Camera's current position
 
-    // Duration calculation for target-only transition
-    // This attempts to base duration on how much the view "changes"
-    // by finding a point on a sphere around the camera that corresponds to the new target direction
-    const tempEndPointForDuration = currentPosition
-      .clone()
-      .setFromSphericalCoords(
-        currentPosition.length(), // Use camera's current distance from origin as radius for calculation consistency
-        target.angleTo(new THREE.Vector3(0, 1, 0)), // Azimuthal angle (phi) - effectively how much left/right
-        target.angleTo(new THREE.Vector3(1, 0, 0)), // Polar angle (theta) - effectively how much up/down
-        // Note: The order of X/Y/Z for angleTo might need adjustment depending on desired spherical interpretation
-        // Or, more simply, calculate based on the direct angle change of the target vector relative to camera.
-      );
     // A simpler duration: based on angular distance the target moves from camera's POV
     const oldTargetDirection = currentTarget
       .clone()
@@ -322,11 +310,8 @@ export class ControlsManager {
       targetDirection.lengthSq() > 0.0001
         ? cameraForward.angleTo(targetDirection)
         : 0;
-    // rotationPercent determines how much of the totalDuration is allocated to rotation
-    // It's clamped between 10% and 80% of the total duration.
     const rotationPercent = 0.4;
 
-    // Corrected duration calculation: rotation and position durations sum to totalDuration
     const rotationDuration = totalDuration * rotationPercent;
     const positionDuration = totalDuration * (1.0 - rotationPercent);
 
@@ -409,20 +394,14 @@ export class ControlsManager {
       if (this.followingTargetObject) {
         this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
 
-        // Apply the stored relative offset to the target's current world position
         const desiredCameraPosition = this.tempTargetPosition
           .clone()
           .add(this.followOffset);
         this.camera.position.copy(desiredCameraPosition);
-        // The target for OrbitControls should be the object's center
         this.controls.target.copy(this.tempTargetPosition);
-        this.controls.update(); // Ensure OrbitControls internal state is updated
-
-        // Update previousFollowTargetPos for next frame if still needed by any residual logic
-        // (though direct delta application to camera/target is preferred)
+        this.controls.update();
         this.previousFollowTargetPos.copy(this.tempTargetPosition);
       } else {
-        // Standard controls update if not following anything
         this.controls.update();
       }
       return;
@@ -473,33 +452,25 @@ export class ControlsManager {
    * positions when following an object.
    */
   update(delta: number): void {
-    // If following an object, update its position and apply delta first.
     if (this.followingTargetObject && !this.isAnimating) {
       this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
       const simulationState = simulationStateService.getCurrentState();
       const isPaused = simulationState.paused;
 
       if (!isPaused) {
-        // Only apply follow updates if simulation is running
         const targetDelta = this.tempTargetPosition
           .clone()
           .sub(this.previousFollowTargetPos);
 
-        // Apply delta to camera position AND OrbitControls target
         this.camera.position.add(targetDelta);
-        this.controls.target.add(targetDelta); // Crucial: OrbitControls pivots around this
+        this.controls.target.add(targetDelta);
 
         this.previousFollowTargetPos.copy(this.tempTargetPosition);
       } else {
-        // When paused, keep previousFollowTargetPos updated to avoid snap on unpause
         this.previousFollowTargetPos.copy(this.tempTargetPosition);
       }
     }
 
-    // Then, let OrbitControls process user input and apply damping.
-    // This call handles user input when no GSAP transition is active (as GSAP transitions
-    // temporarily disable controls via setEnabled(false) in _beginTransition).
-    // OrbitControls.update() is also called at the end of a GSAP transition in _endTransition.
     if (this.controls.enabled) {
       this.controls.update();
     }
@@ -533,8 +504,8 @@ export class ControlsManager {
     if (this.isAnimating && this.activeTimeline) {
       this.activeTimeline.kill();
       this.activeTimeline = null;
-      this.isAnimating = false;
       this.isTransitioning = false;
+      this.isAnimating = false;
       this.setEnabled(true);
     }
   }
@@ -553,12 +524,10 @@ export class ControlsManager {
     this.followingTargetObject = object;
     if (object) {
       this.followOffset.copy(offset);
-      // Initialize previousFollowTargetPos when starting to follow for any delta-based logic if needed.
-      // However, the primary follow mechanism now uses the absolute offset.
       object.getWorldPosition(this.previousFollowTargetPos);
     } else {
       this.followOffset.set(0, 0, 0);
-      this.previousFollowTargetPos.set(0, 0, 0); // Reset if no longer following
+      this.previousFollowTargetPos.set(0, 0, 0);
     }
   }
 
@@ -585,31 +554,22 @@ export class ControlsManager {
 
     if (!object) {
       this.stopFollowing();
-      // Optionally, could emit an event that CameraManager can listen to for resetting view.
-      // For now, just stops following.
       return;
     }
-
-    // The core logic of calculating where to move the camera is now the
-    // responsibility of CameraManager.
-    // This deprecated method will perform a rough immediate move & follow for compatibility
-    // during refactoring, but this is not its final state.
 
     const finalTargetPosition = new THREE.Vector3();
     object.getWorldPosition(finalTargetPosition).add(targetPointOffset);
 
     let finalCameraPosition: THREE.Vector3;
     const currentCameraPosition = this.camera.position.clone();
-    // Use the object's actual center as the current target for offset calculation
     const objectActualCenter = object.getWorldPosition(new THREE.Vector3());
     const directionToTarget = currentCameraPosition
       .clone()
       .sub(objectActualCenter);
 
-    let calculatedCameraOffsetFromTarget = directionToTarget.clone(); // Default to current offset
+    let calculatedCameraOffsetFromTarget = directionToTarget.clone();
 
     if (keepCurrentDistance) {
-      // Maintain current orientation and distance from the NEW finalTargetPosition
       finalCameraPosition = finalTargetPosition.clone().add(directionToTarget);
       calculatedCameraOffsetFromTarget.copy(directionToTarget);
     } else {
@@ -630,7 +590,7 @@ export class ControlsManager {
       if (directionToTarget.lengthSq() > 0.0001) {
         directionToTarget.normalize();
       } else {
-        directionToTarget.set(0, 0, 1); // Default to looking from Z+ if current dir is zero
+        directionToTarget.set(0, 0, 1);
       }
       calculatedCameraOffsetFromTarget = directionToTarget
         .clone()
@@ -640,17 +600,14 @@ export class ControlsManager {
         .add(calculatedCameraOffsetFromTarget);
     }
 
-    // Perform the transition
     this.transitionTo(
       this.camera.position.clone(),
       this.controls.target.clone(),
       finalCameraPosition,
       finalTargetPosition,
-      { focusedObjectId: object?.uuid }, // Use object UUID as potential focus ID
+      { focusedObjectId: object?.uuid },
     );
 
-    // Immediately set to follow with the calculated offset. CameraManager will do this post-transition.
-    // This is for temporary compatibility.
     const relativeOffsetForFollowing = finalCameraPosition
       .clone()
       .sub(finalTargetPosition);
