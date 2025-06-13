@@ -29,6 +29,8 @@ export class ControlsManager {
   private maxTransitionDuration: number = 10.0;
   /** Stores the active GSAP timeline during transitions to allow cancellation. */
   private activeTimeline: gsap.core.Timeline | null = null;
+  /** Flag indicating if the camera is currently undergoing a programmatic GSAP animation. */
+  private isAnimating: boolean = false;
   /** Reusable temporary vector for calculations to avoid allocations. */
   private tempVector = new THREE.Vector3();
   /** The THREE.Object3D instance the camera is currently following, or null. */
@@ -163,6 +165,7 @@ export class ControlsManager {
     this.controls.enableDamping = false;
     this.setEnabled(false);
     this.isTransitioning = true;
+    this.isAnimating = true;
   }
 
   /**
@@ -176,10 +179,15 @@ export class ControlsManager {
     focusedObjectId?: string | null,
   ): void {
     this.isTransitioning = false;
+    this.isAnimating = false;
     this.activeTimeline = null;
 
     this.camera.position.copy(finalCameraPos);
     this.controls.target.copy(finalTargetPos);
+
+    if (this.followingTargetObject) {
+      this.followingTargetObject.getWorldPosition(this.previousFollowTargetPos);
+    }
 
     this.controls.enableDamping = this._originalDampingEnabled;
     this.controls.dampingFactor = this._originalDampingFactor;
@@ -466,7 +474,7 @@ export class ControlsManager {
    */
   update(delta: number): void {
     // If following an object, update its position and apply delta first.
-    if (this.followingTargetObject) {
+    if (this.followingTargetObject && !this.isAnimating) {
       this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
       const simulationState = simulationStateService.getCurrentState();
       const isPaused = simulationState.paused;
@@ -522,9 +530,10 @@ export class ControlsManager {
    * Re-enables user controls.
    */
   public cancelTransition(): void {
-    if (this.isTransitioning && this.activeTimeline) {
+    if (this.isAnimating && this.activeTimeline) {
       this.activeTimeline.kill();
       this.activeTimeline = null;
+      this.isAnimating = false;
       this.isTransitioning = false;
       this.setEnabled(true);
     }

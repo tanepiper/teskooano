@@ -24,35 +24,34 @@ graph TD
         CoreP --> CoreS
     end
 
-    subgraph Domain["Domain Systems"]
+    subgraph "Domain Systems"
         DT --> SC[systems/celestial]
-        CoreP --> SO[systems/orbital]
-        SO --> SC
     end
 
-    subgraph Renderer["Renderer Packages"]
-        DT --> RT[renderer/threejs]
-        CoreS --> RT
+    subgraph "Renderer & Simulation"
+        CoreS --> RT[renderer/threejs]
         SC --> RT
-        RT --> RTC[renderer/threejs-core]
-        RT --> RTV[renderer/threejs-visualization]
-        RT --> RTI[renderer/threejs-interaction]
-        RT --> RTE[renderer/threejs-effects]
+
+        CoreS --> Sim[app/simulation]
+        CoreP --> Sim
     end
 
-    subgraph Applications
-        DT --> AS[app/simulation]
-        CoreS --> AS
-        CoreP --> AS
-        RT --> AS
-        DT --> AW[app/window-manager]
-        AS --> AW
+    subgraph "Application Shell & UI"
+        direction LR
+        UIPlugin[app/ui-plugin]
+        Teskooano[apps/teskooano]
+        Dockview[dockview-core]
+
+        RT --> Teskooano
+        Sim --> Teskooano
+        UIPlugin --> Teskooano
+        Dockview --> Teskooano
     end
 
     style Foundation fill:#e0f7fa,stroke:#006064
-    style Domain fill:#e8f5e9,stroke:#1b5e20
-    style Renderer fill:#f3e5f5,stroke:#4a148c
-    style Applications fill:#fff3e0,stroke:#e65100
+    style "Domain Systems" fill:#e8f5e9,stroke:#1b5e20
+    style "Renderer & Simulation" fill:#f3e5f5,stroke:#4a148c
+    style "Application Shell & UI" fill:#fff3e0,stroke:#e65100
 ```
 
 ## III. Core Packages (Foundation)
@@ -68,12 +67,10 @@ graph TD
   - **Core Interfaces**: `CelestialObject`, `OrbitalParameters`, `StarProperties`, `PlanetProperties`, etc.
   - **Discriminated Unions**: Uses type discriminators for specialized object properties.
 - **`physics.ts`**: Defines `PhysicsStateReal` with real-world units (meters, kilograms, seconds).
-- **`scaling.ts`**: Contains crucial scaling functions and constants for converting between real physics units and visualization units:
-  - **Constants**: `GRAVITATIONAL_CONSTANT`, `AU_METERS`, `METERS_TO_SCENE_UNITS`.
-  - **Functions**: `scaleDistance`, `scaleSize`, `scaleTime`, `scaleOrbitalParameters`.
-- **`ui.ts`**: Defines UI component types, events, and styling interfaces.
+- **`scaling.ts`**: Contains crucial scaling functions and constants for converting between real physics units and visualization units.
+- **`ui.ts`**: Defines UI component types, events, and styling interfaces for plugins.
 
-**Dependencies**: `three` (for Vector3/Quaternion types), `@teskooano/core-math` (for `OSVector3`).
+**Dependencies**: `three` (for Vector3/Quaternion types).
 
 ### B. `core/math`
 
@@ -83,9 +80,9 @@ graph TD
 
 - **`OSVector3.ts`**: Custom 3D vector implementation for physics calculations, with conversion to/from `THREE.Vector3`.
 - **`constants.ts`**: Mathematical constants like `PI`, `TWO_PI`, `EPSILON`.
-- **`utils/`**: General-purpose math utilities (`clamp`, `lerp`, etc.) and functional programming helpers (`debounce`, `throttle`).
+- **`utils/`**: General-purpose math utilities (`clamp`, `lerp`, etc.).
 
-**Dependencies**: Minimal dependency on `three` for vector conversion.
+**Dependencies**: `three` (for vector conversion).
 
 ### C. `core/physics`
 
@@ -118,10 +115,12 @@ graph TD
 **Key Components**:
 
 - **`game/stores.ts`**: Core RxJS Subjects/BehaviorSubjects:
-  - `celestialObjects$`: Holds all `CelestialObject` data.
+  - `celestialObjects$`: Holds all `CelestialObject` data, managed via `celestialFactory`.
   - `simulationState$`: Global simulation settings (time, pause state, selected/focused objects).
-- **`game/actions.ts`**: Functions to modify state (e.g., `addCelestialObject`, `updateSimulationTime`).
-- **`game/factory.ts`**: Creates `CelestialObject` instances, including calculating initial physics state from orbital parameters.
+  - `renderableObjects$`: A derived store providing data tailored for the renderer.
+- **`game/actions.ts`**: Functions to modify state (e.g., `addCelestial`, `setSimulationTime`).
+- **`game/factory.ts`**: `celestialFactory` creates and manages `CelestialObject` instances, including calculating initial physics state from orbital parameters.
+- **`adapters/`**: `physicsSystemAdapter` provides a clean interface between the global state and the physics engine.
 
 **Key Principles**:
 
@@ -135,211 +134,142 @@ graph TD
 
 ### A. `systems/celestial`
 
-**Purpose**: Defines, generates, and renders various celestial objects within the engine.
+**Purpose**: Defines the data, generation logic, and rendering shaders for various celestial objects.
 
 **Key Components**:
 
-- **`renderers/`**: Specialized renderers for different celestial types:
-  - `terrestrial/`: Handles rocky planets with procedural textures.
-  - `stars/`: Manages spectral types, corona effects, and gravitational lensing.
-  - `gas-giants/`: Class-based system (Sudarsky) with distinct shaders.
-  - `rings/`: Modular ring system with shadow calculations.
-  - `particles/`: Asteroid fields and Oort clouds using point clouds.
-  - `earth/`: Specialized Earth renderer with specific textures.
-  - `common/`: Shared components like gravitational lensing.
-- **`generation/`**: Procedural texture generation using 3D Simplex noise.
-- **`textures/`**: Framework for managing texture generation and caching.
-- **`shaders/`**: GLSL shader code for various visual effects.
+- **`renderers/`**: This directory is misnamed; it primarily contains **shader source code (`.glsl`)** and **material definitions** for different celestial types, not the full renderer logic.
+  - `terrestrial/`: Shaders for rocky planets.
+  - `stars/`: Shaders and materials for spectral types, corona effects.
+  - `gas-giants/`: Shaders for class-based gas giants.
+  - `rings/`: Shaders for planetary ring systems.
+- **`generation/`**: _(Largely deprecated)_ Procedural generation logic is now mostly handled within the renderer's material shaders.
+- **`textures/`**: Framework for managing pre-made textures (e.g., Earth clouds).
+- **`shaders/`**: A collection of GLSL shader code for various visual effects.
 
 **Key Characteristics**:
 
-- Highly specialized renderers tailored to celestial object types.
-- Procedural texture generation for variety and detail.
-- Custom shader implementations for realistic visuals.
+- Decouples the visual _definition_ (shaders, materials) of an object from its _rendering implementation_ (in `renderer/threejs`).
+- Focuses on providing the building blocks for realistic celestial visuals.
 
-**Dependencies**: `three`, `@teskooano/data-types`, `@teskooano/renderer-threejs-effects`.
+**Dependencies**: `three`, `@teskooano/data-types`.
 
-### B. `systems/orbital` (Assumed)
+## V. Renderer & Simulation Packages
 
-**Purpose**: Handles higher-level orbital calculations and parent-child relationships.
+This section describes the core runtime packages that handle the visualization and physics simulation.
 
-**Dependencies**: `@teskooano/core-physics`, `@teskooano/core-state`, `@teskooano/data-types`.
+### A. `renderer/threejs` (Main Rendering Engine)
 
-## V. Renderer Packages
-
-### A. `renderer/threejs-core`
-
-**Purpose**: Provides foundational Three.js setup: scene, camera, renderer, animation loop, and state bridging.
+**Purpose**: A comprehensive package that provides the top-level `ModularSpaceRenderer`. It integrates all necessary Three.js components to create the visual simulation space.
 
 **Key Components**:
 
-- **`SceneManager`**: Manages `THREE.Scene`, `THREE.PerspectiveCamera`, and `THREE.WebGLRenderer`.
-- **`AnimationLoop`**: Manages the `requestAnimationFrame` loop and timing.
-- **`StateManager`**: _(Deprecated/Removed?)_ - _Seems state bridging is now handled by `RendererStateAdapter` in `renderer/threejs`._
-
-**Dependencies**: `three`, `@teskooano/core-state`, `@teskooano/data-types`.
-
-### B. `renderer/threejs-effects`
-
-**Purpose**: Manages visual effects and optimizations like lighting and Level of Detail (LOD).
-
-**Key Components**:
-
-- **`LightManager`**: Manages `THREE.Light` sources (stars).
-- **`LODManager`**: Handles Level of Detail transitions for objects.
-- **`lod-manager/`**: Helpers for LOD mesh creation and distance calculation (including `distance-calculator.ts` with segment/distance logic).
-
-**Dependencies**: `three`, `@teskooano/data-types`, `@teskooano/renderer-threejs-interaction` _(Check if needed)_, `@teskooano/renderer-threejs` _(Check if needed)_, `@teskooano/systems-celestial` _(Check if needed)_.
-
-### C. `renderer/threejs-interaction`
-
-**Purpose**: Manages user interaction via camera controls and HTML overlays.
-
-**Key Components**:
-
-- **`ControlsManager`**: Integrates and configures `THREE.OrbitControls`.
-- **`CSS2DManager`**: Manages HTML elements positioned in 3D space using `CSS2DRenderer`, handles layer visibility.
-
-**Dependencies**: `three`, `@teskooano/core-state` _(Panel state interaction?)_, `@teskooano/data-types`, `@teskooano/renderer-threejs`.
-
-### D. `renderer/threejs-visualization`
-
-**Purpose**: Orchestrates the rendering of celestial objects, orbits, and backgrounds.
-
-**Key Components**:
-
-- **`ObjectManager`**: Creates, updates, removes `THREE.Object3D` representations (including `THREE.LOD`). Synchronizes with state adapter, manages `LightManager` updates, triggers lensing setup.
-- **`OrbitManager`**: Visualizes orbital paths (Keplerian or Verlet), optimized line rendering.
-- **`BackgroundManager`**: Creates the starfield background with parallax.
-- **`object-manager/`**: Contains `MeshFactory`, `RendererUpdater`, and `GravitationalLensingHandler`.
-
-**Dependencies**: `three`, `@teskooano/core-state`, `@teskooano/data-types`, other renderer packages (`core`, `effects`, `interaction`), `@teskooano/systems-celestial`.
-
-### E. `renderer/threejs` (Main Integration)
-
-**Purpose**: Main integration package providing the top-level `ModularSpaceRenderer` facade and state adaptation.
-
-**Key Components**:
-
-- **`ModularSpaceRenderer`**: Instantiates and coordinates all renderer managers (`SceneManager`, `ObjectManager`, `OrbitManager`, `LightManager`, etc.). Manages panel-specific view state interactions (label/grid visibility via `EnginePanel`).
-- **`RendererStateAdapter`**: Subscribes to core state (`celestialObjectsStore`, relevant parts of `simulationState`) and creates derived, renderer-specific state (`$renderableObjects`, `$visualSettings`) including coordinate conversion and passing necessary properties like `realRadius_m`.
-- **`utils/coordinateUtils.ts`**: Contains `physicsToThreeJSPosition` for coordinate conversion.
+- **`ModularSpaceRenderer`**: The main class and facade for the rendering engine. It is instantiated by a UI Panel (`CompositeEnginePanel`) and orchestrates all other managers.
+- **`managers/`**:
+  - **`SceneManager`**: Manages the core `THREE.Scene`, `THREE.WebGLRenderer`, and the main animation loop (`requestAnimationFrame`).
+  - **`ObjectManager`**: The most critical component. It subscribes to the `renderableObjects$` state and is responsible for creating, updating, and removing `THREE.Object3D` representations from the scene. It uses a factory pattern to instantiate the correct renderer (e.g., `StarRenderer`, `TerrestrialPlanetRenderer`) for each celestial object.
+  - **`OrbitManager`**: Visualizes orbital paths.
+  - **`ControlsManager`**: Integrates and configures `THREE.OrbitControls`, handling user camera input and smooth programmatic transitions.
+  - **`CameraManager`**: A separate, high-level manager (part of `app/simulation`) that controls camera state (focus, FOV) and directs the `ControlsManager`.
+  - **`EffectManager`**: Handles post-processing effects like bloom and gravitational lensing.
+  - **`LightManager`**: Manages light sources, typically representing stars.
+- **`renderers/`**: Contains the actual renderer classes (e.g. `BaseStarRenderer`, `BaseTerrestrialRenderer`) that are instantiated by the `ObjectManager`. These classes build the `THREE.Mesh` and `THREE.Material` using shaders from `systems/celestial`.
 
 **Key Characteristics**:
 
-- Facade pattern for simplified high-level API.
-- Orchestrates the entire rendering pipeline.
-- State-driven updates based on core state changes via the adapter.
-- Manages interaction with panel-specific state for UI controls.
+- **Facade Pattern**: `ModularSpaceRenderer` provides a simple API to the complex underlying system.
+- **State-Driven**: `ObjectManager` reactively updates the scene based on changes in `renderableObjects$`.
+- **Composition over Inheritance**: The main renderer is composed of many specialized managers.
+- **Clear Separation**: Differentiates between low-level camera control (`ControlsManager`) and high-level camera intent (`CameraManager`).
 
-**Dependencies**: All other renderer packages, `@teskooano/core-state`, `@teskooano/data-types`, `three`.
+**Dependencies**: `@teskooano/core-state`, `@teskooano/data-types`, `three`, `systems/celestial`.
 
-## VI. Application Packages
+### B. `app/simulation`
 
-### A. `app/simulation`
-
-**Purpose**: Main application entry point for running the Open Space simulation.
+**Purpose**: Manages the core simulation lifecycle, physics loop, state, and high-level camera control.
 
 **Key Components**:
 
-- **`Simulation` class**: Instantiates `ModularSpaceRenderer` and provides the main rendering loop.
-- **`loop.ts`**: Contains the physics simulation loop:
-  1. Calculates forces and accelerations.
-  2. Applies chosen integrator (euler, symplecticEuler, verlet).
-  3. Updates state store with new positions, velocities, and rotations.
-- **`toolbar.ts`**: Defines UI controls as Web Components.
-- **`systems/`**: Predefined celestial system configurations.
+- **`SimulationManager`**: A singleton that orchestrates the entire simulation.
+  - **Physics Loop**: Contains the `requestAnimationFrame` loop. It's started and stopped reactively based on the presence of celestial objects.
+  - **State Integration**: Reads from `@teskooano/core-state` via the `physicsSystemAdapter`, calls `updateSimulation` from `@teskooano/core-physics`, and writes the results back.
+  - **Event Bus**: Uses RxJS `Subject`s (`onOrbitUpdate$`, `onDestructionOccurred$`) to broadcast simulation events.
+- **`CameraManager`**: Manages the semantic state of the camera (e.g., "what object are we focused on?"). It provides a public API (`followObject`, `setFov`) and emits its state via a `BehaviorSubject`. It directs the `ControlsManager` in the renderer.
+- **`systems/`**: Contains initializer functions (e.g., `initializeSolarSystem`) that use `actions` from `@teskooano/core-state` to populate the simulation with its initial set of celestial bodies.
+
+**Dependencies**: `@teskooano/core-state`, `@teskooano/core-physics`, `@teskooano/data-types`.
+
+## VI. Application Shell & UI Packages
+
+### A. `@teskooano/ui-plugin`
+
+**Purpose**: A configuration-driven architecture for creating a modular UI. It enables dynamic loading and registration of UI components, functions, and panels.
+
+**Key Components**:
+
+- **Vite Plugin (`teskooanoUiPlugin`)**: Reads `pluginRegistry.ts` files at build time to generate a `virtual:teskooano-loaders` module. This enables code-splitting and HMR for plugins.
+- **`PluginManager` (Singleton)**: The runtime orchestrator. It loads, registers, and manages the lifecycle of all plugins. It handles dependency resolution between plugins and provides a central registry for all UI contributions (panels, functions, components).
+- **`PluginLifecycleManager`**: Handles HMR by listening for WebSocket messages and triggering plugin reloads.
+
+### B. `apps/teskooano`
+
+**Purpose**: The main web application that brings all the packages together.
+
+**Key Components**:
+
+- **`main.ts`**: Entry point of the application. Initializes the `PluginManager` and `DockviewController`.
+- **`plugins/`**: Contains the source code for all the individual UI plugins. Each plugin is a self-contained feature (e.g., `celestial-info`, `focus-control`, `engine-panel`).
+  - **`engine-panel/`**: A crucial plugin that hosts the `CompositeEnginePanel`, which in turn creates and displays the `ModularSpaceRenderer` instance.
+- **`core/controllers/`**:
+  - **`DockviewController`**: Manages the entire `dockview-core` layout, including creating panels, groups, and handling floating windows. It works in tandem with the `PluginManager` to display registered panels.
+  - **`ToolbarController`**: Dynamically builds toolbars by querying the `PluginManager` for registered toolbar items.
 
 **Key Characteristics**:
 
-- Dual loop architecture (physics and rendering).
-- Uses state store for communication between loops.
-- Web Components for UI controls.
-
-**Dependencies**: `@teskooano/renderer-threejs`, `@teskooano/core-state`, `@teskooano/core-physics`, `@teskooano/core-math`, `@teskooano/data-types`.
-
-### B. `app/window-manager` (Assumed)
-
-**Purpose**: Manages application windows, panels, and UI layout.
+- **Plugin-Driven**: The entire UI is assembled from plugins registered with the `PluginManager`.
+- **Decoupled**: UI components (like the toolbar) are decoupled from the features they control. They query the `PluginManager` for available actions.
+- **MVC Pattern**: Most complex UI plugins follow a Model-View-Controller pattern to separate logic from the component's view.
+- **HMR Enabled**: Hot Module Replacement is fully supported for rapid development.
 
 ## VII. Data Flow Diagram
 
 ```mermaid
 flowchart TB
-    subgraph Core["Core Physics Loop"]
-        CP[core/physics]
-        UpdatePhysics["Update Physics\n(integrator)"]
-        CP --> UpdatePhysics
+    subgraph UserInput["User Input & UI"]
+        direction LR
+        Toolbar[Toolbar Buttons]
+        Panels[Plugin Panels]
     end
 
-    subgraph State["State Store (RxJS)"]
-        Sim[simulationState$]
-        CelStore["celestialObjects$"]
-        SimState["simulationState"]
-        PanelViewState["Panel View State\n(per EnginePanel)"]
-        Sim --> CelStore
-        Sim --> SimState
-        Sim --> PanelViewState
+    subgraph AppCore["Application Core"]
+        direction TB
+        PluginManager["PluginManager"]
+        DockviewController["DockviewController"]
+        ToolbarController["ToolbarController"]
+
+        Toolbar --> ToolbarController
+        ToolbarController -- "query for items" --> PluginManager
+        Panels -- "interact" --> DockviewController
+        DockviewController -- "query for panels" --> PluginManager
     end
 
-    subgraph Render["Rendering Pipeline"]
-        RT[renderer/threejs]
-        Adapter[RendererStateAdapter]
-        SceneM[SceneManager]
-        ObjectM[ObjectManager]
-        OrbitM[OrbitManager]
-        LightM[LightManager]
-        CSSM[CSS2DManager]
-        RT --> Adapter
-        Adapter --> ObjectM
-        Adapter --> OrbitM
-        RT --> SceneM
-        RT --> ObjectM
-        RT --> OrbitM
-        RT --> LightM
-        RT --> CSSM
+    subgraph Simulation["Simulation & Rendering"]
+        direction TB
+        SimMan[app/simulation/SimulationManager]
+        Renderer[renderer/threejs/ModularSpaceRenderer]
+        CoreState[core/state]
+        CorePhysics[core/physics]
+
+        SimMan -- "drives" --> CorePhysics
+        CorePhysics -- "updates" --> CoreState
+        CoreState -- "is read by" --> SimMan
+        CoreState -- "is read by" --> Renderer
+        Renderer -- "displays" --> Scene
     end
 
-    subgraph App["Application & UI"]
-        AS[app/simulation / app/teskooano]
-        EnginePanel[EnginePanel]
-        PhysicsLoop["Physics Loop"]
-        RenderLoop["Render Loop"]
-        UIControls["UI Controls"]
-        AS --> PhysicsLoop
-        AS --> RenderLoop
-        AS --> EnginePanel
-        EnginePanel --> UIControls
-    end
-
-    %% Main Flow
-    PhysicsLoop -- "Get bodies" --> CelStore
-    CP -- "Calculate forces" --> PhysicsLoop
-    UpdatePhysics -- "Update positions & velocities" --> PhysicsLoop
-    PhysicsLoop -- "Update state" --> CelStore
-
-    %% Render Flow
-    CelStore -- "Core object state" --> Adapter
-    SimState -- "Global sim state" --> Adapter
-    Adapter -- "Derived state\n(RenderableObjects,\nVisualSettings)" --> ObjectM
-    Adapter -- "Derived state" --> OrbitM
-    LightM -- "Star Light Data" --> ObjectM
-    ObjectM -- "Mesh updates" --> SceneM
-    OrbitM -- "Line updates" --> SceneM
-    LightM -- "Light updates" --> SceneM
-    CSSM -- "Label updates" --> SceneM
-    SceneM -- "Draw scene" --> RenderLoop
-
-    %% UI Flow
-    UIControls -- "Update Panel State" --> PanelViewState
-    PanelViewState -- "State changes" --> EnginePanel
-    EnginePanel -- "Call Renderer Methods\n(setCelestialLabelsVisible, etc)" --> RT
-    UIControls -- "Update Global State?" --> SimState
-
-    style Core fill:#e0f7fa,stroke:#006064
-    style State fill:#e8f5e9,stroke:#1b5e20
-    style Render fill:#f3e5f5,stroke:#4a148c
-    style App fill:#fff3e0,stroke:#e65100
+    UserInput --> AppCore
+    AppCore -- "loads system / controls sim" --> Simulation
+    Simulation -- "renders to" --> Scene
 ```
 
 **Flow Description:**

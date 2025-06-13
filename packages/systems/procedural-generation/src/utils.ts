@@ -251,10 +251,10 @@ export function createProceduralSurfaceProperties(
   let terrainOffset = 0.0;
 
   let height1 = getRandomInRange(0.1, 0.2, random);
-  let height2 = getRandomInRange(0.2, 0.4, random);
-  let height3 = getRandomInRange(0.4, 0.6, random);
-  let height4 = getRandomInRange(0.6, 0.8, random);
-  let height5 = getRandomInRange(0.8, 1.0, random);
+  let height2 = getRandomInRange(height1, 0.4, random);
+  let height3 = getRandomInRange(height2, 0.6, random);
+  let height4 = getRandomInRange(height3, 0.8, random);
+  let height5 = getRandomInRange(height4, 1.0, random);
 
   let color1: string;
   let color2: string;
@@ -269,12 +269,6 @@ export function createProceduralSurfaceProperties(
       color3 = getRandomItem(["#D4A373", "#E6B88A", "#C09463"], random); // Browns (Mountains)
       color4 = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
       color5 = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
-
-      height1 = getRandomInRange(0.2, 0.3, random);
-      height2 = getRandomInRange(0.3, 0.45, random);
-      height3 = getRandomInRange(0.45, 0.6, random);
-      height4 = getRandomInRange(0.6, 0.75, random);
-      height5 = getRandomInRange(0.75, 1.0, random);
 
       persistence = getRandomInRange(0.55, 0.65, random); // Slightly increased
       lacunarity = getRandomInRange(1.8, 2.2, random); // Tightened range

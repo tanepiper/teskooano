@@ -1,64 +1,49 @@
-## Simulation Application Analysis (`packages/app/simulation`)
+## Simulation Package Analysis (`packages/app/simulation`)
 
-**Purpose**: This package acts as the main application entry point for running the Teskooano simulation. It orchestrates the core physics loop, initializes the renderer, and manages the simulation time and state interactions.
+**Purpose**: This package manages the core simulation lifecycle, the physics loop, high-level camera control, and system initialization. It acts as the "engine" that drives the simulation based on data from the state management packages.
 
 **Key Components:**
 
-1.  **`index.ts`**: Exports the main `Simulation` class and re-exports key functions.
+1.  **`SimulationManager.ts`**: This is the heart of the package, implemented as a singleton.
 
-    - **`Simulation` class**:
-      - Primary role is to instantiate and hold the `ModularSpaceRenderer` instance from `@teskooano/renderer-threejs`.
-      - Sets up event listeners (e.g., window resize) to keep the renderer dimensions correct.
-      - _Does not_ directly manage the simulation loop or state updates, focuses purely on renderer setup.
+    - **Physics Loop (`simulationStep`)**: Manages the core `requestAnimationFrame` loop. It's not started by default; it is reactively started by the UI (specifically `PanelLifecycleManager`) when a system is loaded.
+    - **Time Management**: Calculates `deltaTime` between frames, caps it for stability (to prevent physics explosions), and applies the `timeScale` from the global state.
+    - **State Integration**:
+      1.  Reads the current physics state from `@teskooano/core-state` using the `physicsSystemAdapter`.
+      2.  Calls the `updateSimulation` function from `@teskooano/core-physics` to perform all calculations.
+      3.  Receives the results and updates the global state via `physicsSystemAdapter.updateStateFromResult`.
+    - **Event Bus**: Uses RxJS `Subject`s (`onOrbitUpdate`, `onDestructionOccurred`, `onResetTime`) to broadcast key simulation events to any listeners.
+    - **Lifecycle**: Provides `startLoop`, `stopLoop`, and `dispose` methods. `resetSystem` is used to clear the current simulation state.
 
-2.  **`loop.ts`**: Contains the core **physics simulation loop**.
+2.  **`camera/CameraManager.ts`**: A class responsible for the _semantic_ state of the camera.
 
-    - `startSimulationLoop()`: Begins the main simulation update cycle, likely using `requestAnimationFrame`.
-    - `stopSimulationLoop()`: Halts the update cycle.
-    - **Physics Loop Logic** (`simulationLoop` function):
-      1.  Calculates delta time, applying `simulationState.timeScale` and capping for stability (`fixedDeltaTime`).
-      2.  If not paused (`simulationState.paused`), advances `accumulatedTime` and updates `simulationState.time`.
-      3.  Retrieves active celestial bodies from `celestialObjectsStore`, filtering out destroyed or ignored ones.
-      4.  Constructs maps needed for collision detection (radii, types) from the active bodies.
-      5.  Calls `updateSimulation` from `@teskooano/core-physics`, passing the active bodies and collision data. This function handles:
-          - N-body gravity calculation (currently direct summation, potentially Octree later).
-          - Collision detection and resolution (returning destruction events).
-          - State integration (Euler, Verlet, etc., based on physics engine settings).
-      6.  Processes `destructionEvents` from the physics step, emitting `destruction:occurred` via `rendererEvents` for visual effects.
-      7.  Updates the `celestialObjectsStore`:
-          - Merges the updated physics states (`stepResult.states`) back into the store.
-          - Sets the `status` (DESTROYED, ANNIHILATED) for objects listed in `stepResult.destroyedIds` based on collision outcomes.
-          - Updates the `accelerationVectors` store.
-      8.  **Directly calculates and applies object rotation quaternions** within the `celestialObjectsStore` based on `accumulatedTime` and `siderealRotationPeriod_s`.
-      9.  Dispatches a global `CustomEvents.ORBIT_UPDATE` event containing updated positions.
+    - **Decoupled Logic**: It does not directly manipulate the `THREE.Camera`. Instead, it manages the high-level state, such as which object is focused (`focusedObjectId`), the desired FOV, and the current camera position/target.
+    - **State Emission**: Exposes its state via an RxJS `BehaviorSubject` (`getCameraState$`), allowing UI components to react to camera changes.
+    - **API for Intent**: Provides a clean API for camera actions like `followObject(objectId)`, `pointCameraAt(position)`, `setFov(fov)`, and `resetCameraView()`. These actions are translated into commands for the renderer's `ControlsManager`.
+    - **Dependency Injection**: It receives the `ModularSpaceRenderer` instance and other dependencies via a `setDependencies` method, making it independent of how the renderer is created.
 
-3.  **`resetSystem.ts`**: Provides a utility function `resetSystem` to clear the current simulation state (celestial objects, simulation time, etc.) and optionally run an initializer function to load a new system.
-
-4.  **`systems/`**: Contains modules for defining and initializing predefined star systems (e.g., `redDwarfSystem.ts`, `solarSystem/` subdirectory).
-
-    - These modules typically use `actions` from `@teskooano/core-state` to create and add `CelestialObject` data to the stores.
-
-5.  **`solarSystem.ts`**: Likely a placeholder or specific initializer for the Sol system, residing within or called by the `systems/` structure.
-
-_(Note: `toolbar.ts` and related Web Component logic seem to have been removed or refactored out of this package based on current file structure.)_
+3.  **`systems/`**: This directory contains modules for initializing predefined star systems (e.g., `solar-system/`).
+    - **Data-Driven**: These modules are not part of the core simulation logic. They are simply data initializers that use `actions` from `@teskooano/core-state` to populate the stores with the celestial objects that the `SimulationManager` will then act upon. The `initializeSun` function in `star.ts`, for instance, calls `actions.createSolarSystem`, which clears previous state and sets up the new primary star.
 
 **Key Characteristics & Design:**
 
-- **Separation of Concerns**: Attempts to separate renderer setup (`index.ts`) from the physics/state update loop (`loop.ts`).
-- **State-Driven**: The simulation loop reads configuration and initial state from `@teskooano/core-state` (`simulationState`, `celestialObjectsStore`) and writes results back.
-- **Physics Integration**: Leverages `@teskooano/core-physics` for the heavy lifting of N-body simulation and collision detection.
-- **Event-Based Communication**: Uses `rendererEvents` to signal visual events (like destructions) and `CustomEvents` for broader state changes (like orbit updates).
-- **Direct State Manipulation**: The physics loop directly calculates and updates object rotations within the `celestialObjectsStore`. While functional, this slightly bypasses the centralized physics state update pathway and might be revisited for consistency.
-- **Initialization**: Relies on functions within the `systems/` directory to populate the initial simulation state.
+- **Singleton Manager**: The `SimulationManager` provides a single, consistent entry point for controlling the simulation loop.
+- **Reactive Loop**: The simulation loop is not always running. It's a resource that is started and stopped based on application state (i.e., whether there are objects to simulate).
+- **Clear Separation of Concerns**:
+  - `SimulationManager` handles the "when" and "how" of the physics update cycle.
+  - `CameraManager` handles the "what" of camera intent, separate from the low-level rendering implementation.
+  - `@teskooano/core-physics` handles the "what" of the physics calculations.
+  - `@teskooano/core-state` is the single source of truth for all data.
+- **Event-Driven Communication**: Core events are broadcast via RxJS observables, decoupling the simulation from its listeners.
 
 **Data Flow Summary:**
 
-1.  **Initialization**: `systems/*.ts` -> `core-state/actions` -> `celestialObjectsStore`
-2.  **Loop Start**: `startSimulationLoop()` activates `loop.ts`.
-3.  **Physics Update**: `loop.ts` reads `core-state`, calls `core-physics/updateSimulation`.
-4.  **State Update**: `core-physics` returns results -> `loop.ts` updates `core-state` (`celestialObjectsStore`, `simulationState.time`, `accelerationVectors`).
-5.  **Rotation Update**: `loop.ts` directly updates rotation in `celestialObjectsStore`.
-6.  **Events**: `loop.ts` emits `rendererEvents` (destruction) & `CustomEvents` (orbit update).
-7.  **Rendering**: (Managed externally) `renderer-threejs` reads `core-state` (`celestialObjectsStore`) and listens for `rendererEvents` to draw the scene.
+1.  **Initialization**: A UI action triggers an initializer function from `systems/`.
+2.  **State Population**: The initializer calls `actions` in `@teskooano/core-state` to populate the `celestialObjects$` store.
+3.  **Loop Start**: A UI component (`PanelLifecycleManager`) detects the new objects in the state and calls `simulationManager.startLoop()`.
+4.  **Physics Update**: In each frame, `simulationManager` reads from `core-state` (via adapter), calls `core-physics`, and writes results back to `core-state`.
+5.  **Event Emission**: `simulationManager` emits an `onOrbitUpdate` event with the new positions.
+6.  **Rendering**: (Managed externally) `@teskooano/renderer-threejs` listens to state changes (`renderableObjects$`) and draws the scene.
+7.  **Camera Control**: UI components call methods on `CameraManager` (e.g., `followObject('earth')`), which then directs the renderer's `ControlsManager` to perform the action.
 
-**Dependencies**: `@teskooano/renderer-threejs`, `@teskooano/core-state`, `@teskooano/core-physics`, `@teskooano/core-math`, `@teskooano/data-types`, `three`.
+**Dependencies**: `@teskooano/core-state`, `@teskooano/core-physics`, `@teskooano/data-types`, `three`.

@@ -45,10 +45,17 @@ export class SimulationManager {
   private readonly _orbitUpdate$ = new Subject<OrbitUpdatePayload>();
   private readonly _destructionOccurred$ = new Subject<DestructionEvent>();
 
+  /**
+   * Private constructor to enforce the singleton pattern.
+   */
   private constructor() {
     // Private constructor for singleton
   }
 
+  /**
+   * Gets the singleton instance of the SimulationManager.
+   * @returns The singleton instance.
+   */
   public static getInstance(): SimulationManager {
     if (!SimulationManager.instance) {
       SimulationManager.instance = new SimulationManager();
@@ -57,18 +64,32 @@ export class SimulationManager {
   }
 
   // Public Observables for events
+  /**
+   * Observable that emits when the simulation time is reset.
+   */
   public get onResetTime(): Observable<void> {
     return this._resetTime$.asObservable();
   }
 
+  /**
+   * Observable that emits the updated positions of celestial objects after each physics step.
+   */
   public get onOrbitUpdate(): Observable<OrbitUpdatePayload> {
     return this._orbitUpdate$.asObservable();
   }
 
+  /**
+   * Observable that emits details of a destruction event (e.g., collision) when it occurs.
+   */
   public get onDestructionOccurred(): Observable<DestructionEvent> {
     return this._destructionOccurred$.asObservable();
   }
 
+  /**
+   * Starts the main simulation loop.
+   * The loop will only advance the simulation if it is not paused.
+   * It is safe to call this multiple times; it will not start a second loop.
+   */
   public startLoop(): void {
     if (this.isRunning) {
       console.warn("Simulation loop is already running.");
@@ -92,6 +113,10 @@ export class SimulationManager {
     console.log("Simulation loop started.");
   }
 
+  /**
+   * Stops the main simulation loop.
+   * It is safe to call this multiple times.
+   */
   public stopLoop(): void {
     if (!this.isRunning) {
       console.warn("Simulation loop is not running.");
@@ -107,10 +132,20 @@ export class SimulationManager {
     console.log("Simulation loop stopped.");
   }
 
+  /**
+   * Checks if the simulation loop is currently running.
+   * @returns True if the loop is running, false otherwise.
+   */
   public get isLoopRunning(): boolean {
     return this.isRunning;
   }
 
+  /**
+   * The core simulation step, executed on each animation frame.
+   * This method calculates the time delta, runs the physics simulation,
+   * updates the global state, and schedules the next frame.
+   * @param currentTime - The current time provided by `requestAnimationFrame`.
+   */
   private simulationStep = (currentTime: number): void => {
     if (!this.isRunning) return;
 
@@ -241,9 +276,12 @@ export class SimulationManager {
   };
 
   /**
-   * Resets celestial objects and simulation state.
-   * This also emits the onResetTime event.
-   * @param skipStateClear - Set to true if calling code will use createSolarSystem which also clears state
+   * Resets all celestial objects and the simulation state.
+   * This clears all existing bodies and can optionally skip the state-clearing
+   * if an external function (like a system initializer) will handle it.
+   * It always emits the `onResetTime` event.
+   * @param skipStateClear - If true, the function will not clear the global state.
+   * This is useful when chaining with a system creation function that clears state itself.
    */
   public resetSystem(skipStateClear: boolean = false): void {
     if (!skipStateClear) {
@@ -268,6 +306,10 @@ export class SimulationManager {
     console.log("System reset triggered.");
   }
 
+  /**
+   * Emits an event to signal that the simulation time should be reset to zero.
+   * This also resets the internal accumulated time of the manager.
+   */
   public resetTime(): void {
     this._resetTime$.next();
   }

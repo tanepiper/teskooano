@@ -2,87 +2,77 @@
 
 ## What is it?
 
-The `@teskooano/app-simulation` package provides the core simulation loop and setup for the Teskooano engine. It integrates the physics engine (`@teskooano/core-physics`), state management (`@teskooano/core-state`), and the renderer (`@teskooano/renderer-threejs`) to simulate celestial body interactions and manage the overall simulation time and state.
+The `@teskooano/app-simulation` package provides the core simulation lifecycle and camera control for the Teskooano engine. It integrates the physics engine (`@teskooano/core-physics`) and state management (`@teskooano/core-state`) to simulate celestial body interactions and manage the overall simulation time and state.
 
 ## Where is it?
 
 **Physical Location:** `/packages/app/simulation`
 
-**System Context:** This package acts as the central orchestrator, connecting various core libraries to the frontend rendering.
+**System Context:** This package acts as the central engine, managed by the main application, connecting various core libraries to the renderer.
 
 ```mermaid
 graph TD
-    Math[core-math]
-    Physics[core-physics]
-    State[core-state]
-    Types[data-types]
-    Renderer[renderer-threejs]
-    Simulation[app-simulation]
-    Frontend[Frontend Application]
-
-    Math --> Physics
-    Types --> Physics
-    Types --> State
-    Types --> Renderer
-    State --> Simulation
-    Physics --> Simulation
-    Simulation --> Renderer
-    Renderer --> Frontend
-
-    subgraph Simulation Package
-        direction LR
-        Loop[loop.ts]
-        Index[index.ts]
-        Systems[systems/*]
-        Reset[resetSystem.ts]
+    subgraph Core Libraries
+        Physics[core-physics]
+        State[core-state]
+        Types[data-types]
     end
 
-    Index -- Manages --> Renderer
-    Loop -- Updates --> State
-    State -- Read by --> Loop
-    State -- Read by --> Renderer
-    Systems --> State(Via Actions)
-    Reset --> State(Via Actions)
+    subgraph App
+        direction LR
+        Simulation[app-simulation]
+        Renderer[renderer-threejs]
+        Frontend[apps/teskooano]
+    end
+
+    Types --> Physics
+    Types --> State
+    State --> Simulation
+    Physics --> Simulation
+
+    Simulation -- "drives physics" --> Physics
+    Simulation -- "updates and reads" --> State
+
+    State -- "is read by" --> Renderer
+    Renderer -- "is created by" --> Frontend
+    Simulation -- "is controlled by" --> Frontend
+
 ```
 
 ## When is it used?
 
-- To initialize the main `Simulation` class which sets up the renderer.
-- To start/stop the core physics `simulationLoop`.
-- Whenever the simulation time needs to be updated or controlled (pause, timescale).
-- When loading initial system configurations (e.g., from the `systems` directory).
+- To start/stop the core physics loop via the `simulationManager` singleton.
+- To control the camera's focus and field of view via the `CameraManager`.
+- To reset the simulation state.
+- To load initial system configurations (e.g., from the `systems` directory).
 
 ## How does it work?
 
 The simulation system is based on two main parts:
 
-1.  **`Simulation` Class (`index.ts`)**:
+1.  **`SimulationManager` (`SimulationManager.ts`)**:
 
-    - Initializes and holds the `ModularSpaceRenderer` instance.
-    - Sets up event listeners for things like window resizing to keep the renderer updated.
-    - This class _does not_ run the main simulation loop itself but provides the rendering context.
+    - A singleton that manages the core physics update loop (`requestAnimationFrame`).
+    - The loop is started/stopped reactively by the UI layer (e.g., when a system is loaded or cleared).
+    - It reads the current state from `@teskooano/core-state` (via `physicsSystemAdapter`), calls the `updateSimulation` function from `@teskooano/core-physics`, and writes the results back to the state store.
+    - It provides observables (`onOrbitUpdate`, `onDestructionOccurred`) for other parts of the application to subscribe to simulation events.
 
-2.  **`simulationLoop` (`loop.ts`)**:
-    - This is the core physics update loop, typically run via `requestAnimationFrame` when started with `startSimulationLoop()`.
-    - Reads the current state (`celestialObjectsStore`, `simulationState`) from `@teskooano/core-state`.
-    - Calculates the time delta, applying the simulation timescale.
-    - Filters active celestial bodies.
-    - Calls the `updateSimulation` function from `@teskooano/core-physics` to perform N-body calculations, collision detection, and integration.
-    - Handles destruction events emitted by the physics engine and passes them to the renderer via `rendererEvents`.
-    - Updates the `celestialObjectsStore` with the new physics states and statuses (including handling destroyed/annihilated objects).
-    - Calculates and applies object rotations directly to the state.
-    - Dispatches an `orbitUpdate` custom event for potential listeners (like orbit trail renderers).
+2.  **`CameraManager` (`camera/CameraManager.ts`)**:
+    - A class that handles the high-level, semantic state of the camera.
+    - It does **not** directly control the `THREE.Camera`; instead, it manages the _intent_ (e.g., "follow Earth," "reset view").
+    - It provides a clean API (`followObject`, `setFov`, etc.) and uses a `BehaviorSubject` to broadcast its state.
+    - It receives the `ModularSpaceRenderer` from the UI layer and directs the renderer's internal `ControlsManager`.
 
 ### Time Control
 
-- Simulation time (`simulationState.time`) is advanced within the `simulationLoop`.
+- Simulation time (`simulationState.time`) is advanced within the `SimulationManager`'s loop.
 - Pausing (`simulationState.paused`) and time scaling (`simulationState.timeScale`) are respected by the loop.
-- Time resets are handled via the `CustomEvents.SIMULATION_RESET_TIME` event.
+- Time resets are handled via the `simulationManager.resetTime()` method.
 
 ### System Initialization
 
-- Functions like `initializeRedDwarfSystem` (in `systems/`) use `actions` from `@teskooano/core-state` to populate the `celestialObjectsStore` with initial bodies.
-- `resetSystem` likely provides a way to clear the state and load a specific system.
+- Functions like `initializeSolarSystem` (in `systems/`) use `actions` from `@teskooano/core-state` to populate the `celestialObjectsStore` with initial bodies.
+- `simulationManager.resetSystem()` provides a way to clear the state, which is typically called before loading a new system.
 
 ## Installation
 
@@ -94,92 +84,112 @@ _(Internal package, typically not installed standalone)_
 
 ## Usage
 
-### Basic Simulation Setup
+### Basic Simulation Control (from a UI component)
 
 ```typescript
-import Simulation, {
-  startSimulationLoop,
-  stopSimulationLoop,
-} from "@teskooano/app-simulation";
-import { initializeRedDwarfSystem } from "@teskooano/app-simulation/systems"; // Example system
-import { actions as simulationActions } from "@teskooano/core-state";
+import { simulationManager } from "@teskooano/app-simulation";
+import { initializeSolarSystem } from "@teskooano/app-simulation/systems";
 
-// Get container element
-const container = document.getElementById("simulation-container");
-if (!container) throw new Error("Container not found");
+// In a UI component that manages the simulation lifecycle
 
-// 1. Initialize the Simulation class (sets up renderer)
-const simulation = new Simulation(container);
+// 1. Load an initial system into the state
+// This function calls actions that will populate the celestialObjects$ store
+initializeSolarSystem();
 
-// 2. Load an initial system into the state
-const systemId = initializeRedDwarfSystem();
-console.log(`Initialized system: ${systemId}`);
+// 2. The UI listens for object creation and starts the loop
+// This is typically done in a lifecycle manager that subscribes to celestialObjects$
+// and finds that objects now exist.
+simulationManager.startLoop();
 
-// Optional: Set initial camera focus or position via state actions
-// simulationActions.setCameraTarget(systemId);
-
-// 3. Start the physics loop
-startSimulationLoop();
-
-// To stop the loop later:
-// stopSimulationLoop();
+// To stop the loop later (e.g., when a "Clear System" button is pressed):
+simulationManager.stopLoop();
 
 // To pause/resume:
-// simulationActions.setPaused(true);
-// simulationActions.setPaused(false);
+import { actions } from "@teskooano/core-state";
+actions.setPaused(true);
+actions.setPaused(false);
 
 // To change time scale:
-// simulationActions.setTimeScale(10); // 10x speed
+actions.setTimeScale(10); // 10x speed
 ```
 
-_(Removing outdated toolbar/web component sections as they are not present in the current code structure)_
+### Camera Control (from a UI component)
+
+```typescript
+import type { CameraManager } from "@teskooano/app-simulation";
+import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
+
+// Assume `cameraManager` is an instance of CameraManager passed to the UI
+// Assume `renderer` is the ModularSpaceRenderer instance
+
+// Initialize the camera manager with its dependencies
+cameraManager.setDependencies({ renderer });
+
+// Set focus to an object
+cameraManager.followObject("earth");
+
+// Clear focus and return to default view
+cameraManager.clearFocus(); // or cameraManager.followObject(null);
+
+// Reset camera to its initial state
+cameraManager.resetCameraView();
+```
 
 ## API Reference
 
 ### Exports from `index.ts`
 
 ```typescript
-// Main class for renderer setup
-class Simulation {
-  constructor(container: HTMLElement);
-  // Primarily manages the renderer instance
+// The singleton instance for controlling the simulation loop
+export const simulationManager: SimulationManager;
+
+// The class for managing the simulation loop and state
+export class SimulationManager {
+  startLoop(): void;
+  stopLoop(): void;
+  resetSystem(skipStateClear?: boolean): void;
+  // ... plus observable event streams
 }
-export default Simulation;
 
-// Core simulation loop controls
-export function startSimulationLoop(): void;
-export function stopSimulationLoop(): void;
+// The class for managing high-level camera state
+export class CameraManager {
+  setDependencies(options: CameraManagerOptions): void;
+  followObject(objectId: string | null): void;
+  clearFocus(): void;
+  resetCameraView(): void;
+  setFov(fov: number): void;
+  getCameraState$(): BehaviorSubject<CameraManagerState>;
+  // ... and more
+}
 
-// Utility to reset simulation state
-export function resetSystem(systemInitializer?: () => string): void;
+// Type definitions for camera state and options
+export type { CameraManagerState, CameraManagerOptions };
 
-// Placeholder/Example solar system setup
-export function initializeSolarSystem(): string; // Likely defined in systems/solar-system
+// Constants for camera defaults
+export * from "./camera/constants";
+
+// System initializers, e.g.:
+export function initializeSolarSystem(): void;
 ```
-
-### Exports from `loop.ts`
-
-_(Primarily internal loop logic, `startSimulationLoop` and `stopSimulationLoop` are re-exported via `index.ts`)_
 
 ### Exports from `systems/*`
 
-_(Example: `systems/redDwarfSystem.ts`)_
+_(Example: `systems/solar-system/index.ts`)_
 
 ```typescript
-export function initializeRedDwarfSystem(): string; // Returns the ID of the primary star
+export function initializeSolarSystem(): void; // Populates state, returns nothing
 ```
 
 _(Add other system initializers as needed)_
 
 ## Dependencies
 
-- `@teskooano/core-math`
 - `@teskooano/core-physics`
 - `@teskooano/core-state`
 - `@teskooano/data-types`
-- `@teskooano/renderer-threejs`
+- `rxjs`
 - `three`
 
 ---
 
-_Remember to commit often! `git commit -m "docs(simulation): update README for v0.1.0"`_
+_Remember to commit often! `git commit -m "docs(simulation): update README for v0.2.0"`_
