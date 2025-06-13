@@ -7,19 +7,19 @@ import {
   type SimulationState,
 } from "@teskooano/core-state";
 import {
+  CelestialObject,
   CelestialStatus,
   CelestialType,
+  RenderableCelestialObject,
+  RingSystemProperties,
   SCALE,
   scaleSize,
-  type CelestialObject,
 } from "@teskooano/data-types";
 import { BehaviorSubject, Subscription } from "rxjs";
 import * as THREE from "three";
 import { physicsToThreeJSPosition } from "./utils/coordinateUtils";
-import type {
-  RenderableCelestialObject,
-  RendererVisualSettings,
-} from "./types";
+import type { RendererVisualSettings } from "./types";
+import { physicsSystemAdapter } from "@teskooano/core-state";
 
 /**
  * Acts as a bridge between the core application state and the rendering engine.
@@ -384,5 +384,119 @@ export class RendererStateAdapter {
     this.unsubscribeSimState?.unsubscribe();
     this.unsubscribeObjects = null;
     this.unsubscribeSimState = null;
+  }
+
+  private createRenderableObject(
+    obj: CelestialObject,
+  ): RenderableCelestialObject {
+    const position = new THREE.Vector3();
+    physicsToThreeJSPosition(position, obj.physicsStateReal.position_m);
+    const rotation = obj.rotation
+      ? obj.rotation.clone()
+      : new THREE.Quaternion();
+
+    return {
+      celestialObjectId: obj.id,
+      name: obj.name,
+      type: obj.type,
+      status: obj.status,
+      seed: obj.seed || obj.name,
+      radius: scaleSize(obj.realRadius_m, obj.type),
+      mass: obj.realMass_kg,
+      position,
+      rotation,
+      properties: obj.properties,
+      orbit: obj.orbit,
+      parentId: obj.parentId,
+      primaryLightSourceId: obj.currentParentId,
+      isVisible: true,
+      isTargetable: true,
+      isSelected: false,
+      isFocused: false,
+      realRadius_m: obj.realRadius_m,
+      temperature: obj.temperature,
+      axialTilt: obj.axialTilt,
+      uniforms: {},
+    };
+  }
+
+  private createRenderableRingSystem(
+    obj: CelestialObject,
+    ringSystem: RingSystemProperties,
+  ): RenderableCelestialObject {
+    const position = new THREE.Vector3();
+    physicsToThreeJSPosition(position, obj.physicsStateReal.position_m);
+
+    return {
+      celestialObjectId: `${obj.id}-${ringSystem.rings[0].innerRadius}`,
+      name: `${obj.name} Rings`,
+      type: CelestialType.RING_SYSTEM,
+      status: CelestialStatus.ACTIVE,
+      seed: obj.seed || obj.name,
+      radius: scaleSize(
+        ringSystem.rings[0].outerRadius,
+        CelestialType.RING_SYSTEM,
+      ),
+      mass: 0,
+      position,
+      rotation: new THREE.Quaternion(),
+      properties: ringSystem,
+      orbit: undefined,
+      parentId: obj.id,
+      primaryLightSourceId: obj.currentParentId,
+      isVisible: true,
+      isTargetable: false,
+      isSelected: false,
+      isFocused: false,
+      realRadius_m: 0,
+      temperature: 0,
+      axialTilt: obj.axialTilt,
+      uniforms: {},
+    };
+  }
+
+  private updateRenderableObject(
+    obj: CelestialObject,
+    existing: RenderableCelestialObject | undefined,
+    determineLightSource: (id: string) => string | undefined,
+  ): RenderableCelestialObject {
+    const target =
+      existing ??
+      ({
+        celestialObjectId: obj.id,
+        position: new THREE.Vector3(),
+        rotation: new THREE.Quaternion(),
+        isVisible: true,
+        isTargetable: true,
+        isSelected: false,
+        isFocused: false,
+        uniforms: {},
+      } as RenderableCelestialObject);
+
+    const realRadius = obj.realRadius_m ?? 0;
+
+    physicsToThreeJSPosition(target.position, obj.physicsStateReal.position_m);
+    target.rotation.copy(
+      this.calculateRotation(
+        obj.axialTilt,
+        obj.siderealRotationPeriod_s,
+      ).toThreeJS(),
+    );
+
+    target.name = obj.name;
+    target.type = obj.type;
+    target.seed = obj?.seed ?? (target.seed || crypto.randomUUID());
+    target.radius = scaleSize(realRadius, obj.type);
+    target.mass = (obj.realMass_kg ?? 0) * SCALE.MASS;
+    target.properties = obj.properties;
+    target.orbit = obj.orbit;
+    target.parentId = obj.parentId;
+    target.primaryLightSourceId = determineLightSource(obj.id);
+    target.realRadius_m = realRadius;
+    target.axialTilt = obj.axialTilt;
+    target.status = obj.status;
+    target.uniforms.temperature = obj.temperature;
+
+    return target;
   }
 }

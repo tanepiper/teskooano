@@ -4,16 +4,24 @@ This package provides managers and utilities for handling visual effects and opt
 
 ## Features
 
-- **`LightManager`**: Manages dynamic light sources, primarily point lights representing stars, and ambient light. Provides methods to add, update, and remove lights, as well as retrieve light data for shaders.
-- **`LODManager`**: Manages Level of Detail (LOD) for scene objects using Three.js's built-in `THREE.LOD` class. It dynamically adjusts the geometric detail of objects based on their distance to the camera to optimize performance. Includes helper functions for creating LOD meshes and calculating appropriate distance thresholds.
+- **`LightManager`**: Manages dynamic light sources. It reactively creates, updates, and removes `THREE.PointLight` sources based on star data from the core state, and also manages global ambient light.
+- **`LODManager`**: Manages Level of Detail (LOD) for scene objects using Three.js's built-in `THREE.LOD` class. It dynamically adjusts the geometric detail of objects based on their distance to the camera to optimize performance.
 - **Debug Capabilities**: Includes optional debugging features for visualizing LOD levels and distances.
+
+## Architecture
+
+This package provides two main, independent manager classes: `LightManager` and `LODManager`. They are designed to be instantiated and used directly by a renderer integrator, such as `@teskooano/renderer-threejs`.
+
+For more details, see the `ARCHITECTURE.md` file.
 
 ## Usage
 
-This package is typically used internally by the main `@teskooano/renderer-threejs` package or specific object renderers (e.g., celestial body renderers) to apply lighting and LOD optimizations to the scene.
+This package is used internally by the main `@teskooano/renderer-threejs` package. The `ModularSpaceRenderer` class instantiates both `LightManager` and `LODManager` and integrates them into its render loop.
+
+A conceptual example:
 
 ```typescript
-import { EffectsManager } from "@teskooano/renderer-threejs-effects";
+import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
 import * as THREE from "three";
 
 // Assuming scene and camera are already initialized
@@ -25,24 +33,21 @@ const camera = new THREE.PerspectiveCamera(
   1000,
 );
 
-const effectsManager = new EffectsManager(scene, camera);
+// Instantiate managers directly
+const lightManager = new LightManager(scene, camera, false);
+const lodManager = new LODManager(camera);
 
-// Add a star light
-effectsManager.lightManager.addStarLight(
-  "star-1",
-  new THREE.Vector3(100, 100, 100),
-  new THREE.Color(0xffffff),
-);
-
-// Create and add an LOD object (example)
-// const lodObject = effectsManager.lodManager.createLODMesh(...);
+// Create an LOD object and add it to the scene
+// (In the real app, this is done by the ObjectManager/MeshFactory)
+// const lodObject = lodManager.createAndRegisterLOD(...);
 // scene.add(lodObject);
 
 function animate() {
   requestAnimationFrame(animate);
 
-  // Update effects
-  effectsManager.update();
+  // Update managers in the render loop
+  lodManager.update();
+  // LightManager updates reactively via its state subscription
 
   // ... other rendering logic ...
   renderer.render(scene, camera);

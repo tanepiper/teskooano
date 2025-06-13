@@ -1,9 +1,10 @@
 import * as THREE from "three";
 import type { CelestialObject, StarProperties } from "@teskooano/data-types";
-import { CelestialRenderer, LODLevel } from "../index";
-import { SCALE } from "@teskooano/data-types";
+import { CelestialRenderer } from "../index";
+import { SCALE, RenderableCelestialObject } from "@teskooano/data-types";
 import type { CelestialMeshOptions } from "../common/CelestialRenderer";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { LODLevel } from "@teskooano/renderer-threejs-effects";
+import { scaleSize } from "@teskooano/data-types";
 
 /**
  * Vertex shader for stars

@@ -1,6 +1,9 @@
 import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type {
+  CelestialObject,
+  RenderableCelestialObject,
+} from "@teskooano/data-types";
+import { LODLevel } from "@teskooano/renderer-threejs-effects";
 
 /**
  * Options for creating celestial object meshes
@@ -48,16 +51,6 @@ export interface LightSourceData {
    * Default: 1.0
    */
   intensity?: number;
-}
-
-/**
- * Defines a single level of detail for a celestial object.
- */
-export interface LODLevel {
-  /** The Three.js object (Mesh, Group, Points, etc.) for this level. */
-  object: THREE.Object3D;
-  /** The distance threshold at which this level becomes active. */
-  distance: number;
 }
 
 /**

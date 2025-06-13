@@ -1,8 +1,7 @@
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import {
-  RingSystemRenderer,
-  type LODLevel,
-} from "@teskooano/systems-celestial";
+import { CelestialType } from "@teskooano/data-types";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { RingSystemRenderer } from "@teskooano/systems-celestial";
+import type { LODLevel } from "@teskooano/renderer-threejs-effects";
 import * as THREE from "three";
 import { createFallbackSphere } from "./createFallbackSphere";
 

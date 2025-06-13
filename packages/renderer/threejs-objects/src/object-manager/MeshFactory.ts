@@ -4,15 +4,14 @@ import {
   GasGiantProperties,
   StarProperties,
 } from "@teskooano/data-types";
-import type { LODManager } from "@teskooano/renderer-threejs-effects";
+import type { LODLevel, LODManager } from "@teskooano/renderer-threejs-effects";
 import {
   BaseTerrestrialRenderer,
   createStarRenderer,
   type CelestialRenderer,
-  type LODLevel,
 } from "@teskooano/systems-celestial";
 import { RingSystemRenderer } from "@teskooano/systems-celestial";
-import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
 import {
   createAsteroidFieldMesh,

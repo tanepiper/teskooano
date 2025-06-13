@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineBuilder } from "../utils/LineBuilder";

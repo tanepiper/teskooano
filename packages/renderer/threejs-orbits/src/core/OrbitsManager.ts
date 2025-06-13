@@ -1,8 +1,6 @@
 import * as THREE from "three";
-import {
-  type RenderableCelestialObject,
-  type RendererStateAdapter,
-} from "@teskooano/renderer-threejs";
+import { type RendererStateAdapter } from "@teskooano/renderer-threejs";
+import { type RenderableCelestialObject } from "@teskooano/data-types";
 import type { Observable, Subscription } from "rxjs";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { KeplerianManager } from "../keplerian/KeplerianManager";

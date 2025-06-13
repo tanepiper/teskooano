@@ -97,9 +97,7 @@ constructor(container: HTMLElement, options?: ModularSpaceRendererOptions)
 - `setGridVisible(visible: boolean)` / `toggleGrid()`: Controls grid visibility.
 - `setOrbitsVisible(visible: boolean)` / `toggleOrbits()`: Controls orbit visibility.
 - `setCelestialLabelsVisible(visible: boolean)`: Controls label visibility.
-- `setFollowTarget(id: string | null)`: _(Deprecated)_ Sets the camera follow target.
 - `setFollowTargetObject(object: THREE.Object3D | null, offset?: THREE.Vector3)`: Low-level method to follow a 3D object.
-- `updateCamera(position, target)`: _(Deprecated)_ Manually sets camera position/target.
 
 #### Key Properties (Accessing Sub-Managers)
 

@@ -1,8 +1,8 @@
 import * as THREE from "three";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { Subscription } from "rxjs";
 
-import type { LODLevel } from "@teskooano/systems-celestial";
+import type { LODLevel } from "./lod-manager/types";
 
 import {
   getSimulationState,

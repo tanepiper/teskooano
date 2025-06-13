@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { renderableStore } from "@teskooano/core-state";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType, StarProperties } from "@teskooano/data-types";
 import { Observable, Subscription, EMPTY } from "rxjs";
 import { tap, catchError, map } from "rxjs/operators";

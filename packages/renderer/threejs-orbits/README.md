@@ -1,82 +1,58 @@
 # @teskooano/renderer-threejs-orbits
 
-Visualization of orbital paths using Three.js for the Teskooano space simulation engine.
+This package provides visualization of orbital paths using Three.js for the Teskooano space simulation engine.
 
 ## Features
 
-- Keplerian orbit visualization (static elliptical paths)
-- Verlet-based trajectory visualization (dynamic trails and predictions)
-- Memory-efficient buffer management
-- Togglable visualization modes
+- **Keplerian Orbits**: Renders static, idealized elliptical paths based on orbital parameters.
+- **Verlet-based Trajectories**:
+  - **Trails**: Shows the recent, historical path of an object.
+  - **Predictions**: Shows the predicted future path for a selected object based on physics calculations.
+- **Dynamic Mode Switching**: Seamlessly toggle between Keplerian and Verlet visualization modes.
+- **Memory-Efficient**: Uses buffer pooling and shared materials to minimize resource consumption.
 
 ## Architecture
 
-This package is currently undergoing a refactoring process to improve its architecture and organization. See [ARCHITECTURE.md](./ARCHITECTURE.md) for a detailed overview of the current and future structure.
+The package is orchestrated by a central `OrbitsManager` which delegates tasks to specialized sub-managers for each visualization type (`KeplerianManager`, `TrailManager`, `PredictionManager`). This provides a clean separation of concerns.
 
-## Current Refactoring Status
-
-The refactoring is now complete while maintaining backward compatibility:
-
-- [x] Memory management improvements
-- [x] Physics calculation redundancy removed
-- [x] New directory structure created
-- [x] Utility classes extracted
-- [x] Keplerian orbit visualization refactored
-- [x] Verlet visualization refactored
-- [x] Main OrbitManager refactored to OrbitsManager
+For a detailed explanation of the design, see the [ARCHITECTURE.md](./ARCHITECTURE.md) file.
 
 ## Usage
 
-### Legacy API (backward compatible)
+The `OrbitsManager` is typically instantiated and managed by a higher-level renderer class.
 
 ```typescript
-// Create an OrbitManager instance
-const orbitManager = new OrbitManager(
-  objectManager,
-  stateAdapter,
-  renderableStore.renderableObjects$,
-);
+import {
+  OrbitsManager,
+  VisualizationMode,
+} from "@teskooano/renderer-threejs-orbits";
+import { SceneManager } from "@teskooano/renderer-threejs-core";
+import * as THREE from "three";
 
-// Toggle between Keplerian and Verlet modes
-orbitManager.setVisualizationMode(LegacyVisualizationMode.Keplerian);
-orbitManager.setVisualizationMode(LegacyVisualizationMode.Verlet);
+// --- Initialization ---
+const sceneManager = new SceneManager(new THREE.Scene());
+const orbitsManager = new OrbitsManager(sceneManager);
 
-// Toggle orbit visualization
-orbitManager.toggleVisualization();
+// --- In the Render Loop ---
+function animate() {
+  requestAnimationFrame(animate);
 
-// Highlight an object's orbit
-orbitManager.highlightVisualization("celestialObjectId");
+  // The OrbitsManager's update method handles all orbit-related updates
+  orbitsManager.update();
+}
 
-// Update visualizations (call per frame)
-orbitManager.updateAllVisualizations();
-
-// Clean up resources
-orbitManager.dispose();
-```
-
-### New API (preferred for new code)
-
-```typescript
-// Create an OrbitsManager instance
-const orbitsManager = new OrbitsManager(
-  objectManager,
-  stateAdapter,
-  renderableStore.renderableObjects$,
-);
+// --- Interacting with the Manager ---
 
 // Toggle between Keplerian and Verlet modes
 orbitsManager.setVisualizationMode(VisualizationMode.Keplerian);
 orbitsManager.setVisualizationMode(VisualizationMode.Verlet);
 
-// Toggle orbit visualization
+// Toggle orbit visibility on and off
 orbitsManager.toggleVisualization();
 
-// Highlight an object's orbit
+// Highlight the orbit/path for a specific object
 orbitsManager.highlightVisualization("celestialObjectId");
 
-// Update visualizations (call per frame)
-orbitsManager.updateAllVisualizations();
-
-// Clean up resources
+// --- Cleanup ---
 orbitsManager.dispose();
 ```

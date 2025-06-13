@@ -1,10 +1,14 @@
-import { CelestialType, StarProperties } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import {
+  CelestialType,
+  StarProperties,
+  StellarType,
+} from "@teskooano/data-types";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import {
   createStarRenderer,
   type CelestialRenderer,
-  type LODLevel,
 } from "@teskooano/systems-celestial";
+import type { LODLevel } from "@teskooano/renderer-threejs-effects";
 import * as THREE from "three";
 import { createFallbackSphere } from "./createFallbackSphere";
 

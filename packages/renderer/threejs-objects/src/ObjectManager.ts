@@ -3,13 +3,14 @@ import {
   accelerationVectors$,
   getCelestialObjects,
   celestialObjects$,
+  renderableStore,
 } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
   GasGiantClass,
 } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { LightManager, LODManager } from "@teskooano/renderer-threejs-effects";
 import type { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-interaction";
@@ -33,7 +34,7 @@ import {
   AccelerationVisualizer,
 } from "./object-manager";
 
-import type { LODLevel } from "@teskooano/systems-celestial";
+import type { LODLevel } from "@teskooano/renderer-threejs-effects";
 
 import type { DestructionEvent } from "@teskooano/core-physics";
 import { rendererEvents } from "@teskooano/renderer-threejs";
