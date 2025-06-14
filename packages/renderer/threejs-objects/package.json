@@ -29,7 +29,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "three": "^0.176.0",
+    "three": "^0.177.0",
     "@teskooano/core-state": "file:../../../core/state",
     "@teskooano/data-types": "file:../../../core/data-types",
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
@@ -42,7 +42,7 @@
     "@teskooano/renderer-threejs-labels": "file:../threejs-labels"
   },
   "devDependencies": {
-    "@types/three": "^0.176.0",
-    "vitest": "^3.1.2"
+    "@types/three": "^0.177.0",
+    "vitest": "^3.2.3"
   }
 }

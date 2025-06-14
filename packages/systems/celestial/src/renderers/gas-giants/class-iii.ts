@@ -2,7 +2,7 @@ import type { GasGiantProperties } from "@teskooano/data-types";
 import * as THREE from "three";
 import { BaseGasGiantMaterial, BaseGasGiantRenderer } from "./base-gas-giant";
 
-import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import classIIIFragmentShader from "../../shaders/gas-giants/class-iii.fragment.glsl";
 import classIIIVertexShader from "../../shaders/gas-giants/class-iii.vertex.glsl";
 

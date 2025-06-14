@@ -12,8 +12,9 @@ import {
   MaterialDebugData,
   LightingDebugData,
 } from "@teskooano/core-debug";
-import type { LightSourcesMap } from "../common/CelestialRenderer";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import type { LightSourcesMap } from "../base/CelestialRenderer";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 
 /**
  * Helper class that adds debug functionality to CelestialRenderers

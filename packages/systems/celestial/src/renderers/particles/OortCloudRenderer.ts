@@ -3,10 +3,11 @@ import {
   type OortCloudProperties as CentralOortCloudProperties,
   SCALE,
 } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
-import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "..";
+import { CelestialMeshOptions, CelestialRenderer } from "..";
 import { renderableStore, getSimulationState } from "@teskooano/core-state";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 const oortCloudVertexShader = `
   attribute float size;

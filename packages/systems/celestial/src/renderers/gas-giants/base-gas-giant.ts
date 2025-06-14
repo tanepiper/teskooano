@@ -1,9 +1,13 @@
 import { renderableStore } from "@teskooano/core-state";
 import type { GasGiantProperties } from "@teskooano/data-types";
 import { SCALE } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "../index";
+import {
+  CelestialMeshOptions,
+  CelestialRenderer,
+} from "../base/CelestialRenderer";
 
 import basicFragmentShader from "../../shaders/gas-giants/basic.fragment.glsl";
 import basicVertexShader from "../../shaders/gas-giants/basic.vertex.glsl";

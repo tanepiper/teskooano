@@ -1,7 +1,6 @@
 import * as THREE from "three";
-import type { CelestialObject, StarProperties } from "@teskooano/data-types";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
-import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**
  * Material for Wolf-Rayet stars

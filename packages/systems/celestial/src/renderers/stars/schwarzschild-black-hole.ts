@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import type { CelestialObject } from "@teskooano/data-types";
 import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
-import { GravitationalLensingHelper } from "../common/gravitational-lensing";
-import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import type { CelestialMeshOptions } from "../common/CelestialRenderer";
+import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type { CelestialMeshOptions } from "../base/CelestialRenderer";
 
 /**
  * Material for Schwarzschild black holes
@@ -189,7 +189,7 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
   createMesh(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
-  ): THREE.Object3D {
+  ): THREE.Group {
     const group = new THREE.Group();
     group.name = `blackhole-${object.celestialObjectId}`;
 

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "..";
+import { CelestialMeshOptions, CelestialRenderer } from "..";
 
 import {
   CelestialType,
@@ -7,8 +7,9 @@ import {
   AU_METERS,
   type AsteroidFieldProperties as CentralAsteroidFieldProperties,
 } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { simulationStateService } from "@teskooano/core-state";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 const asteroidVertexShader = `
   attribute float size;

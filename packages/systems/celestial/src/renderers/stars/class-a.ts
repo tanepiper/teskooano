@@ -1,7 +1,6 @@
 import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
-import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 
 /**
  * Material for A-class stars

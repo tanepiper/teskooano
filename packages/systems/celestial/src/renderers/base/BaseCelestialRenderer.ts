@@ -1,14 +1,13 @@
 import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
 import {
   CelestialMeshOptions,
   CelestialRenderer,
   LightSourceData,
   LightSourcesMap,
-  LODLevel,
 } from "./CelestialRenderer";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import { getCelestialObjects, renderableStore } from "@teskooano/core-state";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { renderableStore } from "@teskooano/core-state";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
  * Abstract base class for all celestial renderers

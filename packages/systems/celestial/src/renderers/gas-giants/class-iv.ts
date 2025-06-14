@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { BaseGasGiantMaterial, BaseGasGiantRenderer } from "./base-gas-giant";
 import classIVFragmentShader from "../../shaders/gas-giants/class-iv.fragment.glsl";
 import classIVVertexShader from "../../shaders/gas-giants/class-iv.vertex.glsl";
-import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 
 /**
  * Material for Class IV gas giants (Alkali Metals / Dark)

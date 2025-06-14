@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "typescript": "5.8.3",
-    "vitest": "3.1.2",
-    "@types/web": "0.0.228"
+    "vitest": "3.2.3",
+    "@types/web": "0.0.241"
   }
 }

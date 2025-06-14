@@ -1,13 +1,15 @@
 import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
+import type {
+  CelestialObject,
+  RenderableCelestialObject,
+} from "@teskooano/data-types";
 import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
 import {
   SchwarzschildBlackHoleMaterial,
   AccretionDiskMaterial,
 } from "./schwarzschild-black-hole";
-import { GravitationalLensingHelper } from "../common/gravitational-lensing";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import type { CelestialMeshOptions } from "../common/CelestialRenderer";
+import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
+import type { CelestialMeshOptions } from "../base/CelestialRenderer";
 
 /**
  * Material for Kerr black holes' ergosphere
@@ -176,9 +178,9 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
   createMesh(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
-  ): THREE.Object3D {
+  ): THREE.Group {
     const group = new THREE.Group();
-    group.name = `kerr-blackhole-${object.celestialObjectId}`;
+    group.name = `${object.celestialObjectId}-group`;
 
     this.addEventHorizon(object, group);
 

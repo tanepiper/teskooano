@@ -17,12 +17,12 @@
     "lint": "eslint src/**/*.ts"
   },
   "dependencies": {
-    "three": "0.176.0"
+    "three": "0.177.0"
   },
   "devDependencies": {
     "typescript": "5.8.3",
-    "vitest": "3.1.2",
-    "eslint": "9.25.1",
-    "@types/three": "0.176.0"
+    "vitest": "3.2.3",
+    "eslint": "9.29.0",
+    "@types/three": "0.177.0"
   }
 }

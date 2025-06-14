@@ -1,13 +1,15 @@
 import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
+import type {
+  CelestialObject,
+  RenderableCelestialObject,
+} from "@teskooano/data-types";
 import {
   BaseStarMaterial,
   BaseStarRenderer,
   CoronaMaterial,
 } from "./base-star";
-import { GravitationalLensingHelper } from "../common/gravitational-lensing";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
-import type { CelestialMeshOptions } from "../common/CelestialRenderer";
+import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
+import type { CelestialMeshOptions } from "../base/CelestialRenderer";
 
 /**
  * Material for neutron stars
@@ -147,12 +149,63 @@ export class NeutronStarRenderer extends BaseStarRenderer {
   createMesh(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
-  ): THREE.Object3D {
-    const group = super.createMesh(object, options) as THREE.Group;
+  ): THREE.Group {
+    const group = new THREE.Group();
+    group.name = `${object.celestialObjectId}-group`;
 
-    this.addRadiationJets(object, group);
+    // Create the main star body
+    const segments = options?.detailLevel === "high" ? 64 : 48;
+    const geometry = new THREE.SphereGeometry(
+      object.radius,
+      segments,
+      segments,
+    );
+    const material = this.getMaterial(object);
+    this.materials.set(object.celestialObjectId, material as BaseStarMaterial);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = `${object.celestialObjectId}-body`;
+    group.add(mesh);
+    this.addCorona(object, group);
 
-    this.addEnhancedGlow(object, group);
+    // Add jets
+    const jetLength = object.radius * 10;
+    const jetRadius = object.radius * 0.5;
+
+    const jetGeometry = new THREE.CylinderGeometry(
+      jetRadius,
+      jetRadius,
+      jetLength,
+      16,
+      1,
+      true,
+    );
+
+    const northJetMaterial = new PulsarJetMaterial(this.getStarColor(object), {
+      opacity: 0.7,
+      pulseSpeed: 15.0,
+    });
+    const jetMaterials: PulsarJetMaterial[] = [];
+    jetMaterials.push(northJetMaterial);
+
+    const northJet = new THREE.Mesh(jetGeometry, northJetMaterial);
+    northJet.position.set(0, jetLength / 2, 0);
+    northJet.name = `${object.celestialObjectId}-jet-north`;
+
+    const southJetMaterial = new PulsarJetMaterial(this.getStarColor(object), {
+      opacity: 0.7,
+      pulseSpeed: 15.0,
+    });
+    jetMaterials.push(southJetMaterial);
+
+    const southJet = new THREE.Mesh(jetGeometry, southJetMaterial);
+    southJet.position.set(0, -jetLength / 2, 0);
+    southJet.rotation.x = Math.PI;
+    southJet.name = `${object.celestialObjectId}-jet-south`;
+
+    group.add(northJet);
+    group.add(southJet);
+
+    this.jetMaterials.set(object.celestialObjectId, jetMaterials);
 
     return group;
   }
@@ -208,77 +261,6 @@ export class NeutronStarRenderer extends BaseStarRenderer {
       group.add(coronaMesh2);
       group.add(coronaMesh3);
     });
-  }
-
-  /**
-   * Add radiation jets to simulate pulsar behavior
-   */
-  private addRadiationJets(
-    object: RenderableCelestialObject,
-    group: THREE.Group,
-  ): void {
-    const jetMaterials: PulsarJetMaterial[] = [];
-    this.jetMaterials.set(object.celestialObjectId, jetMaterials);
-
-    const jetColor = new THREE.Color(0x8abfff);
-    const jetLength = object.radius * 30;
-    const jetRadius = object.radius * 3;
-
-    const jetGeometry = new THREE.ConeGeometry(
-      jetRadius,
-      jetLength,
-      16,
-      1,
-      true,
-    );
-
-    const northJetMaterial = new PulsarJetMaterial(jetColor, {
-      opacity: 0.7,
-      pulseSpeed: 15.0,
-    });
-    jetMaterials.push(northJetMaterial);
-
-    const northJet = new THREE.Mesh(jetGeometry, northJetMaterial);
-    northJet.position.set(0, jetLength / 2, 0);
-    northJet.name = `${object.celestialObjectId}-jet-north`;
-
-    const southJetMaterial = new PulsarJetMaterial(jetColor, {
-      opacity: 0.7,
-      pulseSpeed: 15.0,
-    });
-    jetMaterials.push(southJetMaterial);
-
-    const southJet = new THREE.Mesh(jetGeometry, southJetMaterial);
-    southJet.position.set(0, -jetLength / 2, 0);
-    southJet.rotation.x = Math.PI;
-    southJet.name = `${object.celestialObjectId}-jet-south`;
-
-    group.add(northJet);
-    group.add(southJet);
-  }
-
-  /**
-   * Add additional glow effect to make neutron star more visible
-   */
-  private addEnhancedGlow(
-    object: RenderableCelestialObject,
-    group: THREE.Group,
-  ): void {
-    const light = new THREE.PointLight(0xdcecff, 2.0, object.radius * 100);
-    light.name = `${object.celestialObjectId}-light`;
-    group.add(light);
-
-    const glowGeometry = new THREE.SphereGeometry(object.radius * 1.5, 32, 32);
-    const glowMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.8,
-      blending: THREE.AdditiveBlending,
-    });
-
-    const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
-    glowMesh.name = `${object.celestialObjectId}-enhanced-glow`;
-    group.add(glowMesh);
   }
 
   /**

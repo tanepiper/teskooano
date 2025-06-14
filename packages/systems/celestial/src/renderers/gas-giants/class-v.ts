@@ -7,7 +7,7 @@ import { BaseGasGiantMaterial, BaseGasGiantRenderer } from "./base-gas-giant";
 
 import classVFragmentShader from "../../shaders/gas-giants/class-v.fragment.glsl";
 import classVVertexShader from "../../shaders/gas-giants/class-v.vertex.glsl";
-import { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 
 /**
  * Material for Class V gas giants (Silicate Clouds / Bright / Glowing)

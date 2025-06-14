@@ -1,7 +1,7 @@
-jq = "1.7.1"
-moon = "1.35.1"
-node = "23.11.0"
-npm = "11.3.0"
+jq = "1.8.0"
+moon = "1.37.1"
+node = "24.2.0"
+npm = "11.4.2"
 
 [plugins]
 jq = "https://raw.githubusercontent.com/appthrust/proto-toml-plugins/main/jq/plugin.toml"

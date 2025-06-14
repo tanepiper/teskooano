@@ -1,12 +1,13 @@
 import * as THREE from "three";
-import type { CelestialObject, StarProperties } from "@teskooano/data-types";
-import { CelestialRenderer } from "../common/CelestialRenderer";
+import type { StarProperties } from "@teskooano/data-types";
+import { CelestialRenderer } from "../base/CelestialRenderer";
+import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
 import {
   SCALE,
   RenderableCelestialObject,
   scaleSize,
 } from "@teskooano/data-types";
-import type { CelestialMeshOptions } from "../common/CelestialRenderer";
+import type { CelestialMeshOptions } from "../base/CelestialRenderer";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
@@ -321,20 +322,20 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    const scale = typeof SCALE === "number" ? SCALE : 1;
+    const highDetailGroup = this.createMesh(object, options);
 
-    const highDetailGroup = this._createHighDetailGroup(object, options);
-    const level0: LODLevel = { object: highDetailGroup, distance: 0 };
+    const lodLevels: LODLevel[] = [{ object: highDetailGroup, distance: 0 }];
 
-    const mediumDetailGroup = this._createHighDetailGroup(object, {
+    const mediumDetailGroup = this.createMesh(object, {
       ...options,
       segments: 32,
     });
     mediumDetailGroup.name = `${object.celestialObjectId}-medium-lod`;
     const level1: LODLevel = {
       object: mediumDetailGroup,
-      distance: 200 * scale,
+      distance: 200 * (typeof SCALE === "number" ? SCALE : 1),
     };
+    lodLevels.push(level1);
 
     const lowDetailMesh = new THREE.Mesh(
       new THREE.SphereGeometry(object.radius * 0.8, 8, 8),
@@ -343,22 +344,21 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     lowDetailMesh.name = `${object.celestialObjectId}-low-lod`;
     const level2Group = new THREE.Group();
     level2Group.add(lowDetailMesh);
-    const level2: LODLevel = { object: level2Group, distance: 1500 * scale };
+    const level2: LODLevel = {
+      object: level2Group,
+      distance: 1500 * (typeof SCALE === "number" ? SCALE : 1),
+    };
+    lodLevels.push(level2);
 
-    return [level0, level1, level2];
+    return lodLevels;
   }
 
-  /**
-   * Helper to create the high-detail group (Level 0 LOD).
-   * Contains the logic previously in createMesh.
-   * @internal
-   */
-  protected _createHighDetailGroup(
+  public createMesh(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): THREE.Group {
     const group = new THREE.Group();
-    group.name = `${object.celestialObjectId}-high-lod-group`;
+    const scale = typeof SCALE === "number" ? SCALE : 1.0;
 
     const segments = options?.detailLevel === "high" ? 64 : 48;
     const geometry = new THREE.SphereGeometry(
