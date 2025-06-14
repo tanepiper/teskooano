@@ -1,23 +1,24 @@
 import { SCALE, CelestialType, PlanetProperties } from "@teskooano/data-types";
 import * as THREE from "three";
-import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "../index";
+import { CelestialMeshOptions, LightSourcesMap } from "../index";
 import { AtmosphereMaterial } from "./materials/atmosphere.material";
 import { ProceduralPlanetMaterial } from "./materials/procedural-planet.material";
 
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
 import {
   AtmosphereService,
   AtmosphereMeshResult,
 } from "./utils/atmosphere-cloud-utils";
 import { PlanetMaterialService } from "./utils/planet-material-utils";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 const MAX_LIGHTS = 4;
 
 /**
  * Base renderer for terrestrial planets and moons
  */
-export class BaseTerrestrialRenderer implements CelestialRenderer {
-  protected materials: Map<string, THREE.Material> = new Map();
+export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
   protected atmosphereMaterials: Map<string, AtmosphereMaterial> = new Map();
   protected textureLoader: THREE.TextureLoader;
 
@@ -25,9 +26,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     string,
     { color: THREE.Texture | null; normal: THREE.Texture | null }
   > = new Map();
-  protected startTime: number = Date.now() / 1000;
-  protected elapsedTime: number = 0;
-  protected objectIds: Set<string> = new Set();
 
   private _worldPos = new THREE.Vector3();
   private _lightWorldPos = new THREE.Vector3();
@@ -38,6 +36,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
   protected atmosphereCloudService: AtmosphereService;
 
   constructor() {
+    super();
     this.textureLoader = new THREE.TextureLoader();
     this.materialService = new PlanetMaterialService();
     this.atmosphereCloudService = new AtmosphereService();
@@ -50,8 +49,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    this.objectIds.add(object.celestialObjectId);
-
     const baseRadius = object.radius ?? 1;
     const scale = typeof SCALE === "number" ? SCALE : 1;
 
@@ -101,7 +98,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
     let bodyMesh: THREE.Mesh;
     try {
       const bodyMaterial = this.materialService.createMaterial(object);
-      this.initializeMaterialMap(object.celestialObjectId, bodyMaterial);
+      this.registerMaterial(object.celestialObjectId, bodyMaterial);
       const bodyGeometry = new THREE.SphereGeometry(
         baseRadius,
         segments,
@@ -119,17 +116,13 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
         roughness: 0.8,
         metalness: 0.1,
       });
-      this.initializeMaterialMap(object.celestialObjectId, fallbackMaterial);
+      this.registerMaterial(object.celestialObjectId, fallbackMaterial);
       const bodyGeometry = new THREE.SphereGeometry(
         baseRadius,
         segments,
         segments,
       );
       bodyMesh = new THREE.Mesh(bodyGeometry, fallbackMaterial);
-      console.warn(
-        `[BaseTerrestrialRenderer] Created fallback body mesh for ${object.celestialObjectId}:`,
-        bodyMesh,
-      );
     }
     bodyMesh.name = `${object.celestialObjectId}-body`;
     group.add(bodyMesh);
@@ -210,27 +203,18 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
   }
 
   /**
-   * Initialize the materials map with the created material
-   */
-  protected initializeMaterialMap(id: string, material: THREE.Material): void {
-    this.materials.set(id, material);
-  }
-
-  /**
    * Update uniforms for the planet based on time and lighting.
    */
   update(
+    object: RenderableCelestialObject,
     time: number,
-    lightSources?: Map<
-      string,
-      { position: THREE.Vector3; color: THREE.Color; intensity: number }
-    >,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
     camera?: THREE.Camera,
   ): void {
+    super.update(object, time, timeScale, lightSources, camera);
+
     if (!lightSources || lightSources.size === 0) {
-      console.warn(
-        "[BaseTerrestrialRenderer] No light sources provided, adding default light",
-      );
       lightSources = new Map<
         string,
         { position: THREE.Vector3; color: THREE.Color; intensity: number }
@@ -242,24 +226,24 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       });
     }
 
-    this.materials.forEach((material) => {
-      if (material instanceof ProceduralPlanetMaterial) {
-        material.update(time, lightSources, camera);
-      }
-    });
+    const bodyMaterial = this.materials.get(object.celestialObjectId);
+    if (bodyMaterial && bodyMaterial instanceof ProceduralPlanetMaterial) {
+      bodyMaterial.update(time, lightSources, camera);
+    }
 
-    // Update atmosphere materials with current time and light sources
-    this.atmosphereMaterials.forEach((material) => {
-      material.update(time, camera, lightSources);
-    });
+    const atmosphereMaterial = this.atmosphereMaterials.get(
+      object.celestialObjectId,
+    );
+    if (atmosphereMaterial) {
+      atmosphereMaterial.update(time, camera, lightSources);
+    }
   }
 
   /**
    * Dispose of all materials and textures
    */
   dispose(): void {
-    this.materials.forEach((material) => material.dispose());
-    this.materials.clear();
+    super.dispose();
 
     this.atmosphereMaterials.forEach((material) => material.dispose());
     this.atmosphereMaterials.clear();
@@ -269,8 +253,6 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       textures.normal?.dispose();
     });
     this.loadedTextures.clear();
-
-    this.objectIds.clear();
   }
 
   private _updateUniformIfDefined(
@@ -400,14 +382,8 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
       bodyMesh &&
       !(bodyMesh.material instanceof ProceduralPlanetMaterial)
     ) {
-      console.warn(
-        `[BaseTerrestrialRenderer] updateWith: Body mesh for ${objectData.celestialObjectId} does not have ProceduralPlanetMaterial.`,
-      );
       if (!(material instanceof ProceduralPlanetMaterial)) return;
     } else if (!bodyMesh && !(material instanceof ProceduralPlanetMaterial)) {
-      console.warn(
-        `[BaseTerrestrialRenderer] updateWith: Could not find body mesh or suitable material for ${objectData.celestialObjectId}`,
-      );
       return;
     }
 
@@ -423,18 +399,7 @@ export class BaseTerrestrialRenderer implements CelestialRenderer {
 
       if (planetProps.surface) {
         this._updateSurfaceUniforms(material, planetProps.surface);
-      } else {
-        console.warn(
-          `[BaseTerrestrialRenderer] updateWith: Planet ${objectData.celestialObjectId} has no surface properties defined.`,
-        );
       }
-    } else {
-      console.warn(
-        `[BaseTerrestrialRenderer] updateWith: Conditions not met for ${objectData.celestialObjectId}. Material:`,
-        material,
-        "Properties:",
-        objectData.properties,
-      );
     }
   }
 }

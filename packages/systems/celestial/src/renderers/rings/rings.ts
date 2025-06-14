@@ -1,7 +1,11 @@
 import { RingSystemProperties } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
-import type { CelestialMeshOptions, CelestialRenderer } from "../index";
+import type {
+  CelestialMeshOptions,
+  CelestialRenderer,
+  LightSourcesMap,
+} from "../index";
 
 import ringFragmentShader from "../../shaders/ring/ring.fragment.glsl";
 import ringVertexShader from "../../shaders/ring/ring.vertex.glsl";
@@ -12,6 +16,7 @@ import {
 } from "@teskooano/core-debug";
 import { renderableStore } from "@teskooano/core-state";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
 
 /**
  * Material for celestial object rings
@@ -97,9 +102,7 @@ export class RingMaterial extends THREE.ShaderMaterial {
   }
 }
 
-export class RingSystemRenderer implements CelestialRenderer {
-  protected materials: Map<string, RingMaterial[]> = new Map();
-  protected objectIds: Set<string> = new Set();
+export class RingSystemRenderer extends BaseCelestialRenderer {
   protected textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
 
   private _createRingGroup(
@@ -151,7 +154,7 @@ export class RingSystemRenderer implements CelestialRenderer {
       });
 
       const materialKey = `${object.celestialObjectId}-ring-${index}`;
-      this.materials.set(materialKey, [ringMaterial]);
+      this.registerMaterial(materialKey, ringMaterial);
 
       const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
       ringMesh.name = `${object.celestialObjectId}-ring-${index}`;
@@ -171,8 +174,6 @@ export class RingSystemRenderer implements CelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions & { parentLODDistances?: number[] },
   ): LODLevel[] {
-    this.objectIds.add(object.celestialObjectId);
-
     const detailedRingGroup = this._createRingGroup(object, options);
     const level0: LODLevel = { object: detailedRingGroup, distance: 0 };
 
@@ -208,96 +209,49 @@ export class RingSystemRenderer implements CelestialRenderer {
   }
 
   update(
+    object: RenderableCelestialObject,
     time: number,
-    lightSources?: Map<
-      string,
-      { position: THREE.Vector3; color: THREE.Color; intensity?: number }
-    >,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
   ): void {
-    const currentRenderableObjects = renderableStore.getRenderableObjects();
+    if (isVisualizationEnabled()) {
+      threeVectorDebug.clearVectors(`ring-system-${object.celestialObjectId}`);
+    }
+
+    const parentPosition = object.position;
+    const parentRadius = object.radius;
+
+    if (!parentPosition || parentRadius === undefined) {
+      console.warn(
+        `[RingSystemRenderer Update] Parent position or radius missing for parent ${object.celestialObjectId}. Skipping material update.`,
+      );
+      return;
+    }
+
+    const primarySunPosition =
+      this.findPrimaryLightSource(object, lightSources)?.position ??
+      new THREE.Vector3(1e11, 0, 0);
 
     if (isVisualizationEnabled()) {
-      this.objectIds.forEach((id) => {
-        threeVectorDebug.clearVectors(`ring-system-${id}`);
+      threeVectorDebug.setVectors(`ring-system-${object.celestialObjectId}`, {
+        sunDir: primarySunPosition.clone().normalize(),
+        parentPos: parentPosition.clone(),
       });
     }
 
-    this.materials.forEach((materialArray, materialKey) => {
-      const ringSystemId = materialKey.split("-ring-")[0];
-      const ringSystemObject = currentRenderableObjects[ringSystemId];
-
-      if (!ringSystemObject) {
-        console.warn(
-          `[RingSystemRenderer Update] Ring system object ${ringSystemId} not found in store.`,
+    this.materials.forEach((material, materialKey) => {
+      if (materialKey.startsWith(`${object.celestialObjectId}-ring-`)) {
+        (material as RingMaterial).update(
+          time,
+          primarySunPosition,
+          parentPosition,
+          parentRadius,
         );
-        return;
       }
-
-      const parentId = ringSystemObject.parentId;
-      if (!parentId) {
-        console.warn(
-          `[RingSystemRenderer Update] Parent ID not found for ring system ${ringSystemId}.`,
-        );
-        return;
-      }
-
-      const parentObject = currentRenderableObjects[parentId];
-      if (!parentObject) {
-        console.warn(
-          `[RingSystemRenderer Update] Parent object ${parentId} not found for ring system ${ringSystemId}.`,
-        );
-        return;
-      }
-
-      const parentPosition = parentObject.position;
-      const parentRadius = parentObject.radius;
-
-      if (!parentPosition || parentRadius === undefined) {
-        console.warn(
-          `[RingSystemRenderer Update] Parent position or radius missing for parent ${parentId}. Skipping vector storage and material update.`,
-        );
-        return;
-      }
-
-      let primarySunPosition: THREE.Vector3 | undefined = undefined;
-      const lightSourceId = parentObject.primaryLightSourceId;
-      let primaryLightData = lightSources?.get(lightSourceId ?? "");
-
-      if (!primaryLightData && lightSources && lightSources.size > 0) {
-        primaryLightData = lightSources.values().next().value;
-      }
-
-      if (primaryLightData?.position) {
-        primarySunPosition = primaryLightData.position.clone();
-      } else {
-        primarySunPosition = new THREE.Vector3(1e11, 0, 0);
-      }
-
-      if (isVisualizationEnabled() && primarySunPosition) {
-        threeVectorDebug.setVectors(`ring-system-${ringSystemId}`, {
-          sunDir: primarySunPosition.clone().normalize(),
-          parentPos: parentPosition.clone(),
-        });
-      }
-
-      materialArray.forEach((material) => {
-        material.update(time, primarySunPosition, parentPosition, parentRadius);
-      });
     });
   }
 
   dispose(): void {
-    this.materials.forEach((materialArray) => {
-      materialArray.forEach((material) => material.dispose());
-    });
-    this.materials.clear();
-
-    if (isVisualizationEnabled()) {
-      this.objectIds.forEach((id) => {
-        threeVectorDebug.clearVectors(`ring-system-${id}`);
-      });
-    }
-
-    this.objectIds.clear();
+    super.dispose();
   }
 }

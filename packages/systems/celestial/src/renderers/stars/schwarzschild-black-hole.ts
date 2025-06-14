@@ -1,9 +1,15 @@
 import * as THREE from "three";
-import type { CelestialObject } from "@teskooano/data-types";
+import type {
+  CelestialObject,
+  RenderableCelestialObject,
+} from "@teskooano/data-types";
 import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
 import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
-import type { CelestialMeshOptions } from "../base/CelestialRenderer";
+import type {
+  CelestialMeshOptions,
+  LightSourcesMap,
+} from "../base/CelestialRenderer";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
  * Material for Schwarzschild black holes
@@ -184,45 +190,57 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
   private lensingHelpers: Map<string, GravitationalLensingHelper> = new Map();
 
   /**
-   * Create the black hole mesh with event horizon and accretion disk
+   * Creates and returns an array of LOD levels for the black hole.
+   * This includes the event horizon and an accretion disk.
    */
-  createMesh(
+  getLODLevels(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
-  ): THREE.Group {
-    const group = new THREE.Group();
-    group.name = `blackhole-${object.celestialObjectId}`;
+  ): LODLevel[] {
+    // --- 1. Create all components once ---
+    const eventHorizon = this._createEventHorizon(object);
+    const accretionDisk = this._createAccretionDisk(object);
 
-    this.addEventHorizon(object, group);
+    // --- 2. Assemble LOD levels ---
 
-    this.addAccretionDisk(object, group);
+    // Level 0: High detail (Horizon + Disk)
+    const highDetailGroup = new THREE.Group();
+    highDetailGroup.name = `${object.celestialObjectId}-lod-high`;
+    highDetailGroup.add(eventHorizon.clone());
+    highDetailGroup.add(accretionDisk.clone());
+    const lod0: LODLevel = { object: highDetailGroup, distance: 0 };
 
-    return group;
+    // Level 1: Low detail (Horizon only)
+    const lowDetailGroup = new THREE.Group();
+    lowDetailGroup.name = `${object.celestialObjectId}-lod-low`;
+    lowDetailGroup.add(eventHorizon);
+    const lod1: LODLevel = { object: lowDetailGroup, distance: 10000 };
+
+    return [lod0, lod1];
   }
 
   /**
    * Add the event horizon sphere to the group
+   * @internal
    */
-  private addEventHorizon(
-    object: RenderableCelestialObject,
-    group: THREE.Group,
-  ): void {
+  private _createEventHorizon(object: RenderableCelestialObject): THREE.Mesh {
     const radius = object.radius || 1;
-
-    const geometry = new THREE.SphereGeometry(radius, 32, 32);
+    const geometry = new THREE.SphereGeometry(radius, 64, 64);
     this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
-
+    this.materials.set(
+      object.celestialObjectId,
+      this.eventHorizonMaterial as any,
+    ); // Cast needed as it's not a BaseStarMaterial
     const eventHorizon = new THREE.Mesh(geometry, this.eventHorizonMaterial);
-    group.add(eventHorizon);
+    eventHorizon.name = `${object.celestialObjectId}-event-horizon`;
+    return eventHorizon;
   }
 
   /**
    * Add the accretion disk to the group
+   * @internal
    */
-  private addAccretionDisk(
-    object: RenderableCelestialObject,
-    group: THREE.Group,
-  ): void {
+  private _createAccretionDisk(object: RenderableCelestialObject): THREE.Mesh {
     const radius = object.radius || 1;
     const diskOuterRadius = radius * 5;
     const diskInnerRadius = radius * 1.5;
@@ -234,13 +252,12 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
       1,
     );
     const diskMaterial = new AccretionDiskMaterial();
-
     this.accretionDiskMaterials.set(object.celestialObjectId, diskMaterial);
 
     const accretionDisk = new THREE.Mesh(diskGeometry, diskMaterial);
     accretionDisk.rotation.x = Math.PI / 2;
-
-    group.add(accretionDisk);
+    accretionDisk.name = `${object.celestialObjectId}-accretion-disk`;
+    return accretionDisk;
   }
 
   /**
@@ -280,13 +297,16 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
   }
 
   /**
-   * Update materials with current time
+   * Update materials with current time and handle lensing effect
    */
   update(
-    time?: number,
+    object: RenderableCelestialObject,
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.PerspectiveCamera,
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
-    camera?: THREE.PerspectiveCamera,
   ): void {
     const currentTime = time ?? Date.now() / 1000 - this.startTime;
     this.elapsedTime = currentTime;

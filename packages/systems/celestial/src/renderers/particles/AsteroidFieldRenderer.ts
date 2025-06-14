@@ -1,15 +1,14 @@
 import * as THREE from "three";
-import { CelestialMeshOptions, CelestialRenderer } from "..";
+import { CelestialMeshOptions, CelestialRenderer, LightSourcesMap } from "..";
 
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import {
   CelestialType,
   SCALE,
-  AU_METERS,
   type AsteroidFieldProperties as CentralAsteroidFieldProperties,
 } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { simulationStateService } from "@teskooano/core-state";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
 
 const asteroidVertexShader = `
   attribute float size;
@@ -100,31 +99,29 @@ const asteroidFragmentShader = `
 /**
  * Renders an asteroid field using a particle system with LOD support.
  */
-export class AsteroidFieldRenderer implements CelestialRenderer {
-  private objectId: string | null = null;
-
+export class AsteroidFieldRenderer extends BaseCelestialRenderer {
   private lodGeometries: THREE.BufferGeometry[] = [];
 
-  private sharedMaterial: THREE.ShaderMaterial | null = null;
   private asteroidTextures: THREE.Texture[] = [];
-  private time: number = 0;
-  private textureLoader = new THREE.TextureLoader();
+  private readonly textureLoader: THREE.TextureLoader;
   private loadedTextureCount = 0;
   private materialReady = false;
   private beltRotationSpeed = 0.00005;
   private particleRotationSpeed = 1.0 + Math.random() * 2;
   private beltRotationAngle = 0;
-  private lastLogTime = 0;
   private previousSimTime = 0;
-  private cumulativeRotation = 0;
-  private resetCounter = 0;
   private cumulativeParticleTime = 0;
+
+  constructor() {
+    super();
+    this.textureLoader = new THREE.TextureLoader();
+  }
 
   /**
    * Creates the shared ShaderMaterial, loading textures asynchronously.
    * @internal
    */
-  private _createSharedMaterial(): THREE.ShaderMaterial {
+  private _createSharedMaterial(objectId: string): THREE.ShaderMaterial {
     if (this.asteroidTextures.length === 0) {
       const texturePaths = [
         "space/textures/asteroids/asteroid_1.png",
@@ -140,20 +137,23 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
 
       texturePaths.forEach((path, index) => {
         this.textureLoader.load(
-          `${window.location.href}${path}`,
+          path,
           (texture) => {
             this.asteroidTextures[index] = texture;
             this.loadedTextureCount++;
 
-            if (this.sharedMaterial) {
-              if (this.sharedMaterial.uniforms.asteroidTextures.value) {
-                this.sharedMaterial.uniforms.asteroidTextures.value[index] =
-                  texture;
+            const material = this.materials.get(
+              objectId,
+            ) as THREE.ShaderMaterial;
+
+            if (material) {
+              if (material.uniforms.asteroidTextures.value) {
+                material.uniforms.asteroidTextures.value[index] = texture;
 
                 if (this.loadedTextureCount === 5) {
-                  this.sharedMaterial.uniforms.asteroidTextures.value =
+                  material.uniforms.asteroidTextures.value =
                     this.asteroidTextures;
-                  this.sharedMaterial.needsUpdate = true;
+                  material.needsUpdate = true;
                   this.materialReady = true;
                 }
               } else {
@@ -206,7 +206,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
       }
     };
 
-    this.sharedMaterial = material;
+    this.registerMaterial(objectId, material);
     return material;
   }
 
@@ -318,18 +318,17 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
       beltRotationSpeed?: number;
     },
   ): LODLevel[] {
-    this.objectId = object.celestialObjectId;
     this.lodGeometries = [];
-    this.beltRotationAngle = 0;
-    this.cumulativeRotation = 0;
-    this.resetCounter = 0;
 
     if (options?.beltRotationSpeed !== undefined) {
       this.beltRotationSpeed = options.beltRotationSpeed;
     }
 
-    if (!this.sharedMaterial) {
-      this._createSharedMaterial();
+    let material = this.materials.get(
+      object.celestialObjectId,
+    ) as THREE.ShaderMaterial;
+    if (!material) {
+      material = this._createSharedMaterial(object.celestialObjectId);
     }
 
     const distancesAU = [0, 1, 4, 10];
@@ -350,7 +349,7 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
 
       const geometry = this._createAsteroidGeometry(object, count);
 
-      const points = new THREE.Points(geometry, this.sharedMaterial!);
+      const points = new THREE.Points(geometry, material);
       points.name = `${object.celestialObjectId}-asteroidfield-lod-${i}`;
       points.frustumCulled = true;
 
@@ -363,70 +362,55 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
       );
 
       const fallbackGeom = this._createAsteroidGeometry(object, 1000);
-      const fallbackPoints = new THREE.Points(
-        fallbackGeom,
-        this.sharedMaterial!,
-      );
+      const fallbackPoints = new THREE.Points(fallbackGeom, material);
       return [{ object: fallbackPoints, distance: 0 }];
     }
 
     return lodLevels;
   }
 
-  update(time: number): void {
-    const currentTime = Date.now();
+  update(
+    object: RenderableCelestialObject,
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.Camera,
+  ): void {
+    const material = this.materials.get(
+      object.celestialObjectId,
+    ) as THREE.ShaderMaterial;
+    if (!material) return;
 
-    const timeScale = simulationStateService.getCurrentState().timeScale;
-
-    let timeDelta: number;
-    let timeResetDetected = false;
-
-    if (time < this.previousSimTime) {
-      this.resetCounter++;
-      timeResetDetected = true;
-
-      this.cumulativeRotation = this.beltRotationAngle;
-      timeDelta = 0;
-    } else {
-      timeDelta = time - this.previousSimTime;
-
-      this.cumulativeParticleTime += timeDelta;
+    let timeDelta = 0;
+    if (this.previousSimTime > 0) {
+      if (time < this.previousSimTime) {
+        // Time reset detected
+        timeDelta = 0;
+      } else {
+        timeDelta = time - this.previousSimTime;
+      }
     }
-
-    if (!timeResetDetected) {
-      this.beltRotationAngle =
-        this.cumulativeRotation +
-        time * this.beltRotationSpeed * 10 * timeScale;
-    }
-
-    this.beltRotationAngle %= Math.PI * 2;
-
     this.previousSimTime = time;
 
-    if (currentTime - this.lastLogTime > 1000) {
-      this.lastLogTime = currentTime;
-    }
+    this.cumulativeParticleTime += timeDelta;
 
-    if (this.sharedMaterial) {
-      this.sharedMaterial.uniforms.time.value = this.cumulativeParticleTime;
+    const rotationIncrement =
+      timeDelta * this.beltRotationSpeed * 10 * timeScale;
+    this.beltRotationAngle =
+      (this.beltRotationAngle + rotationIncrement) % (Math.PI * 2);
 
-      this.sharedMaterial.uniforms.particleRotationSpeed.value =
-        this.particleRotationSpeed * timeScale;
+    material.uniforms.time.value = this.cumulativeParticleTime;
 
-      this.sharedMaterial.uniforms.beltRotationAngle.value =
-        this.beltRotationAngle;
+    material.uniforms.particleRotationSpeed.value =
+      this.particleRotationSpeed * timeScale;
 
-      this.sharedMaterial.uniformsNeedUpdate = true;
-    }
+    material.uniforms.beltRotationAngle.value = this.beltRotationAngle;
 
-    this.time = time;
+    material.uniformsNeedUpdate = true;
   }
 
   dispose(): void {
-    if (this.sharedMaterial) {
-      this.sharedMaterial.dispose();
-      this.sharedMaterial = null;
-    }
+    super.dispose();
 
     this.asteroidTextures.forEach((texture) => {
       if (texture) texture.dispose();
@@ -437,12 +421,9 @@ export class AsteroidFieldRenderer implements CelestialRenderer {
       geometry.dispose();
     });
     this.lodGeometries = [];
-    this.objectId = null;
     this.materialReady = false;
     this.beltRotationAngle = 0;
     this.previousSimTime = 0;
-    this.cumulativeRotation = 0;
-    this.resetCounter = 0;
     this.cumulativeParticleTime = 0;
   }
 }

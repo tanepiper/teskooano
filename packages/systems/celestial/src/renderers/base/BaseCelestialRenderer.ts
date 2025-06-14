@@ -6,7 +6,6 @@ import {
   LightSourcesMap,
 } from "./CelestialRenderer";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { renderableStore } from "@teskooano/core-state";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
@@ -54,22 +53,23 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
 
   /**
    * Update the renderer with the current simulation state
-   * Default implementation updates time-based uniforms for all materials
+   * Default implementation updates time-based uniforms for the specific object's material.
    */
   update(
+    object: RenderableCelestialObject,
     time: number,
+    timeScale: number,
     lightSources?: LightSourcesMap,
     camera?: THREE.Camera,
   ): void {
     this.elapsedTime = time - this.startTime;
 
-    this.materials.forEach((material) => {
-      if (material instanceof THREE.ShaderMaterial) {
-        if (material.uniforms && material.uniforms.time !== undefined) {
-          material.uniforms.time.value = this.elapsedTime;
-        }
+    const material = this.materials.get(object.celestialObjectId);
+    if (material && material instanceof THREE.ShaderMaterial) {
+      if (material.uniforms && material.uniforms.time !== undefined) {
+        material.uniforms.time.value = this.elapsedTime;
       }
-    });
+    }
   }
 
   /**
@@ -169,13 +169,9 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   }
 
   /**
-   * Helper method to get the world position of an object from its ID
-   * Using the celestialObjectsStore
+   * Helper method to get the world position of an object
    */
-  protected getWorldPosition(objectId: string): THREE.Vector3 | null {
-    const object = renderableStore.getRenderableObjects()[objectId];
-    if (!object || !object.position) return null;
-
+  protected getWorldPosition(object: RenderableCelestialObject): THREE.Vector3 {
     return object.position.clone();
   }
 

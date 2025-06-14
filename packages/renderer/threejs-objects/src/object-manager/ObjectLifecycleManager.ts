@@ -96,6 +96,10 @@ export class ObjectLifecycleManager {
       const objectData = newState[id];
       const mesh = this.objects.get(id);
 
+      if (id === "barycenter") {
+        return;
+      }
+
       // Handle destroyed/annihilated objects explicitly
       if (
         objectData.status === CelestialStatus.DESTROYED ||

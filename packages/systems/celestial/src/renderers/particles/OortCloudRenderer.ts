@@ -5,8 +5,8 @@ import {
 } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
-import { CelestialMeshOptions, CelestialRenderer } from "..";
-import { renderableStore, getSimulationState } from "@teskooano/core-state";
+import { CelestialMeshOptions, CelestialRenderer, LightSourcesMap } from "..";
+import { renderableStore } from "@teskooano/core-state";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 const oortCloudVertexShader = `
@@ -417,15 +417,21 @@ export class OortCloudRenderer implements CelestialRenderer {
     return lodLevels;
   }
 
-  update(time: number): void {
+  update(
+    object: RenderableCelestialObject,
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.Camera,
+  ): void {
     if (!this.particles || !this.objectId || !this.material) {
       console.warn(
-        `[OortCloudRenderer] Update called but missing required properties: particles=${!!this.particles}, objectId=${!!this.objectId}, material=${!!this.material}`,
+        `[OortCloudRenderer] Update called but missing required properties: particles=${!!this
+          .particles}, objectId=${!!this.objectId}, material=${!!this
+          .material}`,
       );
       return;
     }
-
-    const timeScale = getSimulationState().timeScale;
 
     const currentTime = Date.now();
 

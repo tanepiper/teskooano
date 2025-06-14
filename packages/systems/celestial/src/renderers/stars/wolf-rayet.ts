@@ -60,11 +60,11 @@ export class WolfRayetRenderer extends BaseStarRenderer {
   /**
    * Override to create more extensive corona for Wolf-Rayet stars
    */
-  protected addCorona(
+  protected _addCoronaToGroup(
     object: RenderableCelestialObject,
     group: THREE.Group,
   ): void {
-    super.addCorona(object, group);
+    super._addCoronaToGroup(object, group);
 
     const radius = object.radius || 1;
     const coronaScale = radius * 5;

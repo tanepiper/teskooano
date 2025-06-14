@@ -7,7 +7,10 @@ import {
   RenderableCelestialObject,
   scaleSize,
 } from "@teskooano/data-types";
-import type { CelestialMeshOptions } from "../base/CelestialRenderer";
+import type {
+  CelestialMeshOptions,
+  LightSourcesMap,
+} from "../base/CelestialRenderer";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
@@ -322,63 +325,78 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    const highDetailGroup = this.createMesh(object, options);
+    const scale = typeof SCALE === "number" ? SCALE : 1.0;
 
-    const lodLevels: LODLevel[] = [{ object: highDetailGroup, distance: 0 }];
+    // --- Create components once ---
+    const material = this.getMaterial(object);
+    this.materials.set(object.celestialObjectId, material);
 
-    const mediumDetailGroup = this.createMesh(object, {
-      ...options,
-      segments: 32,
-    });
-    mediumDetailGroup.name = `${object.celestialObjectId}-medium-lod`;
-    const level1: LODLevel = {
+    const highDetailGeometry = new THREE.SphereGeometry(
+      object.radius,
+      options?.segments ?? 64,
+      options?.segments ?? 64,
+    );
+    const starBodyHigh = new THREE.Mesh(highDetailGeometry, material);
+    starBodyHigh.name = `${object.celestialObjectId}-body-high`;
+
+    const mediumDetailGeometry = new THREE.SphereGeometry(
+      object.radius,
+      32,
+      32,
+    );
+    const starBodyMedium = new THREE.Mesh(mediumDetailGeometry, material);
+    starBodyMedium.name = `${object.celestialObjectId}-body-medium`;
+
+    const coronaGroup = this._createCoronaGroup(object);
+
+    // --- Assemble LOD levels ---
+
+    // Level 0: High-detail body + Corona
+    const highDetailGroup = new THREE.Group();
+    highDetailGroup.add(starBodyHigh);
+    highDetailGroup.add(coronaGroup.clone()); // Clone to avoid sharing group between LODs
+    const lod0: LODLevel = { object: highDetailGroup, distance: 0 };
+
+    // Level 1: Medium-detail body + Corona
+    const mediumDetailGroup = new THREE.Group();
+    mediumDetailGroup.add(starBodyMedium);
+    mediumDetailGroup.add(coronaGroup);
+    const lod1: LODLevel = {
       object: mediumDetailGroup,
-      distance: 200 * (typeof SCALE === "number" ? SCALE : 1),
+      distance: 200 * scale,
     };
-    lodLevels.push(level1);
 
+    // Level 2: Low-detail basic mesh (no corona)
     const lowDetailMesh = new THREE.Mesh(
       new THREE.SphereGeometry(object.radius * 0.8, 8, 8),
       new THREE.MeshBasicMaterial({ color: this.getStarColor(object) }),
     );
     lowDetailMesh.name = `${object.celestialObjectId}-low-lod`;
-    const level2Group = new THREE.Group();
-    level2Group.add(lowDetailMesh);
-    const level2: LODLevel = {
-      object: level2Group,
-      distance: 1500 * (typeof SCALE === "number" ? SCALE : 1),
+    const lod2: LODLevel = {
+      object: lowDetailMesh,
+      distance: 1500 * scale,
     };
-    lodLevels.push(level2);
 
-    return lodLevels;
-  }
-
-  public createMesh(
-    object: RenderableCelestialObject,
-    options?: CelestialMeshOptions,
-  ): THREE.Group {
-    const group = new THREE.Group();
-    const scale = typeof SCALE === "number" ? SCALE : 1.0;
-
-    const segments = options?.detailLevel === "high" ? 64 : 48;
-    const geometry = new THREE.SphereGeometry(
-      object.radius,
-      segments,
-      segments,
-    );
-    const material = this.getMaterial(object);
-    this.materials.set(object.celestialObjectId, material);
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.name = `${object.celestialObjectId}-body`;
-    group.add(mesh);
-    this.addCorona(object, group);
-    return group;
+    return [lod0, lod1, lod2];
   }
 
   /**
-   * Add corona effect to the star
+   * Creates a group containing the corona meshes for a star.
+   * This is separated to allow reuse in LOD generation.
+   * @internal
    */
-  protected addCorona(
+  protected _createCoronaGroup(object: RenderableCelestialObject): THREE.Group {
+    const coronaGroup = new THREE.Group();
+    coronaGroup.name = `${object.celestialObjectId}-corona-group`;
+    this._addCoronaToGroup(object, coronaGroup);
+    return coronaGroup;
+  }
+
+  /**
+   * Add corona effect to a given group.
+   * @internal
+   */
+  protected _addCoronaToGroup(
     object: RenderableCelestialObject,
     group: THREE.Group,
   ): void {
@@ -419,7 +437,13 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
   /**
    * Update the renderer with the current time
    */
-  update(time?: number): void {
+  update(
+    object: RenderableCelestialObject,
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.Camera,
+  ): void {
     if (time === undefined) {
       this.elapsedTime = Date.now() / 1000 - this.startTime;
     } else {

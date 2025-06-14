@@ -3,6 +3,7 @@ import type { PlanetAtmosphereProperties } from "@teskooano/data-types";
 
 import atmosphereVertexShaderSource from "../../../shaders/terrestrial/atmosphere.vertex.glsl";
 import atmosphereFragmentShaderSource from "../../../shaders/terrestrial/atmosphere.fragment.glsl";
+import { LightSourceData } from "../../base/CelestialRenderer";
 
 const MAX_LIGHTS = 4;
 
@@ -74,10 +75,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
   update(
     time: number,
     camera?: THREE.Camera,
-    lightSources?: Map<
-      string,
-      { position: THREE.Vector3; color: THREE.Color; intensity: number }
-    >,
+    lightSources?: Map<string, LightSourceData>,
   ): void {
     if (camera) {
       this.uniforms.uCameraPosition.value.copy(camera.position);
@@ -97,7 +95,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
           if (lightColors[numLights])
             lightColors[numLights].copy(lightData.color);
           if (lightIntensities)
-            lightIntensities[numLights] = lightData.intensity;
+            lightIntensities[numLights] = lightData.intensity ?? 1.0;
           numLights++;
         } else {
           break;

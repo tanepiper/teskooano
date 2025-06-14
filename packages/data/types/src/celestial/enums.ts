@@ -22,6 +22,8 @@ export enum CelestialType {
   OORT_CLOUD = "OORT_CLOUD",
   /** A distinct system of rings orbiting a celestial body. */
   RING_SYSTEM = "RING_SYSTEM",
+  /** The center of mass of a multi-body system. */
+  BARYCENTER = "BARYCENTER",
   /** Catch-all for other or undefined celestial types. */
   OTHER = "OTHER",
 }

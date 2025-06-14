@@ -6,11 +6,12 @@ import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import {
   CelestialMeshOptions,
-  CelestialRenderer,
+  type LightSourcesMap,
 } from "../base/CelestialRenderer";
 
 import basicFragmentShader from "../../shaders/gas-giants/basic.fragment.glsl";
 import basicVertexShader from "../../shaders/gas-giants/basic.vertex.glsl";
+import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
 
 /**
  * Base material for gas giants
@@ -53,11 +54,7 @@ export class BasicGasGiantMaterial extends BaseGasGiantMaterial {
 /**
  * Base renderer for gas giants, implementing the LOD system.
  */
-export abstract class BaseGasGiantRenderer implements CelestialRenderer {
-  protected materials: Map<string, BaseGasGiantMaterial> = new Map();
-  protected objectIds: Set<string> = new Set();
-  protected startTime: number = performance.now();
-  protected elapsedTime: number = 0;
+export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
   protected textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
 
   /**
@@ -75,7 +72,6 @@ export abstract class BaseGasGiantRenderer implements CelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    this.objectIds.add(object.celestialObjectId);
     const scale = typeof SCALE === "number" ? SCALE : 1;
     const baseRadius = object.radius ?? 10;
 
@@ -86,7 +82,8 @@ export abstract class BaseGasGiantRenderer implements CelestialRenderer {
       highDetailSegments,
     );
     const highDetailMaterial = this.getMaterial(object);
-    this.materials.set(object.celestialObjectId, highDetailMaterial);
+    this.registerMaterial(object.celestialObjectId, highDetailMaterial);
+
     const highDetailMesh = new THREE.Mesh(
       highDetailGeometry,
       highDetailMaterial,
@@ -157,43 +154,31 @@ export abstract class BaseGasGiantRenderer implements CelestialRenderer {
    * Update the materials stored by this renderer.
    */
   update(
+    object: RenderableCelestialObject,
     time: number,
-    lightSources?: Map<
-      string,
-      { position: THREE.Vector3; color: THREE.Color; intensity?: number }
-    >,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
     camera?: THREE.Camera,
   ): void {
-    this.elapsedTime = (performance.now() - this.startTime) / 1000;
-    const t = time ?? this.elapsedTime;
+    super.update(object, time, timeScale, lightSources, camera);
 
-    const currentRenderableObjects = renderableStore.getRenderableObjects();
+    const material = this.materials.get(
+      object.celestialObjectId,
+    ) as BaseGasGiantMaterial;
+    if (!material) return;
 
-    this.objectIds.forEach((objectId) => {
-      const material = this.materials.get(objectId);
-      const currentObject = currentRenderableObjects[objectId];
-      if (!material || !currentObject) return;
+    const primaryLightData = this.findPrimaryLightSource(object, lightSources);
+    const lightSourcePosition = primaryLightData
+      ? primaryLightData.position
+      : new THREE.Vector3(1e11, 0, 0);
 
-      let lightSourcePosition = new THREE.Vector3(1e11, 0, 0);
-      const lightSourceId = currentObject.primaryLightSourceId;
-      let primaryLightData = lightSources?.get(lightSourceId ?? "");
-      if (!primaryLightData && lightSources && lightSources.size > 0) {
-        primaryLightData = lightSources.values().next().value;
-      }
-      if (primaryLightData?.position) {
-        lightSourcePosition = primaryLightData.position;
-      }
-
-      material.update(t, lightSourcePosition);
-    });
+    material.update(this.elapsedTime, lightSourcePosition);
   }
 
   /**
    * Clean up resources
    */
   dispose(): void {
-    this.materials.forEach((material) => material.dispose());
-    this.materials.clear();
-    this.objectIds.clear();
+    super.dispose();
   }
 }

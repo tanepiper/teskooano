@@ -9,7 +9,11 @@ import {
   CoronaMaterial,
 } from "./base-star";
 import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
-import type { CelestialMeshOptions } from "../base/CelestialRenderer";
+import type {
+  CelestialMeshOptions,
+  LightSourcesMap,
+} from "../base/CelestialRenderer";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
  * Material for neutron stars
@@ -144,16 +148,54 @@ export class NeutronStarRenderer extends BaseStarRenderer {
   }
 
   /**
-   * Override the createMesh method to add radiation jets and make neutron star more visible
+   * Creates and returns an array of LOD levels for the neutron star.
+   * This includes the star body, a large corona, and pulsar jets.
    */
-  createMesh(
+  getLODLevels(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
-  ): THREE.Group {
-    const group = new THREE.Group();
-    group.name = `${object.celestialObjectId}-group`;
+  ): LODLevel[] {
+    // --- 1. Create all components once ---
+    const starBody = this._createStarBody(object, options);
+    const coronaGroup = this._createCoronaGroup(object);
+    const jetsGroup = this._createJetsGroup(object);
 
-    // Create the main star body
+    // --- 2. Assemble LOD levels ---
+
+    // Level 0: High detail (Body + Corona + Jets)
+    const highDetailGroup = new THREE.Group();
+    highDetailGroup.name = `${object.celestialObjectId}-lod-high`;
+    highDetailGroup.add(starBody.clone());
+    highDetailGroup.add(coronaGroup.clone());
+    highDetailGroup.add(jetsGroup.clone());
+    const lod0: LODLevel = { object: highDetailGroup, distance: 0 };
+
+    // Level 1: Medium detail (Body + Corona)
+    const mediumDetailGroup = new THREE.Group();
+    mediumDetailGroup.name = `${object.celestialObjectId}-lod-medium`;
+    mediumDetailGroup.add(starBody); // reuse the original mesh
+    mediumDetailGroup.add(coronaGroup);
+    const lod1: LODLevel = { object: mediumDetailGroup, distance: 2000 };
+
+    // Level 2: Low detail (Just a bright sprite)
+    const lowDetailMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(object.radius * 2, 8, 8),
+      new THREE.MeshBasicMaterial({ color: this.getStarColor(object) }),
+    );
+    lowDetailMesh.name = `${object.celestialObjectId}-lod-low`;
+    const lod2: LODLevel = { object: lowDetailMesh, distance: 10000 };
+
+    return [lod0, lod1, lod2];
+  }
+
+  /**
+   * Creates the main, small, dense body of the neutron star.
+   * @internal
+   */
+  private _createStarBody(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): THREE.Mesh {
     const segments = options?.detailLevel === "high" ? 64 : 48;
     const geometry = new THREE.SphereGeometry(
       object.radius,
@@ -164,13 +206,19 @@ export class NeutronStarRenderer extends BaseStarRenderer {
     this.materials.set(object.celestialObjectId, material as BaseStarMaterial);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.name = `${object.celestialObjectId}-body`;
-    group.add(mesh);
-    this.addCorona(object, group);
+    return mesh;
+  }
 
-    // Add jets
+  /**
+   * Creates the pulsar jets characteristic of a neutron star.
+   * @internal
+   */
+  private _createJetsGroup(object: RenderableCelestialObject): THREE.Group {
+    const group = new THREE.Group();
+    group.name = `${object.celestialObjectId}-jets`;
+
     const jetLength = object.radius * 10;
     const jetRadius = object.radius * 0.5;
-
     const jetGeometry = new THREE.CylinderGeometry(
       jetRadius,
       jetRadius,
@@ -179,47 +227,44 @@ export class NeutronStarRenderer extends BaseStarRenderer {
       1,
       true,
     );
+    const jetMaterials: PulsarJetMaterial[] = [];
+    const color = this.getStarColor(object);
 
-    const northJetMaterial = new PulsarJetMaterial(this.getStarColor(object), {
+    const northJetMaterial = new PulsarJetMaterial(color, {
       opacity: 0.7,
       pulseSpeed: 15.0,
     });
-    const jetMaterials: PulsarJetMaterial[] = [];
     jetMaterials.push(northJetMaterial);
-
-    const northJet = new THREE.Mesh(jetGeometry, northJetMaterial);
+    const northJet = new THREE.Mesh(jetGeometry.clone(), northJetMaterial);
     northJet.position.set(0, jetLength / 2, 0);
     northJet.name = `${object.celestialObjectId}-jet-north`;
 
-    const southJetMaterial = new PulsarJetMaterial(this.getStarColor(object), {
+    const southJetMaterial = new PulsarJetMaterial(color, {
       opacity: 0.7,
       pulseSpeed: 15.0,
     });
     jetMaterials.push(southJetMaterial);
-
     const southJet = new THREE.Mesh(jetGeometry, southJetMaterial);
     southJet.position.set(0, -jetLength / 2, 0);
     southJet.rotation.x = Math.PI;
     southJet.name = `${object.celestialObjectId}-jet-south`;
 
-    group.add(northJet);
-    group.add(southJet);
-
+    group.add(northJet, southJet);
     this.jetMaterials.set(object.celestialObjectId, jetMaterials);
 
     return group;
   }
 
   /**
-   * Override to create much larger corona for neutron stars
+   * Overrides the base corona to be much larger and more intense.
+   * @internal
    */
-  protected addCorona(
-    object: RenderableCelestialObject,
-    group: THREE.Group,
-  ): void {
+  protected _createCoronaGroup(object: RenderableCelestialObject): THREE.Group {
+    const coronaGroup = new THREE.Group();
+    coronaGroup.name = `${object.celestialObjectId}-corona-group`;
+
     const starColor = this.getStarColor(object);
     const coronaMaterials: CoronaMaterial[] = [];
-
     this.coronaMaterials.set(object.celestialObjectId, coronaMaterials);
 
     const coronaScales = [3.0, 6.0, 10.0, 15.0];
@@ -238,29 +283,18 @@ export class NeutronStarRenderer extends BaseStarRenderer {
         pulseSpeed: 0.5 + index * 0.2,
         noiseScale: 3.0 + index * 1.5,
       });
-
       coronaMaterials.push(coronaMaterial);
 
       const coronaMesh = new THREE.Mesh(coronaGeometry, coronaMaterial);
       coronaMesh.name = `${object.celestialObjectId}-corona-${index}`;
 
+      // Create a second plane rotated 90 degrees for a more volumetric feel
       const coronaMesh2 = coronaMesh.clone();
-      coronaMesh2.name = `${object.celestialObjectId}-corona-${index}-2`;
       coronaMesh2.rotation.y = Math.PI / 2;
-
-      const coronaMesh3 = coronaMesh.clone();
-      coronaMesh3.name = `${object.celestialObjectId}-corona-${index}-3`;
-      coronaMesh3.rotation.x = Math.PI / 4;
-      coronaMesh3.rotation.y = Math.PI / 4;
-
-      coronaMesh.rotation.order = "YXZ";
-      coronaMesh2.rotation.order = "YXZ";
-      coronaMesh3.rotation.order = "YXZ";
-
-      group.add(coronaMesh);
-      group.add(coronaMesh2);
-      group.add(coronaMesh3);
+      coronaGroup.add(coronaMesh, coronaMesh2);
     });
+
+    return coronaGroup;
   }
 
   /**
@@ -297,23 +331,23 @@ export class NeutronStarRenderer extends BaseStarRenderer {
    * Update the renderer with the current time
    */
   update(
-    time?: number,
+    object: RenderableCelestialObject,
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.PerspectiveCamera,
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
-    camera?: THREE.PerspectiveCamera,
   ): void {
-    super.update(time);
+    super.update(object, time, timeScale, lightSources, camera);
+    const jets = this.jetMaterials.get(object.celestialObjectId);
+    if (jets) {
+      jets.forEach((jet) => jet.update(this.elapsedTime));
+    }
 
-    this.jetMaterials.forEach((materials) => {
-      materials.forEach((material) => {
-        material.update(this.elapsedTime);
-      });
-    });
-
-    if (renderer && scene && camera) {
-      this.lensingHelpers.forEach((helper) => {
-        helper.update(renderer, scene, camera);
-      });
+    const lensingHelper = this.lensingHelpers.get(object.celestialObjectId);
+    if (lensingHelper && renderer && scene && camera) {
+      lensingHelper.update(renderer, scene, camera);
     }
   }
 

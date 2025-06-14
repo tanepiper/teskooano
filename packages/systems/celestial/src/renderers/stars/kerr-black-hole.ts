@@ -9,7 +9,11 @@ import {
   AccretionDiskMaterial,
 } from "./schwarzschild-black-hole";
 import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
-import type { CelestialMeshOptions } from "../base/CelestialRenderer";
+import type {
+  CelestialMeshOptions,
+  LightSourcesMap,
+} from "../base/CelestialRenderer";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
  * Material for Kerr black holes' ergosphere
@@ -173,68 +177,84 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
   }
 
   /**
-   * Create the black hole mesh with event horizon, ergosphere and accretion disk
+   * Creates and returns an array of LOD levels for the Kerr black hole.
+   * This includes the event horizon, ergosphere, and accretion disk.
    */
-  createMesh(
+  getLODLevels(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
-  ): THREE.Group {
-    const group = new THREE.Group();
-    group.name = `${object.celestialObjectId}-group`;
+  ): LODLevel[] {
+    // --- 1. Create all components once ---
+    const eventHorizon = this._createEventHorizon(object);
+    const ergosphere = this._createErgosphere(object);
+    const accretionDisk = this._createAccretionDisk(object);
 
-    this.addEventHorizon(object, group);
+    // --- 2. Assemble LOD levels ---
 
-    this.addErgosphere(object, group);
+    // Level 0: High detail (Horizon + Ergosphere + Disk)
+    const highDetailGroup = new THREE.Group();
+    highDetailGroup.name = `${object.celestialObjectId}-lod-high`;
+    highDetailGroup.add(eventHorizon.clone());
+    highDetailGroup.add(ergosphere.clone());
+    highDetailGroup.add(accretionDisk.clone());
+    const lod0: LODLevel = { object: highDetailGroup, distance: 0 };
 
-    this.addAccretionDisk(object, group);
+    // Level 1: Medium detail (Horizon + Ergosphere)
+    const mediumDetailGroup = new THREE.Group();
+    mediumDetailGroup.name = `${object.celestialObjectId}-lod-medium`;
+    mediumDetailGroup.add(eventHorizon.clone());
+    mediumDetailGroup.add(ergosphere);
+    const lod1: LODLevel = { object: mediumDetailGroup, distance: 8000 };
 
-    return group;
+    // Level 2: Low detail (Horizon only)
+    const lowDetailGroup = new THREE.Group();
+    lowDetailGroup.name = `${object.celestialObjectId}-lod-low`;
+    lowDetailGroup.add(eventHorizon);
+    const lod2: LODLevel = { object: lowDetailGroup, distance: 20000 };
+
+    return [lod0, lod1, lod2];
   }
 
   /**
    * Add the event horizon sphere to the group
+   * @internal
    */
-  private addEventHorizon(
-    object: RenderableCelestialObject,
-    group: THREE.Group,
-  ): void {
+  private _createEventHorizon(object: RenderableCelestialObject): THREE.Mesh {
     const radius = object.radius || 1;
-
-    const geometry = new THREE.SphereGeometry(radius, 32, 32);
+    const geometry = new THREE.SphereGeometry(radius, 64, 64);
     this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
-
+    this.materials.set(
+      object.celestialObjectId,
+      this.eventHorizonMaterial as any,
+    );
     const eventHorizon = new THREE.Mesh(geometry, this.eventHorizonMaterial);
-    group.add(eventHorizon);
+    eventHorizon.name = `${object.celestialObjectId}-event-horizon`;
+    return eventHorizon;
   }
 
   /**
    * Add the ergosphere to the group - slightly oblate spheroid
+   * @internal
    */
-  private addErgosphere(
-    object: RenderableCelestialObject,
-    group: THREE.Group,
-  ): void {
+  private _createErgosphere(object: RenderableCelestialObject): THREE.Mesh {
     const radius = object.radius || 1;
     const ergoRadius = radius * 1.4;
-
     const geometry = new THREE.SphereGeometry(ergoRadius, 48, 48);
-
-    geometry.scale(1.0, 0.8, 1.0);
+    geometry.scale(1.0, 0.8, 1.0); // Make it oblate
 
     this.ergosphereMaterial = new ErgosphereMaterial();
     this.ergosphereMaterial.setRotationSpeed(this.rotationSpeed);
 
     const ergosphere = new THREE.Mesh(geometry, this.ergosphereMaterial);
-    group.add(ergosphere);
+    ergosphere.name = `${object.celestialObjectId}-ergosphere`;
+    return ergosphere;
   }
 
   /**
    * Add the accretion disk to the group with frame dragging effects
+   * @internal
    */
-  private addAccretionDisk(
-    object: RenderableCelestialObject,
-    group: THREE.Group,
-  ): void {
+  private _createAccretionDisk(object: RenderableCelestialObject): THREE.Mesh {
     const radius = object.radius || 1;
     const diskOuterRadius = radius * 6;
     const diskInnerRadius = radius * 1.2;
@@ -246,15 +266,12 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
       1,
     );
     const diskMaterial = new KerrAccretionDiskMaterial(this.rotationSpeed);
-
     this.accretionDiskMaterials.set(object.celestialObjectId, diskMaterial);
 
     const accretionDisk = new THREE.Mesh(diskGeometry, diskMaterial);
     accretionDisk.rotation.x = Math.PI / 2;
-
-    accretionDisk.rotation.z = Math.PI / 15;
-
-    group.add(accretionDisk);
+    accretionDisk.name = `${object.celestialObjectId}-accretion-disk`;
+    return accretionDisk;
   }
 
   /**
@@ -300,10 +317,13 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
    * Update materials with current time
    */
   update(
-    time?: number,
+    object: RenderableCelestialObject,
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.PerspectiveCamera,
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
-    camera?: THREE.PerspectiveCamera,
   ): void {
     const currentTime = time ?? Date.now() / 1000 - this.startTime;
     this.elapsedTime = currentTime;

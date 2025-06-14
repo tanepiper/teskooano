@@ -49,20 +49,9 @@ export class ClassIIIGasGiantRenderer extends BaseGasGiantRenderer {
       ? new THREE.Color(properties.atmosphereColor)
       : new THREE.Color(0xafdbf5);
 
-    let stormMap: THREE.Texture | undefined = undefined;
-    // if (properties.stormColor) {
-    //   const stormTexture = TextureFactory.generateGasGiantTexture({
-    //     class: properties.gasGiantClass,
-    //     baseColor: baseColor,
-    //     secondaryColor: new THREE.Color(properties.stormColor),
-    //     seed: seed,
-    //   });
-    //   stormMap = stormTexture.colorMap;
-    // }
-
     return new ClassIIIMaterial({
       baseColor: baseColor,
-      stormMap: stormMap,
+      stormMap: undefined,
     });
   }
 }

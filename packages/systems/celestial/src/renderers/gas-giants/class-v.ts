@@ -63,22 +63,11 @@ export class ClassVGasGiantRenderer extends BaseGasGiantRenderer {
       : new THREE.Color(0xff6600);
     const emissiveIntensity = properties.emissiveIntensity ?? 0.1;
 
-    let stormMap: THREE.Texture | undefined = undefined;
-    // if (properties.stormColor) {
-    //   const stormTexture = TextureFactory.generateGasGiantTexture({
-    //     class: properties.gasGiantClass,
-    //     baseColor: baseColor,
-    //     secondaryColor: new THREE.Color(properties.stormColor),
-    //     seed: seed,
-    //   });
-    //   stormMap = stormTexture.colorMap;
-    // }
-
     return new ClassVMaterial({
       baseColor: baseColor,
       emissiveColor: emissiveColor,
       emissiveIntensity: emissiveIntensity,
-      stormMap: stormMap,
+      stormMap: undefined,
     });
   }
 }
