@@ -1,10 +1,14 @@
-import { CelestialType, GasGiantProperties } from "@teskooano/data-types";
+import {
+  CelestialType,
+  GasGiantClass,
+  GasGiantProperties,
+} from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { CelestialRenderer } from "@teskooano/systems-celestial";
+import { createGasGiantRenderer } from "@teskooano/systems-celestial";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { createFallbackSphere } from "./createFallbackSphere";
-import { BaseGasGiantRenderer } from "@teskooano/systems-celestial";
 
 interface CreateGasGiantMeshDeps {
   celestialRenderers: Map<string, CelestialRenderer>;
@@ -32,21 +36,19 @@ export function createGasGiantMesh(
     return createFallbackSphere(object);
   }
 
-  const renderer = deps.celestialRenderers.get(rendererKey);
+  // Use the factory to create a new renderer instance.
+  const renderer = createGasGiantRenderer(rendererKey);
 
-  if (renderer?.getLODLevels) {
-    const lodLevels = renderer.getLODLevels(object);
-    if (lodLevels && lodLevels.length > 0) {
-      const lod = deps.createLodCallback(object, lodLevels);
-      return lod;
-    } else {
-      console.warn(
-        `[MeshFactory:GasGiant] Renderer for ${object.celestialObjectId} (Key: ${rendererKey}) provided invalid LOD levels.`,
-      );
-    }
+  // Initialize the renderer to create rings if they exist.
+  renderer.initialize(object);
+
+  const lodLevels = renderer.getLODLevels(object);
+  if (lodLevels && lodLevels.length > 0) {
+    const lod = deps.createLodCallback(object, lodLevels);
+    return lod;
   } else {
     console.warn(
-      `[MeshFactory:GasGiant] No suitable renderer with getLODLevels found for ${object.celestialObjectId} (Key: ${rendererKey}).`,
+      `[MeshFactory:GasGiant] Renderer for ${object.celestialObjectId} (Key: ${rendererKey}) provided invalid LOD levels.`,
     );
   }
 

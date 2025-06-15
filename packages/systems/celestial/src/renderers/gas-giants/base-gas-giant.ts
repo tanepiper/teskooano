@@ -75,6 +75,18 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
   protected ringSystemRenderer: RingSystemRenderer | null = null;
 
   /**
+   * Initializes the renderer, creating the ring system if data is present.
+   * This must be called after the constructor.
+   * @param object - The celestial object data.
+   */
+  initialize(object: RenderableCelestialObject): void {
+    const properties = object.properties as RingSystemProperties;
+    if (properties?.rings && properties.rings.length > 0) {
+      this.ringSystemRenderer = new RingSystemRenderer(this);
+    }
+  }
+
+  /**
    * Child classes must implement this method to return the appropriate material
    * for the highest detail LOD level.
    */
@@ -89,18 +101,41 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    const properties = object.properties as
-      | GasGiantProperties
-      | RingSystemProperties;
-    const hasRings =
-      properties &&
-      "rings" in properties &&
-      (properties as RingSystemProperties).rings.length > 0;
+    const planetLODs = this._createPlanetLODs(object, options);
 
-    if (hasRings) {
-      this.ringSystemRenderer = new RingSystemRenderer(this);
+    if (this.ringSystemRenderer) {
+      const ringLODs = this.ringSystemRenderer.getLODLevels(object, {
+        ...options,
+        parentLODDistances: planetLODs.map((l) => l.distance),
+      });
+
+      // Combine planet and ring LODs
+      return planetLODs.map((planetLOD, index) => {
+        const ringLOD = ringLODs[index] || ringLODs[ringLODs.length - 1];
+        const combinedGroup = new THREE.Group();
+        combinedGroup.name = `${object.celestialObjectId}-lod-${index}-combined`;
+        combinedGroup.add(planetLOD.object);
+        if (ringLOD?.object) {
+          combinedGroup.add(ringLOD.object);
+        }
+        return {
+          object: combinedGroup,
+          distance: planetLOD.distance,
+        };
+      });
     }
 
+    return planetLODs;
+  }
+
+  /**
+   * Creates the array of LOD levels for the planet body itself.
+   * @internal
+   */
+  private _createPlanetLODs(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): LODLevel[] {
     const scale = typeof SCALE === "number" ? SCALE : 1;
     const baseRadius = object.radius ?? 10;
 
@@ -120,13 +155,6 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     highDetailMesh.name = `${object.celestialObjectId}-high-lod`;
     const level0Group = new THREE.Group();
     level0Group.add(highDetailMesh);
-
-    if (hasRings && this.ringSystemRenderer) {
-      const ringLODs = this.ringSystemRenderer.getLODLevels(object, options);
-      if (ringLODs.length > 0) {
-        level0Group.add(ringLODs[0].object);
-      }
-    }
 
     const level0: LODLevel = { object: level0Group, distance: 0 };
 
@@ -224,5 +252,8 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
    */
   dispose(): void {
     super.dispose();
+    if (this.ringSystemRenderer) {
+      this.ringSystemRenderer.dispose();
+    }
   }
 }

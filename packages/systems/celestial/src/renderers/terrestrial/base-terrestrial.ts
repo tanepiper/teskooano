@@ -12,6 +12,7 @@ import {
 } from "./utils/atmosphere-cloud-utils";
 import { PlanetMaterialService } from "./utils/planet-material-utils";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { RingSystemRenderer } from "../rings";
 
 const MAX_LIGHTS = 4;
 
@@ -21,6 +22,7 @@ const MAX_LIGHTS = 4;
 export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
   protected atmosphereMaterials: Map<string, AtmosphereMaterial> = new Map();
   protected textureLoader: THREE.TextureLoader;
+  protected ringSystemRenderer?: RingSystemRenderer;
 
   protected loadedTextures: Map<
     string,
@@ -46,6 +48,46 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
    * Creates and returns an array of LOD levels for the terrestrial object.
    */
   getLODLevels(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): LODLevel[] {
+    const planetLevels = this._createPlanetLODs(object, options);
+    const planetProps = object.properties as PlanetProperties;
+
+    if (
+      this.ringSystemRenderer &&
+      planetProps?.rings &&
+      planetProps.rings.length > 0
+    ) {
+      const ringLODs = this.ringSystemRenderer.getLODLevels(object, {
+        ...options,
+        parentLODDistances: planetLevels.map((l) => l.distance),
+      });
+
+      // Combine planet and ring LODs
+      return planetLevels.map((planetLOD, index) => {
+        const ringLOD = ringLODs[index] || ringLODs[ringLODs.length - 1]; // Fallback to last ring LOD
+        const combinedGroup = new THREE.Group();
+        combinedGroup.name = `${object.celestialObjectId}-lod-${index}-combined`;
+        combinedGroup.add(planetLOD.object);
+        if (ringLOD && ringLOD.object) {
+          combinedGroup.add(ringLOD.object);
+        }
+        return {
+          object: combinedGroup,
+          distance: planetLOD.distance,
+        };
+      });
+    }
+
+    return planetLevels;
+  }
+
+  /**
+   * Creates the LOD levels specifically for the planet body.
+   * @internal
+   */
+  private _createPlanetLODs(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
@@ -214,6 +256,10 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
 
+    if (this.ringSystemRenderer) {
+      this.ringSystemRenderer.update(object, time, timeScale, lightSources);
+    }
+
     if (!lightSources || lightSources.size === 0) {
       lightSources = new Map<
         string,
@@ -244,6 +290,9 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
    */
   dispose(): void {
     super.dispose();
+    if (this.ringSystemRenderer) {
+      this.ringSystemRenderer.dispose();
+    }
 
     this.atmosphereMaterials.forEach((material) => material.dispose());
     this.atmosphereMaterials.clear();
@@ -400,6 +449,17 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
       if (planetProps.surface) {
         this._updateSurfaceUniforms(material, planetProps.surface);
       }
+    }
+  }
+
+  /**
+   * Initializes the renderer, including creating the ring system if needed.
+   * This should be called after the constructor.
+   */
+  initialize(object: RenderableCelestialObject): void {
+    const planetProps = object.properties as PlanetProperties;
+    if (planetProps?.rings && planetProps.rings.length > 0) {
+      this.ringSystemRenderer = new RingSystemRenderer(this);
     }
   }
 }

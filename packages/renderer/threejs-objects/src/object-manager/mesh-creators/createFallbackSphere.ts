@@ -1,4 +1,4 @@
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
 
 /**
