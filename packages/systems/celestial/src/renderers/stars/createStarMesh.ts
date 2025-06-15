@@ -4,13 +4,11 @@ import {
   StellarType,
 } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import {
-  createStarRenderer,
-  type CelestialRenderer,
-} from "@teskooano/systems-celestial";
+import { createStarRenderer } from "./index";
+import type { CelestialRenderer } from "../base/CelestialRenderer";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-import { createFallbackSphere } from "./createFallbackSphere";
+import { createFallbackSphere } from "../utils/createFallbackSphere";
 
 interface CreateStarMeshDeps {
   starRenderers: Map<string, CelestialRenderer>;

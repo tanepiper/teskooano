@@ -1,15 +1,11 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
-import {
-  createStarRenderer,
-  type CelestialRenderer,
-} from "@teskooano/systems-celestial";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import type { CelestialRenderer } from "../base/CelestialRenderer";
 import * as THREE from "three";
-import { createFallbackSphere } from "./createFallbackSphere";
-import { AsteroidFieldRenderer } from "@teskooano/systems-celestial";
+import { createFallbackSphere } from "../utils/createFallbackSphere";
 
-interface CreateAsteroidFieldMeshDeps {
+interface CreateAsteroidMeshDeps {
   celestialRenderers: Map<string, CelestialRenderer>;
   createLodCallback: (
     object: RenderableCelestialObject,
@@ -19,13 +15,14 @@ interface CreateAsteroidFieldMeshDeps {
 
 /**
  * @internal
- * Creates an Asteroid Field mesh (potentially an LOD object or points).
+ * Creates an Asteroid/Space Rock mesh (potentially an LOD object).
  */
-export function createAsteroidFieldMesh(
+export function createAsteroidMesh(
   object: RenderableCelestialObject,
-  deps: CreateAsteroidFieldMeshDeps,
+  deps: CreateAsteroidMeshDeps,
 ): THREE.Object3D {
-  const renderer = deps.celestialRenderers.get(CelestialType.ASTEROID_FIELD);
+  // Use SPACE_ROCK type for lookup
+  const renderer = deps.celestialRenderers.get(CelestialType.SPACE_ROCK);
 
   if (renderer?.getLODLevels) {
     const lodLevels = renderer.getLODLevels(object);
@@ -34,13 +31,14 @@ export function createAsteroidFieldMesh(
       return lod;
     } else {
       console.warn(
-        `[MeshFactory:AsteroidField] Renderer for ${object.celestialObjectId} provided invalid LOD levels.`,
+        `[MeshFactory:Asteroid] Renderer for SPACE_ROCK ${object.celestialObjectId} provided invalid LOD levels.`,
       );
     }
   } else {
-    // TODO: Asteroid field might have direct creation, e.g., createPoints()
+    // TODO: Consider if asteroid renderer might have a direct mesh creation method
+    // if (!renderer?.createMesh) { ... }
     console.warn(
-      `[MeshFactory:AsteroidField] No suitable renderer with getLODLevels found for ${object.celestialObjectId}.`,
+      `[MeshFactory:Asteroid] No suitable renderer with getLODLevels found for SPACE_ROCK ${object.celestialObjectId}.`,
     );
   }
 

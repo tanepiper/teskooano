@@ -15,6 +15,7 @@ export * from "./white-dwarf";
 export * from "./wolf-rayet";
 export * from "./schwarzschild-black-hole";
 export * from "./kerr-black-hole";
+export * from "./createStarMesh";
 
 import { BaseStarRenderer } from "./base-star";
 import { MainSequenceStarRenderer } from "./main-sequence-star";

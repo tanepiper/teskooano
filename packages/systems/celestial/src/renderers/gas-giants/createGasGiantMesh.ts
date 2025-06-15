@@ -1,14 +1,15 @@
-import {
-  CelestialType,
-  GasGiantClass,
-  GasGiantProperties,
-} from "@teskooano/data-types";
+import { GasGiantClass, GasGiantProperties } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import type { CelestialRenderer } from "@teskooano/systems-celestial";
-import { createGasGiantRenderer } from "@teskooano/systems-celestial";
+import type { CelestialRenderer } from "../base/CelestialRenderer";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-import { createFallbackSphere } from "./createFallbackSphere";
+import { createFallbackSphere } from "../utils/createFallbackSphere";
+import { BaseGasGiantRenderer } from "./base";
+import { ClassIGasGiantRenderer } from "./class-i";
+import { ClassIIGasGiantRenderer } from "./class-ii";
+import { ClassIIIGasGiantRenderer } from "./class-iii";
+import { ClassIVGasGiantRenderer } from "./class-iv";
+import { ClassVGasGiantRenderer } from "./class-v";
 
 interface CreateGasGiantMeshDeps {
   celestialRenderers: Map<string, CelestialRenderer>;
@@ -36,8 +37,30 @@ export function createGasGiantMesh(
     return createFallbackSphere(object);
   }
 
-  // Use the factory to create a new renderer instance.
-  const renderer = createGasGiantRenderer(rendererKey);
+  let renderer: BaseGasGiantRenderer;
+
+  switch (rendererKey) {
+    case GasGiantClass.CLASS_I:
+      renderer = new ClassIGasGiantRenderer();
+      break;
+    case GasGiantClass.CLASS_II:
+      renderer = new ClassIIGasGiantRenderer();
+      break;
+    case GasGiantClass.CLASS_III:
+      renderer = new ClassIIIGasGiantRenderer();
+      break;
+    case GasGiantClass.CLASS_IV:
+      renderer = new ClassIVGasGiantRenderer();
+      break;
+    case GasGiantClass.CLASS_V:
+      renderer = new ClassVGasGiantRenderer();
+      break;
+    default:
+      console.warn(
+        `[MeshFactory:GasGiant] Unknown gasGiantClass: ${rendererKey} for ${object.celestialObjectId}. Using fallback.`,
+      );
+      return createFallbackSphere(object);
+  }
 
   // Initialize the renderer to create rings if they exist.
   renderer.initialize(object);

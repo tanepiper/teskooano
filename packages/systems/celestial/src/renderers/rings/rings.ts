@@ -1,20 +1,15 @@
-import { RingSystemProperties } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { RingSystemProperties } from "@teskooano/data-types";
 import * as THREE from "three";
-import type {
-  CelestialMeshOptions,
-  CelestialRenderer,
-  LightSourcesMap,
-} from "../index";
+import type { CelestialMeshOptions, LightSourcesMap } from "../index";
 
 import ringFragmentShader from "../../shaders/ring/ring.fragment.glsl";
 import ringVertexShader from "../../shaders/ring/ring.vertex.glsl";
 
 import {
-  threeVectorDebug,
   isVisualizationEnabled,
+  threeVectorDebug,
 } from "@teskooano/core-debug";
-import { renderableStore } from "@teskooano/core-state";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
 

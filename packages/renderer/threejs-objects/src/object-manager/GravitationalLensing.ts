@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType, StellarType } from "@teskooano/data-types";
 import { StarProperties } from "@teskooano/data-types";
 import {

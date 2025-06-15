@@ -21,7 +21,7 @@ import {
   createMoonMesh,
   createPlanetMesh,
   createStarMesh,
-} from "./mesh-creators"; // Import creator functions
+} from "@teskooano/systems-celestial"; // Import creator functions
 import type { ObjectManager } from "../ObjectManager";
 
 /**
