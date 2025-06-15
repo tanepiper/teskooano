@@ -3,16 +3,16 @@ import type {
   CelestialObject,
   RenderableCelestialObject,
 } from "@teskooano/data-types";
-import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
+import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
 import {
   SchwarzschildBlackHoleMaterial,
   AccretionDiskMaterial,
 } from "./schwarzschild-black-hole";
-import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
+import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
 import type {
   CelestialMeshOptions,
   LightSourcesMap,
-} from "../base/CelestialRenderer";
+} from "../../base/CelestialRenderer";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**

@@ -2,12 +2,7 @@ import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType, StellarType } from "@teskooano/data-types";
 import { StarProperties } from "@teskooano/data-types";
-import {
-  CelestialRenderer,
-  SchwarzschildBlackHoleRenderer,
-  KerrBlackHoleRenderer,
-  NeutronStarRenderer,
-} from "@teskooano/systems-celestial";
+import { type CelestialRenderer } from "@teskooano/systems-celestial";
 
 /**
  * @internal
@@ -109,27 +104,23 @@ export class GravitationalLensingHandler {
 
     const starRenderer = this.starRenderers.get(objectData.celestialObjectId);
 
-    if (mesh && starRenderer) {
-      if (
-        starRenderer instanceof SchwarzschildBlackHoleRenderer ||
-        starRenderer instanceof KerrBlackHoleRenderer ||
-        starRenderer instanceof NeutronStarRenderer
-      ) {
-        starRenderer.addGravitationalLensing(
-          objectData,
-          renderer,
-          scene,
-          camera,
-          mesh,
-        );
+    // if (mesh && starRenderer) {
+    //   if (starRenderer instanceof NeutronStarRenderer) {
+    //     starRenderer.addGravitationalLensing(
+    //       objectData,
+    //       renderer,
+    //       scene,
+    //       camera,
+    //       mesh,
+    //     );
 
-        this.lensingObjectsToAdd.delete(objectData.celestialObjectId);
-      }
-    } else {
-      console.warn(
-        `[LensingHandler] Mesh or StarRenderer not ready for lensing object ${objectData.celestialObjectId}`,
-      );
-    }
+    //     this.lensingObjectsToAdd.delete(objectData.celestialObjectId);
+    //   }
+    // } else {
+    //   console.warn(
+    //     `[LensingHandler] Mesh or StarRenderer not ready for lensing object ${objectData.celestialObjectId}`,
+    //   );
+    // }
   }
 
   /**

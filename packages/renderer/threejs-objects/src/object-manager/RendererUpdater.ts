@@ -1,11 +1,6 @@
-import {
-  type CelestialRenderer,
-  KerrBlackHoleRenderer,
-  NeutronStarRenderer,
-  SchwarzschildBlackHoleRenderer,
-} from "@teskooano/systems-celestial";
-import type * as THREE from "three";
 import { renderableStore } from "@teskooano/core-state";
+import { type CelestialRenderer } from "@teskooano/systems-celestial";
+import type * as THREE from "three";
 
 type LightSourcesMap = Map<
   string,
@@ -78,25 +73,7 @@ export class RendererUpdater {
       const { time, timeScale, lightSources, camera, renderer, scene } =
         context;
 
-      if (
-        (rendererInstance instanceof SchwarzschildBlackHoleRenderer ||
-          rendererInstance instanceof KerrBlackHoleRenderer ||
-          rendererInstance instanceof NeutronStarRenderer) &&
-        renderer &&
-        scene
-      ) {
-        rendererInstance.update(
-          object,
-          time,
-          timeScale,
-          lightSources,
-          camera,
-          renderer,
-          scene,
-        );
-      } else {
-        rendererInstance.update(object, time, timeScale, lightSources, camera);
-      }
+      rendererInstance.update(object, time, timeScale, lightSources, camera);
     });
   }
 

@@ -3,12 +3,12 @@ import type {
   CelestialObject,
   RenderableCelestialObject,
 } from "@teskooano/data-types";
-import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
-import { GravitationalLensingHelper } from "../effects/gravitational-lensing";
+import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
+import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
 import type {
   CelestialMeshOptions,
   LightSourcesMap,
-} from "../base/CelestialRenderer";
+} from "../../base/CelestialRenderer";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**

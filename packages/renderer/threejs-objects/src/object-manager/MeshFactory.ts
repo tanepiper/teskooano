@@ -1,18 +1,6 @@
-import {
-  CelestialType,
-  GasGiantClass,
-  GasGiantProperties,
-  StarProperties,
-} from "@teskooano/data-types";
-import type { LODManager, LODLevel } from "@teskooano/renderer-threejs-lod";
-import {
-  BaseTerrestrialRenderer,
-  createStarRenderer,
-  type CelestialRenderer,
-} from "@teskooano/systems-celestial";
-import { RingSystemRenderer } from "@teskooano/systems-celestial";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import * as THREE from "three";
+import { CelestialType } from "@teskooano/data-types";
+import type { LODLevel, LODManager } from "@teskooano/renderer-threejs-lod";
 import {
   createAsteroidFieldMesh,
   createAsteroidMesh,
@@ -21,8 +9,9 @@ import {
   createMoonMesh,
   createPlanetMesh,
   createStarMesh,
-} from "@teskooano/systems-celestial"; // Import creator functions
-import type { ObjectManager } from "../ObjectManager";
+  type CelestialRenderer,
+} from "@teskooano/systems-celestial";
+import * as THREE from "three";
 
 /**
  * @internal

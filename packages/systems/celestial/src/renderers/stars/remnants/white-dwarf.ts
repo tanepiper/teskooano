@@ -1,6 +1,8 @@
 import * as THREE from "three";
-import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
+import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import type { CelestialMeshOptions } from "../../base/CelestialRenderer";
 
 /**
  * Material for white dwarf stars
@@ -42,6 +44,14 @@ export class WhiteDwarfMaterial extends BaseStarMaterial {
  * Renderer for white dwarf stars
  */
 export class WhiteDwarfRenderer extends BaseStarRenderer {
+  getLODLevels(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions | undefined,
+  ): LODLevel[] {
+    const material = this.getMaterial(object);
+    return this._createLuminousStarLODs(object, material, options);
+  }
+
   /**
    * Returns the appropriate material for a white dwarf star
    */

@@ -27,6 +27,21 @@ export interface CelestialMeshOptions {
    * Default: false
    */
   debug?: boolean;
+
+  /**
+   * Optional reference to the main scene camera.
+   */
+  camera?: THREE.Camera;
+
+  /**
+   * Optional reference to the main THREE.js scene.
+   */
+  scene?: THREE.Scene;
+
+  /**
+   * Optional reference to the main THREE.js renderer.
+   */
+  renderer?: THREE.WebGLRenderer;
 }
 
 /**

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
+import { BaseStarMaterial } from "../base/base-star";
+import { MainSequenceStarRenderer } from "./main-sequence-star";
 
 /**
  * Material for A-class stars
@@ -41,11 +42,11 @@ export class ClassAStarMaterial extends BaseStarMaterial {
 /**
  * Renderer for A-class stars
  */
-export class ClassAStarRenderer extends BaseStarRenderer {
+export class ClassAStarRenderer extends MainSequenceStarRenderer {
   /**
    * Returns the appropriate material for an A-class star
    */
-  protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
     return new ClassAStarMaterial();
   }
 

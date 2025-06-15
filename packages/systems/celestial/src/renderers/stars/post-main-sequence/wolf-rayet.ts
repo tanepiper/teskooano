@@ -1,7 +1,9 @@
 import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
-import { LightSourcesMap } from "..";
+import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
+import { LightSourcesMap } from "../..";
+import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import type { CelestialMeshOptions } from "../../base/CelestialRenderer";
 
 /**
  * Material for Wolf-Rayet stars
@@ -53,6 +55,14 @@ export class WolfRayetMaterial extends BaseStarMaterial {
  * Renderer for Wolf-Rayet stars
  */
 export class WolfRayetRenderer extends BaseStarRenderer {
+  public getLODLevels(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): LODLevel[] {
+    const material = this.getMaterial(object);
+    return this._createLuminousStarLODs(object, material, options);
+  }
+
   /**
    * Returns the appropriate material for a Wolf-Rayet star
    */

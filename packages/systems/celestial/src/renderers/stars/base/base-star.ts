@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import type { StarProperties } from "@teskooano/data-types";
-import { CelestialRenderer } from "../base/CelestialRenderer";
-import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
+import { CelestialRenderer } from "../../base/CelestialRenderer";
+import { BaseCelestialRenderer } from "../../base/BaseCelestialRenderer";
 import {
   SCALE,
   RenderableCelestialObject,
@@ -10,7 +10,7 @@ import {
 import type {
   CelestialMeshOptions,
   LightSourcesMap,
-} from "../base/CelestialRenderer";
+} from "../../base/CelestialRenderer";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
@@ -327,15 +327,26 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
 
   /**
    * Creates and returns an array of LOD levels for the star object.
+   * This is abstract and must be implemented by subclasses.
    */
-  getLODLevels(
+  abstract getLODLevels(
     object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): LODLevel[];
+
+  /**
+   * Helper method for luminous stars to create a standard set of LOD levels
+   * with a star body and corona.
+   * @internal
+   */
+  protected _createLuminousStarLODs(
+    object: RenderableCelestialObject,
+    material: BaseStarMaterial,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     const scale = typeof SCALE === "number" ? SCALE : 1.0;
 
     // --- Create components once ---
-    const material = this.getMaterial(object);
     this.materials.set(object.celestialObjectId, material);
 
     const highDetailGeometry = new THREE.SphereGeometry(
@@ -431,61 +442,6 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
       coronaMesh.material.side = THREE.DoubleSide;
       group.add(coronaMesh);
     });
-  }
-
-  /**
-   * Get the appropriate material for the star type
-   * Subclasses must implement this
-   */
-  protected abstract getMaterial(
-    object: RenderableCelestialObject,
-  ): BaseStarMaterial;
-
-  /**
-   * Update the renderer with the current time
-   */
-  update(
-    object: RenderableCelestialObject,
-    time: number,
-    timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
-  ): void {
-    super.update(object, time, timeScale, lightSources, camera);
-    this.elapsedTime = time;
-
-    const material = this.materials.get(
-      object.celestialObjectId,
-    ) as BaseStarMaterial;
-    const coronaMaterial = this.materials.get(
-      `${object.celestialObjectId}-corona`,
-    ) as THREE.ShaderMaterial;
-
-    if (material && material.update) {
-      material.update(this.elapsedTime, timeScale, lightSources, camera);
-    }
-
-    if (coronaMaterial && coronaMaterial.uniforms.time) {
-      coronaMaterial.uniforms.time.value = this.elapsedTime * 0.5;
-    }
-  }
-
-  /**
-   * Clean up resources
-   */
-  dispose(): void {
-    this.materials.forEach((material) => {
-      material.dispose();
-    });
-
-    this.coronaMaterials.forEach((materials) => {
-      materials.forEach((material) => {
-        material.dispose();
-      });
-    });
-
-    this.materials.clear();
-    this.coronaMaterials.clear();
   }
 
   /**
