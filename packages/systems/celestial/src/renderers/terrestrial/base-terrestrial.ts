@@ -1,18 +1,18 @@
-import { SCALE, CelestialType, PlanetProperties } from "@teskooano/data-types";
+import { CelestialType, PlanetProperties, SCALE } from "@teskooano/data-types";
 import * as THREE from "three";
 import { CelestialMeshOptions, LightSourcesMap } from "../index";
 import { AtmosphereMaterial } from "./materials/atmosphere.material";
 import { ProceduralPlanetMaterial } from "./materials/procedural-planet.material";
 
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
-import {
-  AtmosphereService,
-  AtmosphereMeshResult,
-} from "./utils/atmosphere-cloud-utils";
-import { PlanetMaterialService } from "./utils/planet-material-utils";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
 import { RingSystemRenderer } from "../rings";
+import {
+  AtmosphereMeshResult,
+  AtmosphereService,
+} from "./utils/atmosphere-utils";
+import { PlanetMaterialService } from "./utils/planet-material-utils";
 
 const MAX_LIGHTS = 4;
 
@@ -35,13 +35,13 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
 
   protected material: ProceduralPlanetMaterial | null = null;
   protected materialService: PlanetMaterialService;
-  protected atmosphereCloudService: AtmosphereService;
+  protected atmosphereService: AtmosphereService;
 
   constructor() {
     super();
     this.textureLoader = new THREE.TextureLoader();
     this.materialService = new PlanetMaterialService();
-    this.atmosphereCloudService = new AtmosphereService();
+    this.atmosphereService = new AtmosphereService();
   }
 
   /**
@@ -172,11 +172,7 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     const planetProps = object.properties as PlanetProperties;
 
     const atmosphereResult: AtmosphereMeshResult | null =
-      this.atmosphereCloudService.createAtmosphereMesh(
-        object,
-        segments,
-        baseRadius,
-      );
+      this.atmosphereService.createAtmosphereMesh(object, segments, baseRadius);
     if (atmosphereResult) {
       group.add(atmosphereResult.mesh);
       this.atmosphereMaterials.set(

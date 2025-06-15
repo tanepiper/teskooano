@@ -1,19 +1,18 @@
-import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import * as THREE from "three";
 import {
-  RenderableCelestialObject,
-  CelestialType,
-  GasGiantProperties,
-  StarProperties,
-  GasGiantClass,
-  PlanetType,
-  RingProperties,
-  OrbitalParameters,
-  RockyType,
-  PlanetProperties,
-  StellarType,
   CelestialStatus,
+  CelestialType,
+  GasGiantClass,
+  GasGiantProperties,
+  OrbitalParameters,
+  PlanetProperties,
+  PlanetType,
+  RenderableCelestialObject,
+  RockyType,
+  StarProperties,
+  StellarType,
 } from "@teskooano/data-types";
+import * as THREE from "three";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { BaseGasGiantRenderer } from "./base";
 import { ClassIGasGiantRenderer } from "./class-i";
 import { ClassIIGasGiantRenderer } from "./class-ii";

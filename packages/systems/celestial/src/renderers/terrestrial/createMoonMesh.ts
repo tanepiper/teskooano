@@ -1,9 +1,9 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
-import { BaseTerrestrialRenderer } from "./base-terrestrial";
-import type { CelestialRenderer } from "../base/CelestialRenderer";
 import * as THREE from "three";
+import type { CelestialRenderer } from "../base/CelestialRenderer";
 import { createFallbackSphere } from "../utils/createFallbackSphere";
+import { BaseTerrestrialRenderer } from "./base-terrestrial";
 
 interface CreateMoonMeshDeps {
   moonRenderers: Map<string, CelestialRenderer>;

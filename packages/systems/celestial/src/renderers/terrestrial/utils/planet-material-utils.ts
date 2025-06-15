@@ -1,10 +1,9 @@
 import {
-  PlanetProperties,
+  type PlanetProperties,
   PlanetType,
-  ProceduralSurfaceProperties,
-  SurfaceType,
+  type ProceduralSurfaceProperties,
+  type RenderableCelestialObject,
 } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
 import { ProceduralPlanetMaterial } from "../materials/procedural-planet.material";
 

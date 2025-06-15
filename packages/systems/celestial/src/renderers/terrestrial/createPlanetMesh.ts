@@ -1,10 +1,9 @@
-import { CelestialType, PlanetProperties } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { BaseTerrestrialRenderer } from "./base-terrestrial";
-import type { CelestialRenderer } from "../base/CelestialRenderer";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
+import type { CelestialRenderer } from "../base/CelestialRenderer";
 import { createFallbackSphere } from "../utils/createFallbackSphere";
+import { BaseTerrestrialRenderer } from "./base-terrestrial";
 
 interface CreatePlanetMeshDeps {
   planetRenderers: Map<string, CelestialRenderer>;

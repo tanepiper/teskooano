@@ -4,29 +4,19 @@ import { accelerationVectors$ } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
-  GasGiantClass,
-  type RenderableCelestialObject,
+  type RenderableCelestialObject
 } from "@teskooano/data-types";
-import { rendererEvents } from "@teskooano/renderer-threejs";
+import { DestructionPayload, rendererEvents } from "@teskooano/renderer-threejs";
 import type { CSS2DManager } from "@teskooano/renderer-threejs-labels";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 import { LightManager } from "@teskooano/renderer-threejs-lighting";
-import { LODManager, type LODLevel } from "@teskooano/renderer-threejs-lod";
-import {
-  AsteroidFieldRenderer,
-  CelestialRenderer,
-  ClassIGasGiantRenderer,
-  ClassIIGasGiantRenderer,
-  ClassIIIGasGiantRenderer,
-  ClassIVGasGiantRenderer,
-  ClassVGasGiantRenderer,
-  RingSystemRenderer,
-} from "@teskooano/systems-celestial";
+import { LODManager } from "@teskooano/renderer-threejs-lod";
+import { CelestialRenderer } from "@teskooano/systems-celestial";
 import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
-import { createDebris, type DebrisParticle } from "./debris/create-debris";
 import {
   AccelerationVisualizer,
+  DebrisEffectManager,
   GravitationalLensingHandler,
   MeshFactory,
   ObjectLifecycleManager,
@@ -97,6 +87,7 @@ export class ObjectManager {
   private rendererUpdater: RendererUpdater;
   /** @internal Manages particle effects for object destruction events. */
   private objectLifecycleManager: ObjectLifecycleManager;
+  private debrisEffectManager: DebrisEffectManager;
 
   /** @internal RxJS subscription to the renderable objects stream. */
   private objectsSubscription: Subscription | null = null;
@@ -105,7 +96,6 @@ export class ObjectManager {
   /** @internal Unsubscribe function for the destruction event listener. */
   private destructionSubscription: Subscription | null = null;
   private debugMode: boolean = false;
-  private debrisEffectsEnabled: boolean = true;
 
   /** @internal Reusable vector to avoid allocations in loops. */
   private tempVector3 = new THREE.Vector3();
@@ -147,7 +137,6 @@ export class ObjectManager {
     this.acceleration$ = acceleration$; // Assign the observable
 
     this.lodManager = new LODManager(camera);
-    this.initCelestialRenderers(); // Initialize specialized renderers
     this.lensingHandler = new GravitationalLensingHandler({
       starRenderers: this.starRenderers,
     });
@@ -192,42 +181,11 @@ export class ObjectManager {
       celestialRenderers: this.celestialRenderers,
     });
 
+    this.debrisEffectManager = new DebrisEffectManager({ scene: this.scene });
+
     // Start listening to state changes and events
     this.subscribeToStateChanges();
     this.subscribeToDestructionEvents();
-  }
-
-  /**
-   * @internal Initializes the map of specialized celestial renderers (e.g., for different Gas Giant classes).
-   */
-  private initCelestialRenderers(): void {
-    // Initialize renderers for specific types like Gas Giants
-    this.celestialRenderers.set(
-      GasGiantClass.CLASS_I,
-      new ClassIGasGiantRenderer(),
-    );
-    this.celestialRenderers.set(
-      GasGiantClass.CLASS_II,
-      new ClassIIGasGiantRenderer(),
-    );
-    this.celestialRenderers.set(
-      GasGiantClass.CLASS_III,
-      new ClassIIIGasGiantRenderer(),
-    );
-    this.celestialRenderers.set(
-      GasGiantClass.CLASS_IV,
-      new ClassIVGasGiantRenderer(),
-    );
-    this.celestialRenderers.set(
-      GasGiantClass.CLASS_V,
-      new ClassVGasGiantRenderer(),
-    );
-
-    // Add renderer for asteroid fields
-    this.celestialRenderers.set(
-      CelestialType.ASTEROID_FIELD,
-      new AsteroidFieldRenderer() as any, // Cast might be needed depending on specific interfaces
-    );
   }
 
   /**
@@ -260,15 +218,23 @@ export class ObjectManager {
       this.destructionSubscription.unsubscribe();
     }
     this.destructionSubscription = rendererEvents.destruction$.subscribe(
-      (payload) => {
-        if (this.debrisEffectsEnabled) {
-          const debris = createDebris(
-            payload.object,
-            this.scene,
-            this.renderer,
-          );
-          debris.forEach((d: DebrisParticle) => this.scene.add(d.mesh));
-        }
+      (payload: DestructionPayload) => {
+        const fullObject =
+          this.latestRenderableObjects[payload.object.id];
+        if (!fullObject) return;
+
+        // The manager has its own internal check for whether effects are enabled.
+        this.debrisEffectManager.createDebrisEffect({
+          destroyedId: fullObject.celestialObjectId,
+          survivorId: fullObject.parentId ?? "unknown",
+          impactPosition: new OSVector3(
+            fullObject.position.x,
+            fullObject.position.y,
+            fullObject.position.z,
+          ),
+          relativeVelocity: new OSVector3(0, 0, 0), // Placeholder
+          destroyedRadius: fullObject.radius,
+        });
       },
     );
   }
@@ -317,6 +283,9 @@ export class ObjectManager {
     scene?: THREE.Scene,
     camera?: THREE.PerspectiveCamera,
   ): void {
+    const deltaTime = this.getDeltaTime();
+    this.debrisEffectManager.update(deltaTime);
+
     // Update LOD system first
     this.lodManager.update();
 
@@ -508,7 +477,7 @@ export class ObjectManager {
    * @param enabled Whether debris effects should be shown.
    */
   public setDebrisEffectsEnabled(enabled: boolean): void {
-    this.debrisEffectsEnabled = enabled;
+    this.debrisEffectManager.setDebrisEffectsEnabled(enabled);
   }
 
   /**
@@ -516,7 +485,6 @@ export class ObjectManager {
    * @returns The new state (true if enabled, false if disabled).
    */
   public toggleDebrisEffects(): boolean {
-    this.debrisEffectsEnabled = !this.debrisEffectsEnabled;
-    return this.debrisEffectsEnabled;
+    return this.debrisEffectManager.toggleDebrisEffects();
   }
 }

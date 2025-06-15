@@ -12,7 +12,7 @@ The package is orchestrated by the central `ObjectManager` class, which composes
   - It adds, updates, and removes objects from the scene based on state changes.
   - It delegates visual effects like debris fields and gravitational lensing to their respective managers.
 
-- **`MeshFactory`**: A factory responsible for creating the appropriate `THREE.Mesh` or `THREE.LOD` for a given `RenderableCelestialObject`. It uses a suite of `create<Type>Mesh` functions (e.g., `createStarMesh`, `createPlanetMesh`) that, in turn, use the `CelestialRenderer` instances from `@teskooano/systems-celestial` to generate the actual geometry and materials via Level of Detail (LOD) levels.
+- **`MeshFactory`**: A factory that acts as a central delegator for mesh creation. It does not contain any geometry or material creation logic itself. Instead, it calls the appropriate `create<Type>Mesh` factory function (e.g., `createStarMesh`, `createPlanetMesh`) imported from the `@teskooano/systems-celestial` package. This keeps the object management layer cleanly separated from the celestial rendering systems.
 
 - **`DebrisEffectManager`**: Manages the particle effects for objects with a `DESTROYED` status.
 
