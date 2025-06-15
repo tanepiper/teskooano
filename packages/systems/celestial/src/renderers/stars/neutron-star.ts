@@ -24,6 +24,7 @@ import { LODLevel } from "@teskooano/renderer-threejs-lod";
  * - Extremely dense, rapid rotation
  * - Strong magnetic fields
  * - Pulsars are rotating neutron stars
+ * - Highly magnetized
  */
 export class NeutronStarMaterial extends BaseStarMaterial {
   constructor(
@@ -48,6 +49,21 @@ export class NeutronStarMaterial extends BaseStarMaterial {
 
       metallicEffect: options.metallicEffect ?? 0.2,
     });
+  }
+
+  update(
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.Camera,
+  ): void {
+    if (this.uniforms.time !== undefined) {
+      this.uniforms.time.value = time;
+    }
+    if (this.uniforms.pulseSpeed !== undefined) {
+      this.uniforms.pulseSpeed.value =
+        (this.uniforms.pulseSpeed.value as number) * timeScale;
+    }
   }
 }
 
@@ -335,18 +351,27 @@ export class NeutronStarRenderer extends BaseStarRenderer {
     time: number,
     timeScale: number,
     lightSources?: LightSourcesMap,
-    camera?: THREE.PerspectiveCamera,
+    camera?: THREE.Camera,
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
-    const jets = this.jetMaterials.get(object.celestialObjectId);
-    if (jets) {
-      jets.forEach((jet) => jet.update(this.elapsedTime));
+
+    const material = this.materials.get(
+      object.celestialObjectId,
+    ) as NeutronStarMaterial;
+    if (material) {
+      material.update(this.elapsedTime, timeScale, lightSources, camera);
     }
 
     const lensingHelper = this.lensingHelpers.get(object.celestialObjectId);
-    if (lensingHelper && renderer && scene && camera) {
+    if (
+      lensingHelper &&
+      renderer &&
+      scene &&
+      camera &&
+      camera instanceof THREE.PerspectiveCamera
+    ) {
       lensingHelper.update(renderer, scene, camera);
     }
   }

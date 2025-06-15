@@ -228,14 +228,14 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
 
     const bodyMaterial = this.materials.get(object.celestialObjectId);
     if (bodyMaterial && bodyMaterial instanceof ProceduralPlanetMaterial) {
-      bodyMaterial.update(time, lightSources, camera);
+      bodyMaterial.update(time, timeScale, lightSources, camera);
     }
 
     const atmosphereMaterial = this.atmosphereMaterials.get(
       object.celestialObjectId,
     );
     if (atmosphereMaterial) {
-      atmosphereMaterial.update(time, camera, lightSources);
+      atmosphereMaterial.update(time, timeScale, camera, lightSources);
     }
   }
 

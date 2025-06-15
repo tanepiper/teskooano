@@ -4,6 +4,7 @@ uniform vec3 uSunPosition; // World space position of the sun
 uniform vec3 uParentPosition; // World position of the parent body
 uniform float uParentRadius; // Radius of the parent body
 uniform float time; // Current time for potential animation effects
+uniform vec3 uSunColor; // Color of the primary light source
 
 // Define PI constant for GLSL
 #define PI 3.141592653589793
@@ -57,18 +58,22 @@ void main() {
     // *** Lighting Calculation ***
     // Use world space normal and the calculated lightDirection
     float ambientIntensity = 0.35;
-    float diffuseFactor = max(0.0, dot(normalize(vNormal), lightDirection)); // USE CALCULATED lightDirection
-    float combinedLight = (diffuseFactor * 0.65) + ambientIntensity;
+    vec3 ambientColor = uSunColor * ambientIntensity;
+
+    float diffuseFactor = max(0.0, abs(dot(normalize(vNormal), lightDirection)));
+    vec3 diffuseColor = uSunColor * diffuseFactor * 0.65;
+    
+    vec3 combinedLight = diffuseColor + ambientColor;
 
     // Apply shadow to lighting
-    float finalLightIntensity = combinedLight * shadowFactor;
+    vec3 finalLightColor = combinedLight * shadowFactor;
 
     // Simple ring variation (using vUv which is fine)
     float distanceFromCenter = length(vUv - vec2(0.5, 0.5)) * 2.0;
     float ringVariation = 1.0 - 0.1 * sin(distanceFromCenter * 25.0 + time * 0.08);
 
     // Combine all factors for final color
-    vec3 finalColor = color * finalLightIntensity * ringVariation;
+    vec3 finalColor = color * finalLightColor * ringVariation;
 
     // Use base opacity
     gl_FragColor = vec4(finalColor, opacity);

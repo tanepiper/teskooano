@@ -60,6 +60,7 @@ export class RingMaterial extends THREE.ShaderMaterial {
         rotationRate: { value: 0.0 },
         ringIndex: { value: options.ringIndex ?? 0 },
         ringType: { value: typeCoef },
+        uSunColor: { value: new THREE.Color(0xffffff) },
       },
       vertexShader: ringVertexShader,
       fragmentShader: ringFragmentShader,
@@ -73,18 +74,23 @@ export class RingMaterial extends THREE.ShaderMaterial {
    * Update material uniforms, e.g., time for animation, light source changes.
    * @param time Current time (e.g., from animation loop).
    * @param sunPosition World space POSITION of the primary light source (sun).
+   * @param sunColor World space COLOR of the primary light source (sun).
    * @param parentPosition World position of the celestial body the rings belong to.
    * @param parentRadius Radius of the celestial body the rings belong to.
    */
   update(
     time: number,
     sunPosition?: THREE.Vector3,
+    sunColor?: THREE.Color,
     parentPosition?: THREE.Vector3,
     parentRadius?: number,
   ) {
     this.uniforms.time.value = time;
     if (sunPosition) {
       this.uniforms.uSunPosition.value.copy(sunPosition);
+    }
+    if (sunColor) {
+      this.uniforms.uSunColor.value.copy(sunColor);
     }
     if (parentPosition) {
       this.uniforms.uParentPosition.value.copy(parentPosition);
@@ -102,8 +108,12 @@ export class RingMaterial extends THREE.ShaderMaterial {
   }
 }
 
-export class RingSystemRenderer extends BaseCelestialRenderer {
-  protected textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
+export class RingSystemRenderer {
+  private parentRenderer: BaseCelestialRenderer;
+
+  constructor(parentRenderer: BaseCelestialRenderer) {
+    this.parentRenderer = parentRenderer;
+  }
 
   private _createRingGroup(
     object: RenderableCelestialObject,
@@ -154,7 +164,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer {
       });
 
       const materialKey = `${object.celestialObjectId}-ring-${index}`;
-      this.registerMaterial(materialKey, ringMaterial);
+      this.parentRenderer.registerMaterial(materialKey, ringMaterial);
 
       const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
       ringMesh.name = `${object.celestialObjectId}-ring-${index}`;
@@ -228,9 +238,13 @@ export class RingSystemRenderer extends BaseCelestialRenderer {
       return;
     }
 
+    const primarySun = this.parentRenderer.findPrimaryLightSource(
+      object,
+      lightSources,
+    );
     const primarySunPosition =
-      this.findPrimaryLightSource(object, lightSources)?.position ??
-      new THREE.Vector3(1e11, 0, 0);
+      primarySun?.position ?? new THREE.Vector3(1e11, 0, 0);
+    const primarySunColor = primarySun?.color ?? new THREE.Color(0xffffff);
 
     if (isVisualizationEnabled()) {
       threeVectorDebug.setVectors(`ring-system-${object.celestialObjectId}`, {
@@ -239,11 +253,12 @@ export class RingSystemRenderer extends BaseCelestialRenderer {
       });
     }
 
-    this.materials.forEach((material, materialKey) => {
+    this.parentRenderer.materials.forEach((material, materialKey) => {
       if (materialKey.startsWith(`${object.celestialObjectId}-ring-`)) {
         (material as RingMaterial).update(
           time,
           primarySunPosition,
+          primarySunColor,
           parentPosition,
           parentRadius,
         );
@@ -252,6 +267,6 @@ export class RingSystemRenderer extends BaseCelestialRenderer {
   }
 
   dispose(): void {
-    super.dispose();
+    this.parentRenderer.dispose();
   }
 }

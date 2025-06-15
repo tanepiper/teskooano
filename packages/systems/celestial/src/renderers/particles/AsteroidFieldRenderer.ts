@@ -23,6 +23,7 @@ const asteroidVertexShader = `
   varying float vTextureIndex;
   varying float vInitialRotation;
   uniform float pointSizeScale; 
+  varying vec3 vWorldPosition;
   
 
   void main() {
@@ -39,7 +40,10 @@ const asteroidVertexShader = `
       position.x * sinAngle + position.z * cosAngle
     );
     
-    vec4 mvPosition = modelViewMatrix * vec4(rotatedPosition, 1.0);
+    vec4 worldPosition4 = modelMatrix * vec4(rotatedPosition, 1.0);
+    vWorldPosition = worldPosition4.xyz;
+
+    vec4 mvPosition = viewMatrix * worldPosition4;
     gl_Position = projectionMatrix * mvPosition;
     
     float calculatedPointSize = size * ( pointSizeScale / -mvPosition.z );
@@ -57,6 +61,9 @@ const asteroidFragmentShader = `
   uniform float alphaTest;
   uniform float time;
   uniform float particleRotationSpeed; 
+  uniform vec3 lightPosition;
+  uniform vec3 lightColor;
+  varying vec3 vWorldPosition;
 
   void main() {
     vec4 texColor;
@@ -91,8 +98,14 @@ const asteroidFragmentShader = `
 
     if ( texColor.a < alphaTest ) discard; 
 
+    vec3 normal = vec3(0.0, 0.0, 1.0);
+    vec3 lightDir = normalize(lightPosition - vWorldPosition);
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 diffuse = diff * lightColor;
+
+    vec3 ambient = vec3(0.1, 0.1, 0.1);
     
-    gl_FragColor = texColor * vec4(vColor, 1.0);
+    gl_FragColor = texColor * vec4(vColor * (ambient + diffuse), 1.0);
   }
 `;
 
@@ -179,6 +192,8 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
         time: { value: 0.0 },
         beltRotationAngle: { value: 0.0 },
         particleRotationSpeed: { value: this.particleRotationSpeed },
+        lightPosition: { value: new THREE.Vector3() },
+        lightColor: { value: new THREE.Color(0xffffff) },
       },
       vertexShader: asteroidVertexShader,
       fragmentShader: asteroidFragmentShader,
@@ -380,6 +395,12 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       object.celestialObjectId,
     ) as THREE.ShaderMaterial;
     if (!material) return;
+
+    const primaryLight = this.findPrimaryLightSource(object, lightSources);
+    if (primaryLight) {
+      material.uniforms.lightPosition.value.copy(primaryLight.position);
+      material.uniforms.lightColor.value.copy(primaryLight.color);
+    }
 
     let timeDelta = 0;
     if (this.previousSimTime > 0) {

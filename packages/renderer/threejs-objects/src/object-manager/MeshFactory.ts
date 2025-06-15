@@ -20,7 +20,6 @@ import {
   createGasGiantMesh,
   createMoonMesh,
   createPlanetMesh,
-  createRingSystemMesh,
   createStarMesh,
 } from "./mesh-creators"; // Import creator functions
 import type { ObjectManager } from "../ObjectManager";
@@ -154,9 +153,6 @@ export class MeshFactory {
           break;
         case CelestialType.SPACE_ROCK:
           mesh = createAsteroidMesh(object, deps);
-          break;
-        case CelestialType.RING_SYSTEM:
-          mesh = createRingSystemMesh(object, deps);
           break;
         case CelestialType.ASTEROID_FIELD:
           mesh = createAsteroidFieldMesh(object, deps);
@@ -405,70 +401,6 @@ export class MeshFactory {
       // For now, assume LOD is preferred.
       console.warn(
         `[MeshFactory] No suitable renderer with getLODLevels found for SPACE_ROCK ${object.celestialObjectId}.`,
-      );
-    }
-    return this.createFallbackSphere(object);
-  }
-
-  private createRingSystemMesh(
-    object: RenderableCelestialObject,
-  ): THREE.Object3D {
-    let renderer = this.ringSystemRenderers.get(object.celestialObjectId);
-
-    // If no ID-specific renderer, create and store a default one
-    if (!renderer) {
-      try {
-        renderer = new RingSystemRenderer();
-        this.ringSystemRenderers.set(object.celestialObjectId, renderer);
-      } catch (error) {
-        console.error(
-          `[MeshFactory] Failed to create default RingSystemRenderer for ${object.celestialObjectId}:`,
-          error,
-        );
-        return this.createFallbackSphere(object);
-      }
-    }
-
-    // Now renderer is guaranteed to be RingSystemRenderer if created successfully
-    if (renderer?.getLODLevels) {
-      const lodLevels = renderer.getLODLevels(object);
-      if (lodLevels && lodLevels.length > 0) {
-        const lod = this.createLodCallback(object, lodLevels);
-        return lod;
-      } else {
-        console.warn(
-          `[MeshFactory] RingSystemRenderer for ${object.celestialObjectId} provided invalid LOD levels.`,
-        );
-      }
-    } else {
-      // This case should be less likely now if constructor succeeded
-      console.warn(
-        `[MeshFactory] RingSystemRenderer for ${object.celestialObjectId} does not have getLODLevels.`,
-      );
-    }
-    return this.createFallbackSphere(object);
-  }
-
-  private createAsteroidFieldMesh(
-    object: RenderableCelestialObject,
-  ): THREE.Object3D {
-    const renderer = this.celestialRenderers.get(CelestialType.ASTEROID_FIELD);
-    if (renderer?.getLODLevels) {
-      const lodLevels = renderer.getLODLevels(object);
-      if (lodLevels && lodLevels.length > 0) {
-        const lod = this.createLodCallback(object, lodLevels);
-        // Don't store instance renderer for fields
-        return lod;
-      } else {
-        console.warn(
-          `[MeshFactory] Renderer for ASTEROID_FIELD ${object.celestialObjectId} provided invalid LOD levels.`,
-        );
-      }
-    } else {
-      // Asteroid fields might have a direct creation method if they don't use LODManager
-      // E.g., if (typeof renderer?.createPoints === 'function') { return renderer.createPoints(object); }
-      console.warn(
-        `[MeshFactory] No suitable renderer with getLODLevels found for ASTEROID_FIELD ${object.celestialObjectId}.`,
       );
     }
     return this.createFallbackSphere(object);

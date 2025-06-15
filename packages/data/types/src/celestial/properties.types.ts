@@ -93,6 +93,7 @@ export interface PlanetProperties extends SpecificPropertiesBase {
   /** Optional surface characteristics, specific structure depends on PlanetType. */
   surface?: SurfacePropertiesUnion;
   /** Optional array defining planetary rings. */
+  rings?: RingProperties[];
 }
 
 /** Base interface for surface properties */
@@ -287,6 +288,7 @@ export interface GasGiantProperties extends SpecificPropertiesBase {
   axialTiltDeg?: number;
   emissiveColor?: string;
   emissiveIntensity?: number;
+  rings?: RingProperties[];
 }
 
 /**

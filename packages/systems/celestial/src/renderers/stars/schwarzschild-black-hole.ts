@@ -68,8 +68,15 @@ export class SchwarzschildBlackHoleMaterial extends THREE.ShaderMaterial {
   /**
    * Update the material with the current time
    */
-  update(time: number): void {
-    this.uniforms.time.value = time;
+  update(
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.Camera,
+  ): void {
+    if (this.uniforms.time !== undefined) {
+      this.uniforms.time.value = time;
+    }
   }
 
   /**
@@ -82,6 +89,8 @@ export class SchwarzschildBlackHoleMaterial extends THREE.ShaderMaterial {
  * Material for black hole accretion disk
  */
 export class AccretionDiskMaterial extends THREE.ShaderMaterial {
+  public isAccretionDiskMaterial = true;
+
   constructor() {
     const diskShader = {
       uniforms: {
@@ -170,8 +179,15 @@ export class AccretionDiskMaterial extends THREE.ShaderMaterial {
   /**
    * Update the material with the current time
    */
-  update(time: number): void {
-    this.uniforms.time.value = time;
+  update(
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.Camera,
+  ): void {
+    if (this.uniforms.time !== undefined) {
+      this.uniforms.time.value = time;
+    }
   }
 
   /**
@@ -304,25 +320,35 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
     time: number,
     timeScale: number,
     lightSources?: LightSourcesMap,
-    camera?: THREE.PerspectiveCamera,
+    camera?: THREE.Camera,
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
   ): void {
-    const currentTime = time ?? Date.now() / 1000 - this.startTime;
-    this.elapsedTime = currentTime;
+    super.update(object, time, timeScale, lightSources, camera);
+    const currentTime = this.elapsedTime;
 
     if (this.eventHorizonMaterial) {
-      this.eventHorizonMaterial.update(currentTime);
+      this.eventHorizonMaterial.update(
+        currentTime,
+        timeScale,
+        lightSources,
+        camera,
+      );
     }
 
     this.accretionDiskMaterials.forEach((material) => {
-      material.update(currentTime);
+      material.update(currentTime, timeScale, lightSources, camera);
     });
 
-    if (renderer && scene && camera) {
-      this.lensingHelpers.forEach((helper) => {
-        helper.update(renderer, scene, camera);
-      });
+    const lensingHelper = this.lensingHelpers.get(object.celestialObjectId);
+    if (
+      lensingHelper &&
+      renderer &&
+      scene &&
+      camera &&
+      camera instanceof THREE.PerspectiveCamera
+    ) {
+      lensingHelper.update(renderer, scene, camera);
     }
   }
 

@@ -73,24 +73,13 @@ export interface CelestialRenderer {
   ): LODLevel[];
 
   /**
-   * Update the renderer with the current simulation state for a specific object.
-   *
-   * This method should:
-   * 1. Update time-based shader uniforms
-   * 2. Update light source information in shaders
-   * 3. Handle any animations or effects
-   *
-   * @param object The celestial object data to update.
-   * @param time The current elapsed simulation time.
-   * @param timeScale The current simulation time scale.
-   * @param lightSources Map of light source IDs to their position and color data.
-   * @param camera The camera object (for LOD calculations).
+   * Update the object's state
    */
   update(
     object: RenderableCelestialObject,
     time: number,
     timeScale: number,
-    lightSources?: Map<string, LightSourceData>,
+    lightSources?: LightSourcesMap,
     camera?: THREE.Camera,
   ): void;
 

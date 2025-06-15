@@ -195,43 +195,14 @@ export function generatePlanet(
         axialTilt: tiltAxis,
         physicsStateReal: initialPhysicsState,
       };
-      subscriber.next(planetData);
 
       if (generatedRings && generatedRings.length > 0) {
-        const ringSystemId = `ring-system-${planetId}`;
-        const ringSystemName = `${planetName} Rings`;
-
-        const ringSystemProperties: RingSystemProperties = {
-          type: CelestialType.RING_SYSTEM,
-          rings: generatedRings,
-          parentId: planetId,
-        };
-
-        const ringSystemData: CelestialObject = {
-          id: ringSystemId,
-          name: ringSystemName,
-          type: CelestialType.RING_SYSTEM,
-          status: CelestialStatus.ACTIVE,
-          parentId: planetId,
-          currentParentId: planetId,
-          properties: ringSystemProperties,
-          axialTilt: tiltAxis.clone(),
-
-          realMass_kg: 0,
-          realRadius_m: 0,
-          temperature: 0,
-          orbit: {} as OrbitalParameters,
-
-          physicsStateReal: {
-            id: ringSystemId,
-            mass_kg: 0,
-            position_m: initialPhysicsState.position_m.clone(),
-            velocity_mps: initialPhysicsState.velocity_mps.clone(),
-          },
-        };
-        subscriber.next(ringSystemData);
+        if (planetData.properties) {
+          (planetData.properties as PlanetProperties).rings = generatedRings;
+        }
       }
 
+      subscriber.next(planetData);
       subscriber.complete();
     } catch (error) {
       console.error(`Error generating planet ${planetName}:`, error);

@@ -22,7 +22,13 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
    * Map of materials for different objects
    * Key: object ID, Value: material instance
    */
-  protected materials: Map<string, THREE.Material> = new Map();
+  public materials: Map<string, THREE.Material> = new Map();
+
+  /**
+   * Map of LOD levels for different objects
+   * Key: object ID, Value: LOD instance
+   */
+  protected lods: Map<string, THREE.LOD> = new Map();
 
   /**
    * The start time of the renderer (used to calculate elapsed time)
@@ -41,6 +47,10 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   protected _tempVector1: THREE.Vector3 = new THREE.Vector3();
   protected _tempVector2: THREE.Vector3 = new THREE.Vector3();
   protected _tempVector3: THREE.Vector3 = new THREE.Vector3();
+
+  constructor() {
+    // ... existing code ...
+  }
 
   /**
    * Get LOD levels for a celestial object
@@ -62,13 +72,9 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     lightSources?: LightSourcesMap,
     camera?: THREE.Camera,
   ): void {
-    this.elapsedTime = time - this.startTime;
-
-    const material = this.materials.get(object.celestialObjectId);
-    if (material && material instanceof THREE.ShaderMaterial) {
-      if (material.uniforms && material.uniforms.time !== undefined) {
-        material.uniforms.time.value = this.elapsedTime;
-      }
+    const lod = this.lods.get(object.celestialObjectId);
+    if (lod) {
+      this.lods.get(object.celestialObjectId)?.update(camera as THREE.Camera);
     }
   }
 
@@ -133,8 +139,11 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   /**
    * Add a material to the materials map for tracking and disposal
    */
-  protected registerMaterial(objectId: string, material: THREE.Material): void {
-    this.materials.set(objectId, material);
+  public registerMaterial(materialKey: string, material: THREE.Material): void {
+    if (this.materials.has(materialKey)) {
+      this.materials.get(materialKey)?.dispose();
+    }
+    this.materials.set(materialKey, material);
   }
 
   /**
@@ -178,7 +187,7 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   /**
    * Helper to find the primary light source for an object
    */
-  protected findPrimaryLightSource(
+  public findPrimaryLightSource(
     object: RenderableCelestialObject,
     lightSources?: LightSourcesMap,
   ): LightSourceData | null {
@@ -192,5 +201,9 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     }
 
     return lightSources.values().next().value || null;
+  }
+
+  public getLOD(object: RenderableCelestialObject): THREE.LOD | undefined {
+    return this.lods.get(object.celestialObjectId);
   }
 }

@@ -257,8 +257,15 @@ export abstract class BaseStarMaterial extends THREE.ShaderMaterial {
   /**
    * Update the material with the current time
    */
-  update(time: number): void {
-    this.uniforms.time.value = time;
+  update(
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.Camera,
+  ): void {
+    if (this.uniforms.time !== undefined) {
+      this.uniforms.time.value = time;
+    }
   }
 
   /**
@@ -312,8 +319,8 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
 /**
  * Abstract base class for star renderers, implementing the LOD system.
  */
-export abstract class BaseStarRenderer implements CelestialRenderer {
-  protected materials: Map<string, BaseStarMaterial> = new Map();
+export abstract class BaseStarRenderer extends BaseCelestialRenderer {
+  public materials: Map<string, BaseStarMaterial> = new Map();
   protected coronaMaterials: Map<string, CoronaMaterial[]> = new Map();
   protected startTime: number = Date.now() / 1000;
   protected elapsedTime: number = 0;
@@ -444,21 +451,23 @@ export abstract class BaseStarRenderer implements CelestialRenderer {
     lightSources?: LightSourcesMap,
     camera?: THREE.Camera,
   ): void {
-    if (time === undefined) {
-      this.elapsedTime = Date.now() / 1000 - this.startTime;
-    } else {
-      this.elapsedTime = time;
+    super.update(object, time, timeScale, lightSources, camera);
+    this.elapsedTime = time;
+
+    const material = this.materials.get(
+      object.celestialObjectId,
+    ) as BaseStarMaterial;
+    const coronaMaterial = this.materials.get(
+      `${object.celestialObjectId}-corona`,
+    ) as THREE.ShaderMaterial;
+
+    if (material && material.update) {
+      material.update(this.elapsedTime, timeScale, lightSources, camera);
     }
 
-    this.materials.forEach((material) => {
-      material.update(this.elapsedTime);
-    });
-
-    this.coronaMaterials.forEach((materials) => {
-      materials.forEach((material) => {
-        material.update(this.elapsedTime);
-      });
-    });
+    if (coronaMaterial && coronaMaterial.uniforms.time) {
+      coronaMaterial.uniforms.time.value = this.elapsedTime * 0.5;
+    }
   }
 
   /**

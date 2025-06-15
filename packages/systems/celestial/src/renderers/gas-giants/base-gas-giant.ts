@@ -1,5 +1,8 @@
 import { renderableStore } from "@teskooano/core-state";
-import type { GasGiantProperties } from "@teskooano/data-types";
+import type {
+  GasGiantProperties,
+  RingSystemProperties,
+} from "@teskooano/data-types";
 import { SCALE } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
@@ -12,6 +15,7 @@ import {
 import basicFragmentShader from "../../shaders/gas-giants/basic.fragment.glsl";
 import basicVertexShader from "../../shaders/gas-giants/basic.vertex.glsl";
 import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
+import { RingMaterial, RingSystemRenderer } from "../rings/rings";
 
 /**
  * Base material for gas giants
@@ -22,12 +26,24 @@ export abstract class BaseGasGiantMaterial extends THREE.ShaderMaterial {
   /**
    * Update the material with current time
    */
-  update(time: number, lightSourcePosition?: THREE.Vector3): void {
-    if (this.uniforms.time) {
-      this.uniforms.time.value = time;
-    }
-    if (this.uniforms.sunPosition && lightSourcePosition) {
-      this.uniforms.sunPosition.value = lightSourcePosition;
+  update(
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.Camera,
+  ): void {
+    this.uniforms.time.value = time;
+
+    if (lightSources && lightSources.size > 0) {
+      const firstLight = lightSources.values().next().value;
+      if (firstLight) {
+        if (this.uniforms.sunPosition) {
+          this.uniforms.sunPosition.value = firstLight.position;
+        }
+        if (this.uniforms.lightPosition) {
+          this.uniforms.lightPosition.value.copy(firstLight.position);
+        }
+      }
     }
   }
 
@@ -56,6 +72,7 @@ export class BasicGasGiantMaterial extends BaseGasGiantMaterial {
  */
 export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
   protected textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
+  protected ringSystemRenderer: RingSystemRenderer | null = null;
 
   /**
    * Child classes must implement this method to return the appropriate material
@@ -72,6 +89,18 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
+    const properties = object.properties as
+      | GasGiantProperties
+      | RingSystemProperties;
+    const hasRings =
+      properties &&
+      "rings" in properties &&
+      (properties as RingSystemProperties).rings.length > 0;
+
+    if (hasRings) {
+      this.ringSystemRenderer = new RingSystemRenderer(this);
+    }
+
     const scale = typeof SCALE === "number" ? SCALE : 1;
     const baseRadius = object.radius ?? 10;
 
@@ -91,6 +120,14 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     highDetailMesh.name = `${object.celestialObjectId}-high-lod`;
     const level0Group = new THREE.Group();
     level0Group.add(highDetailMesh);
+
+    if (hasRings && this.ringSystemRenderer) {
+      const ringLODs = this.ringSystemRenderer.getLODLevels(object, options);
+      if (ringLODs.length > 0) {
+        level0Group.add(ringLODs[0].object);
+      }
+    }
+
     const level0: LODLevel = { object: level0Group, distance: 0 };
 
     const mediumSegments = 32;
@@ -102,6 +139,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     const mediumMaterial = new BasicGasGiantMaterial(
       this._getBaseGasGiantColor(object),
     );
+    this.registerMaterial(`${object.celestialObjectId}-medium`, mediumMaterial);
     const mediumMesh = new THREE.Mesh(mediumGeometry, mediumMaterial);
     mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
     const level1Group = new THREE.Group();
@@ -118,6 +156,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
       color: this._getBaseGasGiantColor(object),
       wireframe: false,
     });
+    this.registerMaterial(`${object.celestialObjectId}-low`, lowMaterial);
     const lowMesh = new THREE.Mesh(lowGeometry, lowMaterial);
     lowMesh.name = `${object.celestialObjectId}-low-lod`;
     const level2Group = new THREE.Group();
@@ -151,7 +190,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
   }
 
   /**
-   * Update the materials stored by this renderer.
+   * Update the gas giant's appearance.
    */
   update(
     object: RenderableCelestialObject,
@@ -161,22 +200,27 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     camera?: THREE.Camera,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
+    this.elapsedTime = time;
 
     const material = this.materials.get(
       object.celestialObjectId,
     ) as BaseGasGiantMaterial;
-    if (!material) return;
 
-    const primaryLightData = this.findPrimaryLightSource(object, lightSources);
-    const lightSourcePosition = primaryLightData
-      ? primaryLightData.position
-      : new THREE.Vector3(1e11, 0, 0);
+    const lightSourcePosition =
+      this.findPrimaryLightSource(object, lightSources)?.position ??
+      new THREE.Vector3(1e11, 0, 0);
 
-    material.update(this.elapsedTime, lightSourcePosition);
+    if (material) {
+      material.update(this.elapsedTime, timeScale, lightSources, camera);
+    }
+
+    if (this.ringSystemRenderer) {
+      this.ringSystemRenderer.update(object, time, timeScale, lightSources);
+    }
   }
 
   /**
-   * Clean up resources
+   * Dispose of all materials and textures.
    */
   dispose(): void {
     super.dispose();

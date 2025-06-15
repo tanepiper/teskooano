@@ -125,7 +125,6 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
   update(time: number, renderTarget: THREE.WebGLRenderTarget): void {
     this.uniforms.time.value = time;
     this.uniforms.tBackground.value = renderTarget.texture;
-    this.uniforms.resolution.value.set(renderTarget.width, renderTarget.height);
   }
 
   /**

@@ -91,6 +91,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
 
   update(
     time: number,
+    timeScale: number,
     lightSources?: Map<string, LightSourceData>,
     camera?: THREE.Camera,
   ): void {

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { BaseStarMaterial, BaseStarRenderer } from "./base-star";
+import { LightSourcesMap } from "..";
 
 /**
  * Material for Wolf-Rayet stars
@@ -36,6 +37,15 @@ export class WolfRayetMaterial extends BaseStarMaterial {
 
       metallicEffect: options.metallicEffect ?? 0.5,
     });
+  }
+
+  update(
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.Camera,
+  ): void {
+    super.update(time, timeScale, lightSources, camera);
   }
 }
 
