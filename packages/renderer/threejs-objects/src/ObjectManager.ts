@@ -4,9 +4,12 @@ import { accelerationVectors$ } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
-  type RenderableCelestialObject
+  type RenderableCelestialObject,
 } from "@teskooano/data-types";
-import { DestructionPayload, rendererEvents } from "@teskooano/renderer-threejs";
+import {
+  DestructionPayload,
+  rendererEvents,
+} from "@teskooano/renderer-threejs";
 import type { CSS2DManager } from "@teskooano/renderer-threejs-labels";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 import { LightManager } from "@teskooano/renderer-threejs-lighting";
@@ -219,8 +222,7 @@ export class ObjectManager {
     }
     this.destructionSubscription = rendererEvents.destruction$.subscribe(
       (payload: DestructionPayload) => {
-        const fullObject =
-          this.latestRenderableObjects[payload.object.id];
+        const fullObject = this.latestRenderableObjects[payload.object.id];
         if (!fullObject) return;
 
         // The manager has its own internal check for whether effects are enabled.

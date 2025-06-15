@@ -29,8 +29,9 @@ This is the heart of the package, containing the logic for instantiating differe
   - **Particles (Asteroids/Oort Clouds)**: The `getLODLevels` method for asteroid fields returns multiple `THREE.Points` objects with progressively fewer particles. The Oort cloud renderer returns one high-detail particle system and then empty groups for lower LODs.
 - **Factory Functions**: Instantiation patterns have been partially unified.
   - **Stars & Gas Giants**: Now use a factory pattern. Central functions (`createStarMesh`, `createGasGiantMesh`) inspect the object's properties and delegate to an internal `create...Renderer` function to instantiate the correct concrete renderer. This is the preferred pattern.
-  - **Terrestrial, Particles & Others**: No factory exists yet. The consuming code is still responsible for selecting and instantiating the correct renderer class (e.g., `BaseTerrestrialRenderer`, `AsteroidFieldRenderer`).
-- **Inconsistent `update` Signatures**: Most renderers adhere to the `update(object, time, timeScale, lightSources, camera)` signature. However, renderers for exotic objects like black holes, which require multi-pass rendering for effects like gravitational lensing, have a custom signature: `update(object, time, timeScale, lightSources, camera, renderer, scene)`. This is enabled by recent changes to `CelestialMeshOptions` which now include optional `renderer`, `scene`, and `camera` properties.
+  - **Terrestrial**: Now uses a factory pattern. `createPlanetMesh` and `createMoonMesh` are the primary entry points.
+  - **Particles & Others**: No factory exists yet for particle systems.
+- **Inconsistent `update` Signatures**: Most renderers adhere to the `update(object, time, timeScale, lightSources, camera)` signature. However, renderers for exotic objects like black holes, which require multi-pass rendering for effects like gravitational lensing, have a custom signature: `update(object, time, timeScale, lightSources, camera, renderer, scene)`.
 
 ### B. Specialized Renderer Deep Dive
 
@@ -43,7 +44,7 @@ This is the heart of the package, containing the logic for instantiating differe
   - Each class has its own `...Renderer` and `...Material` class.
   - They feature material-level LOD, where the `updateLOD` method on the material for Class I/II giants changes shader uniforms (e.g., reducing noise octaves) to decrease complexity at a distance.
   - Seamlessly integrates the `RingSystemRenderer`.
-- **Terrestrial**: The `BaseTerrestrialRenderer` uses a service-based approach to compose the final object, combining a procedurally rendered planet body with optional atmosphere and cloud layers. This is one of the cleanest architectures in the package.
+- **Terrestrial**: Follows the factory pattern, using `createPlanetMesh` and `createMoonMesh` as the public API. Internally, the `BaseTerrestrialRenderer` uses a service-based approach to compose the final object from a procedurally rendered planet body and an optional atmosphere. This is one of the cleanest architectures in the package.
 - **Particles**: `AsteroidFieldRenderer` and `OortCloudRenderer` use `THREE.Points` with custom shaders. They are highly efficient but differ on a key `PointsMaterial` setting: `sizeAttenuation` is `true` for asteroid fields (particles shrink with distance) but `false` for Oort clouds (particles maintain screen size, for a distant-sky effect).
 - **Rings**: `RingSystemRenderer` is a modular, data-driven renderer that creates planetary ring systems with lighting and shadow casting from the parent body. It is composed by other renderers (like `BaseGasGiantRenderer` and `BaseTerrestrialRenderer`) during their `initialize` phase.
 
@@ -56,7 +57,7 @@ This is the heart of the package, containing the logic for instantiating differe
 
 ## IV. Weaknesses & Inconsistencies
 
-1.  **Inconsistent Architecture (Partially Addressed)**: While the factory pattern is now used for stars and gas giants, it has not yet been extended to Terrestrial planets or Particle systems. This remains the primary architectural inconsistency.
+1.  **Inconsistent Architecture (Partially Addressed)**: The factory pattern is now consistently applied to Stars, Gas Giants, and Terrestrial bodies. The main remaining inconsistency is the lack of a factory for Particle systems (`AsteroidField`, `OortCloud`).
 2.  **Inconsistent Shader Handling**: The use of both external `.glsl` files and embedded GLSL strings is a significant inconsistency that impacts maintainability. The `BaseStarRenderer` and `GravitationalLensingMaterial` still embed their shader code.
 3.  **State Management Coupling**: Many renderers are still coupled to the global `renderableStore` from `@teskooano/core-state`, fetching object data directly within their `update` loops. This makes the renderers less pure and harder to test.
 4.  **Divergent LOD Strategies**: The lack of a unified LOD strategy leads to different behaviors and performance characteristics across object types.
@@ -67,8 +68,8 @@ This is the heart of the package, containing the logic for instantiating differe
 This analysis aligns with the existing `TODO.md` and `MIGRATION_PLAN.md`. The highest-priority actions should be:
 
 1.  **Complete Renderer Architecture Unification**:
-    - **Create factories for Terrestrial objects (`createPlanetMesh`, `createMoonMesh`) and Particle systems (`createAsteroidFieldMesh`)** to match the pattern used by Stars and Gas Giants. This will create a single, standard entry point for creating any celestial renderer.
-    - Standardize the `update` method signature across all renderers. For special cases like lensing, the factory should return a "wrapper" renderer that handles the multi-pass logic internally, or ensure the required parameters are passed via the `options` object.
+    - **Create factories for Particle systems (`createAsteroidFieldMesh`)** to match the pattern used by other renderers. This will create a single, standard entry point for creating any celestial renderer.
+    - Standardize the `update` method signature across all renderers. For special cases like lensing, the factory should return a "wrapper" renderer that handles the multi-pass logic internally.
 2.  **Standardize Shader Handling**: Refactor all renderers that use embedded GLSL strings (primarily `BaseStarRenderer` and `GravitationalLensingMaterial`) to load their shaders from external `.glsl` files in the `src/shaders/` directory.
 3.  **Decouple from Global State**: Refactor renderer `update` methods. Instead of pulling from a global store, the necessary data (`RenderableCelestialObject`) should be passed into the `update` method by the calling manager (e.g., `ObjectManager`).
 4.  **Develop a Unified LOD Strategy**: Design a single, consistent approach to LOD. This could involve standardizing on the multi-geometry approach (returning multiple `LODLevel`s from `getLODLevels`) and ensuring all renderers conform to it.

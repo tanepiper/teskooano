@@ -4,7 +4,9 @@ This file tracks planned improvements and future work for the celestial renderin
 
 ## High Priority
 
-- [ ] **Unify Renderer Architecture**: Define and implement a formal `CelestialRenderer` interface or abstract base class. A primary goal should be to create a single factory entry point for all renderers and standardize `update` method signatures.
+- [x] **Unify Renderer Architecture (Partially Complete)**: The factory pattern is now used for Stars, Gas Giants, and Terrestrial bodies, and a formal `CelestialRenderer` interface exists.
+  - [ ] Create a factory for Particle systems (`createAsteroidFieldMesh`) to complete the pattern.
+  - [ ] Standardize `update` method signatures across all renderers. For special cases like lensing, the factory should return a "wrapper" renderer that handles the multi-pass logic internally.
 - [ ] **Decouple Concerns**:
   - [ ] Reduce direct dependency on `celestialObjectsStore` in renderer `update` methods (pass state as arguments or use subscriptions).
 - [ ] **Standardize LOD**: Develop and implement a common Level of Detail strategy across all renderers.

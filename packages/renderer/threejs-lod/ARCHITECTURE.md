@@ -29,6 +29,7 @@ graph TD
 
     subgraph "Object Rendering (@teskooano/renderer-threejs-objects)"
         direction LR
-        C[ObjectManager] -- "Registers LODs with" --> B;
+        C[ObjectManager] -- "Uses" --> D[MeshFactory]
+        D -- "Registers LODs with" --> B
     end
 ```
