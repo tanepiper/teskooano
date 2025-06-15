@@ -33,7 +33,6 @@ export interface MeshFactoryConfig {
   starRenderers: Map<string, CelestialRenderer>;
   planetRenderers: Map<string, CelestialRenderer>;
   moonRenderers: Map<string, CelestialRenderer>;
-  ringSystemRenderers: Map<string, RingSystemRenderer>;
   lodManager: LODManager;
   camera: THREE.PerspectiveCamera; // Needed for LOD registration?
   createLodCallback: (
@@ -53,7 +52,6 @@ export class MeshFactory {
   private starRenderers: Map<string, CelestialRenderer>;
   private planetRenderers: Map<string, CelestialRenderer>;
   private moonRenderers: Map<string, CelestialRenderer>;
-  private ringSystemRenderers: Map<string, RingSystemRenderer>;
   private lodManager: LODManager;
   private createLodCallback: (
     object: RenderableCelestialObject,
@@ -67,7 +65,6 @@ export class MeshFactory {
     starRenderers: Map<string, CelestialRenderer>;
     planetRenderers: Map<string, CelestialRenderer>;
     moonRenderers: Map<string, CelestialRenderer>;
-    ringSystemRenderers: Map<string, RingSystemRenderer>;
     celestialRenderers: Map<string, CelestialRenderer>;
     createLodCallback: (
       object: RenderableCelestialObject,
@@ -80,7 +77,6 @@ export class MeshFactory {
     this.starRenderers = config.starRenderers;
     this.planetRenderers = config.planetRenderers;
     this.moonRenderers = config.moonRenderers;
-    this.ringSystemRenderers = config.ringSystemRenderers;
     this.lodManager = config.lodManager;
     this.createLodCallback = config.createLodCallback;
     this.camera = config.camera;
@@ -90,7 +86,6 @@ export class MeshFactory {
       starRenderers: this.starRenderers,
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
-      ringSystemRenderers: this.ringSystemRenderers,
       celestialRenderers: this.celestialRenderers,
       createLodCallback: this.createLodCallback,
     };

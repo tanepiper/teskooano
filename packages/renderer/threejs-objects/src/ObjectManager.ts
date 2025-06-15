@@ -70,8 +70,6 @@ export class ObjectManager {
   private planetRenderers: Map<string, CelestialRenderer> = new Map();
   /** @internal Map storing specialized renderers specifically for moons, keyed by object ID. */
   private moonRenderers: Map<string, CelestialRenderer> = new Map();
-  /** @internal Map storing specialized renderers specifically for ring systems, keyed by object ID. */
-  private ringSystemRenderers: Map<string, RingSystemRenderer> = new Map();
 
   /** @internal Observable stream of renderable object data from the core state. */
   private renderableObjects$: Observable<
@@ -160,19 +158,18 @@ export class ObjectManager {
       starRenderers: this.starRenderers,
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
-      ringSystemRenderers: this.ringSystemRenderers,
       lodManager: this.lodManager,
       camera: this.camera,
-      createLodCallback: (
-        object: RenderableCelestialObject,
-        levels: LODLevel[],
-      ) => this.lodManager.createAndRegisterLOD(object, levels),
+      createLodCallback: this.lodManager.createAndRegisterLOD.bind(
+        this.lodManager,
+      ),
     });
 
     // Setup the ObjectLifecycleManager with dependencies
     this.objectLifecycleManager = new ObjectLifecycleManager({
       objects: this.objects,
       scene: this.scene,
+      camera: this.camera,
       meshFactory: this.meshFactory,
       lodManager: this.lodManager,
       lightManager: this.lightManager,
@@ -181,8 +178,6 @@ export class ObjectManager {
       starRenderers: this.starRenderers,
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
-      ringSystemRenderers: this.ringSystemRenderers,
-      camera: this.camera,
       css2DManager: this.css2DManager,
     });
 
@@ -191,11 +186,10 @@ export class ObjectManager {
       objects: this.objects,
     });
     this.rendererUpdater = new RendererUpdater({
-      celestialRenderers: this.celestialRenderers,
       starRenderers: this.starRenderers,
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
-      ringSystemRenderers: this.ringSystemRenderers,
+      celestialRenderers: this.celestialRenderers,
     });
 
     // Start listening to state changes and events
@@ -306,6 +300,7 @@ export class ObjectManager {
    * This includes LOD, specialized celestial renderers, label visibility, and debris effects.
    *
    * @param time - The current simulation time (or frame time).
+   * @param timeScale - The scale factor for the time.
    * @param lightSources - Map of active light sources and their data.
    * @param renderer - Optional override for the WebGLRenderer instance.
    * @param scene - Optional override for the Scene instance.
@@ -313,6 +308,7 @@ export class ObjectManager {
    */
   updateRenderers(
     time: number,
+    timeScale: number,
     lightSources: Map<
       string,
       { position: THREE.Vector3; color: THREE.Color; intensity: number }
@@ -327,11 +323,11 @@ export class ObjectManager {
     // Update specialized renderers (stars, planets, etc.)
     this.rendererUpdater.updateRenderers(
       time,
-      lightSources,
-      this.objects, // Pass current objects map if needed by renderers
-      renderer || this.renderer || undefined,
-      scene || this.scene,
+      timeScale,
       camera || this.camera,
+      lightSources,
+      renderer || this.renderer,
+      scene || this.scene,
     );
 
     // Update visibility of CSS2D labels based on LOD and object type
@@ -446,7 +442,6 @@ export class ObjectManager {
     this.starRenderers.clear();
     this.planetRenderers.clear();
     this.moonRenderers.clear();
-    this.ringSystemRenderers.clear();
 
     // Clear the main object map (should be empty after lifecycle disposal, but good practice)
     this.objects.clear();

@@ -85,6 +85,7 @@ export class RenderPipeline {
     // 3. Update 3D objects (position, rotation, materials).
     this.objectManager.updateRenderers(
       elapsedTime,
+      1.0,
       this.lightManager.getStarLightsData(),
       this.renderer,
       this.scene,

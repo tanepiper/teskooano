@@ -58,6 +58,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
 
         // Camera
         uCameraPosition: { value: new THREE.Vector3() },
+        uTime: { value: 0.0 },
       },
       vertexShader: atmosphereVertexShaderSource,
       fragmentShader: atmosphereFragmentShaderSource,
@@ -78,7 +79,7 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
     camera?: THREE.Camera,
     lightSources?: Map<string, LightSourceData>,
   ): void {
-    this.uniforms.time.value = time;
+    this.uniforms.uTime.value = time;
 
     if (camera) {
       this.uniforms.uCameraPosition.value.copy(camera.position);

@@ -32,7 +32,6 @@ export interface ObjectLifecycleManagerConfig {
   starRenderers: Map<string, CelestialRenderer>;
   planetRenderers: Map<string, CelestialRenderer>;
   moonRenderers: Map<string, CelestialRenderer>;
-  ringSystemRenderers: Map<string, RingSystemRenderer>;
   camera: THREE.PerspectiveCamera;
   css2DManager?: CSS2DManager;
 }
@@ -54,7 +53,6 @@ export class ObjectLifecycleManager {
   private starRenderers: Map<string, CelestialRenderer>;
   private planetRenderers: Map<string, CelestialRenderer>;
   private moonRenderers: Map<string, CelestialRenderer>;
-  private ringSystemRenderers: Map<string, RingSystemRenderer>;
   private camera: THREE.PerspectiveCamera; // Add camera reference
 
   constructor(config: ObjectLifecycleManagerConfig) {
@@ -68,7 +66,6 @@ export class ObjectLifecycleManager {
     this.starRenderers = config.starRenderers;
     this.planetRenderers = config.planetRenderers;
     this.moonRenderers = config.moonRenderers;
-    this.ringSystemRenderers = config.ringSystemRenderers;
     this.camera = config.camera;
     this.css2DManager = config.css2DManager;
   }
@@ -241,10 +238,6 @@ export class ObjectLifecycleManager {
     const moonRenderer = this.moonRenderers.get(objectId);
     if (moonRenderer?.dispose) moonRenderer.dispose();
     this.moonRenderers.delete(objectId);
-
-    const ringSystemRenderer = this.ringSystemRenderers.get(objectId);
-    if (ringSystemRenderer?.dispose) ringSystemRenderer.dispose();
-    this.ringSystemRenderers.delete(objectId);
 
     // Remove the main mesh from the scene
     this.scene.remove(mesh);
