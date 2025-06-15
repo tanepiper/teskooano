@@ -86,9 +86,9 @@ This package uses a combination of specialized renderers, procedural generation 
 1.  **Renderers (`src/renderers/`)**: Each major category of celestial object (terrestrial, star, gas giant, etc.) has a dedicated renderer or set of renderers. These classes are responsible for generating the appropriate `THREE.Object3D` for a given celestial object from `@teskooano/data-types`.
 
     - The key method is `getLODLevels()`, which returns an array of `LODLevel` objects. Each level contains a `THREE.Object3D` and a distance threshold. This array is consumed by `@teskooano/renderer-threejs-lod` to handle automatic Level of Detail switching.
-    - **Instantiation is inconsistent**:
-      - For stars, a factory function (`createStarRenderer`) is provided to select the correct renderer based on the star's properties.
-      - For other types like Gas Giants, the consumer must manually choose and instantiate the correct renderer class (e.g., `ClassIGasGiantRenderer`).
+    - **Instantiation is now partially unified via a factory pattern**:
+      - For **Stars** and **Gas Giants**, factory functions (`createStarMesh`, `createGasGiantMesh`) are provided. These are the intended entry points, which internally select and instantiate the correct renderer based on the object's properties.
+      - For other types like **Terrestrial Planets** and **Particles**, the consumer must still manually choose and instantiate the correct renderer class (e.g., `BaseTerrestrialRenderer`).
 
 2.  **GPU-Based Procedural Generation**: The system has moved away from CPU-based texture generation towards a more powerful, shader-based approach.
 
@@ -102,78 +102,105 @@ This package uses a combination of specialized renderers, procedural generation 
 
 ### Example Usage
 
+The functions from this package are not intended to be consumed directly by the application, but rather by a `MeshFactory` that is part of the core rendering engine. The factory is responsible for holding renderer instances and creating the final `THREE.Object3D`.
+
 ```typescript
-import { ObjectManager } from "@teskooano/renderer-threejs-objects"; // The primary consumer
-import { LODManager } from "@teskooano/renderer-threejs-lod";
 import {
   type RenderableCelestialObject,
   CelestialType,
+  GasGiantClass,
   StellarType,
 } from "@teskooano/data-types";
 import {
-  createStarRenderer,
-  ClassIGasGiantRenderer, // No factory, so import the class directly
-  BaseTerrestrialRenderer,
+  createStarMesh,
+  createGasGiantMesh,
+  createPlanetMesh, // Hypothetical future factory
   type CelestialRenderer,
 } from "@teskooano/systems-celestial";
+import { LODManager } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 
-// Hypothetical usage within a consuming manager (like ObjectManager)
-class VisualizationManager {
+// Hypothetical usage within a high-level factory/manager
+class MeshFactory {
   private lodManager: LODManager;
   private scene: THREE.Scene;
-  private objectRenderers: Map<string, CelestialRenderer> = new Map();
+  private camera: THREE.PerspectiveCamera;
+  private renderer: THREE.WebGLRenderer;
 
-  constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
+  // Maps to store created renderers to call their update/dispose methods
+  private celestialRenderers: Map<string, CelestialRenderer> = new Map();
+
+  constructor(
+    scene: THREE.Scene,
+    camera: THREE.PerspectiveCamera,
+    renderer: THREE.WebGLRenderer,
+  ) {
     this.scene = scene;
+    this.camera = camera;
+    this.renderer = renderer;
     this.lodManager = new LODManager(camera, scene);
   }
 
-  createCelestialObject(objectData: RenderableCelestialObject): void {
-    let renderer: CelestialRenderer | undefined;
+  // The main factory method
+  public createMesh(objectData: RenderableCelestialObject): THREE.Object3D {
+    let mesh: THREE.Object3D | undefined;
 
-    // 1. Select the appropriate renderer
+    // Dependencies passed to the create...Mesh functions
+    const deps = {
+      // The factory holds the map of active renderers
+      celestialRenderers: this.celestialRenderers,
+      // It provides a callback for creating the final LOD object
+      createLodCallback: (obj: RenderableCelestialObject, levels: any[]) => {
+        const lod = this.lodManager.createLOD(levels);
+        // The renderer instance is stored for the update loop
+        this.celestialRenderers.set(obj.celestialObjectId, rendererInstance);
+        return lod;
+      },
+      // Pass down core scene components for advanced effects
+      scene: this.scene,
+      camera: this.camera,
+      renderer: this.renderer,
+    };
+
+    // 1. Select the appropriate factory function
     switch (objectData.type) {
-      case CelestialType.PLANET:
-      case CelestialType.MOON:
-        if ((objectData.properties as any).type === "GasGiant") {
-          // Example of manual selection for Gas Giants
-          renderer = new ClassIGasGiantRenderer();
-        } else {
-          renderer = new BaseTerrestrialRenderer();
-        }
+      case CelestialType.GAS_GIANT:
+        mesh = createGasGiantMesh(objectData, deps);
         break;
       case CelestialType.STAR:
-        // Use the factory for stars
-        renderer = createStarRenderer(
-          objectData.properties.spectralClass,
-          objectData.properties.stellarType as StellarType,
-        );
+        mesh = createStarMesh(objectData, deps);
         break;
-      // ... other cases
+      // case CelestialType.PLANET:
+      //   mesh = createPlanetMesh(objectData, deps);
+      //   break;
+      default:
+        // Fallback or error
+        console.error(`No mesh factory found for type: ${objectData.type}`);
+        mesh = new THREE.Object3D(); // Return empty object
     }
 
-    if (!renderer) {
-      console.error(`No renderer found for type: ${objectData.type}`);
-      return;
-    }
-
-    // 2. Get the LOD levels from the renderer
-    const lodLevels = renderer.getLODLevels(objectData);
-
-    // 3. Create the LOD object and add it to the scene and manager
-    const lodObject = this.lodManager.createLOD(lodLevels);
-    lodObject.position.copy(objectData.position);
-    this.scene.add(lodObject);
-
-    // 4. Store the renderer instance to call its update/dispose methods later
-    this.objectRenderers.set(objectData.celestialObjectId, renderer);
+    mesh.position.copy(objectData.position);
+    this.scene.add(mesh);
+    return mesh;
   }
 
-  update(time: number, lightSources: any) {
+  update(time: number, timeScale: number, lightSources: any) {
     // In the main loop, update all registered renderers
-    this.objectRenderers.forEach((renderer) => {
-      renderer.update(time, lightSources);
+    this.celestialRenderers.forEach((renderer, objectId) => {
+      // Here you would get the latest objectData from a state store
+      const objectData = getObjectById(objectId);
+      if (objectData && renderer) {
+        // Pass all required params for the update signature
+        renderer.update(
+          objectData,
+          time,
+          timeScale,
+          lightSources,
+          this.camera,
+          this.renderer, // Pass renderer for advanced effects
+          this.scene, // Pass scene for advanced effects
+        );
+      }
     });
     // LODManager is also updated here
     this.lodManager.update();
@@ -202,7 +229,7 @@ _(See [CHANGELOG.md](./CHANGELOG.md) for version history)_
 
 **Planned / Future Work:**
 
-- **Unify Renderer Architecture**: Create a standard factory for all renderer types and standardize `update` method signatures.
+- **Unify Renderer Architecture**: Create standard factory functions for the remaining renderer types (Terrestrial, Particles) and standardize `update` method signatures.
 - **Standardize Shader Handling**: Refactor all renderers to load shaders from external `.glsl` files, removing all embedded GLSL strings.
 - **Decouple from Global State**: Remove direct dependencies on `@teskooano/core-state` from within renderer `update` loops.
 - **Implement a Consistent LOD Strategy**: Unify the different LOD implementation methods into a single, consistent pattern.

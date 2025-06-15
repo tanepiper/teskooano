@@ -1,6 +1,6 @@
 import { CelestialType, PlanetProperties } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { BaseTerrestrialRenderer } from "./index";
+import { BaseTerrestrialRenderer } from "./base-terrestrial";
 import type { CelestialRenderer } from "../base/CelestialRenderer";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
@@ -27,6 +27,9 @@ export function createPlanetMesh(
   if (!renderer) {
     try {
       renderer = new BaseTerrestrialRenderer();
+      // Initialize the renderer to create sub-renderers (e.g., rings)
+      (renderer as BaseTerrestrialRenderer).initialize(object);
+
       if (renderer) {
         deps.planetRenderers.set(object.celestialObjectId, renderer);
       }

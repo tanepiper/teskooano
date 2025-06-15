@@ -1,6 +1,6 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
-import { BaseTerrestrialRenderer } from "./index";
+import { BaseTerrestrialRenderer } from "./base-terrestrial";
 import type { CelestialRenderer } from "../base/CelestialRenderer";
 import * as THREE from "three";
 import { createFallbackSphere } from "../utils/createFallbackSphere";
@@ -27,6 +27,9 @@ export function createMoonMesh(
     try {
       // Assuming moons use the same default terrestrial renderer as planets
       renderer = new BaseTerrestrialRenderer();
+      // Initialize the renderer to create sub-renderers (e.g., rings)
+      (renderer as BaseTerrestrialRenderer).initialize(object);
+
       if (renderer) {
         deps.moonRenderers.set(object.celestialObjectId, renderer);
       }

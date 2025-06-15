@@ -51,15 +51,21 @@ The current celestial renderers have inconsistencies in their implementations. A
 
 ### Tasks
 
-- [✓] Create formal `CelestialRenderer` interface
-  - [✓] Define standard methods (`createMesh`, `update`, `dispose`)
-  - [✓] Extract common utility functions to shared helpers
-  - [✓] Document the interface comprehensively with expected behaviors
-- [ ] Refactor existing renderers to implement the new interface
-  - [ ] Update `StarRenderer` to use external GLSL files like other renderers
-  - [ ] Standardize material management patterns
+- [✓] Create formal `CelestialRenderer` interface and base classes
+  - [✓] Define standard methods (`getLODLevels`, `update`, `dispose`) and a common `BaseCelestialRenderer`.
+  - [✓] Document the interface comprehensively with expected behaviors.
+- [✓] Refactor `StarRenderer` and `GasGiantRenderer` to use a unified factory pattern.
+  - [✓] Created `createStarMesh` and `createGasGiantMesh` as the primary entry points.
+  - [✓] Corrected the star renderer inheritance model to properly distinguish luminous and non-luminous objects.
+  - [✓] Fixed encapsulation issues with the `GravitationalLensingHelper`.
+  - [✓] Moved star renderer files into a new, more logical directory structure.
+- [ ] Refactor remaining renderers to use the factory pattern.
+  - [ ] Implement `createPlanetMesh`, `createMoonMesh`, and `createAsteroidFieldMesh` factory functions.
+  - [ ] Ensure all renderers follow the same instantiation and composition patterns.
+- [ ] Standardize shader handling across all renderers.
+  - [ ] Update `StarRenderer` and `ParticleRenderer` to use external GLSL files instead of embedded strings.
 - [✓] Stabilize and Optimize Core Rendering
-  - [✓] Fix state synchronization bugs (`ObjectManager`, `RendererStateAdapter`)
+  - [✓] Fix state synchronization bugs (`ObjectManager`, `RendererStateAdapter`).
   - [✓] Optimize LOD segment counts & fix LOD switching
   - [✓] Optimize line rendering (trails/predictions)
   - [✓] Fix lighting integration (`LightManager`)
@@ -81,7 +87,7 @@ The current celestial renderers have inconsistencies in their implementations. A
 | Task                         | Status      | Assigned To | Notes                                                               |
 | ---------------------------- | ----------- | ----------- | ------------------------------------------------------------------- |
 | Formal Interface             | Completed   |             | Created CelestialRenderer interface and BaseCelestialRenderer class |
-| Renderer Refactoring         | In Progress |             | Starting with StarRenderer refactoring                              |
+| Renderer Refactoring         | In Progress |             | Star & Gas Giant systems complete. Terrestrial & Particles next.    |
 | Core Rendering Stabilization | Completed   |             | Addressed major bugs and performance issues                         |
 | Texture System               | Not Started |             |                                                                     |
 | Rendering Quality            | Not Started |             |                                                                     |

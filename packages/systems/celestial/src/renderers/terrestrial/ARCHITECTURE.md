@@ -7,7 +7,7 @@ This document provides a detailed breakdown of the rendering system for terrestr
 The terrestrial renderer is the most modular and service-oriented of the celestial rendering systems. It is built around a central orchestrator class, `BaseTerrestrialRenderer`, which delegates specific creation tasks to specialized service classes.
 
 - **`BaseTerrestrialRenderer`**: This is the primary and only renderer class in this module. It acts as an orchestrator, responsible for constructing the final `THREE.Object3D` for a planet. It does not contain material or atmosphere generation logic itself, but instead instantiates and uses services to do so.
-- **No Factory Function**: Unlike the star renderer, this module does not provide a `createTerrestrialRenderer` factory function. The consuming code must directly instantiate `BaseTerrestrialRenderer`.
+- **Factory Functions**: The module now provides `createPlanetMesh` and `createMoonMesh` as the primary entry points. These factories are responsible for instantiating the correct renderer and creating the final LOD object, which aligns this system with the preferred architectural pattern.
 
 ### 2. The Orchestrator (`base-terrestrial.ts`)
 
