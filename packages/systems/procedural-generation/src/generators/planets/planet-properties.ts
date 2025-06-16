@@ -14,7 +14,6 @@ import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 import type { PlanetBaseProperties } from "./planet-type";
 import { ProceduralSurfaceProperties } from "@teskooano/data-types";
-import { calculateLuminosity, estimateTemperature } from "../../utils";
 import { createProceduralSurfaceProperties } from "../../properties";
 
 /**

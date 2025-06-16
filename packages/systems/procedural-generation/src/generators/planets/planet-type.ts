@@ -4,6 +4,7 @@ import {
   GasGiantClass,
   PlanetType,
   RockyType,
+  type CelestialObject,
 } from "@teskooano/data-types";
 import * as UTIL from "../../utils";
 import { CelestialZoneManager } from "../../zones";
@@ -32,18 +33,16 @@ export interface PlanetBaseProperties {
  *
  * @param random The seeded pseudo-random number generator function.
  * @param bodyDistanceAU The planet's distance from its star in AU.
- * @param starTemperature The temperature of the parent star in Kelvin.
- * @param starRadius The radius of the parent star in meters.
- * @param zoneManager An instance of `CelestialZoneManager`. A new one is created by default.
+ * @param parentStar The parent star `CelestialObject`.
  * @returns A `PlanetBaseProperties` object or `undefined` if no suitable zone is found.
  */
 export function determinePlanetTypeAndBaseProperties(
   random: () => number,
   bodyDistanceAU: number,
-  starTemperature: number,
-  starRadius: number,
-  zoneManager: CelestialZoneManager = new CelestialZoneManager(),
+  parentStar: CelestialObject,
 ): PlanetBaseProperties | undefined {
+  const zones = CelestialZoneManager.generateZonesForStar(parentStar);
+  const zoneManager = new CelestialZoneManager(zones);
   const zone = zoneManager.getZoneForDistance(bodyDistanceAU);
   if (!zone || zone.formationProbabilities.length === 0) {
     return undefined;
@@ -84,8 +83,8 @@ export function determinePlanetTypeAndBaseProperties(
     const classifiedGiant = UTIL.classifyGasGiantByTemperature(
       random,
       bodyDistanceAU,
-      starTemperature,
-      starRadius,
+      parentStar.temperature,
+      parentStar.realRadius_m,
     );
     if (
       chosenFormation.subTypes?.length &&

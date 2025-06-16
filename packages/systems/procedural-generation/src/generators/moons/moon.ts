@@ -140,7 +140,7 @@ export function generateMoon(
       moonOrbit,
       0,
     );
-    initialWorldVel_mps = calculateOrbitalVelocity(
+    const initialRelativeVel_mps = calculateOrbitalVelocity(
       parentPlanetState,
       moonOrbit,
       0,
@@ -149,6 +149,9 @@ export function generateMoon(
     initialWorldPos_m = initialRelativePos_m
       .clone()
       .add(parentPlanetState.position_m);
+    initialWorldVel_mps = initialRelativeVel_mps
+      .clone()
+      .add(parentPlanetState.velocity_mps);
 
     if (
       !initialWorldPos_m ||

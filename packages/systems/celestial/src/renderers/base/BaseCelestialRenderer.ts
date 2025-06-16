@@ -76,20 +76,22 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     object: RenderableCelestialObject,
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
+    lightSources: LightSourcesMap,
+    camera: THREE.Camera,
   ): void {
-    const lod = this.lods.get(object.celestialObjectId);
-    if (lod) {
-      this.lods.get(object.celestialObjectId)?.update(camera as THREE.Camera);
-    }
+    this.updateLOD(object.celestialObjectId, camera);
   }
 
   /**
    * Default implementation of LOD updating
    * Subclasses should override if they use custom LOD handling
    */
-  updateLOD(objectId: string, distance: number, camera: THREE.Camera): void {}
+  updateLOD(objectId: string, camera: THREE.Camera): void {
+    const lod = this.lods.get(objectId);
+    if (lod) {
+      lod.update(camera as THREE.Camera);
+    }
+  }
 
   /**
    * Clean up resources

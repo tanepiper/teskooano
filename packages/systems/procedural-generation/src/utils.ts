@@ -92,25 +92,43 @@ export function getSpectralClass(temperature: number): SpectralClass {
 }
 
 /**
- * Calculates the luminosity of a star relative to the Sun
- * using the Stefan-Boltzmann law.
+ * Calculates the true luminosity of a star relative to the Sun, based on the
+ * Stefan-Boltzmann law. This value is used for physics-based calculations
+ * like determining celestial zones.
  *
  * @param radius_m The star's radius in meters.
  * @param temperature_k The star's surface temperature in Kelvin.
- * @param luminosity_multiplier An artificial multiplier to enhance visual
- *   brightness differences in the renderer.
- * @returns The calculated luminosity relative to the Sun (L☉).
+ * @returns The calculated luminosity relative to the Sun (L☉), without any
+ *   visual multipliers.
  */
-export function calculateLuminosity(
+export function calculateStellarLuminosity(
   radius_m: number,
   temperature_k: number,
-  luminosity_multiplier: number = 750,
 ): number {
   if (radius_m <= 0 || temperature_k <= 0) return 0;
   const surfaceArea = 4 * Math.PI * radius_m ** 2;
   const totalPowerWatts =
     surfaceArea * CONST.STEFAN_BOLTZMANN * temperature_k ** 4;
-  return (totalPowerWatts / CONST.SOLAR_LUMINOSITY) * luminosity_multiplier;
+  return totalPowerWatts / CONST.SOLAR_LUMINOSITY;
+}
+
+/**
+ * Calculates a visually-enhanced luminosity of a star.
+ * This includes an artificial multiplier to make brightness differences more
+ * apparent in the renderer and should not be used for physics calculations.
+ *
+ * @param radius_m The star's radius in meters.
+ * @param temperature_k The star's surface temperature in Kelvin.
+ * @param luminosity_multiplier An artificial multiplier to enhance visual brightness.
+ * @returns The calculated visual luminosity relative to the Sun (L☉).
+ */
+export function calculateVisualLuminosity(
+  radius_m: number,
+  temperature_k: number,
+  luminosity_multiplier: number = 750,
+): number {
+  const stellarLuminosity = calculateStellarLuminosity(radius_m, temperature_k);
+  return stellarLuminosity * luminosity_multiplier;
 }
 
 /**
@@ -228,7 +246,10 @@ export function classifyGasGiantByTemperature(
   starTemperature: number,
   starRadius: number,
 ): GasGiantClass {
-  const starLuminosity = calculateLuminosity(starRadius, starTemperature);
+  const starLuminosity = calculateStellarLuminosity(
+    starRadius,
+    starTemperature,
+  );
   const estimatedTemp = estimateTemperature(starLuminosity, distanceAU);
 
   const CLASS_V_THRESHOLD = 1000;

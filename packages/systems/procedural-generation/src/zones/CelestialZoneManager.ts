@@ -3,8 +3,11 @@ import {
   GasGiantClass,
   PlanetType,
   RockyType,
+  type CelestialObject,
 } from "@teskooano/data-types";
 import { CelestialZone } from "./types";
+import * as CONST from "../constants";
+import { calculateStellarLuminosity } from "../utils";
 
 /**
  * The default configuration for celestial zones, based on a typical G-type star.
@@ -14,7 +17,9 @@ export const defaultCelestialZones: CelestialZone[] = [
   {
     name: "Inner Zone",
     minAU: 0.1,
-    maxAU: 2.5,
+    maxAU: 1.5,
+    minBodies: 2,
+    maxAdditionalBodies: 2,
     formationProbabilities: [
       {
         type: CelestialType.PLANET,
@@ -23,12 +28,7 @@ export const defaultCelestialZones: CelestialZone[] = [
         massMultiplierFactorRange: [0.5, 1.5],
         ringChance: 0.01,
         allowedRingTypes: [RockyType.LIGHT_ROCK, RockyType.DARK_ROCK],
-        subTypes: [
-          PlanetType.TERRESTRIAL,
-          PlanetType.BARREN,
-          PlanetType.ROCKY,
-          PlanetType.LAVA,
-        ],
+        subTypes: [PlanetType.BARREN, PlanetType.ROCKY, PlanetType.LAVA],
       },
       {
         type: CelestialType.GAS_GIANT,
@@ -46,9 +46,47 @@ export const defaultCelestialZones: CelestialZone[] = [
     ],
   },
   {
+    name: "Habitable Zone",
+    minAU: 0.8,
+    maxAU: 2.5,
+    minBodies: 2,
+    maxAdditionalBodies: 2,
+    formationProbabilities: [
+      {
+        type: CelestialType.PLANET,
+        chance: 0.75,
+        densityRange_kg_m3: [3500, 6000],
+        massMultiplierFactorRange: [0.5, 1.5],
+        ringChance: 0.01,
+        allowedRingTypes: [RockyType.LIGHT_ROCK, RockyType.DARK_ROCK],
+        subTypes: [
+          PlanetType.TERRESTRIAL,
+          PlanetType.BARREN,
+          PlanetType.ROCKY,
+          PlanetType.LAVA,
+        ],
+      },
+      {
+        type: CelestialType.GAS_GIANT,
+        chance: 0.15,
+        densityRange_kg_m3: [600, 1500],
+        massMultiplierFactorRange: [15, 65],
+        ringChance: 0.05,
+        allowedRingTypes: [
+          RockyType.METALLIC,
+          RockyType.DARK_ROCK,
+          RockyType.DUST,
+        ],
+        subTypes: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II], // Hot Jupiters
+      },
+    ],
+  },
+  {
     name: "Frost Line",
     minAU: 2.5,
     maxAU: 8,
+    minBodies: 1,
+    maxAdditionalBodies: 2,
     formationProbabilities: [
       {
         type: CelestialType.GAS_GIANT,
@@ -78,6 +116,8 @@ export const defaultCelestialZones: CelestialZone[] = [
     name: "Outer Zone",
     minAU: 8,
     maxAU: 30,
+    minBodies: 1,
+    maxAdditionalBodies: 3,
     formationProbabilities: [
       {
         type: CelestialType.GAS_GIANT, // Ice Giants
@@ -118,6 +158,28 @@ export class CelestialZoneManager {
   constructor(zones: CelestialZone[] = defaultCelestialZones) {
     // Sort zones by min distance to ensure correct matching
     this.zones = zones.sort((a, b) => a.minAU - b.minAU);
+  }
+
+  /**
+   * Generates a scaled set of celestial zones based on a star's luminosity.
+   * Brighter stars will have their zones pushed further out.
+   *
+   * @param star - The star to generate zones for.
+   * @returns An array of `CelestialZone` objects scaled for the given star.
+   */
+  public static generateZonesForStar(star: CelestialObject): CelestialZone[] {
+    const luminosity = calculateStellarLuminosity(
+      star.realRadius_m,
+      star.temperature,
+    );
+    // The habitable zone and other stellar zones scale with the square root of luminosity
+    const scaleFactor = Math.sqrt(luminosity);
+
+    return defaultCelestialZones.map((zone) => ({
+      ...zone,
+      minAU: zone.minAU * scaleFactor,
+      maxAU: zone.maxAU * scaleFactor,
+    }));
   }
 
   /**

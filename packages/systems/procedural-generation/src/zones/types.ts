@@ -1,15 +1,11 @@
-import {
+import type {
   CelestialType,
   GasGiantClass,
   PlanetType,
   RockyType,
 } from "@teskooano/data-types";
 
-/**
- * Describes the likelihood and properties of a specific type of celestial object
- * that can form within a given orbital zone.
- */
-export interface CelestialFormationProbability {
+export interface FormationProbability {
   type: CelestialType;
   /** A value between 0 and 1 representing the base chance of this type appearing. */
   chance: number;
@@ -26,16 +22,15 @@ export interface CelestialFormationProbability {
 }
 
 /**
- * Represents a single orbital zone around a star, defining its boundaries
- * and the types of celestial bodies likely to be found within it.
+ * Represents a defined region in a star system with specific properties
+ * for celestial body formation.
  */
 export interface CelestialZone {
-  /** A descriptive name for the zone (e.g., "Inner Zone", "Frost Line"). */
   name: string;
-  /** The minimum distance from the star for this zone, in Astronomical Units (AU). */
   minAU: number;
-  /** The maximum distance from the star for this zone, in Astronomical Units (AU). */
   maxAU: number;
-  /** An array defining the probabilities and properties for celestial object formation. */
-  formationProbabilities: CelestialFormationProbability[];
+  formationProbabilities: FormationProbability[];
+  allowedRingTypes?: RockyType[];
+  minBodies: number;
+  maxAdditionalBodies: number;
 }

@@ -179,7 +179,7 @@ export function generateStar(random: () => number): CelestialObject {
   let visualStarRadius =
     realStarRadius * SCALE.SIZE * STAR_VISUAL_SCALE_MULTIPLIER;
 
-  const starLuminosity = UTIL.calculateLuminosity(
+  const starLuminosity = UTIL.calculateVisualLuminosity(
     realStarRadius,
     starTemperature,
   );
@@ -273,7 +273,7 @@ export function generateStar(random: () => number): CelestialObject {
     );
   }
 
-  const properties: StarProperties = {
+  const starProperties: StarProperties = {
     type: CelestialType.STAR,
     isMainStar: true,
     spectralClass: spectralClassString,
@@ -287,7 +287,7 @@ export function generateStar(random: () => number): CelestialObject {
   };
 
   const starData: CelestialObject = {
-    id: `${properties.spectralClass}-${starName}`,
+    id: `${starProperties.spectralClass}-${starName}`,
     name: starName,
     type: CelestialType.STAR,
     status: CelestialStatus.ACTIVE,
@@ -296,7 +296,7 @@ export function generateStar(random: () => number): CelestialObject {
     realRadius_m: correctedRadius,
     temperature: starTemperature,
     orbit: defaultStarOrbit,
-    properties,
+    properties: starProperties,
     physicsStateReal: {
       id: `star-${starName.toLowerCase()}`,
       mass_kg: starMass,
