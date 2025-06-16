@@ -352,6 +352,7 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
     super.initialize(object, options);
 
     if (this.lightingManager) {
+      console.log("registering light source", object.celestialObjectId);
       const lightSource = new LightSourceComponent(object, {
         light: new THREE.PointLight(this.getStarColor(object), 1, 0, 2),
         castShadow: true,

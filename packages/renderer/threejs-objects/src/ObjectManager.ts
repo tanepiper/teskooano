@@ -193,6 +193,7 @@ export class ObjectManager {
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
       celestialRenderers: this.celestialRenderers,
+      lightingManager: this.lightingManager,
     });
 
     this.debrisEffectManager = new DebrisEffectManager({ scene: this.scene });
@@ -322,7 +323,6 @@ export class ObjectManager {
       time,
       timeScale,
       camera ?? this.camera,
-      undefined, // lightSources are now handled by the renderer via the lightingManager
       renderer,
       scene,
     );
