@@ -10,12 +10,12 @@ import {
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
 
+const MAX_LIGHTS = 4;
+
 const asteroidVertexShader = `
   attribute float size;
   attribute float textureIndex;
   attribute float initialRotation;
-  
-  
   
   uniform float beltRotationAngle;
   
@@ -23,8 +23,6 @@ const asteroidVertexShader = `
   varying float vTextureIndex;
   varying float vInitialRotation;
   uniform float pointSizeScale; 
-  varying vec3 vWorldPosition;
-  
 
   void main() {
     vColor = color;
@@ -40,10 +38,8 @@ const asteroidVertexShader = `
       position.x * sinAngle + position.z * cosAngle
     );
     
-    vec4 worldPosition4 = modelMatrix * vec4(rotatedPosition, 1.0);
-    vWorldPosition = worldPosition4.xyz;
+    vec4 mvPosition = modelViewMatrix * vec4(rotatedPosition, 1.0);
 
-    vec4 mvPosition = viewMatrix * worldPosition4;
     gl_Position = projectionMatrix * mvPosition;
     
     float calculatedPointSize = size * ( pointSizeScale / -mvPosition.z );
@@ -54,6 +50,14 @@ const asteroidVertexShader = `
 `;
 
 const asteroidFragmentShader = `
+  #define MAX_LIGHTS 4
+
+  struct Light {
+    vec3 direction;
+    vec3 color;
+    float intensity;
+  };
+
   varying vec3 vColor;
   varying float vTextureIndex;
   varying float vInitialRotation;
@@ -61,29 +65,23 @@ const asteroidFragmentShader = `
   uniform float alphaTest;
   uniform float time;
   uniform float particleRotationSpeed; 
-  uniform vec3 lightPosition;
-  uniform vec3 lightColor;
-  varying vec3 vWorldPosition;
+  uniform Light uLights[MAX_LIGHTS];
+  uniform int uNumLights;
 
   void main() {
     vec4 texColor;
-
-    
     
     float angle = vInitialRotation + time * particleRotationSpeed;
     mat2 rotationMatrix = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-
     
     vec2 center = vec2(0.5, 0.5);
     vec2 uv = gl_PointCoord - center;
     vec2 rotatedUV = rotationMatrix * uv + center;
 
-    
     if (rotatedUV.x < 0.0 || rotatedUV.x > 1.0 || rotatedUV.y < 0.0 || rotatedUV.y > 1.0) {
         discard;
     }
 
-    
     if (vTextureIndex < 0.5) {
         texColor = texture2D(asteroidTextures[0], rotatedUV);
     } else if (vTextureIndex < 1.5) {
@@ -98,14 +96,19 @@ const asteroidFragmentShader = `
 
     if ( texColor.a < alphaTest ) discard; 
 
+    // Use a fixed normal for billboarded particles
     vec3 normal = vec3(0.0, 0.0, 1.0);
-    vec3 lightDir = normalize(lightPosition - vWorldPosition);
-    float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor;
+    
+    vec3 totalDiffuse = vec3(0.0);
+    for (int i = 0; i < uNumLights; i++) {
+        vec3 lightDir = uLights[i].direction;
+        float diff = max(dot(normal, lightDir), 0.0);
+        totalDiffuse += uLights[i].color * uLights[i].intensity * diff;
+    }
 
     vec3 ambient = vec3(0.1, 0.1, 0.1);
     
-    gl_FragColor = texColor * vec4(vColor * (ambient + diffuse), 1.0);
+    gl_FragColor = texColor * vec4(vColor * (ambient + totalDiffuse), 1.0);
   }
 `;
 
@@ -184,6 +187,19 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       });
     }
 
+    const lights: {
+      direction: THREE.Vector3;
+      color: THREE.Color;
+      intensity: number;
+    }[] = [];
+    for (let i = 0; i < MAX_LIGHTS; i++) {
+      lights.push({
+        direction: new THREE.Vector3(),
+        color: new THREE.Color(),
+        intensity: 0,
+      });
+    }
+
     const material = new THREE.ShaderMaterial({
       uniforms: {
         asteroidTextures: { value: this.asteroidTextures },
@@ -192,8 +208,8 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
         time: { value: 0.0 },
         beltRotationAngle: { value: 0.0 },
         particleRotationSpeed: { value: this.particleRotationSpeed },
-        lightPosition: { value: new THREE.Vector3() },
-        lightColor: { value: new THREE.Color(0xffffff) },
+        uLights: { value: lights },
+        uNumLights: { value: 0 },
       },
       vertexShader: asteroidVertexShader,
       fragmentShader: asteroidFragmentShader,
@@ -396,10 +412,35 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
     ) as THREE.ShaderMaterial;
     if (!material) return;
 
-    const primaryLight = this.findPrimaryLightSource(object, lightSources);
-    if (primaryLight) {
-      material.uniforms.lightPosition.value.copy(primaryLight.position);
-      material.uniforms.lightColor.value.copy(primaryLight.color);
+    if (lightSources && lightSources.size > 0) {
+      const sortedLights = Array.from(lightSources.values())
+        .map((light) => ({
+          ...light,
+          distanceSq: object.position.distanceToSquared(light.position),
+        }))
+        .sort((a, b) => a.distanceSq - b.distanceSq)
+        .slice(0, MAX_LIGHTS);
+
+      material.uniforms.uNumLights.value = sortedLights.length;
+
+      for (let i = 0; i < MAX_LIGHTS; i++) {
+        if (i < sortedLights.length) {
+          const light = sortedLights[i];
+          const direction = new THREE.Vector3()
+            .subVectors(light.position, object.position)
+            .normalize();
+
+          // Using a constant attenuation for now as belt particles are small and distributed
+          const attenuation = 1.0;
+
+          material.uniforms.uLights.value[i].direction.copy(direction);
+          material.uniforms.uLights.value[i].color.copy(light.color);
+          material.uniforms.uLights.value[i].intensity =
+            (light.intensity ?? 1.0) * attenuation;
+        }
+      }
+    } else {
+      material.uniforms.uNumLights.value = 0;
     }
 
     let timeDelta = 0;
