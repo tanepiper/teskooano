@@ -114,10 +114,9 @@ export interface CelestialRenderer {
    * explicit shader or material adjustments.
    *
    * @param objectId ID of the object to update
-   * @param distance Distance from the camera to the object
    * @param camera The camera object
    */
-  updateLOD?(objectId: string, distance: number, camera: THREE.Camera): void;
+  updateLOD?(objectId: string, camera: THREE.Camera): void;
 
   /**
    * Clean up any resources used by the renderer

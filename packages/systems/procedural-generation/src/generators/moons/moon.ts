@@ -14,10 +14,13 @@ import {
   CelestialType,
   PlanetType,
   SurfaceType,
+  PhysicsStateReal,
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
-import { generateCelestialName } from "../names";
+import { createProceduralSurfaceProperties } from "../../properties";
+import { calculatePlanetOrbitAndInitialState } from "../planets/planet-orbit";
+import { generateCelestialName } from "../names/celestial-name";
 
 /**
  * Generates data for a single moon orbiting a parent planet.
@@ -200,13 +203,13 @@ export function generateMoon(
     case PlanetType.ICE:
     case PlanetType.DESERT:
     case PlanetType.LAVA:
-      detailedSurface = UTIL.createProceduralSurfaceProperties(
+      detailedSurface = createProceduralSurfaceProperties(
         random,
         moonPlanetType,
       );
       break;
     default:
-      detailedSurface = UTIL.createProceduralSurfaceProperties(
+      detailedSurface = createProceduralSurfaceProperties(
         random,
         PlanetType.ROCKY,
       );

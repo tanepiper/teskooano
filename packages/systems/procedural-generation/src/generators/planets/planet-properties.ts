@@ -14,7 +14,8 @@ import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 import type { PlanetBaseProperties } from "./planet-type";
 import { ProceduralSurfaceProperties } from "@teskooano/data-types";
-import { createProceduralSurfaceProperties } from "../../utils";
+import { calculateLuminosity, estimateTemperature } from "../../utils";
+import { createProceduralSurfaceProperties } from "../../properties";
 
 /**
  * Generates the specific properties for a planet based on its high-level type.
@@ -260,7 +261,7 @@ function generateRockyPlanetSpecificProperties(
     case PlanetType.ICE:
     case PlanetType.DESERT:
     case PlanetType.LAVA:
-      surfaceProperties = UTIL.createProceduralSurfaceProperties(
+      surfaceProperties = createProceduralSurfaceProperties(
         random,
         rockyPlanetType,
       );
@@ -269,7 +270,7 @@ function generateRockyPlanetSpecificProperties(
       console.warn(
         `Unhandled rocky planet type: ${rockyPlanetType}. Using TERRESTRIAL defaults.`,
       );
-      surfaceProperties = UTIL.createProceduralSurfaceProperties(
+      surfaceProperties = createProceduralSurfaceProperties(
         random,
         PlanetType.TERRESTRIAL,
       );

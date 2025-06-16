@@ -241,8 +241,8 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     object: RenderableCelestialObject,
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
+    lightSources: LightSourcesMap,
+    camera: THREE.Camera,
   ): void {
     if (!lightSources || lightSources.size === 0) {
       lightSources = new Map<

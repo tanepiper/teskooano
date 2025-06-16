@@ -186,8 +186,8 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     object: RenderableCelestialObject,
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
+    lightSources: LightSourcesMap,
+    camera: THREE.Camera,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
     this.elapsedTime = time;
@@ -233,7 +233,12 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     }
 
     if (this.ringSystemRenderer) {
-      this.ringSystemRenderer.update(object, time, timeScale, lightSources);
+      this.ringSystemRenderer.update(
+        object,
+        this.elapsedTime,
+        timeScale,
+        lightSources,
+      );
     }
   }
 
