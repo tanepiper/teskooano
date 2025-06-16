@@ -1,38 +1,38 @@
 ## Architecture: `@teskooano/renderer-threejs-lighting`
 
-This package provides managers and utilities for handling lighting within the Teskooano Three.js rendering pipeline.
+This package provides a component-based system for managing dynamic, emissive light sources within the Teskooano Three.js rendering pipeline. Its primary purpose is to handle lights that represent stars, which are the main sources of illumination for other celestial objects.
 
 ### Core Components
 
-- **`LightManager`**: A centralized manager for creating, tracking, and updating all light sources in the scene. It is designed to handle lights that represent stars, which are a primary source of illumination for celestial objects.
+- **`LightingManager`**: A centralized manager that maintains a registry of all active `LightSourceComponent` instances in the scene. It is responsible for orchestrating updates and providing other systems with a way to query for influential lights. There should be one `LightingManager` per scene.
+
+- **`LightSourceComponent`**: A wrapper around a `THREE.Light` instance (typically a `THREE.PointLight`). Each component is tied to a specific `RenderableCelestialObject` and is responsible for keeping the light's position and properties in sync with the object it represents.
 
 ### How it works
 
-The `LightManager` is instantiated by the main `ModularSpaceRenderer` and subscribes to the `renderableObjects$` stream from `@teskooano/core-state`. It automatically creates, updates, and removes `THREE.PointLight` instances based on `CelestialType.STAR` objects in the state.
+The `LightingManager` is instantiated by the main `ModularSpaceRenderer`. Other parts of the system, specifically the renderers for emissive objects like stars (`BaseStarRenderer`), create a `LightSourceComponent` and `register()` it with the `LightingManager`.
 
-This reactive approach means that other parts of the system, such as celestial renderers, can get an up-to-date list of the most influential light sources for a given object simply by querying the `LightManager`. This allows for dynamic and realistic lighting effects on planets, moons, and other bodies as they move through the system.
+This imperative approach allows celestial renderers to control whether they emit light. The `LightingManager` can then be queried by any other renderer (e.g., for a planet) to get a list of the most influential light sources for that object, calculated based on distance and intensity. This enables dynamic and realistic lighting effects as celestial bodies move through the system.
 
-A key feature is its ability to manage a specific number of "star lights" and provide their data (color, intensity, position) in a structured way that can be passed to shaders.
+This manager is **not** responsible for the visual representation of objects at a distance (e.g., showing a planet as a dot of light at low LOD). That logic belongs within the individual celestial renderers themselves.
 
 ### Mermaid Diagram
 
 ```mermaid
 graph TD
-    subgraph "Main Renderer (@teskooano/renderer-threejs)"
-        direction LR
-        A[ModularSpaceRenderer]
+    subgraph "Main Renderer"
+        A[ModularSpaceRenderer] --> B((LightingManager))
     end
 
-    subgraph "This Package (@teskooano/renderer-threejs-lighting)"
-        direction LR
-        B[LightManager]
+    subgraph "Celestial Rendering"
+        C(StarRenderer) -- creates & registers --> D(LightSourceComponent)
     end
 
-    subgraph "Object Rendering (@teskooano/renderer-threejs-objects)"
-        direction LR
-        C[ObjectManager]
+    subgraph "Lighting System"
+       B -. registers .-> D
     end
 
-    A --> B
-    C --> B
+    subgraph "Celestial Rendering"
+        E(PlanetRenderer) -- "gets influential lights for object" --> B
+    end
 ```

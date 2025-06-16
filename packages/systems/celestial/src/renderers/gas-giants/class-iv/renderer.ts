@@ -8,9 +8,7 @@ import { ClassIVMaterial } from "./material";
  * Renderer for Class IV gas giants
  */
 export class ClassIVGasGiantRenderer extends BaseGasGiantRenderer {
-  protected getMaterial(
-    object: RenderableCelestialObject,
-  ): BaseGasGiantMaterial {
+  public getMaterial(object: RenderableCelestialObject): BaseGasGiantMaterial {
     const properties = object.properties as GasGiantProperties;
 
     const seed = object.celestialObjectId

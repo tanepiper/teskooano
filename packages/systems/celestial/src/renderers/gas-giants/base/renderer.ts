@@ -121,26 +121,39 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
     const level1Group = new THREE.Group();
     level1Group.add(mediumMesh);
-    const level1: LODLevel = { object: level1Group, distance: 150 * scale };
+    const level1: LODLevel = { object: level1Group, distance: 800 * scale };
 
-    const lowSegments = 16;
-    const lowGeometry = new THREE.SphereGeometry(
-      baseRadius,
-      lowSegments,
-      lowSegments,
-    );
-    const lowMaterial = new THREE.MeshBasicMaterial({
-      color: this._getBaseGasGiantColor(object),
-      wireframe: false,
-    });
-    this.registerMaterial(`${object.celestialObjectId}-low`, lowMaterial);
-    const lowMesh = new THREE.Mesh(lowGeometry, lowMaterial);
-    lowMesh.name = `${object.celestialObjectId}-low-lod`;
-    const level2Group = new THREE.Group();
-    level2Group.add(lowMesh);
-    const level2: LODLevel = { object: level2Group, distance: 800 * scale };
+    const level2Group = this._createLowDetailGroup(object);
+    const level2: LODLevel = { object: level2Group, distance: 2000 * scale };
 
     return [level0, level1, level2];
+  }
+
+  /**
+   * Helper to create the low-detail group (Level 2 LOD).
+   * @internal
+   */
+  private _createLowDetailGroup(
+    object: RenderableCelestialObject,
+  ): THREE.Group {
+    const group = new THREE.Group();
+    group.name = `${object.celestialObjectId}-low-lod-group`;
+    const scale = typeof SCALE === "number" ? SCALE : 1;
+    const color = this._getBaseGasGiantColor(object);
+
+    const lodLight = this._createLODLight(
+      color,
+      10.0, // Gas giants are generally brighter/larger
+    );
+    lodLight.name = `${object.celestialObjectId}-low-lod-light`;
+
+    const lodBillboard = this._createLODBillboard(color, 1 * scale); // Larger billboard for giants
+    lodBillboard.name = `${object.celestialObjectId}-low-lod-billboard`;
+
+    group.add(lodLight);
+    group.add(lodBillboard);
+
+    return group;
   }
 
   /**

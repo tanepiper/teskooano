@@ -108,15 +108,14 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     );
     const level1: LODLevel = {
       object: mediumDetailGroup,
-      distance: 50 * scale,
+      distance: 250 * scale,
     };
 
-    const lowDetailGroup = this._createLowDetailGroup(
-      object,
-      baseRadius,
-      scale,
-    );
-    const level2: LODLevel = { object: lowDetailGroup, distance: Infinity };
+    const lowDetailGroup = this._createLowDetailGroup(object);
+    const level2: LODLevel = {
+      object: lowDetailGroup,
+      distance: 1000 * scale,
+    };
 
     const levels = [level0, level1, level2];
     return levels;
@@ -216,28 +215,23 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
    */
   private _createLowDetailGroup(
     object: RenderableCelestialObject,
-    baseRadius: number,
-    scale: number,
   ): THREE.Group {
-    const lowSegments = 8;
-    const lowLodEffectiveRadius = baseRadius * 0.01;
-    const lowGeometry = new THREE.SphereGeometry(
-      lowLodEffectiveRadius,
-      lowSegments,
-      lowSegments,
-    );
-    const lowMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-    });
-    lowMaterial.depthTest = false;
+    const group = new THREE.Group();
+    group.name = `${object.celestialObjectId}-low-lod-group`;
 
-    const lowMesh = new THREE.Mesh(lowGeometry, lowMaterial);
-    lowMesh.name = `${object.celestialObjectId}-low-lod`;
-    lowMesh.renderOrder = 999;
+    const color = this.materialService.getBaseColor(object);
+    const scale = typeof SCALE === "number" ? SCALE : 1;
 
-    const level2Group = new THREE.Group();
-    level2Group.add(lowMesh);
-    return level2Group;
+    const lodLight = this._createLODLight(color, 1.5);
+    lodLight.name = `${object.celestialObjectId}-low-lod-light`;
+
+    const lodBillboard = this._createLODBillboard(color, 20 * scale);
+    lodBillboard.name = `${object.celestialObjectId}-low-lod-billboard`;
+
+    group.add(lodLight);
+    group.add(lodBillboard);
+
+    return group;
   }
 
   /**

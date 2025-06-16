@@ -104,9 +104,9 @@ export class LightingManager {
   }
 
   /**
-   * Clears all registered light sources from the manager.
+   * Disposes of all registered light sources from the manager.
    */
-  public clear(): void {
+  public dispose(): void {
     this.lightSources.forEach((component) => {
       this.scene.remove(component.light);
       component.dispose();

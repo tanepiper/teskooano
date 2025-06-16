@@ -381,7 +381,7 @@ export class ModularSpaceRenderer {
     this.backgroundManager.dispose();
     this.controlsManager.dispose();
     this.css2DManager?.dispose();
-    this.lightingManager.clear();
+    this.lightingManager.dispose();
     if (typeof (this.lodManager as any).dispose === "function") {
       (this.lodManager as any).dispose();
     }

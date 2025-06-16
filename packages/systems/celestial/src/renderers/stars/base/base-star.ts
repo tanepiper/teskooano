@@ -410,15 +410,18 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
       distance: 200 * scale,
     };
 
-    // Level 2: Low-detail basic mesh (no corona)
-    const lowDetailMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(object.radius * 0.8, 8, 8),
-      new THREE.MeshBasicMaterial({ color: this.getStarColor(object) }),
-    );
-    lowDetailMesh.name = `${object.celestialObjectId}-low-lod`;
+    // Level 2: Low-detail point light and billboard
+    const lowDetailGroup = new THREE.Group();
+    lowDetailGroup.name = `${object.celestialObjectId}-low-lod-group`;
+    const color = this.getStarColor(object);
+    const lodLight = this._createLODLight(color, 2.5); // Stars are bright
+    const lodBillboard = this._createLODBillboard(color, 60 * scale); // Larger billboard for stars
+    lowDetailGroup.add(lodLight);
+    lowDetailGroup.add(lodBillboard);
+
     const lod2: LODLevel = {
-      object: lowDetailMesh,
-      distance: 1500 * scale,
+      object: lowDetailGroup,
+      distance: 2500 * scale,
     };
 
     return [lod0, lod1, lod2];

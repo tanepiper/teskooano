@@ -38,9 +38,14 @@ export class NeutronStarRenderer extends BaseStarRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    const geometry = new THREE.SphereGeometry(object.radius, 32, 32);
-    const material = new NeutronStarMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    // --- High Detail: A small, bright mesh with gravitational lensing ---
+    const highDetailGeometry = new THREE.SphereGeometry(object.radius, 32, 32);
+    const highDetailMaterial = new NeutronStarMaterial();
+    const highDetailMesh = new THREE.Mesh(
+      highDetailGeometry,
+      highDetailMaterial,
+    );
+    highDetailMesh.name = `${object.celestialObjectId}-high-lod`;
 
     // Add gravitational lensing
     if (options?.camera && options.scene && options.renderer) {
@@ -48,11 +53,22 @@ export class NeutronStarRenderer extends BaseStarRenderer {
         options.renderer,
         options.scene,
         options.camera as THREE.PerspectiveCamera,
-        mesh,
+        highDetailMesh,
       );
     }
+    const level0: LODLevel = { object: highDetailMesh, distance: 0 };
 
-    return [{ object: mesh, distance: 0 }];
+    // --- Low Detail: A simple point light and billboard ---
+    const lowDetailGroup = new THREE.Group();
+    lowDetailGroup.name = `${object.celestialObjectId}-low-lod-group`;
+    const color = new THREE.Color(0x99aaff); // Intense blue-white
+    const lodLight = this._createLODLight(color, 3.0);
+    const lodBillboard = this._createLODBillboard(color, 30);
+    lowDetailGroup.add(lodLight);
+    lowDetailGroup.add(lodBillboard);
+    const level1: LODLevel = { object: lowDetailGroup, distance: 1000 };
+
+    return [level0, level1];
   }
 
   update(

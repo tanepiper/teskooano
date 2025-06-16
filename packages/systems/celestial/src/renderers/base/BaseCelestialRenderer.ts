@@ -53,6 +53,7 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   protected _tempVector2: THREE.Vector3 = new THREE.Vector3();
   protected _tempVector3: THREE.Vector3 = new THREE.Vector3();
   protected lightingManager?: LightingManager;
+  private _billboardTexture: THREE.CanvasTexture | null = null;
 
   constructor(options: BaseCelestialRendererOptions = {}) {
     this.lightingManager = options.lightingManager;
@@ -118,6 +119,7 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
 
     this.materials.clear();
     this.lods.clear();
+    this._billboardTexture?.dispose();
   }
 
   /**
@@ -212,6 +214,96 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     }
 
     return lightSources.values().next().value || null;
+  }
+
+  /**
+   * Creates a simple, non-shadow-casting point light to represent a celestial
+   * object at its lowest level of detail.
+   * @param color - The color of the light.
+   * @param intensity - The intensity of the light.
+   * @returns A `THREE.PointLight` instance.
+   * @protected
+   */
+  protected _createLODLight(
+    color: THREE.ColorRepresentation = 0xffffff,
+    intensity: number = 100.5,
+  ): THREE.PointLight {
+    const light = new THREE.PointLight(color, intensity, 0, 0); // No distance falloff, no decay
+    light.castShadow = false;
+    return light;
+  }
+
+  private _createBillboardTexture(): THREE.CanvasTexture {
+    if (this._billboardTexture) {
+      return this._billboardTexture;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      // This should not happen in a browser environment
+      throw new Error("Could not get 2D context for billboard texture");
+    }
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = canvas.width / 2;
+
+    // Create a radial gradient for a soft-edged circle
+    const gradient = context.createRadialGradient(
+      centerX,
+      centerY,
+      0,
+      centerX,
+      centerY,
+      radius,
+    );
+    gradient.addColorStop(0, "rgba(255,255,255,1)");
+    gradient.addColorStop(0.4, "rgba(255,255,255,0.8)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    this._billboardTexture = texture;
+    return texture;
+  }
+
+  /**
+   * Creates a simple billboard sprite to represent a celestial
+   * object at its lowest level of detail.
+   * @param color - The color of the sprite.
+   * @param size - The size of the billboard in world units.
+   * @returns A `THREE.Mesh` instance configured as a billboard.
+   * @protected
+   */
+  protected _createLODBillboard(
+    color: THREE.ColorRepresentation = 0xffffff,
+    size: number = 10,
+  ): THREE.Mesh {
+    const texture = this._createBillboardTexture();
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      color: color,
+      blending: THREE.AdditiveBlending,
+      depthTest: false,
+      transparent: true,
+    });
+
+    const planeGeometry = new THREE.PlaneGeometry(size, size);
+    const billboardMesh = new THREE.Mesh(planeGeometry, material);
+    billboardMesh.renderOrder = 999;
+
+    // This callback makes the mesh always face the camera, acting as a billboard
+    // that correctly scales with distance.
+    billboardMesh.onBeforeRender = (renderer, scene, camera) => {
+      billboardMesh.quaternion.copy(camera.quaternion);
+    };
+
+    return billboardMesh;
   }
 
   public getLOD(object: RenderableCelestialObject): THREE.LOD | undefined {

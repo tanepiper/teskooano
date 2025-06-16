@@ -6,11 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- **Major Refactor**: `LightManager` now subscribes to `renderableStore.renderableObjects$` from `@teskooano/core-state` using RxJS.
-  - Star lights are now added, updated, and removed reactively based on changes to star objects in the core state.
-  - Intensity is now partly derived from star temperature.
-  - Removed the manual `addStarLight` and `updateStarLight` methods in favor of reactive updates.
-- Improved `dispose` method to correctly unsubscribe and dispose of light resources.
+- **Major Refactor**: The lighting system has been refactored to a component-based architecture.
+  - The main `LightManager` has been renamed to `LightingManager` and now acts as a simple registry for light sources.
+  - A new `LightSourceComponent` has been introduced. It is responsible for attaching a `THREE.Light` to a `RenderableCelestialObject` and keeping it synchronized.
+  - The manager no longer uses a reactive subscription to the state store. Instead, celestial renderers are now responsible for imperatively creating and registering their own `LightSourceComponent` instances.
+  - Removed manual methods like `addStarLight` in favor of the `register(component)` pattern.
+- Improved `dispose` method to correctly clean up all registered components.
 
 ## [0.1.0] - 2025-04-24
 
