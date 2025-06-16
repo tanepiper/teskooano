@@ -1,3 +1,4 @@
+import { utils } from "@teskooano/core-math";
 import {
   CelestialType,
   GasGiantClass,
@@ -5,6 +6,7 @@ import {
   RockyType,
 } from "@teskooano/data-types";
 import * as UTIL from "../../utils";
+import { CelestialZoneManager } from "../../zones";
 
 /**
  * @internal
@@ -25,111 +27,96 @@ export interface PlanetBaseProperties {
 
 /**
  * Determines the fundamental type of a planet (e.g., Rocky, Gas Giant) and its
- * initial physical properties based on its distance from a star.
- *
- * This is a key step in the planet generation pipeline. It uses the orbital
- * distance to decide whether a celestial body is more likely to be a dense,
- * rocky world or a less-dense gas or ice giant. It also sets the initial
- * probability for having a ring system.
+ * initial physical properties based on its distance from a star, using a
+ * data-driven zone-based approach.
  *
  * @param random The seeded pseudo-random number generator function.
  * @param bodyDistanceAU The planet's distance from its star in AU.
  * @param starTemperature The temperature of the parent star in Kelvin.
  * @param starRadius The radius of the parent star in meters.
- * @returns A `PlanetBaseProperties` object containing the determined
- *   preliminary characteristics.
+ * @param zoneManager An instance of `CelestialZoneManager`. A new one is created by default.
+ * @returns A `PlanetBaseProperties` object or `undefined` if no suitable zone is found.
  */
 export function determinePlanetTypeAndBaseProperties(
   random: () => number,
   bodyDistanceAU: number,
   starTemperature: number,
   starRadius: number,
-): PlanetBaseProperties {
-  let planetType: CelestialType;
-  let preliminaryDensity_kg_m3: number;
-  let targetDensity_kg_m3: number;
-  let massMultiplierFactor: number = 1;
-  let ringChance: number = 0;
-  let ringAllowedTypes: RockyType[] = [];
+  zoneManager: CelestialZoneManager = new CelestialZoneManager(),
+): PlanetBaseProperties | undefined {
+  const zone = zoneManager.getZoneForDistance(bodyDistanceAU);
+  if (!zone || zone.formationProbabilities.length === 0) {
+    return undefined;
+  }
+
+  const typeRoll = random();
+  let cumulativeChance = 0;
+  let chosenFormation;
+
+  for (const prob of zone.formationProbabilities) {
+    cumulativeChance += prob.chance;
+    if (typeRoll < cumulativeChance) {
+      chosenFormation = prob;
+      break;
+    }
+  }
+
+  if (!chosenFormation) {
+    chosenFormation =
+      zone.formationProbabilities[zone.formationProbabilities.length - 1];
+  }
+
+  const targetDensity_kg_m3 = utils.lerp(
+    chosenFormation.densityRange_kg_m3[0],
+    chosenFormation.densityRange_kg_m3[1],
+    random(),
+  );
+  const massMultiplierFactor = utils.lerp(
+    chosenFormation.massMultiplierFactorRange[0],
+    chosenFormation.massMultiplierFactorRange[1],
+    random(),
+  );
+
   let gasGiantClass: GasGiantClass | undefined = undefined;
   let rockyPlanetType: PlanetType | undefined = undefined;
 
-  const typeRoll = random();
-
-  if (bodyDistanceAU < 2.5) {
-    preliminaryDensity_kg_m3 = 3000 + random() * 3000;
-    const innerGasGiantChance = 0.25;
-
-    if (typeRoll < innerGasGiantChance) {
-      planetType = CelestialType.GAS_GIANT;
-      targetDensity_kg_m3 = 600 + random() * 900;
-      massMultiplierFactor = 15 + random() * 50;
-      ringChance = 0.05;
-      ringAllowedTypes = [
-        RockyType.METALLIC,
-        RockyType.DARK_ROCK,
-        RockyType.DUST,
-      ];
-      gasGiantClass = UTIL.classifyGasGiantByTemperature(
-        random,
-        bodyDistanceAU,
-        starTemperature,
-        starRadius,
-      );
-    } else {
-      planetType = CelestialType.PLANET;
-      targetDensity_kg_m3 = 3500 + random() * 2500;
-
-      ringChance = 0.01;
-      ringAllowedTypes = [RockyType.LIGHT_ROCK, RockyType.DARK_ROCK];
-    }
-  } else if (bodyDistanceAU < 8) {
-    preliminaryDensity_kg_m3 = 600 + random() * 900;
-    planetType = CelestialType.GAS_GIANT;
-    targetDensity_kg_m3 = preliminaryDensity_kg_m3;
-    massMultiplierFactor = 20 + random() * 100;
-    ringChance = 0.1;
-    ringAllowedTypes = [RockyType.METALLIC, RockyType.DUST];
-    gasGiantClass = UTIL.classifyGasGiantByTemperature(
+  if (chosenFormation.type === CelestialType.GAS_GIANT) {
+    const classifiedGiant = UTIL.classifyGasGiantByTemperature(
       random,
       bodyDistanceAU,
       starTemperature,
       starRadius,
     );
-  } else {
-    preliminaryDensity_kg_m3 = 1200 + random() * 800;
-    const outerIceGiantChance = 0.85;
-
-    if (random() < outerIceGiantChance) {
-      planetType = CelestialType.GAS_GIANT;
-      targetDensity_kg_m3 = preliminaryDensity_kg_m3;
-      massMultiplierFactor = 5 + random() * 20;
-      ringChance = 0.2;
-      ringAllowedTypes = [RockyType.ICE, RockyType.ICE_DUST];
-
+    if (
+      chosenFormation.subTypes?.length &&
+      chosenFormation.subTypes.includes(classifiedGiant)
+    ) {
+      gasGiantClass = classifiedGiant;
+    } else if (chosenFormation.subTypes?.length) {
       gasGiantClass = UTIL.getRandomItem(
-        [GasGiantClass.CLASS_III, GasGiantClass.CLASS_IV],
+        chosenFormation.subTypes as GasGiantClass[],
         random,
       );
-    } else {
-      planetType = CelestialType.PLANET;
-      targetDensity_kg_m3 = 2000 + random() * 2000;
-
-      ringChance = 0.15;
-      ringAllowedTypes = [RockyType.ICE, RockyType.ICE_DUST];
-
-      rockyPlanetType = PlanetType.ICE;
     }
+  } else if (
+    (chosenFormation.type === CelestialType.PLANET ||
+      chosenFormation.type === CelestialType.DWARF_PLANET) &&
+    chosenFormation.subTypes?.length
+  ) {
+    rockyPlanetType = UTIL.getRandomItem(
+      chosenFormation.subTypes as PlanetType[],
+      random,
+    );
   }
 
   return {
-    planetType,
-    preliminaryDensity_kg_m3,
-    targetDensity_kg_m3,
-    massMultiplierFactor,
-    ringChance,
-    ringAllowedTypes,
-    gasGiantClass,
-    rockyPlanetType,
+    planetType: chosenFormation.type,
+    preliminaryDensity_kg_m3: targetDensity_kg_m3,
+    targetDensity_kg_m3: targetDensity_kg_m3,
+    massMultiplierFactor: massMultiplierFactor,
+    ringChance: chosenFormation.ringChance,
+    ringAllowedTypes: chosenFormation.allowedRingTypes,
+    gasGiantClass: gasGiantClass,
+    rockyPlanetType: rockyPlanetType,
   };
 }

@@ -1,14 +1,17 @@
-import { PlanetType, ProceduralSurfaceProperties } from "@teskooano/data-types";
-import { getRandomInRange } from "../utils";
+import { utils } from "@teskooano/core-math";
 import {
-  getBarrenProperties,
+  PlanetType,
+  type ProceduralSurfaceProperties,
+} from "@teskooano/data-types";
+import { getBarrenProperties } from "./barren";
+import {
   getDesertProperties,
   getIceProperties,
   getLavaProperties,
   getOceanProperties,
   getRockyProperties,
-  getTerrestrialProperties,
 } from "./";
+import { getTerrestrialProperties } from "./terrestrial";
 
 /**
  * Creates detailed procedural surface properties for a planet based on its type.
@@ -28,32 +31,32 @@ export function createProceduralSurfaceProperties(
   random: () => number,
   planetType: PlanetType,
 ): ProceduralSurfaceProperties {
-  // Define base properties that can be shared or used as fallbacks
+  // Define a base set of properties that can be overridden
   const baseProperties: ProceduralSurfaceProperties = {
-    persistence: getRandomInRange(0.5, 0.7, random),
-    lacunarity: getRandomInRange(1.8, 2.2, random),
-    simplePeriod: getRandomInRange(1.5, 4.0, random),
-    octaves: Math.floor(getRandomInRange(8, 12, random)),
-    bumpScale: getRandomInRange(2, 3, random),
-    color1: "#808080",
-    color2: "#A9A9A9",
-    color3: "#D3D3D3",
-    color4: "#FFFFFF",
-    color5: "#696969",
-    height1: getRandomInRange(0.1, 0.2, random),
-    height2: getRandomInRange(0.2, 0.4, random),
-    height3: getRandomInRange(0.4, 0.6, random),
-    height4: getRandomInRange(0.6, 0.8, random),
-    height5: getRandomInRange(0.8, 1.0, random),
-    shininess: getRandomInRange(8, 32, random),
-    specularStrength: getRandomInRange(0.1, 0.3, random),
-    roughness: getRandomInRange(0.5, 0.9, random),
-    ambientLightIntensity: 0.5,
-    undulation: getRandomInRange(0.1, 0.3, random),
-    terrainType: 2,
-    terrainAmplitude: 1.0,
-    terrainSharpness: 1.0,
-    terrainOffset: 0.0,
+    color1: "#ffffff",
+    color2: "#cccccc",
+    color3: "#999999",
+    color4: "#666666",
+    color5: "#333333",
+    persistence: utils.lerp(0.5, 0.7, random()),
+    lacunarity: utils.lerp(1.8, 2.2, random()),
+    simplePeriod: utils.lerp(1.5, 4.0, random()),
+    octaves: Math.floor(utils.lerp(8, 12, random())),
+    bumpScale: utils.lerp(2, 3, random()),
+    terrainType: 1, // Default to a balanced terrain
+    terrainAmplitude: 1,
+    terrainSharpness: 1,
+    terrainOffset: 0,
+    height1: utils.lerp(0.1, 0.2, random()),
+    height2: utils.lerp(0.2, 0.4, random()),
+    height3: utils.lerp(0.4, 0.6, random()),
+    height4: utils.lerp(0.6, 0.8, random()),
+    height5: utils.lerp(0.8, 1.0, random()),
+    shininess: utils.lerp(8, 32, random()),
+    specularStrength: utils.lerp(0.1, 0.3, random()),
+    roughness: utils.lerp(0.5, 0.9, random()),
+    ambientLightIntensity: 0.2,
+    undulation: utils.lerp(0.1, 0.3, random()),
   };
 
   let specificProperties: Partial<ProceduralSurfaceProperties> = {};

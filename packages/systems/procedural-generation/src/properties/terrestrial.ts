@@ -1,14 +1,15 @@
 import type { ProceduralSurfaceProperties } from "@teskooano/data-types";
-import { getRandomInRange, getRandomItem } from "../utils";
+import { utils } from "@teskooano/core-math";
+import { getRandomItem } from "../utils";
 
 export function getTerrestrialProperties(
   random: () => number,
 ): Partial<ProceduralSurfaceProperties> {
-  const color1 = getRandomItem(["#1E4F6F", "#2A6F97", "#01497C"], random); // Blues (Water)
-  const color2 = getRandomItem(["#4C9341", "#6A994E", "#8AA36F"], random); // Greens (Land)
-  const color3 = getRandomItem(["#D4A373", "#E6B88A", "#C09463"], random); // Browns (Mountains)
-  const color4 = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
-  const color5 = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
+  const color1 = getRandomItem(["#006400", "#228B22", "#008000"], random); // Dark green for forests
+  const color2 = getRandomItem(["#32CD32", "#9ACD32", "#6B8E23"], random); // Lime green/olive drab for grasslands
+  const color3 = getRandomItem(["#F5DEB3", "#D2B48C", "#BC8F8F"], random); // Wheat/tan/rosy brown for arid/mountainous regions
+  const color4 = getRandomItem(["#4682B4", "#87CEEB", "#1E90FF"], random); // Steel blue/sky blue/dodger blue for water
+  const color5 = getRandomItem(["#FFFFFF", "#F5F5F5", "#FFFAFA"], random); // White/snow for peaks and polar caps
 
   return {
     color1,
@@ -16,18 +17,18 @@ export function getTerrestrialProperties(
     color3,
     color4,
     color5,
-    persistence: getRandomInRange(0.55, 0.65, random), // Slightly increased
-    lacunarity: getRandomInRange(1.8, 2.2, random), // Tightened range
-    simplePeriod: getRandomInRange(0.5, 0.9, random), // Higher frequency
-    octaves: Math.floor(getRandomInRange(10, 14, random)), // Increased octaves
-    bumpScale: getRandomInRange(1, 2, random),
-    roughness: getRandomInRange(0.1, 0.2, random),
-    specularStrength: getRandomInRange(0.3, 0.6, random),
-    ambientLightIntensity: getRandomInRange(0.2, 0.4, random), // Higher ambient for Earth-like planets
-    undulation: getRandomInRange(0.3, 0.5, random), // Higher undulation for continent-like features
-    terrainType: 2, // Sharp peaks for mountains
-    terrainAmplitude: getRandomInRange(0.8, 1.2, random),
-    terrainSharpness: getRandomInRange(0.8, 1.2, random),
-    terrainOffset: getRandomInRange(-0.1, 0.1, random),
+    persistence: utils.lerp(0.55, 0.65, random()), // Slightly increased
+    lacunarity: utils.lerp(1.8, 2.2, random()), // Tightened range
+    simplePeriod: utils.lerp(0.5, 0.9, random()), // Higher frequency
+    octaves: Math.floor(utils.lerp(10, 14, random())), // Increased octaves
+    bumpScale: utils.lerp(1, 2, random()),
+    roughness: utils.lerp(0.1, 0.2, random()),
+    specularStrength: utils.lerp(0.3, 0.6, random()),
+    ambientLightIntensity: utils.lerp(0.2, 0.4, random()), // Higher ambient for Earth-like planets
+    undulation: utils.lerp(0.3, 0.5, random()), // Higher undulation for continent-like features
+    terrainType: 1,
+    terrainAmplitude: utils.lerp(0.8, 1.2, random()),
+    terrainSharpness: utils.lerp(0.8, 1.2, random()),
+    terrainOffset: utils.lerp(-0.1, 0.1, random()),
   };
 }

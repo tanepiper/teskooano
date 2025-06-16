@@ -1,15 +1,16 @@
 import type { ProceduralSurfaceProperties } from "@teskooano/data-types";
-import { getRandomInRange, getRandomItem } from "../utils";
+import { utils } from "@teskooano/core-math";
+import { getRandomItem } from "../utils";
 
 export function getRockyProperties(
   random: () => number,
 ): Partial<ProceduralSurfaceProperties> {
-  // Brighter, more varied rock palette
-  const color1 = getRandomItem(["#6B4226", "#5D4037", "#4E342E"], random); // Dark brown/earthy base
-  const color2 = getRandomItem(["#8D6E63", "#795548", "#6D4C41"], random); // Mid-tone browns
-  const color3 = getRandomItem(["#A1887F", "#BCAAA4", "#90A4AE"], random); // Lighter browns and grays
-  const color4 = getRandomItem(["#D7CCC8", "#CFD8DC", "#B0BEC5"], random); // Lightest grays/tans for highlights
-  const color5 = getRandomItem(["#5D4037", "#455A64", "#37474F"], random); // Darkest rock/shadow color
+  // Palette of grays, browns, and dark tones
+  const color1 = getRandomItem(["#363636", "#424242", "#2E2E2E"], random); // Dark gray base
+  const color2 = getRandomItem(["#5A5A5A", "#616161", "#505050"], random); // Mid-tone gray
+  const color3 = getRandomItem(["#808080", "#8D8D8D", "#737373"], random); // Lighter gray
+  const color4 = getRandomItem(["#A9A9A9", "#B3B3B3", "#9F9F9F"], random); // Lightest gray for peaks
+  const color5 = getRandomItem(["#6F4E37", "#5C4033", "#4A3728"], random); // Coffee/brown undertones
 
   return {
     color1,
@@ -17,18 +18,18 @@ export function getRockyProperties(
     color3,
     color4,
     color5,
-    persistence: getRandomInRange(0.45, 0.6, random),
-    lacunarity: getRandomInRange(1.9, 2.3, random),
-    simplePeriod: getRandomInRange(1.0, 3.0, random),
-    octaves: Math.floor(getRandomInRange(9, 13, random)),
-    bumpScale: getRandomInRange(2, 3, random),
-    roughness: getRandomInRange(0.7, 0.95, random),
-    specularStrength: getRandomInRange(0.3, 0.6, random),
-    ambientLightIntensity: getRandomInRange(0.3, 0.5, random), // Boosted ambient light
-    undulation: getRandomInRange(0.2, 0.4, random),
-    terrainType: 2, // Sharp peaks for rocky terrain
-    terrainAmplitude: getRandomInRange(1.0, 1.5, random),
-    terrainSharpness: getRandomInRange(1.2, 1.8, random),
-    terrainOffset: getRandomInRange(-0.2, 0.0, random),
+    persistence: utils.lerp(0.45, 0.6, random()),
+    lacunarity: utils.lerp(1.9, 2.3, random()),
+    simplePeriod: utils.lerp(1.0, 3.0, random()),
+    octaves: Math.floor(utils.lerp(9, 13, random())),
+    bumpScale: utils.lerp(2, 3, random()),
+    roughness: utils.lerp(0.7, 0.95, random()),
+    specularStrength: utils.lerp(0.3, 0.6, random()),
+    ambientLightIntensity: utils.lerp(0.3, 0.5, random()), // Boosted ambient light
+    undulation: utils.lerp(0.2, 0.4, random()),
+    terrainType: 2, // Sharp peaks for rugged terrain
+    terrainAmplitude: utils.lerp(1.0, 1.5, random()),
+    terrainSharpness: utils.lerp(1.2, 1.8, random()),
+    terrainOffset: utils.lerp(-0.2, 0.0, random()),
   };
 }

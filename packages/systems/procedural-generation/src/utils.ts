@@ -61,21 +61,6 @@ export function calculateOrbitalPeriod_s(
 }
 
 /**
- * Gets a random number within a specified inclusive range.
- * @param min The minimum value of the range.
- * @param max The maximum value of the range.
- * @param randomFn The seeded pseudo-random number generator function.
- * @returns A random number within the range.
- */
-export function getRandomInRange(
-  min: number,
-  max: number,
-  randomFn: () => number,
-): number {
-  return min + randomFn() * (max - min);
-}
-
-/**
  * Calculates the radius of a sphere given its mass and average density.
  * @param mass_kg Mass of the sphere in kilograms.
  * @param density_kg_m3 Average density in kilograms per cubic meter.

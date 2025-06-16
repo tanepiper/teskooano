@@ -1,5 +1,6 @@
 import type { ProceduralSurfaceProperties } from "@teskooano/data-types";
-import { getRandomInRange, getRandomItem } from "../utils";
+import { utils } from "@teskooano/core-math";
+import { getRandomItem } from "../utils";
 
 export function getBarrenProperties(
   random: () => number,
@@ -17,18 +18,18 @@ export function getBarrenProperties(
     color3,
     color4,
     color5,
-    persistence: getRandomInRange(0.4, 0.55, random),
-    lacunarity: getRandomInRange(2.0, 2.5, random),
-    simplePeriod: getRandomInRange(1.0, 3.5, random),
-    octaves: Math.floor(getRandomInRange(8, 12, random)),
-    bumpScale: getRandomInRange(2, 3, random),
-    roughness: getRandomInRange(0.6, 0.8, random), // More matte/dusty
-    specularStrength: getRandomInRange(0.3, 0.6, random),
-    ambientLightIntensity: getRandomInRange(0.3, 0.5, random), // Boosted ambient light
-    undulation: getRandomInRange(0.1, 0.2, random),
+    persistence: utils.lerp(0.4, 0.55, random()),
+    lacunarity: utils.lerp(2.0, 2.5, random()),
+    simplePeriod: utils.lerp(1.0, 3.5, random()),
+    octaves: Math.floor(utils.lerp(8, 12, random())),
+    bumpScale: utils.lerp(2, 3, random()),
+    roughness: utils.lerp(0.6, 0.8, random()), // More matte/dusty
+    specularStrength: utils.lerp(0.3, 0.6, random()),
+    ambientLightIntensity: utils.lerp(0.3, 0.5, random()), // Boosted ambient light
+    undulation: utils.lerp(0.1, 0.2, random()),
     terrainType: 2, // Sharp peaks to catch light, not valleys
-    terrainAmplitude: getRandomInRange(0.5, 0.8, random),
-    terrainSharpness: getRandomInRange(1.5, 2.0, random),
-    terrainOffset: getRandomInRange(0.0, 0.2, random),
+    terrainAmplitude: utils.lerp(0.5, 0.8, random()),
+    terrainSharpness: utils.lerp(1.5, 2.0, random()),
+    terrainOffset: utils.lerp(0.0, 0.2, random()),
   };
 }

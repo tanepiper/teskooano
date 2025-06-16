@@ -192,9 +192,9 @@ export async function generateSystem(
     stars.forEach((star) => subscriber.next(star));
 
     const minDistanceStepAU = 0.2;
-    const maxDistanceStepAU = 20;
-    const totalPotentialOrbits = Math.floor(random() * 10) + 5;
-    const maxPlacementAU = 50;
+    const maxDistanceStepAU = 200;
+    const totalPotentialOrbits = Math.floor(random() * 20) + 30;
+    const maxPlacementAU = 2000;
 
     // Use RxJS stream for orbital bodies
     const bodyGenerationPipeline$ = range(0, totalPotentialOrbits).pipe(

@@ -1,21 +1,16 @@
-import { Observable, Subscriber } from "rxjs";
 import { OSVector3 } from "@teskooano/core-math";
 import {
   CelestialObject,
-  OrbitalParameters,
-  PhysicsStateReal,
-  RingProperties,
-  RingSystemProperties,
-  PlanetProperties,
-  PlanetType,
-  PlanetAtmosphereProperties,
   CelestialSpecificPropertiesUnion,
-} from "@teskooano/data-types";
-import {
   CelestialStatus,
   CelestialType,
+  PhysicsStateReal,
+  PlanetProperties,
+  PlanetType,
+  RingProperties,
   scaleSize,
 } from "@teskooano/data-types";
+import { Observable, Subscriber } from "rxjs";
 import * as CONST from "../../constants";
 import { generateCelestialName } from "../../generators/names/celestial-name";
 import * as UTIL from "../../utils";
@@ -73,6 +68,11 @@ export function generatePlanet(
         starTemperature,
         starRadius,
       );
+
+      if (!baseProps) {
+        subscriber.complete();
+        return;
+      }
 
       const massRangeMultiplier = 1 + bodyDistanceAU / 5;
 
