@@ -3,7 +3,14 @@ import { BaseLabelLayer, VisibilityLevel } from "./BaseLabelLayer";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { AU_MARKER_LABEL_TAG } from "../components/au-marker-label/AuMarkerLabelComponent";
 
+/**
+ * Manages labels specifically for AU distance markers.
+ */
 export class AuMarkerLabelLayer extends BaseLabelLayer {
+  constructor(scene: THREE.Scene) {
+    super(scene);
+  }
+
   public createLabel(
     id: string,
     auValue: number,
@@ -42,50 +49,21 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
       return;
     }
 
-    const sceneLevels = this._getSceneVisibilityLevels();
-    const valueSelector = (element: HTMLElement) =>
-      parseFloat(element.getAttribute("data-au-value") || "0");
+    const cameraPosition = new THREE.Vector3();
+    camera.getWorldPosition(cameraPosition);
+    // AU markers are centered at the centralBody's position
+    const cameraDistance = cameraPosition.distanceTo(centralBody.position);
 
-    this.updateVisibilityFromLevels(
-      camera,
-      centralBody,
-      sceneLevels,
-      valueSelector,
-    );
-  }
+    this.elements.forEach((label) => {
+      const markerAuValueScene = parseFloat(
+        label.element.getAttribute("data-au-value") || "0",
+      );
 
-  /**
-   * Pre-calculates the camera distance and label value thresholds in scene units.
-   * @returns An array of visibility levels with values in scene units.
-   */
-  private _getSceneVisibilityLevels(): VisibilityLevel[] {
-    const visibilityLevels = [
-      {
-        cameraDistAU: 5000,
-        minLabelAU: 1000,
-      },
-      {
-        cameraDistAU: 2000,
-        minLabelAU: 200,
-      },
-      {
-        cameraDistAU: 600,
-        minLabelAU: 100,
-      },
-      {
-        cameraDistAU: 400,
-        minLabelAU: 20,
-      },
-      {
-        cameraDistAU: 100,
-        minLabelAU: 10,
-      },
-    ];
+      // Hide the label if the camera is 110% past the marker's distance
+      const visible = cameraDistance < markerAuValueScene * 10;
 
-    // Convert AU levels to scene units for direct comparison.
-    return visibilityLevels.map((level) => ({
-      cameraDistScene: this.auToSceneUnits(level.cameraDistAU),
-      minLabelScene: this.auToSceneUnits(level.minLabelAU),
-    }));
+      // Use toggleAttribute for CSS animations
+      label.element.toggleAttribute("visible", visible);
+    });
   }
 }

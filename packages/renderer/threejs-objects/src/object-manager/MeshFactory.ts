@@ -1,5 +1,6 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
+import type { LightingInfluenceManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel, LODManager } from "@teskooano/renderer-threejs-lod";
 import {
   createAsteroidFieldMesh,
@@ -23,6 +24,7 @@ export interface MeshFactoryConfig {
   planetRenderers: Map<string, CelestialRenderer>;
   moonRenderers: Map<string, CelestialRenderer>;
   lodManager: LODManager;
+  lightingInfluenceManager: LightingInfluenceManager;
   camera: THREE.PerspectiveCamera; // Needed for LOD registration?
   createLodCallback: (
     object: RenderableCelestialObject,
@@ -42,6 +44,7 @@ export class MeshFactory {
   private planetRenderers: Map<string, CelestialRenderer>;
   private moonRenderers: Map<string, CelestialRenderer>;
   private lodManager: LODManager;
+  private lightingInfluenceManager: LightingInfluenceManager;
   private createLodCallback: (
     object: RenderableCelestialObject,
     levels: LODLevel[],
@@ -55,6 +58,7 @@ export class MeshFactory {
     planetRenderers: Map<string, CelestialRenderer>;
     moonRenderers: Map<string, CelestialRenderer>;
     celestialRenderers: Map<string, CelestialRenderer>;
+    lightingInfluenceManager: LightingInfluenceManager;
     createLodCallback: (
       object: RenderableCelestialObject,
       levels: LODLevel[],
@@ -69,6 +73,7 @@ export class MeshFactory {
     this.lodManager = config.lodManager;
     this.createLodCallback = config.createLodCallback;
     this.camera = config.camera;
+    this.lightingInfluenceManager = config.lightingInfluenceManager;
 
     // Prepare deps object for creator functions
     this.creatorDeps = {
@@ -77,6 +82,7 @@ export class MeshFactory {
       moonRenderers: this.moonRenderers,
       celestialRenderers: this.celestialRenderers,
       createLodCallback: this.createLodCallback,
+      lightingInfluenceManager: this.lightingInfluenceManager,
     };
   }
 

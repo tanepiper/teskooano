@@ -9,7 +9,31 @@ import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { CELESTIAL_LABEL_TAG } from "../components/celestial-label/CelestialLabelComponent";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 
+export interface LabelVisibilityConfig {
+  planet?: number;
+  gasGiant?: number;
+  moon?: number;
+  ejectedMoon?: number;
+  secondaryStar?: number;
+  default?: number;
+}
+
 export class CelestialLabelLayer extends BaseLabelLayer {
+  private visibilityConfig: Required<LabelVisibilityConfig>;
+
+  constructor(config: LabelVisibilityConfig = {}) {
+    super();
+    this.visibilityConfig = {
+      planet: 90,
+      gasGiant: 190,
+      moon: 2,
+      ejectedMoon: 2000,
+      secondaryStar: 3000,
+      default: 2,
+      ...config,
+    };
+  }
+
   public createLabel(
     object: RenderableCelestialObject,
     parentMesh: THREE.Object3D,
@@ -83,9 +107,12 @@ export class CelestialLabelLayer extends BaseLabelLayer {
           break;
         }
 
-        case CelestialType.PLANET:
-        case CelestialType.GAS_GIANT: {
+        case CelestialType.PLANET: {
           visible = distanceToSelf < config.planet;
+          break;
+        }
+        case CelestialType.GAS_GIANT: {
+          visible = distanceToSelf < config.gasGiant;
           break;
         }
 
@@ -151,11 +178,12 @@ export class CelestialLabelLayer extends BaseLabelLayer {
    */
   private _getLabelVisibilityConfig() {
     return {
-      planet: this.auToSceneUnits(2000),
-      moon: this.auToSceneUnits(2),
-      ejectedMoon: this.auToSceneUnits(2000),
-      secondaryStar: this.auToSceneUnits(3000),
-      default: this.auToSceneUnits(2),
+      planet: this.auToSceneUnits(this.visibilityConfig.planet),
+      gasGiant: this.auToSceneUnits(this.visibilityConfig.gasGiant),
+      moon: this.auToSceneUnits(this.visibilityConfig.moon),
+      ejectedMoon: this.auToSceneUnits(this.visibilityConfig.ejectedMoon),
+      secondaryStar: this.auToSceneUnits(this.visibilityConfig.secondaryStar),
+      default: this.auToSceneUnits(this.visibilityConfig.default),
     };
   }
 

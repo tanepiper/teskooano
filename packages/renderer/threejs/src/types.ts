@@ -19,6 +19,11 @@ import type {
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import type { BackgroundManager } from "@teskooano/renderer-threejs-background";
+import {
+  CSS2DLayerType,
+  LabelVisibilityConfig,
+} from "@teskooano/renderer-threejs-labels";
+import { Scene, WebGLRendererParameters } from "three";
 
 /**
  * Defines a collection of values intended to be passed as uniforms to shaders.
@@ -43,7 +48,7 @@ export interface RendererVisualSettings {
 /**
  * Defines the configuration options for creating a `ModularSpaceRenderer`.
  */
-export interface ModularSpaceRendererOptions {
+export interface ModularSpaceRendererOptions extends WebGLRendererParameters {
   /** Enables/disables antialiasing. */
   antialias?: boolean;
   /** Enables/disables shadows. */
@@ -61,6 +66,7 @@ export interface ModularSpaceRendererOptions {
   /** Sets the initial visibility of particle effects for destroyed objects. */
   showDebrisEffects?: boolean;
   grid?: "polar" | "cartesian";
+  labelConfig?: LabelVisibilityConfig;
 }
 
 /**
@@ -92,3 +98,4 @@ export interface RenderPipelineOptions {
 /**
  * Defines a function that can be invoked from the console
  */
+export type RenderCallback = () => void;

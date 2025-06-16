@@ -4,29 +4,23 @@ import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import type { CelestialMeshOptions } from "../../base/CelestialRenderer";
+import { BaseCelestialRendererOptions } from "../../base/BaseCelestialRenderer";
 
 /**
  * Material for main sequence stars with shader effects
  */
 export class MainSequenceStarMaterial extends BaseStarMaterial {
-  constructor(
-    color: THREE.Color = new THREE.Color(0xffff00),
-    options: {
-      coronaIntensity?: number;
-      pulseSpeed?: number;
-      glowIntensity?: number;
-      temperatureVariation?: number;
-      metallicEffect?: number;
-    } = {},
-  ) {
-    super(color, options);
-  }
+  // The constructor is inherited from BaseStarMaterial
 }
 
 /**
  * Main sequence star renderer
  */
 export class MainSequenceStarRenderer extends BaseStarRenderer {
+  constructor(options: BaseCelestialRendererOptions = {}) {
+    super(options);
+  }
+
   /**
    * Returns the appropriate material for a main sequence star
    */

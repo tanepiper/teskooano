@@ -12,6 +12,10 @@ import type {
   LightSourcesMap,
 } from "../../base/CelestialRenderer";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import {
+  LightSourceComponent,
+  LightingInfluenceManager,
+} from "@teskooano/renderer-threejs-lighting";
 
 /**
  * Vertex shader for stars
@@ -317,7 +321,7 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
 }
 
 /**
- * Abstract base class for star renderers, implementing the LOD system.
+ * Base class for all star renderers
  */
 export abstract class BaseStarRenderer extends BaseCelestialRenderer {
   public materials: Map<string, BaseStarMaterial> = new Map();
@@ -325,19 +329,43 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
   protected startTime: number = Date.now() / 1000;
   protected elapsedTime: number = 0;
 
-  /**
-   * Creates and returns an array of LOD levels for the star object.
-   * This is abstract and must be implemented by subclasses.
-   */
   abstract getLODLevels(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[];
 
   /**
-   * Helper method for luminous stars to create a standard set of LOD levels
-   * with a star body and corona.
-   * @internal
+   * Initializes the renderer for a specific celestial object.
+   * For stars, this includes setting up their light source component.
+   */
+  public override initialize(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): void {
+    super.initialize(object, options);
+
+    if (!this.lightingInfluenceManager) {
+      console.warn(
+        `[BaseStarRenderer] LightingInfluenceManager is not available for object ${object.celestialObjectId}. Light source will not be created.`,
+      );
+      return;
+    }
+
+    const lightSource = new LightSourceComponent(object, {
+      castShadow: true,
+      // The light itself will be managed by the lighting system,
+      // but we can configure it here.
+    });
+
+    this.lightingInfluenceManager.register(lightSource);
+
+    // TODO: We need a way to unregister the light source when the object is disposed.
+    // This might involve enhancing the dispose method or using an event bus.
+  }
+
+  /**
+   * Creates an array of LOD levels for a luminous star
+   * @param object The celestial object data
    */
   protected _createLuminousStarLODs(
     object: RenderableCelestialObject,

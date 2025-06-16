@@ -12,7 +12,10 @@ import {
 } from "@teskooano/renderer-threejs";
 import type { CSS2DManager } from "@teskooano/renderer-threejs-labels";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
-import { LightManager } from "@teskooano/renderer-threejs-lighting";
+import {
+  LightManager,
+  LightingInfluenceManager,
+} from "@teskooano/renderer-threejs-lighting";
 import { LODManager } from "@teskooano/renderer-threejs-lod";
 import { CelestialRenderer } from "@teskooano/systems-celestial";
 import type { Observable, Subscription } from "rxjs";
@@ -55,6 +58,8 @@ export class ObjectManager {
   private renderer: THREE.WebGLRenderer;
   /** @internal Manages Levels of Detail for objects based on camera distance. */
   private lodManager: LODManager;
+  /** @internal Manages the influence and calculation of the new component-based lighting system. */
+  public lightingInfluenceManager: LightingInfluenceManager;
   /** @internal Map storing specialized renderers keyed by their specific type (e.g., GasGiantClass). */
   private celestialRenderers: Map<string, CelestialRenderer> = new Map();
   /** @internal Map storing specialized renderers specifically for stars, keyed by object ID. */
@@ -151,6 +156,7 @@ export class ObjectManager {
     this.acceleration$ = acceleration$; // Assign the observable
 
     this.lodManager = new LODManager(camera);
+    this.lightingInfluenceManager = new LightingInfluenceManager();
     this.lensingHandler = new GravitationalLensingHandler({
       starRenderers: this.starRenderers,
     });
@@ -162,6 +168,7 @@ export class ObjectManager {
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
       lodManager: this.lodManager,
+      lightingInfluenceManager: this.lightingInfluenceManager,
       camera: this.camera,
       createLodCallback: this.lodManager.createAndRegisterLOD.bind(
         this.lodManager,

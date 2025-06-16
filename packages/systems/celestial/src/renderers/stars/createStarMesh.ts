@@ -22,6 +22,7 @@ import type { CelestialRenderer } from "../base/CelestialRenderer";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { createFallbackSphere } from "../utils/createFallbackSphere";
+import { LightingInfluenceManager } from "@teskooano/renderer-threejs-lighting";
 
 interface CreateStarMeshDeps {
   starRenderers: Map<string, CelestialRenderer>;
@@ -30,6 +31,7 @@ interface CreateStarMeshDeps {
     object: RenderableCelestialObject,
     levels: LODLevel[],
   ) => THREE.LOD;
+  lightingInfluenceManager: LightingInfluenceManager;
 }
 
 /**
@@ -41,41 +43,44 @@ interface CreateStarMeshDeps {
 function createStarRenderer(
   spectralClass?: string,
   stellarType?: StellarType,
+  lightingInfluenceManager?: LightingInfluenceManager,
 ): BaseStarRenderer {
   if (stellarType) {
+    const options = { lightingInfluenceManager };
     switch (stellarType) {
       case StellarType.NEUTRON_STAR:
-        return new NeutronStarRenderer();
+        return new NeutronStarRenderer(options);
       case StellarType.WHITE_DWARF:
-        return new WhiteDwarfRenderer();
+        return new WhiteDwarfRenderer(options);
       case StellarType.WOLF_RAYET:
-        return new WolfRayetRenderer();
+        return new WolfRayetRenderer(options);
       case StellarType.BLACK_HOLE:
-        return new SchwarzschildBlackHoleRenderer();
+        return new SchwarzschildBlackHoleRenderer(options);
       case StellarType.KERR_BLACK_HOLE:
-        return new KerrBlackHoleRenderer();
+        return new KerrBlackHoleRenderer(options);
       case StellarType.MAIN_SEQUENCE:
         break;
     }
   }
 
+  const options = { lightingInfluenceManager };
   switch (spectralClass?.toUpperCase()) {
     case "O":
-      return new ClassOStarRenderer();
+      return new ClassOStarRenderer(options);
     case "B":
-      return new ClassBStarRenderer();
+      return new ClassBStarRenderer(options);
     case "A":
-      return new ClassAStarRenderer();
+      return new ClassAStarRenderer(options);
     case "F":
-      return new ClassFStarRenderer();
+      return new ClassFStarRenderer(options);
     case "G":
-      return new ClassGStarRenderer();
+      return new ClassGStarRenderer(options);
     case "K":
-      return new ClassKStarRenderer();
+      return new ClassKStarRenderer(options);
     case "M":
-      return new ClassMStarRenderer();
+      return new ClassMStarRenderer(options);
     default:
-      return new MainSequenceStarRenderer();
+      return new MainSequenceStarRenderer(options);
   }
 }
 
@@ -97,6 +102,7 @@ export function createStarMesh(
         const newRenderer = createStarRenderer(
           starProps.spectralClass,
           starProps.stellarType,
+          deps.lightingInfluenceManager,
         );
         if (newRenderer) {
           renderer = newRenderer;
@@ -124,6 +130,7 @@ export function createStarMesh(
     const lodLevels = renderer.getLODLevels(object);
     if (lodLevels && lodLevels.length > 0) {
       const lod = deps.createLodCallback(object, lodLevels);
+      renderer.initialize(object);
       return lod;
     } else {
       console.warn(

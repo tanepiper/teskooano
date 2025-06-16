@@ -7,6 +7,11 @@ import {
 } from "./CelestialRenderer";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { LightingInfluenceManager } from "@teskooano/renderer-threejs-lighting";
+
+export interface BaseCelestialRendererOptions {
+  lightingInfluenceManager?: LightingInfluenceManager;
+}
 
 /**
  * Abstract base class for all celestial renderers
@@ -22,7 +27,7 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
    * Map of materials for different objects
    * Key: object ID, Value: material instance
    */
-  public materials: Map<string, THREE.Material> = new Map();
+  public materials: Map<string, THREE.Material | THREE.Material[]> = new Map();
 
   /**
    * Map of LOD levels for different objects
@@ -47,9 +52,10 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   protected _tempVector1: THREE.Vector3 = new THREE.Vector3();
   protected _tempVector2: THREE.Vector3 = new THREE.Vector3();
   protected _tempVector3: THREE.Vector3 = new THREE.Vector3();
+  protected lightingInfluenceManager?: LightingInfluenceManager;
 
-  constructor() {
-    // ... existing code ...
+  constructor(options: BaseCelestialRendererOptions = {}) {
+    this.lightingInfluenceManager = options.lightingInfluenceManager;
   }
 
   /**
@@ -141,8 +147,12 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
    * Add a material to the materials map for tracking and disposal
    */
   public registerMaterial(id: string, material: THREE.Material): void {
-    if (this.materials.has(id)) {
-      this.materials.get(id)?.dispose();
+    const existingMaterial = this.materials.get(id);
+    if (existingMaterial) {
+      (Array.isArray(existingMaterial)
+        ? existingMaterial
+        : [existingMaterial]
+      ).forEach((m) => m.dispose());
     }
     this.materials.set(id, material);
   }
@@ -206,5 +216,12 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
 
   public getLOD(object: RenderableCelestialObject): THREE.LOD | undefined {
     return this.lods.get(object.celestialObjectId);
+  }
+
+  public initialize(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): void {
+    // Base implementation does nothing, subclasses should override.
   }
 }

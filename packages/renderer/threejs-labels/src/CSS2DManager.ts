@@ -10,7 +10,10 @@ import {
   AU_MARKER_LABEL_TAG,
 } from "./components/au-marker-label/AuMarkerLabelComponent";
 import { AuMarkerLabelLayer } from "./layers/AuMarkerLabelLayer";
-import { CelestialLabelLayer } from "./layers/CelestialLabelLayer";
+import {
+  CelestialLabelLayer,
+  LabelVisibilityConfig,
+} from "./layers/CelestialLabelLayer";
 import { BaseLabelLayer } from "./layers/BaseLabelLayer";
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 
@@ -35,7 +38,11 @@ export class CSS2DManager {
   /**
    * Create a new CSS2DManager
    */
-  constructor(scene: THREE.Scene, container: HTMLElement) {
+  constructor(
+    scene: THREE.Scene,
+    container: HTMLElement,
+    labelConfig: LabelVisibilityConfig = {},
+  ) {
     this.scene = scene;
     this.container = container;
 
@@ -47,9 +54,12 @@ export class CSS2DManager {
     this.layers = new Map();
     this.layers.set(
       CSS2DLayerType.CELESTIAL_LABELS,
-      new CelestialLabelLayer(scene),
+      new CelestialLabelLayer(labelConfig),
     );
-    this.layers.set(CSS2DLayerType.AU_MARKERS, new AuMarkerLabelLayer(scene));
+    this.layers.set(
+      CSS2DLayerType.AU_MARKERS,
+      new AuMarkerLabelLayer(this.scene),
+    );
   }
 
   private registerWebComponents(): void {

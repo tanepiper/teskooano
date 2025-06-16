@@ -1,6 +1,7 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
-import * as THREE from "three";
+import type { LightingInfluenceManager } from "@teskooano/renderer-threejs-lighting";
+import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import type * as THREE from "three";
 
 /**
  * Options for creating celestial object meshes
@@ -42,6 +43,13 @@ export interface CelestialMeshOptions {
    * Optional reference to the main THREE.js renderer.
    */
   renderer?: THREE.WebGLRenderer;
+
+  createLodCallback?: (
+    object: RenderableCelestialObject,
+    levels: LODLevel[],
+  ) => THREE.LOD;
+
+  lightingInfluenceManager?: LightingInfluenceManager;
 }
 
 /**
@@ -120,6 +128,13 @@ export interface CelestialRenderer {
    * 3. Remove any event listeners or other references
    */
   dispose(): void;
+
+  materials: Map<string, THREE.Material | THREE.Material[]>;
+
+  initialize: (
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ) => void;
 }
 
 /**

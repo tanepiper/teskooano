@@ -9,10 +9,11 @@ import {
   AccretionDiskMaterial,
 } from "./schwarzschild-black-hole";
 import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
-import type {
+import {
   CelestialMeshOptions,
   LightSourcesMap,
 } from "../../base/CelestialRenderer";
+import { BaseCelestialRendererOptions } from "../../base/BaseCelestialRenderer";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
@@ -176,9 +177,11 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
   /**
    * Constructor allows setting rotation speed
    */
-  constructor(rotationSpeed: number = 0.5) {
-    super();
-    this.rotationSpeed = rotationSpeed;
+  constructor(
+    options: BaseCelestialRendererOptions & { rotationSpeed?: number } = {},
+  ) {
+    super(options);
+    this.rotationSpeed = options.rotationSpeed ?? 0.5;
   }
 
   /**
