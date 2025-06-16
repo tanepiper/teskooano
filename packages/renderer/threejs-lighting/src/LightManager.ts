@@ -55,8 +55,8 @@ export class LightManager {
       ambientLightColor: config.ambientLightColor ?? 0xffffff,
       ambientLightIntensity: config.ambientLightIntensity ?? 1,
       defaultStarLightColor: config.defaultStarLightColor ?? 0xffffff,
-      defaultStarLightIntensity: config.defaultStarLightIntensity ?? 100.5,
-      defaultStarLightDistance: config.defaultStarLightDistance ?? 100,
+      defaultStarLightIntensity: config.defaultStarLightIntensity ?? 1.5,
+      defaultStarLightDistance: config.defaultStarLightDistance ?? 1,
       defaultStarLightDecay: config.defaultStarLightDecay ?? 2,
       intensityCalculation: config.intensityCalculation ?? {
         base: 1.0,
@@ -146,10 +146,17 @@ export class LightManager {
                 const color = starProps.color
                   ? new THREE.Color(starProps.color).getHex()
                   : undefined;
-                const intensity = starProps.systemLighting
+                let intensity = starProps.systemLighting
                   ? starProps.systemLighting.starLightIntensity
                   : this.calculateIntensity(objectData.temperature);
                 const position = objectData.position;
+
+                if (typeof intensity !== "number" || !isFinite(intensity)) {
+                  console.warn(
+                    `[LightManager] Calculated invalid intensity for ${id} (temperature: ${objectData.temperature}). Using default.`,
+                  );
+                  intensity = this.config.defaultStarLightIntensity;
+                }
 
                 incomingStarIds.add(id);
 
@@ -279,7 +286,7 @@ export class LightManager {
         intensity: light.intensity,
       });
     });
-
+    //console.log("lightData", lightData);
     return lightData;
   }
 
@@ -290,6 +297,9 @@ export class LightManager {
    * @returns Calculated light intensity.
    */
   private calculateIntensity(temperature: number): number {
+    if (typeof temperature !== "number" || !isFinite(temperature)) {
+      return this.config.intensityCalculation.base;
+    }
     const { base, minTemp, divisor } = this.config.intensityCalculation;
     return base + Math.max(0, (temperature - minTemp) / divisor);
   }

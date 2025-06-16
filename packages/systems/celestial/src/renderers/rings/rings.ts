@@ -105,6 +105,7 @@ export class RingMaterial extends THREE.ShaderMaterial {
 
 export class RingSystemRenderer {
   private parentRenderer: BaseCelestialRenderer;
+  private ringMaterials: Map<string, RingMaterial> = new Map();
 
   constructor(parentRenderer: BaseCelestialRenderer) {
     this.parentRenderer = parentRenderer;
@@ -159,6 +160,7 @@ export class RingSystemRenderer {
       });
 
       const materialKey = `${object.celestialObjectId}-ring-${index}`;
+      this.ringMaterials.set(materialKey, ringMaterial);
       this.parentRenderer.registerMaterial(materialKey, ringMaterial);
 
       const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
@@ -248,20 +250,26 @@ export class RingSystemRenderer {
       });
     }
 
-    this.parentRenderer.materials.forEach((material, materialKey) => {
-      if (materialKey.startsWith(`${object.celestialObjectId}-ring-`)) {
-        (material as RingMaterial).update(
-          time,
-          primarySunPosition,
-          primarySunColor,
-          parentPosition,
-          parentRadius,
-        );
-      }
+    this.ringMaterials.forEach((material, key) => {
+      material.update(
+        time,
+        primarySunPosition,
+        primarySunColor,
+        parentPosition,
+        parentRadius,
+      );
     });
   }
 
+  /**
+   * Dispose of all materials created and managed by this renderer.
+   */
   dispose(): void {
-    this.parentRenderer.dispose();
+    this.ringMaterials.forEach((material) => {
+      // The parentRenderer is responsible for the actual disposal
+      // since the material was registered with it. We just clear our map.
+      material.dispose();
+    });
+    this.ringMaterials.clear();
   }
 }

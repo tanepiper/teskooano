@@ -22,24 +22,17 @@ export function createAsteroidFieldMesh(
   object: RenderableCelestialObject,
   deps: CreateAsteroidFieldMeshDeps,
 ): THREE.Object3D {
-  const renderer = deps.celestialRenderers.get(CelestialType.ASTEROID_FIELD);
+  const renderer = new AsteroidFieldRenderer();
+  deps.celestialRenderers.set(object.celestialObjectId, renderer);
 
-  if (renderer?.getLODLevels) {
-    const lodLevels = renderer.getLODLevels(object);
-    if (lodLevels && lodLevels.length > 0) {
-      const lod = deps.createLodCallback(object, lodLevels);
-      return lod;
-    } else {
-      console.warn(
-        `[MeshFactory:AsteroidField] Renderer for ${object.celestialObjectId} provided invalid LOD levels.`,
-      );
-    }
-  } else {
-    // TODO: Asteroid field might have direct creation, e.g., createPoints()
-    console.warn(
-      `[MeshFactory:AsteroidField] No suitable renderer with getLODLevels found for ${object.celestialObjectId}.`,
-    );
+  const lodLevels = renderer.getLODLevels(object);
+  if (lodLevels && lodLevels.length > 0) {
+    const lod = deps.createLodCallback(object, lodLevels);
+    return lod;
   }
 
+  console.warn(
+    `[MeshFactory:AsteroidField] Renderer for ${object.celestialObjectId} provided no valid LOD levels. Using fallback.`,
+  );
   return createFallbackSphere(object);
 }
