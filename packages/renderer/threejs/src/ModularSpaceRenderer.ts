@@ -1,6 +1,6 @@
 import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { AnimationLoop, SceneManager } from "@teskooano/renderer-threejs-core";
-import { LightManager } from "@teskooano/renderer-threejs-lighting";
+import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODManager } from "@teskooano/renderer-threejs-lod";
 import {
   ControlsManager,
@@ -57,7 +57,7 @@ export class ModularSpaceRenderer {
   public css2DManager?: Layer2DManager;
 
   /** Manages scene lighting, including star-based light sources. */
-  public lightManager: LightManager;
+  public lightingManager: LightingManager;
   /** Manages Level of Detail for objects to optimize performance. */
   public lodManager: LODManager;
 
@@ -94,11 +94,7 @@ export class ModularSpaceRenderer {
     this.animationLoop.setRenderer(this.sceneManager.renderer);
     this.animationLoop.setCamera(this.sceneManager.camera);
 
-    this.lightManager = new LightManager({
-      scene: this.sceneManager.scene,
-      camera: this.sceneManager.camera,
-      enablePostProcessing: options.hdr ?? false,
-    });
+    this.lightingManager = new LightingManager(this.sceneManager.scene);
     this.lodManager = new LODManager(this.sceneManager.camera);
 
     const showCelestialLabels = options.showCelestialLabels !== false;
@@ -144,7 +140,6 @@ export class ModularSpaceRenderer {
       this.sceneManager.scene,
       this.sceneManager.camera,
       renderableStore.renderableObjects$,
-      this.lightManager,
       this.sceneManager.renderer,
       this.css2DManager,
     );
@@ -163,7 +158,7 @@ export class ModularSpaceRenderer {
       orbitManager: this.orbitManager,
       objectManager: this.objectManager,
       backgroundManager: this.backgroundManager,
-      lightManager: this.lightManager,
+      lightingManager: this.lightingManager,
       lodManager: this.lodManager,
       css2DManager: this.css2DManager,
       animationLoop: this.animationLoop,
@@ -386,7 +381,7 @@ export class ModularSpaceRenderer {
     this.backgroundManager.dispose();
     this.controlsManager.dispose();
     this.css2DManager?.dispose();
-    this.lightManager.dispose();
+    this.lightingManager.clear();
     if (typeof (this.lodManager as any).dispose === "function") {
       (this.lodManager as any).dispose();
     }
@@ -459,7 +454,7 @@ export class ModularSpaceRenderer {
       orbitManager: this.orbitManager,
       objectManager: this.objectManager,
       backgroundManager: this.backgroundManager,
-      lightManager: this.lightManager,
+      lightingManager: this.lightingManager,
       lodManager: this.lodManager,
       css2DManager: this.css2DManager,
       animationLoop: this.animationLoop,

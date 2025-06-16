@@ -12,10 +12,7 @@ import {
 } from "@teskooano/renderer-threejs";
 import type { Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
-import {
-  LightManager,
-  LightingInfluenceManager,
-} from "@teskooano/renderer-threejs-lighting";
+import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODManager } from "@teskooano/renderer-threejs-lod";
 import { CelestialRenderer } from "@teskooano/systems-celestial";
 import type { Observable, Subscription } from "rxjs";
@@ -59,7 +56,7 @@ export class ObjectManager {
   /** @internal Manages Levels of Detail for objects based on camera distance. */
   private lodManager: LODManager;
   /** @internal Manages the influence and calculation of the new component-based lighting system. */
-  public lightingInfluenceManager: LightingInfluenceManager;
+  public lightingManager: LightingManager;
   /** @internal Map storing specialized renderers keyed by their specific type (e.g., GasGiantClass). */
   private celestialRenderers: Map<string, CelestialRenderer> = new Map();
   /** @internal Map storing specialized renderers specifically for stars, keyed by object ID. */
@@ -77,8 +74,6 @@ export class ObjectManager {
   private latestRenderableObjects: Record<string, RenderableCelestialObject> =
     {};
 
-  /** @internal Manages light sources, particularly star lights. */
-  private lightManager: LightManager;
   /** @internal Manages CSS2D labels and potentially other 2D elements, optional. */
   private css2DManager?: LabelVisibilityManager & Layer2DManager;
   /** @internal Observable stream of acceleration vectors from the core state. */
@@ -104,6 +99,7 @@ export class ObjectManager {
   /** @internal Unsubscribe function for the destruction event listener. */
   private destructionSubscription: Subscription | null = null;
   private debugMode: boolean = false;
+  private lastUpdateTime: number = 0;
 
   /** @internal Reusable vector to avoid allocations in loops. */
   private tempVector3 = new THREE.Vector3();
@@ -133,7 +129,6 @@ export class ObjectManager {
    * @param scene - The main Three.js scene.
    * @param camera - The main perspective camera.
    * @param renderableObjects$ - Observable stream of renderable celestial object data.
-   * @param lightManager - The LightManager instance.
    * @param renderer - The WebGLRenderer instance.
    * @param css2DManager - Optional manager for CSS2D labels and interactions.
    * @param acceleration$ - Optional observable stream for acceleration vectors.
@@ -142,7 +137,6 @@ export class ObjectManager {
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
-    lightManager: LightManager,
     renderer: THREE.WebGLRenderer,
     css2DManager?: LabelVisibilityManager & Layer2DManager,
     acceleration$: Observable<Record<string, OSVector3>> = accelerationVectors$,
@@ -150,13 +144,12 @@ export class ObjectManager {
     this.scene = scene;
     this.camera = camera;
     this.renderableObjects$ = renderableObjects$;
-    this.lightManager = lightManager;
     this.renderer = renderer;
     this.css2DManager = css2DManager;
     this.acceleration$ = acceleration$; // Assign the observable
 
     this.lodManager = new LODManager(camera);
-    this.lightingInfluenceManager = new LightingInfluenceManager();
+    this.lightingManager = new LightingManager(this.scene);
     this.lensingHandler = new GravitationalLensingHandler({
       starRenderers: this.starRenderers,
     });
@@ -168,7 +161,7 @@ export class ObjectManager {
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
       lodManager: this.lodManager,
-      lightingInfluenceManager: this.lightingInfluenceManager,
+      lightingManager: this.lightingManager,
       camera: this.camera,
       createLodCallback: this.lodManager.createAndRegisterLOD.bind(
         this.lodManager,
@@ -182,7 +175,7 @@ export class ObjectManager {
       camera: this.camera,
       meshFactory: this.meshFactory,
       lodManager: this.lodManager,
-      lightManager: this.lightManager,
+      lightingManager: this.lightingManager,
       lensingHandler: this.lensingHandler,
       renderer: this.renderer,
       starRenderers: this.starRenderers,
@@ -288,57 +281,51 @@ export class ObjectManager {
    * @returns The corresponding Object3D, or undefined if not found.
    */
   getCentralBody(): THREE.Object3D | undefined {
-    const centralBody = Object.values(this.latestRenderableObjects).find(
-      (obj) => obj.type === CelestialType.STAR && !obj.parentId,
+    // Find the sun (or primary star)
+    const centralBodyId = Object.keys(this.latestRenderableObjects).find(
+      (id) => {
+        const obj = this.latestRenderableObjects[id];
+        return (
+          obj.type === CelestialType.STAR &&
+          obj.status !== CelestialStatus.DESTROYED &&
+          !obj.parentId // Assuming the primary star has no parent
+        );
+      },
     );
 
-    if (centralBody) {
-      return this.objects.get(centralBody.celestialObjectId);
+    if (centralBodyId) {
+      return this.objects.get(centralBodyId) ?? undefined;
     }
 
-    return undefined;
+    // Fallback to the first object if no primary star is found
+    const firstId = Object.keys(this.latestRenderableObjects)[0];
+    return this.objects.get(firstId) ?? undefined;
   }
 
   /**
-   * Updates all managed renderers and systems that require frame-by-frame updates.
-   * This includes LOD, specialized celestial renderers, label visibility, and debris effects.
-   *
-   * @param time - The current simulation time (or frame time).
-   * @param timeScale - The scale factor for the time.
-   * @param lightSources - Map of active light sources and their data.
-   * @param renderer - Optional override for the WebGLRenderer instance.
-   * @param scene - Optional override for the Scene instance.
-   * @param camera - Optional override for the Camera instance.
+   * Updates all specialized renderers (stars, planets, etc.).
+   * @param time - The current simulation time.
+   * @param timeScale - The current simulation time scale.
+   * @param renderer - The WebGLRenderer instance.
+   * @param scene - The main Three.js scene.
+   * @param camera - The main perspective camera.
    */
-  updateRenderers(
+  public updateRenderers(
     time: number,
     timeScale: number,
-    lightSources: Map<
-      string,
-      { position: THREE.Vector3; color: THREE.Color; intensity: number }
-    >,
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
     camera?: THREE.PerspectiveCamera,
   ): void {
-    const deltaTime = this.getDeltaTime();
-    this.debrisEffectManager.update(deltaTime);
-
-    // Update LOD system first
-    this.lodManager.update();
-
-    // Update specialized renderers (stars, planets, etc.)
+    // The rendererUpdater now gets the light sources for each object itself
     this.rendererUpdater.updateRenderers(
       time,
       timeScale,
-      camera || this.camera,
-      lightSources,
-      renderer || this.renderer,
-      scene || this.scene,
+      camera ?? this.camera,
+      undefined, // lightSources are now handled by the renderer via the lightingManager
+      renderer,
+      scene,
     );
-
-    // Update visibility of CSS2D labels based on LOD and object type
-    this.updateLabelVisibility();
   }
 
   /**
@@ -411,25 +398,46 @@ export class ObjectManager {
   }
 
   /**
-   * @internal Placeholder for getting delta time. Replace with actual clock/timer implementation.
-   * @returns A fixed delta time value (e.g., for 60fps).
+   * @internal Calculates the time elapsed since the last frame.
+   * @returns The delta time in seconds.
    */
   private getDeltaTime(): number {
-    // TODO: Replace this with a proper delta time calculation from a THREE.Clock or similar
-    return 0.016;
+    const now = performance.now();
+    const deltaTime = (now - (this.lastUpdateTime || now)) / 1000;
+    this.lastUpdateTime = now;
+    return deltaTime;
   }
 
   /**
-   * Placeholder update method, potentially for internal ObjectManager logic if needed.
-   * Currently unused.
+   * @internal Manages the visibility of object labels based on camera distance and LOD.
+   * @param scene - The main Three.js scene.
+   * @param camera - The main perspective camera.
    */
   update(
     renderer: THREE.WebGLRenderer,
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
   ): void {
-    // If the ObjectManager itself needs per-frame updates, add logic here.
-    // Currently, updates are delegated to sub-managers via updateRenderers.
+    const time = Date.now() / 1000;
+    const deltaTime = this.getDeltaTime();
+
+    // 1. Update LODs for all objects
+    this.lodManager.update();
+
+    // 2. Update all lighting components and the manager itself
+    this.lightingManager.update();
+
+    // 3. Update all the custom renderers (for shaders, effects, etc.)
+    this.updateRenderers(time, 1.0, renderer, scene, camera);
+
+    // 4. Update gravitational lensing effect
+    this.lensingHandler.updateAll(renderer, scene, camera);
+
+    // 5. Update debris effects
+    this.debrisEffectManager.update(deltaTime);
+
+    // 6. Update label visibility
+    this.updateLabelVisibility();
   }
 
   /**
@@ -533,5 +541,25 @@ export class ObjectManager {
    */
   public toggleDebrisEffects(): boolean {
     return this.debrisEffectManager.toggleDebrisEffects();
+  }
+
+  /**
+   * @internal Cleans up resources for a single object.
+   */
+  private cleanupObject(id: string): void {
+    const object3d = this.objects.get(id);
+
+    if (object3d) {
+      this.scene.remove(object3d);
+      this.lodManager.remove(id);
+      this.lightingManager.unregister(id);
+    }
+
+    this.objects.delete(id);
+    this.starRenderers.delete(id);
+    this.planetRenderers.delete(id);
+    this.moonRenderers.delete(id);
+    // this.css2DManager?.removeLayerInstance(CSS2DLayerType.LABEL, id);
+    // this.css2DManager?.removeLayerInstance(CSS2DLayerType.MARKER, id);
   }
 }

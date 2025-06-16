@@ -7,6 +7,7 @@ import type {
   LightSourcesMap,
 } from "../../base/CelestialRenderer";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { BaseCelestialRendererOptions } from "../../base/BaseCelestialRenderer";
 
 /**
  * Material for neutron stars
@@ -28,6 +29,10 @@ class NeutronStarMaterial extends THREE.MeshBasicMaterial {
  */
 export class NeutronStarRenderer extends BaseStarRenderer {
   protected gravitationalLensingHelper: GravitationalLensingHelper | undefined;
+
+  constructor(options?: BaseCelestialRendererOptions) {
+    super(options);
+  }
 
   getLODLevels(
     object: RenderableCelestialObject,

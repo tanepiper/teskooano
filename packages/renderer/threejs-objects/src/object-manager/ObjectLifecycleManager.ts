@@ -8,7 +8,10 @@ import {
   type Layer2DManager,
   CelestialLabelLayer,
 } from "@teskooano/renderer-threejs-labels";
-import type { LightManager } from "@teskooano/renderer-threejs-lighting";
+import {
+  type LightingManager,
+  LightSourceComponent,
+} from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
 import type {
   CelestialRenderer,
@@ -27,7 +30,7 @@ export interface ObjectLifecycleManagerConfig {
   scene: THREE.Scene;
   meshFactory: MeshFactory;
   lodManager: LODManager;
-  lightManager: LightManager;
+  lightingManager: LightingManager;
   lensingHandler: GravitationalLensingHandler;
   renderer: THREE.WebGLRenderer | null;
   starRenderers: Map<string, CelestialRenderer>;
@@ -47,7 +50,7 @@ export class ObjectLifecycleManager {
   private scene: THREE.Scene;
   private meshFactory: MeshFactory;
   private lodManager: LODManager;
-  private lightManager: LightManager;
+  private lightingManager: LightingManager;
   private lensingHandler: GravitationalLensingHandler;
   private css2DManager?: Layer2DManager;
   private renderer: THREE.WebGLRenderer | null;
@@ -61,7 +64,7 @@ export class ObjectLifecycleManager {
     this.scene = config.scene;
     this.meshFactory = config.meshFactory;
     this.lodManager = config.lodManager;
-    this.lightManager = config.lightManager;
+    this.lightingManager = config.lightingManager;
     this.lensingHandler = config.lensingHandler;
     this.renderer = config.renderer;
     this.starRenderers = config.starRenderers;
@@ -147,7 +150,7 @@ export class ObjectLifecycleManager {
 
     // Handle associated components (lights, labels, lensing)
     if (object.type === CelestialType.STAR && object.position) {
-      this.lightManager.addStarLight(objectId, object.position);
+      this.lightingManager.register(new LightSourceComponent(object));
     }
 
     const celestialLayer = this.css2DManager?.getLayer(
@@ -228,7 +231,7 @@ export class ObjectLifecycleManager {
     }
     this.lodManager.remove(objectId); // Remove from LOD manager
     this.lensingHandler.removeLensingObject(objectId); // Remove from lensing
-    this.lightManager.removeStarLight(objectId); // Remove associated light
+    this.lightingManager.unregister(objectId); // Remove associated light
 
     // Clean up specialized renderers associated with this object ID
     const starRenderer = this.starRenderers.get(objectId);

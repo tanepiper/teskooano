@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { BaseStarMaterial } from "../base/base-star";
 import { MainSequenceStarRenderer } from "./main-sequence-star";
+import { BaseCelestialRendererOptions } from "../../base/BaseCelestialRenderer";
 
 /**
  * Material for G-class stars (includes our Sun)
@@ -43,6 +44,10 @@ export class ClassGStarMaterial extends BaseStarMaterial {
  * Renderer for G-class stars
  */
 export class ClassGStarRenderer extends MainSequenceStarRenderer {
+  constructor(options?: BaseCelestialRendererOptions) {
+    super(options);
+  }
+
   /**
    * Returns the appropriate material for a G-class star
    */

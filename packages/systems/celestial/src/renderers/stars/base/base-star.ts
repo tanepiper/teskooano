@@ -14,8 +14,9 @@ import type {
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
   LightSourceComponent,
-  LightingInfluenceManager,
+  LightingManager,
 } from "@teskooano/renderer-threejs-lighting";
+import { BaseCelestialRendererOptions } from "../../base/BaseCelestialRenderer";
 
 /**
  * Vertex shader for stars
@@ -328,6 +329,12 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
   protected coronaMaterials: Map<string, CoronaMaterial[]> = new Map();
   protected startTime: number = Date.now() / 1000;
   protected elapsedTime: number = 0;
+  protected lightingManager?: LightingManager;
+
+  constructor(options?: BaseCelestialRendererOptions) {
+    super(options);
+    this.lightingManager = options?.lightingManager;
+  }
 
   abstract getLODLevels(
     object: RenderableCelestialObject,
@@ -344,23 +351,13 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
   ): void {
     super.initialize(object, options);
 
-    if (!this.lightingInfluenceManager) {
-      console.warn(
-        `[BaseStarRenderer] LightingInfluenceManager is not available for object ${object.celestialObjectId}. Light source will not be created.`,
-      );
-      return;
+    if (this.lightingManager) {
+      const lightSource = new LightSourceComponent(object, {
+        light: new THREE.PointLight(this.getStarColor(object), 1, 0, 2),
+        castShadow: true,
+      });
+      this.lightingManager.register(lightSource);
     }
-
-    const lightSource = new LightSourceComponent(object, {
-      castShadow: true,
-      // The light itself will be managed by the lighting system,
-      // but we can configure it here.
-    });
-
-    this.lightingInfluenceManager.register(lightSource);
-
-    // TODO: We need a way to unregister the light source when the object is disposed.
-    // This might involve enhancing the dispose method or using an event bus.
   }
 
   /**
@@ -503,5 +500,34 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
     }
 
     return new THREE.Color(0xffcc00);
+  }
+
+  public override update(
+    object: RenderableCelestialObject,
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.Camera,
+  ): void {
+    this.elapsedTime = Date.now() / 1000 - this.startTime;
+    this.materials.forEach((material) => {
+      material.update(this.elapsedTime, timeScale, lightSources, camera);
+    });
+    this.coronaMaterials.forEach((materials) => {
+      materials.forEach((material) => {
+        material.update(this.elapsedTime);
+      });
+    });
+  }
+
+  public override dispose(): void {
+    this.materials.forEach((material) => {
+      material.dispose();
+    });
+    this.coronaMaterials.forEach((materials) => {
+      materials.forEach((material) => material.dispose());
+    });
+    this.materials.clear();
+    this.coronaMaterials.clear();
   }
 }

@@ -22,7 +22,7 @@ import type { CelestialRenderer } from "../base/CelestialRenderer";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { createFallbackSphere } from "../utils/createFallbackSphere";
-import { LightingInfluenceManager } from "@teskooano/renderer-threejs-lighting";
+import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 
 interface CreateStarMeshDeps {
   starRenderers: Map<string, CelestialRenderer>;
@@ -31,7 +31,7 @@ interface CreateStarMeshDeps {
     object: RenderableCelestialObject,
     levels: LODLevel[],
   ) => THREE.LOD;
-  lightingInfluenceManager: LightingInfluenceManager;
+  lightingManager: LightingManager;
 }
 
 /**
@@ -43,10 +43,10 @@ interface CreateStarMeshDeps {
 function createStarRenderer(
   spectralClass?: string,
   stellarType?: StellarType,
-  lightingInfluenceManager?: LightingInfluenceManager,
+  lightingManager?: LightingManager,
 ): BaseStarRenderer {
   if (stellarType) {
-    const options = { lightingInfluenceManager };
+    const options = { lightingManager };
     switch (stellarType) {
       case StellarType.NEUTRON_STAR:
         return new NeutronStarRenderer(options);
@@ -63,7 +63,7 @@ function createStarRenderer(
     }
   }
 
-  const options = { lightingInfluenceManager };
+  const options = { lightingManager };
   switch (spectralClass?.toUpperCase()) {
     case "O":
       return new ClassOStarRenderer(options);
@@ -102,7 +102,7 @@ export function createStarMesh(
         const newRenderer = createStarRenderer(
           starProps.spectralClass,
           starProps.stellarType,
-          deps.lightingInfluenceManager,
+          deps.lightingManager,
         );
         if (newRenderer) {
           renderer = newRenderer;

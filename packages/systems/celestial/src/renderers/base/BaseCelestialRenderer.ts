@@ -7,10 +7,10 @@ import {
 } from "./CelestialRenderer";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
-import { LightingInfluenceManager } from "@teskooano/renderer-threejs-lighting";
+import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 
 export interface BaseCelestialRendererOptions {
-  lightingInfluenceManager?: LightingInfluenceManager;
+  lightingManager?: LightingManager;
 }
 
 /**
@@ -52,10 +52,10 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   protected _tempVector1: THREE.Vector3 = new THREE.Vector3();
   protected _tempVector2: THREE.Vector3 = new THREE.Vector3();
   protected _tempVector3: THREE.Vector3 = new THREE.Vector3();
-  protected lightingInfluenceManager?: LightingInfluenceManager;
+  protected lightingManager?: LightingManager;
 
   constructor(options: BaseCelestialRendererOptions = {}) {
-    this.lightingInfluenceManager = options.lightingInfluenceManager;
+    this.lightingManager = options.lightingManager;
   }
 
   /**

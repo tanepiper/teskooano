@@ -10,18 +10,16 @@ import type {
   AnimationLoop,
   SceneManager,
 } from "@teskooano/renderer-threejs-core";
-import type { LightManager } from "@teskooano/renderer-threejs-lighting";
+import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
-import type {
-  ControlsManager,
-  CSS2DManager,
-} from "@teskooano/renderer-threejs-interaction";
+import type { ControlsManager } from "@teskooano/renderer-threejs-controls";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import type { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import {
   CSS2DLayerType,
   LabelVisibilityConfig,
+  Layer2DManager,
 } from "@teskooano/renderer-threejs-labels";
 import { Scene, WebGLRendererParameters } from "three";
 
@@ -84,13 +82,13 @@ export interface RenderPipelineOptions {
   /** The manager for the skybox and background. */
   backgroundManager: BackgroundManager;
   /** The manager for scene lighting. */
-  lightManager: LightManager;
+  lightingManager: LightingManager;
   /** The manager for Level of Detail. */
   lodManager: LODManager;
   /** The manager for the main animation loop. */
   animationLoop: AnimationLoop;
   /** The optional manager for 2D HTML labels. */
-  css2DManager?: CSS2DManager;
+  css2DManager?: Layer2DManager;
   /** The optional manager for rendering custom 2D canvas UI. */
   canvasUIManager?: { render(): void };
 }

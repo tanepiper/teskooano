@@ -10,6 +10,7 @@ import type {
   LightSourcesMap,
 } from "../../base/CelestialRenderer";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { BaseCelestialRendererOptions } from "../../base/BaseCelestialRenderer";
 
 /**
  * Material for Schwarzschild black holes
@@ -204,6 +205,10 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
   private accretionDiskMaterials: Map<string, AccretionDiskMaterial> =
     new Map();
   private lensingHelpers: Map<string, GravitationalLensingHelper> = new Map();
+
+  constructor(options?: BaseCelestialRendererOptions) {
+    super(options);
+  }
 
   /**
    * Creates and returns an array of LOD levels for the black hole.

@@ -1,5 +1,5 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import type { LightingInfluenceManager } from "@teskooano/renderer-threejs-lighting";
+import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import type * as THREE from "three";
 
@@ -49,7 +49,7 @@ export interface CelestialMeshOptions {
     levels: LODLevel[],
   ) => THREE.LOD;
 
-  lightingInfluenceManager?: LightingInfluenceManager;
+  lightingInfluenceManager?: LightingManager;
 }
 
 /**

@@ -1,1 +1,1 @@
-export * from "./LightingInfluenceManager";
+export * from "./LightingManager";
