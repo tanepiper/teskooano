@@ -27,48 +27,49 @@ export enum CSS2DLayerType {
 }
 
 /**
- * Unified manager for all CSS2D rendered UI elements with support for different layers
+ * Manages all CSS2D rendered UI elements, organized into distinct layers.
+ * It handles the core CSS2DRenderer and provides an interface for registering
+ * different types of label layers, each with their own components and logic.
  */
 export class CSS2DManager {
   private renderer: CSS2DRenderer;
   private container: HTMLElement;
   private scene: THREE.Scene;
-  private layers: Map<CSS2DLayerType, BaseLabelLayer>;
+  private layers: Map<CSS2DLayerType, BaseLabelLayer> = new Map();
 
   /**
-   * Create a new CSS2DManager
+   * Creates a new CSS2DManager.
+   * @param scene The main Three.js scene.
+   * @param container The HTML element that will host the renderer's canvas.
    */
-  constructor(
-    scene: THREE.Scene,
-    container: HTMLElement,
-    labelConfig: LabelVisibilityConfig = {},
-  ) {
+  constructor(scene: THREE.Scene, container: HTMLElement) {
     this.scene = scene;
     this.container = container;
-
-    this.registerWebComponents();
-
     this.renderer = this.createRenderer();
     container.appendChild(this.renderer.domElement);
-
-    this.layers = new Map();
-    this.layers.set(
-      CSS2DLayerType.CELESTIAL_LABELS,
-      new CelestialLabelLayer(labelConfig),
-    );
-    this.layers.set(
-      CSS2DLayerType.AU_MARKERS,
-      new AuMarkerLabelLayer(this.scene),
-    );
   }
 
-  private registerWebComponents(): void {
-    if (!customElements.get(CELESTIAL_LABEL_TAG)) {
-      customElements.define(CELESTIAL_LABEL_TAG, CelestialLabelComponent);
+  /**
+   * Registers a new layer with the manager.
+   * This will also automatically register any web components required by the layer.
+   * @param layerType The enum key for the layer.
+   * @param layer The layer instance to register.
+   */
+  public registerLayer(layerType: CSS2DLayerType, layer: BaseLabelLayer): void {
+    if (this.layers.has(layerType)) {
+      console.warn(
+        `Layer for type ${layerType} already registered. Overwriting.`,
+      );
+      this.layers.get(layerType)?.clear();
     }
-    if (!customElements.get(AU_MARKER_LABEL_TAG)) {
-      customElements.define(AU_MARKER_LABEL_TAG, AuMarkerLabelComponent);
-    }
+    this.layers.set(layerType, layer);
+
+    // Register components required by the layer
+    layer.getRequiredComponents().forEach(({ tagName, componentClass }) => {
+      if (!customElements.get(tagName)) {
+        customElements.define(tagName, componentClass);
+      }
+    });
   }
 
   private createRenderer(): CSS2DRenderer {
@@ -93,12 +94,9 @@ export class CSS2DManager {
       return;
     }
 
-    this.layers
-      .get(CSS2DLayerType.AU_MARKERS)
-      ?.update(camera, centralBody, objectManager);
-    this.layers
-      .get(CSS2DLayerType.CELESTIAL_LABELS)
-      ?.update(camera, centralBody, objectManager);
+    this.layers.forEach((layer) =>
+      layer.update(camera, centralBody, objectManager),
+    );
   }
 
   /**
@@ -118,6 +116,7 @@ export class CSS2DManager {
    * @param id - A unique ID for this label (e.g., 'au-label-5').
    * @param auValue - The astronomical unit value to display (e.g., 5).
    * @param position - The THREE.Vector3 position in the scene where the label should appear.
+   * @param color The color of the label.
    */
   createAuMarkerLabel(
     id: string,
@@ -125,9 +124,12 @@ export class CSS2DManager {
     position: THREE.Vector3,
     color: string,
   ): void {
-    (
-      this.layers.get(CSS2DLayerType.AU_MARKERS) as AuMarkerLabelLayer
-    )?.createLabel(id, auValue, position, color);
+    const layer = this.layers.get(
+      CSS2DLayerType.AU_MARKERS,
+    ) as AuMarkerLabelLayer;
+    if (layer) {
+      layer.createLabel(id, auValue, position, color);
+    }
   }
 
   /**

@@ -109,25 +109,11 @@ export function handleFollowRequest(
     return false;
   }
 
-  const currentRenderables = renderableStore.getRenderableObjects();
-  const targetObjectRenderable = currentRenderables[objectId];
-  if (
-    !targetObjectRenderable ||
-    !targetObjectRenderable.position ||
-    !(targetObjectRenderable.position instanceof THREE.Vector3)
-  ) {
-    console.error(
-      `[handleFollowRequest] Invalid or missing renderable data for follow target ${objectId}`,
-    );
-    return false;
-  }
-
   const objectToFollow = renderer.objectManager.getObject(objectId);
   if (!objectToFollow) {
-    console.error(
-      `[handleFollowRequest] Could not find THREE object with ID '${objectId}' in renderer.objectManager.`,
+    console.warn(
+      `[handleFollowRequest] Could not find THREE object with ID '${objectId}' in renderer.objectManager. The camera will attempt to follow it once it appears.`,
     );
-    return false;
   }
 
   const engineCameraManager = parentPanel.engineCameraManager;

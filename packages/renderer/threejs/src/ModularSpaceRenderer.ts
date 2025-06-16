@@ -9,6 +9,8 @@ import {
 import {
   CSS2DManager,
   CSS2DLayerType,
+  CelestialLabelLayer,
+  AuMarkerLabelLayer,
 } from "@teskooano/renderer-threejs-labels";
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import {
@@ -106,12 +108,22 @@ export class ModularSpaceRenderer {
     );
 
     if (showCelestialLabels) {
-      this.css2DManager = new CSS2DManager(
-        this.sceneManager.scene,
-        container,
-        options.labelConfig,
+      this.css2DManager = new CSS2DManager(this.sceneManager.scene, container);
+
+      // Create and register the celestial label layer
+      const celestialLayer = new CelestialLabelLayer(options.labelConfig);
+      this.css2DManager.registerLayer(
+        CSS2DLayerType.CELESTIAL_LABELS,
+        celestialLayer,
       );
+
+      // Conditionally create and register the AU marker layer
       if (options.showAuMarkers) {
+        const auMarkerLayer = new AuMarkerLabelLayer(this.sceneManager.scene);
+        this.css2DManager.registerLayer(
+          CSS2DLayerType.AU_MARKERS,
+          auMarkerLayer,
+        );
         this._createAuMarkerLabels();
       }
     } else {

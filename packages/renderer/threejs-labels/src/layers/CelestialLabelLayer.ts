@@ -1,12 +1,15 @@
 import * as THREE from "three";
-import { BaseLabelLayer } from "./BaseLabelLayer";
+import { BaseLabelLayer, UIRegistryComponent } from "./BaseLabelLayer";
 import {
   type RenderableCelestialObject,
   CelestialType,
   AU_METERS,
 } from "@teskooano/data-types";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import { CELESTIAL_LABEL_TAG } from "../components/celestial-label/CelestialLabelComponent";
+import {
+  CELESTIAL_LABEL_TAG,
+  CelestialLabelComponent,
+} from "../components/celestial-label/CelestialLabelComponent";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 
 export interface LabelVisibilityConfig {
@@ -14,7 +17,7 @@ export interface LabelVisibilityConfig {
   gasGiant?: number;
   moon?: number;
   ejectedMoon?: number;
-  secondaryStar?: number;
+  otherStars?: number;
   default?: number;
 }
 
@@ -28,10 +31,22 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       gasGiant: 190,
       moon: 2,
       ejectedMoon: 2000,
-      secondaryStar: 3000,
+      otherStars: 3000,
       default: 2,
       ...config,
     };
+  }
+
+  /**
+   * Specifies the custom elements required by this layer.
+   */
+  public override getRequiredComponents(): UIRegistryComponent[] {
+    return [
+      {
+        tagName: CELESTIAL_LABEL_TAG,
+        componentClass: CelestialLabelComponent,
+      },
+    ];
   }
 
   public createLabel(
@@ -182,7 +197,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       gasGiant: this.auToSceneUnits(this.visibilityConfig.gasGiant),
       moon: this.auToSceneUnits(this.visibilityConfig.moon),
       ejectedMoon: this.auToSceneUnits(this.visibilityConfig.ejectedMoon),
-      secondaryStar: this.auToSceneUnits(this.visibilityConfig.secondaryStar),
+      secondaryStar: this.auToSceneUnits(this.visibilityConfig.otherStars),
       default: this.auToSceneUnits(this.visibilityConfig.default),
     };
   }

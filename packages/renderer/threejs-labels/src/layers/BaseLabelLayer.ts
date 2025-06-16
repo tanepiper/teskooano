@@ -4,6 +4,14 @@ import { CONVERSION } from "@teskooano/core-physics";
 import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 
 /**
+ * Defines the structure for a component that can be registered with the CSS2DManager.
+ */
+export interface UIRegistryComponent {
+  tagName: string;
+  componentClass: CustomElementConstructor;
+}
+
+/**
  * Configuration for a single visibility level.
  */
 export interface VisibilityLevel {
@@ -14,12 +22,27 @@ export interface VisibilityLevel {
 export abstract class BaseLabelLayer {
   protected elements: Map<string, CSS2DObject> = new Map();
   public isVisible: boolean = true;
-  protected scene: THREE.Scene;
+  protected scene?: THREE.Scene;
 
-  constructor(scene: THREE.Scene) {
+  /**
+   * @param scene The Three.js scene, optional for layers that add elements to other objects.
+   */
+  constructor(scene?: THREE.Scene) {
     this.scene = scene;
   }
 
+  /**
+   * Specifies the custom elements required by this layer.
+   * @returns An array of component definitions.
+   */
+  public getRequiredComponents(): UIRegistryComponent[] {
+    return [];
+  }
+
+  /**
+   * Toggles the visibility of all labels in this layer.
+   * @param visible The desired visibility state.
+   */
   public setVisibility(visible: boolean): void {
     this.isVisible = visible;
     this.elements.forEach((element) => {
@@ -107,12 +130,13 @@ export abstract class BaseLabelLayer {
     return this.elements.size > 0;
   }
 
+  /**
+   * Default implementation does nothing.
+   * Subclasses should override this method to implement LOD or other updates.
+   */
   public update(
     camera: THREE.Camera,
     centralBody?: THREE.Object3D,
     objectManager?: any,
-  ): void {
-    // Default implementation does nothing.
-    // Subclasses should override this method to implement LOD or other updates.
-  }
+  ): void {}
 }

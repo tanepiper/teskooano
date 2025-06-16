@@ -17,7 +17,7 @@
   "dependencies": {
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/core-math": "file:../../core/math",
-    "rxjs": "^7.8.2"
+    "rxjs": "7.8.2"
   },
   "devDependencies": {
     "typescript": "5.8.3",
