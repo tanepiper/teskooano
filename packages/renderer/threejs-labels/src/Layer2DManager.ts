@@ -1,21 +1,7 @@
+import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import * as THREE from "three";
 import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import { type RenderableCelestialObject } from "@teskooano/data-types";
-import {
-  CelestialLabelComponent,
-  CELESTIAL_LABEL_TAG,
-} from "./components/celestial-label/CelestialLabelComponent";
-import {
-  AuMarkerLabelComponent,
-  AU_MARKER_LABEL_TAG,
-} from "./components/au-marker-label/AuMarkerLabelComponent";
-import { AuMarkerLabelLayer } from "./layers/AuMarkerLabelLayer";
-import {
-  CelestialLabelLayer,
-  LabelVisibilityConfig,
-} from "./layers/CelestialLabelLayer";
 import { BaseLabelLayer } from "./layers/BaseLabelLayer";
-import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 
 /**
  * Layer types enum for different UI elements
@@ -31,14 +17,14 @@ export enum CSS2DLayerType {
  * It handles the core CSS2DRenderer and provides an interface for registering
  * different types of label layers, each with their own components and logic.
  */
-export class CSS2DManager {
+export class Layer2DManager {
   private renderer: CSS2DRenderer;
   private container: HTMLElement;
   private scene: THREE.Scene;
   private layers: Map<CSS2DLayerType, BaseLabelLayer> = new Map();
 
   /**
-   * Creates a new CSS2DManager.
+   * Creates a new Layer2DManager.
    * @param scene The main Three.js scene.
    * @param container The HTML element that will host the renderer's canvas.
    */
@@ -83,6 +69,15 @@ export class CSS2DManager {
   }
 
   /**
+   * Retrieves a registered layer instance.
+   * @param layerType The enum key for the layer to retrieve.
+   * @returns The layer instance, or undefined if not found.
+   */
+  public getLayer(layerType: CSS2DLayerType): BaseLabelLayer | undefined {
+    return this.layers.get(layerType);
+  }
+
+  /**
    * Update method to be called each frame
    */
   update(
@@ -97,39 +92,6 @@ export class CSS2DManager {
     this.layers.forEach((layer) =>
       layer.update(camera, centralBody, objectManager),
     );
-  }
-
-  /**
-   * Create a celestial object label
-   */
-  createCelestialLabel(
-    object: RenderableCelestialObject,
-    parentMesh: THREE.Object3D,
-  ): void {
-    (
-      this.layers.get(CSS2DLayerType.CELESTIAL_LABELS) as CelestialLabelLayer
-    )?.createLabel(object, parentMesh);
-  }
-
-  /**
-   * Creates a label for an AU distance marker circle.
-   * @param id - A unique ID for this label (e.g., 'au-label-5').
-   * @param auValue - The astronomical unit value to display (e.g., 5).
-   * @param position - The THREE.Vector3 position in the scene where the label should appear.
-   * @param color The color of the label.
-   */
-  createAuMarkerLabel(
-    id: string,
-    auValue: number,
-    position: THREE.Vector3,
-    color: string,
-  ): void {
-    const layer = this.layers.get(
-      CSS2DLayerType.AU_MARKERS,
-    ) as AuMarkerLabelLayer;
-    if (layer) {
-      layer.createLabel(id, auValue, position, color);
-    }
   }
 
   /**
@@ -175,11 +137,11 @@ export class CSS2DManager {
   }
 
   /**
-   * Shows a specific 2D label element within a layer.
-   * @param layer - The layer the element belongs to.
-   * @param id - The unique ID of the element to show.
+   * Shows a specific 2D instance within a layer.
+   * @param layer The layer the instance belongs to.
+   * @param id The unique ID of the instance to show.
    */
-  showLabel(layer: CSS2DLayerType, id: string): void {
+  showInstance(layer: CSS2DLayerType, id: string): void {
     const layerInstance = this.layers.get(layer);
     if (layerInstance?.isVisible) {
       const cssObject = layerInstance.getElement(id);
@@ -190,11 +152,11 @@ export class CSS2DManager {
   }
 
   /**
-   * Hides a specific 2D label element within a layer.
-   * @param layer - The layer the element belongs to.
-   * @param id - The unique ID of the element to hide.
+   * Hides a specific 2D instance within a layer.
+   * @param layer The layer the instance belongs to.
+   * @param id The unique ID of the instance to hide.
    */
-  hideLabel(layer: CSS2DLayerType, id: string): void {
+  hideInstance(layer: CSS2DLayerType, id: string): void {
     const cssObject = this.layers.get(layer)?.getElement(id);
     if (cssObject) {
       cssObject.visible = false;

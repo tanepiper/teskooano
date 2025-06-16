@@ -6,18 +6,18 @@ For a detailed explanation of the internal architecture, see [ARCHITECTURE.md](.
 
 ## Features
 
-- **`CSS2DManager`**: A lightweight manager for the `THREE.CSS2DRenderer`. It handles the render loop and provides a registry for different label layers.
+- **`Layer2DManager`**: A lightweight manager for the `THREE.CSS2DRenderer`. It handles the render loop and provides a registry for different label layers.
 - **Dynamic Layers**: The system is built around extensible layers. Each layer (`AuMarkerLabelLayer`, `CelestialLabelLayer`) encapsulates the logic and required HTML components for a specific type of label.
 - **Configurable**: Layers can be configured during instantiation. For example, `CelestialLabelLayer` accepts a `LabelVisibilityConfig` to control visibility distances.
 
 ## Usage
 
-The `CSS2DManager` is instantiated by a higher-level renderer. Layers are then created and registered with the manager.
+The `Layer2DManager` is instantiated by a higher-level renderer. Layers are then created and registered with the manager.
 
 ```typescript
 import * as THREE from "three";
 import {
-  CSS2DManager,
+  Layer2DManager,
   CSS2DLayerType,
   CelestialLabelLayer,
   AuMarkerLabelLayer,
@@ -28,14 +28,14 @@ const scene = new THREE.Scene();
 const container = document.getElementById("renderer-container");
 
 // 1. Create the manager
-const css2dManager = new CSS2DManager(scene, container);
+const layer2dManager = new Layer2DManager(scene, container);
 
 // 2. Create and register layers
 const celestialLayer = new CelestialLabelLayer({ planet: 500 }); // Optional config
-css2dManager.registerLayer(CSS2DLayerType.CELESTIAL_LABELS, celestialLayer);
+layer2dManager.registerLayer(CSS2DLayerType.CELESTIAL_LABELS, celestialLayer);
 
 const auMarkerLayer = new AuMarkerLabelLayer(scene);
-css2dManager.registerLayer(CSS2DLayerType.AU_MARKERS, auMarkerLayer);
+layer2dManager.registerLayer(CSS2DLayerType.AU_MARKERS, auMarkerLayer);
 
 // --- Interacting with Layers ---
 
@@ -53,17 +53,17 @@ function animate(camera) {
   // Main WebGL render call happens here...
 
   // Update and render all registered CSS2D layers
-  css2dManager.update(camera, scene.children[0]);
-  css2dManager.render(camera);
+  layer2dManager.update(camera, scene.children[0]);
+  layer2dManager.render(camera);
 }
 
 // --- Cleanup ---
-css2dManager.dispose();
+layer2dManager.dispose();
 ```
 
 ## Core Components
 
-- **`CSS2DManager`:** Manages the `CSS2DRenderer` and a registry of layers.
+- **`Layer2DManager`:** Manages the `CSS2DRenderer` and a registry of layers.
 - **`BaseLabelLayer`:** The abstract base class for all label layers.
 - **`CelestialLabelLayer`:** A layer for rendering labels on celestial objects.
 - **`AuMarkerLabelLayer`:** A layer for rendering distance markers (e.g., 1 AU, 5 AU).

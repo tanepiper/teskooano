@@ -6,7 +6,7 @@ This document outlines the architecture of the labels package, which provides a 
 
 The system is built around three main components:
 
-1.  **`CSS2DManager`**: A lightweight orchestrator responsible for managing the `CSS2DRenderer`, handling the render loop for labels, and providing a registry for different layers. It does not contain any logic specific to any single type of label.
+1.  **`Layer2DManager`**: A lightweight orchestrator responsible for managing the `CSS2DRenderer`, handling the render loop for labels, and providing a registry for different layers. It does not contain any logic specific to any single type of label.
 
 2.  **`BaseLabelLayer`**: An abstract base class that defines the common interface for all label layers. Each layer is a self-contained module responsible for a specific type of label (e.g., celestial object names, AU distance markers).
 
@@ -14,9 +14,9 @@ The system is built around three main components:
 
 ## Layer Registration and Flexibility
 
-The key to the system's flexibility is its dynamic layer registration. The `CSS2DManager` is not aware of any specific layer types at compile time. Instead, a higher-level consumer (like `ModularSpaceRenderer`) is responsible for instantiating the desired layers and registering them with the manager.
+The key to the system's flexibility is its dynamic layer registration. The `Layer2DManager` is not aware of any specific layer types at compile time. Instead, a higher-level consumer (like `ModularSpaceRenderer`) is responsible for instantiating the desired layers and registering them with the manager.
 
-This pattern decouples the manager from the layers, allowing new types of labels to be created and used without ever modifying the `CSS2DManager` itself.
+This pattern decouples the manager from the layers, allowing new types of labels to be created and used without ever modifying the `Layer2DManager` itself.
 
 ### Self-Contained Layers
 
@@ -24,7 +24,7 @@ Each layer is responsible for its own logic and dependencies. This includes:
 
 - **Creating and Managing Labels**: Handling the logic for when and how to create its specific `CSS2DObject` instances.
 - **Update Logic**: Implementing an `update` method for per-frame logic, such as visibility culling based on camera distance.
-- **Component Registration**: Declaring its required HTML Custom Elements via the `getRequiredComponents()` method. The `CSS2DManager` automatically handles the `customElements.define()` call when a layer is registered.
+- **Component Registration**: Declaring its required HTML Custom Elements via the `getRequiredComponents()` method. The `Layer2DManager` automatically handles the `customElements.define()` call when a layer is registered.
 
 ## Data Flow Diagram
 
@@ -35,10 +35,10 @@ graph TD
     subgraph ModularSpaceRenderer (Consumer)
         A[Create CelestialLabelLayer]
         B[Create AuMarkerLabelLayer]
-        C[Create CSS2DManager]
+        C[Create Layer2DManager]
     end
 
-    subgraph CSS2DManager
+    subgraph Layer2DManager
         D{Layers Registry};
         E[Render Loop];
         F[Component Registration];

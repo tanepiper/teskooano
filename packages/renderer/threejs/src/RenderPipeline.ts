@@ -4,7 +4,7 @@ import type {
   SceneManager,
 } from "@teskooano/renderer-threejs-core";
 import type { ControlsManager } from "@teskooano/renderer-threejs-controls";
-import type { CSS2DManager } from "@teskooano/renderer-threejs-labels";
+import type { Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import type { LightManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
@@ -27,7 +27,7 @@ export class RenderPipeline {
   private backgroundManager: BackgroundManager;
   private lightManager: LightManager;
   private lodManager: LODManager;
-  private css2DManager?: CSS2DManager;
+  private css2DManager?: Layer2DManager;
   private animationLoop: AnimationLoop;
 
   private camera: THREE.PerspectiveCamera;

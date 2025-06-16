@@ -10,7 +10,7 @@ import {
   DestructionPayload,
   rendererEvents,
 } from "@teskooano/renderer-threejs";
-import type { CSS2DManager } from "@teskooano/renderer-threejs-labels";
+import type { Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 import {
   LightManager,
@@ -34,8 +34,8 @@ import {
  *          This allows decoupling from the full CSS2DManager if needed.
  */
 interface LabelVisibilityManager {
-  showLabel(layer: CSS2DLayerType, id: string): void;
-  hideLabel(layer: CSS2DLayerType, id: string): void;
+  showInstance(layer: CSS2DLayerType, id: string): void;
+  hideInstance(layer: CSS2DLayerType, id: string): void;
 }
 
 /**
@@ -80,7 +80,7 @@ export class ObjectManager {
   /** @internal Manages light sources, particularly star lights. */
   private lightManager: LightManager;
   /** @internal Manages CSS2D labels and potentially other 2D elements, optional. */
-  private css2DManager?: LabelVisibilityManager & CSS2DManager;
+  private css2DManager?: LabelVisibilityManager & Layer2DManager;
   /** @internal Observable stream of acceleration vectors from the core state. */
   private acceleration$: Observable<Record<string, OSVector3>>;
 
@@ -144,7 +144,7 @@ export class ObjectManager {
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
     lightManager: LightManager,
     renderer: THREE.WebGLRenderer,
-    css2DManager?: LabelVisibilityManager & CSS2DManager,
+    css2DManager?: LabelVisibilityManager & Layer2DManager,
     acceleration$: Observable<Record<string, OSVector3>> = accelerationVectors$,
   ) {
     this.scene = scene;
@@ -358,7 +358,10 @@ export class ObjectManager {
         objectData.status === CelestialStatus.DESTROYED ||
         !this.objects.has(objectId)
       ) {
-        this.css2DManager.hideLabel(CSS2DLayerType.CELESTIAL_LABELS, objectId);
+        this.css2DManager.hideInstance(
+          CSS2DLayerType.CELESTIAL_LABELS,
+          objectId,
+        );
         continue;
       }
 
@@ -394,9 +397,15 @@ export class ObjectManager {
 
       // Apply visibility change
       if (showLabel) {
-        this.css2DManager.showLabel(CSS2DLayerType.CELESTIAL_LABELS, objectId);
+        this.css2DManager.showInstance(
+          CSS2DLayerType.CELESTIAL_LABELS,
+          objectId,
+        );
       } else {
-        this.css2DManager.hideLabel(CSS2DLayerType.CELESTIAL_LABELS, objectId);
+        this.css2DManager.hideInstance(
+          CSS2DLayerType.CELESTIAL_LABELS,
+          objectId,
+        );
       }
     }
   }

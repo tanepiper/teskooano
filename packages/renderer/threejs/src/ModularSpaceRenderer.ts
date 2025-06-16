@@ -7,7 +7,7 @@ import {
   CameraManager,
 } from "@teskooano/renderer-threejs-controls";
 import {
-  CSS2DManager,
+  Layer2DManager,
   CSS2DLayerType,
   CelestialLabelLayer,
   AuMarkerLabelLayer,
@@ -54,7 +54,7 @@ export class ModularSpaceRenderer {
   /** Manages user interaction and camera controls (e.g., OrbitControls). */
   public controlsManager: ControlsManager;
   /** Manages the 2D HTML labels overlaid on the 3D scene. */
-  public css2DManager?: CSS2DManager;
+  public css2DManager?: Layer2DManager;
 
   /** Manages scene lighting, including star-based light sources. */
   public lightManager: LightManager;
@@ -108,7 +108,10 @@ export class ModularSpaceRenderer {
     );
 
     if (showCelestialLabels) {
-      this.css2DManager = new CSS2DManager(this.sceneManager.scene, container);
+      this.css2DManager = new Layer2DManager(
+        this.sceneManager.scene,
+        container,
+      );
 
       // Create and register the celestial label layer
       const celestialLayer = new CelestialLabelLayer(options.labelConfig);
@@ -260,7 +263,10 @@ export class ModularSpaceRenderer {
 
       for (const [dir, pos] of Object.entries(labelPositions)) {
         const labelId = `au-label-${dir}-${au}`;
-        this.css2DManager?.createAuMarkerLabel(labelId, au, pos, color);
+        const auMarkerLayer = this.css2DManager?.getLayer(
+          CSS2DLayerType.AU_MARKERS,
+        ) as AuMarkerLabelLayer;
+        auMarkerLayer?.createLabel(labelId, au, pos, color);
       }
     });
   }

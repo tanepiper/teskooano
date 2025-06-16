@@ -5,7 +5,8 @@ import {
 } from "@teskooano/data-types";
 import {
   CSS2DLayerType,
-  type CSS2DManager,
+  type Layer2DManager,
+  CelestialLabelLayer,
 } from "@teskooano/renderer-threejs-labels";
 import type { LightManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
@@ -33,7 +34,7 @@ export interface ObjectLifecycleManagerConfig {
   planetRenderers: Map<string, CelestialRenderer>;
   moonRenderers: Map<string, CelestialRenderer>;
   camera: THREE.PerspectiveCamera;
-  css2DManager?: CSS2DManager;
+  css2DManager?: Layer2DManager;
 }
 
 /**
@@ -48,7 +49,7 @@ export class ObjectLifecycleManager {
   private lodManager: LODManager;
   private lightManager: LightManager;
   private lensingHandler: GravitationalLensingHandler;
-  private css2DManager?: CSS2DManager;
+  private css2DManager?: Layer2DManager;
   private renderer: THREE.WebGLRenderer | null;
   private starRenderers: Map<string, CelestialRenderer>;
   private planetRenderers: Map<string, CelestialRenderer>;
@@ -149,8 +150,11 @@ export class ObjectLifecycleManager {
       this.lightManager.addStarLight(objectId, object.position);
     }
 
-    if (this.css2DManager) {
-      this.css2DManager.createCelestialLabel(object, mesh);
+    const celestialLayer = this.css2DManager?.getLayer(
+      CSS2DLayerType.CELESTIAL_LABELS,
+    ) as CelestialLabelLayer;
+    if (celestialLayer) {
+      celestialLayer.createLabel(object, mesh);
     }
 
     if (this.lensingHandler.needsGravitationalLensing(object)) {
