@@ -12,6 +12,7 @@ import {
 import { AuMarkerLabelLayer } from "./layers/AuMarkerLabelLayer";
 import { CelestialLabelLayer } from "./layers/CelestialLabelLayer";
 import { BaseLabelLayer } from "./layers/BaseLabelLayer";
+import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 
 /**
  * Layer types enum for different UI elements
@@ -73,12 +74,21 @@ export class CSS2DManager {
   /**
    * Update method to be called each frame
    */
-  update(camera: THREE.Camera, centralBody?: THREE.Object3D): void {
+  update(
+    camera: THREE.Camera,
+    centralBody?: THREE.Object3D,
+    objectManager?: ObjectManager,
+  ): void {
     if (!centralBody) {
       return;
     }
 
-    this.layers.get(CSS2DLayerType.AU_MARKERS)?.update(camera, centralBody);
+    this.layers
+      .get(CSS2DLayerType.AU_MARKERS)
+      ?.update(camera, centralBody, objectManager);
+    this.layers
+      .get(CSS2DLayerType.CELESTIAL_LABELS)
+      ?.update(camera, centralBody, objectManager);
   }
 
   /**

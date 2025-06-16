@@ -112,6 +112,17 @@ export class ObjectManager {
   }
 
   /**
+   * Public accessor for the latest renderable objects data.
+   * @returns A record of `RenderableCelestialObject`.
+   */
+  public getLatestRenderableObjects(): Record<
+    string,
+    RenderableCelestialObject
+  > {
+    return this.latestRenderableObjects;
+  }
+
+  /**
    * Creates an instance of ObjectManager.
    *
    * @param scene - The main Three.js scene.

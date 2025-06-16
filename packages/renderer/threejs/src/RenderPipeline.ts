@@ -102,7 +102,7 @@ export class RenderPipeline {
     if (this.css2DManager) {
       if (typeof this.css2DManager.update === "function") {
         const centralBody = this.objectManager.getCentralBody();
-        this.css2DManager.update(this.camera, centralBody);
+        this.css2DManager.update(this.camera, centralBody, this.objectManager);
       }
       if (typeof this.css2DManager.render === "function") {
         this.css2DManager.render(this.camera);

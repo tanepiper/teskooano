@@ -27,8 +27,14 @@ export class CelestialLabelComponent extends HTMLElement {
             padding: 2px 5px;
             border-radius: 3px;
             font-size: 12px;
-            pointer-events: none;
             user-select: none;
+            opacity: 1;
+            transition: opacity 0.3s ease-in-out;
+          }
+
+          :host(:not([visible])) {
+            opacity: 0;
+            pointer-events: none;
           }
         </style>
         <span>${name}</span>

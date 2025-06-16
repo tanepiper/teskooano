@@ -3,11 +3,10 @@ import { BaseLabelLayer } from "./BaseLabelLayer";
 import {
   type RenderableCelestialObject,
   CelestialType,
-  SCALE,
-  type OortCloudProperties,
 } from "@teskooano/data-types";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { CELESTIAL_LABEL_TAG } from "../components/celestial-label/CelestialLabelComponent";
+import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 
 export class CelestialLabelLayer extends BaseLabelLayer {
   public createLabel(
@@ -16,14 +15,17 @@ export class CelestialLabelLayer extends BaseLabelLayer {
   ): void {
     const objectId = object.celestialObjectId;
     if (this.elements.has(objectId)) {
-      console.warn(
-        `[CelestialLabelLayer] Label already exists for ${objectId}. Skipping creation.`,
-      );
       return;
     }
 
     const labelElement = document.createElement(CELESTIAL_LABEL_TAG);
     labelElement.setAttribute("data-name", object.name);
+    // Store metadata for the update logic
+    labelElement.setAttribute("data-object-id", objectId);
+    labelElement.setAttribute("data-object-type", object.type);
+    if (object.parentId) {
+      labelElement.setAttribute("data-parent-id", object.parentId);
+    }
 
     const label = new CSS2DObject(labelElement);
     label.position.copy(this.calculateLabelPosition(object));
@@ -31,25 +33,115 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     parentMesh.add(label);
 
     this.elements.set(objectId, label);
-    label.visible = this.isVisible;
+  }
+
+  public override update(
+    camera: THREE.Camera,
+    centralBody?: THREE.Object3D,
+    objectManager?: ObjectManager,
+  ): void {
+    if (!objectManager) {
+      return;
+    }
+    const cameraPosition = new THREE.Vector3();
+    camera.getWorldPosition(cameraPosition);
+
+    const config = this._getLabelVisibilityConfig();
+    const allObjects = objectManager.getLatestRenderableObjects();
+    const mainStarId = Object.values(allObjects).find(
+      (obj) => obj.type === CelestialType.STAR && !obj.parentId,
+    )?.celestialObjectId;
+
+    this.elements.forEach((label) => {
+      const type = label.element.getAttribute(
+        "data-object-type",
+      ) as CelestialType;
+      const objectId = label.element.getAttribute("data-object-id")!;
+      const ownObject = objectManager.getObject(objectId);
+
+      let visible = false;
+
+      if (!ownObject) {
+        label.element.toggleAttribute("visible", false);
+        return; // Skip to next label if the object doesn't exist in the scene
+      }
+
+      switch (type) {
+        case CelestialType.STAR: {
+          if (objectId === mainStarId) {
+            visible = true;
+          } else {
+            // It's a secondary star, apply distance check
+            const distanceToSelf = cameraPosition.distanceTo(
+              ownObject.position,
+            );
+            visible = distanceToSelf < config.secondaryStar;
+          }
+          break;
+        }
+
+        case CelestialType.PLANET:
+        case CelestialType.GAS_GIANT: {
+          const distanceToSelf = cameraPosition.distanceTo(ownObject.position);
+          visible = distanceToSelf < config.planet;
+          break;
+        }
+
+        case CelestialType.MOON: {
+          const parentId = label.element.getAttribute("data-parent-id")!;
+          const allObjects = objectManager.getLatestRenderableObjects();
+          const parentData = allObjects[parentId];
+          const parentObject = objectManager.getObject(parentId);
+
+          if (parentObject && parentData) {
+            if (
+              [CelestialType.PLANET, CelestialType.GAS_GIANT].includes(
+                parentData.type,
+              )
+            ) {
+              // Rule: Visible if camera is close to the PARENT planet.
+              const distanceToParent = cameraPosition.distanceTo(
+                parentObject.position,
+              );
+              visible = distanceToParent < config.moon;
+            } else if (parentData.type === CelestialType.STAR) {
+              // Rule: Ejected moon, visible if camera is close to the MOON itself.
+              const distanceToSelf = cameraPosition.distanceTo(
+                ownObject.position,
+              );
+              visible = distanceToSelf < config.ejectedMoon;
+            }
+          }
+          break;
+        }
+        default: {
+          // Rule: Default for all other objects.
+          const distanceToSelf = cameraPosition.distanceTo(ownObject.position);
+          visible = distanceToSelf < config.default;
+        }
+      }
+      label.element.toggleAttribute("visible", visible);
+    });
+  }
+
+  /**
+   * Defines the visibility rules for different celestial object types.
+   * @returns An object with distance thresholds in scene units.
+   */
+  private _getLabelVisibilityConfig() {
+    return {
+      planet: this.auToSceneUnits(2000),
+      moon: this.auToSceneUnits(2),
+      ejectedMoon: this.auToSceneUnits(2000),
+      secondaryStar: this.auToSceneUnits(3000),
+      default: this.auToSceneUnits(2),
+    };
   }
 
   private calculateLabelPosition(
     object: RenderableCelestialObject,
   ): THREE.Vector3 {
-    if (object.type === CelestialType.OORT_CLOUD) {
-      const oortCloudProps = object.properties as OortCloudProperties;
-      const innerRadiusAU = oortCloudProps.innerRadiusAU;
-      if (innerRadiusAU && typeof innerRadiusAU === "number") {
-        const scaledInnerRadius = innerRadiusAU * SCALE.RENDER_SCALE_AU;
-        const direction = new THREE.Vector3(0.7, 0.7, 0).normalize();
-        return direction.multiplyScalar(scaledInnerRadius);
-      } else {
-        return new THREE.Vector3(100, 100, 0);
-      }
-    } else {
-      const visualRadius = object.radius || 1;
-      return new THREE.Vector3(0, visualRadius * 1.5, 0);
-    }
+    const visualRadius = object.radius || 1;
+    return new THREE.Vector3(0, visualRadius * 1.5, 0);
   }
 }
