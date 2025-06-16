@@ -52,6 +52,16 @@ export abstract class BaseLabelLayer {
   }
 
   /**
+   * Converts a value from the renderer's internal scene units into Astronomical Units (AU).
+   * @param sceneUnits - The value in scene units.
+   * @returns The equivalent value in AU.
+   */
+  protected sceneUnitsToAu(sceneUnits: number): number {
+    // This is the mathematical inverse of auToSceneUnits.
+    return sceneUnits / (AU_METERS * METERS_TO_SCENE_UNITS);
+  }
+
+  /**
    * A generic update handler that toggles element visibility based on a set of distance-based levels.
    *
    * @param camera - The scene camera.

@@ -1,6 +1,6 @@
 export class CelestialLabelComponent extends HTMLElement {
   static get observedAttributes() {
-    return ["data-name"];
+    return ["data-name", "data-distance-formatted"];
   }
 
   constructor() {
@@ -10,13 +10,18 @@ export class CelestialLabelComponent extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (name === "data-name" && oldValue !== newValue) {
+    if (
+      (name === "data-name" && oldValue !== newValue) ||
+      (name === "data-distance-formatted" && oldValue !== newValue)
+    ) {
       this.render();
     }
   }
 
   private render() {
     const name = this.getAttribute("data-name") || "Unknown";
+    const distanceText = this.getAttribute("data-distance-formatted");
+
     if (this.shadowRoot) {
       this.shadowRoot.innerHTML = `
         <style>
@@ -32,12 +37,19 @@ export class CelestialLabelComponent extends HTMLElement {
             transition: opacity 0.3s ease-in-out;
           }
 
+          .distance {
+            font-size: 0.8em;
+            color: #ccc;
+            margin-left: 8px;
+          }
+
           :host(:not([visible])) {
             opacity: 0;
             pointer-events: none;
           }
         </style>
         <span>${name}</span>
+        ${distanceText ? `<span class="distance">${distanceText}</span>` : ""}
       `;
     }
   }

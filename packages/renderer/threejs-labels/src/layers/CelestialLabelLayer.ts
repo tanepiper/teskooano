@@ -3,6 +3,7 @@ import { BaseLabelLayer } from "./BaseLabelLayer";
 import {
   type RenderableCelestialObject,
   CelestialType,
+  AU_METERS,
 } from "@teskooano/data-types";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { CELESTIAL_LABEL_TAG } from "../components/celestial-label/CelestialLabelComponent";
@@ -63,8 +64,13 @@ export class CelestialLabelLayer extends BaseLabelLayer {
 
       if (!ownObject) {
         label.element.toggleAttribute("visible", false);
-        return; // Skip to next label if the object doesn't exist in the scene
+        return;
       }
+
+      const distanceToSelf = cameraPosition.distanceTo(ownObject.position);
+      const distanceInAu = this.sceneUnitsToAu(distanceToSelf);
+      const formattedDistance = this._formatDistance(distanceInAu);
+      label.element.setAttribute("data-distance-formatted", formattedDistance);
 
       switch (type) {
         case CelestialType.STAR: {
@@ -72,9 +78,6 @@ export class CelestialLabelLayer extends BaseLabelLayer {
             visible = true;
           } else {
             // It's a secondary star, apply distance check
-            const distanceToSelf = cameraPosition.distanceTo(
-              ownObject.position,
-            );
             visible = distanceToSelf < config.secondaryStar;
           }
           break;
@@ -82,7 +85,6 @@ export class CelestialLabelLayer extends BaseLabelLayer {
 
         case CelestialType.PLANET:
         case CelestialType.GAS_GIANT: {
-          const distanceToSelf = cameraPosition.distanceTo(ownObject.position);
           visible = distanceToSelf < config.planet;
           break;
         }
@@ -106,9 +108,6 @@ export class CelestialLabelLayer extends BaseLabelLayer {
               visible = distanceToParent < config.moon;
             } else if (parentData.type === CelestialType.STAR) {
               // Rule: Ejected moon, visible if camera is close to the MOON itself.
-              const distanceToSelf = cameraPosition.distanceTo(
-                ownObject.position,
-              );
               visible = distanceToSelf < config.ejectedMoon;
             }
           }
@@ -116,12 +115,34 @@ export class CelestialLabelLayer extends BaseLabelLayer {
         }
         default: {
           // Rule: Default for all other objects.
-          const distanceToSelf = cameraPosition.distanceTo(ownObject.position);
           visible = distanceToSelf < config.default;
         }
       }
       label.element.toggleAttribute("visible", visible);
     });
+  }
+
+  /**
+   * Formats a distance value into a human-readable string with appropriate units.
+   * @param distanceInAu - The distance in Astronomical Units.
+   * @returns A formatted string (e.g., "(1.23 AU)", "(500.00 km)").
+   */
+  private _formatDistance(distanceInAu: number): string {
+    if (distanceInAu > 0.5) {
+      return `(${distanceInAu.toFixed(2)} AU)`;
+    }
+
+    const distanceInMeters = distanceInAu * AU_METERS;
+    const MEGAMETER = 1_000_000;
+    const KILOMETER = 1_000;
+
+    if (distanceInMeters >= MEGAMETER) {
+      return `(${(distanceInMeters / MEGAMETER).toFixed(2)} Mm)`;
+    }
+    if (distanceInMeters >= KILOMETER) {
+      return `(${(distanceInMeters / KILOMETER).toFixed(2)} km)`;
+    }
+    return `(${distanceInMeters.toFixed(2)} m)`;
   }
 
   /**
