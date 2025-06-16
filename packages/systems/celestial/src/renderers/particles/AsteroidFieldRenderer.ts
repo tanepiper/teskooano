@@ -23,6 +23,7 @@ const asteroidVertexShader = `
   varying float vTextureIndex;
   varying float vInitialRotation;
   uniform float pointSizeScale; 
+  varying vec3 vWorldPosition;
 
   void main() {
     vColor = color;
@@ -38,7 +39,10 @@ const asteroidVertexShader = `
       position.x * sinAngle + position.z * cosAngle
     );
     
-    vec4 mvPosition = modelViewMatrix * vec4(rotatedPosition, 1.0);
+    vec4 worldPosition = modelMatrix * vec4(rotatedPosition, 1.0);
+    vWorldPosition = worldPosition.xyz;
+
+    vec4 mvPosition = viewMatrix * worldPosition;
 
     gl_Position = projectionMatrix * mvPosition;
     
@@ -53,7 +57,7 @@ const asteroidFragmentShader = `
   #define MAX_LIGHTS 4
 
   struct Light {
-    vec3 direction;
+    vec3 position;
     vec3 color;
     float intensity;
   };
@@ -67,6 +71,7 @@ const asteroidFragmentShader = `
   uniform float particleRotationSpeed; 
   uniform Light uLights[MAX_LIGHTS];
   uniform int uNumLights;
+  varying vec3 vWorldPosition;
 
   void main() {
     vec4 texColor;
@@ -96,12 +101,12 @@ const asteroidFragmentShader = `
 
     if ( texColor.a < alphaTest ) discard; 
 
-    // Use a fixed normal for billboarded particles
-    vec3 normal = vec3(0.0, 0.0, 1.0);
+    // For billboards, the normal should point towards the camera in world space
+    vec3 normal = normalize(cameraPosition - vWorldPosition);
     
     vec3 totalDiffuse = vec3(0.0);
     for (int i = 0; i < uNumLights; i++) {
-        vec3 lightDir = uLights[i].direction;
+        vec3 lightDir = normalize(uLights[i].position - vWorldPosition);
         float diff = max(dot(normal, lightDir), 0.0);
         totalDiffuse += uLights[i].color * uLights[i].intensity * diff;
     }
@@ -188,13 +193,13 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
     }
 
     const lights: {
-      direction: THREE.Vector3;
+      position: THREE.Vector3;
       color: THREE.Color;
       intensity: number;
     }[] = [];
     for (let i = 0; i < MAX_LIGHTS; i++) {
       lights.push({
-        direction: new THREE.Vector3(),
+        position: new THREE.Vector3(),
         color: new THREE.Color(),
         intensity: 0,
       });
@@ -407,6 +412,15 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
     lightSources?: LightSourcesMap,
     camera?: THREE.Camera,
   ): void {
+    const lod = this.lods.get(object.celestialObjectId);
+    if (lod && object.parentId && lightSources?.has(object.parentId)) {
+      const parentLight = lightSources.get(object.parentId);
+      if (parentLight) {
+        lod.position.copy(parentLight.position);
+      }
+    }
+
+    if (!this.materialReady) return;
     const material = this.materials.get(
       object.celestialObjectId,
     ) as THREE.ShaderMaterial;
@@ -426,14 +440,9 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       for (let i = 0; i < MAX_LIGHTS; i++) {
         if (i < sortedLights.length) {
           const light = sortedLights[i];
-          const direction = new THREE.Vector3()
-            .subVectors(light.position, object.position)
-            .normalize();
-
-          // Using a constant attenuation for now as belt particles are small and distributed
           const attenuation = 1.0;
 
-          material.uniforms.uLights.value[i].direction.copy(direction);
+          material.uniforms.uLights.value[i].position.copy(light.position);
           material.uniforms.uLights.value[i].color.copy(light.color);
           material.uniforms.uLights.value[i].intensity =
             (light.intensity ?? 1.0) * attenuation;

@@ -71,6 +71,17 @@ export class CSS2DManager {
   }
 
   /**
+   * Update method to be called each frame
+   */
+  update(camera: THREE.Camera, centralBody?: THREE.Object3D): void {
+    if (!centralBody) {
+      return;
+    }
+
+    this.layers.get(CSS2DLayerType.AU_MARKERS)?.update(camera, centralBody);
+  }
+
+  /**
    * Create a celestial object label
    */
   createCelestialLabel(
@@ -118,17 +129,8 @@ export class CSS2DManager {
    * @param camera The camera to use for rendering
    */
   render(camera: THREE.Camera): void {
-    let hasAnyElements = false;
-    for (const layer of this.layers.values()) {
-      if (layer.hasElements()) {
-        hasAnyElements = true;
-        break;
-      }
-    }
-
-    if (hasAnyElements) {
-      this.renderer.render(this.scene, camera);
-    }
+    // The update logic is now in the update method, so we just render here.
+    this.renderer.render(this.scene, camera);
   }
 
   /**

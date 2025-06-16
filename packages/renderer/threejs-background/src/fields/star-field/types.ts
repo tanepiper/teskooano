@@ -37,11 +37,6 @@ export interface StarFieldOptions extends FieldOptions {
   /** An array of layer configurations that make up the star field. */
   layers: StarFieldLayerOptions[];
   /**
-   * The base speed at which the star layers rotate independently.
-   * @default 0.00000002
-   */
-  rotationSpeed?: number;
-  /**
    * The strength of the parallax effect. A higher value results in more
    * apparent movement relative to the camera.
    * @default 0.1

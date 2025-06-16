@@ -264,6 +264,24 @@ export class ObjectManager {
   }
 
   /**
+   * Retrieves the primary central body of the system, typically the main star.
+   * It finds the first star object that does not have a parent object.
+   *
+   * @returns The corresponding Object3D, or undefined if not found.
+   */
+  getCentralBody(): THREE.Object3D | undefined {
+    const centralBody = Object.values(this.latestRenderableObjects).find(
+      (obj) => obj.type === CelestialType.STAR && !obj.parentId,
+    );
+
+    if (centralBody) {
+      return this.objects.get(centralBody.celestialObjectId);
+    }
+
+    return undefined;
+  }
+
+  /**
    * Updates all managed renderers and systems that require frame-by-frame updates.
    * This includes LOD, specialized celestial renderers, label visibility, and debris effects.
    *

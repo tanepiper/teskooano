@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+import { CONVERSION } from "@teskooano/core-physics";
 
 export abstract class BaseLabelLayer {
   protected elements: Map<string, CSS2DObject> = new Map();
@@ -38,5 +39,10 @@ export abstract class BaseLabelLayer {
 
   public hasElements(): boolean {
     return this.elements.size > 0;
+  }
+
+  public update(camera: THREE.Camera, centralBody?: THREE.Object3D): void {
+    // Default implementation does nothing.
+    // Subclasses should override this method to implement LOD or other updates.
   }
 }

@@ -99,8 +99,14 @@ export class RenderPipeline {
     this.lodManager.update();
 
     // 6. Render the 2D overlay, which depends on final 3D positions.
-    if (this.css2DManager && typeof this.css2DManager.render === "function") {
-      this.css2DManager.render(this.camera);
+    if (this.css2DManager) {
+      if (typeof this.css2DManager.update === "function") {
+        const centralBody = this.objectManager.getCentralBody();
+        this.css2DManager.update(this.camera, centralBody);
+      }
+      if (typeof this.css2DManager.render === "function") {
+        this.css2DManager.render(this.camera);
+      }
     }
 
     // 7. Run any custom render callbacks injected into the loop.
