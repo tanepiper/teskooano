@@ -5,10 +5,16 @@ import * as THREE from "three";
 describe("LightManager", () => {
   let lightManager: LightManager;
   let scene: THREE.Scene;
+  let camera: THREE.Camera;
 
   beforeEach(() => {
     scene = new THREE.Scene();
-    lightManager = new LightManager(scene);
+    camera = new THREE.PerspectiveCamera();
+    lightManager = new LightManager({
+      scene,
+      camera,
+      enablePostProcessing: false,
+    });
   });
 
   afterEach(() => {

@@ -5,6 +5,7 @@ import classIIFragmentShader from "../../../shaders/gas-giants/class-ii.fragment
 import classIIVertexShader from "../../../shaders/gas-giants/class-ii.vertex.glsl";
 
 const lodToOctaveMap = [2, 3, 5, 8];
+const MAX_LIGHTS = 4;
 
 /**
  * Material for Class II gas giants (Water Clouds) - Using the new shaders
@@ -25,6 +26,19 @@ export class ClassIIMaterial extends BaseGasGiantMaterial {
   }) {
     const darkColor = options.atmosphereColor.clone().multiplyScalar(0.35);
 
+    const lights: {
+      direction: THREE.Vector3;
+      color: THREE.Color;
+      intensity: number;
+    }[] = [];
+    for (let i = 0; i < MAX_LIGHTS; i++) {
+      lights.push({
+        direction: new THREE.Vector3(),
+        color: new THREE.Color(),
+        intensity: 0,
+      });
+    }
+
     super({
       uniforms: {
         mainColor1: { value: options.atmosphereColor },
@@ -34,7 +48,9 @@ export class ClassIIMaterial extends BaseGasGiantMaterial {
         uSeed: { value: options.seed },
 
         time: { value: 0 },
-        sunPosition: { value: new THREE.Vector3(0, 0, 0) },
+
+        uLights: { value: lights },
+        uNumLights: { value: 0 },
 
         uWarpOctaves: { value: 5 },
         uColorOctaves: { value: 3 },

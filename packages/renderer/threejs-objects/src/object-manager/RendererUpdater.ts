@@ -27,6 +27,7 @@ export class RendererUpdater {
   private starRenderers: Map<string, CelestialRenderer>;
   private planetRenderers: Map<string, CelestialRenderer>;
   private moonRenderers: Map<string, CelestialRenderer>;
+  private loggedIds = new Set<string>();
 
   constructor(config: RendererUpdaterConfig) {
     this.celestialRenderers = config.celestialRenderers;
@@ -77,5 +78,7 @@ export class RendererUpdater {
     });
   }
 
-  dispose(): void {}
+  dispose(): void {
+    this.loggedIds.clear();
+  }
 }

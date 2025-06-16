@@ -5,6 +5,7 @@ import classIFragmentShader from "../../../shaders/gas-giants/class-i.fragment.g
 import classIVertexShader from "../../../shaders/gas-giants/class-i.vertex.glsl";
 
 const lodToOctaveMap = [2, 3, 5, 8];
+const MAX_LIGHTS = 4;
 
 /**
  * Material for Class I gas giants (Ammonia Clouds) - Jupiter-like
@@ -22,6 +23,19 @@ export class ClassIMaterial extends BaseGasGiantMaterial {
   }) {
     const darkColor = options.atmosphereColor.clone().multiplyScalar(0.4);
 
+    const lights: {
+      direction: THREE.Vector3;
+      color: THREE.Color;
+      intensity: number;
+    }[] = [];
+    for (let i = 0; i < MAX_LIGHTS; i++) {
+      lights.push({
+        direction: new THREE.Vector3(),
+        color: new THREE.Color(),
+        intensity: 0,
+      });
+    }
+
     super({
       uniforms: {
         mainColor1: { value: options.atmosphereColor },
@@ -31,7 +45,9 @@ export class ClassIMaterial extends BaseGasGiantMaterial {
         uSeed: { value: options.seed },
 
         time: { value: 0 },
-        sunPosition: { value: new THREE.Vector3(0, 0, 0) },
+
+        uLights: { value: lights },
+        uNumLights: { value: 0 },
 
         uWarpOctaves: { value: 5 },
         uColorOctaves: { value: 3 },

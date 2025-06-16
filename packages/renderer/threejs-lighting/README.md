@@ -1,22 +1,20 @@
 # @teskooano/renderer-threejs-lighting
 
-This package provides managers and utilities for handling visual effects and optimizations within the Teskooano Three.js rendering pipeline.
+This package provides a manager for handling lighting within the Teskooano Three.js rendering pipeline.
 
 ## Features
 
 - **`LightManager`**: Manages dynamic light sources. It reactively creates, updates, and removes `THREE.PointLight` sources based on star data from the core state, and also manages global ambient light.
-- **`LODManager`**: Manages Level of Detail (LOD) for scene objects using Three.js's built-in `THREE.LOD` class. It dynamically adjusts the geometric detail of objects based on their distance to the camera to optimize performance.
-- **Debug Capabilities**: Includes optional debugging features for visualizing LOD levels and distances.
 
 ## Architecture
 
-This package provides two main, independent manager classes: `LightManager` and `LODManager`. They are designed to be instantiated and used directly by a renderer integrator, such as `@teskooano/renderer-threejs`.
+This package provides one main manager class: `LightManager`. It is designed to be instantiated and used directly by a renderer integrator, such as `@teskooano/renderer-threejs`.
 
 For more details, see the `ARCHITECTURE.md` file.
 
 ## Usage
 
-This package is used internally by the main `@teskooano/renderer-threejs` package. The `ModularSpaceRenderer` class instantiates both `LightManager` and `LODManager` and integrates them into its render loop.
+This package is used internally by the main `@teskooano/renderer-threejs` package. The `ModularSpaceRenderer` class instantiates the `LightManager` and integrates it into its render loop.
 
 An example of how to use the `LightManager` can be found in the main `ModularSpaceRenderer` class, but a simple example is shown below:
 
@@ -33,20 +31,12 @@ const camera = new THREE.PerspectiveCamera(
   1000,
 );
 
-// Instantiate managers directly
+// Instantiate the manager
 const lightManager = new LightManager(scene, camera, false);
-const lodManager = new LODManager(camera);
-
-// Create an LOD object and add it to the scene
-// (In the real app, this is done by the ObjectManager/MeshFactory)
-// const lodObject = lodManager.createAndRegisterLOD(...);
-// scene.add(lodObject);
 
 function animate() {
   requestAnimationFrame(animate);
 
-  // Update managers in the render loop
-  lodManager.update();
   // LightManager updates reactively via its state subscription
 
   // ... other rendering logic ...

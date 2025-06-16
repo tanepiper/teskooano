@@ -250,12 +250,6 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     lightSources?: LightSourcesMap,
     camera?: THREE.Camera,
   ): void {
-    super.update(object, time, timeScale, lightSources, camera);
-
-    if (this.ringSystemRenderer) {
-      this.ringSystemRenderer.update(object, time, timeScale, lightSources);
-    }
-
     if (!lightSources || lightSources.size === 0) {
       lightSources = new Map<
         string,
@@ -267,6 +261,19 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
         intensity: 1.5,
       });
     }
+
+    super.update(object, time, timeScale, lightSources, camera);
+
+    if (this.ringSystemRenderer) {
+      this.ringSystemRenderer.update(object, time, timeScale, lightSources);
+    }
+
+    // Adjust light intensities for terrestrial objects to avoid excessive lighting (no light ring) on planets/moons.
+    lightSources.forEach((lightData) => {
+      if (lightData.intensity !== undefined && lightData.intensity > 1.5) {
+        lightData.intensity = 1.5;
+      }
+    });
 
     const bodyMaterial = this.materials.get(object.celestialObjectId);
     if (bodyMaterial && bodyMaterial instanceof ProceduralPlanetMaterial) {

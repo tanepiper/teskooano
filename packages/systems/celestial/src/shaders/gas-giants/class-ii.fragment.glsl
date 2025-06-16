@@ -1,5 +1,13 @@
 precision highp float;
 
+#define MAX_LIGHTS 4
+
+struct Light {
+  vec3 direction;
+  vec3 color;
+  float intensity;
+};
+
 // Varyings from vertex shader (matching our updated vertex shader)
 varying vec3 vNormal;          // Vertex normal in world space (use this for specular)
 varying vec3 vWorldPosition;     // Vertex position in world space
@@ -17,6 +25,8 @@ uniform int uWarpOctaves;      // LOD-controlled octave count for warping noise
 uniform int uColorOctaves;     // LOD-controlled octave count for color noise
 uniform sampler2D stormMap;    // Storm texture
 uniform bool hasStormMap;      // Whether to apply storm texture
+uniform Light uLights[MAX_LIGHTS];
+uniform int uNumLights;
 
 // --- Helper: lerp ---
 vec3 lerp(vec3 v1, vec3 v2, float s) {
@@ -151,7 +161,6 @@ void main() {
     // Use actual vertex normal for lighting calculations
     vec3 normal = normalize(vNormal);
     vec3 viewDir = normalize(vViewDirection);
-    vec3 lightDir = normalize(vSunDirection);
 
     // Calculate noise color first
     vec3 noiseColor = vec3(0.0);
@@ -186,18 +195,24 @@ void main() {
     noiseColor = lerp(noiseColor, noiseColor + detailColorVariation, smoothstep(0.3, 0.7, detailNoise));
 
     // Now calculate lighting components using the noiseColor
+    vec3 totalDiffuse = vec3(0.0);
+    vec3 totalSpecular = vec3(0.0);
 
-    // Diffuse component
-    float ndl = max(0.0, dot(normal, lightDir));
-    ndl = clamp01(ndl);
-    vec3 diffuse = noiseColor * ndl; // Correct: Multiply noiseColor by diffuse factor
+    for (int i = 0; i < uNumLights; i++) {
+        vec3 lightDir = uLights[i].direction;
 
-    // Specular component
-    vec3 halfAngle = normalize(viewDir + lightDir);
-    float specComp = max(0.0, dot(normal, halfAngle));
-    specComp = clamp01(specComp);
-    specComp = pow(specComp, 80.0);
-    vec3 specular = vec3(0.05) * specComp;
+        // Diffuse component
+        float ndl = max(0.0, dot(normal, lightDir));
+        ndl = clamp01(ndl);
+        totalDiffuse += noiseColor * ndl * uLights[i].color * uLights[i].intensity;
+
+        // Specular component
+        vec3 halfAngle = normalize(viewDir + lightDir);
+        float specComp = max(0.0, dot(normal, halfAngle));
+        specComp = clamp01(specComp);
+        specComp = pow(specComp, 80.0);
+        totalSpecular += vec3(0.05) * specComp * uLights[i].color * uLights[i].intensity;
+    }
 
     // Rim Lighting
     float rimDot = 1.0 - max(dot(viewDir, normal), 0.0);
@@ -208,7 +223,7 @@ void main() {
 
     // Combine components
     vec3 ambient = noiseColor * 0.15; // Add a small ambient factor based on surface color
-    vec3 finalColor = ambient + diffuse + specular + rim; // Correctly sum components, including ambient
+    vec3 finalColor = ambient + totalDiffuse + totalSpecular + rim; // Correctly sum components, including ambient
 
     // Apply storm overlay if available
     if (hasStormMap) {

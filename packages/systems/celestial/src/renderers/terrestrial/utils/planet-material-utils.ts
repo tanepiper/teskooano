@@ -24,7 +24,7 @@ export class PlanetMaterialService {
     const specificSurfaceProps = (object.properties as PlanetProperties)
       ?.surface as ProceduralSurfaceProperties | undefined;
     const planetProps = object.properties as PlanetProperties | undefined;
-    const planetType = planetProps?.planetType ?? (object as any).planetType; // Consider a safer way to get planetType if needed
+    const planetType = planetProps?.planetType;
 
     let simplePalette = {
       color1: "#5179B5",
@@ -127,8 +127,7 @@ export class PlanetMaterialService {
       shininess: specificSurfaceProps?.shininess ?? 100,
       specularStrength: specificSurfaceProps?.specularStrength ?? 0.3,
       roughness: specificSurfaceProps?.roughness ?? 0.5,
-      ambientLightIntensity:
-        specificSurfaceProps?.ambientLightIntensity ?? 0.0001,
+      ambientLightIntensity: specificSurfaceProps?.ambientLightIntensity ?? 0.2,
 
       terrainAmplitude: specificSurfaceProps?.terrainAmplitude ?? 1.0,
       terrainSharpness: specificSurfaceProps?.terrainSharpness ?? 1.0,

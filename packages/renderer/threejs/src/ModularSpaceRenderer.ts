@@ -92,11 +92,11 @@ export class ModularSpaceRenderer {
     this.animationLoop.setRenderer(this.sceneManager.renderer);
     this.animationLoop.setCamera(this.sceneManager.camera);
 
-    this.lightManager = new LightManager(
-      this.sceneManager.scene,
-      this.sceneManager.camera,
-      options.hdr ?? false,
-    );
+    this.lightManager = new LightManager({
+      scene: this.sceneManager.scene,
+      camera: this.sceneManager.camera,
+      enablePostProcessing: options.hdr ?? false,
+    });
     this.lodManager = new LODManager(this.sceneManager.camera);
 
     const showCelestialLabels = options.showCelestialLabels !== false;

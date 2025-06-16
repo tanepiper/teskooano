@@ -19,7 +19,6 @@ import { BehaviorSubject, Subscription } from "rxjs";
 import * as THREE from "three";
 import { physicsToThreeJSPosition } from "./utils/coordinateUtils";
 import type { RendererVisualSettings } from "./types";
-import { physicsSystemAdapter } from "@teskooano/core-state";
 
 /**
  * Acts as a bridge between the core application state and the rendering engine.

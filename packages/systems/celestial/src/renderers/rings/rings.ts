@@ -166,7 +166,6 @@ export class RingSystemRenderer {
       ringMesh.rotation.x = -Math.PI / 2;
       ringGroup.add(ringMesh);
     });
-    console.log("RingSystemRenderer _createRingGroup", ringGroup);
 
     return ringGroup;
   }
@@ -220,13 +219,6 @@ export class RingSystemRenderer {
     timeScale: number,
     lightSources?: LightSourcesMap,
   ): void {
-    console.log(
-      "RingSystemRenderer update",
-      object,
-      time,
-      timeScale,
-      lightSources,
-    );
     if (isVisualizationEnabled()) {
       threeVectorDebug.clearVectors(`ring-system-${object.celestialObjectId}`);
     }
@@ -257,8 +249,6 @@ export class RingSystemRenderer {
     }
 
     this.parentRenderer.materials.forEach((material, materialKey) => {
-      console.log("RingSystemRenderer update", materialKey);
-      console.log("material", material);
       if (materialKey.startsWith(`${object.celestialObjectId}-ring-`)) {
         (material as RingMaterial).update(
           time,

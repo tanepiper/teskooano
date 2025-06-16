@@ -1,34 +1,19 @@
 import * as THREE from "three";
 import { renderableStore } from "@teskooano/core-state";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { CelestialType, StarProperties } from "@teskooano/data-types";
-import { Observable, Subscription, EMPTY } from "rxjs";
-import { tap, catchError, map } from "rxjs/operators";
+import {
+  CelestialType,
+  StarProperties,
+  SystemLightingProperties,
+} from "@teskooano/data-types";
+import { EMPTY, Observable, Subscription } from "rxjs";
+import { catchError, map, tap } from "rxjs/operators";
+import type { LightActionPlan, LightManagerConfig } from "./types";
 
 /**
- * @internal Structure defining the actions to perform on lights based on state changes.
- */
-interface LightActionPlan {
-  adds: {
-    id: string;
-    position: THREE.Vector3;
-    color?: number;
-    intensity?: number;
-  }[];
-  updates: {
-    id: string;
-    position: THREE.Vector3;
-    color?: number;
-    intensity?: number;
-  }[];
-  removes: string[];
-}
-
-/**
- * @class LightManager
- * @description Manages light sources within the Three.js scene, focusing on PointLights
- *              representing stars. It subscribes to the renderable objects state
- *              to automatically add, update, and remove star lights.
+ * Manages light sources within the Three.js scene, focusing on PointLights
+ * representing stars. It subscribes to the renderable objects state
+ * to automatically add, update, and remove star lights.
  */
 export class LightManager {
   /** @internal Scene graph object where lights are added. */
@@ -41,40 +26,80 @@ export class LightManager {
   private objectsSubscription: Subscription | null = null;
   /** @internal Observable stream of renderable object data. */
   private objects$: Observable<Record<string, RenderableCelestialObject>>;
+  /** @internal Configuration for default light values and calculations. */
+  private config: Required<
+    Pick<
+      LightManagerConfig,
+      | "ambientLightColor"
+      | "ambientLightIntensity"
+      | "defaultStarLightColor"
+      | "defaultStarLightIntensity"
+      | "defaultStarLightDistance"
+      | "defaultStarLightDecay"
+      | "intensityCalculation"
+    >
+  >;
+  /** @internal Flag to ensure system-wide lighting is set only once. */
+  private systemLightingInitialized: boolean = false;
 
   /**
    * Creates an instance of LightManager.
-   * @param scene - The Three.js scene to manage lights within.
-   * @param camera - The Three.js camera.
-   * @param enablePostProcessing - Whether post-processing is enabled.
-   * @param objects$ - An optional Observable stream of renderable objects. Defaults to `renderableStore.renderableObjects$` from `@teskooano/core-state`.
-   * @param textureLoader - An optional THREE.TextureLoader for loading textures.
+   * @param config - The configuration object for the LightManager.
    */
-  constructor(
-    scene: THREE.Scene,
-    camera: THREE.Camera,
-    enablePostProcessing: boolean,
-    objects$: Observable<
-      Record<string, RenderableCelestialObject>
-    > = renderableStore.renderableObjects$,
-    private textureLoader?: THREE.TextureLoader,
-  ) {
-    this.scene = scene;
-    this.objects$ = objects$;
+  constructor(config: LightManagerConfig) {
+    this.scene = config.scene;
+    this.objects$ = config.objects$ || renderableStore.renderableObjects$;
+
+    // Set defaults for optional config values
+    this.config = {
+      ambientLightColor: config.ambientLightColor ?? 0xffffff,
+      ambientLightIntensity: config.ambientLightIntensity ?? 1,
+      defaultStarLightColor: config.defaultStarLightColor ?? 0xffffff,
+      defaultStarLightIntensity: config.defaultStarLightIntensity ?? 100.5,
+      defaultStarLightDistance: config.defaultStarLightDistance ?? 100,
+      defaultStarLightDecay: config.defaultStarLightDecay ?? 2,
+      intensityCalculation: config.intensityCalculation ?? {
+        base: 1.0,
+        minTemp: 3000,
+        divisor: 5000,
+      },
+    };
 
     // Initialize with a soft white ambient light
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    this.ambientLight = new THREE.AmbientLight(
+      this.config.ambientLightColor,
+      this.config.ambientLightIntensity,
+    );
     this.scene.add(this.ambientLight);
 
     this.subscribeToStore();
   }
 
   /**
+   * Updates the scene's ambient light and default star intensity based on
+   * properties from the primary star.
+   * @param lightingProps - The system lighting properties.
+   */
+  public updateSystemLighting(lightingProps: SystemLightingProperties): void {
+    if (!lightingProps) return;
+
+    const newColor = new THREE.Color(lightingProps.ambientLightColor).getHex();
+    this.ambientLight.color.setHex(newColor);
+    this.config.ambientLightColor = newColor;
+
+    this.ambientLight.intensity = lightingProps.ambientLightIntensity;
+    this.config.ambientLightIntensity = lightingProps.ambientLightIntensity;
+
+    this.config.defaultStarLightIntensity = lightingProps.starLightIntensity;
+
+    console.log(
+      `[LightManager] System lighting updated from primary star. Ambient: #${newColor.toString(16)} @ ${lightingProps.ambientLightIntensity.toFixed(2)}`,
+    );
+  }
+
+  /**
    * @internal
    * Subscribes to the `objects$` stream to manage star lights based on object data.
-   * - Adds new star lights.
-   * - Updates positions of existing star lights.
-   * - Removes star lights for objects no longer present or not stars.
    */
   private subscribeToStore(): void {
     if (this.objectsSubscription) {
@@ -90,7 +115,6 @@ export class LightManager {
           (
             objects: Record<string, RenderableCelestialObject>,
           ): LightActionPlan => {
-            // Calculate the changes needed based on the new object state
             const plan: LightActionPlan = {
               adds: [],
               updates: [],
@@ -105,24 +129,33 @@ export class LightManager {
               if (
                 objectData.type === CelestialType.STAR &&
                 objectData.position &&
-                objectData.properties // Ensure properties exist for color
+                objectData.properties
               ) {
                 const starProps = objectData.properties as StarProperties;
+
+                // If this is the main star, update the system-wide lighting, but only once.
+                if (
+                  !this.systemLightingInitialized &&
+                  starProps.isMainStar &&
+                  starProps.systemLighting
+                ) {
+                  this.updateSystemLighting(starProps.systemLighting);
+                  this.systemLightingInitialized = true;
+                }
+
                 const color = starProps.color
                   ? new THREE.Color(starProps.color).getHex()
                   : undefined;
-                const intensity = objectData.temperature
-                  ? this.calculateIntensity(objectData.temperature)
-                  : undefined;
-                const position = objectData.position; // Already a THREE.Vector3
+                const intensity = starProps.systemLighting
+                  ? starProps.systemLighting.starLightIntensity
+                  : this.calculateIntensity(objectData.temperature);
+                const position = objectData.position;
 
                 incomingStarIds.add(id);
 
                 if (currentLightIds.has(id)) {
-                  // Exists, plan an update
                   plan.updates.push({ id, position, color, intensity });
                 } else {
-                  // New, plan an add
                   plan.adds.push({ id, position, color, intensity });
                 }
               }
@@ -139,11 +172,8 @@ export class LightManager {
           },
         ),
         tap((plan: LightActionPlan) => {
-          // Execute the plan: Perform side effects
-          // Removals first
           plan.removes.forEach((id) => this.removeStarLight(id));
 
-          // Then updates
           plan.updates.forEach((update) => {
             const light = this.starLights.get(update.id);
             if (light) {
@@ -154,7 +184,6 @@ export class LightManager {
             }
           });
 
-          // Finally adds
           plan.adds.forEach((add) => {
             this.addStarLight(add.id, add.position, add.color, add.intensity);
           });
@@ -169,22 +198,21 @@ export class LightManager {
 
   /**
    * Adds a point light representing a star to the scene.
-   * Typically called internally by the store subscription, but can be used manually.
    *
    * @param id - The unique identifier for the star object.
    * @param position - The position of the star light.
-   * @param color - The color of the light (default: 0xffffff).
-   * @param intensity - The intensity of the light (default: 1.5).
-   * @param distance - The distance of the light (default: 0).
-   * @param decay - The decay of the light (default: 0.5).
+   * @param color - The color of the light. Uses configured default if not provided.
+   * @param intensity - The intensity of the light. Uses configured default if not provided.
+   * @param distance - The distance of the light. Uses configured default if not provided.
+   * @param decay - The decay of the light. Uses configured default if not provided.
    */
   addStarLight(
     id: string,
     position: THREE.Vector3,
-    color: number = 0xffffff,
-    intensity: number = 1.5,
-    distance: number = 0,
-    decay: number = 0.5,
+    color?: number,
+    intensity?: number,
+    distance?: number,
+    decay?: number,
   ): void {
     if (this.starLights.has(id)) {
       console.warn(
@@ -192,7 +220,12 @@ export class LightManager {
       );
       return;
     }
-    const light = new THREE.PointLight(color, intensity, distance, decay);
+    const light = new THREE.PointLight(
+      color ?? this.config.defaultStarLightColor,
+      intensity ?? this.config.defaultStarLightIntensity,
+      distance ?? this.config.defaultStarLightDistance,
+      decay ?? this.config.defaultStarLightDecay,
+    );
     light.position.copy(position);
     this.scene.add(light);
     this.starLights.set(id, light);
@@ -240,7 +273,6 @@ export class LightManager {
     >();
 
     this.starLights.forEach((light, id) => {
-      // Currently only handles PointLight, ensure type safety if other types are added.
       lightData.set(id, {
         position: light.position.clone(),
         color: light.color.clone(),
@@ -253,37 +285,31 @@ export class LightManager {
 
   /**
    * @internal
-   * Calculates light intensity based on star temperature (Placeholder).
-   * Needs a more physically accurate model.
+   * Calculates light intensity based on star temperature using configured parameters.
    * @param temperature - Star temperature in Kelvin.
    * @returns Calculated light intensity.
    */
   private calculateIntensity(temperature: number): number {
-    // Basic placeholder: Intensity increases with temperature.
-    // Scale factor needs tuning based on visual requirements.
-    return 1.0 + Math.max(0, (temperature - 3000) / 5000); // Example scaling
+    const { base, minTemp, divisor } = this.config.intensityCalculation;
+    return base + Math.max(0, (temperature - minTemp) / divisor);
   }
 
   /**
    * Cleans up resources used by the LightManager.
-   * Removes all lights from the scene and unsubscribes from the store.
    */
   dispose(): void {
-    // Unsubscribe from the observable
     this.objectsSubscription?.unsubscribe();
     this.objectsSubscription = null;
 
-    // Remove all managed star lights
     this.starLights.forEach((light) => {
       this.scene.remove(light);
-      light.dispose?.(); // Dispose if needed
+      light.dispose?.();
     });
     this.starLights.clear();
 
-    // Remove ambient light
     if (this.ambientLight) {
       this.scene.remove(this.ambientLight);
-      this.ambientLight.dispose?.(); // Dispose if needed
+      this.ambientLight.dispose?.();
     }
   }
 }

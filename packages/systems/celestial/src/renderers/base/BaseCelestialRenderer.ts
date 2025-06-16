@@ -111,6 +111,7 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     });
 
     this.materials.clear();
+    this.lods.clear();
   }
 
   /**
@@ -139,11 +140,11 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   /**
    * Add a material to the materials map for tracking and disposal
    */
-  public registerMaterial(materialKey: string, material: THREE.Material): void {
-    if (this.materials.has(materialKey)) {
-      this.materials.get(materialKey)?.dispose();
+  public registerMaterial(id: string, material: THREE.Material): void {
+    if (this.materials.has(id)) {
+      this.materials.get(id)?.dispose();
     }
-    this.materials.set(materialKey, material);
+    this.materials.set(id, material);
   }
 
   /**

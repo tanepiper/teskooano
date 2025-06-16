@@ -14,6 +14,8 @@ import { BaseCelestialRenderer } from "../../base/BaseCelestialRenderer";
 import { RingSystemRenderer } from "../../rings/rings";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
 
+const MAX_LIGHTS = 4;
+
 /**
  * Base renderer for gas giants, implementing the LOD system.
  */
@@ -37,7 +39,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
    * Child classes must implement this method to return the appropriate material
    * for the highest detail LOD level.
    */
-  protected abstract getMaterial(
+  public abstract getMaterial(
     object: RenderableCelestialObject,
   ): BaseGasGiantMaterial;
 
@@ -181,12 +183,40 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
       object.celestialObjectId,
     ) as BaseGasGiantMaterial;
 
-    const lightSourcePosition =
-      this.findPrimaryLightSource(object, lightSources)?.position ??
-      new THREE.Vector3(1e11, 0, 0);
-
     if (material) {
-      material.update(this.elapsedTime, timeScale, lightSources, camera);
+      const lightsForShader: {
+        direction: THREE.Vector3;
+        color: THREE.Color;
+        intensity: number;
+      }[] = [];
+
+      if (lightSources && lightSources.size > 0) {
+        const sortedLights = Array.from(lightSources.values())
+          .map((light) => ({
+            ...light,
+            distanceSq: object.position.distanceToSquared(light.position),
+          }))
+          .sort((a, b) => a.distanceSq - b.distanceSq)
+          .slice(0, MAX_LIGHTS);
+
+        sortedLights.forEach((light) => {
+          // Calculate direction from planet to light
+          const direction = new THREE.Vector3()
+            .subVectors(light.position, object.position)
+            .normalize();
+
+          // Simple distance attenuation - this can be made more sophisticated
+          const attenuation =
+            1.0 / (1.0 + light.distanceSq * 0.00000000000000000001);
+
+          lightsForShader.push({
+            direction: direction,
+            color: light.color,
+            intensity: (light.intensity ?? 1.0) * attenuation,
+          });
+        });
+      }
+      material.update(this.elapsedTime, timeScale, lightsForShader, camera);
     }
 
     if (this.ringSystemRenderer) {

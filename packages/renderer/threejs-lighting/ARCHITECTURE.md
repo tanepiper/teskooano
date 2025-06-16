@@ -8,7 +8,9 @@ This package provides managers and utilities for handling lighting within the Te
 
 ### How it works
 
-The `LightManager` is instantiated by the main `ModularSpaceRenderer`. Other parts of the system, particularly the `ObjectManager` (from `@teskooano/renderer-threejs-objects`), can then query the `LightManager` to get information about the nearest or most influential light sources for a given object. This allows for dynamic and realistic lighting effects on planets, moons, and other bodies as they move through the system.
+The `LightManager` is instantiated by the main `ModularSpaceRenderer` and subscribes to the `renderableObjects$` stream from `@teskooano/core-state`. It automatically creates, updates, and removes `THREE.PointLight` instances based on `CelestialType.STAR` objects in the state.
+
+This reactive approach means that other parts of the system, such as celestial renderers, can get an up-to-date list of the most influential light sources for a given object simply by querying the `LightManager`. This allows for dynamic and realistic lighting effects on planets, moons, and other bodies as they move through the system.
 
 A key feature is its ability to manage a specific number of "star lights" and provide their data (color, intensity, position) in a structured way that can be passed to shaders.
 

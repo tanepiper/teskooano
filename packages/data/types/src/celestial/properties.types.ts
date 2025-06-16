@@ -23,6 +23,18 @@ export interface SpecificPropertiesBase {
 }
 
 /**
+ * Defines the system-wide lighting properties, usually attached to the primary star.
+ */
+export interface SystemLightingProperties {
+  /** The hex color of the ambient light in the system. */
+  ambientLightColor: string;
+  /** The intensity of the ambient light. */
+  ambientLightIntensity: number;
+  /** The intensity of the main star's light. */
+  starLightIntensity: number;
+}
+
+/**
  * Properties specific to Stars.
  */
 export interface StarProperties extends SpecificPropertiesBase {
@@ -49,6 +61,8 @@ export interface StarProperties extends SpecificPropertiesBase {
   whiteDwarfType?: WhiteDwarfType;
   /** Type for exotic stellar objects like neutron stars */
   exoticType?: ExoticStellarType;
+  /** Optional system-wide lighting properties, only present on the primary star. */
+  systemLighting?: SystemLightingProperties;
 }
 
 export interface PlanetAtmosphereProperties {

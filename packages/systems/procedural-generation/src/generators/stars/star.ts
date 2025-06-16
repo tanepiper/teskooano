@@ -3,6 +3,7 @@ import type {
   CelestialObject,
   OrbitalParameters,
   StarProperties,
+  SystemLightingProperties,
 } from "@teskooano/data-types";
 import {
   CelestialStatus,
@@ -179,7 +180,7 @@ export function generateStar(random: () => number): CelestialObject {
     realStarRadius * SCALE.SIZE * STAR_VISUAL_SCALE_MULTIPLIER;
 
   const starLuminosity = UTIL.calculateLuminosity(
-    starRadius_Solar,
+    realStarRadius,
     starTemperature,
   );
   let mainSpectralClass = UTIL.getSpectralClass(starTemperature);
@@ -213,6 +214,23 @@ export function generateStar(random: () => number): CelestialObject {
   } else {
     spectralClassString = mainSpectralClass as string;
   }
+
+  // --- System Lighting Properties ---
+  // Based on the primary star's characteristics.
+  // Clamp luminosity to a reasonable range for intensity calculation to avoid extreme values.
+  const clampedLuminosity = Math.max(0.1, Math.min(starLuminosity, 1000));
+  const starLightIntensity = 1.5 + Math.log1p(clampedLuminosity) * 2; // Log scale for less extreme variation
+  const ambientLightIntensity = Math.max(
+    0.2,
+    Math.min(starLightIntensity * 0.2, 0.8),
+  ); // Ambient is a fraction of star light, but with a floor.
+
+  const systemLighting: SystemLightingProperties = {
+    ambientLightColor: starColor,
+    ambientLightIntensity: parseFloat(ambientLightIntensity.toFixed(3)),
+    starLightIntensity: parseFloat(starLightIntensity.toFixed(2)),
+  };
+  // --- End System Lighting ---
 
   let correctedRadius = realStarRadius;
   let correctedRadius_Solar = starRadius_Solar;
@@ -248,8 +266,6 @@ export function generateStar(random: () => number): CelestialObject {
 
     const correctedVisualRadius =
       correctedRadius * SCALE.SIZE * STAR_VISUAL_SCALE_MULTIPLIER;
-
-    realStarRadius = correctedRadius;
     visualStarRadius = correctedVisualRadius;
   } else {
     console.warn(
@@ -257,29 +273,30 @@ export function generateStar(random: () => number): CelestialObject {
     );
   }
 
-  const starProperties: StarProperties = {
+  const properties: StarProperties = {
     type: CelestialType.STAR,
     isMainStar: true,
     spectralClass: spectralClassString,
-    mainSpectralClass: mainSpectralClass,
-    specialSpectralClass: specialSpectralClass,
-    luminosityClass: luminosityClass,
-    luminosity: chosenType === StellarType.BLACK_HOLE ? 0 : starLuminosity,
-    color: chosenType === StellarType.BLACK_HOLE ? "#000000" : starColor,
+    luminosity: starLuminosity,
+    color: starColor,
     stellarType: chosenType,
+    mainSpectralClass: mainSpectralClass as SpectralClass,
+    luminosityClass,
+    specialSpectralClass,
+    systemLighting,
   };
 
-  const star: CelestialObject = {
-    id: `star-${starName.toLowerCase()}`,
+  const starData: CelestialObject = {
+    id: `${properties.spectralClass}-${starName}`,
     name: starName,
     type: CelestialType.STAR,
     status: CelestialStatus.ACTIVE,
     parentId: undefined,
     realMass_kg: starMass,
-    realRadius_m: realStarRadius,
+    realRadius_m: correctedRadius,
     temperature: starTemperature,
     orbit: defaultStarOrbit,
-    properties: starProperties,
+    properties,
     physicsStateReal: {
       id: `star-${starName.toLowerCase()}`,
       mass_kg: starMass,
@@ -288,5 +305,5 @@ export function generateStar(random: () => number): CelestialObject {
     },
   };
 
-  return star;
+  return starData;
 }
