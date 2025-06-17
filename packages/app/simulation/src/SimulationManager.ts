@@ -1,30 +1,24 @@
 import {
   updateSimulation,
   vectorPool,
-  type SimulationStepResult,
   type DestructionEvent,
   type SimulationParameters,
+  type SimulationStepResult,
 } from "@teskooano/core-physics";
 import {
-  getSimulationState,
-  setSimulationState,
-  physicsSystemAdapter,
   celestialFactory,
+  getSimulationState,
+  physicsSystemAdapter,
+  setSimulationState,
 } from "@teskooano/core-state";
 import {
   CelestialObject,
   CelestialStatus,
   CelestialType,
+  OrbitUpdatePayload,
 } from "@teskooano/data-types";
+import { Observable, Subject, Subscription } from "rxjs";
 import * as THREE from "three";
-import { Subject, Subscription, Observable } from "rxjs";
-
-/**
- * Defines the payload for the orbit update event stream.
- */
-export interface OrbitUpdatePayload {
-  positions: Record<string, { x: number; y: number; z: number }>;
-}
 
 /**
  * Manages the overall simulation lifecycle, physics loop, state, and events.

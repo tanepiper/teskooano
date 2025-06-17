@@ -3,7 +3,7 @@ import {
   CelestialType,
   StarProperties,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/FormatUtils.js";
+import { FormatUtils } from "../utils/formatters";
 import { renderMainProperties } from "./common/render-helpers.js";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 
@@ -12,7 +12,7 @@ export class StarInfoComponent extends BaseCelestialInfoComponent {
     super("Loading star data...");
   }
 
-  protected render(celestial: CelestialObject): string {
+  protected renderDetails(celestial: CelestialObject): string {
     const starProps = celestial.properties as StarProperties;
 
     let spectralDescription = "";
@@ -30,7 +30,6 @@ export class StarInfoComponent extends BaseCelestialInfoComponent {
       : "N/A";
 
     return `
-      <h3>${celestial.name}</h3>
       <dl class="info-grid">
           <dt>Type:</dt><dd>Star</dd>
           ${starProps?.isMainStar ? `<dt>Main Star:</dt><dd>Yes</dd>` : ""}

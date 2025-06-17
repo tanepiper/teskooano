@@ -3,25 +3,25 @@ import type {
   PanelConfig,
   ToolbarRegistration,
 } from "@teskooano/ui-plugin";
-import { FocusControl } from "./view/FocusControl.view.js";
+import { CelestialHierarchy } from "./view/CelestialHierarchy.view.js";
 import TargetIcon from "@fluentui/svg-icons/icons/target_24_regular.svg?raw";
 import { CelestialRowComponent } from "./components/celestial-row/CelestialRow.component.js";
 
 const panelConfig: PanelConfig = {
-  componentName: "focus-control",
-  panelClass: FocusControl,
-  defaultTitle: "Focus Control",
+  componentName: "celestial-hierarchy",
+  panelClass: CelestialHierarchy,
+  defaultTitle: "Celestial Hierarchy",
 };
 
 const toolbarRegistration: ToolbarRegistration = {
   target: "engine-toolbar",
   items: [
     {
-      id: "focus-control-button",
+      id: "celestial-hierarchy-button",
       type: "panel",
-      title: "Focus Control",
+      title: "Celestial Hierarchy",
       iconSvg: TargetIcon,
-      componentName: "focus-control",
+      componentName: "celestial-hierarchy",
       behaviour: "toggle",
 
       initialPosition: {
@@ -36,15 +36,15 @@ const toolbarRegistration: ToolbarRegistration = {
 };
 
 /**
- * Plugin definition for the Focus Control panel.
+ * Plugin definition for the Celestial Hierarchy panel.
  *
- * Registers the FocusControl panel and its associated toolbar button
+ * Registers the CelestialHierarchy panel and its associated toolbar button
  * for selecting and focusing on celestial objects.
  */
 export const plugin: TeskooanoPlugin = {
-  id: "teskooano-focus-controls",
-  name: "Focus Controls",
-  description: "Provides the focus control panel and toolbar button.",
+  id: "teskooano-celestial-hierarchy",
+  name: "Celestial Hierarchy",
+  description: "Provides the celestial hierarchy panel and toolbar button.",
   panels: [panelConfig],
   toolbarRegistrations: [toolbarRegistration],
   functions: [],
@@ -58,4 +58,4 @@ export const plugin: TeskooanoPlugin = {
   ],
 };
 
-export { FocusControl };
+export { CelestialHierarchy };

@@ -1,6 +1,6 @@
-# Focus Control Plugin (`@teskooano/focus-controls`)
+# Celestial Hierarchy Plugin (`@teskooano/celestial-hierarchy`)
 
-Provides a standard UI panel (`FocusControl`) for listing celestial objects and allowing the user to select one to focus the camera on within an engine view panel (like `CompositeEnginePanel`).
+Provides a standard UI panel (`CelestialHierarchy`) for listing celestial objects and allowing the user to select one to focus the camera on within an engine view panel (like `CompositeEnginePanel`).
 
 ## Purpose
 
@@ -8,8 +8,8 @@ To offer a discoverable list of objects within the simulated system and provide 
 
 ## Features
 
-- **UI Panel:** Defines the `FocusControl` panel which renders a searchable/scrollable list of celestial objects.
-- **Toolbar Integration:** Registers a button on the `engine-toolbar` to open the focus control panel.
+- **UI Panel:** Defines the `CelestialHierarchy` panel which renders a searchable/scrollable list of celestial objects.
+- **Toolbar Integration:** Registers a button on the `engine-toolbar` to open the celestial hierarchy panel.
 - **State Interaction:**
   - The controller subscribes to the global `celestialObjectsStore` to populate its list.
   - The controller subscribes to the parent engine panel's view state to highlight the currently focused object.
@@ -19,22 +19,22 @@ To offer a discoverable list of objects within the simulated system and provide 
 
 ## Usage
 
-1.  **Registration:** The plugin is automatically registered when loaded via `loadAndRegisterPlugins` if `teskooano-focus-controls` is included in the `pluginConfig`.
-2.  **Toolbar Button:** A target icon will appear on toolbars associated with engine panels (specifically those targeted by `engine-toolbar`). Clicking this button opens the `FocusControl` panel, typically as a floating panel.
+1.  **Registration:** The plugin is automatically registered when loaded via `loadAndRegisterPlugins` if `teskooano-celestial-hierarchy` is included in the `pluginConfig`.
+2.  **Toolbar Button:** A target icon will appear on toolbars associated with engine panels (specifically those targeted by `engine-toolbar`). Clicking this button opens the `CelestialHierarchy` panel, typically as a floating panel.
 3.  **Panel Functionality:** The panel lists objects from the current simulation. Clicking an object triggers the associated engine view to focus its camera on that object.
 
 ## Implementation Details (MVC Architecture)
 
-The `focus-control` plugin follows the project's standard Model-View-Controller (MVC) architecture to ensure a clean separation of concerns.
+The `celestial-hierarchy` plugin follows the project's standard Model-View-Controller (MVC) architecture to ensure a clean separation of concerns.
 
-- **View (`view/FocusControl.view.ts`):**
+- **View (`view/CelestialHierarchy.view.ts`):**
 
-  - A "dumb" custom element (`<focus-control>`) that implements Dockview's `IContentRenderer`.
+  - A "dumb" custom element (`<celestial-hierarchy>`) that implements Dockview's `IContentRenderer`.
   - It is responsible only for creating its shadow DOM from an HTML template and querying for key element references (the list container, buttons).
-  - On construction, it instantiates the `FocusControlController`.
+  - On construction, it instantiates the `CelestialHierarchyController`.
   - It delegates all lifecycle methods (`connectedCallback`, `disconnectedCallback`, `init`) and user interactions to the controller.
 
-- **Controller (`controller/FocusControl.controller.ts`):**
+- **Controller (`controller/CelestialHierarchy.controller.ts`):**
 
   - This class contains all the business logic for the feature.
   - It receives element references from the View in its constructor.
@@ -46,7 +46,7 @@ The `focus-control` plugin follows the project's standard Model-View-Controller 
 - **Component (`components/celestial-row/`):**
   - **`CelestialRow.component.ts`**: A reusable custom element (`<celestial-row>`) that displays a single celestial object in the list.
   - It receives object data via attributes (`object-id`, `object-name`, etc.).
-  - It fires custom events (`focus-request`, `follow-request`) when its internal buttons are clicked, which are caught and handled by the `FocusControlController`.
+  - It fires custom events (`focus-request`, `follow-request`) when its internal buttons are clicked, which are caught and handled by the `CelestialHierarchyController`.
 
 This structure ensures that the view is simple and declarative, while all complex logic is encapsulated and managed within the dedicated controller, making the feature more robust and easier to maintain.
 

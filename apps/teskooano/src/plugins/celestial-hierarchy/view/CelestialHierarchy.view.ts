@@ -1,21 +1,24 @@
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
-import { FocusControlController } from "../controller/FocusControl.controller.js";
+import { CelestialHierarchyController } from "../controller/CelestialHierarchy.controller.js";
 import "../components/celestial-row/CelestialRow.component.js";
-import { template } from "./FocusControl.template.js";
+import { template } from "./CelestialHierarchy.template.js";
 
 /**
- * The view component for the focus control panel.
+ * The view component for the celestial hierarchy panel.
  *
- * This custom element (`<focus-control>`) is responsible for rendering the
- * panel's UI and delegating all logic to the `FocusControlController`.
+ * This custom element (`<celestial-hierarchy>`) is responsible for rendering the
+ * panel's UI and delegating all logic to the `CelestialHierarchyController`.
  * It implements Dockview's `IContentRenderer` to integrate with the panel system.
  */
-export class FocusControl extends HTMLElement implements IContentRenderer {
-  private controller!: FocusControlController;
+export class CelestialHierarchy
+  extends HTMLElement
+  implements IContentRenderer
+{
+  private controller!: CelestialHierarchyController;
 
   /**
-   * Creates an instance of the FocusControl view.
+   * Creates an instance of the CelestialHierarchy view.
    * Sets up the shadow DOM and instantiates the controller.
    */
   constructor() {
@@ -31,13 +34,13 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
 
     if (!treeListContainer || !resetButton || !clearButton) {
       console.error(
-        "[FocusControl] Critical elements not found in shadow DOM.",
+        "[CelestialHierarchy] Critical elements not found in shadow DOM.",
       );
       // Avoid creating controller if view is broken
       return;
     }
 
-    this.controller = new FocusControlController(
+    this.controller = new CelestialHierarchyController(
       this,
       treeListContainer,
       resetButton,
@@ -80,7 +83,7 @@ export class FocusControl extends HTMLElement implements IContentRenderer {
       this.controller?.setParentPanel(parent);
     } else {
       console.error(
-        `[FocusControl] Initialization did not provide a valid CompositeEnginePanel with an engineCameraManager.`,
+        `[CelestialHierarchy] Initialization did not provide a valid CompositeEnginePanel with an engineCameraManager.`,
         parameters.params,
       );
     }

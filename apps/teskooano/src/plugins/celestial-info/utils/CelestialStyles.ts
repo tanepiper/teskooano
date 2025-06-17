@@ -7,14 +7,28 @@ export const baseStyles = `
   color: var(--color-text-primary, #ddd);
   background-color: transparent;
 }
-h3 {
-  margin: 0 0 0.75rem 0;
-  font-size: var(--font-size-lg, 18px);
+.title-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-subtle, #444);
+  padding-bottom: 0.75rem;
+}
+.title-container celestial-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+.title-container h3 {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: var(--font-size-xl, 22px);
   color: var(--color-text-accent, #66d9ef);
   font-weight: 600;
-  border-bottom: 1px solid var(--color-border-subtle, #444);
-  padding-bottom: 0.5rem;
   letter-spacing: 0.5px;
+  flex-grow: 1;
 }
 .info-grid {
   display: grid;

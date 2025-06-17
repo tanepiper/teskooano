@@ -108,12 +108,13 @@ export class CelestialInfoController {
   ): void => {
     if (this._currentSelectedId) {
       const currentObject = allCelestials[this._currentSelectedId];
-      if (currentObject && currentObject.status !== CelestialStatus.DESTROYED) {
-        this._viewManager.renderInfo(currentObject);
-      } else if (!currentObject) {
+      if (!currentObject) {
         this._viewManager.showPlaceholder("Selected object data not found.");
         this._currentSelectedId = null;
-      } else {
+      } else if (
+        currentObject.status &&
+        currentObject.status === CelestialStatus.DESTROYED
+      ) {
         this._viewManager.showPlaceholder(
           `Object '${currentObject.name}' has been destroyed.`,
         );

@@ -4,7 +4,7 @@ import {
   OortCloudProperties,
   AU_METERS,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/FormatUtils.js";
+import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 
 export class OortCloudInfoComponent extends BaseCelestialInfoComponent {
@@ -12,10 +12,9 @@ export class OortCloudInfoComponent extends BaseCelestialInfoComponent {
     super("Loading Oort cloud data...");
   }
 
-  protected render(celestial: CelestialObject): string {
+  protected renderDetails(celestial: CelestialObject): string {
     const properties = celestial.properties as OortCloudProperties;
     return `
-      <h3>${celestial.name}</h3>
       <dl class="info-grid">
           <dt>Type:</dt><dd>Oort Cloud</dd>
           <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>

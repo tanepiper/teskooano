@@ -1,29 +1,35 @@
-import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
+import {
+  celestialObjects$,
+  getCelestialObjects,
+  renderableStore,
+} from "@teskooano/core-state";
 import {
   CelestialObject,
   CelestialStatus,
   CustomEvents,
+  METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
 import { Subscription } from "rxjs";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CameraManagerState } from "@teskooano/app-simulation";
-import type { FocusControl } from "../view/FocusControl.view.js";
+import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
 import { FocusListManager } from "./FocusListManager.js";
 import {
   handleFocusRequest,
   handleFollowRequest,
 } from "./focus-interactions.js";
+import * as THREE from "three";
 
 /**
- * Controller for the FocusControl view.
+ * Controller for the CelestialHierarchy view.
  *
  * This class encapsulates all the business logic for the focus control panel.
  * It manages the list of celestial objects, handles user interactions
  * (focus, follow, expand/collapse), and communicates with the parent
  * engine panel to control the camera.
  */
-export class FocusControlController {
-  private _view: FocusControl;
+export class CelestialHierarchyController {
+  private _view: CelestialHierarchy;
   private _treeListContainer: HTMLUListElement;
   private _resetButton: HTMLElement;
   private _clearButton: HTMLElement;
@@ -43,16 +49,17 @@ export class FocusControlController {
   private _celestialObjectsUnsubscribe: Subscription | null = null;
   private _cameraStateSubscription: Subscription | null = null;
   private _previousObjectsState: Record<string, CelestialObject> = {};
+  private _listUpdateInterval: number | null = null;
 
   /**
-   * Creates an instance of FocusControlController.
-   * @param view The FocusControl view instance this controller manages.
+   * Creates an instance of CelestialHierarchyController.
+   * @param view The CelestialHierarchy view instance this controller manages.
    * @param treeListContainer The UL element that will contain the object tree.
    * @param resetButton The button element to reset the camera view.
    * @param clearButton The button element to clear the camera focus.
    */
   constructor(
-    view: FocusControl,
+    view: CelestialHierarchy,
     treeListContainer: HTMLUListElement,
     resetButton: HTMLElement,
     clearButton: HTMLElement,
@@ -111,6 +118,11 @@ export class FocusControlController {
       "celestial-influences-changed",
       this._handleInfluencesChanged,
     );
+
+    this._listUpdateInterval = window.setInterval(
+      () => this.updateAndReorderList(),
+      500,
+    );
   }
 
   /**
@@ -126,6 +138,10 @@ export class FocusControlController {
     if (this._cameraStateSubscription) {
       this._cameraStateSubscription.unsubscribe();
       this._cameraStateSubscription = null;
+    }
+    if (this._listUpdateInterval) {
+      window.clearInterval(this._listUpdateInterval);
+      this._listUpdateInterval = null;
     }
     document.removeEventListener(
       "celestial-objects-loaded",
@@ -170,7 +186,7 @@ export class FocusControlController {
       this._updateHighlightInternal(initialState.focusedObjectId);
     } else {
       console.warn(
-        "[FocusControlController] Parent panel or its EngineCameraManager not available on setParentPanel.",
+        "[CelestialHierarchyController] Parent panel or its EngineCameraManager not available on setParentPanel.",
       );
       this._cameraStateSubscription?.unsubscribe();
       this._cameraStateSubscription = null;
@@ -220,19 +236,19 @@ export class FocusControlController {
         currentObject.status === CelestialStatus.ANNIHILATED
       ) {
         console.warn(
-          `[FocusControlController] ${event.type} ignored for inactive object ${objectId}.`,
+          `[CelestialHierarchyController] ${event.type} ignored for inactive object ${objectId}.`,
         );
         return;
       }
 
       if (event.type === CustomEvents.FOCUS_REQUEST) {
         console.debug(
-          `[FocusControlController] Focus requested via row event for: ${objectId}`,
+          `[CelestialHierarchyController] Focus requested via row event for: ${objectId}`,
         );
         this.requestFocus(objectId);
       } else if (event.type === CustomEvents.FOLLOW_REQUEST) {
         console.debug(
-          `[FocusControlController] Follow requested via row event for: ${objectId}`,
+          `[CelestialHierarchyController] Follow requested via row event for: ${objectId}`,
         );
         this.requestFollow(objectId);
       }
@@ -251,7 +267,7 @@ export class FocusControlController {
     );
     if (!success) {
       console.warn(
-        `[FocusControlController] handleFocusRequest failed for ${objectId}`,
+        `[CelestialHierarchyController] handleFocusRequest failed for ${objectId}`,
       );
     }
   }
@@ -278,7 +294,7 @@ export class FocusControlController {
       row?.toggleAttribute("following", true);
     } else {
       console.warn(
-        `[FocusControlController] handleFollowRequest failed for ${objectId}`,
+        `[CelestialHierarchyController] handleFollowRequest failed for ${objectId}`,
       );
     }
     return success;
@@ -293,12 +309,12 @@ export class FocusControlController {
   public publicFollowObject = (objectId: string): boolean => {
     if (!objectId) {
       console.warn(
-        "[FocusControlController] publicFollowObject called with no objectId.",
+        "[CelestialHierarchyController] publicFollowObject called with no objectId.",
       );
       return false;
     }
     console.debug(
-      `[FocusControlController] Public follow object called for: ${objectId}`,
+      `[CelestialHierarchyController] Public follow object called for: ${objectId}`,
     );
     return this.requestFollow(objectId);
   };
@@ -452,4 +468,88 @@ export class FocusControlController {
     this._previousObjectsState = { ...currentObjects };
     if (needsListUpdate) this._populateListInternal();
   };
+
+  /**
+   * Periodically updates the distance display for all visible celestial rows
+   * and reorders the lists based on distance from the parent.
+   */
+  private updateAndReorderList(): void {
+    if (!this._parentPanel) return;
+    const renderer = this._parentPanel.getRenderer();
+    if (!renderer) return;
+
+    const allObjects = getCelestialObjects();
+    if (Object.keys(allObjects).length === 0) return;
+
+    const origin = new THREE.Vector3(0, 0, 0);
+    const worldPosition = new THREE.Vector3();
+    const parentWorldPosition = new THREE.Vector3();
+    const SCENE_UNITS_TO_METERS = 1 / METERS_TO_SCENE_UNITS;
+
+    // First, update all distances and store them on the LI elements
+    const listItems =
+      this._treeListContainer.querySelectorAll<HTMLLIElement>("li[data-id]");
+    listItems.forEach((li) => {
+      const id = li.dataset.id;
+      if (!id) return;
+
+      const celestialObj = allObjects[id];
+      const sceneObject = renderer.objectManager.getObject(id);
+      if (!celestialObj || !sceneObject) return;
+
+      sceneObject.getWorldPosition(worldPosition);
+      let distanceMeters = 0;
+
+      const parentId = celestialObj.currentParentId ?? celestialObj.parentId;
+      if (parentId) {
+        const parentSceneObject = renderer.objectManager.getObject(parentId);
+        if (parentSceneObject) {
+          parentSceneObject.getWorldPosition(parentWorldPosition);
+          distanceMeters =
+            worldPosition.distanceTo(parentWorldPosition) *
+            SCENE_UNITS_TO_METERS;
+        }
+      } else {
+        // Fallback to distance from origin for root objects
+        distanceMeters =
+          worldPosition.distanceTo(origin) * SCENE_UNITS_TO_METERS;
+      }
+
+      li.dataset.distance = distanceMeters.toString();
+      const row = li.querySelector<any>("celestial-row");
+      if (row && typeof row.updateDistance === "function") {
+        row.updateDistance(distanceMeters);
+      }
+    });
+
+    // Now, reorder the children of each list (root and nested)
+    const listsToSort =
+      this._treeListContainer.querySelectorAll<HTMLUListElement>(
+        "ul#focus-tree-list, ul.nested",
+      );
+
+    listsToSort.forEach((list) => {
+      const currentChildren = Array.from(
+        list.querySelectorAll<HTMLLIElement>(":scope > li[data-id]"),
+      );
+
+      // Create a new array that can be sorted without affecting the live NodeList
+      const sortedChildren = [...currentChildren];
+      sortedChildren.sort((a, b) => {
+        const distA = parseFloat(a.dataset.distance ?? "0");
+        const distB = parseFloat(b.dataset.distance ?? "0");
+        return distA - distB;
+      });
+
+      // Check if the current DOM order matches the desired sorted order
+      const orderHasChanged = currentChildren.some(
+        (child, index) => child.dataset.id !== sortedChildren[index].dataset.id,
+      );
+
+      // Only manipulate the DOM if the order has actually changed
+      if (orderHasChanged) {
+        sortedChildren.forEach((child) => list.appendChild(child));
+      }
+    });
+  }
 }

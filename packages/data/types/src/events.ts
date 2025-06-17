@@ -1,4 +1,11 @@
 /**
+ * Defines the payload for the orbit update event stream.
+ */
+export interface OrbitUpdatePayload {
+  positions: Record<string, { x: number; y: number; z: number }>;
+}
+
+/**
  * A map of custom event names used throughout the application.
  * Using constants helps prevent typos and ensures consistency.
  */

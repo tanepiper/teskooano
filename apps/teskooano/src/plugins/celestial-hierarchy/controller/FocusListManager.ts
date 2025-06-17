@@ -3,6 +3,7 @@ import {
   CelestialStatus,
   CelestialType,
 } from "@teskooano/data-types";
+import { generateIconConfig } from "../../celestial-icons";
 
 /**
  * Manages the DOM representation of the celestial object list.
@@ -93,6 +94,10 @@ export class FocusListManager {
         row.setAttribute("object-id", obj.id);
         row.setAttribute("object-name", obj.name);
         row.setAttribute("object-type", obj.type);
+
+        const iconConfig = generateIconConfig(obj);
+        row.setAttribute("config", JSON.stringify(iconConfig));
+
         if (isInactive) row.setAttribute("inactive", "");
         if (isFocused) row.setAttribute("focused", "");
 

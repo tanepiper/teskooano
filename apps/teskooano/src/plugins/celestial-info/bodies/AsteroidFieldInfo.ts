@@ -4,7 +4,7 @@ import {
   AsteroidFieldProperties,
   AU_METERS,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/FormatUtils.js";
+import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 
 export class AsteroidFieldInfoComponent extends BaseCelestialInfoComponent {
@@ -12,11 +12,10 @@ export class AsteroidFieldInfoComponent extends BaseCelestialInfoComponent {
     super("Loading asteroid field data...");
   }
 
-  protected render(celestial: CelestialObject): string {
+  protected renderDetails(celestial: CelestialObject): string {
     const properties = celestial.properties as AsteroidFieldProperties;
 
     return `
-      <h3>${celestial.name}</h3>
       <dl class="info-grid">
           <dt>Type:</dt><dd>Asteroid Field</dd>
           <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>

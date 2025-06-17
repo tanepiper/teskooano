@@ -66,21 +66,24 @@ template.innerHTML = `
     gap: 6px;
   }
 
-  .celestial-icon {
-    width: 14px;
-    height: 14px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+  celestial-icon {
+    width: 28px;
+    height: 28px;
     flex-shrink: 0;
-    border-radius: 50%; /* Keep the round icon style */
-    /* Default background set via JS based on type */
   }
 
   .object-name {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-grow: 1;
+  }
+
+  .object-distance {
+    font-size: 0.9em;
+    color: var(--color-text-secondary, #aaa);
+    margin-left: 8px;
+    flex-shrink: 0;
   }
 
   .action-buttons {
@@ -101,14 +104,15 @@ template.innerHTML = `
 </style>
 
 <div class="icon-name-container">
-  <span id="icon" class="celestial-icon"></span>
+  <celestial-icon id="icon"></celestial-icon>
   <span id="name" class="object-name">Object Name</span>
+  <span id="distance" class="object-distance"></span>
 </div>
 <div class="action-buttons">
-  <teskooano-button size="sm" id="focus-btn" title="Focus Camera" appearance="stealth">
+  <teskooano-button size="xs" id="focus-btn" title="Focus Camera" appearance="stealth">
     <span slot="icon">${EyeIcon}</span>
   </teskooano-button>
-  <teskooano-button size="sm" id="follow-btn" title="Follow Object" appearance="stealth">
+  <teskooano-button size="xs" id="follow-btn" title="Follow Object" appearance="stealth">
     <span slot="icon">${PersonRunningFilledIcon}</span>
   </teskooano-button>
 </div>

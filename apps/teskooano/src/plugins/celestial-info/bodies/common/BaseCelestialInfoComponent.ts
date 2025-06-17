@@ -1,6 +1,7 @@
 import { CelestialObject } from "@teskooano/data-types";
 import { CelestialInfoComponent } from "../../utils/CelestialInfoInterface.js";
 import { baseStyles } from "../../utils/CelestialStyles.js";
+import { CelestialIconComponent } from "../../../celestial-icons/index.js";
 
 /**
  * An abstract base class for celestial info components.
@@ -33,7 +34,13 @@ export abstract class BaseCelestialInfoComponent
   public updateData(celestial: CelestialObject): void {
     if (!this.container) return;
     this.container.classList.remove("placeholder");
-    this.container.innerHTML = this.render(celestial);
+    this.container.innerHTML = `
+      <div class="title-container">
+        <celestial-icon object-id="${celestial.id}"></celestial-icon>
+        <h3>${celestial.name}</h3>
+      </div>
+      ${this.renderDetails(celestial)}
+    `;
   }
 
   /**
@@ -43,5 +50,5 @@ export abstract class BaseCelestialInfoComponent
    * @param celestial The celestial object to render.
    * @returns An HTML string to be injected into the component's container.
    */
-  protected abstract render(celestial: CelestialObject): string;
+  protected abstract renderDetails(celestial: CelestialObject): string;
 }

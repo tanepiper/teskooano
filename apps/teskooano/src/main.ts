@@ -4,11 +4,9 @@ import "./vite-env.d";
 
 import { getCelestialObjects } from "@teskooano/core-state";
 
-import { TourController } from "./core/interface/tour-controller";
-
 import {
-  pluginManager,
   PanelConfig,
+  pluginManager,
   TeskooanoPlugin,
 } from "@teskooano/ui-plugin";
 
@@ -16,9 +14,9 @@ import { pluginConfig } from "./config/pluginRegistry";
 import { pluginConfig as corePluginConfig } from "./core/config/pluginRegistry";
 
 import {
+  DockviewApi,
   IContentRenderer,
   PanelInitParameters,
-  DockviewApi,
 } from "dockview-core";
 
 interface AppContext {

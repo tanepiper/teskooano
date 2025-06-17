@@ -3,7 +3,7 @@ import {
   CelestialType,
   GasGiantProperties,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/FormatUtils.js";
+import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 import {
   renderAlbedo,
@@ -18,15 +18,14 @@ export class GasGiantInfoComponent extends BaseCelestialInfoComponent {
     super("Loading gas giant data...");
   }
 
-  protected render(celestial: CelestialObject): string {
+  protected renderDetails(celestial: CelestialObject): string {
     const giantProps = celestial.properties as GasGiantProperties;
 
     return `
-      <h3>${celestial.name}</h3>
       <dl class="info-grid">
           <dt>Type:</dt><dd>Gas Giant</dd>
           <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
-          <dt>Class:</dt><dd>${giantProps?.gasGiantClass ?? "N/A"}</dd>
+          <dt>Class:</dt><dd>${giantProps?.planetType ?? "N/A"}</dd>
           
           ${renderMainProperties(celestial)}
           

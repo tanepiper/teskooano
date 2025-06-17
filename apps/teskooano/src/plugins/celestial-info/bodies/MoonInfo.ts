@@ -3,7 +3,7 @@ import {
   CelestialType,
   PlanetProperties,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/FormatUtils.js";
+import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 import {
   renderAlbedo,
@@ -18,12 +18,11 @@ export class MoonInfoComponent extends BaseCelestialInfoComponent {
     super("Loading moon data...");
   }
 
-  protected render(celestial: CelestialObject): string {
+  protected renderDetails(celestial: CelestialObject): string {
     const moonProps = celestial.properties as PlanetProperties;
     const surface = moonProps?.surface;
 
     return `
-      <h3>${celestial.name}</h3>
       <dl class="info-grid">
           <dt>Type:</dt><dd>Moon</dd>
           <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>

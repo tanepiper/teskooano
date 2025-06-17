@@ -1,6 +1,9 @@
 import { CelestialType } from "@teskooano/data-types";
 import { template, iconStyles } from "./CelestialRow.template.js";
 import { CustomEvents } from "@teskooano/data-types";
+import { CelestialIconComponent } from "../../../celestial-icons";
+import { AU_METERS } from "@teskooano/data-types";
+import { FormatUtils } from "../../../celestial-info/utils/formatters";
 
 /**
  * A custom element to display a single row in the focus control list.
@@ -12,7 +15,8 @@ import { CustomEvents } from "@teskooano/data-types";
  *
  * @attr object-id - The unique ID of the celestial object.
  * @attr object-name - The display name of the celestial object.
- * @attr object-type - The type of the celestial object (e.g., 'Star', 'Planet').
+ * @attr object-type - The type of the celestial object (e.g., 'Star', 'Planet'), used for the hover tooltip.
+ * @attr {string} config - A JSON string representing the CelestialIconConfig.
  * @attr {boolean} inactive - When present, styles the row as inactive/disabled.
  * @attr {boolean} focused - When present, styles the row as the currently focused item.
  * @attr {boolean} following - When present, indicates the camera is following this object.
@@ -22,6 +26,7 @@ export class CelestialRowComponent extends HTMLElement {
     "object-id",
     "object-name",
     "object-type",
+    "config",
     "inactive",
     "focused",
     "following",
@@ -31,8 +36,9 @@ export class CelestialRowComponent extends HTMLElement {
   private _isInactive: boolean = false;
   private _isFocused: boolean = false;
 
-  private iconEl: HTMLElement | null = null;
+  private iconEl: CelestialIconComponent | null = null;
   private nameEl: HTMLElement | null = null;
+  private distanceEl: HTMLElement | null = null;
   private focusBtn: HTMLElement | null = null;
   private followBtn: HTMLElement | null = null;
 
@@ -44,8 +50,11 @@ export class CelestialRowComponent extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
-    this.iconEl = this.shadowRoot!.getElementById("icon");
+    this.iconEl = this.shadowRoot!.getElementById(
+      "icon",
+    ) as CelestialIconComponent;
     this.nameEl = this.shadowRoot!.getElementById("name");
+    this.distanceEl = this.shadowRoot!.getElementById("distance");
     // focusBtn and followBtn will be initialized in connectedCallback
   }
 
@@ -105,6 +114,9 @@ export class CelestialRowComponent extends HTMLElement {
         this.updateName(newValue);
         break;
       case "object-type":
+        this.title = `Type: ${newValue}`;
+        break;
+      case "config":
         this.updateIcon(newValue);
         break;
       case "inactive":
@@ -154,14 +166,12 @@ export class CelestialRowComponent extends HTMLElement {
   }
 
   /**
-   * Updates the icon style based on the object's type.
-   * @param type The celestial object type.
+   * Updates the icon by passing the config to the celestial-icon component.
+   * @param configJson The celestial icon configuration as a JSON string.
    */
-  private updateIcon(type: string | null) {
-    const iconEl = this.shadowRoot!.getElementById("icon");
-    if (iconEl) {
-      iconEl.style.cssText =
-        iconStyles[type as CelestialType] || iconStyles.default;
+  private updateIcon(configJson: string | null) {
+    if (this.iconEl && configJson) {
+      this.iconEl.setAttribute("config", configJson);
     }
   }
 
@@ -198,6 +208,17 @@ export class CelestialRowComponent extends HTMLElement {
       );
     }
   };
+
+  /**
+   * Updates the displayed distance from the system origin.
+   * @param distanceInMeters The distance in meters.
+   */
+  public updateDistance(distanceInMeters: number) {
+    if (this.distanceEl) {
+      this.distanceEl.textContent =
+        FormatUtils.formatDistanceAdaptive(distanceInMeters);
+    }
+  }
 
   get objectId(): string | null {
     return this._objectId;
