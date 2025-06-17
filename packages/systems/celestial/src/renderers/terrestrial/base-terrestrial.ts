@@ -117,20 +117,21 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
 
     const color = this.materialService.getBaseColor(object);
     let billboardDistance: number;
-
+    let size: number;
     if (object.type === CelestialType.MOON) {
-      // For moons, use a fixed distance in meters, as requested.
-      // 2500 Mm = 2,500,000 km = 2,500,000,000 meters
+      // 75 = 75,000,000 meters, this is correct
+      size = 0.01;
       const MOON_BILLBOARD_DISTANCE_M = 75;
       billboardDistance = MOON_BILLBOARD_DISTANCE_M / scale;
     } else {
+      size = 0.02;
       // For planets, use the existing scaling logic
       billboardDistance = 1000 * scale;
     }
 
     const level2 = this._createBillboardLOD(object, {
       distance: billboardDistance,
-      size: 0.01, // Terrestrials should be small pinpoints
+      size,
       color: color,
     });
 
