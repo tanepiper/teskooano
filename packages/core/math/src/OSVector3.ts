@@ -94,6 +94,22 @@ export class OSVector3 {
   }
 
   /**
+   * Divides this vector by a scalar value.
+   * @param scalar - The scalar value.
+   * @returns This vector for chaining.
+   */
+  divideScalar(scalar: number): this {
+    if (scalar !== 0) {
+      this.x /= scalar;
+      this.y /= scalar;
+      this.z /= scalar;
+    } else {
+      this.set(0, 0, 0);
+    }
+    return this;
+  }
+
+  /**
    * Calculates the squared length (magnitude squared) of this vector.
    * Avoids a square root calculation, useful for comparisons.
    * @returns The squared length.

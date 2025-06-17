@@ -222,10 +222,12 @@ export class OrbitsManager {
 
       // Only show prediction for highlighted object
       if (this.highlightedObjectId) {
-        this.predictionManager.updatePrediction(
-          this.highlightedObjectId,
-          shouldUpdatePredictions,
-        );
+        this.predictionManager.updatePrediction(this.highlightedObjectId, {
+          forceRecalculate: shouldUpdatePredictions,
+          timeScale: visualSettings.timeScale,
+          predictionSteps: visualSettings.predictionSteps,
+          predictionDuration: visualSettings.predictionDuration,
+        });
         this.predictionManager.highlightPrediction(this.highlightedObjectId);
       } else {
         this.predictionManager.highlightPrediction(null);
@@ -297,7 +299,15 @@ export class OrbitsManager {
     } else {
       // Clear highlighting
       if (this.currentMode === VisualizationMode.Verlet) {
+        this.trailManager.setHighlightedObject(null);
         this.predictionManager.highlightPrediction(null);
+      } else if (this.currentMode === VisualizationMode.Keplerian) {
+        if (previouslyHighlightedId) {
+          this.keplerianManager.resetPreviousHighlight(
+            previouslyHighlightedId,
+            null,
+          );
+        }
       }
     }
   }

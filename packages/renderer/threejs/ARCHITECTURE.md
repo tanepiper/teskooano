@@ -46,9 +46,12 @@ graph TD
         LODManager
     end
 
-    subgraph "Interaction (@teskooano/renderer-threejs-interaction)"
+    subgraph "Controls (@teskooano/renderer-threejs-controls)"
         ControlsManager
-        CSS2DManager
+    end
+
+    subgraph "Labels (@teskooano/renderer-threejs-labels)"
+        Layer2DManager["Layer2DManager"]
     end
 
     AppUI -- "Instantiates" --> MSR;
@@ -60,7 +63,7 @@ graph TD
     MSR -- "Instantiates & Coordinates" --> OrbitMgr;
     MSR -- "Instantiates & Coordinates" --> BgMgr;
     MSR -- "Instantiates & Coordinates" --> ControlsManager;
-    MSR -- "Instantiates & Coordinates" --> CSS2DManager;
+    MSR -- "Instantiates & Coordinates" --> Layer2DManager;
     MSR -- "Instantiates & Coordinates" --> LightManager;
     MSR -- "Instantiates & Coordinates" --> LODManager;
 
@@ -75,10 +78,10 @@ graph TD
     RP -- "Updates" --> ControlsManager;
     RP -- "Updates" --> LODManager;
     RP -- "Renders via" --> SceneManager;
-    RP -- "Renders via" --> CSS2DManager;
+    RP -- "Renders via" --> Layer2DManager;
 
     ObjMgr -- "Uses" --> LightManager;
-    ObjMgr -- "Uses" --> CSS2DManager;
+    ObjMgr -- "Uses" --> Layer2DManager;
     ObjMgr -- "Registers with" --> LODManager;
 
     LODManager -- "Uses Camera from" --> SceneManager;

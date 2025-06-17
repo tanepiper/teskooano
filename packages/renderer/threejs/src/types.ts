@@ -41,6 +41,12 @@ export interface RendererVisualSettings {
   trailLengthMultiplier: number;
   /** The physics engine currently used for orbital calculations. */
   physicsEngine: "keplerian" | "verlet";
+  /** The time scale for the simulation. */
+  timeScale: number;
+  /** The number of steps for the simulation. */
+  predictionSteps: number;
+  /** The duration of the prediction in seconds. */
+  predictionDuration: number;
 }
 
 /**
@@ -97,3 +103,15 @@ export interface RenderPipelineOptions {
  * Defines a function that can be invoked from the console
  */
 export type RenderCallback = () => void;
+
+/**
+ * Defines the quality levels for trail rendering, which determines the
+ * maximum number of points in a smoothed trail.
+ */
+export enum TrailQuality {
+  Low = "Low",
+  Med = "Med",
+  High = "High",
+  Ultra = "Ultra",
+  Cosmic = "Cosmic",
+}

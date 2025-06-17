@@ -6,19 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `LODManager` now adjusts LOD distances based on the global `performanceProfile` from `simulationState$`.
-- The `LODManager` no longer contains internal logic for building LOD meshes or calculating distances. It now relies on `CelestialRenderer` instances to provide pre-defined `LODLevel` arrays.
-- Refactored tests to align with the current `LODManager` API.
+- `LODManager` now subscribes to `simulationState$` to get the current `performanceProfile` (`low`, `medium`, 'high'). This profile is used to apply a scaling factor to the distances of **newly created** LODs.
+- All `THREE.LOD` objects are now created via a central `createAndRegisterLOD` method in `LODManager`, which ensures consistency.
+- Debug labels (`lod-debug-labels.ts`) have been improved to show more information and handle removal more cleanly.
 
 ### Removed
 
-- Removed the obsolete `LightManager` and `EffectsManager` facade class. The package now exports only `LODManager`.
-- Removed obsolete helper functions for building LOD meshes and calculating distances.
-
-## [0.1.0] - 2025-04-24
-
-### Added
-
-- Initial release of the `@teskooano/renderer-threejs-lod` package.
-- `LODManager`: Manages Level of Detail for scene objects using `THREE.LOD`.
-- Debug visualization for LOD levels and distances.
+- Removed the obsolete `LightManager`

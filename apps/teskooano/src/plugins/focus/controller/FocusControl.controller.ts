@@ -159,6 +159,10 @@ export class FocusControlController {
         .getCameraState$()
         .subscribe((state: CameraManagerState) => {
           this._updateHighlightInternal(state.focusedObjectId);
+
+          if (this._currentFollowedId && !state.followedObjectId) {
+            this._parentPanel?.orbitManager?.highlightVisualization(null);
+          }
         });
       const initialState = this._parentPanel.engineCameraManager
         .getCameraState$()
@@ -262,6 +266,8 @@ export class FocusControlController {
     const success = handleFollowRequest(this._parentPanel, objectId);
 
     if (success) {
+      this._parentPanel?.orbitManager?.highlightVisualization(objectId);
+
       this._currentFollowedId = objectId;
       this._treeListContainer
         ?.querySelectorAll(`celestial-row[following]`)
@@ -408,6 +414,7 @@ export class FocusControlController {
         this._parentPanel?.engineCameraManager?.clearFocus();
       }
       if (isInactive && this._currentFollowedId === objectId) {
+        this._parentPanel?.orbitManager?.highlightVisualization(null);
         this._currentFollowedId = null;
         const row = this._treeListContainer?.querySelector(
           `celestial-row[object-id="${objectId}"]`,

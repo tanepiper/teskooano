@@ -3,21 +3,23 @@ import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineBuilder } from "../utils/LineBuilder";
+import { OSVector3 } from "@teskooano/core-math";
 import { CircularBuffer } from "../utils/CircularBuffer";
+import { simplifyPath } from "../utils/simplify";
+import { TrailQuality } from "@teskooano/renderer-threejs";
 
 /**
  * Manages the creation and updating of trail lines showing an object's recent path.
  *
- * Trail lines display the recent historical positions of celestial objects to
- * visualize their movement trajectory over time.
+ * This manager offloads the storage and management of position history to a
+ * Web Worker to keep the main render thread as light as possible.
  */
 export class TrailManager {
   /** Map storing trail lines, keyed by celestial object ID */
   public trailLines: Map<string, THREE.Line> = new Map();
 
-  /** Position history for each object */
-  private positionHistory: Map<string, CircularBuffer<THREE.Vector3>> =
-    new Map();
+  /** Web worker for handling trail history. */
+  private trailWorker: Worker | null = null;
 
   /** Line builder utility for efficient line creation and updates */
   private lineBuilder: LineBuilder;
@@ -34,6 +36,9 @@ export class TrailManager {
   /** Flag indicating if trail visualization is enabled */
   private visualizationVisible: boolean = true;
 
+  /** The quality setting for smoothed trails. */
+  private trailQuality: TrailQuality = TrailQuality.High;
+
   /**
    * Creates a new TrailManager instance.
    *
@@ -42,6 +47,32 @@ export class TrailManager {
   constructor(objectManager: ObjectManager) {
     this.objectManager = objectManager;
     this.lineBuilder = new LineBuilder();
+    this.initializeWorker();
+  }
+
+  private initializeWorker(): void {
+    this.trailWorker = new Worker(
+      new URL("./trail.worker.ts", import.meta.url),
+      { type: "module" },
+    );
+
+    this.trailWorker.onmessage = (
+      e: MessageEvent<{
+        objectId: string;
+        points: [number, number, number][];
+        maxHistoryLength: number;
+      }>,
+    ) => {
+      const { objectId, points, maxHistoryLength } = e.data;
+      const pointsTHREE = points.map(
+        (p) => new THREE.Vector3(p[0], p[1], p[2]),
+      );
+      this.drawTrailLine(objectId, pointsTHREE, maxHistoryLength);
+    };
+
+    this.trailWorker.onerror = (e) => {
+      console.error("Error from trail worker:", e);
+    };
   }
 
   /**
@@ -58,25 +89,38 @@ export class TrailManager {
     maxHistoryLength: number,
     updateGeometry: boolean,
   ): void {
-    // Get or initialize position history for this object
-    let history = this.positionHistory.get(objectId);
-    if (!history) {
-      history = new CircularBuffer<THREE.Vector3>(maxHistoryLength);
-      this.positionHistory.set(objectId, history);
+    if (!this.trailWorker) return;
+
+    // Throttle updates by only sending data when updateGeometry is true
+    if (updateGeometry) {
+      this.trailWorker.postMessage({
+        type: "update",
+        objectId,
+        position: object.position.toArray(),
+        maxHistoryLength,
+        quality: this.trailQuality,
+      });
     }
 
-    // Ensure the buffer has the correct capacity
-    if (history.capacity !== maxHistoryLength) {
-      history.resize(maxHistoryLength);
+    // Ensure the line is visible if it exists
+    const line = this.trailLines.get(objectId);
+    if (line) {
+      line.visible = this.visualizationVisible;
+      this.applyHighlight(objectId, line);
     }
+  }
 
-    // Add current position to history
-    history.push(object.position.clone());
-
+  private drawTrailLine(
+    objectId: string,
+    points: THREE.Vector3[],
+    maxHistoryLength: number,
+  ): void {
     let line = this.trailLines.get(objectId);
     const requiredBufferSize = Math.max(1, maxHistoryLength);
+    let isNewLine = false;
 
     if (!line) {
+      isNewLine = true;
       const material = SharedMaterials.clone("TRAIL");
       line = this.lineBuilder.createLine(
         requiredBufferSize,
@@ -88,21 +132,52 @@ export class TrailManager {
       this.objectManager.addRawObjectToScene(line);
       this.trailLines.set(objectId, line);
     } else {
-      // Ensure buffer capacity is sufficient
       this.lineBuilder.resizeLineBuffer(line, requiredBufferSize);
     }
 
-    // Update the line with current history points
-    if (updateGeometry || !line.visible) {
-      const pointsToDraw = history.getOrderedItems();
-      this.lineBuilder.updateLine(line, pointsToDraw, pointsToDraw.length);
+    // Only update geometry if there are points to draw
+    if (points.length > 0) {
+      this._updateLineGeometryFromVectors(line, points);
     }
 
-    // Update visibility
     line.visible = this.visualizationVisible;
+    this.trailLines.forEach((_, id) => {
+      this.applyHighlight(id, line);
+    });
+  }
 
-    // Apply highlighting if needed
-    this.applyHighlight(objectId, line);
+  private _updateLineGeometryFromVectors(
+    line: THREE.Line,
+    points: THREE.Vector3[],
+  ): void {
+    const geometry = line.geometry;
+    const positionAttribute = geometry.attributes
+      .position as THREE.BufferAttribute;
+    const positions = positionAttribute.array as Float32Array;
+
+    const numPointsToDraw = Math.min(points.length, positionAttribute.count);
+
+    for (let i = 0; i < numPointsToDraw; i++) {
+      const point = points[i];
+      const offset = i * 3;
+      positions[offset] = point.x;
+      positions[offset + 1] = point.y;
+      positions[offset + 2] = point.z;
+    }
+
+    // If there are fewer points than the buffer capacity, fill the rest with the last point
+    if (numPointsToDraw > 0 && numPointsToDraw < positionAttribute.count) {
+      const lastPoint = points[numPointsToDraw - 1];
+      for (let i = numPointsToDraw; i < positionAttribute.count; i++) {
+        const offset = i * 3;
+        positions[offset] = lastPoint.x;
+        positions[offset + 1] = lastPoint.y;
+        positions[offset + 2] = lastPoint.z;
+      }
+    }
+
+    positionAttribute.needsUpdate = true;
+    geometry.setDrawRange(0, numPointsToDraw);
   }
 
   /**
@@ -116,7 +191,7 @@ export class TrailManager {
       this.lineBuilder.disposeLine(line);
       this.trailLines.delete(objectId);
     }
-    this.positionHistory.delete(objectId);
+    this.trailWorker?.postMessage({ type: "remove", objectId });
   }
 
   /**
@@ -176,11 +251,12 @@ export class TrailManager {
    * Disposes of all resources used by the TrailManager.
    */
   dispose(): void {
+    this.trailWorker?.postMessage({ type: "clear-all" });
+    this.trailWorker?.terminate();
     this.trailLines.forEach((line, objectId) => {
       this.removeTrail(objectId);
     });
     this.trailLines.clear();
-    this.positionHistory.clear();
   }
 
   /**
@@ -189,8 +265,17 @@ export class TrailManager {
    * @param maxHistoryLength The new maximum length for the history buffer.
    */
   limitHistoryMemory(maxHistoryLength: number): void {
-    this.positionHistory.forEach((buffer) => {
-      buffer.resize(maxHistoryLength);
+    this.trailWorker?.postMessage({
+      type: "set-history-limit",
+      maxHistoryLength,
     });
+  }
+
+  /**
+   * Sets the quality level for smoothed trail rendering.
+   * @param quality The desired trail quality level.
+   */
+  setTrailQuality(quality: TrailQuality): void {
+    this.trailQuality = quality;
   }
 }

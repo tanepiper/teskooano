@@ -4,55 +4,64 @@ This package provides a component-based system for managing dynamic, emissive li
 
 ## Features
 
-- **`LightingManager`**: Manages a registry of `LightSourceComponent` instances. It can be queried to find the most influential lights for any object in the scene.
-- **`LightSourceComponent`**: A component that wraps a `THREE.Light` and ties it to a `RenderableCelestialObject`, keeping its position and properties synchronized.
+- **`LightingManager`**: A central registry for all dynamic light sources in the scene.
+- **`LightSourceComponent`**: A wrapper that links a `THREE.Light` instance to a moving `RenderableCelestialObject`.
+- **Performant Lookups**: Provides a `getInfluentialLights()` method to efficiently find the most relevant lights for any object in the scene, which is crucial for shader-based lighting calculations.
 
 ## Architecture
 
-This package provides one main manager class, `LightingManager`, and a component class, `LightSourceComponent`. It is designed to be used by a renderer integrator, such as `@teskooano/renderer-threejs`. The `LightingManager` acts as a central registry, while renderers for specific celestial objects (like stars) are responsible for creating and registering `LightSourceComponent` instances.
+The system is designed to be explicit and lightweight. A consumer (like `@teskooano/renderer-threejs-objects`) is responsible for creating `LightSourceComponent` instances for any object that should emit light (e.g., a star) and registering them with the `LightingManager`.
 
-For more details, see the `ARCHITECTURE.md` file.
+For a more detailed explanation of the design, see the [ARCHITECTURE.md](./ARCHITECTURE.md) file.
 
 ## Usage
 
-This package is used internally by the main `@teskooano/renderer-threejs` package. A simplified example of how it might be used is shown below:
+This package is designed to be used by an integrator package like `@teskooano/renderer-threejs`. The `LightingManager` is instantiated and its `update` method is called on every frame of the render loop.
 
 ```typescript
+// In a renderer or object manager class
+
 import {
   LightingManager,
   LightSourceComponent,
 } from "@teskooano/renderer-threejs-lighting";
-import { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 
-// Assume a scene is initialized
+// --- Initialization ---
 const scene = new THREE.Scene();
-
-// 1. Instantiate the manager
 const lightingManager = new LightingManager(scene);
 
-// 2. A celestial renderer (e.g., for a star) creates a light source component
-//    for its specific celestial object.
-const myStarObject: RenderableCelestialObject = getMyStar(); // (get a renderable object)
-const starLightComponent = new LightSourceComponent(myStarObject);
+// --- Object Creation (e.g., when a star is created) ---
+// (object is a RenderableCelestialObject representing the star)
+const starObject: RenderableCelestialObject = getStarData();
+const lightSource = new LightSourceComponent(starObject);
+lightingManager.register(lightSource);
 
-// 3. The celestial renderer registers the component with the manager.
-lightingManager.register(starLightComponent);
-
+// --- In the Render Loop / Pipeline ---
 function animate() {
   requestAnimationFrame(animate);
 
-  // 4. The lighting manager updates all registered components each frame.
+  // Must be called every frame to update light positions
   lightingManager.update();
 
-  // 5. Another object's renderer can now query for influential lights.
-  const myPlanetObject: RenderableCelestialObject = getMyPlanet();
-  const influentialLights =
-    lightingManager.getInfluentialLights(myPlanetObject);
-  // ...use these lights in the planet's shader...
-
-  renderer.render(scene, camera);
+  // --- Example: A planet renderer needs to find its light source ---
+  const planetObject: RenderableCelestialObject = getPlanetData();
+  const influentialLights = lightingManager.getInfluentialLights(
+    planetObject,
+    1,
+  );
+  if (influentialLights.length > 0) {
+    const primaryLight = influentialLights[0];
+    // Pass light position, color, etc., to planet's shader uniforms
+  }
 }
 
-animate();
+// --- Object Destruction ---
+lightingManager.unregister(starObject.celestialObjectId);
 ```
+
+## Core Components
+
+- **`LightingManager`:** The registry class for all light sources. It adds/removes lights from the scene and provides the `getInfluentialLights` query method.
+- **`LightSourceComponent`**: A component that wraps a `THREE.Light` and keeps its position synchronized with a `RenderableCelestialObject`.

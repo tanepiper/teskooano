@@ -1,57 +1,53 @@
 # @teskooano/renderer-threejs-orbits
 
-This package provides visualization of orbital paths using Three.js for the Teskooano space simulation engine.
+This package is responsible for all orbit visualization within the Teskooano engine.
 
 ## Features
 
-- **Keplerian Orbits**: Renders static, idealized elliptical paths based on orbital parameters.
-- **Verlet-based Trajectories**:
-  - **Trails**: Shows the recent, historical path of an object.
-  - **Predictions**: Shows the predicted future path for a selected object based on physics calculations.
-- **Dynamic Mode Switching**: Seamlessly toggle between Keplerian and Verlet visualization modes.
-- **Memory-Efficient**: Uses buffer pooling and shared materials to minimize resource consumption.
+- **Dual Visualization Modes**: Dynamically switches between two modes to match the active physics engine:
+  - **Keplerian Mode**: Renders precise, analytical orbital ellipses based on an object's orbital parameters.
+  - **Verlet Mode**: Renders numerically-integrated paths, including historical trails and predicted future trajectories.
+- **Centralized Management**: An `OrbitsManager` orchestrates all orbit-related rendering.
+- **Highlighting**: Supports highlighting the orbit of a specific object.
+- **Performance-Optimized**: Uses shared materials and efficient buffer management to minimize performance overhead.
 
 ## Architecture
 
-The package is orchestrated by a central `OrbitsManager` which delegates tasks to specialized sub-managers for each visualization type (`KeplerianManager`, `TrailManager`, `PredictionManager`). This provides a clean separation of concerns.
+The package uses a **Strategy Pattern**, where the `OrbitsManager` acts as the main context. It switches between different visualization strategies (`KeplerianManager` vs. a combination of `TrailManager` and `PredictionManager`) based on the simulation's active physics engine state. This keeps the rendering logic decoupled and allows for easy expansion.
 
-For a detailed explanation of the design, see the [ARCHITECTURE.md](./ARCHITECTURE.md) file.
+For a complete breakdown and a component diagram, please see the `ARCHITECTURE.md` file.
 
 ## Usage
 
-The `OrbitsManager` is typically instantiated and managed by a higher-level renderer class.
+This package is an internal dependency of `@teskooano/renderer-threejs`. The main `ModularSpaceRenderer` instantiates the `OrbitsManager` and calls its `updateAllVisualizations()` method from the main render pipeline. It is not designed to be used directly by the application.
 
 ```typescript
-import {
-  OrbitsManager,
-  VisualizationMode,
-} from "@teskooano/renderer-threejs-orbits";
-import { SceneManager } from "@teskooano/renderer-threejs-core";
-import * as THREE from "three";
+// Simplified conceptual usage inside ModularSpaceRenderer
+
+import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
+import { renderableStore } from "@teskooano/core-state";
+import { stateAdapter } from "./RendererStateAdapter"; // Assuming stateAdapter is available
 
 // --- Initialization ---
-const sceneManager = new SceneManager(new THREE.Scene());
-const orbitsManager = new OrbitsManager(sceneManager);
+const orbitsManager = new OrbitsManager(
+  this.objectManager, // Assumes an ObjectManager instance
+  this.stateAdapter,
+  renderableStore.renderableObjects$,
+);
 
-// --- In the Render Loop ---
+// --- In the Render Loop / Pipeline ---
 function animate() {
-  requestAnimationFrame(animate);
-
-  // The OrbitsManager's update method handles all orbit-related updates
-  orbitsManager.update();
+  // This single call triggers updates for the currently active orbit strategy
+  orbitsManager.updateAllVisualizations();
 }
 
-// --- Interacting with the Manager ---
+// --- Changing Visualization Mode ---
+// The OrbitsManager automatically listens for changes from the RendererStateAdapter
+// and switches its internal strategy. No direct call is needed.
 
-// Toggle between Keplerian and Verlet modes
-orbitsManager.setVisualizationMode(VisualizationMode.Keplerian);
-orbitsManager.setVisualizationMode(VisualizationMode.Verlet);
-
-// Toggle orbit visibility on and off
-orbitsManager.toggleVisualization();
-
-// Highlight the orbit/path for a specific object
-orbitsManager.highlightVisualization("celestialObjectId");
+// --- Highlighting an orbit ---
+orbitsManager.highlightVisualization("earth"); // Highlight Earth's orbit
+orbitsManager.highlightVisualization(null); // Clear highlight
 
 // --- Cleanup ---
 orbitsManager.dispose();

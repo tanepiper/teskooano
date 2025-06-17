@@ -27,7 +27,6 @@ export function createGasGiantMesh(
   object: RenderableCelestialObject,
   deps: CreateGasGiantMeshDeps,
 ): THREE.Object3D {
-  console.log("object", object);
   const properties = object.properties as GasGiantProperties | undefined;
   const rendererKey = properties?.planetType;
 

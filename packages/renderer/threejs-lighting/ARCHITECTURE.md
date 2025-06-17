@@ -1,38 +1,66 @@
-## Architecture: `@teskooano/renderer-threejs-lighting`
+# Architecture: `@teskooano/renderer-threejs-lighting`
 
-This package provides a component-based system for managing dynamic, emissive light sources within the Teskooano Three.js rendering pipeline. Its primary purpose is to handle lights that represent stars, which are the main sources of illumination for other celestial objects.
+This document outlines the architecture for the `threejs-lighting` package, which provides lighting management for the Teskooano renderer.
 
-### Core Components
+## Overview
 
-- **`LightingManager`**: A centralized manager that maintains a registry of all active `LightSourceComponent` instances in the scene. It is responsible for orchestrating updates and providing other systems with a way to query for influential lights. There should be one `LightingManager` per scene.
+The package has been significantly refactored to follow a simpler, more direct management pattern. The previous state-driven, automatic `LightManager` has been replaced by a lean `LightingManager` that acts as a registry. This shifts the responsibility of creating and managing light sources to the consumer (typically the `@teskooano/renderer-threejs-objects` package), making the lighting system more explicit and easier to control.
 
-- **`LightSourceComponent`**: A wrapper around a `THREE.Light` instance (typically a `THREE.PointLight`). Each component is tied to a specific `RenderableCelestialObject` and is responsible for keeping the light's position and properties in sync with the object it represents.
+The core of the package consists of two main components:
 
-### How it works
+1.  **`LightingManager`**: A registry that holds all active `LightSourceComponent` instances in the scene. Its primary responsibility is to provide a performant way to query for the most influential lights affecting a specific object.
+2.  **`LightSourceComponent`**: A wrapper that associates a `THREE.Light` instance with a `RenderableCelestialObject`. It's responsible for updating the light's position to match its associated object.
 
-The `LightingManager` is instantiated by the main `ModularSpaceRenderer`. Other parts of the system, specifically the renderers for emissive objects like stars (`BaseStarRenderer`), create a `LightSourceComponent` and `register()` it with the `LightingManager`.
+## Data Flow and Responsibilities
 
-This imperative approach allows celestial renderers to control whether they emit light. The `LightingManager` can then be queried by any other renderer (e.g., for a planet) to get a list of the most influential light sources for that object, calculated based on distance and intensity. This enables dynamic and realistic lighting effects as celestial bodies move through the system.
+The `ObjectManager` (or another consumer) is responsible for the lifecycle of lights. When it creates a mesh for a star, it also creates a corresponding `LightSourceComponent` and registers it with the `LightingManager`. When a star is removed, the `ObjectManager` unregisters the component.
 
-This manager is **not** responsible for the visual representation of objects at a distance (e.g., showing a planet as a dot of light at low LOD). That logic belongs within the individual celestial renderers themselves.
+Other renderers (e.g., for planets or ships) can then query the `LightingManager`'s `getInfluentialLights()` method to find the closest light sources for their shader calculations.
 
-### Mermaid Diagram
+### Interaction Diagram
 
 ```mermaid
 graph TD
-    subgraph "Main Renderer"
-        A[ModularSpaceRenderer] --> B((LightingManager))
+    subgraph "@teskooano/renderer-threejs-objects"
+        OM[ObjectManager]
     end
 
-    subgraph "Celestial Rendering"
-        C(StarRenderer) -- creates & registers --> D(LightSourceComponent)
+    subgraph "@teskooano/renderer-threejs-lighting"
+        LM(LightingManager)
+        LSC(LightSourceComponent)
     end
 
-    subgraph "Lighting System"
-       B -. registers .-> D
+    subgraph "three.js"
+        L[THREE.Light]
+        S[THREE.Scene]
     end
 
-    subgraph "Celestial Rendering"
-        E(PlanetRenderer) -- "gets influential lights for object" --> B
+    subgraph "Other Renderers (e.g., PlanetRenderer)"
+        PR[PlanetRenderer]
     end
+
+    OM -- "Creates" --> LSC;
+    OM -- "Registers" --> LM;
+    OM -- "Unregisters" --> LM;
+
+    LSC -- "Wraps" --> L;
+    LM -- "Adds/Removes from" --> S;
+    L -- "Attached to" --> S;
+
+    PR -- "Queries for lights" --> LM;
+    LM -- "getInfluentialLights()" --> PR;
+
+    classDef consumer fill:#cde4ff,stroke:#5a96d8;
+    classDef manager fill:#d5e8d4,stroke:#82b366;
+    classDef component fill:#f8cecc,stroke:#b85450;
+    class OM,PR consumer;
+    class LM manager;
+    class LSC component;
+
 ```
+
+## Key Design Decisions
+
+- **Explicit over Implicit**: The new design avoids the complexity of a state-driven system. The consumer has full control over when light sources are created and destroyed, which is more predictable and easier to debug.
+- **Performance-Oriented Querying**: The `getInfluentialLights()` method is the most critical part of the `LightingManager`. It uses squared distance checks to avoid costly square root operations, ensuring that finding the nearest lights for an object is as fast as possible.
+- **Decoupling**: The `LightingManager` does not depend on any state stores. It is a simple, self-contained registry, making it highly reusable and testable. The `LightSourceComponent` provides the link between the renderer's object data and the `THREE.Light` instance.

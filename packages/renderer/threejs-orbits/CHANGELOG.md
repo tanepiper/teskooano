@@ -21,6 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The `dispose` method in `KeplerianOrbitManager` now correctly unsubscribes from the `renderableStore.renderableObjects$` observable.
 - Extensive comment removal and minor code cleanup across most files, including `OrbitManager.ts`, `orbit-manager/keplerian-manager.ts`, `orbit-manager/orbit-calculator.ts`, and `orbit-manager/verlet-predictor.ts`.
 
+## [0.2.0] - (Date)
+
+### Changed
+
+- **MAJOR REFACTOR**: The package was completely refactored to use a **Strategy Pattern**.
+  - A new `OrbitsManager` was introduced as the central orchestrator and public facade for the package. It handles mode switching and delegates tasks to specialized sub-managers.
+  - The logic was split into three distinct sub-managers:
+    - `KeplerianManager`: Manages the rendering of static, elliptical Keplerian orbits.
+    - `TrailManager`: Manages the rendering of historical trails for objects in Verlet mode.
+    - `PredictionManager`: Manages the rendering of predicted future trajectories in Verlet mode.
+  - The manager now subscribes to the `RendererStateAdapter` to automatically switch between `Keplerian` and `Verlet` visualization modes based on the active physics engine.
+- **Performance**:
+  - Introduced `LineBuilder` and `BufferPool` utilities to efficiently manage `THREE.Line` geometries and reuse buffers, reducing memory churn.
+  - Added a `CircularBuffer` for the `TrailManager` to efficiently manage position history without expensive array operations.
+  - Added `SharedMaterials` to cache and reuse materials across all orbit lines.
+- **API Change**: All interactions are now intended to go through the `OrbitsManager`. The sub-managers are considered internal implementation details.
+
 ## [0.1.0] - 2025-04-24
 
 ### Added
