@@ -160,7 +160,7 @@ export class FocusControlController {
         .subscribe((state: CameraManagerState) => {
           this._updateHighlightInternal(state.focusedObjectId);
 
-          if (this._currentFollowedId && !state.followedObjectId) {
+          if (this._currentFollowedId && !state.focusedObjectId) {
             this._parentPanel?.orbitManager?.highlightVisualization(null);
           }
         });
