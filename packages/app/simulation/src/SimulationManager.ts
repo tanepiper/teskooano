@@ -110,7 +110,6 @@ export class SimulationManager {
       cancelAnimationFrame(this.animationFrameId);
     }
     this.animationFrameId = requestAnimationFrame(this.simulationStep);
-    console.log("Simulation loop started.");
   }
 
   /**
