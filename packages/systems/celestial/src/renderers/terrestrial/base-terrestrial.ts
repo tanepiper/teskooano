@@ -121,7 +121,7 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     if (object.type === CelestialType.MOON) {
       // For moons, use a fixed distance in meters, as requested.
       // 2500 Mm = 2,500,000 km = 2,500,000,000 meters
-      const MOON_BILLBOARD_DISTANCE_M = 2_500_000_000;
+      const MOON_BILLBOARD_DISTANCE_M = 75;
       billboardDistance = MOON_BILLBOARD_DISTANCE_M / scale;
     } else {
       // For planets, use the existing scaling logic
