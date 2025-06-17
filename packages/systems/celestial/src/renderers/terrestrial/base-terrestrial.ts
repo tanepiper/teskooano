@@ -265,6 +265,19 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     const bodyMaterial = this.materials.get(object.celestialObjectId);
     if (bodyMaterial && bodyMaterial instanceof ProceduralPlanetMaterial) {
       bodyMaterial.update(time, timeScale, lightSources, camera);
+
+      if (
+        object.properties &&
+        (object.properties.type === CelestialType.PLANET ||
+          object.properties.type === CelestialType.MOON ||
+          object.properties.type === CelestialType.DWARF_PLANET)
+      ) {
+        const planetProps = object.properties as PlanetProperties;
+
+        if (planetProps.surface) {
+          this._updateSurfaceUniforms(bodyMaterial, planetProps.surface);
+        }
+      }
     }
 
     const atmosphereMaterial = this.atmosphereMaterials.get(
@@ -393,53 +406,6 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
       "uSpecularStrength",
       surfaceProps.specularStrength,
     );
-  }
-
-  public updateWith(
-    objectData: RenderableCelestialObject,
-    groupMesh: THREE.Object3D,
-  ): void {
-    let bodyMesh = groupMesh.children.find(
-      (child) => child.name === `${objectData.celestialObjectId}-body`,
-    ) as THREE.Mesh;
-
-    if (
-      !bodyMesh &&
-      groupMesh instanceof THREE.Mesh &&
-      groupMesh.name === `${objectData.celestialObjectId}-body`
-    ) {
-      bodyMesh = groupMesh;
-    }
-
-    let material = this.materials.get(
-      objectData.celestialObjectId,
-    ) as ProceduralPlanetMaterial;
-
-    if (bodyMesh && bodyMesh.material instanceof ProceduralPlanetMaterial) {
-      material = bodyMesh.material as ProceduralPlanetMaterial;
-    } else if (
-      bodyMesh &&
-      !(bodyMesh.material instanceof ProceduralPlanetMaterial)
-    ) {
-      if (!(material instanceof ProceduralPlanetMaterial)) return;
-    } else if (!bodyMesh && !(material instanceof ProceduralPlanetMaterial)) {
-      return;
-    }
-
-    if (
-      material &&
-      material.uniforms &&
-      objectData.properties &&
-      (objectData.properties.type === CelestialType.PLANET ||
-        objectData.properties.type === CelestialType.MOON ||
-        objectData.properties.type === CelestialType.DWARF_PLANET)
-    ) {
-      const planetProps = objectData.properties as PlanetProperties;
-
-      if (planetProps.surface) {
-        this._updateSurfaceUniforms(material, planetProps.surface);
-      }
-    }
   }
 
   /**

@@ -54,7 +54,9 @@ export abstract class BaseUniformsRenderer {
     path: string[],
     value: any,
   ): CelestialSpecificPropertiesUnion {
-    let current = obj;
+    const newObj = this._deepClone(obj);
+    let current = newObj;
+
     for (let i = 0; i < path.length - 1; i++) {
       const key = path[i];
       if (typeof current[key] !== "object" || current[key] === null) {
@@ -62,8 +64,9 @@ export abstract class BaseUniformsRenderer {
       }
       current = current[key];
     }
+
     current[path[path.length - 1]] = value;
-    return obj;
+    return newObj;
   }
 
   /**
@@ -117,6 +120,16 @@ export abstract class BaseUniformsRenderer {
               clonedProperties,
               propertyPathToUniform,
               newValue,
+            );
+            console.log(
+              `[Uniforms] Updating ${celestialId} property ${propertyPathToUniform.join(
+                ".",
+              )} to:`,
+              newValue,
+            );
+            console.log(
+              "[Uniforms] Dispatching new properties:",
+              updatedProperties,
             );
             actions.updateCelestialObject(celestialId, {
               properties: updatedProperties,
@@ -173,6 +186,16 @@ export abstract class BaseUniformsRenderer {
               clonedProperties,
               propertyPathToUniform,
               newColor,
+            );
+            console.log(
+              `[Uniforms] Updating ${celestialId} property ${propertyPathToUniform.join(
+                ".",
+              )} to:`,
+              newColor,
+            );
+            console.log(
+              "[Uniforms] Dispatching new properties:",
+              updatedProperties,
             );
             actions.updateCelestialObject(celestialId, {
               properties: updatedProperties,

@@ -65,6 +65,9 @@ export class RendererStateAdapter {
         initialSimState.visualSettings.trailLengthMultiplier,
       physicsEngine:
         initialSimState.physicsEngine === "verlet" ? "verlet" : "keplerian",
+      timeScale: initialSimState.timeScale,
+      predictionSteps: initialSimState.visualSettings.predictionSteps,
+      predictionDuration: initialSimState.visualSettings.predictionDuration,
     });
 
     this.subscribeToCoreState();
@@ -123,20 +126,32 @@ export class RendererStateAdapter {
     existing: RenderableCelestialObject | undefined,
     determineLightSource: (id: string) => string | undefined,
   ): RenderableCelestialObject {
-    const target =
-      existing ??
-      ({
-        celestialObjectId: obj.id,
-        position: new THREE.Vector3(),
-        rotation: new THREE.Quaternion(),
-        isVisible: true,
-        isTargetable: true,
-        isSelected: false,
-        isFocused: false,
-        uniforms: {},
-      } as RenderableCelestialObject);
-
     const realRadius = obj.realRadius_m ?? 0;
+
+    const target = {
+      celestialObjectId: obj.id,
+      position: new THREE.Vector3(),
+      rotation: new THREE.Quaternion(),
+      isVisible: true,
+      isTargetable: true,
+      isSelected: false,
+      isFocused: false,
+      uniforms: {},
+      name: obj.name,
+      type: obj.type,
+      seed: obj?.seed ?? crypto.randomUUID(),
+      radius: scaleSize(realRadius, obj.type),
+      mass: (obj.realMass_kg ?? 0) * SCALE.MASS,
+      properties: obj.properties,
+      orbit: obj.orbit,
+      parentId: obj.parentId,
+      primaryLightSourceId: determineLightSource(obj.id),
+      realRadius_m: realRadius,
+      axialTilt: obj.axialTilt ?? 0,
+      status: obj.status,
+      temperature: obj.temperature,
+      albedo: obj.albedo ?? 0.3,
+    };
 
     physicsToThreeJSPosition(target.position, obj.physicsStateReal.position_m);
     target.rotation.copy(
@@ -145,20 +160,6 @@ export class RendererStateAdapter {
         obj.siderealRotationPeriod_s,
       ).toThreeJS(),
     );
-
-    target.name = obj.name;
-    target.type = obj.type;
-    target.seed = obj?.seed ?? (target.seed || crypto.randomUUID());
-    target.radius = scaleSize(realRadius, obj.type);
-    target.mass = (obj.realMass_kg ?? 0) * SCALE.MASS;
-    target.properties = obj.properties;
-    target.orbit = obj.orbit;
-    target.parentId = obj.parentId;
-    target.primaryLightSourceId = determineLightSource(obj.id);
-    target.realRadius_m = realRadius;
-    target.axialTilt = obj.axialTilt;
-    target.status = obj.status;
-    target.uniforms.temperature = obj.temperature;
 
     return target;
   }
@@ -197,18 +198,30 @@ export class RendererStateAdapter {
       return null;
     }
 
-    const target =
-      existing ??
-      ({
-        celestialObjectId: obj.id,
-        position: new THREE.Vector3(),
-        rotation: new THREE.Quaternion(),
-        isVisible: true,
-        isTargetable: false,
-        isSelected: false,
-        isFocused: false,
-        uniforms: {},
-      } as RenderableCelestialObject);
+    const target = {
+      celestialObjectId: obj.id,
+      position: new THREE.Vector3(),
+      rotation: new THREE.Quaternion(),
+      isVisible: true,
+      isTargetable: false,
+      isSelected: false,
+      isFocused: false,
+      uniforms: {},
+      name: obj.name,
+      type: obj.type,
+      seed: obj?.seed ?? crypto.randomUUID(),
+      radius: 0,
+      mass: 0,
+      properties: obj.properties,
+      orbit: undefined,
+      parentId: obj.parentId,
+      primaryLightSourceId: determineLightSource(obj.id),
+      realRadius_m: 0,
+      axialTilt: parent.axialTilt ?? 0,
+      status: obj.status,
+      temperature: obj.temperature,
+      albedo: parent.albedo ?? 0,
+    };
 
     physicsToThreeJSPosition(
       target.position,
@@ -217,20 +230,6 @@ export class RendererStateAdapter {
     target.rotation.copy(
       this.calculateRotation(parent.axialTilt, undefined).toThreeJS(),
     );
-
-    target.name = obj.name;
-    target.type = obj.type;
-    target.seed = obj?.seed ?? (target.seed || crypto.randomUUID());
-    target.radius = 0;
-    target.mass = 0;
-    target.properties = obj.properties;
-    target.orbit = undefined;
-    target.parentId = obj.parentId;
-    target.primaryLightSourceId = determineLightSource(obj.id);
-    target.realRadius_m = 0;
-    target.axialTilt = parent.axialTilt;
-    target.status = obj.status;
-    target.uniforms.temperature = obj.temperature;
 
     return target;
   }
@@ -360,15 +359,24 @@ export class RendererStateAdapter {
           simState.visualSettings.trailLengthMultiplier ?? 150;
         const newEngine =
           simState.physicsEngine === "verlet" ? "verlet" : "keplerian";
+        const newTimeScale = simState.timeScale;
+        const newPredictionSteps = simState.visualSettings.predictionSteps;
+        const newPredictionDuration =
+          simState.visualSettings.predictionDuration;
 
         if (
           newMultiplier !== currentVisSettings.trailLengthMultiplier ||
-          newEngine !== currentVisSettings.physicsEngine
+          newEngine !== currentVisSettings.physicsEngine ||
+          newTimeScale !== currentVisSettings.timeScale ||
+          newPredictionSteps !== currentVisSettings.predictionSteps ||
+          newPredictionDuration !== currentVisSettings.predictionDuration
         ) {
           this.$visualSettings.next({
-            ...currentVisSettings,
             trailLengthMultiplier: newMultiplier,
             physicsEngine: newEngine,
+            timeScale: newTimeScale,
+            predictionSteps: newPredictionSteps,
+            predictionDuration: newPredictionDuration,
           });
         }
       },
@@ -414,7 +422,8 @@ export class RendererStateAdapter {
       isFocused: false,
       realRadius_m: obj.realRadius_m,
       temperature: obj.temperature,
-      axialTilt: obj.axialTilt,
+      axialTilt: obj.axialTilt ?? 0,
+      albedo: obj.albedo ?? 0.3,
       uniforms: {},
     };
   }
@@ -449,7 +458,8 @@ export class RendererStateAdapter {
       isFocused: false,
       realRadius_m: 0,
       temperature: 0,
-      axialTilt: obj.axialTilt,
+      axialTilt: obj.axialTilt ?? 0,
+      albedo: 0,
       uniforms: {},
     };
   }
@@ -492,9 +502,10 @@ export class RendererStateAdapter {
     target.parentId = obj.parentId;
     target.primaryLightSourceId = determineLightSource(obj.id);
     target.realRadius_m = realRadius;
-    target.axialTilt = obj.axialTilt;
+    target.axialTilt = obj.axialTilt ?? 0;
     target.status = obj.status;
     target.uniforms.temperature = obj.temperature;
+    target.albedo = obj.albedo ?? 0.3;
 
     return target;
   }

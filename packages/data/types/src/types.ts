@@ -34,9 +34,9 @@ export interface RenderableCelestialObject {
   rotation: THREE.Quaternion;
 
   /** Type-specific physical properties (e.g., stellar class, planet composition). */
-  properties: CelestialSpecificPropertiesUnion;
+  properties?: CelestialSpecificPropertiesUnion;
   /** The orbital parameters describing the object's path, if applicable. */
-  orbit: OrbitalParameters;
+  orbit?: OrbitalParameters;
   /** The albedo of the object. */
   albedo: number;
 
