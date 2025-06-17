@@ -16,14 +16,13 @@ import { CelestialZoneManager } from "../../zones";
  * properties are generated.
  */
 export interface PlanetBaseProperties {
-  planetType: CelestialType;
+  celestialType: CelestialType;
+  planetType: PlanetType | GasGiantClass;
   preliminaryDensity_kg_m3: number;
   targetDensity_kg_m3: number;
   massMultiplierFactor: number;
   ringChance: number;
   ringAllowedTypes: RockyType[];
-  gasGiantClass?: GasGiantClass;
-  rockyPlanetType?: PlanetType;
 }
 
 /**
@@ -109,13 +108,12 @@ export function determinePlanetTypeAndBaseProperties(
   }
 
   return {
-    planetType: chosenFormation.type,
+    celestialType: chosenFormation.type,
+    planetType: rockyPlanetType as PlanetType,
     preliminaryDensity_kg_m3: targetDensity_kg_m3,
     targetDensity_kg_m3: targetDensity_kg_m3,
     massMultiplierFactor: massMultiplierFactor,
     ringChance: chosenFormation.ringChance,
     ringAllowedTypes: chosenFormation.allowedRingTypes,
-    gasGiantClass: gasGiantClass,
-    rockyPlanetType: rockyPlanetType,
   };
 }

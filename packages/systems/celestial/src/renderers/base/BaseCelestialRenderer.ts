@@ -5,9 +5,26 @@ import {
   LightSourceData,
   LightSourcesMap,
 } from "./CelestialRenderer";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+import {
+  AU_METERS,
+  CelestialType,
+  RenderableCelestialObject,
+  SCALE,
+} from "@teskooano/data-types";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
+import {
+  BillboardInfo,
+  calculateDistantSpriteSize,
+  createBillboardSprite,
+} from "../billboards";
+
+export interface BillboardLODConfig {
+  distance: number;
+  size: number;
+  color: THREE.Color;
+  light?: THREE.PointLight;
+}
 
 export interface BaseCelestialRendererOptions {
   lightingManager?: LightingManager;
@@ -53,6 +70,11 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   protected _tempVector2: THREE.Vector3 = new THREE.Vector3();
   protected _tempVector3: THREE.Vector3 = new THREE.Vector3();
   protected lightingManager?: LightingManager;
+
+  /**
+   * Map to store BillboardInfo for managing dynamic billboard properties, keyed by celestial object ID.
+   */
+  protected billboardsInfo: Map<string, BillboardInfo> = new Map();
   private _billboardTexture: THREE.CanvasTexture | null = null;
 
   constructor(options: BaseCelestialRendererOptions = {}) {
@@ -78,8 +100,11 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     timeScale: number,
     lightSources: LightSourcesMap,
     camera: THREE.Camera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
     this.updateLOD(object.celestialObjectId, camera);
+    this.updateBillboards(camera, allObjects, allMeshes);
   }
 
   /**
@@ -91,6 +116,141 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     if (lod) {
       lod.update(camera as THREE.Camera);
     }
+  }
+
+  private visibilityConfig = {
+    planet: 90,
+    gasGiant: 190,
+    moon: 2,
+    ejectedMoon: 2000,
+    secondaryStar: 3000,
+    default: 2,
+  };
+
+  private auToSceneUnits(au: number): number {
+    const scale = typeof SCALE === "number" ? SCALE : 1;
+    return (au * AU_METERS) / scale;
+  }
+
+  protected updateBillboards(
+    camera: THREE.Camera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
+  ): void {
+    if (!camera || !allObjects || !allMeshes || this.billboardsInfo.size === 0)
+      return;
+
+    const cameraPosition = new THREE.Vector3();
+    camera.getWorldPosition(cameraPosition);
+
+    const config = {
+      planet: this.auToSceneUnits(this.visibilityConfig.planet),
+      gasGiant: this.auToSceneUnits(this.visibilityConfig.gasGiant),
+      moon: this.auToSceneUnits(this.visibilityConfig.moon),
+      ejectedMoon: this.auToSceneUnits(this.visibilityConfig.ejectedMoon),
+      secondaryStar: this.auToSceneUnits(this.visibilityConfig.secondaryStar),
+      default: this.auToSceneUnits(this.visibilityConfig.default),
+    };
+
+    const mainStarId = Object.values(allObjects).find(
+      (obj) => obj.type === CelestialType.STAR && !obj.parentId,
+    )?.celestialObjectId;
+
+    this.billboardsInfo.forEach((info) => {
+      const { sprite, activationDistance, object } = info;
+      const material = sprite.material as THREE.SpriteMaterial;
+      if (!material) return;
+
+      // NEW VISIBILITY LOGIC
+      let isVisibleByRule = false;
+      const distanceToSelf = cameraPosition.distanceTo(object.position);
+
+      switch (object.type) {
+        case CelestialType.STAR: {
+          if (object.celestialObjectId === mainStarId) {
+            isVisibleByRule = true;
+          } else {
+            isVisibleByRule = distanceToSelf < config.secondaryStar;
+          }
+          break;
+        }
+        case CelestialType.PLANET:
+          isVisibleByRule = distanceToSelf < config.planet;
+          break;
+        case CelestialType.GAS_GIANT:
+          isVisibleByRule = distanceToSelf < config.gasGiant;
+          break;
+        case CelestialType.MOON: {
+          const parentId = object.parentId;
+
+          // Handle ejected moons first.
+          if (!parentId) {
+            isVisibleByRule = distanceToSelf < config.ejectedMoon;
+            break;
+          }
+
+          // Get parent data. If not available, moon can't be visible.
+          const parentData = allObjects[parentId];
+          const parentObject = allMeshes[parentId];
+          if (!parentObject || !parentData) {
+            isVisibleByRule = false;
+            break;
+          }
+
+          // Rule 1: Is the parent a billboard? If so, the moon is hidden.
+          if (
+            parentObject instanceof THREE.LOD &&
+            parentObject.levels.length > 0
+          ) {
+            const isParentBillboard =
+              parentObject.getCurrentLevel() === parentObject.levels.length - 1;
+            if (isParentBillboard) {
+              isVisibleByRule = false;
+              break; // Final decision: hide.
+            }
+          }
+
+          // Rule 2: Is the camera too far from the parent? (2 AU cutoff)
+          const parentPosition = new THREE.Vector3();
+          parentObject.getWorldPosition(parentPosition);
+          const distanceToParent = cameraPosition.distanceTo(parentPosition);
+          if (distanceToParent > config.moon) {
+            isVisibleByRule = false;
+            break; // Final decision: hide.
+          }
+
+          // If we passed both checks, the moon is allowed to be visible.
+          isVisibleByRule = true;
+          break;
+        }
+        default:
+          isVisibleByRule = distanceToSelf < config.default;
+      }
+
+      // ORIGINAL FADING LOGIC, now combined with visibility rule
+      let targetOpacity;
+      const baseSpriteOpacity = 0.85;
+
+      // Only show if it meets the visibility rule AND is beyond the activation distance for the billboard
+      if (isVisibleByRule && distanceToSelf >= activationDistance) {
+        targetOpacity = baseSpriteOpacity;
+      } else {
+        targetOpacity = 0.0;
+      }
+
+      const currentOpacity = material.opacity;
+      let newOpacity = THREE.MathUtils.lerp(
+        currentOpacity,
+        targetOpacity,
+        0.1, // fade speed
+      );
+
+      if (targetOpacity < 0.01 && newOpacity < 0.01) {
+        newOpacity = 0;
+      }
+      material.opacity = newOpacity;
+      sprite.visible = newOpacity > 0.001;
+    });
   }
 
   /**
@@ -121,6 +281,19 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
 
     this.materials.clear();
     this.lods.clear();
+
+    // New dispose logic
+    this.billboardsInfo.forEach(({ sprite }) => {
+      if (
+        sprite.material.map &&
+        sprite.material.map instanceof THREE.CanvasTexture
+      ) {
+        sprite.material.map.dispose();
+      }
+      sprite.material.dispose();
+    });
+    this.billboardsInfo.clear();
+
     this._billboardTexture?.dispose();
   }
 
@@ -219,93 +392,75 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   }
 
   /**
-   * Creates a simple, non-shadow-casting point light to represent a celestial
-   * object at its lowest level of detail.
-   * @param color - The color of the light.
-   * @param intensity - The intensity of the light.
-   * @returns A `THREE.PointLight` instance.
+   * Creates a standardized billboard LOD level.
+   * This centralizes the creation of the sprite, its group, and registers it for updates.
+   * @param object The celestial object for the billboard.
+   * @param config Configuration for the billboard's appearance and behavior.
+   * @returns An LODLevel object containing the configured billboard.
    * @protected
    */
-  protected _createLODLight(
-    color: THREE.ColorRepresentation = 0xffffff,
-    intensity: number = 100.5,
-  ): THREE.PointLight {
-    const light = new THREE.PointLight(color, intensity, 0, 0); // No distance falloff, no decay
-    light.castShadow = false;
-    return light;
+  protected _createBillboardLOD(
+    object: RenderableCelestialObject,
+    config: BillboardLODConfig,
+  ): LODLevel {
+    const texture = this.getBillboardTexture();
+    const sprite = createBillboardSprite(
+      object,
+      texture,
+      config.size,
+      config.color,
+    );
+
+    this.billboardsInfo.set(object.celestialObjectId, {
+      object: object,
+      sprite: sprite,
+      activationDistance: config.distance,
+      maxFadeDistance: config.distance * 5,
+    });
+
+    const billboardGroup = new THREE.Group();
+    billboardGroup.name = `${object.celestialObjectId}-billboard-lod`;
+    billboardGroup.add(sprite);
+
+    if (config.light) {
+      billboardGroup.add(config.light);
+    }
+
+    return {
+      object: billboardGroup,
+      distance: config.distance,
+    };
   }
 
-  private _createBillboardTexture(): THREE.CanvasTexture {
+  protected getBillboardTexture(): THREE.CanvasTexture {
     if (this._billboardTexture) {
       return this._billboardTexture;
     }
 
     const canvas = document.createElement("canvas");
-    canvas.width = 64;
-    canvas.height = 64;
+    canvas.width = 64; // from util
+    canvas.height = 64; // from util
     const context = canvas.getContext("2d");
     if (!context) {
-      // This should not happen in a browser environment
       throw new Error("Could not get 2D context for billboard texture");
     }
 
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = canvas.width / 2;
-
-    // Create a radial gradient for a soft-edged circle
     const gradient = context.createRadialGradient(
-      centerX,
-      centerY,
+      canvas.width / 2,
+      canvas.height / 2,
       0,
-      centerX,
-      centerY,
-      radius,
+      canvas.width / 2,
+      canvas.height / 2,
+      canvas.width / 2,
     );
     gradient.addColorStop(0, "rgba(255,255,255,1)");
-    gradient.addColorStop(0.4, "rgba(255,255,255,0.8)");
-    gradient.addColorStop(1, "rgba(255,255,255,0)");
-
+    gradient.addColorStop(1, "rgba(255,255,255,0)"); // from util
     context.fillStyle = gradient;
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     const texture = new THREE.CanvasTexture(canvas);
     this._billboardTexture = texture;
     return texture;
-  }
-
-  /**
-   * Creates a simple billboard sprite to represent a celestial
-   * object at its lowest level of detail.
-   * @param color - The color of the sprite.
-   * @param size - The size of the billboard in world units.
-   * @returns A `THREE.Mesh` instance configured as a billboard.
-   * @protected
-   */
-  protected _createLODBillboard(
-    color: THREE.ColorRepresentation = 0xffffff,
-    size: number = 10,
-  ): THREE.Mesh {
-    const texture = this._createBillboardTexture();
-    const material = new THREE.MeshBasicMaterial({
-      map: texture,
-      color: color,
-      blending: THREE.AdditiveBlending,
-      depthTest: false,
-      transparent: true,
-    });
-
-    const planeGeometry = new THREE.PlaneGeometry(size, size);
-    const billboardMesh = new THREE.Mesh(planeGeometry, material);
-    billboardMesh.renderOrder = 999;
-
-    // This callback makes the mesh always face the camera, acting as a billboard
-    // that correctly scales with distance.
-    billboardMesh.onBeforeRender = (renderer, scene, camera) => {
-      billboardMesh.quaternion.copy(camera.quaternion);
-    };
-
-    return billboardMesh;
   }
 
   public getLOD(object: RenderableCelestialObject): THREE.LOD | undefined {

@@ -102,8 +102,10 @@ export interface CelestialRenderer {
     object: RenderableCelestialObject,
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
+    lightSources: LightSourcesMap,
+    camera: THREE.Camera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
   ): void;
 
   /**
@@ -134,6 +136,8 @@ export interface CelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ) => void;
+
+  getLOD(object: RenderableCelestialObject): THREE.LOD | undefined;
 }
 
 /**

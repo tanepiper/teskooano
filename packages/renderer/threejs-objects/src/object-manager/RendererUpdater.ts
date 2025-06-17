@@ -46,10 +46,11 @@ export class RendererUpdater {
     time: number,
     timeScale: number,
     camera: THREE.Camera,
+    allMeshes: Map<string, THREE.Object3D>,
     renderer?: THREE.WebGLRenderer,
     scene?: THREE.Scene,
   ): void {
-    const context = { time, timeScale, camera, renderer, scene };
+    const context = { time, timeScale, camera, renderer, scene, allMeshes };
 
     this.processRendererMap(this.starRenderers, context);
     this.processRendererMap(this.planetRenderers, context);
@@ -78,6 +79,7 @@ export class RendererUpdater {
       time: number;
       timeScale: number;
       camera: THREE.Camera;
+      allMeshes: Map<string, THREE.Object3D>;
       renderer?: THREE.WebGLRenderer;
       scene?: THREE.Scene;
     },
@@ -90,14 +92,22 @@ export class RendererUpdater {
         return;
       }
 
-      const { time, timeScale, camera, renderer, scene } = context;
+      const { time, timeScale, camera, renderer, scene, allMeshes } = context;
 
       // Get influential lights specifically for this object
       const influentialLights =
         this.lightingManager.getInfluentialLights(object);
       const lightSources = this.convertToLightSourceMap(influentialLights);
 
-      rendererInstance.update(object, time, timeScale, lightSources, camera);
+      rendererInstance.update(
+        object,
+        time,
+        timeScale,
+        lightSources,
+        camera,
+        allObjects,
+        Object.fromEntries(allMeshes),
+      );
     });
   }
 

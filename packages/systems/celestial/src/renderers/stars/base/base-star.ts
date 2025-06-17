@@ -17,6 +17,12 @@ import {
   LightingManager,
 } from "@teskooano/renderer-threejs-lighting";
 import { BaseCelestialRendererOptions } from "../../base/BaseCelestialRenderer";
+import {
+  calculateDistantSpriteSize,
+  createBillboardLODLevel,
+  createBillboardPointLight,
+  createBillboardSprite,
+} from "../../billboards";
 
 /**
  * Vertex shader for stars
@@ -336,95 +342,61 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
     this.lightingManager = options?.lightingManager;
   }
 
-  abstract getLODLevels(
+  /**
+   * Abstract method for subclasses to provide the main star material.
+   */
+  abstract getMaterial(object: RenderableCelestialObject): BaseStarMaterial;
+
+  /**
+   * Abstract method for subclasses to provide their custom, high-detail LODs.
+   * These will be combined with the standard billboard LOD.
+   */
+  protected abstract getCustomLODs(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[];
 
   /**
-   * Initializes the renderer for a specific celestial object.
-   * For stars, this includes setting up their light source component.
+   * Abstract method for subclasses to define the distance at which the billboard appears.
    */
-  public override initialize(
+  protected abstract getBillboardLODDistance(
     object: RenderableCelestialObject,
-    options?: CelestialMeshOptions,
-  ): void {
-    super.initialize(object, options);
-
-    if (this.lightingManager) {
-      console.log("registering light source", object.celestialObjectId);
-      const lightSource = new LightSourceComponent(object, {
-        light: new THREE.PointLight(this.getStarColor(object), 1, 0, 2),
-        castShadow: true,
-      });
-      this.lightingManager.register(lightSource);
-    }
-  }
+  ): number;
 
   /**
-   * Creates an array of LOD levels for a luminous star
-   * @param object The celestial object data
+   * Assembles and returns all LOD levels for the star, combining custom meshes
+   * with a standard billboard for distant viewing.
    */
-  protected _createLuminousStarLODs(
+  getLODLevels(
     object: RenderableCelestialObject,
-    material: BaseStarMaterial,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    const scale = typeof SCALE === "number" ? SCALE : 1.0;
+    const customLODs = this.getCustomLODs(object, options);
+    const billboardDistance = this.getBillboardLODDistance(object);
+    const starColor = this.getStarColor(object);
+    const starMaterial = this.getMaterial(object);
 
-    // --- Create components once ---
-    this.materials.set(object.celestialObjectId, material);
-
-    const highDetailGeometry = new THREE.SphereGeometry(
-      object.radius,
-      options?.segments ?? 64,
-      options?.segments ?? 64,
+    const pointLight = createBillboardPointLight(
+      object,
+      starColor,
+      starMaterial,
     );
-    const starBodyHigh = new THREE.Mesh(highDetailGeometry, material);
-    starBodyHigh.name = `${object.celestialObjectId}-body-high`;
 
-    const mediumDetailGeometry = new THREE.SphereGeometry(
-      object.radius,
-      32,
-      32,
+    const distantPointSize =
+      typeof (this as any).calculateBillboardSize === "function"
+        ? (this as any).calculateBillboardSize(object)
+        : calculateDistantSpriteSize(object);
+
+    const billboardLOD = this._createBillboardLOD(object, {
+      distance: billboardDistance,
+      size: distantPointSize,
+      color: starColor,
+      light: pointLight,
+    });
+
+    return [...customLODs, billboardLOD].sort(
+      (a, b) => a.distance - b.distance,
     );
-    const starBodyMedium = new THREE.Mesh(mediumDetailGeometry, material);
-    starBodyMedium.name = `${object.celestialObjectId}-body-medium`;
-
-    const coronaGroup = this._createCoronaGroup(object);
-
-    // --- Assemble LOD levels ---
-
-    // Level 0: High-detail body + Corona
-    const highDetailGroup = new THREE.Group();
-    highDetailGroup.add(starBodyHigh);
-    highDetailGroup.add(coronaGroup.clone()); // Clone to avoid sharing group between LODs
-    const lod0: LODLevel = { object: highDetailGroup, distance: 0 };
-
-    // Level 1: Medium-detail body + Corona
-    const mediumDetailGroup = new THREE.Group();
-    mediumDetailGroup.add(starBodyMedium);
-    mediumDetailGroup.add(coronaGroup);
-    const lod1: LODLevel = {
-      object: mediumDetailGroup,
-      distance: 200 * scale,
-    };
-
-    // Level 2: Low-detail point light and billboard
-    const lowDetailGroup = new THREE.Group();
-    lowDetailGroup.name = `${object.celestialObjectId}-low-lod-group`;
-    const color = this.getStarColor(object);
-    const lodLight = this._createLODLight(color, 2.5); // Stars are bright
-    const lodBillboard = this._createLODBillboard(color, 60 * scale); // Larger billboard for stars
-    lowDetailGroup.add(lodLight);
-    lowDetailGroup.add(lodBillboard);
-
-    const lod2: LODLevel = {
-      object: lowDetailGroup,
-      distance: 2500 * scale,
-    };
-
-    return [lod0, lod1, lod2];
   }
 
   /**
@@ -533,5 +505,6 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
     });
     this.materials.clear();
     this.coronaMaterials.clear();
+    super.dispose();
   }
 }

@@ -23,7 +23,7 @@ export interface RenderableCelestialObject {
   status: CelestialStatus;
   /** A seed value used for procedural generation. */
   seed: string;
-
+  /** The albedo of the object. */
   /** The scaled radius of the object in renderer units. */
   radius: number;
   /** The mass of the object in kilograms. */
@@ -34,9 +34,11 @@ export interface RenderableCelestialObject {
   rotation: THREE.Quaternion;
 
   /** Type-specific physical properties (e.g., stellar class, planet composition). */
-  properties?: CelestialSpecificPropertiesUnion;
+  properties: CelestialSpecificPropertiesUnion;
   /** The orbital parameters describing the object's path, if applicable. */
-  orbit?: OrbitalParameters;
+  orbit: OrbitalParameters;
+  /** The albedo of the object. */
+  albedo: number;
 
   /** The ID of the celestial object this object orbits around. */
   parentId?: string;
@@ -59,7 +61,7 @@ export interface RenderableCelestialObject {
   temperature: number;
 
   /** The tilt of the object's rotational axis relative to its orbital plane. */
-  axialTilt?: OSVector3 | number;
+  axialTilt: OSVector3 | number;
 
   /** A collection of values intended to be passed as uniforms to shaders. */
   uniforms: { [key: string]: any };

@@ -13,6 +13,10 @@ import {
 import { BaseCelestialRenderer } from "../../base/BaseCelestialRenderer";
 import { RingSystemRenderer } from "../../rings/rings";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
+import {
+  calculateDistantSpriteSize,
+  createBillboardSprite,
+} from "../../billboards";
 
 const MAX_LIGHTS = 4;
 
@@ -123,37 +127,16 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     level1Group.add(mediumMesh);
     const level1: LODLevel = { object: level1Group, distance: 800 * scale };
 
-    const level2Group = this._createLowDetailGroup(object);
-    const level2: LODLevel = { object: level2Group, distance: 2000 * scale };
+    const color = this._getBaseGasGiantColor(object);
+    const billboardDistance = 2000 * scale;
+
+    const level2 = this._createBillboardLOD(object, {
+      distance: billboardDistance,
+      size: calculateDistantSpriteSize(object),
+      color: color,
+    });
 
     return [level0, level1, level2];
-  }
-
-  /**
-   * Helper to create the low-detail group (Level 2 LOD).
-   * @internal
-   */
-  private _createLowDetailGroup(
-    object: RenderableCelestialObject,
-  ): THREE.Group {
-    const group = new THREE.Group();
-    group.name = `${object.celestialObjectId}-low-lod-group`;
-    const scale = typeof SCALE === "number" ? SCALE : 1;
-    const color = this._getBaseGasGiantColor(object);
-
-    const lodLight = this._createLODLight(
-      color,
-      10.0, // Gas giants are generally brighter/larger
-    );
-    lodLight.name = `${object.celestialObjectId}-low-lod-light`;
-
-    const lodBillboard = this._createLODBillboard(color, 1 * scale); // Larger billboard for giants
-    lodBillboard.name = `${object.celestialObjectId}-low-lod-billboard`;
-
-    group.add(lodLight);
-    group.add(lodBillboard);
-
-    return group;
   }
 
   /**

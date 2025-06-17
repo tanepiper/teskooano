@@ -13,6 +13,10 @@ import {
   AtmosphereService,
 } from "./utils/atmosphere-utils";
 import { PlanetMaterialService } from "./utils/planet-material-utils";
+import {
+  calculateDistantSpriteSize,
+  createBillboardSprite,
+} from "../billboards";
 
 const MAX_LIGHTS = 4;
 
@@ -111,11 +115,24 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
       distance: 250 * scale,
     };
 
-    const lowDetailGroup = this._createLowDetailGroup(object);
-    const level2: LODLevel = {
-      object: lowDetailGroup,
-      distance: 1000 * scale,
-    };
+    const color = this.materialService.getBaseColor(object);
+    let billboardDistance: number;
+
+    if (object.type === CelestialType.MOON) {
+      // For moons, use a fixed distance in meters, as requested.
+      // 2500 Mm = 2,500,000 km = 2,500,000,000 meters
+      const MOON_BILLBOARD_DISTANCE_M = 2_500_000_000;
+      billboardDistance = MOON_BILLBOARD_DISTANCE_M / scale;
+    } else {
+      // For planets, use the existing scaling logic
+      billboardDistance = 1000 * scale;
+    }
+
+    const level2 = this._createBillboardLOD(object, {
+      distance: billboardDistance,
+      size: 0.01, // Terrestrials should be small pinpoints
+      color: color,
+    });
 
     const levels = [level0, level1, level2];
     return levels;
@@ -207,31 +224,6 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     const level1Group = new THREE.Group();
     level1Group.add(mediumMesh);
     return level1Group;
-  }
-
-  /**
-   * Helper to create the low-detail group (Level 2 LOD).
-   * @internal
-   */
-  private _createLowDetailGroup(
-    object: RenderableCelestialObject,
-  ): THREE.Group {
-    const group = new THREE.Group();
-    group.name = `${object.celestialObjectId}-low-lod-group`;
-
-    const color = this.materialService.getBaseColor(object);
-    const scale = typeof SCALE === "number" ? SCALE : 1;
-
-    const lodLight = this._createLODLight(color, 1.5);
-    lodLight.name = `${object.celestialObjectId}-low-lod-light`;
-
-    const lodBillboard = this._createLODBillboard(color, 20 * scale);
-    lodBillboard.name = `${object.celestialObjectId}-low-lod-billboard`;
-
-    group.add(lodLight);
-    group.add(lodBillboard);
-
-    return group;
   }
 
   /**

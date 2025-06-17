@@ -285,7 +285,7 @@ export interface RingProperties {
  */
 export interface GasGiantProperties extends SpecificPropertiesBase {
   type: CelestialType.GAS_GIANT;
-  gasGiantClass: GasGiantClass;
+  planetType: GasGiantClass;
   atmosphereColor: string;
   cloudColor: string;
   cloudSpeed: number;

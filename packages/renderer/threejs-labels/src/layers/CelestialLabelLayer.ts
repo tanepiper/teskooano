@@ -17,7 +17,7 @@ export interface LabelVisibilityConfig {
   gasGiant?: number;
   moon?: number;
   ejectedMoon?: number;
-  otherStars?: number;
+  secondaryStar?: number;
   default?: number;
 }
 
@@ -31,7 +31,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       gasGiant: 190,
       moon: 2,
       ejectedMoon: 2000,
-      otherStars: 3000,
+      secondaryStar: 3000,
       default: 2,
       ...config,
     };
@@ -197,7 +197,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       gasGiant: this.auToSceneUnits(this.visibilityConfig.gasGiant),
       moon: this.auToSceneUnits(this.visibilityConfig.moon),
       ejectedMoon: this.auToSceneUnits(this.visibilityConfig.ejectedMoon),
-      secondaryStar: this.auToSceneUnits(this.visibilityConfig.otherStars),
+      secondaryStar: this.auToSceneUnits(this.visibilityConfig.secondaryStar),
       default: this.auToSceneUnits(this.visibilityConfig.default),
     };
   }

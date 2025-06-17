@@ -1,9 +1,12 @@
 import {
+  CelestialType,
+  ExoticStellarType,
   GRAVITATIONAL_CONSTANT,
   GasGiantClass,
   PlanetType,
   ProceduralSurfaceProperties,
   SpectralClass,
+  StellarType,
 } from "@teskooano/data-types";
 import * as CONST from "./constants";
 
@@ -268,4 +271,113 @@ export function classifyGasGiantByTemperature(
       random,
     );
   }
+}
+
+/**
+ * Calculates a realistic albedo value for a planet based on its type.
+ * @param planetType The type of the planet.
+ * @param random A seeded random number generator.
+ * @returns A value between 0 and 1 representing the planet's albedo.
+ */
+export function calculateAlbedo(
+  celestialType: CelestialType,
+  planetType: PlanetType | GasGiantClass | StellarType | ExoticStellarType,
+  random: () => number,
+): number {
+  let baseAlbedo: number = 0.3;
+  let range: number = 0;
+
+  if (
+    celestialType === CelestialType.PLANET ||
+    celestialType === CelestialType.MOON
+  ) {
+    switch (planetType as PlanetType) {
+      case PlanetType.ICE:
+        baseAlbedo = 0.75;
+        range = 0.25;
+        break;
+      case PlanetType.TERRESTRIAL:
+        baseAlbedo = 0.5;
+        range = 0.25; //
+        break;
+      case PlanetType.ROCKY:
+        baseAlbedo = 0.25;
+        range = 0.25;
+        break;
+      case PlanetType.BARREN:
+        baseAlbedo = 0.1;
+        range = 0.1;
+        break;
+      case PlanetType.LAVA:
+        baseAlbedo = 0.4;
+        range = 0.05;
+        break;
+      default:
+        baseAlbedo = 0.3;
+        range = 0;
+    }
+  }
+
+  if (celestialType === CelestialType.GAS_GIANT) {
+    switch (planetType as GasGiantClass) {
+      case GasGiantClass.CLASS_I: // Ammonia clouds (Jupiter-like)
+        baseAlbedo = 0.5;
+        range = 0.1; // 0.3 - 0.4
+        break;
+      case GasGiantClass.CLASS_II: // Water clouds
+        baseAlbedo = 0.7;
+        range = 0.2;
+        break;
+      case GasGiantClass.CLASS_III: // Clear
+        baseAlbedo = 0.3;
+        range = 0.1;
+        break;
+      case GasGiantClass.CLASS_IV: // Alkali metals
+        baseAlbedo = 0.4;
+        range = 0.1;
+        break;
+      case GasGiantClass.CLASS_V: // Silicate clouds (Hot Jupiters)
+        baseAlbedo = 0.7;
+        range = 0.05; // 0.05 - 0.1 (very dark)
+        break; // Fixed fallthrough
+      default:
+        baseAlbedo = 0.3;
+        range = 0;
+        break;
+    }
+  }
+
+  if (celestialType === CelestialType.STAR) {
+    // For stars, "albedo" is a proxy for billboard brightness
+    switch (planetType as StellarType) {
+      case StellarType.MAIN_SEQUENCE:
+      case StellarType.MAIN_SEQUENCE_G:
+        baseAlbedo = 0.4;
+        range = 0.2; // 0.4 - 0.6
+        break;
+      case StellarType.WOLF_RAYET:
+        baseAlbedo = 0.8;
+        range = 0.15; // 0.8 - 0.95 (Extremely bright)
+        break;
+      case StellarType.NEUTRON_STAR:
+        baseAlbedo = 0.7;
+        range = 0.2; // 0.7 - 0.9 (Intensely bright spots)
+        break;
+      case StellarType.BLACK_HOLE:
+      case StellarType.KERR_BLACK_HOLE:
+        baseAlbedo = 0.01;
+        range = 0.04; // 0.01 - 0.05 (Nearly black)
+        break;
+      case StellarType.WHITE_DWARF:
+        baseAlbedo = 0.6;
+        range = 0.2; // 0.6 - 0.8 (Very bright for its size)
+        break;
+      default:
+        baseAlbedo = 0.3;
+        range = 0;
+        break;
+    }
+  }
+
+  return (baseAlbedo + random() * range) * 2;
 }

@@ -45,23 +45,40 @@ export class WhiteDwarfMaterial extends BaseStarMaterial {
  * Renderer for white dwarf stars
  */
 export class WhiteDwarfRenderer extends BaseStarRenderer {
+  private material: WhiteDwarfMaterial;
+
   constructor(options?: BaseCelestialRendererOptions) {
     super(options);
+    this.material = new WhiteDwarfMaterial();
   }
 
-  getLODLevels(
+  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+    return this.material;
+  }
+
+  protected getCustomLODs(
     object: RenderableCelestialObject,
-    options?: CelestialMeshOptions | undefined,
+    options?: CelestialMeshOptions,
   ): LODLevel[] {
-    const material = this.getMaterial(object);
-    return this._createLuminousStarLODs(object, material, options);
+    const segments = this.getSegmentsForDetailLevel(options?.detailLevel, 32);
+    const geometry = new THREE.SphereGeometry(
+      object.radius,
+      segments,
+      segments,
+    );
+    const mesh = new THREE.Mesh(geometry, this.material);
+    mesh.name = `${object.celestialObjectId}-body`;
+
+    const group = new THREE.Group();
+    group.add(mesh);
+    this._addCoronaToGroup(object, group);
+
+    return [{ object: group, distance: 0 }];
   }
 
-  /**
-   * Returns the appropriate material for a white dwarf star
-   */
-  protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
-    return new WhiteDwarfMaterial();
+  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
+    // White dwarfs are small but very bright, so their billboard should appear from further away
+    return object.radius * 500;
   }
 
   /**

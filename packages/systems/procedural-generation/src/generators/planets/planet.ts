@@ -86,7 +86,7 @@ export function generatePlanet(
 
       const visualPlanetRadius_m = scaleSize(
         finalPlanetRadius_m,
-        baseProps.planetType,
+        baseProps.celestialType,
       );
 
       let generatedRings: RingProperties[] | undefined;
@@ -134,6 +134,12 @@ export function generatePlanet(
       );
       const planetTemp = estimateTemperature(starLuminosity, bodyDistanceAU);
 
+      const planetAlbedo = UTIL.calculateAlbedo(
+        baseProps.celestialType,
+        baseProps.planetType,
+        random,
+      );
+
       let properties: CelestialSpecificPropertiesUnion = specificProperties;
       if (
         specificProperties.type === CelestialType.PLANET &&
@@ -176,7 +182,8 @@ export function generatePlanet(
         id: planetId,
         name: planetName,
         status: CelestialStatus.ACTIVE,
-        type: baseProps.planetType,
+        albedo: planetAlbedo,
+        type: baseProps.celestialType,
         parentId: parentStar.id,
         currentParentId: parentStar.id,
         realMass_kg: planetMass_kg,
