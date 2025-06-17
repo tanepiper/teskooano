@@ -90,7 +90,7 @@ export const defaultCelestialZones: CelestialZone[] = [
     formationProbabilities: [
       {
         type: CelestialType.GAS_GIANT,
-        chance: 1.0, // Almost always a gas giant here
+        chance: 0.75, // Almost always a gas giant here
         densityRange_kg_m3: [600, 1500],
         massMultiplierFactorRange: [20, 120],
         ringChance: 0.25,
@@ -129,8 +129,35 @@ export const defaultCelestialZones: CelestialZone[] = [
         subTypes: [GasGiantClass.CLASS_III, GasGiantClass.CLASS_IV],
       },
       {
-        type: CelestialType.DWARF_PLANET, // Dwarf/Ice Planets
+        type: CelestialType.PLANET, // Dwarf/Ice Planets
         chance: 0.15,
+        densityRange_kg_m3: [1000, 3000],
+        massMultiplierFactorRange: [0.01, 0.1],
+        ringChance: 0.05,
+        allowedRingTypes: [RockyType.ICE, RockyType.ICE_DUST],
+        subTypes: [PlanetType.ICE, PlanetType.ROCKY, PlanetType.BARREN],
+      },
+    ],
+  },
+  {
+    name: "Interstellar Zone",
+    minAU: 30,
+    maxAU: 10000,
+    minBodies: 2,
+    maxAdditionalBodies: 5,
+    formationProbabilities: [
+      {
+        type: CelestialType.GAS_GIANT, // Ice Giants
+        chance: 0.1,
+        densityRange_kg_m3: [1200, 2000],
+        massMultiplierFactorRange: [5, 25],
+        ringChance: 0.4,
+        allowedRingTypes: [RockyType.ICE, RockyType.ICE_DUST],
+        subTypes: [GasGiantClass.CLASS_III, GasGiantClass.CLASS_IV],
+      },
+      {
+        type: CelestialType.DWARF_PLANET, // Dwarf/Ice Planets
+        chance: 0.9,
         densityRange_kg_m3: [1000, 3000],
         massMultiplierFactorRange: [0.01, 0.1],
         ringChance: 0.05,

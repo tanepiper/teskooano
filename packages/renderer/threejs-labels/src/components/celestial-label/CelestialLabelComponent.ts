@@ -26,6 +26,9 @@ export class CelestialLabelComponent extends HTMLElement {
       this.shadowRoot.innerHTML = `
         <style>
           :host {
+            position: relative;
+            left: 50px;
+            top: -20px;
             display: block;
             color: white;
             background-color: rgba(0,0,0,0.5);

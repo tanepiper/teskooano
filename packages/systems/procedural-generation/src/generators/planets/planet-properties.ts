@@ -64,7 +64,9 @@ function generateGasGiantSpecificProperties(
   baseProps: PlanetBaseProperties,
   bodyDistanceAU: number,
 ): GasGiantProperties {
+  console.log("baseProps", baseProps);
   const gasGiantClass = baseProps.planetType || GasGiantClass.CLASS_I;
+  console.log("gasGiantClass", gasGiantClass);
 
   let atmComposition: string[];
   let atmPressure: number;

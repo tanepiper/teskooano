@@ -23,6 +23,7 @@ export interface BillboardLODConfig {
   distance: number;
   size: number;
   color: THREE.Color;
+  albedo?: number;
   light?: THREE.PointLight;
 }
 
@@ -404,23 +405,22 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     config: BillboardLODConfig,
   ): LODLevel {
     const texture = this.getBillboardTexture();
-    const sprite = createBillboardSprite(
+    const billboardInfo = createBillboardSprite(
       object,
       texture,
       config.size,
       config.color,
+      config.albedo,
     );
 
-    this.billboardsInfo.set(object.celestialObjectId, {
-      object: object,
-      sprite: sprite,
-      activationDistance: config.distance,
-      maxFadeDistance: config.distance * 5,
-    });
+    billboardInfo.activationDistance = config.distance;
+    billboardInfo.maxFadeDistance = config.distance * 5;
+
+    this.billboardsInfo.set(object.celestialObjectId, billboardInfo);
 
     const billboardGroup = new THREE.Group();
     billboardGroup.name = `${object.celestialObjectId}-billboard-lod`;
-    billboardGroup.add(sprite);
+    billboardGroup.add(billboardInfo.sprite);
 
     if (config.light) {
       billboardGroup.add(config.light);

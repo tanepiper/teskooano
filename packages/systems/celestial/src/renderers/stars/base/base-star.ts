@@ -389,7 +389,7 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
 
     const billboardLOD = this._createBillboardLOD(object, {
       distance: billboardDistance,
-      size: distantPointSize,
+      size: 0.05,
       color: starColor,
       light: pointLight,
     });

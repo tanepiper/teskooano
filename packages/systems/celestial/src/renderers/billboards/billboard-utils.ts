@@ -1,6 +1,7 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
+import { BillboardInfo } from "./types";
 
 /**
  * Creates a canvas texture for a star billboard.
@@ -38,8 +39,8 @@ export function createBillboardTexture(): THREE.CanvasTexture {
 export function calculateDistantSpriteSize(
   object: RenderableCelestialObject,
 ): number {
-  const minSpriteSize = 0.03;
-  const maxSpriteSize = 0.15;
+  const minSpriteSize = 0.01;
+  const maxSpriteSize = 0.05;
   const radiusScaleFactor = 0.0001;
   let calculatedSpriteSize = object.radius * radiusScaleFactor;
   return Math.max(minSpriteSize, Math.min(maxSpriteSize, calculatedSpriteSize));
@@ -52,6 +53,7 @@ export function calculateDistantSpriteSize(
  * @param texture - The texture to use for the sprite.
  * @param size - The size of the sprite (typically in screen space units).
  * @param starColor - The color of the star, used to tint the sprite.
+ * @param albedo - The albedo factor to calculate the final color of the sprite.
  * @returns A THREE.Sprite configured for billboard rendering.
  */
 export function createBillboardSprite(
@@ -59,19 +61,29 @@ export function createBillboardSprite(
   texture: THREE.Texture,
   size: number,
   starColor: THREE.Color,
-): THREE.Sprite {
+  albedo: number = 0.3,
+): BillboardInfo {
+  const finalColor = starColor.clone().multiplyScalar(albedo * 2.5);
+
   const spriteMaterial = new THREE.SpriteMaterial({
     map: texture,
-    color: starColor,
+    color: finalColor,
     blending: THREE.AdditiveBlending,
     sizeAttenuation: false, // Size is in screen space
     transparent: true,
+    opacity: 0.85,
   });
 
   const distantSprite = new THREE.Sprite(spriteMaterial);
   distantSprite.name = `${object.celestialObjectId}-distant-sprite`;
   distantSprite.scale.set(size, size, 1.0);
-  return distantSprite;
+
+  return {
+    sprite: distantSprite,
+    object,
+    activationDistance: 0,
+    maxFadeDistance: 0,
+  };
 }
 
 /**

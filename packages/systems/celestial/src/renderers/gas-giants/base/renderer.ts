@@ -132,8 +132,9 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
 
     const level2 = this._createBillboardLOD(object, {
       distance: billboardDistance,
-      size: calculateDistantSpriteSize(object),
+      size: 0.02,
       color: color,
+      albedo: object.albedo,
     });
 
     return [level0, level1, level2];

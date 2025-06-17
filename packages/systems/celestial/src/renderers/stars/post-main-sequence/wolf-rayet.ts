@@ -60,19 +60,36 @@ export class WolfRayetRenderer extends BaseStarRenderer {
     super(options);
   }
 
-  public getLODLevels(
+  protected getCustomLODs(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     const material = this.getMaterial(object);
-    return this._createLuminousStarLODs(object, material, options);
+    const segments = this.getSegmentsForDetailLevel(options?.detailLevel, 64);
+    const geometry = new THREE.SphereGeometry(
+      object.radius,
+      segments,
+      segments,
+    );
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = `${object.celestialObjectId}-body`;
+
+    const group = new THREE.Group();
+    group.add(mesh);
+    this._addCoronaToGroup(object, group);
+
+    return [{ object: group, distance: 0 }];
   }
 
   /**
    * Returns the appropriate material for a Wolf-Rayet star
    */
-  protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
     return new WolfRayetMaterial();
+  }
+
+  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
+    return object.radius * 2000;
   }
 
   /**
