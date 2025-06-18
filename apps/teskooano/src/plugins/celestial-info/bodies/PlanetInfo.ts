@@ -3,7 +3,7 @@ import {
   CelestialType,
   PlanetProperties,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/FormatUtils.js";
+import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 import {
   renderAlbedo,
@@ -18,13 +18,12 @@ export class PlanetInfoComponent extends BaseCelestialInfoComponent {
     super("Loading planet data...");
   }
 
-  protected render(celestial: CelestialObject): string {
+  protected renderDetails(celestial: CelestialObject): string {
     const planetProps = celestial.properties as PlanetProperties;
     const surface = planetProps?.surface;
     const atmosphere = planetProps?.atmosphere;
 
     return `
-      <h3>${celestial.name}</h3>
       <dl class="info-grid">
           <dt>Type:</dt><dd>${celestial.type === CelestialType.DWARF_PLANET ? "Dwarf Planet" : "Planet"}</dd>
           <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>

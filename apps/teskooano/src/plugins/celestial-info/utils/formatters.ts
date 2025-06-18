@@ -31,6 +31,27 @@ export class FormatUtils {
       : "N/A";
   }
 
+  static formatDistanceAdaptive(
+    meters: number | undefined | null,
+    auDigits = 2,
+    otherDigits = 1,
+  ): string {
+    if (meters == null || !Number.isFinite(meters)) return "N/A";
+
+    const au = meters / AU_IN_METERS;
+
+    if (au >= 0.1) {
+      return au.toFixed(auDigits) + " AU";
+    }
+    if (meters >= 1_000_000) {
+      return (meters / 1_000_000).toFixed(otherDigits) + " Mm";
+    }
+    if (meters >= 1000) {
+      return (meters / 1000).toFixed(otherDigits) + " km";
+    }
+    return meters.toFixed(0) + " m";
+  }
+
   static formatDegrees(radians: number | undefined | null, digits = 1): string {
     return radians != null && Number.isFinite(radians)
       ? ((radians * 180) / Math.PI).toFixed(digits) + "°"

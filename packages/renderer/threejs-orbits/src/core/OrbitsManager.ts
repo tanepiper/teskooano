@@ -163,12 +163,12 @@ export class OrbitsManager {
   updateAllVisualizations(): void {
     const objects = this.latestRenderableObjects;
     const visualSettings = this.stateAdapter.$visualSettings.getValue();
+    const trailLength = 50000; // A large, fixed number of points for the trail history.
 
     // Periodically clean up memory
     if (this.predictionUpdateCounter === 0) {
       if (this.currentMode === VisualizationMode.Verlet) {
-        const maxHistoryLength = 100 * visualSettings.trailLengthMultiplier;
-        this.trailManager.limitHistoryMemory(maxHistoryLength);
+        this.trailManager.limitHistoryMemory(trailLength);
       }
     }
 
@@ -201,12 +201,11 @@ export class OrbitsManager {
       }
 
       // Update trail for each object
-      const maxHistoryLength = 100 * visualSettings.trailLengthMultiplier;
       Object.values(objects).forEach((obj) => {
         this.trailManager.updateTrail(
           obj.celestialObjectId,
           obj,
-          maxHistoryLength,
+          trailLength,
           shouldUpdateTrailGeometry,
         );
       });
@@ -222,10 +221,12 @@ export class OrbitsManager {
 
       // Only show prediction for highlighted object
       if (this.highlightedObjectId) {
-        this.predictionManager.updatePrediction(
-          this.highlightedObjectId,
-          shouldUpdatePredictions,
-        );
+        this.predictionManager.updatePrediction(this.highlightedObjectId, {
+          forceRecalculate: shouldUpdatePredictions,
+          timeScale: visualSettings.timeScale,
+          predictionSteps: visualSettings.predictionSteps,
+          predictionDuration: visualSettings.predictionDuration,
+        });
         this.predictionManager.highlightPrediction(this.highlightedObjectId);
       } else {
         this.predictionManager.highlightPrediction(null);
@@ -292,12 +293,28 @@ export class OrbitsManager {
         );
       } else {
         this.trailManager.setHighlightedObject(objectId, this.highlightColor);
+        // Force an immediate prediction update for the newly highlighted object
+        const visualSettings = this.stateAdapter.$visualSettings.getValue();
+        this.predictionManager.updatePrediction(objectId, {
+          forceRecalculate: true,
+          timeScale: visualSettings.timeScale,
+          predictionSteps: visualSettings.predictionSteps,
+          predictionDuration: visualSettings.predictionDuration,
+        });
         this.predictionManager.highlightPrediction(objectId);
       }
     } else {
       // Clear highlighting
       if (this.currentMode === VisualizationMode.Verlet) {
+        this.trailManager.setHighlightedObject(null);
         this.predictionManager.highlightPrediction(null);
+      } else if (this.currentMode === VisualizationMode.Keplerian) {
+        if (previouslyHighlightedId) {
+          this.keplerianManager.resetPreviousHighlight(
+            previouslyHighlightedId,
+            null,
+          );
+        }
       }
     }
   }

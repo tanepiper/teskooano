@@ -6,16 +6,20 @@ This directory contains renderers that create large collections of small objects
 
 Unlike other rendering systems, this module does not have a shared base class. `AsteroidFieldRenderer` and `OortCloudRenderer` are two independent, self-contained classes that both implement the `CelestialRenderer` interface. Their primary similarity is the use of `THREE.Points` to render particles, but their implementations are highly specialized.
 
+- **Factory Functions**: The module now provides `createAsteroidFieldMesh` and `createAsteroidMesh` as the primary entry points. These factories are responsible for instantiating the correct renderer and creating the final LOD object, which aligns this system with the preferred architectural pattern.
+
 ### 2. `AsteroidFieldRenderer.ts`
 
 This renderer is responsible for creating disk-shaped asteroid belts. Its implementation is significantly more advanced than a standard particle system.
 
+- **Inheritance**: This class now extends `BaseCelestialRenderer`, providing access to common utilities and resource management.
 - **Custom Shaders**: It uses a custom vertex and fragment shader (`asteroidVertexShader`, `asteroidFragmentShader`) embedded as strings.
   - The vertex shader handles the rotation of the entire belt and calculates the screen-space size of each particle (`gl_PointSize`) to achieve proper size attenuation (particles get smaller with distance).
   - The fragment shader is particularly advanced. It implements a **texture atlas** system in the shader, using a `vTextureIndex` varying to select one of five different asteroid textures from a `sampler2D` array (`uniform sampler2D asteroidTextures[5]`). It also applies an individual rotation to each particle's UV coordinates, making each asteroid appear to tumble independently.
 - **Asynchronous Texture Loading**: It asynchronously loads an array of 5 distinct asteroid `.png` textures. The `sharedMaterial` is created immediately, but the textures are populated in the material's uniforms as they finish loading.
 - **LOD Strategy**: It implements a robust LOD system in its `getLODLevels` method. It creates **multiple, separate `THREE.BufferGeometry` instances**, one for each LOD level (`High`, `Medium`, `Low`). Each geometry has a progressively smaller number of particles, significantly reducing the data sent to the GPU at a distance. All these geometries share the same custom `ShaderMaterial`.
 - **Mesh Creation**: The `getLODLevels` method returns an array of `LODLevel` objects, each containing a `THREE.Points` object with the appropriate geometry for that distance.
+- **Procedural Generation**: Both renderers create their particle distributions procedurally, making them flexible and data-driven.
 
 ### 3. `OortCloudRenderer.ts`
 
@@ -37,5 +41,5 @@ This renderer creates a vast, spherical Oort cloud at the edge of a star system.
 
 - **Weaknesses / Inconsistencies**:
   - **Embedded Shaders**: Like the star renderer, this system embeds its GLSL code in TypeScript files, which makes the shaders harder to develop and maintain compared to external `.glsl` files.
-  - **No Shared Logic**: Despite their conceptual similarity, the two renderers share no code. Common functionalities (like procedural particle generation or the basic structure of a particle renderer) could potentially be abstracted into a shared base class or utility functions to reduce duplication.
+  - **Partially Shared Logic**: While `AsteroidFieldRenderer` now extends the base class, `OortCloudRenderer` remains a standalone implementation. There may still be opportunities to abstract common particle generation or material setup logic into a shared base class for particle systems.
   - **Asynchronous Complexity**: The async texture loading in `AsteroidFieldRenderer` adds complexity to its initialization sequence that must be carefully managed by the consuming code.

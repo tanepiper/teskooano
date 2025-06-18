@@ -8,8 +8,8 @@ export const pluginConfig: PluginRegistryConfig = {
   "teskooano-engine-settings": {
     path: "../plugins/engine-settings",
   },
-  "teskooano-focus-controls": {
-    path: "../plugins/focus",
+  "teskooano-celestial-hierarchy": {
+    path: "../plugins/celestial-hierarchy",
   },
   "teskooano-engine-info": {
     path: "../plugins/engine-info",
@@ -38,4 +38,24 @@ export const pluginConfig: PluginRegistryConfig = {
   "teskooano-debug-panel": {
     path: "../plugins/debug-panel",
   },
+  "teskooano-celestial-icons": {
+    path: "../plugins/celestial-icons",
+  },
 };
+
+export const INITIAL_PLUGINS: (keyof typeof pluginConfig)[] = [
+  "teskooano-external-links",
+  "teskooano-engine-panel",
+  "teskooano-engine-settings",
+  "teskooano-celestial-hierarchy",
+  "teskooano-engine-info",
+  "teskooano-celestial-info",
+  "teskooano-settings",
+  "teskooano-simulation-controls",
+  "teskooano-system-controls",
+  "teskooano-about",
+  "teskooano-celestial-uniforms",
+  "teskooano-plugin-manager",
+  "teskooano-debug-panel",
+  "teskooano-celestial-icons",
+];

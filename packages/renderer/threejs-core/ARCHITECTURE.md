@@ -37,3 +37,29 @@ This package provides foundational components for the Three.js rendering pipelin
 - **Basic Stats**: `AnimationLoop` includes logic for calculating and updating basic rendering performance statistics in the global state.
 - **Debug Helpers**: `SceneManager` includes optional grid and sphere helpers.
 - **Internal Events**: Provides a type-safe RxJS-based event bus for internal communication.
+
+````
+
+```mermaid
+graph LR
+    subgraph "@teskooano/renderer-threejs-core"
+        SceneManager["SceneManager"]
+        AnimationLoop["AnimationLoop"]
+        rendererEvents["rendererEvents"]
+    end
+
+    subgraph "@teskooano/core-state"
+        CoreState["simulationState Store"]
+    end
+
+
+    Integrator -- "Instantiates & Controls" --> SceneManager;
+    Integrator -- "Instantiates & Controls" --> AnimationLoop;
+    Integrator -- "Sets Renderer/Camera on" --> AnimationLoop;
+    Integrator -- "Hooks into" --> AnimationLoop;
+
+    AnimationLoop -- "Drives" --> SceneManager;
+    AnimationLoop -- "Updates" --> CoreState;
+
+    SceneManager -- "Reads initial state from" --> CoreState
+````

@@ -4,6 +4,7 @@ import * as THREE from "three";
 import proceduralFragmentShaderSource from "../../../shaders/terrestrial/procedural.fragment.glsl";
 import proceduralVertexShaderSource from "../../../shaders/terrestrial/procedural.vertex.glsl";
 import { ProceduralPlanetUniforms } from "../../../types/procedural";
+import { LightSourceData } from "../../index";
 
 const MAX_LIGHTS = 4;
 
@@ -29,7 +30,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       }
     };
 
-    const uniforms: ProceduralPlanetUniforms = {
+    const uniforms = {
       uNumLights: { value: 0 },
       uLightPositions: {
         value: Array(MAX_LIGHTS)
@@ -81,7 +82,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
     };
 
     super({
-      uniforms,
+      uniforms: uniforms as any,
       vertexShader: proceduralVertexShaderSource,
       fragmentShader: proceduralFragmentShaderSource,
       precision: "highp",
@@ -90,10 +91,8 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
 
   update(
     time: number,
-    lightSources?: Map<
-      string,
-      { position: THREE.Vector3; color: THREE.Color; intensity: number }
-    >,
+    timeScale: number,
+    lightSources?: Map<string, LightSourceData>,
     camera?: THREE.Camera,
   ): void {
     this.uniforms.uTime.value = time;
@@ -105,7 +104,9 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
     const lightColors = this.uniforms.uLightColors?.value || [];
 
     if (!this.uniforms.uLightIntensities) {
-      this.uniforms.uLightIntensities = { value: Array(MAX_LIGHTS).fill(1.0) };
+      this.uniforms.uLightIntensities = new THREE.Uniform(
+        Array(MAX_LIGHTS).fill(1.0) as number[],
+      );
     }
     const lightIntensities = this.uniforms.uLightIntensities.value;
 
@@ -119,7 +120,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
           if (lightColors[numLights])
             lightColors[numLights].copy(lightData.color);
           if (lightIntensities)
-            lightIntensities[numLights] = lightData.intensity;
+            lightIntensities[numLights] = lightData.intensity ?? 1.0;
           numLights++;
         } else {
           break;

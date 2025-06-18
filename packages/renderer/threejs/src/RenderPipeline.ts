@@ -4,8 +4,8 @@ import type {
   SceneManager,
 } from "@teskooano/renderer-threejs-core";
 import type { ControlsManager } from "@teskooano/renderer-threejs-controls";
-import type { CSS2DManager } from "@teskooano/renderer-threejs-labels";
-import type { LightManager } from "@teskooano/renderer-threejs-lighting";
+import type { Layer2DManager } from "@teskooano/renderer-threejs-labels";
+import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
@@ -25,9 +25,9 @@ export class RenderPipeline {
   private orbitManager: OrbitsManager;
   private objectManager: ObjectManager;
   private backgroundManager: BackgroundManager;
-  private lightManager: LightManager;
+  private lightingManager: LightingManager;
   private lodManager: LODManager;
-  private css2DManager?: CSS2DManager;
+  private css2DManager?: Layer2DManager;
   private animationLoop: AnimationLoop;
 
   private camera: THREE.PerspectiveCamera;
@@ -46,7 +46,7 @@ export class RenderPipeline {
     this.orbitManager = managers.orbitManager;
     this.objectManager = managers.objectManager;
     this.backgroundManager = managers.backgroundManager;
-    this.lightManager = managers.lightManager;
+    this.lightingManager = managers.lightingManager;
     this.lodManager = managers.lodManager;
     this.css2DManager = managers.css2DManager;
     this.animationLoop = managers.animationLoop;
@@ -76,6 +76,10 @@ export class RenderPipeline {
    * @param elapsedTime The total time elapsed since the loop started, in seconds.
    */
   public update = (deltaTime: number, elapsedTime: number): void => {
+    // Attach renderer height to camera for dynamic calculations (e.g., point sizes)
+    // This is a bit of a hack but avoids a major refactor of all update signatures.
+    (this.camera as any).rendererHeight = this.renderer.domElement.clientHeight;
+
     // 1. Update controls and camera position first.
     this.controlsManager.update(deltaTime);
 
@@ -83,13 +87,7 @@ export class RenderPipeline {
     this.orbitManager.updateAllVisualizations();
 
     // 3. Update 3D objects (position, rotation, materials).
-    this.objectManager.updateRenderers(
-      elapsedTime,
-      this.lightManager.getStarLightsData(),
-      this.renderer,
-      this.scene,
-      this.camera,
-    );
+    this.objectManager.update(this.renderer, this.scene, this.camera);
 
     // 4. Update the background, which may have a parallax effect based on camera position.
     this.backgroundManager.update(deltaTime);
@@ -98,8 +96,14 @@ export class RenderPipeline {
     this.lodManager.update();
 
     // 6. Render the 2D overlay, which depends on final 3D positions.
-    if (this.css2DManager && typeof this.css2DManager.render === "function") {
-      this.css2DManager.render(this.camera);
+    if (this.css2DManager) {
+      if (typeof this.css2DManager.update === "function") {
+        const centralBody = this.objectManager.getCentralBody();
+        this.css2DManager.update(this.camera, centralBody, this.objectManager);
+      }
+      if (typeof this.css2DManager.render === "function") {
+        this.css2DManager.render(this.camera);
+      }
     }
 
     // 7. Run any custom render callbacks injected into the loop.

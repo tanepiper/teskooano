@@ -14,10 +14,13 @@ import {
   CelestialType,
   PlanetType,
   SurfaceType,
+  PhysicsStateReal,
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
-import { generateCelestialName } from "../names";
+import { createProceduralSurfaceProperties } from "../../properties";
+import { calculatePlanetOrbitAndInitialState } from "../planets/planet-orbit";
+import { generateCelestialName } from "../names/celestial-name";
 
 /**
  * Generates data for a single moon orbiting a parent planet.
@@ -137,7 +140,7 @@ export function generateMoon(
       moonOrbit,
       0,
     );
-    initialWorldVel_mps = calculateOrbitalVelocity(
+    const initialRelativeVel_mps = calculateOrbitalVelocity(
       parentPlanetState,
       moonOrbit,
       0,
@@ -146,6 +149,9 @@ export function generateMoon(
     initialWorldPos_m = initialRelativePos_m
       .clone()
       .add(parentPlanetState.position_m);
+    initialWorldVel_mps = initialRelativeVel_mps
+      .clone()
+      .add(parentPlanetState.velocity_mps);
 
     if (
       !initialWorldPos_m ||
@@ -200,13 +206,13 @@ export function generateMoon(
     case PlanetType.ICE:
     case PlanetType.DESERT:
     case PlanetType.LAVA:
-      detailedSurface = UTIL.createProceduralSurfaceProperties(
+      detailedSurface = createProceduralSurfaceProperties(
         random,
         moonPlanetType,
       );
       break;
     default:
-      detailedSurface = UTIL.createProceduralSurfaceProperties(
+      detailedSurface = createProceduralSurfaceProperties(
         random,
         PlanetType.ROCKY,
       );

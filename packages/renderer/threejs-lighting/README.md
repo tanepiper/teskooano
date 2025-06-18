@@ -1,57 +1,67 @@
 # @teskooano/renderer-threejs-lighting
 
-This package provides managers and utilities for handling visual effects and optimizations within the Teskooano Three.js rendering pipeline.
+This package provides a component-based system for managing dynamic, emissive light sources within the Teskooano Three.js rendering pipeline.
 
 ## Features
 
-- **`LightManager`**: Manages dynamic light sources. It reactively creates, updates, and removes `THREE.PointLight` sources based on star data from the core state, and also manages global ambient light.
-- **`LODManager`**: Manages Level of Detail (LOD) for scene objects using Three.js's built-in `THREE.LOD` class. It dynamically adjusts the geometric detail of objects based on their distance to the camera to optimize performance.
-- **Debug Capabilities**: Includes optional debugging features for visualizing LOD levels and distances.
+- **`LightingManager`**: A central registry for all dynamic light sources in the scene.
+- **`LightSourceComponent`**: A wrapper that links a `THREE.Light` instance to a moving `RenderableCelestialObject`.
+- **Performant Lookups**: Provides a `getInfluentialLights()` method to efficiently find the most relevant lights for any object in the scene, which is crucial for shader-based lighting calculations.
 
 ## Architecture
 
-This package provides two main, independent manager classes: `LightManager` and `LODManager`. They are designed to be instantiated and used directly by a renderer integrator, such as `@teskooano/renderer-threejs`.
+The system is designed to be explicit and lightweight. A consumer (like `@teskooano/renderer-threejs-objects`) is responsible for creating `LightSourceComponent` instances for any object that should emit light (e.g., a star) and registering them with the `LightingManager`.
 
-For more details, see the `ARCHITECTURE.md` file.
+For a more detailed explanation of the design, see the [ARCHITECTURE.md](./ARCHITECTURE.md) file.
 
 ## Usage
 
-This package is used internally by the main `@teskooano/renderer-threejs` package. The `ModularSpaceRenderer` class instantiates both `LightManager` and `LODManager` and integrates them into its render loop.
-
-An example of how to use the `LightManager` can be found in the main `ModularSpaceRenderer` class, but a simple example is shown below:
+This package is designed to be used by an integrator package like `@teskooano/renderer-threejs`. The `LightingManager` is instantiated and its `update` method is called on every frame of the render loop.
 
 ```typescript
-import { LightManager } from "@teskooano/renderer-threejs-lighting";
+// In a renderer or object manager class
+
+import {
+  LightingManager,
+  LightSourceComponent,
+} from "@teskooano/renderer-threejs-lighting";
 import * as THREE from "three";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 
-// Assuming scene and camera are already initialized
+// --- Initialization ---
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000,
-);
+const lightingManager = new LightingManager(scene);
 
-// Instantiate managers directly
-const lightManager = new LightManager(scene, camera, false);
-const lodManager = new LODManager(camera);
+// --- Object Creation (e.g., when a star is created) ---
+// (object is a RenderableCelestialObject representing the star)
+const starObject: RenderableCelestialObject = getStarData();
+const lightSource = new LightSourceComponent(starObject);
+lightingManager.register(lightSource);
 
-// Create an LOD object and add it to the scene
-// (In the real app, this is done by the ObjectManager/MeshFactory)
-// const lodObject = lodManager.createAndRegisterLOD(...);
-// scene.add(lodObject);
-
+// --- In the Render Loop / Pipeline ---
 function animate() {
   requestAnimationFrame(animate);
 
-  // Update managers in the render loop
-  lodManager.update();
-  // LightManager updates reactively via its state subscription
+  // Must be called every frame to update light positions
+  lightingManager.update();
 
-  // ... other rendering logic ...
-  renderer.render(scene, camera);
+  // --- Example: A planet renderer needs to find its light source ---
+  const planetObject: RenderableCelestialObject = getPlanetData();
+  const influentialLights = lightingManager.getInfluentialLights(
+    planetObject,
+    1,
+  );
+  if (influentialLights.length > 0) {
+    const primaryLight = influentialLights[0];
+    // Pass light position, color, etc., to planet's shader uniforms
+  }
 }
 
-animate();
+// --- Object Destruction ---
+lightingManager.unregister(starObject.celestialObjectId);
 ```
+
+## Core Components
+
+- **`LightingManager`:** The registry class for all light sources. It adds/removes lights from the scene and provides the `getInfluentialLights` query method.
+- **`LightSourceComponent`**: A component that wraps a `THREE.Light` and keeps its position synchronized with a `RenderableCelestialObject`.

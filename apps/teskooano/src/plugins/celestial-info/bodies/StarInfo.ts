@@ -1,18 +1,14 @@
-import {
-  CelestialObject,
-  CelestialType,
-  StarProperties,
-} from "@teskooano/data-types";
-import { FormatUtils } from "../utils/FormatUtils.js";
-import { renderMainProperties } from "./common/render-helpers.js";
+import { CelestialObject, StarProperties } from "@teskooano/data-types";
+import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
+import { renderMainProperties } from "./common/render-helpers.js";
 
 export class StarInfoComponent extends BaseCelestialInfoComponent {
   constructor() {
     super("Loading star data...");
   }
 
-  protected render(celestial: CelestialObject): string {
+  protected renderDetails(celestial: CelestialObject): string {
     const starProps = celestial.properties as StarProperties;
 
     let spectralDescription = "";
@@ -30,7 +26,6 @@ export class StarInfoComponent extends BaseCelestialInfoComponent {
       : "N/A";
 
     return `
-      <h3>${celestial.name}</h3>
       <dl class="info-grid">
           <dt>Type:</dt><dd>Star</dd>
           ${starProps?.isMainStar ? `<dt>Main Star:</dt><dd>Yes</dd>` : ""}

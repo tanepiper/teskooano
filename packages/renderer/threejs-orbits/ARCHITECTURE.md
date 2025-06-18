@@ -1,76 +1,87 @@
-# @teskooano/renderer-threejs-orbits Architecture
+# Architecture: `@teskooano/renderer-threejs-orbits`
+
+This document provides a detailed overview of the architecture for the `@teskooano/renderer-threejs-orbits` package.
 
 ## Overview
 
-The `@teskooano/renderer-threejs-orbits` package is responsible for visualizing orbital paths in the Teskooano engine. It provides two distinct visualization modes, managed by a central `OrbitsManager`:
+This package is responsible for visualizing the orbital paths of celestial objects. It is designed to support two distinct modes of visualization that correspond to the underlying physics engines used in the simulation:
 
-1.  **Keplerian Mode**: Draws static, idealized elliptical orbit lines calculated from orbital parameters. This is managed by the `KeplerianManager`.
-2.  **Verlet Mode**: Draws dynamic trails and trajectory predictions based on real-time physics simulation. This is split between the `TrailManager` and `PredictionManager`.
+1.  **Keplerian Mode**: Visualizes the perfect, analytical ellipses described by Kepler's laws. This is used when the simulation is running in `keplerian` mode.
+2.  **Verlet Mode**: Visualizes the paths of objects calculated by the Verlet numerical integrator. This consists of two parts:
+    - A historical "trail" showing where the object has been.
+    - A "prediction" line showing the calculated future trajectory.
 
-This architectural design allows the system to efficiently toggle between idealized orbital paths and physically simulated paths.
+The architecture is built around the **Strategy Pattern**. A central `OrbitsManager` acts as the context, orchestrating a suite of sub-managers (the strategies) and switching between them based on the application's current state.
 
 ## Core Components
 
-### `OrbitsManager` (`core/OrbitsManager.ts`)
+### 1. `OrbitsManager` (The Context)
 
-This is the central controller class that orchestrates all orbit visualization.
+The `OrbitsManager` is the public-facing facade of the package. It is instantiated by the main `ModularSpaceRenderer`.
 
-- **Responsibilities**:
-  - Instantiates and manages the sub-managers (`KeplerianManager`, `TrailManager`, `PredictionManager`).
-  - Handles switching between `Keplerian` and `Verlet` visualization modes.
-  - Delegates all visualization tasks (creation, updates, visibility, highlighting) to the appropriate sub-manager.
-  - Subscribes to the `renderableStore` to react to object changes.
+**Key Responsibilities:**
 
-### Sub-Managers
+- **Mode Switching**: Subscribes to the `RendererStateAdapter`'s `$visualSettings` observable to detect changes in the active `physicsEngine`. When the engine changes, it seamlessly transitions between the Keplerian and Verlet visualization strategies.
+- **Orchestration**: It holds instances of all three sub-managers (`KeplerianManager`, `TrailManager`, `PredictionManager`). In its `updateAllVisualizations()` method (called every frame), it delegates the update calls to the currently active manager(s).
+- **Lifecycle Management**: It listens to the `renderableObjects$` stream to add and remove visualizations as objects appear and disappear from the simulation.
+- **API Facade**: Provides a clean public API for controlling the visualizations (e.g., `setVisibility`, `highlightVisualization`, `setPredictionDuration`).
 
-1.  **`KeplerianManager`** (`keplerian/KeplerianManager.ts`)
+### 2. `KeplerianManager` (Strategy 1)
 
-    - **Purpose**: Manages static, elliptical Keplerian orbit lines.
-    - **Functionality**: Creates and updates orbit lines based on `OrbitalParameters`. Uses `OrbitCalculator` for the underlying math. Handles highlighting and visibility for all Keplerian paths.
+- **Responsibility**: Renders the full elliptical orbits for objects that have `OrbitalParameters`.
+- **Workflow**: When active, it uses an `OrbitCalculator` utility to generate the vertices for an object's orbital ellipse based on its parameters. It then uses a `LineBuilder` to create or update the corresponding `THREE.Line` object in the scene.
 
-2.  **`TrailManager`** (`verlet/TrailManager.ts`)
+### 3. `TrailManager` & `PredictionManager` (Strategy 2)
 
-    - **Purpose**: Manages historical path trails for objects in Verlet mode.
-    - **Functionality**: Captures recent object positions into a moving buffer. Uses `LineBuilder` to efficiently create and update the trail geometry. Trail length is configurable.
+These two managers work together to visualize orbits under the Verlet integration engine.
 
-3.  **`PredictionManager`** (`verlet/PredictionManager.ts`)
-    - **Purpose**: Manages future trajectory prediction lines for a selected object in Verlet mode.
-    - **Functionality**: Uses the `predictTrajectory` function from `@teskooano/core-physics` to get future points. It does **not** perform its own physics calculations. It visualizes the predicted path using `LineBuilder`.
+- **`TrailManager`**:
 
-### Utility Modules
+  - **Responsibility**: Shows the recent historical path of an object.
+  - **Workflow**: For each object, it maintains a `CircularBuffer` of recent positions. On each update, it adds the object's current position to the buffer and uses the `LineBuilder` to draw a line connecting the points in the buffer. The length of the trail is determined by the buffer's capacity.
 
-- **`OrbitCalculator.ts`**: Implements the mathematics for calculating Keplerian orbit points from orbital parameters.
-- **`LineBuilder.ts`**: Provides utilities for creating and updating `THREE.Line` geometries efficiently.
-- **`BufferPool.ts`**: A memory optimization utility for recycling `Float32Array` buffers to reduce garbage collection.
-- **`SharedMaterials.ts`**: Defines shared `THREE.LineBasicMaterial` instances to reduce resource consumption.
+- **`PredictionManager`**:
+  - **Responsibility**: Shows the predicted future path of an object.
+  - **Workflow**: It can be triggered to run a "prediction simulation" using a `predictTrajectory` function from `@teskooano/core-physics`. This function calculates an array of future positions. The `PredictionManager` then caches these points and draws them as a line. This is a computationally expensive operation, so it is only run periodically or on demand, not every frame.
 
-## Data Flow and Update Cycle
+### 4. Utility Classes
 
-1.  The `OrbitsManager` subscribes to the `renderableStore.renderableObjects$` observable.
-2.  On each frame, the main renderer calls `orbitsManager.update()`.
-3.  The `OrbitsManager` then calls the `update()` method of the currently active sub-manager(s) (`KeplerianManager` or both `TrailManager` and `PredictionManager`).
-4.  The sub-managers handle the details of creating, updating, or removing their respective line geometries from the scene.
-5.  When an object is highlighted via `orbitsManager.highlight()`, the call is delegated to the active managers to apply a highlight material to the correct line.
+- **`LineBuilder`**: A utility for efficiently creating and updating `THREE.Line` objects. It uses a `BufferPool` to reuse `BufferAttribute`s, minimizing memory allocations and garbage collection.
+- **`SharedMaterials`**: A singleton that provides cached, reusable `LineBasicMaterial` instances for all orbit lines, reducing the number of materials in the scene.
 
-## Code Organization
+## Interaction Diagram
 
-The package is organized by feature, with distinct directories for the core orchestrator, each visualization mode, and shared utilities.
+```mermaid
+graph TD
+    subgraph ModularSpaceRenderer
+        MSR
+    end
 
-```
-packages/renderer/threejs-orbits/
-├── src/
-│   ├── core/
-│   │   ├── OrbitsManager.ts        # Main controller
-│   │   └── SharedMaterials.ts      # Shared materials
-│   ├── keplerian/
-│   │   ├── KeplerianManager.ts     # Manages static ellipses
-│   │   └── OrbitCalculator.ts      # Math for ellipses
-│   ├── verlet/
-│   │   ├── TrailManager.ts         # Manages historical trails
-│   │   └── PredictionManager.ts    # Manages future predictions
-│   └── utils/
-│       ├── LineBuilder.ts          # THREE.js line creation helpers
-│       └── BufferPool.ts           # Buffer management utilities
+    subgraph RenderPipeline
+        RP
+    end
+
+    subgraph RendererStateAdapter
+        RSA["$visualSettings"]
+    end
+
+    subgraph "This Package"
+        OM(OrbitsManager)
+        KM(KeplerianManager)
+        TM(TrailManager)
+        PM(PredictionManager)
+    end
+
+    MSR -- Instantiates --> OM;
+    RP -- Calls update() --> OM;
+    OM -- Subscribes to --> RSA;
+
+    OM -- Delegates to --> KM;
+    OM -- Delegates to --> TM;
+    OM -- Delegates to --> PM;
+
+    classDef manager fill:#d5e8d4,stroke:#82b366;
+    class OM, KM, TM, PM manager;
 ```
 
 ## Known Limitations and Potential Improvements

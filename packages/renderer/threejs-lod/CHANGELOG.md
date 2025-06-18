@@ -6,23 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- **Major Refactor (LightManager.ts)**:
-  - Now subscribes to `renderableStore.renderableObjects$` from `@teskooano/core-state` using RxJS (`pipe`, `map`, `filter`, `pairwise`).
-  - Star lights are now added, updated (position, intensity), and removed reactively based on changes to star objects in the core state.
-  - Intensity is now partly derived from star temperature via a new `calculateIntensity` placeholder method.
-  - Removed the manual `addStarLight` and `updateStarLight` methods in favor of reactive updates.
-  - Improved `dispose` method to correctly unsubscribe and dispose of light resources.
-- `LODManager` now adjusts LOD distances based on the global `performanceProfile` from `simulationState$`.
+- `LODManager` now subscribes to `simulationState$` to get the current `performanceProfile` (`low`, `medium`, 'high'). This profile is used to apply a scaling factor to the distances of **newly created** LODs.
+- All `THREE.LOD` objects are now created via a central `createAndRegisterLOD` method in `LODManager`, which ensures consistency.
+- Debug labels (`lod-debug-labels.ts`) have been improved to show more information and handle removal more cleanly.
 
 ### Removed
 
-- Removed the unused `EffectsManager` facade class. The package now exports `LightManager` and `LODManager` to be used directly by the integrator.
-
-## [0.1.0] - 2025-04-24
-
-### Added
-
-- Initial release of the `@teskooano/renderer-threejs-effects` package.
-- `LightManager`: Manages ambient light and dynamic star point lights.
-- `LODManager`: Manages Level of Detail for scene objects using `THREE.LOD`.
-- Helper functions in `lod-manager/` for building LOD meshes, calculating distances, and debug visualization.
+- Removed the obsolete `LightManager`

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Major Refactor (Star & Gas Giant Renderers)**:
+
+  - Unified the instantiation logic for Stars and Gas Giants by introducing factory functions (`createStarMesh`, `createGasGiantMesh`). This standardizes the public API and encapsulates renderer selection logic.
+  - Restructured the `renderers/stars` directory, organizing renderers into subdirectories by stellar evolution stage (`main-sequence`, `post-main-sequence`, `remnants`, `black-holes`) for improved clarity.
+  - Refactored `BaseStarRenderer` into a more abstract class by making `getLODLevels` an abstract method. This removes the assumption that all stars are luminous and allows for correct implementation of non-luminous objects like black holes.
+  - Introduced `MainSequenceStarRenderer` as a new intermediate base class for all luminous stars to share common LOD and material logic.
+  - Updated all star renderer subclasses to inherit from the correct base class and conform to the new architecture.
+  - Added optional `camera`, `scene`, and `renderer` properties to `CelestialMeshOptions` to allow advanced renderers (like `NeutronStarRenderer`) to access necessary components for multi-pass effects like gravitational lensing.
+
 - **Major Refactor (Materials & Textures)**:
   - Removed the entire old procedural texture generation system (deleted `textures/` directory including `TextureFactory.ts`, `TextureGeneratorBase.ts`, and individual generator classes like `GasGiantTextureGenerator.ts`, `TerrestrialTextureGenerator.ts`, etc.).
   - Removed the old material management system (deleted `MaterialFactory.ts` and individual material classes like `PlanetMaterial.ts`, `StarMaterial.ts`, etc.).

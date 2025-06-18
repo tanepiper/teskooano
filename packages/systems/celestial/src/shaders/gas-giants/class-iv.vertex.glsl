@@ -2,13 +2,11 @@
 varying vec2 vUv;          // Texture coordinates (keep for now, might not be used)
 varying vec3 vNormal;      // Vertex normal in world space
 varying vec3 vWorldPosition; // Vertex position in world space
-varying vec3 vSunDirection; // Direction from vertex to sun
 varying vec3 vViewDirection; // Direction from camera to vertex
 varying vec3 vUnitSamplePoint; // Normalized local position (for noise sampling)
 varying vec3 vSphereNormalW; // Normalized world normal assuming perfect sphere
 
 // Uniforms passed from the application
-uniform vec3 sunPosition; // Position of the sun (light source) in world space
 // cameraPosition is already provided by Three.js as a built-in uniform
 uniform float time;       // Time for potential animation
 
@@ -34,9 +32,6 @@ void main() {
 
   // Calculate direction from camera to vertex in world space
   vViewDirection = normalize(cameraPosition - vWorldPosition);
-
-  // Calculate direction from vertex to sun in world space
-  vSunDirection = normalize(sunPosition - vWorldPosition);
 
   // Calculate final vertex position in clip space
   gl_Position = projectionMatrix * modelViewMatrix * vec4(localPosition, 1.0);

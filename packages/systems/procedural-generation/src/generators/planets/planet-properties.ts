@@ -14,7 +14,7 @@ import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
 import type { PlanetBaseProperties } from "./planet-type";
 import { ProceduralSurfaceProperties } from "@teskooano/data-types";
-import { createProceduralSurfaceProperties } from "../../utils";
+import { createProceduralSurfaceProperties } from "../../properties";
 
 /**
  * Generates the specific properties for a planet based on its high-level type.
@@ -35,7 +35,7 @@ export function generatePlanetSpecificProperties(
   baseProps: PlanetBaseProperties,
   bodyDistanceAU: number,
 ): CelestialSpecificPropertiesUnion {
-  if (baseProps.planetType === CelestialType.GAS_GIANT) {
+  if (baseProps.celestialType === CelestialType.GAS_GIANT) {
     return generateGasGiantSpecificProperties(
       random,
       baseProps,
@@ -64,7 +64,7 @@ function generateGasGiantSpecificProperties(
   baseProps: PlanetBaseProperties,
   bodyDistanceAU: number,
 ): GasGiantProperties {
-  const gasGiantClass = baseProps.gasGiantClass || GasGiantClass.CLASS_I;
+  const gasGiantClass = baseProps.planetType || GasGiantClass.CLASS_I;
 
   let atmComposition: string[];
   let atmPressure: number;
@@ -107,7 +107,7 @@ function generateGasGiantSpecificProperties(
 
   return {
     type: CelestialType.GAS_GIANT,
-    gasGiantClass: gasGiantClass,
+    planetType: gasGiantClass as GasGiantClass,
     atmosphere: {
       composition: atmComposition,
       pressure: atmPressure,
@@ -141,7 +141,7 @@ function generateRockyPlanetSpecificProperties(
   let surfaceType: SurfaceType;
   let composition: string[];
 
-  if (baseProps.rockyPlanetType === PlanetType.ICE) {
+  if (baseProps.planetType === PlanetType.ICE) {
     rockyPlanetType = PlanetType.ICE;
     surfaceType = UTIL.getRandomItem(
       [SurfaceType.CRATERED, SurfaceType.FLAT, SurfaceType.ICE_FLATS],
@@ -180,7 +180,7 @@ function generateRockyPlanetSpecificProperties(
 
   // Determine if the planet has an atmosphere based on its type
   let hasAtmosphere: boolean;
-  switch (baseProps.rockyPlanetType) {
+  switch (baseProps.planetType) {
     case PlanetType.TERRESTRIAL:
       hasAtmosphere = true;
     case PlanetType.BARREN:
@@ -204,7 +204,7 @@ function generateRockyPlanetSpecificProperties(
   let cloudProps: PlanetProperties["clouds"] = undefined;
 
   if (hasAtmosphere) {
-    if (baseProps.rockyPlanetType === PlanetType.ICE) {
+    if (baseProps.planetType === PlanetType.ICE) {
       atmosphereType = AtmosphereType.THIN;
       pressure = random() * 0.1;
     } else {
@@ -260,7 +260,7 @@ function generateRockyPlanetSpecificProperties(
     case PlanetType.ICE:
     case PlanetType.DESERT:
     case PlanetType.LAVA:
-      surfaceProperties = UTIL.createProceduralSurfaceProperties(
+      surfaceProperties = createProceduralSurfaceProperties(
         random,
         rockyPlanetType,
       );
@@ -269,7 +269,7 @@ function generateRockyPlanetSpecificProperties(
       console.warn(
         `Unhandled rocky planet type: ${rockyPlanetType}. Using TERRESTRIAL defaults.`,
       );
-      surfaceProperties = UTIL.createProceduralSurfaceProperties(
+      surfaceProperties = createProceduralSurfaceProperties(
         random,
         PlanetType.TERRESTRIAL,
       );

@@ -1,63 +1,48 @@
 # @teskooano/renderer-threejs-objects
 
-This package is responsible for the creation, lifecycle management, and visual representation of all celestial objects within the Three.js scene for the Teskooano engine. It acts as the bridge between the abstract `RenderableCelestialObject` data from the core state and the concrete `THREE.Object3D` meshes displayed to the user.
+This package is responsible for managing the lifecycle of all `THREE.Object3D` instances that represent celestial bodies in the scene.
+
+## Features
+
+- **State-Driven Object Management**: Subscribes to the application's `renderableObjects$` state stream and automatically adds, updates, and removes `THREE.Object3D` instances to match the state.
+- **Modular Architecture**: The main `ObjectManager` class delegates tasks to specialized sub-managers for handling object creation, per-frame visual updates, and lifecycle events.
+- **Dynamic Renderer Selection**: Uses a `MeshFactory` to select the appropriate `CelestialRenderer` from the `@teskooano/systems-celestial` package based on the object's type (e.g., `Star`, `Planet`, `GasGiant`).
+- **Integration with other Renderer Packages**:
+  - Works with `@teskooano/renderer-threejs-lod` to create `THREE.LOD` objects.
+  - Works with `@teskooano/renderer-threejs-lighting` to register light sources from stars.
+  - Works with `@teskooano/renderer-threejs-labels` to create and manage 2D labels.
+- **Special Effects**: Includes handlers for special visual effects like gravitational lensing and particle-based debris from destroyed objects.
 
 ## Architecture
 
-The package is orchestrated by the central `ObjectManager` class, which composes functionality from several specialized sub-managers and factories.
+The `ObjectManager` is a high-level orchestrator. Its primary job is to initialize a set of sub-managers and delegate tasks to them. This includes an `ObjectLifecycleManager` that syncs the scene with the application state, a `MeshFactory` that builds the 3D objects using renderers from the celestial systems package, and a `RendererUpdater` that calls the `update` method on all active renderers each frame.
 
-- **`ObjectManager`**: The main orchestrator. It subscribes to the `renderableStore` from `@teskooano/core-state`.
-
-  - It uses a `MeshFactory` to create `THREE.Object3D` instances for new celestial objects.
-  - It adds, updates, and removes objects from the scene based on state changes.
-  - It delegates visual effects like debris fields and gravitational lensing to their respective managers.
-
-- **`MeshFactory`**: A factory responsible for creating the appropriate `THREE.Mesh` or `THREE.LOD` for a given `RenderableCelestialObject`. It uses a suite of `create<Type>Mesh` functions (e.g., `createStarMesh`, `createPlanetMesh`) that, in turn, use the `CelestialRenderer` instances from `@teskooano/systems-celestial` to generate the actual geometry and materials via Level of Detail (LOD) levels.
-
-- **`DebrisEffectManager`**: Manages the particle effects for objects with a `DESTROYED` status.
-
-- **`GravitationalLensing`**: Manages the post-processing effect for massive objects like black holes.
-
-- **`ObjectLifecycleManager`**: Handles the logic for adding and removing objects from the `THREE.Scene`.
-
-- **`RendererUpdater`**: Responsible for calling the `update()` method on individual `CelestialRenderer` instances each frame.
+For a complete breakdown and a component diagram, please see the `ARCHITECTURE.md` file.
 
 ## Usage
 
-The `ObjectManager` is typically instantiated and managed by the main `@teskooano/renderer-threejs` package.
+This package is an internal dependency of `@teskooano/renderer-threejs`. The main `ModularSpaceRenderer` instantiates the `ObjectManager`, subscribes it to the state store, and calls its `update()` method from the main render pipeline. It is not designed to be used directly by the application.
 
 ```typescript
+// Simplified conceptual usage inside ModularSpaceRenderer
+
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import { SceneManager } from "@teskooano/renderer-threejs-core";
-import { LightManager } from "@teskooano/renderer-threejs-lighting";
-import { LODManager } from "@teskooano/renderer-threejs-lod";
-import { CSS2DManager } from "@teskooano/renderer-threejs-interaction";
-import * as THREE from "three";
+import { renderableStore } from "@teskooano/core-state";
 
 // --- Initialization ---
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera();
-const lodManager = new LODManager(camera);
-const lightManager = new LightManager(scene, camera, false);
-const css2dManager = new CSS2DManager(document.body);
-const sceneManager = new SceneManager(scene);
+// (scene, camera, renderer, etc., are assumed to be initialized)
+const objectManager = new ObjectManager(
+  this.scene,
+  this.camera,
+  renderableStore.renderableObjects$, // The state stream
+  this.renderer,
+  this.css2DManager,
+);
 
-const objectManager = new ObjectManager({
-  sceneManager,
-  lodManager,
-  lightManager,
-  css2dManager,
-  camera,
-});
-
-// --- In the Render Loop ---
+// --- In the Render Loop / Pipeline ---
 function animate() {
-  requestAnimationFrame(animate);
-
-  // The ObjectManager's update method handles all object-related updates
-  objectManager.update(0, camera);
-
-  // ... other renderer updates ...
+  // This single call triggers all sub-manager updates
+  objectManager.update(this.renderer, this.scene, this.camera);
 }
 
 // --- Cleanup ---

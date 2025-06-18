@@ -4,35 +4,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as THREE from "three";
 import { LODManager } from "../LODManager";
-import { CelestialObject, CelestialType } from "@teskooano/data-types";
+import { RenderableCelestialObject } from "@teskooano/data-types";
+import { LODLevel } from "../lod-manager/types";
+import { CelestialType, CelestialStatus } from "@teskooano/data-types";
 
-Object.defineProperties(window.document, {
-  createElement: {
-    value: vi.fn().mockImplementation((tagName) => {
-      if (tagName === "canvas") {
-        return {
-          width: 256,
-          height: 128,
-          getContext: vi.fn().mockReturnValue({
-            clearRect: vi.fn(),
-            fillStyle: "",
-            fillRect: vi.fn(),
-            font: "",
-            textAlign: "",
-            fillText: vi.fn(),
-          }),
-        };
-      }
-      return {};
+// Mock the core state module
+vi.mock("@teskooano/core-state", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@teskooano/core-state")>();
+  const { Subject } = await import("rxjs");
+  return {
+    ...mod,
+    simulationState$: new Subject(),
+    getSimulationState: () => ({
+      performanceProfile: "medium",
     }),
-    configurable: true,
-  },
+  };
 });
 
 describe("LODManager", () => {
   let lodManager: LODManager;
   let camera: THREE.PerspectiveCamera;
-  let testObject: CelestialObject;
+  let testObject: RenderableCelestialObject;
 
   beforeEach(() => {
     camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
@@ -41,21 +33,30 @@ describe("LODManager", () => {
     lodManager = new LODManager(camera);
 
     testObject = {
-      id: "test-planet",
+      celestialObjectId: "test-planet",
       type: CelestialType.PLANET,
       name: "Test Planet",
+      mass: 1e24,
+      radius: 6.3e6,
+      seed: "0",
+      realRadius_m: 6.3e6,
+      temperature: 0,
+      uniforms: {},
       position: new THREE.Vector3(100, 0, 0),
       rotation: new THREE.Quaternion(),
-      radius: 10,
-      mass: 1000,
+      parentId: undefined,
+      status: CelestialStatus.ACTIVE,
       properties: {
-        type: "rocky",
+        type: CelestialType.PLANET,
+        isMoon: false,
+        composition: [],
       },
     };
   });
 
   afterEach(() => {
     lodManager.clear();
+    vi.clearAllMocks();
   });
 
   it("should initialize correctly", () => {
@@ -63,106 +64,95 @@ describe("LODManager", () => {
     expect(lodManager["camera"]).toBe(camera);
   });
 
-  it("should create LOD mesh for a celestial object", () => {
-    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+  it("should create and register a THREE.LOD object", () => {
+    const levels: LODLevel[] = [
+      { object: new THREE.Mesh(), distance: 0 },
+      { object: new THREE.Mesh(), distance: 100 },
+    ];
 
-    const lodMesh = lodManager.createLODMesh(testObject, material);
+    const lod = lodManager.createAndRegisterLOD(testObject, levels);
 
-    expect(lodMesh).toBeInstanceOf(THREE.LOD);
+    expect(lod).toBeInstanceOf(THREE.LOD);
+    expect(lod.levels.length).toBe(2);
+    expect(lod.name).toBe("test-planet-LODContainer");
 
-    expect(lodMesh.levels.length).toBe(4);
-
-    lodMesh.levels.forEach((level, index) => {
-      const mesh = level.object as THREE.Mesh;
-      expect(mesh).toBeInstanceOf(THREE.Mesh);
-      expect(mesh.material).toBe(material);
-      expect(mesh.geometry).toBeInstanceOf(THREE.SphereGeometry);
-
-      const expectedDistances = [0, 100, 1000, 10000];
-      expect(level.distance).toBe(expectedDistances[index]);
-    });
+    const registeredLOD = lodManager.getLODById("test-planet");
+    expect(registeredLOD).toBe(lod);
   });
 
-  it("should update LOD based on camera position", () => {
-    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+  it("should throw an error if no LOD levels are provided", () => {
+    expect(() => lodManager.createAndRegisterLOD(testObject, [])).toThrow();
+    expect(() =>
+      lodManager.createAndRegisterLOD(testObject, null as any),
+    ).toThrow();
+  });
 
-    const lodMesh = lodManager.createLODMesh(testObject, material);
+  it("should update all registered LODs", () => {
+    const levels: LODLevel[] = [{ object: new THREE.Mesh(), distance: 0 }];
+    const lod = lodManager.createAndRegisterLOD(testObject, levels);
 
-    lodMesh.position.copy(testObject.position);
+    const updateSpy = vi.spyOn(lod, "update");
+    lodManager.update();
 
+    expect(updateSpy).toHaveBeenCalledWith(camera);
+  });
+
+  it("should remove an LOD and its resources", () => {
+    const levels: LODLevel[] = [{ object: new THREE.Mesh(), distance: 0 }];
+    lodManager.createAndRegisterLOD(testObject, levels);
+
+    expect(lodManager.getLODById("test-planet")).not.toBeNull();
+
+    lodManager.remove("test-planet");
+
+    expect(lodManager.getLODById("test-planet")).toBeNull();
+  });
+
+  it("should clear all managed LODs", () => {
+    const levels: LODLevel[] = [{ object: new THREE.Mesh(), distance: 0 }];
+    lodManager.createAndRegisterLOD(testObject, levels);
+
+    lodManager.clear();
+
+    expect(lodManager.getLODById("test-planet")).toBeNull();
+    expect(lodManager["objectLODs"].size).toBe(0);
+  });
+
+  it("should handle debug label creation and removal", () => {
     lodManager.toggleDebug(true);
 
-    lodManager.update();
+    const levels: LODLevel[] = [
+      { object: new THREE.Mesh(), distance: 0 },
+      { object: new THREE.Mesh(), distance: 100 },
+    ];
+    const lod = lodManager.createAndRegisterLOD(testObject, levels);
 
-    const distance = lodMesh
-      .getWorldPosition(new THREE.Vector3())
-      .distanceTo(camera.position);
-
-    const currentLevel = lodMesh.getCurrentLevel();
-
-    lodMesh.levels.forEach((level, index) => {
-      console.log(`[TEST] LOD level ${index}: distance = ${level.distance}`);
-    });
-
-    expect(lodMesh.getCurrentLevel()).toBe(1);
-
-    camera.position.set(90, 0, 0);
-    lodManager.update();
-
-    const distance2 = lodMesh
-      .getWorldPosition(new THREE.Vector3())
-      .distanceTo(camera.position);
-    console.log(
-      `[TEST] Distance between camera and LOD mesh (after moving closer): ${distance2}`,
-    );
-
-    const currentLevel2 = lodMesh.getCurrentLevel();
-    console.log(
-      `[TEST] Current LOD level (after moving closer): ${currentLevel2}`,
-    );
-
-    expect(lodMesh.getCurrentLevel()).toBe(1);
-
-    camera.position.set(0, 0, 0);
-    lodManager.update();
-    expect(lodMesh.getCurrentLevel()).toBe(1);
-  });
-
-  it("should create different LOD levels for different object types", () => {
-    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-
-    const moonObject = { ...testObject, type: CelestialType.MOON };
-    const moonLOD = lodManager.createLODMesh(moonObject, material);
-    expect(moonLOD.levels.length).toBe(4);
-    expect(moonLOD.levels[1].distance).toBe(50);
-
-    const asteroidObject = { ...testObject, type: CelestialType.SPACE_ROCK };
-    const asteroidLOD = lodManager.createLODMesh(asteroidObject, material);
-    expect(asteroidLOD.levels.length).toBe(4);
-    expect(asteroidLOD.levels[1].distance).toBe(25);
-
-    const starObject = { ...testObject, type: CelestialType.STAR };
-    const starLOD = lodManager.createLODMesh(starObject, material);
-    expect(starLOD.levels.length).toBe(3);
-    expect(starLOD.levels[1].distance).toBe(2000);
-  });
-
-  it("should handle debug visualization", () => {
-    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-    const lodMesh = lodManager.createLODMesh(testObject, material);
-
-    lodManager.toggleDebug(true);
-    lodManager.update();
-
-    const debugLabels = lodManager["debugLabels"];
-    expect(debugLabels.size).toBe(1);
-
-    const debugLabel = debugLabels.get(testObject.id);
+    expect(lodManager["debugLabels"].has("test-planet")).toBe(true);
+    const debugLabel = lodManager["debugLabels"].get("test-planet");
     expect(debugLabel).toBeDefined();
-    expect(debugLabel?.sprite).toBeInstanceOf(THREE.Sprite);
-    expect(debugLabel?.sprite.visible).toBe(true);
 
-    lodManager.toggleDebug(false);
-    expect(debugLabel?.sprite.visible).toBe(false);
+    // Check if label sprite is added to the LOD object
+    let hasLabel = false;
+    lod.traverse((child) => {
+      if (child === debugLabel?.sprite) {
+        hasLabel = true;
+      }
+    });
+    expect(hasLabel).toBe(true);
+
+    lodManager.remove("test-planet");
+    expect(lodManager["debugLabels"].has("test-planet")).toBe(false);
+  });
+
+  it("should apply scale factor based on performance profile", () => {
+    // Mock the state update
+    const { simulationState$ } = require("@teskooano/core-state");
+    simulationState$.next({ performanceProfile: "low" });
+
+    const levels: LODLevel[] = [{ object: new THREE.Mesh(), distance: 100 }];
+    const lod = lodManager.createAndRegisterLOD(testObject, levels);
+
+    // low profile has a 1.5x scale factor
+    expect(lod.levels[0].distance).toBe(150);
   });
 });

@@ -1,21 +1,16 @@
-import { Observable, Subscriber } from "rxjs";
 import { OSVector3 } from "@teskooano/core-math";
 import {
   CelestialObject,
-  OrbitalParameters,
-  PhysicsStateReal,
-  RingProperties,
-  RingSystemProperties,
-  PlanetProperties,
-  PlanetType,
-  PlanetAtmosphereProperties,
   CelestialSpecificPropertiesUnion,
-} from "@teskooano/data-types";
-import {
   CelestialStatus,
   CelestialType,
+  PhysicsStateReal,
+  PlanetProperties,
+  PlanetType,
+  RingProperties,
   scaleSize,
 } from "@teskooano/data-types";
+import { Observable, Subscriber } from "rxjs";
 import * as CONST from "../../constants";
 import { generateCelestialName } from "../../generators/names/celestial-name";
 import * as UTIL from "../../utils";
@@ -24,7 +19,7 @@ import { generatePlanetSpecificProperties } from "./planet-properties";
 import { generateRings } from "./planet-rings";
 import { determinePlanetTypeAndBaseProperties } from "./planet-type";
 
-import { calculateLuminosity, estimateTemperature } from "../../utils";
+import { calculateStellarLuminosity, estimateTemperature } from "../../utils";
 
 /**
  * Creates an RxJS Observable that generates and emits data for a single planet
@@ -41,38 +36,34 @@ import { calculateLuminosity, estimateTemperature } from "../../utils";
  * `CelestialObject` for the ring system if one was generated.
  *
  * @param random The seeded pseudo-random number generator function.
- * @param starId The ID of the parent star.
- * @param starMass_kg The mass of the parent star in kilograms.
- * @param starTemperature The temperature of the parent star in Kelvin.
- * @param starRadius The radius of the parent star in meters.
+ * @param parentStar The parent star object.
  * @param bodyDistanceAU The orbital distance of the planet from the star in AU.
  * @param systemSeed The main system seed string.
- * @param parentStarState The physics state of the parent star, used for orbital calculations.
  * @returns An `Observable<CelestialObject>` that emits the planet and then its
  *   ring system (if any), then completes.
  */
 export function generatePlanet(
   random: () => number,
-  starId: string,
-  starMass_kg: number,
-  starTemperature: number,
-  starRadius: number,
+  parentStar: CelestialObject,
   bodyDistanceAU: number,
   systemSeed: string,
-  parentStarState: PhysicsStateReal,
 ): Observable<CelestialObject> {
   return new Observable((subscriber: Subscriber<CelestialObject>) => {
     let planetName: string = "Unknown Planet";
     try {
       planetName = generateCelestialName(random);
-      const planetId = `planet-${starId}-${planetName.toLowerCase()}`;
+      const planetId = `planet-${parentStar.id}-${planetName.toLowerCase()}`;
 
       const baseProps = determinePlanetTypeAndBaseProperties(
         random,
         bodyDistanceAU,
-        starTemperature,
-        starRadius,
+        parentStar,
       );
+
+      if (!baseProps) {
+        subscriber.complete();
+        return;
+      }
 
       const massRangeMultiplier = 1 + bodyDistanceAU / 5;
 
@@ -95,7 +86,7 @@ export function generatePlanet(
 
       const visualPlanetRadius_m = scaleSize(
         finalPlanetRadius_m,
-        baseProps.planetType,
+        baseProps.celestialType,
       );
 
       let generatedRings: RingProperties[] | undefined;
@@ -111,10 +102,10 @@ export function generatePlanet(
       const { orbit, initialPhysicsState } =
         calculatePlanetOrbitAndInitialState(
           random,
-          starMass_kg,
+          parentStar.realMass_kg,
           planetMass_kg,
           bodyDistanceAU,
-          parentStarState,
+          parentStar.physicsStateReal as PhysicsStateReal,
           planetId,
         );
 
@@ -137,8 +128,17 @@ export function generatePlanet(
       ).normalize();
 
       const planetSeed = `${systemSeed}-${planetId}`;
-      const starLuminosity = calculateLuminosity(starRadius, starTemperature);
+      const starLuminosity = calculateStellarLuminosity(
+        parentStar.realRadius_m,
+        parentStar.temperature,
+      );
       const planetTemp = estimateTemperature(starLuminosity, bodyDistanceAU);
+
+      const planetAlbedo = UTIL.calculateAlbedo(
+        baseProps.celestialType,
+        baseProps.planetType,
+        random,
+      );
 
       let properties: CelestialSpecificPropertiesUnion = specificProperties;
       if (
@@ -182,9 +182,10 @@ export function generatePlanet(
         id: planetId,
         name: planetName,
         status: CelestialStatus.ACTIVE,
-        type: baseProps.planetType,
-        parentId: starId,
-        currentParentId: starId,
+        albedo: planetAlbedo,
+        type: baseProps.celestialType,
+        parentId: parentStar.id,
+        currentParentId: parentStar.id,
         realMass_kg: planetMass_kg,
         realRadius_m: finalPlanetRadius_m,
         temperature: planetTemp,
@@ -195,43 +196,14 @@ export function generatePlanet(
         axialTilt: tiltAxis,
         physicsStateReal: initialPhysicsState,
       };
-      subscriber.next(planetData);
 
       if (generatedRings && generatedRings.length > 0) {
-        const ringSystemId = `ring-system-${planetId}`;
-        const ringSystemName = `${planetName} Rings`;
-
-        const ringSystemProperties: RingSystemProperties = {
-          type: CelestialType.RING_SYSTEM,
-          rings: generatedRings,
-          parentId: planetId,
-        };
-
-        const ringSystemData: CelestialObject = {
-          id: ringSystemId,
-          name: ringSystemName,
-          type: CelestialType.RING_SYSTEM,
-          status: CelestialStatus.ACTIVE,
-          parentId: planetId,
-          currentParentId: planetId,
-          properties: ringSystemProperties,
-          axialTilt: tiltAxis.clone(),
-
-          realMass_kg: 0,
-          realRadius_m: 0,
-          temperature: 0,
-          orbit: {} as OrbitalParameters,
-
-          physicsStateReal: {
-            id: ringSystemId,
-            mass_kg: 0,
-            position_m: initialPhysicsState.position_m.clone(),
-            velocity_mps: initialPhysicsState.velocity_mps.clone(),
-          },
-        };
-        subscriber.next(ringSystemData);
+        if (planetData.properties) {
+          (planetData.properties as PlanetProperties).rings = generatedRings;
+        }
       }
 
+      subscriber.next(planetData);
       subscriber.complete();
     } catch (error) {
       console.error(`Error generating planet ${planetName}:`, error);

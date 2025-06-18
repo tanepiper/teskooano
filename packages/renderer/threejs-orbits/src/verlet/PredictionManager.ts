@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { PhysicsStateReal, predictTrajectory } from "@teskooano/core-physics";
+import { PhysicsStateReal } from "@teskooano/core-physics";
 import { OSVector3 } from "@teskooano/core-math";
 import { getCelestialObjects } from "@teskooano/core-state";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
@@ -16,8 +16,11 @@ export class PredictionManager {
   /** Map storing prediction lines, keyed by celestial object ID */
   public predictionLines: Map<string, THREE.Line> = new Map();
 
-  /** Cached prediction points for each object to avoid recalculation every frame */
-  private predictedLinePoints: Map<string, OSVector3[]> = new Map();
+  /** Web worker for handling expensive prediction calculations */
+  private predictionWorker: Worker | null = null;
+
+  /** Flag to prevent sending new requests while one is in flight */
+  private isCalculating: boolean = false;
 
   /** Line builder utility for efficient line creation and updates */
   private lineBuilder: LineBuilder;
@@ -26,10 +29,10 @@ export class PredictionManager {
   private objectManager: ObjectManager;
 
   /** Duration to predict into the future (in seconds) */
-  private predictionDuration: number = 3600 * 12; // 12 hours
+  private predictionDuration: number = 3600 * 24; // 24 hours
 
   /** Number of steps to use for the prediction calculation */
-  private predictionSteps: number = 200;
+  private predictionSteps: number = 60;
 
   /** Flag indicating if prediction visualization is enabled */
   private visualizationVisible: boolean = true;
@@ -42,17 +45,73 @@ export class PredictionManager {
   constructor(objectManager: ObjectManager) {
     this.objectManager = objectManager;
     this.lineBuilder = new LineBuilder();
+
+    this.initializeWorker();
+  }
+
+  private initializeWorker(): void {
+    // Vite-specific worker instantiation
+    this.predictionWorker = new Worker(
+      new URL("./prediction.worker.ts", import.meta.url),
+      { type: "module" },
+    );
+
+    this.predictionWorker.onmessage = (
+      e: MessageEvent<{
+        success: boolean;
+        objectId?: string;
+        points?: [number, number, number][];
+        error?: string;
+      }>,
+    ) => {
+      this.isCalculating = false;
+      if (e.data.success && e.data.points && e.data.objectId) {
+        const objectId = e.data.objectId;
+        if (objectId) {
+          const predictionPointsTHREE = e.data.points.map(
+            (p) => new THREE.Vector3(p[0], p[1], p[2]),
+          );
+          this.drawPredictionLine(objectId, predictionPointsTHREE);
+        }
+      } else {
+        console.error(
+          "Prediction worker failed:",
+          e.data.error || "Unknown error",
+        );
+      }
+    };
+
+    this.predictionWorker.onerror = (e) => {
+      this.isCalculating = false;
+      console.error("Error from prediction worker:", e);
+    };
   }
 
   /**
    * Updates or creates a prediction line for a specific object.
    *
    * @param objectId - ID of the object to predict for
-   * @param forceRecalculate - Whether to force recalculation even if cached
+   * @param options - Options for the prediction calculation.
    * @returns True if prediction was successfully created/updated
    */
-  updatePrediction(objectId: string, forceRecalculate: boolean): boolean {
-    // Get all current physics states
+  updatePrediction(
+    objectId: string,
+    options: {
+      forceRecalculate: boolean;
+      timeScale?: number;
+      predictionSteps?: number;
+      predictionDuration?: number;
+    },
+  ): boolean {
+    if (!options.forceRecalculate) {
+      return false;
+    }
+
+    if (this.isCalculating) {
+      // Don't start a new calculation if one is already running
+      return false;
+    }
+
     const fullObjectsMap = getCelestialObjects();
     const targetObject = fullObjectsMap[objectId];
 
@@ -61,71 +120,71 @@ export class PredictionManager {
       return false;
     }
 
-    // Get other physics states for N-body calculations
     const allCurrentPhysicsStates = Object.values(fullObjectsMap)
       .map((co) => co.physicsStateReal)
       .filter((state): state is PhysicsStateReal => !!state);
 
-    const otherPhysicsStates = allCurrentPhysicsStates.filter(
-      (state) => state.id !== objectId,
+    // Serialize data for the worker to avoid GC churn inside the worker.
+    const floatsPerObject = 7; // mass, px, py, pz, vx, vy, vz
+    const buffer = new Float32Array(
+      allCurrentPhysicsStates.length * floatsPerObject,
     );
+    const idMap = new Map<string, number>();
 
-    // Calculate or retrieve prediction points
-    let predictionPoints: OSVector3[];
+    allCurrentPhysicsStates.forEach((state, index) => {
+      idMap.set(state.id, index);
+      const offset = index * floatsPerObject;
+      buffer[offset] = state.mass_kg;
+      buffer[offset + 1] = state.position_m.x;
+      buffer[offset + 2] = state.position_m.y;
+      buffer[offset + 3] = state.position_m.z;
+      buffer[offset + 4] = state.velocity_mps.x;
+      buffer[offset + 5] = state.velocity_mps.y;
+      buffer[offset + 6] = state.velocity_mps.z;
+    });
 
-    if (forceRecalculate || !this.predictedLinePoints.has(objectId)) {
-      // Calculate new prediction
-      const newPoints = predictTrajectory(
+    this.isCalculating = true;
+    this.predictionWorker?.postMessage(
+      {
         objectId,
-        [targetObject.physicsStateReal, ...otherPhysicsStates],
-        this.predictionDuration,
-        this.predictionSteps,
-        {
-          // Add options here if needed, e.g., collision detection
-        },
-      );
+        physicsStatesBuffer: buffer,
+        idMap: idMap,
+        predictionDuration:
+          options.predictionDuration || this.predictionDuration,
+        predictionSteps: options.predictionSteps || this.predictionSteps,
+      },
+      [buffer.buffer],
+    ); // Zero-copy transfer of the buffer
 
-      this.predictedLinePoints.set(objectId, newPoints);
-      predictionPoints = newPoints;
-    } else {
-      // Use cached prediction
-      predictionPoints = this.predictedLinePoints.get(objectId)!;
-    }
+    return true;
+  }
 
-    // Convert to THREE.Vector3 for rendering
-    const predictionPointsTHREE = predictionPoints.map((p) => p.toThreeJS());
-
-    // If not enough points for a line, remove any existing prediction
-    if (predictionPointsTHREE.length < 2) {
+  private drawPredictionLine(
+    objectId: string,
+    predictionPoints: THREE.Vector3[],
+  ): void {
+    if (predictionPoints.length < 2) {
       this.removePrediction(objectId);
-      return false;
+      return;
     }
 
-    // Update or create the prediction line
     let line = this.predictionLines.get(objectId);
+    const predictionSteps = predictionPoints.length;
 
     if (!line) {
-      // Create new prediction line
       const material = SharedMaterials.clone("PREDICTION");
       line = this.lineBuilder.createLine(
-        this.predictionSteps,
+        predictionSteps,
         material,
         `prediction-line-${objectId}`,
       );
-
       line.frustumCulled = false;
       this.objectManager.addRawObjectToScene(line);
       this.predictionLines.set(objectId, line);
     }
 
-    // Update the line with current prediction points
-    this.lineBuilder.updateLine(
-      line,
-      predictionPointsTHREE,
-      this.predictionSteps,
-    );
+    this.lineBuilder.updateLine(line, predictionPoints, predictionSteps);
 
-    // Store the default color for future reference
     if (
       line.material instanceof THREE.LineBasicMaterial &&
       !line.userData.defaultColor
@@ -133,10 +192,7 @@ export class PredictionManager {
       line.userData.defaultColor = line.material.color.clone();
     }
 
-    // Update visibility
     line.visible = this.visualizationVisible;
-
-    return true;
   }
 
   /**
@@ -151,7 +207,6 @@ export class PredictionManager {
       this.lineBuilder.disposeLine(line);
       this.predictionLines.delete(objectId);
     }
-    this.predictedLinePoints.delete(objectId);
   }
 
   /**
@@ -193,11 +248,10 @@ export class PredictionManager {
   }
 
   /**
-   * Clears all prediction lines and cached points.
+   * Clears all prediction lines.
    */
   clearAllPredictions(): void {
     this.predictionLines.forEach((_, id) => this.removePrediction(id));
-    this.predictedLinePoints.clear();
   }
 
   /**
@@ -231,6 +285,7 @@ export class PredictionManager {
    * Cleans up all prediction lines and releases resources.
    */
   dispose(): void {
+    this.predictionWorker?.terminate();
     this.clearAllPredictions();
     this.lineBuilder.clear();
   }

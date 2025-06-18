@@ -45,32 +45,10 @@ graph TD
 
     StarField -- "Uses" --> SFG;
     NebulaField -- "Uses" --> NFS;
-    BM -- "Selects from" --> NFP;
-    NebulaField -- "Receives Palette" --> BM;
+    BM -- "Provides Palette to" --> NebulaField;
+    NebulaField -- "Uses" --> NFP;
 ```
 
 ## Core Components
 
-1.  **`BackgroundManager.ts`**: The central orchestrator class.
-
-    - **Responsibility**: Manages the entire lifecycle of the background. It instantiates and manages a collection of `Field` objects, handles debug mode toggling, updates all fields each frame, and cleans up resources on disposal. By default, it creates a `StarField` and a `NebulaField`.
-    - **Instantiation**: It is instantiated by the main `ModularSpaceRenderer`, which also calls its `update()` method within the main render loop.
-
-2.  **`fields/core/Field.ts`**: An abstract base class for all environmental effects.
-
-    - **Responsibility**: Defines the common interface for all `Field` implementations, including `update()`, `dispose()`, and `toggleDebug()` methods. This ensures that the `BackgroundManager` can handle any type of field in a generic way.
-
-3.  **`fields/star-field/`**: A `Field` implementation for creating multi-layered star fields.
-
-    - **`StarField.ts`**: The main class that manages the star layers, handles their animation, and implements parallax effects.
-    - **`star-field.generator.ts`**: A utility function that procedurally generates the positions and colors for the stars in a single layer.
-
-4.  **`fields/nebula-field/`**: A `Field` implementation for creating a complex, procedural nebula.
-
-    - **`NebulaField.ts`**: The main class that creates the geometry and the custom shader material for the nebula.
-    - **`shaders/`**: Contains the GLSL vertex and fragment shaders responsible for rendering the nebula. The fragment shader uses multiple layers of domain-warped 3D Simplex noise to generate complex, swirling patterns and blend colors.
-    - **`palettes.ts`**: Provides a set of scientifically-inspired color palettes that the `BackgroundManager` can randomly select from to color the nebula.
-    - **Performance Note**: The nebula shader is computationally intensive. The visual quality and performance are directly tied to the `octaves` parameter in the noise configuration. A lower number of octaves (e.g., 2-4) is recommended for real-time performance, while a higher number (e.g., 8+) can be used for high-quality static renders at the cost of framerate.
-
-5.  **`background-manager/debug-visualizer.ts`**: A module for providing debug visuals.
-    - **Responsibility**: Contains functions to aid in debugging the background layers. It can create wireframe spheres to show the boundaries of each star field layer. This functionality is controlled by the `toggleDebug()` method in `BackgroundManager`.
+1.  \*\*`

@@ -62,12 +62,12 @@ spaceRenderer.toggleOrbits();
 
 // Set camera follow target (a high-level action that uses CameraManager and ControlsManager)
 const objectIdToFollow = "earth"; // Example ID
-// NOTE: The setFollowTarget method is deprecated and removed.
-// The correct way to do this is via a higher-level CameraManager,
-// which is outside the scope of this package.
+// NOTE: Higher-level camera logic, including focusing on an object by ID,
+// is handled by a CameraManager, which is outside the scope of this package.
+// This package provides the low-level `setFollowTargetObject` method.
 
 // Stop following
-// spaceRenderer.setFollowTarget(null);
+// spaceRenderer.setFollowTargetObject(null);
 
 // Access underlying managers/objects (use with caution)
 const scene = spaceRenderer.scene;
@@ -110,7 +110,7 @@ constructor(container: HTMLElement, options?: ModularSpaceRendererOptions)
 - `lightManager: LightManager`
 - `lodManager: LODManager`
 - `renderPipeline: RenderPipeline`
-- `css2DManager?: CSS2DManager`
+- `css2DManager?: Layer2DManager`
 
 (Direct access to sub-managers allows calling their specific methods if needed, but prefer using facade methods on `ModularSpaceRenderer` when available).
 

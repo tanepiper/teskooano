@@ -5,9 +5,13 @@ import {
 } from "@teskooano/data-types";
 import {
   CSS2DLayerType,
-  type CSS2DManager,
+  type Layer2DManager,
+  CelestialLabelLayer,
 } from "@teskooano/renderer-threejs-labels";
-import type { LightManager } from "@teskooano/renderer-threejs-lighting";
+import {
+  type LightingManager,
+  LightSourceComponent,
+} from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
 import type {
   CelestialRenderer,
@@ -26,15 +30,14 @@ export interface ObjectLifecycleManagerConfig {
   scene: THREE.Scene;
   meshFactory: MeshFactory;
   lodManager: LODManager;
-  lightManager: LightManager;
+  lightingManager: LightingManager;
   lensingHandler: GravitationalLensingHandler;
   renderer: THREE.WebGLRenderer | null;
   starRenderers: Map<string, CelestialRenderer>;
   planetRenderers: Map<string, CelestialRenderer>;
   moonRenderers: Map<string, CelestialRenderer>;
-  ringSystemRenderers: Map<string, RingSystemRenderer>;
   camera: THREE.PerspectiveCamera;
-  css2DManager?: CSS2DManager;
+  css2DManager?: Layer2DManager;
 }
 
 /**
@@ -47,14 +50,13 @@ export class ObjectLifecycleManager {
   private scene: THREE.Scene;
   private meshFactory: MeshFactory;
   private lodManager: LODManager;
-  private lightManager: LightManager;
+  private lightingManager: LightingManager;
   private lensingHandler: GravitationalLensingHandler;
-  private css2DManager?: CSS2DManager;
+  private css2DManager?: Layer2DManager;
   private renderer: THREE.WebGLRenderer | null;
   private starRenderers: Map<string, CelestialRenderer>;
   private planetRenderers: Map<string, CelestialRenderer>;
   private moonRenderers: Map<string, CelestialRenderer>;
-  private ringSystemRenderers: Map<string, RingSystemRenderer>;
   private camera: THREE.PerspectiveCamera; // Add camera reference
 
   constructor(config: ObjectLifecycleManagerConfig) {
@@ -62,13 +64,12 @@ export class ObjectLifecycleManager {
     this.scene = config.scene;
     this.meshFactory = config.meshFactory;
     this.lodManager = config.lodManager;
-    this.lightManager = config.lightManager;
+    this.lightingManager = config.lightingManager;
     this.lensingHandler = config.lensingHandler;
     this.renderer = config.renderer;
     this.starRenderers = config.starRenderers;
     this.planetRenderers = config.planetRenderers;
     this.moonRenderers = config.moonRenderers;
-    this.ringSystemRenderers = config.ringSystemRenderers;
     this.camera = config.camera;
     this.css2DManager = config.css2DManager;
   }
@@ -95,6 +96,10 @@ export class ObjectLifecycleManager {
     newStateIds.forEach((id) => {
       const objectData = newState[id];
       const mesh = this.objects.get(id);
+
+      if (id === "barycenter") {
+        return;
+      }
 
       // Handle destroyed/annihilated objects explicitly
       if (
@@ -145,11 +150,14 @@ export class ObjectLifecycleManager {
 
     // Handle associated components (lights, labels, lensing)
     if (object.type === CelestialType.STAR && object.position) {
-      this.lightManager.addStarLight(objectId, object.position);
+      this.lightingManager.register(new LightSourceComponent(object));
     }
 
-    if (this.css2DManager) {
-      this.css2DManager.createCelestialLabel(object, mesh);
+    const celestialLayer = this.css2DManager?.getLayer(
+      CSS2DLayerType.CELESTIAL_LABELS,
+    ) as CelestialLabelLayer;
+    if (celestialLayer) {
+      celestialLayer.createLabel(object, mesh);
     }
 
     if (this.lensingHandler.needsGravitationalLensing(object)) {
@@ -223,7 +231,7 @@ export class ObjectLifecycleManager {
     }
     this.lodManager.remove(objectId); // Remove from LOD manager
     this.lensingHandler.removeLensingObject(objectId); // Remove from lensing
-    this.lightManager.removeStarLight(objectId); // Remove associated light
+    this.lightingManager.unregister(objectId); // Remove associated light
 
     // Clean up specialized renderers associated with this object ID
     const starRenderer = this.starRenderers.get(objectId);
@@ -237,10 +245,6 @@ export class ObjectLifecycleManager {
     const moonRenderer = this.moonRenderers.get(objectId);
     if (moonRenderer?.dispose) moonRenderer.dispose();
     this.moonRenderers.delete(objectId);
-
-    const ringSystemRenderer = this.ringSystemRenderers.get(objectId);
-    if (ringSystemRenderer?.dispose) ringSystemRenderer.dispose();
-    this.ringSystemRenderers.delete(objectId);
 
     // Remove the main mesh from the scene
     this.scene.remove(mesh);

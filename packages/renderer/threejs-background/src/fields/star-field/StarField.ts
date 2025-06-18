@@ -28,9 +28,6 @@ export class StarField extends Field {
    */
   private originalLayerColors: Map<number, Float32Array> = new Map();
 
-  /** The base speed for the rotational animation of the star layers. */
-  private rotationSpeed: number;
-
   /** The intensity of the parallax effect. */
   private parallaxStrength: number;
 
@@ -43,7 +40,6 @@ export class StarField extends Field {
    */
   constructor(options: StarFieldOptions) {
     super(options);
-    this.rotationSpeed = options.rotationSpeed ?? 0.00000002;
     this.parallaxStrength = options.parallaxStrength ?? 0.1;
     this.baseDistance = options.baseDistance;
     this.createLayers(options.layers);
@@ -76,23 +72,9 @@ export class StarField extends Field {
    * @param camera The scene's camera, used to calculate parallax.
    */
   public update(deltaTime: number, camera?: THREE.PerspectiveCamera): void {
-    this.animateLayers(deltaTime);
     if (camera) {
       this.applyParallax(camera);
     }
-  }
-
-  /**
-   * Applies a subtle, independent rotational animation to each star layer
-   * to create a dynamic background.
-   * @param deltaTime The time elapsed since the last frame.
-   */
-  private animateLayers(deltaTime: number): void {
-    this.starLayers.forEach((layer, index) => {
-      // Each layer rotates at a slightly different speed for a better effect.
-      const speedMultiplier = 1 - index / this.starLayers.length;
-      layer.rotation.y += this.rotationSpeed * deltaTime * speedMultiplier;
-    });
   }
 
   /**

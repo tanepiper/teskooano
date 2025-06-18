@@ -30,6 +30,11 @@ export class SimulationStateService {
     physicsEngine: "verlet",
     visualSettings: {
       trailLengthMultiplier: 2,
+      showAllOrbits: true,
+      showAllLabels: false,
+      showAuMarkers: true,
+      predictionSteps: 500,
+      predictionDuration: 2,
     },
     performanceProfile: "medium",
   };
@@ -171,6 +176,26 @@ export class SimulationStateService {
       console.warn(
         `[SimulationStateService] Multiplier unchanged (${validatedMultiplier}), skipping state set.`,
       );
+    }
+  }
+
+  public setPredictionSettings(steps: number, duration: number): void {
+    const currentState = this.getCurrentState();
+    const newSteps = Math.max(10, steps);
+    const newDuration = Math.max(0.1, duration);
+
+    if (
+      newSteps !== currentState.visualSettings.predictionSteps ||
+      newDuration !== currentState.visualSettings.predictionDuration
+    ) {
+      this.setState({
+        ...currentState,
+        visualSettings: {
+          ...currentState.visualSettings,
+          predictionSteps: newSteps,
+          predictionDuration: newDuration,
+        },
+      });
     }
   }
 }

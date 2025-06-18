@@ -1,9 +1,16 @@
 precision highp float;
 
+#define MAX_LIGHTS 4
+
+struct Light {
+  vec3 direction;
+  vec3 color;
+  float intensity;
+};
+
 // Varyings from vertex shader
 varying vec3 vNormal;          // World space normal (for lighting)
 varying vec3 vWorldPosition;     // World space position
-varying vec3 vSunDirection;      // Direction to sun
 varying vec3 vViewDirection;     // Direction from camera
 // vUnitSamplePoint and vSphereNormalW are not strictly needed here, but keep for consistency
 varying vec3 vUnitSamplePoint;
@@ -11,9 +18,10 @@ varying vec3 vSphereNormalW;
 
 // Uniforms
 uniform vec3 baseColor;        // The primary azure/blue color
-uniform vec3 sunPosition;      // Needed by vertex shader, potentially for specular
 uniform sampler2D stormMap;    // Storm texture
 uniform bool hasStormMap;      // Whether to apply storm texture
+uniform Light uLights[MAX_LIGHTS];
+uniform int uNumLights;
 // No noise uniforms needed (uSeed, uWarpOctaves, uColorOctaves)
 
 // --- Helper: clamp01 ---
@@ -26,23 +34,28 @@ float clamp01(float value) {
 void main() {
     // Use the actual surface normal for both diffuse and specular
     vec3 normal = normalize(vNormal);
-
-    // Simple Lighting Model
-    vec3 lightDir = normalize(vSunDirection);
     vec3 viewDir = normalize(vViewDirection);
+    vec3 diffuseNormal = normalize(vSphereNormalW);
 
-    // Diffuse component (basic Lambertian)
-    float ndl = max(0.0, dot(normal, lightDir));
-    ndl = clamp01(ndl);
-    // Reduce diffuse intensity further
-    vec3 diffuse = baseColor * ndl * 0.85; // Reduced multiplier again (was 0.95)
+    vec3 totalDiffuse = vec3(0.0);
+    vec3 totalSpecular = vec3(0.0);
 
-    // Specular component (basic Blinn-Phong) - Keep it very low
-    vec3 halfAngle = normalize(viewDir + lightDir);
-    float specComp = max(0.0, dot(normal, halfAngle));
-    specComp = clamp01(specComp);
-    specComp = pow(specComp, 40.0); // Sharper highlights for Class III
-    vec3 specular = vec3(0.08) * specComp; // Slightly brighter specular
+    for (int i = 0; i < uNumLights; i++) {
+        vec3 lightDir = uLights[i].direction;
+        
+        // Diffuse component (basic Lambertian)
+        float ndl = max(0.0, dot(diffuseNormal, lightDir));
+        ndl = clamp01(ndl);
+        // Reduce diffuse intensity further
+        totalDiffuse += baseColor * ndl * 0.85 * uLights[i].color * uLights[i].intensity; // Reduced multiplier again (was 0.95)
+
+        // Specular component (basic Blinn-Phong) - Keep it very low
+        vec3 halfAngle = normalize(viewDir + lightDir);
+        float specComp = max(0.0, dot(normal, halfAngle));
+        specComp = clamp01(specComp);
+        specComp = pow(specComp, 40.0); // Sharper highlights for Class III
+        totalSpecular += vec3(0.08) * specComp * uLights[i].color * uLights[i].intensity; // Slightly brighter specular
+    }
 
     // Rim Lighting (Class III adjustments - potentially less pronounced)
     float rimDot = 1.0 - max(dot(viewDir, normal), 0.0);
@@ -53,7 +66,7 @@ void main() {
 
     // Combine components
     vec3 ambient = baseColor * 0.15; // Ambient based on blended baseColor
-    vec3 finalColor = ambient + diffuse + specular + rim;
+    vec3 finalColor = ambient + totalDiffuse + totalSpecular + rim;
 
     // Apply storm overlay if available
     if (hasStormMap) {

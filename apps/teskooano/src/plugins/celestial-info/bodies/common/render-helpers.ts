@@ -4,7 +4,7 @@ import type {
   OrbitalParameters,
   RingSystemProperties,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../../utils/FormatUtils.js";
+import { FormatUtils } from "../../utils/formatters";
 
 export function renderMainProperties(celestial: CelestialObject): string {
   return `

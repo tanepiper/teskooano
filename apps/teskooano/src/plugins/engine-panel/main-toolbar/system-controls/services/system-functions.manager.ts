@@ -218,6 +218,8 @@ export class SystemFunctionsManager {
    */
   public async clearSystem() {
     try {
+      simulationManager.stopLoop();
+
       celestialFactory.clearState({
         resetCamera: false,
         resetTime: true,

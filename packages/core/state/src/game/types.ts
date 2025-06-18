@@ -40,8 +40,18 @@ export type PerformanceProfileType = "low" | "medium" | "high" | "cosmic";
  * Defines settings related to visual aspects of the simulation, like trails.
  */
 export interface VisualSettingsState {
+  /** Renders orbit paths for all objects if true. */
+  showAllOrbits: boolean;
+  /** Renders labels for all objects if true. */
+  showAllLabels: boolean;
+  /** Renders AU (Astronomical Unit) marker lines from the primary star if true. */
+  showAuMarkers: boolean;
   /** A multiplier affecting the length of rendered trails for objects. */
   trailLengthMultiplier: number;
+  /** The number of steps to calculate for trajectory prediction. */
+  predictionSteps: number;
+  /** The duration (in simulation years) to predict trajectories for. */
+  predictionDuration: number;
 }
 
 /**
@@ -111,3 +121,5 @@ export interface ClearStateOptions {
   resetTime?: boolean;
   resetSelection?: boolean;
 }
+
+export type CelestialRegistry = Record<string, CelestialObject>;

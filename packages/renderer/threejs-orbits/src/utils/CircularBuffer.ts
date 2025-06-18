@@ -71,6 +71,33 @@ export class CircularBuffer<T> {
   }
 
   /**
+   * Takes (removes and returns) a specified number of items from the start of the buffer.
+   * @param count - The number of items to take.
+   * @returns An array containing the removed items.
+   */
+  take(count: number): T[] {
+    if (count <= 0) return [];
+    if (count > this._size) count = this._size;
+
+    const takenItems = new Array<T>(count);
+    for (let i = 0; i < count; i++) {
+      const index = (this.head - this._size + this.capacity) % this.capacity;
+      takenItems[i] = this.buffer[index] as T;
+      this.buffer[index] = undefined;
+      this._size--;
+    }
+    return takenItems;
+  }
+
+  /**
+   * Clears the buffer.
+   */
+  clear(): void {
+    this.buffer = new Array<T | undefined>(this.capacity);
+    this._size = 0;
+  }
+
+  /**
    * The current number of items in the buffer.
    */
   get size(): number {

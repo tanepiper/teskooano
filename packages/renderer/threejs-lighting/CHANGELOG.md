@@ -6,23 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- **Major Refactor (LightManager.ts)**:
-  - Now subscribes to `renderableStore.renderableObjects$` from `@teskooano/core-state` using RxJS (`pipe`, `map`, `filter`, `pairwise`).
-  - Star lights are now added, updated (position, intensity), and removed reactively based on changes to star objects in the core state.
-  - Intensity is now partly derived from star temperature via a new `calculateIntensity` placeholder method.
-  - Removed the manual `addStarLight` and `updateStarLight` methods in favor of reactive updates.
-  - Improved `dispose` method to correctly unsubscribe and dispose of light resources.
-- `LODManager` now adjusts LOD distances based on the global `performanceProfile` from `simulationState$`.
-
-### Removed
-
-- Removed the unused `EffectsManager` facade class. The package now exports `LightManager` and `LODManager` to be used directly by the integrator.
+- **Major Refactor**: The lighting system has been refactored to a component-based architecture.
+  - The main `LightManager` has been renamed to `LightingManager` and now acts as a simple registry for light sources.
+  - A new `LightSourceComponent` has been introduced. It is responsible for attaching a `THREE.Light` to a `RenderableCelestialObject` and keeping it synchronized.
+  - The manager no longer uses a reactive subscription to the state store. Instead, celestial renderers are now responsible for imperatively creating and registering their own `LightSourceComponent` instances.
+  - Removed manual methods like `addStarLight` in favor of the `register(component)` pattern.
+- Improved `dispose` method to correctly clean up all registered components.
 
 ## [0.1.0] - 2025-04-24
 
 ### Added
 
-- Initial release of the `@teskooano/renderer-threejs-effects` package.
+- Initial release of the `@teskooano/renderer-threejs-lighting` package.
 - `LightManager`: Manages ambient light and dynamic star point lights.
-- `LODManager`: Manages Level of Detail for scene objects using `THREE.LOD`.
-- Helper functions in `lod-manager/` for building LOD meshes, calculating distances, and debug visualization.

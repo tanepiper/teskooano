@@ -30,17 +30,17 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "dockview-core": "4.2.4"
+    "dockview-core": "4.3.1"
   },
   "devDependencies": {
-    "@types/node": "22.15.3",
+    "@types/node": "24.0.3",
     "typescript": "5.8.3",
-    "eslint": "9.25.1",
+    "eslint": "9.29.0",
     "prettier": "3.5.3",
     "rxjs": "7.8.2",
-    "@typescript-eslint/eslint-plugin": "8.31.1",
-    "@typescript-eslint/parser": "8.31.1",
-    "vite": "6.3.4"
+    "@typescript-eslint/eslint-plugin": "8.34.0",
+    "@typescript-eslint/parser": "8.34.0",
+    "vite": "6.3.5"
   },
   "peerDependencies": {
     "dockview-core": "1.13.0",

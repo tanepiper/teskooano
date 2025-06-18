@@ -1,14 +1,16 @@
 import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { AnimationLoop, SceneManager } from "@teskooano/renderer-threejs-core";
-import { LightManager } from "@teskooano/renderer-threejs-lighting";
+import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODManager } from "@teskooano/renderer-threejs-lod";
 import {
   ControlsManager,
   CameraManager,
 } from "@teskooano/renderer-threejs-controls";
 import {
-  CSS2DManager,
+  Layer2DManager,
   CSS2DLayerType,
+  CelestialLabelLayer,
+  AuMarkerLabelLayer,
 } from "@teskooano/renderer-threejs-labels";
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import {
@@ -52,10 +54,10 @@ export class ModularSpaceRenderer {
   /** Manages user interaction and camera controls (e.g., OrbitControls). */
   public controlsManager: ControlsManager;
   /** Manages the 2D HTML labels overlaid on the 3D scene. */
-  public css2DManager?: CSS2DManager;
+  public css2DManager?: Layer2DManager;
 
   /** Manages scene lighting, including star-based light sources. */
-  public lightManager: LightManager;
+  public lightingManager: LightingManager;
   /** Manages Level of Detail for objects to optimize performance. */
   public lodManager: LODManager;
 
@@ -92,11 +94,7 @@ export class ModularSpaceRenderer {
     this.animationLoop.setRenderer(this.sceneManager.renderer);
     this.animationLoop.setCamera(this.sceneManager.camera);
 
-    this.lightManager = new LightManager(
-      this.sceneManager.scene,
-      this.sceneManager.camera,
-      options.hdr ?? false,
-    );
+    this.lightingManager = new LightingManager(this.sceneManager.scene);
     this.lodManager = new LODManager(this.sceneManager.camera);
 
     const showCelestialLabels = options.showCelestialLabels !== false;
@@ -106,8 +104,25 @@ export class ModularSpaceRenderer {
     );
 
     if (showCelestialLabels) {
-      this.css2DManager = new CSS2DManager(this.sceneManager.scene, container);
+      this.css2DManager = new Layer2DManager(
+        this.sceneManager.scene,
+        container,
+      );
+
+      // Create and register the celestial label layer
+      const celestialLayer = new CelestialLabelLayer(options.labelConfig);
+      this.css2DManager.registerLayer(
+        CSS2DLayerType.CELESTIAL_LABELS,
+        celestialLayer,
+      );
+
+      // Conditionally create and register the AU marker layer
       if (options.showAuMarkers) {
+        const auMarkerLayer = new AuMarkerLabelLayer(this.sceneManager.scene);
+        this.css2DManager.registerLayer(
+          CSS2DLayerType.AU_MARKERS,
+          auMarkerLayer,
+        );
         this._createAuMarkerLabels();
       }
     } else {
@@ -125,7 +140,6 @@ export class ModularSpaceRenderer {
       this.sceneManager.scene,
       this.sceneManager.camera,
       renderableStore.renderableObjects$,
-      this.lightManager,
       this.sceneManager.renderer,
       this.css2DManager,
     );
@@ -144,7 +158,7 @@ export class ModularSpaceRenderer {
       orbitManager: this.orbitManager,
       objectManager: this.objectManager,
       backgroundManager: this.backgroundManager,
-      lightManager: this.lightManager,
+      lightingManager: this.lightingManager,
       lodManager: this.lodManager,
       css2DManager: this.css2DManager,
       animationLoop: this.animationLoop,
@@ -244,7 +258,10 @@ export class ModularSpaceRenderer {
 
       for (const [dir, pos] of Object.entries(labelPositions)) {
         const labelId = `au-label-${dir}-${au}`;
-        this.css2DManager?.createAuMarkerLabel(labelId, au, pos, color);
+        const auMarkerLayer = this.css2DManager?.getLayer(
+          CSS2DLayerType.AU_MARKERS,
+        ) as AuMarkerLabelLayer;
+        auMarkerLayer?.createLabel(labelId, au, pos, color);
       }
     });
   }
@@ -364,7 +381,7 @@ export class ModularSpaceRenderer {
     this.backgroundManager.dispose();
     this.controlsManager.dispose();
     this.css2DManager?.dispose();
-    this.lightManager.dispose();
+    this.lightingManager.dispose();
     if (typeof (this.lodManager as any).dispose === "function") {
       (this.lodManager as any).dispose();
     }
@@ -437,7 +454,7 @@ export class ModularSpaceRenderer {
       orbitManager: this.orbitManager,
       objectManager: this.objectManager,
       backgroundManager: this.backgroundManager,
-      lightManager: this.lightManager,
+      lightingManager: this.lightingManager,
       lodManager: this.lodManager,
       css2DManager: this.css2DManager,
       animationLoop: this.animationLoop,

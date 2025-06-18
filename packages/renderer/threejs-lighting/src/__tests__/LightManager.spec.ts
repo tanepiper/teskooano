@@ -1,121 +1,225 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { LightManager } from "../LightManager";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { LightingManager } from "../managers/LightingManager";
 import * as THREE from "three";
+import { LightSourceComponent } from "../components/LightSourceComponent";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
+import {
+  CelestialStatus,
+  CelestialType,
+  StellarType,
+} from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 
-describe("LightManager", () => {
-  let lightManager: LightManager;
+// Helper to create a mock renderable object for tests.
+const createMockRenderableStar = (
+  id: string,
+  position: THREE.Vector3,
+): RenderableCelestialObject => {
+  return {
+    celestialObjectId: id,
+    name: `Test Star ${id}`,
+    type: CelestialType.STAR,
+    status: CelestialStatus.ACTIVE,
+    seed: id,
+    radius: 696340,
+    mass: 1.989e30,
+    position: position,
+    rotation: new THREE.Quaternion(),
+    realRadius_m: 696340000,
+    temperature: 5778,
+    properties: {
+      type: CelestialType.STAR,
+      isMainStar: true,
+      stellarType: StellarType.MAIN_SEQUENCE,
+      spectralClass: "G2V",
+      luminosity: 1,
+      color: "#FFFFFF",
+    },
+    uniforms: {},
+  };
+};
+
+describe("LightingManager", () => {
+  let lightingManager: LightingManager;
   let scene: THREE.Scene;
 
   beforeEach(() => {
     scene = new THREE.Scene();
-    lightManager = new LightManager(scene);
+    vi.spyOn(scene, "add");
+    vi.spyOn(scene, "remove");
+    lightingManager = new LightingManager(scene);
   });
 
   afterEach(() => {
-    lightManager.dispose();
+    lightingManager.dispose();
+    vi.restoreAllMocks();
   });
 
-  it("should add a star light to the scene", () => {
-    const position = new THREE.Vector3(100, 200, 300);
-    const color = 0xff0000;
-    const intensity = 2.0;
-    const id = "star1";
+  it("should register a light source and add its light to the scene", () => {
+    const mockObject = createMockRenderableStar(
+      "star1",
+      new THREE.Vector3(100, 0, 0),
+    );
+    const component = new LightSourceComponent(mockObject);
 
-    lightManager.addStarLight(id, position, color, intensity);
+    lightingManager.register(component);
 
-    const light = scene.children[0] as THREE.PointLight;
-
-    expect(light).toBeInstanceOf(THREE.PointLight);
-    expect(light.color.getHex()).toBe(color);
-    expect(light.intensity).toBe(intensity);
-    expect(light.position.x).toBe(position.x);
-    expect(light.position.y).toBe(position.y);
-    expect(light.position.z).toBe(position.z);
-    expect(light.decay).toBe(0.5);
-    expect(light.distance).toBe(0);
+    expect(scene.add).toHaveBeenCalledWith(component.light);
   });
 
-  it("should add a star light with default parameters", () => {
-    const position = new THREE.Vector3(100, 200, 300);
-    const id = "star1";
+  it("should unregister a light source and remove its light from the scene", () => {
+    const mockObject = createMockRenderableStar(
+      "star1",
+      new THREE.Vector3(100, 0, 0),
+    );
+    const component = new LightSourceComponent(mockObject);
+    lightingManager.register(component);
 
-    lightManager.addStarLight(id, position);
+    lightingManager.unregister("star1");
 
-    const light = scene.children[0] as THREE.PointLight;
-
-    expect(light.color.getHex()).toBe(0xffffff);
-    expect(light.intensity).toBe(1.5);
+    expect(scene.remove).toHaveBeenCalledWith(component.light);
   });
 
-  it("should remove star light from scene", () => {
-    const position = new THREE.Vector3(100, 200, 300);
-    const id = "star1";
+  it("should call dispose on the component when unregistering", () => {
+    const mockObject = createMockRenderableStar(
+      "star1",
+      new THREE.Vector3(100, 0, 0),
+    );
+    const component = new LightSourceComponent(mockObject);
+    const disposeSpy = vi.spyOn(component, "dispose");
+    lightingManager.register(component);
 
-    lightManager.addStarLight(id, position);
-    expect(scene.children.length).toBe(1);
+    lightingManager.unregister("star1");
 
-    lightManager.removeStarLight(id);
-    expect(scene.children.length).toBe(0);
+    expect(disposeSpy).toHaveBeenCalled();
   });
 
-  it("should not throw when removing non-existent light", () => {
+  it("should not throw when unregistering a non-existent light source", () => {
     expect(() => {
-      lightManager.removeStarLight("nonexistent");
+      lightingManager.unregister("nonexistent");
     }).not.toThrow();
   });
 
-  it("should get all star light positions", () => {
-    const positions = [
-      new THREE.Vector3(100, 200, 300),
-      new THREE.Vector3(400, 500, 600),
-    ];
-    const ids = ["star1", "star2"];
+  it("should re-register a light source, removing the old one first", () => {
+    const mockObject = createMockRenderableStar(
+      "star1",
+      new THREE.Vector3(100, 0, 0),
+    );
+    const component1 = new LightSourceComponent(mockObject);
+    lightingManager.register(component1);
 
-    positions.forEach((pos, index) => {
-      lightManager.addStarLight(ids[index], pos);
-    });
+    const component2 = new LightSourceComponent(mockObject); // Same object ID
+    lightingManager.register(component2);
 
-    const lightPositions = lightManager.getStarLightPositions();
-
-    expect(lightPositions.size).toBe(2);
-    positions.forEach((pos, index) => {
-      const lightPos = lightPositions.get(ids[index]);
-      expect(lightPos).toBeDefined();
-      expect(lightPos?.x).toBe(pos.x);
-      expect(lightPos?.y).toBe(pos.y);
-      expect(lightPos?.z).toBe(pos.z);
-    });
+    expect(scene.remove).toHaveBeenCalledWith(component1.light);
+    expect(scene.add).toHaveBeenCalledWith(component2.light);
+    expect(scene.add).toHaveBeenCalledTimes(2);
   });
 
-  it("should dispose all lights", () => {
-    const positions = [
-      new THREE.Vector3(100, 200, 300),
-      new THREE.Vector3(400, 500, 600),
-    ];
-    positions.forEach((pos, index) => {
-      lightManager.addStarLight(`star${index}`, pos);
-    });
+  it("should update all registered light source components", () => {
+    const mock1 = createMockRenderableStar(
+      "star1",
+      new THREE.Vector3(100, 0, 0),
+    );
+    const mock2 = createMockRenderableStar(
+      "star2",
+      new THREE.Vector3(200, 0, 0),
+    );
+    const comp1 = new LightSourceComponent(mock1);
+    const comp2 = new LightSourceComponent(mock2);
+    const update1Spy = vi.spyOn(comp1, "update");
+    const update2Spy = vi.spyOn(comp2, "update");
 
-    expect(scene.children.length).toBe(2);
+    lightingManager.register(comp1);
+    lightingManager.register(comp2);
+    lightingManager.update();
 
-    lightManager.dispose();
-
-    expect(scene.children.length).toBe(0);
+    expect(update1Spy).toHaveBeenCalled();
+    expect(update2Spy).toHaveBeenCalled();
   });
 
-  it("should handle multiple operations on the same light", () => {
-    const id = "star1";
-    const initialPos = new THREE.Vector3(100, 200, 300);
-    const updatedPos = new THREE.Vector3(400, 500, 600);
+  it("should dispose all light sources", () => {
+    const mock1 = createMockRenderableStar(
+      "star1",
+      new THREE.Vector3(100, 0, 0),
+    );
+    const mock2 = createMockRenderableStar(
+      "star2",
+      new THREE.Vector3(200, 0, 0),
+    );
+    const comp1 = new LightSourceComponent(mock1);
+    const comp2 = new LightSourceComponent(mock2);
+    const dispose1Spy = vi.spyOn(comp1, "dispose");
+    const dispose2Spy = vi.spyOn(comp2, "dispose");
 
-    lightManager.addStarLight(id, initialPos);
-    expect(scene.children.length).toBe(1);
+    lightingManager.register(comp1);
+    lightingManager.register(comp2);
+    lightingManager.dispose();
 
-    lightManager.removeStarLight(id);
-    expect(scene.children.length).toBe(0);
+    expect(scene.remove).toHaveBeenCalledWith(comp1.light);
+    expect(scene.remove).toHaveBeenCalledWith(comp2.light);
+    expect(dispose1Spy).toHaveBeenCalled();
+    expect(dispose2Spy).toHaveBeenCalled();
+  });
 
-    expect(() => {
-      lightManager.addStarLight(id, initialPos);
-    }).not.toThrow();
+  describe("getInfluentialLights", () => {
+    it("should return the most influential lights for a target object", () => {
+      const target = createMockRenderableStar(
+        "target",
+        new THREE.Vector3(0, 0, 0),
+      );
+      const closeStar = createMockRenderableStar(
+        "closeStar",
+        new THREE.Vector3(10, 0, 0),
+      );
+      const farStar = createMockRenderableStar(
+        "farStar",
+        new THREE.Vector3(1000, 0, 0),
+      );
+
+      const closeComp = new LightSourceComponent(closeStar);
+      (closeComp.light as THREE.PointLight).intensity = 1.0;
+      const farComp = new LightSourceComponent(farStar);
+      (farComp.light as THREE.PointLight).intensity = 1.0;
+
+      lightingManager.register(closeComp);
+      lightingManager.register(farComp);
+
+      const influential = lightingManager.getInfluentialLights(target, 4);
+
+      expect(influential.length).toBe(1); // Far star should be below threshold
+      expect(influential[0]).toBe(closeComp);
+    });
+
+    it("should not consider the target object itself as a light source", () => {
+      const target = createMockRenderableStar(
+        "target",
+        new THREE.Vector3(0, 0, 0),
+      );
+      const targetComp = new LightSourceComponent(target);
+      lightingManager.register(targetComp);
+
+      const influential = lightingManager.getInfluentialLights(target);
+      expect(influential.length).toBe(0);
+    });
+
+    it("should respect the maxLights limit", () => {
+      const target = createMockRenderableStar(
+        "target",
+        new THREE.Vector3(0, 0, 0),
+      );
+      for (let i = 0; i < 5; i++) {
+        const star = createMockRenderableStar(
+          `star${i}`,
+          new THREE.Vector3(10 + i, 0, 0),
+        );
+        const comp = new LightSourceComponent(star);
+        (comp.light as THREE.PointLight).intensity = 1.0;
+        lightingManager.register(comp);
+      }
+
+      const influential = lightingManager.getInfluentialLights(target, 2);
+      expect(influential.length).toBe(2);
+    });
   });
 });

@@ -3,10 +3,11 @@ import {
   type OortCloudProperties as CentralOortCloudProperties,
   SCALE,
 } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
-import { CelestialMeshOptions, CelestialRenderer, LODLevel } from "..";
-import { renderableStore, getSimulationState } from "@teskooano/core-state";
+import { CelestialMeshOptions, CelestialRenderer, LightSourcesMap } from "..";
+import { renderableStore } from "@teskooano/core-state";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 const oortCloudVertexShader = `
   attribute float size;
@@ -416,98 +417,18 @@ export class OortCloudRenderer implements CelestialRenderer {
     return lodLevels;
   }
 
-  update(time: number): void {
-    if (!this.particles || !this.objectId || !this.material) {
-      console.warn(
-        `[OortCloudRenderer] Update called but missing required properties: particles=${!!this.particles}, objectId=${!!this.objectId}, material=${!!this.material}`,
-      );
-      return;
-    }
-
-    const timeScale = getSimulationState().timeScale;
-
-    const currentTime = Date.now();
-
-    let timeDelta: number;
-    let timeResetDetected = false;
-
-    if (time < this.previousSimTime) {
-      this.resetCounter++;
-      timeResetDetected = true;
-
-      this.cumulativeRotation.x = this.cloudRotationAngles.x;
-      this.cumulativeRotation.y = this.cloudRotationAngles.y;
-      this.cumulativeRotation.z = this.cloudRotationAngles.z;
-      timeDelta = 0;
-    } else {
-      timeDelta = time - this.previousSimTime;
-
-      this.cumulativeParticleTime += timeDelta;
-    }
-
-    if (!timeResetDetected) {
-      this.cloudRotationAngles.x =
-        this.cumulativeRotation.x +
-        time * this.cloudRotationSpeed * 0.7 * timeScale;
-      this.cloudRotationAngles.y =
-        this.cumulativeRotation.y +
-        time * this.cloudRotationSpeed * 1.0 * timeScale;
-      this.cloudRotationAngles.z =
-        this.cumulativeRotation.z +
-        time * this.cloudRotationSpeed * 0.5 * timeScale;
-    }
-
-    this.cloudRotationAngles.x %= Math.PI * 2;
-    this.cloudRotationAngles.y %= Math.PI * 2;
-    this.cloudRotationAngles.z %= Math.PI * 2;
-
-    this.previousSimTime = time;
-
-    if (currentTime - this.lastLogTime > 5000) {
-      this.lastLogTime = currentTime;
-    }
-
-    this.material.uniforms.time.value = this.cumulativeParticleTime;
-    this.material.uniforms.particleRotationSpeed.value =
-      this.particleRotationSpeed * timeScale;
-    this.material.uniforms.cloudRotationAngleX.value =
-      this.cloudRotationAngles.x;
-    this.material.uniforms.cloudRotationAngleY.value =
-      this.cloudRotationAngles.y;
-    this.material.uniforms.cloudRotationAngleZ.value =
-      this.cloudRotationAngles.z;
-    this.material.uniformsNeedUpdate = true;
-
-    if (this.particles && !this.particles.visible) {
-      this.particles.visible = true;
-    }
-
-    const currentRenderableObjects = renderableStore.getRenderableObjects();
-    const currentObject = currentRenderableObjects[this.objectId];
-
-    if (!currentObject) {
-      console.warn(
-        `[OortCloudRenderer Update] Object ${this.objectId} not found in store.`,
-      );
-      return;
-    }
-
-    const parentId = currentObject.parentId;
-    let parentPosition: THREE.Vector3 | null = null;
-
-    if (parentId) {
-      const parentObject = currentRenderableObjects[parentId];
-      if (parentObject && parentObject.position) {
-        parentPosition = parentObject.position;
-      } else {
-        console.warn(
-          `[OortCloudRenderer Update] Parent object ${parentId} or its position not found for ${this.objectId}.`,
-        );
-      }
-    }
-
-    if (parentPosition && this.particles) {
-      this.particles.position.copy(parentPosition);
+  update(
+    object: RenderableCelestialObject,
+    time: number,
+    timeScale: number,
+    lightSources?: LightSourcesMap,
+    camera?: THREE.Camera,
+  ): void {
+    if (this.material) {
+      this.material.uniforms.time.value = time * 0.0001;
+      this.material.uniforms.cameraPosition.value =
+        camera?.position ?? new THREE.Vector3();
+      this.material.uniformsNeedUpdate = true;
     }
   }
 

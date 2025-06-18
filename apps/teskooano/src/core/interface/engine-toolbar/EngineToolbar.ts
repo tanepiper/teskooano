@@ -128,10 +128,7 @@ export class EngineToolbar {
       this._context.pluginManager.getToolbarItemsForTarget("engine-toolbar");
     const widgetConfigs =
       this._context.pluginManager.getToolbarWidgetsForTarget("engine-toolbar");
-    console.log(`[EngineToolbar ${this._apiId}] Populating with items:`, {
-      itemConfigs,
-      widgetConfigs,
-    });
+
     this.renderDynamicButtons(itemConfigs);
     this.renderDynamicWidgets(widgetConfigs);
   }
@@ -158,9 +155,6 @@ export class EngineToolbar {
     this._context.pluginManager.pluginsChanged$
       .pipe(takeUntil(this._destroy$))
       .subscribe(() => {
-        console.log(
-          `[EngineToolbar ${this._apiId}] Repopulating items due to plugin change.`,
-        );
         this.populateItemsFromPlugins();
       });
   }

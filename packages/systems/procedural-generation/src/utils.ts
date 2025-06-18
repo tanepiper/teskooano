@@ -1,9 +1,12 @@
 import {
+  CelestialType,
+  ExoticStellarType,
   GRAVITATIONAL_CONSTANT,
   GasGiantClass,
   PlanetType,
   ProceduralSurfaceProperties,
   SpectralClass,
+  StellarType,
 } from "@teskooano/data-types";
 import * as CONST from "./constants";
 
@@ -61,21 +64,6 @@ export function calculateOrbitalPeriod_s(
 }
 
 /**
- * Gets a random number within a specified inclusive range.
- * @param min The minimum value of the range.
- * @param max The maximum value of the range.
- * @param randomFn The seeded pseudo-random number generator function.
- * @returns A random number within the range.
- */
-export function getRandomInRange(
-  min: number,
-  max: number,
-  randomFn: () => number,
-): number {
-  return min + randomFn() * (max - min);
-}
-
-/**
  * Calculates the radius of a sphere given its mass and average density.
  * @param mass_kg Mass of the sphere in kilograms.
  * @param density_kg_m3 Average density in kilograms per cubic meter.
@@ -107,25 +95,43 @@ export function getSpectralClass(temperature: number): SpectralClass {
 }
 
 /**
- * Calculates the luminosity of a star relative to the Sun
- * using the Stefan-Boltzmann law.
+ * Calculates the true luminosity of a star relative to the Sun, based on the
+ * Stefan-Boltzmann law. This value is used for physics-based calculations
+ * like determining celestial zones.
  *
  * @param radius_m The star's radius in meters.
  * @param temperature_k The star's surface temperature in Kelvin.
- * @param luminosity_multiplier An artificial multiplier to enhance visual
- *   brightness differences in the renderer.
- * @returns The calculated luminosity relative to the Sun (L☉).
+ * @returns The calculated luminosity relative to the Sun (L☉), without any
+ *   visual multipliers.
  */
-export function calculateLuminosity(
+export function calculateStellarLuminosity(
   radius_m: number,
   temperature_k: number,
-  luminosity_multiplier: number = 10,
 ): number {
   if (radius_m <= 0 || temperature_k <= 0) return 0;
   const surfaceArea = 4 * Math.PI * radius_m ** 2;
   const totalPowerWatts =
     surfaceArea * CONST.STEFAN_BOLTZMANN * temperature_k ** 4;
-  return (totalPowerWatts / CONST.SOLAR_LUMINOSITY) * luminosity_multiplier;
+  return totalPowerWatts / CONST.SOLAR_LUMINOSITY;
+}
+
+/**
+ * Calculates a visually-enhanced luminosity of a star.
+ * This includes an artificial multiplier to make brightness differences more
+ * apparent in the renderer and should not be used for physics calculations.
+ *
+ * @param radius_m The star's radius in meters.
+ * @param temperature_k The star's surface temperature in Kelvin.
+ * @param luminosity_multiplier An artificial multiplier to enhance visual brightness.
+ * @returns The calculated visual luminosity relative to the Sun (L☉).
+ */
+export function calculateVisualLuminosity(
+  radius_m: number,
+  temperature_k: number,
+  luminosity_multiplier: number = 750,
+): number {
+  const stellarLuminosity = calculateStellarLuminosity(radius_m, temperature_k);
+  return stellarLuminosity * luminosity_multiplier;
 }
 
 /**
@@ -243,7 +249,10 @@ export function classifyGasGiantByTemperature(
   starTemperature: number,
   starRadius: number,
 ): GasGiantClass {
-  const starLuminosity = calculateLuminosity(starRadius, starTemperature);
+  const starLuminosity = calculateStellarLuminosity(
+    starRadius,
+    starTemperature,
+  );
   const estimatedTemp = estimateTemperature(starLuminosity, distanceAU);
 
   const CLASS_V_THRESHOLD = 1000;
@@ -265,263 +274,110 @@ export function classifyGasGiantByTemperature(
 }
 
 /**
- * Creates detailed procedural surface properties for a planet based on its type.
- *
- * This function is crucial for the visual appearance of planets. It defines
- * a set of parameters (noise settings, bump scales, colors, etc.) that are fed
- * into the shaders to procedurally generate the planet's surface texture. Each
- * `PlanetType` has a unique, handcrafted set of parameters to give it a distinct
- * look, from the continents of a Terrestrial world to the dunes of a Desert planet.
- *
- * @param random The seeded pseudo-random number generator function.
- * @param planetType The `PlanetType` of the planet.
- * @returns A `ProceduralSurfaceProperties` object containing all the data
- *   needed by the planet surface shader.
+ * Calculates a realistic albedo value for a planet based on its type.
+ * @param planetType The type of the planet.
+ * @param random A seeded random number generator.
+ * @returns A value between 0 and 1 representing the planet's albedo.
  */
-export function createProceduralSurfaceProperties(
+export function calculateAlbedo(
+  celestialType: CelestialType,
+  planetType: PlanetType | GasGiantClass | StellarType | ExoticStellarType,
   random: () => number,
-  planetType: PlanetType,
-): ProceduralSurfaceProperties {
-  // Default procedural values - can be overridden by specific types
-  let persistence = getRandomInRange(0.5, 0.7, random); // Adjusted for more detail
-  let lacunarity = getRandomInRange(1.8, 2.2, random); // Tightened and slightly lowered
-  let simplePeriod = getRandomInRange(1.5, 4.0, random); // Higher frequency on average
-  let octaves = Math.floor(getRandomInRange(8, 12, random)); // Increased octaves
-  let bumpScale = getRandomInRange(2, 3, random);
-  let roughness = getRandomInRange(0.5, 0.9, random);
-  let shininess = getRandomInRange(8, 32, random);
-  let specularStrength = getRandomInRange(0.1, 0.3, random);
-  let ambientLightIntensity = 0.5;
-  let undulation = getRandomInRange(0.1, 0.3, random);
+): number {
+  let baseAlbedo: number = 0.3;
+  let range: number = 0;
 
-  // Default terrain generation values
-  let terrainType = 2; // Default to sharp peaks
-  let terrainAmplitude = 1.0;
-  let terrainSharpness = 1.0;
-  let terrainOffset = 0.0;
-
-  let height1 = getRandomInRange(0.1, 0.2, random);
-  let height2 = getRandomInRange(height1, 0.4, random);
-  let height3 = getRandomInRange(height2, 0.6, random);
-  let height4 = getRandomInRange(height3, 0.8, random);
-  let height5 = getRandomInRange(height4, 1.0, random);
-
-  let color1: string;
-  let color2: string;
-  let color3: string;
-  let color4: string;
-  let color5: string;
-
-  switch (planetType) {
-    case PlanetType.TERRESTRIAL:
-      color1 = getRandomItem(["#1E4F6F", "#2A6F97", "#01497C"], random); // Blues (Water)
-      color2 = getRandomItem(["#4C9341", "#6A994E", "#8AA36F"], random); // Greens (Land)
-      color3 = getRandomItem(["#D4A373", "#E6B88A", "#C09463"], random); // Browns (Mountains)
-      color4 = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
-      color5 = getRandomItem(["#FFFFFF", "#F5F5F5", "#E8E8E8"], random); // White (Peaks/Snow)
-
-      persistence = getRandomInRange(0.55, 0.65, random); // Slightly increased
-      lacunarity = getRandomInRange(1.8, 2.2, random); // Tightened range
-      simplePeriod = getRandomInRange(0.5, 0.9, random); // Higher frequency
-      octaves = Math.floor(getRandomInRange(10, 14, random)); // Increased octaves
-      bumpScale = getRandomInRange(1, 2, random);
-      roughness = getRandomInRange(0.1, 0.2, random);
-      //shininess = getRandomInRange(3, 7, random); // Moderate shine for Terran
-      specularStrength = getRandomInRange(0.3, 0.6, random);
-      //ambientLightIntensity = getRandomInRange(0.2, 0.4, random); // Higher ambient for Earth-like planets
-      undulation = getRandomInRange(0.3, 0.5, random); // Higher undulation for continent-like features
-      terrainType = 2; // Sharp peaks for mountains
-      terrainAmplitude = getRandomInRange(0.8, 1.2, random);
-      terrainSharpness = getRandomInRange(0.8, 1.2, random);
-      terrainOffset = getRandomInRange(-0.1, 0.1, random);
-      break;
-
-    case PlanetType.ROCKY:
-      color1 = getRandomItem(["#4f2214", "#171719", "#312b2e"], random);
-      color2 = getRandomItem(["#522f28", "#631100", "#3d1c15"], random);
-      color3 = getRandomItem(["#3b3837", "#5d4a41", "#4d4542"], random);
-      color4 = getRandomItem(["#59392e", "#662d1a", "#242327"], random);
-      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random); // Darker browns for rocky peaks
-
-      persistence = getRandomInRange(0.45, 0.6, random); // Significantly increased for detail
-      lacunarity = getRandomInRange(1.9, 2.3, random); // Adjusted range
-      simplePeriod = getRandomInRange(1.0, 3.0, random); // Smaller period for more detail
-      octaves = Math.floor(getRandomInRange(9, 13, random)); // Increased octaves
-      bumpScale = getRandomInRange(2, 3, random);
-      roughness = getRandomInRange(0.7, 0.95, random);
-      //shininess = getRandomInRange(5, 10, random); // Very low shine
-      specularStrength = getRandomInRange(0.1, 0.9, random); // Very low strength
-      //ambientLightIntensity = getRandomInRange(0.1, 0.2, random); // Lower ambient for rocky planets
-      ambientLightIntensity = 0.9;
-      undulation = getRandomInRange(0.2, 0.4, random); // Moderate undulation for rocky terrain
-      terrainType = 2; // Sharp peaks for rocky terrain
-      terrainAmplitude = getRandomInRange(1.0, 1.5, random);
-      terrainSharpness = getRandomInRange(1.2, 1.8, random);
-      terrainOffset = getRandomInRange(-0.2, 0.0, random);
-      break;
-
-    case PlanetType.BARREN:
-      color1 = getRandomItem(["#583C3C", "#6d4c41", "#6f3323"], random); // Dark Grays
-      color2 = getRandomItem(["#544A59", "#111c19", "#2a2b2b"], random); // Medium Grays
-      color3 = getRandomItem(["#733217", "#312727", "#544A59"], random); // Lighter Grays
-      color4 = getRandomItem(["#756C61", "#292525", "#1f0e0e"], random); // Light Grays
-      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
-
-      persistence = getRandomInRange(0.4, 0.55, random); // Significantly increased
-      lacunarity = getRandomInRange(2.0, 2.5, random); // Reduced to avoid overly chaotic noise
-      simplePeriod = getRandomInRange(1.0, 3.5, random); // Smaller period for more detail
-      octaves = Math.floor(getRandomInRange(8, 12, random)); // Increased octaves
-      bumpScale = getRandomInRange(2, 3, random);
-      roughness = getRandomInRange(0.01, 0.09, random); // High roughness
-      //shininess = getRandomInRange(1, 3, random); // Very low shine
-      specularStrength = getRandomInRange(0.01, 0.05, random); // Very low strength
-      //ambientLightIntensity = getRandomInRange(0.05, 0.15, random); // Very low ambient for barren planets
-      ambientLightIntensity = 0.9;
-      undulation = getRandomInRange(0.1, 0.2, random); // Lower undulation for barren planets
-      terrainType = 3; // Sharp valleys for barren planets
-      terrainAmplitude = getRandomInRange(0.5, 0.8, random);
-      terrainSharpness = getRandomInRange(1.5, 2.0, random);
-      terrainOffset = getRandomInRange(0.0, 0.2, random);
-      break;
-
-    case PlanetType.DESERT:
-      color1 = getRandomItem(["#A0522D", "#B8860B", "#8B4513"], random); // Sienna, DarkGoldenrod, SaddleBrown (Deep Dunes/Rock)
-      color2 = getRandomItem(["#D2B48C", "#F4A460", "#CD853F"], random); // Tan, SandyBrown, Peru (Sand)
-      color3 = getRandomItem(["#E0C9A6", "#FFDEAD", "#DEB887"], random); // Lighter Tan, NavajoWhite, BurlyWood (Highlights)
-      color4 = getRandomItem(["#F5E6CA", "#FFF8DC", "#FAF0E6"], random); // Beige, Cornsilk, Linen (Peaks/Bright Sand)
-      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
-
-      persistence = getRandomInRange(0.4, 0.6, random); // Adjusted for more consistent detail
-      lacunarity = getRandomInRange(1.9, 2.4, random); // Corrected from very high range
-      simplePeriod = getRandomInRange(1.5, 4.0, random); // Adjusted for finer details
-      octaves = Math.floor(getRandomInRange(8, 12, random)); // Increased octaves
-      bumpScale = getRandomInRange(0.01, 0.04, random); // Lower bump for ice
-      roughness = getRandomInRange(0.65, 0.9, random);
-      //shininess = getRandomInRange(128, 512, random); // Very low shine
-      specularStrength = getRandomInRange(0.05, 0.15, random); // Slightly higher than barren/rocky but still low
-      //  ambientLightIntensity = getRandomInRange(0.3, 0.5, random); // Higher ambient for desert planets
-      undulation = getRandomInRange(0.15, 0.25, random); // Moderate undulation for desert dunes
-      terrainType = 1; // Simple noise for dunes
-      terrainAmplitude = getRandomInRange(0.3, 0.6, random);
-      terrainSharpness = getRandomInRange(0.5, 0.8, random);
-      terrainOffset = getRandomInRange(0.1, 0.3, random);
-      break;
-
-    case PlanetType.ICE:
-      color1 = getRandomItem(["#ffffff", "#edfbff", "#def4f9"], random); // CadetBlue, CornflowerBlue, SteelBlue (Deep Ice/Shadows)
-      color2 = getRandomItem(["#fff3f3", "#ffffff", "#52c8ff"], random); // PowderBlue, LightBlue (Main Ice Field)
-      color3 = getRandomItem(["#80ecff", "#ffffff", "#f5fdff"], random); // Lighter Blues/Cyans (Snow/Frost)
-      color4 = getRandomItem(["#FFFFFF", "#F0FFFF", "#c9c9c9"], random); // White, Azure, MintCream (Glints/Pure Snow)
-      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
-
-      persistence = getRandomInRange(0.45, 0.6, random); // Adjusted persistence
-      lacunarity = getRandomInRange(1.9, 2.2, random); // Corrected lacunarity for smoother ice
-      simplePeriod = getRandomInRange(0.8, 1.8, random); // Adjusted for finer ice details
-      octaves = Math.floor(getRandomInRange(8, 12, random)); // Increased octaves
-      bumpScale = 3; //getRandomInRange(1, 2, random); // Lower bump for ice
-      roughness = getRandomInRange(0.1, 0.3, random);
-      //shininess = getRandomInRange(10, 20, random); // Higher shine for ice
-      specularStrength = getRandomInRange(0.4, 0.8, random); // Stronger specular for ice
-      //ambientLightIntensity = getRandomInRange(0.4, 0.6, random); // High ambient for ice planets
-      ambientLightIntensity = 0.5;
-      undulation = getRandomInRange(0.05, 0.15, random); // Very low undulation for ice planets
-      terrainType = 1; // Simple noise for ice
-      terrainAmplitude = getRandomInRange(0.2, 0.4, random);
-      terrainSharpness = getRandomInRange(0.3, 0.6, random);
-      terrainOffset = getRandomInRange(0.2, 0.4, random);
-      break;
-
-    case PlanetType.LAVA:
-      color1 = getRandomItem(["#1A0000", "#2B0B00", "#000000"], random); // Very Dark Red/Black (Cooled Rock)
-      color2 = getRandomItem(["#4E0000", "#6B0000", "#8B0000"], random); // Dark Reds (Cooling Lava/Rock)
-      color3 = getRandomItem(["#AE1000", "#CC3300", "#FF4500"], random); // Bright Reds/Oranges (Hot Lava)
-      color4 = getRandomItem(["#FF8C00", "#FFA500", "#FFFF00"], random); // Orange/Yellow (Hottest Lava)
-      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
-
-      persistence = getRandomInRange(0.5, 0.65, random);
-      lacunarity = getRandomInRange(1.9, 2.3, random); // Adjusted range
-      simplePeriod = getRandomInRange(1, 4, random);
-      octaves = Math.floor(getRandomInRange(9, 13, random)); // Increased octaves
-      bumpScale = getRandomInRange(2, 3, random);
-      roughness = getRandomInRange(0.1, 1, random);
-      //shininess = getRandomInRange(10, 30, random); // Moderate shine for Terran
-      specularStrength = getRandomInRange(0.3, 0.6, random);
-      //ambientLightIntensity = getRandomInRange(0.2, 0.4, random); // Moderate ambient for lava planets
-      ambientLightIntensity = 0.9;
-      undulation = getRandomInRange(0.2, 0.3, random); // Moderate undulation for lava flows
-      terrainType = 2; // Sharp peaks for volcanic terrain
-      terrainAmplitude = getRandomInRange(1.2, 1.8, random);
-      terrainSharpness = getRandomInRange(1.0, 1.5, random);
-      terrainOffset = getRandomInRange(-0.3, -0.1, random);
-      break;
-
-    case PlanetType.OCEAN:
-      color1 = getRandomItem(["#001F3F", "#003366", "#004080"], random); // Deep Ocean Blue
-      color2 = getRandomItem(["#0055A4", "#1E90FF", "#4169E1"], random); // Mid Ocean Blue, DodgerBlue, RoyalBlue
-      color3 = getRandomItem(["#87CEEB", "#ADD8E6", "#B0E0E6"], random); // SkyBlue, LightBlue, PowderBlue (Shallows)
-      color4 = getRandomItem(["#F0F8FF", "#E0FFFF", "#FFFFFF"], random); // AliceBlue, LightCyan, White (Foam/Ice Caps?)
-      color5 = getRandomItem(["#6d4c41", "#795548", "#5d4037"], random);
-
-      persistence = getRandomInRange(0.6, 0.75, random); // Very smooth generally
-      lacunarity = getRandomInRange(1.8, 2.1, random); // Few sharp transitions
-      simplePeriod = getRandomInRange(8.0, 15.0, random); // Large, gentle swells
-      octaves = Math.floor(getRandomInRange(4, 6, random)); // Less detail needed
-      bumpScale = getRandomInRange(0.005, 0.02, random); // Very low bump for water surface
-      roughness = getRandomInRange(0.1, 0.4, random); // Water is smooth
-      //shininess = getRandomInRange(32, 96, random); // Water shine
-      specularStrength = getRandomInRange(0.5, 0.9, random); // Strong water reflections
-      //ambientLightIntensity = getRandomInRange(0.3, 0.5, random); // Higher ambient for ocean planets
-      undulation = getRandomInRange(0.4, 0.6, random); // High undulation for ocean planets
-      terrainType = 1; // Simple noise for ocean
-      terrainAmplitude = getRandomInRange(0.4, 0.7, random);
-      terrainSharpness = getRandomInRange(0.4, 0.7, random);
-      terrainOffset = getRandomInRange(0.3, 0.5, random);
-      break;
-
-    default:
-      console.warn(
-        `[createProceduralSurfaceProperties] Unhandled planetType: ${planetType}, using fallback TERRESTRIAL palette.`,
-      );
-      // Fallback to Terrestrial-like palette
-      color1 = "#1E4F6F";
-      color2 = "#4C9341";
-      color3 = "#D4A373";
-      color4 = "#FFFFFF";
-      color5 = "#795548";
-      //ambientLightIntensity = getRandomInRange(0.2, 0.3, random); // Default ambient
-      undulation = getRandomInRange(0.1, 0.3, random); // Default undulation
-      terrainType = 2;
-      terrainAmplitude = 1.0;
-      terrainSharpness = 1.0;
-      terrainOffset = 0.0;
-      break;
+  if (
+    celestialType === CelestialType.PLANET ||
+    celestialType === CelestialType.MOON
+  ) {
+    switch (planetType as PlanetType) {
+      case PlanetType.ICE:
+        baseAlbedo = 0.75;
+        range = 0.25;
+        break;
+      case PlanetType.TERRESTRIAL:
+        baseAlbedo = 0.5;
+        range = 0.25; //
+        break;
+      case PlanetType.ROCKY:
+        baseAlbedo = 0.25;
+        range = 0.25;
+        break;
+      case PlanetType.BARREN:
+        baseAlbedo = 0.1;
+        range = 0.1;
+        break;
+      case PlanetType.LAVA:
+        baseAlbedo = 0.4;
+        range = 0.05;
+        break;
+      default:
+        baseAlbedo = 0.3;
+        range = 0;
+    }
   }
 
-  // Construct the final properties object
-  return {
-    persistence: persistence,
-    lacunarity: lacunarity,
-    simplePeriod: simplePeriod,
-    octaves: octaves,
-    bumpScale: bumpScale,
-    color1: color1,
-    color2: color2,
-    color3: color3,
-    color4: color4,
-    color5: color5,
-    height1: height1,
-    height2: height2,
-    height3: height3,
-    height4: height4,
-    height5: height5,
-    shininess: shininess,
-    specularStrength: specularStrength,
-    roughness: roughness,
-    ambientLightIntensity: ambientLightIntensity,
-    undulation: undulation,
-    terrainType: terrainType,
-    terrainAmplitude: terrainAmplitude,
-    terrainSharpness: terrainSharpness,
-    terrainOffset: terrainOffset,
-  };
+  if (celestialType === CelestialType.GAS_GIANT) {
+    switch (planetType as GasGiantClass) {
+      case GasGiantClass.CLASS_I: // Ammonia clouds (Jupiter-like)
+        baseAlbedo = 0.5;
+        range = 0.1; // 0.3 - 0.4
+        break;
+      case GasGiantClass.CLASS_II: // Water clouds
+        baseAlbedo = 0.7;
+        range = 0.2;
+        break;
+      case GasGiantClass.CLASS_III: // Clear
+        baseAlbedo = 0.3;
+        range = 0.1;
+        break;
+      case GasGiantClass.CLASS_IV: // Alkali metals
+        baseAlbedo = 0.4;
+        range = 0.1;
+        break;
+      case GasGiantClass.CLASS_V: // Silicate clouds (Hot Jupiters)
+        baseAlbedo = 0.7;
+        range = 0.05; // 0.05 - 0.1 (very dark)
+        break; // Fixed fallthrough
+      default:
+        baseAlbedo = 0.3;
+        range = 0;
+        break;
+    }
+  }
+
+  if (celestialType === CelestialType.STAR) {
+    // For stars, "albedo" is a proxy for billboard brightness
+    switch (planetType as StellarType) {
+      case StellarType.MAIN_SEQUENCE:
+      case StellarType.MAIN_SEQUENCE_G:
+        baseAlbedo = 0.4;
+        range = 0.2; // 0.4 - 0.6
+        break;
+      case StellarType.WOLF_RAYET:
+        baseAlbedo = 0.8;
+        range = 0.15; // 0.8 - 0.95 (Extremely bright)
+        break;
+      case StellarType.NEUTRON_STAR:
+        baseAlbedo = 0.7;
+        range = 0.2; // 0.7 - 0.9 (Intensely bright spots)
+        break;
+      case StellarType.BLACK_HOLE:
+      case StellarType.KERR_BLACK_HOLE:
+        baseAlbedo = 0.01;
+        range = 0.04; // 0.01 - 0.05 (Nearly black)
+        break;
+      case StellarType.WHITE_DWARF:
+        baseAlbedo = 0.6;
+        range = 0.2; // 0.6 - 0.8 (Very bright for its size)
+        break;
+      default:
+        baseAlbedo = 0.3;
+        range = 0;
+        break;
+    }
+  }
+
+  return (baseAlbedo + random() * range) * 2;
 }
