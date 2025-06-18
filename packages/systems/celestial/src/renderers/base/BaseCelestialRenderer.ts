@@ -42,6 +42,12 @@ export interface BaseCelestialRendererOptions {
  */
 export abstract class BaseCelestialRenderer implements CelestialRenderer {
   /**
+   * Statically cached texture for all billboards to ensure it's created only once.
+   * @private
+   */
+  private static _billboardTexture: THREE.CanvasTexture | null = null;
+
+  /**
    * Map of materials for different objects
    * Key: object ID, Value: material instance
    */
@@ -76,7 +82,6 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
    * Map to store BillboardInfo for managing dynamic billboard properties, keyed by celestial object ID.
    */
   protected billboardsInfo: Map<string, BillboardInfo> = new Map();
-  private _billboardTexture: THREE.CanvasTexture | null = null;
 
   constructor(options: BaseCelestialRendererOptions = {}) {
     this.lightingManager = options.lightingManager;
@@ -203,9 +208,10 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
             parentObject instanceof THREE.LOD &&
             parentObject.levels.length > 0
           ) {
-            const isParentBillboard =
-              parentObject.getCurrentLevel() === parentObject.levels.length - 1;
-            if (isParentBillboard) {
+            // The last level is assumed to be the billboard. Check if its object is visible.
+            const billboardLevel =
+              parentObject.levels[parentObject.levels.length - 1];
+            if (billboardLevel.object.visible) {
               isVisibleByRule = false;
               break; // Final decision: hide.
             }
@@ -283,19 +289,12 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     this.materials.clear();
     this.lods.clear();
 
-    // New dispose logic
     this.billboardsInfo.forEach(({ sprite }) => {
-      if (
-        sprite.material.map &&
-        sprite.material.map instanceof THREE.CanvasTexture
-      ) {
-        sprite.material.map.dispose();
-      }
+      // The material is unique to each sprite, so it's safe to dispose.
       sprite.material.dispose();
+      // The texture map is static and shared, so we do not dispose of it here.
     });
     this.billboardsInfo.clear();
-
-    this._billboardTexture?.dispose();
   }
 
   /**
@@ -433,8 +432,8 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   }
 
   protected getBillboardTexture(): THREE.CanvasTexture {
-    if (this._billboardTexture) {
-      return this._billboardTexture;
+    if (BaseCelestialRenderer._billboardTexture) {
+      return BaseCelestialRenderer._billboardTexture;
     }
 
     const canvas = document.createElement("canvas");
@@ -459,7 +458,7 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     const texture = new THREE.CanvasTexture(canvas);
-    this._billboardTexture = texture;
+    BaseCelestialRenderer._billboardTexture = texture;
     return texture;
   }
 

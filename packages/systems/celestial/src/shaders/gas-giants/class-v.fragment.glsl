@@ -35,6 +35,7 @@ float clamp01(float value) {
 void main() {
     vec3 normal = normalize(vNormal);
     vec3 viewDir = normalize(vViewDirection);
+    vec3 diffuseNormal = normalize(vSphereNormalW);
 
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
@@ -43,7 +44,7 @@ void main() {
         vec3 lightDir = uLights[i].direction;
 
         // Diffuse component - Strong reflection
-        float ndl = max(0.0, dot(normal, lightDir));
+        float ndl = max(0.0, dot(diffuseNormal, lightDir));
         ndl = clamp01(ndl);
         totalDiffuse += baseColor * ndl * uLights[i].color * uLights[i].intensity; // Strong diffuse based on bright base color
 

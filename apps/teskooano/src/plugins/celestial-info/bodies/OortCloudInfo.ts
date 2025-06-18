@@ -1,8 +1,7 @@
 import {
-  CelestialObject,
-  CelestialType,
-  OortCloudProperties,
   AU_METERS,
+  CelestialObject,
+  OortCloudProperties,
 } from "@teskooano/data-types";
 import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";

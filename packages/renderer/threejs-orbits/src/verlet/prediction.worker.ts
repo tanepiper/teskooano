@@ -1,31 +1,28 @@
-import { PhysicsStateReal, predictTrajectory } from "@teskooano/core-physics";
-import { OSVector3 } from "@teskooano/core-math";
+import { predictTrajectory } from "@teskooano/core-physics";
+import { PredictionDataPool } from "./PredictionDataPool.worker";
+
+const POOL_SIZE = 500; // Max number of physics bodies
+const dataPool = new PredictionDataPool(POOL_SIZE);
 
 self.onmessage = (
   e: MessageEvent<{
     objectId: string;
-    physicsStates: PhysicsStateReal[];
+    physicsStatesBuffer: Float32Array;
+    idMap: Map<string, number>;
     predictionDuration: number;
     predictionSteps: number;
   }>,
 ) => {
-  const { objectId, physicsStates, predictionDuration, predictionSteps } =
-    e.data;
+  const {
+    objectId,
+    physicsStatesBuffer,
+    idMap,
+    predictionDuration,
+    predictionSteps,
+  } = e.data;
 
-  // Re-hydrate plain objects into class instances
-  const hydratedStates: PhysicsStateReal[] = physicsStates.map((state) => ({
-    ...state,
-    position_m: new OSVector3(
-      state.position_m.x,
-      state.position_m.y,
-      state.position_m.z,
-    ),
-    velocity_mps: new OSVector3(
-      state.velocity_mps.x,
-      state.velocity_mps.y,
-      state.velocity_mps.z,
-    ),
-  }));
+  // Update the pool of objects from the flat buffer, avoiding new allocations.
+  const hydratedStates = dataPool.updateFromBuffer(physicsStatesBuffer, idMap);
 
   try {
     const newPoints = predictTrajectory(

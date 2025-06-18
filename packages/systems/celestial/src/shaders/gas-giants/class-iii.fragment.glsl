@@ -35,6 +35,7 @@ void main() {
     // Use the actual surface normal for both diffuse and specular
     vec3 normal = normalize(vNormal);
     vec3 viewDir = normalize(vViewDirection);
+    vec3 diffuseNormal = normalize(vSphereNormalW);
 
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
@@ -43,7 +44,7 @@ void main() {
         vec3 lightDir = uLights[i].direction;
         
         // Diffuse component (basic Lambertian)
-        float ndl = max(0.0, dot(normal, lightDir));
+        float ndl = max(0.0, dot(diffuseNormal, lightDir));
         ndl = clamp01(ndl);
         // Reduce diffuse intensity further
         totalDiffuse += baseColor * ndl * 0.85 * uLights[i].color * uLights[i].intensity; // Reduced multiplier again (was 0.95)

@@ -1,8 +1,4 @@
-import {
-  CelestialObject,
-  CelestialType,
-  GasGiantProperties,
-} from "@teskooano/data-types";
+import { CelestialObject, GasGiantProperties } from "@teskooano/data-types";
 import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 import {

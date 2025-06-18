@@ -209,7 +209,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       uniforms: {
         asteroidTextures: { value: this.asteroidTextures },
         alphaTest: { value: 0.1 },
-        pointSizeScale: { value: 600.0 },
+        pointSizeScale: { value: 1.0 },
         time: { value: 0.0 },
         beltRotationAngle: { value: 0.0 },
         particleRotationSpeed: { value: this.particleRotationSpeed },
@@ -425,6 +425,14 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       object.celestialObjectId,
     ) as THREE.ShaderMaterial;
     if (!material) return;
+
+    if (camera && camera instanceof THREE.PerspectiveCamera) {
+      const rendererHeight = (camera as any).rendererHeight;
+      if (rendererHeight) {
+        material.uniforms.pointSizeScale.value =
+          rendererHeight / (2.0 * Math.tan((camera.fov * Math.PI) / 360.0));
+      }
+    }
 
     if (lightSources && lightSources.size > 0) {
       const sortedLights = Array.from(lightSources.values())

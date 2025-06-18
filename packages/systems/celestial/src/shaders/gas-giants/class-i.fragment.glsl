@@ -11,7 +11,6 @@ struct Light {
 // Varyings from vertex shader (matching our updated vertex shader)
 varying vec3 vNormal;          // Vertex normal in world space (use this for specular)
 varying vec3 vWorldPosition;     // Vertex position in world space
-varying vec3 vSunDirection;      // Direction from vertex to sun
 varying vec3 vViewDirection;     // Direction from camera to vertex
 varying vec3 vUnitSamplePoint;   // Normalized local position (for noise sampling)
 varying vec3 vSphereNormalW;     // Normalized world normal assuming perfect sphere (use this for diffuse)
@@ -198,11 +197,14 @@ void main() {
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
+    // Use the smooth sphere normal for diffuse lighting to match the procedural texture
+    vec3 diffuseNormal = normalize(vSphereNormalW);
+
     for (int i = 0; i < uNumLights; i++) {
         vec3 lightDir = uLights[i].direction;
         
         // Diffuse component
-        float ndl = max(0.0, dot(normal, lightDir));
+        float ndl = max(0.0, dot(diffuseNormal, lightDir));
         ndl = clamp01(ndl);
         totalDiffuse += noiseColor * ndl * uLights[i].color * uLights[i].intensity;
 

@@ -1,11 +1,7 @@
-import {
-  CelestialObject,
-  CelestialType,
-  StarProperties,
-} from "@teskooano/data-types";
+import { CelestialObject, StarProperties } from "@teskooano/data-types";
 import { FormatUtils } from "../utils/formatters";
-import { renderMainProperties } from "./common/render-helpers.js";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
+import { renderMainProperties } from "./common/render-helpers.js";
 
 export class StarInfoComponent extends BaseCelestialInfoComponent {
   constructor() {

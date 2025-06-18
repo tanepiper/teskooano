@@ -68,10 +68,11 @@ export function createBillboardSprite(
   const spriteMaterial = new THREE.SpriteMaterial({
     map: texture,
     color: finalColor,
-    blending: THREE.AdditiveBlending,
+    blending: THREE.NormalBlending,
     sizeAttenuation: false, // Size is in screen space
     transparent: true,
     opacity: 0.85,
+    depthWrite: false,
   });
 
   const distantSprite = new THREE.Sprite(spriteMaterial);

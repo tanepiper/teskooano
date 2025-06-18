@@ -1,8 +1,7 @@
 import {
-  CelestialObject,
-  CelestialType,
   AsteroidFieldProperties,
   AU_METERS,
+  CelestialObject,
 } from "@teskooano/data-types";
 import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";

@@ -26,6 +26,7 @@ const MAX_LIGHTS = 4;
 export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
   protected textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
   protected ringSystemRenderer: RingSystemRenderer | null = null;
+  public lod: THREE.LOD | undefined;
 
   /**
    * Initializes the renderer, creating the ring system if data is present.
@@ -48,13 +49,21 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
   ): BaseGasGiantMaterial;
 
   /**
-   * Creates and returns an array of LOD levels for the gas giant object.
+   * Creates and returns the THREE.LOD object for the gas giant.
+   * This method builds the LOD levels and stores a reference to the final
+   * LOD object within the renderer instance.
    */
-  getLODLevels(
+  public createLOD(
     object: RenderableCelestialObject,
+    createLodObject: (
+      object: RenderableCelestialObject,
+      levels: LODLevel[],
+    ) => THREE.LOD,
     options?: CelestialMeshOptions,
-  ): LODLevel[] {
+  ): THREE.LOD {
     const planetLODs = this._createPlanetLODs(object, options);
+
+    let finalLODs = planetLODs;
 
     if (this.ringSystemRenderer) {
       const ringLODs = this.ringSystemRenderer.getLODLevels(object, {
@@ -63,7 +72,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
       });
 
       // Combine planet and ring LODs
-      return planetLODs.map((planetLOD, index) => {
+      finalLODs = planetLODs.map((planetLOD, index) => {
         const ringLOD = ringLODs[index] || ringLODs[ringLODs.length - 1];
         const combinedGroup = new THREE.Group();
         combinedGroup.name = `${object.celestialObjectId}-lod-${index}-combined`;
@@ -78,7 +87,8 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
       });
     }
 
-    return planetLODs;
+    this.lod = createLodObject(object, finalLODs);
+    return this.lod;
   }
 
   /**
@@ -176,9 +186,11 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     super.update(object, time, timeScale, lightSources, camera);
     this.elapsedTime = time;
 
-    const material = this.materials.get(
-      object.celestialObjectId,
-    ) as BaseGasGiantMaterial;
+    // The main material is on the first LOD level's object.
+    const highDetailMesh = this.lod?.levels[0]?.object.children[0]
+      ?.children[0] as THREE.Mesh<THREE.SphereGeometry, BaseGasGiantMaterial>;
+
+    const material = highDetailMesh?.material;
 
     if (material) {
       const lightsForShader: {
@@ -189,27 +201,26 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
 
       if (lightSources && lightSources.size > 0) {
         const sortedLights = Array.from(lightSources.values())
-          .map((light) => ({
-            ...light,
-            distanceSq: object.position.distanceToSquared(light.position),
+          .map((component) => ({
+            component,
+            distanceSq: object.position.distanceToSquared(component.position),
           }))
           .sort((a, b) => a.distanceSq - b.distanceSq)
           .slice(0, MAX_LIGHTS);
 
-        sortedLights.forEach((light) => {
+        sortedLights.forEach(({ component, distanceSq }) => {
           // Calculate direction from planet to light
           const direction = new THREE.Vector3()
-            .subVectors(light.position, object.position)
+            .subVectors(component.position, object.position)
             .normalize();
 
           // Simple distance attenuation - this can be made more sophisticated
-          const attenuation =
-            1.0 / (1.0 + light.distanceSq * 0.00000000000000000001);
+          const attenuation = 1.0 / (1.0 + distanceSq * 0.00000000000000000001);
 
           lightsForShader.push({
             direction: direction,
-            color: light.color,
-            intensity: (light.intensity ?? 1.0) * attenuation,
+            color: component.color,
+            intensity: (component.intensity ?? 1.0) * attenuation,
           });
         });
       }

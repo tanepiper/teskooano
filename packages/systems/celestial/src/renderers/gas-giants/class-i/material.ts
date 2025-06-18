@@ -47,7 +47,7 @@ export class ClassIMaterial extends BaseGasGiantMaterial {
         time: { value: 0 },
 
         uLights: { value: lights },
-        uNumLights: { value: 0 },
+        uNumLights: { value: lights.length },
 
         uWarpOctaves: { value: 5 },
         uColorOctaves: { value: 3 },

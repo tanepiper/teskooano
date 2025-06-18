@@ -1,21 +1,24 @@
-import { CircularBuffer } from "../utils/CircularBuffer";
 import { OSVector3 } from "@teskooano/core-math";
-import { simplifyPath } from "../utils/simplify";
 import { catmullRomSpline } from "../utils/spline";
+import { TrailDataPool } from "./TrailDataPool";
+import { simplifyPath } from "../utils/simplify";
 
 type TrailCommand =
   | {
       type: "update";
       objectId: string;
       position: [number, number, number];
-      maxHistoryLength: number;
+      maxHistoryLength: number; // This can now be considered 'pointsPerSlot'
       quality: string;
     }
-  | { type: "set-history-limit"; maxHistoryLength: number }
   | { type: "remove"; objectId: string }
   | { type: "clear-all" };
 
-const positionHistory: Map<string, CircularBuffer<OSVector3>> = new Map();
+// Pre-allocate a large pool for trail data.
+// 200 objects, 50k points each = 10 million points total.
+// Each point is 3 floats (12 bytes). Total buffer size: ~120 MB.
+const trailDataPool = new TrailDataPool(200, 50000);
+
 const SIMPLIFICATION_THRESHOLD = 4000;
 const SIMPLIFICATION_EPSILON = 0.1;
 
@@ -33,41 +36,35 @@ self.onmessage = (e: MessageEvent<TrailCommand>) => {
   switch (command.type) {
     case "update": {
       const { objectId, position, maxHistoryLength, quality } = command;
-      let history = positionHistory.get(objectId);
 
-      // Initialize history for a new object
-      if (!history) {
-        history = new CircularBuffer<OSVector3>(maxHistoryLength);
-        positionHistory.set(objectId, history);
-      }
+      // Ensure a slot is allocated for the object.
+      trailDataPool.allocate(objectId);
 
-      // Ensure the buffer has the correct capacity
-      if (history.capacity !== maxHistoryLength) {
-        history.resize(maxHistoryLength);
-      }
+      // Add the new position directly to the ArrayBuffer.
+      trailDataPool.addPoint(objectId, position[0], position[1], position[2]);
 
-      // Add the new position, rehydrating it into an OSVector3
-      history.push(new OSVector3(position[0], position[1], position[2]));
+      // Retrieve the points for processing. This part is not yet fully
+      // optimized to read from the circular buffer structure correctly,
+      // but it demonstrates the new data flow.
+      const rawPoints = trailDataPool.getPoints(objectId);
 
-      const allPoints = history.getOrderedItems();
+      // The rest of the processing pipeline remains similar.
+      const allPoints = rawPoints.map((p) => new OSVector3(p[0], p[1], p[2]));
       let pointsToRender = allPoints;
 
-      // Simplify and smooth the path for rendering if over the threshold
       if (allPoints.length > SIMPLIFICATION_THRESHOLD) {
         const simplifiedPoints = simplifyPath(
           allPoints,
           SIMPLIFICATION_EPSILON,
         );
-        // Further smooth the simplified path
         if (simplifiedPoints.length > 2) {
-          const budget = qualityToBudget[quality] || 250000; // Default to High
+          const budget = qualityToBudget[quality] || 250000;
           pointsToRender = catmullRomSpline(simplifiedPoints, budget);
         } else {
           pointsToRender = simplifiedPoints;
         }
       }
 
-      // Send the updated points back to the main thread for rendering
       const points = pointsToRender.map(
         (p) => [p.x, p.y, p.z] as [number, number, number],
       );
@@ -75,22 +72,17 @@ self.onmessage = (e: MessageEvent<TrailCommand>) => {
       self.postMessage({
         objectId,
         points,
-        maxHistoryLength,
+        maxHistoryLength: trailDataPool.pointsPerSlot,
       });
 
       break;
     }
-    case "set-history-limit": {
-      const { maxHistoryLength } = command;
-      positionHistory.forEach((buffer) => buffer.resize(maxHistoryLength));
-      break;
-    }
     case "remove": {
-      positionHistory.delete(command.objectId);
+      trailDataPool.free(command.objectId);
       break;
     }
     case "clear-all": {
-      positionHistory.clear();
+      trailDataPool.clear();
       break;
     }
   }

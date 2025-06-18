@@ -124,13 +124,37 @@ export class PredictionManager {
       .map((co) => co.physicsStateReal)
       .filter((state): state is PhysicsStateReal => !!state);
 
-    this.isCalculating = true;
-    this.predictionWorker?.postMessage({
-      objectId,
-      physicsStates: allCurrentPhysicsStates,
-      predictionDuration: options.predictionDuration || this.predictionDuration,
-      predictionSteps: options.predictionSteps || this.predictionSteps,
+    // Serialize data for the worker to avoid GC churn inside the worker.
+    const floatsPerObject = 7; // mass, px, py, pz, vx, vy, vz
+    const buffer = new Float32Array(
+      allCurrentPhysicsStates.length * floatsPerObject,
+    );
+    const idMap = new Map<string, number>();
+
+    allCurrentPhysicsStates.forEach((state, index) => {
+      idMap.set(state.id, index);
+      const offset = index * floatsPerObject;
+      buffer[offset] = state.mass_kg;
+      buffer[offset + 1] = state.position_m.x;
+      buffer[offset + 2] = state.position_m.y;
+      buffer[offset + 3] = state.position_m.z;
+      buffer[offset + 4] = state.velocity_mps.x;
+      buffer[offset + 5] = state.velocity_mps.y;
+      buffer[offset + 6] = state.velocity_mps.z;
     });
+
+    this.isCalculating = true;
+    this.predictionWorker?.postMessage(
+      {
+        objectId,
+        physicsStatesBuffer: buffer,
+        idMap: idMap,
+        predictionDuration:
+          options.predictionDuration || this.predictionDuration,
+        predictionSteps: options.predictionSteps || this.predictionSteps,
+      },
+      [buffer.buffer],
+    ); // Zero-copy transfer of the buffer
 
     return true;
   }

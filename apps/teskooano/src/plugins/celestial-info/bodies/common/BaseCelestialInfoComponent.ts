@@ -1,7 +1,6 @@
 import { CelestialObject } from "@teskooano/data-types";
 import { CelestialInfoComponent } from "../../utils/CelestialInfoInterface.js";
 import { baseStyles } from "../../utils/CelestialStyles.js";
-import { CelestialIconComponent } from "../../../celestial-icons/index.js";
 
 /**
  * An abstract base class for celestial info components.

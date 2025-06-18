@@ -76,6 +76,10 @@ export class RenderPipeline {
    * @param elapsedTime The total time elapsed since the loop started, in seconds.
    */
   public update = (deltaTime: number, elapsedTime: number): void => {
+    // Attach renderer height to camera for dynamic calculations (e.g., point sizes)
+    // This is a bit of a hack but avoids a major refactor of all update signatures.
+    (this.camera as any).rendererHeight = this.renderer.domElement.clientHeight;
+
     // 1. Update controls and camera position first.
     this.controlsManager.update(deltaTime);
 
