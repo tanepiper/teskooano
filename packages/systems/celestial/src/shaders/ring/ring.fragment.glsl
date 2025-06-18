@@ -55,21 +55,24 @@ void main() {
     // We use gl_FrontFacing to flip the normal for the back side of the ring.
     vec3 faceNormal = gl_FrontFacing ? vWorldNormal : -vWorldNormal;
 
-    // Artificially "lift" the light for the lighting calculation
-    vec3 adjustedLightingDirection = normalize(lightingDirection + vec3(0.0, 0.15, 0.0));
-
     // *** Shadow Calculation (Binary: 1.0 for lit, 0.0 for shadow) ***
     float shadowFactor = checkShadow(vPosition, vWorldParentPos, shadowRayDirection, uParentRadius);
 
     // *** Lighting Calculation ***
-    // Use the adjusted lighting direction to get the diffuse component.
-    float ambientIntensity = 0.35;
-    float diffuseFactor = max(0.0, dot(faceNormal, adjustedLightingDirection));
-    float diffuseContribution = diffuseFactor * 1.5; // Boost the diffuse light
+    // For two-sided lighting, we calculate diffuse light from "above" and "below" the ring plane
+    // and sum them up. The `faceNormal` will ensure only the relevant side contributes.
+    vec3 lightLift = vWorldNormal * 0.15; // Lift relative to the ring's own normal
+    vec3 lightDirUp = normalize(lightingDirection + lightLift);
+    vec3 lightDirDown = normalize(lightingDirection - lightLift);
+
+    float diffuseUp = max(0.0, dot(faceNormal, lightDirUp));
+    float diffuseDown = max(0.0, dot(faceNormal, lightDirDown));
+    float totalDiffuse = (diffuseUp + diffuseDown) * 1.5; // Sum and boost diffuse light
 
     // The final light is the ambient component, plus the diffuse component (if not in shadow).
     // The diffuse component is scaled by the sun's attenuated intensity.
-    float finalLightIntensity = ambientIntensity + (diffuseContribution * uSunIntensity * shadowFactor);
+    float ambientIntensity = 0.35;
+    float finalLightIntensity = ambientIntensity + (totalDiffuse * uSunIntensity * shadowFactor);
 
     // Simple ring variation (using vUv which is fine)
     float distanceFromCenter = length(vUv - vec2(0.5, 0.5)) * 2.0;
