@@ -1,27 +1,19 @@
-import * as THREE from "three";
 import type { StarProperties } from "@teskooano/data-types";
-import { CelestialRenderer } from "../../base/CelestialRenderer";
-import { BaseCelestialRenderer } from "../../base/BaseCelestialRenderer";
+import { RenderableCelestialObject } from "@teskooano/data-types";
+import { LightingManager } from "@teskooano/renderer-threejs-lighting";
+import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import * as THREE from "three";
 import {
-  SCALE,
-  RenderableCelestialObject,
-  scaleSize,
-} from "@teskooano/data-types";
+  BaseCelestialRenderer,
+  BaseCelestialRendererOptions,
+} from "../../base/BaseCelestialRenderer";
 import type {
   CelestialMeshOptions,
   LightSourcesMap,
 } from "../../base/CelestialRenderer";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
-import {
-  LightSourceComponent,
-  LightingManager,
-} from "@teskooano/renderer-threejs-lighting";
-import { BaseCelestialRendererOptions } from "../../base/BaseCelestialRenderer";
 import {
   calculateDistantSpriteSize,
-  createBillboardLODLevel,
   createBillboardPointLight,
-  createBillboardSprite,
 } from "../../billboards";
 
 /**

@@ -3,11 +3,20 @@ import * as THREE from "three";
 import { BaseGasGiantRenderer, BaseGasGiantMaterial } from "../base";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { ClassIVMaterial } from "./material";
+import { CelestialMeshOptions } from "../../base/CelestialRenderer";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
  * Renderer for Class IV gas giants
  */
 export class ClassIVGasGiantRenderer extends BaseGasGiantRenderer {
+  public getLODLevels(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): LODLevel[] {
+    return this._createPlanetLODs(object, options);
+  }
+
   public getMaterial(object: RenderableCelestialObject): BaseGasGiantMaterial {
     const properties = object.properties as GasGiantProperties;
 

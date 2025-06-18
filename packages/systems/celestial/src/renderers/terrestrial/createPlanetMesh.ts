@@ -7,7 +7,7 @@ import { BaseTerrestrialRenderer } from "./base-terrestrial";
 
 interface CreatePlanetMeshDeps {
   planetRenderers: Map<string, CelestialRenderer>;
-  createLodCallback: (
+  createLodObject: (
     object: RenderableCelestialObject,
     levels: LODLevel[],
   ) => THREE.LOD;
@@ -25,13 +25,9 @@ export function createPlanetMesh(
 
   if (!renderer) {
     try {
-      renderer = new BaseTerrestrialRenderer();
-      // Initialize the renderer to create sub-renderers (e.g., rings)
-      (renderer as BaseTerrestrialRenderer).initialize(object);
-
-      if (renderer) {
-        deps.planetRenderers.set(object.celestialObjectId, renderer);
-      }
+      renderer = new BaseTerrestrialRenderer(object, {
+        renderers: deps.planetRenderers,
+      });
     } catch (error) {
       console.error(
         `[MeshFactory:Planet] Failed to create default BaseTerrestrialRenderer for ${object.celestialObjectId}:`,
@@ -51,7 +47,7 @@ export function createPlanetMesh(
   if (renderer.getLODLevels) {
     const lodLevels = renderer.getLODLevels(object);
     if (lodLevels && lodLevels.length > 0) {
-      const lod = deps.createLodCallback(object, lodLevels);
+      const lod = deps.createLodObject(object, lodLevels);
       return lod;
     } else {
       console.warn(

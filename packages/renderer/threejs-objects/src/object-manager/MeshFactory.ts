@@ -59,7 +59,7 @@ export class MeshFactory {
     moonRenderers: Map<string, CelestialRenderer>;
     celestialRenderers: Map<string, CelestialRenderer>;
     lightingManager: LightingManager;
-    createLodCallback: (
+    createLodObject: (
       object: RenderableCelestialObject,
       levels: LODLevel[],
     ) => THREE.LOD;
@@ -81,7 +81,7 @@ export class MeshFactory {
       planetRenderers: this.planetRenderers,
       moonRenderers: this.moonRenderers,
       celestialRenderers: this.celestialRenderers,
-      createLodCallback: this.createLodCallback,
+      createLodObject: this.createLodCallback,
       lightingManager: this.lightingManager,
     };
   }

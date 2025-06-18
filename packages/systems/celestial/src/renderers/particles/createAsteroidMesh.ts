@@ -7,7 +7,7 @@ import { createFallbackSphere } from "../utils/createFallbackSphere";
 
 interface CreateAsteroidMeshDeps {
   celestialRenderers: Map<string, CelestialRenderer>;
-  createLodCallback: (
+  createLodObject: (
     object: RenderableCelestialObject,
     levels: LODLevel[],
   ) => THREE.LOD;
@@ -27,7 +27,7 @@ export function createAsteroidMesh(
   if (renderer?.getLODLevels) {
     const lodLevels = renderer.getLODLevels(object);
     if (lodLevels && lodLevels.length > 0) {
-      const lod = deps.createLodCallback(object, lodLevels);
+      const lod = deps.createLodObject(object, lodLevels);
       return lod;
     } else {
       console.warn(

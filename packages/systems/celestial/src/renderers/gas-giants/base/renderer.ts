@@ -1,24 +1,27 @@
 import type {
   GasGiantProperties,
+  RenderableCelestialObject,
   RingSystemProperties,
 } from "@teskooano/data-types";
 import { SCALE } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
+import { BaseCelestialRenderer } from "../../base/BaseCelestialRenderer";
 import {
   CelestialMeshOptions,
+  type CelestialRenderer,
   type LightSourcesMap,
 } from "../../base/CelestialRenderer";
-import { BaseCelestialRenderer } from "../../base/BaseCelestialRenderer";
 import { RingSystemRenderer } from "../../rings/rings";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
-import {
-  calculateDistantSpriteSize,
-  createBillboardSprite,
-} from "../../billboards";
 
 const MAX_LIGHTS = 4;
+
+export interface GasGiantRendererDeps {
+  celestialRenderers: Map<string, CelestialRenderer>;
+  lightingManager?: LightingManager;
+}
 
 /**
  * Base renderer for gas giants, implementing the LOD system.
@@ -28,12 +31,18 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
   protected ringSystemRenderer: RingSystemRenderer | null = null;
   public lod: THREE.LOD | undefined;
 
+  constructor(object: RenderableCelestialObject, deps: GasGiantRendererDeps) {
+    super({ lightingManager: deps.lightingManager });
+    this._initialize(object);
+    deps.celestialRenderers.set(object.celestialObjectId, this);
+  }
+
   /**
    * Initializes the renderer, creating the ring system if data is present.
    * This must be called after the constructor.
    * @param object - The celestial object data.
    */
-  initialize(object: RenderableCelestialObject): void {
+  private _initialize(object: RenderableCelestialObject): void {
     const properties = object.properties as RingSystemProperties;
     if (properties?.rings && properties.rings.length > 0) {
       this.ringSystemRenderer = new RingSystemRenderer(this);
@@ -95,7 +104,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
    * Creates the array of LOD levels for the planet body itself.
    * @internal
    */
-  private _createPlanetLODs(
+  protected _createPlanetLODs(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {

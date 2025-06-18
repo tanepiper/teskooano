@@ -27,7 +27,7 @@ import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 interface CreateStarMeshDeps {
   starRenderers: Map<string, CelestialRenderer>;
   celestialRenderers: Map<string, CelestialRenderer>;
-  createLodCallback: (
+  createLodObject: (
     object: RenderableCelestialObject,
     levels: LODLevel[],
   ) => THREE.LOD;
@@ -129,7 +129,7 @@ export function createStarMesh(
   if (renderer?.getLODLevels) {
     const lodLevels = renderer.getLODLevels(object);
     if (lodLevels && lodLevels.length > 0) {
-      const lod = deps.createLodCallback(object, lodLevels);
+      const lod = deps.createLodObject(object, lodLevels);
       renderer.initialize(object);
       return lod;
     } else {

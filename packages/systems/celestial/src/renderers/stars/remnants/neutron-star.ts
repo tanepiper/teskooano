@@ -11,15 +11,19 @@ import {
   calculateDistantSpriteSize,
   createBillboardSprite,
 } from "../../billboards";
-import { BaseCelestialRenderer } from "../../base/BaseCelestialRenderer";
+import { BaseStarRenderer, BaseStarMaterial } from "../base/base-star";
 
 /**
  * Material for neutron stars
  */
-class NeutronStarMaterial extends THREE.MeshBasicMaterial {
+class NeutronStarMaterial extends BaseStarMaterial {
   constructor() {
-    super({
-      color: 0xffffff,
+    super(new THREE.Color(0xffffff), {
+      coronaIntensity: 0.0,
+      pulseSpeed: 0.0,
+      glowIntensity: 0.1,
+      temperatureVariation: 0.0,
+      metallicEffect: 0.1,
     });
   }
 }
@@ -31,7 +35,7 @@ class NeutronStarMaterial extends THREE.MeshBasicMaterial {
  * so it provides its own LOD implementation without a corona.
  * It uses a gravitational lensing effect.
  */
-export class NeutronStarRenderer extends BaseCelestialRenderer {
+export class NeutronStarRenderer extends BaseStarRenderer {
   protected gravitationalLensingHelper: GravitationalLensingHelper | undefined;
   private material: NeutronStarMaterial;
 
@@ -41,32 +45,22 @@ export class NeutronStarRenderer extends BaseCelestialRenderer {
     this.registerMaterial("neutron-star-material", this.material);
   }
 
-  getLODLevels(
+  getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+    return this.material;
+  }
+
+  protected getCustomLODs(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    // --- High Detail: A small, bright mesh ---
     const highDetailGeometry = new THREE.SphereGeometry(object.radius, 32, 32);
     const highDetailMesh = new THREE.Mesh(highDetailGeometry, this.material);
     highDetailMesh.name = `${object.celestialObjectId}-high-lod`;
+    return [{ object: highDetailMesh, distance: 0 }];
+  }
 
-    // TODO: Gravitational lensing needs to be re-integrated
-    const level0: LODLevel = { object: highDetailMesh, distance: 0 };
-
-    // --- Low Detail: A simple point light and billboard ---
-    const color = new THREE.Color(0x99aaff); // Intense blue-white
-    const billboardDistance = 1000;
-    const size = calculateDistantSpriteSize(object);
-    const light = new THREE.PointLight(color, 3.0, 0, 2);
-
-    const level1 = this._createBillboardLOD(object, {
-      distance: billboardDistance,
-      size: size,
-      color: color,
-      light: light,
-    });
-
-    return [level0, level1];
+  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
+    return object.radius * 2000;
   }
 
   update(

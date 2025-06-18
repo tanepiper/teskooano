@@ -7,7 +7,7 @@ import { BaseTerrestrialRenderer } from "./base-terrestrial";
 
 interface CreateMoonMeshDeps {
   moonRenderers: Map<string, CelestialRenderer>;
-  createLodCallback: (
+  createLodObject: (
     object: RenderableCelestialObject,
     levels: LODLevel[],
   ) => THREE.LOD;
@@ -26,13 +26,9 @@ export function createMoonMesh(
   if (!renderer) {
     try {
       // Assuming moons use the same default terrestrial renderer as planets
-      renderer = new BaseTerrestrialRenderer();
-      // Initialize the renderer to create sub-renderers (e.g., rings)
-      (renderer as BaseTerrestrialRenderer).initialize(object);
-
-      if (renderer) {
-        deps.moonRenderers.set(object.celestialObjectId, renderer);
-      }
+      renderer = new BaseTerrestrialRenderer(object, {
+        renderers: deps.moonRenderers,
+      });
     } catch (error) {
       console.error(
         `[MeshFactory:Moon] Failed to create default BaseTerrestrialRenderer for ${object.celestialObjectId}:`,
@@ -51,7 +47,7 @@ export function createMoonMesh(
   if (renderer.getLODLevels) {
     const lodLevels = renderer.getLODLevels(object);
     if (lodLevels && lodLevels.length > 0) {
-      const lod = deps.createLodCallback(object, lodLevels);
+      const lod = deps.createLodObject(object, lodLevels);
       return lod;
     } else {
       console.warn(

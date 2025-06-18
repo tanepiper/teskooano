@@ -8,7 +8,7 @@ import { AsteroidFieldRenderer } from "./AsteroidFieldRenderer";
 
 interface CreateAsteroidFieldMeshDeps {
   celestialRenderers: Map<string, CelestialRenderer>;
-  createLodCallback: (
+  createLodObject: (
     object: RenderableCelestialObject,
     levels: LODLevel[],
   ) => THREE.LOD;
@@ -27,7 +27,7 @@ export function createAsteroidFieldMesh(
 
   const lodLevels = renderer.getLODLevels(object);
   if (lodLevels && lodLevels.length > 0) {
-    const lod = deps.createLodCallback(object, lodLevels);
+    const lod = deps.createLodObject(object, lodLevels);
     return lod;
   }
 

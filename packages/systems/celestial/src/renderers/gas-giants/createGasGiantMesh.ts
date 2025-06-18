@@ -1,22 +1,27 @@
-import { GasGiantClass, GasGiantProperties } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
-import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import {
+  GasGiantClass,
+  GasGiantProperties,
+  type RenderableCelestialObject,
+} from "@teskooano/data-types";
+import { type LODLevel } from "@teskooano/renderer-threejs-lod";
+import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import * as THREE from "three";
 import type { CelestialRenderer } from "../base/CelestialRenderer";
 import { createFallbackSphere } from "../utils/createFallbackSphere";
-import { BaseGasGiantRenderer } from "./base";
+import type { BaseGasGiantRenderer } from "./base";
 import { ClassIGasGiantRenderer } from "./class-i";
 import { ClassIIGasGiantRenderer } from "./class-ii";
 import { ClassIIIGasGiantRenderer } from "./class-iii";
 import { ClassIVGasGiantRenderer } from "./class-iv";
 import { ClassVGasGiantRenderer } from "./class-v";
 
-interface CreateGasGiantMeshDeps {
-  celestialRenderers: Map<string, CelestialRenderer>;
-  createLodCallback: (
+interface MeshFactoryDeps {
+  celestialRenderers: Map<string, any>;
+  createLodObject: (
     object: RenderableCelestialObject,
     levels: LODLevel[],
   ) => THREE.LOD;
+  lightingManager: LightingManager;
 }
 
 /**
@@ -25,40 +30,37 @@ interface CreateGasGiantMeshDeps {
  */
 export function createGasGiantMesh(
   object: RenderableCelestialObject,
-  deps: CreateGasGiantMeshDeps,
+  deps: MeshFactoryDeps,
 ): THREE.Object3D {
   let renderer = deps.celestialRenderers.get(object.celestialObjectId) as
     | BaseGasGiantRenderer
     | undefined;
 
   if (!renderer) {
-    const properties = object.properties as GasGiantProperties | undefined;
-    const gasGiantClass = properties?.planetType;
-
-    if (!gasGiantClass) {
-      console.warn(
-        `[MeshFactory:GasGiant] Missing or invalid gasGiantClass for ${object.celestialObjectId}. Using fallback.`,
-      );
-      return createFallbackSphere(object);
-    }
+    const properties = object.properties as GasGiantProperties;
+    const gasGiantClass = properties.planetType;
+    const rendererDeps = {
+      celestialRenderers: deps.celestialRenderers,
+      lightingManager: deps.lightingManager,
+    };
 
     let newRenderer: BaseGasGiantRenderer;
 
     switch (gasGiantClass) {
       case GasGiantClass.CLASS_I:
-        newRenderer = new ClassIGasGiantRenderer();
+        newRenderer = new ClassIGasGiantRenderer(object, rendererDeps);
         break;
       case GasGiantClass.CLASS_II:
-        newRenderer = new ClassIIGasGiantRenderer();
+        newRenderer = new ClassIIGasGiantRenderer(object, rendererDeps);
         break;
       case GasGiantClass.CLASS_III:
-        newRenderer = new ClassIIIGasGiantRenderer();
+        newRenderer = new ClassIIIGasGiantRenderer(object, rendererDeps);
         break;
       case GasGiantClass.CLASS_IV:
-        newRenderer = new ClassIVGasGiantRenderer();
+        newRenderer = new ClassIVGasGiantRenderer(object, rendererDeps);
         break;
       case GasGiantClass.CLASS_V:
-        newRenderer = new ClassVGasGiantRenderer();
+        newRenderer = new ClassVGasGiantRenderer(object, rendererDeps);
         break;
       default:
         console.warn(
@@ -67,11 +69,8 @@ export function createGasGiantMesh(
         return createFallbackSphere(object);
     }
 
-    // Initialize the renderer to create rings if they exist.
-    newRenderer.initialize(object);
-    deps.celestialRenderers.set(object.celestialObjectId, newRenderer);
     renderer = newRenderer;
   }
 
-  return renderer.createLOD(object, deps.createLodCallback);
+  return renderer.createLOD(object, deps.createLodObject);
 }

@@ -17,6 +17,11 @@ import {
   calculateDistantSpriteSize,
   createBillboardSprite,
 } from "../billboards";
+import { CelestialRenderer } from "../base/CelestialRenderer";
+
+export interface TerrestrialRendererDeps {
+  renderers: Map<string, CelestialRenderer>;
+}
 
 const MAX_LIGHTS = 4;
 
@@ -33,19 +38,20 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     { color: THREE.Texture | null; normal: THREE.Texture | null }
   > = new Map();
 
-  private _worldPos = new THREE.Vector3();
-  private _lightWorldPos = new THREE.Vector3();
-  private _viewLightDir = new THREE.Vector3();
-
   protected material: ProceduralPlanetMaterial | null = null;
   protected materialService: PlanetMaterialService;
   protected atmosphereService: AtmosphereService;
 
-  constructor() {
+  constructor(
+    object: RenderableCelestialObject,
+    deps: TerrestrialRendererDeps,
+  ) {
     super();
     this.textureLoader = new THREE.TextureLoader();
     this.materialService = new PlanetMaterialService();
     this.atmosphereService = new AtmosphereService();
+    this.initialize(object);
+    deps.renderers.set(object.celestialObjectId, this);
   }
 
   /**

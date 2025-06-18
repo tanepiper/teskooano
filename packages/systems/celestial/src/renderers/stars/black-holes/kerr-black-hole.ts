@@ -184,11 +184,14 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
     this.rotationSpeed = options.rotationSpeed ?? 0.5;
   }
 
-  /**
-   * Creates and returns an array of LOD levels for the Kerr black hole.
-   * This includes the event horizon, ergosphere, and accretion disk.
-   */
-  getLODLevels(
+  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+    if (!this.eventHorizonMaterial) {
+      this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
+    }
+    return this.eventHorizonMaterial as unknown as BaseStarMaterial;
+  }
+
+  protected getCustomLODs(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
@@ -221,6 +224,10 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
     const lod2: LODLevel = { object: lowDetailGroup, distance: 20000 };
 
     return [lod0, lod1, lod2];
+  }
+
+  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
+    return object.radius * 25000;
   }
 
   /**
@@ -280,13 +287,6 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
     accretionDisk.rotation.x = Math.PI / 2;
     accretionDisk.name = `${object.celestialObjectId}-accretion-disk`;
     return accretionDisk;
-  }
-
-  /**
-   * Required by base class but not used for black holes
-   */
-  protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
-    return {} as BaseStarMaterial;
   }
 
   /**

@@ -210,11 +210,16 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
     super(options);
   }
 
-  /**
-   * Creates and returns an array of LOD levels for the black hole.
-   * This includes the event horizon and an accretion disk.
-   */
-  getLODLevels(
+  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+    if (!this.eventHorizonMaterial) {
+      this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
+    }
+    // This is not a perfect fit, but it's the main material for the object.
+    // The accretion disk has its own material managed separately.
+    return this.eventHorizonMaterial as unknown as BaseStarMaterial;
+  }
+
+  protected getCustomLODs(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
@@ -238,6 +243,10 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
     const lod1: LODLevel = { object: lowDetailGroup, distance: 10000 };
 
     return [lod0, lod1];
+  }
+
+  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
+    return object.radius * 20000;
   }
 
   /**
@@ -279,13 +288,6 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
     accretionDisk.rotation.x = Math.PI / 2;
     accretionDisk.name = `${object.celestialObjectId}-accretion-disk`;
     return accretionDisk;
-  }
-
-  /**
-   * Required by base class but not used for black holes
-   */
-  protected getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
-    return {} as BaseStarMaterial;
   }
 
   /**

@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { type LightSourcesMap } from "../../base/CelestialRenderer";
 import basicFragmentShader from "../../../shaders/gas-giants/basic.fragment.glsl";
 import basicVertexShader from "../../../shaders/gas-giants/basic.vertex.glsl";
 
