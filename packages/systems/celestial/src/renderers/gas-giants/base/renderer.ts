@@ -192,7 +192,10 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     lightSources: LightSourcesMap,
     camera: THREE.Camera,
   ): void {
-    super.update(object, time, timeScale, lightSources, camera);
+    if (!this.lod) {
+      return;
+    }
+    this.lod.update(camera);
     this.elapsedTime = time;
 
     // The main material is on the first LOD level's object.
@@ -207,34 +210,33 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
         color: THREE.Color;
         intensity: number;
       }[] = [];
-
+      console.log("lightSources", lightSources, lightSources.size);
+      // The lightSources map is pre-filtered by the RendererUpdater to only contain
+      // the most influential lights for this specific object.
       if (lightSources && lightSources.size > 0) {
-        const sortedLights = Array.from(lightSources.values())
-          .map((component) => ({
-            component,
-            distanceSq: object.position.distanceToSquared(component.position),
-          }))
-          .sort((a, b) => a.distanceSq - b.distanceSq)
-          .slice(0, MAX_LIGHTS);
-
-        sortedLights.forEach(({ component, distanceSq }) => {
+        lightSources.forEach((lightData) => {
           // Calculate direction from planet to light
           const direction = new THREE.Vector3()
-            .subVectors(component.position, object.position)
+            .subVectors(lightData.position, object.position)
             .normalize();
 
           // Simple distance attenuation - this can be made more sophisticated
+          const distanceSq = object.position.distanceToSquared(
+            lightData.position,
+          );
           const attenuation = 1.0 / (1.0 + distanceSq * 0.00000000000000000001);
 
           lightsForShader.push({
             direction: direction,
-            color: component.color,
-            intensity: (component.intensity ?? 1.0) * attenuation,
+            color: lightData.color,
+            intensity: (lightData.intensity ?? 1.0) * attenuation,
           });
         });
       }
+      console.log("lightsForShader", lightsForShader);
       material.update(this.elapsedTime, timeScale, lightsForShader, camera);
     }
+    
 
     if (this.ringSystemRenderer) {
       this.ringSystemRenderer.update(

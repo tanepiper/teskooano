@@ -98,7 +98,7 @@ export class RendererUpdater {
       const influentialLights =
         this.lightingManager.getInfluentialLights(object);
       const lightSources = this.convertToLightSourceMap(influentialLights);
-
+      
       rendererInstance.update(
         object,
         time,

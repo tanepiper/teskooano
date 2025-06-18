@@ -2,7 +2,7 @@ import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
 import type { LightSourceComponent } from "../components/LightSourceComponent";
 
-const INFLUENCE_THRESHOLD = 0.05;
+const INFLUENCE_THRESHOLD = 0.0;
 const MAX_INFLUENTIAL_LIGHTS = 4;
 
 /**

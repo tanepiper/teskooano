@@ -1,2 +1,2 @@
 export * from "./LODManager";
-export * from "./lod-manager/types";
+export * from "./lod-manager";

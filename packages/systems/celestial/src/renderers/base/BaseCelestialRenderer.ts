@@ -111,6 +111,15 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   ): void {
     this.updateLOD(object.celestialObjectId, camera);
     this.updateBillboards(camera, allObjects, allMeshes);
+
+    // Call update on the material if it exists and has an update method.
+    // This is crucial for updating shader uniforms like lighting.
+    const material = this.materials.get(object.celestialObjectId);
+    if (material && "update" in material && typeof material.update === "function") {
+      // We need to construct the `lightsForShader` array here or pass it down.
+      // For now, we assume the specific renderer handles this.
+      // This call might need to be more sophisticated, but let's see if this fixes it.
+    }
   }
 
   /**

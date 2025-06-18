@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { Subscription } from "rxjs";
 
-import type { LODLevel } from "./lod-manager/types";
+import type { LODLevel, DebugLabel } from "./lod-manager";
 
 import {
   getSimulationState,
@@ -15,8 +15,7 @@ import {
   updateDebugLabel,
   disposeDebugLabel,
   setDebugLabelVisibility,
-  type DebugLabel,
-} from "./lod-manager/lod-debug-labels";
+} from "./lod-manager";
 
 /**
  * Manages Level of Detail (LOD) for celestial objects by creating THREE.LOD instances

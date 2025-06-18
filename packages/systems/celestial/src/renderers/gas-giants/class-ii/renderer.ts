@@ -1,6 +1,6 @@
 import type { GasGiantProperties } from "@teskooano/data-types";
 import * as THREE from "three";
-import { BaseGasGiantRenderer, BaseGasGiantMaterial } from "../base";
+import { BaseGasGiantRenderer, BaseGasGiantMaterial, GasGiantRendererDeps } from "../base";
 
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { ClassIIMaterial } from "./material";
@@ -11,6 +11,10 @@ import { LODLevel } from "@teskooano/renderer-threejs-lod";
  * Renderer for Class II gas giants
  */
 export class ClassIIGasGiantRenderer extends BaseGasGiantRenderer {
+  constructor(object: RenderableCelestialObject, deps: GasGiantRendererDeps) {
+    super(object, deps);
+  }
+
   public getLODLevels(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
