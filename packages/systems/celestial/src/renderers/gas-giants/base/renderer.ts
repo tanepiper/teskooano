@@ -29,24 +29,10 @@ export interface GasGiantRendererDeps {
 export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
   protected textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
   protected ringSystemRenderer: RingSystemRenderer | null = null;
-  public lod: THREE.LOD | undefined;
 
   constructor(object: RenderableCelestialObject, deps: GasGiantRendererDeps) {
     super({ lightingManager: deps.lightingManager });
-    this._initialize(object);
     deps.celestialRenderers.set(object.celestialObjectId, this);
-  }
-
-  /**
-   * Initializes the renderer, creating the ring system if data is present.
-   * This must be called after the constructor.
-   * @param object - The celestial object data.
-   */
-  private _initialize(object: RenderableCelestialObject): void {
-    const properties = object.properties as RingSystemProperties;
-    if (properties?.rings && properties.rings.length > 0) {
-      this.ringSystemRenderer = new RingSystemRenderer(this);
-    }
   }
 
   /**
@@ -58,21 +44,30 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
   ): BaseGasGiantMaterial;
 
   /**
-   * Creates and returns the THREE.LOD object for the gas giant.
-   * This method builds the LOD levels and stores a reference to the final
-   * LOD object within the renderer instance.
+   * Creates and returns the array of LOD levels for the gas giant.
+   * This method builds the LOD levels which will be used to construct a
+   * THREE.LOD object externally.
    */
-  public createLOD(
+  public getLODLevels(
     object: RenderableCelestialObject,
-    createLodObject: (
-      object: RenderableCelestialObject,
-      levels: LODLevel[],
-    ) => THREE.LOD,
     options?: CelestialMeshOptions,
-  ): THREE.LOD {
+  ): LODLevel[] {
     const planetLODs = this._createPlanetLODs(object, options);
+    const properties = object.properties as RingSystemProperties;
 
     let finalLODs = planetLODs;
+
+    // LAZY INITIALIZATION: Create the ring renderer only when it's first needed.
+    if (
+      !this.ringSystemRenderer &&
+      properties?.rings &&
+      properties.rings.length > 0
+    ) {
+      this.ringSystemRenderer = new RingSystemRenderer(this);
+    }
+
+    console.log("BaseGasGiantRenderer getLODLevels", this.ringSystemRenderer);
+    console.log("BaseGasGiantRenderer planetProps", properties);
 
     if (this.ringSystemRenderer) {
       const ringLODs = this.ringSystemRenderer.getLODLevels(object, {
@@ -95,9 +90,9 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
         };
       });
     }
+    console.log("BaseGasGiantRenderer finalLODs", finalLODs);
 
-    this.lod = createLodObject(object, finalLODs);
-    return this.lod;
+    return finalLODs;
   }
 
   /**
@@ -192,17 +187,13 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     lightSources: LightSourcesMap,
     camera: THREE.Camera,
   ): void {
-    if (!this.lod) {
-      return;
-    }
-    this.lod.update(camera);
+    super.update(object, time, timeScale, lightSources, camera);
     this.elapsedTime = time;
 
-    // The main material is on the first LOD level's object.
-    const highDetailMesh = this.lod?.levels[0]?.object.children[0]
-      ?.children[0] as THREE.Mesh<THREE.SphereGeometry, BaseGasGiantMaterial>;
-
-    const material = highDetailMesh?.material;
+    // The material for the high-detail mesh is stored in our own map.
+    const material = this.materials.get(
+      object.celestialObjectId,
+    ) as BaseGasGiantMaterial;
 
     if (material) {
       const lightsForShader: {
@@ -210,7 +201,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
         color: THREE.Color;
         intensity: number;
       }[] = [];
-      console.log("lightSources", lightSources, lightSources.size);
+
       // The lightSources map is pre-filtered by the RendererUpdater to only contain
       // the most influential lights for this specific object.
       if (lightSources && lightSources.size > 0) {
@@ -220,11 +211,14 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
             .subVectors(lightData.position, object.position)
             .normalize();
 
-          // Simple distance attenuation - this can be made more sophisticated
+          // Physically-based distance attenuation using inverse-square law,
+          // scaled for solar system distances. A larger factor creates
+          // a more dramatic and visible falloff.
+          const FALLOFF_FACTOR = 0.00000001; // Tunable factor
           const distanceSq = object.position.distanceToSquared(
             lightData.position,
           );
-          const attenuation = 1.0 / (1.0 + distanceSq * 0.00000000000000000001);
+          const attenuation = 1.0 / (1.0 + distanceSq * FALLOFF_FACTOR);
 
           lightsForShader.push({
             direction: direction,
@@ -233,10 +227,9 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
           });
         });
       }
-      console.log("lightsForShader", lightsForShader);
+
       material.update(this.elapsedTime, timeScale, lightsForShader, camera);
     }
-    
 
     if (this.ringSystemRenderer) {
       this.ringSystemRenderer.update(

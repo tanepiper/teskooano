@@ -1,4 +1,3 @@
-
 #ifndef NOISE_GLSL
 #define NOISE_GLSL
 
@@ -32,8 +31,10 @@ float fbm(vec3 p, int octaves_param, float persistence_param, float lacunarity_p
 vec3 perturbNormal(vec3 baseNormal, vec3 worldPos, float bumpScale) {
     float epsilon = 0.01; // Small offset for sampling gradient
 
-    // Calculate noise coordinate (same as in main)
-    vec3 noiseCoord = vObjectPosition * uSimplePeriod;
+    // Calculate noise coordinate (same as in main), but add a large offset
+    // to decouple it from the terrain height noise. This creates a separate
+    // bump map from a different part of the noise space.
+    vec3 noiseCoord = (vObjectPosition + vec3(123.456, 789.012, 345.678)) * uSimplePeriod * 4.0; // Higher frequency for bumps
 
     // Sample noise at slightly offset positions
     float noiseX = fbm(noiseCoord + vec3(epsilon, 0.0, 0.0), uOctaves, persistence, lacunarity);

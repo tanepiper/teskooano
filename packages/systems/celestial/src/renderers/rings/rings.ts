@@ -56,6 +56,7 @@ export class RingMaterial extends THREE.ShaderMaterial {
         ringIndex: { value: options.ringIndex ?? 0 },
         ringType: { value: typeCoef },
         uSunColor: { value: new THREE.Color(0xffffff) },
+        uSunIntensity: { value: 1.0 },
       },
       vertexShader: ringVertexShader,
       fragmentShader: ringFragmentShader,
@@ -70,6 +71,7 @@ export class RingMaterial extends THREE.ShaderMaterial {
    * @param time Current time (e.g., from animation loop).
    * @param sunPosition World space POSITION of the primary light source (sun).
    * @param sunColor World space COLOR of the primary light source (sun).
+   * @param sunIntensity Attenuated intensity of the primary light source.
    * @param parentPosition World position of the celestial body the rings belong to.
    * @param parentRadius Radius of the celestial body the rings belong to.
    */
@@ -77,6 +79,7 @@ export class RingMaterial extends THREE.ShaderMaterial {
     time: number,
     sunPosition?: THREE.Vector3,
     sunColor?: THREE.Color,
+    sunIntensity?: number,
     parentPosition?: THREE.Vector3,
     parentRadius?: number,
   ) {
@@ -86,6 +89,9 @@ export class RingMaterial extends THREE.ShaderMaterial {
     }
     if (sunColor) {
       this.uniforms.uSunColor.value.copy(sunColor);
+    }
+    if (sunIntensity !== undefined) {
+      this.uniforms.uSunIntensity.value = sunIntensity;
     }
     if (parentPosition) {
       this.uniforms.uParentPosition.value.copy(parentPosition);
@@ -242,6 +248,15 @@ export class RingSystemRenderer {
     const primarySunPosition =
       primarySun?.position ?? new THREE.Vector3(1e11, 0, 0);
     const primarySunColor = primarySun?.color ?? new THREE.Color(0xffffff);
+    let primarySunIntensity = primarySun?.intensity ?? 1.0;
+
+    // Physically-based distance attenuation
+    if (primarySun) {
+      const FALLOFF_FACTOR = 0.00000000001; // Tiny factor for huge solar system distances
+      const distanceSq = parentPosition.distanceToSquared(primarySun.position);
+      const attenuation = 1.0 / (1.0 + distanceSq * FALLOFF_FACTOR);
+      primarySunIntensity *= attenuation;
+    }
 
     if (isVisualizationEnabled()) {
       threeVectorDebug.setVectors(`ring-system-${object.celestialObjectId}`, {
@@ -255,6 +270,7 @@ export class RingSystemRenderer {
         time,
         primarySunPosition,
         primarySunColor,
+        primarySunIntensity,
         parentPosition,
         parentRadius,
       );

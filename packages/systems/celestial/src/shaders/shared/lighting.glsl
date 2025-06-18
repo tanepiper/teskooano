@@ -30,20 +30,25 @@ vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
 
         // Diffuse
         float diff = max(dot(normal, lightDir), 0.0);
-        vec3 diffuse = diff * lightColor * lightIntensity * 0.3; // Reduced to 30%
+        vec3 diffuse = diff * lightColor * lightIntensity;
 
         // Specular (Blinn-Phong)
         vec3 halfwayDir = normalize(lightDir + viewDir);
         float spec = pow(max(dot(normal, halfwayDir), 0.0), uShininess);
-        vec3 specular = uSpecularStrength * spec * lightColor * lightIntensity * 0.2; // Reduced to 20%
+        vec3 specular = uSpecularStrength * spec * lightColor * lightIntensity;
 
         directionalLight += diffuse + specular;
     }
 
-    // Balance ambient and directional lighting
-    totalLight = mix(totalLight, totalLight + directionalLight, 0.4); // Only add 40% of directional light
+    // Combine ambient and directional lighting directly
+    totalLight += directionalLight;
 
-    return baseColor * totalLight;
+    vec3 litColor = baseColor * totalLight;
+
+    // Apply Reinhard tone mapping to prevent over-exposure and create a more natural look
+    vec3 mappedColor = litColor / (litColor + vec3(1.0));
+
+    return mappedColor;
 }
 
 #endif

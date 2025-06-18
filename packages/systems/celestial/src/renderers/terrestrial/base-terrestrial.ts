@@ -1,4 +1,9 @@
-import { CelestialType, PlanetProperties, SCALE } from "@teskooano/data-types";
+import {
+  CelestialType,
+  PlanetProperties,
+  ProceduralSurfaceProperties,
+  SCALE,
+} from "@teskooano/data-types";
 import * as THREE from "three";
 import { CelestialMeshOptions, LightSourcesMap } from "../index";
 import { AtmosphereMaterial } from "./materials/atmosphere.material";
@@ -50,7 +55,6 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     this.textureLoader = new THREE.TextureLoader();
     this.materialService = new PlanetMaterialService();
     this.atmosphereService = new AtmosphereService();
-    this.initialize(object);
     deps.renderers.set(object.celestialObjectId, this);
   }
 
@@ -63,6 +67,20 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
   ): LODLevel[] {
     const planetLevels = this._createPlanetLODs(object, options);
     const planetProps = object.properties as PlanetProperties;
+
+    console.log(
+      "BaseTerrestrialRenderer getLODLevels",
+      this.ringSystemRenderer,
+    );
+    console.log("BaseTerrestrialRenderer planetProps", object);
+    // LAZY INITIALIZATION of RingSystemRenderer
+    if (
+      !this.ringSystemRenderer &&
+      planetProps?.rings &&
+      planetProps.rings.length > 0
+    ) {
+      this.ringSystemRenderer = new RingSystemRenderer(this);
+    }
 
     if (
       this.ringSystemRenderer &&
@@ -243,47 +261,40 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     lightSources: LightSourcesMap,
     camera: THREE.Camera,
   ): void {
-    if (!lightSources || lightSources.size === 0) {
-      lightSources = new Map<
-        string,
-        { position: THREE.Vector3; color: THREE.Color; intensity: number }
-      >();
-      lightSources.set("default_sun", {
-        position: new THREE.Vector3(1, 0.3, 0.5).normalize(),
-        color: new THREE.Color(0xffffff),
-        intensity: 1.5,
+    super.update(object, time, timeScale, lightSources, camera);
+
+    // Calculate attenuation and update light intensity in-place.
+    if (lightSources && lightSources.size > 0) {
+      lightSources.forEach((lightData) => {
+        // Physically-based distance attenuation using inverse-square law,
+        // scaled for solar system distances. A larger factor creates
+        // a more dramatic and visible falloff.
+        const FALLOFF_FACTOR = 0.00000001; // Tunable factor
+        const distanceSq = object.position.distanceToSquared(
+          lightData.position,
+        );
+        const attenuation = 1.0 / (1.0 + distanceSq * FALLOFF_FACTOR);
+
+        // Update the intensity directly in the map
+        lightData.intensity = (lightData.intensity ?? 1.0) * attenuation;
       });
     }
 
-    super.update(object, time, timeScale, lightSources, camera);
-
-    if (this.ringSystemRenderer) {
-      this.ringSystemRenderer.update(object, time, timeScale, lightSources);
-    }
-
-    // Adjust light intensities for terrestrial objects to avoid excessive lighting (no light ring) on planets/moons.
-    lightSources.forEach((lightData) => {
-      if (lightData.intensity !== undefined && lightData.intensity > 1.5) {
-        lightData.intensity = 1.5;
-      }
-    });
-
     const bodyMaterial = this.materials.get(object.celestialObjectId);
-    if (bodyMaterial && bodyMaterial instanceof ProceduralPlanetMaterial) {
-      bodyMaterial.update(time, timeScale, lightSources, camera);
-
-      if (
-        object.properties &&
-        (object.properties.type === CelestialType.PLANET ||
-          object.properties.type === CelestialType.MOON ||
-          object.properties.type === CelestialType.DWARF_PLANET)
-      ) {
-        const planetProps = object.properties as PlanetProperties;
-
-        if (planetProps.surface) {
-          this._updateSurfaceUniforms(bodyMaterial, planetProps.surface);
-        }
+    if (
+      bodyMaterial &&
+      bodyMaterial instanceof ProceduralPlanetMaterial &&
+      "update" in bodyMaterial &&
+      typeof bodyMaterial.update === "function"
+    ) {
+      const planetProps = object.properties as PlanetProperties;
+      if (planetProps.surface) {
+        this._updateSurfaceUniforms(
+          bodyMaterial,
+          planetProps.surface as ProceduralSurfaceProperties,
+        );
       }
+      bodyMaterial.update(time, timeScale, lightSources, camera);
     }
 
     const atmosphereMaterial = this.atmosphereMaterials.get(
@@ -291,6 +302,10 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     );
     if (atmosphereMaterial) {
       atmosphereMaterial.update(time, timeScale, camera, lightSources);
+    }
+
+    if (this.ringSystemRenderer) {
+      this.ringSystemRenderer.update(object, time, timeScale, lightSources);
     }
   }
 
@@ -423,5 +438,9 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     if (planetProps?.rings && planetProps.rings.length > 0) {
       this.ringSystemRenderer = new RingSystemRenderer(this);
     }
+  }
+
+  public getLOD(object: RenderableCelestialObject): THREE.LOD | undefined {
+    return this.lods.get(object.celestialObjectId);
   }
 }

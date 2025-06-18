@@ -5,7 +5,10 @@ import { BaseGasGiantRenderer, GasGiantRendererDeps } from "../base";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { BaseGasGiantMaterial } from "../base";
 import { ClassIMaterial } from "./material";
-import { CelestialMeshOptions, LightSourcesMap } from "../../base/CelestialRenderer";
+import {
+  CelestialMeshOptions,
+  LightSourcesMap,
+} from "../../base/CelestialRenderer";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
@@ -15,13 +18,6 @@ export class ClassIGasGiantRenderer extends BaseGasGiantRenderer {
   constructor(object: RenderableCelestialObject, deps: GasGiantRendererDeps) {
     super(object, deps);
     console.log("ClassIGasGiantRenderer constructor", this);
-  }
-
-  public getLODLevels(
-    object: RenderableCelestialObject,
-    options?: CelestialMeshOptions,
-  ): LODLevel[] {
-    return this._createPlanetLODs(object, options);
   }
 
   public getMaterial(object: RenderableCelestialObject): BaseGasGiantMaterial {

@@ -6,7 +6,6 @@ precision highp float;
 
 // MODIFIED: Added varyings from vertex shader
 varying vec2 vUv;
-varying float vHeight;       // Calculated height (0-1) from vertex shader
 varying vec3 vWorldPosition;  // World space position of the fragment
 varying vec3 vWorldNormal;    // Perturbed world normal from vertex shader
 varying vec3 vObjectPosition; // Normalized object-space position for seamless noise
@@ -111,11 +110,8 @@ void main() {
         baseColor = mix(baseColor, colors[i], blendFactor);
     }
 
-    // Calculate perturbed normal for bump mapping
-    vec3 perturbedNormal = perturbNormal(baseNormal, vWorldPosition, uBumpScale);
-
-    // Use perturbed normal for lighting
-    vec3 finalColor = calculateLighting(baseColor, perturbedNormal, viewDir);
+    // Use base normal for lighting
+    vec3 finalColor = calculateLighting(baseColor, baseNormal, viewDir);
 
     // Output final lit color
     gl_FragColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);

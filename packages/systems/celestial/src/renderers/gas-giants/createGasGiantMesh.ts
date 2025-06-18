@@ -72,5 +72,14 @@ export function createGasGiantMesh(
     renderer = newRenderer;
   }
 
-  return renderer.createLOD(object, deps.createLodObject);
+  const lodLevels = renderer.getLODLevels(object);
+  if (lodLevels && lodLevels.length > 0) {
+    const lod = deps.createLodObject(object, lodLevels);
+    return lod;
+  }
+
+  console.warn(
+    `[MeshFactory:GasGiant] Renderer for ${object.celestialObjectId} provided no valid LOD levels. Using fallback.`,
+  );
+  return createFallbackSphere(object);
 }

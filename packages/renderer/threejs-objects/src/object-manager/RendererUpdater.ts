@@ -94,20 +94,33 @@ export class RendererUpdater {
 
       const { time, timeScale, camera, renderer, scene, allMeshes } = context;
 
-      // Get influential lights specifically for this object
-      const influentialLights =
-        this.lightingManager.getInfluentialLights(object);
-      const lightSources = this.convertToLightSourceMap(influentialLights);
-      
-      rendererInstance.update(
-        object,
-        time,
-        timeScale,
-        lightSources,
-        camera,
-        allObjects,
-        Object.fromEntries(allMeshes),
-      );
+      if (this.lightingManager) {
+        // Get influential lights specifically for this object
+        const influentialLights =
+          this.lightingManager.getInfluentialLights(object);
+        const lightSources = this.convertToLightSourceMap(influentialLights);
+
+        rendererInstance.update(
+          object,
+          time,
+          timeScale,
+          lightSources,
+          camera,
+          allObjects,
+          Object.fromEntries(allMeshes),
+        );
+      } else {
+        // Fallback if no lighting manager is present
+        rendererInstance.update(
+          object,
+          time,
+          timeScale,
+          new Map(), // Pass empty map
+          camera,
+          allObjects,
+          Object.fromEntries(allMeshes),
+        );
+      }
     });
   }
 

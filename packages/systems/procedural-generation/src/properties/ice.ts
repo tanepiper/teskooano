@@ -21,12 +21,12 @@ export function getIceProperties(
     lacunarity: utils.lerp(1.9, 2.2, random()), // Corrected lacunarity for smoother ice
     simplePeriod: utils.lerp(0.8, 1.8, random()), // Adjusted for finer ice details
     octaves: Math.floor(utils.lerp(8, 12, random())), // Increased octaves
-    bumpScale: 3, //utils.lerp(1, 2, random); // Lower bump for ice
+    bumpScale: 10, //utils.lerp(1, 2, random); // Lower bump for ice
     roughness: utils.lerp(0.1, 0.3, random()),
     specularStrength: utils.lerp(0.4, 0.8, random()), // Stronger specular for ice
     ambientLightIntensity: utils.lerp(0.4, 0.6, random()), // High ambient for ice planets
     undulation: utils.lerp(0.05, 0.15, random()), // Very low undulation for ice planets
-    terrainType: 1, // Simple noise for ice
+    terrainType: 3,
     terrainAmplitude: utils.lerp(0.2, 0.4, random()),
     terrainSharpness: utils.lerp(0.3, 0.6, random()),
     terrainOffset: utils.lerp(0.2, 0.4, random()),

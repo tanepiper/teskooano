@@ -1,6 +1,10 @@
 import type { GasGiantProperties } from "@teskooano/data-types";
 import * as THREE from "three";
-import { BaseGasGiantRenderer, BaseGasGiantMaterial, GasGiantRendererDeps } from "../base";
+import {
+  BaseGasGiantRenderer,
+  BaseGasGiantMaterial,
+  GasGiantRendererDeps,
+} from "../base";
 
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { ClassIIMaterial } from "./material";

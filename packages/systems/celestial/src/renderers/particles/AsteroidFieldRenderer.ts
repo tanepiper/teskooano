@@ -409,83 +409,43 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
     object: RenderableCelestialObject,
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
+    lightSources: LightSourcesMap,
+    camera: THREE.Camera,
   ): void {
-    const lod = this.lods.get(object.celestialObjectId);
-    if (lod && object.parentId && lightSources?.has(object.parentId)) {
-      const parentLight = lightSources.get(object.parentId);
-      if (parentLight) {
-        lod.position.copy(parentLight.position);
-      }
-    }
-
-    if (!this.materialReady) return;
+    super.update(object, time, timeScale, lightSources, camera);
     const material = this.materials.get(
       object.celestialObjectId,
     ) as THREE.ShaderMaterial;
-    if (!material) return;
 
-    if (camera && camera instanceof THREE.PerspectiveCamera) {
-      const rendererHeight = (camera as any).rendererHeight;
-      if (rendererHeight) {
-        material.uniforms.pointSizeScale.value =
-          rendererHeight / (2.0 * Math.tan((camera.fov * Math.PI) / 360.0));
-      }
-    }
+    if (material && this.materialReady) {
+      // Time-based rotation for the entire belt
+      const deltaTime = (time - this.previousSimTime) * timeScale;
+      this.beltRotationAngle += this.beltRotationSpeed * deltaTime;
+      material.uniforms.beltRotationAngle.value = this.beltRotationAngle;
+      this.previousSimTime = time;
 
-    if (lightSources && lightSources.size > 0) {
-      const sortedLights = Array.from(lightSources.values())
-        .map((light) => ({
-          ...light,
-          distanceSq: object.position.distanceToSquared(light.position),
-        }))
-        .sort((a, b) => a.distanceSq - b.distanceSq)
-        .slice(0, MAX_LIGHTS);
+      // Slower, cumulative time for individual particle rotation
+      this.cumulativeParticleTime += deltaTime * 0.001; // Scale down for slower rotation
+      material.uniforms.time.value = this.cumulativeParticleTime;
 
-      material.uniforms.uNumLights.value = sortedLights.length;
+      if (lightSources && lightSources.size > 0) {
+        let lightIndex = 0;
+        const lightsUniform = material.uniforms.uLights
+          .value as typeof material.uniforms.uLights.value;
 
-      for (let i = 0; i < MAX_LIGHTS; i++) {
-        if (i < sortedLights.length) {
-          const light = sortedLights[i];
-          const attenuation = 1.0;
-
-          material.uniforms.uLights.value[i].position.copy(light.position);
-          material.uniforms.uLights.value[i].color.copy(light.color);
-          material.uniforms.uLights.value[i].intensity =
-            (light.intensity ?? 1.0) * attenuation;
-        }
-      }
-    } else {
-      material.uniforms.uNumLights.value = 0;
-    }
-
-    let timeDelta = 0;
-    if (this.previousSimTime > 0) {
-      if (time < this.previousSimTime) {
-        // Time reset detected
-        timeDelta = 0;
+        lightSources.forEach((lightData) => {
+          if (lightIndex < MAX_LIGHTS) {
+            lightsUniform[lightIndex].position.copy(lightData.position);
+            lightsUniform[lightIndex].color.copy(lightData.color);
+            lightsUniform[lightIndex].intensity = lightData.intensity ?? 1.0;
+            lightIndex++;
+          }
+        });
+        material.uniforms.uNumLights.value = lightIndex;
       } else {
-        timeDelta = time - this.previousSimTime;
+        material.uniforms.uNumLights.value = 0;
       }
     }
-    this.previousSimTime = time;
-
-    this.cumulativeParticleTime += timeDelta;
-
-    const rotationIncrement =
-      timeDelta * this.beltRotationSpeed * 10 * timeScale;
-    this.beltRotationAngle =
-      (this.beltRotationAngle + rotationIncrement) % (Math.PI * 2);
-
-    material.uniforms.time.value = this.cumulativeParticleTime;
-
-    material.uniforms.particleRotationSpeed.value =
-      this.particleRotationSpeed * timeScale;
-
-    material.uniforms.beltRotationAngle.value = this.beltRotationAngle;
-
-    material.uniformsNeedUpdate = true;
   }
 
   dispose(): void {
