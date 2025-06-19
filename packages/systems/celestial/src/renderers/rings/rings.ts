@@ -14,6 +14,13 @@ import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
 
 const MAX_SHADOW_CASTERS = 4;
+const MAX_LIGHTS = 4;
+
+interface RingLightSource {
+  position: THREE.Vector3;
+  color: THREE.Color;
+  intensity: number;
+}
 
 /**
  * Material for celestial object rings
@@ -50,15 +57,22 @@ export class RingMaterial extends THREE.ShaderMaterial {
         time: { value: 0 },
         textureMap: { value: options.textureMap ?? null },
         hasTexture: { value: options.textureMap ? 1.0 : 0.0 },
-        uSunPosition: { value: new THREE.Vector3(1e11, 0, 0) },
         uParentPosition: { value: new THREE.Vector3(0, 0, 0) },
         uParentRadius: { value: 1.0 },
         qualityFactor: { value: qualityFactor },
         rotationRate: { value: 0.0 },
         ringIndex: { value: options.ringIndex ?? 0 },
         ringType: { value: typeCoef },
-        uSunColor: { value: new THREE.Color(0xffffff) },
-        uSunIntensity: { value: 1.0 },
+        uNumLights: { value: 0 },
+        uLightSources: {
+          value: Array(MAX_LIGHTS)
+            .fill(0)
+            .map(() => ({
+              position: new THREE.Vector3(),
+              color: new THREE.Color(),
+              intensity: 0,
+            })),
+        },
         uNumShadowCasters: { value: 0 },
         uShadowCasters: {
           value: Array(MAX_SHADOW_CASTERS)
@@ -80,9 +94,8 @@ export class RingMaterial extends THREE.ShaderMaterial {
   /**
    * Update material uniforms, e.g., time for animation, light source changes.
    * @param time Current time (e.g., from animation loop).
-   * @param sunPosition World space POSITION of the primary light source (sun).
-   * @param sunColor World space COLOR of the primary light source (sun).
-   * @param sunIntensity Attenuated intensity of the primary light source.
+   * @param lightSources An array of active light sources.
+   * @param numLights The number of active lights.
    * @param parentPosition World position of the celestial body the rings belong to.
    * @param parentRadius Radius of the celestial body the rings belong to.
    * @param shadowCasters Array of objects with position and radius for moons casting shadows.
@@ -90,24 +103,29 @@ export class RingMaterial extends THREE.ShaderMaterial {
    */
   update(
     time: number,
-    sunPosition?: THREE.Vector3,
-    sunColor?: THREE.Color,
-    sunIntensity?: number,
+    lightSources?: RingLightSource[],
+    numLights?: number,
     parentPosition?: THREE.Vector3,
     parentRadius?: number,
     shadowCasters?: { position: THREE.Vector3; radius: number }[],
     numShadowCasters?: number,
   ) {
     this.uniforms.time.value = time;
-    if (sunPosition) {
-      this.uniforms.uSunPosition.value.copy(sunPosition);
+
+    if (lightSources && numLights !== undefined) {
+      for (let i = 0; i < MAX_LIGHTS; i++) {
+        const uniformLight = this.uniforms.uLightSources.value[i];
+        if (i < numLights) {
+          uniformLight.position.copy(lightSources[i].position);
+          uniformLight.color.copy(lightSources[i].color);
+          uniformLight.intensity = lightSources[i].intensity;
+        } else {
+          uniformLight.intensity = 0; // Turn off unused lights
+        }
+      }
+      this.uniforms.uNumLights.value = numLights;
     }
-    if (sunColor) {
-      this.uniforms.uSunColor.value.copy(sunColor);
-    }
-    if (sunIntensity !== undefined) {
-      this.uniforms.uSunIntensity.value = sunIntensity;
-    }
+
     if (parentPosition) {
       this.uniforms.uParentPosition.value.copy(parentPosition);
     }
@@ -260,74 +278,64 @@ export class RingSystemRenderer {
       threeVectorDebug.clearVectors(`ring-system-${object.celestialObjectId}`);
     }
 
-    const parentPosition = object.position;
-    const parentRadius = object.radius;
-
-    if (!parentPosition || parentRadius === undefined) {
-      console.warn(
-        `[RingSystemRenderer Update] Parent position or radius missing for parent ${object.celestialObjectId}. Skipping material update.`,
-      );
+    if (!lightSources || lightSources.size === 0) {
       return;
     }
 
-    // --- Find moons to cast shadows ---
-    const moonShadowCasters: { position: THREE.Vector3; radius: number }[] = [];
-    let numMoonCasters = 0;
+    // Prepare light sources for the material
+    const lightsForMaterial: RingLightSource[] = [];
+    let lightCount = 0;
+    for (const [, light] of lightSources) {
+      if (lightCount >= MAX_LIGHTS) break;
+      lightsForMaterial.push({
+        position: light.position,
+        color: light.color,
+        intensity: light.intensity ?? 0,
+      });
+      lightCount++;
+    }
 
+    // --- Shadow Caster Calculation ---
+    const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
+    const parentBody = allObjects
+      ? allObjects[object.celestialObjectId]
+      : undefined;
+
+    if (parentBody) {
+      // The parent body itself is the primary shadow caster.
+      shadowCasters.push({
+        position: parentBody.position.clone(),
+        radius: parentBody.radius ?? 0,
+      });
+    }
+
+    // Find moons of the parent object to act as additional shadow casters.
     if (allObjects) {
-      const moons = Object.values(allObjects).filter(
-        (obj) =>
-          obj.type === CelestialType.MOON &&
-          obj.parentId === object.celestialObjectId,
-      );
-
-      for (const moon of moons) {
-        if (numMoonCasters < MAX_SHADOW_CASTERS) {
-          moonShadowCasters.push({
-            position: new THREE.Vector3().fromArray(moon.position.toArray()),
-            radius: moon.radius ?? 0,
-          });
-          numMoonCasters++;
-        } else {
-          break;
+      for (const other of Object.values(allObjects)) {
+        if (
+          other.parentId === object.celestialObjectId &&
+          other.type === CelestialType.MOON
+        ) {
+          if (shadowCasters.length < MAX_SHADOW_CASTERS) {
+            shadowCasters.push({
+              position: other.position.clone(),
+              radius: other.radius ?? 0,
+            });
+          }
         }
       }
     }
 
-    const primarySun = this.parentRenderer.findPrimaryLightSource(
-      object,
-      lightSources,
-    );
-    const primarySunPosition =
-      primarySun?.position ?? new THREE.Vector3(1e11, 0, 0);
-    const primarySunColor = primarySun?.color ?? new THREE.Color(0xffffff);
-    let primarySunIntensity = primarySun?.intensity ?? 1.0;
-
-    // Physically-based distance attenuation
-    if (primarySun) {
-      const FALLOFF_FACTOR = 0.00000000001; // Tiny factor for huge solar system distances
-      const distanceSq = parentPosition.distanceToSquared(primarySun.position);
-      const attenuation = 1.0 / (1.0 + distanceSq * FALLOFF_FACTOR);
-      primarySunIntensity *= attenuation;
-    }
-
-    if (isVisualizationEnabled()) {
-      threeVectorDebug.setVectors(`ring-system-${object.celestialObjectId}`, {
-        sunDir: primarySunPosition.clone().normalize(),
-        parentPos: parentPosition.clone(),
-      });
-    }
-
-    this.ringMaterials.forEach((material, key) => {
+    // Update all ring materials associated with this renderer
+    this.ringMaterials.forEach((material) => {
       material.update(
         time,
-        primarySunPosition,
-        primarySunColor,
-        primarySunIntensity,
-        parentPosition,
-        parentRadius,
-        moonShadowCasters,
-        numMoonCasters,
+        lightsForMaterial,
+        lightCount,
+        object.position.clone(),
+        object.radius ?? 0,
+        shadowCasters,
+        shadowCasters.length,
       );
     });
   }
