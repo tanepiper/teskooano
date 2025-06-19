@@ -186,8 +186,9 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     timeScale: number,
     lightSources: LightSourcesMap,
     camera: THREE.Camera,
+    allObjects?: Record<string, RenderableCelestialObject>,
   ): void {
-    super.update(object, time, timeScale, lightSources, camera);
+    super.update(object, time, timeScale, lightSources, camera, allObjects);
     this.elapsedTime = time;
 
     // The material for the high-detail mesh is stored in our own map.
@@ -228,7 +229,29 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
         });
       }
 
-      material.update(this.elapsedTime, timeScale, lightsForShader, camera);
+      const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
+      if (allObjects) {
+        for (const other of Object.values(allObjects)) {
+          if (
+            other.parentId === object.celestialObjectId &&
+            other.radius &&
+            other.position
+          ) {
+            shadowCasters.push({
+              position: other.position,
+              radius: other.radius,
+            });
+          }
+        }
+      }
+
+      material.update(
+        this.elapsedTime,
+        timeScale,
+        lightsForShader,
+        camera,
+        shadowCasters,
+      );
     }
 
     if (this.ringSystemRenderer) {

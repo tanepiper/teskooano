@@ -29,6 +29,7 @@ export interface TerrestrialRendererDeps {
 }
 
 const MAX_LIGHTS = 4;
+const MAX_SHADOW_CASTERS = 4;
 
 /**
  * Base renderer for terrestrial planets and moons
@@ -260,6 +261,7 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     timeScale: number,
     lightSources: LightSourcesMap,
     camera: THREE.Camera,
+    allObjects: Record<string, RenderableCelestialObject>,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
 
@@ -294,6 +296,30 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
           planetProps.surface as ProceduralSurfaceProperties,
         );
       }
+
+      // --- Shadow Caster Update ---
+      const moons = Object.values(allObjects).filter(
+        (obj) =>
+          obj.type === CelestialType.MOON &&
+          obj.parentId === object.celestialObjectId,
+      );
+
+      const shadowCasters = bodyMaterial.uniforms.uShadowCasters.value;
+      let numCasters = 0;
+
+      for (let i = 0; i < MAX_SHADOW_CASTERS; i++) {
+        if (i < moons.length) {
+          const moon = moons[i];
+          shadowCasters[i].position.fromArray(moon.position.toArray());
+          shadowCasters[i].radius = moon.radius ?? 0;
+          numCasters++;
+        } else {
+          shadowCasters[i].radius = 0; // Ensure unused slots don't cast shadows
+        }
+      }
+      bodyMaterial.uniforms.uNumShadowCasters.value = numCasters;
+      // --- End Shadow Caster Update ---
+
       bodyMaterial.update(time, timeScale, lightSources, camera);
     }
 

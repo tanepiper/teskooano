@@ -1,11 +1,17 @@
 precision highp float;
 
 #define MAX_LIGHTS 4
+#define MAX_SHADOW_CASTERS 8
 
 struct Light {
   vec3 direction;
   vec3 color;
   float intensity;
+};
+
+struct ShadowCaster {
+    vec3 position;
+    float radius;
 };
 
 // Varyings from vertex shader
@@ -15,19 +21,60 @@ varying vec3 vViewDirection;
 // Keep unused varyings for consistency
 varying vec3 vUnitSamplePoint;
 varying vec3 vSphereNormalW;
+varying vec3 vPosition;
+varying vec2 vUv;
 
 // Uniforms
 uniform vec3 baseColor; // A very dark base color (e.g., dark grey/brown/red)
+uniform float time;
 uniform sampler2D stormMap;    // Storm texture
 uniform bool hasStormMap;      // Whether to apply storm texture
 uniform Light uLights[MAX_LIGHTS];
 uniform int uNumLights;
+uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
+uniform int uNumShadowCasters;
 
 // --- Helper: clamp01 ---
 float clamp01(float value) {
     if(value < 0.0) return 0.0;
     if(value > 1.0) return 1.0;
     return value;
+}
+
+// Ray-sphere intersection test for shadow casting
+// Returns a value from 0.0 (full shadow) to 1.0 (fully lit)
+float getShadow(vec3 fragPos, vec3 lightDir) {
+    float finalShadow = 1.0;
+
+    for (int i = 0; i < uNumShadowCasters; i++) {
+        // This check is necessary because the array is padded with empty data
+        if (uShadowCasters[i].radius <= 0.0) continue;
+
+        vec3 oc = fragPos - uShadowCasters[i].position;
+        float b = dot(oc, lightDir);
+        float c = dot(oc, oc) - (uShadowCasters[i].radius * uShadowCasters[i].radius);
+        float discriminant = b * b - c;
+
+        // If the ray is potentially inside the shadow cone
+        if (discriminant > 0.0) {
+            float t = -b - sqrt(discriminant);
+            // Check if the intersection is in front of the fragment
+            if (t > 0.001) {
+                // Penumbra width is proportional to the occluder's radius.
+                // A larger multiplier makes the edge softer.
+                float penumbra = uShadowCasters[i].radius * 0.8;
+                float penumbraSq = penumbra * penumbra;
+                
+                // Calculate a smooth fade from lit to shadow based on how deep the ray is.
+                // 1.0 = lit edge, 0.0 = deep shadow.
+                float currentShadow = 1.0 - smoothstep(0.0, penumbraSq, discriminant);
+                
+                // The final shadow is the darkest of all potential shadows.
+                finalShadow = min(finalShadow, currentShadow);
+            }
+        }
+    }
+    return finalShadow;
 }
 
 void main() {
@@ -44,14 +91,20 @@ void main() {
         // Diffuse component - very low contribution
         float ndl = max(0.0, dot(diffuseNormal, lightDir));
         ndl = clamp01(ndl);
-        totalDiffuse += baseColor * ndl * 0.1 * uLights[i].color * uLights[i].intensity; // Extremely low diffuse reflection
+        
+        float shadow = 1.0;
+        if (ndl > 0.0) {
+            shadow = getShadow(vPosition, lightDir);
+        }
+
+        totalDiffuse += baseColor * ndl * 0.1 * uLights[i].color * uLights[i].intensity * shadow; // Extremely low diffuse reflection
 
         // Specular component - negligible
         vec3 halfAngle = normalize(viewDir + lightDir);
         float specComp = max(0.0, dot(normal, halfAngle));
         specComp = clamp01(specComp);
         specComp = pow(specComp, 100.0); // Very tight
-        totalSpecular += vec3(0.1) * specComp * uLights[i].color * uLights[i].intensity; // More pronounced specular
+        totalSpecular += vec3(0.1) * specComp * uLights[i].color * uLights[i].intensity * shadow; // More pronounced specular
     }
 
     // Rim Lighting (Class IV adjustments - more intense)

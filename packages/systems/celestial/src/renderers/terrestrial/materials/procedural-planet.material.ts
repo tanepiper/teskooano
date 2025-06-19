@@ -7,6 +7,7 @@ import { ProceduralPlanetUniforms } from "../../../types/procedural";
 import { LightSourceData } from "../../index";
 
 const MAX_LIGHTS = 4;
+const MAX_SHADOW_CASTERS = 4;
 
 /**
  * Material for rendering procedurally generated terrestrial planet surfaces using shaders.
@@ -48,6 +49,17 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
         value: surfaceProps.ambientLightIntensity ?? 0.2,
       },
       uCameraPosition: { value: new THREE.Vector3() },
+
+      // Shadow casting uniforms
+      uNumShadowCasters: { value: 0 },
+      uShadowCasters: {
+        value: Array(MAX_SHADOW_CASTERS)
+          .fill(0)
+          .map(() => ({
+            position: new THREE.Vector3(),
+            radius: 0,
+          })),
+      },
 
       persistence: { value: surfaceProps.persistence ?? 0.5 },
       lacunarity: { value: surfaceProps.lacunarity ?? 2.0 },

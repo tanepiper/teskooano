@@ -2,6 +2,7 @@ precision highp float;
 
 // Define maximum number of lights the shader can handle
 #define MAX_LIGHTS 4
+#define MAX_SHADOW_CASTERS 4
 #define HEIGHT_LEVELS 5
 
 // MODIFIED: Added varyings from vertex shader
@@ -18,6 +19,14 @@ uniform vec3 uLightColors[MAX_LIGHTS];
 uniform float uLightIntensities[MAX_LIGHTS];
 uniform vec3 uAmbientLightColor;
 uniform float uAmbientLightIntensity;
+
+// Shadow Caster Uniforms
+struct ShadowCaster {
+    vec3 position;
+    float radius;
+};
+uniform int uNumShadowCasters;
+uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 
 // Procedural Generation Parameters
 uniform float uTime;
@@ -59,6 +68,41 @@ uniform float uSpecularStrength;
 #ifndef TERRAIN_GLSL
     #include "../shared/terrain.glsl"
 #endif
+
+// Returns a value from 0.0 (full shadow) to 1.0 (fully lit)
+float getShadow(vec3 fragPos, vec3 lightDir) {
+    float finalShadow = 1.0;
+
+    for (int i = 0; i < uNumShadowCasters; i++) {
+        // This check is necessary because the array is padded with empty data
+        if (uShadowCasters[i].radius <= 0.0) continue;
+
+        vec3 oc = fragPos - uShadowCasters[i].position;
+        float b = dot(oc, lightDir);
+        float c = dot(oc, oc) - (uShadowCasters[i].radius * uShadowCasters[i].radius);
+        float discriminant = b * b - c;
+
+        // If the ray is potentially inside the shadow cone
+        if (discriminant > 0.0) {
+            float t = -b - sqrt(discriminant);
+            // Check if the intersection is in front of the fragment
+            if (t > 0.001) {
+                // Penumbra width is proportional to the occluder's radius.
+                // A larger multiplier makes the edge softer.
+                float penumbra = uShadowCasters[i].radius * 0.8;
+                float penumbraSq = penumbra * penumbra;
+                
+                // Calculate a smooth fade from lit to shadow based on how deep the ray is.
+                // 1.0 = lit edge, 0.0 = deep shadow.
+                float currentShadow = 1.0 - smoothstep(0.0, penumbraSq, discriminant);
+                
+                // The final shadow is the darkest of all potential shadows.
+                finalShadow = min(finalShadow, currentShadow);
+            }
+        }
+    }
+    return finalShadow;
+}
 
 // --- Main Function ---
 void main() {
@@ -110,8 +154,18 @@ void main() {
         baseColor = mix(baseColor, colors[i], blendFactor);
     }
 
+    // Determine shadow factor before calculating lighting
+    float shadowFactor = 1.0;
+    if (uNumLights > 0) {
+        vec3 primaryLightDir = normalize(uLightPositions[0] - vWorldPosition);
+        // Only calculate shadow if the surface is facing the light
+        if (dot(baseNormal, primaryLightDir) > 0.0) {
+            shadowFactor = getShadow(vWorldPosition, primaryLightDir);
+        }
+    }
+
     // Use base normal for lighting
-    vec3 finalColor = calculateLighting(baseColor, baseNormal, viewDir);
+    vec3 finalColor = calculateLighting(baseColor, baseNormal, viewDir, shadowFactor);
 
     // Output final lit color
     gl_FragColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);

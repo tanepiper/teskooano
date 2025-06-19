@@ -6,7 +6,10 @@ varying vec3 vSphereNormalW;
 void main() {
   vUv = uv;
   vNormal = normalize(normalMatrix * normal);
-  vPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+  
+  vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+  vPosition = worldPosition.xyz;
+  
   vSphereNormalW = normalize(mat3(modelMatrix) * normalize(position));
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 } 

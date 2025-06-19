@@ -16,7 +16,7 @@ vec3 calculateLightContribution(vec3 lightPos, vec3 lightColor, float intensity,
 }
 
 // Simple lighting calculation (Blinn-Phongish)
-vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
+vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir, float shadowFactor) {
     // Start with ambient light
     vec3 totalLight = uAmbientLightColor * uAmbientLightIntensity;
     vec3 directionalLight = vec3(0.0);
@@ -40,8 +40,8 @@ vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir) {
         directionalLight += diffuse + specular;
     }
 
-    // Combine ambient and directional lighting directly
-    totalLight += directionalLight;
+    // Apply shadow factor only to direct light (diffuse and specular)
+    totalLight += directionalLight * shadowFactor;
 
     vec3 litColor = baseColor * totalLight;
 

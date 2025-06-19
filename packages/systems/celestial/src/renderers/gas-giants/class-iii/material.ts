@@ -5,6 +5,7 @@ import classIIIFragmentShader from "../../../shaders/gas-giants/class-iii.fragme
 import classIIIVertexShader from "../../../shaders/gas-giants/class-iii.vertex.glsl";
 
 const MAX_LIGHTS = 4;
+const MAX_SHADOW_CASTERS = 8;
 
 /**
  * Material for Class III gas giants (Cloudless / Azure)
@@ -25,6 +26,14 @@ export class ClassIIIMaterial extends BaseGasGiantMaterial {
       });
     }
 
+    const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
+    for (let i = 0; i < MAX_SHADOW_CASTERS; i++) {
+      shadowCasters.push({
+        position: new THREE.Vector3(),
+        radius: 0,
+      });
+    }
+
     super({
       uniforms: {
         baseColor: { value: options.baseColor },
@@ -33,6 +42,9 @@ export class ClassIIIMaterial extends BaseGasGiantMaterial {
 
         uLights: { value: lights },
         uNumLights: { value: 0 },
+
+        uShadowCasters: { value: shadowCasters },
+        uNumShadowCasters: { value: 0 },
 
         stormMap: { value: options.stormMap },
         hasStormMap: { value: !!options.stormMap },

@@ -4,6 +4,7 @@ import classIVFragmentShader from "../../../shaders/gas-giants/class-iv.fragment
 import classIVVertexShader from "../../../shaders/gas-giants/class-iv.vertex.glsl";
 
 const MAX_LIGHTS = 4;
+const MAX_SHADOW_CASTERS = 8;
 
 /**
  * Material for Class IV gas giants (Alkali Metals / Dark)
@@ -24,6 +25,14 @@ export class ClassIVMaterial extends BaseGasGiantMaterial {
       });
     }
 
+    const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
+    for (let i = 0; i < MAX_SHADOW_CASTERS; i++) {
+      shadowCasters.push({
+        position: new THREE.Vector3(),
+        radius: 0,
+      });
+    }
+
     super({
       uniforms: {
         baseColor: { value: options.baseColor },
@@ -31,6 +40,9 @@ export class ClassIVMaterial extends BaseGasGiantMaterial {
 
         uLights: { value: lights },
         uNumLights: { value: 0 },
+
+        uShadowCasters: { value: shadowCasters },
+        uNumShadowCasters: { value: 0 },
 
         stormMap: { value: options.stormMap },
         hasStormMap: { value: !!options.stormMap },

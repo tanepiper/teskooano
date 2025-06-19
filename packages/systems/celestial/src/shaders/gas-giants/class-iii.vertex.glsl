@@ -5,6 +5,7 @@ varying vec3 vWorldPosition; // Vertex position in world space
 varying vec3 vViewDirection; // Direction from camera to vertex
 varying vec3 vUnitSamplePoint; // Normalized local position (for noise sampling)
 varying vec3 vSphereNormalW; // Normalized world normal assuming perfect sphere
+varying vec3 vPosition;
 
 // Uniforms passed from the application
 // cameraPosition is already provided by Three.js as a built-in uniform
@@ -35,4 +36,6 @@ void main() {
 
   // Calculate final vertex position in clip space
   gl_Position = projectionMatrix * modelViewMatrix * vec4(localPosition, 1.0);
+
+  vPosition = worldPosition4.xyz;
 } 

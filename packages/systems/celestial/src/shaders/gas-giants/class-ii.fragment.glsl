@@ -1,11 +1,17 @@
 precision highp float;
 
 #define MAX_LIGHTS 4
+#define MAX_SHADOW_CASTERS 8
 
 struct Light {
   vec3 direction;
   vec3 color;
   float intensity;
+};
+
+struct ShadowCaster {
+    vec3 position;
+    float radius;
 };
 
 // Varyings from vertex shader (matching our updated vertex shader)
@@ -14,6 +20,8 @@ varying vec3 vWorldPosition;     // Vertex position in world space
 varying vec3 vViewDirection;     // Direction from camera to vertex
 varying vec3 vUnitSamplePoint;   // Normalized local position (for noise sampling)
 varying vec3 vSphereNormalW;     // Normalized world normal assuming perfect sphere (use this for diffuse)
+varying vec3 vPosition;
+varying vec2 vUv;
 
 // Uniforms from material (matching our updated material)
 uniform vec3 mainColor1;       // Mapped from atmosphereColor (e.g., light yellow/cream)
@@ -26,6 +34,11 @@ uniform sampler2D stormMap;    // Storm texture
 uniform bool hasStormMap;      // Whether to apply storm texture
 uniform Light uLights[MAX_LIGHTS];
 uniform int uNumLights;
+
+uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
+uniform int uNumShadowCasters;
+
+uniform float time;
 
 // --- Helper: lerp ---
 vec3 lerp(vec3 v1, vec3 v2, float s) {
@@ -156,6 +169,42 @@ float fractalSimplex4(vec4 p, int nbOctaves, float decay, float lacunarity) {
     return value / totalAmplitude;
 }
 
+// Ray-sphere intersection test for shadow casting
+// Returns a value from 0.0 (full shadow) to 1.0 (fully lit)
+float getShadow(vec3 fragPos, vec3 lightDir) {
+    float finalShadow = 1.0;
+
+    for (int i = 0; i < uNumShadowCasters; i++) {
+        // This check is necessary because the array is padded with empty data
+        if (uShadowCasters[i].radius <= 0.0) continue;
+
+        vec3 oc = fragPos - uShadowCasters[i].position;
+        float b = dot(oc, lightDir);
+        float c = dot(oc, oc) - (uShadowCasters[i].radius * uShadowCasters[i].radius);
+        float discriminant = b * b - c;
+
+        // If the ray is potentially inside the shadow cone
+        if (discriminant > 0.0) {
+            float t = -b - sqrt(discriminant);
+            // Check if the intersection is in front of the fragment
+            if (t > 0.001) {
+                // Penumbra width is proportional to the occluder's radius.
+                // A larger multiplier makes the edge softer.
+                float penumbra = uShadowCasters[i].radius * 0.8;
+                float penumbraSq = penumbra * penumbra;
+                
+                // Calculate a smooth fade from lit to shadow based on how deep the ray is.
+                // 1.0 = lit edge, 0.0 = deep shadow.
+                float currentShadow = 1.0 - smoothstep(0.0, penumbraSq, discriminant);
+                
+                // The final shadow is the darkest of all potential shadows.
+                finalShadow = min(finalShadow, currentShadow);
+            }
+        }
+    }
+    return finalShadow;
+}
+
 void main() {
     // Use actual vertex normal for lighting calculations
     vec3 normal = normalize(vNormal);
@@ -194,38 +243,30 @@ void main() {
     noiseColor = lerp(noiseColor, noiseColor + detailColorVariation, smoothstep(0.3, 0.7, detailNoise));
 
     // Now calculate lighting components using the noiseColor
-    vec3 totalDiffuse = vec3(0.0);
-    vec3 totalSpecular = vec3(0.0);
+    vec3 totalLight = vec3(0.0);
 
     // Use the smooth sphere normal for diffuse lighting to match the procedural texture
     vec3 diffuseNormal = normalize(vSphereNormalW);
 
     for (int i = 0; i < uNumLights; i++) {
-        vec3 lightDir = uLights[i].direction;
+        if (uLights[i].intensity <= 0.0) continue;
 
-        // Diffuse component
-        float ndl = max(0.0, dot(diffuseNormal, lightDir));
-        ndl = clamp01(ndl);
-        totalDiffuse += noiseColor * ndl * uLights[i].color * uLights[i].intensity;
+        vec3 lightDir = normalize(uLights[i].direction);
+        float diffuse = max(dot(diffuseNormal, lightDir), 0.0);
+        
+        float shadow = 1.0;
+        if (diffuse > 0.0) {
+            shadow = getShadow(vPosition, lightDir);
+        }
 
-        // Specular component
-        vec3 halfAngle = normalize(viewDir + lightDir);
-        float specComp = max(0.0, dot(normal, halfAngle));
-        specComp = clamp01(specComp);
-        specComp = pow(specComp, 80.0);
-        totalSpecular += vec3(0.05) * specComp * uLights[i].color * uLights[i].intensity;
+        totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow;
     }
 
-    // Rim Lighting
-    float rimDot = 1.0 - max(dot(viewDir, normal), 0.0);
-    float rimIntensity = pow(rimDot, 3.0);
-    rimIntensity = clamp01(rimIntensity * 0.6);
-    vec3 rimColor = mix(mainColor1, mainColor2, 0.5) * 1.2;
-    vec3 rim = rimColor * rimIntensity; // Calculate final rim color contribution
+    // Add a gentle ambient light
+    totalLight += vec3(0.05);
 
-    // Combine components
-    vec3 ambient = noiseColor * 0.15; // Add a small ambient factor based on surface color
-    vec3 finalColor = ambient + totalDiffuse + totalSpecular + rim; // Correctly sum components, including ambient
+    // Final color is a mix based on the noise value
+    vec3 finalColor = noiseColor * totalLight;
 
     // Apply storm overlay if available
     if (hasStormMap) {

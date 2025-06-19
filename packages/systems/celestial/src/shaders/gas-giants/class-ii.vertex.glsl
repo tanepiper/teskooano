@@ -5,6 +5,7 @@ varying vec3 vWorldPosition; // Vertex position in world space
 varying vec3 vViewDirection; // Direction from camera to vertex
 varying vec3 vUnitSamplePoint; // Normalized local position (for noise sampling)
 varying vec3 vSphereNormalW; // Normalized world normal assuming perfect sphere
+varying vec3 vPosition;
 
 // Uniforms passed from the application
 // cameraPosition is already provided by Three.js as a built-in uniform
@@ -21,17 +22,21 @@ void main() {
   // World position and normal
   vec4 worldPosition4 = modelMatrix * vec4(localPosition, 1.0);
   vWorldPosition = worldPosition4.xyz;
-  vNormal = normalize( mat3(modelMatrix) * localNormal );
+  vNormal = normalize(normalMatrix * normal);
 
   // Normalized local position (used as base for noise sampling)
-  vUnitSamplePoint = normalize(localPosition);
+  vUnitSamplePoint = normalize(position);
 
   // Calculate world normal assuming a perfect sphere at origin, transformed
   // This is used for the base diffuse lighting calculation in the example
-  vSphereNormalW = normalize( mat3(modelMatrix) * vUnitSamplePoint );
+  vSphereNormalW = normalize(mat3(modelMatrix) * normalize(position));
 
   // Calculate direction from camera to vertex in world space
   vViewDirection = normalize(cameraPosition - vWorldPosition);
+
+  // Calculate the world position and pass it to the fragment shader
+  vec4 worldPosition = modelMatrix * vec4(localPosition, 1.0);
+  vPosition = worldPosition.xyz;
 
   // Calculate final vertex position in clip space
   gl_Position = projectionMatrix * modelViewMatrix * vec4(localPosition, 1.0);
