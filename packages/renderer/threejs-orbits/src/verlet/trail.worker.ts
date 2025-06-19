@@ -23,11 +23,11 @@ const SIMPLIFICATION_THRESHOLD = 4000;
 const SIMPLIFICATION_EPSILON = 0.1;
 
 const qualityToBudget: Record<string, number> = {
-  Low: 100000,
-  Med: 175000,
-  High: 250000,
-  Ultra: 300000,
-  Cosmic: 500000,
+  Low: 1000,
+  Med: 1750,
+  High: 2500,
+  Ultra: 3000,
+  Cosmic: 5000,
 };
 
 self.onmessage = (e: MessageEvent<TrailCommand>) => {
@@ -58,7 +58,7 @@ self.onmessage = (e: MessageEvent<TrailCommand>) => {
           SIMPLIFICATION_EPSILON,
         );
         if (simplifiedPoints.length > 2) {
-          const budget = qualityToBudget[quality] || 250000;
+          const budget = qualityToBudget[quality] || 2500;
           pointsToRender = catmullRomSpline(simplifiedPoints, budget);
         } else {
           pointsToRender = simplifiedPoints;
