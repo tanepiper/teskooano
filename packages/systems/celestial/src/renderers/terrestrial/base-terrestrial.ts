@@ -298,23 +298,51 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
       }
 
       // --- Shadow Caster Update ---
-      const moons = Object.values(allObjects).filter(
-        (obj) =>
-          obj.type === CelestialType.MOON &&
-          obj.parentId === object.celestialObjectId,
-      );
+      const shadowCastersData: { position: THREE.Vector3; radius: number }[] =
+        [];
 
-      const shadowCasters = bodyMaterial.uniforms.uShadowCasters.value;
+      // If the object is a planet-like body, its moons are the shadow casters.
+      if (
+        object.type === CelestialType.PLANET ||
+        object.type === CelestialType.DWARF_PLANET
+      ) {
+        const moons = Object.values(allObjects).filter(
+          (obj) =>
+            obj.type === CelestialType.MOON &&
+            obj.parentId === object.celestialObjectId,
+        );
+        for (const moon of moons) {
+          if (shadowCastersData.length < MAX_SHADOW_CASTERS) {
+            shadowCastersData.push({
+              position: new THREE.Vector3().fromArray(moon.position.toArray()),
+              radius: moon.radius ?? 0,
+            });
+          }
+        }
+      }
+      // If the object is a moon, its parent planet is the shadow caster.
+      else if (object.type === CelestialType.MOON && object.parentId) {
+        const parentPlanet = allObjects[object.parentId];
+        if (parentPlanet) {
+          shadowCastersData.push({
+            position: new THREE.Vector3().fromArray(
+              parentPlanet.position.toArray(),
+            ),
+            radius: parentPlanet.radius ?? 0,
+          });
+        }
+      }
+
+      const shadowCastersUniform = bodyMaterial.uniforms.uShadowCasters.value;
       let numCasters = 0;
 
       for (let i = 0; i < MAX_SHADOW_CASTERS; i++) {
-        if (i < moons.length) {
-          const moon = moons[i];
-          shadowCasters[i].position.fromArray(moon.position.toArray());
-          shadowCasters[i].radius = moon.radius ?? 0;
+        if (i < shadowCastersData.length) {
+          shadowCastersUniform[i].position.copy(shadowCastersData[i].position);
+          shadowCastersUniform[i].radius = shadowCastersData[i].radius;
           numCasters++;
         } else {
-          shadowCasters[i].radius = 0; // Ensure unused slots don't cast shadows
+          shadowCastersUniform[i].radius = 0; // Ensure unused slots don't cast shadows
         }
       }
       bodyMaterial.uniforms.uNumShadowCasters.value = numCasters;
@@ -331,7 +359,13 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     }
 
     if (this.ringSystemRenderer) {
-      this.ringSystemRenderer.update(object, time, timeScale, lightSources);
+      this.ringSystemRenderer.update(
+        object,
+        time,
+        timeScale,
+        lightSources,
+        allObjects,
+      );
     }
   }
 

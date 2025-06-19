@@ -257,9 +257,10 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     if (this.ringSystemRenderer) {
       this.ringSystemRenderer.update(
         object,
-        this.elapsedTime,
+        time,
         timeScale,
         lightSources,
+        allObjects,
       );
     }
   }

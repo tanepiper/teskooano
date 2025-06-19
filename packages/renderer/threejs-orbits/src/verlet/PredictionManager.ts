@@ -1,10 +1,14 @@
 import * as THREE from "three";
 import { PhysicsStateReal } from "@teskooano/core-physics";
 import { OSVector3 } from "@teskooano/core-math";
-import { getCelestialObjects } from "@teskooano/core-state";
+import { getCelestialObjects, renderableStore } from "@teskooano/core-state";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineBuilder } from "../utils/LineBuilder";
+import {
+  AU_METERS,
+  type RenderableCelestialObject,
+} from "@teskooano/data-types";
 
 /**
  * Manages the creation and updating of prediction lines showing an object's future trajectory.
@@ -113,12 +117,18 @@ export class PredictionManager {
     }
 
     const fullObjectsMap = getCelestialObjects();
-    const targetObject = fullObjectsMap[objectId];
+    const renderableObjectsMap = renderableStore.getRenderableObjects();
+    const targetObject = renderableObjectsMap[objectId];
 
     if (!targetObject?.physicsStateReal) {
       this.removePrediction(objectId);
       return false;
     }
+
+    const predictionSteps = this.calculatePredictionSteps(
+      targetObject,
+      renderableObjectsMap,
+    );
 
     const allCurrentPhysicsStates = Object.values(fullObjectsMap)
       .map((co) => co.physicsStateReal)
@@ -151,12 +161,57 @@ export class PredictionManager {
         idMap: idMap,
         predictionDuration:
           options.predictionDuration || this.predictionDuration,
-        predictionSteps: options.predictionSteps || this.predictionSteps,
+        predictionSteps: predictionSteps,
       },
       [buffer.buffer],
     ); // Zero-copy transfer of the buffer
 
     return true;
+  }
+
+  /**
+   * Calculates the optimal number of steps for a prediction line based on the
+   * orbit's size, ensuring a consistent visual density.
+   *
+   * @param object - The celestial object whose orbit is being predicted.
+   * @param allObjects - A map of all renderable objects in the scene.
+   * @returns The calculated number of steps, clamped within a min/max range.
+   */
+  private calculatePredictionSteps(
+    object: RenderableCelestialObject,
+    allObjects: Record<string, RenderableCelestialObject>,
+  ): number {
+    const MIN_STEPS = 100;
+    const MAX_STEPS = 10000;
+    const POINTS_PER_AU = 200; // Defines the desired visual density of points.
+
+    let orbitDefiningObject = object;
+
+    // If the object is a moon, its path through the system is primarily
+    // defined by its parent's orbit. We should use the parent's orbital
+    // circumference to determine the line's visual density.
+    if (object.parentId) {
+      const parent = allObjects[object.parentId];
+      // Check if the parent exists and has an orbit of its own (i.e., is not a central star).
+      if (parent && parent.orbit) {
+        orbitDefiningObject = parent;
+      }
+    }
+
+    if (!orbitDefiningObject.orbit) {
+      // Fallback for objects without a defined orbit (e.g., central stars).
+      return MIN_STEPS;
+    }
+
+    // Approximate the circumference of the ellipse.
+    // A simple approximation using the semi-major axis is sufficient for this purpose.
+    const circumferenceAU =
+      2 * Math.PI * (orbitDefiningObject.orbit.realSemiMajorAxis_m / AU_METERS);
+
+    const steps = Math.round(circumferenceAU * POINTS_PER_AU);
+
+    // Clamp the result to prevent excessively low or high step counts.
+    return Math.max(MIN_STEPS, Math.min(steps, MAX_STEPS));
   }
 
   private drawPredictionLine(

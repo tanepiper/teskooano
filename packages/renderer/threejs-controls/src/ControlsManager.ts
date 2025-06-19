@@ -69,7 +69,7 @@ export class ControlsManager {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.screenSpacePanning = false;
-    this.controls.minDistance = 0.1;
+    this.controls.minDistance = 0.01;
     this.controls.maxDistance = 1e7; // Adjust as needed
     this.controls.maxPolarAngle = Math.PI; // Allow looking from underneath
 

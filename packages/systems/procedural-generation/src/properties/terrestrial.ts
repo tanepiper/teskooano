@@ -26,7 +26,7 @@ export function getTerrestrialProperties(
     specularStrength: utils.lerp(0.3, 0.6, random()),
     ambientLightIntensity: utils.lerp(0.2, 0.4, random()), // Higher ambient for Earth-like planets
     undulation: utils.lerp(0.3, 0.5, random()), // Higher undulation for continent-like features
-    terrainType: 1,
+    terrainType: 3,
     terrainAmplitude: utils.lerp(0.8, 1.2, random()),
     terrainSharpness: utils.lerp(0.8, 1.2, random()),
     terrainOffset: utils.lerp(-0.1, 0.1, random()),

@@ -13,6 +13,7 @@ uniform float uLightIntensities[4];
 uniform vec3 uCameraPosition;
 
 varying vec3 vWorldPosition;
+varying vec3 vPlanetCenter;
 
 const float PI = 3.14159265359;
 
@@ -53,7 +54,7 @@ float opticalDepth(vec3 position, vec3 direction) {
 
 void main() {
   vec3 viewDirection = normalize(uCameraPosition - vWorldPosition);
-  vec3 normalizedPos = normalize(vWorldPosition);
+  vec3 normalizedPos = normalize(vWorldPosition - vPlanetCenter);
 
   // Density calculation based on view angle
   float viewAngle = abs(dot(viewDirection, normalizedPos));

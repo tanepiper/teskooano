@@ -1,6 +1,7 @@
 export * from "./barren";
 export * from "./creator";
 export * from "./desert";
+export * from "./gas-giant";
 export * from "./ice";
 export * from "./lava";
 export * from "./ocean";

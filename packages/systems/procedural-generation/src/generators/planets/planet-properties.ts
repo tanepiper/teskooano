@@ -64,7 +64,16 @@ function generateGasGiantSpecificProperties(
   baseProps: PlanetBaseProperties,
   bodyDistanceAU: number,
 ): GasGiantProperties {
-  const gasGiantClass = baseProps.planetType || GasGiantClass.CLASS_I;
+  const gasGiantClass = baseProps.planetType as GasGiantClass;
+
+  if (!gasGiantClass || !Object.values(GasGiantClass).includes(gasGiantClass)) {
+    // This is a critical failure in the generation pipeline.
+    // It means that a celestial body was determined to be a gas giant,
+    // but was not assigned a valid GasGiantClass subtype from its zone.
+    throw new Error(
+      `[generateGasGiantSpecificProperties] Called without a valid GasGiantClass. Received: "${gasGiantClass}". This indicates a bug in the upstream type determination logic within the CelestialZoneManager or planet-type generator.`,
+    );
+  }
 
   let atmComposition: string[];
   let atmPressure: number;
@@ -73,41 +82,98 @@ function generateGasGiantSpecificProperties(
   let cloudSpeed: number;
   let atmosphereType: AtmosphereType;
 
-  if (bodyDistanceAU < 2.5) {
-    atmosphereType = AtmosphereType.VERY_DENSE;
-    atmComposition = ["H2", "He", "Na", "K"];
-    atmPressure = 10 + random() * 100;
-    atmosphereColor = UTIL.getRandomItem(
-      CONST.ATMOSPHERE_COLORS[AtmosphereType.VERY_DENSE],
-      random,
-    );
-    cloudColor = UTIL.getRandomItem(["#E0E0E0", "#D8D8D8", "#F5F5F5"], random);
-    cloudSpeed = 0.05 + random() * 0.1;
-  } else if (bodyDistanceAU < 8) {
-    atmosphereType = AtmosphereType.NORMAL;
-    atmComposition = ["H2", "He", "CH4", "NH3"];
-    atmPressure = 1 + random() * 10;
-    atmosphereColor = UTIL.getRandomItem(
-      ["#E0C0A0", "#D8B898", "#F0D0B0"],
-      random,
-    );
-    cloudColor = UTIL.getRandomItem(["#FFFFFF", "#F0F0F0", "#FEFEFE"], random);
-    cloudSpeed = random() * 0.1;
-  } else {
-    atmosphereType = AtmosphereType.THIN;
-    atmComposition = ["H2", "He", "CH4"];
-    atmPressure = 0.1 + random() * 1;
-    atmosphereColor = UTIL.getRandomItem(
-      ["#A0C0E0", "#B0D0F0", "#98B8D8"],
-      random,
-    );
-    cloudColor = UTIL.getRandomItem(["#D0E0F0", "#E0F0FF", "#C8D8E8"], random);
-    cloudSpeed = random() * 0.05;
+  switch (gasGiantClass) {
+    case GasGiantClass.CLASS_I: // Ammonia Clouds
+      atmosphereType = AtmosphereType.NORMAL;
+      atmComposition = ["H2", "He", "CH4", "NH3", "Tholins", "P"];
+      atmPressure = 1 + random() * 10;
+      atmosphereColor = UTIL.getRandomItem(
+        ["#E0C0A0", "#D8B898", "#F0D0B0"],
+        random,
+      );
+      cloudColor = UTIL.getRandomItem(
+        ["#FFFFFF", "#F0F0F0", "#FEFEFE"],
+        random,
+      );
+      cloudSpeed = random() * 0.1;
+      break;
+
+    case GasGiantClass.CLASS_II: // Water Clouds
+      atmosphereType = AtmosphereType.NORMAL;
+      atmComposition = ["H2", "He", "H2O", "CH4"];
+      atmPressure = 5 + random() * 20;
+      atmosphereColor = UTIL.getRandomItem(
+        ["#D0D0E0", "#E0E0F0", "#F0F0FF"],
+        random,
+      );
+      cloudColor = UTIL.getRandomItem(
+        ["#FFFFFF", "#F0F0F0", "#E8E8E8"],
+        random,
+      );
+      cloudSpeed = 0.05 + random() * 0.08;
+      break;
+
+    case GasGiantClass.CLASS_III: // Cloudless
+      atmosphereType = AtmosphereType.DENSE;
+      atmComposition = ["H2", "He", "CH4"];
+      atmPressure = 10 + random() * 50;
+      atmosphereColor = UTIL.getRandomItem(
+        ["#4A90E2", "#3A7BC8", "#2F65A8"],
+        random,
+      );
+      cloudColor = "transparent";
+      cloudSpeed = 0;
+      break;
+
+    case GasGiantClass.CLASS_IV: // Alkali Metals
+      atmosphereType = AtmosphereType.VERY_DENSE;
+      atmComposition = ["H2", "He", "CO", "Na", "K", "SiO", "Fe", "TiO", "VO"];
+      atmPressure = 20 + random() * 80;
+      atmosphereColor = UTIL.getRandomItem(
+        ["#BC8F8F", "#D2B48C", "#F5DEB3"],
+        random,
+      );
+      cloudColor = UTIL.getRandomItem(
+        ["#F5F5DC", "#FFF8DC", "#FAFAD2"],
+        random,
+      );
+      cloudSpeed = 0.08 + random() * 0.1;
+      break;
+
+    case GasGiantClass.CLASS_V: // Silicate Clouds
+      atmosphereType = AtmosphereType.VERY_DENSE;
+      atmComposition = ["H2", "He", "CO", "SiO", "Fe"];
+      atmPressure = 50 + random() * 150;
+      atmosphereColor = UTIL.getRandomItem(
+        ["#BDB76B", "#F0E68C", "#FFF5EE"],
+        random,
+      );
+      cloudColor = UTIL.getRandomItem(
+        ["#E0E0E0", "#D8D8D8", "#F5F5F5"],
+        random,
+      );
+      cloudSpeed = 0.1 + random() * 0.15;
+      break;
+
+    default: // Fallback to Class I
+      atmosphereType = AtmosphereType.NORMAL;
+      atmComposition = ["H2", "He", "CH4", "NH3", "Tholins", "P"];
+      atmPressure = 1 + random() * 10;
+      atmosphereColor = UTIL.getRandomItem(
+        ["#E0C0A0", "#D8B898", "#F0D0B0"],
+        random,
+      );
+      cloudColor = UTIL.getRandomItem(
+        ["#FFFFFF", "#F0F0F0", "#FEFEFE"],
+        random,
+      );
+      cloudSpeed = random() * 0.1;
+      break;
   }
 
   return {
     type: CelestialType.GAS_GIANT,
-    planetType: gasGiantClass as GasGiantClass,
+    planetType: gasGiantClass,
     atmosphere: {
       composition: atmComposition,
       pressure: atmPressure,
@@ -137,31 +203,17 @@ function generateRockyPlanetSpecificProperties(
   random: () => number,
   baseProps: PlanetBaseProperties,
 ): PlanetProperties {
-  let rockyPlanetType: PlanetType;
+  const rockyPlanetType = baseProps.planetType as PlanetType;
   let surfaceType: SurfaceType;
   let composition: string[];
 
-  if (baseProps.planetType === PlanetType.ICE) {
-    rockyPlanetType = PlanetType.ICE;
+  if (rockyPlanetType === PlanetType.ICE) {
     surfaceType = UTIL.getRandomItem(
       [SurfaceType.CRATERED, SurfaceType.FLAT, SurfaceType.ICE_FLATS],
       random,
     );
     composition = CONST.ICE_COMPOSITION;
   } else {
-    rockyPlanetType = UTIL.getRandomItem(
-      [
-        PlanetType.ROCKY,
-        PlanetType.TERRESTRIAL,
-        PlanetType.DESERT,
-        PlanetType.LAVA,
-        PlanetType.BARREN,
-        PlanetType.ROCKY,
-        PlanetType.TERRESTRIAL,
-        PlanetType.BARREN,
-      ],
-      random,
-    );
     surfaceType = UTIL.getRandomItem(
       [
         SurfaceType.CRATERED,
@@ -183,6 +235,7 @@ function generateRockyPlanetSpecificProperties(
   switch (baseProps.planetType) {
     case PlanetType.TERRESTRIAL:
       hasAtmosphere = true;
+      break;
     case PlanetType.BARREN:
       hasAtmosphere = false; // Barren planets never have an atmosphere
       break;

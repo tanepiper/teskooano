@@ -79,22 +79,33 @@ export function determinePlanetTypeAndBaseProperties(
   let rockyPlanetType: PlanetType | undefined = undefined;
 
   if (chosenFormation.type === CelestialType.GAS_GIANT) {
+    // First, determine the class based on physics (temperature)
     const classifiedGiant = UTIL.classifyGasGiantByTemperature(
       random,
       bodyDistanceAU,
       parentStar.temperature,
       parentStar.realRadius_m,
     );
+
+    // Then, check if the physically-correct class is allowed by the zone's rules.
+    // The zone's rules are the ultimate source of truth.
     if (
       chosenFormation.subTypes?.length &&
       chosenFormation.subTypes.includes(classifiedGiant)
     ) {
+      // If it's allowed, use it.
       gasGiantClass = classifiedGiant;
     } else if (chosenFormation.subTypes?.length) {
+      // If not, the physics and the zone rules contradict.
+      // In this case, we respect the zone's explicit rules and pick a valid type.
+      // This prevents edge cases with unusual stars creating lore-breaking planets.
       gasGiantClass = UTIL.getRandomItem(
         chosenFormation.subTypes as GasGiantClass[],
         random,
       );
+    } else {
+      // As a final fallback, if the zone has no subtypes defined, use the classified one.
+      gasGiantClass = classifiedGiant;
     }
   } else if (
     (chosenFormation.type === CelestialType.PLANET ||
@@ -107,9 +118,11 @@ export function determinePlanetTypeAndBaseProperties(
     );
   }
 
+  const planetOrGiantType = gasGiantClass ?? rockyPlanetType;
+
   return {
     celestialType: chosenFormation.type,
-    planetType: rockyPlanetType as PlanetType,
+    planetType: planetOrGiantType as PlanetType | GasGiantClass,
     preliminaryDensity_kg_m3: targetDensity_kg_m3,
     targetDensity_kg_m3: targetDensity_kg_m3,
     massMultiplierFactor: massMultiplierFactor,

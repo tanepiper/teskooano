@@ -8,6 +8,7 @@ import {
 import { CelestialZone } from "./types";
 import * as CONST from "../constants";
 import { calculateStellarLuminosity } from "../utils";
+import { calculateHabitableZoneFromLuminosity } from "../properties/stars";
 
 /**
  * The default configuration for celestial zones, based on a typical G-type star.
@@ -17,7 +18,7 @@ export const defaultCelestialZones: CelestialZone[] = [
   {
     name: "Inner Zone",
     minAU: 0.1,
-    maxAU: 1.5,
+    maxAU: 0.8,
     minBodies: 2,
     maxAdditionalBodies: 2,
     formationProbabilities: [
@@ -41,13 +42,13 @@ export const defaultCelestialZones: CelestialZone[] = [
           RockyType.DARK_ROCK,
           RockyType.DUST,
         ],
-        subTypes: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II], // Hot Jupiters
+        subTypes: [GasGiantClass.CLASS_IV, GasGiantClass.CLASS_V], // Hot Jupiters
       },
     ],
   },
   {
     name: "Habitable Zone",
-    minAU: 0.8,
+    minAU: 1.5,
     maxAU: 2.5,
     minBodies: 2,
     maxAdditionalBodies: 2,
@@ -59,12 +60,7 @@ export const defaultCelestialZones: CelestialZone[] = [
         massMultiplierFactorRange: [0.5, 1.5],
         ringChance: 0.01,
         allowedRingTypes: [RockyType.LIGHT_ROCK, RockyType.DARK_ROCK],
-        subTypes: [
-          PlanetType.TERRESTRIAL,
-          PlanetType.BARREN,
-          PlanetType.ROCKY,
-          PlanetType.LAVA,
-        ],
+        subTypes: [PlanetType.TERRESTRIAL, PlanetType.BARREN, PlanetType.ROCKY],
       },
       {
         type: CelestialType.GAS_GIANT,
@@ -77,7 +73,11 @@ export const defaultCelestialZones: CelestialZone[] = [
           RockyType.DARK_ROCK,
           RockyType.DUST,
         ],
-        subTypes: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II], // Hot Jupiters
+        subTypes: [
+          GasGiantClass.CLASS_I,
+          GasGiantClass.CLASS_II,
+          GasGiantClass.CLASS_V,
+        ],
       },
     ],
   },
@@ -95,11 +95,7 @@ export const defaultCelestialZones: CelestialZone[] = [
         massMultiplierFactorRange: [20, 120],
         ringChance: 0.25,
         allowedRingTypes: [RockyType.METALLIC, RockyType.DUST, RockyType.ICE],
-        subTypes: [
-          GasGiantClass.CLASS_I,
-          GasGiantClass.CLASS_II,
-          GasGiantClass.CLASS_III,
-        ],
+        subTypes: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II],
       },
       {
         type: CelestialType.PLANET,
@@ -126,7 +122,7 @@ export const defaultCelestialZones: CelestialZone[] = [
         massMultiplierFactorRange: [5, 25],
         ringChance: 0.4,
         allowedRingTypes: [RockyType.ICE, RockyType.ICE_DUST],
-        subTypes: [GasGiantClass.CLASS_III, GasGiantClass.CLASS_IV],
+        subTypes: [GasGiantClass.CLASS_II, GasGiantClass.CLASS_III],
       },
       {
         type: CelestialType.PLANET, // Dwarf/Ice Planets
@@ -153,7 +149,7 @@ export const defaultCelestialZones: CelestialZone[] = [
         massMultiplierFactorRange: [5, 25],
         ringChance: 0.4,
         allowedRingTypes: [RockyType.ICE, RockyType.ICE_DUST],
-        subTypes: [GasGiantClass.CLASS_III, GasGiantClass.CLASS_IV],
+        subTypes: [GasGiantClass.CLASS_III],
       },
       {
         type: CelestialType.DWARF_PLANET, // Dwarf/Ice Planets
@@ -195,18 +191,7 @@ export class CelestialZoneManager {
    * @returns An array of `CelestialZone` objects scaled for the given star.
    */
   public static generateZonesForStar(star: CelestialObject): CelestialZone[] {
-    const luminosity = calculateStellarLuminosity(
-      star.realRadius_m,
-      star.temperature,
-    );
-    // The habitable zone and other stellar zones scale with the square root of luminosity
-    const scaleFactor = Math.sqrt(luminosity);
-
-    return defaultCelestialZones.map((zone) => ({
-      ...zone,
-      minAU: zone.minAU * scaleFactor,
-      maxAU: zone.maxAU * scaleFactor,
-    }));
+    return generateZonesForStar(star);
   }
 
   /**
@@ -219,4 +204,59 @@ export class CelestialZoneManager {
       (zone) => distanceAU >= zone.minAU && distanceAU < zone.maxAU,
     );
   }
+}
+
+export function generateZonesForStar(star: CelestialObject): CelestialZone[] {
+  // First, calculate the star's intrinsic luminosity.
+  const luminosity = calculateStellarLuminosity(
+    star.realRadius_m,
+    star.temperature,
+  );
+
+  // Next, use the new physics-based calculation for the habitable zone.
+  const { innerBoundary: hzInner, outerBoundary: hzOuter } =
+    calculateHabitableZoneFromLuminosity(luminosity);
+
+  const originalHabitableZone = defaultCelestialZones.find(
+    (z) => z.name === "Habitable Zone",
+  )!;
+  const originalInnerZone = defaultCelestialZones.find(
+    (z) => z.name === "Inner Zone",
+  )!;
+  const originalFrostLine = defaultCelestialZones.find(
+    (z) => z.name === "Frost Line",
+  )!;
+
+  // Calculate scaling factors based on how the habitable zone has shifted.
+  // We use this to scale the other zones relative to the new, accurate HZ.
+  const innerScaleFactor = hzInner / originalHabitableZone.minAU;
+  const outerScaleFactor = hzOuter / originalHabitableZone.maxAU;
+
+  const scaledZones = JSON.parse(
+    JSON.stringify(defaultCelestialZones),
+  ) as CelestialZone[];
+
+  const habitableZone = scaledZones.find((z) => z.name === "Habitable Zone")!;
+  habitableZone.minAU = hzInner;
+  habitableZone.maxAU = hzOuter;
+
+  const innerZone = scaledZones.find((z) => z.name === "Inner Zone")!;
+  innerZone.minAU *= innerScaleFactor;
+  innerZone.maxAU = hzInner; // Ensure it's contiguous
+
+  const frostLine = scaledZones.find((z) => z.name === "Frost Line")!;
+  frostLine.minAU = hzOuter; // Ensure it's contiguous
+  frostLine.maxAU *= outerScaleFactor;
+
+  const outerZone = scaledZones.find((z) => z.name === "Outer Zone")!;
+  outerZone.minAU = frostLine.maxAU;
+  outerZone.maxAU *= outerScaleFactor;
+
+  const interstellarZone = scaledZones.find(
+    (z) => z.name === "Interstellar Zone",
+  )!;
+  interstellarZone.minAU = outerZone.maxAU;
+  interstellarZone.maxAU *= outerScaleFactor;
+
+  return scaledZones;
 }

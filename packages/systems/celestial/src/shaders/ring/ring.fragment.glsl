@@ -6,6 +6,16 @@ uniform float time; // Current time for potential animation effects
 uniform vec3 uSunColor; // Color of the primary light source
 uniform float uSunIntensity; // Attenuated intensity of the sun
 
+#define MAX_SHADOW_CASTERS 4
+
+// Shadow Caster Uniforms from Moons
+struct ShadowCaster {
+    vec3 position;
+    float radius;
+};
+uniform int uNumShadowCasters;
+uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
+
 // Define PI constant for GLSL
 #define PI 3.141592653589793
 
@@ -42,6 +52,35 @@ float checkShadow(vec3 fragWorldPos, vec3 parentWorldPos, vec3 lightDirWorld, fl
     return 1.0; // Lit
 }
 
+// Check for shadow cast by moons in WORLD SPACE
+// Returns a value from 0.0 (full shadow) to 1.0 (fully lit)
+float getMoonShadows(vec3 fragPos, vec3 lightDir) {
+    float finalShadow = 1.0;
+    if (uNumShadowCasters == 0) {
+        return 1.0;
+    }
+
+    for (int i = 0; i < uNumShadowCasters; i++) {
+        if (uShadowCasters[i].radius <= 0.0) continue;
+
+        vec3 oc = fragPos - uShadowCasters[i].position;
+        float b = dot(oc, lightDir);
+        float c = dot(oc, oc) - (uShadowCasters[i].radius * uShadowCasters[i].radius);
+        float discriminant = b * b - c;
+
+        if (discriminant > 0.0) {
+            float t = -b - sqrt(discriminant);
+            if (t > 0.001) {
+                float penumbra = uShadowCasters[i].radius * 0.8;
+                float penumbraSq = penumbra * penumbra;
+                float currentShadow = 1.0 - smoothstep(0.0, penumbraSq, discriminant);
+                finalShadow = min(finalShadow, currentShadow);
+            }
+        }
+    }
+    return finalShadow;
+}
+
 void main() {
     // For lighting, use a single direction from parent to sun.
     // This treats light as a distant directional source.
@@ -55,12 +94,13 @@ void main() {
     // We use gl_FrontFacing to flip the normal for the back side of the ring.
     vec3 faceNormal = gl_FrontFacing ? vWorldNormal : -vWorldNormal;
 
-    // *** Shadow Calculation (Binary: 1.0 for lit, 0.0 for shadow) ***
-    float shadowFactor = checkShadow(vPosition, vWorldParentPos, shadowRayDirection, uParentRadius);
+    // *** Shadow Calculation ***
+    float planetShadow = checkShadow(vPosition, vWorldParentPos, shadowRayDirection, uParentRadius);
+    float moonShadows = getMoonShadows(vPosition, shadowRayDirection);
+    float shadowFactor = min(planetShadow, moonShadows);
 
     // *** Lighting Calculation ***
     // For two-sided lighting, we calculate diffuse light from "above" and "below" the ring plane
-    // and sum them up. The `faceNormal` will ensure only the relevant side contributes.
     vec3 lightLift = vWorldNormal * 0.15; // Lift relative to the ring's own normal
     vec3 lightDirUp = normalize(lightingDirection + lightLift);
     vec3 lightDirDown = normalize(lightingDirection - lightLift);

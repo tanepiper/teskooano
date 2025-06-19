@@ -1,5 +1,5 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { RingSystemProperties } from "@teskooano/data-types";
+import { CelestialType, RingSystemProperties } from "@teskooano/data-types";
 import * as THREE from "three";
 import type { CelestialMeshOptions, LightSourcesMap } from "../index";
 
@@ -12,6 +12,8 @@ import {
 } from "@teskooano/core-debug";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
+
+const MAX_SHADOW_CASTERS = 4;
 
 /**
  * Material for celestial object rings
@@ -57,6 +59,15 @@ export class RingMaterial extends THREE.ShaderMaterial {
         ringType: { value: typeCoef },
         uSunColor: { value: new THREE.Color(0xffffff) },
         uSunIntensity: { value: 1.0 },
+        uNumShadowCasters: { value: 0 },
+        uShadowCasters: {
+          value: Array(MAX_SHADOW_CASTERS)
+            .fill(0)
+            .map(() => ({
+              position: new THREE.Vector3(),
+              radius: 0,
+            })),
+        },
       },
       vertexShader: ringVertexShader,
       fragmentShader: ringFragmentShader,
@@ -74,6 +85,8 @@ export class RingMaterial extends THREE.ShaderMaterial {
    * @param sunIntensity Attenuated intensity of the primary light source.
    * @param parentPosition World position of the celestial body the rings belong to.
    * @param parentRadius Radius of the celestial body the rings belong to.
+   * @param shadowCasters Array of objects with position and radius for moons casting shadows.
+   * @param numShadowCasters The number of active shadow casters.
    */
   update(
     time: number,
@@ -82,6 +95,8 @@ export class RingMaterial extends THREE.ShaderMaterial {
     sunIntensity?: number,
     parentPosition?: THREE.Vector3,
     parentRadius?: number,
+    shadowCasters?: { position: THREE.Vector3; radius: number }[],
+    numShadowCasters?: number,
   ) {
     this.uniforms.time.value = time;
     if (sunPosition) {
@@ -98,6 +113,19 @@ export class RingMaterial extends THREE.ShaderMaterial {
     }
     if (parentRadius !== undefined) {
       this.uniforms.uParentRadius.value = parentRadius;
+    }
+
+    if (shadowCasters && numShadowCasters !== undefined) {
+      for (let i = 0; i < MAX_SHADOW_CASTERS; i++) {
+        const uniformCaster = this.uniforms.uShadowCasters.value[i];
+        if (i < numShadowCasters) {
+          uniformCaster.position.copy(shadowCasters[i].position);
+          uniformCaster.radius = shadowCasters[i].radius;
+        } else {
+          uniformCaster.radius = 0;
+        }
+      }
+      this.uniforms.uNumShadowCasters.value = numShadowCasters;
     }
   }
 
@@ -226,6 +254,7 @@ export class RingSystemRenderer {
     time: number,
     timeScale: number,
     lightSources?: LightSourcesMap,
+    allObjects?: Record<string, RenderableCelestialObject>,
   ): void {
     if (isVisualizationEnabled()) {
       threeVectorDebug.clearVectors(`ring-system-${object.celestialObjectId}`);
@@ -239,6 +268,30 @@ export class RingSystemRenderer {
         `[RingSystemRenderer Update] Parent position or radius missing for parent ${object.celestialObjectId}. Skipping material update.`,
       );
       return;
+    }
+
+    // --- Find moons to cast shadows ---
+    const moonShadowCasters: { position: THREE.Vector3; radius: number }[] = [];
+    let numMoonCasters = 0;
+
+    if (allObjects) {
+      const moons = Object.values(allObjects).filter(
+        (obj) =>
+          obj.type === CelestialType.MOON &&
+          obj.parentId === object.celestialObjectId,
+      );
+
+      for (const moon of moons) {
+        if (numMoonCasters < MAX_SHADOW_CASTERS) {
+          moonShadowCasters.push({
+            position: new THREE.Vector3().fromArray(moon.position.toArray()),
+            radius: moon.radius ?? 0,
+          });
+          numMoonCasters++;
+        } else {
+          break;
+        }
+      }
     }
 
     const primarySun = this.parentRenderer.findPrimaryLightSource(
@@ -273,6 +326,8 @@ export class RingSystemRenderer {
         primarySunIntensity,
         parentPosition,
         parentRadius,
+        moonShadowCasters,
+        numMoonCasters,
       );
     });
   }

@@ -1,11 +1,13 @@
 import { utils } from "@teskooano/core-math";
 import {
+  GasGiantClass,
   PlanetType,
   type ProceduralSurfaceProperties,
 } from "@teskooano/data-types";
 import { getBarrenProperties } from "./barren";
 import {
   getDesertProperties,
+  getGasGiantProperties,
   getIceProperties,
   getLavaProperties,
   getOceanProperties,
@@ -23,13 +25,13 @@ import { getTerrestrialProperties } from "./terrestrial";
  * look, from the continents of a Terrestrial world to the dunes of a Desert planet.
  *
  * @param random The seeded pseudo-random number generator function.
- * @param planetType The `PlanetType` of the planet.
+ * @param type The `PlanetType` or `GasGiantClass` of the celestial body.
  * @returns A `ProceduralSurfaceProperties` object containing all the data
  *   needed by the planet surface shader.
  */
 export function createProceduralSurfaceProperties(
   random: () => number,
-  planetType: PlanetType,
+  type: PlanetType | GasGiantClass,
 ): ProceduralSurfaceProperties {
   // Define a base set of properties that can be overridden
   const baseProperties: ProceduralSurfaceProperties = {
@@ -43,7 +45,7 @@ export function createProceduralSurfaceProperties(
     simplePeriod: utils.lerp(1.5, 4.0, random()),
     octaves: Math.floor(utils.lerp(8, 12, random())),
     bumpScale: utils.lerp(2, 3, random()),
-    terrainType: 1, // Default to a balanced terrain
+    terrainType: 2, // Default to a balanced terrain
     terrainAmplitude: 1,
     terrainSharpness: 1,
     terrainOffset: 0,
@@ -61,34 +63,43 @@ export function createProceduralSurfaceProperties(
 
   let specificProperties: Partial<ProceduralSurfaceProperties> = {};
 
-  switch (planetType) {
-    case PlanetType.TERRESTRIAL:
-      specificProperties = getTerrestrialProperties(random);
-      break;
-    case PlanetType.ROCKY:
-      specificProperties = getRockyProperties(random);
-      break;
-    case PlanetType.BARREN:
-      specificProperties = getBarrenProperties(random);
-      break;
-    case PlanetType.DESERT:
-      specificProperties = getDesertProperties(random);
-      break;
-    case PlanetType.ICE:
-      specificProperties = getIceProperties(random);
-      break;
-    case PlanetType.LAVA:
-      specificProperties = getLavaProperties(random);
-      break;
-    case PlanetType.OCEAN:
-      specificProperties = getOceanProperties(random);
-      break;
-    default:
-      console.warn(
-        `[createProceduralSurfaceProperties] Unhandled planetType: ${planetType}, using fallback TERRESTRIAL properties.`,
-      );
-      specificProperties = getTerrestrialProperties(random);
-      break;
+  if (Object.values(PlanetType).includes(type as PlanetType)) {
+    switch (type as PlanetType) {
+      case PlanetType.TERRESTRIAL:
+        specificProperties = getTerrestrialProperties(random);
+        break;
+      case PlanetType.ROCKY:
+        specificProperties = getRockyProperties(random);
+        break;
+      case PlanetType.BARREN:
+        specificProperties = getBarrenProperties(random);
+        break;
+      case PlanetType.DESERT:
+        specificProperties = getDesertProperties(random);
+        break;
+      case PlanetType.ICE:
+        specificProperties = getIceProperties(random);
+        break;
+      case PlanetType.LAVA:
+        specificProperties = getLavaProperties(random);
+        break;
+      case PlanetType.OCEAN:
+        specificProperties = getOceanProperties(random);
+        break;
+      default:
+        console.warn(
+          `[createProceduralSurfaceProperties] Unhandled planetType: ${type}, using fallback TERRESTRIAL properties.`,
+        );
+        specificProperties = getTerrestrialProperties(random);
+        break;
+    }
+  } else if (Object.values(GasGiantClass).includes(type as GasGiantClass)) {
+    specificProperties = getGasGiantProperties(random, type as GasGiantClass);
+  } else {
+    console.warn(
+      `[createProceduralSurfaceProperties] Unknown celestial type: ${type}, using fallback properties.`,
+    );
+    specificProperties = getTerrestrialProperties(random);
   }
 
   // Merge the base properties with the type-specific properties
