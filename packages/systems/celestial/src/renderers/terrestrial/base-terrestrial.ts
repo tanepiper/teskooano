@@ -69,11 +69,6 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     const planetLevels = this._createPlanetLODs(object, options);
     const planetProps = object.properties as PlanetProperties;
 
-    console.log(
-      "BaseTerrestrialRenderer getLODLevels",
-      this.ringSystemRenderer,
-    );
-    console.log("BaseTerrestrialRenderer planetProps", object);
     // LAZY INITIALIZATION of RingSystemRenderer
     if (
       !this.ringSystemRenderer &&

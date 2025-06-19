@@ -122,7 +122,6 @@ export class SimulationManager {
     }
     this.resetTimeSubscription?.unsubscribe();
     this.resetTimeSubscription = null;
-    console.log("Simulation loop stopped.");
   }
 
   /**
@@ -249,9 +248,6 @@ export class SimulationManager {
         resetSelection: true,
       });
     } else {
-      console.warn(
-        "[SimulationManager] Skipping state clear as external system creation will handle it.",
-      );
       // Even if skipping full state clear, internal time and resetTime$ event might be relevant.
       if (getSimulationState().time !== 0) {
         // If time is not already zero
@@ -261,7 +257,6 @@ export class SimulationManager {
     // Always reset internal accumulated time and emit event
     this.accumulatedTime = 0;
     this._resetTime$.next();
-    console.log("System reset triggered.");
   }
 
   /**
@@ -282,8 +277,6 @@ export class SimulationManager {
     this._orbitUpdate$.complete();
     this._destructionOccurred$.complete();
     this.resetTimeSubscription?.unsubscribe();
-
-    console.log("SimulationManager disposed.");
   }
 }
 

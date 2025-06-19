@@ -17,7 +17,6 @@ import { LODLevel } from "@teskooano/renderer-threejs-lod";
 export class ClassIGasGiantRenderer extends BaseGasGiantRenderer {
   constructor(object: RenderableCelestialObject, deps: GasGiantRendererDeps) {
     super(object, deps);
-    console.log("ClassIGasGiantRenderer constructor", this);
   }
 
   public getMaterial(object: RenderableCelestialObject): BaseGasGiantMaterial {

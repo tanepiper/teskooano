@@ -65,10 +65,6 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     ) {
       this.ringSystemRenderer = new RingSystemRenderer(this);
     }
-
-    console.log("BaseGasGiantRenderer getLODLevels", this.ringSystemRenderer);
-    console.log("BaseGasGiantRenderer planetProps", properties);
-
     if (this.ringSystemRenderer) {
       const ringLODs = this.ringSystemRenderer.getLODLevels(object, {
         ...options,
@@ -90,7 +86,6 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
         };
       });
     }
-    console.log("BaseGasGiantRenderer finalLODs", finalLODs);
 
     return finalLODs;
   }
