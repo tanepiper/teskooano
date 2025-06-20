@@ -19,13 +19,6 @@ export class ClassIIGasGiantRenderer extends BaseGasGiantRenderer {
     super(object, deps);
   }
 
-  public getLODLevels(
-    object: RenderableCelestialObject,
-    options?: CelestialMeshOptions,
-  ): LODLevel[] {
-    return this._createPlanetLODs(object, options);
-  }
-
   public getMaterial(object: RenderableCelestialObject): BaseGasGiantMaterial {
     const properties = object.properties as GasGiantProperties;
 
