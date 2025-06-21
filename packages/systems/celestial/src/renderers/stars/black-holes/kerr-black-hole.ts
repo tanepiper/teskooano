@@ -13,7 +13,7 @@ import {
   CelestialMeshOptions,
   LightSourcesMap,
 } from "../../base/CelestialRenderer";
-import { BaseCelestialRendererOptions } from "../../base/BaseCelestialRenderer";
+import { BaseCelestialRendererOptions } from "../../base";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**

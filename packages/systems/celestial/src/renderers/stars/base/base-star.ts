@@ -6,7 +6,7 @@ import * as THREE from "three";
 import {
   BaseCelestialRenderer,
   BaseCelestialRendererOptions,
-} from "../../base/BaseCelestialRenderer";
+} from "../../base";
 import type {
   CelestialMeshOptions,
   LightSourcesMap,
@@ -379,7 +379,7 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
         ? (this as any).calculateBillboardSize(object)
         : calculateDistantSpriteSize(object);
 
-    const billboardLOD = this._createBillboardLOD(object, {
+    const billboardLOD = this.billboardManager.createBillboardLOD(object, {
       distance: billboardDistance,
       size: 0.05,
       color: starColor,

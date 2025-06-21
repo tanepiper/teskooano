@@ -139,7 +139,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     const color = this._getBaseGasGiantColor(object);
     const billboardDistance = 2000 * scale;
 
-    const level2 = this._createBillboardLOD(object, {
+    const level2 = this.billboardManager.createBillboardLOD(object, {
       distance: billboardDistance,
       size: 0.02,
       color: color,

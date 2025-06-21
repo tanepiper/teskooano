@@ -4,7 +4,7 @@ import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
 import { LightSourcesMap } from "../..";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import type { CelestialMeshOptions } from "../../base/CelestialRenderer";
-import { BaseCelestialRendererOptions } from "../../base/BaseCelestialRenderer";
+import { BaseCelestialRendererOptions } from "../../base";
 
 /**
  * Material for Wolf-Rayet stars

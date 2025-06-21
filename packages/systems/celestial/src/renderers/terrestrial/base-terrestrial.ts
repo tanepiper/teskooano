@@ -149,7 +149,7 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
       billboardDistance = 1000 * scale;
     }
 
-    const level2 = this._createBillboardLOD(object, {
+    const level2 = this.billboardManager.createBillboardLOD(object, {
       distance: billboardDistance,
       size,
       color: color,

@@ -1,95 +1,78 @@
+import { RenderableCelestialObject } from "@teskooano/data-types";
+import { LightingManager } from "@teskooano/renderer-threejs-lighting";
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
+import { BillboardManager } from "../billboards";
 import {
   CelestialMeshOptions,
   CelestialRenderer,
   LightSourceData,
   LightSourcesMap,
 } from "./CelestialRenderer";
-import {
-  AU_METERS,
-  CelestialType,
-  RenderableCelestialObject,
-  SCALE,
-} from "@teskooano/data-types";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
-import { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import {
-  BillboardInfo,
-  calculateDistantSpriteSize,
-  createBillboardSprite,
-} from "../billboards";
-
-export interface BillboardLODConfig {
-  distance: number;
-  size: number;
-  color: THREE.Color;
-  albedo?: number;
-  light?: THREE.PointLight;
-}
-
-export interface BaseCelestialRendererOptions {
-  lightingManager?: LightingManager;
-}
+import { BaseCelestialRendererOptions } from "./types";
 
 /**
- * Abstract base class for all celestial renderers
+ * Abstract base class for all celestial renderers.
  *
- * Provides common functionality:
- * - Material and resource management
- * - Light source handling
- * - Basic time tracking
- * - Utility methods for LOD
+ * Provides common functionality for all objects that are rendered in the scene,
+ * including material and resource management, light source handling, time tracking,
+ * and Level of Detail (LOD) utilities. It serves as the foundation upon which
+ * more specific renderers (e.g., for planets, stars) are built.
  */
 export abstract class BaseCelestialRenderer implements CelestialRenderer {
   /**
-   * Statically cached texture for all billboards to ensure it's created only once.
-   * @private
-   */
-  private static _billboardTexture: THREE.CanvasTexture | null = null;
-
-  /**
-   * Map of materials for different objects
-   * Key: object ID, Value: material instance
+   * A map of materials used by the renderer, keyed by a unique identifier
+   * (typically the celestial object ID). This is used for tracking and proper disposal.
    */
   public materials: Map<string, THREE.Material | THREE.Material[]> = new Map();
 
   /**
-   * Map of LOD levels for different objects
-   * Key: object ID, Value: LOD instance
+   * A map of Level of Detail (LOD) objects, keyed by a unique identifier
+   * (typically the celestial object ID).
    */
   protected lods: Map<string, THREE.LOD> = new Map();
 
   /**
-   * The start time of the renderer (used to calculate elapsed time)
+   * The timestamp when the renderer was instantiated, used to calculate elapsed time.
    */
   protected startTime: number = Date.now() / 1000;
 
   /**
-   * The current elapsed time
+   * The current elapsed time since the renderer was instantiated.
    */
   protected elapsedTime: number = 0;
 
   /**
-   * Reusable vectors for calculations
-   * Using instance variables avoids allocation in update loops
+   * Reusable `THREE.Vector3` instances to avoid allocations in performance-critical
+   * update loops.
    */
   protected _tempVector1: THREE.Vector3 = new THREE.Vector3();
   protected _tempVector2: THREE.Vector3 = new THREE.Vector3();
   protected _tempVector3: THREE.Vector3 = new THREE.Vector3();
+  /**
+   * An optional reference to the scene's lighting manager.
+   */
   protected lightingManager?: LightingManager;
+  /**
+   * A dedicated manager for handling billboard creation and updates.
+   */
+  protected billboardManager: BillboardManager;
 
   /**
-   * Map to store BillboardInfo for managing dynamic billboard properties, keyed by celestial object ID.
+   * Initializes the renderer, setting up the lighting and billboard managers.
+   * @param options Configuration options for the renderer.
    */
-  protected billboardsInfo: Map<string, BillboardInfo> = new Map();
-
   constructor(options: BaseCelestialRendererOptions = {}) {
     this.lightingManager = options.lightingManager;
+    this.billboardManager = new BillboardManager();
   }
 
   /**
-   * Get LOD levels for a celestial object
-   * Must be implemented by subclasses
+   * Abstract method to be implemented by subclasses. It should return an array
+   * of `LODLevel` objects that define the different levels of detail for a given
+   * celestial object.
+   * @param object The celestial object for which to get LOD levels.
+   * @param options Additional options for creating the mesh.
    */
   abstract getLODLevels(
     object: RenderableCelestialObject,
@@ -97,8 +80,16 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   ): LODLevel[];
 
   /**
-   * Update the renderer with the current simulation state
-   * Default implementation updates time-based uniforms for the specific object's material.
+   * The main update method, called once per frame. It orchestrates calls to update
+   * the object's LOD and its billboard representation. Subclasses should extend this
+   * to add their own update logic (e.g., for materials and shaders).
+   * @param object The celestial object being updated.
+   * @param time The current simulation time.
+   * @param timeScale The current time scale factor.
+   * @param lightSources A map of influential light sources for this object.
+   * @param camera The scene's main camera.
+   * @param allObjects A map of all renderable objects in the scene.
+   * @param allMeshes A map of all THREE.Object3D meshes in the scene.
    */
   update(
     object: RenderableCelestialObject,
@@ -110,12 +101,15 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     allMeshes?: Record<string, THREE.Object3D>,
   ): void {
     this.updateLOD(object.celestialObjectId, camera);
-    this.updateBillboards(camera, allObjects, allMeshes);
+    if (allObjects && allMeshes) {
+      this.billboardManager.update(camera, allObjects, allMeshes);
+    }
   }
 
   /**
-   * Default implementation of LOD updating
-   * Subclasses should override if they use custom LOD handling
+   * Updates the LOD for a specific object based on its distance to the camera.
+   * @param objectId The ID of the object whose LOD should be updated.
+   * @param camera The scene's main camera.
    */
   updateLOD(objectId: string, camera: THREE.Camera): void {
     const lod = this.lods.get(objectId);
@@ -123,145 +117,9 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
       lod.update(camera as THREE.Camera);
     }
   }
-
-  private visibilityConfig = {
-    planet: 90,
-    gasGiant: 190,
-    moon: 2,
-    ejectedMoon: 2000,
-    secondaryStar: 3000,
-    default: 2,
-  };
-
-  private auToSceneUnits(au: number): number {
-    const scale = typeof SCALE === "number" ? SCALE : 1;
-    return (au * AU_METERS) / scale;
-  }
-
-  protected updateBillboards(
-    camera: THREE.Camera,
-    allObjects?: Record<string, RenderableCelestialObject>,
-    allMeshes?: Record<string, THREE.Object3D>,
-  ): void {
-    if (!camera || !allObjects || !allMeshes || this.billboardsInfo.size === 0)
-      return;
-
-    const cameraPosition = new THREE.Vector3();
-    camera.getWorldPosition(cameraPosition);
-
-    const config = {
-      planet: this.auToSceneUnits(this.visibilityConfig.planet),
-      gasGiant: this.auToSceneUnits(this.visibilityConfig.gasGiant),
-      moon: this.auToSceneUnits(this.visibilityConfig.moon),
-      ejectedMoon: this.auToSceneUnits(this.visibilityConfig.ejectedMoon),
-      secondaryStar: this.auToSceneUnits(this.visibilityConfig.secondaryStar),
-      default: this.auToSceneUnits(this.visibilityConfig.default),
-    };
-
-    const mainStarId = Object.values(allObjects).find(
-      (obj) => obj.type === CelestialType.STAR && !obj.parentId,
-    )?.celestialObjectId;
-
-    this.billboardsInfo.forEach((info) => {
-      const { sprite, activationDistance, object } = info;
-      const material = sprite.material as THREE.SpriteMaterial;
-      if (!material) return;
-
-      // NEW VISIBILITY LOGIC
-      let isVisibleByRule = false;
-      const distanceToSelf = cameraPosition.distanceTo(object.position);
-
-      switch (object.type) {
-        case CelestialType.STAR: {
-          if (object.celestialObjectId === mainStarId) {
-            isVisibleByRule = true;
-          } else {
-            isVisibleByRule = distanceToSelf < config.secondaryStar;
-          }
-          break;
-        }
-        case CelestialType.PLANET:
-          isVisibleByRule = distanceToSelf < config.planet;
-          break;
-        case CelestialType.GAS_GIANT:
-          isVisibleByRule = distanceToSelf < config.gasGiant;
-          break;
-        case CelestialType.MOON: {
-          const parentId = object.parentId;
-
-          // Handle ejected moons first.
-          if (!parentId) {
-            isVisibleByRule = distanceToSelf < config.ejectedMoon;
-            break;
-          }
-
-          // Get parent data. If not available, moon can't be visible.
-          const parentData = allObjects[parentId];
-          const parentObject = allMeshes[parentId];
-          if (!parentObject || !parentData) {
-            isVisibleByRule = false;
-            break;
-          }
-
-          // Rule 1: Is the parent a billboard? If so, the moon is hidden.
-          if (
-            parentObject instanceof THREE.LOD &&
-            parentObject.levels.length > 0
-          ) {
-            // The last level is assumed to be the billboard. Check if its object is visible.
-            const billboardLevel =
-              parentObject.levels[parentObject.levels.length - 1];
-            if (billboardLevel.object.visible) {
-              isVisibleByRule = false;
-              break; // Final decision: hide.
-            }
-          }
-
-          // Rule 2: Is the camera too far from the parent? (2 AU cutoff)
-          const parentPosition = new THREE.Vector3();
-          parentObject.getWorldPosition(parentPosition);
-          const distanceToParent = cameraPosition.distanceTo(parentPosition);
-          if (distanceToParent > config.moon) {
-            isVisibleByRule = false;
-            break; // Final decision: hide.
-          }
-
-          // If we passed both checks, the moon is allowed to be visible.
-          isVisibleByRule = true;
-          break;
-        }
-        default:
-          isVisibleByRule = distanceToSelf < config.default;
-      }
-
-      // ORIGINAL FADING LOGIC, now combined with visibility rule
-      let targetOpacity;
-      const baseSpriteOpacity = 0.85;
-
-      // Only show if it meets the visibility rule AND is beyond the activation distance for the billboard
-      if (isVisibleByRule && distanceToSelf >= activationDistance) {
-        targetOpacity = baseSpriteOpacity;
-      } else {
-        targetOpacity = 0.0;
-      }
-
-      const currentOpacity = material.opacity;
-      let newOpacity = THREE.MathUtils.lerp(
-        currentOpacity,
-        targetOpacity,
-        0.1, // fade speed
-      );
-
-      if (targetOpacity < 0.01 && newOpacity < 0.01) {
-        newOpacity = 0;
-      }
-      material.opacity = newOpacity;
-      sprite.visible = newOpacity > 0.001;
-    });
-  }
-
   /**
-   * Clean up resources
+   * Cleans up all managed resources, including materials and billboard assets,
+   * to prevent memory leaks when the renderer is no longer needed.
    */
   dispose(): void {
     this.materials.forEach((material) => {
@@ -288,17 +146,15 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
 
     this.materials.clear();
     this.lods.clear();
-
-    this.billboardsInfo.forEach(({ sprite }) => {
-      // The material is unique to each sprite, so it's safe to dispose.
-      sprite.material.dispose();
-      // The texture map is static and shared, so we do not dispose of it here.
-    });
-    this.billboardsInfo.clear();
+    this.billboardManager.dispose();
   }
 
   /**
-   * Helper method to map detail level to segment count
+   * A helper method that maps a qualitative detail level (e.g., "high") to a
+   * concrete number of segments for creating geometries.
+   * @param detailLevel A string representing the desired detail level.
+   * @param defaultSegments A fallback number of segments if the detail level is not specified.
+   * @returns The calculated number of segments.
    */
   protected getSegmentsForDetailLevel(
     detailLevel?: string,
@@ -321,7 +177,11 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   }
 
   /**
-   * Add a material to the materials map for tracking and disposal
+   * Registers a material with the renderer for tracking and later disposal.
+   * If a material with the same ID already exists, it is disposed of before
+   * the new one is added.
+   * @param id A unique identifier for the material.
+   * @param material The material instance to register.
    */
   public registerMaterial(id: string, material: THREE.Material): void {
     const existingMaterial = this.materials.get(id);
@@ -335,8 +195,11 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   }
 
   /**
-   * Utility method to safely apply a texture to a material
-   * Handles uniforms for shader materials
+   * A utility method to safely apply a texture to a material property or uniform.
+   * It handles both standard `THREE.Material` and `THREE.ShaderMaterial` types.
+   * @param material The material to which the texture will be applied.
+   * @param textureKey The name of the property or uniform to set.
+   * @param texture The texture to apply.
    */
   protected applyTexture(
     material: THREE.Material,
@@ -355,9 +218,11 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   }
 
   /**
-   * Calculate the appropriate LOD level based on distance
-   * Returns a number between 0 and 1 representing the LOD level
-   * 0 = highest detail, 1 = lowest detail
+   * Calculates a normalized LOD level (0 to 1) based on the distance from
+   * the camera to an object and the object's radius.
+   * @param distance The distance from the camera to the object.
+   * @param objectRadius The radius of the object.
+   * @returns A normalized value representing the LOD level.
    */
   protected calculateLODLevel(distance: number, objectRadius: number): number {
     const normalizedDistance = distance / (objectRadius * 100);
@@ -366,14 +231,22 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
   }
 
   /**
-   * Helper method to get the world position of an object
+   * A helper method to get the world position of an object.
+   * @param object The celestial object.
+   * @returns A clone of the object's position vector.
    */
   protected getWorldPosition(object: RenderableCelestialObject): THREE.Vector3 {
     return object.position.clone();
   }
 
   /**
-   * Helper to find the primary light source for an object
+   * A helper method to find the most influential light source for a given object.
+   * It prioritizes the object's `primaryLightSourceId` if it exists and is
+   * present in the provided light sources map. Otherwise, it falls back to the
+   * first available light source.
+   * @param object The celestial object.
+   * @param lightSources A map of available light sources.
+   * @returns The most influential light source, or null if none are available.
    */
   public findPrimaryLightSource(
     object: RenderableCelestialObject,
@@ -391,81 +264,16 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     return lightSources.values().next().value || null;
   }
 
-  /**
-   * Creates a standardized billboard LOD level.
-   * This centralizes the creation of the sprite, its group, and registers it for updates.
-   * @param object The celestial object for the billboard.
-   * @param config Configuration for the billboard's appearance and behavior.
-   * @returns An LODLevel object containing the configured billboard.
-   * @protected
-   */
-  protected _createBillboardLOD(
-    object: RenderableCelestialObject,
-    config: BillboardLODConfig,
-  ): LODLevel {
-    const texture = this.getBillboardTexture();
-    const billboardInfo = createBillboardSprite(
-      object,
-      texture,
-      config.size,
-      config.color,
-      config.albedo,
-    );
-
-    billboardInfo.activationDistance = config.distance;
-    billboardInfo.maxFadeDistance = config.distance * 5;
-
-    this.billboardsInfo.set(object.celestialObjectId, billboardInfo);
-
-    const billboardGroup = new THREE.Group();
-    billboardGroup.name = `${object.celestialObjectId}-billboard-lod`;
-    billboardGroup.add(billboardInfo.sprite);
-
-    if (config.light) {
-      billboardGroup.add(config.light);
-    }
-
-    return {
-      object: billboardGroup,
-      distance: config.distance,
-    };
-  }
-
-  protected getBillboardTexture(): THREE.CanvasTexture {
-    if (BaseCelestialRenderer._billboardTexture) {
-      return BaseCelestialRenderer._billboardTexture;
-    }
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 64; // from util
-    canvas.height = 64; // from util
-    const context = canvas.getContext("2d");
-    if (!context) {
-      throw new Error("Could not get 2D context for billboard texture");
-    }
-
-    const gradient = context.createRadialGradient(
-      canvas.width / 2,
-      canvas.height / 2,
-      0,
-      canvas.width / 2,
-      canvas.height / 2,
-      canvas.width / 2,
-    );
-    gradient.addColorStop(0, "rgba(255,255,255,1)");
-    gradient.addColorStop(1, "rgba(255,255,255,0)"); // from util
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    const texture = new THREE.CanvasTexture(canvas);
-    BaseCelestialRenderer._billboardTexture = texture;
-    return texture;
-  }
-
   public getLOD(object: RenderableCelestialObject): THREE.LOD | undefined {
     return this.lods.get(object.celestialObjectId);
   }
 
+  /**
+   * An initialization method intended to be overridden by subclasses.
+   * This provides a hook for post-constructor setup logic.
+   * @param object The celestial object to initialize.
+   * @param options Additional options for initialization.
+   */
   public initialize(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,

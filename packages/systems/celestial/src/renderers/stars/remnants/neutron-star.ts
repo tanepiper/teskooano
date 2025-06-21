@@ -6,7 +6,7 @@ import type {
   LightSourcesMap,
 } from "../../base/CelestialRenderer";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
-import { BaseCelestialRendererOptions } from "../../base/BaseCelestialRenderer";
+import { BaseCelestialRendererOptions } from "../../base";
 import {
   calculateDistantSpriteSize,
   createBillboardSprite,
