@@ -1,17 +1,72 @@
-import * as THREE from "three";
-import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import { simulationStateService } from "@teskooano/core-state";
+import * as THREE from "three";
 import { rendererEvents } from "./events";
 
-/** Default camera Field of View (FOV) in degrees. */
-const DEFAULT_FOV = 75;
+/**
+ * @interface SceneManagerOptions
+ * @description Defines the configuration options for creating a SceneManager instance.
+ * This provides a strongly-typed contract for initializing the scene.
+ */
+export interface SceneManagerOptions {
+  /** Enables or disables anti-aliasing. Defaults to true. */
+  antialias?: boolean;
+  /** Enables or disables shadow mapping. Defaults to true. */
+  shadows?: boolean;
+  /** Enables or disables the High Dynamic Range (HDR) rendering pipeline with ACES Filmic tone mapping. Defaults to true. */
+  hdr?: boolean;
+  /** The background for the scene. Can be a CSS color string or a THREE.Texture. Defaults to a dark blue (`0x000510`). */
+  background?: string | THREE.Texture;
+  /** Whether to display a grid helper in the scene. Defaults to true. */
+  showGrid?: boolean;
+  /** The camera's vertical Field of View (FOV) in degrees. Defaults to 75. */
+  fov?: number;
+}
+
+/**
+ * @const DefaultSceneManagerConfig
+ * @description Contains the default values for various scene, camera, and renderer settings.
+ * This centralizes "magic numbers" and default configurations for easier management and consistency.
+ */
+const DefaultSceneManagerConfig = {
+  CAMERA: {
+    FOV: 75,
+    NEAR_PLANE: 0.0001,
+    FAR_PLANE: 10000000,
+    DEFAULT_POSITION: new THREE.Vector3(0, 20, 50),
+    DEFAULT_TARGET: new THREE.Vector3(0, 0, 0),
+  },
+  RENDERER: {
+    POWER_PREFERENCE: {
+      LOW: "low-power" as const,
+      HIGH: "high-performance" as const,
+      DEFAULT: "default" as const,
+    },
+    TONE_MAPPING_EXPOSURE: 1.0,
+  },
+  HELPERS: {
+    GRID: {
+      SIZE: 10000,
+      DIVISIONS: 100,
+      COLOR_CENTER_LINE: 0xff0000,
+      COLOR_GRID: 0x444444,
+    },
+    DEBUG_SPHERE: {
+      RADIUS: 0.5,
+      WIDTH_SEGMENTS: 16,
+      HEIGHT_SEGMENTS: 16,
+      COLOR: 0xff00ff,
+    },
+  },
+  BACKGROUND_COLOR: 0x000510,
+};
 
 /**
  * Manages the core Three.js components: the scene, camera, and renderer.
  *
  * This class is responsible for the initial setup of the 3D environment,
- * handling resizing, and providing the main `render` method. It also manages
- * optional visual helpers like a grid and AU distance markers.
+ * handling resizing, and providing the main `render` method. It encapsulates
+ * the boilerplate of Three.js setup and provides a clean API for interacting
+ * with the scene.
  */
 export class SceneManager {
   /** The root `THREE.Scene` object. */
@@ -22,6 +77,7 @@ export class SceneManager {
   public renderer: THREE.WebGLRenderer;
 
   private fov: number;
+  private options: SceneManagerOptions;
   private debugSphere: THREE.Mesh | null = null;
   private gridHelper: THREE.GridHelper | null = null;
   private showGrid: boolean = true;
@@ -33,52 +89,48 @@ export class SceneManager {
    * Creates a new SceneManager instance.
    *
    * @param container The HTML element where the renderer's canvas will be appended.
-   * @param options Configuration options for the scene and renderer.
+   * This element's dimensions will define the rendering area.
+   * @param options A configuration object (`SceneManagerOptions`) for the scene,
+   * camera, and renderer. Defaults will be used for any omitted properties.
    */
-  constructor(
-    container: HTMLElement,
-    options: {
-      antialias?: boolean;
-      shadows?: boolean;
-      hdr?: boolean;
-      background?: string | THREE.Texture;
-      showGrid?: boolean;
-      fov?: number;
-    } = {},
-  ) {
+  constructor(container: HTMLElement, options: SceneManagerOptions = {}) {
+    this.options = options;
     this.width = container.clientWidth;
     this.height = container.clientHeight;
     this.scene = new THREE.Scene();
 
     // Initialize core components
-    this.fov = this._initializeFov(options.fov);
+    this.fov = this._initializeFov();
     this.camera = this._initializeCamera();
-    this.renderer = this._initializeRenderer(container, options);
+    this.renderer = this._initializeRenderer(container);
 
     // Configure scene features
-    this.backgroundColor = this._parseBackground(options.background);
-    this.showGrid = options.showGrid !== false;
+    this.backgroundColor = this._parseBackground(this.options.background);
+    this.showGrid = this.options.showGrid !== false;
 
     if (this.showGrid) {
       this._createGridHelper();
     }
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
-    this.scene.add(ambientLight);
   }
 
   /**
-   * Determines the initial Field of View.
-   * @param fovOption The FOV from constructor options.
+   * Determines the initial Field of View, prioritizing constructor options,
+   * then persisted state, and finally the default configuration.
    * @returns The resolved FOV value.
    */
-  private _initializeFov(fovOption?: number): number {
+  private _initializeFov(): number {
     const initialState = simulationStateService.getCurrentState();
-    return fovOption ?? initialState.camera?.fov ?? DEFAULT_FOV;
+    return (
+      this.options.fov ??
+      initialState.camera?.fov ??
+      DefaultSceneManagerConfig.CAMERA.FOV
+    );
   }
 
   /**
-   * Sets up the main perspective camera based on initial state or defaults.
+   * Sets up the main perspective camera. It will use position and target data
+   * from the persisted state if available, otherwise it falls back to a
+   * sensible default position and target.
    * @returns The configured `PerspectiveCamera`.
    */
   private _initializeCamera(): THREE.PerspectiveCamera {
@@ -86,8 +138,8 @@ export class SceneManager {
     const camera = new THREE.PerspectiveCamera(
       this.fov,
       this.width / this.height,
-      0.0001,
-      10000000,
+      DefaultSceneManagerConfig.CAMERA.NEAR_PLANE,
+      DefaultSceneManagerConfig.CAMERA.FAR_PLANE,
     );
 
     if (initialState?.camera) {
@@ -101,36 +153,38 @@ export class SceneManager {
         initialState.camera.target.y,
         initialState.camera.target.z,
       );
+    } else {
+      camera.position.copy(DefaultSceneManagerConfig.CAMERA.DEFAULT_POSITION);
+      camera.lookAt(DefaultSceneManagerConfig.CAMERA.DEFAULT_TARGET);
     }
     return camera;
   }
 
   /**
-   * Sets up the WebGL renderer, configures its features, and appends it to the DOM.
+   * Sets up the WebGL renderer, configures its features based on options
+   * and performance profile, and appends its canvas to the container element.
    * @param container The host element for the renderer's canvas.
-   * @param options The constructor options.
    * @returns The configured `WebGLRenderer`.
    */
-  private _initializeRenderer(
-    container: HTMLElement,
-    options: { shadows?: boolean; hdr?: boolean; antialias?: boolean },
-  ): THREE.WebGLRenderer {
+  private _initializeRenderer(container: HTMLElement): THREE.WebGLRenderer {
     const initialState = simulationStateService.getCurrentState();
     const profile = initialState.performanceProfile;
-    let powerPref: "default" | "high-performance" | "low-power" = "default";
+    let powerPref: "default" | "high-performance" | "low-power" =
+      DefaultSceneManagerConfig.RENDERER.POWER_PREFERENCE.DEFAULT;
+
     switch (profile) {
       case "low":
-        powerPref = "low-power";
+        powerPref = DefaultSceneManagerConfig.RENDERER.POWER_PREFERENCE.LOW;
         break;
       case "high":
       case "cosmic":
-        powerPref = "high-performance";
+        powerPref = DefaultSceneManagerConfig.RENDERER.POWER_PREFERENCE.HIGH;
         break;
     }
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
-      antialias: options.antialias ?? true,
+      antialias: this.options.antialias ?? true,
       stencil: false,
       logarithmicDepthBuffer: false,
       preserveDrawingBuffer: false,
@@ -141,15 +195,16 @@ export class SceneManager {
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    if (options.shadows) {
+    if (this.options.shadows ?? true) {
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     }
 
-    if (options.hdr) {
+    if (this.options.hdr ?? true) {
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.0;
+      renderer.toneMappingExposure =
+        DefaultSceneManagerConfig.RENDERER.TONE_MAPPING_EXPOSURE;
     }
     return renderer;
   }
@@ -168,7 +223,7 @@ export class SceneManager {
       }
       return background;
     }
-    return new THREE.Color(0x000510);
+    return new THREE.Color(DefaultSceneManagerConfig.BACKGROUND_COLOR);
   }
 
   /**
@@ -282,11 +337,16 @@ export class SceneManager {
     rendererEvents.dispose$.next();
   }
 
-  /** Creates the debug sphere at the origin. */
+  /** Creates the debug sphere at the origin using settings from the default config. */
   private _createDebugSphere(): void {
     if (this.debugSphere) return;
-    const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-    const material = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+    const config = DefaultSceneManagerConfig.HELPERS.DEBUG_SPHERE;
+    const geometry = new THREE.SphereGeometry(
+      config.RADIUS,
+      config.WIDTH_SEGMENTS,
+      config.HEIGHT_SEGMENTS,
+    );
+    const material = new THREE.MeshBasicMaterial({ color: config.COLOR });
     this.debugSphere = new THREE.Mesh(geometry, material);
     this.debugSphere.position.set(0, 0, 0);
     this.scene.add(this.debugSphere);
@@ -306,10 +366,16 @@ export class SceneManager {
     }
   }
 
-  /** Creates the grid helper. */
+  /** Creates the grid helper using settings from the default config. */
   private _createGridHelper(): void {
     if (this.gridHelper) return;
-    this.gridHelper = new THREE.GridHelper(10000, 100, 0xff0000, 0x444444);
+    const config = DefaultSceneManagerConfig.HELPERS.GRID;
+    this.gridHelper = new THREE.GridHelper(
+      config.SIZE,
+      config.DIVISIONS,
+      config.COLOR_CENTER_LINE,
+      config.COLOR_GRID,
+    );
     this.scene.add(this.gridHelper);
   }
 

@@ -264,6 +264,11 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     return lightSources.values().next().value || null;
   }
 
+  /**
+   * A helper method to get the LOD object for a given celestial object.
+   * @param object The celestial object.
+   * @returns The LOD object, or undefined if it doesn't exist.
+   */
   public getLOD(object: RenderableCelestialObject): THREE.LOD | undefined {
     return this.lods.get(object.celestialObjectId);
   }
