@@ -33,13 +33,13 @@
   },
   "devDependencies": {
     "@types/three": "0.177.0",
-    "@playwright/test": "1.53.0",
-    "@vitest/browser": "3.2.3",
-    "@vitest/ui": "3.2.3",
+    "@playwright/test": "1.53.1",
+    "@vitest/browser": "3.2.4",
+    "@vitest/ui": "3.2.4",
     "eslint": "9.29.0",
     "happy-dom": "18.0.1",
-    "playwright": "1.53.0",
+    "playwright": "1.53.1",
     "typescript": "5.8.3",
-    "vitest": "3.2.3"
+    "vitest": "3.2.4"
   }
 }

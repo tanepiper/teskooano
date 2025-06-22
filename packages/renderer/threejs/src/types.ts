@@ -95,8 +95,6 @@ export interface RenderPipelineOptions {
   animationLoop: AnimationLoop;
   /** The optional manager for 2D HTML labels. */
   css2DManager?: Layer2DManager;
-  /** The optional manager for rendering custom 2D canvas UI. */
-  canvasUIManager?: { render(): void };
 }
 
 /**

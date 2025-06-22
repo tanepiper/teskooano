@@ -46,7 +46,7 @@
     "@teskooano/renderer-threejs-objects": "file:../threejs-objects",
     "@types/three": "0.177.0",
     "alea": "1.0.1",
-    "canvas": "3.1.0",
+    "canvas": "3.1.1",
     "commander": "14.0.0",
     "extended-random": "1.2.2",
     "ora": "8.2.0",
@@ -55,16 +55,16 @@
     "three": "0.177.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.53.0",
+    "@playwright/test": "1.53.1",
     "@types/node": "24.0.3",
     "@types/three": "0.177.0",
-    "@vitest/browser": "3.2.3",
-    "@vitest/ui": "3.2.3",
+    "@vitest/browser": "3.2.4",
+    "@vitest/ui": "3.2.4",
     "eslint": "9.29.0",
     "happy-dom": "18.0.1",
-    "playwright": "1.53.0",
+    "playwright": "1.53.1",
     "typescript": "5.8.3",
-    "vitest": "3.2.3"
+    "vitest": "3.2.4"
   },
   "bin": {
     "generate-planet-texture": "./src/cli/generate-texture.ts"

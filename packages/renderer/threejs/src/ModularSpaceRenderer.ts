@@ -1,26 +1,20 @@
 import { BackgroundManager } from "@teskooano/renderer-threejs-background";
+import { ControlsManager } from "@teskooano/renderer-threejs-controls";
 import { AnimationLoop, SceneManager } from "@teskooano/renderer-threejs-core";
-import { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import { LODManager } from "@teskooano/renderer-threejs-lod";
 import {
-  ControlsManager,
-  CameraManager,
-} from "@teskooano/renderer-threejs-controls";
-import {
-  Layer2DManager,
+  AuMarkerLabelLayer,
   CSS2DLayerType,
   CelestialLabelLayer,
-  AuMarkerLabelLayer,
+  Layer2DManager,
 } from "@teskooano/renderer-threejs-labels";
+import { LightingManager } from "@teskooano/renderer-threejs-lighting";
+import { LODManager } from "@teskooano/renderer-threejs-lod";
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import {
-  OrbitsManager,
-  VisualizationMode,
-} from "@teskooano/renderer-threejs-orbits";
+import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import * as THREE from "three";
 import { RendererStateAdapter } from "./RendererStateAdapter";
-import type { ModularSpaceRendererOptions } from "./types";
 import { RenderPipeline } from "./RenderPipeline";
+import type { ModularSpaceRendererOptions } from "./types";
 
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { renderableStore } from "@teskooano/core-state";
@@ -69,8 +63,6 @@ export class ModularSpaceRenderer {
   /** Orchestrates the per-frame update sequence. */
   private renderPipeline: RenderPipeline;
 
-  /** An optional, injectable manager for rendering custom 2D canvas UI. */
-  private canvasUIManager?: { render(): void };
   private debrisEffectsEnabled: boolean = true;
 
   /**
@@ -162,7 +154,6 @@ export class ModularSpaceRenderer {
       lodManager: this.lodManager,
       css2DManager: this.css2DManager,
       animationLoop: this.animationLoop,
-      canvasUIManager: this.canvasUIManager,
     });
 
     this.setupEventListeners(container);
@@ -434,49 +425,6 @@ export class ModularSpaceRenderer {
    */
   toggleOrbits(): void {
     this.orbitManager.toggleVisualization();
-  }
-
-  /**
-   * Sets an optional Canvas UI manager to be rendered on top of the 3D scene.
-   * The provided object must have a `render()` method that will be called
-   * at the end of each frame.
-   *
-   * @param uiManager - An object with a `render()` method.
-   */
-  setCanvasUIManager(uiManager: { render(): void }): void {
-    this.canvasUIManager = uiManager;
-    // We need to recreate the pipeline if the UI manager is set after initialization.
-    // This is a simple way to handle it, though a more robust solution might
-    // involve a setter on the pipeline itself.
-    this.renderPipeline = new RenderPipeline({
-      sceneManager: this.sceneManager,
-      controlsManager: this.controlsManager,
-      orbitManager: this.orbitManager,
-      objectManager: this.objectManager,
-      backgroundManager: this.backgroundManager,
-      lightingManager: this.lightingManager,
-      lodManager: this.lodManager,
-      css2DManager: this.css2DManager,
-      animationLoop: this.animationLoop,
-      canvasUIManager: this.canvasUIManager,
-    });
-    this.setupAnimationCallbacks();
-  }
-
-  /**
-   * Adds a callback function to be executed during each render frame.
-   * @param callback - The function to execute.
-   */
-  addRenderCallback(callback: () => void): void {
-    this.animationLoop.onRender(callback);
-  }
-
-  /**
-   * Removes a previously added render callback function.
-   * @param callback - The callback function to remove.
-   */
-  removeRenderCallback(callback: () => void): void {
-    this.animationLoop.removeRenderCallback(callback);
   }
 
   /**

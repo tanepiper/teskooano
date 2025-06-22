@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "typescript": "5.8.3",
-    "vitest": "3.2.3",
+    "vitest": "3.2.4",
     "eslint": "9.29.0",
     "@types/three": "0.177.0"
   }

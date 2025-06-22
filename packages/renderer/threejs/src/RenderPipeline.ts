@@ -34,7 +34,8 @@ export class RenderPipeline {
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;
 
-  private canvasUIManager?: { render(): void };
+  private lastTime: number = 0;
+  private frameId: number | null = null;
 
   /**
    * Creates an instance of RenderPipeline.
@@ -50,7 +51,6 @@ export class RenderPipeline {
     this.lodManager = managers.lodManager;
     this.css2DManager = managers.css2DManager;
     this.animationLoop = managers.animationLoop;
-    this.canvasUIManager = managers.canvasUIManager;
 
     // Cache core three.js objects
     this.camera = this.sceneManager.camera;
@@ -111,10 +111,15 @@ export class RenderPipeline {
 
     // 8. Perform the main scene render.
     this.sceneManager.render();
-
-    // 9. Render any top-level canvas UI.
-    if (this.canvasUIManager) {
-      this.canvasUIManager.render();
-    }
   };
+
+  /**
+   * Stops the render pipeline update loop.
+   */
+  public stop(): void {
+    if (this.frameId) {
+      cancelAnimationFrame(this.frameId);
+      this.frameId = null;
+    }
+  }
 }
