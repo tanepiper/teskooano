@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable } from "rxjs";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 
 /**
  * @class RenderableStore

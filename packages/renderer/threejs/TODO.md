@@ -10,11 +10,22 @@ This list tracks planned improvements and tasks for the Three.js renderer packag
 - [ ] Add support for loading and displaying 3D models (FBX format specified) for ships or stations.
 - [ ] Implement post-processing effects (e.g., bloom for stars/lights).
 - [x] Add skybox/environment map for space background instead of just a solid color/simple texture.
-- [ ] Visualize gravitational fields or other physics data.
+- [x] Visualize gravitational fields or other physics data.
 
 ## Refactoring & Improvements
 
-- [x] Refactor the render loop orchestration out of `ModularSpaceRenderer` and into a dedicated `RenderPipeline` class for better Separation of Concerns.
+### Architectural Refactoring
+
+- [ ] **Refactor `RendererStateAdapter`**: This class currently handles both state subscription and the complex logic of transforming `CelestialObject` data into `RenderableCelestialObject` instances.
+  - **Proposal**: Create a `RenderableObjectFactory` to encapsulate the object creation logic currently in `processStandardObject` and `processRingSystem`.
+  - **Proposal**: Extract the lighting source calculation from `processCelestialObjectsUpdateNow` into a dedicated utility function.
+  - **Benefit**: This will make `RendererStateAdapter` a leaner adapter focused on state flow, while the factory handles the complex and reusable construction logic.
+- [ ] **Refactor `ModularSpaceRenderer`**: The logic for creating AU markers is currently hardcoded in a large private method.
+  - **Proposal**: Create a new `AuMarkerManager` class, following the existing manager pattern. This class would be responsible for creating and managing both the ring meshes and the 2D labels for AU markers.
+  - **Benefit**: This will reduce the size and complexity of `ModularSpaceRenderer` and better encapsulate a distinct piece of functionality.
+
+### General Improvements
+
 - [ ] Improve performance of orbit line updates (e.g., buffer geometry updates vs recreating lines).
 - [ ] Optimize label rendering performance.
 - [ ] Add more detailed error handling and logging.

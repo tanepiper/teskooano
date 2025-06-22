@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Removed the unused and optional `canvasUIManager` from `ModularSpaceRenderer` and `RenderPipeline`, simplifying the rendering pipeline.
 - Removed deprecated methods `setFollowTarget` and `updateCamera` from `ModularSpaceRenderer` to clean up the public API.
 - Deleted unused `setup.ts` file.
 
