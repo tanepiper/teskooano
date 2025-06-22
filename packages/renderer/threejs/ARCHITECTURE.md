@@ -19,7 +19,6 @@ graph TD
         direction TB
         MSR["ModularSpaceRenderer"];
         RSA["RendererStateAdapter"];
-        ROF["RenderableObjectFactory"];
         RP["RenderPipeline"];
     end
 
@@ -30,6 +29,7 @@ graph TD
     subgraph "Feature Packages"
         direction LR
         ObjMgr["ObjectManager<br/>(@teskooano/renderer-threejs-objects)"]
+        ROF["RenderableObjectFactory<br/>(@teskooano/renderer-threejs-objects)"]
         OrbitMgr["OrbitsManager<br/>(@teskooano/renderer-threejs-orbits)"]
         BgMgr["BackgroundManager<br/>(@teskooano/renderer-threejs-background)"]
     end
@@ -72,9 +72,7 @@ graph TD
     MSR -- "Instantiates" --> AMM;
 
     RSA -- "Subscribes to" --> CoreState;
-    RSA -- "Instantiates" --> ROF;
     RSA -- "Calls" --> CSM;
-    RSA -- "Uses" --> ROF;
     RSA -- "Provides Renderables to" --> ObjMgr;
     RSA -- "Provides Visual Settings" --> OrbitMgr;
 
@@ -112,19 +110,15 @@ graph TD
 
     - **Responsibility**: Acts as an adapter between the core application state and the rendering engine. It subscribes to `celestialObjects$` and `simulationState$`. It orchestrates the transformation process by calling `calculateLightSourceMaps` (from `@teskooano/renderer-threejs-lighting`) to determine the lighting hierarchy, then delegating the creation of `RenderableCelestialObject` instances to its `RenderableObjectFactory`. It then publishes this ready-to-render data to the `renderableStore`, which the visualization managers consume.
 
-3.  **`RenderableObjectFactory` (`factory/RenderableObjectFactory.ts`)**: The object creation specialist.
-
-    - **Responsibility**: Encapsulates all the complex logic for converting a raw `CelestialObject` into a `RenderableCelestialObject`. This includes scaling positions, calculating complex rotations based on axial tilt and sidereal period, and mapping all relevant properties. It is a stateless factory that receives all necessary data for its calculations.
-
-4.  **`RenderPipeline` (`RenderPipeline.ts`)**: The frame-by-frame orchestrator.
+3.  **`RenderPipeline` (`RenderPipeline.ts`)**: The frame-by-frame orchestrator.
 
     - **Responsibility**: Encapsulates the logic for the sequence of operations that occur each frame. It is instantiated by `ModularSpaceRenderer` and holds references to all the managers. Its `update` method is called by the `AnimationLoop` on each tick, and it calls the individual `update` methods on the managers in the correct order.
 
 ## Data Flow & Coordination
 
 1.  The application instantiates `ModularSpaceRenderer`, passing in the container element.
-2.  `ModularSpaceRenderer`'s constructor initializes `RendererStateAdapter` (which in turn creates its `RenderableObjectFactory`), all required managers from the sub-modules, and the `RenderPipeline`.
-3.  The `RendererStateAdapter` automatically subscribes to the core state (`celestialObjects$`). As data arrives, it first calls `calculateLightSourceMaps` to build a lighting hierarchy. It then passes the raw objects and the light map to the `RenderableObjectFactory`.
+2.  `ModularSpaceRenderer`'s constructor initializes `RendererStateAdapter`, all required managers from the sub-modules, and the `RenderPipeline`.
+3.  The `RendererStateAdapter` automatically subscribes to the core state (`celestialObjects$`). As data arrives, it first calls `calculateLightSourceMaps` to build a lighting hierarchy. It then instantiates a `RenderableObjectFactory` (from `@teskooano/renderer-threejs-objects`) and uses it to process the raw objects and the light map.
 4.  The factory processes the data and returns a complete set of `RenderableCelestialObject` instances. The adapter then pushes this set into the `renderableStore`.
 5.  Managers like `ObjectManager` and `OrbitManager` subscribe to the `renderableStore` and react to its updates by creating, updating, or removing Three.js objects (meshes, lines, etc.) from the scene.
 6.  `ModularSpaceRenderer` tells the `AnimationLoop` to use the `RenderPipeline`'s `update` method as its callback.

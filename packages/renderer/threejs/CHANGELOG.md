@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Refactor**: Moved `RenderableObjectFactory` and its `coordinateUtils` dependency to the `@teskooano/renderer-threejs-objects` package to better align responsibilities. `RendererStateAdapter` now imports it from the new location.
 - Refactored `ModularSpaceRenderer` to delegate its frame-by-frame update logic to a new, more modular `RenderPipeline` class.
 - Replaced the custom `EventEmitter` in `events.ts` with type-safe RxJS `Subject`s, aligning with the project's state management patterns.
 - Created dedicated interfaces (`ModularSpaceRendererOptions`, `RenderPipelineOptions`) for constructor options to improve type safety.

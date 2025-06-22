@@ -1,8 +1,6 @@
-export { CSS2DLayerType, Layer2DManager } from "./Layer2DManager";
-export {
-  CelestialLabelLayer,
-  type LabelVisibilityConfig,
-} from "./layers/CelestialLabelLayer";
-export { AuMarkerLabelLayer } from "./layers/AuMarkerLabelLayer";
-export { BaseLabelLayer } from "./layers/BaseLabelLayer";
+export * from "./Layer2DManager";
+export * from "./layers/CelestialLabelLayer";
+export * from "./layers/AuMarkerLabelLayer";
+export * from "./layers/BaseLabelLayer";
 export * from "./managers";
+export * from "./setup";

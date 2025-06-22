@@ -20,6 +20,7 @@ This list tracks planned improvements and tasks for the Three.js renderer packag
   - **Proposal**: Create a `RenderableObjectFactory` to encapsulate the object creation logic currently in `processStandardObject` and `processRingSystem`.
   - **Proposal**: Extract the lighting source calculation from `processCelestialObjectsUpdateNow` into a dedicated utility function.
   - **Benefit**: This will make `RendererStateAdapter` a leaner adapter focused on state flow, while the factory handles the complex and reusable construction logic.
+- [x] **Relocate `RenderableObjectFactory`**: The factory was moved from this package to `@teskooano/renderer-threejs-objects` to better align with the object management and creation lifecycle.
 - [x] **Refactor `ModularSpaceRenderer`**: The logic for creating AU markers is currently hardcoded in a large private method.
   - **Proposal**: Create a new `AuMarkerManager` class, following the existing manager pattern. This class would be responsible for creating and managing both the ring meshes and the 2D labels for AU markers.
   - **Benefit**: This will reduce the size and complexity of `ModularSpaceRenderer` and better encapsulate a distinct piece of functionality.
