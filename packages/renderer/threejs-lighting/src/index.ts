@@ -4,3 +4,4 @@ export * from "./types";
 // New component-based lighting API
 export * from "./components";
 export * from "./managers";
+export * from "./utils";

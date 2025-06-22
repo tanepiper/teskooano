@@ -1,4 +1,3 @@
-import { OSQuaternion, OSVector3 } from "@teskooano/core-math";
 import {
   celestialObjects$,
   getSimulationState,
@@ -6,17 +5,11 @@ import {
   simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
-import {
-  CelestialObject,
-  CelestialType,
-  RenderableCelestialObject,
-  SCALE,
-  scaleSize,
-} from "@teskooano/data-types";
+import { CelestialObject } from "@teskooano/data-types";
+import { calculateLightSourceMaps } from "@teskooano/renderer-threejs-lighting";
 import { BehaviorSubject, Subscription } from "rxjs";
-import * as THREE from "three";
+import { RenderableObjectFactory } from "./factory/RenderableObjectFactory";
 import type { RendererVisualSettings } from "./types";
-import { physicsToThreeJSPosition } from "./utils/coordinateUtils";
 
 /**
  * Acts as a bridge between the core application state and the rendering engine.
@@ -41,22 +34,14 @@ export class RendererStateAdapter {
   /** The current simulation time, used for calculating rotations. */
   private currentSimulationTime: number = 0;
 
-  // --- Reusable scratch variables for performance ---
-  /** A reusable vector defining the 'up' axis for sidereal rotation. */
-  private rotationAxis = new OSVector3(0, 1, 0);
-  /** A reusable quaternion for storing the calculated axial tilt. */
-  private tiltQuaternion = new OSQuaternion();
-  /** A reusable quaternion for storing the calculated spin based on time. */
-  private spinQuaternion = new OSQuaternion();
-  /** A reusable quaternion for the final combined rotation result. */
-  private finalRotation = new OSQuaternion();
-  /** A reusable vector for the z-axis. */
-  private zAxis = new OSVector3(0, 0, 1);
+  /** The factory for creating renderable object instances. */
+  private factory: RenderableObjectFactory;
 
   /**
    * Initializes the adapter and subscribes to the core state.
    */
   constructor() {
+    this.factory = new RenderableObjectFactory();
     const initialSimState = getSimulationState();
     this.$visualSettings = new BehaviorSubject<RendererVisualSettings>({
       trailLengthMultiplier:
@@ -72,262 +57,35 @@ export class RendererStateAdapter {
   }
 
   /**
-   * Calculates the final orientation of a celestial object.
-   *
-   * This method combines the object's fixed axial tilt with its continuous
-   * sidereal rotation based on the current simulation time.
-   * It reuses private class members (`tiltQuaternion`, `spinQuaternion`, etc.)
-   * to avoid creating new objects in the render loop, which is a key
-   * performance optimization.
-   *
-   * @param axialTilt The object's axial tilt in degrees (either an OSVector3 or a number).
-   * @param siderealPeriod The time it takes for one full rotation, in seconds.
-   * @returns An OSQuaternion representing the object's final orientation.
-   */
-  private calculateRotation(
-    axialTilt: OSVector3 | number | undefined,
-    siderealPeriod: number | undefined,
-  ): OSQuaternion {
-    this.tiltQuaternion = new OSQuaternion();
-    this.spinQuaternion = new OSQuaternion();
-
-    if (axialTilt instanceof OSVector3) {
-      this.tiltQuaternion.setFromEuler(axialTilt, "XYZ");
-    } else if (typeof axialTilt === "number" && !isNaN(axialTilt)) {
-      const rad = axialTilt * (Math.PI / 180);
-      this.tiltQuaternion.setFromAxisAngle(this.zAxis, rad);
-    }
-
-    if (siderealPeriod && siderealPeriod !== 0) {
-      const rotationAngle =
-        (this.currentSimulationTime / siderealPeriod) * 2 * Math.PI;
-      this.spinQuaternion.setFromAxisAngle(this.rotationAxis, rotationAngle);
-      this.finalRotation
-        .copy(this.tiltQuaternion)
-        .multiply(this.spinQuaternion);
-    } else {
-      this.finalRotation.copy(this.tiltQuaternion);
-    }
-    return this.finalRotation;
-  }
-
-  /**
-   * Processes a standard celestial object into its renderable equivalent.
-   *
-   * @param obj The raw celestial object from the core state.
-   * @param existing The previously existing renderable object, if any.
-   * @param determineLightSource A function to find the primary light source for this object.
-   * @returns A fully formed `RenderableCelestialObject`.
-   */
-  private processStandardObject(
-    obj: CelestialObject,
-    existing: RenderableCelestialObject | undefined,
-    determineLightSource: (id: string) => string | undefined,
-  ): RenderableCelestialObject {
-    const realRadius = obj.realRadius_m ?? 0;
-
-    const target = {
-      celestialObjectId: obj.id,
-      position: new THREE.Vector3(),
-      rotation: new THREE.Quaternion(),
-      isVisible: true,
-      isTargetable: true,
-      isSelected: false,
-      isFocused: false,
-      uniforms: {},
-      name: obj.name,
-      type: obj.type,
-      seed: obj?.seed ?? crypto.randomUUID(),
-      radius: scaleSize(realRadius, obj.type),
-      mass: (obj.realMass_kg ?? 0) * SCALE.MASS,
-      properties: obj.properties,
-      orbit: obj.orbit,
-      parentId: obj.parentId,
-      primaryLightSourceId: determineLightSource(obj.id),
-      realRadius_m: realRadius,
-      axialTilt: obj.axialTilt ?? 0,
-      status: obj.status,
-      temperature: obj.temperature,
-      albedo: obj.albedo ?? 0.3,
-    };
-
-    physicsToThreeJSPosition(target.position, obj.physicsStateReal.position_m);
-    target.rotation.copy(
-      this.calculateRotation(
-        obj.axialTilt,
-        obj.siderealRotationPeriod_s,
-      ).toThreeJS(),
-    );
-
-    return target;
-  }
-
-  /**
-   * Processes a ring system celestial object.
-   *
-   * A ring system's position and orientation are derived from its parent object.
-   * This method ensures the ring is correctly placed and tilted relative to its parent.
-   *
-   * @param obj The ring system object from the core state.
-   * @param objects The full map of all celestial objects.
-   * @param existing The previously existing renderable object, if any.
-   * @param determineLightSource A function to find the primary light source.
-   * @returns A `RenderableCelestialObject` for the ring, or `null` if the parent is not found.
-   */
-  private processRingSystem(
-    obj: CelestialObject,
-    objects: Record<string, CelestialObject>,
-    existing: RenderableCelestialObject | undefined,
-    determineLightSource: (id: string) => string | undefined,
-  ): RenderableCelestialObject | null {
-    const parentId = obj.parentId;
-    if (!parentId) {
-      console.warn(
-        `[RendererStateAdapter] Ring system ${obj.id} is missing parentId.`,
-      );
-      return null;
-    }
-    const parent = objects[parentId];
-    if (
-      !parent ||
-      !parent.physicsStateReal ||
-      !parent.physicsStateReal.position_m
-    ) {
-      return null;
-    }
-
-    const target = {
-      celestialObjectId: obj.id,
-      position: new THREE.Vector3(),
-      rotation: new THREE.Quaternion(),
-      isVisible: true,
-      isTargetable: false,
-      isSelected: false,
-      isFocused: false,
-      uniforms: {},
-      name: obj.name,
-      type: obj.type,
-      seed: obj?.seed ?? crypto.randomUUID(),
-      radius: 0,
-      mass: 0,
-      properties: obj.properties,
-      orbit: undefined,
-      parentId: obj.parentId,
-      primaryLightSourceId: determineLightSource(obj.id),
-      realRadius_m: 0,
-      axialTilt: parent.axialTilt ?? 0,
-      status: obj.status,
-      temperature: obj.temperature,
-      albedo: parent.albedo ?? 0,
-    };
-
-    physicsToThreeJSPosition(
-      target.position,
-      parent.physicsStateReal.position_m,
-    );
-    target.rotation.copy(
-      this.calculateRotation(parent.axialTilt, undefined).toThreeJS(),
-    );
-
-    return target;
-  }
-
-  /**
    * The main processing handler for celestial object updates.
    *
    * This method is called whenever the `celestialObjects$` observable emits.
-   * It iterates through all objects, transforms them into `RenderableCelestialObject`s
-   * using the appropriate helper methods (`processStandardObject`, `processRingSystem`),
-   * and then updates the central `renderableStore` with the complete new set of
-   * renderable objects.
-   *
-   * It also pre-calculates the lighting hierarchy for all objects.
+   * It orchestrates the transformation of core state objects into renderable
+   * objects by first calculating the lighting hierarchy and then delegating
+   * the creation logic to the `RenderableObjectFactory`.
    *
    * @param objects The complete record of celestial objects from the core state.
    */
   private processCelestialObjectsUpdateNow(
     objects: Record<string, CelestialObject>,
   ): void {
-    const objectCount = Object.keys(objects).length;
-    const renderableMap: Record<string, RenderableCelestialObject> = {};
-
-    if (objectCount === 0) {
+    if (Object.keys(objects).length === 0) {
       renderableStore.setAllRenderableObjects({});
       return;
     }
 
-    const lightSourceMap: Record<string, string | undefined> = {};
-    const determineLightSource = (id: string): string | undefined => {
-      if (id in lightSourceMap) return lightSourceMap[id];
-      const obj = objects[id];
-      if (!obj) return undefined;
-      if (obj.type === CelestialType.STAR) {
-        lightSourceMap[id] = id;
-        return id;
-      }
-      if (!obj.parentId) {
-        lightSourceMap[id] = undefined;
-        return undefined;
-      }
-      lightSourceMap[id] = determineLightSource(obj.parentId);
-      return lightSourceMap[id];
-    };
-
-    Object.keys(objects).forEach((id) => determineLightSource(id));
-
-    const existingRenderables = renderableStore.getRenderableObjects();
-
     try {
-      for (const id in objects) {
-        const obj = objects[id];
-        const existing = existingRenderables[id];
+      // 1. Determine the lighting hierarchy for all objects.
+      const lightSourceMap = calculateLightSourceMaps(objects);
 
-        if (!obj.physicsStateReal || !obj.physicsStateReal.position_m) {
-          if (obj.type !== CelestialType.RING_SYSTEM) {
-            console.warn(
-              `[RendererStateAdapter] Skipping object ${id} due to missing physics state.`,
-            );
-            continue;
-          }
-        }
+      // 2. Delegate creation of renderable objects to the factory.
+      const renderableMap = this.factory.createRenderableObjects(
+        objects,
+        lightSourceMap,
+        this.currentSimulationTime,
+      );
 
-        let renderableObject: RenderableCelestialObject | null = null;
-
-        switch (obj.type) {
-          case CelestialType.RING_SYSTEM:
-            renderableObject = this.processRingSystem(
-              obj,
-              objects,
-              existing,
-              determineLightSource,
-            );
-            break;
-          case CelestialType.STAR:
-          case CelestialType.PLANET:
-          case CelestialType.MOON:
-          case CelestialType.DWARF_PLANET:
-          case CelestialType.GAS_GIANT:
-          case CelestialType.COMET:
-          case CelestialType.ASTEROID_FIELD:
-          case CelestialType.OORT_CLOUD:
-          case CelestialType.SPACE_ROCK:
-            renderableObject = this.processStandardObject(
-              obj,
-              existing,
-              determineLightSource,
-            );
-            break;
-          default:
-            console.warn(
-              `[RendererStateAdapter] Unhandled celestial type: ${obj.type} for object ${id}`,
-            );
-        }
-
-        if (renderableObject) {
-          renderableMap[id] = renderableObject;
-        } else {
-        }
-      }
+      // 3. Update the central store with the new set of objects.
       renderableStore.setAllRenderableObjects(renderableMap);
     } catch (error) {
       console.error(

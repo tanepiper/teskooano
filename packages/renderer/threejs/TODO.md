@@ -16,7 +16,7 @@ This list tracks planned improvements and tasks for the Three.js renderer packag
 
 ### Architectural Refactoring
 
-- [ ] **Refactor `RendererStateAdapter`**: This class currently handles both state subscription and the complex logic of transforming `CelestialObject` data into `RenderableCelestialObject` instances.
+- [x] **Refactor `RendererStateAdapter`**: This class currently handles both state subscription and the complex logic of transforming `CelestialObject` data into `RenderableCelestialObject` instances.
   - **Proposal**: Create a `RenderableObjectFactory` to encapsulate the object creation logic currently in `processStandardObject` and `processRingSystem`.
   - **Proposal**: Extract the lighting source calculation from `processCelestialObjectsUpdateNow` into a dedicated utility function.
   - **Benefit**: This will make `RendererStateAdapter` a leaner adapter focused on state flow, while the factory handles the complex and reusable construction logic.
