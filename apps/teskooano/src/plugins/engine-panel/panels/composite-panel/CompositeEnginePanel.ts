@@ -11,7 +11,8 @@ import { panelService } from "../../../../core/controllers/dockview/panel.servic
 import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 
 import { CustomEvents } from "@teskooano/data-types";
-import { RendererStats } from "@teskooano/renderer-threejs-core";
+import { RendererStats, SceneManager } from "@teskooano/renderer-threejs-core";
+import { initializeLabelSystem } from "@teskooano/renderer-threejs-labels";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import { EngineToolbar } from "../../../../core/interface/engine-toolbar";
 import { EngineCameraManager } from "../camera-manager";
@@ -351,9 +352,11 @@ export class CompositeEnginePanel
    * `PanelLifecycleManager` when celestial objects are available.
    */
   private initializeRendererAndUI(): void {
+    if (this._renderer || !this._engineContainer) {
+      return;
+    }
     this.initializeRenderer();
     this.createEngineToolbar();
-    this.triggerResize();
   }
 
   /**
@@ -361,42 +364,39 @@ export class CompositeEnginePanel
    * its initial state and event listeners.
    */
   private initializeRenderer(): void {
-    if (!this._engineContainer) {
-      console.error(
-        "[CompositeEnginePanel] Engine container not found, cannot initialize renderer.",
-      );
-      return;
+    if (this._renderer || !this._engineContainer) {
+      return; // Already initialized or container not ready
     }
-    if (this._renderer) {
-      console.warn(
-        "[CompositeEnginePanel] Renderer already appears initialized.",
-      );
-      return;
-    }
+    const viewState = this.getViewState();
 
-    const initialViewState = this.getViewState();
-    this._renderer = new ModularSpaceRenderer(this._engineContainer, {
+    // 1. Create the SceneManager first, as it owns the scene and camera.
+    const sceneManager = new SceneManager(this._engineContainer, {
       antialias: true,
-      shadows: true,
-      hdr: true,
-      showGrid: initialViewState.showGrid,
-      showCelestialLabels: initialViewState.showCelestialLabels,
-      showAuMarkers: initialViewState.showAuMarkers,
-      showDebrisEffects: initialViewState.showDebrisEffects,
+      showGrid: viewState.showGrid,
     });
 
-    if (!this._renderer) {
-      console.error(
-        "[CompositeEnginePanel] Failed to create ModularSpaceRenderer instance.",
-      );
-      if (this._engineContainer) {
-        this._engineContainer.textContent =
-          "Error initializing engine: Failed to create renderer instance.";
-      }
-      return;
-    }
+    // 2. Decide if the label system is needed and initialize it.
+    const labelSystem = initializeLabelSystem(
+      sceneManager.scene,
+      this._engineContainer,
+      {
+        showAuMarkers: viewState.showAuMarkers,
+        labelConfig: {}, // Provide a default or pass from viewState if available
+      },
+    );
 
-    // Delegate camera setup to the coordinator
+    // 3. Create the main renderer, injecting the dependencies.
+    this._renderer = new ModularSpaceRenderer(
+      this._engineContainer,
+      sceneManager,
+      {
+        // Pass other non-scene/label options here if any
+        showDebrisEffects: viewState.showDebrisEffects,
+      },
+      labelSystem,
+    );
+
+    // 4. Finalize setup.
     this._cameraCoordinator = new PanelCameraCoordinator(
       this,
       this._renderer,
@@ -413,15 +413,18 @@ export class CompositeEnginePanel
       return;
     }
 
-    this._finalizePanelInitialization();
+    // Apply the complete initial view state to the newly created renderer.
+    applyViewStateToRenderer(this._renderer, viewState);
+
+    this._finalizeRendererInitialization();
   }
 
   /**
-   * Finalizes the renderer and panel setup by dispatching events,
+   * Finishes the renderer and panel setup by dispatching events,
    * starting the render loop, and setting up observers.
    * Assumes _renderer and _engineContainer are initialized.
    */
-  private _finalizePanelInitialization(): void {
+  private _finalizeRendererInitialization(): void {
     if (!this._renderer || !this._engineContainer) return;
 
     if (this.element.isConnected && this._api?.id) {
@@ -443,8 +446,6 @@ export class CompositeEnginePanel
       this.triggerResize();
     });
     this._resizeObserver.observe(this._engineContainer);
-
-    applyViewStateToRenderer(this._renderer, this.getViewState());
   }
 
   /**

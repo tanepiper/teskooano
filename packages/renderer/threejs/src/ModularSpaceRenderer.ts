@@ -18,6 +18,7 @@ import type { ModularSpaceRendererOptions } from "./types";
 
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { renderableStore } from "@teskooano/core-state";
+import { LabelSystem } from "@teskooano/renderer-threejs-labels";
 
 /**
  * The main orchestrator for the Three.js rendering engine.
@@ -67,47 +68,31 @@ export class ModularSpaceRenderer {
    * Initializes the renderer and all its subordinate managers.
    *
    * @param container The HTML element that will host the renderer's canvas.
+   * @param sceneManager The pre-initialized SceneManager.
    * @param options Configuration options for the renderer.
+   * @param labelSystem The optional LabelSystem.
    */
   constructor(
     container: HTMLElement,
+    sceneManager: SceneManager,
     options: ModularSpaceRendererOptions = {},
+    labelSystem?: LabelSystem,
   ) {
     this.stateAdapter = new RendererStateAdapter();
 
-    this.sceneManager = new SceneManager(container, options);
+    this.sceneManager = sceneManager;
     this.animationLoop = this.sceneManager.animationLoop;
+
+    this.css2DManager = labelSystem?.css2DManager;
+    this.auMarkerManager = labelSystem?.auMarkerManager;
 
     this.lightingManager = new LightingManager(this.sceneManager.scene);
     this.lodManager = new LODManager(this.sceneManager.camera);
 
-    const showCelestialLabels = options.showCelestialLabels !== false;
     this.controlsManager = new ControlsManager(
       this.sceneManager.camera,
       this.sceneManager.renderer.domElement,
     );
-
-    if (showCelestialLabels) {
-      const { css2DManager, auMarkerManager } = initializeLabelSystem(
-        this.sceneManager.scene,
-        container,
-        {
-          showAuMarkers: options.showAuMarkers,
-          labelConfig: options.labelConfig,
-        },
-      );
-      this.css2DManager = css2DManager;
-      this.auMarkerManager = auMarkerManager;
-    } else {
-      this.css2DManager = undefined;
-    }
-
-    if (!this.css2DManager && showCelestialLabels) {
-      throw new Error("CSS2DManager failed to initialize but UI was enabled.");
-    } else if (!showCelestialLabels && this.css2DManager) {
-      console.warn("CSS2DManager initialized but UI is disabled?");
-      this.css2DManager = undefined;
-    }
 
     this.objectManager = new ObjectManager(
       this.sceneManager.scene,
