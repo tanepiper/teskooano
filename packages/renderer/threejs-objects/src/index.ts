@@ -1,5 +1,5 @@
 export * from "./ObjectManager";
 
 export * from "./object-manager";
-
-export {};
+export * from "./factory";
+export * from "./utils";

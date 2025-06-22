@@ -8,7 +8,7 @@ import {
 import { CelestialObject } from "@teskooano/data-types";
 import { calculateLightSourceMaps } from "@teskooano/renderer-threejs-lighting";
 import { BehaviorSubject, Subscription } from "rxjs";
-import { RenderableObjectFactory } from "./factory/RenderableObjectFactory";
+import { RenderableObjectFactory } from "@teskooano/renderer-threejs-objects";
 import type { RendererVisualSettings } from "./types";
 
 /**
