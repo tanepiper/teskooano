@@ -54,6 +54,7 @@ graph TD
 
     subgraph "Labels (@teskooano/renderer-threejs-labels)"
         Layer2DManager["Layer2DManager"]
+        AMM["AuMarkerManager"]
     end
 
     AppUI -- "Instantiates" --> MSR;
@@ -68,6 +69,7 @@ graph TD
     MSR -- "Instantiates & Coordinates" --> Layer2DManager;
     MSR -- "Instantiates & Coordinates" --> LightManager;
     MSR -- "Instantiates & Coordinates" --> LODManager;
+    MSR -- "Instantiates" --> AMM;
 
     RSA -- "Subscribes to" --> CoreState;
     RSA -- "Instantiates" --> ROF;
@@ -96,6 +98,8 @@ graph TD
     BgMgr -- "Modifies" --> SceneManager;
     ObjMgr -- "Modifies" --> SceneManager;
     OrbitMgr -- "Modifies" --> SceneManager;
+
+    MSR -- "Calls methods on" --> AMM;
 ```
 
 ## Core Components within this Package

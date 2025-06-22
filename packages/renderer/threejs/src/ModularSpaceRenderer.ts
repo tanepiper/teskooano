@@ -2,10 +2,10 @@ import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { ControlsManager } from "@teskooano/renderer-threejs-controls";
 import { AnimationLoop, SceneManager } from "@teskooano/renderer-threejs-core";
 import {
-  AuMarkerLabelLayer,
   CSS2DLayerType,
   CelestialLabelLayer,
   Layer2DManager,
+  AuMarkerManager,
 } from "@teskooano/renderer-threejs-labels";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODManager } from "@teskooano/renderer-threejs-lod";
@@ -18,7 +18,6 @@ import type { ModularSpaceRendererOptions } from "./types";
 
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { renderableStore } from "@teskooano/core-state";
-import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 
 /**
  * The main orchestrator for the Three.js rendering engine.
@@ -54,9 +53,8 @@ export class ModularSpaceRenderer {
   public lightingManager: LightingManager;
   /** Manages Level of Detail for objects to optimize performance. */
   public lodManager: LODManager;
-
-  /** A group to hold the AU marker rings for easy visibility toggling. */
-  private auMarkersGroup: THREE.Group;
+  /** Manages the AU distance markers (rings and labels). */
+  public auMarkerManager?: AuMarkerManager;
 
   /** Bridges core application state to the renderer-consumable `renderableStore`. */
   private stateAdapter: RendererStateAdapter;
@@ -76,11 +74,8 @@ export class ModularSpaceRenderer {
     options: ModularSpaceRendererOptions = {},
   ) {
     this.stateAdapter = new RendererStateAdapter();
-    this.auMarkersGroup = new THREE.Group();
-    this.auMarkersGroup.name = "AuMarkersGroup";
 
     this.sceneManager = new SceneManager(container, options);
-    this.sceneManager.scene.add(this.auMarkersGroup);
     this.animationLoop = new AnimationLoop();
 
     this.animationLoop.setRenderer(this.sceneManager.renderer);
@@ -109,13 +104,12 @@ export class ModularSpaceRenderer {
       );
 
       // Conditionally create and register the AU marker layer
-      if (options.showAuMarkers) {
-        const auMarkerLayer = new AuMarkerLabelLayer(this.sceneManager.scene);
-        this.css2DManager.registerLayer(
-          CSS2DLayerType.AU_MARKERS,
-          auMarkerLayer,
+      if (options.showAuMarkers && this.css2DManager) {
+        this.auMarkerManager = new AuMarkerManager(
+          this.sceneManager.scene,
+          this.css2DManager,
         );
-        this._createAuMarkerLabels();
+        this.auMarkerManager.createMarkers();
       }
     } else {
       this.css2DManager = undefined;
@@ -174,87 +168,6 @@ export class ModularSpaceRenderer {
     } else {
       this.setDebrisEffectsEnabled(this.debrisEffectsEnabled);
     }
-  }
-
-  /**
-   * Orchestrates the creation of 2D labels for the AU distance markers.
-   * This is called from the constructor after the necessary managers are available.
-   * @internal
-   */
-  private _createAuMarkerLabels(): void {
-    const auMarkers = [
-      { au: 1, color: "#FFA500" },
-      { au: 2, color: "#FFA500" },
-      { au: 3, color: "#FFA500" },
-      { au: 4, color: "#FFA500" },
-      { au: 5, color: "#FFA500" },
-      { au: 6, color: "#FFA500" },
-      { au: 7, color: "#FFA500" },
-      { au: 8, color: "#FFA500" },
-      { au: 9, color: "#FFA500" },
-      { au: 10, color: "#FFA500" },
-      { au: 20, color: "#FFA500" },
-      { au: 50, color: "#FFA500" },
-      { au: 100, color: "#FFA500" },
-      { au: 150, color: "#FFA500" },
-      { au: 200, color: "#FFA500" },
-      { au: 300, color: "#FFA500" },
-      { au: 400, color: "#FFA500" },
-      { au: 500, color: "#FFA500" },
-      { au: 600, color: "#FFA500" },
-      { au: 700, color: "#FFA500" },
-      { au: 800, color: "#FFA500" },
-      { au: 900, color: "#FFA500" },
-      { au: 1000, color: "#FFA500" },
-      { au: 2000, color: "#FFA500" },
-      { au: 3000, color: "#FFA500" },
-      { au: 4000, color: "#FFA500" },
-      { au: 5000, color: "#FFA500" },
-      { au: 6000, color: "#FFA500" },
-      { au: 7000, color: "#FFA500" },
-      { au: 8000, color: "#FFA500" },
-      { au: 9000, color: "#FFA500" },
-      { au: 10000, color: "#FFA500" },
-      { au: 20000, color: "#FFA500" },
-      { au: 30000, color: "#FFA500" },
-      { au: 40000, color: "#FFA500" },
-      { au: 50000, color: "#FFA500" },
-      { au: 60000, color: "#FFA500" },
-    ];
-
-    auMarkers.forEach(({ au, color }) => {
-      const radiusSceneUnits = au * AU_METERS * METERS_TO_SCENE_UNITS;
-      const ringThickness = radiusSceneUnits * 0.01; // 1% of the radius
-      const circleGeometry = new THREE.RingGeometry(
-        radiusSceneUnits - ringThickness / 2,
-        radiusSceneUnits + ringThickness / 2,
-        128,
-      );
-      const circleMaterial = new THREE.MeshBasicMaterial({
-        color: color,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.1,
-      });
-      const circle = new THREE.Mesh(circleGeometry, circleMaterial);
-      circle.rotation.x = -Math.PI / 2;
-      this.auMarkersGroup.add(circle);
-
-      const labelPositions = {
-        Xpos: new THREE.Vector3(radiusSceneUnits, 0, 0),
-        Xneg: new THREE.Vector3(-radiusSceneUnits, 0, 0),
-        Zpos: new THREE.Vector3(0, 0, radiusSceneUnits),
-        Zneg: new THREE.Vector3(0, 0, -radiusSceneUnits),
-      };
-
-      for (const [dir, pos] of Object.entries(labelPositions)) {
-        const labelId = `au-label-${dir}-${au}`;
-        const auMarkerLayer = this.css2DManager?.getLayer(
-          CSS2DLayerType.AU_MARKERS,
-        ) as AuMarkerLabelLayer;
-        auMarkerLayer?.createLabel(labelId, au, pos, color);
-      }
-    });
   }
 
   /**
@@ -372,6 +285,7 @@ export class ModularSpaceRenderer {
     this.backgroundManager.dispose();
     this.controlsManager.dispose();
     this.css2DManager?.dispose();
+    this.auMarkerManager?.dispose();
     this.lightingManager.dispose();
     if (typeof (this.lodManager as any).dispose === "function") {
       (this.lodManager as any).dispose();
@@ -404,8 +318,7 @@ export class ModularSpaceRenderer {
    * @param visible - True to show AU markers, false to hide.
    */
   setAuMarkersVisible(visible: boolean): void {
-    this.auMarkersGroup.visible = visible;
-    this.css2DManager?.setLayerVisibility(CSS2DLayerType.AU_MARKERS, visible);
+    this.auMarkerManager?.setVisible(visible);
   }
   /**
    * Sets the visibility of all orbital lines.

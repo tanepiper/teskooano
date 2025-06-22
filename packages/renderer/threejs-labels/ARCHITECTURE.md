@@ -76,3 +76,12 @@ graph TD
 - **Layer System:** Allows logical grouping and independent visibility control for different UI categories (e.g., hide all AU markers). The logic for each layer is encapsulated within its own class that extends `BaseLabelLayer`.
 - **`pointer-events: none`:** Essential for ensuring the CSS2D overlay doesn't block interaction with the underlying WebGL canvas. The `Layer2DManager` injects CSS to enforce this.
 - **Delegated Lifecycles:** The `Layer2DManager` is a lean orchestrator. The responsibility for creating, removing, and updating the logic for labels is delegated to the specific `BaseLabelLayer` implementations. This keeps the manager simple and makes the system more extensible.
+
+## Supporting Components
+
+1.  **`AuMarkerManager`**: A higher-level manager that encapsulates the logic for a specific feature: the AU (Astronomical Unit) markers.
+
+    - **Responsibility**: It uses the `Layer2DManager` to create a dedicated `AuMarkerLabelLayer` for the 2D labels, and it also directly manages the corresponding 3D ring `Mesh` objects in the main scene. This keeps all the logic for this specific feature contained in one place.
+    - **Instantiation**: It is instantiated and controlled by the main `ModularSpaceRenderer` in the `@teskooano/renderer-threejs` package.
+
+2.  **`BaseLabelLayer` Subclasses** (`CelestialLabelLayer`, `AuMarkerLabelLayer`): These classes contain the specific logic for managing a particular type of label. They are responsible for creating the HTML elements, positioning them, and defining their update logic (e.g., visibility based on distance).

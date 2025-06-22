@@ -8,11 +8,14 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "paths": {
       "@teskooano/data-types": ["../../data/types/src"],
-      "@teskooano/renderer-threejs": ["../threejs/src"]
+      "@teskooano/renderer-threejs-objects": ["../threejs-objects/src"]
     },
     "noEmit": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../../data/types" }, { "path": "../threejs" }]
+  "references": [
+    { "path": "../../data/types" },
+    { "path": "../threejs-objects" }
+  ]
 }

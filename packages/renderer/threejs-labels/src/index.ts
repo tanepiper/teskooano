@@ -5,3 +5,4 @@ export {
 } from "./layers/CelestialLabelLayer";
 export { AuMarkerLabelLayer } from "./layers/AuMarkerLabelLayer";
 export { BaseLabelLayer } from "./layers/BaseLabelLayer";
+export * from "./managers";
