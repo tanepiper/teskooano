@@ -468,7 +468,7 @@ export class ObjectManager {
 
     // Dispose renderers and clear their maps
     this.rendererUpdater.dispose();
-    this.lodManager.clear();
+    this.lodManager.dispose();
     this.lensingHandler.clear();
 
     this.celestialRenderers.clear();

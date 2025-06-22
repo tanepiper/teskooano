@@ -119,7 +119,7 @@ class CelestialFactoryService {
     gameStateService.setAllCelestialObjects({});
     gameStateService.setAllCelestialHierarchy({});
 
-    const currentState = simulationStateService.getCurrentState();
+    const currentState = simulationStateService.getSimulationState();
 
     const newState: any = { ...currentState };
 
@@ -142,7 +142,7 @@ class CelestialFactoryService {
       };
     }
 
-    simulationStateService.setState(newState);
+    simulationStateService.setSimulationState(newState);
 
     document.dispatchEvent(
       new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {

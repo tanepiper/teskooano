@@ -4,8 +4,6 @@ import type {
   PerformanceProfileType,
   PhysicsEngineType,
   SimulationState,
-  CameraState,
-  VisualSettingsState,
 } from "./types";
 
 /**
@@ -64,7 +62,7 @@ export class SimulationStateService {
   }
 
   /** Gets the current complete simulation state object. */
-  public getCurrentState(): SimulationState {
+  public getSimulationState(): SimulationState {
     return this._simulationState.getValue();
   }
 
@@ -73,28 +71,28 @@ export class SimulationStateService {
    * Prefer specific action methods for partial updates.
    * @param newState The complete new simulation state.
    */
-  public setState(newState: SimulationState): void {
+  public setSimulationState(newState: SimulationState): void {
     this._simulationState.next(newState);
   }
 
   public setTimeScale(scale: number): void {
-    this.setState({
-      ...this.getCurrentState(),
+    this.setSimulationState({
+      ...this.getSimulationState(),
       timeScale: scale,
     });
   }
 
   public togglePause(): void {
-    const currentState = this.getCurrentState();
-    this.setState({
+    const currentState = this.getSimulationState();
+    this.setSimulationState({
       ...currentState,
       paused: !currentState.paused,
     });
   }
 
   public resetTime(): void {
-    const currentState = this.getCurrentState();
-    this.setState({
+    const currentState = this.getSimulationState();
+    this.setSimulationState({
       ...currentState,
       time: 0,
       timeScale: 1,
@@ -103,9 +101,9 @@ export class SimulationStateService {
   }
 
   public stepTime(dt: number = 1): void {
-    const currentState = this.getCurrentState();
+    const currentState = this.getSimulationState();
     if (currentState.paused) {
-      this.setState({
+      this.setSimulationState({
         ...currentState,
         time: currentState.time + dt,
       });
@@ -117,22 +115,22 @@ export class SimulationStateService {
   }
 
   public selectObject(objectId: string | null): void {
-    this.setState({
-      ...this.getCurrentState(),
+    this.setSimulationState({
+      ...this.getSimulationState(),
       selectedObject: objectId,
     });
   }
 
   public setFocusedObject(objectId: string | null): void {
-    this.setState({
-      ...this.getCurrentState(),
+    this.setSimulationState({
+      ...this.getSimulationState(),
       focusedObjectId: objectId,
     });
   }
 
   public updateCamera(position: OSVector3, target: OSVector3): void {
-    const currentState = this.getCurrentState();
-    this.setState({
+    const currentState = this.getSimulationState();
+    this.setSimulationState({
       ...currentState,
       camera: {
         ...currentState.camera,
@@ -143,16 +141,16 @@ export class SimulationStateService {
   }
 
   public setPhysicsEngine(engine: PhysicsEngineType): void {
-    this.setState({
-      ...this.getCurrentState(),
+    this.setSimulationState({
+      ...this.getSimulationState(),
       physicsEngine: engine,
     });
   }
 
   public setPerformanceProfile(profile: PerformanceProfileType): void {
-    const currentState = this.getCurrentState();
+    const currentState = this.getSimulationState();
     if (profile !== currentState.performanceProfile) {
-      this.setState({
+      this.setSimulationState({
         ...currentState,
         performanceProfile: profile,
       });
@@ -161,11 +159,11 @@ export class SimulationStateService {
 
   public setTrailLengthMultiplier(multiplier: number): void {
     const validatedMultiplier = Math.max(0, multiplier);
-    const currentState = this.getCurrentState();
+    const currentState = this.getSimulationState();
     if (
       validatedMultiplier !== currentState.visualSettings.trailLengthMultiplier
     ) {
-      this.setState({
+      this.setSimulationState({
         ...currentState,
         visualSettings: {
           ...currentState.visualSettings,
@@ -180,7 +178,7 @@ export class SimulationStateService {
   }
 
   public setPredictionSettings(steps: number, duration: number): void {
-    const currentState = this.getCurrentState();
+    const currentState = this.getSimulationState();
     const newSteps = Math.max(10, steps);
     const newDuration = Math.max(0.1, duration);
 
@@ -188,7 +186,7 @@ export class SimulationStateService {
       newSteps !== currentState.visualSettings.predictionSteps ||
       newDuration !== currentState.visualSettings.predictionDuration
     ) {
-      this.setState({
+      this.setSimulationState({
         ...currentState,
         visualSettings: {
           ...currentState.visualSettings,

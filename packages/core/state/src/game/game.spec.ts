@@ -104,7 +104,7 @@ describe("Celestial Objects Store", () => {
 
 describe("Simulation State Actions", () => {
   beforeEach(() => {
-    simulationStateService.setState({
+    simulationStateService.setSimulationState({
       time: 0,
       timeScale: 1,
       paused: false,
@@ -128,46 +128,46 @@ describe("Simulation State Actions", () => {
 
   it("should select an object", () => {
     simulationStateService.selectObject("obj1");
-    const state = simulationStateService.getCurrentState();
+    const state = simulationStateService.getSimulationState();
     expect(state.selectedObject).toBe("obj1");
   });
 
   it("should deselect object if null is passed", () => {
     simulationStateService.selectObject("obj1");
     simulationStateService.selectObject(null);
-    const state = simulationStateService.getCurrentState();
+    const state = simulationStateService.getSimulationState();
     expect(state.selectedObject).toBeNull();
   });
 
   it("should not select a non-existent object", () => {
     simulationStateService.selectObject("nonexistent");
-    const state = simulationStateService.getCurrentState();
+    const state = simulationStateService.getSimulationState();
     expect(state.selectedObject).toBe("nonexistent");
   });
 
   it("should focus an object", () => {
     simulationStateService.setFocusedObject("obj2");
-    const state = simulationStateService.getCurrentState();
+    const state = simulationStateService.getSimulationState();
     expect(state.focusedObjectId).toBe("obj2");
   });
 
   it("should unfocus object if null is passed", () => {
     simulationStateService.setFocusedObject("obj2");
     simulationStateService.setFocusedObject(null);
-    const state = simulationStateService.getCurrentState();
+    const state = simulationStateService.getSimulationState();
     expect(state.focusedObjectId).toBeNull();
   });
 
   it("should not focus a non-existent object", () => {
     simulationStateService.setFocusedObject("nonexistent");
-    const state = simulationStateService.getCurrentState();
+    const state = simulationStateService.getSimulationState();
     expect(state.focusedObjectId).toBe("nonexistent");
   });
 });
 
 describe("Simulation Actions (Extended)", () => {
   beforeEach(() => {
-    simulationStateService.setState({
+    simulationStateService.setSimulationState({
       time: 0,
       timeScale: 1,
       paused: false,
@@ -187,28 +187,28 @@ describe("Simulation Actions (Extended)", () => {
 
   describe("simulation general actions", () => {
     it("should initialize with default values (covered by beforeEach and getCurrentState)", () => {
-      const state = simulationStateService.getCurrentState();
+      const state = simulationStateService.getSimulationState();
       expect(state.time).toBe(0);
       expect(state.timeScale).toBe(1);
     });
 
     it("should update timeScale", () => {
       simulationStateService.setTimeScale(2);
-      expect(simulationStateService.getCurrentState().timeScale).toBe(2);
+      expect(simulationStateService.getSimulationState().timeScale).toBe(2);
     });
 
     it("should toggle pause state", () => {
       simulationStateService.togglePause();
-      expect(simulationStateService.getCurrentState().paused).toBe(true);
+      expect(simulationStateService.getSimulationState().paused).toBe(true);
       simulationStateService.togglePause();
-      expect(simulationStateService.getCurrentState().paused).toBe(false);
+      expect(simulationStateService.getSimulationState().paused).toBe(false);
     });
 
     it("should update camera position and target", () => {
       const newPosition = new OSVector3(100, 200, 300);
       const newTarget = new OSVector3(0, 0, 0);
       simulationStateService.updateCamera(newPosition, newTarget);
-      const cameraState = simulationStateService.getCurrentState().camera;
+      const cameraState = simulationStateService.getSimulationState().camera;
       expect(cameraState.position.x).toBe(100);
       expect(cameraState.position.y).toBe(200);
       expect(cameraState.position.z).toBe(300);

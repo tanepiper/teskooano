@@ -2,7 +2,15 @@ import "@teskooano/design-system/styles.css";
 import "dockview-core/dist/styles/dockview.css";
 import "./vite-env.d";
 
-import { getCelestialObjects } from "@teskooano/core-state";
+import {
+  getCelestialObjects,
+  simulationStateService,
+} from "@teskooano/core-state";
+import {
+  rendererEvents,
+  type RendererStats,
+} from "@teskooano/renderer-threejs-core";
+import { throttleTime } from "rxjs/operators";
 
 import {
   PanelConfig,
@@ -92,7 +100,9 @@ async function initializeApp() {
   appContext.dockviewController = dockviewController;
 
   // Initialize managers that provide functions other components depend on.
-  await pluginManager.execute("engine-view:initialize");
+  await pluginManager.execute("engine-view:initialize", {
+    targetElement: appElement,
+  });
 
   try {
     await pluginManager.execute("toolbar:initialize", {
@@ -130,12 +140,16 @@ async function initializeApp() {
 
   // Initialize the tour controller and prompt if needed.
   try {
-    await pluginManager.execute("tour:initialize");
+    await pluginManager.execute("tour:initialize", {
+      modalManager,
+    });
   } catch (error) {
     console.error("[App] Failed to initialize tour controller:", error);
   }
 
-  await pluginManager.execute("system-controls:initialize");
+  await pluginManager.execute("system-controls:initialize", {
+    dockviewController,
+  });
 
   const plugins = pluginManager.getPlugins();
   plugins.forEach((plugin: TeskooanoPlugin) => {
@@ -194,7 +208,9 @@ async function initializeApp() {
 
   // Create the initial engine view panel on startup.
   try {
-    await pluginManager.execute("view:addCompositeEnginePanel");
+    await pluginManager.execute("view:addCompositeEnginePanel", {
+      dockviewController,
+    });
   } catch (error) {
     console.error(
       "[App] Error calling view:addCompositeEnginePanel function on startup:",
@@ -208,6 +224,19 @@ async function initializeApp() {
 }
 
 function setupEventListeners() {
+  rendererEvents.statsUpdated$
+    .pipe(throttleTime(1000, undefined, { leading: true, trailing: true }))
+    .subscribe((stats: RendererStats) => {
+      const currentState = simulationStateService.getSimulationState();
+      simulationStateService.setSimulationState({
+        ...currentState,
+        renderer: {
+          ...currentState.renderer,
+          ...stats,
+        },
+      });
+    });
+
   document.addEventListener("engine-focus-request", (event: Event) => {
     const focusEvent = event as CustomEvent<{
       targetPanelId: string;
@@ -234,7 +263,9 @@ function setupEventListeners() {
 
   document.body.addEventListener("start-tour-request", () => {
     try {
-      pluginManager.execute("tour:restart");
+      pluginManager.execute("tour:restart", {
+        modalManager: appContext.modalManager,
+      });
     } catch (error) {
       console.error("[App] Error calling tour:restart:", error);
     }

@@ -2,10 +2,9 @@ import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { ControlsManager } from "@teskooano/renderer-threejs-controls";
 import { AnimationLoop, SceneManager } from "@teskooano/renderer-threejs-core";
 import {
-  CSS2DLayerType,
-  CelestialLabelLayer,
-  Layer2DManager,
   AuMarkerManager,
+  CSS2DLayerType,
+  Layer2DManager,
   initializeLabelSystem,
 } from "@teskooano/renderer-threejs-labels";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
@@ -77,10 +76,7 @@ export class ModularSpaceRenderer {
     this.stateAdapter = new RendererStateAdapter();
 
     this.sceneManager = new SceneManager(container, options);
-    this.animationLoop = new AnimationLoop();
-
-    this.animationLoop.setRenderer(this.sceneManager.renderer);
-    this.animationLoop.setCamera(this.sceneManager.camera);
+    this.animationLoop = this.sceneManager.animationLoop;
 
     this.lightingManager = new LightingManager(this.sceneManager.scene);
     this.lodManager = new LODManager(this.sceneManager.camera);
@@ -231,13 +227,13 @@ export class ModularSpaceRenderer {
    * Starts the rendering loop.
    */
   startRenderLoop(): void {
-    this.animationLoop.start();
+    this.sceneManager.startRenderLoop();
   }
   /**
    * Stops the rendering loop.
    */
   stopRenderLoop(): void {
-    this.animationLoop.stop();
+    this.sceneManager.stopRenderLoop();
   }
 
   /**
@@ -249,18 +245,6 @@ export class ModularSpaceRenderer {
     this.sceneManager.onResize(width, height);
 
     this.css2DManager?.onResize(width, height);
-  }
-
-  /**
-   * Executes a single render frame.
-   *
-   * @deprecated The rendering logic is now managed by the internal animation loop.
-   * Calling this method is unnecessary and may have no effect.
-   */
-  render(): void {
-    // Most logic moved to mainUpdateCallback within animationLoop.onAnimate
-    // This method is kept for API compatibility but is effectively a no-op,
-    // as the primary rendering path is the animation loop.
   }
 
   /**
@@ -278,9 +262,7 @@ export class ModularSpaceRenderer {
     this.css2DManager?.dispose();
     this.auMarkerManager?.dispose();
     this.lightingManager.dispose();
-    if (typeof (this.lodManager as any).dispose === "function") {
-      (this.lodManager as any).dispose();
-    }
+    this.lodManager.dispose();
 
     window.removeEventListener("resize", () => {
       this.onResize(window.innerWidth, window.innerHeight);

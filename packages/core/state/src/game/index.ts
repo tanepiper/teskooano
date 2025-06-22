@@ -48,12 +48,10 @@ export const getChildrenOfObject =
   gameStateService.getChildrenOfObject.bind(gameStateService);
 
 export const simulationState$ = simulationStateService.simulationState$;
-export const getSimulationState = simulationStateService.getCurrentState.bind(
-  simulationStateService,
-);
-export const setSimulationState = simulationStateService.setState.bind(
-  simulationStateService,
-);
+export const getSimulationState =
+  simulationStateService.getSimulationState.bind(simulationStateService);
+export const setSimulationState =
+  simulationStateService.setSimulationState.bind(simulationStateService);
 
 export const actions = {
   setTimeScale: simulationStateService.setTimeScale.bind(

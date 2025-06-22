@@ -1,4 +1,3 @@
-import { simulationStateService } from "@teskooano/core-state";
 import * as THREE from "three";
 import { rendererEvents } from "./events";
 
@@ -164,34 +163,9 @@ export class AnimationLoop {
     }
 
     try {
-      const drawCalls = this.renderer.info.render.calls;
-      const triangles = this.renderer.info.render.triangles;
-      const memoryInfo = (performance as any)?.memory;
-      const usedMemory = memoryInfo?.usedJSHeapSize;
-
-      const currentState = simulationStateService.getCurrentState();
       const stats = this.getCurrentStats();
 
-      // Avoid setting state if the values haven't changed
-      if (
-        stats &&
-        currentState.renderer?.fps === stats.fps &&
-        currentState.renderer?.drawCalls === stats.drawCalls &&
-        currentState.renderer?.triangles === stats.triangles &&
-        currentState.renderer?.memory?.usedJSHeapSize ===
-          stats.memory?.usedJSHeapSize
-      ) {
-        return;
-      }
-
       if (stats) {
-        simulationStateService.setState({
-          ...currentState,
-          renderer: {
-            ...currentState.renderer,
-            ...stats,
-          },
-        });
         rendererEvents.statsUpdated$.next(stats);
       }
     } catch (error) {

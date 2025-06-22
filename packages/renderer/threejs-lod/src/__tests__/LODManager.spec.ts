@@ -55,7 +55,7 @@ describe("LODManager", () => {
   });
 
   afterEach(() => {
-    lodManager.clear();
+    lodManager.dispose();
     vi.clearAllMocks();
   });
 
@@ -112,7 +112,7 @@ describe("LODManager", () => {
     const levels: LODLevel[] = [{ object: new THREE.Mesh(), distance: 0 }];
     lodManager.createAndRegisterLOD(testObject, levels);
 
-    lodManager.clear();
+    lodManager.dispose();
 
     expect(lodManager.getLODById("test-planet")).toBeNull();
     expect(lodManager["objectLODs"].size).toBe(0);

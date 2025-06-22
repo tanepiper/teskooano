@@ -1,5 +1,6 @@
 import { simulationStateService } from "@teskooano/core-state";
 import * as THREE from "three";
+import { AnimationLoop } from "./AnimationLoop";
 import { rendererEvents } from "./events";
 
 /**
@@ -75,6 +76,8 @@ export class SceneManager {
   public camera: THREE.PerspectiveCamera;
   /** The `THREE.WebGLRenderer` instance. */
   public renderer: THREE.WebGLRenderer;
+  /** Manages the `requestAnimationFrame` loop. */
+  public animationLoop: AnimationLoop;
 
   private fov: number;
   private options: SceneManagerOptions;
@@ -100,9 +103,14 @@ export class SceneManager {
     this.scene = new THREE.Scene();
 
     // Initialize core components
+    this.animationLoop = new AnimationLoop();
     this.fov = this._initializeFov();
     this.camera = this._initializeCamera();
     this.renderer = this._initializeRenderer(container);
+
+    // Pass renderer and camera to the loop for stats collection
+    this.animationLoop.setRenderer(this.renderer);
+    this.animationLoop.setCamera(this.camera);
 
     // Configure scene features
     this.backgroundColor = this._parseBackground(this.options.background);
@@ -119,7 +127,7 @@ export class SceneManager {
    * @returns The resolved FOV value.
    */
   private _initializeFov(): number {
-    const initialState = simulationStateService.getCurrentState();
+    const initialState = simulationStateService.getSimulationState();
     return (
       this.options.fov ??
       initialState.camera?.fov ??
@@ -134,7 +142,7 @@ export class SceneManager {
    * @returns The configured `PerspectiveCamera`.
    */
   private _initializeCamera(): THREE.PerspectiveCamera {
-    const initialState = simulationStateService.getCurrentState();
+    const initialState = simulationStateService.getSimulationState();
     const camera = new THREE.PerspectiveCamera(
       this.fov,
       this.width / this.height,
@@ -167,7 +175,7 @@ export class SceneManager {
    * @returns The configured `WebGLRenderer`.
    */
   private _initializeRenderer(container: HTMLElement): THREE.WebGLRenderer {
-    const initialState = simulationStateService.getCurrentState();
+    const initialState = simulationStateService.getSimulationState();
     const profile = initialState.performanceProfile;
     let powerPref: "default" | "high-performance" | "low-power" =
       DefaultSceneManagerConfig.RENDERER.POWER_PREFERENCE.DEFAULT;
@@ -253,6 +261,20 @@ export class SceneManager {
   }
 
   /**
+   * Starts the rendering loop.
+   */
+  public startRenderLoop(): void {
+    this.animationLoop.start();
+  }
+
+  /**
+   * Stops the rendering loop.
+   */
+  public stopRenderLoop(): void {
+    this.animationLoop.stop();
+  }
+
+  /**
    * Renders a single frame of the scene.
    */
   render(): void {
@@ -320,19 +342,29 @@ export class SceneManager {
    * This includes helpers, the renderer, and all objects in the scene.
    */
   dispose(): void {
-    this.renderer.dispose();
+    // Clear scene objects and helpers
     this._clearDebugSphere();
     this._clearGridHelper();
+    this.scene.children.forEach((obj) => {
+      // Basic cleanup. More complex objects need their own dispose logic.
+      if (obj instanceof THREE.Mesh) {
+        obj.geometry.dispose();
+        if (Array.isArray(obj.material)) {
+          obj.material.forEach((mat) => mat.dispose());
+        } else {
+          obj.material.dispose();
+        }
+      }
+    });
 
-    // Remove the canvas from the DOM before disposing the renderer itself
-    if (this.renderer.domElement.parentNode) {
-      this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
-    }
+    // Stop the animation loop
+    this.animationLoop.stop();
 
-    // Clear remaining scene children
-    while (this.scene.children.length > 0) {
-      this.scene.remove(this.scene.children[0]);
-    }
+    // Dispose of the renderer and remove its canvas from the DOM
+    this.renderer.dispose();
+    this.renderer.domElement.parentElement?.removeChild(
+      this.renderer.domElement,
+    );
 
     rendererEvents.dispose$.next();
   }

@@ -170,7 +170,7 @@ export class LODManager {
   /**
    * Clear all managed LODs and debug labels.
    */
-  clear(): void {
+  dispose(): void {
     this.debugLabels.forEach(disposeDebugLabel);
     this.debugLabels.clear();
 
