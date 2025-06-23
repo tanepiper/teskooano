@@ -10,3 +10,4 @@
 
 export * from "./types.js";
 export { pluginManager } from "./pluginManager.js";
+export * from "./factories/plugin-factory.js";

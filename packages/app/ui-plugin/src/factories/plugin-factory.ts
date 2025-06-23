@@ -4,7 +4,7 @@ import type {
   ToolbarRegistration,
   ComponentConfig,
   ToolbarTarget,
-} from "@teskooano/ui-plugin";
+} from "../types.js";
 
 interface PanelPluginConfig {
   id: string;

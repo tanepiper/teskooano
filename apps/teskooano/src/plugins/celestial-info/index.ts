@@ -1,4 +1,4 @@
-import { createPanelPlugin } from "../../core/utils/plugin-factory.js";
+import { createPanelPlugin } from "@teskooano/ui-plugin";
 import { CelestialInfo } from "./view/CelestialInfo.view.js";
 
 import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
