@@ -62,72 +62,221 @@ graph TB
     class CELESTIAL,PROCEDURAL systems
 ```
 
-## Architecture Analysis (`apps/teskooano`)
+## Current Architecture Analysis
+
+### Application Structure (`apps/teskooano`)
 
 **Purpose**: This is the main frontend application for the Teskooano N-Body Simulation. It orchestrates the user interface, manages different views of the simulation using `dockview-core`, integrates core engine packages, and provides user controls.
 
-**Key Components:**
+### Core Components
 
-1.  **`main.ts`**: The application entry point.
+#### 1. Application Initialization (`main.ts`)
+The application entry point that coordinates the startup sequence:
 
-    - Initializes core controllers (`DockviewController`, `ToolbarController`).
-    - Sets up the initial `dockview` layout, typically creating an `EnginePanel` and its associated `UiPanel`.
-    - Imports and ensures registration of necessary web components (e.g., `FocusControl`, `CelestialInfo`, custom buttons, panels like `SettingsPanel`, `ProgressPanel`).
-    - Connects controllers (e.g., passes `DockviewController` to `ToolbarController`).
+- **Plugin System Bootstrap**: Loads and registers all plugins with dependency resolution
+- **UI Framework Setup**: Initializes Dockview for panel management
+- **Manager Initialization**: Sets up toolbar, modal, and tour controllers
+- **Event System**: Establishes global event listeners for plugin communication
+- **Error Handling**: Provides graceful failure modes and user feedback
 
-2.  **`controllers/dockviewController.ts`**: Manages the `dockview-core` instance.
+```typescript
+// Simplified initialization flow
+async function initializeApp() {
+  validateEnvironment();
+  await initializePluginSystem();
+  const { dockviewController } = await initializeDockview();
+  await initializeManagers(dockviewController);
+  setupEventListeners();
+}
+```
 
-    - Creates and configures the main `dockview` layout manager attached to the `#app` element.
-    - Provides a `createComponent` factory function for `dockview` that maps panel names (e.g., `'engine_view'`, `'ui_view'`, `'settings_view'`) to corresponding component classes (`EnginePanel`, `UiPanel`, `SettingsPanel`, etc.). Uses a `Map` (`_registeredComponents`) to allow dynamic registration.
-    - Listens for `dockview` events (e.g., `onDidActivePanelChange`) and updates the application state, specifically setting the `activePanelApi` store from `@teskooano/core-state` when an `EnginePanel` is focused.
-    - Exposes the raw `dockview` API (`api`) for other parts of the application (like `ToolbarController`) to interact with.
+#### 2. Plugin System Architecture
+A sophisticated plugin-based architecture enabling modular functionality:
 
-3.  **`controllers/toolbarController.ts`**: Manages the top toolbar element (`#toolbar`).
+**Plugin Manager** (`packages/app/ui-plugin/`):
+- **Loading**: Dynamic imports with build-time code splitting
+- **Registration**: Type-safe plugin capability registration
+- **Execution**: Context-aware function execution system
+- **Dependencies**: Topological sorting for plugin dependencies
+- **Hot Module Replacement**: Development-time plugin reloading
 
-    - Renders the toolbar content, including application icon, buttons (`Add Teskooano`, `Settings`), simulation controls (`toolbar-teskooano-simulation-controls`), and potentially a seed form (`toolbar-seed-form`).
-    - Handles button actions:
-      - `Add Teskooano`: Calls `addEnginePanels` to create a new `EnginePanel` and its associated `UiPanel` within the `dockview` layout, managed via the `DockviewController`.
-      - `Settings`: Calls `toggleSettingsPanel` to add or remove a floating `SettingsPanel` using the `DockviewController`.
-    - Uses a counter (`_enginePanelCounter`) to generate unique IDs for new engine/UI panels.
+**Plugin Types**:
+- **Panels**: Dockview-compatible UI panels (celestial-info, celestial-hierarchy)
+- **Functions**: Reusable business logic (system generation, focus control)
+- **Components**: Custom web components (buttons, controls, displays)
+- **Toolbar Items**: Toolbar buttons and widgets
+- **Managers**: Singleton service classes (modal manager, tour controller)
 
-4.  **`components/engine/EnginePanel.ts`**: A `dockview` panel component responsible for displaying a single instance of the 3D simulation.
+#### 3. State Management Architecture
+Reactive state management using RxJS observables:
 
-    - Likely instantiates or interfaces with `@teskooano/renderer-threejs` and `@teskooano/app-simulation` (or parts thereof) to render the 3D scene within its DOM element.
-    - May expose its own API or interact with `core-state` to allow control and data display by associated `UiPanel`s.
-    - Manages its own Three.js scene, camera, and renderer lifecycle tied to the panel's lifecycle.
+**Core State** (`@teskooano/core-state`):
+- `celestialObjects$` - Current celestial body data
+- `simulationState$` - Physics simulation settings and status
+- `accelerationVectors$` - Real-time physics vectors for visualization
+- `celestialHierarchy$` - Object parent-child relationships
 
-5.  **`components/engine/ProgressPanel.ts`**: A `dockview` panel component, likely used to display loading progress or background task status related to the simulation (e.g., procedural generation).
+**Derived State**:
+- `renderableObjects$` - Transformed data for 3D rendering
+- `visualSettings$` - Renderer-specific configuration
 
-6.  **`components/ui-controls/UiPanel.ts`**: A `dockview` panel designed to host various UI controls related to a _specific_ `EnginePanel`.
+**State Flow Pattern**:
+```
+Raw Physics Data → Core State → Renderable Store → UI Components
+                               ↓
+                         Simulation Loop
+```
 
-    - Takes an `engineViewId` parameter during creation to associate itself with a target `EnginePanel`.
-    - Renders distinct sections (defined in `main.ts` or by `ToolbarController`) containing specific web components (e.g., `<focus-control>`, `<celestial-info>`, `<renderer-info-display>`, `<engine-ui-settings-panel>`).
-    - These inner components likely interact with the associated `EnginePanel`'s API or filtered data from `core-state`.
+#### 4. Rendering Pipeline
+Modular 3D rendering system built on Three.js:
 
-7.  **`components/ui-controls/` (Specific Controls)**: Contains individual web components used within the `UiPanel` or potentially elsewhere.
+**ModularSpaceRenderer** (`packages/renderer/threejs/`):
+- **Scene Management**: Three.js scene, camera, and renderer lifecycle
+- **Object Management**: Celestial body 3D representations
+- **Lighting System**: Dynamic lighting based on star positions
+- **Controls**: User interaction (orbit controls, focus, follow)
+- **Effects**: Visual effects (trails, predictions, backgrounds)
 
-    - `FocusControl`: Allows users to select/focus on celestial objects.
-    - `RendererInfoDisplay`: Shows debugging or performance information about the `renderer-threejs` instance.
-    - `CelestialInfo`: Displays data about the currently selected celestial object.
+**Manager Decomposition**:
+- `ObjectManager` - 3D object lifecycle and LOD
+- `OrbitsManager` - Trajectory visualization
+- `LightingManager` - Scene lighting calculations
+- `ControlsManager` - Camera and user interactions
+- `BackgroundManager` - Skybox and environment
 
-8.  **`components/toolbar/`**: Contains web components specifically designed for use within the main application toolbar.
+#### 5. Plugin Communication Patterns
 
-    - `SimulationControls`: Provides play/pause, speed controls for the simulation (likely interacting with `core-state`).
-    - `SeedForm`: Allows users to input parameters to seed or reset the simulation state.
+**Direct Execution**:
+```typescript
+pluginManager.execute('focus:focus_on_body', { objectId: 'earth' });
+```
 
-9.  **`components/settings/SettingsPanel.ts`**: A `dockview` panel component providing global application settings, displayed in a floating window toggled by the `ToolbarController`.
+**Shared State Subscriptions**:
+```typescript
+celestialObjects$.subscribe(objects => {
+  // React to state changes
+});
+```
 
-10. **`components/shared/`**: Contains reusable base components, like `<teskooano-button>`.
+**DOM Events**:
+```typescript
+document.dispatchEvent(new CustomEvent('engine-focus-request', {
+  detail: { targetPanelId: 'panel-1', objectId: 'mars' }
+}));
+```
 
-11. **`styles.css`**: Global application styles and potentially theme overrides for `dockview`.
+### Key Architectural Patterns
 
-**Key Characteristics & Design:**
+#### 1. Model-View-Controller (MVC)
+All UI plugins follow a strict MVC pattern:
 
-- **Multi-View Architecture**: Leverages `dockview-core` to enable multiple independent views (`EnginePanel`) of the simulation data, each potentially with its own set of UI controls (`UiPanel`).
-- **Controller Pattern**: Uses `DockviewController` and `ToolbarController` to encapsulate interactions with major UI libraries/sections and manage application flow.
-- **Component-Based UI**: Builds the interface from distinct web components (both `dockview` panels and smaller controls).
-- **State Integration**: Interacts with `@teskooano/core-state` (e.g., `activePanelApi`) to share state between panels and controllers.
-- **Engine Abstraction**: The core simulation and rendering logic are largely delegated to imported packages (`@teskooano/app-simulation`, `@teskooano/renderer-threejs`), with `EnginePanel` acting as the integration point within this application's UI.
-- **Dynamic Layout**: The layout is not fixed; users can rearrange panels (within `dockview` constraints), and the `ToolbarController` can dynamically add new engine views.
+- **View**: Custom element responsible only for DOM management
+- **Controller**: Business logic, state management, and side effects
+- **Model**: Reactive state accessed through observables
 
-**Dependencies**: `dockview-core`, `RxJS`, `three`, `@teskooano/app-simulation`, `@teskooano/core-state`, `@teskooano/renderer-threejs`, `@teskooano/procedural-generation`.
+#### 2. Dependency Injection
+Plugin execution context provides access to shared services:
+
+```typescript
+interface PluginExecutionContext {
+  pluginManager: PluginManager;
+  dockviewApi: DockviewApi;
+  dockviewController: DockviewController;
+  getManager<T>(id: string): T;
+  executeFunction<T>(id: string, args?: any): T;
+}
+```
+
+#### 3. Observer Pattern
+Extensive use of RxJS for reactive programming:
+
+- State changes propagate automatically through observable streams
+- UI components subscribe to relevant data streams
+- Side effects are managed through operators and subscriptions
+
+#### 4. Factory Pattern
+Dynamic object creation with caching:
+
+- Plugin loading uses factory functions for module instantiation
+- Celestial renderers use factories for type-specific creation
+- UI components use factory patterns for panel generation
+
+### Performance Optimizations
+
+#### 1. Code Splitting
+- Plugins are loaded dynamically using Vite's dynamic imports
+- Only required functionality is loaded at runtime
+- Build-time generation of plugin loaders
+
+#### 2. Level of Detail (LOD)
+- 3D objects adapt complexity based on camera distance
+- Shader complexity reduces for distant objects
+- Particle systems scale object count dynamically
+
+#### 3. Subscription Management
+- Automatic cleanup of RxJS subscriptions in components
+- Shared state streams prevent redundant calculations
+- Throttling and debouncing for high-frequency updates
+
+### Current Challenges & Technical Debt
+
+#### 1. Complexity Hotspots
+- **main.ts**: 278 lines handling multiple initialization concerns
+- **PluginManager**: 367 lines with multiple responsibilities
+- **ModularSpaceRenderer**: Large coordinator class managing many subsystems
+
+#### 2. Code Duplication
+- RxJS subscription patterns repeated across 15+ files
+- Plugin configuration boilerplate in 12+ plugin definitions
+- State access patterns inconsistent throughout codebase
+
+#### 3. Architectural Misalignment
+- UI logic mixed with business logic in some packages
+- Circular dependencies between renderer and state packages
+- Camera management split between multiple layers
+
+### Dependencies
+
+**Core Framework Dependencies**:
+- `dockview-core` - Panel layout management
+- `three` - 3D graphics rendering
+- `rxjs` - Reactive programming
+
+**Internal Package Dependencies**:
+- `@teskooano/core-state` - Centralized state management
+- `@teskooano/core-physics` - Physics simulation engine
+- `@teskooano/renderer-threejs` - 3D rendering pipeline
+- `@teskooano/app-simulation` - Simulation orchestration
+- `@teskooano/ui-plugin` - Plugin system infrastructure
+
+### Development Workflow
+
+#### 1. Plugin Development
+```typescript
+// Create plugin
+export const plugin: TeskooanoPlugin = {
+  id: 'my-plugin',
+  panels: [/* panel configs */],
+  functions: [/* function configs */],
+  components: [/* component configs */],
+};
+
+// Register in pluginRegistry.ts
+export const pluginConfig = {
+  'my-plugin': () => import('./plugins/my-plugin'),
+};
+```
+
+#### 2. Hot Module Replacement
+- Plugins support HMR during development
+- State preservation during plugin reloads
+- Real-time feedback on plugin changes
+
+#### 3. Testing Strategy
+- Unit tests for individual plugins and components
+- Integration tests for plugin communication
+- Performance tests for rendering pipeline
+
+---
+
+*This architecture enables a highly modular, extensible N-Body simulation with sophisticated 3D visualization capabilities while maintaining clean separation of concerns and developer productivity.*
