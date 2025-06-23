@@ -1,7 +1,7 @@
-import {
-  type TeskooanoPlugin,
-  type FunctionConfig,
-  type PluginExecutionContext,
+import { createInterfacePlugin } from "@teskooano/ui-plugin";
+import type {
+  FunctionConfig,
+  PluginExecutionContext,
 } from "@teskooano/ui-plugin";
 import { EngineToolbarManager } from "./EngineToolbarManager";
 
@@ -17,12 +17,9 @@ const initializeEngineToolbar: FunctionConfig = {
   },
 };
 
-export const plugin: TeskooanoPlugin = {
+export const plugin = createInterfacePlugin({
   id: "teskooano-engine-toolbar",
   name: "Teskooano Engine Toolbar",
   description: "Provides the manager service for engine overlay toolbars.",
-  panels: [],
-  components: [],
   functions: [initializeEngineToolbar],
-  toolbarRegistrations: [],
-};
+});

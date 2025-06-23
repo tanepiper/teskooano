@@ -1,5 +1,5 @@
+import { createInterfacePlugin } from "@teskooano/ui-plugin";
 import type {
-  TeskooanoPlugin,
   FunctionConfig,
   PluginExecutionContext,
   ToolbarRegistration,
@@ -85,7 +85,7 @@ const tourToolbarRegistration: ToolbarRegistration = {
   ],
 };
 
-export const plugin: TeskooanoPlugin = {
+export const plugin = createInterfacePlugin({
   id: "teskooano-tour",
   name: "Teskooano Tour",
   description: "Provides the interface for application tours using driver.js",
@@ -95,6 +95,5 @@ export const plugin: TeskooanoPlugin = {
     restartTourFunction,
     setSkipTourFunction,
   ],
-  panels: [],
   toolbarRegistrations: [tourToolbarRegistration],
-};
+});

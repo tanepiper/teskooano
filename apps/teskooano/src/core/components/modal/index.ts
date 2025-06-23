@@ -1,4 +1,4 @@
-import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
+import { createComponentPlugin } from "@teskooano/ui-plugin";
 import { TeskooanoModal } from "./Modal";
 import { TeskooanoModalManager } from "./ModalManager";
 
@@ -8,7 +8,7 @@ export * from "./ModalManager";
 /**
  * Plugin definition for the core Modal system.
  */
-export const plugin: TeskooanoPlugin = {
+export const plugin = createComponentPlugin({
   id: "teskooano-modal",
   name: "Teskooano Modal",
   description:
@@ -27,9 +27,4 @@ export const plugin: TeskooanoPlugin = {
       managerClass: TeskooanoModalManager,
     },
   ],
-
-  panels: [],
-  functions: [],
-  toolbarRegistrations: [],
-  toolbarWidgets: [],
-};
+});

@@ -1,7 +1,7 @@
-import {
-  type FunctionConfig,
-  type PluginExecutionContext,
-  type TeskooanoPlugin,
+import { createControllerPlugin } from "@teskooano/ui-plugin";
+import type {
+  FunctionConfig,
+  PluginExecutionContext,
 } from "@teskooano/ui-plugin";
 
 import { ToolbarController } from "./ToolbarController.js";
@@ -51,12 +51,12 @@ const initializeToolbar: FunctionConfig = {
 
 export const functions = [initializeToolbar];
 
-export const plugin: TeskooanoPlugin = {
+export const plugin = createControllerPlugin({
   id: "core-toolbar",
   name: "Core Toolbar",
   description: "Initializes the main application toolbar.",
   functions: [initializeToolbar],
-};
+});
 
 export * from "./ToolbarController";
 export * from "./ToolbarController.utils";

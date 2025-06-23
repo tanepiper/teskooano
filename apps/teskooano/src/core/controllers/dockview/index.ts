@@ -1,5 +1,5 @@
+import { createControllerPlugin } from "@teskooano/ui-plugin";
 import type {
-  TeskooanoPlugin,
   FunctionConfig,
   PluginExecutionContext,
 } from "@teskooano/ui-plugin";
@@ -54,11 +54,10 @@ const initializeDockview: FunctionConfig = {
 /**
  * The standard TeskooanoPlugin definition for the Dockview controller.
  */
-export const plugin: TeskooanoPlugin = {
+export const plugin = createControllerPlugin({
   id: "teskooano-dockview",
   name: "Teskooano Dockview",
-  description:
-    "Provides the main DockviewController instance via an initialization function.",
+  description: "Provides the main DockviewController instance via an initialization function.",
   functions: [initializeDockview],
   panels: [
     {
@@ -67,8 +66,4 @@ export const plugin: TeskooanoPlugin = {
       defaultTitle: "Error",
     },
   ],
-  components: [],
-  managerClasses: [],
-  toolbarRegistrations: [],
-  toolbarWidgets: [],
-};
+});

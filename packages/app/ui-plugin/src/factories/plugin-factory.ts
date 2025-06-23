@@ -4,6 +4,8 @@ import type {
   ToolbarRegistration,
   ComponentConfig,
   ToolbarTarget,
+  FunctionConfig,
+  ManagerConfig,
 } from "../types.js";
 
 interface PanelPluginConfig {
@@ -28,6 +30,34 @@ interface PanelPluginConfig {
   tooltipText?: string;
   tooltipTitle?: string;
   tooltipIconSvg?: string;
+}
+
+interface ComponentPluginConfig {
+  id: string;
+  name: string;
+  description: string;
+  components: ComponentConfig[];
+  managerClasses?: ManagerConfig[];
+  version?: string;
+  icon?: string;
+}
+
+interface ControllerPluginConfig {
+  id: string;
+  name: string;
+  description: string;
+  functions: FunctionConfig[];
+  panels?: PanelConfig[];
+  managerClasses?: ManagerConfig[];
+}
+
+interface InterfacePluginConfig {
+  id: string;
+  name: string;
+  description: string;
+  functions: FunctionConfig[];
+  toolbarRegistrations?: ToolbarRegistration[];
+  managerClasses?: ManagerConfig[];
 }
 
 /**
@@ -82,6 +112,59 @@ export function createPanelPlugin(config: PanelPluginConfig): TeskooanoPlugin {
     components: components,
     functions: config.additionalFunctions || [],
     managerClasses: [],
+  };
+}
+
+/**
+ * Factory for component-only plugins (like core UI components).
+ */
+export function createComponentPlugin(config: ComponentPluginConfig): TeskooanoPlugin {
+  return {
+    id: config.id,
+    name: config.name,
+    description: config.description,
+    ...(config.version && { version: config.version }),
+    ...(config.icon && { icon: config.icon }),
+    components: config.components,
+    managerClasses: config.managerClasses || [],
+    panels: [],
+    functions: [],
+    toolbarRegistrations: [],
+    toolbarWidgets: [],
+  };
+}
+
+/**
+ * Factory for controller plugins (initialization functions + panels).
+ */
+export function createControllerPlugin(config: ControllerPluginConfig): TeskooanoPlugin {
+  return {
+    id: config.id,
+    name: config.name,
+    description: config.description,
+    functions: config.functions,
+    panels: config.panels || [],
+    managerClasses: config.managerClasses || [],
+    components: [],
+    toolbarRegistrations: [],
+    toolbarWidgets: [],
+  };
+}
+
+/**
+ * Factory for interface plugins (functions + toolbar registrations).
+ */
+export function createInterfacePlugin(config: InterfacePluginConfig): TeskooanoPlugin {
+  return {
+    id: config.id,
+    name: config.name,
+    description: config.description,
+    functions: config.functions,
+    toolbarRegistrations: config.toolbarRegistrations || [],
+    managerClasses: config.managerClasses || [],
+    panels: [],
+    components: [],
+    toolbarWidgets: [],
   };
 }
 

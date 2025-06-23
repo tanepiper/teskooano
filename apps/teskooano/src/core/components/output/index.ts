@@ -1,4 +1,4 @@
-import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
+import { createComponentPlugin } from "@teskooano/ui-plugin";
 import { TeskooanoOutputDisplay } from "./OutputDisplay";
 import { TeskooanoLabeledValue } from "./LabeledValue";
 
@@ -8,7 +8,7 @@ export * from "./LabeledValue";
 /**
  * Plugin definition for the core Output components.
  */
-export const plugin: TeskooanoPlugin = {
+export const plugin = createComponentPlugin({
   id: "teskooano-output",
   name: "Teskooano Output Components",
   description:
@@ -24,10 +24,4 @@ export const plugin: TeskooanoPlugin = {
       componentClass: TeskooanoLabeledValue,
     },
   ],
-
-  managerClasses: [],
-  panels: [],
-  functions: [],
-  toolbarRegistrations: [],
-  toolbarWidgets: [],
-};
+});
