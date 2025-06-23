@@ -1,4 +1,7 @@
-import { type SimulationState, StateSubscriptionMixin } from "@teskooano/core-state";
+import {
+  type SimulationState,
+  StateSubscriptionMixin,
+} from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
   DockviewPanelApi,
@@ -314,6 +317,7 @@ export class CompositeEnginePanel
     // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
     this._subscriptionManager.dispose();
     this._lifecycleManager.dispose();
+    this._eventManager.dispose();
 
     this._placeholderManager?.dispose();
 
@@ -344,15 +348,8 @@ export class CompositeEnginePanel
     this._subscriptionManager.dispose();
     this._subscriptionManager = new StateSubscriptionMixin();
 
-    // ✅ Using StateSubscriptionMixin composition for clean subscription management
-    this._subscriptionManager.subscribeToStateComposition(
-      this._lifecycleManager.listen(),
-      () => {} // Manager handles its own side effects
-    );
-    this._subscriptionManager.subscribeToStateComposition(
-      this._eventManager.listen(),
-      () => {} // Manager handles its own side effects
-    );
+    this._lifecycleManager.listen();
+    this._eventManager.listen();
   }
 
   /**

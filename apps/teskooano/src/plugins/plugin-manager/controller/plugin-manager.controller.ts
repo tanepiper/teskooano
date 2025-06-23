@@ -19,12 +19,9 @@ export class PluginManagerController extends StateSubscriptionMixin {
    */
   public init(): void {
     // ✅ Using StateSubscriptionMixin for clean subscription management
-    this.subscribeToState(
-      pluginManager.pluginsChanged$,
-      () => {
-        this.renderPluginList();
-      }
-    );
+    this.subscribeToState(pluginManager.pluginsChanged$, () => {
+      this.renderPluginList();
+    });
     this.renderPluginList();
   }
 

@@ -1,5 +1,5 @@
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
-import { StateSubscriptionMixin } from "../mixins/StateSubscriptionMixin";
+import { StateSubscriptionMixin } from "@teskooano/core-state";
 import { template } from "./Slider.template";
 import {
   BehaviorSubject,
@@ -223,34 +223,32 @@ export class TeskooanoSlider extends HTMLElement {
       ),
     );
 
-    // ✅ Using StateSubscriptionMixin composition for clean subscription management  
-    this.subscriptionManager.subscribeToState(
+    // ✅ Using StateSubscriptionMixin composition for clean subscription management
+    this.subscriptionManager.subscribeToStateComposition(
       coreState$,
       (state: SliderUIState) => this.updateUI(state),
     );
 
-    this.subscriptionManager.subscribeToState(
-      this.debouncedUpdateSubject
-        .pipe(
-          debounceTime(400),
-          distinctUntilChanged(),
-          filter((value) => !this.isInvalidSubject.getValue()),
-          tap((finalValue) => {
-            this.valueSubject.next(finalValue);
+    this.subscriptionManager.subscribeToStateComposition(
+      this.debouncedUpdateSubject.pipe(
+        debounceTime(400),
+        distinctUntilChanged(),
+        filter(() => !this.isInvalidSubject.getValue()),
+      ),
+      (finalValue) => {
+        this.valueSubject.next(finalValue);
 
-            this.dispatchEvent(
-              new CustomEvent<SliderValueChangePayload>(
-                CustomEvents.SLIDER_CHANGE,
-                {
-                  detail: { value: finalValue },
-                  bubbles: true,
-                  composed: true,
-                },
-              ),
-            );
-          }),
-        )
-        .subscribe(),
+        this.dispatchEvent(
+          new CustomEvent<SliderValueChangePayload>(
+            CustomEvents.SLIDER_CHANGE,
+            {
+              detail: { value: finalValue },
+              bubbles: true,
+              composed: true,
+            },
+          ),
+        );
+      },
     );
   }
 

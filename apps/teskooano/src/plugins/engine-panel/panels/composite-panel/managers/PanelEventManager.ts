@@ -14,6 +14,7 @@ interface PanelEventManagerOptions {
  */
 export class PanelEventManager {
   private _options: PanelEventManagerOptions;
+  private _subscription = new Subscription();
 
   constructor(options: PanelEventManagerOptions) {
     this._options = options;
@@ -23,23 +24,23 @@ export class PanelEventManager {
    * Sets up all event listeners and returns a subscription that can be
    * used to tear them all down.
    */
-  public listen(): Subscription {
-    const subscription = new Subscription();
-
+  public listen(): void {
     // Subscribe to simulation state
-    subscription.add(
+    this._subscription.add(
       simulationState$.subscribe(this._options.handleSimulationStateChange),
     );
 
     // Subscribe to layout changes
-    subscription.add(
+    this._subscription.add(
       layoutOrientation$.subscribe(() => {
         if (this._options.panelIsConnected()) {
           this._options.triggerResize();
         }
       }),
     );
+  }
 
-    return subscription;
+  public dispose(): void {
+    this._subscription.unsubscribe();
   }
 }

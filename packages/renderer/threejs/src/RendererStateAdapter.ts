@@ -101,43 +101,38 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
    */
   private subscribeToCoreState(): void {
     // ✅ Using StateSubscriptionMixin for clean subscription management
-    this.subscribeToState(
-      celestialObjects$,
-      (objects) => this.processCelestialObjectsUpdateNow(objects),
+    this.subscribeToState(celestialObjects$, (objects) =>
+      this.processCelestialObjectsUpdateNow(objects),
     );
 
-    this.subscribeToState(
-      simulationState$,
-      (simState: SimulationState) => {
-        this.currentSimulationTime = simState.time ?? 0;
+    this.subscribeToState(simulationState$, (simState: SimulationState) => {
+      this.currentSimulationTime = simState.time ?? 0;
 
-        const currentVisSettings = this.$visualSettings.getValue();
-        const newMultiplier =
-          simState.visualSettings.trailLengthMultiplier ?? 150;
-        const newEngine =
-          simState.physicsEngine === "verlet" ? "verlet" : "keplerian";
-        const newTimeScale = simState.timeScale;
-        const newPredictionSteps = simState.visualSettings.predictionSteps;
-        const newPredictionDuration =
-          simState.visualSettings.predictionDuration;
+      const currentVisSettings = this.$visualSettings.getValue();
+      const newMultiplier =
+        simState.visualSettings.trailLengthMultiplier ?? 150;
+      const newEngine =
+        simState.physicsEngine === "verlet" ? "verlet" : "keplerian";
+      const newTimeScale = simState.timeScale;
+      const newPredictionSteps = simState.visualSettings.predictionSteps;
+      const newPredictionDuration = simState.visualSettings.predictionDuration;
 
-        if (
-          newMultiplier !== currentVisSettings.trailLengthMultiplier ||
-          newEngine !== currentVisSettings.physicsEngine ||
-          newTimeScale !== currentVisSettings.timeScale ||
-          newPredictionSteps !== currentVisSettings.predictionSteps ||
-          newPredictionDuration !== currentVisSettings.predictionDuration
-        ) {
-          this.$visualSettings.next({
-            trailLengthMultiplier: newMultiplier,
-            physicsEngine: newEngine,
-            timeScale: newTimeScale,
-            predictionSteps: newPredictionSteps,
-            predictionDuration: newPredictionDuration,
-          });
-        }
+      if (
+        newMultiplier !== currentVisSettings.trailLengthMultiplier ||
+        newEngine !== currentVisSettings.physicsEngine ||
+        newTimeScale !== currentVisSettings.timeScale ||
+        newPredictionSteps !== currentVisSettings.predictionSteps ||
+        newPredictionDuration !== currentVisSettings.predictionDuration
+      ) {
+        this.$visualSettings.next({
+          trailLengthMultiplier: newMultiplier,
+          physicsEngine: newEngine,
+          timeScale: newTimeScale,
+          predictionSteps: newPredictionSteps,
+          predictionDuration: newPredictionDuration,
+        });
       }
-    );
+    });
   }
 
   /**

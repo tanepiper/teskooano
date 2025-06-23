@@ -7,6 +7,7 @@ The Teskooano application follows a **reactive, plugin-based architecture** with
 ## Core Architecture Patterns
 
 ### 1. Reactive State Management (RxJS-based)
+
 The application uses a **centralized reactive state** pattern with multiple interconnected stores:
 
 ```mermaid
@@ -49,17 +50,17 @@ graph TB
     SS --> RSS
     SS --> SM
     CS --> PA
-    
+
     %% Physics Loop
     SM --> UPD
     UPD --> PA
     PA --> CS
-    
+
     %% Rendering Pipeline
     RS --> OM
     RSS --> ORM
     CS --> MSR
-    
+
     %% UI Subscriptions
     CS --> P1
     CS --> P2
@@ -79,6 +80,7 @@ graph TB
 ```
 
 ### 2. Plugin System Architecture
+
 The application uses a **hierarchical plugin system** with dependency resolution:
 
 ```mermaid
@@ -170,11 +172,11 @@ sequenceDiagram
     UI->>PM: execute("system:generate_random")
     PM->>CS: actions.createSolarSystem()
     CS->>CS: celestialObjects$ emits
-    
+
     Note over SM: Reactive Simulation Start
     CS->>SM: celestialObjects$ subscription
     SM->>SM: startLoop() when objects exist
-    
+
     loop Animation Frame
         SM->>CS: getSimulationState()
         SM->>CS: physicsSystemAdapter.getBodies()
@@ -229,14 +231,17 @@ graph LR
 ### 🚨 Code Duplication Areas
 
 #### 1. State Subscription Patterns
+
 **Issue**: Multiple plugins implement similar RxJS subscription patterns.
 
 **Location**: Found in:
+
 - `apps/teskooano/src/plugins/celestial-info/`
 - `apps/teskooano/src/plugins/celestial-hierarchy/`
 - `apps/teskooano/src/plugins/engine-panel/main-toolbar/system-controls/`
 
 **Pattern**:
+
 ```typescript
 // Repeated in multiple plugins
 private subscriptions = new Subscription();
@@ -247,10 +252,10 @@ ngOnInit() {
       // Plugin-specific logic
     })
   );
-  
+
   this.subscriptions.add(
     simulationState$.subscribe(state => {
-      // Plugin-specific logic  
+      // Plugin-specific logic
     })
   );
 }
@@ -263,14 +268,22 @@ ngOnDestroy() {
 **Recommendation**: Create a `BaseSubscribableComponent` or `StateSubscriptionMixin`.
 
 #### 2. Plugin Registration Boilerplate
+
 **Issue**: Similar plugin definition structures across plugins.
 
 **Pattern**:
+
 ```typescript
 // Repeated pattern in plugin index.ts files
-const panelConfig: PanelConfig = { /* ... */ };
-const toolbarRegistration: ToolbarRegistration = { /* ... */ };
-const components: ComponentConfig[] = [ /* ... */ ];
+const panelConfig: PanelConfig = {
+  /* ... */
+};
+const toolbarRegistration: ToolbarRegistration = {
+  /* ... */
+};
+const components: ComponentConfig[] = [
+  /* ... */
+];
 
 export const plugin: TeskooanoPlugin = {
   id: "plugin-id",
@@ -286,25 +299,30 @@ export const plugin: TeskooanoPlugin = {
 ### 🧠 Cognitive Complexity Issues
 
 #### 1. Main Application Bootstrap (`main.ts`)
+
 **Issue**: The `initializeApp()` function is 278 lines and handles multiple concerns.
 
 **Complexity Factors**:
+
 - Plugin loading and dependency resolution
-- Error handling for multiple initialization steps  
+- Error handling for multiple initialization steps
 - Event listener setup
 - Dockview integration
 - Manager initialization
 
 **Recommendation**: Break down into smaller, focused initialization functions:
+
 - `initializePluginSystem()`
 - `initializeDockview()`
 - `initializeManagers()`
 - `setupEventListeners()`
 
 #### 2. Plugin Manager (`packages/app/ui-plugin/src/pluginManager.ts`)
+
 **Issue**: Single class handling multiple responsibilities (367 lines).
 
 **Complexity Factors**:
+
 - Plugin loading and registration
 - Dependency resolution
 - Hot Module Replacement
@@ -312,6 +330,7 @@ export const plugin: TeskooanoPlugin = {
 - Function execution
 
 **Current Delegation**:
+
 ```typescript
 class PluginManager {
   #registrationManager: RegistrationManager; // ✅ Good
@@ -320,15 +339,18 @@ class PluginManager {
 ```
 
 **Recommendation**: Further decompose into:
+
 - `PluginLoader`
-- `DependencyResolver`  
+- `DependencyResolver`
 - `ExecutionContext`
 - `HMRManager`
 
 #### 3. ModularSpaceRenderer (`packages/renderer/threejs/src/ModularSpaceRenderer.ts`)
+
 **Issue**: Large coordinator class (434 lines) managing many subsystems.
 
 **Current Structure**: ✅ Generally well-decomposed into managers, but could benefit from:
+
 - Extract setup logic into `RendererSetup` class
 - Move event listener logic to `RendererEventManager`
 - Create `RendererAPI` interface for public methods
@@ -336,9 +358,11 @@ class PluginManager {
 ### 🏗️ Architectural Misplacement Issues
 
 #### 1. State Management Split
+
 **Issue**: Application state is split between `@teskooano/core-state` and local component state.
 
 **Examples**:
+
 - Camera state in `packages/app/simulation/src/camera/CameraManager.ts`
 - UI state in individual plugin components
 - Visual settings in both `SimulationState` and `RendererStateAdapter`
@@ -346,9 +370,11 @@ class PluginManager {
 **Recommendation**: Consolidate related state into dedicated state slices.
 
 #### 2. Cross-Package Dependencies
+
 **Issue**: Some packages have unclear dependency boundaries.
 
 **Examples**:
+
 ```typescript
 // In renderer package, importing from systems
 import { calculateLightSourceMaps } from "@teskooano/renderer-threejs-lighting";
@@ -365,7 +391,7 @@ import { calculateLightSourceMaps } from "@teskooano/renderer-threejs-lighting";
 graph TD
     subgraph "State Complexity Hotspots"
         A[SimulationState: 15+ properties]
-        B[CelestialObject: 20+ properties]  
+        B[CelestialObject: 20+ properties]
         C[RenderableCelestialObject: 25+ properties]
         D[PluginExecutionContext: 6+ methods]
     end
@@ -378,7 +404,7 @@ graph TD
     end
 
     T1 --> T2
-    T2 --> T3  
+    T2 --> T3
     T3 --> T4
 
     A --> T2
@@ -396,16 +422,19 @@ graph TD
 ## Performance Considerations
 
 ### 1. Observable Subscription Management
+
 **Current Pattern**: Each plugin manages its own subscriptions.
 **Risk**: Memory leaks if not properly cleaned up.
 **Solution**: Centralized subscription management or auto-cleanup utilities.
 
 ### 2. State Update Frequency
+
 **Current**: Multiple state streams update independently.
 **Risk**: Excessive re-renders and calculations.
 **Solution**: Batch state updates where possible.
 
 ### 3. Plugin Hot Reloading
+
 **Current**: Full plugin disposal and re-registration.
 **Risk**: Losing component state during development.
 **Solution**: State preservation during HMR.
@@ -413,16 +442,19 @@ graph TD
 ## Recommendations Summary
 
 ### Immediate Actions (High Impact, Low Effort)
+
 1. **Create Base Classes**: Extract common subscription patterns
 2. **Plugin Factories**: Reduce boilerplate in plugin definitions
 3. **State Type Cleanup**: Consolidate similar interfaces
 
-### Medium-term Refactoring (High Impact, Medium Effort)  
+### Medium-term Refactoring (High Impact, Medium Effort)
+
 1. **Main.ts Decomposition**: Break down initialization logic
 2. **Manager Boundaries**: Clearer separation of concerns
 3. **State Consolidation**: Reduce state management complexity
 
 ### Long-term Architecture (High Impact, High Effort)
+
 1. **Plugin System V2**: More declarative plugin definitions
 2. **State Machine**: Replace ad-hoc state with formal state machines
 3. **Micro-frontend**: Consider splitting large plugins into smaller packages
@@ -430,15 +462,17 @@ graph TD
 ## Testing Strategy
 
 ### Current Gaps
+
 - Limited integration tests for plugin interactions
 - No tests for complex state flow scenarios
 - Manual testing required for plugin loading/unloading
 
 ### Recommended Tests
+
 1. **Plugin Integration Tests**: Test cross-plugin communication
-2. **State Flow Tests**: Test complete data transformation pipelines  
+2. **State Flow Tests**: Test complete data transformation pipelines
 3. **Performance Tests**: Measure subscription and rendering performance
 
 ---
 
-*This document should be updated as the architecture evolves. Consider running architectural reviews quarterly to identify new complexity hotspots.*
+_This document should be updated as the architecture evolves. Consider running architectural reviews quarterly to identify new complexity hotspots._

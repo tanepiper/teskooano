@@ -48,7 +48,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
 
   private _previousObjectsState: Record<string, CelestialObject> = {};
   private _listUpdateInterval: number | null = null;
-  
+
   // Special subscription for camera state that has dynamic lifecycle
   private _cameraStateSubscription: any = null;
 
@@ -137,13 +137,13 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     this.removeEventListeners();
     // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
     super.dispose();
-    
+
     // Clean up special camera state subscription
     if (this._cameraStateSubscription) {
       this._cameraStateSubscription.unsubscribe();
       this._cameraStateSubscription = null;
     }
-    
+
     if (this._listUpdateInterval) {
       window.clearInterval(this._listUpdateInterval);
       this._listUpdateInterval = null;

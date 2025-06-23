@@ -9,15 +9,17 @@ This document provides a detailed analysis of code quality issues in the Teskooa
 ### Critical Duplication Issues
 
 #### 1. RxJS Subscription Management Pattern
+
 **Severity**: 🔴 High  
 **Impact**: Memory leaks, maintenance burden  
 **Locations**: 15+ files
 
 **Duplicated Pattern**:
+
 ```typescript
 // Found in multiple files:
 // - apps/teskooano/src/plugins/celestial-info/view/CelestialInfo.view.ts
-// - apps/teskooano/src/plugins/celestial-hierarchy/view/CelestialHierarchy.view.ts  
+// - apps/teskooano/src/plugins/celestial-hierarchy/view/CelestialHierarchy.view.ts
 // - apps/teskooano/src/plugins/engine-panel/main-toolbar/system-controls/view/system-controls.component.ts
 // - apps/teskooano/src/plugins/celestial-uniforms/view/CelestialUniforms.view.ts
 
@@ -29,7 +31,7 @@ public init(): void {
       // Component-specific logic
     })
   );
-  
+
   this.subscriptions.add(
     simulationState$.subscribe(state => {
       // Component-specific logic
@@ -43,18 +45,19 @@ public dispose(): void {
 ```
 
 **Recommended Solution**:
+
 ```typescript
 // Create: apps/teskooano/src/core/components/mixins/StateSubscriptionMixin.ts
 export class StateSubscriptionMixin {
   protected subscriptions = new Subscription();
-  
+
   protected subscribeToState<T>(
-    observable: Observable<T>, 
-    handler: (value: T) => void
+    observable: Observable<T>,
+    handler: (value: T) => void,
   ): void {
     this.subscriptions.add(observable.subscribe(handler));
   }
-  
+
   public dispose(): void {
     this.subscriptions.unsubscribe();
   }
@@ -63,7 +66,7 @@ export class StateSubscriptionMixin {
 // Usage in plugins:
 export class CelestialInfo extends StateSubscriptionMixin {
   public init(): void {
-    this.subscribeToState(celestialObjects$, objects => {
+    this.subscribeToState(celestialObjects$, (objects) => {
       // Component logic
     });
   }
@@ -71,11 +74,13 @@ export class CelestialInfo extends StateSubscriptionMixin {
 ```
 
 #### 2. Plugin Configuration Boilerplate
+
 **Severity**: 🟡 Medium  
 **Impact**: Development velocity, consistency  
 **Locations**: 12+ plugin index.ts files
 
 **Duplicated Pattern**:
+
 ```typescript
 // Pattern repeated across:
 // - apps/teskooano/src/plugins/celestial-info/index.ts
@@ -93,7 +98,7 @@ const toolbarRegistration: ToolbarRegistration = {
   target: "engine-toolbar",
   items: [{
     id: "button-id",
-    type: "panel", 
+    type: "panel",
     title: "Button Title",
     iconSvg: IconSvg,
     componentName: "component-name",
@@ -114,6 +119,7 @@ export const plugin: TeskooanoPlugin = {
 ```
 
 **Recommended Solution**:
+
 ```typescript
 // Create: apps/teskooano/src/core/utils/plugin-factory.ts
 export function createPanelPlugin(config: {
@@ -137,15 +143,17 @@ export function createPanelPlugin(config: {
 
   const toolbarRegistration: ToolbarRegistration = {
     target: config.target || "engine-toolbar",
-    items: [{
-      id: `${config.id}-button`,
-      type: "panel",
-      title: config.buttonTitle || config.defaultTitle,
-      iconSvg: config.iconSvg,
-      componentName: config.componentName,
-      behaviour: "toggle",
-      order: config.order || 10,
-    }],
+    items: [
+      {
+        id: `${config.id}-button`,
+        type: "panel",
+        title: config.buttonTitle || config.defaultTitle,
+        iconSvg: config.iconSvg,
+        componentName: config.componentName,
+        behaviour: "toggle",
+        order: config.order || 10,
+      },
+    ],
   };
 
   return {
@@ -163,7 +171,7 @@ export function createPanelPlugin(config: {
 // Usage:
 export const plugin = createPanelPlugin({
   id: "teskooano-celestial-info",
-  name: "Celestial Info Display", 
+  name: "Celestial Info Display",
   description: "Shows detailed celestial object information",
   componentName: "celestial-info",
   panelClass: CelestialInfo,
@@ -175,50 +183,51 @@ export const plugin = createPanelPlugin({
 ```
 
 #### 3. State Access Patterns
+
 **Severity**: 🟡 Medium  
 **Impact**: Inconsistent data access  
 **Locations**: 8+ files
 
 **Duplicated Pattern**:
+
 ```typescript
 // Found in multiple controllers and components:
-import { 
-  celestialObjects$, 
+import {
+  celestialObjects$,
   getCelestialObjects,
   simulationState$,
-  getSimulationState 
+  getSimulationState,
 } from "@teskooano/core-state";
 
 // Inconsistent patterns of reactive vs imperative access
 const objects = getCelestialObjects(); // Imperative
-celestialObjects$.subscribe(objects => {}); // Reactive
+celestialObjects$.subscribe((objects) => {}); // Reactive
 
-const state = getSimulationState(); // Imperative  
-simulationState$.subscribe(state => {}); // Reactive
+const state = getSimulationState(); // Imperative
+simulationState$.subscribe((state) => {}); // Reactive
 ```
 
 **Recommended Solution**:
+
 ```typescript
 // Create: apps/teskooano/src/core/state/StateAccessor.ts
 export class StateAccessor {
   // Standardized reactive access with initial value
-  static getCelestialObjectsStream(): Observable<Record<string, CelestialObject>> {
-    return celestialObjects$.pipe(
-      startWith(getCelestialObjects())
-    );
+  static getCelestialObjectsStream(): Observable<
+    Record<string, CelestialObject>
+  > {
+    return celestialObjects$.pipe(startWith(getCelestialObjects()));
   }
-  
+
   static getSimulationStateStream(): Observable<SimulationState> {
-    return simulationState$.pipe(
-      startWith(getSimulationState())
-    );
+    return simulationState$.pipe(startWith(getSimulationState()));
   }
-  
+
   // Standardized imperative access
   static getCurrentCelestialObjects(): Record<string, CelestialObject> {
     return getCelestialObjects();
   }
-  
+
   static getCurrentSimulationState(): SimulationState {
     return getSimulationState();
   }
@@ -230,12 +239,14 @@ export class StateAccessor {
 ### Critical Complexity Issues
 
 #### 1. Application Initialization (`main.ts`)
+
 **Severity**: 🔴 High  
 **Complexity Score**: ~25 (Threshold: 10)  
 **File**: `apps/teskooano/src/main.ts`  
 **Function**: `initializeApp()` (lines 27-277)
 
 **Complexity Factors**:
+
 - 8 sequential async operations
 - 4 different error handling patterns
 - 5 manager initialization steps
@@ -243,6 +254,7 @@ export class StateAccessor {
 - Plugin dependency resolution
 
 **Cyclomatic Complexity Breakdown**:
+
 ```typescript
 async function initializeApp() {
   // 1. HTML element validation (2 branches)
@@ -258,7 +270,7 @@ async function initializeApp() {
     const result: any = await pluginManager.execute("dockview:initialize", {
       appElement,
     });
-    
+
     if (result && typeof result === "object" && "controller" in result) {
       // Success path
     } else {
@@ -284,6 +296,7 @@ async function initializeApp() {
 ```
 
 **Recommended Refactoring**:
+
 ```typescript
 // Break down into focused functions:
 
@@ -300,7 +313,7 @@ async function initializeApp() {
 function validateEnvironment(): void {
   const appElement = document.getElementById("app");
   const toolbarElement = document.getElementById("toolbar");
-  
+
   if (!appElement || !toolbarElement) {
     throw new EnvironmentValidationError("Required HTML elements not found");
   }
@@ -317,19 +330,22 @@ async function initializePluginSystem(): Promise<void> {
 // etc...
 ```
 
-#### 2. Plugin Manager Class 
+#### 2. Plugin Manager Class
+
 **Severity**: 🔴 High  
 **Complexity Score**: ~20  
 **File**: `packages/app/ui-plugin/src/pluginManager.ts`  
 **Class**: `PluginManager` (367 lines)
 
 **Complexity Factors**:
+
 - Multiple responsibility areas (loading, registration, execution, HMR)
 - Complex dependency resolution algorithm
 - Registry management across 6 different types
 - Error handling for various plugin lifecycle events
 
 **Recommended Decomposition**:
+
 ```typescript
 // Split into focused classes:
 
@@ -338,19 +354,19 @@ export class PluginManager {
   private executor: PluginExecutor;
   private registrationManager: RegistrationManager;
   private hmrManager: HMRManager;
-  
+
   constructor() {
     this.loader = new PluginLoader();
     this.executor = new PluginExecutor(this.registrationManager);
     this.registrationManager = new RegistrationManager();
     this.hmrManager = new HMRManager(this.loader, this.registrationManager);
   }
-  
+
   async loadAndRegisterPlugins(pluginIds: string[]): Promise<void> {
     const plugins = await this.loader.loadPlugins(pluginIds);
     this.registrationManager.registerPlugins(plugins);
   }
-  
+
   execute<T>(functionId: string, args?: any): Promise<T> | T | undefined {
     return this.executor.execute(functionId, args);
   }
@@ -370,17 +386,20 @@ class PluginExecutor {
 ```
 
 #### 3. Renderer State Adapter
+
 **Severity**: 🟡 Medium  
 **Complexity Score**: ~15  
 **File**: `packages/renderer/threejs/src/RendererStateAdapter.ts`  
 **Class**: `RendererStateAdapter`
 
 **Complexity Factors**:
+
 - Multiple subscription management
 - Complex data transformation pipeline
 - Mixed reactive and imperative patterns
 
 **Current Issues**:
+
 ```typescript
 // Complex subscription in constructor
 this.unsubscribeSimState = simulationState$.subscribe(
@@ -389,7 +408,8 @@ this.unsubscribeSimState = simulationState$.subscribe(
 
     const currentVisSettings = this.$visualSettings.getValue();
     const newMultiplier = simState.visualSettings.trailLengthMultiplier ?? 150;
-    const newEngine = simState.physicsEngine === "verlet" ? "verlet" : "keplerian";
+    const newEngine =
+      simState.physicsEngine === "verlet" ? "verlet" : "keplerian";
     const newTimeScale = simState.timeScale;
     const newPredictionSteps = simState.visualSettings.predictionSteps;
     const newPredictionDuration = simState.visualSettings.predictionDuration;
@@ -415,6 +435,7 @@ this.unsubscribeSimState = simulationState$.subscribe(
 ```
 
 **Recommended Refactoring**:
+
 ```typescript
 class RendererStateAdapter {
   constructor() {
@@ -427,25 +448,32 @@ class RendererStateAdapter {
     this.unsubscribeSimState = simulationState$
       .pipe(
         map(this.extractVisualSettings),
-        distinctUntilChanged(this.compareVisualSettings)
+        distinctUntilChanged(this.compareVisualSettings),
       )
-      .subscribe(visualSettings => {
+      .subscribe((visualSettings) => {
         this.$visualSettings.next(visualSettings);
       });
   }
 
-  private extractVisualSettings(simState: SimulationState): RendererVisualSettings {
+  private extractVisualSettings(
+    simState: SimulationState,
+  ): RendererVisualSettings {
     return {
-      trailLengthMultiplier: simState.visualSettings.trailLengthMultiplier ?? 150,
-      physicsEngine: simState.physicsEngine === "verlet" ? "verlet" : "keplerian",
+      trailLengthMultiplier:
+        simState.visualSettings.trailLengthMultiplier ?? 150,
+      physicsEngine:
+        simState.physicsEngine === "verlet" ? "verlet" : "keplerian",
       timeScale: simState.timeScale,
       predictionSteps: simState.visualSettings.predictionSteps,
       predictionDuration: simState.visualSettings.predictionDuration,
     };
   }
 
-  private compareVisualSettings(a: RendererVisualSettings, b: RendererVisualSettings): boolean {
-    return Object.keys(a).every(key => a[key] === b[key]);
+  private compareVisualSettings(
+    a: RendererVisualSettings,
+    b: RendererVisualSettings,
+  ): boolean {
+    return Object.keys(a).every((key) => a[key] === b[key]);
   }
 }
 ```
@@ -455,23 +483,25 @@ class RendererStateAdapter {
 ### Critical Misplacement Issues
 
 #### 1. UI Logic in Core Packages
+
 **Severity**: 🔴 High  
 **Issue**: UI-specific code mixed with business logic
 
 **Examples**:
+
 ```typescript
 // ❌ BAD: UI logic in simulation package
 // File: packages/app/simulation/src/camera/CameraManager.ts
 export class CameraManager {
   // This should be in UI layer, not simulation core
   private focusedObjectId: string | null = null;
-  
+
   public followObject(objectName: string): void {
     // Mixed UI intent with physics logic
   }
 }
 
-// ❌ BAD: Renderer concerns in state package  
+// ❌ BAD: Renderer concerns in state package
 // File: packages/core/state/src/game/renderableStore.ts
 export class RenderableStore {
   // This is renderer-specific, not core state
@@ -482,6 +512,7 @@ export class RenderableStore {
 ```
 
 **Recommended Architecture**:
+
 ```typescript
 // ✅ GOOD: Separate concerns
 
@@ -496,28 +527,31 @@ export class PhysicsBasedCameraController {
 export class UICameraManager {
   constructor(
     private physicsController: PhysicsBasedCameraController,
-    private renderer: ModularSpaceRenderer
+    private renderer: ModularSpaceRenderer,
   ) {}
-  
+
   public followObject(objectName: string): void {
     // UI orchestration using business logic
-    const distance = this.physicsController.calculateOptimalViewingDistance(object);
+    const distance =
+      this.physicsController.calculateOptimalViewingDistance(object);
     this.renderer.controlsManager.transitionTo(object.position, distance);
   }
 }
 ```
 
 #### 2. Cross-Package State Dependencies
+
 **Severity**: 🟡 Medium  
 **Issue**: Circular dependencies and unclear boundaries
 
 **Problems**:
+
 ```typescript
 // packages/renderer/threejs/src/RendererStateAdapter.ts
 import { calculateLightSourceMaps } from "@teskooano/renderer-threejs-lighting";
 import { celestialObjects$, simulationState$ } from "@teskooano/core-state";
 
-// packages/systems/celestial/src/renderers/common/BaseCelestialRenderer.ts  
+// packages/systems/celestial/src/renderers/common/BaseCelestialRenderer.ts
 import { renderableStore } from "@teskooano/core-state";
 
 // packages/app/simulation/src/SimulationManager.ts
@@ -525,6 +559,7 @@ import { celestialFactory } from "@teskooano/core-state";
 ```
 
 **Dependency Graph Issues**:
+
 ```mermaid
 graph TD
     A[core-state] --> B[renderer-threejs]
@@ -533,12 +568,13 @@ graph TD
     A --> D[systems-celestial]
     D --> B
     B --> A
-    
+
     classDef circular fill:#ffcdd2
     class A,B,C,D circular
 ```
 
 **Recommended Solution**: Introduce dependency injection interfaces:
+
 ```typescript
 // packages/core/interfaces/src/renderer.ts
 export interface RendererStateProvider {
@@ -546,48 +582,49 @@ export interface RendererStateProvider {
   getVisualSettings(): Observable<VisualSettings>;
 }
 
-// packages/core/interfaces/src/lighting.ts  
+// packages/core/interfaces/src/lighting.ts
 export interface LightingProvider {
   calculateLightSourceMaps(objects: CelestialObject[]): LightSourcesMap;
 }
 
 // Implementations inject dependencies instead of direct imports
 export class RendererStateAdapter implements RendererStateProvider {
-  constructor(
-    private lightingProvider: LightingProvider
-  ) {}
+  constructor(private lightingProvider: LightingProvider) {}
 }
 ```
 
-#### 3. Plugin System Responsibilities  
+#### 3. Plugin System Responsibilities
+
 **Severity**: 🟡 Medium  
 **Issue**: Plugin manager handling too many concerns
 
 **Current Problems**:
+
 ```typescript
 class PluginManager {
   // ❌ Should be separate services
   #dockviewApi: DockviewApi | null = null;           // UI framework coupling
   #dockviewController: any | null = null;             // UI framework coupling
-  
+
   public setAppDependencies(deps: {                   // Dependency injection mixed with plugin logic
     dockviewApi: DockviewApi;
     dockviewController: any;
   }): void {}
-  
+
   public getPendingToolbarRegistrations(): [...] {}   // Toolbar-specific logic
-  
+
   public getToolbarItemsForTarget(target: ToolbarTarget): [...] {} // Toolbar-specific logic
 }
 ```
 
 **Recommended Separation**:
+
 ```typescript
 // Focused plugin manager
 export class PluginManager {
   private registrationManager: RegistrationManager;
   private executionEngine: PluginExecutionEngine;
-  
+
   // Only plugin-related methods
   public registerPlugin(plugin: TeskooanoPlugin): void {}
   public execute<T>(functionId: string, args?: any): Promise<T> {}
@@ -598,9 +635,9 @@ export class PluginUIIntegration {
   constructor(
     private pluginManager: PluginManager,
     private dockviewController: DockviewController,
-    private toolbarController: ToolbarController
+    private toolbarController: ToolbarController,
   ) {}
-  
+
   public integratePluginWithUI(pluginId: string): void {
     // Handle UI-specific plugin integration
   }
@@ -609,7 +646,7 @@ export class PluginUIIntegration {
 // Separate dependency injection container
 export class PluginDependencyContainer {
   private dependencies = new Map<string, any>();
-  
+
   public register<T>(key: string, instance: T): void {}
   public resolve<T>(key: string): T {}
 }
@@ -618,26 +655,30 @@ export class PluginDependencyContainer {
 ## 📋 Action Plan & Prioritization
 
 ### Phase 1: Quick Wins (1-2 weeks)
+
 1. **Create StateSubscriptionMixin** - Eliminate RxJS subscription duplication
-2. **Extract Plugin Factory Functions** - Reduce boilerplate in plugin definitions  
+2. **Extract Plugin Factory Functions** - Reduce boilerplate in plugin definitions
 3. **Standardize State Access Patterns** - Create consistent StateAccessor utility
 
 ### Phase 2: Complexity Reduction (3-4 weeks)
+
 1. **Refactor main.ts initialization** - Break into focused functions
-2. **Decompose PluginManager** - Extract loader, executor, HMR manager  
+2. **Decompose PluginManager** - Extract loader, executor, HMR manager
 3. **Simplify RendererStateAdapter** - Use RxJS operators for transformation
 
 ### Phase 3: Architectural Improvements (6-8 weeks)
+
 1. **Introduce Dependency Injection** - Remove circular dependencies
 2. **Separate UI from Business Logic** - Move UI concerns to app layer
 3. **Create Plugin System V2** - More declarative plugin definitions
 
 ### Success Metrics
+
 - **Code Duplication**: Reduce by 60% (measured by clone detection tools)
-- **Cognitive Complexity**: No functions > 15 complexity score  
+- **Cognitive Complexity**: No functions > 15 complexity score
 - **Dependency Cycles**: Zero circular dependencies between packages
 - **Test Coverage**: Maintain >80% coverage during refactoring
 
 ---
 
-*This analysis should be revisited monthly during active development to catch new complexity hotspots early.*
+_This analysis should be revisited monthly during active development to catch new complexity hotspots early._

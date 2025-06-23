@@ -55,7 +55,7 @@ export class PanelLifecycleManager {
    * Starts listening to the `celestialObjects$` stream and manages the panel's
    * lifecycle accordingly.
    */
-  public listen(): Subscription {
+  public listen(): void {
     if (!this._subscription.closed) {
       this.dispose();
     }
@@ -104,8 +104,6 @@ export class PanelLifecycleManager {
         this._handleSystemGenerationComplete,
       );
     });
-
-    return this._subscription;
   }
 
   /**

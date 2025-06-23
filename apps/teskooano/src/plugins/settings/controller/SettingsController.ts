@@ -97,10 +97,7 @@ export class SettingsController extends StateSubscriptionMixin {
     );
 
     // ✅ Using StateSubscriptionMixin for clean subscription management
-    this.subscribeToState(
-      simulationState$,
-      this.updateControlStates,
-    );
+    this.subscribeToState(simulationState$, this.updateControlStates);
   }
 
   /**

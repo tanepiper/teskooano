@@ -10,7 +10,7 @@ This document provides concrete implementation examples for the recommendations 
 
 ```typescript
 // apps/teskooano/src/core/components/mixins/StateSubscriptionMixin.ts
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subscription } from "rxjs";
 
 /**
  * Mixin class that provides standardized RxJS subscription management.
@@ -23,15 +23,15 @@ export class StateSubscriptionMixin {
    * Subscribe to an observable with automatic cleanup management.
    */
   protected subscribeToState<T>(
-    observable: Observable<T>, 
+    observable: Observable<T>,
     handler: (value: T) => void,
-    errorHandler?: (error: any) => void
+    errorHandler?: (error: any) => void,
   ): void {
     this.subscriptions.add(
       observable.subscribe({
         next: handler,
-        error: errorHandler || this.defaultErrorHandler
-      })
+        error: errorHandler || this.defaultErrorHandler,
+      }),
     );
   }
 
@@ -40,16 +40,16 @@ export class StateSubscriptionMixin {
    */
   protected subscribeToMultipleStates<T>(
     observables: Observable<T>[],
-    handler: (value: T) => void
+    handler: (value: T) => void,
   ): void {
-    observables.forEach(obs => this.subscribeToState(obs, handler));
+    observables.forEach((obs) => this.subscribeToState(obs, handler));
   }
 
   /**
    * Default error handler for subscriptions.
    */
   private defaultErrorHandler(error: any): void {
-    console.error('[StateSubscriptionMixin] Subscription error:', error);
+    console.error("[StateSubscriptionMixin] Subscription error:", error);
   }
 
   /**
@@ -65,34 +65,32 @@ export class StateSubscriptionMixin {
 
 ```typescript
 // apps/teskooano/src/plugins/celestial-info/view/CelestialInfo.view.ts
-import { StateSubscriptionMixin } from '../../../core/components/mixins/StateSubscriptionMixin.js';
-import { celestialObjects$, simulationState$ } from '@teskooano/core-state';
-import { CelestialInfoController } from '../controller/CelestialInfo.controller.js';
+import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin.js";
+import { celestialObjects$, simulationState$ } from "@teskooano/core-state";
+import { CelestialInfoController } from "../controller/CelestialInfo.controller.js";
 
 export class CelestialInfo extends StateSubscriptionMixin {
   static componentName = "celestial-info";
-  
+
   private controller: CelestialInfoController;
   private shadowRoot: ShadowRoot;
 
   constructor() {
     super();
-    this.shadowRoot = this.attachShadow({ mode: 'open' });
+    this.shadowRoot = this.attachShadow({ mode: "open" });
     this.controller = new CelestialInfoController(this.shadowRoot);
   }
 
   public init(params: any): void {
     this.controller.setContext(params.context);
-    
+
     // ✅ Clean, standardized subscription pattern
-    this.subscribeToState(
-      celestialObjects$, 
-      objects => this.controller.handleCelestialObjectsUpdate(objects)
+    this.subscribeToState(celestialObjects$, (objects) =>
+      this.controller.handleCelestialObjectsUpdate(objects),
     );
-    
-    this.subscribeToState(
-      simulationState$,
-      state => this.controller.handleSimulationStateUpdate(state)
+
+    this.subscribeToState(simulationState$, (state) =>
+      this.controller.handleSimulationStateUpdate(state),
     );
   }
 
@@ -109,13 +107,13 @@ export class CelestialInfo extends StateSubscriptionMixin {
 
 ```typescript
 // apps/teskooano/src/core/utils/plugin-factory.ts
-import type { 
-  TeskooanoPlugin, 
-  PanelConfig, 
+import type {
+  TeskooanoPlugin,
+  PanelConfig,
   ToolbarRegistration,
   ComponentConfig,
-  ToolbarTarget 
-} from '@teskooano/ui-plugin';
+  ToolbarTarget,
+} from "@teskooano/ui-plugin";
 
 interface PanelPluginConfig {
   id: string;
@@ -144,15 +142,17 @@ export function createPanelPlugin(config: PanelPluginConfig): TeskooanoPlugin {
 
   const toolbarRegistration: ToolbarRegistration = {
     target: config.target || "engine-toolbar",
-    items: [{
-      id: `${config.id}-button`,
-      type: "panel",
-      title: config.buttonTitle || config.defaultTitle,
-      iconSvg: config.iconSvg,
-      componentName: config.componentName,
-      behaviour: "toggle",
-      order: config.order || 10,
-    }],
+    items: [
+      {
+        id: `${config.id}-button`,
+        type: "panel",
+        title: config.buttonTitle || config.defaultTitle,
+        iconSvg: config.iconSvg,
+        componentName: config.componentName,
+        behaviour: "toggle",
+        order: config.order || 10,
+      },
+    ],
   };
 
   // Always include the main component
@@ -202,17 +202,20 @@ export function createFunctionPlugin(config: {
 
 ```typescript
 // apps/teskooano/src/plugins/celestial-info/index.ts
-import { createPanelPlugin } from '../../core/utils/plugin-factory.js';
-import { CelestialInfo } from './view/CelestialInfo.view.js';
-import InfoIcon from '@fluentui/svg-icons/icons/info_24_regular.svg?raw';
+import { createPanelPlugin } from "../../core/utils/plugin-factory.js";
+import { CelestialInfo } from "./view/CelestialInfo.view.js";
+import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
 
 // Import all the sub-components
-import { AsteroidFieldInfoComponent } from './bodies/AsteroidFieldInfo.js';
-import { GasGiantInfoComponent } from './bodies/GasGiantInfo.js';
+import { AsteroidFieldInfoComponent } from "./bodies/AsteroidFieldInfo.js";
+import { GasGiantInfoComponent } from "./bodies/GasGiantInfo.js";
 // ... other components
 
 const additionalComponents = [
-  { tagName: "asteroid-field-info", componentClass: AsteroidFieldInfoComponent },
+  {
+    tagName: "asteroid-field-info",
+    componentClass: AsteroidFieldInfoComponent,
+  },
   { tagName: "gas-giant-info", componentClass: GasGiantInfoComponent },
   // ... other components
 ];
@@ -242,20 +245,27 @@ export const plugin = createPanelPlugin({
 export class EnvironmentValidationError extends Error {
   constructor(message: string) {
     super(`Environment validation failed: ${message}`);
-    this.name = 'EnvironmentValidationError';
+    this.name = "EnvironmentValidationError";
   }
 }
 
-export function validateEnvironment(): { appElement: HTMLElement; toolbarElement: HTMLElement } {
+export function validateEnvironment(): {
+  appElement: HTMLElement;
+  toolbarElement: HTMLElement;
+} {
   const appElement = document.getElementById("app");
   const toolbarElement = document.getElementById("toolbar");
 
   if (!appElement) {
-    throw new EnvironmentValidationError("Application container element (#app) not found");
+    throw new EnvironmentValidationError(
+      "Application container element (#app) not found",
+    );
   }
 
   if (!toolbarElement) {
-    throw new EnvironmentValidationError("Toolbar container element (#toolbar) not found");
+    throw new EnvironmentValidationError(
+      "Toolbar container element (#toolbar) not found",
+    );
   }
 
   return { appElement, toolbarElement };
@@ -264,43 +274,45 @@ export function validateEnvironment(): { appElement: HTMLElement; toolbarElement
 
 ```typescript
 // apps/teskooano/src/core/initialization/plugin-system.ts
-import { pluginManager } from '@teskooano/ui-plugin';
-import { pluginConfig } from '../../config/pluginRegistry';
-import { pluginConfig as corePluginConfig } from '../config/pluginRegistry';
+import { pluginManager } from "@teskooano/ui-plugin";
+import { pluginConfig } from "../../config/pluginRegistry";
+import { pluginConfig as corePluginConfig } from "../config/pluginRegistry";
 
 export async function initializePluginSystem(): Promise<void> {
   console.log("🔌 Loading plugins...");
-  
+
   const pluginIds = [
     ...Object.keys(corePluginConfig),
     ...Object.keys(pluginConfig),
   ];
-  
+
   await pluginManager.loadAndRegisterPlugins(pluginIds);
-  
+
   // Initially set null dependencies - will be updated after dockview init
   pluginManager.setAppDependencies({
     dockviewApi: null as any,
     dockviewController: null,
   });
-  
+
   console.log(`✅ Loaded ${pluginIds.length} plugins`);
 }
 ```
 
 ```typescript
 // apps/teskooano/src/core/initialization/dockview.ts
-import { pluginManager } from '@teskooano/ui-plugin';
-import type { DockviewApi } from 'dockview-core';
+import { pluginManager } from "@teskooano/ui-plugin";
+import type { DockviewApi } from "dockview-core";
 
 export interface DockviewInitResult {
   controller: any;
   api: DockviewApi;
 }
 
-export async function initializeDockview(appElement: HTMLElement): Promise<DockviewInitResult> {
+export async function initializeDockview(
+  appElement: HTMLElement,
+): Promise<DockviewInitResult> {
   console.log("🪟 Initializing Dockview...");
-  
+
   try {
     const result: any = await pluginManager.execute("dockview:initialize", {
       appElement,
@@ -324,7 +336,6 @@ export async function initializeDockview(appElement: HTMLElement): Promise<Dockv
 
     console.log("✅ Dockview initialized successfully");
     return { controller, api };
-
   } catch (error) {
     console.error("[Dockview] Initialization failed:", error);
     throw new Error(`Dockview initialization failed: ${error.message}`);
@@ -334,7 +345,7 @@ export async function initializeDockview(appElement: HTMLElement): Promise<Dockv
 
 ```typescript
 // apps/teskooano/src/core/initialization/managers.ts
-import { pluginManager } from '@teskooano/ui-plugin';
+import { pluginManager } from "@teskooano/ui-plugin";
 
 const MANAGER_INIT_SEQUENCE = [
   { id: "engine-view:initialize", name: "Engine View" },
@@ -344,23 +355,27 @@ const MANAGER_INIT_SEQUENCE = [
 ] as const;
 
 export async function initializeManagers(
-  appElement: HTMLElement, 
+  appElement: HTMLElement,
   toolbarElement: HTMLElement,
-  dockviewController: any
+  dockviewController: any,
 ): Promise<void> {
   console.log("⚙️ Initializing managers...");
 
   for (const manager of MANAGER_INIT_SEQUENCE) {
     try {
       console.log(`  Initializing ${manager.name}...`);
-      
+
       await pluginManager.execute(manager.id, {
-        targetElement: manager.id.includes("toolbar") ? toolbarElement : appElement,
+        targetElement: manager.id.includes("toolbar")
+          ? toolbarElement
+          : appElement,
         dockviewController,
       });
-      
     } catch (error) {
-      console.error(`[Manager Init] Failed to initialize ${manager.name}:`, error);
+      console.error(
+        `[Manager Init] Failed to initialize ${manager.name}:`,
+        error,
+      );
       throw new Error(`Manager initialization failed: ${manager.name}`);
     }
   }
@@ -388,13 +403,13 @@ export async function initializeManagers(
 import "@teskooano/design-system/styles.css";
 import "dockview-core/dist/styles/dockview.css";
 
-import { validateEnvironment } from './core/initialization/environment.js';
-import { initializePluginSystem } from './core/initialization/plugin-system.js';
-import { initializeDockview } from './core/initialization/dockview.js';
-import { initializeManagers } from './core/initialization/managers.js';
-import { registerPanelComponents } from './core/initialization/panel-registration.js';
-import { createInitialPanels } from './core/initialization/initial-panels.js';
-import { setupEventListeners } from './core/initialization/event-listeners.js';
+import { validateEnvironment } from "./core/initialization/environment.js";
+import { initializePluginSystem } from "./core/initialization/plugin-system.js";
+import { initializeDockview } from "./core/initialization/dockview.js";
+import { initializeManagers } from "./core/initialization/managers.js";
+import { registerPanelComponents } from "./core/initialization/panel-registration.js";
+import { createInitialPanels } from "./core/initialization/initial-panels.js";
+import { setupEventListeners } from "./core/initialization/event-listeners.js";
 
 export const appContext = {
   modalManager: null as any,
@@ -412,7 +427,7 @@ async function initializeApp(): Promise<void> {
     await initializePluginSystem();
 
     // Phase 3: UI framework initialization
-    const { controller: dockviewController, api: dockviewApi } = 
+    const { controller: dockviewController, api: dockviewApi } =
       await initializeDockview(appElement);
 
     // Phase 4: Manager initialization
@@ -432,12 +447,12 @@ async function initializeApp(): Promise<void> {
     appContext.modalManager = pluginManager.getManagerInstance("modal-manager");
 
     console.log("🪐 Teskooano Initialized successfully!");
-
   } catch (error) {
     console.error("💥 Application initialization failed:", error);
-    
+
     // Could show user-friendly error dialog here
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     document.body.innerHTML = `
       <div style="padding: 20px; color: red; font-family: monospace;">
         <h2>Application Failed to Initialize</h2>
@@ -445,7 +460,7 @@ async function initializeApp(): Promise<void> {
         <p>Please refresh the page or check the console for more details.</p>
       </div>
     `;
-    
+
     throw error;
   }
 }
@@ -460,7 +475,7 @@ initializeApp().catch(console.error);
 
 ```typescript
 // packages/app/ui-plugin/src/managers/plugin-loader.ts
-import type { TeskooanoPlugin } from '../types.js';
+import type { TeskooanoPlugin } from "../types.js";
 
 export class PluginLoader {
   private loaders: Record<string, () => Promise<any>>;
@@ -472,7 +487,9 @@ export class PluginLoader {
   /**
    * Load plugins with dependency resolution.
    */
-  async loadPlugins(pluginIds: string[]): Promise<Map<string, TeskooanoPlugin>> {
+  async loadPlugins(
+    pluginIds: string[],
+  ): Promise<Map<string, TeskooanoPlugin>> {
     const loadedPlugins = new Map<string, TeskooanoPlugin>();
     const allRequestedIds = new Set(pluginIds);
     const processingOrder: string[] = [];
@@ -490,7 +507,7 @@ export class PluginLoader {
     context: {
       loadedPlugins: Map<string, TeskooanoPlugin>;
       processingOrder: string[];
-    }
+    },
   ): Promise<void> {
     const visited = new Set<string>();
     const processing = new Set<string>();
@@ -500,7 +517,7 @@ export class PluginLoader {
         throw new Error(`Circular dependency detected: ${pluginId}`);
       }
       if (visited.has(pluginId)) return;
-      
+
       processing.add(pluginId);
 
       const plugin = await this.loadSinglePlugin(pluginId);
@@ -509,7 +526,10 @@ export class PluginLoader {
       // Resolve dependencies
       if (plugin.dependencies) {
         for (const depId of plugin.dependencies) {
-          if (!allRequestedIds.has(depId) && !context.loadedPlugins.has(depId)) {
+          if (
+            !allRequestedIds.has(depId) &&
+            !context.loadedPlugins.has(depId)
+          ) {
             throw new Error(`Unmet dependency: ${pluginId} -> ${depId}`);
           }
           if (!context.loadedPlugins.has(depId)) {
@@ -550,12 +570,19 @@ export class PluginLoader {
 
 ```typescript
 // packages/app/ui-plugin/src/managers/plugin-executor.ts
-import type { PluginExecutionContext, FunctionConfig, RegisteredItem } from '../types.js';
+import type {
+  PluginExecutionContext,
+  FunctionConfig,
+  RegisteredItem,
+} from "../types.js";
 
 export class PluginExecutor {
   constructor(
     private functionRegistry: Map<string, RegisteredItem<FunctionConfig>>,
-    private getAppDependencies: () => { dockviewApi: any; dockviewController: any }
+    private getAppDependencies: () => {
+      dockviewApi: any;
+      dockviewController: any;
+    },
   ) {}
 
   execute<T = any>(functionId: string, args?: any): Promise<T> | T | undefined {
@@ -566,18 +593,21 @@ export class PluginExecutor {
     }
 
     const context = this.createExecutionContext();
-    
+
     try {
       return funcConfig.execute(context, args);
     } catch (error) {
-      console.error(`[PluginExecutor] Error executing function '${functionId}':`, error);
+      console.error(
+        `[PluginExecutor] Error executing function '${functionId}':`,
+        error,
+      );
       throw error;
     }
   }
 
   private createExecutionContext(): PluginExecutionContext {
     const { dockviewApi, dockviewController } = this.getAppDependencies();
-    
+
     return {
       pluginManager: this, // Note: This would need to be the main PluginManager
       dockviewApi,
@@ -589,7 +619,9 @@ export class PluginExecutor {
 
   private getManager<T = any>(id: string): T | undefined {
     // This would delegate to the main plugin manager's getManagerInstance
-    throw new Error("getManager should be implemented by the main PluginManager");
+    throw new Error(
+      "getManager should be implemented by the main PluginManager",
+    );
   }
 }
 ```
@@ -603,22 +635,25 @@ export class PluginManager {
   private executor: PluginExecutor;
   private registrationManager: RegistrationManager;
   private hmrManager: HMRManager;
-  
-  private appDependencies = { dockviewApi: null as any, dockviewController: null as any };
+
+  private appDependencies = {
+    dockviewApi: null as any,
+    dockviewController: null as any,
+  };
 
   constructor() {
     this.registrationManager = new RegistrationManager(/* registries */);
     this.loader = new PluginLoader(pluginLoaders);
     this.executor = new PluginExecutor(
       this.registrationManager.getFunctionRegistry(),
-      () => this.appDependencies
+      () => this.appDependencies,
     );
     this.hmrManager = new HMRManager(this.loader, this.registrationManager);
   }
 
   async loadAndRegisterPlugins(pluginIds: string[]): Promise<void> {
     const plugins = await this.loader.loadPlugins(pluginIds);
-    
+
     for (const [pluginId, plugin] of plugins) {
       this.registerPlugin(plugin);
     }
@@ -628,7 +663,10 @@ export class PluginManager {
     return this.executor.execute(functionId, args);
   }
 
-  setAppDependencies(deps: { dockviewApi: any; dockviewController: any }): void {
+  setAppDependencies(deps: {
+    dockviewApi: any;
+    dockviewController: any;
+  }): void {
     this.appDependencies = deps;
     this.registrationManager.setDependencies({ dockviewApi: deps.dockviewApi });
   }
@@ -645,8 +683,8 @@ export class PluginManager {
 
 ```typescript
 // packages/core/physics/src/camera/CameraPhysics.ts
-import type { CelestialObject } from '@teskooano/data-types';
-import { OSVector3 } from '@teskooano/core-math';
+import type { CelestialObject } from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Pure physics calculations for camera positioning.
@@ -659,7 +697,7 @@ export class CameraPhysics {
   calculateOptimalViewingDistance(object: CelestialObject): number {
     const baseRadius = object.physicalCharacteristics.radius;
     const massInfluence = Math.log10(object.physicalCharacteristics.mass) * 0.1;
-    
+
     // Standard viewing distance is 3x the radius, adjusted for mass
     return baseRadius * 3 * (1 + massInfluence);
   }
@@ -677,19 +715,19 @@ export class CameraPhysics {
   calculateTransitionPath(
     startPosition: OSVector3,
     targetPosition: OSVector3,
-    duration: number
+    duration: number,
   ): OSVector3[] {
     // Implement smooth transition curve (e.g., Bézier curve)
     const steps = Math.ceil(duration * 60); // 60 FPS
     const path: OSVector3[] = [];
-    
+
     for (let i = 0; i <= steps; i++) {
       const t = i / steps;
       // Simple linear interpolation (could be improved with curves)
       const position = startPosition.lerp(targetPosition, t);
       path.push(position);
     }
-    
+
     return path;
   }
 }
@@ -699,10 +737,10 @@ export class CameraPhysics {
 
 ```typescript
 // apps/teskooano/src/camera/UICameraManager.ts
-import { CameraPhysics } from '@teskooano/core-physics/camera';
-import type { ModularSpaceRenderer } from '@teskooano/renderer-threejs';
-import type { CelestialObject } from '@teskooano/data-types';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { CameraPhysics } from "@teskooano/core-physics/camera";
+import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
+import type { CelestialObject } from "@teskooano/data-types";
+import { BehaviorSubject, Observable } from "rxjs";
 
 interface CameraState {
   focusedObjectId: string | null;
@@ -730,14 +768,15 @@ export class UICameraManager {
    * Public API for focusing on an object.
    */
   async focusOnObject(object: CelestialObject): Promise<void> {
-    const optimalDistance = this.physics.calculateOptimalViewingDistance(object);
+    const optimalDistance =
+      this.physics.calculateOptimalViewingDistance(object);
     const safeDistance = Math.max(
       optimalDistance,
-      this.physics.calculateSafeApproachDistance(object)
+      this.physics.calculateSafeApproachDistance(object),
     );
 
     await this.transitionToObject(object, safeDistance);
-    
+
     this.updateState({
       focusedObjectId: object.id,
       isFollowing: false,
@@ -750,10 +789,10 @@ export class UICameraManager {
    */
   startFollowing(object: CelestialObject): void {
     const followDistance = this.physics.calculateOptimalViewingDistance(object);
-    
+
     this.renderer.setFollowTargetObject(
       this.renderer.getObjectById(object.id),
-      new THREE.Vector3(0, 0, followDistance)
+      new THREE.Vector3(0, 0, followDistance),
     );
 
     this.updateState({
@@ -770,27 +809,33 @@ export class UICameraManager {
     return this.cameraState$.asObservable();
   }
 
-  private async transitionToObject(object: CelestialObject, distance: number): Promise<void> {
+  private async transitionToObject(
+    object: CelestialObject,
+    distance: number,
+  ): Promise<void> {
     // Use business logic to calculate transition
     const currentPos = this.renderer.camera.position;
     const targetPos = object.position;
-    
+
     // Delegate to renderer for actual movement
     return new Promise((resolve) => {
       this.renderer.controlsManager.transitionTo(targetPos, distance);
-      
+
       // Listen for transition complete event
       const handleComplete = () => {
-        document.removeEventListener('camera-transition-complete', handleComplete);
+        document.removeEventListener(
+          "camera-transition-complete",
+          handleComplete,
+        );
         resolve();
       };
-      document.addEventListener('camera-transition-complete', handleComplete);
+      document.addEventListener("camera-transition-complete", handleComplete);
     });
   }
 
   private setupUserInteractionListeners(): void {
     // Listen for user camera manipulation to clear focus
-    document.addEventListener('camera-user-manipulation', () => {
+    document.addEventListener("camera-user-manipulation", () => {
       this.updateState({
         focusedObjectId: null,
         isFollowing: false,
@@ -810,8 +855,8 @@ export class UICameraManager {
 
 ```typescript
 // apps/teskooano/src/plugins/celestial-hierarchy/controller/CelestialHierarchy.controller.ts
-import { UICameraManager } from '../../../camera/UICameraManager.js';
-import type { CelestialObject } from '@teskooano/data-types';
+import { UICameraManager } from "../../../camera/UICameraManager.js";
+import type { CelestialObject } from "@teskooano/data-types";
 
 export class CelestialHierarchyController {
   constructor(
@@ -828,7 +873,7 @@ export class CelestialHierarchyController {
 
     // Delegate to UI camera manager (which uses business logic)
     await this.cameraManager.focusOnObject(object);
-    
+
     // Update UI state
     this.setSelectedObject(objectId);
   }
@@ -847,6 +892,7 @@ export class CelestialHierarchyController {
 ```
 
 This separation provides:
+
 - ✅ **Pure business logic** in core packages (testable, reusable)
 - ✅ **UI orchestration** in application layer (framework-specific)
 - ✅ **Clear boundaries** between concerns
@@ -854,4 +900,4 @@ This separation provides:
 
 ---
 
-*These examples demonstrate how the recommendations from the code quality analysis can be practically implemented to reduce duplication, complexity, and architectural issues.*
+_These examples demonstrate how the recommendations from the code quality analysis can be practically implemented to reduce duplication, complexity, and architectural issues._

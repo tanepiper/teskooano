@@ -1,6 +1,9 @@
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { OSVector3 } from "@teskooano/core-math";
-import { accelerationVectors$, StateSubscriptionMixin } from "@teskooano/core-state";
+import {
+  accelerationVectors$,
+  StateSubscriptionMixin,
+} from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,

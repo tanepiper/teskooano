@@ -66,12 +66,9 @@ export class SimulationControlsController extends StateSubscriptionMixin {
     this.handleStateUpdate(getSimulationState());
 
     // ✅ Using StateSubscriptionMixin for clean subscription management
-    this.subscribeToState(
-      simulationState$,
-      (state: SimulationState) => {
-        this.handleStateUpdate(state);
-      }
-    );
+    this.subscribeToState(simulationState$, (state: SimulationState) => {
+      this.handleStateUpdate(state);
+    });
   }
 
   /**

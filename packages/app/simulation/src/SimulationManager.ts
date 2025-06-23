@@ -96,10 +96,13 @@ export class SimulationManager {
     this.accumulatedTime = getSimulationState().time; // Sync with current state time
 
     this.subscriptionManager.dispose(); // Clear any existing subscriptions
-    this.subscriptionManager.subscribeToStateComposition(this._resetTime$, () => {
-      this.accumulatedTime = 0; // Reset internal accumulated time
-      // The global state time is reset by celestialFactory.clearState
-    });
+    this.subscriptionManager.subscribeToStateComposition(
+      this._resetTime$,
+      () => {
+        this.accumulatedTime = 0; // Reset internal accumulated time
+        // The global state time is reset by celestialFactory.clearState
+      },
+    );
 
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);

@@ -1,4 +1,8 @@
-import { celestialObjects$, getCelestialObjects, StateSubscriptionMixin } from "@teskooano/core-state";
+import {
+  celestialObjects$,
+  getCelestialObjects,
+  StateSubscriptionMixin,
+} from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
 import type { CelestialInfo } from "../view/CelestialInfo.view";
 import { CelestialInfoViewManager } from "./CelestialInfoViewManager";
@@ -35,10 +39,7 @@ export class CelestialInfoController extends StateSubscriptionMixin {
    */
   public initialize(): void {
     // ✅ Using StateSubscriptionMixin for clean subscription management
-    this.subscribeToState(
-      celestialObjects$,
-      this.handleObjectStoreUpdate,
-    );
+    this.subscribeToState(celestialObjects$, this.handleObjectStoreUpdate);
 
     document.addEventListener(
       "renderer-focus-changed",
