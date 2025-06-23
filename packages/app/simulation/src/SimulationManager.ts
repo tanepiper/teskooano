@@ -10,6 +10,7 @@ import {
   getSimulationState,
   physicsSystemAdapter,
   setSimulationState,
+  StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import {
   CelestialObject,
@@ -17,7 +18,7 @@ import {
   CelestialType,
   OrbitUpdatePayload,
 } from "@teskooano/data-types";
-import { Observable, Subject, Subscription } from "rxjs";
+import { Observable, Subject } from "rxjs";
 import * as THREE from "three";
 
 /**
@@ -31,7 +32,7 @@ export class SimulationManager {
   private lastTime = 0;
   private isRunning = false;
   private accumulatedTime = 0;
-  private resetTimeSubscription: Subscription | null = null;
+  private subscriptionManager = new StateSubscriptionMixin();
   private animationFrameId: number | null = null;
 
   // Event Subjects
@@ -94,8 +95,8 @@ export class SimulationManager {
     this.lastTime = performance.now();
     this.accumulatedTime = getSimulationState().time; // Sync with current state time
 
-    this.resetTimeSubscription?.unsubscribe(); // Ensure no old subscription
-    this.resetTimeSubscription = this._resetTime$.subscribe(() => {
+    this.subscriptionManager.dispose(); // Clear any existing subscriptions
+    this.subscriptionManager.subscribeToStateComposition(this._resetTime$, () => {
       this.accumulatedTime = 0; // Reset internal accumulated time
       // The global state time is reset by celestialFactory.clearState
     });
@@ -120,8 +121,7 @@ export class SimulationManager {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
-    this.resetTimeSubscription?.unsubscribe();
-    this.resetTimeSubscription = null;
+    this.subscriptionManager.dispose();
   }
 
   /**
@@ -276,7 +276,7 @@ export class SimulationManager {
     this._resetTime$.complete();
     this._orbitUpdate$.complete();
     this._destructionOccurred$.complete();
-    this.resetTimeSubscription?.unsubscribe();
+    this.subscriptionManager.dispose();
   }
 }
 

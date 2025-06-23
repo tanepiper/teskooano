@@ -1,6 +1,6 @@
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { OSVector3 } from "@teskooano/core-math";
-import { accelerationVectors$ } from "@teskooano/core-state";
+import { accelerationVectors$, StateSubscriptionMixin } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
@@ -15,7 +15,7 @@ import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODManager } from "@teskooano/renderer-threejs-lod";
 import { CelestialRenderer } from "@teskooano/systems-celestial";
-import type { Observable, Subscription } from "rxjs";
+import type { Observable } from "rxjs";
 import * as THREE from "three";
 import {
   AccelerationVisualizer,
@@ -44,7 +44,7 @@ interface LabelVisibilityManager {
  *              It subscribes to state updates (renderable objects, acceleration) and events (destruction)
  *              to keep the Three.js scene synchronized with the simulation state.
  */
-export class ObjectManager {
+export class ObjectManager extends StateSubscriptionMixin {
   /** @internal Map storing the primary Three.js Object3D for each celestial object ID. */
   private objects: Map<string, THREE.Object3D> = new Map();
   /** @internal Reference to the main Three.js scene. */
@@ -92,12 +92,6 @@ export class ObjectManager {
   private objectLifecycleManager: ObjectLifecycleManager;
   private debrisEffectManager: DebrisEffectManager;
 
-  /** @internal RxJS subscription to the renderable objects stream. */
-  private objectsSubscription: Subscription | null = null;
-  /** @internal RxJS subscription to the acceleration vectors stream. */
-  private accelerationsSubscription: Subscription | null = null;
-  /** @internal Unsubscribe function for the destruction event listener. */
-  private destructionSubscription: Subscription | null = null;
   private debugMode: boolean = false;
   private lastUpdateTime: number = 0;
 
@@ -149,6 +143,7 @@ export class ObjectManager {
     css2DManager?: LabelVisibilityManager & Layer2DManager,
     acceleration$: Observable<Record<string, OSVector3>> = accelerationVectors$,
   ) {
+    super();
     this.scene = scene;
     this.camera = camera;
     this.renderableObjects$ = renderableObjects$;
@@ -216,7 +211,8 @@ export class ObjectManager {
    */
   private subscribeToStateChanges(): void {
     // Subscribe to renderable objects and sync the scene via ObjectLifecycleManager
-    this.objectsSubscription = this.renderableObjects$.subscribe(
+    this.subscribeToState(
+      this.renderableObjects$,
       (objects: Record<string, RenderableCelestialObject>) => {
         this.latestRenderableObjects = objects;
         this.objectLifecycleManager.syncObjectsWithState(
@@ -226,7 +222,8 @@ export class ObjectManager {
     );
 
     // Subscribe to acceleration vectors and update the visualization
-    this.accelerationsSubscription = this.acceleration$.subscribe(
+    this.subscribeToState(
+      this.acceleration$,
       (accelerations: Record<string, OSVector3>) => {
         this.accelerationVisualizer.syncAccelerationArrows(accelerations);
       },
@@ -237,10 +234,8 @@ export class ObjectManager {
    * @internal Subscribes to destruction events emitted via the rendererEvents bus.
    */
   private subscribeToDestructionEvents(): void {
-    if (this.destructionSubscription) {
-      this.destructionSubscription.unsubscribe();
-    }
-    this.destructionSubscription = rendererEvents.destruction$.subscribe(
+    this.subscribeToState(
+      rendererEvents.destruction$,
       (payload: DestructionPayload) => {
         const fullObject = this.latestRenderableObjects[payload.object.id];
         if (!fullObject) return;
@@ -462,13 +457,8 @@ export class ObjectManager {
    * Unsubscribes from observables, disposes objects, clears maps.
    */
   dispose(): void {
-    // Unsubscribe from all observables and event listeners
-    this.objectsSubscription?.unsubscribe();
-    this.objectsSubscription = null;
-    this.accelerationsSubscription?.unsubscribe();
-    this.accelerationsSubscription = null;
-    this.destructionSubscription?.unsubscribe();
-    this.destructionSubscription = null;
+    // Unsubscribe from all observables and event listeners using mixin
+    super.dispose();
 
     // Dispose sub-managers in logical order (e.g., lifecycle last?)
     this.objectLifecycleManager.dispose(); // Disposes individual objects and their resources

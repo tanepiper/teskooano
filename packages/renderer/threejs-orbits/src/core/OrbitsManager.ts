@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { type RendererStateAdapter } from "@teskooano/renderer-threejs";
 import { type RenderableCelestialObject } from "@teskooano/data-types";
-import type { Observable, Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "@teskooano/core-state";
+import type { Observable } from "rxjs";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { KeplerianStrategy } from "./modes/KeplerianStrategy";
 import { VerletStrategy } from "./modes/VerletStrategy";
@@ -26,7 +27,7 @@ export enum VisualizationMode {
  * Verlet trails, and trajectory predictions) and handles mode switching, visibility,
  * and highlighting.
  */
-export class OrbitsManager {
+export class OrbitsManager extends StateSubscriptionMixin {
   /** Current visualization mode */
   private currentMode: VisualizationMode = VisualizationMode.Keplerian;
 
@@ -50,12 +51,6 @@ export class OrbitsManager {
   /** Color used for highlighting */
   private highlightColor: THREE.Color = new THREE.Color(0x00ff00);
 
-  /** Subscription for the adapter settings */
-  private adapterSettingsSubscription: Subscription | null = null;
-
-  /** Subscription for renderable objects */
-  private objectsSubscription: Subscription | null = null;
-
   /** Cache of the latest renderable objects */
   private latestRenderableObjects: Record<string, RenderableCelestialObject> =
     {};
@@ -75,6 +70,7 @@ export class OrbitsManager {
     stateAdapter: RendererStateAdapter,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
   ) {
+    super();
     this.stateAdapter = stateAdapter;
 
     // Initialize strategies
@@ -86,22 +82,21 @@ export class OrbitsManager {
     this.activeStrategy = this.keplerianStrategy;
 
     // Subscribe to renderable objects stream
-    this.objectsSubscription = renderableObjects$.subscribe((objects) => {
+    this.subscribeToState(renderableObjects$, (objects) => {
       this.latestRenderableObjects = objects;
     });
 
     // Subscribe to visualization settings
-    this.adapterSettingsSubscription =
-      this.stateAdapter.$visualSettings.subscribe((settings) => {
-        const newMode =
-          settings.physicsEngine === "verlet"
-            ? VisualizationMode.Verlet
-            : VisualizationMode.Keplerian;
+    this.subscribeToState(this.stateAdapter.$visualSettings, (settings) => {
+      const newMode =
+        settings.physicsEngine === "verlet"
+          ? VisualizationMode.Verlet
+          : VisualizationMode.Keplerian;
 
-        if (newMode !== this.currentMode) {
-          this.setVisualizationMode(newMode);
-        }
-      });
+      if (newMode !== this.currentMode) {
+        this.setVisualizationMode(newMode);
+      }
+    });
 
     // Set initial mode based on current settings
     const initialSettings = this.stateAdapter.$visualSettings.getValue();
@@ -205,12 +200,8 @@ export class OrbitsManager {
    * Should be called when the manager is no longer needed.
    */
   dispose(): void {
-    // Clean up subscriptions
-    this.adapterSettingsSubscription?.unsubscribe();
-    this.adapterSettingsSubscription = null;
-
-    this.objectsSubscription?.unsubscribe();
-    this.objectsSubscription = null;
+    // Clean up subscriptions using mixin
+    super.dispose();
 
     // Clean up visualization managers
     this.keplerianStrategy.dispose();

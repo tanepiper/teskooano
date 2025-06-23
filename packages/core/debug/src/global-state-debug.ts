@@ -1,8 +1,9 @@
 import {
   getSimulationState,
   type SimulationState,
+  StateSubscriptionMixin,
 } from "@teskooano/core-state";
-import { BehaviorSubject, Observable, Subscription } from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 import { DebugLevel, isDebugEnabled } from "./debug-config";
 
 /**
@@ -13,7 +14,7 @@ import { DebugLevel, isDebugEnabled } from "./debug-config";
  */
 export class GlobalStateDebugger {
   private static instance: GlobalStateDebugger;
-  private stateSubscription: Subscription | null = null;
+  private subscriptionManager = new StateSubscriptionMixin();
 
   /**
    * A BehaviorSubject holding the latest snapshot of the global simulation state.
@@ -52,10 +53,6 @@ export class GlobalStateDebugger {
    * This is called automatically on construction if debugging is enabled.
    */
   public startMonitoring(): void {
-    if (this.stateSubscription) {
-      return; // Already monitoring
-    }
-
     // Initialize with the current state
     this._globalState$.next(getSimulationState());
 
@@ -71,8 +68,7 @@ export class GlobalStateDebugger {
    * Stops monitoring the global state.
    */
   public stopMonitoring(): void {
-    this.stateSubscription?.unsubscribe();
-    this.stateSubscription = null;
+    this.subscriptionManager.dispose();
     this._globalState$.next(null);
   }
 

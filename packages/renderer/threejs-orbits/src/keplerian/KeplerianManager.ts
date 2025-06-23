@@ -1,7 +1,8 @@
 import { type OrbitalParameters, CelestialType } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import type { Observable, Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "@teskooano/core-state";
+import type { Observable } from "rxjs";
 import * as THREE from "three";
 import { OrbitCalculator } from "./OrbitCalculator";
 import { SharedMaterials } from "../core/SharedMaterials";
@@ -15,7 +16,7 @@ import { updateThreeVector3Array } from "../utils/arrayUtils";
  * based on Keplerian orbital elements. It works with the ObjectManager to add/remove lines
  * from the scene and handles visual properties like highlighting and visibility.
  */
-export class KeplerianManager {
+export class KeplerianManager extends StateSubscriptionMixin {
   /** Map storing static Keplerian orbit lines, keyed by celestial object ID. */
   public lines: Map<string, THREE.Line> = new Map();
 
@@ -34,9 +35,6 @@ export class KeplerianManager {
   private latestRenderableObjects: Record<string, RenderableCelestialObject> =
     {};
 
-  /** Subscription to renderable objects updates */
-  private objectsSubscription: Subscription | null = null;
-
   /** Line builder utility for efficient line creation and update */
   private lineBuilder: LineBuilder;
 
@@ -50,11 +48,12 @@ export class KeplerianManager {
     objectManager: ObjectManager,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
   ) {
+    super();
     this.objectManager = objectManager;
     this.renderableObjects$ = renderableObjects$;
     this.lineBuilder = new LineBuilder();
 
-    this.objectsSubscription = this.renderableObjects$.subscribe((objects) => {
+    this.subscribeToState(this.renderableObjects$, (objects) => {
       this.latestRenderableObjects = objects;
     });
   }
@@ -276,7 +275,7 @@ export class KeplerianManager {
    */
   dispose(): void {
     this.clearAll();
-    this.objectsSubscription?.unsubscribe();
+    super.dispose();
     this.lineBuilder.clear();
   }
 }

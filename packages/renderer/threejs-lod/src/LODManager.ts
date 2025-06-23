@@ -1,12 +1,12 @@
 import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { Subscription } from "rxjs";
 
 import type { LODLevel, DebugLabel } from "./lod-manager";
 
 import {
   getSimulationState,
   simulationState$,
+  StateSubscriptionMixin,
   type PerformanceProfileType,
 } from "@teskooano/core-state";
 
@@ -21,20 +21,20 @@ import {
  * Manages Level of Detail (LOD) for celestial objects by creating THREE.LOD instances
  * based on levels provided by specific CelestialRenderers.
  */
-export class LODManager {
+export class LODManager extends StateSubscriptionMixin {
   private camera: THREE.PerspectiveCamera;
   private objectLODs: Map<string, THREE.LOD> = new Map();
   private debugLabels: Map<string, DebugLabel> = new Map();
   private debugEnabled: boolean = false;
   private currentProfile: PerformanceProfileType = "medium";
-  private unsubscribeSimState: Subscription | null = null;
 
   constructor(camera: THREE.PerspectiveCamera) {
+    super();
     this.camera = camera;
 
     this.currentProfile = getSimulationState().performanceProfile;
 
-    this.unsubscribeSimState = simulationState$.subscribe((state) => {
+    this.subscribeToState(simulationState$, (state) => {
       if (state.performanceProfile !== this.currentProfile) {
         this.currentProfile = state.performanceProfile;
       }
@@ -179,8 +179,7 @@ export class LODManager {
 
     this.objectLODs.clear();
 
-    this.unsubscribeSimState?.unsubscribe();
-    this.unsubscribeSimState = null;
+    super.dispose();
   }
 
   /**
