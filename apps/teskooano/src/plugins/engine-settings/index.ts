@@ -11,7 +11,8 @@ const COMPONENT_NAME = "engine-ui-settings-panel";
 export const plugin = createPanelPlugin({
   id: "teskooano-engine-settings",
   name: "Engine Settings UI",
-  description: "Provides the settings panel for controlling engine view options.",
+  description:
+    "Provides the settings panel for controlling engine view options.",
   componentName: COMPONENT_NAME,
   panelClass: EngineUISettingsPanel,
   defaultTitle: "Engine Settings",

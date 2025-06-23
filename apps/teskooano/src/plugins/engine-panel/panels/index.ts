@@ -8,7 +8,7 @@ import { CompositeEnginePanel } from "./composite-panel/CompositeEnginePanel";
  */
 export const plugin = createPanelPlugin({
   id: "engine-panel-views",
-  name: "Engine Panel Views", 
+  name: "Engine Panel Views",
   description: "Registers the main engine view panel (CompositeEnginePanel).",
   componentName: "teskooano-engine-view",
   panelClass: CompositeEnginePanel,

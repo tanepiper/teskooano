@@ -85,10 +85,14 @@ export function createPanelPlugin(config: PanelPluginConfig): TeskooanoPlugin {
           componentName: config.componentName,
           behaviour: "toggle",
           order: config.order || 10,
-          ...(config.initialPosition && { initialPosition: config.initialPosition }),
+          ...(config.initialPosition && {
+            initialPosition: config.initialPosition,
+          }),
           ...(config.tooltipText && { tooltipText: config.tooltipText }),
           ...(config.tooltipTitle && { tooltipTitle: config.tooltipTitle }),
-          ...(config.tooltipIconSvg && { tooltipIconSvg: config.tooltipIconSvg }),
+          ...(config.tooltipIconSvg && {
+            tooltipIconSvg: config.tooltipIconSvg,
+          }),
         },
       ],
     });
@@ -118,7 +122,9 @@ export function createPanelPlugin(config: PanelPluginConfig): TeskooanoPlugin {
 /**
  * Factory for component-only plugins (like core UI components).
  */
-export function createComponentPlugin(config: ComponentPluginConfig): TeskooanoPlugin {
+export function createComponentPlugin(
+  config: ComponentPluginConfig,
+): TeskooanoPlugin {
   return {
     id: config.id,
     name: config.name,
@@ -137,7 +143,9 @@ export function createComponentPlugin(config: ComponentPluginConfig): TeskooanoP
 /**
  * Factory for controller plugins (initialization functions + panels).
  */
-export function createControllerPlugin(config: ControllerPluginConfig): TeskooanoPlugin {
+export function createControllerPlugin(
+  config: ControllerPluginConfig,
+): TeskooanoPlugin {
   return {
     id: config.id,
     name: config.name,
@@ -154,7 +162,9 @@ export function createControllerPlugin(config: ControllerPluginConfig): Teskooan
 /**
  * Factory for interface plugins (functions + toolbar registrations).
  */
-export function createInterfacePlugin(config: InterfacePluginConfig): TeskooanoPlugin {
+export function createInterfacePlugin(
+  config: InterfacePluginConfig,
+): TeskooanoPlugin {
   return {
     id: config.id,
     name: config.name,

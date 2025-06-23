@@ -10,7 +10,8 @@ export * from "./types.js";
 export const plugin = createComponentPlugin({
   id: "teskooano-external-links",
   name: "External Links Widget",
-  description: "Provides external link buttons (GitHub, Mastodon) for the main toolbar.",
+  description:
+    "Provides external link buttons (GitHub, Mastodon) for the main toolbar.",
   components: [
     {
       tagName: "teskooano-external-links-component",

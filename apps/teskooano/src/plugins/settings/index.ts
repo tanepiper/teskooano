@@ -9,7 +9,8 @@ import SettingsIcon from "@fluentui/svg-icons/icons/settings_24_regular.svg?raw"
 export const plugin = createPanelPlugin({
   id: "teskooano-settings",
   name: "Application Settings Panel",
-  description: "Registers the main application settings panel and its toolbar toggle button.",
+  description:
+    "Registers the main application settings panel and its toolbar toggle button.",
   componentName: SettingsPanel.componentName,
   panelClass: SettingsPanel,
   defaultTitle: "Settings",

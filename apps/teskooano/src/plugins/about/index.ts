@@ -8,7 +8,7 @@ import QuestionIcon from "@fluentui/svg-icons/icons/question_circle_24_regular.s
  */
 export const plugin = createPanelPlugin({
   id: "teskooano-about",
-  name: "About Panel", 
+  name: "About Panel",
   description: "Provides the About panel and toolbar button.",
   componentName: AboutPanel.componentName,
   panelClass: AboutPanel,

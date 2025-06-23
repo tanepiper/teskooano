@@ -11,9 +11,15 @@ import { PlanetInfoComponent } from "./bodies/PlanetInfo.js";
 import { StarInfoComponent } from "./bodies/StarInfo.js";
 
 const additionalComponents = [
-  { tagName: "asteroid-field-info", componentClass: AsteroidFieldInfoComponent },
+  {
+    tagName: "asteroid-field-info",
+    componentClass: AsteroidFieldInfoComponent,
+  },
   { tagName: "gas-giant-info", componentClass: GasGiantInfoComponent },
-  { tagName: "generic-celestial-info", componentClass: GenericCelestialInfoComponent },
+  {
+    tagName: "generic-celestial-info",
+    componentClass: GenericCelestialInfoComponent,
+  },
   { tagName: "moon-info", componentClass: MoonInfoComponent },
   { tagName: "oort-cloud-info", componentClass: OortCloudInfoComponent },
   { tagName: "planet-info", componentClass: PlanetInfoComponent },
@@ -27,13 +33,15 @@ const additionalComponents = [
 export const plugin = createPanelPlugin({
   id: "teskooano-celestial-info",
   name: "Celestial Info Display",
-  description: "Provides the celestial information display panel and toolbar button.",
+  description:
+    "Provides the celestial information display panel and toolbar button.",
   componentName: CelestialInfo.componentName,
   panelClass: CelestialInfo,
   defaultTitle: "Celestial Info",
   iconSvg: InfoIcon,
-  order: 30,
+  order: 35,
   additionalComponents,
+  target: "engine-toolbar",
 });
 
 export { CelestialInfo };

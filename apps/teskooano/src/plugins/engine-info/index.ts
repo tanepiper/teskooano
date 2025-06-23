@@ -9,7 +9,8 @@ import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?r
 export const plugin = createPanelPlugin({
   id: "teskooano-engine-info",
   name: "Engine Info Display",
-  description: "Provides the engine information display panel and toolbar button.",
+  description:
+    "Provides the engine information display panel and toolbar button.",
   componentName: RendererInfoDisplay.componentName,
   panelClass: RendererInfoDisplay,
   defaultTitle: "Renderer Info",
