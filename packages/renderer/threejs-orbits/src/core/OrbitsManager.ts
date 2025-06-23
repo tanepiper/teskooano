@@ -39,8 +39,10 @@ export class OrbitsManager {
   /** Manager for position history trail visualizations */
   private verletStrategy: VerletStrategy;
 
-  /** Flag indicating if visualizations are visible */
-  private visualizationVisible: boolean = true;
+  /** Flag indicating if orbit/trail visualizations are visible */
+  private orbitLinesVisible: boolean = true;
+  /** Flag indicating if prediction line visualizations are visible */
+  private predictionLinesVisible: boolean = true;
 
   /** Currently highlighted object ID */
   private highlightedObjectId: string | null = null;
@@ -135,17 +137,21 @@ export class OrbitsManager {
    */
   setVisualizationMode(mode: VisualizationMode): void {
     if (mode === this.currentMode && this.activeStrategy) return;
-
     this.currentMode = mode;
 
-    if (mode === VisualizationMode.Keplerian) {
-      this.activeStrategy = this.keplerianStrategy;
-      this.verletStrategy.setVisibility(false);
-    } else {
-      this.activeStrategy = this.verletStrategy;
-      this.keplerianStrategy.setVisibility(false);
-    }
-    this.activeStrategy.setVisibility(this.visualizationVisible);
+    const inactiveStrategy =
+      mode === VisualizationMode.Keplerian
+        ? this.verletStrategy
+        : this.keplerianStrategy;
+    inactiveStrategy.setVisibility(false);
+    inactiveStrategy.setPredictionVisibility(false);
+
+    this.activeStrategy =
+      mode === VisualizationMode.Keplerian
+        ? this.keplerianStrategy
+        : this.verletStrategy;
+    this.activeStrategy.setVisibility(this.orbitLinesVisible);
+    this.activeStrategy.setPredictionVisibility(this.predictionLinesVisible);
   }
 
   /**
@@ -162,30 +168,27 @@ export class OrbitsManager {
   }
 
   /**
-   * Toggles the visibility of all visualizations.
+   * Sets the visibility of the main orbit/trail lines.
+   *
+   * @param visible - Whether orbit/trail lines should be visible
    */
-  toggleVisualization(): void {
-    this.setVisibility(!this.visualizationVisible);
+  public setOrbitTrailsVisibility(visible: boolean): void {
+    this.orbitLinesVisible = visible;
+    if (this.activeStrategy) {
+      this.activeStrategy.setVisibility(visible);
+    }
   }
 
   /**
-   * Gets the current visibility state.
+   * Sets the visibility of prediction lines (only applicable in Verlet mode).
    *
-   * @returns Whether visualizations are currently visible
+   * @param visible - Whether prediction lines should be visible
    */
-  isVisualizationVisible(): boolean {
-    return this.visualizationVisible;
-  }
-
-  /**
-   * Sets the visibility of all visualizations.
-   *
-   * @param visible - Whether visualizations should be visible
-   */
-  setVisibility(visible: boolean): void {
-    if (visible === this.visualizationVisible) return;
-    this.visualizationVisible = visible;
-    this.activeStrategy.setVisibility(visible);
+  public setPredictionVisibility(visible: boolean): void {
+    this.predictionLinesVisible = visible;
+    if (this.activeStrategy) {
+      this.activeStrategy.setPredictionVisibility(visible);
+    }
   }
 
   /**

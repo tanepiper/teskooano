@@ -94,8 +94,10 @@ export class VerletStrategy implements IOrbitVisualizationStrategy {
   }
 
   setVisibility(visible: boolean): void {
-    this.isVisible = visible;
     this.trailManager.setVisibility(visible);
+  }
+
+  setPredictionVisibility(visible: boolean): void {
     this.predictionManager.setVisibility(visible);
   }
 

@@ -10,6 +10,7 @@ type ControlRefs = {
   auMarkersToggle: HTMLInputElement;
   debrisEffectsToggle: HTMLInputElement;
   orbitLinesToggle: HTMLInputElement;
+  predictionLinesToggle: HTMLInputElement;
   fovSliderElement: TeskooanoSlider;
   debugModeToggle: HTMLInputElement;
   errorMessageElement: HTMLElement;
@@ -87,6 +88,10 @@ export class EngineSettingsController {
       "change",
       this.handleOrbitLinesToggleChange,
     );
+    this._refs.predictionLinesToggle?.addEventListener(
+      "change",
+      this.handlePredictionLinesToggleChange,
+    );
     this._refs.fovSliderElement?.addEventListener(
       CustomEvents.SLIDER_CHANGE,
       this.handleFovChange as EventListener,
@@ -120,6 +125,10 @@ export class EngineSettingsController {
     this._refs.orbitLinesToggle?.removeEventListener(
       "change",
       this.handleOrbitLinesToggleChange,
+    );
+    this._refs.predictionLinesToggle?.removeEventListener(
+      "change",
+      this.handlePredictionLinesToggleChange,
     );
     this._refs.fovSliderElement?.removeEventListener(
       CustomEvents.SLIDER_CHANGE,
@@ -188,6 +197,12 @@ export class EngineSettingsController {
     });
   };
 
+  private handlePredictionLinesToggleChange = (event: Event): void => {
+    this._parentPanel?.updateViewState({
+      showPredictionLines: (event.target as HTMLInputElement).checked,
+    });
+  };
+
   private handleDebugModeToggleChange = (event: Event): void => {
     this._parentPanel?.setDebugMode((event.target as HTMLInputElement).checked);
   };
@@ -236,6 +251,10 @@ export class EngineSettingsController {
     }
     if (this._refs.orbitLinesToggle) {
       this._refs.orbitLinesToggle.checked = viewState.showOrbitLines ?? true;
+    }
+    if (this._refs.predictionLinesToggle) {
+      this._refs.predictionLinesToggle.checked =
+        viewState.showPredictionLines ?? true;
     }
     if (this._refs.debugModeToggle) {
       this._refs.debugModeToggle.checked = viewState.isDebugMode ?? false;

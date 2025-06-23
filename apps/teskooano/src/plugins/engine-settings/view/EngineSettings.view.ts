@@ -45,6 +45,9 @@ export class EngineUISettingsPanel
       orbitLinesToggle: this.shadowRoot!.getElementById(
         "orbit-lines-toggle",
       ) as HTMLInputElement,
+      predictionLinesToggle: this.shadowRoot!.getElementById(
+        "prediction-lines-toggle",
+      ) as HTMLInputElement,
       fovSliderElement: this.shadowRoot!.getElementById(
         "fov-slider",
       ) as TeskooanoSlider,

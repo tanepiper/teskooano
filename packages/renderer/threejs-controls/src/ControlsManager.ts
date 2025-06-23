@@ -1,4 +1,3 @@
-import { OSVector3 } from "@teskooano/core-math";
 import { CustomEvents } from "@teskooano/data-types";
 import gsap from "gsap";
 import * as THREE from "three";
@@ -43,18 +42,11 @@ export class ControlsManager {
   /** Stores the calculated camera offset relative to the target at the end of a transition. (Currently unused in update loop but kept for reference). */
   /** Tracks whether debug/fly controls are active. */
   private isDebugModeActive: boolean = false;
-  /** Stores the last OrbitControls target before switching to debug mode. */
-  private lastOrbitTarget: THREE.Vector3 = new THREE.Vector3();
-  /** Clock for FlyControls delta calculation. */
-  private clock = new THREE.Clock();
 
   // Store original damping settings during transition
   private _originalDampingEnabled: boolean = false;
   private _originalDampingFactor: number = 0.05;
 
-  private lastCameraPosition = new THREE.Vector3();
-  private lastCameraTarget = new THREE.Vector3();
-  private changeThreshold = 0.001; // Minimum change to trigger state update
   private rendererElement: HTMLElement;
 
   /**

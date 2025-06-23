@@ -120,6 +120,13 @@ template.innerHTML = `
     </label>
   </div>
   <div class="setting-row">
+    <label for="prediction-lines-toggle">Show Prediction Lines</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="prediction-lines-toggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="setting-row">
     <label for="debug-mode-toggle">Debug Mode</label>
     <label class="toggle-switch">
       <input type="checkbox" id="debug-mode-toggle">

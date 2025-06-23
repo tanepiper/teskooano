@@ -16,6 +16,7 @@ export const createDefaultViewState = (): CompositeEngineState => ({
   showAuMarkers: true,
   showDebrisEffects: false,
   showOrbitLines: true,
+  showPredictionLines: true,
   isDebugMode: false,
   fov: DEFAULT_PANEL_FOV,
 });
@@ -46,6 +47,9 @@ export function applyViewStateToRenderer(
   }
   if (updates.showOrbitLines !== undefined) {
     renderer.setOrbitsVisible(updates.showOrbitLines);
+  }
+  if (updates.showPredictionLines !== undefined) {
+    renderer.setPredictionLinesVisible(updates.showPredictionLines);
   }
   if (updates.fov !== undefined) {
     renderer.sceneManager?.setFov(updates.fov);

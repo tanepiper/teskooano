@@ -71,7 +71,7 @@ export class PredictionLabelLayer extends BaseLabelLayer {
     // Baseline thresholds in scene units
     const BASE_HIDE_SHORT_TERM_DIST = 50;
     const BASE_HIDE_MEDIUM_TERM_DIST = 150;
-    const BASE_HIDE_LONG_TERM_DIST = 1500;
+    const BASE_HIDE_LONG_TERM_DIST = 3000;
     const EARTH_ORBITAL_VELOCITY_MS = 29780; // ~30 km/s
 
     // Scale thresholds based on the object's velocity relative to Earth's orbital speed.

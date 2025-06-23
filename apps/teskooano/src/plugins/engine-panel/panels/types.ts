@@ -60,6 +60,11 @@ export interface CompositeEngineState {
    */
   showOrbitLines?: boolean;
   /**
+   * Whether to show the prediction lines for celestial bodies.
+   * Defaults to true.
+   */
+  showPredictionLines?: boolean;
+  /**
    * Whether to show the debug mode
    * NOTE: This is still a work in progress and the camera controls are not yet fully integrated
    */

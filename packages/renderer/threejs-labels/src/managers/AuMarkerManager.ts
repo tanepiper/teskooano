@@ -15,7 +15,7 @@ const auMarkersData = [
   { au: 9, color: "#FFA500" },
   { au: 10, color: "#00ff00" },
   { au: 20, color: "#FFA500" },
-  { au: 30, color: "#00ff00" },
+  { au: 30, color: "#FFA500" },
   { au: 40, color: "#FFA500" },
   { au: 50, color: "#FFA500" },
   { au: 60, color: "#FFA500" },
@@ -46,6 +46,10 @@ const auMarkersData = [
   { au: 40000, color: "#FFA500" },
   { au: 50000, color: "#FFA500" },
   { au: 60000, color: "#FFA500" },
+  { au: 70000, color: "#FFA500" },
+  { au: 80000, color: "#FFA500" },
+  { au: 90000, color: "#FFA500" },
+  { au: 100000, color: "#00ff00" },
 ];
 
 /**

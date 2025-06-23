@@ -290,19 +290,24 @@ export class ModularSpaceRenderer {
    * @param visible - True to show orbits, false to hide.
    */
   setOrbitsVisible(visible: boolean): void {
-    this.orbitManager.setVisibility(visible);
+    this.orbitManager.setOrbitTrailsVisibility(visible);
+  }
+  /**
+   * Sets the visibility of all prediction lines.
+   * @param visible - True to show prediction lines, false to hide.
+   */
+  setPredictionLinesVisible(visible: boolean): void {
+    this.orbitManager.setPredictionVisibility(visible);
+    this.css2DManager?.setLayerVisibility(
+      CSS2DLayerType.PREDICTION_LABELS,
+      visible,
+    );
   }
   /**
    * Toggles the visibility of the background grid helper.
    */
   toggleGrid(): void {
     this.sceneManager.toggleGrid();
-  }
-  /**
-   * Toggles the visibility of all orbital lines.
-   */
-  toggleOrbits(): void {
-    this.orbitManager.toggleVisualization();
   }
 
   /**

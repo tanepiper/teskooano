@@ -77,4 +77,8 @@ export class KeplerianStrategy implements IOrbitVisualizationStrategy {
   dispose(): void {
     this.keplerianManager.dispose();
   }
+
+  public setPredictionVisibility(visible: boolean): void {
+    // This strategy does not have prediction lines.
+  }
 }

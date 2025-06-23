@@ -16,5 +16,7 @@ export interface IOrbitVisualizationStrategy {
 
   setVisibility(visible: boolean): void;
 
+  setPredictionVisibility(visible: boolean): void;
+
   dispose(): void;
 }
