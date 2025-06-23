@@ -117,7 +117,7 @@ export class OrbitsManager {
     // This is problematic with the new structure, but we'll leave it for now
     // to avoid breaking external dependencies. A better approach would be
     // to refactor consumers to not need direct access.
-    return (this.verletStrategy as any).predictionManager;
+    return this.verletStrategy.predictionManager;
   }
 
   /**
@@ -125,7 +125,7 @@ export class OrbitsManager {
    */
   public getTrailManager(): TrailManager {
     // Similar to getPredictionManager, this is not ideal.
-    return (this.verletStrategy as any).trailManager;
+    return this.verletStrategy.trailManager;
   }
 
   /**
@@ -152,9 +152,13 @@ export class OrbitsManager {
    * Updates all visualizations based on the current mode and settings.
    * This should be called once per frame from the render loop.
    */
-  updateAllVisualizations(): void {
+  updateAllVisualizations(deltaTime: number): void {
     const visualSettings = this.stateAdapter.$visualSettings.getValue();
-    this.activeStrategy.update(this.latestRenderableObjects, visualSettings);
+    this.activeStrategy.update(
+      this.latestRenderableObjects,
+      visualSettings,
+      deltaTime,
+    );
   }
 
   /**

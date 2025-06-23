@@ -15,8 +15,34 @@ import { SharedMaterials } from "../core/SharedMaterials";
 import { LineBuilder } from "../utils/LineBuilder";
 import { Subscription } from "rxjs";
 import { map, distinctUntilChanged } from "rxjs/operators";
+import {
+  CSS2DLayerType,
+  Layer2DManager,
+} from "@teskooano/renderer-threejs-labels";
+import { PredictionLabelLayer } from "@teskooano/renderer-threejs-labels";
+import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
 
 const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
+const TIME_MARKERS = [
+  3600, // 1h
+  3600 * 6, // 6h
+  3600 * 12, // 12h
+  86400, // 1d
+  86400 * 7, // 7d
+  86400 * 30, // 30d
+  86400 * 60, // 60d
+  86400 * 90, // 90d
+  86400 * 180, // 180d
+  SECONDS_PER_YEAR, // 1y
+];
+
+function formatTimestamp(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.round(seconds / 3600)}h`;
+  if (seconds < 31536000) return `${Math.round(seconds / 86400)}d`;
+  return `${(seconds / 31536000).toFixed(1)}y`;
+}
 
 /**
  * Manages the creation and updating of prediction lines showing an object's future trajectory.
@@ -39,6 +65,30 @@ export class PredictionManager {
 
   /** Object manager for scene interaction */
   private objectManager: ObjectManager;
+
+  /** The manager for 2D labels */
+  private layer2DManager: Layer2DManager | null = null;
+
+  /** A fixed pool of reusable label objects for time markers. */
+  private predictionLabels: {
+    label: CSS2DObject;
+    element: HTMLElement;
+  }[] = [];
+
+  // --- Animation State ---
+  /** The currently displayed points of the prediction line. */
+  private currentPoints: THREE.Vector3[] = [];
+  /** The target points for the animation. */
+  private targetPoints: THREE.Vector3[] = [];
+  /** Flag to indicate if the line is currently animating. */
+  private isAnimating: boolean = false;
+  /** Progress of the current animation (0 to 1). */
+  private animationProgress: number = 0;
+  /** Duration of the smoothing animation in seconds. */
+  private readonly animationDuration: number = 0.5;
+  /** ID of the currently highlighted object, to know which line to animate. */
+  private highlightedObjectId: string | null = null;
+  // -----------------------
 
   /** Duration to predict into the future (in seconds), synced from global state. */
   private predictionDuration: number = 0;
@@ -77,17 +127,25 @@ export class PredictionManager {
         success: boolean;
         objectId?: string;
         points?: [number, number, number][];
+        timestamps?: number[];
         error?: string;
       }>,
     ) => {
       this.isCalculating = false;
-      if (e.data.success && e.data.points && e.data.objectId) {
+      if (
+        e.data.success &&
+        e.data.points &&
+        e.data.timestamps &&
+        e.data.objectId
+      ) {
         const objectId = e.data.objectId;
         if (objectId) {
-          const predictionPointsTHREE = e.data.points.map(
+          const newPoints = e.data.points.map(
             (p) => new THREE.Vector3(p[0], p[1], p[2]),
           );
-          this.drawPredictionLine(objectId, predictionPointsTHREE);
+          // Instead of drawing directly, set the target for animation
+          this.startAnimation(objectId, newPoints);
+          this.updatePredictionLabels(newPoints, e.data.timestamps);
         }
       } else {
         console.error(
@@ -218,7 +276,7 @@ export class PredictionManager {
     allObjects: Record<string, RenderableCelestialObject>,
   ): number {
     const MIN_STEPS = 100;
-    const MAX_STEPS = 10000;
+    const MAX_STEPS = 1000;
     const POINTS_PER_AU = 2000; // Defines the desired visual density of points.
 
     let orbitDefiningObject = object;
@@ -300,6 +358,7 @@ export class PredictionManager {
       this.lineBuilder.disposeLine(line);
       this.predictionLines.delete(objectId);
     }
+    this.hideAllLabels();
   }
 
   /**
@@ -314,6 +373,11 @@ export class PredictionManager {
     this.predictionLines.forEach((line) => {
       line.visible = visible;
     });
+
+    // Also toggle label visibility, but only if the main switch is on
+    if (!visible) {
+      this.hideAllLabels();
+    }
   }
 
   /**
@@ -345,6 +409,7 @@ export class PredictionManager {
    */
   clearAllPredictions(): void {
     this.predictionLines.forEach((_, id) => this.removePrediction(id));
+    this.hideAllLabels();
   }
 
   /**
@@ -353,7 +418,18 @@ export class PredictionManager {
    * @param objectId - ID of the object to show prediction for, or null to hide all
    */
   highlightPrediction(objectId: string | null): void {
-    if (objectId) {
+    this.highlightedObjectId = objectId;
+    const labelLayer = this.layer2DManager?.getLayer(
+      CSS2DLayerType.PREDICTION_LABELS,
+    ) as PredictionLabelLayer | undefined;
+
+    if (objectId && labelLayer) {
+      const threeJsObject = this.objectManager.getObject(objectId);
+      const coreObject = getCelestialObjects()[objectId];
+      const velocity = coreObject?.physicsStateReal?.velocity_mps.length() || 0;
+
+      labelLayer.setActivePredictionObject(threeJsObject, velocity);
+
       // Hide all predictions except for the highlighted object
       this.predictionLines.forEach((line, id) => {
         if (id !== objectId) {
@@ -367,11 +443,122 @@ export class PredictionManager {
         line.visible = this.visualizationVisible;
       }
     } else {
-      // Hide all predictions
+      labelLayer?.setActivePredictionObject(null, null);
+      // Hide all predictions and all labels
       this.predictionLines.forEach((line) => {
         line.visible = false;
       });
+      this.hideAllLabels();
     }
+  }
+
+  /**
+   * Sets the Layer2DManager instance for creating labels.
+   * @param manager - The Layer2DManager instance.
+   */
+  public setLayer2DManager(manager: Layer2DManager): void {
+    this.layer2DManager = manager;
+    // Ensure the layer is registered and create the reusable labels
+    this.initializeLabels();
+  }
+
+  private initializeLabels(): void {
+    if (!this.layer2DManager) return;
+    this.disposeLabels(); // Clear any existing labels first
+
+    const labelLayer =
+      this.layer2DManager.getLayer(CSS2DLayerType.PREDICTION_LABELS) ||
+      new PredictionLabelLayer(this.objectManager.getScene());
+
+    if (!this.layer2DManager.getLayer(CSS2DLayerType.PREDICTION_LABELS)) {
+      this.layer2DManager.registerLayer(
+        CSS2DLayerType.PREDICTION_LABELS,
+        labelLayer,
+      );
+    }
+
+    TIME_MARKERS.forEach((markerTime) => {
+      const labelId = `prediction-label-${markerTime}`;
+      const labelText = formatTimestamp(markerTime);
+      const label = (labelLayer as PredictionLabelLayer).addLabel(
+        labelId,
+        new THREE.Vector3(), // Initial position
+        labelText,
+        markerTime,
+      );
+      label.visible = false; // Initially hidden
+      this.predictionLabels.push({ label, element: label.element });
+    });
+  }
+
+  private updatePredictionLabels(
+    points: THREE.Vector3[],
+    timestamps: number[],
+  ): void {
+    if (
+      !this.layer2DManager ||
+      points.length < 2 ||
+      this.predictionLabels.length === 0
+    ) {
+      return;
+    }
+
+    const totalDuration = timestamps[timestamps.length - 1];
+
+    this.predictionLabels.forEach(({ label, element }, index) => {
+      const markerTime = TIME_MARKERS[index];
+      if (markerTime > totalDuration) {
+        label.visible = false;
+        return; // Don't create labels beyond the prediction duration
+      }
+
+      // Find the segment where our markerTime falls by finding the last timestamp
+      // that is less than or equal to our target time.
+      let segmentIndex = -1;
+      for (let j = 0; j < timestamps.length - 1; j++) {
+        if (timestamps[j] <= markerTime && timestamps[j + 1] >= markerTime) {
+          segmentIndex = j;
+          break;
+        }
+      }
+
+      if (segmentIndex !== -1) {
+        const t0 = timestamps[segmentIndex];
+        const t1 = timestamps[segmentIndex + 1];
+        const p0 = points[segmentIndex];
+        const p1 = points[segmentIndex + 1];
+
+        // Avoid division by zero if timestamps are identical
+        const segmentDuration = t1 - t0;
+        if (segmentDuration === 0) {
+          label.visible = false;
+          return;
+        }
+
+        // Calculate interpolation factor
+        const t = (markerTime - t0) / segmentDuration;
+
+        // Interpolate position
+        label.position.copy(p0).lerp(p1, t);
+        label.visible = this.visualizationVisible;
+      } else {
+        label.visible = false;
+      }
+    });
+  }
+
+  private hideAllLabels(): void {
+    this.predictionLabels.forEach(({ label }) => {
+      label.visible = false;
+    });
+  }
+
+  private disposeLabels(): void {
+    if (!this.layer2DManager) return;
+    this.predictionLabels.forEach(({ label }) => {
+      label.removeFromParent();
+    });
+    this.predictionLabels = [];
   }
 
   /**
@@ -382,5 +569,72 @@ export class PredictionManager {
     this.predictionWorker?.terminate();
     this.clearAllPredictions();
     this.lineBuilder.clear();
+    this.disposeLabels();
+  }
+
+  /**
+   * Main update loop, called every frame to drive animation.
+   * @param deltaTime - The time elapsed since the last frame.
+   */
+  public update(deltaTime: number): void {
+    if (!this.isAnimating) return;
+
+    this.animationProgress += deltaTime;
+    const t = Math.min(this.animationProgress / this.animationDuration, 1);
+
+    // Ensure we have a line to update
+    const line = this.predictionLines.get(this.highlightedObjectId || "");
+    if (!line) {
+      this.isAnimating = false;
+      return;
+    }
+
+    const interpolatedPoints = this.currentPoints.map((p, i) => {
+      if (this.targetPoints[i]) {
+        return p.clone().lerp(this.targetPoints[i], t);
+      }
+      return p; // Should not happen if arrays are same length
+    });
+
+    this.lineBuilder.updateLine(
+      line,
+      interpolatedPoints,
+      interpolatedPoints.length,
+    );
+
+    if (t >= 1) {
+      this.isAnimating = false;
+      this.currentPoints = this.targetPoints;
+    }
+  }
+
+  private startAnimation(objectId: string, newPoints: THREE.Vector3[]): void {
+    if (newPoints.length === 0) {
+      this.removePrediction(objectId);
+      return;
+    }
+
+    // If there's no current line or points, draw it instantly.
+    if (
+      !this.predictionLines.has(objectId) ||
+      this.currentPoints.length === 0
+    ) {
+      this.currentPoints = newPoints;
+      this.targetPoints = newPoints;
+      this.drawPredictionLine(objectId, newPoints);
+      return;
+    }
+
+    // Ensure arrays are the same length for interpolation
+    if (this.currentPoints.length !== newPoints.length) {
+      // If lengths differ, we can't smoothly animate. Just snap to the new line.
+      // A more advanced solution might resample the curves to match point counts.
+      this.currentPoints = newPoints;
+      this.drawPredictionLine(objectId, newPoints);
+    }
+
+    this.targetPoints = newPoints;
+    this.animationProgress = 0;
+    this.isAnimating = true;
   }
 }

@@ -84,7 +84,7 @@ export class RenderPipeline {
     this.controlsManager.update(deltaTime);
 
     // 2. Update orbital paths.
-    this.orbitManager.updateAllVisualizations();
+    this.orbitManager.updateAllVisualizations(deltaTime);
 
     // 3. Update 3D objects (position, rotation, materials).
     this.objectManager.update(this.renderer, this.scene, this.camera);

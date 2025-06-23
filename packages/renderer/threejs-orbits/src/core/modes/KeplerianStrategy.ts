@@ -21,7 +21,16 @@ export class KeplerianStrategy implements IOrbitVisualizationStrategy {
     );
   }
 
-  update(objects: Record<string, RenderableCelestialObject>): void {
+  update(
+    objects: Record<string, RenderableCelestialObject>,
+    visualSettings: {
+      timeScale: number;
+      predictionSteps: number;
+      predictionDuration: number;
+    },
+    deltaTime: number,
+  ): void {
+    if (!this.isVisible) return;
     Object.values(objects).forEach((obj) => {
       if (obj.orbit && obj.parentId) {
         this.keplerianManager.createOrUpdate(

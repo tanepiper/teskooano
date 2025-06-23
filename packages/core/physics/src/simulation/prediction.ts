@@ -1,9 +1,14 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { PhysicsStateReal } from "../types";
+import { type PhysicsStateReal } from "@teskooano/data-types";
 import { Octree } from "../spatial/octree";
 import { velocityVerletIntegrate } from "../integrators";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
+
+export type PredictedPoint = {
+  point: OSVector3;
+  timestamp: number;
+};
 
 /**
  * Predicts the future trajectory of a specific body using the same physics
@@ -29,7 +34,7 @@ export function predictTrajectory(
     bodyTypes?: Map<string | number, CelestialType>;
     radii?: Map<string | number, number>;
   } = {},
-): OSVector3[] {
+): PredictedPoint[] {
   const {
     octreeSize = 5e13,
     barnesHutTheta = 0.7,
@@ -58,7 +63,7 @@ export function predictTrajectory(
   const dt = duration_s / steps;
 
   // Pre-allocate arrays and objects to be reused in the loop
-  const predictedPointsOS: OSVector3[] = [];
+  const predictedPoints: PredictedPoint[] = [];
   const accelerations = new Map<string | number, OSVector3>();
   const octree = new Octree(octreeSize);
   const reusableAccVector = new OSVector3(0, 0, 0);
@@ -81,7 +86,10 @@ export function predictTrajectory(
   // Add the initial position
   const initialTargetState = currentStates[targetBodyIndex];
   if (initialTargetState.position_m) {
-    predictedPointsOS.push(initialTargetState.position_m.clone());
+    predictedPoints.push({
+      point: initialTargetState.position_m.clone(),
+      timestamp: 0,
+    });
   } else {
     console.warn(`Initial target position missing for ${targetBodyId}`);
     return [];
@@ -206,7 +214,10 @@ export function predictTrajectory(
 
     // Add the new prediction point
     if (targetNextState !== null) {
-      predictedPointsOS.push(targetNextState.position_m.clone());
+      predictedPoints.push({
+        point: targetNextState.position_m.clone(),
+        timestamp: (i + 1) * dt,
+      });
     } else {
       console.warn(`Target state not found after step ${i}. Aborting.`);
       break;
@@ -220,12 +231,13 @@ export function predictTrajectory(
 
   // If scaling is requested, apply it.
   if (scaleToSceneUnits) {
-    return predictedPointsOS.map((p) =>
-      p.multiplyScalar(METERS_TO_SCENE_UNITS),
-    );
+    return predictedPoints.map(({ point, timestamp }) => ({
+      point: point.multiplyScalar(METERS_TO_SCENE_UNITS),
+      timestamp,
+    }));
   }
 
-  return predictedPointsOS;
+  return predictedPoints;
 }
 
 /**

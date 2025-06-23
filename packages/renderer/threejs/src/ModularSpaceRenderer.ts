@@ -107,6 +107,13 @@ export class ModularSpaceRenderer {
       this.stateAdapter,
       renderableStore.renderableObjects$,
     );
+
+    if (this.css2DManager) {
+      this.orbitManager
+        .getPredictionManager()
+        .setLayer2DManager(this.css2DManager);
+    }
+
     this.backgroundManager = new BackgroundManager(this.sceneManager.scene);
     this.backgroundManager.setCamera(this.sceneManager.camera);
 

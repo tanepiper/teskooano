@@ -9,6 +9,7 @@ export interface IOrbitVisualizationStrategy {
       predictionSteps: number;
       predictionDuration: number;
     },
+    deltaTime: number,
   ): void;
 
   highlight(objectId: string | null, color: THREE.Color): void;

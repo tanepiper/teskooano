@@ -113,6 +113,14 @@ export class ObjectManager {
   }
 
   /**
+   * Public accessor for the scene.
+   * @returns The THREE.Scene instance.
+   */
+  public getScene(): THREE.Scene {
+    return this.scene;
+  }
+
+  /**
    * Public accessor for the latest renderable objects data.
    * @returns A record of `RenderableCelestialObject`.
    */

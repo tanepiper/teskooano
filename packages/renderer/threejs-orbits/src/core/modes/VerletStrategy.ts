@@ -6,13 +6,13 @@ import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type * as THREE from "three";
 
 export class VerletStrategy implements IOrbitVisualizationStrategy {
-  private trailManager: TrailManager;
-  private predictionManager: PredictionManager;
+  public trailManager: TrailManager;
+  public predictionManager: PredictionManager;
   private highlightedObjectId: string | null = null;
   private trailUpdateCounter: number = 0;
   private readonly trailUpdateFrequency: number = 5;
   private predictionUpdateCounter: number = 0;
-  private readonly predictionUpdateFrequency: number = 15;
+  private readonly predictionUpdateFrequency: number = 90;
   private isVisible: boolean = true;
 
   constructor(objectManager: ObjectManager) {
@@ -27,8 +27,11 @@ export class VerletStrategy implements IOrbitVisualizationStrategy {
       predictionSteps: number;
       predictionDuration: number;
     },
+    deltaTime: number,
   ): void {
     const trailLength = 50000;
+
+    this.predictionManager.update(deltaTime);
 
     if (this.predictionUpdateCounter === 0) {
       this.trailManager.limitHistoryMemory(trailLength);
