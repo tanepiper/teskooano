@@ -217,4 +217,18 @@ export class ControlsManager {
     this.orbitControlsHandler.dispose();
     // ObjectFollower has no resources to dispose of.
   }
+
+  /**
+   * Calculates the expected duration of a camera transition between two points.
+   * This is useful for planning and prediction logic.
+   * @param startPos The starting position of the transition.
+   * @param endPos The ending position of the transition.
+   * @returns The calculated duration in seconds.
+   */
+  public calculateTransitionDuration(
+    startPos: THREE.Vector3,
+    endPos: THREE.Vector3,
+  ): number {
+    return this.transitionManager.calculateTransitionDuration(startPos, endPos);
+  }
 }

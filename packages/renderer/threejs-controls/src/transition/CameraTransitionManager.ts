@@ -324,7 +324,7 @@ export class CameraTransitionManager {
    * @param endPos The ending position of the transition.
    * @returns The calculated duration in seconds.
    */
-  private calculateTransitionDuration(
+  public calculateTransitionDuration(
     startPos: THREE.Vector3,
     endPos: THREE.Vector3,
   ): number {

@@ -232,13 +232,40 @@ export class CameraManager {
         return;
       }
 
-      const targetPosition = renderableObject.position.clone();
-      // NEW: Calculate distance based on object's radius
+      // --- Prediction Logic ---
+      const objectVelocity =
+        renderableObject.velocity?.clone() ?? new THREE.Vector3();
+
+      // We need to know how long the transition will take to predict the final position.
+      // To do that, we first calculate the destination as if the object were static.
+      const initialTargetPos = renderableObject.position.clone();
+      const initialRadius = renderableObject.radius ?? DEFAULT_CAMERA_DISTANCE;
+      const initialOffset = CAMERA_OFFSET.clone().multiplyScalar(
+        initialRadius * 3,
+      );
+      const initialCameraPos = initialTargetPos.clone().add(initialOffset);
+
+      // Now, get the duration for that "static" trip.
+      const transitionDuration =
+        this.renderer.controlsManager.calculateTransitionDuration(
+          this.renderer.camera.position,
+          initialCameraPos,
+        );
+
+      // Predict the final position of the object after the transition.
+      const predictedTargetPosition = renderableObject.position
+        .clone()
+        .add(objectVelocity.multiplyScalar(transitionDuration));
+      // --- End Prediction ---
+
       const calculatedDistance =
         (renderableObject.radius ?? DEFAULT_CAMERA_DISTANCE) * 3;
       const cameraOffsetVector =
         CAMERA_OFFSET.clone().multiplyScalar(calculatedDistance);
-      const cameraPosition = targetPosition.clone().add(cameraOffsetVector);
+      // The final camera position is offset from the *predicted* target position.
+      const cameraPosition = predictedTargetPosition
+        .clone()
+        .add(cameraOffsetVector);
 
       if (this.renderer.controlsManager) {
         // Set up follow BEFORE initiating transition for better continuity
@@ -254,9 +281,10 @@ export class CameraManager {
           );
         }
 
+        // Now, transition to the PREDICTED positions.
         this.renderer.controlsManager.moveToPosition(
           cameraPosition,
-          targetPosition,
+          predictedTargetPosition,
           true,
           { focusedObjectId: objectId },
         );

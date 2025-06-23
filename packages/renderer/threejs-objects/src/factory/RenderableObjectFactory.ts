@@ -77,6 +77,7 @@ export class RenderableObjectFactory {
     const target = {
       celestialObjectId: obj.id,
       position: new THREE.Vector3(),
+      velocity: new THREE.Vector3(),
       rotation: new THREE.Quaternion(),
       isVisible: true,
       isTargetable: true,
@@ -100,6 +101,12 @@ export class RenderableObjectFactory {
     };
 
     physicsToThreeJSPosition(target.position, obj.physicsStateReal.position_m);
+    if (obj.physicsStateReal.velocity_mps) {
+      physicsToThreeJSPosition(
+        target.velocity,
+        obj.physicsStateReal.velocity_mps,
+      );
+    }
     target.rotation.copy(
       this.calculateRotation(
         obj.axialTilt,
@@ -133,6 +140,7 @@ export class RenderableObjectFactory {
     const target = {
       celestialObjectId: obj.id,
       position: new THREE.Vector3(),
+      velocity: new THREE.Vector3(),
       rotation: new THREE.Quaternion(),
       isVisible: true,
       isTargetable: false,
@@ -159,6 +167,12 @@ export class RenderableObjectFactory {
       target.position,
       parent.physicsStateReal.position_m,
     );
+    if (parent.physicsStateReal.velocity_mps) {
+      physicsToThreeJSPosition(
+        target.velocity,
+        parent.physicsStateReal.velocity_mps,
+      );
+    }
     // Rings use parent's tilt but do not have their own sidereal rotation
     target.rotation.copy(
       this.calculateRotation(parent.axialTilt, undefined, 0).toThreeJS(),

@@ -30,6 +30,8 @@ export interface RenderableCelestialObject {
   mass: number;
   /** The 3D position of the object in the renderer's coordinate system. */
   position: THREE.Vector3;
+  /** The 3D velocity of the object in the renderer's coordinate system (units/sec). */
+  velocity?: THREE.Vector3;
   /** The rotational orientation of the object. */
   rotation: THREE.Quaternion;
 
