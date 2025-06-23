@@ -155,11 +155,4 @@ export class SystemGenerator {
   }
 }
 
-/**
- * A utility function to dispatch the `SIMULATION_RESET_TIME` event.
- * @deprecated This is a candidate for removal in favor of more direct state management.
- */
-export const handleResetSimulationTime = () => {
-  const event = new CustomEvent(CustomEvents.SIMULATION_RESET_TIME);
-  window.dispatchEvent(event);
-};
+
