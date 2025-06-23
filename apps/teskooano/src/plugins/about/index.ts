@@ -25,5 +25,4 @@ export const plugin = createPanelPlugin({
     width: 450,
     height: 500,
   },
-  dependencies: ["teskooano-card"],
 });
