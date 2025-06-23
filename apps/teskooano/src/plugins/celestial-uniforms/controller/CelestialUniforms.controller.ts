@@ -1,6 +1,6 @@
 import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
 import { type CelestialObject, CelestialStatus } from "@teskooano/data-types";
-import { Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
 import type { CelestialUniformsEditor } from "../view/CelestialUniforms.view";
 import { UniformsRendererFactory } from "./uniform-renderers/UniformsRendererFactory";
 
@@ -11,15 +11,14 @@ import { UniformsRendererFactory } from "./uniform-renderers/UniformsRendererFac
  * It manages subscriptions to state, handles focus changes, and orchestrates
  * the rendering of UI controls by delegating to specialized renderer classes.
  */
-export class CelestialUniformsController {
+export class CelestialUniformsController extends StateSubscriptionMixin {
   private _view: CelestialUniformsEditor;
   private _container: HTMLElement;
   private _placeholder: HTMLElement;
   private _titleEl: HTMLElement;
 
-  private unsubscribeObjectsStore: Subscription | null = null;
   private currentSelectedId: string | null = null;
-  private activeInputSubscriptions: Subscription[] = [];
+  private activeInputSubscriptions: any[] = [];
   private _lastRenderedObjectId: string | null = null;
 
   private _handleRendererFocusChange: (event: Event) => void;
@@ -38,6 +37,7 @@ export class CelestialUniformsController {
     placeholder: HTMLElement,
     titleEl: HTMLElement,
   ) {
+    super();
     this._view = view;
     this._container = container;
     this._placeholder = placeholder;
@@ -90,8 +90,8 @@ export class CelestialUniformsController {
    */
   public dispose(): void {
     this._cleanupSubscriptions();
-    this.unsubscribeObjectsStore?.unsubscribe();
-    this.unsubscribeObjectsStore = null;
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
 
     document.removeEventListener(
       "renderer-focus-changed",
@@ -118,8 +118,10 @@ export class CelestialUniformsController {
   }
 
   private setupObjectListener(): void {
-    this.unsubscribeObjectsStore = celestialObjects$.subscribe(
-      (allCelestials) => {
+    // ✅ Using StateSubscriptionMixin for clean subscription management
+    this.subscribeToState(
+      celestialObjects$,
+      (allCelestials: Record<string, CelestialObject>) => {
         if (this.currentSelectedId) {
           const celestialData = allCelestials[this.currentSelectedId];
 

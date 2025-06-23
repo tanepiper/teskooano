@@ -1,6 +1,6 @@
 import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
-import { Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
 import type { CelestialInfo } from "../view/CelestialInfo.view";
 import { CelestialInfoViewManager } from "./CelestialInfoViewManager";
 
@@ -9,10 +9,9 @@ import { CelestialInfoViewManager } from "./CelestialInfoViewManager";
  * Encapsulates all business logic for the celestial info panel, including
  * state subscriptions, event handling, and managing the view manager.
  */
-export class CelestialInfoController {
+export class CelestialInfoController extends StateSubscriptionMixin {
   private _view: CelestialInfo;
   private _viewManager: CelestialInfoViewManager;
-  private _celestialObjectsSubscription: Subscription | null = null;
   private _currentSelectedId: string | null = null;
 
   /**
@@ -26,6 +25,7 @@ export class CelestialInfoController {
     container: HTMLElement,
     placeholder: HTMLElement,
   ) {
+    super();
     this._view = view;
     this._viewManager = new CelestialInfoViewManager(container, placeholder);
   }
@@ -35,7 +35,9 @@ export class CelestialInfoController {
    * focus events.
    */
   public initialize(): void {
-    this._celestialObjectsSubscription = celestialObjects$.subscribe(
+    // ✅ Using StateSubscriptionMixin for clean subscription management
+    this.subscribeToState(
+      celestialObjects$,
       this.handleObjectStoreUpdate,
     );
 
@@ -55,8 +57,8 @@ export class CelestialInfoController {
    * listeners to prevent memory leaks.
    */
   public dispose(): void {
-    this._celestialObjectsSubscription?.unsubscribe();
-    this._celestialObjectsSubscription = null;
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
 
     document.removeEventListener(
       "renderer-focus-changed",

@@ -9,7 +9,7 @@ import {
   CustomEvents,
   METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
-import { Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CameraManagerState } from "@teskooano/app-simulation";
 import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
@@ -28,7 +28,7 @@ import * as THREE from "three";
  * (focus, follow, expand/collapse), and communicates with the parent
  * engine panel to control the camera.
  */
-export class CelestialHierarchyController {
+export class CelestialHierarchyController extends StateSubscriptionMixin {
   private _view: CelestialHierarchy;
   private _treeListContainer: HTMLUListElement;
   private _resetButton: HTMLElement;
@@ -46,10 +46,11 @@ export class CelestialHierarchyController {
   private _handleInfluencesChanged: () => void;
   private _handleTreeInteraction: (event: Event) => void;
 
-  private _celestialObjectsUnsubscribe: Subscription | null = null;
-  private _cameraStateSubscription: Subscription | null = null;
   private _previousObjectsState: Record<string, CelestialObject> = {};
   private _listUpdateInterval: number | null = null;
+  
+  // Special subscription for camera state that has dynamic lifecycle
+  private _cameraStateSubscription: any = null;
 
   /**
    * Creates an instance of CelestialHierarchyController.
@@ -64,6 +65,7 @@ export class CelestialHierarchyController {
     resetButton: HTMLElement,
     clearButton: HTMLElement,
   ) {
+    super();
     this._view = view;
     this._treeListContainer = treeListContainer;
     this._resetButton = resetButton;
@@ -98,7 +100,9 @@ export class CelestialHierarchyController {
     this._populateListInternal();
 
     this._previousObjectsState = { ...getCelestialObjects() };
-    this._celestialObjectsUnsubscribe = celestialObjects$.subscribe(
+    // ✅ Using StateSubscriptionMixin for clean subscription management
+    this.subscribeToState(
+      celestialObjects$,
       this.checkForStatusChanges.bind(this),
     );
 
@@ -131,14 +135,15 @@ export class CelestialHierarchyController {
    */
   public dispose(): void {
     this.removeEventListeners();
-    if (this._celestialObjectsUnsubscribe) {
-      this._celestialObjectsUnsubscribe.unsubscribe();
-      this._celestialObjectsUnsubscribe = null;
-    }
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
+    
+    // Clean up special camera state subscription
     if (this._cameraStateSubscription) {
       this._cameraStateSubscription.unsubscribe();
       this._cameraStateSubscription = null;
     }
+    
     if (this._listUpdateInterval) {
       window.clearInterval(this._listUpdateInterval);
       this._listUpdateInterval = null;

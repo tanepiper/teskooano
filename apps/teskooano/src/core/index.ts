@@ -22,6 +22,9 @@ export { TeskooanoSelect } from "./components/select/Select";
 export { TeskooanoSlider } from "./components/slider/Slider";
 export { TeskooanoTooltip } from "./components/tooltip/Tooltip";
 
+// --- Mixins ---
+export { StateSubscriptionMixin } from "./components/mixins/StateSubscriptionMixin";
+
 // --- Controllers ---
 export {
   DockviewController,
