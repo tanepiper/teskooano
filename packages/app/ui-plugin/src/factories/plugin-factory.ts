@@ -41,24 +41,28 @@ export function createPanelPlugin(config: PanelPluginConfig): TeskooanoPlugin {
     defaultTitle: config.defaultTitle,
   };
 
-  const toolbarRegistration: ToolbarRegistration = {
-    target: config.target || "engine-toolbar",
-    items: [
-      {
-        id: `${config.id}-button`,
-        type: "panel",
-        title: config.buttonTitle || config.defaultTitle,
-        iconSvg: config.iconSvg,
-        componentName: config.componentName,
-        behaviour: "toggle",
-        order: config.order || 10,
-        ...(config.initialPosition && { initialPosition: config.initialPosition }),
-        ...(config.tooltipText && { tooltipText: config.tooltipText }),
-        ...(config.tooltipTitle && { tooltipTitle: config.tooltipTitle }),
-        ...(config.tooltipIconSvg && { tooltipIconSvg: config.tooltipIconSvg }),
-      },
-    ],
-  };
+  // Only create toolbar registration if target is specified (not undefined)
+  const toolbarRegistrations: ToolbarRegistration[] = [];
+  if (config.target !== undefined) {
+    toolbarRegistrations.push({
+      target: config.target || "engine-toolbar",
+      items: [
+        {
+          id: `${config.id}-button`,
+          type: "panel",
+          title: config.buttonTitle || config.defaultTitle,
+          iconSvg: config.iconSvg,
+          componentName: config.componentName,
+          behaviour: "toggle",
+          order: config.order || 10,
+          ...(config.initialPosition && { initialPosition: config.initialPosition }),
+          ...(config.tooltipText && { tooltipText: config.tooltipText }),
+          ...(config.tooltipTitle && { tooltipTitle: config.tooltipTitle }),
+          ...(config.tooltipIconSvg && { tooltipIconSvg: config.tooltipIconSvg }),
+        },
+      ],
+    });
+  }
 
   // Always include the main component
   const components: ComponentConfig[] = [
@@ -74,7 +78,7 @@ export function createPanelPlugin(config: PanelPluginConfig): TeskooanoPlugin {
     name: config.name,
     description: config.description,
     panels: [panelConfig],
-    toolbarRegistrations: [toolbarRegistration],
+    toolbarRegistrations: toolbarRegistrations,
     components: components,
     functions: config.additionalFunctions || [],
     managerClasses: [],

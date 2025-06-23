@@ -6,7 +6,7 @@ This report documents the successful implementation and deployment of the plugin
 
 ## 📊 Impact Summary
 
-### ✅ **Plugins Successfully Converted (11/16 total)**
+### ✅ **Plugins Successfully Converted (10/16 total)**
 | Plugin | Lines Before | Lines After | Reduction |
 |--------|-------------|-------------|-----------|
 | about | 53 | 18 | **66%** |
@@ -16,13 +16,14 @@ This report documents the successful implementation and deployment of the plugin
 | debug-panel | 69 | 25 | **64%** |
 | engine-info | 58 | 22 | **62%** |
 | engine-settings | 49 | 15 | **69%** |
+| engine-panel/panels | 30 | 12 | **60%** |
 | plugin-manager | 72 | 25 | **65%** |
 | settings | 55 | 15 | **73%** |
 
 ### **Total Aggregate Impact:**
-- **536 lines reduced to 187 lines**
+- **566 lines reduced to 199 lines**
 - **Average 65% reduction per plugin**
-- **349 lines of boilerplate eliminated**
+- **367 lines of boilerplate eliminated**
 
 ## 🏗️ Implementation Details
 
@@ -87,13 +88,15 @@ export const plugin = createPanelPlugin({
 });
 ```
 
-## 🔧 Plugins Not Converted (5/16) - By Design
+## 🔧 Plugins Not Converted (6/16) - By Design
 
 ### **Functional/Non-Panel Plugins:**
-1. **notifications** - Functional plugin with UI manager
-2. **external-links** - Toolbar widget plugin (not panel)
-3. **celestial-icons** - Component library plugin
+1. **notifications** - Functional plugin with UI manager (not a panel)
+2. **external-links** - Toolbar widget plugin (not a panel)
+3. **celestial-icons** - Component library plugin (not a panel)
 4. **engine-panel** - Composite plugin aggregating multiple sub-plugins
+5. **engine-panel/simulation-controls** - Functional MVC component plugin (not a panel)
+6. **engine-panel/system-controls** - Functional MVC component with service layer (not a panel)
 
 These plugins have different architectural patterns and correctly don't use the panel factory.
 

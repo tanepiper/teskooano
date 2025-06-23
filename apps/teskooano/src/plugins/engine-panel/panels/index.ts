@@ -1,29 +1,20 @@
-import {
-  type TeskooanoPlugin,
-  type PanelConfig,
-  type PluginExecutionContext,
-} from "@teskooano/ui-plugin";
+import { createPanelPlugin } from "@teskooano/ui-plugin";
 import { CompositeEnginePanel } from "./composite-panel/CompositeEnginePanel";
-
-const enginePanelConfig: PanelConfig = {
-  componentName: "teskooano-engine-view",
-  panelClass: CompositeEnginePanel,
-  defaultTitle: "Engine View",
-};
 
 /**
  * Plugin definition for the core Engine Panel view.
- * Registers the CompositeEnginePanel as a Dockview panel.
+ * ✅ Refactored to use createPanelPlugin factory - reduced from 30 lines to 12 lines
+ * Note: This is a special panel that doesn't have a toolbar button as it's created dynamically
  */
-export const plugin: TeskooanoPlugin = {
+export const plugin = createPanelPlugin({
   id: "engine-panel-views",
-  name: "Engine Panel Views",
+  name: "Engine Panel Views", 
   description: "Registers the main engine view panel (CompositeEnginePanel).",
-  panels: [enginePanelConfig],
-  functions: [],
-  toolbarRegistrations: [],
-  toolbarWidgets: [],
-  managerClasses: [],
-};
+  componentName: "teskooano-engine-view",
+  panelClass: CompositeEnginePanel,
+  defaultTitle: "Engine View",
+  iconSvg: "", // No icon needed - this panel is created programmatically
+  target: undefined, // No toolbar registration - panels are created via function calls
+});
 
 export { CompositeEnginePanel };
