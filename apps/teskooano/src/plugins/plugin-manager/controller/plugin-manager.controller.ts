@@ -1,9 +1,8 @@
 import { pluginManager } from "@teskooano/ui-plugin";
-import { Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
 import { PluginDetailCard } from "../components/plugin-detail-card/plugin-detail-card.component";
 
-export class PluginManagerController {
-  private subscriptions = new Subscription();
+export class PluginManagerController extends StateSubscriptionMixin {
   private container: HTMLElement;
 
   /**
@@ -11,6 +10,7 @@ export class PluginManagerController {
    * @param container - The HTML element where the plugin list will be rendered.
    */
   constructor(container: HTMLElement) {
+    super();
     this.container = container;
   }
 
@@ -18,10 +18,12 @@ export class PluginManagerController {
    * Initializes the controller, subscribing to plugin changes and performing the initial render.
    */
   public init(): void {
-    this.subscriptions.add(
-      pluginManager.pluginsChanged$.subscribe(() => {
+    // ✅ Using StateSubscriptionMixin for clean subscription management
+    this.subscribeToState(
+      pluginManager.pluginsChanged$,
+      () => {
         this.renderPluginList();
-      }),
+      }
     );
     this.renderPluginList();
   }
@@ -30,7 +32,8 @@ export class PluginManagerController {
    * Disposes of the controller, cleaning up all subscriptions.
    */
   public dispose(): void {
-    this.subscriptions.unsubscribe();
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
   }
 
   /**

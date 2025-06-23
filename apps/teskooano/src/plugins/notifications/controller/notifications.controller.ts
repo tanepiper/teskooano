@@ -2,10 +2,9 @@ import {
   type Notification,
   notificationManager,
 } from "@teskooano/notifications";
-import { Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
 
-export class NotificationsController {
-  private subscription: Subscription;
+export class NotificationsController extends StateSubscriptionMixin {
   private cardFactory: (notification: Notification) => HTMLElement;
   private container: HTMLElement;
   private notificationElements = new Map<string, HTMLElement>();
@@ -14,9 +13,12 @@ export class NotificationsController {
     container: HTMLElement,
     cardFactory: (notification: Notification) => HTMLElement,
   ) {
+    super();
     this.container = container;
     this.cardFactory = cardFactory;
-    this.subscription = notificationManager.notifications$.subscribe(
+    // ✅ Using StateSubscriptionMixin for clean subscription management
+    this.subscribeToState(
+      notificationManager.notifications$,
       this.handleNotificationsChange,
     );
   }
@@ -49,6 +51,7 @@ export class NotificationsController {
   };
 
   public dispose() {
-    this.subscription.unsubscribe();
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
   }
 }

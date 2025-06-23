@@ -8,7 +8,7 @@ import {
 
 import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
-import { Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
 
 const ENGINE_OPTIONS: { value: PhysicsEngineType; label: string }[] = [
   { value: "euler", label: "Euler Integrator" },
@@ -42,14 +42,12 @@ export interface ISettingsPanelElements {
  * event handling, state management, and synchronization with the global application state.
  * It follows the MVC pattern, where this is the 'Controller'.
  */
-export class SettingsController {
-  /** @internal */
-  private unsubscribeSimState: Subscription | null = null;
-
+export class SettingsController extends StateSubscriptionMixin {
   /**
    * Initializes the controller and binds it to the view's elements.
    */
   constructor(private elements: ISettingsPanelElements) {
+    super();
     this.addEventListenersAndPopulate();
   }
 
@@ -59,6 +57,8 @@ export class SettingsController {
    */
   public dispose(): void {
     this.removeEventListenersAndUnsubscribe();
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
   }
 
   /**
@@ -96,7 +96,9 @@ export class SettingsController {
       this.handleProfileChange,
     );
 
-    this.unsubscribeSimState = simulationState$.subscribe(
+    // ✅ Using StateSubscriptionMixin for clean subscription management
+    this.subscribeToState(
+      simulationState$,
       this.updateControlStates,
     );
   }
@@ -123,8 +125,7 @@ export class SettingsController {
       this.handleProfileChange,
     );
 
-    this.unsubscribeSimState?.unsubscribe();
-    this.unsubscribeSimState = null;
+    // Subscription cleanup handled by StateSubscriptionMixin
   }
 
   /**

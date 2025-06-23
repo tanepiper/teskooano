@@ -4,7 +4,7 @@ import {
   simulationState$,
   type SimulationState,
 } from "@teskooano/core-state";
-import { Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "../../../../../core/components/mixins/StateSubscriptionMixin";
 import type { TeskooanoButton } from "../../../../../core/components/button/Button";
 import { PauseIcon, PlayIcon } from "../view/simulation-controls.template";
 import {
@@ -38,9 +38,8 @@ export interface SimulationUIElements {
  * - Managing component-level state and logic (e.g., speed constants).
  * - Setting up and tearing down all event listeners.
  */
-export class SimulationControlsController {
+export class SimulationControlsController extends StateSubscriptionMixin {
   private uiElements: SimulationUIElements;
-  private subscriptions = new Subscription();
   private readonly speedValues = [
     0.0625, 0.125, 0.25, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 20, 24,
     32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024, 2048, 4096, 8192, 16384,
@@ -54,6 +53,7 @@ export class SimulationControlsController {
    * @param {SimulationUIElements} uiElements - The collection of UI elements from the view.
    */
   constructor(uiElements: SimulationUIElements) {
+    super();
     this.uiElements = uiElements;
   }
 
@@ -65,11 +65,12 @@ export class SimulationControlsController {
     // Initialize display with current state
     this.handleStateUpdate(getSimulationState());
 
-    // Subscribe to the simulation state and pass updates to the controller.
-    this.subscriptions.add(
-      simulationState$.subscribe((state) => {
+    // ✅ Using StateSubscriptionMixin for clean subscription management
+    this.subscribeToState(
+      simulationState$,
+      (state: SimulationState) => {
         this.handleStateUpdate(state);
-      }),
+      }
     );
   }
 
@@ -78,7 +79,8 @@ export class SimulationControlsController {
    */
   public dispose(): void {
     this.removeEventListeners();
-    this.subscriptions.unsubscribe();
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
   }
 
   /**

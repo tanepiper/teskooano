@@ -1,6 +1,7 @@
 import { currentSeed$ } from "@teskooano/core-state";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
-import { BehaviorSubject, merge, Observable, Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "../../../../../core/components/mixins/StateSubscriptionMixin";
+import { BehaviorSubject, merge, Observable } from "rxjs";
 import { tap } from "rxjs/operators";
 import type { SystemControls } from "../view/system-controls.component";
 import {
@@ -25,9 +26,8 @@ import {
  * - Handling the component's internal state (e.g., loading indicators).
  * - Tearing down all subscriptions when the component is destroyed.
  */
-export class SystemControlsController {
+export class SystemControlsController extends StateSubscriptionMixin {
   private view: SystemControls;
-  private subscriptions = new Subscription();
   public isGenerating$$ = new BehaviorSubject<boolean>(false);
   private effects: SystemControlsEffects | undefined;
   private context: PluginExecutionContext;
@@ -38,6 +38,7 @@ export class SystemControlsController {
    * @param {PluginExecutionContext} context - The application context for plugin interaction.
    */
   constructor(view: SystemControls, context: PluginExecutionContext) {
+    super();
     this.view = view;
     this.context = context;
   }
@@ -156,12 +157,13 @@ export class SystemControlsController {
       this.effects.createBlankSystemEffect$(createBlankClick$),
     );
 
-    this.subscriptions.add(generateSystem$.subscribe());
-    this.subscriptions.add(clearSystem$.subscribe());
-    this.subscriptions.add(exportSystem$.subscribe());
-    this.subscriptions.add(importSystem$.subscribe());
-    this.subscriptions.add(copySeed$.subscribe());
-    this.subscriptions.add(createBlankSystem$.subscribe());
+    // ✅ Using StateSubscriptionMixin for clean subscription management
+    this.subscribeToState(generateSystem$, () => {});
+    this.subscribeToState(clearSystem$, () => {});
+    this.subscribeToState(exportSystem$, () => {});
+    this.subscribeToState(importSystem$, () => {});
+    this.subscribeToState(copySeed$, () => {});
+    this.subscribeToState(createBlankSystem$, () => {});
   }
 
   /**
@@ -170,6 +172,7 @@ export class SystemControlsController {
    * view is disconnected from the DOM.
    */
   public dispose(): void {
-    this.subscriptions.unsubscribe();
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
   }
 }

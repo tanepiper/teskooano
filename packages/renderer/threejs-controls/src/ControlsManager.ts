@@ -1,7 +1,7 @@
 import { CustomEvents } from "@teskooano/data-types";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "@teskooano/core-state";
 import { ObjectFollower } from "./following/ObjectFollower";
 import {
   ControlsChangeEvent,

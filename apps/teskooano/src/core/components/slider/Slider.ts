@@ -1,9 +1,9 @@
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
+import { StateSubscriptionMixin } from "../mixins/StateSubscriptionMixin";
 import { template } from "./Slider.template";
 import {
   BehaviorSubject,
   Subject,
-  Subscription,
   combineLatest,
   debounceTime,
   distinctUntilChanged,
@@ -54,7 +54,7 @@ export class TeskooanoSlider extends HTMLElement {
 
   private debouncedUpdateSubject = new Subject<number>();
 
-  private subscriptions = new Subscription();
+  private subscriptionManager = new StateSubscriptionMixin();
 
   constructor() {
     super();
@@ -85,9 +85,8 @@ export class TeskooanoSlider extends HTMLElement {
   disconnectedCallback() {
     this.removeEventListeners();
 
-    this.subscriptions.unsubscribe();
-
-    this.subscriptions = new Subscription();
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    this.subscriptionManager.dispose();
   }
 
   attributeChangedCallback(
@@ -224,11 +223,13 @@ export class TeskooanoSlider extends HTMLElement {
       ),
     );
 
-    this.subscriptions.add(
-      coreState$.subscribe((state) => this.updateUI(state)),
+    // ✅ Using StateSubscriptionMixin composition for clean subscription management  
+    this.subscriptionManager.subscribeToState(
+      coreState$,
+      (state: SliderUIState) => this.updateUI(state),
     );
 
-    this.subscriptions.add(
+    this.subscriptionManager.subscribeToState(
       this.debouncedUpdateSubject
         .pipe(
           debounceTime(400),

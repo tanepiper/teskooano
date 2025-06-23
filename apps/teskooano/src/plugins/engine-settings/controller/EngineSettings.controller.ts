@@ -1,7 +1,7 @@
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CompositeEngineState } from "../../engine-panel/panels/types.js";
 import type { TeskooanoSlider } from "../../../core/components/slider/Slider.js";
-import { Subscription } from "rxjs";
+import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 
 type ControlRefs = {
@@ -23,16 +23,16 @@ type ControlRefs = {
  * It handles UI element interactions, manages state synchronization with the
  * parent CompositeEnginePanel, and displays error messages.
  */
-export class EngineSettingsController {
+export class EngineSettingsController extends StateSubscriptionMixin {
   private _refs: ControlRefs;
   private _parentPanel: CompositeEnginePanel | null = null;
-  private _unsubscribeParentState: Subscription | null = null;
 
   /**
    * Creates an instance of EngineSettingsController.
    * @param controlRefs An object containing references to the view's DOM elements.
    */
   constructor(controlRefs: ControlRefs) {
+    super();
     this._refs = controlRefs;
   }
 
@@ -48,8 +48,8 @@ export class EngineSettingsController {
    */
   public dispose(): void {
     this.removeEventListeners();
-    this._unsubscribeParentState?.unsubscribe();
-    this._unsubscribeParentState = null;
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
   }
 
   /**
@@ -149,14 +149,14 @@ export class EngineSettingsController {
       return;
     }
 
-    this._unsubscribeParentState?.unsubscribe();
-
     try {
       const initialState = this._parentPanel.getViewState();
       this.updateUiState(initialState);
       this.clearError();
 
-      this._unsubscribeParentState = this._parentPanel.subscribeToViewState(
+      // ✅ Using StateSubscriptionMixin for clean subscription management
+      this.subscribeToState(
+        this._parentPanel.viewState$,
         (newState: CompositeEngineState) => this.updateUiState(newState),
       );
     } catch (error) {
@@ -164,8 +164,6 @@ export class EngineSettingsController {
         "Failed to get initial state or subscribe to parent panel.";
       this.showError(errMsg);
       console.error(`[EngineSettingsController] ${errMsg}`, error);
-      this._unsubscribeParentState?.unsubscribe();
-      this._unsubscribeParentState = null;
     }
   }
 
