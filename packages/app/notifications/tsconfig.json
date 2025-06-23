@@ -1,0 +1,11 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": false,
+    "paths": {}
+  },
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"],
+  "references": []
+}

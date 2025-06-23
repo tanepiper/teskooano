@@ -28,6 +28,7 @@
     "@teskooano/core-state": "file:../../core/state",
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
+    "@teskooano/notifications": "file:../../app/notifications",
     "three": "0.177.0",
     "gsap": "3.13.0"
   },

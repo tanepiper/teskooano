@@ -38,6 +38,7 @@
       "@teskooano/renderer-threejs-lighting": [
         "packages/renderer/threejs-lighting/src"
       ],
+      "@teskooano/notifications": ["packages/app/notifications/src"],
       "@teskooano/renderer-threejs-lod": ["packages/renderer/threejs-lod/src"],
       "@teskooano/core-state": ["packages/core/state/src/index.ts"],
       "@teskooano/data-types": ["packages/data/types/src/index.ts"],
@@ -112,6 +113,9 @@
     },
     {
       "path": "./packages/systems/celestial"
+    },
+    {
+      "path": "./packages/app/notifications"
     }
   ],
   "include": ["packages/**/*", "apps/**/*", "glsl.d.ts"],

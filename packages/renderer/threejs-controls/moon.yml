@@ -9,7 +9,7 @@ fileGroups:
 
 tasks:
   build:
-    command: "npm run build"
+    command: "vite build"
     inputs:
       - "@globs(sources)"
     outputs:
@@ -18,3 +18,9 @@ tasks:
     command: "npm run lint"
     inputs:
       - "@globs(sources)"
+  test:
+    command: "vitest"
+
+dependsOn:
+  - "@teskooano/data-types"
+  - "@teskooano/notifications"

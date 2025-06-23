@@ -1,7 +1,9 @@
 import { CustomEvents } from "@teskooano/data-types";
+import { notificationManager } from "@teskooano/notifications";
 import gsap from "gsap";
 import * as THREE from "three";
 import { OrbitControlsHandler } from "../orbit/OrbitControlsHandler";
+import { renderableStore } from "@teskooano/core-state";
 
 /**
  * Manages smooth, animated camera transitions using GSAP.
@@ -17,11 +19,16 @@ export class CameraTransitionManager {
   private activeTimeline: gsap.core.Timeline | null = null;
   /** Reusable temporary vector for calculations to avoid allocations. */
   private tempVector = new THREE.Vector3();
+  /** The ID of the currently active transition notification. */
+  private activeTransitionNotificationId: string | null = null;
+  /** The camera position on the last update frame, for calculating instantaneous speed. */
+  private lastUpdatePosition = new THREE.Vector3();
+  /** The timeline time on the last update frame, for calculating instantaneous speed. */
+  private lastUpdateTime: number = 0;
 
   // --- Transition Configuration ---
-  private transitionDistanceFactor: number = 0.5;
-  private minTransitionDuration: number = 5.0;
-  private maxTransitionDuration: number = 10.0;
+  // These properties are now handled by the multi-stage logic
+  // in calculateTransitionDuration.
 
   // Store original damping settings during transition
   private _originalDampingEnabled: boolean = false;
@@ -47,6 +54,14 @@ export class CameraTransitionManager {
    * Cancels existing transitions, disables controls, and stores original damping.
    */
   private beginTransition(): void {
+    // Clear any previous transition notification immediately
+    if (this.activeTransitionNotificationId) {
+      notificationManager.removeNotification(
+        this.activeTransitionNotificationId,
+      );
+      this.activeTransitionNotificationId = null;
+    }
+
     this.cancelTransition();
     this._originalDampingEnabled =
       this.orbitControlsHandler.controls.enableDamping;
@@ -67,6 +82,14 @@ export class CameraTransitionManager {
     type: "target-only" | "position-and-target",
     focusedObjectId?: string | null,
   ): void {
+    // Clear the transition notification upon arrival
+    if (this.activeTransitionNotificationId) {
+      notificationManager.removeNotification(
+        this.activeTransitionNotificationId,
+      );
+      this.activeTransitionNotificationId = null;
+    }
+
     this.isAnimating = false;
     this.activeTimeline = null;
 
@@ -101,6 +124,14 @@ export class CameraTransitionManager {
    * Re-enables user controls.
    */
   public cancelTransition(): void {
+    // Clear the transition notification on cancellation
+    if (this.activeTransitionNotificationId) {
+      notificationManager.removeNotification(
+        this.activeTransitionNotificationId,
+      );
+      this.activeTransitionNotificationId = null;
+    }
+
     if (this.isAnimating && this.activeTimeline) {
       this.activeTimeline.kill();
       this.activeTimeline = null;
@@ -118,24 +149,13 @@ export class CameraTransitionManager {
   ): void {
     this.beginTransition();
 
-    const currentTarget = this.orbitControlsHandler.controls.target.clone();
     const currentPosition = this.camera.position.clone();
 
-    const oldTargetDirection = currentTarget
-      .clone()
-      .sub(currentPosition)
-      .normalize();
-    const newTargetDirection = target.clone().sub(currentPosition).normalize();
-    const angularDistance = oldTargetDirection.angleTo(newTargetDirection);
-
-    let duration =
-      this.minTransitionDuration +
-      (angularDistance / Math.PI) *
-        (this.maxTransitionDuration - this.minTransitionDuration);
-    duration = Math.min(
-      Math.max(duration, this.minTransitionDuration),
-      this.maxTransitionDuration,
-    );
+    // The "distance" for a target-only transition isn't a straight line,
+    // but we can use the main calculator to get a sensible duration.
+    // We'll calculate based on an arbitrary "move" to the new target
+    // to get a representative distance.
+    const duration = this.calculateTransitionDuration(currentPosition, target);
 
     const onComplete = () => {
       this.endTransition(
@@ -153,7 +173,7 @@ export class CameraTransitionManager {
       y: target.y,
       z: target.z,
       duration: duration,
-      ease: "power1.inOut",
+      ease: "power3.inOut",
       onUpdate: () => {
         this.camera.lookAt(this.orbitControlsHandler.controls.target);
       },
@@ -171,7 +191,28 @@ export class CameraTransitionManager {
     this.beginTransition();
 
     const startPos = this.camera.position.clone();
+    this.lastUpdatePosition.copy(startPos);
+    this.lastUpdateTime = 0;
     const totalDuration = this.calculateTransitionDuration(startPos, endPos);
+    const AU = 150; // Aprox
+
+    let targetName = "Position";
+    if (options?.focusedObjectId) {
+      const targetObject =
+        renderableStore.getRenderableObjects()[options.focusedObjectId];
+      if (targetObject) {
+        targetName = targetObject.name;
+      }
+    }
+
+    // Create the notification but don't set a duration, as we'll manage it manually.
+    const notification = notificationManager.addNotification({
+      title: `Moving to ${targetName}`,
+      message: `Calculating route to ${targetName}...`,
+      level: "info",
+      source: "CameraManager",
+    });
+    this.activeTransitionNotificationId = notification.id;
 
     const cameraForward = this.camera
       .getWorldDirection(this.tempVector.clone())
@@ -181,7 +222,7 @@ export class CameraTransitionManager {
       targetDirection.lengthSq() > 0.0001
         ? cameraForward.angleTo(targetDirection)
         : 0;
-    const rotationPercent = 0.4;
+    const rotationPercent = 0.2;
 
     const rotationDuration = totalDuration * rotationPercent;
     const positionDuration = totalDuration * (1.0 - rotationPercent);
@@ -197,15 +238,50 @@ export class CameraTransitionManager {
 
     this.activeTimeline = gsap.timeline({ onComplete: onTimelineComplete });
 
+    const timelineUpdateCallback = () => {
+      if (!this.activeTimeline || !this.activeTransitionNotificationId) return;
+
+      const currentPosition = this.camera.position;
+      const currentTime = this.activeTimeline.time();
+
+      const deltaTime = currentTime - this.lastUpdateTime;
+      const deltaDistance = currentPosition.distanceTo(this.lastUpdatePosition);
+
+      // Calculate instantaneous speed based on frame-to-frame changes
+      const speed = deltaTime > 0 ? deltaDistance / deltaTime : 0;
+      const speedInAU = speed / AU;
+
+      // Update state for the next frame's calculation
+      this.lastUpdatePosition.copy(currentPosition);
+      this.lastUpdateTime = currentTime;
+
+      const remainingDistance = currentPosition.distanceTo(endPos);
+      const remainingDistanceAU = remainingDistance / AU;
+      const remainingTime = this.activeTimeline.duration() - currentTime;
+
+      notificationManager.updateNotification(
+        this.activeTransitionNotificationId,
+        {
+          message: `
+          Target: <strong>${targetName}</strong><br/>
+          Speed: <strong>${speedInAU.toFixed(2)} AU/s</strong><br/>
+          Remaining: <strong>${remainingDistanceAU.toFixed(2)} AU</strong><br/>
+          ETA: <strong>${remainingTime.toFixed(1)}s</strong>
+        `,
+        },
+      );
+    };
+
     if (rotationDuration > 0.01) {
       this.activeTimeline.to(this.orbitControlsHandler.controls.target, {
         x: endTarget.x,
         y: endTarget.y,
         z: endTarget.z,
         duration: rotationDuration,
-        ease: "power2.inOut",
+        ease: "power3.inOut",
         onUpdate: () => {
           this.orbitControlsHandler.controls.update();
+          timelineUpdateCallback(); // Update during rotation phase
         },
       });
     }
@@ -218,9 +294,10 @@ export class CameraTransitionManager {
           y: endPos.y,
           z: endPos.z,
           duration: positionDuration,
-          ease: "expo.out",
+          ease: "power4.inOut",
           onUpdate: () => {
             this.orbitControlsHandler.controls.update();
+            timelineUpdateCallback(); // Update during position phase
           },
         },
         rotationDuration > 0.01 ? ">" : 0,
@@ -236,23 +313,52 @@ export class CameraTransitionManager {
   }
 
   /**
-   * Calculates transition duration based on distance.
+   * Calculates transition duration based on a power curve of the distance.
+   * This provides a non-linear duration where travel time increases with
+   * distance, but at a decreasing rate, making long journeys feasible.
+   *
+   * The formula is `duration = factor * (distanceInAU ^ exponent)`, clamped
+   * between a minimum and maximum duration.
+   *
+   * @param startPos The starting position of the transition.
+   * @param endPos The ending position of the transition.
+   * @returns The calculated duration in seconds.
    */
   private calculateTransitionDuration(
     startPos: THREE.Vector3,
     endPos: THREE.Vector3,
   ): number {
+    // --- Dynamic Transition Duration Calculation ---
+    const AU = 150; // Approximate scene units per Astronomical Unit
+
+    // --- Tuning Parameters for the duration curve ---
+    // The base duration for a 1 AU trip.
+    const BASE_DURATION_FACTOR = 3.0;
+    // The exponent controls the curve's shape. < 1 means diminishing returns.
+    // 0.5 is a square root curve. 0.4 is a bit steeper.
+    const DISTANCE_EXPONENT = 0.4;
+    // The absolute minimum duration for any transition, in seconds.
+    const MIN_DURATION_S = 1.5;
+    // The absolute maximum duration for any transition, in seconds.
+    const MAX_DURATION_S = 30.0;
+
     const distance = startPos.distanceTo(endPos);
 
-    let duration = this.minTransitionDuration;
-    if (distance > 0) {
-      duration += Math.min(
-        this.transitionDistanceFactor * Math.log10(1 + distance),
-        this.maxTransitionDuration - this.minTransitionDuration,
-      );
+    // Don't start a transition for a zero-distance move.
+    if (distance < 0.001) {
+      return 0;
     }
 
-    return Math.min(duration, this.maxTransitionDuration);
+    const distanceInAU = distance / AU;
+
+    const calculatedDuration =
+      BASE_DURATION_FACTOR * Math.pow(distanceInAU, DISTANCE_EXPONENT);
+
+    // Clamp the duration between the defined min and max values.
+    return Math.max(
+      MIN_DURATION_S,
+      Math.min(MAX_DURATION_S, calculatedDuration),
+    );
   }
 
   /**

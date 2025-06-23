@@ -9,7 +9,8 @@
     "paths": {
       "@teskooano/core-state": ["../../core/state/src"],
       "@teskooano/data-types": ["../../data/types/src"],
-      "@teskooano/renderer-threejs-core": ["../threejs-core/src"]
+      "@teskooano/renderer-threejs-core": ["../threejs-core/src"],
+      "@teskooano/notifications": ["../../app/notifications/src"]
     },
     "noEmit": false
   },
@@ -18,6 +19,7 @@
   "references": [
     { "path": "../../core/state" },
     { "path": "../../data/types" },
-    { "path": "../threejs-core" }
+    { "path": "../threejs-core" },
+    { "path": "../../app/notifications" }
   ]
 }

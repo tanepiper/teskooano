@@ -3,11 +3,11 @@ import type {
   FunctionConfig,
   PluginExecutionContext,
 } from "@teskooano/ui-plugin";
-import { DockviewController } from "./dockview-controller";
+import { DockviewController } from "./dockview-controller/DockviewController";
 import { FallbackPanel } from "./fallback-panel";
 import type { DockviewApi } from "dockview-core";
 
-export * from "./dockview-controller";
+export * from "./dockview-controller/DockviewController";
 export * from "./group-manager";
 export * from "./overlay-manager";
 export * from "./fallback-panel";
@@ -20,7 +20,7 @@ export * from "./types";
 const initializeDockview: FunctionConfig = {
   id: "dockview:initialize",
   execute: async (
-    _: PluginExecutionContext,
+    context: PluginExecutionContext,
     options?: { appElement?: HTMLElement },
   ): Promise<{ controller: DockviewController; api: DockviewApi }> => {
     const appElement = options?.appElement;
@@ -29,12 +29,24 @@ const initializeDockview: FunctionConfig = {
         "[DockviewPlugin] Initialization failed: appElement is required in options.",
       );
     }
+    const dockviewController = new DockviewController(appElement);
 
-    const controller = new DockviewController(appElement);
+    // Initialize global UI managers that append to the main view
+    try {
+      const notificationUIManager = await context.pluginManager.execute(
+        "notifications:initialize",
+        context,
+      );
+      if (notificationUIManager) {
+        notificationUIManager.createContainer(appElement);
+      }
+    } catch (error) {
+      console.error("[Dockview] Failed to initialize notifications UI:", error);
+    }
 
     return {
-      controller: controller,
-      api: controller.api,
+      controller: dockviewController,
+      api: dockviewController.api,
     };
   },
 };
