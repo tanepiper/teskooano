@@ -1,3 +1,67 @@
+# Teskooano Application Architecture
+
+This document outlines the architectural decisions, patterns, and structure of the Teskooano application.
+
+## Overview
+
+Teskooano is a modular N-Body simulation built with modern web technologies. The application follows a plugin-based architecture with reactive state management and a sophisticated 3D rendering pipeline.
+
+## 📚 Architecture Documentation Suite
+
+This document is part of a comprehensive architecture documentation suite:
+
+- **[DATA_FLOW_ARCHITECTURE.md](./DATA_FLOW_ARCHITECTURE.md)** - Detailed data flow diagrams and reactive architecture patterns
+- **[CODE_QUALITY_ANALYSIS.md](./CODE_QUALITY_ANALYSIS.md)** - Code duplication analysis, complexity hotspots, and refactoring recommendations  
+- **[IMPLEMENTATION_EXAMPLES.md](./IMPLEMENTATION_EXAMPLES.md)** - Concrete examples showing how to apply architectural improvements
+- **ARCHITECTURE.md** (this file) - High-level architectural overview and decisions
+
+## Quick Architecture Summary
+
+```mermaid
+graph TB
+    subgraph "Application Layer"
+        APP[Teskooano App]
+        PLUGINS[Plugin System]
+    end
+    
+    subgraph "Core Packages"
+        STATE[Core State]
+        PHYSICS[Core Physics]  
+        MATH[Core Math]
+    end
+    
+    subgraph "Rendering Pipeline"
+        RENDER[Renderer ThreeJS]
+        OBJECTS[Object Manager]
+        LIGHTING[Lighting System]
+    end
+    
+    subgraph "Systems"
+        CELESTIAL[Celestial Systems]
+        PROCEDURAL[Procedural Generation]
+    end
+    
+    APP --> PLUGINS
+    PLUGINS --> STATE
+    STATE --> PHYSICS
+    PHYSICS --> MATH
+    STATE --> RENDER
+    RENDER --> OBJECTS
+    RENDER --> LIGHTING
+    CELESTIAL --> RENDER
+    PROCEDURAL --> CELESTIAL
+    
+    classDef app fill:#e3f2fd
+    classDef core fill:#e8f5e8  
+    classDef render fill:#fff3e0
+    classDef systems fill:#f3e5f5
+    
+    class APP,PLUGINS app
+    class STATE,PHYSICS,MATH core
+    class RENDER,OBJECTS,LIGHTING render
+    class CELESTIAL,PROCEDURAL systems
+```
+
 ## Architecture Analysis (`apps/teskooano`)
 
 **Purpose**: This is the main frontend application for the Teskooano N-Body Simulation. It orchestrates the user interface, manages different views of the simulation using `dockview-core`, integrates core engine packages, and provides user controls.
