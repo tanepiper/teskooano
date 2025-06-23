@@ -1,5 +1,5 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { PhysicsStateReal } from "@teskooano/core-physics";
+import type { PhysicsStateReal } from "@teskooano/data-types";
 
 /**
  * Manages a pre-allocated pool of PhysicsStateReal objects to avoid continuous

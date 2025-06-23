@@ -1,14 +1,22 @@
 import * as THREE from "three";
-import { PhysicsStateReal } from "@teskooano/core-physics";
-import { OSVector3 } from "@teskooano/core-math";
-import { getCelestialObjects, renderableStore } from "@teskooano/core-state";
-import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import { SharedMaterials } from "../core/SharedMaterials";
-import { LineBuilder } from "../utils/LineBuilder";
 import {
+  type PhysicsStateReal,
   AU_METERS,
   type RenderableCelestialObject,
 } from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
+import {
+  getCelestialObjects,
+  renderableStore,
+  simulationStateService,
+} from "@teskooano/core-state";
+import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import { SharedMaterials } from "../core/SharedMaterials";
+import { LineBuilder } from "../utils/LineBuilder";
+import { Subscription } from "rxjs";
+import { map, distinctUntilChanged } from "rxjs/operators";
+
+const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
 
 /**
  * Manages the creation and updating of prediction lines showing an object's future trajectory.
@@ -32,14 +40,17 @@ export class PredictionManager {
   /** Object manager for scene interaction */
   private objectManager: ObjectManager;
 
-  /** Duration to predict into the future (in seconds) */
-  private predictionDuration: number = 3600 * 24; // 24 hours
+  /** Duration to predict into the future (in seconds), synced from global state. */
+  private predictionDuration: number = 0;
 
   /** Number of steps to use for the prediction calculation */
   private predictionSteps: number = 60;
 
   /** Flag indicating if prediction visualization is enabled */
   private visualizationVisible: boolean = true;
+
+  /** Subscription to the global simulation state */
+  private stateSubscription: Subscription | undefined;
 
   /**
    * Creates a new PredictionManager instance.
@@ -51,6 +62,7 @@ export class PredictionManager {
     this.lineBuilder = new LineBuilder();
 
     this.initializeWorker();
+    this.initializeStateSubscriptions();
   }
 
   private initializeWorker(): void {
@@ -92,6 +104,25 @@ export class PredictionManager {
   }
 
   /**
+   * Subscribes to the global simulation state to keep prediction settings in sync.
+   */
+  private initializeStateSubscriptions(): void {
+    this.stateSubscription = simulationStateService.simulationState$
+      .pipe(
+        map((state) => state.visualSettings.predictionDuration),
+        distinctUntilChanged(),
+      )
+      .subscribe((durationInYears) => {
+        const newDurationInSeconds = durationInYears * SECONDS_PER_YEAR;
+        if (this.predictionDuration !== newDurationInSeconds) {
+          this.predictionDuration = newDurationInSeconds;
+          // When the duration changes, all existing lines are invalid.
+          this.clearAllPredictions();
+        }
+      });
+  }
+
+  /**
    * Updates or creates a prediction line for a specific object.
    *
    * @param objectId - ID of the object to predict for
@@ -104,7 +135,6 @@ export class PredictionManager {
       forceRecalculate: boolean;
       timeScale?: number;
       predictionSteps?: number;
-      predictionDuration?: number;
     },
   ): boolean {
     if (!options.forceRecalculate) {
@@ -117,16 +147,23 @@ export class PredictionManager {
     }
 
     const fullObjectsMap = getCelestialObjects();
-    const renderableObjectsMap = renderableStore.getRenderableObjects();
-    const targetObject = renderableObjectsMap[objectId];
+    const targetObject = fullObjectsMap[objectId];
 
     if (!targetObject?.physicsStateReal) {
       this.removePrediction(objectId);
       return false;
     }
 
+    const renderableObjectsMap = renderableStore.getRenderableObjects();
+    const renderableTargetObject = renderableObjectsMap[objectId];
+
+    if (!renderableTargetObject) {
+      this.removePrediction(objectId);
+      return false;
+    }
+
     const predictionSteps = this.calculatePredictionSteps(
-      targetObject,
+      renderableTargetObject,
       renderableObjectsMap,
     );
 
@@ -159,8 +196,7 @@ export class PredictionManager {
         objectId,
         physicsStatesBuffer: buffer,
         idMap: idMap,
-        predictionDuration:
-          options.predictionDuration || this.predictionDuration,
+        predictionDuration: this.predictionDuration,
         predictionSteps: predictionSteps,
       },
       [buffer.buffer],
@@ -183,7 +219,7 @@ export class PredictionManager {
   ): number {
     const MIN_STEPS = 100;
     const MAX_STEPS = 10000;
-    const POINTS_PER_AU = 200; // Defines the desired visual density of points.
+    const POINTS_PER_AU = 2000; // Defines the desired visual density of points.
 
     let orbitDefiningObject = object;
 
@@ -239,9 +275,11 @@ export class PredictionManager {
     }
 
     this.lineBuilder.updateLine(line, predictionPoints, predictionSteps);
+    line.computeLineDistances();
 
     if (
-      line.material instanceof THREE.LineBasicMaterial &&
+      (line.material instanceof THREE.LineBasicMaterial ||
+        line.material instanceof THREE.LineDashedMaterial) &&
       !line.userData.defaultColor
     ) {
       line.userData.defaultColor = line.material.color.clone();
@@ -340,6 +378,7 @@ export class PredictionManager {
    * Cleans up all prediction lines and releases resources.
    */
   dispose(): void {
+    this.stateSubscription?.unsubscribe();
     this.predictionWorker?.terminate();
     this.clearAllPredictions();
     this.lineBuilder.clear();

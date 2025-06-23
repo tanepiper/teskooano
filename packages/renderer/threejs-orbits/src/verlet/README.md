@@ -10,11 +10,12 @@ A key architectural principle here is offloading expensive calculations to Web W
 
 ### Core Design
 
-1.  **Web Worker Offloading**: The manager does not perform physics calculations itself. It offloads the expensive n-body simulation to `prediction.worker.ts`. The main `PredictionManager` class acts as a coordinator, sending the current physics state of all objects to the worker and receiving back a calculated trajectory. This is a critical pattern to keep the main render thread from blocking.
-2.  **Data Flow**: The data flow is designed to keep the core physics engine decoupled from the renderer.
-    - The main thread gathers `PhysicsStateReal` objects, which contain `OSVector3` instances.
-    - These are serialized to plain objects and sent to the worker via `postMessage`.
-    - The worker "re-hydrates" the plain objects back into `PhysicsStateReal` instances with `OSVector3` methods.
+1.  **State-Driven Configuration**: The `PredictionManager` is a consumer of the global simulation state from `@teskooano/core-state`. It subscribes to `simulationStateService.simulationState$` and automatically updates its prediction duration when the user changes the setting in the UI. This ensures a single source of truth for configuration and removes redundant state from the manager.
+2.  **Web Worker Offloading**: The manager does not perform physics calculations itself. It offloads the expensive n-body simulation to `prediction.worker.ts`. The main `PredictionManager` class acts as a coordinator, sending the current physics state of all objects and the current prediction duration to the worker, then receiving back a calculated trajectory. This is a critical pattern to keep the main render thread from blocking.
+3.  **Data Flow**: The data flow is designed to keep the core physics engine decoupled from the renderer.
+    - The main thread gathers `CelestialObject` instances, which contain `PhysicsStateReal` objects (using `OSVector3`).
+    - The raw physics data is serialized into a `Float32Array` and sent to the worker via `postMessage` for zero-copy transfer.
+    - The worker "re-hydrates" the buffer back into physics state objects with `OSVector3` methods.
     - It calls the `predictTrajectory` function from `@teskooano/core-physics`.
     - The resulting `OSVector3[]` array is serialized to a `[number, number, number][]` array and sent back to the main thread.
     - Finally, the `PredictionManager` converts this data into a `THREE.Vector3[]` array suitable for rendering with the `LineBuilder` utility.

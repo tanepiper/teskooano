@@ -2,6 +2,7 @@ import { simulationStateService } from "@teskooano/core-state";
 import * as THREE from "three";
 import { AnimationLoop } from "./AnimationLoop";
 import { rendererEvents } from "./events";
+import { GridManager } from "./helpers/GridManager";
 
 /**
  * @interface SceneManagerOptions
@@ -46,8 +47,8 @@ const DefaultSceneManagerConfig = {
   },
   HELPERS: {
     GRID: {
-      SIZE: 10000,
-      DIVISIONS: 100,
+      SIZE: 10000000,
+      DIVISIONS: 1000,
       COLOR_CENTER_LINE: 0xff0000,
       COLOR_GRID: 0x444444,
     },
@@ -82,8 +83,7 @@ export class SceneManager {
   private fov: number;
   private options: SceneManagerOptions;
   private debugSphere: THREE.Mesh | null = null;
-  private gridHelper: THREE.GridHelper | null = null;
-  private showGrid: boolean = true;
+  private gridManager: GridManager | null = null;
   private backgroundColor: THREE.Color | THREE.Texture;
   private width: number;
   private height: number;
@@ -114,11 +114,11 @@ export class SceneManager {
 
     // Configure scene features
     this.backgroundColor = this._parseBackground(this.options.background);
-    this.showGrid = this.options.showGrid !== false;
 
-    if (this.showGrid) {
-      this._createGridHelper();
-    }
+    this.gridManager = new GridManager(
+      this.scene,
+      this.options.showGrid !== false,
+    );
   }
 
   /**
@@ -286,6 +286,7 @@ export class SceneManager {
     }
 
     this.renderer.setViewport(0, 0, this.width, this.height);
+    this.gridManager?.update(this.camera);
 
     try {
       this.renderer.render(this.scene, this.camera);
@@ -316,7 +317,7 @@ export class SceneManager {
    * Toggles the visibility of the grid helper.
    */
   toggleGrid(): void {
-    this.setGridVisible(!this.showGrid);
+    this.gridManager?.toggle();
   }
 
   /**
@@ -324,16 +325,13 @@ export class SceneManager {
    * @param visible True to show the grid, false to hide.
    */
   setGridVisible(visible: boolean): void {
-    this.showGrid = visible;
     if (visible) {
-      if (!this.gridHelper) {
-        this._createGridHelper();
+      if (!this.gridManager) {
+        this.gridManager = new GridManager(this.scene);
       }
-      if (this.gridHelper) {
-        this.gridHelper.visible = true;
-      }
-    } else if (this.gridHelper) {
-      this.gridHelper.visible = false;
+      this.gridManager.setVisible(true);
+    } else {
+      this.gridManager?.setVisible(false);
     }
   }
 
@@ -344,7 +342,7 @@ export class SceneManager {
   dispose(): void {
     // Clear scene objects and helpers
     this._clearDebugSphere();
-    this._clearGridHelper();
+    this.gridManager?.dispose();
     this.scene.children.forEach((obj) => {
       // Basic cleanup. More complex objects need their own dispose logic.
       if (obj instanceof THREE.Mesh) {
@@ -395,29 +393,6 @@ export class SceneManager {
         this.debugSphere.material.dispose();
       }
       this.debugSphere = null;
-    }
-  }
-
-  /** Creates the grid helper using settings from the default config. */
-  private _createGridHelper(): void {
-    if (this.gridHelper) return;
-    const config = DefaultSceneManagerConfig.HELPERS.GRID;
-    this.gridHelper = new THREE.GridHelper(
-      config.SIZE,
-      config.DIVISIONS,
-      config.COLOR_CENTER_LINE,
-      config.COLOR_GRID,
-    );
-    this.scene.add(this.gridHelper);
-  }
-
-  /** Disposes of the grid helper's resources. */
-  private _clearGridHelper(): void {
-    if (this.gridHelper) {
-      this.scene.remove(this.gridHelper);
-      this.gridHelper.geometry.dispose();
-      (this.gridHelper.material as THREE.Material).dispose();
-      this.gridHelper = null;
     }
   }
 }

@@ -1,5 +1,5 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { catmullRomSpline } from "../utils/spline";
+import * as THREE from "three";
 import { TrailDataPool } from "./TrailDataPool";
 import { simplifyPath } from "../utils/simplify";
 
@@ -50,7 +50,7 @@ self.onmessage = (e: MessageEvent<TrailCommand>) => {
 
       // The rest of the processing pipeline remains similar.
       const allPoints = rawPoints.map((p) => new OSVector3(p[0], p[1], p[2]));
-      let pointsToRender = allPoints;
+      let pointsToRender: { x: number; y: number; z: number }[] = allPoints;
 
       if (allPoints.length > SIMPLIFICATION_THRESHOLD) {
         const simplifiedPoints = simplifyPath(
@@ -59,7 +59,11 @@ self.onmessage = (e: MessageEvent<TrailCommand>) => {
         );
         if (simplifiedPoints.length > 2) {
           const budget = qualityToBudget[quality] || 2500;
-          pointsToRender = catmullRomSpline(simplifiedPoints, budget);
+          const threePoints = simplifiedPoints.map(
+            (p) => new THREE.Vector3(p.x, p.y, p.z),
+          );
+          const spline = new THREE.CatmullRomCurve3(threePoints);
+          pointsToRender = spline.getPoints(budget);
         } else {
           pointsToRender = simplifiedPoints;
         }

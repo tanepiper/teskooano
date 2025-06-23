@@ -26,11 +26,15 @@ export const SharedMaterials = {
   /**
    * Material for rendering prediction lines that show an object's future path.
    */
-  PREDICTION: new THREE.LineBasicMaterial({
-    color: 0xff0000,
+  PREDICTION: new THREE.LineDashedMaterial({
+    color: 0xffff00,
     linewidth: isMobileWidth ? 2 : 5,
+    scale: 1,
+    dashSize: 10,
+    gapSize: 5,
+    precision: "highp",
     transparent: true,
-    opacity: 1,
+    opacity: 0.7,
     depthTest: true,
   }),
 
@@ -64,7 +68,7 @@ export const SharedMaterials = {
    */
   clone(
     type: "TRAIL" | "PREDICTION" | "KEPLERIAN" | "KEPLERIAN_MOON",
-  ): THREE.LineBasicMaterial {
+  ): THREE.LineBasicMaterial | THREE.LineDashedMaterial {
     return this[type].clone();
   },
 };

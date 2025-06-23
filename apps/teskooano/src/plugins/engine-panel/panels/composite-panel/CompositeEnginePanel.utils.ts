@@ -11,7 +11,7 @@ export const createDefaultViewState = (): CompositeEngineState => ({
   cameraPosition: new THREE.Vector3(200, 200, 200),
   cameraTarget: new THREE.Vector3(0, 0, 0),
   focusedObjectId: null,
-  showGrid: true,
+  showGrid: false,
   showCelestialLabels: true,
   showAuMarkers: true,
   showDebrisEffects: false,

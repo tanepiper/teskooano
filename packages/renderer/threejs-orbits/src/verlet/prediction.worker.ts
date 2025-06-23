@@ -1,4 +1,5 @@
 import { predictTrajectory } from "@teskooano/core-physics";
+import * as THREE from "three";
 import { PredictionDataPool } from "./PredictionDataPool.worker";
 
 const POOL_SIZE = 500; // Max number of physics bodies
@@ -33,11 +34,27 @@ self.onmessage = (
       {},
     );
 
+    if (newPoints.length < 2) {
+      self.postMessage({
+        success: true,
+        objectId: objectId,
+        points: [],
+      });
+      return;
+    }
+
+    // Convert to THREE.Vector3 for spline creation
+    const threePoints = newPoints.map((p) => new THREE.Vector3(p.x, p.y, p.z));
+
+    // Create a smooth curve through the points
+    const spline = new THREE.CatmullRomCurve3(threePoints);
+    const smoothedPoints = spline.getPoints(predictionSteps * 2); // Oversample for smoothness
+
     // Post the results back to the main thread
     self.postMessage({
       success: true,
       objectId: objectId,
-      points: newPoints.map((p) => [p.x, p.y, p.z]), // Serialize OSVector3
+      points: smoothedPoints.map((p) => [p.x, p.y, p.z]), // Serialize
     });
   } catch (error) {
     console.error("Error during trajectory prediction in worker:", error);
