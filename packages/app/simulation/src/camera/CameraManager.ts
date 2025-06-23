@@ -210,11 +210,10 @@ export class CameraManager {
 
     if (objectId === null) {
       this.renderer.controlsManager.stopFollowing();
-      this.renderer.controlsManager.transitionTo(
-        this.renderer.camera.position.clone(),
-        this.renderer.controlsManager.controls.target.clone(),
+      this.renderer.controlsManager.moveToPosition(
         DEFAULT_CAMERA_POSITION.clone(),
         DEFAULT_CAMERA_TARGET.clone(),
+        true,
         { focusedObjectId: null },
       );
     } else {
@@ -234,7 +233,9 @@ export class CameraManager {
       }
 
       const targetPosition = renderableObject.position.clone();
-      const calculatedDistance = distance ?? DEFAULT_CAMERA_DISTANCE;
+      // NEW: Calculate distance based on object's radius
+      const calculatedDistance =
+        (renderableObject.radius ?? DEFAULT_CAMERA_DISTANCE) * 3;
       const cameraOffsetVector =
         CAMERA_OFFSET.clone().multiplyScalar(calculatedDistance);
       const cameraPosition = targetPosition.clone().add(cameraOffsetVector);
@@ -253,11 +254,10 @@ export class CameraManager {
           );
         }
 
-        this.renderer.controlsManager.transitionTo(
-          this.renderer.camera.position.clone(),
-          this.renderer.controlsManager.controls.target.clone(),
+        this.renderer.controlsManager.moveToPosition(
           cameraPosition,
           targetPosition,
+          true,
           { focusedObjectId: objectId },
         );
       } else {

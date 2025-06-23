@@ -419,16 +419,22 @@ export class PredictionManager {
    */
   highlightPrediction(objectId: string | null): void {
     this.highlightedObjectId = objectId;
+
     const labelLayer = this.layer2DManager?.getLayer(
       CSS2DLayerType.PREDICTION_LABELS,
     ) as PredictionLabelLayer | undefined;
 
     if (objectId && labelLayer) {
-      const threeJsObject = this.objectManager.getObject(objectId);
       const coreObject = getCelestialObjects()[objectId];
+      const renderableObject = renderableStore.getRenderableObjects()[objectId];
+      const threeJsObject = this.objectManager.getObject(objectId);
       const velocity = coreObject?.physicsStateReal?.velocity_mps.length() || 0;
 
-      labelLayer.setActivePredictionObject(threeJsObject, velocity);
+      labelLayer.setActivePredictionObject(
+        renderableObject,
+        threeJsObject,
+        velocity,
+      );
 
       // Hide all predictions except for the highlighted object
       this.predictionLines.forEach((line, id) => {
@@ -443,7 +449,8 @@ export class PredictionManager {
         line.visible = this.visualizationVisible;
       }
     } else {
-      labelLayer?.setActivePredictionObject(null, null);
+      // If no object is highlighted, clear the active prediction object
+      labelLayer?.setActivePredictionObject(null, null, null);
       // Hide all predictions and all labels
       this.predictionLines.forEach((line) => {
         line.visible = false;

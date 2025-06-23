@@ -2,12 +2,14 @@ import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { BaseLabelLayer, UIRegistryComponent } from "./BaseLabelLayer";
 import { PredictionLabel } from "../components/prediction/PredictionLabel";
+import { RenderableCelestialObject } from "@teskooano/data-types";
 
 const PREDICTION_LABEL_TAG = "prediction-label";
 
 export class PredictionLabelLayer extends BaseLabelLayer {
   private activePredictionObject: THREE.Object3D | null = null;
   private activeObjectVelocity: number = 0; // Speed in m/s
+  private activeObjectRadius: number = 0; // Radius in scene units
 
   constructor(scene: THREE.Scene) {
     super(scene);
@@ -46,11 +48,13 @@ export class PredictionLabelLayer extends BaseLabelLayer {
   }
 
   public setActivePredictionObject(
-    object: THREE.Object3D | null,
+    object: RenderableCelestialObject | null,
+    threeJsObject: THREE.Object3D | null,
     velocity: number | null,
   ): void {
-    this.activePredictionObject = object;
+    this.activePredictionObject = threeJsObject;
     this.activeObjectVelocity = velocity || 0;
+    this.activeObjectRadius = object?.radius || 0;
   }
 
   public update(camera: THREE.Camera): void {
@@ -64,9 +68,8 @@ export class PredictionLabelLayer extends BaseLabelLayer {
       return;
     }
 
-    const zoomDistance = camera.position.distanceTo(
-      this.activePredictionObject.position,
-    );
+    const objectPosition = this.activePredictionObject.position;
+    const zoomDistance = camera.position.distanceTo(objectPosition);
 
     // Baseline thresholds in scene units
     const BASE_HIDE_SHORT_TERM_DIST = 50;
@@ -95,6 +98,16 @@ export class PredictionLabelLayer extends BaseLabelLayer {
         // Default to visible if time is not set, though this shouldn't happen.
         css2dObject.visible = true;
         return;
+      }
+
+      // Check 1: Is label inside the celestial object's radius?
+      if (this.activeObjectRadius > 0) {
+        const distanceToCenter =
+          css2dObject.position.distanceTo(objectPosition);
+        if (distanceToCenter < this.activeObjectRadius) {
+          css2dObject.visible = false;
+          return; // Skip further checks, it's inside the object.
+        }
       }
 
       let shouldBeVisible = true;
