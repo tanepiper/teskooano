@@ -14,6 +14,10 @@ const initializeNotifications: FunctionConfig = {
   },
 };
 
+/**
+ * Plugin definition for the Notifications UI system.
+ * Note: Uses manual definition since it combines components + functions (which createComponentPlugin doesn't support)
+ */
 export const plugin: TeskooanoPlugin = {
   id: "notifications",
   name: "Notifications UI",
@@ -30,4 +34,9 @@ export const plugin: TeskooanoPlugin = {
     },
   ],
   functions: [initializeNotifications],
+  // Simplified boilerplate
+  panels: [],
+  toolbarRegistrations: [],
+  toolbarWidgets: [],
+  managerClasses: [],
 };

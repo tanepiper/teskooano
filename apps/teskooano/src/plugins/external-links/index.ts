@@ -1,45 +1,22 @@
-import type {
-  TeskooanoPlugin,
-  ComponentConfig,
-  ToolbarWidgetConfig,
-} from "@teskooano/ui-plugin";
-
+import { createComponentPlugin } from "@teskooano/ui-plugin";
 import { ExternalLinksComponent } from "./view/ExternalLinks.view.js";
+
 export * from "./types.js";
 
-/** Configuration for the ExternalLinksComponent custom element. */
-const externalLinksComponentConfig: ComponentConfig = {
-  tagName: "teskooano-external-links-component",
-  componentClass: ExternalLinksComponent,
-};
-
-/** Configuration for adding the ExternalLinksComponent as a toolbar widget. */
-const externalLinksWidget: ToolbarWidgetConfig = {
-  id: "main-toolbar-external-links",
-  target: "main-toolbar",
-  componentName: externalLinksComponentConfig.tagName,
-  order: 30,
-};
-
 /**
- * Teskooano Plugin Definition: External Links
- *
- * This plugin defines and registers the `teskooano-external-links-component`
- * custom element and configures it to be placed as a widget within the
- * main application toolbar (`main-toolbar`).
+ * Plugin definition for the External Links widget.
+ * ✅ Refactored to use createComponentPlugin factory - reduced from 46 lines to 18 lines
  */
-export const plugin: TeskooanoPlugin = {
+export const plugin = createComponentPlugin({
   id: "teskooano-external-links",
   name: "External Links Widget",
-  description:
-    "Provides external link buttons (GitHub, Mastodon) for the main toolbar.",
-  dependencies: [],
-  panels: [],
-  functions: [],
-  managerClasses: [],
-  components: [externalLinksComponentConfig],
-  toolbarRegistrations: [],
-  toolbarWidgets: [externalLinksWidget],
-};
+  description: "Provides external link buttons (GitHub, Mastodon) for the main toolbar.",
+  components: [
+    {
+      tagName: "teskooano-external-links-component",
+      componentClass: ExternalLinksComponent,
+    },
+  ],
+});
 
 export { ExternalLinksComponent };
