@@ -1,4 +1,4 @@
-import { type SimulationState } from "@teskooano/core-state";
+import { type SimulationState, StateSubscriptionMixin } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import {
   DockviewPanelApi,
@@ -54,7 +54,7 @@ export class CompositeEnginePanel
   private _renderer: ModularSpaceRenderer | undefined;
   private _resizeObserver: ResizeObserver | undefined;
 
-  private _subscriptions = new Subscription();
+  private _subscriptionManager = new StateSubscriptionMixin();
   private _isInitialized = false;
 
   private _cameraCoordinator: PanelCameraCoordinator | undefined = undefined;
@@ -146,9 +146,9 @@ export class CompositeEnginePanel
   disconnectedCallback(): void {
     // Unsubscribe from everything when removed from the DOM.
     // `dispose` will handle the final cleanup if the panel is permanently removed.
-    this._subscriptions.unsubscribe();
-    // Re-create subscription object for re-attachment
-    this._subscriptions = new Subscription();
+    this._subscriptionManager.dispose();
+    // Re-create subscription manager for re-attachment
+    this._subscriptionManager = new StateSubscriptionMixin();
   }
 
   /**
@@ -311,7 +311,8 @@ export class CompositeEnginePanel
   dispose(): void {
     this.disposeRendererAndUI();
 
-    this._subscriptions.unsubscribe();
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    this._subscriptionManager.dispose();
     this._lifecycleManager.dispose();
 
     this._placeholderManager?.dispose();
@@ -340,11 +341,18 @@ export class CompositeEnginePanel
    */
   private setupSubscriptions(): void {
     // Ensure existing subscriptions are cleaned up before creating new ones.
-    this._subscriptions.unsubscribe();
-    this._subscriptions = new Subscription();
+    this._subscriptionManager.dispose();
+    this._subscriptionManager = new StateSubscriptionMixin();
 
-    this._subscriptions.add(this._lifecycleManager.listen());
-    this._subscriptions.add(this._eventManager.listen());
+    // ✅ Using StateSubscriptionMixin composition for clean subscription management
+    this._subscriptionManager.subscribeToStateComposition(
+      this._lifecycleManager.listen(),
+      () => {} // Manager handles its own side effects
+    );
+    this._subscriptionManager.subscribeToStateComposition(
+      this._eventManager.listen(),
+      () => {} // Manager handles its own side effects
+    );
   }
 
   /**

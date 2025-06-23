@@ -4,10 +4,11 @@ import {
   renderableStore,
   simulationState$,
   type SimulationState,
+  StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import { CelestialObject } from "@teskooano/data-types";
 import { calculateLightSourceMaps } from "@teskooano/renderer-threejs-lighting";
-import { BehaviorSubject, Subscription } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { RenderableObjectFactory } from "@teskooano/renderer-threejs-objects";
 import type { RendererVisualSettings } from "./types";
 
@@ -23,14 +24,10 @@ import type { RendererVisualSettings } from "./types";
  * It then publishes the transformed data to the central `renderableStore`,
  * decoupling the renderer from the core application logic.
  */
-export class RendererStateAdapter {
+export class RendererStateAdapter extends StateSubscriptionMixin {
   /** An observable for visual settings that renderer components can subscribe to. */
   public $visualSettings: BehaviorSubject<RendererVisualSettings>;
 
-  /** Subscription to the main celestial objects store. */
-  private unsubscribeObjects: Subscription | null = null;
-  /** Subscription to the main simulation state store. */
-  private unsubscribeSimState: Subscription | null = null;
   /** The current simulation time, used for calculating rotations. */
   private currentSimulationTime: number = 0;
 
@@ -41,6 +38,7 @@ export class RendererStateAdapter {
    * Initializes the adapter and subscribes to the core state.
    */
   constructor() {
+    super();
     this.factory = new RenderableObjectFactory();
     const initialSimState = getSimulationState();
     this.$visualSettings = new BehaviorSubject<RendererVisualSettings>({
@@ -102,11 +100,14 @@ export class RendererStateAdapter {
    * drive all the updates within this adapter.
    */
   private subscribeToCoreState(): void {
-    this.unsubscribeObjects = celestialObjects$.subscribe((objects) =>
-      this.processCelestialObjectsUpdateNow(objects),
+    // ✅ Using StateSubscriptionMixin for clean subscription management
+    this.subscribeToState(
+      celestialObjects$,
+      (objects) => this.processCelestialObjectsUpdateNow(objects),
     );
 
-    this.unsubscribeSimState = simulationState$.subscribe(
+    this.subscribeToState(
+      simulationState$,
       (simState: SimulationState) => {
         this.currentSimulationTime = simState.time ?? 0;
 
@@ -135,7 +136,7 @@ export class RendererStateAdapter {
             predictionDuration: newPredictionDuration,
           });
         }
-      },
+      }
     );
   }
 
@@ -143,9 +144,7 @@ export class RendererStateAdapter {
    * Cleans up all subscriptions to prevent memory leaks.
    */
   public dispose(): void {
-    this.unsubscribeObjects?.unsubscribe();
-    this.unsubscribeSimState?.unsubscribe();
-    this.unsubscribeObjects = null;
-    this.unsubscribeSimState = null;
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
   }
 }

@@ -3,8 +3,8 @@ import {
   getSimulationState,
   simulationState$,
   type SimulationState,
+  StateSubscriptionMixin,
 } from "@teskooano/core-state";
-import { StateSubscriptionMixin } from "../../../../../core/components/mixins/StateSubscriptionMixin";
 import type { TeskooanoButton } from "../../../../../core/components/button/Button";
 import { PauseIcon, PlayIcon } from "../view/simulation-controls.template";
 import {

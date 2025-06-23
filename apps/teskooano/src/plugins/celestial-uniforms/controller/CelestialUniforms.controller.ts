@@ -1,6 +1,5 @@
-import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
+import { celestialObjects$, getCelestialObjects, StateSubscriptionMixin } from "@teskooano/core-state";
 import { type CelestialObject, CelestialStatus } from "@teskooano/data-types";
-import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
 import type { CelestialUniformsEditor } from "../view/CelestialUniforms.view";
 import { UniformsRendererFactory } from "./uniform-renderers/UniformsRendererFactory";
 

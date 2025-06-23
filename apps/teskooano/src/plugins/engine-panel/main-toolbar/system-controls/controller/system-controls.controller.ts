@@ -1,6 +1,5 @@
-import { currentSeed$ } from "@teskooano/core-state";
+import { currentSeed$, StateSubscriptionMixin } from "@teskooano/core-state";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
-import { StateSubscriptionMixin } from "../../../../../core/components/mixins/StateSubscriptionMixin";
 import { BehaviorSubject, merge, Observable } from "rxjs";
 import { tap } from "rxjs/operators";
 import type { SystemControls } from "../view/system-controls.component";

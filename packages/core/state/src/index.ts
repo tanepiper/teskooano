@@ -4,3 +4,6 @@ export * from "./game/simulation";
 export * from "./game/stores";
 export * from "./game/renderableStore";
 export * from "./game/factory";
+
+// Utilities
+export * from "./utils/StateSubscriptionMixin";

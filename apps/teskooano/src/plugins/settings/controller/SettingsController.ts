@@ -4,11 +4,11 @@ import {
   simulationStateService,
   type PhysicsEngineType,
   type PerformanceProfileType,
+  StateSubscriptionMixin,
 } from "@teskooano/core-state";
 
 import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
-import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
 
 const ENGINE_OPTIONS: { value: PhysicsEngineType; label: string }[] = [
   { value: "euler", label: "Euler Integrator" },

@@ -1,7 +1,7 @@
 import { CustomEvents } from "@teskooano/data-types";
+import { StateSubscriptionMixin } from "@teskooano/core-state";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { StateSubscriptionMixin } from "@teskooano/core-state";
 import { ObjectFollower } from "./following/ObjectFollower";
 import {
   ControlsChangeEvent,
@@ -16,11 +16,10 @@ import { CameraTransitionManager } from "./transition/CameraTransitionManager";
  * - `CameraTransitionManager`: For programmatic, animated transitions.
  * - `ObjectFollower`: For tracking moving objects.
  */
-export class ControlsManager {
+export class ControlsManager extends StateSubscriptionMixin {
   /** The camera being controlled. */
   private camera: THREE.PerspectiveCamera;
   private rendererElement: HTMLElement;
-  private subscriptions = new Subscription();
 
   // --- Child Managers ---
   private orbitControlsHandler: OrbitControlsHandler;
@@ -39,6 +38,7 @@ export class ControlsManager {
    * @param rendererElement The HTML element for event listeners (typically the canvas).
    */
   constructor(camera: THREE.PerspectiveCamera, rendererElement: HTMLElement) {
+    super();
     this.camera = camera;
     this.rendererElement = rendererElement;
 
@@ -57,15 +57,14 @@ export class ControlsManager {
     this.controls = this.orbitControlsHandler.controls;
 
     // 2. Wire handlers together
-    this.subscriptions.add(
-      this.orbitControlsHandler.onControlsStart$.subscribe(
-        this.handleControlsStart,
-      ),
+    // ✅ Using StateSubscriptionMixin for clean subscription management
+    this.subscribeToState(
+      this.orbitControlsHandler.onControlsStart$,
+      this.handleControlsStart,
     );
-    this.subscriptions.add(
-      this.orbitControlsHandler.onControlsEnd$.subscribe(
-        this.handleControlsEnd,
-      ),
+    this.subscribeToState(
+      this.orbitControlsHandler.onControlsEnd$,
+      this.handleControlsEnd,
     );
   }
 
@@ -212,7 +211,8 @@ export class ControlsManager {
    * Cleans up all resources used by the manager and its handlers.
    */
   dispose(): void {
-    this.subscriptions.unsubscribe();
+    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
+    super.dispose();
     this.transitionManager.dispose();
     this.orbitControlsHandler.dispose();
     // ObjectFollower has no resources to dispose of.

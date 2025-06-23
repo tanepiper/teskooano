@@ -1,5 +1,5 @@
 import { pluginManager } from "@teskooano/ui-plugin";
-import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
+import { StateSubscriptionMixin } from "@teskooano/core-state";
 import { PluginDetailCard } from "../components/plugin-detail-card/plugin-detail-card.component";
 
 export class PluginManagerController extends StateSubscriptionMixin {

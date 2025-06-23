@@ -2,6 +2,7 @@ import {
   celestialObjects$,
   getCelestialObjects,
   renderableStore,
+  StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import {
   CelestialObject,
@@ -9,7 +10,6 @@ import {
   CustomEvents,
   METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
-import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CameraManagerState } from "@teskooano/app-simulation";
 import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";

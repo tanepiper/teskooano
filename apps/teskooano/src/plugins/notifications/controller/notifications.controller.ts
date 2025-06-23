@@ -2,7 +2,7 @@ import {
   type Notification,
   notificationManager,
 } from "@teskooano/notifications";
-import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
+import { StateSubscriptionMixin } from "@teskooano/core-state";
 
 export class NotificationsController extends StateSubscriptionMixin {
   private cardFactory: (notification: Notification) => HTMLElement;

@@ -1,6 +1,5 @@
-import { celestialObjects$, getCelestialObjects } from "@teskooano/core-state";
+import { celestialObjects$, getCelestialObjects, StateSubscriptionMixin } from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
-import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
 import type { CelestialInfo } from "../view/CelestialInfo.view";
 import { CelestialInfoViewManager } from "./CelestialInfoViewManager";
 

@@ -1,7 +1,7 @@
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { CompositeEngineState } from "../../engine-panel/panels/types.js";
 import type { TeskooanoSlider } from "../../../core/components/slider/Slider.js";
-import { StateSubscriptionMixin } from "../../../core/components/mixins/StateSubscriptionMixin";
+import { StateSubscriptionMixin } from "@teskooano/core-state";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 
 type ControlRefs = {
