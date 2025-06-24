@@ -7,14 +7,29 @@ import type {
 import type { pluginManager } from "./pluginManager.js";
 
 /**
- * Context object passed to plugin function execute methods.
+ * A limited interface for the plugin manager that exposes only
+ * the methods needed by plugin execution contexts.
+ * This prevents circular dependencies and maintains clean separation.
+ */
+export interface PluginManagerProxy {
+  execute<T = any>(functionId: string, args?: any): Promise<T> | T | undefined;
+  getManagerInstance<T = any>(id: string): T | undefined;
+}
+
+/**
+ * Context object passed to plugin functions during execution.
+ * Provides access to core application APIs and services.
  */
 export interface PluginExecutionContext {
-  pluginManager: typeof pluginManager;
+  /** Limited plugin manager interface for function execution */
+  pluginManager: PluginManagerProxy;
+  /** DockView API for panel management */
   dockviewApi: DockviewApi | null;
-  dockviewController?: any | null;
-
+  /** DockView controller for advanced panel operations */
+  dockviewController: any;
+  /** Get a manager instance by ID */
   getManager: <T = any>(id: string) => T | undefined;
+  /** Execute another plugin function */
   executeFunction: <T = any>(
     functionId: string,
     args?: any,

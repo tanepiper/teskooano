@@ -104,37 +104,61 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
       (objects) => this.processCelestialObjectsUpdateNow(objects),
     );
 
-    this.subscribeToState(
+    // ✅ Using RxJS operators for cleaner visual settings transformation
+    this.subscribeToStateWithMapping(
       StateAccessor.getSimulationStateStream(),
       (simState: SimulationState) => {
+        // Update simulation time
         this.currentSimulationTime = simState.time ?? 0;
-
-        const currentVisSettings = this.$visualSettings.getValue();
-        const newMultiplier =
-          simState.visualSettings.trailLengthMultiplier ?? 150;
-        const newEngine =
-          simState.physicsEngine === "verlet" ? "verlet" : "keplerian";
-        const newTimeScale = simState.timeScale;
-        const newPredictionSteps = simState.visualSettings.predictionSteps;
-        const newPredictionDuration =
-          simState.visualSettings.predictionDuration;
-
-        if (
-          newMultiplier !== currentVisSettings.trailLengthMultiplier ||
-          newEngine !== currentVisSettings.physicsEngine ||
-          newTimeScale !== currentVisSettings.timeScale ||
-          newPredictionSteps !== currentVisSettings.predictionSteps ||
-          newPredictionDuration !== currentVisSettings.predictionDuration
-        ) {
-          this.$visualSettings.next({
-            trailLengthMultiplier: newMultiplier,
-            physicsEngine: newEngine,
-            timeScale: newTimeScale,
-            predictionSteps: newPredictionSteps,
-            predictionDuration: newPredictionDuration,
-          });
+        
+        // Extract and transform visual settings
+        return this.extractVisualSettings(simState);
+      },
+      (visualSettings: RendererVisualSettings) => {
+        // Only emit if settings have actually changed
+        const currentSettings = this.$visualSettings.getValue();
+        if (!this.compareVisualSettings(currentSettings, visualSettings)) {
+          this.$visualSettings.next(visualSettings);
         }
       },
+    );
+  }
+
+  /**
+   * Extracts visual settings from simulation state.
+   * @param simState The simulation state to extract from
+   * @returns The extracted visual settings
+   */
+  private extractVisualSettings(
+    simState: SimulationState,
+  ): RendererVisualSettings {
+    return {
+      trailLengthMultiplier:
+        simState.visualSettings.trailLengthMultiplier ?? 150,
+      physicsEngine:
+        simState.physicsEngine === "verlet" ? "verlet" : "keplerian",
+      timeScale: simState.timeScale,
+      predictionSteps: simState.visualSettings.predictionSteps,
+      predictionDuration: simState.visualSettings.predictionDuration,
+    };
+  }
+
+  /**
+   * Compares two visual settings objects for equality.
+   * @param a First settings object
+   * @param b Second settings object
+   * @returns True if settings are equal, false otherwise
+   */
+  private compareVisualSettings(
+    a: RendererVisualSettings,
+    b: RendererVisualSettings,
+  ): boolean {
+    return (
+      a.trailLengthMultiplier === b.trailLengthMultiplier &&
+      a.physicsEngine === b.physicsEngine &&
+      a.timeScale === b.timeScale &&
+      a.predictionSteps === b.predictionSteps &&
+      a.predictionDuration === b.predictionDuration
     );
   }
 

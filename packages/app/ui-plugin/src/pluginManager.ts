@@ -5,6 +5,9 @@ import {
   RegistrationManager,
   type PluginRegistries,
 } from "./managers/registration.manager";
+import { PluginLoader } from "./managers/plugin-loader.manager";
+import { PluginExecutor } from "./managers/plugin-executor.manager";
+import { HMRManager } from "./managers/hmr.manager";
 import type {
   ComponentConfig,
   FunctionConfig,
@@ -17,9 +20,8 @@ import type {
   ToolbarRegistration,
   ToolbarTarget,
   ToolbarWidgetConfig,
+  PluginManagerProxy,
 } from "./types.js";
-
-import { pluginLoaders } from "virtual:teskooano-loaders";
 
 /**
  * Internal type to store manager instances along with their originating plugin ID.
@@ -32,17 +34,12 @@ type RegisteredManager = {
 
 /**
  * Manages the lifecycle of all UI plugins in the application.
- * This class is a singleton, accessible via `PluginManager.getInstance()`.
- *
- * It handles:
- * - Loading and registering plugins.
- * - Resolving dependencies between plugins.
- * - Providing access to registered plugin capabilities (panels, functions, etc.).
- * - Unloading and reloading plugins, especially for Hot Module Replacement (HMR).
+ * This class is now a lean orchestrator that delegates responsibilities
+ * to specialized manager classes.
  *
  * @singleton
  */
-class PluginManager {
+class PluginManager implements PluginManagerProxy {
   #registries: PluginRegistries = {
     pluginRegistry: new Map<string, TeskooanoPlugin>(),
     panelRegistry: new Map<string, RegisteredItem<PanelConfig>>(),
@@ -56,9 +53,11 @@ class PluginManager {
     componentRegistry: new Map<string, RegisteredItem<ComponentConfig>>(),
   };
 
+  // Specialized managers
   #registrationManager: RegistrationManager;
-  #dockviewApi: DockviewApi | null = null;
-  #dockviewController: any | null = null;
+  #pluginLoader: PluginLoader;
+  #pluginExecutor: PluginExecutor;
+  #hmrManager: HMRManager;
 
   #pluginStatusSubject = new Subject<PluginRegistrationStatus>();
   #pluginsChangedSubject = new BehaviorSubject<void>(undefined);
@@ -74,16 +73,25 @@ class PluginManager {
     this.#registrationManager = new RegistrationManager(
       this.#registries as any,
     ); // Cast needed due to private fields
-    if (import.meta.hot) {
-      import.meta.hot.on(
-        "teskooano-plugin-update",
-        (data: { pluginId: string }) => {
-          if (data.pluginId) {
-            this.reloadPlugin(data.pluginId);
-          }
-        },
-      );
-    }
+    
+    this.#pluginLoader = new PluginLoader();
+    
+    this.#pluginExecutor = new PluginExecutor(
+      this.#registries.functionRegistry,
+      this.#registries.managerInstances,
+    );
+    
+    this.#hmrManager = new HMRManager(
+      this.#pluginLoader,
+      this.#registrationManager,
+      this.#registries.pluginRegistry,
+    );
+
+    // Set up HMR callbacks
+    this.#hmrManager.setCallbacks({
+      onPluginStatusChange: (status) => this.#pluginStatusSubject.next(status),
+      onPluginsChanged: () => this.#pluginsChangedSubject.next(),
+    });
   }
 
   public static getInstance(): PluginManager {
@@ -97,12 +105,14 @@ class PluginManager {
     dockviewApi: DockviewApi;
     dockviewController: any;
   }): void {
-    this.#dockviewApi = deps.dockviewApi;
-    this.#dockviewController = deps.dockviewController;
     this.#registrationManager.setDependencies({
-      dockviewApi: this.#dockviewApi,
+      dockviewApi: deps.dockviewApi,
     });
-    // Additional logic to update dependencies in already instantiated managers
+    
+    this.#pluginExecutor.setDependencies({
+      dockviewApi: deps.dockviewApi,
+      dockviewController: deps.dockviewController,
+    });
   }
 
   public registerPlugin(plugin: TeskooanoPlugin): void {
@@ -115,185 +125,102 @@ class PluginManager {
   }
 
   public async reloadPlugin(pluginId: string): Promise<void> {
-    await this.unloadPlugin(pluginId);
-    await this.loadAndRegisterPlugins([pluginId]);
+    return this.#hmrManager.reloadPlugin(pluginId);
   }
 
   public async unloadPlugin(pluginId: string): Promise<void> {
-    this.#pluginStatusSubject.next({ type: "unloading", pluginId });
-    const plugin = this.#registries.pluginRegistry.get(pluginId);
-    if (!plugin) {
-      return;
-    }
-
-    if (typeof plugin.dispose === "function") {
-      this.#pluginStatusSubject.next({ type: "disposing", pluginId });
-      try {
-        plugin.dispose();
-        this.#pluginStatusSubject.next({ type: "disposed", pluginId });
-      } catch (error) {
-        this.#pluginStatusSubject.next({
-          type: "dispose_error",
-          pluginId,
-          error,
-        });
-      }
-    }
-
-    this.#registrationManager.unregisterPluginItems(pluginId);
-    this.#registries.pluginRegistry.delete(pluginId);
-    this.#pluginsChangedSubject.next();
-    this.#pluginStatusSubject.next({ type: "unloaded", pluginId });
+    return this.#hmrManager.unloadPlugin(pluginId);
   }
 
   public async loadAndRegisterPlugins(
     pluginIds: string[],
     passedArguments?: any,
   ): Promise<void> {
-    const loaders = pluginLoaders as Record<string, () => Promise<any>>;
-    const loadedPlugins: Record<string, TeskooanoPlugin> = {};
     const registeredPluginIds: Set<string> = new Set();
     const failedPluginIds: Set<string> = new Set();
-    const allRequestedIds = new Set(pluginIds);
-    const processingOrder: string[] = [];
 
     this.#pluginStatusSubject.next({
       type: "loading_started",
-      pluginIds: Array.from(allRequestedIds),
+      pluginIds,
     });
 
     try {
-      await this.#performTopologicalSort(allRequestedIds, {
-        loaders,
-        loadedPlugins,
-        processingOrder,
+      const alreadyRegistered = new Set(this.#registries.pluginRegistry.keys());
+      const { loadedPlugins, processingOrder } =
+        await this.#pluginLoader.loadPlugins(pluginIds, alreadyRegistered);
+
+      this.#pluginStatusSubject.next({
+        type: "registration_started",
+        pluginIds: processingOrder,
+      });
+
+      for (const pluginId of processingOrder) {
+        const plugin = loadedPlugins[pluginId];
+        if (plugin) {
+          try {
+            this.#pluginStatusSubject.next({
+              type: "registering_plugin",
+              pluginId,
+            });
+            this.registerPlugin(plugin);
+            registeredPluginIds.add(pluginId);
+            this.#pluginStatusSubject.next({
+              type: "registered_plugin",
+              pluginId,
+            });
+
+            if (plugin.initialize) {
+              try {
+                await plugin.initialize(passedArguments);
+              } catch (initError: any) {
+                console.error(
+                  `[PluginManager] Error initializing plugin '${pluginId}':`,
+                  initError,
+                );
+                this.#pluginStatusSubject.next({
+                  type: "init_error",
+                  pluginId,
+                  error: initError,
+                });
+              }
+            }
+          } catch (regError: any) {
+            console.error(
+              `[PluginManager] Error registering plugin '${pluginId}':`,
+              regError,
+            );
+            failedPluginIds.add(pluginId);
+            this.#pluginStatusSubject.next({
+              type: "register_error",
+              pluginId,
+              error: regError,
+            });
+          }
+        }
+      }
+
+      const notFound = pluginIds.filter(
+        (id: string) =>
+          !loadedPlugins[id] && !this.#registries.pluginRegistry.has(id),
+      );
+
+      this.#pluginStatusSubject.next({
+        type: "loading_complete",
+        successfullyRegistered: [...registeredPluginIds],
+        failed: [...failedPluginIds],
+        notFound,
       });
     } catch (error: any) {
-      const failedId =
-        processingOrder.find((id) => !loadedPlugins[id]) || "unknown";
-      failedPluginIds.add(failedId);
       this.#pluginStatusSubject.next({
         type: "load_error",
-        pluginId: failedId,
+        pluginId: "unknown",
         error,
       });
-    }
-
-    this.#pluginStatusSubject.next({
-      type: "registration_started",
-      pluginIds: processingOrder,
-    });
-
-    for (const pluginId of processingOrder) {
-      const plugin = loadedPlugins[pluginId];
-      if (plugin) {
-        try {
-          this.#pluginStatusSubject.next({
-            type: "registering_plugin",
-            pluginId,
-          });
-          this.registerPlugin(plugin);
-          registeredPluginIds.add(pluginId);
-          this.#pluginStatusSubject.next({
-            type: "registered_plugin",
-            pluginId,
-          });
-          if (plugin.initialize) {
-            try {
-              plugin.initialize(passedArguments);
-            } catch (initError: any) {
-              console.error(
-                `[PluginManager] Error initializing plugin '${pluginId}':`,
-                initError,
-              );
-              this.#pluginStatusSubject.next({
-                type: "init_error",
-                pluginId,
-                error: initError,
-              });
-            }
-          }
-        } catch (regError: any) {
-          console.error(
-            `[PluginManager] Error registering plugin '${pluginId}':`,
-            regError,
-          );
-          failedPluginIds.add(pluginId);
-          this.#pluginStatusSubject.next({
-            type: "register_error",
-            pluginId,
-            error: regError,
-          });
-        }
-      }
-    }
-
-    const notFound = pluginIds.filter(
-      (id: string) =>
-        !loadedPlugins[id] && !this.#registries.pluginRegistry.has(id),
-    );
-
-    this.#pluginStatusSubject.next({
-      type: "loading_complete",
-      successfullyRegistered: [...registeredPluginIds],
-      failed: [...failedPluginIds],
-      notFound,
-    });
-  }
-
-  async #performTopologicalSort(
-    allRequestedIds: Set<string>,
-    context: {
-      loaders: Record<string, () => Promise<any>>;
-      loadedPlugins: Record<string, TeskooanoPlugin>;
-      processingOrder: string[];
-    },
-  ): Promise<void> {
-    const visited = new Set<string>();
-    const processing = new Set<string>();
-
-    const resolve = async (pluginId: string): Promise<void> => {
-      if (processing.has(pluginId)) {
-        throw new Error(
-          `Circular dependency detected involving plugin: ${pluginId}`,
-        );
-      }
-      if (visited.has(pluginId)) return;
-      processing.add(pluginId);
-
-      const loader = context.loaders[pluginId];
-      if (!loader)
-        throw new Error(`Loader for plugin '${pluginId}' not found.`);
-      const module = await loader();
-      const plugin = module.plugin as TeskooanoPlugin;
-      context.loadedPlugins[pluginId] = plugin;
-
-      if (plugin.dependencies) {
-        for (const depId of plugin.dependencies) {
-          if (
-            !allRequestedIds.has(depId) &&
-            !this.#registries.pluginRegistry.has(depId)
-          ) {
-            throw new Error(
-              `Plugin '${pluginId}' has an unmet dependency: '${depId}'`,
-            );
-          }
-          if (!this.#registries.pluginRegistry.has(depId)) {
-            await resolve(depId);
-          }
-        }
-      }
-      processing.delete(pluginId);
-      visited.add(pluginId);
-      context.processingOrder.push(pluginId);
-    };
-
-    for (const id of allRequestedIds) {
-      if (!this.#registries.pluginRegistry.has(id)) {
-        await resolve(id);
-      }
+      throw error;
     }
   }
+
+
 
   public getPlugins(): TeskooanoPlugin[] {
     return Array.from(this.#registries.pluginRegistry.values());
@@ -317,19 +244,7 @@ class PluginManager {
     functionId: string,
     args?: any,
   ): Promise<T> | T | undefined {
-    const funcConfig = this.#registries.functionRegistry.get(functionId);
-    if (!funcConfig) {
-      console.error(`[PluginManager] Function '${functionId}' not found.`);
-      return undefined;
-    }
-    const context: PluginExecutionContext = {
-      pluginManager: this,
-      dockviewApi: this.#dockviewApi,
-      dockviewController: this.#dockviewController,
-      getManager: this.getManagerInstance.bind(this),
-      executeFunction: this.execute.bind(this),
-    };
-    return funcConfig.execute(context, args);
+    return this.#pluginExecutor.execute<T>(functionId, args);
   }
 
   public getToolbarItemsForTarget(target: ToolbarTarget): ToolbarItemConfig[] {
@@ -355,7 +270,7 @@ class PluginManager {
   }
 
   public getManagerInstance<T = any>(id: string): T | undefined {
-    return this.#registries.managerInstances.get(id)?.instance;
+    return this.#pluginExecutor.getManagerInstance<T>(id);
   }
 
   public getPendingToolbarRegistrations(): RegisteredItem<ToolbarRegistration>[] {
