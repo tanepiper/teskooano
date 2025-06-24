@@ -207,13 +207,37 @@ function generateRockyPlanetSpecificProperties(
   let surfaceType: SurfaceType;
   let composition: string[];
 
-  if (rockyPlanetType === PlanetType.ICE) {
+  // Handle gas giant types that might appear in rocky planet generation
+  // This occurs when moons of gas giants are generated
+  if (Object.values(GasGiantClass).includes(rockyPlanetType as any)) {
+    // For gas giant moons, use ice composition as they're typically icy
     surfaceType = UTIL.getRandomItem(
       [SurfaceType.CRATERED, SurfaceType.FLAT, SurfaceType.ICE_FLATS],
       random,
     );
     composition = CONST.ICE_COMPOSITION;
+  } else if (rockyPlanetType === PlanetType.ICE) {
+    surfaceType = UTIL.getRandomItem(
+      [SurfaceType.CRATERED, SurfaceType.FLAT, SurfaceType.ICE_FLATS],
+      random,
+    );
+    composition = CONST.ICE_COMPOSITION;
+  } else if (rockyPlanetType === PlanetType.OCEAN) {
+    // Ocean worlds have varied surface types
+    surfaceType = UTIL.getRandomItem(
+      [SurfaceType.FLAT, SurfaceType.VARIED, SurfaceType.CRATERED],
+      random,
+    );
+    composition = ["water", "rock", "ice", "salts"];
+  } else if (rockyPlanetType === "METALLIC" as any) {
+    // Metallic planets (iron-rich worlds)
+    surfaceType = UTIL.getRandomItem(
+      [SurfaceType.CRATERED, SurfaceType.MOUNTAINOUS, SurfaceType.FLAT],
+      random,
+    );
+    composition = ["iron", "nickel", "silicates", "sulfides"];
   } else {
+    // Standard rocky planets
     surfaceType = UTIL.getRandomItem(
       [
         SurfaceType.CRATERED,
@@ -242,6 +266,12 @@ function generateRockyPlanetSpecificProperties(
     case PlanetType.ICE:
       hasAtmosphere = random() < 0.1; // 10% chance for Ice planets
       break;
+    case PlanetType.OCEAN:
+      hasAtmosphere = random() < 0.95; // 95% chance for Ocean planets
+      break;
+    case "METALLIC" as any:
+      hasAtmosphere = random() < 0.3; // 30% chance for Metallic planets
+      break;
     case PlanetType.ROCKY:
     case PlanetType.DESERT:
     case PlanetType.LAVA:
@@ -260,6 +290,20 @@ function generateRockyPlanetSpecificProperties(
     if (baseProps.planetType === PlanetType.ICE) {
       atmosphereType = AtmosphereType.THIN;
       pressure = random() * 0.1;
+    } else if (baseProps.planetType === PlanetType.OCEAN) {
+      // Ocean worlds typically have thick atmospheres
+      atmosphereType = UTIL.getRandomItem(
+        [AtmosphereType.NORMAL, AtmosphereType.DENSE],
+        random,
+      );
+      pressure =
+        atmosphereType === AtmosphereType.NORMAL
+          ? 0.5 + random() * 1.0
+          : 1.5 + random() * 3;
+    } else if (baseProps.planetType === "METALLIC" as any) {
+      // Metallic planets have thin, exotic atmospheres
+      atmosphereType = AtmosphereType.THIN;
+      pressure = random() * 0.3;
     } else {
       atmosphereType = UTIL.getRandomItem(
         [AtmosphereType.THIN, AtmosphereType.NORMAL, AtmosphereType.DENSE],
@@ -276,12 +320,31 @@ function generateRockyPlanetSpecificProperties(
       CONST.ATMOSPHERE_COLORS[atmosphereType],
       random,
     );
-    atmComposition = UTIL.getRandomItem(
-      CONST.ATMOSPHERE_COMPOSITION[atmosphereType],
-      random,
-    );
+    
+    // Enhanced atmospheric composition based on planet type
+    if (baseProps.planetType === PlanetType.OCEAN) {
+      atmComposition = UTIL.getRandomItem(
+        [["N2", "O2", "H2O"], ["CO2", "H2O"], ["N2", "H2O", "Ar"]],
+        random,
+      );
+    } else if (baseProps.planetType === "METALLIC" as any) {
+      atmComposition = UTIL.getRandomItem(
+        [["Na", "K", "Fe"], ["SiO", "Fe", "Mg"], ["Ca", "Al", "O2"]],
+        random,
+      );
+    } else {
+      atmComposition = UTIL.getRandomItem(
+        CONST.ATMOSPHERE_COMPOSITION[atmosphereType],
+        random,
+      );
+    }
 
-    const cloudTypeKey = rockyPlanetType === PlanetType.ICE ? "ICE" : "ROCKY";
+    // Enhanced cloud properties based on planet type
+    const cloudTypeKey = 
+      rockyPlanetType === PlanetType.ICE ? "ICE" : 
+      rockyPlanetType === PlanetType.OCEAN ? "OCEAN" :
+      rockyPlanetType === "METALLIC" as any ? "ROCKY" : "ROCKY";
+      
     cloudProps = {
       color: UTIL.getRandomItem(CONST.CLOUD_COLORS[cloudTypeKey], random),
       opacity:
@@ -291,11 +354,13 @@ function generateRockyPlanetSpecificProperties(
             ? 0.5 + random() * 0.3
             : 0.7 + random() * 0.2,
       coverage:
-        atmosphereType === AtmosphereType.THIN
-          ? 0.1 + random() * 0.3
-          : atmosphereType === AtmosphereType.NORMAL
-            ? 0.4 + random() * 0.4
-            : 0.7 + random() * 0.3,
+        baseProps.planetType === PlanetType.OCEAN
+          ? 0.7 + random() * 0.3 // Ocean worlds have high cloud coverage
+          : atmosphereType === AtmosphereType.THIN
+            ? 0.1 + random() * 0.3
+            : atmosphereType === AtmosphereType.NORMAL
+              ? 0.4 + random() * 0.4
+              : 0.7 + random() * 0.3,
       speed:
         atmosphereType === AtmosphereType.THIN
           ? 0.1 + random() * 0.2
@@ -313,19 +378,44 @@ function generateRockyPlanetSpecificProperties(
     case PlanetType.ICE:
     case PlanetType.DESERT:
     case PlanetType.LAVA:
+    case PlanetType.OCEAN:
       surfaceProperties = createProceduralSurfaceProperties(
         random,
         rockyPlanetType,
       );
       break;
-    default:
-      console.warn(
-        `Unhandled rocky planet type: ${rockyPlanetType}. Using TERRESTRIAL defaults.`,
-      );
+    case "METALLIC" as any:
+      // Create metallic surface properties
       surfaceProperties = createProceduralSurfaceProperties(
         random,
-        PlanetType.TERRESTRIAL,
+        PlanetType.ROCKY, // Use rocky as base, will be customized
       );
+      // Customize for metallic properties
+      surfaceProperties.color1 = "#8C7853"; // Bronze
+      surfaceProperties.color2 = "#CD7F32"; // Copper
+      surfaceProperties.color3 = "#C0C0C0"; // Silver
+      surfaceProperties.color4 = "#FFD700"; // Gold
+      surfaceProperties.color5 = "#E5E4E2"; // Platinum
+      surfaceProperties.shininess = 0.8 + random() * 0.2; // Very shiny
+      surfaceProperties.specularStrength = 0.7 + random() * 0.3;
+      surfaceProperties.roughness = 0.1 + random() * 0.3; // Smoother
+      break;
+    default:
+      // Handle gas giant classes that might appear as moons
+      if (Object.values(GasGiantClass).includes(rockyPlanetType as any)) {
+        surfaceProperties = createProceduralSurfaceProperties(
+          random,
+          PlanetType.ICE, // Use ice properties for gas giant moons
+        );
+      } else {
+        console.warn(
+          `Unhandled rocky planet type: ${rockyPlanetType}. Using TERRESTRIAL defaults.`,
+        );
+        surfaceProperties = createProceduralSurfaceProperties(
+          random,
+          PlanetType.TERRESTRIAL,
+        );
+      }
       break;
   }
 
