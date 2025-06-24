@@ -1,8 +1,6 @@
 import {
-  celestialObjects$,
-  getSimulationState,
+  StateAccessor,
   renderableStore,
-  simulationState$,
   type SimulationState,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
@@ -15,8 +13,8 @@ import type { RendererVisualSettings } from "./types";
 /**
  * Acts as a bridge between the core application state and the rendering engine.
  *
- * This class subscribes to the main application state observables (`celestialObjects$`
- * and `simulationState$`). It transforms the raw, physics-based data into a
+ * This class subscribes to the main application state observables through `StateAccessor`.
+ * It transforms the raw, physics-based data into a
  * `RenderableCelestialObject` format that the various rendering managers can
  * consume. This transformation includes scaling positions, calculating rotations,
  * and determining lighting relationships.
@@ -40,7 +38,7 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
   constructor() {
     super();
     this.factory = new RenderableObjectFactory();
-    const initialSimState = getSimulationState();
+    const initialSimState = StateAccessor.getCurrentSimulationState();
     this.$visualSettings = new BehaviorSubject<RendererVisualSettings>({
       trailLengthMultiplier:
         initialSimState.visualSettings.trailLengthMultiplier,
@@ -57,7 +55,7 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
   /**
    * The main processing handler for celestial object updates.
    *
-   * This method is called whenever the `celestialObjects$` observable emits.
+   * This method is called whenever the celestial objects state updates.
    * It orchestrates the transformation of core state objects into renderable
    * objects by first calculating the lighting hierarchy and then delegating
    * the creation logic to the `RenderableObjectFactory`.
@@ -96,16 +94,16 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
   /**
    * Subscribes to the core application state observables.
    *
-   * Sets up the subscriptions to `celestialObjects$` and `simulationState$` that
+   * Sets up the subscriptions to the core state observables that
    * drive all the updates within this adapter.
    */
   private subscribeToCoreState(): void {
     // ✅ Using StateSubscriptionMixin for clean subscription management
-    this.subscribeToState(celestialObjects$, (objects) =>
+    this.subscribeToState(StateAccessor.getCelestialObjectsStream(), (objects) =>
       this.processCelestialObjectsUpdateNow(objects),
     );
 
-    this.subscribeToState(simulationState$, (simState: SimulationState) => {
+    this.subscribeToState(StateAccessor.getSimulationStateStream(), (simState: SimulationState) => {
       this.currentSimulationTime = simState.time ?? 0;
 
       const currentVisSettings = this.$visualSettings.getValue();
