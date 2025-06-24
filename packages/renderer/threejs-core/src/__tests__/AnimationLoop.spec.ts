@@ -18,8 +18,6 @@ vi.mock("three", async () => {
   };
 });
 
-
-
 describe("AnimationLoop", () => {
   let animationLoop: AnimationLoop;
   let mockRequestAnimationFrame: ReturnType<typeof vi.fn>;
@@ -141,13 +139,13 @@ describe("AnimationLoop", () => {
   it("should get the current stats", () => {
     const mockRenderer = {
       info: {
-        render: { calls: 10, triangles: 1000 }
-      }
+        render: { calls: 10, triangles: 1000 },
+      },
     } as any;
-    
+
     animationLoop.setRenderer(mockRenderer);
     const stats = animationLoop.getCurrentStats();
-    
+
     expect(stats).toBeDefined();
     if (stats) {
       expect(stats.drawCalls).toBe(10);
@@ -172,13 +170,13 @@ describe("AnimationLoop", () => {
   it("should handle animation frame callback", () => {
     const mockCallback = vi.fn();
     animationLoop.onAnimate(mockCallback);
-    
+
     animationLoop.start();
-    
+
     // Trigger the animation frame manually
     const animateCallback = mockRequestAnimationFrame.mock.calls[0][0];
     animateCallback();
-    
+
     expect(mockCallback).toHaveBeenCalledWith(1.0, 0.016);
   });
 });

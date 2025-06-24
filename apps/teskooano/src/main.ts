@@ -2,10 +2,7 @@ import "@teskooano/design-system/styles.css";
 import "dockview-core/dist/styles/dockview.css";
 import "./vite-env.d";
 
-import {
-  StateAccessor,
-  simulationStateService,
-} from "@teskooano/core-state";
+import { StateAccessor, simulationStateService } from "@teskooano/core-state";
 import {
   rendererEvents,
   type RendererStats,

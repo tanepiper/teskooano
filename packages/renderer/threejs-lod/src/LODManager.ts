@@ -31,7 +31,8 @@ export class LODManager extends StateSubscriptionMixin {
     super();
     this.camera = camera;
 
-    this.currentProfile = StateAccessor.getCurrentSimulationState().performanceProfile;
+    this.currentProfile =
+      StateAccessor.getCurrentSimulationState().performanceProfile;
 
     this.subscribeToState(StateAccessor.getSimulationStateStream(), (state) => {
       if (state.performanceProfile !== this.currentProfile) {

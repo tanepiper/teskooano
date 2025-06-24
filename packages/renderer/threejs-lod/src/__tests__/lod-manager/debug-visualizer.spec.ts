@@ -39,7 +39,7 @@ describe("Debug Visualizer Module", () => {
       lod.addLevel(new THREE.Object3D(), 1000);
 
       lod.position.set(100, 0, 0);
-      
+
       // Mock getCurrentLevel method
       vi.spyOn(lod, "getCurrentLevel").mockReturnValue(1);
 

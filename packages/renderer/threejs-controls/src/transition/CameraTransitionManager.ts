@@ -198,7 +198,9 @@ export class CameraTransitionManager {
 
     let targetName = "Position";
     if (options?.focusedObjectId) {
-      const targetObject = StateAccessor.getRenderableObject(options.focusedObjectId);
+      const targetObject = StateAccessor.getRenderableObject(
+        options.focusedObjectId,
+      );
       if (targetObject) {
         targetName = targetObject.name;
       }

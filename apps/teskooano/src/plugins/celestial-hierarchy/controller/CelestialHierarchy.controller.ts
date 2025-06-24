@@ -99,7 +99,9 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     this.addEventListeners();
     this._populateListInternal();
 
-    this._previousObjectsState = { ...StateAccessor.getCurrentCelestialObjects() };
+    this._previousObjectsState = {
+      ...StateAccessor.getCurrentCelestialObjects(),
+    };
     // ✅ Using StateSubscriptionMixin for clean subscription management
     this.subscribeToState(
       celestialObjects$,

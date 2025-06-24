@@ -5,9 +5,7 @@ import {
   type RenderableCelestialObject,
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
-import {
-  StateAccessor,
-} from "@teskooano/core-state";
+import { StateAccessor } from "@teskooano/core-state";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineBuilder } from "../utils/LineBuilder";
@@ -424,7 +422,8 @@ export class PredictionManager {
 
     if (objectId && labelLayer) {
       const coreObject = StateAccessor.getCelestialObject(objectId);
-      const renderableObject = StateAccessor.getCurrentRenderableObjects()[objectId];
+      const renderableObject =
+        StateAccessor.getCurrentRenderableObjects()[objectId];
       const threeJsObject = this.objectManager.getObject(objectId);
       const velocity = coreObject?.physicsStateReal?.velocity_mps.length() || 0;
 
