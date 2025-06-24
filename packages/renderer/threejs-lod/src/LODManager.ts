@@ -4,8 +4,7 @@ import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LODLevel, DebugLabel } from "./lod-manager";
 
 import {
-  getSimulationState,
-  simulationState$,
+  StateAccessor,
   StateSubscriptionMixin,
   type PerformanceProfileType,
 } from "@teskooano/core-state";
@@ -32,9 +31,9 @@ export class LODManager extends StateSubscriptionMixin {
     super();
     this.camera = camera;
 
-    this.currentProfile = getSimulationState().performanceProfile;
+    this.currentProfile = StateAccessor.getCurrentSimulationState().performanceProfile;
 
-    this.subscribeToState(simulationState$, (state) => {
+    this.subscribeToState(StateAccessor.getSimulationStateStream(), (state) => {
       if (state.performanceProfile !== this.currentProfile) {
         this.currentProfile = state.performanceProfile;
       }

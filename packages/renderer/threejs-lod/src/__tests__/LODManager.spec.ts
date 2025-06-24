@@ -12,12 +12,17 @@ import { CelestialType, CelestialStatus } from "@teskooano/data-types";
 vi.mock("@teskooano/core-state", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@teskooano/core-state")>();
   const { Subject } = await import("rxjs");
+  const mockSubject = new Subject();
   return {
     ...mod,
-    simulationState$: new Subject(),
-    getSimulationState: () => ({
-      performanceProfile: "medium",
-    }),
+    StateAccessor: {
+      getCurrentSimulationState: () => ({
+        performanceProfile: "medium",
+      }),
+      getSimulationStateStream: () => mockSubject,
+    },
+    // Keep the direct reference for the test
+    simulationState$: mockSubject,
   };
 });
 
