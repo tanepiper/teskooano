@@ -50,5 +50,14 @@ export { EngineToolbarManager } from "./interface/engine-toolbar/EngineToolbarMa
 export { TourController } from "./interface/tour-controller/TourController";
 export type { TourStep } from "./interface/tour-controller/types";
 
+// --- Initialization ---
+export {
+  ApplicationInitializer,
+  ManagerInitializer,
+  PanelRegistry,
+  EventSetup,
+} from "./initialization";
+export { EnvironmentValidator } from "./validation";
+
 // --- Configuration ---
 export { pluginConfig } from "./config/pluginRegistry";
