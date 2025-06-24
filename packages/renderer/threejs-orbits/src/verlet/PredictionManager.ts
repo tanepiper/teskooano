@@ -7,8 +7,6 @@ import {
 import { OSVector3 } from "@teskooano/core-math";
 import {
   StateAccessor,
-  renderableStore,
-  simulationStateService,
 } from "@teskooano/core-state";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
@@ -165,12 +163,12 @@ export class PredictionManager {
    * Subscribes to the global simulation state to keep prediction settings in sync.
    */
   private initializeStateSubscriptions(): void {
-    this.stateSubscription = simulationStateService.simulationState$
+    this.stateSubscription = StateAccessor.getSimulationStateStream()
       .pipe(
         map((state) => state.visualSettings.predictionDuration),
         distinctUntilChanged(),
       )
-      .subscribe((durationInYears) => {
+      .subscribe((durationInYears: number) => {
         const newDurationInSeconds = durationInYears * SECONDS_PER_YEAR;
         if (this.predictionDuration !== newDurationInSeconds) {
           this.predictionDuration = newDurationInSeconds;
@@ -212,7 +210,7 @@ export class PredictionManager {
       return false;
     }
 
-    const renderableObjectsMap = renderableStore.getRenderableObjects();
+    const renderableObjectsMap = StateAccessor.getCurrentRenderableObjects();
     const renderableTargetObject = renderableObjectsMap[objectId];
 
     if (!renderableTargetObject) {
@@ -426,7 +424,7 @@ export class PredictionManager {
 
     if (objectId && labelLayer) {
       const coreObject = StateAccessor.getCelestialObject(objectId);
-      const renderableObject = renderableStore.getRenderableObjects()[objectId];
+      const renderableObject = StateAccessor.getCurrentRenderableObjects()[objectId];
       const threeJsObject = this.objectManager.getObject(objectId);
       const velocity = coreObject?.physicsStateReal?.velocity_mps.length() || 0;
 
