@@ -60,8 +60,9 @@ function generateStandardBody(
   const { parentStar, distanceRelativeToParentAU, zone } = placement;
   const bodyTypeRoll = random();
 
-  // Check if asteroid belt is supported and likely
-  if (zone.supportsAsteroidBelts && bodyTypeRoll < 0.15) {
+  // Check if asteroid belt is likely based on zone category
+  const asteroidChance = (zone.category === "COLD" || zone.category === "FROZEN") ? 0.25 : 0.1;
+  if (bodyTypeRoll < asteroidChance) {
     if (distanceRelativeToParentAU < 2.0 || distanceRelativeToParentAU > 10.0) {
       return EMPTY; // Invalid distance for a belt
     }

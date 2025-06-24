@@ -19,13 +19,7 @@ import {
   StellarSystemType 
 } from "../zones";
 
-interface StarSystemHierarchy {
-  primary: CelestialObject;
-  companions?: StarSystemHierarchy[];
-  separation?: number; // AU
-  eccentricity?: number;
-  inclination?: number;
-}
+// Note: StarSystemHierarchy interface removed - using direct CelestialObject arrays for simplicity
 
 /**
  * Generates sophisticated stellar systems with realistic orbital mechanics and hierarchical structures.
