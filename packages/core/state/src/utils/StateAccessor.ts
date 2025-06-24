@@ -1,5 +1,5 @@
 import { Observable, startWith } from "rxjs";
-import type { CelestialObject } from "@teskooano/data-types";
+import type { CelestialObject, RenderableCelestialObject } from "@teskooano/data-types";
 import type { OSVector3 } from "@teskooano/core-math";
 import {
   celestialObjects$,
@@ -14,6 +14,7 @@ import {
   getCurrentSeed,
 } from "../game";
 import type { SimulationState } from "../game/types";
+import { renderableStore } from "../game/renderableStore";
 
 /**
  * Standardized accessor for all state in the Teskooano application.
@@ -184,5 +185,92 @@ export class StateAccessor {
    */
   static hasAnyCelestialObjects(): boolean {
     return this.getCelestialObjectCount() > 0;
+  }
+
+  // =============================================================================
+  // RENDERABLE OBJECTS ACCESS
+  // =============================================================================
+
+  /**
+   * Gets the current snapshot of all renderable objects (reactive).
+   * @returns Observable of the current renderable objects map with initial value
+   */
+  static getRenderableObjectsStream(): Observable<Record<string, RenderableCelestialObject>> {
+    return renderableStore.renderableObjects$.pipe(
+      startWith(renderableStore.getRenderableObjects())
+    );
+  }
+
+  /**
+   * Gets the current snapshot of all renderable objects (imperative).
+   * @returns The current renderable objects map
+   */
+  static getCurrentRenderableObjects(): Record<string, RenderableCelestialObject> {
+    return renderableStore.getRenderableObjects();
+  }
+
+  /**
+   * Gets a specific renderable object by ID.
+   * @param objectId The ID of the renderable object to retrieve
+   * @returns The renderable object or undefined if not found
+   */
+  static getRenderableObject(objectId: string): RenderableCelestialObject | undefined {
+    return this.getCurrentRenderableObjects()[objectId];
+  }
+
+  /**
+   * Gets multiple renderable objects by their IDs.
+   * @param objectIds Array of object IDs to retrieve
+   * @returns Array of renderable objects (only existing objects are included)
+   */
+  static getRenderableObjectsByIds(objectIds: string[]): RenderableCelestialObject[] {
+    const allObjects = this.getCurrentRenderableObjects();
+    return objectIds
+      .map(id => allObjects[id])
+      .filter((obj): obj is RenderableCelestialObject => obj !== undefined);
+  }
+
+  /**
+   * Gets multiple renderable objects by their IDs as a map.
+   * @param objectIds Array of object IDs to retrieve
+   * @returns Record mapping IDs to renderable objects (only existing objects are included)
+   */
+  static getRenderableObjectsMapByIds(objectIds: string[]): Record<string, RenderableCelestialObject> {
+    const allObjects = this.getCurrentRenderableObjects();
+    const result: Record<string, RenderableCelestialObject> = {};
+    
+    objectIds.forEach(id => {
+      const obj = allObjects[id];
+      if (obj) {
+        result[id] = obj;
+      }
+    });
+    
+    return result;
+  }
+
+  /**
+   * Checks if a renderable object exists by ID.
+   * @param objectId The ID to check
+   * @returns True if the renderable object exists
+   */
+  static hasRenderableObject(objectId: string): boolean {
+    return objectId in this.getCurrentRenderableObjects();
+  }
+
+  /**
+   * Gets all renderable object IDs.
+   * @returns Array of all renderable object IDs
+   */
+  static getRenderableObjectIds(): string[] {
+    return Object.keys(this.getCurrentRenderableObjects());
+  }
+
+  /**
+   * Gets the count of renderable objects.
+   * @returns Number of renderable objects in the system
+   */
+  static getRenderableObjectCount(): number {
+    return Object.keys(this.getCurrentRenderableObjects()).length;
   }
 }

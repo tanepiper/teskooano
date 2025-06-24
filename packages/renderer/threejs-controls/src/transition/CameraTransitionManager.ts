@@ -3,7 +3,7 @@ import { notificationManager } from "@teskooano/notifications";
 import gsap from "gsap";
 import * as THREE from "three";
 import { OrbitControlsHandler } from "../orbit/OrbitControlsHandler";
-import { renderableStore } from "@teskooano/core-state";
+import { StateAccessor } from "@teskooano/core-state";
 
 /**
  * Manages smooth, animated camera transitions using GSAP.
@@ -198,8 +198,7 @@ export class CameraTransitionManager {
 
     let targetName = "Position";
     if (options?.focusedObjectId) {
-      const targetObject =
-        renderableStore.getRenderableObjects()[options.focusedObjectId];
+      const targetObject = StateAccessor.getRenderableObject(options.focusedObjectId);
       if (targetObject) {
         targetName = targetObject.name;
       }
