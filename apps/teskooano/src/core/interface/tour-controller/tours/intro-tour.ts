@@ -1,4 +1,4 @@
-import { getCelestialObjects } from "@teskooano/core-state";
+import { StateAccessor } from "@teskooano/core-state";
 import { Config, Driver, PopoverDOM, State } from "driver.js";
 import { PluginExecutionContext } from "@teskooano/ui-plugin";
 import { TourStep } from "../types";
@@ -35,7 +35,7 @@ export function createIntroTour(
       },
       onNextClick: () => {
         const totalCelestialObjects = Object.values(
-          getCelestialObjects(),
+          StateAccessor.getCurrentCelestialObjects(),
         ).length;
         hasCelestialObjects = totalCelestialObjects > 0;
         driverObj.moveNext();

@@ -3,7 +3,7 @@ import "dockview-core/dist/styles/dockview.css";
 import "./vite-env.d";
 
 import {
-  getCelestialObjects,
+  StateAccessor,
   simulationStateService,
 } from "@teskooano/core-state";
 import {
@@ -245,7 +245,7 @@ function setupEventListeners() {
     }>;
     const { objectId } = focusEvent.detail;
     if (objectId) {
-      const objects = getCelestialObjects();
+      const objects = StateAccessor.getCurrentCelestialObjects();
       const selectedObject = objects[objectId];
       if (selectedObject && selectedObject.name) {
         try {

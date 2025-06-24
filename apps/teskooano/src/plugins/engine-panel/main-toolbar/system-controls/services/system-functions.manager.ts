@@ -3,8 +3,7 @@ import { OSVector3 } from "@teskooano/core-math";
 import {
   actions,
   celestialFactory,
-  getCelestialObjects,
-  getCurrentSeed,
+  StateAccessor,
   updateSeed,
 } from "@teskooano/core-state";
 import { CelestialType, type CelestialObject } from "@teskooano/data-types";
@@ -246,8 +245,8 @@ export class SystemFunctionsManager {
    */
   public async exportSystem() {
     try {
-      const objects = getCelestialObjects();
-      const seed = getCurrentSeed();
+      const objects = StateAccessor.getCurrentCelestialObjects();
+      const seed = StateAccessor.getCurrentSeed();
       const objectsArray = Object.values(objects);
 
       if (objectsArray.length === 0) {
@@ -379,7 +378,7 @@ export class SystemFunctionsManager {
    * @returns {Promise<ProcessResult>} The result of the copy operation.
    */
   public async copySeed(_: PluginExecutionContext, seedToCopy?: string) {
-    const seed = seedToCopy ?? getCurrentSeed() ?? "";
+    const seed = seedToCopy ?? StateAccessor.getCurrentSeed() ?? "";
     if (!seed) {
       return { success: false, symbol: "🤷", message: "No seed to copy." };
     }

@@ -6,7 +6,7 @@ import {
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 import {
-  getCelestialObjects,
+  StateAccessor,
   renderableStore,
   simulationStateService,
 } from "@teskooano/core-state";
@@ -204,7 +204,7 @@ export class PredictionManager {
       return false;
     }
 
-    const fullObjectsMap = getCelestialObjects();
+    const fullObjectsMap = StateAccessor.getCurrentCelestialObjects();
     const targetObject = fullObjectsMap[objectId];
 
     if (!targetObject?.physicsStateReal) {
@@ -425,7 +425,7 @@ export class PredictionManager {
     ) as PredictionLabelLayer | undefined;
 
     if (objectId && labelLayer) {
-      const coreObject = getCelestialObjects()[objectId];
+      const coreObject = StateAccessor.getCurrentCelestialObjects()[objectId];
       const renderableObject = renderableStore.getRenderableObjects()[objectId];
       const threeJsObject = this.objectManager.getObject(objectId);
       const velocity = coreObject?.physicsStateReal?.velocity_mps.length() || 0;

@@ -1,6 +1,6 @@
 import {
   actions,
-  getSimulationState,
+  StateAccessor,
   simulationState$,
   type SimulationState,
   StateSubscriptionMixin,
@@ -63,7 +63,7 @@ export class SimulationControlsController extends StateSubscriptionMixin {
   public init(): void {
     this.addEventListeners();
     // Initialize display with current state
-    this.handleStateUpdate(getSimulationState());
+    this.handleStateUpdate(StateAccessor.getCurrentSimulationState());
 
     // ✅ Using StateSubscriptionMixin for clean subscription management
     this.subscribeToState(simulationState$, (state: SimulationState) => {
@@ -167,7 +167,7 @@ export class SimulationControlsController extends StateSubscriptionMixin {
   // Event Handlers (bound to the class instance)
   private playPauseHandler = () => actions.togglePause();
   private speedUpHandler = () => {
-    const currentScale = getSimulationState().timeScale;
+    const currentScale = StateAccessor.getCurrentSimulationState().timeScale;
     if (currentScale === 0) {
       actions.setTimeScale(1);
       return;
@@ -180,7 +180,7 @@ export class SimulationControlsController extends StateSubscriptionMixin {
     actions.setTimeScale(nextSpeed * sign);
   };
   private speedDownHandler = () => {
-    const currentScale = getSimulationState().timeScale;
+    const currentScale = StateAccessor.getCurrentSimulationState().timeScale;
     if (currentScale === 0) {
       actions.setTimeScale(-1);
       return;
@@ -193,7 +193,7 @@ export class SimulationControlsController extends StateSubscriptionMixin {
     actions.setTimeScale(prevSpeed * sign);
   };
   private reverseHandler = () => {
-    const currentScale = getSimulationState().timeScale;
+    const currentScale = StateAccessor.getCurrentSimulationState().timeScale;
     actions.setTimeScale(currentScale === 0 ? -1 : -currentScale);
   };
 
@@ -205,7 +205,7 @@ export class SimulationControlsController extends StateSubscriptionMixin {
     scaleSelect.style.display = "inline-block";
     scaleSelect.innerHTML = "";
 
-    let currentScale = getSimulationState().timeScale;
+    let currentScale = StateAccessor.getCurrentSimulationState().timeScale;
     currentScale =
       currentScale < 0
         ? Math.abs(currentScale)
@@ -233,7 +233,7 @@ export class SimulationControlsController extends StateSubscriptionMixin {
     if (applyChange) {
       const selectedValue = parseFloat(scaleSelect.value);
       if (!isNaN(selectedValue)) {
-        const currentSimState = getSimulationState();
+        const currentSimState = StateAccessor.getCurrentSimulationState();
         const newScale =
           currentSimState.timeScale < 0 ? -selectedValue : selectedValue;
         actions.setTimeScale(newScale);
