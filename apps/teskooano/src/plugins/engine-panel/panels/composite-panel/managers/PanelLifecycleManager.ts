@@ -1,4 +1,4 @@
-import { celestialObjects$ } from "@teskooano/core-state";
+import { StateAccessor } from "@teskooano/core-state";
 import { simulationManager } from "@teskooano/app-simulation";
 import { CustomEvents } from "@teskooano/data-types";
 import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
@@ -62,7 +62,7 @@ export class PanelLifecycleManager {
     this._subscription = new Subscription();
 
     this._subscription.add(
-      celestialObjects$.subscribe((celestialObjects) => {
+      StateAccessor.getCelestialObjectsStream().subscribe((celestialObjects) => {
         if (!this._options.getIsConnected()) return;
 
         const hasObjects = Object.keys(celestialObjects).length > 0;

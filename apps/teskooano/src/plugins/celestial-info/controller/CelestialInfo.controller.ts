@@ -1,6 +1,6 @@
 import {
   celestialObjects$,
-  getCelestialObjects,
+  StateAccessor,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
@@ -138,7 +138,7 @@ export class CelestialInfoController extends StateSubscriptionMixin {
       return;
     }
 
-    const celestialData = getCelestialObjects()[selectedId];
+    const celestialData = StateAccessor.getCurrentCelestialObjects()[selectedId];
 
     if (celestialData) {
       if (celestialData.status === CelestialStatus.DESTROYED) {

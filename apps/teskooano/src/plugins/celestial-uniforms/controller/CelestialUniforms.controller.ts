@@ -1,6 +1,6 @@
 import {
   celestialObjects$,
-  getCelestialObjects,
+  StateAccessor,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import { type CelestialObject, CelestialStatus } from "@teskooano/data-types";
@@ -184,7 +184,7 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
       ) {
         message = `Object '${potentiallyDestroyedObject.name}' has been destroyed.`;
       } else if (oldSelectedId && !potentiallyDestroyedObject) {
-        const allCelestials = getCelestialObjects();
+        const allCelestials = StateAccessor.getCurrentCelestialObjects();
         const oldObjectData = allCelestials[oldSelectedId];
         if (!oldObjectData) {
           message = `Object previously selected (${oldSelectedId}) is no longer available.`;
@@ -195,7 +195,7 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
       return;
     }
 
-    const celestialData = getCelestialObjects()[selectedId];
+    const celestialData = StateAccessor.getCurrentCelestialObjects()[selectedId];
 
     if (celestialData) {
       if (celestialData.status === CelestialStatus.DESTROYED) {

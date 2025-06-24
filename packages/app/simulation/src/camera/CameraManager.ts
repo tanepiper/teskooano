@@ -1,4 +1,4 @@
-import { getSimulationState, renderableStore } from "@teskooano/core-state";
+import { StateAccessor, renderableStore } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { BehaviorSubject } from "rxjs";
 import * as THREE from "three";

@@ -1,7 +1,6 @@
 import {
-  celestialObjects$,
+  StateAccessor,
   currentSeed$,
-  getCelestialObjects,
   getCurrentSeed,
   updateSeed,
 } from "@teskooano/core-state";
@@ -253,7 +252,7 @@ export class SystemControls extends HTMLElement {
     }
 
     const displayState$ = combineLatest([
-      celestialObjects$.pipe(startWith(getCelestialObjects())),
+      StateAccessor.getCelestialObjectsStream(),
       currentSeed$.pipe(startWith(getCurrentSeed())),
       this.controller.isGenerating$$,
       this.mobile$$,

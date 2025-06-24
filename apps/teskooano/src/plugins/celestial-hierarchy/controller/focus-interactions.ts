@@ -1,4 +1,4 @@
-import { getCelestialObjects, renderableStore } from "@teskooano/core-state";
+import { StateAccessor, renderableStore } from "@teskooano/core-state";
 import {
   CelestialStatus,
   CelestialType,
@@ -29,7 +29,7 @@ export function handleFocusRequest(
     return false;
   }
 
-  const objects = getCelestialObjects();
+  const objects = StateAccessor.getCurrentCelestialObjects();
   const targetObject = objects[objectId];
   if (
     !targetObject ||
@@ -96,7 +96,7 @@ export function handleFollowRequest(
     return false;
   }
 
-  const objects = getCelestialObjects();
+  const objects = StateAccessor.getCurrentCelestialObjects();
   const targetObject = objects[objectId];
   if (
     !targetObject ||

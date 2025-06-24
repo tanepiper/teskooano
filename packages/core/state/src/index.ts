@@ -7,3 +7,4 @@ export * from "./game/factory";
 
 // Utilities
 export * from "./utils/StateSubscriptionMixin";
+export * from "./utils/StateAccessor";

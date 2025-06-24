@@ -1,4 +1,4 @@
-import { getCelestialObjects } from "@teskooano/core-state";
+import { StateAccessor } from "@teskooano/core-state";
 import type {
   CelestialObject,
   OrbitalParameters,
@@ -43,7 +43,7 @@ export function renderAlbedo(albedo: number | undefined | null): string {
 }
 
 export function renderRingSystem(celestialId: string): string {
-  const allObjects = getCelestialObjects();
+  const allObjects = StateAccessor.getCurrentCelestialObjects();
   const ringSystem = Object.values(allObjects).find(
     (obj) => obj.parentId === celestialId,
   );

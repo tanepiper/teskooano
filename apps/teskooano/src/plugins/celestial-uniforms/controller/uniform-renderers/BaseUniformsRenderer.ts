@@ -4,7 +4,7 @@ import {
   CustomEvents,
   type SliderValueChangePayload,
 } from "@teskooano/data-types";
-import { actions, getCelestialObjects } from "@teskooano/core-state";
+import { actions, StateAccessor } from "@teskooano/core-state";
 import { Subscription, fromEvent } from "rxjs";
 import { map, distinctUntilChanged, tap } from "rxjs/operators";
 
@@ -111,7 +111,7 @@ export abstract class BaseUniformsRenderer {
         map((event) => event.detail.value),
         distinctUntilChanged((prev, curr) => prev === curr && !isNaN(prev)),
         tap((newValue) => {
-          const latestCelestial = getCelestialObjects()[celestialId];
+          const latestCelestial = StateAccessor.getCurrentCelestialObjects()[celestialId];
           if (latestCelestial && latestCelestial.properties) {
             const clonedProperties = this._deepClone(
               latestCelestial.properties,
@@ -177,7 +177,7 @@ export abstract class BaseUniformsRenderer {
         map((event) => (event.target as HTMLInputElement).value),
         distinctUntilChanged(),
         tap((newColor) => {
-          const latestCelestial = getCelestialObjects()[celestialId];
+          const latestCelestial = StateAccessor.getCurrentCelestialObjects()[celestialId];
           if (latestCelestial && latestCelestial.properties) {
             const clonedProperties = this._deepClone(
               latestCelestial.properties,

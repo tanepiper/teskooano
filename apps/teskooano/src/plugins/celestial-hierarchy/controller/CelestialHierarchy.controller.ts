@@ -1,6 +1,6 @@
 import {
   celestialObjects$,
-  getCelestialObjects,
+  StateAccessor,
   renderableStore,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
@@ -99,7 +99,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     this.addEventListeners();
     this._populateListInternal();
 
-    this._previousObjectsState = { ...getCelestialObjects() };
+    this._previousObjectsState = { ...StateAccessor.getCurrentCelestialObjects() };
     // ✅ Using StateSubscriptionMixin for clean subscription management
     this.subscribeToState(
       celestialObjects$,
@@ -233,7 +233,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       const objectId = customEvent.detail?.objectId;
       if (!objectId) return;
 
-      const currentObjects = getCelestialObjects();
+      const currentObjects = StateAccessor.getCurrentCelestialObjects();
       const currentObject = currentObjects[objectId];
       if (
         !currentObject ||
@@ -366,7 +366,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
    */
   private _populateListInternal = (): void => {
     if (!this._treeListContainer) return;
-    const objects = getCelestialObjects();
+    const objects = StateAccessor.getCurrentCelestialObjects();
     this._listManager.populate(objects, this._currentFocusedId);
   };
 
@@ -483,7 +483,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     const renderer = this._parentPanel.getRenderer();
     if (!renderer) return;
 
-    const allObjects = getCelestialObjects();
+    const allObjects = StateAccessor.getCurrentCelestialObjects();
     if (Object.keys(allObjects).length === 0) return;
 
     const origin = new THREE.Vector3(0, 0, 0);
