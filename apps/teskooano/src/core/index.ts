@@ -38,7 +38,7 @@ export type {
   RegisteredComponentInfo,
   ModalResult,
   PanelInitParameters,
-} from "./controllers/dockview/types";
+} from "./controllers/dockview/types/";
 
 export { ToolbarController } from "./controllers/toolbar/ToolbarController";
 export type { ToolbarInitOptions } from "./controllers/toolbar";
