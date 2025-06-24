@@ -249,14 +249,14 @@ export class CameraTransitionManager {
 
       // Calculate instantaneous speed based on frame-to-frame changes
       const speed = deltaTime > 0 ? deltaDistance / deltaTime : 0;
-      const speedInAU = speed / AU;
+      const speedInAU = speed / AU / 10;
 
       // Update state for the next frame's calculation
       this.lastUpdatePosition.copy(currentPosition);
       this.lastUpdateTime = currentTime;
 
       const remainingDistance = currentPosition.distanceTo(endPos);
-      const remainingDistanceAU = remainingDistance / AU;
+      const remainingDistanceAU = remainingDistance / AU / 10;
       const remainingTime = this.activeTimeline.duration() - currentTime;
 
       notificationManager.updateNotification(
