@@ -6,7 +6,6 @@ import {
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
 import { CelestialMeshOptions, CelestialRenderer, LightSourcesMap } from "..";
-import { renderableStore } from "@teskooano/core-state";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 const oortCloudVertexShader = `
