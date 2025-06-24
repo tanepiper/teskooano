@@ -40,29 +40,23 @@ export function determinePlanetTypeAndBaseProperties(
   bodyDistanceAU: number,
   parentStar: CelestialObject,
 ): PlanetBaseProperties | undefined {
-  const zones = CelestialZoneManager.generateZonesForStar(parentStar);
-  const zoneManager = new CelestialZoneManager(zones);
+  // Use the new zone manager with the provided random function
+  const zoneManager = new CelestialZoneManager(random);
   const zone = zoneManager.getZoneForDistance(bodyDistanceAU);
-  if (!zone || zone.formationProbabilities.length === 0) {
+  if (!zone) {
     return undefined;
   }
 
-  const typeRoll = random();
-  let cumulativeChance = 0;
-  let chosenFormation;
-
-  for (const prob of zone.formationProbabilities) {
-    cumulativeChance += prob.chance;
-    if (typeRoll < cumulativeChance) {
-      chosenFormation = prob;
-      break;
-    }
-  }
-
-  if (!chosenFormation) {
-    chosenFormation =
-      zone.formationProbabilities[zone.formationProbabilities.length - 1];
-  }
+  // Create a simple formation probability for the new zone format
+  const chosenFormation = {
+    type: zone.allowedTypes.includes("GAS_GIANT" as any) ? CelestialType.GAS_GIANT : CelestialType.PLANET,
+    chance: zone.formationProbability,
+    subTypes: zone.allowedTypes,
+    densityRange_kg_m3: [2000, 5000] as [number, number], // Default rocky density range
+    massMultiplierFactorRange: [0.1, 10] as [number, number], // Wide range for variety
+    ringChance: 0.1,
+    allowedRingTypes: [RockyType.LIGHT_ROCK, RockyType.DARK_ROCK, RockyType.ICE] as RockyType[],
+  };
 
   const targetDensity_kg_m3 = utils.lerp(
     chosenFormation.densityRange_kg_m3[0],
