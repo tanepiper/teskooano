@@ -73,14 +73,18 @@ class PluginManager implements PluginManagerProxy {
     this.#registrationManager = new RegistrationManager(
       this.#registries as any,
     ); // Cast needed due to private fields
-    
+
     this.#pluginLoader = new PluginLoader();
-    
+
     this.#pluginExecutor = new PluginExecutor(
       this.#registries.functionRegistry,
       this.#registries.managerInstances,
+      this.registerPlugin.bind(this),
+      this.pluginsChanged$,
+      this.getToolbarItemsForTarget.bind(this),
+      this.getToolbarWidgetsForTarget.bind(this),
     );
-    
+
     this.#hmrManager = new HMRManager(
       this.#pluginLoader,
       this.#registrationManager,
@@ -108,7 +112,7 @@ class PluginManager implements PluginManagerProxy {
     this.#registrationManager.setDependencies({
       dockviewApi: deps.dockviewApi,
     });
-    
+
     this.#pluginExecutor.setDependencies({
       dockviewApi: deps.dockviewApi,
       dockviewController: deps.dockviewController,
@@ -219,8 +223,6 @@ class PluginManager implements PluginManagerProxy {
       throw error;
     }
   }
-
-
 
   public getPlugins(): TeskooanoPlugin[] {
     return Array.from(this.#registries.pluginRegistry.values());

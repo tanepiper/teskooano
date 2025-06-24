@@ -36,9 +36,7 @@ export class PluginLoader {
     } catch (error: any) {
       const failedId =
         processingOrder.find((id) => !loadedPlugins[id]) || "unknown";
-      throw new Error(
-        `Failed to load plugin '${failedId}': ${error.message}`,
-      );
+      throw new Error(`Failed to load plugin '${failedId}': ${error.message}`);
     }
   }
 

@@ -1,22 +1,22 @@
 /**
  * @fileoverview Plugin Factory Functions
- * 
+ *
  * This module provides factory functions for creating different types of Teskooano plugins
  * with minimal boilerplate code. Each factory function handles the common patterns and
  * configurations needed for specific plugin types, reducing repetition and ensuring
  * consistency across plugin definitions.
- * 
+ *
  * ## Available Factories:
- * 
+ *
  * - **`createPanelPlugin`** - Panel-based plugins with optional toolbar integration
  * - **`createComponentPlugin`** - Component-only plugins for reusable UI elements
  * - **`createControllerPlugin`** - Service plugins with functions and optional panels
  * - **`createInterfacePlugin`** - Function plugins with toolbar button integration
  * - **`createFunctionPlugin`** - Lightweight function-only plugins
  * - **`createWidgetPlugin`** - Toolbar widget plugins for inline functionality
- * 
+ *
  * ## Usage Pattern:
- * 
+ *
  * ```typescript
  * // Instead of manually defining all plugin properties:
  * export const plugin: TeskooanoPlugin = {
@@ -24,7 +24,7 @@
  *   name: "My Plugin",
  *   // ... 20+ lines of boilerplate
  * };
- * 
+ *
  * // Use a factory function:
  * export const plugin = createPanelPlugin({
  *   id: "my-plugin",
@@ -32,7 +32,7 @@
  *   // ... only the essential configuration
  * });
  * ```
- * 
+ *
  * @author Teskooano Team
  */
 
@@ -151,16 +151,16 @@ interface InterfacePluginConfig {
 
 /**
  * Creates a panel-based plugin with automatic toolbar integration and component registration.
- * 
+ *
  * This factory simplifies the creation of plugins that provide UI panels, automatically:
  * - Registering the panel component as a custom element
  * - Creating toolbar button configuration (if target is specified)
  * - Setting up proper panel-to-toolbar bindings
  * - Handling additional components and functions
- * 
+ *
  * @param config Configuration object defining the panel plugin
  * @returns A complete TeskooanoPlugin ready for registration
- * 
+ *
  * @example
  * ```typescript
  * export const plugin = createPanelPlugin({
@@ -233,14 +233,14 @@ export function createPanelPlugin(config: PanelPluginConfig): TeskooanoPlugin {
 
 /**
  * Creates a component-only plugin that registers custom elements without panels or toolbars.
- * 
+ *
  * Use this factory for reusable UI components that don't need their own dedicated panels
  * but should be available throughout the application. Perfect for shared components like
  * buttons, form controls, or layout elements.
- * 
+ *
  * @param config Configuration object defining the component plugin
  * @returns A complete TeskooanoPlugin with only component registrations
- * 
+ *
  * @example
  * ```typescript
  * export const plugin = createComponentPlugin({
@@ -274,16 +274,16 @@ export function createComponentPlugin(
 
 /**
  * Creates a controller plugin that provides services, functions, and optional panels.
- * 
+ *
  * Controller plugins are the backbone of the application architecture. They typically:
  * - Initialize services and manager classes
  * - Provide API functions for other plugins to use
  * - Handle background tasks and data processing
  * - Optionally include panels for configuration or monitoring
- * 
+ *
  * @param config Configuration object defining the controller plugin
  * @returns A complete TeskooanoPlugin with functions and optional panels
- * 
+ *
  * @example
  * ```typescript
  * export const plugin = createControllerPlugin({
@@ -318,17 +318,17 @@ export function createControllerPlugin(
 
 /**
  * Creates an interface plugin that provides functions with toolbar button integration.
- * 
+ *
  * Interface plugins are ideal when you want to expose functionality through toolbar
  * buttons without creating dedicated panels. They're perfect for:
  * - Action buttons (save, export, reset)
  * - Toggle switches (show/hide features)
  * - Quick access functions
  * - Modal dialog triggers
- * 
+ *
  * @param config Configuration object defining the interface plugin
  * @returns A complete TeskooanoPlugin with functions and toolbar integration
- * 
+ *
  * @example
  * ```typescript
  * export const plugin = createInterfacePlugin({
@@ -366,19 +366,19 @@ export function createInterfacePlugin(
 
 /**
  * Creates a lightweight plugin that only provides functions without any UI components.
- * 
+ *
  * Function-only plugins are perfect for:
  * - API services and utilities
  * - Background processing tasks
  * - Data transformation functions
  * - Integration with external services
  * - Shared business logic
- * 
+ *
  * These plugins have minimal overhead since they don't register any UI elements.
- * 
+ *
  * @param config Basic plugin configuration with functions array
  * @returns A complete TeskooanoPlugin with only function registrations
- * 
+ *
  * @example
  * ```typescript
  * export const plugin = createFunctionPlugin({
@@ -412,7 +412,7 @@ export function createFunctionPlugin(config: {
 
 /**
  * Creates a plugin that provides toolbar widgets without dedicated panels.
- * 
+ *
  * Widget plugins are specialized for creating custom elements that are directly
  * embedded in toolbars. Unlike panel plugins, these don't open separate windows
  * but provide inline functionality within the toolbar itself. Perfect for:
@@ -421,10 +421,10 @@ export function createFunctionPlugin(config: {
  * - Real-time data displays
  * - Quick settings toggles
  * - Progress indicators
- * 
+ *
  * @param config Configuration with components and toolbar widget definitions
  * @returns A complete TeskooanoPlugin with widget registrations
- * 
+ *
  * @example
  * ```typescript
  * export const plugin = createWidgetPlugin({

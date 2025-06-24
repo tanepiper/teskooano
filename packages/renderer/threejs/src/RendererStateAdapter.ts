@@ -110,7 +110,7 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
       (simState: SimulationState) => {
         // Update simulation time
         this.currentSimulationTime = simState.time ?? 0;
-        
+
         // Extract and transform visual settings
         return this.extractVisualSettings(simState);
       },

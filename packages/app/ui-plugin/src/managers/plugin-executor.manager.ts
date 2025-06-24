@@ -3,7 +3,12 @@ import type {
   FunctionConfig,
   PluginExecutionContext,
   RegisteredItem,
+  TeskooanoPlugin,
+  ToolbarItemConfig,
+  ToolbarTarget,
+  ToolbarWidgetConfig,
 } from "../types";
+import type { Observable } from "rxjs";
 
 /**
  * Handles plugin function execution.
@@ -14,13 +19,31 @@ export class PluginExecutor {
   private dockviewApi: DockviewApi | null = null;
   private dockviewController: any | null = null;
   private managerInstances: Map<string, { instance: any; pluginId: string }>;
+  private registerPlugin: (plugin: TeskooanoPlugin) => void;
+  private pluginsChanged$: Observable<void>;
+  private getToolbarItemsForTarget: (
+    target: ToolbarTarget,
+  ) => ToolbarItemConfig[];
+  private getToolbarWidgetsForTarget: (
+    target: ToolbarTarget,
+  ) => ToolbarWidgetConfig[];
 
   constructor(
     functionRegistry: Map<string, RegisteredItem<FunctionConfig>>,
     managerInstances: Map<string, { instance: any; pluginId: string }>,
+    registerPlugin: (plugin: TeskooanoPlugin) => void,
+    pluginsChanged$: Observable<void>,
+    getToolbarItemsForTarget: (target: ToolbarTarget) => ToolbarItemConfig[],
+    getToolbarWidgetsForTarget: (
+      target: ToolbarTarget,
+    ) => ToolbarWidgetConfig[],
   ) {
     this.functionRegistry = functionRegistry;
     this.managerInstances = managerInstances;
+    this.registerPlugin = registerPlugin;
+    this.pluginsChanged$ = pluginsChanged$;
+    this.getToolbarItemsForTarget = getToolbarItemsForTarget;
+    this.getToolbarWidgetsForTarget = getToolbarWidgetsForTarget;
   }
 
   public setDependencies(deps: {
@@ -84,6 +107,10 @@ export class PluginExecutor {
     return {
       execute: this.execute.bind(this),
       getManagerInstance: this.getManagerInstance.bind(this),
+      registerPlugin: this.registerPlugin,
+      pluginsChanged$: this.pluginsChanged$,
+      getToolbarItemsForTarget: this.getToolbarItemsForTarget,
+      getToolbarWidgetsForTarget: this.getToolbarWidgetsForTarget,
     };
   }
 }

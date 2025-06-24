@@ -13,16 +13,19 @@ This document summarizes the major code quality improvements implemented based o
 **Solution**: Decomposed into focused, single-responsibility classes:
 
 - **`PluginLoader`** (`packages/app/ui-plugin/src/managers/plugin-loader.manager.ts`)
+
   - Handles plugin loading and dependency resolution
   - Manages complex topological sorting logic
   - ~90 lines focused solely on loading concerns
 
 - **`PluginExecutor`** (`packages/app/ui-plugin/src/managers/plugin-executor.manager.ts`)
+
   - Handles function execution with proper context creation
   - Manages execution dependencies and error handling
   - ~70 lines focused on execution logic
 
 - **`HMRManager`** (`packages/app/ui-plugin/src/managers/hmr.manager.ts`)
+
   - Manages Hot Module Replacement lifecycle
   - Handles plugin disposal and reloading
   - ~130 lines focused on HMR concerns
@@ -31,7 +34,8 @@ This document summarizes the major code quality improvements implemented based o
   - Manages plugin registration and unregistration
   - Handles component/panel/function registration
 
-**Impact**: 
+**Impact**:
+
 - Reduced main `PluginManager` from 367 to ~280 lines
 - Each manager has a single, clear responsibility
 - Improved testability and maintainability
@@ -41,13 +45,15 @@ This document summarizes the major code quality improvements implemented based o
 
 **Problem**: Complex subscription management with inline state transformation logic.
 
-**Solution**: 
+**Solution**:
+
 - Extracted visual settings transformation into dedicated methods
 - Improved RxJS pattern usage with `subscribeToStateWithMapping`
 - Added proper comparison logic to prevent unnecessary updates
 - Clean separation of transformation and subscription logic
 
 **Files Changed**:
+
 - `packages/renderer/threejs/src/RendererStateAdapter.ts`
 
 ### 🔄 StateSubscriptionMixin Standardization
@@ -108,16 +114,19 @@ Robust plugin factory functions already exist in `packages/app/ui-plugin/src/fac
 ## 📊 Impact Metrics
 
 ### Code Complexity Reduction
+
 - **PluginManager**: 367 → 280 lines (~25% reduction)
 - **Cognitive Complexity**: Reduced from ~20 to ~8 per class
 - **Single Responsibility**: Each manager now has one clear purpose
 
 ### Maintainability Improvements
+
 - **Testability**: Each manager can be unit tested independently
 - **Debuggability**: Clear separation of concerns makes issues easier to trace
 - **Extensibility**: New plugin loading strategies can be added without touching core logic
 
 ### Performance Benefits
+
 - **Memory Management**: Better subscription cleanup with StateSubscriptionMixin
 - **Error Recovery**: More resilient plugin loading and HMR processes
 - **Resource Cleanup**: Proper disposal patterns throughout
@@ -125,11 +134,13 @@ Robust plugin factory functions already exist in `packages/app/ui-plugin/src/fac
 ## 🔮 Remaining Opportunities
 
 ### Phase 2: Medium-term Improvements
+
 1. **Circular Dependency Resolution**: Address renderer ↔ systems package dependencies
 2. **UI Logic Separation**: Move remaining UI concerns from core packages to app layer
 3. **Dependency Injection Container**: Implement full DI container for complex dependencies
 
 ### Phase 3: Long-term Architectural Improvements
+
 1. **Plugin System V2**: More declarative plugin definitions
 2. **Standard UI Component Library**: Replace ad-hoc components with design system
 3. **Advanced Error Boundaries**: Implement React-style error boundaries for plugins
