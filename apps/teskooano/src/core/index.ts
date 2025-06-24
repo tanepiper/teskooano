@@ -38,7 +38,7 @@ export type {
   RegisteredComponentInfo,
   ModalResult,
   PanelInitParameters,
-} from "./controllers/dockview/types";
+} from "./controllers/dockview/types/index";
 
 export { ToolbarController } from "./controllers/toolbar/ToolbarController";
 export type { ToolbarInitOptions } from "./controllers/toolbar";
@@ -49,6 +49,15 @@ export { EngineToolbarManager } from "./interface/engine-toolbar/EngineToolbarMa
 
 export { TourController } from "./interface/tour-controller/TourController";
 export type { TourStep } from "./interface/tour-controller/types";
+
+// --- Initialization ---
+export {
+  ApplicationInitializer,
+  ManagerInitializer,
+  PanelRegistry,
+  EventSetup,
+} from "./initialization";
+export { EnvironmentValidator } from "./validation";
 
 // --- Configuration ---
 export { pluginConfig } from "./config/pluginRegistry";
