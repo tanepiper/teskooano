@@ -40,7 +40,7 @@ describe("AnimationLoop", () => {
     window.requestAnimationFrame = originalRequestAnimationFrame;
     window.cancelAnimationFrame = originalCancelAnimationFrame;
 
-    animationLoop.dispose();
+    animationLoop.stop();
     vi.clearAllMocks();
   });
 
