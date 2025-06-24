@@ -21,7 +21,7 @@ export class EventSetup {
    */
   public static setupEventListeners(
     pluginManagerInstance: typeof pluginManager,
-    appContext: AppContext
+    appContext: AppContext,
   ): void {
     try {
       this.setupRendererStatsListener();
@@ -29,7 +29,7 @@ export class EventSetup {
       this.setupTourRequestListener(pluginManagerInstance, appContext);
     } catch (error) {
       throw new Error(
-        `Event setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Event setup failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -56,7 +56,7 @@ export class EventSetup {
    * Sets up engine focus request handling
    */
   private static setupEngineFocusListener(
-    pluginManagerInstance: typeof pluginManager
+    pluginManagerInstance: typeof pluginManager,
   ): void {
     document.addEventListener("engine-focus-request", (event: Event) => {
       const focusEvent = event as CustomEvent<{
@@ -64,23 +64,28 @@ export class EventSetup {
         objectId: string | null;
         distance?: number;
       }>;
-      
+
       const { objectId } = focusEvent.detail;
       if (!objectId) return;
 
       const objects = StateAccessor.getCurrentCelestialObjects();
       const selectedObject = objects[objectId];
-      
+
       if (selectedObject && selectedObject.name) {
         try {
           pluginManagerInstance.execute("tour:setCelestialFocus", {
             celestialName: selectedObject.name,
           });
         } catch (error) {
-          console.error("[EventSetup] Error calling tour:setCelestialFocus:", error);
+          console.error(
+            "[EventSetup] Error calling tour:setCelestialFocus:",
+            error,
+          );
         }
       } else {
-        console.warn(`[EventSetup] Could not find object or name for ID: ${objectId}`);
+        console.warn(
+          `[EventSetup] Could not find object or name for ID: ${objectId}`,
+        );
       }
     });
   }
@@ -90,7 +95,7 @@ export class EventSetup {
    */
   private static setupTourRequestListener(
     pluginManagerInstance: typeof pluginManager,
-    appContext: AppContext
+    appContext: AppContext,
   ): void {
     document.body.addEventListener("start-tour-request", () => {
       try {

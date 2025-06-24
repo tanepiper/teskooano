@@ -1,12 +1,9 @@
-import type { 
-  pluginManager, 
-  PanelConfig, 
-  TeskooanoPlugin 
+import type {
+  pluginManager,
+  PanelConfig,
+  TeskooanoPlugin,
 } from "@teskooano/ui-plugin";
-import { 
-  IContentRenderer, 
-  PanelInitParameters 
-} from "dockview-core";
+import { IContentRenderer, PanelInitParameters } from "dockview-core";
 
 /**
  * Handles registration of panel components with the dockview system
@@ -18,17 +15,17 @@ export class PanelRegistry {
    */
   public static registerPanelComponents(
     pluginManagerInstance: typeof pluginManager,
-    dockviewController: any
+    dockviewController: any,
   ): void {
     const plugins = pluginManagerInstance.getPlugins();
     const errors: string[] = [];
-    
+
     plugins.forEach((plugin: TeskooanoPlugin) => {
       plugin.panels?.forEach((panelConfig: PanelConfig) => {
         try {
           this.registerSinglePanel(panelConfig, plugin.id, dockviewController);
         } catch (error) {
-          const errorMessage = `Failed to register panel '${panelConfig.componentName}' from plugin '${plugin.id}': ${error instanceof Error ? error.message : 'Unknown error'}`;
+          const errorMessage = `Failed to register panel '${panelConfig.componentName}' from plugin '${plugin.id}': ${error instanceof Error ? error.message : "Unknown error"}`;
           console.error(`[PanelRegistry] ${errorMessage}`);
           errors.push(errorMessage);
         }
@@ -37,7 +34,7 @@ export class PanelRegistry {
 
     if (errors.length > 0) {
       throw new Error(
-        `Panel registration failed with ${errors.length} error(s):\n${errors.join('\n')}`
+        `Panel registration failed with ${errors.length} error(s):\n${errors.join("\n")}`,
       );
     }
   }
@@ -49,14 +46,14 @@ export class PanelRegistry {
   private static registerSinglePanel(
     panelConfig: PanelConfig,
     pluginId: string,
-    dockviewController: any
+    dockviewController: any,
   ): void {
     const PanelComponentOrConstructor = panelConfig.panelClass;
     const componentName = panelConfig.componentName;
 
     if (!PanelComponentOrConstructor) {
       throw new Error(
-        `Panel class not found for ${componentName} in plugin ${pluginId}`
+        `Panel class not found for ${componentName} in plugin ${pluginId}`,
       );
     }
 
@@ -67,9 +64,9 @@ export class PanelRegistry {
       this.registerCustomElementPanel(componentName, dockviewController);
     } else {
       this.registerDirectPanel(
-        componentName, 
-        PanelComponentOrConstructor, 
-        dockviewController
+        componentName,
+        PanelComponentOrConstructor,
+        dockviewController,
       );
     }
   }
@@ -79,7 +76,7 @@ export class PanelRegistry {
    */
   private static registerCustomElementPanel(
     componentName: string,
-    dockviewController: any
+    dockviewController: any,
   ): void {
     class CustomElementPanelWrapper implements IContentRenderer {
       private _element: HTMLElement;
@@ -101,7 +98,7 @@ export class PanelRegistry {
 
     dockviewController.registerComponent(
       componentName,
-      CustomElementPanelWrapper
+      CustomElementPanelWrapper,
     );
   }
 
@@ -112,16 +109,16 @@ export class PanelRegistry {
   private static registerDirectPanel(
     componentName: string,
     PanelComponentOrConstructor: any,
-    dockviewController: any
+    dockviewController: any,
   ): void {
     try {
       dockviewController.registerComponent(
         componentName,
-        PanelComponentOrConstructor as new () => IContentRenderer
+        PanelComponentOrConstructor as new () => IContentRenderer,
       );
     } catch (error) {
       throw new Error(
-        `Error registering panel '${componentName}' directly: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Error registering panel '${componentName}' directly: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }

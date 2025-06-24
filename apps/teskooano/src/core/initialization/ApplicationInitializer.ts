@@ -26,49 +26,51 @@ export class ApplicationInitializer {
    * @throws {Error} If any critical initialization step fails
    */
   public static async initialize(
-    pluginIds: string[]
+    pluginIds: string[],
   ): Promise<InitializationResult> {
     console.log("🔭 Initializing Teskooano...");
 
     try {
       // Step 1: Validate environment
-      console.log("[Init] Validating environment...");
-      const { appElement, toolbarElement } = EnvironmentValidator.validateRequiredElements();
+      console.debug("[Init] Validating environment...");
+      const { appElement, toolbarElement } =
+        EnvironmentValidator.validateRequiredElements();
 
       // Step 2: Load and register plugins
-      console.log("[Init] Loading plugins...");
+      console.debug("[Init] Loading plugins...");
       await this.loadPlugins(pluginIds);
 
       // Step 3: Initialize dockview system
-      console.log("[Init] Initializing dockview system...");
-      const { dockviewController, dockviewApi } = await this.initializeDockview(appElement);
+      console.debug("[Init] Initializing dockview system...");
+      const { dockviewController, dockviewApi } =
+        await this.initializeDockview(appElement);
 
       // Step 4: Set plugin manager dependencies
-      console.log("[Init] Setting plugin dependencies...");
+      console.debug("[Init] Setting plugin dependencies...");
       pluginManager.setAppDependencies({
         dockviewApi,
         dockviewController,
       });
 
       // Step 5: Initialize application managers
-      console.log("[Init] Initializing application managers...");
+      console.debug("[Init] Initializing application managers...");
       const { modalManager } = await ManagerInitializer.initializeManagers(
         pluginManager,
         appElement,
         toolbarElement,
-        dockviewController
+        dockviewController,
       );
 
       // Step 6: Register panel components
-      console.log("[Init] Registering panel components...");
+      console.debug("[Init] Registering panel components...");
       PanelRegistry.registerPanelComponents(pluginManager, dockviewController);
 
       // Step 7: Create initial panels
-      console.log("[Init] Creating initial panels...");
+      console.debug("[Init] Creating initial panels...");
       await this.createInitialPanels(dockviewController);
 
       // Step 8: Setup event listeners
-      console.log("[Init] Setting up event listeners...");
+      console.debug("[Init] Setting up event listeners...");
       const appContext: AppContext = {
         dockviewController,
         modalManager,
@@ -84,12 +86,12 @@ export class ApplicationInitializer {
       };
     } catch (error) {
       console.error("💥 Critical initialization failure:", error);
-      
+
       // Attempt cleanup
       await this.cleanup();
-      
+
       throw new Error(
-        `Application initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Application initialization failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -98,7 +100,7 @@ export class ApplicationInitializer {
    * Initializes the dockview system
    */
   private static async initializeDockview(
-    appElement: HTMLElement
+    appElement: HTMLElement,
   ): Promise<{ dockviewController: any; dockviewApi: DockviewApi }> {
     // Set initial null dependencies
     pluginManager.setAppDependencies({
@@ -126,11 +128,14 @@ export class ApplicationInitializer {
           result && typeof result === "object" && "message" in result
             ? result.message
             : "Unknown error or unexpected result structure from dockview:initialize";
-        
+
         throw new Error(`Dockview initialization failed: ${message}`);
       }
     } catch (error) {
-      console.error("[ApplicationInitializer] Error calling dockview:initialize function:", error);
+      console.error(
+        "[ApplicationInitializer] Error calling dockview:initialize function:",
+        error,
+      );
       throw error;
     }
   }
@@ -143,7 +148,7 @@ export class ApplicationInitializer {
       await pluginManager.loadAndRegisterPlugins(pluginIds);
     } catch (error) {
       throw new Error(
-        `Failed to load plugins: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to load plugins: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -151,14 +156,16 @@ export class ApplicationInitializer {
   /**
    * Creates initial application panels
    */
-  private static async createInitialPanels(dockviewController: any): Promise<void> {
+  private static async createInitialPanels(
+    dockviewController: any,
+  ): Promise<void> {
     try {
       await pluginManager.execute("view:addCompositeEnginePanel", {
         dockviewController,
       });
     } catch (error) {
       throw new Error(
-        `Failed to create initial panels: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to create initial panels: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -169,20 +176,20 @@ export class ApplicationInitializer {
   private static async cleanup(): Promise<void> {
     try {
       console.log("[Init] Attempting cleanup...");
-      
+
       // Clear any plugin manager state
       // Note: pluginManager might not have a cleanup method, so we wrap in try-catch
-      if (typeof (pluginManager as any).cleanup === 'function') {
+      if (typeof (pluginManager as any).cleanup === "function") {
         await (pluginManager as any).cleanup();
       }
-      
+
       // Clear any global context
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         // Clear any global event listeners that might have been attached
         // This is defensive programming - most event listeners will be cleaned up
         // when the page reloads, but it's good practice
       }
-      
+
       console.log("[Init] Cleanup completed");
     } catch (cleanupError) {
       console.warn("[Init] Cleanup failed:", cleanupError);

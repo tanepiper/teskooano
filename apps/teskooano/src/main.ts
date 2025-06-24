@@ -27,7 +27,7 @@ async function initializeApp(): Promise<void> {
 
   try {
     const result = await ApplicationInitializer.initialize(pluginIds);
-    
+
     // Update global context for legacy components that depend on it
     Object.assign(appContext, result.appContext);
   } catch (error) {
