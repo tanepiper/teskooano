@@ -1,5 +1,5 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { renderableStore } from "@teskooano/core-state";
+import { StateAccessor } from "@teskooano/core-state";
 import { type CelestialRenderer } from "@teskooano/systems-celestial";
 import type * as THREE from "three";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
@@ -84,7 +84,7 @@ export class RendererUpdater {
       scene?: THREE.Scene;
     },
   ) {
-    const allObjects = renderableStore.getRenderableObjects();
+    const allObjects = StateAccessor.getCurrentRenderableObjects();
 
     rendererMap.forEach((rendererInstance, objectId) => {
       const object = allObjects[objectId];

@@ -1,7 +1,7 @@
 import { debugConfig, setVisualizationEnabled } from "@teskooano/core-debug";
 import { OSVector3 } from "@teskooano/core-math";
 import {
-  accelerationVectors$,
+  StateAccessor,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import {
@@ -144,7 +144,7 @@ export class ObjectManager extends StateSubscriptionMixin {
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
     renderer: THREE.WebGLRenderer,
     css2DManager?: LabelVisibilityManager & Layer2DManager,
-    acceleration$: Observable<Record<string, OSVector3>> = accelerationVectors$,
+    acceleration$: Observable<Record<string, OSVector3>> = StateAccessor.getAccelerationVectorsStream(),
   ) {
     super();
     this.scene = scene;
