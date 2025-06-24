@@ -2,11 +2,11 @@ import { OSVector3 } from "@teskooano/core-math";
 import {
   calculateOrbitalPosition,
   calculateOrbitalVelocity,
-  type PhysicsStateReal,
 } from "@teskooano/core-physics";
 import type {
   CelestialObject,
   OrbitalParameters,
+  PhysicsStateReal,
   StarProperties,
 } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
