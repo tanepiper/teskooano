@@ -1,5 +1,5 @@
 import { simulationManager } from "@teskooano/app-simulation";
-import { celestialObjects$ } from "@teskooano/core-state";
+import { StateAccessor } from "@teskooano/core-state";
 import { BehaviorSubject, Observable } from "rxjs";
 import { distinctUntilChanged, map } from "rxjs/operators";
 
@@ -20,12 +20,12 @@ export const simulationLoopStarted$: Observable<boolean> =
  * Subscribes to the celestial objects store and automatically starts or stops
  * the simulation loop based on whether any objects exist.
  */
-celestialObjects$
+StateAccessor.getCelestialObjectsStream()
   .pipe(
     map((objects) => Object.keys(objects).length > 0),
     distinctUntilChanged(),
   )
-  .subscribe((hasObjects) => {
+  .subscribe((hasObjects: boolean) => {
     if (hasObjects) {
       ensureSimulationLoopStarted();
     } else {
