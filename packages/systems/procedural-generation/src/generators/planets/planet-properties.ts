@@ -229,7 +229,7 @@ function generateRockyPlanetSpecificProperties(
       random,
     );
     composition = ["water", "rock", "ice", "salts"];
-  } else if (rockyPlanetType === "METALLIC" as any) {
+  } else if (rockyPlanetType === ("METALLIC" as any)) {
     // Metallic planets (iron-rich worlds)
     surfaceType = UTIL.getRandomItem(
       [SurfaceType.CRATERED, SurfaceType.MOUNTAINOUS, SurfaceType.FLAT],
@@ -300,7 +300,7 @@ function generateRockyPlanetSpecificProperties(
         atmosphereType === AtmosphereType.NORMAL
           ? 0.5 + random() * 1.0
           : 1.5 + random() * 3;
-    } else if (baseProps.planetType === "METALLIC" as any) {
+    } else if (baseProps.planetType === ("METALLIC" as any)) {
       // Metallic planets have thin, exotic atmospheres
       atmosphereType = AtmosphereType.THIN;
       pressure = random() * 0.3;
@@ -320,16 +320,24 @@ function generateRockyPlanetSpecificProperties(
       CONST.ATMOSPHERE_COLORS[atmosphereType],
       random,
     );
-    
+
     // Enhanced atmospheric composition based on planet type
     if (baseProps.planetType === PlanetType.OCEAN) {
       atmComposition = UTIL.getRandomItem(
-        [["N2", "O2", "H2O"], ["CO2", "H2O"], ["N2", "H2O", "Ar"]],
+        [
+          ["N2", "O2", "H2O"],
+          ["CO2", "H2O"],
+          ["N2", "H2O", "Ar"],
+        ],
         random,
       );
-    } else if (baseProps.planetType === "METALLIC" as any) {
+    } else if (baseProps.planetType === ("METALLIC" as any)) {
       atmComposition = UTIL.getRandomItem(
-        [["Na", "K", "Fe"], ["SiO", "Fe", "Mg"], ["Ca", "Al", "O2"]],
+        [
+          ["Na", "K", "Fe"],
+          ["SiO", "Fe", "Mg"],
+          ["Ca", "Al", "O2"],
+        ],
         random,
       );
     } else {
@@ -340,11 +348,15 @@ function generateRockyPlanetSpecificProperties(
     }
 
     // Enhanced cloud properties based on planet type
-    const cloudTypeKey = 
-      rockyPlanetType === PlanetType.ICE ? "ICE" : 
-      rockyPlanetType === PlanetType.OCEAN ? "OCEAN" :
-      rockyPlanetType === "METALLIC" as any ? "ROCKY" : "ROCKY";
-      
+    const cloudTypeKey =
+      rockyPlanetType === PlanetType.ICE
+        ? "ICE"
+        : rockyPlanetType === PlanetType.OCEAN
+          ? "OCEAN"
+          : rockyPlanetType === ("METALLIC" as any)
+            ? "ROCKY"
+            : "ROCKY";
+
     cloudProps = {
       color: UTIL.getRandomItem(CONST.CLOUD_COLORS[cloudTypeKey], random),
       opacity:

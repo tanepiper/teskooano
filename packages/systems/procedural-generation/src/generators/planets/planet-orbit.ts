@@ -47,11 +47,11 @@ export function calculatePlanetOrbitAndInitialState(
   // Generate realistic orbital eccentricity using Rayleigh distribution
   // Most planets have low eccentricity (< 0.1), with mean around 0.05
   const eccentricity = generateRealisticEccentricity(random, bodyDistanceAU);
-  
+
   // Generate realistic inclination - most planets are nearly coplanar
   // Use Gaussian distribution centered on 0° with standard deviation of ~2-3°
   const inclination = generateRealisticInclination(random);
-  
+
   // Other orbital angles are uniformly distributed
   const longitudeOfAscendingNode = random() * 2 * Math.PI;
   const argumentOfPeriapsis = random() * 2 * Math.PI;
@@ -124,37 +124,43 @@ export function calculatePlanetOrbitAndInitialState(
  * Generates realistic orbital eccentricity based on exoplanet observations
  * Uses a Rayleigh distribution with distance-dependent parameters
  */
-function generateRealisticEccentricity(random: () => number, distanceAU: number): number {
+function generateRealisticEccentricity(
+  random: () => number,
+  distanceAU: number,
+): number {
   // Close-in planets (< 0.1 AU) tend to be circularized by tidal forces
   if (distanceAU < 0.1) {
     return random() * 0.02; // Very circular orbits
   }
-  
+
   // Hot Jupiters and close planets (0.1 - 1 AU) have moderate eccentricity
   if (distanceAU < 1.0) {
     // Rayleigh distribution with σ = 0.05 (mean ~0.063)
     const sigma = 0.05;
     const u1 = random();
     const u2 = random();
-    const rayleigh = sigma * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    const rayleigh =
+      sigma * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
     return Math.min(0.3, Math.abs(rayleigh)); // Cap at 0.3 for close planets
   }
-  
+
   // Outer planets can have higher eccentricity due to planet-planet interactions
   if (distanceAU < 5.0) {
     // Slightly higher eccentricity for outer planets
     const sigma = 0.08;
     const u1 = random();
     const u2 = random();
-    const rayleigh = sigma * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    const rayleigh =
+      sigma * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
     return Math.min(0.6, Math.abs(rayleigh)); // Cap at 0.6
   }
-  
+
   // Very distant planets can have high eccentricity (like comets)
   const sigma = 0.15;
   const u1 = random();
   const u2 = random();
-  const rayleigh = sigma * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  const rayleigh =
+    sigma * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
   return Math.min(0.9, Math.abs(rayleigh)); // Cap at 0.9 for stability
 }
 
@@ -167,11 +173,11 @@ function generateRealisticInclination(random: () => number): number {
   const u1 = random();
   const u2 = random();
   const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-  
+
   // Standard deviation of ~2.5 degrees (0.044 radians) for planetary systems
   const stdDev = 0.044; // ~2.5 degrees in radians
   const inclination = Math.abs(z0 * stdDev);
-  
+
   // Cap at 15 degrees (0.26 radians) - highly inclined planets are rare
   return Math.min(inclination, 0.26);
 }

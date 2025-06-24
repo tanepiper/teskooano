@@ -60,13 +60,12 @@ function generateStandardBody(
   const { parentStar, distanceRelativeToParentAU, zone } = placement;
   const bodyTypeRoll = random();
 
-  // Check if asteroid belt is likely based on zone category
-  const asteroidChance = (zone.category === "COLD" || zone.category === "FROZEN") ? 0.25 : 0.1;
-  if (bodyTypeRoll < asteroidChance) {
-    if (distanceRelativeToParentAU < 2.0 || distanceRelativeToParentAU > 10.0) {
-      return EMPTY; // Invalid distance for a belt
-    }
-    
+  // Check if an asteroid belt is a possibility for this slot
+  const asteroidChance =
+    zone.category === "COLD" || zone.category === "FROZEN" ? 0.25 : 0.1;
+  const isAsteroidBeltCandidate = bodyTypeRoll < asteroidChance;
+
+  if (isAsteroidBeltCandidate) {
     const beltData = generateAsteroidBelt(
       random,
       parentStar.id,
@@ -77,7 +76,7 @@ function generateStandardBody(
     return beltData ? of(beltData) : EMPTY;
   }
 
-  // Generate a planet and its moons
+  // If not an asteroid belt, generate a planet and its moons
   const planet$ = generatePlanet(
     random,
     parentStar,
@@ -111,13 +110,13 @@ function generateRogueObject(
 ): Observable<CelestialObject> {
   const { distanceAU } = placement;
   const rogueSeed = `${seed}-rogue-${placement.slotIndex}`;
-  
+
   // Create a minimal "star" at the rogue location for generation purposes
   const dummyStar: CelestialObject = {
-    id: 'rogue-center',
-    name: 'Rogue Center',
+    id: "rogue-center",
+    name: "Rogue Center",
     type: CelestialType.OTHER,
-    status: 'active' as any,
+    status: "active" as any,
     realRadius_m: 1000,
     realMass_kg: 1e20, // Very small mass
     orbit: {
@@ -131,13 +130,13 @@ function generateRogueObject(
     },
     temperature: 2.7, // Background temperature
     physicsStateReal: {
-      id: 'rogue-center',
+      id: "rogue-center",
       mass_kg: 1e20,
       position_m: { x: distanceAU * 1.496e11, y: 0, z: 0 } as any,
       velocity_mps: { x: 0, y: 0, z: 0 } as any,
     },
   };
-  
+
   // Generate a rogue planet (no moons for rogue objects typically)
   return generatePlanet(random, dummyStar, 0.1, rogueSeed);
 }

@@ -27,10 +27,10 @@ const C = 299792458;
  */
 const STELLAR_TYPE_WEIGHTS: { type: StellarType; weight: number }[] = [
   { type: StellarType.MAIN_SEQUENCE, weight: 95.2 }, // Vast majority are main sequence
-  { type: StellarType.WHITE_DWARF, weight: 3.5 },   // Common stellar remnants
-  { type: StellarType.WOLF_RAYET, weight: 0.8 },    // Rare massive evolved stars
-  { type: StellarType.NEUTRON_STAR, weight: 0.4 },  // Very rare stellar remnants
-  { type: StellarType.BLACK_HOLE, weight: 0.1 },    // Extremely rare
+  { type: StellarType.WHITE_DWARF, weight: 3.5 }, // Common stellar remnants
+  { type: StellarType.WOLF_RAYET, weight: 0.8 }, // Rare massive evolved stars
+  { type: StellarType.NEUTRON_STAR, weight: 0.4 }, // Very rare stellar remnants
+  { type: StellarType.BLACK_HOLE, weight: 0.1 }, // Extremely rare
 ];
 
 /**
@@ -96,7 +96,7 @@ function getMainSequenceProperties(mass: number): [number, number] {
  */
 function generateRealisticStellarMass(random: () => number): number {
   const roll = random();
-  
+
   // Based on Kroupa IMF - most stars are low mass
   if (roll < 0.85) {
     // M-dwarfs (0.08 - 0.6 solar masses) - most common
@@ -179,7 +179,9 @@ export function generateStar(random: () => number): CelestialObject {
     case StellarType.BLACK_HOLE:
       // Stellar black holes: 3-50 solar masses typically
       starMass_Solar = 3 + random() * 47; // Stellar mass black holes
-      starRadius_Solar = calculateSchwarzschildRadius(starMass_Solar * CONST.SOLAR_MASS_KG) / CONST.SOLAR_RADIUS_M;
+      starRadius_Solar =
+        calculateSchwarzschildRadius(starMass_Solar * CONST.SOLAR_MASS_KG) /
+        CONST.SOLAR_RADIUS_M;
       starTemperature = 2.7; // CMB temperature (no surface)
       break;
 
@@ -194,16 +196,21 @@ export function generateStar(random: () => number): CelestialObject {
     default:
       // Use realistic mass distribution
       starMass_Solar = generateRealisticStellarMass(random);
-      [starRadius_Solar, starTemperature] = getMainSequenceProperties(starMass_Solar);
+      [starRadius_Solar, starTemperature] =
+        getMainSequenceProperties(starMass_Solar);
       chosenType = StellarType.MAIN_SEQUENCE;
       break;
   }
 
   const starMass = starMass_Solar * CONST.SOLAR_MASS_KG;
   let realStarRadius = starRadius_Solar * CONST.SOLAR_RADIUS_M;
-  let visualStarRadius = realStarRadius * SCALE.SIZE * STAR_VISUAL_SCALE_MULTIPLIER;
+  let visualStarRadius =
+    realStarRadius * SCALE.SIZE * STAR_VISUAL_SCALE_MULTIPLIER;
 
-  const starLuminosity = UTIL.calculateVisualLuminosity(realStarRadius, starTemperature);
+  const starLuminosity = UTIL.calculateVisualLuminosity(
+    realStarRadius,
+    starTemperature,
+  );
   let mainSpectralClass = UTIL.getSpectralClass(starTemperature);
   let specialSpectralClass: SpecialSpectralClass | undefined = undefined;
   let luminosityClass = LuminosityClass.V; // Main sequence default
@@ -243,7 +250,10 @@ export function generateStar(random: () => number): CelestialObject {
   // Calculate realistic system lighting based on stellar properties
   const clampedLuminosity = Math.max(0.001, Math.min(starLuminosity, 10000));
   const starLightIntensity = Math.pow(clampedLuminosity, 0.25); // Fourth root for more reasonable scaling
-  const ambientLightIntensity = Math.max(0.1, Math.min(starLightIntensity * 0.15, 0.6));
+  const ambientLightIntensity = Math.max(
+    0.1,
+    Math.min(starLightIntensity * 0.15, 0.6),
+  );
 
   const systemLighting: SystemLightingProperties = {
     ambientLightColor: starColor,
@@ -253,16 +263,16 @@ export function generateStar(random: () => number): CelestialObject {
 
   // Apply realistic minimum radii for spectral classes
   const minRadii: Record<SpectralClass, number> = {
-    [SpectralClass.O]: 6.6,   // O-type giants
-    [SpectralClass.B]: 1.8,   // B-type dwarfs
-    [SpectralClass.A]: 1.4,   // A-type dwarfs
-    [SpectralClass.F]: 1.15,  // F-type dwarfs
-    [SpectralClass.G]: 0.85,  // G-type dwarfs (like Sun)
-    [SpectralClass.K]: 0.65,  // K-type dwarfs
-    [SpectralClass.M]: 0.1,   // M-type dwarfs (very small)
-    [SpectralClass.L]: 0.08,  // Brown dwarfs
-    [SpectralClass.T]: 0.08,  // Brown dwarfs
-    [SpectralClass.Y]: 0.08,  // Brown dwarfs
+    [SpectralClass.O]: 6.6, // O-type giants
+    [SpectralClass.B]: 1.8, // B-type dwarfs
+    [SpectralClass.A]: 1.4, // A-type dwarfs
+    [SpectralClass.F]: 1.15, // F-type dwarfs
+    [SpectralClass.G]: 0.85, // G-type dwarfs (like Sun)
+    [SpectralClass.K]: 0.65, // K-type dwarfs
+    [SpectralClass.M]: 0.1, // M-type dwarfs (very small)
+    [SpectralClass.L]: 0.08, // Brown dwarfs
+    [SpectralClass.T]: 0.08, // Brown dwarfs
+    [SpectralClass.Y]: 0.08, // Brown dwarfs
   };
 
   let correctedRadius = realStarRadius;
@@ -276,7 +286,8 @@ export function generateStar(random: () => number): CelestialObject {
   ) {
     correctedRadius_Solar = minRadii[mainSpectralClass];
     correctedRadius = correctedRadius_Solar * CONST.SOLAR_RADIUS_M;
-    visualStarRadius = correctedRadius * SCALE.SIZE * STAR_VISUAL_SCALE_MULTIPLIER;
+    visualStarRadius =
+      correctedRadius * SCALE.SIZE * STAR_VISUAL_SCALE_MULTIPLIER;
   }
 
   const starProperties: StarProperties = {

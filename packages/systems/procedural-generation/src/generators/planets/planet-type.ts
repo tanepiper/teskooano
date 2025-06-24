@@ -47,15 +47,26 @@ export function determinePlanetTypeAndBaseProperties(
     return undefined;
   }
 
+  // Determine if the zone allows for gas giant formation
+  const gasGiantTypesInZone = zone.allowedTypes.filter((t) =>
+    Object.values(GasGiantClass).includes(t as GasGiantClass),
+  );
+  const canBeGasGiant =
+    gasGiantTypesInZone.length > 0 && random() < zone.formationProbability;
+
   // Create a simple formation probability for the new zone format
   const chosenFormation = {
-    type: zone.allowedTypes.includes("GAS_GIANT" as any) ? CelestialType.GAS_GIANT : CelestialType.PLANET,
+    type: canBeGasGiant ? CelestialType.GAS_GIANT : CelestialType.PLANET,
     chance: zone.formationProbability,
     subTypes: zone.allowedTypes,
     densityRange_kg_m3: [2000, 5000] as [number, number], // Default rocky density range
     massMultiplierFactorRange: [0.1, 10] as [number, number], // Wide range for variety
     ringChance: 0.1,
-    allowedRingTypes: [RockyType.LIGHT_ROCK, RockyType.DARK_ROCK, RockyType.ICE] as RockyType[],
+    allowedRingTypes: [
+      RockyType.LIGHT_ROCK,
+      RockyType.DARK_ROCK,
+      RockyType.ICE,
+    ] as RockyType[],
   };
 
   const targetDensity_kg_m3 = utils.lerp(
@@ -93,10 +104,11 @@ export function determinePlanetTypeAndBaseProperties(
       // If not, the physics and the zone rules contradict.
       // In this case, we respect the zone's explicit rules and pick a valid type.
       // This prevents edge cases with unusual stars creating lore-breaking planets.
-      gasGiantClass = UTIL.getRandomItem(
-        chosenFormation.subTypes as GasGiantClass[],
-        random,
-      );
+      const validGasGiantSubtypes = chosenFormation.subTypes.filter((t) =>
+        Object.values(GasGiantClass).includes(t as GasGiantClass),
+      ) as GasGiantClass[];
+
+      gasGiantClass = UTIL.getRandomItem(validGasGiantSubtypes, random);
     } else {
       // As a final fallback, if the zone has no subtypes defined, use the classified one.
       gasGiantClass = classifiedGiant;

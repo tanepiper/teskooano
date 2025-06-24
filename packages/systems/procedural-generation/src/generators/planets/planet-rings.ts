@@ -29,7 +29,7 @@ function calculateRocheLimit(
 ): number {
   // Roche limit = 2.44 * R_planet * (ρ_planet / ρ_particle)^(1/3)
   const densityRatio = planetDensity_kgm3 / particleDensity_kgm3;
-  return 2.44 * planetRadius_m * Math.pow(densityRatio, 1/3);
+  return 2.44 * planetRadius_m * Math.pow(densityRatio, 1 / 3);
 }
 
 /**
@@ -42,7 +42,7 @@ function calculateRocheLimit(
 function getFormationZoneRingTypes(
   stellarDistanceAU: number,
   planetType: string,
-  allowedTypes: RockyType[]
+  allowedTypes: RockyType[],
 ): RockyType[] {
   const snowLine = 2.7; // Approximate snow line in AU
   const enhancedTypes: RockyType[] = [...allowedTypes];
@@ -80,7 +80,9 @@ function getFormationZoneRingTypes(
  * @param context Ring formation context
  * @returns Probability modifier (0-2, where 1 is baseline)
  */
-function calculateRingFormationProbability(context: RingFormationContext): number {
+function calculateRingFormationProbability(
+  context: RingFormationContext,
+): number {
   let probability = 1.0;
 
   // Gas giants much more likely to have rings
@@ -89,7 +91,8 @@ function calculateRingFormationProbability(context: RingFormationContext): numbe
   }
 
   // Larger planets more likely to have rings
-  if (context.planetMass > 10) { // Jupiter masses
+  if (context.planetMass > 10) {
+    // Jupiter masses
     probability *= 2.0;
   } else if (context.planetMass > 0.1) {
     probability *= 1.5;
@@ -103,9 +106,11 @@ function calculateRingFormationProbability(context: RingFormationContext): numbe
   }
 
   // Younger systems more likely to have rings (more debris)
-  if (context.systemAge < 1) { // Young system (< 1 Gyr)
+  if (context.systemAge < 1) {
+    // Young system (< 1 Gyr)
     probability *= 1.5;
-  } else if (context.systemAge > 5) { // Old system (> 5 Gyr)
+  } else if (context.systemAge > 5) {
+    // Old system (> 5 Gyr)
     probability *= 0.7;
   }
 
@@ -133,7 +138,7 @@ function generateEnhancedRingProperties(
   innerRadius_m: number,
   outerRadius_m: number,
   stellarDistanceAU: number,
-  systemTilt: number
+  systemTilt: number,
 ): RingProperties {
   const ringComp = CONST.RING_COMPOSITION[ringType];
   const ringColor = UTIL.getRandomItem(CONST.RING_COLORS[ringType], random);
@@ -252,18 +257,22 @@ export function generateRings(
 
   if (roll < effectiveChance && allowedTypes.length > 0) {
     const rings: RingProperties[] = [];
-    
+
     // Enhanced ring count based on planet type
     let maxRings = 5;
     if (context?.planetType.includes("CLASS_")) {
       maxRings = 8; // Gas giants can have more complex ring systems
     }
-    
+
     const numRings = Math.floor(random() * maxRings) + 1;
 
     // Get formation zone appropriate ring types
-    const enhancedAllowedTypes = context 
-      ? getFormationZoneRingTypes(context.stellarDistanceAU, context.planetType, allowedTypes)
+    const enhancedAllowedTypes = context
+      ? getFormationZoneRingTypes(
+          context.stellarDistanceAU,
+          context.planetType,
+          allowedTypes,
+        )
       : allowedTypes;
 
     // Determine the type for the whole ring system once.
@@ -286,26 +295,27 @@ export function generateRings(
 
     // Calculate Roche limit for ring placement
     const rocheLimit = calculateRocheLimit(parentVisualRadius_m);
-    
+
     // All rings in a system share the same tilt, but with enhanced realism
     const systemTilt = (random() - 0.5) * 0.15;
 
     // Start the first ring outside the Roche limit with safety margin
     let currentInnerRadius_m = Math.max(
       (1.3 + random() * 0.7) * parentVisualRadius_m,
-      rocheLimit * 1.1 // 10% safety margin outside Roche limit
+      rocheLimit * 1.1, // 10% safety margin outside Roche limit
     );
 
     for (let i = 0; i < numRings; i++) {
       const innerRadius_m = currentInnerRadius_m;
 
       // Calculate a variable width for each ring with enhanced realism
-      const baseWidth = (0.05 + random() * (outerRadiusFactor / 5)) * parentVisualRadius_m;
-      
+      const baseWidth =
+        (0.05 + random() * (outerRadiusFactor / 5)) * parentVisualRadius_m;
+
       // Ring width decreases with distance (observational constraint)
-      const distanceFactor = Math.max(0.5, 1 - (i * 0.1));
+      const distanceFactor = Math.max(0.5, 1 - i * 0.1);
       const ringWidth_m = baseWidth * distanceFactor;
-      
+
       const outerRadius_m = innerRadius_m + ringWidth_m;
 
       // Generate enhanced ring properties
@@ -315,7 +325,7 @@ export function generateRings(
         innerRadius_m,
         outerRadius_m,
         context?.stellarDistanceAU || 5.0,
-        systemTilt
+        systemTilt,
       );
 
       rings.push(ring);
@@ -324,11 +334,13 @@ export function generateRings(
       // Gaps are influenced by resonances and shepherd moons
       const minGap = ringWidth_m * 0.1;
       const maxGap = ringWidth_m * 1.5;
-      
+
       // Larger planets tend to have wider gaps
-      const massGapFactor = context?.planetMass ? Math.min(2, Math.sqrt(context.planetMass)) : 1;
+      const massGapFactor = context?.planetMass
+        ? Math.min(2, Math.sqrt(context.planetMass))
+        : 1;
       const gap_m = (minGap + random() * (maxGap - minGap)) * massGapFactor;
-      
+
       currentInnerRadius_m = outerRadius_m + gap_m;
     }
 

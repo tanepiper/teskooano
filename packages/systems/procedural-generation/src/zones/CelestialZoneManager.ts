@@ -5,12 +5,12 @@ import {
   RockyType,
   type CelestialObject,
 } from "@teskooano/data-types";
-import { 
-  CelestialZone, 
-  ZoneCategory, 
+import {
+  CelestialZone,
+  ZoneCategory,
   OrbitalConfiguration,
   StellarSystemType,
-  type StellarSystemConfiguration
+  type StellarSystemConfiguration,
 } from "./types";
 import * as CONST from "../constants";
 import { getRandomItem } from "../utils";
@@ -21,12 +21,15 @@ function calculateStellarLuminosity(mass: number): number {
   return Math.pow(mass, 3.5);
 }
 
-function calculateHabitableZoneFromLuminosity(luminosity: number): { inner: number; outer: number } {
+function calculateHabitableZoneFromLuminosity(luminosity: number): {
+  inner: number;
+  outer: number;
+} {
   // Habitable zone calculation based on stellar luminosity
   const sqrtL = Math.sqrt(luminosity);
   return {
     inner: 0.95 * sqrtL,
-    outer: 1.37 * sqrtL
+    outer: 1.37 * sqrtL,
   };
 }
 
@@ -44,8 +47,11 @@ export const enhancedCelestialZones: CelestialZone[] = [
     allowedTypes: [PlanetType.LAVA, RockyType.METALLIC],
     disallowedTypes: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II],
     formationProbability: 0.15,
-    specialConfigurations: [OrbitalConfiguration.STANDARD, OrbitalConfiguration.ROGUE],
-    maxBodies: 3
+    specialConfigurations: [
+      OrbitalConfiguration.STANDARD,
+      OrbitalConfiguration.ROGUE,
+    ],
+    maxBodies: 3,
   },
   {
     name: "Hot Inner Zone",
@@ -60,9 +66,9 @@ export const enhancedCelestialZones: CelestialZone[] = [
     specialConfigurations: [
       OrbitalConfiguration.STANDARD,
       OrbitalConfiguration.BINARY_PAIR,
-      OrbitalConfiguration.TROJAN
+      OrbitalConfiguration.TROJAN,
     ],
-    maxBodies: 4
+    maxBodies: 4,
   },
   {
     name: "Temperate Zone",
@@ -78,9 +84,9 @@ export const enhancedCelestialZones: CelestialZone[] = [
       OrbitalConfiguration.STANDARD,
       OrbitalConfiguration.BINARY_PAIR,
       OrbitalConfiguration.TROJAN,
-      OrbitalConfiguration.CO_ORBITAL
+      OrbitalConfiguration.CO_ORBITAL,
     ],
-    maxBodies: 3
+    maxBodies: 3,
   },
   {
     name: "Cool Zone",
@@ -95,9 +101,9 @@ export const enhancedCelestialZones: CelestialZone[] = [
     specialConfigurations: [
       OrbitalConfiguration.STANDARD,
       OrbitalConfiguration.BINARY_PAIR,
-      OrbitalConfiguration.TROJAN
+      OrbitalConfiguration.TROJAN,
     ],
-    maxBodies: 5
+    maxBodies: 5,
   },
   {
     name: "Outer Gas Zone",
@@ -106,16 +112,20 @@ export const enhancedCelestialZones: CelestialZone[] = [
     maxAU: 30.0,
     temperatureRange: { min: 50, max: 100 },
     stellarTypes: [CelestialType.STAR],
-    allowedTypes: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II, RockyType.ICE],
+    allowedTypes: [
+      GasGiantClass.CLASS_I,
+      GasGiantClass.CLASS_II,
+      RockyType.ICE,
+    ],
     disallowedTypes: [PlanetType.LAVA, PlanetType.DESERT, PlanetType.OCEAN],
     formationProbability: 0.8,
     specialConfigurations: [
       OrbitalConfiguration.STANDARD,
       OrbitalConfiguration.BINARY_PAIR,
       OrbitalConfiguration.TROJAN,
-      OrbitalConfiguration.CO_ORBITAL
+      OrbitalConfiguration.CO_ORBITAL,
     ],
-    maxBodies: 4
+    maxBodies: 4,
   },
   {
     name: "Frozen Outer Zone",
@@ -125,14 +135,19 @@ export const enhancedCelestialZones: CelestialZone[] = [
     temperatureRange: { min: 10, max: 50 },
     stellarTypes: [CelestialType.STAR],
     allowedTypes: [GasGiantClass.CLASS_III, RockyType.ICE],
-    disallowedTypes: [PlanetType.LAVA, PlanetType.DESERT, PlanetType.OCEAN, PlanetType.TERRESTRIAL],
+    disallowedTypes: [
+      PlanetType.LAVA,
+      PlanetType.DESERT,
+      PlanetType.OCEAN,
+      PlanetType.TERRESTRIAL,
+    ],
     formationProbability: 0.3,
     specialConfigurations: [
       OrbitalConfiguration.STANDARD,
       OrbitalConfiguration.ROGUE,
-      OrbitalConfiguration.BINARY_PAIR
+      OrbitalConfiguration.BINARY_PAIR,
     ],
-    maxBodies: 6
+    maxBodies: 6,
   },
   {
     name: "Interstellar Zone",
@@ -142,11 +157,16 @@ export const enhancedCelestialZones: CelestialZone[] = [
     temperatureRange: { min: 2, max: 10 },
     stellarTypes: [CelestialType.STAR],
     allowedTypes: [RockyType.ICE, GasGiantClass.CLASS_III],
-    disallowedTypes: [PlanetType.LAVA, PlanetType.DESERT, PlanetType.OCEAN, PlanetType.TERRESTRIAL],
+    disallowedTypes: [
+      PlanetType.LAVA,
+      PlanetType.DESERT,
+      PlanetType.OCEAN,
+      PlanetType.TERRESTRIAL,
+    ],
     formationProbability: 0.1,
     specialConfigurations: [OrbitalConfiguration.ROGUE],
-    maxBodies: 10
-  }
+    maxBodies: 10,
+  },
 ];
 
 /**
@@ -167,7 +187,7 @@ export class CelestialZoneManager {
    */
   determineStellarConfiguration(): StellarSystemConfiguration {
     const roll = this.random();
-    
+
     if (roll < 0.6) {
       return { type: StellarSystemType.SINGLE_STAR, stars: 1 };
     } else if (roll < 0.85) {
@@ -177,32 +197,39 @@ export class CelestialZoneManager {
     } else if (roll < 0.98) {
       return { type: StellarSystemType.TRIPLE_HIERARCHICAL, stars: 3 };
     } else {
-      return { type: StellarSystemType.MULTIPLE_COMPLEX, stars: Math.floor(this.random() * 3) + 4 };
+      return {
+        type: StellarSystemType.MULTIPLE_COMPLEX,
+        stars: Math.floor(this.random() * 3) + 4,
+      };
     }
   }
 
   /**
    * Gets zones adjusted for stellar luminosity and system configuration
    */
-  getAdjustedZones(stars: CelestialObject[], config: StellarSystemConfiguration): CelestialZone[] {
+  getAdjustedZones(
+    stars: CelestialObject[],
+    config: StellarSystemConfiguration,
+  ): CelestialZone[] {
     if (stars.length === 0) return this.zones;
 
-         // Calculate combined luminosity for multi-star systems
-     const totalLuminosity = stars.reduce((sum, star) => {
-       const mass = star.realMass_kg || 1.989e30; // Default to solar mass if not specified
-       const solarMasses = mass / 1.989e30; // Convert to solar masses
-       return sum + calculateStellarLuminosity(solarMasses);
-     }, 0);
+    // Calculate combined luminosity for multi-star systems
+    const totalLuminosity = stars.reduce((sum, star) => {
+      const mass = star.realMass_kg || 1.989e30; // Default to solar mass if not specified
+      const solarMasses = mass / 1.989e30; // Convert to solar masses
+      return sum + calculateStellarLuminosity(solarMasses);
+    }, 0);
 
     // Adjust zone boundaries based on luminosity
     const luminosityFactor = Math.sqrt(totalLuminosity);
-    
-    return this.zones.map(zone => ({
+
+    return this.zones.map((zone) => ({
       ...zone,
       minAU: zone.minAU * luminosityFactor,
       maxAU: zone.maxAU * luminosityFactor,
       // Adjust formation probability based on system complexity
-      formationProbability: zone.formationProbability * this.getComplexityFactor(config)
+      formationProbability:
+        zone.formationProbability * this.getComplexityFactor(config),
     }));
   }
 
@@ -230,8 +257,8 @@ export class CelestialZoneManager {
    * Selects appropriate zones for body placement
    */
   selectZonesForPlacement(
-    stars: CelestialObject[], 
-    config: StellarSystemConfiguration
+    stars: CelestialObject[],
+    config: StellarSystemConfiguration,
   ): CelestialZone[] {
     const adjustedZones = this.getAdjustedZones(stars, config);
     const activeZones: CelestialZone[] = [];
@@ -245,36 +272,39 @@ export class CelestialZoneManager {
 
     // Ensure at least one zone is active for non-empty systems
     if (activeZones.length === 0 && stars.length > 0) {
-      const fallbackZone = getRandomItem(adjustedZones.slice(1, 4), this.random); // Pick from hot/temperate/cool
+      const fallbackZone = getRandomItem(
+        adjustedZones.slice(1, 4),
+        this.random,
+      ); // Pick from hot/temperate/cool
       activeZones.push(fallbackZone);
     }
 
     return activeZones;
   }
 
-     /**
-    * Gets all available zones (for testing and analysis)
-    */
-   getAllZones(): CelestialZone[] {
-     return [...this.zones];
-   }
+  /**
+   * Gets all available zones (for testing and analysis)
+   */
+  getAllZones(): CelestialZone[] {
+    return [...this.zones];
+  }
 
-   /**
-    * Gets zone for a specific distance (compatibility method)
-    */
-   getZoneForDistance(distanceAU: number): CelestialZone | undefined {
-     return this.zones.find(
-       (zone) => distanceAU >= zone.minAU && distanceAU < zone.maxAU
-     );
-   }
- }
+  /**
+   * Gets zone for a specific distance (compatibility method)
+   */
+  getZoneForDistance(distanceAU: number): CelestialZone | undefined {
+    return this.zones.find(
+      (zone) => distanceAU >= zone.minAU && distanceAU < zone.maxAU,
+    );
+  }
+}
 
- /**
-  * Legacy compatibility function
-  */
- export function generateZonesForStar(star: CelestialObject): CelestialZone[] {
-   const random = () => Math.random(); // Use non-seeded random for backwards compatibility
-   const zoneManager = new CelestialZoneManager(random);
-   const config = zoneManager.determineStellarConfiguration();
-   return zoneManager.getAdjustedZones([star], config);
- }
+/**
+ * Legacy compatibility function
+ */
+export function generateZonesForStar(star: CelestialObject): CelestialZone[] {
+  const random = () => Math.random(); // Use non-seeded random for backwards compatibility
+  const zoneManager = new CelestialZoneManager(random);
+  const config = zoneManager.determineStellarConfiguration();
+  return zoneManager.getAdjustedZones([star], config);
+}

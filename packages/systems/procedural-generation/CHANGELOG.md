@@ -20,11 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Planet Properties Enhancement
+
 - **Enhanced Ocean World Support**: Added comprehensive properties for ocean planets including realistic atmospheric compositions and cloud coverage
 - **Metallic Planet Support**: Implemented support for metal-rich planets with appropriate surface properties, atmospheric compositions, and visual characteristics
 - **Gas Giant Moon Handling**: Improved handling of moons around gas giants with appropriate ice compositions and surface properties
 
 #### Scientific Ring System Generation
+
 - **Roche Limit Calculations**: Implemented proper Roche limit constraints for ring placement with safety margins
 - **Formation Zone Composition**: Ring materials now vary based on stellar distance (rocky/metallic inner systems, icy outer systems)
 - **Enhanced Ring Dynamics**: Added realistic orbital mechanics with Kepler's law-based rotation rates
@@ -32,21 +34,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Advanced Ring Properties**: Enhanced density, opacity, and texture selection based on ring material type
 
 #### Atmospheric Modeling Improvements
+
 - **Type-Specific Atmospheres**: Different atmospheric compositions for ocean worlds, metallic planets, and standard rocky planets
 - **Enhanced Cloud Properties**: Ocean worlds now have appropriate high cloud coverage and realistic atmospheric properties
 - **Atmospheric Retention Modeling**: Basic framework for mass-dependent atmospheric properties
 
 ### Fixed
+
 - **Unhandled Planet Types**: Eliminated all "Unhandled rocky planet type" warnings for OCEAN, CLASS_I, CLASS_III, and METALLIC types
 - **Gas Giant Classification**: Proper handling of gas giant classes when they appear in moon generation contexts
 - **Import Issues**: Fixed TypeScript import issues with RockyType enum usage
 
 ### Enhanced
+
 - **Ring Formation Probability**: Scientifically accurate probability modifiers based on planet mass, stellar distance, system age, and moon presence
 - **Surface Property Generation**: Enhanced metallic planet surfaces with appropriate shininess, specular properties, and color gradients
 - **Atmospheric Compositions**: More realistic atmospheric compositions based on planetary formation and evolution models
 
 ### Technical Improvements
+
 - **Ring Formation Context**: Added comprehensive context interface for realistic ring generation
 - **Enhanced Ring Textures**: Type-specific texture identifiers for different ring materials
 - **Orbital Mechanics**: Improved gap spacing and ring width calculations based on observational constraints
@@ -56,38 +62,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Major Refactor: Enhanced Procedural Generation System
 
 #### Zone System Overhaul
+
 - **Enhanced Zone Categories**: Added 9 realistic zones (SCORCHED, HOT, TEMPERATE, COOL, COLD, FROZEN, OUTER, DISTANT, INTERSTELLAR)
 - **Orbital Configuration Support**: Implemented STANDARD, BINARY_PAIR, TROJAN, CO_ORBITAL, ROGUE, CIRCUMBINARY configurations
 - **Stellar System Types**: Added support for SINGLE_STAR, BINARY_CLOSE, BINARY_WIDE, MULTIPLE_STAR systems
 
 #### Advanced Star Generation
+
 - **Realistic Stellar Distribution**: Implemented proper stellar population statistics (95.2% main sequence, 3.5% white dwarfs, etc.)
 - **Kroupa Initial Mass Function**: Scientifically accurate stellar mass distribution
 - **Enhanced Binary Systems**: Proper barycentric motion and hierarchical arrangements
 - **Stellar Evolution Models**: Improved mass-radius-temperature relationships
 
-#### Scientific Planet Generation  
+#### Scientific Planet Generation
+
 - **Enhanced Moon Systems**: Realistic moon counts (20-140+ for gas giants, 0-3 for terrestrial)
 - **Formation-Based Properties**: Moon types based on co-accretion, impact, and capture mechanisms
 - **Orbital Mechanics**: Realistic eccentricity and inclination distributions with proper validation
 
 #### Advanced Body Placement
+
 - **Special Configurations**: Support for binary planets, trojan arrangements, co-orbital bodies
 - **Rogue Objects**: Generation of rogue planets and brown dwarfs in interstellar space
 - **Enhanced Validation**: Proper Hill sphere and Roche limit constraints
 
 ### Added
+
 - **Stellar Classification**: Complete spectral types including Wolf-Rayet subtypes
-- **Asteroid Belt Enhancement**: Distance-based composition and realistic belt properties  
+- **Asteroid Belt Enhancement**: Distance-based composition and realistic belt properties
 - **System Architecture**: Complex multi-star hierarchical arrangements
 - **Physics Constraints**: Advanced orbital stability validation
 
 ### Performance
+
 - **Optimized Calculations**: Minimal computational overhead for complex systems
 - **Deterministic Generation**: Consistent results from seed values
 - **Scalability**: Support for systems with 100+ celestial bodies
 
 ### Testing
+
 - **Comprehensive Test Suite**: 10/10 tests passing with realistic system validation
 - **Edge Case Handling**: Robust error handling and graceful degradation
 - **Backward Compatibility**: Maintains compatibility with existing generation calls
@@ -95,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2024-12-23
 
 ### Initial Release
+
 - Basic procedural generation system
 - Simple star and planet generation
 - Initial zone-based placement system
@@ -127,13 +141,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📊 New Orbital Configurations
 
-| Configuration | Description | Frequency |
-|---------------|-------------|-----------|
-| Binary Pairs | Planets orbiting each other | ~15% |
-| Trojan Groups | L4/L5 Lagrange point arrangements | ~8% |
-| Co-Orbital | Bodies sharing same orbit | ~5% |
-| Circumbinary | Planets orbiting both stars | ~3% |
-| Rogue Objects | Unbound interstellar bodies | ~2% |
+| Configuration | Description                       | Frequency |
+| ------------- | --------------------------------- | --------- |
+| Binary Pairs  | Planets orbiting each other       | ~15%      |
+| Trojan Groups | L4/L5 Lagrange point arrangements | ~8%       |
+| Co-Orbital    | Bodies sharing same orbit         | ~5%       |
+| Circumbinary  | Planets orbiting both stars       | ~3%       |
+| Rogue Objects | Unbound interstellar bodies       | ~2%       |
 
 ### 🌟 Generation Improvements
 
@@ -175,12 +189,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.1] - Previous Version
 
 ### Added
+
 - Basic zone system implementation
 - Simple multi-star support
 - Asteroid belt generation
 - Ring system generation
 
 ### Fixed
+
 - Orbital period calculations
 - Temperature estimation accuracy
 - Memory leaks in observable streams
@@ -190,12 +206,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - Previous Version
 
 ### Added
+
 - Moon generation system
 - Enhanced planet properties
 - Spectral classification
 - Visual luminosity calculations
 
 ### Changed
+
 - Improved seeded random generation
 - Better error handling
 - Enhanced type definitions
@@ -205,12 +223,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - Previous Version
 
 ### Added
+
 - Multi-star system support
 - Gas giant classification
 - Ring system generation
 - Enhanced planet types
 
 ### Fixed
+
 - Orbital mechanics calculations
 - Star color generation
 - Planet naming consistency
@@ -220,6 +240,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - Initial Release
 
 ### Added
+
 - Basic procedural star system generation
 - Single star systems
 - Planet and moon generation

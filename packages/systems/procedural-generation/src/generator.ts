@@ -34,7 +34,7 @@ export async function generateSystem(
 
   // Generate the stellar system first using enhanced generation
   const stars = generateStars(random);
-  
+
   // Create zone manager and determine system configuration
   const zoneManager = new CelestialZoneManager(random);
   const systemConfig = zoneManager.determineStellarConfiguration();
@@ -54,15 +54,23 @@ export async function generateSystem(
       const placements = generateBodyDistances(random, zones, stars);
 
       // Log system information for debugging
-      console.log(`[GenerateSystem] ${systemName}: ${stars.length} star(s), ${placements.length} body placement(s)`);
+      console.log(
+        `[GenerateSystem] ${systemName}: ${stars.length} star(s), ${placements.length} body placement(s)`,
+      );
       console.log(`[GenerateSystem] System type: ${systemConfig.type}`);
-      
+
       // Special configurations summary
-      const specialConfigs = placements.filter(p => p.configuration !== 'STANDARD');
+      const specialConfigs = placements.filter(
+        (p) => p.configuration !== "STANDARD",
+      );
       if (specialConfigs.length > 0) {
-        console.log(`[GenerateSystem] Special configurations: ${specialConfigs.length}`);
-        specialConfigs.forEach(p => {
-          console.log(`  - ${p.configuration} at ${p.distanceAU.toFixed(2)} AU`);
+        console.log(
+          `[GenerateSystem] Special configurations: ${specialConfigs.length}`,
+        );
+        specialConfigs.forEach((p) => {
+          console.log(
+            `  - ${p.configuration} at ${p.distanceAU.toFixed(2)} AU`,
+          );
         });
       }
 
@@ -99,7 +107,10 @@ export async function generateSystem(
         subscription.unsubscribe();
       };
     } catch (error) {
-      console.error(`[GenerateSystem] Error setting up system generation for ${systemName}:`, error);
+      console.error(
+        `[GenerateSystem] Error setting up system generation for ${systemName}:`,
+        error,
+      );
       subscriber.error(error);
     }
   });

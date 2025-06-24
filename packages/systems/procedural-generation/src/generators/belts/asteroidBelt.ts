@@ -66,7 +66,7 @@ export function generateAsteroidBelt(
   const particleCount = calculateRealisticParticleCount(
     beltDimensions,
     bodyDistanceAU,
-    random
+    random,
   );
 
   const beltProperties: AsteroidFieldProperties = {
@@ -164,19 +164,24 @@ export function generateAsteroidBelt(
 /**
  * Validates if the given distance is appropriate for asteroid belt formation
  */
-function isValidAsteroidBeltDistance(distanceAU: number, starMass_kg: number): boolean {
+function isValidAsteroidBeltDistance(
+  distanceAU: number,
+  starMass_kg: number,
+): boolean {
   const solarMass = 1.989e30;
   const massRatio = starMass_kg / solarMass;
-  
+
   // Scale frost line and belt formation zone with stellar mass
   const frostLine = 2.7 * Math.sqrt(massRatio); // Approximate frost line
   const innerLimit = 1.5 * Math.sqrt(massRatio); // Too close for belt stability
   const outerLimit = 6.0 * Math.sqrt(massRatio); // Too far for main belt
-  
+
   // Main asteroid belt: between Mars and Jupiter orbits (scaled)
   // Also allow for outer belts (like Kuiper belt analogs)
-  return (distanceAU >= innerLimit && distanceAU <= outerLimit) || 
-         (distanceAU >= 20 && distanceAU <= 100); // Outer belt region
+  return (
+    (distanceAU >= innerLimit && distanceAU <= outerLimit) ||
+    (distanceAU >= 20 && distanceAU <= 100)
+  ); // Outer belt region
 }
 
 /**
@@ -184,7 +189,7 @@ function isValidAsteroidBeltDistance(distanceAU: number, starMass_kg: number): b
  */
 function generateAsteroidBeltName(index: number, distanceAU: number): string {
   const baseName = String.fromCharCode(65 + index); // A, B, C...
-  
+
   if (distanceAU < 5) {
     return `Inner Belt ${baseName}`;
   } else if (distanceAU < 15) {
@@ -197,7 +202,10 @@ function generateAsteroidBeltName(index: number, distanceAU: number): string {
 /**
  * Determines belt composition based on distance from star (temperature gradient)
  */
-function determineBeltComposition(distanceAU: number, random: () => number): {
+function determineBeltComposition(
+  distanceAU: number,
+  random: () => number,
+): {
   primaryType: RockyType;
   materials: string[];
 } {
@@ -206,20 +214,26 @@ function determineBeltComposition(distanceAU: number, random: () => number): {
     const type = random() < 0.7 ? RockyType.METALLIC : RockyType.DARK_ROCK;
     return {
       primaryType: type,
-      materials: ["iron", "nickel", "silicates", "platinum group metals"]
+      materials: ["iron", "nickel", "silicates", "platinum group metals"],
     };
   } else if (distanceAU < 6) {
     // Main belt: mixed rocky and carbonaceous
     const type = random() < 0.5 ? RockyType.LIGHT_ROCK : RockyType.DARK_ROCK;
     return {
       primaryType: type,
-      materials: ["silicates", "carbon", "water", "organic compounds"]
+      materials: ["silicates", "carbon", "water", "organic compounds"],
     };
   } else {
     // Outer belt: icy composition (beyond frost line)
     return {
       primaryType: RockyType.ICE,
-      materials: ["water ice", "methane ice", "ammonia ice", "silicates", "organics"]
+      materials: [
+        "water ice",
+        "methane ice",
+        "ammonia ice",
+        "silicates",
+        "organics",
+      ],
     };
   }
 }
@@ -227,7 +241,10 @@ function determineBeltComposition(distanceAU: number, random: () => number): {
 /**
  * Calculates realistic belt dimensions based on astronomical observations
  */
-function calculateBeltDimensions(centerDistanceAU: number, random: () => number): {
+function calculateBeltDimensions(
+  centerDistanceAU: number,
+  random: () => number,
+): {
   innerRadius: number;
   outerRadius: number;
   height: number;
@@ -235,18 +252,18 @@ function calculateBeltDimensions(centerDistanceAU: number, random: () => number)
   // Belt width: typically 20-40% of the central distance
   const relativeWidth = 0.2 + random() * 0.2; // 20-40%
   const halfWidth = centerDistanceAU * relativeWidth * 0.5;
-  
+
   const innerRadius = Math.max(0.1, centerDistanceAU - halfWidth);
   const outerRadius = centerDistanceAU + halfWidth;
-  
+
   // Belt height: much smaller than width (disk-like structure)
   // Typically 1-5% of the radial width
   const height = halfWidth * 2 * (0.01 + random() * 0.04); // 1-5% of width
-  
+
   return {
     innerRadius,
     outerRadius,
-    height
+    height,
   };
 }
 
@@ -256,22 +273,23 @@ function calculateBeltDimensions(centerDistanceAU: number, random: () => number)
 function calculateRealisticParticleCount(
   dimensions: { innerRadius: number; outerRadius: number; height: number },
   distanceAU: number,
-  random: () => number
+  random: () => number,
 ): number {
   // Base count depends on belt volume and distance from star
-  const beltVolume = Math.PI * (
-    dimensions.outerRadius * dimensions.outerRadius - 
-    dimensions.innerRadius * dimensions.innerRadius
-  ) * dimensions.height;
-  
+  const beltVolume =
+    Math.PI *
+    (dimensions.outerRadius * dimensions.outerRadius -
+      dimensions.innerRadius * dimensions.innerRadius) *
+    dimensions.height;
+
   // Density decreases with distance (less material available)
   const densityFactor = Math.pow(distanceAU, -1.5); // Inverse square-ish law
-  
+
   // Base particle density (particles per cubic AU)
   const baseDensity = 100 + random() * 400; // 100-500 particles per cubic AU
-  
+
   const totalCount = Math.floor(beltVolume * baseDensity * densityFactor);
-  
+
   // Realistic range: 1,000 to 50,000 visible objects
   return Math.max(1000, Math.min(50000, totalCount));
 }
@@ -282,18 +300,22 @@ function calculateRealisticParticleCount(
 function generateBeltOrbit(
   distanceAU: number,
   starMass_kg: number,
-  random: () => number
+  random: () => number,
 ): OrbitalParameters {
   const semiMajorAxis_m = distanceAU * CONST.AU_TO_METERS;
-  const period_s = UTIL.calculateOrbitalPeriod_s(starMass_kg, semiMajorAxis_m, 0);
-  
+  const period_s = UTIL.calculateOrbitalPeriod_s(
+    starMass_kg,
+    semiMajorAxis_m,
+    0,
+  );
+
   // Asteroid belts have low but non-zero eccentricity
   // Main belt asteroids: mean eccentricity ~0.15
   const eccentricity = 0.05 + random() * 0.2; // 0.05 to 0.25
-  
+
   // Inclination spread: Main belt has ~5-10° spread
   const inclination = (random() - 0.5) * 0.2; // ±6° spread
-  
+
   return {
     realSemiMajorAxis_m: semiMajorAxis_m,
     eccentricity: eccentricity,
@@ -308,23 +330,27 @@ function generateBeltOrbit(
 /**
  * Calculates belt temperature based on stellar heating
  */
-function calculateBeltTemperature(distanceAU: number, starMass_kg: number): number {
+function calculateBeltTemperature(
+  distanceAU: number,
+  starMass_kg: number,
+): number {
   const solarMass = 1.989e30;
   const solarLuminosity = 3.828e26; // Watts
-  
+
   // Approximate stellar luminosity using mass-luminosity relation
   const massRatio = starMass_kg / solarMass;
   const stellarLuminosity = solarLuminosity * Math.pow(massRatio, 3.5);
-  
+
   // Calculate equilibrium temperature at distance
   const stefanBoltzmann = 5.67e-8;
   const distanceM = distanceAU * CONST.AU_TO_METERS;
-  
+
   // T = (L / (16π σ d²))^(1/4) for a gray body with albedo ~0.1
   const temperature = Math.pow(
-    stellarLuminosity / (16 * Math.PI * stefanBoltzmann * distanceM * distanceM),
-    0.25
+    stellarLuminosity /
+      (16 * Math.PI * stefanBoltzmann * distanceM * distanceM),
+    0.25,
   );
-  
+
   return Math.max(2.7, temperature); // Not colder than cosmic background
 }

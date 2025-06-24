@@ -34,14 +34,22 @@ export function generateBodyDistances(
 
   // Generate placements for each zone
   zones.forEach((zone) => {
-    const zoneGroups = generatePlacementsForZone(random, zone, stars, globalSlotIndex);
+    const zoneGroups = generatePlacementsForZone(
+      random,
+      zone,
+      stars,
+      globalSlotIndex,
+    );
     placementGroups.push(...zoneGroups);
-    globalSlotIndex += zoneGroups.reduce((sum, group) => sum + group.bodies.length, 0);
+    globalSlotIndex += zoneGroups.reduce(
+      (sum, group) => sum + group.bodies.length,
+      0,
+    );
   });
 
   // Flatten all placements and sort by distance
   const allPlacements = placementGroups
-    .flatMap(group => group.bodies)
+    .flatMap((group) => group.bodies)
     .sort((a, b) => a.distanceAU - b.distanceAU);
 
   return filterValidPlacements(allPlacements, stars);
@@ -54,12 +62,12 @@ function generatePlacementsForZone(
   random: () => number,
   zone: CelestialZone,
   stars: CelestialObject[],
-  startingSlotIndex: number
+  startingSlotIndex: number,
 ): PlacementGroup[] {
   const groups: PlacementGroup[] = [];
   // Use maxBodies from the new zone format
   const numPotentialSlots = Math.floor(random() * zone.maxBodies) + 1;
-  
+
   let slotIndex = startingSlotIndex;
   let usedSlots = 0;
 
@@ -67,10 +75,11 @@ function generatePlacementsForZone(
     const distance = generateDistanceInZone(random, zone);
     const parentStar = findClosestStar(distance, stars);
     const relativeDistance = Math.abs(distance - getStarDistance(parentStar));
-    
+
     // Determine if this should be a special configuration
-    const shouldUseSpecialConfig = random() < getSpecialConfigurationChance(zone, distance);
-    
+    const shouldUseSpecialConfig =
+      random() < getSpecialConfigurationChance(zone, distance);
+
     if (shouldUseSpecialConfig) {
       const specialGroup = generateSpecialConfigurationGroup(
         random,
@@ -78,9 +87,9 @@ function generatePlacementsForZone(
         distance,
         parentStar,
         relativeDistance,
-        slotIndex
+        slotIndex,
       );
-      
+
       if (specialGroup && specialGroup.bodies.length > 0) {
         groups.push(specialGroup);
         usedSlots += specialGroup.bodies.length;
@@ -92,12 +101,12 @@ function generatePlacementsForZone(
           parentStar,
           relativeDistance,
           zone,
-          slotIndex
+          slotIndex,
         );
         groups.push({
           baseDistance: distance,
           configuration: OrbitalConfiguration.STANDARD,
-          bodies: [standardPlacement]
+          bodies: [standardPlacement],
         });
         usedSlots++;
         slotIndex++;
@@ -109,12 +118,12 @@ function generatePlacementsForZone(
         parentStar,
         relativeDistance,
         zone,
-        slotIndex
+        slotIndex,
       );
       groups.push({
         baseDistance: distance,
         configuration: OrbitalConfiguration.STANDARD,
-        bodies: [standardPlacement]
+        bodies: [standardPlacement],
       });
       usedSlots++;
       slotIndex++;
@@ -133,7 +142,7 @@ function generateSpecialConfigurationGroup(
   baseDistance: number,
   parentStar: CelestialObject,
   relativeDistance: number,
-  slotIndex: number
+  slotIndex: number,
 ): PlacementGroup | null {
   const availableConfigs = getAvailableConfigurations(zone);
   if (availableConfigs.length === 0) return null;
@@ -150,7 +159,7 @@ function generateSpecialConfigurationGroup(
         parentStar,
         relativeDistance,
         arrangement,
-        slotIndex
+        slotIndex,
       );
 
     case OrbitalConfiguration.TROJAN:
@@ -161,7 +170,7 @@ function generateSpecialConfigurationGroup(
         parentStar,
         relativeDistance,
         arrangement,
-        slotIndex
+        slotIndex,
       );
 
     case OrbitalConfiguration.CO_ORBITAL:
@@ -172,7 +181,7 @@ function generateSpecialConfigurationGroup(
         parentStar,
         relativeDistance,
         arrangement,
-        slotIndex
+        slotIndex,
       );
 
     case OrbitalConfiguration.ROGUE:
@@ -183,7 +192,7 @@ function generateSpecialConfigurationGroup(
         parentStar,
         relativeDistance,
         arrangement,
-        slotIndex
+        slotIndex,
       );
 
     case OrbitalConfiguration.CIRCUMBINARY:
@@ -194,7 +203,7 @@ function generateSpecialConfigurationGroup(
         parentStar,
         relativeDistance,
         arrangement,
-        slotIndex
+        slotIndex,
       );
 
     default:
@@ -212,7 +221,7 @@ function generateBinaryPairGroup(
   parentStar: CelestialObject,
   relativeDistance: number,
   arrangement: OrbitalArrangement,
-  slotIndex: number
+  slotIndex: number,
 ): PlacementGroup {
   // Binary planets orbit very close to each other
   const separationKm = 10000 + random() * 50000; // 10,000 - 60,000 km
@@ -256,7 +265,7 @@ function generateTrojanGroup(
   parentStar: CelestialObject,
   relativeDistance: number,
   arrangement: OrbitalArrangement,
-  slotIndex: number
+  slotIndex: number,
 ): PlacementGroup {
   // Main body at the base distance
   const mainPlacement: BodyPlacement = {
@@ -273,7 +282,7 @@ function generateTrojanGroup(
 
   // Determine number of trojans (1-3)
   const numTrojans = 1 + Math.floor(random() * 3);
-  
+
   for (let i = 0; i < numTrojans; i++) {
     // Trojans are at the same distance but 60° ahead or behind
     const isL4 = random() < 0.5; // L4 (ahead) or L5 (behind)
@@ -284,7 +293,10 @@ function generateTrojanGroup(
       configuration: OrbitalConfiguration.TROJAN,
       arrangement: {
         ...arrangement,
-        phaseOffsets: [...(arrangement.phaseOffsets || []), isL4 ? Math.PI / 3 : -Math.PI / 3]
+        phaseOffsets: [
+          ...(arrangement.phaseOffsets || []),
+          isL4 ? Math.PI / 3 : -Math.PI / 3,
+        ],
       },
       zone,
       slotIndex: slotIndex + i + 1,
@@ -310,15 +322,15 @@ function generateCoOrbitalGroup(
   parentStar: CelestialObject,
   relativeDistance: number,
   arrangement: OrbitalArrangement,
-  slotIndex: number
+  slotIndex: number,
 ): PlacementGroup {
   // 2-4 bodies sharing the same orbit
   const numBodies = 2 + Math.floor(random() * 3);
   const bodies: BodyPlacement[] = [];
-  
+
   for (let i = 0; i < numBodies; i++) {
     const phaseOffset = (i * 2 * Math.PI) / numBodies + (random() - 0.5) * 0.2; // Slight randomization
-    
+
     const placement: BodyPlacement = {
       distanceAU: baseDistance,
       parentStar,
@@ -326,7 +338,7 @@ function generateCoOrbitalGroup(
       configuration: OrbitalConfiguration.CO_ORBITAL,
       arrangement: {
         ...arrangement,
-        phaseOffsets: [...(arrangement.phaseOffsets || []), phaseOffset]
+        phaseOffsets: [...(arrangement.phaseOffsets || []), phaseOffset],
       },
       zone,
       slotIndex: slotIndex + i,
@@ -352,11 +364,11 @@ function generateRogueGroup(
   parentStar: CelestialObject,
   relativeDistance: number,
   arrangement: OrbitalArrangement,
-  slotIndex: number
+  slotIndex: number,
 ): PlacementGroup {
   // Rogue objects can be anywhere in the zone
   const rogueDistance = utils.lerp(zone.minAU, zone.maxAU, random());
-  
+
   const roguePlacement: BodyPlacement = {
     distanceAU: rogueDistance,
     parentStar, // Still need a reference star for zone calculation
@@ -385,12 +397,12 @@ function generateCircumbinaryGroup(
   parentStar: CelestialObject,
   relativeDistance: number,
   arrangement: OrbitalArrangement,
-  slotIndex: number
+  slotIndex: number,
 ): PlacementGroup {
   // Circumbinary objects must be far enough from both stars to be stable
   const minCircumbinaryDistance = 2.5; // Minimum stable distance in AU for most binaries
   const adjustedDistance = Math.max(baseDistance, minCircumbinaryDistance);
-  
+
   const circumbinaryPlacement: BodyPlacement = {
     distanceAU: adjustedDistance,
     parentStar, // Will be handled specially in generation
@@ -412,11 +424,17 @@ function generateCircumbinaryGroup(
 /**
  * Helper functions
  */
-function generateDistanceInZone(random: () => number, zone: CelestialZone): number {
+function generateDistanceInZone(
+  random: () => number,
+  zone: CelestialZone,
+): number {
   return utils.lerp(zone.minAU, zone.maxAU, random());
 }
 
-function findClosestStar(distance: number, stars: CelestialObject[]): CelestialObject {
+function findClosestStar(
+  distance: number,
+  stars: CelestialObject[],
+): CelestialObject {
   let closestStar = stars[0];
   let minDistanceDiff = Infinity;
 
@@ -436,12 +454,17 @@ function getStarDistance(star: CelestialObject): number {
   return (star.orbit?.realSemiMajorAxis_m ?? 0) / AU_METERS;
 }
 
-function getSpecialConfigurationChance(zone: CelestialZone, distance: number): number {
+function getSpecialConfigurationChance(
+  zone: CelestialZone,
+  distance: number,
+): number {
   // Use formation probability as base chance for special configurations
   return Math.min(0.4, zone.formationProbability * 0.3); // 30% of formation probability, capped at 40%
 }
 
-function getAvailableConfigurations(zone: CelestialZone): OrbitalConfiguration[] {
+function getAvailableConfigurations(
+  zone: CelestialZone,
+): OrbitalConfiguration[] {
   // Use the special configurations from the new zone format
   return [...zone.specialConfigurations];
 }
@@ -449,7 +472,7 @@ function getAvailableConfigurations(zone: CelestialZone): OrbitalConfiguration[]
 function createArrangement(
   random: () => number,
   configuration: OrbitalConfiguration,
-  baseDistance: number
+  baseDistance: number,
 ): OrbitalArrangement {
   switch (configuration) {
     case OrbitalConfiguration.BINARY_PAIR:
@@ -488,7 +511,7 @@ function createStandardPlacement(
   parentStar: CelestialObject,
   relativeDistance: number,
   zone: CelestialZone,
-  slotIndex: number
+  slotIndex: number,
 ): BodyPlacement {
   return {
     distanceAU: distance,
@@ -502,9 +525,9 @@ function createStandardPlacement(
 
 function filterValidPlacements(
   placements: BodyPlacement[],
-  stars: CelestialObject[]
+  stars: CelestialObject[],
 ): BodyPlacement[] {
-  return placements.filter(placement => {
+  return placements.filter((placement) => {
     // Skip validation for rogue objects
     if (placement.configuration === OrbitalConfiguration.ROGUE) {
       return true;
@@ -513,7 +536,7 @@ function filterValidPlacements(
     // Check minimum distance from parent star
     const parentStar = placement.parentStar;
     const minDistance = (parentStar.realRadius_m * 2.0) / AU_METERS; // 2x stellar radius minimum
-    
+
     return placement.distanceRelativeToParentAU > minDistance;
   });
 }
