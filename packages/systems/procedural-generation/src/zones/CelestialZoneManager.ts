@@ -5,258 +5,276 @@ import {
   RockyType,
   type CelestialObject,
 } from "@teskooano/data-types";
-import { CelestialZone } from "./types";
+import { 
+  CelestialZone, 
+  ZoneCategory, 
+  OrbitalConfiguration,
+  StellarSystemType,
+  type StellarSystemConfiguration
+} from "./types";
 import * as CONST from "../constants";
-import { calculateStellarLuminosity } from "../utils";
-import { calculateHabitableZoneFromLuminosity } from "../properties/stars";
+import { getRandomItem } from "../utils";
+
+// Helper functions for zone calculations
+function calculateStellarLuminosity(mass: number): number {
+  // Main sequence mass-luminosity relation: L ∝ M^3.5
+  return Math.pow(mass, 3.5);
+}
+
+function calculateHabitableZoneFromLuminosity(luminosity: number): { inner: number; outer: number } {
+  // Habitable zone calculation based on stellar luminosity
+  const sqrtL = Math.sqrt(luminosity);
+  return {
+    inner: 0.95 * sqrtL,
+    outer: 1.37 * sqrtL
+  };
+}
 
 /**
- * The default configuration for celestial zones, based on a typical G-type star.
- * These can be overridden or extended.
+ * Enhanced zone configurations that create more realistic and interesting systems
  */
-export const defaultCelestialZones: CelestialZone[] = [
+export const enhancedCelestialZones: CelestialZone[] = [
   {
-    name: "Inner Zone",
-    minAU: 0.1,
+    name: "Scorched Zone",
+    category: ZoneCategory.SCORCHED,
+    minAU: 0.01,
+    maxAU: 0.3,
+    temperatureRange: { min: 800, max: 2000 },
+    stellarTypes: [CelestialType.STAR],
+    allowedTypes: [PlanetType.LAVA, RockyType.METALLIC],
+    disallowedTypes: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II],
+    formationProbability: 0.15,
+    specialConfigurations: [OrbitalConfiguration.STANDARD, OrbitalConfiguration.ROGUE],
+    maxBodies: 3
+  },
+  {
+    name: "Hot Inner Zone",
+    category: ZoneCategory.HOT,
+    minAU: 0.3,
     maxAU: 0.8,
-    minBodies: 2,
-    maxAdditionalBodies: 2,
-    formationProbabilities: [
-      {
-        type: CelestialType.PLANET,
-        chance: 0.75,
-        densityRange_kg_m3: [3500, 6000],
-        massMultiplierFactorRange: [0.5, 1.5],
-        ringChance: 0.01,
-        allowedRingTypes: [RockyType.LIGHT_ROCK, RockyType.DARK_ROCK],
-        subTypes: [PlanetType.BARREN, PlanetType.ROCKY, PlanetType.LAVA],
-      },
-      {
-        type: CelestialType.GAS_GIANT,
-        chance: 0.25,
-        densityRange_kg_m3: [600, 1500],
-        massMultiplierFactorRange: [15, 65],
-        ringChance: 0.05,
-        allowedRingTypes: [
-          RockyType.METALLIC,
-          RockyType.DARK_ROCK,
-          RockyType.DUST,
-        ],
-        subTypes: [GasGiantClass.CLASS_IV, GasGiantClass.CLASS_V], // Hot Jupiters
-      },
+    temperatureRange: { min: 400, max: 800 },
+    stellarTypes: [CelestialType.STAR],
+    allowedTypes: [PlanetType.ROCKY, PlanetType.DESERT, PlanetType.LAVA],
+    disallowedTypes: [GasGiantClass.CLASS_III],
+    formationProbability: 0.7,
+    specialConfigurations: [
+      OrbitalConfiguration.STANDARD,
+      OrbitalConfiguration.BINARY_PAIR,
+      OrbitalConfiguration.TROJAN
     ],
+    maxBodies: 4
   },
   {
-    name: "Habitable Zone",
-    minAU: 1.5,
-    maxAU: 2.5,
-    minBodies: 2,
-    maxAdditionalBodies: 2,
-    formationProbabilities: [
-      {
-        type: CelestialType.PLANET,
-        chance: 0.75,
-        densityRange_kg_m3: [3500, 6000],
-        massMultiplierFactorRange: [0.5, 1.5],
-        ringChance: 0.01,
-        allowedRingTypes: [RockyType.LIGHT_ROCK, RockyType.DARK_ROCK],
-        subTypes: [PlanetType.TERRESTRIAL, PlanetType.BARREN, PlanetType.ROCKY],
-      },
-      {
-        type: CelestialType.GAS_GIANT,
-        chance: 0.15,
-        densityRange_kg_m3: [600, 1500],
-        massMultiplierFactorRange: [15, 65],
-        ringChance: 0.05,
-        allowedRingTypes: [
-          RockyType.METALLIC,
-          RockyType.DARK_ROCK,
-          RockyType.DUST,
-        ],
-        subTypes: [
-          GasGiantClass.CLASS_I,
-          GasGiantClass.CLASS_II,
-          GasGiantClass.CLASS_V,
-        ],
-      },
+    name: "Temperate Zone",
+    category: ZoneCategory.TEMPERATE,
+    minAU: 0.8,
+    maxAU: 2.0,
+    temperatureRange: { min: 200, max: 400 },
+    stellarTypes: [CelestialType.STAR],
+    allowedTypes: [PlanetType.TERRESTRIAL, PlanetType.OCEAN, PlanetType.ROCKY],
+    disallowedTypes: [],
+    formationProbability: 0.85,
+    specialConfigurations: [
+      OrbitalConfiguration.STANDARD,
+      OrbitalConfiguration.BINARY_PAIR,
+      OrbitalConfiguration.TROJAN,
+      OrbitalConfiguration.CO_ORBITAL
     ],
+    maxBodies: 3
   },
   {
-    name: "Frost Line",
-    minAU: 2.5,
-    maxAU: 8,
-    minBodies: 1,
-    maxAdditionalBodies: 2,
-    formationProbabilities: [
-      {
-        type: CelestialType.GAS_GIANT,
-        chance: 0.75, // Almost always a gas giant here
-        densityRange_kg_m3: [600, 1500],
-        massMultiplierFactorRange: [20, 120],
-        ringChance: 0.25,
-        allowedRingTypes: [RockyType.METALLIC, RockyType.DUST, RockyType.ICE],
-        subTypes: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II],
-      },
-      {
-        type: CelestialType.PLANET,
-        chance: 0.25,
-        densityRange_kg_m3: [1000, 3000],
-        massMultiplierFactorRange: [0.01, 0.1],
-        ringChance: 0.05,
-        allowedRingTypes: [RockyType.ICE, RockyType.ICE_DUST],
-        subTypes: [PlanetType.ICE, PlanetType.ROCKY, PlanetType.BARREN],
-      },
+    name: "Cool Zone",
+    category: ZoneCategory.COOL,
+    minAU: 2.0,
+    maxAU: 5.0,
+    temperatureRange: { min: 100, max: 200 },
+    stellarTypes: [CelestialType.STAR],
+    allowedTypes: [PlanetType.ICE, PlanetType.ROCKY, GasGiantClass.CLASS_I],
+    disallowedTypes: [PlanetType.LAVA, PlanetType.DESERT],
+    formationProbability: 0.6,
+    specialConfigurations: [
+      OrbitalConfiguration.STANDARD,
+      OrbitalConfiguration.BINARY_PAIR,
+      OrbitalConfiguration.TROJAN
     ],
+    maxBodies: 5
   },
   {
-    name: "Outer Zone",
-    minAU: 8,
-    maxAU: 30,
-    minBodies: 1,
-    maxAdditionalBodies: 3,
-    formationProbabilities: [
-      {
-        type: CelestialType.GAS_GIANT, // Ice Giants
-        chance: 0.85,
-        densityRange_kg_m3: [1200, 2000],
-        massMultiplierFactorRange: [5, 25],
-        ringChance: 0.4,
-        allowedRingTypes: [RockyType.ICE, RockyType.ICE_DUST],
-        subTypes: [GasGiantClass.CLASS_II, GasGiantClass.CLASS_III],
-      },
-      {
-        type: CelestialType.PLANET, // Dwarf/Ice Planets
-        chance: 0.15,
-        densityRange_kg_m3: [1000, 3000],
-        massMultiplierFactorRange: [0.01, 0.1],
-        ringChance: 0.05,
-        allowedRingTypes: [RockyType.ICE, RockyType.ICE_DUST],
-        subTypes: [PlanetType.ICE, PlanetType.ROCKY, PlanetType.BARREN],
-      },
+    name: "Outer Gas Zone",
+    category: ZoneCategory.COLD,
+    minAU: 5.0,
+    maxAU: 30.0,
+    temperatureRange: { min: 50, max: 100 },
+    stellarTypes: [CelestialType.STAR],
+    allowedTypes: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II, RockyType.ICE],
+    disallowedTypes: [PlanetType.LAVA, PlanetType.DESERT, PlanetType.OCEAN],
+    formationProbability: 0.8,
+    specialConfigurations: [
+      OrbitalConfiguration.STANDARD,
+      OrbitalConfiguration.BINARY_PAIR,
+      OrbitalConfiguration.TROJAN,
+      OrbitalConfiguration.CO_ORBITAL
     ],
+    maxBodies: 4
+  },
+  {
+    name: "Frozen Outer Zone",
+    category: ZoneCategory.FROZEN,
+    minAU: 30.0,
+    maxAU: 100.0,
+    temperatureRange: { min: 10, max: 50 },
+    stellarTypes: [CelestialType.STAR],
+    allowedTypes: [GasGiantClass.CLASS_III, RockyType.ICE],
+    disallowedTypes: [PlanetType.LAVA, PlanetType.DESERT, PlanetType.OCEAN, PlanetType.TERRESTRIAL],
+    formationProbability: 0.3,
+    specialConfigurations: [
+      OrbitalConfiguration.STANDARD,
+      OrbitalConfiguration.ROGUE,
+      OrbitalConfiguration.BINARY_PAIR
+    ],
+    maxBodies: 6
   },
   {
     name: "Interstellar Zone",
-    minAU: 30,
-    maxAU: 10000,
-    minBodies: 2,
-    maxAdditionalBodies: 5,
-    formationProbabilities: [
-      {
-        type: CelestialType.GAS_GIANT, // Ice Giants
-        chance: 0.1,
-        densityRange_kg_m3: [1200, 2000],
-        massMultiplierFactorRange: [5, 25],
-        ringChance: 0.4,
-        allowedRingTypes: [RockyType.ICE, RockyType.ICE_DUST],
-        subTypes: [GasGiantClass.CLASS_III],
-      },
-      {
-        type: CelestialType.DWARF_PLANET, // Dwarf/Ice Planets
-        chance: 0.9,
-        densityRange_kg_m3: [1000, 3000],
-        massMultiplierFactorRange: [0.01, 0.1],
-        ringChance: 0.05,
-        allowedRingTypes: [RockyType.ICE, RockyType.ICE_DUST],
-        subTypes: [PlanetType.ICE, PlanetType.ROCKY, PlanetType.BARREN],
-      },
-    ],
-  },
+    category: ZoneCategory.INTERSTELLAR,
+    minAU: 100.0,
+    maxAU: 10000.0,
+    temperatureRange: { min: 2, max: 10 },
+    stellarTypes: [CelestialType.STAR],
+    allowedTypes: [RockyType.ICE, GasGiantClass.CLASS_III],
+    disallowedTypes: [PlanetType.LAVA, PlanetType.DESERT, PlanetType.OCEAN, PlanetType.TERRESTRIAL],
+    formationProbability: 0.1,
+    specialConfigurations: [OrbitalConfiguration.ROGUE],
+    maxBodies: 10
+  }
 ];
 
 /**
- * @class CelestialZoneManager
- * @description Manages the definitions of orbital zones and provides methods
- *              to retrieve zone information based on distance from a star.
- *              This is a key component in making procedural generation more
- *              data-driven and configurable.
+ * Enhanced Celestial Zone Manager that creates realistic, zone-based star systems
+ * with sophisticated orbital configurations and multi-star support.
  */
 export class CelestialZoneManager {
-  private zones: CelestialZone[];
+  private readonly zones: CelestialZone[];
+  private readonly random: () => number;
 
-  /**
-   * Creates an instance of CelestialZoneManager.
-   * @param zones - An array of `CelestialZone` configurations. Defaults to `defaultCelestialZones`.
-   */
-  constructor(zones: CelestialZone[] = defaultCelestialZones) {
-    // Sort zones by min distance to ensure correct matching
-    this.zones = zones.sort((a, b) => a.minAU - b.minAU);
+  constructor(random: () => number, customZones?: CelestialZone[]) {
+    this.zones = customZones || enhancedCelestialZones;
+    this.random = random;
   }
 
   /**
-   * Generates a scaled set of celestial zones based on a star's luminosity.
-   * Brighter stars will have their zones pushed further out.
-   *
-   * @param star - The star to generate zones for.
-   * @returns An array of `CelestialZone` objects scaled for the given star.
+   * Determines the stellar system configuration based on probability
    */
-  public static generateZonesForStar(star: CelestialObject): CelestialZone[] {
-    return generateZonesForStar(star);
+  determineStellarConfiguration(): StellarSystemConfiguration {
+    const roll = this.random();
+    
+    if (roll < 0.6) {
+      return { type: StellarSystemType.SINGLE_STAR, stars: 1 };
+    } else if (roll < 0.85) {
+      return { type: StellarSystemType.BINARY_CLOSE, stars: 2 };
+    } else if (roll < 0.95) {
+      return { type: StellarSystemType.BINARY_WIDE, stars: 2 };
+    } else if (roll < 0.98) {
+      return { type: StellarSystemType.TRIPLE_HIERARCHICAL, stars: 3 };
+    } else {
+      return { type: StellarSystemType.MULTIPLE_COMPLEX, stars: Math.floor(this.random() * 3) + 4 };
+    }
   }
 
   /**
-   * Retrieves the appropriate celestial zone for a given orbital distance.
-   * @param distanceAU - The distance from the star in Astronomical Units (AU).
-   * @returns The matching `CelestialZone` object, or `undefined` if no zone is found.
+   * Gets zones adjusted for stellar luminosity and system configuration
    */
-  public getZoneForDistance(distanceAU: number): CelestialZone | undefined {
-    return this.zones.find(
-      (zone) => distanceAU >= zone.minAU && distanceAU < zone.maxAU,
-    );
+  getAdjustedZones(stars: CelestialObject[], config: StellarSystemConfiguration): CelestialZone[] {
+    if (stars.length === 0) return this.zones;
+
+         // Calculate combined luminosity for multi-star systems
+     const totalLuminosity = stars.reduce((sum, star) => {
+       const mass = star.realMass_kg || 1.989e30; // Default to solar mass if not specified
+       const solarMasses = mass / 1.989e30; // Convert to solar masses
+       return sum + calculateStellarLuminosity(solarMasses);
+     }, 0);
+
+    // Adjust zone boundaries based on luminosity
+    const luminosityFactor = Math.sqrt(totalLuminosity);
+    
+    return this.zones.map(zone => ({
+      ...zone,
+      minAU: zone.minAU * luminosityFactor,
+      maxAU: zone.maxAU * luminosityFactor,
+      // Adjust formation probability based on system complexity
+      formationProbability: zone.formationProbability * this.getComplexityFactor(config)
+    }));
   }
-}
 
-export function generateZonesForStar(star: CelestialObject): CelestialZone[] {
-  // First, calculate the star's intrinsic luminosity.
-  const luminosity = calculateStellarLuminosity(
-    star.realRadius_m,
-    star.temperature,
-  );
+  /**
+   * Gets formation probability modifier based on system complexity
+   */
+  private getComplexityFactor(config: StellarSystemConfiguration): number {
+    switch (config.type) {
+      case StellarSystemType.SINGLE_STAR:
+        return 1.0;
+      case StellarSystemType.BINARY_CLOSE:
+        return 0.8; // Slightly reduced formation in close binaries
+      case StellarSystemType.BINARY_WIDE:
+        return 1.1; // Enhanced formation in wide binaries
+      case StellarSystemType.TRIPLE_HIERARCHICAL:
+        return 0.9;
+      case StellarSystemType.MULTIPLE_COMPLEX:
+        return 0.7; // Reduced formation in complex systems
+      default:
+        return 1.0;
+    }
+  }
 
-  // Next, use the new physics-based calculation for the habitable zone.
-  const { innerBoundary: hzInner, outerBoundary: hzOuter } =
-    calculateHabitableZoneFromLuminosity(luminosity);
+  /**
+   * Selects appropriate zones for body placement
+   */
+  selectZonesForPlacement(
+    stars: CelestialObject[], 
+    config: StellarSystemConfiguration
+  ): CelestialZone[] {
+    const adjustedZones = this.getAdjustedZones(stars, config);
+    const activeZones: CelestialZone[] = [];
 
-  const originalHabitableZone = defaultCelestialZones.find(
-    (z) => z.name === "Habitable Zone",
-  )!;
-  const originalInnerZone = defaultCelestialZones.find(
-    (z) => z.name === "Inner Zone",
-  )!;
-  const originalFrostLine = defaultCelestialZones.find(
-    (z) => z.name === "Frost Line",
-  )!;
+    for (const zone of adjustedZones) {
+      const shouldInclude = this.random() < zone.formationProbability;
+      if (shouldInclude) {
+        activeZones.push(zone);
+      }
+    }
 
-  // Calculate scaling factors based on how the habitable zone has shifted.
-  // We use this to scale the other zones relative to the new, accurate HZ.
-  const innerScaleFactor = hzInner / originalHabitableZone.minAU;
-  const outerScaleFactor = hzOuter / originalHabitableZone.maxAU;
+    // Ensure at least one zone is active for non-empty systems
+    if (activeZones.length === 0 && stars.length > 0) {
+      const fallbackZone = getRandomItem(adjustedZones.slice(1, 4), this.random); // Pick from hot/temperate/cool
+      activeZones.push(fallbackZone);
+    }
 
-  const scaledZones = JSON.parse(
-    JSON.stringify(defaultCelestialZones),
-  ) as CelestialZone[];
+    return activeZones;
+  }
 
-  const habitableZone = scaledZones.find((z) => z.name === "Habitable Zone")!;
-  habitableZone.minAU = hzInner;
-  habitableZone.maxAU = hzOuter;
+     /**
+    * Gets all available zones (for testing and analysis)
+    */
+   getAllZones(): CelestialZone[] {
+     return [...this.zones];
+   }
 
-  const innerZone = scaledZones.find((z) => z.name === "Inner Zone")!;
-  innerZone.minAU *= innerScaleFactor;
-  innerZone.maxAU = hzInner; // Ensure it's contiguous
+   /**
+    * Gets zone for a specific distance (compatibility method)
+    */
+   getZoneForDistance(distanceAU: number): CelestialZone | undefined {
+     return this.zones.find(
+       (zone) => distanceAU >= zone.minAU && distanceAU < zone.maxAU
+     );
+   }
+ }
 
-  const frostLine = scaledZones.find((z) => z.name === "Frost Line")!;
-  frostLine.minAU = hzOuter; // Ensure it's contiguous
-  frostLine.maxAU *= outerScaleFactor;
-
-  const outerZone = scaledZones.find((z) => z.name === "Outer Zone")!;
-  outerZone.minAU = frostLine.maxAU;
-  outerZone.maxAU *= outerScaleFactor;
-
-  const interstellarZone = scaledZones.find(
-    (z) => z.name === "Interstellar Zone",
-  )!;
-  interstellarZone.minAU = outerZone.maxAU;
-  interstellarZone.maxAU *= outerScaleFactor;
-
-  return scaledZones;
-}
+ /**
+  * Legacy compatibility function
+  */
+ export function generateZonesForStar(star: CelestialObject): CelestialZone[] {
+   const random = () => Math.random(); // Use non-seeded random for backwards compatibility
+   const zoneManager = new CelestialZoneManager(random);
+   const config = zoneManager.determineStellarConfiguration();
+   return zoneManager.getAdjustedZones([star], config);
+ }
