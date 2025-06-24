@@ -31,9 +31,14 @@ export function generateBodyDistances(
 ): BodyPlacement[] {
   const placementGroups: PlacementGroup[] = [];
   let globalSlotIndex = 0;
+  const maxBodies = 60 + Math.floor(random() * 21); // 60-80 bodies
 
   // Generate placements for each zone
-  zones.forEach((zone) => {
+  for (const zone of zones) {
+    if (globalSlotIndex >= maxBodies) {
+      break; // Stop if we've hit the body limit
+    }
+
     const zoneGroups = generatePlacementsForZone(
       random,
       zone,
@@ -45,7 +50,7 @@ export function generateBodyDistances(
       (sum, group) => sum + group.bodies.length,
       0,
     );
-  });
+  }
 
   // Flatten all placements and sort by distance
   const allPlacements = placementGroups
