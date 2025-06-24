@@ -111,7 +111,7 @@ export abstract class BaseUniformsRenderer {
         map((event) => event.detail.value),
         distinctUntilChanged((prev, curr) => prev === curr && !isNaN(prev)),
         tap((newValue) => {
-          const latestCelestial = StateAccessor.getCurrentCelestialObjects()[celestialId];
+          const latestCelestial = StateAccessor.getCelestialObject(celestialId);
           if (latestCelestial && latestCelestial.properties) {
             const clonedProperties = this._deepClone(
               latestCelestial.properties,
@@ -177,7 +177,7 @@ export abstract class BaseUniformsRenderer {
         map((event) => (event.target as HTMLInputElement).value),
         distinctUntilChanged(),
         tap((newColor) => {
-          const latestCelestial = StateAccessor.getCurrentCelestialObjects()[celestialId];
+          const latestCelestial = StateAccessor.getCelestialObject(celestialId);
           if (latestCelestial && latestCelestial.properties) {
             const clonedProperties = this._deepClone(
               latestCelestial.properties,

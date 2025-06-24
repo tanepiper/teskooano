@@ -425,7 +425,7 @@ export class PredictionManager {
     ) as PredictionLabelLayer | undefined;
 
     if (objectId && labelLayer) {
-      const coreObject = StateAccessor.getCurrentCelestialObjects()[objectId];
+      const coreObject = StateAccessor.getCelestialObject(objectId);
       const renderableObject = renderableStore.getRenderableObjects()[objectId];
       const threeJsObject = this.objectManager.getObject(objectId);
       const velocity = coreObject?.physicsStateReal?.velocity_mps.length() || 0;

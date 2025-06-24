@@ -119,7 +119,38 @@ export class StateAccessor {
    * @returns The celestial object or undefined if not found
    */
   static getCelestialObject(objectId: string): CelestialObject | undefined {
-    return getCelestialObjects()[objectId];
+    return this.getCurrentCelestialObjects()[objectId];
+  }
+
+  /**
+   * Gets multiple celestial objects by their IDs.
+   * @param objectIds Array of object IDs to retrieve
+   * @returns Array of celestial objects (only existing objects are included)
+   */
+  static getCelestialObjectsByIds(objectIds: string[]): CelestialObject[] {
+    const allObjects = this.getCurrentCelestialObjects();
+    return objectIds
+      .map(id => allObjects[id])
+      .filter((obj): obj is CelestialObject => obj !== undefined);
+  }
+
+  /**
+   * Gets multiple celestial objects by their IDs as a map.
+   * @param objectIds Array of object IDs to retrieve
+   * @returns Record mapping IDs to celestial objects (only existing objects are included)
+   */
+  static getCelestialObjectsMapByIds(objectIds: string[]): Record<string, CelestialObject> {
+    const allObjects = this.getCurrentCelestialObjects();
+    const result: Record<string, CelestialObject> = {};
+    
+    objectIds.forEach(id => {
+      const obj = allObjects[id];
+      if (obj) {
+        result[id] = obj;
+      }
+    });
+    
+    return result;
   }
 
   /**
@@ -128,7 +159,7 @@ export class StateAccessor {
    * @returns True if the object exists
    */
   static hasCelestialObject(objectId: string): boolean {
-    return objectId in getCelestialObjects();
+    return objectId in this.getCurrentCelestialObjects();
   }
 
   /**
@@ -136,7 +167,7 @@ export class StateAccessor {
    * @returns Array of all celestial object IDs
    */
   static getCelestialObjectIds(): string[] {
-    return Object.keys(getCelestialObjects());
+    return Object.keys(this.getCurrentCelestialObjects());
   }
 
   /**
@@ -144,7 +175,7 @@ export class StateAccessor {
    * @returns Number of celestial objects in the system
    */
   static getCelestialObjectCount(): number {
-    return Object.keys(getCelestialObjects()).length;
+    return Object.keys(this.getCurrentCelestialObjects()).length;
   }
 
   /**

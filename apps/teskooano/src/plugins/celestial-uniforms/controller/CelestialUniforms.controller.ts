@@ -195,7 +195,7 @@ export class CelestialUniformsController extends StateSubscriptionMixin {
       return;
     }
 
-    const celestialData = StateAccessor.getCurrentCelestialObjects()[selectedId];
+    const celestialData = StateAccessor.getCelestialObject(selectedId);
 
     if (celestialData) {
       if (celestialData.status === CelestialStatus.DESTROYED) {
