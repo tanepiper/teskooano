@@ -1,4 +1,4 @@
-import { simulationStateService } from "@teskooano/core-state";
+import { StateAccessor } from "@teskooano/core-state";
 import * as THREE from "three";
 import { AnimationLoop } from "./AnimationLoop";
 import { rendererEvents } from "./events";
@@ -127,7 +127,7 @@ export class SceneManager {
    * @returns The resolved FOV value.
    */
   private _initializeFov(): number {
-    const initialState = simulationStateService.getSimulationState();
+    const initialState = StateAccessor.getCurrentSimulationState();
     return (
       this.options.fov ??
       initialState.camera?.fov ??
@@ -142,7 +142,7 @@ export class SceneManager {
    * @returns The configured `PerspectiveCamera`.
    */
   private _initializeCamera(): THREE.PerspectiveCamera {
-    const initialState = simulationStateService.getSimulationState();
+    const initialState = StateAccessor.getCurrentSimulationState();
     const camera = new THREE.PerspectiveCamera(
       this.fov,
       this.width / this.height,
@@ -175,7 +175,7 @@ export class SceneManager {
    * @returns The configured `WebGLRenderer`.
    */
   private _initializeRenderer(container: HTMLElement): THREE.WebGLRenderer {
-    const initialState = simulationStateService.getSimulationState();
+    const initialState = StateAccessor.getCurrentSimulationState();
     const profile = initialState.performanceProfile;
     let powerPref: "default" | "high-performance" | "low-power" =
       DefaultSceneManagerConfig.RENDERER.POWER_PREFERENCE.DEFAULT;

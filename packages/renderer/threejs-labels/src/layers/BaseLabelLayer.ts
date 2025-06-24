@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import { CONVERSION } from "@teskooano/core-physics";
 import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 
 /**

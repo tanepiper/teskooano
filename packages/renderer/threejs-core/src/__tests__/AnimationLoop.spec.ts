@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { AnimationLoop } from "../AnimationLoop";
 import * as THREE from "three";
-import { celestialObjectsStore } from "@teskooano/core-state";
-import { CelestialType } from "@teskooano/data-types";
 
 const originalRequestAnimationFrame = window.requestAnimationFrame;
 const originalCancelAnimationFrame = window.cancelAnimationFrame;
@@ -20,11 +18,7 @@ vi.mock("three", async () => {
   };
 });
 
-vi.mock("@teskooano/core-state", () => ({
-  celestialObjectsStore: {
-    get: vi.fn().mockReturnValue({}),
-  },
-}));
+
 
 describe("AnimationLoop", () => {
   let animationLoop: AnimationLoop;
@@ -94,8 +88,11 @@ describe("AnimationLoop", () => {
     const mockCallback = vi.fn();
 
     animationLoop.onAnimate(mockCallback);
+    animationLoop.start();
 
-    animationLoop.tick();
+    // Trigger the animation frame manually
+    const animateCallback = mockRequestAnimationFrame.mock.calls[0][0];
+    animateCallback();
 
     expect(mockCallback).toHaveBeenCalledWith(1.0, 0.016);
   });
@@ -104,8 +101,11 @@ describe("AnimationLoop", () => {
     const mockCallback = vi.fn();
 
     animationLoop.onRender(mockCallback);
+    animationLoop.start();
 
-    animationLoop.tick();
+    // Trigger the animation frame manually
+    const animateCallback = mockRequestAnimationFrame.mock.calls[0][0];
+    animateCallback();
 
     expect(mockCallback).toHaveBeenCalled();
   });
@@ -114,10 +114,12 @@ describe("AnimationLoop", () => {
     const mockCallback = vi.fn();
 
     animationLoop.onAnimate(mockCallback);
-
     animationLoop.removeAnimateCallback(mockCallback);
+    animationLoop.start();
 
-    animationLoop.tick();
+    // Trigger the animation frame manually
+    const animateCallback = mockRequestAnimationFrame.mock.calls[0][0];
+    animateCallback();
 
     expect(mockCallback).not.toHaveBeenCalled();
   });
@@ -126,18 +128,31 @@ describe("AnimationLoop", () => {
     const mockCallback = vi.fn();
 
     animationLoop.onRender(mockCallback);
-
     animationLoop.removeRenderCallback(mockCallback);
+    animationLoop.start();
 
-    animationLoop.tick();
+    // Trigger the animation frame manually
+    const animateCallback = mockRequestAnimationFrame.mock.calls[0][0];
+    animateCallback();
 
     expect(mockCallback).not.toHaveBeenCalled();
   });
 
-  it("should get the delta time", () => {
-    const delta = animationLoop.getDelta();
-
-    expect(delta).toBe(0.016);
+  it("should get the current stats", () => {
+    const mockRenderer = {
+      info: {
+        render: { calls: 10, triangles: 1000 }
+      }
+    } as any;
+    
+    animationLoop.setRenderer(mockRenderer);
+    const stats = animationLoop.getCurrentStats();
+    
+    expect(stats).toBeDefined();
+    if (stats) {
+      expect(stats.drawCalls).toBe(10);
+      expect(stats.triangles).toBe(1000);
+    }
   });
 
   it("should dispose resources", () => {
@@ -147,28 +162,23 @@ describe("AnimationLoop", () => {
     animationLoop.onAnimate(mockAnimateCallback);
     animationLoop.onRender(mockRenderCallback);
 
-    animationLoop.dispose();
+    // No dispose method exists in AnimationLoop, test stop instead
+    animationLoop.start();
+    animationLoop.stop();
 
-    animationLoop.tick();
-
-    expect(mockAnimateCallback).not.toHaveBeenCalled();
-    expect(mockRenderCallback).not.toHaveBeenCalled();
+    expect(mockCancelAnimationFrame).toHaveBeenCalled();
   });
 
-  it("should collect light sources from celestial objects", () => {
-    const mockCelestialObjects = {
-      star1: {
-        type: CelestialType.STAR,
-        position: { x: 1, y: 2, z: 3 },
-      },
-    };
-
-    vi.mocked(celestialObjectsStore.get).mockReturnValue(
-      mockCelestialObjects as any,
-    );
-
-    animationLoop.tick();
-
-    expect(true).toBe(true);
+  it("should handle animation frame callback", () => {
+    const mockCallback = vi.fn();
+    animationLoop.onAnimate(mockCallback);
+    
+    animationLoop.start();
+    
+    // Trigger the animation frame manually
+    const animateCallback = mockRequestAnimationFrame.mock.calls[0][0];
+    animateCallback();
+    
+    expect(mockCallback).toHaveBeenCalledWith(1.0, 0.016);
   });
 });

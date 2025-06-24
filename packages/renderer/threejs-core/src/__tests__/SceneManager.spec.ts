@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as THREE from "three";
 import { SceneManager } from "../SceneManager";
-import { simulationState } from "@teskooano/core-state";
 
 describe("SceneManager", () => {
   let container: HTMLDivElement;
