@@ -17,14 +17,21 @@ interface AppContext {
 export class EventSetup {
   /**
    * Sets up all application event listeners
+   * @throws {Error} If critical event setup fails
    */
   public static setupEventListeners(
     pluginManagerInstance: typeof pluginManager,
     appContext: AppContext
   ): void {
-    this.setupRendererStatsListener();
-    this.setupEngineFocusListener(pluginManagerInstance);
-    this.setupTourRequestListener(pluginManagerInstance, appContext);
+    try {
+      this.setupRendererStatsListener();
+      this.setupEngineFocusListener(pluginManagerInstance);
+      this.setupTourRequestListener(pluginManagerInstance, appContext);
+    } catch (error) {
+      throw new Error(
+        `Event setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 
   /**

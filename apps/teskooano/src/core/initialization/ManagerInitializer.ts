@@ -6,6 +6,7 @@ import type { pluginManager } from "@teskooano/ui-plugin";
 export class ManagerInitializer {
   /**
    * Initializes core application managers
+   * @throws {Error} If any critical manager fails to initialize
    */
   public static async initializeManagers(
     pluginManagerInstance: typeof pluginManager,
@@ -13,47 +14,54 @@ export class ManagerInitializer {
     toolbarElement: HTMLElement,
     dockviewController: any
   ): Promise<{ modalManager: any }> {
-    // Initialize engine view manager
-    await pluginManagerInstance.execute("engine-view:initialize", {
-      targetElement: appElement,
-    });
-
-    // Initialize toolbar manager
     try {
+      // Initialize engine view manager (critical)
+      console.log("[ManagerInit] Initializing engine view...");
+      await pluginManagerInstance.execute("engine-view:initialize", {
+        targetElement: appElement,
+      });
+
+      // Initialize toolbar manager (critical)
+      console.log("[ManagerInit] Initializing toolbar...");
       await pluginManagerInstance.execute("toolbar:initialize", {
         targetElement: toolbarElement,
       });
-    } catch (error) {
-      console.error("[ManagerInitializer] Error during toolbar initialization:", error);
-      throw error;
-    }
 
-    // Initialize and configure modal manager
-    const modalManager = pluginManagerInstance.getManagerInstance<any>("modal-manager");
-    if (!modalManager) {
-      throw new Error("Failed to get ModalManager instance from plugin manager.");
-    }
+      // Initialize and configure modal manager (critical)
+      console.log("[ManagerInit] Initializing modal manager...");
+      const modalManager = pluginManagerInstance.getManagerInstance<any>("modal-manager");
+      if (!modalManager) {
+        throw new Error("Failed to get ModalManager instance from plugin manager.");
+      }
 
-    if (typeof modalManager.initialize === "function") {
-      modalManager.initialize(dockviewController);
-    } else {
-      throw new Error("ModalManager instance does not have an initialize method.");
-    }
+      if (typeof modalManager.initialize === "function") {
+        modalManager.initialize(dockviewController);
+      } else {
+        throw new Error("ModalManager instance does not have an initialize method.");
+      }
 
-    // Initialize tour controller
-    try {
-      await pluginManagerInstance.execute("tour:initialize", {
-        modalManager,
+      // Initialize system controls (critical)
+      console.log("[ManagerInit] Initializing system controls...");
+      await pluginManagerInstance.execute("system-controls:initialize", {
+        dockviewController,
       });
+
+      // Initialize tour controller (optional - shouldn't block startup)
+      console.log("[ManagerInit] Initializing tour controller...");
+      try {
+        await pluginManagerInstance.execute("tour:initialize", {
+          modalManager,
+        });
+      } catch (error) {
+        console.warn("[ManagerInit] Tour controller initialization failed (non-critical):", error);
+        // Tour is optional, don't let this block the app
+      }
+
+      return { modalManager };
     } catch (error) {
-      console.error("[ManagerInitializer] Failed to initialize tour controller:", error);
+      throw new Error(
+        `Manager initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
-
-    // Initialize system controls
-    await pluginManagerInstance.execute("system-controls:initialize", {
-      dockviewController,
-    });
-
-    return { modalManager };
   }
 }

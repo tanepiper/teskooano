@@ -14,22 +14,37 @@ import {
 export class PanelRegistry {
   /**
    * Registers all panel components from loaded plugins
+   * @throws {Error} If critical panel registration fails
    */
   public static registerPanelComponents(
     pluginManagerInstance: typeof pluginManager,
     dockviewController: any
   ): void {
     const plugins = pluginManagerInstance.getPlugins();
+    const errors: string[] = [];
     
     plugins.forEach((plugin: TeskooanoPlugin) => {
       plugin.panels?.forEach((panelConfig: PanelConfig) => {
-        this.registerSinglePanel(panelConfig, plugin.id, dockviewController);
+        try {
+          this.registerSinglePanel(panelConfig, plugin.id, dockviewController);
+        } catch (error) {
+          const errorMessage = `Failed to register panel '${panelConfig.componentName}' from plugin '${plugin.id}': ${error instanceof Error ? error.message : 'Unknown error'}`;
+          console.error(`[PanelRegistry] ${errorMessage}`);
+          errors.push(errorMessage);
+        }
       });
     });
+
+    if (errors.length > 0) {
+      throw new Error(
+        `Panel registration failed with ${errors.length} error(s):\n${errors.join('\n')}`
+      );
+    }
   }
 
   /**
    * Registers a single panel component
+   * @throws {Error} If panel registration fails
    */
   private static registerSinglePanel(
     panelConfig: PanelConfig,
@@ -40,10 +55,9 @@ export class PanelRegistry {
     const componentName = panelConfig.componentName;
 
     if (!PanelComponentOrConstructor) {
-      console.error(
+      throw new Error(
         `Panel class not found for ${componentName} in plugin ${pluginId}`
       );
-      return;
     }
 
     const isCustomElementConstructor =
@@ -93,6 +107,7 @@ export class PanelRegistry {
 
   /**
    * Registers a direct panel component
+   * @throws {Error} If panel registration fails
    */
   private static registerDirectPanel(
     componentName: string,
@@ -105,9 +120,8 @@ export class PanelRegistry {
         PanelComponentOrConstructor as new () => IContentRenderer
       );
     } catch (error) {
-      console.error(
-        `[PanelRegistry] Error registering panel '${componentName}' directly:`,
-        error
+      throw new Error(
+        `Error registering panel '${componentName}' directly: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   }
