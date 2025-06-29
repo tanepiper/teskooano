@@ -7,6 +7,36 @@
     <meta name="theme-color" content="#ffffff" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Teskooano</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #121212;
+        overflow: hidden;
+      }
+      #app {
+        height: 100%;
+      }
+      #loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        background-color: #121212;
+      }
+      #loading img {
+        width: 300px;
+        height: 300px;
+      }
+    </style>
     <meta
       name="description"
       content="Teskooano is a 3D N-Body Simulator build in Web Components."
@@ -14,7 +44,11 @@
   </head>
   <body>
     <div id="toolbar"></div>
-    <div id="app"></div>
+    <div id="app">
+      <div id="loading">
+        <img src="/assets/loading-spinner.svg" alt="Loading..." />
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -1,13 +1,12 @@
-import { createComponentPlugin } from "@teskooano/ui-plugin";
+import type { TeskooanoPlugin } from "@teskooano/ui-plugin";
 import { ExternalLinksComponent } from "./view/ExternalLinks.view.js";
 
 export * from "./types.js";
 
 /**
  * Plugin definition for the External Links widget.
- * ✅ Refactored to use createComponentPlugin factory - reduced from 46 lines to 18 lines
  */
-export const plugin = createComponentPlugin({
+export const plugin: TeskooanoPlugin = {
   id: "teskooano-external-links",
   name: "External Links Widget",
   description:
@@ -18,6 +17,14 @@ export const plugin = createComponentPlugin({
       componentClass: ExternalLinksComponent,
     },
   ],
-});
+  toolbarWidgets: [
+    {
+      id: "main-toolbar-external-links",
+      componentName: "teskooano-external-links-component",
+      target: "main-toolbar",
+      order: 100,
+    },
+  ],
+};
 
 export { ExternalLinksComponent };

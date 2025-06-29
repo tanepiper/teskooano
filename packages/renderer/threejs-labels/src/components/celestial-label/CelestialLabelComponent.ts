@@ -27,6 +27,7 @@ export class CelestialLabelComponent extends HTMLElement {
         <style>
           :host {
             position: relative;
+            font-family: monospace;
             left: 50px;
             top: -20px;
             display: block;
@@ -34,25 +35,26 @@ export class CelestialLabelComponent extends HTMLElement {
             background-color: rgba(0,0,0,0.5);
             padding: 2px 5px;
             border-radius: 3px;
-            font-size: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
             user-select: none;
+            pointer-events: none;
             opacity: 1;
             transition: opacity 0.3s ease-in-out;
           }
 
           .distance {
-            font-size: 0.8em;
+            font-size: 0.8rem;
             color: #ccc;
             margin-left: 8px;
           }
 
           :host(:not([visible])) {
             opacity: 0;
-            pointer-events: none;
           }
         </style>
         <span>${name}</span>
-        ${distanceText ? `<span class="distance">${distanceText}</span>` : ""}
+        ${distanceText ? `<span class="distance">⎊ ${distanceText}</span>` : ""}
       `;
     }
   }

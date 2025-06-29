@@ -171,7 +171,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
    */
   private _formatDistance(distanceInAu: number): string {
     if (distanceInAu > 0.5) {
-      return `(${distanceInAu.toFixed(2)} AU)`;
+      return `${distanceInAu.toFixed(2)} AU`;
     }
 
     const distanceInMeters = distanceInAu * AU_METERS;
@@ -179,12 +179,12 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     const KILOMETER = 1_000;
 
     if (distanceInMeters >= MEGAMETER) {
-      return `(${(distanceInMeters / MEGAMETER).toFixed(2)} Mm)`;
+      return `${(distanceInMeters / MEGAMETER).toFixed(2)} Mm`;
     }
     if (distanceInMeters >= KILOMETER) {
-      return `(${(distanceInMeters / KILOMETER).toFixed(2)} km)`;
+      return `${(distanceInMeters / KILOMETER).toFixed(2)} km`;
     }
-    return `(${distanceInMeters.toFixed(2)} m)`;
+    return `${distanceInMeters.toFixed(2)} m`;
   }
 
   /**

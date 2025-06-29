@@ -1,20 +1,12 @@
 import * as THREE from "three";
+import { Layer2DManager } from "./Layer2DManager";
+import { CelestialLabelLayer } from "./layers/CelestialLabelLayer";
 import { AuMarkerManager } from "./managers/AuMarkerManager";
-import { CSS2DLayerType, Layer2DManager } from "./Layer2DManager";
 import {
-  CelestialLabelLayer,
-  type LabelVisibilityConfig,
-} from "./layers/CelestialLabelLayer";
-
-export interface LabelSystemOptions {
-  showAuMarkers?: boolean;
-  labelConfig?: LabelVisibilityConfig;
-}
-
-export interface LabelSystem {
-  css2DManager: Layer2DManager;
-  auMarkerManager?: AuMarkerManager;
-}
+  CSS2DLayerType,
+  type LabelSystem,
+  type LabelSystemOptions,
+} from "./types";
 
 /**
  * Initializes the complete label system, including the 2D manager and all default layers.
@@ -33,11 +25,8 @@ export function initializeLabelSystem(
   const celestialLayer = new CelestialLabelLayer(options.labelConfig);
   css2DManager.registerLayer(CSS2DLayerType.CELESTIAL_LABELS, celestialLayer);
 
-  let auMarkerManager: AuMarkerManager | undefined;
-  if (options.showAuMarkers) {
-    auMarkerManager = new AuMarkerManager(scene, css2DManager);
-    auMarkerManager.createMarkers();
-  }
+  const auMarkerManager = new AuMarkerManager(scene, css2DManager);
+  auMarkerManager.createMarkers();
 
   return { css2DManager, auMarkerManager };
 }

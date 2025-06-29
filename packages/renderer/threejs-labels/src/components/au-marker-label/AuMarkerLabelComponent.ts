@@ -1,4 +1,10 @@
+/**
+ * A Web Component for showing the AU distance markers within the engine
+ * The marker has two properties - for it's value and colour
+ */
 export class AuMarkerLabelComponent extends HTMLElement {
+  static TAG_NAME = "teskooano-au-marker";
+
   static get observedAttributes() {
     return ["data-au-display-value", "data-color"];
   }
@@ -27,12 +33,13 @@ export class AuMarkerLabelComponent extends HTMLElement {
           :host {
             display: block;
             color: ${color};
-            background-color: rgba(0,0,0,0.6);
+            background-color: #444;
+            border: 1px solid #000;
+            opacity: 0.5;
             padding: 2px 5px;
-            border-radius: 3px;
-            font-size: 12px;
+            border-radius: 1rem;
+            font-size: 0.8rem;
             user-select: none;
-            opacity: 1;
             transition: opacity 0.3s ease-in-out;
           }
 
@@ -46,5 +53,3 @@ export class AuMarkerLabelComponent extends HTMLElement {
     }
   }
 }
-
-export const AU_MARKER_LABEL_TAG = "au-marker-label";

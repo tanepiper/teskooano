@@ -1,7 +1,8 @@
 import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import * as THREE from "three";
-import { Layer2DManager, CSS2DLayerType } from "../Layer2DManager";
+import { Layer2DManager } from "../Layer2DManager";
 import { AuMarkerLabelLayer } from "../layers/AuMarkerLabelLayer";
+import { CSS2DLayerType } from "../types";
 
 const auMarkersData = [
   { au: 1, color: "#00ff00" },
@@ -99,6 +100,7 @@ export class AuMarkerManager {
         side: THREE.DoubleSide,
         transparent: true,
         opacity: 0.5,
+        toneMapped: false,
       });
       const circle = new THREE.Mesh(circleGeometry, circleMaterial);
       circle.rotation.x = -Math.PI / 2;

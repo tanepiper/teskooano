@@ -79,6 +79,12 @@ export class ApplicationInitializer {
 
       console.log("🪐 Teskooano Initialized.");
 
+      // Hide the loading screen
+      const loadingElement = document.getElementById("loading");
+      if (loadingElement) {
+        loadingElement.remove();
+      }
+
       return {
         dockviewController,
         dockviewApi,
@@ -86,6 +92,21 @@ export class ApplicationInitializer {
       };
     } catch (error) {
       console.error("💥 Critical initialization failure:", error);
+
+      // Display an error message to the user
+      const loadingElement = document.getElementById("loading");
+      if (loadingElement) {
+        loadingElement.innerHTML = `
+          <div style="text-align: center; font-family: sans-serif; color: #E0E0E0;">
+              <h2>Application Error</h2>
+              <p>Could not initialize the simulation.</p>
+              <p style="color: #EF5350; font-family: monospace; max-width: 80vw; margin: auto; word-wrap: break-word;">${
+                error instanceof Error ? error.message : "Unknown error"
+              }</p>
+              <p><small>Please check the developer console for more details.</small></p>
+          </div>
+      `;
+      }
 
       // Attempt cleanup
       await this.cleanup();

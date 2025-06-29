@@ -1,10 +1,7 @@
 import * as THREE from "three";
 import { BaseLabelLayer, UIRegistryComponent } from "./BaseLabelLayer";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-import {
-  AU_MARKER_LABEL_TAG,
-  AuMarkerLabelComponent,
-} from "../components/au-marker-label/AuMarkerLabelComponent";
+import { AuMarkerLabelComponent } from "../components/au-marker-label/AuMarkerLabelComponent";
 
 /**
  * Manages labels specifically for AU distance markers.
@@ -20,46 +17,47 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
   public override getRequiredComponents(): UIRegistryComponent[] {
     return [
       {
-        tagName: AU_MARKER_LABEL_TAG,
+        tagName: AuMarkerLabelComponent.TAG_NAME,
         componentClass: AuMarkerLabelComponent,
       },
     ];
   }
 
+  /**
+   * Create a label for a specific AU Value at the specific position
+   * @param id
+   * @param auValue
+   * @param position
+   * @param color
+   */
   public createLabel(
     id: string,
     auValue: number,
     position: THREE.Vector3,
     color: string,
   ): void {
-    if (this.elements.has(id)) {
-      console.warn(
-        `[AuMarkerLabelLayer] Label already exists for ${id}. Skipping creation.`,
-      );
-      return;
+    if (!this.scene) {
+      throw new Error("No scene to create AU Markers with");
     }
 
-    const labelElement = document.createElement(AU_MARKER_LABEL_TAG);
+    const labelElement = document.createElement(
+      AuMarkerLabelComponent.TAG_NAME,
+    );
     // Store the AU value in scene units for direct comparison later.
     const auValueInSceneUnits = this.auToSceneUnits(auValue);
-    labelElement.setAttribute("data-au-value", auValueInSceneUnits.toString());
+    labelElement.setAttribute(
+      "data-scene-distance",
+      auValueInSceneUnits.toString(),
+    );
     labelElement.setAttribute("data-au-display-value", auValue.toString());
     labelElement.setAttribute("data-color", color);
 
     const css2dObject = new CSS2DObject(labelElement);
     css2dObject.position.copy(position);
 
-    if (this.scene) {
-      this.scene.add(css2dObject);
-    } else {
-      console.warn(
-        `[AuMarkerLabelLayer] Scene is not available. Label for ${id} will not be rendered.`,
-      );
-    }
+    this.scene.add(css2dObject);
 
     this.elements.set(id, css2dObject);
-    // The component's visibility is now controlled by the 'visible' attribute for animations.
-    // label.visible = this.isVisible;
   }
 
   public override update(
@@ -77,7 +75,7 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
 
     this.elements.forEach((label) => {
       const markerAuValueScene = parseFloat(
-        label.element.getAttribute("data-au-value") || "0",
+        label.element.getAttribute("data-scene-distance") || "0",
       );
 
       // Hide the label if the camera is 110% past the marker's distance
