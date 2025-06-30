@@ -1,5 +1,9 @@
-import { Overlay } from "dockview-core/dist/esm/overlay/overlay";
-import { ActiveOverlay, ModalResult, OverlayOptions } from "../types";
+import {
+  type ActiveOverlay,
+  type ModalResult,
+  type OverlayOptions,
+} from "../types/index";
+import { ModalComponent } from "../../../components/modal";
 
 /**
  * Manages modal-like overlays within a Dockview container.
@@ -15,102 +19,71 @@ export class OverlayManager {
    */
   constructor(container: HTMLElement) {
     this._overlayContainer = container;
-
-    this._overlayContainer.style.position = "relative";
   }
 
   /**
    * Shows a modal-like overlay centered in the Dockview container.
    * @param id Unique ID for this overlay instance.
-   * @param element The HTML element to display within the overlay.
-   * @param options Dimensions for the overlay.
+   * @param content The HTML element to display within the overlay.
+   * @param options Configuration for the modal.
    * @returns A promise that resolves with the result when the overlay is hidden.
    */
-  public showOverlay(
+  public async showOverlay(
     id: string,
-    element: HTMLElement,
+    content: HTMLElement,
     options: OverlayOptions,
   ): Promise<ModalResult> {
-    return new Promise((resolve) => {
-      if (this._activeOverlays.has(id)) {
-        console.warn(`OverlayManager: Overlay with ID ${id} already shown.`);
-        resolve("dismissed");
-        return;
-      }
+    if (this._activeOverlays.has(id)) {
+      console.warn(`OverlayManager: Overlay with ID ${id} already shown.`);
+      // Immediately resolve if the modal is already open
+      return Promise.resolve("dismissed");
+    }
 
-      const containerRect = this._overlayContainer.getBoundingClientRect();
-      const width = options.width;
-      const height = options.height;
-      const top = Math.max(
-        0,
-        containerRect.top + containerRect.height / 2 - height / 2,
-      );
-      const left = Math.max(
-        0,
-        containerRect.left + containerRect.width / 2 - width / 2,
-      );
+    const modal = new ModalComponent();
+    this._overlayContainer.appendChild(modal);
 
-      try {
-        const overlayInstance = new Overlay({
-          container: this._overlayContainer,
-          content: element,
-          top: top,
-          left: left,
-          width: width,
-          height: height,
-        });
+    const promise = modal.show({
+      title: options.title,
+      content,
+      confirmText: options.confirmText,
+      closeText: options.closeText,
+      secondaryText: options.secondaryText,
+      hideSecondaryButton: options.hideSecondaryButton,
+    });
 
-        const overlayElement = overlayInstance.element as HTMLElement;
+    // Store a reference to the modal so we can potentially interact with it later
+    // For now, the modal manages its own lifecycle.
+    this._activeOverlays.set(id, { element: modal });
 
-        overlayInstance.setVisible(true);
-        overlayInstance.bringToFront();
-
-        this._activeOverlays.set(id, {
-          overlay: overlayInstance,
-          element: overlayElement,
-          resolve,
-        });
-      } catch (error) {
-        console.error(`OverlayManager: Failed to create overlay ${id}:`, error);
-        resolve("dismissed");
-      }
+    // The modal's promise will resolve when it's closed.
+    // We also need to clean up our registry when it closes.
+    return promise.finally(() => {
+      this._activeOverlays.delete(id);
     });
   }
 
   /**
-   * Hides and cleans up a specific overlay.
+   * Hides an overlay and resolves the promise with the result.
    * @param id The ID of the overlay to hide.
-   * @param result The reason the overlay is being hidden (e.g., 'confirm', 'close').
+   * @param result The result to resolve the promise with.
    */
   public hideOverlay(id: string, result: ModalResult): void {
-    const overlayData = this._activeOverlays.get(id);
-    if (!overlayData) {
-      console.warn(
-        `OverlayManager: No active overlay found with ID ${id} to hide.`,
-      );
-      return;
+    const overlay = this._activeOverlays.get(id);
+    if (overlay) {
+      (overlay.element as ModalComponent).close(result);
     }
-
-    try {
-      overlayData.overlay.setVisible(false);
-      overlayData.overlay.dispose();
-    } catch (error) {
-      console.error(
-        `OverlayManager: Error during overlay cleanup for ${id}:`,
-        error,
-      );
-    }
-
-    overlayData.resolve(result);
-    this._activeOverlays.delete(id);
   }
 
   /**
    * Hides and disposes all active overlays.
    */
   public dispose(): void {
-    this._activeOverlays.forEach((_, id) => {
-      this.hideOverlay(id, "dismissed");
+    this._activeOverlays.forEach((activeOverlay) => {
+      // Assuming modal component has a 'close' method that removes it
+      if (typeof (activeOverlay.element as any).close === "function") {
+        (activeOverlay.element as any).close("dismissed");
+      }
     });
+    this._activeOverlays.clear();
   }
 }

@@ -8,25 +8,31 @@ import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 export type DockviewGroup = any;
 
 /**
- * Options for configuring the dimensions of an overlay.
+ * Options for configuring the dimensions and content of an overlay.
  */
 export interface OverlayOptions {
   /** The desired width of the overlay in pixels. */
   width: number;
   /** The desired height of the overlay in pixels. */
   height: number;
+  /** The title to display in the modal header. */
+  title: string;
+  /** Text for the confirm button. If undefined, the button is hidden. */
+  confirmText?: string;
+  /** Text for the close button. If undefined, the button is hidden. */
+  closeText?: string;
+  /** Text for the secondary action button. If undefined, the button is hidden. */
+  secondaryText?: string;
+  /** If true, the secondary button is hidden regardless of whether it has text. */
+  hideSecondaryButton?: boolean;
 }
 
 /**
  * Internal state representing an active overlay.
  */
 export interface ActiveOverlay {
-  /** The Dockview Overlay instance. Use `any` for now due to type complexity/privacy. */
-  overlay: any;
   /** The root HTML element of the overlay. */
   element: HTMLElement;
-  /** The resolve function for the Promise returned by `showOverlay`. */
-  resolve: (result: ModalResult) => void;
 }
 
 /**

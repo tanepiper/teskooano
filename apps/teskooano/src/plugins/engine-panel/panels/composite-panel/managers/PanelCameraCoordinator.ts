@@ -1,5 +1,6 @@
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { CameraManager } from "@teskooano/app-simulation";
+import type { CameraManagerState as CameraState } from "@teskooano/app-simulation";
 import { BehaviorSubject, Subscription } from "rxjs";
 import { EngineCameraManager } from "../../camera-manager";
 import type { CompositeEngineState } from "../../types";
@@ -8,6 +9,14 @@ import type { CompositeEnginePanel } from "../CompositeEnginePanel";
 /**
  * Coordinates the creation, configuration, and state synchronization of camera-related
  * managers (`CameraManager`, `EngineCameraManager`) for a single `CompositeEnginePanel`.
+ *
+ * This class is responsible for:
+ * - Creating and initializing the CameraManager and EngineCameraManager instances.
+ * - Configuring and linking the state of the CameraManager to the panel's view state.
+ * - Updating the panel's view state based on changes from the CameraManager.
+ * - Providing access to the CameraManager and EngineCameraManager instances.
+ *
+ * This class is used by the CompositeEnginePanel to manage the camera-related functionality.
  */
 export class PanelCameraCoordinator {
   private _panel: CompositeEnginePanel;
@@ -19,6 +28,13 @@ export class PanelCameraCoordinator {
   private _engineCameraManager: EngineCameraManager | undefined;
   private _subscription = new Subscription();
 
+  /**
+   * Creates a new PanelCameraCoordinator.
+   * @param panel - The panel instance that owns this coordinator.
+   * @param renderer - The renderer instance that will be used by the camera manager.
+   * @param viewState$ - The BehaviorSubject that holds the panel's view state.
+   * @param panelApiId - The ID of the panel instance.
+   */
   constructor(
     panel: CompositeEnginePanel,
     renderer: ModularSpaceRenderer,
@@ -41,10 +57,18 @@ export class PanelCameraCoordinator {
     return true;
   }
 
+  /**
+   * Provides access to the CameraManager instance.
+   * @returns The CameraManager instance or undefined if not initialized.
+   */
   public get cameraManager(): CameraManager | undefined {
     return this._cameraManagerInstance;
   }
 
+  /**
+   * Provides access to the EngineCameraManager instance.
+   * @returns The EngineCameraManager instance or undefined if not initialized.
+   */
   public get engineCameraManager(): EngineCameraManager | undefined {
     return this._engineCameraManager;
   }
@@ -103,41 +127,7 @@ export class PanelCameraCoordinator {
       this._subscription.add(
         this._cameraManagerInstance
           .getCameraState$()
-          .subscribe((cameraState) => {
-            if (!this._panel.isConnected) return;
-
-            const currentPanelState = this._viewState$.getValue();
-            const updates: Partial<CompositeEngineState> = {};
-
-            if (
-              !currentPanelState.cameraPosition.equals(
-                cameraState.currentPosition,
-              )
-            ) {
-              updates.cameraPosition = cameraState.currentPosition.clone();
-            }
-            if (
-              !currentPanelState.cameraTarget.equals(cameraState.currentTarget)
-            ) {
-              updates.cameraTarget = cameraState.currentTarget.clone();
-            }
-            if (
-              currentPanelState.focusedObjectId !== cameraState.focusedObjectId
-            ) {
-              updates.focusedObjectId = cameraState.focusedObjectId;
-            }
-            if (currentPanelState.fov !== cameraState.fov) {
-              updates.fov = cameraState.fov;
-            }
-
-            if (Object.keys(updates).length > 0) {
-              // Use a direct update to avoid re-triggering the renderer apply logic
-              this._viewState$.next({
-                ...currentPanelState,
-                ...updates,
-              });
-            }
-          }),
+          .subscribe(this._handleCameraStateChange),
       );
       return true;
     } catch (error) {
@@ -148,4 +138,37 @@ export class PanelCameraCoordinator {
       return false;
     }
   }
+
+  /**
+   * Updates the panel's view state based on changes from the CameraManager.
+   * This is a one-way sync from camera state -> panel UI state.
+   * @param cameraState - The latest state from the camera manager.
+   */
+  private _handleCameraStateChange = (cameraState: CameraState): void => {
+    if (!this._panel.isConnected) return;
+
+    const currentPanelState = this._viewState$.getValue();
+    const updates: Partial<CompositeEngineState> = {};
+
+    if (!currentPanelState.cameraPosition.equals(cameraState.currentPosition)) {
+      updates.cameraPosition = cameraState.currentPosition.clone();
+    }
+    if (!currentPanelState.cameraTarget.equals(cameraState.currentTarget)) {
+      updates.cameraTarget = cameraState.currentTarget.clone();
+    }
+    if (currentPanelState.focusedObjectId !== cameraState.focusedObjectId) {
+      updates.focusedObjectId = cameraState.focusedObjectId;
+    }
+    if (currentPanelState.fov !== cameraState.fov) {
+      updates.fov = cameraState.fov;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      // Use a direct update to avoid re-triggering the renderer apply logic
+      this._viewState$.next({
+        ...currentPanelState,
+        ...updates,
+      });
+    }
+  };
 }

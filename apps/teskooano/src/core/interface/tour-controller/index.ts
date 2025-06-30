@@ -22,7 +22,7 @@ const initializeTourFunction: FunctionConfig = {
       // Register the default tour immediately after creation.
       tourControllerInstance.registerTour("intro", createIntroTour);
     }
-    await tourControllerInstance.promptIfNeeded();
+    tourControllerInstance.promptIfNeeded();
     return tourControllerInstance;
   },
 };

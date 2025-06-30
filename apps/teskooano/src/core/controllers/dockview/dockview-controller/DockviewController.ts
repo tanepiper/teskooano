@@ -18,7 +18,7 @@ import {
   ModalResult,
   OverlayOptions,
   RegisteredComponentInfo,
-} from "../types";
+} from "../types/index";
 import { addFloatingPanel, addPanel } from "./DockviewController.api";
 import { handlePanelRemoval } from "./DockviewController.events";
 import { handlePanelToggleAction } from "./DockviewController.toggle";
@@ -261,7 +261,7 @@ export class DockviewController {
    * @param options Dimensions for the overlay.
    * @returns A promise that resolves with the result when the overlay is hidden.
    */
-  public showOverlay(
+  public async showOverlay(
     id: string,
     element: HTMLElement,
     options: OverlayOptions,

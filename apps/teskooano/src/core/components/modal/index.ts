@@ -4,6 +4,7 @@ import { TeskooanoModalManager } from "./ModalManager";
 
 export * from "./Modal";
 export * from "./ModalManager";
+export { ModalComponent } from "./view";
 
 /**
  * Plugin definition for the core Modal system.

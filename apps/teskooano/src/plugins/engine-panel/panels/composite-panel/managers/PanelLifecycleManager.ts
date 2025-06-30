@@ -5,11 +5,31 @@ import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { Subscription } from "rxjs";
 import type { PlaceholderManager } from "../../placeholder-manager";
 
-interface PanelLifecycleManagerOptions {
+/**
+ * Options for the PanelLifecycleManager.
+ */
+export interface PanelLifecycleManagerOptions {
+  /**
+   * Checks if the panel is connected to the DOM.
+   * @returns True if the panel is connected, false otherwise.
+   */
   getIsConnected: () => boolean;
+  /**
+   * Gets the renderer.
+   * @returns The renderer or undefined if not initialized.
+   */
   getRenderer: () => ModularSpaceRenderer | undefined;
+  /**
+   * The placeholder manager to use.
+   */
   placeholderManager: PlaceholderManager | undefined;
+  /**
+   * Initializes the renderer and UI.
+   */
   initializeRendererAndUI: () => void;
+  /**
+   * Disposes of the renderer and UI.
+   */
   disposeRendererAndUI: () => void;
 }
 
@@ -34,6 +54,9 @@ export class PanelLifecycleManager {
       this._handleSystemGenerationComplete.bind(this);
   }
 
+  /**
+   * Handles the system generation start event.
+   */
   private _handleSystemGenerationStart = (): void => {
     if (!this._options.getIsConnected()) return;
     this._isGeneratingSystem = true;
@@ -43,6 +66,9 @@ export class PanelLifecycleManager {
     }
   };
 
+  /**
+   * Handles the system generation complete event.
+   */
   private _handleSystemGenerationComplete = (): void => {
     if (!this._options.getIsConnected()) return;
     this._isGeneratingSystem = false;
@@ -87,6 +113,7 @@ export class PanelLifecycleManager {
       ),
     );
 
+    // Add event listeners for system generation start and complete.
     window.addEventListener(
       CustomEvents.SYSTEM_GENERATION_START,
       this._handleSystemGenerationStart,
@@ -96,6 +123,7 @@ export class PanelLifecycleManager {
       this._handleSystemGenerationComplete,
     );
 
+    // Remove event listeners when the manager is disposed.
     this._subscription.add(() => {
       window.removeEventListener(
         CustomEvents.SYSTEM_GENERATION_START,

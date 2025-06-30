@@ -55,6 +55,7 @@ export class ManagerInitializer {
       console.debug("[ManagerInit] Initializing tour controller...");
       try {
         await pluginManagerInstance.execute("tour:initialize", {
+          dockviewController,
           modalManager,
         });
       } catch (error) {

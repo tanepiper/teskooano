@@ -2,9 +2,23 @@ import { simulationState$, type SimulationState } from "@teskooano/core-state";
 import { Subscription } from "rxjs";
 import { layoutOrientation$ } from "../../state";
 
-interface PanelEventManagerOptions {
+/**
+ * Options for the PanelEventManager.
+ */
+export interface PanelEventManagerOptions {
+  /**
+   * Checks if the panel is connected to the DOM.
+   * @returns True if the panel is connected, false otherwise.
+   */
   panelIsConnected: () => boolean;
+  /**
+   * Triggers a resize event.
+   */
   triggerResize: () => void;
+  /**
+   * Handles a simulation state change.
+   * @param state - The new simulation state.
+   */
   handleSimulationStateChange: (state: SimulationState) => void;
 }
 
@@ -16,6 +30,10 @@ export class PanelEventManager {
   private _options: PanelEventManagerOptions;
   private _subscription = new Subscription();
 
+  /**
+   * Creates a new PanelEventManager.
+   * @param options - The options for the event manager.
+   */
   constructor(options: PanelEventManagerOptions) {
     this._options = options;
   }
@@ -40,6 +58,9 @@ export class PanelEventManager {
     );
   }
 
+  /**
+   * Disposes of the event manager by unsubscribing from all subscriptions.
+   */
   public dispose(): void {
     this._subscription.unsubscribe();
   }

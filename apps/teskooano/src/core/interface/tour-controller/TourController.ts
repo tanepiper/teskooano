@@ -2,7 +2,7 @@ import { Config, driver, PopoverDOM, State } from "driver.js";
 import "driver.js/dist/driver.css";
 import { type TourStep, type TourFactory } from "./types";
 import { PluginExecutionContext } from "@teskooano/ui-plugin";
-import { ModalResult } from "../../controllers/dockview";
+import type { ModalResult } from "../../controllers/dockview/types/index";
 
 /**
  * Manages and orchestrates interactive application tours using driver.js.
@@ -71,7 +71,7 @@ export class TourController {
       },
       onDeselected: () => {
         if (!this.isSkippingTour()) {
-          localStorage.setItem("skipTour", "true");
+          localStorage.setItem("completedTour", "true");
         }
       },
     });
@@ -104,30 +104,33 @@ export class TourController {
       return;
     }
 
-    this.markTourModalAsShown();
-
     try {
+      const content = document.createElement("div");
+      content.innerHTML = `<p>Would you like to take a quick tour of the interface?</p>
+                       <p><small>You can restart the tour later from the help menu.</small></p>`;
+
       const result: ModalResult =
-        await this._context.dockviewController.showModal({
-          id: "tour-prompt-modal",
-          title: "Welcome to Teskooano!",
-          content: `<p>Would you like to take a quick tour of the interface?</p>
-                  <p><small>You can restart the tour later from the help menu.</small></p>`,
-          confirmText: "Start Tour",
-          closeText: "Maybe Later",
-          hideSecondaryButton: true,
-          width: 400,
-          height: 220,
-        });
+        await this._context.dockviewController.showOverlay(
+          "tour-prompt-modal",
+          content,
+          {
+            title: "Welcome to Teskooano!",
+            confirmText: "Start Tour",
+            closeText: "Maybe Later",
+            secondaryText: "Don't Show Again",
+            hideSecondaryButton: false,
+            width: 400,
+            height: 220,
+          },
+        );
 
       if (result === "confirm") {
         this.startTour();
-      } else {
+      } else if (result === "secondary") {
         this.setSkipTour(true);
       }
     } catch (error) {
       console.error("Error showing tour modal:", error);
-      this.setSkipTour(true);
     }
   }
 
@@ -193,33 +196,15 @@ export class TourController {
    * @returns True if the tour should be skipped, false otherwise.
    */
   public isSkippingTour(): boolean {
-    return localStorage.getItem("skipTour") === "true";
-  }
-
-  /**
-   * Checks if the initial tour prompt modal has been shown before.
-   * Reads the preference from localStorage.
-   * @returns True if the modal has been shown, false otherwise.
-   */
-  public hasShownTourModal(): boolean {
-    return localStorage.getItem("tourModalShown") === "true";
-  }
-
-  /**
-   * Marks the initial tour prompt modal as shown in localStorage.
-   */
-  public markTourModalAsShown(): void {
-    localStorage.setItem("tourModalShown", "true");
+    return localStorage.getItem("completedTour") === "true";
   }
 
   /**
    * Checks if the tour should be prompted based on localStorage flags.
-   * Returns true if the prompt modal hasn't been shown AND the tour isn't set to skip.
+   * Returns true if the tour hasn't been skipped.
    */
   public shouldPromptForTour(): boolean {
-    const modalShown = localStorage.getItem("tourModalShown") === "true";
-    const skipTour = localStorage.getItem("skipTour") === "true";
-    return !modalShown && !skipTour;
+    return !this.isSkippingTour();
   }
 
   /**
@@ -300,9 +285,9 @@ export class TourController {
    */
   public setSkipTour(skip: boolean): void {
     if (skip) {
-      localStorage.setItem("skipTour", "true");
+      localStorage.setItem("completedTour", "true");
     } else {
-      localStorage.removeItem("skipTour");
+      localStorage.removeItem("completedTour");
     }
   }
 }

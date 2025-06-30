@@ -1,18 +1,54 @@
-import type { DockviewController } from "../../controllers/dockview/DockviewController";
-import { ModalResult } from "../../controllers/dockview/types";
+import type { DockviewController } from "../../controllers/dockview";
+import type { ModalResult } from "../../controllers/dockview/types/index";
 import { TeskooanoModal } from "./Modal";
 
+/**
+ * Options for the modal manager.
+ */
 export interface ModalOptions {
+  /**
+   * The ID of the modal.
+   */
   id?: string;
+  /**
+   * The title of the modal.
+   */
   title: string;
+  /**
+   * The content of the modal.
+   */
   content: string | HTMLElement;
+  /**
+   * The width of the modal.
+   */
   width?: number;
+  /**
+   * The height of the modal.
+   */
   height?: number;
+  /**
+   * The text for the confirm button.
+   */
   confirmText?: string;
+  /**
+   * The text for the close button.
+   */
   closeText?: string;
+  /**
+   * The text for the secondary button.
+   */
   secondaryText?: string;
+  /**
+   * Whether to hide the close button.
+   */
   hideCloseButton?: boolean;
+  /**
+   * Whether to hide the confirm button.
+   */
   hideConfirmButton?: boolean;
+  /**
+   * Whether to hide the secondary button.
+   */
   hideSecondaryButton?: boolean;
 }
 
@@ -115,7 +151,13 @@ export class TeskooanoModalManager {
     const overlayPromise = this._dockviewController!.showOverlay(
       modalId,
       modalElement,
-      { width, height },
+      {
+        width,
+        height,
+        title: options.title,
+        confirmText: options.confirmText,
+        closeText: options.closeText,
+      },
     );
 
     overlayPromise.finally(() => {
