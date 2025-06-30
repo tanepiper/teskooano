@@ -241,40 +241,19 @@ export class CompositeEnginePanel
   }
 
   /**
-   * Toggles the visibility of the 5AU grid.
-   * @param visible - Whether to show the grid.
+   * Updates a single property of the panel's view state.
+   * This provides a generic public interface for modifying view state.
+   *
+   * @param key The key of the view state property to update.
+   * @param value The new value for the property.
    */
-  public setShowGrid(visible: boolean): void {
-    this.updateViewState({ showGrid: visible });
-  }
-  /**
-   * Toggles the visibility of celestial body labels.
-   * @param visible - Whether to show the labels.
-   */
-  public setShowCelestialLabels(visible: boolean): void {
-    this.updateViewState({ showCelestialLabels: visible });
-  }
-  /**
-   * Toggles the visibility of Astronomical Unit (AU) markers.
-   * @param visible - Whether to show the markers.
-   */
-  public setShowAuMarkers(visible: boolean): void {
-    this.updateViewState({ showAuMarkers: visible });
-  }
-  /**
-   * Enables or disables debris effects (placeholder).
-   * @param visible - Whether to show the debris effects.
-   */
-  public setDebrisEffectsEnabled(visible: boolean): void {
-    this.updateViewState({ showDebrisEffects: visible });
-  }
-
-  /**
-   * Enables or disables the global renderer debug mode.
-   * @param enabled - Whether to enable the debug mode.
-   */
-  public setDebugMode(enabled: boolean): void {
-    this.updateViewState({ isDebugMode: enabled });
+  public setProperty<K extends keyof CompositeEngineState>(
+    key: K,
+    value: CompositeEngineState[K],
+  ): void {
+    // The cast is necessary because of how TypeScript handles computed
+    // property names in object literals.
+    this.updateViewState({ [key]: value } as Partial<CompositeEngineState>);
   }
 
   /**

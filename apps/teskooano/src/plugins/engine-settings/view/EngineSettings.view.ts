@@ -30,28 +30,26 @@ export class EngineUISettingsPanel
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
     const controlRefs = {
-      gridToggle: this.shadowRoot!.getElementById(
+      showGrid: this.shadowRoot!.getElementById(
         "grid-toggle",
       ) as HTMLInputElement,
-      labelsToggle: this.shadowRoot!.getElementById(
+      showCelestialLabels: this.shadowRoot!.getElementById(
         "labels-toggle",
       ) as HTMLInputElement,
-      auMarkersToggle: this.shadowRoot!.getElementById(
+      showAuMarkers: this.shadowRoot!.getElementById(
         "au-markers-toggle",
       ) as HTMLInputElement,
-      debrisEffectsToggle: this.shadowRoot!.getElementById(
+      showDebrisEffects: this.shadowRoot!.getElementById(
         "debris-effects-toggle",
       ) as HTMLInputElement,
-      orbitLinesToggle: this.shadowRoot!.getElementById(
+      showOrbitLines: this.shadowRoot!.getElementById(
         "orbit-lines-toggle",
       ) as HTMLInputElement,
-      predictionLinesToggle: this.shadowRoot!.getElementById(
+      showPredictionLines: this.shadowRoot!.getElementById(
         "prediction-lines-toggle",
       ) as HTMLInputElement,
-      fovSliderElement: this.shadowRoot!.getElementById(
-        "fov-slider",
-      ) as TeskooanoSlider,
-      debugModeToggle: this.shadowRoot!.getElementById(
+      fov: this.shadowRoot!.getElementById("fov-slider") as TeskooanoSlider,
+      isDebugMode: this.shadowRoot!.getElementById(
         "debug-mode-toggle",
       ) as HTMLInputElement,
       errorMessageElement: this.shadowRoot!.getElementById(

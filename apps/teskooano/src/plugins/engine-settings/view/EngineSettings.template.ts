@@ -87,49 +87,49 @@ template.innerHTML = `
   <div class="setting-row">
     <label for="grid-toggle">Show Grid</label>
     <label class="toggle-switch">
-      <input type="checkbox" id="grid-toggle">
+      <input type="checkbox" id="grid-toggle" name="showGrid">
       <span class="slider"></span>
     </label>
   </div>
   <div class="setting-row">
     <label for="labels-toggle">Show Celestial Labels</label>
     <label class="toggle-switch">
-      <input type="checkbox" id="labels-toggle">
+      <input type="checkbox" id="labels-toggle" name="showCelestialLabels">
       <span class="slider"></span>
     </label>
   </div>
   <div class="setting-row">
     <label for="au-markers-toggle">Show AU Markers</label>
     <label class="toggle-switch">
-      <input type="checkbox" id="au-markers-toggle">
+      <input type="checkbox" id="au-markers-toggle" name="showAuMarkers">
       <span class="slider"></span>
     </label>
   </div>
   <div class="setting-row">
     <label for="debris-effects-toggle">Show Debris Effects</label>
     <label class="toggle-switch">
-      <input type="checkbox" id="debris-effects-toggle">
+      <input type="checkbox" id="debris-effects-toggle" name="showDebrisEffects">
       <span class="slider"></span>
     </label>
   </div>
   <div class="setting-row">
     <label for="orbit-lines-toggle">Show Orbit Lines</label>
     <label class="toggle-switch">
-      <input type="checkbox" id="orbit-lines-toggle">
+      <input type="checkbox" id="orbit-lines-toggle" name="showOrbitLines">
       <span class="slider"></span>
     </label>
   </div>
   <div class="setting-row">
     <label for="prediction-lines-toggle">Show Prediction Lines</label>
     <label class="toggle-switch">
-      <input type="checkbox" id="prediction-lines-toggle">
+      <input type="checkbox" id="prediction-lines-toggle" name="showPredictionLines">
       <span class="slider"></span>
     </label>
   </div>
   <div class="setting-row">
     <label for="debug-mode-toggle">Debug Mode</label>
     <label class="toggle-switch">
-      <input type="checkbox" id="debug-mode-toggle">
+      <input type="checkbox" id="debug-mode-toggle" name="isDebugMode">
       <span class="slider"></span>
     </label>
   </div>

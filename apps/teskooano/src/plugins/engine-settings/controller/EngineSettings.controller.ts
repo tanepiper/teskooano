@@ -5,15 +5,25 @@ import { StateSubscriptionMixin } from "@teskooano/core-state";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 
 type ControlRefs = {
-  gridToggle: HTMLInputElement;
-  labelsToggle: HTMLInputElement;
-  auMarkersToggle: HTMLInputElement;
-  debrisEffectsToggle: HTMLInputElement;
-  orbitLinesToggle: HTMLInputElement;
-  predictionLinesToggle: HTMLInputElement;
-  fovSliderElement: TeskooanoSlider;
-  debugModeToggle: HTMLInputElement;
+  // Toggles - keys must match CompositeEngineState properties
+  showGrid: HTMLInputElement;
+  showCelestialLabels: HTMLInputElement;
+  showAuMarkers: HTMLInputElement;
+  showDebrisEffects: HTMLInputElement;
+  showOrbitLines: HTMLInputElement;
+  showPredictionLines: HTMLInputElement;
+  isDebugMode: HTMLInputElement;
+
+  // Sliders
+  fov: TeskooanoSlider;
+
+  // Other
   errorMessageElement: HTMLElement;
+};
+
+type ControlConfig = {
+  key: keyof ControlRefs & keyof CompositeEngineState;
+  type: "toggle" | "slider";
 };
 
 /**
@@ -26,6 +36,20 @@ type ControlRefs = {
 export class EngineSettingsController extends StateSubscriptionMixin {
   private _refs: ControlRefs;
   private _parentPanel: CompositeEnginePanel | null = null;
+  private _eventHandlerMap: Map<string, EventListenerOrEventListenerObject> =
+    new Map();
+
+  // Configuration drives UI logic, mapping refs to their behavior
+  private readonly _controlConfig: ReadonlyArray<ControlConfig> = [
+    { key: "showGrid", type: "toggle" },
+    { key: "showCelestialLabels", type: "toggle" },
+    { key: "showAuMarkers", type: "toggle" },
+    { key: "showDebrisEffects", type: "toggle" },
+    { key: "showOrbitLines", type: "toggle" },
+    { key: "showPredictionLines", type: "toggle" },
+    { key: "isDebugMode", type: "toggle" },
+    { key: "fov", type: "slider" },
+  ];
 
   /**
    * Creates an instance of EngineSettingsController.
@@ -34,6 +58,19 @@ export class EngineSettingsController extends StateSubscriptionMixin {
   constructor(controlRefs: ControlRefs) {
     super();
     this._refs = controlRefs;
+    this.bindHandlers();
+  }
+
+  /**
+   * Binds event handler functions to the class instance, ensuring `this`
+   * context is correct and allowing them to be added and removed as listeners.
+   */
+  private bindHandlers(): void {
+    this._eventHandlerMap.set("toggle", this.handleToggleChange.bind(this));
+    this._eventHandlerMap.set(
+      "slider",
+      this.handleFovChange.bind(this) as EventListener,
+    );
   }
 
   /**
@@ -48,7 +85,6 @@ export class EngineSettingsController extends StateSubscriptionMixin {
    */
   public dispose(): void {
     this.removeEventListeners();
-    // ✅ Using StateSubscriptionMixin for automatic subscription cleanup
     super.dispose();
   }
 
@@ -65,79 +101,47 @@ export class EngineSettingsController extends StateSubscriptionMixin {
   }
 
   /**
-   * Attaches event listeners to the interactive UI elements.
+   * Attaches event listeners to the interactive UI elements based on the control config.
    */
   private addEventListeners(): void {
-    this._refs.gridToggle?.addEventListener(
-      "change",
-      this.handleGridToggleChange,
-    );
-    this._refs.labelsToggle?.addEventListener(
-      "change",
-      this.handleLabelsToggleChange,
-    );
-    this._refs.auMarkersToggle?.addEventListener(
-      "change",
-      this.handleAuMarkersToggleChange,
-    );
-    this._refs.debrisEffectsToggle?.addEventListener(
-      "change",
-      this.handleDebrisEffectsToggleChange,
-    );
-    this._refs.orbitLinesToggle?.addEventListener(
-      "change",
-      this.handleOrbitLinesToggleChange,
-    );
-    this._refs.predictionLinesToggle?.addEventListener(
-      "change",
-      this.handlePredictionLinesToggleChange,
-    );
-    this._refs.fovSliderElement?.addEventListener(
-      CustomEvents.SLIDER_CHANGE,
-      this.handleFovChange as EventListener,
-    );
-    this._refs.debugModeToggle?.addEventListener(
-      "change",
-      this.handleDebugModeToggleChange,
-    );
+    this._controlConfig.forEach(({ key, type }) => {
+      const element = this._refs[key];
+      if (!element) return;
+
+      if (type === "toggle") {
+        element.addEventListener(
+          "change",
+          this._eventHandlerMap.get("toggle")!,
+        );
+      } else if (type === "slider") {
+        element.addEventListener(
+          CustomEvents.SLIDER_CHANGE,
+          this._eventHandlerMap.get("slider")!,
+        );
+      }
+    });
   }
 
   /**
    * Removes all attached event listeners for cleanup.
    */
   private removeEventListeners(): void {
-    this._refs.gridToggle?.removeEventListener(
-      "change",
-      this.handleGridToggleChange,
-    );
-    this._refs.labelsToggle?.removeEventListener(
-      "change",
-      this.handleLabelsToggleChange,
-    );
-    this._refs.auMarkersToggle?.removeEventListener(
-      "change",
-      this.handleAuMarkersToggleChange,
-    );
-    this._refs.debrisEffectsToggle?.removeEventListener(
-      "change",
-      this.handleDebrisEffectsToggleChange,
-    );
-    this._refs.orbitLinesToggle?.removeEventListener(
-      "change",
-      this.handleOrbitLinesToggleChange,
-    );
-    this._refs.predictionLinesToggle?.removeEventListener(
-      "change",
-      this.handlePredictionLinesToggleChange,
-    );
-    this._refs.fovSliderElement?.removeEventListener(
-      CustomEvents.SLIDER_CHANGE,
-      this.handleFovChange as EventListener,
-    );
-    this._refs.debugModeToggle?.removeEventListener(
-      "change",
-      this.handleDebugModeToggleChange,
-    );
+    this._controlConfig.forEach(({ key, type }) => {
+      const element = this._refs[key];
+      if (!element) return;
+
+      if (type === "toggle") {
+        element.removeEventListener(
+          "change",
+          this._eventHandlerMap.get("toggle")!,
+        );
+      } else if (type === "slider") {
+        element.removeEventListener(
+          CustomEvents.SLIDER_CHANGE,
+          this._eventHandlerMap.get("slider")!,
+        );
+      }
+    });
   }
 
   /**
@@ -167,44 +171,21 @@ export class EngineSettingsController extends StateSubscriptionMixin {
     }
   }
 
-  private handleGridToggleChange = (event: Event): void => {
-    this._parentPanel?.setShowGrid((event.target as HTMLInputElement).checked);
+  /**
+   * Generic handler for all toggle input change events.
+   * Uses the element's `name` attribute to identify the state key to update.
+   */
+  private handleToggleChange = (event: Event): void => {
+    const target = event.target as HTMLInputElement;
+    const key = target.name as keyof CompositeEngineState;
+    if (key && this._parentPanel) {
+      this._parentPanel.setProperty(key, target.checked);
+    }
   };
 
-  private handleLabelsToggleChange = (event: Event): void => {
-    this._parentPanel?.setShowCelestialLabels(
-      (event.target as HTMLInputElement).checked,
-    );
-  };
-
-  private handleAuMarkersToggleChange = (event: Event): void => {
-    this._parentPanel?.setShowAuMarkers(
-      (event.target as HTMLInputElement).checked,
-    );
-  };
-
-  private handleDebrisEffectsToggleChange = (event: Event): void => {
-    this._parentPanel?.setDebrisEffectsEnabled(
-      (event.target as HTMLInputElement).checked,
-    );
-  };
-
-  private handleOrbitLinesToggleChange = (event: Event): void => {
-    this._parentPanel?.updateViewState({
-      showOrbitLines: (event.target as HTMLInputElement).checked,
-    });
-  };
-
-  private handlePredictionLinesToggleChange = (event: Event): void => {
-    this._parentPanel?.updateViewState({
-      showPredictionLines: (event.target as HTMLInputElement).checked,
-    });
-  };
-
-  private handleDebugModeToggleChange = (event: Event): void => {
-    this._parentPanel?.setDebugMode((event.target as HTMLInputElement).checked);
-  };
-
+  /**
+   * Handler for the FOV slider's custom change event.
+   */
   private handleFovChange = (
     event: CustomEvent<SliderValueChangePayload>,
   ): void => {
@@ -222,7 +203,7 @@ export class EngineSettingsController extends StateSubscriptionMixin {
         return;
       }
 
-      this._parentPanel.updateViewState({ fov: newValue });
+      this._parentPanel.setProperty("fov", newValue);
       this.clearError();
     } catch (error) {
       this.showError("An error occurred while updating Field of View (FOV).");
@@ -230,39 +211,26 @@ export class EngineSettingsController extends StateSubscriptionMixin {
   };
 
   /**
-   * Synchronizes the UI controls with the provided state object.
+   * Synchronizes the UI controls with the provided state object by
+   * iterating through the control configuration.
    * @param viewState The latest state from the parent panel.
    */
   private updateUiState(viewState: CompositeEngineState): void {
-    if (this._refs.gridToggle) {
-      this._refs.gridToggle.checked = viewState.showGrid ?? true;
-    }
-    if (this._refs.labelsToggle) {
-      this._refs.labelsToggle.checked = viewState.showCelestialLabels ?? true;
-    }
-    if (this._refs.auMarkersToggle) {
-      this._refs.auMarkersToggle.checked = viewState.showAuMarkers ?? true;
-    }
-    if (this._refs.debrisEffectsToggle) {
-      this._refs.debrisEffectsToggle.checked =
-        viewState.showDebrisEffects ?? false;
-    }
-    if (this._refs.orbitLinesToggle) {
-      this._refs.orbitLinesToggle.checked = viewState.showOrbitLines ?? true;
-    }
-    if (this._refs.predictionLinesToggle) {
-      this._refs.predictionLinesToggle.checked =
-        viewState.showPredictionLines ?? true;
-    }
-    if (this._refs.debugModeToggle) {
-      this._refs.debugModeToggle.checked = viewState.isDebugMode ?? false;
-    }
+    this._controlConfig.forEach(({ key, type }) => {
+      const element = this._refs[key];
+      const value = viewState[key];
 
-    if (this._refs.fovSliderElement && typeof viewState.fov === "number") {
-      if (this._refs.fovSliderElement.value !== viewState.fov) {
-        this._refs.fovSliderElement.value = viewState.fov;
+      if (!element || value === undefined) return;
+
+      if (type === "toggle" && typeof value === "boolean") {
+        (element as HTMLInputElement).checked = value;
+      } else if (type === "slider" && typeof value === "number") {
+        const slider = element as TeskooanoSlider;
+        if (slider.value !== value) {
+          slider.value = value;
+        }
       }
-    }
+    });
   }
 
   /**
