@@ -20,6 +20,7 @@ import {
   type LabelSystem,
 } from "@teskooano/renderer-threejs-labels";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
+import "../../../../core/interface/engine-toolbar/view/engine-toolbar.component";
 import { EngineToolbar } from "../../../../core/interface/engine-toolbar";
 import { EngineCameraManager } from "../camera-manager";
 import { PlaceholderManager } from "../placeholder-manager";
@@ -481,9 +482,20 @@ export class CompositeEnginePanel
       return;
     }
 
+    const toolbarContainer = this.shadowRoot!.querySelector(
+      "teskooano-engine-toolbar",
+    );
+
+    if (!toolbarContainer) {
+      console.error(
+        "[CompositeEnginePanel] Could not find 'teskooano-engine-toolbar' element in shadow DOM.",
+      );
+      return;
+    }
+
     this._engineToolbar = toolbarManager.createToolbarForPanel(
       this._api.id,
-      this,
+      toolbarContainer as HTMLElement,
       this,
     );
   }

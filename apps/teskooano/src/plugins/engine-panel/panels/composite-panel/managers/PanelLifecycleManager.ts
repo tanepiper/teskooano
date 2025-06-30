@@ -93,21 +93,24 @@ export class PanelLifecycleManager {
           if (!this._options.getIsConnected()) return;
 
           const hasObjects = Object.keys(celestialObjects).length > 0;
-          const hasRenderer = !!this._options.getRenderer();
+          const rendererExists = !!this._options.getRenderer();
 
-          if (hasObjects && !hasRenderer) {
-            // If objects exist but we have no renderer, create it.
+          if (hasObjects) {
+            // If we have objects, ensure the renderer is up and placeholder is hidden.
+            if (!rendererExists) {
+              this._options.initializeRendererAndUI();
+              simulationManager.startLoop();
+            }
             this._options.placeholderManager?.hide();
-            this._options.initializeRendererAndUI();
-            simulationManager.startLoop();
-          } else if (!hasObjects && hasRenderer) {
-            // If no objects exist but we have a renderer, tear it down.
-            this._options.disposeRendererAndUI();
-            simulationManager.resetSystem(true);
-            this._options.placeholderManager?.showMessage(false);
-          } else if (!hasObjects && !hasRenderer && !this._isGeneratingSystem) {
-            // Handle initial state or after a clear when no new system is generating
-            this._options.placeholderManager?.showMessage(false);
+          } else {
+            // If we have no objects, ensure the renderer is gone and placeholder is shown.
+            if (rendererExists) {
+              this._options.disposeRendererAndUI();
+              simulationManager.resetSystem(true);
+            }
+            if (!this._isGeneratingSystem) {
+              this._options.placeholderManager?.showMessage(false);
+            }
           }
         },
       ),

@@ -117,7 +117,7 @@ export function createIntroTour(
     },
     {
       id: "ui-settings-1",
-      element: ".engine-overlay-toolbar-container",
+      element: "teskooano-engine-toolbar",
       popover: {
         title: "📦 Engine Toolbar",
         description:

@@ -66,6 +66,12 @@ template.innerHTML = `
   .toolbar-widget-area > * {
     flex-shrink: 0;
   }
+
+  .toolbar-left-section {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
 </style>
 <div class="toolbar-left-section">
   <teskooano-button

@@ -2,21 +2,34 @@ export const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
-      display: flex;
-      flex-direction: column; /* Ensure children stack correctly if needed */
+      display: block;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      position: relative; /* For positioning placeholder */
-      background-color: var(--background-color-2, #1e1e1e); /* Default background */
+      position: relative;
     }
 
     .engine-container {
-      flex-grow: 1;
       width: 100%;
       height: 100%;
-      position: relative; /* Children can be absolute to this */
-      overflow: hidden;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    #engine-placeholder-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--background-color-rgb, rgba(27, 27, 27, 0.95));
+      color: var(--text-color-rgb, #ddd);
+      z-index: 200; /* Above engine, below toolbar */
     }
 
     .placeholder-wrapper {
@@ -130,18 +143,20 @@ template.innerHTML = `
       box-shadow: 0 0 25px rgba(60, 120, 180, 0.8),
         inset 0 0 8px rgba(255, 255, 255, 0.2);
     }
+
+    .hidden {
+      display: none !important;
+    }
   </style>
-  <div class="engine-container"></div>
-  <div
-    id="engine-placeholder-wrapper"
-    class="placeholder-wrapper dynamic-grid-background"
-  >
+  <div class="engine-container" id="engine-container"></div>
+  <teskooano-engine-toolbar></teskooano-engine-toolbar>
+  <div id="engine-placeholder-wrapper">
     <img
       src="/assets/panel-icon.png"
       alt="Engine Placeholder Icon"
       class="placeholder-icon"
     />
-    <p id="placeholder-message"></p>
-    <div id="placeholder-action-area" style="width: 50%; min-height: 20px;"></div>
+    <p id="placeholder-message">No system loaded</p>
+    <div id="placeholder-action-area"></div>
   </div>
 `;
