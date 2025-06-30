@@ -1,8 +1,108 @@
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import type { TeskooanoSlider } from "../../../core/components/slider/Slider.js";
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
-import { template } from "./EngineSettings.template.js";
-import { EngineSettingsController } from "../controller/EngineSettings.controller.js";
+import {
+  ControlRegistration,
+  EngineSettingsController,
+} from "../controller/EngineSettings.controller.js";
+
+const controlConfig = [
+  { key: "showGrid", type: "toggle", label: "Show Grid" },
+  {
+    key: "showCelestialLabels",
+    type: "toggle",
+    label: "Show Celestial Labels",
+  },
+  { key: "showAuMarkers", type: "toggle", label: "Show AU Markers" },
+  { key: "showDebrisEffects", type: "toggle", label: "Show Debris Effects" },
+  { key: "showOrbitLines", type: "toggle", label: "Show Orbit Lines" },
+  {
+    key: "showPredictionLines",
+    type: "toggle",
+    label: "Show Prediction Lines",
+  },
+  { key: "isDebugMode", type: "toggle", label: "Debug Mode" },
+  {
+    key: "fov",
+    type: "slider",
+    label: "FOV",
+    min: 30,
+    max: 140,
+    step: 1,
+    value: 75,
+    helpText: "Adjust the camera Field of View (degrees)",
+  },
+] as const;
+
+const styles = `
+  :host {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    padding: 10px !important;
+    font-family: var(--font-family, sans-serif);
+    font-size: 0.9em;
+    border-top: 1px solid var(--color-border-alt, #5a5a7a);
+  }
+  .setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  label {
+    margin-right: 10px;
+    color: var(--color-text-secondary, #aaa);
+  }
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+  }
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-surface-alt, #3a3a4e);
+    transition: .4s;
+    border-radius: 20px;
+    border: 1px solid var(--color-border-alt, #5a5a7a);
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--color-text-secondary, #aaa);
+    transition: .4s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: var(--color-primary, #6c63ff);
+    border-color: var(--color-primary, #6c63ff);
+  }
+  input:checked + .slider:before {
+    transform: translateX(14px);
+    background-color: white;
+  }
+  .error-message {
+      color: var(--color-error, #f44336);
+      font-style: italic;
+      margin-top: 10px;
+  }
+`;
 
 /**
  * @element engine-ui-settings-panel
@@ -27,37 +127,80 @@ export class EngineUISettingsPanel
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
-    const controlRefs = {
-      showGrid: this.shadowRoot!.getElementById(
-        "grid-toggle",
-      ) as HTMLInputElement,
-      showCelestialLabels: this.shadowRoot!.getElementById(
-        "labels-toggle",
-      ) as HTMLInputElement,
-      showAuMarkers: this.shadowRoot!.getElementById(
-        "au-markers-toggle",
-      ) as HTMLInputElement,
-      showDebrisEffects: this.shadowRoot!.getElementById(
-        "debris-effects-toggle",
-      ) as HTMLInputElement,
-      showOrbitLines: this.shadowRoot!.getElementById(
-        "orbit-lines-toggle",
-      ) as HTMLInputElement,
-      showPredictionLines: this.shadowRoot!.getElementById(
-        "prediction-lines-toggle",
-      ) as HTMLInputElement,
-      fov: this.shadowRoot!.getElementById("fov-slider") as TeskooanoSlider,
-      isDebugMode: this.shadowRoot!.getElementById(
-        "debug-mode-toggle",
-      ) as HTMLInputElement,
-      errorMessageElement: this.shadowRoot!.getElementById(
-        "error-message",
-      ) as HTMLElement,
-    };
+    const styleElement = document.createElement("style");
+    styleElement.textContent = styles;
+    this.shadowRoot!.appendChild(styleElement);
 
-    this._controller = new EngineSettingsController(controlRefs);
+    const controlsForController: ControlRegistration[] = [];
+
+    controlConfig.forEach((config) => {
+      const { container, control } = this.createControl(config);
+      this.shadowRoot!.appendChild(container);
+      controlsForController.push({
+        key: config.key,
+        type: config.type,
+        element: control,
+      });
+    });
+
+    const errorMessageElement = document.createElement("div");
+    errorMessageElement.id = "error-message";
+    errorMessageElement.className = "error-message";
+    errorMessageElement.style.display = "none";
+    this.shadowRoot!.appendChild(errorMessageElement);
+
+    this._controller = new EngineSettingsController(
+      controlsForController,
+      errorMessageElement,
+    );
+  }
+
+  private createControl(config: (typeof controlConfig)[number]) {
+    const container = document.createElement("div");
+    let controlElement: HTMLElement;
+
+    if (config.type === "slider") {
+      container.className = "setting-row-full"; // Sliders can take full width
+      const slider = document.createElement(
+        "teskooano-slider",
+      ) as TeskooanoSlider & { name: string };
+      slider.id = config.key;
+      slider.name = config.key;
+      slider.setAttribute("label", config.label);
+      slider.setAttribute("min", String(config.min));
+      slider.setAttribute("max", String(config.max));
+      slider.setAttribute("step", String(config.step));
+      slider.setAttribute("value", String(config.value));
+      if ("helpText" in config) {
+        slider.setAttribute("help-text", config.helpText);
+      }
+      slider.setAttribute("editable-value", "");
+      container.appendChild(slider);
+      controlElement = slider;
+    } else {
+      container.className = "setting-row";
+      const label = document.createElement("label");
+      label.htmlFor = config.key;
+      label.textContent = config.label;
+
+      const switchLabel = document.createElement("label");
+      switchLabel.className = "toggle-switch";
+
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.id = config.key;
+      input.name = config.key;
+
+      const sliderSpan = document.createElement("span");
+      sliderSpan.className = "slider";
+
+      switchLabel.append(input, sliderSpan);
+      container.append(label, switchLabel);
+      controlElement = input;
+    }
+
+    return { container, control: controlElement };
   }
 
   /**
@@ -99,8 +242,8 @@ export class EngineUISettingsPanel
   }
 
   /**
-   * Required by Dockview `IContentRenderer`.
-   * @returns The root HTMLElement of this component.
+   * Required for the `IContentRenderer` interface. Returns the host element.
+   * @returns The component's host element.
    */
   get element(): HTMLElement {
     return this;

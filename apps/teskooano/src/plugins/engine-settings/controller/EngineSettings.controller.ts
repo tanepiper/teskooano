@@ -4,27 +4,11 @@ import type { TeskooanoSlider } from "../../../core/components/slider/Slider.js"
 import { StateSubscriptionMixin } from "@teskooano/core-state";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 
-type ControlRefs = {
-  // Toggles - keys must match CompositeEngineState properties
-  showGrid: HTMLInputElement;
-  showCelestialLabels: HTMLInputElement;
-  showAuMarkers: HTMLInputElement;
-  showDebrisEffects: HTMLInputElement;
-  showOrbitLines: HTMLInputElement;
-  showPredictionLines: HTMLInputElement;
-  isDebugMode: HTMLInputElement;
-
-  // Sliders
-  fov: TeskooanoSlider;
-
-  // Other
-  errorMessageElement: HTMLElement;
-};
-
-type ControlConfig = {
-  key: keyof ControlRefs & keyof CompositeEngineState;
+export interface ControlRegistration<T extends HTMLElement = HTMLElement> {
+  key: keyof CompositeEngineState;
   type: "toggle" | "slider";
-};
+  element: T;
+}
 
 /**
  * Controller for the EngineUISettingsPanel view.
@@ -34,30 +18,24 @@ type ControlConfig = {
  * parent CompositeEnginePanel, and displays error messages.
  */
 export class EngineSettingsController extends StateSubscriptionMixin {
-  private _refs: ControlRefs;
+  private _controls: ControlRegistration[];
+  private _errorMessageElement: HTMLElement;
   private _parentPanel: CompositeEnginePanel | null = null;
   private _eventHandlerMap: Map<string, EventListenerOrEventListenerObject> =
     new Map();
 
-  // Configuration drives UI logic, mapping refs to their behavior
-  private readonly _controlConfig: ReadonlyArray<ControlConfig> = [
-    { key: "showGrid", type: "toggle" },
-    { key: "showCelestialLabels", type: "toggle" },
-    { key: "showAuMarkers", type: "toggle" },
-    { key: "showDebrisEffects", type: "toggle" },
-    { key: "showOrbitLines", type: "toggle" },
-    { key: "showPredictionLines", type: "toggle" },
-    { key: "isDebugMode", type: "toggle" },
-    { key: "fov", type: "slider" },
-  ];
-
   /**
    * Creates an instance of EngineSettingsController.
-   * @param controlRefs An object containing references to the view's DOM elements.
+   * @param controls An array of control registration objects.
+   * @param errorMessageElement The element to display error messages in.
    */
-  constructor(controlRefs: ControlRefs) {
+  constructor(
+    controls: ControlRegistration[],
+    errorMessageElement: HTMLElement,
+  ) {
     super();
-    this._refs = controlRefs;
+    this._controls = controls;
+    this._errorMessageElement = errorMessageElement;
     this.bindHandlers();
   }
 
@@ -69,7 +47,7 @@ export class EngineSettingsController extends StateSubscriptionMixin {
     this._eventHandlerMap.set("toggle", this.handleToggleChange.bind(this));
     this._eventHandlerMap.set(
       "slider",
-      this.handleFovChange.bind(this) as EventListener,
+      this.handleSliderChange.bind(this) as EventListener,
     );
   }
 
@@ -104,10 +82,7 @@ export class EngineSettingsController extends StateSubscriptionMixin {
    * Attaches event listeners to the interactive UI elements based on the control config.
    */
   private addEventListeners(): void {
-    this._controlConfig.forEach(({ key, type }) => {
-      const element = this._refs[key];
-      if (!element) return;
-
+    this._controls.forEach(({ element, type }) => {
       if (type === "toggle") {
         element.addEventListener(
           "change",
@@ -126,10 +101,7 @@ export class EngineSettingsController extends StateSubscriptionMixin {
    * Removes all attached event listeners for cleanup.
    */
   private removeEventListeners(): void {
-    this._controlConfig.forEach(({ key, type }) => {
-      const element = this._refs[key];
-      if (!element) return;
-
+    this._controls.forEach(({ element, type }) => {
       if (type === "toggle") {
         element.removeEventListener(
           "change",
@@ -158,7 +130,6 @@ export class EngineSettingsController extends StateSubscriptionMixin {
       this.updateUiState(initialState);
       this.clearError();
 
-      // ✅ Using StateSubscriptionMixin for clean subscription management
       this.subscribeToState(
         this._parentPanel.viewState$,
         (newState: CompositeEngineState) => this.updateUiState(newState),
@@ -184,29 +155,37 @@ export class EngineSettingsController extends StateSubscriptionMixin {
   };
 
   /**
-   * Handler for the FOV slider's custom change event.
+   * Generic handler for the slider's custom change event.
    */
-  private handleFovChange = (
+  private handleSliderChange = (
     event: CustomEvent<SliderValueChangePayload>,
   ): void => {
     if (!this._parentPanel) {
       this.showError(
-        "Cannot handle FOV change: Parent panel reference missing.",
+        "Cannot handle slider change: Parent panel reference missing.",
       );
       return;
     }
 
     try {
+      const target = event.target as HTMLElement & { name?: string };
+      const key = target.name as keyof CompositeEngineState;
       const newValue = event.detail?.value;
-      if (typeof newValue !== "number" || isNaN(newValue)) {
-        this.showError("Invalid FOV value received from slider event.");
+
+      if (!key) {
+        this.showError("Slider is missing 'name' attribute.");
         return;
       }
 
-      this._parentPanel.setProperty("fov", newValue);
+      if (typeof newValue !== "number" || isNaN(newValue)) {
+        this.showError(`Invalid value received from slider '${key}'.`);
+        return;
+      }
+
+      this._parentPanel.setProperty(key, newValue);
       this.clearError();
     } catch (error) {
-      this.showError("An error occurred while updating Field of View (FOV).");
+      this.showError("An error occurred while updating slider value.");
     }
   };
 
@@ -216,11 +195,10 @@ export class EngineSettingsController extends StateSubscriptionMixin {
    * @param viewState The latest state from the parent panel.
    */
   private updateUiState(viewState: CompositeEngineState): void {
-    this._controlConfig.forEach(({ key, type }) => {
-      const element = this._refs[key];
+    this._controls.forEach(({ key, type, element }) => {
       const value = viewState[key];
 
-      if (!element || value === undefined) return;
+      if (value === undefined) return;
 
       if (type === "toggle" && typeof value === "boolean") {
         (element as HTMLInputElement).checked = value;
@@ -238,9 +216,9 @@ export class EngineSettingsController extends StateSubscriptionMixin {
    * @param message The error message to display.
    */
   public showError(message: string): void {
-    if (this._refs.errorMessageElement) {
-      this._refs.errorMessageElement.textContent = message;
-      this._refs.errorMessageElement.style.display = "block";
+    if (this._errorMessageElement) {
+      this._errorMessageElement.textContent = message;
+      this._errorMessageElement.style.display = "block";
     }
   }
 
@@ -248,9 +226,9 @@ export class EngineSettingsController extends StateSubscriptionMixin {
    * Hides the error message area in the view.
    */
   private clearError(): void {
-    if (this._refs.errorMessageElement) {
-      this._refs.errorMessageElement.textContent = "";
-      this._refs.errorMessageElement.style.display = "none";
+    if (this._errorMessageElement) {
+      this._errorMessageElement.textContent = "";
+      this._errorMessageElement.style.display = "none";
     }
   }
 }
