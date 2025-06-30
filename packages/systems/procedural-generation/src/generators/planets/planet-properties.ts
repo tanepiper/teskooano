@@ -35,6 +35,7 @@ export function generatePlanetSpecificProperties(
   baseProps: PlanetBaseProperties,
   bodyDistanceAU: number,
 ): CelestialSpecificPropertiesUnion {
+  console.log("generatePlanetSpecificProperties", baseProps);
   if (baseProps.celestialType === CelestialType.GAS_GIANT) {
     return generateGasGiantSpecificProperties(
       random,
@@ -257,9 +258,6 @@ function generateRockyPlanetSpecificProperties(
   // Determine if the planet has an atmosphere based on its type
   let hasAtmosphere: boolean;
   switch (baseProps.planetType) {
-    case PlanetType.TERRESTRIAL:
-      hasAtmosphere = true;
-      break;
     case PlanetType.BARREN:
       hasAtmosphere = false; // Barren planets never have an atmosphere
       break;
@@ -267,14 +265,16 @@ function generateRockyPlanetSpecificProperties(
       hasAtmosphere = random() < 0.1; // 10% chance for Ice planets
       break;
     case PlanetType.OCEAN:
-      hasAtmosphere = random() < 0.95; // 95% chance for Ocean planets
+    case PlanetType.LAVA:
+    case PlanetType.DESERT:
+    case PlanetType.TERRESTRIAL:
+      hasAtmosphere = true; // Ocean planets always have an atmosphere
       break;
     case "METALLIC" as any:
       hasAtmosphere = random() < 0.3; // 30% chance for Metallic planets
       break;
     case PlanetType.ROCKY:
-    case PlanetType.DESERT:
-    case PlanetType.LAVA:
+
     default: // Assume Terran or other rocky types suitable for atmosphere
       hasAtmosphere = random() < 0.6; // 60% chance for Terran/other
       break;

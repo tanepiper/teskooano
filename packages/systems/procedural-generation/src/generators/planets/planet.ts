@@ -18,7 +18,7 @@ import { calculatePlanetOrbitAndInitialState } from "./planet-orbit";
 import { generatePlanetSpecificProperties } from "./planet-properties";
 import { generateRings } from "./planet-rings";
 import { determinePlanetTypeAndBaseProperties } from "./planet-type";
-
+import { createProceduralSurfaceProperties } from "../../properties/creator";
 import { calculateStellarLuminosity, estimateTemperature } from "../../utils";
 
 /**
@@ -141,6 +141,18 @@ export function generatePlanet(
       );
 
       let properties: CelestialSpecificPropertiesUnion = specificProperties;
+
+      if (baseProps.celestialType === CelestialType.PLANET) {
+        const proceduralSurface = createProceduralSurfaceProperties(
+          random,
+          baseProps.planetType,
+        );
+        properties = {
+          ...properties,
+          surface: proceduralSurface,
+        } as PlanetProperties;
+      }
+
       if (
         specificProperties.type === CelestialType.PLANET &&
         (specificProperties as PlanetProperties).atmosphere

@@ -5,11 +5,11 @@ import { getRandomItem } from "../utils";
 export function getIceProperties(
   random: () => number,
 ): Partial<ProceduralSurfaceProperties> {
-  const color1 = getRandomItem(["#E0FFFF", "#F0FFFF", "#AFEEEE"], random); // Light cyan/pale turquoise
-  const color2 = getRandomItem(["#B0E0E6", "#ADD8E6", "#87CEEB"], random); // Powder blue/light blue
-  const color3 = getRandomItem(["#FFFFFF", "#F5F5F5", "#FAFAFA"], random); // Off-white/snow
-  const color4 = getRandomItem(["#D3D3D3", "#C0C0C0", "#B0C4DE"], random); // Light gray/silver/light steel blue
-  const color5 = getRandomItem(["#778899", "#708090", "#696969"], random); // Slate gray/dim gray for deep ice
+  const color1 = getRandomItem(["#F0FFFF", "#E8FFFF", "#F8FFFF"], random); // Azure Mist
+  const color2 = getRandomItem(["#ADD8E6", "#A5D2DF", "#B5DDEB"], random); // Light Blue
+  const color3 = getRandomItem(["#FFFFFF", "#FDFDFD", "#F8F8F8"], random); // White
+  const color4 = getRandomItem(["#c2c2c2", "#B8B8B8", "#CCCCCC"], random); // Grey
+  const color5 = getRandomItem(["#ada9a9", "#A39F9F", "#B7B3B3"], random); // Dusty Grey
 
   return {
     color1,
@@ -17,18 +17,24 @@ export function getIceProperties(
     color3,
     color4,
     color5,
-    persistence: utils.lerp(0.45, 0.6, random()), // Adjusted persistence
-    lacunarity: utils.lerp(1.9, 2.2, random()), // Corrected lacunarity for smoother ice
-    simplePeriod: utils.lerp(0.8, 1.8, random()), // Adjusted for finer ice details
-    octaves: Math.floor(utils.lerp(8, 12, random())), // Increased octaves
-    bumpScale: 10, //utils.lerp(1, 2, random); // Lower bump for ice
-    roughness: utils.lerp(0.1, 0.3, random()),
-    specularStrength: utils.lerp(0.4, 0.8, random()), // Stronger specular for ice
-    ambientLightIntensity: utils.lerp(0.4, 0.6, random()), // High ambient for ice planets
-    undulation: utils.lerp(0.05, 0.15, random()), // Very low undulation for ice planets
+    persistence: utils.lerp(0.53, 0.54, random()),
+    lacunarity: utils.lerp(2.14, 2.16, random()),
+    simplePeriod: utils.lerp(0.86, 0.88, random()),
+    octaves: Math.floor(utils.lerp(8, 9, random())),
+    bumpScale: 10,
     terrainType: 3,
-    terrainAmplitude: utils.lerp(0.2, 0.4, random()),
-    terrainSharpness: utils.lerp(0.3, 0.6, random()),
-    terrainOffset: utils.lerp(0.2, 0.4, random()),
+    terrainAmplitude: utils.lerp(0.19, 0.21, random()),
+    terrainSharpness: utils.lerp(1.28, 1.32, random()),
+    terrainOffset: utils.lerp(0.24, 0.26, random()),
+    height1: utils.lerp(0.088, 0.092, random()),
+    height2: utils.lerp(0.41, 0.43, random()),
+    height3: utils.lerp(0.4, 0.42, random()),
+    height4: utils.lerp(0.43, 0.45, random()),
+    height5: utils.lerp(0.43, 0.45, random()),
+    shininess: utils.lerp(23, 24, random()),
+    specularStrength: utils.lerp(0.47, 0.48, random()),
+    roughness: utils.lerp(0.11, 0.12, random()),
+    ambientLightIntensity: utils.lerp(0.42, 0.43, random()),
+    undulation: utils.lerp(0.095, 0.105, random()),
   };
 }

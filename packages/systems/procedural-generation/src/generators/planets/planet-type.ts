@@ -118,16 +118,27 @@ export function determinePlanetTypeAndBaseProperties(
       chosenFormation.type === CelestialType.DWARF_PLANET) &&
     chosenFormation.subTypes?.length
   ) {
-    rockyPlanetType = UTIL.getRandomItem(
-      chosenFormation.subTypes as PlanetType[],
-      random,
-    );
+    const validPlanetSubtypes = chosenFormation.subTypes.filter((t) =>
+      Object.values(PlanetType).includes(t as PlanetType),
+    ) as PlanetType[];
+
+    if (validPlanetSubtypes.length > 0) {
+      rockyPlanetType = UTIL.getRandomItem(validPlanetSubtypes, random);
+    }
   }
+  console.log("determinePlanetTypeAndBaseProperties", {
+    gasGiantClass,
+    rockyPlanetType,
+    chosenFormation,
+  });
 
   const planetOrGiantType = gasGiantClass ?? rockyPlanetType;
+  const finalCelestialType = gasGiantClass
+    ? CelestialType.GAS_GIANT
+    : chosenFormation.type;
 
   return {
-    celestialType: chosenFormation.type,
+    celestialType: finalCelestialType,
     planetType: planetOrGiantType as PlanetType | GasGiantClass,
     preliminaryDensity_kg_m3: targetDensity_kg_m3,
     targetDensity_kg_m3: targetDensity_kg_m3,

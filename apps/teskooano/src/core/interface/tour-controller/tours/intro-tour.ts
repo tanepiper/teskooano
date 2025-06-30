@@ -117,7 +117,7 @@ export function createIntroTour(
     },
     {
       id: "ui-settings-1",
-      element: "teskooano-engine-toolbar",
+      element: ".engine-view teskooano-engine-toolbar",
       popover: {
         title: "📦 Engine Toolbar",
         description:
@@ -128,7 +128,8 @@ export function createIntroTour(
     },
     {
       id: "ui-settings-2",
-      element: "#engine-toolbar-toggle-button",
+      element:
+        ".engine-view teskooano-engine-toolbar #engine-toolbar-toggle-button",
       popover: {
         title: "☾ Toggle the Toolbar",
         description:
@@ -140,7 +141,8 @@ export function createIntroTour(
 
     {
       id: "focus-control",
-      element: "#engine-toolbar-button-focus-control-button",
+      element:
+        ".engine-view teskooano-engine-toolbar #engine-toolbar-button-focus-control-button",
       overlayColor: "rgba(0, 0, 0, 0.3)",
       disableActiveInteraction: false,
       popover: {
@@ -169,7 +171,8 @@ export function createIntroTour(
     },
     {
       id: "celestial-info",
-      element: "#engine-toolbar-button-celestial-info-button",
+      element:
+        ".engine-view teskooano-engine-toolbar #engine-toolbar-button-celestial-info-button",
       popover: {
         title: "ℹ️ Celestial Info",
         description:
@@ -180,7 +183,8 @@ export function createIntroTour(
     },
     {
       id: "renderer-info",
-      element: "#engine-toolbar-button-engine-info-button",
+      element:
+        ".engine-view teskooano-engine-toolbar #engine-toolbar-button-engine-info-button",
       popover: {
         title: "🎨 Renderer & Performance",
         description:
@@ -191,7 +195,8 @@ export function createIntroTour(
     },
     {
       id: "engine-settings",
-      element: "#engine-toolbar-button-engine_settings",
+      element:
+        ".engine-view teskooano-engine-toolbar #engine-toolbar-button-engine_settings",
       popover: {
         title: "⚙️ Engine Settings",
         description:
