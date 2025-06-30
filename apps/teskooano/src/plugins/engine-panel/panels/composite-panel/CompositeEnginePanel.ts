@@ -15,7 +15,10 @@ import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 
 import { CustomEvents } from "@teskooano/data-types";
 import { RendererStats, SceneManager } from "@teskooano/renderer-threejs-core";
-import { initializeLabelSystem } from "@teskooano/renderer-threejs-labels";
+import {
+  initializeLabelSystem,
+  type LabelSystem,
+} from "@teskooano/renderer-threejs-labels";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import { EngineToolbar } from "../../../../core/interface/engine-toolbar";
 import { EngineCameraManager } from "../camera-manager";
@@ -60,6 +63,8 @@ export class CompositeEnginePanel
   private _subscriptionManager = new StateSubscriptionMixin();
   private _isInitialized = false;
 
+  private _sceneManager: SceneManager | undefined = undefined;
+  private _labelSystem: LabelSystem | undefined = undefined;
   private _cameraCoordinator: PanelCameraCoordinator | undefined = undefined;
   private _lifecycleManager: PanelLifecycleManager;
   private _eventManager: PanelEventManager;
@@ -236,8 +241,24 @@ export class CompositeEnginePanel
    * Provides access to the EngineToolbar instance.
    * @returns The EngineToolbar instance or null if not initialized.
    */
-  public get engineToolbar(): EngineToolbar | null {
+  public get toolbar(): EngineToolbar | null {
     return this._engineToolbar;
+  }
+
+  /**
+   * Provides access to the LabelSystem instance.
+   * @returns The LabelSystem instance or undefined if not initialized.
+   */
+  public get labelSystem(): LabelSystem | undefined {
+    return this._labelSystem;
+  }
+
+  /**
+   * Provides access to the SceneManager instance.
+   * @returns The SceneManager instance or undefined if not initialized.
+   */
+  public get sceneManager(): SceneManager | undefined {
+    return this._sceneManager;
   }
 
   /**
@@ -354,14 +375,14 @@ export class CompositeEnginePanel
     const viewState = this.getViewState();
 
     // 1. Create the SceneManager first, as it owns the scene and camera.
-    const sceneManager = new SceneManager(this._engineContainer, {
+    this._sceneManager = new SceneManager(this._engineContainer, {
       antialias: true,
       showGrid: viewState.showGrid,
     });
 
     // 2. Decide if the label system is needed and initialize it.
-    const labelSystem = initializeLabelSystem(
-      sceneManager.scene,
+    this._labelSystem = initializeLabelSystem(
+      this._sceneManager.scene,
       this._engineContainer,
       {
         showAuMarkers: viewState.showAuMarkers,
@@ -372,12 +393,12 @@ export class CompositeEnginePanel
     // 3. Create the main renderer, injecting the dependencies.
     this._renderer = new ModularSpaceRenderer(
       this._engineContainer,
-      sceneManager,
+      this._sceneManager,
       {
         // Pass other non-scene/label options here if any
         showDebrisEffects: viewState.showDebrisEffects,
       },
-      labelSystem,
+      this._labelSystem,
     );
 
     // 4. Finalize setup.

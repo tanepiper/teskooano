@@ -1,6 +1,7 @@
 import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import * as THREE from "three";
 import type { CompositeEngineState } from "../types";
+import type { CompositeEnginePanel } from "./CompositeEnginePanel";
 
 /**
  * The default FOV for the panel state, aligning with SceneManager's default
@@ -52,7 +53,8 @@ export function applyViewStateToRenderer(
     renderer.setPredictionLinesVisible(updates.showPredictionLines);
   }
   if (updates.fov !== undefined) {
-    renderer.sceneManager?.setFov(updates.fov);
+    renderer.camera.fov = updates.fov;
+    renderer.camera.updateProjectionMatrix();
   }
   if (updates.isDebugMode !== undefined) {
     renderer.setDebugMode(updates.isDebugMode);
