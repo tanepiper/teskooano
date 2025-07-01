@@ -58,8 +58,8 @@ meanAnomaly: 342.021 * DEG_TO_RAD,
 
 **Fixed Bodies**:
 - ✅ **Asteroid Belt**: Now uses fixed orbital elements
-- ✅ **Saturn Moons**: Titan, Rhea, Iapetus, Dione - accurate orbital elements
-- 🔄 **Jupiter Moons**: Io, Europa, Ganymede, Callisto - modularized with accurate data
+- ✅ **Saturn System**: All 6 moons (Titan, Enceladus, Rhea, Iapetus, Dione, Tethys) - accurate orbital elements
+- ✅ **Jupiter System**: All 4 Galilean moons (Io, Europa, Ganymede, Callisto) - modularized with accurate data
 - ⏳ **Remaining moons**: Uranus, Neptune, Pluto systems - pending fix
 
 ### 2. **Added Missing Bodies**
@@ -68,7 +68,9 @@ meanAnomaly: 342.021 * DEG_TO_RAD,
 **Added Bodies**:
 - ✅ **Ceres** - Complete dwarf planet implementation with accurate physical and orbital parameters
 - ✅ **Enceladus** - Saturn's geologically active ice moon with subsurface ocean properties
-- ⏳ **Other dwarf planets**: Eris, Makemake, Haumea - planned for next phase
+- ✅ **Eris** - Most massive dwarf planet with moon Dysnomia, highly eccentric orbit
+- ✅ **Vesta** - Second largest asteroid, differentiated structure with basaltic crust
+- ⏳ **Other dwarf planets**: Makemake, Haumea - planned for next phase
 
 ### 3. **Modular Architecture Refactoring**
 **Action**: Split large files into focused, maintainable modules.
@@ -82,6 +84,19 @@ jupiter.ts (417 lines) → jupiter/
 ├── europa.ts         # Europa moon  
 ├── ganymede.ts       # Ganymede moon
 └── callisto.ts       # Callisto moon
+```
+
+**Saturn System Refactoring**:
+```
+saturn.ts (610 lines) → saturn/
+├── index.ts          # Main system initializer
+├── saturn.ts         # Planet + ring system
+├── titan.ts          # Largest moon with atmosphere
+├── enceladus.ts      # Geologically active moon
+├── rhea.ts           # Second-largest moon
+├── iapetus.ts        # Two-toned moon
+├── dione.ts          # Wispy terrain moon
+└── tethys.ts         # Odysseus crater moon
 ```
 
 **Benefits**:
@@ -112,15 +127,15 @@ All astronomical data sourced from:
    - Pluto system (Charon)
 
 2. **Add Major Missing Bodies**:
-   - Eris (most massive dwarf planet)
    - Makemake (Kuiper Belt dwarf planet)
    - Haumea (elongated dwarf planet)
-   - Vesta (second largest asteroid)
+   - Pallas (third largest asteroid)
 
 3. **Modular Refactoring**:
-   - Saturn system (6+ moons)
    - Uranus system (5 moons)
    - Neptune system (2 moons)
+   - Mars system (2 moons)
+   - Earth-Moon system
 
 ### Medium Priority
 1. **Minor Body Improvements**:

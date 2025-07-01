@@ -1,6 +1,8 @@
 import { initializeAsteroidBelt } from "./asteroidBelt";
 import { initializeCeres } from "./ceres";
 import { initializeEarth } from "./earth";
+import { initializeEris } from "./eris";
+import { initializeVesta } from "./vesta";
 import { initializeJupiter } from "./jupiter";
 import { initializeMars } from "./mars";
 import { initializeMercury } from "./mercury";
@@ -24,11 +26,13 @@ export function initializeSolarSystem() {
   initializeEarth(sunId);
   initializeMars(sunId);
   initializeCeres(sunId);
+  initializeVesta(sunId);
   initializeJupiter(sunId);
   initializeSaturn(sunId);
   initializeUranus(sunId);
   initializeNeptune(sunId);
   initializePluto(sunId);
+  initializeEris(sunId);
 
   initializeAsteroidBelt(sunId);
   // initializeOortCloud(sunId);
