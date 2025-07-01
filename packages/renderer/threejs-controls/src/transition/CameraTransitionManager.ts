@@ -194,7 +194,7 @@ export class CameraTransitionManager {
     this.lastUpdatePosition.copy(startPos);
     this.lastUpdateTime = 0;
     const totalDuration = this.calculateTransitionDuration(startPos, endPos);
-    const AU = 150; // Aprox
+    const AU = 15; // Approximate scene units per AU (adjusted for new scale)
 
     let targetName = "Position";
     if (options?.focusedObjectId) {
@@ -330,7 +330,7 @@ export class CameraTransitionManager {
     endPos: THREE.Vector3,
   ): number {
     // --- Dynamic Transition Duration Calculation ---
-    const AU = 150; // Approximate scene units per Astronomical Unit
+    const AU = 15; // Approximate scene units per Astronomical Unit (adjusted for new scale)
 
     // --- Tuning Parameters for the duration curve ---
     // The base duration for a 1 AU trip.

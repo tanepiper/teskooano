@@ -240,7 +240,7 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
     const lowDetailGroup = new THREE.Group();
     lowDetailGroup.name = `${object.celestialObjectId}-lod-low`;
     lowDetailGroup.add(eventHorizon);
-    const lod1: LODLevel = { object: lowDetailGroup, distance: 10000 };
+    const lod1: LODLevel = { object: lowDetailGroup, distance: 1000 };
 
     return [lod0, lod1];
   }

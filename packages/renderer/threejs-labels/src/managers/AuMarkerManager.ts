@@ -88,7 +88,7 @@ export class AuMarkerManager {
     this.css2DManager.registerLayer(CSS2DLayerType.AU_MARKERS, auMarkerLayer);
 
     auMarkersData.forEach(({ au, color }) => {
-      const radiusSceneUnits = au * AU_METERS * METERS_TO_SCENE_UNITS;
+      const radiusSceneUnits = au * AU_METERS * METERS_TO_SCENE_UNITS; // Auto-adjusts with new scale
       const ringThickness = radiusSceneUnits * 0.001;
       const circleGeometry = new THREE.RingGeometry(
         radiusSceneUnits - ringThickness / 2,

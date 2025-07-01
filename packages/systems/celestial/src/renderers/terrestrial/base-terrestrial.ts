@@ -132,7 +132,7 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     );
     const level1: LODLevel = {
       object: mediumDetailGroup,
-      distance: 250 * scale,
+      distance: 2500 * scale,
     };
 
     const color = this.materialService.getBaseColor(object);
@@ -146,7 +146,7 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     } else {
       size = 0.02;
       // For planets, use the existing scaling logic
-      billboardDistance = 1000 * scale;
+      billboardDistance = 10000 * scale;
     }
 
     const level2 = this.billboardManager.createBillboardLOD(object, {

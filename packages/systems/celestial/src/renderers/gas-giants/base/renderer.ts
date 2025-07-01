@@ -133,10 +133,10 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     mediumMesh.name = `${object.celestialObjectId}-medium-lod`;
     const level1Group = new THREE.Group();
     level1Group.add(mediumMesh);
-    const level1: LODLevel = { object: level1Group, distance: 800 * scale };
+    const level1: LODLevel = { object: level1Group, distance: 8000 * scale };
 
     const color = this._getBaseGasGiantColor(object);
-    const billboardDistance = 2000 * scale;
+    const billboardDistance = 20000 * scale;
 
     const level2 = this.billboardManager.createBillboardLOD(object, {
       distance: billboardDistance,

@@ -215,13 +215,13 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
     mediumDetailGroup.name = `${object.celestialObjectId}-lod-medium`;
     mediumDetailGroup.add(eventHorizon.clone());
     mediumDetailGroup.add(ergosphere);
-    const lod1: LODLevel = { object: mediumDetailGroup, distance: 8000 };
+    const lod1: LODLevel = { object: mediumDetailGroup, distance: 800 };
 
     // Level 2: Low detail (Horizon only)
     const lowDetailGroup = new THREE.Group();
     lowDetailGroup.name = `${object.celestialObjectId}-lod-low`;
     lowDetailGroup.add(eventHorizon);
-    const lod2: LODLevel = { object: lowDetailGroup, distance: 20000 };
+    const lod2: LODLevel = { object: lowDetailGroup, distance: 2000 };
 
     return [lod0, lod1, lod2];
   }

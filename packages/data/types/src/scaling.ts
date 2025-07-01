@@ -27,7 +27,7 @@ export const SCALE = {
   TIME: 1.0,
   MASS: 1.0e-20,
 
-  RENDER_SCALE_AU: 1000,
+  RENDER_SCALE_AU: 100,
 
   GAS_GIANT_SIZE: 1.0,
   STAR_SIZE: 1.0,

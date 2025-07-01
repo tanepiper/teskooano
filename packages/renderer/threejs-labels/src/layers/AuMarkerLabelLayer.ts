@@ -79,6 +79,7 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
       );
 
       // Hide the label if the camera is 110% past the marker's distance
+      // Note: This should auto-adjust with new scale since markerAuValueScene uses auToSceneUnits()
       const visible = cameraDistance < markerAuValueScene * 10;
 
       // Use toggleAttribute for CSS animations

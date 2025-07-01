@@ -367,7 +367,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       material = this._createSharedMaterial(object.celestialObjectId);
     }
 
-    const distancesAU = [0, 1, 4, 10];
+    const distancesAU = [0, 0.1, 0.4, 1.0];
     const distancesSceneUnits = distancesAU.map(
       (au) => au * SCALE.RENDER_SCALE_AU,
     );

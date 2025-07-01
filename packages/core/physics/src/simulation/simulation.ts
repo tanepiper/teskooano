@@ -116,7 +116,7 @@ export const updateSimulation = (
     isStar,
     bodyTypes,
     parentIds,
-    octreeSize = 5e13,
+    octreeSize = 5e13, // NOTE: Monitor performance after scale change - may need adjustment
     barnesHutTheta = 0.7,
     physicsEngine = "verlet",
   } = params;

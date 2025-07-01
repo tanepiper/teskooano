@@ -36,7 +36,7 @@ export function predictTrajectory(
   } = {},
 ): PredictedPoint[] {
   const {
-    octreeSize = 5e13,
+    octreeSize = 5e13, // NOTE: Monitor performance after scale change - may need adjustment
     barnesHutTheta = 0.7,
     scaleToSceneUnits = true,
     collisionDetection = false,
