@@ -214,6 +214,7 @@ export function generateMoon(
 
   // Determine moon composition and surface properties
   const moonPlanetType = determineMoonType(
+    random,
     formationMechanism,
     parentPlanetData,
   );
@@ -247,7 +248,11 @@ export function generateMoon(
     planetType: moonPlanetType,
     isMoon: true,
     parentPlanet: parentPlanetData.id,
-    composition: determineMoonComposition(moonPlanetType, formationMechanism),
+    composition: determineMoonComposition(
+      random,
+      moonPlanetType,
+      formationMechanism,
+    ),
     surface: detailedSurface as any,
     atmosphere: undefined, // Most moons lack significant atmospheres
   };
@@ -482,6 +487,7 @@ function generateMoonOrbit(
  * Determine moon type based on formation and parent planet
  */
 function determineMoonType(
+  random: () => number,
   formation: string,
   parentPlanet: CelestialObject,
 ): PlanetType {
@@ -503,7 +509,7 @@ function determineMoonType(
     case "capture":
       // Captured objects vary widely
       const types = [PlanetType.BARREN, PlanetType.ROCKY, PlanetType.ICE];
-      return types[Math.floor(Math.random() * types.length)];
+      return types[Math.floor(random() * types.length)];
 
     default:
       return PlanetType.ROCKY;
@@ -535,6 +541,7 @@ function determineMoonSurface(
  * Determine moon composition
  */
 function determineMoonComposition(
+  random: () => number,
   moonType: PlanetType,
   formation: string,
 ): string[] {
@@ -548,9 +555,7 @@ function determineMoonComposition(
     case "capture":
       return ["carbon", "silicates", "water ice"]; // Asteroid-like
     default:
-      return UTIL.getRandomItem(CONST.ROCKY_COMPOSITION, Math.random).split(
-        ",",
-      );
+      return UTIL.getRandomItem(CONST.ROCKY_COMPOSITION, random).split(",");
   }
 }
 

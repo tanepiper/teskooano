@@ -300,10 +300,17 @@ export class CelestialZoneManager {
 }
 
 /**
- * Legacy compatibility function
+ * Generates zones for a star using the provided seeded random function.
+ * This ensures deterministic zone generation.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param star The star object to generate zones for.
+ * @returns Array of CelestialZone objects adjusted for the star.
  */
-export function generateZonesForStar(star: CelestialObject): CelestialZone[] {
-  const random = () => Math.random(); // Use non-seeded random for backwards compatibility
+export function generateZonesForStar(
+  random: () => number,
+  star: CelestialObject,
+): CelestialZone[] {
   const zoneManager = new CelestialZoneManager(random);
   const config = zoneManager.determineStellarConfiguration();
   return zoneManager.getAdjustedZones([star], config);

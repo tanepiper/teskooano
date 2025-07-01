@@ -270,7 +270,7 @@ function generateContactBinary(
 
   // Contact binaries affect each other's properties
   // They typically have enhanced activity and mass transfer
-  updateStarPropertiesForContact(primary, companion);
+  updateStarPropertiesForContact(random, primary, companion);
 
   return [primary, companion];
 }
@@ -420,6 +420,7 @@ function updateStarPropertiesForMultiple(
  * Updates star properties for contact binary systems
  */
 function updateStarPropertiesForContact(
+  random: () => number,
   primary: CelestialObject,
   companion: CelestialObject,
 ): void {
@@ -431,6 +432,6 @@ function updateStarPropertiesForContact(
   const companionProps = companion.properties as StarProperties;
 
   // Slightly enhance luminosity due to interaction effects
-  primaryProps.luminosity *= 1.0 + Math.random() * 0.2;
-  companionProps.luminosity *= 1.0 + Math.random() * 0.2;
+  primaryProps.luminosity *= 1.0 + random() * 0.2;
+  companionProps.luminosity *= 1.0 + random() * 0.2;
 }

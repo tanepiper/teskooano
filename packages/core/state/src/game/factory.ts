@@ -270,9 +270,13 @@ class CelestialFactoryService {
     }
 
     if (!data.parentId) {
-      if (data.type !== CelestialType.STAR) {
+      if (
+        data.type !== CelestialType.STAR &&
+        data.type !== CelestialType.PLANET &&
+        data.type !== CelestialType.GAS_GIANT
+      ) {
         console.error(
-          `[CelestialFactoryService] Cannot add non-star object ${data.id}. Missing parentId.`,
+          `[CelestialFactoryService] Cannot add non-star/non-rogue-planet object ${data.id}. Missing parentId.`,
         );
         return;
       }
@@ -354,6 +358,44 @@ class CelestialFactoryService {
         velocity_mps: new OSVector3(0, 0, 0),
       };
       orbitalParams = undefined;
+    } else if (
+      (data.type === CelestialType.PLANET ||
+        data.type === CelestialType.GAS_GIANT) &&
+      !data.parentId
+    ) {
+      // Handle rogue planets - they drift freely in space with minimal motion
+      const isRogueWithZeroOrbit =
+        data.orbit &&
+        data.orbit.realSemiMajorAxis_m === 0 &&
+        data.orbit.eccentricity === 0 &&
+        data.orbit.period_s === 0;
+
+      if (isRogueWithZeroOrbit && data.orbit) {
+        // For rogue planets, use orbit position data if provided, otherwise place randomly
+        const baseDistance = data.orbit.meanAnomaly || Math.random() * 100 + 50; // Use meanAnomaly as distance storage
+        const AU_TO_METERS = 1.496e11;
+
+        physicsStateReal = {
+          id: data.id,
+          mass_kg: data.realMass_kg,
+          position_m: new OSVector3(
+            baseDistance * AU_TO_METERS,
+            (Math.random() - 0.5) * baseDistance * AU_TO_METERS * 0.1,
+            (Math.random() - 0.5) * baseDistance * AU_TO_METERS * 0.1,
+          ),
+          velocity_mps: new OSVector3(
+            (Math.random() - 0.5) * 500, // ±250 m/s drift
+            (Math.random() - 0.5) * 500,
+            (Math.random() - 0.5) * 500,
+          ),
+        };
+        orbitalParams = undefined;
+      } else {
+        console.error(
+          `[CelestialFactoryService] Planet/GasGiant ${data.id} without parent must have zero orbital parameters for rogue planets.`,
+        );
+        return;
+      }
     } else {
       if (!orbitalParams) {
         console.error(

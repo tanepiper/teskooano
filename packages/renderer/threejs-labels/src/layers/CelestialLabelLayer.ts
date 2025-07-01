@@ -111,6 +111,14 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       const formattedDistance = this._formatDistance(distanceInAu);
       label.element.setAttribute("data-distance-formatted", formattedDistance);
 
+      // Calculate and format speed
+      const renderableObject = allObjects[objectId];
+      if (renderableObject?.velocityMagnitude_mps !== undefined) {
+        const speed = renderableObject.velocityMagnitude_mps; // Raw velocity in m/s
+        const formattedSpeed = this._formatSpeed(speed);
+        label.element.setAttribute("data-speed-formatted", formattedSpeed);
+      }
+
       switch (type) {
         case CelestialType.STAR: {
           if (objectId === mainStarId) {
@@ -185,6 +193,38 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       return `${(distanceInMeters / KILOMETER).toFixed(2)} km`;
     }
     return `${distanceInMeters.toFixed(2)} m`;
+  }
+
+  /**
+   * Formats a speed value into a human-readable string with appropriate units.
+   * @param speedInMps - The speed in meters per second.
+   * @returns A formatted string (e.g., "1.23 km/s", "0.001c").
+   */
+  private _formatSpeed(speedInMps: number): string {
+    const LIGHT_SPEED = 299_792_458; // m/s
+    const KILOMETER_PER_SECOND = 1_000; // m/s
+
+    // If speed is significant fraction of light speed (>= 0.001c), show as fraction of c
+    if (speedInMps >= LIGHT_SPEED * 0.001) {
+      const fractionOfLightSpeed = speedInMps / LIGHT_SPEED;
+      if (fractionOfLightSpeed >= 0.01) {
+        return `${fractionOfLightSpeed.toFixed(3)}c`;
+      } else {
+        return `${fractionOfLightSpeed.toFixed(4)}c`;
+      }
+    }
+
+    // If speed is >= 1 km/s, show in km/s
+    if (speedInMps >= KILOMETER_PER_SECOND) {
+      return `${(speedInMps / KILOMETER_PER_SECOND).toFixed(2)} km/s`;
+    }
+
+    // Otherwise show in m/s
+    if (speedInMps >= 1) {
+      return `${speedInMps.toFixed(1)} m/s`;
+    } else {
+      return `${speedInMps.toFixed(2)} m/s`;
+    }
   }
 
   /**

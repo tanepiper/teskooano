@@ -13,6 +13,7 @@ import {
   generateAsteroidBelt,
   generateMoonsObservable,
   generatePlanet,
+  generateRoguePlanet,
 } from "../generators";
 import type { BodyPlacement } from "../utils/body-placement";
 import { OrbitalConfiguration } from "../zones";
@@ -109,34 +110,7 @@ function generateRogueObject(
   seed: string,
 ): Observable<CelestialObject> {
   const { distanceAU } = placement;
-  const rogueSeed = `${seed}-rogue-${placement.slotIndex}`;
-
-  // Create a minimal "star" at the rogue location for generation purposes
-  const dummyStar: CelestialObject = {
-    id: "rogue-center",
-    name: "Rogue Center",
-    type: CelestialType.OTHER,
-    status: "active" as any,
-    realRadius_m: 1000,
-    realMass_kg: 1e20, // Very small mass
-    orbit: {
-      realSemiMajorAxis_m: 0,
-      eccentricity: 0,
-      inclination: 0,
-      longitudeOfAscendingNode: 0,
-      argumentOfPeriapsis: 0,
-      meanAnomaly: 0,
-      period_s: 0,
-    },
-    temperature: 2.7, // Background temperature
-    physicsStateReal: {
-      id: "rogue-center",
-      mass_kg: 1e20,
-      position_m: { x: distanceAU * 1.496e11, y: 0, z: 0 } as any,
-      velocity_mps: { x: 0, y: 0, z: 0 } as any,
-    },
-  };
 
   // Generate a rogue planet (no moons for rogue objects typically)
-  return generatePlanet(random, dummyStar, 0.1, rogueSeed);
+  return generateRoguePlanet(random, distanceAU, seed, placement.slotIndex);
 }

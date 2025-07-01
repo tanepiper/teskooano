@@ -4,10 +4,12 @@ import {
   CelestialSpecificPropertiesUnion,
   CelestialStatus,
   CelestialType,
+  GasGiantClass,
   PhysicsStateReal,
   PlanetProperties,
   PlanetType,
   RingProperties,
+  RockyType,
   scaleSize,
 } from "@teskooano/data-types";
 import { Observable, Subscriber } from "rxjs";
@@ -219,6 +221,183 @@ export function generatePlanet(
       subscriber.complete();
     } catch (error) {
       console.error(`Error generating planet ${planetName}:`, error);
+      subscriber.error(error);
+    }
+  });
+}
+
+/**
+ * Creates an RxJS Observable that generates and emits data for a single rogue planet
+ * that is not gravitationally bound to any star.
+ *
+ * Rogue planets are planetary objects that have been ejected from their original
+ * stellar system and now drift freely through interstellar space.
+ *
+ * @param random The seeded pseudo-random number generator function.
+ * @param distanceAU The distance from the system center where the rogue planet is located.
+ * @param systemSeed The main system seed string.
+ * @param slotIndex The slot index for unique naming.
+ * @returns An `Observable<CelestialObject>` that emits the rogue planet and then completes.
+ */
+export function generateRoguePlanet(
+  random: () => number,
+  distanceAU: number,
+  systemSeed: string,
+  slotIndex: number,
+): Observable<CelestialObject> {
+  return new Observable((subscriber: Subscriber<CelestialObject>) => {
+    let planetName: string = "Unknown Rogue Planet";
+    try {
+      planetName = generateCelestialName(random);
+      const planetId = `planet-rogue-${planetName.toLowerCase()}-${slotIndex}`;
+
+      // For rogue planets, use a simplified zone approach - they're typically cold
+      // and more likely to be ice giants or frozen rocky planets
+      const planetTypeRoll = random();
+      let baseProps;
+
+      if (planetTypeRoll < 0.3) {
+        // 30% chance of being a gas giant (likely ejected ice giant)
+        baseProps = {
+          celestialType: CelestialType.GAS_GIANT,
+          planetType:
+            random() < 0.7 ? GasGiantClass.CLASS_III : GasGiantClass.CLASS_IV, // Ice giants
+          preliminaryDensity_kg_m3: 1500, // Lower density for ice giants
+          targetDensity_kg_m3: 1500,
+          massMultiplierFactor: random() * 15 + 5, // 5-20x Earth mass
+          ringChance: 0.4, // Moderate chance of rings
+          ringAllowedTypes: [RockyType.ICE],
+        };
+      } else {
+        // 70% chance of being a rocky/ice planet
+        baseProps = {
+          celestialType: CelestialType.PLANET,
+          planetType: random() < 0.6 ? PlanetType.ICE : PlanetType.ROCKY,
+          preliminaryDensity_kg_m3: 4000, // Rocky density
+          targetDensity_kg_m3: 4000,
+          massMultiplierFactor: random() * 3 + 0.5, // 0.5-3.5x Earth mass
+          ringChance: 0.05, // Very low chance of rings
+          ringAllowedTypes: [RockyType.ICE],
+        };
+      }
+
+      const planetMassMultiplier =
+        (0.5 + random() * 5) * baseProps.massMultiplierFactor;
+      const planetMass_kg = planetMassMultiplier * CONST.EARTH_MASS_KG;
+
+      const finalPlanetRadius_m = UTIL.calculateRadius(
+        planetMass_kg,
+        baseProps.targetDensity_kg_m3,
+      );
+
+      // Create a dummy parent for property generation (won't be used as actual parent)
+      const dummyParent = {
+        id: "temp-parent",
+        realRadius_m: 696340000, // Sun-like radius
+        temperature: 5778, // Sun-like temperature
+        realMass_kg: 1.989e30, // Sun-like mass
+      } as CelestialObject;
+
+      const specificProperties = generatePlanetSpecificProperties(
+        random,
+        baseProps as any,
+        50, // Far distance for cold properties
+      );
+
+      const visualPlanetRadius_m = scaleSize(
+        finalPlanetRadius_m,
+        baseProps.celestialType,
+      );
+
+      let generatedRings: RingProperties[] | undefined;
+      if (baseProps.ringChance > 0 && baseProps.ringAllowedTypes.length > 0) {
+        generatedRings = generateRings(
+          random,
+          baseProps.ringChance,
+          baseProps.ringAllowedTypes as any,
+          visualPlanetRadius_m,
+        );
+      }
+
+      // For rogue planets, we pass the distance information through the orbit parameters
+      // The factory will detect this and create appropriate physics state
+
+      const rotationPeriod_s = 18000 + random() * (172800 - 18000);
+      const tilt_deg = random() * 45;
+      const tilt_rad = tilt_deg * (Math.PI / 180);
+
+      const tiltAxis = new OSVector3(
+        0,
+        Math.cos(tilt_rad),
+        Math.sin(tilt_rad),
+      ).normalize();
+
+      const planetSeed = `${systemSeed}-rogue-${planetId}`;
+      // Rogue planets are very cold - background temperature of space
+      const planetTemp = 2.7 + random() * 10; // 2.7-12.7K
+
+      const planetAlbedo = UTIL.calculateAlbedo(
+        baseProps.celestialType,
+        baseProps.planetType,
+        random,
+      );
+
+      let properties: CelestialSpecificPropertiesUnion = specificProperties;
+
+      if (baseProps.celestialType === CelestialType.PLANET) {
+        const proceduralSurface = createProceduralSurfaceProperties(
+          random,
+          baseProps.planetType,
+        );
+        properties = {
+          ...properties,
+          surface: proceduralSurface,
+        } as PlanetProperties;
+      }
+
+      // Rogue planets use zero orbital parameters with distance encoded in meanAnomaly
+      const planetData: CelestialObject = {
+        id: planetId,
+        name: `Rogue ${planetName}`,
+        status: CelestialStatus.ACTIVE,
+        albedo: planetAlbedo,
+        type: baseProps.celestialType,
+        // No parentId - rogue planets don't orbit anything
+        realMass_kg: planetMass_kg,
+        realRadius_m: finalPlanetRadius_m,
+        temperature: planetTemp,
+        orbit: {
+          realSemiMajorAxis_m: 0,
+          eccentricity: 0,
+          inclination: 0,
+          longitudeOfAscendingNode: 0,
+          argumentOfPeriapsis: 0,
+          meanAnomaly: distanceAU, // Store distance here for factory to use
+          period_s: 0,
+        },
+        properties,
+        seed: planetSeed,
+        siderealRotationPeriod_s: rotationPeriod_s,
+        axialTilt: tiltAxis,
+        // Physics state will be calculated by the factory
+        physicsStateReal: {
+          id: planetId,
+          mass_kg: planetMass_kg,
+          position_m: new OSVector3(0, 0, 0), // Placeholder - factory will set this
+          velocity_mps: new OSVector3(0, 0, 0), // Placeholder - factory will set this
+        },
+      };
+
+      if (generatedRings && generatedRings.length > 0) {
+        if (planetData.properties) {
+          (planetData.properties as PlanetProperties).rings = generatedRings;
+        }
+      }
+
+      subscriber.next(planetData);
+      subscriber.complete();
+    } catch (error) {
+      console.error(`Error generating rogue planet ${planetName}:`, error);
       subscriber.error(error);
     }
   });

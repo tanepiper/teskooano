@@ -78,6 +78,7 @@ export class RenderableObjectFactory {
       celestialObjectId: obj.id,
       position: new THREE.Vector3(),
       velocity: new THREE.Vector3(),
+      velocityMagnitude_mps: 0, // Raw velocity magnitude in m/s for display
       rotation: new THREE.Quaternion(),
       isVisible: true,
       isTargetable: true,
@@ -102,10 +103,13 @@ export class RenderableObjectFactory {
 
     physicsToThreeJSPosition(target.position, obj.physicsStateReal.position_m);
     if (obj.physicsStateReal.velocity_mps) {
+      // Keep velocity scaled for scene consistency (camera predictions, etc.)
       physicsToThreeJSPosition(
         target.velocity,
         obj.physicsStateReal.velocity_mps,
       );
+      // Store raw velocity magnitude for display purposes
+      target.velocityMagnitude_mps = obj.physicsStateReal.velocity_mps.length();
     }
     target.rotation.copy(
       this.calculateRotation(
@@ -141,6 +145,7 @@ export class RenderableObjectFactory {
       celestialObjectId: obj.id,
       position: new THREE.Vector3(),
       velocity: new THREE.Vector3(),
+      velocityMagnitude_mps: 0, // Raw velocity magnitude in m/s for display
       rotation: new THREE.Quaternion(),
       isVisible: true,
       isTargetable: false,
@@ -168,10 +173,14 @@ export class RenderableObjectFactory {
       parent.physicsStateReal.position_m,
     );
     if (parent.physicsStateReal.velocity_mps) {
+      // Keep velocity scaled for scene consistency (camera predictions, etc.)
       physicsToThreeJSPosition(
         target.velocity,
         parent.physicsStateReal.velocity_mps,
       );
+      // Store raw velocity magnitude for display purposes
+      target.velocityMagnitude_mps =
+        parent.physicsStateReal.velocity_mps.length();
     }
     // Rings use parent's tilt but do not have their own sidereal rotation
     target.rotation.copy(

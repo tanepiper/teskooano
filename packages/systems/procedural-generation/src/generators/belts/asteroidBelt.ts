@@ -178,10 +178,11 @@ function isValidAsteroidBeltDistance(
 
   // Main asteroid belt: between Mars and Jupiter orbits (scaled)
   // Also allow for outer belts (like Kuiper belt analogs)
+  // Extended range to fill the gap for procedural generation
   return (
     (distanceAU >= innerLimit && distanceAU <= outerLimit) ||
-    (distanceAU >= 20 && distanceAU <= 100)
-  ); // Outer belt region
+    (distanceAU >= 6 && distanceAU <= 100)
+  ); // Extended outer belt region to eliminate gap
 }
 
 /**
