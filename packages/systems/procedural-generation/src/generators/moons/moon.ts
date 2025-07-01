@@ -106,6 +106,7 @@ export function generateMoon(
     moonSemiMajorAxis_m,
     moonOrbitalPeriod_s,
     formationMechanism,
+    parentPlanetData.orbit,
   );
 
   // Validate orbital parameters
@@ -444,39 +445,50 @@ function generateMoonOrbit(
   semiMajorAxis: number,
   period: number,
   formation: string,
+  parentOrbit?: OrbitalParameters,
 ): OrbitalParameters {
   let eccentricity: number;
-  let inclination: number;
+  let relativeInclination: number;
 
   switch (formation) {
     case "co-accretion":
       // Regular, circular orbits (like Galilean moons)
       eccentricity = random() * 0.01; // Very circular
-      inclination = (random() - 0.5) * 0.05; // Nearly coplanar
+      relativeInclination = (random() - 0.5) * 0.05; // Nearly coplanar (+/- 1.4 degrees)
       break;
 
     case "impact":
       // Moderate eccentricity, coplanar
       eccentricity = random() * 0.1;
-      inclination = (random() - 0.5) * 0.1;
+      relativeInclination = (random() - 0.5) * 0.1; // +/- 2.8 degrees
       break;
 
     case "capture":
       // Highly eccentric, inclined orbits
       eccentricity = 0.1 + random() * 0.4; // Higher eccentricity
-      inclination = (random() - 0.5) * 0.5; // Can be highly inclined
+      relativeInclination = (random() - 0.5) * 0.5; // Can be highly inclined (+/- 14 degrees)
       break;
 
     default:
       eccentricity = random() * 0.05;
-      inclination = (random() - 0.5) * 0.1;
+      relativeInclination = (random() - 0.5) * 0.1;
   }
+
+  // Combine parent's inclination with a small relative inclination.
+  // This keeps the moon orbiting roughly in the same plane as the planet.
+  const finalInclination =
+    (parentOrbit?.inclination ?? 0) + relativeInclination;
+
+  // Align the direction of the tilt with the parent's orbit.
+  const longitudeOfAscendingNode = parentOrbit
+    ? parentOrbit.longitudeOfAscendingNode
+    : random() * 2 * Math.PI;
 
   return {
     realSemiMajorAxis_m: semiMajorAxis,
     eccentricity: eccentricity,
-    inclination: inclination,
-    longitudeOfAscendingNode: random() * 2 * Math.PI,
+    inclination: finalInclination,
+    longitudeOfAscendingNode: longitudeOfAscendingNode,
     argumentOfPeriapsis: random() * 2 * Math.PI,
     meanAnomaly: random() * 2 * Math.PI,
     period_s: period,
