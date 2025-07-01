@@ -12,21 +12,16 @@ import {
 } from "@teskooano/core-debug";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
-
-const MAX_SHADOW_CASTERS = 4;
-const MAX_LIGHTS = 4;
-
-interface RingLightSource {
-  position: THREE.Vector3;
-  color: THREE.Color;
-  intensity: number;
-}
+import { LightSourceData } from "../base/CelestialRenderer";
 
 /**
  * Material for celestial object rings
  * Works for all ring types with configuration options
  */
 export class RingMaterial extends THREE.ShaderMaterial {
+  protected currentNumLights: number = 0;
+  protected currentNumShadowCasters: number = 0;
+
   constructor(
     ringColor: THREE.Color = new THREE.Color(0xeeddaa),
     options: {
@@ -50,7 +45,14 @@ export class RingMaterial extends THREE.ShaderMaterial {
 
     const typeCoef = ringType === "detailed_saturn" ? 1.0 : 0.0;
 
+    const MAX_LIGHTS = 4;
+    const MAX_SHADOW_CASTERS = 4;
+
     super({
+      defines: {
+        MAX_LIGHTS: MAX_LIGHTS,
+        MAX_SHADOW_CASTERS: MAX_SHADOW_CASTERS,
+      },
       uniforms: {
         color: { value: ringColor },
         opacity: { value: options.opacity ?? 0.8 },
@@ -89,61 +91,92 @@ export class RingMaterial extends THREE.ShaderMaterial {
       side: THREE.DoubleSide,
       depthWrite: false,
     });
+
+    this.currentNumLights = MAX_LIGHTS;
+    this.currentNumShadowCasters = MAX_SHADOW_CASTERS;
   }
 
-  /**
-   * Update material uniforms, e.g., time for animation, light source changes.
-   * @param time Current time (e.g., from animation loop).
-   * @param lightSources An array of active light sources.
-   * @param numLights The number of active lights.
-   * @param parentPosition World position of the celestial body the rings belong to.
-   * @param parentRadius Radius of the celestial body the rings belong to.
-   * @param shadowCasters Array of objects with position and radius for moons casting shadows.
-   * @param numShadowCasters The number of active shadow casters.
-   */
+  private resizeLightArrays(newSize: number): void {
+    const defineSize = Math.max(1, newSize);
+    if (this.defines.MAX_LIGHTS !== defineSize) {
+      this.defines.MAX_LIGHTS = defineSize;
+      this.needsUpdate = true;
+    }
+
+    const lights = [];
+    for (let i = 0; i < defineSize; i++) {
+      lights.push(
+        this.uniforms.uLightSources.value[i] || {
+          position: new THREE.Vector3(),
+          color: new THREE.Color(),
+          intensity: 0,
+        },
+      );
+    }
+    this.uniforms.uLightSources.value = lights;
+  }
+
+  private resizeShadowCasterArrays(newSize: number): void {
+    const defineSize = Math.max(1, newSize);
+    if (this.defines.MAX_SHADOW_CASTERS !== defineSize) {
+      this.defines.MAX_SHADOW_CASTERS = defineSize;
+      this.needsUpdate = true;
+    }
+
+    const casters = [];
+    for (let i = 0; i < defineSize; i++) {
+      casters.push(
+        this.uniforms.uShadowCasters.value[i] || {
+          position: new THREE.Vector3(),
+          radius: 0,
+        },
+      );
+    }
+    this.uniforms.uShadowCasters.value = casters;
+  }
+
   update(
     time: number,
-    lightSources?: RingLightSource[],
-    numLights?: number,
-    parentPosition?: THREE.Vector3,
-    parentRadius?: number,
+    parentPosition: THREE.Vector3,
+    parentRadius: number,
+    lightSources?: LightSourcesMap,
     shadowCasters?: { position: THREE.Vector3; radius: number }[],
-    numShadowCasters?: number,
   ) {
     this.uniforms.time.value = time;
+    this.uniforms.uParentPosition.value.copy(parentPosition);
+    this.uniforms.uParentRadius.value = parentRadius;
 
-    if (lightSources && numLights !== undefined) {
-      for (let i = 0; i < MAX_LIGHTS; i++) {
+    const numLights = lightSources?.size ?? 0;
+    if (numLights !== this.currentNumLights) {
+      this.resizeLightArrays(numLights);
+      this.currentNumLights = numLights;
+    }
+
+    this.uniforms.uNumLights.value = numLights;
+    if (lightSources) {
+      let i = 0;
+      for (const light of lightSources.values()) {
         const uniformLight = this.uniforms.uLightSources.value[i];
-        if (i < numLights) {
-          uniformLight.position.copy(lightSources[i].position);
-          uniformLight.color.copy(lightSources[i].color);
-          uniformLight.intensity = lightSources[i].intensity;
-        } else {
-          uniformLight.intensity = 0; // Turn off unused lights
-        }
+        uniformLight.position.copy(light.position);
+        uniformLight.color.copy(light.color);
+        uniformLight.intensity = light.intensity;
+        i++;
       }
-      this.uniforms.uNumLights.value = numLights;
     }
 
-    if (parentPosition) {
-      this.uniforms.uParentPosition.value.copy(parentPosition);
-    }
-    if (parentRadius !== undefined) {
-      this.uniforms.uParentRadius.value = parentRadius;
+    const numShadowCasters = shadowCasters?.length ?? 0;
+    if (numShadowCasters !== this.currentNumShadowCasters) {
+      this.resizeShadowCasterArrays(numShadowCasters);
+      this.currentNumShadowCasters = numShadowCasters;
     }
 
-    if (shadowCasters && numShadowCasters !== undefined) {
-      for (let i = 0; i < MAX_SHADOW_CASTERS; i++) {
+    this.uniforms.uNumShadowCasters.value = numShadowCasters;
+    if (shadowCasters) {
+      for (let i = 0; i < numShadowCasters; i++) {
         const uniformCaster = this.uniforms.uShadowCasters.value[i];
-        if (i < numShadowCasters) {
-          uniformCaster.position.copy(shadowCasters[i].position);
-          uniformCaster.radius = shadowCasters[i].radius;
-        } else {
-          uniformCaster.radius = 0;
-        }
+        uniformCaster.position.copy(shadowCasters[i].position);
+        uniformCaster.radius = shadowCasters[i].radius;
       }
-      this.uniforms.uNumShadowCasters.value = numShadowCasters;
     }
   }
 
@@ -292,19 +325,6 @@ export class RingSystemRenderer {
       return;
     }
 
-    // Prepare light sources for the material
-    const lightsForMaterial: RingLightSource[] = [];
-    let lightCount = 0;
-    for (const [, light] of lightSources) {
-      if (lightCount >= MAX_LIGHTS) break;
-      lightsForMaterial.push({
-        position: light.position,
-        color: light.color,
-        intensity: light.intensity ?? 0,
-      });
-      lightCount++;
-    }
-
     // --- Shadow Caster Calculation ---
     const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
     const parentBody = allObjects
@@ -326,12 +346,10 @@ export class RingSystemRenderer {
           other.parentId === object.celestialObjectId &&
           other.type === CelestialType.MOON
         ) {
-          if (shadowCasters.length < MAX_SHADOW_CASTERS) {
-            shadowCasters.push({
-              position: other.position.clone(),
-              radius: other.radius ?? 0,
-            });
-          }
+          shadowCasters.push({
+            position: other.position.clone(),
+            radius: other.radius ?? 0,
+          });
         }
       }
     }
@@ -340,12 +358,10 @@ export class RingSystemRenderer {
     this.ringMaterials.forEach((material) => {
       material.update(
         time,
-        lightsForMaterial,
-        lightCount,
         object.position.clone(),
         object.radius ?? 0,
+        lightSources,
         shadowCasters,
-        shadowCasters.length,
       );
     });
   }

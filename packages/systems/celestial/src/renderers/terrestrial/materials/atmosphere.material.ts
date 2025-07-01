@@ -5,13 +5,12 @@ import atmosphereVertexShaderSource from "../../../shaders/terrestrial/atmospher
 import atmosphereFragmentShaderSource from "../../../shaders/terrestrial/atmosphere.fragment.glsl";
 import { LightSourceData } from "../../base/CelestialRenderer";
 
-const MAX_LIGHTS = 4;
-
 /**
  * Material for atmospheric scattering effect with support for multiple light sources
  */
 export class AtmosphereMaterial extends THREE.ShaderMaterial {
   private parentId: string;
+  protected currentNumLights: number = 0;
 
   constructor(
     atmosphereProps: PlanetAtmosphereProperties & {
@@ -31,8 +30,12 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
     } = atmosphereProps;
 
     const { planetRadius = 1.0, parentId = "unknown" } = options;
+    const MAX_LIGHTS = 4;
 
     super({
+      defines: {
+        MAX_LIGHTS: MAX_LIGHTS,
+      },
       uniforms: {
         // Atmosphere properties
         glowColor: { value: new THREE.Color(glowColor) },
@@ -68,6 +71,33 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
     });
 
     this.parentId = parentId;
+    this.currentNumLights = MAX_LIGHTS;
+  }
+
+  protected resizeLightArrays(newSize: number): void {
+    const defineSize = Math.max(1, newSize);
+    if (this.defines.MAX_LIGHTS !== defineSize) {
+      this.defines.MAX_LIGHTS = defineSize;
+      this.needsUpdate = true;
+    }
+
+    const lightPositions = [];
+    const lightColors = [];
+    const lightIntensities = [];
+
+    for (let i = 0; i < defineSize; i++) {
+      lightPositions.push(
+        this.uniforms.uLightPositions.value[i] || new THREE.Vector3(),
+      );
+      lightColors.push(
+        this.uniforms.uLightColors.value[i] || new THREE.Color(1, 1, 1),
+      );
+      lightIntensities.push(this.uniforms.uLightIntensities.value[i] ?? 1.0);
+    }
+
+    this.uniforms.uLightPositions.value = lightPositions;
+    this.uniforms.uLightColors.value = lightColors;
+    this.uniforms.uLightIntensities.value = lightIntensities;
   }
 
   /**
@@ -85,38 +115,22 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
       this.uniforms.uCameraPosition.value.copy(camera.position);
     }
 
-    const lightPositions = this.uniforms.uLightPositions?.value || [];
-    const lightColors = this.uniforms.uLightColors?.value || [];
-    const lightIntensities = this.uniforms.uLightIntensities?.value || [];
+    const numLights = lightSources?.size ?? 0;
+    if (numLights !== this.currentNumLights) {
+      this.resizeLightArrays(numLights);
+      this.currentNumLights = numLights;
+    }
 
-    let numLights = 0;
-
+    this.uniforms.uNumLights.value = numLights;
     if (lightSources) {
-      for (const [, lightData] of lightSources.entries()) {
-        if (numLights < MAX_LIGHTS) {
-          if (lightPositions[numLights])
-            lightPositions[numLights].copy(lightData.position);
-          if (lightColors[numLights])
-            lightColors[numLights].copy(lightData.color);
-          if (lightIntensities)
-            lightIntensities[numLights] = lightData.intensity ?? 1.0;
-          numLights++;
-        } else {
-          break;
-        }
+      let i = 0;
+      for (const lightData of lightSources.values()) {
+        this.uniforms.uLightPositions.value[i].copy(lightData.position);
+        this.uniforms.uLightColors.value[i].copy(lightData.color);
+        this.uniforms.uLightIntensities.value[i] = lightData.intensity ?? 1.0;
+        i++;
       }
     }
-
-    if (this.uniforms.uNumLights) {
-      this.uniforms.uNumLights.value = numLights;
-    }
-
-    // Reset unused light slots
-    // for (let i = numLights; i < MAX_LIGHTS; i++) {
-    //   if (lightPositions[i]) lightPositions[i].set(0, 0, 0);
-    //   if (lightColors[i]) lightColors[i].set(0, 0, 0);
-    //   if (lightIntensities) lightIntensities[i] = 0.0;
-    // }
   }
 
   dispose(): void {

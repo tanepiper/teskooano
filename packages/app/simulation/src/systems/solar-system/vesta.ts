@@ -61,7 +61,7 @@ export function initializeVesta(parentId: string): void {
       isMoon: false,
       composition: [
         "basaltic crust",
-        "olivine mantle", 
+        "olivine mantle",
         "iron-nickel core",
         "HED meteorite source",
         "eucrite",

@@ -1,8 +1,5 @@
 precision highp float;
 
-#define MAX_LIGHTS 4
-#define MAX_SHADOW_CASTERS 8
-
 struct Light {
   vec3 direction;
   vec3 color;

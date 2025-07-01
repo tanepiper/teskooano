@@ -6,14 +6,13 @@ import proceduralVertexShaderSource from "../../../shaders/terrestrial/procedura
 import { ProceduralPlanetUniforms } from "../../../types/procedural";
 import { LightSourceData } from "../../index";
 
-const MAX_LIGHTS = 4;
-const MAX_SHADOW_CASTERS = 4;
-
 /**
  * Material for rendering procedurally generated terrestrial planet surfaces using shaders.
  */
 export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
   declare uniforms: ProceduralPlanetUniforms;
+  protected currentNumLights: number = 0;
+  protected currentNumShadowCasters: number = 0;
 
   constructor(surfaceProps: ProceduralSurfaceProperties) {
     const parseColor = (
@@ -31,19 +30,20 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       }
     };
 
+    const MAX_LIGHTS = 4;
+    const MAX_SHADOW_CASTERS = 4;
+
     const uniforms = {
       uNumLights: { value: 0 },
-      uLightPositions: {
+      uLights: {
         value: Array(MAX_LIGHTS)
           .fill(0)
-          .map(() => new THREE.Vector3()),
+          .map(() => ({
+            position: new THREE.Vector3(),
+            color: new THREE.Color(1, 1, 1),
+            intensity: 1.0,
+          })),
       },
-      uLightColors: {
-        value: Array(MAX_LIGHTS)
-          .fill(0)
-          .map(() => new THREE.Color(1, 1, 1)),
-      },
-      uLightIntensities: { value: Array(MAX_LIGHTS).fill(1.0) },
       uAmbientLightColor: { value: new THREE.Color(0xffffff) },
       uAmbientLightIntensity: {
         value: surfaceProps.ambientLightIntensity ?? 0.2,
@@ -94,11 +94,57 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
     };
 
     super({
+      defines: {
+        MAX_LIGHTS: MAX_LIGHTS,
+        MAX_SHADOW_CASTERS: MAX_SHADOW_CASTERS,
+      },
       uniforms: uniforms as any,
       vertexShader: proceduralVertexShaderSource,
       fragmentShader: proceduralFragmentShaderSource,
       precision: "highp",
     });
+
+    this.currentNumLights = MAX_LIGHTS;
+    this.currentNumShadowCasters = MAX_SHADOW_CASTERS;
+  }
+
+  protected resizeLightArrays(newSize: number): void {
+    const defineSize = Math.max(1, newSize);
+    if (this.defines.MAX_LIGHTS !== defineSize) {
+      this.defines.MAX_LIGHTS = defineSize;
+      this.needsUpdate = true;
+    }
+
+    const lights = [];
+    for (let i = 0; i < defineSize; i++) {
+      lights.push(
+        this.uniforms.uLights.value[i] || {
+          position: new THREE.Vector3(),
+          color: new THREE.Color(1, 1, 1),
+          intensity: 1.0,
+        },
+      );
+    }
+    this.uniforms.uLights.value = lights;
+  }
+
+  protected resizeShadowCasterArrays(newSize: number): void {
+    const defineSize = Math.max(1, newSize);
+    if (this.defines.MAX_SHADOW_CASTERS !== defineSize) {
+      this.defines.MAX_SHADOW_CASTERS = defineSize;
+      this.needsUpdate = true;
+    }
+
+    const shadowCasters = [];
+    for (let i = 0; i < defineSize; i++) {
+      shadowCasters.push(
+        this.uniforms.uShadowCasters.value[i] || {
+          position: new THREE.Vector3(),
+          radius: 0,
+        },
+      );
+    }
+    this.uniforms.uShadowCasters.value = shadowCasters;
   }
 
   update(
@@ -106,48 +152,44 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
     timeScale: number,
     lightSources?: Map<string, LightSourceData>,
     camera?: THREE.Camera,
+    shadowCasters?: { position: THREE.Vector3; radius: number }[],
   ): void {
     this.uniforms.uTime.value = time;
     if (camera) {
       this.uniforms.uCameraPosition.value.copy(camera.position);
     }
 
-    const lightPositions = this.uniforms.uLightPositions?.value || [];
-    const lightColors = this.uniforms.uLightColors?.value || [];
-
-    if (!this.uniforms.uLightIntensities) {
-      this.uniforms.uLightIntensities = new THREE.Uniform(
-        Array(MAX_LIGHTS).fill(1.0) as number[],
-      );
+    const numLights = lightSources?.size ?? 0;
+    if (numLights !== this.currentNumLights) {
+      this.resizeLightArrays(numLights);
+      this.currentNumLights = numLights;
     }
-    const lightIntensities = this.uniforms.uLightIntensities.value;
 
-    let numLights = 0;
-
+    this.uniforms.uNumLights.value = numLights;
     if (lightSources) {
-      for (const [, /*id*/ lightData] of lightSources.entries()) {
-        if (numLights < MAX_LIGHTS) {
-          if (lightPositions[numLights])
-            lightPositions[numLights].copy(lightData.position);
-          if (lightColors[numLights])
-            lightColors[numLights].copy(lightData.color);
-          if (lightIntensities)
-            lightIntensities[numLights] = lightData.intensity ?? 1.0;
-          numLights++;
-        } else {
-          break;
-        }
+      let i = 0;
+      for (const lightData of lightSources.values()) {
+        this.uniforms.uLights.value[i].position.copy(lightData.position);
+        this.uniforms.uLights.value[i].color.copy(lightData.color);
+        this.uniforms.uLights.value[i].intensity = lightData.intensity ?? 1.0;
+        i++;
       }
     }
 
-    if (this.uniforms.uNumLights) {
-      this.uniforms.uNumLights.value = numLights;
+    const numShadowCasters = shadowCasters?.length ?? 0;
+    if (numShadowCasters !== this.currentNumShadowCasters) {
+      this.resizeShadowCasterArrays(numShadowCasters);
+      this.currentNumShadowCasters = numShadowCasters;
     }
 
-    for (let i = numLights; i < MAX_LIGHTS; i++) {
-      if (lightPositions[i]) lightPositions[i].set(0, 0, 0);
-      if (lightColors[i]) lightColors[i].set(0, 0, 0);
-      if (lightIntensities) lightIntensities[i] = 0.0;
+    this.uniforms.uNumShadowCasters.value = numShadowCasters;
+    if (shadowCasters) {
+      for (let i = 0; i < numShadowCasters; i++) {
+        this.uniforms.uShadowCasters.value[i].position.copy(
+          shadowCasters[i].position,
+        );
+        this.uniforms.uShadowCasters.value[i].radius = shadowCasters[i].radius;
+      }
     }
   }
 }

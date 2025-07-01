@@ -4,9 +4,6 @@ uniform vec3 uParentPosition;
 uniform float uParentRadius;
 uniform float time;
 
-#define MAX_LIGHTS 4
-#define MAX_SHADOW_CASTERS 4
-
 // Unified Light Source structure
 struct LightSource {
     vec3 position;

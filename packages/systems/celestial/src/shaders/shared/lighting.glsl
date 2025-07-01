@@ -1,5 +1,5 @@
-#ifndef LIGHTING_GLSL
-#define LIGHTING_GLSL
+#ifndef LIGHTING_FUNCTION_GLSL
+#define LIGHTING_FUNCTION_GLSL
 
 // Function to calculate lighting contribution from a single light source
 vec3 calculateLightContribution(vec3 lightPos, vec3 lightColor, float intensity, vec3 normal, vec3 viewDir, vec3 worldPos) {
@@ -16,39 +16,34 @@ vec3 calculateLightContribution(vec3 lightPos, vec3 lightColor, float intensity,
 }
 
 // Simple lighting calculation (Blinn-Phongish)
-vec3 calculateLighting(vec3 baseColor, vec3 normal, vec3 viewDir, float shadowFactor) {
-    // Start with ambient light
-    vec3 totalLight = uAmbientLightColor * uAmbientLightIntensity;
-    vec3 directionalLight = vec3(0.0);
+vec3 calculateLighting(
+    vec3 albedo, 
+    vec3 normal, 
+    vec3 viewDir, 
+    float shadowFactor
+) {
+    vec3 finalColor = albedo * uAmbientLightColor * uAmbientLightIntensity;
 
-    for(int i = 0; i < uNumLights; ++i) {
-        if(i >= uNumLights)
-            break; // Safety break
-        vec3 lightDir = normalize(uLightPositions[i] - vWorldPosition);
-        vec3 lightColor = uLightColors[i];
-        float lightIntensity = uLightIntensities[i];
+    for (int i = 0; i < uNumLights; i++) {
+        vec3 lightPos = uLights[i].position;
+        vec3 lightColor = uLights[i].color;
+        float lightIntensity = uLights[i].intensity;
+
+        vec3 lightDir = normalize(lightPos - vWorldPosition);
 
         // Diffuse
         float diff = max(dot(normal, lightDir), 0.0);
-        vec3 diffuse = diff * lightColor * lightIntensity;
+        vec3 diffuse = lightColor * diff;
 
         // Specular (Blinn-Phong)
         vec3 halfwayDir = normalize(lightDir + viewDir);
         float spec = pow(max(dot(normal, halfwayDir), 0.0), uShininess);
-        vec3 specular = uSpecularStrength * spec * lightColor * lightIntensity;
+        vec3 specular = uSpecularStrength * spec * lightColor;
 
-        directionalLight += diffuse + specular;
+        finalColor += albedo * (diffuse + specular) * lightIntensity * shadowFactor;
     }
-
-    // Apply shadow factor only to direct light (diffuse and specular)
-    totalLight += directionalLight * shadowFactor;
-
-    vec3 litColor = baseColor * totalLight;
-
-    // Apply Reinhard tone mapping to prevent over-exposure and create a more natural look
-    vec3 mappedColor = litColor / (litColor + vec3(1.0));
-
-    return mappedColor;
+    
+    return finalColor;
 }
 
 #endif

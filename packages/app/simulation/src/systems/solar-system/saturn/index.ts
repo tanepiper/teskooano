@@ -11,7 +11,7 @@ import { initializeTethys } from "./tethys";
  */
 export function initializeSaturn(parentId: string): void {
   const saturnId = initializeSaturnPlanet(parentId);
-  
+
   initializeTitan(saturnId);
   initializeEnceladus(saturnId);
   initializeRhea(saturnId);

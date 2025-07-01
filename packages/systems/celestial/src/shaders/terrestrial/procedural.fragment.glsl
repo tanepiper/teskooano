@@ -1,8 +1,5 @@
 precision highp float;
 
-// Define maximum number of lights the shader can handle
-#define MAX_LIGHTS 4
-#define MAX_SHADOW_CASTERS 4
 #define HEIGHT_LEVELS 5
 
 // MODIFIED: Added varyings from vertex shader
@@ -12,11 +9,16 @@ varying vec3 vWorldNormal;    // Perturbed world normal from vertex shader
 varying vec3 vObjectPosition; // Normalized object-space position for seamless noise
 uniform vec3 uCameraPosition;
 
+// --- Structs ---
+struct Light {
+  vec3 position;
+  vec3 color;
+  float intensity;
+};
+
 // Multi-Light Uniforms
 uniform int uNumLights;
-uniform vec3 uLightPositions[MAX_LIGHTS];
-uniform vec3 uLightColors[MAX_LIGHTS];
-uniform float uLightIntensities[MAX_LIGHTS];
+uniform Light uLights[MAX_LIGHTS];
 uniform vec3 uAmbientLightColor;
 uniform float uAmbientLightIntensity;
 
@@ -157,7 +159,7 @@ void main() {
     // Determine shadow factor before calculating lighting
     float shadowFactor = 1.0;
     if (uNumLights > 0) {
-        vec3 primaryLightDir = normalize(uLightPositions[0] - vWorldPosition);
+        vec3 primaryLightDir = normalize(uLights[0].position - vWorldPosition);
         // Only calculate shadow if the surface is facing the light
         if (dot(baseNormal, primaryLightDir) > 0.0) {
             shadowFactor = getShadow(vWorldPosition, primaryLightDir);

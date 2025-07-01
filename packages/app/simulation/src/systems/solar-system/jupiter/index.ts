@@ -9,7 +9,7 @@ import { initializeCallisto } from "./callisto";
  */
 export function initializeJupiter(parentId: string): void {
   const jupiterId = initializeJupiterPlanet(parentId);
-  
+
   initializeIo(jupiterId);
   initializeEuropa(jupiterId);
   initializeGanymede(jupiterId);

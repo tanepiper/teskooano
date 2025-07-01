@@ -16,8 +16,6 @@ import {
 import { RingSystemRenderer } from "../../rings/rings";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
 
-const MAX_LIGHTS = 4;
-
 export interface GasGiantRendererDeps {
   celestialRenderers: Map<string, CelestialRenderer>;
   lightingManager?: LightingManager;
@@ -25,6 +23,7 @@ export interface GasGiantRendererDeps {
 
 /**
  * Base renderer for gas giants, implementing the LOD system.
+ * Supports dynamic numbers of lights and shadow casters.
  */
 export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
   protected textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
@@ -174,6 +173,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
 
   /**
    * Update the gas giant's appearance.
+   * Now handles dynamic numbers of lights and shadow casters.
    */
   update(
     object: RenderableCelestialObject,
@@ -200,6 +200,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
 
       // The lightSources map is pre-filtered by the RendererUpdater to only contain
       // the most influential lights for this specific object.
+      // Now we process ALL available lights instead of limiting to MAX_LIGHTS
       if (lightSources && lightSources.size > 0) {
         lightSources.forEach((lightData) => {
           // Calculate direction from planet to light
@@ -211,6 +212,65 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
           // scaled for solar system distances. A larger factor creates
           // a more dramatic and visible falloff.
           const FALLOFF_FACTOR = 0.00000001; // Tunable factor
+          const distanceSq = object.position.distanceToSquared(
+            lightData.position,
+          );
+          const attenuation = 1.0 / (1.0 + distanceSq * FALLOFF_FACTOR);
+
+          lightsForShader.push({
+            direction: direction,
+            color: lightData.color,
+            intensity: (lightData.intensity ?? 1.0) * attenuation,
+          });
+        });
+      }
+
+      // Collect ALL shadow casters (moons) for this gas giant
+      const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
+      if (allObjects) {
+        for (const other of Object.values(allObjects)) {
+          if (
+            other.parentId === object.celestialObjectId &&
+            other.radius &&
+            other.position
+          ) {
+            shadowCasters.push({
+              position: other.position,
+              radius: other.radius,
+            });
+          }
+        }
+      }
+
+      // Material will now handle dynamic resizing internally
+      material.update(
+        this.elapsedTime,
+        timeScale,
+        lightsForShader,
+        camera,
+        shadowCasters,
+      );
+    }
+
+    // Also update medium detail material if it exists
+    const mediumMaterial = this.materials.get(
+      `${object.celestialObjectId}-medium`,
+    ) as BaseGasGiantMaterial;
+
+    if (mediumMaterial) {
+      const lightsForShader: {
+        direction: THREE.Vector3;
+        color: THREE.Color;
+        intensity: number;
+      }[] = [];
+
+      if (lightSources && lightSources.size > 0) {
+        lightSources.forEach((lightData) => {
+          const direction = new THREE.Vector3()
+            .subVectors(lightData.position, object.position)
+            .normalize();
+
+          const FALLOFF_FACTOR = 0.00000001;
           const distanceSq = object.position.distanceToSquared(
             lightData.position,
           );
@@ -240,7 +300,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
         }
       }
 
-      material.update(
+      mediumMaterial.update(
         this.elapsedTime,
         timeScale,
         lightsForShader,

@@ -7,9 +7,9 @@ uniform float aberrationIntensity;
 
 // Light properties
 uniform int uNumLights;
-uniform vec3 uLightPositions[4];
-uniform vec3 uLightColors[4];
-uniform float uLightIntensities[4];
+uniform vec3 uLightPositions[MAX_LIGHTS];
+uniform vec3 uLightColors[MAX_LIGHTS];
+uniform float uLightIntensities[MAX_LIGHTS];
 uniform vec3 uCameraPosition;
 
 varying vec3 vWorldPosition;
@@ -66,9 +66,7 @@ void main() {
   // Scattering calculations using example's Rayleigh/Mie combination
   vec3 scatter = vec3(0.0);
 
-  for (int i = 0; i < 4; i++) {
-    if (i >= uNumLights) break;
-
+  for (int i = 0; i < uNumLights; i++) {
     vec3 lightDir = normalize(uLightPositions[i] - vWorldPosition);
     float scatterAngle = dot(viewDirection, lightDir) * 0.5 + 0.5;
 

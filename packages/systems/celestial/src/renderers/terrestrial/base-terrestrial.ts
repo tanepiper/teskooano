@@ -307,12 +307,10 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
             obj.parentId === object.celestialObjectId,
         );
         for (const moon of moons) {
-          if (shadowCastersData.length < MAX_SHADOW_CASTERS) {
-            shadowCastersData.push({
-              position: new THREE.Vector3().fromArray(moon.position.toArray()),
-              radius: moon.radius ?? 0,
-            });
-          }
+          shadowCastersData.push({
+            position: new THREE.Vector3().fromArray(moon.position.toArray()),
+            radius: moon.radius ?? 0,
+          });
         }
       }
       // If the object is a moon, its parent planet is the shadow caster.
@@ -327,23 +325,15 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
           });
         }
       }
-
-      const shadowCastersUniform = bodyMaterial.uniforms.uShadowCasters.value;
-      let numCasters = 0;
-
-      for (let i = 0; i < MAX_SHADOW_CASTERS; i++) {
-        if (i < shadowCastersData.length) {
-          shadowCastersUniform[i].position.copy(shadowCastersData[i].position);
-          shadowCastersUniform[i].radius = shadowCastersData[i].radius;
-          numCasters++;
-        } else {
-          shadowCastersUniform[i].radius = 0; // Ensure unused slots don't cast shadows
-        }
-      }
-      bodyMaterial.uniforms.uNumShadowCasters.value = numCasters;
       // --- End Shadow Caster Update ---
 
-      bodyMaterial.update(time, timeScale, lightSources, camera);
+      bodyMaterial.update(
+        time,
+        timeScale,
+        lightSources,
+        camera,
+        shadowCastersData,
+      );
     }
 
     const atmosphereMaterial = this.atmosphereMaterials.get(

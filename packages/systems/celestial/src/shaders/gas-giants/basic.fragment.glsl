@@ -1,5 +1,3 @@
-#define MAX_LIGHTS 4
-
 struct Light {
   vec3 direction;
   vec3 color;
@@ -15,7 +13,7 @@ uniform vec3 baseColor;
 uniform float time;
 uniform int uNumLights;
 uniform Light uLights[MAX_LIGHTS];
-uniform ShadowCaster uShadowCasters[8]; // MAX_SHADOW_CASTERS
+uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 uniform int uNumShadowCasters;
 
 varying vec2 vUv;

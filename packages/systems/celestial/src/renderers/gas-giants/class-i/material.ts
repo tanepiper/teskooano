@@ -5,12 +5,52 @@ import classIFragmentShader from "../../../shaders/gas-giants/class-i.fragment.g
 import classIVertexShader from "../../../shaders/gas-giants/class-i.vertex.glsl";
 
 const lodToOctaveMap = [2, 3, 5, 8];
-const MAX_LIGHTS = 4;
-const MAX_SHADOW_CASTERS = 8;
+
+/**
+ * Create initial arrays for lights and shadow casters with reasonable starting sizes
+ */
+function createInitialLightArray(initialSize: number = 4): Array<{
+  direction: THREE.Vector3;
+  color: THREE.Color;
+  intensity: number;
+}> {
+  const lights: Array<{
+    direction: THREE.Vector3;
+    color: THREE.Color;
+    intensity: number;
+  }> = [];
+
+  for (let i = 0; i < initialSize; i++) {
+    lights.push({
+      direction: new THREE.Vector3(),
+      color: new THREE.Color(),
+      intensity: 0,
+    });
+  }
+
+  return lights;
+}
+
+function createInitialShadowCasterArray(initialSize: number = 8): Array<{
+  position: THREE.Vector3;
+  radius: number;
+}> {
+  const shadowCasters: Array<{ position: THREE.Vector3; radius: number }> = [];
+
+  for (let i = 0; i < initialSize; i++) {
+    shadowCasters.push({
+      position: new THREE.Vector3(),
+      radius: 0,
+    });
+  }
+
+  return shadowCasters;
+}
 
 /**
  * Material for Class I gas giants (Ammonia Clouds) - Jupiter-like
  * Uses 4D fractal simplex noise based on example.
+ * Supports dynamic numbers of lights and shadow casters.
  */
 export class ClassIMaterial extends BaseGasGiantMaterial {
   private warpOctaves: number = 5;
@@ -24,28 +64,16 @@ export class ClassIMaterial extends BaseGasGiantMaterial {
   }) {
     const darkColor = options.atmosphereColor.clone().multiplyScalar(0.4);
 
-    const lights: {
-      direction: THREE.Vector3;
-      color: THREE.Color;
-      intensity: number;
-    }[] = [];
-    for (let i = 0; i < MAX_LIGHTS; i++) {
-      lights.push({
-        direction: new THREE.Vector3(),
-        color: new THREE.Color(),
-        intensity: 0,
-      });
-    }
-
-    const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
-    for (let i = 0; i < MAX_SHADOW_CASTERS; i++) {
-      shadowCasters.push({
-        position: new THREE.Vector3(),
-        radius: 0,
-      });
-    }
+    const MAX_LIGHTS = 4;
+    const MAX_SHADOW_CASTERS = 16;
+    const lights = createInitialLightArray(MAX_LIGHTS);
+    const shadowCasters = createInitialShadowCasterArray(MAX_SHADOW_CASTERS); // Start with more for gas giants with many moons
 
     super({
+      defines: {
+        MAX_LIGHTS: MAX_LIGHTS,
+        MAX_SHADOW_CASTERS: MAX_SHADOW_CASTERS,
+      },
       uniforms: {
         mainColor1: { value: options.atmosphereColor },
         mainColor2: { value: options.cloudColor },
@@ -70,6 +98,9 @@ export class ClassIMaterial extends BaseGasGiantMaterial {
       vertexShader: classIVertexShader,
       fragmentShader: classIFragmentShader,
     });
+
+    this.currentNumLights = MAX_LIGHTS;
+    this.currentNumShadowCasters = MAX_SHADOW_CASTERS;
   }
 
   updateLOD(lodLevel: number): void {

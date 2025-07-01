@@ -15,6 +15,7 @@ import {
   generatePlanet,
   generateRoguePlanet,
 } from "../generators";
+import { isValidAsteroidBeltDistance } from "../generators/belts/utils";
 import type { BodyPlacement } from "../utils/body-placement";
 import { OrbitalConfiguration } from "../zones";
 
@@ -66,7 +67,13 @@ function generateStandardBody(
     zone.category === "COLD" || zone.category === "FROZEN" ? 0.25 : 0.1;
   const isAsteroidBeltCandidate = bodyTypeRoll < asteroidChance;
 
-  if (isAsteroidBeltCandidate) {
+  if (
+    isAsteroidBeltCandidate &&
+    isValidAsteroidBeltDistance(
+      distanceRelativeToParentAU,
+      parentStar.realMass_kg,
+    )
+  ) {
     const beltData = generateAsteroidBelt(
       random,
       parentStar.id,

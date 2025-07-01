@@ -16,6 +16,7 @@ import {
   calculateOrbitalPosition,
   calculateOrbitalVelocity,
 } from "@teskooano/core-physics";
+import { isValidAsteroidBeltDistance } from "./utils";
 
 /**
  * Generates scientifically accurate asteroid belt data based on real asteroid belt observations
@@ -159,30 +160,6 @@ export function generateAsteroidBelt(
   };
 
   return belt;
-}
-
-/**
- * Validates if the given distance is appropriate for asteroid belt formation
- */
-function isValidAsteroidBeltDistance(
-  distanceAU: number,
-  starMass_kg: number,
-): boolean {
-  const solarMass = 1.989e30;
-  const massRatio = starMass_kg / solarMass;
-
-  // Scale frost line and belt formation zone with stellar mass
-  const frostLine = 2.7 * Math.sqrt(massRatio); // Approximate frost line
-  const innerLimit = 1.5 * Math.sqrt(massRatio); // Too close for belt stability
-  const outerLimit = 6.0 * Math.sqrt(massRatio); // Too far for main belt
-
-  // Main asteroid belt: between Mars and Jupiter orbits (scaled)
-  // Also allow for outer belts (like Kuiper belt analogs)
-  // Extended range to fill the gap for procedural generation
-  return (
-    (distanceAU >= innerLimit && distanceAU <= outerLimit) ||
-    (distanceAU >= 6 && distanceAU <= 100)
-  ); // Extended outer belt region to eliminate gap
 }
 
 /**
