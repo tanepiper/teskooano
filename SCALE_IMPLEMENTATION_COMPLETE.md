@@ -70,6 +70,17 @@
 - **Changes**: Added verification comments (systems should auto-adjust)
 - **Status**: COMPLETE (verification required)
 
+### ✅ Phase 8: Critical Shader & Lighting Fixes
+- **Files**: 
+  - `packages/systems/celestial/src/renderers/terrestrial/base-terrestrial.ts`
+  - `packages/systems/celestial/src/renderers/gas-giants/base/renderer.ts`
+- **Changes**: 
+  - **CRITICAL**: Fixed `FALLOFF_FACTOR` values (100x increase to compensate for distance² effect)
+  - Terrestrial renderer: `0.00000001` → `0.000001`
+  - Gas giant renderer: `0.00000001` → `0.000001` (both instances)
+- **Impact**: Maintains proper light attenuation behavior after scale reduction
+- **Status**: COMPLETE
+
 ---
 
 ## Testing Checklist
@@ -102,6 +113,14 @@
 - [ ] No significant performance regression
 - [ ] Trajectory predictions remain accurate
 - [ ] Orbital mechanics maintain stability
+
+### Shader & Lighting
+- [ ] Planetary lighting looks natural at various distances
+- [ ] Gas giant atmosphere lighting transitions smoothly  
+- [ ] Ring shadows from moons appear correctly
+- [ ] Light falloff behavior matches previous visual quality
+- [ ] Atmosphere glow intensity unchanged
+- [ ] Shadow sharpness consistent across scale ranges
 
 ### Scale Verification Tests
 
@@ -140,8 +159,8 @@
 - **UI Consistency**: Verify all distance displays show consistent values
 
 ### Low Priority
-- **Shader Distances**: Most shader calculations should work unchanged, but verify shadow/lighting quality
 - **Procedural Generation**: System generation should be unaffected, but verify asteroid belt distances
+- **Fine-tuning**: Individual FALLOFF_FACTOR values may need minor adjustment based on visual testing
 
 ---
 

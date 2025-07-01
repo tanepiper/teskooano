@@ -266,7 +266,8 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
         // Physically-based distance attenuation using inverse-square law,
         // scaled for solar system distances. A larger factor creates
         // a more dramatic and visible falloff.
-        const FALLOFF_FACTOR = 0.00000001; // Tunable factor
+        // ADJUSTED: 100x increase to compensate for 10x scale reduction (distance^2 effect)
+        const FALLOFF_FACTOR = 0.000001; // Tunable factor (was 0.00000001)
         const distanceSq = object.position.distanceToSquared(
           lightData.position,
         );
