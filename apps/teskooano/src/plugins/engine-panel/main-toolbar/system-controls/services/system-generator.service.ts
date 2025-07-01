@@ -86,14 +86,7 @@ export class SystemGenerator {
 
     try {
       // Invoke the core procedural generation function.
-      const { systemName, objects$ } =
-        await generateSystemObservable(finalSeed);
-
-      if (systemName) {
-        console.warn(
-          `[SystemGenerator] System Name: ${systemName} (handling not implemented)`,
-        );
-      }
+      const { objects$ } = await generateSystemObservable(finalSeed);
 
       let isFirstStar = true;
 

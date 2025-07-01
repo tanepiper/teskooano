@@ -126,11 +126,6 @@ export function determinePlanetTypeAndBaseProperties(
       rockyPlanetType = UTIL.getRandomItem(validPlanetSubtypes, random);
     }
   }
-  console.log("determinePlanetTypeAndBaseProperties", {
-    gasGiantClass,
-    rockyPlanetType,
-    chosenFormation,
-  });
 
   const planetOrGiantType = gasGiantClass ?? rockyPlanetType;
   const finalCelestialType = gasGiantClass

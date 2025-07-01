@@ -1,6 +1,5 @@
 import type { CelestialObject } from "@teskooano/data-types";
 import { EMPTY, Observable, catchError, from } from "rxjs";
-import { generateSystemName } from "./generators";
 import { generateBodyForSlot, generateStars } from "./operators";
 import { createSeededRandom } from "./seeded-random";
 import { generateBodyDistances } from "./utils/body-placement";
@@ -30,10 +29,12 @@ export async function generateSystem(
   seed: string,
 ): Promise<{ systemName: string; objects$: Observable<CelestialObject> }> {
   const random = await createSeededRandom(seed);
-  const systemName = generateSystemName(random);
 
   // Generate the stellar system first using enhanced generation
   const stars = generateStars(random);
+
+  // Use the main star's name as the system name
+  const systemName = stars[0]?.name || "Unknown System";
 
   // Create zone manager and determine system configuration
   const zoneManager = new CelestialZoneManager(random);

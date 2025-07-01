@@ -35,7 +35,6 @@ export function generatePlanetSpecificProperties(
   baseProps: PlanetBaseProperties,
   bodyDistanceAU: number,
 ): CelestialSpecificPropertiesUnion {
-  console.log("generatePlanetSpecificProperties", baseProps);
   if (baseProps.celestialType === CelestialType.GAS_GIANT) {
     return generateGasGiantSpecificProperties(
       random,

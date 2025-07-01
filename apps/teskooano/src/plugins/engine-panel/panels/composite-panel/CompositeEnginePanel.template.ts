@@ -150,7 +150,7 @@ template.innerHTML = `
   </style>
   <div class="engine-container" id="engine-container"></div>
   <teskooano-engine-toolbar></teskooano-engine-toolbar>
-  <div id="engine-placeholder-wrapper">
+  <div id="engine-placeholder-wrapper" class="dynamic-grid-background">
     <img
       src="/assets/panel-icon.png"
       alt="Engine Placeholder Icon"
