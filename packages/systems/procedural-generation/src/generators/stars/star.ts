@@ -26,11 +26,11 @@ const C = 299792458;
  * Main sequence stars dominate (~95%), with evolved stars being much rarer
  */
 const STELLAR_TYPE_WEIGHTS: { type: StellarType; weight: number }[] = [
-  { type: StellarType.MAIN_SEQUENCE, weight: 95.2 }, // Vast majority are main sequence
-  { type: StellarType.WHITE_DWARF, weight: 3.5 }, // Common stellar remnants
-  { type: StellarType.WOLF_RAYET, weight: 0.8 }, // Rare massive evolved stars
-  { type: StellarType.NEUTRON_STAR, weight: 0.4 }, // Very rare stellar remnants
-  { type: StellarType.BLACK_HOLE, weight: 0.1 }, // Extremely rare
+  { type: StellarType.MAIN_SEQUENCE, weight: 70 }, // Still common, but less dominant
+  { type: StellarType.WHITE_DWARF, weight: 10 }, // More frequent remnants
+  { type: StellarType.WOLF_RAYET, weight: 5 }, // More frequent massive stars
+  { type: StellarType.NEUTRON_STAR, weight: 5 }, // More frequent neutron stars
+  { type: StellarType.BLACK_HOLE, weight: 10 }, // Significantly more frequent
 ];
 
 /**
@@ -94,26 +94,23 @@ function getMainSequenceProperties(mass: number): [number, number] {
  * Realistic stellar mass distribution based on Initial Mass Function (IMF)
  * Heavily weighted toward lower mass stars (Salpeter/Kroupa IMF)
  */
-function generateRealisticStellarMass(random: () => number): number {
-  const roll = random();
+function generateMainSequenceMass(random: () => number): number {
+  const u = random();
+  const minMass = 0.08; // Stellar ignition limit
+  const maxMass = 120; // Maximum stellar mass
 
-  // Based on Kroupa IMF - most stars are low mass
-  if (roll < 0.85) {
-    // M-dwarfs (0.08 - 0.6 solar masses) - most common
-    return 0.08 + Math.pow(random(), 2.5) * 0.52;
-  } else if (roll < 0.95) {
-    // K and G dwarfs (0.6 - 1.2 solar masses)
-    return 0.6 + Math.pow(random(), 1.8) * 0.6;
-  } else if (roll < 0.98) {
-    // F and A stars (1.2 - 3.0 solar masses)
-    return 1.2 + Math.pow(random(), 1.5) * 1.8;
-  } else if (roll < 0.995) {
-    // B stars (3.0 - 15.0 solar masses)
-    return 3.0 + Math.pow(random(), 1.2) * 12.0;
-  } else {
-    // O stars (15.0 - 120.0 solar masses) - extremely rare
-    return 15.0 + Math.pow(random(), 0.8) * 105.0;
-  }
+  // Flatter power-law exponent for more variety (original was 2.3)
+  const alpha = 1.5;
+
+  const C =
+    (1 - alpha) / (Math.pow(maxMass, 1 - alpha) - Math.pow(minMass, 1 - alpha));
+
+  const mass = Math.pow(
+    ((1 - alpha) / C) * u + Math.pow(minMass, 1 - alpha),
+    1 / (1 - alpha),
+  );
+
+  return Math.max(minMass, Math.min(maxMass, mass));
 }
 
 function calculateSchwarzschildRadius(mass_kg: number): number {
@@ -195,7 +192,7 @@ export function generateStar(random: () => number): CelestialObject {
     case StellarType.MAIN_SEQUENCE:
     default:
       // Use realistic mass distribution
-      starMass_Solar = generateRealisticStellarMass(random);
+      starMass_Solar = generateMainSequenceMass(random);
       [starRadius_Solar, starTemperature] =
         getMainSequenceProperties(starMass_Solar);
       chosenType = StellarType.MAIN_SEQUENCE;
@@ -246,6 +243,12 @@ export function generateStar(random: () => number): CelestialObject {
   } else {
     spectralClassString = mainSpectralClass as string;
   }
+
+  // --- DEBUG LOG ---
+  console.log(
+    `[generateStar] Generating: ${chosenType} | Mass: ${starMass_Solar.toFixed(2)} M☉ | Temp: ${Math.round(starTemperature)} K | Class: ${spectralClassString}`,
+  );
+  // --- END DEBUG LOG ---
 
   // Calculate realistic system lighting based on stellar properties
   const clampedLuminosity = Math.max(0.001, Math.min(starLuminosity, 10000));

@@ -31,14 +31,13 @@ export async function generateSystem(
   const random = await createSeededRandom(seed);
 
   // Generate the stellar system first using enhanced generation
-  const stars = generateStars(random);
+  const { stars, systemConfig } = generateStars(random);
 
   // Use the main star's name as the system name
   const systemName = stars[0]?.name || "Unknown System";
 
   // Create zone manager and determine system configuration
   const zoneManager = new CelestialZoneManager(random);
-  const systemConfig = zoneManager.determineStellarConfiguration();
 
   // Generate zones optimized for this stellar system
   const zones = zoneManager.selectZonesForPlacement(stars, systemConfig);

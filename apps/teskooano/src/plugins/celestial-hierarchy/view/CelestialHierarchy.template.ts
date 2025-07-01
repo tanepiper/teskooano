@@ -115,7 +115,7 @@ template.innerHTML = `
     }
     li.destroyed .list-item-content .caret,
     li.annihilated .list-item-content .caret {
-       cursor: not-allowed;
+       /* cursor: not-allowed; -- Removed to allow interaction */
     }
 
     li.destroyed { opacity: 0.6; }

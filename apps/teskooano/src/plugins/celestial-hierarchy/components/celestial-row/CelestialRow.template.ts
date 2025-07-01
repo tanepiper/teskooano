@@ -43,8 +43,6 @@ template.innerHTML = `
   /* Inactive state styling */
   :host([inactive]) {
     color: var(--color-text-disabled, #888);
-    text-decoration: line-through;
-    cursor: not-allowed;
     background-color: transparent !important; /* Override hover/focus */
     opacity: 0.6;
   }

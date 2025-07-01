@@ -207,22 +207,21 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
    * @param event The DOM event triggered within the tree.
    */
   private handleTreeInteraction(event: Event): void {
+    // Check for touch event to prevent emulated click
+    if (event.type === "touchend") {
+      event.preventDefault();
+    }
     const target = event.target as HTMLElement;
 
     const caret = target.closest(".caret") as HTMLElement | null;
     if (caret) {
       const parentLi = caret.closest("li");
-      const isInactive =
-        parentLi?.classList.contains("destroyed") ||
-        parentLi?.classList.contains("annihilated");
-      if (!isInactive) {
-        const nestedList =
-          parentLi?.querySelector<HTMLUListElement>(":scope > .nested");
-        if (nestedList) {
-          const isExpanded = nestedList.classList.toggle("active");
-          caret.classList.toggle("caret-down", isExpanded);
-          caret.setAttribute("aria-expanded", isExpanded.toString());
-        }
+      const nestedList =
+        parentLi?.querySelector<HTMLUListElement>(":scope > .nested");
+      if (nestedList) {
+        const isExpanded = nestedList.classList.toggle("active");
+        caret.classList.toggle("caret-down", isExpanded);
+        caret.setAttribute("aria-expanded", isExpanded.toString());
       }
       return;
     }
@@ -343,6 +342,10 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
         this._handleTreeInteraction,
       );
       this._treeListContainer.addEventListener(
+        "touchend",
+        this._handleTreeInteraction,
+      );
+      this._treeListContainer.addEventListener(
         CustomEvents.FOCUS_REQUEST,
         this._handleTreeInteraction,
       );
@@ -360,6 +363,24 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
   private removeEventListeners(): void {
     // Re-implementing remove with bound functions would be complex.
     // For now, the controller lives and dies with the view, so this is okay.
+    if (this._treeListContainer) {
+      this._treeListContainer.removeEventListener(
+        "click",
+        this._handleTreeInteraction,
+      );
+      this._treeListContainer.removeEventListener(
+        "touchend",
+        this._handleTreeInteraction,
+      );
+      this._treeListContainer.removeEventListener(
+        CustomEvents.FOCUS_REQUEST,
+        this._handleTreeInteraction,
+      );
+      this._treeListContainer.removeEventListener(
+        CustomEvents.FOLLOW_REQUEST,
+        this._handleTreeInteraction,
+      );
+    }
   }
 
   /**

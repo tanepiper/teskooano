@@ -28,7 +28,10 @@ import {
  * @param random The seeded pseudo-random number generator function.
  * @returns An array of `CelestialObject` representing the generated stars with proper physics.
  */
-export function generateStars(random: () => number): CelestialObject[] {
+export function generateStars(random: () => number): {
+  stars: CelestialObject[];
+  systemConfig: StellarSystemConfiguration;
+} {
   // Generate the primary star first to determine system characteristics
   const primaryStar = generateStar(random);
   const primaryMass_solar = primaryStar.realMass_kg / CONST.SOLAR_MASS_KG;
@@ -38,7 +41,9 @@ export function generateStars(random: () => number): CelestialObject[] {
   const systemConfig = zoneManager.determineStellarConfiguration();
 
   // Generate the stellar system based on configuration
-  return generateStellarSystem(random, primaryStar, systemConfig);
+  const stars = generateStellarSystem(random, primaryStar, systemConfig);
+
+  return { stars, systemConfig };
 }
 
 /**
