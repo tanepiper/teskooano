@@ -5,8 +5,7 @@ import {
   CelestialType,
   PlanetType,
   SurfaceType,
-  type RockyTerrestrialSurfaceProperties,
-  type PlanetAtmosphereProperties,
+  type PlanetProperties,
 } from "@teskooano/data-types";
 
 const MERCURY_MASS_KG = 3.3011e23;
@@ -26,10 +25,11 @@ const MERCURY_AXIAL_TILT_DEG = 0.034;
  * Initializes Mercury using accurate data.
  */
 export function initializeMercury(parentId: string): void {
+  const mercuryId = "mercury";
   const mercuryAxialTiltRad = MERCURY_AXIAL_TILT_DEG * DEG_TO_RAD;
 
   actions.addCelestial({
-    id: "mercury",
+    id: mercuryId,
     name: "Mercury",
     seed: "mercury",
     type: CelestialType.PLANET,
@@ -53,47 +53,42 @@ export function initializeMercury(parentId: string): void {
       meanAnomaly: MERCURY_MA_DEG * DEG_TO_RAD,
       period_s: MERCURY_SIDEREAL_PERIOD_S,
     },
-    atmosphere: {
-      glowColor: "#E0E0E033",
-      intensity: 0.05,
-      power: 1.0,
-      thickness: 0.02,
-    } as PlanetAtmosphereProperties,
-    surface: {
-      type: SurfaceType.CRATERED,
-      planetType: PlanetType.ROCKY,
-      color: "#9E9E9E",
-      roughness: 0.8,
-
-      persistence: 0.45,
-      lacunarity: 2.2,
-      simplePeriod: 8.0,
-      octaves: 6,
-      bumpScale: 0.1,
-      color1: "#9E9E9E",
-      color2: "#757575",
-      color3: "#888888",
-      color4: "#A0A0A0",
-      color5: "#BDBDBD",
-      height1: 0.0,
-      height2: 0.25,
-      height3: 0.5,
-      height4: 0.75,
-      height5: 1.0,
-      shininess: 0.05,
-      specularStrength: 0.05,
-      ambientLightIntensity: 0.1,
-      undulation: 0.2,
-      terrainType: 1,
-      terrainAmplitude: 0.4,
-      terrainSharpness: 0.6,
-      terrainOffset: 0.0,
-    } as RockyTerrestrialSurfaceProperties,
     properties: {
       type: CelestialType.PLANET,
-      planetType: PlanetType.ROCKY,
+      planetType: PlanetType.BARREN,
       isMoon: false,
-      composition: ["silicates", "iron core"],
-    },
+      composition: ["iron core", "silicate mantle", "thin exosphere"],
+      surface: {
+        // Base surface properties
+        type: SurfaceType.CRATERED,
+        color: "#8C7853", // Brownish-gray
+        roughness: 0.85,
+        planetType: PlanetType.BARREN,
+        // Mercury-like barren procedural properties
+        persistence: 0.5,
+        lacunarity: 2.2,
+        simplePeriod: 2.0,
+        octaves: 10,
+        bumpScale: 2.5,
+        color1: "#6D6D6D", // Darker gray base
+        color2: "#c0b6a2", // Brownish-gray (Mercury-like)
+        color3: "#A9A9A9", // Light gray
+        color4: "#dfd3c3", // Tan highlights
+        color5: "#E1E1E1", // Brightest peaks
+        height1: 0.08,
+        height2: 0.18,
+        height3: 0.35,
+        height4: 0.68,
+        height5: 0.92,
+        shininess: 16,
+        specularStrength: 0.45,
+        ambientLightIntensity: 0.4,
+        undulation: 0.15,
+        terrainType: 2,
+        terrainAmplitude: 0.7,
+        terrainSharpness: 1.6,
+        terrainOffset: -0.1,
+      },
+    } as PlanetProperties,
   });
 }

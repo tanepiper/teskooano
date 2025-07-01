@@ -25,6 +25,7 @@ import {
   type Observable as ObservableType,
 } from "rxjs";
 import { SystemGenerator } from "./system-generator.service";
+import { initializeSolarSystem } from "@teskooano/app-simulation";
 
 /** Represents the data structure for an imported system file. */
 interface SystemImportData {
@@ -370,6 +371,34 @@ export class SystemFunctionsManager {
   }
 
   /**
+   * Plugin function to load the Sol solar system with all planets and moons.
+   * @returns {Promise<ProcessResult>} The result of the load operation.
+   */
+  public async loadSolarSystem() {
+    try {
+      celestialFactory.clearState({
+        resetCamera: false,
+        resetTime: true,
+        resetSelection: true,
+      });
+      actions.resetTime();
+
+      initializeSolarSystem();
+      updateSeed("sol");
+
+      simulationManager.resetSystem(true);
+      return { success: true, symbol: "☀️", message: "Solar system loaded." };
+    } catch (error) {
+      console.error("[SystemFunctions] Error loading solar system:", error);
+      return {
+        success: false,
+        symbol: "❌",
+        message: "Failed to load solar system.",
+      };
+    }
+  }
+
+  /**
    * Plugin function to copy a given seed string to the clipboard.
    * If no seed is provided, it uses the current seed from the state.
    *
@@ -423,6 +452,11 @@ export class SystemFunctionsManager {
         id: "system:create_blank",
         dependencies: { dockView: { api: true } },
         execute: this.createBlankSystem.bind(this),
+      },
+      {
+        id: "system:load_solar_system",
+        dependencies: {},
+        execute: this.loadSolarSystem.bind(this),
       },
       {
         id: "system:copy_seed",

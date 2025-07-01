@@ -14,6 +14,7 @@ import type { pluginManager } from "./pluginManager.js";
 export interface PluginManagerProxy {
   execute<T = any>(functionId: string, args?: any): Promise<T> | T | undefined;
   getManagerInstance<T = any>(id: string): T | undefined;
+  registerPlugin(plugin: TeskooanoPlugin): void;
 }
 
 /**

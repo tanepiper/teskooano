@@ -8,8 +8,8 @@ import type { CelestialObject } from "@teskooano/data-types";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import { BehaviorSubject, combineLatest, fromEvent, Subscription } from "rxjs";
 import { debounceTime, map, startWith, tap } from "rxjs/operators";
-import { SystemControlsTemplate } from "./system-controls.template.js";
-import { SystemControlsController } from "../controller/system-controls.controller.js";
+import { SystemControlsTemplate } from "./system-controls.template";
+import { SystemControlsController } from "../controller/system-controls.controller";
 
 // Define core types based on usage
 type CoreCelestialObjectMap = Record<string, CelestialObject>;
@@ -378,5 +378,3 @@ export class SystemControls extends HTMLElement {
     }
   }
 }
-
-// Define the custom element now that the class is defined.

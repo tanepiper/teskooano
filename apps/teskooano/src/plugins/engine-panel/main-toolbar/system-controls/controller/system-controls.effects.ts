@@ -256,4 +256,10 @@ export class SystemControlsEffects {
     "system:create_blank",
     "📄",
   );
+
+  /** Effect pipeline for loading the Sol solar system. */
+  public loadSolarSystemEffect$ = this.createStandardEffect(
+    "system:load_solar_system",
+    "☀️",
+  );
 }

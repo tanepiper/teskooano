@@ -97,7 +97,7 @@ export function generatePlanet(
           random,
           baseProps.ringChance,
           baseProps.ringAllowedTypes,
-          visualPlanetRadius_m,
+          finalPlanetRadius_m,
         );
       }
 
@@ -315,7 +315,7 @@ export function generateRoguePlanet(
           random,
           baseProps.ringChance,
           baseProps.ringAllowedTypes as any,
-          visualPlanetRadius_m,
+          finalPlanetRadius_m,
         );
       }
 

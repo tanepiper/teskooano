@@ -84,6 +84,9 @@ export class SystemControlsController extends StateSubscriptionMixin {
     const createBlankButton = shadowRoot.querySelector<HTMLElement>(
       'teskooano-button[data-action="create-blank"]',
     );
+    const loadSolarSystemButton = shadowRoot.querySelector<HTMLElement>(
+      'teskooano-button[data-action="load-solar-system"]',
+    );
 
     if (
       !generateSubmitButton ||
@@ -93,6 +96,7 @@ export class SystemControlsController extends StateSubscriptionMixin {
       !importButton ||
       !copySeedButton ||
       !createBlankButton ||
+      !loadSolarSystemButton ||
       !this.effects
     ) {
       console.error(
@@ -111,6 +115,9 @@ export class SystemControlsController extends StateSubscriptionMixin {
     const importClick$ = createButtonClickStream$(importButton);
     const copySeedClick$ = createButtonClickStream$(copySeedButton);
     const createBlankClick$ = createButtonClickStream$(createBlankButton);
+    const loadSolarSystemClick$ = createButtonClickStream$(
+      loadSolarSystemButton,
+    );
 
     const generateSystemTrigger$: Observable<{
       seed: string;
@@ -155,6 +162,9 @@ export class SystemControlsController extends StateSubscriptionMixin {
     const createBlankSystem$ = handleEffectResult(
       this.effects.createBlankSystemEffect$(createBlankClick$),
     );
+    const loadSolarSystem$ = handleEffectResult(
+      this.effects.loadSolarSystemEffect$(loadSolarSystemClick$),
+    );
 
     // ✅ Using StateSubscriptionMixin for clean subscription management
     this.subscribeToState(generateSystem$, () => {});
@@ -163,6 +173,7 @@ export class SystemControlsController extends StateSubscriptionMixin {
     this.subscribeToState(importSystem$, () => {});
     this.subscribeToState(copySeed$, () => {});
     this.subscribeToState(createBlankSystem$, () => {});
+    this.subscribeToState(loadSolarSystem$, () => {});
   }
 
   /**

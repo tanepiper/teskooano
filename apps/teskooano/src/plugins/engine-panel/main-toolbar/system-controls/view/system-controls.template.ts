@@ -1,6 +1,7 @@
 import RocketRegular from "@fluentui/svg-icons/icons/rocket_20_regular.svg?raw";
 import SparkleRegular from "@fluentui/svg-icons/icons/sparkle_20_regular.svg?raw";
 import DocumentAddRegular from "@fluentui/svg-icons/icons/document_add_20_regular.svg?raw";
+import WeatherSunnyRegular from "@fluentui/svg-icons/icons/weather_sunny_20_regular.svg?raw";
 import ArrowDownloadRegular from "@fluentui/svg-icons/icons/arrow_download_20_regular.svg?raw";
 import CopyRegular from "@fluentui/svg-icons/icons/copy_20_regular.svg?raw";
 import ArrowUploadRegular from "@fluentui/svg-icons/icons/arrow_upload_20_regular.svg?raw";
@@ -293,6 +294,16 @@ systemControlsTemplate.innerHTML = `
             tooltip-text="Create a new blank system with just a star"
             tooltip-icon='${DocumentAddRegular}'>
           ${DocumentAddRegular}
+        </teskooano-button>
+        <teskooano-button 
+            data-action="load-solar-system" 
+            variant="ghost" 
+            size="sm" 
+            title="Load Solar System"
+            tooltip-title="Load Sol"
+            tooltip-text="Load our Solar System with all planets and moons"
+            tooltip-icon='${WeatherSunnyRegular}'>
+          ${WeatherSunnyRegular}
         </teskooano-button>
         <teskooano-button 
             data-action="import" 

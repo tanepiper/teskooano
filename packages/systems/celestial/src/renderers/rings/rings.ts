@@ -178,13 +178,23 @@ export class RingSystemRenderer {
       return ringGroup;
     }
 
+    const parentRadius = object.realRadius_m;
+    if (!parentRadius) {
+      console.warn(
+        `[RingSystemRenderer] Cannot create rings for ${object.celestialObjectId} because it has no 'realRadius_m' property for scaling.`,
+      );
+      return ringGroup;
+    }
+
     const sortedRings = [...properties.rings].sort(
       (a, b) => (a.innerRadius || 0) - (b.innerRadius || 0),
     );
 
     sortedRings.forEach((ringProps, index) => {
-      const scaledInnerRadius = ringProps.innerRadius ?? 1;
-      const scaledOuterRadius = ringProps.outerRadius ?? 1;
+      const scaledInnerRadius =
+        (ringProps.innerRadius ?? parentRadius) / parentRadius;
+      const scaledOuterRadius =
+        (ringProps.outerRadius ?? parentRadius) / parentRadius;
       const ringColor = new THREE.Color(ringProps.color ?? 0xffffff);
       const ringOpacity = ringProps.opacity ?? 0.7;
 
