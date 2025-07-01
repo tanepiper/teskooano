@@ -68,6 +68,17 @@ const TETHYS_INC_DEG = 1.12;
 const TETHYS_SIDEREAL_PERIOD_S = 163475;
 const TETHYS_ALBEDO = 1.229;
 
+const ENCELADUS_MASS_KG = 1.08e20;
+const ENCELADUS_RADIUS_M = 252100;
+const ENCELADUS_SMA_M = 238020 * KM;
+const ENCELADUS_ECC = 0.0047;
+const ENCELADUS_INC_DEG = 0.019;
+const ENCELADUS_LAN_DEG = 169.8;
+const ENCELADUS_AOP_DEG = 312.9;
+const ENCELADUS_MA_DEG = 258.0;
+const ENCELADUS_SIDEREAL_PERIOD_S = 118378;
+const ENCELADUS_ALBEDO = 1.375;
+
 /**
  * Initializes Saturn, its rings, and major moons using accurate data.
  */
@@ -211,9 +222,9 @@ export function initializeSaturn(parentId: string): void {
       realSemiMajorAxis_m: TITAN_SMA_M,
       eccentricity: TITAN_ECC,
       inclination: TITAN_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
-      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
-      meanAnomaly: Math.random() * 2 * Math.PI,
+      longitudeOfAscendingNode: 28.06 * DEG_TO_RAD,
+      argumentOfPeriapsis: 180.4 * DEG_TO_RAD,
+      meanAnomaly: 49.8 * DEG_TO_RAD,
       period_s: TITAN_SIDEREAL_PERIOD_S,
     },
     properties: {
@@ -282,9 +293,9 @@ export function initializeSaturn(parentId: string): void {
       realSemiMajorAxis_m: RHEA_SMA_M,
       eccentricity: RHEA_ECC,
       inclination: RHEA_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
-      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
-      meanAnomaly: Math.random() * 2 * Math.PI,
+      longitudeOfAscendingNode: 130.7 * DEG_TO_RAD,
+      argumentOfPeriapsis: 349.3 * DEG_TO_RAD,
+      meanAnomaly: 127.5 * DEG_TO_RAD,
       period_s: RHEA_SIDEREAL_PERIOD_S,
     },
     properties: {
@@ -347,9 +358,9 @@ export function initializeSaturn(parentId: string): void {
       realSemiMajorAxis_m: IAPETUS_SMA_M,
       eccentricity: IAPETUS_ECC,
       inclination: IAPETUS_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
-      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
-      meanAnomaly: Math.random() * 2 * Math.PI,
+      longitudeOfAscendingNode: 81.1 * DEG_TO_RAD,
+      argumentOfPeriapsis: 271.6 * DEG_TO_RAD,
+      meanAnomaly: 23.9 * DEG_TO_RAD,
       period_s: IAPETUS_SIDEREAL_PERIOD_S,
     },
     properties: {
@@ -412,9 +423,9 @@ export function initializeSaturn(parentId: string): void {
       realSemiMajorAxis_m: DIONE_SMA_M,
       eccentricity: DIONE_ECC,
       inclination: DIONE_INC_DEG * DEG_TO_RAD,
-      longitudeOfAscendingNode: Math.random() * 2 * Math.PI,
-      argumentOfPeriapsis: Math.random() * 2 * Math.PI,
-      meanAnomaly: Math.random() * 2 * Math.PI,
+      longitudeOfAscendingNode: 128.2 * DEG_TO_RAD,
+      argumentOfPeriapsis: 91.1 * DEG_TO_RAD,
+      meanAnomaly: 357.6 * DEG_TO_RAD,
       period_s: DIONE_SIDEREAL_PERIOD_S,
     },
     properties: {
@@ -522,6 +533,76 @@ export function initializeSaturn(parentId: string): void {
         terrainAmplitude: 0.7,
         terrainSharpness: 1.6,
         terrainOffset: 0.15,
+      },
+    } as PlanetProperties,
+  });
+
+  actions.addCelestial({
+    id: "enceladus",
+    name: "Enceladus",
+    seed: "enceladus",
+    type: CelestialType.MOON,
+    parentId: saturnId,
+    realMass_kg: ENCELADUS_MASS_KG,
+    realRadius_m: ENCELADUS_RADIUS_M,
+    temperature: 75,
+    albedo: ENCELADUS_ALBEDO,
+    siderealRotationPeriod_s: ENCELADUS_SIDEREAL_PERIOD_S,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: ENCELADUS_SMA_M,
+      eccentricity: ENCELADUS_ECC,
+      inclination: ENCELADUS_INC_DEG * DEG_TO_RAD,
+      longitudeOfAscendingNode: ENCELADUS_LAN_DEG * DEG_TO_RAD,
+      argumentOfPeriapsis: ENCELADUS_AOP_DEG * DEG_TO_RAD,
+      meanAnomaly: ENCELADUS_MA_DEG * DEG_TO_RAD,
+      period_s: ENCELADUS_SIDEREAL_PERIOD_S,
+    },
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.BARREN,
+      isMoon: true,
+      parentPlanet: saturnId,
+      composition: [
+        "water ice",
+        "silicate core",
+        "subsurface ocean",
+        "water vapor geysers",
+      ],
+      atmosphere: {
+        glowColor: "#FFFFFF",
+        intensity: 0.05,
+        power: 0.8,
+        thickness: 0.02,
+      },
+      surface: {
+        type: SurfaceType.ICE_CRACKED,
+        color: "#F8F8FF",
+        roughness: 0.3,
+        planetType: PlanetType.BARREN,
+        persistence: 0.45,
+        lacunarity: 1.8,
+        simplePeriod: 1.2,
+        octaves: 7,
+        bumpScale: 1.8,
+        color1: "#E0E8F0",
+        color2: "#F0F0F8",
+        color3: "#F8F8FF",
+        color4: "#FFFFFF",
+        color5: "#FFFFF0",
+        height1: 0.15,
+        height2: 0.3,
+        height3: 0.5,
+        height4: 0.75,
+        height5: 0.9,
+        shininess: 40,
+        specularStrength: 0.9,
+        ambientLightIntensity: 0.5,
+        undulation: 0.12,
+        terrainType: 3,
+        terrainAmplitude: 0.4,
+        terrainSharpness: 1.1,
+        terrainOffset: 0.2,
       },
     } as PlanetProperties,
   });
