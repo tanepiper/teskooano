@@ -5,6 +5,7 @@ import "./vite-env.d";
 import { ApplicationInitializer } from "./core/initialization";
 import { pluginConfig } from "./config/pluginRegistry";
 import { pluginConfig as corePluginConfig } from "./core/config/pluginRegistry";
+import { setRenderScaleAu } from "@teskooano/data-types";
 
 interface AppContext {
   modalManager?: any;
@@ -20,6 +21,9 @@ export const appContext: AppContext = {};
  * Application entry point - orchestrates initialization
  */
 async function initializeApp(): Promise<void> {
+  // TODO: This should be driven by a user setting or config file
+  setRenderScaleAu(1);
+
   const pluginIds = [
     ...Object.keys(corePluginConfig),
     ...Object.keys(pluginConfig),

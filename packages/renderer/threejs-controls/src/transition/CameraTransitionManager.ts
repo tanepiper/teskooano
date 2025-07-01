@@ -4,6 +4,7 @@ import gsap from "gsap";
 import * as THREE from "three";
 import { OrbitControlsHandler } from "../orbit/OrbitControlsHandler";
 import { StateAccessor } from "@teskooano/core-state";
+import { AU_METERS, unscaleDistance } from "@teskooano/data-types";
 
 /**
  * Manages smooth, animated camera transitions using GSAP.
@@ -194,7 +195,6 @@ export class CameraTransitionManager {
     this.lastUpdatePosition.copy(startPos);
     this.lastUpdateTime = 0;
     const totalDuration = this.calculateTransitionDuration(startPos, endPos);
-    const AU = 15; // Approximate scene units per AU (adjusted for new scale)
 
     let targetName = "Position";
     if (options?.focusedObjectId) {
@@ -250,14 +250,16 @@ export class CameraTransitionManager {
 
       // Calculate instantaneous speed based on frame-to-frame changes
       const speed = deltaTime > 0 ? deltaDistance / deltaTime : 0;
-      const speedInAU = speed / AU / 10;
+      const realSpeed = unscaleDistance(speed); // m/s
+      const speedInAU = realSpeed / AU_METERS;
 
       // Update state for the next frame's calculation
       this.lastUpdatePosition.copy(currentPosition);
       this.lastUpdateTime = currentTime;
 
       const remainingDistance = currentPosition.distanceTo(endPos);
-      const remainingDistanceAU = remainingDistance / AU / 10;
+      const remainingRealDistance = unscaleDistance(remainingDistance); // meters
+      const remainingDistanceAU = remainingRealDistance / AU_METERS;
       const remainingTime = this.activeTimeline.duration() - currentTime;
 
       notificationManager.updateNotification(
@@ -330,7 +332,9 @@ export class CameraTransitionManager {
     endPos: THREE.Vector3,
   ): number {
     // --- Dynamic Transition Duration Calculation ---
-    const AU = 15; // Approximate scene units per Astronomical Unit (adjusted for new scale)
+    const distance = startPos.distanceTo(endPos);
+    const distanceInMeters = unscaleDistance(distance);
+    const distanceInAU = distanceInMeters / AU_METERS;
 
     // --- Tuning Parameters for the duration curve ---
     // The base duration for a 1 AU trip.
@@ -343,14 +347,10 @@ export class CameraTransitionManager {
     // The absolute maximum duration for any transition, in seconds.
     const MAX_DURATION_S = 30.0;
 
-    const distance = startPos.distanceTo(endPos);
-
     // Don't start a transition for a zero-distance move.
     if (distance < 0.001) {
       return 0;
     }
-
-    const distanceInAU = distance / AU;
 
     const calculatedDuration =
       BASE_DURATION_FACTOR * Math.pow(distanceInAU, DISTANCE_EXPONENT);

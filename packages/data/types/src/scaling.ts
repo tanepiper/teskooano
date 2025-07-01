@@ -21,20 +21,29 @@ export const AU_METERS = 149597870700;
  * - TIME_SCALE: Factor for time adjustments if needed
  * - RENDER_SCALE_AU: Units in the ThreeJS scene per Astronomical Unit (AU)
  */
-export const SCALE = {
+export let SCALE = {
   DISTANCE: 1.0,
   SIZE: 1.0,
   TIME: 1.0,
   MASS: 1.0e-20,
 
-  RENDER_SCALE_AU: 100,
+  RENDER_SCALE_AU: 10,
 
   GAS_GIANT_SIZE: 1.0,
   STAR_SIZE: 1.0,
   MOON_DISTANCE: 50.0,
 };
 
-export const METERS_TO_SCENE_UNITS = SCALE.RENDER_SCALE_AU / AU_METERS;
+export let METERS_TO_SCENE_UNITS = SCALE.RENDER_SCALE_AU / AU_METERS;
+
+/**
+ * Updates the render scale and recalculates dependent constants.
+ * @param newScale The new value for RENDER_SCALE_AU.
+ */
+export function setRenderScaleAu(newScale: number): void {
+  SCALE.RENDER_SCALE_AU = newScale;
+  METERS_TO_SCENE_UNITS = SCALE.RENDER_SCALE_AU / AU_METERS;
+}
 
 /**
  * Convert a physical distance to a visualization distance (in Scene Units)

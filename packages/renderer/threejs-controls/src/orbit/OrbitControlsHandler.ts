@@ -30,7 +30,7 @@ export class OrbitControlsHandler {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.5;
     this.controls.screenSpacePanning = false;
-    this.controls.minDistance = 0.01;
+    this.controls.minDistance = 0.001;
     this.controls.maxDistance = 1e6; // Adjusted for new scale (10x reduction)
     this.controls.maxPolarAngle = Math.PI; // Allow looking from underneath
 
