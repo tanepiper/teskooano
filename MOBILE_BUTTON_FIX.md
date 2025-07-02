@@ -25,7 +25,8 @@ The primary issue was that `touch-action: none` was applied globally to the `#ap
 
 - Added `touchstart` and `touchend` event listeners
 - Implemented proper touch event handling to prevent ghost clicks
-- Added visual feedback for touch interactions
+- Added visual feedback for touch interactions that respects persistent active state
+- Touch handlers only add/remove "active" class when button doesn't have persistent `active` attribute
 
 ### 3. Mobile-Responsive Button Sizing
 **File:** `apps/teskooano/src/core/components/button/Button.template.ts`
@@ -52,6 +53,12 @@ The primary issue was that `touch-action: none` was applied globally to the `#ap
 
 ### Mobile Detection
 Used `@media (pointer: coarse)` to detect touch devices, which is more reliable than screen size queries for identifying devices that primarily use touch input.
+
+### Active State Handling
+The touch event handlers are designed to respect the button's persistent active state:
+- Touch feedback is only applied when the button doesn't have the `active` attribute
+- This prevents temporary touch styling from overriding persistent button states
+- Ensures toggle buttons and other stateful buttons maintain their correct visual state
 
 ### Accessibility Compliance
 The minimum 44px touch target size follows iOS Human Interface Guidelines and Android Material Design recommendations for accessible touch targets.

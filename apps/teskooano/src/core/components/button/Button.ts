@@ -129,13 +129,17 @@ export class TeskooanoButton extends HTMLElement {
       e.preventDefault();
       return;
     }
-    // Add visual feedback for touch
-    this.buttonElement.classList.add("active");
+    // Add temporary touch feedback only if not persistently active
+    if (!this.hasAttribute("active")) {
+      this.buttonElement.classList.add("active");
+    }
   };
 
   private handleTouchEnd = (e: TouchEvent) => {
-    // Remove visual feedback
-    this.buttonElement.classList.remove("active");
+    // Remove temporary touch feedback only if not persistently active
+    if (!this.hasAttribute("active")) {
+      this.buttonElement.classList.remove("active");
+    }
     
     if (this.disabled) {
       e.stopPropagation();
