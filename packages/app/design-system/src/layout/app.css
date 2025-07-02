@@ -3,7 +3,8 @@
    ========================================================================== */
 
 #app {
-  touch-action: none;
+  /* Allow touch events on UI elements, prevent only on 3D canvas */
+  touch-action: auto;
   width: 100%;
   flex: 1;
   margin: 0 auto;
@@ -11,6 +12,20 @@
   position: relative;
   display: flex; /* Add back flex for main layout */
   flex-direction: column; /* Stack toolbar and content */
+}
+
+/* Prevent touch events on the 3D engine container to avoid interference with camera controls */
+.engine-container {
+  touch-action: none;
+}
+
+/* Ensure UI panels and buttons can receive touch events */
+.dockview-container,
+.dv-panel,
+.dv-tab,
+teskooano-button,
+button {
+  touch-action: auto;
 }
 
 #toolbar {

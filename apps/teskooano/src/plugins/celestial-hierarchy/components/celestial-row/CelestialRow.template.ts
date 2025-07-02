@@ -99,6 +99,20 @@ template.innerHTML = `
     --button-icon-color: currentColor; /* Added: Make icon inherit text color */
   }
 
+  /* Mobile-specific improvements for celestial row buttons */
+  @media (pointer: coarse) {
+    teskooano-button {
+      /* Increase touch target size on mobile */
+      --button-min-height: 32px;
+      --button-padding: 6px;
+      --button-icon-size: 16px;
+    }
+    
+    .action-buttons {
+      gap: 4px; /* Increase gap between buttons on mobile */
+    }
+  }
+
 </style>
 
 <div class="icon-name-container">

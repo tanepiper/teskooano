@@ -205,6 +205,29 @@ template.innerHTML = `
       display: none;
     }
 
+    /* Mobile-specific improvements for better touch interaction */
+    @media (pointer: coarse) {
+      button {
+        /* Increase minimum touch target size for mobile */
+        min-height: 44px;
+        min-width: 44px;
+        /* Add more padding for easier touch */
+        padding: var(--space-3) var(--space-4);
+      }
+      
+      :host([size="xs"]) button {
+        min-height: 32px;
+        min-width: 32px;
+        padding: var(--space-2) var(--space-3);
+      }
+      
+      :host([size="sm"]) button {
+        min-height: 36px;
+        min-width: 36px;
+        padding: var(--space-2) var(--space-3);
+      }
+    }
+
     /* Explicitly hide the tooltip when it's inside the shadow DOM */
     teskooano-tooltip {
       display: none;
