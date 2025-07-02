@@ -6,6 +6,71 @@ import { AU_METERS } from "@teskooano/data-types";
 import { FormatUtils } from "../../../celestial-info/utils/formatters";
 
 /**
+ * Simple touch handler for elements that need both click and touch support
+ */
+class SimpleTouchHandler {
+  private element: HTMLElement;
+  private clickHandler: (event: Event) => void;
+  private isTouch: boolean = false;
+  private touchStartTime: number = 0;
+
+  constructor(element: HTMLElement, clickHandler: (event: Event) => void) {
+    this.element = element;
+    this.clickHandler = clickHandler;
+    this.setupEventListeners();
+  }
+
+  private setupEventListeners(): void {
+    this.element.addEventListener("touchstart", this.handleTouchStart, { passive: false });
+    this.element.addEventListener("touchend", this.handleTouchEnd, { passive: false });
+    this.element.addEventListener("click", this.handleClick);
+  }
+
+  private handleTouchStart = (event: TouchEvent): void => {
+    this.isTouch = true;
+    this.touchStartTime = Date.now();
+    this.element.classList.add("touch-active");
+  };
+
+  private handleTouchEnd = (event: TouchEvent): void => {
+    this.element.classList.remove("touch-active");
+    
+    const touchDuration = Date.now() - this.touchStartTime;
+    
+    // Valid touch (not too quick, not too long)
+    if (touchDuration >= 50 && touchDuration <= 1000) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.clickHandler(event);
+    }
+    
+    // Reset isTouch after a delay to prevent ghost clicks
+    setTimeout(() => {
+      this.isTouch = false;
+    }, 300);
+  };
+
+  private handleClick = (event: MouseEvent): void => {
+    // If this click came after a touch, ignore it
+    if (this.isTouch) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    
+    // Normal click for non-touch devices
+    this.clickHandler(event);
+  };
+
+  public destroy(): void {
+    this.element.removeEventListener("touchstart", this.handleTouchStart);
+    this.element.removeEventListener("touchend", this.handleTouchEnd);
+    this.element.removeEventListener("click", this.handleClick);
+    this.element.classList.remove("touch-active");
+  }
+}
+
+/**
  * A custom element to display a single row in the focus control list.
  * It shows the object's name, an icon representing its type, and
  * buttons to focus or follow the object.
@@ -41,6 +106,9 @@ export class CelestialRowComponent extends HTMLElement {
   private distanceEl: HTMLElement | null = null;
   private focusBtn: HTMLElement | null = null;
   private followBtn: HTMLElement | null = null;
+  
+  private focusTouchHandler: SimpleTouchHandler | null = null;
+  private followTouchHandler: SimpleTouchHandler | null = null;
 
   /**
    * Creates an instance of CelestialRowComponent.
@@ -68,19 +136,21 @@ export class CelestialRowComponent extends HTMLElement {
     this.followBtn = this.shadowRoot!.getElementById("follow-btn");
 
     if (this.focusBtn) {
-      this.focusBtn.addEventListener("click", this.handleFocusClick);
+      this.focusTouchHandler = new SimpleTouchHandler(this.focusBtn, this.handleFocusClick);
     } else {
       console.error(
         `[CelestialRowComponent connectedCallback] focusBtn NOT FOUND for ${this.getAttribute("object-id")}`,
       );
     }
+    
     if (this.followBtn) {
-      this.followBtn.addEventListener("click", this.handleFollowClick);
+      this.followTouchHandler = new SimpleTouchHandler(this.followBtn, this.handleFollowClick);
     } else {
       console.error(
         `[CelestialRowComponent connectedCallback] followBtn NOT FOUND for ${this.getAttribute("object-id")}`,
       );
     }
+    
     this.updateButtonTitles();
   }
 
@@ -90,8 +160,15 @@ export class CelestialRowComponent extends HTMLElement {
    * Removes event listeners to prevent memory leaks.
    */
   disconnectedCallback() {
-    this.focusBtn?.removeEventListener("click", this.handleFocusClick);
-    this.followBtn?.removeEventListener("click", this.handleFollowClick);
+    if (this.focusTouchHandler) {
+      this.focusTouchHandler.destroy();
+      this.focusTouchHandler = null;
+    }
+    
+    if (this.followTouchHandler) {
+      this.followTouchHandler.destroy();
+      this.followTouchHandler = null;
+    }
   }
 
   /**
@@ -179,7 +256,7 @@ export class CelestialRowComponent extends HTMLElement {
    * Handles the click event for the focus button.
    * Dispatches a `focus-request` custom event.
    */
-  private handleFocusClick = (event: MouseEvent) => {
+  private handleFocusClick = (event: Event) => {
     event.stopPropagation();
     if (this._objectId && !this._isInactive) {
       this.dispatchEvent(
@@ -196,7 +273,7 @@ export class CelestialRowComponent extends HTMLElement {
    * Handles the click event for the follow button.
    * Dispatches a `follow-request` custom event.
    */
-  private handleFollowClick = (event: MouseEvent) => {
+  private handleFollowClick = (event: Event) => {
     event.stopPropagation();
     if (this._objectId && !this._isInactive) {
       this.dispatchEvent(

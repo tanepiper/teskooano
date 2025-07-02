@@ -73,3 +73,220 @@ toolbar-teskooano-simulation-controls .display-value {
   width: 100%;
   min-height: 30px; /* Keep or adjust as needed */
 }
+
+/* ==========================================================================
+   Miscellaneous Component Styles
+   ========================================================================== */
+
+/* --- Basic Element Styles --- */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+  min-height: fit-content;
+}
+
+/* --- Utility Classes --- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* --- Loading States --- */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* --- Error States --- */
+.error {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+/* --- Success States --- */
+.success {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+/* --- Focus Utilities --- */
+.focus-ring {
+  outline: var(--border-width-medium) solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* --- Text Utilities --- */
+.text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Responsive Utilities --- */
+.hide-mobile {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+.show-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .show-mobile {
+    display: block !important;
+  }
+}
+
+/* --- Basic Form Elements --- */
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-control {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-1);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  transition: border-color var(--transition-duration-fast) var(--transition-timing-base);
+  min-width: 5ch; /* Example min-width */
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.form-control:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--color-surface-2);
+}
+
+/* --- Basic Flexbox Utilities --- */
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-center {
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  justify-content: space-between;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+/* --- Basic Grid Utilities --- */
+.grid {
+  display: grid;
+}
+
+.grid-center {
+  place-items: center;
+}
+
+/* --- Spacing Utilities --- */
+.m-0 { margin: 0; }
+.p-0 { padding: 0; }
+.mt-1 { margin-top: var(--space-1); }
+.mb-1 { margin-bottom: var(--space-1); }
+.pt-1 { padding-top: var(--space-1); }
+.pb-1 { padding-bottom: var(--space-1); }
+
+/* --- Touch Feedback Styles --- */
+.touch-active {
+  transform: scale(0.98);
+  opacity: 0.8;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+button.touch-active,
+[role="button"].touch-active,
+teskooano-button.touch-active {
+  background-color: var(--color-surface-1, rgba(255, 255, 255, 0.1));
+  transform: scale(0.98);
+}
+
+/* Enhanced touch feedback on mobile */
+@media (pointer: coarse) {
+  .touch-active {
+    transform: scale(0.96);
+  }
+  
+  button.touch-active,
+  [role="button"].touch-active,
+  teskooano-button.touch-active {
+    transform: scale(0.96);
+    background-color: var(--color-surface-2, rgba(255, 255, 255, 0.15));
+  }
+}
+
+/* --- Interaction States --- */
+.interactive {
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
+.interactive:hover {
+  transform: translateY(-1px);
+}
+
+.interactive:active {
+  transform: translateY(0);
+}
+
+/* --- Animation Utilities --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .touch-active {
+    transform: none !important;
+    transition: none !important;
+  }
+}

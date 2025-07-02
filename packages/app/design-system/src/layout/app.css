@@ -23,9 +23,23 @@
 .dockview-container,
 .dv-panel,
 .dv-tab,
+.dv-group-control,
+.dv-tabs-and-actions-container,
 teskooano-button,
-button {
-  touch-action: auto;
+button,
+input,
+select,
+textarea {
+  touch-action: manipulation !important;
+}
+
+/* Specific touch handling for interactive elements */
+teskooano-button button,
+.celestial-row,
+.celestial-row button,
+#toolbar button,
+.toolbar button {
+  touch-action: manipulation !important;
 }
 
 #toolbar {
@@ -43,6 +57,7 @@ button {
   flex-shrink: 0;
   overflow: hidden;
   position: relative;
+  touch-action: manipulation;
 }
 
 /* Style the basic button within the toolbar using the new base style */
@@ -55,6 +70,7 @@ button {
   color: var(--color-text-secondary);
   border-color: transparent;
   padding: var(--space-1) var(--space-2); /* Smaller padding for toolbar */
+  touch-action: manipulation;
 }
 #toolbar button:hover {
   background-color: var(--color-surface-3);
@@ -97,4 +113,27 @@ button {
       transparent 55%
     );
   background-repeat: no-repeat;
+}
+
+/* Mobile-specific touch improvements */
+@media (pointer: coarse) {
+  /* Ensure all interactive elements have proper touch targets */
+  button,
+  teskooano-button,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+  
+  /* Improve touch feedback */
+  button:active,
+  teskooano-button:active,
+  [role="button"]:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
 }

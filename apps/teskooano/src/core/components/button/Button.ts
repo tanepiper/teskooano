@@ -3,6 +3,167 @@ import { template } from "./Button.template";
 import { ButtonTooltipManager } from "./ButtonTooltipManager";
 
 /**
+ * Touch Handler Options
+ */
+interface TouchHandlerOptions {
+  preventDefault?: boolean;
+  stopPropagation?: boolean;
+  touchDelay?: number;
+  maxTouchMove?: number;
+  visualFeedback?: boolean;
+}
+
+/**
+ * Simple Touch Handler for Button Component
+ */
+class SimpleTouchHandler {
+  private element: HTMLElement;
+  private options: Required<TouchHandlerOptions>;
+  private touchStartTime: number = 0;
+  private touchStartPosition: { x: number; y: number } | null = null;
+  private isTouch: boolean = false;
+  private clickHandler?: (event: Event) => void;
+
+  constructor(
+    element: HTMLElement,
+    clickHandler: (event: Event) => void,
+    options: TouchHandlerOptions = {}
+  ) {
+    this.element = element;
+    this.clickHandler = clickHandler;
+    this.options = {
+      preventDefault: false,
+      stopPropagation: false,
+      touchDelay: 0,
+      maxTouchMove: 10,
+      visualFeedback: true,
+      ...options,
+    };
+
+    this.setupEventListeners();
+  }
+
+  private setupEventListeners(): void {
+    this.element.addEventListener("touchstart", this.handleTouchStart, { passive: false });
+    this.element.addEventListener("touchmove", this.handleTouchMove, { passive: false });
+    this.element.addEventListener("touchend", this.handleTouchEnd, { passive: false });
+    this.element.addEventListener("touchcancel", this.handleTouchCancel, { passive: false });
+    this.element.addEventListener("click", this.handleClick);
+    this.element.addEventListener("contextmenu", this.handleContextMenu);
+  }
+
+  private handleTouchStart = (event: TouchEvent): void => {
+    this.isTouch = true;
+    this.touchStartTime = Date.now();
+    
+    const touch = event.touches[0];
+    this.touchStartPosition = {
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+
+    if (this.options.visualFeedback) {
+      this.element.classList.add("touch-active");
+    }
+
+    if (this.options.preventDefault) {
+      event.preventDefault();
+    }
+    if (this.options.stopPropagation) {
+      event.stopPropagation();
+    }
+  };
+
+  private handleTouchMove = (event: TouchEvent): void => {
+    if (!this.touchStartPosition) return;
+
+    const touch = event.touches[0];
+    const deltaX = Math.abs(touch.clientX - this.touchStartPosition.x);
+    const deltaY = Math.abs(touch.clientY - this.touchStartPosition.y);
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    if (distance > this.options.maxTouchMove) {
+      this.cancelTouch();
+    }
+  };
+
+  private handleTouchEnd = (event: TouchEvent): void => {
+    if (!this.touchStartPosition) return;
+
+    const touchDuration = Date.now() - this.touchStartTime;
+    
+    if (this.options.visualFeedback) {
+      this.element.classList.remove("touch-active");
+    }
+
+    if (touchDuration >= this.options.touchDelay) {
+      event.preventDefault();
+      
+      if (this.options.stopPropagation) {
+        event.stopPropagation();
+      }
+
+      if (this.clickHandler) {
+        this.clickHandler(event);
+      }
+    }
+
+    this.resetTouch();
+  };
+
+  private handleTouchCancel = (): void => {
+    this.cancelTouch();
+  };
+
+  private handleClick = (event: MouseEvent): void => {
+    if (this.isTouch) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.isTouch = false;
+      return;
+    }
+
+    if (this.clickHandler) {
+      this.clickHandler(event);
+    }
+  };
+
+  private handleContextMenu = (event: Event): void => {
+    if (this.isTouch) {
+      event.preventDefault();
+    }
+  };
+
+  private cancelTouch(): void {
+    if (this.options.visualFeedback) {
+      this.element.classList.remove("touch-active");
+    }
+    this.resetTouch();
+  }
+
+  private resetTouch(): void {
+    this.touchStartPosition = null;
+    this.touchStartTime = 0;
+    setTimeout(() => {
+      this.isTouch = false;
+    }, 300);
+  }
+
+  public destroy(): void {
+    this.element.removeEventListener("touchstart", this.handleTouchStart);
+    this.element.removeEventListener("touchmove", this.handleTouchMove);
+    this.element.removeEventListener("touchend", this.handleTouchEnd);
+    this.element.removeEventListener("touchcancel", this.handleTouchCancel);
+    this.element.removeEventListener("click", this.handleClick);
+    this.element.removeEventListener("contextmenu", this.handleContextMenu);
+    
+    if (this.options.visualFeedback) {
+      this.element.classList.remove("touch-active");
+    }
+  }
+}
+
+/**
  * A custom button element `<teskooano-button>` that extends standard button functionality
  * with features like tooltips, different sizes, variants, and an active state.
  * It supports disabling the button and handling tooltip display logic.
@@ -51,6 +212,8 @@ export class TeskooanoButton extends HTMLElement {
   private buttonElement: HTMLButtonElement;
   /** @internal */
   private tooltipManager: ButtonTooltipManager;
+  /** @internal */
+  private touchHandler: SimpleTouchHandler | null = null;
 
   constructor() {
     super();
@@ -68,15 +231,10 @@ export class TeskooanoButton extends HTMLElement {
       tooltipElement,
     );
 
-    this.addEventListener("click", this.handleClickProxy);
     this.addEventListener("mouseenter", this.handleShowTooltipProxy);
     this.addEventListener("focusin", this.handleShowTooltipProxy);
     this.addEventListener("mouseleave", this.handleHideTooltipProxy);
     this.addEventListener("focusout", this.handleHideTooltipProxy);
-    
-    // Add touch event listeners for better mobile support
-    this.addEventListener("touchstart", this.handleTouchStart);
-    this.addEventListener("touchend", this.handleTouchEnd);
   }
 
   /**
@@ -93,25 +251,56 @@ export class TeskooanoButton extends HTMLElement {
     this.updateActiveState();
     this.tooltipManager.updateContent();
     this.updateVariant();
+    
+    // Setup touch handler for better mobile support
+    this.setupTouchHandler();
   }
 
   disconnectedCallback() {
-    this.removeEventListener("click", this.handleClickProxy);
     this.removeEventListener("mouseenter", this.handleShowTooltipProxy);
     this.removeEventListener("focusin", this.handleShowTooltipProxy);
     this.removeEventListener("mouseleave", this.handleHideTooltipProxy);
     this.removeEventListener("focusout", this.handleHideTooltipProxy);
-    this.removeEventListener("touchstart", this.handleTouchStart);
-    this.removeEventListener("touchend", this.handleTouchEnd);
     this.tooltipManager.disconnected();
+    
+    // Cleanup touch handler
+    if (this.touchHandler) {
+      this.touchHandler.destroy();
+      this.touchHandler = null;
+    }
   }
 
-  private handleClickProxy = (e: MouseEvent) => {
+  private setupTouchHandler(): void {
+    if (this.touchHandler) {
+      this.touchHandler.destroy();
+    }
+    
+    this.touchHandler = new SimpleTouchHandler(
+      this.buttonElement,
+      this.handleButtonActivation,
+      {
+        preventDefault: false,
+        stopPropagation: false,
+        visualFeedback: true,
+        maxTouchMove: 15,
+      }
+    );
+  }
+
+  private handleButtonActivation = (event: Event): void => {
     if (this.disabled) {
-      e.stopPropagation();
-      e.preventDefault();
+      event.stopPropagation();
+      event.preventDefault();
       return;
     }
+
+    // Dispatch a custom event that bubbles up
+    const clickEvent = new CustomEvent('button-activated', {
+      bubbles: true,
+      composed: true,
+      detail: { originalEvent: event }
+    });
+    this.dispatchEvent(clickEvent);
   };
 
   private handleShowTooltipProxy = () => {
@@ -120,32 +309,6 @@ export class TeskooanoButton extends HTMLElement {
 
   private handleHideTooltipProxy = () => {
     this.tooltipManager.hide();
-  };
-
-  private handleTouchStart = (e: TouchEvent) => {
-    // Prevent ghost clicks on mobile by stopping propagation
-    if (this.disabled) {
-      e.stopPropagation();
-      e.preventDefault();
-      return;
-    }
-    // Add temporary touch feedback only if not persistently active
-    if (!this.hasAttribute("active")) {
-      this.buttonElement.classList.add("active");
-    }
-  };
-
-  private handleTouchEnd = (e: TouchEvent) => {
-    // Remove temporary touch feedback only if not persistently active
-    if (!this.hasAttribute("active")) {
-      this.buttonElement.classList.remove("active");
-    }
-    
-    if (this.disabled) {
-      e.stopPropagation();
-      e.preventDefault();
-      return;
-    }
   };
 
   attributeChangedCallback(
@@ -159,6 +322,10 @@ export class TeskooanoButton extends HTMLElement {
       case "disabled":
         this.updateDisabledState();
         if (this.disabled) this.tooltipManager.hide();
+        // Recreate touch handler when disabled state changes
+        if (this.touchHandler) {
+          this.setupTouchHandler();
+        }
         break;
       case "tooltip-text":
       case "tooltip-title":

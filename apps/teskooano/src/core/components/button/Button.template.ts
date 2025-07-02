@@ -41,7 +41,8 @@ template.innerHTML = `
       transition: background-color var(--transition-duration-fast) var(--transition-timing-base),
                   border-color var(--transition-duration-fast) var(--transition-timing-base),
                   color var(--transition-duration-fast) var(--transition-timing-base),
-                  box-shadow var(--transition-duration-fast) var(--transition-timing-base);
+                  box-shadow var(--transition-duration-fast) var(--transition-timing-base),
+                  transform var(--transition-duration-fast) var(--transition-timing-base);
     }
 
     button:hover:not([disabled]) {
@@ -76,6 +77,13 @@ template.innerHTML = `
       color: var(--color-text-disabled);
     }
 
+    /* Touch feedback styles */
+    button.touch-active {
+      transform: scale(0.98);
+      background-color: var(--color-surface-1);
+      transition: transform 0.1s ease, background-color 0.1s ease;
+    }
+
     /* --- Variants using host attributes --- */
     :host([variant="primary"]) button {
         background-color: var(--color-primary);
@@ -94,6 +102,9 @@ template.innerHTML = `
        box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-primary);
        outline: none; 
     }
+    :host([variant="primary"]) button.touch-active {
+        background-color: var(--color-primary-active);
+    }
     
     :host([variant="ghost"]) button {
         background-color: transparent;
@@ -110,6 +121,9 @@ template.innerHTML = `
     }
      :host([variant="ghost"]) button:focus-visible {
        border-color: var(--color-border-focus); 
+    }
+    :host([variant="ghost"]) button.touch-active {
+        background-color: var(--color-surface-2);
     }
 
     /* --- Image Variant --- */
@@ -143,6 +157,10 @@ template.innerHTML = `
        outline: var(--border-width-medium) solid var(--color-border-focus); 
        outline-offset: 1px; 
        border-color: transparent;
+    }
+    :host([variant="image"]) button.touch-active {
+        background-color: var(--color-surface-2);
+        transform: scale(0.95);
     }
 
     /* --- Sizes using host attributes --- */
@@ -225,6 +243,15 @@ template.innerHTML = `
         min-height: 36px;
         min-width: 36px;
         padding: var(--space-2) var(--space-3);
+      }
+
+      /* Enhanced touch feedback on mobile */
+      button.touch-active {
+        transform: scale(0.96);
+      }
+      
+      :host([variant="image"]) button.touch-active {
+        transform: scale(0.92);
       }
     }
 

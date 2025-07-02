@@ -7,16 +7,32 @@
   height: 100%; /* Ensure it fills space below toolbar */
   flex-grow: 1; /* Allow it to take remaining space */
   overflow: hidden; /* Prevent Dockview's own scrollbars if desired */
+  touch-action: manipulation;
 }
 
 /* These overrides are applied via tokens in tokens.css, 
    but this class is the target */
 .dockview-theme-abyss {
+  touch-action: manipulation;
 }
 
 /* Improve touch dragging for Dockview floating panels */
 .dockview-floating-group .dv-group-control {
-  touch-action: none;
+  touch-action: none; /* Keep for drag functionality */
+}
+
+/* Ensure tabs and buttons are touchable */
+.dv-tab,
+.dv-tab-container,
+.dv-tabs-container,
+.dv-tabs-and-actions-container {
+  touch-action: manipulation !important;
+}
+
+/* Panel content should allow touch */
+.dv-panel,
+.dv-panel-content {
+  touch-action: manipulation;
 }
 
 .dv-groupview-floating,

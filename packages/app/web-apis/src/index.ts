@@ -37,3 +37,5 @@ export * as RemotePlaybackAPI from "./remote-playback";
 export * as ScreenCaptureAPI from "./screen-capture";
 
 export * as PopoverAPI from "./popover";
+
+export * from "./touch-handler";

@@ -19,6 +19,7 @@ import {
   handleFollowRequest,
 } from "./focus-interactions.js";
 import * as THREE from "three";
+import { addButtonTouchSupport } from "../../../core/utils/touch-utils";
 
 /**
  * Controller for the CelestialHierarchy view.
@@ -52,6 +53,10 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
   // Special subscription for camera state that has dynamic lifecycle
   private _cameraStateSubscription: any = null;
 
+  // Touch support cleanup functions
+  private _resetButtonTouchCleanup: (() => void) | null = null;
+  private _clearButtonTouchCleanup: (() => void) | null = null;
+
   /**
    * Creates an instance of CelestialHierarchyController.
    * @param view The CelestialHierarchy view instance this controller manages.
@@ -75,12 +80,12 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
 
     this._handleObjectsLoaded = this._populateListInternal.bind(this);
     this._handleObjectDestroyed = this._populateListInternal.bind(this);
-    this._handleObjectStatusChanged = (event: Event): void => {
+    this._handleObjectStatusChanged = (event: Event) => {
       const customEvent = event as CustomEvent<{
         objectId: string;
         status: CelestialStatus;
       }>;
-      if (customEvent.detail) {
+      if (customEvent.detail?.objectId && customEvent.detail?.status) {
         this._updateObjectStatusInternal(
           customEvent.detail.objectId,
           customEvent.detail.status,
@@ -166,6 +171,16 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       "celestial-influences-changed",
       this._handleInfluencesChanged,
     );
+
+    // Clean up touch support
+    if (this._resetButtonTouchCleanup) {
+      this._resetButtonTouchCleanup();
+      this._resetButtonTouchCleanup = null;
+    }
+    if (this._clearButtonTouchCleanup) {
+      this._clearButtonTouchCleanup();
+      this._clearButtonTouchCleanup = null;
+    }
   }
 
   /**
@@ -329,12 +344,20 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
    * Adds all necessary event listeners for the controller to function.
    */
   private addEventListeners(): void {
-    this._resetButton?.addEventListener("click", () =>
-      this._parentPanel?.engineCameraManager?.resetCameraView(),
-    );
-    this._clearButton?.addEventListener("click", () =>
-      this._parentPanel?.engineCameraManager?.clearFocus(),
-    );
+    // Add touch support to buttons
+    if (this._resetButton) {
+      this._resetButtonTouchCleanup = addButtonTouchSupport(
+        this._resetButton,
+        () => this._parentPanel?.engineCameraManager?.resetCameraView()
+      );
+    }
+    
+    if (this._clearButton) {
+      this._clearButtonTouchCleanup = addButtonTouchSupport(
+        this._clearButton,
+        () => this._parentPanel?.engineCameraManager?.clearFocus()
+      );
+    }
 
     if (this._treeListContainer) {
       this._treeListContainer.addEventListener(

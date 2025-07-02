@@ -97,6 +97,13 @@ template.innerHTML = `
     --button-min-height: 18px; /* Adjust size */
     --button-icon-size: 14px;
     --button-icon-color: currentColor; /* Added: Make icon inherit text color */
+    transition: transform 0.1s ease, background-color 0.1s ease;
+  }
+
+  /* Touch feedback for buttons */
+  teskooano-button.touch-active {
+    transform: scale(0.95);
+    background-color: var(--color-surface-2, rgba(255, 255, 255, 0.1));
   }
 
   /* Mobile-specific improvements for celestial row buttons */
@@ -110,6 +117,11 @@ template.innerHTML = `
     
     .action-buttons {
       gap: 4px; /* Increase gap between buttons on mobile */
+    }
+    
+    /* Enhanced touch feedback on mobile */
+    teskooano-button.touch-active {
+      transform: scale(0.92);
     }
   }
 
