@@ -131,7 +131,16 @@ systemControlsTemplate.innerHTML = `
       background-color: var(--color-surface-1, #1a1a2e);
       color: var(--color-text-primary, #e0e0fc);
       font-size: var(--font-size-small, 0.85rem);
+      touch-action: manipulation;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
+    
+    .state--empty .seed-form input[type="text"]:focus {
+      outline: none;
+      border-color: var(--color-primary, #6c63ff);
+      box-shadow: 0 0 0 2px var(--color-primary-alpha, rgba(108, 99, 255, 0.3));
+    }
+    
      :host([mobile]) .state--empty .seed-form input[type="text"] {
         height: calc(var(--control-height-xs, 28px) - 2px); /* Even smaller on mobile */
      }
@@ -183,6 +192,18 @@ systemControlsTemplate.innerHTML = `
       padding: 2px 6px;
       border-radius: var(--radius-sm, 2px);
       border: 1px solid var(--color-border-subtle, #4a4a6a);
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: background-color 0.2s ease;
+    }
+    
+    .state--loaded .system-info .system-seed:hover {
+      background-color: var(--color-surface-2, rgba(255, 255, 255, 0.1));
+    }
+    
+    .state--loaded .system-info .system-seed.touch-active {
+      background-color: var(--color-surface-2, rgba(255, 255, 255, 0.1));
+      transform: scale(0.98);
     }
 
     .state--loaded .system-info .celestial-count {
@@ -251,6 +272,41 @@ systemControlsTemplate.innerHTML = `
      @keyframes spin {
        from { transform: rotate(0deg); }
        to { transform: rotate(360deg); }
+     }
+     
+     /* Mobile-specific improvements */
+     @media (pointer: coarse) {
+       .state--empty .seed-form input[type="text"] {
+         min-height: 44px;
+         font-size: 16px; /* Prevent zoom on iOS */
+         padding: var(--space-2, 8px) var(--space-3, 12px);
+       }
+       
+       .state--loaded .system-info .system-seed {
+         min-height: 32px;
+         padding: var(--space-1, 4px) var(--space-2, 8px);
+         font-size: 14px;
+       }
+     }
+     
+     /* Reduced motion support */
+     @media (prefers-reduced-motion: reduce) {
+       .state--empty .seed-form input[type="text"],
+       .state--loaded .system-info .system-seed {
+         transition: none;
+       }
+       
+       .state--loaded .system-info .system-seed.touch-active {
+         transform: none;
+       }
+       
+       .feedback {
+         animation: none;
+       }
+       
+       .loading-overlay::after {
+         animation: none;
+       }
      }
 
   </style>

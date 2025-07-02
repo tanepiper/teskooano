@@ -1,4 +1,5 @@
 import { CustomEvents } from "@teskooano/data-types";
+import { addTouchSupport } from "../../utils/touch-utils";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -45,7 +46,10 @@ template.innerHTML = `
       font-size: var(--font-size-sm, 0.9em);
       cursor: pointer;
       opacity: 0;
-      transition: opacity 0.2s ease, background-color 0.2s ease;
+      transition: opacity 0.2s ease, background-color 0.2s ease, transform 0.1s ease;
+      touch-action: manipulation;
+      min-height: 32px;
+      min-width: 44px;
     }
     
     :host(:hover) .copy-button,
@@ -58,8 +62,10 @@ template.innerHTML = `
       background-color: var(--color-surface-highlight, #3a3a5e);
     }
     
-    .copy-button:active {
+    .copy-button:active,
+    .copy-button.touch-active {
       background-color: var(--color-surface-pressed, #1a1a2e);
+      transform: scale(0.95);
     }
     
     .copy-button:focus {
@@ -90,6 +96,35 @@ template.innerHTML = `
     .content-wrapper {
       width: 100%;
     }
+    
+    /* Mobile improvements */
+    @media (pointer: coarse) {
+      .copy-button {
+        min-height: 44px;
+        min-width: 48px;
+        padding: var(--space-xs, 4px) var(--space-sm, 8px);
+        font-size: 16px; /* Prevent zoom on iOS */
+        opacity: 0.8; /* Make more visible on mobile */
+      }
+      
+      :host(:hover) .copy-button,
+      :host(:focus-within) .copy-button,
+      .copy-button:focus {
+        opacity: 1;
+      }
+    }
+    
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .copy-button {
+        transition: opacity 0.2s ease;
+      }
+      
+      .copy-button:active,
+      .copy-button.touch-active {
+        transform: none;
+      }
+    }
   </style>
   <div class="content-wrapper">
     <slot></slot> <!-- Default slot for content -->
@@ -106,6 +141,7 @@ export class TeskooanoOutputDisplay extends HTMLElement {
   private copyFeedback: HTMLElement;
   private _internalUpdate = false;
   private _copyTimeout: number | null = null;
+  private copyButtonTouchCleanup: (() => void) | null = null;
 
   constructor() {
     super();
@@ -117,8 +153,6 @@ export class TeskooanoOutputDisplay extends HTMLElement {
     this.copyFeedback = this.shadowRoot!.querySelector(".copy-feedback")!;
 
     this.slotElement.addEventListener("slotchange", this.handleSlotChange);
-
-    this.copyButton.addEventListener("click", this.handleCopyClick);
   }
 
   connectedCallback() {
@@ -132,16 +166,39 @@ export class TeskooanoOutputDisplay extends HTMLElement {
 
     this.setAttribute("role", "textbox");
     this.setAttribute("aria-readonly", "true");
+    
+    // Setup touch support for copy button
+    this.setupCopyButtonTouch();
   }
 
   disconnectedCallback() {
     this.slotElement.removeEventListener("slotchange", this.handleSlotChange);
-    this.copyButton.removeEventListener("click", this.handleCopyClick);
 
     if (this._copyTimeout !== null) {
       window.clearTimeout(this._copyTimeout);
       this._copyTimeout = null;
     }
+    
+    // Clean up copy button touch support
+    if (this.copyButtonTouchCleanup) {
+      this.copyButtonTouchCleanup();
+      this.copyButtonTouchCleanup = null;
+    }
+  }
+
+  private setupCopyButtonTouch(): void {
+    if (this.copyButtonTouchCleanup) {
+      this.copyButtonTouchCleanup();
+    }
+    
+    this.copyButtonTouchCleanup = addTouchSupport(
+      this.copyButton,
+      this.handleCopyClick,
+      {
+        visualFeedback: true,
+        maxMove: 10,
+      }
+    );
   }
 
   attributeChangedCallback(
@@ -267,6 +324,11 @@ export class TeskooanoOutputDisplay extends HTMLElement {
   private updateCopyEnabledAttribute(value: string | null) {
     const copyEnabled = value !== null;
     this.copyButton.style.display = copyEnabled ? "block" : "none";
+    
+    // Recreate touch support when copy enabled state changes
+    if (copyEnabled && this.copyButtonTouchCleanup) {
+      this.setupCopyButtonTouch();
+    }
   }
 
   get value(): string {

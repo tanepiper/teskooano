@@ -1,4 +1,5 @@
 import { CustomEvents } from "@teskooano/data-types";
+import { addTouchSupport } from "../../utils/touch-utils";
 
 const template = document.createElement("template");
 template.innerHTML = `
@@ -37,12 +38,22 @@ template.innerHTML = `
       border: 1px solid var(--select-border);
       border-radius: var(--select-border-radius);
       cursor: pointer;
+      touch-action: manipulation;
+      min-height: 44px; /* Ensure good touch target */
     }
     select:focus {
       outline: none;
       border-color: var(--color-primary, #6c63ff);
       box-shadow: 0 0 0 2px var(--color-primary-alpha, rgba(108, 99, 255, 0.3));
     }
+    
+    /* Touch feedback */
+    select.touch-active {
+      transform: scale(0.98);
+      background-color: var(--color-surface-2, rgba(255, 255, 255, 0.1));
+      transition: transform 0.1s ease, background-color 0.1s ease;
+    }
+    
     /* Disabled state */
     :host([disabled]) select {
         opacity: var(--select-disabled-opacity);
@@ -62,6 +73,27 @@ template.innerHTML = `
     :host([disabled]) .help-text {
         opacity: var(--select-disabled-opacity);
     }
+    
+    /* Mobile improvements */
+    @media (pointer: coarse) {
+      select {
+        min-height: 48px;
+        padding: var(--space-md, 12px) var(--space-lg, 16px);
+        font-size: 16px; /* Prevent zoom on iOS */
+      }
+      
+      select.touch-active {
+        transform: scale(0.96);
+      }
+    }
+    
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      select.touch-active {
+        transform: none !important;
+        transition: none !important;
+      }
+    }
   </style>
   <div class="select-wrapper">
     <label for="select-input"><slot name="label">Label</slot></label>
@@ -79,6 +111,7 @@ export class TeskooanoSelect extends HTMLElement {
   private helpTextElement: HTMLElement;
   private mutationObserver: MutationObserver;
   private _internalUpdate = false;
+  private touchCleanup: (() => void) | null = null;
 
   constructor() {
     super();
@@ -111,7 +144,9 @@ export class TeskooanoSelect extends HTMLElement {
     });
 
     this.selectElement.addEventListener("change", this.handleChange);
-    this.addEventListener("click", this.handleClick);
+    
+    // Add touch support
+    this.setupTouchSupport();
 
     if (
       !this.selectElement.hasAttribute("aria-label") &&
@@ -127,8 +162,46 @@ export class TeskooanoSelect extends HTMLElement {
   disconnectedCallback() {
     this.mutationObserver.disconnect();
     this.selectElement.removeEventListener("change", this.handleChange);
-    this.removeEventListener("click", this.handleClick);
+    
+    // Clean up touch support
+    if (this.touchCleanup) {
+      this.touchCleanup();
+      this.touchCleanup = null;
+    }
   }
+
+  private setupTouchSupport(): void {
+    if (this.touchCleanup) {
+      this.touchCleanup();
+    }
+    
+    this.touchCleanup = addTouchSupport(
+      this.selectElement,
+      this.handleSelectActivation,
+      {
+        visualFeedback: true,
+        maxMove: 15,
+      }
+    );
+  }
+
+  private handleSelectActivation = (event: Event): void => {
+    if (this.disabled) {
+      event.stopPropagation();
+      event.preventDefault();
+      return;
+    }
+
+    // For touch events, we need to trigger the select opening
+    if (event.type === 'touchend') {
+      // Focus the select to open it
+      this.selectElement.focus();
+      // Small delay to ensure the select opens properly
+      setTimeout(() => {
+        this.selectElement.click();
+      }, 50);
+    }
+  };
 
   private handleOptionChanges = (mutations: MutationRecord[]) => {
     this.syncOptions();
@@ -195,6 +268,10 @@ export class TeskooanoSelect extends HTMLElement {
         break;
       case "disabled":
         this.updateAttribute(name, newValue);
+        // Recreate touch support when disabled state changes
+        if (this.touchCleanup) {
+          this.setupTouchSupport();
+        }
         break;
       case "help-text":
         this.updateHelpTextAttribute(newValue);
@@ -293,19 +370,6 @@ export class TeskooanoSelect extends HTMLElement {
         detail: { value: this.value },
       }),
     );
-  };
-
-  private handleClick = (e: MouseEvent) => {
-    if (this.disabled) {
-      e.stopPropagation();
-      return;
-    }
-
-    if (e.target !== this.selectElement) {
-      this.selectElement.click();
-
-      this.selectElement.focus();
-    }
   };
 
   get value(): string {

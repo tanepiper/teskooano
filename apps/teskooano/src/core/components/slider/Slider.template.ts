@@ -44,7 +44,9 @@ template.innerHTML = `
       border-radius: var(--slider-track-height); /* Rounded track */
       cursor: pointer;
       margin: calc(var(--slider-thumb-size) / 2) 0; /* Center thumb vertically */
+      touch-action: manipulation; /* Improve touch handling */
     }
+    
     /* Thumb styles - WebKit */
     input[type="range"]::-webkit-slider-thumb {
       appearance: none;
@@ -56,7 +58,9 @@ template.innerHTML = `
       border-radius: 50%;
       cursor: pointer;
       margin-top: calc((var(--slider-thumb-size) / -2) + (var(--slider-track-height) / 2)); /* Vertical align */
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
+    
     /* Thumb styles - Mozilla */
     input[type="range"]::-moz-range-thumb {
       width: calc(var(--slider-thumb-size) - 4px); /* Adjust for border */
@@ -65,7 +69,17 @@ template.innerHTML = `
       border: 2px solid var(--slider-thumb-border);
       border-radius: 50%;
       cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
+    
+    /* Active/Touch feedback for thumb */
+    input[type="range"]:active::-webkit-slider-thumb {
+      transform: scale(1.2);
+    }
+    input[type="range"]:active::-moz-range-thumb {
+      transform: scale(1.2);
+    }
+    
     /* Focus styles */
     input[type="range"]:focus::-webkit-slider-thumb {
        box-shadow: 0 0 0 3px var(--color-primary-alpha, rgba(108, 99, 255, 0.3)); 
@@ -73,6 +87,7 @@ template.innerHTML = `
     input[type="range"]:focus::-moz-range-thumb {
        box-shadow: 0 0 0 3px var(--color-primary-alpha, rgba(108, 99, 255, 0.3)); 
     }
+    
     /* Disabled state */
      :host([disabled]) input[type="range"] {
         opacity: 0.6;
@@ -122,12 +137,21 @@ template.innerHTML = `
         box-sizing: border-box;
         font-family: var(--font-family-monospace, monospace);
         -moz-appearance: textfield; /* Firefox */
+        touch-action: manipulation; /* Improve touch handling */
+        min-height: 32px; /* Ensure good touch target */
     }
     .value-input::-webkit-outer-spin-button,
     .value-input::-webkit-inner-spin-button {
         -webkit-appearance: none;
         margin: 0;
     }
+    
+    .value-input:focus {
+      outline: none;
+      border-color: var(--color-border-focus, var(--color-primary));
+      box-shadow: 0 0 0 2px var(--color-primary-alpha, rgba(108, 99, 255, 0.3));
+    }
+    
     /* Hide the non-editable value display when input is shown */
     :host([editable-value]) .value-display {
         display: none;
@@ -150,6 +174,41 @@ template.innerHTML = `
         font-size: var(--font-size-xs, 0.8em);
         color: var(--color-text-secondary, #aaa);
         display: block;
+    }
+    
+    /* Mobile-specific improvements */
+    @media (pointer: coarse) {
+      /* Increase track height for easier touch interaction */
+      input[type="range"] {
+        height: calc(var(--slider-track-height) * 1.5);
+        margin: calc(var(--slider-thumb-size) / 1.5) 0;
+      }
+      
+      /* Larger thumb for touch */
+      :host {
+        --slider-thumb-size: 20px;
+      }
+      
+      /* Ensure value input has good touch target */
+      .value-input {
+        min-height: 44px;
+        min-width: 60px;
+        padding: var(--space-xs, 4px) var(--space-sm, 8px);
+        font-size: 16px; /* Prevent zoom on iOS */
+      }
+      
+      /* Increase control row spacing on mobile */
+      .control-row {
+        gap: calc(var(--slider-gap) * 1.5);
+      }
+    }
+    
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      input[type="range"]::-webkit-slider-thumb,
+      input[type="range"]::-moz-range-thumb {
+        transition: none;
+      }
     }
   </style>
   <div class="slider-wrapper">
