@@ -73,6 +73,10 @@ export class TeskooanoButton extends HTMLElement {
     this.addEventListener("focusin", this.handleShowTooltipProxy);
     this.addEventListener("mouseleave", this.handleHideTooltipProxy);
     this.addEventListener("focusout", this.handleHideTooltipProxy);
+    
+    // Add touch event listeners for better mobile support
+    this.addEventListener("touchstart", this.handleTouchStart);
+    this.addEventListener("touchend", this.handleTouchEnd);
   }
 
   /**
@@ -97,6 +101,8 @@ export class TeskooanoButton extends HTMLElement {
     this.removeEventListener("focusin", this.handleShowTooltipProxy);
     this.removeEventListener("mouseleave", this.handleHideTooltipProxy);
     this.removeEventListener("focusout", this.handleHideTooltipProxy);
+    this.removeEventListener("touchstart", this.handleTouchStart);
+    this.removeEventListener("touchend", this.handleTouchEnd);
     this.tooltipManager.disconnected();
   }
 
@@ -114,6 +120,28 @@ export class TeskooanoButton extends HTMLElement {
 
   private handleHideTooltipProxy = () => {
     this.tooltipManager.hide();
+  };
+
+  private handleTouchStart = (e: TouchEvent) => {
+    // Prevent ghost clicks on mobile by stopping propagation
+    if (this.disabled) {
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
+    // Add visual feedback for touch
+    this.buttonElement.classList.add("active");
+  };
+
+  private handleTouchEnd = (e: TouchEvent) => {
+    // Remove visual feedback
+    this.buttonElement.classList.remove("active");
+    
+    if (this.disabled) {
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
   };
 
   attributeChangedCallback(
