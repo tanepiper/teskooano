@@ -85,7 +85,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
         objectId: string;
         status: CelestialStatus;
       }>;
-      if (customEvent.detail?.objectId && customEvent.detail?.status) {
+      if (customEvent.detail?.objectId && customEvent.detail?.status != null) {
         this._updateObjectStatusInternal(
           customEvent.detail.objectId,
           customEvent.detail.status,
