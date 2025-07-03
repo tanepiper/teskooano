@@ -52,7 +52,8 @@
     "ora": "8.2.0",
     "simplex-noise": "4.0.3",
     "squirrel-noise": "1.0.0",
-    "three": "0.178.0"
+    "three": "0.178.0",
+    "@three.ez/instanced-mesh": "0.3.5"
   },
   "devDependencies": {
     "@playwright/test": "1.53.2",

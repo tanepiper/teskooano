@@ -80,10 +80,7 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
       planetProps?.rings &&
       planetProps.rings.length > 0
     ) {
-      const ringLODs = this.ringSystemRenderer.getLODLevels(object, {
-        ...options,
-        parentLODDistances: planetLevels.map((l) => l.distance),
-      });
+      const ringLODs = this.ringSystemRenderer.getLODLevels(object, options);
 
       // Combine planet and ring LODs
       return planetLevels.map((planetLOD, index) => {

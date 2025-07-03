@@ -17,9 +17,17 @@ export interface BaseCelestialRendererOptions {
 export type DetailLevel = "high" | "medium" | "low" | "very-low";
 
 /**
- * Options for creating celestial object meshes
+ * Options for creating a celestial mesh.
  */
 export interface CelestialMeshOptions {
+  /**
+   * The scale to render the object at.
+   * @default 1.0
+   */
+  renderScale?: number;
+  /**
+   * Optional camera for effects that require multi-pass rendering or screen space calculations.
+   */
   /**
    * Level of detail to use for the mesh
    */

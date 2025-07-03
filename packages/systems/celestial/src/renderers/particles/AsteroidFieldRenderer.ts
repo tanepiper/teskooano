@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { CelestialMeshOptions, CelestialRenderer, LightSourcesMap } from "..";
+import { LightSourcesMap } from "..";
 
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@teskooano/data-types";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
+import { CelestialMeshOptions } from "../base";
 
 const MAX_LIGHTS = 4;
 
@@ -18,11 +19,11 @@ const asteroidVertexShader = `
   attribute float initialRotation;
   
   uniform float beltRotationAngle;
+  uniform float renderScale;
   
   varying vec3 vColor;
   varying float vTextureIndex;
   varying float vInitialRotation;
-  uniform float pointSizeScale; 
   varying vec3 vWorldPosition;
 
   void main() {
@@ -46,10 +47,11 @@ const asteroidVertexShader = `
 
     gl_Position = projectionMatrix * mvPosition;
     
-    float calculatedPointSize = size * ( pointSizeScale / -mvPosition.z );
+    // Scale point size based on distance to camera
+    float distance = length(mvPosition.xyz);
+    float calculatedPointSize = size * (1.0 / distance) * renderScale * 2500.0;
     
-    gl_PointSize = max(1.0, calculatedPointSize); 
-    
+    gl_PointSize = max(1.5, calculatedPointSize);
   }
 `;
 
@@ -99,21 +101,35 @@ const asteroidFragmentShader = `
         texColor = texture2D(asteroidTextures[4], rotatedUV);
     }
 
-    if ( texColor.a < alphaTest ) discard; 
+    if (texColor.a < alphaTest) discard; 
 
-    // For billboards, the normal should point towards the camera in world space
-    vec3 normal = normalize(cameraPosition - vWorldPosition);
+    // Remap gl_PointCoord to -1 to 1 range to represent a sphere's surface
+    vec2 fromCenter = gl_PointCoord * 2.0 - 1.0;
+    float len = length(fromCenter);
+    if (len > 1.0) discard; // Discard fragments outside the circle to ensure round particles
+
+    // Calculate a pseudo-normal for a sphere
+    vec3 normal = vec3(fromCenter.x, fromCenter.y, sqrt(1.0 - len * len));
     
-    vec3 totalDiffuse = vec3(0.0);
-    for (int i = 0; i < uNumLights; i++) {
-        vec3 lightDir = normalize(uLights[i].position - vWorldPosition);
-        float diff = max(dot(normal, lightDir), 0.0);
-        totalDiffuse += uLights[i].color * uLights[i].intensity * diff;
+    // Lighting Calculation
+    vec3 totalLighting = vec3(0.15); // Ambient light
+
+    for (int i = 0; i < MAX_LIGHTS; i++) {
+        if (i >= uNumLights) break;
+        
+        vec3 lightDirection = normalize(uLights[i].position - vWorldPosition);
+        float diffuse = max(dot(normal, lightDirection), 0.0);
+        
+        vec3 lightContribution = uLights[i].color * uLights[i].intensity * diffuse;
+        totalLighting += lightContribution;
     }
-
-    vec3 ambient = vec3(0.1, 0.1, 0.1);
     
-    gl_FragColor = texColor * vec4(vColor * (ambient + totalDiffuse), 1.0);
+    totalLighting = clamp(totalLighting, 0.0, 1.0);
+    
+    // Final color combines texture, vertex color, and lighting
+    vec3 finalColor = texColor.rgb * vColor * totalLighting;
+    
+    gl_FragColor = vec4(finalColor, texColor.a);
   }
 `;
 
@@ -132,6 +148,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
   private beltRotationAngle = 0;
   private previousSimTime = 0;
   private cumulativeParticleTime = 0;
+  private renderScale = 1.0;
 
   constructor() {
     super();
@@ -208,8 +225,8 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
     const material = new THREE.ShaderMaterial({
       uniforms: {
         asteroidTextures: { value: this.asteroidTextures },
-        alphaTest: { value: 0.1 },
-        pointSizeScale: { value: 1.0 },
+        alphaTest: { value: 0.2 },
+        renderScale: { value: this.renderScale },
         time: { value: 0.0 },
         beltRotationAngle: { value: 0.0 },
         particleRotationSpeed: { value: this.particleRotationSpeed },
@@ -218,9 +235,10 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       },
       vertexShader: asteroidVertexShader,
       fragmentShader: asteroidFragmentShader,
-      transparent: true,
+      transparent: false,
       vertexColors: true,
       depthWrite: true,
+      depthTest: true,
       blending: THREE.NormalBlending,
     });
 
@@ -320,7 +338,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       );
       colors.push(newColor.r, newColor.g, newColor.b);
 
-      sizes.push(4 + Math.random() * 8);
+      sizes.push(8 + Math.random() * 12);
       textureIndices.push(i % 5);
       initialRotations.push(Math.random() * Math.PI * 2);
     }
@@ -359,6 +377,9 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
     if (options?.beltRotationSpeed !== undefined) {
       this.beltRotationSpeed = options.beltRotationSpeed;
     }
+    if (options?.renderScale !== undefined) {
+      this.renderScale = options.renderScale;
+    }
 
     let material = this.materials.get(
       object.celestialObjectId,
@@ -367,12 +388,12 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       material = this._createSharedMaterial(object.celestialObjectId);
     }
 
-    const distancesAU = [0, 1, 4, 10];
+    const distancesAU = [0, 10, 20, 30];
     const distancesSceneUnits = distancesAU.map(
       (au) => au * SCALE.RENDER_SCALE_AU,
     );
 
-    const particleCounts = [20000, 10000, 5000, 1000];
+    const particleCounts = [20000, 10000, 5000, 1000].reverse();
 
     const lodLevels: LODLevel[] = [];
 
@@ -421,12 +442,15 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       // Time-based rotation for the entire belt
       const deltaTime = (time - this.previousSimTime) * timeScale;
       this.beltRotationAngle += this.beltRotationSpeed * deltaTime;
+      this.beltRotationAngle %= 2 * Math.PI; // Prevent precision loss
       material.uniforms.beltRotationAngle.value = this.beltRotationAngle;
       this.previousSimTime = time;
 
       // Slower, cumulative time for individual particle rotation
       this.cumulativeParticleTime += deltaTime * 0.001; // Scale down for slower rotation
+      this.cumulativeParticleTime %= 2 * Math.PI; // Prevent precision loss
       material.uniforms.time.value = this.cumulativeParticleTime;
+      material.uniforms.renderScale.value = this.renderScale;
 
       if (lightSources && lightSources.size > 0) {
         let lightIndex = 0;
