@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import basicFragmentShader from "../../../shaders/gas-giants/basic.fragment.glsl";
 import basicVertexShader from "../../../shaders/gas-giants/basic.vertex.glsl";
+import { LightArrayUtils } from "../../base/CelestialRenderer";
 
 // Remove hard-coded constants - we'll calculate dynamically
 interface CalculatedLight {
@@ -93,32 +94,11 @@ export abstract class BaseGasGiantMaterial extends THREE.ShaderMaterial {
   protected resizeLightArrays(newSize: number): void {
     if (!this.uniforms.uLights) return;
 
-    if (this.defines.MAX_LIGHTS !== newSize) {
-      this.defines.MAX_LIGHTS = newSize;
-      this.needsUpdate = true;
-    }
-
-    const currentArray = this.uniforms.uLights.value;
-    const newArray: Array<{
-      direction: THREE.Vector3;
-      color: THREE.Color;
-      intensity: number;
-    }> = [];
-
-    // Copy existing data and add new slots as needed
-    for (let i = 0; i < newSize; i++) {
-      if (i < currentArray.length && currentArray[i]) {
-        newArray.push(currentArray[i]);
-      } else {
-        newArray.push({
-          direction: new THREE.Vector3(),
-          color: new THREE.Color(),
-          intensity: 0,
-        });
-      }
-    }
-
-    this.uniforms.uLights.value = newArray;
+    this.uniforms.uLights.value = LightArrayUtils.resizeLightArray(
+      this,
+      newSize,
+      this.uniforms.uLights.value,
+    );
   }
 
   /**
@@ -127,27 +107,12 @@ export abstract class BaseGasGiantMaterial extends THREE.ShaderMaterial {
   protected resizeShadowCasterArrays(newSize: number): void {
     if (!this.uniforms.uShadowCasters) return;
 
-    if (this.defines.MAX_SHADOW_CASTERS !== newSize) {
-      this.defines.MAX_SHADOW_CASTERS = newSize;
-      this.needsUpdate = true;
-    }
-
-    const currentArray = this.uniforms.uShadowCasters.value;
-    const newArray: Array<{ position: THREE.Vector3; radius: number }> = [];
-
-    // Copy existing data and add new slots as needed
-    for (let i = 0; i < newSize; i++) {
-      if (i < currentArray.length && currentArray[i]) {
-        newArray.push(currentArray[i]);
-      } else {
-        newArray.push({
-          position: new THREE.Vector3(),
-          radius: 0,
-        });
-      }
-    }
-
-    this.uniforms.uShadowCasters.value = newArray;
+    this.uniforms.uShadowCasters.value =
+      LightArrayUtils.resizeShadowCasterArray(
+        this,
+        newSize,
+        this.uniforms.uShadowCasters.value,
+      );
   }
 
   dispose(): void {}
@@ -161,37 +126,13 @@ function createInitialLightArray(initialSize: number = 4): Array<{
   color: THREE.Color;
   intensity: number;
 }> {
-  const lights: Array<{
-    direction: THREE.Vector3;
-    color: THREE.Color;
-    intensity: number;
-  }> = [];
-
-  for (let i = 0; i < initialSize; i++) {
-    lights.push({
+  return Array(initialSize)
+    .fill(0)
+    .map(() => ({
       direction: new THREE.Vector3(),
       color: new THREE.Color(),
       intensity: 0,
-    });
-  }
-
-  return lights;
-}
-
-function createInitialShadowCasterArray(initialSize: number = 8): Array<{
-  position: THREE.Vector3;
-  radius: number;
-}> {
-  const shadowCasters: Array<{ position: THREE.Vector3; radius: number }> = [];
-
-  for (let i = 0; i < initialSize; i++) {
-    shadowCasters.push({
-      position: new THREE.Vector3(),
-      radius: 0,
-    });
-  }
-
-  return shadowCasters;
+    }));
 }
 
 /**
@@ -202,7 +143,8 @@ export class BasicGasGiantMaterial extends BaseGasGiantMaterial {
     const MAX_LIGHTS = 4;
     const MAX_SHADOW_CASTERS = 8;
     const lights = createInitialLightArray(MAX_LIGHTS);
-    const shadowCasters = createInitialShadowCasterArray(MAX_SHADOW_CASTERS);
+    const shadowCasters =
+      LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS);
 
     super({
       defines: {

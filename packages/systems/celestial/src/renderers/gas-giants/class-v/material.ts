@@ -1,49 +1,9 @@
 import * as THREE from "three";
 import { BaseGasGiantMaterial } from "../base";
+import { LightArrayUtils } from "../../base/CelestialRenderer";
 
 import classVFragmentShader from "../../../shaders/gas-giants/class-v.fragment.glsl";
 import classVVertexShader from "../../../shaders/gas-giants/class-v.vertex.glsl";
-
-/**
- * Create initial arrays for lights and shadow casters with reasonable starting sizes
- */
-function createInitialLightArray(initialSize: number = 4): Array<{
-  direction: THREE.Vector3;
-  color: THREE.Color;
-  intensity: number;
-}> {
-  const lights: Array<{
-    direction: THREE.Vector3;
-    color: THREE.Color;
-    intensity: number;
-  }> = [];
-
-  for (let i = 0; i < initialSize; i++) {
-    lights.push({
-      direction: new THREE.Vector3(),
-      color: new THREE.Color(),
-      intensity: 0,
-    });
-  }
-
-  return lights;
-}
-
-function createInitialShadowCasterArray(initialSize: number = 8): Array<{
-  position: THREE.Vector3;
-  radius: number;
-}> {
-  const shadowCasters: Array<{ position: THREE.Vector3; radius: number }> = [];
-
-  for (let i = 0; i < initialSize; i++) {
-    shadowCasters.push({
-      position: new THREE.Vector3(),
-      radius: 0,
-    });
-  }
-
-  return shadowCasters;
-}
 
 /**
  * Material for Class V gas giants (Silicate Clouds / Bright / Glowing)
@@ -59,8 +19,15 @@ export class ClassVMaterial extends BaseGasGiantMaterial {
   }) {
     const MAX_LIGHTS = 4;
     const MAX_SHADOW_CASTERS = 16;
-    const lights = createInitialLightArray(MAX_LIGHTS);
-    const shadowCasters = createInitialShadowCasterArray(MAX_SHADOW_CASTERS); // Start with more for gas giants with many moons
+    const lights = Array(MAX_LIGHTS)
+      .fill(0)
+      .map(() => ({
+        direction: new THREE.Vector3(),
+        color: new THREE.Color(),
+        intensity: 0,
+      }));
+    const shadowCasters =
+      LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS);
 
     super({
       defines: {

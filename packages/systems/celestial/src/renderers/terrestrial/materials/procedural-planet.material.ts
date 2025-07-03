@@ -4,7 +4,7 @@ import * as THREE from "three";
 import proceduralFragmentShaderSource from "../../../shaders/terrestrial/procedural.fragment.glsl";
 import proceduralVertexShaderSource from "../../../shaders/terrestrial/procedural.vertex.glsl";
 import { ProceduralPlanetUniforms } from "../../../types/procedural";
-import { LightSourceData } from "../../index";
+import { LightArrayUtils, LightSourceData } from "../../base/CelestialRenderer";
 
 /**
  * Material for rendering procedurally generated terrestrial planet surfaces using shaders.
@@ -36,13 +36,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
     const uniforms = {
       uNumLights: { value: 0 },
       uLights: {
-        value: Array(MAX_LIGHTS)
-          .fill(0)
-          .map(() => ({
-            position: new THREE.Vector3(),
-            color: new THREE.Color(1, 1, 1),
-            intensity: 1.0,
-          })),
+        value: LightArrayUtils.createLightSourceArray(MAX_LIGHTS),
       },
       uAmbientLightColor: { value: new THREE.Color(0xffffff) },
       uAmbientLightIntensity: {
@@ -53,12 +47,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       // Shadow casting uniforms
       uNumShadowCasters: { value: 0 },
       uShadowCasters: {
-        value: Array(MAX_SHADOW_CASTERS)
-          .fill(0)
-          .map(() => ({
-            position: new THREE.Vector3(),
-            radius: 0,
-          })),
+        value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
       },
 
       persistence: { value: surfaceProps.persistence ?? 0.5 },
@@ -109,42 +98,22 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
   }
 
   protected resizeLightArrays(newSize: number): void {
-    const defineSize = Math.max(1, newSize);
-    if (this.defines.MAX_LIGHTS !== defineSize) {
-      this.defines.MAX_LIGHTS = defineSize;
-      this.needsUpdate = true;
-    }
-
-    const lights = [];
-    for (let i = 0; i < defineSize; i++) {
-      lights.push(
-        this.uniforms.uLights.value[i] || {
-          position: new THREE.Vector3(),
-          color: new THREE.Color(1, 1, 1),
-          intensity: 1.0,
-        },
-      );
-    }
-    this.uniforms.uLights.value = lights;
+    this.uniforms.uLights.value = LightArrayUtils.resizeLightArray(
+      this,
+      newSize,
+      this.uniforms.uLights.value,
+    );
+    this.currentNumLights = newSize;
   }
 
   protected resizeShadowCasterArrays(newSize: number): void {
-    const defineSize = Math.max(1, newSize);
-    if (this.defines.MAX_SHADOW_CASTERS !== defineSize) {
-      this.defines.MAX_SHADOW_CASTERS = defineSize;
-      this.needsUpdate = true;
-    }
-
-    const shadowCasters = [];
-    for (let i = 0; i < defineSize; i++) {
-      shadowCasters.push(
-        this.uniforms.uShadowCasters.value[i] || {
-          position: new THREE.Vector3(),
-          radius: 0,
-        },
+    this.uniforms.uShadowCasters.value =
+      LightArrayUtils.resizeShadowCasterArray(
+        this,
+        newSize,
+        this.uniforms.uShadowCasters.value,
       );
-    }
-    this.uniforms.uShadowCasters.value = shadowCasters;
+    this.currentNumShadowCasters = newSize;
   }
 
   update(
@@ -162,7 +131,6 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
     const numLights = lightSources?.size ?? 0;
     if (numLights !== this.currentNumLights) {
       this.resizeLightArrays(numLights);
-      this.currentNumLights = numLights;
     }
 
     this.uniforms.uNumLights.value = numLights;
@@ -179,7 +147,6 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
     const numShadowCasters = shadowCasters?.length ?? 0;
     if (numShadowCasters !== this.currentNumShadowCasters) {
       this.resizeShadowCasterArrays(numShadowCasters);
-      this.currentNumShadowCasters = numShadowCasters;
     }
 
     this.uniforms.uNumShadowCasters.value = numShadowCasters;

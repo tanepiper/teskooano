@@ -12,7 +12,7 @@ import {
 } from "@teskooano/core-debug";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
-import { LightSourceData } from "../base/CelestialRenderer";
+import { LightArrayUtils } from "../base/CelestialRenderer";
 
 /**
  * Material for celestial object rings
@@ -67,22 +67,11 @@ export class RingMaterial extends THREE.ShaderMaterial {
         ringType: { value: typeCoef },
         uNumLights: { value: 0 },
         uLightSources: {
-          value: Array(MAX_LIGHTS)
-            .fill(0)
-            .map(() => ({
-              position: new THREE.Vector3(),
-              color: new THREE.Color(),
-              intensity: 0,
-            })),
+          value: LightArrayUtils.createLightSourceArray(MAX_LIGHTS),
         },
         uNumShadowCasters: { value: 0 },
         uShadowCasters: {
-          value: Array(MAX_SHADOW_CASTERS)
-            .fill(0)
-            .map(() => ({
-              position: new THREE.Vector3(),
-              radius: 0,
-            })),
+          value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
       },
       vertexShader: ringVertexShader,
@@ -97,42 +86,22 @@ export class RingMaterial extends THREE.ShaderMaterial {
   }
 
   private resizeLightArrays(newSize: number): void {
-    const defineSize = Math.max(1, newSize);
-    if (this.defines.MAX_LIGHTS !== defineSize) {
-      this.defines.MAX_LIGHTS = defineSize;
-      this.needsUpdate = true;
-    }
-
-    const lights = [];
-    for (let i = 0; i < defineSize; i++) {
-      lights.push(
-        this.uniforms.uLightSources.value[i] || {
-          position: new THREE.Vector3(),
-          color: new THREE.Color(),
-          intensity: 0,
-        },
-      );
-    }
-    this.uniforms.uLightSources.value = lights;
+    this.uniforms.uLightSources.value = LightArrayUtils.resizeLightArray(
+      this,
+      newSize,
+      this.uniforms.uLightSources.value,
+    );
+    this.currentNumLights = newSize;
   }
 
   private resizeShadowCasterArrays(newSize: number): void {
-    const defineSize = Math.max(1, newSize);
-    if (this.defines.MAX_SHADOW_CASTERS !== defineSize) {
-      this.defines.MAX_SHADOW_CASTERS = defineSize;
-      this.needsUpdate = true;
-    }
-
-    const casters = [];
-    for (let i = 0; i < defineSize; i++) {
-      casters.push(
-        this.uniforms.uShadowCasters.value[i] || {
-          position: new THREE.Vector3(),
-          radius: 0,
-        },
+    this.uniforms.uShadowCasters.value =
+      LightArrayUtils.resizeShadowCasterArray(
+        this,
+        newSize,
+        this.uniforms.uShadowCasters.value,
       );
-    }
-    this.uniforms.uShadowCasters.value = casters;
+    this.currentNumShadowCasters = newSize;
   }
 
   update(
@@ -149,7 +118,6 @@ export class RingMaterial extends THREE.ShaderMaterial {
     const numLights = lightSources?.size ?? 0;
     if (numLights !== this.currentNumLights) {
       this.resizeLightArrays(numLights);
-      this.currentNumLights = numLights;
     }
 
     this.uniforms.uNumLights.value = numLights;
@@ -167,7 +135,6 @@ export class RingMaterial extends THREE.ShaderMaterial {
     const numShadowCasters = shadowCasters?.length ?? 0;
     if (numShadowCasters !== this.currentNumShadowCasters) {
       this.resizeShadowCasterArrays(numShadowCasters);
-      this.currentNumShadowCasters = numShadowCasters;
     }
 
     this.uniforms.uNumShadowCasters.value = numShadowCasters;

@@ -3,7 +3,7 @@ import type { PlanetAtmosphereProperties } from "@teskooano/data-types";
 
 import atmosphereVertexShaderSource from "../../../shaders/terrestrial/atmosphere.vertex.glsl";
 import atmosphereFragmentShaderSource from "../../../shaders/terrestrial/atmosphere.fragment.glsl";
-import { LightSourceData } from "../../base/CelestialRenderer";
+import { LightArrayUtils, LightSourceData } from "../../base/CelestialRenderer";
 
 /**
  * Material for atmospheric scattering effect with support for multiple light sources
@@ -81,6 +81,8 @@ export class AtmosphereMaterial extends THREE.ShaderMaterial {
       this.needsUpdate = true;
     }
 
+    // Since the atmosphere material uses separate arrays for positions, colors, and intensities,
+    // we need to handle each array separately rather than using LightArrayUtils directly
     const lightPositions = [];
     const lightColors = [];
     const lightIntensities = [];
