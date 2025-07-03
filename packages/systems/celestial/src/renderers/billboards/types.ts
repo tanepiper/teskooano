@@ -6,6 +6,7 @@ export interface BillboardInfo {
   activationDistance: number;
   maxFadeDistance: number; // Distance at which opacity reaches its minimum
   object: RenderableCelestialObject;
+  light?: PointLight;
 }
 
 export interface BillboardLODConfig {
@@ -13,5 +14,4 @@ export interface BillboardLODConfig {
   size: number;
   color: Color;
   albedo?: number;
-  light?: PointLight;
 }

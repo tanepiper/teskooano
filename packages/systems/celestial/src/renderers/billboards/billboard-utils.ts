@@ -4,49 +4,6 @@ import * as THREE from "three";
 import { BillboardInfo } from "./types";
 
 /**
- * Creates a canvas texture for a star billboard.
- * The texture is a radial gradient from white (center) to transparent (edge).
- * @returns A THREE.CanvasTexture to be used for the billboard sprite.
- */
-export function createBillboardTexture(): THREE.CanvasTexture {
-  const canvas = document.createElement("canvas");
-  canvas.width = 64;
-  canvas.height = 64;
-  const context = canvas.getContext("2d");
-  if (context) {
-    const gradient = context.createRadialGradient(
-      canvas.width / 2,
-      canvas.height / 2,
-      0,
-      canvas.width / 2,
-      canvas.height / 2,
-      canvas.width / 2,
-    );
-    gradient.addColorStop(0, "rgba(255,255,255,1)");
-    gradient.addColorStop(1, "rgba(255,255,255,0)");
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-  }
-  return new THREE.CanvasTexture(canvas);
-}
-
-/**
- * Calculates a default size for the distant sprite based on the star's radius.
- * This is a fallback if a more specific `calculateBillboardSize` is not available on the renderer.
- * @param object - The renderable celestial object (star).
- * @returns The calculated sprite size, clamped between min and max values.
- */
-export function calculateDistantSpriteSize(
-  object: RenderableCelestialObject,
-): number {
-  const minSpriteSize = 0.01;
-  const maxSpriteSize = 0.05;
-  const radiusScaleFactor = 0.0001;
-  let calculatedSpriteSize = object.radius * radiusScaleFactor;
-  return Math.max(minSpriteSize, Math.min(maxSpriteSize, calculatedSpriteSize));
-}
-
-/**
  * Creates the sprite for the star billboard.
  * The sprite uses additive blending and its size is in screen space.
  * @param object - The renderable celestial object (star).
@@ -63,7 +20,7 @@ export function createBillboardSprite(
   starColor: THREE.Color,
   albedo: number = 0.3,
 ): BillboardInfo {
-  const finalColor = starColor.clone().multiplyScalar(albedo * 2.5);
+  const finalColor = starColor.clone().multiplyScalar(albedo);
 
   const spriteMaterial = new THREE.SpriteMaterial({
     map: texture,
@@ -77,7 +34,7 @@ export function createBillboardSprite(
 
   const distantSprite = new THREE.Sprite(spriteMaterial);
   distantSprite.name = `${object.celestialObjectId}-distant-sprite`;
-  distantSprite.scale.set(size, size, 1.0);
+  distantSprite.scale.set(size / 2, size / 2, 1.0);
 
   return {
     sprite: distantSprite,
@@ -115,6 +72,8 @@ export function createBillboardPointLight(
     2, // Decay factor
   );
   pointLight.name = `${object.celestialObjectId}-low-lod-light`;
+  // Store the original intensity for fading calculations
+  pointLight.userData.originalIntensity = lightIntensity;
   return pointLight;
 }
 

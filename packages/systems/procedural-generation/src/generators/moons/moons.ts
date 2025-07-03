@@ -127,32 +127,20 @@ function calculateRealisticMoonCount(
       // Gas giants can have many moons like Jupiter (95) and Saturn (146)
       if (planetMassRatio > 300) {
         // Saturn-class (95+ Earth masses)
-        baseMoonCount = 80;
-        variation = 60; // 20-140 moons
+        baseMoonCount = 5;
+        variation = 30; // 20-140 moons
       } else if (planetMassRatio > 250) {
         // Jupiter-class (318 Earth masses)
-        baseMoonCount = 60;
-        variation = 40; // 20-100 moons
+        baseMoonCount = 5;
+        variation = 20; // 20-100 moons
       } else if (planetMassRatio > 50) {
         // Neptune-class (17 Earth masses)
-        baseMoonCount = 10;
-        variation = 15; // 0-25 moons
+        baseMoonCount = 0;
+        variation = 10; // 0-25 moons
       } else {
         // Smaller gas giants
-        baseMoonCount = 5;
+        baseMoonCount = 0;
         variation = 8; // 0-13 moons
-      }
-      break;
-
-    case "ice_giant":
-      // Ice giants like Uranus (27 moons) and Neptune (16 moons)
-      if (planetMassRatio > 15) {
-        // Uranus/Neptune class
-        baseMoonCount = 15;
-        variation = 12; // 3-27 moons
-      } else {
-        baseMoonCount = 5;
-        variation = 7; // 0-12 moons
       }
       break;
 
@@ -175,8 +163,8 @@ function calculateRealisticMoonCount(
 
     default:
       // Default case for other planet types
-      baseMoonCount = Math.floor(planetMassRatio * 0.1);
-      variation = Math.max(1, Math.floor(planetMassRatio * 0.2));
+      baseMoonCount = 0;
+      variation = 5;
   }
 
   // Distance factor - closer planets lose moons to stellar tides
@@ -204,7 +192,7 @@ function calculateRealisticMoonCount(
  */
 function getPlanetType(
   planetObject: CelestialObject,
-): "gas_giant" | "ice_giant" | "terrestrial" | "other" {
+): "gas_giant" | "terrestrial" | "other" {
   if (planetObject.type === CelestialType.GAS_GIANT) {
     return "gas_giant";
   }
@@ -218,13 +206,9 @@ function getPlanetType(
     case PlanetType.DESERT:
     case PlanetType.LAVA:
     case PlanetType.BARREN:
-      return "terrestrial";
-
     case PlanetType.ICE:
-      // Large ice planets are ice giants, small ones are terrestrial
-      const planetMass = planetObject.realMass_kg;
-      const earthMass = 5.972e24;
-      return planetMass / earthMass > 10 ? "ice_giant" : "terrestrial";
+    case PlanetType.OCEAN:
+      return "terrestrial";
 
     default:
       return "other";
@@ -246,9 +230,6 @@ function calculateInitialMoonDistance(
     case "gas_giant":
       // Gas giants start closer due to larger Roche limit
       return 2.5 + Math.log10(massRatio) * 0.5;
-
-    case "ice_giant":
-      return 3.0 + Math.log10(massRatio) * 0.3;
 
     case "terrestrial":
       // Terrestrial planets start further out

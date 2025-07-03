@@ -14,7 +14,7 @@ import {
 const EARTH_MASS_KG = 5.97237e24;
 const EARTH_RADIUS_M = 6371000;
 const EARTH_TEMP_K = 288;
-const EARTH_ALBEDO = 0.306;
+const EARTH_ALBEDO = 0.8;
 const EARTH_SMA_AU = 1.0;
 const EARTH_ECC = 0.01671;
 const EARTH_INC_DEG = 0.00005;
@@ -87,7 +87,7 @@ export function initializeEarth(parentId: string): void {
       },
       surface: {
         type: SurfaceType.VARIED,
-        color: "#1E3A5F",
+        color: "#15e267",
         roughness: 0.12,
         planetType: PlanetType.TERRESTRIAL,
         persistence: 0.54,

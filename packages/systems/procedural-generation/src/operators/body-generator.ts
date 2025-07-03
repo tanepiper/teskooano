@@ -94,6 +94,19 @@ function generateStandardBody(
 
   return planet$.pipe(
     mergeMap((planetObject) => {
+      // Decide if this planet should have moons based on distance and mass
+      const distanceFactor = Math.min(1, distanceRelativeToParentAU / 10); // Normalize distance effect up to 10 AU
+      const massFactor = Math.min(
+        1,
+        planetObject.realMass_kg / (5.972e24 * 50),
+      ); // Normalize mass effect up to 50 Earth masses
+      const moonChance = 0.1 + distanceFactor * 0.4 + massFactor * 0.5; // Base chance + distance + mass
+      const shouldHaveMoons = random() < moonChance;
+
+      if (!shouldHaveMoons) {
+        return of(planetObject);
+      }
+
       // For special configurations, we might modify the generation
       // or add additional objects in the future
       const moon$ = generateMoonsObservable(

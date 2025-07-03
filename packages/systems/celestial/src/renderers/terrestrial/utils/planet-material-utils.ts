@@ -152,8 +152,8 @@ export class PlanetMaterialService {
       | undefined;
 
     // Prioritize color1 if defined in properties
-    if (specificSurfaceProps?.color1) {
-      return new THREE.Color(specificSurfaceProps.color1);
+    if (specificSurfaceProps?.color4) {
+      return new THREE.Color(specificSurfaceProps.color4);
     }
 
     // Fallback based on planet type

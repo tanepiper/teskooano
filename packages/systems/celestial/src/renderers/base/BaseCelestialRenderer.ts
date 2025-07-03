@@ -4,12 +4,11 @@ import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { BillboardManager } from "../billboards";
 import {
-  CelestialMeshOptions,
   CelestialRenderer,
   LightSourceData,
   LightSourcesMap,
 } from "./CelestialRenderer";
-import { BaseCelestialRendererOptions } from "./types";
+import { BaseCelestialRendererOptions, CelestialMeshOptions } from "./types";
 
 /**
  * Abstract base class for all celestial renderers.

@@ -87,6 +87,11 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
 
       // Combine planet and ring LODs
       return planetLevels.map((planetLOD, index) => {
+        // The last level is the billboard, which should not have rings attached.
+        if (index === planetLevels.length - 1) {
+          return planetLOD;
+        }
+
         const ringLOD = ringLODs[index] || ringLODs[ringLODs.length - 1]; // Fallback to last ring LOD
         const combinedGroup = new THREE.Group();
         combinedGroup.name = `${object.celestialObjectId}-lod-${index}-combined`;
@@ -113,7 +118,6 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     const baseRadius = object.radius ?? 1;
-    const scale = typeof SCALE === "number" ? SCALE : 1;
 
     const highDetailGroup = this._createHighDetailGroup(
       object,
@@ -122,34 +126,31 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     );
     const level0: LODLevel = { object: highDetailGroup, distance: 0 };
 
-    const mediumDetailGroup = this._createMediumDetailGroup(
-      object,
-      baseRadius,
-      scale,
-    );
+    const mediumDetailGroup = this._createMediumDetailGroup(object, baseRadius);
     const level1: LODLevel = {
       object: mediumDetailGroup,
-      distance: 250 * scale,
+      distance: 250 * baseRadius,
     };
 
     const color = this.materialService.getBaseColor(object);
     let billboardDistance: number;
     let size: number;
     if (object.type === CelestialType.MOON) {
-      // 75 = 75,000,000 meters, this is correct
       size = 0.01;
-      const MOON_BILLBOARD_DISTANCE_M = 75;
-      billboardDistance = MOON_BILLBOARD_DISTANCE_M / scale;
+      // Moons are small, billboard needs to appear at a larger multiple of its radius
+      // to be seen from a reasonable distance away from its parent planet.
+      billboardDistance = 4000 * baseRadius;
     } else {
       size = 0.02;
-      // For planets, use the existing scaling logic
-      billboardDistance = 1000 * scale;
+      // Planets are larger, so a smaller multiplier works.
+      billboardDistance = 1000 * baseRadius;
     }
 
     const level2 = this.billboardManager.createBillboardLOD(object, {
       distance: billboardDistance,
       size,
       color: color,
+      albedo: object.albedo ?? 1.0,
     });
 
     const levels = [level0, level1, level2];
@@ -224,7 +225,6 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
   private _createMediumDetailGroup(
     object: RenderableCelestialObject,
     baseRadius: number,
-    scale: number,
   ): THREE.Group {
     const mediumSegments = 32;
     const mediumGeometry = new THREE.SphereGeometry(

@@ -35,15 +35,6 @@ export class BillboardManager {
    * celestial types become visible or hidden.
    * @private
    */
-  private visibilityConfig = {
-    planet: 90,
-    gasGiant: 190,
-    moon: 2,
-    ejectedMoon: 2000,
-    secondaryStar: 3000,
-    default: 2,
-  };
-
   constructor() {}
 
   /**
@@ -66,18 +57,18 @@ export class BillboardManager {
       config.albedo,
     );
 
+    const light = this.createPointLightForBillboard(object, config);
+    billboardInfo.light = light;
+
     billboardInfo.activationDistance = config.distance;
-    billboardInfo.maxFadeDistance = config.distance * 5;
+    billboardInfo.maxFadeDistance = config.distance * 4;
 
     this.billboardsInfo.set(object.celestialObjectId, billboardInfo);
 
     const billboardGroup = new THREE.Group();
     billboardGroup.name = `${object.celestialObjectId}-billboard-lod`;
     billboardGroup.add(billboardInfo.sprite);
-
-    if (config.light) {
-      billboardGroup.add(config.light);
-    }
+    billboardGroup.add(light);
 
     return {
       object: billboardGroup,
@@ -96,108 +87,34 @@ export class BillboardManager {
    */
   public update(
     camera: THREE.Camera,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     allObjects: Record<string, RenderableCelestialObject>,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     allMeshes: Record<string, THREE.Object3D>,
   ): void {
-    if (!camera || !allObjects || !allMeshes || this.billboardsInfo.size === 0)
-      return;
+    if (!camera || this.billboardsInfo.size === 0) return;
 
     const cameraPosition = new THREE.Vector3();
     camera.getWorldPosition(cameraPosition);
 
-    const config = {
-      planet: this.auToSceneUnits(this.visibilityConfig.planet),
-      gasGiant: this.auToSceneUnits(this.visibilityConfig.gasGiant),
-      moon: this.auToSceneUnits(this.visibilityConfig.moon),
-      ejectedMoon: this.auToSceneUnits(this.visibilityConfig.ejectedMoon),
-      secondaryStar: this.auToSceneUnits(this.visibilityConfig.secondaryStar),
-      default: this.auToSceneUnits(this.visibilityConfig.default),
-    };
-
-    const mainStarId = Object.values(allObjects).find(
-      (obj) => obj.type === CelestialType.STAR && !obj.parentId,
-    )?.celestialObjectId;
-
     this.billboardsInfo.forEach((info) => {
-      const { sprite, activationDistance, object } = info;
+      const { sprite, activationDistance, maxFadeDistance, object, light } =
+        info;
       const material = sprite.material as THREE.SpriteMaterial;
       if (!material) return;
 
-      // NEW VISIBILITY LOGIC
-      let isVisibleByRule = false;
       const distanceToSelf = cameraPosition.distanceTo(object.position);
 
-      switch (object.type) {
-        case CelestialType.STAR: {
-          if (object.celestialObjectId === mainStarId) {
-            isVisibleByRule = true;
-          } else {
-            isVisibleByRule = distanceToSelf < config.secondaryStar;
-          }
-          break;
-        }
-        case CelestialType.PLANET:
-          isVisibleByRule = distanceToSelf < config.planet;
-          break;
-        case CelestialType.GAS_GIANT:
-          isVisibleByRule = distanceToSelf < config.gasGiant;
-          break;
-        case CelestialType.MOON: {
-          const parentId = object.parentId;
-
-          if (!parentId) {
-            isVisibleByRule = distanceToSelf < config.ejectedMoon;
-            break;
-          }
-
-          const parentData = allObjects[parentId];
-          const parentObject = allMeshes[parentId];
-          if (!parentObject || !parentData) {
-            isVisibleByRule = false;
-            break;
-          }
-
-          if (
-            parentObject instanceof THREE.LOD &&
-            parentObject.levels.length > 0
-          ) {
-            const billboardLevel =
-              parentObject.levels[parentObject.levels.length - 1];
-            if (billboardLevel.object.visible) {
-              isVisibleByRule = false;
-              break;
-            }
-          }
-
-          const parentPosition = new THREE.Vector3();
-          parentObject.getWorldPosition(parentPosition);
-          const distanceToParent = cameraPosition.distanceTo(parentPosition);
-          if (distanceToParent > config.moon) {
-            isVisibleByRule = false;
-            break;
-          }
-
-          isVisibleByRule = true;
-          break;
-        }
-        default:
-          isVisibleByRule = distanceToSelf < config.default;
-      }
-
-      let targetOpacity;
+      // --- Opacity Fading ---
       const baseSpriteOpacity = 0.85;
-
-      if (isVisibleByRule && distanceToSelf >= activationDistance) {
-        targetOpacity = baseSpriteOpacity;
-      } else {
-        targetOpacity = 0.0;
-      }
+      const targetOpacity =
+        distanceToSelf >= activationDistance ? baseSpriteOpacity : 0.0;
 
       const currentOpacity = material.opacity;
       let newOpacity = THREE.MathUtils.lerp(
         currentOpacity,
         targetOpacity,
-        0.1, // fade speed
+        0.05, // fade speed
       );
 
       if (targetOpacity < 0.01 && newOpacity < 0.01) {
@@ -205,6 +122,28 @@ export class BillboardManager {
       }
       material.opacity = newOpacity;
       sprite.visible = newOpacity > 0.001;
+
+      // --- Light Fading ---
+      if (light) {
+        // Light starts fading at activationDistance and is fully gone by maxFadeDistance
+        const lightFadeFactor = THREE.MathUtils.smoothstep(
+          distanceToSelf,
+          activationDistance,
+          maxFadeDistance,
+        );
+        const targetIntensity =
+          (1 - lightFadeFactor) * (light.userData.originalIntensity || 1);
+
+        light.intensity = THREE.MathUtils.lerp(
+          light.intensity,
+          targetIntensity,
+          0.05, // fade speed
+        );
+
+        if (targetIntensity < 0.01 && light.intensity < 0.01) {
+          light.intensity = 0;
+        }
+      }
     });
   }
 
@@ -258,15 +197,39 @@ export class BillboardManager {
   }
 
   /**
-   * Converts a distance in Astronomical Units (AU) to scene units.
-   * This is used to translate the abstract visibility distances in `visibilityConfig`
-   * into concrete distances usable for LOD checks.
-   * @param au The distance in AU.
-   * @private
-   * @returns The equivalent distance in scene units.
+   * Creates a point light for a billboard based on its color and albedo.
+   * @param object The celestial object.
+   * @param config The billboard configuration.
+   * @returns A new THREE.PointLight.
    */
-  private auToSceneUnits(au: number): number {
-    const scale = typeof SCALE === "number" ? SCALE : 1;
-    return (au * AU_METERS) / scale;
+  private createPointLightForBillboard(
+    object: RenderableCelestialObject,
+    config: BillboardLODConfig,
+  ): THREE.PointLight {
+    // --- Light Color ---
+    // Use a desaturated, brighter version of the object's color for the light
+    // to increase perceived brightness while retaining the hue.
+    const hsl = { h: 0, s: 0, l: 0 };
+    config.color.getHSL(hsl);
+    const lightColor = new THREE.Color().setHSL(hsl.h, 0.4, 0.85);
+
+    // --- Light Intensity ---
+    // Intensity is a factor of the color's luminance and the albedo.
+    // A base value is added to ensure dark planets are still visible,
+    // and a larger multiplier is used for overall brightness.
+    const lightIntensity =
+      (0.2 + config.color.getHSL({ h: 0, s: 0, l: 0 }).l) *
+      (config.albedo ?? 0.3);
+
+    const pointLight = new THREE.PointLight(
+      lightColor,
+      lightIntensity,
+      0, // No decay distance limit
+      2, // Decay factor
+    );
+    pointLight.name = `${object.celestialObjectId}-low-lod-light`;
+    // Store the original intensity for fading calculations
+    pointLight.userData.originalIntensity = lightIntensity;
+    return pointLight;
   }
 }

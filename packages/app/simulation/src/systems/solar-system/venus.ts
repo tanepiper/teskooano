@@ -86,7 +86,7 @@ export function initializeVenus(parentId: string): void {
         color1: "#B8860B", // Dark goldenrod (sulfur deposits)
         color2: "#DAA520", // Goldenrod (sulfurous rock)
         color3: "#FFFF00", // Yellow (pure sulfur areas)
-        color4: "#ADFF2F", // Green yellow (sulfur compounds)
+        color4: "#fff52f", // Green yellow (sulfur compounds)
         color5: "#F0E68C", // Khaki (sulfuric weathering)
         height1: 0.1,
         height2: 0.25,

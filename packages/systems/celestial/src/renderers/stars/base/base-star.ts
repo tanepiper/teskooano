@@ -7,14 +7,8 @@ import {
   BaseCelestialRenderer,
   BaseCelestialRendererOptions,
 } from "../../base";
-import type {
-  CelestialMeshOptions,
-  LightSourcesMap,
-} from "../../base/CelestialRenderer";
-import {
-  calculateDistantSpriteSize,
-  createBillboardPointLight,
-} from "../../billboards";
+import type { LightSourcesMap } from "../../base/CelestialRenderer";
+import type { CelestialMeshOptions } from "../../base/types";
 
 /**
  * Vertex shader for stars
@@ -320,13 +314,11 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
 }
 
 /**
- * Base class for all star renderers
+ * Base class for all star renderers.
  */
 export abstract class BaseStarRenderer extends BaseCelestialRenderer {
   public materials: Map<string, BaseStarMaterial> = new Map();
   protected coronaMaterials: Map<string, CoronaMaterial[]> = new Map();
-  protected startTime: number = Date.now() / 1000;
-  protected elapsedTime: number = 0;
   protected lightingManager?: LightingManager;
 
   constructor(options?: BaseCelestialRendererOptions) {
@@ -366,24 +358,12 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
     const customLODs = this.getCustomLODs(object, options);
     const billboardDistance = this.getBillboardLODDistance(object);
     const starColor = this.getStarColor(object);
-    const starMaterial = this.getMaterial(object);
-
-    const pointLight = createBillboardPointLight(
-      object,
-      starColor,
-      starMaterial,
-    );
-
-    const distantPointSize =
-      typeof (this as any).calculateBillboardSize === "function"
-        ? (this as any).calculateBillboardSize(object)
-        : calculateDistantSpriteSize(object);
 
     const billboardLOD = this.billboardManager.createBillboardLOD(object, {
       distance: billboardDistance,
       size: 0.05,
       color: starColor,
-      light: pointLight,
+      albedo: 1.0, // Stars are emissive
     });
 
     return [...customLODs, billboardLOD].sort(
@@ -438,57 +418,58 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
   }
 
   /**
-   * Get the primary color for the star based on its properties
-   * Subclasses can override this for specific star types
+   * Gets the color of the star from its properties.
+   * @param object The celestial object.
+   * @returns A THREE.Color instance.
    */
   protected getStarColor(object: RenderableCelestialObject): THREE.Color {
-    const starProps = object.properties as StarProperties;
-
-    if (starProps?.color) {
-      return new THREE.Color(starProps.color);
-    }
-
-    if (starProps?.spectralClass) {
-      switch (starProps.spectralClass.toUpperCase()) {
-        case "O":
-          return new THREE.Color(0x9bb0ff);
-        case "B":
-          return new THREE.Color(0xaabfff);
-        case "A":
-          return new THREE.Color(0xf8f7ff);
-        case "F":
-          return new THREE.Color(0xfff4ea);
-        case "G":
-          return new THREE.Color(0xffcc00);
-        case "K":
-          return new THREE.Color(0xffaa55);
-        case "M":
-          return new THREE.Color(0xff6644);
-      }
-    }
-
-    return new THREE.Color(0xffcc00);
+    const properties = object.properties as StarProperties;
+    const colorValue = properties?.color || [1, 1, 1];
+    // Ensure values are numbers before passing to constructor
+    return new THREE.Color(
+      Number(colorValue[0]),
+      Number(colorValue[1]),
+      Number(colorValue[2]),
+    );
   }
 
+  /**
+   * The update loop for the star renderer.
+   */
   public override update(
     object: RenderableCelestialObject,
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
+    lightSources: LightSourcesMap,
+    camera: THREE.Camera,
+    allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
-    this.elapsedTime = Date.now() / 1000 - this.startTime;
-    this.materials.forEach((material) => {
-      material.update(this.elapsedTime, timeScale, lightSources, camera);
-    });
-    this.coronaMaterials.forEach((materials) => {
-      materials.forEach((material) => {
-        material.update(this.elapsedTime);
+    super.update(
+      object,
+      time,
+      timeScale,
+      lightSources,
+      camera,
+      allObjects,
+      allMeshes,
+    );
+
+    const material = this.materials.get(object.celestialObjectId);
+    if (material) {
+      material.update(time, timeScale, lightSources, camera);
+    }
+
+    const coronaMaterials = this.coronaMaterials.get(object.celestialObjectId);
+    if (coronaMaterials) {
+      coronaMaterials.forEach((material) => {
+        material.update(time);
       });
-    });
+    }
   }
 
   public override dispose(): void {
+    super.dispose();
     this.materials.forEach((material) => {
       material.dispose();
     });
@@ -497,6 +478,5 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
     });
     this.materials.clear();
     this.coronaMaterials.clear();
-    super.dispose();
   }
 }
