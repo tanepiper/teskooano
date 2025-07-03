@@ -3,13 +3,9 @@
  */
 export interface CelestialMeshOptions {
   /**
-   * Level of detail to use for the mesh
-   */
-  detailLevel?: "high" | "medium" | "low" | "very-low";
-  /**
    * Specific number of segments to use (overrides detailLevel)
    */
-  segments?: number;
+  segments: number;
 }
 
 export * from "./base/CelestialRenderer";

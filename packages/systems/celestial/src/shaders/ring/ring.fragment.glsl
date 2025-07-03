@@ -27,6 +27,11 @@ varying vec2 vUv;
 varying vec3 vWorldNormal;
 varying vec3 vPosition; // World space position of the fragment
 
+// Simplified noise function
+float noise(vec2 st) {
+    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+}
+
 // Function to calculate shadow from a single spherical occluder
 // Returns 1.0 if lit, 0.0 if in full shadow (umbra), or a value in between for penumbra.
 float getShadow(vec3 fragPos, vec3 lightPos, vec3 casterPos, float casterRadius) {
@@ -88,9 +93,18 @@ void main() {
         totalLight += light.color * diffuse * light.intensity * shadow;
     }
 
-    // Simple ring variation for texture
+    // Calculate distance from center for radial patterns
     float distanceFromCenter = length(vUv - vec2(0.5, 0.5)) * 2.0;
-    float ringVariation = 1.0 - 0.1 * sin(distanceFromCenter * 25.0 + time * 0.08);
+    
+    // Basic noise pattern
+    vec2 noiseCoord = vUv * 20.0 + time * 0.01;
+    float noiseVal = noise(noiseCoord);
+    
+    // Create radial bands with simple noise
+    float radialBands = 0.8 + 0.2 * sin(distanceFromCenter * 20.0);
+    
+    // Combine for a rocky appearance
+    float ringVariation = radialBands * (0.8 + 0.2 * noiseVal);
 
     // Combine all factors for final color
     vec3 finalColor = color * (totalLight + ambientIntensity) * ringVariation;

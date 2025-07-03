@@ -13,7 +13,7 @@ import {
   type CelestialRenderer,
   type LightSourcesMap,
 } from "../../base/CelestialRenderer";
-import { RingSystemRenderer } from "../../rings/rings";
+import { RingSystemRenderer } from "../../rings/renderer";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
 
 export interface GasGiantRendererDeps {
