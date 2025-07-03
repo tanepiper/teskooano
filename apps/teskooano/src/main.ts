@@ -5,6 +5,7 @@ import "./vite-env.d";
 import { ApplicationInitializer } from "./core/initialization";
 import { pluginConfig } from "./config/pluginRegistry";
 import { pluginConfig as corePluginConfig } from "./core/config/pluginRegistry";
+import { connect } from "@rxjs-insights/devtools/connect";
 
 interface AppContext {
   modalManager?: any;
@@ -26,6 +27,7 @@ async function initializeApp(): Promise<void> {
   ];
 
   try {
+    await connect();
     const result = await ApplicationInitializer.initialize(pluginIds);
 
     // Update global context for legacy components that depend on it

@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { BaseLabelLayer, UIRegistryComponent } from "./BaseLabelLayer";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { AuMarkerLabelComponent } from "../components/au-marker-label/AuMarkerLabelComponent";
+import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 
 /**
  * Manages labels specifically for AU distance markers.
@@ -63,6 +64,7 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
   public override update(
     camera: THREE.Camera,
     centralBody?: THREE.Object3D,
+    objectManager?: ObjectManager,
   ): void {
     if (!centralBody || !this.isVisible) {
       return;
@@ -79,7 +81,35 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
       );
 
       // Hide the label if the camera is 110% past the marker's distance
-      const visible = cameraDistance < markerAuValueScene * 10;
+      let visible = cameraDistance < markerAuValueScene * 10;
+
+      // Apply occlusion checking if the label would otherwise be visible
+      if (visible && objectManager) {
+        // Get the label's world position
+        const labelWorldPosition = new THREE.Vector3();
+        label.getWorldPosition(labelWorldPosition);
+
+        // Generate a unique ID for this AU marker label
+        const labelId =
+          label.element.getAttribute("data-au-display-value") +
+          "_" +
+          label.position.x.toFixed(0) +
+          "_" +
+          label.position.z.toFixed(0);
+
+        // Check if the label is occluded by any celestial objects
+        const isOccluded = this.isLabelOccludedOptimized(
+          labelId,
+          labelWorldPosition,
+          camera,
+          objectManager,
+          // No labelObjectId for AU markers since they don't belong to a specific object
+        );
+
+        if (isOccluded) {
+          visible = false;
+        }
+      }
 
       // Use toggleAttribute for CSS animations
       label.element.toggleAttribute("visible", visible);

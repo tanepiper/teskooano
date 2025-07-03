@@ -168,6 +168,14 @@ export class CelestialLabelLayer extends BaseLabelLayer {
           visible = distanceToSelf < config.default;
         }
       }
+
+      // Apply occlusion checking if the label would otherwise be visible
+      if (visible && this.isVisible) {
+        // Get the label's world position
+        const labelWorldPosition = new THREE.Vector3();
+        label.getWorldPosition(labelWorldPosition);
+      }
+
       label.element.toggleAttribute("visible", visible);
     });
   }

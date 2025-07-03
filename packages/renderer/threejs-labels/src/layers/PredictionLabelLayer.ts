@@ -3,6 +3,7 @@ import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { BaseLabelLayer, UIRegistryComponent } from "./BaseLabelLayer";
 import { PredictionLabel } from "../components/prediction/PredictionLabel";
 import { RenderableCelestialObject } from "@teskooano/data-types";
+import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 
 const PREDICTION_LABEL_TAG = "prediction-label";
 
@@ -57,7 +58,11 @@ export class PredictionLabelLayer extends BaseLabelLayer {
     this.activeObjectRadius = object?.radius || 0;
   }
 
-  public update(camera: THREE.Camera): void {
+  public update(
+    camera: THREE.Camera,
+    centralBody?: THREE.Object3D,
+    objectManager?: ObjectManager,
+  ): void {
     if (!this.isVisible || !this.activePredictionObject) {
       // Ensure all are hidden if the layer is globally hidden or no object is active.
       this.elements.forEach((css2dObject) => {
@@ -125,6 +130,29 @@ export class PredictionLabelLayer extends BaseLabelLayer {
       } else {
         // Long-term markers (> 90 days)
         if (zoomDistance > HIDE_LONG_TERM_DIST) {
+          shouldBeVisible = false;
+        }
+      }
+
+      // Apply occlusion checking if the label would otherwise be visible
+      if (shouldBeVisible && objectManager) {
+        // Get the label's world position
+        const labelWorldPosition = new THREE.Vector3();
+        css2dObject.getWorldPosition(labelWorldPosition);
+
+        // Generate a unique ID for this prediction label
+        const labelId = `prediction_${element.dataset.markerTime}_${this.activePredictionObject?.name || "unknown"}`;
+
+        // Check if the label is occluded by celestial objects
+        const isOccluded = this.isLabelOccludedOptimized(
+          labelId,
+          labelWorldPosition,
+          camera,
+          objectManager,
+          // No specific object ID since prediction labels are independent
+        );
+
+        if (isOccluded) {
           shouldBeVisible = false;
         }
       }

@@ -39,6 +39,16 @@ export class TrailManager {
   /** The quality setting for smoothed trails. */
   private trailQuality: TrailQuality = TrailQuality.High;
 
+  /** Sampling state for orbital-aware trail collection */
+  private lastSampledPositions: Map<string, THREE.Vector3> = new Map();
+  private lastSampledTimes: Map<string, number> = new Map();
+
+  /** Minimum time between samples (in milliseconds) based on orbital characteristics */
+  private readonly MIN_SAMPLE_INTERVAL_MS = 500; // 1/2 seconds minimum
+
+  /** Minimum distance to move before sampling (in scene units) - prevents micro-wobbles */
+  private readonly MIN_SAMPLE_DISTANCE_SQ = 1e-6; // Much larger than physics noise threshold
+
   /**
    * Creates a new TrailManager instance.
    *
@@ -78,6 +88,8 @@ export class TrailManager {
   /**
    * Updates a trail line for a given object, adding its current position to the history.
    *
+   * Uses orbital-aware sampling to capture general trajectory rather than every micro-wobble.
+   *
    * @param objectId - ID of the object to update
    * @param object - The renderable object data
    * @param maxHistoryLength - Maximum number of positions to keep in history
@@ -91,8 +103,37 @@ export class TrailManager {
   ): void {
     if (!this.trailWorker) return;
 
-    // Throttle updates by only sending data when updateGeometry is true
-    if (updateGeometry) {
+    // Implement orbital-aware sampling
+    const currentTime = Date.now();
+    const currentPosition = new THREE.Vector3().copy(object.position);
+
+    const lastSampledPosition = this.lastSampledPositions.get(objectId);
+    const lastSampledTime = this.lastSampledTimes.get(objectId) || 0;
+
+    let shouldSample = false;
+
+    if (!lastSampledPosition) {
+      // First sample for this object
+      shouldSample = true;
+    } else {
+      const timeSinceLastSample = currentTime - lastSampledTime;
+      const distanceSqSinceLastSample =
+        currentPosition.distanceToSquared(lastSampledPosition);
+
+      // Sample if enough time has passed AND the object has moved significantly
+      // This captures orbital motion while filtering out micro-wobbles
+      if (
+        timeSinceLastSample >= this.MIN_SAMPLE_INTERVAL_MS &&
+        distanceSqSinceLastSample >= this.MIN_SAMPLE_DISTANCE_SQ
+      ) {
+        shouldSample = true;
+      }
+    }
+
+    if (shouldSample && updateGeometry) {
+      this.lastSampledPositions.set(objectId, currentPosition.clone());
+      this.lastSampledTimes.set(objectId, currentTime);
+
       this.trailWorker.postMessage({
         type: "update",
         objectId,
@@ -165,14 +206,13 @@ export class TrailManager {
       positions[offset + 2] = point.z;
     }
 
-    // If there are fewer points than the buffer capacity, fill the rest with the last point
-    if (numPointsToDraw > 0 && numPointsToDraw < positionAttribute.count) {
-      const lastPoint = points[numPointsToDraw - 1];
+    // Clear the rest of the buffer to prevent visual artifacts from old data
+    if (numPointsToDraw < positionAttribute.count) {
       for (let i = numPointsToDraw; i < positionAttribute.count; i++) {
         const offset = i * 3;
-        positions[offset] = lastPoint.x;
-        positions[offset + 1] = lastPoint.y;
-        positions[offset + 2] = lastPoint.z;
+        positions[offset] = 0;
+        positions[offset + 1] = 0;
+        positions[offset + 2] = 0;
       }
     }
 
@@ -191,6 +231,11 @@ export class TrailManager {
       this.lineBuilder.disposeLine(line);
       this.trailLines.delete(objectId);
     }
+
+    // Clean up sampling state
+    this.lastSampledPositions.delete(objectId);
+    this.lastSampledTimes.delete(objectId);
+
     this.trailWorker?.postMessage({ type: "remove", objectId });
   }
 
@@ -257,6 +302,10 @@ export class TrailManager {
       this.removeTrail(objectId);
     });
     this.trailLines.clear();
+
+    // Clean up all sampling state
+    this.lastSampledPositions.clear();
+    this.lastSampledTimes.clear();
   }
 
   /**

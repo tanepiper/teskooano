@@ -7,8 +7,10 @@
 export class TrailDataPool {
   private buffer: ArrayBuffer; // The main buffer holding all vertex data (x, y, z floats)
   private float32View: Float32Array; // A view for easy float access
-  private objectSlots: Map<string, { offset: number; head: number }> =
-    new Map();
+  private objectSlots: Map<
+    string,
+    { offset: number; head: number; count: number }
+  > = new Map();
   private freeSlots: number[] = []; // A stack of starting offsets for available slots
 
   public readonly totalSlots: number;
@@ -52,7 +54,7 @@ export class TrailDataPool {
     }
 
     const offset = this.freeSlots.pop()!;
-    this.objectSlots.set(objectId, { offset, head: 0 });
+    this.objectSlots.set(objectId, { offset, head: 0, count: 0 });
     return true;
   }
 
@@ -85,35 +87,55 @@ export class TrailDataPool {
     this.float32View[index + 2] = z;
 
     slot.head = (slot.head + 1) % this.pointsPerSlot;
+    if (slot.count < this.pointsPerSlot) {
+      slot.count++;
+    }
   }
 
   /**
-   * Retrieves all points for a given object's trail.
-   * This is not yet optimized for circular reading, but serves the purpose.
-   * A more optimized version would read directly from the head backwards.
+   * Retrieves all points for a given object's trail in chronological order.
    * @param objectId - The ID of the object.
    * @returns An array of points, each as a [x, y, z] tuple.
    */
   public getPoints(objectId: string): [number, number, number][] {
     const slot = this.objectSlots.get(objectId);
-    if (!slot) return [];
+    if (!slot || slot.count === 0) return [];
 
-    // This is a simplified retrieval. A fully optimized version would
-    // handle the circular nature of the buffer without creating a new array.
-    const points: [number, number, number][] = [];
-    for (let i = 0; i < this.pointsPerSlot; i++) {
-      const index = slot.offset + i * this.floatsPerPoint;
-      // A simple check to see if the point has been written to (not foolproof)
-      if (
-        this.float32View[index] !== 0 ||
-        this.float32View[index + 1] !== 0 ||
-        this.float32View[index + 2] !== 0
-      ) {
-        points.push([
+    const points: [number, number, number][] = new Array(slot.count);
+    const start = slot.offset;
+
+    if (slot.count < this.pointsPerSlot) {
+      // Buffer hasn't wrapped yet, just read from the start
+      for (let i = 0; i < slot.count; i++) {
+        const index = start + i * this.floatsPerPoint;
+        points[i] = [
           this.float32View[index],
           this.float32View[index + 1],
           this.float32View[index + 2],
-        ]);
+        ];
+      }
+    } else {
+      // Buffer has wrapped, so we read it in two parts to maintain order.
+      // Part 1: from the current head (oldest data) to the end of the slot's buffer
+      const part1Length = this.pointsPerSlot - slot.head;
+      for (let i = 0; i < part1Length; i++) {
+        const index = start + (slot.head + i) * this.floatsPerPoint;
+        points[i] = [
+          this.float32View[index],
+          this.float32View[index + 1],
+          this.float32View[index + 2],
+        ];
+      }
+
+      // Part 2: from the beginning of the slot's buffer up to the head
+      const part2Length = slot.head;
+      for (let i = 0; i < part2Length; i++) {
+        const index = start + i * this.floatsPerPoint;
+        points[part1Length + i] = [
+          this.float32View[index],
+          this.float32View[index + 1],
+          this.float32View[index + 2],
+        ];
       }
     }
     return points;
