@@ -8,8 +8,6 @@ import {
 
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { ClassIIMaterial } from "./material";
-import { CelestialMeshOptions } from "../../base/CelestialRenderer";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
  * Renderer for Class II gas giants

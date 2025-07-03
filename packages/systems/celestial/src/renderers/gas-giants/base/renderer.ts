@@ -8,11 +8,8 @@ import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { BaseCelestialRenderer } from "../../base/BaseCelestialRenderer";
-import {
-  CelestialMeshOptions,
-  type CelestialRenderer,
-  type LightSourcesMap,
-} from "../../base/CelestialRenderer";
+import { type CelestialRenderer, type LightSourcesMap } from "../../base";
+import { CelestialMeshOptions } from "../../base/types";
 import { RingSystemRenderer } from "../../rings/renderer";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
 
@@ -295,6 +292,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
         time,
         timeScale,
         lightSources,
+        camera,
         allObjects,
       );
     }

@@ -1,7 +1,8 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType, RingSystemProperties } from "@teskooano/data-types";
 import * as THREE from "three";
-import type { CelestialMeshOptions, LightSourcesMap } from "../index";
+import type { LightSourcesMap } from "../base";
+import { CelestialMeshOptions } from "../base/types";
 
 import {
   isVisualizationEnabled,
@@ -12,104 +13,99 @@ import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
 import { RingMaterial } from "./material";
 import { calculateKeplerianRotationRate } from "./utils";
 
-export class RingSystemRenderer {
-  private parentRenderer: BaseCelestialRenderer;
+/**
+ * Renderer for planetary ring systems
+ *
+ * This renderer extends BaseCelestialRenderer to provide consistent behavior
+ * with other celestial renderers and proper LOD support.
+ */
+export class RingSystemRenderer extends BaseCelestialRenderer {
+  /**
+   * Map of ring materials by object ID and ring index
+   */
   private ringMaterials: Map<string, RingMaterial> = new Map();
 
-  constructor(parentRenderer: BaseCelestialRenderer) {
+  /**
+   * Parent renderer that owns this ring system
+   * Used for material registration and coordination
+   */
+  private parentRenderer?: BaseCelestialRenderer;
+
+  /**
+   * Create a new ring system renderer
+   *
+   * @param parentRenderer Optional parent renderer that owns this ring system
+   */
+  constructor(parentRenderer?: BaseCelestialRenderer) {
+    super();
     this.parentRenderer = parentRenderer;
   }
 
-  private _createRingGroup(
+  /**
+   * Creates and returns LOD levels for the ring system
+   *
+   * @param object The celestial object with ring properties
+   * @param options Options for creating the mesh, including parentLODDistances for backward compatibility
+   * @returns Array of LOD levels
+   */
+  getLODLevels(
     object: RenderableCelestialObject,
-    options?: CelestialMeshOptions,
-  ): THREE.Group {
-    const ringGroup = new THREE.Group();
-    ringGroup.name = `${object.celestialObjectId}-rings`;
+    options?: CelestialMeshOptions & { parentLODDistances?: number[] },
+  ): LODLevel[] {
     const properties = object.properties as RingSystemProperties;
 
     if (!properties?.rings || properties.rings.length === 0) {
       console.warn(
         `[RingSystemRenderer] No ring data found for ${object.celestialObjectId}`,
       );
-      return ringGroup;
+      return [{ object: new THREE.Group(), distance: 0 }];
     }
 
-    const parentRadius = object.realRadius_m;
-    if (!parentRadius) {
-      console.warn(
-        `[RingSystemRenderer] Cannot create rings for ${object.celestialObjectId} because it has no 'realRadius_m' property for scaling.`,
-      );
-      return ringGroup;
+    // Check if we should use the legacy mode with parentLODDistances
+    if (options?.parentLODDistances && options.parentLODDistances.length > 0) {
+      return this._createLegacyLODLevels(object, options);
     }
 
-    const sortedRings = [...properties.rings].sort(
-      (a, b) => (a.innerRadius || 0) - (b.innerRadius || 0),
-    );
-
-    sortedRings.forEach((ringProps, index) => {
-      const scaledInnerRadius =
-        (ringProps.innerRadius ?? parentRadius) / parentRadius;
-      const scaledOuterRadius =
-        (ringProps.outerRadius ?? parentRadius) / parentRadius;
-      const ringColor = new THREE.Color(ringProps.color ?? 0xffffff);
-      const ringOpacity = ringProps.opacity ?? 0.7;
-
-      // Calculate rotation rate based on ring properties or use Keplerian calculation
-      let rotationRate: number;
-
-      if (ringProps.rotationRate !== undefined) {
-        // Use provided rotation rate if available
-        rotationRate = ringProps.rotationRate;
-      } else {
-        // Calculate rotation rate based on Keplerian mechanics
-        rotationRate = calculateKeplerianRotationRate(
-          ringProps.innerRadius ?? parentRadius,
-          ringProps.outerRadius ?? parentRadius * 2,
-        );
-      }
-
-      if (scaledOuterRadius <= scaledInnerRadius) {
-        console.warn(
-          `[RingSystemRenderer] Invalid ring dimensions for ${object.celestialObjectId}, ring ${index}: Outer radius must be greater than inner radius.`,
-        );
-        return;
-      }
-
-      const segments = 256;
-      const ringGeometry = new THREE.RingGeometry(
-        scaledInnerRadius,
-        scaledOuterRadius,
-        segments,
-        8,
-        0,
-        Math.PI * 2,
-      );
-
-      const ringMaterial = new RingMaterial(ringColor, {
-        opacity: ringOpacity,
-        rotationRate: rotationRate,
-      });
-
-      const materialKey = `${object.celestialObjectId}-ring-${index}`;
-      this.ringMaterials.set(materialKey, ringMaterial);
-      this.parentRenderer.registerMaterial(materialKey, ringMaterial);
-
-      const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
-      ringMesh.name = `${object.celestialObjectId}-ring-${index}`;
-      ringMesh.rotation.x = -Math.PI / 2;
-      ringGroup.add(ringMesh);
+    // Create LOD levels with different detail
+    const highDetailGroup = this._createRingGroup(object, {
+      ...options,
+      detailLevel: "high",
+      segments: options?.segments ?? 256,
     });
 
-    return ringGroup;
+    const mediumDetailGroup = this._createRingGroup(object, {
+      ...options,
+      detailLevel: "medium",
+      segments: options?.segments ? Math.floor(options.segments / 2) : 128,
+    });
+
+    const lowDetailGroup = this._createRingGroup(object, {
+      ...options,
+      detailLevel: "low",
+      segments: options?.segments ? Math.floor(options.segments / 4) : 64,
+    });
+
+    // Calculate LOD distances based on object radius
+    const objectRadius = object.radius ?? 1;
+    const baseDistance = objectRadius * 10;
+
+    return [
+      { object: highDetailGroup, distance: 0 },
+      { object: mediumDetailGroup, distance: baseDistance },
+      { object: lowDetailGroup, distance: baseDistance * 3 },
+    ];
   }
 
   /**
-   * Creates and returns an array of LOD levels for the ring system.
-   * Level 0 contains the detailed rings.
-   * Subsequent levels are empty groups, using distances from parentLODDistances.
+   * Creates LOD levels using the legacy approach with parentLODDistances
+   * This maintains backward compatibility with existing parent renderers
+   *
+   * @param object The celestial object
+   * @param options Options including parentLODDistances
+   * @returns Array of LOD levels
+   * @private
    */
-  getLODLevels(
+  private _createLegacyLODLevels(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions & { parentLODDistances?: number[] },
   ): LODLevel[] {
@@ -147,13 +143,165 @@ export class RingSystemRenderer {
     return lodLevels;
   }
 
+  /**
+   * Initialize the ring system for a celestial object
+   *
+   * @param object The celestial object
+   * @param options Options for creating the mesh
+   */
+  public initialize(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): void {
+    // Create LOD levels
+    const lodLevels = this.getLODLevels(object, options);
+
+    // Create THREE.LOD object
+    const lod = new THREE.LOD();
+    lod.name = `${object.celestialObjectId}-rings-lod`;
+
+    // Add LOD levels
+    lodLevels.forEach((level) => {
+      lod.addLevel(level.object, level.distance);
+    });
+
+    // Store LOD object
+    this.lods.set(object.celestialObjectId, lod);
+  }
+
+  /**
+   * Create a ring group with the specified options
+   *
+   * @param object The celestial object
+   * @param options Options for creating the mesh
+   * @returns THREE.Group containing ring meshes
+   * @private
+   */
+  private _createRingGroup(
+    object: RenderableCelestialObject,
+    options?: CelestialMeshOptions,
+  ): THREE.Group {
+    const ringGroup = new THREE.Group();
+    ringGroup.name = `${object.celestialObjectId}-rings`;
+    const properties = object.properties as RingSystemProperties;
+
+    if (!properties?.rings || properties.rings.length === 0) {
+      console.warn(
+        `[RingSystemRenderer] No ring data found for ${object.celestialObjectId}`,
+      );
+      return ringGroup;
+    }
+
+    const parentRadius = object.realRadius_m;
+    if (!parentRadius) {
+      console.warn(
+        `[RingSystemRenderer] Cannot create rings for ${object.celestialObjectId} because it has no 'realRadius_m' property for scaling.`,
+      );
+      return ringGroup;
+    }
+
+    const sortedRings = [...properties.rings].sort(
+      (a, b) => (a.innerRadius || 0) - (b.innerRadius || 0),
+    );
+
+    // Get segments based on detail level
+    const segments =
+      options?.segments ??
+      this.getSegmentsForDetailLevel(options?.detailLevel, 128);
+
+    sortedRings.forEach((ringProps, index) => {
+      const scaledInnerRadius =
+        (ringProps.innerRadius ?? parentRadius) / parentRadius;
+      const scaledOuterRadius =
+        (ringProps.outerRadius ?? parentRadius) / parentRadius;
+      const ringColor = new THREE.Color(ringProps.color ?? 0xffffff);
+      const ringOpacity = ringProps.opacity ?? 0.7;
+
+      // Calculate rotation rate based on ring properties or use Keplerian calculation
+      let rotationRate: number;
+
+      if (ringProps.rotationRate !== undefined) {
+        // Use provided rotation rate if available
+        rotationRate = ringProps.rotationRate;
+      } else {
+        // Calculate rotation rate based on Keplerian mechanics
+        rotationRate = calculateKeplerianRotationRate(
+          ringProps.innerRadius ?? parentRadius,
+          ringProps.outerRadius ?? parentRadius * 2,
+        );
+      }
+
+      if (scaledOuterRadius <= scaledInnerRadius) {
+        console.warn(
+          `[RingSystemRenderer] Invalid ring dimensions for ${object.celestialObjectId}, ring ${index}: Outer radius must be greater than inner radius.`,
+        );
+        return;
+      }
+
+      const ringGeometry = new THREE.RingGeometry(
+        scaledInnerRadius,
+        scaledOuterRadius,
+        segments,
+        8,
+        0,
+        Math.PI * 2,
+      );
+
+      const ringMaterial = new RingMaterial(ringColor, {
+        opacity: ringOpacity,
+        rotationRate: rotationRate,
+      });
+
+      const materialKey = `${object.celestialObjectId}-ring-${index}`;
+      this.ringMaterials.set(materialKey, ringMaterial);
+
+      // Register material with parent renderer if available, otherwise with this renderer
+      if (this.parentRenderer) {
+        this.parentRenderer.registerMaterial(materialKey, ringMaterial);
+      } else {
+        this.registerMaterial(materialKey, ringMaterial);
+      }
+
+      const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+      ringMesh.name = `${object.celestialObjectId}-ring-${index}`;
+      ringMesh.rotation.x = -Math.PI / 2;
+      ringGroup.add(ringMesh);
+    });
+
+    return ringGroup;
+  }
+
+  /**
+   * Update the ring system
+   *
+   * @param object The celestial object
+   * @param time Current simulation time
+   * @param timeScale Current time scale
+   * @param lightSources Map of light sources
+   * @param camera Scene camera
+   * @param allObjects Map of all objects in the scene
+   * @param allMeshes Map of all meshes in the scene
+   */
   update(
     object: RenderableCelestialObject,
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
+    lightSources: LightSourcesMap,
+    camera: THREE.Camera,
     allObjects?: Record<string, RenderableCelestialObject>,
+    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
+    // Call parent update method to handle LOD updates
+    super.update(
+      object,
+      time,
+      timeScale,
+      lightSources,
+      camera,
+      allObjects,
+      allMeshes,
+    );
+
     if (isVisualizationEnabled()) {
       threeVectorDebug.clearVectors(`ring-system-${object.celestialObjectId}`);
     }
@@ -204,14 +352,19 @@ export class RingSystemRenderer {
   }
 
   /**
-   * Dispose of all materials created and managed by this renderer.
+   * Clean up resources used by the renderer
    */
   dispose(): void {
-    this.ringMaterials.forEach((material) => {
-      // The parentRenderer is responsible for the actual disposal
-      // since the material was registered with it. We just clear our map.
-      material.dispose();
-    });
+    // Only dispose materials if this is not a child renderer
+    if (!this.parentRenderer) {
+      this.ringMaterials.forEach((material) => {
+        material.dispose();
+      });
+    }
+
     this.ringMaterials.clear();
+
+    // Call parent dispose method
+    super.dispose();
   }
 }

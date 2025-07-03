@@ -67,26 +67,52 @@ export function initializeJupiterPlanet(parentId: string): string {
       emissiveIntensity: 0.1,
       rings: [
         {
-          innerRadius: 1.72 * JUPITER_REAL_RADIUS_M,
-          outerRadius: 1.81 * JUPITER_REAL_RADIUS_M,
+          // Main Ring (corresponds to the brightest part of Jupiter's ring system)
+          innerRadius: 1.72 * JUPITER_REAL_RADIUS_M, // ~122,500 km from Jupiter's center
+          outerRadius: 1.8 * JUPITER_REAL_RADIUS_M, // ~129,000 km from Jupiter's center
           density: 0.05,
-          opacity: 0.05,
-          color: "#A0522D",
+          opacity: 0.2,
+          color: "#b86139",
           type: RockyType.DUST,
           texture: "textures/ring_dust.png",
-          rotationRate: 0.001,
-          composition: ["dust"],
+          rotationRate: 0.002, // Faster rotation rate based on Keplerian mechanics
+          composition: ["dust", "micron-sized particles"],
         } as RingProperties,
         {
-          innerRadius: 1.29 * JUPITER_REAL_RADIUS_M,
-          outerRadius: 1.72 * JUPITER_REAL_RADIUS_M,
+          // Halo Ring (inner, thicker part of Jupiter's ring system)
+          innerRadius: 1.4 * JUPITER_REAL_RADIUS_M, // ~100,000 km from Jupiter's center
+          outerRadius: 1.72 * JUPITER_REAL_RADIUS_M, // ~122,500 km from Jupiter's center
           density: 0.01,
-          opacity: 0.02,
-          color: "#A0522D",
+          opacity: 0.2,
+          color: "#904826",
           type: RockyType.DUST,
           texture: "textures/ring_dust_faint.png",
+          rotationRate: 0.003, // Faster rotation for inner ring
+          composition: ["submicron dust"],
+        } as RingProperties,
+        {
+          // Amalthea Gossamer Ring
+          innerRadius: 1.8 * JUPITER_REAL_RADIUS_M, // ~129,000 km from Jupiter's center
+          outerRadius: 2.54 * JUPITER_REAL_RADIUS_M, // ~182,000 km from Jupiter's center
+          density: 0.002,
+          opacity: 0.01,
+          color: "#8B4513",
+          type: RockyType.DUST,
+          texture: "textures/ring_dust_very_faint.png",
           rotationRate: 0.0015,
           composition: ["fine dust"],
+        } as RingProperties,
+        {
+          // Thebe Gossamer Ring
+          innerRadius: 2.54 * JUPITER_REAL_RADIUS_M, // ~182,000 km from Jupiter's center
+          outerRadius: 3.1 * JUPITER_REAL_RADIUS_M, // ~221,900 km from Jupiter's center
+          density: 0.001,
+          opacity: 0.005,
+          color: "#8B4513",
+          type: RockyType.DUST,
+          texture: "textures/ring_dust_very_faint.png",
+          rotationRate: 0.001,
+          composition: ["very fine dust"],
         } as RingProperties,
       ],
     } as GasGiantProperties,

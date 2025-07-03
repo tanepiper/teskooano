@@ -5,11 +5,6 @@ import { BaseGasGiantRenderer, GasGiantRendererDeps } from "../base";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { BaseGasGiantMaterial } from "../base";
 import { ClassIMaterial } from "./material";
-import {
-  CelestialMeshOptions,
-  LightSourcesMap,
-} from "../../base/CelestialRenderer";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
 
 /**
  * Renderer for Class I gas giants

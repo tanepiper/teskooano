@@ -1,13 +1,3 @@
-/**
- * Options for creating celestial object meshes
- */
-export interface CelestialMeshOptions {
-  /**
-   * Specific number of segments to use (overrides detailLevel)
-   */
-  segments: number;
-}
-
 export * from "./base/CelestialRenderer";
 export * from "./base/BaseCelestialRenderer";
 export * from "./utils/CelestialRendererDebugHelper";

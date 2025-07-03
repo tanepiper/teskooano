@@ -2,55 +2,7 @@ import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-
-/**
- * Options for creating celestial object meshes
- */
-export interface CelestialMeshOptions {
-  /**
-   * Level of detail to use for the mesh
-   */
-  detailLevel?: "high" | "medium" | "low" | "very-low";
-
-  /**
-   * Specific number of segments to use (overrides detailLevel)
-   */
-  segments?: number;
-
-  /**
-   * Whether to include special effects like atmospheres, rings, etc.
-   * Default: true
-   */
-  includeEffects?: boolean;
-
-  /**
-   * Whether to include debug helpers (e.g., wireframes, normals)
-   * Default: false
-   */
-  debug?: boolean;
-
-  /**
-   * Optional reference to the main scene camera.
-   */
-  camera?: THREE.Camera;
-
-  /**
-   * Optional reference to the main THREE.js scene.
-   */
-  scene?: THREE.Scene;
-
-  /**
-   * Optional reference to the main THREE.js renderer.
-   */
-  renderer?: THREE.WebGLRenderer;
-
-  createLodCallback?: (
-    object: RenderableCelestialObject,
-    levels: LODLevel[],
-  ) => THREE.LOD;
-
-  lightingInfluenceManager?: LightingManager;
-}
+import { CelestialMeshOptions } from "./types";
 
 /**
  * Options for light sources in the scene

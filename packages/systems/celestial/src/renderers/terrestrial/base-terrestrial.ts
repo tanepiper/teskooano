@@ -5,24 +5,21 @@ import {
   SCALE,
 } from "@teskooano/data-types";
 import * as THREE from "three";
-import { CelestialMeshOptions, LightSourcesMap } from "../index";
+import { LightSourcesMap } from "../base";
+import { CelestialMeshOptions } from "../base/types";
 import { AtmosphereMaterial } from "./materials/atmosphere.material";
 import { ProceduralPlanetMaterial } from "./materials/procedural-planet.material";
 
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
+import { CelestialRenderer } from "../base/CelestialRenderer";
 import { RingSystemRenderer } from "../rings";
 import {
   AtmosphereMeshResult,
   AtmosphereService,
 } from "./utils/atmosphere-utils";
 import { PlanetMaterialService } from "./utils/planet-material-utils";
-import {
-  calculateDistantSpriteSize,
-  createBillboardSprite,
-} from "../billboards";
-import { CelestialRenderer } from "../base/CelestialRenderer";
 
 export interface TerrestrialRendererDeps {
   renderers: Map<string, CelestialRenderer>;
@@ -349,6 +346,7 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
         time,
         timeScale,
         lightSources,
+        camera,
         allObjects,
       );
     }

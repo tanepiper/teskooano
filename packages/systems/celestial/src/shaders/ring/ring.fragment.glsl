@@ -56,7 +56,7 @@ float getShadow(vec3 fragPos, vec3 lightPos, vec3 casterPos, float casterRadius)
 
 void main() {
     vec3 totalLight = vec3(0.0);
-    float ambientIntensity = 0.1; // Reduced ambient light
+    float ambientIntensity = 0.5; // Reduced ambient light
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= uNumLights) break;
