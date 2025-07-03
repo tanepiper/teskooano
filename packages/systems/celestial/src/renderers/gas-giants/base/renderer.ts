@@ -193,7 +193,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
 
     if (material) {
       const lightsForShader: {
-        direction: THREE.Vector3;
+        position: THREE.Vector3;
         color: THREE.Color;
         intensity: number;
       }[] = [];
@@ -203,24 +203,12 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
       // Now we process ALL available lights instead of limiting to MAX_LIGHTS
       if (lightSources && lightSources.size > 0) {
         lightSources.forEach((lightData) => {
-          // Calculate direction from planet to light
-          const direction = new THREE.Vector3()
-            .subVectors(lightData.position, object.position)
-            .normalize();
-
-          // Physically-based distance attenuation using inverse-square law,
-          // scaled for solar system distances. A larger factor creates
-          // a more dramatic and visible falloff.
-          const FALLOFF_FACTOR = 0.00000001; // Tunable factor
-          const distanceSq = object.position.distanceToSquared(
-            lightData.position,
-          );
-          const attenuation = 1.0 / (1.0 + distanceSq * FALLOFF_FACTOR);
-
+          // Pass the light position directly to the shader
+          // The direction will be calculated in the material's update method
           lightsForShader.push({
-            direction: direction,
+            position: lightData.position.clone(),
             color: lightData.color,
-            intensity: (lightData.intensity ?? 1.0) * attenuation,
+            intensity: lightData.intensity ?? 1.0,
           });
         });
       }
@@ -259,27 +247,19 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
 
     if (mediumMaterial) {
       const lightsForShader: {
-        direction: THREE.Vector3;
+        position: THREE.Vector3;
         color: THREE.Color;
         intensity: number;
       }[] = [];
 
       if (lightSources && lightSources.size > 0) {
         lightSources.forEach((lightData) => {
-          const direction = new THREE.Vector3()
-            .subVectors(lightData.position, object.position)
-            .normalize();
-
-          const FALLOFF_FACTOR = 0.00000001;
-          const distanceSq = object.position.distanceToSquared(
-            lightData.position,
-          );
-          const attenuation = 1.0 / (1.0 + distanceSq * FALLOFF_FACTOR);
-
+          // Pass the light position directly to the shader
+          // The direction will be calculated in the material's update method
           lightsForShader.push({
-            direction: direction,
+            position: lightData.position.clone(),
             color: lightData.color,
-            intensity: (lightData.intensity ?? 1.0) * attenuation,
+            intensity: lightData.intensity ?? 1.0,
           });
         });
       }

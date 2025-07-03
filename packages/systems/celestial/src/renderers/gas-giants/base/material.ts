@@ -5,7 +5,7 @@ import { LightArrayUtils } from "../../base/CelestialRenderer";
 
 // Remove hard-coded constants - we'll calculate dynamically
 interface CalculatedLight {
-  direction: THREE.Vector3;
+  position: THREE.Vector3;
   color: THREE.Color;
   intensity: number;
 }
@@ -53,7 +53,9 @@ export abstract class BaseGasGiantMaterial extends THREE.ShaderMaterial {
       for (let i = 0; i < numLights; i++) {
         const light = lights[i];
         if (light && this.uniforms.uLights.value[i]) {
-          this.uniforms.uLights.value[i].direction.copy(light.direction);
+          // Simply copy the light position to the shader
+          // The direction will be calculated in the fragment shader
+          this.uniforms.uLights.value[i].position.copy(light.position);
           this.uniforms.uLights.value[i].color.copy(light.color);
           this.uniforms.uLights.value[i].intensity = light.intensity;
         }
@@ -122,17 +124,11 @@ export abstract class BaseGasGiantMaterial extends THREE.ShaderMaterial {
  * Create initial arrays for lights and shadow casters with reasonable starting sizes
  */
 function createInitialLightArray(initialSize: number = 4): Array<{
-  direction: THREE.Vector3;
+  position: THREE.Vector3;
   color: THREE.Color;
   intensity: number;
 }> {
-  return Array(initialSize)
-    .fill(0)
-    .map(() => ({
-      direction: new THREE.Vector3(),
-      color: new THREE.Color(),
-      intensity: 0,
-    }));
+  return LightArrayUtils.createLightSourceArray(initialSize);
 }
 
 /**

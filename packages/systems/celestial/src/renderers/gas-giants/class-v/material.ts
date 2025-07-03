@@ -19,13 +19,7 @@ export class ClassVMaterial extends BaseGasGiantMaterial {
   }) {
     const MAX_LIGHTS = 4;
     const MAX_SHADOW_CASTERS = 16;
-    const lights = Array(MAX_LIGHTS)
-      .fill(0)
-      .map(() => ({
-        direction: new THREE.Vector3(),
-        color: new THREE.Color(),
-        intensity: 0,
-      }));
+    const lights = LightArrayUtils.createLightSourceArray(MAX_LIGHTS);
     const shadowCasters =
       LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS);
 

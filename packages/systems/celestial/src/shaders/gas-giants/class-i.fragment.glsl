@@ -1,7 +1,7 @@
 precision highp float;
 
 struct Light {
-  vec3 direction;
+  vec3 position;
   vec3 color;
   float intensity;
 };
@@ -173,40 +173,24 @@ float fractalSimplex4(vec4 p, int nbOctaves, float decay, float lacunarity) {
     return value / totalAmplitude;
 }
 
-// Ray-sphere intersection test for shadow casting
-// Returns a value from 0.0 (full shadow) to 1.0 (fully lit)
-float getShadow(vec3 fragPos, vec3 lightDir) {
-    float finalShadow = 1.0;
-
-    for (int i = 0; i < uNumShadowCasters; i++) {
-        // This check is necessary because the array is padded with empty data
-        if (uShadowCasters[i].radius <= 0.0) continue;
-
-        vec3 oc = fragPos - uShadowCasters[i].position;
-        float b = dot(oc, lightDir);
-        float c = dot(oc, oc) - (uShadowCasters[i].radius * uShadowCasters[i].radius);
-        float discriminant = b * b - c;
-
-        // If the ray is potentially inside the shadow cone
-        if (discriminant > 0.0) {
-            float t = -b - sqrt(discriminant);
-            // Check if the intersection is in front of the fragment
-            if (t > 0.001) {
-                // Penumbra width is proportional to the occluder's radius.
-                // A larger multiplier makes the edge softer.
-                float penumbra = uShadowCasters[i].radius * 0.8;
-                float penumbraSq = penumbra * penumbra;
-                
-                // Calculate a smooth fade from lit to shadow based on how deep the ray is.
-                // 1.0 = lit edge, 0.0 = deep shadow.
-                float currentShadow = 1.0 - smoothstep(0.0, penumbraSq, discriminant);
-                
-                // The final shadow is the darkest of all potential shadows.
-                finalShadow = min(finalShadow, currentShadow);
-            }
-        }
-    }
-    return finalShadow;
+// Function to calculate shadow from a single spherical occluder
+float getShadow(vec3 fragPos, vec3 lightPos, vec3 casterPos, float casterRadius) {
+  vec3 lightDir = normalize(lightPos - fragPos);
+  vec3 oc = fragPos - casterPos;
+  float b = dot(oc, lightDir);
+  float c = dot(oc, oc) - (casterRadius * casterRadius);
+  float discriminant = b * b - c;
+  
+  if (discriminant < 0.0) {
+    return 1.0; // No intersection, fully lit
+  }
+  
+  float t = -b - sqrt(discriminant);
+  if (t > 0.001) { // Epsilon to avoid self-shadowing
+    return 0.0; // In shadow
+  }
+  
+  return 1.0; // Lit
 }
 
 void main() {
@@ -250,12 +234,16 @@ void main() {
     for (int i = 0; i < uNumLights; i++) {
         if (uLights[i].intensity <= 0.0) continue;
 
-        vec3 lightDir = normalize(uLights[i].direction);
+        // Calculate direction from fragment to light
+        vec3 lightDir = normalize(uLights[i].position - vPosition);
+        
         float diffuse = max(dot(diffuseNormal, lightDir), 0.0);
         
         float shadow = 1.0;
-        if (diffuse > 0.0) {
-            shadow = getShadow(vPosition, lightDir);
+        for (int j = 0; j < uNumShadowCasters; j++) {
+            shadow = min(shadow, getShadow(vPosition, uLights[i].position, 
+                                          uShadowCasters[j].position, 
+                                          uShadowCasters[j].radius));
         }
         
         totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow;
@@ -280,5 +268,8 @@ void main() {
         finalColor = mix(finalColor, stormColor.rgb, stormColor.a * 0.8);
     }
 
-    gl_FragColor = vec4(finalColor, 1.0);
+    // Apply gamma correction to the final color
+    vec3 gammaCorrectedColor = pow(finalColor, vec3(1.0 / 2.2));
+    
+    gl_FragColor = vec4(gammaCorrectedColor, 1.0);
 } 

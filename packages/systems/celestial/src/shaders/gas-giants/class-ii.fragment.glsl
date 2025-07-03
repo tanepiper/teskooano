@@ -1,7 +1,7 @@
 precision highp float;
 
 struct Light {
-  vec3 direction;
+  vec3 position;
   vec3 color;
   float intensity;
 };
@@ -248,7 +248,8 @@ void main() {
     for (int i = 0; i < uNumLights; i++) {
         if (uLights[i].intensity <= 0.0) continue;
 
-        vec3 lightDir = normalize(uLights[i].direction);
+        // Calculate light direction from position
+        vec3 lightDir = normalize(uLights[i].position - vPosition);
         float diffuse = max(dot(diffuseNormal, lightDir), 0.0);
         
         float shadow = 1.0;

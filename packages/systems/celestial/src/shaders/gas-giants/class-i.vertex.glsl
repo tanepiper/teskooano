@@ -33,8 +33,9 @@ void main() {
   // This is used for the base diffuse lighting calculation in the example
   vSphereNormalW = normalize( mat3(modelMatrix) * unitSamplePoint );
 
-  // Calculate direction from camera to vertex in world space
-  vec3 viewDirection = normalize(cameraPosition - worldPosition.xyz);
+  // We'll use a fixed view direction from "above" the planet
+  // This removes camera dependency for lighting calculations
+  vec3 viewDirection = vec3(0.0, 1.0, 0.0);
 
   // Calculate final vertex position in clip space
   gl_Position = projectionMatrix * modelViewMatrix * vec4(localPosition, 1.0);
