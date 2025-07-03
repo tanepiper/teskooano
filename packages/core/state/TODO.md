@@ -1,7 +1,6 @@
 # TODO - @teskooano/core-state
 
 - [ ] **Decouple UI Logic from Core State**:
-
   - The `PanelService` and `PanelViewState` type are UI-specific constructs related to Dockview and should not reside in a core state package.
   - Move these components to `apps/teskooano/src/core/controllers/dockview/` to create a clean separation between core application state and UI presentation logic.
 

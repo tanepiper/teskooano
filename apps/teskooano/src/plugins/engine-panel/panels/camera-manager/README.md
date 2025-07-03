@@ -7,13 +7,11 @@ This directory contains the `EngineCameraManager`, a key component in the panel-
 The camera architecture is coordinated by the `PanelCameraCoordinator` and exposed to the panel through the `EngineCameraManager`. This system is designed to be instantiated for each `CompositeEnginePanel`, providing isolated control over each 3D view.
 
 - **`PanelCameraCoordinator` (The Coordinator)**:
-
   - **Location**: `../composite-panel/managers/`
   - **Responsibility**: This is the orchestrator. For each `CompositeEnginePanel`, it creates a new, dedicated instance of the `CameraManager`.
   - **Mechanism**: It links the `CameraManager` instance to the panel's renderer and synchronizes its state (position, focus, FOV) with the panel's own `CompositeEngineState`.
 
 - **`CameraManager` (The Engine)**:
-
   - **Location**: `../camera-manager/` (Note: This is a conceptual location, as the manager is instantiated in the coordinator)
   - **Responsibility**: This is a powerful, generic class that contains all the core logic for camera manipulation. It handles smooth transitions (using GSAP), focus calculations, state management via RxJS, and direct interaction with the Three.js camera object. It has no knowledge of panels or the UI.
 

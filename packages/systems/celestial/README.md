@@ -84,14 +84,12 @@ This package uses a combination of specialized renderers, procedural generation 
 ### Core Concepts
 
 1.  **Renderers (`src/renderers/`)**: Each major category of celestial object (terrestrial, star, gas giant, etc.) has a dedicated renderer or set of renderers. These classes are responsible for generating the appropriate `THREE.Object3D` for a given celestial object from `@teskooano/data-types`.
-
     - The key method is `getLODLevels()`, which returns an array of `LODLevel` objects. Each level contains a `THREE.Object3D` and a distance threshold. This array is consumed by `@teskooano/renderer-threejs-lod` to handle automatic Level of Detail switching.
     - **Instantiation is now partially unified via a factory pattern**:
       - For **Stars** and **Gas Giants**, factory functions (`createStarMesh`, `createGasGiantMesh`) are provided. These are the intended entry points, which internally select and instantiate the correct renderer based on the object's properties.
       - For other types like **Terrestrial Planets** and **Particles**, the consumer must still manually choose and instantiate the correct renderer class (e.g., `BaseTerrestrialRenderer`).
 
 2.  **GPU-Based Procedural Generation**: The system has moved away from CPU-based texture generation towards a more powerful, shader-based approach.
-
     - **Terrestrial Planets**: A single, complex shader (`procedural.fragment.glsl`) generates the entire planet surface on the fly. Its appearance is controlled by a large set of uniforms defined in the `ProceduralPlanetMaterial`.
     - **Gas Giants & Stars**: Also rely heavily on procedural shaders for their dynamic, turbulent surfaces.
 

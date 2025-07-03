@@ -52,7 +52,6 @@ settings/
 ## 4. Data Flow
 
 1.  **Initialization:**
-
     - `PluginManager` loads the `teskooano-settings` plugin.
     - User clicks the toolbar button, and `Dockview` creates an instance of `SettingsPanel`.
     - `SettingsPanel.connectedCallback()` fires.
@@ -60,7 +59,6 @@ settings/
     - `SettingsController` subscribes to `simulationState$` and immediately updates the view with the current state.
 
 2.  **User Interaction (e.g., changing Performance Profile):**
-
     - User selects "High" from the performance profile `<select>` element.
     - The `change` event fires on the element.
     - `SettingsController.handleProfileChange()` is executed.

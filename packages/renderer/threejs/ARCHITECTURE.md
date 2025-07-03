@@ -103,15 +103,12 @@ graph TD
 ## Core Components within this Package
 
 1.  **`ModularSpaceRenderer` (`ModularSpaceRenderer.ts`)**: The primary facade class.
-
     - **Responsibility**: Instantiates all managers from the `threejs-*` sub-modules, passes necessary dependencies between them (e.g., scene, camera), instantiates the `RenderPipeline`, provides high-level control methods (start/stop loop, toggle features), and handles disposal. It serves as the primary configuration and control point for the entire rendering system.
 
 2.  **`RendererStateAdapter` (`RendererStateAdapter.ts`)**: The state bridge and transformation orchestrator.
-
     - **Responsibility**: Acts as an adapter between the core application state and the rendering engine. It subscribes to `celestialObjects$` and `simulationState$`. It orchestrates the transformation process by calling `calculateLightSourceMaps` (from `@teskooano/renderer-threejs-lighting`) to determine the lighting hierarchy, then delegating the creation of `RenderableCelestialObject` instances to its `RenderableObjectFactory`. It then publishes this ready-to-render data to the `renderableStore`, which the visualization managers consume.
 
 3.  **`RenderPipeline` (`RenderPipeline.ts`)**: The frame-by-frame orchestrator.
-
     - **Responsibility**: Encapsulates the logic for the sequence of operations that occur each frame. It is instantiated by `ModularSpaceRenderer` and holds references to all the managers. Its `update` method is called by the `AnimationLoop` on each tick, and it calls the individual `update` methods on the managers in the correct order.
 
 ## Data Flow & Coordination

@@ -34,7 +34,6 @@ This renderer creates a vast, spherical Oort cloud at the edge of a star system.
 ### 4. Key Characteristics & Design Summary
 
 - **Strengths**:
-
   - **Advanced Visuals**: The custom shader approach, especially in the `AsteroidFieldRenderer`, allows for sophisticated effects like individual particle rotation and texture variation that would be impossible with `THREE.PointsMaterial`.
   - **Performant LOD**: Both renderers have effective LOD strategies tailored to their needs. The multi-geometry approach for asteroids is excellent for distinct distance breaks, while the adjustable vertex count for the Oort cloud is efficient for a more uniform field.
   - **Procedural Generation**: Both renderers create their particle distributions procedurally, making them flexible and data-driven.

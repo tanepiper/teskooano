@@ -262,13 +262,11 @@ const mps = auDayToMetersPerSecond(1); // Convert AU/day to m/s
 ## Performance Tips
 
 1. **Adjust Barnes-Hut Theta Parameter:**
-
    - Lower values (e.g., 0.3) give higher accuracy but slower performance
    - Higher values (e.g., 0.9) give faster performance with less accuracy
    - Default of 0.7 is a good balance for most simulations
 
 2. **Choose Appropriate Octree Size:**
-
    - Set the `octreeSize` parameter to cover the entire simulation area
    - For solar system simulations, a size of 5e13 meters (~ 334 AU) is usually sufficient
 

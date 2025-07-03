@@ -28,7 +28,6 @@ The terrestrial renderer is the most modular and service-oriented of the celesti
 The core logic is encapsulated in two service classes, promoting a clean separation of concerns.
 
 - **`PlanetMaterialService` (`planet-material-utils.ts`)**:
-
   - **`createMaterial()`**: This is its primary method. It is responsible for creating a `ProceduralPlanetMaterial`. It reads the `ProceduralSurfaceProperties` from the celestial object's data.
   - **Fallback Logic**: If specific surface properties (like colors) are not defined on the object, this service contains crucial fallback logic. It uses the object's `PlanetType` (e.g., `LAVA`, `ICE`, `DESERT`) to generate a suitable default color palette and set of procedural parameters. This makes the procedural system robust even with incomplete input data.
   - **`getBaseColor()`**: A helper method that provides a single representative color for an object, used by the medium LOD level.
@@ -44,7 +43,6 @@ The core logic is encapsulated in two service classes, promoting a clean separat
 The materials use external `.glsl` shaders, which is a significant improvement over the star renderer's embedded shader approach.
 
 - **`ProceduralPlanetMaterial` (`procedural-planet.material.ts`)**:
-
   - The heart of the terrestrial renderer. It extends `THREE.ShaderMaterial` and uses the complex `procedural.vertex.glsl` and `procedural.fragment.glsl` shaders.
   - These shaders generate the planet's entire surface—including continents, oceans, mountains, and ice caps—procedurally using noise functions.
   - The material's constructor takes a `ProceduralSurfaceProperties` object, which is used to populate a large number of uniforms that control the noise, color ramps, terrain shape, and lighting.

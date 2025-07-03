@@ -64,18 +64,15 @@ graph TD
 ### Breakdown of Directory & File Responsibilities
 
 - **`/` (Root)**
-
   - `index.ts`: The main plugin entry point. It bundles the component and the initializer function into a single `TeskooanoPlugin` for registration with the application.
   - `SystemControls.spec.ts`: Vitest tests for the component.
   - `ARCHITECTURE.md`: This file.
 
 - **`/view/`**
-
   - `system-controls.component.ts`: Defines the `teskooano-system-controls` custom element. It owns the Shadow DOM, holds element references, and instantiates its controller. It subscribes to state (both global and from its controller) to trigger internal UI update methods. Contains zero business logic.
   - `system-controls.template.ts`: Provides the static HTML and CSS for the component, defining its visual states.
 
 - **`/controller/`**
-
   - `system-controls.controller.ts`: The orchestrator for the view. It initializes all RxJS streams, manages the effect pipelines, handles component-level state (`isGenerating$$`), and manages all subscriptions.
   - `system-controls.streams.ts`: Its sole responsibility is to capture user interactions (like clicks) from the view and convert them into RxJS `Observable` streams. This isolates event listener setup.
   - `system-controls.effects.ts`: This is the heart of the UI's reactive logic. It subscribes to the "intent" streams and defines pipelines that perform actions, such as setting the loading state and calling the appropriate plugin function.

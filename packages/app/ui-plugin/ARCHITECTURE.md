@@ -38,7 +38,6 @@ The primary goal of this UI Plugin System is to enable a modular and extensible 
 ## 3. Loading and Registration Flow
 
 1.  **Build/Dev Startup:**
-
     - The `teskooanoUiPlugin` is initialized in `vite.config.ts` with `pluginRegistryPaths`.
     - The plugin reads the specified config files.
     - The plugin generates the `virtual:teskooano-loaders` module containing `pluginLoaders`.
@@ -101,7 +100,6 @@ sequenceDiagram
 After initialization, UI controllers (e.g., `ToolbarController`, `EngineToolbar`, `DockviewController`) interact with the `PluginManager` to build the dynamic parts of the UI:
 
 1.  **Toolbar Creation:**
-
     - A toolbar instance (e.g., `EngineToolbar`) is created for a specific target (e.g., `'engine-toolbar'`).
     - It calls `getToolbarItemsForTarget('engine-toolbar')` and potentially `getToolbarWidgetsForTarget('engine-toolbar')` on the `PluginManager`.
     - The `PluginManager` returns arrays of `ToolbarItemConfig` and `ToolbarWidgetConfig` objects registered for that target.
@@ -109,13 +107,11 @@ After initialization, UI controllers (e.g., `ToolbarController`, `EngineToolbar`
     - Click handlers on buttons use the configuration details (e.g., `componentName` for panels, `functionId` for functions) to trigger actions.
 
 2.  **Panel Handling:**
-
     - When a toolbar button configured to open a panel (`type: 'panel'`) is clicked:
       - The handler retrieves the `componentName` (which must be a defined custom element tag) from the button's configuration.
       - It uses the `DockviewController` (accessing the stored `dockviewApi`) to add a panel using the `componentName`. Dockview uses the already-defined custom element.
 
 3.  **Function Handling:**
-
     - When a toolbar button configured to execute a function (`type: 'function'`) is clicked:
       - The handler retrieves the `functionId`.
       - It calls `getFunctionConfig(functionId)` on the `PluginManager`.
@@ -183,7 +179,6 @@ sequenceDiagram
 After initialization, UI controllers (e.g., `ToolbarController`, `EngineToolbar`, `DockviewController`) interact with the `PluginManager` to build the dynamic parts of the UI:
 
 1.  **Toolbar Creation:**
-
     - A toolbar instance (e.g., `EngineToolbar`) is created for a specific target (e.g., `'engine-toolbar'`).
     - It calls `getToolbarItemsForTarget('engine-toolbar')` and potentially `getToolbarWidgetsForTarget('engine-toolbar')` on the `PluginManager`.
     - The `PluginManager` returns arrays of `ToolbarItemConfig` and `ToolbarWidgetConfig` objects registered for that target.
@@ -191,13 +186,11 @@ After initialization, UI controllers (e.g., `ToolbarController`, `EngineToolbar`
     - Click handlers on buttons use the configuration details (e.g., `componentName` for panels, `functionId` for functions) to trigger actions.
 
 2.  **Panel Handling:**
-
     - When a toolbar button configured to open a panel (`type: 'panel'`) is clicked:
       - The handler retrieves the `componentName` (which must be a defined custom element tag) from the button's configuration.
       - It uses the `DockviewController` (accessing the stored `dockviewApi`) to add a panel using the `componentName`. Dockview uses the already-defined custom element.
 
 3.  **Function Handling:**
-
     - When a toolbar button configured to execute a function (`type: 'function'`) is clicked:
       - The handler retrieves the `functionId`.
       - It calls `getFunctionConfig(functionId)` on the `PluginManager`.

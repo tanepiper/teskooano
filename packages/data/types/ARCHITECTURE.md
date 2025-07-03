@@ -7,7 +7,6 @@
 1.  **`index.ts`**: Standard entry point that re-exports all definitions from the other modules within this package.
 
 2.  **`celestial.ts`**: Defines the core data structures for celestial bodies and their properties.
-
     - **Enums**: Provides classifications for various celestial characteristics:
       - `CelestialType`: Primary classification (STAR, PLANET, MOON, ASTEROID_FIELD, etc.).
       - `GasGiantClass`: Sudarsky classification (CLASS_I to CLASS_V).
@@ -36,12 +35,10 @@
         - Other optional fields (`axialTilt`, `seed`, `primaryLightSourceId`, runtime flags like `isVisible`).
 
 3.  **`physics.ts`**: Defines the core state representation for the physics engine.
-
     - **Interfaces**:
       - `PhysicsStateReal`: Represents an object's state using real-world units (id, `mass_kg`, `position_m: OSVector3`, `velocity_mps: OSVector3`).
 
 4.  **`scaling.ts`**: Provides constants and utility functions for converting between real-world units and simulation/visualization units.
-
     - **Constants**: `GRAVITATIONAL_CONSTANT`, `AU_METERS`, `SCALE` (defining internal scaling factors like `MASS`, and the crucial `RENDER_SCALE_AU` which dictates scene units per AU), `METERS_TO_SCENE_UNITS` (derived).
     - **Functions**:
       - `scaleDistance`, `unscaleDistance`: Convert distances (meters <=> scene units), handling special case for moon visualization distance.
@@ -52,7 +49,6 @@
       - `scaleOrbitalParameters`: Adjusts orbital period based on scaled semi-major axis to ensure Kepler's Third Law holds visually if distances are scaled non-uniformly (like the moon distance boost).
 
 5.  **`main.ts`**: Defines top-level simulation state and physics function types.
-
     - **Interfaces**:
       - `SimulationState`: Defines the structure of the main simulation state atom/map (time, timeScale, paused, selectedObject, focusedObjectId, camera state).
     - **Type Aliases**:

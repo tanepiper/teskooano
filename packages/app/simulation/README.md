@@ -51,7 +51,6 @@ graph TD
 The simulation system is based on two main parts:
 
 1.  **`SimulationManager` (`SimulationManager.ts`)**:
-
     - A singleton that manages the core physics update loop (`requestAnimationFrame`).
     - The loop is started/stopped reactively by the UI layer (e.g., when a system is loaded or cleared).
     - It reads the current state from `@teskooano/core-state` (via `physicsSystemAdapter`), calls the `updateSimulation` function from `@teskooano/core-physics`, and writes the results back to the state store.

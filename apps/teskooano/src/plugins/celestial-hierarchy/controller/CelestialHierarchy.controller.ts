@@ -207,14 +207,14 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
    * @param event The DOM event triggered within the tree.
    */
   private handleTreeInteraction(event: Event): void {
-    // Check for touch event to prevent emulated click
-    if (event.type === "touchend") {
-      event.preventDefault();
-    }
     const target = event.target as HTMLElement;
 
     const caret = target.closest(".caret") as HTMLElement | null;
     if (caret) {
+      // Only prevent default for touch events on carets to prevent emulated click
+      if (event.type === "touchend") {
+        event.preventDefault();
+      }
       const parentLi = caret.closest("li");
       const nestedList =
         parentLi?.querySelector<HTMLUListElement>(":scope > .nested");

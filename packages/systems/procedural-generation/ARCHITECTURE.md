@@ -159,12 +159,10 @@ The system first determines the number of stars:
 For each star:
 
 1. **Primary Star** (first star):
-
    - Generated with default position (0,0,0)
    - No initial orbital parameters
 
 2. **Companion Stars** (if any):
-
    - Assigned as children of the primary star (`parentId = primaryStar.id`)
    - Given orbital parameters around the primary:
      - Semi-major axis: 0.1-10 AU

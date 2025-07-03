@@ -7,7 +7,6 @@ This document provides a detailed breakdown of the refactored star rendering sys
 The system has been significantly refactored to improve clarity, correctness, and maintainability.
 
 - **Directory Structure**: Renderers are now organized by stellar evolution stage into the following subdirectories:
-
   - `base/`: Contains the abstract base classes for all stars.
   - `main-sequence/`: Contains renderers for all main-sequence stars (Classes O, B, A, F, G, K, M).
   - `post-main-sequence/`: Contains renderers for giant and supergiant stars (e.g., Wolf-Rayet).
@@ -60,7 +59,6 @@ Thanks to the refactoring, these renderers are now extremely simple.
 These renderers extend `BaseStarRenderer` directly and provide highly specialized `getLODLevels` implementations.
 
 - **`NeutronStarRenderer`**:
-
   - Implements `getLODLevels` to create a small, intensely bright mesh.
   - It **no longer creates its own jets or glow effects directly**. This logic would be better handled by a higher-level composition or a dedicated effects manager.
   - **Integrates `GravitationalLensingHelper`**: The lensing effect is now correctly instantiated within `getLODLevels`. The required `renderer`, `scene`, and `camera` are passed via the `CelestialMeshOptions` object, which resolves the previous leaky abstraction.
@@ -74,7 +72,6 @@ These renderers extend `BaseStarRenderer` directly and provide highly specialize
 ### 5. Key Characteristics & Design Summary
 
 - **Strengths**:
-
   - **Clear and Correct Inheritance**: The new hierarchy accurately reflects the difference between luminous and non-luminous objects, removing flawed assumptions from the base class.
   - **Simplified Instantiation**: The `createStarMesh` factory provides a clean, single entry point.
   - **Improved Encapsulation**: Effects like gravitational lensing are now managed internally by the renderer that needs them, removing leaky abstractions and making the components more self-contained.

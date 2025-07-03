@@ -34,7 +34,6 @@ graph TD
 ### Key Components & Flow
 
 1.  **`EngineViewManager.ts`**:
-
     - **`EngineViewManager` Class**: This class holds the state (like `_enginePanelCounter`) and logic for creating engine panels. Crucially, its constructor accepts the `PluginExecutionContext`, giving it access to `dockviewApi`, `pluginManager`, and other core services without relying on global imports.
     - **`engineViewInitializer` (`engine-view:initialize`)**: This is the main entry point for the plugin's logic, registered in the `plugin` export.
       - When the application starts, the `PluginManager` calls the `execute` method of this function.

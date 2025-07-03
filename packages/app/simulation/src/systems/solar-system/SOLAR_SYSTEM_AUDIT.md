@@ -140,13 +140,11 @@ All astronomical data sourced from:
 ### High Priority
 
 1. **Complete Randomness Elimination**:
-
    - Uranus system moons (5 bodies)
    - Neptune system moons (2 bodies)
    - Pluto system (Charon)
 
 2. **Add Major Missing Bodies**:
-
    - Makemake (Kuiper Belt dwarf planet)
    - Haumea (elongated dwarf planet)
    - Pallas (third largest asteroid)
@@ -160,7 +158,6 @@ All astronomical data sourced from:
 ### Medium Priority
 
 1. **Minor Body Improvements**:
-
    - Pallas, Hygiea asteroids
    - Additional significant moons
    - Kuiper Belt Objects

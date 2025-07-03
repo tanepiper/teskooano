@@ -7,13 +7,11 @@
 1.  **`index.ts`**: Entry point, exporting the main components (`constants`, `OSVector3`) and namespacing the utility functions under `utils`.
 
 2.  **`constants.ts`**: Defines commonly used mathematical constants:
-
     - `EPSILON`: A small value for precise floating-point comparisons.
     - `PI`, `TWO_PI`, `HALF_PI`: Standard Pi-related values.
     - `DEG_TO_RAD`: Conversion factor from degrees to radians.
 
 3.  **`OSVector3.ts`**: A custom implementation of a 3-dimensional vector (Y-up coordinate system).
-
     - **Properties**: `x`, `y`, `z` (public numbers).
     - **Constructor**: `constructor(x = 0, y = 0, z = 0)`.
     - **Core Methods**: `clone()`, `set()`, `copy()`, `add()`, `sub()`, `multiplyScalar()`, `lengthSq()`, `length()`, `normalize()`, `dot()`, `cross()`, `distanceToSquared()`, `distanceTo()`.

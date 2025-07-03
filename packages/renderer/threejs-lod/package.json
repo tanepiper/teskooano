@@ -38,16 +38,16 @@
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/renderer-threejs": "file:../threejs",
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
-    "three": "0.177.0"
+    "three": "0.178.0"
   },
   "devDependencies": {
-    "@types/three": "0.177.0",
-    "@playwright/test": "1.53.1",
+    "@types/three": "0.178.0",
+    "@playwright/test": "1.53.2",
     "@vitest/browser": "3.2.4",
     "@vitest/ui": "3.2.4",
-    "eslint": "9.29.0",
+    "eslint": "9.30.1",
     "happy-dom": "18.0.1",
-    "playwright": "1.53.1",
+    "playwright": "1.53.2",
     "typescript": "5.8.3",
     "vitest": "3.2.4"
   }

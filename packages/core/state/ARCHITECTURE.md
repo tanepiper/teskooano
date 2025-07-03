@@ -12,14 +12,12 @@
 3.  **`game/actions.ts`**: Contains functions that modify the state. These actions are the only way to update the stores, ensuring a unidirectional data flow. Examples: `addCelestialObject`, `updateSimulationTime`, `selectObject`.
 
 4.  **`game/simulation.ts`**: Defines and manages the simulation control state.
-
     - `SimulationState` Interface: Defines the structure for global simulation settings (time, timeScale, paused, selectedObject, focusedObjectId, camera state using `OSVector3`, physicsEngine choice, visualSettings, optional renderer stats).
     - `simulationState`: An `atom` store holding a single `SimulationState` object.
     - `simulationActions`: An object containing functions to modify the `simulationState` atom (e.g., `setTimeScale`, `togglePause`, `selectObject`, `updateCamera`, `setPhysicsEngine`, `setTrailLengthMultiplier`).
 
 5.  **`game/physicsSystemAdapter.ts`**: Defines the `PhysicsSystemAdapter` service.
     This service acts as a crucial bridge between the application's core game state (managed by `GameStateService`) and the external physics engine (`@teskooano/core-physics`). Its responsibilities include:
-
     - `physicsSystemAdapter.getPhysicsBodies()`: Retrieves an array of `PhysicsStateReal` objects representing all active (not destroyed or ignored) celestial bodies. This array is intended to be fed into the physics engine for a simulation step.
     - `physicsSystemAdapter.getCelestialObjectsSnapshot()`: Provides a direct snapshot (a shallow copy) of the current `Record<string, CelestialObject>` from `GameStateService`. This is useful for parts of the simulation loop that need to build parameters based on the full state of all objects (e.g., for calculating radii, types for the physics engine).
     - `physicsSystemAdapter.updateStateFromResult(result: SimulationStepResult)`: Takes a `SimulationStepResult` object (output from `@teskooano/core-physics`'s `updateSimulation` function). It then updates the `GameStateService` by:
@@ -29,14 +27,12 @@
       - This method efficiently updates the game state, typically by preparing a new map of all celestial objects and calling `gameStateService.setAllCelestialObjects()`.
 
 6.  **`game/celestialActions.ts`**: Provides functions for CRUD operations on celestial objects within the state stores.
-
     - `addCelestialObject(object)`: Adds a complete `CelestialObject` to `celestialObjectsStore` and updates `celestialHierarchyStore`. Dispatches a DOM event.
     - `updateCelestialObject(objectId, updates)`: Updates specific fields of an existing object in the store.
     - `removeCelestialObject(objectId)`: Removes an object from the store. Dispatches a DOM event.
     - `updateOrbitalParameters(objectId, parameters)`: Updates the `orbit` property of an object.
 
 7.  **`game/factory.ts`**: Contains logic for creating fully initialized `CelestialObject` instances.
-
     - `CelestialObjectCreationInput`: Interface defining the necessary input data (real mass/radius, type, parent, orbit, etc.).
     - `celestialFactory`: An object with factory methods:
       - `clearState()`: Resets the stores and simulation state variables.

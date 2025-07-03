@@ -28,14 +28,12 @@ To offer a discoverable list of objects within the simulated system and provide 
 The `celestial-hierarchy` plugin follows the project's standard Model-View-Controller (MVC) architecture to ensure a clean separation of concerns.
 
 - **View (`view/CelestialHierarchy.view.ts`):**
-
   - A "dumb" custom element (`<celestial-hierarchy>`) that implements Dockview's `IContentRenderer`.
   - It is responsible only for creating its shadow DOM from an HTML template and querying for key element references (the list container, buttons).
   - On construction, it instantiates the `CelestialHierarchyController`.
   - It delegates all lifecycle methods (`connectedCallback`, `disconnectedCallback`, `init`) and user interactions to the controller.
 
 - **Controller (`controller/CelestialHierarchy.controller.ts`):**
-
   - This class contains all the business logic for the feature.
   - It receives element references from the View in its constructor.
   - It manages all state, including subscriptions to RxJS stores (`celestialObjects$`, `cameraState$`).

@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Major Refactor (Star & Gas Giant Renderers)**:
-
   - Unified the instantiation logic for Stars and Gas Giants by introducing factory functions (`createStarMesh`, `createGasGiantMesh`). This standardizes the public API and encapsulates renderer selection logic.
   - Restructured the `renderers/stars` directory, organizing renderers into subdirectories by stellar evolution stage (`main-sequence`, `post-main-sequence`, `remnants`, `black-holes`) for improved clarity.
   - Refactored `BaseStarRenderer` into a more abstract class by making `getLODLevels` an abstract method. This removes the assumption that all stars are luminous and allows for correct implementation of non-luminous objects like black holes.

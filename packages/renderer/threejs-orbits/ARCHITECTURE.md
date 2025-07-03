@@ -36,7 +36,6 @@ The `OrbitsManager` is the public-facing facade of the package. It is instantiat
 These two managers work together to visualize orbits under the Verlet integration engine.
 
 - **`TrailManager`**:
-
   - **Responsibility**: Shows the recent historical path of an object.
   - **Workflow**: For each object, it maintains a `CircularBuffer` of recent positions. On each update, it adds the object's current position to the buffer and uses the `LineBuilder` to draw a line connecting the points in the buffer. The length of the trail is determined by the buffer's capacity.
 

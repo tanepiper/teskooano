@@ -7,14 +7,12 @@
 1. **`index.ts`**: Exports the primary types, constants, and functions from sub-modules. Exports specific integrators (`verlet`, `standardEuler`, `symplecticEuler`) and other core functionality.
 
 2. **`types.ts`**: Defines core function signatures and the primary data structure:
-
    - `PhysicsStateReal`: The state representation (ID, `mass_kg`, `position_m: OSVector3`, `velocity_mps: OSVector3`). Crucially, uses REAL-WORLD units (kg, m, m/s).
    - `NetForceCalculator`: Signature for a function that calculates the total force on one body from all others.
    - `PairForceCalculator`: Signature for calculating the force between two specific bodies.
    - `Integrator`: Signature for numerical integration functions that advance a `PhysicsStateReal` forward in time given an acceleration and timestep (`dt`).
 
 3. **`simulation/simulation.ts`**: Contains the main simulation loop logic with the following key functions:
-
    - `calculateAccelerationForBody`: Helper that calculates acceleration on a body using the Octree.
    - `updateSimulation`: Performs one step of the simulation:
      1. Builds an Octree from the current body positions.
@@ -26,13 +24,11 @@
    - `runSimulation`: A helper function to run the `updateSimulation` loop for a specified number of steps.
 
 4. **`forces/`**: Implements various force calculation methods:
-
    - `gravity.ts`: Implements Newtonian gravitational force calculation.
    - `relativistic.ts`: Provides relativistic gravity calculations (not yet fully integrated).
    - `non-gravitational.ts`: Implements non-gravitational forces (thrust, drag, etc.).
 
 5. **`integrators/`**: Contains different numerical integration methods:
-
    - `verlet.ts`:
      - `verletIntegrate`: Implements the basic position Verlet algorithm.
      - `velocityVerletIntegrate`: Implements the Velocity Verlet algorithm (used by default in simulation).
@@ -42,7 +38,6 @@
      - `symplecticEuler`: Implements the symplectic Euler method for better energy conservation.
 
 6. **`spatial/octree.ts`**: Implements the Barnes-Hut algorithm for optimizing force calculations:
-
    - `OctreeNode`: Interface defining the structure of a node (center, size, bodies, children, total mass, center of mass).
    - Helper functions: `createNode`, `isInBounds`, `subdivide`, `updateMassProperties`, `insertBody`.
    - `Octree` class:
@@ -51,18 +46,15 @@
      - `calculateForceOn(body, theta)`: Calculates the approximate gravitational force on a target body using the Barnes-Hut method, with `theta` controlling the approximation threshold.
 
 7. **`collision/collision.ts`**: Handles collision detection and resolution:
-
    - Uses body radii and types to detect collisions.
    - Implements conservation of momentum and energy in collision resolution.
    - Returns both updated states and IDs of destroyed bodies.
 
 8. **`orbital/`**: Provides orbital mechanics calculations:
-
    - Converts between state vectors and Keplerian orbital elements.
    - Calculates orbital parameters (period, semi-major axis, etc.).
 
 9. **`units/`**: Contains constants and conversion functions:
-
    - `constants.ts`: Defines physical constants (`GRAVITATIONAL_CONSTANT`, `AU_METERS`, etc.).
    - `units.ts`: Provides conversion functions between different unit systems.
 

@@ -317,23 +317,19 @@ flowchart TB
 ### A. Patterns
 
 1.  **State-Driven Architecture**:
-
     - Central RxJS stores (`celestialObjects$`, `simulationState$`) for global state.
     - **Adapter Pattern**: `RendererStateAdapter` decouples core state from renderer-specific needs (coordinate systems, derived data).
     - **Panel-Specific State**: View settings managed within `EnginePanel`'s internal store.
     - Unidirectional data flow remains key.
 
 2.  **Facade Pattern**:
-
     - `ModularSpaceRenderer` simplifies interaction with the complex renderer subsystem.
     - `celestialFactory` provides simplified creation of complex celestial objects.
 
 3.  **Manager Pattern**:
-
     - Used extensively (e.g., `SceneManager`, `ObjectManager`, `LODManager`) to encapsulate related responsibilities.
 
 4.  **Dependency Injection**:
-
     - Components are wired together during instantiation in parent classes (e.g., `ModularSpaceRenderer` creates and passes managers).
 
 5.  **Dual Loop Architecture**:
@@ -342,24 +338,19 @@ flowchart TB
 ### B. Key Decisions
 
 1.  **Real Units vs. Scaled Visualization**:
-
     - Physics uses real units; conversion happens in `RendererStateAdapter` / `coordinateUtils`.
 
 2.  **Pluggable Physics**:
-
     - Multiple integrators, selectable via `simulationState.physicsEngine`.
 
 3.  **Specialized Celestial Renderers**:
-
     - Distinct renderers, custom shaders, procedural generation.
 
 4.  **Level of Detail (LOD)**:
-
     - Centralized `LODManager` using `distance-calculator` logic.
     - **Critical**: Segment counts must be reasonable to avoid performance cliffs.
 
 5.  **State Management Scope**:
-
     - Global simulation state (`simulationState`) vs. Per-Panel view state (`PanelViewState`). Clear separation is crucial.
 
 6.  **Optimized Rendering**:
@@ -370,11 +361,9 @@ flowchart TB
 ### D. Areas for Improvement
 
 1.  **Consistent Abstraction**:
-
     - Formal `CelestialRenderer` interface still needed.
 
 2.  **Renderer Agnosticism**:
-
     - Some state components (`PanelViewState`) still use Three.js types.
 
 3.  **Performance Optimization**:
@@ -385,17 +374,14 @@ flowchart TB
 ## IX. Future Directions
 
 1. **Enhanced physics accuracy**:
-
    - Relativistic effects for high-gravity scenarios.
    - Additional N-body optimization techniques.
 
 2. **Expanded celestial types**:
-
    - More specialized renderers for exotic objects.
    - Enhanced atmospheric effects and surface details.
 
 3. **Improved user experience**:
-
    - Interactive object selection and manipulation.
    - Expanded informational displays and educational features.
 

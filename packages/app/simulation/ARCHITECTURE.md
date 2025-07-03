@@ -5,7 +5,6 @@
 **Key Components:**
 
 1.  **`SimulationManager.ts`**: This is the heart of the package, implemented as a singleton.
-
     - **Physics Loop (`simulationStep`)**: Manages the core `requestAnimationFrame` loop. It's not started by default; it is reactively started by the UI (specifically `PanelLifecycleManager`) when a system is loaded.
     - **Time Management**: Calculates `deltaTime` between frames, caps it for stability (to prevent physics explosions), and applies the `timeScale` from the global state.
     - **State Integration**:
@@ -16,7 +15,6 @@
     - **Lifecycle**: Provides `startLoop`, `stopLoop`, and `dispose` methods. `resetSystem` is used to clear the current simulation state.
 
 2.  **`camera/CameraManager.ts`**: A class responsible for the _semantic_ state of the camera.
-
     - **Decoupled Logic**: It does not directly manipulate the `THREE.Camera`. Instead, it manages the high-level state, such as which object is focused (`focusedObjectId`), the desired FOV, and the current camera position/target.
     - **State Emission**: Exposes its state via an RxJS `BehaviorSubject` (`getCameraState$`), allowing UI components to react to camera changes.
     - **API for Intent**: Provides a clean API for camera actions like `followObject(objectId)`, `pointCameraAt(position)`, `setFov(fov)`, and `resetCameraView()`. These actions are translated into commands for the renderer's `ControlsManager`.

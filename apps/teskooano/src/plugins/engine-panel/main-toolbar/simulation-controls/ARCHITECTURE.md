@@ -34,7 +34,6 @@ graph TD
 ### Key Components
 
 1.  **View (`view/simulation-controls.component.ts`)**
-
     - **Class**: `SimulationControls`
     - **Responsibilities**:
       - Acts as the custom element (`<teskooano-simulation-controls>`).
@@ -42,7 +41,6 @@ graph TD
       - It instantiates its own `SimulationControlsController` upon connection to the DOM and calls the controller's `dispose` method upon disconnection. It contains no business logic.
 
 2.  **Controller (`controller/simulation-controls.controller.ts`)**
-
     - **Class**: `SimulationControlsController`
     - **Responsibilities**:
       - This is the "brains" of the component; it contains all business logic.
@@ -52,7 +50,6 @@ graph TD
       - When it receives a new state from `simulationState$`, it calls private `_update...` methods to directly manipulate the View's DOM elements (e.g., changing text content, toggling attributes).
 
 3.  **Template (`view/simulation-controls.template.ts`)**
-
     - **Exports**: A `<template>` element.
     - **Responsibilities**:
       - Defines the complete, static HTML structure and CSS styles for the component's Shadow DOM.

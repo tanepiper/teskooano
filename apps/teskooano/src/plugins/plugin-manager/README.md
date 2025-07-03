@@ -11,7 +11,6 @@ The `plugin-manager` is a simple UI plugin whose primary purpose is to provide a
 This plugin follows a very straightforward **Simple View Component** pattern. It does not have a dedicated controller or complex internal logic.
 
 - **`PluginManagerPanel.ts` (The View)**: This custom element (`<teskooano-plugin-manager-panel>`) is the core of the plugin.
-
   - It directly imports and interacts with the singleton `pluginManager`.
   - On connection to the DOM (`connectedCallback`), it subscribes to an event stream from the `pluginManager` to listen for any changes (e.g., plugins being loaded, unloaded, or reloaded via HMR).
   - When it receives an update, it calls its internal `renderPluginList()` method to re-fetch the complete list of plugins and re-render the view.

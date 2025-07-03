@@ -1,13 +1,11 @@
 # TODO - @teskooano/core-math
 
 - [x] **Fix Inconsistent Decoupling from `three`**:
-
   - The `OSVector3.ts` file directly imports `THREE.Quaternion`, creating a hard dependency on the `three` library which is not declared in `package.json`.
   - **Long-term Fix**: Create a custom `OSQuaternion` class within this package to remove the direct `three` import, achieving true renderer-agnosticism.
   - **Short-term Fix**: Add `three` as a `peerDependency` in `package.json` to make the dependency explicit.
 
 - [ ] **Audit Test Suites for Type Correctness**:
-
   - Some tests in dependent packages use `THREE.Vector3` where `OSVector3` is expected.
   - Perform a full audit of test suites across all core packages to ensure they exclusively use `OSVector3` when interacting with functions that expect it to enforce type safety.
 

@@ -15,7 +15,6 @@ The ring renderer is encapsulated within a single primary class, `RingSystemRend
 - **Initialization**: The `RingSystemRenderer` is not created in the parent's constructor. Instead, the parent renderer (e.g., `BaseTerrestrialRenderer`) provides an `initialize(object)` method. This method is called by the `MeshFactory` after the parent renderer is created. Inside `initialize`, the parent renderer checks for ring data and creates its `RingSystemRenderer` instance. This ensures the ring system is ready before any rendering occurs.
 
 - **`getLODLevels()`**: This is the main public method, which returns an array of `LODLevel` objects.
-
   - **LOD Synchronization**: The parent renderer passes its own calculated LOD distances to the ring renderer's `getLODLevels` method. This ensures the ring system's LODs are perfectly synchronized with its parent planet's LODs.
   - **LOD 0 (High Detail)**: For the highest level of detail, it generates a `THREE.Group` containing a series of `THREE.Mesh` objects for each ring segment.
   - **LOD 1+ (No Rings)**: For all subsequent LOD levels, the method returns an **empty `THREE.Group`**. This is a simple and highly effective optimization strategy: the detailed ring geometry is swapped out for nothing at a distance, completely removing it from the rendering workload.
@@ -27,7 +26,6 @@ The ring renderer is encapsulated within a single primary class, `RingSystemRend
 The visual appearance of the rings is handled by the `RingMaterial` and its associated GLSL shaders.
 
 - **Lighting and Shadows**: The fragment shader implements a robust lighting model that includes:
-
   - **Coplanar Lighting Fix**: To solve the issue where a distant light source is in the same plane as the rings (resulting in zero diffuse light), the shader uses a common technique. For the diffuse lighting calculation, it uses an "artificially lifted" light direction vector. This breaks the coplanar alignment and ensures the rings are correctly illuminated.
   - **Accurate Shadowing**: For casting the parent body's shadow, the shader uses the _true_ geometric vector from each ring fragment to the light source. This ensures shadows are physically accurate while lighting remains visually appealing.
   - **Parent Body Shadowing**: The core feature is the calculation of the shadow cast by the parent planet onto its own rings. This is achieved in the shader by performing a ray-sphere intersection test.
@@ -37,7 +35,6 @@ The visual appearance of the rings is handled by the `RingMaterial` and its asso
 ### 4. Key Characteristics & Design Summary
 
 - **Strengths**:
-
   - **Highly Modular and Reusable**: Encapsulated in a single renderer class, it can be easily composed by any other renderer needing a ring system.
   - **Performant and Synchronized LOD**: The strategy of replacing the detailed rings with an empty group at a distance is simple and effective. Passing the parent's LOD distances ensures the visual transition is seamless.
   - **Robust Lighting Model**: The shader correctly handles both realistic shadowing and the common coplanar lighting problem, resulting in high visual fidelity.

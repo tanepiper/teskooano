@@ -31,13 +31,11 @@ An abstract class extending `THREE.ShaderMaterial`. It provides a common interfa
 This class implements the `CelestialRenderer` interface and orchestrates the creation and management of gas giant objects. It is responsible for all lighting calculations.
 
 - **LOD Strategy (`getLODLevels`)**: This is the public method for creating the object's visual representation. It implements a three-tiered LOD system for the planet body:
-
   1.  **Level 0 (High Detail)**: Creates a high-resolution `THREE.SphereGeometry`. It calls the abstract `getMaterial()` method, forcing subclasses to provide their unique, complex procedural material for this level.
   2.  **Level 1 (Medium Detail)**: Uses a `BasicGasGiantMaterial` (a simpler fallback shader) on a medium-resolution sphere.
   3.  **Level 2 (Low Detail)**: Uses a standard `THREE.MeshBasicMaterial` on a very low-resolution sphere.
 
 - **Composition with Rings**: The renderer is designed to be composed with a ring system.
-
   - **`initialize(object)`**: This method must be called by the factory after the renderer is instantiated. It checks the object for `rings` data and, if present, creates an instance of the `RingSystemRenderer`.
   - **LOD Combination**: The `getLODLevels` method first creates the LODs for the planet body. Then, if a `ringSystemRenderer` exists, it calls its `getLODLevels` method, passing its own LOD distances to ensure the planet and rings change detail in perfect sync. The final returned object for each level is a `THREE.Group` containing both the planet and ring meshes.
 
@@ -62,7 +60,6 @@ Each file implements a renderer for a specific Sudarsky class. The pattern is co
 ### 4. Key Characteristics & Design Summary
 
 - **Strengths**:
-
   - **Factory Pattern**: The `createGasGiantMesh` function provides a clean, unified entry point for consumers.
   - **Correct Directional Lighting**: The system now uses a lighting model appropriate for planetary scales. By calculating direction vectors on the CPU, it ensures sharp, correct terminators and avoids floating-point issues, while still supporting multiple light sources.
   - **Clean Composition**: The `initialize` pattern for adding the `RingSystemRenderer` is a great example of clean composition over inheritance. The parent renderer owns and manages its sub-renderer.

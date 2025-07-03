@@ -11,18 +11,15 @@ It follows an **Orchestrator Panel** pattern. The `CompositeEnginePanel` custom 
 ### Core Responsibilities & Managers
 
 - **`CompositeEnginePanel.ts` (The Orchestrator)**:
-
   - **State Management**: Manages its own private RxJS `BehaviorSubject` for its view state (`CompositeEngineState`), ensuring panel independence.
   - **DOM & Lifecycle**: Owns the shadow DOM and implements the `IContentRenderer` interface for Dockview integration.
   - **Manager Coordination**: Instantiates and orchestrates the three dedicated managers described below.
 
 - **`PanelLifecycleManager`**:
-
   - **Responsibility**: Manages the creation and destruction of the `ModularSpaceRenderer`.
   - **Mechanism**: Subscribes to the global `celestialObjects$` state. When objects appear, it triggers the renderer's initialization. When objects disappear, it tears the renderer down to conserve resources and shows a placeholder. It also listens for global `SYSTEM_GENERATION` events to display loading indicators.
 
 - **`PanelCameraCoordinator`**:
-
   - **Responsibility**: Orchestrates all camera-related components (`CameraManager` and `EngineCameraManager`).
   - **Mechanism**: It creates the camera systems and links their state to the panel's view state, ensuring that camera position, FOV, and focused object are synchronized.
 

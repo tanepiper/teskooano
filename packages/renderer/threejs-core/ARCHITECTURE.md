@@ -5,7 +5,6 @@ This package provides foundational components for the Three.js rendering pipelin
 **Core Components:**
 
 1.  **`SceneManager.ts` (`SceneManager`)**: Manages the fundamental Three.js scene setup.
-
     - Creates and holds `THREE.Scene`, `THREE.PerspectiveCamera`, and `THREE.WebGLRenderer` instances.
     - Configures renderer settings (size, pixel ratio, shadows, HDR/tone mapping) based on options.
     - Handles scene background (color or texture).
@@ -15,7 +14,6 @@ This package provides foundational components for the Three.js rendering pipelin
     - `dispose()`: Cleans up the renderer and removes scene children.
 
 2.  **`AnimationLoop.ts` (`AnimationLoop`)**: Manages the main `requestAnimationFrame` loop.
-
     - Uses `THREE.Clock` to track time and delta.
     - Provides `start()` and `stop()` methods.
     - Manages arrays of callbacks for animation (`onAnimateCallbacks`) and rendering (`onRenderCallbacks`).

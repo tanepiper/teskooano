@@ -80,7 +80,6 @@ graph TD
 ## Supporting Components
 
 1.  **`AuMarkerManager`**: A higher-level manager that encapsulates the logic for a specific feature: the AU (Astronomical Unit) markers.
-
     - **Responsibility**: It uses the `Layer2DManager` to create a dedicated `AuMarkerLabelLayer` for the 2D labels, and it also directly manages the corresponding 3D ring `Mesh` objects in the main scene. This keeps all the logic for this specific feature contained in one place.
     - **Instantiation**: It is instantiated and controlled by the main `ModularSpaceRenderer` in the `@teskooano/renderer-threejs` package.
 

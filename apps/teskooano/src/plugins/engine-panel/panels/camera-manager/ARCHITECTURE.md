@@ -13,7 +13,6 @@ This document outlines the architecture for camera management within the Teskooa
 The architecture consists of three main classes working in concert for each panel instance:
 
 1.  **`PanelCameraCoordinator` (The Orchestrator)**
-
     - **Location**: `../composite-panel/managers/`
     - **Responsibility**: This class is the "glue". It is instantiated by a `CompositeEnginePanel` and is responsible for creating and wiring together the other two components.
     - **Mechanism**:
@@ -22,7 +21,6 @@ The architecture consists of three main classes working in concert for each pane
       - It subscribes to the `CameraManager`'s state changes and synchronizes them with the panel's own `CompositeEngineState`. This ensures the panel's state is always a reliable reflection of the camera's state.
 
 2.  **`CameraManager` (The Engine)**
-
     - **Location**: `@teskooano/app-simulation` (a shared package)
     - **Responsibility**: This is a generic, powerful, and reusable class that contains all the core logic for camera manipulation. It is completely unaware of the UI, panels, or plugins.
     - **Mechanism**:

@@ -70,7 +70,6 @@ Plugin loading is driven by configuration files, analyzed by the Vite plugin at 
     ```
 
 4.  **Initialize Plugin Manager (in `main.ts`):**
-
     - Get the singleton instance: `const pluginManager = PluginManager.getInstance();`
     - **Set Dependencies:** Call `pluginManager.setAppDependencies({ dockviewApi, dockviewController });` **ONCE** early in initialization.
     - **Load Plugins:** Call `await pluginManager.loadAndRegisterPlugins(pluginIdsToLoad);` where `pluginIdsToLoad` is an array of the plugin IDs you want to activate (e.g., derived from feature flags or the keys of your config objects).

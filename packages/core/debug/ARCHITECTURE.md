@@ -5,26 +5,22 @@
 **Core Components**:
 
 1.  **`index.ts`**: The main entry point.
-
     - Defines and exports the global `debugConfig` object (`{ level: DebugLevel, visualize: boolean, logging: boolean }`).
     - Exports the `DebugLevel` enum.
     - Provides helper functions (`isDebugEnabled`, `isVisualizationEnabled`, `setVisualizationEnabled`) to check or modify the global config.
     - Re-exports all functionality from other modules.
 
 2.  **`logger.ts`**: Implements a custom logging solution.
-
     - Provides standard logging functions (`error`, `warn`, `info`, `debug`, `trace`) that respect `debugConfig.level` and `debugConfig.logging`.
     - Allows creating named loggers (`createLogger(name: string)`) for context.
     - Includes a basic performance timer (`logger.time(label, fn)`).
 
 3.  **`vector-debug.ts`**: Utility for storing and retrieving `OSVector3` instances.
-
     - Uses a `Map<string, Map<string, OSVector3>>` (or similar) to store vectors associated with an object ID and a specific key (e.g., `vectorDebug.setVector('planet-id', 'velocity', vector)`).
     - Provides `getVector`, `getVectors`, `clearVectors`, `clearAll`.
     - Intended for temporary storage during debugging sessions, often checked with `isVisualizationEnabled`.
 
 4.  **`three-vector-debug.ts`**: Similar to `vector-debug`, but for `THREE.Vector3` instances.
-
     - Uses the same storage pattern (`Map<string, Map<string, THREE.Vector3>>`).
     - Useful for debugging rendering logic, shaders, or geometry calculations involving Three.js vectors.
 
