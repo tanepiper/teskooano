@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { PhysicsStateReal } from "../types";
+import { PhysicsStateReal } from "@teskooano/data-types";
 import { standardEuler } from "./euler";
 import { verletIntegrate, velocityVerletIntegrate } from "./verlet";
 import { OSVector3 } from "@teskooano/core-math";

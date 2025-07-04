@@ -49,7 +49,7 @@ const asteroidVertexShader = `
     
     // Scale point size based on distance to camera
     float distance = length(mvPosition.xyz);
-    float calculatedPointSize = size * (1.0 / distance) * renderScale * 2500.0;
+    float calculatedPointSize = size * (1.0 / distance) * renderScale * 350.0;
     
     gl_PointSize = max(1.5, calculatedPointSize);
   }
@@ -85,9 +85,11 @@ const asteroidFragmentShader = `
     vec2 uv = gl_PointCoord - center;
     vec2 rotatedUV = rotationMatrix * uv + center;
 
+    /*
     if (rotatedUV.x < 0.0 || rotatedUV.x > 1.0 || rotatedUV.y < 0.0 || rotatedUV.y > 1.0) {
         discard;
     }
+    */
 
     if (vTextureIndex < 0.5) {
         texColor = texture2D(asteroidTextures[0], rotatedUV);
@@ -393,7 +395,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       (au) => au * SCALE.RENDER_SCALE_AU,
     );
 
-    const particleCounts = [20000, 10000, 5000, 1000].reverse();
+    const particleCounts = [20000, 10000, 5000, 5000];
 
     const lodLevels: LODLevel[] = [];
 
@@ -447,7 +449,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       this.previousSimTime = time;
 
       // Slower, cumulative time for individual particle rotation
-      this.cumulativeParticleTime += deltaTime * 0.001; // Scale down for slower rotation
+      this.cumulativeParticleTime += deltaTime * 0.05; // Scale down for slower rotation
       this.cumulativeParticleTime %= 2 * Math.PI; // Prevent precision loss
       material.uniforms.time.value = this.cumulativeParticleTime;
       material.uniforms.renderScale.value = this.renderScale;

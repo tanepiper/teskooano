@@ -2,6 +2,7 @@ import type { CelestialObject, PhysicsStateReal } from "@teskooano/data-types";
 import { CelestialStatus, CelestialType } from "@teskooano/data-types";
 import type { SimulationStepResult } from "@teskooano/core-physics"; // Assuming this path is correct or will be resolved by TS
 import { gameStateService } from "./stores";
+import type { OrbitalParameters } from "@teskooano/data-types";
 
 /**
  * @class PhysicsSystemAdapter
@@ -53,6 +54,24 @@ class PhysicsSystemAdapter {
    */
   public getCelestialObjectsSnapshot(): Record<string, CelestialObject> {
     return gameStateService.getCelestialObjects();
+  }
+
+  /**
+   * Returns a snapshot of the orbital parameters for all celestial objects.
+   */
+  public getOrbitalParametersSnapshot(): Map<
+    string | number,
+    OrbitalParameters
+  > {
+    const orbitalParams = new Map<string | number, OrbitalParameters>();
+    const allObjects = this.getCelestialObjectsSnapshot();
+
+    for (const obj of Object.values(allObjects)) {
+      if (obj.orbit) {
+        orbitalParams.set(obj.id, obj.orbit);
+      }
+    }
+    return orbitalParams;
   }
 
   /**

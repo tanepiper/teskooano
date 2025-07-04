@@ -99,7 +99,16 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     allObjects?: Record<string, RenderableCelestialObject>,
     allMeshes?: Record<string, THREE.Object3D>,
   ): void {
-    this.updateLOD(object.celestialObjectId, camera);
+    const lod = this.lods.get(object.celestialObjectId);
+
+    if (lod) {
+      // Always update the LOD's position from the object's state.
+      // This is crucial for "ideal" mode and ensures the visual position
+      // always matches the physics position.
+      lod.position.copy(object.position);
+      lod.update(camera);
+    }
+
     if (allObjects && allMeshes) {
       this.billboardManager.update(camera, allObjects, allMeshes);
     }

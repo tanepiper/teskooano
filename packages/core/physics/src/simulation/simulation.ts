@@ -1,6 +1,9 @@
-import { PhysicsStateReal } from "../types";
 import { OSVector3 } from "@teskooano/core-math";
-import { CelestialType } from "@teskooano/data-types";
+import {
+  CelestialType,
+  type OrbitalParameters,
+  PhysicsStateReal,
+} from "@teskooano/data-types";
 import { GRAVITATIONAL_CONSTANT } from "../units/constants";
 import {
   handleCollisions,
@@ -10,9 +13,11 @@ import {
   velocityVerletIntegrate,
   standardEuler,
   symplecticEuler,
+  idealOrbit,
 } from "../integrators";
 import { Octree } from "../spatial/octree";
 import type { PhysicsEngineType } from "@teskooano/core-state";
+import { sortBodiesByHierarchy } from "../utils";
 
 /**
  * Helper function to calculate the acceleration on a single body, given its state
@@ -95,6 +100,8 @@ export interface SimulationParameters {
   octreeSize?: number;
   barnesHutTheta?: number;
   physicsEngine?: PhysicsEngineType;
+  orbitalParameters?: Map<string | number, OrbitalParameters>;
+  currentTime_s?: number;
 }
 
 /**
@@ -119,7 +126,64 @@ export const updateSimulation = (
     octreeSize = 5e13,
     barnesHutTheta = 0.7,
     physicsEngine = "verlet",
+    orbitalParameters,
+    currentTime_s,
   } = params;
+
+  if (physicsEngine === "ideal") {
+    if (!orbitalParameters || currentTime_s === undefined || !parentIds) {
+      console.error(
+        'CRITICAL: "ideal" physics engine requires `orbitalParameters`, `currentTime_s`, and `parentIds` to be provided.',
+      );
+      return {
+        states: bodies,
+        accelerations: new Map(),
+        destroyedIds: new Set(),
+        destructionEvents: [],
+      };
+    }
+
+    const bodyMap = new Map(bodies.map((b) => [b.id, b]));
+    const sortedBodies = sortBodiesByHierarchy(bodies, parentIds);
+    const updatedStates: Record<string, PhysicsStateReal> = {};
+
+    for (const body of sortedBodies) {
+      const bodyOrbitalParams = orbitalParameters.get(body.id);
+      const parentId = parentIds.get(body.id);
+
+      if (!parentId || !bodyOrbitalParams) {
+        updatedStates[body.id] = body;
+        continue;
+      }
+
+      // For ideal orbits, the parent state *must* be the already-updated state from this same tick.
+      // We get it from our `updatedStates` map, which we are building as we iterate.
+      const parentState = updatedStates[parentId];
+
+      if (!parentState) {
+        console.warn(
+          `Could not find parent with ID ${parentId} for body ${body.id} in the set of already-updated bodies. This should not happen with a sorted list.`,
+        );
+        updatedStates[body.id] = body; // Can't update, so keep original state.
+        continue;
+      }
+      const newState = idealOrbit(
+        body,
+        parentState,
+        bodyOrbitalParams,
+        currentTime_s,
+      );
+      updatedStates[body.id] = newState;
+    }
+
+    // In Ideal mode, we completely bypass collision detection for a pure "on-rails" orrery simulation.
+    return {
+      states: Object.values(updatedStates),
+      accelerations: new Map(),
+      destroyedIds: new Set(),
+      destructionEvents: [],
+    };
+  }
 
   const accelerations = new Map<string, OSVector3>();
   let nBodyOctree: Octree | undefined; // For Verlet N-body calculations

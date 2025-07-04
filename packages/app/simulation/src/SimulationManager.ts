@@ -194,6 +194,9 @@ export class SimulationManager {
           bodyTypes,
           parentIds,
           physicsEngine: getSimulationState().physicsEngine,
+          orbitalParameters:
+            physicsSystemAdapter.getOrbitalParametersSnapshot(),
+          currentTime_s: this.accumulatedTime,
         };
 
         const result: SimulationStepResult = updateSimulation(

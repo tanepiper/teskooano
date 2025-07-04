@@ -19,12 +19,9 @@ export interface CameraState {
 }
 
 /**
- * Defines the available types of physics engines for the simulation.
- * - `euler`: Standard Euler integration (simple, less accurate).
- * - `symplectic`: Symplectic Euler integration (better energy conservation than standard Euler).
- * - `verlet`: Velocity Verlet integration (good stability and energy conservation, often default).
+ * The type of physics engine to use for the simulation.
  */
-export type PhysicsEngineType = "euler" | "symplectic" | "verlet";
+export type PhysicsEngineType = "euler" | "symplectic" | "verlet" | "ideal";
 
 /**
  * Defines the performance profile settings for the simulation.

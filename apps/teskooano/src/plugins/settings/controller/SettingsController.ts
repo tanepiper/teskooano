@@ -14,6 +14,7 @@ const ENGINE_OPTIONS: { value: PhysicsEngineType; label: string }[] = [
   { value: "euler", label: "Euler Integrator" },
   { value: "symplectic", label: "Symplectic Euler" },
   { value: "verlet", label: "Verlet Integration" },
+  { value: "ideal", label: "Ideal (Keplerian)" },
 ];
 
 const PERFORMANCE_PROFILE_OPTIONS: {

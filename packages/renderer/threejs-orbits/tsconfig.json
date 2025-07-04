@@ -9,6 +9,8 @@
     "paths": {
       "@teskooano/core-state": ["../../core/state/src"],
       "@teskooano/data-types": ["../../data/types/src"],
+      "@teskooano/core-math": ["../../core/math/src"],
+      "@teskooano/core-physics": ["../../core/physics/src"],
       "@teskooano/renderer-threejs-core": ["../threejs-core/src"],
       "@teskooano/systems-celestial": ["../../systems/celestial/src"]
     },
@@ -19,6 +21,8 @@
   "references": [
     { "path": "../../core/state" },
     { "path": "../../data/types" },
+    { "path": "../../core/math" },
+    { "path": "../../core/physics" },
     { "path": "../threejs-core" },
     { "path": "../../systems/celestial" }
   ]

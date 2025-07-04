@@ -32,6 +32,7 @@
     "@teskooano/core-state": "file:../../../core/state",
     "@teskooano/data-types": "file:../../../core/data-types",
     "@teskooano/core-math": "file:../../../core/math",
+    "@teskooano/core-physics": "file:../../../core/physics",
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
     "eventemitter3": "5.0.1",
     "rxjs": "7.8.2"

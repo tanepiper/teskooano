@@ -1,7 +1,7 @@
-import { PhysicsStateReal } from "../types";
 import {
   OrbitalParameters,
   GRAVITATIONAL_CONSTANT,
+  PhysicsStateReal,
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 

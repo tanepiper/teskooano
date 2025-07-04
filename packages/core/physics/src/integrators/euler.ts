@@ -1,4 +1,4 @@
-import { PhysicsStateReal, Integrator } from "../types";
+import { Integrator, PhysicsStateReal } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 
 /**

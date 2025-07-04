@@ -3,6 +3,7 @@ export * from "./scaling";
 
 import * as THREE from "three";
 import { PhysicsStateReal } from "./physics";
+import { OSVector3 } from "@teskooano/core-math";
 
 /**
  * State interface for the simulation
@@ -14,8 +15,8 @@ export interface SimulationState {
   selectedObject: string | null;
   focusedObjectId: string | null;
   camera: {
-    position: THREE.Vector3;
-    target: THREE.Vector3;
+    position: OSVector3;
+    target: OSVector3;
     fov: number;
   };
 }
@@ -24,18 +25,25 @@ export type PairForceCalculator = (
   body1: PhysicsStateReal,
   body2: PhysicsStateReal,
   G?: number,
-) => THREE.Vector3;
+) => OSVector3;
 
 /**
  * Function type for physics integrators that update body state
  */
 export type Integrator = (
   currentState: PhysicsStateReal,
-  acceleration: THREE.Vector3,
+  acceleration: OSVector3,
   dt: number,
 ) => PhysicsStateReal;
 
-export type PhysicsEngineType = "euler" | "symplectic" | "verlet";
+/**
+ * The type of physics engine to use for the simulation.
+ */
+export type PhysicsEngineType = "euler" | "symplectic" | "verlet" | "ideal";
+
+/**
+ * The quality of the trail rendering.
+ */
 
 /**
  * Represents the fundamental properties of a celestial body required for rendering and simulation.
