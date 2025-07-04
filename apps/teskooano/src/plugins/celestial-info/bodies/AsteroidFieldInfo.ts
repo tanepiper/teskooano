@@ -1,10 +1,16 @@
 import {
   AsteroidFieldProperties,
-  AU_METERS,
   CelestialObject,
 } from "@teskooano/data-types";
 import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
+import {
+  renderCard,
+  renderHierarchy,
+  renderMainBody,
+  renderOrbitalParameters,
+  renderPhysics,
+} from "./common/render-helpers.js";
 
 export class AsteroidFieldInfoComponent extends BaseCelestialInfoComponent {
   constructor() {
@@ -14,28 +20,24 @@ export class AsteroidFieldInfoComponent extends BaseCelestialInfoComponent {
   protected renderDetails(celestial: CelestialObject): string {
     const properties = celestial.properties as AsteroidFieldProperties;
 
-    return `
-      <dl class="info-grid">
-          <dt>Type:</dt><dd>Asteroid Field</dd>
-          <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
-          
-          ${
-            celestial.orbit
-              ? `
-          <dt>Inner Radius:</dt><dd>${FormatUtils.formatDistanceAU(celestial.orbit.realSemiMajorAxis_m * (1 - celestial.orbit.eccentricity))}</dd>
-          <dt>Outer Radius:</dt><dd>${FormatUtils.formatDistanceAU(celestial.orbit.realSemiMajorAxis_m * (1 + celestial.orbit.eccentricity))}</dd>
-          <dt>Width:</dt><dd>${FormatUtils.formatDistanceAU(celestial.orbit.realSemiMajorAxis_m * celestial.orbit.eccentricity * 2)}</dd>
-          <dt>Inclination:</dt><dd>${FormatUtils.formatDegrees(celestial.orbit.inclination)}</dd>
-          `
-              : ""
-          }
-          
-          ${properties.innerRadiusAU ? `<dt>Inner Radius (Prop):</dt><dd>${FormatUtils.formatDistanceAU(properties.innerRadiusAU * AU_METERS)}</dd>` : ""} 
-          ${properties.outerRadiusAU ? `<dt>Outer Radius (Prop):</dt><dd>${FormatUtils.formatDistanceAU(properties.outerRadiusAU * AU_METERS)}</dd>` : ""} 
-          ${properties.count ? `<dt>Count:</dt><dd>${properties.count.toLocaleString()}</dd>` : ""} 
+    const physical = `
+          ${properties.count ? `<dt>Count:</dt><dd>${properties.count.toLocaleString()}</dd>` : ""}
           ${properties.composition ? `<dt>Composition:</dt><dd>${properties.composition.join(", ")}</dd>` : ""}
-          ${properties.color ? `<dt>Color:</dt><dd>${properties.color}</dd>` : ""} 
-      </dl>
+          ${properties.color ? `<dt>Color:</dt><dd>${properties.color}</dd>` : ""}
+    `;
+
+    const hierarchy = renderHierarchy(celestial);
+    const orbit = renderOrbitalParameters(celestial.orbit);
+    const physics = renderPhysics(celestial.id, celestial.physicsStateReal);
+
+    return `
+      ${renderMainBody(celestial.name, "Asteroid Field", celestial)}
+      <div class="cards-container">
+          ${renderCard("Hierarchy", hierarchy)}
+          ${renderCard("Orbital Mechanics", orbit)}
+          ${renderCard("Physical Properties", physical)}
+          ${renderCard("Real-time Physics", physics, "physics-card")}
+      </div>
     `;
   }
 }

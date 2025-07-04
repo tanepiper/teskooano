@@ -1,7 +1,14 @@
 import { CelestialObject, StarProperties } from "@teskooano/data-types";
 import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
-import { renderMainProperties } from "./common/render-helpers.js";
+import {
+  renderCard,
+  renderHierarchy,
+  renderMainBody,
+  renderOrbitalParameters,
+  renderPhysicalCharacteristics,
+  renderPhysics,
+} from "./common/render-helpers.js";
 
 export class StarInfoComponent extends BaseCelestialInfoComponent {
   constructor() {
@@ -19,32 +26,38 @@ export class StarInfoComponent extends BaseCelestialInfoComponent {
         spectralDescription = ` (Neutron Star)`;
       }
     }
+    const subtitle = `Star - ${starProps?.spectralClass ?? "Unknown Class"}${spectralDescription}`;
 
     const colorName = FormatUtils.getStarColorName(starProps?.color);
     const colorDisplay = starProps?.color
       ? `${colorName} (${starProps.color})`
       : "N/A";
 
-    return `
-      <dl class="info-grid">
-          <dt>Type:</dt><dd>Star</dd>
-          ${starProps?.isMainStar ? `<dt>Main Star:</dt><dd>Yes</dd>` : ""}
-          ${!starProps?.isMainStar ? `<dt>Orbiting:</dt><dd>${celestial.parentId ?? "N/A"}</dd>` : ""}
-          
-          ${renderMainProperties(celestial)}
+    const physical = renderPhysicalCharacteristics(celestial);
+    const starSpecifics = `
+        <dt>Spectral:</dt><dd>${starProps?.spectralClass ?? "N/A"}${spectralDescription}</dd>
+        <dt>Luminosity:</dt><dd>${FormatUtils.formatExp(starProps?.luminosity, 2)} L☉</dd>
+        <dt>Color:</dt><dd>${colorDisplay}</dd>
+        ${starProps?.classType ? `<dt>Stellar Type:</dt><dd>${starProps.classType}</dd>` : ""}
+    `;
 
-          <dt>Spectral:</dt><dd>${starProps?.spectralClass ?? "N/A"}${spectralDescription}</dd>
-          <dt>Luminosity:</dt><dd>${FormatUtils.formatExp(starProps?.luminosity, 2)} L☉</dd>
-          <dt>Color:</dt><dd>${colorDisplay}</dd>
-          
-          ${celestial.orbit?.realSemiMajorAxis_m ? `<dt>Orbit Size:</dt><dd>${FormatUtils.formatDistanceAU(celestial.orbit.realSemiMajorAxis_m)}</dd>` : ""}
-          ${celestial.orbit?.eccentricity ? `<dt>Eccentricity:</dt><dd>${FormatUtils.formatFix(celestial.orbit.eccentricity, 4)}</dd>` : ""}
-          ${celestial.orbit?.period_s ? `<dt>Period:</dt><dd>${FormatUtils.formatPeriod(celestial.orbit.period_s)}</dd>` : ""}
-          
-          ${starProps?.classType ? `<dt>Stellar Type:</dt><dd>${starProps.classType}</dd>` : ""}
-          
-          ${starProps?.partnerStars && starProps.partnerStars.length > 0 ? `<dt>Partners:</dt><dd>${starProps.partnerStars.join(", ")}</dd>` : ""}
-      </dl>
+    const hierarchy = renderHierarchy(celestial);
+    const orbit = renderOrbitalParameters(celestial.orbit);
+    const physics = renderPhysics(celestial.id, celestial.physicsStateReal);
+
+    const partners =
+      starProps?.partnerStars && starProps.partnerStars.length > 0
+        ? `<dt>Partners:</dt><dd>${starProps.partnerStars.join(", ")}</dd>`
+        : "";
+
+    return `
+      ${renderMainBody(celestial.name, subtitle, celestial)}
+      <div class="cards-container">
+        ${renderCard("Hierarchy", `${hierarchy}${partners}`)}
+        ${renderCard("Orbital Mechanics", orbit)}
+        ${renderCard("Physical Properties", `${physical}${starSpecifics}`)}
+        ${renderCard("Real-time Physics", physics, "physics-card")}
+      </div>
     `;
   }
 }

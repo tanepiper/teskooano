@@ -79,7 +79,8 @@ export interface PlanetAtmosphereProperties {
 /**
  * Properties specific to Planets (including rocky, terrestrial, ice, etc.). Note: Moons use PlanetProperties.
  */
-export interface PlanetProperties extends SpecificPropertiesBase {
+export interface PlanetProperties<T = ProceduralSurfaceProperties>
+  extends SpecificPropertiesBase {
   type: CelestialType.PLANET | CelestialType.MOON | CelestialType.DWARF_PLANET;
   /** The specific type classification of the planet (e.g., ROCKY, TERRESTRIAL). */
   classType?: PlanetType;
@@ -105,71 +106,9 @@ export interface PlanetProperties extends SpecificPropertiesBase {
     speed?: number;
   };
   /** Optional surface characteristics, specific structure depends on PlanetType. */
-  surface?: SurfacePropertiesUnion;
+  surface?: T;
   /** Optional array defining planetary rings. */
   rings?: RingProperties[];
-}
-
-/** Base interface for surface properties */
-export interface BaseSurfaceProperties {
-  /** The general topographic type (e.g., CRATERED, MOUNTAINOUS). */
-  type: SurfaceType;
-  /** The base color of the surface, usually a hex string. */
-  color: string;
-  /** A value indicating surface texture roughness (e.g., 0.0 - 1.0). */
-  roughness: number;
-  /** An optional secondary color for surface variations, usually a hex string. */
-  secondaryColor?: string;
-}
-
-/** Surface properties specific to Desert planets */
-export interface DesertSurfaceProperties extends BaseSurfaceProperties {
-  classType: PlanetType.DESERT;
-  /** Intensity of dune patterns (e.g., 0.0 - 1.0). */
-  dunePattern?: number;
-  /** Average height of dunes (in scaled units). */
-  duneHeight?: number;
-}
-
-/** Surface properties specific to Ice planets */
-export interface IceSurfaceProperties extends BaseSurfaceProperties {
-  classType: PlanetType.ICE;
-  /** Intensity of surface cracks or fissures (e.g., 0.0 - 1.0). */
-  crackIntensity?: number;
-  /** Surface glossiness or shininess (e.g., 0.0 - 1.0). */
-  glossiness?: number;
-  /** Average thickness of the ice layer (in scaled units). */
-  iceThickness?: number;
-}
-
-/** Surface properties specific to Lava planets */
-export interface LavaSurfaceProperties extends BaseSurfaceProperties {
-  classType: PlanetType.LAVA;
-  /** Color of the cooled rock areas, usually a hex string. */
-  rockColor?: string;
-  /** Color of the molten lava, usually a hex string. */
-  lavaColor?: string;
-  /** Level of surface lava flow activity (e.g., 0.0 - 1.0). */
-  lavaActivity?: number;
-  /** Level of volcanic eruptions or hotspots (e.g., 0.0 - 1.0). */
-  volcanicActivity?: number;
-}
-
-/** Surface properties specific to Ocean planets */
-export interface OceanSurfaceProperties extends BaseSurfaceProperties {
-  classType: PlanetType.OCEAN;
-  /** Color of the shallow surface water, usually a hex string. */
-  oceanColor?: string;
-  /** Color of the deeper water, usually a hex string. */
-  deepOceanColor?: string;
-  /** Color of any landmasses or islands, usually a hex string. */
-  landColor?: string;
-  /** Ratio of land area to water area (0.0 - 1.0). */
-  landRatio?: number;
-  /** Average height of surface waves (e.g., 0.0 - 1.0). */
-  waveHeight?: number;
-  /** Average depth of the oceans (in scaled units). */
-  oceanDepth?: number;
 }
 
 /**
@@ -229,30 +168,6 @@ export interface ProceduralSurfaceProperties {
   /** Base height offset for the entire terrain */
   terrainOffset: number;
 }
-
-/** Surface properties specific to Rocky/Terrestrial planets */
-export interface RockyTerrestrialSurfaceProperties
-  extends ProceduralSurfaceProperties,
-    BaseSurfaceProperties {
-  classType: PlanetType.ROCKY | PlanetType.TERRESTRIAL;
-}
-
-/** Surface properties specific to Barren planets */
-export interface BarrenSurfaceProperties
-  extends ProceduralSurfaceProperties,
-    BaseSurfaceProperties {
-  classType: PlanetType.BARREN;
-}
-
-/** Union type for all possible surface properties */
-export type SurfacePropertiesUnion =
-  | DesertSurfaceProperties
-  | IceSurfaceProperties
-  | LavaSurfaceProperties
-  | OceanSurfaceProperties
-  | RockyTerrestrialSurfaceProperties
-  | BarrenSurfaceProperties
-  | BaseSurfaceProperties;
 
 /**
  * Represents the properties defining a single planetary ring or a segment of a ring system.

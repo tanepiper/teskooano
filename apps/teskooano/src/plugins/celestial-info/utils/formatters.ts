@@ -69,6 +69,16 @@ export class FormatUtils {
     }
   }
 
+  static formatSpeed(
+    metersPerSecond: number | undefined | null,
+    digits = 2,
+  ): string {
+    if (metersPerSecond == null || !Number.isFinite(metersPerSecond))
+      return "N/A";
+    const kmPerSecond = metersPerSecond / 1000;
+    return `${kmPerSecond.toFixed(digits)} km/s`;
+  }
+
   static getStarColorName(hexColor: string | undefined | null): string {
     if (!hexColor) return "Unknown";
 

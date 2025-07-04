@@ -1,13 +1,16 @@
-import { CelestialObject, PlanetProperties } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/formatters";
-import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
+import { CelestialObject } from "@teskooano/data-types";
 import {
   renderAlbedo,
-  renderMainProperties,
-  renderOrbit,
+  renderCard,
+  renderHierarchy,
+  renderMainBody,
+  renderOrbitalParameters,
+  renderPhysicalCharacteristics,
+  renderPhysics,
   renderRingSystem,
-  renderRotation,
+  renderRotationalParameters,
 } from "./common/render-helpers.js";
+import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 
 export class MoonInfoComponent extends BaseCelestialInfoComponent {
   constructor() {
@@ -15,25 +18,25 @@ export class MoonInfoComponent extends BaseCelestialInfoComponent {
   }
 
   protected renderDetails(celestial: CelestialObject): string {
-    const moonProps = celestial.properties as PlanetProperties;
-    const surface = moonProps?.surface;
+    const physical = renderPhysicalCharacteristics(celestial);
+    const rotation = renderRotationalParameters(
+      celestial.siderealRotationPeriod_s,
+    );
+    const albedo = renderAlbedo(celestial.albedo);
+    const rings = renderRingSystem(celestial.id);
+
+    const hierarchy = renderHierarchy(celestial);
+    const orbit = renderOrbitalParameters(celestial.orbit);
+    const physics = renderPhysics(celestial.id, celestial.physicsStateReal);
 
     return `
-      <dl class="info-grid">
-          <dt>Type:</dt><dd>Moon</dd>
-          <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
-          <dt>Moon Type:</dt><dd>${moonProps?.classType ?? "N/A"}</dd>
-          
-          ${renderMainProperties(celestial)}
-          
-          ${surface ? `<dt>Surface:</dt><dd>${surface.type ?? "N/A"}</dd>` : ""}
-          ${surface ? `<dt>Roughness:</dt><dd>${FormatUtils.formatFix(surface.roughness, 2)}</dd>` : ""}
-          
-          ${renderRingSystem(celestial.id)}
-          ${renderOrbit(celestial.orbit)}
-          ${renderRotation(celestial.siderealRotationPeriod_s)}
-          ${renderAlbedo(celestial.albedo)}
-      </dl>
+      ${renderMainBody(celestial.name, "Moon", celestial)}
+      <div class="cards-container">
+        ${renderCard("Hierarchy", hierarchy)}
+        ${renderCard("Orbital Mechanics", orbit)}
+        ${renderCard("Physical Properties", `${physical}${rotation}${albedo}${rings}`)}
+        ${renderCard("Real-time Physics", physics, "physics-card")}
+      </div>
     `;
   }
 }

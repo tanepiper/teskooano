@@ -30,6 +30,31 @@ export const baseStyles = `
   letter-spacing: 0.5px;
   flex-grow: 1;
 }
+.title-container p {
+    margin: 0;
+    font-size: var(--font-size-md, 15px);
+    color: var(--color-text-secondary, #aaa);
+}
+.cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.info-card {
+    background-color: var(--color-background-subtle, #252532);
+    border: 1px solid var(--color-border-subtle, #444);
+    border-radius: var(--border-radius-lg, 6px);
+    padding: 0.75rem 1rem;
+}
+.info-card h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: var(--font-size-md, 15px);
+    color: var(--color-text-accent, #66d9ef);
+    font-weight: 500;
+    border-bottom: 1px solid var(--color-border-subtle, #444);
+    padding-bottom: 0.5rem;
+}
 .info-grid {
   display: grid;
   grid-template-columns: 120px 1fr;

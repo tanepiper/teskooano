@@ -5,7 +5,6 @@ import type { CelestialStatus, CelestialType } from "./enums";
 import type {
   CelestialSpecificPropertiesUnion,
   PlanetAtmosphereProperties,
-  SurfacePropertiesUnion,
 } from "./properties.types";
 
 /**
@@ -58,9 +57,6 @@ export interface CelestialObject {
 
   /** Optional atmospheric properties common to many bodies */
   atmosphere?: PlanetAtmosphereProperties;
-
-  /** Optional surface properties common to many bodies */
-  surface?: SurfacePropertiesUnion;
 
   /** Object containing properties specific to the `type` (or `class`) of celestial object. Optional for types like OTHER. */
   properties?: CelestialSpecificPropertiesUnion;

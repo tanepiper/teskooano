@@ -166,19 +166,19 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
    */
   protected getSegmentsForDetailLevel(
     detailLevel?: string,
-    defaultSegments: number = 64,
+    defaultSegments: number = 16,
   ): number {
     if (!detailLevel) return defaultSegments;
 
     switch (detailLevel) {
       case "high":
-        return 128;
-      case "medium":
-        return 64;
-      case "low":
         return 32;
-      case "very-low":
+      case "medium":
         return 16;
+      case "low":
+        return 8;
+      case "very-low":
+        return 4;
       default:
         return defaultSegments;
     }

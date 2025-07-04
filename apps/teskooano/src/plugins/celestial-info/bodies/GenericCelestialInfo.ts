@@ -1,6 +1,13 @@
 import { CelestialObject } from "@teskooano/data-types";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
-import { renderMainProperties, renderOrbit } from "./common/render-helpers.js";
+import {
+  renderCard,
+  renderHierarchy,
+  renderMainBody,
+  renderOrbitalParameters,
+  renderPhysicalCharacteristics,
+  renderPhysics,
+} from "./common/render-helpers.js";
 
 export class GenericCelestialInfoComponent extends BaseCelestialInfoComponent {
   constructor() {
@@ -8,14 +15,19 @@ export class GenericCelestialInfoComponent extends BaseCelestialInfoComponent {
   }
 
   protected renderDetails(celestial: CelestialObject): string {
+    const physical = renderPhysicalCharacteristics(celestial);
+    const hierarchy = renderHierarchy(celestial);
+    const orbit = renderOrbitalParameters(celestial.orbit);
+    const physics = renderPhysics(celestial.id, celestial.physicsStateReal);
+
     return `
-      <dl class="info-grid">
-          <dt>Type:</dt><dd>${celestial.type ?? "Unknown"}</dd>
-          <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
-          
-          ${renderMainProperties(celestial)}
-          ${renderOrbit(celestial.orbit)}
-      </dl>
+        ${renderMainBody(celestial.name, celestial.type, celestial)}
+        <div class="cards-container">
+            ${renderCard("Hierarchy", hierarchy)}
+            ${renderCard("Orbital Mechanics", orbit)}
+            ${renderCard("Physical Properties", physical)}
+            ${renderCard("Real-time Physics", physics, "physics-card")}
+        </div>
     `;
   }
 }

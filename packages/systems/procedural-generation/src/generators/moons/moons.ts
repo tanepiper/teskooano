@@ -12,6 +12,7 @@ import {
 } from "@teskooano/data-types";
 import * as CONST_PROC_GEN from "../../constants"; // Aliasing to avoid conflict if CONST is used locally
 import { generateMoon } from "./moon"; // Assuming generateMoon is in the same directory
+import { getCelestialTypeForPlanet } from "../../utils/celestials";
 
 /**
  * Creates an RxJS Observable that generates scientifically realistic numbers of moons
@@ -186,34 +187,6 @@ function calculateRealisticMoonCount(
     0,
     adjustedBase + randomVariation - Math.floor(variation / 2),
   );
-}
-
-/**
- * Determines planet type from CelestialObject properties
- */
-function getCelestialTypeForPlanet(
-  planetObject: CelestialObject,
-): CelestialType {
-  if (planetObject.type === CelestialType.GAS_GIANT) {
-    return CelestialType.GAS_GIANT;
-  }
-
-  const props = planetObject.properties as PlanetProperties;
-  if (!props) return CelestialType.OTHER;
-
-  switch (props.classType) {
-    case PlanetType.TERRESTRIAL:
-    case PlanetType.ROCKY:
-    case PlanetType.DESERT:
-    case PlanetType.LAVA:
-    case PlanetType.BARREN:
-    case PlanetType.ICE:
-    case PlanetType.OCEAN:
-      return CelestialType.PLANET;
-
-    default:
-      return CelestialType.OTHER;
-  }
 }
 
 /**

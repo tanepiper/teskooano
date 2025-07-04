@@ -91,8 +91,9 @@ export function generateIconConfig(
   const atmosphere = getAtmosphereConfig(object);
   if (atmosphere) baseConfig.atmosphere = atmosphere;
 
-  if (object.surface && "persistence" in object.surface) {
-    baseConfig.procedural = object.surface as ProceduralSurfaceProperties;
+  if (object.properties && "surface" in object.properties) {
+    baseConfig.procedural = (object.properties as PlanetProperties)
+      .surface as ProceduralSurfaceProperties;
   }
 
   switch (object.type) {

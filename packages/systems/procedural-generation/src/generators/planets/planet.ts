@@ -213,7 +213,8 @@ export function generatePlanet(
 
       if (generatedRings && generatedRings.length > 0) {
         if (planetData.properties) {
-          (planetData.properties as PlanetProperties).rings = generatedRings;
+          (planetData.properties as PlanetProperties).rings =
+            generatedRings as RingProperties[];
         }
       }
 
@@ -390,7 +391,8 @@ export function generateRoguePlanet(
 
       if (generatedRings && generatedRings.length > 0) {
         if (planetData.properties) {
-          (planetData.properties as PlanetProperties).rings = generatedRings;
+          (planetData.properties as PlanetProperties).rings =
+            generatedRings as RingProperties[];
         }
       }
 

@@ -3,15 +3,18 @@ import {
   CelestialType,
   PlanetProperties,
 } from "@teskooano/data-types";
-import { FormatUtils } from "../utils/formatters";
-import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 import {
   renderAlbedo,
-  renderMainProperties,
-  renderOrbit,
+  renderMainBody,
+  renderCard,
+  renderHierarchy,
+  renderOrbitalParameters,
+  renderPhysicalCharacteristics,
   renderRingSystem,
-  renderRotation,
+  renderRotationalParameters,
+  renderPhysics,
 } from "./common/render-helpers.js";
+import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 
 export class PlanetInfoComponent extends BaseCelestialInfoComponent {
   constructor() {
@@ -20,25 +23,28 @@ export class PlanetInfoComponent extends BaseCelestialInfoComponent {
 
   protected renderDetails(celestial: CelestialObject): string {
     const planetProps = celestial.properties as PlanetProperties;
-    const surface = planetProps?.surface;
-    const atmosphere = planetProps?.atmosphere;
+    const subtitle =
+      celestial.type === CelestialType.DWARF_PLANET ? "Dwarf Planet" : "Planet";
+
+    const physical = renderPhysicalCharacteristics(celestial);
+    const rotation = renderRotationalParameters(
+      celestial.siderealRotationPeriod_s,
+    );
+    const albedo = renderAlbedo(celestial.albedo);
+    const rings = renderRingSystem(celestial.id);
+
+    const hierarchy = renderHierarchy(celestial);
+    const orbit = renderOrbitalParameters(celestial.orbit);
+    const physics = renderPhysics(celestial.id, celestial.physicsStateReal);
 
     return `
-      <dl class="info-grid">
-          <dt>Type:</dt><dd>${celestial.type === CelestialType.DWARF_PLANET ? "Dwarf Planet" : "Planet"}</dd>
-          <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
-          <dt>Planet Type:</dt><dd>${planetProps?.classType ?? "N/A"}</dd>
-          
-          ${renderMainProperties(celestial)}
-          
-          ${surface ? `<dt>Surface:</dt><dd>${surface.type ?? "N/A"}</dd>` : ""}
-          ${surface ? `<dt>Roughness:</dt><dd>${FormatUtils.formatFix(surface.roughness, 2)}</dd>` : ""}
-          
-          ${renderRingSystem(celestial.id)}
-          ${renderOrbit(celestial.orbit)}
-          ${renderRotation(celestial.siderealRotationPeriod_s)}
-          ${renderAlbedo(celestial.albedo)}
-      </dl>
+      ${renderMainBody(celestial.name, subtitle, celestial)}
+      <div class="cards-container">
+        ${renderCard("Hierarchy", hierarchy)}
+        ${renderCard("Orbital Mechanics", orbit)}
+        ${renderCard("Physical Properties", `${physical}${rotation}${albedo}${rings}`)}
+        ${renderCard("Real-time Physics", physics, "physics-card")}
+      </div>
     `;
   }
 }

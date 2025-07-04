@@ -1,6 +1,8 @@
 import { CelestialObject } from "@teskooano/data-types";
+import { StateAccessor } from "@teskooano/core-state";
 import { CelestialInfoComponent } from "../../utils/CelestialInfoInterface.js";
 import { baseStyles } from "../../utils/CelestialStyles.js";
+import { renderPhysics } from "./render-helpers.js";
 
 /**
  * An abstract base class for celestial info components.
@@ -13,6 +15,8 @@ export abstract class BaseCelestialInfoComponent
 {
   protected shadow: ShadowRoot;
   private container: HTMLElement;
+  private physicsUpdateInterval: number | null = null;
+  private currentCelestialId: string | null = null;
 
   constructor(placeholderText: string) {
     super();
@@ -24,6 +28,45 @@ export abstract class BaseCelestialInfoComponent
     this.container = this.shadow.getElementById("container")!;
   }
 
+  connectedCallback() {
+    this.startPhysicsUpdates();
+  }
+
+  disconnectedCallback() {
+    this.stopPhysicsUpdates();
+  }
+
+  private startPhysicsUpdates(): void {
+    if (this.physicsUpdateInterval) return;
+    this.physicsUpdateInterval = window.setInterval(() => {
+      if (!this.currentCelestialId) return;
+
+      const physicsDataContainer = this.shadow.getElementById(
+        `physics-data-${this.currentCelestialId}`,
+      );
+      if (!physicsDataContainer) return;
+
+      const allObjects = StateAccessor.getCurrentCelestialObjects();
+      const celestial = allObjects[this.currentCelestialId];
+
+      if (celestial?.physicsStateReal) {
+        physicsDataContainer.innerHTML = renderPhysics(
+          this.currentCelestialId,
+          celestial.physicsStateReal,
+        )
+          .replace(/<div.*?>/, "")
+          .replace("</div>", ""); // Render only the inner part
+      }
+    }, 1000);
+  }
+
+  private stopPhysicsUpdates(): void {
+    if (this.physicsUpdateInterval) {
+      clearInterval(this.physicsUpdateInterval);
+      this.physicsUpdateInterval = null;
+    }
+  }
+
   /**
    * The main update method called by the view manager.
    * It removes the placeholder class and updates the container's content
@@ -32,14 +75,9 @@ export abstract class BaseCelestialInfoComponent
    */
   public updateData(celestial: CelestialObject): void {
     if (!this.container) return;
+    this.currentCelestialId = celestial.id;
     this.container.classList.remove("placeholder");
-    this.container.innerHTML = `
-      <div class="title-container">
-        <celestial-icon object-id="${celestial.id}"></celestial-icon>
-        <h3>${celestial.name}</h3>
-      </div>
-      ${this.renderDetails(celestial)}
-    `;
+    this.container.innerHTML = this.renderDetails(celestial);
   }
 
   /**
