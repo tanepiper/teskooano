@@ -1,0 +1,80 @@
+import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
+import { KM } from "@teskooano/core-physics";
+import { actions } from "@teskooano/core-state";
+import {
+  CelestialType,
+  PlanetType,
+  SurfaceType,
+  type PlanetProperties,
+} from "@teskooano/data-types";
+
+const MIRANDA_REAL_RADIUS_M = 235800;
+
+/**
+ * Creates Miranda.
+ * @param parentId The ID of the parent object (Uranus).
+ */
+export function initializeMiranda(parentId: string): void {
+  const defaultMoonAxialTilt = new OSVector3(0, 1, 0).normalize();
+
+  actions.addCelestial({
+    id: "miranda",
+    name: "Miranda",
+    seed: "miranda_seed_1413",
+    type: CelestialType.MOON,
+    parentId: parentId,
+    realMass_kg: 6.59e19,
+    realRadius_m: MIRANDA_REAL_RADIUS_M,
+    siderealRotationPeriod_s: 1.22e5,
+    axialTilt: defaultMoonAxialTilt,
+    orbit: {
+      realSemiMajorAxis_m: 129390 * KM,
+      eccentricity: 0.0013,
+      inclination: 4.232 * DEG_TO_RAD,
+      longitudeOfAscendingNode: 169.5 * DEG_TO_RAD,
+      argumentOfPeriapsis: 289.7 * DEG_TO_RAD,
+      meanAnomaly: 182.4 * DEG_TO_RAD,
+      period_s: 1.22e5,
+    },
+    temperature: 60,
+    albedo: 0.32,
+    properties: {
+      type: CelestialType.MOON,
+      planetType: PlanetType.BARREN,
+      isMoon: true,
+      parentPlanet: parentId,
+      composition: ["water ice", "silicates", "methane clathrates?"],
+      surface: {
+        // Base surface properties
+        type: SurfaceType.CANYONOUS,
+        color: "#B8B8C0", // Light gray
+        roughness: 0.75,
+        planetType: PlanetType.BARREN,
+        // Miranda bizarre terrain procedural properties
+        persistence: 0.65,
+        lacunarity: 2.5,
+        simplePeriod: 1.5,
+        octaves: 12,
+        bumpScale: 4.0,
+        color1: "#707078", // Dark areas
+        color2: "#909098", // Medium gray
+        color3: "#B8B8C0", // Miranda's surface
+        color4: "#D0D0D8", // Lighter ridges
+        color5: "#E8E8F0", // Brightest cliffs
+        height1: 0.05,
+        height2: 0.25,
+        height3: 0.5,
+        height4: 0.75,
+        height5: 0.95,
+        shininess: 15,
+        specularStrength: 0.35,
+        ambientLightIntensity: 0.35,
+        undulation: 0.5,
+        terrainType: 1,
+        terrainAmplitude: 1.5,
+        terrainSharpness: 2.5,
+        terrainOffset: 0.0,
+      },
+    } as PlanetProperties,
+  });
+}

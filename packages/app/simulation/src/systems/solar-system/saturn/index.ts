@@ -5,6 +5,9 @@ import { initializeRhea } from "./rhea";
 import { initializeIapetus } from "./iapetus";
 import { initializeDione } from "./dione";
 import { initializeTethys } from "./tethys";
+import { initializeMimas } from "./mimas";
+import { initializeHyperion } from "./hyperion";
+import { initializePhoebe } from "./phoebe";
 
 /**
  * Initializes the complete Saturn system: the planet and its major moons.
@@ -12,10 +15,18 @@ import { initializeTethys } from "./tethys";
 export function initializeSaturn(parentId: string): void {
   const saturnId = initializeSaturnPlanet(parentId);
 
-  initializeTitan(saturnId);
+  // Major inner moons
+  initializeMimas(saturnId);
   initializeEnceladus(saturnId);
-  initializeRhea(saturnId);
-  initializeIapetus(saturnId);
-  initializeDione(saturnId);
   initializeTethys(saturnId);
+  initializeDione(saturnId);
+  initializeRhea(saturnId);
+
+  // Major outer moons
+  initializeTitan(saturnId);
+  initializeHyperion(saturnId);
+  initializeIapetus(saturnId);
+
+  // Irregular captured moon
+  initializePhoebe(saturnId);
 }

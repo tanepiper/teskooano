@@ -68,12 +68,7 @@ export function initializeVesta(parentId: string): void {
         "diogenite",
       ],
       shapeModel: "asteroid",
-      atmosphere: {
-        glowColor: "#000000",
-        intensity: 0,
-        power: 0,
-        thickness: 0,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.CRATERED,
         color: "#B8A48C",
