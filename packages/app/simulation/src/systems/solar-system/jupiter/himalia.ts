@@ -48,7 +48,7 @@ export function initializeHimalia(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["rock", "ice"],
@@ -56,7 +56,7 @@ export function initializeHimalia(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#9E9E9E",
         roughness: 0.9,
-        planetType: PlanetType.ROCKY,
+        classType: PlanetType.ROCKY,
         persistence: 0.5,
         lacunarity: 2.1,
         simplePeriod: 2.5,

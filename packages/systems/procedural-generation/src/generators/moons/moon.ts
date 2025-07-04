@@ -246,7 +246,7 @@ export function generateMoon(
 
   const moonSpecificProperties: PlanetProperties = {
     type: CelestialType.PLANET,
-    planetType: moonPlanetType,
+    classType: moonPlanetType,
     isMoon: true,
     parentPlanet: parentPlanetData.id,
     composition: determineMoonComposition(
@@ -508,7 +508,7 @@ function determineMoonType(
   switch (formation) {
     case "co-accretion":
       // Similar to parent planet material
-      if (parentProps?.planetType === PlanetType.TERRESTRIAL) {
+      if (parentProps?.classType === PlanetType.TERRESTRIAL) {
         return PlanetType.ROCKY;
       } else {
         return PlanetType.ICE; // Moons of gas giants are often icy

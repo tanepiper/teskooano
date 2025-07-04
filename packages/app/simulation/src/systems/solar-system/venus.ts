@@ -57,7 +57,7 @@ export function initializeVenus(parentId: string): void {
     },
     properties: {
       type: CelestialType.PLANET,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: false,
       composition: [
         "silicates",
@@ -76,7 +76,7 @@ export function initializeVenus(parentId: string): void {
         type: SurfaceType.VOLCANIC,
         color: "#DAA520", // Goldenrod base (sulfurous)
         roughness: 0.7,
-        planetType: PlanetType.ROCKY,
+        classType: PlanetType.ROCKY,
         // Venus-like sulfurous/volcanic procedural properties
         persistence: 0.55,
         lacunarity: 2.0,

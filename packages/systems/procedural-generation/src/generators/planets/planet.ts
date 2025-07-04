@@ -138,7 +138,7 @@ export function generatePlanet(
 
       const planetAlbedo = UTIL.calculateAlbedo(
         baseProps.celestialType,
-        baseProps.planetType,
+        baseProps.celestialClass,
         random,
       );
 
@@ -147,7 +147,7 @@ export function generatePlanet(
       if (baseProps.celestialType === CelestialType.PLANET) {
         const proceduralSurface = createProceduralSurfaceProperties(
           random,
-          baseProps.planetType,
+          baseProps.celestialClass,
         );
         properties = {
           ...properties,
@@ -163,29 +163,29 @@ export function generatePlanet(
           ...specificProperties,
           atmosphere: {
             glowColor: UTIL.getRandomItem(
-              specificProperties.planetType === PlanetType.TERRESTRIAL
+              specificProperties.classType === PlanetType.TERRESTRIAL
                 ? ["#dfe0e7", "#e7e9eb", "#f2f4f7"]
-                : specificProperties.planetType === PlanetType.ICE
+                : specificProperties.classType === PlanetType.ICE
                   ? ["#aaccff", "#cceeff", "#ddeeff"]
                   : ["#ff9966", "#ffaa88", "#ffbb99"],
               random,
             ),
             intensity:
-              specificProperties.planetType === PlanetType.TERRESTRIAL
+              specificProperties.classType === PlanetType.TERRESTRIAL
                 ? 1.0
-                : specificProperties.planetType === PlanetType.ICE
+                : specificProperties.classType === PlanetType.ICE
                   ? 0.8
                   : 1.2,
             power:
-              specificProperties.planetType === PlanetType.TERRESTRIAL
+              specificProperties.classType === PlanetType.TERRESTRIAL
                 ? 2.0
-                : specificProperties.planetType === PlanetType.ICE
+                : specificProperties.classType === PlanetType.ICE
                   ? 1.8
                   : 2.2,
             thickness:
-              specificProperties.planetType === PlanetType.TERRESTRIAL
+              specificProperties.classType === PlanetType.TERRESTRIAL
                 ? 0.1
-                : specificProperties.planetType === PlanetType.ICE
+                : specificProperties.classType === PlanetType.ICE
                   ? 0.08
                   : 0.12,
           },
@@ -260,7 +260,7 @@ export function generateRoguePlanet(
         // 30% chance of being a gas giant (likely ejected ice giant)
         baseProps = {
           celestialType: CelestialType.GAS_GIANT,
-          planetType:
+          classType:
             random() < 0.7 ? GasGiantClass.CLASS_III : GasGiantClass.CLASS_IV, // Ice giants
           preliminaryDensity_kg_m3: 1500, // Lower density for ice giants
           targetDensity_kg_m3: 1500,
@@ -272,7 +272,7 @@ export function generateRoguePlanet(
         // 70% chance of being a rocky/ice planet
         baseProps = {
           celestialType: CelestialType.PLANET,
-          planetType: random() < 0.6 ? PlanetType.ICE : PlanetType.ROCKY,
+          classType: random() < 0.6 ? PlanetType.ICE : PlanetType.ROCKY,
           preliminaryDensity_kg_m3: 4000, // Rocky density
           targetDensity_kg_m3: 4000,
           massMultiplierFactor: random() * 3 + 0.5, // 0.5-3.5x Earth mass
@@ -338,7 +338,7 @@ export function generateRoguePlanet(
 
       const planetAlbedo = UTIL.calculateAlbedo(
         baseProps.celestialType,
-        baseProps.planetType,
+        baseProps.classType,
         random,
       );
 
@@ -347,7 +347,7 @@ export function generateRoguePlanet(
       if (baseProps.celestialType === CelestialType.PLANET) {
         const proceduralSurface = createProceduralSurfaceProperties(
           random,
-          baseProps.planetType,
+          baseProps.classType,
         );
         properties = {
           ...properties,

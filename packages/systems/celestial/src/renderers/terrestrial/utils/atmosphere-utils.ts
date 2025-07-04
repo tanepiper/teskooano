@@ -43,7 +43,7 @@ export class AtmosphereService {
     );
     // Adjust default color based on planet type if color isn't explicitly set
     if (!atmosphereProps.glowColor) {
-      if (props?.planetType === PlanetType.LAVA) {
+      if (props?.classType === PlanetType.LAVA) {
         atmosphereColor = new THREE.Color("#FF6644"); // Orangey-red for lava atmosphere
       } else {
         atmosphereColor = new THREE.Color("#88AAFF"); // Bluish for typical atmosphere

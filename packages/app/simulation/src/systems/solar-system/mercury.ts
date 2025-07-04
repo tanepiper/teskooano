@@ -55,7 +55,7 @@ export function initializeMercury(parentId: string): void {
     },
     properties: {
       type: CelestialType.PLANET,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: false,
       composition: ["iron core", "silicate mantle", "thin exosphere"],
       surface: {
@@ -63,7 +63,7 @@ export function initializeMercury(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#8C7853", // Brownish-gray
         roughness: 0.85,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         // Mercury-like barren procedural properties
         persistence: 0.5,
         lacunarity: 2.2,

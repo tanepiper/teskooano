@@ -21,7 +21,7 @@ export class GasGiantInfoComponent extends BaseCelestialInfoComponent {
       <dl class="info-grid">
           <dt>Type:</dt><dd>Gas Giant</dd>
           <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
-          <dt>Class:</dt><dd>${giantProps?.planetType ?? "N/A"}</dd>
+          <dt>Class:</dt><dd>${giantProps?.classType ?? "N/A"}</dd>
           
           ${renderMainProperties(celestial)}
           

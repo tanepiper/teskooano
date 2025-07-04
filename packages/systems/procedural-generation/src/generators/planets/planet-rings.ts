@@ -1,4 +1,4 @@
-import type { RingProperties } from "@teskooano/data-types";
+import type { CelestiaClassType, RingProperties } from "@teskooano/data-types";
 import { RockyType } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 import * as UTIL from "../../utils";
@@ -12,7 +12,7 @@ interface RingFormationContext {
   stellarDistanceAU: number;
   systemAge: number;
   hasLargeMoons: boolean;
-  planetType: string;
+  classType: CelestiaClassType;
 }
 
 /**
@@ -41,7 +41,7 @@ function calculateRocheLimit(
  */
 function getFormationZoneRingTypes(
   stellarDistanceAU: number,
-  planetType: string,
+  classType: CelestiaClassType,
   allowedTypes: RockyType[],
 ): RockyType[] {
   const snowLine = 2.7; // Approximate snow line in AU
@@ -66,7 +66,7 @@ function getFormationZoneRingTypes(
   }
 
   // Gas giants more likely to have complex ring systems
-  if (planetType.includes("CLASS_")) {
+  if (classType.includes("CLASS_")) {
     if (!enhancedTypes.includes(RockyType.ICE)) {
       enhancedTypes.push(RockyType.ICE);
     }
@@ -86,7 +86,7 @@ function calculateRingFormationProbability(
   let probability = 1.0;
 
   // Gas giants much more likely to have rings
-  if (context.planetType.includes("CLASS_")) {
+  if (context.classType.includes("CLASS_")) {
     probability *= 3.0;
   }
 
@@ -260,7 +260,7 @@ export function generateRings(
 
     // Enhanced ring count based on planet type
     let maxRings = 5;
-    if (context?.planetType.includes("CLASS_")) {
+    if (context?.classType.includes("CLASS_")) {
       maxRings = 8; // Gas giants can have more complex ring systems
     }
 
@@ -270,7 +270,7 @@ export function generateRings(
     const enhancedAllowedTypes = context
       ? getFormationZoneRingTypes(
           context.stellarDistanceAU,
-          context.planetType,
+          context.classType,
           allowedTypes,
         )
       : allowedTypes;

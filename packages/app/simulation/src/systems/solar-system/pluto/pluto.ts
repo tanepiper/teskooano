@@ -57,7 +57,7 @@ export function initializePlutoDwarfPlanet(parentId: string): string {
     },
     properties: {
       type: CelestialType.DWARF_PLANET,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: false,
       composition: [
         "nitrogen ice",
@@ -77,7 +77,7 @@ export function initializePlutoDwarfPlanet(parentId: string): string {
         type: SurfaceType.ICE_FLATS,
         color: "#F5E8D1",
         roughness: 0.4,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.53,
         lacunarity: 2.15,
         simplePeriod: 0.86,

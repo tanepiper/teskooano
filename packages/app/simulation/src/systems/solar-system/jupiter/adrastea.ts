@@ -45,7 +45,7 @@ export function initializeAdrastea(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["rocky materials", "ice"],
@@ -53,7 +53,7 @@ export function initializeAdrastea(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#888888",
         roughness: 0.8,
-        planetType: PlanetType.ROCKY,
+        classType: PlanetType.ROCKY,
         persistence: 0.5,
         lacunarity: 2.0,
         simplePeriod: 2.0,

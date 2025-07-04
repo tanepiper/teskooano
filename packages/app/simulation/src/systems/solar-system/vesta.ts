@@ -57,7 +57,7 @@ export function initializeVesta(parentId: string): void {
     },
     properties: {
       type: CelestialType.DWARF_PLANET,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: false,
       composition: [
         "basaltic crust",
@@ -73,7 +73,7 @@ export function initializeVesta(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#B8A48C",
         roughness: 0.85,
-        planetType: PlanetType.ROCKY,
+        classType: PlanetType.ROCKY,
         persistence: 0.6,
         lacunarity: 2.4,
         simplePeriod: 2.2,

@@ -30,7 +30,7 @@ const createMockRenderableStar = (
     properties: {
       type: CelestialType.STAR,
       isMainStar: true,
-      stellarType: StellarType.MAIN_SEQUENCE,
+      classType: StellarType.MAIN_SEQUENCE,
       spectralClass: "G2V",
       luminosity: 1,
       color: "#FFFFFF",

@@ -182,7 +182,7 @@ class CelestialFactoryService {
     const specialSpectralClass = inputStarProps?.specialSpectralClass;
     const exoticType = inputStarProps?.exoticType;
     const whiteDwarfType = inputStarProps?.whiteDwarfType;
-    const stellarType = inputStarProps?.stellarType;
+    const stellarType = inputStarProps?.classType;
     const partnerStars = inputStarProps?.partnerStars;
 
     let albedo = data.albedo;
@@ -207,7 +207,7 @@ class CelestialFactoryService {
       spectralClass,
       luminosity: defaultLuminosity,
       color: defaultColor,
-      stellarType,
+      classType: stellarType,
       partnerStars,
       mainSpectralClass,
       luminosityClass,

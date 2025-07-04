@@ -48,7 +48,7 @@ export function initializeGanymede(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: [
@@ -67,7 +67,7 @@ export function initializeGanymede(parentId: string): void {
         type: SurfaceType.ICE_FLATS,
         color: "#D0D8E0",
         roughness: 0.4,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.5,
         lacunarity: 2.0,
         simplePeriod: 2.5,

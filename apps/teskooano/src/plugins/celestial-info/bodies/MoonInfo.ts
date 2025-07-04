@@ -22,7 +22,7 @@ export class MoonInfoComponent extends BaseCelestialInfoComponent {
       <dl class="info-grid">
           <dt>Type:</dt><dd>Moon</dd>
           <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
-          <dt>Moon Type:</dt><dd>${moonProps?.planetType ?? "N/A"}</dd>
+          <dt>Moon Type:</dt><dd>${moonProps?.classType ?? "N/A"}</dd>
           
           ${renderMainProperties(celestial)}
           

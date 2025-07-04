@@ -48,7 +48,7 @@ export interface StarProperties extends SpecificPropertiesBase {
   /** The primary color tint of the star, usually represented as a hex string. */
   color: string;
   /** Optional classification for exotic star types like Neutron Stars, Black Holes, etc. */
-  stellarType?: StellarType;
+  classType?: StellarType;
   /** Optional array of partner star IDs, used for multi-star systems orbital calculations. */
   partnerStars?: string[];
   /** Main spectral class (O, B, A, F, G, K, M, etc.) */
@@ -82,7 +82,7 @@ export interface PlanetAtmosphereProperties {
 export interface PlanetProperties extends SpecificPropertiesBase {
   type: CelestialType.PLANET | CelestialType.MOON | CelestialType.DWARF_PLANET;
   /** The specific type classification of the planet (e.g., ROCKY, TERRESTRIAL). */
-  planetType?: PlanetType;
+  classType?: PlanetType;
   /** Indicates if this object orbits a planet rather than a star. */
   isMoon: boolean;
   /** The ID of the parent planet, required if isMoon is true. */
@@ -124,7 +124,7 @@ export interface BaseSurfaceProperties {
 
 /** Surface properties specific to Desert planets */
 export interface DesertSurfaceProperties extends BaseSurfaceProperties {
-  planetType: PlanetType.DESERT;
+  classType: PlanetType.DESERT;
   /** Intensity of dune patterns (e.g., 0.0 - 1.0). */
   dunePattern?: number;
   /** Average height of dunes (in scaled units). */
@@ -133,7 +133,7 @@ export interface DesertSurfaceProperties extends BaseSurfaceProperties {
 
 /** Surface properties specific to Ice planets */
 export interface IceSurfaceProperties extends BaseSurfaceProperties {
-  planetType: PlanetType.ICE;
+  classType: PlanetType.ICE;
   /** Intensity of surface cracks or fissures (e.g., 0.0 - 1.0). */
   crackIntensity?: number;
   /** Surface glossiness or shininess (e.g., 0.0 - 1.0). */
@@ -144,7 +144,7 @@ export interface IceSurfaceProperties extends BaseSurfaceProperties {
 
 /** Surface properties specific to Lava planets */
 export interface LavaSurfaceProperties extends BaseSurfaceProperties {
-  planetType: PlanetType.LAVA;
+  classType: PlanetType.LAVA;
   /** Color of the cooled rock areas, usually a hex string. */
   rockColor?: string;
   /** Color of the molten lava, usually a hex string. */
@@ -157,7 +157,7 @@ export interface LavaSurfaceProperties extends BaseSurfaceProperties {
 
 /** Surface properties specific to Ocean planets */
 export interface OceanSurfaceProperties extends BaseSurfaceProperties {
-  planetType: PlanetType.OCEAN;
+  classType: PlanetType.OCEAN;
   /** Color of the shallow surface water, usually a hex string. */
   oceanColor?: string;
   /** Color of the deeper water, usually a hex string. */
@@ -234,14 +234,14 @@ export interface ProceduralSurfaceProperties {
 export interface RockyTerrestrialSurfaceProperties
   extends ProceduralSurfaceProperties,
     BaseSurfaceProperties {
-  planetType: PlanetType.ROCKY | PlanetType.TERRESTRIAL;
+  classType: PlanetType.ROCKY | PlanetType.TERRESTRIAL;
 }
 
 /** Surface properties specific to Barren planets */
 export interface BarrenSurfaceProperties
   extends ProceduralSurfaceProperties,
     BaseSurfaceProperties {
-  planetType: PlanetType.BARREN;
+  classType: PlanetType.BARREN;
 }
 
 /** Union type for all possible surface properties */
@@ -285,7 +285,7 @@ export interface RingProperties {
  */
 export interface GasGiantProperties extends SpecificPropertiesBase {
   type: CelestialType.GAS_GIANT;
-  planetType: GasGiantClass;
+  classType: GasGiantClass;
   atmosphereColor: string;
   cloudColor: string;
   cloudSpeed: number;
@@ -306,10 +306,30 @@ export interface GasGiantProperties extends SpecificPropertiesBase {
 }
 
 /**
+ * The class of comet.
+ */
+export enum CometClass {
+  /** Icey comet. */
+  ICE = "ICE",
+  /** Carbonaceous comet. */
+  CARBONACEOUS = "CARBONACEOUS",
+  /** Metallic comet. */
+  METALLIC = "METALLIC",
+  /** Silicate comet. */
+  SILICATE = "SILICATE",
+}
+
+/**
  * Properties specific to Comets.
  */
 export interface CometProperties extends SpecificPropertiesBase {
   type: CelestialType.COMET;
+
+  /**
+   * The class of comet.
+   */
+  classType: CometClass;
+
   /** Array listing the primary chemical components (e.g., ["water ice", "CO2"]). */
   composition: string[];
   /** A measure of the comet's outgassing activity, affecting tail and coma visibility (e.g., 0.0 - 1.0). */
@@ -399,3 +419,10 @@ export interface CelestialObjectProperties {
   asteroidField?: AsteroidFieldProperties;
   proceduralSurface?: ProceduralSurfaceProperties;
 }
+
+export type CelestiaClassType =
+  | PlanetType
+  | GasGiantClass
+  | StellarType
+  | ExoticStellarType
+  | CometClass;

@@ -299,7 +299,7 @@ export function generateStar(random: () => number): CelestialObject {
     spectralClass: spectralClassString,
     luminosity: starLuminosity,
     color: starColor,
-    stellarType: chosenType,
+    classType: chosenType,
     mainSpectralClass: mainSpectralClass as SpectralClass,
     luminosityClass,
     specialSpectralClass,

@@ -40,7 +40,7 @@ export function initializeMiranda(parentId: string): void {
     albedo: 0.32,
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "silicates", "methane clathrates?"],
@@ -49,7 +49,7 @@ export function initializeMiranda(parentId: string): void {
         type: SurfaceType.CANYONOUS,
         color: "#B8B8C0", // Light gray
         roughness: 0.75,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         // Miranda bizarre terrain procedural properties
         persistence: 0.65,
         lacunarity: 2.5,

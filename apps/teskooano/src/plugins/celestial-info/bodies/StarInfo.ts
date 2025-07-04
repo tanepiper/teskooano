@@ -41,7 +41,7 @@ export class StarInfoComponent extends BaseCelestialInfoComponent {
           ${celestial.orbit?.eccentricity ? `<dt>Eccentricity:</dt><dd>${FormatUtils.formatFix(celestial.orbit.eccentricity, 4)}</dd>` : ""}
           ${celestial.orbit?.period_s ? `<dt>Period:</dt><dd>${FormatUtils.formatPeriod(celestial.orbit.period_s)}</dd>` : ""}
           
-          ${starProps?.stellarType ? `<dt>Stellar Type:</dt><dd>${starProps.stellarType}</dd>` : ""}
+          ${starProps?.classType ? `<dt>Stellar Type:</dt><dd>${starProps.classType}</dd>` : ""}
           
           ${starProps?.partnerStars && starProps.partnerStars.length > 0 ? `<dt>Partners:</dt><dd>${starProps.partnerStars.join(", ")}</dd>` : ""}
       </dl>

@@ -117,7 +117,7 @@ export function generateIconConfig(
       baseConfig.rings = getRingConfig(object);
       if (baseConfig.procedural) break;
 
-      switch (planetProps.planetType) {
+      switch (planetProps.classType) {
         case PlanetType.TERRESTRIAL:
           baseConfig.base.gradient = ["#6da0d2", "#2c4e7f"];
           break;
@@ -147,7 +147,7 @@ export function generateIconConfig(
       if (baseConfig.procedural) break;
 
       // Moons are simpler: solid color based on type
-      switch (moonProps.planetType) {
+      switch (moonProps.classType) {
         case PlanetType.ROCKY:
         case PlanetType.BARREN:
           baseConfig.base.color = "#9e9e9e";

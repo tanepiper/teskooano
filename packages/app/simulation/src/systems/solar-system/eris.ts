@@ -68,7 +68,7 @@ export function initializeEris(parentId: string): void {
     },
     properties: {
       type: CelestialType.DWARF_PLANET,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: false,
       composition: [
         "nitrogen ice",
@@ -87,7 +87,7 @@ export function initializeEris(parentId: string): void {
         type: SurfaceType.ICE_FLATS,
         color: "#F5F5FF",
         roughness: 0.15,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.48,
         lacunarity: 2.0,
         simplePeriod: 1.5,
@@ -140,7 +140,7 @@ export function initializeEris(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: erisId,
       composition: ["water ice", "rocky material"],
@@ -155,7 +155,7 @@ export function initializeEris(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#606060",
         roughness: 0.9,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.5,
         lacunarity: 2.2,
         simplePeriod: 3.5,

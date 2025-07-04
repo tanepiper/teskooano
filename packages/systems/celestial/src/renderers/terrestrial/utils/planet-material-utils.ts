@@ -24,7 +24,7 @@ export class PlanetMaterialService {
     const specificSurfaceProps = (object.properties as PlanetProperties)
       ?.surface as ProceduralSurfaceProperties | undefined;
     const planetProps = object.properties as PlanetProperties | undefined;
-    const planetType = planetProps?.planetType;
+    const classType = planetProps?.classType;
 
     let simplePalette = {
       color1: "#5179B5",
@@ -34,8 +34,8 @@ export class PlanetMaterialService {
       color6: "#FFFFFF",
     };
 
-    if (planetType) {
-      switch (planetType) {
+    if (classType) {
+      switch (classType) {
         case PlanetType.LAVA:
           simplePalette = {
             color1: "#3B0B00",
@@ -146,7 +146,7 @@ export class PlanetMaterialService {
    */
   getBaseColor(object: RenderableCelestialObject): THREE.Color {
     const planetProps = object.properties as PlanetProperties | undefined;
-    const planetType = planetProps?.planetType ?? (object as any).planetType;
+    const classType = planetProps?.classType;
     const specificSurfaceProps = planetProps?.surface as
       | ProceduralSurfaceProperties
       | undefined;
@@ -157,8 +157,8 @@ export class PlanetMaterialService {
     }
 
     // Fallback based on planet type
-    if (planetType) {
-      switch (planetType) {
+    if (classType) {
+      switch (classType) {
         case PlanetType.LAVA:
           return new THREE.Color("#801800"); // Darker red/brown for lava base
         case PlanetType.ICE:

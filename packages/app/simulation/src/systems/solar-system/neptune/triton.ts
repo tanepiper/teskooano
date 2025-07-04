@@ -41,7 +41,7 @@ export function initializeTriton(parentId: string): void {
     axialTilt: defaultMoonAxialTilt,
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["nitrogen ice", "water ice", "methane ice", "rocky core"],
@@ -49,7 +49,7 @@ export function initializeTriton(parentId: string): void {
         type: SurfaceType.VARIED,
         color: "#E0F0F0",
         roughness: 0.5,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.53,
         lacunarity: 2.14,
         simplePeriod: 0.87,

@@ -27,7 +27,7 @@ export class PlanetInfoComponent extends BaseCelestialInfoComponent {
       <dl class="info-grid">
           <dt>Type:</dt><dd>${celestial.type === CelestialType.DWARF_PLANET ? "Dwarf Planet" : "Planet"}</dd>
           <dt>Parent:</dt><dd>${celestial.parentId ?? "N/A"}</dd>
-          <dt>Planet Type:</dt><dd>${planetProps?.planetType ?? "N/A"}</dd>
+          <dt>Planet Type:</dt><dd>${planetProps?.classType ?? "N/A"}</dd>
           
           ${renderMainProperties(celestial)}
           

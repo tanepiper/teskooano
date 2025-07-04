@@ -48,7 +48,7 @@ export function initializeTethys(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["mostly water ice", "small amount of rock"],
@@ -62,7 +62,7 @@ export function initializeTethys(parentId: string): void {
         type: SurfaceType.ICE_CRACKED,
         color: "#F8F8F8",
         roughness: 0.4,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.5,
         lacunarity: 2.1,
         simplePeriod: 1.9,

@@ -38,7 +38,7 @@ export function createGasGiantMesh(
 
   if (!renderer) {
     const properties = object.properties as GasGiantProperties;
-    const gasGiantClass = properties.planetType;
+    const gasGiantClass = properties.classType;
     const rendererDeps = {
       celestialRenderers: deps.celestialRenderers,
       lightingManager: deps.lightingManager,

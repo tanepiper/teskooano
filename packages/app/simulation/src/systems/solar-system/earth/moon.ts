@@ -51,13 +51,13 @@ export function initializeLuna(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["silicates", "anorthosite crust", "possible small core"],
       surface: {
         type: SurfaceType.VARIED,
-        planetType: PlanetType.ROCKY,
+        classType: PlanetType.ROCKY,
         color: "#BEBEBE",
         roughness: 0.75,
         persistence: 0.5,

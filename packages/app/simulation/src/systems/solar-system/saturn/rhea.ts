@@ -48,7 +48,7 @@ export function initializeRhea(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rocky core"],
@@ -62,7 +62,7 @@ export function initializeRhea(parentId: string): void {
         type: SurfaceType.ICE_FLATS,
         color: "#EAEAEA",
         roughness: 0.7,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.52,
         lacunarity: 2.2,
         simplePeriod: 2.5,

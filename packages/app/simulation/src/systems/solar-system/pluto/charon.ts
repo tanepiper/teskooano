@@ -50,7 +50,7 @@ export function initializeCharon(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "ammonia ice (hydrates)", "rocky interior"],
@@ -58,7 +58,7 @@ export function initializeCharon(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#B0B8C0",
         roughness: 0.6,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.52,
         lacunarity: 2.2,
         simplePeriod: 2.5,

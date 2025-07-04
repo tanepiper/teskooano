@@ -49,7 +49,7 @@ export function initializePhoebe(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rock", "carbonaceous material"],
@@ -63,7 +63,7 @@ export function initializePhoebe(parentId: string): void {
         type: SurfaceType.VARIED,
         color: "#504030",
         roughness: 0.8,
-        planetType: PlanetType.ROCKY,
+        classType: PlanetType.ROCKY,
         persistence: 0.5,
         lacunarity: 2.2,
         simplePeriod: 1.9,

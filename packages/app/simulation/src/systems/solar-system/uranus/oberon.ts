@@ -40,7 +40,7 @@ export function initializeOberon(parentId: string): void {
     albedo: 0.35,
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rock", "dark carbonaceous material"],
@@ -49,7 +49,7 @@ export function initializeOberon(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#9898A0", // Dark gray
         roughness: 0.8,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         // Oberon dark surface procedural properties
         persistence: 0.55,
         lacunarity: 2.2,

@@ -48,7 +48,7 @@ export function initializeEuropa(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: [
@@ -67,7 +67,7 @@ export function initializeEuropa(parentId: string): void {
         type: SurfaceType.ICE_CRACKED,
         color: "#F0F4F8",
         roughness: 0.3,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.53,
         lacunarity: 2.15,
         simplePeriod: 0.86,

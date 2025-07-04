@@ -49,7 +49,7 @@ export function initializeUranusPlanet(parentId: string): string {
     ).normalize(),
     properties: {
       type: CelestialType.GAS_GIANT,
-      planetType: GasGiantClass.CLASS_III,
+      classType: GasGiantClass.CLASS_III,
       atmosphereColor: "#B0E0E6",
       cloudColor: "#FFFFFF",
       cloudSpeed: 50,

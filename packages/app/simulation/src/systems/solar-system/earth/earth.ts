@@ -57,7 +57,7 @@ export function initializeEarthPlanet(parentId: string): string {
     },
     properties: {
       type: CelestialType.PLANET,
-      planetType: PlanetType.TERRESTRIAL,
+      classType: PlanetType.TERRESTRIAL,
       isMoon: false,
       composition: [
         "silicates",
@@ -75,7 +75,7 @@ export function initializeEarthPlanet(parentId: string): string {
         type: SurfaceType.VARIED,
         color: "#15e267",
         roughness: 0.12,
-        planetType: PlanetType.TERRESTRIAL,
+        classType: PlanetType.TERRESTRIAL,
         persistence: 0.54,
         lacunarity: 2.2,
         simplePeriod: 18,

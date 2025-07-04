@@ -48,7 +48,7 @@ export function initializeMimas(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rocky core"],
@@ -62,7 +62,7 @@ export function initializeMimas(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#E0E0E0",
         roughness: 0.8,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.6,
         lacunarity: 2.1,
         simplePeriod: 2.0,

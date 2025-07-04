@@ -46,7 +46,7 @@ export function initializeDeimos(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["carbonaceous chondrite"],
@@ -54,7 +54,7 @@ export function initializeDeimos(parentId: string): void {
       atmosphere: undefined,
       surface: {
         type: SurfaceType.CRATERED,
-        planetType: PlanetType.ROCKY,
+        classType: PlanetType.ROCKY,
         color: "#808080",
         roughness: 0.6,
         persistence: 0.45,

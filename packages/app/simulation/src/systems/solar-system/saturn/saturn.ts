@@ -58,7 +58,7 @@ export function initializeSaturnPlanet(parentId: string): string {
     },
     properties: {
       type: CelestialType.GAS_GIANT,
-      planetType: GasGiantClass.CLASS_II,
+      classType: GasGiantClass.CLASS_II,
       atmosphereColor: "#F0E68C",
       cloudColor: "#FFF8DC",
       cloudSpeed: 80,

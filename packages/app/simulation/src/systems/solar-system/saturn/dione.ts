@@ -48,7 +48,7 @@ export function initializeDione(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rocky core"],
@@ -62,7 +62,7 @@ export function initializeDione(parentId: string): void {
         type: SurfaceType.ICE_CRACKED,
         color: "#E0E0E0",
         roughness: 0.5,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.55,
         lacunarity: 2.0,
         simplePeriod: 2.2,

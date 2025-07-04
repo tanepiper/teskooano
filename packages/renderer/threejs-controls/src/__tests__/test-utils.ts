@@ -34,7 +34,7 @@ export function createMockStar(overrides = {}): CelestialObject {
     mass: 1000000,
     properties: {
       spectralClass: "G",
-      stellarType: StellarType.MAIN_SEQUENCE,
+      classType: StellarType.MAIN_SEQUENCE,
       luminosity: 1,
       temperature: 5778,
       color: 0xffff00,
@@ -128,7 +128,7 @@ export function createMockBlackHole(overrides = {}): CelestialObject {
     mass: 100000000,
     properties: {
       spectralClass: "X",
-      stellarType: StellarType.BLACK_HOLE,
+      classType: StellarType.BLACK_HOLE,
       luminosity: 0,
       temperature: 0,
       color: 0x000000,

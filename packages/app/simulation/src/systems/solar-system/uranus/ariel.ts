@@ -40,7 +40,7 @@ export function initializeAriel(parentId: string): void {
     albedo: 0.39,
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rock", "possible ammonia"],
@@ -49,7 +49,7 @@ export function initializeAriel(parentId: string): void {
         type: SurfaceType.VARIED,
         color: "#E8E8F0", // Light ice
         roughness: 0.4,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         // Ariel bright fractured procedural properties
         persistence: 0.5,
         lacunarity: 2.0,

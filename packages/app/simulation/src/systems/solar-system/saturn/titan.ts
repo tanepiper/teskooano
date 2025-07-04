@@ -48,7 +48,7 @@ export function initializeTitan(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: true,
       parentPlanet: parentId,
       composition: [
@@ -68,7 +68,7 @@ export function initializeTitan(parentId: string): void {
         type: SurfaceType.FLAT,
         color: "#A06A42",
         roughness: 0.2,
-        planetType: PlanetType.ROCKY,
+        classType: PlanetType.ROCKY,
         persistence: 0.53,
         lacunarity: 2.14,
         simplePeriod: 0.87,

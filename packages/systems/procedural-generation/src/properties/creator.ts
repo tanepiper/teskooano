@@ -88,7 +88,7 @@ export function createProceduralSurfaceProperties(
         break;
       default:
         console.warn(
-          `[createProceduralSurfaceProperties] Unhandled planetType: ${type}, using fallback TERRESTRIAL properties.`,
+          `[createProceduralSurfaceProperties] Unhandled classType: ${type}, using fallback TERRESTRIAL properties.`,
         );
         specificProperties = getTerrestrialProperties(random);
         break;

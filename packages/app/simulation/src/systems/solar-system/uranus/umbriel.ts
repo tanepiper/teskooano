@@ -40,7 +40,7 @@ export function initializeUmbriel(parentId: string): void {
     albedo: 0.21,
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: [
@@ -54,7 +54,7 @@ export function initializeUmbriel(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#50505A", // Very dark
         roughness: 0.85,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         // Umbriel very dark procedural properties
         persistence: 0.58,
         lacunarity: 2.3,

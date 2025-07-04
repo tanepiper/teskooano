@@ -1,5 +1,7 @@
 import {
+  CelestiaClassType,
   CelestialType,
+  CometClass,
   ExoticStellarType,
   GRAVITATIONAL_CONSTANT,
   GasGiantClass,
@@ -275,13 +277,13 @@ export function classifyGasGiantByTemperature(
 
 /**
  * Calculates a realistic albedo value for a planet based on its type.
- * @param planetType The type of the planet.
+ * @param classType The type of the planet.
  * @param random A seeded random number generator.
  * @returns A value between 0 and 1 representing the planet's albedo.
  */
 export function calculateAlbedo(
   celestialType: CelestialType,
-  planetType: PlanetType | GasGiantClass | StellarType | ExoticStellarType,
+  classType: CelestiaClassType,
   random: () => number,
 ): number {
   let baseAlbedo: number = 0.3;
@@ -291,7 +293,7 @@ export function calculateAlbedo(
     celestialType === CelestialType.PLANET ||
     celestialType === CelestialType.MOON
   ) {
-    switch (planetType as PlanetType) {
+    switch (classType as PlanetType) {
       case PlanetType.ICE:
         baseAlbedo = 0.75;
         range = 0.25;
@@ -319,7 +321,7 @@ export function calculateAlbedo(
   }
 
   if (celestialType === CelestialType.GAS_GIANT) {
-    switch (planetType as GasGiantClass) {
+    switch (classType as GasGiantClass) {
       case GasGiantClass.CLASS_I: // Ammonia clouds (Jupiter-like)
         baseAlbedo = 0.5;
         range = 0.1; // 0.3 - 0.4
@@ -349,7 +351,7 @@ export function calculateAlbedo(
 
   if (celestialType === CelestialType.STAR) {
     // For stars, "albedo" is a proxy for billboard brightness
-    switch (planetType as StellarType) {
+    switch (classType as StellarType) {
       case StellarType.MAIN_SEQUENCE:
       case StellarType.MAIN_SEQUENCE_G:
         baseAlbedo = 0.4;

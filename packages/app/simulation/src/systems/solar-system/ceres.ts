@@ -56,7 +56,7 @@ export function initializeCeres(parentId: string): void {
     },
     properties: {
       type: CelestialType.DWARF_PLANET,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: false,
       composition: [
         "water ice",
@@ -75,7 +75,7 @@ export function initializeCeres(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#8C7853",
         roughness: 0.8,
-        planetType: PlanetType.ROCKY,
+        classType: PlanetType.ROCKY,
         persistence: 0.52,
         lacunarity: 2.1,
         simplePeriod: 2.8,

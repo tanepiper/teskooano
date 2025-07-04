@@ -57,7 +57,7 @@ export function initializeMarsPlanet(parentId: string): string {
     },
     properties: {
       type: CelestialType.PLANET,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: false,
       composition: ["iron oxide", "silicates", "thin CO2 atmosphere"],
       atmosphere: {
@@ -70,7 +70,7 @@ export function initializeMarsPlanet(parentId: string): string {
         type: SurfaceType.DUNES,
         color: "#CD853F",
         roughness: 0.8,
-        planetType: PlanetType.ROCKY,
+        classType: PlanetType.ROCKY,
         persistence: 0.5,
         lacunarity: 2.1,
         simplePeriod: 2.5,

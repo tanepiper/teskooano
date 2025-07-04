@@ -58,7 +58,7 @@ export function initializeJupiterPlanet(parentId: string): string {
     },
     properties: {
       type: CelestialType.GAS_GIANT,
-      planetType: GasGiantClass.CLASS_I,
+      classType: GasGiantClass.CLASS_I,
       atmosphereColor: "#D2B48C",
       cloudColor: "#FFFFFF",
       cloudSpeed: 120,

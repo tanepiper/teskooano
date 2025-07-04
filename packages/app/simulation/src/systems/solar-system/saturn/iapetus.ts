@@ -48,7 +48,7 @@ export function initializeIapetus(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rock", "carbonaceous material on one side"],
@@ -62,7 +62,7 @@ export function initializeIapetus(parentId: string): void {
         type: SurfaceType.VARIED,
         color: "#A0A0A0",
         roughness: 0.7,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.48,
         lacunarity: 2.3,
         simplePeriod: 1.8,

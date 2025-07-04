@@ -42,7 +42,7 @@ export function initializeNereid(parentId: string): void {
     albedo: 0.14,
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rock?"],
@@ -52,7 +52,7 @@ export function initializeNereid(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#A0A0A8", // Dark gray
         roughness: 0.7,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         // Nereid asteroid-like procedural properties
         persistence: 0.55,
         lacunarity: 2.3,

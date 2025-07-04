@@ -48,7 +48,7 @@ export function initializeCallisto(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: [
@@ -67,7 +67,7 @@ export function initializeCallisto(parentId: string): void {
         type: SurfaceType.ICE_CRACKED,
         color: "#707080",
         roughness: 0.8,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.6,
         lacunarity: 2.4,
         simplePeriod: 3.0,

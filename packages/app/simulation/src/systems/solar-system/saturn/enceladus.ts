@@ -48,7 +48,7 @@ export function initializeEnceladus(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: [
@@ -67,7 +67,7 @@ export function initializeEnceladus(parentId: string): void {
         type: SurfaceType.ICE_CRACKED,
         color: "#F8F8FF",
         roughness: 0.3,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         persistence: 0.45,
         lacunarity: 1.8,
         simplePeriod: 1.2,

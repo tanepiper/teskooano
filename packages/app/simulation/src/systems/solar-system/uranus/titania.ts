@@ -40,7 +40,7 @@ export function initializeTitania(parentId: string): void {
     albedo: 0.27,
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.BARREN,
+      classType: PlanetType.BARREN,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rock", "carbon dioxide ice"],
@@ -49,7 +49,7 @@ export function initializeTitania(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#B0B0B8", // Gray-blue ice
         roughness: 0.7,
-        planetType: PlanetType.BARREN,
+        classType: PlanetType.BARREN,
         // Titania ice procedural properties
         persistence: 0.52,
         lacunarity: 2.1,

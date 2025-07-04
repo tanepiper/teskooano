@@ -101,7 +101,7 @@ export function createStarMesh(
       try {
         const newRenderer = createStarRenderer(
           starProps.spectralClass,
-          starProps.stellarType,
+          starProps.classType,
           deps.lightingManager,
         );
         if (newRenderer) {
@@ -109,7 +109,7 @@ export function createStarMesh(
           deps.starRenderers.set(object.celestialObjectId, renderer);
         } else {
           console.warn(
-            `[MeshFactory:Star] createStarRenderer failed for ${object.celestialObjectId} (Class: ${starProps.spectralClass}, Type: ${starProps.stellarType}).`,
+            `[MeshFactory:Star] createStarRenderer failed for ${object.celestialObjectId} (Class: ${starProps.spectralClass}, Type: ${starProps.classType}).`,
           );
         }
       } catch (error) {

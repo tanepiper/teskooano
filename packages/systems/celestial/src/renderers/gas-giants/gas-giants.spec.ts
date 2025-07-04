@@ -51,7 +51,7 @@ function createMockPlanet(
     uniforms: {},
     properties: {
       type: CelestialType.PLANET,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: false,
       composition: ["silicates", "iron"],
     },
@@ -89,7 +89,7 @@ function createMockStar(
     uniforms: {},
     properties: {
       type: CelestialType.STAR,
-      stellarType: StellarType.MAIN_SEQUENCE,
+      classType: StellarType.MAIN_SEQUENCE,
       isMainStar: true,
       spectralClass: "G",
       luminosity: 1,

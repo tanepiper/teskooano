@@ -48,7 +48,7 @@ export function initializeNeptunePlanet(parentId: string): string {
     ).normalize(),
     properties: {
       type: CelestialType.GAS_GIANT,
-      planetType: GasGiantClass.CLASS_III,
+      classType: GasGiantClass.CLASS_III,
       atmosphereColor: "#3F5D9A",
       cloudColor: "#FFFFFF",
       cloudSpeed: 200,

@@ -48,7 +48,7 @@ export function initializeIo(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ROCKY,
+      classType: PlanetType.ROCKY,
       isMoon: true,
       parentPlanet: parentId,
       composition: [
@@ -67,7 +67,7 @@ export function initializeIo(parentId: string): void {
         type: SurfaceType.VOLCANIC,
         color: "#FFFFA0",
         roughness: 0.6,
-        planetType: PlanetType.ROCKY,
+        classType: PlanetType.ROCKY,
         persistence: 0.58,
         lacunarity: 1.9,
         simplePeriod: 1.7,

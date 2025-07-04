@@ -51,7 +51,7 @@ export function initializeHyperion(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      planetType: PlanetType.ICE,
+      classType: PlanetType.ICE,
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rocky material"],
@@ -65,7 +65,7 @@ export function initializeHyperion(parentId: string): void {
         type: SurfaceType.CRATERED,
         color: "#BDB7AB",
         roughness: 0.9,
-        planetType: PlanetType.ICE,
+        classType: PlanetType.ICE,
         persistence: 0.45,
         lacunarity: 2.5,
         simplePeriod: 1.5,

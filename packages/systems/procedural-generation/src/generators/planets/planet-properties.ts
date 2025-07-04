@@ -64,7 +64,7 @@ function generateGasGiantSpecificProperties(
   baseProps: PlanetBaseProperties,
   bodyDistanceAU: number,
 ): GasGiantProperties {
-  const gasGiantClass = baseProps.planetType as GasGiantClass;
+  const gasGiantClass = baseProps.celestialClass as GasGiantClass;
 
   if (!gasGiantClass || !Object.values(GasGiantClass).includes(gasGiantClass)) {
     // This is a critical failure in the generation pipeline.
@@ -173,7 +173,7 @@ function generateGasGiantSpecificProperties(
 
   return {
     type: CelestialType.GAS_GIANT,
-    planetType: gasGiantClass,
+    classType: gasGiantClass,
     atmosphere: {
       composition: atmComposition,
       pressure: atmPressure,
@@ -203,7 +203,7 @@ function generateRockyPlanetSpecificProperties(
   random: () => number,
   baseProps: PlanetBaseProperties,
 ): PlanetProperties {
-  const rockyPlanetType = baseProps.planetType as PlanetType;
+  const rockyPlanetType = baseProps.celestialClass as PlanetType;
   let surfaceType: SurfaceType;
   let composition: string[];
 
@@ -256,7 +256,7 @@ function generateRockyPlanetSpecificProperties(
 
   // Determine if the planet has an atmosphere based on its type
   let hasAtmosphere: boolean;
-  switch (baseProps.planetType) {
+  switch (baseProps.celestialClass) {
     case PlanetType.BARREN:
       hasAtmosphere = false; // Barren planets never have an atmosphere
       break;
@@ -286,10 +286,10 @@ function generateRockyPlanetSpecificProperties(
   let cloudProps: PlanetProperties["clouds"] = undefined;
 
   if (hasAtmosphere) {
-    if (baseProps.planetType === PlanetType.ICE) {
+    if (baseProps.celestialClass === PlanetType.ICE) {
       atmosphereType = AtmosphereType.THIN;
       pressure = random() * 0.1;
-    } else if (baseProps.planetType === PlanetType.OCEAN) {
+    } else if (baseProps.celestialClass === PlanetType.OCEAN) {
       // Ocean worlds typically have thick atmospheres
       atmosphereType = UTIL.getRandomItem(
         [AtmosphereType.NORMAL, AtmosphereType.DENSE],
@@ -299,7 +299,7 @@ function generateRockyPlanetSpecificProperties(
         atmosphereType === AtmosphereType.NORMAL
           ? 0.5 + random() * 1.0
           : 1.5 + random() * 3;
-    } else if (baseProps.planetType === ("METALLIC" as any)) {
+    } else if (baseProps.celestialClass === ("METALLIC" as any)) {
       // Metallic planets have thin, exotic atmospheres
       atmosphereType = AtmosphereType.THIN;
       pressure = random() * 0.3;
@@ -321,7 +321,7 @@ function generateRockyPlanetSpecificProperties(
     );
 
     // Enhanced atmospheric composition based on planet type
-    if (baseProps.planetType === PlanetType.OCEAN) {
+    if (baseProps.celestialClass === PlanetType.OCEAN) {
       atmComposition = UTIL.getRandomItem(
         [
           ["N2", "O2", "H2O"],
@@ -330,7 +330,7 @@ function generateRockyPlanetSpecificProperties(
         ],
         random,
       );
-    } else if (baseProps.planetType === ("METALLIC" as any)) {
+    } else if (baseProps.celestialClass === ("METALLIC" as any)) {
       atmComposition = UTIL.getRandomItem(
         [
           ["Na", "K", "Fe"],
@@ -365,7 +365,7 @@ function generateRockyPlanetSpecificProperties(
             ? 0.5 + random() * 0.3
             : 0.7 + random() * 0.2,
       coverage:
-        baseProps.planetType === PlanetType.OCEAN
+        baseProps.celestialClass === PlanetType.OCEAN
           ? 0.7 + random() * 0.3 // Ocean worlds have high cloud coverage
           : atmosphereType === AtmosphereType.THIN
             ? 0.1 + random() * 0.3
@@ -432,7 +432,7 @@ function generateRockyPlanetSpecificProperties(
 
   return {
     type: CelestialType.PLANET,
-    planetType: rockyPlanetType,
+    classType: rockyPlanetType,
     isMoon: false,
     composition: composition,
     surface: surfaceProperties as any,

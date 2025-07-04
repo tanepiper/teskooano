@@ -17,7 +17,7 @@ import { CelestialZoneManager } from "../../zones";
  */
 export interface PlanetBaseProperties {
   celestialType: CelestialType;
-  planetType: PlanetType | GasGiantClass;
+  celestialClass: PlanetType | GasGiantClass;
   preliminaryDensity_kg_m3: number;
   targetDensity_kg_m3: number;
   massMultiplierFactor: number;
@@ -134,7 +134,7 @@ export function determinePlanetTypeAndBaseProperties(
 
   return {
     celestialType: finalCelestialType,
-    planetType: planetOrGiantType as PlanetType | GasGiantClass,
+    celestialClass: planetOrGiantType as PlanetType | GasGiantClass,
     preliminaryDensity_kg_m3: targetDensity_kg_m3,
     targetDensity_kg_m3: targetDensity_kg_m3,
     massMultiplierFactor: massMultiplierFactor,

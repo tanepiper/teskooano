@@ -2,6 +2,7 @@ import type {
   CelestialObject,
   PlanetProperties,
   GasGiantProperties,
+  CelestiaClassType,
 } from "@teskooano/data-types";
 import { Observable, Subscriber } from "rxjs";
 import {
@@ -116,14 +117,14 @@ function calculateRealisticMoonCount(
   const planetMassRatio = planetMass_kg / earthMass;
 
   // Get planet type from properties
-  const planetType = getPlanetType(planetObject);
+  const classType = getCelestialTypeForPlanet(planetObject);
 
   // Base moon count depends on planet type and mass
   let baseMoonCount: number;
   let variation: number;
 
-  switch (planetType) {
-    case "gas_giant":
+  switch (classType) {
+    case CelestialType.GAS_GIANT:
       // Gas giants can have many moons like Jupiter (95) and Saturn (146)
       if (planetMassRatio > 300) {
         // Saturn-class (95+ Earth masses)
@@ -144,7 +145,7 @@ function calculateRealisticMoonCount(
       }
       break;
 
-    case "terrestrial":
+    case CelestialType.PLANET:
       // Terrestrial planets typically have 0-3 major moons
       if (planetMassRatio > 0.8) {
         // Earth-class or larger
@@ -190,17 +191,17 @@ function calculateRealisticMoonCount(
 /**
  * Determines planet type from CelestialObject properties
  */
-function getPlanetType(
+function getCelestialTypeForPlanet(
   planetObject: CelestialObject,
-): "gas_giant" | "terrestrial" | "other" {
+): CelestialType {
   if (planetObject.type === CelestialType.GAS_GIANT) {
-    return "gas_giant";
+    return CelestialType.GAS_GIANT;
   }
 
   const props = planetObject.properties as PlanetProperties;
-  if (!props) return "other";
+  if (!props) return CelestialType.OTHER;
 
-  switch (props.planetType) {
+  switch (props.classType) {
     case PlanetType.TERRESTRIAL:
     case PlanetType.ROCKY:
     case PlanetType.DESERT:
@@ -208,10 +209,10 @@ function getPlanetType(
     case PlanetType.BARREN:
     case PlanetType.ICE:
     case PlanetType.OCEAN:
-      return "terrestrial";
+      return CelestialType.PLANET;
 
     default:
-      return "other";
+      return CelestialType.OTHER;
   }
 }
 
@@ -222,16 +223,16 @@ function calculateInitialMoonDistance(
   planetObject: CelestialObject,
   planetMass_kg: number,
 ): number {
-  const planetType = getPlanetType(planetObject);
+  const celestialType = getCelestialTypeForPlanet(planetObject);
   const earthMass = 5.972e24;
   const massRatio = planetMass_kg / earthMass;
 
-  switch (planetType) {
-    case "gas_giant":
+  switch (celestialType) {
+    case CelestialType.GAS_GIANT:
       // Gas giants start closer due to larger Roche limit
       return 2.5 + Math.log10(massRatio) * 0.5;
 
-    case "terrestrial":
+    case CelestialType.PLANET:
       // Terrestrial planets start further out
       return 3.5;
 
