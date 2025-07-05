@@ -1,4 +1,5 @@
 import type { OSVector3 } from "@teskooano/core-math";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
 
 /**
@@ -7,7 +8,6 @@ import * as THREE from "three";
  */
 export interface AccelerationVisualizerConfig {
   objects: Map<string, THREE.Object3D>;
-  arrowScaleFactor?: number; // Optional, provide default
   arrowColor?: number; // Optional, provide default
 }
 
@@ -19,12 +19,10 @@ export interface AccelerationVisualizerConfig {
 export class AccelerationVisualizer {
   private objects: Map<string, THREE.Object3D>;
   private accelerationArrows: Map<string, THREE.ArrowHelper> = new Map();
-  private readonly arrowScaleFactor: number;
   private readonly arrowColor: number;
 
   constructor(config: AccelerationVisualizerConfig) {
     this.objects = config.objects;
-    this.arrowScaleFactor = config.arrowScaleFactor ?? 1e-11; // Use default if not provided
     this.arrowColor = config.arrowColor ?? 0xff00ff; // Use default if not provided
   }
 
@@ -32,48 +30,60 @@ export class AccelerationVisualizer {
    * Synchronizes the visibility and properties of acceleration vector arrows
    * based on the latest acceleration data.
    * @param accelerations - The latest acceleration vectors { objectId: OSVector3 }.
+   * @param renderableObjects - A map of all renderable celestial objects.
    */
-  syncAccelerationArrows(accelerations: Record<string, OSVector3>): void {
+  syncAccelerationArrows(
+    accelerations: Record<string, OSVector3>,
+    renderableObjects: Record<string, RenderableCelestialObject>,
+  ): void {
     const updatedArrowIds = new Set<string>();
 
     for (const objectId in accelerations) {
       const accelerationVec = accelerations[objectId];
       const parentObject = this.objects.get(objectId);
+      const renderableObject = renderableObjects[objectId];
 
-      if (!parentObject || !accelerationVec) {
+      if (!parentObject || !accelerationVec || !renderableObject) {
         continue;
       }
+
+      const objectRadius = renderableObject.radius ?? 1;
 
       const direction = new THREE.Vector3(
         accelerationVec.x,
         accelerationVec.y,
         accelerationVec.z,
       );
-      const length = direction.length();
+      const magnitude = direction.length();
 
       // Normalize direction, handle near-zero length
-      if (length > 1e-9) {
+      if (magnitude > 1e-9) {
         direction.normalize();
       } else {
         direction.set(0, 1, 0); // Default direction if length is negligible
       }
 
-      const scaledLength = length * this.arrowScaleFactor;
+      // Arrow length is now proportional to the object's radius, not acceleration magnitude
+      const arrowLength = objectRadius * 3;
+      const headLength = objectRadius * 0.4;
+      const headWidth = objectRadius * 0.2;
 
       let arrow = this.accelerationArrows.get(objectId);
 
       if (arrow) {
         // Update existing arrow
         arrow.setDirection(direction);
-        arrow.setLength(scaledLength);
+        arrow.setLength(arrowLength, headLength, headWidth);
         arrow.visible = true;
       } else {
         // Create new arrow
         arrow = new THREE.ArrowHelper(
           direction,
           new THREE.Vector3(0, 0, 0), // Origin relative to parent
-          scaledLength,
+          arrowLength,
           this.arrowColor,
+          headLength,
+          headWidth,
         );
         arrow.name = `AccelerationArrow_${objectId}`;
         parentObject.add(arrow); // Add arrow as child of the object

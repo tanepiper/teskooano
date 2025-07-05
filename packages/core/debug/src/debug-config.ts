@@ -26,10 +26,9 @@ export interface DebugConfig {
  * Global debug configuration
  */
 export const debugConfig: DebugConfig = {
-  level:
-    process.env.NODE_ENV === "production" ? DebugLevel.ERROR : DebugLevel.INFO,
-  visualize: process.env.NODE_ENV !== "production",
-  logging: process.env.NODE_ENV !== "production",
+  level: DebugLevel.ERROR,
+  visualize: false,
+  logging: true, // Let's keep logging enabled for non-production by default
 };
 
 /**

@@ -15,7 +15,7 @@ import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODManager } from "@teskooano/renderer-threejs-lod";
 import { CelestialRenderer } from "@teskooano/systems-celestial";
-import type { Observable } from "rxjs";
+import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
 import {
   AccelerationVisualizer,
@@ -81,6 +81,7 @@ export class ObjectManager extends StateSubscriptionMixin {
 
   /** @internal Manages the visualization of acceleration vectors as arrows in the scene. */
   private accelerationVisualizer: AccelerationVisualizer;
+  private accelerationSubscription: Subscription | null = null;
 
   /** @internal Handles gravitational lensing effects for massive objects like black holes. */
   private lensingHandler: GravitationalLensingHandler;
@@ -223,13 +224,7 @@ export class ObjectManager extends StateSubscriptionMixin {
       },
     );
 
-    // Subscribe to acceleration vectors and update the visualization
-    this.subscribeToState(
-      this.acceleration$,
-      (accelerations: Record<string, OSVector3>) => {
-        this.accelerationVisualizer.syncAccelerationArrows(accelerations);
-      },
-    );
+    // No longer subscribe to acceleration here unconditionally
   }
 
   /**
@@ -460,7 +455,9 @@ export class ObjectManager extends StateSubscriptionMixin {
    * Unsubscribes from observables, disposes objects, clears maps.
    */
   dispose(): void {
-    // Unsubscribe from all observables and event listeners using mixin
+    if (this.accelerationSubscription) {
+      this.accelerationSubscription.unsubscribe();
+    }
     super.dispose();
 
     // Dispose sub-managers in logical order (e.g., lifecycle last?)
@@ -511,8 +508,8 @@ export class ObjectManager extends StateSubscriptionMixin {
   }
 
   /**
-   * Forces disposal and recreation of all celestial object meshes.
-   * Useful when global settings change that affect mesh generation (like debug mode).
+   * Recreates all meshes from the current state.
+   * Useful for applying global visual changes.
    */
   public recreateAllMeshes(): void {
     // Dispose all current objects via the lifecycle manager
@@ -525,16 +522,41 @@ export class ObjectManager extends StateSubscriptionMixin {
 
   public setDebugVisualization(enabled: boolean): void {
     setVisualizationEnabled(enabled);
+
+    if (enabled) {
+      if (
+        !this.accelerationSubscription ||
+        this.accelerationSubscription.closed
+      ) {
+        // Create subscription if it doesn't exist or is closed
+        this.accelerationSubscription = this.acceleration$.subscribe(
+          (accelerations: Record<string, OSVector3>) => {
+            // The check is implicit now because we only subscribe when enabled
+            this.accelerationVisualizer.syncAccelerationArrows(
+              accelerations,
+              this.latestRenderableObjects,
+            );
+          },
+        );
+      }
+    } else {
+      // Unsubscribe and clear visuals if it exists
+      if (this.accelerationSubscription) {
+        this.accelerationSubscription.unsubscribe();
+        this.accelerationSubscription = null;
+      }
+      this.accelerationVisualizer.clear();
+    }
   }
 
   /**
-   * Toggles debug visualizations on or off.
-   * @returns The new state (true if enabled, false if disabled).
+   * Toggles the state of debug visualizations and returns the new state.
+   * @returns The new visibility state of the debug visualizations.
    */
   public toggleDebugVisualization(): boolean {
-    const newState = !debugConfig.visualize;
-    this.setDebugVisualization(newState);
-    return newState;
+    const isEnabled = debugConfig.visualize;
+    this.setDebugVisualization(!isEnabled);
+    return !isEnabled;
   }
 
   /**
@@ -551,25 +573,5 @@ export class ObjectManager extends StateSubscriptionMixin {
    */
   public toggleDebrisEffects(): boolean {
     return this.debrisEffectManager.toggleDebrisEffects();
-  }
-
-  /**
-   * @internal Cleans up resources for a single object.
-   */
-  private cleanupObject(id: string): void {
-    const object3d = this.objects.get(id);
-
-    if (object3d) {
-      this.scene.remove(object3d);
-      this.lodManager.remove(id);
-      this.lightingManager.unregister(id);
-    }
-
-    this.objects.delete(id);
-    this.starRenderers.delete(id);
-    this.planetRenderers.delete(id);
-    this.moonRenderers.delete(id);
-    // this.css2DManager?.removeLayerInstance(CSS2DLayerType.LABEL, id);
-    // this.css2DManager?.removeLayerInstance(CSS2DLayerType.MARKER, id);
   }
 }
