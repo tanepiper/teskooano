@@ -15,24 +15,6 @@ import {
 import * as CONST from "../constants";
 import { getRandomItem } from "../utils";
 
-// Helper functions for zone calculations
-function calculateStellarLuminosity(mass: number): number {
-  // Main sequence mass-luminosity relation: L ∝ M^3.5
-  return Math.pow(mass, 3.5);
-}
-
-function calculateHabitableZoneFromLuminosity(luminosity: number): {
-  inner: number;
-  outer: number;
-} {
-  // Habitable zone calculation based on stellar luminosity
-  const sqrtL = Math.sqrt(luminosity);
-  return {
-    inner: 0.95 * sqrtL,
-    outer: 1.37 * sqrtL,
-  };
-}
-
 /**
  * Enhanced zone configurations that create more realistic and interesting systems
  */
@@ -40,12 +22,15 @@ export const enhancedCelestialZones: CelestialZone[] = [
   {
     name: "Scorched Zone",
     category: ZoneCategory.SCORCHED,
-    minAU: 0.01,
-    maxAU: 0.3,
+    baseMinAU: 0.01,
+    baseMaxAU: 0.3,
+    minAU: 0, // Calculated at runtime
+    maxAU: 0, // Calculated at runtime
     temperatureRange: { min: 800, max: 2000 },
-    stellarTypes: [CelestialType.STAR],
-    allowedTypes: [PlanetType.LAVA, RockyType.METALLIC],
-    disallowedTypes: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II],
+    allowedPlanetTypes: [PlanetType.LAVA, PlanetType.ROCKY], // Replaced RockyType.METALLIC
+    allowedGasGiantClasses: [GasGiantClass.CLASS_IV, GasGiantClass.CLASS_V],
+    cometChance: 0,
+    asteroidBeltChance: 0.1, // Some chance for inner belts
     formationProbability: 0.15,
     specialConfigurations: [
       OrbitalConfiguration.STANDARD,
@@ -56,12 +41,15 @@ export const enhancedCelestialZones: CelestialZone[] = [
   {
     name: "Hot Inner Zone",
     category: ZoneCategory.HOT,
-    minAU: 0.3,
-    maxAU: 0.8,
+    baseMinAU: 0.3,
+    baseMaxAU: 0.8,
+    minAU: 0, // Calculated at runtime
+    maxAU: 0, // Calculated at runtime
     temperatureRange: { min: 400, max: 800 },
-    stellarTypes: [CelestialType.STAR],
-    allowedTypes: [PlanetType.ROCKY, PlanetType.DESERT, PlanetType.LAVA],
-    disallowedTypes: [GasGiantClass.CLASS_III],
+    allowedPlanetTypes: [PlanetType.ROCKY, PlanetType.DESERT, PlanetType.LAVA],
+    allowedGasGiantClasses: [GasGiantClass.CLASS_IV, GasGiantClass.CLASS_V],
+    cometChance: 0,
+    asteroidBeltChance: 0.2, // Higher chance for the main asteroid belt
     formationProbability: 0.7,
     specialConfigurations: [
       OrbitalConfiguration.STANDARD,
@@ -73,12 +61,20 @@ export const enhancedCelestialZones: CelestialZone[] = [
   {
     name: "Temperate Zone",
     category: ZoneCategory.TEMPERATE,
-    minAU: 0.8,
-    maxAU: 2.0,
+    baseMinAU: 0.8,
+    baseMaxAU: 2.0,
+    minAU: 0, // Calculated at runtime
+    maxAU: 0, // Calculated at runtime
     temperatureRange: { min: 200, max: 400 },
-    stellarTypes: [CelestialType.STAR],
-    allowedTypes: [PlanetType.TERRESTRIAL, PlanetType.OCEAN, PlanetType.ROCKY],
-    disallowedTypes: [],
+    allowedPlanetTypes: [
+      PlanetType.TERRESTRIAL,
+      PlanetType.OCEAN,
+      PlanetType.ROCKY,
+      PlanetType.DESERT,
+    ],
+    allowedGasGiantClasses: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II],
+    cometChance: 0,
+    asteroidBeltChance: 0.1,
     formationProbability: 0.85,
     specialConfigurations: [
       OrbitalConfiguration.STANDARD,
@@ -91,12 +87,15 @@ export const enhancedCelestialZones: CelestialZone[] = [
   {
     name: "Cool Zone",
     category: ZoneCategory.COOL,
-    minAU: 2.0,
-    maxAU: 5.0,
+    baseMinAU: 2.0,
+    baseMaxAU: 5.0,
+    minAU: 0, // Calculated at runtime
+    maxAU: 0, // Calculated at runtime
     temperatureRange: { min: 100, max: 200 },
-    stellarTypes: [CelestialType.STAR],
-    allowedTypes: [PlanetType.ICE, PlanetType.ROCKY, GasGiantClass.CLASS_I],
-    disallowedTypes: [PlanetType.LAVA, PlanetType.DESERT],
+    allowedPlanetTypes: [PlanetType.ICE, PlanetType.ROCKY],
+    allowedGasGiantClasses: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II],
+    cometChance: 0.02, // Small chance for comets to start appearing
+    asteroidBeltChance: 0.15,
     formationProbability: 0.6,
     specialConfigurations: [
       OrbitalConfiguration.STANDARD,
@@ -108,16 +107,15 @@ export const enhancedCelestialZones: CelestialZone[] = [
   {
     name: "Outer Gas Zone",
     category: ZoneCategory.COLD,
-    minAU: 5.0,
-    maxAU: 30.0,
+    baseMinAU: 5.0,
+    baseMaxAU: 30.0,
+    minAU: 0, // Calculated at runtime
+    maxAU: 0, // Calculated at runtime
     temperatureRange: { min: 50, max: 100 },
-    stellarTypes: [CelestialType.STAR],
-    allowedTypes: [
-      GasGiantClass.CLASS_I,
-      GasGiantClass.CLASS_II,
-      RockyType.ICE,
-    ],
-    disallowedTypes: [PlanetType.LAVA, PlanetType.DESERT, PlanetType.OCEAN],
+    allowedPlanetTypes: [PlanetType.ICE], // Replaced RockyType.ICE
+    allowedGasGiantClasses: [GasGiantClass.CLASS_I, GasGiantClass.CLASS_II],
+    cometChance: 0.05,
+    asteroidBeltChance: 0.2, // Kuiper-like belt
     formationProbability: 0.8,
     specialConfigurations: [
       OrbitalConfiguration.STANDARD,
@@ -130,17 +128,15 @@ export const enhancedCelestialZones: CelestialZone[] = [
   {
     name: "Frozen Outer Zone",
     category: ZoneCategory.FROZEN,
-    minAU: 30.0,
-    maxAU: 100.0,
+    baseMinAU: 30.0,
+    baseMaxAU: 100.0,
+    minAU: 0, // Calculated at runtime
+    maxAU: 0, // Calculated at runtime
     temperatureRange: { min: 10, max: 50 },
-    stellarTypes: [CelestialType.STAR],
-    allowedTypes: [GasGiantClass.CLASS_III, RockyType.ICE],
-    disallowedTypes: [
-      PlanetType.LAVA,
-      PlanetType.DESERT,
-      PlanetType.OCEAN,
-      PlanetType.TERRESTRIAL,
-    ],
+    allowedPlanetTypes: [PlanetType.ICE], // Replaced RockyType.ICE
+    allowedGasGiantClasses: [GasGiantClass.CLASS_III],
+    cometChance: 0.1, // Higher comet chance
+    asteroidBeltChance: 0.25,
     formationProbability: 0.3,
     specialConfigurations: [
       OrbitalConfiguration.STANDARD,
@@ -150,19 +146,52 @@ export const enhancedCelestialZones: CelestialZone[] = [
     maxBodies: 6,
   },
   {
+    name: "Outer Zone",
+    category: ZoneCategory.OUTER,
+    baseMinAU: 100.0,
+    baseMaxAU: 1000.0,
+    minAU: 0, // Calculated at runtime
+    maxAU: 0, // Calculated at runtime
+    temperatureRange: { min: 5, max: 10 },
+    allowedPlanetTypes: [PlanetType.ICE, PlanetType.BARREN], // Replaced RockyType.ICE
+    allowedGasGiantClasses: [GasGiantClass.CLASS_II, GasGiantClass.CLASS_III],
+    cometChance: 0.15,
+    asteroidBeltChance: 0.15,
+    formationProbability: 0.2,
+    specialConfigurations: [
+      OrbitalConfiguration.ROGUE,
+      OrbitalConfiguration.BINARY_PAIR,
+    ],
+    maxBodies: 8,
+  },
+  {
+    name: "Distant Zone",
+    category: ZoneCategory.DISTANT,
+    baseMinAU: 1000.0,
+    baseMaxAU: 5000.0,
+    minAU: 0, // Calculated at runtime
+    maxAU: 0, // Calculated at runtime
+    temperatureRange: { min: 2, max: 5 },
+    allowedPlanetTypes: [PlanetType.ICE, PlanetType.BARREN],
+    allowedGasGiantClasses: [GasGiantClass.CLASS_III],
+    cometChance: 0.2, // Very likely to be comets
+    asteroidBeltChance: 0.1,
+    formationProbability: 0.15,
+    specialConfigurations: [OrbitalConfiguration.ROGUE],
+    maxBodies: 10,
+  },
+  {
     name: "Interstellar Zone",
     category: ZoneCategory.INTERSTELLAR,
-    minAU: 100.0,
-    maxAU: 10000.0,
+    baseMinAU: 5000.0,
+    baseMaxAU: 10000.0,
+    minAU: 0, // Calculated at runtime
+    maxAU: 0, // Calculated at runtime
     temperatureRange: { min: 2, max: 10 },
-    stellarTypes: [CelestialType.STAR],
-    allowedTypes: [RockyType.ICE, GasGiantClass.CLASS_III],
-    disallowedTypes: [
-      PlanetType.LAVA,
-      PlanetType.DESERT,
-      PlanetType.OCEAN,
-      PlanetType.TERRESTRIAL,
-    ],
+    allowedPlanetTypes: [PlanetType.ICE], // Replaced RockyType.ICE
+    allowedGasGiantClasses: [GasGiantClass.CLASS_III],
+    cometChance: 0.25, // Almost exclusively comets or rogue bodies
+    asteroidBeltChance: 0.1,
     formationProbability: 0.1,
     specialConfigurations: [OrbitalConfiguration.ROGUE],
     maxBodies: 10,
@@ -180,6 +209,32 @@ export class CelestialZoneManager {
   constructor(random: () => number, customZones?: CelestialZone[]) {
     this.zones = customZones || enhancedCelestialZones;
     this.random = random;
+  }
+
+  /**
+   * Creates and initializes a `CelestialZoneManager` with zone boundaries
+   * dynamically adjusted for the properties of a specific star.
+   *
+   * @param star The star to base the zone calculations on.
+   * @param random The seeded pseudo-random number generator function.
+   * @returns A new `CelestialZoneManager` instance with scaled zones.
+   */
+  static createForStar(
+    star: CelestialObject,
+    random: () => number,
+  ): CelestialZoneManager {
+    // Luminosity is proportional to Mass^3.5
+    const luminosity = Math.pow(star.realMass_kg / CONST.SOLAR_MASS_KG, 3.5);
+    // Zone boundaries scale with the square root of luminosity
+    const scalingFactor = Math.sqrt(luminosity);
+
+    const adjustedZones = enhancedCelestialZones.map((zone) => ({
+      ...zone,
+      minAU: zone.baseMinAU * scalingFactor,
+      maxAU: zone.baseMaxAU * scalingFactor,
+    }));
+
+    return new CelestialZoneManager(random, adjustedZones);
   }
 
   /**
@@ -215,13 +270,17 @@ export class CelestialZoneManager {
 
     // Calculate combined luminosity for multi-star systems
     const totalLuminosity = stars.reduce((sum, star) => {
-      const mass = star.realMass_kg || 1.989e30; // Default to solar mass if not specified
-      const solarMasses = mass / 1.989e30; // Convert to solar masses
-      return sum + calculateStellarLuminosity(solarMasses);
+      const mass = star.realMass_kg || CONST.SOLAR_MASS_KG;
+      const solarMasses = mass / CONST.SOLAR_MASS_KG;
+      // Main sequence mass-luminosity relation: L ∝ M^3.5
+      return sum + Math.pow(solarMasses, 3.5);
     }, 0);
 
+    const complexity = this.getComplexityFactor(config);
+    const scaledLuminosity = totalLuminosity * complexity;
+
     // Adjust zone boundaries based on luminosity
-    const luminosityFactor = Math.sqrt(totalLuminosity);
+    const luminosityFactor = Math.sqrt(scaledLuminosity);
 
     return this.zones.map((zone) => ({
       ...zone,

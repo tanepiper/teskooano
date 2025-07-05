@@ -246,12 +246,16 @@ export interface CometProperties extends SpecificPropertiesBase {
   activity: number;
   /** Visual radius of the coma (in scaled units). */
   visualComaRadius?: number;
-  /** Color of the coma, usually a hex string with alpha. */
+  /** Color of the coma, usually a hex string. */
   visualComaColor?: string;
-  /** Maximum visual length of the tail (in scaled units). */
+  /** Opacity of the coma (0 to 1). */
+  visualComaOpacity?: number;
+  /** Optional visual maximum length of the comet's tail (in scaled units). */
   visualMaxTailLength?: number;
-  /** Color of the comet's tail, usually a hex string with alpha. */
+  /** Color of the comet's tail, usually a hex string. */
   visualTailColor?: string;
+  /** Opacity of the tail (0 to 1). */
+  visualTailOpacity?: number;
   /** Optional container for detailed visual parameters of the nucleus shader. */
   visuals?: {
     darkColorMultiplier?: number;

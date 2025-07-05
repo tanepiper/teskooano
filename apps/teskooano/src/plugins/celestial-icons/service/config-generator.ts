@@ -205,8 +205,22 @@ export function generateIconConfig(
     }
     case CelestialType.COMET: {
       const cometProps = object.properties as CometProperties;
-      baseConfig.base.color = cometProps.visualComaColor || "#FFFFFF";
-      baseConfig.atmosphere = { color: "#B0E0E6", size: 3 };
+      // Small, bright head
+      baseConfig.base = {
+        type: "planet",
+        color: cometProps.visualComaColor || "#FFFFFF",
+        radius: 3, // Smaller radius for the comet head
+      };
+
+      // A tail instead of a generic atmosphere glow
+      baseConfig.tail = {
+        color: cometProps.visualTailColor || "#DCE6FF",
+        angle: -45, // Pointing up and to the right
+        length: 12, // A decent length
+      };
+
+      // Ensure atmosphere from base config is removed
+      baseConfig.atmosphere = undefined;
       break;
     }
     case CelestialType.SPACE_ROCK: {

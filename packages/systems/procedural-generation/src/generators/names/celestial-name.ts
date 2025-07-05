@@ -1,3 +1,6 @@
+import * as UTIL from "../../utils";
+import { createSeededRandom } from "../../seeded-random";
+
 const vowels = "aeiou";
 const consonants = "bcdfghjklmnpqrstvwxyz";
 
@@ -18,78 +21,42 @@ const consonantDoubles = [
 const vowelDoubles = ["a", "e", "o"];
 
 /**
- * Generates a procedural, pronounceable name for a celestial body.
+ * Generates a unique and evocative name for a celestial body using a
+ * sophisticated, multi-layered approach inspired by real astronomical naming
+ * conventions.
  *
  * It constructs names by pseudo-randomly combining consonants and vowels,
  * following simple grammatical rules to create natural-sounding results. It allows
  * for occasional double letters and handles special cases like 'qu' to improve
  * the quality of the generated names.
  *
- * @param random A function returning a pseudo-random number between 0 (inclusive) and 1 (exclusive).
- * @returns A generated name string, capitalized.
+ * @param random The seeded pseudo-random number generator function.
+ * @returns A unique celestial name string.
  */
 export function generateCelestialName(random: () => number): string {
   const nameLength = 5 + Math.floor(random() * 5);
   let name = "";
-  let lastCharType: "vowel" | "consonant" | "none" = "none";
+  let isVowelTurn = random() > 0.5;
 
   for (let i = 0; i < nameLength; i++) {
-    let nextChar = "";
-    const allowDoubleConsonant = random() < 0.1;
-    const allowDoubleVowel = random() < 0.08;
-
-    if (lastCharType === "vowel") {
-      if (
-        allowDoubleVowel &&
-        name.length > 0 &&
-        vowelDoubles.includes(name[name.length - 1])
-      ) {
-        nextChar = name[name.length - 1];
-        lastCharType = "vowel";
-      } else {
-        const consonantIndex = Math.floor(random() * consonants.length);
-        nextChar = consonants[consonantIndex];
-
-        if (nextChar === "q" && i < nameLength - 1) {
-          nextChar = "qu";
-          i++;
-        }
-        lastCharType = "consonant";
-      }
-    } else if (lastCharType === "consonant") {
-      if (
-        allowDoubleConsonant &&
-        name.length > 0 &&
-        consonantDoubles.includes(name[name.length - 1])
-      ) {
-        nextChar = name[name.length - 1];
-        lastCharType = "consonant";
-      } else {
-        const vowelIndex = Math.floor(random() * vowels.length);
-        nextChar = vowels[vowelIndex];
-        lastCharType = "vowel";
-      }
+    if (isVowelTurn) {
+      name += vowels[Math.floor(random() * vowels.length)];
     } else {
-      if (random() < 0.6) {
-        const consonantIndex = Math.floor(random() * consonants.length);
-        nextChar = consonants[consonantIndex];
-        if (nextChar === "q" && i < nameLength - 1) {
-          nextChar = "qu";
-          i++;
-        }
-        lastCharType = "consonant";
-      } else {
-        const vowelIndex = Math.floor(random() * vowels.length);
-        nextChar = vowels[vowelIndex];
-        lastCharType = "vowel";
-      }
+      name += consonants[Math.floor(random() * consonants.length)];
     }
-    name += nextChar;
+    isVowelTurn = !isVowelTurn;
   }
-
-  if (name.endsWith("q")) {
-    name += "u";
-  }
-
   return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/**
+ * Generates a system name from a seed string.
+ * @param seed The seed string to use for generation.
+ * @returns A system name.
+ */
+export async function generateSystemNameFromSeed(
+  seed: string,
+): Promise<string> {
+  const random = await createSeededRandom(seed);
+  return generateCelestialName(random);
 }

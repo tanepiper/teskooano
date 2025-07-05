@@ -22,6 +22,7 @@ import { generateRings } from "./planet-rings";
 import { determinePlanetTypeAndBaseProperties } from "./planet-type";
 import { createProceduralSurfaceProperties } from "../../properties/creator";
 import { calculateStellarLuminosity, estimateTemperature } from "../../utils";
+import { CelestialZone } from "../../zones";
 
 /**
  * Creates an RxJS Observable that generates and emits data for a single planet
@@ -41,6 +42,7 @@ import { calculateStellarLuminosity, estimateTemperature } from "../../utils";
  * @param parentStar The parent star object.
  * @param bodyDistanceAU The orbital distance of the planet from the star in AU.
  * @param systemSeed The main system seed string.
+ * @param zone The dynamically-scaled celestial zone for this location.
  * @returns An `Observable<CelestialObject>` that emits the planet and then its
  *   ring system (if any), then completes.
  */
@@ -49,6 +51,7 @@ export function generatePlanet(
   parentStar: CelestialObject,
   bodyDistanceAU: number,
   systemSeed: string,
+  zone: CelestialZone,
 ): Observable<CelestialObject> {
   return new Observable((subscriber: Subscriber<CelestialObject>) => {
     let planetName: string = "Unknown Planet";
@@ -58,8 +61,8 @@ export function generatePlanet(
 
       const baseProps = determinePlanetTypeAndBaseProperties(
         random,
-        bodyDistanceAU,
         parentStar,
+        zone,
       );
 
       if (!baseProps) {
@@ -83,7 +86,7 @@ export function generatePlanet(
       const specificProperties = generatePlanetSpecificProperties(
         random,
         baseProps,
-        bodyDistanceAU,
+        zone.minAU, // Pass the zone's minimum distance for temperature calcs
       );
 
       const visualPlanetRadius_m = scaleSize(
@@ -238,6 +241,7 @@ export function generatePlanet(
  * @param distanceAU The distance from the system center where the rogue planet is located.
  * @param systemSeed The main system seed string.
  * @param slotIndex The slot index for unique naming.
+ * @param zone The dynamically-scaled celestial zone for this location.
  * @returns An `Observable<CelestialObject>` that emits the rogue planet and then completes.
  */
 export function generateRoguePlanet(
@@ -245,41 +249,25 @@ export function generateRoguePlanet(
   distanceAU: number,
   systemSeed: string,
   slotIndex: number,
+  zone: CelestialZone,
 ): Observable<CelestialObject> {
   return new Observable((subscriber: Subscriber<CelestialObject>) => {
     let planetName: string = "Unknown Rogue Planet";
     try {
       planetName = generateCelestialName(random);
-      const planetId = `planet-rogue-${planetName.toLowerCase()}-${slotIndex}`;
+      const planetId = `planet-rogue-${slotIndex}-${planetName.toLowerCase()}`;
 
-      // For rogue planets, use a simplified zone approach - they're typically cold
-      // and more likely to be ice giants or frozen rocky planets
-      const planetTypeRoll = random();
-      let baseProps;
+      const baseProps = determinePlanetTypeAndBaseProperties(
+        random,
+        // For rogues, there is no parent star, but we use one as a placeholder
+        // for the function signature. The zone is the critical part.
+        { realMass_kg: CONST.SOLAR_MASS_KG } as CelestialObject,
+        zone,
+      );
 
-      if (planetTypeRoll < 0.3) {
-        // 30% chance of being a gas giant (likely ejected ice giant)
-        baseProps = {
-          celestialType: CelestialType.GAS_GIANT,
-          classType:
-            random() < 0.7 ? GasGiantClass.CLASS_III : GasGiantClass.CLASS_IV, // Ice giants
-          preliminaryDensity_kg_m3: 1500, // Lower density for ice giants
-          targetDensity_kg_m3: 1500,
-          massMultiplierFactor: random() * 15 + 5, // 5-20x Earth mass
-          ringChance: 0.4, // Moderate chance of rings
-          ringAllowedTypes: [RockyType.ICE],
-        };
-      } else {
-        // 70% chance of being a rocky/ice planet
-        baseProps = {
-          celestialType: CelestialType.PLANET,
-          classType: random() < 0.6 ? PlanetType.ICE : PlanetType.ROCKY,
-          preliminaryDensity_kg_m3: 4000, // Rocky density
-          targetDensity_kg_m3: 4000,
-          massMultiplierFactor: random() * 3 + 0.5, // 0.5-3.5x Earth mass
-          ringChance: 0.05, // Very low chance of rings
-          ringAllowedTypes: [RockyType.ICE],
-        };
+      if (!baseProps) {
+        subscriber.complete();
+        return;
       }
 
       const planetMassMultiplier =
@@ -339,7 +327,7 @@ export function generateRoguePlanet(
 
       const planetAlbedo = UTIL.calculateAlbedo(
         baseProps.celestialType,
-        baseProps.classType,
+        baseProps.celestialClass,
         random,
       );
 
@@ -348,7 +336,7 @@ export function generateRoguePlanet(
       if (baseProps.celestialType === CelestialType.PLANET) {
         const proceduralSurface = createProceduralSurfaceProperties(
           random,
-          baseProps.classType,
+          baseProps.celestialClass,
         );
         properties = {
           ...properties,

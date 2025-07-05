@@ -7,7 +7,7 @@ import {
   type CelestialObject,
 } from "@teskooano/data-types";
 import * as UTIL from "../../utils";
-import { CelestialZoneManager } from "../../zones";
+import { type CelestialZone } from "../../zones";
 
 /**
  * @internal
@@ -33,112 +33,81 @@ export interface PlanetBaseProperties {
  * @param random The seeded pseudo-random number generator function.
  * @param bodyDistanceAU The planet's distance from its star in AU.
  * @param parentStar The parent star `CelestialObject`.
+ * @param zone The dynamically-scaled celestial zone for this location.
  * @returns A `PlanetBaseProperties` object or `undefined` if no suitable zone is found.
  */
 export function determinePlanetTypeAndBaseProperties(
   random: () => number,
-  bodyDistanceAU: number,
   parentStar: CelestialObject,
+  zone: CelestialZone,
 ): PlanetBaseProperties | undefined {
-  // Use the new zone manager with the provided random function
-  const zoneManager = new CelestialZoneManager(random);
-  const zone = zoneManager.getZoneForDistance(bodyDistanceAU);
   if (!zone) {
     return undefined;
   }
 
   // Determine if the zone allows for gas giant formation
-  const gasGiantTypesInZone = zone.allowedTypes.filter((t) =>
-    Object.values(GasGiantClass).includes(t as GasGiantClass),
-  );
   const canBeGasGiant =
-    gasGiantTypesInZone.length > 0 && random() < zone.formationProbability;
+    zone.allowedGasGiantClasses.length > 0 &&
+    random() < zone.formationProbability;
 
-  // Create a simple formation probability for the new zone format
-  const chosenFormation = {
-    type: canBeGasGiant ? CelestialType.GAS_GIANT : CelestialType.PLANET,
-    chance: zone.formationProbability,
-    subTypes: zone.allowedTypes,
-    densityRange_kg_m3: [2000, 5000] as [number, number], // Default rocky density range
-    massMultiplierFactorRange: [0.1, 10] as [number, number], // Wide range for variety
-    ringChance: 0.1,
-    allowedRingTypes: [
-      RockyType.LIGHT_ROCK,
-      RockyType.DARK_ROCK,
-      RockyType.ICE,
-    ] as RockyType[],
-  };
-
+  // With the new explicit zone definition, we can simplify this logic.
+  const isGasGiant = canBeGasGiant;
   const targetDensity_kg_m3 = utils.lerp(
-    chosenFormation.densityRange_kg_m3[0],
-    chosenFormation.densityRange_kg_m3[1],
+    isGasGiant ? 500 : 2000,
+    isGasGiant ? 2000 : 5500,
     random(),
   );
   const massMultiplierFactor = utils.lerp(
-    chosenFormation.massMultiplierFactorRange[0],
-    chosenFormation.massMultiplierFactorRange[1],
+    isGasGiant ? 10 : 0.1,
+    isGasGiant ? 300 : 10,
     random(),
   );
+  const ringChance = isGasGiant ? 0.75 : 0.1;
 
-  let gasGiantClass: GasGiantClass | undefined = undefined;
-  let rockyPlanetType: PlanetType | undefined = undefined;
+  let celestialClass: PlanetType | GasGiantClass | undefined;
 
-  if (chosenFormation.type === CelestialType.GAS_GIANT) {
-    // First, determine the class based on physics (temperature)
+  if (isGasGiant) {
+    // First, attempt to classify based on physics.
     const classifiedGiant = UTIL.classifyGasGiantByTemperature(
       random,
-      bodyDistanceAU,
+      zone.minAU, // Use the zone's distance for temperature classification
       parentStar.temperature,
       parentStar.realRadius_m,
     );
 
-    // Then, check if the physically-correct class is allowed by the zone's rules.
-    // The zone's rules are the ultimate source of truth.
-    if (
-      chosenFormation.subTypes?.length &&
-      chosenFormation.subTypes.includes(classifiedGiant)
-    ) {
-      // If it's allowed, use it.
-      gasGiantClass = classifiedGiant;
-    } else if (chosenFormation.subTypes?.length) {
-      // If not, the physics and the zone rules contradict.
-      // In this case, we respect the zone's explicit rules and pick a valid type.
-      // This prevents edge cases with unusual stars creating lore-breaking planets.
-      const validGasGiantSubtypes = chosenFormation.subTypes.filter((t) =>
-        Object.values(GasGiantClass).includes(t as GasGiantClass),
-      ) as GasGiantClass[];
-
-      gasGiantClass = UTIL.getRandomItem(validGasGiantSubtypes, random);
+    // If the physically-correct class is allowed by the zone, use it.
+    // Otherwise, pick a random valid one from the zone's explicit list.
+    if (zone.allowedGasGiantClasses.includes(classifiedGiant)) {
+      celestialClass = classifiedGiant;
     } else {
-      // As a final fallback, if the zone has no subtypes defined, use the classified one.
-      gasGiantClass = classifiedGiant;
+      celestialClass = UTIL.getRandomItem(zone.allowedGasGiantClasses, random);
     }
-  } else if (
-    (chosenFormation.type === CelestialType.PLANET ||
-      chosenFormation.type === CelestialType.DWARF_PLANET) &&
-    chosenFormation.subTypes?.length
-  ) {
-    const validPlanetSubtypes = chosenFormation.subTypes.filter((t) =>
-      Object.values(PlanetType).includes(t as PlanetType),
-    ) as PlanetType[];
-
-    if (validPlanetSubtypes.length > 0) {
-      rockyPlanetType = UTIL.getRandomItem(validPlanetSubtypes, random);
+  } else {
+    // If it's a rocky planet, just pick one from the allowed list for the zone.
+    if (zone.allowedPlanetTypes.length > 0) {
+      celestialClass = UTIL.getRandomItem(zone.allowedPlanetTypes, random);
     }
   }
 
-  const planetOrGiantType = gasGiantClass ?? rockyPlanetType;
-  const finalCelestialType = gasGiantClass
+  // Fallback if no type could be determined (should not happen with good zone defs)
+  if (!celestialClass) {
+    console.warn(
+      `[planet-type] Could not determine a valid celestial class for zone "${zone.name}". Falling back to ROCKY.`,
+    );
+    celestialClass = PlanetType.ROCKY;
+  }
+
+  const finalCelestialType = isGasGiant
     ? CelestialType.GAS_GIANT
-    : chosenFormation.type;
+    : CelestialType.PLANET;
 
   return {
     celestialType: finalCelestialType,
-    celestialClass: planetOrGiantType as PlanetType | GasGiantClass,
+    celestialClass: celestialClass,
     preliminaryDensity_kg_m3: targetDensity_kg_m3,
     targetDensity_kg_m3: targetDensity_kg_m3,
     massMultiplierFactor: massMultiplierFactor,
-    ringChance: chosenFormation.ringChance,
-    ringAllowedTypes: chosenFormation.allowedRingTypes,
+    ringChance: ringChance,
+    ringAllowedTypes: [RockyType.ICE, RockyType.LIGHT_ROCK], // Rings are always rocky/icy
   };
 }

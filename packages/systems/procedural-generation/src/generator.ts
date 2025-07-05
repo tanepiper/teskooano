@@ -4,6 +4,8 @@ import { generateBodyForSlot, generateStars } from "./operators";
 import { createSeededRandom } from "./seeded-random";
 import { generateBodyDistances } from "./utils/body-placement";
 import { CelestialZoneManager } from "./zones";
+import { generateComet, generateSystemNameFromSeed } from "./generators";
+import { mergeMap, take } from "rxjs/operators";
 
 /**
  * Generates sophisticated star systems with enhanced realism and variety.
@@ -28,91 +30,69 @@ import { CelestialZoneManager } from "./zones";
 export async function generateSystem(
   seed: string,
 ): Promise<{ systemName: string; objects$: Observable<CelestialObject> }> {
-  const random = await createSeededRandom(seed);
+  const systemName = await generateSystemNameFromSeed(seed);
 
-  // Generate the stellar system first using enhanced generation
-  const { stars, systemConfig } = generateStars(random);
-
-  // Use the main star's name as the system name
-  const systemName = stars[0]?.name || "Unknown System";
-
-  // Create zone manager and determine system configuration
-  const zoneManager = new CelestialZoneManager(random);
-
-  // Generate zones optimized for this stellar system
-  const zones = zoneManager.selectZonesForPlacement(stars, systemConfig);
-
-  // Create the main Observable stream with enhanced generation
   const objects$ = new Observable<CelestialObject>((subscriber) => {
-    try {
-      // Emit all stars first
-      stars.forEach((star) => {
-        subscriber.next(star);
-      });
+    const runGeneration = async () => {
+      try {
+        const random = await createSeededRandom(seed);
+        const { stars, systemConfig } = generateStars(random);
+        const primaryStar = stars[0];
 
-      // Generate sophisticated body placements using the zone system
-      const placements = generateBodyDistances(random, zones, stars);
-
-      // Log system information for debugging
-      console.log(
-        `[GenerateSystem] ${systemName}: ${stars.length} star(s), ${placements.length} body placement(s)`,
-      );
-      console.log(`[GenerateSystem] System type: ${systemConfig.type}`);
-
-      // Special configurations summary
-      const specialConfigs = placements.filter(
-        (p) => p.configuration !== "STANDARD",
-      );
-      if (specialConfigs.length > 0) {
-        console.log(
-          `[GenerateSystem] Special configurations: ${specialConfigs.length}`,
-        );
-        specialConfigs.forEach((p) => {
-          console.log(
-            `  - ${p.configuration} at ${p.distanceAU.toFixed(2)} AU`,
+        if (!primaryStar) {
+          throw new Error(
+            "System generation failed to produce a primary star.",
           );
+        }
+
+        const zoneManager = CelestialZoneManager.createForStar(
+          primaryStar,
+          random,
+        );
+
+        let celestialCount = 0;
+        stars.forEach((star) => {
+          subscriber.next(star);
+          celestialCount++;
         });
+
+        const cometPlacementZone = zoneManager.getAllZones().slice(-4)[0];
+        const cometDistanceAU = cometPlacementZone.maxAU * (1 + random());
+        const comet = generateComet(random, primaryStar, cometDistanceAU, 99);
+        if (comet) {
+          subscriber.next(comet);
+          celestialCount++;
+        }
+
+        const bodyPlacements = generateBodyDistances(
+          random,
+          zoneManager.getAllZones(),
+          stars,
+        );
+
+        const remainingSlots = 80 - celestialCount;
+
+        from(bodyPlacements)
+          .pipe(
+            generateBodyForSlot(random, seed),
+            take(remainingSlots > 0 ? remainingSlots : 0),
+            catchError((err) => {
+              console.error("Error in body generation pipeline:", err);
+              // We must not let one failed body stop the entire stream.
+              return EMPTY;
+            }),
+          )
+          .subscribe({
+            next: (obj) => subscriber.next(obj),
+            error: (err) => subscriber.error(err), // Should not be reached due to catchError
+            complete: () => subscriber.complete(),
+          });
+      } catch (error) {
+        subscriber.error(error);
       }
+    };
 
-      // Generate bodies using the enhanced placement system
-      const bodyGenerationPipeline$ = from(placements).pipe(
-        generateBodyForSlot(random, seed),
-        catchError((err) => {
-          console.error("Error in enhanced body generation pipeline:", err);
-          subscriber.error(err);
-          return EMPTY;
-        }),
-      );
-
-      const subscription = bodyGenerationPipeline$.subscribe({
-        next: (obj) => {
-          // Add some metadata about the generation process
-          if (obj.properties) {
-            (obj.properties as any).generationInfo = {
-              systemSeed: seed,
-              systemType: systemConfig.type,
-              starCount: stars.length,
-            };
-          }
-          subscriber.next(obj);
-        },
-        error: (err) => subscriber.error(err),
-        complete: () => {
-          console.log(`[GenerateSystem] ${systemName}: Generation complete`);
-          subscriber.complete();
-        },
-      });
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    } catch (error) {
-      console.error(
-        `[GenerateSystem] Error setting up system generation for ${systemName}:`,
-        error,
-      );
-      subscriber.error(error);
-    }
+    runGeneration();
   });
 
   return { systemName, objects$ };

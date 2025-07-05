@@ -5,6 +5,7 @@ export interface CelestialIconConfig {
     type: "star" | "planet";
     color: string;
     gradient?: [string, string];
+    radius?: number;
   };
   rings?: {
     color: string;
@@ -15,4 +16,9 @@ export interface CelestialIconConfig {
     size: number; // as a percentage of the icon size
   };
   procedural?: ProceduralSurfaceProperties;
+  tail?: {
+    color: string;
+    angle: number; // in degrees
+    length: number;
+  };
 }

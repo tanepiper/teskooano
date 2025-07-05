@@ -89,12 +89,25 @@ export interface FormationProbability {
 export interface CelestialZone {
   name: string;
   category: ZoneCategory;
+  temperatureRange: { min: number; max: number };
+
+  // Final, calculated boundaries for a specific star
   minAU: number;
   maxAU: number;
-  temperatureRange: { min: number; max: number };
-  stellarTypes: CelestialType[];
-  allowedTypes: (PlanetType | RockyType | GasGiantClass)[];
-  disallowedTypes: (PlanetType | RockyType | GasGiantClass)[];
+
+  // Base boundaries used as a template, relative to a G-type star (L=1)
+  baseMinAU: number;
+  baseMaxAU: number;
+
+  allowedPlanetTypes: PlanetType[];
+  allowedGasGiantClasses: GasGiantClass[];
+
+  /** The chance (0.0 to 1.0) of a comet spawning in this zone instead of a planet. */
+  cometChance: number;
+  /** The chance (0.0 to 1.0) of an asteroid belt spawning instead of a planet. */
+  asteroidBeltChance: number;
+
+  /** The probability (0.0 to 1.0) that a generated body will be a Gas Giant instead of a Planet. */
   formationProbability: number;
   specialConfigurations: OrbitalConfiguration[];
   maxBodies: number;

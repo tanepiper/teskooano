@@ -86,7 +86,7 @@ export class CelestialIconComponent extends HTMLElement {
     this.clear();
     if (!this._config || !this.layers) return;
 
-    const { base, rings, atmosphere, procedural } = this._config;
+    const { base, rings, atmosphere, procedural, tail } = this._config;
 
     // If there is a glow effect, we need to scale down the entire group
     // to ensure the final rendered icon is the same size as others.
@@ -124,12 +124,32 @@ export class CelestialIconComponent extends HTMLElement {
       this.layers.appendChild(atmo);
     }
 
+    // 2. Render comet tail
+    if (tail) {
+      const tailPath = document.createElementNS(SVG_NS, "path");
+      tailPath.setAttribute("class", "comet-tail");
+
+      // Create a teardrop/triangle shape for the tail
+      const tailLength = tail.length || 10;
+      const tailWidth = 5;
+      const d = `M 12,12 L ${12 + tailLength},${12 - tailWidth / 2} L ${
+        12 + tailLength
+      },${12 + tailWidth / 2} Z`;
+
+      tailPath.setAttribute("d", d);
+      tailPath.setAttribute("fill", tail.color);
+      tailPath.setAttribute("transform", `rotate(${tail.angle} 12 12)`);
+      this.layers.appendChild(tailPath);
+    }
+
     // 2. Render base planet/star (middle layer)
     const body = document.createElementNS(SVG_NS, "circle");
     body.setAttribute("class", "planet-base");
     body.setAttribute("cx", "12");
     body.setAttribute("cy", "12");
-    body.setAttribute("r", "8");
+
+    const radius = base.radius ?? 8;
+    body.setAttribute("r", String(radius));
 
     if (procedural) {
       body.setAttribute("fill", "url(#procedural-gradient)");

@@ -24,6 +24,11 @@ template.innerHTML = `
         fill: none;
         stroke-width: 2;
     }
+    .comet-tail {
+        fill-opacity: 0.8;
+        stroke: none;
+        filter: url(#atmosphere-blur);
+    }
 </style>
 <svg viewBox="0 0 24 24">
     <defs>
@@ -40,8 +45,9 @@ template.innerHTML = `
     </defs>
     <g class="icon-layers">
       <!-- Atmosphere will be added here -->
-      <!-- Rings will be added here -->
+      <!-- Comet Tail will be added here -->
       <!-- Planet/Star body will be added here -->
+      <!-- Rings will be added here -->
     </g>
 </svg>
 `;

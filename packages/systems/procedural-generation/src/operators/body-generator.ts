@@ -8,9 +8,11 @@ import {
   of,
   Observable,
   type OperatorFunction,
+  from,
 } from "rxjs";
 import {
   generateAsteroidBelt,
+  generateComet,
   generateMoonsObservable,
   generatePlanet,
   generateRoguePlanet,
@@ -59,64 +61,61 @@ function generateStandardBody(
   placement: BodyPlacement,
   seed: string,
 ): Observable<CelestialObject> {
-  const { parentStar, distanceRelativeToParentAU, zone } = placement;
+  const { parentStar, distanceRelativeToParentAU, zone, slotIndex } = placement;
   const bodyTypeRoll = random();
 
-  // Check if an asteroid belt is a possibility for this slot
-  const asteroidChance =
-    zone.category === "COLD" || zone.category === "FROZEN" ? 0.25 : 0.1;
-  const isAsteroidBeltCandidate = bodyTypeRoll < asteroidChance;
+  // With the new zone definition, we can use chances directly.
+  const { cometChance, asteroidBeltChance } = zone;
 
+  // First, check for comets.
+  if (bodyTypeRoll < cometChance) {
+    const comet = generateComet(
+      random,
+      parentStar,
+      distanceRelativeToParentAU,
+      slotIndex,
+    );
+    return comet ? of(comet) : EMPTY;
+  }
+
+  // Next, check for asteroid belts.
   if (
-    isAsteroidBeltCandidate &&
+    bodyTypeRoll < cometChance + asteroidBeltChance &&
     isValidAsteroidBeltDistance(
       distanceRelativeToParentAU,
       parentStar.realMass_kg,
     )
   ) {
-    const beltData = generateAsteroidBelt(
+    const belt = generateAsteroidBelt(
       random,
       parentStar.id,
       parentStar.realMass_kg,
-      placement.slotIndex,
+      slotIndex,
       distanceRelativeToParentAU,
     );
-    return beltData ? of(beltData) : EMPTY;
+    return belt ? of(belt) : EMPTY;
   }
 
-  // If not an asteroid belt, generate a planet and its moons
-  const planet$ = generatePlanet(
+  // Otherwise, generate a planet.
+  return generatePlanet(
     random,
     parentStar,
     distanceRelativeToParentAU,
     seed,
-  );
-
-  return planet$.pipe(
-    mergeMap((planetObject) => {
-      // Decide if this planet should have moons based on distance and mass
-      const distanceFactor = Math.min(1, distanceRelativeToParentAU / 10); // Normalize distance effect up to 10 AU
-      const massFactor = Math.min(
-        1,
-        planetObject.realMass_kg / (5.972e24 * 50),
-      ); // Normalize mass effect up to 50 Earth masses
-      const moonChance = 0.1 + distanceFactor * 0.4 + massFactor * 0.5; // Base chance + distance + mass
-      const shouldHaveMoons = random() < moonChance;
-
-      if (!shouldHaveMoons) {
-        return of(planetObject);
-      }
-
-      // For special configurations, we might modify the generation
-      // or add additional objects in the future
-      const moon$ = generateMoonsObservable(
+    zone,
+  ).pipe(
+    mergeMap((planet) => {
+      if (!planet) return EMPTY;
+      // After the planet is created, generate its moons.
+      const moons$ = generateMoonsObservable(
         random,
-        planetObject,
-        planetObject.realMass_kg,
-        planetObject.realRadius_m,
+        planet,
+        planet.realMass_kg,
+        planet.realRadius_m,
         seed,
       );
-      return concat(of(planetObject), moon$);
+      // Return the planet first, then all its moons.
+      return concat(of(planet), moons$);
     }),
   );
 }
@@ -132,5 +131,11 @@ function generateRogueObject(
   const { distanceAU } = placement;
 
   // Generate a rogue planet (no moons for rogue objects typically)
-  return generateRoguePlanet(random, distanceAU, seed, placement.slotIndex);
+  return generateRoguePlanet(
+    random,
+    distanceAU,
+    seed,
+    placement.slotIndex,
+    placement.zone,
+  );
 }
