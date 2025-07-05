@@ -3,9 +3,17 @@ import {
   type PhysicsStateReal,
   AU_METERS,
   type RenderableCelestialObject,
+  CelestialType,
+  CelestialObject,
+  CelestialStatus,
 } from "@teskooano/data-types";
+import { type SimulationParameters } from "@teskooano/core-physics";
 import { OSVector3 } from "@teskooano/core-math";
-import { StateAccessor } from "@teskooano/core-state";
+import {
+  StateAccessor,
+  getSimulationState,
+  physicsSystemAdapter,
+} from "@teskooano/core-state";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineBuilder } from "../utils/LineBuilder";
@@ -225,6 +233,39 @@ export class PredictionManager {
       .map((co) => co.physicsStateReal)
       .filter((state): state is PhysicsStateReal => !!state);
 
+    // --- Create SimulationParameters for the worker ---
+    const radii = new Map<string | number, number>();
+    const isStar = new Map<string | number, boolean>();
+    const bodyTypes = new Map<string | number, CelestialType>();
+    const parentIds = new Map<string | number, string | undefined>();
+
+    Object.values(fullObjectsMap)
+      .filter(
+        (obj: CelestialObject) =>
+          obj.status !== CelestialStatus.DESTROYED &&
+          obj.status !== CelestialStatus.ANNIHILATED &&
+          !obj.ignorePhysics,
+      )
+      .forEach((obj: CelestialObject) => {
+        if (obj.physicsStateReal) {
+          radii.set(obj.id, obj.realRadius_m);
+          isStar.set(obj.id, obj.type === CelestialType.STAR);
+          bodyTypes.set(obj.id, obj.type);
+          parentIds.set(obj.id, obj.parentId);
+        }
+      });
+
+    const simParams: SimulationParameters = {
+      radii,
+      isStar,
+      bodyTypes,
+      parentIds,
+      physicsEngine: getSimulationState().physicsEngine,
+      orbitalParameters: physicsSystemAdapter.getOrbitalParametersSnapshot(),
+      currentTime_s: getSimulationState().time,
+    };
+    // ------------------------------------------------
+
     // Serialize data for the worker to avoid GC churn inside the worker.
     const floatsPerObject = 7; // mass, px, py, pz, vx, vy, vz
     const buffer = new Float32Array(
@@ -252,6 +293,7 @@ export class PredictionManager {
         idMap: idMap,
         predictionDuration: this.predictionDuration,
         predictionSteps: predictionSteps,
+        simulationParameters: simParams,
       },
       [buffer.buffer],
     ); // Zero-copy transfer of the buffer

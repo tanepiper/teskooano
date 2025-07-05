@@ -1,4 +1,7 @@
-import { predictTrajectory } from "@teskooano/core-physics";
+import {
+  predictTrajectory,
+  type SimulationParameters,
+} from "@teskooano/core-physics";
 import * as THREE from "three";
 import { PredictionDataPool } from "./PredictionDataPool.worker";
 
@@ -12,6 +15,7 @@ self.onmessage = (
     idMap: Map<string, number>;
     predictionDuration: number;
     predictionSteps: number;
+    simulationParameters: SimulationParameters;
   }>,
 ) => {
   const {
@@ -20,6 +24,7 @@ self.onmessage = (
     idMap,
     predictionDuration,
     predictionSteps,
+    simulationParameters,
   } = e.data;
 
   // Update the pool of objects from the flat buffer, avoiding new allocations.
@@ -31,7 +36,7 @@ self.onmessage = (
       hydratedStates,
       predictionDuration,
       predictionSteps,
-      {},
+      simulationParameters,
     );
 
     if (predictedResult.length < 2) {

@@ -153,6 +153,8 @@ export class ObjectLifecycleManager {
       this.lightingManager.register(new LightSourceComponent(object));
     }
 
+    // For comets, the mesh is an LOD object. The label should be added
+    // to the LOD object itself so it's not affected by level switching.
     const celestialLayer = this.css2DManager?.getLayer(
       CSS2DLayerType.CELESTIAL_LABELS,
     ) as CelestialLabelLayer;

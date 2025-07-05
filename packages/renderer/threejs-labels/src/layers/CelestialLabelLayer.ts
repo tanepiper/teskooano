@@ -16,6 +16,7 @@ export interface LabelVisibilityConfig {
   planet?: number;
   gasGiant?: number;
   moon?: number;
+  comet?: number;
   ejectedMoon?: number;
   secondaryStar?: number;
   default?: number;
@@ -27,9 +28,10 @@ export class CelestialLabelLayer extends BaseLabelLayer {
   constructor(config: LabelVisibilityConfig = {}) {
     super();
     this.visibilityConfig = {
-      planet: 90,
-      gasGiant: 190,
-      moon: 2,
+      planet: 100,
+      gasGiant: 200,
+      comet: 200,
+      moon: 5,
       ejectedMoon: 2000,
       secondaryStar: 3000,
       default: 2,
@@ -130,10 +132,21 @@ export class CelestialLabelLayer extends BaseLabelLayer {
           break;
         }
 
+        case CelestialType.COMET: {
+          visible = distanceToSelf < config.comet;
+          break;
+        }
+
         case CelestialType.PLANET: {
           visible = distanceToSelf < config.planet;
           break;
         }
+
+        case CelestialType.DWARF_PLANET: {
+          visible = distanceToSelf < config.planet;
+          break;
+        }
+
         case CelestialType.GAS_GIANT: {
           visible = distanceToSelf < config.gasGiant;
           break;
@@ -243,6 +256,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     return {
       planet: this.auToSceneUnits(this.visibilityConfig.planet),
       gasGiant: this.auToSceneUnits(this.visibilityConfig.gasGiant),
+      comet: this.auToSceneUnits(this.visibilityConfig.comet),
       moon: this.auToSceneUnits(this.visibilityConfig.moon),
       ejectedMoon: this.auToSceneUnits(this.visibilityConfig.ejectedMoon),
       secondaryStar: this.auToSceneUnits(this.visibilityConfig.secondaryStar),

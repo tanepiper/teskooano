@@ -9,3 +9,4 @@ export * from "./rings";
 export * from "./stars";
 export * from "./terrestrial";
 export * from "./utils/createFallbackSphere";
+export * from "./comet";

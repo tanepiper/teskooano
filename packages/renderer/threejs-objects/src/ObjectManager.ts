@@ -375,7 +375,8 @@ export class ObjectManager extends StateSubscriptionMixin {
           type === CelestialType.GAS_GIANT ||
           type === CelestialType.OORT_CLOUD || // Example: Always show Oort cloud representation label?
           type === CelestialType.DWARF_PLANET ||
-          type === CelestialType.ASTEROID_FIELD
+          type === CelestialType.ASTEROID_FIELD ||
+          type === CelestialType.COMET
         ) {
           showLabel = true;
         } else if (

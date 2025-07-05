@@ -124,6 +124,7 @@ const iconStyles: Record<string, string> = {
   [CelestialType.MOON]: "background-color: lightgrey;",
   [CelestialType.ASTEROID_FIELD]: "background-color: brown;",
   [CelestialType.OORT_CLOUD]: "background-color: darkgrey;",
+  [CelestialType.COMET]: "background-color: #E0FFFF;", // Light Cyan
   default: "background-color: white;",
 };
 

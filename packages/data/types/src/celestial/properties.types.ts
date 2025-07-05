@@ -238,18 +238,16 @@ export enum CometClass {
  * Properties specific to Comets.
  */
 export interface CometProperties extends SpecificPropertiesBase {
+  /** The type of celestial object. */
   type: CelestialType.COMET;
-
   /**
    * The class of comet.
    */
   classType: CometClass;
-
   /** Array listing the primary chemical components (e.g., ["water ice", "CO2"]). */
   composition: string[];
   /** A measure of the comet's outgassing activity, affecting tail and coma visibility (e.g., 0.0 - 1.0). */
   activity: number;
-
   /** Visual radius of the coma (in scaled units). */
   visualComaRadius?: number;
   /** Color of the coma, usually a hex string with alpha. */

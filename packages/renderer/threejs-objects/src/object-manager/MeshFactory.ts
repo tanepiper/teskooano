@@ -10,6 +10,7 @@ import {
   createMoonMesh,
   createPlanetMesh,
   createStarMesh,
+  createCometMesh,
   type CelestialRenderer,
 } from "@teskooano/systems-celestial";
 import * as THREE from "three";
@@ -146,6 +147,9 @@ export class MeshFactory {
           break;
         case CelestialType.ASTEROID_FIELD:
           mesh = createAsteroidFieldMesh(object, deps);
+          break;
+        case CelestialType.COMET:
+          mesh = createCometMesh(object, deps);
           break;
         default:
           console.warn(
