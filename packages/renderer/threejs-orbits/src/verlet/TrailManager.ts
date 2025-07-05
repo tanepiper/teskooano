@@ -43,9 +43,6 @@ export class TrailManager {
   private lastSampledPositions: Map<string, THREE.Vector3> = new Map();
   private lastSampledTimes: Map<string, number> = new Map();
 
-  /** Minimum time between samples (in milliseconds) based on orbital characteristics */
-  private readonly MIN_SAMPLE_INTERVAL_MS = 500; // 1/2 seconds minimum
-
   /** Minimum distance to move before sampling (in scene units) - prevents micro-wobbles */
   private readonly MIN_SAMPLE_DISTANCE_SQ = 1e-6; // Much larger than physics noise threshold
 
@@ -117,13 +114,25 @@ export class TrailManager {
       shouldSample = true;
     } else {
       const timeSinceLastSample = currentTime - lastSampledTime;
+
+      // Dynamically adjust sample interval based on velocity.
+      // Faster objects need more frequent sampling.
+      const velocity = object.velocityMagnitude_mps || 1; // m/s, avoid 0
+      // An object at 50km/s (50000 m/s) should be sampled frequently (~50ms interval).
+      // An object at 1km/s (1000 m/s) can be sampled less often (~1s interval).
+      // Using an inverse relationship: interval = C / velocity.
+      // For 50km/s: 50 = C / 50000 -> C = 2,500,000
+      const C = 2_500_000;
+      let dynamicInterval = C / velocity;
+      dynamicInterval = Math.max(50, Math.min(1000, dynamicInterval)); // Clamp between 50ms and 1s.
+
       const distanceSqSinceLastSample =
         currentPosition.distanceToSquared(lastSampledPosition);
 
-      // Sample if enough time has passed AND the object has moved significantly
-      // This captures orbital motion while filtering out micro-wobbles
+      // Sample if enough time has passed AND the object has moved significantly.
+      // The dynamic interval provides more points for high-velocity objects.
       if (
-        timeSinceLastSample >= this.MIN_SAMPLE_INTERVAL_MS &&
+        timeSinceLastSample >= dynamicInterval &&
         distanceSqSinceLastSample >= this.MIN_SAMPLE_DISTANCE_SQ
       ) {
         shouldSample = true;

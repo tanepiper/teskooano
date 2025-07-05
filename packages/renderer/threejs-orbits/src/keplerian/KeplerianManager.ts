@@ -1,5 +1,5 @@
 import { type OrbitalParameters, CelestialType } from "@teskooano/data-types";
-import type { RenderableCelestialObject } from "@teskooano/renderer-threejs";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { StateSubscriptionMixin } from "@teskooano/core-state";
 import type { Observable } from "rxjs";
@@ -8,6 +8,7 @@ import { OrbitCalculator } from "./OrbitCalculator";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineBuilder } from "../utils/LineBuilder";
 import { updateThreeVector3Array } from "../utils/arrayUtils";
+import { type OSVector3 } from "@teskooano/core-math";
 
 /**
  * Manages the creation, update, visibility, and highlighting of static Keplerian orbit lines.
@@ -22,6 +23,14 @@ export class KeplerianManager extends StateSubscriptionMixin {
 
   /** Cache for THREE.Vector3 arrays to avoid reallocation */
   private positionCache: Map<string, THREE.Vector3[]> = new Map();
+  /**
+   * Cache for the raw calculated OSVector3 points to avoid recalculation.
+   * The number is a version based on a key orbital parameter to check for changes.
+   */
+  private orbitPointCache: Map<
+    string,
+    { version: number; points: OSVector3[] }
+  > = new Map();
 
   /** Object manager for adding/removing objects from the scene */
   private objectManager: ObjectManager;
@@ -91,9 +100,25 @@ export class KeplerianManager extends StateSubscriptionMixin {
     const parentWorldPosition = new THREE.Vector3();
     parentObject3D.getWorldPosition(parentWorldPosition);
 
-    // Calculate orbit points
-    const orbitPointsOS =
-      OrbitCalculator.calculateOrbitPoints(orbitalParameters);
+    // --- Orbit Point Calculation & Caching ---
+    let orbitPointsOS: OSVector3[];
+    const cachedData = this.orbitPointCache.get(objectId);
+    const currentVersion = orbitalParameters.realSemiMajorAxis_m;
+
+    if (cachedData && cachedData.version === currentVersion) {
+      orbitPointsOS = cachedData.points;
+    } else {
+      // Only calculate if not cached or if the orbit has fundamentally changed.
+      orbitPointsOS = OrbitCalculator.calculateOrbitPoints(
+        orbitalParameters,
+        objectState,
+      );
+      this.orbitPointCache.set(objectId, {
+        version: currentVersion,
+        points: orbitPointsOS,
+      });
+    }
+    // --- End Caching ---
 
     // Efficiently update or create the THREE.Vector3 array
     const cachedPositions = this.positionCache.get(objectId) ?? [];
@@ -173,6 +198,7 @@ export class KeplerianManager extends StateSubscriptionMixin {
       this.lineBuilder.disposeLine(line);
       this.lines.delete(objectId);
       this.positionCache.delete(objectId);
+      this.orbitPointCache.delete(objectId);
     }
   }
 

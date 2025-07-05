@@ -112,3 +112,54 @@ export const calculateKeplerianStateAtTime = (
 
   return { position, velocity };
 };
+
+/**
+ * Calculates the 3D position of an orbiting body at a specific true anomaly.
+ * This is useful for drawing the geometric shape of the orbit without regard to time.
+ *
+ * @param orbitalParameters The Keplerian orbital elements of the object.
+ * @param trueAnomaly_rad The true anomaly (angle from periapsis) in radians.
+ * @returns The calculated 3D position vector in meters, relative to the central body.
+ */
+export const calculateKeplerianPositionAtTrueAnomaly = (
+  orbitalParameters: OrbitalParameters,
+  trueAnomaly_rad: number,
+): OSVector3 => {
+  const {
+    realSemiMajorAxis_m: a,
+    eccentricity: e,
+    inclination: i,
+    longitudeOfAscendingNode: o,
+    argumentOfPeriapsis: w,
+  } = orbitalParameters;
+
+  // Calculate the distance from the central body (radius) using the polar equation for an ellipse
+  const r = (a * (1 - e * e)) / (1 + e * Math.cos(trueAnomaly_rad));
+
+  // --- 2. Calculate Position in the Orbital Plane (perifocal frame) ---
+  // The initial orbit is on the XZ plane for a Y-up coordinate system.
+  const position = new OSVector3(
+    r * Math.cos(trueAnomaly_rad),
+    0,
+    r * Math.sin(trueAnomaly_rad),
+  );
+
+  // --- 4. Rotate Position to the Inertial Frame ---
+  // Replicate the exact same rotation logic as calculateKeplerianStateAtTime
+  // The argument of periapsis rotates within the orbital plane (now XZ), so its axis is Y.
+  const q_argP = new OSQuaternion().setFromAxisAngle(new OSVector3(0, 1, 0), w);
+  const q_incl = new OSQuaternion().setFromAxisAngle(new OSVector3(1, 0, 0), i);
+  const q_longAscNode = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(0, 1, 0),
+    o,
+  );
+
+  const finalRotation = new OSQuaternion()
+    .multiply(q_longAscNode)
+    .multiply(q_incl)
+    .multiply(q_argP);
+
+  position.applyQuaternion(finalRotation);
+
+  return position;
+};

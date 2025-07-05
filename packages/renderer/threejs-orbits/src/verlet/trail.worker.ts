@@ -56,37 +56,10 @@ self.onmessage = (e: MessageEvent<TrailCommand>) => {
 
       const rawPoints = trailDataPool.getPoints(objectId);
 
-      if (rawPoints.length < 3) {
-        // Not enough points for a spline, send raw data
-        self.postMessage({
-          objectId,
-          points: rawPoints,
-          maxHistoryLength: trailDataPool.pointsPerSlot,
-        });
-        return;
-      }
-
-      const allPoints = rawPoints.map((p) => new OSVector3(p[0], p[1], p[2]));
-
-      // --- Always smooth the line using a spline if possible ---
-      const budget = qualityToBudget[quality] || 2500;
-      const threePoints = allPoints.map(
-        (p) => new THREE.Vector3(p.x, p.y, p.z),
-      );
-      const spline = new THREE.CatmullRomCurve3(threePoints);
-
-      // Dynamically calculate divisions based on history, capped by quality.
-      // This prevents the spline from creating wild curves from very few points.
-      const divisions = Math.min(allPoints.length * 5, budget);
-      const pointsToRender = spline.getPoints(divisions);
-
-      const points = pointsToRender.map(
-        (p) => [p.x, p.y, p.z] as [number, number, number],
-      );
-
+      // No longer using spline for greater accuracy; sending raw points directly.
       self.postMessage({
         objectId,
-        points,
+        points: rawPoints,
         maxHistoryLength: trailDataPool.pointsPerSlot,
       });
 

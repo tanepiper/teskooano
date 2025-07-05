@@ -4,6 +4,7 @@ import { TrailManager } from "../../verlet/TrailManager";
 import { PredictionManager } from "../../verlet/PredictionManager";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type * as THREE from "three";
+import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
 
 export class VerletStrategy implements IOrbitVisualizationStrategy {
   public trailManager: TrailManager;
@@ -15,9 +16,13 @@ export class VerletStrategy implements IOrbitVisualizationStrategy {
   private readonly predictionUpdateFrequency: number = 90;
   private isVisible: boolean = true;
 
-  constructor(objectManager: ObjectManager) {
+  constructor(objectManager: ObjectManager, layer2DManager?: Layer2DManager) {
     this.trailManager = new TrailManager(objectManager);
     this.predictionManager = new PredictionManager(objectManager);
+
+    if (layer2DManager) {
+      this.predictionManager.setLayer2DManager(layer2DManager);
+    }
   }
 
   update(

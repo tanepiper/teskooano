@@ -7,15 +7,14 @@ import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { KeplerianStrategy } from "./modes/KeplerianStrategy";
 import { VerletStrategy } from "./modes/VerletStrategy";
 import type { IOrbitVisualizationStrategy } from "./modes/IOrbitVisualizationStrategy";
-import { TrailManager } from "../verlet/TrailManager";
-import { PredictionManager } from "../verlet/PredictionManager";
+import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
 
 /**
  * Enum defining the available modes for orbit visualization.
  * - `Keplerian`: Static elliptical orbits calculated from orbital parameters.
  * - `Verlet`: Dynamic trails and predictions based on Verlet integration physics.
  */
-export enum VisualizationMode {
+export enum OrbitDisplayMode {
   Keplerian = "KEPLERIAN",
   Verlet = "VERLET",
 }
@@ -29,16 +28,10 @@ export enum VisualizationMode {
  */
 export class OrbitsManager extends StateSubscriptionMixin {
   /** Current visualization mode */
-  private currentMode: VisualizationMode = VisualizationMode.Keplerian;
+  private currentMode: OrbitDisplayMode = OrbitDisplayMode.Keplerian;
 
   /** Active strategy for orbit visualization */
-  private activeStrategy: IOrbitVisualizationStrategy;
-
-  /** Manager for Keplerian (static elliptical) orbit visualizations */
-  private keplerianStrategy: KeplerianStrategy;
-
-  /** Manager for position history trail visualizations */
-  private verletStrategy: VerletStrategy;
+  private activeStrategy?: IOrbitVisualizationStrategy;
 
   /** Flag indicating if orbit/trail visualizations are visible */
   private orbitLinesVisible: boolean = true;
@@ -57,6 +50,8 @@ export class OrbitsManager extends StateSubscriptionMixin {
 
   /** State adapter for accessing visualization settings */
   private stateAdapter: RendererStateAdapter;
+  /** The optional manager for 2D labels, passed to strategies. */
+  private layer2DManager?: Layer2DManager;
 
   /**
    * Creates a new OrbitsManager instance.
@@ -64,22 +59,17 @@ export class OrbitsManager extends StateSubscriptionMixin {
    * @param objectManager - The scene's ObjectManager for rendering operations
    * @param stateAdapter - Adapter for accessing engine state and settings
    * @param renderableObjects$ - Observable stream of renderable object data
+   * @param layer2DManager - Optional manager for 2D labels.
    */
   constructor(
     objectManager: ObjectManager,
     stateAdapter: RendererStateAdapter,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
+    layer2DManager?: Layer2DManager,
   ) {
     super();
     this.stateAdapter = stateAdapter;
-
-    // Initialize strategies
-    this.keplerianStrategy = new KeplerianStrategy(
-      objectManager,
-      renderableObjects$,
-    );
-    this.verletStrategy = new VerletStrategy(objectManager);
-    this.activeStrategy = this.keplerianStrategy;
+    this.layer2DManager = layer2DManager;
 
     // Subscribe to renderable objects stream
     this.subscribeToState(renderableObjects$, (objects) => {
@@ -90,39 +80,21 @@ export class OrbitsManager extends StateSubscriptionMixin {
     this.subscribeToState(this.stateAdapter.$visualSettings, (settings) => {
       const newMode =
         settings.physicsEngine === "verlet"
-          ? VisualizationMode.Verlet
-          : VisualizationMode.Keplerian;
+          ? OrbitDisplayMode.Verlet
+          : OrbitDisplayMode.Keplerian;
 
-      if (newMode !== this.currentMode) {
-        this.setVisualizationMode(newMode);
-      }
+      this.setVisualizationMode(newMode, objectManager, renderableObjects$);
     });
 
     // Set initial mode based on current settings
     const initialSettings = this.stateAdapter.$visualSettings.getValue();
     this.setVisualizationMode(
       initialSettings.physicsEngine === "verlet"
-        ? VisualizationMode.Verlet
-        : VisualizationMode.Keplerian,
+        ? OrbitDisplayMode.Verlet
+        : OrbitDisplayMode.Keplerian,
+      objectManager,
+      renderableObjects$,
     );
-  }
-
-  /**
-   * Provides access to the PredictionManager instance.
-   */
-  public getPredictionManager(): PredictionManager {
-    // This is problematic with the new structure, but we'll leave it for now
-    // to avoid breaking external dependencies. A better approach would be
-    // to refactor consumers to not need direct access.
-    return this.verletStrategy.predictionManager;
-  }
-
-  /**
-   * Provides access to the TrailManager instance.
-   */
-  public getTrailManager(): TrailManager {
-    // Similar to getPredictionManager, this is not ideal.
-    return this.verletStrategy.trailManager;
   }
 
   /**
@@ -130,21 +102,32 @@ export class OrbitsManager extends StateSubscriptionMixin {
    *
    * @param mode - The visualization mode to use
    */
-  setVisualizationMode(mode: VisualizationMode): void {
+  setVisualizationMode(
+    mode: OrbitDisplayMode,
+    objectManager: ObjectManager,
+    renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
+  ): void {
     if (mode === this.currentMode && this.activeStrategy) return;
     this.currentMode = mode;
 
-    const inactiveStrategy =
-      mode === VisualizationMode.Keplerian
-        ? this.verletStrategy
-        : this.keplerianStrategy;
-    inactiveStrategy.setVisibility(false);
-    inactiveStrategy.setPredictionVisibility(false);
+    // Dispose of the old strategy to clean up resources
+    if (this.activeStrategy) {
+      this.activeStrategy.dispose();
+    }
 
-    this.activeStrategy =
-      mode === VisualizationMode.Keplerian
-        ? this.keplerianStrategy
-        : this.verletStrategy;
+    // Create the new strategy
+    if (mode === OrbitDisplayMode.Keplerian) {
+      this.activeStrategy = new KeplerianStrategy(
+        objectManager,
+        renderableObjects$,
+      );
+    } else {
+      this.activeStrategy = new VerletStrategy(
+        objectManager,
+        this.layer2DManager,
+      );
+    }
+
     this.activeStrategy.setVisibility(this.orbitLinesVisible);
     this.activeStrategy.setPredictionVisibility(this.predictionLinesVisible);
   }
@@ -155,7 +138,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
    */
   updateAllVisualizations(deltaTime: number): void {
     const visualSettings = this.stateAdapter.$visualSettings.getValue();
-    this.activeStrategy.update(
+    this.activeStrategy?.update(
       this.latestRenderableObjects,
       visualSettings,
       deltaTime,
@@ -169,9 +152,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
    */
   public setOrbitTrailsVisibility(visible: boolean): void {
     this.orbitLinesVisible = visible;
-    if (this.activeStrategy) {
-      this.activeStrategy.setVisibility(visible);
-    }
+    this.activeStrategy?.setVisibility(visible);
   }
 
   /**
@@ -181,9 +162,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
    */
   public setPredictionVisibility(visible: boolean): void {
     this.predictionLinesVisible = visible;
-    if (this.activeStrategy) {
-      this.activeStrategy.setPredictionVisibility(visible);
-    }
+    this.activeStrategy?.setPredictionVisibility(visible);
   }
 
   /**
@@ -192,7 +171,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
    * @param objectId - ID of the object to highlight, or null to clear highlight
    */
   highlightVisualization(objectId: string | null): void {
-    this.activeStrategy.highlight(objectId, this.highlightColor);
+    this.activeStrategy?.highlight(objectId, this.highlightColor);
   }
 
   /**
@@ -204,8 +183,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
     super.dispose();
 
     // Clean up visualization managers
-    this.keplerianStrategy.dispose();
-    this.verletStrategy.dispose();
+    this.activeStrategy?.dispose();
 
     this.highlightedObjectId = null;
   }
