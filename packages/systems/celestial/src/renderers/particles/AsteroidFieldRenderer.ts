@@ -14,23 +14,32 @@ import { CelestialMeshOptions } from "../base";
 const MAX_LIGHTS = 4;
 
 const asteroidVertexShader = `
+  #define MAX_LIGHTS 4
+
   attribute float size;
   attribute float textureIndex;
   attribute float initialRotation;
   
   uniform float beltRotationAngle;
   uniform float renderScale;
+
+  struct Light {
+    vec3 position;
+    vec3 color;
+    float intensity;
+  };
+  uniform Light uLights[MAX_LIGHTS];
+  uniform int uNumLights;
   
   varying vec3 vColor;
   varying float vTextureIndex;
   varying float vInitialRotation;
-  varying vec3 vWorldPosition;
+  varying vec3 vViewLightDir[MAX_LIGHTS];
 
   void main() {
     vColor = color;
     vTextureIndex = textureIndex;
     vInitialRotation = initialRotation;
-    
     
     float cosAngle = cos(beltRotationAngle);
     float sinAngle = sin(beltRotationAngle);
@@ -41,9 +50,14 @@ const asteroidVertexShader = `
     );
     
     vec4 worldPosition = modelMatrix * vec4(rotatedPosition, 1.0);
-    vWorldPosition = worldPosition.xyz;
-
     vec4 mvPosition = viewMatrix * worldPosition;
+
+    // Transform light positions to view space and calculate direction
+    for (int i = 0; i < MAX_LIGHTS; i++) {
+        if (i >= uNumLights) break;
+        vec4 lightViewPos = viewMatrix * vec4(uLights[i].position, 1.0);
+        vViewLightDir[i] = lightViewPos.xyz - mvPosition.xyz;
+    }
 
     gl_Position = projectionMatrix * mvPosition;
     
@@ -73,7 +87,7 @@ const asteroidFragmentShader = `
   uniform float particleRotationSpeed; 
   uniform Light uLights[MAX_LIGHTS];
   uniform int uNumLights;
-  varying vec3 vWorldPosition;
+  varying vec3 vViewLightDir[MAX_LIGHTS];
 
   void main() {
     vec4 texColor;
@@ -84,12 +98,6 @@ const asteroidFragmentShader = `
     vec2 center = vec2(0.5, 0.5);
     vec2 uv = gl_PointCoord - center;
     vec2 rotatedUV = rotationMatrix * uv + center;
-
-    /*
-    if (rotatedUV.x < 0.0 || rotatedUV.x > 1.0 || rotatedUV.y < 0.0 || rotatedUV.y > 1.0) {
-        discard;
-    }
-    */
 
     if (vTextureIndex < 0.5) {
         texColor = texture2D(asteroidTextures[0], rotatedUV);
@@ -105,21 +113,19 @@ const asteroidFragmentShader = `
 
     if (texColor.a < alphaTest) discard; 
 
-    // Remap gl_PointCoord to -1 to 1 range to represent a sphere's surface
     vec2 fromCenter = gl_PointCoord * 2.0 - 1.0;
     float len = length(fromCenter);
-    if (len > 1.0) discard; // Discard fragments outside the circle to ensure round particles
+    if (len > 1.0) discard; 
 
-    // Calculate a pseudo-normal for a sphere
     vec3 normal = vec3(fromCenter.x, fromCenter.y, sqrt(1.0 - len * len));
     
-    // Lighting Calculation
-    vec3 totalLighting = vec3(0.15); // Ambient light
+    // Lighting Calculation is now in view space
+    vec3 totalLighting = vec3(1.0); // Ambient light
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= uNumLights) break;
         
-        vec3 lightDirection = normalize(uLights[i].position - vWorldPosition);
+        vec3 lightDirection = normalize(vViewLightDir[i]);
         float diffuse = max(dot(normal, lightDirection), 0.0);
         
         vec3 lightContribution = uLights[i].color * uLights[i].intensity * diffuse;
@@ -128,7 +134,6 @@ const asteroidFragmentShader = `
     
     totalLighting = clamp(totalLighting, 0.0, 1.0);
     
-    // Final color combines texture, vertex color, and lighting
     vec3 finalColor = texColor.rgb * vColor * totalLighting;
     
     gl_FragColor = vec4(finalColor, texColor.a);

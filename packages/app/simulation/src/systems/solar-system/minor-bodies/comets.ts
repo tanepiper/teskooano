@@ -45,7 +45,7 @@ const comets: SystemBody[] = [
     albedo: HALLEY_ALBEDO,
     properties: {
       type: CelestialType.COMET,
-      classType: CometClass.ICE,
+      classType: CometClass.ACTIVE,
       activity: 0.7,
       composition: ["water ice", "dust"],
       visualComaRadius: 75000 * METERS_TO_SCENE_UNITS * 0.5, // Approx 75,000 km, scaled down
@@ -72,7 +72,7 @@ const comets: SystemBody[] = [
     albedo: HALEBOPP_ALBEDO,
     properties: {
       type: CelestialType.COMET,
-      classType: CometClass.ICE,
+      classType: CometClass.ACTIVE,
       activity: 0.9,
       composition: ["water ice", "dust"],
       visualComaRadius: 150000 * METERS_TO_SCENE_UNITS * 0.5, // Approx 150,000 km, scaled down
@@ -99,7 +99,7 @@ const comets: SystemBody[] = [
     albedo: ENCKE_ALBEDO,
     properties: {
       type: CelestialType.COMET,
-      classType: CometClass.CARBONACEOUS,
+      classType: CometClass.ACTIVE,
       composition: ["carbon", "dust"],
       activity: 0.4,
       visualComaRadius: 50000 * METERS_TO_SCENE_UNITS * 0.5, // Approx 50,000 km, scaled down

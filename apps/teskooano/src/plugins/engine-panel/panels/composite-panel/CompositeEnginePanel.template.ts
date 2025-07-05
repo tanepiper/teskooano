@@ -15,6 +15,7 @@ template.innerHTML = `
       position: absolute;
       top: 0;
       left: 0;
+      cursor: crosshair;
     }
 
     #engine-placeholder-wrapper {

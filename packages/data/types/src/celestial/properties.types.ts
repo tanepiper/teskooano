@@ -221,17 +221,13 @@ export interface GasGiantProperties extends SpecificPropertiesBase {
 }
 
 /**
- * The class of comet.
+ * The class of comet, based on its activity level.
  */
 export enum CometClass {
-  /** Icey comet. */
-  ICE = "ICE",
-  /** Carbonaceous comet. */
-  CARBONACEOUS = "CARBONACEOUS",
-  /** Metallic comet. */
-  METALLIC = "METALLIC",
-  /** Silicate comet. */
-  SILICATE = "SILICATE",
+  /** An active comet, currently outgassing and potentially forming a coma and tail. */
+  ACTIVE = "ACTIVE",
+  /** An extinct comet that has depleted its volatiles and now resembles a dark, inert asteroid. */
+  EXTINCT = "EXTINCT",
 }
 
 /**
@@ -256,6 +252,15 @@ export interface CometProperties extends SpecificPropertiesBase {
   visualMaxTailLength?: number;
   /** Color of the comet's tail, usually a hex string with alpha. */
   visualTailColor?: string;
+  /** Optional container for detailed visual parameters of the nucleus shader. */
+  visuals?: {
+    darkColorMultiplier?: number;
+    lightColorMultiplier?: number;
+    fbmScale?: number;
+    fineFbmScale?: number;
+    fineFbmMix?: number;
+    ambientStrength?: number;
+  };
 }
 
 /**

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
+  CometClass,
   CometProperties,
   RenderableCelestialObject,
   SCALE,
@@ -12,6 +13,7 @@ import {
 } from "../base";
 import {
   CometComaMaterial,
+  CometJetMaterial,
   CometNucleusMaterial,
   CometParticleMaterial,
   CometSimplifiedTailMaterial,
@@ -24,6 +26,8 @@ const PARTICLE_LIFETIME = 5.0; // seconds
 export class CometRenderer extends BaseCelestialRenderer {
   private nucleus?: THREE.Mesh;
   private coma?: THREE.Mesh;
+  private nucleus_lod1?: THREE.Mesh;
+  private coma_lod1?: THREE.Mesh;
   private particleTail?: THREE.Points;
   private particleGeometry?: THREE.BufferGeometry;
   private particlePositions?: Float32Array;
@@ -33,6 +37,20 @@ export class CometRenderer extends BaseCelestialRenderer {
     lifetime: Float32Array;
     velocity: THREE.Vector3[];
   };
+  private jets: {
+    points: THREE.Points;
+    geometry: THREE.BufferGeometry;
+    attributes: {
+      size: Float32Array;
+      alpha: Float32Array;
+      lifetime: Float32Array;
+      velocity: THREE.Vector3[];
+    };
+    lastParticleIndex: number;
+    emissionPoint?: THREE.Vector3;
+    emissionNormal?: THREE.Vector3;
+    repositionTimer: number;
+  }[] = [];
   private comaMaterial?: CometComaMaterial;
   private simplifiedTail?: THREE.Mesh;
   private simplifiedTailMaterial?: CometSimplifiedTailMaterial;
@@ -48,18 +66,23 @@ export class CometRenderer extends BaseCelestialRenderer {
     this.createComa(object);
     this.createParticleTail(object);
     this.createSimplifiedTail(object);
+    this._createJets(object);
 
     // LOD 0: High detail with particle tail
     const lod0_container = new THREE.Group();
     lod0_container.add(this.nucleus!);
     lod0_container.add(this.coma!);
     lod0_container.add(this.particleTail!);
+    this.jets.forEach((jet) => lod0_container.add(jet.points));
 
     // LOD 1: Lower detail with simplified mesh tail
     const lod1_container = new THREE.Group();
-    const nucleus_lod1 = this.nucleus!.clone(false); // Clone geometry/material but not children
-    lod1_container.add(nucleus_lod1);
-    lod1_container.add(this.coma!.clone(false));
+    this.nucleus_lod1 = this.nucleus!.clone(false); // Clone geometry/material but not children
+    lod1_container.add(this.nucleus_lod1);
+    if (this.coma) {
+      this.coma_lod1 = this.coma.clone(false);
+      lod1_container.add(this.coma_lod1);
+    }
     lod1_container.add(this.simplifiedTail!);
 
     return [
@@ -88,7 +111,7 @@ export class CometRenderer extends BaseCelestialRenderer {
       const normalizedVertex = vertex.clone().normalize();
 
       // Get noise value
-      const noiseFrequency = 2.0;
+      const noiseFrequency = 1.0;
       const noisePosition = normalizedVertex
         .clone()
         .multiplyScalar(noiseFrequency);
@@ -112,8 +135,18 @@ export class CometRenderer extends BaseCelestialRenderer {
     }
     nucleusGeometry.computeVertexNormals(); // Recalculate normals for correct lighting
 
+    const properties = object.properties as CometProperties;
+    // An active comet has a brighter, icy-rock color.
+    let nucleusColorValue = "#5b7b96";
+
+    // An extinct comet is a dark, inert, asteroid-like rock.
+    if (properties.classType === CometClass.EXTINCT) {
+      nucleusColorValue = "#8e8b8b";
+    }
+
     const nucleusMaterial = new CometNucleusMaterial({
-      color: new THREE.Color(0x96693d), // A brownish, rocky color
+      color: new THREE.Color(nucleusColorValue),
+      ...(properties.visuals || {}),
     });
     this.nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
     this.registerMaterial(
@@ -238,22 +271,62 @@ export class CometRenderer extends BaseCelestialRenderer {
       allMeshes,
     );
 
+    const nucleusMaterial = this.materials.get(
+      `comet-nucleus-${object.celestialObjectId}`,
+    ) as CometNucleusMaterial | undefined;
+
+    if (nucleusMaterial && lightSources) {
+      nucleusMaterial.uniforms.uNumLights.value = lightSources.size;
+      let i = 0;
+      for (const lightData of lightSources.values()) {
+        nucleusMaterial.uniforms.uLights.value[i].position.copy(
+          lightData.position,
+        );
+        nucleusMaterial.uniforms.uLights.value[i].color.copy(lightData.color);
+        nucleusMaterial.uniforms.uLights.value[i].intensity =
+          lightData.intensity ?? 1.0;
+        i++;
+      }
+    }
+
+    if (this.particleTail) {
+      const material = this.particleTail.material as CometParticleMaterial;
+      const primaryLightSource = this.findPrimaryLightSource(
+        object,
+        lightSources,
+      );
+      if (primaryLightSource) {
+        material.uniforms.uLightIntensity.value = primaryLightSource.intensity;
+      }
+    }
+
+    // Also update jet materials
+    const primaryLightSourceForJets = this.findPrimaryLightSource(
+      object,
+      lightSources,
+    );
+    if (primaryLightSourceForJets) {
+      this.jets.forEach((jet) => {
+        const material = jet.points.material as CometJetMaterial;
+        material.uniforms.uLightPosition.value.copy(
+          primaryLightSourceForJets.position,
+        );
+        material.uniforms.uLightColor.value.set(
+          primaryLightSourceForJets.color,
+        );
+        material.uniforms.uLightIntensity.value =
+          primaryLightSourceForJets.intensity;
+      });
+    }
+
+    const deltaTime = this.clock.getDelta();
+
+    // Calculate distance to the sun for activity factor
     const primaryLightSource = this.findPrimaryLightSource(
       object,
       lightSources,
     );
     if (!primaryLightSource) return;
-
-    if (this.nucleus) {
-      const material = this.nucleus.material as CometNucleusMaterial;
-      material.uniforms.uLightPosition.value.copy(primaryLightSource.position);
-      material.uniforms.uLightColor.value.set(primaryLightSource.color);
-      material.uniforms.uLightIntensity.value = primaryLightSource.intensity;
-    }
-
-    const deltaTime = this.clock.getDelta();
-
-    // Calculate distance to the sun
     const lightPosition = this._tempVector1.set(
       primaryLightSource.position.x,
       primaryLightSource.position.y,
@@ -263,13 +336,55 @@ export class CometRenderer extends BaseCelestialRenderer {
     const distanceToLight = cometPosition.distanceTo(lightPosition);
 
     const activityDistance = 2 * SCALE.RENDER_SCALE_AU;
-    const activityFactor =
+    let activityFactor =
       1.0 - THREE.MathUtils.smoothstep(distanceToLight, 0, activityDistance);
+
+    // An extinct comet has no activity, so no coma or tail.
+    const properties = object.properties as CometProperties;
+    if (properties.classType === CometClass.EXTINCT) {
+      activityFactor = 0.0;
+    }
+
+    // Update rotation
+    if (this.nucleus) {
+      const rotationSpeed = activityFactor * deltaTime * 0.5;
+      this.nucleus.rotation.y += rotationSpeed;
+      this.nucleus.rotation.x += rotationSpeed * 0.25;
+
+      if (this.nucleus_lod1) {
+        this.nucleus_lod1.rotation.copy(this.nucleus.rotation);
+      }
+    }
 
     // Update Coma
     if (this.comaMaterial) {
-      this.comaMaterial.uniforms.uOpacity.value = activityFactor * 0.8;
+      this.comaMaterial.uniforms.uOpacity.value = activityFactor;
       this.comaMaterial.uniforms.uTime.value = time;
+      if (lightSources) {
+        this.comaMaterial.uniforms.uNumLights.value = lightSources.size;
+        let i = 0;
+        for (const lightData of lightSources.values()) {
+          this.comaMaterial.uniforms.uLights.value[i].position.copy(
+            lightData.position,
+          );
+          this.comaMaterial.uniforms.uLights.value[i].color.copy(
+            lightData.color,
+          );
+          this.comaMaterial.uniforms.uLights.value[i].intensity =
+            lightData.intensity ?? 1.0;
+          i++;
+        }
+      }
+    }
+
+    if (this.coma) {
+      const comaScale = 1.0 + activityFactor * 0.5;
+      this.coma.scale.setScalar(comaScale);
+      this.coma.rotation.copy(this.nucleus!.rotation);
+      if (this.coma_lod1) {
+        this.coma_lod1.scale.setScalar(comaScale);
+        this.coma_lod1.rotation.copy(this.nucleus!.rotation);
+      }
     }
 
     // Update Simplified Tail
@@ -287,6 +402,8 @@ export class CometRenderer extends BaseCelestialRenderer {
         this._tempVector1.set(0, 1, 0),
         tailDirection,
       );
+      // Scale the tail length based on activity
+      this.simplifiedTail.scale.y = activityFactor;
     }
 
     // Update Particle Tail
@@ -324,7 +441,7 @@ export class CometRenderer extends BaseCelestialRenderer {
       }
 
       // Emit new particles
-      const particlesToEmit = Math.floor(activityFactor * 5); // Emit up to 5 particles per frame
+      const particlesToEmit = Math.floor(activityFactor * 20); // Emit more particles when active
       for (let i = 0; i < particlesToEmit; i++) {
         this.lastParticleIndex = (this.lastParticleIndex + 1) % MAX_PARTICLES;
         const pIndex = this.lastParticleIndex;
@@ -337,10 +454,12 @@ export class CometRenderer extends BaseCelestialRenderer {
         this.particleAttributes.lifetime[pIndex] =
           PARTICLE_LIFETIME * (0.5 + Math.random() * 0.5);
         this.particleAttributes.size[pIndex] =
-          object.radius * (1.0 + Math.random() * 2.0);
+          object.radius * (1.0 + Math.random() * 2.0) * (1.0 + activityFactor);
 
         const tailLength = properties.visualMaxTailLength!;
-        const speed = (tailLength / PARTICLE_LIFETIME) * 0.5; // Spread particles along the tail
+        // Increase speed with activity to make the tail longer
+        const speed =
+          (tailLength / PARTICLE_LIFETIME) * 0.5 * (1.0 + activityFactor * 2.0);
 
         this.particleAttributes.velocity[pIndex]
           .copy(tailDirection)
@@ -356,6 +475,160 @@ export class CometRenderer extends BaseCelestialRenderer {
       this.particleGeometry.attributes.position.needsUpdate = true;
       this.particleGeometry.attributes.size.needsUpdate = true;
       this.particleGeometry.attributes.alpha.needsUpdate = true;
+    }
+
+    this._updateJets(deltaTime, activityFactor, object);
+  }
+
+  private _updateJets(
+    deltaTime: number,
+    activityFactor: number,
+    object: RenderableCelestialObject,
+  ): void {
+    if (!this.nucleus || activityFactor <= 0) {
+      this.jets.forEach((jet) => {
+        jet.points.visible = false;
+      });
+      return;
+    }
+
+    this.jets.forEach((jet) => {
+      // jet.points.visible = true; // This was overriding the LOD system.
+
+      // Update existing particles
+      const positions = jet.geometry.getAttribute("position")
+        .array as Float32Array;
+      for (let i = 0; i < jet.attributes.velocity.length; i++) {
+        if (jet.attributes.lifetime[i] > 0) {
+          jet.attributes.lifetime[i] -= deltaTime;
+          if (jet.attributes.lifetime[i] <= 0) {
+            jet.attributes.lifetime[i] = -1.0;
+            continue;
+          }
+
+          const velocity = jet.attributes.velocity[i];
+          positions[i * 3 + 0] += velocity.x * deltaTime;
+          positions[i * 3 + 1] += velocity.y * deltaTime;
+          positions[i * 3 + 2] += velocity.z * deltaTime;
+
+          jet.attributes.alpha[i] =
+            (jet.attributes.lifetime[i] / (PARTICLE_LIFETIME * 0.2)) *
+            activityFactor;
+        }
+      }
+
+      // Handle jet repositioning
+      jet.repositionTimer -= deltaTime;
+      if (jet.repositionTimer <= 0) {
+        jet.repositionTimer = 3.0 + Math.random() * 4.0; // Reposition every 3-7 seconds
+        const nucleusGeom = this.nucleus!.geometry;
+        const positionAttribute = nucleusGeom.getAttribute("position");
+        const normalAttribute = nucleusGeom.getAttribute("normal");
+        const randomIndex = Math.floor(Math.random() * positionAttribute.count);
+
+        jet.emissionPoint = new THREE.Vector3().fromBufferAttribute(
+          positionAttribute,
+          randomIndex,
+        );
+        jet.emissionNormal = new THREE.Vector3().fromBufferAttribute(
+          normalAttribute,
+          randomIndex,
+        );
+      }
+
+      if (!jet.emissionPoint || !jet.emissionNormal) return;
+
+      // Emit new particles
+      const particlesToEmit = Math.floor(activityFactor * 5); // Fewer particles than the main tail
+      for (let i = 0; i < particlesToEmit; i++) {
+        jet.lastParticleIndex =
+          (jet.lastParticleIndex + 1) % jet.attributes.velocity.length;
+        const pIndex = jet.lastParticleIndex;
+
+        // Start particles at the emission point on the nucleus surface
+        positions[pIndex * 3 + 0] = jet.emissionPoint.x;
+        positions[pIndex * 3 + 1] = jet.emissionPoint.y;
+        positions[pIndex * 3 + 2] = jet.emissionPoint.z;
+
+        jet.attributes.lifetime[pIndex] =
+          PARTICLE_LIFETIME * 0.2 * (0.5 + Math.random() * 0.5); // Shorter lifetime
+        jet.attributes.size[pIndex] =
+          object.radius * (0.5 + Math.random() * 1.0) * (1.0 + activityFactor);
+
+        const speed = 20 * (1.0 + activityFactor);
+
+        jet.attributes.velocity[pIndex]
+          .copy(jet.emissionNormal)
+          .multiplyScalar(speed * (0.8 + Math.random() * 0.4))
+          .add(
+            this._tempVector1
+              .random()
+              .subScalar(0.5)
+              .multiplyScalar(speed * 0.3),
+          ); // Add some spread
+      }
+
+      jet.geometry.attributes.position.needsUpdate = true;
+      jet.geometry.attributes.size.needsUpdate = true;
+      jet.geometry.attributes.alpha.needsUpdate = true;
+    });
+  }
+
+  private _createJets(object: RenderableCelestialObject): void {
+    const NUM_JETS = 3;
+    const MAX_JET_PARTICLES = 200;
+
+    for (let i = 0; i < NUM_JETS; i++) {
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(MAX_JET_PARTICLES * 3);
+      const attributes = {
+        size: new Float32Array(MAX_JET_PARTICLES),
+        alpha: new Float32Array(MAX_JET_PARTICLES),
+        lifetime: new Float32Array(MAX_JET_PARTICLES),
+        velocity: Array.from(
+          { length: MAX_JET_PARTICLES },
+          () => new THREE.Vector3(),
+        ),
+      };
+
+      for (let p = 0; p < MAX_JET_PARTICLES; p++) {
+        attributes.lifetime[p] = -1.0; // Init as dead
+      }
+
+      geometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(positions, 3),
+      );
+      geometry.setAttribute(
+        "size",
+        new THREE.BufferAttribute(attributes.size, 1),
+      );
+      geometry.setAttribute(
+        "alpha",
+        new THREE.BufferAttribute(attributes.alpha, 1),
+      );
+
+      // Reuse the same material as the main tail
+      const particleMaterial = new CometJetMaterial({
+        color: new THREE.Color(
+          (object.properties as CometProperties).visualTailColor || "#ffffff",
+        ),
+      });
+      this.registerMaterial(
+        `comet-jet-${i}-${object.celestialObjectId}`,
+        particleMaterial,
+      );
+
+      const points = new THREE.Points(geometry, particleMaterial);
+      points.name = `comet-jet-${i}`;
+
+      this.jets.push({
+        points,
+        geometry,
+        attributes,
+        lastParticleIndex: 0,
+        repositionTimer: Math.random() * 5, // Stagger repositioning
+      });
     }
   }
 }
