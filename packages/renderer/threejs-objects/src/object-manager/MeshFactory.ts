@@ -8,11 +8,12 @@ import {
   createFallbackSphere,
   createGasGiantMesh,
   createMoonMesh,
+  createOortCloudMesh,
   createPlanetMesh,
   createStarMesh,
   createCometMesh,
-  type CelestialRenderer,
 } from "@teskooano/systems-celestial";
+import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 
 /**
@@ -150,6 +151,9 @@ export class MeshFactory {
           break;
         case CelestialType.COMET:
           mesh = createCometMesh(object, deps);
+          break;
+        case CelestialType.OORT_CLOUD:
+          mesh = createOortCloudMesh(object, deps);
           break;
         default:
           console.warn(

@@ -3,7 +3,10 @@ import type { PlanetAtmosphereProperties } from "@teskooano/data-types";
 
 import atmosphereVertexShaderSource from "../../../shaders/terrestrial/atmosphere.vertex.glsl";
 import atmosphereFragmentShaderSource from "../../../shaders/terrestrial/atmosphere.fragment.glsl";
-import { LightArrayUtils, LightSourceData } from "../../base/CelestialRenderer";
+import {
+  LightArrayUtils,
+  LightSourceData,
+} from "@teskooano/renderer-threejs-celestial";
 
 /**
  * Material for atmospheric scattering effect with support for multiple light sources

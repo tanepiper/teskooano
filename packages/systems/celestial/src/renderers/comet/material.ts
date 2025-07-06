@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { LightArrayUtils } from "../base/CelestialRenderer";
+import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
 
 const MAX_LIGHTS = 4;
 

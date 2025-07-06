@@ -1,15 +1,16 @@
-import * as THREE from "three";
-import { LightSourcesMap } from "..";
-
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import {
   CelestialType,
   SCALE,
   type AsteroidFieldProperties as CentralAsteroidFieldProperties,
 } from "@teskooano/data-types";
+import {
+  BaseCelestialRenderer,
+  type CelestialMeshOptions,
+  type LightSourcesMap,
+} from "@teskooano/renderer-threejs-celestial";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
-import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
-import { CelestialMeshOptions } from "../base";
+import * as THREE from "three";
 
 const MAX_LIGHTS = 4;
 

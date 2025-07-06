@@ -41,6 +41,7 @@
     "@teskooano/core-math": "file:../../core/math",
     "@teskooano/core-physics": "file:../../core/physics",
     "@teskooano/data-types": "file:../data/types",
+    "@teskooano/renderer-threejs-celestial": "file:../threejs-celestial",
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
     "@teskooano/renderer-threejs-lod": "file:../threejs-lod",
     "@teskooano/renderer-threejs-objects": "file:../threejs-objects",

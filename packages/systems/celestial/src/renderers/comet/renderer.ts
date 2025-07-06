@@ -6,12 +6,14 @@ import {
   RenderableCelestialObject,
   SCALE,
 } from "@teskooano/data-types";
+
 import {
   BaseCelestialRenderer,
-  CelestialMeshOptions,
-  LightSourceData,
-  LightSourcesMap,
-} from "../base";
+  type CelestialMeshOptions,
+  type LightSourcesMap,
+  type CelestialRenderer,
+  type LightSourceData,
+} from "@teskooano/renderer-threejs-celestial";
 import {
   CometComaMaterial,
   CometJetMaterial,

@@ -15,6 +15,9 @@
     "paths": {
       "@teskooano/core-state": ["../../core/state/src"],
       "@teskooano/data-types": ["../../data/types/src"],
+      "@teskooano/renderer-threejs-celestial": [
+        "../../renderer/threejs-celestial/src"
+      ],
       "@teskooano/renderer-threejs-core": ["../../renderer/threejs-core/src"],
       "@teskooano/renderer-threejs-lod": ["../../renderer/threejs-lod/src"],
       "@teskooano/renderer-threejs-objects": [
@@ -26,6 +29,7 @@
   "references": [
     { "path": "../../core/state" },
     { "path": "../../data/types" },
+    { "path": "../../renderer/threejs-celestial" },
     { "path": "../../renderer/threejs-core" },
     { "path": "../../renderer/threejs-lod" },
     { "path": "../../renderer/threejs-objects" }

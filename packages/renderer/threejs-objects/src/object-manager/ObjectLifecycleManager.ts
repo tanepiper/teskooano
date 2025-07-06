@@ -13,10 +13,7 @@ import {
   LightSourceComponent,
 } from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
-import type {
-  CelestialRenderer,
-  RingSystemRenderer,
-} from "@teskooano/systems-celestial";
+import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 import type { GravitationalLensingHandler } from "./GravitationalLensing";
 import type { MeshFactory } from "./MeshFactory";

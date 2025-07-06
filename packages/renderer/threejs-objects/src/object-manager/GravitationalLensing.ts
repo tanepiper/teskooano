@@ -1,14 +1,12 @@
 import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import {
   CelestialType,
   StarProperties,
   StellarType,
 } from "@teskooano/data-types";
-import {
-  GravitationalLensingHelper,
-  type CelestialRenderer,
-} from "@teskooano/systems-celestial";
+import { GravitationalLensingHelper } from "@teskooano/systems-celestial";
 
 /**
  * @internal

@@ -1,5 +1,8 @@
 import { Color, DoubleSide, ShaderMaterial, Vector3 } from "three";
-import { LightArrayUtils, LightSourcesMap } from "../base/CelestialRenderer";
+import {
+  LightArrayUtils,
+  LightSourcesMap,
+} from "@teskooano/renderer-threejs-celestial";
 import ringVertexShader from "../../shaders/ring/ring.vertex.glsl";
 import ringFragmentShader from "../../shaders/ring/ring.fragment.glsl";
 

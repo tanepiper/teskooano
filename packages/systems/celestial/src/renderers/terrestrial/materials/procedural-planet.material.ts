@@ -4,7 +4,10 @@ import * as THREE from "three";
 import proceduralFragmentShaderSource from "../../../shaders/terrestrial/procedural.fragment.glsl";
 import proceduralVertexShaderSource from "../../../shaders/terrestrial/procedural.vertex.glsl";
 import { ProceduralPlanetUniforms } from "../../../types/procedural";
-import { LightArrayUtils, LightSourceData } from "../../base/CelestialRenderer";
+import {
+  LightArrayUtils,
+  LightSourceData,
+} from "@teskooano/renderer-threejs-celestial";
 
 /**
  * Material for rendering procedurally generated terrestrial planet surfaces using shaders.

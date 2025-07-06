@@ -1,14 +1,14 @@
 import type { StarProperties } from "@teskooano/data-types";
 import { RenderableCelestialObject } from "@teskooano/data-types";
+import {
+  BaseCelestialRenderer,
+  type BaseCelestialRendererOptions,
+  type CelestialMeshOptions,
+  type LightSourcesMap,
+} from "@teskooano/renderer-threejs-celestial";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-import {
-  BaseCelestialRenderer,
-  BaseCelestialRendererOptions,
-} from "../../base";
-import type { LightSourcesMap } from "../../base/CelestialRenderer";
-import type { CelestialMeshOptions } from "../../base/types";
 
 /**
  * Vertex shader for stars

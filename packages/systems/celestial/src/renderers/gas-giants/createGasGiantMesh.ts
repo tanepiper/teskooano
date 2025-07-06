@@ -6,7 +6,6 @@ import {
 import { type LODLevel } from "@teskooano/renderer-threejs-lod";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import * as THREE from "three";
-import type { CelestialRenderer } from "../base/CelestialRenderer";
 import { createFallbackSphere } from "../utils/createFallbackSphere";
 import type { BaseGasGiantRenderer } from "./base";
 import { ClassIGasGiantRenderer } from "./class-i";

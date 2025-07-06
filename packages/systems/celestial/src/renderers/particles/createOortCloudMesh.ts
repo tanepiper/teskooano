@@ -4,8 +4,9 @@ import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 import { createFallbackSphere } from "../utils/createFallbackSphere";
+import { OortCloudRenderer } from "./OortCloudRenderer";
 
-interface CreateAsteroidMeshDeps {
+interface CreateOortCloudMeshDeps {
   celestialRenderers: Map<string, CelestialRenderer>;
   createLodObject: (
     object: RenderableCelestialObject,
@@ -15,14 +16,15 @@ interface CreateAsteroidMeshDeps {
 
 /**
  * @internal
- * Creates an Asteroid/Space Rock mesh (potentially an LOD object).
+ * Creates an Oort Cloud mesh (potentially an LOD object).
  */
-export function createAsteroidMesh(
+export function createOortCloudMesh(
   object: RenderableCelestialObject,
-  deps: CreateAsteroidMeshDeps,
+  deps: CreateOortCloudMeshDeps,
 ): THREE.Object3D {
-  // Use SPACE_ROCK type for lookup
-  const renderer = deps.celestialRenderers.get(CelestialType.SPACE_ROCK);
+  // Create and register the OortCloudRenderer instance
+  const renderer = new OortCloudRenderer();
+  deps.celestialRenderers.set(object.celestialObjectId, renderer);
 
   if (renderer?.getLODLevels) {
     const lodLevels = renderer.getLODLevels(object);
@@ -31,14 +33,12 @@ export function createAsteroidMesh(
       return lod;
     } else {
       console.warn(
-        `[MeshFactory:Asteroid] Renderer for SPACE_ROCK ${object.celestialObjectId} provided invalid LOD levels.`,
+        `[MeshFactory:OortCloud] Renderer for OORT_CLOUD ${object.celestialObjectId} provided invalid LOD levels.`,
       );
     }
   } else {
-    // TODO: Consider if asteroid renderer might have a direct mesh creation method
-    // if (!renderer?.createMesh) { ... }
     console.warn(
-      `[MeshFactory:Asteroid] No suitable renderer with getLODLevels found for SPACE_ROCK ${object.celestialObjectId}.`,
+      `[MeshFactory:OortCloud] No suitable renderer with getLODLevels found for OORT_CLOUD ${object.celestialObjectId}.`,
     );
   }
 

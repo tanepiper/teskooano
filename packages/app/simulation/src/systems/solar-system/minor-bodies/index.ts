@@ -30,7 +30,7 @@ export function initializeMinorBodies(parentId: string): void {
   initializeAsteroidBelt(parentId);
 
   // Outer System
-  // initializeOortCloud(parentId); // Commented out as in original
+  //initializeOortCloud(parentId); // Commented out as in original
 }
 
 // Re-export individual initializers for flexibility

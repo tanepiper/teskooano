@@ -1,15 +1,18 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType, RingSystemProperties } from "@teskooano/data-types";
 import * as THREE from "three";
-import type { LightSourcesMap } from "../base";
-import { CelestialMeshOptions } from "../base/types";
 
 import {
   isVisualizationEnabled,
   threeVectorDebug,
 } from "@teskooano/core-debug";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
-import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
+import {
+  BaseCelestialRenderer,
+  type CelestialMeshOptions,
+  type LightSourcesMap,
+  type CelestialRenderer,
+} from "@teskooano/renderer-threejs-celestial";
 import { RingMaterial } from "./material";
 import { calculateKeplerianRotationRate } from "./utils";
 

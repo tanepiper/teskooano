@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { BaseGasGiantMaterial } from "../base";
-import { LightArrayUtils } from "../../base/CelestialRenderer";
+import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
 import classIVFragmentShader from "../../../shaders/gas-giants/class-iv.fragment.glsl";
 import classIVVertexShader from "../../../shaders/gas-giants/class-iv.vertex.glsl";
 

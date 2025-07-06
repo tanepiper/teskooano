@@ -139,7 +139,7 @@ This function's responsibility is now three-fold:
 
 1.  Delegate to a specialized factory to get the object's unique core layers.
 2.  Check for common, optional properties (`rings`, etc.) and append the corresponding shared `RenderLayer`.
-3.  Append the standardized, required layers (like the final billboard).
+3.  Append the REQUIRED standardized low-LOD billboard layer.
 
 ```typescript
 // factory/celestial.factory.ts

@@ -7,6 +7,7 @@ import {
 import {
   CelestialObject,
   CelestialStatus,
+  CelestialType,
   CustomEvents,
   METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
@@ -513,6 +514,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     const worldPosition = new THREE.Vector3();
     const parentWorldPosition = new THREE.Vector3();
     const SCENE_UNITS_TO_METERS = 1 / METERS_TO_SCENE_UNITS;
+    const AU_TO_METERS = 149597870700; // 1 AU in meters
 
     // First, update all distances and store them on the LI elements
     const listItems =
@@ -525,22 +527,46 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       const sceneObject = renderer.objectManager.getObject(id);
       if (!celestialObj || !sceneObject) return;
 
-      sceneObject.getWorldPosition(worldPosition);
       let distanceMeters = 0;
 
-      const parentId = celestialObj.currentParentId ?? celestialObj.parentId;
-      if (parentId) {
-        const parentSceneObject = renderer.objectManager.getObject(parentId);
-        if (parentSceneObject) {
-          parentSceneObject.getWorldPosition(parentWorldPosition);
-          distanceMeters =
-            worldPosition.distanceTo(parentWorldPosition) *
-            SCENE_UNITS_TO_METERS;
+      // Special handling for particle systems (asteroid fields and oort clouds)
+      // that don't have meaningful world positions
+      if (
+        celestialObj.type === CelestialType.ASTEROID_FIELD ||
+        celestialObj.type === CelestialType.OORT_CLOUD
+      ) {
+        // Use orbital distance or distance from properties
+        if (celestialObj.orbit?.realSemiMajorAxis_m) {
+          distanceMeters = celestialObj.orbit.realSemiMajorAxis_m;
+        } else if (celestialObj.properties) {
+          // For asteroid fields and oort clouds, use average of inner and outer radius
+          const props = celestialObj.properties as any;
+          if (
+            props.innerRadiusAU !== undefined &&
+            props.outerRadiusAU !== undefined
+          ) {
+            const avgRadiusAU = (props.innerRadiusAU + props.outerRadiusAU) / 2;
+            distanceMeters = avgRadiusAU * AU_TO_METERS;
+          }
         }
       } else {
-        // Fallback to distance from origin for root objects
-        distanceMeters =
-          worldPosition.distanceTo(origin) * SCENE_UNITS_TO_METERS;
+        // For regular objects, use world position
+        sceneObject.getWorldPosition(worldPosition);
+
+        const parentId = celestialObj.currentParentId ?? celestialObj.parentId;
+        if (parentId) {
+          const parentSceneObject = renderer.objectManager.getObject(parentId);
+          if (parentSceneObject) {
+            parentSceneObject.getWorldPosition(parentWorldPosition);
+            distanceMeters =
+              worldPosition.distanceTo(parentWorldPosition) *
+              SCENE_UNITS_TO_METERS;
+          }
+        } else {
+          // Fallback to distance from origin for root objects
+          distanceMeters =
+            worldPosition.distanceTo(origin) * SCENE_UNITS_TO_METERS;
+        }
       }
 
       li.dataset.distance = distanceMeters.toString();

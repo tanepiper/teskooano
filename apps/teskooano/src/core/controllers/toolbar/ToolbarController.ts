@@ -91,18 +91,21 @@ export class ToolbarController {
    */
   public detectMobileDevice(): boolean {
     // Check for touch capability and screen size
-    const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const hasTouchScreen =
+      "ontouchstart" in window || navigator.maxTouchPoints > 0;
     const isSmallScreen = window.innerWidth < 768;
     const isMediumScreen = window.innerWidth < 1024;
-    
+
     // Detect iPad specifically (including iPad Pro)
     const userAgent = navigator.userAgent.toLowerCase();
-    const isIpad = userAgent.includes('ipad') || 
-                   (userAgent.includes('macintosh') && hasTouchScreen);
-    
+    const isIpad =
+      userAgent.includes("ipad") ||
+      (userAgent.includes("macintosh") && hasTouchScreen);
+
     // Detect other tablets based on screen size and touch capability
-    const isTablet = hasTouchScreen && window.innerWidth >= 768 && window.innerWidth <= 1024;
-    
+    const isTablet =
+      hasTouchScreen && window.innerWidth >= 768 && window.innerWidth <= 1024;
+
     return isSmallScreen || isIpad || isTablet;
   }
 

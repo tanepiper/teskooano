@@ -82,6 +82,32 @@ export class EngineCameraManager {
   }
 
   /**
+   * Moves the camera to a specific position and target with a smooth transition.
+   * @param cameraPosition - The world coordinates to move the camera to.
+   * @param targetPosition - The world coordinates for the camera to look at.
+   */
+  public moveToPosition(
+    cameraPosition: THREE.Vector3,
+    targetPosition: THREE.Vector3,
+  ): void {
+    if (
+      this._cameraManager &&
+      (this._cameraManager as any).renderer?.controlsManager
+    ) {
+      (this._cameraManager as any).renderer.controlsManager.moveToPosition(
+        cameraPosition,
+        targetPosition,
+        true,
+        { focusedObjectId: null },
+      );
+    } else {
+      console.warn(
+        `[EngineCameraManager for Panel ${this._panelApiId || "N/A"}] moveToPosition called but CameraManager or controlsManager is not available.`,
+      );
+    }
+  }
+
+  /**
    * Perform any necessary cleanup.
    * For now, this class doesn't hold resources that need explicit cleanup beyond
    * what CameraManager itself handles or what the CompositeEnginePanel handles for CameraManager.

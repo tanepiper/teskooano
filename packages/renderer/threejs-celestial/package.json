@@ -1,0 +1,46 @@
+{
+  "name": "@teskooano/renderer-threejs-celestial",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Base celestial renderer and billboard management for ThreeJS",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.d.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:browser": "vitest --browser=chromium",
+    "test:watch": "vitest",
+    "test:browser:watch": "vitest --browser=chromium",
+    "test:browser:headless": "vitest --browser.headless",
+    "test:ui": "vitest --ui",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@teskooano/core-state": "file:../../core/state",
+    "@teskooano/data-types": "file:../../data/types",
+    "@teskooano/renderer-threejs-lighting": "file:../threejs-lighting",
+    "@teskooano/renderer-threejs-lod": "file:../threejs-lod",
+    "three": "0.178.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.178.0",
+    "@playwright/test": "1.53.2",
+    "@vitest/browser": "3.2.4",
+    "@vitest/ui": "3.2.4",
+    "eslint": "9.30.1",
+    "happy-dom": "18.0.1",
+    "playwright": "1.53.2",
+    "typescript": "5.8.3",
+    "vitest": "3.2.4"
+  }
+}

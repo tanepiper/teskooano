@@ -5,15 +5,18 @@ import {
   SCALE,
 } from "@teskooano/data-types";
 import * as THREE from "three";
-import { LightSourcesMap } from "../base";
-import { CelestialMeshOptions } from "../base/types";
+
 import { AtmosphereMaterial } from "./materials/atmosphere.material";
 import { ProceduralPlanetMaterial } from "./materials/procedural-planet.material";
 
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
-import { BaseCelestialRenderer } from "../base/BaseCelestialRenderer";
-import { CelestialRenderer } from "../base/CelestialRenderer";
+import {
+  BaseCelestialRenderer,
+  type CelestialMeshOptions,
+  type LightSourcesMap,
+  type CelestialRenderer,
+} from "@teskooano/renderer-threejs-celestial";
 import { RingSystemRenderer } from "../rings";
 import {
   AtmosphereMeshResult,

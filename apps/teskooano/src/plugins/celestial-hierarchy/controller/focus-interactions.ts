@@ -3,6 +3,7 @@ import {
   CelestialStatus,
   CelestialType,
   CustomEvents,
+  METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel";
 import * as THREE from "three";
@@ -124,6 +125,49 @@ export function handleFollowRequest(
     return false;
   }
 
+  // Special handling for asteroid fields and oort clouds - travel to inner radius
+  if (
+    targetObject.type === CelestialType.ASTEROID_FIELD ||
+    targetObject.type === CelestialType.OORT_CLOUD
+  ) {
+    const AU_TO_METERS = 149597870700; // 1 AU in meters
+    let innerRadiusMeters = 0;
+    let innerRadiusAU = 0;
+
+    if (targetObject.properties) {
+      const props = targetObject.properties as any;
+      if (props.innerRadiusAU !== undefined) {
+        innerRadiusAU = props.innerRadiusAU;
+        innerRadiusMeters = props.innerRadiusAU * AU_TO_METERS;
+      }
+    }
+
+    if (innerRadiusMeters > 0) {
+      // Convert to scene units
+      const innerRadiusSceneUnits = innerRadiusMeters * METERS_TO_SCENE_UNITS;
+
+      // Set target position at the inner radius edge (on the XY plane)
+      const targetPosition = new THREE.Vector3(innerRadiusSceneUnits, 0, 0);
+
+      // Calculate camera position with an offset for a good viewing angle
+      // Use a normalized offset vector similar to the default camera behavior
+      const cameraOffset = new THREE.Vector3(0.3, 0.2, 0.5).normalize();
+      const offsetDistance = innerRadiusSceneUnits * 0.1; // 10% of the inner radius as offset
+      const cameraPosition = targetPosition
+        .clone()
+        .add(cameraOffset.multiplyScalar(offsetDistance));
+
+      // Use the new moveToPosition method to smoothly travel there
+      engineCameraManager.moveToPosition(cameraPosition, targetPosition);
+
+      console.debug(
+        `[handleFollowRequest] Traveling to inner radius of ${objectId} (${innerRadiusAU} AU)`,
+      );
+      return true;
+    }
+  }
+
+  // Default behavior for other object types
   engineCameraManager.focusOnObject(objectId);
 
   console.debug(`[handleFollowRequest] Follow initiated for ${objectId}`);

@@ -7,9 +7,12 @@ import { SCALE } from "@teskooano/data-types";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-import { BaseCelestialRenderer } from "../../base/BaseCelestialRenderer";
-import { type CelestialRenderer, type LightSourcesMap } from "../../base";
-import { CelestialMeshOptions } from "../../base/types";
+import { BaseCelestialRenderer } from "@teskooano/renderer-threejs-celestial";
+import {
+  type CelestialRenderer,
+  type LightSourcesMap,
+  type CelestialMeshOptions,
+} from "@teskooano/renderer-threejs-celestial";
 import { RingSystemRenderer } from "../../rings/renderer";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
 
