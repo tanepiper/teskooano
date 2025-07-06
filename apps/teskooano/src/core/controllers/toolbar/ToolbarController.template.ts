@@ -38,6 +38,8 @@ template.innerHTML = `
       gap: var(--space-sm); /* Smaller gap for widgets */
       display: flex; /* Explicitly ensure it's a flex container, though inherited via .toolbar-section */
       align-items: center; /* Align items vertically in the center */
+      touch-action: pan-x; /* Allow horizontal scrolling on touch devices */
+      -webkit-overflow-scrolling: touch; /* Enable momentum scrolling on iOS */
     }
 
     .widget-area::-webkit-scrollbar, .widget-area::-webkit-scrollbar-button { display: none; }

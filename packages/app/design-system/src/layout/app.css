@@ -3,7 +3,7 @@
    ========================================================================== */
 
 #app {
-  touch-action: none;
+  touch-action: pan-y; /* Allow vertical scrolling but prevent horizontal */
   width: 100%;
   flex: 1;
   margin: 0 auto;
@@ -26,8 +26,22 @@
   flex-wrap: nowrap;
   gap: var(--spacing-md); /* Use new spacing */
   flex-shrink: 0;
-  overflow: hidden;
+  overflow-x: auto; /* Allow horizontal scrolling */
+  overflow-y: hidden; /* Hide vertical overflow */
   position: relative;
+  touch-action: pan-x; /* Allow horizontal scrolling on touch devices */
+  -webkit-overflow-scrolling: touch; /* Enable momentum scrolling on iOS */
+}
+
+/* Hide toolbar scrollbar */
+#toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ensure toolbar items don't shrink and maintain proper scrolling behavior */
+#toolbar > * {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Style the basic button within the toolbar using the new base style */
