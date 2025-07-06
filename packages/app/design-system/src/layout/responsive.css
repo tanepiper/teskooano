@@ -12,14 +12,16 @@
 @media only screen and (max-width: 1024px) {
   #toolbar {
     gap: var(--spacing-sm); /* Less gap */
-    flex-wrap: wrap;
-    height: auto; /* Allow wrapping */
+    flex-wrap: nowrap; /* Prevent wrapping on tablets - use horizontal scroll instead */
+    height: var(--toolbar-height); /* Fixed height for tablets */
     min-height: var(--toolbar-height); /* Ensure min height */
     padding: var(--spacing-sm) var(--spacing-md); /* Adjust padding */
+    overflow-x: auto; /* Enable horizontal scrolling */
+    -webkit-overflow-scrolling: touch; /* Enable momentum scrolling on iOS */
   }
 
   #toolbar > * {
-    flex-shrink: 1;
+    flex-shrink: 0; /* Prevent shrinking to allow horizontal scroll */
     flex-basis: auto;
     min-width: 0;
   }
@@ -28,6 +30,11 @@
   #toolbar button {
     padding: var(--space-1) var(--space-2);
     font-size: var(--font-size-small);
+  }
+
+  /* Hide toolbar scrollbar on tablets */
+  #toolbar::-webkit-scrollbar {
+    display: none;
   }
 
   /* Example: Hide text on specific buttons */
