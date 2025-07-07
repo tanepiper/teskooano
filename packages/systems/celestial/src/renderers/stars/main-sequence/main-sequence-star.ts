@@ -17,9 +17,13 @@ export class MainSequenceStarMaterial extends BaseStarMaterial {
 
 /**
  * Main sequence star renderer
+ * @template TMainSequenceMaterial The specific main sequence star material type this renderer works with
  */
-export class MainSequenceStarRenderer extends BaseStarRenderer {
-  private materialCache: Map<string, MainSequenceStarMaterial> = new Map();
+export class MainSequenceStarRenderer<
+  TMainSequenceMaterial extends
+    MainSequenceStarMaterial = MainSequenceStarMaterial,
+> extends BaseStarRenderer<TMainSequenceMaterial> {
+  private materialCache: Map<string, TMainSequenceMaterial> = new Map();
 
   constructor(options: BaseCelestialRendererOptions = {}) {
     super(options);
@@ -28,12 +32,16 @@ export class MainSequenceStarRenderer extends BaseStarRenderer {
   /**
    * Returns the appropriate material for a main sequence star
    */
-  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+  protected createMaterial(
+    object: RenderableCelestialObject,
+  ): TMainSequenceMaterial {
     if (this.materialCache.has(object.celestialObjectId)) {
       return this.materialCache.get(object.celestialObjectId)!;
     }
     const color = this.getStarColor(object);
-    const material = new MainSequenceStarMaterial(color);
+    const material = new MainSequenceStarMaterial(
+      color,
+    ) as TMainSequenceMaterial;
     this.materialCache.set(object.celestialObjectId, material);
     return material;
   }
@@ -42,7 +50,7 @@ export class MainSequenceStarRenderer extends BaseStarRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    const material = this.getMaterial(object);
+    const material = this.createAndRegisterMaterial(object);
     const segments = this.getSegmentsForDetailLevel(options?.detailLevel);
     const geometry = new THREE.SphereGeometry(
       object.radius,

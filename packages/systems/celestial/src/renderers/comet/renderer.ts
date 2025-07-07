@@ -276,31 +276,20 @@ export class CometRenderer extends BaseCelestialRenderer {
       allMeshes,
     );
 
-    // Calculate attenuation and update light intensity in-place.
-    if (lightSources && lightSources.size > 0) {
-      lightSources.forEach((lightData) => {
-        // Physically-based distance attenuation using inverse-square law,
-        // scaled for solar system distances. A larger factor creates
-        // a more dramatic and visible falloff.
-        const FALLOFF_FACTOR = 0.00000001; // Tunable factor
-        const distanceSq = object.position.distanceToSquared(
-          lightData.position,
-        );
-        const attenuation = 1.0 / (1.0 + distanceSq * FALLOFF_FACTOR);
+    // Apply centralized light attenuation
+    const attenuatedLightSources = this.applyLightAttenuation(
+      object,
+      lightSources,
+    );
 
-        // Update the intensity directly in the map
-        lightData.intensity = (lightData.intensity ?? 1.0) * attenuation;
-      });
-    }
-
-    const nucleusMaterial = this.materials.get(
+    const nucleusMaterial = this.getMaterial(
       `comet-nucleus-${object.celestialObjectId}`,
     ) as CometNucleusMaterial | undefined;
 
-    if (nucleusMaterial && lightSources) {
-      nucleusMaterial.uniforms.uNumLights.value = lightSources.size;
+    if (nucleusMaterial && attenuatedLightSources) {
+      nucleusMaterial.uniforms.uNumLights.value = attenuatedLightSources.size;
       let i = 0;
-      for (const lightData of lightSources.values()) {
+      for (const lightData of attenuatedLightSources.values()) {
         nucleusMaterial.uniforms.uLights.value[i].position.copy(
           lightData.position,
         );
@@ -313,9 +302,9 @@ export class CometRenderer extends BaseCelestialRenderer {
 
     if (this.particleTail) {
       const material = this.particleTail.material as CometParticleMaterial;
-      const primaryLightSource = this._findClosestLightSource(
+      const primaryLightSource = this.findClosestLightSource(
         object,
-        lightSources,
+        attenuatedLightSources,
       );
       if (primaryLightSource) {
         material.uniforms.uLightIntensity.value = primaryLightSource.intensity;
@@ -323,9 +312,9 @@ export class CometRenderer extends BaseCelestialRenderer {
     }
 
     // Also update jet materials
-    const primaryLightSourceForJets = this._findClosestLightSource(
+    const primaryLightSourceForJets = this.findClosestLightSource(
       object,
-      lightSources,
+      attenuatedLightSources,
     );
     if (primaryLightSourceForJets) {
       this.jets.forEach((jet) => {
@@ -344,9 +333,9 @@ export class CometRenderer extends BaseCelestialRenderer {
     const deltaTime = this.clock.getDelta();
 
     // Calculate distance to the sun for activity factor
-    const primaryLightSource = this._findClosestLightSource(
+    const primaryLightSource = this.findClosestLightSource(
       object,
-      lightSources,
+      attenuatedLightSources,
     );
     if (!primaryLightSource) return;
 
@@ -380,10 +369,11 @@ export class CometRenderer extends BaseCelestialRenderer {
     if (this.comaMaterial) {
       this.comaMaterial.uniforms.uOpacity.value = activityFactor;
       this.comaMaterial.uniforms.uTime.value = time;
-      if (lightSources) {
-        this.comaMaterial.uniforms.uNumLights.value = lightSources.size;
+      if (attenuatedLightSources) {
+        this.comaMaterial.uniforms.uNumLights.value =
+          attenuatedLightSources.size;
         let i = 0;
-        for (const lightData of lightSources.values()) {
+        for (const lightData of attenuatedLightSources.values()) {
           this.comaMaterial.uniforms.uLights.value[i].position.copy(
             lightData.position,
           );
@@ -498,30 +488,6 @@ export class CometRenderer extends BaseCelestialRenderer {
     }
 
     this._updateJets(deltaTime, activityFactor, object);
-  }
-
-  private _findClosestLightSource(
-    object: RenderableCelestialObject,
-    lightSources: LightSourcesMap,
-  ): LightSourceData | null {
-    if (!lightSources || lightSources.size === 0) {
-      return null;
-    }
-
-    let closestLight: LightSourceData | null = null;
-    let minDistanceSq = Infinity;
-
-    const cometPosition = object.position;
-
-    for (const lightData of lightSources.values()) {
-      const distanceSq = cometPosition.distanceToSquared(lightData.position);
-      if (distanceSq < minDistanceSq) {
-        minDistanceSq = distanceSq;
-        closestLight = lightData;
-      }
-    }
-
-    return closestLight;
   }
 
   private _updateJets(

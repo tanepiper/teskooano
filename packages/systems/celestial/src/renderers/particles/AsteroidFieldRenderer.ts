@@ -188,9 +188,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
             this.asteroidTextures[index] = texture;
             this.loadedTextureCount++;
 
-            const material = this.materials.get(
-              objectId,
-            ) as THREE.ShaderMaterial;
+            const material = this.getMaterial(objectId) as THREE.ShaderMaterial;
 
             if (material) {
               if (material.uniforms.asteroidTextures.value) {
@@ -389,7 +387,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       this.renderScale = options.renderScale;
     }
 
-    let material = this.materials.get(
+    let material = this.getMaterial(
       object.celestialObjectId,
     ) as THREE.ShaderMaterial;
     if (!material) {
@@ -442,7 +440,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
     camera: THREE.Camera,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
-    const material = this.materials.get(
+    const material = this.getMaterial(
       object.celestialObjectId,
     ) as THREE.ShaderMaterial;
 
@@ -460,12 +458,18 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       material.uniforms.time.value = this.cumulativeParticleTime;
       material.uniforms.renderScale.value = this.renderScale;
 
-      if (lightSources && lightSources.size > 0) {
+      // Apply centralized light attenuation
+      const attenuatedLightSources = this.applyLightAttenuation(
+        object,
+        lightSources,
+      );
+
+      if (attenuatedLightSources && attenuatedLightSources.size > 0) {
         let lightIndex = 0;
         const lightsUniform = material.uniforms.uLights
           .value as typeof material.uniforms.uLights.value;
 
-        lightSources.forEach((lightData) => {
+        attenuatedLightSources.forEach((lightData) => {
           if (lightIndex < MAX_LIGHTS) {
             lightsUniform[lightIndex].position.copy(lightData.position);
             lightsUniform[lightIndex].color.copy(lightData.color);

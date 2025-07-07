@@ -1,4 +1,5 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { CelestialType } from "@teskooano/data-types";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
@@ -29,6 +30,237 @@ export interface LightSourceData {
  * Map of light sources
  */
 export type LightSourcesMap = Map<string, LightSourceData>;
+
+/**
+ * Shadow caster data for lighting calculations
+ */
+export interface ShadowCasterData {
+  position: THREE.Vector3;
+  radius: number;
+}
+
+/**
+ * Configuration for lighting calculations
+ */
+export interface LightingConfig {
+  /**
+   * Falloff factor for distance-based attenuation
+   * Larger values create more dramatic falloff
+   * @default 0.00000001
+   */
+  falloffFactor?: number;
+
+  /**
+   * Whether to modify light sources in-place or return new data
+   * @default true
+   */
+  modifyInPlace?: boolean;
+}
+
+/**
+ * Utility class for calculating lighting effects and attenuation
+ */
+export class LightingCalculator {
+  /**
+   * Default falloff factor for physically-based distance attenuation
+   * using inverse-square law, scaled for solar system distances
+   */
+  private static readonly DEFAULT_FALLOFF_FACTOR = 0.00000001;
+
+  /**
+   * Applies distance-based attenuation to light sources for a celestial object
+   *
+   * @param object The celestial object receiving light
+   * @param lightSources Map of light sources to attenuate
+   * @param config Optional configuration for attenuation calculations
+   * @returns The modified light sources map (or new map if modifyInPlace is false)
+   */
+  static applyDistanceAttenuation(
+    object: RenderableCelestialObject,
+    lightSources: LightSourcesMap,
+    config: LightingConfig = {},
+  ): LightSourcesMap {
+    const {
+      falloffFactor = LightingCalculator.DEFAULT_FALLOFF_FACTOR,
+      modifyInPlace = true,
+    } = config;
+
+    const resultSources = modifyInPlace ? lightSources : new Map(lightSources);
+
+    if (!resultSources || resultSources.size === 0) {
+      return resultSources;
+    }
+
+    resultSources.forEach((lightData) => {
+      const distanceSq = object.position.distanceToSquared(lightData.position);
+      const attenuation = 1.0 / (1.0 + distanceSq * falloffFactor);
+
+      // Update the intensity directly in the map
+      lightData.intensity = (lightData.intensity ?? 1.0) * attenuation;
+    });
+
+    return resultSources;
+  }
+
+  /**
+   * Finds the closest light source to a celestial object
+   *
+   * @param object The celestial object
+   * @param lightSources Map of available light sources
+   * @returns The closest light source, or null if none available
+   */
+  static findClosestLightSource(
+    object: RenderableCelestialObject,
+    lightSources: LightSourcesMap,
+  ): LightSourceData | null {
+    if (!lightSources || lightSources.size === 0) {
+      return null;
+    }
+
+    let closestLight: LightSourceData | null = null;
+    let minDistanceSq = Infinity;
+
+    const objectPosition = object.position;
+
+    for (const lightData of lightSources.values()) {
+      const distanceSq = objectPosition.distanceToSquared(lightData.position);
+      if (distanceSq < minDistanceSq) {
+        minDistanceSq = distanceSq;
+        closestLight = lightData;
+      }
+    }
+
+    return closestLight;
+  }
+
+  /**
+   * Calculates light intensity at a specific distance from a light source
+   *
+   * @param lightSource The light source
+   * @param distance Distance from the light source
+   * @param falloffFactor Optional custom falloff factor
+   * @returns Attenuated light intensity
+   */
+  static calculateLightIntensityAtDistance(
+    lightSource: LightSourceData,
+    distance: number,
+    falloffFactor: number = LightingCalculator.DEFAULT_FALLOFF_FACTOR,
+  ): number {
+    const distanceSq = distance * distance;
+    const attenuation = 1.0 / (1.0 + distanceSq * falloffFactor);
+    return (lightSource.intensity ?? 1.0) * attenuation;
+  }
+}
+
+/**
+ * Utility class for managing shadow casters in celestial rendering
+ */
+export class ShadowCasterUtils {
+  /**
+   * Finds all shadow casters that can affect a given celestial object
+   *
+   * @param object The celestial object that might receive shadows
+   * @param allObjects Map of all objects in the scene
+   * @returns Array of shadow caster data
+   */
+  static findShadowCasters(
+    object: RenderableCelestialObject,
+    allObjects: Record<string, RenderableCelestialObject>,
+  ): ShadowCasterData[] {
+    const shadowCasters: ShadowCasterData[] = [];
+
+    if (!allObjects) {
+      return shadowCasters;
+    }
+
+    // If the object is a planet-like body, its moons are shadow casters
+    if (
+      object.type === CelestialType.PLANET ||
+      object.type === CelestialType.DWARF_PLANET ||
+      object.type === CelestialType.GAS_GIANT
+    ) {
+      const moons = Object.values(allObjects).filter(
+        (obj) =>
+          obj.type === CelestialType.MOON &&
+          obj.parentId === object.celestialObjectId,
+      );
+
+      for (const moon of moons) {
+        shadowCasters.push({
+          position: moon.position.clone(),
+          radius: moon.radius ?? 0,
+        });
+      }
+    }
+    // If the object is a moon, its parent planet is a shadow caster
+    else if (object.type === CelestialType.MOON && object.parentId) {
+      const parentPlanet = allObjects[object.parentId];
+      if (parentPlanet) {
+        shadowCasters.push({
+          position: parentPlanet.position.clone(),
+          radius: parentPlanet.radius ?? 0,
+        });
+      }
+    }
+
+    return shadowCasters;
+  }
+
+  /**
+   * Finds shadow casters for ring systems specifically
+   *
+   * @param object The object that owns the ring system
+   * @param allObjects Map of all objects in the scene
+   * @returns Array of shadow caster data
+   */
+  static findRingShadowCasters(
+    object: RenderableCelestialObject,
+    allObjects: Record<string, RenderableCelestialObject>,
+  ): ShadowCasterData[] {
+    const shadowCasters: ShadowCasterData[] = [];
+
+    if (!allObjects) {
+      return shadowCasters;
+    }
+
+    // The parent body itself is the primary shadow caster for its rings
+    shadowCasters.push({
+      position: object.position.clone(),
+      radius: object.radius ?? 0,
+    });
+
+    // Find moons of the parent object to act as additional shadow casters
+    for (const other of Object.values(allObjects)) {
+      if (
+        other.parentId === object.celestialObjectId &&
+        other.type === CelestialType.MOON
+      ) {
+        shadowCasters.push({
+          position: other.position.clone(),
+          radius: other.radius ?? 0,
+        });
+      }
+    }
+
+    return shadowCasters;
+  }
+
+  /**
+   * Converts shadow caster data to the format expected by shader materials
+   *
+   * @param shadowCasters Array of shadow caster data
+   * @returns Array formatted for shader uniforms
+   */
+  static toShaderFormat(shadowCasters: ShadowCasterData[]): Array<{
+    position: THREE.Vector3;
+    radius: number;
+  }> {
+    return shadowCasters.map((caster) => ({
+      position: caster.position.clone(),
+      radius: caster.radius,
+    }));
+  }
+}
 
 /**
  * Utility class for managing light and shadow caster arrays in shader materials
@@ -162,6 +394,34 @@ export class LightArrayUtils {
     }
 
     return newArray;
+  }
+
+  /**
+   * Converts LightSourcesMap to shader-compatible array format
+   *
+   * @param lightSources Map of light sources
+   * @returns Array formatted for shader uniforms
+   */
+  static toShaderFormat(lightSources: LightSourcesMap): Array<{
+    position: THREE.Vector3;
+    color: THREE.Color;
+    intensity: number;
+  }> {
+    const lights: Array<{
+      position: THREE.Vector3;
+      color: THREE.Color;
+      intensity: number;
+    }> = [];
+
+    for (const lightData of lightSources.values()) {
+      lights.push({
+        position: lightData.position.clone(),
+        color: lightData.color.clone(),
+        intensity: lightData.intensity ?? 1.0,
+      });
+    }
+
+    return lights;
   }
 }
 

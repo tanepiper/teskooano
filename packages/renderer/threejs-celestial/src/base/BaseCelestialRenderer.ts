@@ -7,62 +7,74 @@ import {
   CelestialRenderer,
   LightSourceData,
   LightSourcesMap,
+  ShadowCasterData,
+  LightingConfig,
 } from "./CelestialRenderer";
 import { BaseCelestialRendererOptions, CelestialMeshOptions } from "./types";
+import {
+  MaterialManager,
+  LODManager,
+  CelestialLightingManager,
+  GeometryUtilities,
+  TimeManager,
+} from "./managers";
 
 /**
  * Abstract base class for all celestial renderers.
  *
- * Provides common functionality for all objects that are rendered in the scene,
- * including material and resource management, light source handling, time tracking,
- * and Level of Detail (LOD) utilities. It serves as the foundation upon which
- * more specific renderers (e.g., for planets, stars) are built.
+ * This class provides a clean interface for celestial rendering by delegating
+ * specific responsibilities to specialized manager classes. It serves as a
+ * coordination layer that orchestrates the various aspects of celestial rendering.
+ *
+ * @template TMaterial The specific material type this renderer works with (e.g., BaseStarMaterial, BaseGasGiantMaterial)
  */
-export abstract class BaseCelestialRenderer implements CelestialRenderer {
+export abstract class BaseCelestialRenderer<
+  TMaterial extends THREE.Material = THREE.Material,
+> implements CelestialRenderer
+{
   /**
-   * A map of materials used by the renderer, keyed by a unique identifier
-   * (typically the celestial object ID). This is used for tracking and proper disposal.
+   * Manager for material lifecycle and operations
    */
-  public materials: Map<string, THREE.Material | THREE.Material[]> = new Map();
+  protected materialManager: MaterialManager;
 
   /**
-   * A map of Level of Detail (LOD) objects, keyed by a unique identifier
-   * (typically the celestial object ID).
+   * Manager for Level of Detail objects and operations
    */
-  protected lods: Map<string, THREE.LOD> = new Map();
+  protected lodManager: LODManager;
 
   /**
-   * The timestamp when the renderer was instantiated, used to calculate elapsed time.
+   * Manager for lighting-related calculations and operations
    */
-  protected startTime: number = Date.now() / 1000;
+  protected lightingManager: CelestialLightingManager;
 
   /**
-   * The current elapsed time since the renderer was instantiated.
+   * Manager for time tracking and calculations
    */
-  protected elapsedTime: number = 0;
+  protected timeManager: TimeManager;
 
   /**
-   * Reusable `THREE.Vector3` instances to avoid allocations in performance-critical
-   * update loops.
-   */
-  protected _tempVector1: THREE.Vector3 = new THREE.Vector3();
-  protected _tempVector2: THREE.Vector3 = new THREE.Vector3();
-  protected _tempVector3: THREE.Vector3 = new THREE.Vector3();
-  /**
-   * An optional reference to the scene's lighting manager.
-   */
-  protected lightingManager?: LightingManager;
-  /**
-   * A dedicated manager for handling billboard creation and updates.
+   * Manager for billboard creation and updates
    */
   protected billboardManager: BillboardManager;
 
   /**
-   * Initializes the renderer, setting up the lighting and billboard managers.
+   * Reusable Vector3 instances to avoid allocations in performance-critical update loops
+   */
+  protected _tempVector1: THREE.Vector3 = new THREE.Vector3();
+  protected _tempVector2: THREE.Vector3 = new THREE.Vector3();
+  protected _tempVector3: THREE.Vector3 = new THREE.Vector3();
+
+  /**
+   * Initializes the renderer and its manager components.
    * @param options Configuration options for the renderer.
    */
   constructor(options: BaseCelestialRendererOptions = {}) {
-    this.lightingManager = options.lightingManager;
+    this.materialManager = new MaterialManager();
+    this.lodManager = new LODManager();
+    this.lightingManager = new CelestialLightingManager(
+      options.lightingManager,
+    );
+    this.timeManager = new TimeManager();
     this.billboardManager = new BillboardManager();
   }
 
@@ -77,6 +89,14 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[];
+
+  /**
+   * Optional abstract method for subclasses to create their specific material type.
+   * When implemented, this method will be called by getMaterial() to create materials.
+   * @param object The celestial object for which to create the material.
+   * @returns The specific material type for this renderer.
+   */
+  protected createMaterial?(object: RenderableCelestialObject): TMaterial;
 
   /**
    * The main update method, called once per frame. It orchestrates calls to update
@@ -99,16 +119,13 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     allObjects?: Record<string, RenderableCelestialObject>,
     allMeshes?: Record<string, THREE.Object3D>,
   ): void {
-    const lod = this.lods.get(object.celestialObjectId);
+    // Update time tracking
+    this.timeManager.update(time, timeScale);
 
-    if (lod) {
-      // Always update the LOD's position from the object's state.
-      // This is crucial for "ideal" mode and ensures the visual position
-      // always matches the physics position.
-      lod.position.copy(object.position);
-      lod.update(camera);
-    }
+    // Update LOD position and level
+    this.lodManager.updateObjectLOD(object, camera);
 
+    // Update billboards if needed
     if (allObjects && allMeshes) {
       this.billboardManager.update(camera, allObjects, allMeshes);
     }
@@ -120,91 +137,124 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
    * @param camera The scene's main camera.
    */
   updateLOD(objectId: string, camera: THREE.Camera): void {
-    const lod = this.lods.get(objectId);
-    if (lod) {
-      lod.update(camera as THREE.Camera);
-    }
+    this.lodManager.updateLOD(objectId, camera);
   }
+
+  // === Lighting Delegation Methods ===
+
   /**
-   * Cleans up all managed resources, including materials and billboard assets,
-   * to prevent memory leaks when the renderer is no longer needed.
+   * Applies distance-based attenuation to light sources for this celestial object.
+   * @param object The celestial object
+   * @param lightSources Map of light sources to attenuate
+   * @param config Optional configuration for attenuation
+   * @returns The attenuated light sources
    */
-  dispose(): void {
-    this.materials.forEach((material) => {
-      if (material instanceof THREE.Material) {
-        Object.keys(material).forEach((key) => {
-          const value = (material as any)[key];
-          if (value instanceof THREE.Texture) {
-            value.dispose();
-          }
-        });
-
-        if (material instanceof THREE.ShaderMaterial) {
-          Object.keys(material.uniforms || {}).forEach((key) => {
-            const value = material.uniforms[key].value;
-            if (value instanceof THREE.Texture) {
-              value.dispose();
-            }
-          });
-        }
-
-        material.dispose();
-      }
-    });
-
-    this.materials.clear();
-    this.lods.clear();
-    this.billboardManager.dispose();
+  protected applyLightAttenuation(
+    object: RenderableCelestialObject,
+    lightSources: LightSourcesMap,
+    config?: LightingConfig,
+  ): LightSourcesMap {
+    return this.lightingManager.applyLightAttenuation(
+      object,
+      lightSources,
+      config,
+    );
   }
 
   /**
-   * A helper method that maps a qualitative detail level (e.g., "high") to a
-   * concrete number of segments for creating geometries.
-   * @param detailLevel A string representing the desired detail level.
-   * @param defaultSegments A fallback number of segments if the detail level is not specified.
-   * @returns The calculated number of segments.
+   * Finds all shadow casters that can affect this celestial object.
+   * @param object The celestial object
+   * @param allObjects Map of all objects in the scene
+   * @returns Array of shadow caster data
    */
-  protected getSegmentsForDetailLevel(
-    detailLevel?: string,
-    defaultSegments: number = 32,
-  ): number {
-    if (!detailLevel) return defaultSegments;
-
-    switch (detailLevel) {
-      case "high":
-        return 64;
-      case "medium":
-        return 32;
-      case "low":
-        return 8;
-      case "very-low":
-        return 4;
-      default:
-        return defaultSegments;
-    }
+  protected findShadowCasters(
+    object: RenderableCelestialObject,
+    allObjects?: Record<string, RenderableCelestialObject>,
+  ): ShadowCasterData[] {
+    return this.lightingManager.findShadowCasters(object, allObjects);
   }
+
+  /**
+   * Finds shadow casters specifically for ring systems.
+   * @param object The object that owns the ring system
+   * @param allObjects Map of all objects in the scene
+   * @returns Array of shadow caster data
+   */
+  protected findRingShadowCasters(
+    object: RenderableCelestialObject,
+    allObjects?: Record<string, RenderableCelestialObject>,
+  ): ShadowCasterData[] {
+    return this.lightingManager.findRingShadowCasters(object, allObjects);
+  }
+
+  /**
+   * Finds the closest light source to this celestial object.
+   * @param object The celestial object
+   * @param lightSources Map of available light sources
+   * @returns The closest light source, or null if none available
+   */
+  protected findClosestLightSource(
+    object: RenderableCelestialObject,
+    lightSources?: LightSourcesMap,
+  ): LightSourceData | null {
+    return this.lightingManager.findClosestLightSource(object, lightSources);
+  }
+
+  // === Material Delegation Methods ===
 
   /**
    * Registers a material with the renderer for tracking and later disposal.
-   * If a material with the same ID already exists, it is disposed of before
-   * the new one is added.
    * @param id A unique identifier for the material.
    * @param material The material instance to register.
    */
   public registerMaterial(id: string, material: THREE.Material): void {
-    const existingMaterial = this.materials.get(id);
-    if (existingMaterial) {
-      (Array.isArray(existingMaterial)
-        ? existingMaterial
-        : [existingMaterial]
-      ).forEach((m) => m.dispose());
-    }
-    this.materials.set(id, material);
+    this.materialManager.registerMaterial(id, material);
   }
 
   /**
-   * A utility method to safely apply a texture to a material property or uniform.
-   * It handles both standard `THREE.Material` and `THREE.ShaderMaterial` types.
+   * Gets a material by its registered ID. Returns the generic THREE.Material type.
+   * @param id The unique identifier for the material.
+   * @returns The material or material array, or undefined if not found.
+   */
+  public getMaterial(
+    id: string,
+  ): THREE.Material | THREE.Material[] | undefined {
+    return this.materialManager.getMaterial(id);
+  }
+
+  /**
+   * Gets a typed material by its registered ID. This provides better type safety
+   * when you know the specific material type.
+   * @param id The unique identifier for the material.
+   * @returns The material cast to the specific type, or undefined if not found.
+   */
+  public getTypedMaterial(id: string): TMaterial | undefined {
+    const material = this.materialManager.getMaterial(id);
+    if (material && !Array.isArray(material)) {
+      return material as TMaterial;
+    }
+    return undefined;
+  }
+
+  /**
+   * Creates and registers a material for a celestial object.
+   * This method will call the subclass's createMaterial method if implemented.
+   * @param object The celestial object for which to create the material.
+   * @returns The created material, or undefined if createMaterial is not implemented.
+   */
+  public createAndRegisterMaterial(
+    object: RenderableCelestialObject,
+  ): TMaterial | undefined {
+    if (this.createMaterial) {
+      const material = this.createMaterial(object);
+      this.registerMaterial(object.celestialObjectId, material);
+      return material;
+    }
+    return undefined;
+  }
+
+  /**
+   * Safely applies a texture to a material property or uniform.
    * @param material The material to which the texture will be applied.
    * @param textureKey The name of the property or uniform to set.
    * @param texture The texture to apply.
@@ -214,44 +264,76 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     textureKey: string,
     texture: THREE.Texture | null,
   ): void {
-    if (!texture) return;
+    this.materialManager.applyTexture(material, textureKey, texture);
+  }
 
-    if (material instanceof THREE.ShaderMaterial) {
-      if (material.uniforms && material.uniforms[textureKey] !== undefined) {
-        material.uniforms[textureKey].value = texture;
-      }
-    } else {
-      (material as any)[textureKey] = texture;
-    }
+  // === Geometry Utilities Delegation ===
+
+  /**
+   * Maps a qualitative detail level to a concrete number of segments for creating geometries.
+   * @param detailLevel A string representing the desired detail level.
+   * @param defaultSegments A fallback number of segments if the detail level is not specified.
+   * @returns The calculated number of segments.
+   */
+  protected getSegmentsForDetailLevel(
+    detailLevel?: string,
+    defaultSegments: number = 32,
+  ): number {
+    return GeometryUtilities.getSegmentsForDetailLevel(
+      detailLevel,
+      defaultSegments,
+    );
   }
 
   /**
-   * Calculates a normalized LOD level (0 to 1) based on the distance from
-   * the camera to an object and the object's radius.
+   * Gets the world position of an object.
+   * @param object The celestial object.
+   * @returns A clone of the object's position vector.
+   */
+  protected getWorldPosition(object: RenderableCelestialObject): THREE.Vector3 {
+    return GeometryUtilities.getWorldPosition(object);
+  }
+
+  /**
+   * Calculates a normalized LOD level based on distance and object radius.
    * @param distance The distance from the camera to the object.
    * @param objectRadius The radius of the object.
    * @returns A normalized value representing the LOD level.
    */
   protected calculateLODLevel(distance: number, objectRadius: number): number {
-    const normalizedDistance = distance / (objectRadius * 100);
-
-    return Math.max(0, Math.min(1, normalizedDistance - 0.5));
+    return this.lodManager.calculateLODLevel(distance, objectRadius);
   }
 
+  // === Time Management Delegation ===
+
   /**
-   * A helper method to get the world position of an object.
-   * @param object The celestial object.
-   * @returns A clone of the object's position vector.
+   * Gets the current elapsed time since the renderer was created.
+   * @returns The elapsed time in seconds.
    */
-  protected getWorldPosition(object: RenderableCelestialObject): THREE.Vector3 {
-    return object.position.clone();
+  protected getElapsedTime(): number {
+    return this.timeManager.getElapsedTime();
   }
 
   /**
-   * A helper method to find the most influential light source for a given object.
-   * It prioritizes the object's `primaryLightSourceId` if it exists and is
-   * present in the provided light sources map. Otherwise, it falls back to the
-   * first available light source.
+   * Gets the start time of the renderer.
+   * @returns The start time in seconds.
+   */
+  protected getStartTime(): number {
+    return this.timeManager.getStartTime();
+  }
+
+  // === Legacy Interface Support ===
+
+  /**
+   * Legacy interface: provides access to materials map for backwards compatibility.
+   * @deprecated Use getMaterial() instead for better encapsulation.
+   */
+  public get materials(): Map<string, THREE.Material | THREE.Material[]> {
+    return this.materialManager.materials;
+  }
+
+  /**
+   * Finds the most influential light source for a given object.
    * @param object The celestial object.
    * @param lightSources A map of available light sources.
    * @returns The most influential light source, or null if none are available.
@@ -260,25 +342,16 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     object: RenderableCelestialObject,
     lightSources?: LightSourcesMap,
   ): LightSourceData | null {
-    if (!lightSources || lightSources.size === 0) return null;
-
-    if (
-      object.primaryLightSourceId &&
-      lightSources.has(object.primaryLightSourceId)
-    ) {
-      return lightSources.get(object.primaryLightSourceId) || null;
-    }
-
-    return lightSources.values().next().value || null;
+    return this.lightingManager.findPrimaryLightSource(object, lightSources);
   }
 
   /**
-   * A helper method to get the LOD object for a given celestial object.
+   * Gets the LOD object for a given celestial object.
    * @param object The celestial object.
    * @returns The LOD object, or undefined if it doesn't exist.
    */
   public getLOD(object: RenderableCelestialObject): THREE.LOD | undefined {
-    return this.lods.get(object.celestialObjectId);
+    return this.lodManager.getLODForObject(object);
   }
 
   /**
@@ -292,5 +365,16 @@ export abstract class BaseCelestialRenderer implements CelestialRenderer {
     options?: CelestialMeshOptions,
   ): void {
     // Base implementation does nothing, subclasses should override.
+  }
+
+  /**
+   * Cleans up all managed resources by delegating to manager dispose methods.
+   * This prevents memory leaks when the renderer is no longer needed.
+   */
+  dispose(): void {
+    this.materialManager.dispose();
+    this.lodManager.dispose();
+    this.billboardManager.dispose();
+    // Note: lighting and time managers don't require disposal
   }
 }

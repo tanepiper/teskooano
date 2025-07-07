@@ -11,12 +11,14 @@ import { ClassIIIMaterial } from "./material";
 /**
  * Renderer for Class III gas giants
  */
-export class ClassIIIGasGiantRenderer extends BaseGasGiantRenderer {
+export class ClassIIIGasGiantRenderer extends BaseGasGiantRenderer<ClassIIIMaterial> {
   constructor(object: RenderableCelestialObject, deps: GasGiantRendererDeps) {
     super(object, deps);
   }
 
-  public getMaterial(object: RenderableCelestialObject): BaseGasGiantMaterial {
+  protected createMaterial(
+    object: RenderableCelestialObject,
+  ): ClassIIIMaterial {
     const properties = object.properties as GasGiantProperties;
 
     const seed = object.celestialObjectId

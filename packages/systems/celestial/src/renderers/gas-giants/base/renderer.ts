@@ -12,6 +12,8 @@ import {
   type CelestialRenderer,
   type LightSourcesMap,
   type CelestialMeshOptions,
+  LightArrayUtils,
+  ShadowCasterUtils,
 } from "@teskooano/renderer-threejs-celestial";
 import { RingSystemRenderer } from "../../rings/renderer";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
@@ -24,8 +26,11 @@ export interface GasGiantRendererDeps {
 /**
  * Base renderer for gas giants, implementing the LOD system.
  * Supports dynamic numbers of lights and shadow casters.
+ * @template TGasGiantMaterial The specific gas giant material type this renderer works with
  */
-export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
+export abstract class BaseGasGiantRenderer<
+  TGasGiantMaterial extends BaseGasGiantMaterial = BaseGasGiantMaterial,
+> extends BaseCelestialRenderer<TGasGiantMaterial> {
   protected textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
   protected ringSystemRenderer: RingSystemRenderer | null = null;
 
@@ -35,12 +40,12 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
   }
 
   /**
-   * Child classes must implement this method to return the appropriate material
-   * for the highest detail LOD level.
+   * Abstract method for subclasses to create their specific gas giant material.
+   * This is called by the base class's createAndRegisterMaterial method.
    */
-  public abstract getMaterial(
+  protected abstract createMaterial(
     object: RenderableCelestialObject,
-  ): BaseGasGiantMaterial;
+  ): TGasGiantMaterial;
 
   /**
    * Creates and returns the array of LOD levels for the gas giant.
@@ -105,8 +110,12 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
       highDetailSegments,
       highDetailSegments,
     );
-    const highDetailMaterial = this.getMaterial(object);
-    this.registerMaterial(object.celestialObjectId, highDetailMaterial);
+    const highDetailMaterial = this.createAndRegisterMaterial(object);
+    if (!highDetailMaterial) {
+      throw new Error(
+        `Failed to create material for gas giant ${object.celestialObjectId}`,
+      );
+    }
 
     const highDetailMesh = new THREE.Mesh(
       highDetailGeometry,
@@ -186,67 +195,52 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     allObjects?: Record<string, RenderableCelestialObject>,
   ): void {
     super.update(object, time, timeScale, lightSources, camera, allObjects);
-    this.elapsedTime = time;
 
-    // --- Prepare data for shaders ---
-    const lightsForShader: {
-      position: THREE.Vector3;
-      color: THREE.Color;
-      intensity: number;
-    }[] = [];
-    if (lightSources && lightSources.size > 0) {
-      lightSources.forEach((lightData) => {
-        lightsForShader.push({
-          position: lightData.position.clone(),
-          color: lightData.color,
-          intensity: lightData.intensity ?? 1.0,
-        });
-      });
-    }
+    // Apply centralized light attenuation
+    const attenuatedLightSources = this.applyLightAttenuation(
+      object,
+      lightSources,
+    );
 
-    const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
-    if (allObjects) {
-      for (const other of Object.values(allObjects)) {
-        if (
-          other.parentId === object.celestialObjectId &&
-          other.radius &&
-          other.position
-        ) {
-          shadowCasters.push({
-            position: other.position.clone(), // Clone to prevent state mutation
-            radius: other.radius,
-          });
-        }
-      }
-    }
+    // Convert light sources to shader format
+    const lightsForShader = LightArrayUtils.toShaderFormat(
+      attenuatedLightSources,
+    );
+
+    // Find shadow casters using centralized utility
+    const shadowCasters = this.findShadowCasters(object, allObjects);
+
+    // Convert shadow casters to shader format
+    const shadowCastersForShader =
+      ShadowCasterUtils.toShaderFormat(shadowCasters);
 
     // --- Update High-Detail Material ---
-    const material = this.materials.get(
+    const material = this.getMaterial(
       object.celestialObjectId,
-    ) as BaseGasGiantMaterial;
+    ) as TGasGiantMaterial;
 
     if (material) {
       material.update(
-        this.elapsedTime,
+        this.getElapsedTime(),
         timeScale,
         lightsForShader,
         camera,
-        shadowCasters,
+        shadowCastersForShader,
       );
     }
 
     // --- Update Medium-Detail Material ---
-    const mediumMaterial = this.materials.get(
+    const mediumMaterial = this.getMaterial(
       `${object.celestialObjectId}-medium`,
-    ) as BaseGasGiantMaterial;
+    ) as TGasGiantMaterial;
 
     if (mediumMaterial) {
       mediumMaterial.update(
-        this.elapsedTime,
+        this.getElapsedTime(),
         timeScale,
         lightsForShader,
         camera,
-        shadowCasters,
+        shadowCastersForShader,
       );
     }
 
@@ -255,7 +249,7 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
         object,
         time,
         timeScale,
-        lightSources,
+        attenuatedLightSources,
         camera,
         allObjects,
       );

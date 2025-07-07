@@ -45,7 +45,7 @@ export class WhiteDwarfMaterial extends BaseStarMaterial {
 /**
  * Renderer for white dwarf stars
  */
-export class WhiteDwarfRenderer extends BaseStarRenderer {
+export class WhiteDwarfRenderer extends BaseStarRenderer<WhiteDwarfMaterial> {
   private material: WhiteDwarfMaterial;
 
   constructor(options?: BaseCelestialRendererOptions) {
@@ -53,7 +53,9 @@ export class WhiteDwarfRenderer extends BaseStarRenderer {
     this.material = new WhiteDwarfMaterial();
   }
 
-  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+  protected createMaterial(
+    object: RenderableCelestialObject,
+  ): WhiteDwarfMaterial {
     return this.material;
   }
 

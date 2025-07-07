@@ -11,12 +11,12 @@ import { ClassVMaterial } from "./material";
 /**
  * Renderer for Class V gas giants
  */
-export class ClassVGasGiantRenderer extends BaseGasGiantRenderer {
+export class ClassVGasGiantRenderer extends BaseGasGiantRenderer<ClassVMaterial> {
   constructor(object: RenderableCelestialObject, deps: GasGiantRendererDeps) {
     super(object, deps);
   }
 
-  public getMaterial(object: RenderableCelestialObject): BaseGasGiantMaterial {
+  protected createMaterial(object: RenderableCelestialObject): ClassVMaterial {
     const properties = object.properties as GasGiantProperties;
 
     const seed = object.celestialObjectId

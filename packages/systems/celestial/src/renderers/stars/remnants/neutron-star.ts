@@ -31,7 +31,7 @@ class NeutronStarMaterial extends BaseStarMaterial {
  * so it provides its own LOD implementation without a corona.
  * It uses a gravitational lensing effect.
  */
-export class NeutronStarRenderer extends BaseStarRenderer {
+export class NeutronStarRenderer extends BaseStarRenderer<NeutronStarMaterial> {
   protected gravitationalLensingHelper: GravitationalLensingHelper | undefined;
   private material: NeutronStarMaterial;
 
@@ -41,7 +41,9 @@ export class NeutronStarRenderer extends BaseStarRenderer {
     this.registerMaterial("neutron-star-material", this.material);
   }
 
-  getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+  protected createMaterial(
+    object: RenderableCelestialObject,
+  ): NeutronStarMaterial {
     return this.material;
   }
 

@@ -43,7 +43,7 @@ export class ClassMStarMaterial extends BaseStarMaterial {
 /**
  * Renderer for M-class stars
  */
-export class ClassMStarRenderer extends MainSequenceStarRenderer {
+export class ClassMStarRenderer extends MainSequenceStarRenderer<ClassMStarMaterial> {
   constructor(options?: BaseCelestialRendererOptions) {
     super(options);
   }
@@ -51,7 +51,9 @@ export class ClassMStarRenderer extends MainSequenceStarRenderer {
   /**
    * Returns the appropriate material for an M-class star
    */
-  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+  protected createMaterial(
+    object: RenderableCelestialObject,
+  ): ClassMStarMaterial {
     return new ClassMStarMaterial();
   }
 

@@ -61,11 +61,10 @@ const oortCloudFragmentShader = `
 /**
  * Renders an Oort cloud using a particle system
  */
-export class OortCloudRenderer extends BaseCelestialRenderer {
+export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMaterial> {
   private objectId: string | null = null;
   private particles: THREE.Points | null = null;
   private geometry: THREE.BufferGeometry | null = null;
-  private material: THREE.ShaderMaterial | null = null;
   private cloudTexture: THREE.Texture | null = null;
   private time: number = 0;
   private invalidParticleLogged: Set<string> = new Set();
@@ -194,8 +193,11 @@ export class OortCloudRenderer extends BaseCelestialRenderer {
         `OortCloudRenderer: Invalid visualRadius (${visualRadius}), visualThickness (${visualThickness}), or visualCount (${visualCount}) before loop for object ${object.celestialObjectId}. Returning empty geometry/material.`,
       );
 
-      const material = this._createShaderMaterial(object);
-      return { geometry: new THREE.BufferGeometry(), material };
+      const material = this.createAndRegisterMaterial(object);
+      return {
+        geometry: new THREE.BufferGeometry(),
+        material: material || new THREE.ShaderMaterial(),
+      };
     }
 
     // Create particles in a spherical distribution (Oort cloud)
@@ -248,15 +250,18 @@ export class OortCloudRenderer extends BaseCelestialRenderer {
       new THREE.Float32BufferAttribute(initialRotations, 1),
     );
 
-    const material = this._createShaderMaterial(object);
+    const material = this.createAndRegisterMaterial(object);
 
-    return { geometry: this.geometry, material };
+    return {
+      geometry: this.geometry,
+      material: material || new THREE.ShaderMaterial(),
+    };
   }
 
   /**
    * Creates the shader material for the Oort cloud.
    */
-  private _createShaderMaterial(
+  protected createMaterial(
     object: RenderableCelestialObject,
   ): THREE.ShaderMaterial {
     if (!this.cloudTexture) {
@@ -266,9 +271,10 @@ export class OortCloudRenderer extends BaseCelestialRenderer {
       this.textureLoader.load(
         `${window.location.href}${texturePath}`,
         (texture) => {
-          if (this.material) {
-            this.material.uniforms.cloudTexture.value = texture;
-            this.material.needsUpdate = true;
+          const material = this.getTypedMaterial(object.celestialObjectId);
+          if (material) {
+            material.uniforms.cloudTexture.value = texture;
+            material.needsUpdate = true;
           }
         },
         undefined,
@@ -348,8 +354,6 @@ export class OortCloudRenderer extends BaseCelestialRenderer {
       }
     };
 
-    this.registerMaterial(object.celestialObjectId, material);
-    this.material = material;
     return material;
   }
 
@@ -398,11 +402,12 @@ export class OortCloudRenderer extends BaseCelestialRenderer {
     }
 
     // Create material
-    let material = this.materials.get(
-      object.celestialObjectId,
-    ) as THREE.ShaderMaterial;
+    const material = this.createAndRegisterMaterial(object);
     if (!material) {
-      material = this._createShaderMaterial(object);
+      console.error(
+        `[OortCloudRenderer] Could not create material for ${object.celestialObjectId}.`,
+      );
+      return []; // Return empty array if material fails
     }
 
     // Create fixed geometry like asteroid field
@@ -531,9 +536,10 @@ export class OortCloudRenderer extends BaseCelestialRenderer {
       allMeshes,
     );
 
-    if (this.material) {
-      this.material.uniforms.time.value = time * 0.0001;
-      this.material.uniformsNeedUpdate = true;
+    const material = this.getTypedMaterial(object.celestialObjectId);
+    if (material) {
+      material.uniforms.time.value = this.getElapsedTime() * 0.0001;
+      material.uniformsNeedUpdate = true;
     }
   }
 
@@ -541,14 +547,10 @@ export class OortCloudRenderer extends BaseCelestialRenderer {
     if (this.geometry) {
       this.geometry.dispose();
     }
-    if (this.material) {
-      this.material.dispose();
-    }
     if (this.cloudTexture) {
       this.cloudTexture.dispose();
     }
     this.particles = null;
-    this.material = null;
     this.cloudTexture = null;
     this.textureLoader = null;
     this.invalidParticleLogged.clear();

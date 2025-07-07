@@ -16,6 +16,7 @@ import {
   type CelestialMeshOptions,
   type LightSourcesMap,
   type CelestialRenderer,
+  ShadowCasterUtils,
 } from "@teskooano/renderer-threejs-celestial";
 import { RingSystemRenderer } from "../rings";
 import {
@@ -33,8 +34,12 @@ const MAX_SHADOW_CASTERS = 4;
 
 /**
  * Base renderer for terrestrial planets and moons
+ * @template TTerrestrialMaterial The specific terrestrial material type this renderer works with
  */
-export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
+export class BaseTerrestrialRenderer<
+  TTerrestrialMaterial extends
+    ProceduralPlanetMaterial = ProceduralPlanetMaterial,
+> extends BaseCelestialRenderer<TTerrestrialMaterial> {
   protected atmosphereMaterials: Map<string, AtmosphereMaterial> = new Map();
   protected textureLoader: THREE.TextureLoader;
   protected ringSystemRenderer?: RingSystemRenderer;
@@ -57,6 +62,17 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     this.materialService = new PlanetMaterialService();
     this.atmosphereService = new AtmosphereService();
     deps.renderers.set(object.celestialObjectId, this);
+  }
+
+  /**
+   * Creates the appropriate material for this terrestrial object.
+   * This implementation creates a ProceduralPlanetMaterial.
+   */
+  protected createMaterial(
+    object: RenderableCelestialObject,
+  ): TTerrestrialMaterial {
+    const bodyMaterial = this.materialService.createMaterial(object);
+    return bodyMaterial as TTerrestrialMaterial;
   }
 
   /**
@@ -174,8 +190,12 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
 
     let bodyMesh: THREE.Mesh;
     try {
-      const bodyMaterial = this.materialService.createMaterial(object);
-      this.registerMaterial(object.celestialObjectId, bodyMaterial);
+      const bodyMaterial = this.createAndRegisterMaterial(object);
+      if (!bodyMaterial) {
+        throw new Error(
+          `Failed to create material for ${object.celestialObjectId}`,
+        );
+      }
       const bodyGeometry = new THREE.SphereGeometry(
         baseRadius,
         segments,
@@ -257,24 +277,13 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
 
-    // Calculate attenuation and update light intensity in-place.
-    if (lightSources && lightSources.size > 0) {
-      lightSources.forEach((lightData) => {
-        // Physically-based distance attenuation using inverse-square law,
-        // scaled for solar system distances. A larger factor creates
-        // a more dramatic and visible falloff.
-        const FALLOFF_FACTOR = 0.00000001; // Tunable factor
-        const distanceSq = object.position.distanceToSquared(
-          lightData.position,
-        );
-        const attenuation = 1.0 / (1.0 + distanceSq * FALLOFF_FACTOR);
+    // Apply centralized light attenuation
+    const attenuatedLightSources = this.applyLightAttenuation(
+      object,
+      lightSources,
+    );
 
-        // Update the intensity directly in the map
-        lightData.intensity = (lightData.intensity ?? 1.0) * attenuation;
-      });
-    }
-
-    const bodyMaterial = this.materials.get(object.celestialObjectId);
+    const bodyMaterial = this.getMaterial(object.celestialObjectId);
     if (
       bodyMaterial &&
       bodyMaterial instanceof ProceduralPlanetMaterial &&
@@ -289,47 +298,19 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
         );
       }
 
-      // --- Shadow Caster Update ---
-      const shadowCastersData: { position: THREE.Vector3; radius: number }[] =
-        [];
+      // Find shadow casters using centralized utility
+      const shadowCasters = this.findShadowCasters(object, allObjects);
 
-      // If the object is a planet-like body, its moons are the shadow casters.
-      if (
-        object.type === CelestialType.PLANET ||
-        object.type === CelestialType.DWARF_PLANET
-      ) {
-        const moons = Object.values(allObjects).filter(
-          (obj) =>
-            obj.type === CelestialType.MOON &&
-            obj.parentId === object.celestialObjectId,
-        );
-        for (const moon of moons) {
-          shadowCastersData.push({
-            position: new THREE.Vector3().fromArray(moon.position.toArray()),
-            radius: moon.radius ?? 0,
-          });
-        }
-      }
-      // If the object is a moon, its parent planet is the shadow caster.
-      else if (object.type === CelestialType.MOON && object.parentId) {
-        const parentPlanet = allObjects[object.parentId];
-        if (parentPlanet) {
-          shadowCastersData.push({
-            position: new THREE.Vector3().fromArray(
-              parentPlanet.position.toArray(),
-            ),
-            radius: parentPlanet.radius ?? 0,
-          });
-        }
-      }
-      // --- End Shadow Caster Update ---
+      // Convert to shader format
+      const shadowCastersForShader =
+        ShadowCasterUtils.toShaderFormat(shadowCasters);
 
       bodyMaterial.update(
         time,
         timeScale,
-        lightSources,
+        attenuatedLightSources,
         camera,
-        shadowCastersData,
+        shadowCastersForShader,
       );
     }
 
@@ -337,7 +318,12 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
       object.celestialObjectId,
     );
     if (atmosphereMaterial) {
-      atmosphereMaterial.update(time, timeScale, camera, lightSources);
+      atmosphereMaterial.update(
+        time,
+        timeScale,
+        camera,
+        attenuatedLightSources,
+      );
     }
 
     if (this.ringSystemRenderer) {
@@ -345,7 +331,7 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
         object,
         time,
         timeScale,
-        lightSources,
+        attenuatedLightSources,
         camera,
         allObjects,
       );
@@ -484,6 +470,6 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
   }
 
   public getLOD(object: RenderableCelestialObject): THREE.LOD | undefined {
-    return this.lods.get(object.celestialObjectId);
+    return super.getLOD(object);
   }
 }

@@ -165,12 +165,12 @@ export class KerrAccretionDiskMaterial extends AccretionDiskMaterial {
 }
 
 /**
- * Renderer for Kerr black holes (rotating black holes)
+ * Renderer for Kerr black holes
  */
-export class KerrBlackHoleRenderer extends BaseStarRenderer {
+export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHoleMaterial> {
   private eventHorizonMaterial: SchwarzschildBlackHoleMaterial | null = null;
   private ergosphereMaterial: ErgosphereMaterial | null = null;
-  private accretionDiskMaterials: Map<string, KerrAccretionDiskMaterial> =
+  private accretionDiskMaterials: Map<string, AccretionDiskMaterial> =
     new Map();
   private rotationSpeed: number = 0.5;
   private lensingHelpers: Map<string, GravitationalLensingHelper> = new Map();
@@ -185,11 +185,13 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
     this.rotationSpeed = options.rotationSpeed ?? 0.5;
   }
 
-  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+  protected createMaterial(
+    object: RenderableCelestialObject,
+  ): SchwarzschildBlackHoleMaterial {
     if (!this.eventHorizonMaterial) {
       this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
     }
-    return this.eventHorizonMaterial as unknown as BaseStarMaterial;
+    return this.eventHorizonMaterial;
   }
 
   protected getCustomLODs(
@@ -334,7 +336,8 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
     allObjects: Record<string, RenderableCelestialObject>,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
-    const currentTime = this.elapsedTime;
+    // Update materials with current time
+    const currentTime = this.getElapsedTime();
 
     if (this.eventHorizonMaterial) {
       this.eventHorizonMaterial.update(
@@ -353,12 +356,14 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
       );
     }
 
-    const material = this.materials.get(object.celestialObjectId);
-    if (material) {
-      material.update(currentTime, timeScale, lightSources, camera);
-    }
+    // const material = this.getMaterial(
+    //   object.celestialObjectId,
+    // ) as TStarMaterial;
+    // if (material) {
+    //   material.update(currentTime, timeScale, lightSources, camera);
+    // }
 
-    // const lensingHelper = this.lensingHelpers.get(object.celestialObjectId);
+    // // const lensingHelper = this.lensingHelpers.get(object.celestialObjectId);
     // if (
     //   lensingHelper &&
     //   renderer &&

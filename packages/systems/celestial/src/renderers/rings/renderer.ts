@@ -11,7 +11,7 @@ import {
   BaseCelestialRenderer,
   type CelestialMeshOptions,
   type LightSourcesMap,
-  type CelestialRenderer,
+  ShadowCasterUtils,
 } from "@teskooano/renderer-threejs-celestial";
 import { RingMaterial } from "./material";
 import { calculateKeplerianRotationRate } from "./utils";
@@ -22,7 +22,7 @@ import { calculateKeplerianRotationRate } from "./utils";
  * This renderer extends BaseCelestialRenderer to provide consistent behavior
  * with other celestial renderers and proper LOD support.
  */
-export class RingSystemRenderer extends BaseCelestialRenderer {
+export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
   /**
    * Map of ring materials by object ID and ring index
    */
@@ -168,8 +168,15 @@ export class RingSystemRenderer extends BaseCelestialRenderer {
       lod.addLevel(level.object, level.distance);
     });
 
+    // After a certain distance, rings are not visible, so we add an empty object.
+    const emptyGroup = new THREE.Group();
+    lod.addLevel(emptyGroup, 20000 * (object.radius ?? 1));
+
     // Store LOD object
-    this.lods.set(object.celestialObjectId, lod);
+    this.lodManager.registerLOD(object.celestialObjectId, lod);
+    // The LOD object itself is not returned because the levels are managed internally.
+    // The LOD object needs to be added to the scene, which is handled by the consumer
+    // of this renderer. This method simply prepares the LOD object.
   }
 
   /**
@@ -313,54 +320,26 @@ export class RingSystemRenderer extends BaseCelestialRenderer {
       return;
     }
 
-    // Attenuate light intensity based on distance before passing to materials
-    lightSources.forEach((lightData) => {
-      const distanceSq = object.position.distanceToSquared(lightData.position);
-      // Consistent with other renderers
-      const FALLOFF_FACTOR = 0.00000001;
-      const attenuation = 1.0 / (1.0 + distanceSq * FALLOFF_FACTOR);
-      lightData.intensity = (lightData.intensity ?? 1.0) * attenuation;
-    });
+    // Apply centralized light attenuation
+    const attenuatedLightSources = this.applyLightAttenuation(
+      object,
+      lightSources,
+    );
 
-    // --- Shadow Caster Calculation ---
-    const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
-    const parentBody = allObjects
-      ? allObjects[object.celestialObjectId]
-      : undefined;
+    // Find shadow casters using centralized utility
+    const shadowCasters = this.findRingShadowCasters(object, allObjects);
 
-    if (parentBody) {
-      // The parent body itself is the primary shadow caster.
-      shadowCasters.push({
-        position: parentBody.position.clone(),
-        radius: parentBody.radius ?? 0,
-      });
-    }
+    // Convert shadow casters to shader format
+    const shadowCastersForShader =
+      ShadowCasterUtils.toShaderFormat(shadowCasters);
 
-    // Find moons of the parent object to act as additional shadow casters.
-    if (allObjects) {
-      for (const other of Object.values(allObjects)) {
-        if (
-          other.parentId === object.celestialObjectId &&
-          other.type === CelestialType.MOON
-        ) {
-          shadowCasters.push({
-            position: other.position.clone(),
-            radius: other.radius ?? 0,
-          });
-        }
-      }
-    }
-
-    console.log("lightSources", lightSources);
-
-    // Update all ring materials associated with this renderer
     this.ringMaterials.forEach((material) => {
       material.update(
-        time,
-        object.position.clone(),
-        object.radius ?? 0,
-        lightSources,
-        shadowCasters,
+        this.getElapsedTime(),
+        object.position,
+        object.radius ?? 1,
+        attenuatedLightSources,
+        shadowCastersForShader,
       );
     });
   }

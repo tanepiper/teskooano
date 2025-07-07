@@ -315,21 +315,26 @@ export class CoronaMaterial extends THREE.ShaderMaterial {
 
 /**
  * Base class for all star renderers.
+ * @template TStarMaterial The specific star material type this renderer works with
  */
-export abstract class BaseStarRenderer extends BaseCelestialRenderer {
-  public materials: Map<string, BaseStarMaterial> = new Map();
+export abstract class BaseStarRenderer<
+  TStarMaterial extends BaseStarMaterial = BaseStarMaterial,
+> extends BaseCelestialRenderer<TStarMaterial> {
   protected coronaMaterials: Map<string, CoronaMaterial[]> = new Map();
-  protected lightingManager?: LightingManager;
+  protected starLightingManager?: LightingManager;
 
   constructor(options?: BaseCelestialRendererOptions) {
     super(options);
-    this.lightingManager = options?.lightingManager;
+    this.starLightingManager = options?.lightingManager;
   }
 
   /**
-   * Abstract method for subclasses to provide the main star material.
+   * Abstract method for subclasses to create their specific star material.
+   * This is called by the base class's createAndRegisterMaterial method.
    */
-  abstract getMaterial(object: RenderableCelestialObject): BaseStarMaterial;
+  protected abstract createMaterial(
+    object: RenderableCelestialObject,
+  ): TStarMaterial;
 
   /**
    * Abstract method for subclasses to provide their custom, high-detail LODs.
@@ -455,7 +460,9 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
       allMeshes,
     );
 
-    const material = this.materials.get(object.celestialObjectId);
+    const material = this.getMaterial(
+      object.celestialObjectId,
+    ) as TStarMaterial;
     if (material) {
       material.update(time, timeScale, lightSources, camera);
     }
@@ -470,13 +477,10 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
 
   public override dispose(): void {
     super.dispose();
-    this.materials.forEach((material) => {
-      material.dispose();
-    });
+    this.materialManager.dispose();
     this.coronaMaterials.forEach((materials) => {
       materials.forEach((material) => material.dispose());
     });
-    this.materials.clear();
     this.coronaMaterials.clear();
   }
 }

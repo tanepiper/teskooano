@@ -2,6 +2,7 @@ import {
   CelestialObject,
   CelestialType,
   CometProperties,
+  GasGiantClass,
   GasGiantProperties,
   PlanetProperties,
   PlanetType,
@@ -24,6 +25,37 @@ const SPECTRAL_CLASS_GRADIENTS: Partial<
   [SpectralClass.L]: ["#ff8a4a", "#e05a1a"],
   [SpectralClass.T]: ["#d66c39", "#a03a0a"],
   [SpectralClass.Y]: ["#a05a4a", "#6b2a1a"],
+};
+
+const GAS_GIANT_CLASS_COLORS: Record<
+  GasGiantClass,
+  { atmo: string; cloud: string; storm: string }
+> = {
+  [GasGiantClass.CLASS_I]: {
+    atmo: "#E6DAB8",
+    cloud: "#FFFFFF",
+    storm: "#D3BBA5",
+  }, // Ammonia: Yellowish/white
+  [GasGiantClass.CLASS_II]: {
+    atmo: "#A8C5D3",
+    cloud: "#E0F0FF",
+    storm: "#8EAEBF",
+  }, // Water: Bluish/white
+  [GasGiantClass.CLASS_III]: {
+    atmo: "#3D5A80",
+    cloud: "#2C3E50",
+    storm: "#1A2530",
+  }, // Cloudless: Deep blue/dark
+  [GasGiantClass.CLASS_IV]: {
+    atmo: "#C78E6D",
+    cloud: "#A37053",
+    storm: "#7D553D",
+  }, // Alkali: Dusky reddish/brown
+  [GasGiantClass.CLASS_V]: {
+    atmo: "#BDBDBD",
+    cloud: "#E0E0E0",
+    storm: "#9E9E9E",
+  }, // Silicate: Grey/hazy
 };
 
 function getRingConfig(object: CelestialObject): CelestialIconConfig["rings"] {
@@ -163,9 +195,13 @@ export function generateIconConfig(
     }
     case CelestialType.GAS_GIANT: {
       const gasGiantProps = object.properties as GasGiantProperties;
-      const atmoColor = gasGiantProps.atmosphereColor || "#E6A974";
-      const cloudColor = gasGiantProps.cloudColor || "#C7956D";
-      const stormColor = gasGiantProps.stormColor || "#8f6648";
+      const classColors =
+        GAS_GIANT_CLASS_COLORS[gasGiantProps.classType] ??
+        GAS_GIANT_CLASS_COLORS[GasGiantClass.CLASS_I]; // Fallback to Class I
+
+      const atmoColor = gasGiantProps.atmosphereColor ?? classColors.atmo;
+      const cloudColor = gasGiantProps.cloudColor ?? classColors.cloud;
+      const stormColor = gasGiantProps.stormColor ?? classColors.storm;
 
       // Create a more complex gradient for gas giants to show bands
       baseConfig.procedural = {

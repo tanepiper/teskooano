@@ -58,7 +58,7 @@ export class WolfRayetMaterial extends BaseStarMaterial {
 /**
  * Renderer for Wolf-Rayet stars
  */
-export class WolfRayetRenderer extends BaseStarRenderer {
+export class WolfRayetRenderer extends BaseStarRenderer<WolfRayetMaterial> {
   constructor(options?: BaseCelestialRendererOptions) {
     super(options);
   }
@@ -67,7 +67,7 @@ export class WolfRayetRenderer extends BaseStarRenderer {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    const material = this.getMaterial(object);
+    const material = this.createAndRegisterMaterial(object);
     const segments = this.getSegmentsForDetailLevel(options?.detailLevel, 64);
     const geometry = new THREE.SphereGeometry(
       object.radius,
@@ -87,7 +87,9 @@ export class WolfRayetRenderer extends BaseStarRenderer {
   /**
    * Returns the appropriate material for a Wolf-Rayet star
    */
-  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+  protected createMaterial(
+    object: RenderableCelestialObject,
+  ): WolfRayetMaterial {
     return new WolfRayetMaterial();
   }
 

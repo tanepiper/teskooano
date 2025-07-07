@@ -201,7 +201,7 @@ export class AccretionDiskMaterial extends THREE.ShaderMaterial {
 /**
  * Renderer for Schwarzschild black holes
  */
-export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
+export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHoleMaterial> {
   private eventHorizonMaterial: SchwarzschildBlackHoleMaterial | null = null;
   private accretionDiskMaterials: Map<string, AccretionDiskMaterial> =
     new Map();
@@ -211,13 +211,13 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
     super(options);
   }
 
-  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+  protected createMaterial(
+    object: RenderableCelestialObject,
+  ): SchwarzschildBlackHoleMaterial {
     if (!this.eventHorizonMaterial) {
       this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
     }
-    // This is not a perfect fit, but it's the main material for the object.
-    // The accretion disk has its own material managed separately.
-    return this.eventHorizonMaterial as unknown as BaseStarMaterial;
+    return this.eventHorizonMaterial;
   }
 
   protected getCustomLODs(
@@ -335,15 +335,12 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
     allObjects: Record<string, RenderableCelestialObject>,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
-    const currentTime = this.elapsedTime;
 
+    const currentTime = this.getElapsedTime();
+
+    // Update the dynamic ring effect (event horizon distortion)
     if (this.eventHorizonMaterial) {
-      this.eventHorizonMaterial.update(
-        currentTime,
-        timeScale,
-        lightSources,
-        camera,
-      );
+      this.eventHorizonMaterial.uniforms.time.value = currentTime;
     }
 
     this.accretionDiskMaterials.forEach((material) => {

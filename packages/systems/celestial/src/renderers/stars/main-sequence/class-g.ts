@@ -43,7 +43,7 @@ export class ClassGStarMaterial extends BaseStarMaterial {
 /**
  * Renderer for G-class stars
  */
-export class ClassGStarRenderer extends MainSequenceStarRenderer {
+export class ClassGStarRenderer extends MainSequenceStarRenderer<ClassGStarMaterial> {
   constructor(options?: BaseCelestialRendererOptions) {
     super(options);
   }
@@ -51,7 +51,9 @@ export class ClassGStarRenderer extends MainSequenceStarRenderer {
   /**
    * Returns the appropriate material for a G-class star
    */
-  public getMaterial(object: RenderableCelestialObject): BaseStarMaterial {
+  protected createMaterial(
+    object: RenderableCelestialObject,
+  ): ClassGStarMaterial {
     return new ClassGStarMaterial();
   }
 
