@@ -36,7 +36,7 @@ export function initializeSun(): string {
       spectralClass: "G2V",
       luminosity: SUN_LUMINOSITY,
       color: "#FFFFE0",
-      classType: StellarType.MAIN_SEQUENCE_G,
+      classType: StellarType.MAIN_SEQUENCE,
     },
   });
 

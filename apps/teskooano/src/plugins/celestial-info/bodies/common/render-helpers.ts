@@ -1,4 +1,5 @@
 import { CelestialObject } from "@teskooano/data-types";
+import { generateIconConfig } from "../../../celestial-icons/service/config-generator.js";
 
 /**
  * Renders the main body (title and subtitle) of a celestial info component.
@@ -9,13 +10,21 @@ export function renderMainBody(
   subtitle: string,
   celestial: CelestialObject,
 ): string {
+  // Generate icon configuration for this celestial object
+  const iconConfig = generateIconConfig(celestial);
+  const iconConfigJson = JSON.stringify(iconConfig);
+
   return `
-    <div class="title-container">
-        <celestial-icon object-id="${celestial.id}"></celestial-icon>
-        <div class="title-text">
-            <h3>${title}</h3>
-            <p>${subtitle}</p>
+    <div class="celestial-header">
+        <div class="icon-container">
+            <celestial-icon config='${iconConfigJson}'></celestial-icon>
         </div>
+        <div class="header-content">
+            <h2 class="celestial-title">${title}</h2>
+            <p class="celestial-subtitle">${subtitle}</p>
+            <div class="celestial-id">ID: ${celestial.id}</div>
+        </div>
+        <div class="header-accent"></div>
     </div>`;
 }
 

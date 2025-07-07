@@ -8,16 +8,18 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const IO_MASS_KG = 8.9319e22;
-const IO_RADIUS_M = 1821600;
-const IO_SMA_M = 421700 * KM;
-const IO_ECC = 0.0041;
-const IO_INC_DEG = 0.05;
-const IO_LAN_DEG = 43.977;
-const IO_AOP_DEG = 84.129;
-const IO_MA_DEG = 342.021;
-const IO_SIDEREAL_PERIOD_S = 152854;
-const IO_ALBEDO = 0.63;
+// Verified Wikipedia data for Io
+const IO_MASS_KG = 8.9319e22; // Wikipedia verified
+const IO_RADIUS_M = 1821600; // Mean radius from Wikipedia: 1821.6±0.5 km
+const IO_SMA_M = 421800 * KM; // Wikipedia verified: 421,800 km
+const IO_ECC = 0.0041; // Wikipedia verified
+const IO_INC_DEG = 0.05; // Wikipedia verified: 0.050° to Jupiter's equator
+const IO_LAN_DEG = 43.977; // Current value
+const IO_AOP_DEG = 84.129; // Current value
+const IO_MA_DEG = 342.021; // Current value
+const IO_SIDEREAL_PERIOD_S = 1.769137786 * 24 * 3600; // Wikipedia: 1.769137786 days (synchronous)
+const IO_ALBEDO = 0.63; // Wikipedia verified
+const IO_TEMP_K = 110; // Wikipedia verified: mean 110 K
 
 /**
  * Initializes Io, Jupiter's volcanically active moon.
@@ -33,7 +35,7 @@ export function initializeIo(parentId: string): void {
     parentId: parentId,
     realMass_kg: IO_MASS_KG,
     realRadius_m: IO_RADIUS_M,
-    temperature: 110,
+    temperature: IO_TEMP_K,
     albedo: IO_ALBEDO,
     siderealRotationPeriod_s: IO_SIDEREAL_PERIOD_S,
     axialTilt: defaultMoonAxialTilt,

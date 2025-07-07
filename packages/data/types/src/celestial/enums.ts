@@ -132,8 +132,6 @@ export enum RockyType {
 export enum StellarType {
   /** Stars fusing hydrogen in their core, like the Sun. */
   MAIN_SEQUENCE = "MAIN_SEQUENCE",
-  /** Specific main sequence star type (Sun-like). */
-  MAIN_SEQUENCE_G = "MAIN_SEQUENCE_G",
   /** Extremely dense remnant of a massive star's supernova. */
   NEUTRON_STAR = "NEUTRON_STAR",
   /** Dense remnant of a low-to-medium mass star. */

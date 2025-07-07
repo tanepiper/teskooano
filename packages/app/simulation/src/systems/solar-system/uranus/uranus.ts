@@ -8,10 +8,10 @@ import {
   type GasGiantProperties,
 } from "@teskooano/data-types";
 
-const URANUS_SIDEREAL_ROTATION_PERIOD_S = -0.71833 * 24 * 3600;
+const URANUS_SIDEREAL_ROTATION_PERIOD_S = -0.71833 * 24 * 3600; // Retrograde rotation
 const URANUS_AXIAL_TILT_DEG = 97.77;
-const URANUS_ORBITAL_PERIOD_S = 2.651e9;
-const URANUS_REAL_RADIUS_M = 25362000;
+const URANUS_ORBITAL_PERIOD_S = 2.651e9; // 84.0205 years
+const URANUS_REAL_RADIUS_M = 25362000; // Equatorial radius
 
 /**
  * Creates Uranus.
@@ -28,19 +28,19 @@ export function initializeUranusPlanet(parentId: string): string {
     seed: "uranus_seed_84",
     type: CelestialType.GAS_GIANT,
     parentId: parentId,
-    realMass_kg: 8.681e25,
+    realMass_kg: 8.6813e25, // Corrected mass
     realRadius_m: URANUS_REAL_RADIUS_M,
     orbit: {
-      realSemiMajorAxis_m: 19.2184 * AU,
-      eccentricity: 0.046381,
-      inclination: 0.7733 * DEG_TO_RAD,
+      realSemiMajorAxis_m: 19.19126 * AU, // Corrected semi-major axis
+      eccentricity: 0.04725744, // Corrected eccentricity
+      inclination: 0.773 * DEG_TO_RAD, // Corrected inclination
       longitudeOfAscendingNode: 74.006 * DEG_TO_RAD,
-      argumentOfPeriapsis: 96.999 * DEG_TO_RAD,
-      meanAnomaly: 142.234 * DEG_TO_RAD,
+      argumentOfPeriapsis: 96.998857 * DEG_TO_RAD, // Corrected argument of periapsis
+      meanAnomaly: 142.2386 * DEG_TO_RAD, // Corrected mean anomaly
       period_s: URANUS_ORBITAL_PERIOD_S,
     },
-    temperature: 76,
-    albedo: 0.51,
+    temperature: 76, // Corrected temperature
+    albedo: 0.488, // Corrected Bond albedo
     siderealRotationPeriod_s: URANUS_SIDEREAL_ROTATION_PERIOD_S,
     axialTilt: new OSVector3(
       0,

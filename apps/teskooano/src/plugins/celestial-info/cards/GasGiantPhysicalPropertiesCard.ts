@@ -1,5 +1,5 @@
 import { PhysicalPropertiesCard } from "./PhysicalPropertiesCard.js";
-import { GasGiantProperties } from "@teskooano/data-types";
+import { GasGiantProperties, GasGiantClass } from "@teskooano/data-types";
 import { FormatUtils } from "../utils/formatters.js";
 
 export class GasGiantPhysicalPropertiesCard extends PhysicalPropertiesCard {
@@ -53,10 +53,31 @@ export class GasGiantPhysicalPropertiesCard extends PhysicalPropertiesCard {
     if (giantProps?.classType) {
       properties.push({
         property: "Gas Giant Class",
-        value: giantProps.classType,
+        value: this.formatGasGiantClass(giantProps.classType),
       });
     }
 
     return properties;
+  }
+
+  /**
+   * Formats gas giant class names and adds descriptive information.
+   */
+  private formatGasGiantClass(classType: GasGiantClass): string {
+    switch (classType) {
+      case GasGiantClass.CLASS_I:
+        return "Class I (Ammonia clouds, Jupiter-like)";
+      case GasGiantClass.CLASS_II:
+        return "Class II (Water clouds, Saturn-like)";
+      case GasGiantClass.CLASS_III:
+        return "Class III (Ice Giant, Uranus/Neptune-like)";
+      case GasGiantClass.CLASS_IV:
+        return "Class IV (Alkali metal clouds, very hot)";
+      case GasGiantClass.CLASS_V:
+        return "Class V (Silicate clouds, extremely hot)";
+      default:
+        // Fallback for any raw string values that might exist
+        return String(classType).replace(/_/g, " ").replace(/CLASS/g, "Class");
+    }
   }
 }

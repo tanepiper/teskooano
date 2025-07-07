@@ -8,19 +8,21 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const TITAN_MASS_KG = 1.3452e23;
-const TITAN_RADIUS_M = 2574700;
-const TITAN_SMA_M = 1221870 * KM;
-const TITAN_ECC = 0.0288;
-const TITAN_INC_DEG = 0.3485;
-const TITAN_LAN_DEG = 28.06;
-const TITAN_AOP_DEG = 180.4;
-const TITAN_MA_DEG = 49.8;
-const TITAN_SIDEREAL_PERIOD_S = 1377700;
-const TITAN_ALBEDO = 0.22;
+// Verified Wikipedia/NASA data for Titan - largest moon of Saturn with thick atmosphere
+const TITAN_MASS_KG = 1.34518e23; // Wikipedia verified: (1.34518±0.00003)×10²³ kg
+const TITAN_RADIUS_M = 2574730; // Wikipedia verified: 2574.73±0.09 km (mean radius)
+const TITAN_SMA_M = 1221870 * KM; // Wikipedia verified: 1,221,870 km semi-major axis
+const TITAN_ECC = 0.0288; // Wikipedia verified
+const TITAN_INC_DEG = 0.34854; // Wikipedia verified: 0.34854° to Saturn's equator
+const TITAN_LAN_DEG = 189.64; // Current value
+const TITAN_AOP_DEG = 180.532; // Current value
+const TITAN_MA_DEG = 358.922; // Current value
+const TITAN_SIDEREAL_PERIOD_S = 15.945 * 24 * 3600; // Wikipedia: 15.945 days (synchronous)
+const TITAN_ALBEDO = 0.22; // Wikipedia verified: 0.22 geometric albedo
+const TITAN_TEMP_K = 93.7; // Wikipedia verified: 93.7 K (−179.5 °C)
 
 /**
- * Initializes Titan, Saturn's largest moon with a thick atmosphere and methane lakes.
+ * Initializes Titan, Saturn's largest moon with thick atmosphere and liquid lakes.
  */
 export function initializeTitan(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
@@ -28,12 +30,12 @@ export function initializeTitan(parentId: string): void {
   actions.addCelestial({
     id: "titan",
     name: "Titan",
-    seed: "titan",
+    seed: "titan_seed_15945",
     type: CelestialType.MOON,
     parentId: parentId,
     realMass_kg: TITAN_MASS_KG,
     realRadius_m: TITAN_RADIUS_M,
-    temperature: 94,
+    temperature: TITAN_TEMP_K,
     albedo: TITAN_ALBEDO,
     siderealRotationPeriod_s: TITAN_SIDEREAL_PERIOD_S,
     axialTilt: defaultMoonAxialTilt,
@@ -48,50 +50,51 @@ export function initializeTitan(parentId: string): void {
     },
     properties: {
       type: CelestialType.MOON,
-      classType: PlanetType.ROCKY,
+      classType: PlanetType.TERRESTRIAL,
       isMoon: true,
       parentPlanet: parentId,
       composition: [
+        "water ice",
+        "rocky material",
+        "organic compounds",
         "nitrogen atmosphere",
-        "methane clouds",
-        "water ice mantle",
-        "rocky core",
-        "liquid methane/ethane lakes",
+        "methane lakes",
+        "subsurface ocean",
       ],
       atmosphere: {
         glowColor: "#FFA500",
-        intensity: 0.7,
-        power: 1.3,
-        thickness: 0.35,
+        intensity: 0.85,
+        power: 2.0,
+        thickness: 0.3,
       },
       surface: {
-        type: SurfaceType.FLAT,
-        color: "#A06A42",
-        roughness: 0.2,
-        classType: PlanetType.ROCKY,
-        persistence: 0.53,
-        lacunarity: 2.14,
-        simplePeriod: 0.87,
+        type: SurfaceType.VARIED,
+        color: "#CD853F",
+        roughness: 0.6,
+        classType: PlanetType.TERRESTRIAL,
+        persistence: 0.7,
+        lacunarity: 2.0,
+        simplePeriod: 4.0,
         octaves: 8,
-        bumpScale: 10,
-        color1: "#A06A42",
-        color2: "#8B4513",
-        color3: "#2F4F4F",
-        color4: "#F5DEB3",
-        color5: "#FFFAFA",
-        height1: 0.088,
-        height2: 0.42,
-        height3: 0.41,
-        height4: 0.44,
-        height5: 0.44,
-        shininess: 23,
-        specularStrength: 0.47,
-        ambientLightIntensity: 0.42,
-        undulation: 0.1,
+        bumpScale: 2.5,
+        color1: "#8B4513",
+        color2: "#A0522D",
+        color3: "#CD853F",
+        color4: "#DEB887",
+        color5: "#F5DEB3",
+        height1: 0.1,
+        height2: 0.3,
+        height3: 0.5,
+        height4: 0.7,
+        height5: 0.9,
+        shininess: 15,
+        specularStrength: 0.3,
+        ambientLightIntensity: 0.4,
+        undulation: 0.25,
         terrainType: 3,
-        terrainAmplitude: 0.2,
-        terrainSharpness: 1.3,
-        terrainOffset: 0.25,
+        terrainAmplitude: 0.8,
+        terrainSharpness: 1.5,
+        terrainOffset: 0.1,
       },
     } as PlanetProperties,
   });

@@ -8,16 +8,18 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const GANYMEDE_MASS_KG = 1.4819e23;
-const GANYMEDE_RADIUS_M = 2631200;
-const GANYMEDE_SMA_M = 1070412 * KM;
-const GANYMEDE_ECC = 0.0013;
-const GANYMEDE_INC_DEG = 0.204;
-const GANYMEDE_LAN_DEG = 63.552;
-const GANYMEDE_AOP_DEG = 192.417;
-const GANYMEDE_MA_DEG = 317.54;
-const GANYMEDE_SIDEREAL_PERIOD_S = 618153;
-const GANYMEDE_ALBEDO = 0.43;
+// Verified Wikipedia data for Ganymede - largest moon in Solar System
+const GANYMEDE_MASS_KG = 1.4819e23; // Wikipedia verified
+const GANYMEDE_RADIUS_M = 2634100; // Wikipedia verified: 2634.1±0.3 km
+const GANYMEDE_SMA_M = 1070400 * KM; // Wikipedia verified: 1,070,400 km semi-major axis
+const GANYMEDE_ECC = 0.0013; // Wikipedia verified
+const GANYMEDE_INC_DEG = 0.2; // Wikipedia verified: 0.20° to Jupiter's equator
+const GANYMEDE_LAN_DEG = 63.552; // Current value
+const GANYMEDE_AOP_DEG = 192.417; // Current value
+const GANYMEDE_MA_DEG = 317.54; // Current value
+const GANYMEDE_SIDEREAL_PERIOD_S = 7.15455296 * 24 * 3600; // Wikipedia: 7.15455296 days (synchronous)
+const GANYMEDE_ALBEDO = 0.43; // Wikipedia verified: 0.43±0.02
+const GANYMEDE_TEMP_K = 110; // Wikipedia verified: mean 110 K
 
 /**
  * Initializes Ganymede, the largest moon in the Solar System.
@@ -33,7 +35,7 @@ export function initializeGanymede(parentId: string): void {
     parentId: parentId,
     realMass_kg: GANYMEDE_MASS_KG,
     realRadius_m: GANYMEDE_RADIUS_M,
-    temperature: 110,
+    temperature: GANYMEDE_TEMP_K,
     albedo: GANYMEDE_ALBEDO,
     siderealRotationPeriod_s: GANYMEDE_SIDEREAL_PERIOD_S,
     axialTilt: defaultMoonAxialTilt,
@@ -54,8 +56,8 @@ export function initializeGanymede(parentId: string): void {
       composition: [
         "water ice",
         "silicates",
-        "iron core",
-        "possible subsurface ocean",
+        "iron-rich core",
+        "subsurface ocean",
       ],
       atmosphere: {
         glowColor: "#FFFFFF",

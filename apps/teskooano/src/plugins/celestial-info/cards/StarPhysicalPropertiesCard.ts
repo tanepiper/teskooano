@@ -1,5 +1,5 @@
 import { PhysicalPropertiesCard } from "./PhysicalPropertiesCard.js";
-import { StarProperties } from "@teskooano/data-types";
+import { StarProperties, StellarType } from "@teskooano/data-types";
 import { FormatUtils } from "../utils/formatters.js";
 
 export class StarPhysicalPropertiesCard extends PhysicalPropertiesCard {
@@ -54,10 +54,35 @@ export class StarPhysicalPropertiesCard extends PhysicalPropertiesCard {
     if (starProps?.classType) {
       properties.push({
         property: "Stellar Type",
-        value: starProps.classType,
+        value: this.formatStellarType(starProps.classType),
       });
     }
 
     return properties;
+  }
+
+  /**
+   * Formats stellar type names and adds descriptive information.
+   */
+  private formatStellarType(stellarType: StellarType): string {
+    switch (stellarType) {
+      case StellarType.MAIN_SEQUENCE:
+        return "Main Sequence (Hydrogen-fusing star)";
+      case StellarType.NEUTRON_STAR:
+        return "Neutron Star (Dense stellar remnant)";
+      case StellarType.WHITE_DWARF:
+        return "White Dwarf (Low-mass stellar remnant)";
+      case StellarType.WOLF_RAYET:
+        return "Wolf-Rayet (Hot, massive star with strong winds)";
+      case StellarType.BLACK_HOLE:
+        return "Black Hole (Collapsed massive star)";
+      case StellarType.KERR_BLACK_HOLE:
+        return "Kerr Black Hole (Rotating black hole)";
+      default:
+        // Fallback for any raw string values that might exist
+        return String(stellarType)
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase());
+    }
   }
 }

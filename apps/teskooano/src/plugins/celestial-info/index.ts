@@ -13,6 +13,7 @@ import { StarInfoComponent } from "./bodies/StarInfo.js";
 // Import card components
 import { GravitationalForcesCard } from "./cards/GravitationalForcesCard.js";
 import { LightSourcesCard } from "./cards/LightSourcesCard.js";
+import { ShadowSourcesCard } from "./cards/ShadowSourcesCard.js";
 import { PhysicsCard } from "./cards/PhysicsCard.js";
 import { HierarchyCard } from "./cards/HierarchyCard.js";
 import { OrbitalMechanicsCard } from "./cards/OrbitalMechanicsCard.js";
@@ -44,6 +45,10 @@ const additionalComponents = [
   {
     tagName: "light-sources-card",
     componentClass: LightSourcesCard,
+  },
+  {
+    tagName: "shadow-sources-card",
+    componentClass: ShadowSourcesCard,
   },
   {
     tagName: "physics-card",

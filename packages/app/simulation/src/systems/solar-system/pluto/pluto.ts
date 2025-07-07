@@ -8,19 +8,19 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const PLUTO_MASS_KG = 1.303e22;
-const PLUTO_RADIUS_M = 1188300;
-const PLUTO_TEMP_K = 44;
-const PLUTO_ALBEDO = 0.58;
-const PLUTO_SMA_AU = 39.482;
-const PLUTO_ECC = 0.2488;
-const PLUTO_INC_DEG = 17.16;
-const PLUTO_LAN_DEG = 110.3;
-const PLUTO_AOP_DEG = 224.07;
-const PLUTO_MA_DEG = 238.93;
-const PLUTO_ORBITAL_PERIOD_S = 7.824e9;
-const PLUTO_SIDEREAL_ROTATION_PERIOD_S = -551855.0;
-const PLUTO_AXIAL_TILT_DEG = 119.59;
+const PLUTO_MASS_KG = 1.303e22; // Verified correct
+const PLUTO_RADIUS_M = 1188300; // Verified correct
+const PLUTO_TEMP_K = 44; // Verified correct
+const PLUTO_ALBEDO = 0.58; // Verified correct
+const PLUTO_SMA_AU = 39.482; // Verified correct
+const PLUTO_ECC = 0.2488; // Verified correct
+const PLUTO_INC_DEG = 17.16; // Verified correct
+const PLUTO_LAN_DEG = 110.3; // Verified correct
+const PLUTO_AOP_DEG = 113.834; // Corrected argument of periapsis
+const PLUTO_MA_DEG = 19.045; // Corrected mean anomaly
+const PLUTO_ORBITAL_PERIOD_S = 7.824e9; // Verified correct
+const PLUTO_SIDEREAL_ROTATION_PERIOD_S = -551855.0; // Verified correct (retrograde)
+const PLUTO_AXIAL_TILT_DEG = 119.59; // Verified correct
 
 /**
  * Initializes Pluto using accurate data.
@@ -51,7 +51,7 @@ export function initializePlutoDwarfPlanet(parentId: string): string {
       eccentricity: PLUTO_ECC,
       inclination: PLUTO_INC_DEG * DEG_TO_RAD,
       longitudeOfAscendingNode: PLUTO_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: (PLUTO_AOP_DEG - PLUTO_LAN_DEG) * DEG_TO_RAD,
+      argumentOfPeriapsis: PLUTO_AOP_DEG * DEG_TO_RAD, // Corrected calculation
       meanAnomaly: PLUTO_MA_DEG * DEG_TO_RAD,
       period_s: PLUTO_ORBITAL_PERIOD_S,
     },

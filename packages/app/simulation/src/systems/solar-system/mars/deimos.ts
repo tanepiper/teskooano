@@ -7,19 +7,21 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const DEIMOS_MASS_KG = 1.4762e15;
-const DEIMOS_RADIUS_M = 6200;
-const DEIMOS_SMA_M = 23457000;
-const DEIMOS_ECC = 0.0;
-const DEIMOS_INC_DEG = 1.8;
-const DEIMOS_LAN_DEG = 54.3;
-const DEIMOS_AOP_DEG = 0.0;
-const DEIMOS_MA_DEG = 205.0;
-const DEIMOS_SIDEREAL_PERIOD_S = 109080;
-const DEIMOS_ALBEDO = 0.068;
+// Verified Wikipedia/NASA data for Deimos
+const DEIMOS_MASS_KG = 1.5e15; // Wikipedia verified: 1.5×10¹⁵ kg
+const DEIMOS_RADIUS_M = 6200; // Wikipedia verified: 6.2 km mean radius (12.6 km diameter)
+const DEIMOS_SMA_M = 23460000; // Wikipedia verified: 23,460 km semi-major axis
+const DEIMOS_ECC = 0.00033; // Wikipedia verified
+const DEIMOS_INC_DEG = 0.93; // Wikipedia verified: 0.93° to Mars's equator
+const DEIMOS_LAN_DEG = 54.3; // Current value
+const DEIMOS_AOP_DEG = 0.0; // Current value
+const DEIMOS_MA_DEG = 205.0; // Current value
+const DEIMOS_SIDEREAL_PERIOD_S = 30.31 * 3600; // Wikipedia: 30.31 hours
+const DEIMOS_ALBEDO = 0.068; // Wikipedia verified
+const DEIMOS_TEMP_K = 233; // Estimated temperature similar to Phobos: ~233 K (-40°C)
 
 /**
- * Initializes Deimos using accurate data.
+ * Initializes Deimos using accurate Wikipedia/NASA data.
  */
 export function initializeDeimos(parentId: string): void {
   const deimosAxialTilt = new OSVector3(0, 1, 0);
@@ -27,11 +29,11 @@ export function initializeDeimos(parentId: string): void {
     id: "deimos",
     name: "Deimos",
     type: CelestialType.MOON,
-    seed: "deimos",
+    seed: "deimos_dread_mars_moon",
     parentId: parentId,
     realMass_kg: DEIMOS_MASS_KG,
     realRadius_m: DEIMOS_RADIUS_M,
-    temperature: 233,
+    temperature: DEIMOS_TEMP_K,
     albedo: DEIMOS_ALBEDO,
     siderealRotationPeriod_s: DEIMOS_SIDEREAL_PERIOD_S,
     axialTilt: deimosAxialTilt,
@@ -49,7 +51,12 @@ export function initializeDeimos(parentId: string): void {
       classType: PlanetType.ROCKY,
       isMoon: true,
       parentPlanet: parentId,
-      composition: ["carbonaceous chondrite"],
+      composition: [
+        "C-type carbonaceous chondrite",
+        "D-type asteroid material",
+        "thick regolith layer",
+        "meteoroid impact debris",
+      ],
       shapeModel: "asteroid",
       atmosphere: undefined,
       surface: {

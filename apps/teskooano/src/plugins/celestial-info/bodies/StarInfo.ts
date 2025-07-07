@@ -1,4 +1,8 @@
-import { CelestialObject, StarProperties } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  StarProperties,
+  StellarType,
+} from "@teskooano/data-types";
 import {
   BaseCelestialInfoComponent,
   CardConfig,
@@ -15,7 +19,35 @@ export class StarInfoComponent extends BaseCelestialInfoComponent {
 
   protected getSubtitle(celestial: CelestialObject): string {
     const props = celestial.properties as StarProperties;
-    return `${props.spectralClass} ${celestial.type}`;
+    const stellarTypeFormatted = props.classType
+      ? this.formatStellarType(props.classType)
+      : celestial.type;
+    return `${props.spectralClass} ${stellarTypeFormatted}`;
+  }
+
+  /**
+   * Formats stellar type names properly.
+   */
+  private formatStellarType(stellarType: StellarType): string {
+    switch (stellarType) {
+      case StellarType.MAIN_SEQUENCE:
+        return "Main Sequence Star";
+      case StellarType.NEUTRON_STAR:
+        return "Neutron Star";
+      case StellarType.WHITE_DWARF:
+        return "White Dwarf";
+      case StellarType.WOLF_RAYET:
+        return "Wolf-Rayet Star";
+      case StellarType.BLACK_HOLE:
+        return "Black Hole";
+      case StellarType.KERR_BLACK_HOLE:
+        return "Kerr Black Hole";
+      default:
+        // Fallback for any raw string values that might exist
+        return String(stellarType)
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase());
+    }
   }
 
   protected getCardConfigs(): CardConfig[] {
@@ -27,7 +59,6 @@ export class StarInfoComponent extends BaseCelestialInfoComponent {
         tagName: "star-physical-properties-card",
       },
       { title: "Gravitational Forces", tagName: "gravitational-forces-card" },
-      { title: "Light Sources", tagName: "light-sources-card" },
       {
         title: "Real-time Physics",
         tagName: "physics-card",

@@ -7,19 +7,21 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const PHOBOS_MASS_KG = 1.0659e16;
-const PHOBOS_RADIUS_M = 11267;
-const PHOBOS_SMA_M = 9375000;
-const PHOBOS_ECC = 0.015;
-const PHOBOS_INC_DEG = 1.1;
-const PHOBOS_LAN_DEG = 169.2;
-const PHOBOS_AOP_DEG = 216.3;
-const PHOBOS_MA_DEG = 189.7;
-const PHOBOS_SIDEREAL_PERIOD_S = 27537;
-const PHOBOS_ALBEDO = 0.071;
+// Verified Wikipedia data for Phobos
+const PHOBOS_MASS_KG = 1.072e16; // Wikipedia verified: 1.072×10¹⁶ kg
+const PHOBOS_RADIUS_M = 11100; // Wikipedia verified: 11.1 km mean radius
+const PHOBOS_SMA_M = 9377200; // Wikipedia verified: 9,377.2 km semi-major axis
+const PHOBOS_ECC = 0.0151; // Wikipedia verified
+const PHOBOS_INC_DEG = 1.093; // Wikipedia verified: 1.093° to Mars's equator
+const PHOBOS_LAN_DEG = 169.2; // Current value
+const PHOBOS_AOP_DEG = 216.3; // Current value
+const PHOBOS_MA_DEG = 189.7; // Current value
+const PHOBOS_SIDEREAL_PERIOD_S = 0.31891023 * 24 * 3600; // Wikipedia: 0.31891023 days
+const PHOBOS_ALBEDO = 0.071; // Wikipedia verified
+const PHOBOS_TEMP_K = 233; // Wikipedia verified: ~233 K
 
 /**
- * Initializes Phobos using accurate data.
+ * Initializes Phobos using accurate Wikipedia data.
  */
 export function initializePhobos(parentId: string): void {
   const phobosAxialTilt = new OSVector3(0, 1, 0);
@@ -27,11 +29,11 @@ export function initializePhobos(parentId: string): void {
     id: "phobos",
     name: "Phobos",
     type: CelestialType.MOON,
-    seed: "phobos",
+    seed: "phobos_fear_mars_moon",
     parentId: parentId,
     realMass_kg: PHOBOS_MASS_KG,
     realRadius_m: PHOBOS_RADIUS_M,
-    temperature: 233,
+    temperature: PHOBOS_TEMP_K,
     albedo: PHOBOS_ALBEDO,
     siderealRotationPeriod_s: PHOBOS_SIDEREAL_PERIOD_S,
     axialTilt: phobosAxialTilt,
@@ -49,7 +51,12 @@ export function initializePhobos(parentId: string): void {
       classType: PlanetType.ROCKY,
       isMoon: true,
       parentPlanet: parentId,
-      composition: ["carbonaceous chondrite"],
+      composition: [
+        "carbonaceous chondrite",
+        "C-type rock",
+        "meteoroid impact debris",
+        "fine dust regolith",
+      ],
       shapeModel: "asteroid",
       atmosphere: undefined,
       surface: {

@@ -8,16 +8,18 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const CALLISTO_MASS_KG = 1.0759e23;
-const CALLISTO_RADIUS_M = 2410300;
-const CALLISTO_SMA_M = 1882709 * KM;
-const CALLISTO_ECC = 0.0074;
-const CALLISTO_INC_DEG = 0.205;
-const CALLISTO_LAN_DEG = 298.848;
-const CALLISTO_AOP_DEG = 52.643;
-const CALLISTO_MA_DEG = 181.408;
-const CALLISTO_SIDEREAL_PERIOD_S = 1441902;
-const CALLISTO_ALBEDO = 0.17;
+// Verified Wikipedia data for Callisto - most heavily cratered moon in Solar System
+const CALLISTO_MASS_KG = 1.075938e23; // Wikipedia verified: (1.075938±0.000137)×10²³ kg
+const CALLISTO_RADIUS_M = 2410300; // Wikipedia verified: 2410.3±1.5 km (mean radius)
+const CALLISTO_SMA_M = 1882700 * KM; // Wikipedia verified: 1,882,700 km semi-major axis
+const CALLISTO_ECC = 0.0074; // Wikipedia verified
+const CALLISTO_INC_DEG = 0.192; // Wikipedia verified: 0.192° to local Laplace plane
+const CALLISTO_LAN_DEG = 298.848; // Current value
+const CALLISTO_AOP_DEG = 52.643; // Current value
+const CALLISTO_MA_DEG = 181.408; // Current value
+const CALLISTO_SIDEREAL_PERIOD_S = 16.6890184 * 24 * 3600; // Wikipedia: 16.6890184 days (synchronous)
+const CALLISTO_ALBEDO = 0.22; // Wikipedia verified: 0.22 geometric albedo
+const CALLISTO_TEMP_K = 134; // Wikipedia verified: mean 134±11 K
 
 /**
  * Initializes Callisto, Jupiter's heavily cratered outermost moon.
@@ -33,7 +35,7 @@ export function initializeCallisto(parentId: string): void {
     parentId: parentId,
     realMass_kg: CALLISTO_MASS_KG,
     realRadius_m: CALLISTO_RADIUS_M,
-    temperature: 134,
+    temperature: CALLISTO_TEMP_K,
     albedo: CALLISTO_ALBEDO,
     siderealRotationPeriod_s: CALLISTO_SIDEREAL_PERIOD_S,
     axialTilt: defaultMoonAxialTilt,
@@ -52,10 +54,11 @@ export function initializeCallisto(parentId: string): void {
       isMoon: true,
       parentPlanet: parentId,
       composition: [
-        "ice",
-        "rock",
-        "possible subsurface ocean",
+        "water ice",
+        "rocky material",
+        "subsurface ocean",
         "undifferentiated interior",
+        "carbonaceous material",
       ],
       atmosphere: {
         glowColor: "#E0E0E0",

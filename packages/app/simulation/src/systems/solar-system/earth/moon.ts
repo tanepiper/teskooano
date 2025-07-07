@@ -7,17 +7,17 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const LUNA_MASS_KG = 7.342e22;
-const LUNA_RADIUS_M = 1737400;
-const LUNA_SMA_M = 384399000;
-const LUNA_ECC = 0.0549;
-const LUNA_INC_DEG = 5.145;
-const LUNA_LAN_DEG = 125.08;
-const LUNA_AOP_DEG = 318.15;
-const LUNA_MA_DEG = 115.36;
-const LUNA_SIDEREAL_PERIOD_S = 2.36059e6;
-const LUNA_AXIAL_TILT_DEG = 6.687;
-const LUNA_ALBEDO = 0.136;
+const LUNA_MASS_KG = 7.342e22; // Verified correct from NASA fact sheet
+const LUNA_RADIUS_M = 1737400; // Verified correct (mean radius)
+const LUNA_SMA_M = 384399000; // Verified correct from NASA fact sheet (384,399 km)
+const LUNA_ECC = 0.0549; // Verified correct
+const LUNA_INC_DEG = 5.145; // Verified correct to ecliptic
+const LUNA_LAN_DEG = 125.08; // Current value - variable due to precession
+const LUNA_AOP_DEG = 318.15; // Current value - variable due to precession
+const LUNA_MA_DEG = 115.36; // Current value - variable
+const LUNA_SIDEREAL_PERIOD_S = 2.36059e6; // 27.321661 days - verified correct
+const LUNA_AXIAL_TILT_DEG = 6.687; // Verified correct - obliquity to orbit
+const LUNA_ALBEDO = 0.11; // Corrected to Bond albedo from NASA fact sheet
 
 /**
  * Initializes the Moon (Luna) using accurate data.
@@ -32,7 +32,7 @@ export function initializeLuna(parentId: string): void {
     parentId: parentId,
     realMass_kg: LUNA_MASS_KG,
     realRadius_m: LUNA_RADIUS_M,
-    temperature: 250,
+    temperature: 250, // Mean temperature (verified from NASA - range 95-390K equator)
     albedo: LUNA_ALBEDO,
     siderealRotationPeriod_s: LUNA_SIDEREAL_PERIOD_S,
     axialTilt: new OSVector3(

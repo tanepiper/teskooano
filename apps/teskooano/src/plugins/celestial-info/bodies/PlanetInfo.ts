@@ -30,6 +30,7 @@ export class PlanetInfoComponent extends BaseCelestialInfoComponent {
       { title: "Physical Properties", tagName: "physical-properties-card" },
       { title: "Gravitational Forces", tagName: "gravitational-forces-card" },
       { title: "Light Sources", tagName: "light-sources-card" },
+      { title: "Shadow Sources", tagName: "shadow-sources-card" },
       {
         title: "Real-time Physics",
         tagName: "physics-card",

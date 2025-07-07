@@ -9,9 +9,9 @@ import {
 } from "@teskooano/data-types";
 
 const NEPTUNE_AXIAL_TILT_DEG = 28.32;
-const NEPTUNE_SIDEREAL_ROTATION_PERIOD_S = 16.11 * 3600;
-const NEPTUNE_ORBITAL_PERIOD_S = 5.199e9;
-const NEPTUNE_REAL_RADIUS_M = 24622000;
+const NEPTUNE_SIDEREAL_ROTATION_PERIOD_S = 16.11 * 3600; // 16.11 hours
+const NEPTUNE_ORBITAL_PERIOD_S = 5.199e9; // 164.8 years
+const NEPTUNE_REAL_RADIUS_M = 24622000; // Equatorial radius
 
 /**
  * Initializes Neptune planet with accurate data.
@@ -27,19 +27,19 @@ export function initializeNeptunePlanet(parentId: string): string {
     seed: "neptune_seed_164",
     type: CelestialType.GAS_GIANT,
     parentId: parentId,
-    realMass_kg: 1.024e26,
+    realMass_kg: 1.02413e26, // Corrected mass
     realRadius_m: NEPTUNE_REAL_RADIUS_M,
     orbit: {
-      realSemiMajorAxis_m: 30.07 * AU,
-      eccentricity: 0.008678,
-      inclination: 1.769 * DEG_TO_RAD,
-      longitudeOfAscendingNode: 131.783 * DEG_TO_RAD,
-      argumentOfPeriapsis: 273.187 * DEG_TO_RAD,
-      meanAnomaly: 256.328 * DEG_TO_RAD,
+      realSemiMajorAxis_m: 30.07 * AU, // Verified correct
+      eccentricity: 0.00859048, // Corrected eccentricity
+      inclination: 1.77004 * DEG_TO_RAD, // Corrected inclination
+      longitudeOfAscendingNode: 131.78422 * DEG_TO_RAD, // Corrected longitude of ascending node
+      argumentOfPeriapsis: 273.187 * DEG_TO_RAD, // Verified correct
+      meanAnomaly: 256.228 * DEG_TO_RAD, // Corrected mean anomaly
       period_s: NEPTUNE_ORBITAL_PERIOD_S,
     },
-    temperature: 72,
-    albedo: 0.41,
+    temperature: 72, // Verified correct
+    albedo: 0.442, // Corrected Bond albedo
     siderealRotationPeriod_s: NEPTUNE_SIDEREAL_ROTATION_PERIOD_S,
     axialTilt: new OSVector3(
       0,

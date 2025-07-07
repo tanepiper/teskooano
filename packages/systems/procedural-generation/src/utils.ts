@@ -353,7 +353,6 @@ export function calculateAlbedo(
     // For stars, "albedo" is a proxy for billboard brightness
     switch (classType as StellarType) {
       case StellarType.MAIN_SEQUENCE:
-      case StellarType.MAIN_SEQUENCE_G:
         baseAlbedo = 0.4;
         range = 0.2; // 0.4 - 0.6
         break;

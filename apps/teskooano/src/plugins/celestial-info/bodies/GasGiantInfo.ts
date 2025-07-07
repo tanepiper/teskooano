@@ -1,4 +1,8 @@
-import { CelestialObject, GasGiantProperties } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  GasGiantProperties,
+  GasGiantClass,
+} from "@teskooano/data-types";
 import {
   BaseCelestialInfoComponent,
   CardConfig,
@@ -15,7 +19,29 @@ export class GasGiantInfoComponent extends BaseCelestialInfoComponent {
 
   protected getSubtitle(celestial: CelestialObject): string {
     const props = celestial.properties as GasGiantProperties;
-    return `${props.classType} Gas Giant`;
+    const formattedClass = this.formatGasGiantClass(props.classType);
+    return `${formattedClass} Gas Giant`;
+  }
+
+  /**
+   * Formats gas giant class names properly.
+   */
+  private formatGasGiantClass(classType: GasGiantClass): string {
+    switch (classType) {
+      case GasGiantClass.CLASS_I:
+        return "Class I";
+      case GasGiantClass.CLASS_II:
+        return "Class II";
+      case GasGiantClass.CLASS_III:
+        return "Class III";
+      case GasGiantClass.CLASS_IV:
+        return "Class IV";
+      case GasGiantClass.CLASS_V:
+        return "Class V";
+      default:
+        // Fallback for any raw string values that might exist
+        return String(classType).replace(/_/g, " ").replace(/CLASS/g, "Class");
+    }
   }
 
   protected getCardConfigs(): CardConfig[] {
@@ -28,6 +54,7 @@ export class GasGiantInfoComponent extends BaseCelestialInfoComponent {
       },
       { title: "Gravitational Forces", tagName: "gravitational-forces-card" },
       { title: "Light Sources", tagName: "light-sources-card" },
+      { title: "Shadow Sources", tagName: "shadow-sources-card" },
       {
         title: "Real-time Physics",
         tagName: "physics-card",
