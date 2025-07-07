@@ -79,12 +79,7 @@ export function initializeMakemake(parentId: string): void {
         "ethane",
         "tholins",
       ],
-      atmosphere: {
-        glowColor: "#FFE0E0",
-        intensity: 0.01,
-        power: 0.3,
-        thickness: 0.005,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.ICE_FLATS,
         color: "#FFE8E8",
@@ -107,7 +102,7 @@ export function initializeMakemake(parentId: string): void {
         height5: 0.9,
         shininess: 55,
         specularStrength: 0.82,
-        ambientLightIntensity: 0.45,
+        ambientLightIntensity: 0.01,
         undulation: 0.05,
         terrainType: 1,
         terrainAmplitude: 0.25,
@@ -147,12 +142,7 @@ export function initializeMakemake(parentId: string): void {
       parentPlanet: makemakeId,
       composition: ["water ice", "rocky material", "organic compounds"],
       shapeModel: "asteroid",
-      atmosphere: {
-        glowColor: "#000000",
-        intensity: 0,
-        power: 0,
-        thickness: 0,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.CRATERED,
         color: "#303030",
@@ -175,7 +165,7 @@ export function initializeMakemake(parentId: string): void {
         height5: 0.8,
         shininess: 1,
         specularStrength: 0.04,
-        ambientLightIntensity: 0.1,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.5,
         terrainType: 1,
         terrainAmplitude: 1.0,

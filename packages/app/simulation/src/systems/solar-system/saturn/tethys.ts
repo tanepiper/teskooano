@@ -52,12 +52,7 @@ export function initializeTethys(parentId: string): void {
       isMoon: true,
       parentPlanet: parentId,
       composition: ["mostly water ice", "small amount of rock"],
-      atmosphere: {
-        glowColor: "#FFFF00",
-        intensity: 0,
-        power: 0,
-        thickness: 0,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.ICE_CRACKED,
         color: "#F8F8F8",
@@ -80,7 +75,7 @@ export function initializeTethys(parentId: string): void {
         height5: 0.9,
         shininess: 36,
         specularStrength: 0.8,
-        ambientLightIntensity: 0.45,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.15,
         terrainType: 3,
         terrainAmplitude: 0.7,

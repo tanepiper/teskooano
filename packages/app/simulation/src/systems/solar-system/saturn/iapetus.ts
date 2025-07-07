@@ -52,12 +52,7 @@ export function initializeIapetus(parentId: string): void {
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rock", "carbonaceous material on one side"],
-      atmosphere: {
-        glowColor: "#FFFF00",
-        intensity: 0,
-        power: 0,
-        thickness: 0,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.VARIED,
         color: "#A0A0A0",
@@ -80,7 +75,7 @@ export function initializeIapetus(parentId: string): void {
         height5: 0.9,
         shininess: 16,
         specularStrength: 0.4,
-        ambientLightIntensity: 0.35,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.25,
         terrainType: 2,
         terrainAmplitude: 0.8,

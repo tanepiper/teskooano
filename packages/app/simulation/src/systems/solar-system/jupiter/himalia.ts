@@ -74,7 +74,7 @@ export function initializeHimalia(parentId: string): void {
         height5: 0.9,
         shininess: 3,
         specularStrength: 0.05,
-        ambientLightIntensity: 0.1,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.2,
         terrainType: 1,
         terrainAmplitude: 0.3,

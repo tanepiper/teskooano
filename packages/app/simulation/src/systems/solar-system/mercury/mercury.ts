@@ -83,7 +83,7 @@ export function initializeMercury(parentId: string): void {
         height5: 0.92,
         shininess: 16,
         specularStrength: 0.45,
-        ambientLightIntensity: 0.4,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.15,
         terrainType: 2,
         terrainAmplitude: 0.7,

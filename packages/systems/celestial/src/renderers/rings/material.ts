@@ -48,6 +48,7 @@ export class RingMaterial extends ShaderMaterial {
         uShadowCasters: {
           value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
+        uDynamicAmbientIntensity: { value: 0.001 }, // Dynamic ambient uniform
       },
       vertexShader: ringVertexShader,
       fragmentShader: ringFragmentShader,

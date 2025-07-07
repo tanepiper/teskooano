@@ -91,7 +91,7 @@ export function initializeVesta(parentId: string): void {
         height5: 0.9,
         shininess: 6,
         specularStrength: 0.2,
-        ambientLightIntensity: 0.3,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.45,
         terrainType: 1,
         terrainAmplitude: 1.2,

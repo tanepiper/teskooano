@@ -34,7 +34,7 @@ export function getIceProperties(
     shininess: utils.lerp(23, 24, random()),
     specularStrength: utils.lerp(0.47, 0.48, random()),
     roughness: utils.lerp(0.11, 0.12, random()),
-    ambientLightIntensity: utils.lerp(0.42, 0.43, random()),
+    ambientLightIntensity: utils.lerp(0.01, 0.02, random()), // Minimal ambient for dark space
     undulation: utils.lerp(0.095, 0.105, random()),
   };
 }

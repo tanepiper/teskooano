@@ -81,32 +81,17 @@ class CelestialActionsService {
     objectId: string,
     updates: Partial<CelestialObject>,
   ): void {
-    console.log(
-      `[CelestialActionsService] Attempting to update object ${objectId} with:`,
-      updates,
-    );
-
     const currentObjects = gameStateService.getCelestialObjects();
     const object = currentObjects[objectId];
 
     if (object) {
-      console.log(
-        `[CelestialActionsService] Found object ${objectId}, current type: ${object.type}`,
-      );
-
       const updatedObject = { ...object, ...updates };
-      console.log(
-        `[CelestialActionsService] New object for ${objectId} will have type: ${updatedObject.type}`,
-      );
 
       gameStateService.setCelestialObject(objectId, updatedObject);
 
       // Verify the update worked
       const verifyObjects = gameStateService.getCelestialObjects();
       const verifyObject = verifyObjects[objectId];
-      console.log(
-        `[CelestialActionsService] Verification: ${objectId} now has type: ${verifyObject?.type}`,
-      );
     } else {
       console.warn(
         `[CelestialActionsService] updateCelestialObject: Object ${objectId} not found.`,

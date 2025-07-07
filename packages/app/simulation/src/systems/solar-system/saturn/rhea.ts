@@ -80,7 +80,7 @@ export function initializeRhea(parentId: string): void {
         height5: 0.95,
         shininess: 32,
         specularStrength: 0.6,
-        ambientLightIntensity: 0.45,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.2,
         terrainType: 2,
         terrainAmplitude: 0.6,

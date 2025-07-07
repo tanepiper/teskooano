@@ -68,7 +68,7 @@ export function initializeAriel(parentId: string): void {
         height5: 0.9,
         shininess: 22,
         specularStrength: 0.5,
-        ambientLightIntensity: 0.4,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.35,
         terrainType: 3,
         terrainAmplitude: 0.8,

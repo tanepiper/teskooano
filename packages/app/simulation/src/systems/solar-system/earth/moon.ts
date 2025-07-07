@@ -77,7 +77,7 @@ export function initializeLuna(parentId: string): void {
         height5: 1.0,
         shininess: 0.02,
         specularStrength: 0.02,
-        ambientLightIntensity: 0.05,
+        ambientLightIntensity: 0.01, // Minimal ambient for dark space
         undulation: 0.1,
         terrainType: 1,
         terrainAmplitude: 0.35,

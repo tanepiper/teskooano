@@ -68,6 +68,13 @@ export class LightingCalculator {
   private static readonly DEFAULT_FALLOFF_FACTOR = 0.00000001;
 
   /**
+   * Ambient light calculation constants
+   */
+  private static readonly AMBIENT_FALLOFF_FACTOR = 0.000000001; // Stronger falloff for ambient
+  private static readonly BASE_AMBIENT_INTENSITY = 0.15; // Base ambient when very close to a bright star
+  private static readonly MIN_AMBIENT_INTENSITY = 0.001; // Minimum ambient in deep space
+
+  /**
    * Applies distance-based attenuation to light sources for a celestial object
    *
    * @param object The celestial object receiving light
@@ -149,6 +156,105 @@ export class LightingCalculator {
     const distanceSq = distance * distance;
     const attenuation = 1.0 / (1.0 + distanceSq * falloffFactor);
     return (lightSource.intensity ?? 1.0) * attenuation;
+  }
+
+  /**
+   * Calculates dynamic ambient lighting based on nearby stars and their luminosity
+   *
+   * @param object The celestial object receiving ambient light
+   * @param lightSources Map of light sources (stars) to calculate ambient from
+   * @returns Dynamic ambient light intensity based on star proximity and luminosity
+   */
+  static calculateDynamicAmbientLight(
+    object: RenderableCelestialObject,
+    lightSources: LightSourcesMap,
+  ): number {
+    if (!lightSources || lightSources.size === 0) {
+      return LightingCalculator.MIN_AMBIENT_INTENSITY;
+    }
+
+    let totalAmbient = 0;
+
+    // Calculate ambient contribution from each star
+    for (const [starId, lightData] of lightSources.entries()) {
+      const distance = object.position.distanceTo(lightData.position);
+      const distanceSq = distance * distance;
+
+      // Use luminosity from star properties if available, otherwise use light intensity
+      let luminosity = lightData.intensity ?? 1.0;
+
+      // Try to get actual luminosity from star properties
+      const starObjects = object as any; // We'll need to pass allObjects to get star data
+      // For now, use the light intensity as a proxy for luminosity
+
+      // Calculate ambient falloff (stronger than direct light falloff)
+      const ambientFalloff =
+        1.0 / (1.0 + distanceSq * LightingCalculator.AMBIENT_FALLOFF_FACTOR);
+
+      // Scale ambient based on star luminosity and distance
+      const ambientContribution =
+        LightingCalculator.BASE_AMBIENT_INTENSITY * luminosity * ambientFalloff;
+
+      totalAmbient += ambientContribution;
+    }
+
+    // Clamp the result between minimum and a reasonable maximum
+    return Math.max(
+      LightingCalculator.MIN_AMBIENT_INTENSITY,
+      Math.min(totalAmbient, LightingCalculator.BASE_AMBIENT_INTENSITY),
+    );
+  }
+
+  /**
+   * Enhanced version that takes star objects to access actual luminosity data
+   *
+   * @param object The celestial object receiving ambient light
+   * @param lightSources Map of light sources to calculate ambient from
+   * @param allObjects Map of all objects to access star properties
+   * @returns Dynamic ambient light intensity based on star luminosity and distance
+   */
+  static calculateDynamicAmbientLightWithStarData(
+    object: RenderableCelestialObject,
+    lightSources: LightSourcesMap,
+    allObjects?: Record<string, RenderableCelestialObject>,
+  ): number {
+    if (!lightSources || lightSources.size === 0) {
+      return LightingCalculator.MIN_AMBIENT_INTENSITY;
+    }
+
+    let totalAmbient = 0;
+
+    // Calculate ambient contribution from each star
+    for (const [starId, lightData] of lightSources.entries()) {
+      const distance = object.position.distanceTo(lightData.position);
+      const distanceSq = distance * distance;
+
+      // Get actual star luminosity if possible
+      let luminosity = lightData.intensity ?? 1.0;
+      if (allObjects && allObjects[starId]) {
+        const starObject = allObjects[starId];
+        if (starObject.type === CelestialType.STAR && starObject.properties) {
+          const starProps = starObject.properties as any;
+          luminosity = starProps.luminosity ?? luminosity;
+        }
+      }
+
+      // Calculate ambient falloff (stronger than direct light falloff)
+      const ambientFalloff =
+        1.0 / (1.0 + distanceSq * LightingCalculator.AMBIENT_FALLOFF_FACTOR);
+
+      // Scale ambient based on star luminosity and distance
+      const ambientContribution =
+        LightingCalculator.BASE_AMBIENT_INTENSITY * luminosity * ambientFalloff;
+
+      totalAmbient += ambientContribution;
+    }
+
+    // Clamp the result between minimum and a reasonable maximum
+    return Math.max(
+      LightingCalculator.MIN_AMBIENT_INTENSITY,
+      Math.min(totalAmbient, LightingCalculator.BASE_AMBIENT_INTENSITY),
+    );
   }
 }
 

@@ -99,9 +99,6 @@ export class HierarchyManager {
           parentId: newParent.id,
           currentParentId: newParent.id,
         });
-        console.log(
-          `Object ${obj.name} (${obj.id}) was orphaned and is now orbiting ${newParent.name} (${newParent.id})`,
-        );
       }
     }
   }
@@ -144,13 +141,6 @@ export class HierarchyManager {
     const escapeDistance = parentHillSphere * 0.5;
 
     if (distanceToParent > escapeDistance) {
-      console.log(
-        `Moon ${obj.name} has escaped its parent ${parent.name}. Distance: ${(distanceToParent / AU_METERS).toFixed(3)} AU, Escape threshold: ${(escapeDistance / AU_METERS).toFixed(3)} AU (Parent Hill Sphere: ${(parentHillSphere / AU_METERS).toFixed(3)} AU)`,
-      );
-
-      // Debug: Check what type it is before the update
-      console.log(`Before update: ${obj.name} type is ${obj.type}`);
-
       const newParent = this.findBestParent(
         obj,
         physicsState,
@@ -165,13 +155,7 @@ export class HierarchyManager {
           currentParentId: newParent.id,
         };
 
-        console.log(`Updating ${obj.name} with payload:`, updatePayload);
-
         celestialActions.updateCelestialObject(obj.id, updatePayload);
-
-        // Debug: Check what type it is after the update
-        const updatedObj = StateAccessor.getCelestialObject(obj.id);
-        console.log(`After update: ${obj.name} type is ${updatedObj?.type}`);
 
         // Dispatch a custom event to notify UI components about the hierarchy change
         document.dispatchEvent(
@@ -184,9 +168,6 @@ export class HierarchyManager {
           }),
         );
 
-        console.log(
-          `Moon ${obj.name} (${obj.id}) escaped and is now orbiting ${newParent.name} (${newParent.id}) as a dwarf planet.`,
-        );
         return true; // The object was changed
       }
     }
@@ -351,9 +332,6 @@ export class HierarchyManager {
     // Don't capture if the "parent" is actually smaller than what would become its child
     // This prevents weird situations where a tiny moon captures a planet
     if (parent.realMass_kg < child.realMass_kg * 0.1) {
-      console.log(
-        `Skipping capture: ${parent.name} is too small to capture ${child.name}`,
-      );
       return;
     }
 
@@ -365,25 +343,14 @@ export class HierarchyManager {
       return;
     }
 
-    console.log(
-      `Gravitational capture: ${child.name} is now orbiting ${parent.name}`,
-    );
-
     // Determine the new type for the child and parent
     const { parentType, childType } = this.determineObjectTypes(parent, child);
-
-    console.log(
-      `Capture analysis: ${parent.name} (${parent.realMass_kg.toExponential(2)} kg, ${(parent.realRadius_m / 1000).toFixed(1)} km) -> ${parentType}, ${child.name} (${child.realMass_kg.toExponential(2)} kg, ${(child.realRadius_m / 1000).toFixed(1)} km) -> ${childType}`,
-    );
 
     // Update the parent object type if needed
     if (parent.type !== parentType) {
       celestialActions.updateCelestialObject(parent.id, {
         type: parentType,
       });
-      console.log(
-        `${parent.name} type changed from ${parent.type} to ${parentType}`,
-      );
     }
 
     // Update the child object to orbit the parent

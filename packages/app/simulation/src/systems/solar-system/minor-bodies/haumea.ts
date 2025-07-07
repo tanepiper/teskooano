@@ -106,12 +106,7 @@ export function initializeHaumea(parentId: string): void {
           composition: ["ice particles"],
         } as RingProperties,
       ],
-      atmosphere: {
-        glowColor: "#E8F0FF",
-        intensity: 0.005,
-        power: 0.25,
-        thickness: 0.003,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.ICE_FLATS,
         color: "#F0F8FF",
@@ -134,7 +129,7 @@ export function initializeHaumea(parentId: string): void {
         height5: 0.95,
         shininess: 60,
         specularStrength: 0.84,
-        ambientLightIntensity: 0.5,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.03,
         terrainType: 1,
         terrainAmplitude: 0.15,
@@ -179,12 +174,7 @@ export function initializeHaumea(parentId: string): void {
         "phyllosilicates",
       ],
       shapeModel: "asteroid",
-      atmosphere: {
-        glowColor: "#000000",
-        intensity: 0,
-        power: 0,
-        thickness: 0,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.CRATERED,
         color: "#404040",
@@ -207,7 +197,7 @@ export function initializeHaumea(parentId: string): void {
         height5: 1.0,
         shininess: 2,
         specularStrength: 0.08,
-        ambientLightIntensity: 0.12,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.45,
         terrainType: 1,
         terrainAmplitude: 0.9,
@@ -275,7 +265,7 @@ export function initializeHaumea(parentId: string): void {
         height5: 0.8,
         shininess: 1,
         specularStrength: 0.06,
-        ambientLightIntensity: 0.1,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.5,
         terrainType: 1,
         terrainAmplitude: 1.1,

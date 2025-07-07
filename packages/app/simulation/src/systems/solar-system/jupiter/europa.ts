@@ -87,7 +87,7 @@ export function initializeEuropa(parentId: string): void {
         height5: 0.43,
         shininess: 24,
         specularStrength: 0.7,
-        ambientLightIntensity: 0.42,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.1,
         terrainType: 3,
         terrainAmplitude: 0.19,

@@ -1,7 +1,8 @@
 uniform vec3 color;
 uniform float opacity;
-uniform vec3 uParentPosition;
-uniform float uParentRadius;
+uniform vec3 uParentPosition; // World position of the parent body
+uniform float uParentRadius;  // Radius of the parent body (used for shadow calculation)
+uniform float uDynamicAmbientIntensity; // Dynamic ambient lighting
 uniform float time;
 
 // Unified Light Source structure
@@ -56,7 +57,7 @@ float getShadow(vec3 fragPos, vec3 lightPos, vec3 casterPos, float casterRadius)
 
 void main() {
     vec3 totalLight = vec3(0.0);
-    float ambientIntensity = 0.5; // Reduced ambient light
+    float ambientIntensity = uDynamicAmbientIntensity; // Use dynamic ambient
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= uNumLights) break;

@@ -89,7 +89,7 @@ export function initializeTitan(parentId: string): void {
         height5: 0.9,
         shininess: 15,
         specularStrength: 0.3,
-        ambientLightIntensity: 0.4,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.25,
         terrainType: 3,
         terrainAmplitude: 0.8,

@@ -85,7 +85,7 @@ export function initializeEnceladus(parentId: string): void {
         height5: 0.9,
         shininess: 40,
         specularStrength: 0.9,
-        ambientLightIntensity: 0.5,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.12,
         terrainType: 3,
         terrainAmplitude: 0.4,

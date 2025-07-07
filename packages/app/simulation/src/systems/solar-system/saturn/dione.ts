@@ -52,12 +52,7 @@ export function initializeDione(parentId: string): void {
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rocky core"],
-      atmosphere: {
-        glowColor: "#FFFF00",
-        intensity: 0,
-        power: 0,
-        thickness: 0,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.ICE_CRACKED,
         color: "#E0E0E0",
@@ -80,7 +75,7 @@ export function initializeDione(parentId: string): void {
         height5: 0.88,
         shininess: 28,
         specularStrength: 0.6,
-        ambientLightIntensity: 0.4,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.18,
         terrainType: 3,
         terrainAmplitude: 0.65,

@@ -13,10 +13,11 @@ struct ShadowCaster {
 
 uniform vec3 baseColor;
 uniform float time;
-uniform int uNumLights;
 uniform Light uLights[MAX_LIGHTS];
+uniform int uNumLights;
 uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 uniform int uNumShadowCasters;
+uniform float uDynamicAmbientIntensity; // Dynamic ambient lighting
 
 varying vec2 vUv;
 varying vec3 vNormal;
@@ -46,8 +47,8 @@ float getShadow(vec3 fragPos, vec3 lightPos, vec3 casterPos, float casterRadius)
 void main() {
   vec3 normal = normalize(vNormal);
   
-  // Ambient light
-  vec3 ambient = baseColor * 0.1;
+  // Dynamic ambient light based on nearby star luminosity
+  vec3 ambient = baseColor * uDynamicAmbientIntensity;
   
   // Diffuse lighting
   vec3 diffuse = vec3(0.0);

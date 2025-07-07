@@ -127,7 +127,8 @@ export class PlanetMaterialService {
       shininess: specificSurfaceProps?.shininess ?? 100,
       specularStrength: specificSurfaceProps?.specularStrength ?? 0.3,
       roughness: specificSurfaceProps?.roughness ?? 0.5,
-      ambientLightIntensity: specificSurfaceProps?.ambientLightIntensity ?? 0.2,
+      ambientLightIntensity:
+        specificSurfaceProps?.ambientLightIntensity ?? 0.01, // Minimal ambient for dark space
 
       terrainAmplitude: specificSurfaceProps?.terrainAmplitude ?? 1.0,
       terrainSharpness: specificSurfaceProps?.terrainSharpness ?? 1.0,

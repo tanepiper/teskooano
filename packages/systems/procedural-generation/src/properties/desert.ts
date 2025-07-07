@@ -25,7 +25,7 @@ export function getDesertProperties(
     bumpScale: utils.lerp(0.01, 0.04, random()), // Lower bump for ice
     roughness: utils.lerp(0.65, 0.9, random()),
     specularStrength: utils.lerp(0.05, 0.15, random()), // Slightly higher than barren/rocky but still low
-    ambientLightIntensity: utils.lerp(0.3, 0.5, random()), // Higher ambient for desert planets
+    ambientLightIntensity: utils.lerp(0.01, 0.02, random()), // Minimal ambient for dark space
     undulation: utils.lerp(0.15, 0.25, random()), // Moderate undulation for desert dunes
     terrainType: 3,
     terrainAmplitude: utils.lerp(0.3, 0.6, random()),

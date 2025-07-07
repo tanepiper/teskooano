@@ -36,6 +36,7 @@ uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 uniform int uNumShadowCasters;
 
 uniform float time;
+uniform float uDynamicAmbientIntensity; // Dynamic ambient lighting
 
 // --- Helper: lerp ---
 vec3 lerp(vec3 v1, vec3 v2, float s) {
@@ -260,8 +261,8 @@ void main() {
         totalLight += uLights[i].color * uLights[i].intensity * diffuse * shadow;
     }
 
-    // Add a gentle ambient light
-    totalLight += vec3(0.05);
+    // Dynamic ambient light based on nearby star luminosity
+    totalLight += vec3(uDynamicAmbientIntensity); // Dynamic ambient for realistic star-based lighting
 
     // Final color is a mix based on the noise value
     vec3 finalColor = noiseColor * totalLight;

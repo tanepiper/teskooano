@@ -68,7 +68,7 @@ export function initializeMiranda(parentId: string): void {
         height5: 0.95,
         shininess: 15,
         specularStrength: 0.35,
-        ambientLightIntensity: 0.35,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.5,
         terrainType: 1,
         terrainAmplitude: 1.5,

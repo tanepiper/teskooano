@@ -73,7 +73,7 @@ export function initializeUmbriel(parentId: string): void {
         height5: 0.85,
         shininess: 6,
         specularStrength: 0.15,
-        ambientLightIntensity: 0.25,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.4,
         terrainType: 2,
         terrainAmplitude: 1.2,

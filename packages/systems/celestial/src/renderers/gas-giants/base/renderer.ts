@@ -202,6 +202,14 @@ export abstract class BaseGasGiantRenderer<
       lightSources,
     );
 
+    // Calculate dynamic ambient light based on nearby stars
+    const dynamicAmbientIntensity =
+      this.lightingManager.calculateDynamicAmbientLightWithStarData(
+        object,
+        lightSources, // Use original light sources for ambient calculation, not attenuated
+        allObjects,
+      );
+
     // Convert light sources to shader format
     const lightsForShader = LightArrayUtils.toShaderFormat(
       attenuatedLightSources,
@@ -220,6 +228,12 @@ export abstract class BaseGasGiantRenderer<
     ) as TGasGiantMaterial;
 
     if (material) {
+      // Update dynamic ambient lighting if the uniform exists
+      if (material.uniforms.uDynamicAmbientIntensity) {
+        material.uniforms.uDynamicAmbientIntensity.value =
+          dynamicAmbientIntensity;
+      }
+
       material.update(
         this.getElapsedTime(),
         timeScale,
@@ -235,6 +249,12 @@ export abstract class BaseGasGiantRenderer<
     ) as TGasGiantMaterial;
 
     if (mediumMaterial) {
+      // Update dynamic ambient lighting if the uniform exists
+      if (mediumMaterial.uniforms.uDynamicAmbientIntensity) {
+        mediumMaterial.uniforms.uDynamicAmbientIntensity.value =
+          dynamicAmbientIntensity;
+      }
+
       mediumMaterial.update(
         this.getElapsedTime(),
         timeScale,

@@ -68,12 +68,7 @@ export function initializePallas(parentId: string): void {
         "hydrated minerals",
       ],
       shapeModel: "asteroid",
-      atmosphere: {
-        glowColor: "#000000",
-        intensity: 0,
-        power: 0,
-        thickness: 0,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.CRATERED,
         color: "#505050",
@@ -96,7 +91,7 @@ export function initializePallas(parentId: string): void {
         height5: 0.8,
         shininess: 3,
         specularStrength: 0.15,
-        ambientLightIntensity: 0.2,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.6,
         terrainType: 1,
         terrainAmplitude: 1.2,

@@ -95,7 +95,7 @@ export function initializeVenus(parentId: string): void {
         height5: 0.9,
         shininess: 14,
         specularStrength: 0.25,
-        ambientLightIntensity: 0.35,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.3,
         terrainType: 2,
         terrainAmplitude: 0.8,

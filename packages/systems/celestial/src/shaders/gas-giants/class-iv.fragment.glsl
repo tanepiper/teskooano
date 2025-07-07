@@ -30,6 +30,7 @@ uniform Light uLights[MAX_LIGHTS];
 uniform int uNumLights;
 uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 uniform int uNumShadowCasters;
+uniform float uDynamicAmbientIntensity; // Dynamic ambient lighting
 
 // --- Helper: clamp01 ---
 float clamp01(float value) {
@@ -112,8 +113,8 @@ void main() {
     vec3 rimColor = mix(baseColor, vec3(1.0), 0.3) * 1.3; // Brighter rim color
     vec3 rim = rimColor * rimIntensity;
 
-    // Combine components
-    vec3 ambient = baseColor * 0.15;
+    // Dynamic ambient light based on nearby star luminosity
+    vec3 ambient = baseColor * uDynamicAmbientIntensity; // Dynamic ambient for realistic star-based lighting
     vec3 finalColor = ambient + totalDiffuse + totalSpecular + rim;
 
     // Optional: Add a very faint emissive component based on base color?

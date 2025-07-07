@@ -283,6 +283,14 @@ export class BaseTerrestrialRenderer<
       lightSources,
     );
 
+    // Calculate dynamic ambient light based on nearby stars
+    const dynamicAmbientIntensity =
+      this.lightingManager.calculateDynamicAmbientLightWithStarData(
+        object,
+        lightSources, // Use original light sources for ambient calculation, not attenuated
+        allObjects,
+      );
+
     const bodyMaterial = this.getMaterial(object.celestialObjectId);
     if (
       bodyMaterial &&
@@ -296,6 +304,12 @@ export class BaseTerrestrialRenderer<
           bodyMaterial,
           planetProps.surface as ProceduralSurfaceProperties,
         );
+      }
+
+      // Update dynamic ambient lighting
+      if (bodyMaterial.uniforms.uAmbientLightIntensity) {
+        bodyMaterial.uniforms.uAmbientLightIntensity.value =
+          dynamicAmbientIntensity;
       }
 
       // Find shadow casters using centralized utility

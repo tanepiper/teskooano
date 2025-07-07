@@ -88,7 +88,7 @@ export function initializeMarsPlanet(parentId: string): string {
         height5: 0.95,
         shininess: 12,
         specularStrength: 0.1,
-        ambientLightIntensity: 0.4,
+        ambientLightIntensity: 0.01, // Minimal ambient for dark space
         undulation: 0.2,
         terrainType: 3,
         terrainAmplitude: 0.45,

@@ -55,12 +55,7 @@ export function initializeHyperion(parentId: string): void {
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rocky material"],
-      atmosphere: {
-        glowColor: "#FFFFFF",
-        intensity: 0,
-        power: 0,
-        thickness: 0,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.CRATERED,
         color: "#BDB7AB",
@@ -83,7 +78,7 @@ export function initializeHyperion(parentId: string): void {
         height5: 0.9,
         shininess: 20,
         specularStrength: 0.3,
-        ambientLightIntensity: 0.35,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.4,
         terrainType: 1,
         terrainAmplitude: 0.9,

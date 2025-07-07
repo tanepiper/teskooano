@@ -150,6 +150,44 @@ export class CelestialLightingManager {
   }
 
   /**
+   * Calculates dynamic ambient lighting based on nearby stars and their luminosity.
+   * This replaces hardcoded ambient values with realistic distance-based ambient light.
+   *
+   * @param object The celestial object receiving ambient light
+   * @param lightSources Map of light sources (stars) to calculate ambient from
+   * @returns Dynamic ambient light intensity based on star proximity and luminosity
+   */
+  public calculateDynamicAmbientLight(
+    object: RenderableCelestialObject,
+    lightSources: LightSourcesMap,
+  ): number {
+    return LightingCalculator.calculateDynamicAmbientLight(
+      object,
+      lightSources,
+    );
+  }
+
+  /**
+   * Calculates dynamic ambient lighting with access to full star data for accurate luminosity.
+   *
+   * @param object The celestial object receiving ambient light
+   * @param lightSources Map of light sources to calculate ambient from
+   * @param allObjects Map of all objects to access star properties
+   * @returns Dynamic ambient light intensity based on star luminosity and distance
+   */
+  public calculateDynamicAmbientLightWithStarData(
+    object: RenderableCelestialObject,
+    lightSources: LightSourcesMap,
+    allObjects?: Record<string, RenderableCelestialObject>,
+  ): number {
+    return LightingCalculator.calculateDynamicAmbientLightWithStarData(
+      object,
+      lightSources,
+      allObjects,
+    );
+  }
+
+  /**
    * Gets the scene's lighting manager if available.
    * @returns The lighting manager, or undefined if not set.
    */

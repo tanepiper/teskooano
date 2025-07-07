@@ -68,7 +68,7 @@ export function initializeOberon(parentId: string): void {
         height5: 0.9,
         shininess: 12,
         specularStrength: 0.3,
-        ambientLightIntensity: 0.32,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.3,
         terrainType: 2,
         terrainAmplitude: 0.9,

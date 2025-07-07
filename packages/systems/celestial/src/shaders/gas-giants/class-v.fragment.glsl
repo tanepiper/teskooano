@@ -32,6 +32,7 @@ uniform Light uLights[MAX_LIGHTS];
 uniform int uNumLights;
 uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 uniform int uNumShadowCasters;
+uniform float uDynamicAmbientIntensity; // Dynamic ambient lighting
 
 // --- Helper: clamp01 ---
 float clamp01(float value) {
@@ -117,8 +118,8 @@ void main() {
     // Emissive component for heat glow
     vec3 emission = emissiveColor * emissiveIntensity;
 
-    // Combine components
-    vec3 ambient = baseColor * 0.15;
+    // Combine components - minimal ambient for dark space
+    vec3 ambient = baseColor * uDynamicAmbientIntensity; // Much reduced ambient for dark space
     vec3 finalColor = ambient + totalDiffuse + totalSpecular + rim + emission;
 
     // Apply storm overlay if available

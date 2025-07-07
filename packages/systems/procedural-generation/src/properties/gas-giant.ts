@@ -13,6 +13,7 @@ export function getGasGiantProperties(
     specularStrength: utils.lerp(0.05, 0.15, random()),
     roughness: utils.lerp(0.8, 1.0, random()),
     undulation: utils.lerp(0.5, 1.0, random()),
+    ambientLightIntensity: 0.01, // Minimal ambient for dark space
   };
 
   let specificProperties: Partial<ProceduralSurfaceProperties> = {};

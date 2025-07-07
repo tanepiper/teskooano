@@ -81,7 +81,7 @@ export function initializeDeimos(parentId: string): void {
         height5: 1.0,
         shininess: 0.01,
         specularStrength: 0.01,
-        ambientLightIntensity: 0.03,
+        ambientLightIntensity: 0.01,
         undulation: 0.2,
         terrainType: 1,
         terrainAmplitude: 0.3,

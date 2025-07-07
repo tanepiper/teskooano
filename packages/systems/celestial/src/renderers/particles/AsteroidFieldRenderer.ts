@@ -120,8 +120,8 @@ const asteroidFragmentShader = `
 
     vec3 normal = vec3(fromCenter.x, fromCenter.y, sqrt(1.0 - len * len));
     
-    // Lighting Calculation is now in view space
-    vec3 totalLighting = vec3(1.0); // Ambient light
+    // Lighting Calculation is now in view space with minimal ambient
+    vec3 totalLighting = vec3(0.05); // Minimal ambient light for dark space
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i >= uNumLights) break;

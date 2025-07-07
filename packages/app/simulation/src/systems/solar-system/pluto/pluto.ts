@@ -95,7 +95,7 @@ export function initializePlutoDwarfPlanet(parentId: string): string {
         height5: 0.43,
         shininess: 23,
         specularStrength: 0.47,
-        ambientLightIntensity: 0.42,
+        ambientLightIntensity: 0.0,
         undulation: 0.1,
         terrainType: 3,
         terrainAmplitude: 0.2,

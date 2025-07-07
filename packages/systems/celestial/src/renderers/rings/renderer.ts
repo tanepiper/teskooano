@@ -299,49 +299,38 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     lightSources: LightSourcesMap,
     camera: THREE.Camera,
     allObjects?: Record<string, RenderableCelestialObject>,
-    allMeshes?: Record<string, THREE.Object3D>,
   ): void {
-    // Call parent update method to handle LOD updates
-    super.update(
-      object,
-      time,
-      timeScale,
-      lightSources,
-      camera,
-      allObjects,
-      allMeshes,
-    );
+    super.update(object, time, timeScale, lightSources, camera);
 
-    if (isVisualizationEnabled()) {
-      threeVectorDebug.clearVectors(`ring-system-${object.celestialObjectId}`);
-    }
-
-    if (!lightSources || lightSources.size === 0) {
-      return;
-    }
-
-    // Apply centralized light attenuation
-    const attenuatedLightSources = this.applyLightAttenuation(
-      object,
-      lightSources,
-    );
-
-    // Find shadow casters using centralized utility
-    const shadowCasters = this.findRingShadowCasters(object, allObjects);
-
-    // Convert shadow casters to shader format
-    const shadowCastersForShader =
-      ShadowCasterUtils.toShaderFormat(shadowCasters);
-
-    this.ringMaterials.forEach((material) => {
-      material.update(
-        this.getElapsedTime(),
-        object.position,
-        object.radius ?? 1,
-        attenuatedLightSources,
-        shadowCastersForShader,
+    // Calculate dynamic ambient light based on nearby stars
+    const dynamicAmbientIntensity =
+      this.lightingManager.calculateDynamicAmbientLightWithStarData(
+        object,
+        lightSources, // Use original light sources for ambient calculation
+        allObjects,
       );
-    });
+
+    if (this.ringMaterials && this.ringMaterials.size > 0) {
+      // Find shadow casters using centralized utility
+      const shadowCasters = this.findRingShadowCasters(object, allObjects);
+
+      // Update all ring materials
+      this.ringMaterials.forEach((material) => {
+        // Update dynamic ambient lighting
+        if (material.uniforms.uDynamicAmbientIntensity) {
+          material.uniforms.uDynamicAmbientIntensity.value =
+            dynamicAmbientIntensity;
+        }
+
+        material.update(
+          time,
+          object.position,
+          object.radius ?? 1.0,
+          lightSources,
+          shadowCasters,
+        );
+      });
+    }
   }
 
   /**

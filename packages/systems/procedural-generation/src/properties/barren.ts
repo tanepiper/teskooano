@@ -25,7 +25,7 @@ export function getBarrenProperties(
     bumpScale: utils.lerp(2, 3, random()),
     roughness: utils.lerp(0.6, 0.8, random()), // More matte/dusty
     specularStrength: utils.lerp(0.3, 0.6, random()),
-    ambientLightIntensity: utils.lerp(0.3, 0.5, random()), // Boosted ambient light
+    ambientLightIntensity: utils.lerp(0.01, 0.02, random()), // Minimal ambient for dark space
     undulation: utils.lerp(0.1, 0.2, random()),
     terrainType: 2, // Sharp peaks to catch light, not valleys
     terrainAmplitude: utils.lerp(0.5, 0.8, random()),

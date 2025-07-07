@@ -93,7 +93,7 @@ export function initializeEarthPlanet(parentId: string): string {
         height5: 0.67,
         shininess: 8.5,
         specularStrength: 0.32,
-        ambientLightIntensity: 0.38,
+        ambientLightIntensity: 0.01, // Minimal ambient for dark space
         undulation: 0.8,
         terrainType: 3,
         terrainAmplitude: 0.8,

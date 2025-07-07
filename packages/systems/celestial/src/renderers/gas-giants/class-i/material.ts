@@ -55,6 +55,7 @@ export class ClassIMaterial extends BaseGasGiantMaterial {
 
         stormMap: { value: options.stormMap },
         hasStormMap: { value: !!options.stormMap },
+        uDynamicAmbientIntensity: { value: 0.001 }, // Dynamic ambient uniform
       },
       vertexShader: classIVertexShader,
       fragmentShader: classIFragmentShader,

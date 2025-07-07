@@ -76,7 +76,7 @@ export function initializeCharon(parentId: string): void {
         height5: 0.9,
         shininess: 18,
         specularStrength: 0.4,
-        ambientLightIntensity: 0.35,
+        ambientLightIntensity: 0.0,
         undulation: 0.25,
         terrainType: 2,
         terrainAmplitude: 0.8,

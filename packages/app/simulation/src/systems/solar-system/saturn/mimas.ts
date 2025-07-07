@@ -52,12 +52,7 @@ export function initializeMimas(parentId: string): void {
       isMoon: true,
       parentPlanet: parentId,
       composition: ["water ice", "rocky core"],
-      atmosphere: {
-        glowColor: "#FFFFFF",
-        intensity: 0,
-        power: 0,
-        thickness: 0,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.CRATERED,
         color: "#E0E0E0",
@@ -80,7 +75,7 @@ export function initializeMimas(parentId: string): void {
         height5: 0.9,
         shininess: 35,
         specularStrength: 0.7,
-        ambientLightIntensity: 0.4,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.22,
         terrainType: 1, // Cratered terrain
         terrainAmplitude: 0.8,

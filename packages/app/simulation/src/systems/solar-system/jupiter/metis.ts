@@ -71,7 +71,7 @@ export function initializeMetis(parentId: string): void {
         height5: 1.0,
         shininess: 5,
         specularStrength: 0.1,
-        ambientLightIntensity: 0.1,
+        ambientLightIntensity: 0.01,
         undulation: 0.1,
         terrainType: 1,
         terrainAmplitude: 0.2,

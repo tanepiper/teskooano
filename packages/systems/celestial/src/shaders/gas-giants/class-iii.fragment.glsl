@@ -30,6 +30,7 @@ uniform int uNumLights;
 uniform ShadowCaster uShadowCasters[MAX_SHADOW_CASTERS];
 uniform int uNumShadowCasters;
 uniform float time;
+uniform float uDynamicAmbientIntensity; // Dynamic ambient lighting
 
 // --- Helper: clamp01 ---
 float clamp01(float value) {
@@ -111,8 +112,8 @@ void main() {
     vec3 rimColor = mix(baseColor, vec3(1.0), 0.10); // Blend even less white (was 0.15)
     vec3 rim = rimColor * rimIntensity;
 
-    // Combine components
-    vec3 ambient = baseColor * 0.15; // Ambient based on blended baseColor
+    // Combine components - minimal ambient for dark space
+    vec3 ambient = baseColor * uDynamicAmbientIntensity; // Much reduced ambient for dark space
     vec3 finalColor = ambient + totalDiffuse + totalSpecular + rim;
 
     // Apply storm overlay if available

@@ -105,7 +105,7 @@ export function initializeEris(parentId: string): void {
         height5: 0.9,
         shininess: 45,
         specularStrength: 0.85,
-        ambientLightIntensity: 0.5,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.08,
         terrainType: 1,
         terrainAmplitude: 0.3,
@@ -173,7 +173,7 @@ export function initializeEris(parentId: string): void {
         height5: 1.0,
         shininess: 2,
         specularStrength: 0.05,
-        ambientLightIntensity: 0.15,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.4,
         terrainType: 1,
         terrainAmplitude: 0.8,

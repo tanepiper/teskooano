@@ -65,12 +65,7 @@ export function initializeCeres(parentId: string): void {
         "clay minerals",
         "salts",
       ],
-      atmosphere: {
-        glowColor: "#CCCCCC",
-        intensity: 0.01,
-        power: 0.3,
-        thickness: 0.005,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.CRATERED,
         color: "#8C7853",
@@ -93,7 +88,7 @@ export function initializeCeres(parentId: string): void {
         height5: 0.9,
         shininess: 4,
         specularStrength: 0.15,
-        ambientLightIntensity: 0.25,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.3,
         terrainType: 2,
         terrainAmplitude: 0.8,

@@ -88,7 +88,7 @@ export function initializeCallisto(parentId: string): void {
         height5: 0.85,
         shininess: 8,
         specularStrength: 0.1,
-        ambientLightIntensity: 0.3,
+        ambientLightIntensity: 0.01, // Minimal ambient for dynamic lighting
         undulation: 0.35,
         terrainType: 2,
         terrainAmplitude: 1.1,

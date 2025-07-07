@@ -24,7 +24,7 @@ export function getLavaProperties(
     bumpScale: utils.lerp(2, 3, random()),
     roughness: utils.lerp(0.1, 1, random()),
     specularStrength: utils.lerp(0.3, 0.6, random()),
-    ambientLightIntensity: utils.lerp(0.2, 0.4, random()), // Moderate ambient for lava planets
+    ambientLightIntensity: utils.lerp(0.02, 0.03, random()), // Minimal ambient for dark space, slightly higher for lava glow
     undulation: utils.lerp(0.2, 0.3, random()), // Moderate undulation for lava flows
     terrainType: 2,
     terrainAmplitude: utils.lerp(1.2, 1.8, random()),

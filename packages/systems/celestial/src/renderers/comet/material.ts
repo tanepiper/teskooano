@@ -47,6 +47,7 @@ uniform float uFbmScale;
 uniform float uFineFbmScale;
 uniform float uFineFbmMix;
 uniform float uAmbientStrength;
+uniform float uDynamicAmbientIntensity;
 
 // Simplex noise function (as it was)
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -100,7 +101,7 @@ void main() {
     finalColor = mix(finalColor, finalColor * 0.8, fineNoise * uFineFbmMix);
 
     // --- Lighting Calculation ---
-    vec3 totalLighting = vec3(uAmbientStrength); // Start with ambient light
+    vec3 totalLighting = vec3(uAmbientStrength); // Start with minimal ambient light
 
     for (int i = 0; i < uNumLights; i++) {
         vec3 lightDirection = normalize(uLights[i].position - vWorldPosition);
@@ -129,7 +130,8 @@ export class CometNucleusMaterial extends THREE.ShaderMaterial {
         uFbmScale: { value: options.fbmScale ?? 0.8 },
         uFineFbmScale: { value: options.fineFbmScale ?? 8.0 },
         uFineFbmMix: { value: options.fineFbmMix ?? 0.2 },
-        uAmbientStrength: { value: options.ambientStrength ?? 0.15 },
+        uAmbientStrength: { value: options.ambientStrength ?? 0.01 }, // Minimal ambient light
+        uDynamicAmbientIntensity: { value: 0.001 }, // Dynamic ambient uniform
       },
       vertexShader: nucleusVertexShader,
       fragmentShader: nucleusFragmentShader,
@@ -305,6 +307,7 @@ void main() {
 const particleFragmentShader = `
 uniform vec3 uColor;
 uniform float uLightIntensity;
+uniform float uDynamicAmbientIntensity;
 
 varying float vAlpha;
 varying float vDepth;
@@ -315,13 +318,11 @@ void main() {
     float strength = 1.0 - smoothstep(0.4, 0.5, dist);
     if (strength < 0.01) discard;
 
-    // The opacity boost was causing particles to blow out and disappear up close.
-    // Removing it provides more consistent visibility.
     float finalAlpha = vAlpha * strength;
 
     // The tail is emissive, its brightness depends on its own properties and general
-    // light intensity, not direction. An ambient term prevents it from being pure black.
-    float ambientStrength = 0.2;
+    // light intensity, not direction. Minimal ambient term to prevent pure black.
+    float ambientStrength = uDynamicAmbientIntensity; // Use dynamic ambient for realistic star-based lighting
     vec3 finalColor = uColor * (ambientStrength + uLightIntensity);
 
     gl_FragColor = vec4(finalColor, finalAlpha);
@@ -334,6 +335,7 @@ export class CometParticleMaterial extends THREE.ShaderMaterial {
       uniforms: {
         uColor: { value: options.color },
         uLightIntensity: { value: 1.0 },
+        uDynamicAmbientIntensity: { value: 0.001 },
       },
       vertexShader: particleVertexShader,
       fragmentShader: particleFragmentShader,
@@ -347,6 +349,7 @@ export class CometParticleMaterial extends THREE.ShaderMaterial {
 const jetParticleFragmentShader = `
   uniform vec3 uColor;
   uniform float uLightIntensity;
+  uniform float uDynamicAmbientIntensity;
 
   varying float vAlpha;
   varying float vDepth;
@@ -397,12 +400,10 @@ const jetParticleFragmentShader = `
       float strength = noise * circularFalloff;
       if (strength < 0.01) discard;
 
-      // Simplified, non-directional lighting for glowing gas.
-      float ambientStrength = 0.2;
+      // Simplified, non-directional lighting for glowing gas. Minimal ambient.
+      float ambientStrength = uDynamicAmbientIntensity; // Use dynamic ambient for realistic star-based lighting
       vec3 finalColor = uColor * (ambientStrength + uLightIntensity * 0.5);
 
-      // The opacity boost was causing particles to blow out and disappear up close.
-      // For dense jets, it's not needed.
       float finalAlpha = vAlpha * strength;
 
       gl_FragColor = vec4(finalColor, finalAlpha);
@@ -440,6 +441,7 @@ export class CometJetMaterial extends THREE.ShaderMaterial {
         uLightPosition: { value: new THREE.Vector3() },
         uLightColor: { value: new THREE.Color(0xffffff) },
         uLightIntensity: { value: 1.0 },
+        uDynamicAmbientIntensity: { value: 0.001 },
       },
       vertexShader: jetParticleVertexShader,
       fragmentShader: jetParticleFragmentShader, // Use the new cloudy shader

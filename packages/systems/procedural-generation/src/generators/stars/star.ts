@@ -253,14 +253,12 @@ export function generateStar(random: () => number): CelestialObject {
   // Calculate realistic system lighting based on stellar properties
   const clampedLuminosity = Math.max(0.001, Math.min(starLuminosity, 10000));
   const starLightIntensity = Math.pow(clampedLuminosity, 0.25); // Fourth root for more reasonable scaling
-  const ambientLightIntensity = Math.max(
-    0.1,
-    Math.min(starLightIntensity * 0.15, 0.6),
-  );
+  // Stars should not contribute ambient lighting in dark space
+  const ambientLightIntensity = 0; // No ambient light from stars
 
   const systemLighting: SystemLightingProperties = {
     ambientLightColor: starColor,
-    ambientLightIntensity: parseFloat(ambientLightIntensity.toFixed(3)),
+    ambientLightIntensity: 0, // No ambient light from stars in dark space
     starLightIntensity: parseFloat(starLightIntensity.toFixed(2)),
   };
 
