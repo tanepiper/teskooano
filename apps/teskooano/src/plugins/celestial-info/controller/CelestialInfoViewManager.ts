@@ -1,4 +1,5 @@
 import { CelestialObject, CelestialType } from "@teskooano/data-types";
+import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel";
 import { AsteroidFieldInfoComponent } from "../bodies/AsteroidFieldInfo.js";
 import { GasGiantInfoComponent } from "../bodies/GasGiantInfo.js";
 import { GenericCelestialInfoComponent } from "../bodies/GenericCelestialInfo.js";
@@ -18,6 +19,7 @@ type ComponentConstructor = new () => CelestialInfoComponent;
 export class CelestialInfoViewManager {
   private _container: HTMLElement;
   private _placeholder: HTMLElement;
+  private _parentPanel: CompositeEnginePanel | null = null;
   private _componentMap: Map<CelestialType | "generic", ComponentConstructor> =
     new Map();
   private _componentCache: Map<ComponentConstructor, CelestialInfoComponent> =
@@ -28,6 +30,10 @@ export class CelestialInfoViewManager {
     this._container = container;
     this._placeholder = placeholder;
     this.registerComponents();
+  }
+
+  public setParentPanel(panel: CompositeEnginePanel): void {
+    this._parentPanel = panel;
   }
 
   /**
@@ -85,6 +91,7 @@ export class CelestialInfoViewManager {
     }
 
     const newActiveComponent = this.getOrCreateComponent(constructor);
+    newActiveComponent.setParentPanel(this._parentPanel);
 
     if (this._activeComponent !== newActiveComponent) {
       if (this._activeComponent) {

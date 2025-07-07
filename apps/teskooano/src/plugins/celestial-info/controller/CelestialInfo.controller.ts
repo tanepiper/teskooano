@@ -4,6 +4,7 @@ import {
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
 import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
+import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel";
 import type { CelestialInfo } from "../view/CelestialInfo.view";
 import { CelestialInfoViewManager } from "./CelestialInfoViewManager";
 
@@ -16,6 +17,7 @@ export class CelestialInfoController extends StateSubscriptionMixin {
   private _view: CelestialInfo;
   private _viewManager: CelestialInfoViewManager;
   private _currentSelectedId: string | null = null;
+  private _parentPanel: CompositeEnginePanel | null = null;
 
   /**
    * Creates an instance of CelestialInfoController.
@@ -50,6 +52,11 @@ export class CelestialInfoController extends StateSubscriptionMixin {
       "focus-request-initiated",
       this.handleFocusRequestInitiated,
     );
+  }
+
+  public setParentPanel(panel: CompositeEnginePanel): void {
+    this._parentPanel = panel;
+    this._viewManager.setParentPanel(panel);
   }
 
   /**

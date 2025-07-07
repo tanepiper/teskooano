@@ -2,7 +2,9 @@ import { CelestialObject } from "@teskooano/data-types";
 import {
   renderAlbedo,
   renderCard,
+  renderGravitationalInfluences,
   renderHierarchy,
+  renderLightSources,
   renderMainBody,
   renderOrbitalParameters,
   renderPhysicalCharacteristics,
@@ -28,6 +30,11 @@ export class MoonInfoComponent extends BaseCelestialInfoComponent {
     const hierarchy = renderHierarchy(celestial);
     const orbit = renderOrbitalParameters(celestial.orbit);
     const physics = renderPhysics(celestial.id, celestial.physicsStateReal);
+    const gravity = renderGravitationalInfluences(celestial);
+    const lighting = renderLightSources(
+      celestial,
+      this.parentPanel?.lightSourceManager,
+    );
 
     return `
       ${renderMainBody(celestial.name, "Moon", celestial)}
@@ -35,6 +42,8 @@ export class MoonInfoComponent extends BaseCelestialInfoComponent {
         ${renderCard("Hierarchy", hierarchy)}
         ${renderCard("Orbital Mechanics", orbit)}
         ${renderCard("Physical Properties", `${physical}${rotation}${albedo}${rings}`)}
+        ${renderCard("Gravitational Forces", gravity)}
+        ${renderCard("Light Sources", lighting)}
         ${renderCard("Real-time Physics", physics, "physics-card")}
       </div>
     `;

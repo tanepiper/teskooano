@@ -4,7 +4,9 @@ import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.
 import {
   renderAlbedo,
   renderCard,
+  renderGravitationalInfluences,
   renderHierarchy,
+  renderLightSources,
   renderMainBody,
   renderOrbitalParameters,
   renderPhysicalCharacteristics,
@@ -38,6 +40,11 @@ export class GasGiantInfoComponent extends BaseCelestialInfoComponent {
     const hierarchy = renderHierarchy(celestial);
     const orbit = renderOrbitalParameters(celestial.orbit);
     const physics = renderPhysics(celestial.id, celestial.physicsStateReal);
+    const gravity = renderGravitationalInfluences(celestial);
+    const lighting = renderLightSources(
+      celestial,
+      this.parentPanel?.lightSourceManager,
+    );
 
     return `
       ${renderMainBody(celestial.name, subtitle, celestial)}
@@ -45,6 +52,8 @@ export class GasGiantInfoComponent extends BaseCelestialInfoComponent {
         ${renderCard("Hierarchy", hierarchy)}
         ${renderCard("Orbital Mechanics", orbit)}
         ${renderCard("Physical Properties", `${physical}${rotation}${albedo}${rings}${giantSpecifics}`)}
+        ${renderCard("Gravitational Forces", gravity)}
+        ${renderCard("Light Sources", lighting)}
         ${renderCard("Real-time Physics", physics, "physics-card")}
       </div>
     `;

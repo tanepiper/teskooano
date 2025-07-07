@@ -5,7 +5,6 @@ import {
   AuMarkerManager,
   CSS2DLayerType,
   Layer2DManager,
-  initializeLabelSystem,
 } from "@teskooano/renderer-threejs-labels";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODManager } from "@teskooano/renderer-threejs-lod";
@@ -424,5 +423,15 @@ export class ModularSpaceRenderer {
    */
   getOrbitsManager(): OrbitsManager {
     return this.orbitManager;
+  }
+
+  /**
+   * Returns the `LightSourceManager` instance to allow for advanced access
+   * to lighting information.
+   *
+   * @returns The light source manager instance.
+   */
+  getLightSourceManager(): LightingManager {
+    return this.lightingManager;
   }
 }

@@ -6,7 +6,9 @@ import { FormatUtils } from "../utils/formatters";
 import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
 import {
   renderCard,
+  renderGravitationalInfluences,
   renderHierarchy,
+  renderLightSources,
   renderMainBody,
   renderOrbitalParameters,
   renderPhysics,
@@ -29,6 +31,11 @@ export class AsteroidFieldInfoComponent extends BaseCelestialInfoComponent {
     const hierarchy = renderHierarchy(celestial);
     const orbit = renderOrbitalParameters(celestial.orbit);
     const physics = renderPhysics(celestial.id, celestial.physicsStateReal);
+    const gravity = renderGravitationalInfluences(celestial);
+    const lighting = renderLightSources(
+      celestial,
+      this.parentPanel?.lightSourceManager,
+    );
 
     return `
       ${renderMainBody(celestial.name, "Asteroid Field", celestial)}
@@ -36,6 +43,8 @@ export class AsteroidFieldInfoComponent extends BaseCelestialInfoComponent {
           ${renderCard("Hierarchy", hierarchy)}
           ${renderCard("Orbital Mechanics", orbit)}
           ${renderCard("Physical Properties", physical)}
+          ${renderCard("Gravitational Forces", gravity)}
+          ${renderCard("Light Sources", lighting)}
           ${renderCard("Real-time Physics", physics, "physics-card")}
       </div>
     `;

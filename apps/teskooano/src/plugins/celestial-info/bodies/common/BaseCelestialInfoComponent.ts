@@ -3,6 +3,7 @@ import { StateAccessor } from "@teskooano/core-state";
 import { CelestialInfoComponent } from "../../utils/CelestialInfoInterface.js";
 import { baseStyles } from "../../utils/CelestialStyles.js";
 import { renderPhysics } from "./render-helpers.js";
+import type { CompositeEnginePanel } from "../../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 
 /**
  * An abstract base class for celestial info components.
@@ -14,6 +15,7 @@ export abstract class BaseCelestialInfoComponent
   implements CelestialInfoComponent
 {
   protected shadow: ShadowRoot;
+  protected parentPanel: CompositeEnginePanel | null = null;
   private container: HTMLElement;
   private physicsUpdateInterval: number | null = null;
   private currentCelestialId: string | null = null;
@@ -26,6 +28,10 @@ export abstract class BaseCelestialInfoComponent
       <div id="container" class="placeholder">${placeholderText}</div>
     `;
     this.container = this.shadow.getElementById("container")!;
+  }
+
+  public setParentPanel(panel: CompositeEnginePanel | null): void {
+    this.parentPanel = panel;
   }
 
   connectedCallback() {

@@ -7,7 +7,9 @@ import {
   renderAlbedo,
   renderMainBody,
   renderCard,
+  renderGravitationalInfluences,
   renderHierarchy,
+  renderLightSources,
   renderOrbitalParameters,
   renderPhysicalCharacteristics,
   renderRingSystem,
@@ -36,6 +38,11 @@ export class PlanetInfoComponent extends BaseCelestialInfoComponent {
     const hierarchy = renderHierarchy(celestial);
     const orbit = renderOrbitalParameters(celestial.orbit);
     const physics = renderPhysics(celestial.id, celestial.physicsStateReal);
+    const gravity = renderGravitationalInfluences(celestial);
+    const lighting = renderLightSources(
+      celestial,
+      this.parentPanel?.lightSourceManager,
+    );
 
     return `
       ${renderMainBody(celestial.name, subtitle, celestial)}
@@ -43,6 +50,8 @@ export class PlanetInfoComponent extends BaseCelestialInfoComponent {
         ${renderCard("Hierarchy", hierarchy)}
         ${renderCard("Orbital Mechanics", orbit)}
         ${renderCard("Physical Properties", `${physical}${rotation}${albedo}${rings}`)}
+        ${renderCard("Gravitational Forces", gravity)}
+        ${renderCard("Light Sources", lighting)}
         ${renderCard("Real-time Physics", physics, "physics-card")}
       </div>
     `;

@@ -4,6 +4,7 @@ import {
   OrbitalParameters,
   RingSystemProperties,
   PhysicsStateReal,
+  GRAVITATIONAL_CONSTANT,
 } from "@teskooano/data-types";
 import { FormatUtils } from "../../utils/formatters";
 
@@ -100,9 +101,85 @@ export function renderHierarchy(celestial: CelestialObject): string {
     html += `<dt>Parent:</dt><dd>${parent.name}</dd>`;
   }
   if (children.length > 0) {
-    html += `<dt>Children:</dt><dd>${children.map((c) => c.name).join(", ")}</dd>`;
+    html += `<dt>Children:</dt><dd>${children
+      .map((c) => c.name)
+      .join(", ")}</dd>`;
   }
   return html;
+}
+
+export function renderGravitationalInfluences(
+  celestial: CelestialObject,
+): string {
+  if (!celestial.physicsStateReal) return "";
+
+  const allObjects = StateAccessor.getCurrentCelestialObjects();
+  const influences: { name: string; force: number }[] = [];
+
+  for (const other of Object.values(allObjects)) {
+    if (other.id === celestial.id || !other.physicsStateReal) continue;
+
+    const distance = celestial.physicsStateReal.position_m.distanceTo(
+      other.physicsStateReal.position_m,
+    );
+    if (distance === 0) continue;
+
+    const force =
+      (GRAVITATIONAL_CONSTANT * (celestial.realMass_kg * other.realMass_kg)) /
+      (distance * distance);
+    influences.push({ name: other.name, force });
+  }
+
+  // Sort by force descending and take the top 5
+  const topInfluences = influences
+    .sort((a, b) => b.force - a.force)
+    .slice(0, 5);
+
+  return topInfluences
+    .map(
+      (inf) =>
+        `<dt>${inf.name}:</dt><dd>${FormatUtils.formatExp(inf.force, 3)} N</dd>`,
+    )
+    .join("");
+}
+
+export function renderLightSources(
+  celestial: CelestialObject,
+  lightingManager: any,
+): string {
+  if (!celestial.physicsStateReal || !lightingManager) return "";
+
+  const lightSources = lightingManager.getLightSources();
+  if (!lightSources || lightSources.size === 0) return "";
+
+  const sourceInfluences: {
+    name: string;
+    distance: number;
+    intensity: number;
+  }[] = [];
+
+  for (const source of lightSources.values()) {
+    const distance = celestial.physicsStateReal.position_m.distanceTo(
+      source.position,
+    );
+    sourceInfluences.push({
+      name: source.name,
+      distance,
+      intensity: source.intensity,
+    });
+  }
+
+  // Sort by distance ascending and take the top 3
+  const topSources = sourceInfluences
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 3);
+
+  return topSources
+    .map(
+      (src) =>
+        `<dt>${src.name}:</dt><dd>${FormatUtils.formatDistanceAU(src.distance, 2)} away, ${FormatUtils.formatFix(src.intensity, 2)} intensity</dd>`,
+    )
+    .join("");
 }
 
 export function renderPhysics(

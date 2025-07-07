@@ -12,6 +12,7 @@ import { BehaviorSubject, Subscription } from "rxjs";
 import { panelService } from "../../../../core/controllers/dockview/panel.service";
 
 import { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
+import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 
 import { CustomEvents } from "@teskooano/data-types";
 import { RendererStats, SceneManager } from "@teskooano/renderer-threejs-core";
@@ -219,7 +220,15 @@ export class CompositeEnginePanel
    * Useful for direct manipulation or querying of orbit visualization data.
    */
   public get orbitManager(): OrbitsManager | undefined {
-    return this._renderer?.orbitManager;
+    return this._renderer?.getOrbitsManager();
+  }
+
+  /**
+   * Provides access to the LightSourceManager instance within the renderer, if available.
+   * Useful for direct manipulation or querying of lighting data.
+   */
+  public get lightSourceManager(): LightingManager | undefined {
+    return this._renderer?.getLightSourceManager();
   }
 
   /**

@@ -4,6 +4,7 @@ import { CelestialInfoController } from "../controller/CelestialInfo.controller"
 import { template } from "./CelestialInfo.template";
 import InfoIcon from "@fluentui/svg-icons/icons/info_24_regular.svg?raw";
 import { FormatUtils } from "../utils/formatters";
+import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel";
 
 /**
  * Custom Element `<celestial-info>`.
@@ -52,7 +53,9 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   }
 
   init(parameters: GroupPanelPartInitParameters): void {
-    // The controller handles the init logic, this is just to satisfy the interface.
+    this._controller.setParentPanel(
+      parameters.api.group.element as CompositeEnginePanel,
+    );
   }
 
   get element(): HTMLElement {
