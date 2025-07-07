@@ -99,6 +99,8 @@ export class ModularSpaceRenderer {
       renderableStore.renderableObjects$,
       this.sceneManager.renderer,
       this.css2DManager,
+      undefined, // acceleration$ - use default
+      this.lightingManager, // Pass the shared lighting manager
     );
 
     this.orbitManager = new OrbitsManager(

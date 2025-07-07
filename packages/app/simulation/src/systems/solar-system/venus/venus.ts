@@ -11,16 +11,16 @@ import {
 
 const VENUS_MASS_KG = 4.8675e24;
 const VENUS_RADIUS_M = 6051800;
-const VENUS_TEMP_K = 737;
-const VENUS_ALBEDO = 0.76;
+const VENUS_TEMP_K = 737; // Surface temperature (extreme greenhouse effect)
+const VENUS_ALBEDO = 0.76; // Bond albedo (0.689 geometric)
 const VENUS_SMA_AU = 0.723332;
-const VENUS_ECC = 0.006773;
-const VENUS_INC_DEG = 3.39471;
-const VENUS_LAN_DEG = 76.68069;
-const VENUS_AOP_DEG = 131.53298;
-const VENUS_MA_DEG = 181.97973;
-const VENUS_ORBITAL_PERIOD_S = 1.94142e7;
-const VENUS_SIDEREAL_ROTATION_PERIOD_S = -20997151;
+const VENUS_ECC = 0.006772;
+const VENUS_INC_DEG = 3.39458;
+const VENUS_LAN_DEG = 76.68;
+const VENUS_AOP_DEG = 54.884; // Argument of perihelion (corrected from Wikipedia)
+const VENUS_MA_DEG = 50.115; // Mean anomaly (corrected from Wikipedia)
+const VENUS_ORBITAL_PERIOD_S = 1.94142e7; // 224.701 Earth days
+const VENUS_SIDEREAL_ROTATION_PERIOD_S = -20997151; // -243.0226 Earth days (retrograde)
 const VENUS_AXIAL_TILT_DEG = 177.36;
 
 /**

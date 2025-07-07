@@ -3,6 +3,7 @@ import {
   FormatUtils,
   AU_IN_METERS,
   SECONDS_PER_DAY,
+  SECONDS_PER_HOUR,
   SECONDS_PER_YEAR,
 } from "./formatters";
 
@@ -76,22 +77,47 @@ describe("FormatUtils", () => {
   });
 
   describe("formatPeriod", () => {
-    it("should format seconds into appropriate units (s, days, yrs)", () => {
-      expect(FormatUtils.formatPeriod(60)).toBe("60 s");
-      expect(FormatUtils.formatPeriod(SECONDS_PER_DAY)).toBe("1.0 days");
+    it("should format periods into appropriate units (s, min, hrs, days, yrs)", () => {
+      // Seconds
+      expect(FormatUtils.formatPeriod(30)).toBe("30.0 s");
+      expect(FormatUtils.formatPeriod(45)).toBe("45.0 s");
+
+      // Minutes
+      expect(FormatUtils.formatPeriod(120)).toBe("2.0 min");
+      expect(FormatUtils.formatPeriod(1800)).toBe("30.0 min");
+
+      // Hours (Earth-like planets - but Earth is 24hrs = 1 day, so test with shorter periods)
+      expect(FormatUtils.formatPeriod(SECONDS_PER_HOUR)).toBe("1.0 hrs");
+      expect(FormatUtils.formatPeriod(SECONDS_PER_HOUR * 2.5)).toBe("2.5 hrs");
+      expect(FormatUtils.formatPeriod(SECONDS_PER_HOUR * 9.9)).toBe("9.9 hrs"); // Jupiter-like
+      expect(FormatUtils.formatPeriod(SECONDS_PER_HOUR * 12)).toBe("12.0 hrs");
+
+      // Days (slower rotators)
+      expect(FormatUtils.formatPeriod(SECONDS_PER_DAY)).toBe("1.0 days"); // Earth (24 hrs = 1 day)
       expect(FormatUtils.formatPeriod(SECONDS_PER_DAY * 1.49)).toBe("1.5 days");
       expect(FormatUtils.formatPeriod(SECONDS_PER_DAY * 1.5)).toBe("1.5 days");
       expect(FormatUtils.formatPeriod(SECONDS_PER_DAY * 1.51)).toBe("1.5 days");
-      expect(FormatUtils.formatPeriod(SECONDS_PER_YEAR)).toBe("365.2 days");
+      expect(FormatUtils.formatPeriod(SECONDS_PER_DAY * 58.6)).toBe(
+        "58.6 days",
+      ); // Mercury
+      expect(FormatUtils.formatPeriod(SECONDS_PER_DAY * 243)).toBe(
+        "243.0 days",
+      ); // Venus
+      expect(FormatUtils.formatPeriod(SECONDS_PER_YEAR)).toBe("365.3 days"); // Updated expected value
       expect(FormatUtils.formatPeriod(SECONDS_PER_YEAR * 1.49)).toBe(
         "544.2 days",
       );
+
+      // Years (tidally locked or very slow)
       expect(FormatUtils.formatPeriod(SECONDS_PER_YEAR * 1.5)).toBe("1.50 yrs");
       expect(FormatUtils.formatPeriod(SECONDS_PER_YEAR * 2)).toBe("2.00 yrs");
     });
 
     it("should return N/A for invalid input", () => {
       expect(FormatUtils.formatPeriod(null)).toBe("N/A");
+      expect(FormatUtils.formatPeriod(undefined)).toBe("N/A");
+      expect(FormatUtils.formatPeriod(Infinity)).toBe("N/A");
+      expect(FormatUtils.formatPeriod(NaN)).toBe("N/A");
     });
   });
 

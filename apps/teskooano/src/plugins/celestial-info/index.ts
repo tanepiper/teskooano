@@ -10,6 +10,17 @@ import { OortCloudInfoComponent } from "./bodies/OortCloudInfo.js";
 import { PlanetInfoComponent } from "./bodies/PlanetInfo.js";
 import { StarInfoComponent } from "./bodies/StarInfo.js";
 
+// Import card components
+import { GravitationalForcesCard } from "./cards/GravitationalForcesCard.js";
+import { LightSourcesCard } from "./cards/LightSourcesCard.js";
+import { PhysicsCard } from "./cards/PhysicsCard.js";
+import { HierarchyCard } from "./cards/HierarchyCard.js";
+import { OrbitalMechanicsCard } from "./cards/OrbitalMechanicsCard.js";
+import { PhysicalPropertiesCard } from "./cards/PhysicalPropertiesCard.js";
+import { StarHierarchyCard } from "./cards/StarHierarchyCard.js";
+import { StarPhysicalPropertiesCard } from "./cards/StarPhysicalPropertiesCard.js";
+import { GasGiantPhysicalPropertiesCard } from "./cards/GasGiantPhysicalPropertiesCard.js";
+
 const additionalComponents = [
   {
     tagName: "asteroid-field-info",
@@ -24,6 +35,44 @@ const additionalComponents = [
   { tagName: "oort-cloud-info", componentClass: OortCloudInfoComponent },
   { tagName: "planet-info", componentClass: PlanetInfoComponent },
   { tagName: "star-info", componentClass: StarInfoComponent },
+
+  // Card components
+  {
+    tagName: "gravitational-forces-card",
+    componentClass: GravitationalForcesCard,
+  },
+  {
+    tagName: "light-sources-card",
+    componentClass: LightSourcesCard,
+  },
+  {
+    tagName: "physics-card",
+    componentClass: PhysicsCard,
+  },
+  {
+    tagName: "hierarchy-card",
+    componentClass: HierarchyCard,
+  },
+  {
+    tagName: "orbital-mechanics-card",
+    componentClass: OrbitalMechanicsCard,
+  },
+  {
+    tagName: "physical-properties-card",
+    componentClass: PhysicalPropertiesCard,
+  },
+  {
+    tagName: "star-hierarchy-card",
+    componentClass: StarHierarchyCard,
+  },
+  {
+    tagName: "star-physical-properties-card",
+    componentClass: StarPhysicalPropertiesCard,
+  },
+  {
+    tagName: "gas-giant-physical-properties-card",
+    componentClass: GasGiantPhysicalPropertiesCard,
+  },
 ];
 
 /**

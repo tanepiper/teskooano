@@ -1,93 +1,103 @@
+/**
+ * Shared styles for celestial info components.
+ */
 export const baseStyles = `
-:host {
-  display: block;
-  padding: 1rem;
-  font-family: var(--font-family-sans, sans-serif);
-  font-size: var(--font-size-sm, 13px);
-  color: var(--color-text-primary, #ddd);
-  background-color: transparent;
-}
-.title-container {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  border-bottom: 1px solid var(--color-border-subtle, #444);
-  padding-bottom: 0.75rem;
-}
-.title-container celestial-icon {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-}
-.title-container h3 {
-  margin: 0;
-  padding: 0;
-  border: none;
-  font-size: var(--font-size-xl, 22px);
-  color: var(--color-text-accent, #66d9ef);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  flex-grow: 1;
-}
-.title-container p {
+  .main-body {
+    margin-bottom: 2rem;
+  }
+
+  .title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .subtitle {
+    margin: 0 0 1.5rem 0;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+  }
+
+  .placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    font-style: italic;
+    color: var(--color-text-secondary);
+  }
+
+  .basic-info {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .basic-info dt {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .basic-info dd {
     margin: 0;
-    font-size: var(--font-size-md, 15px);
-    color: var(--color-text-secondary, #aaa);
-}
-.cards-container {
+    color: var(--color-text-secondary);
+  }
+
+  .cards-container {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    margin-top: 1rem;
-}
-.info-card {
-    background-color: var(--color-background-subtle, #252532);
-    border: 1px solid var(--color-border-subtle, #444);
-    border-radius: var(--border-radius-lg, 6px);
-    padding: 0.75rem 1rem;
-}
-.info-card h4 {
+  }
+
+  .info-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .info-card h4 {
     margin: 0 0 0.75rem 0;
-    font-size: var(--font-size-md, 15px);
-    color: var(--color-text-accent, #66d9ef);
-    font-weight: 500;
-    border-bottom: 1px solid var(--color-border-subtle, #444);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
     padding-bottom: 0.5rem;
-}
-.info-grid {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 0.5rem 1rem;
-  align-items: center;
-}
-.info-grid dt {
-  font-weight: 500;
-  grid-column: 1;
-  color: var(--color-text-secondary, #aaa);
-  text-align: right;
-  white-space: nowrap;
-}
-.info-grid dd {
-  grid-column: 2;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 400;
-  color: var(--color-text-primary, #ddd);
-  background-color: var(--color-background-muted, #2c2c3a);
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--border-radius-md, 4px);
-  border: 1px solid var(--color-border-subtle, #444);
-}
-.placeholder {
-  color: var(--color-text-secondary, #aaa);
-  font-style: normal;
-  text-align: center;
-  padding: 2rem 1rem;
-  border: 1px dashed var(--color-border-subtle, #555);
-  border-radius: var(--border-radius-lg, 6px);
-  background-color: var(--color-background-subtle, #252532);
-}
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .card-content {
+    font-size: 0.9rem;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+    align-items: start;
+  }
+
+  .info-grid dt {
+    font-weight: 600;
+    color: var(--color-text);
+    min-width: fit-content;
+  }
+
+  .info-grid dd {
+    margin: 0;
+    color: var(--color-text-secondary);
+    word-break: break-word;
+  }
+
+  .physics-card {
+    font-family: var(--font-mono, "Courier New", monospace);
+    background: var(--color-surface-alt, var(--color-surface));
+  }
+
+  .physics-card .info-grid {
+    font-size: 0.85rem;
+  }
 `;

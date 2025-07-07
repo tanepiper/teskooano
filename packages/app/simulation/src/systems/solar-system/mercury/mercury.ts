@@ -10,15 +10,16 @@ import {
 
 const MERCURY_MASS_KG = 3.3011e23;
 const MERCURY_RADIUS_M = 2439700;
-const MERCURY_TEMP_K = 340;
+const MERCURY_TEMP_K = 437; // Blackbody temperature (Wikipedia)
 const MERCURY_ALBEDO = 0.142;
 const MERCURY_SMA_AU = 0.387098;
 const MERCURY_ECC = 0.20563;
-const MERCURY_INC_DEG = 7.00487;
-const MERCURY_LAN_DEG = 48.33167;
-const MERCURY_AOP_DEG = 77.45645;
-const MERCURY_MA_DEG = 252.25084;
-const MERCURY_SIDEREAL_PERIOD_S = 7.60053e6;
+const MERCURY_INC_DEG = 7.005;
+const MERCURY_LAN_DEG = 48.331;
+const MERCURY_AOP_DEG = 29.124; // Argument of perihelion (corrected from Wikipedia)
+const MERCURY_MA_DEG = 174.796; // Mean anomaly (corrected from Wikipedia)
+const MERCURY_ORBITAL_PERIOD_S = 7.599154e6; // 87.9691 Earth days (sidereal year)
+const MERCURY_ROTATION_PERIOD_S = 5.067014e6; // 58.646 Earth days (sidereal day)
 const MERCURY_AXIAL_TILT_DEG = 0.034;
 
 /**
@@ -38,7 +39,7 @@ export function initializeMercury(parentId: string): void {
     realRadius_m: MERCURY_RADIUS_M,
     temperature: MERCURY_TEMP_K,
     albedo: MERCURY_ALBEDO,
-    siderealRotationPeriod_s: MERCURY_SIDEREAL_PERIOD_S,
+    siderealRotationPeriod_s: MERCURY_ROTATION_PERIOD_S,
     axialTilt: new OSVector3(
       0,
       Math.cos(mercuryAxialTiltRad),
@@ -51,7 +52,7 @@ export function initializeMercury(parentId: string): void {
       longitudeOfAscendingNode: MERCURY_LAN_DEG * DEG_TO_RAD,
       argumentOfPeriapsis: MERCURY_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: MERCURY_MA_DEG * DEG_TO_RAD,
-      period_s: MERCURY_SIDEREAL_PERIOD_S,
+      period_s: MERCURY_ORBITAL_PERIOD_S,
     },
     properties: {
       type: CelestialType.PLANET,

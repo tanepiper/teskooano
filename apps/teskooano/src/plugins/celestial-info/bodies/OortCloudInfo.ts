@@ -1,52 +1,34 @@
+import { CelestialObject } from "@teskooano/data-types";
 import {
-  AU_METERS,
-  CelestialObject,
-  OortCloudProperties,
-} from "@teskooano/data-types";
-import { FormatUtils } from "../utils/formatters";
-import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
-import {
-  renderCard,
-  renderGravitationalInfluences,
-  renderHierarchy,
-  renderLightSources,
-  renderMainBody,
-  renderPhysics,
-} from "./common/render-helpers.js";
+  BaseCelestialInfoComponent,
+  CardConfig,
+} from "./common/BaseCelestialInfoComponent.js";
 
 export class OortCloudInfoComponent extends BaseCelestialInfoComponent {
   constructor() {
-    super("Loading Oort cloud data...");
+    super("Loading Oort Cloud data...");
   }
 
-  protected renderDetails(celestial: CelestialObject): string {
-    const properties = celestial.properties as OortCloudProperties;
-    const physical = `
-          ${properties.innerRadiusAU ? `<dt>Inner Radius:</dt><dd>${FormatUtils.formatDistanceAU(properties.innerRadiusAU * AU_METERS)}</dd>` : ""} 
-          ${properties.outerRadiusAU ? `<dt>Outer Radius:</dt><dd>${FormatUtils.formatDistanceAU(properties.outerRadiusAU * AU_METERS)}</dd>` : ""} 
-          ${properties.visualParticleCount ? `<dt>Particle Count:</dt><dd>${properties.visualParticleCount.toLocaleString()}</dd>` : ""}
-          ${properties.composition ? `<dt>Composition:</dt><dd>${properties.composition.join(", ")}</dd>` : ""}
-          ${properties.visualParticleColor ? `<dt>Color (visual):</dt><dd>${properties.visualParticleColor}</dd>` : ""}
-          ${celestial.temperature ? `<dt>Temp:</dt><dd>${FormatUtils.formatFix(celestial.temperature)} K</dd>` : ""}
-    `;
+  protected getTitle(celestial: CelestialObject): string {
+    return celestial.name;
+  }
 
-    const hierarchy = renderHierarchy(celestial);
-    const physics = renderPhysics(celestial.id, celestial.physicsStateReal);
-    const gravity = renderGravitationalInfluences(celestial);
-    const lighting = renderLightSources(
-      celestial,
-      this.parentPanel?.lightSourceManager,
-    );
+  protected getSubtitle(celestial: CelestialObject): string {
+    return "Oort Cloud";
+  }
 
-    return `
-      ${renderMainBody(celestial.name, "Oort Cloud", celestial)}
-        <div class="cards-container">
-            ${renderCard("Hierarchy", hierarchy)}
-            ${renderCard("Physical Properties", physical)}
-            ${renderCard("Gravitational Forces", gravity)}
-            ${renderCard("Light Sources", lighting)}
-            ${renderCard("Real-time Physics", physics, "physics-card")}
-        </div>
-    `;
+  protected getCardConfigs(): CardConfig[] {
+    return [
+      { title: "Hierarchy", tagName: "hierarchy-card" },
+      { title: "Orbital Mechanics", tagName: "orbital-mechanics-card" },
+      { title: "Physical Properties", tagName: "physical-properties-card" },
+      { title: "Gravitational Forces", tagName: "gravitational-forces-card" },
+      { title: "Light Sources", tagName: "light-sources-card" },
+      {
+        title: "Real-time Physics",
+        tagName: "physics-card",
+        extraClasses: "physics-card",
+      },
+    ];
   }
 }

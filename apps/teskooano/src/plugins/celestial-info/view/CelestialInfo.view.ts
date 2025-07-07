@@ -53,9 +53,16 @@ export class CelestialInfo extends HTMLElement implements IContentRenderer {
   }
 
   init(parameters: GroupPanelPartInitParameters): void {
-    this._controller.setParentPanel(
-      parameters.api.group.element as CompositeEnginePanel,
-    );
+    const parentPanel = (parameters.params as any)
+      ?.parentInstance as CompositeEnginePanel;
+
+    if (parentPanel) {
+      this._controller.setParentPanel(parentPanel);
+    } else {
+      console.warn(
+        "[CelestialInfo] No parent panel instance found in parameters",
+      );
+    }
   }
 
   get element(): HTMLElement {

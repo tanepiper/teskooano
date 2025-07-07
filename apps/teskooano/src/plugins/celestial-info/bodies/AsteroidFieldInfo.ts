@@ -1,52 +1,34 @@
+import { CelestialObject } from "@teskooano/data-types";
 import {
-  AsteroidFieldProperties,
-  CelestialObject,
-} from "@teskooano/data-types";
-import { FormatUtils } from "../utils/formatters";
-import { BaseCelestialInfoComponent } from "./common/BaseCelestialInfoComponent.js";
-import {
-  renderCard,
-  renderGravitationalInfluences,
-  renderHierarchy,
-  renderLightSources,
-  renderMainBody,
-  renderOrbitalParameters,
-  renderPhysics,
-} from "./common/render-helpers.js";
+  BaseCelestialInfoComponent,
+  CardConfig,
+} from "./common/BaseCelestialInfoComponent.js";
 
 export class AsteroidFieldInfoComponent extends BaseCelestialInfoComponent {
   constructor() {
     super("Loading asteroid field data...");
   }
 
-  protected renderDetails(celestial: CelestialObject): string {
-    const properties = celestial.properties as AsteroidFieldProperties;
+  protected getTitle(celestial: CelestialObject): string {
+    return celestial.name;
+  }
 
-    const physical = `
-          ${properties.count ? `<dt>Count:</dt><dd>${properties.count.toLocaleString()}</dd>` : ""}
-          ${properties.composition ? `<dt>Composition:</dt><dd>${properties.composition.join(", ")}</dd>` : ""}
-          ${properties.color ? `<dt>Color:</dt><dd>${properties.color}</dd>` : ""}
-    `;
+  protected getSubtitle(celestial: CelestialObject): string {
+    return "Asteroid Field";
+  }
 
-    const hierarchy = renderHierarchy(celestial);
-    const orbit = renderOrbitalParameters(celestial.orbit);
-    const physics = renderPhysics(celestial.id, celestial.physicsStateReal);
-    const gravity = renderGravitationalInfluences(celestial);
-    const lighting = renderLightSources(
-      celestial,
-      this.parentPanel?.lightSourceManager,
-    );
-
-    return `
-      ${renderMainBody(celestial.name, "Asteroid Field", celestial)}
-      <div class="cards-container">
-          ${renderCard("Hierarchy", hierarchy)}
-          ${renderCard("Orbital Mechanics", orbit)}
-          ${renderCard("Physical Properties", physical)}
-          ${renderCard("Gravitational Forces", gravity)}
-          ${renderCard("Light Sources", lighting)}
-          ${renderCard("Real-time Physics", physics, "physics-card")}
-      </div>
-    `;
+  protected getCardConfigs(): CardConfig[] {
+    return [
+      { title: "Hierarchy", tagName: "hierarchy-card" },
+      { title: "Orbital Mechanics", tagName: "orbital-mechanics-card" },
+      { title: "Physical Properties", tagName: "physical-properties-card" },
+      { title: "Gravitational Forces", tagName: "gravitational-forces-card" },
+      { title: "Light Sources", tagName: "light-sources-card" },
+      {
+        title: "Real-time Physics",
+        tagName: "physics-card",
+        extraClasses: "physics-card",
+      },
+    ];
   }
 }

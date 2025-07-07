@@ -14,7 +14,7 @@ import type { Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { CSS2DLayerType } from "@teskooano/renderer-threejs-labels";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import { LODManager } from "@teskooano/renderer-threejs-lod";
-import { CelestialRenderer } from "@teskooano/systems-celestial";
+
 import type { Observable, Subscription } from "rxjs";
 import * as THREE from "three";
 import {
@@ -25,6 +25,7 @@ import {
   ObjectLifecycleManager,
   RendererUpdater,
 } from "./object-manager";
+import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 
 /**
  * @internal Interface defining the required methods for managing label visibility.
@@ -135,6 +136,7 @@ export class ObjectManager extends StateSubscriptionMixin {
    * @param renderer - The WebGLRenderer instance.
    * @param css2DManager - Optional manager for CSS2D labels and interactions.
    * @param acceleration$ - Optional observable stream for acceleration vectors.
+   * @param lightingManager - Optional lighting manager to use. If not provided, creates its own.
    */
   constructor(
     scene: THREE.Scene,
@@ -145,6 +147,7 @@ export class ObjectManager extends StateSubscriptionMixin {
     acceleration$: Observable<
       Record<string, OSVector3>
     > = StateAccessor.getAccelerationVectorsStream(),
+    lightingManager?: LightingManager,
   ) {
     super();
     this.scene = scene;
@@ -155,7 +158,7 @@ export class ObjectManager extends StateSubscriptionMixin {
     this.acceleration$ = acceleration$; // Assign the observable
 
     this.lodManager = new LODManager(camera);
-    this.lightingManager = new LightingManager(this.scene);
+    this.lightingManager = lightingManager || new LightingManager(this.scene);
     this.lensingHandler = new GravitationalLensingHandler({
       starRenderers: this.starRenderers,
     });

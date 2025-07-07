@@ -1,5 +1,6 @@
 export const AU_IN_METERS = 149597870700;
 export const SECONDS_PER_DAY = 86400;
+export const SECONDS_PER_HOUR = 3600;
 export const SECONDS_PER_YEAR = SECONDS_PER_DAY * 365.25;
 
 export class FormatUtils {
@@ -60,12 +61,26 @@ export class FormatUtils {
 
   static formatPeriod(seconds: number | undefined | null): string {
     if (seconds == null || !Number.isFinite(seconds)) return "N/A";
-    if (seconds > SECONDS_PER_YEAR * 1.5) {
+
+    // For very long periods (>= 1.5 years), show in years
+    if (seconds >= SECONDS_PER_YEAR * 1.5) {
       return (seconds / SECONDS_PER_YEAR).toFixed(2) + " yrs";
-    } else if (seconds > SECONDS_PER_DAY * 1.5) {
+    }
+    // For periods >= 1 day, show in days
+    else if (seconds >= SECONDS_PER_DAY) {
       return (seconds / SECONDS_PER_DAY).toFixed(1) + " days";
-    } else {
-      return seconds.toFixed(0) + " s";
+    }
+    // For periods >= 1 hour, show in hours
+    else if (seconds >= SECONDS_PER_HOUR) {
+      return (seconds / SECONDS_PER_HOUR).toFixed(1) + " hrs";
+    }
+    // For periods >= 60 seconds, show in minutes
+    else if (seconds >= 60) {
+      return (seconds / 60).toFixed(1) + " min";
+    }
+    // For very short periods, show in seconds
+    else {
+      return seconds.toFixed(1) + " s";
     }
   }
 
