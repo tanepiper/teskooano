@@ -2,9 +2,10 @@ import * as THREE from "three";
 import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
-import type { CelestialMeshOptions } from "../../base/CelestialRenderer";
-import { BaseCelestialRendererOptions } from "../../base";
-
+import {
+  BaseCelestialRendererOptions,
+  CelestialMeshOptions,
+} from "@teskooano/renderer-threejs-celestial";
 /**
  * Material for white dwarf stars
  * - Temperature: 8,000-40,000 K

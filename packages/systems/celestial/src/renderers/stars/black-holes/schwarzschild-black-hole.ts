@@ -5,12 +5,13 @@ import type {
 } from "@teskooano/data-types";
 import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
 import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
-import type {
+
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import {
+  BaseCelestialRendererOptions,
   CelestialMeshOptions,
   LightSourcesMap,
-} from "../../base/CelestialRenderer";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
-import { BaseCelestialRendererOptions } from "../../base";
+} from "@teskooano/renderer-threejs-celestial";
 
 /**
  * Material for Schwarzschild black holes

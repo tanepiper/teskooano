@@ -3,8 +3,10 @@ import type { StarProperties } from "@teskooano/data-types";
 import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
-import type { CelestialMeshOptions } from "../../base";
-import { BaseCelestialRendererOptions } from "../../base";
+import {
+  BaseCelestialRendererOptions,
+  CelestialMeshOptions,
+} from "@teskooano/renderer-threejs-celestial";
 
 /**
  * Material for main sequence stars with shader effects

@@ -14,7 +14,8 @@
       "@teskooano/renderer-threejs-lod": ["../threejs-lod/src"],
       "@teskooano/renderer-threejs-orbits": ["../threejs-orbits/src"],
       "@teskooano/renderer-threejs-labels": ["../threejs-labels/src"],
-      "@teskooano/systems-celestial": ["../../systems/celestial/src"]
+      "@teskooano/systems-celestial": ["../../systems/celestial/src"],
+      "@teskooano/renderer-threejs-celestial": ["../threejs-celestial/src"]
     },
     "noEmit": false
   },
@@ -25,6 +26,7 @@
     { "path": "../../data/types" },
     { "path": "../threejs-core" },
     { "path": "../threejs-lighting" },
+    { "path": "../threejs-celestial" },
     { "path": "../threejs-lod" },
     { "path": "../threejs-orbits" },
     { "path": "../threejs-labels" },

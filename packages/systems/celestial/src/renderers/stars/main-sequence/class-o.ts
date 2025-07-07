@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { BaseStarMaterial } from "../base/base-star";
 import { MainSequenceStarRenderer } from "./main-sequence-star";
-import { BaseCelestialRendererOptions } from "../../base";
+import { BaseCelestialRendererOptions } from "@teskooano/renderer-threejs-celestial";
 
 /**
  * Material for O-class stars

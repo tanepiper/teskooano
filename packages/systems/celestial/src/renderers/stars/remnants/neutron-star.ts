@@ -1,17 +1,13 @@
 import * as THREE from "three";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
-import type {
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
+import { BaseStarRenderer, BaseStarMaterial } from "../base/base-star";
+import {
+  BaseCelestialRendererOptions,
   CelestialMeshOptions,
   LightSourcesMap,
-} from "../../base/CelestialRenderer";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
-import { BaseCelestialRendererOptions } from "../../base";
-import {
-  calculateDistantSpriteSize,
-  createBillboardSprite,
-} from "../../billboards";
-import { BaseStarRenderer, BaseStarMaterial } from "../base/base-star";
+} from "@teskooano/renderer-threejs-celestial";
 
 /**
  * Material for neutron stars
