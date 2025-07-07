@@ -45,16 +45,20 @@ export class DebugPanelController {
     const predictionManager = orbitsManager.getPredictionManager();
     const trailManager = orbitsManager.getTrailManager();
 
-    const predictionLineCount = predictionManager.predictionLines.size;
+    const predictionLineCount = predictionManager?.predictionLines.size ?? 0;
     let predictionSegmentCount = 0;
-    for (const line of predictionManager.predictionLines.values()) {
-      predictionSegmentCount += line.geometry.drawRange.count;
+    if (predictionManager) {
+      for (const line of predictionManager.predictionLines.values()) {
+        predictionSegmentCount += line.geometry.drawRange.count;
+      }
     }
 
-    const trailLineCount = trailManager.trailLines.size;
+    const trailLineCount = trailManager?.trailLines.size ?? 0;
     let trailSegmentCount = 0;
-    for (const line of trailManager.trailLines.values()) {
-      trailSegmentCount += line.geometry.drawRange.count;
+    if (trailManager) {
+      for (const line of trailManager.trailLines.values()) {
+        trailSegmentCount += line.geometry.drawRange.count;
+      }
     }
 
     this.view.renderStats({

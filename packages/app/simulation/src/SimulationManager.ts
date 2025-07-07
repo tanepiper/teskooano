@@ -20,6 +20,7 @@ import {
 } from "@teskooano/data-types";
 import { Observable, Subject } from "rxjs";
 import * as THREE from "three";
+import { HierarchyManager } from "./HierarchyManager";
 
 /**
  * Manages the overall simulation lifecycle, physics loop, state, and events.
@@ -34,6 +35,7 @@ export class SimulationManager {
   private accumulatedTime = 0;
   private subscriptionManager = new StateSubscriptionMixin();
   private animationFrameId: number | null = null;
+  private hierarchyManager: HierarchyManager;
 
   // Event Subjects
   private readonly _resetTime$ = new Subject<void>();
@@ -45,6 +47,7 @@ export class SimulationManager {
    */
   private constructor() {
     // Private constructor for singleton
+    this.hierarchyManager = new HierarchyManager();
   }
 
   /**
@@ -212,6 +215,9 @@ export class SimulationManager {
         }
 
         physicsSystemAdapter.updateStateFromResult(result);
+
+        // After physics, check for hierarchy changes (orphans, escapes)
+        this.hierarchyManager.updateHierarchies();
 
         const updatedPositions: Record<
           string,

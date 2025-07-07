@@ -6,7 +6,9 @@ const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
       font-family: var(--font-family, sans-serif);
       font-size: 0.9em;
       fill: #fff;
@@ -15,6 +17,7 @@ template.innerHTML = `
       margin-bottom: 15px;
       padding-bottom: 10px;
       border-bottom: 1px solid var(--color-border, #4a4a6a);
+      flex-shrink: 0; /* Don't shrink control sections */
     }
     .control-section:last-child {
        border-bottom: none;
@@ -31,9 +34,22 @@ template.innerHTML = `
     }
 
     .target-list-container {
-        max-height: 400px; /* Or adjust as needed */
+        flex: 2; /* Take 2/3 of available space */
+        min-height: 200px; /* Minimum reasonable height */
         overflow-y: auto;
         padding-right: 5px; /* Space for scrollbar */
+    }
+
+    .destroyed-section {
+        flex: 1; /* Take 1/3 of available space */
+        min-height: 150px; /* Minimum reasonable height */
+        overflow-y: auto;
+    }
+
+    .destroyed-list-container {
+        overflow-y: auto;
+        padding-right: 5px; /* Space for scrollbar */
+        max-height: calc(100% - 30px); /* Account for title */
     }
 
     /* --- Tree View Styles --- */
@@ -131,6 +147,14 @@ template.innerHTML = `
         font-style: italic;
     }
 
+    .destroyed-title {
+        margin: 0 0 10px 0;
+        padding: 0;
+        font-size: 1em;
+        font-weight: bold;
+        color: var(--color-text-primary, #fff);
+    }
+
   </style>
 
   <div class="control-section">
@@ -144,6 +168,15 @@ template.innerHTML = `
      <ul id="focus-tree-list">
        <!-- Tree populated here -->
      </ul>
+  </div>
+
+  <div class="destroyed-section control-section">
+    <h3 class="destroyed-title">Destroyed Objects</h3>
+    <div class="destroyed-list-container">
+      <ul id="destroyed-list">
+        <!-- Destroyed items populated here -->
+      </ul>
+    </div>
   </div>
 `;
 

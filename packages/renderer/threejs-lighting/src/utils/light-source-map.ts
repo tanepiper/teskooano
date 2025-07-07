@@ -18,14 +18,30 @@ export function calculateLightSourceMaps(
   /**
    * Memoized recursive function to find the light source for a given object ID.
    * @param id The ID of the object to check.
+   * @param visited Set of visited object IDs to detect circular dependencies.
    * @returns The ID of the light source, or undefined if none exists.
    */
-  const determineLightSource = (id: string): string | undefined => {
+  const determineLightSource = (
+    id: string,
+    visited: Set<string> = new Set(),
+  ): string | undefined => {
     // Return from cache if already computed
     if (id in lightSourceMap) return lightSourceMap[id];
 
+    // Detect circular dependency
+    if (visited.has(id)) {
+      console.warn(
+        `[LightSourceMap] Circular dependency detected involving object ${id}`,
+      );
+      lightSourceMap[id] = undefined;
+      return undefined;
+    }
+
     const obj = objects[id];
-    if (!obj) return undefined;
+    if (!obj) {
+      lightSourceMap[id] = undefined;
+      return undefined;
+    }
 
     // The object is itself a star
     if (obj.type === CelestialType.STAR) {
@@ -39,8 +55,10 @@ export function calculateLightSourceMaps(
       return undefined;
     }
 
-    // Recursively find the parent's light source
-    lightSourceMap[id] = determineLightSource(obj.parentId);
+    // Add current object to visited set and recursively find the parent's light source
+    const newVisited = new Set(visited);
+    newVisited.add(id);
+    lightSourceMap[id] = determineLightSource(obj.parentId, newVisited);
     return lightSourceMap[id];
   };
 

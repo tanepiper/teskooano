@@ -27,6 +27,7 @@ export function predictTrajectory(
   duration_s: number,
   steps: number,
   options: {
+    relativeToBodyId?: string | number;
     octreeSize?: number;
     barnesHutTheta?: number;
     scaleToSceneUnits?: boolean;
@@ -36,6 +37,7 @@ export function predictTrajectory(
   } = {},
 ): PredictedPoint[] {
   const {
+    relativeToBodyId,
     octreeSize = 5e13,
     barnesHutTheta = 0.7,
     scaleToSceneUnits = true,
@@ -52,21 +54,9 @@ export function predictTrajectory(
     return [];
   }
 
-  const targetBodyIndex = allBodiesInitialStates.findIndex(
-    (b) => b.id === targetBodyId,
-  );
-  if (targetBodyIndex === -1) {
-    console.warn(`Target body ID ${targetBodyId} not found in initial states.`);
-    return [];
-  }
-
   const dt = duration_s / steps;
-
-  // Pre-allocate arrays and objects to be reused in the loop
   const predictedPoints: PredictedPoint[] = [];
-  const accelerations = new Map<string | number, OSVector3>();
-  const octree = new Octree(octreeSize);
-  const reusableAccVector = new OSVector3(0, 0, 0);
+  const relativeObjectPath: OSVector3[] = [];
 
   // Make a deep copy of the initial states to avoid modifying the original data
   let currentStates: PhysicsStateReal[] = allBodiesInitialStates.map(
@@ -83,6 +73,16 @@ export function predictTrajectory(
     velocity_mps: body.velocity_mps.clone(),
   }));
 
+  const targetBodyIndex = currentStates.findIndex((b) => b.id === targetBodyId);
+  const relativeBodyIndex = relativeToBodyId
+    ? currentStates.findIndex((b) => b.id === relativeToBodyId)
+    : -1;
+
+  if (targetBodyIndex === -1) {
+    console.warn(`Target body ID ${targetBodyId} not found in initial states.`);
+    return [];
+  }
+
   // Add the initial position
   const initialTargetState = currentStates[targetBodyIndex];
   if (initialTargetState.position_m) {
@@ -95,9 +95,19 @@ export function predictTrajectory(
     return [];
   }
 
+  if (relativeBodyIndex !== -1) {
+    relativeObjectPath.push(
+      currentStates[relativeBodyIndex].position_m.clone(),
+    );
+  }
+
+  const accelerations = new Map<string | number, OSVector3>();
+  const octree = new Octree(octreeSize);
+  const reusableAccVector = new OSVector3(0, 0, 0);
+
   // Simulation loop
   for (let i = 0; i < steps; i++) {
-    // Calculate accelerations using Octree (same as in main simulation)
+    // Calculate accelerations using Octree
     octree.clear();
     for (const body of currentStates) {
       octree.insert(body);
@@ -110,11 +120,10 @@ export function predictTrajectory(
       if (body.mass_kg !== 0) {
         reusableAccVector.copy(netForce).multiplyScalar(1 / body.mass_kg);
       }
-      accelerations.set(body.id, reusableAccVector.clone()); // Clone here as it's stored
+      accelerations.set(body.id, reusableAccVector.clone());
     }
 
     // Integration
-    let targetNextState: PhysicsStateReal | null = null;
     let integrationError = false;
 
     for (let j = 0; j < currentStates.length; j++) {
@@ -128,52 +137,36 @@ export function predictTrajectory(
         break;
       }
 
-      try {
-        // Create acceleration calculator function for Verlet integration
-        const calculateNewAcceleration = (
-          stateGuess: PhysicsStateReal,
-        ): OSVector3 => {
-          const force = octree.calculateForceOn(stateGuess, barnesHutTheta);
-          reusableAccVector.set(0, 0, 0); // Reuse the vector
-          if (stateGuess.mass_kg !== 0) {
-            reusableAccVector
-              .copy(force)
-              .multiplyScalar(1 / stateGuess.mass_kg);
-          }
-          return reusableAccVector;
-        };
+      const calculateNewAcceleration = (
+        stateGuess: PhysicsStateReal,
+      ): OSVector3 => {
+        const force = octree.calculateForceOn(stateGuess, barnesHutTheta);
+        reusableAccVector.set(0, 0, 0);
+        if (stateGuess.mass_kg !== 0) {
+          reusableAccVector.copy(force).multiplyScalar(1 / stateGuess.mass_kg);
+        }
+        return reusableAccVector;
+      };
 
-        // Use the same Verlet integrator as the main simulation
-        // IMPORTANT: The result MUST be written to the `nextStates` array to avoid mutation bugs
-        const resultState = velocityVerletIntegrate(
-          body,
-          acceleration,
-          calculateNewAcceleration,
-          dt,
+      const resultState = velocityVerletIntegrate(
+        body,
+        acceleration,
+        calculateNewAcceleration,
+        dt,
+      );
+
+      nextStates[j].position_m.copy(resultState.position_m);
+      nextStates[j].velocity_mps.copy(resultState.velocity_mps);
+
+      if (
+        !Number.isFinite(nextStates[j].position_m.x) ||
+        !Number.isFinite(nextStates[j].velocity_mps.x)
+      ) {
+        console.error(
+          `Non-finite state detected for body ${body.id}. Aborting prediction.`,
         );
-
-        // Copy result into the pre-allocated next state object
-        nextStates[j].position_m.copy(resultState.position_m);
-        nextStates[j].velocity_mps.copy(resultState.velocity_mps);
-
-        // Validate state
-        const posOk = Number.isFinite(nextStates[j].position_m.x);
-        const velOk = Number.isFinite(nextStates[j].velocity_mps.x);
-
-        if (!posOk || !velOk) {
-          console.error(
-            `Non-finite state detected for body ${body.id}. Aborting prediction.`,
-          );
-          integrationError = true;
-          break;
-        }
-
-        if (body.id === targetBodyId) {
-          targetNextState = nextStates[j];
-        }
-      } catch (error) {
-        console.error(`Error during integration for body ${body.id}:`, error);
         integrationError = true;
+        break;
       }
     }
 
@@ -210,10 +203,9 @@ export function predictTrajectory(
       }
     }
 
-    if (integrationError) break;
-
-    // Add the new prediction point
-    if (targetNextState !== null) {
+    // Add the new prediction point for the target
+    const targetNextState = nextStates[targetBodyIndex];
+    if (targetNextState) {
       predictedPoints.push({
         point: targetNextState.position_m.clone(),
         timestamp: (i + 1) * dt,
@@ -223,21 +215,45 @@ export function predictTrajectory(
       break;
     }
 
-    // Swap state arrays for the next iteration to avoid reallocation
+    // Add the new position for the relative body
+    if (relativeBodyIndex !== -1) {
+      const relativeNextState = nextStates[relativeBodyIndex];
+      if (relativeNextState) {
+        relativeObjectPath.push(relativeNextState.position_m.clone());
+      }
+    }
+
+    // Swap state arrays for the next iteration
     const temp = currentStates;
     currentStates = nextStates;
     nextStates = temp;
   }
 
+  let finalPoints = predictedPoints;
+
+  // If a relative body is specified, transform all points.
+  if (
+    relativeToBodyId &&
+    relativeObjectPath.length === predictedPoints.length
+  ) {
+    finalPoints = predictedPoints.map((p, i) => {
+      const relativePoint = relativeObjectPath[i];
+      return {
+        point: p.point.sub(relativePoint),
+        timestamp: p.timestamp,
+      };
+    });
+  }
+
   // If scaling is requested, apply it.
   if (scaleToSceneUnits) {
-    return predictedPoints.map(({ point, timestamp }) => ({
+    return finalPoints.map(({ point, timestamp }) => ({
       point: point.multiplyScalar(METERS_TO_SCENE_UNITS),
       timestamp,
     }));
   }
 
-  return predictedPoints;
+  return finalPoints;
 }
 
 /**

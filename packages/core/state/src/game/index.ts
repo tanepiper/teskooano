@@ -11,6 +11,7 @@ export {
   simulationStateService,
   renderableStore,
   physicsSystemAdapter,
+  celestialActions,
 };
 
 export const currentSeed$ = gameStateService.currentSeed$;

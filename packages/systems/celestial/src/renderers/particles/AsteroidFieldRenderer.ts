@@ -399,7 +399,7 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       (au) => au * SCALE.RENDER_SCALE_AU,
     );
 
-    const particleCounts = [20000, 10000, 5000, 5000];
+    const particleCounts = [10000, 5000, 2500, 1000];
 
     const lodLevels: LODLevel[] = [];
 

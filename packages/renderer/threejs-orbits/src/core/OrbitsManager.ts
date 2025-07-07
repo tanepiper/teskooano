@@ -8,6 +8,8 @@ import { KeplerianStrategy } from "./modes/KeplerianStrategy";
 import { VerletStrategy } from "./modes/VerletStrategy";
 import type { IOrbitVisualizationStrategy } from "./modes/IOrbitVisualizationStrategy";
 import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
+import { PredictionManager } from "../verlet/PredictionManager";
+import { TrailManager } from "../verlet/TrailManager";
 
 /**
  * Enum defining the available modes for orbit visualization.
@@ -163,6 +165,28 @@ export class OrbitsManager extends StateSubscriptionMixin {
   public setPredictionVisibility(visible: boolean): void {
     this.predictionLinesVisible = visible;
     this.activeStrategy?.setPredictionVisibility(visible);
+  }
+
+  /**
+   * Returns the PredictionManager instance if the current mode is 'Verlet'.
+   * @returns The PredictionManager instance or undefined.
+   */
+  public getPredictionManager(): PredictionManager | undefined {
+    if (this.activeStrategy instanceof VerletStrategy) {
+      return this.activeStrategy.predictionManager;
+    }
+    return undefined;
+  }
+
+  /**
+   * Returns the TrailManager instance if the current mode is 'Verlet'.
+   * @returns The TrailManager instance or undefined.
+   */
+  public getTrailManager(): TrailManager | undefined {
+    if (this.activeStrategy instanceof VerletStrategy) {
+      return this.activeStrategy.trailManager;
+    }
+    return undefined;
   }
 
   /**

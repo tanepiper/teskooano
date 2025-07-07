@@ -29,10 +29,18 @@ export class CelestialHierarchy
     const treeListContainer = this.shadowRoot!.getElementById(
       "focus-tree-list",
     ) as HTMLUListElement;
+    const destroyedListContainer = this.shadowRoot!.getElementById(
+      "destroyed-list",
+    ) as HTMLUListElement;
     const resetButton = this.shadowRoot!.getElementById("reset-view")!;
     const clearButton = this.shadowRoot!.getElementById("clear-focus")!;
 
-    if (!treeListContainer || !resetButton || !clearButton) {
+    if (
+      !treeListContainer ||
+      !destroyedListContainer ||
+      !resetButton ||
+      !clearButton
+    ) {
       console.error(
         "[CelestialHierarchy] Critical elements not found in shadow DOM.",
       );
@@ -43,6 +51,7 @@ export class CelestialHierarchy
     this.controller = new CelestialHierarchyController(
       this,
       treeListContainer,
+      destroyedListContainer,
       resetButton,
       clearButton,
     );

@@ -72,6 +72,33 @@ export class VerletStrategy implements IOrbitVisualizationStrategy {
         predictionSteps: visualSettings.predictionSteps,
       });
       this.predictionManager.highlightPrediction(this.highlightedObjectId);
+
+      const line = this.predictionManager.predictionLines.get(
+        this.highlightedObjectId,
+      );
+      const object = objects[this.highlightedObjectId];
+      const labels = this.predictionManager.getPredictionLabels();
+
+      if (line && object?.parentId) {
+        const parent = objects[object.parentId];
+        if (parent?.position) {
+          line.position.copy(parent.position);
+          labels.forEach(({ label }) => {
+            if (label.visible && label.userData.localPosition) {
+              label.position
+                .copy(label.userData.localPosition)
+                .add(parent.position);
+            }
+          });
+        }
+      } else if (line) {
+        line.position.set(0, 0, 0);
+        labels.forEach(({ label }) => {
+          if (label.visible && label.userData.localPosition) {
+            label.position.copy(label.userData.localPosition);
+          }
+        });
+      }
     } else {
       this.predictionManager.highlightPrediction(null);
     }

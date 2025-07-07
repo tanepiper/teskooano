@@ -12,21 +12,85 @@ import { generateIconConfig } from "../../celestial-icons";
  */
 export class FocusListManager {
   private _rootUlElement: HTMLElement;
+  private _destroyedUlElement: HTMLElement;
 
   /**
    * Creates an instance of FocusListManager.
    * @param rootUlElement The root UL element that will contain the tree.
+   * @param destroyedUlElement The root UL element for destroyed objects.
    */
-  constructor(rootUlElement: HTMLElement) {
+  constructor(rootUlElement: HTMLElement, destroyedUlElement: HTMLElement) {
     this._rootUlElement = rootUlElement;
+    this._destroyedUlElement = destroyedUlElement;
   }
 
   /**
-   * Populates the focus list container with a collapsible tree structure.
+   * Populates both the hierarchy and destroyed lists by partitioning the objects.
    * @param objects The current map of all celestial objects.
    * @param currentFocusedId The ID of the currently focused object, if any.
    */
   public populate(
+    objects: Record<string, CelestialObject>,
+    currentFocusedId: string | null,
+  ): void {
+    const activeObjects: Record<string, CelestialObject> = {};
+    const destroyedObjects: CelestialObject[] = [];
+
+    for (const id in objects) {
+      const obj = objects[id];
+      if (
+        obj.status === CelestialStatus.DESTROYED ||
+        obj.status === CelestialStatus.ANNIHILATED
+      ) {
+        destroyedObjects.push(obj);
+      } else {
+        activeObjects[id] = obj;
+      }
+    }
+
+    this.populateHierarchy(activeObjects, currentFocusedId);
+    this.populateDestroyedList(destroyedObjects);
+  }
+
+  /**
+   * Populates the destroyed list container with a simple list of objects.
+   * @param destroyedObjects An array of celestial objects that are destroyed or annihilated.
+   */
+  private populateDestroyedList(destroyedObjects: CelestialObject[]): void {
+    this._destroyedUlElement.innerHTML = "";
+    if (destroyedObjects.length === 0) {
+      this._destroyedUlElement.innerHTML =
+        '<li class="empty-message">No destroyed objects.</li>';
+      return;
+    }
+
+    // Sort by name
+    destroyedObjects.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+
+    destroyedObjects.forEach((obj) => {
+      const listItem = document.createElement("li");
+      listItem.dataset.id = obj.id;
+
+      const row = document.createElement("celestial-row");
+      row.setAttribute("object-id", obj.id);
+      row.setAttribute("object-name", obj.name);
+      row.setAttribute("object-type", obj.type);
+
+      const iconConfig = generateIconConfig(obj);
+      row.setAttribute("config", JSON.stringify(iconConfig));
+      row.setAttribute("inactive", ""); // Always inactive
+
+      listItem.appendChild(row);
+      this._destroyedUlElement.appendChild(listItem);
+    });
+  }
+
+  /**
+   * Populates the focus list container with a collapsible tree structure.
+   * @param objects The current map of all active celestial objects.
+   * @param currentFocusedId The ID of the currently focused object, if any.
+   */
+  public populateHierarchy(
     objects: Record<string, CelestialObject>,
     currentFocusedId: string | null,
   ): void {
@@ -75,20 +139,20 @@ export class FocusListManager {
         '<li class="empty-message">Loading hierarchy...</li>';
     } else if (objectMap.size === 0) {
       this._rootUlElement.innerHTML =
-        '<li class="empty-message">No celestial objects loaded.</li>';
+        '<li class="empty-message">No active celestial objects loaded.</li>';
     } else {
       const addItem = (obj: CelestialObject, parentUl: HTMLElement) => {
-        const isDestroyed = obj.status === CelestialStatus.DESTROYED;
-        const isAnnihilated = obj.status === CelestialStatus.ANNIHILATED;
-        const isInactive = isDestroyed || isAnnihilated;
+        const isInactive =
+          obj.status === CelestialStatus.DESTROYED ||
+          obj.status === CelestialStatus.ANNIHILATED;
+        if (isInactive) return; // Should not happen with pre-filtered list, but good safeguard.
+
         const childrenIds = dynamicHierarchy.get(obj.id) || [];
         const hasChildren = childrenIds.length > 0;
-        const isFocused = !isInactive && obj.id === currentFocusedId;
+        const isFocused = obj.id === currentFocusedId;
 
         const listItem = document.createElement("li");
         listItem.dataset.id = obj.id;
-        if (isDestroyed) listItem.classList.add("destroyed");
-        if (isAnnihilated) listItem.classList.add("annihilated");
 
         const row = document.createElement("celestial-row");
         row.setAttribute("object-id", obj.id);
@@ -98,7 +162,6 @@ export class FocusListManager {
         const iconConfig = generateIconConfig(obj);
         row.setAttribute("config", JSON.stringify(iconConfig));
 
-        if (isInactive) row.setAttribute("inactive", "");
         if (isFocused) row.setAttribute("focused", "");
 
         row.classList.add("focus-row-item");
@@ -109,7 +172,6 @@ export class FocusListManager {
         if (hasChildren) {
           const caretSpan = document.createElement("span");
           caretSpan.classList.add("caret");
-
           caretSpan.setAttribute("role", "button");
           caretSpan.setAttribute("aria-controls", `subtree-${obj.id}`);
 
@@ -215,26 +277,15 @@ export class FocusListManager {
     const isAnnihilated = status === CelestialStatus.ANNIHILATED;
     const isInactive = isDestroyed || isAnnihilated;
 
-    listItem.classList.toggle("destroyed", isDestroyed);
-    listItem.classList.toggle("annihilated", isAnnihilated);
-
-    if (rowElement) {
-      rowElement.toggleAttribute("inactive", isInactive);
-      if (isInactive) {
-        rowElement.removeAttribute("focused");
-      }
+    if (isInactive) {
+      // The object has been destroyed, it needs to move to the other list.
+      // The easiest and safest way to handle this structural change is to
+      // trigger a full refresh of both lists.
+      return true;
     }
 
-    if (caretElement) {
-      caretElement.classList.toggle("inactive-caret", isInactive);
-      if (isInactive) {
-        caretElement.classList.remove("caret-down");
-        caretElement.setAttribute("aria-expanded", "false");
-        const nestedUl =
-          listItem.querySelector<HTMLUListElement>(":scope > .nested");
-        nestedUl?.classList.remove("active");
-      }
-    }
+    // This logic would handle non-destructive status changes, but we don't
+    // have any right now. Returning false as no refresh is needed.
     return false;
   }
 }

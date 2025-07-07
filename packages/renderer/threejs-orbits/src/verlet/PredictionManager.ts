@@ -6,6 +6,7 @@ import {
   CelestialType,
   CelestialObject,
   CelestialStatus,
+  METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
 import { type SimulationParameters } from "@teskooano/core-physics";
 import { OSVector3 } from "@teskooano/core-math";
@@ -229,6 +230,8 @@ export class PredictionManager {
       renderableObjectsMap,
     );
 
+    const relativeToBodyId = renderableTargetObject.parentId;
+
     const allCurrentPhysicsStates = Object.values(fullObjectsMap)
       .map((co) => co.physicsStateReal)
       .filter((state): state is PhysicsStateReal => !!state);
@@ -288,7 +291,8 @@ export class PredictionManager {
     this.isCalculating = true;
     this.predictionWorker?.postMessage(
       {
-        objectId,
+        objectId: objectId,
+        relativeToBodyId: relativeToBodyId,
         physicsStatesBuffer: buffer,
         idMap: idMap,
         predictionDuration: this.predictionDuration,
@@ -313,36 +317,32 @@ export class PredictionManager {
     object: RenderableCelestialObject,
     allObjects: Record<string, RenderableCelestialObject>,
   ): number {
-    const MIN_STEPS = 100;
-    const MAX_STEPS = 1000;
-    const POINTS_PER_AU = 2000; // Defines the desired visual density of points.
+    const MIN_STEPS = 200;
+    const MAX_STEPS = 3000;
+    const POINTS_PER_AU_PLANETARY = 500;
+    const POINTS_PER_AU_LUNAR = 50000; // High density for moons
 
-    let orbitDefiningObject = object;
-
-    // If the object is a moon, its path through the system is primarily
-    // defined by its parent's orbit. We should use the parent's orbital
-    // circumference to determine the line's visual density.
+    // For moons or any object orbiting another non-star body.
     if (object.parentId) {
       const parent = allObjects[object.parentId];
-      // Check if the parent exists and has an orbit of its own (i.e., is not a central star).
-      if (parent && parent.orbit) {
-        orbitDefiningObject = parent;
+      if (parent && parent.type !== CelestialType.STAR && parent.position) {
+        const distanceToParent_m =
+          object.position.distanceTo(parent.position) / METERS_TO_SCENE_UNITS;
+        const circumference_au = (2 * Math.PI * distanceToParent_m) / AU_METERS;
+        const steps = Math.round(circumference_au * POINTS_PER_AU_LUNAR);
+        return Math.max(MIN_STEPS, Math.min(steps, MAX_STEPS));
       }
     }
 
-    if (!orbitDefiningObject.orbit) {
-      // Fallback for objects without a defined orbit (e.g., central stars).
+    // Fallback to original logic for planets orbiting a star.
+    if (!object.orbit) {
       return MIN_STEPS;
     }
 
-    // Approximate the circumference of the ellipse.
-    // A simple approximation using the semi-major axis is sufficient for this purpose.
     const circumferenceAU =
-      2 * Math.PI * (orbitDefiningObject.orbit.realSemiMajorAxis_m / AU_METERS);
+      2 * Math.PI * (object.orbit.realSemiMajorAxis_m / AU_METERS);
+    const steps = Math.round(circumferenceAU * POINTS_PER_AU_PLANETARY);
 
-    const steps = Math.round(circumferenceAU * POINTS_PER_AU);
-
-    // Clamp the result to prevent excessively low or high step counts.
     return Math.max(MIN_STEPS, Math.min(steps, MAX_STEPS));
   }
 
@@ -537,6 +537,10 @@ export class PredictionManager {
     });
   }
 
+  public getPredictionLabels(): { label: CSS2DObject; element: HTMLElement }[] {
+    return this.predictionLabels;
+  }
+
   private updatePredictionLabels(
     points: THREE.Vector3[],
     timestamps: number[],
@@ -585,7 +589,9 @@ export class PredictionManager {
         const t = (markerTime - t0) / segmentDuration;
 
         // Interpolate position
-        label.position.copy(p0).lerp(p1, t);
+        const localPosition = p0.clone().lerp(p1, t);
+        label.position.copy(localPosition);
+        label.userData.localPosition = localPosition;
         label.visible = this.visualizationVisible;
       } else {
         label.visible = false;

@@ -18,11 +18,11 @@ import { WhiteDwarfRenderer } from "./remnants/white-dwarf";
 import { WolfRayetRenderer } from "./post-main-sequence/wolf-rayet";
 import { SchwarzschildBlackHoleRenderer } from "./black-holes/schwarzschild-black-hole";
 import { KerrBlackHoleRenderer } from "./black-holes/kerr-black-hole";
-import type { CelestialRenderer } from "../base/CelestialRenderer";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { createFallbackSphere } from "../utils/createFallbackSphere";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
+import { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 
 interface CreateStarMeshDeps {
   starRenderers: Map<string, CelestialRenderer>;

@@ -1,6 +1,7 @@
 import { OSVector3 } from "@teskooano/core-math";
-import { PhysicsStateReal } from "../types";
+
 import { calculateNewtonianGravitationalForce as calculateGravitationalForce } from "../forces/gravity";
+import { PhysicsStateReal } from "@teskooano/data-types";
 
 /**
  * Represents a node in the octree
@@ -344,40 +345,50 @@ export class Octree {
     theta: number,
     accumulatedForce: OSVector3,
   ): void {
+    // An empty node exerts no force.
+    if (node.totalMass_kg === 0) {
+      return;
+    }
+
+    // A node that only contains the target body itself exerts no net force on it.
     if (
-      node.totalMass_kg === 0 ||
-      (node.bodies.length === 1 &&
-        node.bodies[0].id === targetBody.id &&
-        !node.children)
+      node.bodies.length === 1 &&
+      node.bodies[0].id === targetBody.id &&
+      !node.children
     ) {
       return;
     }
 
-    const distanceSq =
+    const distance = Math.sqrt(
       distanceSquared(targetBody.position_m, node.centerOfMass_m) +
-      this.softeningFactorSquared;
-    const distance = Math.sqrt(distanceSq);
+        this.softeningFactorSquared,
+    );
     const nodeWidth = node.size * 2;
 
-    if (nodeWidth / distance < theta || !node.children) {
-      if (node.bodies.some((b) => b.id === targetBody.id) && !node.children) {
-        for (const otherBody of node.bodies) {
-          if (otherBody.id !== targetBody.id) {
-            const force = calculateGravitationalForce(otherBody, targetBody);
-            accumulatedForce.add(force);
-          }
-        }
-      } else {
-        const nodeBody: PhysicsStateReal = {
-          id: `node_${node.center.x}_${node.center.y}_${node.center.z}`,
-          mass_kg: node.totalMass_kg,
-          position_m: node.centerOfMass_m,
-          velocity_mps: new OSVector3(0, 0, 0),
-        };
-        const force = calculateGravitationalForce(nodeBody, targetBody);
-        accumulatedForce.add(force);
-      }
+    const isFarAway = nodeWidth / distance < theta;
+
+    if (isFarAway) {
+      // Node is far enough away, so we can approximate it as a single point mass.
+      const nodePointMass: PhysicsStateReal = {
+        id: `node_${node.center.x}_${node.center.y}_${node.center.z}`,
+        mass_kg: node.totalMass_kg,
+        position_m: node.centerOfMass_m,
+        velocity_mps: new OSVector3(0, 0, 0),
+      };
+      const force = calculateGravitationalForce(nodePointMass, targetBody);
+      accumulatedForce.add(force);
     } else {
+      // Node is too close, so we must inspect its contents more closely.
+
+      // 1. Calculate forces from any bodies stored directly in this (potentially internal) node.
+      for (const otherBody of node.bodies) {
+        if (otherBody.id !== targetBody.id) {
+          const force = calculateGravitationalForce(otherBody, targetBody);
+          accumulatedForce.add(force);
+        }
+      }
+
+      // 2. Recurse into the child nodes.
       if (node.children) {
         for (const child of node.children) {
           this.calculateNodeForce(child, targetBody, theta, accumulatedForce);

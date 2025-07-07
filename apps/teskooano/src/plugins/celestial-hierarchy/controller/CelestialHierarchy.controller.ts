@@ -32,6 +32,7 @@ import * as THREE from "three";
 export class CelestialHierarchyController extends StateSubscriptionMixin {
   private _view: CelestialHierarchy;
   private _treeListContainer: HTMLUListElement;
+  private _destroyedListContainer: HTMLUListElement;
   private _resetButton: HTMLElement;
   private _clearButton: HTMLElement;
 
@@ -46,6 +47,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
   private _handleObjectStatusChanged: (event: Event) => void;
   private _handleInfluencesChanged: () => void;
   private _handleTreeInteraction: (event: Event) => void;
+  private _handleHierarchyChanged: (event: Event) => void;
 
   private _previousObjectsState: Record<string, CelestialObject> = {};
   private _listUpdateInterval: number | null = null;
@@ -63,16 +65,21 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
   constructor(
     view: CelestialHierarchy,
     treeListContainer: HTMLUListElement,
+    destroyedListContainer: HTMLUListElement,
     resetButton: HTMLElement,
     clearButton: HTMLElement,
   ) {
     super();
     this._view = view;
     this._treeListContainer = treeListContainer;
+    this._destroyedListContainer = destroyedListContainer;
     this._resetButton = resetButton;
     this._clearButton = clearButton;
 
-    this._listManager = new FocusListManager(this._treeListContainer);
+    this._listManager = new FocusListManager(
+      this._treeListContainer,
+      this._destroyedListContainer,
+    );
 
     this._handleObjectsLoaded = this._populateListInternal.bind(this);
     this._handleObjectDestroyed = this._populateListInternal.bind(this);
@@ -90,6 +97,13 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     };
     this._handleInfluencesChanged = this._populateListInternal.bind(this);
     this._handleTreeInteraction = this.handleTreeInteraction.bind(this);
+    this._handleHierarchyChanged = (event: Event): void => {
+      console.debug(
+        "[CelestialHierarchyController] Hierarchy changed event received.",
+      );
+      // Force an immediate distance update when hierarchy changes
+      this.forceDistanceUpdate();
+    };
   }
 
   /**
@@ -124,6 +138,10 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     document.addEventListener(
       "celestial-influences-changed",
       this._handleInfluencesChanged,
+    );
+    document.addEventListener(
+      "celestial-hierarchy-changed",
+      this._handleHierarchyChanged,
     );
 
     this._listUpdateInterval = window.setInterval(
@@ -166,6 +184,10 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     document.removeEventListener(
       "celestial-influences-changed",
       this._handleInfluencesChanged,
+    );
+    document.removeEventListener(
+      "celestial-hierarchy-changed",
+      this._handleHierarchyChanged,
     );
   }
 
@@ -516,16 +538,25 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
     const SCENE_UNITS_TO_METERS = 1 / METERS_TO_SCENE_UNITS;
     const AU_TO_METERS = 149597870700; // 1 AU in meters
 
-    // First, update all distances and store them on the LI elements
-    const listItems =
-      this._treeListContainer.querySelectorAll<HTMLLIElement>("li[data-id]");
-    listItems.forEach((li) => {
+    // Update distances for both active and destroyed objects
+    const allListItems = [
+      ...Array.from(
+        this._treeListContainer.querySelectorAll<HTMLLIElement>("li[data-id]"),
+      ),
+      ...Array.from(
+        this._destroyedListContainer.querySelectorAll<HTMLLIElement>(
+          "li[data-id]",
+        ),
+      ),
+    ];
+
+    allListItems.forEach((li) => {
       const id = li.dataset.id;
       if (!id) return;
 
       const celestialObj = allObjects[id];
       const sceneObject = renderer.objectManager.getObject(id);
-      if (!celestialObj || !sceneObject) return;
+      if (!celestialObj) return;
 
       let distanceMeters = 0;
 
@@ -549,23 +580,33 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
             distanceMeters = avgRadiusAU * AU_TO_METERS;
           }
         }
-      } else {
+      } else if (sceneObject) {
         // For regular objects, use world position
         sceneObject.getWorldPosition(worldPosition);
 
+        // Use the most current parent information
         const parentId = celestialObj.currentParentId ?? celestialObj.parentId;
-        if (parentId) {
+        if (parentId && allObjects[parentId]) {
           const parentSceneObject = renderer.objectManager.getObject(parentId);
           if (parentSceneObject) {
             parentSceneObject.getWorldPosition(parentWorldPosition);
             distanceMeters =
               worldPosition.distanceTo(parentWorldPosition) *
               SCENE_UNITS_TO_METERS;
+          } else {
+            // Parent not found in scene, use distance from origin
+            distanceMeters =
+              worldPosition.distanceTo(origin) * SCENE_UNITS_TO_METERS;
           }
         } else {
-          // Fallback to distance from origin for root objects
+          // No parent or root object, use distance from origin
           distanceMeters =
             worldPosition.distanceTo(origin) * SCENE_UNITS_TO_METERS;
+        }
+      } else {
+        // Object not in scene (e.g., destroyed), try to use orbital parameters
+        if (celestialObj.orbit?.realSemiMajorAxis_m) {
+          distanceMeters = celestialObj.orbit.realSemiMajorAxis_m;
         }
       }
 
@@ -576,7 +617,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       }
     });
 
-    // Now, reorder the children of each list (root and nested)
+    // Reorder active objects list only (destroyed objects stay in simple list order)
     const listsToSort =
       this._treeListContainer.querySelectorAll<HTMLUListElement>(
         "ul#focus-tree-list, ul.nested",
@@ -603,6 +644,71 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       // Only manipulate the DOM if the order has actually changed
       if (orderHasChanged) {
         sortedChildren.forEach((child) => list.appendChild(child));
+      }
+    });
+  }
+
+  /**
+   * Forces an immediate distance update for all objects.
+   * Useful when objects have changed parents and need immediate recalculation.
+   */
+  private forceDistanceUpdate(): void {
+    // This will be called from hierarchy changes to update distances immediately
+    if (!this._parentPanel) return;
+    const renderer = this._parentPanel.getRenderer();
+    if (!renderer) return;
+
+    const allObjects = StateAccessor.getCurrentCelestialObjects();
+    const origin = new THREE.Vector3(0, 0, 0);
+    const worldPosition = new THREE.Vector3();
+    const parentWorldPosition = new THREE.Vector3();
+    const SCENE_UNITS_TO_METERS = 1 / METERS_TO_SCENE_UNITS;
+
+    // Update distances for all rows immediately
+    const allRows = [
+      ...Array.from(
+        this._treeListContainer.querySelectorAll<any>("celestial-row"),
+      ),
+      ...Array.from(
+        this._destroyedListContainer.querySelectorAll<any>("celestial-row"),
+      ),
+    ];
+
+    allRows.forEach((row) => {
+      const objectId = row.getAttribute("object-id");
+      if (!objectId) return;
+
+      const celestialObj = allObjects[objectId];
+      const sceneObject = renderer.objectManager.getObject(objectId);
+      if (!celestialObj) return;
+
+      let distanceMeters = 0;
+
+      if (sceneObject) {
+        sceneObject.getWorldPosition(worldPosition);
+
+        const parentId = celestialObj.currentParentId ?? celestialObj.parentId;
+        if (parentId && allObjects[parentId]) {
+          const parentSceneObject = renderer.objectManager.getObject(parentId);
+          if (parentSceneObject) {
+            parentSceneObject.getWorldPosition(parentWorldPosition);
+            distanceMeters =
+              worldPosition.distanceTo(parentWorldPosition) *
+              SCENE_UNITS_TO_METERS;
+          } else {
+            distanceMeters =
+              worldPosition.distanceTo(origin) * SCENE_UNITS_TO_METERS;
+          }
+        } else {
+          distanceMeters =
+            worldPosition.distanceTo(origin) * SCENE_UNITS_TO_METERS;
+        }
+      } else if (celestialObj.orbit?.realSemiMajorAxis_m) {
+        distanceMeters = celestialObj.orbit.realSemiMajorAxis_m;
+      }
+
+      if (typeof row.updateDistance === "function") {
+        row.updateDistance(distanceMeters);
       }
     });
   }
