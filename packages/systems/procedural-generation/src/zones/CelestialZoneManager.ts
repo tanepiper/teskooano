@@ -22,8 +22,8 @@ export const enhancedCelestialZones: CelestialZone[] = [
   {
     name: "Scorched Zone",
     category: ZoneCategory.SCORCHED,
-    baseMinAU: 0.01,
-    baseMaxAU: 0.3,
+    baseMinAU: 0.2,
+    baseMaxAU: 0.4,
     minAU: 0, // Calculated at runtime
     maxAU: 0, // Calculated at runtime
     temperatureRange: { min: 800, max: 2000 },
@@ -41,7 +41,7 @@ export const enhancedCelestialZones: CelestialZone[] = [
   {
     name: "Hot Inner Zone",
     category: ZoneCategory.HOT,
-    baseMinAU: 0.3,
+    baseMinAU: 0.4,
     baseMaxAU: 0.8,
     minAU: 0, // Calculated at runtime
     maxAU: 0, // Calculated at runtime
