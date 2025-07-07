@@ -9,12 +9,13 @@ import {
   AccretionDiskMaterial,
 } from "./schwarzschild-black-hole";
 import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
+
+import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
+  BaseCelestialRendererOptions,
   CelestialMeshOptions,
   LightSourcesMap,
-} from "../../base/CelestialRenderer";
-import { BaseCelestialRendererOptions } from "../../base";
-import { LODLevel } from "@teskooano/renderer-threejs-lod";
+} from "@teskooano/renderer-threejs-celestial";
 
 /**
  * Material for Kerr black holes' ergosphere
@@ -322,16 +323,15 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
   }
 
   /**
-   * Update materials with current time
+   * Update uniforms for the planet based on time and lighting.
    */
   update(
     object: RenderableCelestialObject,
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
-    renderer?: THREE.WebGLRenderer,
-    scene?: THREE.Scene,
+    lightSources: LightSourcesMap,
+    camera: THREE.Camera,
+    allObjects: Record<string, RenderableCelestialObject>,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
     const currentTime = this.elapsedTime;
@@ -358,16 +358,16 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer {
       material.update(currentTime, timeScale, lightSources, camera);
     }
 
-    const lensingHelper = this.lensingHelpers.get(object.celestialObjectId);
-    if (
-      lensingHelper &&
-      renderer &&
-      scene &&
-      camera &&
-      camera instanceof THREE.PerspectiveCamera
-    ) {
-      lensingHelper.update(renderer, scene, camera);
-    }
+    // const lensingHelper = this.lensingHelpers.get(object.celestialObjectId);
+    // if (
+    //   lensingHelper &&
+    //   renderer &&
+    //   scene &&
+    //   camera &&
+    //   camera instanceof THREE.PerspectiveCamera
+    // ) {
+    //   lensingHelper.update(renderer, scene, camera);
+    // }
   }
 
   /**

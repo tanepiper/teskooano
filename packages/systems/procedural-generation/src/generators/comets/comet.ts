@@ -35,6 +35,14 @@ export function generateComet(
   distanceAU: number, // This will be used as the basis for the orbit
   index: number,
 ): CelestialObject | null {
+  // Validate distance is within system boundary
+  if (distanceAU > CONST.SYSTEM_MAX_DISTANCE_AU) {
+    console.warn(
+      `[generateComet] Comet distance ${distanceAU} AU exceeds system boundary. Skipping.`,
+    );
+    return null;
+  }
+
   const starId = parentStar.id;
   const starMass_kg = parentStar.realMass_kg;
 

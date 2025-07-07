@@ -323,14 +323,16 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
   /**
    * Update materials with current time and handle lensing effect
    */
+  /**
+   * Update uniforms for the planet based on time and lighting.
+   */
   update(
     object: RenderableCelestialObject,
     time: number,
     timeScale: number,
-    lightSources?: LightSourcesMap,
-    camera?: THREE.Camera,
-    renderer?: THREE.WebGLRenderer,
-    scene?: THREE.Scene,
+    lightSources: LightSourcesMap,
+    camera: THREE.Camera,
+    allObjects: Record<string, RenderableCelestialObject>,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
     const currentTime = this.elapsedTime;
@@ -348,16 +350,16 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer {
       material.update(currentTime, timeScale, lightSources, camera);
     });
 
-    const lensingHelper = this.lensingHelpers.get(object.celestialObjectId);
-    if (
-      lensingHelper &&
-      renderer &&
-      scene &&
-      camera &&
-      camera instanceof THREE.PerspectiveCamera
-    ) {
-      lensingHelper.update(renderer, scene, camera);
-    }
+    // const lensingHelper = this.lensingHelpers.get(object.celestialObjectId);
+    // if (
+    //   lensingHelper &&
+    //   renderer &&
+    //   scene &&
+    //   camera &&
+    //   camera instanceof THREE.PerspectiveCamera
+    // ) {
+    //   lensingHelper.update(renderer, scene, camera);
+    // }
   }
 
   /**

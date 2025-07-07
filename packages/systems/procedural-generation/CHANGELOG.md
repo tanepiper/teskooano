@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **System Distance Boundary Enforcement**: Added hard cap of 10,000 AU for all celestial objects to prevent extreme distances that exceeded the system space
+  - Zone scaling based on stellar luminosity now respects the system boundary
+  - Comet generation capped at system maximum distance
+  - Rogue object placement limited to system boundary
+  - Asteroid belt validation rejects belts beyond 10,000 AU
+  - All distance generation functions now enforce the boundary
+  - Added comprehensive test to verify distance constraints
+
 ### Changed
 
 - **Documentation Overhaul**:

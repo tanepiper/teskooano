@@ -1,3 +1,5 @@
+import { SYSTEM_MAX_DISTANCE_AU } from "../../constants";
+
 /**
  * Validates if the given distance is appropriate for asteroid belt formation
  */
@@ -5,6 +7,11 @@ export function isValidAsteroidBeltDistance(
   distanceAU: number,
   starMass_kg: number,
 ): boolean {
+  // Reject any distance beyond system boundary
+  if (distanceAU > SYSTEM_MAX_DISTANCE_AU) {
+    return false;
+  }
+
   const solarMass = 1.989e30;
   const massRatio = starMass_kg / solarMass;
 

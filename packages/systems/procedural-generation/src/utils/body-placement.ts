@@ -3,7 +3,11 @@ import { type CelestialObject, AU_METERS } from "@teskooano/data-types";
 import type { CelestialZone, OrbitalArrangement } from "../zones";
 import { OrbitalConfiguration } from "../zones";
 import { getRandomItem } from "../utils";
+import { SYSTEM_MAX_DISTANCE_AU } from "../constants";
 
+/**
+ * Represents a single body placement with its orbital configuration
+ */
 export interface BodyPlacement {
   distanceAU: number;
   parentStar: CelestialObject;
@@ -371,8 +375,11 @@ function generateRogueGroup(
   arrangement: OrbitalArrangement,
   slotIndex: number,
 ): PlacementGroup {
-  // Rogue objects can be anywhere in the zone
-  const rogueDistance = utils.lerp(zone.minAU, zone.maxAU, random());
+  // Rogue objects can be anywhere in the zone, but capped at system boundary
+  const rogueDistance = Math.min(
+    utils.lerp(zone.minAU, zone.maxAU, random()),
+    SYSTEM_MAX_DISTANCE_AU,
+  );
 
   const roguePlacement: BodyPlacement = {
     distanceAU: rogueDistance,
@@ -433,7 +440,8 @@ function generateDistanceInZone(
   random: () => number,
   zone: CelestialZone,
 ): number {
-  return utils.lerp(zone.minAU, zone.maxAU, random());
+  const distance = utils.lerp(zone.minAU, zone.maxAU, random());
+  return Math.min(distance, SYSTEM_MAX_DISTANCE_AU);
 }
 
 function findClosestStar(

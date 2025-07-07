@@ -322,4 +322,34 @@ describe("Enhanced Procedural Generation System", () => {
     const hasStars = objects.some((obj) => obj.type === CelestialType.STAR);
     expect(hasStars).toBe(true);
   });
+
+  it("enforces system distance boundary of 10,000 AU", async () => {
+    const seed = "distance-boundary-test";
+    const { objects$ } = await generateSystem(seed);
+
+    const objects: any[] = [];
+    await new Promise<void>((resolve) => {
+      objects$.subscribe({
+        next: (obj) => objects.push(obj),
+        complete: () => resolve(),
+      });
+    });
+
+    // Check all objects are within the 10,000 AU boundary
+    for (const obj of objects) {
+      if (obj.orbit?.realSemiMajorAxis_m) {
+        const distanceAU = obj.orbit.realSemiMajorAxis_m / 1.496e11;
+        expect(distanceAU).toBeLessThanOrEqual(10000);
+      }
+    }
+
+    // Also check for any rogue objects that might store distance differently
+    const rogueObjects = objects.filter((obj) => obj.name.includes("Rogue"));
+    for (const rogue of rogueObjects) {
+      if (rogue.orbit?.meanAnomaly) {
+        // Rogue planets store distance in meanAnomaly
+        expect(rogue.orbit.meanAnomaly).toBeLessThanOrEqual(10000);
+      }
+    }
+  });
 });

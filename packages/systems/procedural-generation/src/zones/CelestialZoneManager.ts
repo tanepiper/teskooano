@@ -230,8 +230,14 @@ export class CelestialZoneManager {
 
     const adjustedZones = enhancedCelestialZones.map((zone) => ({
       ...zone,
-      minAU: zone.baseMinAU * scalingFactor,
-      maxAU: zone.baseMaxAU * scalingFactor,
+      minAU: Math.min(
+        zone.baseMinAU * scalingFactor,
+        CONST.SYSTEM_MAX_DISTANCE_AU,
+      ),
+      maxAU: Math.min(
+        zone.baseMaxAU * scalingFactor,
+        CONST.SYSTEM_MAX_DISTANCE_AU,
+      ),
     }));
 
     return new CelestialZoneManager(random, adjustedZones);
@@ -284,8 +290,14 @@ export class CelestialZoneManager {
 
     return this.zones.map((zone) => ({
       ...zone,
-      minAU: zone.minAU * luminosityFactor,
-      maxAU: zone.maxAU * luminosityFactor,
+      minAU: Math.min(
+        zone.minAU * luminosityFactor,
+        CONST.SYSTEM_MAX_DISTANCE_AU,
+      ),
+      maxAU: Math.min(
+        zone.maxAU * luminosityFactor,
+        CONST.SYSTEM_MAX_DISTANCE_AU,
+      ),
       // Adjust formation probability based on system complexity
       formationProbability:
         zone.formationProbability * this.getComplexityFactor(config),

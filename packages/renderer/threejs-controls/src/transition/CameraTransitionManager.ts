@@ -1,4 +1,8 @@
-import { CustomEvents } from "@teskooano/data-types";
+import {
+  CustomEvents,
+  AU_METERS,
+  METERS_TO_SCENE_UNITS,
+} from "@teskooano/data-types";
 import { notificationManager } from "@teskooano/notifications";
 import gsap from "gsap";
 import * as THREE from "three";
@@ -40,6 +44,15 @@ export class CameraTransitionManager {
   ) {
     this.camera = camera;
     this.orbitControlsHandler = orbitControlsHandler;
+  }
+
+  /**
+   * Converts a value from the renderer's internal scene units into Astronomical Units (AU).
+   * @param sceneUnits - The value in scene units.
+   * @returns The equivalent value in AU.
+   */
+  private sceneUnitsToAu(sceneUnits: number): number {
+    return sceneUnits / (AU_METERS * METERS_TO_SCENE_UNITS);
   }
 
   /**
@@ -194,7 +207,6 @@ export class CameraTransitionManager {
     this.lastUpdatePosition.copy(startPos);
     this.lastUpdateTime = 0;
     const totalDuration = this.calculateTransitionDuration(startPos, endPos);
-    const AU = 150; // Aprox
 
     let targetName = "Position";
     if (options?.focusedObjectId) {
@@ -250,14 +262,14 @@ export class CameraTransitionManager {
 
       // Calculate instantaneous speed based on frame-to-frame changes
       const speed = deltaTime > 0 ? deltaDistance / deltaTime : 0;
-      const speedInAU = speed / AU / 10;
+      const speedInAU = this.sceneUnitsToAu(speed);
 
       // Update state for the next frame's calculation
       this.lastUpdatePosition.copy(currentPosition);
       this.lastUpdateTime = currentTime;
 
       const remainingDistance = currentPosition.distanceTo(endPos);
-      const remainingDistanceAU = remainingDistance / AU / 10;
+      const remainingDistanceAU = this.sceneUnitsToAu(remainingDistance);
       const remainingTime = this.activeTimeline.duration() - currentTime;
 
       notificationManager.updateNotification(
@@ -330,7 +342,6 @@ export class CameraTransitionManager {
     endPos: THREE.Vector3,
   ): number {
     // --- Dynamic Transition Duration Calculation ---
-    const AU = 150; // Approximate scene units per Astronomical Unit
 
     // --- Tuning Parameters for the duration curve ---
     // The base duration for a 1 AU trip.
@@ -350,7 +361,7 @@ export class CameraTransitionManager {
       return 0;
     }
 
-    const distanceInAU = distance / AU;
+    const distanceInAU = this.sceneUnitsToAu(distance);
 
     const calculatedDuration =
       BASE_DURATION_FACTOR * Math.pow(distanceInAU, DISTANCE_EXPONENT);

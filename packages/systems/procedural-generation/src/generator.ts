@@ -6,6 +6,7 @@ import { generateBodyDistances } from "./utils/body-placement";
 import { CelestialZoneManager } from "./zones";
 import { generateComet, generateSystemNameFromSeed } from "./generators";
 import { mergeMap, take } from "rxjs/operators";
+import { SYSTEM_MAX_DISTANCE_AU } from "./constants";
 
 /**
  * Generates sophisticated star systems with enhanced realism and variety.
@@ -57,7 +58,10 @@ export async function generateSystem(
         });
 
         const cometPlacementZone = zoneManager.getAllZones().slice(-4)[0];
-        const cometDistanceAU = cometPlacementZone.maxAU * (1 + random());
+        const cometDistanceAU = Math.min(
+          cometPlacementZone.maxAU * (1 + random()),
+          SYSTEM_MAX_DISTANCE_AU,
+        );
         const comet = generateComet(random, primaryStar, cometDistanceAU, 99);
         if (comet) {
           subscriber.next(comet);
