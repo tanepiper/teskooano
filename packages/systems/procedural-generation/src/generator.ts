@@ -57,7 +57,23 @@ export async function generateSystem(
           celestialCount++;
         });
 
-        const cometPlacementZone = zoneManager.getAllZones().slice(-4)[0];
+        // Use proper zone selection instead of all zones
+        const selectedZones = zoneManager.selectZonesForPlacement(
+          stars,
+          systemConfig,
+        );
+
+        // If no zones were selected, ensure we have at least the basic zones
+        if (selectedZones.length === 0) {
+          const allZones = zoneManager.getAllZones();
+          selectedZones.push(
+            ...allZones.slice(1, 4), // Hot Inner, Temperate, Cool zones
+          );
+        }
+
+        // Generate a comet in the outer system
+        const allZones = zoneManager.getAllZones();
+        const cometPlacementZone = allZones.slice(-4)[0];
         const cometDistanceAU = Math.min(
           cometPlacementZone.maxAU * (1 + random()),
           SYSTEM_MAX_DISTANCE_AU,
@@ -68,9 +84,10 @@ export async function generateSystem(
           celestialCount++;
         }
 
+        // Use selected zones instead of all zones
         const bodyPlacements = generateBodyDistances(
           random,
-          zoneManager.getAllZones(),
+          selectedZones,
           stars,
         );
 

@@ -1,3 +1,4 @@
+import { StateAccessor } from "@teskooano/core-state";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
 
@@ -21,7 +22,7 @@ export class LightSourceComponent {
   /** The underlying THREE.Light instance. */
   public readonly light: THREE.Light;
   /** The celestial object this light source is attached to. */
-  public readonly celestialObject: RenderableCelestialObject;
+  public celestialObject: RenderableCelestialObject;
 
   /**
    * Creates an instance of LightSourceComponent.
@@ -45,7 +46,17 @@ export class LightSourceComponent {
    * This should be called each frame.
    */
   public update(): void {
-    this.light.position.copy(this.celestialObject.position);
+    const objects = StateAccessor.getRenderableObjectsByIds([
+      this.celestialObject.celestialObjectId,
+    ]);
+    const freshObject = objects.find(
+      (o) => o.celestialObjectId === this.celestialObject.celestialObjectId,
+    );
+
+    if (freshObject) {
+      this.celestialObject = freshObject; // Keep our reference fresh
+      this.light.position.copy(freshObject.position);
+    }
     // Future logic to update color/intensity can be added here.
   }
 

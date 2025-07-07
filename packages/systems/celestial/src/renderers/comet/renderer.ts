@@ -349,12 +349,10 @@ export class CometRenderer extends BaseCelestialRenderer {
       lightSources,
     );
     if (!primaryLightSource) return;
-    const lightPosition = this._tempVector1.set(
-      primaryLightSource.position.x,
-      primaryLightSource.position.y,
-      primaryLightSource.position.z,
-    );
-    const cometPosition = this._tempVector2.copy(object.position);
+
+    // Store light position in a dedicated vector to avoid temp vector conflicts
+    const lightPosition = new THREE.Vector3().copy(primaryLightSource.position);
+    const cometPosition = this._tempVector1.copy(object.position);
     const distanceToLight = cometPosition.distanceTo(lightPosition);
 
     const activityDistance = 2 * SCALE.RENDER_SCALE_AU;
@@ -415,13 +413,13 @@ export class CometRenderer extends BaseCelestialRenderer {
       this.simplifiedTailMaterial.uniforms.uOpacity.value = activityFactor;
     }
     if (this.simplifiedTail) {
-      const tailDirection = this._tempVector3
+      const tailDirection = this._tempVector2
         .subVectors(cometPosition, lightPosition)
         .normalize();
 
       // Align the tail's Y-axis with the direction away from the sun
       this.simplifiedTail.quaternion.setFromUnitVectors(
-        this._tempVector1.set(0, 1, 0),
+        this._tempVector3.set(0, 1, 0),
         tailDirection,
       );
       // Scale the tail length based on activity
@@ -436,7 +434,7 @@ export class CometRenderer extends BaseCelestialRenderer {
       this.particleAttributes
     ) {
       const properties = object.properties as CometProperties;
-      const tailDirection = this._tempVector3
+      const tailDirection = this._tempVector2
         .subVectors(cometPosition, lightPosition)
         .normalize();
 
@@ -487,7 +485,7 @@ export class CometRenderer extends BaseCelestialRenderer {
           .copy(tailDirection)
           .multiplyScalar(speed * (0.8 + Math.random() * 0.4))
           .add(
-            this._tempVector1
+            this._tempVector3
               .random()
               .subScalar(0.5)
               .multiplyScalar(speed * 0.2), // Add some spread
@@ -607,7 +605,7 @@ export class CometRenderer extends BaseCelestialRenderer {
           .copy(jet.emissionNormal)
           .multiplyScalar(speed * (0.8 + Math.random() * 0.4))
           .add(
-            this._tempVector1
+            this._tempVector3
               .random()
               .subScalar(0.5)
               .multiplyScalar(speed * 0.3),

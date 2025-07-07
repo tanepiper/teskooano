@@ -31,12 +31,12 @@ export const enhancedCelestialZones: CelestialZone[] = [
     allowedGasGiantClasses: [GasGiantClass.CLASS_IV, GasGiantClass.CLASS_V],
     cometChance: 0,
     asteroidBeltChance: 0.1, // Some chance for inner belts
-    formationProbability: 0.15,
+    formationProbability: 0.08, // Still reduced but allows some variety
     specialConfigurations: [
       OrbitalConfiguration.STANDARD,
       OrbitalConfiguration.ROGUE,
     ],
-    maxBodies: 3,
+    maxBodies: 2, // Allow up to 2 bodies in scorched zone
   },
   {
     name: "Hot Inner Zone",
@@ -56,7 +56,7 @@ export const enhancedCelestialZones: CelestialZone[] = [
       OrbitalConfiguration.BINARY_PAIR,
       OrbitalConfiguration.TROJAN,
     ],
-    maxBodies: 4,
+    maxBodies: 6, // Increased for more variety
   },
   {
     name: "Temperate Zone",
@@ -82,7 +82,7 @@ export const enhancedCelestialZones: CelestialZone[] = [
       OrbitalConfiguration.TROJAN,
       OrbitalConfiguration.CO_ORBITAL,
     ],
-    maxBodies: 3,
+    maxBodies: 5, // Increased for more variety
   },
   {
     name: "Cool Zone",
@@ -102,7 +102,7 @@ export const enhancedCelestialZones: CelestialZone[] = [
       OrbitalConfiguration.BINARY_PAIR,
       OrbitalConfiguration.TROJAN,
     ],
-    maxBodies: 5,
+    maxBodies: 7, // Increased for more variety
   },
   {
     name: "Outer Gas Zone",
@@ -325,7 +325,7 @@ export class CelestialZoneManager {
   }
 
   /**
-   * Selects appropriate zones for body placement
+   * Selects appropriate zones for body placement with improved distribution
    */
   selectZonesForPlacement(
     stars: CelestialObject[],
@@ -334,6 +334,7 @@ export class CelestialZoneManager {
     const adjustedZones = this.getAdjustedZones(stars, config);
     const activeZones: CelestialZone[] = [];
 
+    // Allow more natural zone selection based on formation probability
     for (const zone of adjustedZones) {
       const shouldInclude = this.random() < zone.formationProbability;
       if (shouldInclude) {
@@ -341,16 +342,27 @@ export class CelestialZoneManager {
       }
     }
 
-    // Ensure at least one zone is active for non-empty systems
+    // Ensure at least some zones are active for non-empty systems
     if (activeZones.length === 0 && stars.length > 0) {
-      const fallbackZone = getRandomItem(
-        adjustedZones.slice(1, 4),
-        this.random,
-      ); // Pick from hot/temperate/cool
-      activeZones.push(fallbackZone);
+      // Add 2-3 random zones from different ranges
+      const innerZones = adjustedZones.slice(1, 4); // Hot, Temperate, Cool (skip Scorched)
+      const outerZones = adjustedZones.slice(4, 7); // Cold, Frozen, Outer
+
+      activeZones.push(getRandomItem(innerZones, this.random));
+      if (outerZones.length > 0 && this.random() > 0.3) {
+        activeZones.push(getRandomItem(outerZones, this.random));
+      }
     }
 
-    return activeZones;
+    // Allow more zones for variety - up to 7 zones
+    const maxZones = 5 + Math.floor(this.random() * 3); // 5-7 zones max
+    if (activeZones.length > maxZones) {
+      // Randomly select zones to keep
+      const shuffled = activeZones.sort(() => this.random() - 0.5);
+      return shuffled.slice(0, maxZones).sort((a, b) => a.minAU - b.minAU);
+    }
+
+    return activeZones.sort((a, b) => a.minAU - b.minAU); // Sort by distance
   }
 
   /**

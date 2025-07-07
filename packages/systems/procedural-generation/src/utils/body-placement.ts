@@ -35,7 +35,11 @@ export function generateBodyDistances(
 ): BodyPlacement[] {
   const placementGroups: PlacementGroup[] = [];
   let globalSlotIndex = 0;
-  const maxBodies = 60 + Math.floor(random() * 21); // 60-80 bodies
+  const maxBodies = 50 + Math.floor(random() * 31); // 50-80 bodies
+
+  // Track used distances to ensure proper spacing
+  const usedDistances: number[] = [];
+  const MIN_SPACING_AU = 0.2; // Minimum 0.2 AU between planets - allows closer but prevents extreme clustering
 
   // Generate placements for each zone
   for (const zone of zones) {
@@ -48,12 +52,21 @@ export function generateBodyDistances(
       zone,
       stars,
       globalSlotIndex,
+      usedDistances,
+      MIN_SPACING_AU,
     );
     placementGroups.push(...zoneGroups);
     globalSlotIndex += zoneGroups.reduce(
       (sum, group) => sum + group.bodies.length,
       0,
     );
+
+    // Add distances from this zone to the used distances
+    zoneGroups.forEach((group) => {
+      group.bodies.forEach((body) => {
+        usedDistances.push(body.distanceAU);
+      });
+    });
   }
 
   // Flatten all placements and sort by distance
@@ -72,6 +85,8 @@ function generatePlacementsForZone(
   zone: CelestialZone,
   stars: CelestialObject[],
   startingSlotIndex: number,
+  usedDistances: number[],
+  minSpacing: number,
 ): PlacementGroup[] {
   const groups: PlacementGroup[] = [];
   // Use maxBodies from the new zone format
@@ -79,9 +94,24 @@ function generatePlacementsForZone(
 
   let slotIndex = startingSlotIndex;
   let usedSlots = 0;
+  let attempts = 0;
+  const maxAttempts = numPotentialSlots * 3; // Prevent infinite loops
 
-  while (usedSlots < numPotentialSlots) {
-    const distance = generateDistanceInZone(random, zone);
+  while (usedSlots < numPotentialSlots && attempts < maxAttempts) {
+    attempts++;
+
+    const distance = generateDistanceInZoneWithSpacing(
+      random,
+      zone,
+      usedDistances,
+      minSpacing,
+    );
+
+    // If we couldn't find a valid distance, skip this slot
+    if (distance === null) {
+      continue;
+    }
+
     const parentStar = findClosestStar(distance, stars);
     const relativeDistance = Math.abs(distance - getStarDistance(parentStar));
 
@@ -103,22 +133,8 @@ function generatePlacementsForZone(
         groups.push(specialGroup);
         usedSlots += specialGroup.bodies.length;
         slotIndex += specialGroup.bodies.length;
-      } else {
-        // Fallback to standard placement
-        const standardPlacement = createStandardPlacement(
-          distance,
-          parentStar,
-          relativeDistance,
-          zone,
-          slotIndex,
-        );
-        groups.push({
-          baseDistance: distance,
-          configuration: OrbitalConfiguration.STANDARD,
-          bodies: [standardPlacement],
-        });
-        usedSlots++;
-        slotIndex++;
+        // Add this distance to used distances
+        usedDistances.push(distance);
       }
     } else {
       // Standard single body placement
@@ -136,6 +152,8 @@ function generatePlacementsForZone(
       });
       usedSlots++;
       slotIndex++;
+      // Add this distance to used distances
+      usedDistances.push(distance);
     }
   }
 
@@ -440,8 +458,50 @@ function generateDistanceInZone(
   random: () => number,
   zone: CelestialZone,
 ): number {
-  const distance = utils.lerp(zone.minAU, zone.maxAU, random());
-  return Math.min(distance, SYSTEM_MAX_DISTANCE_AU);
+  // Use a more natural distribution that allows for both clustering and spacing
+  const roll = random();
+
+  if (roll < 0.3) {
+    // 30% chance for early part of zone (some clustering)
+    const earlyPosition = random() * 0.4; // First 40% of zone
+    return utils.lerp(zone.minAU, zone.maxAU, earlyPosition);
+  } else if (roll < 0.7) {
+    // 40% chance for middle part of zone (normal distribution)
+    const middlePosition = 0.3 + random() * 0.4; // Middle 40% of zone
+    return utils.lerp(zone.minAU, zone.maxAU, middlePosition);
+  } else {
+    // 30% chance for outer part of zone (scattered objects)
+    const outerPosition = 0.6 + random() * 0.4; // Outer 40% of zone
+    return utils.lerp(zone.minAU, zone.maxAU, outerPosition);
+  }
+}
+
+/**
+ * Generates a distance within a zone while ensuring proper spacing
+ */
+function generateDistanceInZoneWithSpacing(
+  random: () => number,
+  zone: CelestialZone,
+  usedDistances: number[],
+  minSpacing: number,
+): number | null {
+  const maxAttempts = 20;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const distance = generateDistanceInZone(random, zone);
+
+    // Check if this distance conflicts with existing distances
+    const hasConflict = usedDistances.some(
+      (usedDistance) => Math.abs(distance - usedDistance) < minSpacing,
+    );
+
+    if (!hasConflict) {
+      return distance;
+    }
+  }
+
+  // If we couldn't find a valid distance after many attempts, return null
+  return null;
 }
 
 function findClosestStar(
