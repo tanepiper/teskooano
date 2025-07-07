@@ -170,7 +170,7 @@ export class BaseTerrestrialRenderer extends BaseCelestialRenderer {
     group.name = `${object.celestialObjectId}-high-lod-group`;
     const segments =
       options?.segments ??
-      (["high", "ultra"].includes(options?.detailLevel ?? "") ? 512 : 256);
+      (["high", "ultra"].includes(options?.detailLevel ?? "") ? 128 : 64);
 
     let bodyMesh: THREE.Mesh;
     try {

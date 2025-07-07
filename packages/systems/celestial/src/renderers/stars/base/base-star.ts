@@ -401,7 +401,7 @@ export abstract class BaseStarRenderer extends BaseCelestialRenderer {
 
     coronaScales.forEach((scale, index) => {
       const coronaRadius = object.radius * scale;
-      const coronaGeometry = new THREE.SphereGeometry(coronaRadius, 24, 24);
+      const coronaGeometry = new THREE.SphereGeometry(coronaRadius, 32, 32);
       const coronaMaterial = new CoronaMaterial(starColor, {
         scale: scale,
         opacity: opacities[index],
