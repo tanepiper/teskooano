@@ -313,6 +313,15 @@ export class RingSystemRenderer extends BaseCelestialRenderer {
       return;
     }
 
+    // Attenuate light intensity based on distance before passing to materials
+    lightSources.forEach((lightData) => {
+      const distanceSq = object.position.distanceToSquared(lightData.position);
+      // Consistent with other renderers
+      const FALLOFF_FACTOR = 0.00000001;
+      const attenuation = 1.0 / (1.0 + distanceSq * FALLOFF_FACTOR);
+      lightData.intensity = (lightData.intensity ?? 1.0) * attenuation;
+    });
+
     // --- Shadow Caster Calculation ---
     const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
     const parentBody = allObjects
@@ -341,6 +350,8 @@ export class RingSystemRenderer extends BaseCelestialRenderer {
         }
       }
     }
+
+    console.log("lightSources", lightSources);
 
     // Update all ring materials associated with this renderer
     this.ringMaterials.forEach((material) => {

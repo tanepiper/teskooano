@@ -188,51 +188,44 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
     super.update(object, time, timeScale, lightSources, camera, allObjects);
     this.elapsedTime = time;
 
-    // The material for the high-detail mesh is stored in our own map.
+    // --- Prepare data for shaders ---
+    const lightsForShader: {
+      position: THREE.Vector3;
+      color: THREE.Color;
+      intensity: number;
+    }[] = [];
+    if (lightSources && lightSources.size > 0) {
+      lightSources.forEach((lightData) => {
+        lightsForShader.push({
+          position: lightData.position.clone(),
+          color: lightData.color,
+          intensity: lightData.intensity ?? 1.0,
+        });
+      });
+    }
+
+    const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
+    if (allObjects) {
+      for (const other of Object.values(allObjects)) {
+        if (
+          other.parentId === object.celestialObjectId &&
+          other.radius &&
+          other.position
+        ) {
+          shadowCasters.push({
+            position: other.position.clone(), // Clone to prevent state mutation
+            radius: other.radius,
+          });
+        }
+      }
+    }
+
+    // --- Update High-Detail Material ---
     const material = this.materials.get(
       object.celestialObjectId,
     ) as BaseGasGiantMaterial;
 
     if (material) {
-      const lightsForShader: {
-        position: THREE.Vector3;
-        color: THREE.Color;
-        intensity: number;
-      }[] = [];
-
-      // The lightSources map is pre-filtered by the RendererUpdater to only contain
-      // the most influential lights for this specific object.
-      // Now we process ALL available lights instead of limiting to MAX_LIGHTS
-      if (lightSources && lightSources.size > 0) {
-        lightSources.forEach((lightData) => {
-          // Pass the light position directly to the shader
-          // The direction will be calculated in the material's update method
-          lightsForShader.push({
-            position: lightData.position.clone(),
-            color: lightData.color,
-            intensity: lightData.intensity ?? 1.0,
-          });
-        });
-      }
-
-      // Collect ALL shadow casters (moons) for this gas giant
-      const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
-      if (allObjects) {
-        for (const other of Object.values(allObjects)) {
-          if (
-            other.parentId === object.celestialObjectId &&
-            other.radius &&
-            other.position
-          ) {
-            shadowCasters.push({
-              position: other.position,
-              radius: other.radius,
-            });
-          }
-        }
-      }
-
-      // Material will now handle dynamic resizing internally
       material.update(
         this.elapsedTime,
         timeScale,
@@ -242,46 +235,12 @@ export abstract class BaseGasGiantRenderer extends BaseCelestialRenderer {
       );
     }
 
-    // Also update medium detail material if it exists
+    // --- Update Medium-Detail Material ---
     const mediumMaterial = this.materials.get(
       `${object.celestialObjectId}-medium`,
     ) as BaseGasGiantMaterial;
 
     if (mediumMaterial) {
-      const lightsForShader: {
-        position: THREE.Vector3;
-        color: THREE.Color;
-        intensity: number;
-      }[] = [];
-
-      if (lightSources && lightSources.size > 0) {
-        lightSources.forEach((lightData) => {
-          // Pass the light position directly to the shader
-          // The direction will be calculated in the material's update method
-          lightsForShader.push({
-            position: lightData.position.clone(),
-            color: lightData.color,
-            intensity: lightData.intensity ?? 1.0,
-          });
-        });
-      }
-
-      const shadowCasters: { position: THREE.Vector3; radius: number }[] = [];
-      if (allObjects) {
-        for (const other of Object.values(allObjects)) {
-          if (
-            other.parentId === object.celestialObjectId &&
-            other.radius &&
-            other.position
-          ) {
-            shadowCasters.push({
-              position: other.position,
-              radius: other.radius,
-            });
-          }
-        }
-      }
-
       mediumMaterial.update(
         this.elapsedTime,
         timeScale,
