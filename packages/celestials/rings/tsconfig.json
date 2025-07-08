@@ -12,21 +12,19 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "paths": {
+      "@teskooano/core-debug": ["../../core/debug/src"],
       "@teskooano/data-types": ["../../data/types/src"],
       "@teskooano/renderer-threejs-celestial": [
         "../../renderer/threejs-celestial/src"
       ],
-      "@teskooano/renderer-threejs-lod": ["../../renderer/threejs-lod/src"],
-      "@teskooano/systems-celestial": ["../../systems/celestial/src"],
-      "@teskooano/celestials-rings": ["../rings/src"]
+      "@teskooano/renderer-threejs-lod": ["../../renderer/threejs-lod/src"]
     }
   },
   "references": [
+    { "path": "../../core/debug" },
     { "path": "../../data/types" },
     { "path": "../../renderer/threejs-celestial" },
-    { "path": "../../renderer/threejs-lod" },
-    { "path": "../../systems/celestial" },
-    { "path": "../rings" }
+    { "path": "../../renderer/threejs-lod" }
   ],
   "include": ["src/**/*", "src/shims-glsl.d.ts"],
   "exclude": ["node_modules", "dist"]

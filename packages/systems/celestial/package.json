@@ -45,6 +45,7 @@
     "@teskooano/renderer-threejs-core": "file:../threejs-core",
     "@teskooano/renderer-threejs-lod": "file:../threejs-lod",
     "@teskooano/renderer-threejs-objects": "file:../threejs-objects",
+    "@teskooano/celestials-rings": "file:../../celestials/rings",
     "@types/three": "0.178.0",
     "alea": "1.0.1",
     "canvas": "3.1.2",

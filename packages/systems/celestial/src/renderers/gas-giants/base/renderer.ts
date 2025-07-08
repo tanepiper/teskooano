@@ -15,7 +15,7 @@ import {
   LightArrayUtils,
   ShadowCasterUtils,
 } from "@teskooano/renderer-threejs-celestial";
-import { RingSystemRenderer } from "../../rings/renderer";
+import { RingSystemRenderer } from "@teskooano/celestials-rings";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
 
 export interface GasGiantRendererDeps {

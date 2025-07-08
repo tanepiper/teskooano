@@ -22,7 +22,8 @@
       "@teskooano/renderer-threejs-lod": ["../../renderer/threejs-lod/src"],
       "@teskooano/renderer-threejs-objects": [
         "../../renderer/threejs-objects/src"
-      ]
+      ],
+      "@teskooano/celestials-rings": ["../../celestials/rings/src"]
     },
     "noEmit": false
   },
@@ -32,7 +33,8 @@
     { "path": "../../renderer/threejs-celestial" },
     { "path": "../../renderer/threejs-core" },
     { "path": "../../renderer/threejs-lod" },
-    { "path": "../../renderer/threejs-objects" }
+    { "path": "../../renderer/threejs-objects" },
+    { "path": "../../celestials/rings" }
   ],
   "include": ["src/**/*", "src/shims-glsl.d.ts"],
   "exclude": ["node_modules", "dist"]

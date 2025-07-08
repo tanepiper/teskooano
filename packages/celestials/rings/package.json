@@ -1,12 +1,11 @@
 {
-  "name": "@teskooano/celestials-terrestrial",
+  "name": "@teskooano/celestials-rings",
   "version": "0.1.0",
   "private": true,
-  "description": "Renderer for terrestrial planets and moons",
+  "description": "Renderer for planetary ring systems",
   "keywords": [
     "threejs",
-    "planet",
-    "moon",
+    "rings",
     "space"
   ],
   "license": "ISC",
@@ -31,11 +30,10 @@
     "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
+    "@teskooano/core-debug": "file:../../core/debug",
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/renderer-threejs-celestial": "file:../../renderer/threejs-celestial",
     "@teskooano/renderer-threejs-lod": "file:../../renderer/threejs-lod",
-    "@teskooano/systems-celestial": "file:../../systems/celestial",
-    "@teskooano/celestials-rings": "file:../../celestials/rings",
     "@types/three": "0.178.0",
     "three": "0.178.0"
   },

@@ -3,8 +3,8 @@ import {
   LightArrayUtils,
   LightSourcesMap,
 } from "@teskooano/renderer-threejs-celestial";
-import ringVertexShader from "../../shaders/ring/ring.vertex.glsl";
-import ringFragmentShader from "../../shaders/ring/ring.fragment.glsl";
+import ringVertexShader from "./shaders/ring.vertex.glsl";
+import ringFragmentShader from "./shaders/ring.fragment.glsl";
 
 /**
  * Material for celestial object rings

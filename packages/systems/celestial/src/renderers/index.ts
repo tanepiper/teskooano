@@ -4,6 +4,5 @@ export * from "./effects/gravitational-lensing";
 
 export * from "./gas-giants";
 export * from "./particles";
-export * from "./rings";
 export * from "./stars";
 export * from "./utils/createFallbackSphere";
