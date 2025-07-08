@@ -18,7 +18,7 @@ import {
   type CelestialRenderer,
   ShadowCasterUtils,
 } from "@teskooano/renderer-threejs-celestial";
-import { RingSystemRenderer } from "../rings";
+import { RingSystemRenderer } from "@teskooano/systems-celestial";
 import {
   AtmosphereMeshResult,
   AtmosphereService,

@@ -18,6 +18,7 @@ import {
 import { Octree } from "../spatial/octree";
 import type { PhysicsEngineType } from "@teskooano/core-state";
 import { sortBodiesByHierarchy } from "../utils";
+import { SimulationParameters, SimulationStepResult } from "./types";
 
 /**
  * Helper function to calculate the acceleration on a single body, given its state
@@ -78,31 +79,6 @@ const calculateAccelerationForBody_Simple = (
   acceleration.copy(forceVec).multiplyScalar(1 / targetBodyState.mass_kg);
   return acceleration;
 };
-
-/**
- * Define a return type that includes both states and accelerations
- */
-export interface SimulationStepResult {
-  states: PhysicsStateReal[];
-  accelerations: Map<string, OSVector3>;
-  destroyedIds: Set<string | number>;
-  destructionEvents: DestructionEvent[];
-}
-
-/**
- * Defines the parameters needed for a simulation step, excluding state and dt.
- */
-export interface SimulationParameters {
-  radii: Map<string | number, number>;
-  isStar: Map<string | number, boolean>;
-  bodyTypes: Map<string | number, CelestialType>;
-  parentIds?: Map<string | number, string | undefined>;
-  octreeSize?: number;
-  barnesHutTheta?: number;
-  physicsEngine?: PhysicsEngineType;
-  orbitalParameters?: Map<string | number, OrbitalParameters>;
-  currentTime_s?: number;
-}
 
 /**
  * Updates the state of all bodies in the simulation for a given time step using an Octree.

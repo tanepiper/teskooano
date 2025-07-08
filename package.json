@@ -11,6 +11,7 @@
     "./packages/core/*",
     "./packages/systems/*",
     "./packages/renderer/*",
+    "./packages/celestials/*",
     "./packages/design-system"
   ],
   "scripts": {

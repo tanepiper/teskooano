@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "bundler",
+    "declaration": true,
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@teskooano/data-types": ["../../data/types/src"],
+      "@teskooano/renderer-threejs-celestial": [
+        "../../renderer/threejs-celestial/src"
+      ],
+      "@teskooano/renderer-threejs-lod": ["../../renderer/threejs-lod/src"],
+      "@teskooano/systems-celestial": ["../../systems/celestial/src"]
+    }
+  },
+  "references": [
+    { "path": "../../data/types" },
+    { "path": "../../renderer/threejs-celestial" },
+    { "path": "../../renderer/threejs-lod" },
+    { "path": "../../systems/celestial" }
+  ],
+  "include": ["src/**/*", "src/shims-glsl.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

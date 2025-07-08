@@ -2,11 +2,11 @@ import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
-import { createFallbackSphere } from "../utils/createFallbackSphere";
+import { createFallbackSphere } from "@teskooano/systems-celestial";
 import { BaseTerrestrialRenderer } from "./base-terrestrial";
 
-interface CreatePlanetMeshDeps {
-  planetRenderers: Map<string, CelestialRenderer>;
+interface CreateMoonMeshDeps {
+  moonRenderers: Map<string, CelestialRenderer>;
   createLodObject: (
     object: RenderableCelestialObject,
     levels: LODLevel[],
@@ -15,31 +15,31 @@ interface CreatePlanetMeshDeps {
 
 /**
  * @internal
- * Creates a Planet or Dwarf Planet mesh (usually an LOD object) using appropriate renderers.
+ * Creates a Moon mesh (usually an LOD object) using appropriate renderers.
  */
-export function createPlanetMesh(
+export function createMoonMesh(
   object: RenderableCelestialObject,
-  deps: CreatePlanetMeshDeps,
+  deps: CreateMoonMeshDeps,
 ): THREE.Object3D {
-  let renderer = deps.planetRenderers.get(object.celestialObjectId);
+  let renderer = deps.moonRenderers.get(object.celestialObjectId);
 
   if (!renderer) {
     try {
+      // Assuming moons use the same default terrestrial renderer as planets
       renderer = new BaseTerrestrialRenderer(object, {
-        renderers: deps.planetRenderers,
+        renderers: deps.moonRenderers,
       });
     } catch (error) {
       console.error(
-        `[MeshFactory:Planet] Failed to create default BaseTerrestrialRenderer for ${object.celestialObjectId}:`,
+        `[MeshFactory:Moon] Failed to create default BaseTerrestrialRenderer for ${object.celestialObjectId}:`,
         error,
       );
-      // Fall through, renderer will be undefined
     }
   }
 
   if (!renderer) {
     console.error(
-      `[MeshFactory:Planet] Failed to find or create renderer for ${object.celestialObjectId}.`,
+      `[MeshFactory:Moon] Failed to find or create renderer for ${object.celestialObjectId}.`,
     );
     return createFallbackSphere(object);
   }
@@ -51,12 +51,12 @@ export function createPlanetMesh(
       return lod;
     } else {
       console.warn(
-        `[MeshFactory:Planet] Renderer for ${object.type} ${object.celestialObjectId} provided invalid LOD levels.`,
+        `[MeshFactory:Moon] Renderer for ${object.celestialObjectId} provided invalid LOD levels.`,
       );
     }
   } else {
     console.warn(
-      `[MeshFactory:Planet] Renderer for ${object.type} ${object.celestialObjectId} does not have getLODLevels.`,
+      `[MeshFactory:Moon] Renderer for ${object.celestialObjectId} does not have getLODLevels.`,
     );
   }
 

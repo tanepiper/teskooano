@@ -1,9 +1,9 @@
 import type { ProceduralSurfaceProperties } from "@teskooano/data-types";
 import * as THREE from "three";
 
-import proceduralFragmentShaderSource from "../../../shaders/terrestrial/procedural.fragment.glsl";
-import proceduralVertexShaderSource from "../../../shaders/terrestrial/procedural.vertex.glsl";
-import { ProceduralPlanetUniforms } from "../../../types/procedural";
+import proceduralFragmentShaderSource from "../shaders/procedural.fragment.glsl";
+import proceduralVertexShaderSource from "../shaders/procedural.vertex.glsl";
+import type { ProceduralPlanetUniforms } from "../types/procedural";
 import {
   LightArrayUtils,
   LightSourceData,

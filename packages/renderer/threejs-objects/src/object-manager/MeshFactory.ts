@@ -7,12 +7,14 @@ import {
   createAsteroidMesh,
   createFallbackSphere,
   createGasGiantMesh,
-  createMoonMesh,
   createOortCloudMesh,
-  createPlanetMesh,
   createStarMesh,
-  createCometMesh,
 } from "@teskooano/systems-celestial";
+import {
+  createMoonMesh,
+  createPlanetMesh,
+} from "@teskooano/celestials-terrestrial";
+import { createCometMesh } from "@teskooano/celestials-comet";
 import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 

@@ -15,7 +15,9 @@
       "@teskooano/renderer-threejs-orbits": ["../threejs-orbits/src"],
       "@teskooano/renderer-threejs-labels": ["../threejs-labels/src"],
       "@teskooano/systems-celestial": ["../../systems/celestial/src"],
-      "@teskooano/renderer-threejs-celestial": ["../threejs-celestial/src"]
+      "@teskooano/renderer-threejs-celestial": ["../threejs-celestial/src"],
+      "@teskooano/celestials-comet": ["../../celestials/comet/src"],
+      "@teskooano/celestials-terrestrial": ["../../celestials/terrestrial/src"]
     },
     "noEmit": false
   },
@@ -30,6 +32,8 @@
     { "path": "../threejs-lod" },
     { "path": "../threejs-orbits" },
     { "path": "../threejs-labels" },
-    { "path": "../../systems/celestial" }
+    { "path": "../../systems/celestial" },
+    { "path": "../../celestials/comet" },
+    { "path": "../../celestials/terrestrial" }
   ]
 }
