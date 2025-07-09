@@ -70,9 +70,7 @@ export const actions = {
   updateCamera: simulationStateService.updateCamera.bind(
     simulationStateService,
   ),
-  setPhysicsEngine: simulationStateService.setPhysicsEngine.bind(
-    simulationStateService,
-  ),
+
   setPerformanceProfile: simulationStateService.setPerformanceProfile.bind(
     simulationStateService,
   ),
@@ -102,20 +100,17 @@ export type { ClearStateOptions };
 export type {
   SimulationState,
   CameraState,
-  PhysicsEngineType,
   PerformanceProfileType,
   VisualSettingsState,
   SimulationMode,
   IntegratorType,
   AlgorithmType,
   SimulationConfiguration,
-  LegacyPhysicsEngineType,
 } from "./types";
 
 export {
   isValidConfiguration,
   getDefaultConfiguration,
-  migrateFromLegacyEngine,
   getConfigurationDisplayName,
   getConfigurationShortName,
 } from "./types";

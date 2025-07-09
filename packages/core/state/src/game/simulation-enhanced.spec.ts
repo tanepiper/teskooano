@@ -25,7 +25,6 @@ describe('Enhanced SimulationStateService', () => {
       
       const state = service.getSimulationState();
       expect(state.simulationConfig).toEqual(config);
-      expect(state.physicsEngine).toBe('ideal'); // Backwards compatibility
     });
 
     it('should set valid nbody mode configuration', () => {
@@ -39,7 +38,6 @@ describe('Enhanced SimulationStateService', () => {
       
       const state = service.getSimulationState();
       expect(state.simulationConfig).toEqual(config);
-      expect(state.physicsEngine).toBe('verlet'); // RK4 maps to verlet for backwards compatibility
     });
 
     it('should throw error for invalid configuration', () => {
@@ -52,24 +50,26 @@ describe('Enhanced SimulationStateService', () => {
         .toThrow(/Invalid simulation configuration/);
     });
 
-    it('should update legacy physicsEngine correctly for different integrators', () => {
+    it('should correctly set different integrator configurations', () => {
       const testCases = [
-        { integrator: 'euler' as IntegratorType, expected: 'euler' },
-        { integrator: 'symplectic' as IntegratorType, expected: 'symplectic' },
-        { integrator: 'verlet' as IntegratorType, expected: 'verlet' },
-        { integrator: 'rk4' as IntegratorType, expected: 'verlet' },
-        { integrator: 'adaptive' as IntegratorType, expected: 'verlet' }
+        { integrator: 'euler' as IntegratorType },
+        { integrator: 'symplectic' as IntegratorType },
+        { integrator: 'verlet' as IntegratorType },
+        { integrator: 'rk4' as IntegratorType },
+        { integrator: 'adaptive' as IntegratorType }
       ];
 
-      testCases.forEach(({ integrator, expected }) => {
-        service.setSimulationConfiguration({
-          mode: 'nbody',
-          algorithm: 'barnes-hut',
+      testCases.forEach(({ integrator }) => {
+        const config = {
+          mode: 'nbody' as const,
+          algorithm: 'barnes-hut' as const,
           integrator
-        });
+        };
+        
+        service.setSimulationConfiguration(config);
         
         const state = service.getSimulationState();
-        expect(state.physicsEngine).toBe(expected);
+        expect(state.simulationConfig).toEqual(config);
       });
     });
   });
@@ -268,51 +268,7 @@ describe('Enhanced SimulationStateService', () => {
     });
   });
 
-  describe('backwards compatibility', () => {
-    it('should warn when using deprecated setPhysicsEngine', () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      
-      service.setPhysicsEngine('euler');
-      
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'setPhysicsEngine is deprecated. Use setSimulationConfiguration instead.'
-      );
-      
-      consoleSpy.mockRestore();
-    });
 
-    it('should migrate legacy physics engines correctly', () => {
-      const testCases = [
-        { legacy: 'ideal', expected: { mode: 'ideal' } },
-        { legacy: 'euler', expected: { mode: 'nbody', integrator: 'euler', algorithm: 'barnes-hut' } },
-        { legacy: 'symplectic', expected: { mode: 'nbody', integrator: 'symplectic', algorithm: 'barnes-hut' } },
-        { legacy: 'verlet', expected: { mode: 'nbody', integrator: 'verlet', algorithm: 'barnes-hut' } }
-      ];
-
-      testCases.forEach(({ legacy, expected }) => {
-        service.setPhysicsEngine(legacy as any);
-        
-        const config = service.getSimulationConfiguration();
-        expect(config).toEqual(expected);
-        
-        const state = service.getSimulationState();
-        expect(state.physicsEngine).toBe(legacy); // Legacy field maintained
-      });
-    });
-
-    it('should keep legacy physicsEngine in sync with new configuration', () => {
-      service.setSimulationConfiguration({
-        mode: 'nbody',
-        algorithm: 'direct',
-        integrator: 'symplectic'
-      });
-      
-      const state = service.getSimulationState();
-      expect(state.physicsEngine).toBe('symplectic');
-      expect(state.simulationConfig.mode).toBe('nbody');
-      expect(state.simulationConfig.integrator).toBe('symplectic');
-    });
-  });
 
   describe('reactive state updates', () => {
     it('should emit state changes when configuration updates', (done: () => void) => {

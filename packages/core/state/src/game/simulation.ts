@@ -3,11 +3,9 @@ import { BehaviorSubject, Observable } from "rxjs";
 import {
   getDefaultConfiguration,
   isValidConfiguration,
-  migrateFromLegacyEngine,
 } from "./types";
 import type {
   PerformanceProfileType,
-  PhysicsEngineType,
   SimulationState,
   SimulationConfiguration,
   AlgorithmType,
@@ -37,7 +35,6 @@ export class SimulationStateService {
       fov: 75,
     },
     simulationConfig: getDefaultConfiguration(),
-    physicsEngine: "verlet", // Backwards compatibility - deprecated
     visualSettings: {
       trailLengthMultiplier: 2,
       showAllOrbits: true,
@@ -189,23 +186,7 @@ export class SimulationStateService {
     });
   }
 
-  /**
-   * Sets the physics integration engine to be used for orbital calculations.
-   * @deprecated Use setSimulationConfiguration instead. Will be removed in next major version.
-   * @param engine The name of the physics engine to use.
-   */
-  public setPhysicsEngine(engine: PhysicsEngineType): void {
-    console.warn('setPhysicsEngine is deprecated. Use setSimulationConfiguration instead.');
-    
-    // Migrate legacy engine to new configuration
-    const newConfig = migrateFromLegacyEngine(engine);
-    
-    this.setSimulationState({
-      ...this.getSimulationState(),
-      simulationConfig: newConfig,
-      physicsEngine: engine, // Keep for backwards compatibility
-    });
-  }
+
 
   /**
    * Sets the complete simulation configuration (mode, algorithm, integrator).
@@ -217,28 +198,9 @@ export class SimulationStateService {
       throw new Error(`Invalid simulation configuration: ${JSON.stringify(config)}`);
     }
 
-    const currentState = this.getSimulationState();
-    
-    // Update legacy physicsEngine for backwards compatibility
-    let legacyEngine: PhysicsEngineType = "verlet";
-    if (config.mode === "ideal") {
-      legacyEngine = "ideal";
-    } else if (config.integrator) {
-      // Map integrator to legacy engine
-      switch (config.integrator) {
-        case "euler": legacyEngine = "euler"; break;
-        case "symplectic": legacyEngine = "symplectic"; break;
-        case "verlet":
-        case "rk4":
-        case "adaptive":
-        default: legacyEngine = "verlet"; break;
-      }
-    }
-
     this.setSimulationState({
-      ...currentState,
+      ...this.getSimulationState(),
       simulationConfig: config,
-      physicsEngine: legacyEngine,
     });
   }
 

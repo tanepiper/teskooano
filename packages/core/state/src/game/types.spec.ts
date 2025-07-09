@@ -2,11 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   isValidConfiguration,
   getDefaultConfiguration,
-  migrateFromLegacyEngine,
   getConfigurationDisplayName,
   getConfigurationShortName,
   type SimulationConfiguration,
-  type LegacyPhysicsEngineType
 } from './types';
 
 describe('SimulationConfiguration', () => {
@@ -87,49 +85,7 @@ describe('SimulationConfiguration', () => {
     });
   });
 
-  describe('migrateFromLegacyEngine', () => {
-    it('should migrate ideal engine correctly', () => {
-      const result = migrateFromLegacyEngine("ideal");
-      expect(result).toEqual({ mode: "ideal" });
-      expect(isValidConfiguration(result)).toBe(true);
-    });
 
-    it('should migrate euler engine correctly', () => {
-      const result = migrateFromLegacyEngine("euler");
-      expect(result).toEqual({
-        mode: "nbody",
-        integrator: "euler",
-        algorithm: "barnes-hut"
-      });
-      expect(isValidConfiguration(result)).toBe(true);
-    });
-
-    it('should migrate symplectic engine correctly', () => {
-      const result = migrateFromLegacyEngine("symplectic");
-      expect(result).toEqual({
-        mode: "nbody",
-        integrator: "symplectic",
-        algorithm: "barnes-hut"
-      });
-      expect(isValidConfiguration(result)).toBe(true);
-    });
-
-    it('should migrate verlet engine correctly', () => {
-      const result = migrateFromLegacyEngine("verlet");
-      expect(result).toEqual({
-        mode: "nbody",
-        integrator: "verlet",
-        algorithm: "barnes-hut"
-      });
-      expect(isValidConfiguration(result)).toBe(true);
-    });
-
-    it('should handle invalid input by returning default', () => {
-      const result = migrateFromLegacyEngine("invalid" as LegacyPhysicsEngineType);
-      expect(result).toEqual(getDefaultConfiguration());
-      expect(isValidConfiguration(result)).toBe(true);
-    });
-  });
 
   describe('display names', () => {
     describe('getConfigurationDisplayName', () => {

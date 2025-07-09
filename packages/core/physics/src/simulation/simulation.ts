@@ -17,16 +17,11 @@ import {
 } from "../integrators";
 import { Octree } from "../spatial/octree";
 import { 
-  migrateFromLegacyEngine,
-  isValidConfiguration
-} from "@teskooano/core-state";
-import type { 
-  PhysicsEngineType, 
-  SimulationConfiguration,
-  LegacyPhysicsEngineType
+  isValidConfiguration,
+  getDefaultConfiguration
 } from "@teskooano/core-state";
 import { sortBodiesByHierarchy } from "../utils";
-import { SimulationParameters, SimulationStepResult } from "./types";
+import { SimulationParameters, SimulationStepResult, SimulationConfiguration } from "./types";
 
 /**
  * Helper function to calculate the acceleration on a single body, given its state
@@ -89,65 +84,26 @@ const calculateAccelerationForBody_Simple = (
 };
 
 /**
- * Enhanced simulation wrapper that supports both legacy and new configuration systems
+ * Main simulation function using the new configuration system
  */
 export const updateSimulationWithConfiguration = (
   bodies: PhysicsStateReal[],
   dt: number,
   params: SimulationParameters & { 
-    simulationConfig?: SimulationConfiguration;
-    legacyPhysicsEngine?: LegacyPhysicsEngineType; // for backwards compatibility
+    simulationConfig: SimulationConfiguration;
   },
 ): SimulationStepResult => {
-  let config: SimulationConfiguration;
+  const config = params.simulationConfig;
   
-  // Handle configuration migration
-  if (params.simulationConfig) {
-    config = params.simulationConfig;
-  } else if (params.legacyPhysicsEngine || params.physicsEngine) {
-    const legacy = params.legacyPhysicsEngine || params.physicsEngine || "verlet";
-    config = migrateFromLegacyEngine(legacy);
-  } else {
-    // Default configuration
-    config = { mode: "nbody", integrator: "verlet", algorithm: "barnes-hut" };
-  }
-
   // Ensure configuration is valid
   if (!isValidConfiguration(config)) {
     console.warn("Invalid simulation configuration provided, using default:", config);
-    config = { mode: "nbody", integrator: "verlet", algorithm: "barnes-hut" };
+    const defaultConfig = getDefaultConfiguration();
+    return updateSimulation(bodies, dt, { ...params, simulationConfig: defaultConfig });
   }
 
-  // Call the legacy implementation with translated parameters
-  const legacyParams = {
-    ...params,
-    physicsEngine: translateConfigurationToLegacy(config)
-  };
-
-  return updateSimulation(bodies, dt, legacyParams);
+  return updateSimulation(bodies, dt, params);
 };
-
-/**
- * Translates new configuration to legacy physicsEngine for backwards compatibility
- */
-function translateConfigurationToLegacy(config: SimulationConfiguration): PhysicsEngineType {
-  if (config.mode === "ideal") {
-    return "ideal";
-  }
-  
-  // For N-Body mode, use the integrator as the legacy engine type
-  switch (config.integrator) {
-    case "euler":
-      return "euler";
-    case "symplectic":
-      return "symplectic";
-    case "verlet":
-    case "rk4":
-    case "adaptive":
-    default:
-      return "verlet"; // Default to verlet for advanced integrators
-  }
-}
 
 /**
  * Updates the state of all bodies in the simulation for a given time step using an Octree.
@@ -170,15 +126,15 @@ export const updateSimulation = (
     parentIds,
     octreeSize = 5e13,
     barnesHutTheta = 0.7,
-    physicsEngine = "verlet",
+    simulationConfig,
     orbitalParameters,
     currentTime_s,
   } = params;
 
-  if (physicsEngine === "ideal") {
+  if (simulationConfig.mode === "ideal") {
     if (!orbitalParameters || currentTime_s === undefined || !parentIds) {
       console.error(
-        'CRITICAL: "ideal" physics engine requires `orbitalParameters`, `currentTime_s`, and `parentIds` to be provided.',
+        'CRITICAL: "ideal" simulation mode requires `orbitalParameters`, `currentTime_s`, and `parentIds` to be provided.',
       );
       return {
         states: bodies,
@@ -231,9 +187,13 @@ export const updateSimulation = (
   }
 
   const accelerations = new Map<string, OSVector3>();
-  let nBodyOctree: Octree | undefined; // For Verlet N-body calculations
+  let nBodyOctree: Octree | undefined; // For advanced N-body calculations
 
-  if (physicsEngine === "verlet") {
+  // Determine force calculation method based on algorithm
+  const algorithm = simulationConfig.algorithm || "barnes-hut";
+  
+  if (algorithm === "barnes-hut" || algorithm === "fmm" || algorithm === "p3m") {
+    // Use octree-based calculations for advanced algorithms
     nBodyOctree = new Octree(octreeSize);
     // It's important to insert all bodies before calculating forces for any of them
     bodies.forEach((body) => {
@@ -252,13 +212,13 @@ export const updateSimulation = (
       }
     });
   } else {
-    // Simplified physics for "euler" or "symplectic"
+    // Direct or simplified physics calculation
     const centralStarState = bodies.find((b) => isStar.get(b.id));
     const bodyMap = new Map(bodies.map((b) => [b.id, b])); // Helper to find bodies by ID
 
     if (!centralStarState) {
       console.warn(
-        `Simplified physics mode (${physicsEngine}) selected, but no central star identified. Bodies will experience no gravitational forces unless parentIds are defined and resolve.`,
+        `Direct physics algorithm selected, but no central star identified. Bodies will experience no gravitational forces unless parentIds are defined and resolve.`,
       );
     }
 
@@ -302,16 +262,16 @@ export const updateSimulation = (
     const currentAcceleration =
       accelerations.get(body.id) || new OSVector3(0, 0, 0);
 
-    // This function is only relevant for Verlet integration.
+    // This function is relevant for Verlet and other advanced integrators.
     // It captures the nBodyOctree from the outer scope.
-    const calculateNewAccelerationForVerlet = (
+    const calculateNewAccelerationForAdvanced = (
       newStateGuess: PhysicsStateReal,
     ): OSVector3 => {
       if (!nBodyOctree) {
-        // This case should ideally not be reached if physicsEngine is "verlet"
+        // This case should ideally not be reached for advanced algorithms
         // as nBodyOctree would have been initialized.
         console.error(
-          "CRITICAL: nBodyOctree not initialized for Verlet integration path when calculating new acceleration.",
+          "CRITICAL: nBodyOctree not initialized for advanced integration path when calculating new acceleration.",
         );
         return new OSVector3(0, 0, 0); // Fallback to zero acceleration
       }
@@ -323,8 +283,11 @@ export const updateSimulation = (
       );
     };
 
+    // Get integrator from configuration
+    const integrator = simulationConfig.integrator || "verlet";
+    
     let integratedState: PhysicsStateReal;
-    switch (physicsEngine) {
+    switch (integrator) {
       case "euler":
         integratedState = standardEuler(body, currentAcceleration, dt);
         break;
@@ -332,21 +295,24 @@ export const updateSimulation = (
         integratedState = symplecticEuler(body, currentAcceleration, dt);
         break;
       case "verlet":
+      case "rk4":
+      case "adaptive":
       default:
         integratedState = velocityVerletIntegrate(
           body,
           currentAcceleration,
-          calculateNewAccelerationForVerlet, // Pass the N-body version for Verlet
+          calculateNewAccelerationForAdvanced, // Pass the N-body version for advanced integrators
           dt,
         );
         break;
     }
 
-    // If Euler/Symplectic mode, and this is a primary star (a star with no parent),
+    // If using Euler/Symplectic integrators with direct algorithm, and this is a primary star (a star with no parent),
     // force its velocity to zero and keep its position fixed.
     // This overrides any motion calculated by the integrator for such stars in these modes.
     if (
-      (physicsEngine === "euler" || physicsEngine === "symplectic") &&
+      (integrator === "euler" || integrator === "symplectic") &&
+      algorithm === "direct" &&
       isStar.get(body.id) && // It's a star
       (!parentIds || !parentIds.has(body.id)) // And it has no parent
     ) {

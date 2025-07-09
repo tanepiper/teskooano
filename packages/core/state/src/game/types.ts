@@ -52,9 +52,6 @@ export interface SimulationConfiguration {
   algorithm?: AlgorithmType;    // Only required for N-Body mode
 }
 
-// Backwards compatibility type (temporary)
-export type LegacyPhysicsEngineType = "euler" | "symplectic" | "verlet" | "ideal";
-
 /**
  * Validates if a simulation configuration is valid.
  */
@@ -81,24 +78,6 @@ export function getDefaultConfiguration(): SimulationConfiguration {
     integrator: "verlet",
     algorithm: "barnes-hut"
   };
-}
-
-/**
- * Migrates a legacy physics engine type to the new configuration system.
- */
-export function migrateFromLegacyEngine(legacy: LegacyPhysicsEngineType): SimulationConfiguration {
-  switch (legacy) {
-    case "ideal":
-      return { mode: "ideal" };
-    case "euler":
-      return { mode: "nbody", integrator: "euler", algorithm: "barnes-hut" };
-    case "symplectic":
-      return { mode: "nbody", integrator: "symplectic", algorithm: "barnes-hut" };
-    case "verlet":
-      return { mode: "nbody", integrator: "verlet", algorithm: "barnes-hut" };
-    default:
-      return getDefaultConfiguration();
-  }
 }
 
 /**
@@ -182,9 +161,6 @@ export interface SimulationState {
   camera: CameraState;
   /** The simulation configuration (mode, algorithm, integrator). */
   simulationConfig: SimulationConfiguration;
-  
-  /** @deprecated Use simulationConfig instead. Will be removed in next major version. */
-  physicsEngine?: LegacyPhysicsEngineType;
   /** Current visual settings for the simulation. */
   visualSettings: VisualSettingsState;
   /** Optional renderer statistics. */

@@ -2,14 +2,12 @@ import { OSVector3 } from "@teskooano/core-math";
 import {
   CelestialType,
   PhysicsStateReal,
-  PhysicsEngineType,
   OrbitalParameters,
 } from "@teskooano/data-types";
 import {
   handleCollisions,
   type DestructionEvent,
 } from "../collision/collision";
-
 /**
  * Define a return type that includes both states and accelerations
  */
@@ -18,6 +16,15 @@ export interface SimulationStepResult {
   accelerations: Map<string, OSVector3>;
   destroyedIds: Set<string | number>;
   destructionEvents: DestructionEvent[];
+}
+
+/**
+ * Simulation configuration interface (local definition to avoid circular dependency)
+ */
+export interface SimulationConfiguration {
+  mode: "ideal" | "nbody";
+  integrator?: "euler" | "symplectic" | "verlet" | "rk4" | "adaptive";
+  algorithm?: "direct" | "barnes-hut" | "fmm" | "p3m";
 }
 
 /**
@@ -30,7 +37,7 @@ export interface SimulationParameters {
   parentIds?: Map<string | number, string | undefined>;
   octreeSize?: number;
   barnesHutTheta?: number;
-  physicsEngine?: PhysicsEngineType;
+  simulationConfig: SimulationConfiguration;
   orbitalParameters?: Map<string | number, OrbitalParameters>;
   currentTime_s?: number;
 }
