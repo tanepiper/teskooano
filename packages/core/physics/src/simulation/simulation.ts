@@ -16,7 +16,12 @@ import {
   idealOrbit,
 } from "../integrators";
 import { Octree } from "../spatial/octree";
-import type { PhysicsEngineType } from "@teskooano/core-state";
+import type { 
+  PhysicsEngineType, 
+  SimulationConfiguration,
+  LegacyPhysicsEngineType,
+  migrateFromLegacyEngine 
+} from "@teskooano/core-state";
 import { sortBodiesByHierarchy } from "../utils";
 import { SimulationParameters, SimulationStepResult } from "./types";
 
