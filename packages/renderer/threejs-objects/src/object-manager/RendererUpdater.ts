@@ -1,6 +1,5 @@
-import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { StateAccessor } from "@teskooano/core-state";
-import { type CelestialRenderer } from "@teskooano/systems-celestial";
+import { type CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import type * as THREE from "three";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LightSourceComponent } from "@teskooano/renderer-threejs-lighting";

@@ -1,9 +1,10 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { CelestialType } from "@teskooano/data-types";
+import {
+  createFallbackSphere,
+  type CelestialRenderer,
+} from "@teskooano/renderer-threejs-celestial";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
-import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
-import { createFallbackSphere } from "../utils/createFallbackSphere";
 import { OortCloudRenderer } from "./OortCloudRenderer";
 
 interface CreateOortCloudMeshDeps {

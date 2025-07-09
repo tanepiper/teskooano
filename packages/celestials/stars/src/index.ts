@@ -9,3 +9,4 @@ export * from "./remnants/neutron-star";
 export * from "./remnants/white-dwarf";
 export * from "./black-holes/schwarzschild-black-hole";
 export * from "./black-holes/kerr-black-hole";
+export * from "./black-holes/gravitational-lensing";

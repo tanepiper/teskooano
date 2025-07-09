@@ -39,10 +39,6 @@ export default defineConfig({
         __dirname,
         "../threejs-objects/src",
       ),
-      "@teskooano/systems-celestial": resolve(
-        __dirname,
-        "../../systems/celestial/src",
-      ),
     },
   },
 });

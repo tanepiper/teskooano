@@ -19,16 +19,14 @@
       "@teskooano/renderer-threejs-lighting": [
         "../../renderer/threejs-lighting/src"
       ],
-      "@teskooano/renderer-threejs-lod": ["../../renderer/threejs-lod/src"],
-      "@teskooano/systems-celestial": ["../../systems/celestial/src"]
+      "@teskooano/renderer-threejs-lod": ["../../renderer/threejs-lod/src"]
     }
   },
   "references": [
     { "path": "../../data/types" },
     { "path": "../../renderer/threejs-celestial" },
     { "path": "../../renderer/threejs-lighting" },
-    { "path": "../../renderer/threejs-lod" },
-    { "path": "../../systems/celestial" }
+    { "path": "../../renderer/threejs-lod" }
   ],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

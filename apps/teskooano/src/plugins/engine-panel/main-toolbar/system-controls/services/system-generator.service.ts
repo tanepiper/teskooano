@@ -10,7 +10,6 @@ import {
   type CelestialObject,
 } from "@teskooano/data-types";
 import { generateSystem as generateSystemObservable } from "@teskooano/procedural-generation";
-import { dispatchTextureGenerationComplete } from "@teskooano/systems-celestial";
 import { type DockviewApi } from "dockview-core";
 import { catchError, finalize, lastValueFrom, tap, throwError } from "rxjs";
 
@@ -93,9 +92,13 @@ export class SystemGenerator {
       // Create an RxJS pipeline to process the stream of generated objects.
       const processingPipeline$ = objects$.pipe(
         tap((celestialObject: CelestialObject) => {
+          const creationInput = {
+            ...celestialObject,
+            atmosphere: celestialObject.atmosphere as any,
+          };
           // The first star object establishes the solar system.
           if (celestialObject.type === CelestialType.STAR && isFirstStar) {
-            celestialFactory.createSolarSystem(celestialObject);
+            celestialFactory.createSolarSystem(creationInput);
             isFirstStar = false;
           } else {
             // Subsequent objects are added to the existing system.
@@ -106,9 +109,9 @@ export class SystemGenerator {
               console.warn(
                 `[SystemGenerator] Found another root star: ${celestialObject.id}. Using createSolarSystem anyway. Check generator logic.`,
               );
-              celestialFactory.createSolarSystem(celestialObject);
+              celestialFactory.createSolarSystem(creationInput);
             } else {
-              celestialFactory.addCelestial(celestialObject);
+              celestialFactory.addCelestial(creationInput);
             }
           }
         }),
@@ -120,8 +123,6 @@ export class SystemGenerator {
           return throwError(() => error);
         }),
         finalize(() => {
-          // Once the stream completes, dispatch final events for cleanup and UI updates.
-          dispatchTextureGenerationComplete();
           actions.resetTime();
           SystemGenerator.dispatchSimulationTimeReset();
           window.dispatchEvent(
@@ -138,8 +139,6 @@ export class SystemGenerator {
         "[SystemGenerator] Overall error in generateAndLoadSystem:",
         error,
       );
-      // Ensure cleanup happens even if the initial generation call fails.
-      dispatchTextureGenerationComplete();
       window.dispatchEvent(
         new CustomEvent(CustomEvents.SYSTEM_GENERATION_COMPLETE),
       );

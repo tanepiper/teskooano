@@ -18,7 +18,6 @@
       "@teskooano/renderer-threejs-lighting": ["../threejs-lighting/src"],
       "@teskooano/renderer-threejs-objects": ["../threejs-objects/src"],
       "@teskooano/renderer-threejs-orbits": ["../threejs-orbits/src"],
-      "@teskooano/systems-celestial": ["../../systems/celestial/src"],
       "@teskooano/core-debug": ["../../core/debug/src"]
     }
   },
@@ -35,7 +34,6 @@
     { "path": "../threejs-lighting" },
     { "path": "../threejs-objects" },
     { "path": "../threejs-orbits" },
-    { "path": "../../systems/celestial" },
     { "path": "../../core/debug" }
   ]
 }

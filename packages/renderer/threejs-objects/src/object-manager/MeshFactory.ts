@@ -2,12 +2,8 @@ import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { CelestialType } from "@teskooano/data-types";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel, LODManager } from "@teskooano/renderer-threejs-lod";
-import {
-  createAsteroidFieldMesh,
-  createAsteroidMesh,
-  createFallbackSphere,
-  createOortCloudMesh,
-} from "@teskooano/systems-celestial";
+import { createOortCloudMesh } from "@teskooano/celestials-oort-cloud";
+import { createAsteroidFieldMesh } from "@teskooano/celestials-asteroid-field";
 import { createStarMesh } from "@teskooano/celestials-stars";
 import {
   createMoonMesh,
@@ -15,7 +11,10 @@ import {
 } from "@teskooano/celestials-terrestrial";
 import { createCometMesh } from "@teskooano/celestials-comet";
 import { createGasGiantMesh } from "@teskooano/celestials-gas-giants";
-import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
+import {
+  type CelestialRenderer,
+  createFallbackSphere,
+} from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 
 /**
@@ -144,9 +143,6 @@ export class MeshFactory {
           break;
         case CelestialType.GAS_GIANT:
           mesh = createGasGiantMesh(object, deps);
-          break;
-        case CelestialType.SPACE_ROCK:
-          mesh = createAsteroidMesh(object, deps);
           break;
         case CelestialType.ASTEROID_FIELD:
           mesh = createAsteroidFieldMesh(object, deps);

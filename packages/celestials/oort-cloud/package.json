@@ -1,5 +1,5 @@
 {
-  "name": "@teskooano/celestials-stars",
+  "name": "@teskooano/celestials-oort-cloud",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -18,12 +18,10 @@
   "dependencies": {
     "@teskooano/data-types": "file:../../../core/data-types",
     "@teskooano/renderer-threejs-celestial": "file:../../../renderer/threejs-celestial",
-    "@teskooano/renderer-threejs-lighting": "file:../../../renderer/threejs-lighting",
-    "@teskooano/renderer-threejs-lod": "file:../../../renderer/threejs-lod",
-    "three": "0.178.0"
+    "three": "^0.178.0"
   },
   "devDependencies": {
-    "typescript": "5.8.3",
-    "vitest": "3.2.4"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

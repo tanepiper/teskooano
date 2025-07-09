@@ -6,7 +6,7 @@ import {
   StarProperties,
   StellarType,
 } from "@teskooano/data-types";
-import { GravitationalLensingHelper } from "@teskooano/systems-celestial";
+import { GravitationalLensingHelper } from "@teskooano/celestials-stars";
 
 /**
  * @internal

@@ -4,7 +4,7 @@ import type {
   RenderableCelestialObject,
 } from "@teskooano/data-types";
 import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
-import { GravitationalLensingHelper } from "@teskooano/systems-celestial";
+import { GravitationalLensingHelper } from "./gravitational-lensing";
 
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {

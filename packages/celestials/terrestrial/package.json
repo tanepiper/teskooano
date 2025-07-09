@@ -34,14 +34,13 @@
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/renderer-threejs-celestial": "file:../../renderer/threejs-celestial",
     "@teskooano/renderer-threejs-lod": "file:../../renderer/threejs-lod",
-    "@teskooano/systems-celestial": "file:../../systems/celestial",
     "@teskooano/celestials-rings": "file:../../celestials/rings",
     "@types/three": "0.178.0",
     "three": "0.178.0"
   },
   "devDependencies": {
     "@playwright/test": "1.53.2",
-    "@types/node": "24.0.11",
+    "@types/node": "24.0.12",
     "@vitest/browser": "3.2.4",
     "@vitest/ui": "3.2.4",
     "eslint": "9.30.1",

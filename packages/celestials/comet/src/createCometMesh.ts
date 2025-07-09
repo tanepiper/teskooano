@@ -1,8 +1,10 @@
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
-import { createFallbackSphere } from "./utils/createFallbackSphere";
+import {
+  createFallbackSphere,
+  type CelestialRenderer,
+} from "@teskooano/renderer-threejs-celestial";
 import { CometRenderer } from "./renderer";
 
 interface CreateCometMeshDeps {

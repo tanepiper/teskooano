@@ -20,9 +20,11 @@ import { SchwarzschildBlackHoleRenderer } from "./black-holes/schwarzschild-blac
 import { KerrBlackHoleRenderer } from "./black-holes/kerr-black-hole";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-import { createFallbackSphere } from "@teskooano/systems-celestial";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
-import { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
+import {
+  CelestialRenderer,
+  createFallbackSphere,
+} from "@teskooano/renderer-threejs-celestial";
 
 interface CreateStarMeshDeps {
   starRenderers: Map<string, CelestialRenderer>;

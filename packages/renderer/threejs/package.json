@@ -37,7 +37,6 @@
     "@teskooano/renderer-threejs-lod": "file:../threejs-lod",
     "@teskooano/renderer-threejs-objects": "file:../threejs-objects",
     "@teskooano/renderer-threejs-orbits": "file:../threejs-orbits",
-    "@teskooano/systems-celestial": "file:../../systems/celestial",
     "three": "0.178.0"
   },
   "devDependencies": {

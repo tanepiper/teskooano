@@ -6,13 +6,13 @@ import {
 import { type LODLevel } from "@teskooano/renderer-threejs-lod";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import * as THREE from "three";
-import { createFallbackSphere } from "@teskooano/systems-celestial";
 import type { BaseGasGiantRenderer } from "./base";
 import { ClassIGasGiantRenderer } from "./class-i";
 import { ClassIIGasGiantRenderer } from "./class-ii";
 import { ClassIIIGasGiantRenderer } from "./class-iii";
 import { ClassIVGasGiantRenderer } from "./class-iv";
 import { ClassVGasGiantRenderer } from "./class-v";
+import { createFallbackSphere } from "@teskooano/renderer-threejs-celestial";
 
 interface MeshFactoryDeps {
   celestialRenderers: Map<string, any>;

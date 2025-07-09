@@ -1,0 +1,10 @@
+$schema: "https://moonrepo.dev/schemas/project.json"
+language: "typescript"
+platform: "node"
+type: "library"
+
+tasks:
+  lint:
+    command: "eslint ."
+  test:
+    command: "vitest run"
