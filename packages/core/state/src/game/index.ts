@@ -105,4 +105,17 @@ export type {
   PhysicsEngineType,
   PerformanceProfileType,
   VisualSettingsState,
+  SimulationMode,
+  IntegratorType,
+  AlgorithmType,
+  SimulationConfiguration,
+  LegacyPhysicsEngineType,
+} from "./types";
+
+export {
+  isValidConfiguration,
+  getDefaultConfiguration,
+  migrateFromLegacyEngine,
+  getConfigurationDisplayName,
+  getConfigurationShortName,
 } from "./types";

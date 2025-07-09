@@ -19,7 +19,8 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@teskooano/core-math": "file:../../math",
+    "@teskooano/core-math": "file:../math",
+    "@teskooano/core-state": "file:../state",
     "@teskooano/data-types": "file:../../data/types",
     "rxjs": "7.8.2",
     "three": "0.178.0"

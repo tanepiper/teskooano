@@ -16,11 +16,14 @@ import {
   idealOrbit,
 } from "../integrators";
 import { Octree } from "../spatial/octree";
+import { 
+  migrateFromLegacyEngine,
+  isValidConfiguration
+} from "@teskooano/core-state";
 import type { 
   PhysicsEngineType, 
   SimulationConfiguration,
-  LegacyPhysicsEngineType,
-  migrateFromLegacyEngine 
+  LegacyPhysicsEngineType
 } from "@teskooano/core-state";
 import { sortBodiesByHierarchy } from "../utils";
 import { SimulationParameters, SimulationStepResult } from "./types";
@@ -84,6 +87,67 @@ const calculateAccelerationForBody_Simple = (
   acceleration.copy(forceVec).multiplyScalar(1 / targetBodyState.mass_kg);
   return acceleration;
 };
+
+/**
+ * Enhanced simulation wrapper that supports both legacy and new configuration systems
+ */
+export const updateSimulationWithConfiguration = (
+  bodies: PhysicsStateReal[],
+  dt: number,
+  params: SimulationParameters & { 
+    simulationConfig?: SimulationConfiguration;
+    legacyPhysicsEngine?: LegacyPhysicsEngineType; // for backwards compatibility
+  },
+): SimulationStepResult => {
+  let config: SimulationConfiguration;
+  
+  // Handle configuration migration
+  if (params.simulationConfig) {
+    config = params.simulationConfig;
+  } else if (params.legacyPhysicsEngine || params.physicsEngine) {
+    const legacy = params.legacyPhysicsEngine || params.physicsEngine || "verlet";
+    config = migrateFromLegacyEngine(legacy);
+  } else {
+    // Default configuration
+    config = { mode: "nbody", integrator: "verlet", algorithm: "barnes-hut" };
+  }
+
+  // Ensure configuration is valid
+  if (!isValidConfiguration(config)) {
+    console.warn("Invalid simulation configuration provided, using default:", config);
+    config = { mode: "nbody", integrator: "verlet", algorithm: "barnes-hut" };
+  }
+
+  // Call the legacy implementation with translated parameters
+  const legacyParams = {
+    ...params,
+    physicsEngine: translateConfigurationToLegacy(config)
+  };
+
+  return updateSimulation(bodies, dt, legacyParams);
+};
+
+/**
+ * Translates new configuration to legacy physicsEngine for backwards compatibility
+ */
+function translateConfigurationToLegacy(config: SimulationConfiguration): PhysicsEngineType {
+  if (config.mode === "ideal") {
+    return "ideal";
+  }
+  
+  // For N-Body mode, use the integrator as the legacy engine type
+  switch (config.integrator) {
+    case "euler":
+      return "euler";
+    case "symplectic":
+      return "symplectic";
+    case "verlet":
+    case "rk4":
+    case "adaptive":
+    default:
+      return "verlet"; // Default to verlet for advanced integrators
+  }
+}
 
 /**
  * Updates the state of all bodies in the simulation for a given time step using an Octree.
