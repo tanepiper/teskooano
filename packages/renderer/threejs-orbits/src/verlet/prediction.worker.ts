@@ -38,7 +38,7 @@ self.onmessage = (
       hydratedStates,
       predictionDuration,
       predictionSteps,
-      { ...simulationParameters, relativeToBodyId },
+      { ...simulationParameters, relativeToBodyId, scaleToSceneUnits: true },
     );
 
     if (predictedResult.length < 2) {
@@ -61,50 +61,15 @@ self.onmessage = (
     const spline = new THREE.CatmullRomCurve3(threePoints);
     const smoothedPoints = spline.getPoints(predictionSteps * 2); // Oversample for smoothness
 
-    // We need to accurately interpolate timestamps along the curve's arc length.
-    const originalCurveLengths = spline.getLengths();
-    const totalCurveLength =
-      originalCurveLengths[originalCurveLengths.length - 1];
+    // Interpolate timestamps based on the physics simulation's time progression,
+    // not arc length. This preserves the correct orbital mechanics timing.
     const smoothedTimestamps: number[] = [];
+    const totalDuration = timestamps[timestamps.length - 1];
 
     for (let i = 0; i < smoothedPoints.length; i++) {
-      // Calculate the arc length for the current smoothed point.
-      const currentArcLength =
-        (i / (smoothedPoints.length - 1)) * totalCurveLength;
-
-      // Find the segment in the original curve that this arc length falls into.
-      let segmentIndex = -1;
-      for (let j = 0; j < originalCurveLengths.length - 1; j++) {
-        if (
-          originalCurveLengths[j] <= currentArcLength &&
-          originalCurveLengths[j + 1] >= currentArcLength
-        ) {
-          segmentIndex = j;
-          break;
-        }
-      }
-
-      if (segmentIndex !== -1) {
-        const length0 = originalCurveLengths[segmentIndex];
-        const length1 = originalCurveLengths[segmentIndex + 1];
-        const segmentLength = length1 - length0;
-
-        const t0 = timestamps[segmentIndex];
-        const t1 = timestamps[segmentIndex + 1];
-        const timeSegmentDuration = t1 - t0;
-
-        if (segmentLength > 0) {
-          // Interpolate the timestamp based on the position within the arc length segment.
-          const t = (currentArcLength - length0) / segmentLength;
-          smoothedTimestamps.push(t0 + t * timeSegmentDuration);
-        } else {
-          // If segment length is zero, just use the start time.
-          smoothedTimestamps.push(t0);
-        }
-      } else {
-        // Fallback for the last point
-        smoothedTimestamps.push(timestamps[timestamps.length - 1]);
-      }
+      // Linear interpolation of time based on position in the smoothed array
+      const timeProgress = i / (smoothedPoints.length - 1);
+      smoothedTimestamps.push(timeProgress * totalDuration);
     }
 
     // Post the results back to the main thread

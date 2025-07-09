@@ -31,7 +31,6 @@ const styles = `
   background-color: rgba(244, 67, 54, 0.2);
   border-color: rgba(244, 67, 54, 0.8);
   color: rgba(251, 204, 201, 1);
-  opacity: 0.2;
 }
 `;
 

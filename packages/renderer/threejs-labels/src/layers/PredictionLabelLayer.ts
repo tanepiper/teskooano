@@ -127,11 +127,6 @@ export class PredictionLabelLayer extends BaseLabelLayer {
         if (zoomDistance > HIDE_MEDIUM_TERM_DIST) {
           shouldBeVisible = false;
         }
-      } else {
-        // Long-term markers (> 90 days)
-        if (zoomDistance > HIDE_LONG_TERM_DIST) {
-          shouldBeVisible = false;
-        }
       }
 
       // Apply occlusion checking if the label would otherwise be visible

@@ -555,28 +555,39 @@ export class PredictionManager {
 
     const totalDuration = timestamps[timestamps.length - 1];
 
-    this.predictionLabels.forEach(({ label, element }, index) => {
+    this.predictionLabels.forEach(({ label }, index) => {
       const markerTime = TIME_MARKERS[index];
       if (markerTime > totalDuration) {
         label.visible = false;
         return; // Don't create labels beyond the prediction duration
       }
 
-      // Find the segment where our markerTime falls by finding the last timestamp
-      // that is less than or equal to our target time.
+      // Find the segment where our markerTime falls. Instead of a strict
+      // bounding check that can fail with floating point issues, we find
+      // the last timestamp that is less than or equal to our target time.
       let segmentIndex = -1;
+      // We iterate up to the second-to-last item because we need a segment [j, j+1].
       for (let j = 0; j < timestamps.length - 1; j++) {
-        if (timestamps[j] <= markerTime && timestamps[j + 1] >= markerTime) {
+        if (timestamps[j] <= markerTime) {
           segmentIndex = j;
+        } else {
+          // Since timestamps are sorted, we can break as soon as we've passed the marker.
           break;
         }
       }
 
       if (segmentIndex !== -1) {
+        // The segment is [segmentIndex, segmentIndex + 1]
         const t0 = timestamps[segmentIndex];
         const t1 = timestamps[segmentIndex + 1];
         const p0 = points[segmentIndex];
         const p1 = points[segmentIndex + 1];
+
+        // Ensure we have valid points to work with
+        if (!p0 || !p1) {
+          label.visible = false;
+          return;
+        }
 
         // Avoid division by zero if timestamps are identical
         const segmentDuration = t1 - t0;
@@ -585,8 +596,8 @@ export class PredictionManager {
           return;
         }
 
-        // Calculate interpolation factor
-        const t = (markerTime - t0) / segmentDuration;
+        // Calculate interpolation factor, ensuring it's clamped between 0 and 1
+        const t = Math.max(0, Math.min(1, (markerTime - t0) / segmentDuration));
 
         // Interpolate position
         const localPosition = p0.clone().lerp(p1, t);
@@ -594,6 +605,7 @@ export class PredictionManager {
         label.userData.localPosition = localPosition;
         label.visible = this.visualizationVisible;
       } else {
+        // This case happens if markerTime is smaller than the very first timestamp.
         label.visible = false;
       }
     });

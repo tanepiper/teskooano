@@ -76,6 +76,15 @@ systemControlsTemplate.innerHTML = `
        background-color: var(--color-error-dark, #c0392b);
        border-color: var(--color-error-dark, #c0392b);
      }
+     teskooano-button.solar-system-button::part(button) {
+      background-color: #3cac32;
+      border-color: #36b015;
+      color: var(--color-text-on-primary, white);
+    }
+     teskooano-button.solar-system-button:hover::part(button) {
+        background-color: #36b015;
+       border-color: #36b015;
+     }
 
     /* Icon styles */
     /* REMOVED .icon class styles */
@@ -286,18 +295,8 @@ systemControlsTemplate.innerHTML = `
           ${SparkleRegular}
         </teskooano-button>
         <teskooano-button 
-            data-action="create-blank" 
-            variant="ghost" 
-            size="sm" 
-            title="Create New Blank System"
-            tooltip-title="New Blank"
-            tooltip-text="Create a new blank system with just a star"
-            tooltip-icon='${DocumentAddRegular}'>
-          ${DocumentAddRegular}
-        </teskooano-button>
-        <teskooano-button 
             data-action="load-solar-system" 
-            variant="ghost" 
+            class="solar-system-button"
             size="sm" 
             title="Load Solar System"
             tooltip-title="Load Sol"
@@ -306,8 +305,17 @@ systemControlsTemplate.innerHTML = `
           ${WeatherSunnyRegular}
         </teskooano-button>
         <teskooano-button 
+            data-action="create-blank" 
+            size="sm" 
+            title="Create New Blank System"
+            tooltip-title="New Blank"
+            tooltip-text="Create a new blank system with just a star"
+            tooltip-icon='${DocumentAddRegular}'>
+          ${DocumentAddRegular}
+        </teskooano-button>
+        
+        <teskooano-button 
             data-action="import" 
-            variant="ghost" 
             size="sm" 
             title="Import System from JSON"
             tooltip-title="Import System"
@@ -327,7 +335,6 @@ systemControlsTemplate.innerHTML = `
       <div class="actions">
         <teskooano-button 
             data-action="copy-seed" 
-            variant="ghost" 
             size="sm" 
             title="Copy System Seed"
             tooltip-title="Copy Seed"
@@ -337,7 +344,6 @@ systemControlsTemplate.innerHTML = `
         </teskooano-button>
         <teskooano-button 
             data-action="export" 
-            variant="ghost" 
             size="sm" 
             title="Export System to JSON"
             tooltip-title="Export System"
@@ -347,7 +353,6 @@ systemControlsTemplate.innerHTML = `
         </teskooano-button>
         <teskooano-button 
             data-action="clear" 
-            variant="ghost" 
             class="danger" 
             size="sm" 
             title="Clear System"
