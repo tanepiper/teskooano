@@ -57,6 +57,16 @@ const ALGORITHM_SPECS: Record<AlgorithmType, AlgorithmSpec> = {
     description: 'Particle-Mesh hybrid, efficient for medium-large systems',
     memoryUsage: 'medium',
     accuracy: 'medium'
+  },
+  'tree-pm': {
+    type: 'tree-pm',
+    complexity: 'O(N log N)',
+    minBodies: 1000,
+    maxBodies: 1000000,
+    optimalRange: [5000, 500000],
+    description: 'Tree-PM hybrid, optimal for multi-scale problems',
+    memoryUsage: 'medium',
+    accuracy: 'high'
   }
 };
 

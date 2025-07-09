@@ -14,6 +14,12 @@ import {
   standardEuler,
   symplecticEuler,
   idealOrbit,
+  rk4Integrate,
+  adaptiveRKIntegrate,
+  yoshida4Integrate,
+  forestRuthIntegrate,
+  pefrlIntegrate,
+  leapfrogIntegrate,
 } from "../integrators";
 import { Octree } from "../spatial/octree";
 import { 
@@ -192,7 +198,7 @@ export const updateSimulation = (
   // Determine force calculation method based on algorithm
   const algorithm = simulationConfig.algorithm || "barnes-hut";
   
-  if (algorithm === "barnes-hut" || algorithm === "fmm" || algorithm === "p3m") {
+  if (algorithm === "barnes-hut" || algorithm === "fmm" || algorithm === "p3m" || algorithm === "tree-pm") {
     // Use octree-based calculations for advanced algorithms
     nBodyOctree = new Octree(octreeSize);
     // It's important to insert all bodies before calculating forces for any of them
@@ -295,13 +301,68 @@ export const updateSimulation = (
         integratedState = symplecticEuler(body, currentAcceleration, dt);
         break;
       case "verlet":
-      case "rk4":
-      case "adaptive":
-      default:
         integratedState = velocityVerletIntegrate(
           body,
           currentAcceleration,
-          calculateNewAccelerationForAdvanced, // Pass the N-body version for advanced integrators
+          calculateNewAccelerationForAdvanced,
+          dt,
+        );
+        break;
+      case "rk4":
+        integratedState = rk4Integrate(
+          body,
+          currentAcceleration,
+          calculateNewAccelerationForAdvanced,
+          dt,
+        );
+        break;
+      case "adaptive":
+        const adaptiveResult = adaptiveRKIntegrate(
+          body,
+          currentAcceleration,
+          calculateNewAccelerationForAdvanced,
+          dt,
+        );
+        integratedState = adaptiveResult.newState;
+        break;
+      case "yoshida4":
+        integratedState = yoshida4Integrate(
+          body,
+          currentAcceleration,
+          calculateNewAccelerationForAdvanced,
+          dt,
+        );
+        break;
+      case "forest-ruth":
+        integratedState = forestRuthIntegrate(
+          body,
+          currentAcceleration,
+          calculateNewAccelerationForAdvanced,
+          dt,
+        );
+        break;
+      case "pefrl":
+        integratedState = pefrlIntegrate(
+          body,
+          currentAcceleration,
+          calculateNewAccelerationForAdvanced,
+          dt,
+        );
+        break;
+      case "leapfrog":
+        integratedState = leapfrogIntegrate(
+          body,
+          currentAcceleration,
+          calculateNewAccelerationForAdvanced,
+          dt,
+        );
+        break;
+      default:
+        console.warn(`Unknown integrator: ${integrator}, falling back to verlet`);
+        integratedState = velocityVerletIntegrate(
+          body,
+          currentAcceleration,
+          calculateNewAccelerationForAdvanced,
           dt,
         );
         break;

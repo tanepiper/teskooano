@@ -23,8 +23,12 @@ export interface SimulationStepResult {
  */
 export interface SimulationConfiguration {
   mode: "ideal" | "nbody";
-  integrator?: "euler" | "symplectic" | "verlet" | "rk4" | "adaptive";
-  algorithm?: "direct" | "barnes-hut" | "fmm" | "p3m";
+  integrator?: 
+    | "euler" | "symplectic" | "verlet" | "rk4" | "adaptive"
+    | "yoshida4" | "forest-ruth" | "pefrl" | "leapfrog";
+  algorithm?: 
+    | "direct" | "barnes-hut" | "fmm" | "p3m" 
+    | "tree-pm";
 }
 
 /**

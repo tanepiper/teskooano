@@ -44,12 +44,16 @@ export type SimulationMode = "ideal" | "nbody";
 /**
  * The numerical integration method used for N-Body simulations.
  */
-export type IntegratorType = "euler" | "symplectic" | "verlet" | "rk4" | "adaptive";
+export type IntegratorType = 
+  | "euler" | "symplectic" | "verlet" | "rk4" | "adaptive"
+  | "yoshida4" | "forest-ruth" | "pefrl" | "leapfrog";
 
 /**
  * The force calculation algorithm used for N-Body simulations.
  */
-export type AlgorithmType = "direct" | "barnes-hut" | "fmm" | "p3m";
+export type AlgorithmType = 
+  | "direct" | "barnes-hut" | "fmm" | "p3m" 
+  | "tree-pm";
 
 /**
  * Configuration for the simulation physics system.

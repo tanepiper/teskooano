@@ -11,6 +11,8 @@ import {
   formatScale,
   formatTime,
   getEngineShortName,
+  getConfigurationShortName,
+  getConfigurationDisplayName,
 } from "./simulation-controls.utils";
 
 /**
@@ -91,7 +93,7 @@ export class SimulationControlsController extends StateSubscriptionMixin {
     this._updateScaleDisplay(state.timeScale);
     this._updateReverseButton(state.timeScale);
     this._updateSpeedButtons(state.paused, state.timeScale);
-    this._updateEngineDisplay(state.physicsEngine);
+    this._updateEngineDisplay(state.simulationConfig);
   }
 
   private addEventListeners(): void {
@@ -326,12 +328,13 @@ export class SimulationControlsController extends StateSubscriptionMixin {
     }
   };
 
-  private _updateEngineDisplay = (engineName: string | undefined): void => {
+  private _updateEngineDisplay = (config: any): void => {
     const element = this.uiElements.engineValueDisplay;
     if (element) {
-      const name = engineName || "-";
-      element.textContent = getEngineShortName(name);
-      element.setAttribute("data-full-name", name);
+      const shortName = getConfigurationShortName(config);
+      const fullName = getConfigurationDisplayName(config);
+      element.textContent = shortName;
+      element.setAttribute("data-full-name", fullName);
     }
   };
 }
