@@ -1,6 +1,9 @@
 import type { OSVector3 } from "@teskooano/core-math";
 import { PhysicsStateReal } from "@teskooano/data-types";
 
+// Re-export types for convenience
+export type { PhysicsStateReal };
+
 /**
  * Interface for a function that calculates the net force acting on a specific body
  * within a system of bodies (using REAL units).
