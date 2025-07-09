@@ -61,6 +61,8 @@
       "@teskooano/celestials-gas-giants": [
         "packages/celestials/gas-giants/src/index.ts"
       ],
+      "@teskooano/celestials-stars": ["packages/celestials/stars/src/index.ts"],
+      "@teskooano/celestials": ["packages/celestials/src/index.ts"],
       "@teskooano/*": ["packages/*/src"],
       "@teskooano/ui-plugin": ["packages/app/ui-plugin/dist/index.js"],
       "@teskooano/ui-plugin/ts": ["packages/app/ui-plugin/src/index.ts"],
@@ -128,7 +130,9 @@
     { "path": "./packages/celestials/comet" },
     { "path": "./packages/celestials/terrestrial" },
     { "path": "./packages/celestials/rings" },
-    { "path": "./packages/celestials/gas-giants" }
+    { "path": "./packages/celestials/gas-giants" },
+    { "path": "./packages/celestials/stars" },
+    { "path": "./packages/celestials" }
   ],
   "include": ["packages/**/*", "apps/**/*", "glsl.d.ts"],
   "exclude": ["node_modules", "dist"]

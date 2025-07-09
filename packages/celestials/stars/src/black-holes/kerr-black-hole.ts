@@ -8,7 +8,7 @@ import {
   SchwarzschildBlackHoleMaterial,
   AccretionDiskMaterial,
 } from "./schwarzschild-black-hole";
-import { GravitationalLensingHelper } from "../../effects/gravitational-lensing";
+import { GravitationalLensingHelper } from "@teskooano/systems-celestial";
 
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {

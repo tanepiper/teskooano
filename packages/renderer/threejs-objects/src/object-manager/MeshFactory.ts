@@ -7,8 +7,8 @@ import {
   createAsteroidMesh,
   createFallbackSphere,
   createOortCloudMesh,
-  createStarMesh,
 } from "@teskooano/systems-celestial";
+import { createStarMesh } from "@teskooano/celestials-stars";
 import {
   createMoonMesh,
   createPlanetMesh,

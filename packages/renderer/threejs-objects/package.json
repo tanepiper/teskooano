@@ -41,6 +41,7 @@
     "@teskooano/celestials-comet": "file:../../../celestials/comet",
     "@teskooano/celestials-terrestrial": "file:../../../celestials/terrestrial",
     "@teskooano/celestials-gas-giants": "file:../../../celestials/gas-giants",
+    "@teskooano/celestials-stars": "file:../../../celestials/stars",
     "eventemitter3": "5.0.1",
     "rxjs": "7.8.2",
     "@teskooano/renderer-threejs-labels": "file:../threejs-labels"
