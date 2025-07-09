@@ -2,7 +2,6 @@
 export * from "./utils/CelestialRendererDebugHelper";
 export * from "./effects/gravitational-lensing";
 
-export * from "./gas-giants";
 export * from "./particles";
 export * from "./stars";
 export * from "./utils/createFallbackSphere";

@@ -1,16 +1,15 @@
 import * as THREE from "three";
 import { BaseGasGiantMaterial } from "../base";
 import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
-
-import classIIIFragmentShader from "../../../shaders/gas-giants/class-iii.fragment.glsl";
-import classIIIVertexShader from "../../../shaders/gas-giants/class-iii.vertex.glsl";
+import classIVFragmentShader from "../shaders/class-iv.fragment.glsl";
+import classIVVertexShader from "../shaders/class-iv.vertex.glsl";
 
 /**
- * Material for Class III gas giants (Cloudless / Azure)
- * Uses simple lighting and rim effect.
+ * Material for Class IV gas giants (Alkali Metals / Dark)
+ * Very low albedo.
  * Supports dynamic numbers of lights and shadow casters.
  */
-export class ClassIIIMaterial extends BaseGasGiantMaterial {
+export class ClassIVMaterial extends BaseGasGiantMaterial {
   constructor(options: { baseColor: THREE.Color; stormMap?: THREE.Texture }) {
     const MAX_LIGHTS = 4;
     const MAX_SHADOW_CASTERS = 16;
@@ -25,7 +24,6 @@ export class ClassIIIMaterial extends BaseGasGiantMaterial {
       },
       uniforms: {
         baseColor: { value: options.baseColor },
-
         time: { value: 0 },
 
         uLights: { value: lights },
@@ -38,8 +36,8 @@ export class ClassIIIMaterial extends BaseGasGiantMaterial {
         hasStormMap: { value: !!options.stormMap },
         uDynamicAmbientIntensity: { value: 0.001 }, // Dynamic ambient uniform
       },
-      vertexShader: classIIIVertexShader,
-      fragmentShader: classIIIFragmentShader,
+      vertexShader: classIVVertexShader,
+      fragmentShader: classIVFragmentShader,
     });
 
     this.currentNumLights = MAX_LIGHTS;

@@ -1,12 +1,14 @@
-import type { GasGiantProperties } from "@teskooano/data-types";
-import * as THREE from "three";
+import type {
+  RenderableCelestialObject,
+  GasGiantProperties,
+} from "@teskooano/data-types";
 import {
   BaseGasGiantRenderer,
-  BaseGasGiantMaterial,
-  GasGiantRendererDeps,
-} from "../base";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+  type GasGiantRendererDeps,
+} from "../base/renderer";
 import { ClassIIIMaterial } from "./material";
+import { BaseGasGiantMaterial } from "../base/material";
+import * as THREE from "three";
 
 /**
  * Renderer for Class III gas giants
@@ -21,19 +23,13 @@ export class ClassIIIGasGiantRenderer extends BaseGasGiantRenderer<ClassIIIMater
   ): ClassIIIMaterial {
     const properties = object.properties as GasGiantProperties;
 
-    const seed = object.celestialObjectId
-      ? object.celestialObjectId
-          .split("")
-          .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
-      : Math.random() * 10000;
-
+    // Use provided colors or defaults for Class III
     const baseColor = properties.atmosphereColor
       ? new THREE.Color(properties.atmosphereColor)
-      : new THREE.Color(0xafdbf5);
+      : new THREE.Color(0x6495ed); // Cornflower blue
 
     return new ClassIIIMaterial({
       baseColor: baseColor,
-      stormMap: undefined,
     });
   }
 }

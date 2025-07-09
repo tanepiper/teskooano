@@ -1,12 +1,14 @@
-import type { GasGiantProperties } from "@teskooano/data-types";
-import * as THREE from "three";
+import type {
+  RenderableCelestialObject,
+  GasGiantProperties,
+} from "@teskooano/data-types";
 import {
   BaseGasGiantRenderer,
-  BaseGasGiantMaterial,
-  GasGiantRendererDeps,
-} from "../base";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+  type GasGiantRendererDeps,
+} from "../base/renderer";
 import { ClassIVMaterial } from "./material";
+import { BaseGasGiantMaterial } from "../base/material";
+import * as THREE from "three";
 
 /**
  * Renderer for Class IV gas giants
@@ -19,19 +21,13 @@ export class ClassIVGasGiantRenderer extends BaseGasGiantRenderer<ClassIVMateria
   protected createMaterial(object: RenderableCelestialObject): ClassIVMaterial {
     const properties = object.properties as GasGiantProperties;
 
-    const seed = object.celestialObjectId
-      ? object.celestialObjectId
-          .split("")
-          .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
-      : Math.random() * 10000;
-
+    // Use provided colors or defaults for Class IV
     const baseColor = properties.atmosphereColor
       ? new THREE.Color(properties.atmosphereColor)
-      : new THREE.Color(0x332211);
+      : new THREE.Color(0xb22222); // Firebrick
 
     return new ClassIVMaterial({
       baseColor: baseColor,
-      stormMap: undefined,
     });
   }
 }

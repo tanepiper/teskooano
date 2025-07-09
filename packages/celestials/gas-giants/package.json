@@ -1,0 +1,52 @@
+{
+  "name": "@teskooano/celestials-gas-giants",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Renderer for gas giant planets",
+  "keywords": [
+    "threejs",
+    "gas-giant",
+    "space"
+  ],
+  "license": "ISC",
+  "author": "Tane Piper <hello@tanepiper.com>",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --browser=chromium",
+    "test:browser": "vitest --browser",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@teskooano/data-types": "file:../../data/types",
+    "@teskooano/renderer-threejs-celestial": "file:../../renderer/threejs-celestial",
+    "@teskooano/renderer-threejs-lod": "file:../../renderer/threejs-lod",
+    "@teskooano/celestials-rings": "file:../rings",
+    "@types/three": "0.178.0",
+    "three": "0.178.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.53.2",
+    "@types/node": "24.0.11",
+    "@vitest/browser": "3.2.4",
+    "@vitest/ui": "3.2.4",
+    "eslint": "9.30.1",
+    "happy-dom": "18.0.1",
+    "playwright": "1.53.2",
+    "typescript": "5.8.3",
+    "vite-plugin-glsl": "1.5.1",
+    "vitest": "3.2.4"
+  }
+}

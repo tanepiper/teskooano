@@ -2,21 +2,16 @@ import * as THREE from "three";
 import { BaseGasGiantMaterial } from "../base";
 import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
 
-import classVFragmentShader from "../../../shaders/gas-giants/class-v.fragment.glsl";
-import classVVertexShader from "../../../shaders/gas-giants/class-v.vertex.glsl";
+import classIIIFragmentShader from "../shaders/class-iii.fragment.glsl";
+import classIIIVertexShader from "../shaders/class-iii.vertex.glsl";
 
 /**
- * Material for Class V gas giants (Silicate Clouds / Bright / Glowing)
- * High albedo, includes emissive component for heat.
+ * Material for Class III gas giants (Cloudless / Azure)
+ * Uses simple lighting and rim effect.
  * Supports dynamic numbers of lights and shadow casters.
  */
-export class ClassVMaterial extends BaseGasGiantMaterial {
-  constructor(options: {
-    baseColor: THREE.Color;
-    emissiveColor: THREE.Color;
-    emissiveIntensity: number;
-    stormMap?: THREE.Texture;
-  }) {
+export class ClassIIIMaterial extends BaseGasGiantMaterial {
+  constructor(options: { baseColor: THREE.Color; stormMap?: THREE.Texture }) {
     const MAX_LIGHTS = 4;
     const MAX_SHADOW_CASTERS = 16;
     const lights = LightArrayUtils.createLightSourceArray(MAX_LIGHTS);
@@ -30,8 +25,7 @@ export class ClassVMaterial extends BaseGasGiantMaterial {
       },
       uniforms: {
         baseColor: { value: options.baseColor },
-        emissiveColor: { value: options.emissiveColor },
-        emissiveIntensity: { value: options.emissiveIntensity },
+
         time: { value: 0 },
 
         uLights: { value: lights },
@@ -44,8 +38,8 @@ export class ClassVMaterial extends BaseGasGiantMaterial {
         hasStormMap: { value: !!options.stormMap },
         uDynamicAmbientIntensity: { value: 0.001 }, // Dynamic ambient uniform
       },
-      vertexShader: classVVertexShader,
-      fragmentShader: classVFragmentShader,
+      vertexShader: classIIIVertexShader,
+      fragmentShader: classIIIFragmentShader,
     });
 
     this.currentNumLights = MAX_LIGHTS;

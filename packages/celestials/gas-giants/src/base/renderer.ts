@@ -4,7 +4,7 @@ import type {
   RingSystemProperties,
 } from "@teskooano/data-types";
 import { SCALE } from "@teskooano/data-types";
-import { LightingManager } from "@teskooano/renderer-threejs-lighting";
+import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 import { BaseCelestialRenderer } from "@teskooano/renderer-threejs-celestial";

@@ -53,6 +53,14 @@
         "packages/systems/procedural-generation/src/index.ts"
       ],
       "@teskooano/core-debug": ["packages/core/debug/src/index.ts"],
+      "@teskooano/celestials-comet": ["packages/celestials/comet/src/index.ts"],
+      "@teskooano/celestials-terrestrial": [
+        "packages/celestials/terrestrial/src/index.ts"
+      ],
+      "@teskooano/celestials-rings": ["packages/celestials/rings/src/index.ts"],
+      "@teskooano/celestials-gas-giants": [
+        "packages/celestials/gas-giants/src/index.ts"
+      ],
       "@teskooano/*": ["packages/*/src"],
       "@teskooano/ui-plugin": ["packages/app/ui-plugin/dist/index.js"],
       "@teskooano/ui-plugin/ts": ["packages/app/ui-plugin/src/index.ts"],
@@ -116,7 +124,11 @@
     },
     {
       "path": "./packages/app/notifications"
-    }
+    },
+    { "path": "./packages/celestials/comet" },
+    { "path": "./packages/celestials/terrestrial" },
+    { "path": "./packages/celestials/rings" },
+    { "path": "./packages/celestials/gas-giants" }
   ],
   "include": ["packages/**/*", "apps/**/*", "glsl.d.ts"],
   "exclude": ["node_modules", "dist"]

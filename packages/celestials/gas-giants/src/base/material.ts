@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import basicFragmentShader from "../../../shaders/gas-giants/basic.fragment.glsl";
-import basicVertexShader from "../../../shaders/gas-giants/basic.vertex.glsl";
+import basicFragmentShader from "../shaders/basic.fragment.glsl";
+import basicVertexShader from "../shaders/basic.vertex.glsl";
 import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
 
 // Remove hard-coded constants - we'll calculate dynamically

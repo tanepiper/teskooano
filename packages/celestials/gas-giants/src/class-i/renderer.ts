@@ -2,22 +2,22 @@ import type { GasGiantProperties } from "@teskooano/data-types";
 import * as THREE from "three";
 import {
   BaseGasGiantRenderer,
-  BaseGasGiantMaterial,
-  GasGiantRendererDeps,
-} from "../base";
+  type GasGiantRendererDeps,
+} from "../base/renderer";
 
 import type { RenderableCelestialObject } from "@teskooano/data-types";
-import { ClassIIMaterial } from "./material";
+import { BaseGasGiantMaterial } from "../base/material";
+import { ClassIMaterial } from "./material";
 
 /**
- * Renderer for Class II gas giants
+ * Renderer for Class I gas giants
  */
-export class ClassIIGasGiantRenderer extends BaseGasGiantRenderer<ClassIIMaterial> {
+export class ClassIGasGiantRenderer extends BaseGasGiantRenderer<ClassIMaterial> {
   constructor(object: RenderableCelestialObject, deps: GasGiantRendererDeps) {
     super(object, deps);
   }
 
-  protected createMaterial(object: RenderableCelestialObject): ClassIIMaterial {
+  protected createMaterial(object: RenderableCelestialObject): ClassIMaterial {
     const properties = object.properties as GasGiantProperties;
 
     const seed = object.celestialObjectId
@@ -33,10 +33,11 @@ export class ClassIIGasGiantRenderer extends BaseGasGiantRenderer<ClassIIMateria
       ? new THREE.Color(properties.cloudColor)
       : new THREE.Color(0xd2b48c);
 
-    return new ClassIIMaterial({
+    return new ClassIMaterial({
       atmosphereColor: atmosphereColor,
       cloudColor: cloudColor,
       seed: seed,
+      stormMap: undefined,
     });
   }
 }

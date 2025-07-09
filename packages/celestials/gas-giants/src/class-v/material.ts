@@ -1,16 +1,22 @@
 import * as THREE from "three";
 import { BaseGasGiantMaterial } from "../base";
 import { LightArrayUtils } from "@teskooano/renderer-threejs-celestial";
-import classIVFragmentShader from "../../../shaders/gas-giants/class-iv.fragment.glsl";
-import classIVVertexShader from "../../../shaders/gas-giants/class-iv.vertex.glsl";
+
+import classVFragmentShader from "../shaders/class-v.fragment.glsl";
+import classVVertexShader from "../shaders/class-v.vertex.glsl";
 
 /**
- * Material for Class IV gas giants (Alkali Metals / Dark)
- * Very low albedo.
+ * Material for Class V gas giants (Silicate Clouds / Bright / Glowing)
+ * High albedo, includes emissive component for heat.
  * Supports dynamic numbers of lights and shadow casters.
  */
-export class ClassIVMaterial extends BaseGasGiantMaterial {
-  constructor(options: { baseColor: THREE.Color; stormMap?: THREE.Texture }) {
+export class ClassVMaterial extends BaseGasGiantMaterial {
+  constructor(options: {
+    baseColor: THREE.Color;
+    emissiveColor: THREE.Color;
+    emissiveIntensity: number;
+    stormMap?: THREE.Texture;
+  }) {
     const MAX_LIGHTS = 4;
     const MAX_SHADOW_CASTERS = 16;
     const lights = LightArrayUtils.createLightSourceArray(MAX_LIGHTS);
@@ -24,6 +30,8 @@ export class ClassIVMaterial extends BaseGasGiantMaterial {
       },
       uniforms: {
         baseColor: { value: options.baseColor },
+        emissiveColor: { value: options.emissiveColor },
+        emissiveIntensity: { value: options.emissiveIntensity },
         time: { value: 0 },
 
         uLights: { value: lights },
@@ -36,8 +44,8 @@ export class ClassIVMaterial extends BaseGasGiantMaterial {
         hasStormMap: { value: !!options.stormMap },
         uDynamicAmbientIntensity: { value: 0.001 }, // Dynamic ambient uniform
       },
-      vertexShader: classIVVertexShader,
-      fragmentShader: classIVFragmentShader,
+      vertexShader: classVVertexShader,
+      fragmentShader: classVFragmentShader,
     });
 
     this.currentNumLights = MAX_LIGHTS;
