@@ -13,12 +13,14 @@ import { TrailManager } from "../verlet/TrailManager";
 
 /**
  * Enum defining the available modes for orbit visualization.
- * - `Keplerian`: Static elliptical orbits calculated from orbital parameters.
- * - `Verlet`: Dynamic trails and predictions based on Verlet integration physics.
+ * - `Ideal`: Perfect Keplerian orbits (stable, precise)
+ * - `NBodyDirect`: Real-time N-Body physics with direct calculation
+ * - `NBodyTree`: Real-time N-Body physics with spatial optimization (Barnes-Hut, FMM, P3M)
  */
 export enum OrbitDisplayMode {
-  Keplerian = "KEPLERIAN",
-  Verlet = "VERLET",
+  Ideal = "IDEAL",
+  NBodyDirect = "NBODY_DIRECT", 
+  NBodyTree = "NBODY_TREE",
 }
 
 /**
@@ -30,7 +32,7 @@ export enum OrbitDisplayMode {
  */
 export class OrbitsManager extends StateSubscriptionMixin {
   /** Current visualization mode */
-  private currentMode: OrbitDisplayMode = OrbitDisplayMode.Keplerian;
+  private currentMode: OrbitDisplayMode = OrbitDisplayMode.Ideal;
 
   /** Active strategy for orbit visualization */
   private activeStrategy?: IOrbitVisualizationStrategy;
@@ -45,6 +47,15 @@ export class OrbitsManager extends StateSubscriptionMixin {
 
   /** Color used for highlighting */
   private highlightColor: THREE.Color = new THREE.Color(0x00ff00);
+
+  /** Configuration feedback display */
+  private configurationFeedback: {
+    lastConfig?: { mode: string; algorithm?: string; integrator?: string };
+    transitionStartTime?: number;
+    transitionDuration: number;
+  } = {
+    transitionDuration: 300, // 300ms transition as per requirements
+  };
 
   /** Cache of the latest renderable objects */
   private latestRenderableObjects: Record<string, RenderableCelestialObject> =
@@ -80,27 +91,41 @@ export class OrbitsManager extends StateSubscriptionMixin {
 
     // Subscribe to visualization settings
     this.subscribeToState(this.stateAdapter.$visualSettings, (settings) => {
-      const newMode =
-        settings.physicsEngine === "verlet"
-          ? OrbitDisplayMode.Verlet
-          : OrbitDisplayMode.Keplerian;
-
+      const newMode = this.determineVisualizationMode(settings.simulationConfig);
       this.setVisualizationMode(newMode, objectManager, renderableObjects$);
     });
 
     // Set initial mode based on current settings
     const initialSettings = this.stateAdapter.$visualSettings.getValue();
-    this.setVisualizationMode(
-      initialSettings.physicsEngine === "verlet"
-        ? OrbitDisplayMode.Verlet
-        : OrbitDisplayMode.Keplerian,
-      objectManager,
-      renderableObjects$,
-    );
+    const initialMode = this.determineVisualizationMode(initialSettings.simulationConfig);
+    this.setVisualizationMode(initialMode, objectManager, renderableObjects$);
   }
 
   /**
-   * Sets the visualization mode (Keplerian or Verlet).
+   * Determines the appropriate visualization mode based on simulation configuration.
+   * @param config The simulation configuration
+   * @returns The visualization mode to use
+   */
+  private determineVisualizationMode(config: {
+    mode: "ideal" | "nbody";
+    algorithm?: "direct" | "barnes-hut" | "fmm" | "p3m";
+    integrator?: "euler" | "symplectic" | "verlet" | "rk4" | "adaptive";
+  }): OrbitDisplayMode {
+    if (config.mode === "ideal") {
+      return OrbitDisplayMode.Ideal;
+    }
+    
+    // For N-Body mode, distinguish between direct and tree-based algorithms
+    if (config.algorithm === "direct") {
+      return OrbitDisplayMode.NBodyDirect;
+    } else {
+      // Barnes-Hut, FMM, P3M all use spatial optimization
+      return OrbitDisplayMode.NBodyTree;
+    }
+  }
+
+  /**
+   * Sets the visualization mode (Ideal, N-Body Direct, or N-Body Tree).
    *
    * @param mode - The visualization mode to use
    */
@@ -110,6 +135,11 @@ export class OrbitsManager extends StateSubscriptionMixin {
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
   ): void {
     if (mode === this.currentMode && this.activeStrategy) return;
+    
+    // Start transition feedback
+    this.configurationFeedback.transitionStartTime = performance.now();
+    
+    const previousMode = this.currentMode;
     this.currentMode = mode;
 
     // Dispose of the old strategy to clean up resources
@@ -117,13 +147,18 @@ export class OrbitsManager extends StateSubscriptionMixin {
       this.activeStrategy.dispose();
     }
 
-    // Create the new strategy
-    if (mode === OrbitDisplayMode.Keplerian) {
+    // Log configuration change for debugging
+    console.debug(`[OrbitsManager] Mode transition: ${previousMode} → ${mode}`);
+
+    // Create the new strategy based on mode
+    if (mode === OrbitDisplayMode.Ideal) {
       this.activeStrategy = new KeplerianStrategy(
         objectManager,
         renderableObjects$,
       );
     } else {
+      // Both N-Body modes use the VerletStrategy
+      // TODO: Add mode-specific visual styling for Direct vs Tree algorithms
       this.activeStrategy = new VerletStrategy(
         objectManager,
         this.layer2DManager,
@@ -140,11 +175,71 @@ export class OrbitsManager extends StateSubscriptionMixin {
    */
   updateAllVisualizations(deltaTime: number): void {
     const visualSettings = this.stateAdapter.$visualSettings.getValue();
+    
+    // Update configuration feedback
+    this.updateConfigurationFeedback(visualSettings.simulationConfig);
+    
     this.activeStrategy?.update(
       this.latestRenderableObjects,
       visualSettings,
       deltaTime,
     );
+  }
+
+  /**
+   * Updates configuration feedback for smooth transitions.
+   * @param config Current simulation configuration
+   */
+  private updateConfigurationFeedback(config: {
+    mode: "ideal" | "nbody";
+    algorithm?: "direct" | "barnes-hut" | "fmm" | "p3m";
+    integrator?: "euler" | "symplectic" | "verlet" | "rk4" | "adaptive";
+  }): void {
+    const currentConfigString = `${config.mode}-${config.algorithm || 'none'}-${config.integrator || 'none'}`;
+    const lastConfigString = this.configurationFeedback.lastConfig 
+      ? `${this.configurationFeedback.lastConfig.mode}-${this.configurationFeedback.lastConfig.algorithm || 'none'}-${this.configurationFeedback.lastConfig.integrator || 'none'}`
+      : '';
+    
+    if (currentConfigString !== lastConfigString) {
+      this.configurationFeedback.lastConfig = {
+        mode: config.mode,
+        algorithm: config.algorithm,
+        integrator: config.integrator,
+      };
+    }
+  }
+
+  /**
+   * Gets the current visualization mode and transition status.
+   * @returns Information about current mode and any ongoing transitions
+   */
+  public getVisualizationStatus(): {
+    mode: OrbitDisplayMode;
+    isTransitioning: boolean;
+    transitionProgress: number;
+    configurationSummary: string;
+  } {
+    const now = performance.now();
+    const transitionStartTime = this.configurationFeedback.transitionStartTime;
+    const isTransitioning = transitionStartTime 
+      ? (now - transitionStartTime) < this.configurationFeedback.transitionDuration
+      : false;
+    
+    const transitionProgress = isTransitioning && transitionStartTime
+      ? Math.min((now - transitionStartTime) / this.configurationFeedback.transitionDuration, 1)
+      : 1;
+
+    const config = this.configurationFeedback.lastConfig;
+    const configurationSummary = config
+      ? `${config.mode === 'ideal' ? 'Ideal Orrery' : 'N-Body'} ${config.algorithm ? `(${config.algorithm})` : ''} ${config.integrator ? `[${config.integrator}]` : ''}`.trim()
+      : 'Unknown';
+
+    return {
+      mode: this.currentMode,
+      isTransitioning,
+      transitionProgress,
+      configurationSummary,
+    };
   }
 
   /**

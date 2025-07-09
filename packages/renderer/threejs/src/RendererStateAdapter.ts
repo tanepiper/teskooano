@@ -42,8 +42,7 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
     this.$visualSettings = new BehaviorSubject<RendererVisualSettings>({
       trailLengthMultiplier:
         initialSimState.visualSettings.trailLengthMultiplier,
-      physicsEngine:
-        initialSimState.physicsEngine === "verlet" ? "verlet" : "keplerian",
+      simulationConfig: initialSimState.simulationConfig,
       timeScale: initialSimState.timeScale,
       predictionSteps: initialSimState.visualSettings.predictionSteps,
       predictionDuration: initialSimState.visualSettings.predictionDuration,
@@ -135,8 +134,7 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
     return {
       trailLengthMultiplier:
         simState.visualSettings.trailLengthMultiplier ?? 150,
-      physicsEngine:
-        simState.physicsEngine === "verlet" ? "verlet" : "keplerian",
+      simulationConfig: simState.simulationConfig,
       timeScale: simState.timeScale,
       predictionSteps: simState.visualSettings.predictionSteps,
       predictionDuration: simState.visualSettings.predictionDuration,
@@ -155,7 +153,9 @@ export class RendererStateAdapter extends StateSubscriptionMixin {
   ): boolean {
     return (
       a.trailLengthMultiplier === b.trailLengthMultiplier &&
-      a.physicsEngine === b.physicsEngine &&
+      a.simulationConfig.mode === b.simulationConfig.mode &&
+      a.simulationConfig.algorithm === b.simulationConfig.algorithm &&
+      a.simulationConfig.integrator === b.simulationConfig.integrator &&
       a.timeScale === b.timeScale &&
       a.predictionSteps === b.predictionSteps &&
       a.predictionDuration === b.predictionDuration

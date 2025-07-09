@@ -428,6 +428,21 @@ export class ModularSpaceRenderer {
   }
 
   /**
+   * Gets the current visualization status including mode transitions and configuration.
+   * Useful for providing real-time feedback to users about physics mode changes.
+   *
+   * @returns Current visualization status with transition information
+   */
+  getVisualizationStatus(): {
+    mode: string;
+    isTransitioning: boolean;
+    transitionProgress: number;
+    configurationSummary: string;
+  } {
+    return this.orbitManager.getVisualizationStatus();
+  }
+
+  /**
    * Returns the `LightSourceManager` instance to allow for advanced access
    * to lighting information.
    *

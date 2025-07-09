@@ -31,8 +31,12 @@ export interface RenderableObjectUniforms {
 export interface RendererVisualSettings {
   /** A multiplier that adjusts the length of orbital trails. */
   trailLengthMultiplier: number;
-  /** The physics engine currently used for orbital calculations. */
-  physicsEngine: "keplerian" | "verlet";
+  /** The simulation configuration for rendering-specific decisions. */
+  simulationConfig: {
+    mode: "ideal" | "nbody";
+    algorithm?: "direct" | "barnes-hut" | "fmm" | "p3m";
+    integrator?: "euler" | "symplectic" | "verlet" | "rk4" | "adaptive";
+  };
   /** The time scale for the simulation. */
   timeScale: number;
   /** The number of steps for the simulation. */
