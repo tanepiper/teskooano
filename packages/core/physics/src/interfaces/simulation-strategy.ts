@@ -1,5 +1,6 @@
-import type { PhysicsStateReal, OSVector3 } from "@teskooano/data-types";
+import type { PhysicsStateReal } from "@teskooano/data-types";
 import type { SimulationConfiguration } from "@teskooano/core-state";
+import type { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Result of a simulation step containing updated bodies and metadata
