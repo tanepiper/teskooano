@@ -19,9 +19,121 @@ export interface CameraState {
 }
 
 /**
- * The type of physics engine to use for the simulation.
+ * The simulation mode determines the type of physics calculation used.
  */
-export type PhysicsEngineType = "euler" | "symplectic" | "verlet" | "ideal";
+export type SimulationMode = "ideal" | "nbody";
+
+/**
+ * The numerical integration method used for N-Body simulations.
+ */
+export type IntegratorType = 
+  | "euler"           // Simple Euler integration
+  | "symplectic"      // Symplectic Euler (energy preserving)
+  | "verlet"          // Velocity Verlet (stable, reversible)
+  | "rk4"             // Runge-Kutta 4th order (high accuracy)
+  | "adaptive";       // Adaptive step size (auto-optimizing)
+
+/**
+ * The force calculation algorithm used for N-Body simulations.
+ */
+export type AlgorithmType = 
+  | "direct"          // O(N²) - exact but slow
+  | "barnes-hut"      // O(N log N) - current implementation
+  | "fmm"             // O(N) - Fast Multipole Method
+  | "p3m";            // O(N log N) - Particle-Mesh hybrid
+
+/**
+ * Configuration for the simulation physics system.
+ * Supports both ideal (Keplerian) and N-body physics modes.
+ */
+export interface SimulationConfiguration {
+  mode: SimulationMode;
+  integrator?: IntegratorType;  // Only required for N-Body mode
+  algorithm?: AlgorithmType;    // Only required for N-Body mode
+}
+
+// Backwards compatibility type (temporary)
+export type LegacyPhysicsEngineType = "euler" | "symplectic" | "verlet" | "ideal";
+
+/**
+ * Validates if a simulation configuration is valid.
+ */
+export function isValidConfiguration(config: SimulationConfiguration): boolean {
+  if (config.mode === "ideal") {
+    // Ideal mode doesn't need integrator or algorithm
+    return config.integrator === undefined && config.algorithm === undefined;
+  }
+  
+  if (config.mode === "nbody") {
+    // N-Body mode requires both integrator and algorithm
+    return config.integrator !== undefined && config.algorithm !== undefined;
+  }
+  
+  return false;
+}
+
+/**
+ * Returns the default simulation configuration.
+ */
+export function getDefaultConfiguration(): SimulationConfiguration {
+  return {
+    mode: "nbody",
+    integrator: "verlet",
+    algorithm: "barnes-hut"
+  };
+}
+
+/**
+ * Migrates a legacy physics engine type to the new configuration system.
+ */
+export function migrateFromLegacyEngine(legacy: LegacyPhysicsEngineType): SimulationConfiguration {
+  switch (legacy) {
+    case "ideal":
+      return { mode: "ideal" };
+    case "euler":
+      return { mode: "nbody", integrator: "euler", algorithm: "barnes-hut" };
+    case "symplectic":
+      return { mode: "nbody", integrator: "symplectic", algorithm: "barnes-hut" };
+    case "verlet":
+      return { mode: "nbody", integrator: "verlet", algorithm: "barnes-hut" };
+    default:
+      return getDefaultConfiguration();
+  }
+}
+
+/**
+ * Gets a user-friendly display name for a configuration.
+ */
+export function getConfigurationDisplayName(config: SimulationConfiguration): string {
+  if (config.mode === "ideal") {
+    return "Ideal Orrery";
+  }
+  
+  const integrator = config.integrator ? config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1) : "Unknown";
+  const algorithm = config.algorithm ? config.algorithm.split('-').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join('-') : "Unknown";
+  
+  return `N-Body (${algorithm} + ${integrator})`;
+}
+
+/**
+ * Gets a short name for display in constrained UI spaces.
+ */
+export function getConfigurationShortName(config: SimulationConfiguration): string {
+  if (config.mode === "ideal") {
+    return "Ideal";
+  }
+  
+  const algorithmShort = config.algorithm === "barnes-hut" ? "BH" :
+                        config.algorithm === "fmm" ? "FMM" :
+                        config.algorithm === "p3m" ? "P3M" : "Dir";
+  
+  const integratorShort = config.integrator ? 
+    config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1, 3) : "Unk";
+  
+  return `${algorithmShort}-${integratorShort}`;
+}
 
 /**
  * Defines the performance profile settings for the simulation.
@@ -68,8 +180,11 @@ export interface SimulationState {
   focusedObjectId: string | null;
   /** The current state of the simulation camera. */
   camera: CameraState;
-  /** The type of physics engine currently active in the simulation. */
-  physicsEngine: PhysicsEngineType;
+  /** The simulation configuration (mode, algorithm, integrator). */
+  simulationConfig: SimulationConfiguration;
+  
+  /** @deprecated Use simulationConfig instead. Will be removed in next major version. */
+  physicsEngine?: LegacyPhysicsEngineType;
   /** Current visual settings for the simulation. */
   visualSettings: VisualSettingsState;
   /** Optional renderer statistics. */

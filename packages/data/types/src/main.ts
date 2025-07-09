@@ -37,9 +37,30 @@ export type Integrator = (
 ) => PhysicsStateReal;
 
 /**
- * The type of physics engine to use for the simulation.
+ * The simulation mode determines the type of physics calculation used.
  */
-export type PhysicsEngineType = "euler" | "symplectic" | "verlet" | "ideal";
+export type SimulationMode = "ideal" | "nbody";
+
+/**
+ * The numerical integration method used for N-Body simulations.
+ */
+export type IntegratorType = "euler" | "symplectic" | "verlet" | "rk4" | "adaptive";
+
+/**
+ * The force calculation algorithm used for N-Body simulations.
+ */
+export type AlgorithmType = "direct" | "barnes-hut" | "fmm" | "p3m";
+
+/**
+ * Configuration for the simulation physics system.
+ */
+export interface SimulationConfiguration {
+  mode: SimulationMode;
+  integrator?: IntegratorType;
+  algorithm?: AlgorithmType;
+}
+
+// Note: Validation utilities are available in @teskooano/core-state
 
 /**
  * The quality of the trail rendering.
