@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **Dynamic Shadow Casting**: Implemented planetary shadow casting system where planets cast shadows on each other only when positioned between light sources and targets.
+  - Added `registerShadowCaster()` and `unregisterShadowCaster()` methods to `LightingManager`.
+  - Shadow casting is dynamically enabled/disabled based on celestial object positions each frame.
+  - Uses geometric calculations to determine when objects are blocking light rays.
+
 ### Changed
 
 - **Major Refactor**: The lighting system has been refactored to a component-based architecture.

@@ -150,6 +150,18 @@ export class ObjectLifecycleManager {
       this.lightingManager.register(new LightSourceComponent(object));
     }
 
+    // Register gas giants and planets as shadow casters for inter-planetary shadowing
+    if (
+      (object.type === CelestialType.GAS_GIANT ||
+        object.type === CelestialType.PLANET ||
+        object.type === CelestialType.DWARF_PLANET) &&
+      mesh
+    ) {
+      mesh.castShadow = false; // Initially disabled
+      mesh.receiveShadow = true; // Can receive shadows from other planets
+      this.lightingManager.registerShadowCaster(objectId, mesh, object);
+    }
+
     // For comets, the mesh is an LOD object. The label should be added
     // to the LOD object itself so it's not affected by level switching.
     const celestialLayer = this.css2DManager?.getLayer(
@@ -231,6 +243,7 @@ export class ObjectLifecycleManager {
     this.lodManager.remove(objectId); // Remove from LOD manager
     this.lensingHandler.removeLensingObject(objectId); // Remove from lensing
     this.lightingManager.unregister(objectId); // Remove associated light
+    this.lightingManager.unregisterShadowCaster(objectId); // Remove shadow caster registration
 
     // Clean up specialized renderers associated with this object ID
     const starRenderer = this.starRenderers.get(objectId);

@@ -6,6 +6,7 @@ This package provides a component-based system for managing dynamic, emissive li
 
 - **`LightingManager`**: A central registry for all dynamic light sources in the scene.
 - **`LightSourceComponent`**: A wrapper that links a `THREE.Light` instance to a moving `RenderableCelestialObject`.
+- **Dynamic Shadow Casting**: Planets automatically cast shadows on each other when positioned between light sources and targets.
 - **Performant Lookups**: Provides a `getInfluentialLights()` method to efficiently find the most relevant lights for any object in the scene, which is crucial for shader-based lighting calculations.
 
 ## Architecture
@@ -37,6 +38,16 @@ const lightingManager = new LightingManager(scene);
 const starObject: RenderableCelestialObject = getStarData();
 const lightSource = new LightSourceComponent(starObject);
 lightingManager.register(lightSource);
+
+// --- Register planets as shadow casters ---
+const planetObject: RenderableCelestialObject = getPlanetData();
+const planetMesh: THREE.Mesh = createPlanetMesh(planetObject);
+planetMesh.receiveShadow = true; // Enable receiving shadows
+lightingManager.registerShadowCaster(
+  planetObject.celestialObjectId,
+  planetMesh,
+  planetObject,
+);
 
 // --- In the Render Loop / Pipeline ---
 function animate() {
