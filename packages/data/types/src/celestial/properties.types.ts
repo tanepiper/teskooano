@@ -193,6 +193,20 @@ export interface RingProperties {
   composition: string[];
   /** The dominant type of rocky material composing the ring particles. */
   type: RockyType;
+
+  // Accretion Disk Specific Properties
+  /** Whether this ring represents an accretion disk (affects rendering and physics). */
+  isAccretionDisk?: boolean;
+  /** Temperature of the accretion disk material in Kelvin (for emission calculations). */
+  temperature?: number;
+  /** Accretion rate in solar masses per year (for luminosity calculations). */
+  accretionRate?: number;
+  /** Type of emission from the accretion disk (thermal, synchrotron, etc.). */
+  emissionType?: "thermal" | "synchrotron" | "mixed";
+  /** Whether the disk has relativistic effects (for black holes). */
+  isRelativistic?: boolean;
+  /** Inner edge of the accretion disk (in gravitational radii for black holes). */
+  innerEdgeRadius?: number;
 }
 
 /**

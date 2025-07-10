@@ -4,11 +4,10 @@ import type {
   RenderableCelestialObject,
 } from "@teskooano/data-types";
 import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
-import {
-  SchwarzschildBlackHoleMaterial,
-  AccretionDiskMaterial,
-} from "./schwarzschild-black-hole";
+import { SchwarzschildBlackHoleMaterial } from "./schwarzschild-black-hole";
 import { GravitationalLensingHelper } from "./gravitational-lensing";
+import { generateAccretionDiskProperties } from "@teskooano/celestials-rings";
+import { RingSystemRenderer } from "@teskooano/celestials-rings";
 
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
@@ -47,7 +46,7 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
         varying vec3 vNormal;
         varying vec3 vPosition;
         
-        
+        // Improved noise function
         float noise(vec2 p) {
           return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
         }
@@ -64,45 +63,45 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
         }
         
         void main() {
-          
+          // Calculate spherical coordinates
           float r = length(vPosition);
           float theta = acos(vPosition.y / r);
           float phi = atan(vPosition.z, vPosition.x);
           
-          
+          // Frame dragging effect - rotation depends on latitude
           float rotationFactor = sin(theta); 
           phi += time * rotationSpeed * rotationFactor;
           
-          
+          // Create distorted UV coordinates
           vec2 distortedUv = vec2(
             phi / (2.0 * 3.14159) + 0.5,
             theta / 3.14159
           );
           
-          
+          // Add turbulence to the distortion
           float distortion = fbm(distortedUv * 4.0 + time * 0.1) * 0.1;
           distortedUv += distortion;
           
-          
+          // Energy distribution in the ergosphere
           float energy = fbm(distortedUv * 5.0 - time * 0.2 * rotationFactor);
           
-          
+          // Rim lighting for the ergosphere boundary
           float rim = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
           
-          
+          // Base color for the ergosphere
           vec3 baseColor = vec3(0.1, 0.0, 0.2);
           
-          
+          // Energy color varies with rotation
           vec3 energyColor = mix(
             vec3(0.2, 0.5, 1.0), 
             vec3(0.7, 0.2, 1.0), 
             energy
           );
           
-          
+          // Final color with energy and rim effects
           vec3 finalColor = baseColor + energyColor * energy * 0.7 + vec3(0.3, 0.4, 0.9) * rim * 0.6;
           
-          
+          // Alpha based on energy and rim
           float alpha = 0.2 + rim * 0.6 + energy * 0.2;
           
           gl_FragColor = vec4(finalColor, alpha * 0.8);
@@ -147,33 +146,19 @@ export class ErgosphereMaterial extends THREE.ShaderMaterial {
 }
 
 /**
- * Material for rotating accretion disk with frame dragging effects
- */
-export class KerrAccretionDiskMaterial extends AccretionDiskMaterial {
-  constructor(rotationSpeed: number = 0.5) {
-    super();
-
-    this.uniforms.rotationSpeed = { value: rotationSpeed };
-  }
-
-  /**
-   * Set the rotation speed of the black hole
-   */
-  setRotationSpeed(speed: number): void {
-    this.uniforms.rotationSpeed.value = speed;
-  }
-}
-
-/**
  * Renderer for Kerr black holes
+ * - Has accretion disk using rings system
+ * - Large gravitational lensing effect
+ * - Emits light from accretion disk
+ * - Has ergosphere (frame dragging region)
  */
 export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHoleMaterial> {
   private eventHorizonMaterial: SchwarzschildBlackHoleMaterial | null = null;
   private ergosphereMaterial: ErgosphereMaterial | null = null;
-  private accretionDiskMaterials: Map<string, AccretionDiskMaterial> =
-    new Map();
+  private ringSystemRenderer: RingSystemRenderer | null = null;
   private rotationSpeed: number = 0.5;
   private lensingHelpers: Map<string, GravitationalLensingHelper> = new Map();
+  private createdAccretionDisks: Set<string> = new Set(); // Track created disks
 
   /**
    * Constructor allows setting rotation speed
@@ -185,6 +170,9 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     this.rotationSpeed = options.rotationSpeed ?? 0.5;
   }
 
+  /**
+   * Create material for the Kerr black hole
+   */
   protected createMaterial(
     object: RenderableCelestialObject,
   ): SchwarzschildBlackHoleMaterial {
@@ -194,39 +182,168 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     return this.eventHorizonMaterial;
   }
 
+  /**
+   * Get custom LOD levels for the Kerr black hole
+   */
   protected getCustomLODs(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    // --- 1. Create all components once ---
-    const eventHorizon = this._createEventHorizon(object);
-    const ergosphere = this._createErgosphere(object);
-    const accretionDisk = this._createAccretionDisk(object);
+    const levels: LODLevel[] = [];
 
-    // --- 2. Assemble LOD levels ---
-
-    // Level 0: High detail (Horizon + Ergosphere + Disk)
+    // High detail level (LOD 0) - Full black hole with accretion disk
     const highDetailGroup = new THREE.Group();
-    highDetailGroup.name = `${object.celestialObjectId}-lod-high`;
-    highDetailGroup.add(eventHorizon.clone());
-    highDetailGroup.add(ergosphere.clone());
-    highDetailGroup.add(accretionDisk.clone());
-    const lod0: LODLevel = { object: highDetailGroup, distance: 0 };
+    highDetailGroup.name = `${object.celestialObjectId}-kerr-high`;
 
-    // Level 1: Medium detail (Horizon + Ergosphere)
+    // Create event horizon
+    const eventHorizonGeometry = new THREE.SphereGeometry(1, 32, 32);
+    this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
+    const eventHorizonMesh = new THREE.Mesh(
+      eventHorizonGeometry,
+      this.eventHorizonMaterial,
+    );
+    eventHorizonMesh.name = `${object.celestialObjectId}-event-horizon`;
+    highDetailGroup.add(eventHorizonMesh);
+
+    // Create ergosphere (rotating space-time region)
+    const ergosphereGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+    this.ergosphereMaterial = new ErgosphereMaterial();
+    this.ergosphereMaterial.setRotationSpeed(this.rotationSpeed);
+    const ergosphereMesh = new THREE.Mesh(
+      ergosphereGeometry,
+      this.ergosphereMaterial,
+    );
+    ergosphereMesh.name = `${object.celestialObjectId}-ergosphere`;
+    highDetailGroup.add(ergosphereMesh);
+
+    // Create accretion disk using the rings system
+    if (
+      object.mass &&
+      !this.createdAccretionDisks.has(object.celestialObjectId)
+    ) {
+      this.createdAccretionDisks.add(object.celestialObjectId);
+
+      const accretionDiskProps = generateAccretionDiskProperties(
+        object.mass,
+        1e-8, // Default accretion rate
+        0.8, // Spin parameter (0.8 for rotating black hole)
+      );
+
+      // Create a ring system object for the accretion disk
+      const ringSystemObject = {
+        ...object,
+        realRadius_m: object.radius || 1, // Required for ring scaling
+        properties: {
+          type: "RING_SYSTEM",
+          rings: [
+            {
+              innerRadius: accretionDiskProps.innerRadius,
+              outerRadius: accretionDiskProps.outerRadius,
+              color: accretionDiskProps.color,
+              opacity: accretionDiskProps.opacity,
+              rotationRate: accretionDiskProps.rotationRate,
+              temperature: accretionDiskProps.temperature,
+              accretionRate: accretionDiskProps.accretionRate,
+              emissionType: accretionDiskProps.emissionType,
+              isRelativistic: accretionDiskProps.isRelativistic,
+              innerEdgeRadius: accretionDiskProps.innerEdgeRadius,
+              isAccretionDisk: true, // Mark as accretion disk for special rendering
+            },
+          ],
+        },
+      };
+
+      // Create ring system renderer for the accretion disk
+      this.ringSystemRenderer = new RingSystemRenderer(this);
+
+      // Get the ring system's LOD levels
+      const ringLODLevels = this.ringSystemRenderer.getLODLevels(
+        ringSystemObject as any,
+        options,
+      );
+
+      // Add the highest detail ring level (index 0) to the high detail group
+      if (ringLODLevels.length > 0) {
+        const highDetailRing = ringLODLevels[0].object;
+        highDetailRing.name = `${object.celestialObjectId}-accretion-disk-high`;
+        highDetailGroup.add(highDetailRing);
+      }
+
+      console.log(
+        `[KerrBlackHoleRenderer] Created accretion disk for ${object.celestialObjectId}, ` +
+          `temperature: ${accretionDiskProps.temperature.toFixed(0)}K, ` +
+          `accretion rate: ${accretionDiskProps.accretionRate} M☉/year`,
+      );
+    }
+
+    levels.push({ object: highDetailGroup, distance: 0 });
+
+    // Medium detail level (LOD 1) - Simplified black hole with accretion disk
     const mediumDetailGroup = new THREE.Group();
-    mediumDetailGroup.name = `${object.celestialObjectId}-lod-medium`;
-    mediumDetailGroup.add(eventHorizon.clone());
-    mediumDetailGroup.add(ergosphere);
-    const lod1: LODLevel = { object: mediumDetailGroup, distance: 8000 };
+    mediumDetailGroup.name = `${object.celestialObjectId}-kerr-medium`;
 
-    // Level 2: Low detail (Horizon only)
+    const mediumEventHorizonMesh = new THREE.Mesh(
+      eventHorizonGeometry,
+      this.eventHorizonMaterial,
+    );
+    mediumDetailGroup.add(mediumEventHorizonMesh);
+
+    // Add simplified ergosphere
+    const mediumErgosphereMesh = new THREE.Mesh(
+      ergosphereGeometry,
+      this.ergosphereMaterial,
+    );
+    mediumDetailGroup.add(mediumErgosphereMesh);
+
+    // Add medium detail accretion disk
+    if (this.ringSystemRenderer && object.mass) {
+      // Create a simplified accretion disk for medium detail
+      const mediumDiskGeometry = new THREE.RingGeometry(1.5, 4, 32, 1);
+      const mediumDiskMaterial = new THREE.MeshBasicMaterial({
+        color: new THREE.Color("#FF6B35"),
+        transparent: true,
+        opacity: 0.7,
+        side: THREE.DoubleSide,
+      });
+      const mediumDiskMesh = new THREE.Mesh(
+        mediumDiskGeometry,
+        mediumDiskMaterial,
+      );
+      mediumDiskMesh.name = `${object.celestialObjectId}-accretion-disk-medium`;
+      mediumDiskMesh.rotation.x = -Math.PI / 2;
+      mediumDetailGroup.add(mediumDiskMesh);
+    }
+
+    levels.push({ object: mediumDetailGroup, distance: 1000 });
+
+    // Low detail level (LOD 2) - Event horizon with simple accretion disk
     const lowDetailGroup = new THREE.Group();
-    lowDetailGroup.name = `${object.celestialObjectId}-lod-low`;
-    lowDetailGroup.add(eventHorizon);
-    const lod2: LODLevel = { object: lowDetailGroup, distance: 20000 };
+    lowDetailGroup.name = `${object.celestialObjectId}-kerr-low`;
 
-    return [lod0, lod1, lod2];
+    const lowEventHorizonMesh = new THREE.Mesh(
+      eventHorizonGeometry,
+      this.eventHorizonMaterial,
+    );
+    lowDetailGroup.add(lowEventHorizonMesh);
+
+    // Add simple accretion disk for low detail
+    if (object.mass) {
+      const lowDiskGeometry = new THREE.RingGeometry(1.2, 3, 16, 1);
+      const lowDiskMaterial = new THREE.MeshBasicMaterial({
+        color: new THREE.Color("#FF4500"),
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.DoubleSide,
+      });
+      const lowDiskMesh = new THREE.Mesh(lowDiskGeometry, lowDiskMaterial);
+      lowDiskMesh.name = `${object.celestialObjectId}-accretion-disk-low`;
+      lowDiskMesh.rotation.x = -Math.PI / 2;
+      lowDetailGroup.add(lowDiskMesh);
+    }
+
+    levels.push({ object: lowDetailGroup, distance: 5000 });
+
+    return levels;
   }
 
   protected getBillboardLODDistance(object: RenderableCelestialObject): number {
@@ -269,31 +386,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
   }
 
   /**
-   * Add the accretion disk to the group with frame dragging effects
-   * @internal
-   */
-  private _createAccretionDisk(object: RenderableCelestialObject): THREE.Mesh {
-    const radius = object.radius || 1;
-    const diskOuterRadius = radius * 6;
-    const diskInnerRadius = radius * 1.2;
-
-    const diskGeometry = new THREE.RingGeometry(
-      diskInnerRadius,
-      diskOuterRadius,
-      96,
-      1,
-    );
-    const diskMaterial = new KerrAccretionDiskMaterial(this.rotationSpeed);
-    this.accretionDiskMaterials.set(object.celestialObjectId, diskMaterial);
-
-    const accretionDisk = new THREE.Mesh(diskGeometry, diskMaterial);
-    accretionDisk.rotation.x = Math.PI / 2;
-    accretionDisk.name = `${object.celestialObjectId}-accretion-disk`;
-    return accretionDisk;
-  }
-
-  /**
-   * Add gravitational lensing effect to the black hole
+   * Add large gravitational lensing effect to the Kerr black hole
    * Should be called after the object is added to the scene
    * Kerr black holes have asymmetric lensing due to frame dragging
    */
@@ -310,14 +403,14 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
       camera,
       group,
       {
-        intensity: 1.4,
+        intensity: 2.0, // Much larger lensing effect
 
         distortionScale:
-          2.0 *
-          (object.mass ? Math.min(8, object.mass / 6e6) : 1.0) *
-          (1 + this.rotationSpeed * 0.4),
+          3.0 *
+          (object.mass ? Math.min(12, object.mass / 4e6) : 1.0) *
+          (1 + this.rotationSpeed * 0.6), // Enhanced scale
 
-        lensSphereScale: 9.0,
+        lensSphereScale: 12.0, // Larger lensing sphere
       },
     );
 
@@ -325,7 +418,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
   }
 
   /**
-   * Update uniforms for the planet based on time and lighting.
+   * Update uniforms for the Kerr black hole based on time and lighting.
    */
   update(
     object: RenderableCelestialObject,
@@ -333,12 +426,13 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     timeScale: number,
     lightSources: LightSourcesMap,
     camera: THREE.Camera,
-    allObjects: Record<string, RenderableCelestialObject>,
+    allObjects?: Record<string, RenderableCelestialObject>,
   ): void {
     super.update(object, time, timeScale, lightSources, camera);
-    // Update materials with current time
+
     const currentTime = this.getElapsedTime();
 
+    // Update event horizon material
     if (this.eventHorizonMaterial) {
       this.eventHorizonMaterial.update(
         currentTime,
@@ -347,6 +441,8 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
         camera,
       );
     }
+
+    // Update ergosphere material
     if (this.ergosphereMaterial) {
       this.ergosphereMaterial.update(
         currentTime,
@@ -356,47 +452,54 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
       );
     }
 
-    // const material = this.getMaterial(
-    //   object.celestialObjectId,
-    // ) as TStarMaterial;
-    // if (material) {
-    //   material.update(currentTime, timeScale, lightSources, camera);
-    // }
+    // Update ring system (accretion disk)
+    if (this.ringSystemRenderer) {
+      this.ringSystemRenderer.update(
+        object,
+        currentTime,
+        timeScale,
+        lightSources,
+        camera,
+        allObjects,
+      );
+    }
 
-    // // const lensingHelper = this.lensingHelpers.get(object.celestialObjectId);
-    // if (
-    //   lensingHelper &&
-    //   renderer &&
-    //   scene &&
-    //   camera &&
-    //   camera instanceof THREE.PerspectiveCamera
-    // ) {
-    //   lensingHelper.update(renderer, scene, camera);
-    // }
+    // Note: Gravitational lensing update requires renderer, scene, and camera
+    // which are not available in this update method. The lensing effect
+    // will be updated separately when the renderer is available.
   }
 
   /**
    * Dispose of all materials
    */
   dispose(): void {
+    // Dispose event horizon material
     if (this.eventHorizonMaterial) {
       this.eventHorizonMaterial.dispose();
+      this.eventHorizonMaterial = null;
     }
 
+    // Dispose ergosphere material
     if (this.ergosphereMaterial) {
       this.ergosphereMaterial.dispose();
+      this.ergosphereMaterial = null;
     }
 
-    this.accretionDiskMaterials.forEach((material) => {
-      material.dispose();
-    });
+    // Dispose ring system renderer
+    if (this.ringSystemRenderer) {
+      this.ringSystemRenderer.dispose();
+      this.ringSystemRenderer = null;
+    }
 
-    this.accretionDiskMaterials.clear();
-
-    this.lensingHelpers.forEach((helper) => {
+    // Dispose gravitational lensing helpers
+    for (const helper of this.lensingHelpers.values()) {
       helper.dispose();
-    });
-
+    }
     this.lensingHelpers.clear();
+
+    // Clear tracking set
+    this.createdAccretionDisks.clear();
+
+    super.dispose();
   }
 }

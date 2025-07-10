@@ -17,6 +17,7 @@ import type { CelestialRenderer } from "@teskooano/renderer-threejs-celestial";
 import * as THREE from "three";
 import type { GravitationalLensingHandler } from "./GravitationalLensing";
 import type { MeshFactory } from "./MeshFactory";
+import { StellarType, type StarProperties } from "@teskooano/data-types";
 
 /**
  * @internal
@@ -147,7 +148,16 @@ export class ObjectLifecycleManager {
 
     // Handle associated components (lights, labels, lensing)
     if (object.type === CelestialType.STAR && object.position) {
-      this.lightingManager.register(new LightSourceComponent(object));
+      // Check if this is a black hole - black holes should NOT be light sources
+      const starProps = object.properties as StarProperties;
+      const isBlackHole =
+        starProps?.classType === StellarType.BLACK_HOLE ||
+        starProps?.classType === StellarType.KERR_BLACK_HOLE;
+
+      if (!isBlackHole) {
+        // Only register non-black hole stars as light sources
+        this.lightingManager.register(new LightSourceComponent(object));
+      }
     }
 
     // Register gas giants and planets as shadow casters for inter-planetary shadowing

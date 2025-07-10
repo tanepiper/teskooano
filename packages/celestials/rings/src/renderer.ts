@@ -13,7 +13,7 @@ import {
   type LightSourcesMap,
   ShadowCasterUtils,
 } from "@teskooano/renderer-threejs-celestial";
-import { RingMaterial } from "./material";
+import { RingMaterial, AccretionDiskMaterial } from "./material";
 import { calculateKeplerianRotationRate } from "./utils";
 
 /**
@@ -26,13 +26,19 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
   /**
    * Map of ring materials by object ID and ring index
    */
-  private ringMaterials: Map<string, RingMaterial> = new Map();
+  private ringMaterials: Map<string, RingMaterial | AccretionDiskMaterial> =
+    new Map();
 
   /**
    * Parent renderer that owns this ring system
    * Used for material registration and coordination
    */
   private parentRenderer?: BaseCelestialRenderer;
+
+  /**
+   * Track which accretion disks have been logged to avoid duplicate messages
+   */
+  private loggedAccretionDisks: Set<string> = new Set();
 
   /**
    * Create a new ring system renderer
@@ -257,10 +263,38 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
         Math.PI * 2,
       );
 
-      const ringMaterial = new RingMaterial(ringColor, {
-        opacity: ringOpacity,
-        rotationRate: rotationRate,
-      });
+      // Determine if this is an accretion disk and create appropriate material
+      let ringMaterial: RingMaterial | AccretionDiskMaterial;
+
+      if (ringProps.isAccretionDisk) {
+        // Create accretion disk material with physics-based properties
+        ringMaterial = new AccretionDiskMaterial(ringColor, {
+          opacity: ringOpacity,
+          rotationRate: rotationRate,
+          temperature: ringProps.temperature ?? 10000.0,
+          accretionRate: ringProps.accretionRate ?? 1e-8,
+          emissionType: ringProps.emissionType ?? "thermal",
+          isRelativistic: ringProps.isRelativistic ?? false,
+          innerEdgeRadius: ringProps.innerEdgeRadius ?? 3.0,
+        });
+
+        // Only log once per accretion disk creation
+        const logKey = `${object.celestialObjectId}-accretion-disk`;
+        if (!this.loggedAccretionDisks.has(logKey)) {
+          this.loggedAccretionDisks.add(logKey);
+          console.log(
+            `[RingSystemRenderer] Created accretion disk for ${object.celestialObjectId}, ` +
+              `temperature: ${ringProps.temperature ?? 10000}K, ` +
+              `accretion rate: ${ringProps.accretionRate ?? 1e-8} M☉/year`,
+          );
+        }
+      } else {
+        // Create normal ring material
+        ringMaterial = new RingMaterial(ringColor, {
+          opacity: ringOpacity,
+          rotationRate: rotationRate,
+        });
+      }
 
       const materialKey = `${object.celestialObjectId}-ring-${index}`;
       this.ringMaterials.set(materialKey, ringMaterial);
@@ -322,13 +356,16 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
             dynamicAmbientIntensity;
         }
 
-        material.update(
-          time,
-          object.position,
-          object.radius ?? 1.0,
-          lightSources,
-          shadowCasters,
-        );
+        // Handle both RingMaterial and AccretionDiskMaterial
+        if ("update" in material) {
+          material.update(
+            time,
+            object.position,
+            object.radius ?? 1.0,
+            lightSources,
+            shadowCasters,
+          );
+        }
       });
     }
   }
@@ -345,6 +382,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     }
 
     this.ringMaterials.clear();
+    this.loggedAccretionDisks.clear();
 
     // Call parent dispose method
     super.dispose();

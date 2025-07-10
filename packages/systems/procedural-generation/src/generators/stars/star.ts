@@ -180,6 +180,17 @@ export function generateStar(random: () => number): CelestialObject {
         calculateSchwarzschildRadius(starMass_Solar * CONST.SOLAR_MASS_KG) /
         CONST.SOLAR_RADIUS_M;
       starTemperature = 2.7; // CMB temperature (no surface)
+
+      // Some black holes are rotating (Kerr black holes) and have accretion disks
+      if (random() < 0.3) {
+        // 30% chance of being a Kerr black hole
+        chosenType = StellarType.KERR_BLACK_HOLE;
+        // Kerr black holes typically have higher accretion rates
+        const accretionRate = 1e-8 + random() * 1e-7; // 10^-8 to 10^-7 solar masses/year
+        console.log(
+          `[StarGenerator] Generated Kerr black hole with accretion rate: ${accretionRate.toExponential(2)} M☉/year`,
+        );
+      }
       break;
 
     case StellarType.WOLF_RAYET:

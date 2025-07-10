@@ -1,4 +1,8 @@
-import { CelestialObject, CelestialType } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  CelestialType,
+  StellarType,
+} from "@teskooano/data-types";
 
 /**
  * Traverses the celestial hierarchy to determine the primary light source for every object.
@@ -43,10 +47,22 @@ export function calculateLightSourceMaps(
       return undefined;
     }
 
-    // The object is itself a star
+    // The object is itself a star (but not a black hole)
     if (obj.type === CelestialType.STAR) {
-      lightSourceMap[id] = id;
-      return id;
+      // Check if this is a black hole - black holes should NOT be light sources
+      const starProps = obj.properties as any;
+      const isBlackHole =
+        starProps?.classType === StellarType.BLACK_HOLE ||
+        starProps?.classType === StellarType.KERR_BLACK_HOLE;
+
+      if (!isBlackHole) {
+        lightSourceMap[id] = id;
+        return id;
+      } else {
+        // Black holes are not light sources
+        lightSourceMap[id] = undefined;
+        return undefined;
+      }
     }
 
     // No parent, so no light source in this hierarchy
