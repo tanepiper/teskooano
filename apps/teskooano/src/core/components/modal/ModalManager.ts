@@ -87,7 +87,7 @@ export class TeskooanoModalManager {
   public show(options: ModalOptions): Promise<ModalResult> {
     const modalId =
       options.id ||
-      `modal-overlay-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      `modal-overlay-${Date.now()}-${performance.now().toString(36).substring(2, 7)}`;
 
     const width = options.width || 450;
     const height = options.height || 250;

@@ -9,6 +9,7 @@ import {
 import { ClassVMaterial } from "./material";
 import { BaseGasGiantMaterial } from "../base/material";
 import * as THREE from "three";
+import { createSeededRandomSync } from "@teskooano/core-math";
 
 /**
  * Renderer for Class V gas giants
@@ -21,11 +22,14 @@ export class ClassVGasGiantRenderer extends BaseGasGiantRenderer<ClassVMaterial>
   protected createMaterial(object: RenderableCelestialObject): ClassVMaterial {
     const properties = object.properties as GasGiantProperties;
 
+    // Initialize seeded random for this gas giant
+    const random = createSeededRandomSync(object.seed ?? object.celestialObjectId);
+
     const seed = object.celestialObjectId
       ? object.celestialObjectId
           .split("")
           .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
-      : Math.random() * 10000;
+      : random() * 10000;
 
     const baseColor = properties.atmosphereColor
       ? new THREE.Color(properties.atmosphereColor)

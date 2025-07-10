@@ -4,6 +4,7 @@ import {
   SCALE,
 } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { createSeededRandomSync } from "@teskooano/core-math";
 import {
   BaseCelestialRenderer,
   CelestialMeshOptions,
@@ -70,7 +71,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
   private invalidParticleLogged: Set<string> = new Set();
 
   private cloudRotationSpeed = 0.00002;
-  private particleRotationSpeed = 0.5 + Math.random() * 1.0;
+  private particleRotationSpeed = 0.75; // Default, will be seeded
   private cloudRotationAngles = { x: 0, y: 0, z: 0 };
   private lastLogTime = 0;
   private previousSimTime = 0;
@@ -200,14 +201,17 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
       };
     }
 
+    // Initialize seeded random for consistent generation
+    const random = createSeededRandomSync(object.seed ?? object.celestialObjectId);
+
     // Create particles in a spherical distribution (Oort cloud)
     for (let i = 0; i < visualCount; i++) {
       // Spherical coordinates for uniform distribution on sphere
-      const phi = Math.acos(2 * Math.random() - 1);
-      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * random() - 1);
+      const theta = random() * Math.PI * 2;
 
       // Radius varies between inner and outer radius
-      const r = visualRadius + Math.random() * visualThickness;
+      const r = visualRadius + random() * visualThickness;
 
       const x = r * Math.sin(phi) * Math.cos(theta);
       const y = r * Math.sin(phi) * Math.sin(theta);
@@ -221,16 +225,16 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
 
       // Very subtle color variation - keep it very dark
       const newColor = new THREE.Color().setHSL(
-        hsl.h + (Math.random() * 0.05 - 0.025),
-        Math.max(0.05, hsl.s * (0.5 + Math.random() * 0.2)),
-        Math.max(0.1, hsl.l * (0.3 + Math.random() * 0.2)),
+        hsl.h + (random() * 0.05 - 0.025),
+        Math.max(0.05, hsl.s * (0.5 + random() * 0.2)),
+        Math.max(0.1, hsl.l * (0.3 + random() * 0.2)),
       );
 
       colors.push(newColor.r, newColor.g, newColor.b);
 
       // Make particles very small and subtle
-      sizes.push(0.5 + Math.random() * 1.0);
-      initialRotations.push(Math.random() * Math.PI * 2);
+      sizes.push(0.5 + random() * 1.0);
+      initialRotations.push(random() * Math.PI * 2);
     }
 
     this.geometry.setAttribute(
@@ -392,6 +396,10 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
   ): LODLevel[] {
     this.objectId = object.celestialObjectId;
 
+    // Initialize seeded random for this Oort cloud
+    const random = createSeededRandomSync(object.seed ?? object.celestialObjectId);
+    this.particleRotationSpeed = 0.5 + random() * 1.0;
+
     this.cloudRotationAngles = { x: 0, y: 0, z: 0 };
     this.cumulativeRotation = { x: 0, y: 0, z: 0 };
     this.resetCounter = 0;
@@ -447,11 +455,15 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
     const visualColorHex = properties.visualParticleColor ?? "#353536";
     const targetParticleCount = properties.visualParticleCount;
 
+    // Initialize seeded random for consistent generation
+    const random = createSeededRandomSync(object.seed ?? object.celestialObjectId);
+
     // Create particles in a spherical distribution
     for (let i = 0; i < targetParticleCount; i++) {
-      const phi = Math.acos(2 * Math.random() - 1);
-      const theta = Math.random() * Math.PI * 2;
-      const r = visualRadius + Math.random() * visualThickness;
+      // Spherical distribution around the cloud center
+      const phi = Math.acos(2 * random() - 1);
+      const theta = random() * Math.PI * 2;
+      const r = visualRadius + random() * visualThickness;
 
       const x = r * Math.sin(phi) * Math.cos(theta);
       const y = r * Math.sin(phi) * Math.sin(theta);
@@ -459,19 +471,20 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
 
       positions.push(x, y, z);
 
+      // Color variation
       const baseColor = new THREE.Color(visualColorHex);
       const hsl = { h: 0, s: 0, l: 0 };
       baseColor.getHSL(hsl);
-
       const newColor = new THREE.Color().setHSL(
-        hsl.h + (Math.random() * 0.1 - 0.05),
-        Math.max(0.1, hsl.s * (0.8 + Math.random() * 0.4)),
-        Math.max(0.3, hsl.l * (0.8 + Math.random() * 0.4)),
+        hsl.h + (random() * 0.05 - 0.025),
+        Math.max(0.05, hsl.s * (0.5 + random() * 0.2)),
+        Math.max(0.1, hsl.l * (0.3 + random() * 0.2)),
       );
-
       colors.push(newColor.r, newColor.g, newColor.b);
-      sizes.push(4 + Math.random() * 8);
-      initialRotations.push(Math.random() * Math.PI * 2);
+
+      // Vary sizes
+      sizes.push(0.5 + random() * 1.0);
+      initialRotations.push(random() * Math.PI * 2);
     }
 
     geometry.setAttribute(

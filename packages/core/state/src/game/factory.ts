@@ -1,4 +1,4 @@
-import { OSVector3 } from "@teskooano/core-math";
+import { OSVector3, createSeededRandomSync } from "@teskooano/core-math";
 import {
   calculateOrbitalPosition,
   calculateOrbitalVelocity,
@@ -80,7 +80,7 @@ class CelestialFactoryService {
     const seedString =
       typeof data.seed === "number"
         ? data.seed.toString()
-        : (data.seed ?? `${Math.floor(Math.random() * 1000000)}`);
+        : `${Math.floor(Date.now() % 1000000)}`;
 
     const coreObject: CelestialObject = {
       id: data.id,
@@ -451,8 +451,9 @@ class CelestialFactoryService {
         data.orbit.period_s === 0;
 
       if (isRogueWithZeroOrbit && data.orbit) {
-        // For rogue planets, use orbit position data if provided, otherwise place randomly
-        const baseDistance = data.orbit.meanAnomaly || Math.random() * 100 + 50; // Use meanAnomaly as distance storage
+        // For rogue planets, use orbit position data if provided, otherwise place deterministically
+        const random = createSeededRandomSync(`rogue-${data.id}-${data.seed ?? 'default'}`);
+        const baseDistance = data.orbit.meanAnomaly || random() * 100 + 50; // Use meanAnomaly as distance storage
         const AU_TO_METERS = 1.496e11;
 
         physicsStateReal = {
@@ -460,13 +461,13 @@ class CelestialFactoryService {
           mass_kg: data.realMass_kg,
           position_m: new OSVector3(
             baseDistance * AU_TO_METERS,
-            (Math.random() - 0.5) * baseDistance * AU_TO_METERS * 0.1,
-            (Math.random() - 0.5) * baseDistance * AU_TO_METERS * 0.1,
+            (random() - 0.5) * baseDistance * AU_TO_METERS * 0.1,
+            (random() - 0.5) * baseDistance * AU_TO_METERS * 0.1,
           ),
           velocity_mps: new OSVector3(
-            (Math.random() - 0.5) * 500, // ±250 m/s drift
-            (Math.random() - 0.5) * 500,
-            (Math.random() - 0.5) * 500,
+            (random() - 0.5) * 500, // ±250 m/s drift
+            (random() - 0.5) * 500,
+            (random() - 0.5) * 500,
           ),
         };
         orbitalParams = undefined;

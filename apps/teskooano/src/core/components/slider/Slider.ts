@@ -379,7 +379,7 @@ export class TeskooanoSlider extends HTMLElement {
   }
 
   private getUniqueId(): string {
-    return Math.random().toString(36).substring(2, 9);
+    return performance.now().toString(36).substring(2, 9);
   }
 
   get value(): number {

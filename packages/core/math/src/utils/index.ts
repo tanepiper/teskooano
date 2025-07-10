@@ -1,3 +1,6 @@
+import { OSVector3 } from "../OSVector3";
+import { createSeededRandomSync } from "../random";
+
 /**
  * Clamps a number between a minimum and maximum value.
  * @param value The number to clamp.
@@ -89,9 +92,11 @@ export function nearestPowerOfTwo(value: number): number {
  * Generates a Version 4 UUID (Universally Unique Identifier).
  * @returns A string representing the generated UUID.
  */
-export function generateUUID(): string {
+export function uuid4(): string {
+  const random = createSeededRandomSync(`uuid-${Date.now()}-${performance.now()}`);
+
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
+    const r = (random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });

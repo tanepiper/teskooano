@@ -192,7 +192,7 @@ export class SystemFunctionsManager {
     options?: { seed?: string },
   ) {
     try {
-      const seed = options?.seed ?? Math.random().toString(36).substring(2, 10);
+      const seed = options?.seed ?? Date.now().toString(36).substring(2, 10);
 
       await this.generator.generateAndLoadSystem(seed);
       return {
@@ -354,7 +354,7 @@ export class SystemFunctionsManager {
       });
       actions.resetTime();
 
-      const star = generateStar(Math.random);
+      const star = generateStar(() => Math.random());
       celestialFactory.createSolarSystem(star);
       updateSeed("");
 

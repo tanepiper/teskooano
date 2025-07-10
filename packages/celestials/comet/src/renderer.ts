@@ -22,6 +22,7 @@ import {
   CometSimplifiedTailMaterial,
 } from "./material";
 import { SimplexNoise } from "three/examples/jsm/math/SimplexNoise.js";
+import { createSeededRandomSync } from "@teskooano/core-math";
 
 const MAX_PARTICLES = 12000;
 const PARTICLE_LIFETIME = 5.0; // seconds
@@ -60,11 +61,15 @@ export class CometRenderer extends BaseCelestialRenderer {
   private lastParticleIndex = 0;
   private clock = new THREE.Clock();
   private noise = new SimplexNoise();
+  private random: () => number = () => 0;
 
   getLODLevels(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
+    // Initialize seeded random for this comet
+    this.random = createSeededRandomSync(object.seed ?? object.celestialObjectId);
+    
     this.createNucleus(object);
     this.createComa(object);
     this.createParticleTail(object);
@@ -462,9 +467,9 @@ export class CometRenderer extends BaseCelestialRenderer {
         this.particlePositions[pIndex * 3 + 2] = 0;
 
         this.particleAttributes.lifetime[pIndex] =
-          PARTICLE_LIFETIME * (0.5 + Math.random() * 0.5);
+          PARTICLE_LIFETIME * (0.5 + this.random() * 0.5);
         this.particleAttributes.size[pIndex] =
-          object.radius * (1.0 + Math.random() * 2.0) * (1.0 + activityFactor);
+          object.radius * (1.0 + this.random() * 2.0) * (1.0 + activityFactor);
 
         const tailLength = properties.visualMaxTailLength!;
         // Increase speed with activity to make the tail longer
@@ -473,7 +478,7 @@ export class CometRenderer extends BaseCelestialRenderer {
 
         this.particleAttributes.velocity[pIndex]
           .copy(tailDirection)
-          .multiplyScalar(speed * (0.8 + Math.random() * 0.4))
+          .multiplyScalar(speed * (0.8 + this.random() * 0.4))
           .add(
             this._tempVector3
               .random()
@@ -530,11 +535,11 @@ export class CometRenderer extends BaseCelestialRenderer {
       // Handle jet repositioning
       jet.repositionTimer -= deltaTime;
       if (jet.repositionTimer <= 0) {
-        jet.repositionTimer = 3.0 + Math.random() * 4.0; // Reposition every 3-7 seconds
+        jet.repositionTimer = 3.0 + this.random() * 4.0; // Reposition every 3-7 seconds
         const nucleusGeom = this.nucleus!.geometry;
         const positionAttribute = nucleusGeom.getAttribute("position");
         const normalAttribute = nucleusGeom.getAttribute("normal");
-        const randomIndex = Math.floor(Math.random() * positionAttribute.count);
+        const randomIndex = Math.floor(this.random() * positionAttribute.count);
 
         jet.emissionPoint = new THREE.Vector3().fromBufferAttribute(
           positionAttribute,
@@ -561,15 +566,15 @@ export class CometRenderer extends BaseCelestialRenderer {
         positions[pIndex * 3 + 2] = jet.emissionPoint.z;
 
         jet.attributes.lifetime[pIndex] =
-          PARTICLE_LIFETIME * 0.2 * (0.5 + Math.random() * 0.5); // Shorter lifetime
+          PARTICLE_LIFETIME * 0.2 * (0.5 + this.random() * 0.5); // Shorter lifetime
         jet.attributes.size[pIndex] =
-          object.radius * (0.5 + Math.random() * 1.0) * (1.0 + activityFactor);
+          object.radius * (0.5 + this.random() * 1.0) * (1.0 + activityFactor);
 
         const speed = 20 * (1.0 + activityFactor);
 
         jet.attributes.velocity[pIndex]
           .copy(jet.emissionNormal)
-          .multiplyScalar(speed * (0.8 + Math.random() * 0.4))
+          .multiplyScalar(speed * (0.8 + this.random() * 0.4))
           .add(
             this._tempVector3
               .random()

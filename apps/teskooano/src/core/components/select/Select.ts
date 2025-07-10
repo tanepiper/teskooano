@@ -276,7 +276,7 @@ export class TeskooanoSelect extends HTMLElement {
   }
 
   private getUniqueId(): string {
-    return Math.random().toString(36).substring(2, 9);
+    return performance.now().toString(36).substring(2, 9);
   }
 
   private handleChange = (e: Event) => {

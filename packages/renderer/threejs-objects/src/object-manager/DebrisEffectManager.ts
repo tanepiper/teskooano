@@ -1,6 +1,7 @@
 import type { DestructionEvent } from "@teskooano/core-physics";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import * as THREE from "three";
+import { createSeededRandomSync } from "@teskooano/core-math";
 
 // New structure for active debris effects using InstancedMesh
 interface ActiveInstancedDebris {
@@ -65,9 +66,11 @@ export class DebrisEffectManager {
   private debrisClock = new THREE.Clock();
   private activeDebrisEffects: ActiveInstancedDebris[] = [];
   private _enableDebrisEffects: boolean = true;
+  private random: () => number;
 
-  constructor(config: DebrisEffectManagerConfig) {
+  constructor(config: DebrisEffectManagerConfig, seed?: string) {
     this.scene = config.scene;
+    this.random = createSeededRandomSync(seed ?? `debris-${Date.now()}`);
   }
 
   /**
@@ -158,12 +161,12 @@ export class DebrisEffectManager {
       // Initial Position Offset (relative to impact point)
       randomDir
         .set(
-          (Math.random() - 0.5) * 2,
-          (Math.random() - 0.5) * 2,
-          (Math.random() - 0.5) * 2,
+          (this.random() - 0.5) * 2,
+          (this.random() - 0.5) * 2,
+          (this.random() - 0.5) * 2,
         )
         .normalize()
-        .multiplyScalar(Math.random() * debrisBaseSize * 3); // Spread out a bit
+        .multiplyScalar(this.random() * debrisBaseSize * 3); // Spread out a bit
       tempPos.copy(impactScenePos).add(randomDir);
       positionOffsets[idx3] = tempPos.x;
       positionOffsets[idx3 + 1] = tempPos.y;
@@ -172,9 +175,9 @@ export class DebrisEffectManager {
       // Initial Rotation (random)
       tempQuat.setFromAxisAngle(
         randomDir
-          .set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+          .set(this.random() - 0.5, this.random() - 0.5, this.random() - 0.5)
           .normalize(),
-        Math.random() * Math.PI * 2,
+        this.random() * Math.PI * 2,
       );
       quaternions[idx4] = tempQuat.x;
       quaternions[idx4 + 1] = tempQuat.y;
@@ -182,7 +185,7 @@ export class DebrisEffectManager {
       quaternions[idx4 + 3] = tempQuat.w;
 
       // Scale
-      const scale = debrisBaseSize * (0.5 + Math.random() * 0.9);
+      const scale = debrisBaseSize * (0.5 + this.random() * 0.9);
       scales[idx3] = scale;
       scales[idx3 + 1] = scale;
       scales[idx3 + 2] = scale;
@@ -190,12 +193,12 @@ export class DebrisEffectManager {
       // Velocity (base + random component)
       randomDir
         .set(
-          (Math.random() - 0.5) * 2,
-          (Math.random() - 0.5) * 2,
-          (Math.random() - 0.5) * 2,
+          (this.random() - 0.5) * 2,
+          (this.random() - 0.5) * 2,
+          (this.random() - 0.5) * 2,
         )
         .normalize();
-      const randomVelFactor = 0.5 + Math.random() * 0.8;
+      const randomVelFactor = 0.5 + this.random() * 0.8;
       const finalVel = baseVel
         .clone()
         .lerp(randomDir, 0.7)
@@ -205,11 +208,11 @@ export class DebrisEffectManager {
       velocities[idx3 + 2] = finalVel.z;
 
       // Color (variation of orange/yellow)
-      const hue = Math.random() * 0.1 + 0.05;
+      const hue = this.random() * 0.1 + 0.05;
       tempColor.setHSL(
         hue,
-        0.8 + Math.random() * 0.2,
-        0.5 + Math.random() * 0.1,
+        0.8 + this.random() * 0.2,
+        0.5 + this.random() * 0.1,
       );
       colors[idx4] = tempColor.r;
       colors[idx4 + 1] = tempColor.g;
@@ -218,7 +221,7 @@ export class DebrisEffectManager {
 
       // Lifetime / Start time
       lifetimes[idx2] = startTime;
-      lifetimes[idx2 + 1] = debrisLifetime * (0.8 + Math.random() * 0.4); // Vary lifetime slightly
+      lifetimes[idx2 + 1] = debrisLifetime * (0.8 + this.random() * 0.4); // Vary lifetime slightly
     }
 
     // Set instance attributes

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createSeededRandomSync } from "@teskooano/core-math";
 import { StarFieldLayerOptions } from "./types";
 
 /**
@@ -18,15 +19,7 @@ export function createStarField(
   baseDistance: number,
   options: StarFieldLayerOptions,
 ): THREE.Points {
-  const {
-    count,
-    distanceMultiplier,
-    distanceSpread,
-    minBrightness,
-    maxBrightness,
-    size = 4.0,
-    colorTint,
-  } = options;
+  const random = createSeededRandomSync(`starfield-${options.count}-${options.distanceMultiplier}-${Date.now()}`);
 
   const starGeometry = new THREE.BufferGeometry();
   const positions: number[] = [];
@@ -41,11 +34,11 @@ export function createStarField(
     new THREE.Color("#FFA07A"),
   ];
 
-  for (let i = 0; i < count; i++) {
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(Math.random() * 2 - 1);
+  for (let i = 0; i < options.count; i++) {
+    const theta = random() * Math.PI * 2;
+    const phi = Math.acos(random() * 2 - 1);
     const radius =
-      baseDistance * distanceMultiplier + Math.random() * distanceSpread;
+      baseDistance * options.distanceMultiplier + random() * options.distanceSpread;
 
     positions.push(
       radius * Math.sin(phi) * Math.cos(theta),
@@ -53,20 +46,20 @@ export function createStarField(
       radius * Math.cos(phi),
     );
 
-    const baseColor = starColors[Math.floor(Math.random() * starColors.length)];
+    const baseColor = starColors[Math.floor(random() * starColors.length)];
     const starColor = new THREE.Color();
 
     const hsl = { h: 0, s: 0, l: 0 };
     baseColor.getHSL(hsl);
 
     const newColor = new THREE.Color().setHSL(
-      hsl.h + (Math.random() * 0.1 - 0.05),
-      hsl.s * (0.5 + Math.random() * 0.5),
-      minBrightness + Math.random() * (maxBrightness - minBrightness),
+      hsl.h + (random() * 0.1 - 0.05),
+      hsl.s * (0.5 + random() * 0.5),
+      options.minBrightness + random() * (options.maxBrightness - options.minBrightness),
     );
 
-    if (colorTint) {
-      newColor.lerp(colorTint, 0.3);
+    if (options.colorTint) {
+      newColor.lerp(options.colorTint, 0.3);
     }
 
     colors.push(newColor.r, newColor.g, newColor.b);
@@ -82,7 +75,7 @@ export function createStarField(
   );
 
   const starMaterial = new THREE.PointsMaterial({
-    size,
+    size: options.size,
     vertexColors: true,
     transparent: true,
     opacity: 0.8,

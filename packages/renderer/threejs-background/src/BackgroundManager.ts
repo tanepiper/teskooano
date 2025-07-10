@@ -6,6 +6,7 @@ import { StarFieldOptions } from "./fields/star-field/types";
 import { NebulaField } from "./fields/nebula-field/NebulaField";
 import { NebulaFieldOptions } from "./fields/nebula-field/types";
 import { NEBULA_PALETTES } from "./fields/nebula-field/palettes";
+import { createSeededRandomSync } from "@teskooano/core-math";
 
 /**
  * Defines the base distance for star field layers, used as a reference
@@ -23,16 +24,19 @@ export class BackgroundManager {
   private scene: THREE.Scene;
   private isDebugMode: boolean = false;
   private fields: Field[] = [];
+  private random: () => number;
 
   /**
    * Creates a new BackgroundManager.
    */
-  constructor(scene: THREE.Scene) {
+  constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera, seed?: string) {
     this.scene = scene;
     this.group = new THREE.Group();
     this.debugGroup = new THREE.Group();
     this.group.add(this.debugGroup);
     scene.add(this.group);
+
+    this.random = createSeededRandomSync(seed ?? `background-${Date.now()}`);
 
     this.createDefaultNebula();
     this.createDefaultStarField();
@@ -44,7 +48,7 @@ export class BackgroundManager {
   private createDefaultNebula(): void {
     // Select a random palette
     const selectedPalette =
-      NEBULA_PALETTES[Math.floor(Math.random() * NEBULA_PALETTES.length)];
+      NEBULA_PALETTES[Math.floor(this.random() * NEBULA_PALETTES.length)];
 
     const defaultOptions = {
       alpha: 0.9,
@@ -53,7 +57,7 @@ export class BackgroundManager {
         octaves: 2,
         persistence: 0.5,
         lacunarity: 2.2,
-        seed: Math.random(),
+        seed: this.random(),
       },
     };
 

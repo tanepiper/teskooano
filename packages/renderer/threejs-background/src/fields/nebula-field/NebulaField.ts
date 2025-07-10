@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createSeededRandomSync } from "@teskooano/core-math";
 import { Field } from "../core/Field";
 import { NebulaFieldOptions } from "./types";
 import vertexShader from "./shaders/vertex.glsl";
@@ -19,12 +20,16 @@ export class NebulaField extends Field {
   /** A time counter passed to the shader to drive procedural animation. */
   private time: number = 0;
 
+  /** Seeded random function for deterministic generation. */
+  private random: () => number;
+
   /**
    * Constructs a new NebulaField instance.
    * @param options The configuration for the nebula.
    */
   constructor(options: NebulaFieldOptions) {
     super(options);
+    this.random = createSeededRandomSync(`nebula-${options.noiseConfig.seed ?? Date.now()}`);
     this.rotationSpeed = options.rotationSpeed ?? 0.000000005;
 
     const geometry = this.createGeometry(options.size);
@@ -39,7 +44,7 @@ export class NebulaField extends Field {
     this.object.position.set(
       0,
       0,
-      -options.baseDistance * (1 + (Math.random() - 0.5) * 0.1),
+      -options.baseDistance * (1 + (this.random() - 0.5) * 0.1),
     );
   }
 

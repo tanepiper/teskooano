@@ -46,7 +46,7 @@ export function createRandomSeedStream$(
 ): Observable<{ seed: string; element: HTMLElement }> {
   return fromEvent(buttonElement, "click").pipe(
     map(() => ({
-      seed: Math.random().toString(36).substring(2, 10),
+              seed: Date.now().toString(36).substring(2, 10),
       element: buttonElement,
     })),
   );

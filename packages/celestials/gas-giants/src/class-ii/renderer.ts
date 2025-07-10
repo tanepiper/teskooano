@@ -1,5 +1,6 @@
 import type { GasGiantProperties } from "@teskooano/data-types";
 import * as THREE from "three";
+import { createSeededRandomSync } from "@teskooano/core-math";
 import {
   BaseGasGiantRenderer,
   type GasGiantRendererDeps,
@@ -20,11 +21,14 @@ export class ClassIIGasGiantRenderer extends BaseGasGiantRenderer<ClassIIMateria
   protected createMaterial(object: RenderableCelestialObject): ClassIIMaterial {
     const properties = object.properties as GasGiantProperties;
 
+    // Initialize seeded random for this gas giant
+    const random = createSeededRandomSync(object.seed ?? object.celestialObjectId);
+
     const seed = object.celestialObjectId
       ? object.celestialObjectId
           .split("")
           .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
-      : Math.random() * 10000;
+      : random() * 10000;
 
     // Use provided colors or defaults for Class II
     const atmosphereColor = properties.atmosphereColor
