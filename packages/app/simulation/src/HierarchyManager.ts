@@ -46,22 +46,25 @@ export class HierarchyManager {
         obj.status !== CelestialStatus.DESTROYED &&
         obj.status !== CelestialStatus.ANNIHILATED
       ) {
-        this.handleOrphanedObjects(
-          obj,
-          physicsState,
-          allObjects,
-          allPhysicsStates,
-        );
+        // Skip hierarchy management for asteroid belts - they should have static relationships
+        if (obj.type !== CelestialType.ASTEROID_FIELD) {
+          this.handleOrphanedObjects(
+            obj,
+            physicsState,
+            allObjects,
+            allPhysicsStates,
+          );
 
-        const wasChanged = this.handleMoonEscape(
-          obj,
-          physicsState,
-          allObjects,
-          allPhysicsStates,
-        );
+          const wasChanged = this.handleMoonEscape(
+            obj,
+            physicsState,
+            allObjects,
+            allPhysicsStates,
+          );
 
-        if (!wasChanged) {
-          this.handleCapture(obj, physicsState, allObjects, allPhysicsStates);
+          if (!wasChanged) {
+            this.handleCapture(obj, physicsState, allObjects, allPhysicsStates);
+          }
         }
       }
     }
@@ -230,6 +233,14 @@ export class HierarchyManager {
 
       // Skip if they already have a parent-child relationship
       if (this.areAlreadyRelated(obj, otherObj, allObjects)) {
+        continue;
+      }
+
+      // Asteroid belts should not capture other asteroid belts
+      if (
+        obj.type === CelestialType.ASTEROID_FIELD &&
+        otherObj.type === CelestialType.ASTEROID_FIELD
+      ) {
         continue;
       }
 
@@ -503,6 +514,14 @@ export class HierarchyManager {
         !potentialParent ||
         !parentState ||
         potentialParent.status === CelestialStatus.DESTROYED
+      ) {
+        continue;
+      }
+
+      // Asteroid belts should not be parents of other asteroid belts
+      if (
+        child.type === CelestialType.ASTEROID_FIELD &&
+        potentialParent.type === CelestialType.ASTEROID_FIELD
       ) {
         continue;
       }

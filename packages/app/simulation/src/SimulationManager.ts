@@ -173,6 +173,7 @@ export class SimulationManager {
         const radii = new Map<string | number, number>();
         const isStar = new Map<string | number, boolean>();
         const bodyTypes = new Map<string | number, CelestialType>();
+        const ignoreCollisions = new Map<string | number, boolean>();
         const parentIds = new Map<string | number, string | undefined>();
 
         Object.values(allCelestialObjectsForParams)
@@ -187,6 +188,7 @@ export class SimulationManager {
               radii.set(obj.id, obj.realRadius_m);
               isStar.set(obj.id, obj.type === CelestialType.STAR);
               bodyTypes.set(obj.id, obj.type);
+              ignoreCollisions.set(obj.id, obj.ignoreCollisions ?? false);
               parentIds.set(obj.id, obj.parentId);
             }
           });
@@ -195,6 +197,7 @@ export class SimulationManager {
           radii,
           isStar,
           bodyTypes,
+          ignoreCollisions,
           parentIds,
           simulationConfig: getSimulationState().simulationConfig, // Pass the correct config
           orbitalParameters:

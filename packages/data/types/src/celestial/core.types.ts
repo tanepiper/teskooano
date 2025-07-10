@@ -79,6 +79,9 @@ export interface CelestialObject {
   /** When true, this object will be excluded from physics calculations (no gravity interactions, collisions, etc.) */
   ignorePhysics?: boolean;
 
+  /** When true, this object will be excluded from collision detection. */
+  ignoreCollisions?: boolean;
+
   /** Current visual rotation of the object in the scene. */
   rotation?: THREE.Quaternion;
 }

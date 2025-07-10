@@ -32,7 +32,7 @@ export function getOceanProperties(
     terrainType: 3, // Sharp valleys are key for island coastlines
     terrainAmplitude: utils.lerp(0.75, 0.85, random()),
     terrainSharpness: utils.lerp(0.9, 1.0, random()),
-    terrainOffset: -0.15, // Negative offset pushes most terrain underwater
+    terrainOffset: utils.lerp(0, 1.0, random()), // Negative offset pushes most terrain underwater
     height1: 0, // Deepest part is water
     height2: utils.lerp(0.02, 0.04, random()),
     height3: utils.lerp(0.3, 0.32, random()),

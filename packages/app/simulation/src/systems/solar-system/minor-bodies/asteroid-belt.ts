@@ -1,8 +1,9 @@
-import { DEG_TO_RAD } from "@teskooano/core-math";
+import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
+  CelestialStatus,
   type AsteroidFieldProperties,
 } from "@teskooano/data-types";
 
@@ -19,13 +20,23 @@ const BELT_ASTEROID_COUNT = 50000;
  * Initializes the main Asteroid Belt using representative data.
  */
 export function initializeAsteroidBelt(parentId: string): void {
+  const position = new OSVector3(BELT_CENTER_AU * AU, 0, 0);
+  const velocity = new OSVector3(0, 0, 0);
+
   actions.addCelestial({
     id: "asteroid-belt-main",
     name: "Main Asteroid Belt",
     type: CelestialType.ASTEROID_FIELD,
+    status: CelestialStatus.ACTIVE,
     parentId: parentId,
     realMass_kg: BELT_TOTAL_MASS_KG,
     realRadius_m: BELT_OUTER_AU * AU,
+    physicsStateReal: {
+      id: "asteroid-belt-main",
+      mass_kg: BELT_TOTAL_MASS_KG,
+      position_m: position,
+      velocity_mps: velocity,
+    },
     orbit: {
       realSemiMajorAxis_m: BELT_CENTER_AU * AU,
       eccentricity: BELT_AVG_ECC,
@@ -36,7 +47,8 @@ export function initializeAsteroidBelt(parentId: string): void {
       period_s: Math.sqrt(Math.pow(BELT_CENTER_AU, 3)) * 3.15576e7,
     },
     temperature: 165,
-    ignorePhysics: true,
+    ignorePhysics: false,
+    ignoreCollisions: true,
     properties: {
       type: CelestialType.ASTEROID_FIELD,
       innerRadiusAU: BELT_INNER_AU,

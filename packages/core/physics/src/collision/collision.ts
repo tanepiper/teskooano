@@ -414,6 +414,7 @@ export const handleCollisions = (
   radii: Map<string | number, number>,
   isStar: Map<string | number, boolean>,
   bodyTypes: Map<string | number, CelestialType>,
+  ignoreCollisions?: Map<string | number, boolean>,
 ): [PhysicsStateReal[], Set<string | number>, DestructionEvent[]] => {
   const updatedBodiesMap = new Map<string | number, PhysicsStateReal>();
   bodiesReal.forEach((body) => updatedBodiesMap.set(body.id, { ...body }));
@@ -444,6 +445,14 @@ export const handleCollisions = (
         type1 === CelestialType.RING_SYSTEM ||
         type2 === CelestialType.RING_SYSTEM
       ) {
+        continue;
+      }
+
+      // Check if either object should ignore collisions
+      const body1IgnoreCollisions = ignoreCollisions?.get(id1) ?? false;
+      const body2IgnoreCollisions = ignoreCollisions?.get(id2) ?? false;
+
+      if (body1IgnoreCollisions || body2IgnoreCollisions) {
         continue;
       }
 

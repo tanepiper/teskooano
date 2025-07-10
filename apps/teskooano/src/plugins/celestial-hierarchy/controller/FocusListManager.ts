@@ -4,6 +4,7 @@ import {
   CelestialType,
 } from "@teskooano/data-types";
 import { generateIconConfig } from "../../celestial-icons";
+import { formatDetailedType } from "../utils/type-formatter";
 
 /**
  * Manages the DOM representation of the celestial object list.
@@ -74,7 +75,7 @@ export class FocusListManager {
       const row = document.createElement("celestial-row");
       row.setAttribute("object-id", obj.id);
       row.setAttribute("object-name", obj.name);
-      row.setAttribute("object-type", obj.type);
+      row.setAttribute("object-type", formatDetailedType(obj));
 
       const iconConfig = generateIconConfig(obj);
       row.setAttribute("config", JSON.stringify(iconConfig));
@@ -157,7 +158,7 @@ export class FocusListManager {
         const row = document.createElement("celestial-row");
         row.setAttribute("object-id", obj.id);
         row.setAttribute("object-name", obj.name);
-        row.setAttribute("object-type", obj.type);
+        row.setAttribute("object-type", formatDetailedType(obj));
 
         const iconConfig = generateIconConfig(obj);
         row.setAttribute("config", JSON.stringify(iconConfig));

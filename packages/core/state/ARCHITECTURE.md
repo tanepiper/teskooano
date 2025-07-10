@@ -33,7 +33,6 @@
     - `updateOrbitalParameters(objectId, parameters)`: Updates the `orbit` property of an object.
 
 7.  **`game/factory.ts`**: Contains logic for creating fully initialized `CelestialObject` instances.
-    - `CelestialObjectCreationInput`: Interface defining the necessary input data (real mass/radius, type, parent, orbit, etc.).
     - `celestialFactory`: An object with factory methods:
       - `clearState()`: Resets the stores and simulation state variables.
       - `createSolarSystem(data)`: Creates the central star. Calculates initial scaled properties and physics states (star is stationary). Uses `celestialActions.addCelestialObject`.

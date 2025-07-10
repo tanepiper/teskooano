@@ -201,29 +201,6 @@ export interface SimulationState {
 }
 
 /**
- * Input data required to create a new celestial object.
- * Focuses on core blueprint properties.
- */
-export interface CelestialObjectCreationInput {
-  id: string;
-  name: string;
-  type: CelestialType;
-  realMass_kg: number;
-  realRadius_m: number;
-  parentId?: string;
-  orbit?: OrbitalParameters;
-  temperature?: number;
-  albedo?: number;
-  siderealRotationPeriod_s?: number;
-  axialTilt?: OSVector3;
-  atmosphere?: CelestialSpecificPropertiesUnion;
-  surface?: CelestialSpecificPropertiesUnion;
-  properties?: CelestialSpecificPropertiesUnion;
-  seed?: string | number;
-  ignorePhysics?: boolean;
-}
-
-/**
  * Options for state clearing
  */
 export interface ClearStateOptions {

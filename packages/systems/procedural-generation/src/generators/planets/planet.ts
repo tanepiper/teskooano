@@ -70,13 +70,26 @@ export function generatePlanet(
         return;
       }
 
-      const massRangeMultiplier = 1 + bodyDistanceAU / 5;
+      const massRangeMultiplier = Math.min(1 + bodyDistanceAU / 10, 5); // Cap at 5x to prevent unrealistic masses
 
       const planetMassMultiplier =
         (0.1 + random() * 10) *
         massRangeMultiplier *
         baseProps.massMultiplierFactor;
       const planetMass_kg = planetMassMultiplier * CONST.EARTH_MASS_KG;
+
+      // Debug logging for mass generation
+      // if (planetMass_kg > 1e24) { // If mass > 1 Earth mass
+      //   console.warn(`[generatePlanet] High mass detected for ${planetName}:`, {
+      //     planetName,
+      //     bodyDistanceAU,
+      //     massRangeMultiplier,
+      //     planetMassMultiplier,
+      //     baseProps_massMultiplierFactor: baseProps.massMultiplierFactor,
+      //     planetMass_kg,
+      //     mass_in_earth_masses: planetMass_kg / CONST.EARTH_MASS_KG,
+      //   });
+      // }
 
       const finalPlanetRadius_m = UTIL.calculateRadius(
         planetMass_kg,

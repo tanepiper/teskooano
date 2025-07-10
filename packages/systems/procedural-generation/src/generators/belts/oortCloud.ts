@@ -61,7 +61,8 @@ export function generateOortCloud(
     temperature: 10 + random() * 20,
     orbit: oortOrbit,
     properties: oortProperties,
-    ignorePhysics: true,
+    ignorePhysics: false,
+    ignoreCollisions: true,
     physicsStateReal: {
       id: oortCloudId,
       mass_kg: 0,

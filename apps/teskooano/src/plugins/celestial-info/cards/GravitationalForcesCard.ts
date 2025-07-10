@@ -57,9 +57,66 @@ export class GravitationalForcesCard extends BaseCelestialCard {
       );
       if (distance === 0) continue;
 
+      // Enhanced debug logging for extreme distances and forces
+      if (distance > 1e15) {
+        // If distance > 1e15 meters (about 10 AU)
+        console.log(
+          `[GravitationalForcesCard] DEBUG - Large distance detected:`,
+          {
+            celestial: celestial.name,
+            other: other.name,
+            distance_meters: distance,
+            distance_au: distance / 1.496e11,
+            celestial_pos: celestial.physicsStateReal.position_m,
+            other_pos: other.physicsStateReal.position_m,
+            celestial_mass: celestial.realMass_kg,
+            other_mass: other.realMass_kg,
+          },
+        );
+      }
+
       const force =
         (GRAVITATIONAL_CONSTANT * (celestial.realMass_kg * other.realMass_kg)) /
         (distance * distance);
+
+      // Debug logging for unexpectedly high forces
+      if (force > 1e20) {
+        // If force > 1e20 N (very high)
+        console.log(`[GravitationalForcesCard] DEBUG - High force detected:`, {
+          celestial: celestial.name,
+          other: other.name,
+          force_newtons: force,
+          distance_meters: distance,
+          distance_au: distance / 1.496e11,
+          celestial_mass: celestial.realMass_kg,
+          other_mass: other.realMass_kg,
+          calculated_force: `G * (${celestial.realMass_kg} * ${other.realMass_kg}) / (${distance}²)`,
+          gravitational_constant: GRAVITATIONAL_CONSTANT,
+          // Add expected force calculation for comparison
+          expected_force_earth_mass:
+            (GRAVITATIONAL_CONSTANT * (5.972e24 * 5.972e24)) /
+            (distance * distance),
+          mass_ratio_celestial: celestial.realMass_kg / 5.972e24,
+          mass_ratio_other: other.realMass_kg / 5.972e24,
+        });
+      }
+
+      // Debug logging for large distances
+      // if (distance > 1e15) { // If distance > 1e15 m (~6.7 AU)
+      //   console.log(`[GravitationalForcesCard] DEBUG - Large distance detected:`, {
+      //     celestial: celestial.name,
+      //     other: other.name,
+      //     distance_meters: distance,
+      //     distance_au: distance / 1.496e11,
+      //     celestial_pos: celestial.physicsStateReal.position_m,
+      //     other_pos: other.physicsStateReal.position_m,
+      //     celestial_mass: celestial.realMass_kg,
+      //     other_mass: other.realMass_kg,
+      //     mass_ratio_celestial: celestial.realMass_kg / 5.972e24,
+      //     mass_ratio_other: other.realMass_kg / 5.972e24,
+      //   });
+      // }
+
       influences.push({
         name: other.name,
         force,

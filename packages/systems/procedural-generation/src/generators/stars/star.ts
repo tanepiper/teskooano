@@ -244,12 +244,6 @@ export function generateStar(random: () => number): CelestialObject {
     spectralClassString = mainSpectralClass as string;
   }
 
-  // --- DEBUG LOG ---
-  console.log(
-    `[generateStar] Generating: ${chosenType} | Mass: ${starMass_Solar.toFixed(2)} M☉ | Temp: ${Math.round(starTemperature)} K | Class: ${spectralClassString}`,
-  );
-  // --- END DEBUG LOG ---
-
   // Calculate realistic system lighting based on stellar properties
   const clampedLuminosity = Math.max(0.001, Math.min(starLuminosity, 10000));
   const starLightIntensity = Math.pow(clampedLuminosity, 0.25); // Fourth root for more reasonable scaling

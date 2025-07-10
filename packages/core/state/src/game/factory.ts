@@ -19,7 +19,7 @@ import {
 import { celestialActions } from "./celestialActions";
 import { simulationStateService } from "./simulation";
 import { gameStateService } from "./stores";
-import { CelestialObjectCreationInput, ClearStateOptions } from "./types";
+import { ClearStateOptions } from "./types";
 import { determineStarThermalProperties } from "./utils/star-properties.utils";
 
 /**
@@ -64,23 +64,20 @@ class CelestialFactoryService {
    * Internal method to create and add a celestial object to the game state.
    * It sets up the core object properties, physics state, and hierarchy.
    * @private
-   * @param {CelestialObjectCreationInput} data - The input data for creating the celestial object.
-   * @param {PhysicsStateReal} calculatedPhysicsStateReal - The pre-calculated real physics state of the object.
-   * @param {CelestialSpecificPropertiesUnion | undefined} processedProperties - The specific properties of the celestial object (e.g., StarProperties, PlanetProperties).
-   * @param {number} processedTemperature - The processed temperature of the object.
-   * @param {number} processedAlbedo - The processed albedo of the object.
+   * @param  data - The input data for creating the celestial object.
+   * @param  calculatedPhysicsStateReal - The pre-calculated real physics state of the object.
+   * @param  processedProperties - The specific properties of the celestial object (e.g., StarProperties, PlanetProperties).
+   * @param  processedTemperature - The processed temperature of the object.
+   * @param processedAlbedo - The processed albedo of the object.
    */
   private _createCelestialObjectInternal(
-    data: CelestialObjectCreationInput,
+    data: CelestialObject,
     calculatedPhysicsStateReal: PhysicsStateReal,
     processedProperties: CelestialSpecificPropertiesUnion | undefined,
     processedTemperature: number,
     processedAlbedo: number,
   ): void {
-    const seedString =
-      typeof data.seed === "number"
-        ? data.seed.toString()
-        : `${Math.floor(Date.now() % 1000000)}`;
+    const seedString = data?.seed ?? `${Math.floor(Date.now() % 1000000)}`;
 
     const coreObject: CelestialObject = {
       id: data.id,
@@ -90,7 +87,7 @@ class CelestialFactoryService {
       realMass_kg: data.realMass_kg,
       realRadius_m: data.realRadius_m,
       status: CelestialStatus.ACTIVE,
-      orbit: data.orbit!,
+      orbit: data.orbit,
       temperature: processedTemperature,
       albedo: processedAlbedo,
       siderealRotationPeriod_s: data.siderealRotationPeriod_s,
@@ -103,6 +100,7 @@ class CelestialFactoryService {
       physicsStateReal: calculatedPhysicsStateReal,
       currentParentId: data.parentId,
       ignorePhysics: data.ignorePhysics,
+      ignoreCollisions: data.ignoreCollisions,
     };
     celestialActions.addCelestialObject(coreObject);
 
@@ -173,12 +171,12 @@ class CelestialFactoryService {
    * This involves clearing the current state (partially, camera isn't reset by default),
    * processing the primary star's properties, and adding it to the game state.
    * Dispatches a `CELESTIAL_OBJECTS_LOADED` event with count 1 and systemId after creation.
-   * @param {CelestialObjectCreationInput} data - The input data for the primary star of the solar system.
+   * @param  data - The input data for the primary star of the solar system.
    *                                              Must be of type `CelestialType.STAR`.
-   * @returns {string} The ID of the created star, or an empty string if creation failed.
+   * @returns  The ID of the created star, or an empty string if creation failed.
    * @public
    */
-  public createSolarSystem(data: CelestialObjectCreationInput): string {
+  public createSolarSystem(data: CelestialObject): string {
     if (data.type !== CelestialType.STAR) {
       console.error(
         `[CelestialFactoryService] createSolarSystem called with non-star type: ${data.type}. Aborting.`,
@@ -236,8 +234,10 @@ class CelestialFactoryService {
     const starPhysicsReal: PhysicsStateReal = {
       id: data.id,
       mass_kg: data.realMass_kg,
-      position_m: new OSVector3(0, 0, 0),
-      velocity_mps: new OSVector3(0, 0, 0),
+      position_m:
+        data.physicsStateReal?.position_m?.clone() ?? new OSVector3(0, 0, 0),
+      velocity_mps:
+        data.physicsStateReal?.velocity_mps?.clone() ?? new OSVector3(0, 0, 0),
     };
 
     this._createCelestialObjectInternal(
@@ -266,10 +266,10 @@ class CelestialFactoryService {
   /**
    * Adds multiple celestial objects to the state with dependency-aware sorting.
    * This ensures parents are created before their children.
-   * @param {CelestialObjectCreationInput[]} data - Array of object creation data.
+   * @param  data - Array of object creation data.
    * @public
    */
-  public addCelestialObjects(data: CelestialObjectCreationInput[]): void {
+  public addCelestialObjects(data: CelestialObject[]): void {
     // 1. Sort objects to ensure parents come before children
     const sortedData = this.sortObjectsByDependency(data);
 
@@ -293,15 +293,15 @@ class CelestialFactoryService {
 
   /**
    * Sorts celestial objects based on their parent-child relationships.
-   * @param {CelestialObjectCreationInput[]} objects - The array of objects to sort.
-   * @returns {CelestialObjectCreationInput[]} A new array sorted with parents first.
+   * @param  objects - The array of objects to sort.
+   * @returns  A new array sorted with parents first.
    * @private
    */
   private sortObjectsByDependency(
-    objects: CelestialObjectCreationInput[],
-  ): CelestialObjectCreationInput[] {
+    objects: CelestialObject[],
+  ): CelestialObject[] {
     const objectMap = new Map(objects.map((obj) => [obj.id, obj]));
-    const sorted: CelestialObjectCreationInput[] = [];
+    const sorted: CelestialObject[] = [];
     const visited = new Set<string>();
 
     function visit(objectId: string) {
@@ -331,10 +331,10 @@ class CelestialFactoryService {
    * Calculates its initial physics state based on its orbital parameters and parent object.
    * For objects like RING_SYSTEM, OORT_CLOUD, ASTEROID_FIELD, or parentless stars, specific
    * logic is applied for their physics state.
-   * @param {CelestialObjectCreationInput} data - The input data for the celestial object to add.
+   * @param data - The input data for the celestial object to add.
    * @public
    */
-  public addCelestial(data: CelestialObjectCreationInput): void {
+  public addCelestial(data: CelestialObject): void {
     if (data.type === CelestialType.STAR) {
       if (!data.parentId) {
         console.error(

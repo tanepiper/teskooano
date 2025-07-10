@@ -4,6 +4,7 @@ import type {
   CelestialObject,
   OrbitalParameters,
   PhysicsStateReal,
+  StarProperties,
 } from "@teskooano/data-types";
 import {
   CelestialStatus,
@@ -30,21 +31,19 @@ import { isValidAsteroidBeltDistance } from "./utils";
  * - Kirkwood gaps and resonance effects
  *
  * @param random The seeded pseudo-random number generator function.
- * @param starId The ID of the parent star.
- * @param starMass_kg The mass of the parent star in kilograms.
+ * @param parentStar The parent star object with its properties.
  * @param index The index in the generation loop for deterministic naming.
  * @param bodyDistanceAU The distance of the belt's center from the star in AU.
  * @returns Realistic CelestialObject for the asteroid belt or null if invalid.
  */
 export function generateAsteroidBelt(
   random: () => number,
-  starId: string,
-  starMass_kg: number,
+  parentStar: CelestialObject,
   index: number,
   bodyDistanceAU: number,
 ): CelestialObject | null {
   // Validate distance range - asteroid belts form in specific zones
-  if (!isValidAsteroidBeltDistance(bodyDistanceAU, starMass_kg)) {
+  if (!isValidAsteroidBeltDistance(bodyDistanceAU, parentStar.realMass_kg)) {
     console.warn(
       `[generateAsteroidBelt] Invalid distance ${bodyDistanceAU} AU for asteroid belt formation. Skipping.`,
     );
@@ -52,7 +51,7 @@ export function generateAsteroidBelt(
   }
 
   const beltName = generateAsteroidBeltName(index, bodyDistanceAU);
-  const beltId = `asteroidbelt-${starId}-${beltName
+  const beltId = `asteroidbelt-${parentStar.id}-${beltName
     .toLowerCase()
     .replace(/\s+/g, "-")}`;
 
@@ -70,6 +69,9 @@ export function generateAsteroidBelt(
     random,
   );
 
+  // Calculate realistic belt mass based on volume and density
+  const beltMass_kg = calculateBeltMass(beltDimensions, bodyDistanceAU, random);
+
   const beltProperties: AsteroidFieldProperties = {
     type: CelestialType.ASTEROID_FIELD,
     innerRadiusAU: beltDimensions.innerRadius,
@@ -84,11 +86,15 @@ export function generateAsteroidBelt(
   };
 
   // Generate realistic orbital parameters with proper eccentricity distribution
-  const beltOrbit = generateBeltOrbit(bodyDistanceAU, starMass_kg, random);
+  const beltOrbit = generateBeltOrbit(
+    bodyDistanceAU,
+    parentStar.realMass_kg,
+    random,
+  );
 
-  if (starMass_kg <= 0 || !Number.isFinite(starMass_kg)) {
+  if (parentStar.realMass_kg <= 0 || !Number.isFinite(parentStar.realMass_kg)) {
     console.warn(
-      `[generateAsteroidBelt] Invalid parent star mass (${starMass_kg}) for ${beltId}. Skipping belt.`,
+      `[generateAsteroidBelt] Invalid parent star mass (${parentStar.realMass_kg}) for ${beltId}. Skipping belt.`,
     );
     return null;
   }
@@ -115,10 +121,10 @@ export function generateAsteroidBelt(
   }
 
   const starPhysicsState: PhysicsStateReal = {
-    id: starId,
-    mass_kg: starMass_kg,
-    position_m: new OSVector3(0, 0, 0),
-    velocity_mps: new OSVector3(0, 0, 0),
+    id: parentStar.id,
+    mass_kg: parentStar.realMass_kg,
+    position_m: parentStar.physicsStateReal.position_m.clone(),
+    velocity_mps: parentStar.physicsStateReal.velocity_mps.clone(),
   };
 
   let initialPosition: OSVector3;
@@ -132,28 +138,29 @@ export function generateAsteroidBelt(
       `[generateAsteroidBelt] Error calculating initial state for ${beltId}, using default position.`,
       error,
     );
-    initialPosition = new OSVector3(beltOrbit.realSemiMajorAxis_m, 0, 0);
-    initialVelocity = new OSVector3(0, 0, 0);
+    initialPosition = parentStar.physicsStateReal.position_m.clone();
+    initialVelocity = parentStar.physicsStateReal.velocity_mps.clone();
   }
 
-  // Calculate realistic temperature based on distance from star
-  const beltTemperature = calculateBeltTemperature(bodyDistanceAU, starMass_kg);
+  // Calculate realistic temperature based on the parent star's properties
+  const beltTemperature = calculateBeltTemperature(bodyDistanceAU, parentStar);
 
   const belt: CelestialObject = {
     id: beltId,
     name: beltName,
     type: CelestialType.ASTEROID_FIELD,
     status: CelestialStatus.ACTIVE,
-    parentId: starId,
-    realMass_kg: 0, // Asteroid belts have negligible total mass
+    parentId: parentStar.id,
+    realMass_kg: beltMass_kg, // Now has realistic mass for gravitational effects
     realRadius_m: beltDimensions.outerRadius * CONST.AU_TO_METERS,
     temperature: beltTemperature,
     orbit: beltOrbit,
     properties: beltProperties,
-    ignorePhysics: true,
+    ignorePhysics: false, // Belt itself doesn't move, but its mass affects other objects
+    ignoreCollisions: true,
     physicsStateReal: {
       id: beltId,
-      mass_kg: 0,
+      mass_kg: beltMass_kg,
       position_m: initialPosition,
       velocity_mps: initialVelocity,
     },
@@ -306,29 +313,94 @@ function generateBeltOrbit(
 }
 
 /**
- * Calculates belt temperature based on stellar heating
+ * Calculates realistic belt mass based on volume and density
+ */
+function calculateBeltMass(
+  dimensions: { innerRadius: number; outerRadius: number; height: number },
+  distanceAU: number,
+  random: () => number,
+): number {
+  // Belt volume in cubic AU
+  const beltVolume =
+    Math.PI *
+    (dimensions.outerRadius * dimensions.outerRadius -
+      dimensions.innerRadius * dimensions.innerRadius) *
+    dimensions.height;
+
+  // Density varies with distance from star
+  // Inner belts: higher density (more material)
+  // Outer belts: lower density (less material available)
+  const densityFactor = Math.pow(distanceAU, -1.5); // Inverse square-ish law
+
+  // Base density in kg per cubic AU
+  // Asteroid belt density varies significantly, but we can estimate
+  const baseDensity = 1e12 + random() * 5e12; // 1-6 trillion kg per cubic AU
+
+  const totalMass = beltVolume * baseDensity * densityFactor;
+
+  // Realistic range: 1e18 to 1e22 kg (similar to real asteroid belts)
+  return Math.max(1e18, Math.min(1e22, totalMass));
+}
+
+/**
+ * Calculates belt temperature based on the parent star's actual properties
  */
 function calculateBeltTemperature(
   distanceAU: number,
-  starMass_kg: number,
+  parentStar: CelestialObject,
 ): number {
-  const solarMass = 1.989e30;
-  const solarLuminosity = 3.828e26; // Watts
+  // Use the star's actual luminosity from its properties if available
+  let starLuminosity: number;
 
-  // Approximate stellar luminosity using mass-luminosity relation
-  const massRatio = starMass_kg / solarMass;
-  const stellarLuminosity = solarLuminosity * Math.pow(massRatio, 3.5);
+  if (
+    parentStar.properties &&
+    parentStar.properties.type === CelestialType.STAR
+  ) {
+    const starProps = parentStar.properties as StarProperties;
+    if (starProps.luminosity && starProps.luminosity > 0) {
+      starLuminosity = starProps.luminosity * CONST.SOLAR_LUMINOSITY;
+    } else {
+      // Fallback to mass-based calculation if luminosity is missing or invalid
+      const massRatio = Math.max(
+        0.01,
+        parentStar.realMass_kg / CONST.SOLAR_MASS_KG,
+      );
+      starLuminosity = CONST.SOLAR_LUMINOSITY * Math.pow(massRatio, 3.5);
+    }
+  } else {
+    // Fallback to mass-based calculation if star properties aren't available
+    const massRatio = Math.max(
+      0.01,
+      parentStar.realMass_kg / CONST.SOLAR_MASS_KG,
+    );
+    starLuminosity = CONST.SOLAR_LUMINOSITY * Math.pow(massRatio, 3.5);
+  }
+
+  // Ensure we have a valid luminosity
+  if (!Number.isFinite(starLuminosity) || starLuminosity <= 0) {
+    console.warn(
+      "[calculateBeltTemperature] Invalid star luminosity, using default",
+    );
+    starLuminosity = CONST.SOLAR_LUMINOSITY; // Default to solar luminosity
+  }
 
   // Calculate equilibrium temperature at distance
-  const stefanBoltzmann = 5.67e-8;
   const distanceM = distanceAU * CONST.AU_TO_METERS;
 
   // T = (L / (16π σ d²))^(1/4) for a gray body with albedo ~0.1
   const temperature = Math.pow(
-    stellarLuminosity /
-      (16 * Math.PI * stefanBoltzmann * distanceM * distanceM),
+    starLuminosity /
+      (16 * Math.PI * CONST.STEFAN_BOLTZMANN * distanceM * distanceM),
     0.25,
   );
+
+  // Ensure we have a valid temperature
+  if (!Number.isFinite(temperature) || temperature <= 0) {
+    console.warn(
+      "[calculateBeltTemperature] Invalid temperature calculated, using default",
+    );
+    return 50; // Default temperature for asteroid belts
+  }
 
   return Math.max(2.7, temperature); // Not colder than cosmic background
 }

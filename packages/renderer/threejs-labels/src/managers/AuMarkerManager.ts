@@ -4,63 +4,46 @@ import { Layer2DManager } from "../Layer2DManager";
 import { AuMarkerLabelLayer } from "../layers/AuMarkerLabelLayer";
 import { CSS2DLayerType } from "../types";
 
-const auMarkersData = [
-  { au: 0.1, color: "#00ff00" },
-  { au: 0.2, color: "#FFA500" },
-  { au: 0.3, color: "#FFA500" },
-  { au: 0.4, color: "#FFA500" },
-  { au: 0.5, color: "#FFA500" },
-  { au: 0.6, color: "#FFA500" },
-  { au: 0.7, color: "#FFA500" },
-  { au: 0.8, color: "#FFA500" },
-  { au: 0.9, color: "#FFA500" },
-  { au: 1, color: "#00ff00" },
-  { au: 2, color: "#FFA500" },
-  { au: 3, color: "#FFA500" },
-  { au: 4, color: "#FFA500" },
-  { au: 5, color: "#FFA500" },
-  { au: 6, color: "#FFA500" },
-  { au: 7, color: "#FFA500" },
-  { au: 8, color: "#FFA500" },
-  { au: 9, color: "#FFA500" },
-  { au: 10, color: "#00ff00" },
-  { au: 20, color: "#FFA500" },
-  { au: 30, color: "#FFA500" },
-  { au: 40, color: "#FFA500" },
-  { au: 50, color: "#FFA500" },
-  { au: 60, color: "#FFA500" },
-  { au: 70, color: "#FFA500" },
-  { au: 80, color: "#FFA500" },
-  { au: 90, color: "#FFA500" },
-  { au: 100, color: "#00ff00" },
-  { au: 200, color: "#FFA500" },
-  { au: 300, color: "#FFA500" },
-  { au: 400, color: "#FFA500" },
-  { au: 500, color: "#FFA500" },
-  { au: 600, color: "#FFA500" },
-  { au: 700, color: "#FFA500" },
-  { au: 800, color: "#FFA500" },
-  { au: 900, color: "#FFA500" },
-  { au: 1000, color: "#00ff00" },
-  { au: 2000, color: "#FFA500" },
-  { au: 3000, color: "#FFA500" },
-  { au: 4000, color: "#FFA500" },
-  { au: 5000, color: "#FFA500" },
-  { au: 6000, color: "#FFA500" },
-  { au: 7000, color: "#FFA500" },
-  { au: 8000, color: "#FFA500" },
-  { au: 9000, color: "#FFA500" },
-  { au: 10000, color: "#00ff00" },
-  { au: 20000, color: "#FFA500" },
-  { au: 30000, color: "#FFA500" },
-  { au: 40000, color: "#FFA500" },
-  { au: 50000, color: "#FFA500" },
-  { au: 60000, color: "#FFA500" },
-  { au: 70000, color: "#FFA500" },
-  { au: 80000, color: "#FFA500" },
-  { au: 90000, color: "#FFA500" },
-  { au: 100000, color: "#00ff00" },
-];
+/**
+ * Generates AU marker data dynamically.
+ * Creates markers in groups of 10, where each tenth marker (0.1, 1, 10, 100, etc.) is green
+ * and the others are orange. Goes up to the specified maximum AU.
+ * @param maxAu The maximum AU value to generate markers for (default: 1,000,000)
+ * @returns Array of AU marker data objects
+ */
+function generateAuMarkersData(
+  maxAu: number = 1000000,
+): Array<{ au: number; color: string }> {
+  const markers: Array<{ au: number; color: string }> = [];
+
+  // Start with 0.1 AU and go up in groups of 10
+  let currentGroup = 0.1;
+
+  while (currentGroup <= maxAu) {
+    // Generate 10 markers for this group (0.1, 0.2, ..., 0.9, 1.0)
+    for (let i = 1; i <= 10; i++) {
+      let au = currentGroup * i;
+      if (au < 1) {
+        au = parseFloat(au.toFixed(1));
+      }
+
+      // Skip if we've exceeded the maximum
+      if (au > maxAu) break;
+
+      // Every 10th marker (i === 10) is green, others are orange
+      const color = i === 10 ? "#00ff00" : "#FFA500";
+
+      markers.push({ au, color });
+    }
+
+    // Move to the next group (multiply by 10)
+    currentGroup *= 10;
+  }
+
+  return markers;
+}
+
+const auMarkersData = generateAuMarkersData();
 
 /**
  * Manages the creation, visibility, and disposal of AU (Astronomical Unit) markers.

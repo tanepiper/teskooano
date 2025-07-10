@@ -58,8 +58,8 @@ export function determinePlanetTypeAndBaseProperties(
     random(),
   );
   const massMultiplierFactor = utils.lerp(
-    isGasGiant ? 10 : 0.1,
-    isGasGiant ? 300 : 10,
+    isGasGiant ? 0.2 : 0.02,
+    isGasGiant ? 8 : 1,
     random(),
   );
   const ringChance = isGasGiant ? 0.75 : 0.1;

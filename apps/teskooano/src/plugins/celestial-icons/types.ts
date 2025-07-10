@@ -21,4 +21,5 @@ export interface CelestialIconConfig {
     angle: number; // in degrees
     length: number;
   };
+  special?: "pulsar" | "black-hole" | "white-dwarf" | "protostar";
 }

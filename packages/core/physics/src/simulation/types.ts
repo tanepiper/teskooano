@@ -43,6 +43,7 @@ export interface SimulationParameters {
   radii: Map<string | number, number>;
   isStar: Map<string | number, boolean>;
   bodyTypes: Map<string | number, CelestialType>;
+  ignoreCollisions?: Map<string | number, boolean>;
   parentIds?: Map<string | number, string | undefined>;
   octreeSize?: number;
   barnesHutTheta?: number;

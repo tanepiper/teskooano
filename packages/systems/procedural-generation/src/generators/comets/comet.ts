@@ -153,6 +153,7 @@ export function generateComet(
     orbit: orbit,
     properties: cometProperties,
     ignorePhysics: false,
+    ignoreCollisions: false,
     physicsStateReal: {
       id: cometId,
       mass_kg: mass_kg,

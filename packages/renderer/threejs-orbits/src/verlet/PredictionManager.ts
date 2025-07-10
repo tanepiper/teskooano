@@ -263,7 +263,7 @@ export class PredictionManager {
       isStar,
       bodyTypes,
       parentIds,
-      physicsEngine: getSimulationState().physicsEngine,
+      simulationConfig: getSimulationState().simulationConfig,
       orbitalParameters: physicsSystemAdapter.getOrbitalParametersSnapshot(),
       currentTime_s: getSimulationState().time,
     };

@@ -441,6 +441,7 @@ export const updateSimulation = (
     radii,
     isStar,
     bodyTypes,
+    params.ignoreCollisions,
   );
 
   return {

@@ -82,11 +82,99 @@ export class CelestialIconComponent extends HTMLElement {
     }
   }
 
+  /**
+   * Creates a pulsar effect with animated beams
+   */
+  private createPulsarEffect(): void {
+    if (!this.layers) return;
+
+    // Create pulsar beams
+    for (let i = 0; i < 4; i++) {
+      const beam = document.createElementNS(SVG_NS, "line");
+      beam.setAttribute("class", "pulsar-beam");
+      beam.setAttribute("x1", "12");
+      beam.setAttribute("y1", "12");
+      beam.setAttribute("x2", "12");
+      beam.setAttribute("y2", "2");
+      beam.setAttribute("stroke", "#FFFFFF");
+      beam.setAttribute("stroke-width", "1");
+      beam.setAttribute("opacity", "0.8");
+      beam.setAttribute("transform", `rotate(${i * 90} 12 12)`);
+      this.layers.appendChild(beam);
+    }
+  }
+
+  /**
+   * Creates a black hole effect with accretion disk
+   */
+  private createBlackHoleEffect(): void {
+    if (!this.layers) return;
+
+    // Create accretion disk
+    const disk = document.createElementNS(SVG_NS, "ellipse");
+    disk.setAttribute("class", "black-hole-disk");
+    disk.setAttribute("cx", "12");
+    disk.setAttribute("cy", "12");
+    disk.setAttribute("rx", "10");
+    disk.setAttribute("ry", "3");
+    disk.setAttribute("fill", "none");
+    disk.setAttribute("stroke", "#FF6B6B");
+    disk.setAttribute("stroke-width", "1");
+    disk.setAttribute("opacity", "0.6");
+    this.layers.appendChild(disk);
+
+    // Create inner event horizon
+    const horizon = document.createElementNS(SVG_NS, "circle");
+    horizon.setAttribute("class", "black-hole-horizon");
+    horizon.setAttribute("cx", "12");
+    horizon.setAttribute("cy", "12");
+    horizon.setAttribute("r", "2");
+    horizon.setAttribute("fill", "#000000");
+    horizon.setAttribute("stroke", "#333333");
+    horizon.setAttribute("stroke-width", "0.5");
+    this.layers.appendChild(horizon);
+  }
+
+  /**
+   * Creates a white dwarf effect with subtle glow
+   */
+  private createWhiteDwarfEffect(): void {
+    if (!this.layers) return;
+
+    // Create inner core glow
+    const core = document.createElementNS(SVG_NS, "circle");
+    core.setAttribute("class", "white-dwarf-core");
+    core.setAttribute("cx", "12");
+    core.setAttribute("cy", "12");
+    core.setAttribute("r", "2");
+    core.setAttribute("fill", "#FFFFFF");
+    core.setAttribute("opacity", "0.9");
+    this.layers.appendChild(core);
+  }
+
+  /**
+   * Creates a protostar effect with irregular shape
+   */
+  private createProtostarEffect(): void {
+    if (!this.layers) return;
+
+    // Create irregular protostar shape
+    const protostar = document.createElementNS(SVG_NS, "path");
+    protostar.setAttribute("class", "protostar-shape");
+    protostar.setAttribute(
+      "d",
+      "M 12,8 Q 14,10 12,12 Q 10,14 12,16 Q 14,14 12,12 Q 14,10 12,8",
+    );
+    protostar.setAttribute("fill", "#FF8A4A");
+    protostar.setAttribute("opacity", "0.8");
+    this.layers.appendChild(protostar);
+  }
+
   private renderIcon(): void {
     this.clear();
     if (!this._config || !this.layers) return;
 
-    const { base, rings, atmosphere, procedural, tail } = this._config;
+    const { base, rings, atmosphere, procedural, tail, special } = this._config;
 
     // If there is a glow effect, we need to scale down the entire group
     // to ensure the final rendered icon is the same size as others.
@@ -142,7 +230,25 @@ export class CelestialIconComponent extends HTMLElement {
       this.layers.appendChild(tailPath);
     }
 
-    // 2. Render base planet/star (middle layer)
+    // 3. Render special effects for exotic stars
+    if (special) {
+      switch (special) {
+        case "pulsar":
+          this.createPulsarEffect();
+          break;
+        case "black-hole":
+          this.createBlackHoleEffect();
+          break;
+        case "white-dwarf":
+          this.createWhiteDwarfEffect();
+          break;
+        case "protostar":
+          this.createProtostarEffect();
+          break;
+      }
+    }
+
+    // 4. Render base planet/star (middle layer)
     const body = document.createElementNS(SVG_NS, "circle");
     body.setAttribute("class", "planet-base");
     body.setAttribute("cx", "12");
@@ -164,7 +270,7 @@ export class CelestialIconComponent extends HTMLElement {
     }
     this.layers.appendChild(body);
 
-    // 3. Render rings (top layer)
+    // 5. Render rings (top layer)
     if (rings) {
       const ring = document.createElementNS(SVG_NS, "ellipse");
       ring.setAttribute("class", "rings");

@@ -1,5 +1,7 @@
 import * as THREE from "three";
-
+// Import shader code (assume raw-loader or similar is set up)
+import blurHorizontalShader from "./blur-horizontal.glsl?raw";
+import blurVerticalShader from "./blur-vertical.glsl?raw";
 /**
  * Material for gravitational lensing effect around massive objects
  * - Simulates the bending of light around massive objects like black holes
@@ -72,7 +74,7 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
           offset *= (1.0 + einsteinRing * 0.3); 
           
           
-          vec2 distortedUv = gl_FragCoord.xy / resolution + offset;
+          vec2 distortedUv = vUv + offset;
           vec4 backgroundColor = texture2D(tBackground, distortedUv);
           
           
@@ -154,6 +156,26 @@ export class GravitationalLensingMaterial extends THREE.ShaderMaterial {
   dispose(): void {}
 }
 
+function createBlurMaterial(fragmentShader: string): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      tDiffuse: { value: null },
+      blurSize: { value: 1.0 / 2048.0 }, // less blur
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
+      }
+    `,
+    fragmentShader,
+    depthWrite: false,
+    depthTest: false,
+    transparent: false,
+  });
+}
+
 /**
  * Helper to create a gravitational lensing effect for massive objects
  */
@@ -162,6 +184,16 @@ export class GravitationalLensingHelper {
   private mesh: THREE.Mesh;
   private renderTarget: THREE.WebGLRenderTarget;
   private startTime: number = Date.now() / 1000;
+  private backgroundTarget: THREE.WebGLRenderTarget;
+  private blurTargetH: THREE.WebGLRenderTarget;
+  private blurTargetV: THREE.WebGLRenderTarget;
+  private blurMaterialH: THREE.ShaderMaterial;
+  private blurMaterialV: THREE.ShaderMaterial;
+  private blurQuadH: THREE.Mesh;
+  private blurQuadV: THREE.Mesh;
+  private blurSceneH: THREE.Scene;
+  private blurSceneV: THREE.Scene;
+  private orthoCamera: THREE.OrthographicCamera;
 
   /**
    * Create a new gravitational lensing effect
@@ -178,6 +210,42 @@ export class GravitationalLensingHelper {
       lensSphereScale?: number;
     } = {},
   ) {
+    const width = Math.floor(window.innerWidth * 0.5);
+    const height = Math.floor(window.innerHeight * 0.5);
+    this.backgroundTarget = new THREE.WebGLRenderTarget(width, height, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      format: THREE.RGBAFormat,
+      stencilBuffer: false,
+    });
+    this.blurTargetH = new THREE.WebGLRenderTarget(width, height, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      format: THREE.RGBAFormat,
+      stencilBuffer: false,
+    });
+    this.blurTargetV = new THREE.WebGLRenderTarget(width, height, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      format: THREE.RGBAFormat,
+      stencilBuffer: false,
+    });
+    this.blurMaterialH = createBlurMaterial(blurHorizontalShader);
+    this.blurMaterialV = createBlurMaterial(blurVerticalShader);
+    this.blurQuadH = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      this.blurMaterialH,
+    );
+    this.blurQuadV = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      this.blurMaterialV,
+    );
+    this.blurSceneH = new THREE.Scene();
+    this.blurSceneV = new THREE.Scene();
+    this.blurSceneH.add(this.blurQuadH);
+    this.blurSceneV.add(this.blurQuadV);
+    this.orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
     this.renderTarget = new THREE.WebGLRenderTarget(
       window.innerWidth * 0.5,
       window.innerHeight * 0.5,
@@ -214,6 +282,44 @@ export class GravitationalLensingHelper {
   }
 
   /**
+   * Recursively clones only allowed objects (celestial/background), skipping lines, AU markers, and labels.
+   */
+  private static cloneAllowedObject(
+    obj: THREE.Object3D,
+  ): THREE.Object3D | null {
+    // Exclude all lines
+    if (obj instanceof THREE.Line) return null;
+    // Exclude AU marker rings (meshes with RingGeometry)
+    if (obj instanceof THREE.Mesh && obj.geometry instanceof THREE.RingGeometry)
+      return null;
+    // Exclude CSS2DObjects and similar (labels, markers)
+    const ctor = obj.constructor?.name || "";
+    if (
+      ctor.includes("CSS2D") ||
+      ctor.toLowerCase().includes("label") ||
+      ctor.toLowerCase().includes("marker")
+    )
+      return null;
+    // Exclude asteroid belts
+    if (
+      obj.userData?.isAsteroidField ||
+      obj.userData?.asteroidField ||
+      (obj.name && obj.name.toLowerCase().includes("asteroid")) ||
+      (obj.name && obj.name.toLowerCase().includes("belt"))
+    )
+      return null;
+    // Exclude objects with userData.isMarker or userData.isLabel
+    if (obj.userData?.isMarker || obj.userData?.isLabel) return null;
+    // Recursively clone children
+    const clone = obj.clone(false);
+    for (const child of obj.children) {
+      const childClone = GravitationalLensingHelper.cloneAllowedObject(child);
+      if (childClone) clone.add(childClone);
+    }
+    return clone;
+  }
+
+  /**
    * Update the lensing effect - call this before rendering the scene
    */
   update(
@@ -221,17 +327,62 @@ export class GravitationalLensingHelper {
     scene: THREE.Scene,
     camera: THREE.PerspectiveCamera,
   ): void {
+    // 1. Hide the lensing mesh so it is not included in the full-scene render
     this.mesh.visible = false;
 
+    // 2. Build a filtered scene with only celestial objects and background
+    const filteredScene = new THREE.Scene();
+    if (scene.background) filteredScene.background = scene.background;
+    for (const child of scene.children) {
+      const allowed = GravitationalLensingHelper.cloneAllowedObject(child);
+      if (allowed) filteredScene.add(allowed);
+    }
+
+    // 3. Render the filtered scene to backgroundTarget
+    renderer.setRenderTarget(this.backgroundTarget);
+    renderer.clear();
+    renderer.render(filteredScene, camera);
+    renderer.setRenderTarget(null);
+
+    // 4. Horizontal blur pass (use dedicated mesh/scene)
+    this.blurMaterialH.uniforms.tDiffuse.value = this.backgroundTarget.texture;
+    this.blurMaterialH.uniforms.blurSize.value =
+      1.0 / this.backgroundTarget.width;
+    renderer.setRenderTarget(this.blurTargetH);
+    renderer.clear();
+    renderer.render(this.blurSceneH, this.orthoCamera);
+    renderer.setRenderTarget(null);
+
+    // 5. Vertical blur pass (use dedicated mesh/scene)
+    this.blurMaterialV.uniforms.tDiffuse.value = this.blurTargetH.texture;
+    this.blurMaterialV.uniforms.blurSize.value =
+      1.0 / this.backgroundTarget.height;
+    renderer.setRenderTarget(this.blurTargetV);
+    renderer.clear();
+    renderer.render(this.blurSceneV, this.orthoCamera);
+    renderer.setRenderTarget(null);
+
+    // 6. Show the lensing mesh for the final render
+    this.mesh.visible = true;
+
+    // 7. Prepare the main temp scene (celestial objects only, as before)
+    const tempScene = new THREE.Scene();
+    if (scene.background) tempScene.background = scene.background;
+    for (const child of scene.children) {
+      const allowed = GravitationalLensingHelper.cloneAllowedObject(child);
+      if (allowed) tempScene.add(allowed);
+    }
+
+    // 8. Render the main scene (celestial objects) to the lensing render target
     const originalRenderTarget = renderer.getRenderTarget();
     renderer.setRenderTarget(this.renderTarget);
-    renderer.render(scene, camera);
+    renderer.clear();
+    renderer.render(tempScene, camera);
     renderer.setRenderTarget(originalRenderTarget);
 
+    // 9. Update the lensing material with the blurred full-scene texture
     const elapsedTime = Date.now() / 1000 - this.startTime;
-    this.material.update(elapsedTime, this.renderTarget);
-
-    this.mesh.visible = true;
+    this.material.update(elapsedTime, this.blurTargetV);
   }
 
   /**

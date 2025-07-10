@@ -88,8 +88,7 @@ function generateStandardBody(
   ) {
     const belt = generateAsteroidBelt(
       random,
-      parentStar.id,
-      parentStar.realMass_kg,
+      parentStar,
       slotIndex,
       distanceRelativeToParentAU,
     );
