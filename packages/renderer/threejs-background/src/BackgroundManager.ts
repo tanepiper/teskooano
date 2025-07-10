@@ -7,6 +7,7 @@ import { NebulaField } from "./fields/nebula-field/NebulaField";
 import { NebulaFieldOptions } from "./fields/nebula-field/types";
 import { NEBULA_PALETTES } from "./fields/nebula-field/palettes";
 import { createSeededRandomSync } from "@teskooano/core-math";
+import { StateAccessor } from "@teskooano/core-state";
 
 /**
  * Defines the base distance for star field layers, used as a reference
@@ -29,18 +30,16 @@ export class BackgroundManager {
   /**
    * Creates a new BackgroundManager.
    */
-  constructor(
-    scene: THREE.Scene,
-    camera: THREE.PerspectiveCamera,
-    seed?: string,
-  ) {
+  constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
     this.scene = scene;
     this.group = new THREE.Group();
     this.debugGroup = new THREE.Group();
     this.group.add(this.debugGroup);
     scene.add(this.group);
 
-    this.random = createSeededRandomSync(seed ?? `background-${Date.now()}`);
+    // Get seed from state instead of constructor parameter
+    const currentSeed = StateAccessor.getCurrentSeed();
+    this.random = createSeededRandomSync(`background-${currentSeed}`);
 
     this.createDefaultNebula();
     this.createDefaultStarField();

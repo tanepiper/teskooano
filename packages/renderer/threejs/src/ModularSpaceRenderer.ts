@@ -110,7 +110,10 @@ export class ModularSpaceRenderer {
       this.css2DManager,
     );
 
-    this.backgroundManager = new BackgroundManager(this.sceneManager.scene);
+    this.backgroundManager = new BackgroundManager(
+      this.sceneManager.scene,
+      this.sceneManager.camera,
+    );
     this.backgroundManager.setCamera(this.sceneManager.camera);
 
     this.renderPipeline = new RenderPipeline({

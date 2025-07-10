@@ -2,6 +2,7 @@ import type { DestructionEvent } from "@teskooano/core-physics";
 import { METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import * as THREE from "three";
 import { createSeededRandomSync } from "@teskooano/core-math";
+import { StateAccessor } from "@teskooano/core-state";
 
 // New structure for active debris effects using InstancedMesh
 interface ActiveInstancedDebris {
@@ -70,7 +71,9 @@ export class DebrisEffectManager {
 
   constructor(config: DebrisEffectManagerConfig, seed?: string) {
     this.scene = config.scene;
-    this.random = createSeededRandomSync(seed ?? `debris-${Date.now()}`);
+    // Get seed from state if not provided
+    const effectiveSeed = seed ?? `debris-${StateAccessor.getCurrentSeed()}`;
+    this.random = createSeededRandomSync(effectiveSeed);
   }
 
   /**
