@@ -7,11 +7,11 @@ import { type TeskooanoSlider } from "../../../core/components/slider/Slider.js"
 
 /**
  * Enhanced SettingsPanel Web Component with dual-mode configuration support.
- * 
+ *
  * This component provides a sophisticated interface for configuring the physics simulation,
  * including mode selection (Ideal vs N-Body), algorithm choices, integrator options,
  * and performance settings with real-time feedback.
- * 
+ *
  * Features:
  * - Dual-mode physics configuration (Ideal Orrery vs N-Body Physics)
  * - Conditional UI for N-Body specific controls
@@ -19,7 +19,7 @@ import { type TeskooanoSlider } from "../../../core/components/slider/Slider.js"
  * - Smooth transitions and responsive design
  * - Comprehensive validation and error handling
  * - Integration with enhanced state management
- * 
+ *
  * @example
  * ```html
  * <enhanced-settings-panel></enhanced-settings-panel>
@@ -58,7 +58,7 @@ export class EnhancedSettingsPanel extends HTMLElement {
    */
   private render(): void {
     if (!this.shadowRoot) return;
-    
+
     this.shadowRoot.appendChild(template.content.cloneNode(true));
   }
 
@@ -72,29 +72,55 @@ export class EnhancedSettingsPanel extends HTMLElement {
     }
 
     // Get all required elements from the shadow DOM
-    const formElement = this.shadowRoot.getElementById("enhanced-settings-form") as HTMLFormElement;
-    const trailSliderElement = this.shadowRoot.getElementById("setting-trail-length") as TeskooanoSlider;
-    
+    const formElement = this.shadowRoot.getElementById(
+      "enhanced-settings-form",
+    ) as HTMLFormElement;
+    const trailSliderElement = this.shadowRoot.getElementById(
+      "setting-trail-length",
+    ) as TeskooanoSlider;
+
     // Mode selection
-    const simulationModeSelectElement = this.shadowRoot.getElementById("setting-simulation-mode") as HTMLSelectElement;
-    const currentModeBadgeElement = this.shadowRoot.getElementById("current-mode-badge") as HTMLSpanElement;
-    
+    const simulationModeSelectElement = this.shadowRoot.getElementById(
+      "setting-simulation-mode",
+    ) as HTMLSelectElement;
+    const currentModeBadgeElement = this.shadowRoot.getElementById(
+      "current-mode-badge",
+    ) as HTMLSpanElement;
+
     // N-Body specific controls
-    const nbodyControlsElement = this.shadowRoot.getElementById("nbody-controls") as HTMLDivElement;
-    const algorithmSelectElement = this.shadowRoot.getElementById("setting-algorithm") as HTMLSelectElement;
-    const integratorSelectElement = this.shadowRoot.getElementById("setting-integrator") as HTMLSelectElement;
-    
+    const nbodyControlsElement = this.shadowRoot.getElementById(
+      "nbody-controls",
+    ) as HTMLDivElement;
+    const algorithmSelectElement = this.shadowRoot.getElementById(
+      "setting-algorithm",
+    ) as HTMLSelectElement;
+    const integratorSelectElement = this.shadowRoot.getElementById(
+      "setting-integrator",
+    ) as HTMLSelectElement;
+
     // Display elements
-    const configDisplayElement = this.shadowRoot.getElementById("config-display") as HTMLDivElement;
-    const modePerformanceElement = this.shadowRoot.getElementById("mode-performance") as HTMLDivElement;
-    const performanceDotElement = modePerformanceElement?.querySelector(".performance-dot") as HTMLSpanElement;
-    const performanceTextElement = modePerformanceElement?.querySelector(".performance-text") as HTMLSpanElement;
-    
+    const configDisplayElement = this.shadowRoot.getElementById(
+      "config-display",
+    ) as HTMLDivElement;
+    const modePerformanceElement = this.shadowRoot.getElementById(
+      "mode-performance",
+    ) as HTMLDivElement;
+    const performanceDotElement = modePerformanceElement?.querySelector(
+      ".performance-dot",
+    ) as HTMLSpanElement;
+    const performanceTextElement = modePerformanceElement?.querySelector(
+      ".performance-text",
+    ) as HTMLSpanElement;
+
     // Legacy
-    const profileSelectElement = this.shadowRoot.getElementById("setting-performance-profile") as HTMLSelectElement;
-    
+    const profileSelectElement = this.shadowRoot.getElementById(
+      "setting-performance-profile",
+    ) as HTMLSelectElement;
+
     // Validation
-    const validationMessagesElement = this.shadowRoot.getElementById("validation-messages") as HTMLDivElement;
+    const validationMessagesElement = this.shadowRoot.getElementById(
+      "validation-messages",
+    ) as HTMLDivElement;
 
     // Validate all required elements exist
     const requiredElements = {
@@ -121,7 +147,7 @@ export class EnhancedSettingsPanel extends HTMLElement {
     if (missingElements.length > 0) {
       throw new Error(
         `Enhanced Settings Panel: Missing required elements: ${missingElements.join(", ")}. ` +
-        "Please check that the template contains all necessary elements with correct IDs."
+          "Please check that the template contains all necessary elements with correct IDs.",
       );
     }
 
@@ -139,10 +165,17 @@ export class EnhancedSettingsPanel extends HTMLElement {
 
     try {
       this.controller = new EnhancedSettingsController(this.elements);
-      console.debug("[EnhancedSettingsPanel] Controller initialized successfully");
+      console.debug(
+        "[EnhancedSettingsPanel] Controller initialized successfully",
+      );
     } catch (error) {
-      console.error("[EnhancedSettingsPanel] Failed to initialize controller:", error);
-      this.showError("Failed to initialize settings panel. Please refresh the page.");
+      console.error(
+        "[EnhancedSettingsPanel] Failed to initialize controller:",
+        error,
+      );
+      this.showError(
+        "Failed to initialize settings panel. Please refresh the page.",
+      );
     }
   }
 
@@ -155,9 +188,14 @@ export class EnhancedSettingsPanel extends HTMLElement {
       try {
         this.controller.dispose();
         this.controller = null;
-        console.debug("[EnhancedSettingsPanel] Controller disposed successfully");
+        console.debug(
+          "[EnhancedSettingsPanel] Controller disposed successfully",
+        );
       } catch (error) {
-        console.error("[EnhancedSettingsPanel] Error during controller disposal:", error);
+        console.error(
+          "[EnhancedSettingsPanel] Error during controller disposal:",
+          error,
+        );
       }
     }
 
@@ -197,7 +235,7 @@ export class EnhancedSettingsPanel extends HTMLElement {
   /**
    * Provides access to the controller instance for external integration.
    * This can be useful for parent components that need to interact with the settings.
-   * 
+   *
    * @returns The controller instance or null if not initialized
    */
   public getController(): EnhancedSettingsController | null {
@@ -218,7 +256,7 @@ export class EnhancedSettingsPanel extends HTMLElement {
 
   /**
    * Checks if the panel is properly initialized and ready to use.
-   * 
+   *
    * @returns True if the panel is ready, false otherwise
    */
   public isReady(): boolean {

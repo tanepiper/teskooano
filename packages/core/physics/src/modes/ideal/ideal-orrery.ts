@@ -1,4 +1,7 @@
-import type { PhysicsStateReal, OrbitalParameters } from "@teskooano/data-types";
+import type {
+  PhysicsStateReal,
+  OrbitalParameters,
+} from "@teskooano/data-types";
 import type { SimulationConfiguration } from "@teskooano/core-state";
 import { calculateKeplerianStateAtTime } from "../../orbital/kepler";
 import { sortBodiesByHierarchy } from "../../utils";
@@ -34,18 +37,19 @@ export interface IdealOrbitParams {
  */
 export class IdealOrreryStrategy {
   readonly name = "ideal-orrery";
-  readonly description = "Perfect Keplerian orbits with no gravitational interactions";
+  readonly description =
+    "Perfect Keplerian orbits with no gravitational interactions";
   readonly complexity = "O(N)";
 
   simulate(params: IdealOrbitParams): IdealOrbitResult {
     const startTime = performance.now();
-    
+
     const { bodies, orbitalParameters, parentIds, currentTime_s } = params;
-    
+
     // Validate required parameters for ideal mode
     if (!orbitalParameters || currentTime_s === undefined || !parentIds) {
       console.error(
-        'CRITICAL: "ideal" physics mode requires orbitalParameters, currentTime_s, and parentIds to be provided.'
+        'CRITICAL: "ideal" physics mode requires orbitalParameters, currentTime_s, and parentIds to be provided.',
       );
       return {
         states: bodies,
@@ -53,8 +57,8 @@ export class IdealOrreryStrategy {
           stepTime: 0,
           algorithmUsed: "ideal-error",
           integratorUsed: "none",
-          totalBodies: bodies.length
-        }
+          totalBodies: bodies.length,
+        },
       };
     }
 
@@ -78,7 +82,7 @@ export class IdealOrreryStrategy {
 
       if (!parentState) {
         console.warn(
-          `Could not find parent with ID ${parentId} for body ${body.id} in the set of already-updated bodies. This should not happen with a sorted list.`
+          `Could not find parent with ID ${parentId} for body ${body.id} in the set of already-updated bodies. This should not happen with a sorted list.`,
         );
         updatedStates[body.id] = body; // Keep original state if can't update
         continue;
@@ -89,21 +93,21 @@ export class IdealOrreryStrategy {
         body,
         parentState,
         bodyOrbitalParams,
-        currentTime_s
+        currentTime_s,
       );
       updatedStates[body.id] = newState;
     }
 
     const endTime = performance.now();
-    
+
     return {
       states: Object.values(updatedStates),
       metadata: {
         stepTime: endTime - startTime,
         algorithmUsed: "keplerian",
         integratorUsed: "analytical",
-        totalBodies: bodies.length
-      }
+        totalBodies: bodies.length,
+      },
     };
   }
 
@@ -125,12 +129,12 @@ export class IdealOrreryStrategy {
     body: PhysicsStateReal,
     parent: PhysicsStateReal,
     orbitalParameters: OrbitalParameters,
-    currentTime_s: number
+    currentTime_s: number,
   ): PhysicsStateReal {
     // Calculate relative state using the centralized Keplerian solver
     const { position, velocity } = calculateKeplerianStateAtTime(
       orbitalParameters,
-      currentTime_s
+      currentTime_s,
     );
 
     // Add parent's state for world coordinates

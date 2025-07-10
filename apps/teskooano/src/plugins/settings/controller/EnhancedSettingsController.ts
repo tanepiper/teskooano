@@ -31,25 +31,25 @@ const PERFORMANCE_PROFILE_OPTIONS: {
 export interface IEnhancedSettingsPanelElements {
   formElement: HTMLFormElement;
   trailSliderElement: TeskooanoSlider;
-  
+
   // Mode selection
   simulationModeSelectElement: HTMLSelectElement;
   currentModeBadgeElement: HTMLSpanElement;
-  
+
   // N-Body specific controls
   nbodyControlsElement: HTMLDivElement;
   algorithmSelectElement: HTMLSelectElement;
   integratorSelectElement: HTMLSelectElement;
-  
+
   // Display elements
   configDisplayElement: HTMLDivElement;
   modePerformanceElement: HTMLDivElement;
   performanceDotElement: HTMLSpanElement;
   performanceTextElement: HTMLSpanElement;
-  
+
   // Legacy
   profileSelectElement: HTMLSelectElement;
-  
+
   // Validation
   validationMessagesElement: HTMLDivElement;
 }
@@ -60,7 +60,7 @@ export interface IEnhancedSettingsPanelElements {
  */
 export class EnhancedSettingsController extends StateSubscriptionMixin {
   private currentConfig: SimulationConfiguration;
-  
+
   /**
    * Initializes the enhanced controller and binds it to the view's elements.
    */
@@ -133,7 +133,10 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    * @private
    */
   private removeEventListeners(): void {
-    this.elements.formElement.removeEventListener("submit", this.handleFormSubmit);
+    this.elements.formElement.removeEventListener(
+      "submit",
+      this.handleFormSubmit,
+    );
     this.elements.trailSliderElement.removeEventListener(
       CustomEvents.SLIDER_CHANGE,
       this.handleTrailChange as EventListener,
@@ -221,8 +224,10 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
 
     // Update N-Body specific controls
     if (this.currentConfig.mode === "nbody") {
-      this.elements.algorithmSelectElement.value = this.currentConfig.algorithm || "barnes-hut";
-      this.elements.integratorSelectElement.value = this.currentConfig.integrator || "verlet";
+      this.elements.algorithmSelectElement.value =
+        this.currentConfig.algorithm || "barnes-hut";
+      this.elements.integratorSelectElement.value =
+        this.currentConfig.integrator || "verlet";
     }
   }
 
@@ -232,7 +237,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    */
   private updateNBodyVisibility(): void {
     const isNBodyMode = this.currentConfig.mode === "nbody";
-    
+
     if (isNBodyMode) {
       this.elements.nbodyControlsElement.classList.add("visible");
     } else {
@@ -246,13 +251,14 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    */
   private updateModeBadge(): void {
     const badge = this.elements.currentModeBadgeElement;
-    
+
     // Remove existing mode classes
     badge.classList.remove("ideal", "nbody");
-    
+
     // Add current mode class and update text
     badge.classList.add(this.currentConfig.mode);
-    badge.textContent = this.currentConfig.mode === "ideal" ? "Ideal" : "N-Body";
+    badge.textContent =
+      this.currentConfig.mode === "ideal" ? "Ideal" : "N-Body";
   }
 
   /**
@@ -262,9 +268,8 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   private updateConfigurationDisplay(): void {
     const displayName = getConfigurationDisplayName(this.currentConfig);
     const shortName = getConfigurationShortName(this.currentConfig);
-    
-    this.elements.configDisplayElement.textContent = 
-      `${displayName} | Config: ${shortName}`;
+
+    this.elements.configDisplayElement.textContent = `${displayName} | Config: ${shortName}`;
   }
 
   /**
@@ -283,7 +288,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
     } else {
       // N-Body mode - assess performance based on algorithm
       const algorithm = this.currentConfig.algorithm;
-      
+
       switch (algorithm) {
         case "direct":
           dot.classList.add("warning");
@@ -325,17 +330,20 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    * Shows a validation message to the user.
    * @private
    */
-  private showValidationMessage(message: string, type: "error" | "warning" = "error"): void {
+  private showValidationMessage(
+    message: string,
+    type: "error" | "warning" = "error",
+  ): void {
     const container = this.elements.validationMessagesElement;
-    
+
     const messageElement = document.createElement("div");
     messageElement.className = `${type}-message`;
     messageElement.textContent = message;
-    
+
     container.innerHTML = "";
     container.appendChild(messageElement);
     container.style.display = "block";
-    
+
     // Auto-hide after 5 seconds
     setTimeout(() => {
       container.style.display = "none";
@@ -362,7 +370,9 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    * Handles trail length slider changes.
    * @private
    */
-  private handleTrailChange = (event: CustomEvent<SliderValueChangePayload>): void => {
+  private handleTrailChange = (
+    event: CustomEvent<SliderValueChangePayload>,
+  ): void => {
     const value = event.detail.value;
     if (typeof value === "number" && !isNaN(value)) {
       simulationStateService.setTrailLengthMultiplier(value);
@@ -376,21 +386,22 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   private handleModeChange = (event: Event): void => {
     const target = event.target as HTMLSelectElement;
     const mode = target.value as SimulationMode;
-    
+
     try {
       simulationStateService.setSimulationMode(mode);
       this.clearValidationMessages();
-      
+
       // Add smooth transition effect
       this.elements.nbodyControlsElement.classList.add("fade-in");
       setTimeout(() => {
         this.elements.nbodyControlsElement.classList.remove("fade-in");
       }, 300);
-      
     } catch (error) {
       console.error("Failed to set simulation mode:", error);
-      this.showValidationMessage(`Failed to change mode: ${error instanceof Error ? error.message : String(error)}`);
-      
+      this.showValidationMessage(
+        `Failed to change mode: ${error instanceof Error ? error.message : String(error)}`,
+      );
+
       // Revert selection
       target.value = this.currentConfig.mode;
     }
@@ -403,14 +414,16 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   private handleAlgorithmChange = (event: Event): void => {
     const target = event.target as HTMLSelectElement;
     const algorithm = target.value as AlgorithmType;
-    
+
     try {
       simulationStateService.setNBodyAlgorithm(algorithm);
       this.clearValidationMessages();
     } catch (error) {
       console.error("Failed to set algorithm:", error);
-      this.showValidationMessage(`Failed to change algorithm: ${error instanceof Error ? error.message : String(error)}`);
-      
+      this.showValidationMessage(
+        `Failed to change algorithm: ${error instanceof Error ? error.message : String(error)}`,
+      );
+
       // Revert selection
       target.value = this.currentConfig.algorithm || "barnes-hut";
     }
@@ -423,14 +436,16 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   private handleIntegratorChange = (event: Event): void => {
     const target = event.target as HTMLSelectElement;
     const integrator = target.value as IntegratorType;
-    
+
     try {
       simulationStateService.setNBodyIntegrator(integrator);
       this.clearValidationMessages();
     } catch (error) {
       console.error("Failed to set integrator:", error);
-      this.showValidationMessage(`Failed to change integrator: ${error instanceof Error ? error.message : String(error)}`);
-      
+      this.showValidationMessage(
+        `Failed to change integrator: ${error instanceof Error ? error.message : String(error)}`,
+      );
+
       // Revert selection
       target.value = this.currentConfig.integrator || "verlet";
     }
@@ -443,7 +458,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   private handleProfileChange = (event: Event): void => {
     const target = event.target as HTMLSelectElement;
     const value = target.value as PerformanceProfileType;
-    
+
     if (PERFORMANCE_PROFILE_OPTIONS.some((opt) => opt.value === value)) {
       simulationStateService.setPerformanceProfile(value);
     }

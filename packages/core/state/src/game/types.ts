@@ -26,26 +26,26 @@ export type SimulationMode = "ideal" | "nbody";
 /**
  * The numerical integration method used for N-Body simulations.
  */
-export type IntegratorType = 
-  | "euler"           // Simple Euler integration
-  | "symplectic"      // Symplectic Euler (energy preserving)
-  | "verlet"          // Velocity Verlet (stable, reversible)
-  | "rk4"             // Runge-Kutta 4th order (high accuracy)
-  | "adaptive"        // Adaptive step size (auto-optimizing)
-  | "yoshida4"        // 4th-order symplectic (Yoshida method)
-  | "forest-ruth"     // 4th-order symplectic (Forest-Ruth method)
-  | "pefrl"           // Optimized 4th-order symplectic (PEFRL)
-  | "leapfrog";       // Classic 2nd-order symplectic
+export type IntegratorType =
+  | "euler" // Simple Euler integration
+  | "symplectic" // Symplectic Euler (energy preserving)
+  | "verlet" // Velocity Verlet (stable, reversible)
+  | "rk4" // Runge-Kutta 4th order (high accuracy)
+  | "adaptive" // Adaptive step size (auto-optimizing)
+  | "yoshida4" // 4th-order symplectic (Yoshida method)
+  | "forest-ruth" // 4th-order symplectic (Forest-Ruth method)
+  | "pefrl" // Optimized 4th-order symplectic (PEFRL)
+  | "leapfrog"; // Classic 2nd-order symplectic
 
 /**
  * The force calculation algorithm used for N-Body simulations.
  */
-export type AlgorithmType = 
-  | "direct"          // O(N²) - exact but slow
-  | "barnes-hut"      // O(N log N) - current implementation
-  | "fmm"             // O(N) - Fast Multipole Method
-  | "p3m"             // O(N log N) - Particle-Mesh hybrid
-  | "tree-pm";        // O(N log N) - Tree-PM hybrid (NEW)
+export type AlgorithmType =
+  | "direct" // O(N²) - exact but slow
+  | "barnes-hut" // O(N log N) - current implementation
+  | "fmm" // O(N) - Fast Multipole Method
+  | "p3m" // O(N log N) - Particle-Mesh hybrid
+  | "tree-pm"; // O(N log N) - Tree-PM hybrid (NEW)
 
 /**
  * Configuration for the simulation physics system.
@@ -53,8 +53,8 @@ export type AlgorithmType =
  */
 export interface SimulationConfiguration {
   mode: SimulationMode;
-  integrator?: IntegratorType;  // Only required for N-Body mode
-  algorithm?: AlgorithmType;    // Only required for N-Body mode
+  integrator?: IntegratorType; // Only required for N-Body mode
+  algorithm?: AlgorithmType; // Only required for N-Body mode
 }
 
 /**
@@ -65,12 +65,12 @@ export function isValidConfiguration(config: SimulationConfiguration): boolean {
     // Ideal mode doesn't need integrator or algorithm
     return config.integrator === undefined && config.algorithm === undefined;
   }
-  
+
   if (config.mode === "nbody") {
     // N-Body mode requires both integrator and algorithm
     return config.integrator !== undefined && config.algorithm !== undefined;
   }
-  
+
   return false;
 }
 
@@ -80,43 +80,59 @@ export function isValidConfiguration(config: SimulationConfiguration): boolean {
 export function getDefaultConfiguration(): SimulationConfiguration {
   return {
     mode: "nbody",
-    integrator: "verlet",
-    algorithm: "barnes-hut"
+    integrator: "pefrl",
+    algorithm: "tree-pm",
   };
 }
 
 /**
  * Gets a user-friendly display name for a configuration.
  */
-export function getConfigurationDisplayName(config: SimulationConfiguration): string {
+export function getConfigurationDisplayName(
+  config: SimulationConfiguration,
+): string {
   if (config.mode === "ideal") {
     return "Ideal Orrery";
   }
-  
-  const integrator = config.integrator ? config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1) : "Unknown";
-  const algorithm = config.algorithm ? config.algorithm.split('-').map(word => 
-    word.charAt(0).toUpperCase() + word.slice(1)
-  ).join('-') : "Unknown";
-  
+
+  const integrator = config.integrator
+    ? config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1)
+    : "Unknown";
+  const algorithm = config.algorithm
+    ? config.algorithm
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join("-")
+    : "Unknown";
+
   return `N-Body (${algorithm} + ${integrator})`;
 }
 
 /**
  * Gets a short name for display in constrained UI spaces.
  */
-export function getConfigurationShortName(config: SimulationConfiguration): string {
+export function getConfigurationShortName(
+  config: SimulationConfiguration,
+): string {
   if (config.mode === "ideal") {
     return "Ideal";
   }
-  
-  const algorithmShort = config.algorithm === "barnes-hut" ? "BH" :
-                        config.algorithm === "fmm" ? "FMM" :
-                        config.algorithm === "p3m" ? "P3M" :
-                        config.algorithm === "tree-pm" ? "TPM" : "Dir";
-  
-  const integratorShort = config.integrator ? 
-    config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1, 3) : "Unk";
-  
+
+  const algorithmShort =
+    config.algorithm === "barnes-hut"
+      ? "BH"
+      : config.algorithm === "fmm"
+        ? "FMM"
+        : config.algorithm === "p3m"
+          ? "P3M"
+          : config.algorithm === "tree-pm"
+            ? "TPM"
+            : "Dir";
+
+  const integratorShort = config.integrator
+    ? config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1, 3)
+    : "Unk";
+
   return `${algorithmShort}-${integratorShort}`;
 }
 

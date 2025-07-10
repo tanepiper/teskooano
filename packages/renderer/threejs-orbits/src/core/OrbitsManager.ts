@@ -1,7 +1,10 @@
 import * as THREE from "three";
 import { type RendererStateAdapter } from "@teskooano/renderer-threejs";
 import { type RenderableCelestialObject } from "@teskooano/data-types";
-import { StateSubscriptionMixin } from "@teskooano/core-state";
+import {
+  StateSubscriptionMixin,
+  SimulationConfiguration,
+} from "@teskooano/core-state";
 import type { Observable } from "rxjs";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { KeplerianStrategy } from "./modes/KeplerianStrategy";
@@ -19,7 +22,7 @@ import { TrailManager } from "../verlet/TrailManager";
  */
 export enum OrbitDisplayMode {
   Ideal = "IDEAL",
-  NBodyDirect = "NBODY_DIRECT", 
+  NBodyDirect = "NBODY_DIRECT",
   NBodyTree = "NBODY_TREE",
 }
 
@@ -91,13 +94,17 @@ export class OrbitsManager extends StateSubscriptionMixin {
 
     // Subscribe to visualization settings
     this.subscribeToState(this.stateAdapter.$visualSettings, (settings) => {
-      const newMode = this.determineVisualizationMode(settings.simulationConfig);
+      const newMode = this.determineVisualizationMode(
+        settings.simulationConfig,
+      );
       this.setVisualizationMode(newMode, objectManager, renderableObjects$);
     });
 
     // Set initial mode based on current settings
     const initialSettings = this.stateAdapter.$visualSettings.getValue();
-    const initialMode = this.determineVisualizationMode(initialSettings.simulationConfig);
+    const initialMode = this.determineVisualizationMode(
+      initialSettings.simulationConfig,
+    );
     this.setVisualizationMode(initialMode, objectManager, renderableObjects$);
   }
 
@@ -106,15 +113,13 @@ export class OrbitsManager extends StateSubscriptionMixin {
    * @param config The simulation configuration
    * @returns The visualization mode to use
    */
-  private determineVisualizationMode(config: {
-    mode: "ideal" | "nbody";
-    algorithm?: "direct" | "barnes-hut" | "fmm" | "p3m";
-    integrator?: "euler" | "symplectic" | "verlet" | "rk4" | "adaptive";
-  }): OrbitDisplayMode {
+  private determineVisualizationMode(
+    config: SimulationConfiguration,
+  ): OrbitDisplayMode {
     if (config.mode === "ideal") {
       return OrbitDisplayMode.Ideal;
     }
-    
+
     // For N-Body mode, distinguish between direct and tree-based algorithms
     if (config.algorithm === "direct") {
       return OrbitDisplayMode.NBodyDirect;
@@ -135,10 +140,10 @@ export class OrbitsManager extends StateSubscriptionMixin {
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
   ): void {
     if (mode === this.currentMode && this.activeStrategy) return;
-    
+
     // Start transition feedback
     this.configurationFeedback.transitionStartTime = performance.now();
-    
+
     const previousMode = this.currentMode;
     this.currentMode = mode;
 
@@ -175,10 +180,10 @@ export class OrbitsManager extends StateSubscriptionMixin {
    */
   updateAllVisualizations(deltaTime: number): void {
     const visualSettings = this.stateAdapter.$visualSettings.getValue();
-    
+
     // Update configuration feedback
     this.updateConfigurationFeedback(visualSettings.simulationConfig);
-    
+
     this.activeStrategy?.update(
       this.latestRenderableObjects,
       visualSettings,
@@ -190,16 +195,16 @@ export class OrbitsManager extends StateSubscriptionMixin {
    * Updates configuration feedback for smooth transitions.
    * @param config Current simulation configuration
    */
-  private updateConfigurationFeedback(config: {
-    mode: "ideal" | "nbody";
-    algorithm?: "direct" | "barnes-hut" | "fmm" | "p3m";
-    integrator?: "euler" | "symplectic" | "verlet" | "rk4" | "adaptive";
-  }): void {
-    const currentConfigString = `${config.mode}-${config.algorithm || 'none'}-${config.integrator || 'none'}`;
-    const lastConfigString = this.configurationFeedback.lastConfig 
-      ? `${this.configurationFeedback.lastConfig.mode}-${this.configurationFeedback.lastConfig.algorithm || 'none'}-${this.configurationFeedback.lastConfig.integrator || 'none'}`
-      : '';
-    
+  private updateConfigurationFeedback(config: SimulationConfiguration): void {
+    const currentConfigString = `${config.mode}-${config.algorithm || "none"}-${
+      config.integrator || "none"
+    }`;
+    const lastConfigString = this.configurationFeedback.lastConfig
+      ? `${this.configurationFeedback.lastConfig.mode}-${
+          this.configurationFeedback.lastConfig.algorithm || "none"
+        }-${this.configurationFeedback.lastConfig.integrator || "none"}`
+      : "";
+
     if (currentConfigString !== lastConfigString) {
       this.configurationFeedback.lastConfig = {
         mode: config.mode,
@@ -221,18 +226,26 @@ export class OrbitsManager extends StateSubscriptionMixin {
   } {
     const now = performance.now();
     const transitionStartTime = this.configurationFeedback.transitionStartTime;
-    const isTransitioning = transitionStartTime 
-      ? (now - transitionStartTime) < this.configurationFeedback.transitionDuration
+    const isTransitioning = transitionStartTime
+      ? now - transitionStartTime <
+        this.configurationFeedback.transitionDuration
       : false;
-    
-    const transitionProgress = isTransitioning && transitionStartTime
-      ? Math.min((now - transitionStartTime) / this.configurationFeedback.transitionDuration, 1)
-      : 1;
+
+    const transitionProgress =
+      isTransitioning && transitionStartTime
+        ? Math.min(
+            (now - transitionStartTime) /
+              this.configurationFeedback.transitionDuration,
+            1,
+          )
+        : 1;
 
     const config = this.configurationFeedback.lastConfig;
     const configurationSummary = config
-      ? `${config.mode === 'ideal' ? 'Ideal Orrery' : 'N-Body'} ${config.algorithm ? `(${config.algorithm})` : ''} ${config.integrator ? `[${config.integrator}]` : ''}`.trim()
-      : 'Unknown';
+      ? `${config.mode === "ideal" ? "Ideal Orrery" : "N-Body"} ${
+          config.algorithm ? `(${config.algorithm})` : ""
+        } ${config.integrator ? `[${config.integrator}]` : ""}`.trim()
+      : "Unknown";
 
     return {
       mode: this.currentMode,

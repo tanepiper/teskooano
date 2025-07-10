@@ -22,12 +22,41 @@ import {
   leapfrogIntegrate,
 } from "../integrators";
 import { Octree } from "../spatial/octree";
-import { 
-  isValidConfiguration,
-  getDefaultConfiguration
-} from "@teskooano/core-state";
+
 import { sortBodiesByHierarchy } from "../utils";
-import { SimulationParameters, SimulationStepResult, SimulationConfiguration } from "./types";
+import {
+  SimulationParameters,
+  SimulationStepResult,
+  SimulationConfiguration,
+} from "./types";
+
+/**
+ * Validates if a simulation configuration is valid.
+ * @param config The simulation configuration to validate.
+ * @returns True if the configuration is valid, false otherwise.
+ */
+function isValidConfiguration(config: SimulationConfiguration): boolean {
+  if (config.mode === "ideal") {
+    return true; // Ideal mode doesn't need integrator or algorithm
+  }
+  if (config.mode === "nbody") {
+    // N-Body mode requires both integrator and algorithm
+    return config.integrator !== undefined && config.algorithm !== undefined;
+  }
+  return false;
+}
+
+/**
+ * Returns the default simulation configuration.
+ * @returns The default simulation configuration.
+ */
+function getDefaultConfiguration(): SimulationConfiguration {
+  return {
+    mode: "nbody",
+    integrator: "pefrl",
+    algorithm: "tree-pm",
+  };
+}
 
 /**
  * Helper function to calculate the acceleration on a single body, given its state
@@ -95,17 +124,23 @@ const calculateAccelerationForBody_Simple = (
 export const updateSimulationWithConfiguration = (
   bodies: PhysicsStateReal[],
   dt: number,
-  params: SimulationParameters & { 
+  params: SimulationParameters & {
     simulationConfig: SimulationConfiguration;
   },
 ): SimulationStepResult => {
   const config = params.simulationConfig;
-  
+
   // Ensure configuration is valid
   if (!isValidConfiguration(config)) {
-    console.warn("Invalid simulation configuration provided, using default:", config);
+    console.warn(
+      "Invalid simulation configuration provided, using default:",
+      config,
+    );
     const defaultConfig = getDefaultConfiguration();
-    return updateSimulation(bodies, dt, { ...params, simulationConfig: defaultConfig });
+    return updateSimulation(bodies, dt, {
+      ...params,
+      simulationConfig: defaultConfig,
+    });
   }
 
   return updateSimulation(bodies, dt, params);
@@ -132,10 +167,18 @@ export const updateSimulation = (
     parentIds,
     octreeSize = 5e13,
     barnesHutTheta = 0.7,
-    simulationConfig,
     orbitalParameters,
     currentTime_s,
   } = params;
+
+  // Ensure simulationConfig exists, apply default if not.
+  const simulationConfig = params.simulationConfig ?? getDefaultConfiguration();
+  if (!params.simulationConfig) {
+    console.warn(
+      `Simulation configuration was not provided; applying default:`,
+      simulationConfig,
+    );
+  }
 
   if (simulationConfig.mode === "ideal") {
     if (!orbitalParameters || currentTime_s === undefined || !parentIds) {
@@ -197,8 +240,13 @@ export const updateSimulation = (
 
   // Determine force calculation method based on algorithm
   const algorithm = simulationConfig.algorithm || "barnes-hut";
-  
-  if (algorithm === "barnes-hut" || algorithm === "fmm" || algorithm === "p3m" || algorithm === "tree-pm") {
+
+  if (
+    algorithm === "barnes-hut" ||
+    algorithm === "fmm" ||
+    algorithm === "p3m" ||
+    algorithm === "tree-pm"
+  ) {
     // Use octree-based calculations for advanced algorithms
     nBodyOctree = new Octree(octreeSize);
     // It's important to insert all bodies before calculating forces for any of them
@@ -291,7 +339,7 @@ export const updateSimulation = (
 
     // Get integrator from configuration
     const integrator = simulationConfig.integrator || "verlet";
-    
+
     let integratedState: PhysicsStateReal;
     switch (integrator) {
       case "euler":
@@ -358,7 +406,9 @@ export const updateSimulation = (
         );
         break;
       default:
-        console.warn(`Unknown integrator: ${integrator}, falling back to verlet`);
+        console.warn(
+          `Unknown integrator: ${integrator}, falling back to verlet`,
+        );
         integratedState = velocityVerletIntegrate(
           body,
           currentAcceleration,

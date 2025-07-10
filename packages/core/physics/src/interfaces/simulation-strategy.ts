@@ -36,17 +36,17 @@ export interface ISimulationStrategy {
   readonly name: string;
   readonly description: string;
   readonly complexity: string; // O(N), O(N log N), O(N²)
-  
+
   /**
    * Performs one simulation step
    */
   simulate(params: SimulationParameters): SimulationStepResult;
-  
+
   /**
    * Validates if this strategy can handle the given configuration
    */
   canHandle(config: SimulationConfiguration): boolean;
-  
+
   /**
    * Gets recommended parameters for this strategy
    */
@@ -61,15 +61,15 @@ export interface IAlgorithmStrategy {
   readonly complexity: string;
   readonly recommendedMinBodies: number;
   readonly recommendedMaxBodies: number;
-  
+
   /**
    * Calculates forces for all bodies
    */
   calculateForces(
     bodies: Record<string, PhysicsStateReal>,
-    params: SimulationParameters
+    params: SimulationParameters,
   ): Record<string, OSVector3>;
-  
+
   /**
    * Returns true if this algorithm is optimal for the given body count
    */
@@ -84,21 +84,21 @@ export interface IIntegratorStrategy {
   readonly order: number; // Integration order (1st, 2nd, 4th, etc.)
   readonly isAdaptive: boolean;
   readonly isSymplectic: boolean; // Energy preserving
-  
+
   /**
    * Integrates position and velocity for one time step
    */
   integrate(
     body: PhysicsStateReal,
     force: OSVector3,
-    deltaTime: number
+    deltaTime: number,
   ): PhysicsStateReal;
-  
+
   /**
    * Returns recommended time step for stability
    */
   getRecommendedTimeStep(
     bodies: Record<string, PhysicsStateReal>,
-    maxTimeStep: number
+    maxTimeStep: number,
   ): number;
 }

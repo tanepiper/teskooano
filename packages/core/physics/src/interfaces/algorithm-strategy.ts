@@ -1,6 +1,9 @@
 import { OSVector3 } from "@teskooano/core-math";
 import type { PhysicsStateReal } from "@teskooano/data-types";
-import type { IAlgorithmStrategy, SimulationParameters } from "./simulation-strategy";
+import type {
+  IAlgorithmStrategy,
+  SimulationParameters,
+} from "./simulation-strategy";
 
 /**
  * Abstract base class for force calculation algorithms
@@ -13,15 +16,17 @@ export abstract class AlgorithmStrategy implements IAlgorithmStrategy {
 
   abstract calculateForces(
     bodies: Record<string, PhysicsStateReal>,
-    params: SimulationParameters
+    params: SimulationParameters,
   ): Record<string, OSVector3>;
 
   /**
    * Default implementation of optimization check
    */
   isOptimalFor(bodyCount: number): boolean {
-    return bodyCount >= this.recommendedMinBodies && 
-           bodyCount <= this.recommendedMaxBodies;
+    return (
+      bodyCount >= this.recommendedMinBodies &&
+      bodyCount <= this.recommendedMaxBodies
+    );
   }
 
   /**
@@ -30,28 +35,29 @@ export abstract class AlgorithmStrategy implements IAlgorithmStrategy {
   protected calculateGravitationalForce(
     body1: PhysicsStateReal,
     body2: PhysicsStateReal,
-    G: number = 6.67430e-11
+    G: number = 6.6743e-11,
   ): OSVector3 {
     const dx = body2.position_m.x - body1.position_m.x;
     const dy = body2.position_m.y - body1.position_m.y;
     const dz = body2.position_m.z - body1.position_m.z;
-    
+
     const distanceSquared = dx * dx + dy * dy + dz * dz;
     const distance = Math.sqrt(distanceSquared);
-    
+
     if (distance === 0) return new OSVector3(0, 0, 0);
-    
-    const forceMagnitude = (G * body1.mass_kg * body2.mass_kg) / distanceSquared;
+
+    const forceMagnitude =
+      (G * body1.mass_kg * body2.mass_kg) / distanceSquared;
     const forceDirection = {
       x: dx / distance,
       y: dy / distance,
-      z: dz / distance
+      z: dz / distance,
     };
-    
+
     return new OSVector3(
       forceMagnitude * forceDirection.x,
       forceMagnitude * forceDirection.y,
-      forceMagnitude * forceDirection.z
+      forceMagnitude * forceDirection.z,
     );
   }
 }

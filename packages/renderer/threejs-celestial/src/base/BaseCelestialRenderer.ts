@@ -71,9 +71,7 @@ export abstract class BaseCelestialRenderer<
   constructor(options: BaseCelestialRendererOptions = {}) {
     this.materialManager = new MaterialManager();
     this.lodManager = new LODManager();
-    this.lightingManager = new CelestialLightingManager(
-      options.lightingManager,
-    );
+    this.lightingManager = new CelestialLightingManager();
     this.timeManager = new TimeManager();
     this.billboardManager = new BillboardManager();
   }

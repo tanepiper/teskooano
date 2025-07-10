@@ -68,63 +68,106 @@ export function getEngineShortName(engineName: string | undefined): string {
 
 /**
  * Gets a display-friendly short name for a simulation configuration.
- * 
+ *
  * @param config - The simulation configuration object
  * @returns Short display name (e.g., "BH-Ver", "TPM-Y4")
  */
-export function getConfigurationShortName(config?: { mode: string; algorithm?: string; integrator?: string }): string {
+export function getConfigurationShortName(config?: {
+  mode: string;
+  algorithm?: string;
+  integrator?: string;
+}): string {
   if (!config) return "-";
-  
+
   if (config.mode === "ideal") {
     return "Ideal";
   }
-  
-  const algorithmShort = config.algorithm === "barnes-hut" ? "BH" :
-                        config.algorithm === "fmm" ? "FMM" :
-                        config.algorithm === "p3m" ? "P3M" :
-                        config.algorithm === "tree-pm" ? "TPM" : "Dir";
-  
-  const integratorShort = config.integrator === "euler" ? "Eul" :
-                         config.integrator === "symplectic" ? "Sym" :
-                         config.integrator === "verlet" ? "Ver" :
-                         config.integrator === "rk4" ? "RK4" :
-                         config.integrator === "adaptive" ? "Adp" :
-                         config.integrator === "yoshida4" ? "Y4" :
-                         config.integrator === "forest-ruth" ? "FR" :
-                         config.integrator === "pefrl" ? "PEFRL" :
-                         config.integrator === "leapfrog" ? "LF" : "?";
-  
+
+  const algorithmShort =
+    config.algorithm === "barnes-hut"
+      ? "BH"
+      : config.algorithm === "fmm"
+        ? "FMM"
+        : config.algorithm === "p3m"
+          ? "P3M"
+          : config.algorithm === "tree-pm"
+            ? "TPM"
+            : "Dir";
+
+  const integratorShort =
+    config.integrator === "euler"
+      ? "Eul"
+      : config.integrator === "symplectic"
+        ? "Sym"
+        : config.integrator === "verlet"
+          ? "Ver"
+          : config.integrator === "rk4"
+            ? "RK4"
+            : config.integrator === "adaptive"
+              ? "Adp"
+              : config.integrator === "yoshida4"
+                ? "Y4"
+                : config.integrator === "forest-ruth"
+                  ? "FR"
+                  : config.integrator === "pefrl"
+                    ? "PEFRL"
+                    : config.integrator === "leapfrog"
+                      ? "LF"
+                      : "?";
+
   return `${algorithmShort}-${integratorShort}`;
 }
 
 /**
  * Gets a full display-friendly name for a simulation configuration.
- * 
+ *
  * @param config - The simulation configuration object
  * @returns Full display name (e.g., "N-Body (Barnes-Hut + Verlet)")
  */
-export function getConfigurationDisplayName(config?: { mode: string; algorithm?: string; integrator?: string }): string {
+export function getConfigurationDisplayName(config?: {
+  mode: string;
+  algorithm?: string;
+  integrator?: string;
+}): string {
   if (!config) return "Unknown";
-  
+
   if (config.mode === "ideal") {
     return "Ideal Orrery";
   }
-  
-  const algorithmName = config.algorithm === "barnes-hut" ? "Barnes-Hut" :
-                       config.algorithm === "fmm" ? "Fast Multipole" :
-                       config.algorithm === "p3m" ? "Particle-Mesh" :
-                       config.algorithm === "tree-pm" ? "Tree-PM" :
-                       config.algorithm === "direct" ? "Direct" : "Unknown";
-  
-  const integratorName = config.integrator === "euler" ? "Euler" :
-                        config.integrator === "symplectic" ? "Symplectic" :
-                        config.integrator === "verlet" ? "Verlet" :
-                        config.integrator === "rk4" ? "RK4" :
-                        config.integrator === "adaptive" ? "Adaptive RK" :
-                        config.integrator === "yoshida4" ? "Yoshida 4th" :
-                        config.integrator === "forest-ruth" ? "Forest-Ruth" :
-                        config.integrator === "pefrl" ? "PEFRL" :
-                        config.integrator === "leapfrog" ? "Leapfrog" : "Unknown";
-  
+
+  const algorithmName =
+    config.algorithm === "barnes-hut"
+      ? "Barnes-Hut"
+      : config.algorithm === "fmm"
+        ? "Fast Multipole"
+        : config.algorithm === "p3m"
+          ? "Particle-Mesh"
+          : config.algorithm === "tree-pm"
+            ? "Tree-PM"
+            : config.algorithm === "direct"
+              ? "Direct"
+              : "Unknown";
+
+  const integratorName =
+    config.integrator === "euler"
+      ? "Euler"
+      : config.integrator === "symplectic"
+        ? "Symplectic"
+        : config.integrator === "verlet"
+          ? "Verlet"
+          : config.integrator === "rk4"
+            ? "RK4"
+            : config.integrator === "adaptive"
+              ? "Adaptive RK"
+              : config.integrator === "yoshida4"
+                ? "Yoshida 4th"
+                : config.integrator === "forest-ruth"
+                  ? "Forest-Ruth"
+                  : config.integrator === "pefrl"
+                    ? "PEFRL"
+                    : config.integrator === "leapfrog"
+                      ? "Leapfrog"
+                      : "Unknown";
+
   return `N-Body (${algorithmName} + ${integratorName})`;
 }

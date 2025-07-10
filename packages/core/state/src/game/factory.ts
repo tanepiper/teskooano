@@ -8,6 +8,7 @@ import type {
   CelestialSpecificPropertiesUnion,
   OrbitalParameters,
   PhysicsStateReal,
+  PlanetAtmosphereProperties,
   StarProperties,
 } from "@teskooano/data-types";
 import {
@@ -20,6 +21,21 @@ import { simulationStateService } from "./simulation";
 import { gameStateService } from "./stores";
 import { CelestialObjectCreationInput, ClearStateOptions } from "./types";
 import { determineStarThermalProperties } from "./utils/star-properties.utils";
+
+/**
+ * Type guard to check if an object is of type PlanetAtmosphereProperties.
+ * @param props The properties to check.
+ * @returns True if the properties match PlanetAtmosphereProperties.
+ */
+function isPlanetAtmosphere(props: any): props is PlanetAtmosphereProperties {
+  return (
+    props &&
+    typeof props.thickness === "number" &&
+    typeof props.power === "number" &&
+    typeof props.intensity === "number" &&
+    props.glowColor !== undefined
+  );
+}
 
 /**
  * @class CelestialFactoryService
@@ -79,8 +95,9 @@ class CelestialFactoryService {
       albedo: processedAlbedo,
       siderealRotationPeriod_s: data.siderealRotationPeriod_s,
       axialTilt: data.axialTilt,
-      atmosphere: data.atmosphere,
-      surface: data.surface,
+      atmosphere: isPlanetAtmosphere(data.atmosphere)
+        ? data.atmosphere
+        : undefined,
       properties: processedProperties,
       seed: seedString,
       physicsStateReal: calculatedPhysicsStateReal,
@@ -244,6 +261,69 @@ class CelestialFactoryService {
     );
 
     return data.id;
+  }
+
+  /**
+   * Adds multiple celestial objects to the state with dependency-aware sorting.
+   * This ensures parents are created before their children.
+   * @param {CelestialObjectCreationInput[]} data - Array of object creation data.
+   * @public
+   */
+  public addCelestialObjects(data: CelestialObjectCreationInput[]): void {
+    // 1. Sort objects to ensure parents come before children
+    const sortedData = this.sortObjectsByDependency(data);
+
+    // 2. Add each object in the correct order
+    for (const objectData of sortedData) {
+      this.addCelestial(objectData);
+    }
+
+    // 3. Dispatch a single event after all objects are loaded
+    const totalObjects = Object.keys(
+      gameStateService.getCelestialObjects() ?? {},
+    ).length;
+    const systemId = sortedData.find((d) => d.type === CelestialType.STAR)?.id;
+
+    document.dispatchEvent(
+      new CustomEvent(CustomEvents.CELESTIAL_OBJECTS_LOADED, {
+        detail: { count: totalObjects, systemId },
+      }),
+    );
+  }
+
+  /**
+   * Sorts celestial objects based on their parent-child relationships.
+   * @param {CelestialObjectCreationInput[]} objects - The array of objects to sort.
+   * @returns {CelestialObjectCreationInput[]} A new array sorted with parents first.
+   * @private
+   */
+  private sortObjectsByDependency(
+    objects: CelestialObjectCreationInput[],
+  ): CelestialObjectCreationInput[] {
+    const objectMap = new Map(objects.map((obj) => [obj.id, obj]));
+    const sorted: CelestialObjectCreationInput[] = [];
+    const visited = new Set<string>();
+
+    function visit(objectId: string) {
+      if (visited.has(objectId)) {
+        return;
+      }
+      visited.add(objectId);
+
+      const obj = objectMap.get(objectId);
+      if (obj) {
+        if (obj.parentId && objectMap.has(obj.parentId)) {
+          visit(obj.parentId);
+        }
+        sorted.push(obj);
+      }
+    }
+
+    for (const obj of objects) {
+      visit(obj.id);
+    }
+
+    return sorted;
   }
 
   /**

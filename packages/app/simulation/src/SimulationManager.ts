@@ -196,7 +196,7 @@ export class SimulationManager {
           isStar,
           bodyTypes,
           parentIds,
-          physicsEngine: getSimulationState().physicsEngine,
+          simulationConfig: getSimulationState().simulationConfig, // Pass the correct config
           orbitalParameters:
             physicsSystemAdapter.getOrbitalParametersSnapshot(),
           currentTime_s: this.accumulatedTime,

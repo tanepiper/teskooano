@@ -7,6 +7,7 @@ This document maps all code locations that need modification for implementing th
 ## 🎯 Core Type System Changes
 
 ### Primary Type Definitions
+
 **Current locations require expansion:**
 
 1. **`packages/core/state/src/game/types.ts`** (Lines 23)
@@ -17,16 +18,22 @@ This document maps all code locations that need modification for implementing th
    - Mirror the type changes from core/state
 
 ### New Types Required:
+
 ```typescript
 // New types to add:
 export type SimulationMode = "ideal" | "nbody";
-export type IntegratorType = "euler" | "symplectic" | "verlet" | "rk4" | "adaptive";
+export type IntegratorType =
+  | "euler"
+  | "symplectic"
+  | "verlet"
+  | "rk4"
+  | "adaptive";
 export type AlgorithmType = "direct" | "barnes-hut" | "fmm" | "p3m";
 
 export interface SimulationConfiguration {
   mode: SimulationMode;
-  integrator?: IntegratorType;  // Only for N-Body mode
-  algorithm?: AlgorithmType;    // Only for N-Body mode
+  integrator?: IntegratorType; // Only for N-Body mode
+  algorithm?: AlgorithmType; // Only for N-Body mode
 }
 ```
 
@@ -39,17 +46,19 @@ export interface SimulationConfiguration {
    - **Line 185-189**: Replace `setPhysicsEngine()` with `setSimulationConfiguration()`
    - Add validation logic for mode/algorithm combinations
 
-4. **`packages/core/state/src/game/index.ts`** 
+4. **`packages/core/state/src/game/index.ts`**
    - **Line 72**: Update exported method name and signature
    - **Line 104**: Update PhysicsEngineType export to new types
 
 ### State Tests
+
 5. **`packages/core/state/src/game/game.spec.ts`**
    - **Lines 117, 180**: Update test configurations to use new types
 
 ## 🔧 Physics Engine Core
 
 ### Main Simulation Logic
+
 6. **`packages/core/physics/src/simulation/simulation.ts`**
    - **Line 18**: Import new types
    - **Line 88**: Update function signature and documentation
@@ -61,6 +70,7 @@ export interface SimulationConfiguration {
    - **Line 32**: Update interface to use new configuration type
 
 ### New Files Needed in Physics Package:
+
 ```
 packages/core/physics/src/
 ├── modes/
@@ -89,6 +99,7 @@ packages/core/physics/src/
 ## 🖥️ Application & UI Layer
 
 ### Settings Panel
+
 8. **`apps/teskooano/src/plugins/settings/controller/SettingsController.ts`**
    - **Line 12**: Replace `ENGINE_OPTIONS` with mode/algorithm selection
    - **Line 87**: Update initialization logic
@@ -96,6 +107,7 @@ packages/core/physics/src/
    - **Line 207**: Update state reading logic
 
 ### Settings View
+
 9. **`apps/teskooano/src/plugins/settings/view/` (HTML templates)**
    - Replace single engine dropdown with:
      - Mode selector (Ideal vs N-Body)
@@ -103,6 +115,7 @@ packages/core/physics/src/
      - Integrator selector (conditional visibility)
 
 ### Engine Panel Display
+
 10. **`apps/teskooano/src/plugins/engine-panel/main-toolbar/simulation-controls/controller/simulation-controls.controller.ts`**
     - **Line 93**: Update `_updateEngineDisplay()` to show mode + algorithm
     - **New logic**: Format display like "N-Body (Barnes-Hut + Verlet)"
@@ -114,6 +127,7 @@ packages/core/physics/src/
 ## 🎨 Renderer Integration
 
 ### Renderer State Adapter
+
 12. **`packages/renderer/threejs/src/RendererStateAdapter.ts`**
     - **Line 44-45**: Update physics engine mapping logic
     - **Line 137-138**: Update visual settings extraction
@@ -123,6 +137,7 @@ packages/core/physics/src/
     - **Line 34**: Update `physicsEngine` type to handle new configuration
 
 ### Orbit Renderer
+
 14. **`packages/renderer/threejs-orbits/src/core/OrbitsManager.ts`**
     - **Line 83**: Update mode detection logic
     - **Line 93**: Update initial settings handling
@@ -133,28 +148,32 @@ packages/core/physics/src/
 ## 📦 Package Integration
 
 ### Simulation Manager
+
 16. **`packages/app/simulation/src/SimulationManager.ts`**
     - **Line 198**: Update physics engine parameter passing
     - **Line 204**: Update `updateSimulation` call with new configuration
 
 ### App Tests
+
 17. **`packages/app/simulation/src/index.spec.ts`**
     - **Line 63**: Update test configuration
 
 ## 📚 Documentation Updates
 
 ### Architecture Documentation
+
 18. **ARCHITECTURE.md**
     - **Lines 266, 271, 296, 343**: Update physics engine references
     - Add new section on simulation modes and strategy patterns
 
 19. **Multiple Package READMEs**:
     - `packages/core/physics/README.md` (Line 118, 134)
-    - `packages/core/physics/ARCHITECTURE.md` (Line 16, 23)  
+    - `packages/core/physics/ARCHITECTURE.md` (Line 16, 23)
     - `packages/core/state/ARCHITECTURE.md` (Line 14, 16, 22)
     - `packages/renderer/threejs-orbits/ARCHITECTURE.md` (Line 23)
 
 ### Changelog Updates
+
 20. **CHANGELOG.md** and related files
     - Document breaking changes in physics engine interface
     - Update multiple package changelogs
@@ -162,21 +181,25 @@ packages/core/physics/src/
 ## 🔄 Migration Strategy
 
 ### Phase 1: Core Types & Interfaces
+
 - Update type definitions
 - Create strategy interfaces
 - Add configuration validation
 
-### Phase 2: Physics Engine Refactoring  
+### Phase 2: Physics Engine Refactoring
+
 - Implement mode dispatcher
 - Extract current algorithms into strategy pattern
 - Add new algorithm implementations
 
 ### Phase 3: UI & State Integration
+
 - Update settings controllers and views
 - Modify state management layer
 - Update renderer integration
 
 ### Phase 4: Testing & Documentation
+
 - Update all test suites
 - Refresh documentation
 - Performance validation

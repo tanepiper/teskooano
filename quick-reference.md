@@ -3,63 +3,94 @@
 ## 🔀 New Integrators
 
 ### RK4 (4th Order Runge-Kutta)
+
 ```typescript
-import { rk4Integrate, rk4IntegrateSimple } from './integrators/rk4';
+import { rk4Integrate, rk4IntegrateSimple } from "./integrators/rk4";
 
 // Full RK4 with force recalculation
-const newState = rk4Integrate(currentState, acceleration, calculateNewAcceleration, dt);
+const newState = rk4Integrate(
+  currentState,
+  acceleration,
+  calculateNewAcceleration,
+  dt,
+);
 
 // Simplified RK4 for constant acceleration
 const newState = rk4IntegrateSimple(currentState, acceleration, dt);
 ```
 
 ### Adaptive RK (Dormand-Prince with Error Control)
+
 ```typescript
-import { adaptiveRKIntegrate, AdaptiveConfig } from './integrators/adaptive';
+import { adaptiveRKIntegrate, AdaptiveConfig } from "./integrators/adaptive";
 
 const config: AdaptiveConfig = {
   tolerance: 1e-8,
   minDt: 1e-12,
   maxDt: 1e-2,
-  safetyFactor: 0.9
+  safetyFactor: 0.9,
 };
 
-const result = adaptiveRKIntegrate(currentState, acceleration, calculateNewAcceleration, dt, config);
+const result = adaptiveRKIntegrate(
+  currentState,
+  acceleration,
+  calculateNewAcceleration,
+  dt,
+  config,
+);
 // result contains: newState, actualDt, nextDt, error, stepsTaken
 ```
 
 ### Symplectic Integrators (Yoshida, Forest-Ruth, PEFRL)
+
 ```typescript
-import { 
-  yoshida4Integrate, 
-  forestRuthIntegrate, 
+import {
+  yoshida4Integrate,
+  forestRuthIntegrate,
   pefrlIntegrate,
   symplecticIntegrate,
-  SymplecticConfig 
-} from './integrators/yoshida';
+  SymplecticConfig,
+} from "./integrators/yoshida";
 
 // Direct usage
-const newState = yoshida4Integrate(currentState, acceleration, calculateNewAcceleration, dt);
-const newState = pefrlIntegrate(currentState, acceleration, calculateNewAcceleration, dt);
+const newState = yoshida4Integrate(
+  currentState,
+  acceleration,
+  calculateNewAcceleration,
+  dt,
+);
+const newState = pefrlIntegrate(
+  currentState,
+  acceleration,
+  calculateNewAcceleration,
+  dt,
+);
 
 // Generic with configuration
-const config: SymplecticConfig = { method: 'pefrl', order: 4 };
-const newState = symplecticIntegrate(currentState, acceleration, calculateNewAcceleration, dt, config);
+const config: SymplecticConfig = { method: "pefrl", order: 4 };
+const newState = symplecticIntegrate(
+  currentState,
+  acceleration,
+  calculateNewAcceleration,
+  dt,
+  config,
+);
 ```
 
 ## 🏗️ New Algorithms
 
-### Tree-PM Hybrid Algorithm  
+### Tree-PM Hybrid Algorithm
+
 ```typescript
-import { TreePMStrategy, TreePMConfig } from './algorithms/tree-pm';
+import { TreePMStrategy, TreePMConfig } from "./algorithms/tree-pm";
 
 const config: TreePMConfig = {
-  treeThreshold: 5.0,      // Particles per cell for tree method
-  pmGridSize: 64,          // 64³ PM grid
-  smoothingLength: 1.0,    // Force smoothing
-  treeOpeningAngle: 0.5,   // Barnes-Hut theta
-  maxTreeDepth: 20,        // Tree recursion limit
-  directCutoff: 2.5        // Direct sum threshold
+  treeThreshold: 5.0, // Particles per cell for tree method
+  pmGridSize: 64, // 64³ PM grid
+  smoothingLength: 1.0, // Force smoothing
+  treeOpeningAngle: 0.5, // Barnes-Hut theta
+  maxTreeDepth: 20, // Tree recursion limit
+  directCutoff: 2.5, // Direct sum threshold
 };
 
 const treePM = new TreePMStrategy(config);
@@ -70,71 +101,76 @@ const forces = treePM.calculateForces(bodies, params);
 
 ### When to Use Each Method
 
-| Scenario | Algorithm | Integrator | Reason |
-|----------|-----------|------------|---------|
-| **Planetary System** | `direct` | `pefrl` | High accuracy, energy conservation |
-| **Star Cluster** | `barnes-hut` | `yoshida4` | Good performance, symplectic |
-| **Galaxy Collision** | `tree-pm` | `yoshida4` | Multi-scale, long-term stability |
-| **Close Encounters** | `direct` | `adaptive` | Accuracy with variable timesteps |
-| **Large Smooth System** | `fmm` | `rk4` | Linear scaling, high accuracy |
+| Scenario                | Algorithm    | Integrator | Reason                             |
+| ----------------------- | ------------ | ---------- | ---------------------------------- |
+| **Planetary System**    | `direct`     | `pefrl`    | High accuracy, energy conservation |
+| **Star Cluster**        | `barnes-hut` | `yoshida4` | Good performance, symplectic       |
+| **Galaxy Collision**    | `tree-pm`    | `yoshida4` | Multi-scale, long-term stability   |
+| **Close Encounters**    | `direct`     | `adaptive` | Accuracy with variable timesteps   |
+| **Large Smooth System** | `fmm`        | `rk4`      | Linear scaling, high accuracy      |
 
 ### Performance Characteristics
 
 ```typescript
 // Complexity reference
 const COMPLEXITY_GUIDE = {
-  'direct':     'O(N²)',        // 1-1000 particles
-  'barnes-hut': 'O(N log N)',   // 100-100k particles  
-  'fmm':        'O(N)',         // 1000-1M particles
-  'p3m':        'O(N log N)',   // 500-100k particles
-  'tree-pm':    'O(N log N)',   // 1000-1M particles (NEW)
+  direct: "O(N²)", // 1-1000 particles
+  "barnes-hut": "O(N log N)", // 100-100k particles
+  fmm: "O(N)", // 1000-1M particles
+  p3m: "O(N log N)", // 500-100k particles
+  "tree-pm": "O(N log N)", // 1000-1M particles (NEW)
 };
 
 const INTEGRATOR_ORDER = {
-  'euler':     1,  // First order
-  'verlet':    2,  // Second order
-  'symplectic': 2, // Second order, symplectic
-  'rk4':       4,  // Fourth order (NEW)
-  'adaptive':  5,  // Fifth order with error control (NEW)
-  'yoshida4':  4,  // Fourth order symplectic (NEW)
-  'pefrl':     4,  // Optimized 4th order symplectic (NEW)
+  euler: 1, // First order
+  verlet: 2, // Second order
+  symplectic: 2, // Second order, symplectic
+  rk4: 4, // Fourth order (NEW)
+  adaptive: 5, // Fifth order with error control (NEW)
+  yoshida4: 4, // Fourth order symplectic (NEW)
+  pefrl: 4, // Optimized 4th order symplectic (NEW)
 };
 ```
 
 ## 🎯 Usage Examples
 
 ### Basic Configuration
+
 ```typescript
 const config: SimulationConfiguration = {
-  mode: 'nbody',
-  algorithm: 'tree-pm',
-  integrator: 'yoshida4'
+  mode: "nbody",
+  algorithm: "tree-pm",
+  integrator: "yoshida4",
 };
 ```
 
 ### Advanced Configuration with Algorithm Factory
+
 ```typescript
-import { AlgorithmFactory } from './algorithms/algorithm-factory';
+import { AlgorithmFactory } from "./algorithms/algorithm-factory";
 
 // Automatic selection
 const optimal = AlgorithmFactory.selectOptimalAlgorithm(10000, {
   prioritizeAccuracy: true,
-  maxMemoryUsage: 'medium'
+  maxMemoryUsage: "medium",
 });
 
 // Validation
-const validation = AlgorithmFactory.validateAlgorithmChoice('tree-pm', 10000);
+const validation = AlgorithmFactory.validateAlgorithmChoice("tree-pm", 10000);
 if (!validation.isValid) {
-  console.warn('Warnings:', validation.warnings);
-  console.log('Recommendations:', validation.recommendations);
+  console.warn("Warnings:", validation.warnings);
+  console.log("Recommendations:", validation.recommendations);
 }
 
 // Performance estimation
-const perf = AlgorithmFactory.getPerformanceEstimate('tree-pm', 10000);
-console.log(`Relative speed: ${perf.relativeSpeed}x, Memory: ${perf.memoryUsage}`);
+const perf = AlgorithmFactory.getPerformanceEstimate("tree-pm", 10000);
+console.log(
+  `Relative speed: ${perf.relativeSpeed}x, Memory: ${perf.memoryUsage}`,
+);
 ```
 
 ### Integration with Simulation Wrapper
+
 ```typescript
 // Your existing simulation wrapper will automatically use new methods
 const wrapper = new EnhancedSimulationWrapper(bodies, config);
@@ -149,6 +185,7 @@ const result = wrapper.step(deltaTime);
 ## 🧪 Testing & Validation
 
 ### Energy Conservation Test
+
 ```typescript
 // Test symplectic integrators for energy conservation
 const initialEnergy = calculateTotalEnergy(bodies);
@@ -162,10 +199,11 @@ const energyDrift = Math.abs(finalEnergy - initialEnergy) / initialEnergy;
 ```
 
 ### Adaptive Timestep Test
+
 ```typescript
 // Test adaptive integrator error control
 const adaptiveResult = adaptiveRKIntegrate(state, acc, calcAcc, dt, {
-  tolerance: 1e-10  // Very strict tolerance
+  tolerance: 1e-10, // Very strict tolerance
 });
 
 console.log(`Steps taken: ${adaptiveResult.stepsTaken}`);
@@ -174,16 +212,17 @@ console.log(`Next suggested dt: ${adaptiveResult.nextDt}`);
 ```
 
 ### Tree-PM Performance Test
+
 ```typescript
 // Compare Tree-PM vs Barnes-Hut for multi-scale system
 const bodies = generateMultiScaleBodies(10000); // Galaxy + dense cluster
 
-const barnesHutTime = measureTime(() => 
-  barnesHutStrategy.calculateForces(bodies, params)
+const barnesHutTime = measureTime(() =>
+  barnesHutStrategy.calculateForces(bodies, params),
 );
 
-const treePMTime = measureTime(() => 
-  treePMStrategy.calculateForces(bodies, params)  
+const treePMTime = measureTime(() =>
+  treePMStrategy.calculateForces(bodies, params),
 );
 
 console.log(`Speedup: ${barnesHutTime / treePMTime}x`);

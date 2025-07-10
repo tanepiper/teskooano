@@ -48,6 +48,7 @@ The arXiv paper presents advanced statistical mechanics approaches to N-body sim
 **What it is**: The paper proposes using maximum entropy distributions to model halo mass functions and particle distributions in collisionless dark matter flow.
 
 **Key Formulas**:
+
 - **H∞ Distribution** for large halos:
   ```
   H∞(σv²) = (1/(2αv₀²K₁(α))) · exp[-α/2 · (σv²/αv₀² + αv₀²/σv²)]
@@ -62,6 +63,7 @@ The arXiv paper presents advanced statistical mechanics approaches to N-body sim
 #### 2. Statistical Properties and Constraints
 
 The paper derives distributions that satisfy physical constraints:
+
 - Conservation of mass/energy/momentum
 - Maximum entropy principle
 - Virial equilibrium conditions
@@ -69,6 +71,7 @@ The paper derives distributions that satisfy physical constraints:
 #### 3. Improved Accuracy for Large-Scale Simulations
 
 The maximum entropy approach provides better theoretical grounding for:
+
 - Particle mass functions
 - Velocity distributions
 - Halo formation modeling
@@ -76,6 +79,7 @@ The maximum entropy approach provides better theoretical grounding for:
 ### Recommendations for Teskooano
 
 1. **Enhanced Initial Condition Generation**:
+
    ```typescript
    // New module: packages/core/physics/src/distributions/
    export interface MaxEntropyDistribution {
@@ -84,16 +88,17 @@ The maximum entropy approach provides better theoretical grounding for:
        totalMass: number,
        spatialBounds: BoundingBox,
        alpha: number,
-       v0: number
+       v0: number,
      ): PhysicsStateReal[];
    }
-   
+
    export class HaloMassFunction implements MaxEntropyDistribution {
      // Implementation of H∞ and velocity distributions from paper
    }
    ```
 
 2. **Statistical Validation Tools**:
+
    ```typescript
    export interface DistributionValidator {
      validateMaxEntropy(particles: PhysicsStateReal[]): number;
@@ -118,17 +123,19 @@ The Berkeley patterns document provides comprehensive coverage of N-body computa
 **What it is**: An advanced tree-based method that achieves O(N) complexity vs. Barnes-Hut's O(N log N).
 
 **Key Advantages**:
+
 - Linear scaling with particle count
 - Higher accuracy than Barnes-Hut
 - Better handling of multipole expansions
 
 **Implementation Approach**:
+
 ```typescript
 // New class: packages/core/physics/src/spatial/fmm.ts
 export class FastMultipoleMethod {
   private multipoleOrder: number;
   private tree: FMMTree;
-  
+
   calculateForceOn(body: PhysicsStateReal, accuracy: number): OSVector3 {
     // Implement far-field and near-field expansions
     // Use more sophisticated multipole expansions than Barnes-Hut
@@ -141,16 +148,18 @@ export class FastMultipoleMethod {
 **What it is**: Combines particle-particle forces for nearby interactions with mesh-based methods for long-range forces.
 
 **Benefits**:
+
 - Better handling of different force scales
 - Reduced computational cost for long-range interactions
 - More accurate for dense systems
 
 **Potential Implementation**:
+
 ```typescript
 export class P3MForceCalculator implements ForceCalculator {
   private meshSize: number;
   private cutoffRadius: number;
-  
+
   calculateForces(bodies: PhysicsStateReal[]): Map<string, OSVector3> {
     // 1. Short-range: Direct particle-particle calculation
     // 2. Long-range: FFT-based mesh calculation
@@ -162,6 +171,7 @@ export class P3MForceCalculator implements ForceCalculator {
 #### 3. Parallel Algorithm Patterns
 
 **Key Patterns Identified**:
+
 - **Geometric Decomposition**: Spatial partitioning for parallel processing
 - **Task Parallelism**: Independent force calculations
 - **Pipeline Pattern**: Streaming particle data between processing elements
@@ -197,7 +207,7 @@ export class HybridForceCalculator {
   private nearFieldMethod: SpatialIndex;
   private farFieldMethod: SpatialIndex;
   private cutoffRadius: number;
-  
+
   calculateForces(bodies: PhysicsStateReal[]): Map<string, OSVector3> {
     // Automatically choose method based on particle density and separation
   }
@@ -214,12 +224,12 @@ export class PerformanceOptimizer {
   selectOptimalMethod(
     particleCount: number,
     density: number,
-    accuracyRequirement: number
+    accuracyRequirement: number,
   ): SpatialIndex;
-  
+
   adaptiveTimeStep(
     bodies: PhysicsStateReal[],
-    forces: Map<string, OSVector3>
+    forces: Map<string, OSVector3>,
   ): number;
 }
 ```
@@ -249,10 +259,7 @@ export class MaxEntropyGalaxyFormation {
 ```typescript
 // Enhanced softening based on paper's insights
 export class AdaptiveSoftening {
-  calculateSofteningLength(
-    localDensity: number,
-    particleMass: number
-  ): number {
+  calculateSofteningLength(localDensity: number, particleMass: number): number {
     // Use density-dependent softening for better stability
   }
 }
@@ -267,7 +274,7 @@ export class AdaptiveSoftening {
 export class FMMNode {
   multipoleCoefficients: number[];
   localCoefficients: number[];
-  
+
   computeMultipoleExpansion(bodies: PhysicsStateReal[]): void;
   translateMultipole(displacement: OSVector3): void;
   convertToLocal(): void;
@@ -286,7 +293,7 @@ export class FastMultipoleTree {
 export class P3MCalculator {
   private meshResolution: number;
   private fftSolver: FFTSolver;
-  
+
   calculateLongRangeForces(bodies: PhysicsStateReal[]): Map<string, OSVector3>;
   calculateShortRangeForces(bodies: PhysicsStateReal[]): Map<string, OSVector3>;
 }
@@ -305,7 +312,7 @@ export class AdaptiveVerletIntegrator implements Integrator {
     calculateNewAcceleration: (state: PhysicsStateReal) => OSVector3,
     minDt: number,
     maxDt: number,
-    errorTolerance: number
+    errorTolerance: number,
   ): PhysicsStateReal;
 }
 ```
@@ -324,16 +331,19 @@ export class SimulationAnalyzer {
 ## Performance Impact Analysis
 
 ### Current Barnes-Hut Performance: O(N log N)
+
 - **1,000 particles**: ~10,000 operations
-- **10,000 particles**: ~130,000 operations  
+- **10,000 particles**: ~130,000 operations
 - **100,000 particles**: ~1,700,000 operations
 
 ### With Fast Multipole Method: O(N)
+
 - **1,000 particles**: ~1,000 operations (10x improvement)
 - **10,000 particles**: ~10,000 operations (13x improvement)
 - **100,000 particles**: ~100,000 operations (17x improvement)
 
 ### Memory Efficiency
+
 - **FMM**: Higher memory usage but better scaling
 - **P3M**: Moderate memory increase, significant performance gain for dense systems
 - **Adaptive methods**: Memory usage scales with local complexity
@@ -341,15 +351,18 @@ export class SimulationAnalyzer {
 ## Risk Assessment
 
 ### Low Risk Improvements
+
 - ✅ Enhanced initial condition generators
 - ✅ Better softening parameters
 - ✅ Statistical validation tools
 
-### Medium Risk Improvements  
+### Medium Risk Improvements
+
 - ⚠️ Fast Multipole Method (complex implementation)
 - ⚠️ Particle-Mesh hybrid (requires FFT integration)
 
 ### High Risk Improvements
+
 - ⛔ Complete algorithm overhaul
 - ⛔ Parallel processing implementation
 - ⛔ Real-time adaptive parameters
@@ -357,18 +370,21 @@ export class SimulationAnalyzer {
 ## Implementation Priority
 
 ### Phase 1: Foundation (Weeks 1-4)
+
 1. Implement maximum entropy distribution generators
 2. Add statistical analysis tools
 3. Enhance initial condition scenarios
 4. Improve force softening algorithms
 
 ### Phase 2: Performance (Weeks 5-12)
+
 1. Implement Fast Multipole Method
 2. Add Particle-Mesh hybrid option
 3. Create algorithm selection system
 4. Performance benchmarking suite
 
 ### Phase 3: Advanced Features (Weeks 13-24)
+
 1. Adaptive time integration
 2. Parallel processing support
 3. Advanced collision modeling

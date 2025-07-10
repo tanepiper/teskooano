@@ -14,6 +14,7 @@ import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
 import type * as THREE from "three";
 import { WebGLRendererParameters } from "three";
+import { SimulationConfiguration } from "@teskooano/core-state";
 
 /**
  * Defines a collection of values intended to be passed as uniforms to shaders.
@@ -32,11 +33,7 @@ export interface RendererVisualSettings {
   /** A multiplier that adjusts the length of orbital trails. */
   trailLengthMultiplier: number;
   /** The simulation configuration for rendering-specific decisions. */
-  simulationConfig: {
-    mode: "ideal" | "nbody";
-    algorithm?: "direct" | "barnes-hut" | "fmm" | "p3m";
-    integrator?: "euler" | "symplectic" | "verlet" | "rk4" | "adaptive";
-  };
+  simulationConfig: SimulationConfiguration;
   /** The time scale for the simulation. */
   timeScale: number;
   /** The number of steps for the simulation. */

@@ -1,9 +1,11 @@
 # Implementation Guide: UI Layer Updates
 
 ## Overview
+
 This guide details updating the UI layer components (Settings Panel and Engine Panel) to support the new two-mode simulation configuration system with intuitive user controls and responsive state updates.
 
 ## 🎯 Goals
+
 - Replace single physics engine dropdown with mode-based configuration UI
 - Implement conditional visibility for algorithm/integrator selectors
 - Update engine display in main toolbar to show full configuration
@@ -15,15 +17,18 @@ This guide details updating the UI layer components (Settings Panel and Engine P
 ### Phase 4A: Update Settings Panel
 
 #### Task 4.1: Update Settings Controller
+
 **File**: `apps/teskooano/src/plugins/settings/controller/SettingsController.ts`
 
 **Current Issues:**
+
 - Line 12: `ENGINE_OPTIONS` uses old physics engine types
 - Line 87: Single engine dropdown initialization
 - Line 172-174: `handleEngineChange` needs to handle new configuration
 - Line 207: State reading logic needs update
 
 **To-Do:**
+
 - [ ] Replace `ENGINE_OPTIONS` with mode-based options
 - [ ] Add algorithm and integrator option arrays
 - [ ] Update initialization logic for three-dropdown system
@@ -32,6 +37,7 @@ This guide details updating the UI layer components (Settings Panel and Engine P
 - [ ] Update state synchronization
 
 **Implementation:**
+
 ```typescript
 import {
   getSimulationState,
@@ -48,76 +54,90 @@ import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 
 // New configuration options for dropdowns
-const MODE_OPTIONS: { value: SimulationMode; label: string; description: string }[] = [
-  { 
-    value: "ideal", 
-    label: "Ideal Orrery", 
-    description: "Perfect Keplerian orbits - stable and predictable" 
+const MODE_OPTIONS: {
+  value: SimulationMode;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "ideal",
+    label: "Ideal Orrery",
+    description: "Perfect Keplerian orbits - stable and predictable",
   },
-  { 
-    value: "nbody", 
-    label: "N-Body Physics", 
-    description: "Realistic gravitational interactions between all bodies" 
+  {
+    value: "nbody",
+    label: "N-Body Physics",
+    description: "Realistic gravitational interactions between all bodies",
   },
 ];
 
-const ALGORITHM_OPTIONS: { value: AlgorithmType; label: string; description: string; complexity: string }[] = [
-  { 
-    value: "direct", 
-    label: "Direct Calculation", 
+const ALGORITHM_OPTIONS: {
+  value: AlgorithmType;
+  label: string;
+  description: string;
+  complexity: string;
+}[] = [
+  {
+    value: "direct",
+    label: "Direct Calculation",
     description: "Exact forces, slow for many bodies",
-    complexity: "O(N²)"
+    complexity: "O(N²)",
   },
-  { 
-    value: "barnes-hut", 
-    label: "Barnes-Hut Tree", 
+  {
+    value: "barnes-hut",
+    label: "Barnes-Hut Tree",
     description: "Approximated forces using spatial tree",
-    complexity: "O(N log N)"
+    complexity: "O(N log N)",
   },
-  { 
-    value: "fmm", 
-    label: "Fast Multipole", 
+  {
+    value: "fmm",
+    label: "Fast Multipole",
     description: "Hierarchical multipole expansion",
-    complexity: "O(N)"
+    complexity: "O(N)",
   },
-  { 
-    value: "p3m", 
-    label: "Particle-Mesh", 
+  {
+    value: "p3m",
+    label: "Particle-Mesh",
     description: "Hybrid particle-grid method",
-    complexity: "O(N log N)"
+    complexity: "O(N log N)",
   },
 ];
 
-const INTEGRATOR_OPTIONS: { value: IntegratorType; label: string; description: string; order: number }[] = [
-  { 
-    value: "euler", 
-    label: "Euler Integration", 
+const INTEGRATOR_OPTIONS: {
+  value: IntegratorType;
+  label: string;
+  description: string;
+  order: number;
+}[] = [
+  {
+    value: "euler",
+    label: "Euler Integration",
     description: "Simple but less stable",
-    order: 1
+    order: 1,
   },
-  { 
-    value: "symplectic", 
-    label: "Symplectic Euler", 
+  {
+    value: "symplectic",
+    label: "Symplectic Euler",
     description: "Energy preserving variant",
-    order: 1
+    order: 1,
   },
-  { 
-    value: "verlet", 
-    label: "Verlet Integration", 
+  {
+    value: "verlet",
+    label: "Verlet Integration",
     description: "Stable and reversible (recommended)",
-    order: 2
+    order: 2,
   },
-  { 
-    value: "rk4", 
-    label: "Runge-Kutta 4th", 
+  {
+    value: "rk4",
+    label: "Runge-Kutta 4th",
     description: "High accuracy, more expensive",
-    order: 4
+    order: 4,
   },
-  { 
-    value: "adaptive", 
-    label: "Adaptive Step", 
+  {
+    value: "adaptive",
+    label: "Adaptive Step",
     description: "Auto-adjusting time step",
-    order: 4
+    order: 4,
   },
 ];
 
@@ -127,21 +147,21 @@ const INTEGRATOR_OPTIONS: { value: IntegratorType; label: string; description: s
 export interface ISettingsPanelElements {
   formElement: HTMLFormElement;
   trailSliderElement: TeskooanoSlider;
-  
+
   // Mode selection
   modeSelectElement: HTMLSelectElement;
   modeDescriptionElement: HTMLElement;
-  
+
   // N-Body specific controls (conditionally visible)
   nBodyControlsContainer: HTMLElement;
   algorithmSelectElement: HTMLSelectElement;
   algorithmDescriptionElement: HTMLElement;
   integratorSelectElement: HTMLSelectElement;
   integratorDescriptionElement: HTMLElement;
-  
+
   // Performance profile (existing)
   profileSelectElement: HTMLSelectElement;
-  
+
   // Legacy engine dropdown (for backwards compatibility during transition)
   legacyEngineContainer?: HTMLElement;
   engineSelectElement?: HTMLSelectElement;
@@ -166,17 +186,32 @@ export class SettingsController extends StateSubscriptionMixin {
 
     // Populate dropdowns
     this.populateSelect(this.elements.modeSelectElement, MODE_OPTIONS);
-    this.populateSelect(this.elements.algorithmSelectElement, ALGORITHM_OPTIONS);
-    this.populateSelect(this.elements.integratorSelectElement, INTEGRATOR_OPTIONS);
+    this.populateSelect(
+      this.elements.algorithmSelectElement,
+      ALGORITHM_OPTIONS,
+    );
+    this.populateSelect(
+      this.elements.integratorSelectElement,
+      INTEGRATOR_OPTIONS,
+    );
 
     // Initialize with current state
     const initialState = getSimulationState();
     this.initializeControlsFromState(initialState);
 
     // Event listeners for new controls
-    this.elements.modeSelectElement.addEventListener("change", this.handleModeChange);
-    this.elements.algorithmSelectElement.addEventListener("change", this.handleAlgorithmChange);
-    this.elements.integratorSelectElement.addEventListener("change", this.handleIntegratorChange);
+    this.elements.modeSelectElement.addEventListener(
+      "change",
+      this.handleModeChange,
+    );
+    this.elements.algorithmSelectElement.addEventListener(
+      "change",
+      this.handleAlgorithmChange,
+    );
+    this.elements.integratorSelectElement.addEventListener(
+      "change",
+      this.handleIntegratorChange,
+    );
 
     // Existing controls
     this.elements.trailSliderElement.addEventListener(
@@ -189,10 +224,22 @@ export class SettingsController extends StateSubscriptionMixin {
   }
 
   private removeEventListenersAndUnsubscribe(): void {
-    this.elements.formElement.removeEventListener("submit", this.handleFormSubmit);
-    this.elements.modeSelectElement.removeEventListener("change", this.handleModeChange);
-    this.elements.algorithmSelectElement.removeEventListener("change", this.handleAlgorithmChange);
-    this.elements.integratorSelectElement.removeEventListener("change", this.handleIntegratorChange);
+    this.elements.formElement.removeEventListener(
+      "submit",
+      this.handleFormSubmit,
+    );
+    this.elements.modeSelectElement.removeEventListener(
+      "change",
+      this.handleModeChange,
+    );
+    this.elements.algorithmSelectElement.removeEventListener(
+      "change",
+      this.handleAlgorithmChange,
+    );
+    this.elements.integratorSelectElement.removeEventListener(
+      "change",
+      this.handleIntegratorChange,
+    );
     this.elements.trailSliderElement.removeEventListener(
       CustomEvents.SLIDER_CHANGE,
       this.handleTrailChange as EventListener,
@@ -206,7 +253,7 @@ export class SettingsController extends StateSubscriptionMixin {
    */
   private populateSelect<T extends { value: string; label: string }>(
     selectElement: HTMLSelectElement,
-    options: T[]
+    options: T[],
   ): void {
     selectElement.innerHTML = "";
     options.forEach((option) => {
@@ -241,7 +288,8 @@ export class SettingsController extends StateSubscriptionMixin {
     }
 
     // Existing controls
-    this.elements.trailSliderElement.value = state.visualSettings.trailLengthMultiplier;
+    this.elements.trailSliderElement.value =
+      state.visualSettings.trailLengthMultiplier;
   }
 
   /**
@@ -284,7 +332,7 @@ export class SettingsController extends StateSubscriptionMixin {
    * Updates the mode description text
    */
   private updateModeDescription(mode: SimulationMode): void {
-    const option = MODE_OPTIONS.find(opt => opt.value === mode);
+    const option = MODE_OPTIONS.find((opt) => opt.value === mode);
     if (option && this.elements.modeDescriptionElement) {
       this.elements.modeDescriptionElement.textContent = option.description;
     }
@@ -294,10 +342,9 @@ export class SettingsController extends StateSubscriptionMixin {
    * Updates algorithm description and performance info
    */
   private updateAlgorithmDescription(algorithm: AlgorithmType): void {
-    const option = ALGORITHM_OPTIONS.find(opt => opt.value === algorithm);
+    const option = ALGORITHM_OPTIONS.find((opt) => opt.value === algorithm);
     if (option && this.elements.algorithmDescriptionElement) {
-      this.elements.algorithmDescriptionElement.innerHTML = 
-        `${option.description} <span class="complexity">${option.complexity}</span>`;
+      this.elements.algorithmDescriptionElement.innerHTML = `${option.description} <span class="complexity">${option.complexity}</span>`;
     }
   }
 
@@ -305,10 +352,9 @@ export class SettingsController extends StateSubscriptionMixin {
    * Updates integrator description and order info
    */
   private updateIntegratorDescription(integrator: IntegratorType): void {
-    const option = INTEGRATOR_OPTIONS.find(opt => opt.value === integrator);
+    const option = INTEGRATOR_OPTIONS.find((opt) => opt.value === integrator);
     if (option && this.elements.integratorDescriptionElement) {
-      this.elements.integratorDescriptionElement.innerHTML = 
-        `${option.description} <span class="order">Order: ${option.order}</span>`;
+      this.elements.integratorDescriptionElement.innerHTML = `${option.description} <span class="order">Order: ${option.order}</span>`;
     }
   }
 
@@ -317,9 +363,11 @@ export class SettingsController extends StateSubscriptionMixin {
    */
   private updateNBodyControlsVisibility(mode: SimulationMode): void {
     const isNBodyMode = mode === "nbody";
-    
+
     if (this.elements.nBodyControlsContainer) {
-      this.elements.nBodyControlsContainer.style.display = isNBodyMode ? "block" : "none";
+      this.elements.nBodyControlsContainer.style.display = isNBodyMode
+        ? "block"
+        : "none";
     }
 
     // If switching to ideal mode, ensure N-Body controls are disabled
@@ -335,7 +383,9 @@ export class SettingsController extends StateSubscriptionMixin {
   /**
    * Existing trail change handler
    */
-  private handleTrailChange = (event: CustomEvent<SliderValueChangePayload>): void => {
+  private handleTrailChange = (
+    event: CustomEvent<SliderValueChangePayload>,
+  ): void => {
     const value = event.detail.value;
     if (typeof value === "number" && !isNaN(value)) {
       actions.setTrailLengthMultiplier(value);
@@ -358,12 +408,18 @@ export class SettingsController extends StateSubscriptionMixin {
 
     // Update N-Body controls if in N-Body mode
     if (config.mode === "nbody") {
-      if (config.algorithm && this.elements.algorithmSelectElement.value !== config.algorithm) {
+      if (
+        config.algorithm &&
+        this.elements.algorithmSelectElement.value !== config.algorithm
+      ) {
         this.elements.algorithmSelectElement.value = config.algorithm;
         this.updateAlgorithmDescription(config.algorithm);
       }
-      
-      if (config.integrator && this.elements.integratorSelectElement.value !== config.integrator) {
+
+      if (
+        config.integrator &&
+        this.elements.integratorSelectElement.value !== config.integrator
+      ) {
         this.elements.integratorSelectElement.value = config.integrator;
         this.updateIntegratorDescription(config.integrator);
       }
@@ -381,9 +437,11 @@ export class SettingsController extends StateSubscriptionMixin {
 ```
 
 #### Task 4.2: Update Settings View Template
+
 **File**: `apps/teskooano/src/plugins/settings/view/settings-panel.template.ts` (update existing)
 
 **To-Do:**
+
 - [ ] Replace single engine dropdown with mode-based UI
 - [ ] Add conditional N-Body controls container
 - [ ] Include description elements for user guidance
@@ -391,6 +449,7 @@ export class SettingsController extends StateSubscriptionMixin {
 - [ ] Add accessibility attributes
 
 **Implementation:**
+
 ```typescript
 export const settingsPanelTemplate = `
   <form class="settings-form">
@@ -552,22 +611,29 @@ export const settingsPanelTemplate = `
 ### Phase 4B: Update Engine Panel Display
 
 #### Task 4.3: Update Engine Panel Controller
+
 **File**: `apps/teskooano/src/plugins/engine-panel/main-toolbar/simulation-controls/controller/simulation-controls.controller.ts`
 
 **Current Issues:**
+
 - Line 93: `_updateEngineDisplay()` uses old physics engine format
 
 **To-Do:**
+
 - [ ] Update engine display to show full configuration
 - [ ] Format complex configurations into readable display
 - [ ] Handle both ideal and N-Body mode displays
 - [ ] Add tooltips with detailed information
 
 **Implementation:**
+
 ```typescript
 // ... existing imports ...
 import type { SimulationConfiguration } from "@teskooano/core-state";
-import { getConfigurationDisplayName, getConfigurationShortName } from "@teskooano/core-state";
+import {
+  getConfigurationDisplayName,
+  getConfigurationShortName,
+} from "@teskooano/core-state";
 
 export class SimulationControlsController extends StateSubscriptionMixin {
   // ... existing code ...
@@ -584,7 +650,9 @@ export class SimulationControlsController extends StateSubscriptionMixin {
   /**
    * Updates the engine display with current simulation configuration
    */
-  private _updateEngineDisplay = (config: SimulationConfiguration | undefined): void => {
+  private _updateEngineDisplay = (
+    config: SimulationConfiguration | undefined,
+  ): void => {
     const element = this.uiElements.engineValueDisplay;
     if (!element || !config) {
       if (element) {
@@ -602,10 +670,10 @@ export class SimulationControlsController extends StateSubscriptionMixin {
     element.textContent = shortName;
     element.setAttribute("data-full-name", fullName);
     element.setAttribute("data-mode", config.mode);
-    
+
     // Add CSS class for styling based on mode
     element.className = `engine-display mode-${config.mode}`;
-    
+
     // Set tooltip with detailed information
     element.title = this.buildEngineTooltip(config);
   };
@@ -615,56 +683,64 @@ export class SimulationControlsController extends StateSubscriptionMixin {
    */
   private buildEngineTooltip(config: SimulationConfiguration): string {
     if (config.mode === "ideal") {
-      return "Ideal Orrery Mode\n" +
-             "• Perfect Keplerian orbits\n" +
-             "• No gravitational interactions\n" +
-             "• Maximum stability and predictability";
+      return (
+        "Ideal Orrery Mode\n" +
+        "• Perfect Keplerian orbits\n" +
+        "• No gravitational interactions\n" +
+        "• Maximum stability and predictability"
+      );
     }
 
     const algorithmInfo = this.getAlgorithmInfo(config.algorithm);
     const integratorInfo = this.getIntegratorInfo(config.integrator);
 
-    return `N-Body Physics Mode\n` +
-           `• Algorithm: ${algorithmInfo.name} (${algorithmInfo.complexity})\n` +
-           `• Integrator: ${integratorInfo.name} (Order ${integratorInfo.order})\n` +
-           `• ${algorithmInfo.description}\n` +
-           `• ${integratorInfo.description}`;
+    return (
+      `N-Body Physics Mode\n` +
+      `• Algorithm: ${algorithmInfo.name} (${algorithmInfo.complexity})\n` +
+      `• Integrator: ${integratorInfo.name} (Order ${integratorInfo.order})\n` +
+      `• ${algorithmInfo.description}\n` +
+      `• ${integratorInfo.description}`
+    );
   }
 
   /**
    * Gets detailed algorithm information
    */
-  private getAlgorithmInfo(algorithm?: AlgorithmType): { name: string; complexity: string; description: string } {
+  private getAlgorithmInfo(algorithm?: AlgorithmType): {
+    name: string;
+    complexity: string;
+    description: string;
+  } {
     switch (algorithm) {
       case "direct":
         return {
           name: "Direct Calculation",
           complexity: "O(N²)",
-          description: "Exact force calculation between all body pairs"
+          description: "Exact force calculation between all body pairs",
         };
       case "barnes-hut":
         return {
           name: "Barnes-Hut Tree",
           complexity: "O(N log N)",
-          description: "Spatial tree approximation for distant bodies"
+          description: "Spatial tree approximation for distant bodies",
         };
       case "fmm":
         return {
           name: "Fast Multipole Method",
           complexity: "O(N)",
-          description: "Hierarchical multipole expansion"
+          description: "Hierarchical multipole expansion",
         };
       case "p3m":
         return {
           name: "Particle-Mesh",
           complexity: "O(N log N)",
-          description: "Hybrid particle-grid method"
+          description: "Hybrid particle-grid method",
         };
       default:
         return {
           name: "Unknown",
           complexity: "Unknown",
-          description: "Algorithm not specified"
+          description: "Algorithm not specified",
         };
     }
   }
@@ -672,43 +748,47 @@ export class SimulationControlsController extends StateSubscriptionMixin {
   /**
    * Gets detailed integrator information
    */
-  private getIntegratorInfo(integrator?: IntegratorType): { name: string; order: number; description: string } {
+  private getIntegratorInfo(integrator?: IntegratorType): {
+    name: string;
+    order: number;
+    description: string;
+  } {
     switch (integrator) {
       case "euler":
         return {
           name: "Euler Integration",
           order: 1,
-          description: "Simple first-order method"
+          description: "Simple first-order method",
         };
       case "symplectic":
         return {
           name: "Symplectic Euler",
           order: 1,
-          description: "Energy-preserving variant"
+          description: "Energy-preserving variant",
         };
       case "verlet":
         return {
           name: "Verlet Integration",
           order: 2,
-          description: "Stable and time-reversible"
+          description: "Stable and time-reversible",
         };
       case "rk4":
         return {
           name: "Runge-Kutta 4th Order",
           order: 4,
-          description: "High accuracy integration"
+          description: "High accuracy integration",
         };
       case "adaptive":
         return {
           name: "Adaptive Step Size",
           order: 4,
-          description: "Auto-adjusting time step"
+          description: "Auto-adjusting time step",
         };
       default:
         return {
           name: "Unknown",
           order: 0,
-          description: "Integrator not specified"
+          description: "Integrator not specified",
         };
     }
   }
@@ -718,16 +798,20 @@ export class SimulationControlsController extends StateSubscriptionMixin {
 ```
 
 #### Task 4.4: Update Engine Display Utilities
+
 **File**: `apps/teskooano/src/plugins/engine-panel/main-toolbar/simulation-controls/controller/simulation-controls.utils.ts`
 
 **Current Issues:**
+
 - Line 60: `getEngineShortName()` function needs update for new configuration system
 
 **To-Do:**
+
 - [ ] Remove or deprecate `getEngineShortName()`
 - [ ] Ensure compatibility with new configuration display functions
 
 **Implementation:**
+
 ```typescript
 // ... existing formatTime and formatScale functions remain unchanged ...
 
@@ -736,26 +820,30 @@ export class SimulationControlsController extends StateSubscriptionMixin {
  * Gets a shortened, display-friendly name for a physics engine from its full identifier.
  */
 export function getEngineShortName(engineName: string | undefined): string {
-  console.warn('getEngineShortName is deprecated. Use getConfigurationShortName instead.');
-  
+  console.warn(
+    "getEngineShortName is deprecated. Use getConfigurationShortName instead.",
+  );
+
   if (!engineName) return "-";
   const name = engineName.split("-")[0];
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 // Re-export new configuration utilities for convenience
-export { 
-  getConfigurationDisplayName, 
-  getConfigurationShortName 
+export {
+  getConfigurationDisplayName,
+  getConfigurationShortName,
 } from "@teskooano/core-state";
 ```
 
 ### Phase 4C: Add CSS Styling for New UI Components
 
 #### Task 4.5: Add Responsive CSS for Configuration UI
+
 **File**: `apps/teskooano/src/plugins/settings/view/settings-panel.css` (new)
 
 **To-Do:**
+
 - [ ] Style mode selector with clear visual hierarchy
 - [ ] Add smooth transitions for conditional visibility
 - [ ] Style algorithm/integrator dropdowns with technical styling
@@ -763,6 +851,7 @@ export {
 - [ ] Include accessibility improvements
 
 **Implementation:**
+
 ```css
 /* Settings panel specific styles */
 .engine-display {
@@ -835,7 +924,7 @@ export {
     padding: 0.5rem;
     gap: 1rem;
   }
-  
+
   .nbody-controls {
     margin-left: 0.5rem;
     padding-left: 0.5rem;
@@ -846,9 +935,11 @@ export {
 ## 🧪 Testing Strategy
 
 ### Task 4.6: Create UI Component Tests
+
 **File**: `apps/teskooano/src/plugins/settings/controller/SettingsController.spec.ts` (new)
 
 **To-Do:**
+
 - [ ] Test mode switching UI behavior
 - [ ] Test conditional visibility of N-Body controls
 - [ ] Test state synchronization with UI
@@ -858,11 +949,13 @@ export {
 ## 📋 Implementation Checklist
 
 ### Pre-Implementation
+
 - [ ] Complete state management changes (Guide 03)
 - [ ] Review existing UI component structure
 - [ ] Plan user experience flow for configuration changes
 
 ### Implementation Order
+
 1. [ ] Update SettingsController with new configuration logic
 2. [ ] Update settings view template with new UI structure
 3. [ ] Update engine panel display controller
@@ -872,6 +965,7 @@ export {
 7. [ ] Test user experience flows
 
 ### Post-Implementation
+
 - [ ] Test all UI interactions work correctly
 - [ ] Verify responsive design on different screen sizes
 - [ ] Test accessibility with screen readers
@@ -879,6 +973,7 @@ export {
 - [ ] Performance test UI updates
 
 ## 🎯 Success Criteria
+
 - [ ] Mode switching UI is intuitive and responsive
 - [ ] Conditional controls show/hide smoothly
 - [ ] Engine display clearly shows current configuration
@@ -887,6 +982,7 @@ export {
 - [ ] Responsive design works on all target devices
 
 ## 📋 Dependencies
+
 **Requires**: State management layer changes (Guide 03)
 **Blocks**: Final integration testing
 

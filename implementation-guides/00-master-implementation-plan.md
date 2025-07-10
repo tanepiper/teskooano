@@ -7,6 +7,7 @@ This document provides a comprehensive roadmap for implementing the two-mode N-b
 ## 📋 Executive Summary
 
 ### What We're Building
+
 - **Dual-Mode System**: Ideal Orrery (perfect Keplerian orbits) + N-Body Physics (full gravitational interactions)
 - **Pluggable Algorithms**: Direct, Barnes-Hut, Fast Multipole Method (FMM), Particle-Mesh (P3M)
 - **Multiple Integrators**: Euler, Symplectic, Verlet, Runge-Kutta 4th, Adaptive
@@ -14,6 +15,7 @@ This document provides a comprehensive roadmap for implementing the two-mode N-b
 - **Backwards Compatibility**: Seamless migration from existing physics engine system
 
 ### Key Benefits
+
 - **Performance**: Algorithm auto-selection optimizes for different body counts (O(N) to O(N²))
 - **Stability**: Ideal mode provides perfect orbital mechanics for educational content
 - **Flexibility**: Runtime configuration changes without simulation restart
@@ -22,11 +24,12 @@ This document provides a comprehensive roadmap for implementing the two-mode N-b
 ## 🗂️ Implementation Guides Overview
 
 ### Guide 01: Core Type System Changes
+
 **Foundation layer - defines the new configuration architecture**
 
 - **File**: `implementation-guides/01-core-type-system.md`
 - **Focus**: Type definitions, validation, migration utilities
-- **Key Deliverables**: 
+- **Key Deliverables**:
   - `SimulationConfiguration` interface
   - `SimulationMode`, `AlgorithmType`, `IntegratorType` enums
   - Backwards compatibility functions
@@ -37,6 +40,7 @@ This document provides a comprehensive roadmap for implementing the two-mode N-b
 **Risk Level**: Low
 
 ### Guide 02: Physics Engine Core
+
 **Core physics refactoring - implements the strategy pattern**
 
 - **File**: `implementation-guides/02-physics-engine-core.md`
@@ -52,6 +56,7 @@ This document provides a comprehensive roadmap for implementing the two-mode N-b
 **Risk Level**: High (core functionality)
 
 ### Guide 03: State Management Layer
+
 **State service updates - manages configuration and provides reactive updates**
 
 - **File**: `implementation-guides/03-state-management-layer.md`
@@ -67,6 +72,7 @@ This document provides a comprehensive roadmap for implementing the two-mode N-b
 **Risk Level**: Medium
 
 ### Guide 04: UI Layer Updates
+
 **User interface updates - provides intuitive configuration controls**
 
 - **File**: `implementation-guides/04-ui-layer-updates.md`
@@ -82,6 +88,7 @@ This document provides a comprehensive roadmap for implementing the two-mode N-b
 **Risk Level**: Medium
 
 ### Guide 05: Renderer Integration
+
 **Visual system updates - optimizes rendering for different modes**
 
 - **File**: `implementation-guides/05-renderer-integration.md`
@@ -99,6 +106,7 @@ This document provides a comprehensive roadmap for implementing the two-mode N-b
 ## 📅 Execution Timeline
 
 ### Phase 1: Foundation (Week 1)
+
 **Goal**: Establish type system and basic architecture
 
 ```
@@ -115,6 +123,7 @@ Days 4-5: Guide 02 Setup
 ```
 
 ### Phase 2: Core Implementation (Weeks 2-3)
+
 **Goal**: Implement physics engine refactoring
 
 ```
@@ -132,6 +141,7 @@ Week 3: Guide 02 Continued + Guide 03 Start
 ```
 
 ### Phase 3: Integration (Week 4)
+
 **Goal**: Connect all systems and update user interfaces
 
 ```
@@ -149,6 +159,7 @@ Days 3-5: Guide 04 - UI Layer Updates
 ```
 
 ### Phase 4: Finalization (Week 5)
+
 **Goal**: Complete renderer integration and system testing
 
 ```
@@ -168,14 +179,17 @@ Days 4-5: System Integration Testing
 ## 🎯 Critical Path Analysis
 
 ### Must-Complete Sequential Items:
+
 1. **Types** (Guide 01) → **Physics** (Guide 02) → **State** (Guide 03) → **UI** (Guide 04) → **Renderer** (Guide 05)
 
 ### Parallel Opportunities:
+
 - **Guide 03** (State) can start while **Guide 02** (Physics) is in testing
 - **Guide 04** (UI) planning can begin during **Guide 03** implementation
 - **Documentation updates** can happen in parallel with implementation
 
 ### Risk Mitigation:
+
 - **Guide 02** has highest risk - allocate extra time and senior developers
 - **Integration testing** should happen incrementally, not just at the end
 - **Backwards compatibility** testing at each phase prevents late-stage issues
@@ -183,11 +197,13 @@ Days 4-5: System Integration Testing
 ## 📊 Resource Allocation
 
 ### Developer Assignments:
+
 - **Senior Developer**: Guide 02 (Physics Engine Core) - most complex
 - **Mid-Level Developer**: Guide 03 (State Management) + Guide 04 (UI Layer)
 - **Junior Developer**: Guide 01 (Types) + Guide 05 (Renderer) + Testing
 
 ### Skill Requirements:
+
 - **Physics/Math**: Keplerian mechanics, numerical integration, gravitational algorithms
 - **Architecture**: Strategy pattern, factory pattern, dependency injection
 - **Frontend**: Reactive state management, conditional UI, user experience
@@ -196,6 +212,7 @@ Days 4-5: System Integration Testing
 ## 🧪 Testing Strategy
 
 ### Test Pyramid by Guide:
+
 ```
 Guide 01: Unit tests for type validation and migration
 Guide 02: Physics simulation accuracy and performance tests
@@ -205,6 +222,7 @@ Guide 05: Renderer integration and visual regression tests
 ```
 
 ### Integration Test Points:
+
 1. **After Guide 01**: Type system validation
 2. **After Guide 02**: Physics engine accuracy vs reference implementations
 3. **After Guide 03**: State consistency across mode switches
@@ -214,6 +232,7 @@ Guide 05: Renderer integration and visual regression tests
 ## 🚨 Risk Assessment & Mitigation
 
 ### High-Risk Areas:
+
 1. **Physics Engine Accuracy** (Guide 02)
    - **Risk**: Simulation results don't match existing behavior
    - **Mitigation**: Extensive reference testing, gradual migration
@@ -227,6 +246,7 @@ Guide 05: Renderer integration and visual regression tests
    - **Mitigation**: User testing, progressive enhancement, fallback options
 
 ### Medium-Risk Areas:
+
 1. **State Management Complexity** (Guide 03)
    - **Risk**: Reactive updates become inconsistent
    - **Mitigation**: Comprehensive state tests, clear update patterns
@@ -238,17 +258,20 @@ Guide 05: Renderer integration and visual regression tests
 ## 📈 Success Metrics
 
 ### Technical Metrics:
+
 - **Performance**: ≤5% regression in N-Body mode, 2-5x improvement in Ideal mode
 - **Test Coverage**: >90% for new code, >95% for refactored code
 - **Memory Usage**: <10% increase for dual-mode support
 - **Mode Switch Time**: <300ms transition time
 
 ### User Experience Metrics:
+
 - **Configuration Success Rate**: >95% of users can successfully change modes
 - **Error Recovery**: <1% of configuration changes result in broken states
 - **Accessibility**: 100% compliance with WCAG 2.1 AA standards
 
 ### Code Quality Metrics:
+
 - **Maintainability Index**: >20 improvement in affected modules
 - **Cyclomatic Complexity**: <10 for new functions, <15 for refactored functions
 - **Documentation Coverage**: 100% for public APIs
@@ -256,16 +279,19 @@ Guide 05: Renderer integration and visual regression tests
 ## 🔄 Post-Implementation Plan
 
 ### Immediate Follow-up (Week 6):
+
 - **Performance Optimization**: Fine-tune algorithm auto-selection
 - **User Feedback Integration**: Address any UX issues
 - **Documentation Completion**: Update all READMEs and architecture docs
 
 ### Medium-term Enhancements (Months 2-3):
+
 - **Additional Algorithms**: Implement tree-code variants, GPU acceleration
 - **Advanced Features**: Collision detection, relativistic effects
 - **Visualization Improvements**: Real-time algorithm visualization
 
 ### Long-term Roadmap (Months 4-6):
+
 - **Multi-threading**: Parallel algorithm implementations
 - **Web Workers**: Off-main-thread physics calculations
 - **Advanced UI**: Algorithm configuration wizards, performance dashboards
@@ -273,16 +299,19 @@ Guide 05: Renderer integration and visual regression tests
 ## 📚 Additional Resources
 
 ### Reference Materials:
+
 - **N-Body Algorithms**: Hockney & Eastwood "Computer Simulation Using Particles"
 - **Orbital Mechanics**: Curtis "Orbital Mechanics for Engineering Students"
 - **Strategy Pattern**: Gang of Four "Design Patterns"
 
 ### External Dependencies:
+
 - **Three.js**: Renderer integration points
 - **RxJS**: Reactive state management patterns
 - **Vitest**: Testing framework for all components
 
 ### Documentation Standards:
+
 - **API Documentation**: TSDoc format for all public methods
 - **Architecture Documentation**: C4 model for system design
 - **User Documentation**: Step-by-step configuration guides
@@ -294,6 +323,7 @@ Guide 05: Renderer integration and visual regression tests
 This master plan provides the complete roadmap for transforming your N-body simulation into a modular, high-performance system. Each implementation guide contains detailed step-by-step instructions, code examples, and testing strategies.
 
 **Next Steps:**
+
 1. Review and approve this master plan
 2. Assign developers to guides based on skill sets
 3. Set up development environment and testing infrastructure

@@ -1,28 +1,34 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { OSVector3 } from '@teskooano/core-math';
-import { SimulationManager, type SimulationManagerParams } from './simulation-manager';
-import type { PhysicsStateReal, OrbitalParameters } from '@teskooano/data-types';
-import type { SimulationConfiguration } from '@teskooano/core-state';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { OSVector3 } from "@teskooano/core-math";
+import {
+  SimulationManager,
+  type SimulationManagerParams,
+} from "./simulation-manager";
+import type {
+  PhysicsStateReal,
+  OrbitalParameters,
+} from "@teskooano/data-types";
+import type { SimulationConfiguration } from "@teskooano/core-state";
 
-describe('SimulationManager', () => {
+describe("SimulationManager", () => {
   let manager: SimulationManager;
-  
+
   beforeEach(() => {
     manager = new SimulationManager();
   });
 
   const mockBody: PhysicsStateReal = {
-    id: 'test-body',
+    id: "test-body",
     mass_kg: 1e20,
     position_m: new OSVector3(1e11, 0, 0),
-    velocity_mps: new OSVector3(0, 30000, 0)
+    velocity_mps: new OSVector3(0, 30000, 0),
   };
 
   const mockStar: PhysicsStateReal = {
-    id: 'central-star',
+    id: "central-star",
     mass_kg: 2e30,
     position_m: new OSVector3(0, 0, 0),
-    velocity_mps: new OSVector3(0, 0, 0)
+    velocity_mps: new OSVector3(0, 0, 0),
   };
 
   const mockOrbitalParams: OrbitalParameters = {
@@ -32,161 +38,185 @@ describe('SimulationManager', () => {
     longitudeOfAscendingNode: 0,
     argumentOfPeriapsis: 0,
     meanAnomaly: 0,
-    period_s: 31536000 // 1 year in seconds
+    period_s: 31536000, // 1 year in seconds
   };
 
-  describe('ideal mode simulation', () => {
-    it('should successfully execute ideal mode simulation', () => {
-      const config: SimulationConfiguration = { mode: 'ideal' };
-      
+  describe("ideal mode simulation", () => {
+    it("should successfully execute ideal mode simulation", () => {
+      const config: SimulationConfiguration = { mode: "ideal" };
+
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600, // 1 hour
         configuration: config,
-        orbitalParameters: new Map([['test-body', mockOrbitalParams]]),
-        parentIds: new Map([['test-body', 'central-star']]),
-        currentTime_s: 0
+        orbitalParameters: new Map([["test-body", mockOrbitalParams]]),
+        parentIds: new Map([["test-body", "central-star"]]),
+        currentTime_s: 0,
       };
 
       const result = manager.simulate(params);
 
-      expect(result.metadata.mode).toBe('ideal');
+      expect(result.metadata.mode).toBe("ideal");
       expect(result.metadata.algorithm).toBeUndefined();
       expect(result.states).toHaveLength(2);
       expect(result.accelerations.size).toBe(0); // No force calculations in ideal mode
       expect(result.destroyedIds.size).toBe(0); // No collisions in ideal mode
-      expect(result.metadata.performanceProfile?.accuracy).toBe('exact');
+      expect(result.metadata.performanceProfile?.accuracy).toBe("exact");
     });
 
-    it('should validate required parameters for ideal mode', () => {
-      const config: SimulationConfiguration = { mode: 'ideal' };
-      
-      const params: SimulationManagerParams = {
-        bodies: [mockStar, mockBody],
-        deltaTime: 3600,
-        configuration: config
-        // Missing orbital parameters, parentIds, currentTime_s
-      };
+    it("should validate required parameters for ideal mode", () => {
+      const config: SimulationConfiguration = { mode: "ideal" };
 
-      expect(() => manager.simulate(params)).toThrow(/Invalid simulation configuration/);
-    });
-  });
-
-  describe('nbody mode simulation', () => {
-    it('should successfully execute nbody mode simulation', () => {
-      const config: SimulationConfiguration = {
-        mode: 'nbody',
-        algorithm: 'direct', // Use direct for small systems
-        integrator: 'verlet'
-      };
-      
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
         configuration: config,
-        radii: new Map([['test-body', 1000], ['central-star', 696340000]]),
-        isStar: new Map([['central-star', true], ['test-body', false]]),
-        bodyTypes: new Map()
+        // Missing orbital parameters, parentIds, currentTime_s
+      };
+
+      expect(() => manager.simulate(params)).toThrow(
+        /Invalid simulation configuration/,
+      );
+    });
+  });
+
+  describe("nbody mode simulation", () => {
+    it("should successfully execute nbody mode simulation", () => {
+      const config: SimulationConfiguration = {
+        mode: "nbody",
+        algorithm: "direct", // Use direct for small systems
+        integrator: "verlet",
+      };
+
+      const params: SimulationManagerParams = {
+        bodies: [mockStar, mockBody],
+        deltaTime: 3600,
+        configuration: config,
+        radii: new Map([
+          ["test-body", 1000],
+          ["central-star", 696340000],
+        ]),
+        isStar: new Map([
+          ["central-star", true],
+          ["test-body", false],
+        ]),
+        bodyTypes: new Map(),
       };
 
       const result = manager.simulate(params);
 
-      expect(result.metadata.mode).toBe('nbody');
-              expect(result.metadata.algorithm).toBe('direct');
-      expect(result.metadata.integrator).toBe('verlet');
+      expect(result.metadata.mode).toBe("nbody");
+      expect(result.metadata.algorithm).toBe("direct");
+      expect(result.metadata.integrator).toBe("verlet");
       expect(result.states).toHaveLength(2);
       expect(result.accelerations.size).toBeGreaterThanOrEqual(0);
     });
 
-    it('should auto-select algorithm when requested', () => {
+    it("should auto-select algorithm when requested", () => {
       const config: SimulationConfiguration = {
-        mode: 'nbody',
-        algorithm: 'direct', // Will be overridden by auto-selection
-        integrator: 'verlet'
+        mode: "nbody",
+        algorithm: "direct", // Will be overridden by auto-selection
+        integrator: "verlet",
       };
-      
+
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
         configuration: config,
         autoSelectAlgorithm: true,
         performancePreferences: {
-          prioritizeSpeed: true
-        }
+          prioritizeSpeed: true,
+        },
       };
 
       const result = manager.simulate(params);
 
-      expect(result.metadata.mode).toBe('nbody');
+      expect(result.metadata.mode).toBe("nbody");
       // Should auto-select based on body count and preferences
       expect(result.metadata.algorithm).toBeDefined();
     });
   });
 
-  describe('createOptimalConfiguration', () => {
-    it('should recommend ideal mode when orbital data available and small system', () => {
+  describe("createOptimalConfiguration", () => {
+    it("should recommend ideal mode when orbital data available and small system", () => {
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
-        configuration: { mode: 'nbody', algorithm: 'direct', integrator: 'euler' }, // placeholder
-        orbitalParameters: new Map([['test-body', mockOrbitalParams]]),
-        parentIds: new Map([['test-body', 'central-star']])
+        configuration: {
+          mode: "nbody",
+          algorithm: "direct",
+          integrator: "euler",
+        }, // placeholder
+        orbitalParameters: new Map([["test-body", mockOrbitalParams]]),
+        parentIds: new Map([["test-body", "central-star"]]),
       };
 
       const config = manager.createOptimalConfiguration(params);
 
-      expect(config.mode).toBe('ideal');
+      expect(config.mode).toBe("ideal");
       expect(config.algorithm).toBeUndefined();
       expect(config.integrator).toBeUndefined();
     });
 
-    it('should recommend nbody mode for large systems', () => {
+    it("should recommend nbody mode for large systems", () => {
       const largeBodies = Array.from({ length: 2000 }, (_, i) => ({
         ...mockBody,
-        id: `body-${i}`
+        id: `body-${i}`,
       }));
 
       const params: SimulationManagerParams = {
         bodies: largeBodies,
         deltaTime: 3600,
-        configuration: { mode: 'nbody', algorithm: 'direct', integrator: 'euler' }, // placeholder
+        configuration: {
+          mode: "nbody",
+          algorithm: "direct",
+          integrator: "euler",
+        }, // placeholder
         performancePreferences: {
-          prioritizeSpeed: true
-        }
+          prioritizeSpeed: true,
+        },
       };
 
       const config = manager.createOptimalConfiguration(params);
 
-      expect(config.mode).toBe('nbody');
+      expect(config.mode).toBe("nbody");
       expect(config.algorithm).toBeDefined();
       expect(config.integrator).toBeDefined();
     });
 
-    it('should respect performance preferences', () => {
+    it("should respect performance preferences", () => {
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
-        configuration: { mode: 'nbody', algorithm: 'direct', integrator: 'euler' }, // placeholder
+        configuration: {
+          mode: "nbody",
+          algorithm: "direct",
+          integrator: "euler",
+        }, // placeholder
         performancePreferences: {
-          prioritizeAccuracy: true
-        }
+          prioritizeAccuracy: true,
+        },
       };
 
       const config = manager.createOptimalConfiguration(params);
 
-      expect(config.mode).toBe('nbody');
-      expect(config.integrator).toBe('rk4'); // High accuracy integrator
+      expect(config.mode).toBe("nbody");
+      expect(config.integrator).toBe("rk4"); // High accuracy integrator
     });
   });
 
-  describe('getPerformanceComparison', () => {
-    it('should indicate ideal mode availability when orbital data present', () => {
+  describe("getPerformanceComparison", () => {
+    it("should indicate ideal mode availability when orbital data present", () => {
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
-        configuration: { mode: 'nbody', algorithm: 'direct', integrator: 'euler' }, // placeholder
-        orbitalParameters: new Map([['test-body', mockOrbitalParams]]),
-        parentIds: new Map([['test-body', 'central-star']])
+        configuration: {
+          mode: "nbody",
+          algorithm: "direct",
+          integrator: "euler",
+        }, // placeholder
+        orbitalParameters: new Map([["test-body", mockOrbitalParams]]),
+        parentIds: new Map([["test-body", "central-star"]]),
       };
 
       const comparison = manager.getPerformanceComparison(params);
@@ -195,93 +225,109 @@ describe('SimulationManager', () => {
       expect(comparison.ideal?.estimatedSpeed).toBe(2); // 2 bodies
     });
 
-    it('should indicate ideal mode unavailable when orbital data missing', () => {
+    it("should indicate ideal mode unavailable when orbital data missing", () => {
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
-        configuration: { mode: 'nbody', algorithm: 'direct', integrator: 'euler' } // placeholder
+        configuration: {
+          mode: "nbody",
+          algorithm: "direct",
+          integrator: "euler",
+        }, // placeholder
       };
 
       const comparison = manager.getPerformanceComparison(params);
 
       expect(comparison.ideal?.available).toBe(false);
-      expect(comparison.ideal?.reason).toContain('Missing orbital parameters');
+      expect(comparison.ideal?.reason).toContain("Missing orbital parameters");
     });
 
-    it('should provide estimates for all algorithm combinations', () => {
+    it("should provide estimates for all algorithm combinations", () => {
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
-        configuration: { mode: 'nbody', algorithm: 'direct', integrator: 'euler' } // placeholder
+        configuration: {
+          mode: "nbody",
+          algorithm: "direct",
+          integrator: "euler",
+        }, // placeholder
       };
 
       const comparison = manager.getPerformanceComparison(params);
 
       expect(comparison.configurations.length).toBe(20); // 4 algorithms × 5 integrators
-      
+
       // Should be sorted by relative speed
-      const speeds = comparison.configurations.map(c => c.estimate.relativeSpeed);
+      const speeds = comparison.configurations.map(
+        (c) => c.estimate.relativeSpeed,
+      );
       const sortedSpeeds = [...speeds].sort((a, b) => b - a);
       expect(speeds).toEqual(sortedSpeeds);
     });
 
-    it('should include validation results for each configuration', () => {
+    it("should include validation results for each configuration", () => {
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
-        configuration: { mode: 'nbody', algorithm: 'direct', integrator: 'euler' } // placeholder
+        configuration: {
+          mode: "nbody",
+          algorithm: "direct",
+          integrator: "euler",
+        }, // placeholder
       };
 
       const comparison = manager.getPerformanceComparison(params);
 
-      comparison.configurations.forEach(config => {
+      comparison.configurations.forEach((config) => {
         expect(config.validation).toBeDefined();
-        expect(typeof config.validation.isValid).toBe('boolean');
+        expect(typeof config.validation.isValid).toBe("boolean");
         expect(Array.isArray(config.validation.warnings)).toBe(true);
         expect(Array.isArray(config.validation.recommendations)).toBe(true);
       });
     });
   });
 
-  describe('validation', () => {
-    it('should validate basic configuration requirements', () => {
+  describe("validation", () => {
+    it("should validate basic configuration requirements", () => {
       const invalidConfig = {} as SimulationConfiguration;
-      
+
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
-        configuration: invalidConfig
+        configuration: invalidConfig,
       };
 
-      expect(() => manager.simulate(params)).toThrow(/Simulation mode is required/);
+      expect(() => manager.simulate(params)).toThrow(
+        /Simulation mode is required/,
+      );
     });
 
-    it('should validate nbody mode requirements', () => {
+    it("should validate nbody mode requirements", () => {
       const incompleteConfig: SimulationConfiguration = {
-        mode: 'nbody'
+        mode: "nbody",
         // Missing algorithm and integrator
       };
-      
+
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
-        configuration: incompleteConfig
+        configuration: incompleteConfig,
       };
 
       expect(() => manager.simulate(params)).toThrow(/Algorithm required/);
     });
 
-         it('should provide warnings for missing optional parameters', () => {
-       const config: SimulationConfiguration = {
-         mode: 'nbody',
-         algorithm: 'direct',
-         integrator: 'verlet'
-       };
-      
+    it("should provide warnings for missing optional parameters", () => {
+      const config: SimulationConfiguration = {
+        mode: "nbody",
+        algorithm: "direct",
+        integrator: "verlet",
+      };
+
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
-        configuration: config
+        configuration: config,
         // Missing radii - should warn but not error
       };
 
@@ -290,20 +336,20 @@ describe('SimulationManager', () => {
     });
   });
 
-  describe('performance analysis', () => {
-         it('should add performance recommendations', () => {
-       const config: SimulationConfiguration = {
-         mode: 'nbody',
-         algorithm: 'direct',
-         integrator: 'verlet'
-       };
-      
+  describe("performance analysis", () => {
+    it("should add performance recommendations", () => {
+      const config: SimulationConfiguration = {
+        mode: "nbody",
+        algorithm: "direct",
+        integrator: "verlet",
+      };
+
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
         configuration: config,
-        orbitalParameters: new Map([['test-body', mockOrbitalParams]]),
-        parentIds: new Map([['test-body', 'central-star']])
+        orbitalParameters: new Map([["test-body", mockOrbitalParams]]),
+        parentIds: new Map([["test-body", "central-star"]]),
       };
 
       const result = manager.simulate(params);
@@ -312,54 +358,60 @@ describe('SimulationManager', () => {
       expect(Array.isArray(result.metadata.recommendations)).toBe(true);
     });
 
-         it('should warn about slow execution times', () => {
-       // Mock performance.now to simulate slow execution
-       const originalNow = performance.now;
-       let callCount = 0;
-       vi.spyOn(performance, 'now').mockImplementation(() => {
-         return callCount++ === 0 ? 0 : 150; // 150ms execution time
-       });
+    it("should warn about slow execution times", () => {
+      // Mock performance.now to simulate slow execution
+      const originalNow = performance.now;
+      let callCount = 0;
+      vi.spyOn(performance, "now").mockImplementation(() => {
+        return callCount++ === 0 ? 0 : 150; // 150ms execution time
+      });
 
-       const config: SimulationConfiguration = {
-         mode: 'nbody',
-         algorithm: 'direct',
-         integrator: 'verlet'
-       };
-      
+      const config: SimulationConfiguration = {
+        mode: "nbody",
+        algorithm: "direct",
+        integrator: "verlet",
+      };
+
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
-        configuration: config
+        configuration: config,
       };
 
       const result = manager.simulate(params);
 
-      expect(result.metadata.warnings?.some(w => w.includes('150.0ms'))).toBe(true);
+      expect(result.metadata.warnings?.some((w) => w.includes("150.0ms"))).toBe(
+        true,
+      );
 
       // Restore original implementation
       performance.now = originalNow;
     });
 
-         it('should include performance profile in metadata', () => {
-       const config: SimulationConfiguration = {
-         mode: 'nbody',
-         algorithm: 'direct',
-         integrator: 'verlet'
-       };
-      
+    it("should include performance profile in metadata", () => {
+      const config: SimulationConfiguration = {
+        mode: "nbody",
+        algorithm: "direct",
+        integrator: "verlet",
+      };
+
       const params: SimulationManagerParams = {
         bodies: [mockStar, mockBody],
         deltaTime: 3600,
-        configuration: config
+        configuration: config,
       };
 
       const result = manager.simulate(params);
 
       expect(result.metadata.performanceProfile).toBeDefined();
-      expect(typeof result.metadata.performanceProfile!.relativeSpeed).toBe('number');
+      expect(typeof result.metadata.performanceProfile!.relativeSpeed).toBe(
+        "number",
+      );
       expect(result.metadata.performanceProfile!.memoryUsage).toBeDefined();
       expect(result.metadata.performanceProfile!.accuracy).toBeDefined();
-      expect(typeof result.metadata.performanceProfile!.isOptimal).toBe('boolean');
+      expect(typeof result.metadata.performanceProfile!.isOptimal).toBe(
+        "boolean",
+      );
     });
   });
 });

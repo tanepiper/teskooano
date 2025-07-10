@@ -1,86 +1,215 @@
+import {
+  AlgorithmType,
+  IntegratorType,
+  SimulationMode,
+} from "@teskooano/core-state";
+
 const template = document.createElement("template");
+
+const SIMULATION_MODE_OPTIONS: {
+  value: SimulationMode;
+  label: string;
+}[] = [
+  { value: "nbody", label: "N-Body (Full Physics)" },
+  { value: "ideal", label: "Ideal (Keplerian)" },
+];
+
+const ALGORITHM_OPTIONS: { value: AlgorithmType; label: string }[] = [
+  { value: "direct", label: "Direct Summation" },
+  { value: "barnes-hut", label: "Barnes-Hut" },
+  { value: "fmm", label: "Fast Multipole (FMM)" },
+  { value: "p3m", label: "Particle-Mesh (P3M)" },
+  { value: "tree-pm", label: "Tree-Particle-Mesh" },
+];
+
+const INTEGRATOR_OPTIONS: { value: IntegratorType; label: string }[] = [
+  { value: "euler", label: "Euler" },
+  { value: "symplectic", label: "Symplectic Euler" },
+  { value: "verlet", label: "Velocity Verlet" },
+  { value: "rk4", label: "Runge-Kutta 4 (RK4)" },
+  { value: "adaptive", label: "Adaptive RK45" },
+  { value: "yoshida4", label: "Yoshida 4th Order" },
+  { value: "forest-ruth", label: "Forest-Ruth 4th" },
+  { value: "pefrl", label: "PEFRL 4th Order" },
+  { value: "leapfrog", label: "Leapfrog" },
+];
+
+// Full list of algorithms and integrators for the UI
+const allAlgorithms = ALGORITHM_OPTIONS.map(
+  (alg: { value: string; label: string }) =>
+    `<option value="${alg.value}">${alg.label}</option>`,
+).join("");
+const allIntegrators = INTEGRATOR_OPTIONS.map(
+  (int: { value: string; label: string }) =>
+    `<option value="${int.value}">${int.label}</option>`,
+).join("");
+const allModes = SIMULATION_MODE_OPTIONS.map(
+  (mode: { value: string; label: string }) =>
+    `<option value="${mode.value}">${mode.label}</option>`,
+).join("");
+
 template.innerHTML = `
-  <style>
-    /* Styles copied from SettingsPanel.ts */
-    .settings-form {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-lg, 15px);
-    }
+<style>
+  :host {
+    display: block;
+    font-family: var(--font-family-sans, sans-serif);
+    font-size: var(--font-size-sm, 14px);
+    color: var(--color-text-primary, #eee);
+  }
 
-    .settings-title {
-      margin-top: 0;
-      margin-bottom: 0;
-      color: var(--color-text-secondary, #aaa);
-      border-bottom: 1px solid var(--color-border-subtle, #30304a);
-      padding-bottom: var(--space-sm, 8px);
-    }
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg, 24px);
+  }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-xs, 4px);
-    }
+  .form-section {
+    border: 1px solid var(--color-border, #444);
+    border-radius: var(--border-radius-md, 8px);
+    padding: var(--space-md, 16px);
+  }
+  
+  .form-section h3 {
+    margin: 0 0 var(--space-md, 16px) 0;
+    font-size: var(--font-size-md, 16px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--color-text-secondary, #ccc);
+  }
 
-    .form-group label {
-      font-weight: bold;
-      color: var(--color-text-primary);
-    }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm, 8px);
+  }
 
-    .form-group small {
-      color: var(--color-text-secondary);
-      font-size: var(--font-size-sm);
-    }
+  label {
+    font-weight: var(--font-weight-bold, 600);
+  }
 
-    /* Styles for the standard select */
-    select.teskooano-select {
-      padding: var(--space-sm, 8px) var(--space-md, 12px);
-      background-color: var(--color-background-input, #1e1e30);
-      color: var(--color-text-input, #e0e0ff);
-      border: 1px solid var(--color-border-input, #30304a);
-      border-radius: var(--border-radius-md, 6px);
-      font-family: inherit;
-      font-size: inherit;
-      cursor: pointer;
-      appearance: none; /* Remove default arrow */
-      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%23e0e0ff%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22%20clip-rule%3D%22evenodd%22%20%2F%3E%3C%2Fsvg%3E'); /* Custom arrow */
-      background-repeat: no-repeat;
-      background-position: right var(--space-md, 12px) center;
-      background-size: 1em;
-      padding-right: calc(var(--space-md, 12px) * 2 + 1em); /* Ensure space for arrow */
-    }
-    select.teskooano-select:focus {
-      outline: 2px solid var(--color-focus-ring, #60a5fa);
-      outline-offset: 2px;
-      border-color: var(--color-focus-ring, #60a5fa);
-    }
-  </style>
+  select, input {
+    width: 100%;
+    padding: var(--space-xs, 8px);
+    border-radius: var(--border-radius-sm, 4px);
+    background-color: var(--color-background-input, #2a2a2a);
+    color: var(--color-text-primary, #eee);
+    border: 1px solid var(--color-border, #444);
+  }
 
-  <form id="settings-form" class="settings-form">
-    <h3 class="settings-title">Application Settings</h3>
+  #nbody-specific-controls {
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    gap: var(--space-md, 16px);
+    padding-top: var(--space-md, 16px);
+    border-top: 1px solid var(--color-border, #444);
+  }
 
+  #nbody-specific-controls.visible {
+    display: flex;
+  }
+
+  #current-mode-badge {
+    background-color: var(--color-primary, #337ab7);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: var(--font-size-xs, 12px);
+    text-transform: uppercase;
+  }
+  
+  #config-display {
+    background-color: var(--color-background-inset, #1c1c1c);
+    padding: var(--space-sm, 12px);
+    border-radius: var(--border-radius-sm, 4px);
+    font-family: var(--font-family-mono, monospace);
+    font-size: var(--font-size-xs, 12px);
+    color: var(--color-text-accent, #88ddff);
+    margin-top: var(--space-sm, 12px);
+  }
+  
+  #mode-performance-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-xs, 12px);
+    color: var(--color-text-secondary, #aaa);
+    margin-top: var(--space-sm, 12px);
+  }
+  
+  #performance-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--color-status-neutral, #888);
+  }
+  
+  #validation-messages {
+    background-color: rgba(255, 0, 0, 0.1);
+    border: 1px solid var(--color-status-danger, #f00);
+    border-radius: var(--border-radius-sm, 4px);
+    padding: var(--space-sm, 12px);
+    color: var(--color-text-danger, #ff8a8a);
+    font-size: var(--font-size-xs, 12px);
+    display: none; /* Hidden by default */
+  }
+</style>
+
+<form id="settings-form" novalidate>
+
+  <!-- Simulation Mode Section -->
+  <div class="form-section">
+    <h3>
+      <span>Simulation Mode</span>
+      <span id="current-mode-badge">N-BODY</span>
+    </h3>
     <div class="form-group">
-      <label for="setting-trail-length">Orbit Trail Length Multiplier</label>
-      <teskooano-slider id="setting-trail-length" min="0" max="500" step="1"></teskooano-slider>
-      <small>Controls the length of the orbit trail. Higher values mean longer trails.</small>
-    </div>
-
-    <div class="form-group">
-      <label for="setting-physics-engine">Physics Engine</label>
-      <select id="setting-physics-engine" class="teskooano-select">
-        <!-- Options populated dynamically -->
+      <label for="setting-simulation-mode">Physics Model</label>
+      <select id="setting-simulation-mode">
+        ${allModes}
       </select>
-      <small>Select the physics engine to use for the simulation.</small>
     </div>
+    
+    <!-- N-Body Specific Controls -->
+    <div id="nbody-specific-controls">
+      <div class="form-group">
+        <label for="setting-algorithm">Force Algorithm</label>
+        <select id="setting-algorithm">${allAlgorithms}</select>
+      </div>
+      <div class="form-group">
+        <label for="setting-integrator">Integrator</label>
+        <select id="setting-integrator">${allIntegrators}</select>
+      </div>
+    </div>
+    
+    <!-- Dynamic Displays -->
+    <div id="config-display">n-body (barnes-hut + verlet)</div>
+    <div id="mode-performance-display">
+      <span id="performance-dot"></span>
+      <span id="performance-text">Optimal</span>
+    </div>
+    <div id="validation-messages"></div>
+  </div>
 
+  <!-- Visuals Section -->
+  <div class="form-section">
+    <h3>Visuals & Performance</h3>
+    <div class="form-group">
+      <label for="setting-trail-length">Trail Length</label>
+      <teskooano-slider id="setting-trail-length" min="0" max="1000" value="150" step="10"></teskooano-slider>
+    </div>
     <div class="form-group">
       <label for="setting-performance-profile">Performance Profile</label>
-      <select id="setting-performance-profile" class="teskooano-select">
-        <!-- Options populated dynamically -->
+      <select id="setting-performance-profile">
+        <option value="low">Low (Power Saving)</option>
+        <option value="medium">Medium (Balanced)</option>
+        <option value="high" selected>High (Performance)</option>
+        <option value="cosmic">Max Quality</option>
       </select>
-      <small>Adjusts visual quality and performance. Higher settings increase GPU load.</small>
     </div>
-  </form>
+  </div>
+
+</form>
 `;
 
 export { template };

@@ -1,9 +1,6 @@
 import { OSVector3 } from "@teskooano/core-math";
 import { BehaviorSubject, Observable } from "rxjs";
-import {
-  getDefaultConfiguration,
-  isValidConfiguration,
-} from "./types";
+import { getDefaultConfiguration, isValidConfiguration } from "./types";
 import type {
   PerformanceProfileType,
   SimulationState,
@@ -186,8 +183,6 @@ export class SimulationStateService {
     });
   }
 
-
-
   /**
    * Sets the complete simulation configuration (mode, algorithm, integrator).
    * This is the preferred method for configuring the physics simulation.
@@ -195,7 +190,9 @@ export class SimulationStateService {
    */
   public setSimulationConfiguration(config: SimulationConfiguration): void {
     if (!isValidConfiguration(config)) {
-      throw new Error(`Invalid simulation configuration: ${JSON.stringify(config)}`);
+      throw new Error(
+        `Invalid simulation configuration: ${JSON.stringify(config)}`,
+      );
     }
 
     this.setSimulationState({
@@ -211,7 +208,7 @@ export class SimulationStateService {
   public setSimulationMode(mode: SimulationMode): void {
     const currentState = this.getSimulationState();
     const currentConfig = currentState.simulationConfig;
-    
+
     let newConfig: SimulationConfiguration;
     if (mode === "ideal") {
       newConfig = { mode: "ideal" };
@@ -219,11 +216,11 @@ export class SimulationStateService {
       // For n-body mode, preserve existing algorithm/integrator or use defaults
       newConfig = {
         mode: "nbody",
-        algorithm: currentConfig.algorithm || "barnes-hut",
-        integrator: currentConfig.integrator || "verlet"
+        algorithm: currentConfig.algorithm || "tree-pm",
+        integrator: currentConfig.integrator || "pefrl",
       };
     }
-    
+
     this.setSimulationConfiguration(newConfig);
   }
 
@@ -234,17 +231,17 @@ export class SimulationStateService {
   public setNBodyAlgorithm(algorithm: AlgorithmType): void {
     const currentState = this.getSimulationState();
     const currentConfig = currentState.simulationConfig;
-    
+
     if (currentConfig.mode !== "nbody") {
       throw new Error("Cannot set N-Body algorithm when not in N-Body mode");
     }
-    
+
     const newConfig: SimulationConfiguration = {
       mode: "nbody",
       algorithm,
-      integrator: currentConfig.integrator || "verlet"
+      integrator: currentConfig.integrator || "pefrl",
     };
-    
+
     this.setSimulationConfiguration(newConfig);
   }
 
@@ -255,17 +252,17 @@ export class SimulationStateService {
   public setNBodyIntegrator(integrator: IntegratorType): void {
     const currentState = this.getSimulationState();
     const currentConfig = currentState.simulationConfig;
-    
+
     if (currentConfig.mode !== "nbody") {
       throw new Error("Cannot set N-Body integrator when not in N-Body mode");
     }
-    
+
     const newConfig: SimulationConfiguration = {
       mode: "nbody",
-      algorithm: currentConfig.algorithm || "barnes-hut",
-      integrator
+      algorithm: currentConfig.algorithm || "tree-pm",
+      integrator,
     };
-    
+
     this.setSimulationConfiguration(newConfig);
   }
 

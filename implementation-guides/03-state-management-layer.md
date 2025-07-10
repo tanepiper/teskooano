@@ -1,9 +1,11 @@
 # Implementation Guide: State Management Layer
 
 ## Overview
+
 This guide details updating the state management layer to use the new `SimulationConfiguration` system while maintaining backwards compatibility and providing smooth migration paths.
 
 ## 🎯 Goals
+
 - Replace `physicsEngine` with `simulationConfig` in state
 - Update state service methods to handle new configuration
 - Provide backwards compatibility during transition
@@ -15,14 +17,17 @@ This guide details updating the state management layer to use the new `Simulatio
 ### Phase 3A: Update State Service
 
 #### Task 3.1: Update SimulationStateService
+
 **File**: `packages/core/state/src/game/simulation.ts`
 
 **Current Issues (Lines to Address):**
+
 - Line 29: `physicsEngine: "verlet"` in initial state
 - Line 185-189: `setPhysicsEngine()` method
 - Need to add migration logic and validation
 
 **To-Do:**
+
 - [ ] Update initial state to use `SimulationConfiguration`
 - [ ] Replace `setPhysicsEngine()` with `setSimulationConfiguration()`
 - [ ] Add backwards compatibility methods
@@ -30,6 +35,7 @@ This guide details updating the state management layer to use the new `Simulatio
 - [ ] Update state interface
 
 **Implementation:**
+
 ```typescript
 import { OSVector3 } from "@teskooano/core-math";
 import { BehaviorSubject, Observable } from "rxjs";
@@ -39,10 +45,10 @@ import type {
   LegacyPhysicsEngineType,
   SimulationState,
 } from "./types";
-import { 
-  getDefaultConfiguration, 
-  migrateFromLegacyEngine, 
-  isValidConfiguration 
+import {
+  getDefaultConfiguration,
+  migrateFromLegacyEngine,
+  isValidConfiguration,
 } from "./types";
 
 /**
@@ -68,10 +74,10 @@ export class SimulationStateService {
     },
     // New configuration system
     simulationConfig: getDefaultConfiguration(),
-    
+
     // Keep deprecated field for backwards compatibility (temporary)
     physicsEngine: undefined, // Will be removed in next major version
-    
+
     visualSettings: {
       trailLengthMultiplier: 2,
       showAllOrbits: true,
@@ -128,13 +134,15 @@ export class SimulationStateService {
   public setSimulationState(newState: SimulationState): void {
     // Validate configuration before setting
     if (!isValidConfiguration(newState.simulationConfig)) {
-      console.warn('[SimulationStateService] Invalid simulation configuration, using default');
+      console.warn(
+        "[SimulationStateService] Invalid simulation configuration, using default",
+      );
       newState = {
         ...newState,
-        simulationConfig: getDefaultConfiguration()
+        simulationConfig: getDefaultConfiguration(),
       };
     }
-    
+
     this._simulationState.next(newState);
   }
 
@@ -145,15 +153,17 @@ export class SimulationStateService {
    */
   public setSimulationConfiguration(config: SimulationConfiguration): void {
     if (!isValidConfiguration(config)) {
-      console.error('[SimulationStateService] Invalid configuration:', config);
-      throw new Error(`Invalid simulation configuration: ${JSON.stringify(config)}`);
+      console.error("[SimulationStateService] Invalid configuration:", config);
+      throw new Error(
+        `Invalid simulation configuration: ${JSON.stringify(config)}`,
+      );
     }
 
     this.setSimulationState({
       ...this.getSimulationState(),
       simulationConfig: config,
       // Clear deprecated field when using new API
-      physicsEngine: undefined
+      physicsEngine: undefined,
     });
   }
 
@@ -164,9 +174,9 @@ export class SimulationStateService {
    */
   public setSimulationMode(mode: "ideal" | "nbody"): void {
     const currentState = this.getSimulationState();
-    
+
     let newConfig: SimulationConfiguration;
-    
+
     if (mode === "ideal") {
       newConfig = { mode: "ideal" };
     } else {
@@ -175,10 +185,10 @@ export class SimulationStateService {
       newConfig = {
         mode: "nbody",
         algorithm: currentConfig.algorithm || "barnes-hut",
-        integrator: currentConfig.integrator || "verlet"
+        integrator: currentConfig.integrator || "verlet",
       };
     }
-    
+
     this.setSimulationConfiguration(newConfig);
   }
 
@@ -187,18 +197,22 @@ export class SimulationStateService {
    * Only valid when in N-Body mode.
    * @param algorithm The force calculation algorithm to use.
    */
-  public setNBodyAlgorithm(algorithm: "direct" | "barnes-hut" | "fmm" | "p3m"): void {
+  public setNBodyAlgorithm(
+    algorithm: "direct" | "barnes-hut" | "fmm" | "p3m",
+  ): void {
     const currentState = this.getSimulationState();
-    
+
     if (currentState.simulationConfig.mode !== "nbody") {
-      console.warn('[SimulationStateService] Cannot set algorithm when not in N-Body mode');
+      console.warn(
+        "[SimulationStateService] Cannot set algorithm when not in N-Body mode",
+      );
       return;
     }
-    
+
     this.setSimulationConfiguration({
       mode: "nbody",
       algorithm,
-      integrator: currentState.simulationConfig.integrator || "verlet"
+      integrator: currentState.simulationConfig.integrator || "verlet",
     });
   }
 
@@ -207,18 +221,22 @@ export class SimulationStateService {
    * Only valid when in N-Body mode.
    * @param integrator The numerical integrator to use.
    */
-  public setNBodyIntegrator(integrator: "euler" | "symplectic" | "verlet" | "rk4" | "adaptive"): void {
+  public setNBodyIntegrator(
+    integrator: "euler" | "symplectic" | "verlet" | "rk4" | "adaptive",
+  ): void {
     const currentState = this.getSimulationState();
-    
+
     if (currentState.simulationConfig.mode !== "nbody") {
-      console.warn('[SimulationStateService] Cannot set integrator when not in N-Body mode');
+      console.warn(
+        "[SimulationStateService] Cannot set integrator when not in N-Body mode",
+      );
       return;
     }
-    
+
     this.setSimulationConfiguration({
       mode: "nbody",
       algorithm: currentState.simulationConfig.algorithm || "barnes-hut",
-      integrator
+      integrator,
     });
   }
 
@@ -230,18 +248,18 @@ export class SimulationStateService {
    */
   public setPhysicsEngine(engine: LegacyPhysicsEngineType): void {
     console.warn(
-      '[SimulationStateService] setPhysicsEngine is deprecated. Use setSimulationConfiguration instead.'
+      "[SimulationStateService] setPhysicsEngine is deprecated. Use setSimulationConfiguration instead.",
     );
-    
+
     // Migrate legacy engine to new configuration
     const migratedConfig = migrateFromLegacyEngine(engine);
     this.setSimulationConfiguration(migratedConfig);
-    
+
     // Update deprecated field for backwards compatibility
     const currentState = this.getSimulationState();
     this._simulationState.next({
       ...currentState,
-      physicsEngine: engine
+      physicsEngine: engine,
     });
   }
 
@@ -260,23 +278,23 @@ export class SimulationStateService {
    */
   public getPhysicsEngine(): LegacyPhysicsEngineType {
     console.warn(
-      '[SimulationStateService] getPhysicsEngine is deprecated. Use getSimulationConfiguration instead.'
+      "[SimulationStateService] getPhysicsEngine is deprecated. Use getSimulationConfiguration instead.",
     );
-    
+
     const config = this.getSimulationConfiguration();
-    
+
     // Convert new configuration back to legacy format
     if (config.mode === "ideal") {
       return "ideal";
     } else if (config.integrator) {
       return config.integrator as LegacyPhysicsEngineType;
     }
-    
+
     return "verlet"; // Default fallback
   }
 
   // ... rest of existing methods remain unchanged ...
-  
+
   /**
    * Sets the speed at which simulation time progresses relative to real time.
    * @param scale - The new time scale factor. `1` is real-time, `>1` is faster, `<1` is slower.
@@ -307,18 +325,22 @@ export const simulationStateService = SimulationStateService.getInstance();
 ```
 
 #### Task 3.2: Update State Index Exports
+
 **File**: `packages/core/state/src/game/index.ts`
 
 **Current Issues:**
+
 - Line 72: Export old `setPhysicsEngine` method
 - Line 104: Export old `PhysicsEngineType`
 
 **To-Do:**
+
 - [ ] Add new configuration methods to exports
 - [ ] Keep old exports for backwards compatibility
 - [ ] Add deprecation warnings
 
 **Implementation:**
+
 ```typescript
 // ... existing imports ...
 import type {
@@ -335,16 +357,27 @@ import type {
 // Updated exports object
 export const actions = {
   // ... existing actions ...
-  
+
   // New configuration methods
-  setSimulationConfiguration: simulationStateService.setSimulationConfiguration.bind(simulationStateService),
-  setSimulationMode: simulationStateService.setSimulationMode.bind(simulationStateService),
-  setNBodyAlgorithm: simulationStateService.setNBodyAlgorithm.bind(simulationStateService),
-  setNBodyIntegrator: simulationStateService.setNBodyIntegrator.bind(simulationStateService),
-  
+  setSimulationConfiguration:
+    simulationStateService.setSimulationConfiguration.bind(
+      simulationStateService,
+    ),
+  setSimulationMode: simulationStateService.setSimulationMode.bind(
+    simulationStateService,
+  ),
+  setNBodyAlgorithm: simulationStateService.setNBodyAlgorithm.bind(
+    simulationStateService,
+  ),
+  setNBodyIntegrator: simulationStateService.setNBodyIntegrator.bind(
+    simulationStateService,
+  ),
+
   // Deprecated methods (kept for backwards compatibility)
   /** @deprecated Use setSimulationConfiguration instead */
-  setPhysicsEngine: simulationStateService.setPhysicsEngine.bind(simulationStateService),
+  setPhysicsEngine: simulationStateService.setPhysicsEngine.bind(
+    simulationStateService,
+  ),
 };
 
 // Updated type exports
@@ -354,14 +387,14 @@ export type {
   SimulationMode,
   IntegratorType,
   AlgorithmType,
-  
+
   // Backwards compatibility
   LegacyPhysicsEngineType,
-  
+
   // Deprecated (aliased for compatibility)
   /** @deprecated Use SimulationConfiguration instead */
   LegacyPhysicsEngineType as PhysicsEngineType,
-  
+
   // ... existing exports ...
 };
 ```
@@ -369,74 +402,78 @@ export type {
 ### Phase 3B: Update State Tests
 
 #### Task 3.3: Update State Service Tests
+
 **File**: `packages/core/state/src/game/game.spec.ts`
 
 **Current Issues:**
+
 - Lines 117, 180: Tests using old `physicsEngine` property
 
 **To-Do:**
+
 - [ ] Update existing tests to use new configuration
 - [ ] Add tests for new configuration methods
 - [ ] Test backwards compatibility
 - [ ] Test validation and error handling
 
 **Implementation:**
-```typescript
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { simulationStateService } from './simulation';
-import type { SimulationConfiguration } from './types';
 
-describe('SimulationStateService', () => {
+```typescript
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { simulationStateService } from "./simulation";
+import type { SimulationConfiguration } from "./types";
+
+describe("SimulationStateService", () => {
   beforeEach(() => {
     // Reset service state before each test
     const service = simulationStateService as any;
     service._simulationState.next(service._initialState);
   });
 
-  describe('Simulation Configuration', () => {
-    it('should initialize with default N-Body configuration', () => {
+  describe("Simulation Configuration", () => {
+    it("should initialize with default N-Body configuration", () => {
       const state = simulationStateService.getSimulationState();
       expect(state.simulationConfig).toEqual({
         mode: "nbody",
         integrator: "verlet",
-        algorithm: "barnes-hut"
+        algorithm: "barnes-hut",
       });
     });
 
-    it('should set valid ideal configuration', () => {
+    it("should set valid ideal configuration", () => {
       const config: SimulationConfiguration = { mode: "ideal" };
-      
+
       simulationStateService.setSimulationConfiguration(config);
-      
+
       const state = simulationStateService.getSimulationState();
       expect(state.simulationConfig).toEqual(config);
     });
 
-    it('should set valid N-Body configuration', () => {
+    it("should set valid N-Body configuration", () => {
       const config: SimulationConfiguration = {
         mode: "nbody",
         integrator: "rk4",
-        algorithm: "fmm"
+        algorithm: "fmm",
       };
-      
+
       simulationStateService.setSimulationConfiguration(config);
-      
+
       const state = simulationStateService.getSimulationState();
       expect(state.simulationConfig).toEqual(config);
     });
 
-    it('should reject invalid configurations', () => {
+    it("should reject invalid configurations", () => {
       const invalidConfig = {
-        mode: "nbody"
+        mode: "nbody",
         // Missing required integrator and algorithm
       } as SimulationConfiguration;
-      
+
       expect(() => {
         simulationStateService.setSimulationConfiguration(invalidConfig);
-      }).toThrow('Invalid simulation configuration');
+      }).toThrow("Invalid simulation configuration");
     });
 
-    it('should switch simulation modes correctly', () => {
+    it("should switch simulation modes correctly", () => {
       // Start with N-Body
       simulationStateService.setSimulationMode("nbody");
       let state = simulationStateService.getSimulationState();
@@ -450,87 +487,87 @@ describe('SimulationStateService', () => {
       expect(state.simulationConfig).toEqual({ mode: "ideal" });
     });
 
-    it('should update N-Body algorithm', () => {
+    it("should update N-Body algorithm", () => {
       simulationStateService.setSimulationMode("nbody");
       simulationStateService.setNBodyAlgorithm("fmm");
-      
+
       const state = simulationStateService.getSimulationState();
       expect(state.simulationConfig.algorithm).toBe("fmm");
       expect(state.simulationConfig.integrator).toBe("verlet"); // Should preserve
     });
 
-    it('should update N-Body integrator', () => {
+    it("should update N-Body integrator", () => {
       simulationStateService.setSimulationMode("nbody");
       simulationStateService.setNBodyIntegrator("rk4");
-      
+
       const state = simulationStateService.getSimulationState();
       expect(state.simulationConfig.integrator).toBe("rk4");
       expect(state.simulationConfig.algorithm).toBe("barnes-hut"); // Should preserve
     });
 
-    it('should warn when setting algorithm in ideal mode', () => {
-      const consoleSpy = vi.spyOn(console, 'warn');
-      
+    it("should warn when setting algorithm in ideal mode", () => {
+      const consoleSpy = vi.spyOn(console, "warn");
+
       simulationStateService.setSimulationMode("ideal");
       simulationStateService.setNBodyAlgorithm("fmm");
-      
+
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Cannot set algorithm when not in N-Body mode')
+        expect.stringContaining("Cannot set algorithm when not in N-Body mode"),
       );
     });
   });
 
-  describe('Backwards Compatibility', () => {
-    it('should handle legacy setPhysicsEngine calls', () => {
-      const consoleSpy = vi.spyOn(console, 'warn');
-      
+  describe("Backwards Compatibility", () => {
+    it("should handle legacy setPhysicsEngine calls", () => {
+      const consoleSpy = vi.spyOn(console, "warn");
+
       simulationStateService.setPhysicsEngine("ideal");
-      
+
       const state = simulationStateService.getSimulationState();
       expect(state.simulationConfig.mode).toBe("ideal");
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('setPhysicsEngine is deprecated')
+        expect.stringContaining("setPhysicsEngine is deprecated"),
       );
     });
 
-    it('should migrate legacy physics engines correctly', () => {
+    it("should migrate legacy physics engines correctly", () => {
       simulationStateService.setPhysicsEngine("verlet");
-      
+
       const state = simulationStateService.getSimulationState();
       expect(state.simulationConfig).toEqual({
         mode: "nbody",
         integrator: "verlet",
-        algorithm: "barnes-hut"
+        algorithm: "barnes-hut",
       });
     });
 
-    it('should handle getPhysicsEngine deprecation', () => {
-      const consoleSpy = vi.spyOn(console, 'warn');
-      
+    it("should handle getPhysicsEngine deprecation", () => {
+      const consoleSpy = vi.spyOn(console, "warn");
+
       simulationStateService.setSimulationConfiguration({
         mode: "nbody",
         integrator: "rk4",
-        algorithm: "fmm"
+        algorithm: "fmm",
       });
-      
+
       const engine = simulationStateService.getPhysicsEngine();
-      
+
       expect(engine).toBe("rk4");
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('getPhysicsEngine is deprecated')
+        expect.stringContaining("getPhysicsEngine is deprecated"),
       );
     });
   });
 
-  describe('State Reactivity', () => {
-    it('should emit state changes on configuration updates', (done) => {
+  describe("State Reactivity", () => {
+    it("should emit state changes on configuration updates", (done) => {
       const config: SimulationConfiguration = {
         mode: "nbody",
         integrator: "rk4",
-        algorithm: "fmm"
+        algorithm: "fmm",
       };
 
-      simulationStateService.simulationState$.subscribe(state => {
+      simulationStateService.simulationState$.subscribe((state) => {
         if (state.simulationConfig.integrator === "rk4") {
           expect(state.simulationConfig).toEqual(config);
           done();
@@ -546,18 +583,22 @@ describe('SimulationStateService', () => {
 ### Phase 3C: Update Physics Integration Points
 
 #### Task 3.4: Update SimulationManager Integration
+
 **File**: `packages/app/simulation/src/SimulationManager.ts`
 
 **Current Issues:**
+
 - Line 198: Passing old `physicsEngine` parameter
 - Line 204: `updateSimulation` call needs new signature
 
 **To-Do:**
+
 - [ ] Update parameter passing to use new configuration
 - [ ] Handle configuration extraction from state
 - [ ] Update error handling
 
 **Implementation:**
+
 ```typescript
 // ... existing imports ...
 import type { SimulationConfiguration } from "@teskooano/core-state";
@@ -571,20 +612,20 @@ export class SimulationManager extends StateSubscriptionMixin {
   private performSimulationStep(): void {
     try {
       const currentState = getSimulationState();
-      
+
       // Extract simulation configuration
       const config: SimulationConfiguration = currentState.simulationConfig;
-      
+
       // Get current celestial objects
       const currentBodies = getCelestialObjects();
-      
+
       if (Object.keys(currentBodies).length === 0) {
         return; // No bodies to simulate
       }
 
       // Calculate delta time
       const deltaTime = this.calculateDeltaTime(currentState);
-      
+
       if (deltaTime <= 0) {
         return; // Paused or invalid time step
       }
@@ -595,27 +636,26 @@ export class SimulationManager extends StateSubscriptionMixin {
         deltaTime,
         config, // Use configuration instead of physicsEngine string
         { min: 1000, max: 10000000 }, // radii
-        1000000, // octreeSize  
-        0.5 // theta
+        1000000, // octreeSize
+        0.5, // theta
       );
 
       // Update state with simulation results
       gameStateService.setBulkCelestialObjects(result.bodies);
-      
+
       // Update simulation time
       const newTime = currentState.time + deltaTime;
       simulationStateService.setSimulationState({
         ...currentState,
-        time: newTime
+        time: newTime,
       });
 
       // Log performance metrics if available
       if (result.metadata) {
         this.logPerformanceMetrics(result.metadata, config);
       }
-
     } catch (error) {
-      console.error('[SimulationManager] Error during simulation step:', error);
+      console.error("[SimulationManager] Error during simulation step:", error);
       // Optionally pause simulation on error
       simulationStateService.togglePause();
     }
@@ -625,20 +665,22 @@ export class SimulationManager extends StateSubscriptionMixin {
    * Logs performance metrics for monitoring and optimization
    */
   private logPerformanceMetrics(
-    metadata: any, 
-    config: SimulationConfiguration
+    metadata: any,
+    config: SimulationConfiguration,
   ): void {
     if (this.debugLogging) {
-      console.log('[SimulationManager] Step metrics:', {
+      console.log("[SimulationManager] Step metrics:", {
         mode: config.mode,
-        algorithm: config.algorithm || 'N/A',
-        integrator: config.integrator || 'N/A',
+        algorithm: config.algorithm || "N/A",
+        integrator: config.integrator || "N/A",
         stepTime: `${metadata.stepTime.toFixed(2)}ms`,
         totalBodies: metadata.totalBodies,
-        forceTime: metadata.forceCalculationTime ? 
-          `${metadata.forceCalculationTime.toFixed(2)}ms` : 'N/A',
-        integrationTime: metadata.integrationTime ? 
-          `${metadata.integrationTime.toFixed(2)}ms` : 'N/A'
+        forceTime: metadata.forceCalculationTime
+          ? `${metadata.forceCalculationTime.toFixed(2)}ms`
+          : "N/A",
+        integrationTime: metadata.integrationTime
+          ? `${metadata.integrationTime.toFixed(2)}ms`
+          : "N/A",
       });
     }
   }
@@ -650,9 +692,11 @@ export class SimulationManager extends StateSubscriptionMixin {
 ## 🧪 Testing Strategy
 
 ### Task 3.5: Integration Testing
+
 **File**: `packages/core/state/src/integration.spec.ts` (new)
 
 **To-Do:**
+
 - [ ] Test state service integration with physics engine
 - [ ] Test reactive updates across system
 - [ ] Test error handling and validation
@@ -661,11 +705,13 @@ export class SimulationManager extends StateSubscriptionMixin {
 ## 📋 Implementation Checklist
 
 ### Pre-Implementation
+
 - [ ] Complete type system changes (Guide 01)
 - [ ] Review state service dependencies
 - [ ] Plan migration strategy for existing state
 
 ### Implementation Order
+
 1. [ ] Update `SimulationStateService` with new methods
 2. [ ] Update state index exports
 3. [ ] Update integration points (SimulationManager)
@@ -674,12 +720,14 @@ export class SimulationManager extends StateSubscriptionMixin {
 6. [ ] Validate reactive state updates
 
 ### Post-Implementation
+
 - [ ] Verify all state updates work correctly
 - [ ] Test configuration validation
 - [ ] Confirm backwards compatibility
 - [ ] Performance testing with new state structure
 
 ## 🎯 Success Criteria
+
 - [ ] New configuration system fully functional
 - [ ] Backwards compatibility maintained
 - [ ] All tests pass
@@ -687,6 +735,7 @@ export class SimulationManager extends StateSubscriptionMixin {
 - [ ] Configuration validation prevents invalid states
 
 ## 📋 Dependencies
+
 **Requires**: Type system changes (Guide 01)
 **Blocks**: UI layer updates, renderer integration
 

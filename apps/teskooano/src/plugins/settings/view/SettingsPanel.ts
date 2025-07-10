@@ -1,6 +1,6 @@
 import { IContentRenderer, IDockviewPanelProps } from "dockview-core";
 import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
-import { SettingsController } from "../controller/SettingsController";
+import { EnhancedSettingsController } from "../controller/EnhancedSettingsController";
 import { template } from "./Settings.template";
 
 /**
@@ -16,7 +16,7 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
   public static readonly componentName = "teskooano-settings-panel";
 
   /** @internal */
-  private controller: SettingsController | null = null;
+  private controller: EnhancedSettingsController | null = null;
 
   constructor() {
     super();
@@ -42,31 +42,51 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
    * @internal
    */
   connectedCallback() {
-    const formElement =
-      this.shadowRoot!.querySelector<HTMLFormElement>("#settings-form");
-    const trailSliderElement = this.shadowRoot!.querySelector<TeskooanoSlider>(
-      "#setting-trail-length",
-    );
-    const engineSelectElement =
-      this.shadowRoot!.querySelector<HTMLSelectElement>(
-        "#setting-physics-engine",
-      );
-    const profileSelectElement =
-      this.shadowRoot!.querySelector<HTMLSelectElement>(
+    const elements = {
+      formElement:
+        this.shadowRoot!.querySelector<HTMLFormElement>("#settings-form")!,
+      trailSliderElement: this.shadowRoot!.querySelector<TeskooanoSlider>(
+        "#setting-trail-length",
+      )!,
+      simulationModeSelectElement:
+        this.shadowRoot!.querySelector<HTMLSelectElement>(
+          "#setting-simulation-mode",
+        )!,
+      currentModeBadgeElement: this.shadowRoot!.querySelector<HTMLSpanElement>(
+        "#current-mode-badge",
+      )!,
+      nbodyControlsElement: this.shadowRoot!.querySelector<HTMLDivElement>(
+        "#nbody-specific-controls",
+      )!,
+      algorithmSelectElement:
+        this.shadowRoot!.querySelector<HTMLSelectElement>(
+          "#setting-algorithm",
+        )!,
+      integratorSelectElement:
+        this.shadowRoot!.querySelector<HTMLSelectElement>(
+          "#setting-integrator",
+        )!,
+      configDisplayElement:
+        this.shadowRoot!.querySelector<HTMLDivElement>("#config-display")!,
+      modePerformanceElement: this.shadowRoot!.querySelector<HTMLDivElement>(
+        "#mode-performance-display",
+      )!,
+      performanceDotElement:
+        this.shadowRoot!.querySelector<HTMLSpanElement>("#performance-dot")!,
+      performanceTextElement:
+        this.shadowRoot!.querySelector<HTMLSpanElement>("#performance-text")!,
+      profileSelectElement: this.shadowRoot!.querySelector<HTMLSelectElement>(
         "#setting-performance-profile",
-      );
+      )!,
+      validationMessagesElement: this.shadowRoot!.querySelector<HTMLDivElement>(
+        "#validation-messages",
+      )!,
+    };
 
-    if (
-      !formElement ||
-      !trailSliderElement ||
-      !engineSelectElement ||
-      !profileSelectElement
-    ) {
+    if (Object.values(elements).some((el) => !el)) {
       console.error(
         "[SettingsPanel] Failed to find essential elements in template!",
       );
-      this.shadowRoot!.innerHTML =
-        "<p style='color:red'>Error loading settings panel content.</p>";
       return;
     }
 
@@ -76,12 +96,7 @@ export class SettingsPanel extends HTMLElement implements IContentRenderer {
     this.style.overflowY = "auto";
     this.style.boxSizing = "border-box";
 
-    this.controller = new SettingsController({
-      formElement,
-      trailSliderElement,
-      engineSelectElement,
-      profileSelectElement,
-    });
+    this.controller = new EnhancedSettingsController(elements);
   }
 
   /**
