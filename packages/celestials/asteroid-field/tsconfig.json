@@ -12,6 +12,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "paths": {
+      "@teskooano/core-math": ["../../core/math/src"],
       "@teskooano/data-types": ["../../data/types/src"],
       "@teskooano/renderer-threejs-celestial": [
         "../../renderer/threejs-celestial/src"
@@ -19,6 +20,7 @@
     }
   },
   "references": [
+    { "path": "../../core/math" },
     { "path": "../../data/types" },
     { "path": "../../renderer/threejs-celestial" }
   ],

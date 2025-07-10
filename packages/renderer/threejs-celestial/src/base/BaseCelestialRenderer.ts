@@ -58,6 +58,11 @@ export abstract class BaseCelestialRenderer<
   protected billboardManager: BillboardManager;
 
   /**
+   * Whether billboard LOD levels are disabled for this renderer
+   */
+  protected billboardDisabled: boolean;
+
+  /**
    * Reusable Vector3 instances to avoid allocations in performance-critical update loops
    */
   protected _tempVector1: THREE.Vector3 = new THREE.Vector3();
@@ -74,6 +79,7 @@ export abstract class BaseCelestialRenderer<
     this.lightingManager = new CelestialLightingManager();
     this.timeManager = new TimeManager();
     this.billboardManager = new BillboardManager();
+    this.billboardDisabled = options.disableBillboard ?? false;
   }
 
   /**
@@ -123,8 +129,8 @@ export abstract class BaseCelestialRenderer<
     // Update LOD position and level
     this.lodManager.updateObjectLOD(object, camera);
 
-    // Update billboards if needed
-    if (allObjects && allMeshes) {
+    // Update billboards if needed and not disabled
+    if (!this.billboardDisabled && allObjects && allMeshes) {
       this.billboardManager.update(camera, allObjects, allMeshes);
     }
   }

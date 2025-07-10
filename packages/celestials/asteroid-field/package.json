@@ -16,12 +16,13 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@teskooano/core-math": "file:../../../core/math",
     "@teskooano/data-types": "file:../../../core/data-types",
     "@teskooano/renderer-threejs-celestial": "file:../../../renderer/threejs-celestial",
-    "three": "^0.178.0"
+    "three": "0.178.0"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "typescript": "5.8.3",
+    "vitest": "3.2.4"
   }
 }

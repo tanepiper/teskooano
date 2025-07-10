@@ -4,6 +4,7 @@ import {
   SCALE,
   type AsteroidFieldProperties as CentralAsteroidFieldProperties,
 } from "@teskooano/data-types";
+import { createSeededRandomSync } from "@teskooano/core-math";
 import {
   BaseCelestialRenderer,
   type CelestialMeshOptions,
@@ -12,162 +13,64 @@ import {
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
 
+// Import shader files
+import asteroidVertexShader from "./shaders/asteroid.vert?raw";
+import asteroidFragmentShader from "./shaders/asteroid.frag?raw";
+
 const MAX_LIGHTS = 4;
 
-const asteroidVertexShader = `
-  #define MAX_LIGHTS 4
+/**
+ * Configuration options specific to the asteroid field renderer.
+ */
+export interface AsteroidFieldRendererOptions extends CelestialMeshOptions {
+  /**
+   * Speed of belt rotation (radians per second).
+   * @default 0.00005
+   */
+  beltRotationSpeed?: number;
 
-  attribute float size;
-  attribute float textureIndex;
-  attribute float initialRotation;
-  
-  uniform float beltRotationAngle;
-  uniform float renderScale;
-
-  struct Light {
-    vec3 position;
-    vec3 color;
-    float intensity;
-  };
-  uniform Light uLights[MAX_LIGHTS];
-  uniform int uNumLights;
-  
-  varying vec3 vColor;
-  varying float vTextureIndex;
-  varying float vInitialRotation;
-  varying vec3 vViewLightDir[MAX_LIGHTS];
-
-  void main() {
-    vColor = color;
-    vTextureIndex = textureIndex;
-    vInitialRotation = initialRotation;
-    
-    float cosAngle = cos(beltRotationAngle);
-    float sinAngle = sin(beltRotationAngle);
-    vec3 rotatedPosition = vec3(
-      position.x * cosAngle - position.z * sinAngle,
-      position.y,
-      position.x * sinAngle + position.z * cosAngle
-    );
-    
-    vec4 worldPosition = modelMatrix * vec4(rotatedPosition, 1.0);
-    vec4 mvPosition = viewMatrix * worldPosition;
-
-    // Transform light positions to view space and calculate direction
-    for (int i = 0; i < MAX_LIGHTS; i++) {
-        if (i >= uNumLights) break;
-        vec4 lightViewPos = viewMatrix * vec4(uLights[i].position, 1.0);
-        vViewLightDir[i] = lightViewPos.xyz - mvPosition.xyz;
-    }
-
-    gl_Position = projectionMatrix * mvPosition;
-    
-    // Scale point size based on distance to camera
-    float distance = length(mvPosition.xyz);
-    float calculatedPointSize = size * (1.0 / distance) * renderScale * 350.0;
-    
-    gl_PointSize = max(1.5, calculatedPointSize);
-  }
-`;
-
-const asteroidFragmentShader = `
-  #define MAX_LIGHTS 4
-
-  struct Light {
-    vec3 position;
-    vec3 color;
-    float intensity;
-  };
-
-  varying vec3 vColor;
-  varying float vTextureIndex;
-  varying float vInitialRotation;
-  uniform sampler2D asteroidTextures[5];
-  uniform float alphaTest;
-  uniform float time;
-  uniform float particleRotationSpeed; 
-  uniform Light uLights[MAX_LIGHTS];
-  uniform int uNumLights;
-  varying vec3 vViewLightDir[MAX_LIGHTS];
-
-  void main() {
-    vec4 texColor;
-    
-    float angle = vInitialRotation + time * particleRotationSpeed;
-    mat2 rotationMatrix = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-    
-    vec2 center = vec2(0.5, 0.5);
-    vec2 uv = gl_PointCoord - center;
-    vec2 rotatedUV = rotationMatrix * uv + center;
-
-    if (vTextureIndex < 0.5) {
-        texColor = texture2D(asteroidTextures[0], rotatedUV);
-    } else if (vTextureIndex < 1.5) {
-        texColor = texture2D(asteroidTextures[1], rotatedUV);
-    } else if (vTextureIndex < 2.5) {
-        texColor = texture2D(asteroidTextures[2], rotatedUV);
-    } else if (vTextureIndex < 3.5) {
-        texColor = texture2D(asteroidTextures[3], rotatedUV);
-    } else {
-        texColor = texture2D(asteroidTextures[4], rotatedUV);
-    }
-
-    if (texColor.a < alphaTest) discard; 
-
-    vec2 fromCenter = gl_PointCoord * 2.0 - 1.0;
-    float len = length(fromCenter);
-    if (len > 1.0) discard; 
-
-    vec3 normal = vec3(fromCenter.x, fromCenter.y, sqrt(1.0 - len * len));
-    
-    // Lighting Calculation is now in view space with minimal ambient
-    vec3 totalLighting = vec3(0.05); // Minimal ambient light for dark space
-
-    for (int i = 0; i < MAX_LIGHTS; i++) {
-        if (i >= uNumLights) break;
-        
-        vec3 lightDirection = normalize(vViewLightDir[i]);
-        float diffuse = max(dot(normal, lightDirection), 0.0);
-        
-        vec3 lightContribution = uLights[i].color * uLights[i].intensity * diffuse;
-        totalLighting += lightContribution;
-    }
-    
-    totalLighting = clamp(totalLighting, 0.0, 1.0);
-    
-    vec3 finalColor = texColor.rgb * vColor * totalLighting;
-    
-    gl_FragColor = vec4(finalColor, texColor.a);
-  }
-`;
+  /**
+   * Whether to disable billboard LOD levels (asteroid fields manage their own LOD).
+   * @default true
+   */
+  disableBillboard?: boolean;
+}
 
 /**
  * Renders an asteroid field using a particle system with LOD support.
+ *
+ * This renderer creates multiple LOD levels with varying particle counts
+ * to provide optimal performance at different viewing distances.
  */
 export class AsteroidFieldRenderer extends BaseCelestialRenderer {
   private lodGeometries: THREE.BufferGeometry[] = [];
-
   private asteroidTextures: THREE.Texture[] = [];
   private readonly textureLoader: THREE.TextureLoader;
   private loadedTextureCount = 0;
   private materialReady = false;
   private beltRotationSpeed = 0.00005;
-  private particleRotationSpeed = 1.0 + Math.random() * 2;
+  private particleRotationSpeed = 1.5; // Default value, will be seeded
   private beltRotationAngle = 0;
   private previousSimTime = 0;
   private cumulativeParticleTime = 0;
   private renderScale = 1.0;
+  private random: () => number = () => 0;
 
-  constructor() {
-    super();
+  constructor(options: AsteroidFieldRendererOptions = {}) {
+    // Pass options to base class with billboard disabled by default
+    super({ ...options, disableBillboard: options.disableBillboard ?? true });
     this.textureLoader = new THREE.TextureLoader();
   }
 
   /**
-   * Creates the shared ShaderMaterial, loading textures asynchronously.
-   * @internal
+   * Creates a shared shader material for asteroid rendering.
+   * Uses external GLSL shader files for better maintainability.
+   * @param objectId Unique identifier for the material cache.
+   * @returns Configured ShaderMaterial for asteroid rendering.
+   * @private
    */
   private _createSharedMaterial(objectId: string): THREE.ShaderMaterial {
+    // Load asteroid textures if not already loaded
     if (this.asteroidTextures.length === 0) {
       const texturePaths = [
         "space/textures/asteroids/asteroid_1.png",
@@ -188,197 +91,194 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
             this.asteroidTextures[index] = texture;
             this.loadedTextureCount++;
 
-            const material = this.getMaterial(objectId) as THREE.ShaderMaterial;
+            console.debug(
+              `[AsteroidFieldRenderer] Loaded texture ${index + 1}/5: ${path}`,
+            );
 
-            if (material) {
-              if (material.uniforms.asteroidTextures.value) {
-                material.uniforms.asteroidTextures.value[index] = texture;
+            if (this.loadedTextureCount === 5) {
+              this.materialReady = true;
+              console.debug(
+                `[AsteroidFieldRenderer] All asteroid textures loaded for ${objectId}`,
+              );
 
-                if (this.loadedTextureCount === 5) {
-                  material.uniforms.asteroidTextures.value =
-                    this.asteroidTextures;
-                  material.needsUpdate = true;
-                  this.materialReady = true;
-                }
-              } else {
-                console.warn(
-                  "[AsteroidFieldRenderer] Material uniform array not ready for texture update.",
-                );
+              // Update material with loaded textures
+              const material = this.getMaterial(
+                objectId,
+              ) as THREE.ShaderMaterial;
+              if (material && material.uniforms.asteroidTextures) {
+                material.uniforms.asteroidTextures.value =
+                  this.asteroidTextures;
+                material.needsUpdate = true;
               }
             }
           },
           undefined,
           (error) => {
-            console.error(`Failed to load texture: ${path}`, error);
+            console.error(
+              `[AsteroidFieldRenderer] Failed to load texture: ${path}`,
+              error,
+            );
           },
         );
       });
     }
 
-    const lights: {
-      position: THREE.Vector3;
-      color: THREE.Color;
-      intensity: number;
-    }[] = [];
-    for (let i = 0; i < MAX_LIGHTS; i++) {
-      lights.push({
-        position: new THREE.Vector3(),
-        color: new THREE.Color(),
-        intensity: 0,
-      });
-    }
-
     const material = new THREE.ShaderMaterial({
       uniforms: {
+        // Texture uniforms
         asteroidTextures: { value: this.asteroidTextures },
         alphaTest: { value: 0.2 },
-        renderScale: { value: this.renderScale },
-        time: { value: 0.0 },
+
+        // Animation uniforms
         beltRotationAngle: { value: 0.0 },
+        time: { value: 0.0 },
         particleRotationSpeed: { value: this.particleRotationSpeed },
-        uLights: { value: lights },
-        uNumLights: { value: 0 },
+
+        // Rendering uniforms
+        renderScale: { value: this.renderScale },
       },
       vertexShader: asteroidVertexShader,
       fragmentShader: asteroidFragmentShader,
-      transparent: false,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
       vertexColors: true,
-      depthWrite: true,
-      depthTest: true,
-      blending: THREE.NormalBlending,
     });
 
-    material.onBeforeCompile = (shader) => {
-      const gl = material.userData.renderer?.getContext();
-      if (gl) {
-        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-        if (vertexShader) {
-          gl.shaderSource(vertexShader, shader.vertexShader);
-          gl.compileShader(vertexShader);
-          if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-            console.error(
-              "[AsteroidFieldRenderer] Vertex shader compile error:",
-              gl.getShaderInfoLog(vertexShader),
-            );
-          }
-          gl.deleteShader(vertexShader);
-        }
-      }
-    };
-
+    // Store material for reuse and cleanup using base class method
     this.registerMaterial(objectId, material);
+
+    console.debug(
+      `[AsteroidFieldRenderer] Created material with textures for ${objectId}`,
+    );
+
     return material;
   }
 
   /**
-   * Creates BufferGeometry for the asteroid field particles with a specific count.
-   * @param object - The renderable object data.
-   * @param targetParticleCount - The number of particles to generate.
-   * @returns The generated BufferGeometry.
-   * @internal
+   * Creates asteroid field geometry with specified number of particles.
+   * Uses deterministic seeded randomization for consistent generation.
+   * @param object The celestial object to create geometry for.
+   * @param count Number of asteroids to generate.
+   * @returns BufferGeometry with positioned asteroid particles.
+   * @private
    */
   private _createAsteroidGeometry(
     object: RenderableCelestialObject,
-    targetParticleCount: number,
+    count: number,
   ): THREE.BufferGeometry {
-    let properties: CentralAsteroidFieldProperties | null = null;
-
-    if (
-      object.properties &&
-      object.properties.type === CelestialType.ASTEROID_FIELD
-    ) {
-      properties = object.properties as CentralAsteroidFieldProperties;
-    } else {
-      console.error(
-        `[AsteroidFieldRenderer] Invalid properties for ${object.celestialObjectId}. Using defaults.`,
+    if (!this.random) {
+      console.warn(
+        `[AsteroidFieldRenderer] Seeded random not initialized for ${object.celestialObjectId}, using fallback`,
       );
-      properties = {
-        /* Default properties */ type: CelestialType.ASTEROID_FIELD,
-        innerRadiusAU: 2.0,
-        outerRadiusAU: 3.0,
-        heightAU: 0.2,
-        count: 1000,
-        color: "#8B7355",
-        composition: ["rock"],
-      };
-    }
-
-    if (!properties) {
-      throw new Error(
-        "[AsteroidFieldRenderer] Failed to get valid properties for geometry generation.",
+      this.random = createSeededRandomSync(
+        object.seed ?? object.celestialObjectId,
       );
     }
 
     const geometry = new THREE.BufferGeometry();
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const sizes: number[] = [];
-    const textureIndices: number[] = [];
-    const initialRotations: number[] = [];
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    const textureIndices = new Float32Array(count);
+    const initialRotations = new Float32Array(count);
 
-    const visualInnerRadius = properties.innerRadiusAU * SCALE.RENDER_SCALE_AU;
-    const visualOuterRadius = properties.outerRadiusAU * SCALE.RENDER_SCALE_AU;
-    const visualHeight = properties.heightAU * SCALE.RENDER_SCALE_AU;
-    const baseColorHex =
-      properties.visualParticleColor ?? properties.color ?? "#8B7355";
+    // Get asteroid field properties with validation
+    const properties = this._getAsteroidFieldProperties(object);
 
-    for (let i = 0; i < targetParticleCount; i++) {
-      const r =
-        visualInnerRadius +
-        Math.random() * (visualOuterRadius - visualInnerRadius);
-      const theta = Math.random() * Math.PI * 2;
-      const h = (Math.random() - 0.5) * visualHeight;
+    // Convert AU to scene units for positioning
+    const innerRadius = properties.innerRadiusAU * SCALE.RENDER_SCALE_AU;
+    const outerRadius = properties.outerRadiusAU * SCALE.RENDER_SCALE_AU;
+    const height = properties.heightAU * SCALE.RENDER_SCALE_AU;
 
-      const x = r * Math.cos(theta);
-      const y = h;
-      const z = r * Math.sin(theta);
-      positions.push(x, y, z);
+    // Parse color or use default
+    const baseColor = new THREE.Color(properties.color || "#8B7355");
 
-      const baseColor = new THREE.Color(baseColorHex);
-      const hsl = { h: 0, s: 0, l: 0 };
-      baseColor.getHSL(hsl);
-      const newColor = new THREE.Color().setHSL(
-        hsl.h + (Math.random() * 0.1 - 0.05),
-        hsl.s * (0.8 + Math.random() * 0.4),
-        hsl.l * (0.8 + Math.random() * 0.4),
-      );
-      colors.push(newColor.r, newColor.g, newColor.b);
+    console.debug(
+      `[AsteroidFieldRenderer] Generating ${count} asteroids between ${properties.innerRadiusAU}-${properties.outerRadiusAU} AU`,
+    );
 
-      sizes.push(8 + Math.random() * 12);
-      textureIndices.push(i % 5);
-      initialRotations.push(Math.random() * Math.PI * 2);
+    // Generate asteroid positions and properties
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
+
+      // Generate position in toroidal belt shape
+      const angle = this.random() * Math.PI * 2;
+      const radiusSpread = this.random();
+      const radius = innerRadius + (outerRadius - innerRadius) * radiusSpread;
+
+      // Position with some vertical variation
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const y = (this.random() - 0.5) * height;
+
+      positions[i3] = x;
+      positions[i3 + 1] = y;
+      positions[i3 + 2] = z;
+
+      // Color variation - slight hue and brightness changes
+      const colorVariation = this.random() * 0.3 - 0.15; // ±0.15
+      const brightnessVariation = this.random() * 0.4 + 0.8; // 0.8-1.2
+
+      const finalColor = baseColor.clone();
+      finalColor.offsetHSL(colorVariation * 0.1, 0, colorVariation * 0.2);
+      finalColor.multiplyScalar(brightnessVariation);
+
+      colors[i3] = finalColor.r;
+      colors[i3 + 1] = finalColor.g;
+      colors[i3 + 2] = finalColor.b;
+
+      // Size variation based on distance from center (smaller asteroids further out)
+      const distanceFromCenter = Math.sqrt(x * x + z * z);
+      const normalizedDistance =
+        (distanceFromCenter - innerRadius) / (outerRadius - innerRadius);
+      const baseSizeVariation =
+        (5.0 - normalizedDistance * 0.3) * (0.7 + this.random() * 0.6);
+      // Moderate sizes for good visibility with textures
+      sizes[i] = Math.max(3.0, baseSizeVariation * 15.0); // Good size for textured asteroids
+
+      // Add texture index and initial rotation for shader compatibility
+      textureIndices[i] = Math.floor(this.random() * 5); // Assuming 5 texture variants
+      initialRotations[i] = this.random() * Math.PI * 2; // Random initial rotation
     }
 
-    geometry.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(positions, 3),
-    );
-    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-    geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
+    // Set geometry attributes
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
     geometry.setAttribute(
       "textureIndex",
-      new THREE.Float32BufferAttribute(textureIndices, 1),
+      new THREE.BufferAttribute(textureIndices, 1),
     );
     geometry.setAttribute(
       "initialRotation",
-      new THREE.Float32BufferAttribute(initialRotations, 1),
+      new THREE.BufferAttribute(initialRotations, 1),
     );
 
+    // Calculate bounding sphere for frustum culling
+    geometry.computeBoundingSphere();
+
+    // Store geometry for cleanup
     this.lodGeometries.push(geometry);
+
     return geometry;
   }
 
   /**
    * Creates and returns an array of LOD levels with varying particle counts.
+   * Uses proper distance calculations based on the asteroid field properties.
    */
   getLODLevels(
     object: RenderableCelestialObject,
-    options?: CelestialMeshOptions & {
-      parentLODDistances?: number[];
-      beltRotationSpeed?: number;
-    },
+    options?: AsteroidFieldRendererOptions,
   ): LODLevel[] {
     this.lodGeometries = [];
+
+    // Initialize seeded random for this asteroid field
+    this.random = createSeededRandomSync(
+      object.seed ?? object.celestialObjectId,
+    );
+    this.particleRotationSpeed = 1.0 + this.random() * 2;
 
     if (options?.beltRotationSpeed !== undefined) {
       this.beltRotationSpeed = options.beltRotationSpeed;
@@ -394,20 +294,32 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       material = this._createSharedMaterial(object.celestialObjectId);
     }
 
-    const distancesAU = [0, 10, 20, 30];
-    const distancesSceneUnits = distancesAU.map(
-      (au) => au * SCALE.RENDER_SCALE_AU,
-    );
+    // Get asteroid field properties to calculate appropriate LOD distances
+    const properties = this._getAsteroidFieldProperties(object);
+    const fieldRadius = properties.outerRadiusAU * SCALE.RENDER_SCALE_AU;
 
-    const particleCounts = [10000, 5000, 2500, 1000];
+    // Much simpler LOD distances for debugging
+    const distancesSceneUnits = [
+      0, // Always visible
+      1000, // 1000 scene units
+      5000, // 5000 scene units
+      20000, // 20000 scene units
+    ];
+
+    // Smaller particle counts for debugging
+    const particleCounts = [50000, 25000, 10000, 1000];
 
     const lodLevels: LODLevel[] = [];
 
-    `[AsteroidFieldRenderer] Creating ${distancesSceneUnits.length} LOD levels for asteroid field`;
+    console.debug(
+      `[AsteroidFieldRenderer] Creating ${distancesSceneUnits.length} LOD levels for asteroid field at distances:`,
+      distancesSceneUnits.map(
+        (d) => `${(d / SCALE.RENDER_SCALE_AU).toFixed(2)} AU`,
+      ),
+    );
 
     for (let i = 0; i < distancesSceneUnits.length; i++) {
       const distance = distancesSceneUnits[i];
-
       const count = particleCounts[Math.min(i, particleCounts.length - 1)];
 
       const geometry = this._createAsteroidGeometry(object, count);
@@ -432,6 +344,36 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
     return lodLevels;
   }
 
+  /**
+   * Helper method to extract and validate asteroid field properties.
+   * @param object The renderable celestial object.
+   * @returns Validated asteroid field properties.
+   * @private
+   */
+  private _getAsteroidFieldProperties(
+    object: RenderableCelestialObject,
+  ): CentralAsteroidFieldProperties {
+    if (
+      object.properties &&
+      object.properties.type === CelestialType.ASTEROID_FIELD
+    ) {
+      return object.properties as CentralAsteroidFieldProperties;
+    }
+
+    console.warn(
+      `[AsteroidFieldRenderer] Invalid properties for ${object.celestialObjectId}. Using defaults.`,
+    );
+    return {
+      type: CelestialType.ASTEROID_FIELD,
+      innerRadiusAU: 2.0,
+      outerRadiusAU: 3.0,
+      heightAU: 0.2,
+      count: 100000,
+      color: "#8B7355",
+      composition: ["rock"],
+    };
+  }
+
   update(
     object: RenderableCelestialObject,
     time: number,
@@ -449,38 +391,27 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer {
       const deltaTime = (time - this.previousSimTime) * timeScale;
       this.beltRotationAngle += this.beltRotationSpeed * deltaTime;
       this.beltRotationAngle %= 2 * Math.PI; // Prevent precision loss
-      material.uniforms.beltRotationAngle.value = this.beltRotationAngle;
-      this.previousSimTime = time;
 
       // Slower, cumulative time for individual particle rotation
       this.cumulativeParticleTime += deltaTime * 0.05; // Scale down for slower rotation
       this.cumulativeParticleTime %= 2 * Math.PI; // Prevent precision loss
-      material.uniforms.time.value = this.cumulativeParticleTime;
-      material.uniforms.renderScale.value = this.renderScale;
 
-      // Apply centralized light attenuation
-      const attenuatedLightSources = this.applyLightAttenuation(
-        object,
-        lightSources,
-      );
-
-      if (attenuatedLightSources && attenuatedLightSources.size > 0) {
-        let lightIndex = 0;
-        const lightsUniform = material.uniforms.uLights
-          .value as typeof material.uniforms.uLights.value;
-
-        attenuatedLightSources.forEach((lightData) => {
-          if (lightIndex < MAX_LIGHTS) {
-            lightsUniform[lightIndex].position.copy(lightData.position);
-            lightsUniform[lightIndex].color.copy(lightData.color);
-            lightsUniform[lightIndex].intensity = lightData.intensity ?? 1.0;
-            lightIndex++;
-          }
-        });
-        material.uniforms.uNumLights.value = lightIndex;
-      } else {
-        material.uniforms.uNumLights.value = 0;
+      // Update material uniforms
+      if (material.uniforms.beltRotationAngle) {
+        material.uniforms.beltRotationAngle.value = this.beltRotationAngle;
       }
+      if (material.uniforms.time) {
+        material.uniforms.time.value = this.cumulativeParticleTime;
+      }
+      if (material.uniforms.particleRotationSpeed) {
+        material.uniforms.particleRotationSpeed.value =
+          this.particleRotationSpeed;
+      }
+      if (material.uniforms.renderScale) {
+        material.uniforms.renderScale.value = this.renderScale;
+      }
+
+      this.previousSimTime = time;
     }
   }
 

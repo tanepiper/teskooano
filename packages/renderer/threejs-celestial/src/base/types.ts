@@ -12,6 +12,13 @@ export interface BaseCelestialRendererOptions {
    * by renderers to access global lighting information.
    */
   lightingManager?: LightingManager;
+
+  /**
+   * Whether to disable billboard LOD levels for special rendering cases.
+   * Some renderers like asteroid fields need to manage their own LOD entirely.
+   * @default false
+   */
+  disableBillboard?: boolean;
 }
 
 export type DetailLevel = "high" | "medium" | "low" | "very-low";
