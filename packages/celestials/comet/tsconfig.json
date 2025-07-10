@@ -25,5 +25,6 @@
     { "path": "../../renderer/threejs-lod" }
   ],
   "include": ["src/**/*"],
+  "files": ["src/vite-env.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

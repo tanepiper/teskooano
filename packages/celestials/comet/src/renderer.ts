@@ -11,8 +11,6 @@ import {
   BaseCelestialRenderer,
   type CelestialMeshOptions,
   type LightSourcesMap,
-  type CelestialRenderer,
-  type LightSourceData,
 } from "@teskooano/renderer-threejs-celestial";
 import {
   CometComaMaterial,
@@ -27,6 +25,17 @@ import { createSeededRandomSync } from "@teskooano/core-math";
 const MAX_PARTICLES = 12000;
 const PARTICLE_LIFETIME = 5.0; // seconds
 
+/**
+ * Renderer for comet objects with nucleus, coma, particle tails, and jet effects.
+ *
+ * Features:
+ * - Procedurally displaced nucleus geometry with noise-based surface detail
+ * - Dynamic coma that scales with solar activity
+ * - Particle-based tail system with realistic physics
+ * - Multiple gas jets emanating from the nucleus surface
+ * - LOD system with simplified tail for distant viewing
+ * - Activity-based visual changes (extinct comets show no coma/tail)
+ */
 export class CometRenderer extends BaseCelestialRenderer {
   private nucleus?: THREE.Mesh;
   private coma?: THREE.Mesh;
