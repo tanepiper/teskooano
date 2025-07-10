@@ -36,6 +36,7 @@ export const calculateOrbitalPosition = (
   }
 
   const meanMotion = (2 * Math.PI) / period_s;
+  // Use standard time evolution for position calculation
   const currentMeanAnomaly = meanAnomaly + meanMotion * currentTime;
 
   let eccentricAnomaly = currentMeanAnomaly;
@@ -117,7 +118,8 @@ export const calculateOrbitalVelocity = (
   } = orbitalParameters;
 
   const meanMotion = (2 * Math.PI) / period_s;
-  const currentMeanAnomaly = meanAnomaly + meanMotion * currentTime;
+  // Use subtract for time evolution to match coordinate system convention (consistent with kepler.ts)
+  const currentMeanAnomaly = meanAnomaly - meanMotion * currentTime;
 
   let eccentricAnomaly = currentMeanAnomaly;
   for (let i = 0; i < 5; i++) {
@@ -173,9 +175,8 @@ export const calculateOrbitalVelocity = (
       cosOmega * (cos_v_omega + eccentricity * cosArgPeri) * cosInc);
   const vy = sqrtMuOverP * ((cos_v_omega + eccentricity * cosArgPeri) * sinInc);
 
-  const relativeVelocity_mps = new OSVector3(vx, vy, vz);
-
-  relativeVelocity_mps.multiplyScalar(-1);
+  // Negate velocity components to match coordinate system convention used in kepler.ts
+  const relativeVelocity_mps = new OSVector3(-vx, -vy, -vz);
 
   return relativeVelocity_mps.add(parentStateReal.velocity_mps);
 };

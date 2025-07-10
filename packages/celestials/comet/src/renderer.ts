@@ -653,7 +653,7 @@ export class CometRenderer extends BaseCelestialRenderer {
         geometry,
         attributes,
         lastParticleIndex: 0,
-        repositionTimer: Math.random() * 5, // Stagger repositioning
+        repositionTimer: this.random() * 5, // Stagger repositioning
       });
     }
   }

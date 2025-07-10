@@ -19,28 +19,32 @@ import { WolfRayetRenderer } from "./post-main-sequence/wolf-rayet";
 import { SchwarzschildBlackHoleRenderer } from "./black-holes/schwarzschild-black-hole";
 import { KerrBlackHoleRenderer } from "./black-holes/kerr-black-hole";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
+import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import * as THREE from "three";
-import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import {
   CelestialRenderer,
   createFallbackSphere,
 } from "@teskooano/renderer-threejs-celestial";
 
-interface CreateStarMeshDeps {
-  starRenderers: Map<string, CelestialRenderer>;
+/**
+ * Unified interface for celestial mesh creation dependencies
+ */
+export interface CreateMeshOptions {
+  /** Map to store and cache renderer instances */
   celestialRenderers: Map<string, CelestialRenderer>;
+  /** Function to create LOD objects from levels */
   createLodObject: (
     object: RenderableCelestialObject,
     levels: LODLevel[],
   ) => THREE.LOD;
-  lightingManager: LightingManager;
+  /** Lighting manager for advanced rendering */
+  lightingManager?: LightingManager;
+  /** Enable debug mode for additional logging and fallback usage */
+  debug?: boolean;
 }
 
 /**
  * Helper function to create the appropriate star renderer based on spectral class or stellar type
- * @param spectralClass The spectral class of the star (O, B, A, F, G, K, M)
- * @param stellarType For exotic objects: StellarType enum value
- * @returns A renderer appropriate for the given spectral class or stellar type
  */
 function createStarRenderer(
   spectralClass?: string,
@@ -87,14 +91,34 @@ function createStarRenderer(
 }
 
 /**
- * @internal
- * Creates a Star mesh (usually an LOD object) using appropriate renderers.
+ * Creates a Star mesh with unified API
  */
-export function createStarMesh(
+export function createMesh(
   object: RenderableCelestialObject,
-  deps: CreateStarMeshDeps,
+  options: CreateMeshOptions,
 ): THREE.Object3D {
-  let renderer = deps.starRenderers.get(object.celestialObjectId);
+  const {
+    celestialRenderers,
+    createLodObject,
+    lightingManager,
+    debug = false,
+  } = options;
+
+  if (debug) {
+    console.debug(
+      `[Star:createMesh] Creating mesh for ${object.celestialObjectId}`,
+    );
+  }
+
+  // Force fallback if debug mode is enabled
+  if (debug) {
+    console.debug(
+      `[Star:createMesh] Debug mode enabled, using fallback for ${object.celestialObjectId}`,
+    );
+    return createFallbackSphere(object);
+  }
+
+  let renderer = celestialRenderers.get(object.celestialObjectId);
 
   // If no ID-specific renderer, try to create one
   if (!renderer) {
@@ -104,25 +128,31 @@ export function createStarMesh(
         const newRenderer = createStarRenderer(
           starProps.spectralClass,
           starProps.classType,
-          deps.lightingManager,
+          lightingManager,
         );
         if (newRenderer) {
           renderer = newRenderer;
-          deps.starRenderers.set(object.celestialObjectId, renderer);
+          celestialRenderers.set(object.celestialObjectId, renderer);
+
+          if (debug) {
+            console.debug(
+              `[Star:createMesh] Created new ${starProps.spectralClass || starProps.classType} renderer for ${object.celestialObjectId}`,
+            );
+          }
         } else {
           console.warn(
-            `[MeshFactory:Star] createStarRenderer failed for ${object.celestialObjectId} (Class: ${starProps.spectralClass}, Type: ${starProps.classType}).`,
+            `[Star:createMesh] createStarRenderer failed for ${object.celestialObjectId} (Class: ${starProps.spectralClass}, Type: ${starProps.classType}).`,
           );
         }
       } catch (error) {
         console.error(
-          `[MeshFactory:Star] Error calling createStarRenderer for ${object.celestialObjectId}:`,
+          `[Star:createMesh] Error calling createStarRenderer for ${object.celestialObjectId}:`,
           error,
         );
       }
     } else {
       console.warn(
-        `[MeshFactory:Star] Missing or invalid properties for STAR ${object.celestialObjectId}. Cannot create specific renderer.`,
+        `[Star:createMesh] Missing or invalid properties for STAR ${object.celestialObjectId}. Cannot create specific renderer.`,
       );
     }
   }
@@ -131,22 +161,29 @@ export function createStarMesh(
   if (renderer?.getLODLevels) {
     const lodLevels = renderer.getLODLevels(object);
     if (lodLevels && lodLevels.length > 0) {
-      const lod = deps.createLodObject(object, lodLevels);
+      const lod = createLodObject(object, lodLevels);
       renderer.initialize(object);
+
+      if (debug) {
+        console.debug(
+          `[Star:createMesh] Created LOD with ${lodLevels.length} levels for ${object.celestialObjectId}`,
+        );
+      }
+
       return lod;
     } else {
       console.warn(
-        `[MeshFactory:Star] Renderer for STAR ${object.celestialObjectId} provided invalid LOD levels.`,
+        `[Star:createMesh] Renderer for STAR ${object.celestialObjectId} provided invalid LOD levels.`,
       );
     }
   } else {
     if (renderer) {
       console.warn(
-        `[MeshFactory:Star] Renderer found for STAR ${object.celestialObjectId} but it lacks getLODLevels.`,
+        `[Star:createMesh] Renderer found for STAR ${object.celestialObjectId} but it lacks getLODLevels.`,
       );
     } else {
       console.warn(
-        `[MeshFactory:Star] No suitable renderer found or created for STAR ${object.celestialObjectId}.`,
+        `[Star:createMesh] No suitable renderer found or created for STAR ${object.celestialObjectId}.`,
       );
     }
   }

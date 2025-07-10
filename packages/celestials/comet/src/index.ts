@@ -1,3 +1,6 @@
 export * from "./material";
 export * from "./renderer";
-export * from "./createCometMesh";
+export * from "./createMesh";
+
+// Re-export the old factory function name for backward compatibility
+export { createMesh as createCometMesh } from "./createMesh";

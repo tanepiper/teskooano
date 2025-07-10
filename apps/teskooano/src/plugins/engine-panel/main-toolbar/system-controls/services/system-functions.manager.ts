@@ -26,6 +26,7 @@ import {
 } from "rxjs";
 import { SystemGenerator } from "./system-generator.service";
 import { initializeSolarSystem } from "@teskooano/app-simulation";
+import { createSeededRandomSync } from "@teskooano/core-math";
 
 /** Represents the data structure for an imported system file. */
 interface SystemImportData {
@@ -354,7 +355,7 @@ export class SystemFunctionsManager {
       });
       actions.resetTime();
 
-      const star = generateStar(() => Math.random());
+      const star = generateStar(createSeededRandomSync(Date.now().toString()));
       celestialFactory.createSolarSystem(star);
       updateSeed("");
 

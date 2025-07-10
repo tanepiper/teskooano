@@ -114,8 +114,8 @@ describe("Orbital Mechanics", () => {
       );
 
       expect(position.x).toBeCloseTo(0);
-      expect(position.y).toBeCloseTo(earthSemiMajorAxis);
-      expect(position.z).toBeCloseTo(0);
+      expect(position.y).toBeCloseTo(0);
+      expect(position.z).toBeCloseTo(earthSemiMajorAxis);
     });
 
     it("should calculate correct position for an elliptical orbit at periapsis (t=0)", () => {
