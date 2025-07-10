@@ -202,7 +202,9 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
     }
 
     // Initialize seeded random for consistent generation
-    const random = createSeededRandomSync(object.seed ?? object.celestialObjectId);
+    const random = createSeededRandomSync(
+      object.seed ?? object.celestialObjectId,
+    );
 
     // Create particles in a spherical distribution (Oort cloud)
     for (let i = 0; i < visualCount; i++) {
@@ -397,7 +399,9 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
     this.objectId = object.celestialObjectId;
 
     // Initialize seeded random for this Oort cloud
-    const random = createSeededRandomSync(object.seed ?? object.celestialObjectId);
+    const random = createSeededRandomSync(
+      object.seed ?? object.celestialObjectId,
+    );
     this.particleRotationSpeed = 0.5 + random() * 1.0;
 
     this.cloudRotationAngles = { x: 0, y: 0, z: 0 };
@@ -456,7 +460,9 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
     const targetParticleCount = properties.visualParticleCount;
 
     // Initialize seeded random for consistent generation
-    const random = createSeededRandomSync(object.seed ?? object.celestialObjectId);
+    const random = createSeededRandomSync(
+      object.seed ?? object.celestialObjectId,
+    );
 
     // Create particles in a spherical distribution
     for (let i = 0; i < targetParticleCount; i++) {

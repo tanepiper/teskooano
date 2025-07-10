@@ -452,7 +452,9 @@ class CelestialFactoryService {
 
       if (isRogueWithZeroOrbit && data.orbit) {
         // For rogue planets, use orbit position data if provided, otherwise place deterministically
-        const random = createSeededRandomSync(`rogue-${data.id}-${data.seed ?? 'default'}`);
+        const random = createSeededRandomSync(
+          `rogue-${data.id}-${data.seed ?? "default"}`,
+        );
         const baseDistance = data.orbit.meanAnomaly || random() * 100 + 50; // Use meanAnomaly as distance storage
         const AU_TO_METERS = 1.496e11;
 

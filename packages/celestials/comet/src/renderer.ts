@@ -68,8 +68,10 @@ export class CometRenderer extends BaseCelestialRenderer {
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     // Initialize seeded random for this comet
-    this.random = createSeededRandomSync(object.seed ?? object.celestialObjectId);
-    
+    this.random = createSeededRandomSync(
+      object.seed ?? object.celestialObjectId,
+    );
+
     this.createNucleus(object);
     this.createComa(object);
     this.createParticleTail(object);

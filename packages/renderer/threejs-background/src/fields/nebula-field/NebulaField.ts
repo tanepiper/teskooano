@@ -29,7 +29,9 @@ export class NebulaField extends Field {
    */
   constructor(options: NebulaFieldOptions) {
     super(options);
-    this.random = createSeededRandomSync(`nebula-${options.noiseConfig.seed ?? Date.now()}`);
+    this.random = createSeededRandomSync(
+      `nebula-${options.noiseConfig.seed ?? Date.now()}`,
+    );
     this.rotationSpeed = options.rotationSpeed ?? 0.000000005;
 
     const geometry = this.createGeometry(options.size);

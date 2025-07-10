@@ -93,7 +93,9 @@ export function nearestPowerOfTwo(value: number): number {
  * @returns A string representing the generated UUID.
  */
 export function uuid4(): string {
-  const random = createSeededRandomSync(`uuid-${Date.now()}-${performance.now()}`);
+  const random = createSeededRandomSync(
+    `uuid-${Date.now()}-${performance.now()}`,
+  );
 
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (random() * 16) | 0;

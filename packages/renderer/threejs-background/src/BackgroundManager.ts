@@ -29,7 +29,11 @@ export class BackgroundManager {
   /**
    * Creates a new BackgroundManager.
    */
-  constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera, seed?: string) {
+  constructor(
+    scene: THREE.Scene,
+    camera: THREE.PerspectiveCamera,
+    seed?: string,
+  ) {
     this.scene = scene;
     this.group = new THREE.Group();
     this.debugGroup = new THREE.Group();

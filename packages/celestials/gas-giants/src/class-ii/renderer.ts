@@ -22,7 +22,9 @@ export class ClassIIGasGiantRenderer extends BaseGasGiantRenderer<ClassIIMateria
     const properties = object.properties as GasGiantProperties;
 
     // Initialize seeded random for this gas giant
-    const random = createSeededRandomSync(object.seed ?? object.celestialObjectId);
+    const random = createSeededRandomSync(
+      object.seed ?? object.celestialObjectId,
+    );
 
     const seed = object.celestialObjectId
       ? object.celestialObjectId

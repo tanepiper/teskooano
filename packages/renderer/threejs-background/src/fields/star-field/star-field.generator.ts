@@ -19,7 +19,9 @@ export function createStarField(
   baseDistance: number,
   options: StarFieldLayerOptions,
 ): THREE.Points {
-  const random = createSeededRandomSync(`starfield-${options.count}-${options.distanceMultiplier}-${Date.now()}`);
+  const random = createSeededRandomSync(
+    `starfield-${options.count}-${options.distanceMultiplier}-${Date.now()}`,
+  );
 
   const starGeometry = new THREE.BufferGeometry();
   const positions: number[] = [];
@@ -38,7 +40,8 @@ export function createStarField(
     const theta = random() * Math.PI * 2;
     const phi = Math.acos(random() * 2 - 1);
     const radius =
-      baseDistance * options.distanceMultiplier + random() * options.distanceSpread;
+      baseDistance * options.distanceMultiplier +
+      random() * options.distanceSpread;
 
     positions.push(
       radius * Math.sin(phi) * Math.cos(theta),
@@ -55,7 +58,8 @@ export function createStarField(
     const newColor = new THREE.Color().setHSL(
       hsl.h + (random() * 0.1 - 0.05),
       hsl.s * (0.5 + random() * 0.5),
-      options.minBrightness + random() * (options.maxBrightness - options.minBrightness),
+      options.minBrightness +
+        random() * (options.maxBrightness - options.minBrightness),
     );
 
     if (options.colorTint) {
