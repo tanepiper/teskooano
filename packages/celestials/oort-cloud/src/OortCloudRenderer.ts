@@ -12,99 +12,33 @@ import {
 } from "@teskooano/renderer-threejs-celestial";
 import { LODLevel } from "@teskooano/renderer-threejs-lod";
 import * as THREE from "three";
-
-const oortCloudVertexShader = `
-  attribute float size;
-  attribute float initialRotation;
-  
-  
-  uniform float cloudRotationAngleX;
-  uniform float cloudRotationAngleY;
-  uniform float cloudRotationAngleZ;
-  
-  varying vec3 vColor;
-  varying float vInitialRotation;
-  uniform float pointSizeScale;
-
-  void main() {
-    vColor = color;
-    vInitialRotation = initialRotation;
-    
-    
-    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_Position = projectionMatrix * mvPosition;
-    
-    
-    gl_PointSize = size * pointSizeScale;
-  }
-`;
-
-const oortCloudFragmentShader = `
-  varying vec3 vColor;
-  varying float vInitialRotation;
-  uniform sampler2D cloudTexture;
-  uniform float alphaTest;
-  uniform float time;
-  uniform float particleRotationSpeed;
-
-  void main() {
-    
-    vec4 texColor = texture2D(cloudTexture, gl_PointCoord);
-    
-    
-    if (texColor.a < alphaTest) discard;
-
-    
-    gl_FragColor = texColor * vec4(vColor, 1.0);
-  }
-`;
+import { OortCloudMaterial, type OortCloudMaterialOptions } from "./material";
 
 /**
- * Renders an Oort cloud using a particle system
+ * Renderer for Oort Cloud objects using a particle system.
+ *
+ * Features:
+ * - Spherical particle distribution representing icy cometary bodies
+ * - Seeded random generation for consistent appearance
+ * - Subtle color variations and size differences
+ * - Texture-based rendering with fallback canvas texture
+ * - Single LOD level with always-visible particles
+ * - Configurable density and appearance parameters
+ *
+ * The Oort Cloud is rendered as a sparse collection of small particles
+ * distributed in a thick spherical shell around the system's outer edge.
  */
-export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMaterial> {
+export class OortCloudRenderer extends BaseCelestialRenderer<OortCloudMaterial> {
   private objectId: string | null = null;
   private particles: THREE.Points | null = null;
   private geometry: THREE.BufferGeometry | null = null;
   private cloudTexture: THREE.Texture | null = null;
-  private time: number = 0;
-  private invalidParticleLogged: Set<string> = new Set();
-
   private cloudRotationSpeed = 0.00002;
   private particleRotationSpeed = 0.75; // Default, will be seeded
-  private cloudRotationAngles = { x: 0, y: 0, z: 0 };
-  private lastLogTime = 0;
-  private previousSimTime = 0;
-  private cumulativeRotation = { x: 0, y: 0, z: 0 };
-  private resetCounter = 0;
-  private cumulativeParticleTime = 0;
   private textureLoader: THREE.TextureLoader | null = null;
 
   constructor() {
     super();
-  }
-
-  /**
-   * Creates a fallback canvas texture for when the real texture doesn't load
-   */
-  private createFallbackCanvas(): HTMLCanvasElement {
-    const canvas = document.createElement("canvas");
-    canvas.width = 32;
-    canvas.height = 32;
-    const ctx = canvas.getContext("2d");
-
-    if (ctx) {
-      // Create a simple circular gradient
-      const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-      gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
-      gradient.addColorStop(0.5, "rgba(200, 220, 255, 0.8)");
-      gradient.addColorStop(1, "rgba(160, 192, 255, 0)");
-
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 32, 32);
-    }
-
-    return canvas;
   }
 
   /**
@@ -114,7 +48,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
   getMeshComponents(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
-  ): { geometry: THREE.BufferGeometry; material: THREE.ShaderMaterial } {
+  ): { geometry: THREE.BufferGeometry; material: OortCloudMaterial } {
     let properties: CentralOortCloudProperties | null = null;
 
     if (
@@ -197,7 +131,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
       const material = this.createAndRegisterMaterial(object);
       return {
         geometry: new THREE.BufferGeometry(),
-        material: material || new THREE.ShaderMaterial(),
+        material: material || new OortCloudMaterial(),
       };
     }
 
@@ -260,7 +194,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
 
     return {
       geometry: this.geometry,
-      material: material || new THREE.ShaderMaterial(),
+      material: material || new OortCloudMaterial(),
     };
   }
 
@@ -269,7 +203,15 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
    */
   protected createMaterial(
     object: RenderableCelestialObject,
-  ): THREE.ShaderMaterial {
+  ): OortCloudMaterial {
+    // Create material with fallback texture
+    const material = new OortCloudMaterial({
+      cloudTexture: this.cloudTexture || undefined,
+      pointSizeScale: 0.3,
+      particleRotationSpeed: this.particleRotationSpeed,
+    });
+
+    // Load real texture asynchronously if not already loaded
     if (!this.cloudTexture) {
       const texturePath = "space/textures/asteroids/asteroid_1.png";
 
@@ -277,10 +219,12 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
       this.textureLoader.load(
         `${window.location.href}${texturePath}`,
         (texture) => {
-          const material = this.getTypedMaterial(object.celestialObjectId);
-          if (material) {
-            material.uniforms.cloudTexture.value = texture;
-            material.needsUpdate = true;
+          this.cloudTexture = texture;
+          const currentMaterial = this.getTypedMaterial(
+            object.celestialObjectId,
+          );
+          if (currentMaterial) {
+            currentMaterial.setCloudTexture(texture);
           }
         },
         undefined,
@@ -292,73 +236,6 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
         },
       );
     }
-
-    // Create a fallback texture in case the real texture doesn't load
-    const fallbackTexture = new THREE.CanvasTexture(
-      this.createFallbackCanvas(),
-    );
-
-    const material = new THREE.ShaderMaterial({
-      uniforms: {
-        cloudTexture: { value: this.cloudTexture || fallbackTexture },
-        alphaTest: { value: 0.5 },
-        pointSizeScale: { value: 0.3 }, // Much smaller for subtle appearance
-        time: { value: 0.0 },
-        cloudRotationAngleX: { value: 0.0 },
-        cloudRotationAngleY: { value: 0.0 },
-        cloudRotationAngleZ: { value: 0.0 },
-        particleRotationSpeed: { value: this.particleRotationSpeed },
-      },
-      vertexShader: oortCloudVertexShader,
-      fragmentShader: oortCloudFragmentShader,
-      transparent: false, // Changed to false like asteroid field
-      vertexColors: true,
-
-      depthWrite: true, // Changed to true for proper depth handling
-      depthTest: true, // Added depth testing
-      blending: THREE.NormalBlending,
-
-      alphaTest: 0.2, // Increased to match asteroid field
-    });
-
-    material.needsUpdate = true;
-    material.uniformsNeedUpdate = true;
-
-    material.onBeforeCompile = (shader) => {
-      const renderer = material.userData.renderer;
-      if (renderer) {
-        const gl = renderer.getContext();
-        if (gl) {
-          const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-          if (vertexShader) {
-            gl.shaderSource(vertexShader, shader.vertexShader);
-            gl.compileShader(vertexShader);
-            if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-              console.error(
-                "[OortCloudRenderer] Vertex shader compile error:",
-                gl.getShaderInfoLog(vertexShader),
-              );
-            } else {
-            }
-            gl.deleteShader(vertexShader);
-          }
-
-          const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-          if (fragmentShader) {
-            gl.shaderSource(fragmentShader, shader.fragmentShader);
-            gl.compileShader(fragmentShader);
-            if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-              console.error(
-                "[OortCloudRenderer] Fragment shader compile error:",
-                gl.getShaderInfoLog(fragmentShader),
-              );
-            } else {
-            }
-            gl.deleteShader(fragmentShader);
-          }
-        }
-      }
-    };
 
     return material;
   }
@@ -403,11 +280,6 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
       object.seed ?? object.celestialObjectId,
     );
     this.particleRotationSpeed = 0.5 + random() * 1.0;
-
-    this.cloudRotationAngles = { x: 0, y: 0, z: 0 };
-    this.cumulativeRotation = { x: 0, y: 0, z: 0 };
-    this.resetCounter = 0;
-    this.cumulativeParticleTime = 0;
 
     if (options?.cloudRotationSpeed !== undefined) {
       this.cloudRotationSpeed = options.cloudRotationSpeed;
@@ -557,8 +429,7 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
 
     const material = this.getTypedMaterial(object.celestialObjectId);
     if (material) {
-      material.uniforms.time.value = this.getElapsedTime() * 0.0001;
-      material.uniformsNeedUpdate = true;
+      material.updateTime(this.getElapsedTime() * 0.0001);
     }
   }
 
@@ -572,11 +443,6 @@ export class OortCloudRenderer extends BaseCelestialRenderer<THREE.ShaderMateria
     this.particles = null;
     this.cloudTexture = null;
     this.textureLoader = null;
-    this.invalidParticleLogged.clear();
-    this.cloudRotationAngles = { x: 0, y: 0, z: 0 };
-    this.cumulativeRotation = { x: 0, y: 0, z: 0 };
-    this.resetCounter = 0;
-    this.cumulativeParticleTime = 0;
 
     // Call parent dispose to clean up base class resources
     super.dispose();

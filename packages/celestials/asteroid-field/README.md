@@ -11,30 +11,60 @@ A high-performance, deterministic asteroid field renderer for the Teskooano N-Bo
 - 🌌 **Realistic Scaling**: Proper size distribution and distance-based visibility
 - ⚡ **High Performance**: Optimized shader-based rendering with instanced particles
 
+## Package Structure
+
+```
+src/
+├── shaders/                     # GLSL shader files
+│   ├── asteroid.vert            # Vertex shader for particle positioning
+│   └── asteroid.frag            # Fragment shader for texture rendering
+├── material.ts                  # AsteroidFieldMaterial class
+├── AsteroidFieldRenderer.ts     # Main renderer class
+├── createAsteroidFieldMesh.ts   # Factory function for mesh creation
+└── index.ts                     # Package exports
+```
+
 ## Architecture Overview
 
 The asteroid field system is built on a modular, shader-based architecture that extends the base celestial rendering framework.
 
 ### Core Components
 
-#### 1. AsteroidFieldRenderer
+#### 1. AsteroidFieldMaterial
 
-The main renderer class that manages the entire asteroid field lifecycle:
+A specialized material class for asteroid rendering:
 
 ```typescript
-class AsteroidFieldRenderer extends BaseCelestialRenderer {
-  // Handles LOD generation, material management, and updates
+class AsteroidFieldMaterial extends THREE.ShaderMaterial {
+  // Handles shader uniforms, texture loading, and animation updates
+}
+```
+
+**Key Features:**
+
+- **Automatic Texture Loading**: Asynchronously loads 5 asteroid texture variants
+- **Animation Control**: Methods for updating belt rotation, time, and particle speed
+- **Configurable Options**: Customizable alpha testing, rotation speed, and render scale
+- **Resource Management**: Proper texture disposal and cleanup
+
+#### 2. AsteroidFieldRenderer
+
+The main renderer class that manages the asteroid field geometry and LOD:
+
+```typescript
+class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMaterial> {
+  // Handles LOD generation, geometry creation, and scene management
 }
 ```
 
 **Key Responsibilities:**
 
 - **LOD Management**: Creates multiple detail levels (50k, 25k, 10k, 1k particles)
-- **Texture Loading**: Asynchronously loads 5 asteroid texture variants
-- **Seeded Generation**: Uses object seeds for deterministic placement
-- **Material Updates**: Manages shader uniforms and animation state
+- **Geometry Generation**: Creates positioned asteroid particles with seeded randomization
+- **Material Integration**: Uses AsteroidFieldMaterial for consistent rendering
+- **Scene Updates**: Coordinates material updates with simulation time
 
-#### 2. Shader System
+#### 3. Shader System
 
 ##### Vertex Shader (`asteroid.vert`)
 
@@ -49,7 +79,7 @@ class AsteroidFieldRenderer extends BaseCelestialRenderer {
 - **Alpha Testing**: Discards transparent pixels for proper compositing
 - **Color Modulation**: Applies vertex color variations
 
-#### 3. Geometry Generation
+#### 4. Geometry Generation
 
 The renderer creates `BufferGeometry` with specific attributes:
 
@@ -94,13 +124,31 @@ The renderer uses a 4-tier LOD system for optimal performance:
 
 ### Basic Integration
 
-The asteroid field renderer is automatically used by the mesh factory when creating asteroid field objects:
-
 ```typescript
-import { createAsteroidFieldMesh } from "@teskooano/celestials-asteroid-field";
+import {
+  createAsteroidFieldMesh,
+  AsteroidFieldMaterial,
+  AsteroidFieldRenderer,
+} from "@teskooano/celestials-asteroid-field";
 
-// Called by MeshFactory for ASTEROID_FIELD objects
-const asteroidField = createAsteroidFieldMesh(object, deps);
+// Simple usage via factory function
+const asteroidField = createAsteroidFieldMesh(object, {
+  celestialRenderers: renderersMap,
+  createLodObject: lodFactory,
+});
+
+// Advanced usage with custom material configuration
+const material = new AsteroidFieldMaterial({
+  particleRotationSpeed: 2.0,
+  renderScale: 1.5,
+  alphaTest: 0.3,
+});
+
+// The renderer automatically handles:
+// - Multiple LOD level generation
+// - Seeded particle placement
+// - Texture loading and management
+// - Animation state updates
 ```
 
 ### Configuration Options
