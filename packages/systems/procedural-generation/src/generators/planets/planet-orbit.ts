@@ -47,7 +47,7 @@ export function calculatePlanetOrbitAndInitialState(
   // Generate realistic orbital eccentricity using Rayleigh distribution
   // Most planets have low eccentricity (< 0.1), with mean around 0.05
   let eccentricity = generateRealisticEccentricity(random, bodyDistanceAU);
-  
+
   // Validate that the orbit stays within system boundary by checking aphelion
   // If not, reduce eccentricity until it fits
   while (!UTIL.isOrbitWithinSystemBoundary(bodyDistanceAU, eccentricity)) {

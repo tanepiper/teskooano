@@ -145,11 +145,11 @@ function generatePlacementsForZone(
         zone,
         slotIndex,
       );
-              groups.push({
-          baseDistance: distance,
-          configuration: OrbitalConfiguration.STANDARD,
-          bodies: [standardPlacement],
-        });
+      groups.push({
+        baseDistance: distance,
+        configuration: OrbitalConfiguration.STANDARD,
+        bodies: [standardPlacement],
+      });
       usedSlots++;
       slotIndex++;
       // Add this distance to used distances
@@ -396,7 +396,7 @@ function generateRogueGroup(
   // Account for maximum possible eccentricity to ensure aphelion stays within boundary
   const maxEccentricity = 0.9;
   const effectiveMaxDistance = SYSTEM_MAX_DISTANCE_AU / (1 + maxEccentricity);
-  
+
   // Rogue objects can be anywhere in the zone, but capped at effective system boundary
   const rogueDistance = Math.min(
     utils.lerp(zone.minAU, zone.maxAU, random()),
@@ -490,12 +490,12 @@ function generateDistanceInZoneWithSpacing(
   minSpacing: number,
 ): number | null {
   const maxAttempts = 20;
-  
+
   // Account for maximum possible eccentricity to ensure aphelion stays within boundary
   // Use 0.9 as worst-case eccentricity (comets and distant planets can have high eccentricity)
   const maxEccentricity = 0.9;
   const effectiveMaxDistance = SYSTEM_MAX_DISTANCE_AU / (1 + maxEccentricity);
-  
+
   // Ensure zone doesn't exceed the effective boundary
   const adjustedZoneMax = Math.min(zone.maxAU, effectiveMaxDistance);
 

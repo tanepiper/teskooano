@@ -157,7 +157,7 @@ export function getStarColor(temperature: number): string {
  * For elliptical orbits, aphelion = semiMajorAxis × (1 + eccentricity).
  * This ensures that the entire orbital path stays within the system boundary,
  * not just the semi-major axis.
- * 
+ *
  * @param semiMajorAxisAU The semi-major axis of the orbit in AU.
  * @param eccentricity The orbital eccentricity (0 = circular, < 1 = elliptical).
  * @param maxDistanceAU The maximum allowed distance from the star in AU.
@@ -171,10 +171,10 @@ export function isOrbitWithinSystemBoundary(
   if (semiMajorAxisAU <= 0 || eccentricity < 0 || eccentricity >= 1) {
     return false;
   }
-  
+
   // Calculate aphelion (farthest point from the star)
   const aphelionAU = semiMajorAxisAU * (1 + eccentricity);
-  
+
   return aphelionAU <= maxDistanceAU;
 }
 

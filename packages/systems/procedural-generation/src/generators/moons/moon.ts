@@ -298,17 +298,6 @@ export function generateMoon(
     },
   };
 
-  // Set surface and atmosphere properties
-  if (
-    moonData.properties?.type === CelestialType.MOON ||
-    moonData.properties?.type === CelestialType.PLANET ||
-    moonData.properties?.type === CelestialType.DWARF_PLANET
-  ) {
-    const props = moonData.properties as PlanetProperties;
-    moonData.atmosphere = props.atmosphere;
-    moonData.surface = props.surface;
-  }
-
   return { moonData, nextLastMoonDistance_radii: moonDistance_radii };
 }
 
@@ -441,12 +430,12 @@ function calculateHillRadius(
 
 /**
  * Generate moon orbital parameters based on formation mechanism.
- * 
+ *
  * This function creates realistic moon orbits by:
  * 1. Inheriting the parent planet's orbital plane (inclination and longitude of ascending node)
  * 2. Adding small relative inclinations based on formation mechanism
  * 3. Randomizing the starting position in orbit (meanAnomaly) - this is correct physics
- * 
+ *
  * Note: The randomized meanAnomaly means moons start at different points in their orbits,
  * which may appear as "random directions" but is actually proper orbital mechanics.
  * All moons still orbit in roughly the same plane as their parent planet.

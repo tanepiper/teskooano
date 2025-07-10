@@ -38,16 +38,17 @@ export function generateComet(
   // For comets with highly elliptical orbits, we need to check if the aphelion
   // stays within the system boundary. If the provided distance would result in
   // an orbit that exceeds the boundary, we need to adjust it.
-  
+
   // First, generate a sample eccentricity to check the orbit
   const sampleEccentricity = 0.8 + random() * 0.199; // 0.8 - 0.999
-  
+
   // Check if this orbit would exceed the boundary
   if (!UTIL.isOrbitWithinSystemBoundary(distanceAU, sampleEccentricity)) {
     // Calculate the maximum distance that would keep the aphelion within bounds
     // For a given eccentricity: maxSemiMajorAxis = BOUNDARY / (1 + eccentricity)
-    const maxSemiMajorAxisAU = CONST.SYSTEM_MAX_DISTANCE_AU / (1 + sampleEccentricity);
-    
+    const maxSemiMajorAxisAU =
+      CONST.SYSTEM_MAX_DISTANCE_AU / (1 + sampleEccentricity);
+
     if (maxSemiMajorAxisAU < 10) {
       // If the maximum semi-major axis is too small for a meaningful comet orbit, skip
       console.warn(
@@ -55,11 +56,11 @@ export function generateComet(
       );
       return null;
     }
-    
+
     // Use the adjusted distance instead
     distanceAU = Math.min(distanceAU, maxSemiMajorAxisAU);
   }
-  
+
   // Validate final distance is within system boundary
   if (distanceAU > CONST.SYSTEM_MAX_DISTANCE_AU) {
     console.warn(
@@ -180,7 +181,7 @@ function generateCometOrbit(
 ): OrbitalParameters {
   // Comets have very high eccentricity
   let eccentricity = 0.8 + random() * 0.199; // 0.8 - 0.999
-  
+
   // Ensure the orbit stays within system boundary by checking aphelion
   while (!UTIL.isOrbitWithinSystemBoundary(distanceAU, eccentricity)) {
     eccentricity *= 0.95; // Reduce eccentricity by 5% (more conservative for comets)
