@@ -36,7 +36,8 @@ export const enhancedCelestialZones: CelestialZone[] = [
       OrbitalConfiguration.STANDARD,
       OrbitalConfiguration.ROGUE,
     ],
-    maxBodies: 2, // Allow up to 2 bodies in scorched zone
+    maxBodies: 2,
+    minBodies: 0,
   },
   {
     name: "Hot Inner Zone",
@@ -57,6 +58,7 @@ export const enhancedCelestialZones: CelestialZone[] = [
       OrbitalConfiguration.TROJAN,
     ],
     maxBodies: 6, // Increased for more variety
+    minBodies: 1,
   },
   {
     name: "Temperate Zone",
@@ -83,6 +85,7 @@ export const enhancedCelestialZones: CelestialZone[] = [
       OrbitalConfiguration.CO_ORBITAL,
     ],
     maxBodies: 5, // Increased for more variety
+    minBodies: 1,
   },
   {
     name: "Cool Zone",
@@ -103,6 +106,7 @@ export const enhancedCelestialZones: CelestialZone[] = [
       OrbitalConfiguration.TROJAN,
     ],
     maxBodies: 7, // Increased for more variety
+    minBodies: 2,
   },
   {
     name: "Outer Gas Zone",
@@ -124,6 +128,7 @@ export const enhancedCelestialZones: CelestialZone[] = [
       OrbitalConfiguration.CO_ORBITAL,
     ],
     maxBodies: 4,
+    minBodies: 1,
   },
   {
     name: "Frozen Outer Zone",
@@ -276,6 +281,14 @@ export class CelestialZoneManager {
 
     // Calculate combined luminosity for multi-star systems
     const totalLuminosity = stars.reduce((sum, star) => {
+      // Use the pre-calculated luminosity from properties if it exists.
+      // This is more accurate than the mass-based approximation.
+      const starLuminosity = (star.properties as any)?.luminosity;
+      if (starLuminosity) {
+        return sum + starLuminosity;
+      }
+
+      // Fallback to mass-based calculation if luminosity property is missing.
       const mass = star.realMass_kg || CONST.SOLAR_MASS_KG;
       const solarMasses = mass / CONST.SOLAR_MASS_KG;
       // Main sequence mass-luminosity relation: L ∝ M^3.5
@@ -291,11 +304,11 @@ export class CelestialZoneManager {
     return this.zones.map((zone) => ({
       ...zone,
       minAU: Math.min(
-        zone.minAU * luminosityFactor,
+        zone.baseMinAU * luminosityFactor,
         CONST.SYSTEM_MAX_DISTANCE_AU,
       ),
       maxAU: Math.min(
-        zone.maxAU * luminosityFactor,
+        zone.baseMaxAU * luminosityFactor,
         CONST.SYSTEM_MAX_DISTANCE_AU,
       ),
       // Adjust formation probability based on system complexity
@@ -334,8 +347,19 @@ export class CelestialZoneManager {
     const adjustedZones = this.getAdjustedZones(stars, config);
     const activeZones: CelestialZone[] = [];
 
+    // First, guarantee the inner zones that have a minBodies property
+    const guaranteedZones = adjustedZones.filter(
+      (zone) => (zone.minBodies ?? 0) > 0,
+    );
+    activeZones.push(...guaranteedZones);
+
     // Allow more natural zone selection based on formation probability
     for (const zone of adjustedZones) {
+      // Avoid re-adding guaranteed zones
+      if (activeZones.find((z) => z.name === zone.name)) {
+        continue;
+      }
+
       const shouldInclude = this.random() < zone.formationProbability;
       if (shouldInclude) {
         activeZones.push(zone);

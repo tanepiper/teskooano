@@ -43,7 +43,7 @@ export function initializeAsteroidBelt(parentId: string): void {
       outerRadiusAU: BELT_OUTER_AU,
       heightAU: BELT_HEIGHT_AU,
       count: BELT_ASTEROID_COUNT,
-      color: "#8f8c8a",
+      color: "#b4afac",
       composition: ["silicates", "carbonaceous", "metallic", "icy fragments"],
     } as AsteroidFieldProperties,
   });

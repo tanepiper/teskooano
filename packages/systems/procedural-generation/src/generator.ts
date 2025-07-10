@@ -1,7 +1,7 @@
 import type { CelestialObject } from "@teskooano/data-types";
 import { EMPTY, Observable, catchError, from } from "rxjs";
 import { generateBodyForSlot, generateStars } from "./operators";
-import { createSeededRandom } from "./seeded-random";
+import { createSeededRandom } from "@teskooano/core-math";
 import { generateBodyDistances } from "./utils/body-placement";
 import { CelestialZoneManager } from "./zones";
 import { generateComet, generateSystemNameFromSeed } from "./generators";

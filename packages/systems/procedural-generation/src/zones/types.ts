@@ -111,6 +111,7 @@ export interface CelestialZone {
   formationProbability: number;
   specialConfigurations: OrbitalConfiguration[];
   maxBodies: number;
+  minBodies?: number;
 }
 
 /**

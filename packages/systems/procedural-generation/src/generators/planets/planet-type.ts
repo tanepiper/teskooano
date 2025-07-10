@@ -67,20 +67,16 @@ export function determinePlanetTypeAndBaseProperties(
   let celestialClass: PlanetType | GasGiantClass | undefined;
 
   if (isGasGiant) {
-    // First, attempt to classify based on physics.
-    const classifiedGiant = UTIL.classifyGasGiantByTemperature(
-      random,
-      zone.minAU, // Use the zone's distance for temperature classification
-      parentStar.temperature,
-      parentStar.realRadius_m,
-    );
-
-    // If the physically-correct class is allowed by the zone, use it.
-    // Otherwise, pick a random valid one from the zone's explicit list.
-    if (zone.allowedGasGiantClasses.includes(classifiedGiant)) {
-      celestialClass = classifiedGiant;
-    } else {
+    // The zone dictates which gas giants are allowed.
+    // We should directly pick one from the allowed list.
+    if (zone.allowedGasGiantClasses.length > 0) {
       celestialClass = UTIL.getRandomItem(zone.allowedGasGiantClasses, random);
+    } else {
+      // Fallback if a zone is misconfigured to allow gas giants but lists none.
+      console.warn(
+        `[planet-type] Zone "${zone.name}" is configured to allow Gas Giants but has no allowed classes. Falling back to Class I.`,
+      );
+      celestialClass = GasGiantClass.CLASS_I;
     }
   } else {
     // If it's a rocky planet, just pick one from the allowed list for the zone.

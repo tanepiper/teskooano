@@ -1,5 +1,5 @@
 import * as UTIL from "../../utils";
-import { createSeededRandom } from "../../seeded-random";
+import { createSeededRandom } from "@teskooano/core-math";
 
 const vowels = "aeiou";
 const consonants = "bcdfghjklmnpqrstvwxyz";

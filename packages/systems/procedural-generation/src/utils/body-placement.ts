@@ -90,7 +90,9 @@ function generatePlacementsForZone(
 ): PlacementGroup[] {
   const groups: PlacementGroup[] = [];
   // Use maxBodies from the new zone format
-  const numPotentialSlots = Math.floor(random() * zone.maxBodies) + 1;
+  const numPotentialSlots =
+    (zone?.minBodies ?? 0) +
+    Math.floor(random() * (zone.maxBodies - (zone.minBodies ?? 0) + 1));
 
   let slotIndex = startingSlotIndex;
   let usedSlots = 0;
