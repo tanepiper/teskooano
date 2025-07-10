@@ -202,14 +202,16 @@ function calculateInitialMoonDistance(
 
   switch (celestialType) {
     case CelestialType.GAS_GIANT:
-      // Gas giants start closer due to larger Roche limit
-      return 2.5 + Math.log10(massRatio) * 0.5;
+      // Gas giants can have moons at larger distances due to their size and gravity
+      // Jupiter's moons range from ~6 to ~26 Jupiter radii
+      return 8 + Math.log10(massRatio) * 2;
 
     case CelestialType.PLANET:
-      // Terrestrial planets start further out
-      return 3.5;
+      // Terrestrial planets have moons at larger distances
+      // Earth's Moon is ~60 Earth radii away
+      return 20 + Math.log10(massRatio) * 10;
 
     default:
-      return 3.0;
+      return 15;
   }
 }

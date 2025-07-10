@@ -456,15 +456,28 @@ class CelestialFactoryService {
           `rogue-${data.id}-${data.seed ?? "default"}`,
         );
         const baseDistance = data.orbit.meanAnomaly || random() * 100 + 50; // Use meanAnomaly as distance storage
+
+        // Ensure rogue planets are placed at realistic distances (minimum 50 AU from any star)
+        const minRogueDistanceAU = 50;
+        const safeDistanceAU = Math.max(baseDistance, minRogueDistanceAU);
+
+        // Debug logging for rogue planet placement
+        if (baseDistance < minRogueDistanceAU) {
+          console.warn(
+            `[CelestialFactoryService] Rogue planet ${data.id} was placed too close to star ` +
+              `(${baseDistance.toFixed(2)} AU). Corrected to minimum safe distance of ${safeDistanceAU.toFixed(2)} AU.`,
+          );
+        }
+
         const AU_TO_METERS = 1.496e11;
 
         physicsStateReal = {
           id: data.id,
           mass_kg: data.realMass_kg,
           position_m: new OSVector3(
-            baseDistance * AU_TO_METERS,
-            (random() - 0.5) * baseDistance * AU_TO_METERS * 0.1,
-            (random() - 0.5) * baseDistance * AU_TO_METERS * 0.1,
+            safeDistanceAU * AU_TO_METERS,
+            (random() - 0.5) * safeDistanceAU * AU_TO_METERS * 0.1,
+            (random() - 0.5) * safeDistanceAU * AU_TO_METERS * 0.1,
           ),
           velocity_mps: new OSVector3(
             (random() - 0.5) * 500, // ±250 m/s drift

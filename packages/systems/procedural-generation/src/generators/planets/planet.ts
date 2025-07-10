@@ -78,19 +78,6 @@ export function generatePlanet(
         baseProps.massMultiplierFactor;
       const planetMass_kg = planetMassMultiplier * CONST.EARTH_MASS_KG;
 
-      // Debug logging for mass generation
-      // if (planetMass_kg > 1e24) { // If mass > 1 Earth mass
-      //   console.warn(`[generatePlanet] High mass detected for ${planetName}:`, {
-      //     planetName,
-      //     bodyDistanceAU,
-      //     massRangeMultiplier,
-      //     planetMassMultiplier,
-      //     baseProps_massMultiplierFactor: baseProps.massMultiplierFactor,
-      //     planetMass_kg,
-      //     mass_in_earth_masses: planetMass_kg / CONST.EARTH_MASS_KG,
-      //   });
-      // }
-
       const finalPlanetRadius_m = UTIL.calculateRadius(
         planetMass_kg,
         baseProps.targetDensity_kg_m3,

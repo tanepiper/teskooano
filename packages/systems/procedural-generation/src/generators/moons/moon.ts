@@ -389,8 +389,8 @@ function calculateNextMoonDistance(
   planetRadius: number,
   planetMass: number,
 ): number {
-  // Minimum distance: 2.5 planetary radii (outside Roche limit)
-  const minDistance = Math.max(2.5, lastDistance);
+  // Minimum distance: 5 planetary radii (much more conservative)
+  const minDistance = Math.max(5, lastDistance);
 
   let spacingFactor: number;
 
@@ -402,12 +402,12 @@ function calculateNextMoonDistance(
 
     case "impact":
       // Impact moons often single, large spacing
-      spacingFactor = 3.0 + random() * 2.0;
+      spacingFactor = 2.5 + random() * 2.0;
       break;
 
     case "capture":
       // Irregular spacing for captured objects
-      spacingFactor = 1.5 + random() * 4.0;
+      spacingFactor = 2.0 + random() * 3.0;
       break;
 
     default:
