@@ -35,7 +35,32 @@ export function generateComet(
   distanceAU: number, // This will be used as the basis for the orbit
   index: number,
 ): CelestialObject | null {
-  // Validate distance is within system boundary
+  // For comets with highly elliptical orbits, we need to check if the aphelion
+  // stays within the system boundary. If the provided distance would result in
+  // an orbit that exceeds the boundary, we need to adjust it.
+  
+  // First, generate a sample eccentricity to check the orbit
+  const sampleEccentricity = 0.8 + random() * 0.199; // 0.8 - 0.999
+  
+  // Check if this orbit would exceed the boundary
+  if (!UTIL.isOrbitWithinSystemBoundary(distanceAU, sampleEccentricity)) {
+    // Calculate the maximum distance that would keep the aphelion within bounds
+    // For a given eccentricity: maxSemiMajorAxis = BOUNDARY / (1 + eccentricity)
+    const maxSemiMajorAxisAU = CONST.SYSTEM_MAX_DISTANCE_AU / (1 + sampleEccentricity);
+    
+    if (maxSemiMajorAxisAU < 10) {
+      // If the maximum semi-major axis is too small for a meaningful comet orbit, skip
+      console.warn(
+        `[generateComet] Cannot create a realistic comet orbit within system boundary at distance ${distanceAU} AU. Skipping.`,
+      );
+      return null;
+    }
+    
+    // Use the adjusted distance instead
+    distanceAU = Math.min(distanceAU, maxSemiMajorAxisAU);
+  }
+  
+  // Validate final distance is within system boundary
   if (distanceAU > CONST.SYSTEM_MAX_DISTANCE_AU) {
     console.warn(
       `[generateComet] Comet distance ${distanceAU} AU exceeds system boundary. Skipping.`,
@@ -154,7 +179,17 @@ function generateCometOrbit(
   cometMass_kg: number,
 ): OrbitalParameters {
   // Comets have very high eccentricity
-  const eccentricity = 0.8 + random() * 0.199; // 0.8 - 0.999
+  let eccentricity = 0.8 + random() * 0.199; // 0.8 - 0.999
+  
+  // Ensure the orbit stays within system boundary by checking aphelion
+  while (!UTIL.isOrbitWithinSystemBoundary(distanceAU, eccentricity)) {
+    eccentricity *= 0.95; // Reduce eccentricity by 5% (more conservative for comets)
+    if (eccentricity < 0.5) {
+      // If we've reduced it too much, set a minimum for comet-like behavior
+      eccentricity = 0.5;
+      break;
+    }
+  }
 
   // Use the provided distance as the semi-major axis for long-period comets
   const semiMajorAxis_m = distanceAU * CONST.AU_TO_METERS;

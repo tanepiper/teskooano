@@ -323,7 +323,30 @@ describe("Enhanced Procedural Generation System", () => {
     expect(hasStars).toBe(true);
   });
 
-  it("enforces system distance boundary of 10,000 AU", async () => {
+  it("validates orbital boundary checking utility function", async () => {
+    // Test the isOrbitWithinSystemBoundary utility function
+    const { isOrbitWithinSystemBoundary } = await import("./utils");
+
+    // Test circular orbit at boundary
+    expect(isOrbitWithinSystemBoundary(10000, 0, 10000)).toBe(true);
+    
+    // Test elliptical orbit that would exceed boundary
+    expect(isOrbitWithinSystemBoundary(6000, 0.8, 10000)).toBe(false); // Aphelion: 6000 * 1.8 = 10800 AU
+    
+    // Test elliptical orbit that stays within boundary
+    expect(isOrbitWithinSystemBoundary(5000, 0.8, 10000)).toBe(true); // Aphelion: 5000 * 1.8 = 9000 AU
+    
+    // Test highly elliptical comet-like orbit
+    expect(isOrbitWithinSystemBoundary(3000, 0.99, 10000)).toBe(true); // Aphelion: 3000 * 1.99 = 5970 AU (within boundary)
+    expect(isOrbitWithinSystemBoundary(5100, 0.99, 10000)).toBe(false); // Aphelion: 5100 * 1.99 = 10149 AU (exceeds boundary)
+    
+    // Test invalid inputs
+    expect(isOrbitWithinSystemBoundary(-1000, 0.5, 10000)).toBe(false);
+    expect(isOrbitWithinSystemBoundary(1000, -0.1, 10000)).toBe(false);
+    expect(isOrbitWithinSystemBoundary(1000, 1.0, 10000)).toBe(false);
+  });
+
+  it("enforces system distance boundary of 10,000 AU including aphelion", async () => {
     const seed = "distance-boundary-test";
     const { objects$ } = await generateSystem(seed);
 
@@ -337,9 +360,21 @@ describe("Enhanced Procedural Generation System", () => {
 
     // Check all objects are within the 10,000 AU boundary
     for (const obj of objects) {
-      if (obj.orbit?.realSemiMajorAxis_m) {
-        const distanceAU = obj.orbit.realSemiMajorAxis_m / 1.496e11;
-        expect(distanceAU).toBeLessThanOrEqual(10000);
+      if (obj.orbit?.realSemiMajorAxis_m && obj.orbit?.eccentricity !== undefined) {
+        const semiMajorAxisAU = obj.orbit.realSemiMajorAxis_m / 1.496e11;
+        const eccentricity = obj.orbit.eccentricity;
+        
+        // Check semi-major axis is within boundary
+        expect(semiMajorAxisAU).toBeLessThanOrEqual(10000);
+        
+        // More importantly, check that aphelion (farthest orbital point) is within boundary
+        // Aphelion = semiMajorAxis × (1 + eccentricity)
+        const aphelionAU = semiMajorAxisAU * (1 + eccentricity);
+        expect(aphelionAU).toBeLessThanOrEqual(10000);
+        
+        // Verify eccentricity is valid
+        expect(eccentricity).toBeGreaterThanOrEqual(0);
+        expect(eccentricity).toBeLessThan(1);
       }
     }
 

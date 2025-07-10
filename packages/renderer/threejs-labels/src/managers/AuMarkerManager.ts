@@ -5,6 +5,15 @@ import { AuMarkerLabelLayer } from "../layers/AuMarkerLabelLayer";
 import { CSS2DLayerType } from "../types";
 
 const auMarkersData = [
+  { au: 0.1, color: "#00ff00" },
+  { au: 0.2, color: "#FFA500" },
+  { au: 0.3, color: "#FFA500" },
+  { au: 0.4, color: "#FFA500" },
+  { au: 0.5, color: "#FFA500" },
+  { au: 0.6, color: "#FFA500" },
+  { au: 0.7, color: "#FFA500" },
+  { au: 0.8, color: "#FFA500" },
+  { au: 0.9, color: "#FFA500" },
   { au: 1, color: "#00ff00" },
   { au: 2, color: "#FFA500" },
   { au: 3, color: "#FFA500" },

@@ -101,6 +101,8 @@ export function generateMoon(
   );
 
   // Generate orbital parameters based on formation mechanism
+  // Note: The moon will inherit the parent planet's orbital plane characteristics
+  // (inclination and longitude of ascending node) to maintain realistic coplanar orbits
   const orbitalParams = generateMoonOrbit(
     random,
     moonSemiMajorAxis_m,
@@ -438,7 +440,16 @@ function calculateHillRadius(
 }
 
 /**
- * Generate moon orbital parameters based on formation mechanism
+ * Generate moon orbital parameters based on formation mechanism.
+ * 
+ * This function creates realistic moon orbits by:
+ * 1. Inheriting the parent planet's orbital plane (inclination and longitude of ascending node)
+ * 2. Adding small relative inclinations based on formation mechanism
+ * 3. Randomizing the starting position in orbit (meanAnomaly) - this is correct physics
+ * 
+ * Note: The randomized meanAnomaly means moons start at different points in their orbits,
+ * which may appear as "random directions" but is actually proper orbital mechanics.
+ * All moons still orbit in roughly the same plane as their parent planet.
  */
 function generateMoonOrbit(
   random: () => number,
