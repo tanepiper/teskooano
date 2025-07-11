@@ -234,8 +234,8 @@ function calculateBeltDimensions(
   outerRadius: number;
   height: number;
 } {
-  // Belt width: typically 20-40% of the central distance
-  const relativeWidth = 0.2 + random() * 0.2; // 20-40%
+  // Belt width: typically 10-25% of the central distance (reduced from 20-40%)
+  const relativeWidth = 0.1 + random() * 0.15; // 10-25%
   const halfWidth = centerDistanceAU * relativeWidth * 0.5;
 
   const innerRadius = Math.max(0.1, centerDistanceAU - halfWidth);
@@ -271,12 +271,12 @@ function calculateRealisticParticleCount(
   const densityFactor = Math.pow(distanceAU, -1.5); // Inverse square-ish law
 
   // Base particle density (particles per cubic AU)
-  const baseDensity = 100 + random() * 400; // 100-500 particles per cubic AU
+  const baseDensity = 500 + random() * 1500; // Increased from 100-500 to 500-2000 particles per cubic AU
 
   const totalCount = Math.floor(beltVolume * baseDensity * densityFactor);
 
-  // Realistic range: 1,000 to 50,000 visible objects
-  return Math.max(1000, Math.min(50000, totalCount));
+  // Realistic range: 5,000 to 100,000 visible objects (increased from 1,000-50,000)
+  return Math.max(5000, Math.min(100000, totalCount));
 }
 
 /**

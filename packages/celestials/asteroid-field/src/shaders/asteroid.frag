@@ -40,7 +40,7 @@ void main() {
 
   // Apply vertex color modulation and brightness
   vec3 finalColor = texColor.rgb * vColor * 1.5; // Slight brightness boost
-  float finalAlpha = texColor.a * (1.0 - len * 0.3); // Slight edge falloff
+  float finalAlpha = 1.0; // Slight edge falloff
   
   gl_FragColor = vec4(finalColor, finalAlpha);
 } 

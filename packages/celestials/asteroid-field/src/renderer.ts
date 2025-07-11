@@ -152,8 +152,8 @@ export class AsteroidFieldRenderer extends BaseCelestialRenderer<AsteroidFieldMa
         (distanceFromCenter - innerRadius) / (outerRadius - innerRadius);
       const baseSizeVariation =
         (5.0 - normalizedDistance * 0.3) * (0.7 + this.random() * 0.6);
-      // Moderate sizes for good visibility with textures
-      sizes[i] = Math.max(3.0, baseSizeVariation * 15.0); // Good size for textured asteroids
+      // Much smaller sizes for realistic asteroid appearance
+      sizes[i] = Math.max(0.5, baseSizeVariation * 3.0); // Reduced from 15.0 to 2.0
 
       // Add texture index and initial rotation for shader compatibility
       textureIndices[i] = Math.floor(this.random() * 5); // Assuming 5 texture variants

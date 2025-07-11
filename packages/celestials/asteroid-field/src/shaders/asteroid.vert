@@ -30,5 +30,5 @@ void main() {
   
   // Simplified size calculation - make them much larger for debugging
   float distance = length(mvPosition.xyz);
-  gl_PointSize = size * 100.0 / distance; // Much simpler calculation
+  gl_PointSize = size * 100.0 / distance; // Reduced from 100.0 to 10.0 for realistic size
 } 
