@@ -85,6 +85,21 @@ export function determinePlanetTypeAndBaseProperties(
     }
   }
 
+  // Safety check: Prevent terrestrial planets in outer zones
+  if (
+    celestialClass === PlanetType.TERRESTRIAL ||
+    celestialClass === PlanetType.OCEAN
+  ) {
+    // These planet types should only exist in inner zones (Temperate, Hot, Cool)
+    const innerZoneCategories = ["HOT", "TEMPERATE", "COOL"];
+    if (!innerZoneCategories.includes(zone.category)) {
+      console.warn(
+        `[planet-type] Attempted to place ${celestialClass} in ${zone.category} zone. Falling back to ICE.`,
+      );
+      celestialClass = PlanetType.ICE;
+    }
+  }
+
   // Fallback if no type could be determined (should not happen with good zone defs)
   if (!celestialClass) {
     console.warn(

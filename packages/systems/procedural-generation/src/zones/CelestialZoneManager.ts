@@ -228,10 +228,67 @@ export class CelestialZoneManager {
     star: CelestialObject,
     random: () => number,
   ): CelestialZoneManager {
-    // Luminosity is proportional to Mass^3.5
-    const luminosity = Math.pow(star.realMass_kg / CONST.SOLAR_MASS_KG, 3.5);
-    // Zone boundaries scale with the square root of luminosity
-    const scalingFactor = Math.sqrt(luminosity);
+    // Use the pre-calculated luminosity from properties if it exists.
+    // This is more accurate than the mass-based approximation.
+    let luminosity = (star.properties as any)?.luminosity;
+
+    if (!luminosity) {
+      // Fallback to mass-based calculation if luminosity property is missing.
+      const mass = star.realMass_kg || CONST.SOLAR_MASS_KG;
+      const solarMasses = mass / CONST.SOLAR_MASS_KG;
+      // Main sequence mass-luminosity relation: L ∝ M^3.5
+      luminosity = Math.pow(solarMasses, 3.5);
+    }
+
+    // Get star properties for more sophisticated zone calculation
+    const starProps = star.properties as any;
+    const spectralClass = starProps?.spectralClass || "G";
+    const stellarType = starProps?.stellarType || "MAIN_SEQUENCE";
+    const temperature = star.temperature || 5778; // Default to solar temperature
+
+    // Calculate zone scaling based on star characteristics
+    let scalingFactor = Math.sqrt(luminosity);
+
+    // Adjust scaling based on stellar type
+    switch (stellarType) {
+      case "WHITE_DWARF":
+        // White dwarfs are very hot but small - zones should be very close
+        scalingFactor *= 0.1; // 10% of normal scaling
+        break;
+      case "NEUTRON_STAR":
+      case "BLACK_HOLE":
+        // Compact objects have very close zones
+        scalingFactor *= 0.05; // 5% of normal scaling
+        break;
+      case "RED_GIANT":
+      case "SUPERGIANT":
+        // Giant stars have much larger zones
+        scalingFactor *= 2.0; // 200% of normal scaling
+        break;
+      case "MAIN_SEQUENCE":
+      default:
+        // Main sequence stars use standard scaling
+        break;
+    }
+
+    // Additional adjustments based on spectral class
+    if (spectralClass.startsWith("M")) {
+      // Red dwarfs are cool and dim - zones should be closer
+      scalingFactor *= 0.3;
+    } else if (spectralClass.startsWith("O") || spectralClass.startsWith("B")) {
+      // Hot, massive stars have much larger zones
+      scalingFactor *= 3.0;
+    } else if (spectralClass.startsWith("A")) {
+      // A-type stars are hot but not as extreme as O/B
+      scalingFactor *= 2.0;
+    } else if (spectralClass.startsWith("F")) {
+      // F-type stars are slightly hotter than G
+      scalingFactor *= 1.5;
+    } else if (spectralClass.startsWith("K")) {
+      // K-type stars are cooler than G
+      scalingFactor *= 0.7;
+    }
+    // G-type stars (like our Sun) use the base scaling factor
 
     const adjustedZones = enhancedCelestialZones.map((zone) => ({
       ...zone,
@@ -353,14 +410,32 @@ export class CelestialZoneManager {
     );
     activeZones.push(...guaranteedZones);
 
-    // Allow more natural zone selection based on formation probability
+    // More conservative zone selection - prioritize inner zones
     for (const zone of adjustedZones) {
       // Avoid re-adding guaranteed zones
       if (activeZones.find((z) => z.name === zone.name)) {
         continue;
       }
 
-      const shouldInclude = this.random() < zone.formationProbability;
+      // Be more restrictive about outer zones
+      let inclusionChance = zone.formationProbability;
+
+      // Reduce chances for outer zones to prevent terrestrial planets in inappropriate distances
+      if (
+        zone.category === ZoneCategory.COLD ||
+        zone.category === ZoneCategory.FROZEN
+      ) {
+        inclusionChance *= 0.5; // 50% reduction
+      } else if (
+        zone.category === ZoneCategory.OUTER ||
+        zone.category === ZoneCategory.DISTANT
+      ) {
+        inclusionChance *= 0.3; // 70% reduction
+      } else if (zone.category === ZoneCategory.INTERSTELLAR) {
+        inclusionChance *= 0.1; // 90% reduction
+      }
+
+      const shouldInclude = this.random() < inclusionChance;
       if (shouldInclude) {
         activeZones.push(zone);
       }
@@ -368,22 +443,31 @@ export class CelestialZoneManager {
 
     // Ensure at least some zones are active for non-empty systems
     if (activeZones.length === 0 && stars.length > 0) {
-      // Add 2-3 random zones from different ranges
+      // Add 2-3 random zones from different ranges, but be more conservative
       const innerZones = adjustedZones.slice(1, 4); // Hot, Temperate, Cool (skip Scorched)
-      const outerZones = adjustedZones.slice(4, 7); // Cold, Frozen, Outer
+      const middleZones = adjustedZones.slice(4, 6); // Cold, Frozen
+      const outerZones = adjustedZones.slice(6); // Outer, Distant, Interstellar
 
+      // Always include at least one inner zone
       activeZones.push(getRandomItem(innerZones, this.random));
-      if (outerZones.length > 0 && this.random() > 0.3) {
+
+      // 60% chance for a middle zone
+      if (middleZones.length > 0 && this.random() < 0.6) {
+        activeZones.push(getRandomItem(middleZones, this.random));
+      }
+
+      // Only 20% chance for outer zones
+      if (outerZones.length > 0 && this.random() < 0.2) {
         activeZones.push(getRandomItem(outerZones, this.random));
       }
     }
 
-    // Allow more zones for variety - up to 7 zones
-    const maxZones = 5 + Math.floor(this.random() * 3); // 5-7 zones max
+    // Limit the total number of zones to prevent over-generation
+    const maxZones = 4 + Math.floor(this.random() * 2); // 4-5 zones max (reduced from 5-7)
     if (activeZones.length > maxZones) {
-      // Randomly select zones to keep
-      const shuffled = activeZones.sort(() => this.random() - 0.5);
-      return shuffled.slice(0, maxZones).sort((a, b) => a.minAU - b.minAU);
+      // Prioritize inner zones when trimming
+      const sortedZones = activeZones.sort((a, b) => a.minAU - b.minAU);
+      return sortedZones.slice(0, maxZones);
     }
 
     return activeZones.sort((a, b) => a.minAU - b.minAU); // Sort by distance
@@ -403,6 +487,474 @@ export class CelestialZoneManager {
     return this.zones.find(
       (zone) => distanceAU >= zone.minAU && distanceAU < zone.maxAU,
     );
+  }
+
+  /**
+   * Creates star-specific zones based on the star's unique characteristics.
+   * This is more sophisticated than just scaling generic zones.
+   */
+  static createStarSpecificZones(
+    star: CelestialObject,
+    random: () => number,
+  ): CelestialZone[] {
+    const starProps = star.properties as any;
+    const spectralClass = starProps?.spectralClass || "G";
+    const stellarType = starProps?.stellarType || "MAIN_SEQUENCE";
+    const luminosity = starProps?.luminosity || 1.0;
+    const temperature = star.temperature || 5778;
+
+    // Base scaling from luminosity
+    let baseScaling = Math.sqrt(luminosity);
+
+    // Create zones that are truly specific to this star type
+    const zones: CelestialZone[] = [];
+
+    switch (stellarType) {
+      case "WHITE_DWARF":
+        // White dwarfs have very compact zones due to high temperature but small size
+        zones.push(
+          this.createZone(
+            "Scorched Zone",
+            ZoneCategory.SCORCHED,
+            0.01,
+            0.05,
+            baseScaling * 0.1,
+          ),
+          this.createZone(
+            "Hot Inner Zone",
+            ZoneCategory.HOT,
+            0.05,
+            0.2,
+            baseScaling * 0.1,
+          ),
+          this.createZone(
+            "Temperate Zone",
+            ZoneCategory.TEMPERATE,
+            0.2,
+            0.5,
+            baseScaling * 0.1,
+          ),
+          this.createZone(
+            "Cool Zone",
+            ZoneCategory.COOL,
+            0.5,
+            1.0,
+            baseScaling * 0.1,
+          ),
+        );
+        break;
+
+      case "NEUTRON_STAR":
+      case "BLACK_HOLE":
+        // Compact objects can have planets at various distances
+        // Black holes especially can have planets at much greater distances
+        // For black holes, we need to allow terrestrial planets in cooler zones
+        if (stellarType === "BLACK_HOLE") {
+          zones.push(
+            this.createZone(
+              "Scorched Zone",
+              ZoneCategory.SCORCHED,
+              0.001,
+              0.01,
+              baseScaling * 0.05,
+            ),
+            this.createZone(
+              "Hot Inner Zone",
+              ZoneCategory.HOT,
+              0.01,
+              0.05,
+              baseScaling * 0.05,
+            ),
+            this.createZone(
+              "Temperate Zone",
+              ZoneCategory.TEMPERATE,
+              0.05,
+              0.5,
+              baseScaling * 0.05,
+            ),
+            this.createBlackHoleZone(
+              "Cool Zone",
+              ZoneCategory.COOL,
+              0.5,
+              2.0,
+              baseScaling * 0.05,
+            ),
+            this.createZone(
+              "Outer Gas Zone",
+              ZoneCategory.COLD,
+              2.0,
+              10.0,
+              baseScaling * 0.05,
+            ),
+          );
+        } else {
+          // Neutron stars have more restrictive zones
+          zones.push(
+            this.createZone(
+              "Scorched Zone",
+              ZoneCategory.SCORCHED,
+              0.001,
+              0.01,
+              baseScaling * 0.05,
+            ),
+            this.createZone(
+              "Hot Inner Zone",
+              ZoneCategory.HOT,
+              0.01,
+              0.05,
+              baseScaling * 0.05,
+            ),
+            this.createZone(
+              "Temperate Zone",
+              ZoneCategory.TEMPERATE,
+              0.05,
+              0.5,
+              baseScaling * 0.05,
+            ),
+          );
+        }
+        break;
+
+      case "RED_GIANT":
+      case "SUPERGIANT":
+        // Giant stars have much larger zones
+        zones.push(
+          this.createZone(
+            "Scorched Zone",
+            ZoneCategory.SCORCHED,
+            1.0,
+            5.0,
+            baseScaling * 2.0,
+          ),
+          this.createZone(
+            "Hot Inner Zone",
+            ZoneCategory.HOT,
+            5.0,
+            20.0,
+            baseScaling * 2.0,
+          ),
+          this.createZone(
+            "Temperate Zone",
+            ZoneCategory.TEMPERATE,
+            20.0,
+            100.0,
+            baseScaling * 2.0,
+          ),
+          this.createZone(
+            "Cool Zone",
+            ZoneCategory.COOL,
+            100.0,
+            500.0,
+            baseScaling * 2.0,
+          ),
+          this.createZone(
+            "Outer Gas Zone",
+            ZoneCategory.COLD,
+            500.0,
+            2000.0,
+            baseScaling * 2.0,
+          ),
+        );
+        break;
+
+      case "MAIN_SEQUENCE":
+      default:
+        // Main sequence stars use spectral class-specific zones
+        if (spectralClass.startsWith("M")) {
+          // Red dwarfs: cool, dim, zones very close
+          zones.push(
+            this.createZone(
+              "Scorched Zone",
+              ZoneCategory.SCORCHED,
+              0.05,
+              0.1,
+              baseScaling * 0.3,
+            ),
+            this.createZone(
+              "Hot Inner Zone",
+              ZoneCategory.HOT,
+              0.1,
+              0.3,
+              baseScaling * 0.3,
+            ),
+            this.createZone(
+              "Temperate Zone",
+              ZoneCategory.TEMPERATE,
+              0.3,
+              0.8,
+              baseScaling * 0.3,
+            ),
+            this.createZone(
+              "Cool Zone",
+              ZoneCategory.COOL,
+              0.8,
+              2.0,
+              baseScaling * 0.3,
+            ),
+          );
+        } else if (spectralClass.startsWith("K")) {
+          // K-type stars: cooler than G, zones closer
+          zones.push(
+            this.createZone(
+              "Scorched Zone",
+              ZoneCategory.SCORCHED,
+              0.1,
+              0.3,
+              baseScaling * 0.7,
+            ),
+            this.createZone(
+              "Hot Inner Zone",
+              ZoneCategory.HOT,
+              0.3,
+              0.6,
+              baseScaling * 0.7,
+            ),
+            this.createZone(
+              "Temperate Zone",
+              ZoneCategory.TEMPERATE,
+              0.6,
+              1.4,
+              baseScaling * 0.7,
+            ),
+            this.createZone(
+              "Cool Zone",
+              ZoneCategory.COOL,
+              1.4,
+              3.5,
+              baseScaling * 0.7,
+            ),
+            this.createZone(
+              "Outer Gas Zone",
+              ZoneCategory.COLD,
+              3.5,
+              21.0,
+              baseScaling * 0.7,
+            ),
+          );
+        } else if (spectralClass.startsWith("G")) {
+          // G-type stars (like our Sun): standard zones
+          zones.push(
+            this.createZone(
+              "Scorched Zone",
+              ZoneCategory.SCORCHED,
+              0.2,
+              0.4,
+              baseScaling,
+            ),
+            this.createZone(
+              "Hot Inner Zone",
+              ZoneCategory.HOT,
+              0.4,
+              0.8,
+              baseScaling,
+            ),
+            this.createZone(
+              "Temperate Zone",
+              ZoneCategory.TEMPERATE,
+              0.8,
+              2.0,
+              baseScaling,
+            ),
+            this.createZone(
+              "Cool Zone",
+              ZoneCategory.COOL,
+              2.0,
+              5.0,
+              baseScaling,
+            ),
+            this.createZone(
+              "Outer Gas Zone",
+              ZoneCategory.COLD,
+              5.0,
+              30.0,
+              baseScaling,
+            ),
+          );
+        } else if (spectralClass.startsWith("F")) {
+          // F-type stars: hotter than G, zones further out
+          zones.push(
+            this.createZone(
+              "Scorched Zone",
+              ZoneCategory.SCORCHED,
+              0.3,
+              0.6,
+              baseScaling * 1.5,
+            ),
+            this.createZone(
+              "Hot Inner Zone",
+              ZoneCategory.HOT,
+              0.6,
+              1.2,
+              baseScaling * 1.5,
+            ),
+            this.createZone(
+              "Temperate Zone",
+              ZoneCategory.TEMPERATE,
+              1.2,
+              3.0,
+              baseScaling * 1.5,
+            ),
+            this.createZone(
+              "Cool Zone",
+              ZoneCategory.COOL,
+              3.0,
+              7.5,
+              baseScaling * 1.5,
+            ),
+            this.createZone(
+              "Outer Gas Zone",
+              ZoneCategory.COLD,
+              7.5,
+              45.0,
+              baseScaling * 1.5,
+            ),
+          );
+        } else if (spectralClass.startsWith("A")) {
+          // A-type stars: very hot, zones much further out
+          zones.push(
+            this.createZone(
+              "Scorched Zone",
+              ZoneCategory.SCORCHED,
+              0.6,
+              1.2,
+              baseScaling * 2.0,
+            ),
+            this.createZone(
+              "Hot Inner Zone",
+              ZoneCategory.HOT,
+              1.2,
+              2.4,
+              baseScaling * 2.0,
+            ),
+            this.createZone(
+              "Temperate Zone",
+              ZoneCategory.TEMPERATE,
+              2.4,
+              6.0,
+              baseScaling * 2.0,
+            ),
+            this.createZone(
+              "Cool Zone",
+              ZoneCategory.COOL,
+              6.0,
+              15.0,
+              baseScaling * 2.0,
+            ),
+            this.createZone(
+              "Outer Gas Zone",
+              ZoneCategory.COLD,
+              15.0,
+              90.0,
+              baseScaling * 2.0,
+            ),
+          );
+        } else if (
+          spectralClass.startsWith("B") ||
+          spectralClass.startsWith("O")
+        ) {
+          // O/B-type stars: extremely hot and massive, zones very far out
+          zones.push(
+            this.createZone(
+              "Scorched Zone",
+              ZoneCategory.SCORCHED,
+              2.0,
+              10.0,
+              baseScaling * 3.0,
+            ),
+            this.createZone(
+              "Hot Inner Zone",
+              ZoneCategory.HOT,
+              10.0,
+              30.0,
+              baseScaling * 3.0,
+            ),
+            this.createZone(
+              "Temperate Zone",
+              ZoneCategory.TEMPERATE,
+              30.0,
+              100.0,
+              baseScaling * 3.0,
+            ),
+            this.createZone(
+              "Cool Zone",
+              ZoneCategory.COOL,
+              100.0,
+              300.0,
+              baseScaling * 3.0,
+            ),
+            this.createZone(
+              "Outer Gas Zone",
+              ZoneCategory.COLD,
+              300.0,
+              1000.0,
+              baseScaling * 3.0,
+            ),
+          );
+        }
+        break;
+    }
+
+    return zones;
+  }
+
+  /**
+   * Helper method to create a zone with proper scaling
+   */
+  private static createZone(
+    name: string,
+    category: ZoneCategory,
+    baseMinAU: number,
+    baseMaxAU: number,
+    scalingFactor: number,
+  ): CelestialZone {
+    // Find the template zone to copy properties from
+    const templateZone = enhancedCelestialZones.find((z) => z.name === name);
+    if (!templateZone) {
+      throw new Error(`Template zone not found: ${name}`);
+    }
+
+    return {
+      ...templateZone,
+      minAU: Math.min(baseMinAU * scalingFactor, CONST.SYSTEM_MAX_DISTANCE_AU),
+      maxAU: Math.min(baseMaxAU * scalingFactor, CONST.SYSTEM_MAX_DISTANCE_AU),
+    };
+  }
+
+  /**
+   * Helper method to create a black hole-specific zone that allows terrestrial planets
+   */
+  private static createBlackHoleZone(
+    name: string,
+    category: ZoneCategory,
+    baseMinAU: number,
+    baseMaxAU: number,
+    scalingFactor: number,
+  ): CelestialZone {
+    // Find the template zone to copy properties from
+    const templateZone = enhancedCelestialZones.find((z) => z.name === name);
+    if (!templateZone) {
+      throw new Error(`Template zone not found: ${name}`);
+    }
+
+    // For black holes, modify the Cool Zone to allow terrestrial planets
+    let modifiedZone = { ...templateZone };
+    if (name === "Cool Zone") {
+      modifiedZone = {
+        ...templateZone,
+        allowedPlanetTypes: [
+          PlanetType.TERRESTRIAL,
+          PlanetType.OCEAN,
+          PlanetType.ICE,
+          PlanetType.ROCKY,
+        ],
+      };
+    }
+
+    return {
+      ...modifiedZone,
+      minAU: Math.min(baseMinAU * scalingFactor, CONST.SYSTEM_MAX_DISTANCE_AU),
+      maxAU: Math.min(baseMaxAU * scalingFactor, CONST.SYSTEM_MAX_DISTANCE_AU),
+    };
   }
 }
 

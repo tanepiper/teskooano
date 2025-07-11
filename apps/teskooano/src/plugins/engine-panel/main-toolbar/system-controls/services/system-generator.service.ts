@@ -12,6 +12,72 @@ import {
 import { generateSystem as generateSystemObservable } from "@teskooano/procedural-generation";
 import { type DockviewApi } from "dockview-core";
 import { catchError, finalize, lastValueFrom, tap, throwError } from "rxjs";
+import { OSVector3 } from "@teskooano/core-math";
+
+/**
+ * Adjusts the entire system so that at least one star is positioned very close to the barycentre (origin).
+ * This is a simple coordinate system adjustment that doesn't change any orbital mechanics, velocities, or relative positions.
+ */
+function adjustSystemToBarycentre(): void {
+  const allObjects = StateAccessor.getCurrentCelestialObjects();
+  const objectIds = Object.keys(allObjects);
+
+  if (objectIds.length === 0) return;
+
+  // Find the primary star (first star without a parent)
+  const primaryStar = objectIds.find((id) => {
+    const obj = allObjects[id];
+    return obj.type === CelestialType.STAR && !obj.parentId;
+  });
+
+  if (!primaryStar) {
+    console.warn(
+      "[SystemGenerator] No primary star found for barycentre adjustment",
+    );
+    return;
+  }
+
+  const starObject = allObjects[primaryStar];
+  if (!starObject.physicsStateReal) {
+    console.warn(
+      "[SystemGenerator] Primary star has no physics state for barycentre adjustment",
+    );
+    return;
+  }
+
+  // Calculate the offset needed to move the star to the origin
+  const starPosition = starObject.physicsStateReal.position_m;
+  const offset = new OSVector3(
+    -starPosition.x,
+    -starPosition.y,
+    -starPosition.z,
+  );
+
+  // Apply the offset to all objects
+  objectIds.forEach((id) => {
+    const obj = allObjects[id];
+    if (obj.physicsStateReal) {
+      const newPosition = new OSVector3(
+        obj.physicsStateReal.position_m.x + offset.x,
+        obj.physicsStateReal.position_m.y + offset.y,
+        obj.physicsStateReal.position_m.z + offset.z,
+      );
+
+      // Update the object's position in the state
+      actions.updateCelestialObject(id, {
+        ...obj,
+        physicsStateReal: {
+          ...obj.physicsStateReal,
+          position_m: newPosition,
+        },
+      });
+    }
+  });
+
+  console.log(
+    `[SystemGenerator] Adjusted system barycentre by offset: (${offset.x.toExponential(2)}, ${offset.y.toExponential(2)}, ${offset.z.toExponential(2)})`,
+  );
+}
 
 /**
  * A service dedicated to the complex process of procedurally generating a
@@ -123,6 +189,9 @@ export class SystemGenerator {
           return throwError(() => error);
         }),
         finalize(() => {
+          // Adjust the system so that at least one star is very close to the barycentre
+          adjustSystemToBarycentre();
+
           actions.resetTime();
           SystemGenerator.dispatchSimulationTimeReset();
           window.dispatchEvent(

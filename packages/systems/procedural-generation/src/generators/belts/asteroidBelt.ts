@@ -156,7 +156,7 @@ export function generateAsteroidBelt(
     temperature: beltTemperature,
     orbit: beltOrbit,
     properties: beltProperties,
-    ignorePhysics: false, // Belt itself doesn't move, but its mass affects other objects
+    ignorePhysics: true, // Belt itself doesn't move, but its mass affects other objects
     ignoreCollisions: true,
     physicsStateReal: {
       id: beltId,

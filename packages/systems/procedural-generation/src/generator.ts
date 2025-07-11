@@ -37,6 +37,8 @@ export async function generateSystem(
     const runGeneration = async () => {
       try {
         const random = await createSeededRandom(seed);
+
+        // Step 1: Generate the star(s) first
         const { stars, systemConfig } = generateStars(random);
         const primaryStar = stars[0];
 
@@ -46,50 +48,35 @@ export async function generateSystem(
           );
         }
 
-        const zoneManager = CelestialZoneManager.createForStar(
-          primaryStar,
-          random,
-        );
-
+        // Emit all stars first
         let celestialCount = 0;
         stars.forEach((star) => {
           subscriber.next(star);
           celestialCount++;
         });
 
-        // Use proper zone selection instead of all zones
-        const selectedZones = zoneManager.selectZonesForPlacement(
+        // Step 2: Create zones specific to this star's properties
+        const selectedZones = CelestialZoneManager.createStarSpecificZones(
+          primaryStar,
+          random,
+        );
+
+        // Step 3: Select appropriate zones for this specific star (filter and adjust)
+        const zoneManager = new CelestialZoneManager(random, selectedZones);
+        const finalZones = zoneManager.selectZonesForPlacement(
           stars,
           systemConfig,
         );
 
         // If no zones were selected, ensure we have at least the basic zones
-        if (selectedZones.length === 0) {
-          const allZones = zoneManager.getAllZones();
-          selectedZones.push(
-            ...allZones.slice(1, 4), // Hot Inner, Temperate, Cool zones
+        if (finalZones.length === 0) {
+          finalZones.push(
+            ...selectedZones.slice(1, 4), // Hot Inner, Temperate, Cool zones
           );
         }
 
-        // Generate a comet in the outer system
-        const allZones = zoneManager.getAllZones();
-        const cometPlacementZone = allZones.slice(-4)[0];
-        const cometDistanceAU = Math.min(
-          cometPlacementZone.maxAU * (1 + random()),
-          SYSTEM_MAX_DISTANCE_AU,
-        );
-        const comet = generateComet(random, primaryStar, cometDistanceAU, 99);
-        if (comet) {
-          subscriber.next(comet);
-          celestialCount++;
-        }
-
-        // Use selected zones instead of all zones
-        const bodyPlacements = generateBodyDistances(
-          random,
-          selectedZones,
-          stars,
-        );
+        // Step 4: Generate celestial bodies within the star-specific zones
+        const bodyPlacements = generateBodyDistances(random, finalZones, stars);
 
         const remainingSlots = 80 - celestialCount;
 
