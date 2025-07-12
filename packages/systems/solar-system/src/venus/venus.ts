@@ -43,12 +43,6 @@ export function initializeVenus(parentId: string): void {
     realRadius_m: VENUS_RADIUS_M,
     temperature: VENUS_TEMP_K,
     albedo: VENUS_ALBEDO,
-    siderealRotationPeriod_s: VENUS_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(venusAxialTiltRad),
-      Math.sin(venusAxialTiltRad),
-    ).normalize(),
     orbit: {
       realSemiMajorAxis_m: VENUS_SMA_AU * AU,
       eccentricity: VENUS_ECC,
@@ -57,6 +51,12 @@ export function initializeVenus(parentId: string): void {
       argumentOfPeriapsis: VENUS_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: VENUS_MA_DEG * DEG_TO_RAD,
       period_s: VENUS_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: VENUS_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(venusAxialTiltRad),
+        Math.sin(venusAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: venusId,

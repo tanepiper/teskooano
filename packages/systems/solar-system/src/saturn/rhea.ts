@@ -37,8 +37,7 @@ export function initializeRhea(parentId: string): void {
     realRadius_m: RHEA_RADIUS_M,
     temperature: 73,
     albedo: RHEA_ALBEDO,
-    siderealRotationPeriod_s: RHEA_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: RHEA_SMA_M,
       eccentricity: RHEA_ECC,
@@ -47,6 +46,8 @@ export function initializeRhea(parentId: string): void {
       argumentOfPeriapsis: RHEA_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: RHEA_MA_DEG * DEG_TO_RAD,
       period_s: RHEA_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: RHEA_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "rhea",

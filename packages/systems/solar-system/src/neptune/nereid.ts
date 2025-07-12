@@ -29,8 +29,7 @@ export function initializeNereid(parentId: string): void {
     parentId: parentId,
     realMass_kg: 3.1e19,
     realRadius_m: 170000,
-    siderealRotationPeriod_s: NEREID_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: NEREID_SMA_M,
       eccentricity: 0.7507,
@@ -39,6 +38,8 @@ export function initializeNereid(parentId: string): void {
       argumentOfPeriapsis: 268.2 * DEG_TO_RAD,
       meanAnomaly: 49.3 * DEG_TO_RAD,
       period_s: NEREID_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: NEREID_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     temperature: 50,
     albedo: 0.14,

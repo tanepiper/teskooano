@@ -42,12 +42,7 @@ export function initializeMarsPlanet(parentId: string): string {
     realRadius_m: MARS_RADIUS_M,
     temperature: MARS_TEMP_K,
     albedo: MARS_ALBEDO,
-    siderealRotationPeriod_s: MARS_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(marsAxialTiltRad),
-      Math.sin(marsAxialTiltRad),
-    ).normalize(),
+
     orbit: {
       realSemiMajorAxis_m: MARS_SMA_AU * AU,
       eccentricity: MARS_ECC,
@@ -56,6 +51,12 @@ export function initializeMarsPlanet(parentId: string): string {
       argumentOfPeriapsis: MARS_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: MARS_MA_DEG * DEG_TO_RAD,
       period_s: MARS_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: MARS_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(marsAxialTiltRad),
+        Math.sin(marsAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: marsId,

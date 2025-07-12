@@ -8,7 +8,7 @@ import type {
 } from "./properties.types";
 
 /**
- * Defines the orbital elements required to describe the path of a celestial body around its parent.
+ * Defines the orbital elements and rotational properties required to describe the path and orientation of a celestial body around its parent.
  */
 export interface OrbitalParameters {
   /** The average distance from the parent body (REAL METERS). */
@@ -25,6 +25,10 @@ export interface OrbitalParameters {
   meanAnomaly: number;
   /** The time taken to complete one orbit (REAL SECONDS). */
   period_s: number;
+  /** Optional: The time it takes for the object to rotate 360 degrees around its own axis (in SECONDS). */
+  siderealRotationPeriod_s?: number;
+  /** Optional: The tilt of the object's rotational axis relative to its orbital plane, represented as a normalized vector. */
+  axialTilt?: OSVector3;
 }
 
 /**
@@ -52,9 +56,6 @@ export interface CelestialObject {
   /** Optional surface reflectivity (albedo) (0.0 = absorbs all light, 1.0 = reflects all light). */
   albedo?: number;
 
-  /** Optional: The time it takes for the object to rotate 360 degrees (in SECONDS). */
-  siderealRotationPeriod_s?: number;
-
   /** Optional atmospheric properties common to many bodies */
   atmosphere?: PlanetAtmosphereProperties;
 
@@ -69,9 +70,6 @@ export interface CelestialObject {
 
   /** Optional: Tracks the current dominant gravitational parent (can change in multi-star systems) */
   currentParentId?: string;
-
-  /** Optional: The tilt of the object's rotational axis relative to its orbital plane, represented as a normalized vector. */
-  axialTilt?: OSVector3;
 
   /** Optional seed value used for procedural generation (textures, etc.). */
   seed?: string;

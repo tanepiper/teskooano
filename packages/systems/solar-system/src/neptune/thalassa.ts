@@ -33,8 +33,6 @@ export function initializeThalassa(parentId: string): void {
     realRadius_m: THALASSA_RADIUS_M,
     temperature: 60,
     albedo: THALASSA_ALBEDO,
-    siderealRotationPeriod_s: THALASSA_SIDEREAL_PERIOD_S,
-    axialTilt: tilt,
     orbit: {
       realSemiMajorAxis_m: THALASSA_SMA_M,
       eccentricity: THALASSA_ECC,
@@ -43,6 +41,8 @@ export function initializeThalassa(parentId: string): void {
       argumentOfPeriapsis: 0,
       meanAnomaly: 0,
       period_s: THALASSA_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: THALASSA_SIDEREAL_PERIOD_S,
+      axialTilt: tilt,
     },
     physicsStateReal: {
       id: "thalassa",

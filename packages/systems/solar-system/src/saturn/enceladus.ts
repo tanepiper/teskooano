@@ -37,8 +37,7 @@ export function initializeEnceladus(parentId: string): void {
     realRadius_m: ENCELADUS_RADIUS_M,
     temperature: 75,
     albedo: ENCELADUS_ALBEDO,
-    siderealRotationPeriod_s: ENCELADUS_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: ENCELADUS_SMA_M,
       eccentricity: ENCELADUS_ECC,
@@ -47,6 +46,8 @@ export function initializeEnceladus(parentId: string): void {
       argumentOfPeriapsis: ENCELADUS_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: ENCELADUS_MA_DEG * DEG_TO_RAD,
       period_s: ENCELADUS_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: ENCELADUS_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "enceladus",

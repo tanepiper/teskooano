@@ -37,12 +37,7 @@ export function initializeLuna(parentId: string): void {
     realRadius_m: LUNA_RADIUS_M,
     temperature: 250, // Mean temperature (verified from NASA - range 95-390K equator)
     albedo: LUNA_ALBEDO,
-    siderealRotationPeriod_s: LUNA_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(lunaAxialTiltRad),
-      Math.sin(lunaAxialTiltRad),
-    ).normalize(),
+
     orbit: {
       realSemiMajorAxis_m: LUNA_SMA_M,
       eccentricity: LUNA_ECC,
@@ -51,6 +46,12 @@ export function initializeLuna(parentId: string): void {
       argumentOfPeriapsis: LUNA_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: LUNA_MA_DEG * DEG_TO_RAD,
       period_s: LUNA_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: LUNA_SIDEREAL_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(lunaAxialTiltRad),
+        Math.sin(lunaAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: "luna",

@@ -37,8 +37,7 @@ export function initializeIapetus(parentId: string): void {
     realRadius_m: IAPETUS_RADIUS_M,
     temperature: 110,
     albedo: IAPETUS_ALBEDO,
-    siderealRotationPeriod_s: IAPETUS_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: IAPETUS_SMA_M,
       eccentricity: IAPETUS_ECC,
@@ -47,6 +46,8 @@ export function initializeIapetus(parentId: string): void {
       argumentOfPeriapsis: IAPETUS_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: IAPETUS_MA_DEG * DEG_TO_RAD,
       period_s: IAPETUS_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: IAPETUS_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "iapetus",

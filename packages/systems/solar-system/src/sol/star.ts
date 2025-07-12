@@ -36,6 +36,8 @@ export function initializeSun(): string {
       argumentOfPeriapsis: 0,
       meanAnomaly: 0,
       period_s: 0,
+      siderealRotationPeriod_s: 0,
+      axialTilt: new OSVector3(0, 1, 0).normalize(),
     },
     physicsStateReal: {
       id: "sol",

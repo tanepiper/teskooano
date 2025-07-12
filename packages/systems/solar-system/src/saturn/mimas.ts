@@ -38,8 +38,7 @@ export function initializeMimas(parentId: string): void {
     realRadius_m: MIMAS_RADIUS_M,
     temperature: 63,
     albedo: MIMAS_ALBEDO,
-    siderealRotationPeriod_s: MIMAS_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: MIMAS_SMA_M,
       eccentricity: MIMAS_ECC,
@@ -48,6 +47,8 @@ export function initializeMimas(parentId: string): void {
       argumentOfPeriapsis: MIMAS_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: MIMAS_MA_DEG * DEG_TO_RAD,
       period_s: MIMAS_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: MIMAS_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "mimas",

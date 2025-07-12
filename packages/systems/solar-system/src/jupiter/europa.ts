@@ -40,8 +40,7 @@ export function initializeEuropa(parentId: string): void {
     realRadius_m: EUROPA_RADIUS_M,
     temperature: EUROPA_TEMP_K,
     albedo: EUROPA_ALBEDO,
-    siderealRotationPeriod_s: EUROPA_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: EUROPA_SMA_M,
       eccentricity: EUROPA_ECC,
@@ -50,6 +49,8 @@ export function initializeEuropa(parentId: string): void {
       argumentOfPeriapsis: EUROPA_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: EUROPA_MA_DEG * DEG_TO_RAD,
       period_s: EUROPA_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: EUROPA_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "europa",

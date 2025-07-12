@@ -109,11 +109,11 @@ export class PhysicalPropertiesCard extends BaseCelestialCard {
     }
 
     // Rotational parameters
-    if (this.currentCelestial.siderealRotationPeriod_s) {
+    if (this.currentCelestial.orbit.siderealRotationPeriod_s) {
       properties.push({
         property: "Rotation Period",
         value: FormatUtils.formatPeriod(
-          this.currentCelestial.siderealRotationPeriod_s,
+          this.currentCelestial.orbit.siderealRotationPeriod_s,
         ),
       });
     }

@@ -6,7 +6,6 @@ import {
   PlanetType,
   SurfaceType,
   CelestialStatus,
-  PhysicsStateReal,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -40,8 +39,6 @@ export function initializeTitan(parentId: string): void {
     realRadius_m: TITAN_RADIUS_M,
     temperature: TITAN_TEMP_K,
     albedo: TITAN_ALBEDO,
-    siderealRotationPeriod_s: TITAN_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: TITAN_SMA_M,
       eccentricity: TITAN_ECC,
@@ -50,6 +47,8 @@ export function initializeTitan(parentId: string): void {
       argumentOfPeriapsis: TITAN_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: TITAN_MA_DEG * DEG_TO_RAD,
       period_s: TITAN_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: TITAN_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "titan",

@@ -35,8 +35,7 @@ export function initializeAmalthea(parentId: string): void {
     realRadius_m: AMALTHEA_RADIUS_M,
     temperature: 120, // Generic temperature
     albedo: AMALTHEA_ALBEDO,
-    siderealRotationPeriod_s: AMALTHEA_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: AMALTHEA_SMA_M,
       eccentricity: AMALTHEA_ECC,
@@ -45,6 +44,8 @@ export function initializeAmalthea(parentId: string): void {
       argumentOfPeriapsis: 0,
       meanAnomaly: 0,
       period_s: AMALTHEA_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: AMALTHEA_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "amalthea",

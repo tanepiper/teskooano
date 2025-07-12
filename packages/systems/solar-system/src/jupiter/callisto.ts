@@ -40,8 +40,7 @@ export function initializeCallisto(parentId: string): void {
     realRadius_m: CALLISTO_RADIUS_M,
     temperature: CALLISTO_TEMP_K,
     albedo: CALLISTO_ALBEDO,
-    siderealRotationPeriod_s: CALLISTO_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: CALLISTO_SMA_M,
       eccentricity: CALLISTO_ECC,
@@ -50,6 +49,8 @@ export function initializeCallisto(parentId: string): void {
       argumentOfPeriapsis: CALLISTO_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: CALLISTO_MA_DEG * DEG_TO_RAD,
       period_s: CALLISTO_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: CALLISTO_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "callisto",

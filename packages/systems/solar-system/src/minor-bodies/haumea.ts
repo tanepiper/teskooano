@@ -69,12 +69,7 @@ export function initializeHaumea(parentId: string): void {
     realRadius_m: HAUMEA_RADIUS_M,
     temperature: HAUMEA_TEMP_K,
     albedo: HAUMEA_ALBEDO,
-    siderealRotationPeriod_s: HAUMEA_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(haumeaAxialTiltRad),
-      Math.sin(haumeaAxialTiltRad),
-    ).normalize(),
+
     orbit: {
       realSemiMajorAxis_m: HAUMEA_SMA_AU * AU,
       eccentricity: HAUMEA_ECC,
@@ -83,6 +78,12 @@ export function initializeHaumea(parentId: string): void {
       argumentOfPeriapsis: HAUMEA_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: HAUMEA_MA_DEG * DEG_TO_RAD,
       period_s: HAUMEA_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: HAUMEA_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(haumeaAxialTiltRad),
+        Math.sin(haumeaAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: haumeaId,
@@ -161,8 +162,7 @@ export function initializeHaumea(parentId: string): void {
     realRadius_m: HIIAKA_RADIUS_M,
     temperature: 32,
     albedo: HIIAKA_ALBEDO,
-    siderealRotationPeriod_s: HIIAKA_SIDEREAL_PERIOD_S,
-    axialTilt: hiiakAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: HIIAKA_SMA_M,
       eccentricity: HIIAKA_ECC,
@@ -171,6 +171,8 @@ export function initializeHaumea(parentId: string): void {
       argumentOfPeriapsis: HIIAKA_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: HIIAKA_MA_DEG * DEG_TO_RAD,
       period_s: HIIAKA_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: HIIAKA_SIDEREAL_PERIOD_S,
+      axialTilt: hiiakAxialTilt,
     },
     physicsStateReal: {
       id: "hiiaka",
@@ -236,8 +238,7 @@ export function initializeHaumea(parentId: string): void {
     realRadius_m: NAMAKA_RADIUS_M,
     temperature: 32,
     albedo: NAMAKA_ALBEDO,
-    siderealRotationPeriod_s: NAMAKA_SIDEREAL_PERIOD_S,
-    axialTilt: namakaAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: NAMAKA_SMA_M,
       eccentricity: NAMAKA_ECC,
@@ -246,6 +247,8 @@ export function initializeHaumea(parentId: string): void {
       argumentOfPeriapsis: NAMAKA_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: NAMAKA_MA_DEG * DEG_TO_RAD,
       period_s: NAMAKA_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: NAMAKA_SIDEREAL_PERIOD_S,
+      axialTilt: namakaAxialTilt,
     },
     physicsStateReal: {
       id: "namaka",

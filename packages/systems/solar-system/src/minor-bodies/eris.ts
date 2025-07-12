@@ -53,12 +53,7 @@ export function initializeEris(parentId: string): void {
     realRadius_m: ERIS_RADIUS_M,
     temperature: ERIS_TEMP_K,
     albedo: ERIS_ALBEDO,
-    siderealRotationPeriod_s: ERIS_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(erisAxialTiltRad),
-      Math.sin(erisAxialTiltRad),
-    ).normalize(),
+
     orbit: {
       realSemiMajorAxis_m: ERIS_SMA_AU * AU,
       eccentricity: ERIS_ECC,
@@ -67,6 +62,12 @@ export function initializeEris(parentId: string): void {
       argumentOfPeriapsis: ERIS_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: ERIS_MA_DEG * DEG_TO_RAD,
       period_s: ERIS_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: ERIS_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(erisAxialTiltRad),
+        Math.sin(erisAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: erisId,
@@ -136,8 +137,7 @@ export function initializeEris(parentId: string): void {
     realRadius_m: DYSNOMIA_RADIUS_M,
     temperature: 30,
     albedo: DYSNOMIA_ALBEDO,
-    siderealRotationPeriod_s: DYSNOMIA_SIDEREAL_PERIOD_S,
-    axialTilt: dysnomiaAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: DYSNOMIA_SMA_M,
       eccentricity: DYSNOMIA_ECC,
@@ -146,6 +146,8 @@ export function initializeEris(parentId: string): void {
       argumentOfPeriapsis: DYSNOMIA_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: DYSNOMIA_MA_DEG * DEG_TO_RAD,
       period_s: DYSNOMIA_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: DYSNOMIA_SIDEREAL_PERIOD_S,
+      axialTilt: dysnomiaAxialTilt,
     },
     physicsStateReal: {
       id: "dysnomia",

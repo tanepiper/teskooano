@@ -38,8 +38,7 @@ export function initializeDeimos(parentId: string): void {
     realRadius_m: DEIMOS_RADIUS_M,
     temperature: DEIMOS_TEMP_K,
     albedo: DEIMOS_ALBEDO,
-    siderealRotationPeriod_s: DEIMOS_SIDEREAL_PERIOD_S,
-    axialTilt: deimosAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: DEIMOS_SMA_M,
       eccentricity: DEIMOS_ECC,
@@ -48,6 +47,8 @@ export function initializeDeimos(parentId: string): void {
       argumentOfPeriapsis: DEIMOS_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: DEIMOS_MA_DEG * DEG_TO_RAD,
       period_s: DEIMOS_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: DEIMOS_SIDEREAL_PERIOD_S,
+      axialTilt: deimosAxialTilt,
     },
     physicsStateReal: {
       id: "deimos",

@@ -37,8 +37,7 @@ export function initializeDione(parentId: string): void {
     realRadius_m: DIONE_RADIUS_M,
     temperature: 87,
     albedo: DIONE_ALBEDO,
-    siderealRotationPeriod_s: DIONE_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: DIONE_SMA_M,
       eccentricity: DIONE_ECC,
@@ -47,6 +46,8 @@ export function initializeDione(parentId: string): void {
       argumentOfPeriapsis: DIONE_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: DIONE_MA_DEG * DEG_TO_RAD,
       period_s: DIONE_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: DIONE_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "dione",

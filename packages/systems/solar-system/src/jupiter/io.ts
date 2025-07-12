@@ -40,8 +40,7 @@ export function initializeIo(parentId: string): void {
     realRadius_m: IO_RADIUS_M,
     temperature: IO_TEMP_K,
     albedo: IO_ALBEDO,
-    siderealRotationPeriod_s: IO_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: IO_SMA_M,
       eccentricity: IO_ECC,
@@ -50,6 +49,8 @@ export function initializeIo(parentId: string): void {
       argumentOfPeriapsis: IO_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: IO_MA_DEG * DEG_TO_RAD,
       period_s: IO_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: IO_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "io",

@@ -42,12 +42,7 @@ export function initializeCeres(parentId: string): void {
     realRadius_m: CERES_RADIUS_M,
     temperature: CERES_TEMP_K,
     albedo: CERES_ALBEDO,
-    siderealRotationPeriod_s: CERES_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(ceresAxialTiltRad),
-      Math.sin(ceresAxialTiltRad),
-    ).normalize(),
+
     orbit: {
       realSemiMajorAxis_m: CERES_SMA_AU * AU,
       eccentricity: CERES_ECC,
@@ -56,6 +51,12 @@ export function initializeCeres(parentId: string): void {
       argumentOfPeriapsis: CERES_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: CERES_MA_DEG * DEG_TO_RAD,
       period_s: CERES_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: CERES_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(ceresAxialTiltRad),
+        Math.sin(ceresAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: ceresId,

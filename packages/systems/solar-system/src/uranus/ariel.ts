@@ -27,8 +27,6 @@ export function initializeAriel(parentId: string): void {
     parentId: parentId,
     realMass_kg: 1.353e21,
     realRadius_m: ARIEL_REAL_RADIUS_M,
-    siderealRotationPeriod_s: 2.178e5,
-    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 191020 * KM,
       eccentricity: 0.0012,
@@ -37,9 +35,12 @@ export function initializeAriel(parentId: string): void {
       argumentOfPeriapsis: 83.4 * DEG_TO_RAD,
       meanAnomaly: 310.4 * DEG_TO_RAD,
       period_s: 2.178e5,
+      siderealRotationPeriod_s: 2.178e5,
+      axialTilt: defaultMoonAxialTilt,
     },
     temperature: 60,
     albedo: 0.39,
+
     physicsStateReal: {
       id: "ariel",
       mass_kg: 1.353e21,

@@ -38,8 +38,7 @@ export function initializePhobos(parentId: string): void {
     realRadius_m: PHOBOS_RADIUS_M,
     temperature: PHOBOS_TEMP_K,
     albedo: PHOBOS_ALBEDO,
-    siderealRotationPeriod_s: PHOBOS_SIDEREAL_PERIOD_S,
-    axialTilt: phobosAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: PHOBOS_SMA_M,
       eccentricity: PHOBOS_ECC,
@@ -48,6 +47,8 @@ export function initializePhobos(parentId: string): void {
       argumentOfPeriapsis: PHOBOS_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: PHOBOS_MA_DEG * DEG_TO_RAD,
       period_s: PHOBOS_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: PHOBOS_SIDEREAL_PERIOD_S,
+      axialTilt: phobosAxialTilt,
     },
     physicsStateReal: {
       id: "phobos",

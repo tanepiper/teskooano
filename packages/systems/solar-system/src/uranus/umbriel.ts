@@ -27,8 +27,6 @@ export function initializeUmbriel(parentId: string): void {
     parentId: parentId,
     realMass_kg: 1.172e21,
     realRadius_m: UMBRIEL_REAL_RADIUS_M,
-    siderealRotationPeriod_s: 3.582e5,
-    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 266000 * KM,
       eccentricity: 0.0039,
@@ -37,6 +35,8 @@ export function initializeUmbriel(parentId: string): void {
       argumentOfPeriapsis: 304.1 * DEG_TO_RAD,
       meanAnomaly: 198.8 * DEG_TO_RAD,
       period_s: 3.582e5,
+      siderealRotationPeriod_s: 3.582e5,
+      axialTilt: defaultMoonAxialTilt,
     },
     temperature: 75,
     albedo: 0.21,

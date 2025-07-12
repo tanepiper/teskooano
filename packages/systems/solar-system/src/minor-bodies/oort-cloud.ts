@@ -29,6 +29,8 @@ export function initializeOortCloud(parentId: string): void {
       argumentOfPeriapsis: 0,
       meanAnomaly: 0,
       period_s: 1e13,
+      siderealRotationPeriod_s: 1e13,
+      axialTilt: new OSVector3(0, 1, 0).normalize(),
     },
     temperature: 4,
     ignorePhysics: true,

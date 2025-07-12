@@ -6,7 +6,6 @@ import {
   GasGiantClass,
   RockyType,
   CelestialStatus,
-  PhysicsStateReal,
   type GasGiantProperties,
 } from "@teskooano/data-types";
 
@@ -40,16 +39,15 @@ export function initializeUranusPlanet(parentId: string): string {
       longitudeOfAscendingNode: 74.006 * DEG_TO_RAD,
       argumentOfPeriapsis: 96.998857 * DEG_TO_RAD, // Corrected argument of periapsis
       meanAnomaly: 142.2386 * DEG_TO_RAD, // Corrected mean anomaly
+      siderealRotationPeriod_s: URANUS_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(uranusAxialTiltRad),
+        Math.sin(uranusAxialTiltRad),
+      ).normalize(),
       period_s: URANUS_ORBITAL_PERIOD_S,
     },
     temperature: 76, // Corrected temperature
-    albedo: 0.488, // Corrected Bond albedo
-    siderealRotationPeriod_s: URANUS_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(uranusAxialTiltRad),
-      Math.sin(uranusAxialTiltRad),
-    ).normalize(),
     physicsStateReal: {
       id: uranusId,
       mass_kg: 8.6813e25,

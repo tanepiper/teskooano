@@ -42,12 +42,6 @@ export function initializePallas(parentId: string): void {
     realRadius_m: PALLAS_RADIUS_M,
     temperature: PALLAS_TEMP_K,
     albedo: PALLAS_ALBEDO,
-    siderealRotationPeriod_s: PALLAS_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(pallasAxialTiltRad),
-      Math.sin(pallasAxialTiltRad),
-    ).normalize(),
     orbit: {
       realSemiMajorAxis_m: PALLAS_SMA_AU * AU,
       eccentricity: PALLAS_ECC,
@@ -56,6 +50,12 @@ export function initializePallas(parentId: string): void {
       argumentOfPeriapsis: PALLAS_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: PALLAS_MA_DEG * DEG_TO_RAD,
       period_s: PALLAS_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: PALLAS_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(pallasAxialTiltRad),
+        Math.sin(pallasAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: "pallas",

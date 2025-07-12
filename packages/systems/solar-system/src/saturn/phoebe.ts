@@ -38,8 +38,7 @@ export function initializePhoebe(parentId: string): void {
     realRadius_m: PHOEBE_RADIUS_M,
     temperature: 75,
     albedo: PHOEBE_ALBEDO,
-    siderealRotationPeriod_s: PHOEBE_ROTATION_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: PHOEBE_SMA_M,
       eccentricity: PHOEBE_ECC,
@@ -48,6 +47,8 @@ export function initializePhoebe(parentId: string): void {
       argumentOfPeriapsis: PHOEBE_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: PHOEBE_MA_DEG * DEG_TO_RAD,
       period_s: PHOEBE_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: PHOEBE_ROTATION_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "phoebe",

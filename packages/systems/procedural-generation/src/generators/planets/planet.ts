@@ -206,11 +206,13 @@ export function generatePlanet(
         realMass_kg: planetMass_kg,
         realRadius_m: finalPlanetRadius_m,
         temperature: planetTemp,
-        orbit: orbit,
+        orbit: {
+          ...orbit,
+          siderealRotationPeriod_s: rotationPeriod_s,
+          axialTilt: tiltAxis,
+        },
         properties,
         seed: planetSeed,
-        siderealRotationPeriod_s: rotationPeriod_s,
-        axialTilt: tiltAxis,
         physicsStateReal: initialPhysicsState,
       };
 
@@ -363,11 +365,11 @@ export function generateRoguePlanet(
           argumentOfPeriapsis: 0,
           meanAnomaly: distanceAU, // Store distance here for factory to use
           period_s: 0,
+          siderealRotationPeriod_s: rotationPeriod_s,
+          axialTilt: tiltAxis,
         },
         properties,
         seed: planetSeed,
-        siderealRotationPeriod_s: rotationPeriod_s,
-        axialTilt: tiltAxis,
         // Physics state will be calculated by the factory
         physicsStateReal: {
           id: planetId,

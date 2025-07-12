@@ -43,12 +43,6 @@ export function initializeVesta(parentId: string): void {
     realRadius_m: VESTA_RADIUS_M,
     temperature: VESTA_TEMP_K,
     albedo: VESTA_ALBEDO,
-    siderealRotationPeriod_s: VESTA_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(vestaAxialTiltRad),
-      Math.sin(vestaAxialTiltRad),
-    ).normalize(),
     orbit: {
       realSemiMajorAxis_m: VESTA_SMA_AU * AU,
       eccentricity: VESTA_ECC,
@@ -57,6 +51,12 @@ export function initializeVesta(parentId: string): void {
       argumentOfPeriapsis: VESTA_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: VESTA_MA_DEG * DEG_TO_RAD,
       period_s: VESTA_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: VESTA_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(vestaAxialTiltRad),
+        Math.sin(vestaAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: vestaId,

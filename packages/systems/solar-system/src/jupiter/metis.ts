@@ -35,8 +35,7 @@ export function initializeMetis(parentId: string): void {
     realRadius_m: METIS_RADIUS_M,
     temperature: 120, // Generic temperature
     albedo: METIS_ALBEDO,
-    siderealRotationPeriod_s: METIS_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: METIS_SMA_M,
       eccentricity: METIS_ECC,
@@ -45,6 +44,8 @@ export function initializeMetis(parentId: string): void {
       argumentOfPeriapsis: 0,
       meanAnomaly: 0,
       period_s: METIS_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: METIS_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "metis",

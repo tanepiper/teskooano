@@ -95,7 +95,7 @@ export class RenderableObjectFactory {
       parentId: obj.parentId,
       primaryLightSourceId: lightSourceId,
       realRadius_m: realRadius,
-      axialTilt: obj.axialTilt ?? 0,
+      axialTilt: obj.orbit.axialTilt ?? 0,
       status: obj.status,
       temperature: obj.temperature,
       albedo: obj.albedo ?? 0.3,
@@ -113,8 +113,8 @@ export class RenderableObjectFactory {
     }
     target.rotation.copy(
       this.calculateRotation(
-        obj.axialTilt,
-        obj.siderealRotationPeriod_s,
+        obj.orbit.axialTilt,
+        obj.orbit.siderealRotationPeriod_s,
         simulationTime,
       ).toThreeJS(),
     );
@@ -162,7 +162,7 @@ export class RenderableObjectFactory {
       parentId: obj.parentId,
       primaryLightSourceId: lightSourceId,
       realRadius_m: 0,
-      axialTilt: parent.axialTilt ?? 0,
+      axialTilt: parent.orbit.axialTilt ?? 0,
       status: obj.status,
       temperature: obj.temperature,
       albedo: parent.albedo ?? 0,
@@ -184,7 +184,7 @@ export class RenderableObjectFactory {
     }
     // Rings use parent's tilt but do not have their own sidereal rotation
     target.rotation.copy(
-      this.calculateRotation(parent.axialTilt, undefined, 0).toThreeJS(),
+      this.calculateRotation(parent.orbit.axialTilt, undefined, 0).toThreeJS(),
     );
 
     return target;

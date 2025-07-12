@@ -90,8 +90,6 @@ class CelestialFactoryService {
       orbit: data.orbit,
       temperature: processedTemperature,
       albedo: processedAlbedo,
-      siderealRotationPeriod_s: data.siderealRotationPeriod_s,
-      axialTilt: data.axialTilt,
       atmosphere: isPlanetAtmosphere(data.atmosphere)
         ? data.atmosphere
         : undefined,

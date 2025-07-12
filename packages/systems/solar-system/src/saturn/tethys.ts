@@ -37,8 +37,6 @@ export function initializeTethys(parentId: string): void {
     realRadius_m: TETHYS_RADIUS_M,
     temperature: 86,
     albedo: TETHYS_ALBEDO,
-    siderealRotationPeriod_s: TETHYS_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: TETHYS_SMA_M,
       eccentricity: TETHYS_ECC,
@@ -47,6 +45,8 @@ export function initializeTethys(parentId: string): void {
       argumentOfPeriapsis: TETHYS_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: TETHYS_MA_DEG * DEG_TO_RAD,
       period_s: TETHYS_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: TETHYS_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "tethys",

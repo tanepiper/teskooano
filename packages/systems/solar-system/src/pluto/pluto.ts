@@ -6,7 +6,6 @@ import {
   PlanetType,
   SurfaceType,
   CelestialStatus,
-  PhysicsStateReal,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -43,12 +42,7 @@ export function initializePlutoDwarfPlanet(parentId: string): string {
     realRadius_m: PLUTO_RADIUS_M,
     temperature: PLUTO_TEMP_K,
     albedo: PLUTO_ALBEDO,
-    siderealRotationPeriod_s: PLUTO_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(plutoAxialTiltRad),
-      Math.sin(plutoAxialTiltRad),
-    ).normalize(),
+
     orbit: {
       realSemiMajorAxis_m: PLUTO_SMA_AU * AU,
       eccentricity: PLUTO_ECC,
@@ -57,6 +51,12 @@ export function initializePlutoDwarfPlanet(parentId: string): string {
       argumentOfPeriapsis: PLUTO_AOP_DEG * DEG_TO_RAD, // Corrected calculation
       meanAnomaly: PLUTO_MA_DEG * DEG_TO_RAD,
       period_s: PLUTO_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: PLUTO_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(plutoAxialTiltRad),
+        Math.sin(plutoAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: plutoId,

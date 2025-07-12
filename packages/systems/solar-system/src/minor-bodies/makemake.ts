@@ -6,7 +6,6 @@ import {
   PlanetType,
   SurfaceType,
   CelestialStatus,
-  PhysicsStateReal,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -55,12 +54,7 @@ export function initializeMakemake(parentId: string): void {
     realRadius_m: MAKEMAKE_RADIUS_M,
     temperature: MAKEMAKE_TEMP_K,
     albedo: MAKEMAKE_ALBEDO,
-    siderealRotationPeriod_s: MAKEMAKE_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(makemakeAxialTiltRad),
-      Math.sin(makemakeAxialTiltRad),
-    ).normalize(),
+
     orbit: {
       realSemiMajorAxis_m: MAKEMAKE_SMA_AU * AU,
       eccentricity: MAKEMAKE_ECC,
@@ -69,6 +63,12 @@ export function initializeMakemake(parentId: string): void {
       argumentOfPeriapsis: MAKEMAKE_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: MAKEMAKE_MA_DEG * DEG_TO_RAD,
       period_s: MAKEMAKE_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: MAKEMAKE_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(makemakeAxialTiltRad),
+        Math.sin(makemakeAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: makemakeId,
@@ -134,8 +134,7 @@ export function initializeMakemake(parentId: string): void {
     realRadius_m: MK2_RADIUS_M,
     temperature: 30,
     albedo: MK2_ALBEDO,
-    siderealRotationPeriod_s: MK2_SIDEREAL_PERIOD_S,
-    axialTilt: mk2AxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: MK2_SMA_M,
       eccentricity: MK2_ECC,
@@ -144,6 +143,8 @@ export function initializeMakemake(parentId: string): void {
       argumentOfPeriapsis: MK2_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: MK2_MA_DEG * DEG_TO_RAD,
       period_s: MK2_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: MK2_SIDEREAL_PERIOD_S,
+      axialTilt: mk2AxialTilt,
     },
     physicsStateReal: {
       id: "mk2",

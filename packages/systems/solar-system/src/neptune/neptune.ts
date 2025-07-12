@@ -40,15 +40,16 @@ export function initializeNeptunePlanet(parentId: string): string {
       argumentOfPeriapsis: 273.187 * DEG_TO_RAD, // Verified correct
       meanAnomaly: 256.228 * DEG_TO_RAD, // Corrected mean anomaly
       period_s: NEPTUNE_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: NEPTUNE_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(neptuneAxialTiltRad),
+        Math.sin(neptuneAxialTiltRad),
+      ).normalize(),
     },
     temperature: 72, // Verified correct
     albedo: 0.442, // Corrected Bond albedo
-    siderealRotationPeriod_s: NEPTUNE_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(neptuneAxialTiltRad),
-      Math.sin(neptuneAxialTiltRad),
-    ).normalize(),
+
     physicsStateReal: {
       id: neptuneId,
       mass_kg: 1.02413e26,

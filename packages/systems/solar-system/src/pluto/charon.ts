@@ -6,7 +6,6 @@ import {
   PlanetType,
   SurfaceType,
   CelestialStatus,
-  PhysicsStateReal,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -36,12 +35,7 @@ export function initializeCharon(parentId: string): void {
     realRadius_m: CHARON_RADIUS_M,
     temperature: 53,
     albedo: CHARON_ALBEDO,
-    siderealRotationPeriod_s: CHARON_SIDEREAL_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(charonAxialTiltRad),
-      Math.sin(charonAxialTiltRad),
-    ).normalize(),
+
     orbit: {
       realSemiMajorAxis_m: CHARON_SMA_M,
       eccentricity: CHARON_ECC,
@@ -50,6 +44,12 @@ export function initializeCharon(parentId: string): void {
       argumentOfPeriapsis: 0,
       meanAnomaly: 0,
       period_s: CHARON_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: CHARON_SIDEREAL_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(charonAxialTiltRad),
+        Math.sin(charonAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: "charon",

@@ -27,8 +27,6 @@ export function initializeOberon(parentId: string): void {
     parentId: parentId,
     realMass_kg: 3.014e21,
     realRadius_m: OBERON_REAL_RADIUS_M,
-    siderealRotationPeriod_s: 1.162e6,
-    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 583520 * KM,
       eccentricity: 0.0014,
@@ -37,6 +35,8 @@ export function initializeOberon(parentId: string): void {
       argumentOfPeriapsis: 218.8 * DEG_TO_RAD,
       meanAnomaly: 108.6 * DEG_TO_RAD,
       period_s: 1.162e6,
+      siderealRotationPeriod_s: 1.162e6,
+      axialTilt: defaultMoonAxialTilt,
     },
     temperature: 75,
     albedo: 0.35,

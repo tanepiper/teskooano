@@ -24,8 +24,6 @@ const HYPERION_ALBEDO = 0.3;
  * Initializes Hyperion, a moon of Saturn known for its irregular shape and chaotic rotation.
  */
 export function initializeHyperion(parentId: string): void {
-  // Hyperion's rotation is chaotic, so axial tilt is not constant.
-  // We use a default value for simulation purposes.
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
   actions.addCelestial({
@@ -39,9 +37,7 @@ export function initializeHyperion(parentId: string): void {
     realRadius_m: HYPERION_RADIUS_M,
     temperature: 94,
     albedo: HYPERION_ALBEDO,
-    // Its rotation is chaotic. For simplicity, we use its orbital period.
-    siderealRotationPeriod_s: HYPERION_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: HYPERION_SMA_M,
       eccentricity: HYPERION_ECC,
@@ -50,6 +46,8 @@ export function initializeHyperion(parentId: string): void {
       argumentOfPeriapsis: HYPERION_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: HYPERION_MA_DEG * DEG_TO_RAD,
       period_s: HYPERION_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: HYPERION_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "hyperion",

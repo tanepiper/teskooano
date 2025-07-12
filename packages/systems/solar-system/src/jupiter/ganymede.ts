@@ -40,8 +40,7 @@ export function initializeGanymede(parentId: string): void {
     realRadius_m: GANYMEDE_RADIUS_M,
     temperature: GANYMEDE_TEMP_K,
     albedo: GANYMEDE_ALBEDO,
-    siderealRotationPeriod_s: GANYMEDE_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: GANYMEDE_SMA_M,
       eccentricity: GANYMEDE_ECC,
@@ -50,6 +49,8 @@ export function initializeGanymede(parentId: string): void {
       argumentOfPeriapsis: GANYMEDE_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: GANYMEDE_MA_DEG * DEG_TO_RAD,
       period_s: GANYMEDE_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: GANYMEDE_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "ganymede",

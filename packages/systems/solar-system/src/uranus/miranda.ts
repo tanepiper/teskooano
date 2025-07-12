@@ -27,8 +27,6 @@ export function initializeMiranda(parentId: string): void {
     parentId: parentId,
     realMass_kg: 6.59e19,
     realRadius_m: MIRANDA_REAL_RADIUS_M,
-    siderealRotationPeriod_s: 1.22e5,
-    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 129390 * KM,
       eccentricity: 0.0013,
@@ -37,6 +35,8 @@ export function initializeMiranda(parentId: string): void {
       argumentOfPeriapsis: 289.7 * DEG_TO_RAD,
       meanAnomaly: 182.4 * DEG_TO_RAD,
       period_s: 1.22e5,
+      siderealRotationPeriod_s: 1.22e5,
+      axialTilt: defaultMoonAxialTilt,
     },
     temperature: 60,
     albedo: 0.32,

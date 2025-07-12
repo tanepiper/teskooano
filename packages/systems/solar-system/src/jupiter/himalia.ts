@@ -37,8 +37,7 @@ export function initializeHimalia(parentId: string): void {
     realRadius_m: HIMALIA_RADIUS_M,
     temperature: 124, // Estimated
     albedo: HIMALIA_ALBEDO,
-    siderealRotationPeriod_s: 0.324 * 24 * 3600, // ~7.78 hours
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: HIMALIA_SMA_M,
       eccentricity: HIMALIA_ECC,
@@ -47,6 +46,8 @@ export function initializeHimalia(parentId: string): void {
       argumentOfPeriapsis: HIMALIA_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: HIMALIA_MA_DEG * DEG_TO_RAD,
       period_s: HIMALIA_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: 0.324 * 24 * 3600, // ~7.78 hours
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "himalia",

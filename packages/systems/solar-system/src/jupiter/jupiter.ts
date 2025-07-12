@@ -43,12 +43,7 @@ export function initializeJupiterPlanet(parentId: string): string {
     realRadius_m: JUPITER_REAL_RADIUS_M,
     temperature: JUPITER_TEMP_K,
     albedo: JUPITER_ALBEDO,
-    siderealRotationPeriod_s: JUPITER_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(jupiterAxialTiltRad),
-      Math.sin(jupiterAxialTiltRad),
-    ).normalize(),
+
     orbit: {
       realSemiMajorAxis_m: JUPITER_SMA_AU * AU,
       eccentricity: JUPITER_ECC,
@@ -57,6 +52,12 @@ export function initializeJupiterPlanet(parentId: string): string {
       argumentOfPeriapsis: (JUPITER_AOP_DEG - JUPITER_LAN_DEG) * DEG_TO_RAD,
       meanAnomaly: JUPITER_MA_DEG * DEG_TO_RAD,
       period_s: JUPITER_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: JUPITER_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(jupiterAxialTiltRad),
+        Math.sin(jupiterAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: jupiterId,

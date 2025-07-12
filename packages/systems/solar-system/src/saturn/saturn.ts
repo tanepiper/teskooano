@@ -44,12 +44,7 @@ export function initializeSaturnPlanet(parentId: string): string {
     realRadius_m: SATURN_REAL_RADIUS_M,
     temperature: SATURN_TEMP_K,
     albedo: SATURN_ALBEDO,
-    siderealRotationPeriod_s: SATURN_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(saturnAxialTiltRad),
-      Math.sin(saturnAxialTiltRad),
-    ).normalize(),
+
     orbit: {
       realSemiMajorAxis_m: SATURN_SMA_AU * AU,
       eccentricity: SATURN_ECC,
@@ -58,6 +53,12 @@ export function initializeSaturnPlanet(parentId: string): string {
       argumentOfPeriapsis: (SATURN_AOP_DEG - SATURN_LAN_DEG) * DEG_TO_RAD,
       meanAnomaly: SATURN_MA_DEG * DEG_TO_RAD,
       period_s: SATURN_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: SATURN_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(saturnAxialTiltRad),
+        Math.sin(saturnAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: saturnId,

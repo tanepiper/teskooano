@@ -285,11 +285,13 @@ export function generateMoon(
     realMass_kg: moonMass,
     realRadius_m: moonRadius,
     temperature: parentPlanetData.temperature, // Inherit from parent for simplicity
-    orbit: orbitalParams,
+    orbit: {
+      ...orbitalParams,
+      siderealRotationPeriod_s: rotationPeriod_s,
+      axialTilt: tiltAxis,
+    },
     properties: moonSpecificProperties,
     seed: moonSeed,
-    siderealRotationPeriod_s: rotationPeriod_s,
-    axialTilt: tiltAxis,
     physicsStateReal: {
       id: moonId,
       mass_kg: moonMass,

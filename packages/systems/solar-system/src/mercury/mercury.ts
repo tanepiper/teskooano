@@ -41,12 +41,7 @@ export function initializeMercury(parentId: string): void {
     realRadius_m: MERCURY_RADIUS_M,
     temperature: MERCURY_TEMP_K,
     albedo: MERCURY_ALBEDO,
-    siderealRotationPeriod_s: MERCURY_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(mercuryAxialTiltRad),
-      Math.sin(mercuryAxialTiltRad),
-    ).normalize(),
+
     orbit: {
       realSemiMajorAxis_m: MERCURY_SMA_AU * AU,
       eccentricity: MERCURY_ECC,
@@ -55,6 +50,12 @@ export function initializeMercury(parentId: string): void {
       argumentOfPeriapsis: MERCURY_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: MERCURY_MA_DEG * DEG_TO_RAD,
       period_s: MERCURY_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: MERCURY_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(mercuryAxialTiltRad),
+        Math.sin(mercuryAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: mercuryId,

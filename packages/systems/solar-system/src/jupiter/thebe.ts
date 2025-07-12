@@ -34,8 +34,7 @@ export function initializeThebe(parentId: string): void {
     realRadius_m: THEBE_RADIUS_M,
     temperature: 120, // Generic temperature
     albedo: THEBE_ALBEDO,
-    siderealRotationPeriod_s: THEBE_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
+
     orbit: {
       realSemiMajorAxis_m: THEBE_SMA_M,
       eccentricity: THEBE_ECC,
@@ -44,6 +43,8 @@ export function initializeThebe(parentId: string): void {
       argumentOfPeriapsis: 0,
       meanAnomaly: 0,
       period_s: THEBE_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: THEBE_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "thebe",

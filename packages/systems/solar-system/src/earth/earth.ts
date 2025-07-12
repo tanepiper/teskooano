@@ -43,12 +43,6 @@ export function initializeEarthPlanet(parentId: string): string {
     realRadius_m: EARTH_RADIUS_M,
     temperature: EARTH_TEMP_K,
     albedo: EARTH_ALBEDO,
-    siderealRotationPeriod_s: EARTH_SIDEREAL_ROTATION_PERIOD_S,
-    axialTilt: new OSVector3(
-      0,
-      Math.cos(earthAxialTiltRad),
-      Math.sin(earthAxialTiltRad),
-    ).normalize(),
     orbit: {
       realSemiMajorAxis_m: EARTH_SMA_AU * AU,
       eccentricity: EARTH_ECC,
@@ -57,6 +51,12 @@ export function initializeEarthPlanet(parentId: string): string {
       argumentOfPeriapsis: EARTH_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: EARTH_MA_DEG * DEG_TO_RAD,
       period_s: EARTH_ORBITAL_PERIOD_S,
+      siderealRotationPeriod_s: EARTH_SIDEREAL_ROTATION_PERIOD_S,
+      axialTilt: new OSVector3(
+        0,
+        Math.cos(earthAxialTiltRad),
+        Math.sin(earthAxialTiltRad),
+      ).normalize(),
     },
     physicsStateReal: {
       id: earthId,

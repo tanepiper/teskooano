@@ -28,8 +28,6 @@ export function initializeTitania(parentId: string): void {
     parentId: parentId,
     realMass_kg: 3.527e21,
     realRadius_m: TITANIA_REAL_RADIUS_M,
-    siderealRotationPeriod_s: 7.526e5,
-    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: 436300 * KM,
       eccentricity: 0.0011,
@@ -38,6 +36,8 @@ export function initializeTitania(parentId: string): void {
       argumentOfPeriapsis: 110.1 * DEG_TO_RAD,
       meanAnomaly: 15.9 * DEG_TO_RAD,
       period_s: 7.526e5,
+      siderealRotationPeriod_s: 7.526e5,
+      axialTilt: defaultMoonAxialTilt,
     },
     temperature: 70,
     albedo: 0.27,

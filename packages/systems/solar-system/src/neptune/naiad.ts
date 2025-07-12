@@ -34,8 +34,6 @@ export function initializeNaiad(parentId: string): void {
     realRadius_m: NAIAD_RADIUS_M,
     temperature: 60,
     albedo: NAIAD_ALBEDO,
-    siderealRotationPeriod_s: NAIAD_SIDEREAL_PERIOD_S,
-    axialTilt: defaultMoonAxialTilt,
     orbit: {
       realSemiMajorAxis_m: NAIAD_SMA_M,
       eccentricity: NAIAD_ECC,
@@ -44,6 +42,8 @@ export function initializeNaiad(parentId: string): void {
       argumentOfPeriapsis: 0,
       meanAnomaly: 0,
       period_s: NAIAD_SIDEREAL_PERIOD_S,
+      siderealRotationPeriod_s: NAIAD_SIDEREAL_PERIOD_S,
+      axialTilt: defaultMoonAxialTilt,
     },
     physicsStateReal: {
       id: "naiad",
