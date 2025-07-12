@@ -102,4 +102,43 @@ describe("OSVector3", () => {
     expect(v.y).toBe(0);
     expect(v.z).toBe(0);
   });
+
+  it("should check vector equality with default tolerance", () => {
+    const v1 = new OSVector3(1, 2, 3);
+    const v2 = new OSVector3(1, 2, 3);
+    const v3 = new OSVector3(1.1, 2, 3);
+
+    expect(v1.equals(v2)).toBe(true);
+    expect(v1.equals(v3)).toBe(false);
+  });
+
+  it("should check vector equality with custom tolerance", () => {
+    const v1 = new OSVector3(1, 2, 3);
+    const v2 = new OSVector3(1.05, 2.05, 3.05);
+
+    expect(v1.equals(v2, 0.1)).toBe(true);
+    expect(v1.equals(v2, 0.01)).toBe(false);
+  });
+
+  it("should handle floating point precision in equals", () => {
+    const v1 = new OSVector3(0.1 + 0.2, 0.3, 0.4);
+    const v2 = new OSVector3(0.3, 0.3, 0.4);
+
+    // These should be equal within EPSILON tolerance using relative approach
+    expect(v1.equals(v2)).toBe(true);
+  });
+
+  it("should use relative tolerance like THREE.js", () => {
+    // Test with large numbers - relative tolerance should be more forgiving
+    const v1 = new OSVector3(100, 200, 300);
+    const v2 = new OSVector3(100.0001, 200.0001, 300.0001);
+
+    expect(v1.equals(v2)).toBe(true);
+
+    // Test with small numbers - should be stricter
+    const v3 = new OSVector3(0.1, 0.2, 0.3);
+    const v4 = new OSVector3(0.100001, 0.200001, 0.300001);
+
+    expect(v3.equals(v4)).toBe(true);
+  });
 });

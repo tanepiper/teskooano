@@ -12,6 +12,59 @@ const POOL_SIZE = 500; // Max number of physics bodies
 const dataPool = new PredictionDataPool(POOL_SIZE);
 
 /**
+ * Recursively calculates a body's world position at a given time, considering the hierarchical orbit system
+ */
+function calculateHierarchicalPosition(
+  bodyId: string,
+  currentTime: number,
+  simulationParameters: SimulationParameters,
+  allBodiesInitialStates: any[],
+  visited: Set<string> = new Set(),
+): OSVector3 {
+  // Prevent infinite recursion
+  if (visited.has(bodyId)) {
+    console.warn(`Circular dependency detected for body ${bodyId}`);
+    return new OSVector3(0, 0, 0);
+  }
+  visited.add(bodyId);
+
+  // Get this body's orbital parameters and parent
+  const orbitalParams = simulationParameters.orbitalParameters?.get(bodyId);
+  const parentId = simulationParameters.parentIds?.get(bodyId);
+
+  if (!parentId || !orbitalParams) {
+    // This is a root body (no parent) or has no orbital parameters
+    const bodyState = allBodiesInitialStates.find((b) => b.id === bodyId);
+    if (bodyState && bodyState.position_m) {
+      return new OSVector3(
+        bodyState.position_m.x,
+        bodyState.position_m.y,
+        bodyState.position_m.z,
+      );
+    }
+    return new OSVector3(0, 0, 0);
+  }
+
+  // Calculate this body's position relative to its parent
+  const { position: relativePosition } = calculateKeplerianStateAtTime(
+    orbitalParams,
+    currentTime,
+  );
+
+  // Recursively calculate the parent's world position
+  const parentWorldPosition = calculateHierarchicalPosition(
+    parentId,
+    currentTime,
+    simulationParameters,
+    allBodiesInitialStates,
+    visited,
+  );
+
+  // Return this body's world position
+  return relativePosition.add(parentWorldPosition);
+}
+
+/**
  * Predicts trajectory using ideal Keplerian orbits (matching main simulation in ideal mode)
  */
 function predictIdealTrajectory(
@@ -42,71 +95,30 @@ function predictIdealTrajectory(
     return [];
   }
 
-  // Get the parent body id
-  const parentId = simulationParameters.parentIds?.get(targetBodyId);
-  if (!parentId) {
-    console.warn(`No parent found for target body ${targetBodyId}`);
-    return [];
-  }
-
-  // Find parent's initial state
-  const parentInitialState = allBodiesInitialStates.find(
-    (b) => b.id === parentId,
-  );
-  if (!parentInitialState) {
-    console.warn(`Parent body ${parentId} not found in initial states`);
-    return [];
-  }
-
-  // Calculate trajectory points using Keplerian orbits
+  // Calculate trajectory points using hierarchical Keplerian orbits
   const baseTime = simulationParameters.currentTime_s || 0;
 
   for (let i = 0; i <= steps; i++) {
     const currentTime = baseTime + i * dt;
 
-    // Calculate ideal Keplerian state at this time
-    const { position, velocity } = calculateKeplerianStateAtTime(
-      targetOrbitalParams,
+    // Calculate target body's world position at this time (considering hierarchical orbits)
+    const worldPosition = calculateHierarchicalPosition(
+      targetBodyId,
       currentTime,
+      simulationParameters,
+      allBodiesInitialStates,
     );
-
-    // Add parent's position to get world coordinates
-    const worldPosition = position.add(parentInitialState.position_m);
 
     // Handle relative coordinates if specified
     let finalPoint = worldPosition;
     if (relativeToBodyId) {
-      const relativeBodyState = allBodiesInitialStates.find(
-        (b) => b.id === relativeToBodyId,
+      const relativeWorldPosition = calculateHierarchicalPosition(
+        relativeToBodyId,
+        currentTime,
+        simulationParameters,
+        allBodiesInitialStates,
       );
-      if (relativeBodyState) {
-        // For relative coordinates, we need to calculate the parent's position at this time too
-        const relativeParentId =
-          simulationParameters.parentIds?.get(relativeToBodyId);
-        if (relativeParentId) {
-          const relativeParentOrbitalParams =
-            simulationParameters.orbitalParameters?.get(relativeToBodyId);
-          if (relativeParentOrbitalParams) {
-            const relativeParentInitialState = allBodiesInitialStates.find(
-              (b) => b.id === relativeParentId,
-            );
-            if (relativeParentInitialState) {
-              const { position: relativePosition } =
-                calculateKeplerianStateAtTime(
-                  relativeParentOrbitalParams,
-                  currentTime,
-                );
-              const relativeWorldPosition = relativePosition.add(
-                relativeParentInitialState.position_m,
-              );
-              finalPoint = worldPosition.sub(relativeWorldPosition);
-            }
-          }
-        } else {
-          // If relative body has no parent, just subtract its initial position
-          finalPoint = worldPosition.sub(relativeBodyState.position_m);
-        }
-      }
+      finalPoint = worldPosition.sub(relativeWorldPosition);
     }
 
     // Scale to scene units if requested

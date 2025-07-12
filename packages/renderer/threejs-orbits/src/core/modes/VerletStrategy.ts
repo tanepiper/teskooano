@@ -5,6 +5,7 @@ import { PredictionManager } from "../../verlet/PredictionManager";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type * as THREE from "three";
 import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
+import { getSimulationState } from "@teskooano/core-state";
 
 export class VerletStrategy implements IOrbitVisualizationStrategy {
   public trailManager: TrailManager;
@@ -79,25 +80,43 @@ export class VerletStrategy implements IOrbitVisualizationStrategy {
       const object = objects[this.highlightedObjectId];
       const labels = this.predictionManager.getPredictionLabels();
 
-      if (line && object?.parentId) {
-        const parent = objects[object.parentId];
-        if (parent?.position) {
-          line.position.copy(parent.position);
+      // Check simulation mode to determine how to position prediction lines
+      const simulationConfig = getSimulationState().simulationConfig;
+      const isIdealMode = simulationConfig.mode === "ideal";
+
+      if (line) {
+        if (isIdealMode) {
+          // In ideal mode, predictions are calculated in absolute world coordinates
+          // so the line should be positioned at the origin
+          line.position.set(0, 0, 0);
           labels.forEach(({ label }) => {
             if (label.visible && label.userData.localPosition) {
-              label.position
-                .copy(label.userData.localPosition)
-                .add(parent.position);
+              label.position.copy(label.userData.localPosition);
             }
           });
-        }
-      } else if (line) {
-        line.position.set(0, 0, 0);
-        labels.forEach(({ label }) => {
-          if (label.visible && label.userData.localPosition) {
-            label.position.copy(label.userData.localPosition);
+        } else {
+          // In N-body mode, predictions are relative to parent, so position at parent
+          if (object?.parentId) {
+            const parent = objects[object.parentId];
+            if (parent?.position) {
+              line.position.copy(parent.position);
+              labels.forEach(({ label }) => {
+                if (label.visible && label.userData.localPosition) {
+                  label.position
+                    .copy(label.userData.localPosition)
+                    .add(parent.position);
+                }
+              });
+            }
+          } else {
+            line.position.set(0, 0, 0);
+            labels.forEach(({ label }) => {
+              if (label.visible && label.userData.localPosition) {
+                label.position.copy(label.userData.localPosition);
+              }
+            });
           }
-        });
+        }
       }
     } else {
       this.predictionManager.highlightPrediction(null);

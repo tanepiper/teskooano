@@ -48,9 +48,9 @@ export const calculateKeplerianStateAtTime = (
 ): { position: OSVector3; velocity: OSVector3 } => {
   // --- 1. Calculate Mean and Eccentric Anomaly ---
   const meanMotion = (2 * Math.PI) / orbitalParameters.period_s;
-  // To fix retrograde motion, the time evolution is subtracted.
+  // For prograde motion (normal orbital direction), time evolution is added.
   const meanAnomaly =
-    (orbitalParameters.meanAnomaly - meanMotion * time_s) % (2 * Math.PI);
+    (orbitalParameters.meanAnomaly + meanMotion * time_s) % (2 * Math.PI);
   const eccentricAnomaly = solveKeplerEquation(
     meanAnomaly,
     orbitalParameters.eccentricity,
@@ -64,7 +64,8 @@ export const calculateKeplerianStateAtTime = (
   const x = a * (Math.cos(E) - e);
   const y = a * Math.sqrt(1 - e * e) * Math.sin(E);
   // The initial orbit is on the XZ plane for a Y-up coordinate system.
-  const position = new OSVector3(x, 0, y);
+  // Negate Z (y in orbital plane) to ensure counter-clockwise motion when viewed from +Y
+  const position = new OSVector3(x, 0, -y);
 
   // --- 3. Calculate Velocity in the Orbital Plane (perifocal frame) ---
   // We need parent mass, but it's not in orbital params. Assume it from period and SMA (Vis-viva).
@@ -78,7 +79,8 @@ export const calculateKeplerianStateAtTime = (
     const vx = term * -Math.sin(E);
     const vy = term * Math.sqrt(1 - e * e) * Math.cos(E);
     // Velocity must also be on the XZ plane initially.
-    velocity.set(vx, 0, vy);
+    // Negate Z component to match position coordinate system
+    velocity.set(vx, 0, -vy);
   }
 
   // --- 4. Rotate Position and Velocity to the Inertial Frame ---
@@ -138,10 +140,11 @@ export const calculateKeplerianPositionAtTrueAnomaly = (
 
   // --- 2. Calculate Position in the Orbital Plane (perifocal frame) ---
   // The initial orbit is on the XZ plane for a Y-up coordinate system.
+  // Negate Z to ensure counter-clockwise motion when viewed from +Y
   const position = new OSVector3(
     r * Math.cos(trueAnomaly_rad),
     0,
-    r * Math.sin(trueAnomaly_rad),
+    -r * Math.sin(trueAnomaly_rad),
   );
 
   // --- 4. Rotate Position to the Inertial Frame ---

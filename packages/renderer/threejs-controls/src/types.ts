@@ -1,5 +1,5 @@
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-import * as THREE from "three";
+import { OSVector3 } from "@teskooano/core-math";
 
 /**
  * The current state of the CameraManager.
@@ -8,11 +8,11 @@ export interface CameraManagerState {
   /**
    * The current position of the camera in world coordinates.
    */
-  currentPosition: THREE.Vector3;
+  currentPosition: OSVector3;
   /**
    * The current target point the camera is looking at in world coordinates.
    */
-  currentTarget: THREE.Vector3;
+  currentTarget: OSVector3;
   /**
    * The camera's current vertical Field of View (FOV) in degrees.
    */
@@ -42,11 +42,11 @@ export interface CameraManagerOptions {
   /**
    * Optional initial position for the camera.
    */
-  initialCameraPosition?: THREE.Vector3;
+  initialCameraPosition?: OSVector3;
   /**
    * Optional initial target point for the camera.
    */
-  initialCameraTarget?: THREE.Vector3;
+  initialCameraTarget?: OSVector3;
   /**
    * Optional callback function to be executed when the focused object ID changes
    * *after* a camera transition completes.

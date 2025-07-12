@@ -1,82 +1,427 @@
-## Core Physics Package Architecture (`core/physics`)
+# Physics Package Architecture
 
-**Purpose**: This package implements the core physics simulation engine for Open Space. It handles the calculation of forces (primarily gravity), integrates the motion of celestial bodies over time using numerical methods, and provides optimizations like spatial partitioning via the Barnes-Hut algorithm.
+The `@teskooano/core-physics` package provides a comprehensive physics simulation engine for celestial mechanics, featuring dual simulation modes, multiple algorithms, and advanced numerical integrators.
 
-**Key Components:**
+## Overview
 
-1. **`index.ts`**: Exports the primary types, constants, and functions from sub-modules. Exports specific integrators (`verlet`, `standardEuler`, `symplecticEuler`) and other core functionality.
+The physics system is designed around a **configuration-driven architecture** with intelligent algorithm selection and performance optimization. It supports both perfect analytical solutions (ideal mode) and full N-body dynamics with customizable accuracy/performance trade-offs.
 
-2. **`types.ts`**: Defines core function signatures and the primary data structure:
-   - `PhysicsStateReal`: The state representation (ID, `mass_kg`, `position_m: OSVector3`, `velocity_mps: OSVector3`). Crucially, uses REAL-WORLD units (kg, m, m/s).
-   - `NetForceCalculator`: Signature for a function that calculates the total force on one body from all others.
-   - `PairForceCalculator`: Signature for calculating the force between two specific bodies.
-   - `Integrator`: Signature for numerical integration functions that advance a `PhysicsStateReal` forward in time given an acceleration and timestep (`dt`).
+```mermaid
+graph TB
+    subgraph "Entry Point"
+        SM[SimulationManager]
+    end
 
-3. **`simulation/simulation.ts`**: Contains the main simulation loop logic with the following key functions:
-   - `calculateAccelerationForBody`: Helper that calculates acceleration on a body using the Octree.
-   - `updateSimulation`: Performs one step of the simulation:
-     1. Builds an Octree from the current body positions.
-     2. Calculates net forces on all bodies using the Octree's `calculateForceOn` method.
-     3. Calculates acceleration for each body (`a = F/m`).
-     4. Updates the state (position and velocity) of each body using the Velocity Verlet integrator.
-     5. Handles collisions between bodies based on their radii and types.
-     6. Returns the array of new `PhysicsStateReal` objects, accelerations, and any destroyed body IDs.
-   - `runSimulation`: A helper function to run the `updateSimulation` loop for a specified number of steps.
+    subgraph "Simulation Modes"
+        IM[Ideal Mode]
+        NB[N-Body Mode]
+    end
 
-4. **`forces/`**: Implements various force calculation methods:
-   - `gravity.ts`: Implements Newtonian gravitational force calculation.
-   - `relativistic.ts`: Provides relativistic gravity calculations (not yet fully integrated).
-   - `non-gravitational.ts`: Implements non-gravitational forces (thrust, drag, etc.).
+    subgraph "Algorithm Layer"
+        AF[AlgorithmFactory]
+        DA[Direct Algorithm]
+        BH[Barnes-Hut]
+        FMM[Fast Multipole Method]
+        PM[Particle-Mesh]
+        TPM[Tree-PM Hybrid]
+    end
 
-5. **`integrators/`**: Contains different numerical integration methods:
-   - `verlet.ts`:
-     - `verletIntegrate`: Implements the basic position Verlet algorithm.
-     - `velocityVerletIntegrate`: Implements the Velocity Verlet algorithm (used by default in simulation).
-   - `euler.ts`:
-     - `standardEuler`: Implements the standard Euler method.
-   - `symplecticEuler.ts`:
-     - `symplecticEuler`: Implements the symplectic Euler method for better energy conservation.
+    subgraph "Integration Layer"
+        EU[Euler]
+        SE[Symplectic Euler]
+        VV[Velocity Verlet]
+        RK[Runge-Kutta 4]
+        AD[Adaptive RK]
+        SY[Symplectic Methods]
+    end
 
-6. **`spatial/octree.ts`**: Implements the Barnes-Hut algorithm for optimizing force calculations:
-   - `OctreeNode`: Interface defining the structure of a node (center, size, bodies, children, total mass, center of mass).
-   - Helper functions: `createNode`, `isInBounds`, `subdivide`, `updateMassProperties`, `insertBody`.
-   - `Octree` class:
-     - `constructor(size, maxDepth)`: Initializes the tree.
-     - `insert(body)`: Inserts a `PhysicsStateReal` body into the tree.
-     - `calculateForceOn(body, theta)`: Calculates the approximate gravitational force on a target body using the Barnes-Hut method, with `theta` controlling the approximation threshold.
+    subgraph "Core Components"
+        OC[Octree]
+        COL[Collision Detection]
+        ORB[Orbital Mechanics]
+        PRED[Trajectory Prediction]
+    end
 
-7. **`collision/collision.ts`**: Handles collision detection and resolution:
-   - Uses body radii and types to detect collisions.
-   - Implements conservation of momentum and energy in collision resolution.
-   - Returns both updated states and IDs of destroyed bodies.
+    SM --> IM
+    SM --> NB
+    NB --> AF
+    AF --> DA
+    AF --> BH
+    AF --> FMM
+    AF --> PM
+    AF --> TPM
 
-8. **`orbital/`**: Provides orbital mechanics calculations:
-   - Converts between state vectors and Keplerian orbital elements.
-   - Calculates orbital parameters (period, semi-major axis, etc.).
+    NB --> EU
+    NB --> SE
+    NB --> VV
+    NB --> RK
+    NB --> AD
+    NB --> SY
 
-9. **`units/`**: Contains constants and conversion functions:
-   - `constants.ts`: Defines physical constants (`GRAVITATIONAL_CONSTANT`, `AU_METERS`, etc.).
-   - `units.ts`: Provides conversion functions between different unit systems.
+    BH --> OC
+    NB --> COL
+    IM --> ORB
+    SM --> PRED
+```
 
-10. **`utils/vectorPool.ts`**: Implements a pool of reusable vector objects to reduce garbage collection overhead during intensive vector calculations.
+## Core Architecture Principles
 
-**Key Characteristics & Design:**
+### 1. Configuration-Driven Design
 
-- **Real Units**: All core calculations are performed using real-world physical units (meters, kilograms, seconds) defined in `PhysicsStateReal`.
-- **Pluggable Integrators**: Different integration methods are implemented and can be swapped, with Velocity Verlet being the current default due to its stability and energy conservation properties.
-- **Optimized Force Calculation**: Uses the Barnes-Hut algorithm (Octree) for approximating gravitational forces, reducing complexity from O(N²) to O(N log N).
-- **Collision Handling**: Detects and handles collisions between celestial bodies, including destruction of smaller bodies.
-- **Modularity**: Functionality is cleanly separated into forces, integrators, simulation loop, and spatial partitioning.
-- **Testing**: Comprehensive unit tests ensure the accuracy of physics calculations and integrators.
+All simulation behavior is controlled through configuration objects rather than hardcoded behavior:
 
-**Dependencies**:
+```typescript
+interface SimulationConfiguration {
+  mode: "ideal" | "nbody";
+  integrator?: IntegratorType;
+  algorithm?: AlgorithmType;
+}
+```
 
-- `@teskooano/core-math`: Provides the `OSVector3` class for vector operations.
-- `@teskooano/data-types`: Provides celestial object type definitions.
-- `three`: Used for specific 3D math operations.
+### 2. Strategy Pattern Implementation
 
-**Performance Considerations:**
+Different algorithms and integrators are implemented as strategies, allowing runtime selection:
 
-- The Barnes-Hut algorithm significantly improves performance for large numbers of bodies.
-- The Vector Pool reduces memory allocation overhead during intensive calculations.
-- The configurable `theta` parameter allows balancing between accuracy and performance in the Barnes-Hut approximation.
+- **Algorithm Strategies**: Direct, Barnes-Hut, FMM, P3M, Tree-PM
+- **Integration Strategies**: Euler variants, Verlet, RK4, Adaptive, Symplectic methods
+
+### 3. Intelligent Selection
+
+The `AlgorithmFactory` and `SimulationManager` automatically select optimal configurations based on:
+
+- Body count
+- Performance preferences (accuracy vs speed)
+- Memory constraints
+- System characteristics
+
+### 4. Real SI Units
+
+All internal calculations use SI units (meters, kg, seconds) for physical accuracy and simplicity.
+
+## Directory Structure
+
+```
+src/
+├── algorithms/                 # Force calculation algorithms
+│   ├── algorithm-factory.ts   # Intelligent algorithm selection
+│   └── tree-pm.ts            # Tree-PM hybrid implementation
+├── collision/                 # Collision detection and resolution
+│   └── collision.ts          # Comprehensive collision handling
+├── forces/                    # Force calculation methods
+│   ├── gravity.ts            # Newtonian gravity
+│   ├── relativistic.ts       # Relativistic corrections
+│   └── non-gravitational.ts  # Thrust, drag, etc.
+├── integrators/               # Numerical integration methods
+│   ├── euler.ts              # Basic Euler methods
+│   ├── verlet.ts             # Velocity Verlet (default)
+│   ├── rk4.ts                # Runge-Kutta 4th order
+│   ├── adaptive.ts           # Adaptive timestep (Dormand-Prince)
+│   ├── yoshida.ts            # Symplectic integrators
+│   └── ideal.ts              # Analytical Keplerian orbits
+├── interfaces/                # Strategy pattern interfaces
+│   ├── algorithm-strategy.ts  # Algorithm interface
+│   └── simulation-strategy.ts # Simulation interface
+├── modes/                     # Simulation mode implementations
+│   └── ideal/                # Ideal mode (Keplerian orbits)
+│       └── ideal-orrery.ts   # Perfect orbital mechanics
+├── orbital/                   # Orbital mechanics calculations
+│   ├── kepler.ts             # Kepler's equation solver
+│   ├── orbital.ts            # State vector conversions
+│   └── elementsFromState.ts  # Inverse orbital calculations
+├── simulation/                # Main simulation orchestration
+│   ├── simulation-manager.ts # High-level coordinator
+│   ├── simulation.ts         # Core simulation loop
+│   ├── prediction.ts         # Trajectory prediction
+│   └── types.ts              # Simulation interfaces
+├── spatial/                   # Spatial data structures
+│   └── octree.ts             # Barnes-Hut octree
+├── units/                     # Unit constants and conversions
+│   ├── constants.ts          # Physical constants
+│   └── units.ts              # Unit conversion utilities
+├── utils/                     # Utility functions
+│   ├── vectorPool.ts         # Memory optimization
+│   └── body-sort.ts          # Hierarchical sorting
+└── types.ts                   # Core type definitions
+```
+
+## Key Components
+
+### 1. SimulationManager (Entry Point)
+
+**File**: `simulation/simulation-manager.ts`
+
+The main orchestrator that provides a high-level API for physics simulations:
+
+```typescript
+class SimulationManager {
+  simulate(params: SimulationManagerParams): EnhancedSimulationResult;
+  createOptimalConfiguration(params): SimulationConfiguration;
+  getPerformanceComparison(params): PerformanceComparison;
+}
+```
+
+**Responsibilities:**
+
+- Configuration validation
+- Mode selection (ideal vs N-body)
+- Strategy delegation
+- Performance analysis and recommendations
+- Result assembly with metadata
+
+### 2. AlgorithmFactory (Algorithm Selection)
+
+**File**: `algorithms/algorithm-factory.ts`
+
+Intelligent selection and validation of force calculation algorithms:
+
+```typescript
+class AlgorithmFactory {
+  static selectOptimalAlgorithm(bodyCount, preferences): AlgorithmType;
+  static getPerformanceEstimate(algorithm, bodyCount): PerformanceEstimate;
+  static validateAlgorithmChoice(algorithm, bodyCount): ValidationResult;
+  static createOptimalConfiguration(
+    bodyCount,
+    mode,
+    preferences,
+  ): SimulationConfiguration;
+}
+```
+
+**Selection Logic:**
+
+- Body count analysis
+- Performance preference consideration
+- Memory constraint validation
+- Algorithm capability matching
+
+### 3. Ideal Mode Strategy
+
+**File**: `modes/ideal/ideal-orrery.ts`
+
+Perfect Keplerian orbital mechanics with analytical solutions:
+
+```typescript
+class IdealOrreryStrategy {
+  simulate(params: IdealOrbitParams): IdealOrbitResult;
+}
+```
+
+**Process:**
+
+1. Hierarchical body sorting (topological sort)
+2. Sequential Keplerian calculations
+3. Exact analytical position/velocity computation
+4. No force calculations or collisions
+
+### 4. N-Body Simulation Pipeline
+
+**File**: `simulation/simulation.ts`
+
+Full gravitational N-body simulation with configurable algorithms and integrators:
+
+**Flow:**
+
+1. **Algorithm Selection**: Choose force calculation method
+2. **Force Calculation**: Compute gravitational forces
+3. **Integration**: Update positions and velocities
+4. **Collision Handling**: Detect and resolve collisions
+5. **Result Assembly**: Package output with metadata
+
+### 5. Force Calculation Algorithms
+
+#### Barnes-Hut Octree
+
+**File**: `spatial/octree.ts`
+
+Hierarchical spatial data structure for O(N log N) force calculations:
+
+```typescript
+class Octree {
+  insert(body: PhysicsStateReal): void;
+  calculateForceOn(body: PhysicsStateReal, theta: number): OSVector3;
+}
+```
+
+#### Tree-PM Hybrid
+
+**File**: `algorithms/tree-pm.ts`
+
+Advanced algorithm combining Tree and Particle-Mesh methods:
+
+```typescript
+class TreePMStrategy extends AlgorithmStrategy {
+  calculateForces(bodies, params): Record<string, OSVector3>;
+}
+```
+
+**Multi-scale approach:**
+
+- PM method for long-range forces (low-density regions)
+- Tree method for short-range forces (high-density regions)
+- Automatic density-based partitioning
+
+### 6. Integration Methods
+
+Multiple numerical integrators with different characteristics:
+
+- **Velocity Verlet** (`integrators/verlet.ts`): Default, excellent energy conservation
+- **RK4** (`integrators/rk4.ts`): High accuracy, 4th order
+- **Adaptive RK** (`integrators/adaptive.ts`): Automatic timestep control
+- **Symplectic Methods** (`integrators/yoshida.ts`): Long-term stability
+
+### 7. Orbital Mechanics System
+
+#### Kepler Solver
+
+**File**: `orbital/kepler.ts`
+
+Fast analytical orbital calculations:
+
+- Newton-Raphson Kepler equation solver
+- Coordinate system transformations
+- Time evolution with proper prograde motion
+
+#### State Vector Conversions
+
+**File**: `orbital/orbital.ts`
+
+Bidirectional conversion between orbital elements and state vectors:
+
+- Synchronized with Kepler solver
+- Consistent coordinate mapping
+- Full 3D rotational transformations
+
+### 8. Collision System
+
+**File**: `collision/collision.ts`
+
+Comprehensive collision detection and resolution:
+
+**Collision Types:**
+
+- **Star-Star**: Larger absorbs smaller (inelastic)
+- **Star-Planet**: Star absorbs planet (inelastic)
+- **Moon-Moon**: Mutual destruction
+- **Planet-Gas Giant**: Elastic collision
+- **Similar Mass**: Elastic collision
+- **Large Mass Difference**: Absorption (inelastic)
+
+### 9. Trajectory Prediction
+
+**File**: `simulation/prediction.ts`
+
+Future trajectory calculation using the same physics pipeline:
+
+```typescript
+function predictTrajectory(
+  targetBodyId: string,
+  allBodiesInitialStates: PhysicsStateReal[],
+  duration_s: number,
+  steps: number,
+  options?: PredictionOptions,
+): PredictedPoint[];
+```
+
+## Data Flow Architecture
+
+### Input Processing
+
+1. **Validation**: Check configuration and parameters
+2. **Mode Selection**: Determine ideal vs N-body simulation
+3. **Algorithm Selection**: Choose optimal force calculation method
+4. **Integrator Selection**: Choose numerical integration method
+
+### Simulation Execution
+
+1. **Force Calculation**: Compute gravitational forces between bodies
+2. **Integration**: Update body states using numerical methods
+3. **Collision Detection**: Check for body intersections
+4. **Collision Resolution**: Apply collision physics
+5. **State Validation**: Check for numerical errors
+
+### Output Assembly
+
+1. **Result Packaging**: Combine updated states, forces, collisions
+2. **Performance Analysis**: Calculate execution metrics
+3. **Recommendation Generation**: Suggest optimizations
+4. **Metadata Assembly**: Package analysis and timing data
+
+## Performance Optimization
+
+### Memory Management
+
+- **Vector Pooling**: Reuse `OSVector3` instances to reduce GC pressure
+- **State Swapping**: Reuse arrays between simulation steps
+- **Sparse Storage**: Only store non-zero accelerations and forces
+
+### Computational Optimization
+
+- **Algorithm Auto-Selection**: Choose optimal method based on body count
+- **Adaptive Time Stepping**: Adjust timestep for accuracy/performance balance
+- **Early Termination**: Stop on integration failures or instabilities
+
+### Caching Strategies
+
+- **Force Caching**: Reuse calculations within timesteps
+- **Octree Reuse**: Minimize spatial structure rebuilding
+- **Validation Caching**: Store validation results
+
+## Coordinate System Design
+
+### Y-up Right-handed System
+
+- **Y-axis**: "Up" direction (reference)
+- **XZ-plane**: Orbital motion plane
+- **Orbital Direction**: Counter-clockwise from +Y view (prograde)
+
+### Critical Mappings
+
+- **2D → 3D**: `OSVector3(x, 0, -y)` for proper orientation
+- **Time Evolution**: `meanAnomaly + meanMotion * time` for prograde motion
+- **Rotation Order**: argP → inclination → longAscNode
+
+## Testing Architecture
+
+### Unit Tests
+
+- **Algorithm Accuracy**: Verify force calculations
+- **Integration Stability**: Check energy conservation
+- **Coordinate Consistency**: Validate orbital direction
+- **Performance Bounds**: Ensure timing expectations
+
+### Integration Tests
+
+- **End-to-End Simulation**: Full pipeline validation
+- **Mode Switching**: Verify ideal/N-body consistency
+- **Collision Scenarios**: Complex multi-body interactions
+
+### Performance Tests
+
+- **Scaling Analysis**: Verify algorithmic complexity
+- **Memory Usage**: Monitor resource consumption
+- **Execution Timing**: Benchmark different configurations
+
+## Extension Points
+
+### Adding New Algorithms
+
+1. Implement `IAlgorithmStrategy` interface
+2. Add to `AlgorithmFactory` selection logic
+3. Update performance estimates and validation
+4. Add comprehensive tests
+
+### Adding New Integrators
+
+1. Implement `Integrator` function signature
+2. Add to simulation integrator switch statement
+3. Document stability and accuracy characteristics
+4. Add energy conservation tests
+
+### Adding New Force Types
+
+1. Implement `PairForceCalculator` interface
+2. Integrate into force calculation pipeline
+3. Add configuration options
+4. Validate physical correctness
+
+This architecture provides a robust, extensible foundation for physics simulation with clear separation of concerns, intelligent optimization, and comprehensive testing coverage.

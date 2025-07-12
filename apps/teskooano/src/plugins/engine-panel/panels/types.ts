@@ -1,6 +1,6 @@
-import type { Vector3 } from "three";
 import type { DockviewController } from "../../../core/controllers/dockview";
 import type { EngineToolbarManager } from "../../../core/interface/engine-toolbar";
+import type { OSVector3 } from "@teskooano/core-math";
 
 /**
  * The parameters for the CompositeEnginePanel
@@ -28,11 +28,11 @@ export interface CompositeEngineState {
   /**
    * The position of the camera
    */
-  cameraPosition: Vector3;
+  cameraPosition: OSVector3;
   /**
    * The target of the camera
    */
-  cameraTarget: Vector3;
+  cameraTarget: OSVector3;
   /**
    * The focused object ID
    */

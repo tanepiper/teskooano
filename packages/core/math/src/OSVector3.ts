@@ -188,6 +188,24 @@ export class OSVector3 {
   }
 
   /**
+   * Checks if this vector is equal to another vector within a tolerance.
+   * Uses the same relative tolerance approach as THREE.js for compatibility.
+   * @param v - The other vector.
+   * @param tolerance - The tolerance for comparison. Defaults to EPSILON.
+   * @returns True if the vectors are equal within the tolerance.
+   */
+  equals(v: OSVector3, tolerance: number = EPSILON): boolean {
+    return (
+      Math.abs(this.x - v.x) <=
+        tolerance * Math.max(1.0, Math.abs(this.x), Math.abs(v.x)) &&
+      Math.abs(this.y - v.y) <=
+        tolerance * Math.max(1.0, Math.abs(this.y), Math.abs(v.y)) &&
+      Math.abs(this.z - v.z) <=
+        tolerance * Math.max(1.0, Math.abs(this.z), Math.abs(v.z))
+    );
+  }
+
+  /**
    * Linearly interpolates between this vector and another vector.
    * @param v The vector to interpolate towards.
    * @param alpha The interpolation factor, typically in the range [0, 1].

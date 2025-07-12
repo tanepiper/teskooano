@@ -1,7 +1,6 @@
 import type { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
-import * as THREE from "three";
+import { OSVector3 } from "../../../../../../../packages/core/math/src/OSVector3";
 import type { CompositeEngineState } from "../types";
-import type { CompositeEnginePanel } from "./CompositeEnginePanel";
 
 /**
  * The default FOV for the panel state, aligning with SceneManager's default
@@ -9,15 +8,15 @@ import type { CompositeEnginePanel } from "./CompositeEnginePanel";
 export const DEFAULT_PANEL_FOV = 75;
 
 export const createDefaultViewState = (): CompositeEngineState => ({
-  cameraPosition: new THREE.Vector3(200, 200, 200),
-  cameraTarget: new THREE.Vector3(0, 0, 0),
+  cameraPosition: new OSVector3(200, 200, 200),
+  cameraTarget: new OSVector3(0, 0, 0),
   focusedObjectId: null,
   showGrid: false,
   showCelestialLabels: true,
   showAuMarkers: true,
   showDebrisEffects: false,
   showOrbitLines: true,
-  showPredictionLines: true,
+  showPredictionLines: false,
   isDebugMode: false,
   fov: DEFAULT_PANEL_FOV,
 });

@@ -36,8 +36,8 @@ export const calculateOrbitalPosition = (
   }
 
   const meanMotion = (2 * Math.PI) / period_s;
-  // Use subtract for time evolution to match coordinate system convention (consistent with kepler.ts and calculateOrbitalVelocity)
-  const currentMeanAnomaly = meanAnomaly - meanMotion * currentTime;
+  // Use addition for time evolution for prograde motion (normal orbital direction)
+  const currentMeanAnomaly = meanAnomaly + meanMotion * currentTime;
 
   let eccentricAnomaly = currentMeanAnomaly;
   for (let i = 0; i < 5; i++) {
@@ -78,7 +78,8 @@ export const calculateOrbitalPosition = (
   const x = a * (Math.cos(E) - e);
   const y = a * Math.sqrt(1 - e * e) * Math.sin(E);
   // The initial orbit is on the XZ plane for a Y-up coordinate system (matching kepler.ts)
-  const position = new OSVector3(x, 0, y);
+  // Negate Z to ensure counter-clockwise motion when viewed from +Y
+  const position = new OSVector3(x, 0, -y);
 
   // Apply rotations in same order as kepler.ts: argP -> inclination -> longAscNode
   const omega = argumentOfPeriapsis;
@@ -130,8 +131,8 @@ export const calculateOrbitalVelocity = (
   } = orbitalParameters;
 
   const meanMotion = (2 * Math.PI) / period_s;
-  // Use subtract for time evolution to match coordinate system convention (consistent with kepler.ts)
-  const currentMeanAnomaly = meanAnomaly - meanMotion * currentTime;
+  // Use addition for time evolution for prograde motion (normal orbital direction)
+  const currentMeanAnomaly = meanAnomaly + meanMotion * currentTime;
 
   let eccentricAnomaly = currentMeanAnomaly;
   for (let i = 0; i < 5; i++) {
@@ -158,7 +159,8 @@ export const calculateOrbitalVelocity = (
     const vx = term * -Math.sin(E);
     const vy = term * Math.sqrt(1 - e * e) * Math.cos(E);
     // Velocity must also be on the XZ plane initially (matching kepler.ts)
-    velocity.set(vx, 0, vy);
+    // Negate Z component to match position coordinate system
+    velocity.set(vx, 0, -vy);
   }
 
   // Apply rotations in same order as kepler.ts: argP -> inclination -> longAscNode
