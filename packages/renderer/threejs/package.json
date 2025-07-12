@@ -40,13 +40,13 @@
     "three": "0.178.0"
   },
   "devDependencies": {
-    "@types/three": "0.178.0",
-    "@playwright/test": "1.53.2",
+    "@types/three": "0.178.1",
+    "@playwright/test": "1.54.1",
     "@vitest/browser": "3.2.4",
     "@vitest/ui": "3.2.4",
-    "eslint": "9.30.1",
+    "eslint": "9.31.0",
     "happy-dom": "18.0.1",
-    "playwright": "1.53.2",
+    "playwright": "1.54.1",
     "typescript": "5.8.3",
     "vitest": "3.2.4"
   }

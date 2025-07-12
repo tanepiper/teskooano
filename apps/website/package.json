@@ -10,11 +10,11 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/starlight": "0.34.4",
+    "@astrojs/starlight": "0.34.5",
     "@teskooano/design-system": "file:../../packages/design-system",
     "@pasqal-io/starlight-client-mermaid": "0.1.0",
     "astro": "5.11.0",
-    "sharp": "0.34.2",
+    "sharp": "0.34.3",
     "starlight-typedoc": "0.21.3",
     "typedoc": "0.28.7",
     "typedoc-plugin-markdown": "4.7.0"

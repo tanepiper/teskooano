@@ -35,17 +35,17 @@
     "@teskooano/renderer-threejs-celestial": "file:../../renderer/threejs-celestial",
     "@teskooano/renderer-threejs-lod": "file:../../renderer/threejs-lod",
     "@teskooano/celestials-rings": "file:../../celestials/rings",
-    "@types/three": "0.178.0",
+    "@types/three": "0.178.1",
     "three": "0.178.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.53.2",
-    "@types/node": "24.0.12",
+    "@playwright/test": "1.54.1",
+    "@types/node": "24.0.13",
     "@vitest/browser": "3.2.4",
     "@vitest/ui": "3.2.4",
-    "eslint": "9.30.1",
+    "eslint": "9.31.0",
     "happy-dom": "18.0.1",
-    "playwright": "1.53.2",
+    "playwright": "1.54.1",
     "typescript": "5.8.3",
     "vite-plugin-glsl": "1.5.1",
     "vitest": "3.2.4"

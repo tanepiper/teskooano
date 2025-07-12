@@ -22,7 +22,7 @@
   "devDependencies": {
     "typescript": "5.8.3",
     "vitest": "3.2.4",
-    "eslint": "9.30.1",
-    "@types/three": "0.178.0"
+    "eslint": "9.31.0",
+    "@types/three": "0.178.1"
   }
 }
