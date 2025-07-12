@@ -41,11 +41,10 @@ export type IntegratorType =
  * The force calculation algorithm used for N-Body simulations.
  */
 export type AlgorithmType =
-  | "direct" // O(N²) - exact but slow
-  | "barnes-hut" // O(N log N) - current implementation
+  | "barnes-hut" // O(N log N) - tree-based approximation
   | "fmm" // O(N) - Fast Multipole Method
   | "p3m" // O(N log N) - Particle-Mesh hybrid
-  | "tree-pm"; // O(N log N) - Tree-PM hybrid (NEW)
+  | "tree-pm"; // O(N log N) - Tree-PM hybrid (recommended)
 
 /**
  * Configuration for the simulation physics system.
@@ -125,9 +124,7 @@ export function getConfigurationShortName(
         ? "FMM"
         : config.algorithm === "p3m"
           ? "P3M"
-          : config.algorithm === "tree-pm"
-            ? "TPM"
-            : "Dir";
+          : "TPM"; // tree-pm is the default
 
   const integratorShort = config.integrator
     ? config.integrator.charAt(0).toUpperCase() + config.integrator.slice(1, 3)

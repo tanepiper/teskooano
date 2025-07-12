@@ -290,10 +290,6 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
       const algorithm = this.currentConfig.algorithm;
 
       switch (algorithm) {
-        case "direct":
-          dot.classList.add("warning");
-          text.textContent = "Good for small systems (<100 bodies)";
-          break;
         case "barnes-hut":
           text.textContent = "Balanced performance (100-10K bodies)";
           break;
@@ -302,6 +298,9 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
           break;
         case "p3m":
           text.textContent = "Good for medium systems (2K-50K bodies)";
+          break;
+        case "tree-pm":
+          text.textContent = "Excellent all-around performance";
           break;
         default:
           text.textContent = "Performance varies by system size";

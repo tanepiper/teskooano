@@ -21,22 +21,12 @@ interface AlgorithmSpec {
  * Algorithm specifications based on research and implementation characteristics
  */
 const ALGORITHM_SPECS: Record<AlgorithmType, AlgorithmSpec> = {
-  direct: {
-    type: "direct",
-    complexity: "O(N²)",
-    minBodies: 1,
-    maxBodies: 1000, // Becomes impractical beyond this
-    optimalRange: [1, 100],
-    description: "Exact N-body calculation, best for small systems",
-    memoryUsage: "low",
-    accuracy: "exact",
-  },
   "barnes-hut": {
     type: "barnes-hut",
     complexity: "O(N log N)",
-    minBodies: 50,
+    minBodies: 2,
     maxBodies: 100000,
-    optimalRange: [100, 10000],
+    optimalRange: [2, 10000],
     description: "Tree-based approximation, good balance of speed and accuracy",
     memoryUsage: "medium",
     accuracy: "high",
@@ -64,9 +54,9 @@ const ALGORITHM_SPECS: Record<AlgorithmType, AlgorithmSpec> = {
   "tree-pm": {
     type: "tree-pm",
     complexity: "O(N log N)",
-    minBodies: 1000,
+    minBodies: 2,
     maxBodies: 1000000,
-    optimalRange: [5000, 500000],
+    optimalRange: [2, 500000],
     description: "Tree-PM hybrid, optimal for multi-scale problems",
     memoryUsage: "medium",
     accuracy: "high",
@@ -77,7 +67,7 @@ const ALGORITHM_SPECS: Record<AlgorithmType, AlgorithmSpec> = {
  * Performance thresholds for algorithm selection
  */
 const PERFORMANCE_THRESHOLDS = {
-  small: 100, // Bodies ≤ 100: Use direct
+  small: 100, // Bodies ≤ 100: Use barnes-hut
   medium: 1000, // Bodies 100-1000: Use Barnes-Hut
   large: 10000, // Bodies 1000-10000: Use Barnes-Hut or P3M
   huge: 50000, // Bodies > 10000: Use FMM or P3M
@@ -148,7 +138,6 @@ export class AlgorithmFactory {
         const complexityScore: Record<string, number> = {
           "O(N)": 1,
           "O(N log N)": 2,
-          "O(N²)": 3,
         };
         const complexityDiff =
           (complexityScore[a.complexity] || 2) -
@@ -183,22 +172,25 @@ export class AlgorithmFactory {
     // Calculate relative speed compared to Barnes-Hut at 1000 bodies
     let relativeSpeed: number;
     switch (algorithm) {
-      case "direct":
-        relativeSpeed = Math.pow(1000 / bodyCount, 2); // O(N²) scaling
-        break;
       case "barnes-hut":
         relativeSpeed =
-          ((1000 / bodyCount) * Math.log(1000)) / Math.log(bodyCount); // O(N log N)
+          ((1000 / bodyCount) * Math.log(1000)) /
+          Math.log(Math.max(2, bodyCount)); // O(N log N)
         break;
       case "fmm":
         relativeSpeed = 1000 / bodyCount; // O(N)
         break;
       case "p3m":
         relativeSpeed =
-          (((1000 / bodyCount) * Math.log(1000)) / Math.log(bodyCount)) * 0.8; // Slightly worse than Barnes-Hut
+          (((1000 / bodyCount) * Math.log(1000)) /
+            Math.log(Math.max(2, bodyCount))) *
+          0.8; // Slightly worse than Barnes-Hut
         break;
-      default:
-        relativeSpeed = 1.0;
+      default: // tree-pm
+        relativeSpeed =
+          (((1000 / bodyCount) * Math.log(1000)) /
+            Math.log(Math.max(2, bodyCount))) *
+          1.1; // Slightly better than Barnes-Hut
     }
 
     return {
@@ -248,8 +240,8 @@ export class AlgorithmFactory {
     }
 
     // Performance warnings
-    if (algorithm === "direct" && bodyCount > 500) {
-      warnings.push("Direct algorithm with >500 bodies will be very slow");
+    if (algorithm === "barnes-hut" && bodyCount > 500) {
+      warnings.push("Barnes-Hut algorithm with >500 bodies will be very slow");
     }
     if (algorithm === "fmm" && bodyCount < 2000) {
       warnings.push("FMM overhead may not be worth it for <2000 bodies");

@@ -290,13 +290,13 @@ template.innerHTML = `
         <div class="form-group">
           <label for="setting-algorithm">
             Force Algorithm
-            <span class="info-icon" title="Direct: O(N²) exact but slow. Barnes-Hut: O(N log N) balanced. FMM: O(N) fastest for large systems."></span>
+            <span class="info-icon" title="Barnes-Hut: O(N log N) balanced. FMM: O(N) fastest for large systems. Tree-PM: Excellent all-around performance."></span>
           </label>
           <select id="setting-algorithm" class="teskooano-select">
-            <option value="direct">Direct (Exact, O(N²))</option>
             <option value="barnes-hut">Barnes-Hut (Tree, O(N log N))</option>
             <option value="fmm">Fast Multipole (FMM, O(N))</option>
             <option value="p3m">Particle-Mesh (P3M, O(N log N))</option>
+            <option value="tree-pm">Tree-PM (Recommended)</option>
           </select>
           <small>Algorithm for calculating gravitational forces.</small>
         </div>
@@ -312,6 +312,10 @@ template.innerHTML = `
             <option value="verlet">Velocity Verlet (2nd order)</option>
             <option value="rk4">Runge-Kutta 4 (4th order)</option>
             <option value="adaptive">Adaptive (Variable step)</option>
+            <option value="yoshida4">Yoshida 4th Order</option>
+            <option value="forest-ruth">Forest-Ruth 4th</option>
+            <option value="pefrl">PEFRL 4th Order (Recommended)</option>
+            <option value="leapfrog">Leapfrog</option>
           </select>
           <small>Method for advancing positions and velocities over time.</small>
         </div>

@@ -218,25 +218,6 @@ describe("Enhanced Settings Panel UI Layer", () => {
       expect(performanceDot.classList.contains("error")).toBe(false);
     });
 
-    it("should show warning for direct algorithm", async () => {
-      simulationStateService.setSimulationConfiguration({
-        mode: "nbody",
-        algorithm: "direct",
-        integrator: "verlet",
-      });
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      const performanceText = panel.shadowRoot!.querySelector(
-        ".performance-text",
-      ) as HTMLElement;
-      const performanceDot = panel.shadowRoot!.querySelector(
-        ".performance-dot",
-      ) as HTMLElement;
-
-      expect(performanceText.textContent).toContain("small systems");
-      expect(performanceDot.classList.contains("warning")).toBe(true);
-    });
-
     it("should show balanced performance for Barnes-Hut", async () => {
       simulationStateService.setSimulationConfiguration({
         mode: "nbody",
@@ -249,6 +230,20 @@ describe("Enhanced Settings Panel UI Layer", () => {
         ".performance-text",
       ) as HTMLElement;
       expect(performanceText.textContent).toContain("Balanced performance");
+    });
+
+    it("should show excellent performance for Tree-PM", async () => {
+      simulationStateService.setSimulationConfiguration({
+        mode: "nbody",
+        algorithm: "tree-pm",
+        integrator: "pefrl",
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const performanceText = panel.shadowRoot!.querySelector(
+        ".performance-text",
+      ) as HTMLElement;
+      expect(performanceText.textContent).toContain("Excellent all-around");
     });
   });
 

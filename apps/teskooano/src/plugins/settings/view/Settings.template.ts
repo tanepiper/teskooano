@@ -15,7 +15,6 @@ const SIMULATION_MODE_OPTIONS: {
 ];
 
 const ALGORITHM_OPTIONS: { value: AlgorithmType; label: string }[] = [
-  { value: "direct", label: "Direct Summation" },
   { value: "barnes-hut", label: "Barnes-Hut" },
   { value: "fmm", label: "Fast Multipole (FMM)" },
   { value: "p3m", label: "Particle-Mesh (P3M)" },
@@ -183,7 +182,7 @@ template.innerHTML = `
     </div>
     
     <!-- Dynamic Displays -->
-    <div id="config-display">n-body (barnes-hut + verlet)</div>
+    <div id="config-display">n-body (tree-pm + pefrl)</div>
     <div id="mode-performance-display">
       <span id="performance-dot"></span>
       <span id="performance-text">Optimal</span>

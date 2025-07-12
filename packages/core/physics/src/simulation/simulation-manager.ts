@@ -172,13 +172,7 @@ export class SimulationManager {
     }
 
     // Generate estimates for all N-body configurations
-    const algorithms = [
-      "direct",
-      "barnes-hut",
-      "fmm",
-      "p3m",
-      "tree-pm",
-    ] as const;
+    const algorithms = ["barnes-hut", "fmm", "p3m", "tree-pm"] as const;
     const integrators = [
       "euler",
       "symplectic",

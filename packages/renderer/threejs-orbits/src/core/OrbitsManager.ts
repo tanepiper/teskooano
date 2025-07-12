@@ -7,8 +7,8 @@ import {
 } from "@teskooano/core-state";
 import type { Observable } from "rxjs";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
-import { KeplerianStrategy } from "./modes/KeplerianStrategy";
-import { VerletStrategy } from "./modes/VerletStrategy";
+import { IdealStrategy } from "./modes/IdealStrategy";
+import { NBodyStrategy } from "./modes/NBodyStrategy";
 import type { IOrbitVisualizationStrategy } from "./modes/IOrbitVisualizationStrategy";
 import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { PredictionManager } from "../verlet/PredictionManager";
@@ -17,21 +17,25 @@ import { TrailManager } from "../verlet/TrailManager";
 /**
  * Enum defining the available modes for orbit visualization.
  * - `Ideal`: Perfect Keplerian orbits (stable, precise)
- * - `NBodyDirect`: Real-time N-Body physics with direct calculation
- * - `NBodyTree`: Real-time N-Body physics with spatial optimization (Barnes-Hut, FMM, P3M)
+ * - `NBody`: Real-time N-Body physics with spatial optimization (Barnes-Hut, FMM, P3M, Tree-PM)
  */
 export enum OrbitDisplayMode {
   Ideal = "IDEAL",
-  NBodyDirect = "NBODY_DIRECT",
-  NBodyTree = "NBODY_TREE",
+  NBody = "NBODY",
 }
 
 /**
  * Manager for orbit visualizations, serving as the main entry point for the module.
  *
- * This class coordinates between different visualization systems (Keplerian orbits,
- * Verlet trails, and trajectory predictions) and handles mode switching, visibility,
- * and highlighting.
+ * This class coordinates between different visualization strategies (Ideal vs. N-Body)
+ * and handles mode switching, visibility, and highlighting. It uses the Strategy pattern
+ * to delegate the actual visualization implementation to specialized classes:
+ *
+ * - `IdealStrategy`: Renders perfect elliptical orbits using Keplerian parameters
+ * - `NBodyStrategy`: Renders dynamic trails and predictions based on N-Body simulation
+ *
+ * The manager automatically selects the appropriate strategy based on the current
+ * simulation configuration and provides a unified API for controlling visualizations.
  */
 export class OrbitsManager extends StateSubscriptionMixin {
   /** Current visualization mode */
@@ -110,6 +114,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
 
   /**
    * Determines the appropriate visualization mode based on simulation configuration.
+   *
    * @param config The simulation configuration
    * @returns The visualization mode to use
    */
@@ -118,21 +123,22 @@ export class OrbitsManager extends StateSubscriptionMixin {
   ): OrbitDisplayMode {
     if (config.mode === "ideal") {
       return OrbitDisplayMode.Ideal;
-    }
-
-    // For N-Body mode, distinguish between direct and tree-based algorithms
-    if (config.algorithm === "direct") {
-      return OrbitDisplayMode.NBodyDirect;
     } else {
-      // Barnes-Hut, FMM, P3M all use spatial optimization
-      return OrbitDisplayMode.NBodyTree;
+      // All N-Body algorithms use the same visualization strategy
+      return OrbitDisplayMode.NBody;
     }
   }
 
   /**
-   * Sets the visualization mode (Ideal, N-Body Direct, or N-Body Tree).
+   * Sets the visualization mode (Ideal or N-Body).
+   *
+   * This method creates the appropriate strategy based on the mode:
+   * - For Ideal mode: Creates an IdealStrategy
+   * - For N-Body mode: Creates a NBodyStrategy (handles all N-Body algorithms)
    *
    * @param mode - The visualization mode to use
+   * @param objectManager - The scene's ObjectManager for rendering operations
+   * @param renderableObjects$ - Observable stream of renderable object data
    */
   setVisualizationMode(
     mode: OrbitDisplayMode,
@@ -157,14 +163,13 @@ export class OrbitsManager extends StateSubscriptionMixin {
 
     // Create the new strategy based on mode
     if (mode === OrbitDisplayMode.Ideal) {
-      this.activeStrategy = new KeplerianStrategy(
+      this.activeStrategy = new IdealStrategy(
         objectManager,
         renderableObjects$,
       );
     } else {
-      // Both N-Body modes use the VerletStrategy
-      // TODO: Add mode-specific visual styling for Direct vs Tree algorithms
-      this.activeStrategy = new VerletStrategy(
+      // N-Body mode uses the NBodyStrategy for all algorithms
+      this.activeStrategy = new NBodyStrategy(
         objectManager,
         this.layer2DManager,
       );
@@ -177,6 +182,8 @@ export class OrbitsManager extends StateSubscriptionMixin {
   /**
    * Updates all visualizations based on the current mode and settings.
    * This should be called once per frame from the render loop.
+   *
+   * @param deltaTime - Time elapsed since the last update in milliseconds
    */
   updateAllVisualizations(deltaTime: number): void {
     const visualSettings = this.stateAdapter.$visualSettings.getValue();
@@ -193,6 +200,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
 
   /**
    * Updates configuration feedback for smooth transitions.
+   *
    * @param config Current simulation configuration
    */
   private updateConfigurationFeedback(config: SimulationConfiguration): void {
@@ -216,6 +224,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
 
   /**
    * Gets the current visualization mode and transition status.
+   *
    * @returns Information about current mode and any ongoing transitions
    */
   public getVisualizationStatus(): {
@@ -256,7 +265,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
   }
 
   /**
-   * Sets the visibility of the main orbit/trail lines.
+   * Sets the visibility of orbit and trail lines.
    *
    * @param visible - Whether orbit/trail lines should be visible
    */
@@ -266,7 +275,7 @@ export class OrbitsManager extends StateSubscriptionMixin {
   }
 
   /**
-   * Sets the visibility of prediction lines (only applicable in Verlet mode).
+   * Sets the visibility of prediction lines.
    *
    * @param visible - Whether prediction lines should be visible
    */
@@ -276,47 +285,46 @@ export class OrbitsManager extends StateSubscriptionMixin {
   }
 
   /**
-   * Returns the PredictionManager instance if the current mode is 'Verlet'.
-   * @returns The PredictionManager instance or undefined.
+   * Gets the prediction manager from the active strategy (if available).
+   * Only available when using NBodyStrategy.
+   *
+   * @returns The prediction manager or undefined if not available
    */
   public getPredictionManager(): PredictionManager | undefined {
-    if (this.activeStrategy instanceof VerletStrategy) {
+    if (this.activeStrategy instanceof NBodyStrategy) {
       return this.activeStrategy.predictionManager;
     }
     return undefined;
   }
 
   /**
-   * Returns the TrailManager instance if the current mode is 'Verlet'.
-   * @returns The TrailManager instance or undefined.
+   * Gets the trail manager from the active strategy (if available).
+   * Only available when using NBodyStrategy.
+   *
+   * @returns The trail manager or undefined if not available
    */
   public getTrailManager(): TrailManager | undefined {
-    if (this.activeStrategy instanceof VerletStrategy) {
+    if (this.activeStrategy instanceof NBodyStrategy) {
       return this.activeStrategy.trailManager;
     }
     return undefined;
   }
 
   /**
-   * Highlights a specific object's visualizations.
+   * Highlights a specific object's orbit visualization.
    *
-   * @param objectId - ID of the object to highlight, or null to clear highlight
+   * @param objectId - ID of the object to highlight, or null to clear highlighting
    */
   highlightVisualization(objectId: string | null): void {
+    this.highlightedObjectId = objectId;
     this.activeStrategy?.highlight(objectId, this.highlightColor);
   }
 
   /**
-   * Cleans up all resources used by the managers.
+   * Cleans up resources used by this manager.
    * Should be called when the manager is no longer needed.
    */
   dispose(): void {
-    // Clean up subscriptions using mixin
-    super.dispose();
-
-    // Clean up visualization managers
     this.activeStrategy?.dispose();
-
-    this.highlightedObjectId = null;
   }
 }

@@ -5,12 +5,30 @@ import * as THREE from "three";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { Observable } from "rxjs";
 
-export class KeplerianStrategy implements IOrbitVisualizationStrategy {
+/**
+ * Implementation of the orbit visualization strategy for Ideal (Keplerian) mode.
+ *
+ * This strategy renders perfect elliptical orbits based on analytical Keplerian
+ * orbital parameters. It creates static orbit lines that represent the perfect
+ * mathematical paths of celestial objects in an idealized gravitational system
+ * where only the primary gravitational influence is considered.
+ */
+export class IdealStrategy implements IOrbitVisualizationStrategy {
+  /** Manager for creating and updating Keplerian orbit lines */
   private keplerianManager: KeplerianManager;
+  /** Currently highlighted object ID */
   private highlightedObjectId: string | null = null;
+  /** Visibility state for all orbit lines */
   private isVisible: boolean = true;
+  /** Color used for highlighting */
   private highlightColor: THREE.Color = new THREE.Color(0x00ff00);
 
+  /**
+   * Creates a new IdealStrategy instance.
+   *
+   * @param objectManager - The scene's ObjectManager for rendering operations
+   * @param renderableObjects$ - Observable stream of renderable object data
+   */
   constructor(
     objectManager: ObjectManager,
     renderableObjects$: Observable<Record<string, RenderableCelestialObject>>,
@@ -21,6 +39,17 @@ export class KeplerianStrategy implements IOrbitVisualizationStrategy {
     );
   }
 
+  /**
+   * Updates all orbit visualizations based on the current objects.
+   *
+   * For each object with orbital parameters, creates or updates a perfect
+   * elliptical orbit line. Removes orbit lines for objects that no longer
+   * have orbital parameters.
+   *
+   * @param objects - Map of all renderable celestial objects by ID
+   * @param visualSettings - Current visual settings (not used in this strategy)
+   * @param deltaTime - Time elapsed since last update (not used in this strategy)
+   */
   update(
     objects: Record<string, RenderableCelestialObject>,
     visualSettings: {
@@ -47,6 +76,12 @@ export class KeplerianStrategy implements IOrbitVisualizationStrategy {
     });
   }
 
+  /**
+   * Highlights a specific object's orbit visualization.
+   *
+   * @param objectId - ID of the object to highlight, or null to clear highlighting
+   * @param color - Color to use for highlighting
+   */
   highlight(objectId: string | null, color: THREE.Color): void {
     const previouslyHighlightedId = this.highlightedObjectId;
     this.highlightedObjectId = objectId;
@@ -69,15 +104,29 @@ export class KeplerianStrategy implements IOrbitVisualizationStrategy {
     }
   }
 
+  /**
+   * Sets the visibility of all orbit visualizations.
+   *
+   * @param visible - Whether orbit visualizations should be visible
+   */
   setVisibility(visible: boolean): void {
     this.isVisible = visible;
     this.keplerianManager.setVisibility(visible);
   }
 
+  /**
+   * Cleans up resources used by this strategy.
+   */
   dispose(): void {
     this.keplerianManager.dispose();
   }
 
+  /**
+   * Sets the visibility of trajectory prediction visualizations.
+   * This is a no-op in the Ideal strategy as it doesn't use separate prediction lines.
+   *
+   * @param visible - Whether prediction visualizations should be visible
+   */
   public setPredictionVisibility(visible: boolean): void {
     // This strategy does not have prediction lines.
   }
