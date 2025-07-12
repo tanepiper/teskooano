@@ -3,7 +3,7 @@ import {
   GRAVITATIONAL_CONSTANT,
   PhysicsStateReal,
 } from "@teskooano/data-types";
-import { OSVector3 } from "@teskooano/core-math";
+import { OSVector3, OSQuaternion } from "@teskooano/core-math";
 
 /**
  * Calculates the position of an object based on its orbital parameters around a parent object (REAL units).
@@ -36,8 +36,8 @@ export const calculateOrbitalPosition = (
   }
 
   const meanMotion = (2 * Math.PI) / period_s;
-  // Use standard time evolution for position calculation
-  const currentMeanAnomaly = meanAnomaly + meanMotion * currentTime;
+  // Use subtract for time evolution to match coordinate system convention (consistent with kepler.ts and calculateOrbitalVelocity)
+  const currentMeanAnomaly = meanAnomaly - meanMotion * currentTime;
 
   let eccentricAnomaly = currentMeanAnomaly;
   for (let i = 0; i < 5; i++) {
@@ -69,27 +69,39 @@ export const calculateOrbitalPosition = (
   const term2 = Math.sqrt(sqrtArg2) * Math.cos(eccentricAnomaly / 2);
   const trueAnomaly = 2 * Math.atan2(term1, term2);
 
-  const cosEccAnomaly = Math.cos(eccentricAnomaly);
-  const distance = realSemiMajorAxis_m * (1 - eccentricity * cosEccAnomaly);
+  // Use exact same coordinate system approach as kepler.ts
+  // Calculate position in orbital plane using eccentric anomaly (perifocal frame)
+  const a = realSemiMajorAxis_m;
+  const e = eccentricity;
+  const E = eccentricAnomaly;
 
-  const v = trueAnomaly;
+  const x = a * (Math.cos(E) - e);
+  const y = a * Math.sqrt(1 - e * e) * Math.sin(E);
+  // The initial orbit is on the XZ plane for a Y-up coordinate system (matching kepler.ts)
+  const position = new OSVector3(x, 0, y);
+
+  // Apply rotations in same order as kepler.ts: argP -> inclination -> longAscNode
   const omega = argumentOfPeriapsis;
-  const Omega = longitudeOfAscendingNode;
   const i = inclination;
-  const r = distance;
+  const Omega = longitudeOfAscendingNode;
 
-  const cosOmega = Math.cos(Omega);
-  const sinOmega = Math.sin(Omega);
-  const cosInc = Math.cos(i);
-  const sinInc = Math.sin(i);
-  const cos_v_omega = Math.cos(v + omega);
-  const sin_v_omega = Math.sin(v + omega);
+  const q_argP = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(0, 1, 0),
+    omega,
+  );
+  const q_incl = new OSQuaternion().setFromAxisAngle(new OSVector3(1, 0, 0), i);
+  const q_longAscNode = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(0, 1, 0),
+    Omega,
+  );
 
-  const xFinal = r * (cosOmega * cos_v_omega - sinOmega * sin_v_omega * cosInc);
-  const zFinal = r * (sinOmega * cos_v_omega + cosOmega * sin_v_omega * cosInc);
-  const yFinal = r * (sin_v_omega * sinInc);
+  const finalRotation = new OSQuaternion()
+    .multiply(q_longAscNode)
+    .multiply(q_incl)
+    .multiply(q_argP);
 
-  const relativePosition = new OSVector3(xFinal, yFinal, zFinal);
+  position.applyQuaternion(finalRotation);
+  const relativePosition = position;
 
   return relativePosition;
 };
@@ -131,52 +143,46 @@ export const calculateOrbitalVelocity = (
     eccentricAnomaly = eccentricAnomaly - delta / derivative;
   }
 
-  const trueAnomaly =
-    2 *
-    Math.atan2(
-      Math.sqrt(1 + eccentricity) * Math.sin(eccentricAnomaly / 2),
-      Math.sqrt(1 - eccentricity) * Math.cos(eccentricAnomaly / 2),
-    );
+  // Use exact same velocity calculation approach as kepler.ts
+  const a = realSemiMajorAxis_m;
+  const e = eccentricity;
+  const E = eccentricAnomaly;
 
-  const mu = GRAVITATIONAL_CONSTANT * parentStateReal.mass_kg;
+  // Calculate mu from period and SMA (same as kepler.ts)
+  const mu = Math.pow((2 * Math.PI) / period_s, 2) * Math.pow(a, 3);
 
-  const p = realSemiMajorAxis_m * (1 - eccentricity * eccentricity);
+  let velocity = new OSVector3(0, 0, 0);
 
-  if (p <= 0) {
-    console.warn(
-      `[OrbitalCalc Velocity] Semi-latus rectum p is zero or negative (p=${p}). Cannot calculate velocity.`,
-    );
-    return new OSVector3(0, 0, 0);
+  if (mu > 0 && a > 0) {
+    const term = Math.sqrt(mu / a) / (1 - e * Math.cos(E));
+    const vx = term * -Math.sin(E);
+    const vy = term * Math.sqrt(1 - e * e) * Math.cos(E);
+    // Velocity must also be on the XZ plane initially (matching kepler.ts)
+    velocity.set(vx, 0, vy);
   }
 
-  const sqrtMuOverP = Math.sqrt(mu / p);
-
-  const v = trueAnomaly;
+  // Apply rotations in same order as kepler.ts: argP -> inclination -> longAscNode
   const omega = argumentOfPeriapsis;
-  const Omega = longitudeOfAscendingNode;
   const i = inclination;
+  const Omega = longitudeOfAscendingNode;
 
-  const cosOmega = Math.cos(Omega);
-  const sinOmega = Math.sin(Omega);
-  const cosInc = Math.cos(i);
-  const sinInc = Math.sin(i);
-  const cosArgPeri = Math.cos(omega);
-  const sinArgPeri = Math.sin(omega);
-  const cos_v_omega = Math.cos(v + omega);
-  const sin_v_omega = Math.sin(v + omega);
+  const q_argP = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(0, 1, 0),
+    omega,
+  );
+  const q_incl = new OSQuaternion().setFromAxisAngle(new OSVector3(1, 0, 0), i);
+  const q_longAscNode = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(0, 1, 0),
+    Omega,
+  );
 
-  const vx =
-    sqrtMuOverP *
-    (-cosOmega * (sin_v_omega + eccentricity * sinArgPeri) -
-      sinOmega * (cos_v_omega + eccentricity * cosArgPeri) * cosInc);
-  const vz =
-    sqrtMuOverP *
-    (-sinOmega * (sin_v_omega + eccentricity * sinArgPeri) +
-      cosOmega * (cos_v_omega + eccentricity * cosArgPeri) * cosInc);
-  const vy = sqrtMuOverP * ((cos_v_omega + eccentricity * cosArgPeri) * sinInc);
+  const finalRotation = new OSQuaternion()
+    .multiply(q_longAscNode)
+    .multiply(q_incl)
+    .multiply(q_argP);
 
-  // Negate velocity components to match coordinate system convention used in kepler.ts
-  const relativeVelocity_mps = new OSVector3(-vx, -vy, -vz);
+  velocity.applyQuaternion(finalRotation);
+  const relativeVelocity_mps = velocity;
 
   return relativeVelocity_mps.add(parentStateReal.velocity_mps);
 };
