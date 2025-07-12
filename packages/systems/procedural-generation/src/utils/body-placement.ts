@@ -33,6 +33,14 @@ export function generateBodyDistances(
   zones: CelestialZone[],
   stars: CelestialObject[],
 ): BodyPlacement[] {
+  // Ensure we have valid zones and stars
+  if (!zones || zones.length === 0 || !stars || stars.length === 0) {
+    console.warn(
+      "[BodyPlacement] No valid zones or stars provided for body placement",
+    );
+    return [];
+  }
+
   const placementGroups: PlacementGroup[] = [];
   let globalSlotIndex = 0;
   const maxBodies = 50 + Math.floor(random() * 31); // 50-80 bodies
@@ -92,7 +100,9 @@ function generatePlacementsForZone(
   // Use maxBodies from the new zone format
   const numPotentialSlots =
     (zone?.minBodies ?? 0) +
-    Math.floor(random() * (zone.maxBodies - (zone.minBodies ?? 0) + 1));
+    Math.floor(
+      random() * ((zone?.maxBodies ?? 5) - (zone?.minBodies ?? 0) + 1),
+    );
 
   let slotIndex = startingSlotIndex;
   let usedSlots = 0;
@@ -399,9 +409,13 @@ function generateRogueGroup(
   const maxEccentricity = 0.9;
   const effectiveMaxDistance = SYSTEM_MAX_DISTANCE_AU / (1 + maxEccentricity);
 
+  // Default values if zone is undefined
+  const minAU = zone?.minAU ?? 1.0;
+  const maxAU = zone?.maxAU ?? 5.0;
+
   // Rogue objects can be anywhere in the zone, but capped at effective system boundary
   const rogueDistance = Math.min(
-    utils.lerp(zone.minAU, zone.maxAU, random()),
+    utils.lerp(minAU, maxAU, random()),
     effectiveMaxDistance,
   );
 
@@ -464,6 +478,11 @@ function generateDistanceInZone(
   random: () => number,
   zone: CelestialZone,
 ): number {
+  if (!zone || zone.minAU === undefined || zone.maxAU === undefined) {
+    // Return a reasonable default if zone is undefined
+    return 1.0 + random() * 4.0; // Random distance between 1-5 AU
+  }
+
   // Use a more natural distribution that allows for both clustering and spacing
   const roll = random();
 
@@ -491,6 +510,10 @@ function generateDistanceInZoneWithSpacing(
   usedDistances: number[],
   minSpacing: number,
 ): number | null {
+  if (!zone) {
+    return null;
+  }
+
   const maxAttempts = 20;
 
   // Account for maximum possible eccentricity to ensure aphelion stays within boundary
@@ -499,7 +522,7 @@ function generateDistanceInZoneWithSpacing(
   const effectiveMaxDistance = SYSTEM_MAX_DISTANCE_AU / (1 + maxEccentricity);
 
   // Ensure zone doesn't exceed the effective boundary
-  const adjustedZoneMax = Math.min(zone.maxAU, effectiveMaxDistance);
+  const adjustedZoneMax = Math.min(zone?.maxAU ?? 5.0, effectiveMaxDistance);
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     // Generate distance within the adjusted zone bounds
@@ -549,6 +572,9 @@ function getSpecialConfigurationChance(
   zone: CelestialZone,
   distance: number,
 ): number {
+  if (!zone || zone.formationProbability === undefined) {
+    return 0.1; // Default 10% chance if zone is undefined
+  }
   // Use formation probability as base chance for special configurations
   return Math.min(0.4, zone.formationProbability * 0.3); // 30% of formation probability, capped at 40%
 }
@@ -556,6 +582,10 @@ function getSpecialConfigurationChance(
 function getAvailableConfigurations(
   zone: CelestialZone,
 ): OrbitalConfiguration[] {
+  if (!zone || !zone.specialConfigurations) {
+    // Return a default configuration if zone is undefined
+    return [OrbitalConfiguration.STANDARD];
+  }
   // Use the special configurations from the new zone format
   return [...zone.specialConfigurations];
 }
