@@ -3,7 +3,7 @@ import type {
   OrbitalParameters,
 } from "@teskooano/data-types";
 import type { SimulationConfiguration } from "@teskooano/core-state";
-import { calculateKeplerianStateAtTime } from "../../orbital/kepler";
+import { calculateKeplerianStateAtTime } from "../../orbital/ideal";
 import { sortBodiesByHierarchy } from "../../utils";
 
 /**

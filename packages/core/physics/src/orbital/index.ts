@@ -1,3 +1,3 @@
-export * from "./orbital";
+export * from "./n-body";
 export * from "./elementsFromState";
-export * from "./kepler";
+export * from "./ideal";

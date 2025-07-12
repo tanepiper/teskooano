@@ -28,54 +28,56 @@ export function calculateElementsFromStateVectors(
 
   const mu = G * parentMass_kg;
 
-  const rVec = relativePosition_m;
-  const vVec = relativeVelocity_mps;
+  const positionVector = relativePosition_m;
+  const velocityVector = relativeVelocity_mps;
 
-  const r = rVec.length();
-  const v = vVec.length();
+  const positionMagnitude = positionVector.length();
+  const velocityMagnitude = velocityVector.length();
 
-  if (r < EPSILON || v < EPSILON) {
+  if (positionMagnitude < EPSILON || velocityMagnitude < EPSILON) {
     console.warn(
       "[calculateElementsFromStateVectors] Near-zero position or velocity, cannot calculate elements.",
     );
     return null;
   }
 
-  const hVec = vectorPool.get();
-  hVec.copy(rVec).cross(vVec);
-  const h = hVec.length();
+  const angularMomentumVector = vectorPool.get();
+  angularMomentumVector.copy(positionVector).cross(velocityVector);
+  const angularMomentumMagnitude = angularMomentumVector.length();
 
-  if (h < EPSILON) {
+  if (angularMomentumMagnitude < EPSILON) {
     console.warn(
       "[calculateElementsFromStateVectors] Near-zero angular momentum (potentially radial trajectory), cannot calculate full elements.",
     );
-    vectorPool.release(hVec);
+    vectorPool.release(angularMomentumVector);
     return null;
   }
 
-  const nVec = vectorPool.get();
-  const kHat = vectorPool.get(0, 1, 0);
-  nVec.copy(kHat).cross(hVec);
-  const n = nVec.length();
+  const nodeVector = vectorPool.get();
+  const yAxisVector = vectorPool.get(0, 1, 0);
+  nodeVector.copy(yAxisVector).cross(angularMomentumVector);
+  const nodeMagnitude = nodeVector.length();
 
-  const eVec = vectorPool.get();
+  const eccentricityVector = vectorPool.get();
   const term1 = vectorPool
     .get()
-    .copy(vVec)
-    .cross(hVec)
+    .copy(velocityVector)
+    .cross(angularMomentumVector)
     .multiplyScalar(1 / mu);
   const term2 = vectorPool
     .get()
-    .copy(rVec)
-    .multiplyScalar(1 / r);
-  eVec.copy(term1).sub(term2);
-  const eccentricity = eVec.length();
+    .copy(positionVector)
+    .multiplyScalar(1 / positionMagnitude);
+  eccentricityVector.copy(term1).sub(term2);
+  const eccentricity = eccentricityVector.length();
 
-  const energy = (v * v) / 2 - mu / r;
+  const energy =
+    (velocityMagnitude * velocityMagnitude) / 2 - mu / positionMagnitude;
 
   let semiMajorAxis_m: number;
   if (Math.abs(eccentricity - 1.0) < EPSILON) {
-    semiMajorAxis_m = (h * h) / mu;
+    semiMajorAxis_m =
+      (angularMomentumMagnitude * angularMomentumMagnitude) / mu;
     console.warn(
       "[calculateElementsFromStateVectors] Parabolic orbit detected (e ≈ 1).",
     );
@@ -93,23 +95,25 @@ export function calculateElementsFromStateVectors(
       "[calculateElementsFromStateVectors] Calculated semi-major axis is near zero for a bound orbit. Check inputs.",
     );
 
-    vectorPool.release(hVec);
-    vectorPool.release(nVec);
-    vectorPool.release(kHat);
-    vectorPool.release(eVec);
+    vectorPool.release(angularMomentumVector);
+    vectorPool.release(nodeVector);
+    vectorPool.release(yAxisVector);
+    vectorPool.release(eccentricityVector);
     vectorPool.release(term1);
     vectorPool.release(term2);
     return null;
   }
 
-  const inclination = Math.acos(hVec.y / h);
+  const inclination = Math.acos(
+    angularMomentumVector.y / angularMomentumMagnitude,
+  );
 
   let longitudeOfAscendingNode: number;
-  if (n < EPSILON) {
+  if (nodeMagnitude < EPSILON) {
     longitudeOfAscendingNode = 0;
   } else {
-    longitudeOfAscendingNode = Math.acos(nVec.x / n);
-    if (nVec.z < 0) {
+    longitudeOfAscendingNode = Math.acos(nodeVector.x / nodeMagnitude);
+    if (nodeVector.z < 0) {
       longitudeOfAscendingNode = 2 * Math.PI - longitudeOfAscendingNode;
     }
   }
@@ -118,14 +122,16 @@ export function calculateElementsFromStateVectors(
   if (eccentricity < EPSILON) {
     argumentOfPeriapsis = 0;
   } else {
-    if (n < EPSILON) {
-      argumentOfPeriapsis = Math.acos(eVec.x / eccentricity);
-      if (eVec.z < 0) {
+    if (nodeMagnitude < EPSILON) {
+      argumentOfPeriapsis = Math.acos(eccentricityVector.x / eccentricity);
+      if (eccentricityVector.z < 0) {
         argumentOfPeriapsis = 2 * Math.PI - argumentOfPeriapsis;
       }
     } else {
-      argumentOfPeriapsis = Math.acos(nVec.dot(eVec) / (n * eccentricity));
-      if (eVec.y < 0) {
+      argumentOfPeriapsis = Math.acos(
+        nodeVector.dot(eccentricityVector) / (nodeMagnitude * eccentricity),
+      );
+      if (eccentricityVector.y < 0) {
         argumentOfPeriapsis = 2 * Math.PI - argumentOfPeriapsis;
       }
     }
@@ -133,29 +139,34 @@ export function calculateElementsFromStateVectors(
 
   let trueAnomaly: number;
   if (eccentricity < EPSILON) {
-    if (n < EPSILON) {
-      trueAnomaly = Math.acos(rVec.x / r);
-      if (rVec.z < 0) {
+    if (nodeMagnitude < EPSILON) {
+      trueAnomaly = Math.acos(positionVector.x / positionMagnitude);
+      if (positionVector.z < 0) {
         trueAnomaly = 2 * Math.PI - trueAnomaly;
       }
     } else {
-      trueAnomaly = Math.acos(nVec.dot(rVec) / (n * r));
-      if (rVec.y < 0) {
+      trueAnomaly = Math.acos(
+        nodeVector.dot(positionVector) / (nodeMagnitude * positionMagnitude),
+      );
+      if (positionVector.y < 0) {
         trueAnomaly = 2 * Math.PI - trueAnomaly;
       }
     }
   } else {
-    const rDotV = rVec.dot(vVec);
-    trueAnomaly = Math.acos(eVec.dot(rVec) / (eccentricity * r));
-    if (rDotV < 0) {
+    const positionDotVelocity = positionVector.dot(velocityVector);
+    trueAnomaly = Math.acos(
+      eccentricityVector.dot(positionVector) /
+        (eccentricity * positionMagnitude),
+    );
+    if (positionDotVelocity < 0) {
       trueAnomaly = 2 * Math.PI - trueAnomaly;
     }
   }
 
-  vectorPool.release(hVec);
-  vectorPool.release(nVec);
-  vectorPool.release(kHat);
-  vectorPool.release(eVec);
+  vectorPool.release(angularMomentumVector);
+  vectorPool.release(nodeVector);
+  vectorPool.release(yAxisVector);
+  vectorPool.release(eccentricityVector);
   vectorPool.release(term1);
   vectorPool.release(term2);
 

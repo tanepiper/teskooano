@@ -2,7 +2,7 @@ import type {
   OrbitalParameters,
   PhysicsStateReal,
 } from "@teskooano/data-types";
-import { calculateKeplerianStateAtTime } from "../orbital/kepler";
+import { calculateKeplerianStateAtTime } from "../orbital/ideal";
 
 /**
  * "Integrator" for perfect, on-rails orbital motion.

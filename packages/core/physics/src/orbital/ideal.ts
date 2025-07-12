@@ -7,31 +7,35 @@ import { GRAVITATIONAL_CONSTANT } from "../units/constants";
  * given the mean anomaly M and eccentricity e.
  * Uses Newton-Raphson method for iterative solving.
  *
- * @param M Mean anomaly in radians.
- * @param e Eccentricity of the orbit.
+ * @param meanAnomaly Mean anomaly in radians.
+ * @param eccentricity Eccentricity of the orbit.
  * @param tolerance The desired accuracy for the result.
  * @param maxIterations The maximum number of iterations to prevent infinite loops.
  * @returns The eccentric anomaly E in radians.
  */
 export const solveKeplerEquation = (
-  M: number,
-  e: number,
+  meanAnomaly: number,
+  eccentricity: number,
   tolerance: number = 1e-6,
   maxIterations: number = 100,
 ): number => {
   // For hyperbolic orbits, a different equation and solver would be needed.
   // This implementation is for elliptical orbits (e < 1).
-  let E = M; // Initial guess: for small e, E is close to M.
+  let eccentricAnomaly = meanAnomaly; // Initial guess: for small eccentricity, eccentricAnomaly is close to meanAnomaly.
   for (let i = 0; i < maxIterations; i++) {
-    const dE = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
-    E -= dE;
-    if (Math.abs(dE) < tolerance) {
-      return E;
+    const delta =
+      (eccentricAnomaly -
+        eccentricity * Math.sin(eccentricAnomaly) -
+        meanAnomaly) /
+      (1 - eccentricity * Math.cos(eccentricAnomaly));
+    eccentricAnomaly -= delta;
+    if (Math.abs(delta) < tolerance) {
+      return eccentricAnomaly;
     }
   }
   // This might happen for highly eccentric orbits.
   // console.warn(`Kepler equation did not converge after ${maxIterations} iterations.`);
-  return E; // Return the last approximation.
+  return eccentricAnomaly; // Return the last approximation.
 };
 
 /**
@@ -57,12 +61,14 @@ export const calculateKeplerianStateAtTime = (
   );
 
   // --- 2. Calculate Position in the Orbital Plane (perifocal frame) ---
-  const a = orbitalParameters.realSemiMajorAxis_m;
-  const e = orbitalParameters.eccentricity;
-  const E = eccentricAnomaly;
+  const semiMajorAxis = orbitalParameters.realSemiMajorAxis_m;
+  const eccentricity = orbitalParameters.eccentricity;
 
-  const x = a * (Math.cos(E) - e);
-  const y = a * Math.sqrt(1 - e * e) * Math.sin(E);
+  const x = semiMajorAxis * (Math.cos(eccentricAnomaly) - eccentricity);
+  const y =
+    semiMajorAxis *
+    Math.sqrt(1 - eccentricity * eccentricity) *
+    Math.sin(eccentricAnomaly);
   // The initial orbit is on the XZ plane for a Y-up coordinate system.
   // Negate Z (y in orbital plane) to ensure counter-clockwise motion when viewed from +Y
   const position = new OSVector3(x, 0, -y);
@@ -71,13 +77,19 @@ export const calculateKeplerianStateAtTime = (
   // We need parent mass, but it's not in orbital params. Assume it from period and SMA (Vis-viva).
   // mu = (2*pi/T)^2 * a^3
   const mu =
-    Math.pow((2 * Math.PI) / orbitalParameters.period_s, 2) * Math.pow(a, 3);
+    Math.pow((2 * Math.PI) / orbitalParameters.period_s, 2) *
+    Math.pow(semiMajorAxis, 3);
   let velocity = new OSVector3(0, 0, 0);
 
-  if (mu > 0 && a > 0) {
-    const term = Math.sqrt(mu / a) / (1 - e * Math.cos(E));
-    const vx = term * -Math.sin(E);
-    const vy = term * Math.sqrt(1 - e * e) * Math.cos(E);
+  if (mu > 0 && semiMajorAxis > 0) {
+    const term =
+      Math.sqrt(mu / semiMajorAxis) /
+      (1 - eccentricity * Math.cos(eccentricAnomaly));
+    const vx = term * -Math.sin(eccentricAnomaly);
+    const vy =
+      term *
+      Math.sqrt(1 - eccentricity * eccentricity) *
+      Math.cos(eccentricAnomaly);
     // Velocity must also be on the XZ plane initially.
     // Negate Z component to match position coordinate system
     velocity.set(vx, 0, -vy);
@@ -85,29 +97,34 @@ export const calculateKeplerianStateAtTime = (
 
   // --- 4. Rotate Position and Velocity to the Inertial Frame ---
   // The order of rotations is critical: Argument of Periapsis -> Inclination -> Longitude of Ascending Node
-  const argP = orbitalParameters.argumentOfPeriapsis;
-  const incl = orbitalParameters.inclination;
-  const longAscNode = orbitalParameters.longitudeOfAscendingNode;
+  const argPeriapsis = orbitalParameters.argumentOfPeriapsis;
+  const inclinationAngle = orbitalParameters.inclination;
+  const ascNodeLongitude = orbitalParameters.longitudeOfAscendingNode;
 
   // Create rotation quaternions and apply them in order.
   // The argument of periapsis rotates within the orbital plane (now XZ), so its axis is Y.
-  const q_argP = new OSQuaternion().setFromAxisAngle(
+  const q_argPeriapsis = new OSQuaternion().setFromAxisAngle(
     new OSVector3(0, 1, 0),
-    argP,
-  );
-  const q_incl = new OSQuaternion().setFromAxisAngle(
-    new OSVector3(1, 0, 0),
-    incl,
-  );
-  const q_longAscNode = new OSQuaternion().setFromAxisAngle(
-    new OSVector3(0, 1, 0),
-    longAscNode,
+    argPeriapsis,
   );
 
+  // The inclination rotates around the X axis (line of nodes)
+  const q_inclination = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(1, 0, 0),
+    inclinationAngle,
+  );
+
+  // The longitude of ascending node rotates around the Y axis
+  const q_ascNodeLongitude = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(0, 1, 0),
+    ascNodeLongitude,
+  );
+
+  // Apply rotations in correct order
   const finalRotation = new OSQuaternion()
-    .multiply(q_longAscNode)
-    .multiply(q_incl)
-    .multiply(q_argP);
+    .multiply(q_ascNodeLongitude)
+    .multiply(q_inclination)
+    .multiply(q_argPeriapsis);
 
   position.applyQuaternion(finalRotation);
   velocity.applyQuaternion(finalRotation);
@@ -128,39 +145,47 @@ export const calculateKeplerianPositionAtTrueAnomaly = (
   trueAnomaly_rad: number,
 ): OSVector3 => {
   const {
-    realSemiMajorAxis_m: a,
-    eccentricity: e,
-    inclination: i,
-    longitudeOfAscendingNode: o,
-    argumentOfPeriapsis: w,
+    realSemiMajorAxis_m: semiMajorAxis,
+    eccentricity,
+    inclination: inclinationAngle,
+    longitudeOfAscendingNode: ascNodeLongitude,
+    argumentOfPeriapsis: argPeriapsis,
   } = orbitalParameters;
 
   // Calculate the distance from the central body (radius) using the polar equation for an ellipse
-  const r = (a * (1 - e * e)) / (1 + e * Math.cos(trueAnomaly_rad));
+  const radius =
+    (semiMajorAxis * (1 - eccentricity * eccentricity)) /
+    (1 + eccentricity * Math.cos(trueAnomaly_rad));
 
   // --- 2. Calculate Position in the Orbital Plane (perifocal frame) ---
   // The initial orbit is on the XZ plane for a Y-up coordinate system.
   // Negate Z to ensure counter-clockwise motion when viewed from +Y
   const position = new OSVector3(
-    r * Math.cos(trueAnomaly_rad),
+    radius * Math.cos(trueAnomaly_rad),
     0,
-    -r * Math.sin(trueAnomaly_rad),
+    -radius * Math.sin(trueAnomaly_rad),
   );
 
   // --- 4. Rotate Position to the Inertial Frame ---
   // Replicate the exact same rotation logic as calculateKeplerianStateAtTime
   // The argument of periapsis rotates within the orbital plane (now XZ), so its axis is Y.
-  const q_argP = new OSQuaternion().setFromAxisAngle(new OSVector3(0, 1, 0), w);
-  const q_incl = new OSQuaternion().setFromAxisAngle(new OSVector3(1, 0, 0), i);
-  const q_longAscNode = new OSQuaternion().setFromAxisAngle(
+  const q_argPeriapsis = new OSQuaternion().setFromAxisAngle(
     new OSVector3(0, 1, 0),
-    o,
+    argPeriapsis,
+  );
+  const q_inclination = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(1, 0, 0),
+    inclinationAngle,
+  );
+  const q_ascNodeLongitude = new OSQuaternion().setFromAxisAngle(
+    new OSVector3(0, 1, 0),
+    ascNodeLongitude,
   );
 
   const finalRotation = new OSQuaternion()
-    .multiply(q_longAscNode)
-    .multiply(q_incl)
-    .multiply(q_argP);
+    .multiply(q_ascNodeLongitude)
+    .multiply(q_inclination)
+    .multiply(q_argPeriapsis);
 
   position.applyQuaternion(finalRotation);
 
