@@ -25,7 +25,7 @@ import {
   type Observable as ObservableType,
 } from "rxjs";
 import { SystemGenerator } from "./system-generator.service";
-import { initializeSolarSystem } from "@teskooano/app-simulation";
+import { initializeSolarSystem } from "@teskooano/systems-solar-system";
 import { createSeededRandomSync } from "@teskooano/core-math";
 
 /** Represents the data structure for an imported system file. */

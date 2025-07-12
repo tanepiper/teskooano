@@ -4,7 +4,7 @@ import type {
   CameraManager,
   CameraManagerOptions,
   CameraManagerState,
-} from "@teskooano/app-simulation";
+} from "@teskooano/renderer-threejs-controls";
 import type { CompositeEnginePanel } from "../../panels/composite-panel/CompositeEnginePanel";
 
 /**

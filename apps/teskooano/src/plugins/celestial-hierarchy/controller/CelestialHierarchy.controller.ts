@@ -12,7 +12,7 @@ import {
   METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
-import type { CameraManagerState } from "@teskooano/app-simulation";
+import type { CameraManagerState } from "@teskooano/renderer-threejs-controls";
 import type { CelestialHierarchy } from "../view/CelestialHierarchy.view.js";
 import { FocusListManager } from "./FocusListManager.js";
 import {

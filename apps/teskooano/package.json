@@ -16,6 +16,7 @@
     "@teskooano/renderer-threejs": "file:../../packages/renderer/threejs",
     "@teskooano/web-apis": "file:../../packages/app/web-apis",
     "@teskooano/design-system": "file:../../packages/design-system",
+    "@teskooano/systems-solar-system": "file:../../packages/systems/solar-system",
     "dockview-core": "4.4.0",
     "driver.js": "1.3.6",
     "three": "0.178.0",
