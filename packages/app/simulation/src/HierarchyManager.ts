@@ -18,6 +18,33 @@ export class HierarchyManager {
   private updateIndex = 0;
 
   /**
+   * Checks if an object is part of a binary star system and should be protected from hierarchy changes.
+   * Binary stars with parentId = undefined (primary) or parentId = primary star ID (companion) should maintain their relationships.
+   * @param obj The celestial object to check.
+   * @returns True if the object should be protected from hierarchy changes.
+   */
+  private isBinaryStarProtected(obj: CelestialObject): boolean {
+    if (obj.type !== CelestialType.STAR) return false;
+    
+    // Primary star (no parent) is protected
+    if (!obj.parentId) return true;
+    
+    // Companion star (orbits primary) is protected
+    const parentStar = this.getParentStar(obj);
+    return parentStar !== null && parentStar.type === CelestialType.STAR;
+  }
+  
+  /**
+   * Gets the parent star of an object
+   */
+  private getParentStar(obj: CelestialObject): CelestialObject | null {
+    if (!obj.parentId) return null;
+    
+    const allObjects = StateAccessor.getCurrentCelestialObjects();
+    return Object.values(allObjects).find(parent => parent.id === obj.parentId) || null;
+  }
+
+  /**
    * Updates the hierarchies of all celestial objects based on a set of rules.
    * This is called on every simulation tick, but only processes a single object
    * per tick to avoid performance issues.
@@ -85,6 +112,11 @@ export class HierarchyManager {
     allObjects: Record<string, CelestialObject>,
     allPhysicsStates: PhysicsStateReal[],
   ) {
+    // Protect binary star systems from orphan handling
+    if (this.isBinaryStarProtected(obj)) {
+      return;
+    }
+    
     const parentId = obj.currentParentId ?? obj.parentId;
     if (!parentId) return; // No parent to be orphaned from.
 
@@ -120,6 +152,11 @@ export class HierarchyManager {
     allObjects: Record<string, CelestialObject>,
     allPhysicsStates: PhysicsStateReal[],
   ): boolean {
+    // Protect binary star systems from moon escape handling
+    if (this.isBinaryStarProtected(obj)) {
+      return false;
+    }
+    
     if (obj.type !== CelestialType.MOON) return false;
 
     const parentId = obj.currentParentId ?? obj.parentId;
@@ -191,6 +228,11 @@ export class HierarchyManager {
     allObjects: Record<string, CelestialObject>,
     allPhysicsStates: PhysicsStateReal[],
   ): void {
+    // Protect binary star systems from capture
+    if (this.isBinaryStarProtected(obj)) {
+      return;
+    }
+    
     // A moon with a stable parent should not be trying to capture other objects.
     // Its primary check should be for escaping its current parent.
     if (

@@ -195,8 +195,8 @@ function generateStellarSystem(
 
   switch (config.type) {
     case StellarSystemType.SINGLE_STAR:
-      // Single star is positioned at the barycenter
-      primaryStar.parentId = "barycenter";
+      // Single star has no parent (it's the center of the system)
+      primaryStar.parentId = undefined;
       return stars;
 
     case StellarSystemType.BINARY_CLOSE:
@@ -229,7 +229,7 @@ function generateStellarSystem(
           distance * CONST.AU_TO_METERS * Math.sin((i * Math.PI) / 3),
           0,
         );
-        newStar.parentId = "barycenter"; // All stars orbit the barycenter
+        newStar.parentId = primaryStar.id; // All stars orbit the primary
         stars.push(newStar);
       }
       return stars;
@@ -376,7 +376,7 @@ function generateHierarchicalTriple(
   };
 
   tertiaryStar.orbit = tertiaryOrbit;
-  tertiaryStar.parentId = "barycenter"; // Orbits the barycenter
+  tertiaryStar.parentId = primary.id; // Orbits the primary star
 
   try {
     // Calculate initial position for tertiary around the barycenter
@@ -530,9 +530,11 @@ function setupBinaryOrbit(
   primaryStar.orbit = primaryOrbit;
   companionStar.orbit = companionOrbit;
   
-  // Both stars orbit the barycenter in n-body systems
-  primaryStar.parentId = "barycenter";
-  companionStar.parentId = "barycenter";
+  // In binary systems, both stars orbit each other around their barycenter
+  // For the physics system, we need to choose one star as the "parent" for orbital calculations
+  // The primary star (more massive) becomes the reference point
+  primaryStar.parentId = undefined; // Primary star has no parent (fixed reference)
+  companionStar.parentId = primaryStar.id; // Companion orbits the primary
 
   try {
     // Calculate initial positions
