@@ -230,7 +230,26 @@ export class PredictionManager {
       renderableObjectsMap,
     );
 
-    const relativeToBodyId = renderableTargetObject.parentId;
+    // In multi-star systems, stars move around their barycenter.
+    // If we use a moving star as the relative reference, the prediction lines
+    // won't match the actual celestial body movement because the reference frame itself is moving.
+    // Solution: Use absolute coordinates (relative to origin) in multi-star systems.
+    let relativeToBodyId = renderableTargetObject.parentId;
+
+    // Check if this is a multi-star system by looking for multiple stars
+    const stars = Object.values(fullObjectsMap).filter(
+      (obj) => obj.type === CelestialType.STAR,
+    );
+    const isMultiStarSystem = stars.length > 1;
+
+    // If we're in a multi-star system and the parent is a star, use absolute coordinates
+    if (isMultiStarSystem && relativeToBodyId) {
+      const parentObject = fullObjectsMap[relativeToBodyId];
+      if (parentObject?.type === CelestialType.STAR) {
+        // Use absolute coordinates (relative to origin/barycenter) instead of relative to moving star
+        relativeToBodyId = undefined;
+      }
+    }
 
     const allCurrentPhysicsStates = Object.values(fullObjectsMap)
       .map((co) => co.physicsStateReal)

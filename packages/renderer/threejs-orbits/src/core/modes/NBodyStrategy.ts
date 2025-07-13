@@ -6,6 +6,8 @@ import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type * as THREE from "three";
 import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import { getSimulationState } from "@teskooano/core-state";
+import { StateAccessor } from "@teskooano/core-state";
+import { CelestialType } from "@teskooano/data-types";
 
 /**
  * Implementation of the orbit visualization strategy for N-Body simulation modes.
@@ -136,10 +138,22 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
             }
           });
         } else {
-          // In N-body mode, predictions are relative to parent, so position at parent
+          // In N-body mode, check if we have a valid parent for relative positioning
           if (object?.parentId) {
             const parent = objects[object.parentId];
-            if (parent?.position) {
+
+            // Additional check: in multi-star systems, if parent is a moving star,
+            // the prediction system uses absolute coordinates, so position at origin
+            const allObjects = StateAccessor.getCurrentCelestialObjects();
+            const stars = Object.values(allObjects).filter(
+              (obj) => obj.type === CelestialType.STAR,
+            );
+            const isMultiStarSystem = stars.length > 1;
+            const parentIsMovingStar =
+              parent && parent.type === CelestialType.STAR && isMultiStarSystem;
+
+            if (parent?.position && !parentIsMovingStar) {
+              // Normal relative positioning for single-star systems or non-star parents
               line.position.copy(parent.position);
               labels.forEach(({ label }) => {
                 if (label.visible && label.userData.localPosition) {
@@ -148,8 +162,17 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
                     .add(parent.position);
                 }
               });
+            } else {
+              // Use absolute positioning (origin) for multi-star systems with star parents
+              line.position.set(0, 0, 0);
+              labels.forEach(({ label }) => {
+                if (label.visible && label.userData.localPosition) {
+                  label.position.copy(label.userData.localPosition);
+                }
+              });
             }
           } else {
+            // No parent - use absolute positioning
             line.position.set(0, 0, 0);
             labels.forEach(({ label }) => {
               if (label.visible && label.userData.localPosition) {
