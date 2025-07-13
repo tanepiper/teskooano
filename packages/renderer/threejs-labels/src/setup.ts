@@ -22,7 +22,7 @@ export function initializeLabelSystem(
 ): LabelSystem {
   const css2DManager = new Layer2DManager(scene, container);
 
-  const celestialLayer = new CelestialLabelLayer(options.labelConfig);
+  const celestialLayer = new CelestialLabelLayer(scene, options.labelConfig);
   css2DManager.registerLayer(CSS2DLayerType.CELESTIAL_LABELS, celestialLayer);
 
   const auMarkerManager = new AuMarkerManager(scene, css2DManager);

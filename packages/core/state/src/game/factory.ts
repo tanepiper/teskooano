@@ -171,10 +171,15 @@ class CelestialFactoryService {
    * Dispatches a `CELESTIAL_OBJECTS_LOADED` event with count 1 and systemId after creation.
    * @param  data - The input data for the primary star of the solar system.
    *                                              Must be of type `CelestialType.STAR`.
+   * @param  clearStateFirst - Whether to clear the state before creating the star. Defaults to true.
+   *                          Set to false when creating additional stars in multi-star systems.
    * @returns  The ID of the created star, or an empty string if creation failed.
    * @public
    */
-  public createSolarSystem(data: CelestialObject): string {
+  public createSolarSystem(
+    data: CelestialObject,
+    clearStateFirst = true,
+  ): string {
     if (data.type !== CelestialType.STAR) {
       console.error(
         `[CelestialFactoryService] createSolarSystem called with non-star type: ${data.type}. Aborting.`,
@@ -182,7 +187,9 @@ class CelestialFactoryService {
       return "";
     }
 
-    this.clearState({ resetCamera: false });
+    if (clearStateFirst) {
+      this.clearState();
+    }
 
     const inputStarProps =
       data.properties?.type === CelestialType.STAR

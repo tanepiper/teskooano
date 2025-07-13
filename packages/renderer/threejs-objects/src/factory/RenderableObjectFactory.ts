@@ -27,7 +27,7 @@ export class RenderableObjectFactory {
   /**
    * Calculates the final orientation of a celestial object.
    *
-   * @param axialTilt The object's axial tilt in degrees.
+   * @param axialTilt The object's axial tilt in degrees or as a rotational axis vector.
    * @param siderealPeriod The time for one full rotation, in seconds.
    * @param simulationTime The current simulation time.
    * @returns An OSQuaternion representing the object's final orientation.
@@ -41,15 +41,56 @@ export class RenderableObjectFactory {
     this.spinQuaternion.set(0, 0, 0, 1);
 
     if (axialTilt instanceof OSVector3) {
-      this.tiltQuaternion.setFromEuler(axialTilt, "XYZ");
+      // The axialTilt is a unit vector representing the rotational axis direction
+      // We need to create a quaternion that rotates from the default Y-axis to this direction
+      const defaultAxis = new OSVector3(0, 1, 0);
+      const axisDirection = axialTilt.clone().normalize();
+
+      // Calculate the rotation quaternion from default Y-axis to the tilted axis
+      // Using the formula: q = (dot + 1, cross) normalized
+      const dot = defaultAxis.dot(axisDirection);
+
+      if (Math.abs(dot - 1.0) < 1e-6) {
+        // Vectors are already aligned, no rotation needed
+        this.tiltQuaternion.set(0, 0, 0, 1);
+      } else if (Math.abs(dot + 1.0) < 1e-6) {
+        // Vectors are opposite, rotate 180 degrees around any perpendicular axis
+        // Choose Z-axis if Y is not aligned with it, otherwise use X-axis
+        const axis =
+          Math.abs(defaultAxis.y) < 0.9
+            ? new OSVector3(0, 0, 1)
+            : new OSVector3(1, 0, 0);
+        this.tiltQuaternion.setFromAxisAngle(axis, Math.PI);
+      } else {
+        // General case: calculate cross product and create quaternion
+        const cross = defaultAxis.clone().cross(axisDirection);
+        const s = Math.sqrt((1 + dot) * 2);
+        const invs = 1 / s;
+
+        this.tiltQuaternion.set(
+          cross.x * invs,
+          cross.y * invs,
+          cross.z * invs,
+          s * 0.5,
+        );
+      }
     } else if (typeof axialTilt === "number" && !isNaN(axialTilt)) {
+      // For numeric values, apply tilt around the Z-axis (traditional approach)
       const rad = axialTilt * (Math.PI / 180);
       this.tiltQuaternion.setFromAxisAngle(this.zAxis, rad);
     }
 
     if (siderealPeriod && siderealPeriod !== 0) {
+      // Calculate rotation around the tilted axis
       const rotationAngle = (simulationTime / siderealPeriod) * 2 * Math.PI;
-      this.spinQuaternion.setFromAxisAngle(this.rotationAxis, rotationAngle);
+
+      // The rotation axis is now the tilted axis (Y-axis in the tilted coordinate system)
+      // We need to rotate the default Y-axis by the tilt quaternion to get the actual rotation axis
+      const tiltedRotationAxis = this.rotationAxis
+        .clone()
+        .applyQuaternion(this.tiltQuaternion);
+
+      this.spinQuaternion.setFromAxisAngle(tiltedRotationAxis, rotationAngle);
       this.finalRotation
         .copy(this.tiltQuaternion)
         .multiply(this.spinQuaternion);

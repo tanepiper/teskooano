@@ -25,8 +25,8 @@ export interface LabelVisibilityConfig {
 export class CelestialLabelLayer extends BaseLabelLayer {
   private visibilityConfig: Required<LabelVisibilityConfig>;
 
-  constructor(config: LabelVisibilityConfig = {}) {
-    super();
+  constructor(scene: THREE.Scene, config: LabelVisibilityConfig = {}) {
+    super(scene);
     this.visibilityConfig = {
       planet: 100,
       gasGiant: 200,
@@ -60,6 +60,10 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       return;
     }
 
+    if (!this.scene) {
+      throw new Error("No scene available to create labels");
+    }
+
     const labelElement = document.createElement(CELESTIAL_LABEL_TAG);
     labelElement.setAttribute("data-name", object.name);
     // Store metadata for the update logic
@@ -70,9 +74,12 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     }
 
     const label = new CSS2DObject(labelElement);
-    label.position.copy(this.calculateLabelPosition(object));
+    // Position label in world space relative to the celestial object
+    label.position.copy(this.calculateLabelPosition(object, parentMesh));
 
-    parentMesh.add(label);
+    // Add label directly to the scene, not as a child of the celestial object
+    this.scene.add(label);
+    label.visible = this.isVisible;
 
     this.elements.set(objectId, label);
   }
@@ -108,13 +115,20 @@ export class CelestialLabelLayer extends BaseLabelLayer {
         return;
       }
 
+      // Update label position to follow the celestial object
+      const renderableObject = allObjects[objectId];
+      if (renderableObject) {
+        label.position.copy(
+          this.calculateLabelPosition(renderableObject, ownObject),
+        );
+      }
+
       const distanceToSelf = cameraPosition.distanceTo(ownObject.position);
       const distanceInAu = this.sceneUnitsToAu(distanceToSelf);
       const formattedDistance = this._formatDistance(distanceInAu);
       label.element.setAttribute("data-distance-formatted", formattedDistance);
 
       // Calculate and format speed
-      const renderableObject = allObjects[objectId];
       if (renderableObject?.velocityMagnitude_mps !== undefined) {
         const speed = renderableObject.velocityMagnitude_mps; // Raw velocity in m/s
         const formattedSpeed = this._formatSpeed(speed);
@@ -194,26 +208,20 @@ export class CelestialLabelLayer extends BaseLabelLayer {
   }
 
   /**
-   * Formats a distance value into a human-readable string with appropriate units.
-   * @param distanceInAu - The distance in Astronomical Units.
-   * @returns A formatted string (e.g., "(1.23 AU)", "(500.00 km)").
+   * Formats distance for display
    */
   private _formatDistance(distanceInAu: number): string {
-    if (distanceInAu > 0.5) {
+    if (distanceInAu < 0.01) {
+      return `${Math.round(distanceInAu * AU_METERS)} m`;
+    } else if (distanceInAu < 0.1) {
+      return `${Math.round((distanceInAu * AU_METERS) / 1000)} km`;
+    } else if (distanceInAu < 1) {
       return `${distanceInAu.toFixed(2)} AU`;
+    } else if (distanceInAu < 100) {
+      return `${distanceInAu.toFixed(1)} AU`;
+    } else {
+      return `${Math.round(distanceInAu)} AU`;
     }
-
-    const distanceInMeters = distanceInAu * AU_METERS;
-    const MEGAMETER = 1_000_000;
-    const KILOMETER = 1_000;
-
-    if (distanceInMeters >= MEGAMETER) {
-      return `${(distanceInMeters / MEGAMETER).toFixed(2)} Mm`;
-    }
-    if (distanceInMeters >= KILOMETER) {
-      return `${(distanceInMeters / KILOMETER).toFixed(2)} km`;
-    }
-    return `${distanceInMeters.toFixed(2)} m`;
   }
 
   /**
@@ -266,8 +274,19 @@ export class CelestialLabelLayer extends BaseLabelLayer {
 
   private calculateLabelPosition(
     object: RenderableCelestialObject,
+    parentMesh: THREE.Object3D,
   ): THREE.Vector3 {
     const visualRadius = object.radius || 1;
-    return new THREE.Vector3(0, visualRadius * 1.5, 0);
+
+    // Get the world position of the celestial object
+    const worldPosition = new THREE.Vector3();
+    parentMesh.getWorldPosition(worldPosition);
+
+    // Position label at a fixed offset above the object in world space
+    // Use world "up" direction (Y-axis) to ensure labels stay consistent
+    // regardless of the object's axial tilt or rotation
+    return worldPosition
+      .clone()
+      .add(new THREE.Vector3(0, visualRadius * 1.5, 0));
   }
 }

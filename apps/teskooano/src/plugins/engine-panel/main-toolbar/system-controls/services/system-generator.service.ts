@@ -153,7 +153,7 @@ export class SystemGenerator {
       // Invoke the core procedural generation function.
       const { objects$ } = await generateSystemObservable(finalSeed);
 
-      let isFirstStar = true;
+      let isSystemInitialized = false;
 
       // Create an RxJS pipeline to process the stream of generated objects.
       const processingPipeline$ = objects$.pipe(
@@ -162,23 +162,20 @@ export class SystemGenerator {
             ...celestialObject,
             atmosphere: celestialObject.atmosphere as any,
           };
-          // The first star object establishes the solar system.
-          if (celestialObject.type === CelestialType.STAR && isFirstStar) {
-            celestialFactory.createSolarSystem(creationInput);
-            isFirstStar = false;
-          } else {
-            // Subsequent objects are added to the existing system.
-            if (
-              celestialObject.type === CelestialType.STAR &&
-              !celestialObject.parentId
-            ) {
-              console.warn(
-                `[SystemGenerator] Found another root star: ${celestialObject.id}. Using createSolarSystem anyway. Check generator logic.`,
-              );
+
+          // Handle stars properly using createSolarSystem
+          if (celestialObject.type === CelestialType.STAR) {
+            if (!isSystemInitialized) {
+              // First star: initialize the system and clear state
               celestialFactory.createSolarSystem(creationInput);
+              isSystemInitialized = true;
             } else {
-              celestialFactory.addCelestial(creationInput);
+              // Subsequent stars: don't clear state, just add to existing system
+              celestialFactory.createSolarSystem(creationInput, false);
             }
+          } else {
+            // All other objects (planets, moons, etc.) use addCelestial
+            celestialFactory.addCelestial(creationInput);
           }
         }),
         catchError((error) => {
