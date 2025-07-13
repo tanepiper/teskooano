@@ -23,14 +23,14 @@ const C = 299792458;
 
 /**
  * Realistic stellar type distribution based on Milky Way statistics
- * Main sequence stars dominate (~95%), with evolved stars being much rarer
+ * Main sequence stars dominate (~90%), with evolved stars being much rarer
  */
 const STELLAR_TYPE_WEIGHTS: { type: StellarType; weight: number }[] = [
-  { type: StellarType.MAIN_SEQUENCE, weight: 70 }, // Still common, but less dominant
-  { type: StellarType.WHITE_DWARF, weight: 10 }, // More frequent remnants
-  { type: StellarType.WOLF_RAYET, weight: 5 }, // More frequent massive stars
-  { type: StellarType.NEUTRON_STAR, weight: 5 }, // More frequent neutron stars
-  { type: StellarType.BLACK_HOLE, weight: 10 }, // Significantly more frequent
+  { type: StellarType.MAIN_SEQUENCE, weight: 90 }, // 90% main sequence stars
+  { type: StellarType.WHITE_DWARF, weight: 8 }, // 8% white dwarfs
+  { type: StellarType.NEUTRON_STAR, weight: 1 }, // 1% neutron stars
+  { type: StellarType.BLACK_HOLE, weight: 0.5 }, // 0.5% black holes
+  { type: StellarType.WOLF_RAYET, weight: 0.5 }, // 0.5% Wolf-Rayet stars
 ];
 
 /**

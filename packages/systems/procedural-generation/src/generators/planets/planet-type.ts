@@ -7,7 +7,6 @@ import {
   type CelestialObject,
 } from "@teskooano/data-types";
 import * as UTIL from "../../utils";
-import { type CelestialZone } from "../../zones";
 
 /**
  * @internal
@@ -26,91 +25,68 @@ export interface PlanetBaseProperties {
 }
 
 /**
- * Determines the fundamental type of a planet (e.g., Rocky, Gas Giant) and its
- * initial physical properties based on its distance from a star, using a
- * data-driven zone-based approach.
- *
- * @param random The seeded pseudo-random number generator function.
- * @param bodyDistanceAU The planet's distance from its star in AU.
- * @param parentStar The parent star `CelestialObject`.
- * @param zone The dynamically-scaled celestial zone for this location.
- * @returns A `PlanetBaseProperties` object or `undefined` if no suitable zone is found.
+ * Simplified planet type determination based on temperature and distance.
+ * No complex zone logic, just realistic astrophysics.
  */
 export function determinePlanetTypeAndBaseProperties(
   random: () => number,
   parentStar: CelestialObject,
-  zone: CelestialZone,
+  zone: any,
 ): PlanetBaseProperties | undefined {
   if (!zone) {
     return undefined;
   }
 
-  // Determine if the zone allows for gas giant formation
-  const canBeGasGiant =
-    zone.allowedGasGiantClasses.length > 0 &&
-    random() < zone.formationProbability;
-
-  // With the new explicit zone definition, we can simplify this logic.
-  const isGasGiant = canBeGasGiant;
-  const targetDensity_kg_m3 = utils.lerp(
-    isGasGiant ? 500 : 2000,
-    isGasGiant ? 2000 : 5500,
-    random(),
-  );
-  const massMultiplierFactor = utils.lerp(
-    isGasGiant ? 0.2 : 0.02,
-    isGasGiant ? 8 : 1,
-    random(),
-  );
-  const ringChance = isGasGiant ? 0.75 : 0.1;
-
-  let celestialClass: PlanetType | GasGiantClass | undefined;
-
-  if (isGasGiant) {
-    // The zone dictates which gas giants are allowed.
-    // We should directly pick one from the allowed list.
-    if (zone.allowedGasGiantClasses.length > 0) {
-      celestialClass = UTIL.getRandomItem(zone.allowedGasGiantClasses, random);
-    } else {
-      // Fallback if a zone is misconfigured to allow gas giants but lists none.
-      console.warn(
-        `[planet-type] Zone "${zone.name}" is configured to allow Gas Giants but has no allowed classes. Falling back to Class I.`,
-      );
+  // Get stellar temperature
+  const starProps = parentStar.properties as any;
+  const stellarTemp = starProps?.temperature || 5778;
+  
+  // Calculate effective temperature at this distance
+  const distanceAU = zone.minAU + (zone.maxAU - zone.minAU) * random();
+  const effectiveTemp = stellarTemp * Math.sqrt(1 / distanceAU);
+  
+  // Simple temperature-based planet type selection
+  let celestialClass: PlanetType | GasGiantClass;
+  let isGasGiant = false;
+  
+  if (effectiveTemp > 1000) {
+    // Hot zone: Rocky, Desert, Lava
+    const hotTypes = [PlanetType.ROCKY, PlanetType.DESERT, PlanetType.LAVA];
+    celestialClass = UTIL.getRandomItem(hotTypes, random);
+  } else if (effectiveTemp > 300) {
+    // Habitable zone: Terrestrial, Ocean, Rocky
+    const habitableTypes = [PlanetType.TERRESTRIAL, PlanetType.OCEAN, PlanetType.ROCKY];
+    celestialClass = UTIL.getRandomItem(habitableTypes, random);
+    
+    // 20% chance of gas giant in habitable zone
+    if (random() < 0.2) {
+      isGasGiant = true;
       celestialClass = GasGiantClass.CLASS_I;
     }
   } else {
-    // If it's a rocky planet, just pick one from the allowed list for the zone.
-    if (zone.allowedPlanetTypes.length > 0) {
-      celestialClass = UTIL.getRandomItem(zone.allowedPlanetTypes, random);
+    // Cold zone: Ice, Rocky, or Gas Giant
+    const coldTypes = [PlanetType.ICE, PlanetType.ROCKY];
+    celestialClass = UTIL.getRandomItem(coldTypes, random);
+    
+    // 40% chance of gas giant in cold zone
+    if (random() < 0.4) {
+      isGasGiant = true;
+      celestialClass = random() < 0.5 ? GasGiantClass.CLASS_I : GasGiantClass.CLASS_II;
     }
   }
 
-  // Safety check: Prevent terrestrial planets in outer zones
-  if (
-    celestialClass === PlanetType.TERRESTRIAL ||
-    celestialClass === PlanetType.OCEAN
-  ) {
-    // These planet types should only exist in inner zones (Temperate, Hot, Cool)
-    const innerZoneCategories = ["HOT", "TEMPERATE", "COOL"];
-    if (!innerZoneCategories.includes(zone.category)) {
-      console.warn(
-        `[planet-type] Attempted to place ${celestialClass} in ${zone.category} zone. Falling back to ICE.`,
-      );
-      celestialClass = PlanetType.ICE;
-    }
-  }
+  // Set properties based on type
+  const targetDensity_kg_m3 = isGasGiant ? 
+    utils.lerp(500, 2000, random()) : 
+    utils.lerp(2000, 5500, random());
+    
+  const massMultiplierFactor = isGasGiant ? 
+    utils.lerp(0.2, 8, random()) : 
+    utils.lerp(0.02, 1, random());
+    
+  const ringChance = isGasGiant ? 0.75 : 0.1;
 
-  // Fallback if no type could be determined (should not happen with good zone defs)
-  if (!celestialClass) {
-    console.warn(
-      `[planet-type] Could not determine a valid celestial class for zone "${zone.name}". Falling back to ROCKY.`,
-    );
-    celestialClass = PlanetType.ROCKY;
-  }
-
-  const finalCelestialType = isGasGiant
-    ? CelestialType.GAS_GIANT
-    : CelestialType.PLANET;
+  const finalCelestialType = isGasGiant ? CelestialType.GAS_GIANT : CelestialType.PLANET;
 
   return {
     celestialType: finalCelestialType,
@@ -119,6 +95,6 @@ export function determinePlanetTypeAndBaseProperties(
     targetDensity_kg_m3: targetDensity_kg_m3,
     massMultiplierFactor: massMultiplierFactor,
     ringChance: ringChance,
-    ringAllowedTypes: [RockyType.ICE, RockyType.LIGHT_ROCK], // Rings are always rocky/icy
+    ringAllowedTypes: [RockyType.ICE, RockyType.LIGHT_ROCK],
   };
 }
