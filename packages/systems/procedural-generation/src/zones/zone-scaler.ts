@@ -25,7 +25,7 @@ export class ZoneScaler {
     // Get star properties for more sophisticated zone calculation
     const starProps = star.properties as any;
     const spectralClass = starProps?.spectralClass || "G";
-    const stellarType = starProps?.stellarType || "MAIN_SEQUENCE";
+    const stellarType = starProps?.classType || "MAIN_SEQUENCE"; // Fixed: was stellarType, now matches actual property name
 
     // Calculate zone scaling based on star characteristics
     let scalingFactor = Math.sqrt(luminosity);

@@ -22,7 +22,7 @@ export class StarZoneFactory {
   ): CelestialZone[] {
     const starProps = star.properties as any;
     const spectralClass = starProps?.spectralClass || "G";
-    const stellarType = starProps?.stellarType || "MAIN_SEQUENCE";
+    const stellarType = starProps?.classType || "MAIN_SEQUENCE"; // Fixed: was stellarType, now matches actual property name
     const luminosity = starProps?.luminosity || 1.0;
 
     // Base scaling from luminosity
