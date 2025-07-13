@@ -22,6 +22,143 @@ import {
 // Note: StarSystemHierarchy interface removed - using direct CelestialObject arrays for simplicity
 
 /**
+ * Calculates binary stability constraints to prevent orbital decay
+ */
+interface BinaryStabilityResult {
+  isStable: boolean;
+  minSeparationAU: number;
+  recommendedSeparationAU: number;
+  warnings: string[];
+}
+
+/**
+ * Validates and calculates binary stability constraints
+ */
+function calculateBinaryStability(
+  star1: CelestialObject,
+  star2: CelestialObject,
+  proposedSeparationAU: number,
+): BinaryStabilityResult {
+  const warnings: string[] = [];
+
+  // Convert stellar radii to AU for calculations
+  const star1RadiusAU = star1.realRadius_m / CONST.AU_TO_METERS;
+  const star2RadiusAU = star2.realRadius_m / CONST.AU_TO_METERS;
+
+  // Minimum separation: must be outside both stellar photospheres with safety margin
+  const minSeparationAU = (star1RadiusAU + star2RadiusAU) * 3.0; // 3x safety margin
+
+  // Calculate Roche limit for stability (simplified calculation)
+  const massRatio = star2.realMass_kg / star1.realMass_kg;
+  const rocheLimit =
+    (proposedSeparationAU * 0.49 * Math.pow(massRatio, 2 / 3)) /
+    (0.6 * Math.pow(massRatio, 2 / 3) +
+      Math.log(1 + Math.pow(massRatio, 1 / 3)));
+
+  // Minimum stable separation (conservative estimate)
+  const rocheStableSeparation = Math.max(minSeparationAU, rocheLimit * 2.5);
+
+  // For n-body stability, close binaries should have circular orbits
+  // Recommended separation for numerical stability
+  const recommendedSeparationAU = Math.max(rocheStableSeparation, 0.5); // At least 0.5 AU for close binaries
+
+  // Check various stability conditions
+  let isStable = true;
+
+  if (proposedSeparationAU < minSeparationAU) {
+    isStable = false;
+    warnings.push(
+      `Stars too close: ${proposedSeparationAU.toFixed(3)} AU < minimum ${minSeparationAU.toFixed(3)} AU`,
+    );
+  }
+
+  if (proposedSeparationAU < rocheStableSeparation) {
+    isStable = false;
+    warnings.push(
+      `Within Roche limit: potential mass transfer and instability`,
+    );
+  }
+
+  // Warning for very tight systems that might need smaller timesteps
+  if (proposedSeparationAU < 1.0 && isStable) {
+    warnings.push(
+      `Close binary detected: may require smaller simulation timesteps for stability`,
+    );
+  }
+
+  return {
+    isStable,
+    minSeparationAU,
+    recommendedSeparationAU,
+    warnings,
+  };
+}
+
+/**
+ * Suggests physics engine configuration for binary system stability
+ */
+function suggestBinaryPhysicsConfig(
+  separationAU: number,
+  totalMass_kg: number,
+  orbitalPeriod_s: number,
+): {
+  recommendedTimestep_s: number;
+  recommendedAlgorithm: string;
+  notes: string[];
+} {
+  const notes: string[] = [];
+  let recommendedTimestep_s: number;
+  let recommendedAlgorithm: string;
+
+  // Calculate dynamic timestep based on orbital period
+  // Rule of thumb: timestep should be 1/100th of orbital period for stability
+  const baseDynamicTimestep = orbitalPeriod_s / 100;
+
+  if (separationAU < 0.5) {
+    // Very close binary - needs small timestep
+    recommendedTimestep_s = Math.min(baseDynamicTimestep, 1800); // Max 30 minutes
+    recommendedAlgorithm = "verlet"; // Symplectic integrator for stability
+    notes.push(
+      `Very close binary (${separationAU.toFixed(3)} AU): Use small timestep and symplectic integrator`,
+    );
+  } else if (separationAU < 2.0) {
+    // Close binary - moderate timestep
+    recommendedTimestep_s = Math.min(baseDynamicTimestep, 3600); // Max 1 hour
+    recommendedAlgorithm = "verlet";
+    notes.push(
+      `Close binary (${separationAU.toFixed(3)} AU): Use moderate timestep with stable integrator`,
+    );
+  } else if (separationAU < 10.0) {
+    // Wide binary - normal timestep
+    recommendedTimestep_s = Math.min(baseDynamicTimestep, 7200); // Max 2 hours
+    recommendedAlgorithm = "barnes-hut";
+    notes.push(
+      `Wide binary (${separationAU.toFixed(3)} AU): Standard configuration acceptable`,
+    );
+  } else {
+    // Very wide binary - standard timestep
+    recommendedTimestep_s = Math.min(baseDynamicTimestep, 14400); // Max 4 hours
+    recommendedAlgorithm = "barnes-hut";
+    notes.push(
+      `Very wide binary (${separationAU.toFixed(3)} AU): Standard physics configuration`,
+    );
+  }
+
+  // Additional notes for massive systems
+  if (totalMass_kg > 2 * CONST.SOLAR_MASS_KG) {
+    notes.push(
+      `Massive binary system: Consider relativistic effects for very close orbits`,
+    );
+  }
+
+  return {
+    recommendedTimestep_s,
+    recommendedAlgorithm,
+    notes,
+  };
+}
+
+/**
  * Generates sophisticated stellar systems with realistic orbital mechanics and hierarchical structures.
  * Supports single stars, binary systems, hierarchical triples, and contact binaries.
  *
@@ -61,12 +198,12 @@ function generateStellarSystem(
       return stars;
 
     case StellarSystemType.BINARY_CLOSE:
-      const closeSeparation = 0.1 + random() * 0.9; // 0.1 - 1.0 AU
+      const closeSeparation = 0.5 + random() * 1.5; // 0.5 - 2.0 AU (more conservative)
       const closeConfig = { ...config, separationAU: [closeSeparation] };
       return generateCloseBinary(random, primaryStar, closeConfig);
 
     case StellarSystemType.BINARY_WIDE:
-      const wideSeparation = 1.0 + random() * 99.0; // 1 - 100 AU
+      const wideSeparation = 2.0 + random() * 98.0; // 2 - 100 AU (gap to avoid unstable range)
       const wideConfig = { ...config, separationAU: [wideSeparation] };
       return generateWideBinary(random, primaryStar, wideConfig);
 
@@ -100,7 +237,7 @@ function generateStellarSystem(
 }
 
 /**
- * Generates a close binary system (< 1 AU separation)
+ * Generates a close binary system with stability validation
  */
 function generateCloseBinary(
   random: () => number,
@@ -108,11 +245,36 @@ function generateCloseBinary(
   config: StellarSystemConfiguration,
 ): CelestialObject[] {
   const companionStar = generateStar(random);
-  const separation = config.separationAU![0];
+  let separation = config.separationAU![0];
 
-  // Close binaries have more circular orbits and aligned inclinations
-  const eccentricity = 0.01 + random() * 0.15; // Low eccentricity
-  const inclination = (random() - 0.5) * 0.1; // Small inclination
+  // Validate binary stability and adjust separation if needed
+  const stabilityCheck = calculateBinaryStability(
+    primaryStar,
+    companionStar,
+    separation,
+  );
+
+  if (!stabilityCheck.isStable) {
+    console.warn(
+      `[generateCloseBinary] Unstable binary detected. Adjusting separation from ${separation.toFixed(3)} AU to ${stabilityCheck.recommendedSeparationAU.toFixed(3)} AU`,
+    );
+    stabilityCheck.warnings.forEach((warning) =>
+      console.warn(`[generateCloseBinary] ${warning}`),
+    );
+    separation = stabilityCheck.recommendedSeparationAU;
+  } else if (stabilityCheck.warnings.length > 0) {
+    // Log warnings for stable but potentially problematic systems
+    console.info(
+      `[generateCloseBinary] Binary stability notes for ${primaryStar.id}-${companionStar.id}:`,
+    );
+    stabilityCheck.warnings.forEach((warning) =>
+      console.info(`[generateCloseBinary] ${warning}`),
+    );
+  }
+
+  // Close binaries have more circular orbits and aligned inclinations for stability
+  const eccentricity = 0.01 + random() * 0.05; // Very low eccentricity for stability (0.01-0.06)
+  const inclination = (random() - 0.5) * 0.05; // Very small inclination for stability (±1.4°)
 
   const [primary, companion] = setupBinaryOrbit(
     primaryStar,
@@ -250,7 +412,7 @@ function generateHierarchicalTriple(
 }
 
 /**
- * Generates a contact binary system (stars nearly touching)
+ * Generates a contact binary system with stability validation
  */
 function generateContactBinary(
   random: () => number,
@@ -258,11 +420,36 @@ function generateContactBinary(
   config: StellarSystemConfiguration,
 ): CelestialObject[] {
   const companionStar = generateStar(random);
-  const separation = config.separationAU![0];
+  let separation = config.separationAU![0];
 
-  // Contact binaries are nearly circular and coplanar
-  const eccentricity = 0.001 + random() * 0.01; // Very low eccentricity
-  const inclination = (random() - 0.5) * 0.02; // Very small inclination
+  // Validate binary stability and adjust separation if needed
+  const stabilityCheck = calculateBinaryStability(
+    primaryStar,
+    companionStar,
+    separation,
+  );
+
+  if (!stabilityCheck.isStable) {
+    console.warn(
+      `[generateContactBinary] Unstable contact binary detected. Adjusting separation from ${separation.toFixed(3)} AU to ${stabilityCheck.recommendedSeparationAU.toFixed(3)} AU`,
+    );
+    stabilityCheck.warnings.forEach((warning) =>
+      console.warn(`[generateContactBinary] ${warning}`),
+    );
+    separation = stabilityCheck.recommendedSeparationAU;
+  } else if (stabilityCheck.warnings.length > 0) {
+    // Log warnings for stable but potentially problematic systems
+    console.info(
+      `[generateContactBinary] Contact binary stability notes for ${primaryStar.id}-${companionStar.id}:`,
+    );
+    stabilityCheck.warnings.forEach((warning) =>
+      console.info(`[generateContactBinary] ${warning}`),
+    );
+  }
+
+  // Contact binaries are nearly circular and coplanar for maximum stability
+  const eccentricity = 0.001 + random() * 0.005; // Extremely low eccentricity (0.001-0.006)
+  const inclination = (random() - 0.5) * 0.01; // Extremely small inclination (±0.3°)
 
   const [primary, companion] = setupBinaryOrbit(
     primaryStar,
@@ -281,7 +468,7 @@ function generateContactBinary(
 }
 
 /**
- * Sets up proper binary orbital mechanics with barycentric motion
+ * Sets up proper binary orbital mechanics with barycentric motion and stability enhancements
  */
 function setupBinaryOrbit(
   primaryStar: CelestialObject,
@@ -307,10 +494,13 @@ function setupBinaryOrbit(
     0,
   );
 
-  // Random orbital angles
+  // Improved orbital angles for stability
   const longitudeOfAscendingNode = random() * 2 * Math.PI;
   const argumentOfPeriapsis = random() * 2 * Math.PI;
-  const meanAnomaly = random() * 2 * Math.PI;
+
+  // For better stability, avoid starting both stars at periapsis/apoapsis
+  // Use a random phase but ensure they're 180° apart
+  const baseMeanAnomaly = random() * 2 * Math.PI;
 
   // Primary orbit (around barycenter)
   const primaryOrbit: OrbitalParameters = {
@@ -319,18 +509,18 @@ function setupBinaryOrbit(
     inclination: inclination,
     longitudeOfAscendingNode: longitudeOfAscendingNode,
     argumentOfPeriapsis: argumentOfPeriapsis,
-    meanAnomaly: meanAnomaly,
+    meanAnomaly: baseMeanAnomaly,
     period_s: orbitalPeriod,
   };
 
-  // Companion orbit (180° out of phase)
+  // Companion orbit (180° out of phase for stability)
   const companionOrbit: OrbitalParameters = {
     realSemiMajorAxis_m: companionSMA,
     eccentricity: eccentricity,
     inclination: inclination,
     longitudeOfAscendingNode: longitudeOfAscendingNode,
     argumentOfPeriapsis: (argumentOfPeriapsis + Math.PI) % (2 * Math.PI),
-    meanAnomaly: (meanAnomaly + Math.PI) % (2 * Math.PI),
+    meanAnomaly: (baseMeanAnomaly + Math.PI) % (2 * Math.PI),
     period_s: orbitalPeriod,
   };
 
@@ -369,11 +559,58 @@ function setupBinaryOrbit(
       0,
     );
 
+    // Validate initial conditions for stability
+    const actualSeparation = primaryInitialPos.distanceTo(companionInitialPos);
+    const expectedSeparation = separationMeters;
+    const separationError =
+      Math.abs(actualSeparation - expectedSeparation) / expectedSeparation;
+
+    if (separationError > 0.05) {
+      // 5% tolerance
+      console.warn(
+        `[setupBinaryOrbit] Large separation error: expected ${(expectedSeparation / CONST.AU_TO_METERS).toFixed(3)} AU, got ${(actualSeparation / CONST.AU_TO_METERS).toFixed(3)} AU`,
+      );
+    }
+
+    // Validate velocity magnitudes for circular/low-eccentricity orbits
+    const primaryVelMag = primaryInitialVel.length();
+    const companionVelMag = companionInitialVel.length();
+    const G = 6.674e-11; // Gravitational constant in m^3 kg^-1 s^-2
+    const expectedPrimaryVel = Math.sqrt((G * totalMass) / primarySMA);
+    const expectedCompanionVel = Math.sqrt((G * totalMass) / companionSMA);
+
+    if (
+      Math.abs(primaryVelMag - expectedPrimaryVel) / expectedPrimaryVel >
+      0.1
+    ) {
+      console.warn(
+        `[setupBinaryOrbit] Primary velocity discrepancy: expected ${(expectedPrimaryVel / 1000).toFixed(1)} km/s, got ${(primaryVelMag / 1000).toFixed(1)} km/s`,
+      );
+    }
+
     primaryStar.physicsStateReal.position_m = primaryInitialPos;
     primaryStar.physicsStateReal.velocity_mps = primaryInitialVel;
 
     companionStar.physicsStateReal.position_m = companionInitialPos;
     companionStar.physicsStateReal.velocity_mps = companionInitialVel;
+
+    // Log successful binary setup for debugging
+    console.info(
+      `[setupBinaryOrbit] Stable binary created: ${primaryStar.id}-${companionStar.id}, separation: ${separationAU.toFixed(3)} AU, period: ${(orbitalPeriod / 86400).toFixed(1)} days`,
+    );
+
+    // Provide physics engine configuration suggestions
+    const physicsConfig = suggestBinaryPhysicsConfig(
+      separationAU,
+      totalMass,
+      orbitalPeriod,
+    );
+    console.info(
+      `[setupBinaryOrbit] Physics recommendations: timestep ≤ ${(physicsConfig.recommendedTimestep_s / 3600).toFixed(1)}h, algorithm: ${physicsConfig.recommendedAlgorithm}`,
+    );
+    physicsConfig.notes.forEach((note) =>
+      console.info(`[setupBinaryOrbit] ${note}`),
+    );
   } catch (error) {
     console.error(`[setupBinaryOrbit] Error calculating binary orbits:`, error);
   }

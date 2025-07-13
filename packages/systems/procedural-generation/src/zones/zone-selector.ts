@@ -71,7 +71,8 @@ export class ZoneSelector {
     }
 
     // Limit the total number of zones to prevent over-generation
-    const maxZones = 4 + Math.floor(this.random() * 2); // 4-5 zones max
+    // Increased limit for more populated systems
+    const maxZones = 5 + Math.floor(this.random() * 3); // 5-7 zones instead of 4-5
     if (activeZones.length > maxZones) {
       // Prioritize inner zones when trimming
       const sortedZones = activeZones.sort((a, b) => a.minAU - b.minAU);
@@ -83,17 +84,18 @@ export class ZoneSelector {
 
   /**
    * Get zone inclusion multiplier based on zone category
+   * Made less restrictive for more populated systems
    */
   private getZoneInclusionMultiplier(category: ZoneCategory): number {
     switch (category) {
       case ZoneCategory.COLD:
       case ZoneCategory.FROZEN:
-        return 0.5; // 50% reduction
+        return 0.8; // Reduced penalty from 50% to 20%
       case ZoneCategory.OUTER:
       case ZoneCategory.DISTANT:
-        return 0.3; // 70% reduction
+        return 0.7; // Reduced penalty from 70% to 30%
       case ZoneCategory.INTERSTELLAR:
-        return 0.1; // 90% reduction
+        return 0.5; // Reduced penalty from 90% to 50%
       default:
         return 1.0; // No reduction
     }
@@ -101,32 +103,40 @@ export class ZoneSelector {
 
   /**
    * Add fallback zones when no zones are selected
+   * Made more generous to ensure populated systems
    */
   private addFallbackZones(
     adjustedZones: CelestialZone[],
     activeZones: CelestialZone[],
   ): void {
-    // Add 2-3 random zones from different ranges, but be more conservative
-    const innerZones = adjustedZones.slice(1, 4); // Hot, Temperate, Cool (skip Scorched)
-    const middleZones = adjustedZones.slice(4, 6); // Cold, Frozen
-    const outerZones = adjustedZones.slice(6); // Outer, Distant, Interstellar
+    // Add 3-4 zones from different ranges for better distribution
+    const innerZones = adjustedZones.slice(0, 3); // Scorched, Hot, Temperate
+    const middleZones = adjustedZones.slice(3, 5); // Cool, Outer Gas
+    const outerZones = adjustedZones.slice(5); // Frozen, Outer, Distant, Interstellar
 
     // Always include at least one inner zone
     if (innerZones.length > 0) {
       activeZones.push(getRandomItem(innerZones, this.random));
-    } else if (adjustedZones.length > 0) {
-      // If no inner zones, use any available zone
-      activeZones.push(adjustedZones[0]);
     }
 
-    // 60% chance for a middle zone
-    if (middleZones.length > 0 && this.random() < 0.6) {
+    // 90% chance for a middle zone (increased from 60%)
+    if (middleZones.length > 0 && this.random() < 0.9) {
       activeZones.push(getRandomItem(middleZones, this.random));
     }
 
-    // Only 20% chance for outer zones
-    if (outerZones.length > 0 && this.random() < 0.2) {
+    // 60% chance for outer zones (increased from 20%)
+    if (outerZones.length > 0 && this.random() < 0.6) {
       activeZones.push(getRandomItem(outerZones, this.random));
+    }
+
+    // 30% chance for a second outer zone for more populated systems
+    if (outerZones.length > 1 && this.random() < 0.3) {
+      const remainingOuter = outerZones.filter(
+        (z) => !activeZones.find((a) => a.name === z.name),
+      );
+      if (remainingOuter.length > 0) {
+        activeZones.push(getRandomItem(remainingOuter, this.random));
+      }
     }
   }
 

@@ -549,19 +549,62 @@ function findClosestStar(
   distance: number,
   stars: CelestialObject[],
 ): CelestialObject {
-  let closestStar = stars[0];
-  let minDistanceDiff = Infinity;
+  // In binary systems, planets should orbit the primary (most massive) star
+  // unless they're far enough out to be circumbinary
 
-  for (const star of stars) {
-    const starDistance = getStarDistance(star);
-    const distanceDiff = Math.abs(distance - starDistance);
-    if (distanceDiff < minDistanceDiff) {
-      minDistanceDiff = distanceDiff;
-      closestStar = star;
-    }
+  if (stars.length === 1) {
+    return stars[0];
   }
 
-  return closestStar;
+  // For multi-star systems, find the primary star (most massive)
+  const primaryStar = stars.reduce((primary, current) =>
+    current.realMass_kg > primary.realMass_kg ? current : primary,
+  );
+
+  // Check if this is a close binary system (< 5 AU separation)
+  const maxSeparation =
+    Math.max(
+      ...stars.map(
+        (star) => (star.orbit?.realSemiMajorAxis_m ?? 0) / AU_METERS,
+      ),
+    ) * 2; // Total separation is roughly 2x the larger semi-major axis
+
+  const isCloseBinary = maxSeparation < 5.0; // AU
+
+  if (isCloseBinary) {
+    // In close binaries, planets within ~3x the binary separation orbit the primary star
+    // Beyond that, they should be circumbinary (but that's handled elsewhere)
+    const binaryInfluenceRadius = maxSeparation * 3;
+
+    if (distance < binaryInfluenceRadius) {
+      // Close enough to be dominated by primary star
+      return primaryStar;
+    } else {
+      // Far enough to potentially be circumbinary, but for now assign to primary
+      // (circumbinary logic should be handled in configuration selection)
+      return primaryStar;
+    }
+  } else {
+    // Wide binary - use traditional closest star logic but prefer the primary
+    let closestStar = primaryStar; // Default to primary
+    let minDistanceDiff = Infinity;
+
+    for (const star of stars) {
+      const starDistance = getStarDistance(star);
+      const distanceDiff = Math.abs(distance - starDistance);
+
+      // Add bias toward primary star (reduce effective distance difference)
+      const bias = star.realMass_kg === primaryStar.realMass_kg ? 0.5 : 0; // Primary gets 0.5 AU advantage
+      const adjustedDiff = distanceDiff - bias;
+
+      if (adjustedDiff < minDistanceDiff) {
+        minDistanceDiff = adjustedDiff;
+        closestStar = star;
+      }
+    }
+
+    return closestStar;
+  }
 }
 
 function getStarDistance(star: CelestialObject): number {

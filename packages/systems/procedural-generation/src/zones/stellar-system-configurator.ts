@@ -17,9 +17,9 @@ export class StellarSystemConfigurator {
     const roll = this.random();
 
     if (roll < 0.6) {
-      return { type: StellarSystemType.SINGLE_STAR, stars: 1 };
-    } else if (roll < 0.85) {
       return { type: StellarSystemType.BINARY_CLOSE, stars: 2 };
+    } else if (roll < 0.85) {
+      return { type: StellarSystemType.SINGLE_STAR, stars: 1 };
     } else if (roll < 0.95) {
       return { type: StellarSystemType.BINARY_WIDE, stars: 2 };
     } else if (roll < 0.98) {

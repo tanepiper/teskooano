@@ -8,6 +8,7 @@ import * as CONST from "../constants";
 export class ZoneScaler {
   /**
    * Calculate scaling factor based on star characteristics
+   * Capped for gameplay to prevent systems from being too spread out
    */
   static calculateScalingFactor(star: CelestialObject): number {
     // Use the pre-calculated luminosity from properties if it exists.
@@ -28,7 +29,12 @@ export class ZoneScaler {
     const stellarType = starProps?.classType || "MAIN_SEQUENCE"; // Fixed: was stellarType, now matches actual property name
 
     // Calculate zone scaling based on star characteristics
+    // Use a damped scaling to prevent systems from being too spread out
     let scalingFactor = Math.sqrt(luminosity);
+
+    // Cap the scaling factor for gameplay purposes
+    // Min: 0.1 (very small stars), Max: 5.0 (very large stars)
+    scalingFactor = Math.max(0.1, Math.min(5.0, scalingFactor));
 
     // Adjust scaling based on stellar type
     scalingFactor *= this.getStellarTypeScalingMultiplier(stellarType);
@@ -36,7 +42,8 @@ export class ZoneScaler {
     // Additional adjustments based on spectral class
     scalingFactor *= this.getSpectralClassScalingMultiplier(spectralClass);
 
-    return scalingFactor;
+    // Final cap to ensure systems stay reasonable
+    return Math.max(0.1, Math.min(5.0, scalingFactor));
   }
 
   /**
