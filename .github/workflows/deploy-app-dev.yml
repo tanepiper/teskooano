@@ -4,7 +4,7 @@ name: 🔭 Deploy Teskooano
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
+    branches: ["dev"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -47,6 +47,13 @@ jobs:
         run: |
           moon run website:build
           mv apps/teskooano/dist apps/website/dist/teskooano
+      - name: Build Teskooano (dev)
+        run: |
+          git checkout dev
+          npm install
+          moon run ui-plugin:build
+          moon run teskooano:build
+          mv apps/teskooano/dist apps/website/dist/teskooano/dev
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
