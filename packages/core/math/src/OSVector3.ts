@@ -1,6 +1,6 @@
 import { EPSILON } from "./constants";
-import * as THREE from "three";
 import { OSQuaternion } from "./OSQuaternion";
+import { Vector3 } from "three";
 
 /**
  * Represents a 3-dimensional vector using the Open Space engine's
@@ -274,8 +274,8 @@ export class OSVector3 {
    * Consider dependency injection or careful scoping if using in non-ThreeJS contexts.
    * @returns A new THREE.Vector3 instance.
    */
-  toThreeJS(): THREE.Vector3 {
-    return new THREE.Vector3(this.x, this.y, this.z);
+  toThreeJS(): Vector3 {
+    return new Vector3(this.x, this.y, this.z);
   }
 
   /**
@@ -283,7 +283,7 @@ export class OSVector3 {
    * @param v - The THREE.Vector3 to convert from.
    * @returns A new OSVector3 instance.
    */
-  static fromThreeJS(v: THREE.Vector3): OSVector3 {
+  static fromThreeJS(v: Vector3): OSVector3 {
     return new OSVector3(v.x, v.y, v.z);
   }
 

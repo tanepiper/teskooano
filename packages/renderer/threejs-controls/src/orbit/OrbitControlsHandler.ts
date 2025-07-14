@@ -1,10 +1,10 @@
 import { Subject } from "rxjs";
-import * as THREE from "three";
+import { PerspectiveCamera, Vector3 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 export type ControlsChangeEvent = {
-  position: THREE.Vector3;
-  target: THREE.Vector3;
+  position: Vector3;
+  target: Vector3;
 };
 
 /**
@@ -25,7 +25,7 @@ export class OrbitControlsHandler {
    * @param camera The camera to control.
    * @param domElement The HTML element for event listeners.
    */
-  constructor(camera: THREE.PerspectiveCamera, domElement: HTMLElement) {
+  constructor(camera: PerspectiveCamera, domElement: HTMLElement) {
     this.controls = new OrbitControls(camera, domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.5;

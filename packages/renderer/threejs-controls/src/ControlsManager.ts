@@ -8,6 +8,7 @@ import {
   OrbitControlsHandler,
 } from "./orbit/OrbitControlsHandler";
 import { CameraTransitionManager } from "./transition/CameraTransitionManager";
+import { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Orchestrates camera controls by composing functionality from specialized handlers.
@@ -105,7 +106,7 @@ export class ControlsManager extends StateSubscriptionMixin {
    * @param options Optional parameters for the transition.
    */
   public transitionTargetTo(
-    target: THREE.Vector3,
+    target: OSVector3,
     withTransition: boolean = true,
     options?: { focusedObjectId?: string | null },
   ): void {
@@ -126,15 +127,15 @@ export class ControlsManager extends StateSubscriptionMixin {
    * @param options Optional parameters for the transition.
    */
   public moveToPosition(
-    position: THREE.Vector3,
-    target: THREE.Vector3,
+    position: OSVector3,
+    target: OSVector3,
     withTransition: boolean = true,
     options?: { focusedObjectId?: string | null },
   ): void {
     if (!withTransition) {
       this.transitionManager.cancelTransition();
-      this.camera.position.copy(position);
-      this.controls.target.copy(target);
+      this.camera.position.copy(position.toThreeJS());
+      this.controls.target.copy(target.toThreeJS());
 
       // If following, ensure the follower is synced to the new manual position.
       if (this.objectFollower.isFollowing()) {
@@ -226,8 +227,8 @@ export class ControlsManager extends StateSubscriptionMixin {
    * @returns The calculated duration in seconds.
    */
   public calculateTransitionDuration(
-    startPos: THREE.Vector3,
-    endPos: THREE.Vector3,
+    startPos: OSVector3,
+    endPos: OSVector3,
   ): number {
     return this.transitionManager.calculateTransitionDuration(startPos, endPos);
   }

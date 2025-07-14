@@ -1,4 +1,3 @@
-import { OSVector3 } from "../OSVector3";
 import { createSeededRandomSync } from "../random";
 
 /**

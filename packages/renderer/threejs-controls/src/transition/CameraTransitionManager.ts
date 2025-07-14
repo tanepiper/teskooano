@@ -5,16 +5,17 @@ import {
 } from "@teskooano/data-types";
 import { notificationManager } from "@teskooano/notifications";
 import gsap from "gsap";
-import * as THREE from "three";
 import { OrbitControlsHandler } from "../orbit/OrbitControlsHandler";
 import { StateAccessor } from "@teskooano/core-state";
+import { OSVector3 } from "@teskooano/core-math";
+import { PerspectiveCamera, Vector3 } from "three";
 
 /**
  * Manages smooth, animated camera transitions using GSAP.
  * Handles transitions for camera position, target, or both simultaneously.
  */
 export class CameraTransitionManager {
-  private camera: THREE.PerspectiveCamera;
+  private camera: PerspectiveCamera;
   private orbitControlsHandler: OrbitControlsHandler;
 
   /** Flag indicating if the camera is currently undergoing a programmatic GSAP animation. */
@@ -22,11 +23,11 @@ export class CameraTransitionManager {
   /** Stores the active GSAP timeline during transitions to allow cancellation. */
   private activeTimeline: gsap.core.Timeline | null = null;
   /** Reusable temporary vector for calculations to avoid allocations. */
-  private tempVector = new THREE.Vector3();
+  private tempVector = new Vector3();
   /** The ID of the currently active transition notification. */
   private activeTransitionNotificationId: string | null = null;
   /** The camera position on the last update frame, for calculating instantaneous speed. */
-  private lastUpdatePosition = new THREE.Vector3();
+  private lastUpdatePosition = new OSVector3();
   /** The timeline time on the last update frame, for calculating instantaneous speed. */
   private lastUpdateTime: number = 0;
 
@@ -39,7 +40,7 @@ export class CameraTransitionManager {
   private _originalDampingFactor: number = 0.05;
 
   constructor(
-    camera: THREE.PerspectiveCamera,
+    camera: PerspectiveCamera,
     orbitControlsHandler: OrbitControlsHandler,
   ) {
     this.camera = camera;
@@ -90,8 +91,8 @@ export class CameraTransitionManager {
    * Restores controls and damping, updates final state, and dispatches completion event.
    */
   private endTransition(
-    finalCameraPos: THREE.Vector3,
-    finalTargetPos: THREE.Vector3,
+    finalCameraPos: OSVector3,
+    finalTargetPos: OSVector3,
     type: "target-only" | "position-and-target",
     focusedObjectId?: string | null,
   ): void {
@@ -106,8 +107,8 @@ export class CameraTransitionManager {
     this.isAnimating = false;
     this.activeTimeline = null;
 
-    this.camera.position.copy(finalCameraPos);
-    this.orbitControlsHandler.controls.target.copy(finalTargetPos);
+    this.camera.position.copy(finalCameraPos.toThreeJS());
+    this.orbitControlsHandler.controls.target.copy(finalTargetPos.toThreeJS());
 
     this.orbitControlsHandler.controls.enableDamping =
       this._originalDampingEnabled;
@@ -120,8 +121,8 @@ export class CameraTransitionManager {
       CustomEvents.CAMERA_TRANSITION_COMPLETE,
       {
         detail: {
-          position: finalCameraPos.clone(),
-          target: finalTargetPos.clone(),
+          position: finalCameraPos.toThreeJS(),
+          target: finalTargetPos.toThreeJS(),
           type: type,
           focusedObjectId: focusedObjectId,
         },
@@ -157,12 +158,12 @@ export class CameraTransitionManager {
    * Smoothly transitions only the camera's target point.
    */
   public transitionTargetTo(
-    target: THREE.Vector3,
+    target: OSVector3,
     options?: { focusedObjectId?: string | null },
   ): void {
     this.beginTransition();
 
-    const currentPosition = this.camera.position.clone();
+    const currentPosition = OSVector3.fromThreeJS(this.camera.position);
 
     // The "distance" for a target-only transition isn't a straight line,
     // but we can use the main calculator to get a sensible duration.
@@ -172,7 +173,7 @@ export class CameraTransitionManager {
 
     const onComplete = () => {
       this.endTransition(
-        this.camera.position.clone(),
+        OSVector3.fromThreeJS(this.camera.position),
         target,
         "target-only",
         options?.focusedObjectId,
@@ -197,13 +198,13 @@ export class CameraTransitionManager {
    * Initiates a smooth, sequenced camera transition for both position and target.
    */
   public transitionTo(
-    endPos: THREE.Vector3,
-    endTarget: THREE.Vector3,
+    endPos: OSVector3,
+    endTarget: OSVector3,
     options?: { focusedObjectId?: string | null },
   ): void {
     this.beginTransition();
 
-    const startPos = this.camera.position.clone();
+    const startPos = OSVector3.fromThreeJS(this.camera.position);
     this.lastUpdatePosition.copy(startPos);
     this.lastUpdateTime = 0;
     const totalDuration = this.calculateTransitionDuration(startPos, endPos);
@@ -233,7 +234,7 @@ export class CameraTransitionManager {
     const targetDirection = endTarget.clone().sub(startPos).normalize();
     const angle =
       targetDirection.lengthSq() > 0.0001
-        ? cameraForward.angleTo(targetDirection)
+        ? cameraForward.angleTo(targetDirection.toThreeJS())
         : 0;
     const rotationPercent = 0.2;
 
@@ -254,7 +255,7 @@ export class CameraTransitionManager {
     const timelineUpdateCallback = () => {
       if (!this.activeTimeline || !this.activeTransitionNotificationId) return;
 
-      const currentPosition = this.camera.position;
+      const currentPosition = OSVector3.fromThreeJS(this.camera.position);
       const currentTime = this.activeTimeline.time();
 
       const deltaTime = currentTime - this.lastUpdateTime;
@@ -319,8 +320,8 @@ export class CameraTransitionManager {
       console.warn(
         "[CameraTransitionManager] Transition duration too short, jumping to end state.",
       );
-      this.camera.position.copy(endPos);
-      this.orbitControlsHandler.controls.target.copy(endTarget);
+      this.camera.position.copy(endPos.toThreeJS());
+      this.orbitControlsHandler.controls.target.copy(endTarget.toThreeJS());
       onTimelineComplete();
     }
   }
@@ -338,8 +339,8 @@ export class CameraTransitionManager {
    * @returns The calculated duration in seconds.
    */
   public calculateTransitionDuration(
-    startPos: THREE.Vector3,
-    endPos: THREE.Vector3,
+    startPos: OSVector3,
+    endPos: OSVector3,
   ): number {
     // --- Dynamic Transition Duration Calculation ---
 

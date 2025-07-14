@@ -1,9 +1,9 @@
-import { StateAccessor, renderableStore } from "@teskooano/core-state";
+import { StateAccessor, renderableStore, actions } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { BehaviorSubject } from "rxjs";
-import * as THREE from "three";
 import type { CameraManagerOptions, CameraManagerState } from "./types";
 import { CustomEvents } from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 import {
   CAMERA_OFFSET,
   DEFAULT_CAMERA_DISTANCE,
@@ -11,6 +11,7 @@ import {
   DEFAULT_CAMERA_TARGET,
   DEFAULT_FOV,
 } from "./constants";
+import { Vector3 } from "three";
 
 /**
  * Manages camera operations within a Teskooano engine view.
@@ -33,6 +34,8 @@ export class CameraManager {
   private renderer: ModularSpaceRenderer | undefined;
   private onFocusChangeCallback?: (focusedObjectId: string | null) => void;
   private intendedFocusIdForTransition: string | null = null; // Store intended focus during transition
+  private originalTimeScale: number = 1; // Store original timeScale during transitions
+  private isTransitioning: boolean = false; // Track if we're in a transition
 
   /**
    * BehaviorSubject holding the current state of the camera.
@@ -88,15 +91,16 @@ export class CameraManager {
     this.onFocusChangeCallback = options.onFocusChangeCallback;
 
     const initialFov = options.initialFov ?? DEFAULT_FOV;
-    let initialTarget: THREE.Vector3;
-    let initialPosition: THREE.Vector3;
+    let initialTarget: OSVector3;
+    let initialPosition: OSVector3;
     let initialFocusedObjectId = options.initialFocusedObjectId ?? null;
 
     if (initialFocusedObjectId) {
       const initialFocusObject =
         renderableStore.getRenderableObjects()[initialFocusedObjectId];
       if (initialFocusObject?.position) {
-        initialTarget = initialFocusObject.position.clone();
+        // Convert THREE.Vector3 to OSVector3
+        initialTarget = OSVector3.fromThreeJS(initialFocusObject.position);
       } else {
         console.warn(
           `[CameraManager Init] Initial focused object ${initialFocusedObjectId} not found or has no position. Using default target.`,
@@ -116,11 +120,12 @@ export class CameraManager {
     initialPosition =
       options.initialCameraPosition ?? DEFAULT_CAMERA_POSITION.clone();
 
+    // Update the state with OSVector3 values
     this.cameraStateSubject.next({
       fov: initialFov,
       focusedObjectId: initialFocusedObjectId,
-      currentPosition: initialPosition.clone(),
-      currentTarget: initialTarget.clone(),
+      currentPosition: initialPosition,
+      currentTarget: initialTarget,
     });
 
     // Ensure the new renderer's camera and controls are updated
@@ -164,9 +169,12 @@ export class CameraManager {
       return;
     }
     const initialState = this.cameraStateSubject.getValue();
-    this.renderer.camera.position.copy(initialState.currentPosition);
+    // Convert OSVector3 to THREE.Vector3 for the renderer
+    this.renderer.camera.position.copy(
+      initialState.currentPosition.toThreeJS(),
+    );
     this.renderer.controlsManager.controls.target.copy(
-      initialState.currentTarget,
+      initialState.currentTarget.toThreeJS(),
     );
     this.renderer.controlsManager.controls.update(); // Crucial for OrbitControls
   }
@@ -211,8 +219,8 @@ export class CameraManager {
     if (objectId === null) {
       this.renderer.controlsManager.stopFollowing();
       this.renderer.controlsManager.moveToPosition(
-        DEFAULT_CAMERA_POSITION.clone(),
-        DEFAULT_CAMERA_TARGET.clone(),
+        DEFAULT_CAMERA_POSITION,
+        DEFAULT_CAMERA_TARGET,
         true,
         { focusedObjectId: null },
       );
@@ -234,7 +242,7 @@ export class CameraManager {
 
       // --- Prediction Logic ---
       const objectVelocity =
-        renderableObject.velocity?.clone() ?? new THREE.Vector3();
+        renderableObject.velocity?.clone() ?? new Vector3();
 
       // We need to know how long the transition will take to predict the final position.
       // To do that, we first calculate the destination as if the object were static.
@@ -248,8 +256,8 @@ export class CameraManager {
       // Now, get the duration for that "static" trip.
       const transitionDuration =
         this.renderer?.controlsManager?.calculateTransitionDuration(
-          this.renderer.camera.position,
-          initialCameraPos,
+          OSVector3.fromThreeJS(this.renderer.camera.position),
+          OSVector3.fromThreeJS(initialCameraPos),
         ) ?? 2.0; // Default duration if calculation fails
 
       // Predict the final position of the object after the transition.
@@ -268,6 +276,9 @@ export class CameraManager {
         .add(cameraOffsetVector);
 
       if (this.renderer.controlsManager) {
+        // Pause simulation during transition to prevent fast-moving objects
+        this.pauseSimulationForTransition();
+
         // Set up follow BEFORE initiating transition for better continuity
         // Get the THREE.Object3D from the renderer that matches this objectId
         const objectToFollow = this.renderer.getObjectById(objectId);
@@ -277,14 +288,14 @@ export class CameraManager {
           // This ensures we follow even during transition
           this.renderer.controlsManager.startFollowing(
             objectToFollow,
-            cameraOffsetVector,
+            cameraOffsetVector.toThreeJS(),
           );
         }
 
         // Now, transition to the PREDICTED positions.
         this.renderer.controlsManager.moveToPosition(
-          cameraPosition,
-          predictedTargetPosition,
+          OSVector3.fromThreeJS(cameraPosition),
+          OSVector3.fromThreeJS(predictedTargetPosition),
           true,
           { focusedObjectId: objectId },
         );
@@ -306,7 +317,7 @@ export class CameraManager {
    *
    * @param {THREE.Vector3} targetPosition - The world coordinates to point the camera towards.
    */
-  public pointCameraAt(targetPosition: THREE.Vector3): void {
+  public pointCameraAt(targetPosition: Vector3): void {
     if (!this.renderer?.controlsManager) {
       console.warn(
         "[CameraManager] Cannot point camera: Manager or renderer components not initialized.",
@@ -314,7 +325,7 @@ export class CameraManager {
       return;
     }
     this.renderer.controlsManager.transitionTargetTo(
-      targetPosition.clone(),
+      OSVector3.fromThreeJS(targetPosition),
       true,
     );
   }
@@ -364,6 +375,38 @@ export class CameraManager {
   }
 
   /**
+   * Pauses the simulation during camera transitions to prevent fast-moving objects
+   * from moving too far during the transition period.
+   */
+  private pauseSimulationForTransition(): void {
+    if (this.isTransitioning) return; // Already in a transition
+
+    const currentState = StateAccessor.getCurrentSimulationState();
+    this.originalTimeScale = currentState.timeScale;
+    this.isTransitioning = true;
+
+    // Only pause if the simulation is running (timeScale > 0)
+    if (currentState.timeScale > 0) {
+      // Set timeScale to 1 (normal speed) instead of fully pausing
+      // This allows the camera to still follow the object but at a manageable speed
+      actions.setTimeScale(1);
+    }
+  }
+
+  /**
+   * Resumes the simulation after camera transitions complete.
+   */
+  private resumeSimulationAfterTransition(): void {
+    if (!this.isTransitioning) return;
+
+    // Restore the original timeScale
+    actions.setTimeScale(this.originalTimeScale);
+
+    this.isTransitioning = false;
+    this.originalTimeScale = 1;
+  }
+
+  /**
    * Handles the `camera-transition-complete` event dispatched by the renderer.
    * Updates the internal camera state (position, target) and triggers the focus change callback
    * if the focus ID was set *before* the transition started.
@@ -374,12 +417,15 @@ export class CameraManager {
     const detail = (event as CustomEvent).detail;
     const currentState = this.cameraStateSubject.getValue();
 
+    // Resume simulation after transition completes
+    this.resumeSimulationAfterTransition();
+
     // Update position and target from the transition's end state
     const newPosition = detail.position
-      ? detail.position.clone()
+      ? OSVector3.fromThreeJS(detail.position)
       : currentState.currentPosition.clone();
     const newTarget = detail.target
-      ? detail.target.clone()
+      ? OSVector3.fromThreeJS(detail.target)
       : currentState.currentTarget.clone();
 
     // The focusedObjectId for a programmatic transition is whatever we intended it to be
@@ -418,8 +464,8 @@ export class CameraManager {
     if (!this.renderer) return;
 
     const detail = (event as CustomEvent).detail;
-    const newPosition = detail.position.clone();
-    const newTarget = detail.target.clone();
+    const newPosition = OSVector3.fromThreeJS(detail.position);
+    const newTarget = OSVector3.fromThreeJS(detail.target);
 
     const currentState = this.cameraStateSubject.getValue();
 

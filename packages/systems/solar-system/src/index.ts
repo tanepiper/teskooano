@@ -3,6 +3,7 @@ import { initializeJupiter } from "./jupiter";
 import { initializeMars } from "./mars";
 import { initializeMercury } from "./mercury/mercury";
 import { initializeMinorBodies } from "./minor-bodies";
+import { initializeComets } from "./comets";
 import { initializeNeptune } from "./neptune";
 import { initializePluto } from "./pluto";
 import { initializeSaturn } from "./saturn";
@@ -26,6 +27,6 @@ export function initializeSolarSystem() {
   initializeUranus(sunId);
   initializeNeptune(sunId);
   initializePluto(sunId);
-
+  initializeComets(sunId);
   initializeMinorBodies(sunId);
 }

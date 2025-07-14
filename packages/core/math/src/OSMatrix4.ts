@@ -1,7 +1,6 @@
 import { OSVector3 } from "./OSVector3";
 import { OSQuaternion } from "./OSQuaternion";
-import * as THREE from "three";
-import { EPSILON } from "./constants";
+import { Matrix4 } from "three";
 
 /**
  * Represents a 4x4 matrix.
@@ -564,14 +563,14 @@ export class OSMatrix4 {
   /**
    * Converts this OSMatrix4 to a THREE.Matrix4.
    */
-  toThreeJS(): THREE.Matrix4 {
-    return new THREE.Matrix4().fromArray(this.elements);
+  toThreeJS(): Matrix4 {
+    return new Matrix4().fromArray(this.elements);
   }
 
   /**
    * Creates an OSMatrix4 from a THREE.Matrix4.
    */
-  static fromThreeJS(m: THREE.Matrix4): OSMatrix4 {
+  static fromThreeJS(m: Matrix4): OSMatrix4 {
     const newM = new OSMatrix4();
     newM.elements = m.toArray();
     return newM;

@@ -1,5 +1,4 @@
-import { OSVector3 } from "./OSVector3";
-import * as THREE from "three";
+import { Matrix3 } from "three";
 
 /**
  * Represents a 3x3 matrix.
@@ -187,8 +186,8 @@ export class OSMatrix3 {
    * Converts this OSMatrix3 to a THREE.Matrix3.
    * @returns A new THREE.Matrix3 instance.
    */
-  toThreeJS(): THREE.Matrix3 {
-    return new THREE.Matrix3().fromArray(this.elements);
+  toThreeJS(): Matrix3 {
+    return new Matrix3().fromArray(this.elements);
   }
 
   /**
@@ -196,7 +195,7 @@ export class OSMatrix3 {
    * @param m - The THREE.Matrix3 to convert from.
    * @returns A new OSMatrix3 instance.
    */
-  static fromThreeJS(m: THREE.Matrix3): OSMatrix3 {
+  static fromThreeJS(m: Matrix3): OSMatrix3 {
     const newM = new OSMatrix3();
     newM.elements = m.toArray();
     return newM;

@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import { Quaternion } from "three";
 import { OSVector3 } from "./OSVector3";
 import { EPSILON, DEG_TO_RAD } from "./constants";
 
@@ -286,8 +286,8 @@ export class OSQuaternion {
    * This is the primary point of interoperability with the Three.js rendering engine.
    * @returns A new THREE.Quaternion instance.
    */
-  toThreeJS(): THREE.Quaternion {
-    return new THREE.Quaternion(this.x, this.y, this.z, this.w);
+  toThreeJS(): Quaternion {
+    return new Quaternion(this.x, this.y, this.z, this.w);
   }
 
   /**
@@ -295,7 +295,7 @@ export class OSQuaternion {
    * @param q - The THREE.Quaternion to convert from.
    * @returns A new OSQuaternion instance.
    */
-  static fromThreeJS(q: THREE.Quaternion): OSQuaternion {
+  static fromThreeJS(q: Quaternion): OSQuaternion {
     return new OSQuaternion(q.x, q.y, q.z, q.w);
   }
 }

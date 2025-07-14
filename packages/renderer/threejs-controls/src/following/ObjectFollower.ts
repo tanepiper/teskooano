@@ -1,27 +1,28 @@
-import * as THREE from "three";
+import { PerspectiveCamera, Vector3 } from "three";
+import { Object3D } from "three";
 import { OrbitControlsHandler } from "../orbit/OrbitControlsHandler";
 
 /**
  * Manages the state and logic for making the camera follow a target object.
  */
 export class ObjectFollower {
-  private camera: THREE.PerspectiveCamera;
+  private camera: PerspectiveCamera;
   private orbitControlsHandler: OrbitControlsHandler;
 
-  /** The THREE.Object3D instance the camera is currently following, or null. */
-  private followingTargetObject: THREE.Object3D | null = null;
+  /** The Object3D instance the camera is currently following, or null. */
+  private followingTargetObject: Object3D | null = null;
   /** The offset to maintain from the followed object's world position relative to the object itself. */
-  private followOffset: THREE.Vector3 = new THREE.Vector3();
+  private followOffset: Vector3 = new Vector3();
   /** Reusable vector to store the target object's world position. */
-  private tempTargetPosition = new THREE.Vector3();
+  private tempTargetPosition = new Vector3();
   /** Stores the world position of the followed object from the previous frame for delta calculations. */
-  private previousFollowTargetPos = new THREE.Vector3();
+  private previousFollowTargetPos = new Vector3();
 
   /** A flag to indicate if a follow transition is active, to be controlled externally. */
   public isFollowingTransitioning: boolean = false;
 
   constructor(
-    camera: THREE.PerspectiveCamera,
+    camera: PerspectiveCamera,
     orbitControlsHandler: OrbitControlsHandler,
   ) {
     this.camera = camera;
@@ -36,8 +37,8 @@ export class ObjectFollower {
    * @param offset The desired camera offset FROM the object's center.
    */
   public startFollowing(
-    object: THREE.Object3D | null,
-    offset: THREE.Vector3 = new THREE.Vector3(),
+    object: Object3D | null,
+    offset: Vector3 = new Vector3(),
   ): void {
     this.followingTargetObject = object;
     if (object) {
@@ -66,7 +67,7 @@ export class ObjectFollower {
   /**
    * Returns the current following offset.
    */
-  public getFollowOffset(): THREE.Vector3 {
+  public getFollowOffset(): Vector3 {
     return this.followOffset;
   }
 
@@ -74,11 +75,11 @@ export class ObjectFollower {
    * Returns the world position of the object being followed.
    * If not following, returns a zero vector.
    */
-  public getFollowedObjectWorldPosition(): THREE.Vector3 {
+  public getFollowedObjectWorldPosition(): Vector3 {
     if (this.followingTargetObject) {
-      return this.followingTargetObject.getWorldPosition(new THREE.Vector3());
+      return this.followingTargetObject.getWorldPosition(new Vector3());
     }
-    return new THREE.Vector3();
+    return new Vector3();
   }
 
   /**
@@ -107,7 +108,7 @@ export class ObjectFollower {
   public updateFollowOffset(): void {
     if (this.followingTargetObject) {
       const targetPosition = this.followingTargetObject.getWorldPosition(
-        new THREE.Vector3(),
+        new Vector3(),
       );
       this.followOffset.copy(this.camera.position).sub(targetPosition);
     }
