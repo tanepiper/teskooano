@@ -10,6 +10,7 @@ import {
   createPlanetMesh,
 } from "@teskooano/celestials-terrestrial";
 import { createCometMesh } from "@teskooano/celestials-comet";
+import { createSatelliteMesh } from "@teskooano/celestials-satellite";
 import { createGasGiantMesh } from "@teskooano/celestials-gas-giants";
 import {
   type CelestialRenderer,
@@ -149,6 +150,9 @@ export class MeshFactory {
           break;
         case CelestialType.COMET:
           mesh = createCometMesh(object, deps);
+          break;
+        case CelestialType.SATELLITE:
+          mesh = createSatelliteMesh(object, deps);
           break;
         case CelestialType.OORT_CLOUD:
           mesh = createOortCloudMesh(object, deps);

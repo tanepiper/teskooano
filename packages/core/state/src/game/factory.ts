@@ -358,7 +358,8 @@ class CelestialFactoryService {
       if (
         data.type !== CelestialType.STAR &&
         data.type !== CelestialType.PLANET &&
-        data.type !== CelestialType.GAS_GIANT
+        data.type !== CelestialType.GAS_GIANT &&
+        data.type !== CelestialType.SATELLITE
       ) {
         console.error(
           `[CelestialFactoryService] Cannot add non-star/non-rogue-planet object ${data.id}. Missing parentId.`,
@@ -445,10 +446,11 @@ class CelestialFactoryService {
       orbitalParams = undefined;
     } else if (
       (data.type === CelestialType.PLANET ||
-        data.type === CelestialType.GAS_GIANT) &&
+        data.type === CelestialType.GAS_GIANT ||
+        data.type === CelestialType.SATELLITE) &&
       !data.parentId
     ) {
-      // Handle rogue planets - they drift freely in space with minimal motion
+      // Handle rogue planets and satellites - they drift freely in space with minimal motion
       const isRogueWithZeroOrbit =
         data.orbit &&
         data.orbit.realSemiMajorAxis_m === 0 &&
@@ -493,7 +495,7 @@ class CelestialFactoryService {
         orbitalParams = undefined;
       } else {
         console.error(
-          `[CelestialFactoryService] Planet/GasGiant ${data.id} without parent must have zero orbital parameters for rogue planets.`,
+          `[CelestialFactoryService] Planet/GasGiant/Satellite ${data.id} without parent must have zero orbital parameters for rogue objects.`,
         );
         return;
       }

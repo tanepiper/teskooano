@@ -2,7 +2,7 @@ import type { ProceduralSurfaceProperties } from "@teskooano/data-types";
 
 export interface CelestialIconConfig {
   base: {
-    type: "star" | "planet";
+    type: "star" | "planet" | "satellite";
     color: string;
     gradient?: [string, string];
     radius?: number;

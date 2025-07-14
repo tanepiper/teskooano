@@ -338,6 +338,33 @@ export interface RingSystemProperties extends SpecificPropertiesBase {
   parentId: string;
 }
 
+/**
+ * Properties specific to Satellite objects (man-made spacecraft and stations).
+ */
+export interface SatelliteProperties extends SpecificPropertiesBase {
+  type: CelestialType.SATELLITE;
+  /** Path to the 3D model file (e.g., FBX, GLB format). */
+  modelPath: string;
+  /** Optional scale factor for the model (default: 1.0). */
+  modelScale?: number;
+  /** Optional array listing the main components (e.g., ["solar panels", "communication array"]). */
+  components?: string[];
+  /** Optional mission type classification. */
+  missionType?:
+    | "communications"
+    | "navigation"
+    | "scientific"
+    | "military"
+    | "commercial"
+    | "other";
+  /** Optional operational status. */
+  operationalStatus?: "active" | "inactive" | "deorbited" | "decommissioned";
+  /** Optional launch date as ISO string. */
+  launchDate?: string;
+  /** Optional expected mission duration in years. */
+  missionDuration?: number;
+}
+
 /** Union type for all specific celestial properties */
 export type CelestialSpecificPropertiesUnion =
   | StarProperties
@@ -346,7 +373,8 @@ export type CelestialSpecificPropertiesUnion =
   | CometProperties
   | AsteroidFieldProperties
   | OortCloudProperties
-  | RingSystemProperties;
+  | RingSystemProperties
+  | SatelliteProperties;
 
 export interface CelestialObjectProperties {
   planet?: PlanetProperties;

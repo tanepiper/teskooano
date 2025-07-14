@@ -430,6 +430,17 @@ export function generateIconConfig(
       };
       break;
     }
+    case CelestialType.SATELLITE: {
+      // Custom satellite icon with silver/metallic appearance
+      baseConfig.base = {
+        type: "satellite",
+        color: "#C0C0C0", // Silver color for the satellite body
+      };
+      // Remove atmosphere and rings - satellites don't have these
+      baseConfig.atmosphere = undefined;
+      baseConfig.rings = undefined;
+      break;
+    }
     default: {
       baseConfig.base.color = "#444444";
     }

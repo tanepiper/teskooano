@@ -171,6 +171,115 @@ export class CelestialIconComponent extends HTMLElement {
   }
 
   /**
+   * Creates a satellite icon with solar panels and antenna
+   */
+  private createSatelliteIcon(): void {
+    if (!this.layers) return;
+
+    // Main satellite body (rectangular)
+    const body = document.createElementNS(SVG_NS, "rect");
+    body.setAttribute("class", "satellite-body");
+    body.setAttribute("x", "9");
+    body.setAttribute("y", "9");
+    body.setAttribute("width", "6");
+    body.setAttribute("height", "6");
+    body.setAttribute("fill", "#C0C0C0");
+    body.setAttribute("stroke", "#808080");
+    body.setAttribute("stroke-width", "0.5");
+    this.layers.appendChild(body);
+
+    // Left solar panel
+    const leftPanel = document.createElementNS(SVG_NS, "rect");
+    leftPanel.setAttribute("class", "satellite-panel");
+    leftPanel.setAttribute("x", "4");
+    leftPanel.setAttribute("y", "10.5");
+    leftPanel.setAttribute("width", "4");
+    leftPanel.setAttribute("height", "3");
+    leftPanel.setAttribute("fill", "#1E3A8A");
+    leftPanel.setAttribute("stroke", "#1E40AF");
+    leftPanel.setAttribute("stroke-width", "0.5");
+    this.layers.appendChild(leftPanel);
+
+    // Right solar panel
+    const rightPanel = document.createElementNS(SVG_NS, "rect");
+    rightPanel.setAttribute("class", "satellite-panel");
+    rightPanel.setAttribute("x", "16");
+    rightPanel.setAttribute("y", "10.5");
+    rightPanel.setAttribute("width", "4");
+    rightPanel.setAttribute("height", "3");
+    rightPanel.setAttribute("fill", "#1E3A8A");
+    rightPanel.setAttribute("stroke", "#1E40AF");
+    rightPanel.setAttribute("stroke-width", "0.5");
+    this.layers.appendChild(rightPanel);
+
+    // Solar panel grid lines (left)
+    for (let i = 1; i <= 2; i++) {
+      const line = document.createElementNS(SVG_NS, "line");
+      line.setAttribute("x1", String(4 + i * 1.2));
+      line.setAttribute("y1", "10.5");
+      line.setAttribute("x2", String(4 + i * 1.2));
+      line.setAttribute("y2", "13.5");
+      line.setAttribute("stroke", "#3B82F6");
+      line.setAttribute("stroke-width", "0.3");
+      line.setAttribute("opacity", "0.7");
+      this.layers.appendChild(line);
+    }
+
+    // Solar panel grid lines (right)
+    for (let i = 1; i <= 2; i++) {
+      const line = document.createElementNS(SVG_NS, "line");
+      line.setAttribute("x1", String(16 + i * 1.2));
+      line.setAttribute("y1", "10.5");
+      line.setAttribute("x2", String(16 + i * 1.2));
+      line.setAttribute("y2", "13.5");
+      line.setAttribute("stroke", "#3B82F6");
+      line.setAttribute("stroke-width", "0.3");
+      line.setAttribute("opacity", "0.7");
+      this.layers.appendChild(line);
+    }
+
+    // Communication antenna
+    const antenna = document.createElementNS(SVG_NS, "line");
+    antenna.setAttribute("class", "satellite-antenna");
+    antenna.setAttribute("x1", "12");
+    antenna.setAttribute("y1", "9");
+    antenna.setAttribute("x2", "12");
+    antenna.setAttribute("y2", "6");
+    antenna.setAttribute("stroke", "#FFD700");
+    antenna.setAttribute("stroke-width", "1");
+    antenna.setAttribute("stroke-linecap", "round");
+    this.layers.appendChild(antenna);
+
+    // Antenna dish (small circle at top)
+    const dish = document.createElementNS(SVG_NS, "circle");
+    dish.setAttribute("class", "satellite-dish");
+    dish.setAttribute("cx", "12");
+    dish.setAttribute("cy", "6");
+    dish.setAttribute("r", "1");
+    dish.setAttribute("fill", "none");
+    dish.setAttribute("stroke", "#FFD700");
+    dish.setAttribute("stroke-width", "0.8");
+    this.layers.appendChild(dish);
+
+    // Small details on body (windows/sensors)
+    const detail1 = document.createElementNS(SVG_NS, "circle");
+    detail1.setAttribute("cx", "10.5");
+    detail1.setAttribute("cy", "10.5");
+    detail1.setAttribute("r", "0.5");
+    detail1.setAttribute("fill", "#4ADE80");
+    detail1.setAttribute("opacity", "0.8");
+    this.layers.appendChild(detail1);
+
+    const detail2 = document.createElementNS(SVG_NS, "circle");
+    detail2.setAttribute("cx", "13.5");
+    detail2.setAttribute("cy", "13.5");
+    detail2.setAttribute("r", "0.5");
+    detail2.setAttribute("fill", "#EF4444");
+    detail2.setAttribute("opacity", "0.8");
+    this.layers.appendChild(detail2);
+  }
+
+  /**
    * Creates a static starburst (JWST-style) effect for stars
    */
   private createStarburstEffect(color: string = "#fff"): void {
@@ -309,31 +418,37 @@ export class CelestialIconComponent extends HTMLElement {
       this.layers.appendChild(ring);
     }
 
-    // 4. Render base planet/star (middle layer - this masks the center of the ring)
-    const body = document.createElementNS(SVG_NS, "circle");
-    body.setAttribute("class", "planet-base");
-    body.setAttribute("cx", "12");
-    body.setAttribute("cy", "12");
-
-    // Make star bodies smaller
-    let radius = base.radius ?? 8;
-    if (base.type === "star") {
-      radius = 6;
-    }
-    body.setAttribute("r", String(radius));
-
-    if (procedural) {
-      body.setAttribute("fill", "url(#procedural-gradient)");
-    } else if (base.gradient && this.radialGradient) {
-      const [start, end] = base.gradient;
-      const stops = this.radialGradient.querySelectorAll("stop");
-      stops[0].setAttribute("stop-color", start);
-      stops[1].setAttribute("stop-color", end);
-      body.setAttribute("fill", "url(#planet-gradient)");
+    // 4. Render base planet/star/satellite (middle layer - this masks the center of the ring)
+    if (base.type === "satellite") {
+      // Render satellite icon instead of circular body
+      this.createSatelliteIcon();
     } else {
-      body.setAttribute("fill", base.color);
+      // Render circular body for planets/stars
+      const body = document.createElementNS(SVG_NS, "circle");
+      body.setAttribute("class", "planet-base");
+      body.setAttribute("cx", "12");
+      body.setAttribute("cy", "12");
+
+      // Make star bodies smaller
+      let radius = base.radius ?? 8;
+      if (base.type === "star") {
+        radius = 6;
+      }
+      body.setAttribute("r", String(radius));
+
+      if (procedural) {
+        body.setAttribute("fill", "url(#procedural-gradient)");
+      } else if (base.gradient && this.radialGradient) {
+        const [start, end] = base.gradient;
+        const stops = this.radialGradient.querySelectorAll("stop");
+        stops[0].setAttribute("stop-color", start);
+        stops[1].setAttribute("stop-color", end);
+        body.setAttribute("fill", "url(#planet-gradient)");
+      } else {
+        body.setAttribute("fill", base.color);
+      }
+      this.layers.appendChild(body);
     }
-    this.layers.appendChild(body);
 
     // 6. Render simple front ring highlight (top portion only for 3D effect)
     if (rings) {

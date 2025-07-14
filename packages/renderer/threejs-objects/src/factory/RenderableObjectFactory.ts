@@ -275,6 +275,7 @@ export class RenderableObjectFactory {
         case CelestialType.ASTEROID_FIELD:
         case CelestialType.OORT_CLOUD:
         case CelestialType.SPACE_ROCK:
+        case CelestialType.SATELLITE:
           renderableObject = this.processStandardObject(
             obj,
             lightSourceId,

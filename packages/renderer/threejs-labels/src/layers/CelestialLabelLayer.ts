@@ -20,6 +20,7 @@ export interface LabelVisibilityConfig {
   ejectedMoon?: number;
   secondaryStar?: number;
   default?: number;
+  satellite?: number;
 }
 
 export class CelestialLabelLayer extends BaseLabelLayer {
@@ -35,6 +36,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       ejectedMoon: 2000,
       secondaryStar: 3000,
       default: 2,
+      satellite: 10,
       ...config,
     };
   }
@@ -161,6 +163,11 @@ export class CelestialLabelLayer extends BaseLabelLayer {
           break;
         }
 
+        case CelestialType.SATELLITE: {
+          visible = distanceToSelf < config.satellite;
+          break;
+        }
+
         case CelestialType.GAS_GIANT: {
           visible = distanceToSelf < config.gasGiant;
           break;
@@ -278,6 +285,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       ejectedMoon: this.auToSceneUnits(this.visibilityConfig.ejectedMoon),
       secondaryStar: this.auToSceneUnits(this.visibilityConfig.secondaryStar),
       default: this.auToSceneUnits(this.visibilityConfig.default),
+      satellite: this.auToSceneUnits(this.visibilityConfig.satellite),
     };
   }
 

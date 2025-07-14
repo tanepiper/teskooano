@@ -1,0 +1,52 @@
+{
+  "name": "@teskooano/celestials-satellite",
+  "version": "0.1.0-dev.0",
+  "private": true,
+  "description": "Renderer for satellites and spacecraft using 3D models",
+  "keywords": [
+    "threejs",
+    "satellite",
+    "spacecraft",
+    "space",
+    "3d-models"
+  ],
+  "license": "ISC",
+  "author": "Tane Piper <hello@tanepiper.com>",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run  --browser=chromium",
+    "test:browser": "vitest --browser",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@teskooano/data-types": "file:../../data/types",
+    "@teskooano/renderer-threejs-celestial": "file:../../renderer/threejs-celestial",
+    "@teskooano/renderer-threejs-lod": "file:../../renderer/threejs-lod",
+    "@types/three": "0.178.1",
+    "three": "0.178.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.54.1",
+    "@types/node": "24.0.13",
+    "@vitest/browser": "3.2.4",
+    "@vitest/ui": "3.2.4",
+    "eslint": "9.31.0",
+    "happy-dom": "18.0.1",
+    "playwright": "1.54.1",
+    "typescript": "5.8.3",
+    "vitest": "3.2.4"
+  }
+}

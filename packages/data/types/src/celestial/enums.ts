@@ -24,6 +24,8 @@ export enum CelestialType {
   RING_SYSTEM = "RING_SYSTEM",
   /** The center of mass of a multi-body system. */
   BARYCENTER = "BARYCENTER",
+  /** A man-made artificial satellite or spacecraft. */
+  SATELLITE = "SATELLITE",
   /** Catch-all for other or undefined celestial types. */
   OTHER = "OTHER",
 }

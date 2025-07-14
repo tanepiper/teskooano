@@ -10,6 +10,7 @@ import { initializeSaturn } from "./saturn";
 import { initializeSun } from "./sol";
 import { initializeUranus } from "./uranus";
 import { initializeVenus } from "./venus";
+import { initializeSatellites } from "./satellites";
 
 /**
  * Initializes the complete Solar System by calling creation functions
@@ -20,7 +21,7 @@ export function initializeSolarSystem() {
 
   initializeMercury(sunId);
   initializeVenus(sunId);
-  initializeEarth(sunId);
+  const earthId = initializeEarth(sunId);
   initializeMars(sunId);
   initializeJupiter(sunId);
   initializeSaturn(sunId);
@@ -29,4 +30,5 @@ export function initializeSolarSystem() {
   initializePluto(sunId);
   initializeComets(sunId);
   initializeMinorBodies(sunId);
+  initializeSatellites(sunId, earthId);
 }

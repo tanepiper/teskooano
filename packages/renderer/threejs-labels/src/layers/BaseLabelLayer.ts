@@ -250,9 +250,19 @@ export abstract class BaseLabelLayer {
     objectManager: ObjectManager,
     labelObjectId?: string,
   ): boolean {
+    // Validate inputs
+    if (!camera || !labelPosition || !objectManager) {
+      return false;
+    }
+
     // Get camera world position
     const cameraPosition = this.tempVector.clone();
-    camera.getWorldPosition(cameraPosition);
+    try {
+      camera.getWorldPosition(cameraPosition);
+    } catch (error) {
+      // If camera doesn't have valid world position, skip occlusion test
+      return false;
+    }
 
     // Calculate direction from camera to label
     const direction = labelPosition.clone().sub(cameraPosition).normalize();
@@ -261,6 +271,7 @@ export abstract class BaseLabelLayer {
     // Set up the raycaster
     this.raycaster.set(cameraPosition, direction);
     this.raycaster.far = distance - 0.1; // Stop just before the label
+    this.raycaster.camera = camera; // Required for sprite intersection tests
 
     // Get all celestial objects for intersection testing
     const allObjects = objectManager.getLatestRenderableObjects();
@@ -271,34 +282,46 @@ export abstract class BaseLabelLayer {
       if (labelObjectId && objectId === labelObjectId) return;
 
       const mesh = objectManager.getObject(objectId);
-      if (mesh && mesh.visible) {
+      if (mesh && mesh.visible && mesh.matrixWorld) {
         // Only test against objects that are reasonably close to the ray path
         const objectPosition = mesh.position;
-        const rayToObjectDistance = this.tempVector
-          .copy(cameraPosition)
-          .add(direction.clone().multiplyScalar(distance * 0.5))
-          .distanceTo(objectPosition);
+        if (objectPosition) {
+          const rayToObjectDistance = this.tempVector
+            .copy(cameraPosition)
+            .add(direction.clone().multiplyScalar(distance * 0.5))
+            .distanceTo(objectPosition);
 
-        // Only include objects that could realistically block this ray
-        if (rayToObjectDistance < distance * 0.5) {
-          intersectableObjects.push(mesh);
-          mesh.traverse((child) => {
-            if (child.type === "Mesh" || child.type === "LOD") {
-              intersectableObjects.push(child);
-            }
-          });
+          // Only include objects that could realistically block this ray
+          if (rayToObjectDistance < distance * 0.5) {
+            intersectableObjects.push(mesh);
+            mesh.traverse((child) => {
+              if (
+                child &&
+                child.matrixWorld &&
+                (child.type === "Mesh" || child.type === "LOD")
+              ) {
+                intersectableObjects.push(child);
+              }
+            });
+          }
         }
       }
     });
 
-    // Perform the intersection test
-    const intersections = this.raycaster.intersectObjects(
-      intersectableObjects,
-      false,
-    );
+    try {
+      // Perform the intersection test
+      const intersections = this.raycaster.intersectObjects(
+        intersectableObjects,
+        false,
+      );
 
-    // If we hit something, the label is occluded
-    return intersections.length > 0;
+      // If we hit something, the label is occluded
+      return intersections.length > 0;
+    } catch (error) {
+      // If intersection test fails, assume not occluded
+      console.warn("Occlusion test failed:", error);
+      return false;
+    }
   }
 
   /**

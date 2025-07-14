@@ -23,12 +23,15 @@ let basePath = process.env.CI ? "teskooano" : "";
 
 // get env var from command line
 const env = process.argv.find((arg) => arg.startsWith("--env="))?.split("=")[1];
-console.log("env", env);
-if (env !== "prod") {
+if (process.env.CI && env !== "prod") {
   basePath = `${basePath}/${env}`;
 }
 
-const assetPath = `${basePath}/assets`;
+let assetPath = "public";
+if (process.env.CI) {
+  assetPath = `${basePath}/public`;
+}
+
 console.log("basePath", basePath);
 console.log("assetPath", assetPath);
 
