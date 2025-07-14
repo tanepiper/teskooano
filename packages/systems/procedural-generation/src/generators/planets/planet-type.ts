@@ -25,8 +25,8 @@ export interface PlanetBaseProperties {
 }
 
 /**
- * Simplified planet type determination based on temperature and distance.
- * No complex zone logic, just realistic astrophysics.
+ * Planet type determination that respects zone constraints.
+ * Uses zone's allowedPlanetTypes as primary constraint, with temperature fallback.
  */
 export function determinePlanetTypeAndBaseProperties(
   random: () => number,
@@ -45,42 +45,56 @@ export function determinePlanetTypeAndBaseProperties(
   // Calculate distance within the zone
   const distanceAU = zone.minAU + (zone.maxAU - zone.minAU) * random();
 
-  // Use proper equilibrium temperature calculation
-  const effectiveTemp = UTIL.estimateTemperature(stellarLuminosity, distanceAU);
-
-  // Simple temperature-based planet type selection
   let celestialClass: PlanetType | GasGiantClass;
   let isGasGiant = false;
 
-  if (effectiveTemp > 1000) {
-    // Hot zone: Rocky, Desert, Lava
-    const hotTypes = [PlanetType.ROCKY, PlanetType.DESERT, PlanetType.LAVA];
-    celestialClass = UTIL.getRandomItem(hotTypes, random);
-  } else if (effectiveTemp > 300) {
-    // Habitable zone: Terrestrial, Ocean, Rocky
-    const habitableTypes = [
-      PlanetType.TERRESTRIAL,
-      PlanetType.OCEAN,
-      PlanetType.ROCKY,
-    ];
-    celestialClass = UTIL.getRandomItem(habitableTypes, random);
+  // **FIX: Respect zone constraints first**
+  if (zone.allowedPlanetTypes && zone.allowedPlanetTypes.length > 0) {
+    // Use zone-constrained planet types with weighted selection
+    const allowedTypes = zone.allowedPlanetTypes
+      .map((type: string) => PlanetType[type as keyof typeof PlanetType])
+      .filter(Boolean);
 
-    // 20% chance of gas giant in habitable zone
-    if (random() < 0.2) {
-      isGasGiant = true;
-      celestialClass = GasGiantClass.CLASS_I;
+    if (allowedTypes.length > 0) {
+      // Use weighted selection instead of equal probability
+      celestialClass = selectWeightedPlanetType(allowedTypes, random);
+
+      // Check if gas giants are allowed in this zone
+      if (
+        zone.allowedGasGiantClasses &&
+        zone.allowedGasGiantClasses.length > 0
+      ) {
+        const gasGiantChance = zone.formationProbability || 0.3;
+        if (random() < gasGiantChance * 0.5) {
+          // 50% of formation probability for gas giants
+          isGasGiant = true;
+          const allowedGGClasses = zone.allowedGasGiantClasses
+            .map(
+              (type: string) =>
+                GasGiantClass[type as keyof typeof GasGiantClass],
+            )
+            .filter(Boolean);
+
+          if (allowedGGClasses.length > 0) {
+            celestialClass = UTIL.getRandomItem(allowedGGClasses, random);
+          }
+        }
+      }
+    } else {
+      // Fallback to temperature-based selection if zone types are invalid
+      celestialClass = temperatureBasedPlanetSelection(
+        random,
+        stellarLuminosity,
+        distanceAU,
+      );
     }
   } else {
-    // Cold zone: Ice, Rocky, or Gas Giant
-    const coldTypes = [PlanetType.ICE, PlanetType.ROCKY];
-    celestialClass = UTIL.getRandomItem(coldTypes, random);
-
-    // 40% chance of gas giant in cold zone
-    if (random() < 0.4) {
-      isGasGiant = true;
-      celestialClass =
-        random() < 0.5 ? GasGiantClass.CLASS_I : GasGiantClass.CLASS_II;
-    }
+    // Fallback to temperature-based selection if no zone constraints
+    celestialClass = temperatureBasedPlanetSelection(
+      random,
+      stellarLuminosity,
+      distanceAU,
+    );
   }
 
   // Set properties based on type
@@ -107,4 +121,74 @@ export function determinePlanetTypeAndBaseProperties(
     ringChance: ringChance,
     ringAllowedTypes: [RockyType.ICE, RockyType.LIGHT_ROCK],
   };
+}
+
+/**
+ * Selects a planet type using weighted probabilities.
+ * Makes terrestrial and ocean planets much rarer than rocky planets.
+ */
+function selectWeightedPlanetType(
+  allowedTypes: PlanetType[],
+  random: () => number,
+): PlanetType {
+  // Define rarity weights (higher = more common)
+  const planetWeights: Record<PlanetType, number> = {
+    [PlanetType.ROCKY]: 100, // Very common baseline
+    [PlanetType.DESERT]: 80, // Common in hot zones
+    [PlanetType.ICE]: 90, // Common in cold zones
+    [PlanetType.BARREN]: 70, // Moderately common
+    [PlanetType.LAVA]: 60, // Less common
+    [PlanetType.TERRESTRIAL]: 15, // Rare - only ~15% chance
+    [PlanetType.OCEAN]: 8, // Very rare - only ~8% chance
+  };
+
+  // Calculate total weight for allowed types
+  let totalWeight = 0;
+  for (const type of allowedTypes) {
+    totalWeight += planetWeights[type] || 1;
+  }
+
+  // Select using weighted random
+  const roll = random() * totalWeight;
+  let currentWeight = 0;
+
+  for (const type of allowedTypes) {
+    currentWeight += planetWeights[type] || 1;
+    if (roll <= currentWeight) {
+      return type;
+    }
+  }
+
+  // Fallback to first allowed type (should never reach here)
+  return allowedTypes[0];
+}
+
+/**
+ * Temperature-based planet type selection (fallback when no zone constraints)
+ */
+function temperatureBasedPlanetSelection(
+  random: () => number,
+  stellarLuminosity: number,
+  distanceAU: number,
+): PlanetType | GasGiantClass {
+  // Use proper equilibrium temperature calculation
+  const effectiveTemp = UTIL.estimateTemperature(stellarLuminosity, distanceAU);
+
+  if (effectiveTemp > 1000) {
+    // Hot zone: Rocky, Desert, Lava
+    const hotTypes = [PlanetType.ROCKY, PlanetType.DESERT, PlanetType.LAVA];
+    return UTIL.getRandomItem(hotTypes, random);
+  } else if (effectiveTemp > 300) {
+    // Habitable zone: Terrestrial, Ocean, Rocky
+    const habitableTypes = [
+      PlanetType.TERRESTRIAL,
+      PlanetType.OCEAN,
+      PlanetType.ROCKY,
+    ];
+    return UTIL.getRandomItem(habitableTypes, random);
+  } else {
+    // Cold zone: Ice, Rocky
+    const coldTypes = [PlanetType.ICE, PlanetType.ROCKY];
+    return UTIL.getRandomItem(coldTypes, random);
+  }
 }

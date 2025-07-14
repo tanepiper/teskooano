@@ -150,8 +150,8 @@ function createSimpleZones(stars: CelestialObject[]): any[] {
       temperatureRange: { min: temperature * 0.8, max: temperature * 1.5 },
       allowedPlanetTypes: ["ROCKY", "DESERT", "LAVA"],
       formationProbability: 0.7,
-      maxBodies: 3,
-      minBodies: 2,
+      maxBodies: 2,
+      minBodies: 1,
     },
     {
       name: "Inner Zone",
@@ -160,8 +160,8 @@ function createSimpleZones(stars: CelestialObject[]): any[] {
       temperatureRange: { min: temperature * 0.5, max: temperature * 0.8 },
       allowedPlanetTypes: ["TERRESTRIAL", "ROCKY", "DESERT"],
       formationProbability: 0.8,
-      maxBodies: 4,
-      minBodies: 3,
+      maxBodies: 3,
+      minBodies: 2,
     },
     {
       name: "Habitable Zone",
@@ -170,8 +170,8 @@ function createSimpleZones(stars: CelestialObject[]): any[] {
       temperatureRange: { min: temperature * 0.3, max: temperature * 0.5 },
       allowedPlanetTypes: ["TERRESTRIAL", "OCEAN", "ROCKY"],
       formationProbability: 0.9,
-      maxBodies: 5,
-      minBodies: 4,
+      maxBodies: 3,
+      minBodies: 2,
     },
     {
       name: "Outer Zone",
@@ -180,8 +180,8 @@ function createSimpleZones(stars: CelestialObject[]): any[] {
       temperatureRange: { min: temperature * 0.1, max: temperature * 0.3 },
       allowedPlanetTypes: ["ICE", "ROCKY"],
       formationProbability: 0.6,
-      maxBodies: 6,
-      minBodies: 5,
+      maxBodies: 4,
+      minBodies: 3,
     },
     {
       name: "Distant Zone",
@@ -190,7 +190,7 @@ function createSimpleZones(stars: CelestialObject[]): any[] {
       temperatureRange: { min: temperature * 0.01, max: temperature * 0.1 },
       allowedPlanetTypes: ["ICE", "ROCKY"],
       formationProbability: 0.4,
-      maxBodies: 4,
+      maxBodies: 3,
       minBodies: 1,
     },
   ];
