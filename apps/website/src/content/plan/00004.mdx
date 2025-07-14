@@ -1,0 +1,83 @@
+---
+plan: "00004"
+title: "Cataclysms and Creation"
+author: "Tane"
+released: 2025-07-14
+---
+
+import Slideshow from "../../components/Slideshow.astro";
+import VideoDisplay from "../../components/VideoDisplay.astro";
+
+It's been well over a month since I wrote an update about **Teskooano** - but in that time a lot of changes have happened under
+the hood - and now, you can view our own home system - Sol!
+
+<Slideshow
+  id="00004-1"
+  images={[
+    {
+      src: "00004-01.png",
+      caption: "A screenshot of the Earth solar system in Teskooano",
+    },
+    {
+      src: "00004-02.png",
+      caption:
+        "The new algorithms available in Teskooano, along with the integrators provides different performance profiles",
+    },
+  ]}
+/>
+
+As well as improved N-Body algorithims, there is also a new "ideal" mode that provides an Orrery mode where planets will run along on fixed orbits, rather than fly off in to the depths of space!
+
+<VideoDisplay
+  videos={[
+    {
+      src: "/plan/00004/00004-01.webm",
+      type: "video/webm",
+      altText: "A video of two stars in Orbit in Teskooano",
+    },
+    {
+      src: "/plan/00004/00004-02.webm",
+      type: "video/webm",
+      altText: "A video of two stars in Orbit in Teskooano",
+    },
+    {
+      src: "/plan/00004/00004-03.webm",
+      type: "video/webm",
+      altText: "A video of two stars in Orbit in Teskooano",
+    },
+    {
+      src: "/plan/00004/00004-04.webm",
+      type: "video/webm",
+      altText: "A video of two stars in Orbit in Teskooano",
+    },
+    {
+      src: "/plan/00004/00004-05.webm",
+      type: "video/webm",
+      altText: "A video of two stars in Orbit in Teskooano",
+    },
+  ]}
+  initialAutoplay={true}
+  loopSlideshow={false}
+  showNativeControls={false}
+  aspectRatio="16/9"
+  id="hero-video-slideshow"
+/>
+
+## Release Highlights
+
+- New physics system build from the ground up with new algorithims and integrators
+- New multi-star lighting system that provides real colour and luminocity based on star type, celestial albedo and distance
+- New multi-shadow system that casts multiple shadows on celestials from moons, and casting shadows on ring systems
+- New comet celestial type that has a coma and tail system that reacts to the distance and position of the star their orbit
+- New information panels for celestials that give information about light, shadows, gravity and other details
+- Improved travel camera and notification system
+- New celestial labels with distance and speed along with the celestial name
+- New AU labels that go out to 100,000 AU - the labels also react to celestials so disappear to have less clutter on the screenshot
+- Prediction and orbit line improvements, with prediction labels showing the time a celestial will take to travel
+- Improved procedural solar system generation
+
+... and many more improvements.
+
+You can follow along with development on the official [Teskooano Mastodon](https://mastodon.gamedev.place/@teskooano) where I post the occasional video dev diary.
+
+[🔭 Teskooano](https://teskooano.space/teskooano)
