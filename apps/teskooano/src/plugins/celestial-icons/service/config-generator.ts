@@ -2,7 +2,6 @@ import {
   CelestialObject,
   CelestialType,
   CometProperties,
-  ExoticStellarType,
   GasGiantClass,
   GasGiantProperties,
   PlanetProperties,
@@ -11,6 +10,10 @@ import {
   SpectralClass,
   StarProperties,
   StellarType,
+  NeutronStarSubtype,
+  BlackHoleSubtype,
+  WhiteDwarfSubtype,
+  ProtostarSubtype,
 } from "@teskooano/data-types";
 import { CelestialIconConfig } from "../types";
 
@@ -62,65 +65,6 @@ const STELLAR_TYPE_CONFIGS: Partial<
     base: { type: "star", color: "#000000", radius: 6 },
     atmosphere: { color: "#333333", size: 3 },
     special: "black-hole",
-  },
-  [StellarType.KERR_BLACK_HOLE]: {
-    base: { type: "star", color: "#000000", radius: 6 },
-    atmosphere: { color: "#444444", size: 4 },
-    special: "black-hole",
-  },
-};
-
-// Exotic stellar type configurations
-const EXOTIC_STELLAR_CONFIGS: Partial<
-  Record<
-    ExoticStellarType,
-    {
-      base: CelestialIconConfig["base"];
-      atmosphere?: CelestialIconConfig["atmosphere"];
-      special?: "pulsar" | "black-hole" | "white-dwarf" | "protostar";
-    }
-  >
-> = {
-  [ExoticStellarType.PULSAR]: {
-    base: { type: "star", color: "#FFFFFF", radius: 2 },
-    atmosphere: { color: "#FFFFFF", size: 8 },
-    special: "pulsar",
-  },
-  [ExoticStellarType.MAGNETAR]: {
-    base: { type: "star", color: "#FF6B6B", radius: 2 },
-    atmosphere: { color: "#FF6B6B", size: 10 },
-    special: "pulsar",
-  },
-  [ExoticStellarType.BLACK_HOLE]: {
-    base: { type: "star", color: "#000000", radius: 6 },
-    atmosphere: { color: "#333333", size: 3 },
-    special: "black-hole",
-  },
-  [ExoticStellarType.QUASAR]: {
-    base: { type: "star", color: "#FF6B6B", radius: 8 },
-    atmosphere: { color: "#FF6B6B", size: 12 },
-  },
-  [ExoticStellarType.WHITE_DWARF]: {
-    base: { type: "star", color: "#FFFFFF", radius: 4 },
-    atmosphere: { color: "#FFFFFF", size: 2 },
-    special: "white-dwarf",
-  },
-  [ExoticStellarType.WOLF_RAYET]: {
-    base: { type: "star", color: "#FF6B6B", radius: 10 },
-    atmosphere: { color: "#FF6B6B", size: 8 },
-  },
-  [ExoticStellarType.T_TAURI]: {
-    base: { type: "star", color: "#FFB56C", radius: 6 },
-    atmosphere: { color: "#FFB56C", size: 6 },
-  },
-  [ExoticStellarType.HERBIG_AE_BE]: {
-    base: { type: "star", color: "#CAD8FF", radius: 8 },
-    atmosphere: { color: "#CAD8FF", size: 7 },
-  },
-  [ExoticStellarType.PROTOSTAR]: {
-    base: { type: "star", color: "#FF8A4A", radius: 5 },
-    atmosphere: { color: "#FF8A4A", size: 5 },
-    special: "protostar",
   },
 };
 
@@ -215,26 +159,13 @@ function createStarConfig(starProps: StarProperties): CelestialIconConfig {
     },
   };
 
-  // Check for exotic stellar type first
-  if (starProps.exoticType && EXOTIC_STELLAR_CONFIGS[starProps.exoticType]) {
-    const exoticConfig = EXOTIC_STELLAR_CONFIGS[starProps.exoticType]!;
-    baseConfig.base = exoticConfig.base;
-    if (exoticConfig.atmosphere) {
-      baseConfig.atmosphere = exoticConfig.atmosphere;
-    }
-    if (exoticConfig.special) {
-      baseConfig.special = exoticConfig.special;
-    }
-    return baseConfig;
-  }
-
   // Check for stellar type
-  if (starProps.classType && STELLAR_TYPE_CONFIGS[starProps.classType]) {
-    const stellarConfig = STELLAR_TYPE_CONFIGS[starProps.classType]!;
+  if (starProps.stellarType && STELLAR_TYPE_CONFIGS[starProps.stellarType]) {
+    const stellarConfig = STELLAR_TYPE_CONFIGS[starProps.stellarType]!;
 
     // For main sequence stars, prefer spectral class-based configuration
     if (
-      starProps.classType === StellarType.MAIN_SEQUENCE &&
+      starProps.stellarType === StellarType.MAIN_SEQUENCE &&
       starProps.mainSpectralClass
     ) {
       const spectralClass = starProps.mainSpectralClass;

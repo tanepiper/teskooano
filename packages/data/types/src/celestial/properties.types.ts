@@ -1,7 +1,6 @@
 import type {
   AtmosphereType,
   CelestialType,
-  ExoticStellarType,
   GasGiantClass,
   LuminosityClass,
   PlanetType,
@@ -10,7 +9,10 @@ import type {
   SpecialSpectralClass,
   StellarType,
   SurfaceType,
-  WhiteDwarfType,
+  NeutronStarSubtype,
+  BlackHoleSubtype,
+  WhiteDwarfSubtype,
+  ProtostarSubtype,
 } from "./enums";
 
 /**
@@ -47,8 +49,8 @@ export interface StarProperties extends SpecificPropertiesBase {
   luminosity: number;
   /** The primary color tint of the star, usually represented as a hex string. */
   color: string;
-  /** Optional classification for exotic star types like Neutron Stars, Black Holes, etc. */
-  classType?: StellarType;
+  /** The primary stellar type (e.g., MAIN_SEQUENCE, NEUTRON_STAR, BLACK_HOLE). */
+  stellarType?: StellarType;
   /** Optional array of partner star IDs, used for multi-star systems orbital calculations. */
   partnerStars?: string[];
   /** Main spectral class (O, B, A, F, G, K, M, etc.) */
@@ -57,10 +59,14 @@ export interface StarProperties extends SpecificPropertiesBase {
   specialSpectralClass?: SpecialSpectralClass;
   /** Luminosity class indicating the size/evolutionary state */
   luminosityClass?: LuminosityClass;
-  /** White dwarf specific classification */
-  whiteDwarfType?: WhiteDwarfType;
-  /** Type for exotic stellar objects like neutron stars */
-  exoticType?: ExoticStellarType;
+  /** Subtype for neutron stars (PULSAR, MAGNETAR, etc.) */
+  neutronStarSubtype?: NeutronStarSubtype;
+  /** Subtype for black holes (SCHWARZSCHILD, KERR) */
+  blackHoleSubtype?: BlackHoleSubtype;
+  /** Subtype for white dwarfs (DA, DB, DC, etc.) */
+  whiteDwarfSubtype?: WhiteDwarfSubtype;
+  /** Subtype for pre-main-sequence stars (T_TAURI, HERBIG_AE_BE) */
+  protostarSubtype?: ProtostarSubtype;
   /** Optional system-wide lighting properties, only present on the primary star. */
   systemLighting?: SystemLightingProperties;
 }
@@ -388,5 +394,4 @@ export type CelestiaClassType =
   | PlanetType
   | GasGiantClass
   | StellarType
-  | ExoticStellarType
   | CometClass;

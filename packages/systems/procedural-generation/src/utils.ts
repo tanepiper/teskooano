@@ -1,14 +1,16 @@
 import {
   CelestiaClassType,
   CelestialType,
-  CometClass,
-  ExoticStellarType,
   GRAVITATIONAL_CONSTANT,
   GasGiantClass,
   PlanetType,
   ProceduralSurfaceProperties,
   SpectralClass,
   StellarType,
+  NeutronStarSubtype,
+  BlackHoleSubtype,
+  WhiteDwarfSubtype,
+  ProtostarSubtype,
 } from "@teskooano/data-types";
 import * as CONST from "./constants";
 
@@ -309,7 +311,7 @@ export function classifyGasGiantByTemperature(
  */
 export function calculateAlbedo(
   celestialType: CelestialType,
-  classType: CelestiaClassType,
+  celestialClass: CelestiaClassType,
   random: () => number,
 ): number {
   let baseAlbedo: number = 0.3;
@@ -319,7 +321,7 @@ export function calculateAlbedo(
     celestialType === CelestialType.PLANET ||
     celestialType === CelestialType.MOON
   ) {
-    switch (classType as PlanetType) {
+    switch (celestialClass as PlanetType) {
       case PlanetType.ICE:
         baseAlbedo = 0.75;
         range = 0.25;
@@ -347,7 +349,7 @@ export function calculateAlbedo(
   }
 
   if (celestialType === CelestialType.GAS_GIANT) {
-    switch (classType as GasGiantClass) {
+    switch (celestialClass as GasGiantClass) {
       case GasGiantClass.CLASS_I: // Ammonia clouds (Jupiter-like)
         baseAlbedo = 0.5;
         range = 0.1; // 0.3 - 0.4
@@ -377,7 +379,7 @@ export function calculateAlbedo(
 
   if (celestialType === CelestialType.STAR) {
     // For stars, "albedo" is a proxy for billboard brightness
-    switch (classType as StellarType) {
+    switch (celestialClass as StellarType) {
       case StellarType.MAIN_SEQUENCE:
         baseAlbedo = 0.4;
         range = 0.2; // 0.4 - 0.6
@@ -391,7 +393,6 @@ export function calculateAlbedo(
         range = 0.2; // 0.7 - 0.9 (Intensely bright spots)
         break;
       case StellarType.BLACK_HOLE:
-      case StellarType.KERR_BLACK_HOLE:
         baseAlbedo = 0.01;
         range = 0.04; // 0.01 - 0.05 (Nearly black)
         break;
@@ -407,4 +408,243 @@ export function calculateAlbedo(
   }
 
   return (baseAlbedo + random() * range) * 2;
+}
+
+interface StarThermalPropertiesInput {
+  mainSpectralClass?: SpectralClass;
+  stellarType?: StellarType;
+  neutronStarSubtype?: NeutronStarSubtype;
+  blackHoleSubtype?: BlackHoleSubtype;
+  whiteDwarfSubtype?: WhiteDwarfSubtype;
+  protostarSubtype?: ProtostarSubtype;
+  currentTemperature?: number;
+  currentLuminosity?: number;
+  currentColor?: string;
+}
+
+interface StarThermalPropertiesOutput {
+  temperature: number;
+  luminosity: number;
+  color: string;
+}
+
+/**
+ * Determines the default temperature, luminosity, and color for a star based on its
+ * spectral class and stellar type, if these properties are not already provided.
+ *
+ * @param options - The input properties to base the determination on.
+ * @param options.mainSpectralClass - The main spectral class of the star (e.g., G, K, M).
+ * @param options.stellarType - The stellar type of the star, if applicable (e.g., WHITE_DWARF, NEUTRON_STAR).
+ * @param options.neutronStarSubtype - The neutron star subtype, if applicable.
+ * @param options.blackHoleSubtype - The black hole subtype, if applicable.
+ * @param options.whiteDwarfSubtype - The white dwarf subtype, if applicable.
+ * @param options.protostarSubtype - The pre-main-sequence star subtype, if applicable.
+ * @param options.currentTemperature - The star's current temperature, if already known.
+ * @param options.currentLuminosity - The star's current luminosity, if already known.
+ * @param options.currentColor - The star's current color, if already known.
+ * @returns An object containing the determined temperature, luminosity, and color.
+ */
+export function determineStarThermalProperties({
+  mainSpectralClass,
+  stellarType,
+  neutronStarSubtype,
+  blackHoleSubtype,
+  whiteDwarfSubtype,
+  protostarSubtype,
+  currentTemperature,
+  currentLuminosity,
+  currentColor,
+}: StarThermalPropertiesInput): StarThermalPropertiesOutput {
+  let temperature = currentTemperature;
+  let luminosity = currentLuminosity;
+  let color = currentColor;
+
+  if (
+    temperature === undefined ||
+    luminosity === undefined ||
+    color === undefined
+  ) {
+    switch (mainSpectralClass) {
+      case SpectralClass.O:
+        temperature = temperature ?? 40000;
+        luminosity = luminosity ?? 100000;
+        color = color ?? "#9BB0FF";
+        break;
+      case SpectralClass.B:
+        temperature = temperature ?? 20000;
+        luminosity = luminosity ?? 1000;
+        color = color ?? "#AABFFF";
+        break;
+      case SpectralClass.A:
+        temperature = temperature ?? 8500;
+        luminosity = luminosity ?? 20;
+        color = color ?? "#F8F7FF";
+        break;
+      case SpectralClass.F:
+        temperature = temperature ?? 6500;
+        luminosity = luminosity ?? 4;
+        color = color ?? "#FFF4EA";
+        break;
+      case SpectralClass.G:
+        temperature = temperature ?? 5778;
+        luminosity = luminosity ?? 1.0;
+        color = color ?? "#FFF9E5";
+        break;
+      case SpectralClass.K:
+        temperature = temperature ?? 4500;
+        luminosity = luminosity ?? 0.4;
+        color = color ?? "#FFAA55";
+        break;
+      case SpectralClass.M:
+        temperature = temperature ?? 3000;
+        luminosity = luminosity ?? 0.04;
+        color = color ?? "#FF6644";
+        break;
+      case SpectralClass.L:
+        temperature = temperature ?? 2000;
+        luminosity = luminosity ?? 0.001;
+        color = color ?? "#FF3300";
+        break;
+      case SpectralClass.T:
+        temperature = temperature ?? 1300;
+        luminosity = luminosity ?? 0.0001;
+        color = color ?? "#CC2200";
+        break;
+      case SpectralClass.Y:
+        temperature = temperature ?? 500;
+        luminosity = luminosity ?? 0.00001;
+        color = color ?? "#991100";
+        break;
+      default:
+        // Default to G-type if mainSpectralClass is not provided or unrecognized,
+        // but only if temperature, luminosity, or color are still undefined.
+        if (temperature === undefined) temperature = 5778;
+        if (luminosity === undefined) luminosity = 1.0;
+        if (color === undefined) color = "#FFF9E5";
+    }
+
+    if (stellarType) {
+      // If a stellar type is present, it might override the spectral class defaults or provide its own.
+      // We use the original currentTemperature/Luminosity/Color to see if the stellar type should set them
+      // or if they were already explicitly provided for the stellar object.
+      switch (stellarType) {
+        case StellarType.WHITE_DWARF:
+          // Use subtype to determine specific white dwarf properties
+          if (whiteDwarfSubtype === WhiteDwarfSubtype.DA) {
+            // Hydrogen-dominated - white with slight blue tint
+            temperature = currentTemperature ?? 25000;
+            luminosity = currentLuminosity ?? 0.01;
+            color = currentColor ?? "#F8FCFF";
+          } else if (whiteDwarfSubtype === WhiteDwarfSubtype.DB) {
+            // Helium-dominated - slightly bluer
+            temperature = currentTemperature ?? 30000;
+            luminosity = currentLuminosity ?? 0.015;
+            color = currentColor ?? "#E8F4FF";
+          } else if (whiteDwarfSubtype === WhiteDwarfSubtype.DC) {
+            // Featureless spectrum - neutral white
+            temperature = currentTemperature ?? 20000;
+            luminosity = currentLuminosity ?? 0.008;
+            color = currentColor ?? "#FFFFFF";
+          } else if (whiteDwarfSubtype === WhiteDwarfSubtype.DO) {
+            // Helium-rich with ionized helium - bluish
+            temperature = currentTemperature ?? 40000;
+            luminosity = currentLuminosity ?? 0.02;
+            color = currentColor ?? "#D0E8FF";
+          } else if (whiteDwarfSubtype === WhiteDwarfSubtype.DZ) {
+            // Metal-rich - slightly reddish
+            temperature = currentTemperature ?? 18000;
+            luminosity = currentLuminosity ?? 0.006;
+            color = currentColor ?? "#FFF8F0";
+          } else if (whiteDwarfSubtype === WhiteDwarfSubtype.DQ) {
+            // Carbon-rich - slightly yellowish
+            temperature = currentTemperature ?? 22000;
+            luminosity = currentLuminosity ?? 0.012;
+            color = currentColor ?? "#FFFFF0";
+          } else {
+            // Default white dwarf properties
+            temperature = currentTemperature ?? 25000;
+            luminosity = currentLuminosity ?? 0.01;
+            color = currentColor ?? "#FFFFFF";
+          }
+          break;
+        case StellarType.NEUTRON_STAR:
+          // Use subtype to determine specific neutron star properties
+          if (neutronStarSubtype === NeutronStarSubtype.PULSAR) {
+            // Pulsars - very hot, bright, cyan color
+            temperature = currentTemperature ?? 1000000;
+            luminosity = currentLuminosity ?? 0.3;
+            color = currentColor ?? "#CCFFFF";
+          } else if (neutronStarSubtype === NeutronStarSubtype.MAGNETAR) {
+            // Magnetars - extremely hot, very bright, intense blue
+            temperature = currentTemperature ?? 1500000;
+            luminosity = currentLuminosity ?? 0.5;
+            color = currentColor ?? "#99FFFF";
+          } else {
+            // Standard neutron stars
+            temperature = currentTemperature ?? 1000000;
+            luminosity = currentLuminosity ?? 0.1;
+            color = currentColor ?? "#CCFFFF";
+          }
+          break;
+        case StellarType.BLACK_HOLE:
+          // Use subtype to determine specific black hole properties
+          if (blackHoleSubtype === BlackHoleSubtype.KERR) {
+            // Kerr black holes - may have accretion disk emissions
+            temperature = currentTemperature ?? 2.7; // CMB temperature
+            luminosity = currentLuminosity ?? 0.001; // Very low, but not zero due to accretion
+            color = currentColor ?? "#000000";
+          } else {
+            // Schwarzschild black holes - completely dark
+            temperature = currentTemperature ?? 0;
+            luminosity = currentLuminosity ?? 0;
+            color = currentColor ?? "#000000";
+          }
+          break;
+        case StellarType.WOLF_RAYET:
+          temperature = currentTemperature ?? 50000;
+          luminosity = currentLuminosity ?? 100000;
+          color = currentColor ?? "#99FFFF";
+          break;
+        case StellarType.HYPERGIANT:
+          temperature = currentTemperature ?? 35000;
+          luminosity = currentLuminosity ?? 500000;
+          color = currentColor ?? "#FF6B6B";
+          break;
+        case StellarType.PROTOSTAR:
+          // Protostars are still accreting and not yet optically visible
+          // They have lower temperatures and are often obscured by dust
+          temperature = currentTemperature ?? 2000;
+          luminosity = currentLuminosity ?? 0.01;
+          color = currentColor ?? "#8B4513"; // Brownish due to dust absorption
+          break;
+        case StellarType.PRE_MAIN_SEQUENCE:
+          // Pre-main-sequence stars that have become optically visible
+          // Use subtype to determine specific properties
+          if (protostarSubtype === ProtostarSubtype.T_TAURI) {
+            // T Tauri stars are pre-main-sequence stars < 2 solar masses
+            temperature = currentTemperature ?? 4000;
+            luminosity = currentLuminosity ?? 0.5;
+            color = currentColor ?? "#FF8C42";
+          } else if (protostarSubtype === ProtostarSubtype.HERBIG_AE_BE) {
+            // Herbig Ae/Be stars are pre-main-sequence stars of 2-8 solar masses
+            temperature = currentTemperature ?? 8000;
+            luminosity = currentLuminosity ?? 10;
+            color = currentColor ?? "#87CEEB";
+          } else {
+            // Default pre-main-sequence properties
+            temperature = currentTemperature ?? 4000;
+            luminosity = currentLuminosity ?? 0.5;
+            color = currentColor ?? "#FF8C42";
+          }
+          break;
+      }
+    }
+  }
+
+  // Final fallback to ensure values are always defined.
+  return {
+    temperature: temperature ?? 5778,
+    luminosity: luminosity ?? 1.0,
+    color: color ?? "#FFF9E5",
+  };
 }

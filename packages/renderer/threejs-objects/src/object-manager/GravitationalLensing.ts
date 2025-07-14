@@ -38,9 +38,8 @@ export class GravitationalLensingHandler {
     if (object.type === CelestialType.STAR) {
       const starProps = object.properties as StarProperties;
       return (
-        starProps?.classType === StellarType.BLACK_HOLE ||
-        starProps?.classType === StellarType.KERR_BLACK_HOLE ||
-        starProps?.classType === StellarType.NEUTRON_STAR
+        starProps?.stellarType === StellarType.BLACK_HOLE ||
+        starProps?.stellarType === StellarType.NEUTRON_STAR
       );
     }
     return false;

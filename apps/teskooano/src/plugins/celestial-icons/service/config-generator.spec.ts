@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   CelestialStatus,
   CelestialType,
-  ExoticStellarType,
   SpectralClass,
   StellarType,
+  NeutronStarSubtype,
+  BlackHoleSubtype,
+  WhiteDwarfSubtype,
+  ProtostarSubtype,
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 import { generateIconConfig } from "./config-generator";
@@ -43,7 +46,7 @@ describe("Enhanced Star Icon Generation", () => {
         isMainStar: true,
         spectralClass: "G2V",
         mainSpectralClass: SpectralClass.G,
-        classType: StellarType.MAIN_SEQUENCE,
+        stellarType: StellarType.MAIN_SEQUENCE,
         color: "#FFFFE0",
       });
 
@@ -63,7 +66,7 @@ describe("Enhanced Star Icon Generation", () => {
         isMainStar: true,
         spectralClass: "O5V",
         mainSpectralClass: SpectralClass.O,
-        classType: StellarType.MAIN_SEQUENCE,
+        stellarType: StellarType.MAIN_SEQUENCE,
         color: "#9bb0ff",
       });
 
@@ -79,8 +82,8 @@ describe("Enhanced Star Icon Generation", () => {
         type: CelestialType.STAR,
         isMainStar: true,
         spectralClass: "P",
-        classType: StellarType.NEUTRON_STAR,
-        exoticType: ExoticStellarType.PULSAR,
+        stellarType: StellarType.NEUTRON_STAR,
+        neutronStarSubtype: NeutronStarSubtype.PULSAR,
         color: "#FFFFFF",
       });
 
@@ -88,10 +91,10 @@ describe("Enhanced Star Icon Generation", () => {
 
       expect(config.base.type).toBe("star");
       expect(config.base.color).toBe("#FFFFFF");
-      expect(config.base.radius).toBe(2);
+      expect(config.base.radius).toBe(3);
       expect(config.atmosphere).toEqual({
         color: "#FFFFFF",
-        size: 8,
+        size: 6,
       });
       expect(config.special).toBe("pulsar");
     });
@@ -101,17 +104,18 @@ describe("Enhanced Star Icon Generation", () => {
         type: CelestialType.STAR,
         isMainStar: true,
         spectralClass: "M",
-        exoticType: ExoticStellarType.MAGNETAR,
+        stellarType: StellarType.NEUTRON_STAR,
+        neutronStarSubtype: NeutronStarSubtype.MAGNETAR,
         color: "#FF6B6B",
       });
 
       const config = generateIconConfig(star);
 
       expect(config.base.color).toBe("#FF6B6B");
-      expect(config.base.radius).toBe(2);
+      expect(config.base.radius).toBe(3);
       expect(config.atmosphere).toEqual({
         color: "#FF6B6B",
-        size: 10,
+        size: 6,
       });
       expect(config.special).toBe("pulsar");
     });
@@ -121,8 +125,8 @@ describe("Enhanced Star Icon Generation", () => {
         type: CelestialType.STAR,
         isMainStar: true,
         spectralClass: "X",
-        classType: StellarType.BLACK_HOLE,
-        exoticType: ExoticStellarType.BLACK_HOLE,
+        stellarType: StellarType.BLACK_HOLE,
+        blackHoleSubtype: BlackHoleSubtype.SCHWARZSCHILD,
         color: "#000000",
       });
 
@@ -142,8 +146,8 @@ describe("Enhanced Star Icon Generation", () => {
         type: CelestialType.STAR,
         isMainStar: true,
         spectralClass: "DA",
-        classType: StellarType.WHITE_DWARF,
-        exoticType: ExoticStellarType.WHITE_DWARF,
+        stellarType: StellarType.WHITE_DWARF,
+        whiteDwarfSubtype: WhiteDwarfSubtype.DA,
         color: "#FFFFFF",
       });
 
@@ -163,7 +167,8 @@ describe("Enhanced Star Icon Generation", () => {
         type: CelestialType.STAR,
         isMainStar: true,
         spectralClass: "P",
-        exoticType: ExoticStellarType.PROTOSTAR,
+        stellarType: StellarType.PROTOSTAR,
+        protostarSubtype: ProtostarSubtype.T_TAURI,
         color: "#FF8A4A",
       });
 
@@ -183,8 +188,7 @@ describe("Enhanced Star Icon Generation", () => {
         type: CelestialType.STAR,
         isMainStar: true,
         spectralClass: "W",
-        classType: StellarType.WOLF_RAYET,
-        exoticType: ExoticStellarType.WOLF_RAYET,
+        stellarType: StellarType.WOLF_RAYET,
         color: "#FF6B6B",
       });
 
@@ -203,7 +207,7 @@ describe("Enhanced Star Icon Generation", () => {
         type: CelestialType.STAR,
         isMainStar: true,
         spectralClass: "Q",
-        exoticType: ExoticStellarType.QUASAR,
+        stellarType: StellarType.HYPERGIANT,
         color: "#FF6B6B",
       });
 

@@ -2,6 +2,10 @@ import {
   CelestialType,
   StarProperties,
   StellarType,
+  NeutronStarSubtype,
+  BlackHoleSubtype,
+  WhiteDwarfSubtype,
+  ProtostarSubtype,
 } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import { BaseStarRenderer } from "./base/base-star";
@@ -49,21 +53,43 @@ export interface CreateMeshOptions {
 function createStarRenderer(
   spectralClass?: string,
   stellarType?: StellarType,
+  neutronStarSubtype?: NeutronStarSubtype,
+  blackHoleSubtype?: BlackHoleSubtype,
+  whiteDwarfSubtype?: WhiteDwarfSubtype,
+  protostarSubtype?: ProtostarSubtype,
   lightingManager?: LightingManager,
 ): BaseStarRenderer {
   if (stellarType) {
     const options = { lightingManager };
     switch (stellarType) {
       case StellarType.NEUTRON_STAR:
-        return new NeutronStarRenderer(options);
+        // Use subtype to determine neutron star renderer behavior
+        return new NeutronStarRenderer({
+          ...options,
+          subtype: neutronStarSubtype,
+        });
       case StellarType.WHITE_DWARF:
-        return new WhiteDwarfRenderer(options);
+        // Use subtype to determine white dwarf renderer behavior
+        return new WhiteDwarfRenderer({
+          ...options,
+          subtype: whiteDwarfSubtype,
+        });
       case StellarType.WOLF_RAYET:
         return new WolfRayetRenderer(options);
+      case StellarType.HYPERGIANT:
+        // For now, use main sequence renderer with enhanced parameters
+        return new MainSequenceStarRenderer(options);
+      case StellarType.PROTOSTAR:
+      case StellarType.PRE_MAIN_SEQUENCE:
+        // Use main sequence renderer with special parameters for young stars
+        return new MainSequenceStarRenderer(options);
       case StellarType.BLACK_HOLE:
-        return new SchwarzschildBlackHoleRenderer(options);
-      case StellarType.KERR_BLACK_HOLE:
-        return new KerrBlackHoleRenderer(options);
+        // Use subtype to determine which black hole renderer
+        if (blackHoleSubtype === BlackHoleSubtype.KERR) {
+          return new KerrBlackHoleRenderer(options);
+        } else {
+          return new SchwarzschildBlackHoleRenderer(options);
+        }
       case StellarType.MAIN_SEQUENCE:
         break;
     }
@@ -127,7 +153,11 @@ export function createMesh(
       try {
         const newRenderer = createStarRenderer(
           starProps.spectralClass,
-          starProps.classType,
+          starProps.stellarType,
+          starProps.neutronStarSubtype,
+          starProps.blackHoleSubtype,
+          starProps.whiteDwarfSubtype,
+          starProps.protostarSubtype,
           lightingManager,
         );
         if (newRenderer) {
@@ -136,12 +166,12 @@ export function createMesh(
 
           if (debug) {
             console.debug(
-              `[Star:createMesh] Created new ${starProps.spectralClass || starProps.classType} renderer for ${object.celestialObjectId}`,
+              `[Star:createMesh] Created new ${starProps.spectralClass || starProps.stellarType} renderer for ${object.celestialObjectId}`,
             );
           }
         } else {
           console.warn(
-            `[Star:createMesh] createStarRenderer failed for ${object.celestialObjectId} (Class: ${starProps.spectralClass}, Type: ${starProps.classType}).`,
+            `[Star:createMesh] createStarRenderer failed for ${object.celestialObjectId} (Class: ${starProps.spectralClass}, Type: ${starProps.stellarType}).`,
           );
         }
       } catch (error) {

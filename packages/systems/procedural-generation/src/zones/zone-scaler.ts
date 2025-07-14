@@ -26,7 +26,7 @@ export class ZoneScaler {
     // Get star properties for more sophisticated zone calculation
     const starProps = star.properties as any;
     const spectralClass = starProps?.spectralClass || "G";
-    const stellarType = starProps?.classType || "MAIN_SEQUENCE"; // Fixed: was stellarType, now matches actual property name
+    const stellarType = starProps?.stellarType || "MAIN_SEQUENCE";
 
     // Calculate zone scaling based on star characteristics
     // Use a damped scaling to prevent systems from being too spread out
@@ -55,7 +55,6 @@ export class ZoneScaler {
         return 0.1; // 10% of normal scaling
       case StellarType.NEUTRON_STAR:
       case StellarType.BLACK_HOLE:
-      case StellarType.KERR_BLACK_HOLE:
         return 0.05; // 5% of normal scaling
       case StellarType.WOLF_RAYET:
         return 2.0; // 200% of normal scaling

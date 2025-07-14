@@ -9,11 +9,6 @@
   overflow: hidden; /* Prevent Dockview's own scrollbars if desired */
 }
 
-/* These overrides are applied via tokens in tokens.css, 
-   but this class is the target */
-.dockview-theme-abyss {
-}
-
 /* Improve touch dragging for Dockview floating panels */
 .dockview-floating-group .dv-group-control {
   touch-action: none;

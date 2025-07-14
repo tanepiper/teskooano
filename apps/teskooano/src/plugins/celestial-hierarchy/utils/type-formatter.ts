@@ -1,11 +1,14 @@
 import {
   CelestialObject,
   CelestialType,
-  ExoticStellarType,
   GasGiantClass,
   PlanetType,
   SpectralClass,
   StellarType,
+  NeutronStarSubtype,
+  BlackHoleSubtype,
+  WhiteDwarfSubtype,
+  ProtostarSubtype,
 } from "@teskooano/data-types";
 
 /**
@@ -23,64 +26,64 @@ export function formatDetailedType(object: CelestialObject): string {
         return "Star";
       }
 
-      const stellarType = starProps.classType;
-      const exoticType = starProps.exoticType;
+      const stellarType = starProps.stellarType;
       const spectralClass = starProps.spectralClass;
-      const mainSpectralClass = starProps.mainSpectralClass;
+      const neutronStarSubtype = starProps.neutronStarSubtype;
+      const blackHoleSubtype = starProps.blackHoleSubtype;
+      const whiteDwarfSubtype = starProps.whiteDwarfSubtype;
+      const protostarSubtype = starProps.protostarSubtype;
 
-      // Handle exotic stellar types first
-      if (exoticType) {
-        switch (exoticType) {
-          case ExoticStellarType.PULSAR:
-            return "Pulsar";
-          case ExoticStellarType.MAGNETAR:
-            return "Magnetar";
-          case ExoticStellarType.BLACK_HOLE:
-            return "Black Hole";
-          case ExoticStellarType.QUASAR:
-            return "Quasar";
-          case ExoticStellarType.WHITE_DWARF:
-            return "White Dwarf";
-          case ExoticStellarType.WOLF_RAYET:
-            return "Wolf-Rayet Star";
-          case ExoticStellarType.T_TAURI:
-            return "T Tauri Star";
-          case ExoticStellarType.HERBIG_AE_BE:
-            return "Herbig Ae/Be Star";
-          case ExoticStellarType.PROTOSTAR:
-            return "Protostar";
-          default:
-            return "Exotic Star";
-        }
-      }
-
-      // Handle regular stellar types
+      // Handle stellar types with subtypes
       if (stellarType) {
-        let typeName = "";
         switch (stellarType) {
           case StellarType.MAIN_SEQUENCE:
-            typeName = "Main Sequence Star";
-            break;
+            return spectralClass
+              ? `${spectralClass} Main Sequence Star`
+              : "Main Sequence Star";
+
           case StellarType.NEUTRON_STAR:
-            return "Neutron Star";
+            if (neutronStarSubtype === NeutronStarSubtype.PULSAR) {
+              return "Pulsar";
+            } else if (neutronStarSubtype === NeutronStarSubtype.MAGNETAR) {
+              return "Magnetar";
+            } else {
+              return "Neutron Star";
+            }
+
           case StellarType.WHITE_DWARF:
+            if (whiteDwarfSubtype) {
+              return `${whiteDwarfSubtype} White Dwarf`;
+            }
             return "White Dwarf";
+
+          case StellarType.BLACK_HOLE:
+            if (blackHoleSubtype === BlackHoleSubtype.KERR) {
+              return "Kerr Black Hole";
+            } else {
+              return "Black Hole";
+            }
+
           case StellarType.WOLF_RAYET:
             return "Wolf-Rayet Star";
-          case StellarType.BLACK_HOLE:
-            return "Black Hole";
-          case StellarType.KERR_BLACK_HOLE:
-            return "Kerr Black Hole";
+
+          case StellarType.HYPERGIANT:
+            return "Hypergiant";
+
+          case StellarType.PROTOSTAR:
+            return "Protostar";
+
+          case StellarType.PRE_MAIN_SEQUENCE:
+            if (protostarSubtype === ProtostarSubtype.T_TAURI) {
+              return "T Tauri Star";
+            } else if (protostarSubtype === ProtostarSubtype.HERBIG_AE_BE) {
+              return "Herbig Ae/Be Star";
+            } else {
+              return "Pre-Main-Sequence Star";
+            }
+
           default:
-            typeName = "Star";
+            return spectralClass ? `${spectralClass} Star` : "Star";
         }
-
-        // Add spectral class if available
-        if (spectralClass) {
-          return `${spectralClass} ${typeName}`;
-        }
-
-        return typeName;
       }
 
       // Fallback to spectral class only

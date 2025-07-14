@@ -20,7 +20,6 @@ import { celestialActions } from "./celestialActions";
 import { simulationStateService } from "./simulation";
 import { gameStateService } from "./stores";
 import { ClearStateOptions } from "./types";
-import { determineStarThermalProperties } from "./utils/star-properties.utils";
 
 /**
  * Type guard to check if an object is of type PlanetAtmosphereProperties.
@@ -200,24 +199,10 @@ class CelestialFactoryService {
     const mainSpectralClass = inputStarProps?.mainSpectralClass;
     const luminosityClass = inputStarProps?.luminosityClass;
     const specialSpectralClass = inputStarProps?.specialSpectralClass;
-    const exoticType = inputStarProps?.exoticType;
-    const whiteDwarfType = inputStarProps?.whiteDwarfType;
-    const stellarType = inputStarProps?.classType;
+    const stellarType = inputStarProps?.stellarType;
     const partnerStars = inputStarProps?.partnerStars;
 
     let albedo = data.albedo;
-
-    const thermalProps = determineStarThermalProperties({
-      mainSpectralClass,
-      exoticType,
-      currentTemperature: data.temperature,
-      currentLuminosity: inputStarProps?.luminosity,
-      currentColor: inputStarProps?.color,
-    });
-
-    const temperature = thermalProps.temperature;
-    const defaultLuminosity = thermalProps.luminosity;
-    const defaultColor = thermalProps.color;
 
     if (albedo === undefined) albedo = 0.3;
 
@@ -225,15 +210,13 @@ class CelestialFactoryService {
       type: CelestialType.STAR,
       isMainStar,
       spectralClass,
-      luminosity: defaultLuminosity,
-      color: defaultColor,
-      classType: stellarType,
+      luminosity: inputStarProps?.luminosity ?? 1.0,
+      color: inputStarProps?.color ?? "#FFF9E5",
+      stellarType: stellarType,
       partnerStars,
       mainSpectralClass,
       luminosityClass,
       specialSpectralClass,
-      exoticType,
-      whiteDwarfType,
     };
 
     const starPhysicsReal: PhysicsStateReal = {
@@ -249,7 +232,7 @@ class CelestialFactoryService {
       data,
       starPhysicsReal,
       processedProperties,
-      temperature,
+      data.temperature ?? 5778,
       albedo,
     );
 

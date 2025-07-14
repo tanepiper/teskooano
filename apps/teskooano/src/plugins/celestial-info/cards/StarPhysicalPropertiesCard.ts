@@ -51,10 +51,10 @@ export class StarPhysicalPropertiesCard extends PhysicalPropertiesCard {
       });
     }
 
-    if (starProps?.classType) {
+    if (starProps?.stellarType) {
       properties.push({
         property: "Stellar Type",
-        value: this.formatStellarType(starProps.classType),
+        value: this.formatStellarType(starProps.stellarType),
       });
     }
 
@@ -76,8 +76,6 @@ export class StarPhysicalPropertiesCard extends PhysicalPropertiesCard {
         return "Wolf-Rayet (Hot, massive star with strong winds)";
       case StellarType.BLACK_HOLE:
         return "Black Hole (Collapsed massive star)";
-      case StellarType.KERR_BLACK_HOLE:
-        return "Kerr Black Hole (Rotating black hole)";
       default:
         // Fallback for any raw string values that might exist
         return String(stellarType)

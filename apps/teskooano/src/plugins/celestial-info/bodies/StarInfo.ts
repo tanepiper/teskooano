@@ -19,8 +19,8 @@ export class StarInfoComponent extends BaseCelestialInfoComponent {
 
   protected getSubtitle(celestial: CelestialObject): string {
     const props = celestial.properties as StarProperties;
-    const stellarTypeFormatted = props.classType
-      ? this.formatStellarType(props.classType)
+    const stellarTypeFormatted = props.stellarType
+      ? this.formatStellarType(props.stellarType)
       : celestial.type;
     return `${props.spectralClass} ${stellarTypeFormatted}`;
   }
@@ -40,8 +40,7 @@ export class StarInfoComponent extends BaseCelestialInfoComponent {
         return "Wolf-Rayet Star";
       case StellarType.BLACK_HOLE:
         return "Black Hole";
-      case StellarType.KERR_BLACK_HOLE:
-        return "Kerr Black Hole";
+
       default:
         // Fallback for any raw string values that might exist
         return String(stellarType)

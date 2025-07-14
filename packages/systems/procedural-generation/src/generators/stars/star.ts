@@ -13,6 +13,10 @@ import {
   SpecialSpectralClass,
   SpectralClass,
   StellarType,
+  BlackHoleSubtype,
+  NeutronStarSubtype,
+  WhiteDwarfSubtype,
+  ProtostarSubtype,
 } from "@teskooano/data-types";
 import * as CONST from "../../constants";
 import { generateCelestialName } from "../names/celestial-name";
@@ -26,11 +30,14 @@ const C = 299792458;
  * Main sequence stars dominate (~90%), with evolved stars being much rarer
  */
 const STELLAR_TYPE_WEIGHTS: { type: StellarType; weight: number }[] = [
-  { type: StellarType.MAIN_SEQUENCE, weight: 90 }, // 90% main sequence stars
-  { type: StellarType.WHITE_DWARF, weight: 8 }, // 8% white dwarfs
-  { type: StellarType.NEUTRON_STAR, weight: 1 }, // 1% neutron stars
-  { type: StellarType.BLACK_HOLE, weight: 0.5 }, // 0.5% black holes
-  { type: StellarType.WOLF_RAYET, weight: 0.5 }, // 0.5% Wolf-Rayet stars
+  { type: StellarType.MAIN_SEQUENCE, weight: 85 }, // 85% main sequence stars
+  { type: StellarType.WHITE_DWARF, weight: 10 }, // 10% white dwarfs
+  { type: StellarType.NEUTRON_STAR, weight: 2 }, // 2% neutron stars
+  { type: StellarType.BLACK_HOLE, weight: 1 }, // 1% black holes
+  { type: StellarType.WOLF_RAYET, weight: 1 }, // 1% Wolf-Rayet stars
+  { type: StellarType.HYPERGIANT, weight: 0.5 }, // 0.5% hypergiants
+  { type: StellarType.PROTOSTAR, weight: 0.3 }, // 0.3% protostars
+  { type: StellarType.PRE_MAIN_SEQUENCE, weight: 0.2 }, // 0.2% pre-main-sequence stars
 ];
 
 /**
@@ -180,17 +187,6 @@ export function generateStar(random: () => number): CelestialObject {
         calculateSchwarzschildRadius(starMass_Solar * CONST.SOLAR_MASS_KG) /
         CONST.SOLAR_RADIUS_M;
       starTemperature = 2.7; // CMB temperature (no surface)
-
-      // Some black holes are rotating (Kerr black holes) and have accretion disks
-      if (random() < 0.3) {
-        // 30% chance of being a Kerr black hole
-        chosenType = StellarType.KERR_BLACK_HOLE;
-        // Kerr black holes typically have higher accretion rates
-        const accretionRate = 1e-8 + random() * 1e-7; // 10^-8 to 10^-7 solar masses/year
-        console.log(
-          `[StarGenerator] Generated Kerr black hole with accretion rate: ${accretionRate.toExponential(2)} M☉/year`,
-        );
-      }
       break;
 
     case StellarType.WOLF_RAYET:
@@ -198,6 +194,27 @@ export function generateStar(random: () => number): CelestialObject {
       starMass_Solar = 5 + random() * 45; // Typically 5-50 solar masses
       starRadius_Solar = 0.5 + random() * 4.5; // Very compact for their mass
       starTemperature = 30000 + random() * 170000; // 30,000-200,000K
+      break;
+
+    case StellarType.HYPERGIANT:
+      // Hypergiants: 20-100+ solar masses, very large and luminous
+      starMass_Solar = 20 + random() * 80; // 20-100+ solar masses
+      starRadius_Solar = 20 + random() * 80; // Very large radii
+      starTemperature = 35000 + random() * 15000; // 35,000-50,000K
+      break;
+
+    case StellarType.PROTOSTAR:
+      // Protostars: still accreting, not yet optically visible
+      starMass_Solar = 0.1 + random() * 2.9; // 0.1-3 solar masses
+      starRadius_Solar = 2 + random() * 8; // Large for their mass (still contracting)
+      starTemperature = 2000 + random() * 2000; // 2,000-4,000K (cool due to dust)
+      break;
+
+    case StellarType.PRE_MAIN_SEQUENCE:
+      // Pre-main-sequence stars: optically visible but not yet fusing hydrogen
+      starMass_Solar = 0.1 + random() * 7.9; // 0.1-8 solar masses
+      starRadius_Solar = 1 + random() * 5; // Larger than main sequence for their mass
+      starTemperature = 3000 + random() * 5000; // 3,000-8,000K
       break;
 
     case StellarType.MAIN_SEQUENCE:
@@ -215,16 +232,65 @@ export function generateStar(random: () => number): CelestialObject {
   let visualStarRadius =
     realStarRadius * SCALE.SIZE * STAR_VISUAL_SCALE_MULTIPLIER;
 
-  const starLuminosity = UTIL.calculateStellarLuminosity(
-    realStarRadius,
-    starTemperature,
-  );
+  // Determine subtypes for specific stellar types
+  let neutronStarSubtype: NeutronStarSubtype | undefined;
+  let blackHoleSubtype: BlackHoleSubtype | undefined;
+  let whiteDwarfSubtype: WhiteDwarfSubtype | undefined;
+  let protostarSubtype: ProtostarSubtype | undefined;
+
+  if (chosenType === StellarType.NEUTRON_STAR) {
+    // 70% pulsars, 20% standard, 10% magnetars
+    const subtypeRoll = random();
+    if (subtypeRoll < 0.7) {
+      neutronStarSubtype = NeutronStarSubtype.PULSAR;
+    } else if (subtypeRoll < 0.9) {
+      neutronStarSubtype = NeutronStarSubtype.STANDARD;
+    } else {
+      neutronStarSubtype = NeutronStarSubtype.MAGNETAR;
+    }
+  } else if (chosenType === StellarType.BLACK_HOLE) {
+    // 70% Kerr (rotating), 30% Schwarzschild (non-rotating)
+    blackHoleSubtype =
+      random() < 0.7 ? BlackHoleSubtype.KERR : BlackHoleSubtype.SCHWARZSCHILD;
+  } else if (chosenType === StellarType.WHITE_DWARF) {
+    // Most common white dwarf types
+    const subtypeRoll = random();
+    if (subtypeRoll < 0.8) {
+      whiteDwarfSubtype = WhiteDwarfSubtype.DA; // Hydrogen-dominated
+    } else if (subtypeRoll < 0.9) {
+      whiteDwarfSubtype = WhiteDwarfSubtype.DB; // Helium-dominated
+    } else {
+      whiteDwarfSubtype = WhiteDwarfSubtype.DC; // Featureless
+    }
+  } else if (chosenType === StellarType.PRE_MAIN_SEQUENCE) {
+    // 70% T Tauri (< 2 solar masses), 30% Herbig Ae/Be (2-8 solar masses)
+    protostarSubtype =
+      random() < 0.7 ? ProtostarSubtype.T_TAURI : ProtostarSubtype.HERBIG_AE_BE;
+  }
+
+  // Use the comprehensive thermal properties determination
+  const thermalProps = UTIL.determineStarThermalProperties({
+    mainSpectralClass: UTIL.getSpectralClass(starTemperature),
+    stellarType: chosenType,
+    neutronStarSubtype,
+    blackHoleSubtype,
+    whiteDwarfSubtype,
+    protostarSubtype,
+    currentTemperature: starTemperature,
+    currentLuminosity: UTIL.calculateStellarLuminosity(
+      realStarRadius,
+      starTemperature,
+    ),
+    currentColor: UTIL.getStarColor(starTemperature),
+  });
+
+  const starLuminosity = thermalProps.luminosity;
+  const starColor = thermalProps.color;
   let mainSpectralClass = UTIL.getSpectralClass(starTemperature);
   let specialSpectralClass: SpecialSpectralClass | undefined = undefined;
   let luminosityClass = LuminosityClass.V; // Main sequence default
 
   let spectralClassString: string;
-  const starColor = UTIL.getStarColor(starTemperature);
 
   // Set appropriate spectral classifications
   if (chosenType === StellarType.WHITE_DWARF) {
@@ -303,10 +369,14 @@ export function generateStar(random: () => number): CelestialObject {
     spectralClass: spectralClassString,
     luminosity: starLuminosity,
     color: starColor,
-    classType: chosenType,
+    stellarType: chosenType,
     mainSpectralClass: mainSpectralClass as SpectralClass,
     luminosityClass,
     specialSpectralClass,
+    neutronStarSubtype,
+    blackHoleSubtype,
+    whiteDwarfSubtype,
+    protostarSubtype,
     systemLighting,
   };
 

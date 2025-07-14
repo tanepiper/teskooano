@@ -1,13 +1,14 @@
 import * as THREE from "three";
 import { BaseStarMaterial, BaseStarRenderer } from "../base/base-star";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { WhiteDwarfSubtype } from "@teskooano/data-types";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,
 } from "@teskooano/renderer-threejs-celestial";
 /**
- * Material for white dwarf stars
+ * Material for white dwarf stars with subtype-specific properties
  * - Temperature: 8,000-40,000 K
  * - Color: White to pale blue
  * - Typical mass: 0.5-0.7 M☉
@@ -17,7 +18,10 @@ import {
  * - Electron-degenerate matter
  */
 export class WhiteDwarfMaterial extends BaseStarMaterial {
+  private subtype: WhiteDwarfSubtype;
+
   constructor(
+    subtype: WhiteDwarfSubtype = WhiteDwarfSubtype.DA,
     options: {
       coronaIntensity?: number;
       pulseSpeed?: number;
@@ -26,19 +30,91 @@ export class WhiteDwarfMaterial extends BaseStarMaterial {
       metallicEffect?: number;
     } = {},
   ) {
-    const whiteColor = new THREE.Color(0xf8fcff);
+    // Subtype-specific colors and properties
+    let baseColor: THREE.Color;
+    let coronaIntensity: number;
+    let pulseSpeed: number;
+    let glowIntensity: number;
+    let temperatureVariation: number;
+    let metallicEffect: number;
 
-    super(whiteColor, {
-      coronaIntensity: options.coronaIntensity ?? 0.4,
+    switch (subtype) {
+      case WhiteDwarfSubtype.DA:
+        // Hydrogen-dominated - white with slight blue tint
+        baseColor = new THREE.Color(0xf8fcff);
+        coronaIntensity = 0.4;
+        pulseSpeed = 0.2;
+        glowIntensity = 0.7;
+        temperatureVariation = 0.05;
+        metallicEffect = 0.8;
+        break;
+      case WhiteDwarfSubtype.DB:
+        // Helium-dominated - slightly bluer
+        baseColor = new THREE.Color(0xe8f4ff);
+        coronaIntensity = 0.3;
+        pulseSpeed = 0.1;
+        glowIntensity = 0.6;
+        temperatureVariation = 0.03;
+        metallicEffect = 0.9;
+        break;
+      case WhiteDwarfSubtype.DC:
+        // Featureless spectrum - neutral white
+        baseColor = new THREE.Color(0xffffff);
+        coronaIntensity = 0.2;
+        pulseSpeed = 0.0;
+        glowIntensity = 0.5;
+        temperatureVariation = 0.01;
+        metallicEffect = 0.7;
+        break;
+      case WhiteDwarfSubtype.DO:
+        // Helium-rich with ionized helium - bluish
+        baseColor = new THREE.Color(0xd0e8ff);
+        coronaIntensity = 0.5;
+        pulseSpeed = 0.3;
+        glowIntensity = 0.8;
+        temperatureVariation = 0.08;
+        metallicEffect = 0.85;
+        break;
+      case WhiteDwarfSubtype.DZ:
+        // Metal-rich - slightly reddish
+        baseColor = new THREE.Color(0xfff8f0);
+        coronaIntensity = 0.25;
+        pulseSpeed = 0.05;
+        glowIntensity = 0.55;
+        temperatureVariation = 0.04;
+        metallicEffect = 0.75;
+        break;
+      case WhiteDwarfSubtype.DQ:
+        // Carbon-rich - slightly yellowish
+        baseColor = new THREE.Color(0xfffff0);
+        coronaIntensity = 0.35;
+        pulseSpeed = 0.15;
+        glowIntensity = 0.65;
+        temperatureVariation = 0.06;
+        metallicEffect = 0.8;
+        break;
+      case WhiteDwarfSubtype.DX:
+      default:
+        // Unclassified - neutral white
+        baseColor = new THREE.Color(0xffffff);
+        coronaIntensity = 0.3;
+        pulseSpeed = 0.1;
+        glowIntensity = 0.6;
+        temperatureVariation = 0.02;
+        metallicEffect = 0.8;
+        break;
+    }
 
-      pulseSpeed: options.pulseSpeed ?? 0.2,
-
-      glowIntensity: options.glowIntensity ?? 0.7,
-
-      temperatureVariation: options.temperatureVariation ?? 0.05,
-
-      metallicEffect: options.metallicEffect ?? 0.8,
+    super(baseColor, {
+      coronaIntensity: options.coronaIntensity ?? coronaIntensity,
+      pulseSpeed: options.pulseSpeed ?? pulseSpeed,
+      glowIntensity: options.glowIntensity ?? glowIntensity,
+      temperatureVariation:
+        options.temperatureVariation ?? temperatureVariation,
+      metallicEffect: options.metallicEffect ?? metallicEffect,
     });
+
+    this.subtype = subtype;
   }
 }
 
@@ -47,10 +123,14 @@ export class WhiteDwarfMaterial extends BaseStarMaterial {
  */
 export class WhiteDwarfRenderer extends BaseStarRenderer<WhiteDwarfMaterial> {
   private material: WhiteDwarfMaterial;
+  private subtype: WhiteDwarfSubtype;
 
-  constructor(options?: BaseCelestialRendererOptions) {
+  constructor(
+    options?: BaseCelestialRendererOptions & { subtype?: WhiteDwarfSubtype },
+  ) {
     super(options);
-    this.material = new WhiteDwarfMaterial();
+    this.subtype = options?.subtype ?? WhiteDwarfSubtype.DA;
+    this.material = new WhiteDwarfMaterial(this.subtype);
   }
 
   protected createMaterial(

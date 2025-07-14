@@ -220,7 +220,10 @@ export class SimulationManager {
         physicsSystemAdapter.updateStateFromResult(result);
 
         // After physics, check for hierarchy changes (orphans, escapes)
-        this.hierarchyManager.updateHierarchies();
+        // Skip hierarchy updates in ideal mode since stars are fixed and orbits are perfect
+        if (getSimulationState().simulationConfig.mode !== "ideal") {
+          this.hierarchyManager.updateHierarchies();
+        }
 
         const updatedPositions: Record<
           string,

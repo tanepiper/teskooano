@@ -51,9 +51,7 @@ export function calculateLightSourceMaps(
     if (obj.type === CelestialType.STAR) {
       // Check if this is a black hole - black holes should NOT be light sources
       const starProps = obj.properties as any;
-      const isBlackHole =
-        starProps?.classType === StellarType.BLACK_HOLE ||
-        starProps?.classType === StellarType.KERR_BLACK_HOLE;
+      const isBlackHole = starProps?.stellarType === StellarType.BLACK_HOLE;
 
       if (!isBlackHole) {
         lightSourceMap[id] = id;

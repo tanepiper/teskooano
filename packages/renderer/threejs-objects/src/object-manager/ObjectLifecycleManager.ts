@@ -150,9 +150,7 @@ export class ObjectLifecycleManager {
     if (object.type === CelestialType.STAR && object.position) {
       // Check if this is a black hole - black holes should NOT be light sources
       const starProps = object.properties as StarProperties;
-      const isBlackHole =
-        starProps?.classType === StellarType.BLACK_HOLE ||
-        starProps?.classType === StellarType.KERR_BLACK_HOLE;
+      const isBlackHole = starProps?.stellarType === StellarType.BLACK_HOLE;
 
       if (!isBlackHole) {
         // Only register non-black hole stars as light sources

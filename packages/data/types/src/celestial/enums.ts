@@ -130,20 +130,70 @@ export enum RockyType {
 
 /**
  * Classification of stars based on their spectral characteristics and evolutionary stage.
+ * This represents the actual astrophysical type, not the renderer type.
  */
 export enum StellarType {
   /** Stars fusing hydrogen in their core, like the Sun. */
   MAIN_SEQUENCE = "MAIN_SEQUENCE",
-  /** Extremely dense remnant of a massive star's supernova. */
-  NEUTRON_STAR = "NEUTRON_STAR",
-  /** Dense remnant of a low-to-medium mass star. */
-  WHITE_DWARF = "WHITE_DWARF",
+  /** Young stars still forming and accreting material (not yet optically visible). */
+  PROTOSTAR = "PROTOSTAR",
+  /** Pre-main sequence stars that have become optically visible but haven't started hydrogen fusion. */
+  PRE_MAIN_SEQUENCE = "PRE_MAIN_SEQUENCE",
   /** Massive, hot star losing mass via strong stellar winds. */
   WOLF_RAYET = "WOLF_RAYET",
+  /** Very large, luminous evolved stars. */
+  HYPERGIANT = "HYPERGIANT",
+  /** Dense remnant of a low-to-medium mass star. */
+  WHITE_DWARF = "WHITE_DWARF",
+  /** Extremely dense remnant of a massive star's supernova. */
+  NEUTRON_STAR = "NEUTRON_STAR",
   /** Region of spacetime where gravity is so strong nothing can escape. */
   BLACK_HOLE = "BLACK_HOLE",
-  /** A rotating black hole. */
-  KERR_BLACK_HOLE = "KERR_BLACK_HOLE",
+}
+
+/**
+ * Subtypes for neutron stars - these are NOT separate stellar types
+ */
+export enum NeutronStarSubtype {
+  /** Standard neutron star with regular magnetic field. */
+  STANDARD = "STANDARD",
+  /** Neutron star with strong magnetic field and radio pulses. */
+  PULSAR = "PULSAR",
+  /** Neutron star with extremely strong magnetic field. */
+  MAGNETAR = "MAGNETAR",
+}
+
+/**
+ * Subtypes for black holes - these are NOT separate stellar types
+ */
+export enum BlackHoleSubtype {
+  /** Non-rotating black hole (Schwarzschild). */
+  SCHWARZSCHILD = "SCHWARZSCHILD",
+  /** Rotating black hole (Kerr). */
+  KERR = "KERR",
+}
+
+/**
+ * Subtypes for pre-main-sequence stars - these are NOT separate stellar types
+ */
+export enum ProtostarSubtype {
+  /** Pre-main sequence stars < 2 solar masses with strong stellar winds. */
+  T_TAURI = "T_TAURI",
+  /** Pre-main sequence stars 2-8 solar masses of intermediate mass. */
+  HERBIG_AE_BE = "HERBIG_AE_BE",
+}
+
+/**
+ * Subtypes for white dwarfs based on spectral features
+ */
+export enum WhiteDwarfSubtype {
+  DA = "DA", // Hydrogen-dominated atmosphere
+  DB = "DB", // Helium-dominated atmosphere
+  DC = "DC", // Featureless spectrum
+  DO = "DO", // Helium-rich with ionized helium lines
+  DZ = "DZ", // Metal-rich atmosphere
+  DQ = "DQ", // Carbon-rich atmosphere
+  DX = "DX", // Unclassified
 }
 
 /**
@@ -167,56 +217,27 @@ export enum SpectralClass {
  * Special spectral classes for non-main sequence stars
  */
 export enum SpecialSpectralClass {
-  W = "W",
-  C = "C",
-  S = "S",
-  D = "D",
-  Q = "Q",
-  P = "P",
-  R = "R",
-  N = "N",
+  W = "W", // Wolf-Rayet stars
+  C = "C", // Carbon stars
+  S = "S", // S-type stars
+  D = "D", // White dwarfs
+  Q = "Q", // Novae
+  P = "P", // Pulsars
+  R = "R", // R-type stars
+  N = "N", // Nebulae
 }
 
 /**
  * Luminosity classes, indicating the size and evolutionary state of the star
  */
 export enum LuminosityClass {
-  I = "I",
-  II = "II",
-  III = "III",
-  IV = "IV",
-  V = "V",
-  VI = "VI",
-  VII = "VII",
-}
-
-/**
- * Specific white dwarf spectral types based on spectral features
- */
-export enum WhiteDwarfType {
-  DA = "DA",
-  DB = "DB",
-  DC = "DC",
-  DO = "DO",
-  DZ = "DZ",
-  DQ = "DQ",
-  DX = "DX",
-}
-
-/**
- * Types of exotic stellar objects
- */
-export enum ExoticStellarType {
-  NEUTRON_STAR = "NEUTRON_STAR",
-  PULSAR = "PULSAR",
-  MAGNETAR = "MAGNETAR",
-  BLACK_HOLE = "BLACK_HOLE",
-  QUASAR = "QUASAR",
-  WHITE_DWARF = "WHITE_DWARF",
-  WOLF_RAYET = "WOLF_RAYET",
-  T_TAURI = "T_TAURI",
-  HERBIG_AE_BE = "HERBIG_AE_BE",
-  PROTOSTAR = "PROTOSTAR",
+  I = "I", // Supergiants
+  II = "II", // Bright giants
+  III = "III", // Giants
+  IV = "IV", // Subgiants
+  V = "V", // Main sequence
+  VI = "VI", // Subdwarfs
+  VII = "VII", // White dwarfs
 }
 
 export enum CelestialStatus {
