@@ -41,6 +41,11 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
   private loggedAccretionDisks: Set<string> = new Set();
 
   /**
+   * Store references to ring meshes for shadow casting registration
+   */
+  private ringMeshes: Map<string, THREE.Object3D[]> = new Map();
+
+  /**
    * Create a new ring system renderer
    *
    * @param parentRenderer Optional parent renderer that owns this ring system
@@ -225,6 +230,9 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       options?.segments ??
       this.getSegmentsForDetailLevel(options?.detailLevel, 128);
 
+    // Store ring meshes for shadow casting registration
+    const meshesForThisGroup: THREE.Object3D[] = [];
+
     sortedRings.forEach((ringProps, index) => {
       const scaledInnerRadius =
         (ringProps.innerRadius ?? parentRadius) / parentRadius;
@@ -310,9 +318,69 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       ringMesh.name = `${object.celestialObjectId}-ring-${index}`;
       ringMesh.rotation.x = -Math.PI / 2;
       ringGroup.add(ringMesh);
+
+      // Store ring mesh for shadow casting registration
+      meshesForThisGroup.push(ringMesh);
     });
 
+    // Store ring meshes for this object
+    const objectKey = `${object.celestialObjectId}-${options?.detailLevel || "high"}`;
+    this.ringMeshes.set(objectKey, meshesForThisGroup);
+
     return ringGroup;
+  }
+
+  /**
+   * Gets ring meshes for a specific detail level.
+   * Used by parent renderers to register shadow casters.
+   *
+   * @param objectId The celestial object ID that owns the rings
+   * @param detailLevel The detail level of rings to get (defaults to 'high')
+   * @returns Array of ring meshes or undefined if not found
+   */
+  public getRingMeshes(
+    objectId: string,
+    detailLevel: string = "high",
+  ): THREE.Object3D[] | undefined {
+    const objectKey = `${objectId}-${detailLevel}`;
+    return this.ringMeshes.get(objectKey);
+  }
+
+  /**
+   * Registers ring shadow casters with the provided lighting manager.
+   * This should be called by parent renderers after ring creation.
+   *
+   * @param lightingManager The lighting manager to register with
+   * @param object The celestial object that owns the rings
+   * @param parentObject The parent celestial object that rings orbit around
+   * @param detailLevel The detail level of rings to register (defaults to 'high')
+   */
+  public registerWithLightingManager(
+    lightingManager: any,
+    object: RenderableCelestialObject,
+    parentObject: RenderableCelestialObject,
+    detailLevel: string = "high",
+  ): void {
+    const ringMeshes = this.getRingMeshes(
+      object.celestialObjectId,
+      detailLevel,
+    );
+
+    if (!ringMeshes || ringMeshes.length === 0) {
+      return;
+    }
+
+    if (
+      lightingManager &&
+      typeof lightingManager.registerRingShadowCasters === "function"
+    ) {
+      lightingManager.registerRingShadowCasters(
+        `${object.celestialObjectId}-rings`,
+        ringMeshes,
+        object,
+        parentObject,
+      );
+    }
   }
 
   /**
@@ -382,6 +450,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     }
 
     this.ringMaterials.clear();
+    this.ringMeshes.clear();
     this.loggedAccretionDisks.clear();
 
     // Call parent dispose method

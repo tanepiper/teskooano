@@ -7,6 +7,7 @@ This plugin provides enhanced celestial object icons with special support for ex
 ### Star Icons
 
 - **Main Sequence Stars**: Spectral class-based gradients (O, B, A, F, G, K, M, L, T, Y)
+- **Starburst Effect**: All stars (except black holes) now feature a static JWST-style starburst (cross/spike) effect, making them visually distinct from planets. The effect uses 6 radiating lines with a soft glow, inspired by JWST imagery.
 - **Exotic Stellar Types**: Special visual effects for different star types:
   - **Pulsars/Magnetars**: Animated beam effects
   - **Black Holes**: Accretion disk with event horizon
@@ -79,6 +80,7 @@ The `generateIconConfig()` function automatically creates appropriate configurat
 
 ### Static Effects
 
+- **Starburst (JWST-style)**: All stars (except black holes) display a static cross/spike effect to visually differentiate them from planets. This effect is not animated and is colored to match the star's main color or gradient.
 - **Atmospheric Glow**: Blurred stroke effects for atmospheres
 - **Ring Systems**: Elliptical rings with configurable angles
 - **Comet Tails**: Directional tail effects

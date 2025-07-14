@@ -279,6 +279,25 @@ export abstract class BaseGasGiantRenderer<
   /**
    * Dispose of all materials and textures.
    */
+  /**
+   * Registers ring shadow casters with the lighting manager if rings exist.
+   * @param lightingManager The lighting manager to register with
+   * @param object The celestial object
+   */
+  public registerRingShadowCasters(
+    lightingManager: any,
+    object: RenderableCelestialObject,
+  ): void {
+    if (this.ringSystemRenderer) {
+      this.ringSystemRenderer.registerWithLightingManager(
+        lightingManager,
+        object,
+        object, // parent object (same as object for gas giants)
+        "high", // register the high detail level for shadow casting
+      );
+    }
+  }
+
   dispose(): void {
     super.dispose();
     if (this.ringSystemRenderer) {

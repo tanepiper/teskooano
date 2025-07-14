@@ -170,6 +170,35 @@ export class CelestialIconComponent extends HTMLElement {
     this.layers.appendChild(protostar);
   }
 
+  /**
+   * Creates a static starburst (JWST-style) effect for stars
+   */
+  private createStarburstEffect(color: string = "#fff"): void {
+    if (!this.layers) return;
+    const numSpikes = 6;
+    const length = 12;
+    const center = 12;
+    const strokeWidth = 1.2;
+    const opacity = 0.7;
+    for (let i = 0; i < numSpikes; i++) {
+      const angle = (i * 360) / numSpikes;
+      const rad = (angle * Math.PI) / 180;
+      const x2 = center + length * Math.cos(rad);
+      const y2 = center + length * Math.sin(rad);
+      const spike = document.createElementNS(SVG_NS, "line");
+      spike.setAttribute("class", "starburst-spike");
+      spike.setAttribute("x1", String(center));
+      spike.setAttribute("y1", String(center));
+      spike.setAttribute("x2", String(x2));
+      spike.setAttribute("y2", String(y2));
+      spike.setAttribute("stroke", color);
+      spike.setAttribute("stroke-width", String(strokeWidth));
+      spike.setAttribute("opacity", String(opacity));
+      spike.setAttribute("stroke-linecap", "round");
+      this.layers.appendChild(spike);
+    }
+  }
+
   private renderIcon(): void {
     this.clear();
     if (!this._config || !this.layers) return;
@@ -206,9 +235,16 @@ export class CelestialIconComponent extends HTMLElement {
       atmo.setAttribute("class", "atmosphere");
       atmo.setAttribute("cx", "12");
       atmo.setAttribute("cy", "12");
-      atmo.setAttribute("r", "11");
-      atmo.style.stroke = atmosphere.color;
-      atmo.style.strokeWidth = `${atmosphere.size}px`;
+      // Make star atmospheres smaller
+      if (base.type === "star") {
+        atmo.setAttribute("r", "6");
+        atmo.style.stroke = atmosphere.color;
+        atmo.style.strokeWidth = `${Math.max(1, atmosphere.size * 0.7)}px`;
+      } else {
+        atmo.setAttribute("r", "11");
+        atmo.style.stroke = atmosphere.color;
+        atmo.style.strokeWidth = `${atmosphere.size}px`;
+      }
       this.layers.appendChild(atmo);
     }
 
@@ -247,6 +283,15 @@ export class CelestialIconComponent extends HTMLElement {
           break;
       }
     }
+    // 3.5. Render starburst for all stars except black holes
+    if (base.type === "star" && special !== "black-hole") {
+      // Use gradient start color if available, else base.color
+      let color = base.color;
+      if (base.gradient && Array.isArray(base.gradient)) {
+        color = base.gradient[0];
+      }
+      this.createStarburstEffect(color);
+    }
 
     // 4. Render base planet/star (middle layer)
     const body = document.createElementNS(SVG_NS, "circle");
@@ -254,7 +299,11 @@ export class CelestialIconComponent extends HTMLElement {
     body.setAttribute("cx", "12");
     body.setAttribute("cy", "12");
 
-    const radius = base.radius ?? 8;
+    // Make star bodies smaller
+    let radius = base.radius ?? 8;
+    if (base.type === "star") {
+      radius = 6;
+    }
     body.setAttribute("r", String(radius));
 
     if (procedural) {

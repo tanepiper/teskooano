@@ -63,6 +63,10 @@ template.innerHTML = `
     .protostar-shape {
         animation: protostar-pulse 3s ease-in-out infinite;
     }
+    .starburst-spike {
+        filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px currentColor);
+        pointer-events: none;
+    }
     
     @keyframes protostar-pulse {
         0%, 100% { opacity: 0.6; transform: scale(1); }

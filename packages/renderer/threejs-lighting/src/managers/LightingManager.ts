@@ -20,6 +20,14 @@ export class LightingManager {
     string,
     { mesh: THREE.Object3D; object: RenderableCelestialObject }
   > = new Map();
+  private ringShadowCasters: Map<
+    string,
+    {
+      meshes: THREE.Object3D[];
+      object: RenderableCelestialObject;
+      parentObject: RenderableCelestialObject;
+    }
+  > = new Map();
   private scene: THREE.Scene;
   private lastShadowUpdate: number = 0;
 
@@ -71,6 +79,40 @@ export class LightingManager {
   }
 
   /**
+   * Registers a ring system as shadow casters.
+   * @param objectId - The ID of the ring system object.
+   * @param meshes - Array of THREE.Object3D ring meshes that should cast shadows.
+   * @param object - The RenderableCelestialObject for the ring system.
+   * @param parentObject - The parent planet/star that the rings orbit.
+   */
+  public registerRingShadowCasters(
+    objectId: string,
+    meshes: THREE.Object3D[],
+    object: RenderableCelestialObject,
+    parentObject: RenderableCelestialObject,
+  ): void {
+    this.ringShadowCasters.set(objectId, { meshes, object, parentObject });
+    // Initially disable shadow casting - will be enabled dynamically
+    meshes.forEach((mesh) => {
+      mesh.castShadow = false;
+    });
+  }
+
+  /**
+   * Unregisters ring shadow casters.
+   * @param objectId - The ID of the ring system object.
+   */
+  public unregisterRingShadowCasters(objectId: string): void {
+    const entry = this.ringShadowCasters.get(objectId);
+    if (entry) {
+      entry.meshes.forEach((mesh) => {
+        mesh.castShadow = false;
+      });
+      this.ringShadowCasters.delete(objectId);
+    }
+  }
+
+  /**
    * Unregisters a light source component.
    * @param objectId - The ID of the celestial object whose light source should be removed.
    */
@@ -82,6 +124,7 @@ export class LightingManager {
       this.lightSources.delete(objectId);
     }
     this.unregisterShadowCaster(objectId);
+    this.unregisterRingShadowCasters(objectId);
   }
 
   /**
@@ -97,7 +140,7 @@ export class LightingManager {
     const now = performance.now();
     if (
       this.lightSources.size > 0 &&
-      this.shadowCasters.size > 1 &&
+      (this.shadowCasters.size > 1 || this.ringShadowCasters.size > 0) &&
       now - this.lastShadowUpdate > SHADOW_UPDATE_INTERVAL
     ) {
       this.updateShadowCasting();
@@ -152,6 +195,62 @@ export class LightingManager {
         },
       );
     });
+
+    // Handle ring shadow casting
+    this.ringShadowCasters.forEach(
+      ({ meshes, object: ringObject, parentObject }, ringId) => {
+        // Initially disable all ring shadow casting
+        meshes.forEach((mesh) => {
+          mesh.castShadow = false;
+        });
+
+        // For each light source, check if rings should cast shadows
+        this.lightSources.forEach((lightComponent) => {
+          const lightPos = lightComponent.light.position;
+
+          // Check if rings cast shadows on their parent planet
+          let shouldCastShadowOnParent = false;
+          if (
+            this.isRingBlockingLightToObject(
+              lightPos,
+              ringObject.position,
+              parentObject.position,
+              parentObject.radius || 1,
+            )
+          ) {
+            shouldCastShadowOnParent = true;
+          }
+
+          // Check if rings cast shadows on other objects (moons, planets)
+          let shouldCastShadowOnOthers = false;
+          this.shadowCasters.forEach(
+            ({ mesh: targetMesh, object: targetObject }, targetId) => {
+              if (targetId === lightComponent.celestialObject.celestialObjectId)
+                return; // Target is the light source
+              if (targetId === parentObject.celestialObjectId) return; // Already checked parent above
+
+              if (
+                this.isRingBlockingLightToObject(
+                  lightPos,
+                  ringObject.position,
+                  targetObject.position,
+                  targetObject.radius || 1,
+                )
+              ) {
+                shouldCastShadowOnOthers = true;
+              }
+            },
+          );
+
+          // Enable shadow casting if rings are blocking light to any object
+          if (shouldCastShadowOnParent || shouldCastShadowOnOthers) {
+            meshes.forEach((mesh) => {
+              mesh.castShadow = true;
+            });
+          }
+        });
+      },
+    );
   }
 
   /**
@@ -231,6 +330,73 @@ export class LightingManager {
   }
 
   /**
+   * Determines if a ring system is blocking light from a source to a target object.
+   * Rings are flat disc-shaped objects, so this uses different geometry than spherical shadow casting.
+   * @param lightPos - Position of the light source.
+   * @param ringPos - Position of the ring system (center).
+   * @param targetPos - Position of the shadow target.
+   * @param targetRadius - Radius of the target object.
+   * @returns True if the ring is blocking light to the target.
+   */
+  private isRingBlockingLightToObject(
+    lightPos: THREE.Vector3,
+    ringPos: THREE.Vector3,
+    targetPos: THREE.Vector3,
+    targetRadius: number,
+  ): boolean {
+    // Vector from light to target
+    const lightToTarget = new THREE.Vector3().subVectors(targetPos, lightPos);
+    const lightToTargetDistance = lightToTarget.length();
+
+    // Vector from light to ring center
+    const lightToRing = new THREE.Vector3().subVectors(ringPos, lightPos);
+    const lightToRingDistance = lightToRing.length();
+
+    // Ring must be between light and target
+    if (lightToRingDistance >= lightToTargetDistance) {
+      return false;
+    }
+
+    // Ring must be within shadow distance threshold
+    if (lightToRingDistance > SHADOW_DISTANCE_THRESHOLD) {
+      return false;
+    }
+
+    // Calculate where the light ray intersects the ring plane
+    // Assuming ring is in XZ plane (Y is up/normal)
+    const lightToTargetNorm = lightToTarget.normalize();
+
+    // Project ring position onto light-to-target line
+    const projectionLength = lightToRing.dot(lightToTargetNorm);
+    const intersectionPoint = new THREE.Vector3()
+      .copy(lightToTargetNorm)
+      .multiplyScalar(projectionLength)
+      .add(lightPos);
+
+    // Distance from ring center to intersection point
+    const ringToIntersection = ringPos.distanceTo(intersectionPoint);
+
+    // For ring shadow calculation, we need to check if the intersection point
+    // is within the ring's area. Since we don't have exact ring dimensions here,
+    // we'll use a simplified approach based on the parent object's radius.
+    // Typical ring systems extend 1.5-3x the parent radius
+    const estimatedRingOuterRadius = targetRadius * 2.5;
+    const estimatedRingInnerRadius = targetRadius * 1.2;
+
+    // Check if intersection is within ring area (between inner and outer radius)
+    const isInRingArea =
+      ringToIntersection >= estimatedRingInnerRadius &&
+      ringToIntersection <= estimatedRingOuterRadius;
+
+    // Check if target is close to the ring plane (within a reasonable height)
+    const ringPlaneHeight = Math.abs(targetPos.y - ringPos.y);
+    const maxRingThickness = targetRadius * 0.1; // Rings are typically very thin
+    const isNearRingPlane = ringPlaneHeight <= maxRingThickness;
+
+    return isInRingArea && isNearRingPlane;
+  }
+
+  /**
    * Calculates the most influential light sources for a given target object.
    * This method iterates through all available lights and scores them based on
    * their distance and intensity to find the most significant ones.
@@ -285,5 +451,6 @@ export class LightingManager {
     });
     this.lightSources.clear();
     this.shadowCasters.clear();
+    this.ringShadowCasters.clear();
   }
 }

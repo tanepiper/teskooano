@@ -121,6 +121,11 @@ export function createMesh(
   if (lodLevels && lodLevels.length > 0) {
     const lod = createLodObject(object, lodLevels);
 
+    // Register ring shadow casters if the object has rings and we have a lighting manager
+    if (options.lightingManager) {
+      renderer.registerRingShadowCasters(options.lightingManager, object);
+    }
+
     if (debug) {
       console.debug(
         `[GasGiant:createMesh] Created LOD with ${lodLevels.length} levels for ${object.celestialObjectId}`,

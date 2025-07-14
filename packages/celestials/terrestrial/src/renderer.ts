@@ -486,4 +486,23 @@ export class BaseTerrestrialRenderer<
   public getLOD(object: RenderableCelestialObject): THREE.LOD | undefined {
     return super.getLOD(object);
   }
+
+  /**
+   * Registers ring shadow casters with the lighting manager if rings exist.
+   * @param lightingManager The lighting manager to register with
+   * @param object The celestial object
+   */
+  public registerRingShadowCasters(
+    lightingManager: any,
+    object: RenderableCelestialObject,
+  ): void {
+    if (this.ringSystemRenderer) {
+      this.ringSystemRenderer.registerWithLightingManager(
+        lightingManager,
+        object,
+        object, // parent object (same as object for planets)
+        "high", // register the high detail level for shadow casting
+      );
+    }
+  }
 }

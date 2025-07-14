@@ -170,6 +170,8 @@ export class ObjectLifecycleManager {
       mesh.castShadow = false; // Initially disabled
       mesh.receiveShadow = true; // Can receive shadows from other planets
       this.lightingManager.registerShadowCaster(objectId, mesh, object);
+
+      // Ring shadow casters are registered by the mesh creators after LOD creation
     }
 
     // For comets, the mesh is an LOD object. The label should be added
@@ -254,6 +256,7 @@ export class ObjectLifecycleManager {
     this.lensingHandler.removeLensingObject(objectId); // Remove from lensing
     this.lightingManager.unregister(objectId); // Remove associated light
     this.lightingManager.unregisterShadowCaster(objectId); // Remove shadow caster registration
+    this.lightingManager.unregisterRingShadowCasters(`${objectId}-rings`); // Remove ring shadow casters
 
     // Clean up specialized renderers associated with this object ID
     const starRenderer = this.starRenderers.get(objectId);
