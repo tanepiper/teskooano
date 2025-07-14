@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -11,17 +11,18 @@ import {
 } from "@teskooano/data-types";
 
 const JUPITER_REAL_MASS_KG = 1.89819e27;
-const JUPITER_REAL_RADIUS_M = 69911000;
+const JUPITER_REAL_RADIUS_M = 69911 * KM; // Mean radius
+const JUPITER_EQUATORIAL_RADIUS_M = 71492 * KM; // Equatorial radius for ring calculations
 const JUPITER_TEMP_K = 165;
 const JUPITER_ALBEDO = 0.538;
-const JUPITER_SMA_AU = 5.2044;
+const JUPITER_SMA_AU = 5.2038; // Corrected to match astronomical data
 const JUPITER_ECC = 0.0489;
-const JUPITER_INC_DEG = 1.305;
+const JUPITER_INC_DEG = 1.303; // Corrected to match astronomical data
 const JUPITER_LAN_DEG = 100.464;
-const JUPITER_AOP_DEG = 14.331 + JUPITER_LAN_DEG;
-const JUPITER_MA_DEG = 34.351;
-const JUPITER_ORBITAL_PERIOD_S = 3.74336e8;
-const JUPITER_SIDEREAL_ROTATION_PERIOD_S = 35730.0;
+const JUPITER_AOP_DEG = 273.867; // Corrected to match astronomical data
+const JUPITER_MA_DEG = 20.02; // Corrected to match astronomical data
+const JUPITER_ORBITAL_PERIOD_S = 374335776; // 11.862 years in seconds
+const JUPITER_SIDEREAL_ROTATION_PERIOD_S = 35730.0; // 9.925 hours (already correct)
 const JUPITER_AXIAL_TILT_DEG = 3.13;
 
 /**
@@ -49,7 +50,7 @@ export function initializeJupiterPlanet(parentId: string): string {
       eccentricity: JUPITER_ECC,
       inclination: JUPITER_INC_DEG * DEG_TO_RAD,
       longitudeOfAscendingNode: JUPITER_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: (JUPITER_AOP_DEG - JUPITER_LAN_DEG) * DEG_TO_RAD,
+      argumentOfPeriapsis: (JUPITER_AOP_DEG - JUPITER_LAN_DEG) * DEG_TO_RAD, // 273.867° - 100.464° = 173.403°
       meanAnomaly: JUPITER_MA_DEG * DEG_TO_RAD,
       period_s: JUPITER_ORBITAL_PERIOD_S,
       siderealRotationPeriod_s: JUPITER_SIDEREAL_ROTATION_PERIOD_S,
@@ -76,23 +77,11 @@ export function initializeJupiterPlanet(parentId: string): string {
       emissiveIntensity: 0.1,
       rings: [
         {
-          // Main Ring (corresponds to the brightest part of Jupiter's ring system)
-          innerRadius: 1.72 * JUPITER_REAL_RADIUS_M, // ~122,500 km from Jupiter's center
-          outerRadius: 1.8 * JUPITER_REAL_RADIUS_M, // ~129,000 km from Jupiter's center
-          density: 0.05,
-          opacity: 0.2,
-          color: "#b86139",
-          type: RockyType.DUST,
-          texture: "textures/ring_dust.png",
-          rotationRate: 0.002, // Faster rotation rate based on Keplerian mechanics
-          composition: ["dust", "micron-sized particles"],
-        } as RingProperties,
-        {
-          // Halo Ring (inner, thicker part of Jupiter's ring system)
-          innerRadius: 1.4 * JUPITER_REAL_RADIUS_M, // ~100,000 km from Jupiter's center
-          outerRadius: 1.72 * JUPITER_REAL_RADIUS_M, // ~122,500 km from Jupiter's center
-          density: 0.01,
-          opacity: 0.2,
+          // Halo Ring (innermost, extends vertically above/below ring plane)
+          innerRadius: JUPITER_EQUATORIAL_RADIUS_M + 21500 * KM, // ~92,000 km from Jupiter's center
+          outerRadius: JUPITER_EQUATORIAL_RADIUS_M + 51000 * KM, // ~122,500 km from Jupiter's center
+          density: 0.005,
+          opacity: 0.1,
           color: "#904826",
           type: RockyType.DUST,
           texture: "textures/ring_dust_faint.png",
@@ -100,28 +89,40 @@ export function initializeJupiterPlanet(parentId: string): string {
           composition: ["submicron dust"],
         } as RingProperties,
         {
-          // Amalthea Gossamer Ring
-          innerRadius: 1.8 * JUPITER_REAL_RADIUS_M, // ~129,000 km from Jupiter's center
-          outerRadius: 2.54 * JUPITER_REAL_RADIUS_M, // ~182,000 km from Jupiter's center
-          density: 0.002,
-          opacity: 0.01,
-          color: "#8B4513",
+          // Main Ring (brightest part of Jupiter's ring system)
+          innerRadius: JUPITER_EQUATORIAL_RADIUS_M + 51000 * KM, // ~122,500 km from Jupiter's center
+          outerRadius: JUPITER_EQUATORIAL_RADIUS_M + 57500 * KM, // ~129,000 km from Jupiter's center
+          density: 0.02,
+          opacity: 0.15,
+          color: "#c49f8e",
+          type: RockyType.DUST,
+          texture: "textures/ring_dust.png",
+          rotationRate: 0.002, // Based on Keplerian mechanics
+          composition: ["dust", "micron-sized particles"],
+        } as RingProperties,
+        {
+          // Amalthea Gossamer Ring (extends to Amalthea's orbit)
+          innerRadius: JUPITER_EQUATORIAL_RADIUS_M + 57500 * KM, // ~129,000 km from Jupiter's center
+          outerRadius: JUPITER_EQUATORIAL_RADIUS_M + 110000 * KM, // ~181,300 km from Jupiter's center
+          density: 0.001,
+          opacity: 0.05,
+          color: "#c49f8e",
           type: RockyType.DUST,
           texture: "textures/ring_dust_very_faint.png",
           rotationRate: 0.0015,
-          composition: ["fine dust"],
+          composition: ["fine dust from Amalthea"],
         } as RingProperties,
         {
-          // Thebe Gossamer Ring
-          innerRadius: 2.54 * JUPITER_REAL_RADIUS_M, // ~182,000 km from Jupiter's center
-          outerRadius: 3.1 * JUPITER_REAL_RADIUS_M, // ~221,900 km from Jupiter's center
-          density: 0.001,
-          opacity: 0.005,
-          color: "#8B4513",
+          // Thebe Gossamer Ring (extends to Thebe's orbit)
+          innerRadius: JUPITER_EQUATORIAL_RADIUS_M + 110000 * KM, // ~181,300 km from Jupiter's center
+          outerRadius: JUPITER_EQUATORIAL_RADIUS_M + 150800 * KM, // ~222,000 km from Jupiter's center
+          density: 0.0005,
+          opacity: 0.1,
+          color: "#c49f8e",
           type: RockyType.DUST,
           texture: "textures/ring_dust_very_faint.png",
           rotationRate: 0.001,
-          composition: ["very fine dust"],
+          composition: ["very fine dust from Thebe"],
         } as RingProperties,
       ],
     } as GasGiantProperties,

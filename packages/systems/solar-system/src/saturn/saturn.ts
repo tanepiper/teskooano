@@ -12,17 +12,18 @@ import {
 } from "@teskooano/data-types";
 
 const SATURN_MASS_KG = 5.6834e26;
-const SATURN_REAL_RADIUS_M = 58232 * KM;
+const SATURN_REAL_RADIUS_M = 58232 * KM; // Mean radius
+const SATURN_EQUATORIAL_RADIUS_M = 60268 * KM; // Equatorial radius for ring calculations
 const SATURN_TEMP_K = 134;
 const SATURN_ALBEDO = 0.499;
 const SATURN_SMA_AU = 9.5826;
 const SATURN_ECC = 0.0565;
 const SATURN_INC_DEG = 2.485;
 const SATURN_LAN_DEG = 113.665;
-const SATURN_AOP_DEG = 93.056 + SATURN_LAN_DEG;
-const SATURN_MA_DEG = 49.954;
-const SATURN_ORBITAL_PERIOD_S = 9.29598e8;
-const SATURN_SIDEREAL_ROTATION_PERIOD_S = 38362.0;
+const SATURN_AOP_DEG = 339.392; // Corrected to match astronomical data
+const SATURN_MA_DEG = 317.02; // Corrected to match astronomical data
+const SATURN_ORBITAL_PERIOD_S = 929502060; // 29.4475 years in seconds
+const SATURN_SIDEREAL_ROTATION_PERIOD_S = 38018; // 10h 33m 38s in seconds
 const SATURN_AXIAL_TILT_DEG = 26.73;
 
 /**
@@ -50,7 +51,7 @@ export function initializeSaturnPlanet(parentId: string): string {
       eccentricity: SATURN_ECC,
       inclination: SATURN_INC_DEG * DEG_TO_RAD,
       longitudeOfAscendingNode: SATURN_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: (SATURN_AOP_DEG - SATURN_LAN_DEG) * DEG_TO_RAD,
+      argumentOfPeriapsis: (SATURN_AOP_DEG - SATURN_LAN_DEG) * DEG_TO_RAD, // 339.392° - 113.665° = 225.727°
       meanAnomaly: SATURN_MA_DEG * DEG_TO_RAD,
       period_s: SATURN_ORBITAL_PERIOD_S,
       siderealRotationPeriod_s: SATURN_SIDEREAL_ROTATION_PERIOD_S,
@@ -76,53 +77,70 @@ export function initializeSaturnPlanet(parentId: string): string {
       emissiveColor: "#F0E68C20",
       emissiveIntensity: 0.05,
       rings: [
+        // D Ring (innermost, very sparse)
         {
-          innerRadius: SATURN_REAL_RADIUS_M * 1.15,
-          outerRadius: SATURN_REAL_RADIUS_M * 1.28,
-          density: 0.02,
-          opacity: 0.05,
+          innerRadius: SATURN_EQUATORIAL_RADIUS_M + 7000 * KM,
+          outerRadius: SATURN_EQUATORIAL_RADIUS_M + 14600 * KM,
+          density: 0.001,
+          opacity: 0.01,
           color: "#BDB7AB",
           type: RockyType.DUST,
           texture: "textures/ring_dust_subtle.png",
           rotationRate: 0.002,
           composition: ["fine dust"],
         } as RingProperties,
+        // C Ring (sparse, ice and dust)
         {
-          innerRadius: SATURN_REAL_RADIUS_M * 1.28,
-          outerRadius: SATURN_REAL_RADIUS_M * 1.58,
-          density: 0.2,
-          opacity: 0.15,
+          innerRadius: SATURN_EQUATORIAL_RADIUS_M + 14600 * KM,
+          outerRadius: SATURN_EQUATORIAL_RADIUS_M + 32000 * KM,
+          density: 0.05,
+          opacity: 0.1,
           color: "#A9A190",
           type: RockyType.ICE_DUST,
           texture: "textures/ring_c_ring.png",
           rotationRate: 0.0018,
           composition: ["dirty ice", "dust"],
         } as RingProperties,
+        // B Ring (densest, bright ice particles)
         {
-          innerRadius: SATURN_REAL_RADIUS_M * 1.58,
-          outerRadius: SATURN_REAL_RADIUS_M * 2.02,
-          density: 0.8,
-          opacity: 0.7,
+          innerRadius: SATURN_EQUATORIAL_RADIUS_M + 32000 * KM,
+          outerRadius: SATURN_EQUATORIAL_RADIUS_M + 51800 * KM,
+          density: 0.9,
+          opacity: 0.8,
           color: "#E0DDCF",
           type: RockyType.ICE,
           texture: "textures/ring_b_ring.png",
           rotationRate: 0.0015,
           composition: ["water ice particles"],
         } as RingProperties,
+        // Cassini Division (gap - represented as very sparse ring)
         {
-          innerRadius: SATURN_REAL_RADIUS_M * 2.1,
-          outerRadius: SATURN_REAL_RADIUS_M * 2.35,
-          density: 0.5,
-          opacity: 0.5,
+          innerRadius: SATURN_EQUATORIAL_RADIUS_M + 51800 * KM,
+          outerRadius: SATURN_EQUATORIAL_RADIUS_M + 56200 * KM,
+          density: 0.001,
+          opacity: 0.02,
+          color: "#555555",
+          type: RockyType.DUST,
+          texture: "textures/ring_dust_subtle.png",
+          rotationRate: 0.0014,
+          composition: ["sparse particles"],
+        } as RingProperties,
+        // A Ring (bright, ice particles)
+        {
+          innerRadius: SATURN_EQUATORIAL_RADIUS_M + 56200 * KM,
+          outerRadius: SATURN_EQUATORIAL_RADIUS_M + 80000 * KM,
+          density: 0.6,
+          opacity: 0.6,
           color: "#DAD4C5",
           type: RockyType.ICE,
           texture: "textures/ring_a_ring.png",
           rotationRate: 0.0012,
           composition: ["water ice"],
         } as RingProperties,
+        // F Ring (narrow, dynamic)
         {
-          innerRadius: SATURN_REAL_RADIUS_M * 2.41,
-          outerRadius: SATURN_REAL_RADIUS_M * 2.415,
+          innerRadius: SATURN_EQUATORIAL_RADIUS_M + 80200 * KM,
+          outerRadius: SATURN_EQUATORIAL_RADIUS_M + 80800 * KM,
           density: 0.1,
           opacity: 0.3,
           color: "#CCC5B8",
@@ -131,22 +149,24 @@ export function initializeSaturnPlanet(parentId: string): string {
           rotationRate: 0.0011,
           composition: ["ice particles", "dust"],
         } as RingProperties,
+        // G Ring (very sparse)
         {
-          innerRadius: SATURN_REAL_RADIUS_M * 2.92,
-          outerRadius: SATURN_REAL_RADIUS_M * 2.93,
-          density: 0.005,
-          opacity: 0.02,
+          innerRadius: SATURN_EQUATORIAL_RADIUS_M + 166000 * KM,
+          outerRadius: SATURN_EQUATORIAL_RADIUS_M + 175000 * KM,
+          density: 0.0001,
+          opacity: 0.005,
           color: "#B8B0A2",
           type: RockyType.DUST,
           texture: "textures/ring_g_ring.png",
           rotationRate: 0.0009,
           composition: ["micrometer dust"],
         } as RingProperties,
+        // E Ring (extremely sparse, extends very far)
         {
-          innerRadius: SATURN_REAL_RADIUS_M * 3.11,
-          outerRadius: SATURN_REAL_RADIUS_M * 8.29,
-          density: 0.0001,
-          opacity: 0.005,
+          innerRadius: SATURN_EQUATORIAL_RADIUS_M + 180000 * KM,
+          outerRadius: SATURN_EQUATORIAL_RADIUS_M + 480000 * KM,
+          density: 0.00001,
+          opacity: 0.001,
           color: "#95a0a8",
           type: RockyType.ICE_DUST,
           texture: "textures/ring_e_ring.png",

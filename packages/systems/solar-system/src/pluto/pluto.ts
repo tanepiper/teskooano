@@ -76,12 +76,7 @@ export function initializePlutoDwarfPlanet(parentId: string): string {
         "rocky core",
         "tholins",
       ],
-      atmosphere: {
-        glowColor: "#E0FFFF",
-        intensity: 0.1,
-        power: 1.2,
-        thickness: 0.05,
-      },
+      atmosphere: undefined,
       surface: {
         type: SurfaceType.ICE_FLATS,
         color: "#F5E8D1",
