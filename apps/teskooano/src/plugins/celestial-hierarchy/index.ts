@@ -18,10 +18,10 @@ export const plugin = createPanelPlugin({
   target: "engine-toolbar",
   order: 10,
   initialPosition: {
-    top: 150,
-    left: 50,
-    width: 400,
-    height: 650,
+    top: 100,
+    left: window.innerWidth - 450,
+    width: 450,
+    height: 750,
   },
   additionalComponents: [
     {

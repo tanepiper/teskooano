@@ -93,7 +93,22 @@ export class HierarchyManager {
           );
 
           if (!wasChanged) {
-            this.handleCapture(obj, physicsState, allObjects, allPhysicsStates);
+            // Check for binary star hierarchy updates before general capture
+            const binaryChanged = this.handleBinaryStarHierarchy(
+              obj,
+              physicsState,
+              allObjects,
+              allPhysicsStates,
+            );
+
+            if (!binaryChanged) {
+              this.handleCapture(
+                obj,
+                physicsState,
+                allObjects,
+                allPhysicsStates,
+              );
+            }
           }
         }
       }
@@ -215,6 +230,115 @@ export class HierarchyManager {
       }
     }
     return false; // No change was made
+  }
+
+  /**
+   * Handles dynamic hierarchy changes in binary star systems.
+   * Allows planets to switch between binary stars based on gravitational dominance.
+   * @param obj The celestial object to check.
+   * @param physicsState The current physics state of the object.
+   * @param allObjects A map of all celestial objects.
+   * @param allPhysicsStates An array of all physics states.
+   * @returns True if the object's hierarchy was changed, false otherwise.
+   */
+  private handleBinaryStarHierarchy(
+    obj: CelestialObject,
+    physicsState: PhysicsStateReal,
+    allObjects: Record<string, CelestialObject>,
+    allPhysicsStates: PhysicsStateReal[],
+  ): boolean {
+    // Only handle planets, dwarf planets, and moons in binary star systems
+    if (
+      obj.type !== CelestialType.PLANET &&
+      obj.type !== CelestialType.DWARF_PLANET &&
+      obj.type !== CelestialType.MOON
+    ) {
+      return false;
+    }
+
+    // Find all stars in the system
+    const stars = Object.values(allObjects).filter(
+      (celestial) => celestial.type === CelestialType.STAR,
+    );
+
+    // Only proceed if we have exactly 2 stars (binary system)
+    if (stars.length !== 2) {
+      return false;
+    }
+
+    const [star1, star2] = stars;
+    const star1State = allPhysicsStates.find((p) => p.id === star1.id);
+    const star2State = allPhysicsStates.find((p) => p.id === star2.id);
+
+    if (!star1State || !star2State) {
+      return false;
+    }
+
+    // Calculate gravitational forces from both stars
+    const distanceToStar1Sq = physicsState.position_m
+      .clone()
+      .sub(star1State.position_m)
+      .lengthSq();
+
+    const distanceToStar2Sq = physicsState.position_m
+      .clone()
+      .sub(star2State.position_m)
+      .lengthSq();
+
+    if (distanceToStar1Sq === 0 || distanceToStar2Sq === 0) {
+      return false;
+    }
+
+    const force1 = star1.realMass_kg / distanceToStar1Sq;
+    const force2 = star2.realMass_kg / distanceToStar2Sq;
+
+    // Determine which star should be the parent
+    const dominantStar = force1 > force2 ? star1 : star2;
+    const currentParentId = obj.currentParentId ?? obj.parentId;
+
+    // If the object is already orbiting the gravitationally dominant star, no change needed
+    if (currentParentId === dominantStar.id) {
+      return false;
+    }
+
+    // Check if the current parent is one of the binary stars
+    const currentParent = currentParentId ? allObjects[currentParentId] : null;
+    const isCurrentlyOrbitingStar =
+      currentParent &&
+      currentParent.type === CelestialType.STAR &&
+      (currentParent.id === star1.id || currentParent.id === star2.id);
+
+    if (!isCurrentlyOrbitingStar) {
+      return false; // Object is not currently orbiting either star
+    }
+
+    // Add hysteresis to prevent rapid switching
+    const forceRatio = Math.max(force1, force2) / Math.min(force1, force2);
+    const SWITCHING_THRESHOLD = 1.5; // Dominant star must be 50% stronger
+
+    if (forceRatio < SWITCHING_THRESHOLD) {
+      return false; // Forces are too close, avoid switching
+    }
+
+    // Switch the object to orbit the gravitationally dominant star
+    celestialActions.updateCelestialObject(obj.id, {
+      parentId: dominantStar.id,
+      currentParentId: dominantStar.id,
+    });
+
+    // Dispatch event for UI updates
+    document.dispatchEvent(
+      new CustomEvent("celestial-hierarchy-changed", {
+        detail: {
+          objectId: obj.id,
+          newParentId: dominantStar.id,
+          binaryStarSwitch: true,
+          reason: `Switched to gravitationally dominant star: ${dominantStar.name}`,
+        },
+      }),
+    );
+
+    return true; // Hierarchy was changed
   }
 
   /**

@@ -26,6 +26,13 @@
 .dv-groupview-floating {
   container-name: floating-groupview;
   container-type: inline-size;
+  opacity: 0.8;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  isolation: isolate;
+  position: relative;
+  z-index: 1;
 }
 
 @container floating-groupview (max-width: 1920px) {
