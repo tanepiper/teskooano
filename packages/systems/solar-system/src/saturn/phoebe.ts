@@ -10,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const PHOEBE_MASS_KG = 8.28e18;
-const PHOEBE_RADIUS_M = 106500;
+const PHOEBE_RADIUS_M = 106.5 * KM;
 const PHOEBE_SMA_M = 12947780 * KM;
 const PHOEBE_ECC = 0.158;
 const PHOEBE_INC_DEG = 173.04; // Retrograde orbit

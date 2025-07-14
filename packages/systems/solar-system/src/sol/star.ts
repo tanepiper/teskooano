@@ -6,9 +6,10 @@ import {
   PhysicsStateReal,
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
+import { KM } from "@teskooano/core-physics";
 
 const SUN_MASS_KG = 1.9885e30;
-const SUN_RADIUS_M = 696340000;
+const SUN_RADIUS_M = 696340 * KM; // Solar radius
 const SUN_TEMP_K = 5778;
 const SUN_LUMINOSITY = 1.0;
 

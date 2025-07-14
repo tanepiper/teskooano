@@ -10,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const DIONE_MASS_KG = 1.095e21;
-const DIONE_RADIUS_M = 561400;
+const DIONE_RADIUS_M = 561.4 * KM;
 const DIONE_SMA_M = 377396 * KM;
 const DIONE_ECC = 0.0022;
 const DIONE_INC_DEG = 0.019;

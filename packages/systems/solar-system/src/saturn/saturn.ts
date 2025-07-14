@@ -15,14 +15,14 @@ const SATURN_MASS_KG = 5.6834e26;
 const SATURN_REAL_RADIUS_M = 58232 * KM; // Mean radius
 const SATURN_EQUATORIAL_RADIUS_M = 60268 * KM; // Equatorial radius for ring calculations
 const SATURN_TEMP_K = 134;
-const SATURN_ALBEDO = 0.499;
+const SATURN_ALBEDO = 0.342; // Bond albedo
 const SATURN_SMA_AU = 9.5826;
 const SATURN_ECC = 0.0565;
 const SATURN_INC_DEG = 2.485;
 const SATURN_LAN_DEG = 113.665;
 const SATURN_AOP_DEG = 339.392; // Corrected to match astronomical data
-const SATURN_MA_DEG = 317.02; // Corrected to match astronomical data
-const SATURN_ORBITAL_PERIOD_S = 929502060; // 29.4475 years in seconds
+const SATURN_MA_DEG = 317.02;
+const SATURN_ORBITAL_PERIOD_S = 929292480; // 10,755.70 days in seconds
 const SATURN_SIDEREAL_ROTATION_PERIOD_S = 38018; // 10h 33m 38s in seconds
 const SATURN_AXIAL_TILT_DEG = 26.73;
 
@@ -51,7 +51,7 @@ export function initializeSaturnPlanet(parentId: string): string {
       eccentricity: SATURN_ECC,
       inclination: SATURN_INC_DEG * DEG_TO_RAD,
       longitudeOfAscendingNode: SATURN_LAN_DEG * DEG_TO_RAD,
-      argumentOfPeriapsis: (SATURN_AOP_DEG - SATURN_LAN_DEG) * DEG_TO_RAD, // 339.392° - 113.665° = 225.727°
+      argumentOfPeriapsis: SATURN_AOP_DEG * DEG_TO_RAD,
       meanAnomaly: SATURN_MA_DEG * DEG_TO_RAD,
       period_s: SATURN_ORBITAL_PERIOD_S,
       siderealRotationPeriod_s: SATURN_SIDEREAL_ROTATION_PERIOD_S,

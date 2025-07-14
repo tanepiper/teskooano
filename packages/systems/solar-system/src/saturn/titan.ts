@@ -11,7 +11,7 @@ import {
 
 // Verified Wikipedia/NASA data for Titan - largest moon of Saturn with thick atmosphere
 const TITAN_MASS_KG = 1.34518e23; // Wikipedia verified: (1.34518±0.00003)×10²³ kg
-const TITAN_RADIUS_M = 2574730; // Wikipedia verified: 2574.73±0.09 km (mean radius)
+const TITAN_RADIUS_M = 2574.73 * KM; // Wikipedia verified: 2574.73±0.09 km (mean radius)
 const TITAN_SMA_M = 1221870 * KM; // Wikipedia verified: 1,221,870 km semi-major axis
 const TITAN_ECC = 0.0288; // Wikipedia verified
 const TITAN_INC_DEG = 0.34854; // Wikipedia verified: 0.34854° to Saturn's equator

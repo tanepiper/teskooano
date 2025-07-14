@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -9,19 +9,19 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const PLUTO_MASS_KG = 1.303e22; // Verified correct
-const PLUTO_RADIUS_M = 1188300; // Verified correct
-const PLUTO_TEMP_K = 44; // Verified correct
-const PLUTO_ALBEDO = 0.58; // Verified correct
-const PLUTO_SMA_AU = 39.482; // Verified correct
-const PLUTO_ECC = 0.2488; // Verified correct
-const PLUTO_INC_DEG = 17.16; // Verified correct
-const PLUTO_LAN_DEG = 110.3; // Verified correct
-const PLUTO_AOP_DEG = 113.834; // Corrected argument of periapsis
-const PLUTO_MA_DEG = 19.045; // Corrected mean anomaly
-const PLUTO_ORBITAL_PERIOD_S = 7.824e9; // Verified correct
-const PLUTO_SIDEREAL_ROTATION_PERIOD_S = -551855.0; // Verified correct (retrograde)
-const PLUTO_AXIAL_TILT_DEG = 119.59; // Verified correct
+const PLUTO_MASS_KG = 1.3025e22;
+const PLUTO_RADIUS_M = 1188.3 * KM; // Mean radius
+const PLUTO_TEMP_K = 44; // Mean temperature
+const PLUTO_ALBEDO = 0.72; // Bond albedo
+const PLUTO_SMA_AU = 39.482;
+const PLUTO_ECC = 0.2488;
+const PLUTO_INC_DEG = 17.16;
+const PLUTO_LAN_DEG = 110.299;
+const PLUTO_AOP_DEG = 113.834;
+const PLUTO_MA_DEG = 14.53;
+const PLUTO_ORBITAL_PERIOD_S = 7824384; // 90,560 days
+const PLUTO_SIDEREAL_ROTATION_PERIOD_S = -551856.992; // -6.387230 days (retrograde)
+const PLUTO_AXIAL_TILT_DEG = 119.51;
 
 /**
  * Initializes Pluto using accurate data.

@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -10,17 +10,17 @@ import {
 } from "@teskooano/data-types";
 
 const MARS_MASS_KG = 6.4171e23;
-const MARS_RADIUS_M = 3389500;
-const MARS_TEMP_K = 210; // Mean temperature (range: 130-308 K)
-const MARS_ALBEDO = 0.17; // Bond albedo
-const MARS_SMA_AU = 1.523679; // Corrected semi-major axis
-const MARS_ECC = 0.0934; // Corrected eccentricity
-const MARS_INC_DEG = 1.848; // Corrected inclination
-const MARS_LAN_DEG = 49.558; // Corrected longitude of ascending node
-const MARS_AOP_DEG = 286.502; // Corrected argument of periapsis
-const MARS_MA_DEG = 19.373; // Corrected mean anomaly
-const MARS_ORBITAL_PERIOD_S = 5.9354294e7; // Corrected orbital period (686.980 days)
-const MARS_SIDEREAL_ROTATION_PERIOD_S = 88642.66; // 24h 37m 22.66s
+const MARS_RADIUS_M = 3389.5 * KM; // Mean radius
+const MARS_TEMP_K = 209; // Blackbody temperature
+const MARS_ALBEDO = 0.17; // Geometric albedo
+const MARS_SMA_AU = 1.52368055; // Semi-major axis
+const MARS_ECC = 0.0934; // Eccentricity
+const MARS_INC_DEG = 1.85; // Inclination to ecliptic
+const MARS_LAN_DEG = 49.57854; // Longitude of ascending node
+const MARS_AOP_DEG = 286.5; // Argument of perihelion
+const MARS_MA_DEG = 19.412; // Mean anomaly
+const MARS_ORBITAL_PERIOD_S = 59355072; // 686.980 days
+const MARS_SIDEREAL_ROTATION_PERIOD_S = 88642.7; // 24h 37m 22.7s
 const MARS_AXIAL_TILT_DEG = 25.19;
 
 /**

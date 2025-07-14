@@ -9,7 +9,7 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const OBERON_REAL_RADIUS_M = 761400;
+const OBERON_REAL_RADIUS_M = 761.4 * KM;
 
 /**
  * Creates Oberon.

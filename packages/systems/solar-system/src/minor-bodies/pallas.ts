@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -10,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const PALLAS_MASS_KG = 2.05e20;
-const PALLAS_RADIUS_M = 256500; // Mean radius ~513 km diameter
+const PALLAS_RADIUS_M = 256.5 * KM; // Mean radius ~513 km diameter
 const PALLAS_TEMP_K = 164;
 const PALLAS_ALBEDO = 0.159;
 const PALLAS_SMA_AU = 2.77;

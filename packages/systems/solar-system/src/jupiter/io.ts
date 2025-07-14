@@ -12,7 +12,7 @@ import {
 
 // Verified Wikipedia data for Io
 const IO_MASS_KG = 8.9319e22; // Wikipedia verified
-const IO_RADIUS_M = 1821600; // Mean radius from Wikipedia: 1821.6±0.5 km
+const IO_RADIUS_M = 1821.6 * KM; // Mean radius from Wikipedia: 1821.6±0.5 km
 const IO_SMA_M = 421800 * KM; // Wikipedia verified: 421,800 km
 const IO_ECC = 0.0041; // Wikipedia verified
 const IO_INC_DEG = 0.05; // Wikipedia verified: 0.050° to Jupiter's equator

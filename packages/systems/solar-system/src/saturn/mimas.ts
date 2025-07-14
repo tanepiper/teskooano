@@ -11,7 +11,7 @@ import {
 } from "@teskooano/data-types";
 
 const MIMAS_MASS_KG = 3.75e19;
-const MIMAS_RADIUS_M = 198200;
+const MIMAS_RADIUS_M = 198.2 * KM;
 const MIMAS_SMA_M = 185539 * KM;
 const MIMAS_ECC = 0.0196;
 const MIMAS_INC_DEG = 1.566;

@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -10,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const MERCURY_MASS_KG = 3.3011e23;
-const MERCURY_RADIUS_M = 2439700;
+const MERCURY_RADIUS_M = 2439.7 * KM; // Mean radius
 const MERCURY_TEMP_K = 437; // Blackbody temperature (Wikipedia)
 const MERCURY_ALBEDO = 0.142;
 const MERCURY_SMA_AU = 0.387098;

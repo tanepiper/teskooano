@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialStatus,
@@ -10,19 +10,19 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const EARTH_MASS_KG = 5.97237e24;
-const EARTH_RADIUS_M = 6371000;
-const EARTH_TEMP_K = 288;
-const EARTH_ALBEDO = 0.8;
+const EARTH_MASS_KG = 5.972168e24;
+const EARTH_RADIUS_M = 6371.0 * KM; // Mean radius
+const EARTH_TEMP_K = 255; // Blackbody temperature
+const EARTH_ALBEDO = 0.294; // Bond albedo
 const EARTH_SMA_AU = 1.0;
-const EARTH_ECC = 0.01671;
+const EARTH_ECC = 0.0167086;
 const EARTH_INC_DEG = 0.00005;
 const EARTH_LAN_DEG = -11.26064;
-const EARTH_AOP_DEG = 102.94719;
-const EARTH_MA_DEG = 100.46435;
-const EARTH_ORBITAL_PERIOD_S = 3.15581e7;
-const EARTH_SIDEREAL_ROTATION_PERIOD_S = 86164.1;
-const EARTH_AXIAL_TILT_DEG = 23.43928;
+const EARTH_AOP_DEG = 114.20783;
+const EARTH_MA_DEG = 358.617;
+const EARTH_ORBITAL_PERIOD_S = 31558149.5; // 365.256363004 days
+const EARTH_SIDEREAL_ROTATION_PERIOD_S = 86164.1; // 23h 56m 4.100s
+const EARTH_AXIAL_TILT_DEG = 23.4392811;
 
 /**
  * Initializes Earth using accurate data.

@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -11,7 +11,7 @@ import {
 } from "@teskooano/data-types";
 
 const VESTA_MASS_KG = 2.59e20;
-const VESTA_RADIUS_M = 262700;
+const VESTA_RADIUS_M = 262.7 * KM;
 const VESTA_TEMP_K = 164;
 const VESTA_ALBEDO = 0.423;
 const VESTA_SMA_AU = 2.362;

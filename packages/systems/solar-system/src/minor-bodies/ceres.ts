@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -11,7 +11,7 @@ import {
 } from "@teskooano/data-types";
 
 const CERES_MASS_KG = 9.393e20;
-const CERES_RADIUS_M = 473000;
+const CERES_RADIUS_M = 473 * KM;
 const CERES_TEMP_K = 167;
 const CERES_ALBEDO = 0.09;
 const CERES_SMA_AU = 2.766;

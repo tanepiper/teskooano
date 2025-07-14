@@ -9,7 +9,7 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const UMBRIEL_REAL_RADIUS_M = 584700;
+const UMBRIEL_REAL_RADIUS_M = 584.7 * KM;
 
 /**
  * Creates Umbriel.

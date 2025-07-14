@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialStatus,
@@ -10,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const ERIS_MASS_KG = 1.66e22;
-const ERIS_RADIUS_M = 1163000;
+const ERIS_RADIUS_M = 1163 * KM;
 const ERIS_TEMP_K = 30;
 const ERIS_ALBEDO = 0.96;
 const ERIS_SMA_AU = 67.668;
@@ -24,8 +24,8 @@ const ERIS_SIDEREAL_ROTATION_PERIOD_S = 25.9 * 3600;
 const ERIS_AXIAL_TILT_DEG = 0.0;
 
 const DYSNOMIA_MASS_KG = 3.5e18;
-const DYSNOMIA_RADIUS_M = 175000;
-const DYSNOMIA_SMA_M = 37350000;
+const DYSNOMIA_RADIUS_M = 175 * KM;
+const DYSNOMIA_SMA_M = 37350 * KM;
 const DYSNOMIA_ECC = 0.0062;
 const DYSNOMIA_INC_DEG = 142.0;
 const DYSNOMIA_LAN_DEG = 139.0;

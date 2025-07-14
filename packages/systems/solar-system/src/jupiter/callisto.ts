@@ -12,7 +12,7 @@ import {
 
 // Verified Wikipedia data for Callisto - most heavily cratered moon in Solar System
 const CALLISTO_MASS_KG = 1.075938e23; // Wikipedia verified: (1.075938±0.000137)×10²³ kg
-const CALLISTO_RADIUS_M = 2410300; // Wikipedia verified: 2410.3±1.5 km (mean radius)
+const CALLISTO_RADIUS_M = 2410.3 * KM; // Wikipedia verified: 2410.3±1.5 km (mean radius)
 const CALLISTO_SMA_M = 1882700 * KM; // Wikipedia verified: 1,882,700 km semi-major axis
 const CALLISTO_ECC = 0.0074; // Wikipedia verified
 const CALLISTO_INC_DEG = 0.192; // Wikipedia verified: 0.192° to local Laplace plane

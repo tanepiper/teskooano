@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -10,10 +10,19 @@ import {
   type GasGiantProperties,
 } from "@teskooano/data-types";
 
+const NEPTUNE_MASS_KG = 1.02409e26;
+const NEPTUNE_RADIUS_M = 24622 * KM; // Mean radius
+const NEPTUNE_TEMP_K = 72;
+const NEPTUNE_ALBEDO = 0.29; // Bond albedo
+const NEPTUNE_SMA_AU = 30.07;
+const NEPTUNE_ECC = 0.008678;
+const NEPTUNE_INC_DEG = 1.77;
+const NEPTUNE_LAN_DEG = 131.783;
+const NEPTUNE_AOP_DEG = 273.187;
+const NEPTUNE_MA_DEG = 259.883;
+const NEPTUNE_ORBITAL_PERIOD_S = 5200848000; // 60,195 days
+const NEPTUNE_SIDEREAL_ROTATION_PERIOD_S = 58000; // 16h 6m 36s
 const NEPTUNE_AXIAL_TILT_DEG = 28.32;
-const NEPTUNE_SIDEREAL_ROTATION_PERIOD_S = 16.11 * 3600; // 16.11 hours
-const NEPTUNE_ORBITAL_PERIOD_S = 5.199e9; // 164.8 years
-const NEPTUNE_REAL_RADIUS_M = 24622000; // Equatorial radius
 
 /**
  * Initializes Neptune planet with accurate data.
@@ -30,15 +39,15 @@ export function initializeNeptunePlanet(parentId: string): string {
     type: CelestialType.GAS_GIANT,
     status: CelestialStatus.ACTIVE,
     parentId: parentId,
-    realMass_kg: 1.02413e26, // Corrected mass
-    realRadius_m: NEPTUNE_REAL_RADIUS_M,
+    realMass_kg: NEPTUNE_MASS_KG,
+    realRadius_m: NEPTUNE_RADIUS_M,
     orbit: {
-      realSemiMajorAxis_m: 30.07 * AU, // Verified correct
-      eccentricity: 0.00859048, // Corrected eccentricity
-      inclination: 1.77004 * DEG_TO_RAD, // Corrected inclination
-      longitudeOfAscendingNode: 131.78422 * DEG_TO_RAD, // Corrected longitude of ascending node
-      argumentOfPeriapsis: 273.187 * DEG_TO_RAD, // Verified correct
-      meanAnomaly: 256.228 * DEG_TO_RAD, // Corrected mean anomaly
+      realSemiMajorAxis_m: NEPTUNE_SMA_AU * AU,
+      eccentricity: NEPTUNE_ECC,
+      inclination: NEPTUNE_INC_DEG * DEG_TO_RAD,
+      longitudeOfAscendingNode: NEPTUNE_LAN_DEG * DEG_TO_RAD,
+      argumentOfPeriapsis: NEPTUNE_AOP_DEG * DEG_TO_RAD,
+      meanAnomaly: NEPTUNE_MA_DEG * DEG_TO_RAD,
       period_s: NEPTUNE_ORBITAL_PERIOD_S,
       siderealRotationPeriod_s: NEPTUNE_SIDEREAL_ROTATION_PERIOD_S,
       axialTilt: new OSVector3(
@@ -47,12 +56,12 @@ export function initializeNeptunePlanet(parentId: string): string {
         Math.sin(neptuneAxialTiltRad),
       ).normalize(),
     },
-    temperature: 72, // Verified correct
-    albedo: 0.442, // Corrected Bond albedo
+    temperature: NEPTUNE_TEMP_K,
+    albedo: NEPTUNE_ALBEDO,
 
     physicsStateReal: {
       id: neptuneId,
-      mass_kg: 1.02413e26,
+      mass_kg: NEPTUNE_MASS_KG,
       position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
       velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
     },
@@ -67,8 +76,8 @@ export function initializeNeptunePlanet(parentId: string): string {
       emissiveIntensity: 0.08,
       rings: [
         {
-          innerRadius: NEPTUNE_REAL_RADIUS_M * 1.7,
-          outerRadius: NEPTUNE_REAL_RADIUS_M * 1.701,
+          innerRadius: NEPTUNE_RADIUS_M * 1.7,
+          outerRadius: NEPTUNE_RADIUS_M * 1.701,
           density: 0.05,
           opacity: 0.1,
           color: "#c8c8d4",
@@ -78,8 +87,8 @@ export function initializeNeptunePlanet(parentId: string): string {
           composition: ["dust"],
         },
         {
-          innerRadius: NEPTUNE_REAL_RADIUS_M * 2.15,
-          outerRadius: NEPTUNE_REAL_RADIUS_M * 2.151,
+          innerRadius: NEPTUNE_RADIUS_M * 2.15,
+          outerRadius: NEPTUNE_RADIUS_M * 2.151,
           density: 0.1,
           opacity: 0.2,
           color: "#c8c8d4",
@@ -89,8 +98,8 @@ export function initializeNeptunePlanet(parentId: string): string {
           composition: ["dust", "small rocks"],
         },
         {
-          innerRadius: NEPTUNE_REAL_RADIUS_M * 2.29,
-          outerRadius: NEPTUNE_REAL_RADIUS_M * 2.56,
+          innerRadius: NEPTUNE_RADIUS_M * 2.29,
+          outerRadius: NEPTUNE_RADIUS_M * 2.56,
           density: 0.2,
           opacity: 0.3,
           color: "#c8c8d4",
@@ -100,8 +109,8 @@ export function initializeNeptunePlanet(parentId: string): string {
           composition: ["dark dust"],
         },
         {
-          innerRadius: NEPTUNE_REAL_RADIUS_M * 2.56,
-          outerRadius: NEPTUNE_REAL_RADIUS_M * 2.561,
+          innerRadius: NEPTUNE_RADIUS_M * 2.56,
+          outerRadius: NEPTUNE_RADIUS_M * 2.561,
           density: 0.08,
           opacity: 0.15,
           color: "#c8c8d4",

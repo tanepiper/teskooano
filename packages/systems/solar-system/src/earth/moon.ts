@@ -1,4 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
+import { KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialStatus,
@@ -10,8 +11,8 @@ import {
 } from "@teskooano/data-types";
 
 const LUNA_MASS_KG = 7.342e22; // Verified correct from NASA fact sheet
-const LUNA_RADIUS_M = 1737400; // Verified correct (mean radius)
-const LUNA_SMA_M = 384399000; // Verified correct from NASA fact sheet (384,399 km)
+const LUNA_RADIUS_M = 1737.4 * KM; // Verified correct (mean radius)
+const LUNA_SMA_M = 384399 * KM; // Verified correct from NASA fact sheet (384,399 km)
 const LUNA_ECC = 0.0549; // Verified correct
 const LUNA_INC_DEG = 5.145; // Verified correct to ecliptic
 const LUNA_LAN_DEG = 125.08; // Current value - variable due to precession

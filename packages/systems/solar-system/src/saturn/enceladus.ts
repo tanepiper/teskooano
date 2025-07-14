@@ -10,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const ENCELADUS_MASS_KG = 1.08e20;
-const ENCELADUS_RADIUS_M = 252100;
+const ENCELADUS_RADIUS_M = 252.1 * KM;
 const ENCELADUS_SMA_M = 238020 * KM;
 const ENCELADUS_ECC = 0.0047;
 const ENCELADUS_INC_DEG = 0.019;

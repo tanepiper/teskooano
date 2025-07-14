@@ -12,7 +12,7 @@ import {
 
 // Verified Wikipedia data for Ganymede - largest moon in Solar System
 const GANYMEDE_MASS_KG = 1.4819e23; // Wikipedia verified
-const GANYMEDE_RADIUS_M = 2634100; // Wikipedia verified: 2634.1±0.3 km
+const GANYMEDE_RADIUS_M = 2634.1 * KM; // Wikipedia verified: 2634.1±0.3 km
 const GANYMEDE_SMA_M = 1070400 * KM; // Wikipedia verified: 1,070,400 km semi-major axis
 const GANYMEDE_ECC = 0.0013; // Wikipedia verified
 const GANYMEDE_INC_DEG = 0.2; // Wikipedia verified: 0.20° to Jupiter's equator

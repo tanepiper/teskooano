@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -9,10 +9,19 @@ import {
   type GasGiantProperties,
 } from "@teskooano/data-types";
 
-const URANUS_SIDEREAL_ROTATION_PERIOD_S = -0.71833 * 24 * 3600; // Retrograde rotation
+const URANUS_MASS_KG = 8.681e25;
+const URANUS_RADIUS_M = 25362 * KM; // Mean radius
+const URANUS_TEMP_K = 76;
+const URANUS_ALBEDO = 0.3; // Bond albedo
+const URANUS_SMA_AU = 19.19126;
+const URANUS_ECC = 0.04717;
+const URANUS_INC_DEG = 0.773;
+const URANUS_LAN_DEG = 74.006;
+const URANUS_AOP_DEG = 96.998857;
+const URANUS_MA_DEG = 142.2386;
+const URANUS_ORBITAL_PERIOD_S = 2651486832; // 84.0205 years = 30,688.5 days
+const URANUS_SIDEREAL_ROTATION_PERIOD_S = -62092.5104; // -0.718661 days (retrograde)
 const URANUS_AXIAL_TILT_DEG = 97.77;
-const URANUS_ORBITAL_PERIOD_S = 2.651e9; // 84.0205 years
-const URANUS_REAL_RADIUS_M = 25362000; // Equatorial radius
 
 /**
  * Creates Uranus.
@@ -30,15 +39,15 @@ export function initializeUranusPlanet(parentId: string): string {
     type: CelestialType.GAS_GIANT,
     status: CelestialStatus.ACTIVE,
     parentId: parentId,
-    realMass_kg: 8.6813e25, // Corrected mass
-    realRadius_m: URANUS_REAL_RADIUS_M,
+    realMass_kg: URANUS_MASS_KG,
+    realRadius_m: URANUS_RADIUS_M,
     orbit: {
-      realSemiMajorAxis_m: 19.19126 * AU, // Corrected semi-major axis
-      eccentricity: 0.04725744, // Corrected eccentricity
-      inclination: 0.773 * DEG_TO_RAD, // Corrected inclination
-      longitudeOfAscendingNode: 74.006 * DEG_TO_RAD,
-      argumentOfPeriapsis: 96.998857 * DEG_TO_RAD, // Corrected argument of periapsis
-      meanAnomaly: 142.2386 * DEG_TO_RAD, // Corrected mean anomaly
+      realSemiMajorAxis_m: URANUS_SMA_AU * AU,
+      eccentricity: URANUS_ECC,
+      inclination: URANUS_INC_DEG * DEG_TO_RAD,
+      longitudeOfAscendingNode: URANUS_LAN_DEG * DEG_TO_RAD,
+      argumentOfPeriapsis: URANUS_AOP_DEG * DEG_TO_RAD,
+      meanAnomaly: URANUS_MA_DEG * DEG_TO_RAD,
       siderealRotationPeriod_s: URANUS_SIDEREAL_ROTATION_PERIOD_S,
       axialTilt: new OSVector3(
         0,
@@ -47,10 +56,11 @@ export function initializeUranusPlanet(parentId: string): string {
       ).normalize(),
       period_s: URANUS_ORBITAL_PERIOD_S,
     },
-    temperature: 76, // Corrected temperature
+    temperature: URANUS_TEMP_K,
+    albedo: URANUS_ALBEDO,
     physicsStateReal: {
       id: uranusId,
-      mass_kg: 8.6813e25,
+      mass_kg: URANUS_MASS_KG,
       position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
       velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
     },
@@ -65,8 +75,8 @@ export function initializeUranusPlanet(parentId: string): string {
       emissiveIntensity: 0.05,
       rings: [
         {
-          innerRadius: URANUS_REAL_RADIUS_M * 1.64,
-          outerRadius: URANUS_REAL_RADIUS_M * 1.641,
+          innerRadius: URANUS_RADIUS_M * 1.64,
+          outerRadius: URANUS_RADIUS_M * 1.641,
           density: 0.1,
           opacity: 0.4,
           color: "#A0A0A0",
@@ -76,8 +86,8 @@ export function initializeUranusPlanet(parentId: string): string {
           composition: ["dark dust"],
         },
         {
-          innerRadius: URANUS_REAL_RADIUS_M * 1.7,
-          outerRadius: URANUS_REAL_RADIUS_M * 1.701,
+          innerRadius: URANUS_RADIUS_M * 1.7,
+          outerRadius: URANUS_RADIUS_M * 1.701,
           density: 0.15,
           opacity: 0.5,
           color: "#989898",
@@ -87,8 +97,8 @@ export function initializeUranusPlanet(parentId: string): string {
           composition: ["dark dust"],
         },
         {
-          innerRadius: URANUS_REAL_RADIUS_M * 1.74,
-          outerRadius: URANUS_REAL_RADIUS_M * 1.741,
+          innerRadius: URANUS_RADIUS_M * 1.74,
+          outerRadius: URANUS_RADIUS_M * 1.741,
           density: 0.15,
           opacity: 0.5,
           color: "#989898",
@@ -98,8 +108,8 @@ export function initializeUranusPlanet(parentId: string): string {
           composition: ["dark dust"],
         },
         {
-          innerRadius: URANUS_REAL_RADIUS_M * 1.77,
-          outerRadius: URANUS_REAL_RADIUS_M * 1.771,
+          innerRadius: URANUS_RADIUS_M * 1.77,
+          outerRadius: URANUS_RADIUS_M * 1.771,
           density: 0.15,
           opacity: 0.5,
           color: "#989898",
@@ -109,8 +119,8 @@ export function initializeUranusPlanet(parentId: string): string {
           composition: ["dark dust"],
         },
         {
-          innerRadius: URANUS_REAL_RADIUS_M * 1.8,
-          outerRadius: URANUS_REAL_RADIUS_M * 1.801,
+          innerRadius: URANUS_RADIUS_M * 1.8,
+          outerRadius: URANUS_RADIUS_M * 1.801,
           density: 0.15,
           opacity: 0.5,
           color: "#989898",
@@ -120,8 +130,8 @@ export function initializeUranusPlanet(parentId: string): string {
           composition: ["dark dust"],
         },
         {
-          innerRadius: URANUS_REAL_RADIUS_M * 1.81,
-          outerRadius: URANUS_REAL_RADIUS_M * 1.811,
+          innerRadius: URANUS_RADIUS_M * 1.81,
+          outerRadius: URANUS_RADIUS_M * 1.811,
           density: 0.2,
           opacity: 0.6,
           color: "#B0B0B0",
@@ -131,8 +141,8 @@ export function initializeUranusPlanet(parentId: string): string {
           composition: ["dark dust", "small ice particles"],
         },
         {
-          innerRadius: URANUS_REAL_RADIUS_M * 1.95,
-          outerRadius: URANUS_REAL_RADIUS_M * 1.96,
+          innerRadius: URANUS_RADIUS_M * 1.95,
+          outerRadius: URANUS_RADIUS_M * 1.96,
           density: 0.8,
           opacity: 0.8,
           color: "#C0C0C0",
@@ -142,8 +152,8 @@ export function initializeUranusPlanet(parentId: string): string {
           composition: ["ice boulders", "dust"],
         },
         {
-          innerRadius: URANUS_REAL_RADIUS_M * 2.55,
-          outerRadius: URANUS_REAL_RADIUS_M * 3.8,
+          innerRadius: URANUS_RADIUS_M * 2.55,
+          outerRadius: URANUS_RADIUS_M * 3.8,
           density: 0.05,
           opacity: 0.1,
           color: "#87CEEB",
@@ -153,8 +163,8 @@ export function initializeUranusPlanet(parentId: string): string {
           composition: ["blue dust"],
         },
         {
-          innerRadius: URANUS_REAL_RADIUS_M * 3.8,
-          outerRadius: URANUS_REAL_RADIUS_M * 3.86,
+          innerRadius: URANUS_RADIUS_M * 3.8,
+          outerRadius: URANUS_RADIUS_M * 3.86,
           density: 0.02,
           opacity: 0.05,
           color: "#D3D3D3",

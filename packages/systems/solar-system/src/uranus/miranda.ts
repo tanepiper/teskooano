@@ -9,7 +9,7 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const MIRANDA_REAL_RADIUS_M = 235800;
+const MIRANDA_REAL_RADIUS_M = 235.8 * KM;
 
 /**
  * Creates Miranda.

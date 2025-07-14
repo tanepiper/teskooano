@@ -9,7 +9,7 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const ARIEL_REAL_RADIUS_M = 578900;
+const ARIEL_REAL_RADIUS_M = 578.9 * KM;
 
 /**
  * Creates Ariel.

@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -10,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const MAKEMAKE_MASS_KG = 3.1e21;
-const MAKEMAKE_RADIUS_M = 715000;
+const MAKEMAKE_RADIUS_M = 715 * KM;
 const MAKEMAKE_TEMP_K = 30;
 const MAKEMAKE_ALBEDO = 0.82;
 const MAKEMAKE_SMA_AU = 45.43;
@@ -25,8 +25,8 @@ const MAKEMAKE_AXIAL_TILT_DEG = 0.0;
 
 // MK2 (S/2015 (136472) 1) - Makemake's moon
 const MK2_MASS_KG = 1.0e17; // Estimated based on ~175 km diameter
-const MK2_RADIUS_M = 87500; // ~175 km diameter
-const MK2_SMA_M = 21000000; // ~21,000 km from Makemake
+const MK2_RADIUS_M = 87.5 * KM; // ~175 km diameter
+const MK2_SMA_M = 21000 * KM; // ~21,000 km from Makemake
 const MK2_ECC = 0.0; // Assumed circular
 const MK2_INC_DEG = 0.0; // Assumed coplanar
 const MK2_LAN_DEG = 0.0;

@@ -10,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const IAPETUS_MASS_KG = 1.806e21;
-const IAPETUS_RADIUS_M = 734500;
+const IAPETUS_RADIUS_M = 734.5 * KM;
 const IAPETUS_SMA_M = 3560820 * KM;
 const IAPETUS_ECC = 0.0283;
 const IAPETUS_INC_DEG = 15.47;

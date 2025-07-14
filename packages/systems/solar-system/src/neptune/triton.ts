@@ -28,7 +28,7 @@ export function initializeTriton(parentId: string): void {
     status: CelestialStatus.ACTIVE,
     parentId: parentId,
     realMass_kg: 2.139e22,
-    realRadius_m: 1353400,
+    realRadius_m: 1353.4 * KM,
     orbit: {
       realSemiMajorAxis_m: TRITON_SMA_M,
       eccentricity: 0.000016,

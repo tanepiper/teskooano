@@ -1,5 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
-import { AU } from "@teskooano/core-physics";
+import { AU, KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -13,7 +13,7 @@ import {
 } from "@teskooano/data-types";
 
 const HAUMEA_MASS_KG = 4.006e21;
-const HAUMEA_RADIUS_M = 816000; // Mean radius of triaxial ellipsoid
+const HAUMEA_RADIUS_M = 816 * KM; // Mean radius of triaxial ellipsoid
 const HAUMEA_TEMP_K = 32;
 const HAUMEA_ALBEDO = 0.84;
 const HAUMEA_SMA_AU = 43.12;
@@ -28,8 +28,8 @@ const HAUMEA_AXIAL_TILT_DEG = 0.0;
 
 // Hi'iaka - Haumea's larger moon
 const HIIAKA_MASS_KG = 1.79e19; // Estimated based on ~310 km diameter
-const HIIAKA_RADIUS_M = 155000; // ~310 km diameter
-const HIIAKA_SMA_M = 49500000; // ~49,500 km from Haumea
+const HIIAKA_RADIUS_M = 155 * KM; // ~310 km diameter
+const HIIAKA_SMA_M = 49500 * KM; // ~49,500 km from Haumea
 const HIIAKA_ECC = 0.0513;
 const HIIAKA_INC_DEG = 126.356;
 const HIIAKA_LAN_DEG = 205.0;
@@ -40,8 +40,8 @@ const HIIAKA_ALBEDO = 0.08;
 
 // Namaka - Haumea's smaller moon
 const NAMAKA_MASS_KG = 1.79e18; // Estimated based on ~170 km diameter
-const NAMAKA_RADIUS_M = 85000; // ~170 km diameter
-const NAMAKA_SMA_M = 25657000; // ~25,657 km from Haumea
+const NAMAKA_RADIUS_M = 85 * KM; // ~170 km diameter
+const NAMAKA_SMA_M = 25657 * KM; // ~25,657 km from Haumea
 const NAMAKA_ECC = 0.249;
 const NAMAKA_INC_DEG = 113.0;
 const NAMAKA_LAN_DEG = 187.0;
@@ -105,8 +105,8 @@ export function initializeHaumea(parentId: string): void {
       shapeModel: "triaxial", // Triaxial ellipsoid shape
       rings: [
         {
-          innerRadius: 2287000, // ~2,287 km from center
-          outerRadius: 2322000, // ~2,322 km from center
+          innerRadius: 2287 * KM, // ~2,287 km from center
+          outerRadius: 2322 * KM, // ~2,322 km from center
           density: 0.5,
           opacity: 0.5,
           color: "#C0C0C0",

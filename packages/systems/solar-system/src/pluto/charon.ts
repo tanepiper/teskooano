@@ -10,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const CHARON_MASS_KG = 1.586e21;
-const CHARON_RADIUS_M = 606000;
+const CHARON_RADIUS_M = 606 * KM;
 const CHARON_SMA_M = 19591.4 * KM;
 const CHARON_ECC = 0.00005;
 const CHARON_INC_DEG = 0.001;

@@ -10,7 +10,7 @@ import {
   type PlanetProperties,
 } from "@teskooano/data-types";
 
-const TITANIA_REAL_RADIUS_M = 788400;
+const TITANIA_REAL_RADIUS_M = 788.4 * KM;
 
 /**
  * Creates Titania.

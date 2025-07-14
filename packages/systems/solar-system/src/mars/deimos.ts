@@ -1,4 +1,5 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
+import { KM } from "@teskooano/core-physics";
 import { actions } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -11,8 +12,8 @@ import {
 
 // Verified Wikipedia/NASA data for Deimos
 const DEIMOS_MASS_KG = 1.5e15; // Wikipedia verified: 1.5×10¹⁵ kg
-const DEIMOS_RADIUS_M = 6200; // Wikipedia verified: 6.2 km mean radius (12.6 km diameter)
-const DEIMOS_SMA_M = 23460000; // Wikipedia verified: 23,460 km semi-major axis
+const DEIMOS_RADIUS_M = 6.2 * KM; // Wikipedia verified: 6.2 km mean radius (12.6 km diameter)
+const DEIMOS_SMA_M = 23460 * KM; // Wikipedia verified: 23,460 km semi-major axis
 const DEIMOS_ECC = 0.00033; // Wikipedia verified
 const DEIMOS_INC_DEG = 0.93; // Wikipedia verified: 0.93° to Mars's equator
 const DEIMOS_LAN_DEG = 54.3; // Current value

@@ -10,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const TETHYS_MASS_KG = 6.174e20;
-const TETHYS_RADIUS_M = 531100;
+const TETHYS_RADIUS_M = 531.1 * KM;
 const TETHYS_SMA_M = 294619 * KM;
 const TETHYS_ECC = 0.0001;
 const TETHYS_INC_DEG = 1.12;

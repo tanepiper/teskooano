@@ -12,7 +12,7 @@ import {
 
 // Verified Wikipedia/NASA data for Europa
 const EUROPA_MASS_KG = 4.799844e22; // Wikipedia verified: (4.799844±0.000013)×10²² kg
-const EUROPA_RADIUS_M = 1560800; // Wikipedia verified: 1560.8±0.5 km
+const EUROPA_RADIUS_M = 1560.8 * KM; // Wikipedia verified: 1560.8±0.5 km
 const EUROPA_SMA_M = 670900 * KM; // Wikipedia verified: 670,900 km mean orbit radius
 const EUROPA_ECC = 0.009; // Wikipedia verified
 const EUROPA_INC_DEG = 0.47; // Wikipedia verified: 0.470° to Jupiter's equator

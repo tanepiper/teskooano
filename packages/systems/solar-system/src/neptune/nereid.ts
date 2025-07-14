@@ -28,7 +28,7 @@ export function initializeNereid(parentId: string): void {
     status: CelestialStatus.ACTIVE,
     parentId: parentId,
     realMass_kg: 3.1e19,
-    realRadius_m: 170000,
+    realRadius_m: 170 * KM,
 
     orbit: {
       realSemiMajorAxis_m: NEREID_SMA_M,

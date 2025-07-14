@@ -10,7 +10,7 @@ import {
 } from "@teskooano/data-types";
 
 const HYPERION_MASS_KG = 5.58e18;
-const HYPERION_RADIUS_M = 135000;
+const HYPERION_RADIUS_M = 135 * KM;
 const HYPERION_SMA_M = 1481109 * KM;
 const HYPERION_ECC = 0.123;
 const HYPERION_INC_DEG = 0.648;
