@@ -293,7 +293,23 @@ export class CelestialIconComponent extends HTMLElement {
       this.createStarburstEffect(color);
     }
 
-    // 4. Render base planet/star (middle layer)
+    // 5. Render thick ring behind the planet/star
+    if (rings) {
+      const ring = document.createElementNS(SVG_NS, "ellipse");
+      ring.setAttribute("class", "rings back-ring");
+      ring.setAttribute("cx", "12");
+      ring.setAttribute("cy", "12");
+      ring.setAttribute("rx", "10");
+      ring.setAttribute("ry", "4");
+      ring.setAttribute("transform", `rotate(${rings.angle} 12 12)`);
+      ring.setAttribute("fill", "none");
+      ring.setAttribute("stroke", rings.color);
+      ring.setAttribute("stroke-width", "3");
+      ring.setAttribute("opacity", "0.8");
+      this.layers.appendChild(ring);
+    }
+
+    // 4. Render base planet/star (middle layer - this masks the center of the ring)
     const body = document.createElementNS(SVG_NS, "circle");
     body.setAttribute("class", "planet-base");
     body.setAttribute("cx", "12");
@@ -319,17 +335,17 @@ export class CelestialIconComponent extends HTMLElement {
     }
     this.layers.appendChild(body);
 
-    // 5. Render rings (top layer)
+    // 6. Render simple front ring highlight (top portion only for 3D effect)
     if (rings) {
-      const ring = document.createElementNS(SVG_NS, "ellipse");
-      ring.setAttribute("class", "rings");
-      ring.setAttribute("cx", "12");
-      ring.setAttribute("cy", "12");
-      ring.setAttribute("rx", "10");
-      ring.setAttribute("ry", "4");
-      ring.setAttribute("transform", `rotate(${rings.angle} 12 12)`);
-      ring.style.stroke = rings.color;
-      this.layers.appendChild(ring);
+      const frontArc = document.createElementNS(SVG_NS, "path");
+      frontArc.setAttribute("class", "rings front-arc");
+      frontArc.setAttribute("d", "M 4,10 A 10,4 0 0 1 20,10");
+      frontArc.setAttribute("fill", "none");
+      frontArc.setAttribute("stroke", rings.color);
+      frontArc.setAttribute("stroke-width", "2");
+      frontArc.setAttribute("opacity", "0.9");
+      frontArc.setAttribute("transform", `rotate(${rings.angle} 12 12)`);
+      this.layers.appendChild(frontArc);
     }
   }
 }
