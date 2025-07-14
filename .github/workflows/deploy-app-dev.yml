@@ -39,20 +39,21 @@ jobs:
           auto-install: true
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Build App
-        run: |
-          moon run ui-plugin:build
-          moon run teskooano:build
       - name: Build Homepage
         run: |
           moon run website:build
+      - name: Build App
+        run: |
+          moon run ui-plugin:build
+          moon run teskooano:build -- -- -- --env=prod
           mv apps/teskooano/dist apps/website/dist/teskooano
       - name: Build Teskooano (dev)
         run: |
+          git pull origin dev
           git checkout dev
           npm install
           moon run ui-plugin:build
-          moon run teskooano:build
+          moon run teskooano:build -- -- -- --env=dev
           mv apps/teskooano/dist apps/website/dist/teskooano/dev
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

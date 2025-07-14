@@ -19,7 +19,18 @@ try {
 }
 
 const buildTimestamp = new Date().toISOString();
-const basePath = process.env.CI ? "/teskooano" : "/";
+let basePath = process.env.CI ? "teskooano" : "";
+
+// get env var from command line
+const env = process.argv.find((arg) => arg.startsWith("--env="))?.split("=")[1];
+console.log("env", env);
+if (env !== "prod") {
+  basePath = `${basePath}/${env}`;
+}
+
+const assetPath = `${basePath}/assets`;
+console.log("basePath", basePath);
+console.log("assetPath", assetPath);
 
 export default defineConfig({
   plugins: [
@@ -67,7 +78,7 @@ export default defineConfig({
     }),
   ] as PluginOption[],
   base: basePath,
-
+  publicDir: assetPath,
   define: {
     "import.meta.env.PACKAGE_VERSION": JSON.stringify(appVersion),
     "import.meta.env.GIT_COMMIT_HASH": JSON.stringify(gitCommitHash),
