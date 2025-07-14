@@ -72,10 +72,10 @@ template.innerHTML = `
         display: flex;
         align-items: center;
         padding-left: 4px; /* Base padding */
-        min-height: 24px; /* Ensure consistent height */
+        min-height: 32px; /* Increased to match caret height */
     }
     .list-item-content.leaf-node {
-        padding-left: 22px; /* Indent leaf nodes further to align with text after caret */
+        padding-left: 36px; /* Increased indent to align with text after larger caret */
     }
 
     /* Style the caret/arrow container (SPAN) */
@@ -83,12 +83,15 @@ template.innerHTML = `
       cursor: pointer;
       user-select: none;
       display: inline-block; /* Or flex if needed */
-      width: 18px; /* Fixed width for alignment */
-      height: 18px; /* Match button size roughly */
+      width: 32px; /* Increased for better touch target */
+      height: 32px; /* Increased for better touch target */
       flex-shrink: 0;
       margin-right: 4px; /* Space between caret and row */
       position: relative; /* For pseudo-element positioning */
       transition: transform 0.15s ease-out;
+      /* Ensure good touch target on mobile */
+      min-width: 32px;
+      min-height: 32px;
     }
     /* Caret arrow using ::before */
     .caret::before {
@@ -98,7 +101,7 @@ template.innerHTML = `
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 10px; /* Adjust size */
+      font-size: 16px; /* Increased font size for better visibility */
     }
     .caret.caret-down::before {
       transform: translate(-50%, -50%) rotate(90deg);
