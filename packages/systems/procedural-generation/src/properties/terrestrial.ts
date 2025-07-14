@@ -34,7 +34,7 @@ export function getTerrestrialProperties(
     shininess: utils.lerp(8, 9, random()),
     specularStrength: utils.lerp(0.3, 0.33, random()),
     roughness: utils.lerp(0.1, 0.13, random()),
-    ambientLightIntensity: utils.lerp(0.01, 0.02, random()), // Minimal ambient for dark space
+    ambientLightIntensity: utils.lerp(0.25, 0.3, random()), // System-wide minimum ambient for "just enough glow"
     undulation: utils.lerp(0.38, 0.42, random()),
   };
 }

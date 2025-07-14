@@ -529,7 +529,7 @@ function setupBinaryOrbit(
 
   primaryStar.orbit = primaryOrbit;
   companionStar.orbit = companionOrbit;
-  
+
   // In binary systems, both stars orbit each other around their barycenter
   // For the physics system, we need to choose one star as the "parent" for orbital calculations
   // The primary star (more massive) becomes the reference point

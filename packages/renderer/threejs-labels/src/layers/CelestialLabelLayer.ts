@@ -5,7 +5,7 @@ import {
   CelestialType,
   AU_METERS,
 } from "@teskooano/data-types";
-import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
 import {
   CELESTIAL_LABEL_TAG,
   CelestialLabelComponent,
@@ -208,13 +208,22 @@ export class CelestialLabelLayer extends BaseLabelLayer {
   }
 
   /**
-   * Formats distance for display
+   * Formats distance for display with appropriate units
    */
   private _formatDistance(distanceInAu: number): string {
     if (distanceInAu < 0.01) {
-      return `${Math.round(distanceInAu * AU_METERS)} m`;
-    } else if (distanceInAu < 0.1) {
-      return `${Math.round((distanceInAu * AU_METERS) / 1000)} km`;
+      // For distances under 0.01 AU (1.496e+7 m), use shorter metric units
+      const distanceInMeters = distanceInAu * AU_METERS;
+
+      if (distanceInMeters >= 1_000_000_000) {
+        return `${(distanceInMeters / 1_000_000_000).toFixed(1)} Gm`;
+      } else if (distanceInMeters >= 1_000_000) {
+        return `${(distanceInMeters / 1_000_000).toFixed(1)} Mm`;
+      } else if (distanceInMeters >= 1_000) {
+        return `${(distanceInMeters / 1_000).toFixed(1)} km`;
+      } else {
+        return `${distanceInMeters.toFixed(0)} m`;
+      }
     } else if (distanceInAu < 1) {
       return `${distanceInAu.toFixed(2)} AU`;
     } else if (distanceInAu < 100) {

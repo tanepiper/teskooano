@@ -41,7 +41,7 @@ export function getOceanProperties(
     shininess: utils.lerp(40, 50, random()),
     specularStrength: utils.lerp(0.45, 0.55, random()),
     roughness: utils.lerp(0.03, 0.05, random()),
-    ambientLightIntensity: utils.lerp(0.01, 0.02, random()), // Minimal ambient for dark space
+    ambientLightIntensity: utils.lerp(0.25, 0.3, random()), // System-wide minimum ambient for "just enough glow"
     undulation: utils.lerp(0.3, 0.34, random()),
   };
 }

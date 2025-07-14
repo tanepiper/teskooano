@@ -34,7 +34,7 @@ export function getIceProperties(
     shininess: utils.lerp(23, 24, random()),
     specularStrength: utils.lerp(0.47, 0.48, random()),
     roughness: utils.lerp(0.11, 0.12, random()),
-    ambientLightIntensity: utils.lerp(0.01, 0.02, random()), // Minimal ambient for dark space
+    ambientLightIntensity: utils.lerp(0.25, 0.3, random()), // System-wide minimum ambient for "just enough glow"
     undulation: utils.lerp(0.095, 0.105, random()),
   };
 }

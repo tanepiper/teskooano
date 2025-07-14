@@ -128,7 +128,7 @@ export class PlanetMaterialService {
       specularStrength: specificSurfaceProps?.specularStrength ?? 0.3,
       roughness: specificSurfaceProps?.roughness ?? 0.5,
       ambientLightIntensity:
-        specificSurfaceProps?.ambientLightIntensity ?? 0.01, // Minimal ambient for dark space
+        specificSurfaceProps?.ambientLightIntensity ?? 0.25, // System-wide minimum ambient for "just enough glow"
 
       terrainAmplitude: specificSurfaceProps?.terrainAmplitude ?? 1.0,
       terrainSharpness: specificSurfaceProps?.terrainSharpness ?? 1.0,

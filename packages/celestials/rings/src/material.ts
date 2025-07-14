@@ -49,7 +49,7 @@ export class RingMaterial extends ShaderMaterial {
         uShadowCasters: {
           value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
-        uDynamicAmbientIntensity: { value: 0.001 }, // Dynamic ambient uniform
+        uDynamicAmbientIntensity: { value: 0.25 }, // System-wide minimum ambient for "just enough glow"
       },
       vertexShader: ringVertexShader,
       fragmentShader: ringFragmentShader,
@@ -181,7 +181,7 @@ export class AccretionDiskMaterial extends ShaderMaterial {
         uShadowCasters: {
           value: LightArrayUtils.createShadowCasterArray(MAX_SHADOW_CASTERS),
         },
-        uDynamicAmbientIntensity: { value: 0.001 },
+        uDynamicAmbientIntensity: { value: 0.25 }, // System-wide minimum ambient for "just enough glow"
 
         // Accretion Disk Specific Uniforms
         uIsAccretionDisk: { value: true },

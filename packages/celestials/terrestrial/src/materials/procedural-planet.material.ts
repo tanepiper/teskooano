@@ -43,7 +43,7 @@ export class ProceduralPlanetMaterial extends THREE.ShaderMaterial {
       },
       uAmbientLightColor: { value: new THREE.Color(0xffffff) },
       uAmbientLightIntensity: {
-        value: surfaceProps.ambientLightIntensity ?? 0.01, // Minimal ambient for dark space
+        value: surfaceProps.ambientLightIntensity ?? 0.25, // System-wide minimum ambient for "just enough glow"
       },
       uCameraPosition: { value: new THREE.Vector3() },
 

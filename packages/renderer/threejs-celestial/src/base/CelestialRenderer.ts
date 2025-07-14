@@ -71,8 +71,8 @@ export class LightingCalculator {
    * Ambient light calculation constants
    */
   private static readonly AMBIENT_FALLOFF_FACTOR = 0.000000001; // Stronger falloff for ambient
-  private static readonly BASE_AMBIENT_INTENSITY = 0.15; // Base ambient when very close to a bright star
-  private static readonly MIN_AMBIENT_INTENSITY = 0.001; // Minimum ambient in deep space
+  private static readonly BASE_AMBIENT_INTENSITY = 0.5; // Base ambient when very close to a bright star
+  private static readonly MIN_AMBIENT_INTENSITY = 0.25; // Minimum ambient - "just enough glow"
 
   /**
    * Applies distance-based attenuation to light sources for a celestial object
@@ -235,7 +235,11 @@ export class LightingCalculator {
         const starObject = allObjects[starId];
         if (starObject.type === CelestialType.STAR && starObject.properties) {
           const starProps = starObject.properties as any;
-          luminosity = starProps.luminosity ?? luminosity;
+          // Use systemLighting.starLightIntensity for visual lighting instead of realistic luminosity
+          luminosity =
+            starProps.systemLighting?.starLightIntensity ??
+            lightData.intensity ??
+            1.0;
         }
       }
 

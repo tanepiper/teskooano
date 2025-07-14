@@ -58,7 +58,7 @@ export class ClassIIMaterial extends BaseGasGiantMaterial {
 
         stormMap: { value: options.textures?.stormMap },
         hasStormMap: { value: !!options.textures?.stormMap },
-        uDynamicAmbientIntensity: { value: 0.001 }, // Dynamic ambient uniform
+        uDynamicAmbientIntensity: { value: 0.25 }, // System-wide minimum ambient for "just enough glow"
       },
       vertexShader: classIIVertexShader,
       fragmentShader: classIIFragmentShader,

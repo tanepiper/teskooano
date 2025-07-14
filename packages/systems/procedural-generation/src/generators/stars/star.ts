@@ -215,7 +215,7 @@ export function generateStar(random: () => number): CelestialObject {
   let visualStarRadius =
     realStarRadius * SCALE.SIZE * STAR_VISUAL_SCALE_MULTIPLIER;
 
-  const starLuminosity = UTIL.calculateVisualLuminosity(
+  const starLuminosity = UTIL.calculateStellarLuminosity(
     realStarRadius,
     starTemperature,
   );
@@ -257,9 +257,10 @@ export function generateStar(random: () => number): CelestialObject {
 
   // Calculate realistic system lighting based on stellar properties
   const clampedLuminosity = Math.max(0.001, Math.min(starLuminosity, 10000));
-  const starLightIntensity = Math.pow(clampedLuminosity, 0.25); // Fourth root for more reasonable scaling
+  // Increase light intensity for better visual lighting while keeping physics accurate
+  const starLightIntensity = Math.pow(clampedLuminosity, 0.5) * 2.0; // Square root with multiplier for better visual lighting
   // Stars should not contribute ambient lighting in dark space
-  const ambientLightIntensity = 0; // No ambient light from stars
+  const ambientLightIntensity = 0;
 
   const systemLighting: SystemLightingProperties = {
     ambientLightColor: starColor,

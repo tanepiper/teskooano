@@ -154,7 +154,7 @@ export class BasicGasGiantMaterial extends BaseGasGiantMaterial {
         uNumLights: { value: 0 },
         uShadowCasters: { value: shadowCasters },
         uNumShadowCasters: { value: 0 },
-        uDynamicAmbientIntensity: { value: 0.001 }, // Dynamic ambient uniform
+        uDynamicAmbientIntensity: { value: 0.25 }, // System-wide minimum ambient for "just enough glow"
       },
       vertexShader: basicVertexShader,
       fragmentShader: basicFragmentShader,

@@ -25,23 +25,26 @@ export class HierarchyManager {
    */
   private isBinaryStarProtected(obj: CelestialObject): boolean {
     if (obj.type !== CelestialType.STAR) return false;
-    
+
     // Primary star (no parent) is protected
     if (!obj.parentId) return true;
-    
+
     // Companion star (orbits primary) is protected
     const parentStar = this.getParentStar(obj);
     return parentStar !== null && parentStar.type === CelestialType.STAR;
   }
-  
+
   /**
    * Gets the parent star of an object
    */
   private getParentStar(obj: CelestialObject): CelestialObject | null {
     if (!obj.parentId) return null;
-    
+
     const allObjects = StateAccessor.getCurrentCelestialObjects();
-    return Object.values(allObjects).find(parent => parent.id === obj.parentId) || null;
+    return (
+      Object.values(allObjects).find((parent) => parent.id === obj.parentId) ||
+      null
+    );
   }
 
   /**
@@ -116,7 +119,7 @@ export class HierarchyManager {
     if (this.isBinaryStarProtected(obj)) {
       return;
     }
-    
+
     const parentId = obj.currentParentId ?? obj.parentId;
     if (!parentId) return; // No parent to be orphaned from.
 
@@ -156,7 +159,7 @@ export class HierarchyManager {
     if (this.isBinaryStarProtected(obj)) {
       return false;
     }
-    
+
     if (obj.type !== CelestialType.MOON) return false;
 
     const parentId = obj.currentParentId ?? obj.parentId;
@@ -232,7 +235,7 @@ export class HierarchyManager {
     if (this.isBinaryStarProtected(obj)) {
       return;
     }
-    
+
     // A moon with a stable parent should not be trying to capture other objects.
     // Its primary check should be for escaping its current parent.
     if (
