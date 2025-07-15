@@ -11,6 +11,7 @@ import { template } from "./Tooltip.template.ts";
  * @attr {boolean} [visible=false] - Controls the visibility of the tooltip. Set the attribute to make it visible.
  * @attr {'above'|'below'} [vertical-align=above] - Vertical alignment relative to the trigger element.
  * @attr {'start'|'center'|'end'} [horizontal-align=center] - Horizontal alignment relative to the trigger element.
+ * @attr {number} [timeout=5000] - Auto-hide timeout in milliseconds. Set to 0 to disable auto-hide.
  *
  * @csspart tooltip - The main tooltip container div.
  * @csspart content - The container for the tooltip's content (icon and text).
@@ -39,9 +40,9 @@ import { template } from "./Tooltip.template.ts";
 export class TeskooanoTooltip extends HTMLElement {
   /**
    * Attributes to observe for changes.
-   * Includes 'visible', 'vertical-align', 'horizontal-align'.
+   * Includes 'visible', 'vertical-align', 'horizontal-align', 'timeout'.
    */
-  static observedAttributes = ["visible", "vertical-align", "horizontal-align"];
+  static observedAttributes = ["visible", "vertical-align", "horizontal-align", "timeout"];
 
   private tooltipElement: HTMLElement | null = null;
   /**
@@ -49,6 +50,11 @@ export class TeskooanoTooltip extends HTMLElement {
    * @private
    */
   private _triggerElement: HTMLElement | null = null;
+  /**
+   * Timeout ID for auto-hiding the tooltip after 5 seconds.
+   * @private
+   */
+  private _hideTimeout: number | null = null;
 
   /**
    * Initializes the component, attaches the shadow DOM, and clones the template content.
@@ -93,6 +99,11 @@ export class TeskooanoTooltip extends HTMLElement {
       this.updateVisibility();
     } else if (name === "vertical-align" || name === "horizontal-align") {
       this.updatePositioning();
+    } else if (name === "timeout") {
+      // Restart timeout if tooltip is currently visible
+      if (this.hasAttribute("visible")) {
+        this._startHideTimeout();
+      }
     }
   }
 
@@ -106,6 +117,9 @@ export class TeskooanoTooltip extends HTMLElement {
       this.tooltipElement?.style.setProperty("visibility", "visible");
 
       requestAnimationFrame(() => this._calculateAndAdjustPosition());
+      
+      // Start 5-second timeout to auto-hide
+      this._startHideTimeout();
     } else {
       this.tooltipElement?.style.setProperty("opacity", "0");
       this.tooltipElement?.style.setProperty("visibility", "hidden");
@@ -113,6 +127,9 @@ export class TeskooanoTooltip extends HTMLElement {
       this.tooltipElement?.style.removeProperty("left");
       this.tooltipElement?.style.removeProperty("top");
       this.tooltipElement?.style.removeProperty("transform");
+      
+      // Clear timeout when hiding
+      this._clearHideTimeout();
     }
   }
 
@@ -257,6 +274,52 @@ export class TeskooanoTooltip extends HTMLElement {
   }
 
   /**
+   * Starts the timeout to automatically hide the tooltip.
+   * Uses the configurable timeout attribute or defaults to 5 seconds.
+   * @private
+   */
+  private _startHideTimeout() {
+    this._clearHideTimeout(); // Clear any existing timeout
+    
+    const timeoutMs = this.getTimeoutMs();
+    this._hideTimeout = window.setTimeout(() => {
+      this.hide();
+      this._hideTimeout = null;
+    }, timeoutMs);
+  }
+
+  /**
+   * Gets the timeout duration in milliseconds.
+   * @returns Timeout duration in milliseconds, defaults to 5000ms (5 seconds)
+   * @private
+   */
+  private getTimeoutMs(): number {
+    const timeoutAttr = this.getAttribute("timeout");
+    if (timeoutAttr === null) {
+      return 5000; // Default 5 seconds
+    }
+    
+    const timeoutValue = parseInt(timeoutAttr, 10);
+    if (isNaN(timeoutValue) || timeoutValue < 0) {
+      console.warn(`[Tooltip] Invalid timeout value: ${timeoutAttr}, using default 5000ms`);
+      return 5000;
+    }
+    
+    return timeoutValue;
+  }
+
+  /**
+   * Clears the hide timeout if it exists.
+   * @private
+   */
+  private _clearHideTimeout() {
+    if (this._hideTimeout !== null) {
+      window.clearTimeout(this._hideTimeout);
+      this._hideTimeout = null;
+    }
+  }
+
+  /**
    * Sets the text content of the title slot.
    * @param {string} text - The text to display in the title.
    */
@@ -287,5 +350,25 @@ export class TeskooanoTooltip extends HTMLElement {
     if (mainSlot) {
       mainSlot.textContent = text;
     }
+  }
+
+  /**
+   * Gets the timeout duration in milliseconds.
+   * @returns Timeout duration in milliseconds
+   */
+  get timeout(): number {
+    return this.getTimeoutMs();
+  }
+
+  /**
+   * Sets the timeout duration in milliseconds.
+   * @param {number} value - Timeout duration in milliseconds
+   */
+  set timeout(value: number) {
+    if (value < 0) {
+      console.warn(`[Tooltip] Invalid timeout value: ${value}, must be non-negative`);
+      return;
+    }
+    this.setAttribute("timeout", value.toString());
   }
 }
