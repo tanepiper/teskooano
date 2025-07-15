@@ -14,8 +14,8 @@ import { simulationStateService } from "./simulation";
 
 describe("Factory functions", () => {
   beforeEach(() => {
-    const cameraPos = new OSVector3(0, 0, 1000).toThreeJS();
-    const cameraTarget = new OSVector3(0, 0, 0).toThreeJS();
+    const cameraPos = new OSVector3().setFromArray([0, 0, 1000]).toThreeJS();
+    const cameraTarget = new OSVector3().setZero().toThreeJS();
 
     simulationStateService.setSimulationState({
       time: 0,
@@ -35,8 +35,8 @@ describe("Factory functions", () => {
 
   describe("clearState", () => {
     it("should clear all celestial objects and hierarchy by default", () => {
-      const objectPos = new OSVector3(0, 0, 0).toThreeJS();
-      const objectVel = new OSVector3(0, 0, 0).toThreeJS();
+      const objectPos = new OSVector3().setZero().toThreeJS();
+      const objectVel = new OSVector3().setZero().toThreeJS();
 
       gameStateService.setAllCelestialObjects({
         "test-1": {
@@ -115,8 +115,12 @@ describe("Factory functions", () => {
     });
 
     it("should respect resetCamera option", () => {
-      const customPos = new OSVector3(500, 500, 500).toThreeJS();
-      const customTarget = new OSVector3(100, 100, 100).toThreeJS();
+      const customPos = new OSVector3()
+        .setFromArray([500, 500, 500])
+        .toThreeJS();
+      const customTarget = new OSVector3()
+        .setFromArray([100, 100, 100])
+        .toThreeJS();
 
       simulationStateService.setSimulationState({
         ...simulationStateService.getSimulationState(),
@@ -181,9 +185,9 @@ describe("Factory functions", () => {
 
   describe("createSolarSystem", () => {
     it("should clear all state before creating a new system", () => {
-      const starPos = new OSVector3(0, 0, 0).toThreeJS();
-      const stateRealPos = new OSVector3(0, 0, 0).toThreeJS();
-      const stateRealVel = new OSVector3(0, 0, 0).toThreeJS();
+      const starPos = new OSVector3().setZero().toThreeJS();
+      const stateRealPos = new OSVector3().setZero().toThreeJS();
+      const stateRealVel = new OSVector3().setZero().toThreeJS();
 
       gameStateService.setAllCelestialObjects({
         "old-star": {
@@ -224,8 +228,12 @@ describe("Factory functions", () => {
         } as any,
       });
 
-      const customPos = new OSVector3(500, 500, 500).toThreeJS();
-      const customTarget = new OSVector3(100, 100, 100).toThreeJS();
+      const customPos = new OSVector3()
+        .setFromArray([500, 500, 500])
+        .toThreeJS();
+      const customTarget = new OSVector3()
+        .setFromArray([100, 100, 100])
+        .toThreeJS();
 
       simulationStateService.setSimulationState({
         ...simulationStateService.getSimulationState(),

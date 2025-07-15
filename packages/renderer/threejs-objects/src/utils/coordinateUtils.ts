@@ -16,9 +16,9 @@ export function physicsToThreeJSPosition(
   target: THREE.Vector3,
   physicsPosition: OSVector3,
 ): THREE.Vector3 {
-  target.x = physicsPosition.x * METERS_TO_SCENE_UNITS;
-  target.y = physicsPosition.y * METERS_TO_SCENE_UNITS;
-  target.z = physicsPosition.z * METERS_TO_SCENE_UNITS;
+  // Use toThreeJS for base conversion, then apply scaling
+  target.copy(physicsPosition.toThreeJS());
+  target.multiplyScalar(METERS_TO_SCENE_UNITS);
   return target;
 }
 
@@ -34,13 +34,13 @@ export function threeJSToPhysicsPosition(
   scenePosition: THREE.Vector3,
   target?: OSVector3,
 ): OSVector3 {
-  const result = target || new OSVector3();
+  const result = target || new OSVector3().setZero();
 
   const SCENE_UNITS_TO_METERS = 1 / METERS_TO_SCENE_UNITS;
 
-  result.x = scenePosition.x * SCENE_UNITS_TO_METERS;
-  result.y = scenePosition.y * SCENE_UNITS_TO_METERS;
-  result.z = scenePosition.z * SCENE_UNITS_TO_METERS;
+  // Use fromThreeJS for base conversion, then apply scaling
+  result.copy(OSVector3.fromThreeJS(scenePosition));
+  result.multiplyScalar(SCENE_UNITS_TO_METERS);
 
   return result;
 }

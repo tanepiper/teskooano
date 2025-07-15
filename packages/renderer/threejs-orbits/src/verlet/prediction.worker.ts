@@ -24,7 +24,7 @@ function calculateHierarchicalPosition(
   // Prevent infinite recursion
   if (visited.has(bodyId)) {
     console.warn(`Circular dependency detected for body ${bodyId}`);
-    return new OSVector3(0, 0, 0);
+    return new OSVector3().setZero();
   }
   visited.add(bodyId);
 
@@ -36,13 +36,13 @@ function calculateHierarchicalPosition(
     // This is a root body (no parent) or has no orbital parameters
     const bodyState = allBodiesInitialStates.find((b) => b.id === bodyId);
     if (bodyState && bodyState.position_m) {
-      return new OSVector3(
+      return new OSVector3().setFromArray([
         bodyState.position_m.x,
         bodyState.position_m.y,
         bodyState.position_m.z,
-      );
+      ]);
     }
-    return new OSVector3(0, 0, 0);
+    return new OSVector3().setZero();
   }
 
   // Calculate this body's position relative to its parent
@@ -196,9 +196,7 @@ self.onmessage = (
     }
 
     // Convert to THREE.Vector3 for spline creation
-    const threePoints = predictedResult.map(
-      (p) => new THREE.Vector3(p.point.x, p.point.y, p.point.z),
-    );
+    const threePoints = predictedResult.map((p) => p.point.toThreeJS());
     const timestamps = predictedResult.map((p) => p.timestamp);
 
     // Create a smooth curve through the points

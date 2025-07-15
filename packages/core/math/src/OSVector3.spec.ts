@@ -141,4 +141,74 @@ describe("OSVector3", () => {
 
     expect(v3.equals(v4)).toBe(true);
   });
+
+  it("should add a scaled vector", () => {
+    const v1 = new OSVector3(1, 2, 3);
+    const v2 = new OSVector3(4, 5, 6);
+    v1.addScaledVector(v2, 2);
+    expect(v1.x).toBe(9); // 1 + 4*2
+    expect(v1.y).toBe(12); // 2 + 5*2
+    expect(v1.z).toBe(15); // 3 + 6*2
+  });
+
+  it("should subtract a scaled vector", () => {
+    const v1 = new OSVector3(10, 12, 15);
+    const v2 = new OSVector3(4, 5, 6);
+    v1.subScaledVector(v2, 2);
+    expect(v1.x).toBe(2); // 10 - 4*2
+    expect(v1.y).toBe(2); // 12 - 5*2
+    expect(v1.z).toBe(3); // 15 - 6*2
+  });
+
+  it("should negate a vector", () => {
+    const v = new OSVector3(1, -2, 3);
+    v.negate();
+    expect(v.x).toBe(-1);
+    expect(v.y).toBe(2);
+    expect(v.z).toBe(-3);
+  });
+
+  it("should set vector from array", () => {
+    const v = new OSVector3();
+    const array = [1, 2, 3, 4, 5, 6];
+    v.setFromArray(array, 1); // Start from index 1
+    expect(v.x).toBe(2);
+    expect(v.y).toBe(3);
+    expect(v.z).toBe(4);
+  });
+
+  it("should set vector from array with default offset", () => {
+    const v = new OSVector3();
+    const array = [1, 2, 3];
+    v.setFromArray(array);
+    expect(v.x).toBe(1);
+    expect(v.y).toBe(2);
+    expect(v.z).toBe(3);
+  });
+
+  it("should convert vector to array", () => {
+    const v = new OSVector3(1, 2, 3);
+    const array = v.toArray();
+    expect(array).toEqual([1, 2, 3]);
+  });
+
+  it("should check if vector is finite", () => {
+    const v1 = new OSVector3(1, 2, 3);
+    const v2 = new OSVector3(1, NaN, 3);
+    const v3 = new OSVector3(1, 2, Infinity);
+    const v4 = new OSVector3(1, -Infinity, 3);
+
+    expect(v1.isFinite()).toBe(true);
+    expect(v2.isFinite()).toBe(false);
+    expect(v3.isFinite()).toBe(false);
+    expect(v4.isFinite()).toBe(false);
+  });
+
+  it("should set vector to zero", () => {
+    const v = new OSVector3(1, 2, 3);
+    v.setZero();
+    expect(v.x).toBe(0);
+    expect(v.y).toBe(0);
+    expect(v.z).toBe(0);
+  });
 });

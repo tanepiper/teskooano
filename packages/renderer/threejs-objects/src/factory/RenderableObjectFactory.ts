@@ -18,11 +18,11 @@ import { physicsToThreeJSPosition } from "../utils/coordinateUtils";
  */
 export class RenderableObjectFactory {
   // --- Reusable scratch variables for performance ---
-  private rotationAxis = new OSVector3(0, 1, 0);
+  private rotationAxis = new OSVector3().setFromArray([0, 1, 0]);
   private tiltQuaternion = new OSQuaternion();
   private spinQuaternion = new OSQuaternion();
   private finalRotation = new OSQuaternion();
-  private zAxis = new OSVector3(0, 0, 1);
+  private zAxis = new OSVector3().setFromArray([0, 0, 1]);
 
   /**
    * Calculates the final orientation of a celestial object.
@@ -43,7 +43,7 @@ export class RenderableObjectFactory {
     if (axialTilt instanceof OSVector3) {
       // The axialTilt is a unit vector representing the rotational axis direction
       // We need to create a quaternion that rotates from the default Y-axis to this direction
-      const defaultAxis = new OSVector3(0, 1, 0);
+      const defaultAxis = new OSVector3().setFromArray([0, 1, 0]);
       const axisDirection = axialTilt.clone().normalize();
 
       // Calculate the rotation quaternion from default Y-axis to the tilted axis
@@ -58,8 +58,8 @@ export class RenderableObjectFactory {
         // Choose Z-axis if Y is not aligned with it, otherwise use X-axis
         const axis =
           Math.abs(defaultAxis.y) < 0.9
-            ? new OSVector3(0, 0, 1)
-            : new OSVector3(1, 0, 0);
+            ? new OSVector3().setFromArray([0, 0, 1])
+            : new OSVector3().setFromArray([1, 0, 0]);
         this.tiltQuaternion.setFromAxisAngle(axis, Math.PI);
       } else {
         // General case: calculate cross product and create quaternion
@@ -151,6 +151,9 @@ export class RenderableObjectFactory {
       );
       // Store raw velocity magnitude for display purposes
       target.velocityMagnitude_mps = obj.physicsStateReal.velocity_mps.length();
+    } else {
+      // Use set(0, 0, 0) for zero velocity
+      target.velocity.set(0, 0, 0);
     }
     target.rotation.copy(
       this.calculateRotation(
@@ -222,6 +225,9 @@ export class RenderableObjectFactory {
       // Store raw velocity magnitude for display purposes
       target.velocityMagnitude_mps =
         parent.physicsStateReal.velocity_mps.length();
+    } else {
+      // Use set(0, 0, 0) for zero velocity
+      target.velocity.set(0, 0, 0);
     }
     // Rings use parent's tilt but do not have their own sidereal rotation
     target.rotation.copy(

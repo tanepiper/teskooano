@@ -139,11 +139,11 @@ export const resolveCollision = (
 
   const newVelocity1_mps = body1Real.velocity_mps
     .clone()
-    .add(impulseVector.clone().multiplyScalar(1 / mass1));
+    .addScaledVector(impulseVector, 1 / mass1);
 
   const newVelocity2_mps = body2Real.velocity_mps
     .clone()
-    .sub(impulseVector.clone().multiplyScalar(1 / mass2));
+    .subScaledVector(impulseVector, 1 / mass2);
 
   const newBody1: PhysicsStateReal = {
     ...body1Real,

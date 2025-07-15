@@ -159,8 +159,8 @@ export function predictTrajectory(
       nextStates[j].velocity_mps.copy(resultState.velocity_mps);
 
       if (
-        !Number.isFinite(nextStates[j].position_m.x) ||
-        !Number.isFinite(nextStates[j].velocity_mps.x)
+        !nextStates[j].position_m.isFinite() ||
+        !nextStates[j].velocity_mps.isFinite()
       ) {
         console.error(
           `Non-finite state detected for body ${body.id}. Aborting prediction.`,

@@ -85,7 +85,7 @@ const calculateAccelerationForBody_Simple = (
   targetBodyState: PhysicsStateReal,
   centralStar: PhysicsStateReal,
 ): OSVector3 => {
-  const acceleration = new OSVector3(0, 0, 0);
+  const acceleration = new OSVector3().setZero();
   if (targetBodyState.id === centralStar.id) {
     return acceleration; // Star is fixed
   }

@@ -1,40 +1,40 @@
-import * as THREE from "three";
+import { OSVector3 } from "@teskooano/core-math";
 
 /**
- * A simple object pool for THREE.Vector3 instances.
+ * A simple object pool for OSVector3 instances.
  */
 export class Vector3Pool {
-  private pool: THREE.Vector3[] = [];
+  private pool: OSVector3[] = [];
   private acquiredCount = 0;
 
   /**
-   * Get a Vector3 instance from the pool or create a new one.
+   * Get an OSVector3 instance from the pool or create a new one.
    * Optionally sets the vector's components.
    */
-  get(x = 0, y = 0, z = 0): THREE.Vector3 {
+  get(x = 0, y = 0, z = 0): OSVector3 {
     this.acquiredCount++;
-    const vector = this.pool.pop() || new THREE.Vector3();
+    const vector = this.pool.pop() || new OSVector3();
     return vector.set(x, y, z);
   }
 
   /**
-   * Release a Vector3 instance back into the pool.
+   * Release an OSVector3 instance back into the pool.
    * Resets the vector to (0, 0, 0).
    */
-  release(vector: THREE.Vector3): void {
+  release(vector: OSVector3): void {
     if (this.acquiredCount <= 0) {
       console.warn("Vector3Pool: Released more vectors than acquired!");
       return;
     }
     this.acquiredCount--;
-    vector.set(0, 0, 0);
+    vector.setZero();
     this.pool.push(vector);
   }
 
   /**
    * Releases multiple vectors back into the pool.
    */
-  releaseAll(vectors: THREE.Vector3[]): void {
+  releaseAll(vectors: OSVector3[]): void {
     vectors.forEach((v) => this.release(v));
   }
 

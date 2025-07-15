@@ -9,7 +9,6 @@ import {
   METERS_TO_SCENE_UNITS,
 } from "@teskooano/data-types";
 import { type SimulationParameters } from "@teskooano/core-physics";
-import { OSVector3 } from "@teskooano/core-math";
 import {
   StateAccessor,
   getSimulationState,

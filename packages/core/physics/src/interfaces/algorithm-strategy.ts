@@ -37,27 +37,17 @@ export abstract class AlgorithmStrategy implements IAlgorithmStrategy {
     body2: PhysicsStateReal,
     G: number = 6.6743e-11,
   ): OSVector3 {
-    const dx = body2.position_m.x - body1.position_m.x;
-    const dy = body2.position_m.y - body1.position_m.y;
-    const dz = body2.position_m.z - body1.position_m.z;
+    const displacement = new OSVector3();
+    displacement.copy(body2.position_m).sub(body1.position_m);
 
-    const distanceSquared = dx * dx + dy * dy + dz * dz;
+    const distanceSquared = displacement.lengthSq();
     const distance = Math.sqrt(distanceSquared);
 
-    if (distance === 0) return new OSVector3(0, 0, 0);
+    if (distance === 0) return new OSVector3().setZero();
 
     const forceMagnitude =
       (G * body1.mass_kg * body2.mass_kg) / distanceSquared;
-    const forceDirection = {
-      x: dx / distance,
-      y: dy / distance,
-      z: dz / distance,
-    };
 
-    return new OSVector3(
-      forceMagnitude * forceDirection.x,
-      forceMagnitude * forceDirection.y,
-      forceMagnitude * forceDirection.z,
-    );
+    return displacement.normalize().multiplyScalar(forceMagnitude);
   }
 }

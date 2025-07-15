@@ -1,4 +1,3 @@
-import { OSVector3 } from "@teskooano/core-math";
 import * as THREE from "three";
 import { TrailDataPool } from "./TrailDataPool";
 

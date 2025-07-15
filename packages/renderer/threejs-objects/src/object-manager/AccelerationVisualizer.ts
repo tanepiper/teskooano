@@ -49,10 +49,12 @@ export class AccelerationVisualizer {
 
       const objectRadius = renderableObject.radius ?? 1;
 
+      // Use toArray for more efficient conversion
+      const accelerationArray = accelerationVec.toArray();
       const direction = new THREE.Vector3(
-        accelerationVec.x,
-        accelerationVec.y,
-        accelerationVec.z,
+        accelerationArray[0],
+        accelerationArray[1],
+        accelerationArray[2],
       );
       const magnitude = direction.length();
 

@@ -4,6 +4,212 @@ import { GRAVITATIONAL_CONSTANT as G } from "../units/constants";
 import { vectorPool } from "../utils/vectorPool";
 
 /**
+ * Calculates the eccentricity vector from position, velocity, and gravitational parameter.
+ * Based on the formula: e = (v × L) / μ - r/|r|
+ *
+ * @param position_m Position vector relative to central body (m)
+ * @param velocity_mps Velocity vector relative to central body (m/s)
+ * @param mu_kg_m3_s2 Gravitational parameter (G * parent_mass) in kg⋅m³/s²
+ * @returns The eccentricity vector (dimensionless)
+ */
+export function calculateEccentricityVector(
+  position_m: OSVector3,
+  velocity_mps: OSVector3,
+  mu_kg_m3_s2: number,
+): OSVector3 {
+  const angularMomentum = vectorPool.get();
+  angularMomentum.copy(position_m).cross(velocity_mps);
+
+  const term1 = vectorPool.get();
+  term1
+    .copy(velocity_mps)
+    .cross(angularMomentum)
+    .multiplyScalar(1 / mu_kg_m3_s2);
+
+  const term2 = vectorPool.get();
+  term2.copy(position_m).multiplyScalar(1 / position_m.length());
+
+  const eccentricityVector = vectorPool.get();
+  eccentricityVector.copy(term1).sub(term2);
+
+  // Clean up temporary vectors
+  vectorPool.release(angularMomentum);
+  vectorPool.release(term1);
+  vectorPool.release(term2);
+
+  return eccentricityVector.clone();
+}
+
+/**
+ * Calculates the orbital energy per unit mass.
+ *
+ * @param position_m Position vector relative to central body (m)
+ * @param velocity_mps Velocity vector relative to central body (m/s)
+ * @param mu_kg_m3_s2 Gravitational parameter (G * parent_mass) in kg⋅m³/s²
+ * @returns Energy per unit mass in J/kg
+ */
+export function calculateOrbitalEnergy(
+  position_m: OSVector3,
+  velocity_mps: OSVector3,
+  mu_kg_m3_s2: number,
+): number {
+  const velocitySquared = velocity_mps.lengthSq();
+  const positionMagnitude = position_m.length();
+  return velocitySquared / 2 - mu_kg_m3_s2 / positionMagnitude;
+}
+
+/**
+ * Validates the energy-eccentricity relation: e² = 2HL² + 1
+ *
+ * @param position_m Position vector relative to central body (m)
+ * @param velocity_mps Velocity vector relative to central body (m/s)
+ * @param mu_kg_m3_s2 Gravitational parameter (G * parent_mass) in kg⋅m³/s²
+ * @param tolerance Relative tolerance for validation (default: 1e-6)
+ * @returns Object containing validation result and details
+ */
+export function validateEnergyEccentricityRelation(
+  position_m: OSVector3,
+  velocity_mps: OSVector3,
+  mu_kg_m3_s2: number,
+  tolerance: number = 1e-6,
+): {
+  isValid: boolean;
+  expectedEccentricitySquared: number;
+  actualEccentricitySquared: number;
+  relativeError: number;
+  energy: number;
+  angularMomentumSquared: number;
+} {
+  const energy = calculateOrbitalEnergy(position_m, velocity_mps, mu_kg_m3_s2);
+
+  const angularMomentum = vectorPool.get();
+  angularMomentum.copy(position_m).cross(velocity_mps);
+  const angularMomentumSquared = angularMomentum.lengthSq();
+  vectorPool.release(angularMomentum);
+
+  const eccentricityVector = calculateEccentricityVector(
+    position_m,
+    velocity_mps,
+    mu_kg_m3_s2,
+  );
+  const actualEccentricitySquared = eccentricityVector.lengthSq();
+
+  const expectedEccentricitySquared = 2 * energy * angularMomentumSquared + 1;
+  const relativeError =
+    Math.abs(expectedEccentricitySquared - actualEccentricitySquared) /
+    Math.max(Math.abs(expectedEccentricitySquared), 1);
+
+  return {
+    isValid: relativeError < tolerance,
+    expectedEccentricitySquared,
+    actualEccentricitySquared,
+    relativeError,
+    energy,
+    angularMomentumSquared,
+  };
+}
+
+/**
+ * Validates that the eccentricity vector is orthogonal to the angular momentum vector.
+ *
+ * @param position_m Position vector relative to central body (m)
+ * @param velocity_mps Velocity vector relative to central body (m/s)
+ * @param mu_kg_m3_s2 Gravitational parameter (G * parent_mass) in kg⋅m³/s²
+ * @param tolerance Absolute tolerance for orthogonality check (default: 1e-12)
+ * @returns Object containing validation result and details
+ */
+export function validateEccentricityAngularMomentumOrthogonality(
+  position_m: OSVector3,
+  velocity_mps: OSVector3,
+  mu_kg_m3_s2: number,
+  tolerance: number = 1e-12,
+): {
+  isValid: boolean;
+  dotProduct: number;
+  eccentricityMagnitude: number;
+  angularMomentumMagnitude: number;
+} {
+  const angularMomentum = vectorPool.get();
+  angularMomentum.copy(position_m).cross(velocity_mps);
+  const angularMomentumMagnitude = angularMomentum.length();
+
+  const eccentricityVector = calculateEccentricityVector(
+    position_m,
+    velocity_mps,
+    mu_kg_m3_s2,
+  );
+  const eccentricityMagnitude = eccentricityVector.length();
+
+  const dotProduct = eccentricityVector.dot(angularMomentum);
+
+  vectorPool.release(angularMomentum);
+
+  return {
+    isValid: Math.abs(dotProduct) < tolerance,
+    dotProduct,
+    eccentricityMagnitude,
+    angularMomentumMagnitude,
+  };
+}
+
+/**
+ * Comprehensive validation of orbital conservation laws.
+ *
+ * @param position_m Position vector relative to central body (m)
+ * @param velocity_mps Velocity vector relative to central body (m/s)
+ * @param mu_kg_m3_s2 Gravitational parameter (G * parent_mass) in kg⋅m³/s²
+ * @returns Object containing all validation results
+ */
+export function validateOrbitalConservationLaws(
+  position_m: OSVector3,
+  velocity_mps: OSVector3,
+  mu_kg_m3_s2: number,
+): {
+  energyEccentricityRelation: ReturnType<
+    typeof validateEnergyEccentricityRelation
+  >;
+  orthogonality: ReturnType<
+    typeof validateEccentricityAngularMomentumOrthogonality
+  >;
+  energy: number;
+  angularMomentumMagnitude: number;
+  eccentricityMagnitude: number;
+  isAllValid: boolean;
+} {
+  const energyEccentricityRelation = validateEnergyEccentricityRelation(
+    position_m,
+    velocity_mps,
+    mu_kg_m3_s2,
+  );
+  const orthogonality = validateEccentricityAngularMomentumOrthogonality(
+    position_m,
+    velocity_mps,
+    mu_kg_m3_s2,
+  );
+
+  const angularMomentum = vectorPool.get();
+  angularMomentum.copy(position_m).cross(velocity_mps);
+  const angularMomentumMagnitude = angularMomentum.length();
+  vectorPool.release(angularMomentum);
+
+  const eccentricityVector = calculateEccentricityVector(
+    position_m,
+    velocity_mps,
+    mu_kg_m3_s2,
+  );
+  const eccentricityMagnitude = eccentricityVector.length();
+
+  return {
+    energyEccentricityRelation,
+    orthogonality,
+    energy: energyEccentricityRelation.energy,
+    angularMomentumMagnitude,
+    eccentricityMagnitude,
+    isAllValid: energyEccentricityRelation.isValid && orthogonality.isValid,
+  };
+}
+
+/**
  * Calculates orbital elements from state vectors (position and velocity).
  * Assumes input vectors are relative to the central body and in SI units (meters, m/s).
  * Assumes a Y-up coordinate system where the reference plane is the XZ plane.

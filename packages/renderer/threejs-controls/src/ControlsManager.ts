@@ -112,7 +112,7 @@ export class ControlsManager extends StateSubscriptionMixin {
   ): void {
     if (!withTransition) {
       this.transitionManager.cancelTransition();
-      this.controls.target.set(target.x, target.y, target.z);
+      this.controls.target.copy(target.toThreeJS());
       this.controls.update();
       return;
     }

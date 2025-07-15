@@ -73,14 +73,14 @@ export const calculateRelativisticAcceleration = (
   velocity_mps: OSVector3,
 ): OSVector3 => {
   if (mass_kg === 0) {
-    return new OSVector3(0, 0, 0);
+    return new OSVector3().setZero();
   }
 
   const gamma = calculateGamma(velocity_mps);
-  if (!isFinite(gamma)) return new OSVector3(0, 0, 0);
+  if (!isFinite(gamma)) return new OSVector3().setZero();
 
   const relativisticMass = mass_kg * gamma;
-  if (relativisticMass === 0) return new OSVector3(0, 0, 0);
+  if (relativisticMass === 0) return new OSVector3().setZero();
 
   const acceleration = force.clone().multiplyScalar(1 / relativisticMass);
   return acceleration;

@@ -27,8 +27,8 @@ export class SimulationStateService {
     selectedObject: null,
     focusedObjectId: null,
     camera: {
-      position: new OSVector3(0, 100, 100),
-      target: new OSVector3(0, 0, 0),
+      position: new OSVector3().setFromArray([0, 100, 100]),
+      target: new OSVector3().setZero(),
       fov: 75,
     },
     simulationConfig: getDefaultConfiguration(),

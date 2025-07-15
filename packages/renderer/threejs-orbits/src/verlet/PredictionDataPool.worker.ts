@@ -22,8 +22,8 @@ export class PredictionDataPool {
       this.pool[i] = {
         id: "",
         mass_kg: 0,
-        position_m: new OSVector3(),
-        velocity_mps: new OSVector3(),
+        position_m: new OSVector3().setZero(),
+        velocity_mps: new OSVector3().setZero(),
       };
     }
   }
@@ -49,16 +49,18 @@ export class PredictionDataPool {
         const state = this.pool[poolIndex];
         state.id = objectId;
         state.mass_kg = flatData[dataIndex];
-        state.position_m.set(
+
+        // Use setFromArray for more efficient vector initialization
+        state.position_m.setFromArray([
           flatData[dataIndex + 1],
           flatData[dataIndex + 2],
           flatData[dataIndex + 3],
-        );
-        state.velocity_mps.set(
+        ]);
+        state.velocity_mps.setFromArray([
           flatData[dataIndex + 4],
           flatData[dataIndex + 5],
           flatData[dataIndex + 6],
-        );
+        ]);
       }
     });
 

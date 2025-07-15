@@ -18,5 +18,6 @@ export { symplecticEuler } from "./integrators/symplecticEuler";
 export * from "./spatial/octree";
 
 export * from "./utils/vectorPool";
+export * from "./debug/orbitalValidation";
 
 export * from "./integrators";

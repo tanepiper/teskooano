@@ -1,4 +1,5 @@
 import { StateAccessor } from "@teskooano/core-state";
+import { OSVector3 } from "@teskooano/core-math";
 import * as THREE from "three";
 import { AnimationLoop } from "./AnimationLoop";
 import { rendererEvents } from "./events";
@@ -34,8 +35,8 @@ const DefaultSceneManagerConfig = {
     FOV: 75,
     NEAR_PLANE: 0.0001,
     FAR_PLANE: 10000000,
-    DEFAULT_POSITION: new THREE.Vector3(0, 20, 50),
-    DEFAULT_TARGET: new THREE.Vector3(0, 0, 0),
+    DEFAULT_POSITION: new OSVector3().setFromArray([0, 20, 50]),
+    DEFAULT_TARGET: new OSVector3().setFromArray([0, 0, 0]),
   },
   RENDERER: {
     POWER_PREFERENCE: {
@@ -162,8 +163,13 @@ export class SceneManager {
         initialState.camera.target.z,
       );
     } else {
-      camera.position.copy(DefaultSceneManagerConfig.CAMERA.DEFAULT_POSITION);
-      camera.lookAt(DefaultSceneManagerConfig.CAMERA.DEFAULT_TARGET);
+      // Convert OSVector3 to THREE.Vector3 for rendering
+      camera.position.copy(
+        DefaultSceneManagerConfig.CAMERA.DEFAULT_POSITION.toThreeJS(),
+      );
+      camera.lookAt(
+        DefaultSceneManagerConfig.CAMERA.DEFAULT_TARGET.toThreeJS(),
+      );
     }
     return camera;
   }

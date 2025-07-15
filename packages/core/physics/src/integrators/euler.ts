@@ -31,9 +31,9 @@ export const standardEuler: Integrator = (
   const vel_mps = currentState.velocity_mps.clone();
   const acc = acceleration.clone();
 
-  const newVelocity_mps = vel_mps.clone().add(acc.multiplyScalar(dt));
+  const newVelocity_mps = vel_mps.clone().addScaledVector(acc, dt);
 
-  const newPosition_m = pos_m.clone().add(vel_mps.multiplyScalar(dt));
+  const newPosition_m = pos_m.clone().addScaledVector(vel_mps, dt);
 
   return {
     ...currentState,

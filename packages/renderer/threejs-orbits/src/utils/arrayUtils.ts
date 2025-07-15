@@ -16,21 +16,11 @@ export function updateThreeVector3Array(
   // Update existing vectors
   for (let i = 0; i < sourcePoints.length; i++) {
     if (i < targetPoints.length) {
-      // Reuse existing THREE.Vector3 object
-      targetPoints[i].set(
-        sourcePoints[i].x,
-        sourcePoints[i].y,
-        sourcePoints[i].z,
-      );
+      // Reuse existing THREE.Vector3 object using toThreeJS for efficiency
+      targetPoints[i].copy(sourcePoints[i].toThreeJS());
     } else {
-      // Add new THREE.Vector3 object
-      targetPoints.push(
-        new THREE.Vector3(
-          sourcePoints[i].x,
-          sourcePoints[i].y,
-          sourcePoints[i].z,
-        ),
-      );
+      // Add new THREE.Vector3 object using toThreeJS for efficiency
+      targetPoints.push(sourcePoints[i].toThreeJS());
     }
   }
 

@@ -36,9 +36,10 @@ export const verletIntegrate = (
 
   const displacement = currentPos.clone().sub(prevPos);
 
-  const accTerm = acc.multiplyScalar(dtSquared);
-
-  const newPosition = currentPos.clone().add(displacement).add(accTerm);
+  const newPosition = currentPos
+    .clone()
+    .add(displacement)
+    .addScaledVector(acc, dtSquared);
 
   const newVelocity = newPosition
     .clone()
@@ -88,11 +89,12 @@ export const velocityVerletIntegrate = (
   const halfDt = 0.5 * dt;
   const halfDtSquared = 0.5 * dt * dt;
 
-  const velTerm = vel.clone().multiplyScalar(dt);
-  const accTerm = acc.clone().multiplyScalar(halfDtSquared);
-  const newPosition = pos.clone().add(velTerm).add(accTerm);
+  const newPosition = pos
+    .clone()
+    .addScaledVector(vel, dt)
+    .addScaledVector(acc, halfDtSquared);
 
-  const halfVel = vel.clone().add(acc.clone().multiplyScalar(halfDt));
+  const halfVel = vel.clone().addScaledVector(acc, halfDt);
 
   const stateGuess: PhysicsStateReal = {
     ...currentState,
@@ -101,8 +103,7 @@ export const velocityVerletIntegrate = (
   };
   const newAcceleration = calculateNewAcceleration(stateGuess);
 
-  const newAccTerm = newAcceleration.clone().multiplyScalar(halfDt);
-  const newVelocity = halfVel.clone().add(newAccTerm);
+  const newVelocity = halfVel.clone().addScaledVector(newAcceleration, halfDt);
 
   return {
     ...currentState,

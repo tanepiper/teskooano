@@ -27,7 +27,7 @@ export class CameraTransitionManager {
   /** The ID of the currently active transition notification. */
   private activeTransitionNotificationId: string | null = null;
   /** The camera position on the last update frame, for calculating instantaneous speed. */
-  private lastUpdatePosition = new OSVector3();
+  private lastUpdatePosition = new OSVector3().setZero();
   /** The timeline time on the last update frame, for calculating instantaneous speed. */
   private lastUpdateTime: number = 0;
 

@@ -15,9 +15,9 @@ export function updateThreeVector3Array(
 ): THREE.Vector3[] {
   for (let i = 0; i < source.length; i++) {
     if (target[i]) {
-      target[i].set(source[i].x, source[i].y, source[i].z);
+      target[i].copy(source[i].toThreeJS());
     } else {
-      target[i] = new THREE.Vector3(source[i].x, source[i].y, source[i].z);
+      target[i] = source[i].toThreeJS();
     }
   }
   // If the source is smaller than the target, trim the target

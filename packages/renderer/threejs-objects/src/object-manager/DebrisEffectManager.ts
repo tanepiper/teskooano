@@ -102,11 +102,14 @@ export class DebrisEffectManager {
       return;
     }
 
-    const impactScenePos = new THREE.Vector3(
+    // Use setFromArray for more efficient vector initialization
+    const impactScenePos = new THREE.Vector3();
+    const impactArray = [
       event.impactPosition.x * METERS_TO_SCENE_UNITS,
       event.impactPosition.y * METERS_TO_SCENE_UNITS,
       event.impactPosition.z * METERS_TO_SCENE_UNITS,
-    );
+    ];
+    impactScenePos.fromArray(impactArray);
 
     const debrisCount = 100;
     const debrisBaseSize = event.destroyedRadius * METERS_TO_SCENE_UNITS * 0.15;
@@ -148,11 +151,16 @@ export class DebrisEffectManager {
     const tempQuat = new THREE.Quaternion();
     const tempScale = new THREE.Vector3();
     const tempColor = new THREE.Color();
-    const baseVel = new THREE.Vector3(
-      event.relativeVelocity.x,
-      event.relativeVelocity.y,
-      event.relativeVelocity.z,
-    ).multiplyScalar(METERS_TO_SCENE_UNITS * speedMultiplier);
+
+    // Use setFromArray for more efficient base velocity initialization
+    const baseVel = new THREE.Vector3();
+    const baseVelArray = [
+      event.relativeVelocity.x * METERS_TO_SCENE_UNITS * speedMultiplier,
+      event.relativeVelocity.y * METERS_TO_SCENE_UNITS * speedMultiplier,
+      event.relativeVelocity.z * METERS_TO_SCENE_UNITS * speedMultiplier,
+    ];
+    baseVel.fromArray(baseVelArray);
+
     const randomDir = new THREE.Vector3();
     const startTime = this.debrisClock.getElapsedTime();
 

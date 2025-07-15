@@ -314,4 +314,85 @@ export class OSVector3 {
 
     return this;
   }
+
+  /**
+   * Adds a scaled vector to this vector.
+   * @param v - The vector to scale and add.
+   * @param scalar - The scalar to multiply the vector by.
+   * @returns This vector for chaining.
+   */
+  addScaledVector(v: OSVector3, scalar: number): this {
+    this.x += v.x * scalar;
+    this.y += v.y * scalar;
+    this.z += v.z * scalar;
+    return this;
+  }
+
+  /**
+   * Subtracts a scaled vector from this vector.
+   * @param v - The vector to scale and subtract.
+   * @param scalar - The scalar to multiply the vector by.
+   * @returns This vector for chaining.
+   */
+  subScaledVector(v: OSVector3, scalar: number): this {
+    this.x -= v.x * scalar;
+    this.y -= v.y * scalar;
+    this.z -= v.z * scalar;
+    return this;
+  }
+
+  /**
+   * Negates this vector (multiplies by -1).
+   * @returns This vector for chaining.
+   */
+  negate(): this {
+    this.x = -this.x;
+    this.y = -this.y;
+    this.z = -this.z;
+    return this;
+  }
+
+  /**
+   * Sets this vector's components from an array.
+   * @param array - The array to read from.
+   * @param offset - The offset into the array. Defaults to 0.
+   * @returns This vector for chaining.
+   */
+  setFromArray(array: number[], offset: number = 0): this {
+    this.x = array[offset];
+    this.y = array[offset + 1];
+    this.z = array[offset + 2];
+    return this;
+  }
+
+  /**
+   * Converts this vector to an array.
+   * @returns An array with [x, y, z] components.
+   */
+  toArray(): [number, number, number] {
+    return [this.x, this.y, this.z];
+  }
+
+  /**
+   * Checks if this vector has any non-finite components (NaN or Infinity).
+   * @returns True if any component is NaN or Infinity.
+   */
+  isFinite(): boolean {
+    return (
+      Number.isFinite(this.x) &&
+      Number.isFinite(this.y) &&
+      Number.isFinite(this.z)
+    );
+  }
+
+  /**
+   * Sets this vector to zero.
+   * @returns This vector for chaining.
+   */
+  setZero(): this {
+    this.x = 0;
+    this.y = 0;
+    this.z = 0;
+    return this;
+  }
 }

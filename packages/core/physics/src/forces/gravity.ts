@@ -22,7 +22,7 @@ export const calculateNewtonianGravitationalForce: PairForceCalculator = (
   const distanceSq = displacement.lengthSq();
 
   if (distanceSq < EPSILON * EPSILON) {
-    return new OSVector3(0, 0, 0);
+    return new OSVector3().setZero();
   }
 
   const forceMagnitude = (G * (body1.mass_kg * body2.mass_kg)) / distanceSq;

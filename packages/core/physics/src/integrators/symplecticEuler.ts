@@ -27,12 +27,9 @@ export const symplecticEuler: Integrator = (
   const vel_mps = currentState.velocity_mps.clone();
   const acc = acceleration.clone();
 
-  acc.multiplyScalar(dt);
-  const newVelocity_mps = vel_mps.clone().add(acc);
+  const newVelocity_mps = vel_mps.clone().addScaledVector(acc, dt);
 
-  const newPosition_m = pos_m
-    .clone()
-    .add(newVelocity_mps.clone().multiplyScalar(dt));
+  const newPosition_m = pos_m.clone().addScaledVector(newVelocity_mps, dt);
 
   return {
     ...currentState,

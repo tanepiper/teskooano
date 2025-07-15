@@ -148,8 +148,8 @@ class CelestialFactoryService {
 
     if (resetCamera) {
       newState.camera = {
-        position: new OSVector3(0, 0, 1000),
-        target: new OSVector3(0, 0, 0),
+        position: new OSVector3().setFromArray([0, 0, 1000]),
+        target: new OSVector3().setZero(),
         fov: 60,
       };
     }
@@ -223,9 +223,10 @@ class CelestialFactoryService {
       id: data.id,
       mass_kg: data.realMass_kg,
       position_m:
-        data.physicsStateReal?.position_m?.clone() ?? new OSVector3(0, 0, 0),
+        data.physicsStateReal?.position_m?.clone() ?? new OSVector3().setZero(),
       velocity_mps:
-        data.physicsStateReal?.velocity_mps?.clone() ?? new OSVector3(0, 0, 0),
+        data.physicsStateReal?.velocity_mps?.clone() ??
+        new OSVector3().setZero(),
     };
 
     this._createCelestialObjectInternal(
@@ -423,8 +424,8 @@ class CelestialFactoryService {
       physicsStateReal = {
         id: data.id,
         mass_kg: data.realMass_kg,
-        position_m: new OSVector3(0, 0, 0),
-        velocity_mps: new OSVector3(0, 0, 0),
+        position_m: new OSVector3().setZero(),
+        velocity_mps: new OSVector3().setZero(),
       };
       orbitalParams = undefined;
     } else if (
@@ -464,16 +465,16 @@ class CelestialFactoryService {
         physicsStateReal = {
           id: data.id,
           mass_kg: data.realMass_kg,
-          position_m: new OSVector3(
+          position_m: new OSVector3().setFromArray([
             safeDistanceAU * AU_TO_METERS,
             (random() - 0.5) * safeDistanceAU * AU_TO_METERS * 0.1,
             (random() - 0.5) * safeDistanceAU * AU_TO_METERS * 0.1,
-          ),
-          velocity_mps: new OSVector3(
+          ]),
+          velocity_mps: new OSVector3().setFromArray([
             (random() - 0.5) * 500, // ±250 m/s drift
             (random() - 0.5) * 500,
             (random() - 0.5) * 500,
-          ),
+          ]),
         };
         orbitalParams = undefined;
       } else {

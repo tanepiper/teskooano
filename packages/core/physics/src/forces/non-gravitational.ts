@@ -53,7 +53,7 @@ export const calculateDragForce = (
   const speed = velocity.length();
 
   if (speed < EPSILON) {
-    return new OSVector3(0, 0, 0);
+    return new OSVector3().setZero();
   }
 
   const forceMagnitude =
@@ -68,7 +68,7 @@ export const calculateDragForce = (
  * Combines multiple forces acting on a body
  */
 export const combineForces = (forces: OSVector3[]): OSVector3 => {
-  const result = new OSVector3(0, 0, 0);
+  const result = new OSVector3().setZero();
   if (forces.length === 0) {
     return result;
   }

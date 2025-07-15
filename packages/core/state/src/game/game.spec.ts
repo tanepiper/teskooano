@@ -2,14 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { OSVector3 } from "@teskooano/core-math";
 import {
-  BaseSurfaceProperties,
   CelestialObject,
   CelestialStatus,
   CelestialType,
   OrbitalParameters,
   PhysicsStateReal,
   PlanetAtmosphereProperties,
-  SurfaceType,
 } from "@teskooano/data-types";
 
 import { Quaternion } from "three";
@@ -24,8 +22,8 @@ const createMinimalRealState = (
 ): PhysicsStateReal => ({
   id,
   mass_kg: mass,
-  position_m: new OSVector3(0, 0, 0),
-  velocity_mps: new OSVector3(0, 0, 0),
+  position_m: new OSVector3().setZero(),
+  velocity_mps: new OSVector3().setZero(),
   // ticksSinceLastPhysicsUpdate: 0, // Optional, can be omitted
 });
 
@@ -45,17 +43,11 @@ const createMockObject = (
   physicsStateReal: createMinimalRealState(id, 1e22),
   parentId,
   status: CelestialStatus.ACTIVE,
-  atmosphere: {
-    glowColor: "#ffffff",
-    intensity: 0.5,
-    power: 1,
-    thickness: 0.1,
-  } as PlanetAtmosphereProperties,
-  surface: {
-    type: SurfaceType.VARIED,
-    color: "#aaaaaa",
-    roughness: 0.5,
-  } as BaseSurfaceProperties,
+  properties: {
+    type: CelestialType.PLANET,
+    isMoon: false,
+    composition: ["silicate", "iron"],
+  },
   rotation: new Quaternion(),
   // celestialBodyType: type, // Removed, not a root property
   // properties field would contain more specific type info if needed
@@ -115,8 +107,19 @@ describe("Simulation State Actions", () => {
         target: new OSVector3(0, 0, 0),
         fov: 60,
       },
-      physicsEngine: "verlet",
-      visualSettings: { trailLengthMultiplier: 1 },
+      simulationConfig: {
+        mode: "nbody",
+        algorithm: "barnes-hut",
+        integrator: "verlet",
+      },
+      visualSettings: {
+        trailLengthMultiplier: 1,
+        showAllOrbits: true,
+        showAllLabels: false,
+        showAuMarkers: true,
+        predictionSteps: 500,
+        predictionDuration: 2,
+      },
       performanceProfile: "medium",
     });
 
@@ -178,8 +181,19 @@ describe("Simulation Actions (Extended)", () => {
         target: new OSVector3(0, 0, 0),
         fov: 60,
       },
-      physicsEngine: "verlet",
-      visualSettings: { trailLengthMultiplier: 1 },
+      simulationConfig: {
+        mode: "nbody",
+        algorithm: "barnes-hut",
+        integrator: "verlet",
+      },
+      visualSettings: {
+        trailLengthMultiplier: 1,
+        showAllOrbits: true,
+        showAllLabels: false,
+        showAuMarkers: true,
+        predictionSteps: 500,
+        predictionDuration: 2,
+      },
       performanceProfile: "medium",
     });
     gameStateService.setAllCelestialObjects({});

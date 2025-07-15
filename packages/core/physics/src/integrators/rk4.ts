@@ -141,11 +141,11 @@ export const rk4IntegrateSimple = (
   // Position: x = x0 + v0*t + 0.5*a*t^2
   const newPosition = pos
     .clone()
-    .add(vel.clone().multiplyScalar(dt))
-    .add(acc.clone().multiplyScalar(0.5 * dtSquared));
+    .addScaledVector(vel, dt)
+    .addScaledVector(acc, 0.5 * dtSquared);
 
   // Velocity: v = v0 + a*t
-  const newVelocity = vel.clone().add(acc.clone().multiplyScalar(dt));
+  const newVelocity = vel.clone().addScaledVector(acc, dt);
 
   return {
     ...currentState,

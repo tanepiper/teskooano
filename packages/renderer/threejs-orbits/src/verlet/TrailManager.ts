@@ -3,7 +3,6 @@ import type { RenderableCelestialObject } from "@teskooano/data-types";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import { SharedMaterials } from "../core/SharedMaterials";
 import { LineBuilder } from "../utils/LineBuilder";
-import { OSVector3 } from "@teskooano/core-math";
 import { CircularBuffer } from "../utils/CircularBuffer";
 import { simplifyPath } from "../utils/simplify";
 import { TrailQuality } from "@teskooano/renderer-threejs";

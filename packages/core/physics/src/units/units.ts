@@ -58,10 +58,11 @@ export const convertVector = (
   fromFactor: number,
   toFactor: number,
 ): OSVector3 => {
-  vector.x = convert(vector.x, fromFactor, toFactor);
-  vector.y = convert(vector.y, fromFactor, toFactor);
-  vector.z = convert(vector.z, fromFactor, toFactor);
-  return vector;
+  const array = vector.toArray();
+  const convertedArray = array.map((component) =>
+    convert(component, fromFactor, toFactor),
+  );
+  return vector.setFromArray(convertedArray);
 };
 
 /**

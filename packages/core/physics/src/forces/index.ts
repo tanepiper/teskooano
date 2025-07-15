@@ -23,7 +23,7 @@ export const calculateAcceleration = (
   force: OSVector3,
 ): OSVector3 => {
   if (mass === 0) {
-    return new OSVector3(0, 0, 0);
+    return new OSVector3().setZero();
   }
 
   const acceleration = force.clone();

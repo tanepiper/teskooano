@@ -3,20 +3,14 @@
  * This file provides integrations for THREE.js vector types
  */
 import { OSVector3 } from "@teskooano/core-math";
+import * as THREE from "three";
 import { vectorDebug } from "./vector-debug";
-
-export interface ThreeVector3 {
-  x: number;
-  y: number;
-  z: number;
-  clone(): ThreeVector3;
-}
 
 /**
  * Helper to convert a THREE.Vector3 to our OSVector3
  */
-export function convertThreeVector(vector: ThreeVector3): OSVector3 {
-  return new OSVector3(vector.x, vector.y, vector.z);
+export function convertThreeVector(vector: THREE.Vector3): OSVector3 {
+  return OSVector3.fromThreeJS(vector);
 }
 
 /**
@@ -30,7 +24,7 @@ export class ThreeVectorDebug {
    * @param key The vector key
    * @param vector The THREE.Vector3 to store
    */
-  public setVector(name: string, key: string, vector: ThreeVector3): void {
+  public setVector(name: string, key: string, vector: THREE.Vector3): void {
     const osVector = convertThreeVector(vector);
     vectorDebug.setVector(name, key, osVector);
   }
@@ -41,7 +35,10 @@ export class ThreeVectorDebug {
    * @param name The debug context name
    * @param vectors Record of vector keys to THREE.Vector3 objects
    */
-  public setVectors(name: string, vectors: Record<string, ThreeVector3>): void {
+  public setVectors(
+    name: string,
+    vectors: Record<string, THREE.Vector3>,
+  ): void {
     Object.entries(vectors).forEach(([key, vector]) => {
       this.setVector(name, key, vector);
     });
