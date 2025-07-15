@@ -34,10 +34,10 @@ export class PlaceholderManager {
    */
   public showMessage(isGenerating: boolean): void {
     if (isGenerating) {
-      this.placeholderMessage.textContent = "Generating System...";
+      this.placeholderMessage.textContent = "🪐 Generating System...";
       this.placeholderActionArea.innerHTML = `<progress style='width: 100%;'></progress>`;
     } else {
-      this.placeholderMessage.textContent = "Load or Generate a System";
+      this.placeholderMessage.innerHTML = `Press the ☀ Sol or ✨ Generate Random Seed button in the toolbar to begin<br />On mobile you can slide the toolbar using touch gestures<br />For more help use the 🧭 Tour button in the toolbar`;
       this.placeholderActionArea.innerHTML = `<a href="https://teskooano.space/docs/getting-started" target="_blank" style="display: inline-block; padding: 8px 15px; background-color: #333; color: #fff; text-decoration: none; border-radius: 4px;">📚 Go To Documentation</a>`;
     }
     this.placeholderWrapper.classList.remove("hidden");

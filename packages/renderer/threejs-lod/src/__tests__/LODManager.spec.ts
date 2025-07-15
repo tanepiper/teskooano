@@ -51,6 +51,8 @@ describe("LODManager", () => {
       rotation: new THREE.Quaternion(),
       parentId: undefined,
       status: CelestialStatus.ACTIVE,
+      albedo: 0.3,
+      axialTilt: 0,
       properties: {
         type: CelestialType.PLANET,
         isMoon: false,

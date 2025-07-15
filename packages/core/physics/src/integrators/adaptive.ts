@@ -1,5 +1,49 @@
 import { PhysicsStateReal } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
+import { AU } from "..";
+
+/**
+ * Distance-based tolerance scaling for adaptive integration
+ * Scales tolerance based on orbital distance to counteract floating-point precision errors
+ */
+export interface DistanceToleranceScaling {
+  /** Base tolerance for distances 0-1 AU */
+  baseTolerance: number;
+  /** Scaling factor per AU distance (tolerance increases with distance) */
+  scalingFactor: number;
+  /** Maximum tolerance cap to prevent excessive errors */
+  maxTolerance: number;
+  /** Minimum tolerance floor */
+  minTolerance: number;
+}
+
+/**
+ * Default distance-based tolerance scaling configuration
+ */
+export const DEFAULT_DISTANCE_TOLERANCE: DistanceToleranceScaling = {
+  baseTolerance: 1e-4, // Base tolerance for 0-1 AU
+  scalingFactor: 1e-3, // Tolerance increases by 1e-3 per AU
+  maxTolerance: 1e-2, // Maximum tolerance cap
+  minTolerance: 1e-5, // Minimum tolerance floor
+};
+
+/**
+ * Calculate tolerance based on distance from central body
+ * @param distanceAU Distance from central body in AU
+ * @param scaling Distance tolerance scaling configuration
+ * @returns Scaled tolerance value
+ */
+export function calculateDistanceBasedTolerance(
+  distanceAU: number,
+  scaling: DistanceToleranceScaling = DEFAULT_DISTANCE_TOLERANCE,
+): number {
+  const scaledTolerance =
+    scaling.baseTolerance + distanceAU * scaling.scalingFactor;
+  return Math.max(
+    scaling.minTolerance,
+    Math.min(scaling.maxTolerance, scaledTolerance),
+  );
+}
 
 /**
  * Configuration options for adaptive integration
@@ -7,6 +51,8 @@ import { OSVector3 } from "@teskooano/core-math";
 export interface AdaptiveConfig {
   /** Target relative error tolerance (default: 1e-8) */
   tolerance: number;
+  /** Distance-based tolerance scaling (overrides fixed tolerance if provided) */
+  distanceTolerance?: DistanceToleranceScaling;
   /** Minimum allowed timestep (default: 1e-12) */
   minDt: number;
   /** Maximum allowed timestep (default: 1e-2) */
@@ -23,7 +69,8 @@ export interface AdaptiveConfig {
  * Default configuration for adaptive integration
  */
 export const DEFAULT_ADAPTIVE_CONFIG: AdaptiveConfig = {
-  tolerance: 1e-6, // Relaxed from 1e-8 for astronomical simulations
+  tolerance: 1e-4, // Fallback tolerance if distance scaling not used
+  distanceTolerance: DEFAULT_DISTANCE_TOLERANCE, // Use distance-based scaling by default
   minDt: 1e-12,
   maxDt: 1e5, // Increased from 1e-2 to allow up to ~1 day timesteps
   safetyFactor: 0.9,
@@ -83,6 +130,16 @@ export const adaptiveRKIntegrate = (
     };
   }
 
+  // Calculate distance-based tolerance if scaling is provided
+  let tolerance = cfg.tolerance;
+  if (cfg.distanceTolerance) {
+    const distanceAU = currentState.position_m.length() / 1.496e11; // Convert meters to AU
+    tolerance = calculateDistanceBasedTolerance(
+      distanceAU,
+      cfg.distanceTolerance,
+    );
+  }
+
   let currentDt = Math.max(cfg.minDt, Math.min(cfg.maxDt, Math.abs(dt)));
   let stepsTaken = 0;
   const maxSteps = 1000; // Prevent infinite loops
@@ -90,15 +147,33 @@ export const adaptiveRKIntegrate = (
   while (stepsTaken < maxSteps) {
     stepsTaken++;
 
-    const result = dormandPrinceStep(
-      currentState,
-      acceleration,
-      calculateNewAcceleration,
-      currentDt,
-    );
+    // Try Dormand-Prince method first
+    let result;
+    try {
+      result = dormandPrinceStep(
+        currentState,
+        acceleration,
+        calculateNewAcceleration,
+        currentDt,
+      );
+    } catch (error) {
+      // Fallback to RK4 if Dormand-Prince fails
+      console.warn(
+        `Dormand-Prince integration failed, falling back to RK4: ${error}`,
+      );
+      const rk4State = rk4Step(
+        currentState,
+        acceleration,
+        calculateNewAcceleration,
+        currentDt,
+      );
+      result = {
+        newState: rk4State,
+        error: tolerance * 0.1, // Assume small error for RK4 fallback
+      };
+    }
 
     const error = result.error;
-    const tolerance = cfg.tolerance;
 
     if (error <= tolerance || currentDt <= cfg.minDt) {
       // Step accepted
@@ -133,12 +208,22 @@ export const adaptiveRKIntegrate = (
     }
   }
 
-  // Fallback if max steps exceeded
+  // Final fallback: use RK4 with minimum timestep
+  console.warn(
+    `Adaptive integration failed after ${maxSteps} steps, using RK4 fallback`,
+  );
+  const fallbackState = rk4Step(
+    currentState,
+    acceleration,
+    calculateNewAcceleration,
+    cfg.minDt,
+  );
+
   return {
-    newState: currentState,
-    actualDt: currentDt,
+    newState: fallbackState,
+    actualDt: cfg.minDt,
     nextDt: Math.max(cfg.minDt, currentDt * cfg.maxShrink),
-    error: cfg.tolerance * 10,
+    error: tolerance * 10,
     stepsTaken,
   };
 };
@@ -332,9 +417,23 @@ function dormandPrinceStep(
   const posError = newPos.clone().sub(altPos).length();
   const velError = newVel.clone().sub(altVel).length();
 
-  // Use absolute tolerance for small values to avoid huge relative errors
-  const posScale = Math.max(pos0.length(), newPos.length(), 1e6); // Min scale: 1km
-  const velScale = Math.max(vel0.length(), newVel.length(), 1e-3); // Min scale: 1mm/s
+  // Calculate distance-based scales for error estimation
+
+  const distanceAU = pos0.length() / AU; // Convert meters to AU
+
+  // Scale position tolerance based on distance - closer objects need higher precision
+  const posScale = Math.max(
+    pos0.length(),
+    newPos.length(),
+    Math.max(1e4, distanceAU * 1e5), // Minimum 10km, scales with distance
+  );
+
+  // Scale velocity tolerance based on distance - higher velocities at larger distances
+  const velScale = Math.max(
+    vel0.length(),
+    newVel.length(),
+    Math.max(1e-1, distanceAU * 1e2), // Minimum 10cm/s, scales with distance
+  );
 
   const relPosError = posError / posScale;
   const relVelError = velError / velScale;

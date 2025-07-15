@@ -18,8 +18,8 @@ import {
   CelestialType,
   OrbitUpdatePayload,
 } from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 import { Observable, Subject } from "rxjs";
-import * as THREE from "three";
 import { HierarchyManager } from "./HierarchyManager";
 
 /**
@@ -147,7 +147,7 @@ export class SimulationManager {
   private simulationStep = (currentTime: number): void => {
     if (!this.isRunning) return;
 
-    const acquiredVectors: THREE.Vector3[] = []; // For vectorPool
+    const acquiredVectors: OSVector3[] = []; // For vectorPool
 
     try {
       const deltaTime = (currentTime - this.lastTime) / 1000;

@@ -36,11 +36,7 @@ function calculateHierarchicalPosition(
     // This is a root body (no parent) or has no orbital parameters
     const bodyState = allBodiesInitialStates.find((b) => b.id === bodyId);
     if (bodyState && bodyState.position_m) {
-      return new OSVector3().setFromArray([
-        bodyState.position_m.x,
-        bodyState.position_m.y,
-        bodyState.position_m.z,
-      ]);
+      return bodyState.position_m.clone();
     }
     return new OSVector3().setZero();
   }

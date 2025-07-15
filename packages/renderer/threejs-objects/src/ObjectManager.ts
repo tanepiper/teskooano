@@ -244,11 +244,7 @@ export class ObjectManager extends StateSubscriptionMixin {
         this.debrisEffectManager.createDebrisEffect({
           destroyedId: fullObject.celestialObjectId,
           survivorId: fullObject.parentId ?? "unknown",
-          impactPosition: new OSVector3().setFromArray([
-            fullObject.position.x,
-            fullObject.position.y,
-            fullObject.position.z,
-          ]),
+          impactPosition: OSVector3.fromThreeJS(fullObject.position),
           relativeVelocity: new OSVector3().setZero(), // Placeholder
           destroyedRadius: fullObject.radius,
         });

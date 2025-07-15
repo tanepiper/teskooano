@@ -3,6 +3,21 @@ import { OSQuaternion, OSVector3 } from "@teskooano/core-math";
 import { GRAVITATIONAL_CONSTANT } from "../units/constants";
 
 /**
+ * Calculate distance-based tolerance for Kepler equation solver
+ * @param distanceAU Distance from central body in AU
+ * @returns Scaled tolerance value
+ */
+function calculateKeplerTolerance(distanceAU: number): number {
+  const baseTolerance = 1e-4;
+  const scalingFactor = 1e-3;
+  const maxTolerance = 1e-2;
+  const minTolerance = 1e-5;
+
+  const scaledTolerance = baseTolerance + distanceAU * scalingFactor;
+  return Math.max(minTolerance, Math.min(maxTolerance, scaledTolerance));
+}
+
+/**
  * Solves Kepler's equation M = E - e * sin(E) for the eccentric anomaly E,
  * given the mean anomaly M and eccentricity e.
  * Uses Newton-Raphson method for iterative solving.
@@ -11,14 +26,20 @@ import { GRAVITATIONAL_CONSTANT } from "../units/constants";
  * @param eccentricity Eccentricity of the orbit.
  * @param tolerance The desired accuracy for the result.
  * @param maxIterations The maximum number of iterations to prevent infinite loops.
+ * @param distanceAU Optional distance from central body in AU for tolerance scaling.
  * @returns The eccentric anomaly E in radians.
  */
 export const solveKeplerEquation = (
   meanAnomaly: number,
   eccentricity: number,
-  tolerance: number = 1e-6,
+  tolerance: number = 1e-4, // Relaxed from 1e-5 for maximum stability at higher timesteps
   maxIterations: number = 100,
+  distanceAU?: number,
 ): number => {
+  // Use distance-based tolerance if distance is provided
+  const effectiveTolerance =
+    distanceAU !== undefined ? calculateKeplerTolerance(distanceAU) : tolerance;
+
   // For hyperbolic orbits, a different equation and solver would be needed.
   // This implementation is for elliptical orbits (e < 1).
   let eccentricAnomaly = meanAnomaly; // Initial guess: for small eccentricity, eccentricAnomaly is close to meanAnomaly.
@@ -29,7 +50,7 @@ export const solveKeplerEquation = (
         meanAnomaly) /
       (1 - eccentricity * Math.cos(eccentricAnomaly));
     eccentricAnomaly -= delta;
-    if (Math.abs(delta) < tolerance) {
+    if (Math.abs(delta) < effectiveTolerance) {
       return eccentricAnomaly;
     }
   }

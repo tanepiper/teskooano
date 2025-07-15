@@ -33,6 +33,18 @@ export function createIntroTour(
         side: "bottom",
         align: "center",
       },
+    },
+    {
+      id: "app-intro-3",
+      element: "#teskooano-settings-button",
+      overlayColor: "rgba(0, 0, 0, 0.75)",
+      popover: {
+        title: "⚙️ Engine Settings",
+        description:
+          "This brings up the engine settings, which you can use to select between Keplerian (Ideal) orbits which provide a fixed Orrery, or N-Body physics which provides a more realistic simulation - there are several options for the integrator, and algorithms to try our for accuracy.",
+        side: "bottom",
+        align: "center",
+      },
       onNextClick: () => {
         const totalCelestialObjects = Object.values(
           StateAccessor.getCurrentCelestialObjects(),

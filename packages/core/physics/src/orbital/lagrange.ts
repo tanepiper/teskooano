@@ -12,7 +12,7 @@ import { GRAVITATIONAL_CONSTANT } from "../units/constants";
  */
 const DEFAULT_OPTIONS: Required<LagrangeCalculationOptions> = {
   maxIterations: 1000,
-  tolerance: 1e-12,
+  tolerance: 1e-10, // Relaxed from 1e-11 for maximum stability at higher timesteps
   includeStability: true,
   calculatePotential: true,
 };

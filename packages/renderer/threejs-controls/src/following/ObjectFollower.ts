@@ -1,6 +1,7 @@
 import { PerspectiveCamera, Vector3 } from "three";
 import { Object3D } from "three";
 import { OrbitControlsHandler } from "../orbit/OrbitControlsHandler";
+import { OSVector3 } from "@teskooano/core-math";
 
 /**
  * Manages the state and logic for making the camera follow a target object.
@@ -17,6 +18,8 @@ export class ObjectFollower {
   private tempTargetPosition = new Vector3();
   /** Stores the world position of the followed object from the previous frame for delta calculations. */
   private previousFollowTargetPos = new Vector3();
+  /** Reusable OSVector3 for calculations to avoid allocations. */
+  private tempOSVector = new OSVector3().setZero();
 
   /** A flag to indicate if a follow transition is active, to be controlled externally. */
   public isFollowingTransitioning: boolean = false;
@@ -89,13 +92,20 @@ export class ObjectFollower {
   public update(): void {
     if (this.followingTargetObject && !this.isFollowingTransitioning) {
       this.followingTargetObject.getWorldPosition(this.tempTargetPosition);
-      const targetDelta = this.tempTargetPosition
-        .clone()
-        .sub(this.previousFollowTargetPos);
+
+      // Use OSVector3 for calculations to avoid allocations
+      this.tempOSVector.copy(OSVector3.fromThreeJS(this.tempTargetPosition));
+
+      // Convert previous position to OSVector3 for calculation
+      const previousOSVector = OSVector3.fromThreeJS(
+        this.previousFollowTargetPos,
+      );
+
+      const targetDelta = this.tempOSVector.clone().sub(previousOSVector);
 
       // This logic keeps the camera's offset constant relative to the moving target.
-      this.camera.position.add(targetDelta);
-      this.orbitControlsHandler.controls.target.add(targetDelta);
+      this.camera.position.add(targetDelta.toThreeJS());
+      this.orbitControlsHandler.controls.target.add(targetDelta.toThreeJS());
 
       this.previousFollowTargetPos.copy(this.tempTargetPosition);
     }

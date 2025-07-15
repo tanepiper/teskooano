@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+import { OSVector3 } from "@teskooano/core-math";
 
 export interface DebugLabel {
   element: HTMLDivElement;
@@ -35,8 +36,16 @@ export function updateDebugLabel(
   if (!debugLabel || !debugLabel.element || !lod) return;
 
   const currentLevel = lod.getCurrentLevel();
-  const worldPos = lod.getWorldPosition(new THREE.Vector3());
-  const distance = worldPos.distanceTo(cameraPosition);
+
+  // Get world position as THREE.Vector3 (needed for Three.js API)
+  const worldPosThree = lod.getWorldPosition(new THREE.Vector3());
+
+  // Convert to OSVector3 for calculations
+  const worldPos = OSVector3.fromThreeJS(worldPosThree);
+  const cameraPos = OSVector3.fromThreeJS(cameraPosition);
+
+  // Calculate distance using OSVector3
+  const distance = worldPos.distanceTo(cameraPos);
 
   debugLabel.element.textContent = `LOD: ${currentLevel}\nDist: ${distance.toFixed(0)}`;
 }
