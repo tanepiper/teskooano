@@ -31,22 +31,52 @@ export abstract class BaseLabelLayer {
 
   /** Performance optimization: throttle occlusion checks */
   private occlusionCheckCounter = 0;
-  private readonly OCCLUSION_CHECK_FREQUENCY = 10; // Check every 10 frames
+  public occlusionCheckFrequency: number = 60; // Check every 60 frames (once per second at 60fps)
 
   /** Performance optimization: limit occlusion tests per frame */
-  private readonly MAX_OCCLUSION_TESTS_PER_FRAME = 5;
+  public maxOcclusionTestsPerFrame: number = 3;
   private labelCheckQueue: string[] = [];
   private occlusionResults: Map<
     string,
     { result: boolean; timestamp: number }
   > = new Map();
-  private readonly OCCLUSION_CACHE_DURATION = 500; // Cache results for 500ms
+  public occlusionCacheDuration: number = 2000; // Cache results for 2 seconds
+
+  /** Distance threshold for skipping occlusion tests on nearby labels */
+  public nearbyLabelDistanceThreshold: number = 50;
 
   /**
    * @param scene The Three.js scene, optional for layers that add elements to other objects.
+   * @param occlusionOptions Optional configuration for occlusion testing performance
    */
-  constructor(scene?: THREE.Scene) {
+  constructor(
+    scene?: THREE.Scene,
+    occlusionOptions?: {
+      checkFrequency?: number;
+      maxTestsPerFrame?: number;
+      cacheDuration?: number;
+      nearbyDistanceThreshold?: number;
+    },
+  ) {
     this.scene = scene;
+
+    // Apply occlusion options if provided
+    if (occlusionOptions) {
+      if (occlusionOptions.checkFrequency !== undefined) {
+        this.occlusionCheckFrequency = occlusionOptions.checkFrequency;
+      }
+      if (occlusionOptions.maxTestsPerFrame !== undefined) {
+        this.maxOcclusionTestsPerFrame = occlusionOptions.maxTestsPerFrame;
+      }
+      if (occlusionOptions.cacheDuration !== undefined) {
+        this.occlusionCacheDuration = occlusionOptions.cacheDuration;
+      }
+      if (occlusionOptions.nearbyDistanceThreshold !== undefined) {
+        this.nearbyLabelDistanceThreshold =
+          occlusionOptions.nearbyDistanceThreshold;
+      }
+    }
+
     // Configure raycaster for better performance
     this.raycaster.far = Infinity;
     this.raycaster.near = 0;
@@ -184,7 +214,7 @@ export abstract class BaseLabelLayer {
     // Check cache first
     const cached = this.occlusionResults.get(labelId);
     const now = Date.now();
-    if (cached && now - cached.timestamp < this.OCCLUSION_CACHE_DURATION) {
+    if (cached && now - cached.timestamp < this.occlusionCacheDuration) {
       return cached.result;
     }
 
@@ -194,7 +224,7 @@ export abstract class BaseLabelLayer {
     const distance = cameraPosition.distanceTo(labelPosition);
 
     // If label is very close to camera, it's unlikely to be occluded
-    if (distance < 10) {
+    if (distance < this.nearbyLabelDistanceThreshold) {
       this.occlusionResults.set(labelId, { result: false, timestamp: now });
       return false;
     }
@@ -202,7 +232,7 @@ export abstract class BaseLabelLayer {
     // Throttling: only check a limited number of labels per frame
     this.occlusionCheckCounter++;
     const shouldCheckThisFrame =
-      this.occlusionCheckCounter % this.OCCLUSION_CHECK_FREQUENCY === 0;
+      this.occlusionCheckCounter % this.occlusionCheckFrequency === 0;
 
     if (!shouldCheckThisFrame) {
       // If we have a cached result, use it; otherwise assume not occluded
@@ -218,7 +248,7 @@ export abstract class BaseLabelLayer {
     let testsPerformed = 0;
     while (
       this.labelCheckQueue.length > 0 &&
-      testsPerformed < this.MAX_OCCLUSION_TESTS_PER_FRAME
+      testsPerformed < this.maxOcclusionTestsPerFrame
     ) {
       const queuedLabelId = this.labelCheckQueue.shift()!;
       if (queuedLabelId === labelId) {
