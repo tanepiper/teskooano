@@ -60,13 +60,13 @@ export function initializeVoyager2(): void {
 
   const voyager2Properties: SatelliteProperties = {
     type: CelestialType.SATELLITE,
-    modelPath: "./models/satellite/voyager.glb",
+    modelPath: "models/satellite/voyager.glb", // Fixed path format
     modelScale: 1.0,
     missionType: "scientific",
     operationalStatus: "active",
     launchDate: "1977-08-20",
     description:
-      "NASA's Voyager 2 - the only spacecraft to visit all four gas giants and second to enter interstellar space. Currently 140.23 AU from Sun (13.0 billion miles), traveling at 34,391 mph. Mission elapsed time: 47 years, 10 months. One-way light time: 19:19:40. Carries the Golden Record and continues transmitting scientific data from beyond the heliopause.",
+      "NASA's Voyager 2 - the only spacecraft to visit all four outer planets. Currently 139.7 AU from Sun (13 billion miles), traveling at 34,390 mph. Mission elapsed time: 47 years, 1 month. One-way light time: 19:20:00. Carries the Golden Record with sounds and images of Earth for potential extraterrestrial discovery.",
     components: [
       "High-gain antenna (3.7m dish)",
       "Magnetometer boom",
@@ -86,8 +86,8 @@ export function initializeVoyager2(): void {
     // No parentId - Voyager 2 is a rogue object in interstellar space
     realMass_kg: VOYAGER2_MASS_KG,
     realRadius_m: 2.0, // Approximate size for visualization
-    temperature: 220, // Deep space temperature
-    albedo: 0.1, // Low reflectivity
+    temperature: 300, // More realistic temperature for lighting calculations
+    albedo: 0.3, // More realistic albedo for visibility
 
     // Rogue object orbital parameters (mostly zeros)
     orbit: {

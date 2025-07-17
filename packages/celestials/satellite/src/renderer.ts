@@ -6,6 +6,7 @@ import {
   RenderableCelestialObject,
   SatelliteProperties,
   METERS_TO_SCENE_UNITS,
+  CelestialType,
 } from "@teskooano/data-types";
 
 import {
@@ -218,13 +219,20 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
 
               // Ensure the material is compatible with lighting
               if (child.material) {
-                // Replace all materials with our custom satellite material for proper lighting
+                // Create satellite material that preserves original textures
                 const originalMaterial = child.material;
+                const properties = this.currentObject
+                  ?.properties as SatelliteProperties;
+
+                // Use custom material properties if available, otherwise use defaults
+                const materialProperties = properties?.materialProperties || {};
                 const satelliteMaterial = new SatelliteMaterial({
                   color: originalMaterial.color || new THREE.Color(0xdddddd),
-                  metalness: 0.7,
-                  roughness: 0.3,
+                  metalness: materialProperties.metalness ?? 0.7,
+                  roughness: materialProperties.roughness ?? 0.3,
                   maxEmissiveIntensity: 0.8,
+                  envMapIntensity: materialProperties.envMapIntensity ?? 1.0,
+                  originalMaterial: originalMaterial, // Pass original material to preserve textures
                 });
                 child.material = satelliteMaterial;
               }
@@ -448,7 +456,7 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
 
   private createFallbackMesh(object: RenderableCelestialObject): void {
     this.fallbackMesh = createFallbackSphere(object) as THREE.Mesh;
-    this.fallbackMesh.material = this.createSatelliteMaterial();
+    this.fallbackMesh.material = this.createSatelliteMaterial(); // No original material for fallback
     this.fallbackMesh.renderOrder = 0; // Ensure satellites render before transparent objects
   }
 
@@ -468,13 +476,16 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     ];
   }
 
-  private createSatelliteMaterial(): SatelliteMaterial {
+  private createSatelliteMaterial(
+    originalMaterial?: THREE.Material,
+  ): SatelliteMaterial {
     if (!this.material) {
       this.material = new SatelliteMaterial({
         color: new THREE.Color(0xdddddd), // Clean satellite color
         metalness: 0.7, // Metallic satellite materials
         roughness: 0.3, // Smooth but not mirror-like
         maxEmissiveIntensity: 0.8, // Maximum brightness when fully illuminated
+        originalMaterial: originalMaterial, // Preserve textures if provided
       });
     }
     return this.material;
@@ -500,10 +511,21 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     );
 
     // Apply centralized light attenuation like other renderers
-    const attenuatedLightSources = this.applyLightAttenuation(
+    let attenuatedLightSources = this.applyLightAttenuation(
       object,
       lightSources,
     );
+
+    // Special handling for rogue objects (satellites without parents)
+    // These objects are often very far from stars and need minimum lighting to remain visible
+    if (!object.parentId && object.type === CelestialType.SATELLITE) {
+      // For rogue satellites, ensure they get minimum lighting even at great distances
+      attenuatedLightSources = this.ensureMinimumLightingForRogueObject(
+        object,
+        attenuatedLightSources,
+        lightSources,
+      );
+    }
 
     // Calculate dynamic ambient light based on nearby stars
     const dynamicAmbientIntensity =
@@ -558,6 +580,41 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
       // Example: Slowly rotate the satellite
       this.model.rotation.y += 0.001 * timeScale;
     }
+  }
+
+  /**
+   * Ensures rogue satellites (those without parents) get minimum lighting
+   * even when they're very far from stars, to maintain visibility
+   */
+  private ensureMinimumLightingForRogueObject(
+    object: RenderableCelestialObject,
+    attenuatedLightSources: LightSourcesMap,
+    originalLightSources: LightSourcesMap,
+  ): LightSourcesMap {
+    // Create a new map to avoid modifying the original
+    const enhancedLightSources = new Map(attenuatedLightSources);
+
+    // Check if any light source has very low intensity (indicating great distance)
+    let hasVeryLowLighting = false;
+    for (const lightData of enhancedLightSources.values()) {
+      if (lightData.intensity && lightData.intensity < 0.1) {
+        hasVeryLowLighting = true;
+        break;
+      }
+    }
+
+    // If lighting is very low, boost it to ensure visibility
+    if (hasVeryLowLighting) {
+      for (const [lightId, lightData] of enhancedLightSources.entries()) {
+        // Ensure minimum intensity of 0.3 for rogue objects
+        const minIntensity = 0.3;
+        if (lightData.intensity && lightData.intensity < minIntensity) {
+          lightData.intensity = minIntensity;
+        }
+      }
+    }
+
+    return enhancedLightSources;
   }
 
   dispose(): void {

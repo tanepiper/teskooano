@@ -302,20 +302,10 @@ export class ShadowCasterUtils {
         });
       }
     }
-    // If the object is a moon, its parent planet is a shadow caster
-    else if (object.type === CelestialType.MOON && object.parentId) {
-      const parentPlanet = allObjects[object.parentId];
-      if (parentPlanet) {
-        shadowCasters.push({
-          position: parentPlanet.position.clone(),
-          radius: parentPlanet.radius ?? 0,
-        });
-      }
-    }
-    // If the object is a satellite, its parent body is a shadow caster
-    else if (object.type === CelestialType.SATELLITE && object.parentId) {
+    // Universal rule: any object can be shadowed by its parent, unless the parent is a star
+    else if (object.parentId) {
       const parentBody = allObjects[object.parentId];
-      if (parentBody) {
+      if (parentBody && parentBody.type !== CelestialType.STAR) {
         shadowCasters.push({
           position: parentBody.position.clone(),
           radius: parentBody.radius ?? 0,

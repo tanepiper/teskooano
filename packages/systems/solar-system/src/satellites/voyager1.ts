@@ -60,7 +60,7 @@ export function initializeVoyager1(): void {
 
   const voyager1Properties: SatelliteProperties = {
     type: CelestialType.SATELLITE,
-    modelPath: "./models/satellite/voyager.glb",
+    modelPath: "models/satellite/voyager.glb", // Fixed path format
     modelScale: 1.0,
     missionType: "scientific",
     operationalStatus: "active",
@@ -86,8 +86,8 @@ export function initializeVoyager1(): void {
     // No parentId - Voyager 1 is a rogue object in interstellar space
     realMass_kg: VOYAGER1_MASS_KG,
     realRadius_m: 2.0, // Approximate size for visualization
-    temperature: 220, // Deep space temperature
-    albedo: 0.1, // Low reflectivity
+    temperature: 300, // More realistic temperature for lighting calculations
+    albedo: 0.3, // More realistic albedo for visibility
 
     // Rogue object orbital parameters (mostly zeros)
     orbit: {

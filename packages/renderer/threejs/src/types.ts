@@ -90,7 +90,7 @@ export interface RenderPipelineOptions {
   /** The manager for the main animation loop. */
   animationLoop: AnimationLoop;
   /** The optional manager for 2D HTML labels. */
-  css2DManager?: Layer2DManager;
+  css2DManager: Layer2DManager;
 }
 
 /**

@@ -369,6 +369,15 @@ export interface SatelliteProperties extends SpecificPropertiesBase {
   launchDate?: string;
   /** Optional expected mission duration in years. */
   missionDuration?: number;
+  /** Optional custom material properties for enhanced rendering */
+  materialProperties?: {
+    /** Metallic factor for PBR materials (0.0 - 1.0) */
+    metalness?: number;
+    /** Roughness factor for PBR materials (0.0 - 1.0) */
+    roughness?: number;
+    /** Environment map reflection intensity (0.0 - 2.0) */
+    envMapIntensity?: number;
+  };
 }
 
 /** Union type for all specific celestial properties */

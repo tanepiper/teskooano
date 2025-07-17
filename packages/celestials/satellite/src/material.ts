@@ -13,6 +13,12 @@ export interface SatelliteMaterialOptions {
   roughness?: number;
   /** Maximum emissive intensity when fully lit */
   maxEmissiveIntensity?: number;
+  /** Original material to preserve textures from */
+  originalMaterial?: THREE.Material;
+  /** Environment map for reflections */
+  envMap?: THREE.Texture;
+  /** Environment map intensity */
+  envMapIntensity?: number;
 }
 
 // Vertex shader for satellite materials
@@ -20,11 +26,13 @@ const satelliteVertexShader = `
 varying vec3 vWorldPosition;
 varying vec3 vWorldNormal;
 varying vec3 vViewDirection;
+varying vec2 vUv; // UV coordinates for texture mapping
 
 void main() {
   vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
   vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
   vViewDirection = normalize(cameraPosition - vWorldPosition);
+  vUv = uv; // Pass UV coordinates to fragment shader
   
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
@@ -49,19 +57,66 @@ uniform float uShadowFactor; // Precalculated shadow factor (0.0 = full shadow, 
 uniform float uEmissiveIntensity; // Calculated emissive intensity
 uniform vec3 uEmissiveColor; // Emissive color
 
+// Texture uniforms (from original material)
+uniform sampler2D map; // Diffuse texture
+uniform sampler2D normalMap; // Normal map
+uniform sampler2D roughnessMap; // Roughness map
+uniform sampler2D metalnessMap; // Metalness map
+uniform bool hasMap; // Whether diffuse texture exists
+uniform bool hasNormalMap; // Whether normal map exists
+uniform bool hasRoughnessMap; // Whether roughness map exists
+uniform bool hasMetalnessMap; // Whether metalness map exists
+
+// Environment map uniforms
+uniform samplerCube envMap; // Environment map for reflections
+uniform bool hasEnvMap; // Whether environment map exists
+uniform float envMapIntensity; // Environment map reflection intensity
+
 uniform Light uLights[MAX_LIGHTS];
 uniform int uNumLights;
 
 varying vec3 vWorldPosition;
 varying vec3 vWorldNormal;
 varying vec3 vViewDirection;
+varying vec2 vUv; // UV coordinates for texture mapping
 
 void main() {
   vec3 normal = normalize(vWorldNormal);
   vec3 viewDir = normalize(vViewDirection);
   
+  // Sample textures if available
+  vec3 diffuseColor = baseColor;
+  if (hasMap) {
+    diffuseColor = texture2D(map, vUv).rgb * baseColor;
+  }
+  
+  // Sample normal map if available
+  if (hasNormalMap) {
+    vec3 normalMap = texture2D(normalMap, vUv).rgb * 2.0 - 1.0;
+    normal = normalize(normal + normalMap * 0.5); // Blend with original normal
+  }
+  
+  // Sample material properties from maps if available
+  float finalMetalness = metalness;
+  float finalRoughness = roughness;
+  
+  if (hasMetalnessMap) {
+    finalMetalness = texture2D(metalnessMap, vUv).r;
+  }
+  
+  if (hasRoughnessMap) {
+    finalRoughness = texture2D(roughnessMap, vUv).r;
+  }
+  
+  // Calculate environment map reflection
+  vec3 reflection = vec3(0.0);
+  if (hasEnvMap) {
+    vec3 reflectDir = reflect(-viewDir, normal);
+    reflection = textureCube(envMap, reflectDir).rgb * envMapIntensity * finalMetalness;
+  }
+  
   // Start with ambient lighting - also affected by shadow factor
-  vec3 ambient = baseColor * uDynamicAmbientIntensity * uShadowFactor;
+  vec3 ambient = diffuseColor * uDynamicAmbientIntensity * uShadowFactor;
   
   // Calculate lighting from all light sources
   vec3 totalDiffuse = vec3(0.0);
@@ -89,14 +144,14 @@ void main() {
   }
   
   // Combine lighting components
-  vec3 diffuse = baseColor * totalDiffuse;
+  vec3 diffuse = diffuseColor * totalDiffuse;
   vec3 specular = totalSpecular;
   
   // Add emissive lighting
   vec3 emissive = uEmissiveColor * uEmissiveIntensity;
   
-  // Final color
-  vec3 finalColor = ambient + diffuse + specular + emissive;
+  // Final color with environment map reflection
+  vec3 finalColor = ambient + diffuse + specular + emissive + reflection;
   
   // Apply gamma correction
   finalColor = pow(finalColor, vec3(1.0 / 2.2));
@@ -117,6 +172,36 @@ export class SatelliteMaterial extends THREE.ShaderMaterial {
     const metalness = options.metalness ?? 0.7;
     const roughness = options.roughness ?? 0.3;
     const maxEmissiveIntensity = options.maxEmissiveIntensity ?? 0.6;
+    const originalMaterial = options.originalMaterial;
+    const envMap = options.envMap;
+    const envMapIntensity = options.envMapIntensity ?? 1.0;
+
+    // Extract textures from original material if available
+    let diffuseMap: THREE.Texture | null = null;
+    let normalMap: THREE.Texture | null = null;
+    let roughnessMap: THREE.Texture | null = null;
+    let metalnessMap: THREE.Texture | null = null;
+    let originalEnvMap: THREE.Texture | null = null;
+
+    if (originalMaterial) {
+      // Handle different material types
+      if (originalMaterial instanceof THREE.MeshStandardMaterial) {
+        diffuseMap = originalMaterial.map;
+        normalMap = originalMaterial.normalMap;
+        roughnessMap = originalMaterial.roughnessMap;
+        metalnessMap = originalMaterial.metalnessMap;
+        originalEnvMap = originalMaterial.envMap;
+      } else if (originalMaterial instanceof THREE.MeshBasicMaterial) {
+        diffuseMap = originalMaterial.map;
+      } else if (originalMaterial instanceof THREE.MeshPhongMaterial) {
+        diffuseMap = originalMaterial.map;
+        normalMap = originalMaterial.normalMap;
+        originalEnvMap = originalMaterial.envMap;
+      }
+    }
+
+    // Use provided envMap or fall back to original material's envMap
+    const finalEnvMap = envMap || originalEnvMap;
 
     super({
       uniforms: {
@@ -130,6 +215,19 @@ export class SatelliteMaterial extends THREE.ShaderMaterial {
         uEmissiveColor: { value: new THREE.Color(0x111111) },
         uLights: { value: LightArrayUtils.createLightSourceArray(4) },
         uNumLights: { value: 0 },
+        // Texture uniforms
+        map: { value: diffuseMap },
+        normalMap: { value: normalMap },
+        roughnessMap: { value: roughnessMap },
+        metalnessMap: { value: metalnessMap },
+        hasMap: { value: !!diffuseMap },
+        hasNormalMap: { value: !!normalMap },
+        hasRoughnessMap: { value: !!roughnessMap },
+        hasMetalnessMap: { value: !!metalnessMap },
+        // Environment map uniforms
+        envMap: { value: finalEnvMap },
+        hasEnvMap: { value: !!finalEnvMap },
+        envMapIntensity: { value: envMapIntensity },
       },
       defines: {
         MAX_LIGHTS: 4,

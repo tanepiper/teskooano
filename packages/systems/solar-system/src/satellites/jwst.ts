@@ -32,8 +32,8 @@ export function initializeJWST(parentId: string): void {
     parentId: parentId, // Orbits the Sun, not Earth
     realMass_kg: JWST_MASS_KG,
     realRadius_m: 10, // Approximate radius for visualization (21m diameter sunshield)
-    temperature: 45, // ~-228°C (45K) operating temperature
-    albedo: 0.1, // Very dark to minimize heat
+    temperature: 300, // More realistic temperature for lighting calculations
+    albedo: 0.3, // More realistic albedo for visibility
 
     orbit: {
       realSemiMajorAxis_m: jwstOrbitRadius,
@@ -56,7 +56,7 @@ export function initializeJWST(parentId: string): void {
 
     properties: {
       type: CelestialType.SATELLITE,
-      modelPath: "./models/satellite/jwst.glb",
+      modelPath: "models/satellite/jwst.glb", // Fixed path format
       modelScale: 1.2,
       missionType: "scientific",
       operationalStatus: "active",
@@ -70,6 +70,12 @@ export function initializeJWST(parentId: string): void {
         "Spacecraft bus",
         "High-gain antenna",
       ],
+      // JWST-specific material properties for better reflection
+      materialProperties: {
+        metalness: 0.9, // Highly metallic for gold foil and mirrors
+        roughness: 0.1, // Very smooth for reflective surfaces
+        envMapIntensity: 1.5, // Strong environment reflections
+      },
     } as SatelliteProperties,
   });
 }
