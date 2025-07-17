@@ -57,7 +57,7 @@ export function initializeGPS(parentId: string): void {
 
     properties: {
       type: CelestialType.SATELLITE,
-      modelPath: "/models/satellite/satellite.glb",
+      modelPath: "./models/satellite/satellite.glb",
       modelScale: 0.8,
       missionType: "navigation",
       operationalStatus: "active",

@@ -56,7 +56,7 @@ export function initializeGeostationarySat(parentId: string): void {
 
     properties: {
       type: CelestialType.SATELLITE,
-      modelPath: "/models/satellite/satellite.glb",
+      modelPath: "./models/satellite/satellite.glb",
       modelScale: 1.2, // Larger scale for bigger satellite
       missionType: "communications",
       operationalStatus: "active",

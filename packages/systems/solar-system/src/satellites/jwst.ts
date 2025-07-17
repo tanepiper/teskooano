@@ -56,7 +56,7 @@ export function initializeJWST(parentId: string): void {
 
     properties: {
       type: CelestialType.SATELLITE,
-      modelPath: "/models/satellite/jwst.glb",
+      modelPath: "./models/satellite/jwst.glb",
       modelScale: 1.2,
       missionType: "scientific",
       operationalStatus: "active",

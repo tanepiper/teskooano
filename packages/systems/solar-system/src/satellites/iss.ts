@@ -57,7 +57,7 @@ export function initializeISS(parentId: string): void {
 
     properties: {
       type: CelestialType.SATELLITE,
-      modelPath: "/models/satellite/iss.glb",
+      modelPath: "./models/satellite/iss.glb", // Changed from absolute to relative path
       modelScale: 1.0,
       missionType: "scientific",
       operationalStatus: "active",
