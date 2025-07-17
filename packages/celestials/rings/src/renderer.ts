@@ -16,7 +16,11 @@ import {
 } from "@teskooano/renderer-threejs-celestial";
 import { RingMaterial, AccretionDiskMaterial } from "./material";
 import { calculateKeplerianRotationRate } from "./utils";
-import { calculateSaturnRingOrientation } from "./saturn-ring-orientation";
+import { 
+  calculatePlanetRingOrientation, 
+  shouldUseDynamicRingOrientation,
+  getOrbitalPeriod 
+} from "./ring-orientation";
 
 /**
  * Renderer for planetary ring systems
@@ -329,24 +333,26 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
       ringMesh.name = `${object.celestialObjectId}-ring-${index}`;
       
-      // Apply orientation based on the celestial object type
-      if (object.celestialObjectId === "saturn" && currentTime !== undefined && allObjects) {
-        // Apply Saturn-specific ring orientation based on orbital mechanics
-        const sunObject = allObjects["sol"] || allObjects["sun"];
-        if (sunObject) {
-          const saturnOrientation = calculateSaturnRingOrientation(
+      // Apply orientation based on the celestial object's axial tilt and orbital mechanics
+      if (shouldUseDynamicRingOrientation(object) && currentTime !== undefined && allObjects) {
+        // Apply dynamic ring orientation based on orbital mechanics and axial tilt
+        const starObject = allObjects["sol"] || allObjects["sun"];
+        if (starObject) {
+          const orbitalPeriod = getOrbitalPeriod(object);
+          const planetOrientation = calculatePlanetRingOrientation(
             object,
             currentTime,
-            sunObject.position
+            starObject.position,
+            orbitalPeriod
           );
-          const threeQuaternion = saturnOrientation.toThreeJS();
+          const threeQuaternion = planetOrientation.toThreeJS();
           ringMesh.quaternion.copy(threeQuaternion);
         } else {
-          // Fallback to default orientation if Sun not found
+          // Fallback to default orientation if star not found
           ringMesh.rotation.x = -Math.PI / 2;
         }
       } else {
-        // Default orientation for non-Saturn ring systems
+        // Default orientation for planets without significant axial tilt or ring systems
         ringMesh.rotation.x = -Math.PI / 2;
       }
       
@@ -470,16 +476,18 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       });
     }
 
-    // Update Saturn ring orientation based on orbital mechanics
-    if (object.celestialObjectId === "saturn" && allObjects) {
-      const sunObject = allObjects["sol"] || allObjects["sun"];
-      if (sunObject) {
-        const saturnOrientation = calculateSaturnRingOrientation(
+    // Update ring orientation for planets with significant axial tilt
+    if (shouldUseDynamicRingOrientation(object) && allObjects) {
+      const starObject = allObjects["sol"] || allObjects["sun"];
+      if (starObject) {
+        const orbitalPeriod = getOrbitalPeriod(object);
+        const planetOrientation = calculatePlanetRingOrientation(
           object,
           time,
-          sunObject.position
+          starObject.position,
+          orbitalPeriod
         );
-        const threeQuaternion = saturnOrientation.toThreeJS();
+        const threeQuaternion = planetOrientation.toThreeJS();
         
         // Update all ring meshes with the new orientation
         this.ringMeshes.forEach((meshArray) => {

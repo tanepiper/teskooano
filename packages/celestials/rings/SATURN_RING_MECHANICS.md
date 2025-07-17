@@ -1,10 +1,10 @@
-# Saturn Ring Orientation Mechanics
+# Planetary Ring Orientation Mechanics
 
-This document describes the implementation of astronomically accurate Saturn ring orientation based on its orbital mechanics and axial tilt.
+This document describes the implementation of astronomically accurate ring orientation for any planet with rings and axial tilt, based on orbital mechanics and viewing geometry.
 
 ## Overview
 
-Saturn's ring orientation changes over its 29.4571 Julian year orbital period due to its axial tilt of 26.73°. The rings appear edge-on twice per Saturnian year at the equinoxes, when Saturn's rotational axis is perpendicular to the Solar System barycenter-Saturn line.
+A planet's ring orientation changes over its orbital period due to its axial tilt. For planets with significant axial tilt, rings will appear edge-on twice per orbital period at the equinoxes, when the planet's rotational axis is perpendicular to the star-planet line. The system works for any planet with rings and axial tilt, including Saturn, Uranus, Jupiter, and Neptune.
 
 ## Key Astronomical Facts Implemented
 
@@ -26,28 +26,35 @@ Saturn's ring orientation changes over its 29.4571 Julian year orbital period du
 
 ### Core Functions
 
-#### `calculateSaturnRingOrientation()`
-Calculates Saturn's ring orientation quaternion based on:
-- Saturn's current orbital position
+#### `calculatePlanetRingOrientation()`
+Calculates any planet's ring orientation quaternion based on:
+- Planet's current orbital position
 - Simulation time
-- Sun's position (barycenter approximation)
+- Star's position
+- Planet's axial tilt and orbital parameters
 
 **Algorithm:**
-1. Calculate Saturn-to-Sun direction vector
+1. Calculate planet-to-star direction vector
 2. Determine current position in orbital cycle
-3. Account for unequal equinox periods (13.7 vs 15.7 years)
+3. Account for orbital eccentricity (for unequal equinox periods)
 4. Calculate apparent axial tilt angle using sinusoidal variation
 5. Construct ring orientation quaternion
 
-#### `getSaturnRingViewingInfo()`
-Provides detailed viewing information:
+#### `shouldUseDynamicRingOrientation()`
+Determines if a planet should use dynamic ring orientation:
+- Checks for presence of ring system
+- Verifies significant axial tilt (> ~3 degrees)
+- Returns true only for planets that would benefit from dynamic orientation
+
+#### `getPlanetRingViewingInfo()`
+Provides detailed viewing information for any planet:
 - Whether rings are currently near edge-on (within 5°)
 - Current viewing angle in degrees
-- Time since last edge-on viewing
-- Time until next edge-on viewing
+- Planet's axial tilt
+- Orbital phase information
 
-#### `getSaturnRingPhaseDescription()`
-Returns human-readable descriptions of current ring viewing phase.
+#### `getPlanetRingPhaseDescription()`
+Returns human-readable descriptions of current ring viewing phase for any planet.
 
 ### Mathematical Approach
 
@@ -65,12 +72,15 @@ Where `equinoxPhase` accounts for the unequal period distribution:
 
 The implementation is integrated into the `RingSystemRenderer` class:
 
-1. **Initial Creation**: Ring meshes are created with default orientation
-2. **Runtime Updates**: In the `update()` method, Saturn's rings are dynamically reoriented:
+1. **Automatic Detection**: `shouldUseDynamicRingOrientation()` automatically detects planets that need dynamic orientation
+2. **Initial Creation**: Ring meshes are created with appropriate orientation based on current orbital position
+3. **Runtime Updates**: In the `update()` method, all qualifying planets have their rings dynamically reoriented:
    ```typescript
-   if (object.celestialObjectId === "saturn" && allObjects) {
-     const saturnOrientation = calculateSaturnRingOrientation(
-       object, time, sunObject.position
+   if (shouldUseDynamicRingOrientation(object) && allObjects) {
+     const starObject = allObjects["sol"] || allObjects["sun"];
+     const orbitalPeriod = getOrbitalPeriod(object);
+     const planetOrientation = calculatePlanetRingOrientation(
+       object, time, starObject.position, orbitalPeriod
      );
      // Apply orientation to all ring meshes
      ringMeshes.forEach(mesh => mesh.quaternion.copy(orientation));
@@ -94,25 +104,49 @@ Recent edge-on viewing periods observed from Earth:
 - Expected next: ~2025 (approximately 15.7 years later)
 - Following: ~2039 (approximately 13.7 years after 2025)
 
-## Usage Example
+## Usage Examples
+
+### For Any Planet with Rings
 
 ```typescript
 import { 
-  calculateSaturnRingOrientation, 
-  getSaturnRingViewingInfo 
+  calculatePlanetRingOrientation, 
+  getPlanetRingViewingInfo,
+  shouldUseDynamicRingOrientation
 } from "@teskooano/celestials-rings";
 
-// Get current ring orientation
-const orientation = calculateSaturnRingOrientation(
-  saturnObject, 
-  simulationTime, 
-  sunPosition
-);
+// Check if planet should use dynamic ring orientation
+if (shouldUseDynamicRingOrientation(planetObject)) {
+  // Get current ring orientation
+  const orientation = calculatePlanetRingOrientation(
+    planetObject, 
+    simulationTime, 
+    starPosition
+  );
 
-// Check viewing information
-const viewingInfo = getSaturnRingViewingInfo(simulationTime);
-console.log(`Ring viewing angle: ${viewingInfo.viewingAngle.toFixed(1)}°`);
-console.log(`Edge-on viewing: ${viewingInfo.isNearEdgeOn ? 'Yes' : 'No'}`);
+  // Check viewing information
+  const viewingInfo = getPlanetRingViewingInfo(planetObject, simulationTime);
+  console.log(`${planetObject.name} rings:`);
+  console.log(`Viewing angle: ${viewingInfo.viewingAngle.toFixed(1)}°`);
+  console.log(`Edge-on viewing: ${viewingInfo.isNearEdgeOn ? 'Yes' : 'No'}`);
+  console.log(`Axial tilt: ${viewingInfo.axialTiltDeg.toFixed(1)}°`);
+}
+```
+
+### Planet-Specific Examples
+
+```typescript
+// Saturn (29.5 year orbit, 26.73° tilt)
+const saturnInfo = getPlanetRingViewingInfo(saturn, simulationTime);
+
+// Uranus (84 year orbit, 97.77° extreme tilt)
+const uranusInfo = getPlanetRingViewingInfo(uranus, simulationTime);
+
+// Jupiter (12 year orbit, 3.13° small tilt)
+const jupiterInfo = getPlanetRingViewingInfo(jupiter, simulationTime);
+
+// Neptune (165 year orbit, 28.32° tilt)
+const neptuneInfo = getPlanetRingViewingInfo(neptune, simulationTime);
 ```
 
 ## Testing
