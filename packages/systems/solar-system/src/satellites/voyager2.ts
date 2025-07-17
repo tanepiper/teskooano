@@ -60,7 +60,7 @@ export function initializeVoyager2(): void {
 
   const voyager2Properties: SatelliteProperties = {
     type: CelestialType.SATELLITE,
-    modelPath: "/models/satellite/satellite.fbx",
+    modelPath: "/models/satellite/voyager.glb",
     modelScale: 1.0,
     missionType: "scientific",
     operationalStatus: "active",

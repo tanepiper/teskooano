@@ -34,6 +34,7 @@
   "dependencies": {
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/renderer-threejs-celestial": "file:../../renderer/threejs-celestial",
+    "@teskooano/renderer-threejs-lighting": "file:../../renderer/threejs-lighting",
     "@teskooano/renderer-threejs-lod": "file:../../renderer/threejs-lod",
     "@types/three": "0.178.1",
     "three": "0.178.0"

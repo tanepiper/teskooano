@@ -57,7 +57,7 @@ export function initializeISS(parentId: string): void {
 
     properties: {
       type: CelestialType.SATELLITE,
-      modelPath: "/models/satellite/satellite.fbx",
+      modelPath: "/models/satellite/iss.glb",
       modelScale: 1.0,
       missionType: "scientific",
       operationalStatus: "active",

@@ -64,7 +64,7 @@ export interface PerformanceOptimization {
 const DefaultSceneManagerConfig = {
   CAMERA: {
     FOV: 75,
-    NEAR_PLANE: 0.0001,
+    NEAR_PLANE: 0.000001, // Reduced to allow closer viewing of small objects like satellites
     FAR_PLANE: 10000000,
     DEFAULT_POSITION: new OSVector3().setFromArray([0, 20, 50]),
     DEFAULT_TARGET: new OSVector3().setFromArray([0, 0, 0]),

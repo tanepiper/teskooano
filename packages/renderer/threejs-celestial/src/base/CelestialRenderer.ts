@@ -312,6 +312,16 @@ export class ShadowCasterUtils {
         });
       }
     }
+    // If the object is a satellite, its parent body is a shadow caster
+    else if (object.type === CelestialType.SATELLITE && object.parentId) {
+      const parentBody = allObjects[object.parentId];
+      if (parentBody) {
+        shadowCasters.push({
+          position: parentBody.position.clone(),
+          radius: parentBody.radius ?? 0,
+        });
+      }
+    }
 
     return shadowCasters;
   }

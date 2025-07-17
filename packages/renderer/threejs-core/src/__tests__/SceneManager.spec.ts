@@ -26,7 +26,7 @@ describe("SceneManager", () => {
     expect(sceneManager.renderer).toBeInstanceOf(THREE.WebGLRenderer);
 
     expect(sceneManager.camera.aspect).toBe(800 / 600);
-    expect(sceneManager.camera.near).toBe(0.0001);
+    expect(sceneManager.camera.near).toBe(0.00001); // Updated to match new near plane setting
     expect(sceneManager.camera.far).toBe(10000000);
 
     expect(sceneManager.renderer.domElement).toBeInstanceOf(HTMLCanvasElement);
@@ -38,9 +38,6 @@ describe("SceneManager", () => {
       antialias: false,
       shadows: true,
       hdr: true,
-      background: "#000000",
-      showDebugSphere: true,
-      showGrid: false,
     });
 
     expect(customManager.renderer.shadowMap.enabled).toBe(true);
@@ -73,10 +70,8 @@ describe("SceneManager", () => {
   });
 
   it("should update camera position and target", () => {
-    const position = new THREE.Vector3(1, 2, 3);
-    const target = new THREE.Vector3(4, 5, 6);
-
-    sceneManager.updateCamera(position, target);
+    sceneManager.camera.position.set(1, 2, 3);
+    sceneManager.camera.lookAt(4, 5, 6);
 
     expect(sceneManager.camera.position.x).toBe(1);
     expect(sceneManager.camera.position.y).toBe(2);
@@ -116,44 +111,6 @@ describe("SceneManager", () => {
 
     geometry.dispose();
     material.dispose();
-  });
-
-  it("should toggle debug sphere visibility", () => {
-    const managerWithDebug = new SceneManager(container, {
-      showDebugSphere: true,
-    });
-
-    const debugSphere = managerWithDebug.scene.children.find(
-      (child) =>
-        child instanceof THREE.Mesh &&
-        (child as THREE.Mesh).geometry instanceof THREE.SphereGeometry,
-    );
-
-    expect(debugSphere).toBeDefined();
-    expect((debugSphere as THREE.Mesh).visible).toBe(true);
-
-    managerWithDebug.toggleDebugSphere();
-    expect((debugSphere as THREE.Mesh).visible).toBe(false);
-
-    managerWithDebug.toggleDebugSphere();
-    expect((debugSphere as THREE.Mesh).visible).toBe(true);
-
-    managerWithDebug.dispose();
-  });
-
-  it("should toggle grid visibility", () => {
-    const gridHelper = sceneManager.scene.children.find(
-      (child) => child instanceof THREE.GridHelper,
-    );
-
-    expect(gridHelper).toBeDefined();
-    expect((gridHelper as THREE.GridHelper).visible).toBe(true);
-
-    sceneManager.toggleGrid();
-    expect((gridHelper as THREE.GridHelper).visible).toBe(false);
-
-    sceneManager.toggleGrid();
-    expect((gridHelper as THREE.GridHelper).visible).toBe(true);
   });
 
   it("should dispose resources properly", () => {

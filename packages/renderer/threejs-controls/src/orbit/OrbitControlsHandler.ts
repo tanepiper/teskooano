@@ -30,7 +30,7 @@ export class OrbitControlsHandler {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.5;
     this.controls.screenSpacePanning = false;
-    this.controls.minDistance = 0.0001;
+    this.controls.minDistance = 0.000001; // Reduced to allow closer zooming for small objects like satellites
     this.controls.maxDistance = 1e8; // Adjust as needed
     this.controls.maxPolarAngle = Math.PI; // Allow looking from underneath
 

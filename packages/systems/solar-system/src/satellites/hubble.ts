@@ -57,7 +57,7 @@ export function initializeHubble(parentId: string): void {
 
     properties: {
       type: CelestialType.SATELLITE,
-      modelPath: "/models/satellite/satellite.fbx",
+      modelPath: "/models/satellite/hubble.glb",
       modelScale: 0.7,
       missionType: "scientific",
       operationalStatus: "active",
