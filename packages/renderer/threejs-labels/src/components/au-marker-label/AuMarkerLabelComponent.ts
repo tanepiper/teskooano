@@ -38,7 +38,7 @@ export class AuMarkerLabelComponent extends HTMLElement {
             opacity: 0.5;
             padding: 2px 5px;
             border-radius: 1rem;
-            font-size: 0.8rem;
+            font-size: 0.6rem;
             user-select: none;
             transition: opacity 0.3s ease-in-out;
           }
