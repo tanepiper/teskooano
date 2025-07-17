@@ -49,6 +49,8 @@ export class RenderPipeline {
 
   private frameId: number | null = null;
 
+  private origin: OSVector3 = new OSVector3(0, 0, 0);
+
   /**
    * Creates an instance of RenderPipeline.
    * @param managers An object containing all the manager instances required for the pipeline.
@@ -122,9 +124,9 @@ export class RenderPipeline {
 
     // 4. Update the background, which may have a parallax effect based on camera position.
     // Throttle background updates for performance
-    if (this.frameCount % this.BACKGROUND_UPDATE_FREQUENCY === 0) {
-      this.backgroundManager.update(deltaTime);
-    }
+    // if (this.frameCount % this.BACKGROUND_UPDATE_FREQUENCY === 0) {
+    //   this.backgroundManager.update(deltaTime);
+    // }
 
     // 5. Update grid helper based on camera position - throttled for performance.
     if (this.frameCount % this.GRID_UPDATE_FREQUENCY === 0) {
@@ -133,8 +135,8 @@ export class RenderPipeline {
 
     // 6. Render the 2D overlay, which depends on final 3D positions.
     // AU markers are positioned relative to origin (0,0,0), not a moving central body
-    const origin = new OSVector3(0, 0, 0);
-    this.css2DManager.update(this.camera, origin, this.objectManager);
+
+    this.css2DManager.update(this.camera, this.origin, this.objectManager);
     this.css2DManager.render(this.camera);
 
     // 7. Run any custom render callbacks injected into the loop.

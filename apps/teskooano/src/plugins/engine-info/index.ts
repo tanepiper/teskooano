@@ -17,6 +17,12 @@ export const plugin = createPanelPlugin({
   iconSvg: DataUsageIcon,
   target: "engine-toolbar",
   order: 20,
+  initialPosition: {
+    top: window.innerHeight / 2 - 240,
+    left: window.innerWidth / 2 - 320,
+    width: 640,
+    height: 480,
+  },
 });
 
 export { RendererInfoDisplay };

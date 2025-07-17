@@ -1,5 +1,6 @@
 import { Subject } from "rxjs";
 import type { RendererStats } from "./AnimationLoop";
+import type { PerformanceOptimization } from "./SceneManager";
 
 /** Payload for the `beforeRender` and `afterRender` events. */
 export interface RenderLoopPayload {
@@ -50,4 +51,9 @@ export const rendererEvents = {
    * @event
    */
   statsUpdated$: new Subject<RendererStats>(),
+  /**
+   * Fires when performance optimization settings change.
+   * @event
+   */
+  performanceOptimizationChanged$: new Subject<PerformanceOptimization>(),
 };

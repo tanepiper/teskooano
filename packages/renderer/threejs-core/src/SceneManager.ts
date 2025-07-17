@@ -1,4 +1,4 @@
-import { StateAccessor } from "@teskooano/core-state";
+import { StateAccessor, simulationState$ } from "@teskooano/core-state";
 import { OSVector3 } from "@teskooano/core-math";
 import * as THREE from "three";
 import { AnimationLoop } from "./AnimationLoop";
@@ -18,6 +18,42 @@ export interface SceneManagerOptions {
   hdr?: boolean;
   /** The camera's vertical Field of View (FOV) in degrees. Defaults to 75. */
   fov?: number;
+}
+
+/**
+ * @interface WebGLCapabilities
+ * @description Represents the detected WebGL capabilities of the device
+ */
+export interface WebGLCapabilities {
+  isWebGL2: boolean;
+  precision: string;
+  maxTextures: number;
+  maxTextureSize: number;
+  maxVertexUniforms: number;
+  maxFragmentUniforms: number;
+  maxVaryings: number;
+  maxAttributes: number;
+  vertexTextures: boolean;
+  maxSamples: number;
+  logarithmicDepthBuffer: boolean;
+  reverseDepthBuffer: boolean;
+}
+
+/**
+ * @interface PerformanceOptimization
+ * @description Defines performance optimization settings based on device capabilities
+ */
+export interface PerformanceOptimization {
+  antialias: boolean;
+  shadows: boolean;
+  hdr: boolean;
+  pixelRatio: number;
+  shadowMapType: THREE.ShadowMapType;
+  maxLights: number;
+  maxShadowCasters: number;
+  lodDistanceMultiplier: number;
+  trailQuality: "low" | "medium" | "high";
+  particleCountMultiplier: number;
 }
 
 /**
@@ -42,6 +78,119 @@ const DefaultSceneManagerConfig = {
     TONE_MAPPING_EXPOSURE: 1.0,
   },
 };
+
+/**
+ * Detects WebGL capabilities and returns optimization settings
+ */
+function detectWebGLCapabilities(
+  renderer: THREE.WebGLRenderer,
+): WebGLCapabilities {
+  const capabilities = renderer.capabilities;
+  return {
+    isWebGL2: capabilities.isWebGL2,
+    precision: capabilities.precision,
+    maxTextures: capabilities.maxTextures,
+    maxTextureSize: capabilities.maxTextureSize,
+    maxVertexUniforms: capabilities.maxVertexUniforms,
+    maxFragmentUniforms: capabilities.maxFragmentUniforms,
+    maxVaryings: capabilities.maxVaryings,
+    maxAttributes: capabilities.maxAttributes,
+    vertexTextures: capabilities.vertexTextures,
+    maxSamples: capabilities.maxSamples,
+    logarithmicDepthBuffer: capabilities.logarithmicDepthBuffer,
+    reverseDepthBuffer: capabilities.reverseDepthBuffer,
+  };
+}
+
+/**
+ * Determines optimal performance settings based on WebGL capabilities and user profile
+ */
+function getPerformanceOptimization(
+  capabilities: WebGLCapabilities,
+  userProfile: "low" | "medium" | "high" | "cosmic",
+): PerformanceOptimization {
+  // Base optimization based on hardware capabilities
+  const isHighEndGPU =
+    capabilities.maxTextures >= 16 &&
+    capabilities.maxTextureSize >= 8192 &&
+    capabilities.maxFragmentUniforms >= 1024;
+
+  const isMidRangeGPU =
+    capabilities.maxTextures >= 8 &&
+    capabilities.maxTextureSize >= 4096 &&
+    capabilities.maxFragmentUniforms >= 512;
+
+  const isLowEndGPU = !isHighEndGPU && !isMidRangeGPU;
+
+  // User profile multipliers (0.5 = more aggressive optimization, 2.0 = less optimization)
+  const profileMultipliers = {
+    low: 0.5,
+    medium: 0.8,
+    high: 1.2,
+    cosmic: 2.0,
+  };
+
+  const multiplier = profileMultipliers[userProfile];
+
+  // Determine antialiasing based on capabilities and profile
+  const antialias = isHighEndGPU || (isMidRangeGPU && userProfile !== "low");
+
+  // Determine shadows based on capabilities
+  const shadows = isHighEndGPU || (isMidRangeGPU && userProfile !== "low");
+  const shadowMapType = isHighEndGPU
+    ? THREE.PCFSoftShadowMap
+    : THREE.BasicShadowMap;
+
+  // Determine HDR based on capabilities
+  const hdr =
+    isHighEndGPU ||
+    (isMidRangeGPU && userProfile === "high") ||
+    userProfile === "cosmic";
+
+  // Pixel ratio optimization
+  const basePixelRatio = isHighEndGPU ? 2.0 : isMidRangeGPU ? 1.5 : 1.0;
+  const pixelRatio = Math.min(
+    window.devicePixelRatio,
+    basePixelRatio * multiplier,
+  );
+
+  // Light and shadow limits based on uniform capacity
+  const maxLights = Math.min(
+    Math.floor(capabilities.maxFragmentUniforms / 20), // Estimate uniforms per light
+    isHighEndGPU ? 16 : isMidRangeGPU ? 8 : 4,
+  );
+
+  const maxShadowCasters = Math.min(
+    Math.floor(capabilities.maxFragmentUniforms / 15), // Estimate uniforms per shadow caster
+    isHighEndGPU ? 12 : isMidRangeGPU ? 6 : 3,
+  );
+
+  // LOD distance multiplier (higher = switch to lower detail sooner)
+  const lodDistanceMultiplier = isLowEndGPU ? 1.5 : isMidRangeGPU ? 1.2 : 1.0;
+
+  // Trail quality based on capabilities
+  const trailQuality = isHighEndGPU ? "high" : isMidRangeGPU ? "medium" : "low";
+
+  // Particle count multiplier
+  const particleCountMultiplier = isHighEndGPU
+    ? 1.0
+    : isMidRangeGPU
+      ? 0.7
+      : 0.4;
+
+  return {
+    antialias,
+    shadows,
+    hdr,
+    pixelRatio,
+    shadowMapType,
+    maxLights,
+    maxShadowCasters,
+    lodDistanceMultiplier,
+    trailQuality,
+    particleCountMultiplier,
+  };
+}
 
 /**
  * Manages the core Three.js components: the scene, camera, and renderer.
@@ -69,82 +218,102 @@ export class SceneManager {
   private options: SceneManagerOptions;
   private width: number;
   private height: number;
+  private webGLCapabilities: WebGLCapabilities;
+  private performanceOptimization: PerformanceOptimization;
 
   /**
    * Creates a new SceneManager instance.
-   *
-   * @param container The HTML element where the renderer's canvas will be appended.
-   * This element's dimensions will define the rendering area.
-   * @param options A configuration object (`SceneManagerOptions`) for the scene,
-   * camera, and renderer. Defaults will be used for any omitted properties.
+   * @param container The HTML element that will contain the renderer's canvas.
+   * @param options Configuration options for the scene manager.
    */
   constructor(container: HTMLElement, options: SceneManagerOptions = {}) {
     this.options = options;
+    this.fov = options.fov ?? DefaultSceneManagerConfig.CAMERA.FOV;
     this.width = container.clientWidth;
     this.height = container.clientHeight;
-    this.scene = new THREE.Scene();
 
     // Initialize core components
-    this.animationLoop = new AnimationLoop();
-    this.fov = this._initializeFov();
-    this.camera = this._initializeCamera();
-    this.renderer = this._initializeRenderer(container);
-
-    // Pass renderer and camera to the loop for stats collection
-    this.animationLoop.setRenderer(this.renderer);
-    this.animationLoop.setCamera(this.camera);
-  }
-
-  /**
-   * Determines the initial Field of View, prioritizing constructor options,
-   * then persisted state, and finally the default configuration.
-   * @returns The resolved FOV value.
-   */
-  private _initializeFov(): number {
-    const initialState = StateAccessor.getCurrentSimulationState();
-    return (
-      this.options.fov ??
-      initialState.camera?.fov ??
-      DefaultSceneManagerConfig.CAMERA.FOV
-    );
-  }
-
-  /**
-   * Sets up the main perspective camera. It will use position and target data
-   * from the persisted state if available, otherwise it falls back to a
-   * sensible default position and target.
-   * @returns The configured `PerspectiveCamera`.
-   */
-  private _initializeCamera(): THREE.PerspectiveCamera {
-    const initialState = StateAccessor.getCurrentSimulationState();
-    const camera = new THREE.PerspectiveCamera(
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(
       this.fov,
       this.width / this.height,
       DefaultSceneManagerConfig.CAMERA.NEAR_PLANE,
       DefaultSceneManagerConfig.CAMERA.FAR_PLANE,
     );
 
-    if (initialState?.camera) {
-      camera.position.set(
-        initialState.camera.position.x,
-        initialState.camera.position.y,
-        initialState.camera.position.z,
-      );
-      camera.lookAt(
-        initialState.camera.target.x,
-        initialState.camera.target.y,
-        initialState.camera.target.z,
-      );
+    // Initialize renderer with capability detection
+    this.renderer = this._initializeRenderer(container);
+    this.webGLCapabilities = detectWebGLCapabilities(this.renderer);
+
+    // Get initial performance optimization based on current state
+    const initialState = StateAccessor.getCurrentSimulationState();
+    this.performanceOptimization = getPerformanceOptimization(
+      this.webGLCapabilities,
+      initialState.performanceProfile,
+    );
+
+    // Subscribe to performance profile changes
+    this._subscribeToPerformanceChanges();
+
+    // Initialize animation loop
+    this.animationLoop = new AnimationLoop();
+    this.animationLoop.setRenderer(this.renderer);
+    this.animationLoop.setCamera(this.camera);
+
+    // Set initial camera position
+    this._setInitialCameraPosition();
+  }
+
+  /**
+   * Gets the detected WebGL capabilities
+   */
+  public getWebGLCapabilities(): WebGLCapabilities {
+    return this.webGLCapabilities;
+  }
+
+  /**
+   * Gets the current performance optimization settings
+   */
+  public getPerformanceOptimization(): PerformanceOptimization {
+    return this.performanceOptimization;
+  }
+
+  /**
+   * Updates performance optimization settings based on new profile
+   */
+  private _updatePerformanceOptimization(
+    profile: "low" | "medium" | "high" | "cosmic",
+  ): void {
+    this.performanceOptimization = getPerformanceOptimization(
+      this.webGLCapabilities,
+      profile,
+    );
+
+    // Apply new settings to renderer
+    this.renderer.setPixelRatio(this.performanceOptimization.pixelRatio);
+
+    if (this.performanceOptimization.shadows) {
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = this.performanceOptimization.shadowMapType;
     } else {
-      // Convert OSVector3 to THREE.Vector3 for rendering
-      camera.position.copy(
-        DefaultSceneManagerConfig.CAMERA.DEFAULT_POSITION.toThreeJS(),
-      );
-      camera.lookAt(
-        DefaultSceneManagerConfig.CAMERA.DEFAULT_TARGET.toThreeJS(),
-      );
+      this.renderer.shadowMap.enabled = false;
     }
-    return camera;
+
+    // Emit optimization change event
+    rendererEvents.performanceOptimizationChanged$.next(
+      this.performanceOptimization,
+    );
+  }
+
+  /**
+   * Subscribes to performance profile changes from the state
+   */
+  private _subscribeToPerformanceChanges(): void {
+    simulationState$.subscribe((state: any) => {
+      if (state.performanceProfile) {
+        this._updatePerformanceOptimization(state.performanceProfile);
+      }
+    });
   }
 
   /**
@@ -197,6 +366,43 @@ export class SceneManager {
   }
 
   /**
+   * Sets the initial camera position based on the current simulation state.
+   * This ensures the camera starts in a reasonable position relative to the
+   * celestial objects in the scene.
+   */
+  private _setInitialCameraPosition(): void {
+    const initialState = StateAccessor.getCurrentSimulationState();
+    const cameraState = initialState.camera;
+
+    this.camera.position.set(
+      cameraState.position.x,
+      cameraState.position.y,
+      cameraState.position.z,
+    );
+    this.camera.lookAt(
+      cameraState.target.x,
+      cameraState.target.y,
+      cameraState.target.z,
+    );
+    this.camera.fov = cameraState.fov;
+    this.camera.updateProjectionMatrix();
+  }
+
+  /**
+   * Starts the render loop.
+   */
+  startRenderLoop(): void {
+    this.animationLoop.start();
+  }
+
+  /**
+   * Stops the render loop.
+   */
+  stopRenderLoop(): void {
+    this.animationLoop.stop();
+  }
+
+  /**
    * Sets the Field of View (FOV) of the camera.
    * @param newFov The new FOV value in degrees.
    */
@@ -209,31 +415,19 @@ export class SceneManager {
   }
 
   /**
-   * Handles window resize events.
-   * @param width The new width of the render container.
-   * @param height The new height of the render container.
+   * Handles window resize events by updating the renderer size and camera aspect ratio.
+   * This method should be called whenever the container element is resized.
+   * @param width The new width of the container.
+   * @param height The new height of the container.
    */
   onResize(width: number, height: number): void {
     this.width = width;
     this.height = height;
+
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
+
     this.renderer.setSize(width, height);
-    rendererEvents.resize$.next({ width, height });
-  }
-
-  /**
-   * Starts the rendering loop.
-   */
-  public startRenderLoop(): void {
-    this.animationLoop.start();
-  }
-
-  /**
-   * Stops the rendering loop.
-   */
-  public stopRenderLoop(): void {
-    this.animationLoop.stop();
   }
 
   /**
@@ -252,32 +446,11 @@ export class SceneManager {
   }
 
   /**
-   * Disposes of all resources used by the `SceneManager`.
-   * This includes the renderer and all objects in the scene.
+   * Cleans up resources used by the SceneManager.
+   * This should be called when the SceneManager is no longer needed to prevent memory leaks.
    */
   dispose(): void {
-    // Clear scene objects
-    this.scene.children.forEach((obj) => {
-      // Basic cleanup. More complex objects need their own dispose logic.
-      if (obj instanceof THREE.Mesh) {
-        obj.geometry.dispose();
-        if (Array.isArray(obj.material)) {
-          obj.material.forEach((mat) => mat.dispose());
-        } else {
-          obj.material.dispose();
-        }
-      }
-    });
-
-    // Stop the animation loop
-    this.animationLoop.stop();
-
-    // Dispose of the renderer and remove its canvas from the DOM
     this.renderer.dispose();
-    this.renderer.domElement.parentElement?.removeChild(
-      this.renderer.domElement,
-    );
-
-    rendererEvents.dispose$.next();
+    this.scene.clear();
   }
 }

@@ -16,6 +16,8 @@ import {
   setDebugLabelVisibility,
 } from "./lod-manager";
 
+import { rendererEvents } from "@teskooano/renderer-threejs-core";
+
 /**
  * Manages Level of Detail (LOD) for celestial objects by creating THREE.LOD instances
  * based on levels provided by specific CelestialRenderers.
@@ -26,6 +28,7 @@ export class LODManager extends StateSubscriptionMixin {
   private debugLabels: Map<string, DebugLabel> = new Map();
   private debugEnabled: boolean = false;
   private currentProfile: PerformanceProfileType = "medium";
+  private performanceOptimization: any = null;
 
   constructor(camera: THREE.PerspectiveCamera) {
     super();
@@ -39,186 +42,200 @@ export class LODManager extends StateSubscriptionMixin {
         this.currentProfile = state.performanceProfile;
       }
     });
+
+    // Subscribe to performance optimization changes
+    this.subscribeToState(
+      rendererEvents.performanceOptimizationChanged$,
+      (optimization) => {
+        this.performanceOptimization = optimization;
+      },
+    );
   }
 
   /**
-   * Toggle debug visualization
-   */
-  toggleDebug(enabled: boolean): void {
-    this.debugEnabled = enabled;
-    setDebugLabelVisibility(this.debugLabels, enabled);
-  }
-
-  /**
-   * Create or update debug label for an object
-   * @internal
-   */
-  private _updateOrCreateDebugLabel(objectId: string, lod: THREE.LOD): void {
-    if (!this.debugEnabled) return;
-
-    let debugLabel = this.debugLabels.get(objectId);
-
-    if (!debugLabel) {
-      debugLabel = createDebugLabel();
-      this.debugLabels.set(objectId, debugLabel);
-
-      lod.add(debugLabel.sprite);
-    }
-
-    updateDebugLabel(debugLabel, lod, this.camera.position);
-  }
-
-  /**
-   * Creates a THREE.LOD object from the provided levels and registers it for updates.
-   * This method is intended to be passed to the MeshFactory.
+   * Creates a new LOD instance for a celestial object and registers it for management.
+   * This method applies performance-based scaling to the distance thresholds.
    *
-   * @param object - The RenderableCelestialObject data (used for ID).
-   * @param levels - An array of LODLevel objects provided by the specific CelestialRenderer.
-   * @returns The created and registered THREE.LOD object.
-   * @throws {Error} If the levels array is empty or invalid.
+   * @param object The celestial object that this LOD represents.
+   * @param levels An array of LOD levels, ordered from highest detail (smallest distance) to lowest detail (largest distance).
+   * @returns The created THREE.LOD instance.
    */
   createAndRegisterLOD(
     object: RenderableCelestialObject,
     levels: LODLevel[],
   ): THREE.LOD {
-    if (!levels || levels.length === 0) {
-      throw new Error(
-        `[LODManager] Cannot create LOD for ${object.celestialObjectId}: No LOD levels provided.`,
-      );
-    }
+    // Apply performance-based scaling to distances
+    const scaledLevels = levels.map((level) => ({
+      ...level,
+      distance: level.distance * this.getLODScaleFactor(),
+    }));
 
     const lod = new THREE.LOD();
-    lod.name = `${object.celestialObjectId}-LODContainer`;
-
-    const scaleFactor = this.getLODScaleFactor();
-
-    levels.forEach((level) => {
-      if (!level.object || typeof level.distance !== "number") {
-        console.warn(
-          `[LODManager] Invalid LOD level provided for ${object.celestialObjectId}:`,
-          level,
-        );
-
-        return;
-      }
-
-      const scaledDistance = level.distance * scaleFactor;
-      lod.addLevel(level.object, scaledDistance);
+    scaledLevels.forEach((level) => {
+      lod.addLevel(level.object, level.distance);
     });
 
-    lod.autoUpdate = true;
-
     this.objectLODs.set(object.celestialObjectId, lod);
-
-    if (this.debugEnabled) {
-      this._updateOrCreateDebugLabel(object.celestialObjectId, lod);
-    }
-
     return lod;
   }
 
   /**
-   * Update LOD levels based on camera position
+   * Updates all registered LOD objects based on the current camera position.
+   * This method should be called every frame from the main render pipeline.
    */
   update(): void {
-    this.objectLODs.forEach((lod, objectId) => {
+    this.objectLODs.forEach((lod) => {
       lod.update(this.camera);
+    });
 
-      if (this.debugEnabled) {
-        this._updateOrCreateDebugLabel(objectId, lod);
+    if (this.debugEnabled) {
+      this.updateDebugLabels();
+    }
+  }
+
+  /**
+   * Removes an LOD instance from management and disposes of its resources.
+   * @param objectId The ID of the celestial object whose LOD should be removed.
+   */
+  removeLOD(objectId: string): void {
+    const lod = this.objectLODs.get(objectId);
+    if (lod) {
+      // Dispose of all levels
+      lod.children.forEach((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => mat.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
+
+      this.objectLODs.delete(objectId);
+
+      // Remove debug label if it exists
+      const debugLabel = this.debugLabels.get(objectId);
+      if (debugLabel) {
+        disposeDebugLabel(debugLabel);
+        this.debugLabels.delete(objectId);
       }
+    }
+  }
+
+  /**
+   * Alias for removeLOD to match the interface expected by ObjectLifecycleManager.
+   * @param objectId The ID of the celestial object whose LOD should be removed.
+   */
+  remove(objectId: string): void {
+    this.removeLOD(objectId);
+  }
+
+  /**
+   * Gets the current LOD level for an object by ID.
+   * @param objectId The ID of the celestial object.
+   * @returns The current LOD level (0 for closest, higher for farther), or undefined if not found.
+   */
+  getCurrentLODLevel(objectId: string): number | undefined {
+    const lod = this.objectLODs.get(objectId);
+    if (!lod) return undefined;
+
+    // Find the current level by checking which child is visible
+    for (let i = 0; i < lod.children.length; i++) {
+      const child = lod.children[i];
+      if (child.visible) {
+        return i;
+      }
+    }
+
+    // If no visible child found, return the highest level
+    return lod.children.length - 1;
+  }
+
+  /**
+   * Toggles debug mode, which displays labels showing the current LOD level for each object.
+   * @param enabled Whether debug mode should be enabled.
+   */
+  setDebugMode(enabled: boolean): void {
+    this.debugEnabled = enabled;
+
+    if (enabled) {
+      // Create debug labels for existing LODs
+      this.objectLODs.forEach((lod, objectId) => {
+        if (!this.debugLabels.has(objectId)) {
+          const label = createDebugLabel();
+          this.debugLabels.set(objectId, label);
+        }
+      });
+    } else {
+      // Remove all debug labels
+      this.debugLabels.forEach((label) => {
+        disposeDebugLabel(label);
+      });
+      this.debugLabels.clear();
+    }
+  }
+
+  /**
+   * Updates the positions and content of debug labels to match the current LOD states.
+   */
+  private updateDebugLabels(): void {
+    this.objectLODs.forEach((lod, objectId) => {
+      let label = this.debugLabels.get(objectId);
+      if (!label) {
+        label = createDebugLabel();
+        this.debugLabels.set(objectId, label);
+      }
+
+      updateDebugLabel(label, lod, this.camera.position);
     });
   }
 
   /**
-   * Remove an object's LOD and associated debug label.
-   */
-  remove(objectId: string): void {
-    const lod = this.objectLODs.get(objectId);
-    const debugLabel = this.debugLabels.get(objectId);
-
-    if (debugLabel) {
-      disposeDebugLabel(debugLabel);
-      this.debugLabels.delete(objectId);
-    }
-
-    if (lod) {
-      lod.levels.forEach((levelData) => {
-        levelData.object.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            child.geometry?.dispose();
-            if (Array.isArray(child.material)) {
-              child.material.forEach((mat) => mat?.dispose());
-            } else if (child.material) {
-              child.material?.dispose?.();
-            }
-          }
-          if (child instanceof THREE.Points) {
-            child.geometry?.dispose();
-            if (Array.isArray(child.material)) {
-              child.material.forEach((mat) => mat?.dispose());
-            } else if (child.material) {
-              child.material?.dispose?.();
-            }
-          }
-        });
-      });
-      this.objectLODs.delete(objectId);
-    }
-  }
-
-  /**
-   * Clear all managed LODs and debug labels.
-   */
-  dispose(): void {
-    this.debugLabels.forEach(disposeDebugLabel);
-    this.debugLabels.clear();
-
-    const objectIds = Array.from(this.objectLODs.keys());
-    objectIds.forEach((id) => this.remove(id));
-
-    this.objectLODs.clear();
-
-    super.dispose();
-  }
-
-  /**
-   * Retrieves the currently active LOD level index for a given object.
-   * @param objectId The ID of the celestial object.
-   * @returns The current LOD level index (0 is highest detail), or undefined if the object is not found.
-   */
-  getCurrentLODLevel(objectId: string): number | undefined {
-    const lod = this.getLODById(objectId);
-
-    return lod?.getCurrentLevel();
-  }
-
-  /**
-   * Retrieves the THREE.LOD object for a given object ID.
-   * @param objectId The ID of the celestial object.
-   * @returns The corresponding THREE.LOD object, or null if not found.
-   */
-  getLODById(objectId: string): THREE.LOD | null {
-    return this.objectLODs.get(objectId) || null;
-  }
-
-  /**
-   * Determines the scaling factor for LOD distances based on the current profile.
+   * Determines the scaling factor for LOD distances based on the current profile and device capabilities.
    * Higher quality profiles use smaller distances (switch LODs sooner).
    * @returns The scaling factor (e.g., 1.0 for medium, 0.5 for cosmic).
    */
   private getLODScaleFactor(): number {
+    // Base scaling from user profile
+    let baseScale: number;
     switch (this.currentProfile) {
       case "low":
-        return 1.5;
+        baseScale = 1.5;
+        break;
       case "medium":
-        return 1.0;
+        baseScale = 1.0;
+        break;
       case "high":
-        return 0.75;
+        baseScale = 0.75;
+        break;
       case "cosmic":
-        return 0.5;
+        baseScale = 0.5;
+        break;
       default:
-        return 1.0;
+        baseScale = 1.0;
     }
+
+    // Apply device capability scaling if available
+    if (this.performanceOptimization?.lodDistanceMultiplier) {
+      return baseScale * this.performanceOptimization.lodDistanceMultiplier;
+    }
+
+    return baseScale;
+  }
+
+  /**
+   * Cleans up all resources used by the LODManager.
+   * This should be called when the manager is no longer needed.
+   */
+  dispose(): void {
+    // Remove all LODs
+    this.objectLODs.forEach((lod, objectId) => {
+      this.removeLOD(objectId);
+    });
+
+    // Clear maps
+    this.objectLODs.clear();
+    this.debugLabels.clear();
   }
 }

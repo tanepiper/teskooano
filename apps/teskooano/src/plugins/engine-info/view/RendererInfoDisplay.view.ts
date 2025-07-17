@@ -3,6 +3,7 @@ import { PanelToolbarItemConfig } from "@teskooano/ui-plugin";
 import { GroupPanelPartInitParameters, IContentRenderer } from "dockview-core";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
 import { RendererInfoDisplayController } from "../controller/RendererInfoDisplay.controller.js";
+import { WebGLCapabilitiesDisplayController } from "../controller/WebGLCapabilitiesDisplay.controller.js";
 import type { RendererInfoParams } from "../types";
 import { template } from "./RendererInfoDisplay.template.js";
 
@@ -18,7 +19,8 @@ export class RendererInfoDisplay
   extends HTMLElement
   implements IContentRenderer
 {
-  private _controller: RendererInfoDisplayController;
+  private _rendererController: RendererInfoDisplayController;
+  private _webglController: WebGLCapabilitiesDisplayController;
 
   /**
    * Unique identifier for the custom element.
@@ -49,8 +51,7 @@ export class RendererInfoDisplay
    * Constructs the `RendererInfoDisplay` panel.
    *
    * This sets up the shadow DOM, clones the HTML template, queries for necessary
-   * DOM element references, and instantiates the controller, passing it the view
-   * instance and the element references.
+   * DOM element references, and instantiates both controllers.
    */
   constructor() {
     super();
@@ -66,25 +67,30 @@ export class RendererInfoDisplay
       fovValue: this.shadowRoot!.getElementById("fov-value")!,
     };
 
-    this._controller = new RendererInfoDisplayController(this, elements);
+    this._rendererController = new RendererInfoDisplayController(
+      this,
+      elements,
+    );
+    this._webglController = new WebGLCapabilitiesDisplayController(this);
   }
 
   /**
    * Standard custom element lifecycle callback.
    * Called when the element is added to the document's DOM. This method
-   * initializes the controller.
+   * initializes both controllers.
    */
   connectedCallback() {
-    this._controller.initialize();
+    this._rendererController.initialize();
   }
 
   /**
    * Standard custom element lifecycle callback.
    * Called when the element is removed from the document's DOM. This method
-   * cleans up the controller to prevent memory leaks.
+   * cleans up both controllers to prevent memory leaks.
    */
   disconnectedCallback() {
-    this._controller.dispose();
+    this._rendererController.dispose();
+    this._webglController.dispose();
   }
 
   /**
@@ -103,7 +109,10 @@ export class RendererInfoDisplay
       params.parentInstance &&
       typeof params.parentInstance.getRenderer === "function"
     ) {
-      this._controller.setParentPanel(
+      this._rendererController.setParentPanel(
+        params.parentInstance as CompositeEnginePanel,
+      );
+      this._webglController.setParentPanel(
         params.parentInstance as CompositeEnginePanel,
       );
     } else {

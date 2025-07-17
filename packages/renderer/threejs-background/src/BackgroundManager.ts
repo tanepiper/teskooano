@@ -38,8 +38,12 @@ export class BackgroundManager {
     scene.add(this.group);
 
     // Get seed from state instead of constructor parameter
-    const currentSeed = StateAccessor.getCurrentSeed();
-    this.random = createSeededRandomSync(`background-${currentSeed}`);
+    let currentSeed = StateAccessor.getCurrentSeed();
+    if (currentSeed === "sol") {
+      currentSeed = "1752769136832";
+    }
+    console.log("currentSeed", currentSeed);
+    this.random = createSeededRandomSync(currentSeed);
 
     this.createDefaultNebula();
     this.createDefaultStarField();
