@@ -16,6 +16,7 @@ import {
 } from "@teskooano/renderer-threejs-celestial";
 import { RingMaterial, AccretionDiskMaterial } from "./material";
 import { calculateKeplerianRotationRate } from "./utils";
+import { calculateSaturnRingOrientation } from "./saturn-ring-orientation";
 
 /**
  * Renderer for planetary ring systems
@@ -88,7 +89,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       segments:
         options?.segments ??
         GeometryUtilities.getOptimizedRingSegments("high", 64),
-    });
+    }, 0, undefined); // Will be updated in the update method
 
     const mediumDetailGroup = this._createRingGroup(object, {
       ...options,
@@ -96,7 +97,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       segments: options?.segments
         ? Math.floor(options.segments / 2)
         : GeometryUtilities.getOptimizedRingSegments("medium", 32),
-    });
+    }, 0, undefined); // Will be updated in the update method
 
     const lowDetailGroup = this._createRingGroup(object, {
       ...options,
@@ -104,7 +105,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       segments: options?.segments
         ? Math.floor(options.segments / 4)
         : GeometryUtilities.getOptimizedRingSegments("low", 16),
-    });
+    }, 0, undefined); // Will be updated in the update method
 
     // Calculate LOD distances based on object radius
     const objectRadius = object.radius ?? 1;
@@ -130,7 +131,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions & { parentLODDistances?: number[] },
   ): LODLevel[] {
-    const detailedRingGroup = this._createRingGroup(object, options);
+    const detailedRingGroup = this._createRingGroup(object, options, 0, undefined); // Will be updated in the update method
     const level0: LODLevel = { object: detailedRingGroup, distance: 0 };
 
     const lodLevels = [level0];
@@ -202,12 +203,16 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
    *
    * @param object The celestial object
    * @param options Options for creating the mesh
+   * @param currentTime Current simulation time (for Saturn ring orientation)
+   * @param allObjects Map of all objects in the scene (for finding the Sun)
    * @returns THREE.Group containing ring meshes
    * @private
    */
   private _createRingGroup(
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
+    currentTime?: number,
+    allObjects?: Record<string, RenderableCelestialObject>,
   ): THREE.Group {
     const ringGroup = new THREE.Group();
     ringGroup.name = `${object.celestialObjectId}-rings`;
@@ -323,7 +328,28 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
 
       const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
       ringMesh.name = `${object.celestialObjectId}-ring-${index}`;
-      ringMesh.rotation.x = -Math.PI / 2;
+      
+      // Apply orientation based on the celestial object type
+      if (object.celestialObjectId === "saturn" && currentTime !== undefined && allObjects) {
+        // Apply Saturn-specific ring orientation based on orbital mechanics
+        const sunObject = allObjects["sol"] || allObjects["sun"];
+        if (sunObject) {
+          const saturnOrientation = calculateSaturnRingOrientation(
+            object,
+            currentTime,
+            sunObject.position
+          );
+          const threeQuaternion = saturnOrientation.toThreeJS();
+          ringMesh.quaternion.copy(threeQuaternion);
+        } else {
+          // Fallback to default orientation if Sun not found
+          ringMesh.rotation.x = -Math.PI / 2;
+        }
+      } else {
+        // Default orientation for non-Saturn ring systems
+        ringMesh.rotation.x = -Math.PI / 2;
+      }
+      
       ringGroup.add(ringMesh);
 
       // Store ring mesh for shadow casting registration
@@ -442,6 +468,28 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
           );
         }
       });
+    }
+
+    // Update Saturn ring orientation based on orbital mechanics
+    if (object.celestialObjectId === "saturn" && allObjects) {
+      const sunObject = allObjects["sol"] || allObjects["sun"];
+      if (sunObject) {
+        const saturnOrientation = calculateSaturnRingOrientation(
+          object,
+          time,
+          sunObject.position
+        );
+        const threeQuaternion = saturnOrientation.toThreeJS();
+        
+        // Update all ring meshes with the new orientation
+        this.ringMeshes.forEach((meshArray) => {
+          meshArray.forEach((mesh) => {
+            if (mesh instanceof THREE.Mesh) {
+              mesh.quaternion.copy(threeQuaternion);
+            }
+          });
+        });
+      }
     }
   }
 
