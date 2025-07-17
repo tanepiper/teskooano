@@ -3,6 +3,7 @@ import type { ControlsManager } from "@teskooano/renderer-threejs-controls";
 import type {
   AnimationLoop,
   SceneManager,
+  GridManager,
 } from "@teskooano/renderer-threejs-core";
 import {
   LabelVisibilityConfig,
@@ -84,6 +85,8 @@ export interface RenderPipelineOptions {
   lightingManager: LightingManager;
   /** The manager for Level of Detail. */
   lodManager: LODManager;
+  /** The manager for the grid helper. */
+  gridManager: GridManager;
   /** The manager for the main animation loop. */
   animationLoop: AnimationLoop;
   /** The optional manager for 2D HTML labels. */

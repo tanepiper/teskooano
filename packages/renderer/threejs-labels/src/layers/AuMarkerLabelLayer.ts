@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OSVector3 } from "@teskooano/core-math";
 import { BaseLabelLayer, UIRegistryComponent } from "./BaseLabelLayer";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { AuMarkerLabelComponent } from "../components/au-marker-label/AuMarkerLabelComponent";
@@ -63,8 +64,8 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
 
   public override update(
     camera: THREE.Camera,
-    centralBody?: THREE.Object3D,
-    objectManager?: ObjectManager,
+    centralBody: OSVector3, // This is actually the origin point (0,0,0) for AU markers
+    objectManager: ObjectManager,
   ): void {
     if (!centralBody || !this.isVisible) {
       return;
@@ -72,8 +73,8 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
 
     const cameraPosition = new THREE.Vector3();
     camera.getWorldPosition(cameraPosition);
-    // AU markers are centered at the centralBody's position
-    const cameraDistance = cameraPosition.distanceTo(centralBody.position);
+    // AU markers are centered at the origin (0,0,0), not a moving central body
+    const cameraDistance = cameraPosition.distanceTo(centralBody.toThreeJS());
 
     this.elements.forEach((label) => {
       const markerAuValueScene = parseFloat(
@@ -100,9 +101,10 @@ export class AuMarkerLabelLayer extends BaseLabelLayer {
         // Check if the label is occluded by any celestial objects
         const isOccluded = this.isLabelOccludedOptimized(
           labelId,
-          labelWorldPosition,
+          OSVector3.fromThreeJS(labelWorldPosition),
           camera,
           objectManager,
+          labelId,
           // No labelObjectId for AU markers since they don't belong to a specific object
         );
 

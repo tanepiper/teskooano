@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OSVector3 } from "@teskooano/core-math";
 import { BaseLabelLayer, UIRegistryComponent } from "./BaseLabelLayer";
 import {
   type RenderableCelestialObject,
@@ -95,15 +96,12 @@ export class CelestialLabelLayer extends BaseLabelLayer {
 
   public override update(
     camera: THREE.Camera,
-    centralBody?: THREE.Object3D,
-    objectManager?: ObjectManager,
+    centralBody: OSVector3, // Not used by celestial labels
+    objectManager: ObjectManager,
   ): void {
     // Call parent update for throttling
     super.update(camera, centralBody, objectManager);
 
-    if (!objectManager) {
-      return;
-    }
     const cameraPosition = new THREE.Vector3();
     camera.getWorldPosition(cameraPosition);
 
@@ -245,7 +243,7 @@ export class CelestialLabelLayer extends BaseLabelLayer {
         // Check if the label is occluded by celestial objects
         const isOccluded = this.isLabelOccludedOptimized(
           labelId,
-          labelWorldPosition,
+          OSVector3.fromThreeJS(labelWorldPosition),
           camera,
           objectManager,
           objectId,

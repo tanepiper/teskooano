@@ -1,6 +1,10 @@
 import { BackgroundManager } from "@teskooano/renderer-threejs-background";
 import { ControlsManager } from "@teskooano/renderer-threejs-controls";
-import { AnimationLoop, SceneManager } from "@teskooano/renderer-threejs-core";
+import {
+  AnimationLoop,
+  SceneManager,
+  GridManager,
+} from "@teskooano/renderer-threejs-core";
 import {
   AuMarkerManager,
   CSS2DLayerType,
@@ -47,7 +51,7 @@ export class ModularSpaceRenderer {
   /** Manages user interaction and camera controls (e.g., OrbitControls). */
   public controlsManager: ControlsManager;
   /** Manages the 2D HTML labels overlaid on the 3D scene. */
-  public css2DManager?: Layer2DManager;
+  public css2DManager: Layer2DManager;
 
   /** Manages scene lighting, including star-based light sources. */
   public lightingManager: LightingManager;
@@ -55,6 +59,8 @@ export class ModularSpaceRenderer {
   public lodManager: LODManager;
   /** Manages the AU distance markers (rings and labels). */
   public auMarkerManager?: AuMarkerManager;
+  /** Manages the grid helper for spatial reference. */
+  public gridManager: GridManager;
 
   /** Bridges core application state to the renderer-consumable `renderableStore`. */
   private stateAdapter: RendererStateAdapter;
@@ -75,15 +81,15 @@ export class ModularSpaceRenderer {
     container: HTMLElement,
     sceneManager: SceneManager,
     options: ModularSpaceRendererOptions = {},
-    labelSystem?: LabelSystem,
+    labelSystem: LabelSystem,
   ) {
     this.stateAdapter = new RendererStateAdapter();
 
     this.sceneManager = sceneManager;
     this.animationLoop = this.sceneManager.animationLoop;
 
-    this.css2DManager = labelSystem?.css2DManager;
-    this.auMarkerManager = labelSystem?.auMarkerManager;
+    this.css2DManager = labelSystem.css2DManager;
+    this.auMarkerManager = labelSystem.auMarkerManager;
 
     this.lightingManager = new LightingManager(this.sceneManager.scene);
     this.lodManager = new LODManager(this.sceneManager.camera);
@@ -116,6 +122,12 @@ export class ModularSpaceRenderer {
     );
     this.backgroundManager.setCamera(this.sceneManager.camera);
 
+    // Initialize grid manager with visibility from options
+    this.gridManager = new GridManager(
+      this.sceneManager.scene,
+      options.showGrid !== false,
+    );
+
     this.renderPipeline = new RenderPipeline({
       sceneManager: this.sceneManager,
       controlsManager: this.controlsManager,
@@ -124,6 +136,7 @@ export class ModularSpaceRenderer {
       backgroundManager: this.backgroundManager,
       lightingManager: this.lightingManager,
       lodManager: this.lodManager,
+      gridManager: this.gridManager,
       css2DManager: this.css2DManager,
       animationLoop: this.animationLoop,
     });
@@ -133,10 +146,6 @@ export class ModularSpaceRenderer {
     this.setupAnimationCallbacks();
 
     this.onResize(container.clientWidth, container.clientHeight);
-
-    if (options.showGrid !== undefined) {
-      this.sceneManager.setGridVisible(options.showGrid);
-    }
 
     if (options.showAuMarkers !== undefined) {
       this.setAuMarkersVisible(options.showAuMarkers);
@@ -154,7 +163,7 @@ export class ModularSpaceRenderer {
    */
   private setupEventListeners(container: HTMLElement): void {
     container.addEventListener("toggleGrid", () => {
-      this.sceneManager.toggleGrid();
+      this.toggleGrid();
     });
     container.addEventListener("toggleBackgroundDebug", () => {
       this.backgroundManager.toggleDebug();
@@ -254,6 +263,7 @@ export class ModularSpaceRenderer {
     this.auMarkerManager?.dispose();
     this.lightingManager.dispose();
     this.lodManager.dispose();
+    this.gridManager.dispose();
 
     window.removeEventListener("resize", () => {
       this.onResize(window.innerWidth, window.innerHeight);
@@ -275,7 +285,7 @@ export class ModularSpaceRenderer {
    * @param visible - True to show the grid, false to hide.
    */
   setGridVisible(visible: boolean): void {
-    this.sceneManager.setGridVisible(visible);
+    this.gridManager.setVisible(visible);
   }
   /**
    * Sets the visibility of the AU (Astronomical Unit) marker lines.
@@ -306,7 +316,7 @@ export class ModularSpaceRenderer {
    * Toggles the visibility of the background grid helper.
    */
   toggleGrid(): void {
-    this.sceneManager.toggleGrid();
+    this.gridManager.toggle();
   }
 
   /**
@@ -414,7 +424,6 @@ export class ModularSpaceRenderer {
    * @param enabled - If true, enables debug mode.
    */
   public setDebugMode(enabled: boolean): void {
-    this.sceneManager.setDebugMode(enabled);
     this.objectManager.setDebugMode(enabled);
     this.objectManager.recreateAllMeshes();
     this.controlsManager.setDebugMode(enabled);

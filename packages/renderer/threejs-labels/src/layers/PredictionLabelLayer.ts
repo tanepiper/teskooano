@@ -1,6 +1,7 @@
 import * as THREE from "three";
-import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+import { OSVector3 } from "@teskooano/core-math";
 import { BaseLabelLayer, UIRegistryComponent } from "./BaseLabelLayer";
+import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { PredictionLabel } from "../components/prediction/PredictionLabel";
 import { RenderableCelestialObject } from "@teskooano/data-types";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
@@ -60,8 +61,8 @@ export class PredictionLabelLayer extends BaseLabelLayer {
 
   public update(
     camera: THREE.Camera,
-    centralBody?: THREE.Object3D,
-    objectManager?: ObjectManager,
+    centralBody: OSVector3, // Not used by prediction labels
+    objectManager: ObjectManager,
   ): void {
     if (!this.isVisible || !this.activePredictionObject) {
       // Ensure all are hidden if the layer is globally hidden or no object is active.
@@ -141,10 +142,10 @@ export class PredictionLabelLayer extends BaseLabelLayer {
         // Check if the label is occluded by celestial objects
         const isOccluded = this.isLabelOccludedOptimized(
           labelId,
-          labelWorldPosition,
+          OSVector3.fromThreeJS(labelWorldPosition),
           camera,
           objectManager,
-          // No specific object ID since prediction labels are independent
+          labelId,
         );
 
         if (isOccluded) {

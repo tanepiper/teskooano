@@ -1,15 +1,17 @@
 import type { BackgroundManager } from "@teskooano/renderer-threejs-background";
+import type { ControlsManager } from "@teskooano/renderer-threejs-controls";
 import type {
   AnimationLoop,
   SceneManager,
+  GridManager,
 } from "@teskooano/renderer-threejs-core";
-import type { ControlsManager } from "@teskooano/renderer-threejs-controls";
 import type { Layer2DManager } from "@teskooano/renderer-threejs-labels";
 import type { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODManager } from "@teskooano/renderer-threejs-lod";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type { OrbitsManager } from "@teskooano/renderer-threejs-orbits";
-import type * as THREE from "three";
+import { OSVector3 } from "@teskooano/core-math";
+import * as THREE from "three";
 import type { RenderPipelineOptions } from "./types";
 
 /**
@@ -27,14 +29,24 @@ export class RenderPipeline {
   private backgroundManager: BackgroundManager;
   private lightingManager: LightingManager;
   private lodManager: LODManager;
-  private css2DManager?: Layer2DManager;
+  private gridManager: GridManager;
+  private css2DManager: Layer2DManager;
   private animationLoop: AnimationLoop;
 
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;
 
-  private lastTime: number = 0;
+  // Performance optimization: cache expensive values
+  private cachedRendererHeight: number = 0;
+  private lastHeightCheck: number = 0;
+  private readonly HEIGHT_CHECK_INTERVAL = 1000; // Check height every 1 second
+
+  // Throttling for expensive operations
+  private frameCount: number = 0;
+  private readonly GRID_UPDATE_FREQUENCY = 10; // Update grid every 10 frames
+  private readonly BACKGROUND_UPDATE_FREQUENCY = 5; // Update background every 5 frames
+
   private frameId: number | null = null;
 
   /**
@@ -49,6 +61,7 @@ export class RenderPipeline {
     this.backgroundManager = managers.backgroundManager;
     this.lightingManager = managers.lightingManager;
     this.lodManager = managers.lodManager;
+    this.gridManager = managers.gridManager;
     this.css2DManager = managers.css2DManager;
     this.animationLoop = managers.animationLoop;
 
@@ -56,6 +69,22 @@ export class RenderPipeline {
     this.camera = this.sceneManager.camera;
     this.renderer = this.sceneManager.renderer;
     this.scene = this.sceneManager.scene;
+
+    // Initialize cached height
+    this.cachedRendererHeight = this.renderer.domElement.clientHeight;
+  }
+
+  /**
+   * Gets the renderer height with caching to avoid expensive DOM access.
+   * @returns The cached renderer height.
+   */
+  private getRendererHeight(): number {
+    const now = performance.now();
+    if (now - this.lastHeightCheck > this.HEIGHT_CHECK_INTERVAL) {
+      this.cachedRendererHeight = this.renderer.domElement.clientHeight;
+      this.lastHeightCheck = now;
+    }
+    return this.cachedRendererHeight;
   }
 
   /**
@@ -65,20 +94,21 @@ export class RenderPipeline {
    * 1. Update controls and camera position.
    * 2. Update orbital paths.
    * 3. Update 3D objects (position, rotation, materials).
-   * 4. Update the background (parallax effect).
-   * 5. Update Level of Detail based on new camera position.
+   * 4. Update the background (parallax effect) - throttled.
+   * 5. Update grid helper based on camera position - throttled.
    * 6. Render 2D overlays (CSS2D).
    * 7. Run custom callbacks.
    * 8. Perform the main scene render.
-   * 9. Render top-level canvas UI.
    *
    * @param deltaTime The time elapsed since the last frame, in seconds.
    * @param elapsedTime The total time elapsed since the loop started, in seconds.
    */
   public update = (deltaTime: number, elapsedTime: number): void => {
+    this.frameCount++;
+
     // Attach renderer height to camera for dynamic calculations (e.g., point sizes)
-    // This is a bit of a hack but avoids a major refactor of all update signatures.
-    (this.camera as any).rendererHeight = this.renderer.domElement.clientHeight;
+    // Use cached height to avoid expensive DOM access every frame
+    (this.camera as any).rendererHeight = this.getRendererHeight();
 
     // 1. Update controls and camera position first.
     this.controlsManager.update(deltaTime);
@@ -87,27 +117,34 @@ export class RenderPipeline {
     this.orbitManager.updateAllVisualizations(deltaTime);
 
     // 3. Update 3D objects (position, rotation, materials).
+    // Note: ObjectManager.update() already calls lodManager.update() internally
     this.objectManager.update(this.renderer, this.scene, this.camera);
 
     // 4. Update the background, which may have a parallax effect based on camera position.
-    this.backgroundManager.update(deltaTime);
-
-    // 5. Update LODs based on the new camera position.
-    this.lodManager.update();
-
-    // 6. Render the 2D overlay, which depends on final 3D positions.
-    if (this.css2DManager) {
-      if (typeof this.css2DManager.update === "function") {
-        const centralBody = this.objectManager.getCentralBody();
-        this.css2DManager.update(this.camera, centralBody, this.objectManager);
-      }
-      if (typeof this.css2DManager.render === "function") {
-        this.css2DManager.render(this.camera);
-      }
+    // Throttle background updates for performance
+    if (this.frameCount % this.BACKGROUND_UPDATE_FREQUENCY === 0) {
+      this.backgroundManager.update(deltaTime);
     }
 
+    // 5. Update grid helper based on camera position - throttled for performance.
+    if (this.frameCount % this.GRID_UPDATE_FREQUENCY === 0) {
+      this.gridManager.update(this.camera);
+    }
+
+    // 6. Render the 2D overlay, which depends on final 3D positions.
+    // AU markers are positioned relative to origin (0,0,0), not a moving central body
+    const origin = new OSVector3(0, 0, 0);
+    this.css2DManager.update(this.camera, origin, this.objectManager);
+    this.css2DManager.render(this.camera);
+
     // 7. Run any custom render callbacks injected into the loop.
-    this.animationLoop.getRenderCallbacks().forEach((callback) => callback());
+    // Optimize callback execution by getting the array once
+    const callbacks = this.animationLoop.getRenderCallbacks();
+    if (callbacks.length > 0) {
+      for (let i = 0; i < callbacks.length; i++) {
+        callbacks[i]();
+      }
+    }
 
     // 8. Perform the main scene render.
     this.sceneManager.render();

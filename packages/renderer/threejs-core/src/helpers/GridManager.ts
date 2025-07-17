@@ -46,6 +46,9 @@ const GRID_COLORS = {
  * of a grid helper. It dynamically adjusts the grid's scale and density
  * based on the camera's distance from the origin to maintain a sensible
  * visual appearance at all zoom levels.
+ *
+ * This manager is designed to be used by the ModularSpaceRenderer and
+ * other high-level renderer components, not directly by SceneManager.
  */
 export class GridManager {
   private scene: THREE.Scene;
@@ -61,6 +64,11 @@ export class GridManager {
   constructor(scene: THREE.Scene, initialVisibility = true) {
     this.scene = scene;
     this.isGridVisible = initialVisibility;
+
+    // Create initial grid if visibility is enabled
+    if (this.isGridVisible) {
+      this._create();
+    }
   }
 
   /**
@@ -93,6 +101,8 @@ export class GridManager {
     this.isGridVisible = visible;
     if (!visible && this.gridHelper) {
       this.dispose();
+    } else if (visible && !this.gridHelper) {
+      this._create();
     }
   }
 

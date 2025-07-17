@@ -1,4 +1,5 @@
 import { ObjectManager } from "@teskooano/renderer-threejs-objects";
+import { OSVector3 } from "@teskooano/core-math";
 import * as THREE from "three";
 import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { BaseLabelLayer } from "./layers/BaseLabelLayer";
@@ -83,13 +84,9 @@ export class Layer2DManager {
    */
   update(
     camera: THREE.Camera,
-    centralBody?: THREE.Object3D,
-    objectManager?: ObjectManager,
+    centralBody: OSVector3,
+    objectManager: ObjectManager,
   ): void {
-    if (!centralBody) {
-      return;
-    }
-
     this.layers.forEach((layer) =>
       layer.update(camera, centralBody, objectManager),
     );

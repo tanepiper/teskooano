@@ -3,12 +3,11 @@ import { OSVector3 } from "@teskooano/core-math";
 import * as THREE from "three";
 import { AnimationLoop } from "./AnimationLoop";
 import { rendererEvents } from "./events";
-import { GridManager } from "./helpers/GridManager";
 
 /**
  * @interface SceneManagerOptions
  * @description Defines the configuration options for creating a SceneManager instance.
- * This provides a strongly-typed contract for initializing the scene.
+ * This provides a strongly-typed contract for initializing the core scene components.
  */
 export interface SceneManagerOptions {
   /** Enables or disables anti-aliasing. Defaults to true. */
@@ -17,10 +16,6 @@ export interface SceneManagerOptions {
   shadows?: boolean;
   /** Enables or disables the High Dynamic Range (HDR) rendering pipeline with ACES Filmic tone mapping. Defaults to true. */
   hdr?: boolean;
-  /** The background for the scene. Can be a CSS color string or a THREE.Texture. Defaults to a dark blue (`0x000510`). */
-  background?: string | THREE.Texture;
-  /** Whether to display a grid helper in the scene. Defaults to true. */
-  showGrid?: boolean;
   /** The camera's vertical Field of View (FOV) in degrees. Defaults to 75. */
   fov?: number;
 }
@@ -46,21 +41,6 @@ const DefaultSceneManagerConfig = {
     },
     TONE_MAPPING_EXPOSURE: 1.0,
   },
-  HELPERS: {
-    GRID: {
-      SIZE: 10000000,
-      DIVISIONS: 1000,
-      COLOR_CENTER_LINE: 0xff0000,
-      COLOR_GRID: 0x444444,
-    },
-    DEBUG_SPHERE: {
-      RADIUS: 0.5,
-      WIDTH_SEGMENTS: 16,
-      HEIGHT_SEGMENTS: 16,
-      COLOR: 0xff00ff,
-    },
-  },
-  BACKGROUND_COLOR: 0x000510,
 };
 
 /**
@@ -70,6 +50,10 @@ const DefaultSceneManagerConfig = {
  * handling resizing, and providing the main `render` method. It encapsulates
  * the boilerplate of Three.js setup and provides a clean API for interacting
  * with the scene.
+ *
+ * Note: This class focuses solely on core scene management. UI-specific features
+ * like grids, backgrounds, and debug helpers should be handled by specialized
+ * managers in the rendering pipeline.
  */
 export class SceneManager {
   /** The root `THREE.Scene` object. */
@@ -83,9 +67,6 @@ export class SceneManager {
 
   private fov: number;
   private options: SceneManagerOptions;
-  private debugSphere: THREE.Mesh | null = null;
-  private gridManager: GridManager | null = null;
-  private backgroundColor: THREE.Color | THREE.Texture;
   private width: number;
   private height: number;
 
@@ -112,14 +93,6 @@ export class SceneManager {
     // Pass renderer and camera to the loop for stats collection
     this.animationLoop.setRenderer(this.renderer);
     this.animationLoop.setCamera(this.camera);
-
-    // Configure scene features
-    this.backgroundColor = this._parseBackground(this.options.background);
-
-    this.gridManager = new GridManager(
-      this.scene,
-      this.options.showGrid !== false,
-    );
   }
 
   /**
@@ -224,23 +197,6 @@ export class SceneManager {
   }
 
   /**
-   * Parses the background option into a usable Color or Texture.
-   * @param background The background option from the constructor.
-   * @returns A `THREE.Color` or `THREE.Texture` object.
-   */
-  private _parseBackground(
-    background?: string | THREE.Texture,
-  ): THREE.Color | THREE.Texture {
-    if (background) {
-      if (typeof background === "string") {
-        return new THREE.Color(background);
-      }
-      return background;
-    }
-    return new THREE.Color(DefaultSceneManagerConfig.BACKGROUND_COLOR);
-  }
-
-  /**
    * Sets the Field of View (FOV) of the camera.
    * @param newFov The new FOV value in degrees.
    */
@@ -282,17 +238,11 @@ export class SceneManager {
 
   /**
    * Renders a single frame of the scene.
+   * This method performs the core rendering operation without any UI-specific
+   * features like grids or backgrounds, which should be handled by specialized managers.
    */
   render(): void {
-    if (this.backgroundColor instanceof THREE.Color) {
-      this.renderer.setClearColor(this.backgroundColor);
-      this.scene.background = null;
-    } else if (this.backgroundColor instanceof THREE.Texture) {
-      this.scene.background = this.backgroundColor;
-    }
-
     this.renderer.setViewport(0, 0, this.width, this.height);
-    this.gridManager?.update(this.camera);
 
     try {
       this.renderer.render(this.scene, this.camera);
@@ -302,53 +252,11 @@ export class SceneManager {
   }
 
   /**
-   * Sets the global debug mode for the scene manager.
-   * This controls the visibility of the origin debug sphere.
-   * @param enabled If true, shows the debug sphere; otherwise, hides it.
-   */
-  public setDebugMode(enabled: boolean): void {
-    if (enabled) {
-      if (!this.debugSphere) {
-        this._createDebugSphere();
-      }
-      if (this.debugSphere) {
-        this.debugSphere.visible = true;
-      }
-    } else if (this.debugSphere) {
-      this.debugSphere.visible = false;
-    }
-  }
-
-  /**
-   * Toggles the visibility of the grid helper.
-   */
-  toggleGrid(): void {
-    this.gridManager?.toggle();
-  }
-
-  /**
-   * Sets the visibility of the grid helper.
-   * @param visible True to show the grid, false to hide.
-   */
-  setGridVisible(visible: boolean): void {
-    if (visible) {
-      if (!this.gridManager) {
-        this.gridManager = new GridManager(this.scene);
-      }
-      this.gridManager.setVisible(true);
-    } else {
-      this.gridManager?.setVisible(false);
-    }
-  }
-
-  /**
    * Disposes of all resources used by the `SceneManager`.
-   * This includes helpers, the renderer, and all objects in the scene.
+   * This includes the renderer and all objects in the scene.
    */
   dispose(): void {
-    // Clear scene objects and helpers
-    this._clearDebugSphere();
-    this.gridManager?.dispose();
+    // Clear scene objects
     this.scene.children.forEach((obj) => {
       // Basic cleanup. More complex objects need their own dispose logic.
       if (obj instanceof THREE.Mesh) {
@@ -371,34 +279,5 @@ export class SceneManager {
     );
 
     rendererEvents.dispose$.next();
-  }
-
-  /** Creates the debug sphere at the origin using settings from the default config. */
-  private _createDebugSphere(): void {
-    if (this.debugSphere) return;
-    const config = DefaultSceneManagerConfig.HELPERS.DEBUG_SPHERE;
-    const geometry = new THREE.SphereGeometry(
-      config.RADIUS,
-      config.WIDTH_SEGMENTS,
-      config.HEIGHT_SEGMENTS,
-    );
-    const material = new THREE.MeshBasicMaterial({ color: config.COLOR });
-    this.debugSphere = new THREE.Mesh(geometry, material);
-    this.debugSphere.position.set(0, 0, 0);
-    this.scene.add(this.debugSphere);
-  }
-
-  /** Disposes of the debug sphere's resources. */
-  private _clearDebugSphere(): void {
-    if (this.debugSphere) {
-      this.scene.remove(this.debugSphere);
-      this.debugSphere.geometry.dispose();
-      if (this.debugSphere.material instanceof Array) {
-        this.debugSphere.material.forEach((m) => m.dispose());
-      } else {
-        this.debugSphere.material.dispose();
-      }
-      this.debugSphere = null;
-    }
   }
 }

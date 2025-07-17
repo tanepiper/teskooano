@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OSVector3 } from "@teskooano/core-math";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { AU_METERS, METERS_TO_SCENE_UNITS } from "@teskooano/data-types";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
@@ -161,14 +162,14 @@ export abstract class BaseLabelLayer {
    */
   protected updateVisibilityFromLevels(
     camera: THREE.Camera,
-    centralBody: THREE.Object3D,
+    centralBody: OSVector3,
     sceneLevels: VisibilityLevel[],
     valueSelector: (element: HTMLElement) => number,
   ): void {
     const cameraPosition = new THREE.Vector3();
     camera.getWorldPosition(cameraPosition);
     const cameraDistSceneUnits = cameraPosition.distanceTo(
-      centralBody.position,
+      centralBody.toThreeJS(),
     );
 
     this.elements.forEach((label) => {
@@ -203,8 +204,8 @@ export abstract class BaseLabelLayer {
    */
   public update(
     camera: THREE.Camera,
-    centralBody?: THREE.Object3D,
-    objectManager?: any,
+    centralBody: OSVector3,
+    objectManager: ObjectManager,
   ): void {}
 
   /**
@@ -220,13 +221,11 @@ export abstract class BaseLabelLayer {
    */
   protected isLabelOccludedOptimized(
     labelId: string,
-    labelPosition: THREE.Vector3,
+    labelPosition: OSVector3,
     camera: THREE.Camera,
-    objectManager?: ObjectManager,
-    labelObjectId?: string,
+    objectManager: ObjectManager,
+    labelObjectId: string,
   ): boolean {
-    if (!objectManager) return false;
-
     // Check if occlusion is enabled
     if (!this.occlusionConfig.enabled) {
       return false;
@@ -242,7 +241,7 @@ export abstract class BaseLabelLayer {
     // Spatial culling: quick distance check
     const cameraPosition = this.tempVector.clone();
     camera.getWorldPosition(cameraPosition);
-    const distance = cameraPosition.distanceTo(labelPosition);
+    const distance = cameraPosition.distanceTo(labelPosition.toThreeJS());
 
     // If label is very close to camera, it's unlikely to be occluded
     if (distance < this.occlusionConfig.nearbyDistanceThreshold) {
@@ -296,10 +295,10 @@ export abstract class BaseLabelLayer {
    * Separated from the main method for cleaner code organization.
    */
   private performOcclusionTest(
-    labelPosition: THREE.Vector3,
+    labelPosition: OSVector3,
     camera: THREE.Camera,
     objectManager: ObjectManager,
-    labelObjectId?: string,
+    labelObjectId: string,
   ): boolean {
     // Validate inputs
     if (!camera || !labelPosition || !objectManager) {
@@ -316,8 +315,12 @@ export abstract class BaseLabelLayer {
     }
 
     // Calculate direction from camera to label
-    const direction = labelPosition.clone().sub(cameraPosition).normalize();
-    const distance = cameraPosition.distanceTo(labelPosition);
+    const direction = labelPosition
+      .toThreeJS()
+      .clone()
+      .sub(cameraPosition)
+      .normalize();
+    const distance = cameraPosition.distanceTo(labelPosition.toThreeJS());
 
     // Set up the raycaster
     this.raycaster.set(cameraPosition, direction);
@@ -373,27 +376,6 @@ export abstract class BaseLabelLayer {
       console.warn("Occlusion test failed:", error);
       return false;
     }
-  }
-
-  /**
-   * Legacy method for backward compatibility - now uses optimized version
-   * @deprecated Use isLabelOccludedOptimized instead
-   */
-  protected isLabelOccluded(
-    labelPosition: THREE.Vector3,
-    camera: THREE.Camera,
-    objectManager?: ObjectManager,
-    labelObjectId?: string,
-  ): boolean {
-    // Generate a simple ID based on position for legacy calls
-    const labelId = `${labelPosition.x.toFixed(1)},${labelPosition.y.toFixed(1)},${labelPosition.z.toFixed(1)}`;
-    return this.isLabelOccludedOptimized(
-      labelId,
-      labelPosition,
-      camera,
-      objectManager,
-      labelObjectId,
-    );
   }
 
   /**
