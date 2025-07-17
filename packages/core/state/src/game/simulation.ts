@@ -2,13 +2,13 @@ import { OSVector3 } from "@teskooano/core-math";
 import { BehaviorSubject, Observable } from "rxjs";
 import { getDefaultConfiguration, isValidConfiguration } from "./types";
 import type {
-  PerformanceProfileType,
   SimulationState,
   SimulationConfiguration,
   AlgorithmType,
   IntegratorType,
   SimulationMode,
 } from "./types";
+import { DeviceTier } from "@teskooano/data-types";
 
 /**
  * @class SimulationStateService
@@ -288,7 +288,7 @@ export class SimulationStateService {
    * For performance, consumers should avoid calling this with an unchanged value.
    * @param profile The desired performance profile name.
    */
-  public setPerformanceProfile(profile: PerformanceProfileType): void {
+  public setPerformanceProfile(profile: DeviceTier): void {
     this.setSimulationState({
       ...this.getSimulationState(),
       performanceProfile: profile,

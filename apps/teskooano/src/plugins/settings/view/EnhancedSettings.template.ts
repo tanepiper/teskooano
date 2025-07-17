@@ -337,7 +337,10 @@ template.innerHTML = `
         <span class="info-icon" title="Adjusts rendering quality vs performance. Higher settings increase visual fidelity but use more GPU resources."></span>
       </label>
       <select id="setting-performance-profile" class="teskooano-select">
-        <!-- Options populated dynamically -->
+        <option value="low">Low (Power Saving)</option>
+        <option value="medium">Medium (Balanced)</option>
+        <option value="high">High (Performance)</option>
+        <option value="cosmic">Cosmic (Max Quality)</option>
       </select>
       <small>Balance between visual quality and rendering performance.</small>
     </div>

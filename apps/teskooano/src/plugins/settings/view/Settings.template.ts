@@ -203,7 +203,7 @@ template.innerHTML = `
         <option value="low">Low (Power Saving)</option>
         <option value="medium">Medium (Balanced)</option>
         <option value="high" selected>High (Performance)</option>
-        <option value="cosmic">Max Quality</option>
+        <option value="cosmic">Cosmic (Max Quality)</option>
       </select>
     </div>
   </div>

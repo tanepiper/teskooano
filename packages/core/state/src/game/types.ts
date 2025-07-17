@@ -3,6 +3,7 @@ import {
   CelestialObject,
   CelestialSpecificPropertiesUnion,
   CelestialType,
+  DeviceTier,
   OrbitalParameters,
 } from "@teskooano/data-types";
 
@@ -141,7 +142,6 @@ export function getConfigurationShortName(
  * - `high`: Prioritizes quality/accuracy, may impact performance.
  * - `cosmic`: Maximum quality/accuracy, potentially very demanding.
  */
-export type PerformanceProfileType = "low" | "medium" | "high" | "cosmic";
 
 /**
  * Defines settings related to visual aspects of the simulation, like trails.
@@ -194,7 +194,7 @@ export interface SimulationState {
     memory?: { usedJSHeapSize?: number };
   };
   /** The currently active performance profile. */
-  performanceProfile: PerformanceProfileType;
+  performanceProfile: DeviceTier;
 }
 
 /**

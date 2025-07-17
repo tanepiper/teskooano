@@ -2,7 +2,6 @@ import {
   getSimulationState,
   simulationState$,
   simulationStateService,
-  type PerformanceProfileType,
   type SimulationConfiguration,
   type SimulationMode,
   type AlgorithmType,
@@ -11,18 +10,19 @@ import {
   getConfigurationDisplayName,
   getConfigurationShortName,
 } from "@teskooano/core-state";
+import type { DeviceTier } from "@teskooano/data-types";
 
 import { type TeskooanoSlider } from "../../../core/components/slider/Slider";
 import { CustomEvents, SliderValueChangePayload } from "@teskooano/data-types";
 
 const PERFORMANCE_PROFILE_OPTIONS: {
-  value: PerformanceProfileType;
+  value: DeviceTier;
   label: string;
 }[] = [
   { value: "low", label: "Low (Power Saving)" },
   { value: "medium", label: "Medium (Balanced)" },
   { value: "high", label: "High (Performance)" },
-  { value: "cosmic", label: "Max Quality)" },
+  { value: "cosmic", label: "Cosmic (Max Quality)" },
 ];
 
 /**
@@ -86,7 +86,12 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
   private initialize(): void {
     this.setupEventListeners();
     this.populateControls();
-    this.updateUI();
+
+    // Ensure DOM is ready before updating UI
+    requestAnimationFrame(() => {
+      this.updateUI();
+    });
+
     this.subscribeToState(simulationState$, this.handleStateChange);
   }
 
@@ -164,14 +169,9 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    * @private
    */
   private populateControls(): void {
-    // Performance profile options (unchanged)
-    this.populateSelect(
-      this.elements.profileSelectElement,
-      PERFORMANCE_PROFILE_OPTIONS,
-    );
-
-    // Note: Mode, algorithm, and integrator options are defined in the HTML template
-    // since they're static and benefit from the enhanced styling
+    // Note: All options (mode, algorithm, integrator, performance profile) are defined
+    // in the HTML template since they're static and benefit from the enhanced styling.
+    // No need to populate them programmatically.
   }
 
   /**
@@ -208,7 +208,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    * Updates the performance profile select.
    * @private
    */
-  private updatePerformanceProfile(profile: PerformanceProfileType): void {
+  private updatePerformanceProfile(profile: DeviceTier): void {
     if (this.elements.profileSelectElement.value !== profile) {
       this.elements.profileSelectElement.value = profile;
     }
@@ -456,7 +456,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    */
   private handleProfileChange = (event: Event): void => {
     const target = event.target as HTMLSelectElement;
-    const value = target.value as PerformanceProfileType;
+    const value = target.value as DeviceTier;
 
     if (PERFORMANCE_PROFILE_OPTIONS.some((opt) => opt.value === value)) {
       simulationStateService.setPerformanceProfile(value);

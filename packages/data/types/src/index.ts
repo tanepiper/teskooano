@@ -1,6 +1,7 @@
 export * from "./celestial/index";
 export * from "./events";
 export * from "./main";
+export * from "./performance";
 export * from "./physics";
 export * from "./scaling";
 export * from "./ui";

@@ -2,7 +2,7 @@ import { StateAccessor, renderableStore, actions } from "@teskooano/core-state";
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import { BehaviorSubject } from "rxjs";
 import type { CameraManagerOptions, CameraManagerState } from "./types";
-import { CustomEvents } from "@teskooano/data-types";
+import { CustomEvents, CelestialType } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 import {
   CAMERA_OFFSET,
@@ -190,6 +190,40 @@ export class CameraManager {
   }
 
   /**
+   * Updates dynamic camera settings based on the focused celestial object type
+   * This prevents shader transparency issues while maintaining close viewing for satellites
+   * @param objectId The ID of the focused object, or null if no focus
+   */
+  private _updateDynamicCameraSettings(objectId: string | null): void {
+    if (!this.renderer?.sceneManager) {
+      return;
+    }
+
+    let celestialType: string | undefined;
+
+    if (objectId) {
+      // Get the celestial object type from the renderable store
+      const renderables = renderableStore.getRenderableObjects();
+      const renderableObject = renderables[objectId];
+
+      if (renderableObject) {
+        // Try to get the celestial type from the object's type property
+        celestialType = renderableObject.type;
+      }
+    }
+
+    // Update camera settings in the scene manager
+    this.renderer.sceneManager.updateCameraSettingsForObject(celestialType);
+
+    // Update orbit controls min distance
+    if (this.renderer.controlsManager) {
+      const minDistance =
+        this.renderer.sceneManager.getMinDistanceForObject(celestialType);
+      this.renderer.controlsManager.updateMinDistance(minDistance);
+    }
+  }
+
+  /**
    * Moves and points the camera to focus on a specific celestial object, or clears focus.
    * Initiates a smooth transition managed by the renderer.
    *
@@ -215,6 +249,9 @@ export class CameraManager {
     } else if (objectId === null) {
       this.intendedFocusIdForTransition = null;
     }
+
+    // Update dynamic camera settings based on the focused object type
+    this._updateDynamicCameraSettings(objectId);
 
     if (objectId === null) {
       this.renderer.controlsManager.stopFollowing();

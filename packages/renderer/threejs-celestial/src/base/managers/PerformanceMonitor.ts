@@ -1,4 +1,6 @@
 import { GeometryUtilities, type PerformanceConfig } from "./GeometryUtilities";
+import type { DeviceTier } from "@teskooano/data-types";
+import { simulationStateService } from "@teskooano/core-state";
 
 /**
  * Performance monitoring and optimization utility for celestial rendering
@@ -99,7 +101,7 @@ export class PerformanceMonitor {
   /**
    * Sets the device performance tier
    */
-  public setDeviceTier(tier: "low" | "medium" | "high"): void {
+  public setDeviceTier(tier: DeviceTier): void {
     GeometryUtilities.updatePerformanceConfig({ deviceTier: tier });
   }
 
@@ -130,7 +132,7 @@ export class PerformanceMonitor {
   /**
    * Detects device performance tier based on hardware capabilities
    */
-  public detectDeviceTier(): "low" | "medium" | "high" {
+  public detectDeviceTier(): DeviceTier {
     // Check for WebGL capabilities
     const canvas = document.createElement("canvas");
     const gl =
@@ -173,6 +175,14 @@ export class PerformanceMonitor {
     ) {
       return "low";
     } else if (
+      maxTextureSize >= 8192 &&
+      maxVertexUniformVectors >= 512 &&
+      maxVertexAttribs >= 16 &&
+      maxFragmentUniformVectors >= 1024 &&
+      !isMobile
+    ) {
+      return "cosmic";
+    } else if (
       maxTextureSize >= 4096 &&
       maxVertexUniformVectors >= 256 &&
       maxVertexAttribs >= 16
@@ -191,6 +201,9 @@ export class PerformanceMonitor {
 
     const deviceTier = this.detectDeviceTier();
     this.setDeviceTier(deviceTier);
+
+    // Update the global state with the detected device tier
+    simulationStateService.setPerformanceProfile(deviceTier);
 
     // Set appropriate target FPS based on device tier
     switch (deviceTier) {
@@ -219,6 +232,15 @@ export class PerformanceMonitor {
           minimumSegments: 6,
           enableAdaptiveScaling: true,
           distanceReductionFactor: 0.9,
+        });
+        break;
+      case "cosmic":
+        this.setTargetFPS(60);
+        this.updatePerformanceConfig({
+          performanceReductionMultiplier: 0.3,
+          minimumSegments: 8,
+          enableAdaptiveScaling: false,
+          distanceReductionFactor: 1.0,
         });
         break;
     }

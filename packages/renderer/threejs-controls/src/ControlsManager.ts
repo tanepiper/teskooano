@@ -190,6 +190,15 @@ export class ControlsManager extends StateSubscriptionMixin {
   }
 
   /**
+   * Updates the minimum distance for orbit controls based on the focused celestial object type
+   * This prevents shader transparency issues while maintaining close viewing for satellites
+   * @param minDistance The new minimum distance value
+   */
+  public updateMinDistance(minDistance: number): void {
+    this.orbitControlsHandler.updateMinDistance(minDistance);
+  }
+
+  /**
    * Enables or disables user interaction with the controls.
    * @param enabled Whether to enable the controls.
    */

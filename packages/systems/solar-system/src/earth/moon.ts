@@ -90,7 +90,7 @@ export function initializeLuna(parentId: string): void {
         specularStrength: 0.02,
         ambientLightIntensity: 0.01, // Minimal ambient for dark space
         undulation: 0.1,
-        terrainType: 1,
+        terrainType: 3,
         terrainAmplitude: 0.35,
         terrainSharpness: 0.7,
         terrainOffset: 0.0,

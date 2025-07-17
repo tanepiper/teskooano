@@ -100,7 +100,6 @@ export type { ClearStateOptions };
 export type {
   SimulationState,
   CameraState,
-  PerformanceProfileType,
   VisualSettingsState,
   SimulationMode,
   IntegratorType,

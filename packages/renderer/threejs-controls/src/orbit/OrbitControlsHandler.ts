@@ -30,7 +30,7 @@ export class OrbitControlsHandler {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.5;
     this.controls.screenSpacePanning = false;
-    this.controls.minDistance = 0.0000001; // Reduced to allow closer zooming for small objects like satellites
+    this.controls.minDistance = 0.0001; // Use default value, will be updated dynamically
     this.controls.maxDistance = 1e8; // Adjust as needed
     this.controls.maxPolarAngle = Math.PI; // Allow looking from underneath
 
@@ -48,6 +48,20 @@ export class OrbitControlsHandler {
       target: this.controls.target.clone(),
     });
   };
+
+  /**
+   * Updates the minimum distance based on the focused celestial object type
+   * This prevents shader transparency issues while maintaining close viewing for satellites
+   * @param minDistance The new minimum distance value
+   */
+  public updateMinDistance(minDistance: number): void {
+    if (this.controls.minDistance !== minDistance) {
+      this.controls.minDistance = minDistance;
+      console.debug(
+        `[OrbitControlsHandler] Updated min distance to ${minDistance} for better shader compatibility`,
+      );
+    }
+  }
 
   /**
    * Updates the controls. Should be called in the render loop.

@@ -1,4 +1,7 @@
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type {
+  RenderableCelestialObject,
+  DeviceTier,
+} from "@teskooano/data-types";
 import * as THREE from "three";
 import type { DetailLevel } from "../types";
 
@@ -16,8 +19,8 @@ export interface PerformanceConfig {
   performanceReductionMultiplier?: number;
   /** Minimum segments to maintain even under poor performance */
   minimumSegments?: number;
-  /** Device performance tier: 'low', 'medium', 'high' */
-  deviceTier?: "low" | "medium" | "high";
+  /** Device performance tier */
+  deviceTier?: DeviceTier;
   /** Whether to enable adaptive segment scaling based on object size */
   enableAdaptiveScaling?: boolean;
   /** Distance-based segment reduction factor */

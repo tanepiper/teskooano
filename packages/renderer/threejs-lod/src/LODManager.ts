@@ -1,13 +1,12 @@
 import * as THREE from "three";
-import type { RenderableCelestialObject } from "@teskooano/data-types";
+import type {
+  RenderableCelestialObject,
+  DeviceTier,
+} from "@teskooano/data-types";
 
 import type { LODLevel, DebugLabel } from "./lod-manager";
 
-import {
-  StateAccessor,
-  StateSubscriptionMixin,
-  type PerformanceProfileType,
-} from "@teskooano/core-state";
+import { StateAccessor, StateSubscriptionMixin } from "@teskooano/core-state";
 
 import {
   createDebugLabel,
@@ -27,7 +26,7 @@ export class LODManager extends StateSubscriptionMixin {
   private objectLODs: Map<string, THREE.LOD> = new Map();
   private debugLabels: Map<string, DebugLabel> = new Map();
   private debugEnabled: boolean = false;
-  private currentProfile: PerformanceProfileType = "medium";
+  private currentProfile: DeviceTier = "medium";
   private performanceOptimization: any = null;
 
   constructor(camera: THREE.PerspectiveCamera) {
