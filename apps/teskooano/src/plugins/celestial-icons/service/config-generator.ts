@@ -63,8 +63,17 @@ const STELLAR_TYPE_CONFIGS: Partial<
   },
   [StellarType.BLACK_HOLE]: {
     base: { type: "star", color: "#000000", radius: 6 },
-    atmosphere: { color: "#333333", size: 3 },
+    atmosphere: { color: "#000000", size: 3 },
     special: "black-hole",
+  },
+  [StellarType.PROTOSTAR]: {
+    base: { type: "star", color: "#FF8A4A", radius: 5 },
+    atmosphere: { color: "#FF8A4A", size: 5 },
+    special: "pulsar",
+  },
+  [StellarType.HYPERGIANT]: {
+    base: { type: "star", color: "#FF6B6B", radius: 8 },
+    atmosphere: { color: "#FF6B6B", size: 12 },
   },
 };
 
@@ -155,7 +164,7 @@ function createStarConfig(starProps: StarProperties): CelestialIconConfig {
   const baseConfig: CelestialIconConfig = {
     base: {
       type: "star",
-      color: "#FFFFFF",
+      color: starProps.color || "#FFFFFF",
     },
   };
 
@@ -181,10 +190,16 @@ function createStarConfig(starProps: StarProperties): CelestialIconConfig {
       return baseConfig;
     }
 
-    // For other stellar types, use the stellar type configuration
-    baseConfig.base = stellarConfig.base;
+    // For other stellar types, use the stellar type configuration but override with actual color
+    baseConfig.base = {
+      ...stellarConfig.base,
+      color: starProps.color || stellarConfig.base.color,
+    };
     if (stellarConfig.atmosphere) {
-      baseConfig.atmosphere = stellarConfig.atmosphere;
+      baseConfig.atmosphere = {
+        ...stellarConfig.atmosphere,
+        color: starProps.color || stellarConfig.atmosphere.color,
+      };
     }
     if (stellarConfig.special) {
       baseConfig.special = stellarConfig.special;

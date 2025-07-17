@@ -42,7 +42,12 @@ export class TeskooanoTooltip extends HTMLElement {
    * Attributes to observe for changes.
    * Includes 'visible', 'vertical-align', 'horizontal-align', 'timeout'.
    */
-  static observedAttributes = ["visible", "vertical-align", "horizontal-align", "timeout"];
+  static observedAttributes = [
+    "visible",
+    "vertical-align",
+    "horizontal-align",
+    "timeout",
+  ];
 
   private tooltipElement: HTMLElement | null = null;
   /**
@@ -117,7 +122,7 @@ export class TeskooanoTooltip extends HTMLElement {
       this.tooltipElement?.style.setProperty("visibility", "visible");
 
       requestAnimationFrame(() => this._calculateAndAdjustPosition());
-      
+
       // Start 5-second timeout to auto-hide
       this._startHideTimeout();
     } else {
@@ -127,7 +132,7 @@ export class TeskooanoTooltip extends HTMLElement {
       this.tooltipElement?.style.removeProperty("left");
       this.tooltipElement?.style.removeProperty("top");
       this.tooltipElement?.style.removeProperty("transform");
-      
+
       // Clear timeout when hiding
       this._clearHideTimeout();
     }
@@ -280,7 +285,7 @@ export class TeskooanoTooltip extends HTMLElement {
    */
   private _startHideTimeout() {
     this._clearHideTimeout(); // Clear any existing timeout
-    
+
     const timeoutMs = this.getTimeoutMs();
     this._hideTimeout = window.setTimeout(() => {
       this.hide();
@@ -298,13 +303,15 @@ export class TeskooanoTooltip extends HTMLElement {
     if (timeoutAttr === null) {
       return 5000; // Default 5 seconds
     }
-    
+
     const timeoutValue = parseInt(timeoutAttr, 10);
     if (isNaN(timeoutValue) || timeoutValue < 0) {
-      console.warn(`[Tooltip] Invalid timeout value: ${timeoutAttr}, using default 5000ms`);
+      console.warn(
+        `[Tooltip] Invalid timeout value: ${timeoutAttr}, using default 5000ms`,
+      );
       return 5000;
     }
-    
+
     return timeoutValue;
   }
 
@@ -366,7 +373,9 @@ export class TeskooanoTooltip extends HTMLElement {
    */
   set timeout(value: number) {
     if (value < 0) {
-      console.warn(`[Tooltip] Invalid timeout value: ${value}, must be non-negative`);
+      console.warn(
+        `[Tooltip] Invalid timeout value: ${value}, must be non-negative`,
+      );
       return;
     }
     this.setAttribute("timeout", value.toString());

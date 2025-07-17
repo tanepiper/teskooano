@@ -29,6 +29,9 @@
     "vite": "7.0.4",
     "vite-plugin-glsl": "1.5.1",
     "vite-plugin-pwa": "1.0.1",
-    "vitest": "3.2.4"
+    "vitest": "3.2.4",
+    "@vitest/browser": "3.2.4",
+    "@playwright/test": "1.54.1",
+    "jsdom": "26.1.0"
   }
 }

@@ -19,21 +19,22 @@ try {
 }
 
 const buildTimestamp = new Date().toISOString();
-let basePath = process.env.CI ? "teskooano" : "";
+let basePath = process.env.CI ? "/teskooano" : "";
 
 // get env var from command line
 const env = process.argv.find((arg) => arg.startsWith("--env="))?.split("=")[1];
-if (process.env.CI && env !== "prod") {
+if (process.env.CI && env && env !== "prod") {
   basePath = `${basePath}/${env}`;
 }
 
+// In production, assets should be served from the base path root, not from a /public subdirectory
 let assetPath = "public";
-if (process.env.CI) {
-  assetPath = `${basePath}/public`;
-}
+// Remove the assetPath override for CI - let Vite handle it normally
 
 console.log("basePath", basePath);
 console.log("assetPath", assetPath);
+console.log("CI:", process.env.CI);
+console.log("env:", env);
 
 export default defineConfig({
   plugins: [
