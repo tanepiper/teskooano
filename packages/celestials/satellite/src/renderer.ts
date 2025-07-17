@@ -301,7 +301,7 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     // Convert to scene units (where 1 AU = 1000 units)
     const sceneUnits = realSizeM * METERS_TO_SCENE_UNITS;
 
-    // Apply any custom model scale from properties
+    // Apply any custom model scale from properties FIRST
     const modelScale = properties.modelScale ?? 1.0;
 
     // Calculate visibility scale based on satellite size
@@ -311,7 +311,7 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
       properties,
     );
 
-    // Final scale combines all factors
+    // Final scale: modelScale has the most direct effect, then visibility adjustments
     const finalScale = sceneUnits * modelScale * visibilityScale;
 
     console.debug(
@@ -334,8 +334,8 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     realSizeM: number,
     properties: SatelliteProperties,
   ): number {
-    // Base visibility scale - satellites should be visible but not huge
-    const baseVisibilityScale = 1; // 1000x larger than physics scale
+    // Base visibility scale - reduced to give more control to modelScale
+    const baseVisibilityScale = 0.5; // Reduced from 1.0 to 0.5
 
     // Adjust based on real-world size
     // Larger satellites (like ISS) need less scaling
@@ -343,11 +343,17 @@ export class SatelliteRenderer extends BaseCelestialRenderer {
     let sizeAdjustment = 1.0;
 
     if (realSizeM > 100) {
-      // Large satellites (ISS, etc.) - reduce scaling
+      // Very large satellites (ISS, etc.) - significant reduction
+      sizeAdjustment = 0.3;
+    } else if (realSizeM > 50) {
+      // Large satellites (large space stations) - reduce scaling
       sizeAdjustment = 0.5;
+    } else if (realSizeM > 20) {
+      // Medium-large satellites (Hubble, etc.) - moderate reduction
+      sizeAdjustment = 0.7;
     } else if (realSizeM > 10) {
-      // Medium satellites (Hubble, etc.) - moderate scaling
-      sizeAdjustment = 1.0;
+      // Medium satellites - slight reduction
+      sizeAdjustment = 0.8;
     } else if (realSizeM > 1) {
       // Small satellites - increase scaling
       sizeAdjustment = 2.0;

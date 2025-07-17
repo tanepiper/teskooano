@@ -57,8 +57,8 @@ export function initializeHubble(parentId: string): void {
 
     properties: {
       type: CelestialType.SATELLITE,
-      modelPath: "./models/satellite/hubble.glb",
-      modelScale: 0.7,
+      modelPath: "models/satellite/hubble.glb", // Fixed path format
+      modelScale: 0.1, // Reduced from 0.7 to 0.4 for better size
       missionType: "scientific",
       operationalStatus: "active",
       launchDate: "1990-04-24",
