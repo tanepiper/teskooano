@@ -11,6 +11,7 @@ import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,
   LightSourcesMap,
+  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 
 /**
@@ -147,7 +148,8 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer<Schwarzschi
    */
   private _createEventHorizon(object: RenderableCelestialObject): THREE.Mesh {
     const radius = object.radius || 1;
-    const geometry = new THREE.SphereGeometry(radius, 64, 64);
+    const segments = GeometryUtilities.getOptimizedStarSegments("high", 40);
+    const geometry = new THREE.SphereGeometry(radius, segments, segments);
     this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
     this.materials.set(
       object.celestialObjectId,

@@ -14,6 +14,7 @@ import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,
   LightSourcesMap,
+  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 
 /**
@@ -196,7 +197,15 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     highDetailGroup.name = `${object.celestialObjectId}-kerr-high`;
 
     // Create event horizon
-    const eventHorizonGeometry = new THREE.SphereGeometry(1, 32, 32);
+    const eventHorizonSegments = GeometryUtilities.getOptimizedStarSegments(
+      "high",
+      40,
+    );
+    const eventHorizonGeometry = new THREE.SphereGeometry(
+      1,
+      eventHorizonSegments,
+      eventHorizonSegments,
+    );
     this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
     const eventHorizonMesh = new THREE.Mesh(
       eventHorizonGeometry,
@@ -206,7 +215,15 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     highDetailGroup.add(eventHorizonMesh);
 
     // Create ergosphere (rotating space-time region)
-    const ergosphereGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+    const ergosphereSegments = GeometryUtilities.getOptimizedStarSegments(
+      "high",
+      40,
+    );
+    const ergosphereGeometry = new THREE.SphereGeometry(
+      1.5,
+      ergosphereSegments,
+      ergosphereSegments,
+    );
     this.ergosphereMaterial = new ErgosphereMaterial();
     this.ergosphereMaterial.setRotationSpeed(this.rotationSpeed);
     const ergosphereMesh = new THREE.Mesh(
@@ -298,7 +315,16 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     // Add medium detail accretion disk
     if (this.ringSystemRenderer && object.mass) {
       // Create a simplified accretion disk for medium detail
-      const mediumDiskGeometry = new THREE.RingGeometry(1.5, 4, 32, 1);
+      const mediumDiskSegments = GeometryUtilities.getOptimizedRingSegments(
+        "medium",
+        72,
+      );
+      const mediumDiskGeometry = new THREE.RingGeometry(
+        1.5,
+        4,
+        mediumDiskSegments,
+        1,
+      );
       const mediumDiskMaterial = new THREE.MeshBasicMaterial({
         color: new THREE.Color("#FF6B35"),
         transparent: true,
@@ -328,7 +354,16 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
 
     // Add simple accretion disk for low detail
     if (object.mass) {
-      const lowDiskGeometry = new THREE.RingGeometry(1.2, 3, 16, 1);
+      const lowDiskSegments = GeometryUtilities.getOptimizedRingSegments(
+        "low",
+        36,
+      );
+      const lowDiskGeometry = new THREE.RingGeometry(
+        1.2,
+        3,
+        lowDiskSegments,
+        1,
+      );
       const lowDiskMaterial = new THREE.MeshBasicMaterial({
         color: new THREE.Color("#FF4500"),
         transparent: true,
@@ -356,7 +391,8 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
    */
   private _createEventHorizon(object: RenderableCelestialObject): THREE.Mesh {
     const radius = object.radius || 1;
-    const geometry = new THREE.SphereGeometry(radius, 64, 64);
+    const segments = GeometryUtilities.getOptimizedStarSegments("high", 40);
+    const geometry = new THREE.SphereGeometry(radius, segments, segments);
     this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
     this.materials.set(
       object.celestialObjectId,
@@ -374,7 +410,8 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
   private _createErgosphere(object: RenderableCelestialObject): THREE.Mesh {
     const radius = object.radius || 1;
     const ergoRadius = radius * 1.4;
-    const geometry = new THREE.SphereGeometry(ergoRadius, 48, 48);
+    const segments = GeometryUtilities.getOptimizedStarSegments("high", 40);
+    const geometry = new THREE.SphereGeometry(ergoRadius, segments, segments);
     geometry.scale(1.0, 0.8, 1.0); // Make it oblate
 
     this.ergosphereMaterial = new ErgosphereMaterial();

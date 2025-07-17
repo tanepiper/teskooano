@@ -2,6 +2,7 @@ import { PlanetProperties, PlanetType } from "@teskooano/data-types";
 import type { RenderableCelestialObject } from "@teskooano/data-types";
 import * as THREE from "three";
 import { AtmosphereMaterial } from "../materials/atmosphere.material";
+import { GeometryUtilities } from "@teskooano/renderer-threejs-celestial";
 
 export interface AtmosphereMeshResult {
   mesh: THREE.Mesh;
@@ -22,7 +23,10 @@ export class AtmosphereService {
    */
   createAtmosphereMesh(
     object: RenderableCelestialObject,
-    segments: number = 64,
+    segments: number = GeometryUtilities.getOptimizedAtmosphereSegments(
+      "high",
+      56,
+    ),
     baseRadiusInput?: number,
   ): AtmosphereMeshResult | null {
     const props = object.properties as PlanetProperties | undefined;

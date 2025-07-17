@@ -11,6 +11,7 @@ import {
   BaseCelestialRenderer,
   type CelestialMeshOptions,
   type LightSourcesMap,
+  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 import {
   CometComaMaterial,
@@ -187,10 +188,14 @@ export class CometRenderer extends BaseCelestialRenderer {
         this.comaMaterial,
       );
 
+      const comaSegments = GeometryUtilities.getOptimizedStarSegments(
+        "medium",
+        20,
+      );
       const comaGeometry = new THREE.SphereGeometry(
         properties.visualComaRadius,
-        32,
-        32,
+        comaSegments,
+        comaSegments,
       );
       this.coma = new THREE.Mesh(comaGeometry, this.comaMaterial);
     }

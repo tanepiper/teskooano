@@ -6,6 +6,7 @@ import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,
+  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 /**
  * Material for white dwarf stars with subtype-specific properties
@@ -143,7 +144,10 @@ export class WhiteDwarfRenderer extends BaseStarRenderer<WhiteDwarfMaterial> {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    const segments = this.getSegmentsForDetailLevel(options?.detailLevel, 32);
+    const segments = GeometryUtilities.getOptimizedStarSegments(
+      options?.detailLevel,
+      40,
+    );
     const geometry = new THREE.SphereGeometry(
       object.radius,
       segments,

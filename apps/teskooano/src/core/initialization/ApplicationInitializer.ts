@@ -1,5 +1,6 @@
 import { pluginManager } from "@teskooano/ui-plugin";
 import type { DockviewApi } from "dockview-core";
+import { PerformanceMonitor } from "@teskooano/renderer-threejs-celestial";
 
 import { EnvironmentValidator } from "../validation/EnvironmentValidator";
 import { ManagerInitializer } from "./ManagerInitializer";
@@ -39,6 +40,10 @@ export class ApplicationInitializer {
       // Step 2: Load and register plugins
       console.debug("[Init] Loading plugins...");
       await this.loadPlugins(pluginIds);
+
+      // Step 2.5: Initialize performance monitoring
+      console.debug("[Init] Initializing performance monitoring...");
+      PerformanceMonitor.getInstance();
 
       // Step 3: Initialize dockview system
       console.debug("[Init] Initializing dockview system...");

@@ -8,6 +8,7 @@ import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,
   LightSourcesMap,
+  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 
 /**
@@ -103,7 +104,15 @@ export class NeutronStarRenderer extends BaseStarRenderer<NeutronStarMaterial> {
     object: RenderableCelestialObject,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
-    const highDetailGeometry = new THREE.SphereGeometry(object.radius, 32, 32);
+    const segments = GeometryUtilities.getOptimizedStarSegments(
+      options?.detailLevel,
+      40,
+    );
+    const highDetailGeometry = new THREE.SphereGeometry(
+      object.radius,
+      segments,
+      segments,
+    );
     const highDetailMesh = new THREE.Mesh(highDetailGeometry, this.material);
     highDetailMesh.name = `${object.celestialObjectId}-high-lod`;
     return [{ object: highDetailMesh, distance: 0 }];

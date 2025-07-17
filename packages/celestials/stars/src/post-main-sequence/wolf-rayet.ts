@@ -7,6 +7,7 @@ import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,
   LightSourcesMap,
+  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 
 /**
@@ -68,7 +69,10 @@ export class WolfRayetRenderer extends BaseStarRenderer<WolfRayetMaterial> {
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     const material = this.createAndRegisterMaterial(object);
-    const segments = this.getSegmentsForDetailLevel(options?.detailLevel, 64);
+    const segments = GeometryUtilities.getOptimizedStarSegments(
+      options?.detailLevel,
+      40,
+    );
     const geometry = new THREE.SphereGeometry(
       object.radius,
       segments,
@@ -117,7 +121,15 @@ export class WolfRayetRenderer extends BaseStarRenderer<WolfRayetMaterial> {
     const coronaScale = radius * 5;
     const color = this.getStarColor(object);
 
-    const sphereGeometry = new THREE.SphereGeometry(coronaScale, 32, 32);
+    const coronaSegments = GeometryUtilities.getOptimizedStarSegments(
+      "medium",
+      20,
+    );
+    const sphereGeometry = new THREE.SphereGeometry(
+      coronaScale,
+      coronaSegments,
+      coronaSegments,
+    );
 
     const stellarWindMaterial = new THREE.MeshBasicMaterial({
       color: color,

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { GeometryUtilities } from "@teskooano/renderer-threejs-celestial";
 // Import shader code (assume raw-loader or similar is set up)
 import blurHorizontalShader from "./blur-horizontal.glsl?raw";
 import blurVerticalShader from "./blur-vertical.glsl?raw";
@@ -271,7 +272,8 @@ export class GravitationalLensingHelper {
     const maxDimension = Math.max(objectSize.x, objectSize.y, objectSize.z);
     const sphereRadius = maxDimension * scale;
 
-    const geometry = new THREE.SphereGeometry(sphereRadius, 64, 64);
+    const segments = GeometryUtilities.getOptimizedStarSegments("high", 40);
+    const geometry = new THREE.SphereGeometry(sphereRadius, segments, segments);
     this.mesh = new THREE.Mesh(geometry, this.material);
     this.mesh.name = "gravitational-lensing";
     this.mesh.renderOrder = 1000;

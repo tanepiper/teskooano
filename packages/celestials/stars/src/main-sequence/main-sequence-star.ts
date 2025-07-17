@@ -6,6 +6,7 @@ import type { LODLevel } from "@teskooano/renderer-threejs-lod";
 import {
   BaseCelestialRendererOptions,
   CelestialMeshOptions,
+  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 
 /**
@@ -51,7 +52,10 @@ export class MainSequenceStarRenderer<
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     const material = this.createAndRegisterMaterial(object);
-    const segments = this.getSegmentsForDetailLevel(options?.detailLevel);
+    const segments = GeometryUtilities.getOptimizedStarSegments(
+      options?.detailLevel,
+      40,
+    );
     const geometry = new THREE.SphereGeometry(
       object.radius,
       segments,
@@ -65,7 +69,10 @@ export class MainSequenceStarRenderer<
     this._addCoronaToGroup(object, group);
 
     // Main sequence stars can have a simpler medium LOD
-    const mediumSegments = this.getSegmentsForDetailLevel("medium");
+    const mediumSegments = GeometryUtilities.getOptimizedStarSegments(
+      "medium",
+      20,
+    );
     const mediumGeometry = new THREE.SphereGeometry(
       object.radius,
       mediumSegments,

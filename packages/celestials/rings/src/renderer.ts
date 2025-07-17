@@ -12,6 +12,7 @@ import {
   type CelestialMeshOptions,
   type LightSourcesMap,
   ShadowCasterUtils,
+  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 import { RingMaterial, AccretionDiskMaterial } from "./material";
 import { calculateKeplerianRotationRate } from "./utils";
@@ -84,19 +85,25 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     const highDetailGroup = this._createRingGroup(object, {
       ...options,
       detailLevel: "high",
-      segments: options?.segments ?? 256,
+      segments:
+        options?.segments ??
+        GeometryUtilities.getOptimizedRingSegments("high", 144),
     });
 
     const mediumDetailGroup = this._createRingGroup(object, {
       ...options,
       detailLevel: "medium",
-      segments: options?.segments ? Math.floor(options.segments / 2) : 128,
+      segments: options?.segments
+        ? Math.floor(options.segments / 2)
+        : GeometryUtilities.getOptimizedRingSegments("medium", 72),
     });
 
     const lowDetailGroup = this._createRingGroup(object, {
       ...options,
       detailLevel: "low",
-      segments: options?.segments ? Math.floor(options.segments / 4) : 64,
+      segments: options?.segments
+        ? Math.floor(options.segments / 4)
+        : GeometryUtilities.getOptimizedRingSegments("low", 36),
     });
 
     // Calculate LOD distances based on object radius
@@ -228,7 +235,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     // Get segments based on detail level
     const segments =
       options?.segments ??
-      this.getSegmentsForDetailLevel(options?.detailLevel, 128);
+      GeometryUtilities.getOptimizedRingSegments(options?.detailLevel, 144);
 
     // Store ring meshes for shadow casting registration
     const meshesForThisGroup: THREE.Object3D[] = [];

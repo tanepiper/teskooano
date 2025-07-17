@@ -8,27 +8,35 @@ template.innerHTML = `
         color: var(--color-text, #e0e0fc);
         padding: var(--space-sm, 8px) var(--space-md, 12px);
         border-top: 1px solid var(--color-border-alt, #5a5a7a);
-        max-height: 400px;
+        height: 100%;
+    }
+
+    .info-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md, 12px);
         overflow-y: auto;
         overflow-x: hidden;
+        height: 100%;
+        padding-right: var(--space-xs, 4px); /* Space for scrollbar */
     }
     
-    /* Custom scrollbar styling */
-    :host::-webkit-scrollbar {
+    /* Custom scrollbar styling for the container */
+    .info-container::-webkit-scrollbar {
         width: 8px;
     }
     
-    :host::-webkit-scrollbar-track {
+    .info-container::-webkit-scrollbar-track {
         background: var(--color-surface-alt, #2a2a3a);
         border-radius: 4px;
     }
     
-    :host::-webkit-scrollbar-thumb {
+    .info-container::-webkit-scrollbar-thumb {
         background: var(--color-border, #555);
         border-radius: 4px;
     }
     
-    :host::-webkit-scrollbar-thumb:hover {
+    .info-container::-webkit-scrollbar-thumb:hover {
         background: var(--color-border-alt, #5a5a7a);
     }
     .info-grid {
@@ -177,6 +185,7 @@ template.innerHTML = `
     }
   </style>
   
+  <div class="info-container">
   <!-- Renderer Stats Section -->
   <div class="info-grid">
       <span class="label">FPS:</span>
@@ -214,7 +223,8 @@ template.innerHTML = `
       <h4>Active Performance Optimizations</h4>
       <div style="color: var(--color-text-secondary, #aaa); font-style: italic;">
         Loading optimizations...
-      </div>
+        </div>
+        </div>
     </div>
   </div>
 `;

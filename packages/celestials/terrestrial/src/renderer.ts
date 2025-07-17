@@ -17,6 +17,7 @@ import {
   type LightSourcesMap,
   type CelestialRenderer,
   ShadowCasterUtils,
+  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 import { RingSystemRenderer } from "@teskooano/celestials-rings";
 import {
@@ -186,7 +187,10 @@ export class BaseTerrestrialRenderer<
     group.name = `${object.celestialObjectId}-high-lod-group`;
     const segments =
       options?.segments ??
-      (["high", "ultra"].includes(options?.detailLevel ?? "") ? 128 : 64);
+      GeometryUtilities.getOptimizedHighDetailSegments(
+        options?.detailLevel,
+        64,
+      );
 
     let bodyMesh: THREE.Mesh;
     try {
@@ -246,7 +250,10 @@ export class BaseTerrestrialRenderer<
     object: RenderableCelestialObject,
     baseRadius: number,
   ): THREE.Group {
-    const mediumSegments = 32;
+    const mediumSegments = GeometryUtilities.getOptimizedHighDetailSegments(
+      "medium",
+      32,
+    );
     const mediumGeometry = new THREE.SphereGeometry(
       baseRadius,
       mediumSegments,

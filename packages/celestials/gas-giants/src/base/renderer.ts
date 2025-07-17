@@ -14,6 +14,7 @@ import {
   type CelestialMeshOptions,
   LightArrayUtils,
   ShadowCasterUtils,
+  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 import { RingSystemRenderer } from "@teskooano/celestials-rings";
 import { BaseGasGiantMaterial, BasicGasGiantMaterial } from "./material";
@@ -104,7 +105,12 @@ export abstract class BaseGasGiantRenderer<
   ): LODLevel[] {
     const baseRadius = object.radius ?? 10;
 
-    const highDetailSegments = options?.segments ?? 64;
+    const highDetailSegments =
+      options?.segments ??
+      GeometryUtilities.getOptimizedHighDetailSegments(
+        options?.detailLevel,
+        80,
+      );
     const highDetailGeometry = new THREE.SphereGeometry(
       baseRadius,
       highDetailSegments,
@@ -127,7 +133,10 @@ export abstract class BaseGasGiantRenderer<
 
     const level0: LODLevel = { object: level0Group, distance: 0 };
 
-    const mediumSegments = 32;
+    const mediumSegments = GeometryUtilities.getOptimizedHighDetailSegments(
+      "medium",
+      40,
+    );
     const mediumGeometry = new THREE.SphereGeometry(
       baseRadius,
       mediumSegments,

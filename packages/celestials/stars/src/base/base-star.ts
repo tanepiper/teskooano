@@ -5,6 +5,7 @@ import {
   type BaseCelestialRendererOptions,
   type CelestialMeshOptions,
   type LightSourcesMap,
+  GeometryUtilities,
 } from "@teskooano/renderer-threejs-celestial";
 import { LightingManager } from "@teskooano/renderer-threejs-lighting";
 import type { LODLevel } from "@teskooano/renderer-threejs-lod";
@@ -406,7 +407,15 @@ export abstract class BaseStarRenderer<
 
     coronaScales.forEach((scale, index) => {
       const coronaRadius = object.radius * scale;
-      const coronaGeometry = new THREE.SphereGeometry(coronaRadius, 32, 32);
+      const coronaSegments = GeometryUtilities.getOptimizedStarSegments(
+        "medium",
+        20,
+      );
+      const coronaGeometry = new THREE.SphereGeometry(
+        coronaRadius,
+        coronaSegments,
+        coronaSegments,
+      );
       const coronaMaterial = new CoronaMaterial(starColor, {
         scale: scale,
         opacity: opacities[index],
