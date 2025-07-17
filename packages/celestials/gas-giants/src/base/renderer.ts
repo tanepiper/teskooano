@@ -109,7 +109,7 @@ export abstract class BaseGasGiantRenderer<
       options?.segments ??
       GeometryUtilities.getOptimizedHighDetailSegments(
         options?.detailLevel,
-        80,
+        64,
       );
     const highDetailGeometry = new THREE.SphereGeometry(
       baseRadius,
@@ -135,7 +135,7 @@ export abstract class BaseGasGiantRenderer<
 
     const mediumSegments = GeometryUtilities.getOptimizedHighDetailSegments(
       "medium",
-      40,
+      32,
     );
     const mediumGeometry = new THREE.SphereGeometry(
       baseRadius,

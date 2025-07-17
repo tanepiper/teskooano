@@ -190,7 +190,7 @@ export class CometRenderer extends BaseCelestialRenderer {
 
       const comaSegments = GeometryUtilities.getOptimizedStarSegments(
         "medium",
-        20,
+        32,
       );
       const comaGeometry = new THREE.SphereGeometry(
         properties.visualComaRadius,

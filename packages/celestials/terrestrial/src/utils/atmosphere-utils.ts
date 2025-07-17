@@ -25,7 +25,7 @@ export class AtmosphereService {
     object: RenderableCelestialObject,
     segments: number = GeometryUtilities.getOptimizedAtmosphereSegments(
       "high",
-      56,
+      64,
     ),
     baseRadiusInput?: number,
   ): AtmosphereMeshResult | null {

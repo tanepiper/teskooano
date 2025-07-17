@@ -148,7 +148,7 @@ export class SchwarzschildBlackHoleRenderer extends BaseStarRenderer<Schwarzschi
    */
   private _createEventHorizon(object: RenderableCelestialObject): THREE.Mesh {
     const radius = object.radius || 1;
-    const segments = GeometryUtilities.getOptimizedStarSegments("high", 40);
+    const segments = GeometryUtilities.getOptimizedStarSegments("high", 64);
     const geometry = new THREE.SphereGeometry(radius, segments, segments);
     this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
     this.materials.set(

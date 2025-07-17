@@ -199,7 +199,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     // Create event horizon
     const eventHorizonSegments = GeometryUtilities.getOptimizedStarSegments(
       "high",
-      40,
+      64,
     );
     const eventHorizonGeometry = new THREE.SphereGeometry(
       1,
@@ -217,7 +217,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     // Create ergosphere (rotating space-time region)
     const ergosphereSegments = GeometryUtilities.getOptimizedStarSegments(
       "high",
-      40,
+      64,
     );
     const ergosphereGeometry = new THREE.SphereGeometry(
       1.5,
@@ -317,7 +317,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
       // Create a simplified accretion disk for medium detail
       const mediumDiskSegments = GeometryUtilities.getOptimizedRingSegments(
         "medium",
-        72,
+        32,
       );
       const mediumDiskGeometry = new THREE.RingGeometry(
         1.5,
@@ -356,7 +356,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
     if (object.mass) {
       const lowDiskSegments = GeometryUtilities.getOptimizedRingSegments(
         "low",
-        36,
+        16,
       );
       const lowDiskGeometry = new THREE.RingGeometry(
         1.2,
@@ -391,7 +391,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
    */
   private _createEventHorizon(object: RenderableCelestialObject): THREE.Mesh {
     const radius = object.radius || 1;
-    const segments = GeometryUtilities.getOptimizedStarSegments("high", 40);
+    const segments = GeometryUtilities.getOptimizedStarSegments("high", 64);
     const geometry = new THREE.SphereGeometry(radius, segments, segments);
     this.eventHorizonMaterial = new SchwarzschildBlackHoleMaterial();
     this.materials.set(
@@ -410,7 +410,7 @@ export class KerrBlackHoleRenderer extends BaseStarRenderer<SchwarzschildBlackHo
   private _createErgosphere(object: RenderableCelestialObject): THREE.Mesh {
     const radius = object.radius || 1;
     const ergoRadius = radius * 1.4;
-    const segments = GeometryUtilities.getOptimizedStarSegments("high", 40);
+    const segments = GeometryUtilities.getOptimizedStarSegments("high", 64);
     const geometry = new THREE.SphereGeometry(ergoRadius, segments, segments);
     geometry.scale(1.0, 0.8, 1.0); // Make it oblate
 

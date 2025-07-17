@@ -54,7 +54,7 @@ export class MainSequenceStarRenderer<
     const material = this.createAndRegisterMaterial(object);
     const segments = GeometryUtilities.getOptimizedStarSegments(
       options?.detailLevel,
-      40,
+      64,
     );
     const geometry = new THREE.SphereGeometry(
       object.radius,
@@ -71,7 +71,7 @@ export class MainSequenceStarRenderer<
     // Main sequence stars can have a simpler medium LOD
     const mediumSegments = GeometryUtilities.getOptimizedStarSegments(
       "medium",
-      20,
+      32,
     );
     const mediumGeometry = new THREE.SphereGeometry(
       object.radius,

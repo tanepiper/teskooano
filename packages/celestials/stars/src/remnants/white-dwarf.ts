@@ -146,7 +146,7 @@ export class WhiteDwarfRenderer extends BaseStarRenderer<WhiteDwarfMaterial> {
   ): LODLevel[] {
     const segments = GeometryUtilities.getOptimizedStarSegments(
       options?.detailLevel,
-      40,
+      64,
     );
     const geometry = new THREE.SphereGeometry(
       object.radius,

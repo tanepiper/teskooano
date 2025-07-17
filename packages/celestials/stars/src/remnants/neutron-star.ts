@@ -106,7 +106,7 @@ export class NeutronStarRenderer extends BaseStarRenderer<NeutronStarMaterial> {
   ): LODLevel[] {
     const segments = GeometryUtilities.getOptimizedStarSegments(
       options?.detailLevel,
-      40,
+      64,
     );
     const highDetailGeometry = new THREE.SphereGeometry(
       object.radius,

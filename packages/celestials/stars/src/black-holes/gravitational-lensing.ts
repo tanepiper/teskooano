@@ -272,7 +272,7 @@ export class GravitationalLensingHelper {
     const maxDimension = Math.max(objectSize.x, objectSize.y, objectSize.z);
     const sphereRadius = maxDimension * scale;
 
-    const segments = GeometryUtilities.getOptimizedStarSegments("high", 40);
+    const segments = GeometryUtilities.getOptimizedStarSegments("high", 64);
     const geometry = new THREE.SphereGeometry(sphereRadius, segments, segments);
     this.mesh = new THREE.Mesh(geometry, this.material);
     this.mesh.name = "gravitational-lensing";

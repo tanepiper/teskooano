@@ -87,7 +87,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       detailLevel: "high",
       segments:
         options?.segments ??
-        GeometryUtilities.getOptimizedRingSegments("high", 144),
+        GeometryUtilities.getOptimizedRingSegments("high", 64),
     });
 
     const mediumDetailGroup = this._createRingGroup(object, {
@@ -95,7 +95,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       detailLevel: "medium",
       segments: options?.segments
         ? Math.floor(options.segments / 2)
-        : GeometryUtilities.getOptimizedRingSegments("medium", 72),
+        : GeometryUtilities.getOptimizedRingSegments("medium", 32),
     });
 
     const lowDetailGroup = this._createRingGroup(object, {
@@ -103,7 +103,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
       detailLevel: "low",
       segments: options?.segments
         ? Math.floor(options.segments / 4)
-        : GeometryUtilities.getOptimizedRingSegments("low", 36),
+        : GeometryUtilities.getOptimizedRingSegments("low", 16),
     });
 
     // Calculate LOD distances based on object radius
@@ -235,7 +235,7 @@ export class RingSystemRenderer extends BaseCelestialRenderer<RingMaterial> {
     // Get segments based on detail level
     const segments =
       options?.segments ??
-      GeometryUtilities.getOptimizedRingSegments(options?.detailLevel, 144);
+      GeometryUtilities.getOptimizedRingSegments(options?.detailLevel, 64);
 
     // Store ring meshes for shadow casting registration
     const meshesForThisGroup: THREE.Object3D[] = [];

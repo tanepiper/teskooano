@@ -409,7 +409,7 @@ export abstract class BaseStarRenderer<
       const coronaRadius = object.radius * scale;
       const coronaSegments = GeometryUtilities.getOptimizedStarSegments(
         "medium",
-        20,
+        32,
       );
       const coronaGeometry = new THREE.SphereGeometry(
         coronaRadius,
