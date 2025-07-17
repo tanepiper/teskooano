@@ -25,19 +25,26 @@ export interface LabelVisibilityConfig {
 
 export class CelestialLabelLayer extends BaseLabelLayer {
   private visibilityConfig: Required<LabelVisibilityConfig>;
+  private labelCache = new Map<
+    string,
+    {
+      lastDistance: string;
+      lastSpeed: string;
+      lastVisible: boolean;
+    }
+  >();
 
   constructor(scene: THREE.Scene, config: LabelVisibilityConfig = {}) {
     super(scene);
     this.visibilityConfig = {
-      planet: 100,
-      gasGiant: 200,
-      comet: 200,
-      moon: 5,
-      ejectedMoon: 2000,
-      secondaryStar: 3000,
-      default: 2,
-      satellite: 10,
-      ...config,
+      planet: config.planet ?? 500,
+      gasGiant: config.gasGiant ?? 800,
+      moon: config.moon ?? 200,
+      comet: config.comet ?? 300,
+      ejectedMoon: config.ejectedMoon ?? 150,
+      secondaryStar: config.secondaryStar ?? 1000,
+      default: config.default ?? 400,
+      satellite: config.satellite ?? 100,
     };
   }
 
@@ -53,37 +60,37 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     ];
   }
 
+  /**
+   * Create a label for a celestial object
+   */
   public createLabel(
     object: RenderableCelestialObject,
     parentMesh: THREE.Object3D,
   ): void {
-    const objectId = object.celestialObjectId;
-    if (this.elements.has(objectId)) {
-      return;
-    }
-
     if (!this.scene) {
-      throw new Error("No scene available to create labels");
+      throw new Error("No scene to create celestial labels with");
     }
 
     const labelElement = document.createElement(CELESTIAL_LABEL_TAG);
-    labelElement.setAttribute("data-name", object.name);
-    // Store metadata for the update logic
-    labelElement.setAttribute("data-object-id", objectId);
+    labelElement.setAttribute("data-object-id", object.celestialObjectId);
     labelElement.setAttribute("data-object-type", object.type);
+    labelElement.setAttribute("data-name", object.name);
     if (object.parentId) {
       labelElement.setAttribute("data-parent-id", object.parentId);
     }
 
-    const label = new CSS2DObject(labelElement);
-    // Position label in world space relative to the celestial object
-    label.position.copy(this.calculateLabelPosition(object, parentMesh));
+    const css2dObject = new CSS2DObject(labelElement);
+    css2dObject.position.copy(this.calculateLabelPosition(object, parentMesh));
 
-    // Add label directly to the scene, not as a child of the celestial object
-    this.scene.add(label);
-    label.visible = this.isVisible;
+    this.scene.add(css2dObject);
+    this.elements.set(object.celestialObjectId, css2dObject);
 
-    this.elements.set(objectId, label);
+    // Initialize cache for this label
+    this.labelCache.set(object.celestialObjectId, {
+      lastDistance: "",
+      lastSpeed: "",
+      lastVisible: false,
+    });
   }
 
   public override update(
@@ -91,6 +98,9 @@ export class CelestialLabelLayer extends BaseLabelLayer {
     centralBody?: THREE.Object3D,
     objectManager?: ObjectManager,
   ): void {
+    // Call parent update for throttling
+    super.update(camera, centralBody, objectManager);
+
     if (!objectManager) {
       return;
     }
@@ -128,13 +138,33 @@ export class CelestialLabelLayer extends BaseLabelLayer {
       const distanceToSelf = cameraPosition.distanceTo(ownObject.position);
       const distanceInAu = this.sceneUnitsToAu(distanceToSelf);
       const formattedDistance = this._formatDistance(distanceInAu);
-      label.element.setAttribute("data-distance-formatted", formattedDistance);
 
       // Calculate and format speed
+      let formattedSpeed = "";
       if (renderableObject?.velocityMagnitude_mps !== undefined) {
         const speed = renderableObject.velocityMagnitude_mps; // Raw velocity in m/s
-        const formattedSpeed = this._formatSpeed(speed);
+        formattedSpeed = this._formatSpeed(speed);
+      }
+
+      // Get cached values for this label
+      const cache = this.labelCache.get(objectId) || {
+        lastDistance: "",
+        lastSpeed: "",
+        lastVisible: false,
+      };
+
+      // Only update attributes if values have changed
+      if (cache.lastDistance !== formattedDistance) {
+        label.element.setAttribute(
+          "data-distance-formatted",
+          formattedDistance,
+        );
+        cache.lastDistance = formattedDistance;
+      }
+
+      if (cache.lastSpeed !== formattedSpeed) {
         label.element.setAttribute("data-speed-formatted", formattedSpeed);
+        cache.lastSpeed = formattedSpeed;
       }
 
       switch (type) {
@@ -208,10 +238,39 @@ export class CelestialLabelLayer extends BaseLabelLayer {
         // Get the label's world position
         const labelWorldPosition = new THREE.Vector3();
         label.getWorldPosition(labelWorldPosition);
+
+        // Generate a unique ID for this label
+        const labelId = `celestial_${objectId}`;
+
+        // Check if the label is occluded by celestial objects
+        const isOccluded = this.isLabelOccludedOptimized(
+          labelId,
+          labelWorldPosition,
+          camera,
+          objectManager,
+          objectId,
+        );
+
+        if (isOccluded) {
+          visible = false;
+        }
       }
 
-      label.element.toggleAttribute("visible", visible);
+      // Only update visibility if it has changed
+      if (cache.lastVisible !== visible) {
+        label.element.toggleAttribute("visible", visible);
+        cache.lastVisible = visible;
+      }
+
+      // Update cache
+      this.labelCache.set(objectId, cache);
     });
+  }
+
+  public override clear(): void {
+    super.clear();
+    // Clean up cache
+    this.labelCache.clear();
   }
 
   /**
