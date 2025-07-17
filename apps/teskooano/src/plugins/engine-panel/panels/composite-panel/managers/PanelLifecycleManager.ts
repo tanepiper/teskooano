@@ -45,6 +45,7 @@ export class PanelLifecycleManager {
   private _subscription = new Subscription();
   private _options: PanelLifecycleManagerOptions;
   private _isGeneratingSystem = false;
+  private _clearTimeout: number | null = null;
 
   constructor(options: PanelLifecycleManagerOptions) {
     this._options = options;
@@ -97,16 +98,34 @@ export class PanelLifecycleManager {
 
           if (hasObjects) {
             // If we have objects, ensure the renderer is up and placeholder is hidden.
+            // Cancel any pending renderer disposal timeout
+            if (this._clearTimeout) {
+              clearTimeout(this._clearTimeout);
+              this._clearTimeout = null;
+            }
+
             if (!rendererExists) {
               this._options.initializeRendererAndUI();
               simulationManager.startLoop();
             }
             this._options.placeholderManager?.hide();
           } else {
-            // If we have no objects, ensure the renderer is gone and placeholder is shown.
+            // If we have no objects, wait a bit before disposing the renderer
+            // to avoid disposing it during system loading operations
             if (rendererExists) {
-              this._options.disposeRendererAndUI();
-              simulationManager.resetSystem(true);
+              // Clear any existing timeout
+              if (this._clearTimeout) {
+                clearTimeout(this._clearTimeout);
+              }
+
+              // Set a timeout to dispose the renderer after a short delay
+              // This prevents disposing during rapid state changes (like system loading)
+              this._clearTimeout = window.setTimeout(() => {
+                this._options.disposeRendererAndUI();
+                // Don't call resetSystem here as it might interfere with the state
+                // simulationManager.resetSystem(true);
+                this._clearTimeout = null;
+              }, 100); // 100ms delay
             }
             if (!this._isGeneratingSystem) {
               this._options.placeholderManager?.showMessage(false);
@@ -144,5 +163,11 @@ export class PanelLifecycleManager {
    */
   public dispose(): void {
     this._subscription.unsubscribe();
+
+    // Clear any pending timeout
+    if (this._clearTimeout) {
+      clearTimeout(this._clearTimeout);
+      this._clearTimeout = null;
+    }
   }
 }

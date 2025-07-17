@@ -450,7 +450,20 @@ export class SceneManager {
    * This should be called when the SceneManager is no longer needed to prevent memory leaks.
    */
   dispose(): void {
+    // Stop the animation loop first
+    this.animationLoop.stop();
+
+    // Remove the canvas from the DOM
+    if (this.renderer.domElement && this.renderer.domElement.parentElement) {
+      this.renderer.domElement.parentElement.removeChild(
+        this.renderer.domElement,
+      );
+    }
+
+    // Dispose the renderer (this also disposes the canvas)
     this.renderer.dispose();
+
+    // Clear the scene
     this.scene.clear();
   }
 }

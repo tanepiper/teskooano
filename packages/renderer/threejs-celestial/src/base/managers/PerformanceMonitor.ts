@@ -14,11 +14,13 @@ export class PerformanceMonitor {
   private lastUpdateTime = 0;
   private isEnabled = true;
   private isInitialized = false;
+  private monitoringStarted = false;
 
   private constructor() {
     // Auto-initialize on first access
     this.autoConfigure();
-    this.startMonitoring();
+    // Don't start monitoring immediately - let the renderer initialize first
+    // this.startMonitoring();
   }
 
   /**
@@ -34,7 +36,7 @@ export class PerformanceMonitor {
   /**
    * Starts the performance monitoring loop
    */
-  private startMonitoring(): void {
+  private _startMonitoringLoop(): void {
     if (!this.isEnabled) return;
 
     const updateFPS = () => {
@@ -233,5 +235,27 @@ export class PerformanceMonitor {
   public reinitialize(): void {
     this.isInitialized = false;
     this.autoConfigure();
+  }
+
+  /**
+   * Starts performance monitoring after renderer is initialized
+   * This should be called after the main renderer is ready
+   */
+  public startMonitoring(): void {
+    if (this.isEnabled && !this.monitoringStarted) {
+      this.monitoringStarted = true;
+      this._startMonitoringLoop();
+    }
+  }
+
+  /**
+   * Stops performance monitoring
+   */
+  public stopMonitoring(): void {
+    this.isEnabled = false;
+    this.monitoringStarted = false;
+    this.frameCount = 0;
+    this.lastUpdateTime = 0;
+    this.currentFPS = 0;
   }
 }

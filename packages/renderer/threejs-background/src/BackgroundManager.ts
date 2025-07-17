@@ -42,7 +42,6 @@ export class BackgroundManager {
     if (currentSeed === "sol") {
       currentSeed = "1752769136832";
     }
-    console.log("currentSeed", currentSeed);
     this.random = createSeededRandomSync(currentSeed);
 
     this.createDefaultNebula();

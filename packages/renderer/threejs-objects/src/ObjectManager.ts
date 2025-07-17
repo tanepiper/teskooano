@@ -448,6 +448,8 @@ export class ObjectManager extends StateSubscriptionMixin {
 
     // 6. Update label visibility
     this.updateLabelVisibility();
+
+    this.lastUpdateTime = performance.now();
   }
 
   /**
@@ -483,7 +485,7 @@ export class ObjectManager extends StateSubscriptionMixin {
    * @param enabled - True to show LOD debug helpers, false to hide.
    */
   toggleLODDebug(enabled: boolean): void {
-    this.lodManager.toggleDebug(enabled);
+    this.lodManager.setDebugMode(enabled);
   }
 
   /**

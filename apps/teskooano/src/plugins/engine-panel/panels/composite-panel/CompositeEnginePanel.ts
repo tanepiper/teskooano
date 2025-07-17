@@ -20,6 +20,7 @@ import {
   initializeLabelSystem,
   type LabelSystem,
 } from "@teskooano/renderer-threejs-labels";
+import { PerformanceMonitor } from "@teskooano/renderer-threejs-celestial";
 import type { PluginExecutionContext } from "@teskooano/ui-plugin";
 import "../../../../core/interface/engine-toolbar/view/engine-toolbar.component";
 import { EngineToolbar } from "../../../../core/interface/engine-toolbar";
@@ -387,7 +388,6 @@ export class CompositeEnginePanel
     // 1. Create the SceneManager first, as it owns the scene and camera.
     this._sceneManager = new SceneManager(this._engineContainer, {
       antialias: true,
-      showGrid: viewState.showGrid,
     });
 
     // 2. Decide if the label system is needed and initialize it.
@@ -457,6 +457,9 @@ export class CompositeEnginePanel
 
     this._renderer.startRenderLoop();
 
+    // Start performance monitoring after renderer is ready
+    PerformanceMonitor.getInstance().startMonitoring();
+
     this._resizeObserver = new ResizeObserver(() => {
       this.triggerResize();
     });
@@ -514,19 +517,34 @@ export class CompositeEnginePanel
    * Called when data disappears or the panel is disposed.
    */
   private disposeRendererAndUI(): void {
+    // Stop performance monitoring first
+    PerformanceMonitor.getInstance().stopMonitoring();
+
+    // Dispose renderer (this should handle most cleanup)
     this._renderer?.dispose?.();
     this._renderer = undefined;
 
+    // Dispose camera coordinator
     this._cameraCoordinator?.dispose();
     this._cameraCoordinator = undefined;
 
-    const toolbarManager = this._params?.params?.engineToolbarManager;
+    // Dispose scene manager and label system
+    this._sceneManager?.dispose();
+    this._sceneManager = undefined;
 
+    // LabelSystem doesn't have a dispose method, but its components do
+    this._labelSystem?.css2DManager?.dispose();
+    this._labelSystem?.auMarkerManager?.dispose();
+    this._labelSystem = undefined;
+
+    // Dispose toolbar
+    const toolbarManager = this._params?.params?.engineToolbarManager;
     if (toolbarManager && this._api?.id) {
       toolbarManager.disposeToolbarForPanel(this._api.id);
       this._engineToolbar = null;
     }
 
+    // Disconnect resize observer
     this._resizeObserver?.disconnect();
     this._resizeObserver = undefined;
   }

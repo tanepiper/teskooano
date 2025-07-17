@@ -41,9 +41,9 @@ export class ApplicationInitializer {
       console.debug("[Init] Loading plugins...");
       await this.loadPlugins(pluginIds);
 
-      // Step 2.5: Initialize performance monitoring
+      // Step 2.5: Initialize performance monitoring (but don't start monitoring yet)
       console.debug("[Init] Initializing performance monitoring...");
-      PerformanceMonitor.getInstance();
+      const performanceMonitor = PerformanceMonitor.getInstance();
 
       // Step 3: Initialize dockview system
       console.debug("[Init] Initializing dockview system...");
