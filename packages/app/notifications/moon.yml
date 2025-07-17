@@ -10,7 +10,3 @@ tasks:
     command: "vite"
   lint:
     command: "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
-
-dependsOn:
-  - "@teskooano/data-types"
-  - "@teskooano/core-state"

@@ -4,6 +4,3 @@ tasks:
     args: run
     options:
       runInCI: true
-
-dependsOn:
-  - "~:build"

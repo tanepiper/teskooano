@@ -9,9 +9,6 @@ project:
   owner: "" # Or specify an owner
   maintainers: []
 
-# Depends on nothing for now
-dependsOn: []
-
 fileGroups:
   sources: # Source files
     - "src/**/*"
