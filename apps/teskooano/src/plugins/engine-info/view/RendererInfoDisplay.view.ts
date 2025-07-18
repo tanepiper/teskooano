@@ -59,10 +59,6 @@ export class RendererInfoDisplay
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
 
     const elements = {
-      fpsValue: this.shadowRoot!.getElementById("fps-value")!,
-      drawCallsValue: this.shadowRoot!.getElementById("draw-calls-value")!,
-      trianglesValue: this.shadowRoot!.getElementById("triangles-value")!,
-      memoryValue: this.shadowRoot!.getElementById("memory-value")!,
       camPosValue: this.shadowRoot!.getElementById("cam-pos-value")!,
       fovValue: this.shadowRoot!.getElementById("fov-value")!,
     };

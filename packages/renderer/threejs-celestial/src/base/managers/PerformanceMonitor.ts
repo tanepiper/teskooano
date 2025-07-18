@@ -1,6 +1,11 @@
 import { GeometryUtilities, type PerformanceConfig } from "./GeometryUtilities";
 import type { DeviceTier } from "@teskooano/data-types";
 import { simulationStateService } from "@teskooano/core-state";
+import {
+  IdleDetectionAPI,
+  BatteryAPI,
+  DeviceMemoryAPI,
+} from "@teskooano/web-apis";
 
 /**
  * Performance monitoring and optimization utility for celestial rendering
@@ -18,7 +23,20 @@ export class PerformanceMonitor {
   private isInitialized = false;
   private monitoringStarted = false;
 
+  // Web API state tracking
+  private deviceMemoryGB: number | null = null;
+  private batteryLevel: number = 1;
+  private isCharging: boolean = false;
+  private isIdle: boolean = false;
+  private isIdleDetectionSupported: boolean = false;
+
+  // Subscription cleanup
+  private subscriptions: (() => void)[] = [];
+
   private constructor() {
+    // Initialize web API monitoring
+    this.initializeWebAPIMonitoring();
+
     // Auto-initialize on first access
     this.autoConfigure();
     // Don't start monitoring immediately - let the renderer initialize first
@@ -113,12 +131,22 @@ export class PerformanceMonitor {
     targetFPS: number;
     isOptimizationEnabled: boolean;
     performanceConfig: PerformanceConfig;
+    deviceMemoryGB: number | null;
+    batteryLevel: number;
+    isCharging: boolean;
+    isIdle: boolean;
+    isIdleDetectionSupported: boolean;
   } {
     return {
       currentFPS: this.currentFPS,
       targetFPS: this.targetFPS,
       isOptimizationEnabled: this.isEnabled,
       performanceConfig: GeometryUtilities.getPerformanceConfig(),
+      deviceMemoryGB: this.deviceMemoryGB,
+      batteryLevel: this.batteryLevel,
+      isCharging: this.isCharging,
+      isIdle: this.isIdle,
+      isIdleDetectionSupported: this.isIdleDetectionSupported,
     };
   }
 
@@ -127,6 +155,70 @@ export class PerformanceMonitor {
    */
   public updatePerformanceConfig(config: Partial<PerformanceConfig>): void {
     GeometryUtilities.updatePerformanceConfig(config);
+  }
+
+  /**
+   * Initializes web API monitoring subscriptions
+   */
+  private initializeWebAPIMonitoring(): void {
+    // Device Memory API
+    if (DeviceMemoryAPI.isDeviceMemorySupported()) {
+      const deviceMemorySub = DeviceMemoryAPI.deviceMemory$.subscribe(
+        (state) => {
+          this.deviceMemoryGB = state.memoryGB;
+          this.updatePerformanceBasedOnDeviceState();
+        },
+      );
+      this.subscriptions.push(() => deviceMemorySub.unsubscribe());
+    }
+
+    // Battery API
+    const batterySub = BatteryAPI.batteryState$.subscribe((state) => {
+      this.batteryLevel = state.level;
+      this.isCharging = state.charging;
+      this.updatePerformanceBasedOnDeviceState();
+    });
+    this.subscriptions.push(() => batterySub.unsubscribe());
+
+    // Idle Detection API
+    this.isIdleDetectionSupported = IdleDetectionAPI.isIdleDetectionSupported();
+    if (this.isIdleDetectionSupported) {
+      const idleSub = IdleDetectionAPI.createIdleStateObservable().subscribe(
+        (state) => {
+          this.isIdle = state.user === "idle";
+          this.updatePerformanceBasedOnDeviceState();
+        },
+      );
+      this.subscriptions.push(() => idleSub.unsubscribe());
+    }
+  }
+
+  /**
+   * Updates performance settings based on current device state
+   */
+  private updatePerformanceBasedOnDeviceState(): void {
+    // Reduce performance when battery is low and not charging
+    if (this.batteryLevel < 0.2 && !this.isCharging) {
+      this.setTargetFPS(Math.min(this.targetFPS, 30));
+      this.updatePerformanceConfig({
+        performanceReductionMultiplier: 0.5,
+        enableAdaptiveScaling: true,
+      });
+    }
+
+    // Reduce performance when device is idle
+    if (this.isIdle) {
+      this.setTargetFPS(Math.min(this.targetFPS, 15));
+      this.updatePerformanceConfig({
+        performanceReductionMultiplier: 0.3,
+        enableAdaptiveScaling: true,
+      });
+    }
+
+    // Restore normal performance when conditions improve
+    if (this.batteryLevel >= 0.5 && !this.isIdle) {
+      this.autoConfigure(); // Re-apply device tier settings
+    }
   }
 
   /**
@@ -159,9 +251,9 @@ export class PerformanceMonitor {
         navigator.userAgent,
       );
 
-    // Check for low-end indicators
+    // Enhanced device memory check using web API
     const hasLowMemory =
-      "deviceMemory" in navigator && (navigator as any).deviceMemory < 4;
+      this.deviceMemoryGB !== null && this.deviceMemoryGB < 4;
     const hasLowCores =
       navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4;
 
@@ -179,7 +271,8 @@ export class PerformanceMonitor {
       maxVertexUniformVectors >= 512 &&
       maxVertexAttribs >= 16 &&
       maxFragmentUniformVectors >= 1024 &&
-      !isMobile
+      !isMobile &&
+      (this.deviceMemoryGB === null || this.deviceMemoryGB >= 8)
     ) {
       return "cosmic";
     } else if (
@@ -279,5 +372,19 @@ export class PerformanceMonitor {
     this.frameCount = 0;
     this.lastUpdateTime = 0;
     this.currentFPS = 0;
+  }
+
+  /**
+   * Cleans up all subscriptions and resources
+   */
+  public dispose(): void {
+    this.stopMonitoring();
+
+    // Clean up web API subscriptions
+    this.subscriptions.forEach((unsubscribe) => unsubscribe());
+    this.subscriptions = [];
+
+    // Reset instance
+    PerformanceMonitor.instance = null as any;
   }
 }

@@ -30,6 +30,7 @@
     "@teskooano/data-types": "file:../../data/types",
     "@teskooano/renderer-threejs-lighting": "file:../threejs-lighting",
     "@teskooano/renderer-threejs-lod": "file:../threejs-lod",
+    "@teskooano/web-apis": "file:../../web-apis",
     "three": "0.178.0"
   },
   "devDependencies": {

@@ -1,5 +1,6 @@
 import { createPanelPlugin } from "@teskooano/ui-plugin";
 import { RendererInfoDisplay } from "./view/RendererInfoDisplay.view.js";
+import { WebGLCapabilitiesDisplay } from "./view/WebGLCapabilitiesDisplay.view.js";
 import DataUsageIcon from "@fluentui/svg-icons/icons/data_usage_24_regular.svg?raw";
 
 /**
@@ -25,4 +26,4 @@ export const plugin = createPanelPlugin({
   },
 });
 
-export { RendererInfoDisplay };
+export { RendererInfoDisplay, WebGLCapabilitiesDisplay };

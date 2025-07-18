@@ -10,7 +10,8 @@
       "@teskooano/core-state": ["../../core/state/src"],
       "@teskooano/data-types": ["../../data/types/src"],
       "@teskooano/core-math": ["../../core/math/src"],
-      "@teskooano/renderer-threejs-core": ["../threejs-core/src"]
+      "@teskooano/renderer-threejs-core": ["../threejs-core/src"],
+      "@teskooano/web-apis": ["../../web-apis/src/index.ts"]
     },
     "noEmit": false
   },
@@ -21,6 +22,7 @@
     { "path": "../../data/types" },
     { "path": "../../core/math" },
     { "path": "../threejs-core" },
-    { "path": "../threejs" }
+    { "path": "../threejs" },
+    { "path": "../../app/web-apis" }
   ]
 }

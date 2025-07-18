@@ -45,22 +45,6 @@ template.innerHTML = `
           <td>Triangles</td>
           <td id="stat-triangles">...</td>
         </tr>
-        <tr>
-          <td>Prediction Lines</td>
-          <td id="stat-prediction-lines">...</td>
-        </tr>
-        <tr>
-          <td>Prediction Segments</td>
-          <td id="stat-prediction-segments">...</td>
-        </tr>
-        <tr>
-          <td>Trail Lines</td>
-          <td id="stat-trail-lines">...</td>
-        </tr>
-        <tr>
-          <td>Trail Segments</td>
-          <td id="stat-trail-segments">...</td>
-        </tr>
       </tbody>
     </table>
   </teskooano-card>
@@ -73,14 +57,7 @@ export class RendererStatsComponent extends HTMLElement {
     this.shadowRoot!.appendChild(template.content.cloneNode(true));
   }
 
-  public renderStats(stats: {
-    predictionLines: number;
-    predictionSegments: number;
-    trailLines: number;
-    trailSegments: number;
-    drawCalls: number;
-    triangles: number;
-  }): void {
+  public renderStats(stats: { drawCalls: number; triangles: number }): void {
     const safeUpdate = (id: string, value: string | number) => {
       const el = this.shadowRoot?.getElementById(id);
       if (el) el.textContent = String(value);
@@ -88,12 +65,5 @@ export class RendererStatsComponent extends HTMLElement {
 
     safeUpdate("stat-draw-calls", stats.drawCalls.toLocaleString());
     safeUpdate("stat-triangles", stats.triangles.toLocaleString());
-    safeUpdate("stat-prediction-lines", stats.predictionLines.toLocaleString());
-    safeUpdate(
-      "stat-prediction-segments",
-      stats.predictionSegments.toLocaleString(),
-    );
-    safeUpdate("stat-trail-lines", stats.trailLines.toLocaleString());
-    safeUpdate("stat-trail-segments", stats.trailSegments.toLocaleString());
   }
 }

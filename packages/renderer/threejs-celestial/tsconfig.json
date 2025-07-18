@@ -6,7 +6,18 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "noEmit": false
+    "noEmit": false,
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@teskooano/core-state": ["../../core/state/src/index.ts"],
+      "@teskooano/data-types": ["../../data/types/src/index.ts"],
+      "@teskooano/renderer-threejs-lighting": [
+        "../threejs-lighting/src/index.ts"
+      ],
+      "@teskooano/renderer-threejs-lod": ["../threejs-lod/src/index.ts"],
+      "@teskooano/web-apis": ["../../web-apis/src/index.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"],
@@ -14,6 +25,7 @@
     { "path": "../../core/state" },
     { "path": "../../data/types" },
     { "path": "../threejs-lighting" },
-    { "path": "../threejs-lod" }
+    { "path": "../threejs-lod" },
+    { "path": "../../app/web-apis" }
   ]
 }

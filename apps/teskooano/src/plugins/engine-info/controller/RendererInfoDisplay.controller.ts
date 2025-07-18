@@ -1,15 +1,17 @@
 import { ModularSpaceRenderer } from "@teskooano/renderer-threejs";
 import type { RendererStats } from "@teskooano/renderer-threejs-core";
 import type { CompositeEnginePanel } from "../../engine-panel/panels/composite-panel/CompositeEnginePanel.js";
-import { formatMemory, formatNumber, formatVector } from "../utils/formatters";
+import { PerformanceMonitor } from "@teskooano/renderer-threejs-celestial";
+import {
+  BatteryAPI,
+  IdleDetectionAPI,
+  DeviceMemoryAPI,
+} from "@teskooano/web-apis";
+import { formatVector } from "../utils/formatters";
 import type { RendererInfoDisplay } from "../view/RendererInfoDisplay.view.js";
+import { WebGLCapabilitiesDisplay } from "../view/WebGLCapabilitiesDisplay.view.js";
 
 const UPDATE_INTERVAL_MS = 1000;
-
-const FPS_THRESHOLDS = {
-  GOOD: 50,
-  WARN: 30,
-};
 
 /**
  * Controller for the RendererInfoDisplay view.
@@ -20,17 +22,22 @@ const FPS_THRESHOLDS = {
  */
 export class RendererInfoDisplayController {
   private _view: RendererInfoDisplay;
-  private _fpsValue: HTMLElement;
-  private _drawCallsValue: HTMLElement;
-  private _trianglesValue: HTMLElement;
-  private _memoryValue: HTMLElement;
   private _camPosValue: HTMLElement;
   private _fovValue: HTMLElement;
+  private _devicePerformanceElement?: HTMLElement;
 
   private _renderer: ModularSpaceRenderer | null = null;
   private _updateInterval: number | null = null;
   private _parentPanel: CompositeEnginePanel | null = null;
   private _boundHandleRendererReady: (event: Event) => void;
+  private _performanceMonitor: PerformanceMonitor;
+
+  // Battery, idle state, and device memory tracking
+  private _batteryLevel: number = 1;
+  private _isCharging: boolean = false;
+  private _isIdle: boolean = false;
+  private _isIdleDetectionSupported: boolean = false;
+  private _deviceMemoryGB: number | null = null;
 
   /**
    * Creates an instance of RendererInfoDisplayController.
@@ -40,24 +47,28 @@ export class RendererInfoDisplayController {
   constructor(
     view: RendererInfoDisplay,
     elements: {
-      fpsValue: HTMLElement;
-      drawCallsValue: HTMLElement;
-      trianglesValue: HTMLElement;
-      memoryValue: HTMLElement;
       camPosValue: HTMLElement;
       fovValue: HTMLElement;
     },
   ) {
     this._view = view;
-    this._fpsValue = elements.fpsValue;
-    this._drawCallsValue = elements.drawCallsValue;
-    this._trianglesValue = elements.trianglesValue;
-    this._memoryValue = elements.memoryValue;
     this._camPosValue = elements.camPosValue;
     this._fovValue = elements.fovValue;
+    this._performanceMonitor = PerformanceMonitor.getInstance();
+
+    // Get device performance element from shadow DOM
+    const shadowRoot = (this._view as any).shadowRoot;
+    if (shadowRoot) {
+      this._devicePerformanceElement = shadowRoot.querySelector(
+        "#device-performance",
+      );
+    }
 
     this._boundHandleRendererReady = this.handleRendererReady.bind(this);
     this.updateDisplay = this.updateDisplay.bind(this);
+
+    // Subscribe to web APIs
+    this._subscribeToWebAPIs();
   }
 
   /**
@@ -168,6 +179,8 @@ export class RendererInfoDisplayController {
     try {
       const stats = this._renderer.animationLoop?.getCurrentStats();
       this.updateDisplay(stats);
+      // Also update device performance display
+      this._updateDevicePerformanceDisplay();
     } catch (error) {
       console.error("[RendererInfoDisplay] Error fetching stats:", error);
       this.updateDisplay(null);
@@ -177,33 +190,9 @@ export class RendererInfoDisplayController {
   private updateDisplay = (stats: RendererStats | null): void => {
     if (!this._view.isConnected) return;
 
-    const fps = stats?.fps;
-    const drawCalls = stats?.drawCalls;
-    const triangles = stats?.triangles;
-    const memory = stats?.memory?.usedJSHeapSize;
     const camPos = stats?.camera?.position;
     const fov = stats?.camera?.fov;
 
-    if (this._fpsValue) {
-      this._fpsValue.textContent = formatNumber(fps);
-      if (fps != null && Number.isFinite(fps)) {
-        if (fps >= FPS_THRESHOLDS.GOOD) {
-          this._fpsValue.style.color = "var(--color-success, #4caf50)";
-        } else if (fps >= FPS_THRESHOLDS.WARN) {
-          this._fpsValue.style.color = "var(--color-warning, #ff9800)";
-        } else {
-          this._fpsValue.style.color = "var(--color-error, #f44336)";
-        }
-      } else {
-        this._fpsValue.style.color = "var(--color-text-secondary, #aaa)";
-      }
-    }
-
-    if (this._drawCallsValue)
-      this._drawCallsValue.textContent = formatNumber(drawCalls);
-    if (this._trianglesValue)
-      this._trianglesValue.textContent = formatNumber(triangles);
-    if (this._memoryValue) this._memoryValue.textContent = formatMemory(memory);
     if (this._camPosValue)
       this._camPosValue.textContent = formatVector(camPos, 1);
     if (this._fovValue) this._fovValue.textContent = fov?.toFixed(0) ?? "-";
@@ -221,5 +210,105 @@ export class RendererInfoDisplayController {
         "[RendererInfoDisplay] Received renderer-ready event with invalid detail.",
       );
     }
+  }
+
+  /**
+   * Subscribes to battery, idle detection, and device memory APIs
+   */
+  private _subscribeToWebAPIs(): void {
+    // Subscribe to battery state changes
+    BatteryAPI.batteryState$.subscribe((batteryState) => {
+      this._batteryLevel = batteryState.level;
+      this._isCharging = batteryState.charging;
+      this._updateDevicePerformanceDisplay();
+    });
+
+    // Subscribe to device memory changes
+    DeviceMemoryAPI.deviceMemory$.subscribe((deviceMemoryState) => {
+      this._deviceMemoryGB = deviceMemoryState.memoryGB;
+      this._updateDevicePerformanceDisplay();
+    });
+
+    // Subscribe to idle state changes
+    this._isIdleDetectionSupported =
+      IdleDetectionAPI.isIdleDetectionSupported();
+    if (this._isIdleDetectionSupported) {
+      IdleDetectionAPI.idleState$.subscribe((idleState) => {
+        this._isIdle = idleState.user === "idle";
+        this._updateDevicePerformanceDisplay();
+      });
+    }
+  }
+
+  /**
+   * Updates the device performance display with data from PerformanceMonitor and web APIs
+   */
+  private _updateDevicePerformanceDisplay(): void {
+    if (!this._devicePerformanceElement) return;
+
+    const stats = this._performanceMonitor.getPerformanceStats();
+
+    // Get current renderer stats if available
+    let rendererStats = null;
+    if (this._renderer) {
+      try {
+        rendererStats = this._renderer.animationLoop?.getCurrentStats();
+      } catch (error) {
+        console.error(
+          "[RendererInfoDisplay] Error getting renderer stats:",
+          error,
+        );
+      }
+    }
+
+    // Get prediction and trail data from orbits manager
+    let predictionLines = 0;
+    let predictionSegments = 0;
+    let trailLines = 0;
+    let trailSegments = 0;
+
+    if (this._parentPanel?.orbitManager) {
+      const orbitsManager = this._parentPanel.orbitManager;
+      const predictionManager = orbitsManager.getPredictionManager();
+      const trailManager = orbitsManager.getTrailManager();
+
+      predictionLines = predictionManager?.predictionLines.size ?? 0;
+      if (predictionManager) {
+        for (const line of predictionManager.predictionLines.values()) {
+          predictionSegments += line.geometry.drawRange.count;
+        }
+      }
+
+      trailLines = trailManager?.trailLines.size ?? 0;
+      if (trailManager) {
+        for (const line of trailManager.trailLines.values()) {
+          trailSegments += line.geometry.drawRange.count;
+        }
+      }
+    }
+
+    // Enhance stats with our tracked data and renderer stats
+    const enhancedStats = {
+      ...stats,
+      // Add renderer stats
+      currentFPS: rendererStats?.fps ?? stats.currentFPS,
+      drawCalls: rendererStats?.drawCalls,
+      triangles: rendererStats?.triangles,
+      memory: rendererStats?.memory,
+      // Add prediction and trail data
+      predictionLines,
+      predictionSegments,
+      trailLines,
+      trailSegments,
+      // Add our tracked data
+      batteryLevel: this._batteryLevel,
+      isCharging: this._isCharging,
+      isIdle: this._isIdle,
+      isIdleDetectionSupported: this._isIdleDetectionSupported,
+      deviceMemoryGB: this._deviceMemoryGB,
+    };
+
+    this._devicePerformanceElement.innerHTML =
+      WebGLCapabilitiesDisplay.renderDevicePerformanceSection(enhancedStats);
   }
 }

@@ -82,14 +82,7 @@ export class DebugPanel extends HTMLElement implements IContentRenderer {
    * Updates the renderer statistics display.
    * @param stats - The statistics to render.
    */
-  public renderStats(stats: {
-    predictionLines: number;
-    predictionSegments: number;
-    trailLines: number;
-    trailSegments: number;
-    drawCalls: number;
-    triangles: number;
-  }): void {
+  public renderStats(stats: { drawCalls: number; triangles: number }): void {
     (this.statsComponent as any)?.renderStats(stats);
   }
 

@@ -35,37 +35,9 @@ export class DebugPanelController {
   }
 
   private renderRendererStats(): void {
-    const orbitsManager = this.parentPanel?.orbitManager;
     const rendererStats = this.parentPanel?.getRendererStats();
 
-    if (!orbitsManager) {
-      return;
-    }
-
-    const predictionManager = orbitsManager.getPredictionManager();
-    const trailManager = orbitsManager.getTrailManager();
-
-    const predictionLineCount = predictionManager?.predictionLines.size ?? 0;
-    let predictionSegmentCount = 0;
-    if (predictionManager) {
-      for (const line of predictionManager.predictionLines.values()) {
-        predictionSegmentCount += line.geometry.drawRange.count;
-      }
-    }
-
-    const trailLineCount = trailManager?.trailLines.size ?? 0;
-    let trailSegmentCount = 0;
-    if (trailManager) {
-      for (const line of trailManager.trailLines.values()) {
-        trailSegmentCount += line.geometry.drawRange.count;
-      }
-    }
-
     this.view.renderStats({
-      predictionLines: predictionLineCount,
-      predictionSegments: predictionSegmentCount,
-      trailLines: trailLineCount,
-      trailSegments: trailSegmentCount,
       drawCalls: rendererStats?.drawCalls ?? 0,
       triangles: rendererStats?.triangles ?? 0,
     });
