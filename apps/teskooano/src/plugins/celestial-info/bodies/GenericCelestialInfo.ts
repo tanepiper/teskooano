@@ -1,19 +1,26 @@
-import { CelestialObject } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  CelestialSpecificPropertiesUnion,
+} from "@teskooano/data-types";
 import {
   BaseCelestialInfoComponent,
   CardConfig,
 } from "./common/BaseCelestialInfoComponent.js";
 
-export class GenericCelestialInfoComponent extends BaseCelestialInfoComponent {
+export class GenericCelestialInfoComponent extends BaseCelestialInfoComponent<CelestialSpecificPropertiesUnion> {
   constructor() {
     super("Loading celestial data...");
   }
 
-  protected getTitle(celestial: CelestialObject): string {
+  protected getTitle(
+    celestial: CelestialObject<CelestialSpecificPropertiesUnion>,
+  ): string {
     return celestial.name;
   }
 
-  protected getSubtitle(celestial: CelestialObject): string {
+  protected getSubtitle(
+    celestial: CelestialObject<CelestialSpecificPropertiesUnion>,
+  ): string {
     return celestial.type;
   }
 

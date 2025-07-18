@@ -31,12 +31,6 @@ export function initializeAsteroidBelt(parentId: string): void {
     parentId: parentId,
     realMass_kg: BELT_TOTAL_MASS_KG,
     realRadius_m: BELT_OUTER_AU * AU,
-    physicsStateReal: {
-      id: "asteroid-belt-main",
-      mass_kg: BELT_TOTAL_MASS_KG,
-      position_m: position,
-      velocity_mps: velocity,
-    },
     orbit: {
       realSemiMajorAxis_m: BELT_CENTER_AU * AU,
       eccentricity: BELT_AVG_ECC,

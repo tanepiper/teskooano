@@ -43,17 +43,11 @@ export function initializeNereid(parentId: string): void {
     },
     temperature: 50,
     albedo: 0.14,
-    physicsStateReal: {
-      id: "nereid",
-      mass_kg: 3.1e19,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
+
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.BARREN,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["water ice", "rock?"],
       shapeModel: "asteroid",
       surface: {

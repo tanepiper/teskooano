@@ -47,14 +47,6 @@ export function initializeGPS(parentId: string): void {
       siderealRotationPeriod_s: GPS_PERIOD_HOURS * 3600,
       axialTilt: new OSVector3(0, 1, 0).normalize(),
     },
-
-    physicsStateReal: {
-      id: "gps-satellite",
-      mass_kg: GPS_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
-
     properties: {
       type: CelestialType.SATELLITE,
       modelPath: "./models/satellite/satellite.glb",

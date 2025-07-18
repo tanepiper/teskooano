@@ -100,7 +100,7 @@ export class FocusListManager {
     const objectMap = new Map(Object.entries(objects));
     const dynamicHierarchy = new Map<string | null, string[]>();
     objectMap.forEach((obj, id) => {
-      const parentKey = obj.currentParentId ?? obj.parentId ?? null;
+      const parentKey = obj.parentId ?? null;
       if (!dynamicHierarchy.has(parentKey)) {
         dynamicHierarchy.set(parentKey, []);
       }
@@ -117,7 +117,6 @@ export class FocusListManager {
       if (
         obj.type === CelestialType.STAR &&
         !obj.parentId &&
-        !obj.currentParentId &&
         !rootIds.includes(id)
       ) {
         rootIds.push(id);

@@ -268,7 +268,7 @@ export class CelestialManager {
       properties: processedProperties,
       seed: data.seed ?? `${Math.floor(Date.now() % 1000000)}`,
       physicsStateReal: physicsState,
-      currentParentId: data.parentId,
+      parentId: data.parentId,
     };
   }
 
@@ -294,7 +294,7 @@ export class CelestialManager {
         : undefined,
       seed: data.seed ?? `${Math.floor(Date.now() % 1000000)}`,
       physicsStateReal: physicsState,
-      currentParentId: data.parentId,
+      parentId: data.parentId,
     };
   }
 

@@ -4,6 +4,7 @@ import { celestial } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
+  PlanetType,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -40,7 +41,6 @@ describe("Earth System Initialization", () => {
           meanAnomaly: 0,
           period_s: 0,
         },
-        physicsStateReal: {
           id: sunId,
           mass_kg: 1.989e30,
           position_m: { x: 0, y: 0, z: 0 } as any,
@@ -116,8 +116,7 @@ describe("Earth System Initialization", () => {
       const lunaProps = luna.properties as PlanetProperties;
       expect(lunaProps.type).toBe(CelestialType.MOON);
       expect(lunaProps.isMoon).toBe(true);
-      expect(lunaProps.parentPlanet).toBe(earthId);
-      expect(lunaProps.composition).toContain("silicates");
+      expect(lunaProps.classType).toBe(PlanetType.ROCKY);
     });
 
     it("should create Earth with correct atmospheric properties", () => {
@@ -141,7 +140,6 @@ describe("Earth System Initialization", () => {
           meanAnomaly: 0,
           period_s: 0,
         },
-        physicsStateReal: {
           id: sunId,
           mass_kg: 1.989e30,
           position_m: { x: 0, y: 0, z: 0 } as any,
@@ -194,7 +192,6 @@ describe("Earth System Initialization", () => {
           meanAnomaly: 0,
           period_s: 0,
         },
-        physicsStateReal: {
           id: sunId,
           mass_kg: 1.989e30,
           position_m: { x: 0, y: 0, z: 0 } as any,

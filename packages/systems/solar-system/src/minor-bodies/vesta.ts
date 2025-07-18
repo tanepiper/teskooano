@@ -6,7 +6,6 @@ import {
   PlanetType,
   SurfaceType,
   CelestialStatus,
-  PhysicsStateReal,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -58,12 +57,7 @@ export function initializeVesta(parentId: string): void {
         Math.sin(vestaAxialTiltRad),
       ).normalize(),
     },
-    physicsStateReal: {
-      id: vestaId,
-      mass_kg: VESTA_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
+
     properties: {
       type: CelestialType.DWARF_PLANET,
       classType: PlanetType.ROCKY,

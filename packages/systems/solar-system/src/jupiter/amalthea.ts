@@ -6,7 +6,6 @@ import {
   PlanetType,
   SurfaceType,
   CelestialStatus,
-  PhysicsStateReal,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -47,17 +46,11 @@ export function initializeAmalthea(parentId: string): void {
       siderealRotationPeriod_s: AMALTHEA_SIDEREAL_PERIOD_S,
       axialTilt: defaultMoonAxialTilt,
     },
-    physicsStateReal: {
-      id: "amalthea",
-      mass_kg: AMALTHEA_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
+
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.ROCKY,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["rocky materials", "ice"],
       surface: {
         type: SurfaceType.CRATERED,

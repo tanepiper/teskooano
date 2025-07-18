@@ -1,26 +1,26 @@
 import {
   CelestialObject,
-  CelestialType,
   PlanetProperties,
+  PlanetType,
 } from "@teskooano/data-types";
 import {
   BaseCelestialInfoComponent,
   CardConfig,
 } from "./common/BaseCelestialInfoComponent.js";
 
-export class PlanetInfoComponent extends BaseCelestialInfoComponent {
+export class PlanetInfoComponent extends BaseCelestialInfoComponent<PlanetProperties> {
   constructor() {
     super("Loading planet data...");
   }
 
-  protected getTitle(celestial: CelestialObject): string {
+  protected getTitle(celestial: CelestialObject<PlanetProperties>): string {
     return celestial.name;
   }
 
-  protected getSubtitle(celestial: CelestialObject): string {
-    return celestial.type === CelestialType.DWARF_PLANET
-      ? "Dwarf Planet"
-      : "Planet";
+  protected getSubtitle(celestial: CelestialObject<PlanetProperties>): string {
+    const props = celestial.properties!;
+    const planetType = props.classType || PlanetType.ROCKY;
+    return `${planetType} ${celestial.type.toLowerCase()}`;
   }
 
   protected getCardConfigs(): CardConfig[] {

@@ -3,7 +3,6 @@ import {
   CelestialType,
   StellarType,
   CelestialStatus,
-  PhysicsStateReal,
 } from "@teskooano/data-types";
 import { OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
@@ -39,12 +38,6 @@ export function initializeSun(): string {
       period_s: 0,
       siderealRotationPeriod_s: 0,
       axialTilt: new OSVector3(0, 1, 0).normalize(),
-    },
-    physicsStateReal: {
-      id: "sol",
-      mass_kg: SUN_MASS_KG,
-      position_m: new OSVector3(0, 0, 0),
-      velocity_mps: new OSVector3(0, 0, 0),
     },
     properties: {
       type: CelestialType.STAR,

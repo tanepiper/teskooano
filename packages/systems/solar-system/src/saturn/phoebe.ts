@@ -50,17 +50,10 @@ export function initializePhoebe(parentId: string): void {
       siderealRotationPeriod_s: PHOEBE_ROTATION_PERIOD_S,
       axialTilt: defaultMoonAxialTilt,
     },
-    physicsStateReal: {
-      id: "phoebe",
-      mass_kg: PHOEBE_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.ROCKY,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["water ice", "rock", "carbonaceous material"],
       atmosphere: undefined,
       surface: {

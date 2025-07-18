@@ -6,7 +6,6 @@ import {
   PlanetType,
   SurfaceType,
   CelestialStatus,
-  PhysicsStateReal,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -41,17 +40,11 @@ export function initializeTriton(parentId: string): void {
       period_s: Math.abs(TRITON_SIDEREAL_ROTATION_PERIOD_S),
     },
     temperature: 38,
-    physicsStateReal: {
-      id: "triton",
-      mass_kg: 2.139e22,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
+
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.BARREN,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["nitrogen ice", "water ice", "methane ice", "rocky core"],
       surface: {
         type: SurfaceType.VARIED,

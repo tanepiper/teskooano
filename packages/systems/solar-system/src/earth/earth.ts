@@ -6,7 +6,6 @@ import {
   CelestialType,
   PlanetType,
   SurfaceType,
-  PhysicsStateReal,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -57,12 +56,6 @@ export function initializeEarthPlanet(parentId: string): string {
         Math.cos(earthAxialTiltRad),
         Math.sin(earthAxialTiltRad),
       ).normalize(),
-    },
-    physicsStateReal: {
-      id: earthId,
-      mass_kg: EARTH_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
     },
     properties: {
       type: CelestialType.PLANET,

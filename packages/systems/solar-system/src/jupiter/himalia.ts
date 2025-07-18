@@ -49,17 +49,11 @@ export function initializeHimalia(parentId: string): void {
       siderealRotationPeriod_s: 0.324 * 24 * 3600, // ~7.78 hours
       axialTilt: defaultMoonAxialTilt,
     },
-    physicsStateReal: {
-      id: "himalia",
-      mass_kg: HIMALIA_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
+
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.ROCKY,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["rock", "ice"],
       surface: {
         type: SurfaceType.CRATERED,

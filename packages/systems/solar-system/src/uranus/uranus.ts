@@ -58,12 +58,6 @@ export function initializeUranusPlanet(parentId: string): string {
     },
     temperature: URANUS_TEMP_K,
     albedo: URANUS_ALBEDO,
-    physicsStateReal: {
-      id: uranusId,
-      mass_kg: URANUS_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.GAS_GIANT,
       classType: GasGiantClass.CLASS_III,

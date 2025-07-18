@@ -70,12 +70,6 @@ export function initializeMakemake(parentId: string): void {
         Math.sin(makemakeAxialTiltRad),
       ).normalize(),
     },
-    physicsStateReal: {
-      id: makemakeId,
-      mass_kg: MAKEMAKE_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.DWARF_PLANET,
       classType: PlanetType.BARREN,
@@ -146,17 +140,11 @@ export function initializeMakemake(parentId: string): void {
       siderealRotationPeriod_s: MK2_SIDEREAL_PERIOD_S,
       axialTilt: mk2AxialTilt,
     },
-    physicsStateReal: {
-      id: "mk2",
-      mass_kg: MK2_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
+
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.BARREN,
       isMoon: true,
-      parentPlanet: makemakeId,
       composition: ["water ice", "rocky material", "organic compounds"],
       shapeModel: "asteroid",
       atmosphere: undefined,

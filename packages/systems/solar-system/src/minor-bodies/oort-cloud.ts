@@ -34,12 +34,7 @@ export function initializeOortCloud(parentId: string): void {
     },
     temperature: 4,
     ignorePhysics: true,
-    physicsStateReal: {
-      id: "oort-cloud",
-      mass_kg: OORT_TOTAL_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
+
     properties: {
       type: CelestialType.OORT_CLOUD,
       composition: ["water ice", "ammonia ice", "methane ice"],

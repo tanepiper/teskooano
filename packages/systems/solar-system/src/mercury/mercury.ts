@@ -57,12 +57,7 @@ export function initializeMercury(parentId: string): void {
         Math.sin(mercuryAxialTiltRad),
       ).normalize(),
     },
-    physicsStateReal: {
-      id: mercuryId,
-      mass_kg: MERCURY_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
+
     properties: {
       type: CelestialType.PLANET,
       classType: PlanetType.BARREN,

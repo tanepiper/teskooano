@@ -1,19 +1,21 @@
-import { CelestialObject } from "@teskooano/data-types";
+import { CelestialObject, OortCloudProperties } from "@teskooano/data-types";
 import {
   BaseCelestialInfoComponent,
   CardConfig,
 } from "./common/BaseCelestialInfoComponent.js";
 
-export class OortCloudInfoComponent extends BaseCelestialInfoComponent {
+export class OortCloudInfoComponent extends BaseCelestialInfoComponent<OortCloudProperties> {
   constructor() {
     super("Loading Oort Cloud data...");
   }
 
-  protected getTitle(celestial: CelestialObject): string {
+  protected getTitle(celestial: CelestialObject<OortCloudProperties>): string {
     return celestial.name;
   }
 
-  protected getSubtitle(celestial: CelestialObject): string {
+  protected getSubtitle(
+    celestial: CelestialObject<OortCloudProperties>,
+  ): string {
     return "Oort Cloud";
   }
 

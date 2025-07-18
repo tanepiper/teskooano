@@ -14,6 +14,7 @@ import {
   BlackHoleSubtype,
   WhiteDwarfSubtype,
   ProtostarSubtype,
+  CelestialSpecificPropertiesUnion,
 } from "@teskooano/data-types";
 import { CelestialIconConfig } from "../types";
 

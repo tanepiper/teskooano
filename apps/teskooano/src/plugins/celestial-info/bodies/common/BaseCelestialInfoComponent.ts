@@ -1,4 +1,7 @@
-import { CelestialObject } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  CelestialSpecificPropertiesUnion,
+} from "@teskooano/data-types";
 import { StateAccessor } from "@teskooano/core-state";
 import { CelestialInfoComponent } from "../../utils/CelestialInfoInterface.js";
 import { baseStyles } from "../../utils/CelestialStyles.js";
@@ -15,10 +18,15 @@ export interface CardConfig {
 /**
  * An abstract base class for celestial info components.
  * Uses web components for each card section for better composability.
+ *
+ * @template T - The specific properties type for this celestial object
  */
-export abstract class BaseCelestialInfoComponent
+export abstract class BaseCelestialInfoComponent<
+    T extends
+      CelestialSpecificPropertiesUnion = CelestialSpecificPropertiesUnion,
+  >
   extends HTMLElement
-  implements CelestialInfoComponent
+  implements CelestialInfoComponent<T>
 {
   protected shadow: ShadowRoot;
   protected parentPanel: CompositeEnginePanel | null = null;
@@ -61,7 +69,7 @@ export abstract class BaseCelestialInfoComponent
   /**
    * The main update method called by the view manager.
    */
-  public updateData(celestial: CelestialObject): void {
+  public updateData(celestial: CelestialObject<T>): void {
     if (!this.container) return;
     this.currentCelestialId = celestial.id;
     this.container.classList.remove("placeholder");
@@ -71,7 +79,7 @@ export abstract class BaseCelestialInfoComponent
   /**
    * Renders the complete celestial info using card components.
    */
-  private renderCelestialInfo(celestial: CelestialObject): string {
+  private renderCelestialInfo(celestial: CelestialObject<T>): string {
     const title = this.getTitle(celestial);
     const subtitle = this.getSubtitle(celestial);
     const cardConfigs = this.getCardConfigs();
@@ -96,7 +104,7 @@ export abstract class BaseCelestialInfoComponent
    */
   private setupCards(
     cardConfigs: CardConfig[],
-    celestial: CelestialObject,
+    celestial: CelestialObject<T>,
   ): void {
     const cardsContainer = this.shadow.getElementById("cards-container");
     if (!cardsContainer) return;
@@ -131,7 +139,7 @@ export abstract class BaseCelestialInfoComponent
   /**
    * Abstract methods to be implemented by subclasses.
    */
-  protected abstract getTitle(celestial: CelestialObject): string;
-  protected abstract getSubtitle(celestial: CelestialObject): string;
+  protected abstract getTitle(celestial: CelestialObject<T>): string;
+  protected abstract getSubtitle(celestial: CelestialObject<T>): string;
   protected abstract getCardConfigs(): CardConfig[];
 }

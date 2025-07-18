@@ -510,8 +510,8 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       if (!prevObj) needsListUpdate = true;
       else if (prevObj.status !== obj.status)
         this._updateObjectStatusInternal(id, obj.status);
-      else if (prevObj.currentParentId !== obj.currentParentId)
-        needsListUpdate = true;
+      // Check if hierarchy changed
+      else if (prevObj.parentId !== obj.parentId) needsListUpdate = true;
     });
     Object.keys(this._previousObjectsState).forEach((id) => {
       if (!currentObjects[id]) needsListUpdate = true;
@@ -585,7 +585,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
         sceneObject.getWorldPosition(worldPosition);
 
         // Use the most current parent information
-        const parentId = celestialObj.currentParentId ?? celestialObj.parentId;
+        const parentId = celestialObj.parentId;
         if (parentId && allObjects[parentId]) {
           const parentSceneObject = renderer.objectManager.getObject(parentId);
           if (parentSceneObject) {
@@ -687,7 +687,7 @@ export class CelestialHierarchyController extends StateSubscriptionMixin {
       if (sceneObject) {
         sceneObject.getWorldPosition(worldPosition);
 
-        const parentId = celestialObj.currentParentId ?? celestialObj.parentId;
+        const parentId = celestialObj.parentId;
         if (parentId && allObjects[parentId]) {
           const parentSceneObject = renderer.objectManager.getObject(parentId);
           if (parentSceneObject) {

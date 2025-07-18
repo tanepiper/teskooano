@@ -6,7 +6,6 @@ import {
   GasGiantClass,
   RockyType,
   CelestialStatus,
-  PhysicsStateReal,
   type GasGiantProperties,
   type RingProperties,
 } from "@teskooano/data-types";
@@ -60,12 +59,6 @@ export function initializeSaturnPlanet(parentId: string): string {
         Math.cos(saturnAxialTiltRad),
         Math.sin(saturnAxialTiltRad),
       ).normalize(),
-    },
-    physicsStateReal: {
-      id: saturnId,
-      mass_kg: SATURN_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
     },
     properties: {
       type: CelestialType.GAS_GIANT,

@@ -1,19 +1,26 @@
-import { CelestialObject } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  AsteroidFieldProperties,
+} from "@teskooano/data-types";
 import {
   BaseCelestialInfoComponent,
   CardConfig,
 } from "./common/BaseCelestialInfoComponent.js";
 
-export class AsteroidFieldInfoComponent extends BaseCelestialInfoComponent {
+export class AsteroidFieldInfoComponent extends BaseCelestialInfoComponent<AsteroidFieldProperties> {
   constructor() {
     super("Loading asteroid field data...");
   }
 
-  protected getTitle(celestial: CelestialObject): string {
+  protected getTitle(
+    celestial: CelestialObject<AsteroidFieldProperties>,
+  ): string {
     return celestial.name;
   }
 
-  protected getSubtitle(celestial: CelestialObject): string {
+  protected getSubtitle(
+    celestial: CelestialObject<AsteroidFieldProperties>,
+  ): string {
     return "Asteroid Field";
   }
 

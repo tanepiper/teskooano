@@ -135,7 +135,7 @@ export class HierarchyManager {
       return;
     }
 
-    const parentId = obj.currentParentId ?? obj.parentId;
+    const parentId = obj.parentId;
     if (!parentId) return; // No parent to be orphaned from.
 
     const parent = allObjects[parentId];
@@ -150,7 +150,6 @@ export class HierarchyManager {
       if (newParent) {
         celestial.updateObject(obj.id, {
           parentId: newParent.id,
-          currentParentId: newParent.id,
         });
       }
     }
@@ -177,7 +176,7 @@ export class HierarchyManager {
 
     if (obj.type !== CelestialType.MOON) return false;
 
-    const parentId = obj.currentParentId ?? obj.parentId;
+    const parentId = obj.parentId;
     if (!parentId) return false;
 
     const parent = allObjects[parentId];
@@ -210,7 +209,6 @@ export class HierarchyManager {
         const updatePayload = {
           type: CelestialType.DWARF_PLANET, // It's no longer a moon
           parentId: newParent.id,
-          currentParentId: newParent.id,
         };
 
         celestial.updateObject(obj.id, updatePayload);
@@ -294,15 +292,14 @@ export class HierarchyManager {
 
     // Determine which star should be the parent
     const dominantStar = force1 > force2 ? star1 : star2;
-    const currentParentId = obj.currentParentId ?? obj.parentId;
 
     // If the object is already orbiting the gravitationally dominant star, no change needed
-    if (currentParentId === dominantStar.id) {
+    if (obj.parentId === dominantStar.id) {
       return false;
     }
 
     // Check if the current parent is one of the binary stars
-    const currentParent = currentParentId ? allObjects[currentParentId] : null;
+    const currentParent = obj.parentId ? allObjects[obj.parentId] : null;
     const isCurrentlyOrbitingStar =
       currentParent &&
       currentParent.type === CelestialType.STAR &&
@@ -323,7 +320,6 @@ export class HierarchyManager {
     // Switch the object to orbit the gravitationally dominant star
     celestial.updateObject(obj.id, {
       parentId: dominantStar.id,
-      currentParentId: dominantStar.id,
     });
 
     // Dispatch event for UI updates
@@ -362,10 +358,7 @@ export class HierarchyManager {
 
     // A moon with a stable parent should not be trying to capture other objects.
     // Its primary check should be for escaping its current parent.
-    if (
-      obj.type === CelestialType.MOON &&
-      (obj.currentParentId ?? obj.parentId)
-    ) {
+    if (obj.type === CelestialType.MOON && obj.parentId) {
       return;
     }
 
@@ -465,8 +458,8 @@ export class HierarchyManager {
     obj2: CelestialObject,
     allObjects: Record<string, CelestialObject>,
   ): boolean {
-    const parentId1 = obj1.currentParentId ?? obj1.parentId;
-    const parentId2 = obj2.currentParentId ?? obj2.parentId;
+    const parentId1 = obj1.parentId;
+    const parentId2 = obj2.parentId;
     if (parentId1 && parentId2 && parentId1 === parentId2) {
       return true; // They are siblings, already related enough to not capture each other.
     }
@@ -474,7 +467,7 @@ export class HierarchyManager {
     // Check if obj1 is a parent/ancestor of obj2
     let current = obj2;
     while (current) {
-      const parentId = current.currentParentId ?? current.parentId;
+      const parentId = current.parentId;
       if (!parentId) break;
       if (parentId === obj1.id) return true;
       current = allObjects[parentId];
@@ -484,7 +477,7 @@ export class HierarchyManager {
     // Check if obj2 is a parent/ancestor of obj1
     current = obj1;
     while (current) {
-      const parentId = current.currentParentId ?? current.parentId;
+      const parentId = current.parentId;
       if (!parentId) break;
       if (parentId === obj2.id) return true;
       current = allObjects[parentId];
@@ -537,7 +530,6 @@ export class HierarchyManager {
     celestial.updateObject(child.id, {
       type: childType,
       parentId: parent.id,
-      currentParentId: parent.id,
     });
 
     // Dispatch event for UI updates
@@ -640,7 +632,7 @@ export class HierarchyManager {
       }
 
       // Move up to the next parent
-      const parentId = current.currentParentId ?? current.parentId;
+      const parentId = current.parentId;
       if (!parentId) break;
 
       current = allObjects[parentId];
@@ -737,7 +729,7 @@ export class HierarchyManager {
     allObjects: Record<string, CelestialObject>,
     allPhysicsStates: PhysicsStateReal[],
   ): number {
-    const grandParentId = parent.currentParentId ?? parent.parentId;
+    const grandParentId = parent.parentId;
 
     // If the parent has no parent (it's a star), its influence is vast.
     if (!grandParentId) {

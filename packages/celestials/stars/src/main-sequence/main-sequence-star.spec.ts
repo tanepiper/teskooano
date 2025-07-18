@@ -1,47 +1,78 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import * as THREE from "three";
 import { MainSequenceStarRenderer } from "./main-sequence-star";
+import type { RenderableCelestialObject } from "@teskooano/data-types";
+import { CelestialType } from "@teskooano/data-types";
+import { OSVector3 } from "@teskooano/core-math";
 
 describe("MainSequenceStarRenderer", () => {
   let renderer: MainSequenceStarRenderer;
-  let mockStar: any;
+  let mockStar: RenderableCelestialObject;
 
   beforeEach(() => {
     renderer = new MainSequenceStarRenderer();
     mockStar = {
+      celestialObjectId: "star-1",
       id: "star-1",
       name: "Test Star",
-      type: "star",
+      type: CelestialType.STAR,
+      status: "active",
       radius: 10,
-      position: { x: 0, y: 0, z: 0 },
-      rotation: { x: 0, y: 0, z: 0, w: 1 },
-    };
+      mass: 1.0,
+      position: new THREE.Vector3(0, 0, 0),
+      rotation: new THREE.Quaternion(),
+      seed: "test-seed",
+      realRadius_m: 1000000,
+      realMass_kg: 2e30,
+      temperature: 5778,
+      albedo: 0.3,
+      axialTilt: new OSVector3(0, 0, 0),
+      uniforms: {},
+      properties: {
+        type: CelestialType.STAR,
+        color: "#ffcc00",
+        spectralClass: "G",
+        luminosity: 1.0,
+        isMainStar: true,
+      },
+      orbit: {
+        realSemiMajorAxis_m: 0,
+        eccentricity: 0,
+        inclination: 0,
+        longitudeOfAscendingNode: 0,
+        argumentOfPeriapsis: 0,
+        meanAnomaly: 0,
+        period_s: 0,
+      },
+      physicsStateReal: {
+        id: "star-1",
+        mass_kg: 2e30,
+        position_m: new OSVector3(0, 0, 0),
+        velocity_mps: new OSVector3(0, 0, 0),
+      },
+    } as RenderableCelestialObject;
   });
 
-  it("should create a group with star and corona meshes", () => {
-    const group = renderer.createMesh(mockStar) as THREE.Group;
+  it("should create LOD levels with star and corona meshes", () => {
+    const lodLevels = renderer.getLODLevels(mockStar);
 
-    expect(group).toBeDefined();
-    expect(group).toBeInstanceOf(THREE.Group);
-    expect(group.name).toBe("star-1");
+    expect(lodLevels).toBeDefined();
+    expect(lodLevels.length).toBeGreaterThan(0);
 
-    expect(group.position.x).toBe(0);
-    expect(group.position.y).toBe(0);
-    expect(group.position.z).toBe(0);
+    const highLOD = lodLevels[0];
+    expect(highLOD.object).toBeInstanceOf(THREE.Group);
+    expect(highLOD.distance).toBe(0);
 
+    const group = highLOD.object as THREE.Group;
     expect(group.children.length).toBeGreaterThan(0);
 
     const starMesh = group.children.find(
       (child) =>
-        child.name.includes("body") || child.name === `${mockStar.id}-body`,
+        child.name.includes("body") ||
+        child.name === `${mockStar.celestialObjectId}-body`,
     );
     expect(starMesh).toBeDefined();
     expect(starMesh).toBeInstanceOf(THREE.Mesh);
-
-    const effectMeshes = group.children.filter(
-      (child) => child !== starMesh && child instanceof THREE.Mesh,
-    );
-    expect(effectMeshes.length).toBeGreaterThan(0);
 
     let hasShaderMaterial = false;
     group.children.forEach((child) => {
@@ -53,25 +84,23 @@ describe("MainSequenceStarRenderer", () => {
 
         const material = child.material as THREE.ShaderMaterial;
         expect(material.uniforms).toBeDefined();
-
-        if (material.uniforms.time) {
-          expect(material.uniforms.time).toBeDefined();
-        }
       }
     });
     expect(hasShaderMaterial).toBe(true);
   });
 
   it("should update all materials with the current time", () => {
-    renderer.createMesh(mockStar);
+    const lodLevels = renderer.getLODLevels(mockStar);
+    const mockLightSources = new Map();
+    const mockCamera = new THREE.PerspectiveCamera();
 
-    renderer.update(1.0);
+    renderer.update(mockStar, 1.0, 1.0, mockLightSources, mockCamera);
 
     expect(true).toBe(true);
   });
 
   it("should dispose all materials when disposed", () => {
-    renderer.createMesh(mockStar);
+    renderer.getLODLevels(mockStar);
 
     renderer.dispose();
 

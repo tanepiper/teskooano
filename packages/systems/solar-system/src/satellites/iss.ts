@@ -47,14 +47,6 @@ export function initializeISS(parentId: string): void {
       siderealRotationPeriod_s: ISS_PERIOD_MINUTES * 60, // Tidally locked orientation
       axialTilt: new OSVector3(0, 1, 0).normalize(),
     },
-
-    physicsStateReal: {
-      id: "iss",
-      mass_kg: ISS_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
-
     properties: {
       type: CelestialType.SATELLITE,
       modelPath: "./models/satellite/iss.glb", // Changed from absolute to relative path

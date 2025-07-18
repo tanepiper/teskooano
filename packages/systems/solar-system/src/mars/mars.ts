@@ -58,12 +58,7 @@ export function initializeMarsPlanet(parentId: string): string {
         Math.sin(marsAxialTiltRad),
       ).normalize(),
     },
-    physicsStateReal: {
-      id: marsId,
-      mass_kg: MARS_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
+
     properties: {
       type: CelestialType.PLANET,
       classType: PlanetType.ROCKY,

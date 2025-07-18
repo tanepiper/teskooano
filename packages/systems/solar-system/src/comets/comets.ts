@@ -1,10 +1,5 @@
 import { celestial } from "@teskooano/core-state";
-import {
-  CelestialObject,
-  CelestialStatus,
-  PhysicsStateReal,
-} from "@teskooano/data-types";
-import { OSVector3 } from "@teskooano/core-math";
+import { CelestialObject, CelestialStatus } from "@teskooano/data-types";
 
 // Import individual comet definitions
 import { halleyComet } from "./halley";
@@ -34,12 +29,6 @@ export const initializeComets = (parentId: string) => {
       ...comet,
       status: CelestialStatus.ACTIVE,
       parentId: parentId,
-      physicsStateReal: {
-        id: comet.id,
-        mass_kg: comet.realMass_kg,
-        position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-        velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      },
     } as CelestialObject);
   });
 };

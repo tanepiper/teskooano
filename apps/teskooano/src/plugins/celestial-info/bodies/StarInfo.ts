@@ -8,17 +8,17 @@ import {
   CardConfig,
 } from "./common/BaseCelestialInfoComponent.js";
 
-export class StarInfoComponent extends BaseCelestialInfoComponent {
+export class StarInfoComponent extends BaseCelestialInfoComponent<StarProperties> {
   constructor() {
     super("Loading star data...");
   }
 
-  protected getTitle(celestial: CelestialObject): string {
+  protected getTitle(celestial: CelestialObject<StarProperties>): string {
     return celestial.name;
   }
 
-  protected getSubtitle(celestial: CelestialObject): string {
-    const props = celestial.properties as StarProperties;
+  protected getSubtitle(celestial: CelestialObject<StarProperties>): string {
+    const props = celestial.properties!;
     const stellarTypeFormatted = props.stellarType
       ? this.formatStellarType(props.stellarType)
       : celestial.type;

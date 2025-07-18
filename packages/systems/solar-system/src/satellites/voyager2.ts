@@ -102,14 +102,6 @@ export function initializeVoyager2(): void {
       axialTilt: new OSVector3(0, 1, 0).normalize(),
     },
 
-    // Direct physics state - rogue object approach
-    physicsStateReal: {
-      id: "voyager-2",
-      mass_kg: VOYAGER2_MASS_KG,
-      position_m: position, // Real position in interstellar space
-      velocity_mps: velocity, // Real velocity vector
-    },
-
     // Critical: Ignore physics so Voyager 2 is not affected by gravitational forces
     ignorePhysics: false,
     ignoreCollisions: true,

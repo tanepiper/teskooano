@@ -40,17 +40,10 @@ export function initializeMiranda(parentId: string): void {
     },
     temperature: 60,
     albedo: 0.32,
-    physicsStateReal: {
-      id: "miranda",
-      mass_kg: 6.59e19,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.BARREN,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["water ice", "silicates", "methane clathrates?"],
       surface: {
         // Base surface properties

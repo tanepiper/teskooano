@@ -6,7 +6,6 @@ import {
   PlanetType,
   SurfaceType,
   CelestialStatus,
-  PhysicsStateReal,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -41,17 +40,10 @@ export function initializeTitania(parentId: string): void {
     },
     temperature: 70,
     albedo: 0.27,
-    physicsStateReal: {
-      id: "titania",
-      mass_kg: 3.527e21,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.BARREN,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["water ice", "rock", "carbon dioxide ice"],
       surface: {
         // Base surface properties

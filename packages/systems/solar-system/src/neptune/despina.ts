@@ -41,17 +41,10 @@ export function initializeDespina(parentId: string): void {
       siderealRotationPeriod_s: DESPINA_SIDEREAL_PERIOD_S,
       axialTilt: tilt,
     },
-    physicsStateReal: {
-      id: "despina",
-      mass_kg: DESPINA_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.ROCKY,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["water ice", "rock"],
       surface: {
         type: SurfaceType.CRATERED,

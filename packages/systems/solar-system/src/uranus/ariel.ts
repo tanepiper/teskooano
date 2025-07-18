@@ -40,18 +40,10 @@ export function initializeAriel(parentId: string): void {
     },
     temperature: 60,
     albedo: 0.39,
-
-    physicsStateReal: {
-      id: "ariel",
-      mass_kg: 1.353e21,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.BARREN,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["water ice", "rock", "possible ammonia"],
       surface: {
         // Base surface properties

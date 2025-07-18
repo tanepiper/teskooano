@@ -92,8 +92,6 @@ export interface PlanetProperties<T = ProceduralSurfaceProperties>
   classType?: PlanetType;
   /** Indicates if this object orbits a planet rather than a star. */
   isMoon: boolean;
-  /** The ID of the parent planet, required if isMoon is true. */
-  parentPlanet?: string;
   /** Optional indicator for the desired 3D shape. Defaults to 'sphere' if omitted. */
   shapeModel?: "sphere" | "asteroid" | string;
   /** Array listing the primary chemical or geological composition (e.g., ["silicates", "iron"]). */

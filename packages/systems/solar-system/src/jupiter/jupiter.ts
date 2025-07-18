@@ -60,12 +60,7 @@ export function initializeJupiterPlanet(parentId: string): string {
         Math.sin(jupiterAxialTiltRad),
       ).normalize(),
     },
-    physicsStateReal: {
-      id: jupiterId,
-      mass_kg: JUPITER_REAL_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
+
     properties: {
       type: CelestialType.GAS_GIANT,
       classType: GasGiantClass.CLASS_I,

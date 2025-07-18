@@ -40,17 +40,10 @@ export function initializeOberon(parentId: string): void {
     },
     temperature: 75,
     albedo: 0.35,
-    physicsStateReal: {
-      id: "oberon",
-      mass_kg: 3.014e21,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.BARREN,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["water ice", "rock", "dark carbonaceous material"],
       surface: {
         // Base surface properties

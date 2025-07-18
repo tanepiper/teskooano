@@ -104,19 +104,17 @@ export function generatePlanet(
         );
       }
 
-      const { orbit, initialPhysicsState } =
-        calculatePlanetOrbitAndInitialState(
-          random,
-          parentStar.realMass_kg,
-          planetMass_kg,
-          bodyDistanceAU,
-          parentStar.physicsStateReal as PhysicsStateReal,
-          planetId,
-        );
+      const { orbit } = calculatePlanetOrbitAndInitialState(
+        random,
+        parentStar.realMass_kg,
+        planetMass_kg,
+        bodyDistanceAU,
+        planetId,
+      );
 
-      if (!initialPhysicsState) {
+      if (!orbit) {
         console.error(
-          `[generatePlanet] Failed to calculate initial state for ${planetId}, skipping object creation.`,
+          `[generatePlanet] Failed to calculate orbit for ${planetId}, skipping object creation.`,
         );
         subscriber.complete();
         return;
@@ -202,7 +200,6 @@ export function generatePlanet(
         albedo: planetAlbedo,
         type: baseProps.celestialType,
         parentId: parentStar.id,
-        currentParentId: parentStar.id,
         realMass_kg: planetMass_kg,
         realRadius_m: finalPlanetRadius_m,
         temperature: planetTemp,
@@ -213,7 +210,6 @@ export function generatePlanet(
         },
         properties,
         seed: planetSeed,
-        physicsStateReal: initialPhysicsState,
       };
 
       if (generatedRings && generatedRings.length > 0) {
@@ -371,12 +367,6 @@ export function generateRoguePlanet(
         properties,
         seed: planetSeed,
         // Physics state will be calculated by the factory
-        physicsStateReal: {
-          id: planetId,
-          mass_kg: planetMass_kg,
-          position_m: new OSVector3(0, 0, 0), // Placeholder - factory will set this
-          velocity_mps: new OSVector3(0, 0, 0), // Placeholder - factory will set this
-        },
       };
 
       if (generatedRings && generatedRings.length > 0) {

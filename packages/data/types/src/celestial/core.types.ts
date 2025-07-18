@@ -33,8 +33,10 @@ export interface OrbitalParameters {
 
 /**
  * Represents the complete state and definition of a celestial object within the simulation.
+ *
+ * @template T - The specific properties type for this celestial object (e.g., StarProperties, PlanetProperties)
  */
-export interface CelestialObject {
+export interface CelestialObject<T = CelestialSpecificPropertiesUnion> {
   /** Unique identifier for the celestial object. */
   id: string;
   /** The fundamental type of the object (e.g., STAR, PLANET, MOON). Now defined in BaseCelestialProperties as 'type'. */
@@ -60,16 +62,10 @@ export interface CelestialObject {
   atmosphere?: PlanetAtmosphereProperties;
 
   /** Object containing properties specific to the `type` (or `class`) of celestial object. Optional for types like OTHER. */
-  properties?: CelestialSpecificPropertiesUnion;
-
-  /** Contains the object's state used by the physics engine (real units). */
-  physicsStateReal: PhysicsStateReal;
+  properties?: T;
 
   /** Optional: Reference to parent body ID */
   parentId?: string;
-
-  /** Optional: Tracks the current dominant gravitational parent (can change in multi-star systems) */
-  currentParentId?: string;
 
   /** Optional seed value used for procedural generation (textures, etc.). */
   seed?: string;
@@ -79,7 +75,4 @@ export interface CelestialObject {
 
   /** When true, this object will be excluded from collision detection. */
   ignoreCollisions?: boolean;
-
-  /** Current visual rotation of the object in the scene. */
-  rotation?: THREE.Quaternion;
 }

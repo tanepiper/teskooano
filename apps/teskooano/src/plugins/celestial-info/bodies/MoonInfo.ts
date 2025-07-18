@@ -1,19 +1,19 @@
-import { CelestialObject } from "@teskooano/data-types";
+import { CelestialObject, PlanetProperties } from "@teskooano/data-types";
 import {
   BaseCelestialInfoComponent,
   CardConfig,
 } from "./common/BaseCelestialInfoComponent.js";
 
-export class MoonInfoComponent extends BaseCelestialInfoComponent {
+export class MoonInfoComponent extends BaseCelestialInfoComponent<PlanetProperties> {
   constructor() {
     super("Loading moon data...");
   }
 
-  protected getTitle(celestial: CelestialObject): string {
+  protected getTitle(celestial: CelestialObject<PlanetProperties>): string {
     return celestial.name;
   }
 
-  protected getSubtitle(celestial: CelestialObject): string {
+  protected getSubtitle(celestial: CelestialObject<PlanetProperties>): string {
     return "Moon";
   }
 

@@ -49,17 +49,10 @@ export function initializeHyperion(parentId: string): void {
       siderealRotationPeriod_s: HYPERION_SIDEREAL_PERIOD_S,
       axialTilt: defaultMoonAxialTilt,
     },
-    physicsStateReal: {
-      id: "hyperion",
-      mass_kg: HYPERION_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.ICE,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["water ice", "rocky material"],
       atmosphere: undefined,
       surface: {

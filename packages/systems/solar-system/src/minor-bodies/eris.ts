@@ -69,12 +69,6 @@ export function initializeEris(parentId: string): void {
         Math.sin(erisAxialTiltRad),
       ).normalize(),
     },
-    physicsStateReal: {
-      id: erisId,
-      mass_kg: ERIS_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.DWARF_PLANET,
       classType: PlanetType.BARREN,
@@ -149,17 +143,11 @@ export function initializeEris(parentId: string): void {
       siderealRotationPeriod_s: DYSNOMIA_SIDEREAL_PERIOD_S,
       axialTilt: dysnomiaAxialTilt,
     },
-    physicsStateReal: {
-      id: "dysnomia",
-      mass_kg: DYSNOMIA_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
+
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.BARREN,
       isMoon: true,
-      parentPlanet: erisId,
       composition: ["water ice", "rocky material"],
       shapeModel: "asteroid",
       atmosphere: {

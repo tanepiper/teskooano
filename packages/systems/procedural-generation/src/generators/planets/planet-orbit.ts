@@ -83,11 +83,9 @@ export function calculatePlanetOrbitAndInitialState(
   starMass_kg: number,
   planetMass_kg: number,
   bodyDistanceAU: number,
-  parentStarState: PhysicsStateReal,
   planetId: string,
 ): {
   orbit: OrbitalParameters;
-  initialPhysicsState: PhysicsStateReal | null;
 } {
   const semiMajorAxis_m = bodyDistanceAU * CONST.AU_TO_METERS;
 
@@ -164,140 +162,7 @@ export function calculatePlanetOrbitAndInitialState(
     period_s: orbitalPeriod_s,
   };
 
-  let initialPhysicsState: PhysicsStateReal | null = null;
-  try {
-    const initialRelativePos_m = calculateOrbitalPosition(
-      parentStarState,
-      orbit,
-      0,
-    );
-    let initialRelativeVel_mps = calculateOrbitalVelocity(
-      parentStarState,
-      orbit,
-      0,
-    );
-
-    // Extract the relative velocity component (before adding parent velocity)
-    // The calculateOrbitalVelocity function returns world velocity, but we need relative for validation
-    const relativeVelocity_mps = initialRelativeVel_mps
-      .clone()
-      .sub(parentStarState.velocity_mps);
-
-    // Validate orbital velocity against escape velocity
-    const escapeVelocity_mps = calculateEscapeVelocity(
-      parentStarState.mass_kg,
-      semiMajorAxis_m,
-    );
-    const orbitalVelocity_mps = relativeVelocity_mps.length();
-
-    if (
-      !validateOrbitalVelocity(
-        orbitalVelocity_mps,
-        escapeVelocity_mps,
-        bodyDistanceAU,
-        planetId,
-      )
-    ) {
-      console.warn(
-        `[PlanetOrbit] Correcting orbital velocity for ${planetId}. ` +
-          `Orbital velocity (${orbitalVelocity_mps.toFixed(1)} m/s) > Escape velocity (${escapeVelocity_mps.toFixed(1)} m/s). ` +
-          `Star mass: ${(parentStarState.mass_kg / CONST.SOLAR_MASS_KG).toFixed(2)} M☉, ` +
-          `Planet mass: ${(planetMass_kg / CONST.EARTH_MASS_KG).toFixed(2)} M⊕, ` +
-          `Distance: ${bodyDistanceAU.toFixed(2)} AU. ` +
-          `Star velocity: (${parentStarState.velocity_mps.x.toFixed(1)}, ${parentStarState.velocity_mps.y.toFixed(1)}, ${parentStarState.velocity_mps.z.toFixed(1)}) m/s. ` +
-          `Adjusting eccentricity to create stable orbit.`,
-      );
-
-      // Correct the orbit by reducing eccentricity to lower the orbital velocity
-      let correctedEccentricity = orbit.eccentricity;
-      let correctedOrbit = { ...orbit };
-      let correctedVelocity = orbitalVelocity_mps;
-      let attempts = 0;
-      const maxAttempts = 20; // More attempts for aggressive correction
-
-      while (
-        correctedVelocity >= escapeVelocity_mps * 0.95 &&
-        attempts < maxAttempts
-      ) {
-        correctedEccentricity *= 1.5; // Increase eccentricity by 50% to lower orbital velocity (more aggressive)
-        if (correctedEccentricity > 0.999) {
-          correctedEccentricity = 0.999; // Cap at 0.999 to keep p > 0
-        }
-
-        correctedOrbit = {
-          ...orbit,
-          eccentricity: correctedEccentricity,
-        };
-
-        // Recalculate orbital velocity with corrected eccentricity
-        const correctedRelativeVel = calculateOrbitalVelocity(
-          parentStarState,
-          correctedOrbit,
-          0,
-        );
-        const correctedRelativeVelocity = correctedRelativeVel
-          .clone()
-          .sub(parentStarState.velocity_mps);
-        correctedVelocity = correctedRelativeVelocity.length();
-        attempts++;
-      }
-
-      if (correctedVelocity < escapeVelocity_mps * 0.95) {
-        orbit = correctedOrbit;
-        initialRelativeVel_mps = calculateOrbitalVelocity(
-          parentStarState,
-          orbit,
-          0,
-        );
-      } else {
-        console.error(
-          `[PlanetOrbit] Failed to correct orbital velocity for ${planetId} after ${maxAttempts} attempts. Skipping.`,
-        );
-        return { orbit, initialPhysicsState: null };
-      }
-    }
-
-    const initialWorldPos_m = initialRelativePos_m
-      .clone()
-      .add(parentStarState.position_m);
-    const initialWorldVel_mps = initialRelativeVel_mps
-      .clone()
-      .add(parentStarState.velocity_mps);
-
-    if (
-      !initialWorldPos_m ||
-      !initialWorldVel_mps ||
-      !Number.isFinite(initialWorldPos_m.x) ||
-      !Number.isFinite(initialWorldPos_m.y) ||
-      !Number.isFinite(initialWorldPos_m.z) ||
-      !Number.isFinite(initialWorldVel_mps.x) ||
-      !Number.isFinite(initialWorldVel_mps.y) ||
-      !Number.isFinite(initialWorldVel_mps.z)
-    ) {
-      throw new Error(
-        "Calculated initial planet state contains non-finite values.",
-      );
-    }
-
-    initialPhysicsState = {
-      id: planetId,
-      mass_kg: planetMass_kg,
-      position_m: initialWorldPos_m,
-      velocity_mps: initialWorldVel_mps,
-    };
-  } catch (error) {
-    console.error(
-      `[PlanetOrbit] Error calculating initial physics state for ${planetId}:`,
-      error,
-    );
-    console.error("Inputs:", {
-      parentState: parentStarState,
-      orbitParams: orbit,
-      planetMass_kg: planetMass_kg,
-    });
-  }
-
-  return { orbit, initialPhysicsState };
+  return { orbit };
 }
 
 /**

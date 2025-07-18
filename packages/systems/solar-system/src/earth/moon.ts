@@ -6,7 +6,6 @@ import {
   CelestialType,
   PlanetType,
   SurfaceType,
-  PhysicsStateReal,
   type PlanetProperties,
 } from "@teskooano/data-types";
 
@@ -54,17 +53,10 @@ export function initializeLuna(parentId: string): void {
         Math.sin(lunaAxialTiltRad),
       ).normalize(),
     },
-    physicsStateReal: {
-      id: "luna",
-      mass_kg: LUNA_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
-      classType: PlanetType.ROCKY,
       isMoon: true,
-      parentPlanet: parentId,
+      classType: PlanetType.ROCKY,
       composition: ["silicates", "anorthosite crust", "possible small core"],
       surface: {
         type: SurfaceType.VARIED,

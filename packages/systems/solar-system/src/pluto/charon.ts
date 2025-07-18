@@ -51,17 +51,10 @@ export function initializeCharon(parentId: string): void {
         Math.sin(charonAxialTiltRad),
       ).normalize(),
     },
-    physicsStateReal: {
-      id: "charon",
-      mass_kg: CHARON_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.BARREN,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["water ice", "ammonia ice (hydrates)", "rocky interior"],
       surface: {
         type: SurfaceType.CRATERED,

@@ -6,7 +6,6 @@ import {
   GasGiantClass,
   RockyType,
   CelestialStatus,
-  PhysicsStateReal,
   type GasGiantProperties,
 } from "@teskooano/data-types";
 
@@ -58,13 +57,6 @@ export function initializeNeptunePlanet(parentId: string): string {
     },
     temperature: NEPTUNE_TEMP_K,
     albedo: NEPTUNE_ALBEDO,
-
-    physicsStateReal: {
-      id: neptuneId,
-      mass_kg: NEPTUNE_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.GAS_GIANT,
       classType: GasGiantClass.CLASS_III,

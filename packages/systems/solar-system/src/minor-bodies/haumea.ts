@@ -7,7 +7,6 @@ import {
   RockyType,
   SurfaceType,
   CelestialStatus,
-  PhysicsStateReal,
   type PlanetProperties,
   type RingProperties,
 } from "@teskooano/data-types";
@@ -84,12 +83,6 @@ export function initializeHaumea(parentId: string): void {
         Math.cos(haumeaAxialTiltRad),
         Math.sin(haumeaAxialTiltRad),
       ).normalize(),
-    },
-    physicsStateReal: {
-      id: haumeaId,
-      mass_kg: HAUMEA_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
     },
     properties: {
       type: CelestialType.DWARF_PLANET,
@@ -174,17 +167,10 @@ export function initializeHaumea(parentId: string): void {
       siderealRotationPeriod_s: HIIAKA_SIDEREAL_PERIOD_S,
       axialTilt: hiiakAxialTilt,
     },
-    physicsStateReal: {
-      id: "hiiaka",
-      mass_kg: HIIAKA_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.BARREN,
       isMoon: true,
-      parentPlanet: haumeaId,
       composition: [
         "water ice",
         "crystalline water ice",
@@ -250,17 +236,10 @@ export function initializeHaumea(parentId: string): void {
       siderealRotationPeriod_s: NAMAKA_SIDEREAL_PERIOD_S,
       axialTilt: namakaAxialTilt,
     },
-    physicsStateReal: {
-      id: "namaka",
-      mass_kg: NAMAKA_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.BARREN,
       isMoon: true,
-      parentPlanet: haumeaId,
       composition: ["water ice", "rocky material", "organic compounds"],
       shapeModel: "asteroid",
       atmosphere: {

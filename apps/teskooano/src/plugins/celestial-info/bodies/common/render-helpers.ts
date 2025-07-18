@@ -1,4 +1,7 @@
-import { CelestialObject } from "@teskooano/data-types";
+import {
+  CelestialObject,
+  CelestialSpecificPropertiesUnion,
+} from "@teskooano/data-types";
 import { generateIconConfig } from "../../../celestial-icons/service/config-generator.js";
 
 /**

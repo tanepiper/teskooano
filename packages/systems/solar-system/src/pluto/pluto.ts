@@ -58,12 +58,6 @@ export function initializePlutoDwarfPlanet(parentId: string): string {
         Math.sin(plutoAxialTiltRad),
       ).normalize(),
     },
-    physicsStateReal: {
-      id: plutoId,
-      mass_kg: PLUTO_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.DWARF_PLANET,
       classType: PlanetType.BARREN,

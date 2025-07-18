@@ -8,17 +8,19 @@ import {
   CardConfig,
 } from "./common/BaseCelestialInfoComponent.js";
 
-export class GasGiantInfoComponent extends BaseCelestialInfoComponent {
+export class GasGiantInfoComponent extends BaseCelestialInfoComponent<GasGiantProperties> {
   constructor() {
     super("Loading gas giant data...");
   }
 
-  protected getTitle(celestial: CelestialObject): string {
+  protected getTitle(celestial: CelestialObject<GasGiantProperties>): string {
     return celestial.name;
   }
 
-  protected getSubtitle(celestial: CelestialObject): string {
-    const props = celestial.properties as GasGiantProperties;
+  protected getSubtitle(
+    celestial: CelestialObject<GasGiantProperties>,
+  ): string {
+    const props = celestial.properties!;
     const formattedClass = this.formatGasGiantClass(props.classType);
     return `${formattedClass} Gas Giant`;
   }

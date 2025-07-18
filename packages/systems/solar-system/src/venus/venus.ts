@@ -6,7 +6,6 @@ import {
   CelestialType,
   PlanetType,
   SurfaceType,
-  PhysicsStateReal,
   type PlanetProperties,
   type PlanetAtmosphereProperties,
 } from "@teskooano/data-types";
@@ -57,12 +56,6 @@ export function initializeVenus(parentId: string): void {
         Math.cos(venusAxialTiltRad),
         Math.sin(venusAxialTiltRad),
       ).normalize(),
-    },
-    physicsStateReal: {
-      id: venusId,
-      mass_kg: VENUS_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
     },
     properties: {
       type: CelestialType.PLANET,

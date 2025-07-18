@@ -45,17 +45,10 @@ export function initializeNaiad(parentId: string): void {
       siderealRotationPeriod_s: NAIAD_SIDEREAL_PERIOD_S,
       axialTilt: defaultMoonAxialTilt,
     },
-    physicsStateReal: {
-      id: "naiad",
-      mass_kg: NAIAD_MASS_KG,
-      position_m: new OSVector3(0, 0, 0), // Will be calculated by the factory
-      velocity_mps: new OSVector3(0, 0, 0), // Will be calculated by the factory
-    },
     properties: {
       type: CelestialType.MOON,
       classType: PlanetType.ROCKY,
       isMoon: true,
-      parentPlanet: parentId,
       composition: ["water ice", "rock"],
       surface: {
         type: SurfaceType.CRATERED,

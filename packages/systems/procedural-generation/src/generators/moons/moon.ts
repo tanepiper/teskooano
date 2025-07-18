@@ -170,51 +170,6 @@ export function generateMoon(
     };
   }
 
-  // Calculate initial physics state
-  let initialWorldPos_m: OSVector3;
-  let initialWorldVel_mps: OSVector3;
-  const parentPlanetState = parentPlanetData.physicsStateReal;
-
-  try {
-    const initialRelativePos_m = calculateOrbitalPosition(
-      parentPlanetState,
-      orbitalParams,
-      0,
-    );
-    const initialRelativeVel_mps = calculateOrbitalVelocity(
-      parentPlanetState,
-      orbitalParams,
-      0,
-    );
-
-    initialWorldPos_m = initialRelativePos_m
-      .clone()
-      .add(parentPlanetState.position_m);
-    initialWorldVel_mps = initialRelativeVel_mps
-      .clone()
-      .add(parentPlanetState.velocity_mps);
-
-    if (
-      !initialWorldPos_m ||
-      !initialWorldVel_mps ||
-      !Number.isFinite(initialWorldPos_m.x) ||
-      !Number.isFinite(initialWorldVel_mps.x)
-    ) {
-      throw new Error(
-        "Calculated initial moon state contains non-finite values.",
-      );
-    }
-  } catch (error) {
-    console.error(
-      `[generateMoon] Error calculating initial physics state for ${moonId}:`,
-      error,
-    );
-    return {
-      moonData: null,
-      nextLastMoonDistance_radii: lastMoonDistance_radii,
-    };
-  }
-
   // Determine moon composition and surface properties
   const moonPlanetType = determineMoonType(
     random,
@@ -250,7 +205,6 @@ export function generateMoon(
     type: CelestialType.PLANET,
     classType: moonPlanetType,
     isMoon: true,
-    parentPlanet: parentPlanetData.id,
     composition: determineMoonComposition(
       random,
       moonPlanetType,
@@ -281,7 +235,6 @@ export function generateMoon(
     type: CelestialType.MOON,
     status: CelestialStatus.ACTIVE,
     parentId: parentPlanetData.id,
-    currentParentId: parentPlanetData.id,
     realMass_kg: moonMass,
     realRadius_m: moonRadius,
     temperature: parentPlanetData.temperature, // Inherit from parent for simplicity
@@ -292,12 +245,6 @@ export function generateMoon(
     },
     properties: moonSpecificProperties,
     seed: moonSeed,
-    physicsStateReal: {
-      id: moonId,
-      mass_kg: moonMass,
-      position_m: initialWorldPos_m,
-      velocity_mps: initialWorldVel_mps,
-    },
   };
 
   return { moonData, nextLastMoonDistance_radii: moonDistance_radii };

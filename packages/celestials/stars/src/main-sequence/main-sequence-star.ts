@@ -34,7 +34,7 @@ export class MainSequenceStarRenderer<
    * Returns the appropriate material for a main sequence star
    */
   protected createMaterial(
-    object: RenderableCelestialObject,
+    object: RenderableCelestialObject<StarProperties>,
   ): TMainSequenceMaterial {
     if (this.materialCache.has(object.celestialObjectId)) {
       return this.materialCache.get(object.celestialObjectId)!;
@@ -48,7 +48,7 @@ export class MainSequenceStarRenderer<
   }
 
   protected getCustomLODs(
-    object: RenderableCelestialObject,
+    object: RenderableCelestialObject<StarProperties>,
     options?: CelestialMeshOptions,
   ): LODLevel[] {
     const material = this.createAndRegisterMaterial(object);
@@ -88,15 +88,19 @@ export class MainSequenceStarRenderer<
     ];
   }
 
-  protected getBillboardLODDistance(object: RenderableCelestialObject): number {
+  protected getBillboardLODDistance(
+    object: RenderableCelestialObject<StarProperties>,
+  ): number {
     return object.radius * 500;
   }
 
   /**
    * Get the star color based on its properties
    */
-  protected getStarColor(star: RenderableCelestialObject): THREE.Color {
-    const properties = star.properties as StarProperties;
+  protected getStarColor(
+    star: RenderableCelestialObject<StarProperties>,
+  ): THREE.Color {
+    const properties = star.properties!;
 
     if (properties && properties.color) {
       return new THREE.Color(properties.color);
