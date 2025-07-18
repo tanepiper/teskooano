@@ -11,7 +11,7 @@ import {
 import { type SimulationParameters } from "@teskooano/core-physics";
 import {
   StateAccessor,
-  getSimulationState,
+  simulationState,
   physicsSystemAdapter,
 } from "@teskooano/core-state";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
@@ -281,9 +281,9 @@ export class PredictionManager {
       isStar,
       bodyTypes,
       parentIds,
-      simulationConfig: getSimulationState().simulationConfig,
+      simulationConfig: simulationState.getSimulationState().simulationConfig,
       orbitalParameters: physicsSystemAdapter.getOrbitalParametersSnapshot(),
-      currentTime_s: getSimulationState().time,
+      currentTime_s: simulationState.getSimulationState().time,
     };
     // ------------------------------------------------
 

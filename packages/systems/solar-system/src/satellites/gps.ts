@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { actions } from "@teskooano/core-state";
+import { factoryOperations } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -24,7 +24,7 @@ export function initializeGPS(parentId: string): void {
   const earthRadiusM = 6.371e6; // Mean Earth radius
   const semiMajorAxisM = earthRadiusM + altitudeM;
 
-  actions.addCelestial({
+  factoryOperations.addCelestial({
     id: "gps-satellite",
     name: "GPS Satellite",
     seed: "gps_navstar_block3",

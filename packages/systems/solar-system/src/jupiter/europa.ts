@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { actions } from "@teskooano/core-state";
+import { factoryOperations } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -29,7 +29,7 @@ const EUROPA_TEMP_K = 102; // Wikipedia verified: mean 102 K
 export function initializeEuropa(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
-  actions.addCelestial({
+  factoryOperations.addCelestial({
     id: "europa",
     name: "Europa",
     seed: "europa_seed_3551",

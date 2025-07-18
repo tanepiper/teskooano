@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { actions } from "@teskooano/core-state";
+import { factoryOperations } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -26,7 +26,7 @@ const ENCELADUS_ALBEDO = 1.375;
 export function initializeEnceladus(parentId: string): void {
   const defaultMoonAxialTilt = new OSVector3(0, 1, 0);
 
-  actions.addCelestial({
+  factoryOperations.addCelestial({
     id: "enceladus",
     name: "Enceladus",
     seed: "enceladus",

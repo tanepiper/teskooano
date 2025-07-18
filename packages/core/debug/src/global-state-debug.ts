@@ -1,5 +1,5 @@
 import {
-  getSimulationState,
+  simulationState,
   type SimulationState,
   StateSubscriptionMixin,
 } from "@teskooano/core-state";
@@ -54,7 +54,7 @@ export class GlobalStateDebugger {
    */
   public startMonitoring(): void {
     // Initialize with the current state
-    this._globalState$.next(getSimulationState());
+    this._globalState$.next(simulationState.getSimulationState());
 
     // Subscribe to subsequent changes.
     // NOTE: core-state does not currently have a direct observable for its state.

@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { actions } from "@teskooano/core-state";
+import { factoryOperations } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -24,7 +24,7 @@ const CHARON_AXIAL_TILT_DEG = 119.59; // Same as Pluto
  */
 export function initializeCharon(parentId: string): void {
   const charonAxialTiltRad = CHARON_AXIAL_TILT_DEG * DEG_TO_RAD;
-  actions.addCelestial({
+  factoryOperations.addCelestial({
     id: "charon",
     name: "Charon",
     seed: "charon",

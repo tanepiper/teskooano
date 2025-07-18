@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { actions } from "@teskooano/core-state";
+import { factoryOperations } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -19,7 +19,7 @@ const DESPINA_ALBEDO = 0.09;
 
 export function initializeDespina(parentId: string): void {
   const tilt = new OSVector3(0, 1, 0).normalize();
-  actions.addCelestial({
+  factoryOperations.addCelestial({
     id: "despina",
     name: "Despina",
     seed: "despina",

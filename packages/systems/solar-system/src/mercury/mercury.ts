@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { actions } from "@teskooano/core-state";
+import { factoryOperations } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -30,7 +30,7 @@ export function initializeMercury(parentId: string): void {
   const mercuryId = "mercury";
   const mercuryAxialTiltRad = MERCURY_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  actions.addCelestial({
+  factoryOperations.addCelestial({
     id: mercuryId,
     name: "Mercury",
     seed: "mercury",

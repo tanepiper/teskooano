@@ -1,10 +1,10 @@
 export * from "./game";
-export * from "./game/types";
-export * from "./game/simulation";
-export * from "./game/stores";
-export * from "./game/renderableStore";
-export * from "./game/factory";
+export * from "./utils";
 
-// Utilities
-export * from "./utils/StateSubscriptionMixin";
-export * from "./utils/StateAccessor";
+// Export the new functional API as the primary interface
+export {
+  gameState,
+  simulationState,
+  celestialOperations,
+  factoryOperations,
+} from "./game";

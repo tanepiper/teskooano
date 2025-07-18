@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { KM } from "@teskooano/core-physics";
-import { actions } from "@teskooano/core-state";
+import { factoryOperations } from "@teskooano/core-state";
 import {
   CelestialType,
   CelestialStatus,
@@ -22,7 +22,7 @@ const THALASSA_ALBEDO = 0.07;
  */
 export function initializeThalassa(parentId: string): void {
   const tilt = new OSVector3(0, 1, 0).normalize();
-  actions.addCelestial({
+  factoryOperations.addCelestial({
     id: "thalassa",
     name: "Thalassa",
     seed: "thalassa",

@@ -1,5 +1,5 @@
 import {
-  getSimulationState,
+  simulationState,
   simulationState$,
   simulationStateService,
   type SimulationConfiguration,
@@ -179,7 +179,7 @@ export class EnhancedSettingsController extends StateSubscriptionMixin {
    * @private
    */
   private updateUI(): void {
-    const state = getSimulationState();
+    const state = simulationState.getSimulationState();
     this.currentConfig = state.simulationConfig;
 
     // Update basic controls

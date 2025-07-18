@@ -2,7 +2,7 @@ import {
   actions,
   celestialFactory,
   StateAccessor,
-  updateSeed,
+  gameState,
 } from "@teskooano/core-state";
 import {
   CelestialType,
@@ -137,7 +137,7 @@ export class SystemGenerator {
 
     window.dispatchEvent(new CustomEvent(CustomEvents.SYSTEM_GENERATION_START));
 
-    updateSeed(inputSeed);
+    gameState.updateSeed(inputSeed);
     const finalSeed = StateAccessor.getCurrentSeed();
 
     // Reset the application state before generating a new system.

@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { actions } from "@teskooano/core-state";
+import { factoryOperations } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -31,7 +31,7 @@ export function initializePlutoDwarfPlanet(parentId: string): string {
   const plutoId = "pluto";
   const plutoAxialTiltRad = PLUTO_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  actions.addCelestial({
+  factoryOperations.addCelestial({
     id: plutoId,
     name: "Pluto",
     seed: "pluto",

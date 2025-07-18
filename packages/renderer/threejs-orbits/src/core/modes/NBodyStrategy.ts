@@ -5,7 +5,7 @@ import { PredictionManager } from "../../verlet/PredictionManager";
 import type { ObjectManager } from "@teskooano/renderer-threejs-objects";
 import type * as THREE from "three";
 import { type Layer2DManager } from "@teskooano/renderer-threejs-labels";
-import { getSimulationState } from "@teskooano/core-state";
+import { simulationState } from "@teskooano/core-state";
 import { StateAccessor } from "@teskooano/core-state";
 import { CelestialType } from "@teskooano/data-types";
 
@@ -124,7 +124,8 @@ export class NBodyStrategy implements IOrbitVisualizationStrategy {
       const labels = this.predictionManager.getPredictionLabels();
 
       // Check simulation mode to determine how to position prediction lines
-      const simulationConfig = getSimulationState().simulationConfig;
+      const simulationConfig =
+        simulationState.getSimulationState().simulationConfig;
       const isIdealMode = simulationConfig.mode === "ideal";
 
       if (line) {

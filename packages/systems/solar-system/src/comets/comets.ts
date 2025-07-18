@@ -1,4 +1,4 @@
-import { actions } from "@teskooano/core-state";
+import { factoryOperations } from "@teskooano/core-state";
 import {
   CelestialObject,
   CelestialStatus,
@@ -30,7 +30,7 @@ export const initializeComets = (parentId: string) => {
       return;
     }
 
-    actions.addCelestial({
+    factoryOperations.addCelestial({
       ...comet,
       status: CelestialStatus.ACTIVE,
       parentId: parentId,

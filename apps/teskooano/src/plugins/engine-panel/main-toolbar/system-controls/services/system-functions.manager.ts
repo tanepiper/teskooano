@@ -4,7 +4,7 @@ import {
   actions,
   celestialFactory,
   StateAccessor,
-  updateSeed,
+  gameState,
 } from "@teskooano/core-state";
 import { CelestialType, type CelestialObject } from "@teskooano/data-types";
 import { generateStar } from "@teskooano/procedural-generation";
@@ -141,7 +141,7 @@ export class SystemFunctionsManager {
             }
           });
 
-          updateSeed(parsedData.seed);
+          gameState.updateSeed(parsedData.seed);
           simulationManager.resetSystem(true);
 
           observer.next({
@@ -357,7 +357,7 @@ export class SystemFunctionsManager {
 
       const star = generateStar(createSeededRandomSync(Date.now().toString()));
       celestialFactory.createSolarSystem(star);
-      updateSeed("");
+      gameState.updateSeed("");
 
       simulationManager.resetSystem(true);
       return { success: true, symbol: "📄", message: "Blank system created." };
@@ -385,7 +385,7 @@ export class SystemFunctionsManager {
       actions.resetTime();
 
       initializeSolarSystem();
-      updateSeed("sol");
+      gameState.updateSeed("sol");
 
       simulationManager.resetSystem(true);
       return { success: true, symbol: "☀️", message: "Solar system loaded." };

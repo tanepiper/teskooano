@@ -1,6 +1,6 @@
 import { DEG_TO_RAD, OSVector3 } from "@teskooano/core-math";
 import { AU, KM } from "@teskooano/core-physics";
-import { actions } from "@teskooano/core-state";
+import { factoryOperations } from "@teskooano/core-state";
 import {
   CelestialType,
   PlanetType,
@@ -58,7 +58,7 @@ export function initializeHaumea(parentId: string): void {
   const haumeaId = "haumea";
   const haumeaAxialTiltRad = HAUMEA_AXIAL_TILT_DEG * DEG_TO_RAD;
 
-  actions.addCelestial({
+  factoryOperations.addCelestial({
     id: haumeaId,
     name: "Haumea",
     seed: "haumea",
@@ -151,7 +151,7 @@ export function initializeHaumea(parentId: string): void {
 
   // Add Hi'iaka moon
   const hiiakAxialTilt = new OSVector3(0, 1, 0);
-  actions.addCelestial({
+  factoryOperations.addCelestial({
     id: "hiiaka",
     name: "Hi'iaka",
     seed: "hiiaka",
@@ -227,7 +227,7 @@ export function initializeHaumea(parentId: string): void {
 
   // Add Namaka moon
   const namakaAxialTilt = new OSVector3(0, 1, 0);
-  actions.addCelestial({
+  factoryOperations.addCelestial({
     id: "namaka",
     name: "Namaka",
     seed: "namaka",
